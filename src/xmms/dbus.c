@@ -717,7 +717,7 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
         }
 
         if (entry) {
-                gchar *uri = xmms_playlist_entry_get_uri (entry);
+                gchar *uri = xmms_playlist_entry_url_get (entry);
 
 		reply = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
 
@@ -735,7 +735,7 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
                 }
 
 		/* add the rest of the properties to Dict */
-                xmms_playlist_entry_foreach_prop (entry, hash_to_dict, &dictitr);
+                xmms_playlist_entry_property_foreach (entry, hash_to_dict, &dictitr);
 
 		xmms_playlist_entry_unref (entry);
                 dbus_connection_send (conn, reply, &serial);

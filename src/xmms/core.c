@@ -323,7 +323,7 @@ core_thread (gpointer data)
 			continue;
 		}
 		
-		XMMS_DBG ("Playing %s", core->curr_song->uri);
+		XMMS_DBG ("Playing %s", xmms_playlist_entry_url_get (core->curr_song));
 		
 		core->transport = xmms_transport_new ();
 		xmms_transport_open (core->transport, core->curr_song);
@@ -462,7 +462,7 @@ xmms_core_get_mediainfo (xmms_playlist_entry_t *entry)
 
 	g_return_val_if_fail (core->curr_song, FALSE);
 
-	xmms_playlist_entry_copy_property (core->curr_song, entry);
+	xmms_playlist_entry_property_copy (core->curr_song, entry);
 	
 	return TRUE;
 }
@@ -478,7 +478,9 @@ xmms_core_get_mediainfo (xmms_playlist_entry_t *entry)
 gchar *
 xmms_core_get_uri ()
 {
-	return core->curr_song ? core->curr_song->uri ? g_strdup(core->curr_song->uri) : NULL : NULL;
+	if (core->curr_song)
+		return xmms_playlist_entry_url_get (core->curr_song);
+	return NULL;
 }
 
 gint

@@ -181,19 +181,18 @@ xmms_transport_new ()
 gboolean
 xmms_transport_open (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
-	xmms_plugin_t *plugin;
-
 	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
-	XMMS_DBG ("Trying to open stream: %s", xmms_playlist_entry_get_uri (entry));
+	XMMS_DBG ("Trying to open stream: %s", xmms_playlist_entry_url_get (entry));
 	
 	transport->plugin = xmms_transport_plugin_find 
-		(xmms_playlist_entry_get_uri (entry));
-	if (!plugin)
+		(xmms_playlist_entry_url_get (entry));
+	if (!transport->plugin)
 		return FALSE;
+	transport->entry = entry;
 	
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (transport->plugin));
 
 	return xmms_transport_plugin_open (transport, entry, NULL);
 }
@@ -208,7 +207,7 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 	g_return_val_if_fail (transport, NULL);
 
 	xmms_transport_lock (transport);
-	ret =  xmms_playlist_entry_get_uri (transport->entry);
+	ret =  xmms_playlist_entry_url_get (transport->entry);
 	xmms_transport_unlock (transport);
 
 	return ret;
@@ -418,7 +417,7 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 
 	xmms_transport_plugin_data_set (transport, data);
 
-	url = xmms_playlist_entry_get_uri (transport->entry);
+	url = xmms_playlist_entry_url_get (transport->entry);
 
 	transport->suburl = url + strlen(url); /* empty string */
 

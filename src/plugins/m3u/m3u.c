@@ -1,6 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/playlist.h"
+#include "xmms/playlist_entry.h"
 #include "xmms/util.h"
 #include "xmms/xmms.h"
 
@@ -151,8 +152,8 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 				}
 			}
 
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, len);
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, len);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
 		} else {
 			if (lines[i] && lines[i][0]) {
 				if (lines[i][0] != '/') {
@@ -173,7 +174,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 		}
 
 		if (entry) {
-			XMMS_DBG ("Adding %s", xmms_playlist_entry_get_uri (entry));
+			XMMS_DBG ("Adding %s", xmms_playlist_entry_url_get (entry));
 			xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
 		}
 			
@@ -207,7 +208,7 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 
 		entry = (xmms_playlist_entry_t *)tmp->data;
 
-		d = xmms_playlist_entry_get_prop (entry, 
+		d = xmms_playlist_entry_property_get (entry, 
 				XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
 
 		if (d)
@@ -215,10 +216,10 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 		else
 			d = 0;
 
-		artist = xmms_playlist_entry_get_prop (entry,
+		artist = xmms_playlist_entry_property_get (entry,
 				XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST);
 		
-		title = xmms_playlist_entry_get_prop (entry,
+		title = xmms_playlist_entry_property_get (entry,
 				XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE);
 
 		xmms_playlist_entry_unref (entry);
@@ -233,7 +234,7 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 			g_free (t);
 		}
 
-		uri2 = xmms_util_decode_path (xmms_playlist_entry_get_uri (entry));
+		uri2 = xmms_util_decode_path (xmms_playlist_entry_url_get (entry));
 		uri = strchr (uri2, ':');
 		if (!uri)
 			continue;

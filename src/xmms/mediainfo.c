@@ -141,7 +141,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			newentry = xmms_decoder_get_mediainfo (decoder, transport);
 			if (newentry) {
-				XMMS_DBG ("updating %s", xmms_playlist_entry_get_uri (newentry));
+				XMMS_DBG ("updating %s", xmms_playlist_entry_url_get (newentry));
 				//xmms_playlist_entry_copy_property (newentry, entry);
 			}
 

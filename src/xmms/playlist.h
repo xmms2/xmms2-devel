@@ -4,6 +4,7 @@
 #include <glib.h>
 
 #include "xmms/object.h"
+#include "xmms/playlist_entry.h"
 
 /*
  * Public definitions
@@ -26,20 +27,6 @@ typedef enum {
 } xmms_playlist_changed_actions_t;
 
 
-#define xmms_playlist_entry_foreach_prop(a,b,c) g_hash_table_foreach(a->properties, b, c)
-
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST "artist"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM "album"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE "title"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR "date"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR "tracknr"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE "genre"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE "bitrate"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT "comment"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION "duration"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL "channel"
-#define XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE "samplerate"
-
 /*
  * Private defintions
  */
@@ -47,32 +34,9 @@ typedef enum {
 #define XMMS_MAX_URI_LEN 1024
 #define XMMS_MEDIA_DATA_LEN 1024
 
-/** Playlist structure */
-typedef struct xmms_playlist_St {
-	xmms_object_t object;
-	/** The current list first node. */
-	GList *list;
-	/** Next song that will be retured by xmms_playlist_get_next */
-	GList *currententry;
 
-	GHashTable *id_table;
-	guint nextid;
-
-	GMutex *mutex;
-	GCond *cond;
-	gboolean is_waiting;
-} xmms_playlist_t;
-
-typedef struct xmms_playlist_entry_St {
-	gchar *uri;
-	gchar *mimetype;
-	
-	guint id;
-	
-	guint ref;
-
-	GHashTable *properties;
-} xmms_playlist_entry_t;
+struct xmms_playlist_St;
+typedef struct xmms_playlist_St xmms_playlist_t;
 
 typedef struct xmms_playlist_changed_msg_St {
 	gint type;
@@ -108,20 +72,5 @@ xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
  * Entry modifications
  */
 
-xmms_playlist_entry_t * xmms_playlist_entry_new (gchar *uri);
-
-void xmms_playlist_entry_set_prop (xmms_playlist_entry_t *entry, gchar *key, gchar *value);
-void xmms_playlist_entry_set_uri (xmms_playlist_entry_t *entry, gchar *uri);
-void xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mimetype);
-const gchar *xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry);
-gchar *xmms_playlist_entry_get_uri (const xmms_playlist_entry_t *entry);
-guint xmms_playlist_entry_id_get (xmms_playlist_entry_t *entry);
-gchar *xmms_playlist_entry_get_prop (const xmms_playlist_entry_t *entry, gchar *key);
-gint xmms_playlist_entry_get_prop_int (const xmms_playlist_entry_t *entry, gchar *key);
-void xmms_playlist_entry_copy_property (xmms_playlist_entry_t *entry, xmms_playlist_entry_t *newentry);
-void xmms_playlist_entry_print (xmms_playlist_entry_t *entry);
-gboolean xmms_playlist_entry_is_wellknown (gchar *property);
-void xmms_playlist_entry_ref (xmms_playlist_entry_t *entry);
-void xmms_playlist_entry_unref (xmms_playlist_entry_t *entry);
 
 #endif

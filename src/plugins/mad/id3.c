@@ -84,7 +84,7 @@ add_to_entry (xmms_playlist_entry_t *entry, gchar *key, guchar *val, gint len)
 		return;
 	}
 	XMMS_DBG ("%s=%s", key, nval);
-	xmms_playlist_entry_set_prop (entry, key, nval);	
+	xmms_playlist_entry_property_set (entry, key, nval);	
 	
 }
 
@@ -303,29 +303,29 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 
 	tmp = g_convert (tag->artist, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
 	g_free (tmp);
 	
 	tmp = g_convert (tag->album, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
 	g_free (tmp);
 	
 	tmp = g_convert (tag->title, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
 	g_free (tmp);
 	
 	tmp = g_convert (tag->year, 4, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
 	g_free (tmp);
 	
 	if (tag->genre > GENRE_MAX) {
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, "Unknown");
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {
 		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
 	}
 	
@@ -333,16 +333,16 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 		/* V1.1 */
 		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 		
 		tmp = g_strdup_printf ("%d", (gint) tag->u.v1_1.track_number);
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, tmp);
 		g_free (tmp);
 	} else {
 		tmp = g_convert (tag->u.v1_1.comment, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 	}
 

@@ -232,7 +232,7 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 		if (decoder->output)
 			decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
 		r = g_strdup_printf ("%d", rate);
-		xmms_playlist_entry_set_prop (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
+		xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
 		xmms_effect_samplerate_set (decoder->effect, decoder->samplerate);
 		recalculate_resampler (decoder);
 	}
@@ -307,7 +307,7 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 	g_return_if_fail (decoder);
 	g_return_if_fail (entry);
 
-	xmms_playlist_entry_copy_property (entry, decoder->entry);
+	xmms_playlist_entry_property_copy (entry, decoder->entry);
 	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (entry));
 }
 

@@ -10,11 +10,27 @@
 #include <glib.h>
 
 #include "playlist.h"
+#include "playlist_entry.h"
 #include "util.h"
 #include "core.h"
 #include "signal_xmms.h"
 
-static void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
+
+/** Playlist structure */
+struct xmms_playlist_St {
+	xmms_object_t object;
+	/** The current list first node. */
+	GList *list;
+	/** Next song that will be retured by xmms_playlist_get_next */
+	GList *currententry;
+
+	GHashTable *id_table;
+	guint nextid;
+
+	GMutex *mutex;
+	GCond *cond;
+	gboolean is_waiting;
+};
 
 /*
  * Public functions
@@ -239,19 +255,14 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	GList *new, *node;
 	xmms_playlist_changed_msg_t *chmsg;
 
-	if (file->uri && strstr (file->uri, "britney")) {
-		XMMS_DBG ("Popular music detected: consider playing better music");
-		exit (1);
-	}
-
-	g_return_val_if_fail (!file->id, FALSE);
+	g_return_val_if_fail (file, FALSE);
 
 	new = g_list_alloc ();
 	new->data = (gpointer) file;
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
-	file->id = playlist->nextid++;
+	xmms_playlist_entry_id_set (file, playlist->nextid++);
 	xmms_playlist_entry_ref (file); /* reference this entry */
 	
 	switch (options) {
@@ -277,21 +288,21 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 			break;
 	}
 	
-	g_hash_table_insert (playlist->id_table, GUINT_TO_POINTER (file->id), new);
+	g_hash_table_insert (playlist->id_table, 
+			     GUINT_TO_POINTER (xmms_playlist_entry_id_get (file)), 
+			     new);
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_ADD;
-	chmsg->id = file->id;
+	chmsg->id = xmms_playlist_entry_id_get (file);
 	chmsg->arg = GINT_TO_POINTER (options);
 	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 	g_cond_signal (playlist->cond);
 
-	XMMS_DBG ("Added with id %d - %s", file->id, file->uri);
-
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	xmms_core_mediainfo_add_entry (file->id);
+	xmms_core_mediainfo_add_entry (xmms_playlist_entry_id_get (file));
 
 	return TRUE;
 
@@ -510,8 +521,8 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 	const xmms_playlist_entry_t *entry2 = b;
 	gchar *tmpa=NULL, *tmpb=NULL;
 
-	tmpa = xmms_playlist_entry_get_prop (entry1, prop);
-	tmpb = xmms_playlist_entry_get_prop (entry2, prop);
+	tmpa = xmms_playlist_entry_property_get (entry1, prop);
+	tmpb = xmms_playlist_entry_property_get (entry2, prop);
 
 	if (g_strcasecmp (tmpa, tmpb) == 0)
 		return 0;
@@ -606,224 +617,5 @@ xmms_playlist_close (xmms_playlist_t *playlist)
 	}
 
 	g_list_free (playlist->list);
-}
-
-/* playlist_entry_* */
-
-xmms_playlist_entry_t *
-xmms_playlist_entry_new (gchar *uri)
-{
-	xmms_playlist_entry_t *ret;
-
-	ret = g_new0 (xmms_playlist_entry_t, 1);
-	ret->uri = g_strdup (uri);
-	ret->properties = g_hash_table_new (g_str_hash, g_str_equal);
-	ret->id = 0;
-	ret->ref = 1;
-
-	return ret;
-}
-
-guint
-xmms_playlist_entry_id_get (xmms_playlist_entry_t *entry)
-{
-	g_return_val_if_fail (entry, 0);
-
-	return entry->id;
-}
-
-static void
-xmms_playlist_entry_clone_foreach (gpointer key, gpointer value, gpointer udata)
-{
-	xmms_playlist_entry_t *new = (xmms_playlist_entry_t *) udata;
-
-	xmms_playlist_entry_set_prop (new, g_strdup ((gchar *)key), g_strdup ((gchar *)value));
-}
-
-/** Make a copy of all properties in entry to new
-  */
-
-void
-xmms_playlist_entry_copy_property (xmms_playlist_entry_t *entry, xmms_playlist_entry_t *newentry)
-{
-	g_return_if_fail (entry);
-	g_return_if_fail (newentry);
-
-	g_hash_table_foreach (entry->properties, xmms_playlist_entry_clone_foreach, (gpointer) newentry);
-
-}
-
-/**
- * Associates a value/key pair with a entry.
- * 
- * It copies the value/key and you'll need to call #xmms_playlist_entry_free
- * to free all strings.
- */
-
-void
-xmms_playlist_entry_set_prop (xmms_playlist_entry_t *entry, gchar *key, gchar *value)
-{
-	g_return_if_fail (entry);
-	g_return_if_fail (key);
-	g_return_if_fail (value);
-
-	g_hash_table_insert (entry->properties, g_strdup (key), g_strdup (value));
-	
-}
-
-void
-xmms_playlist_entry_print (xmms_playlist_entry_t *entry)
-{
-
-	g_return_if_fail (entry);
-
-	fprintf (stdout, "--------\n");
-	fprintf (stdout, "Artist=%s\nAlbum=%s\nTitle=%s\nYear=%s\nTracknr=%s\nBitrate=%s\nComment=%s\nDuration=%ss\n", 
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT),
-		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION));
-	fprintf (stdout, "--------\n");
-}
-
-void
-xmms_playlist_entry_set_uri (xmms_playlist_entry_t *entry, gchar *uri)
-{
-	g_return_if_fail (entry);
-	g_return_if_fail (uri);
-
-	entry->uri = g_strdup (uri);
-}
-
-gchar *
-xmms_playlist_entry_get_uri (const xmms_playlist_entry_t *entry)
-{
-	g_return_val_if_fail (entry, NULL);
-
-	return entry->uri;
-}
-
-gchar *
-xmms_playlist_entry_get_prop (const xmms_playlist_entry_t *entry, gchar *key)
-{
-	g_return_val_if_fail (entry, NULL);
-	g_return_val_if_fail (key, NULL);
-
-	return g_hash_table_lookup (entry->properties, key);
-}
-
-gint
-xmms_playlist_entry_get_prop_int (const xmms_playlist_entry_t *entry, gchar *key)
-{
-	gchar *t;
-	g_return_val_if_fail (entry, -1);
-	g_return_val_if_fail (key, -1);
-
-	t = g_hash_table_lookup (entry->properties, key);
-
-	if (t)
-		return strtol (t, NULL, 10);
-	else
-		return 0;
-}
-
-
-static gboolean
-xmms_playlist_entry_foreach_free (gpointer key, gpointer value, gpointer udata)
-{
-	g_free (key);
-	g_free (value);
-	return TRUE;
-}
-
-static void
-xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
-{
-	g_free (entry->uri);
-	
-	if (entry->mimetype)
-		g_free (entry->mimetype);
-
-	g_hash_table_foreach_remove (entry->properties, xmms_playlist_entry_foreach_free, NULL);
-	g_hash_table_destroy (entry->properties);
-
-	g_free (entry);
-}
-
-static gchar *wellknowns[] = {
-	XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE,
-	NULL 
-};
-
-gboolean
-xmms_playlist_entry_is_wellknown (gchar *property)
-{
-	gint i = 0;
-
-	while (wellknowns[i]) {
-		if (g_strcasecmp (wellknowns[i], property) == 0)
-			return TRUE;
-
-		i++;
-	}
-
-	return FALSE;
-}
-
-void
-xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mimetype)
-{
-
-	g_return_if_fail (entry);
-	g_return_if_fail (mimetype);
-
-	entry->mimetype = g_strdup (mimetype);
-
-}
-
-const gchar *
-xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
-{
-	g_return_val_if_fail (entry, NULL);
-
-	return entry->mimetype;
-}
-
-void
-xmms_playlist_entry_ref (xmms_playlist_entry_t *entry)
-{
-	g_return_if_fail (entry);
-	entry->ref ++;
-}
-
-void
-xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
-{
-
-	g_return_if_fail (entry);
-
-	entry->ref --;
-
-	if (entry->ref < 1) {
-		/* free entry */
-
-		XMMS_DBG("Freeing %s", entry->uri);
-		xmms_playlist_entry_free (entry);
-	}
-
 }
 
