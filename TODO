@@ -1,8 +1,11 @@
 CORE
 	* Should check if other server is running
 	* Volyme
-	* Resampler
 	* Equalizer
+	* Check names of functions
+           - especially get/set-functions
+           - signal-names
+           - konsekvent med init/new/create/destroy/free/deinit 
 
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
