@@ -14,19 +14,35 @@
 #include <signal.h>
 #include <syslog.h>
 
-#include "ipc_transport.h"
+#include "xmms/util.h"
+#include "xmms/ipc_transport.h"
 
+void
+xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
+{
+	XMMS_DBG ("Closing socket %d", ipct->fd);
+	g_free (ipct->path);
+	close (ipct->fd);
+	g_free (ipct);
+}
 
 gint
 xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 {
 	gint fd;
+	gint ret;
 	g_return_val_if_fail (ipct, -1);
 	g_return_val_if_fail (buffer, -1);
 
 	fd = ipct->fd;
 
-	return recv (fd, buffer, len, 0);
+	ret =  recv (fd, buffer, len, 0);
+	XMMS_DBG ("ret == %d", ret);
+	if (ret == -1) {
+		XMMS_DBG ("error %s (%d)", strerror (errno), errno);
+	}
+
+	return ret;
 }
 
 gint
@@ -84,6 +100,7 @@ xmms_ipc_usocket_client_init (gchar *path)
 	ipct->path = g_strdup (path);
 	ipct->read_func = xmms_ipc_usocket_read;
 	ipct->write_func = xmms_ipc_usocket_write;
+	ipct->destroy_func = xmms_ipc_usocket_destroy;
 
 	return ipct;
 }
@@ -122,8 +139,11 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 		ret->fd = fd;
 		ret->read_func = xmms_ipc_usocket_read;
 		ret->write_func = xmms_ipc_usocket_write;
+		ret->destroy_func = xmms_ipc_usocket_destroy;
 
 		return ret;
+	} else {
+		XMMS_DBG ("Accept error %s (%d)", strerror (errno), errno);
 	}
 
 	return NULL;
@@ -145,6 +165,10 @@ xmms_ipc_usocket_server_init (gchar *path)
 
 	saddr.sun_family = AF_UNIX;
 	strncpy (saddr.sun_path, path, 108);
+
+	if (g_file_test (path, G_FILE_TEST_EXISTS)) {
+		unlink (path);
+	}
 
 	if (bind (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
@@ -174,6 +198,7 @@ xmms_ipc_usocket_server_init (gchar *path)
 	ipct->read_func = xmms_ipc_usocket_read;
 	ipct->write_func = xmms_ipc_usocket_write;
 	ipct->accept_func = xmms_ipc_usocket_accept;
+	ipct->destroy_func = xmms_ipc_usocket_destroy;
 
 	return ipct;
 }
