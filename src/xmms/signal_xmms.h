@@ -63,10 +63,10 @@
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO "/xmms/playlist::mediainfo"
 #define XMMS_SIGNAL_PLAYLIST_ADD "/xmms/playlist::add"
 #define XMMS_SIGNAL_PLAYLIST_REMOVE "/xmms/playlist::remove"
-#define XMMS_SIGNAL_PLAYLIST_SHUFFLE "/xmms.playlist::shuffle"
-#define XMMS_SIGNAL_PLAYLIST_CLEAR "/xmms.playlist::clear"
-#define XMMS_SIGNAL_PLAYLIST_JUMP "/xmms.playlist::jump"
-#define XMMS_SIGNAL_PLAYLIST_MOVE "/xmms.playlist::move"
+#define XMMS_SIGNAL_PLAYLIST_SHUFFLE "/xmms/playlist::shuffle"
+#define XMMS_SIGNAL_PLAYLIST_CLEAR "/xmms/playlist::clear"
+#define XMMS_SIGNAL_PLAYLIST_JUMP "/xmms/playlist::jump"
+#define XMMS_SIGNAL_PLAYLIST_MOVE "/xmms/playlist::move"
 #define XMMS_SIGNAL_PLAYLIST_SORT "/xmms/playlist::sort"
 
 /*
@@ -76,24 +76,24 @@
 /* Core msgs */
 
 #define XMMS_SIGNAL_CORE_QUIT "/xmms/core::quit"
-#define XMMS_SIGNAL_CORE_DISCONNECT "org.freedesktop.Local.Disconnect"
+#define XMMS_SIGNAL_CORE_DISCONNECT "/org/freedesktop/Local::Disconnected"
 #define XMMS_SIGNAL_CORE_INFORMATION "/xmms/core::information"
 #define XMMS_SIGNAL_CORE_SIGNAL_REGISTER "/xmms/core::register"
 #define XMMS_SIGNAL_CORE_SIGNAL_UNREGISTER "/xmms/core::unregister"
 
 /* Transport msgs */
-#define XMMS_SIGNAL_TRANSPORT_MIMETYPE "org.xmms.transport.mimetype"
-#define XMMS_SIGNAL_TRANSPORT_LIST "org.xmms.transport.list"
+#define XMMS_SIGNAL_TRANSPORT_MIMETYPE "/xmms/transport::mimetype"
+#define XMMS_SIGNAL_TRANSPORT_LIST "/xmms/transport::list"
 
 /* Output msgs */
-#define XMMS_SIGNAL_OUTPUT_EOS_REACHED "org.xmms.output.eos.reached"
-#define XMMS_SIGNAL_OUTPUT_OPEN_FAIL "org.xmms.output.open.fail"
+#define XMMS_SIGNAL_OUTPUT_EOS_REACHED "/xmms/output::eos_reached"
+#define XMMS_SIGNAL_OUTPUT_OPEN_FAIL "/xmms/output::open_fail"
 
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"
 
 /* Config msgs */
-#define XMMS_SIGNAL_CONFIG_SAVE "org.xmms.config.save"
-#define XMMS_SIGNAL_CONFIG_VALUE_CHANGE "org.xmms.config.value.change"
+#define XMMS_SIGNAL_CONFIG_SAVE "/xmms/config::save"
+#define XMMS_SIGNAL_CONFIG_VALUE_CHANGE "/xmms/config::value_change"
 
 #endif /* __SIGNAL_XMMS_H__ */
