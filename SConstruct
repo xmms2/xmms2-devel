@@ -2,14 +2,20 @@
 import xmmsenv;
 import os;
 
+##
+## Get options
+##
+opts = Options(None, ARGUMENTS)
+opts.Add('CC', 'C compiler to use', 'gcc')
+opts.Add('CCFLAGS', 'compilerflags', '-g -Wall -O0')
 
 ## setup base environment...
 ## ...ok, this should be a bit configurable... later.
 ##
 ## SCons-tips 42: start paths with '#' to have them change
 ##                correctly when we descend into subdirs
-base_env = xmmsenv.XmmsEnvironment(CC="gcc", LINK="gcc", CPPPATH = ['#src'],
-	CPPFLAGS = ['-DPKGLIBDIR=\\"/usr/local/lib/xmms\\"','-DSYSCONFDIR=\\"/etc/\\"','-g'])
+base_env = xmmsenv.XmmsEnvironment(options=opts, LINK="gcc", CPPPATH = ['#src'],
+	CPPFLAGS = ['-DPKGLIBDIR=\\"/usr/local/lib/xmms\\"','-DSYSCONFDIR=\\"/etc/\\"'])
 
 
 ##
@@ -26,6 +32,7 @@ base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus
 base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
+#sid!
 base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 base_env.CheckAndAddFlagsToGroup("gtk2", "pkg-config --libs --cflags gtk+-x11-2.0")
 

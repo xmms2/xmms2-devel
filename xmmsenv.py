@@ -5,8 +5,8 @@ import sys;
 
 class XmmsEnvironment(SCons.Environment.Environment):
 	pass
-	def __init__(self, **kw):
-		SCons.Environment.Environment.__init__(self)
+	def __init__(self, options=None, **kw):
+		SCons.Environment.Environment.__init__(self, options=options)
 		self.flag_groups = {}
 		apply(self.Replace, (), kw)
 
