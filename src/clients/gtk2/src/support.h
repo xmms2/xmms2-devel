@@ -42,3 +42,8 @@ void        glade_set_atk_action_description (AtkAction       *action,
                                               const gchar     *action_name,
                                               const gchar     *description);
 
+enum status_codes {
+	STOP,
+	PLAY
+};
+

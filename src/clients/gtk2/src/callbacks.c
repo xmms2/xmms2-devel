@@ -13,6 +13,7 @@
 extern GtkWidget *playlistwin;
 extern xmmsc_connection_t *conn;
 extern GHashTable *idtable;
+extern gint state;
 
 void fill_playlist ();
 
@@ -97,6 +98,9 @@ on_playlist_row_activated              (GtkTreeView     *treeview,
 	gtk_tree_model_get (store, &itr, 2, &id, -1);
 
 	xmmsc_playlist_jump (conn, id);
+
+	if (state == STOP)
+		xmmsc_playback_start (conn);
 
 }
 

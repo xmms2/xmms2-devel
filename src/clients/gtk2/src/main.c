@@ -14,11 +14,6 @@
 
 #include <xmmsclient.h>
 
-enum status_codes {
-	STOP,
-	PLAY
-};
-
 GtkWidget *playlistwin=NULL;
 GtkWidget *mainwindow;
 GHashTable *idtable;

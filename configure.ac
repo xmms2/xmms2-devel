@@ -11,6 +11,12 @@ AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
+GTK2="no"
+
+AC_ARG_ENABLE(gtk2-gui,
+	[ --disable-gtk2-gui		dont compile gtk2 gui],
+	, GTK2="yes")
+
 XMMS_CFLAGS="-DPKGLIBDIR=\\\"\$(pkglibdir)\\\" -DSYSCONFDIR=\\\"\$(sysconfdir)\\\" -I\$(top_srcdir)/src -include \$(top_srcdir)/config.h -Wall"
 AC_SUBST(XMMS_CFLAGS)
 
@@ -57,6 +63,12 @@ AC_CHECK_LIB(sqlite,sqlite_open,[
 AC_SUBST(SQLITE_LDFLAGS)
 AC_SUBST(SQLITE_CFLAGS)
 AM_CONDITIONAL(HAVE_SQLITE, test "$SQLITE_LDFLAGS" != "")
+
+AM_CONDITIONAL(HAVE_GTK2, test "$GTK2" != "no")
+if test "$GTK2" != "no"; then
+	AC_CONFIG_SUBDIRS("src/clients/gtk2")
+fi
+
 
 AC_OUTPUT([
 Makefile
