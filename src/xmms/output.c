@@ -44,6 +44,7 @@ static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
 static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
 static void xmms_output_resume (xmms_output_t *output);
+static void xmms_output_status_set (xmms_output_t *output, gint status);
 
 XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
@@ -803,6 +804,7 @@ xmms_output_thread (gpointer data)
 	if (output->decoder) {
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (XMMS_OBJECT (output->decoder));
+		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 		output->played_time = 0;
 		output->decoder = NULL;
 	}
