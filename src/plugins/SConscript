@@ -39,17 +39,18 @@ if base_env.HasGroup("mad"):
 	mad.AddFlagsFromGroup("mad")
 	mad.XmmsPlugin('xmms_mad', ['mad/mad.c', 'mad/id3.c', 'mad/xing.c'])
 
-vorbis = base_env.Copy()
-vorbis.AddFlagsFromGroup("glib")
-#vorbis.AddFlagsFromGroup("vorbis")
-#vorbis.AddFlagsFromGroup("vorbisfile")
-vorbis.Append (LIBPATH="/sw/lib")
-vorbis.Append (LIBS="vorbis")
-vorbis.Append (LIBS="vorbisfile")
-vorbis.Append (LIBS="ogg")
-vorbis.Append (CPPPATH="/sw/include")
-vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbisfile.c'])
-
+if base_env.HasGroup("vorbis"):
+	vorbis = base_env.Copy()
+	vorbis.AddFlagsFromGroup("glib")
+	#vorbis.AddFlagsFromGroup("vorbis")
+	#vorbis.AddFlagsFromGroup("vorbisfile")
+	vorbis.Append (LIBPATH="/sw/lib")
+	vorbis.Append (LIBS="vorbis")
+	vorbis.Append (LIBS="vorbisfile")
+	vorbis.Append (LIBS="ogg")
+	vorbis.Append (CPPPATH="/sw/include")
+	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbisfile.c'])
+	
 if base_env.HasGroup("vorbis") and base_env.HasGroup("shout") and base_env.HasGroup("vorbisenc"):
 	ices = base_env.Copy()
 	ices.AddFlagsFromGroup("glib")
