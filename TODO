@@ -1,4 +1,4 @@
-CORE:
+CORE
 	* Should check if other server is running
 	* Volyme
 	* Resampler
@@ -12,9 +12,6 @@ CLI:
 
 PLUGINS:
 	* http transport should be remade
-	* mad
-		* support VBR
-		* support ID3V2
 	* vorbis
 		* should calculate duration more correctly
 		  before playing file.
