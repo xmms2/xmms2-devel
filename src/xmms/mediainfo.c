@@ -41,7 +41,7 @@ struct xmms_mediainfo_thread_St {
 	GCond *cond;
 
 	gboolean running;
-	GList *list;
+	GQueue *queue;
 	xmms_playlist_t *playlist;
 	/* 45574 */
 };
@@ -62,7 +62,7 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 	mtt->mutex = g_mutex_new ();
 	mtt->cond = g_cond_new ();
 	mtt->playlist = playlist;
-
+	mtt->queue = g_queue_new ();
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
 
@@ -77,9 +77,8 @@ xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
 {
 	g_mutex_lock (mit->mutex);
 
-	g_list_free (mit->list);
-
-	mit->list = NULL;
+	while (g_queue_pop_head (mit->queue))
+		;
 	mit->running = FALSE;
 	g_cond_signal (mit->cond);
 
@@ -87,6 +86,7 @@ xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
 
 	g_thread_join (mit->thread);
 
+	g_queue_free (mit->queue);
 }
 
 static void
@@ -99,7 +99,7 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
 		g_mutex_lock (mit->mutex);
 
-		mit->list = g_list_append (mit->list, chmsg->id);
+		g_queue_push_tail (mit->queue, GUINT_TO_POINTER (chmsg->id));
 
 		g_cond_signal (mit->cond);
 
@@ -111,12 +111,12 @@ static gpointer
 xmms_mediainfo_thread_thread (gpointer data)
 {
 	xmms_mediainfo_thread_t *mtt = (xmms_mediainfo_thread_t *) data;
-	GList *node = NULL;
 
 	g_mutex_lock (mtt->mutex);
 
 	while (mtt->running) {
 		xmms_playlist_entry_t *entry;
+		guint id;
 		
 
 		XMMS_DBG ("MediainfoThread is idle.");
@@ -124,22 +124,15 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 		XMMS_DBG ("MediainfoThread is awake!");
 
-		while ((node = g_list_nth (mtt->list, 0))) {
+		while ((id = GPOINTER_TO_UINT (g_queue_pop_head (mtt->queue)))) {
 			xmms_transport_t *transport;
 			xmms_playlist_entry_t *newentry;
 			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
 			const gchar *mime;
-			guint id;
 
 			xmms_error_reset (&err);
-
-			mtt->list = g_list_remove_link (mtt->list, node);
-
-			id = GPOINTER_TO_UINT (node->data);
-
-			g_list_free_1 (node);
 
 			g_mutex_unlock (mtt->mutex);
 
