@@ -85,7 +85,7 @@ static guint xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err)
 
 #define XMMS_PLAYBACK_EMIT(signal,argument) { \
 	xmms_object_method_arg_t *arg;\
-	xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (argument));\
+	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (argument));\
 	xmms_object_emit (XMMS_OBJECT (playback), signal, arg); \
 	g_free (arg);\
 }
