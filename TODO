@@ -23,9 +23,29 @@ PLUGINS:
 	* vorbis
 		* calculate duration
 		* map comments to entry_t
-	* ffmpeg for wma
-	* cda
-	* wave
+
+	* Transport
+
+		* SMB
+		* HTTP
+		* FTP
+		* SSH
+		* RTP/RTCP/RTSP http://www.live.com/
+		* GSTP
+
+	* Decoders
+
+		* WAV
+		* WMA http://ffmpeg.sourceforge.net/ includes libavcodec
+		* Speex
+		* CDA Must support DAE.
+		* det däringa lossless formatet som nyligen gick med i vorbis
+
+	* Output
+
+		* ARTS
+		* ALSA
+		* ESD - Tack Gnome.. tack som fan
 	
 LIBL44T:
 	* specification.
