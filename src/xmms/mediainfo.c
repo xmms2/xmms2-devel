@@ -177,7 +177,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			if (xmms_medialib_entry_get (entry)) {
 				const gchar *tmp;
 
-				xmms_playlist_entry_changed (mtt->playlist, entry);
+				xmms_playlist_entry_changed (entry);
 
 				tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD);
 				if (tmp) {
@@ -245,7 +245,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			}
 
 			xmms_decoder_mediainfo_get (decoder, transport);
-			xmms_playlist_entry_changed (mtt->playlist, entry);
+			xmms_playlist_entry_changed (entry);
 
 			/* Store this in the database */
 			xmms_medialib_entry_store (entry);
