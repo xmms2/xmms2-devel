@@ -525,10 +525,9 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 	tmpa = xmms_playlist_entry_property_get (entry1, prop);
 	tmpb = xmms_playlist_entry_property_get (entry2, prop);
 
-	if (g_strcasecmp (tmpa, tmpb) == 0)
-		return 0;
+	XMMS_DBG ("CMP %s with %s", tmpa, tmpb);
 
-	return 1;
+	return g_strcasecmp (tmpa, tmpb);
 }
 
 /** Sorts the playlist by properties.
@@ -541,13 +540,20 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
 {
+	xmms_playlist_changed_msg_t chmsg;
+
 	g_return_if_fail (playlist);
+	XMMS_DBG ("Sorting on %s", property);
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	playlist->list = g_list_sort_with_data (playlist->list, xmms_playlist_entry_compare, property);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_SORT;
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
 
 }
 

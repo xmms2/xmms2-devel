@@ -53,16 +53,17 @@ typedef enum {
 	XMMS_SIGNAL_MASK_PLAYLIST_MOVE = 1 << 16,
 	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 17,
 	XMMS_SIGNAL_MASK_PLAYLIST_SAVE = 1 << 18,
+	XMMS_SIGNAL_MASK_PLAYLIST_SORT = 1 << 19,
 
-	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 19,
-	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 20,
-	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 21,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 22,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 23,
+	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 20,
+	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 21,
+	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 22,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 23,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 24,
 
-	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 24,
+	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 25,
 
-	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 25,
+	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 26,
 } xmms_dbus_signal_mask_t;
 
 
@@ -81,6 +82,7 @@ static gboolean handle_playlist_add (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_remove (guint arg);
 static gboolean handle_playlist_list (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_shuffle ();
+static gboolean handle_playlist_sort (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_clear ();
 static gboolean handle_playlist_save (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_jump (guint arg);
@@ -190,6 +192,9 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_PLAYLIST_SAVE,
 		XMMS_SIGNAL_MASK_PLAYLIST_SAVE, 
 		NULL, handle_playlist_save, NULL, NULL },
+	{ XMMS_SIGNAL_PLAYLIST_SORT,
+		XMMS_SIGNAL_MASK_PLAYLIST_SORT, 
+		NULL, handle_playlist_sort, NULL, NULL },
 	{ XMMS_SIGNAL_PLAYLIST_CHANGED,
 		XMMS_SIGNAL_MASK_PLAYLIST_CHANGED, 
 		send_playlist_changed, NULL, NULL, NULL },
@@ -309,6 +314,9 @@ send_playlist_changed (xmms_object_t *object,
                         break;
                 case XMMS_PLAYLIST_CHANGED_SHUFFLE:
                         msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SHUFFLE, NULL);
+                        break;
+                case XMMS_PLAYLIST_CHANGED_SORT:
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SORT, NULL);
                         break;
                 case XMMS_PLAYLIST_CHANGED_CLEAR:
                         msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_CLEAR, NULL);
@@ -700,6 +708,21 @@ static gboolean
 handle_playlist_clear ()
 {
 	xmms_core_playlist_clear ();
+	return TRUE;
+}
+
+static gboolean
+handle_playlist_sort (DBusConnection *conn, DBusMessage *msg)
+{
+        DBusMessageIter itr;
+ 
+        dbus_message_iter_init (msg, &itr);
+        if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+                gchar *property = dbus_message_iter_get_string (&itr);
+                xmms_core_playlist_sort (property);
+		g_free (property);
+        }
+	
 	return TRUE;
 }
 

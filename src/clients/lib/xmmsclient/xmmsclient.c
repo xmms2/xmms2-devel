@@ -89,6 +89,7 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYLIST_JUMP, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_MOVE },
 	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_UINT32_ARRAY },
+	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
 	{ NULL, 0 },
 };
@@ -455,6 +456,24 @@ void
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
 	xmmsc_send_void(c,XMMS_SIGNAL_PLAYLIST_SHUFFLE);
+}
+
+/**
+ * Sorts the playlist according to the property
+ */
+
+void
+xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
+{
+	DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SORT, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, property);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
 }
 
 /**

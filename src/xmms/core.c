@@ -253,6 +253,12 @@ xmms_core_playlist_shuffle ()
 }
 
 void
+xmms_core_playlist_sort (gchar *property)
+{
+	xmms_playlist_sort (core->playlist, property);
+}
+
+void
 xmms_core_playlist_clear ()
 {
 	/** @todo Kanske inte skitsnygt. */
