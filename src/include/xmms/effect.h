@@ -23,6 +23,7 @@
 #include <glib.h>
 #include "xmms/config.h"
 #include "xmms/plugin.h"
+#include "xmms/output.h"
 
 /*
  * Type definitions
@@ -37,7 +38,7 @@ void xmms_effect_private_data_set (xmms_effect_t *effect, gpointer data);
 xmms_plugin_t * xmms_effect_plugin_get (xmms_effect_t *effect);
 
 /* _int */
-xmms_effect_t *xmms_effect_new (xmms_plugin_t *plugin);
+xmms_effect_t *xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output);
 void xmms_effect_free (xmms_effect_t *effect);
 
 #endif

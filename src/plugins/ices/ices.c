@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -32,6 +32,7 @@
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/internal/output_int.h"
 
 #include <math.h>
 #include <glib.h>
@@ -46,6 +47,7 @@
 
 typedef struct xmms_ices_data_St {
 	shout_t *shout;
+	xmms_playlist_entry_t *entry;
 	vorbis_comment vc;
 	encoder_state *enc;
 	gint serial;
@@ -56,10 +58,13 @@ typedef struct xmms_ices_data_St {
 	GThread *thread;
 } xmms_ices_data_t;
 
-static void xmms_ices_init (xmms_effect_t *effect);
+static void xmms_ices_init (xmms_effect_t *effect, xmms_output_t *output);
 static void xmms_ices_deinit (xmms_effect_t *effect);
 static void xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate);
 static void xmms_ices_process (xmms_effect_t *effect, gchar *buf, guint len);
+static void on_playlist_entry_changed (xmms_output_t *output,
+                                       const xmms_object_cmd_arg_t *arg,
+                                       xmms_ices_data_t *data);
 
 xmms_plugin_t *
 xmms_plugin_get (void)
@@ -67,9 +72,8 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, "ices",
-					    "ICES2 Shoutplugin " XMMS_VERSION,
-					    "ICES2 Shoutplugin");
-
+	                          "Icecast2 Shoutplugin " XMMS_VERSION,
+	                          "Icecast2 Shoutplugin");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://www.icecast.org/");
@@ -82,6 +86,18 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_ices_process);
 
 	xmms_plugin_config_value_register (plugin, "enabled", "0", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "encodingnombr", "64000", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "host", "localhost", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "port", "8000", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "password", "hackme", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "user", "source", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "mount", "/stream.ogg", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "public", "0", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "streamname", "", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "streamdescription", "", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "streamgenre", "", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "streamurl", "", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "buffersize", "65536", NULL, NULL);
 
 	return plugin;
 }
@@ -90,17 +106,15 @@ static gboolean
 xmms_ices_reconnect (xmms_ices_data_t *data)
 {
 	if (shout_open (data->shout) == SHOUTERR_SUCCESS) {
-
-		XMMS_DBG ("Connected to %s:%d/%s", 
-				shout_get_host (data->shout),
-				shout_get_port (data->shout),
-				shout_get_mount (data->shout));
-
+		XMMS_DBG ("Connected to %s:%d/%s",
+		          shout_get_host (data->shout),
+		          shout_get_port (data->shout),
+		          shout_get_mount (data->shout));
 	} else {
 		xmms_log_error ("Couldn't connect to shoutserver");
 		return FALSE;
 	}
-		
+
 	return TRUE;
 }
 
@@ -115,10 +129,10 @@ xmms_ices_thread (xmms_effect_t *effect)
 	g_return_val_if_fail (data, NULL);
 
 	mutex = g_mutex_new ();
-		
+
 	data->write_buf = TRUE;
 
-	xmms_ringbuf_wait_used (data->buf, data->buf_size-4096, mutex);
+	xmms_ringbuf_wait_used (data->buf, data->buf_size - 4096, mutex);
 
 	XMMS_DBG ("Buffering done, starting to encode");
 
@@ -128,13 +142,15 @@ xmms_ices_thread (xmms_effect_t *effect)
 	}
 
 	while (42) {
-		gchar d[4096];
+		gchar buf[4096];
 		ogg_page og;
 		gint ret;
 
-		ret = xmms_ringbuf_read (data->buf, d, 4096);
-		if (ret == 0) {
-			xmms_ringbuf_wait_used (data->buf, data->buf_size-4096, mutex);
+		ret = xmms_ringbuf_read (data->buf, buf, sizeof (buf));
+		if (!ret) {
+			xmms_ringbuf_wait_used (data->buf,
+			                        data->buf_size - sizeof (buf),
+			                        mutex);
 			continue;
 		}
 
@@ -144,7 +160,7 @@ xmms_ices_thread (xmms_effect_t *effect)
 			return NULL;
 		}
 
-		encode_data (data->enc, d, ret, 0);
+		encode_data (data->enc, buf, ret, 0);
 
 		while (encode_dataout (data->enc, &og) > 0) {
 			if (shout_send_raw (data->shout, og.header, og.header_len) < 0) {
@@ -157,129 +173,100 @@ xmms_ices_thread (xmms_effect_t *effect)
 					data->write_buf = FALSE;
 					return NULL;
 				}
-
 			}
 		}
-			
+
 	}
 
 	return NULL;
 }
 
 static void
-xmms_ices_init (xmms_effect_t *effect) 
+xmms_ices_init (xmms_effect_t *effect, xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
+	xmms_plugin_t *plugin = xmms_effect_plugin_get (effect);
 	xmms_config_value_t *val;
-	const gchar *host, *port;
+	xmms_error_t error;
 
 	shout_init ();
-	
+
 	data = g_new0 (xmms_ices_data_t, 1);
 	data->shout = shout_new ();
 
 	shout_set_format (data->shout, SHOUT_FORMAT_VORBIS);
 	shout_set_protocol (data->shout, SHOUT_PROTOCOL_HTTP);
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "encodingnombr",
-						 "64000",
-						 NULL,
-						 NULL);
-
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "host",
-						 "localhost",
-						 NULL,
-						 NULL);
-	host = xmms_config_value_string_get (val);
+	val = xmms_plugin_config_lookup (plugin, "host");
 	shout_set_host (data->shout, xmms_config_value_string_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "port",
-						 "8000",
-						 NULL,
-						 NULL);
-	port = xmms_config_value_string_get (val);
+	val = xmms_plugin_config_lookup (plugin, "port");
 	shout_set_port (data->shout, xmms_config_value_int_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "password",
-						 "hackme",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "password");
 	shout_set_password (data->shout, xmms_config_value_string_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "user",
-						 "source",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "user");
 	shout_set_user (data->shout, xmms_config_value_string_get (val));
-	
+
 	shout_set_agent (data->shout, "XMMS/" XMMS_VERSION);
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "mount",
-						 "/stream.ogg",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "mount");
 	shout_set_mount (data->shout, xmms_config_value_string_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "public",
-						 "0",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "public");
 	shout_set_public (data->shout, xmms_config_value_int_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "streamname",
-						 "",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "streamname");
 	shout_set_name (data->shout, xmms_config_value_string_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "streamdescription",
-						 "",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "streamdescription");
 	shout_set_description (data->shout, xmms_config_value_string_get (val));
-	
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "streamgenre",
-						 "",
-						 NULL,
-						 NULL);
+
+	val = xmms_plugin_config_lookup (plugin, "streamgenre");
 	shout_set_genre (data->shout, xmms_config_value_string_get (val));
 
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "streamurl",
-						 "",
-						 NULL,
-						 NULL);
+	val = xmms_plugin_config_lookup (plugin, "streamurl");
 	shout_set_url (data->shout, xmms_config_value_string_get (val));
 
 	data->write_buf = FALSE;
-	val = xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-						 "buffersize",
-						 "65536",
-						 NULL,
-						 NULL);
-	data->buf = xmms_ringbuf_new (xmms_config_value_int_get (val));
+	val = xmms_plugin_config_lookup (plugin, "buffersize");
 	data->buf_size = xmms_config_value_int_get (val);
+	data->buf = xmms_ringbuf_new (data->buf_size);
 
 	data->serial = 1;
-	
+
+	xmms_error_reset (&error);
+	data->entry = xmms_output_playing_entry_get (output, &error);
+
+	xmms_object_connect (XMMS_OBJECT (output),
+	                     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
+	                     (xmms_object_handler_t ) on_playlist_entry_changed,
+	                     data);
+
 	xmms_effect_private_data_set (effect, data);
 
-	data->thread = g_thread_create ((GThreadFunc) xmms_ices_thread, (gpointer) effect, TRUE, NULL);
+	data->thread = g_thread_create ((GThreadFunc) xmms_ices_thread,
+	                                (gpointer) effect, TRUE, NULL);
 }
 
 static void
-xmms_ices_deinit (xmms_effect_t *effect) 
+xmms_ices_deinit (xmms_effect_t *effect)
 {
+	xmms_ices_data_t *data;
+
+	g_return_if_fail (effect);
+
+	data = xmms_effect_private_data_get (effect);
+	g_return_if_fail (data);
+
+	if (data->entry) {
+		xmms_object_unref (data->entry);
+	}
+
+	shout_close (data->shout);
+	shout_free (data->shout);
+	shout_shutdown ();
 }
 
 static void
@@ -287,9 +274,17 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 {
 	xmms_ices_data_t *data;
 	xmms_config_value_t *val;
-	const xmms_playlist_entry_t *entry;
 	gint nombr;
-	gchar *vc;
+	static struct {
+		gchar *prop;
+		gchar *key;
+	} *pptr, props[] = {
+		{XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, "title"},
+		{XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, "artist"},
+		{XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, "album"},
+		{NULL, NULL}
+	};
+
 	g_return_if_fail (effect);
 
 	data = xmms_effect_private_data_get (effect);
@@ -299,34 +294,22 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 	nombr = xmms_config_value_int_get (val);
 	XMMS_DBG ("Inited a encoder with rate %d nombr %d", rate, nombr);
 
-//	entry = xmms_core_playlist_entry_mediainfo (xmms_core_get_id (core));
-
 	vorbis_comment_clear (&data->vc);
 	vorbis_comment_init (&data->vc);
 
-	vc = g_strdup_printf ("title=%s", 
-			      xmms_playlist_entry_property_get (entry, 
-				      XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE));
-	vorbis_comment_add (&data->vc, vc);
-	g_free (vc);
+	for (pptr = props; pptr && pptr->prop; pptr++) {
+		const gchar *tmp;
 
-	vc = g_strdup_printf ("artist=%s",
-			      xmms_playlist_entry_property_get (entry,
-				      XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST));
-	vorbis_comment_add (&data->vc, vc);
-	g_free (vc);
+		tmp = xmms_playlist_entry_property_get (data->entry,
+		                                        pptr->prop);
+		if (tmp) {
+			vorbis_comment_add_tag (&data->vc,
+			                        pptr->key, (gchar *) tmp);
+		}
+	}
 
-	vc = g_strdup_printf ("album=%s",
-			      xmms_playlist_entry_property_get (entry,
-				      XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM));
-	vorbis_comment_add (&data->vc, vc);
-	g_free (vc);
-
-	data->enc = encode_initialise (2, rate, 1, -1, nombr, -1, 
-				       3, data->serial++, &data->vc);
-	if (!data->enc)
-		return;
-	
+	data->enc = encode_initialise (2, rate, 1, -1, nombr, -1,
+	                               3, data->serial++, &data->vc);
 }
 
 static void
@@ -339,6 +322,22 @@ xmms_ices_process (xmms_effect_t *effect, gchar *buf, guint len)
 	data = xmms_effect_private_data_get (effect);
 	g_return_if_fail (data);
 
-	if (data->write_buf) 
+	if (data->write_buf) {
 		xmms_ringbuf_write (data->buf, buf, len);
+	}
+}
+
+static void
+on_playlist_entry_changed (xmms_output_t *output,
+                           const xmms_object_cmd_arg_t *arg,
+                           xmms_ices_data_t *data)
+{
+	xmms_error_t error;
+
+	if (data->entry) {
+		xmms_object_unref (data->entry);
+	}
+
+	xmms_error_reset (&error);
+	data->entry = xmms_output_playing_entry_get (output, &error);
 }

@@ -506,7 +506,7 @@ xmms_output_close (xmms_output_t *output)
 }
 
 static GList *
-get_effect_list ()
+get_effect_list (xmms_output_t *output)
 {
 	GList *list = NULL;
 	gint i = 0;
@@ -527,7 +527,8 @@ get_effect_list ()
 
 		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_EFFECT, name);
 		if (plugin) {
-			list = g_list_prepend (list, xmms_effect_new (plugin));
+			list = g_list_prepend (list,
+			                       xmms_effect_new (plugin, output));
 
 			/* xmms_plugin_find() increases the refcount and
 			 * xmms_effect_new() does, too, so release one reference
@@ -586,7 +587,7 @@ xmms_output_new (xmms_plugin_t *plugin)
 	output->fill_cond = g_cond_new ();
 	output->decoder_list = g_queue_new ();
 	output->entry_list = g_queue_new ();
-	output->effects = get_effect_list ();
+	output->effects = get_effect_list (output);
 
 	output->samplerate = 44100;
 	output->bytes_written = 0;

@@ -124,9 +124,9 @@ on_enabled_changed (xmms_object_t *object, gconstpointer value,
 }
 
 xmms_effect_t *
-xmms_effect_new (xmms_plugin_t *plugin)
+xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 {
-	void (*initfunc) (xmms_effect_t *);
+	void (*initfunc) (xmms_effect_t *, xmms_output_t *);
 	xmms_effect_t *effect;
 
 	g_return_val_if_fail (plugin, NULL);
@@ -146,7 +146,7 @@ xmms_effect_new (xmms_plugin_t *plugin)
 		return NULL;
 	}
 
-	initfunc (effect);
+	initfunc (effect, output);
 
 	effect->samplerate_change = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
