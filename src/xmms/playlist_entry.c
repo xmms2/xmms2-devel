@@ -29,6 +29,8 @@
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
 #include "xmms/signal_xmms.h"
+#include "internal/transport_int.h"
+#include "internal/decoder_int.h"
 
 /*
  * Type definitions.
@@ -267,5 +269,68 @@ xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *e
 			    entry->id);
 
 }
+
+
+xmms_decoder_t *
+xmms_playlist_entry_start (xmms_playlist_entry_t *entry)
+{
+	xmms_transport_t *t;
+	xmms_decoder_t *d;
+	const gchar *mime;
+
+	XMMS_DBG ("Starting up for %s", xmms_playlist_entry_url_get (entry));
+
+	t = xmms_transport_new ();
+
+	if (!t) {
+		return NULL;
+	}
+
+	if (!xmms_transport_open (t, entry)) {
+		xmms_transport_close (t);
+		xmms_object_unref (t);
+		return NULL;
+	}
+
+	xmms_transport_start (t);
+
+	/*
+	 * Waiting for the mimetype forever
+	 * All transporters MUST set a mimetype, 
+	 * NULL on error
+	 */
+	XMMS_DBG ("Waiting for mimetype");
+	mime = xmms_transport_mimetype_get_wait (t);
+	if (!mime) {
+		xmms_transport_close (t);
+		xmms_object_unref (t);
+		return NULL;
+	}
+
+	XMMS_DBG ("mime-type: %s", mime);
+
+	xmms_playlist_entry_mimetype_set (entry, mime);
+
+	d = xmms_decoder_new ();
+
+	if (!d) {
+		xmms_transport_close (t);
+		xmms_object_unref (t);
+		return NULL;
+	}
+
+	if (!xmms_decoder_open (d, t)) {
+		xmms_transport_close (t);
+		xmms_object_unref (t);
+		xmms_object_unref (d);
+		return NULL;
+	}
+
+	xmms_object_unref (t);
+
+	return d;
+	
+}
+
 
 /** @} */

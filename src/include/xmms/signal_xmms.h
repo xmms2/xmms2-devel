@@ -74,7 +74,6 @@
 
 /* Playlist msgs */
 #define XMMS_SIGNAL_PLAYLIST_LIST "/xmms/playlist::list"
-#define XMMS_SIGNAL_PLAYLIST_CURRENTID "/xmms/playlist::currentid"
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID "/xmms/playlist::mediainfoid"
 #define XMMS_SIGNAL_PLAYLIST_CHANGED "/xmms/playlist::change"
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO "/xmms/playlist::mediainfo"
@@ -104,6 +103,7 @@
 #define XMMS_SIGNAL_OUTPUT_MIXER_CHANGED "/xmms/output::mixer_changed"
 #define XMMS_SIGNAL_OUTPUT_PLAYTIME "/xmms/playback::playtime"
 #define XMMS_SIGNAL_OUTPUT_STATUS "/xmms/output::status"
+#define XMMS_SIGNAL_OUTPUT_CURRENTID "/xmms/output::currentid"
 
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"

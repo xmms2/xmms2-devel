@@ -185,7 +185,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	if (!list)
 		return;
 
-	id = xmmscs_playlist_current_id (conn);
+	id = xmmscs_playback_current_id (conn);
 
 	for (l = list; l; l = x_list_next (l)) {
 		x_hash_t *tab;
@@ -309,7 +309,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 			     "xmms2 seek -seconds - will remove seconds");
 	}
 	
-	id = xmmscs_playlist_current_id (conn);
+	id = xmmscs_playback_current_id (conn);
 	lista = xmmscs_playlist_get_mediainfo (conn, id);
 	duration = atoi (x_hash_lookup (lista, "duration"));
 	cur_playtime = xmmscs_playback_playtime (conn);
@@ -524,7 +524,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	ml = g_main_loop_new (NULL, FALSE);
 
 	/* Setup onchange signal for mediainfo */
-	XMMS_CALLBACK_SET (conn, xmmsc_playlist_current_id, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_playtime, handle_playtime, NULL);
 
 	xmmsc_setup_with_gmain (conn, NULL);

@@ -35,8 +35,6 @@ typedef enum {
 typedef enum {
 	XMMS_PLAYLIST_APPEND,
 	XMMS_PLAYLIST_PREPEND,
-	XMMS_PLAYLIST_INSERT,
-	XMMS_PLAYLIST_DELETE
 } xmms_playlist_actions_t;
 
 typedef enum {

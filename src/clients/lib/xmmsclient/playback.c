@@ -142,6 +142,40 @@ xmmsc_playback_status (xmmsc_connection_t *c)
 	return res;
 }
 
+xmmsc_result_t *
+xmmsc_playback_current_id (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_CURRENTID);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_OUTPUT_CURRENTID);
+	return res;
+}
+
+unsigned int
+xmmscs_playback_current_id (xmmsc_connection_t *c)
+{
+	int ret = 0;
+	xmmsc_result_t *res;
+
+	res = xmmsc_playback_current_id (c);
+	if (!res)
+		return 0;
+
+	xmmsc_result_wait (res);
+
+	if (!xmmsc_result_get_uint (res, &ret)) {
+		xmmsc_result_unref (res);
+		return 0;
+	}
+
+	xmmsc_result_unref (res);
+
+	return ret;
+
+}
+
+
+
 /* FIXME
 xmmsc_result_t *
 xmmsc_playback_statistics (xmmsc_connection_t *c)

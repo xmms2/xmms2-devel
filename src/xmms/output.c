@@ -382,6 +382,8 @@ xmms_output_new (xmms_plugin_t *plugin)
 				     XMMS_SIGNAL_OUTPUT_PLAYTIME);
 	xmms_dbus_register_onchange (XMMS_OBJECT (output),
 				     XMMS_SIGNAL_OUTPUT_STATUS);
+	xmms_dbus_register_onchange (XMMS_OBJECT (output),
+				     XMMS_SIGNAL_OUTPUT_CURRENTID);
 
 
 	xmms_object_method_add (XMMS_OBJECT (output), 
@@ -583,13 +585,24 @@ xmms_output_thread (gpointer data)
 		gint ret;
 
 		if (!output->decoder) {
-			output->decoder = xmms_playlist_next_start (output->playlist);
+			xmms_playlist_entry_t *entry;
+
+			entry = xmms_playlist_get_next_entry (output->playlist);
+
+			output->decoder = xmms_playlist_entry_start (entry);
+
 			if (!output->decoder) {
 				output->running = FALSE;
+				xmms_object_unref (entry);
 				continue;
 			}
-			output->playing_entry = xmms_decoder_playlist_entry_get (output->decoder);
-			xmms_object_ref (output->playing_entry);
+			output->playing_entry = entry;
+
+			xmms_object_emit_f (XMMS_OBJECT (output),
+					    XMMS_SIGNAL_OUTPUT_CURRENTID,
+					    XMMS_OBJECT_METHOD_ARG_UINT32,
+					    xmms_playlist_entry_id_get (entry));
+
 			output->played = 0;
 			xmms_decoder_start (output->decoder, NULL, output);
 		}
