@@ -21,6 +21,8 @@
   *
   */
 
+#include <stdlib.h>
+
 #include "xmms/xmms.h"
 #include "xmms/transport.h"
 #include "xmms/decoder.h"
@@ -152,6 +154,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
 			const gchar *mime;
+			guint lmod = 0;
 
 			xmms_error_reset (&err);
 
@@ -161,19 +164,34 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			/* Check if this is in the medialib first.*/
 			if (xmms_medialib_entry_get (entry)) {
-				xmms_playlist_entry_changed (mtt->playlist, entry);
-				goto cont;
-			}
+				const gchar *tmp;
 
-			XMMS_DBG ("Entry is : %s", xmms_playlist_entry_url_get (entry));
+				xmms_playlist_entry_changed (mtt->playlist, entry);
+
+				tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD);
+				if (tmp) {
+					lmod = atoi (tmp);
+				}
+			}
 
 			transport = xmms_transport_new ();
 			if (!transport || !xmms_transport_open (transport, entry)) {
 				goto cont;
 			}
 
-			if (!xmms_transport_islocal (transport))
+			if (!xmms_transport_islocal (transport)) {
+				xmms_object_unref (transport);
 				goto cont;
+			}
+
+			if (lmod) {
+				const gchar *tmp;
+				tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD);
+				if (tmp && lmod >= atoi (tmp)) {
+					xmms_object_unref (transport);
+					goto cont;
+				}
+			}
 
 			mime = xmms_transport_mimetype_get (transport);
 

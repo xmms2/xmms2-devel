@@ -281,13 +281,14 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 
 	id = xmms_medialib_next_id (medialib);
 	ret = xmms_sqlite_query (NULL, NULL,
-				 "insert into Media values (%d, '%q', '%q', '%q', '%q', '%q', '%q')",
+				 "insert into Media values (%d, '%q', '%q', '%q', '%q', '%q', '%q', %d)",
 				 id, xmms_playlist_entry_url_get (entry),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD));
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD),
+				 time (NULL));
 
 	if (!ret) {
 		return FALSE;
