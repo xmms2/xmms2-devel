@@ -11,6 +11,7 @@ env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsipc", "xmmsutil"],
 
 #env.AddFlagsFromGroup("dbus")
 env.AddFlagsFromGroup("glib")
+env.AddFlagsFromGroup("glib-thread")
 
 if env.HasGroup ("ecore") :
 	xmmsc_sources.append("ipc_ecore.c")
