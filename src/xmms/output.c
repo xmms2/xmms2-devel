@@ -79,6 +79,7 @@ struct xmms_output_St {
 
 	GMutex *mutex;
 	GCond *cond;
+	GCond *fill_cond;
 	GThread *thread;
 	gboolean running;
 
@@ -93,12 +94,6 @@ struct xmms_output_St {
 	gpointer plugin_data;
 
 	xmms_output_type_t type;
-
-	/** The ringbuffer is used for FILL type
-	  * of plugins. Otherwise it uses the 
-	  * decoders ringbuffers all the way.
-	  */
-	xmms_ringbuf_t *fillbuffer;
 
 	xmms_playlist_t *playlist;
 
@@ -334,6 +329,7 @@ xmms_output_destroy (xmms_object_t *object)
 
 	g_mutex_free (output->mutex);
 	g_cond_free (output->cond);
+	g_cond_free (output->fill_cond);
 }
 
 xmms_output_t *
@@ -351,6 +347,7 @@ xmms_output_new (xmms_plugin_t *plugin)
 	output->plugin = plugin;
 	output->mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
+	output->fill_cond = g_cond_new ();
 
 	output->samplerate = 44100;
 	output->bytes_written = 0;
@@ -366,7 +363,6 @@ xmms_output_new (xmms_plugin_t *plugin)
 	wr = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
 	if (!wr) {
 		output->type = XMMS_OUTPUT_TYPE_FILL;
-		output->fillbuffer = xmms_ringbuf_new (XMMS_OUTPUT_DEFAULT_BUFFERSIZE);
 	} else {
 		output->type = XMMS_OUTPUT_TYPE_WR;
 	}
@@ -524,6 +520,9 @@ xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 	if (output->decoder) {
 		XMMS_DBG ("pause!");
 		output->is_paused = TRUE;
+		if (output->type == XMMS_OUTPUT_TYPE_FILL) {
+			g_cond_signal (output->fill_cond);
+		}
 	}
 	xmms_output_unlock (output);
 }
@@ -612,13 +611,12 @@ xmms_output_thread (gpointer data)
 			XMMS_OUTPUT_STATUS_EMIT (output->status);
 		}
 
-		ret = xmms_decoder_read (output->decoder, buffer, 4096);
 
 		if (output->type == XMMS_OUTPUT_TYPE_FILL) {
-			if (ret > 0) {
-				xmms_ringbuf_wait_free (output->fillbuffer, ret, output->mutex);
-				xmms_ringbuf_write (output->fillbuffer, buffer, ret);
-			}
+			XMMS_DBG ("Waiting...");
+			g_cond_wait (output->fill_cond, output->mutex);
+		} else {
+			ret = xmms_decoder_read (output->decoder, buffer, 4096);
 		}
 
 		if (ret > 0 && output->type == XMMS_OUTPUT_TYPE_WR) {
@@ -758,8 +756,13 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 	xmms_output_lock (output);
 	
-	ret = xmms_ringbuf_read (output->fillbuffer, buffer, len);
-
+	if (!output->decoder) {
+		xmms_output_unlock (output);
+		return 0;
+	}
+	
+	ret = xmms_decoder_read (output->decoder, buffer, len);
+	
 	if (ret > 0) {
 	
 		output->played += ret;
@@ -782,6 +785,8 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (output->played_time));
 		xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_PLAYTIME, arg);
 		g_free (arg);
+	} else if (xmms_decoder_iseos (output->decoder)) {
+		g_cond_signal (output->fill_cond);
 	}
 
 	if (ret < len) {
