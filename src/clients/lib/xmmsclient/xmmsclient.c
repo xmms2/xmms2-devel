@@ -277,6 +277,7 @@ void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_destroy (c->ipc);
+	free (c->clientname);
 	free(c);
 }
 
@@ -588,6 +589,7 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 
 	cid = xmmsc_next_id ();
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
+	xmms_ipc_msg_destroy (msg);
 
 	return xmmsc_result_new (c, cid);
 }
