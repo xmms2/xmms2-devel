@@ -3,6 +3,18 @@ import SCons
 import os;
 import sys;
 import time
+import shutil
+from stat import *
+
+def installFunc(dest, source, env):
+	"""Copy file, setting sane permissions"""
+	shutil.copy(source, dest)
+	st = os.stat(source)
+	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+	if st[ST_MODE] & S_IXUSR:
+		mode |= S_IXUSR | S_IXGRP | S_IXOTH
+	os.chmod(dest, mode)
+	return 0
 
 class XmmsEnvironment(SCons.Environment.Environment):
 	pass
@@ -26,6 +38,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.flag_groups = {}
 		self.optional_config = {}
 		apply(self.Replace, (), kw)
+		self['INSTALL'] = installFunc
 		self.plugins = []
 		self.install_prefix=self['PREFIX']
 		self.pluginpath=self.install_prefix + "/lib/xmms/"
