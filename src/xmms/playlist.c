@@ -56,13 +56,10 @@
 
 /* Internal macro to emit XMMS_SIGNAL_PLAYLIST_CHANGED */
 #define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) do { \
-	xmms_object_method_arg_t *arg; \
 	xmms_playlist_changed_msg_t *chmsg; \
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
 	chmsg->type = ttype; chmsg->id=iid; chmsg->arg=argument; \
-	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_PLCH, chmsg); \
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, arg);\
-	g_free (arg);\
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, XMMS_OBJECT_METHOD_ARG_PLCH, chmsg);\
 } while (0)
 
 
@@ -529,7 +526,6 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 xmms_decoder_t *
 xmms_playlist_next_start (xmms_playlist_t *playlist)
 {
-	xmms_object_method_arg_t *arg;
 	xmms_playlist_entry_t *entry;
 	xmms_transport_t *t;
 	xmms_decoder_t *d;
@@ -599,13 +595,12 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 
 	xmms_medialib_log_entry_start (playlist->medialib, entry);
 
-	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
-				   GUINT_TO_POINTER (xmms_playlist_entry_id_get (entry)));
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CURRENTID, arg);
-	g_free (arg);
+	xmms_object_emit_f (XMMS_OBJECT (playlist),
+			    XMMS_SIGNAL_PLAYLIST_CURRENTID,
+			    XMMS_OBJECT_METHOD_ARG_UINT32,
+			    xmms_playlist_entry_id_get (entry));
 
 	return d;
-	
 	
 }
 

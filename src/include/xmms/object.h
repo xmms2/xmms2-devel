@@ -81,10 +81,6 @@ typedef struct {
 
 typedef void (*xmms_object_method_func_t) (xmms_object_t *object, xmms_object_method_arg_t *arg);
 
-xmms_object_method_arg_t *xmms_object_arg_new (xmms_object_method_arg_type_t type, 
-					       gpointer val);
-
-
 #define XMMS_OBJECT(p) ((xmms_object_t *)p)
 #define XMMS_IS_OBJECT(p) (XMMS_OBJECT (p)->id == XMMS_OBJECT_MID)
 
@@ -99,6 +95,9 @@ void xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 
 void xmms_object_emit (xmms_object_t *object, const gchar *signal,
 					   gconstpointer data);
+
+void xmms_object_emit_f (xmms_object_t *object, const gchar *signal,
+						 xmms_object_method_arg_type_t type, ...);
 
 
 void xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_func_t func);

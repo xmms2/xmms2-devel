@@ -23,6 +23,8 @@
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
 
+#include <stdarg.h>
+
 /** @defgroup Object Object
   * @ingroup XMMSServer
   * @{
@@ -32,46 +34,6 @@ typedef struct {
 	xmms_object_handler_t handler;
 	gpointer userdata;
 } xmms_object_handler_entry_t;
-
-xmms_object_method_arg_t *
-xmms_object_arg_new (xmms_object_method_arg_type_t type,
-		     gpointer val)
-{
-	xmms_object_method_arg_t *ret;
-
-	ret = g_new0 (xmms_object_method_arg_t, 1);
-	switch (type) {
-		case XMMS_OBJECT_METHOD_ARG_UINT32:
-			ret->retval.uint32 = GPOINTER_TO_UINT (val);
-			break;
-		case XMMS_OBJECT_METHOD_ARG_INT32:
-			ret->retval.int32 = GPOINTER_TO_INT (val);
-			break;
-		case XMMS_OBJECT_METHOD_ARG_STRING:
-			ret->retval.string = (gchar*) val;
-			break;
-		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
-			ret->retval.playlist_entry = (xmms_playlist_entry_t *)val;
-			break;
-		case XMMS_OBJECT_METHOD_ARG_UINTLIST:
-			ret->retval.uintlist = (GList*)val;
-			break;
-		case XMMS_OBJECT_METHOD_ARG_INTLIST:
-			ret->retval.intlist = (GList*)val;
-			break;
-		case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
-			ret->retval.stringlist = (GList*)val;
-			break;
-		case XMMS_OBJECT_METHOD_ARG_PLCH:
-			ret->retval.plch = (xmms_playlist_changed_msg_t *)val;
-			break;
-		case XMMS_OBJECT_METHOD_ARG_NONE:
-			break;
-	}
-	ret->rettype = type;
-
-	return ret;
-}
 
 void
 xmms_object_parent_set (xmms_object_t *object, xmms_object_t *parent)
@@ -225,6 +187,51 @@ xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data
 	g_list_free (list2);
 
 }
+
+void
+xmms_object_emit_f (xmms_object_t *object, const gchar *signal,
+		    xmms_object_method_arg_type_t type, ...)
+{
+	va_list ap;
+	xmms_object_method_arg_t arg;
+
+	va_start(ap, type);
+
+	switch (type) {
+		case XMMS_OBJECT_METHOD_ARG_UINT32:
+			arg.retval.uint32 = va_arg (ap, guint32);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_INT32:
+			arg.retval.int32 = va_arg (ap, gint32);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_STRING:
+			arg.retval.string = va_arg (ap, gchar *);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
+			arg.retval.playlist_entry = (xmms_playlist_entry_t *) va_arg (ap, gpointer);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_UINTLIST:
+			arg.retval.uintlist = (GList*) va_arg (ap, gpointer);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_INTLIST:
+			arg.retval.intlist = (GList*) va_arg (ap, gpointer);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
+			arg.retval.stringlist = (GList*) va_arg (ap, gpointer);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_PLCH:
+			arg.retval.plch = (xmms_playlist_changed_msg_t *) va_arg (ap, gpointer);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_NONE:
+			break;
+	}
+	arg.rettype = type;
+	va_end(ap);
+
+	xmms_object_emit (object, signal, &arg);
+
+}
+
 
 void
 xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_func_t func)
