@@ -29,7 +29,7 @@ typedef struct xmms_mad_data_St {
 
 static gboolean xmms_mad_can_handle (const gchar *mimetype);
 static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
-static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport);
+static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 
 /*
  * Plugin header
@@ -83,9 +83,11 @@ xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
-xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport)
+xmms_mad_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
+	xmms_transport_t *transport;
+	xmms_output_t *output;
 	gchar out[1152 * 4];
 	mad_fixed_t *ch1, *ch2;
 	mad_fixed_t clipping;
@@ -101,19 +103,27 @@ xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	} else {
 		data->buffer_length = 0;
 	}
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+	
+	output = xmms_decoder_output_get (decoder);
+	g_return_val_if_fail (output, FALSE);
 	
 	ret = xmms_transport_read (transport, data->buffer + data->buffer_length,
-						 4096 - data->buffer_length);
-	if (ret > 0)
-		data->buffer_length += ret;
+							   4096 - data->buffer_length);
+	if (ret <= 0)
+		return FALSE;
+	
+	data->buffer_length += ret;
 	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
 		
 	for (;;) {
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
-			if (!MAD_RECOVERABLE (data->stream.error))
-				break;
-			
-			g_warning ("Error %d in frame", data->stream.error);
+			if (!MAD_RECOVERABLE (data->stream.error)) {
+				g_warning ("Non-recoverable error %u in frame", data->stream.error);
+				return FALSE;
+			}
 		}
 		
 		mad_synth_frame (&data->synth, &data->frame);
@@ -122,7 +132,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport)
 		ch2 = data->synth.pcm.samples[1];
 		
 		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
-		xmms_output_write (decoder->output, out, sizeof(out));
+		xmms_output_write (output, out, sizeof(out));
 	}
 	
 	return TRUE;

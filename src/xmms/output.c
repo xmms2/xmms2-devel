@@ -3,24 +3,53 @@
 #include "ringbuf.h"
 #include "util.h"
 
+
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
 
 static gpointer xmms_output_thread (gpointer data);
 
+/*
+ * Public functions
+ */
+
 gpointer
 xmms_output_plugin_data_get (xmms_output_t *output)
 {
+	gpointer ret;
 	g_return_val_if_fail (output, NULL);
 
-	return output->plugin_data;
+	xmms_output_lock (output);
+	ret = output->plugin_data;
+	xmms_output_unlock (output);
+
+	return ret;
 }
 
 void
 xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
 {
+	xmms_output_lock (output);
 	output->plugin_data = data;
+	xmms_output_unlock (output);
 }
+
+void
+xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
+{
+	g_return_if_fail (output);
+	g_return_if_fail (buffer);
+
+	xmms_output_lock (output);
+	xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
+	xmms_ringbuf_write (output->buffer, buffer, len);
+	xmms_output_unlock (output);
+
+}
+
+/*
+ * Private functions
+ */
 
 xmms_output_t *
 xmms_output_open (xmms_plugin_t *plugin)
@@ -36,6 +65,7 @@ xmms_output_open (xmms_plugin_t *plugin)
 	xmms_object_init (XMMS_OBJECT (output));
 	output->plugin = plugin;
 	output->mutex = g_mutex_new ();
+	output->cond = g_cond_new ();
 	output->buffer = xmms_ringbuf_new (32768);
 	
 	open_method = xmms_plugin_method_get (plugin, "open");
@@ -82,32 +112,14 @@ xmms_output_start (xmms_output_t *output)
 }
 
 void
-xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
+xmms_output_set_eos (xmms_output_t *output, gboolean eos)
 {
 	g_return_if_fail (output);
-	g_return_if_fail (buffer);
 
-	xmms_output_lock (output);
-	xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
-	xmms_ringbuf_write (output->buffer, buffer, len);
-	xmms_output_unlock (output);
+	xmms_ringbuf_set_eos (output->buffer, eos);
 
-}
-
-gint
-xmms_output_read (xmms_output_t *output, gchar *buffer, gint len)
-{
-	gint ret;
-
-	g_return_val_if_fail (output, -1);
-	g_return_val_if_fail (buffer, -1);
-
-	xmms_output_lock (output);
-	xmms_ringbuf_wait_used (output->buffer, len, output->mutex);
-	ret = xmms_ringbuf_read (output->buffer, buffer, len);
-	xmms_output_unlock (output);
-
-	return ret;
+	if (!eos)
+		g_cond_signal (output->cond);
 }
 
 static gpointer
@@ -123,22 +135,26 @@ xmms_output_thread (gpointer data)
 	write_method = xmms_plugin_method_get (output->plugin, "write");
 	g_return_val_if_fail (write_method, NULL);
 
+	xmms_output_lock (output);
 	while (output->running) {
 		gchar buffer[4096];
 		gint ret;
 
-		ret = xmms_output_read (output, buffer, 4096);
+		xmms_ringbuf_wait_used (output->buffer, 4096, output->mutex);
+		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
 		
 		if (ret > 0) {
-		/*	xmms_ringbuf_wait_free (output->buffer, ret, output->mutex);*/
+			xmms_output_unlock (output);
 			write_method (output, buffer, ret);
-		} else {
-			XMMS_DBG ("Not good?!");
+			xmms_output_lock (output);
+		} else if (xmms_ringbuf_eos (output->buffer)) {
+			xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
+			g_cond_wait (output->cond, output->mutex);
 		}
-
-
 	}
+	xmms_output_unlock (output);
 
-	return NULL;
+	/* FIXME: Cleanup */
 	
+	return NULL;
 }
