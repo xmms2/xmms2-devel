@@ -82,6 +82,7 @@ struct xmms_playlist_St {
 	gboolean is_waiting;
 
 	xmms_mediainfo_thread_t *mediainfothr;
+	xmms_playlist_entry_t *playing_entry;
 
 };
 
@@ -427,6 +428,12 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
+	if (playlist->playing_entry && xmms_playlist_entry_id_get (playlist->playing_entry) == id) {
+		xmms_object_ref (playlist->playing_entry);
+		XMMS_PLAYLIST_UNLOCK (playlist);
+		return playlist->playing_entry;
+	}
+
 	r = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -468,8 +475,6 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 	playlist->nextentry = NULL;
 	g_hash_table_destroy (playlist->id_table);
 	playlist->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
-
-	playlist->currententry = NULL;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
@@ -522,6 +527,7 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 xmms_decoder_t *
 xmms_playlist_next_start (xmms_playlist_t *playlist)
 {
+	xmms_object_method_arg_t *arg;
 	xmms_playlist_entry_t *entry;
 	xmms_transport_t *t;
 	xmms_decoder_t *d;
@@ -581,14 +587,12 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 		return NULL;
 	}
 
-	{
-		xmms_object_method_arg_t *arg;
-		arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
-					   GUINT_TO_POINTER (xmms_playlist_entry_id_get (entry)));
-		xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CURRENTID, arg);
-		g_free (arg);
-	}
+	playlist->playing_entry = entry;
 
+	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
+				   GUINT_TO_POINTER (xmms_playlist_entry_id_get (entry)));
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CURRENTID, arg);
+	g_free (arg);
 
 	return d;
 	
@@ -832,7 +836,9 @@ xmms_playlist_current_id (xmms_playlist_t *playlist, xmms_error_t *err)
 	g_return_val_if_fail (playlist, 0);
 
 	XMMS_PLAYLIST_LOCK (playlist);
-	if (playlist->nextentry) {
+	if (playlist->playing_entry) {
+		id = xmms_playlist_entry_id_get (playlist->playing_entry);
+	} else if (playlist->nextentry) {
 		id = xmms_playlist_entry_id_get (playlist->nextentry->data);
 	} else if (playlist->currententry) {
 		id = xmms_playlist_entry_id_get (playlist->currententry->data);
