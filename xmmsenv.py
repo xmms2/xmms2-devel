@@ -15,11 +15,15 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.libpath=self.install_prefix + "/lib/"
 		self.sysconfdir=self['SYSCONFDIR']
 		self.installdir=self['INSTALLDIR']
+		self.mandir=self['MANDIR']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
 
 	def XmmsConfig(self,source):
 		self.Install(self.installdir+self.sysconfdir, source)
+
+	def XmmsManual(self,source):
+		self.Install(self.installdir+self.mandir, source)
 
 	def XmmsPlugin(self,target,source):
 		self.SharedLibrary(target, source)
@@ -95,6 +99,13 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		    		else:
 					print 'garbage in flags: ' + arg
 					sys.xit(1)
+			elif switch == '/':
+				if arg[-3:] == '.la':
+# Ok, this is a libtool file, someday maybe we should parse it.
+# Hate this shit. This is the reason we switch from autobajs.
+# Please do the same!
+					print "I have found some autobajs in " + arg + ". I'm just guessing here."
+					self.Append( LINKFLAGS = [ arg[:-3] + '.a' ] )
 			else:
 				print 'garbage error: ' + arg
 

@@ -181,7 +181,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "started!\n");
 
 		dbus_error_init (&err);
-		conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
+		conn = dbus_connection_open (dbuspath, &err);
 		if (!conn) {
 			c->error = "Couldn't connect to xmms2d even tough I started it... Bad, very bad.";
 			return FALSE;
@@ -646,6 +646,74 @@ xmmsc_playlist_entry_free (GHashTable *entry)
 	g_hash_table_foreach_remove (entry, free_str, NULL);
 
 	g_hash_table_destroy (entry);
+}
+
+static void
+send_mode (xmmsc_connection_t *c, guint m)
+{
+	DBusMessage *msg;
+	DBusMessageIter itr;
+	DBusError err;
+	guint cserial;
+
+	dbus_error_init (&err);
+
+	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MODE_SET, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_uint32 (&itr, m);
+	dbus_connection_send (c->conn, msg, &cserial);
+
+	dbus_message_unref (msg);
+	dbus_connection_flush (c->conn);
+}
+
+
+/**
+ * @todo fix the integers here, this will b0rk b0rk if we
+ * change the enum in core.
+ */
+
+/**
+ * Sets the current playlist to mode none, or normal.
+ */
+
+void
+xmmsc_playlist_mode_set_none (xmmsc_connection_t *c)
+{
+	send_mode (c, 0);
+}
+
+/**
+ * Sets the current playlist to mode repeat all.
+ * This makes the playlist loop after it's finished.
+ */
+
+void
+xmmsc_playlist_mode_set_repeatall (xmmsc_connection_t *c)
+{
+	send_mode (c, 1);
+}
+
+/**
+ * Sets the current playlist to mode repeat one.
+ * This makes the same song to play over and over again.
+ */
+
+void
+xmmsc_playlist_mode_set_repeatone (xmmsc_connection_t *c)
+{
+	send_mode (c, 2);
+}
+
+/**
+ * Sets the current playlist to mode stop.
+ * This will stop playback after the current song.
+ */
+
+void
+xmmsc_playlist_mode_set_stop (xmmsc_connection_t *c)
+{
+	send_mode (c, 3);
 }
 
 /** @} */

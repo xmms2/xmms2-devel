@@ -4,9 +4,11 @@
 
 package=xmms2
 
+SCONSFLAGS=MANDIR=/usr/share/man/man1 PREFIX=/usr SYSCONFDIR=/etc/xmms CFLAGS="-O2 -Wall -g"
+
 build:
 	$(checkdir)
-	scons PREFIX=/usr SYSCONFDIR=/etc/xmms
+	scons $(SCONSFLAGS)
 	touch build
 
 clean:
@@ -27,13 +29,13 @@ binary-arch: checkroot build
 	rm -rf debian/tmp
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
-	scons PREFIX=/usr SYSCONFDIR=/etc/xmms INSTALLDIR="`pwd`/debian/tmp/"
+	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/"
 	rm -f debian/tmp/usr/lib/xmms/*.la
 	rm -f debian/tmp/usr/lib/xmms/*.a
 	find debian/tmp -name '.sconsign' |xargs rm
 # Must have debmake installed for this to work. Otherwise please copy
 # /usr/bin/debstd into the debian directory and change debstd to debian/debstd
-	debstd -u ChangeLog NEWS README 
+	debstd -m -u ChangeLog NEWS README 
 	dh_installdebconf
 #	dh_gencontrol
 	dpkg-gencontrol -isp -pxmms2-core

@@ -180,6 +180,7 @@ xmms_core_playback_stop ()
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
+		core->playlist_op = XMMS_CORE_HOLD_SONG;
 		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STOP, NULL);
 		core->flush = TRUE;
 		wake_core ();
@@ -187,6 +188,19 @@ xmms_core_playback_stop ()
 		XMMS_DBG ("xmms_core_playback_stop with status != XMMS_CORE_PLAYBACK_RUNNING");
 	}
 }
+
+void
+xmms_core_playlist_mode_set (xmms_playlist_mode_t mode)
+{
+	xmms_playlist_mode_set (core->playlist, mode);
+}
+
+xmms_playlist_mode_t
+xmms_core_playlist_mode_get ()
+{
+	return (xmms_playlist_mode_get (core->playlist));
+}
+
 
 void
 xmms_core_playlist_save (gchar *filename)

@@ -23,6 +23,7 @@ PLUGINS:
 
 	* Transport
 		* API support listing. - 1.9.4
+		* be able to set buffersizes based on path/fstype.
 
 	* Transport Plugins
 		* SMB

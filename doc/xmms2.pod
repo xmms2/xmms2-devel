@@ -1,0 +1,93 @@
+=pod
+
+=head1 NAME
+
+XMMS2 CLI program.
+
+=head1 SYNOPSIS
+
+B<xmms2>
+I<command>
+[ I<command_args> ]
+
+B<xmms2>
+
+=head1 DESCRIPTION
+
+XMMS2 CLI is a small program to control the B<xmms2d>. This program is
+designed to be able to do everything a GUI for XMMS should be able to do.
+
+=head1 COMMANDS
+
+=over 4
+
+=item B<play>
+
+Start playback of current playlist.
+
+=item B<stop>
+
+Stop playback.
+
+=item B<add> I<file>
+
+Appends I<file> to playlist.
+
+=item B<list>
+
+Lists current playlist. The first field in output is the I<id> refered to by
+all playlist commands below.
+
+=item B<remove> I<id>
+
+Removes I<id> from playlist.
+
+=item B<jump> I<id>
+
+Jumps to I<id> in the playlist. This file will be played.
+
+=item B<next>
+
+Skip to next entry in the playlist.
+
+=item B<prev>
+
+Skips to previous entry in the playlist.
+
+=item B<shuffle>
+
+Shuffles the order of the playlist.
+
+=item B<clear>
+
+Clears the playlist.
+
+=item B<sort> I<property>
+
+Sorts the playlist alphabeticly with I<property>. Property here can be
+artist, album, genre, bitrate, title or duration.
+
+=item B<mode> I<none> | I<all> | I<one> | I<stop>
+
+Sets playlist mode to either repeat I<all>, repeat I<one>, I<stop> after
+current entry or I<none>.
+
+=item B<seek> I<seconds>
+
+Seeks I<seconds> in current playback.
+
+=item B<volume> I<0-100>
+
+Sets volume.
+
+=item B<config> I<key> I<value>
+
+Sets config I<key> to I<value>
+
+=item B<savelist> I<file>
+
+Saves current playlist to I<file> on the serverside.
+
+=back
+
+=cut

@@ -20,10 +20,13 @@ Clean up the builddir by running:
 ##
 opts = Options(None, ARGUMENTS)
 opts.Add('CC', 'C compiler to use', 'gcc')
-opts.Add('CCFLAGS', 'compilerflags', '-g -Wall -O0')
+opts.Add('CXX', 'C++ compiler to use', 'g++')
+opts.Add('CXXFLAGS', 'C++ compilerflags', '-g -Wall -O0')
+opts.Add('CCFLAGS', 'C compilerflags', '-g -Wall -O0')
 opts.Add('PREFIX', 'installprefix', '/usr/local')
 opts.Add('SYSCONFDIR', 'system configuration dir', '/usr/local/etc')
 opts.Add('INSTALLDIR', 'runtime install dir', '')
+opts.Add('MANDIR', 'manual directory', '/usr/local/man')
 opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
 opts.Add('NOCACHE', 'do not use cache', 0)
 
@@ -58,4 +61,6 @@ Export('base_env')
 SConscript('src/xmms/SConscript',build_dir='builddir/xmms',duplicate=0)
 SConscript('src/clients/SConscript',build_dir='builddir/clients',duplicate=0)
 SConscript('src/plugins/SConscript',build_dir='builddir/plugins', duplicate=0)
+
+base_env.XmmsManual('doc/xmms2.1')
 

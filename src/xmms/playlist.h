@@ -27,6 +27,13 @@ typedef enum {
 	XMMS_PLAYLIST_CHANGED_SORT
 } xmms_playlist_changed_actions_t;
 
+typedef enum {
+	XMMS_PLAYLIST_MODE_NONE = 0,
+	XMMS_PLAYLIST_MODE_REPEAT_ALL = 1,
+	XMMS_PLAYLIST_MODE_REPEAT_ONE = 2,
+	XMMS_PLAYLIST_MODE_STOP = 3,
+} xmms_playlist_mode_t;
+
 
 /*
  * Private defintions
@@ -68,6 +75,8 @@ void xmms_playlist_clear (xmms_playlist_t *playlist);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id);
 
 xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
+xmms_playlist_mode_t xmms_playlist_mode_get (xmms_playlist_t *playlist);
+void xmms_playlist_mode_set (xmms_playlist_t *playlist, xmms_playlist_mode_t mode);
 
 /*
  * Entry modifications
