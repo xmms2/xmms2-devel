@@ -192,12 +192,14 @@ xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 		return rate;
 	}
 
-	if (rate != output->samplerate) {
+	/** @todo fix this later? if device has been relesed in between
+	 *  we can't just skip running this. */
+/*	if (rate != output->samplerate) {*/
 		xmms_output_samplerate_set_method_t samplerate_method;
 		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
 		output->samplerate = samplerate_method (output, rate);
 		XMMS_DBG ("samplerate set to: %d", output->samplerate);
-	}
+/*	}*/
 	return output->samplerate;
 }
 
