@@ -560,6 +560,8 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
  *  returned by xmms_playlist_get_next. This function
  *  will also wake xmms_playlist_wait
  */
+
+XMMS_METHOD_DEFINE (jump, xmms_playlist_set_current_position, xmms_playlist_t *, NONE, UINT32, NONE);
   
 gboolean
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
@@ -702,6 +704,7 @@ xmms_playlist_init ()
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_LIST, XMMS_METHOD_FUNC (list));
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_CLEAR, XMMS_METHOD_FUNC (clear));
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SORT, XMMS_METHOD_FUNC (sort));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_JUMP, XMMS_METHOD_FUNC (jump));
 
 	return ret;
 }
