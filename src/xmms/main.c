@@ -10,6 +10,7 @@
 #include "config.h"
 #include "config_xmms.h"
 #include "playlist.h"
+#include "unixsignal.h"
 #include "util.h"
 
 #include <stdlib.h>
@@ -23,6 +24,9 @@
 static xmms_playlist_t *playlist;
 static xmms_output_t *output;
 static xmms_decoder_t *m_decoder;
+static GMainLoop *mainloop;
+
+
 
 void play_next (void);
 
@@ -172,6 +176,7 @@ main (int argc, char **argv)
 	sigaddset (&signals, SIGINT);
 	sigaddset (&signals, SIGSEGV);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
+
 	
 	if (argc < 2)
 		exit (1);
@@ -245,27 +250,14 @@ main (int argc, char **argv)
 	xmms_object_connect (XMMS_OBJECT (output), "eos-reached", eos_reached, NULL);
 
 	xmms_output_start (output);
+
 	play_next ();
 
-	while (42) {
-		int caught;
+	xmms_signal_init (XMMS_OBJECT (output));
 
-		memset (&signals, 0, sizeof (sigset_t));
-		sigaddset (&signals, SIGINT);
+	mainloop = g_main_loop_new (NULL, FALSE);
 
-		sigwait (&signals, &caught);
-
-		switch (caught) {
-			case SIGINT:
-				xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
-				break;
-			case SIGHUP:
-			case SIGTERM:
-				exit (1);
-				
-		}
-	}
-				
+        g_main_loop_run (mainloop);
 
 	return 0;
 }
