@@ -1,5 +1,7 @@
 import SCons
 import xmmsenv
+import distutils
+import distutils.sysconfig
 from marshal import dump, load;
 
 import os;
@@ -57,11 +59,7 @@ def checkFlags(base_env):
 	else :
 		print "PyREX not found, no cookie for you!"
 
-	base_env.CheckLibAndAddFlagsToGroup("python", "python", "PyList_New", depends="pyrex")
-	if not base_env.HasGroup ("python") :
-		base_env.CheckLibAndAddFlagsToGroup("python", "python2.3", "PyList_New", depends="pyrex")
-	if not base_env.HasGroup ("python") :
-		base_env.CheckLibAndAddFlagsToGroup("python", "python2.2", "PyList_New", depends="pyrex")
+	base_env.AddFlagsToGroup ("python", "-I"+distutils.sysconfig.get_python_inc ())
 
 	##
 	## Write cache

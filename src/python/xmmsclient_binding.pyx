@@ -31,7 +31,8 @@ cdef extern from "xmms/xmmsclient-result.h" :
 	void xmmsc_result_unref (xmmsc_result_t *res)
 	void xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, object user_data)
 	void xmmsc_result_wait (xmmsc_result_t *res)
-	int xmmsc_result_iserror (xmmsc_result_t *res)
+	signed int xmmsc_result_iserror (xmmsc_result_t *res)
+	signed char *xmmsc_result_get_error (xmmsc_result_t *res)
 
 	signed int xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 	signed int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
@@ -70,7 +71,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, signed char *)
 	xmmsc_result_t *xmmsc_playlist_entry_changed (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_changed (xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
+	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, signed int moment)
 
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_setup_with_gmain (xmmsc_connection_t *connection, GMainContext *context)
@@ -219,6 +220,12 @@ cdef class XMMSResult :
 		
 		return r
 
+	def iserror (self) :
+		return xmmsc_result_iserror (self.res)
+
+	def error (self) :
+		return xmmsc_result_get_error (self.res)
+
 	def __dealloc__ (self) :
 		if self.res :
 			xmmsc_result_unref (self.res)
@@ -231,12 +238,16 @@ cdef class XMMS:
 
 	def connect (self, path) :
 
-		if path[0] == '/' :
-			cpath = "unix:path="+path
-		else :
-			cpath = path
+		if path :
+			if path[0] == '/' :
+				cpath = "unix:path="+path
+			else :
+				cpath = path
 
-		r =  xmmsc_connect (self.conn, cpath)
+			r = xmmsc_connect (self.conn, cpath)
+		else :
+			r = xmmsc_connect (self.conn, NULL)
+
 		if r == 0 :
 			raise IOError
 
@@ -288,6 +299,9 @@ cdef class XMMS:
 
 	def PlaylistList (self) :
 		return self._res (xmmsc_playlist_list (self.conn))
+
+	def PlaylistSetNext (self, type, moment) :
+		return self._res (xmmsc_playlist_set_next (self.conn, type, moment))
 
 	def PlaylistMediainfo (self, id) :
 		return self._res (xmmsc_playlist_get_mediainfo (self.conn, id))

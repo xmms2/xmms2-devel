@@ -25,6 +25,7 @@ Clean up the builddir by running:
 ## Get options
 ##
 opts = Options(None, ARGUMENTS)
+opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
 opts.Add('CC', 'C compiler to use', 'gcc')
 opts.Add('CXX', 'C++ compiler to use', 'g++')
 opts.Add('LD', 'Linker to use', 'ld')

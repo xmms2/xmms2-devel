@@ -1,0 +1,13 @@
+Import('base_env')
+
+pyx = Builder(action = "(" + base_env["PYREX"] + ' $SOURCE' + " || true)")
+env = base_env.Copy (CPPPATH = ['#src', '#src/include'],
+	LIBPATH = ["../lib/xmmsclient/", "../lib/xmmsclient-glib" ],
+	LIBS = ["xmmsclient", "xmmsclient-glib"])
+
+env.Append(BUILDERS = {'Pyx' : pyx})
+
+env.AddFlagsFromGroup ("glib")
+env.AddFlagsFromGroup ("python")
+env.Pyx ("xmmsclient_binding.c", ["xmmsclient_binding.pyx"])
+env.XmmsPython ("xmmsclient_binding", ["xmmsclient_binding.c"])
