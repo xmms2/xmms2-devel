@@ -15,15 +15,18 @@
  */
 
 
+#ifndef __XMMS_ERROR_XMMS_H__
+#define __XMMS_ERROR_XMMS_H__
 
-
-#ifndef __XMMS_DBUS_H__
-#define __XMMS_DBUS_H__
-
-#include "xmms/core.h"
-
-gboolean xmms_dbus_init (xmms_core_t *core, const gchar *path);
-void xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object);
-void xmms_dbus_register_onchange (xmms_object_t *object, gchar *signal);
+typedef enum {
+	XMMS_ERROR_NONE=0,
+	XMMS_ERROR_GENERIC,
+	XMMS_ERROR_OOM,
+	XMMS_ERROR_PERMISSION,
+	XMMS_ERROR_NOENT,
+	XMMS_ERROR_INVAL,
+	XMMS_ERROR_NO_SAUSAGE,
+	XMMS_ERROR_COUNT /* must be last */
+} xmms_error_code_t;
 
 #endif

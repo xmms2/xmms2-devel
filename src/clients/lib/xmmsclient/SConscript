@@ -4,7 +4,7 @@ Import('base_env')
 
 xmmsc_sources = Split ("xmmsclient.c xmmswatch.c "
 		       "playlist.c playback.c other.c "
-		       "xlist.c xhash.c")
+		       "xlist.c xhash.c result.c")
 
 env = base_env.Copy()
 

@@ -25,6 +25,7 @@
 
 typedef struct xmms_plugin_St xmms_plugin_t;
 
+#include "xmms/object.h"
 #include "xmms/config.h"
 
 /* 

@@ -78,23 +78,25 @@ watch_callback (xmmsc_connection_t *conn,
 			break;
 		case XMMSC_TIMEOUT_ADD:
 			{
-				GSource *s;
+				GSource *s = NULL;
 				xmmsc_timeout_t *timeout = data;
 				
 				s = g_timeout_source_new (timeout->interval);
 				g_source_set_callback (s, timeout->cb, timeout, NULL);
 				g_source_attach (s, x_source->context);
-				timeout->data = GUINT_TO_POINTER (g_source_get_id (s));
+				timeout->data = s;
 			}
 			break;
 		case XMMSC_TIMEOUT_REMOVE:
 			{
 				guint id;
 				xmmsc_timeout_t *timeout = data;
+				GSource *s = timeout->data;
+				id = g_source_get_id (s);
 				
-				id = GPOINTER_TO_UINT (timeout->data);
-				if (id != 0)
-					g_source_remove (id);
+				if (id != 0) {
+					g_source_destroy (s);
+				}
 			}
 			break;
 		case XMMSC_WATCH_WAKEUP:

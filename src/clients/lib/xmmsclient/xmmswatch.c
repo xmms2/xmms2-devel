@@ -133,10 +133,8 @@ watch_toggled (DBusWatch *watch,
 
 /* Timeout functions */
 static void
-timeout_free (xmmsc_timeout_t *time)
+timeout_free (xmmsc_connection_t *conn)
 {
-	if (time)
-		free (time);
 }
 
 static int
@@ -163,11 +161,11 @@ timeout_add (DBusTimeout *timeout,
 	time->interval = dbus_timeout_get_interval (timeout);
 	time->cb = timeout_handler;
 
-	dbus_timeout_set_data (timeout, time, (DBusFreeFunction)timeout_free);
+	dbus_timeout_set_data (timeout, time, NULL);
 
 	conn->watch_callback (conn, XMMSC_TIMEOUT_ADD, time);
 
-	return FALSE;
+	return TRUE;
 }
 
 static void
@@ -180,7 +178,7 @@ timeout_remove (DBusTimeout *timeout,
 	time = dbus_timeout_get_data (timeout);
 	if (!time)
 		return;
-
+	
 	conn->watch_callback (conn, XMMSC_TIMEOUT_REMOVE, time);
 
 	time->dbus_timeout = NULL;

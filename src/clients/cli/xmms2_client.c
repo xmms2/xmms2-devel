@@ -78,6 +78,7 @@ cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (i = 2; argv[i]; i++) {
 		char url[4096];
+		xmmsc_result_t *res;
 
 		if (!strchr (argv[i], ':')) {
 			/* OK, so this is NOT an valid URL */
@@ -96,37 +97,57 @@ cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 			g_snprintf (url, 4096, "%s", argv[i]);
 		}
 		
+		res = xmmsc_playlist_add (conn, xmmsc_encode_path (url));
+		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			printf ("something went wrong when adding it to the playlist\n");
+			exit (-1);
+		}
 		print_info ("Adding %s", url);
-		xmmsc_playlist_add (conn, xmmsc_encode_path (url));
+		xmmsc_result_unref (res);
 	}
 }
 
 static void
 cmd_clear (xmmsc_connection_t *conn, int argc, char **argv)
 {
+	xmmsc_result_t *res;
 
-	xmmsc_playback_stop (conn);
-	xmmsc_playlist_clear (conn);
+	res = xmmsc_playback_stop (conn);
+	xmmsc_result_unref (res);
+
+	res = xmmsc_playlist_clear (conn);
+	xmmsc_result_unref (res);
 
 }
 
 static void
 cmd_shuffle (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_playlist_shuffle (conn);
+	xmmsc_result_t *res;
+	
+	res = xmmsc_playlist_shuffle (conn);
+	xmmsc_result_unref (res);
+	
 }
 
 static void
 cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
+	xmmsc_result_t *res;
 
 	if (argc < 3) {
 		print_error ("Remove needs a ID to be removed");
 	}
 
 	for (i = 2; argv[i]; i++) {
-		xmmsc_playlist_remove (conn, atoi (argv[i]));
+		res = xmmsc_playlist_remove (conn, atoi (argv[i]));
+		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			fprintf (stderr, "Couldn't remove %d (%s)\n", atoi (argv[i]), xmmsc_result_get_error (res));
+		}
+		xmmsc_result_unref (res);
 	}
 }
 
@@ -134,26 +155,27 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	unsigned int *list;
+	x_list_t *list;
+	x_list_t *l;
 	GError *err = NULL;
-	int i;
 	int id;
 	int r, w;
 
 	list = xmmscs_playlist_list (conn);
 
-	if (*list == -1)
+	if (!list)
 		return;
 
 	id = xmmscs_playback_current_id (conn);
 
-	for (i = 0; list[i]; i++) {
+	for (l = list; l; l = x_list_next (l)) {
 		x_hash_t *tab;
 		char line[80];
+		unsigned int i = XPOINTER_TO_UINT (l->data);
 
 		g_clear_error (&err);
 		
-		tab = xmmscs_playlist_get_mediainfo (conn, list[i]);
+		tab = xmmscs_playlist_get_mediainfo (conn, i);
 
 		memset (line, '\0', 80);
 
@@ -163,11 +185,11 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
 		}
 
-		if (id == list[i]) {
-			print_info ("->[%d] %s", list[i], 
+		if (id == i) {
+			print_info ("->[%d] %s", i, 
 					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		} else {
-			print_info ("  [%d] %s", list[i], 
+			print_info ("  [%d] %s", i, 
 					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		}
 
@@ -182,32 +204,65 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_play (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_playback_start (conn);
+	xmmsc_result_t *res;
+	res = xmmsc_playback_start (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't start playback: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 }
 
 static void
 cmd_stop (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_playback_stop (conn);
+	xmmsc_result_t *res;
+	res = xmmsc_playback_stop (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't stop playback: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
 }
 
 static void
 cmd_pause (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_playback_pause (conn);
+	xmmsc_result_t *res;
+	res = xmmsc_playback_pause (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't pause playback: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 
 }
 
 static void
 cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_playback_next (conn);
+	xmmsc_result_t *res;
+	res = xmmsc_playback_next (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
 }
 
 static void
 cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_playback_prev (conn);
+	xmmsc_result_t *res;
+	res = xmmsc_playback_prev (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't go back in playlist: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
 }
 
 static void
@@ -215,6 +270,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int id,seconds,duration,cur_playtime;
 	x_hash_t *lista;
+	xmmsc_result_t *res;
 
 	if (argc < 3) {
 		print_error ("You need to specify a number of seconds. Usage:\n"
@@ -223,10 +279,10 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 			     "xmms2 seek -seconds - will remove seconds");
 	}
 	
-	id= xmmscs_playback_current_id (conn);
+	id = xmmscs_playback_current_id (conn);
 	lista = xmmscs_playlist_get_mediainfo (conn, id);
 	duration = atoi (x_hash_lookup (lista, "duration"));
-	cur_playtime = xmmsc_playback_current_playtime (conn);
+	cur_playtime = xmmscs_playback_playtime (conn);
 	x_hash_destroy (lista);
 
 	if (!duration)
@@ -238,7 +294,8 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 
 		if (seconds >= duration) {
 			printf ("Trying to seek to a higher value then total_playtime, Skipping to next song\n");
-			xmmsc_playback_next (conn);
+			res = xmmsc_playback_next (conn);
+			xmmsc_result_unref (res);
 		} else {
 			printf ("Adding %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
 		}
@@ -257,8 +314,12 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 		seconds = atoi (argv[2]) * 1000;
 	}
 	
-	xmmsc_playback_seek_ms (conn, seconds);
-	
+	res = xmmsc_playback_seek_ms (conn, seconds);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't seek to that position: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 }
 
 static void
@@ -270,11 +331,18 @@ cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
 {
+	xmmsc_result_t *res;
+
 	if (argc < 4) {
 		print_error ("You need to specify a configkey and a value");
 	}
 
-	xmmsc_configval_set (conn, argv[2], argv[3]);
+	res = xmmsc_configval_set (conn, argv[2], argv[3]);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't set config value: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 }
 
 static void
@@ -301,66 +369,88 @@ cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 {
+	xmmsc_result_t *res;
 
 	if (argc < 3) {
 		print_error ("You'll need to specify a ID to jump to.");
 	}
 
-	xmmsc_playback_jump (conn, atoi (argv[2]));
+	res = xmmsc_playback_jump (conn, atoi (argv[2]));
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't jump to that song: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 }
 
 /* STATUS FUNCTIONS */
 
 static gchar songname[60];
-static gint id;
 static gint curr_dur;
 
-static void
-handle_currentid (void *userdata, void *arg)
-{
-	id = GPOINTER_TO_UINT (arg);
-	xmmsc_playlist_get_mediainfo ((xmmsc_connection_t*)userdata, id);
-}
+static void handle_mediainfo (xmmsc_result_t *res, void *userdata);
 
 static void
-handle_playtime (void *userdata, void *arg)
+handle_playtime (xmmsc_result_t *res, void *userdata)
 {
-	guint dur = GPOINTER_TO_UINT (arg);
-
+	guint dur;
+	xmmsc_result_t *ret;
+	
+	if (xmmsc_result_iserror (res)) {
+		print_error ("apan");
+	}
+	
+	if (!xmmsc_result_get_uint (res, &dur)) {
+		print_error ("korv");
+	}
+	
 	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", songname, dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
 	fflush (stdout);
+
+	xmmsc_result_unref (xmmsc_result_restart (res));
+	xmmsc_result_unref (res);
 }
 
 static void
-handle_mediainfo (void *userdata, void *arg)
+handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	x_hash_t *hash = arg;
+	x_hash_t *hash;
 	gchar *tmp;
 	gint mid;
+	guint id;
+	xmmsc_connection_t *c = userdata;
 
-	tmp = x_hash_lookup (hash, "id");
-
-	mid = GPOINTER_TO_UINT (tmp);
-
-	if (id == mid) {
-		memset (songname, 0, 60);
-		printf ("\n");
-		xmmsc_entry_format (songname, 60, "%a - %t", hash);
-		tmp = x_hash_lookup (hash, "duration");
-		if (tmp)
-			curr_dur = atoi (tmp);
-		else
-			curr_dur = 0;
+	if (!xmmsc_result_get_uint (res, &id)) {
+		printf ("no id!\n");
+		return;
 	}
 
-}
+	hash = xmmscs_playlist_get_mediainfo (c, id);
 
-static void
-handle_quit (void *userdata, void *arg)
-{
-	GMainLoop *ml = userdata;
+	if (!hash) {
+		printf ("no mediainfo!\n");
+	} else {
+		tmp = x_hash_lookup (hash, "id");
 
-	g_main_loop_quit (ml);
+		mid = GPOINTER_TO_UINT (tmp);
+
+		if (id == mid) {
+			memset (songname, 0, 60);
+			printf ("\n");
+			xmmsc_entry_format (songname, 60, "%a - %t", hash);
+			tmp = x_hash_lookup (hash, "duration");
+			if (tmp)
+				curr_dur = atoi (tmp);
+			else
+				curr_dur = 0;
+		}
+		xmmsc_playlist_entry_free (hash);
+	}
+
+	xmmsc_result_unref (xmmsc_result_restart (res));
+
+	xmmsc_result_unref (res);
+
 }
 
 static void
@@ -370,15 +460,62 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*) conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void *) conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_mediainfo, (void *) conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_QUIT, handle_quit, (void *) ml);
-
-	xmmsc_playback_current_id (conn);
+	/* Setup onchange signal for mediainfo */
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_playtime, handle_playtime, NULL);
 
 	xmmsc_setup_with_gmain (conn, NULL);
 
+	g_main_loop_run (ml);
+}
+
+static void
+handle_plch (xmmsc_result_t *res, void *userdata)
+{
+	unsigned int type, id, arg;
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Huston we have a problem %s", xmmsc_result_get_error (res));
+	}
+
+	if (!xmmsc_result_get_playlist_change (res, &type, &id, &arg)) {
+		print_error ("Couldn't fetch plch message!");
+	}
+
+	switch (type) {
+		case XMMSC_PLAYLIST_ADD:
+			print_info ("Added to playlist id = %d", id);
+			break;
+		case XMMSC_PLAYLIST_CLEAR:
+			print_info ("Playlist was cleared!");
+			break;
+		case XMMSC_PLAYLIST_REMOVE:
+			print_info ("%d was removed from the playlist", id);
+			break;
+		case XMMSC_PLAYLIST_SORT:
+			print_info ("Playlist was sorted");
+			break;
+		case XMMSC_PLAYLIST_SHUFFLE:
+			print_info ("Playlist was shuffled");
+			break;
+		default:
+			print_info ("Playlist was altered, but only apan knows how..");
+			break;
+	}
+	
+	xmmsc_result_unref (xmmsc_result_restart (res));
+	xmmsc_result_unref (res);
+}
+
+static void
+cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	GMainLoop *ml;
+
+	ml = g_main_loop_new (NULL, FALSE);
+	XMMS_CALLBACK_SET (conn, xmmsc_playlist_changed, handle_plch, conn);
+
+	xmmsc_setup_with_gmain (conn, NULL);
 	g_main_loop_run (ml);
 }
 
@@ -406,6 +543,7 @@ cmds commands[] = {
 
 
 	{ "status", "go into status mode", cmd_status },
+	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	{ "quit", "make the server quit", cmd_quit },

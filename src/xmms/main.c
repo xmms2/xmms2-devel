@@ -70,13 +70,13 @@ parse_config ()
 		}
 		return TRUE;
 	} else {
-			if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
-				mkdir (configdir, 0755);
-			}
+		if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
+			mkdir (configdir, 0755);
+		}
 
-			xmms_config_init (NULL);
+		xmms_config_init (NULL);
 
-			return TRUE;
+		return TRUE;
 	}
 	return FALSE;
 }

@@ -188,7 +188,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 }
 
 void
-xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
+xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err)
 {
 	xmms_config_value_t *val;
 
@@ -200,6 +200,8 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
 		
 		xmms_config_value_data_set (val, g_strdup (value));
 		xmms_config_save (cf);
+	} else {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to set nonexistant configvalue");
 	}
 
 }
@@ -207,7 +209,7 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
 XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 
 GList *
-xmms_config_listvalues (xmms_config_t *conf)
+xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
 	GList *ret = NULL;
 
@@ -225,15 +227,16 @@ xmms_config_listvalues (xmms_config_t *conf)
 
 }
 
-XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, LIST, NONE, NONE);
+XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
 
 const gchar *
-xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key)
+xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error_t *err)
 {
 	xmms_config_value_t *val;
 
 	val = xmms_config_lookup (key);
 	if (!val) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to get nonexistant configvalue");
 		return NULL;
 	}
 

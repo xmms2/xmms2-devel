@@ -312,34 +312,39 @@ xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
 	return decoder->samplerate;
 }
 
-void
-xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds)
+gboolean
+xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
 {
 	guint samples;
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (decoder, FALSE);
 	
 	samples = (guint)(((gdouble) decoder->samplerate) * milliseconds / 1000);
 
-	xmms_decoder_seek_samples (decoder, samples);
+	return xmms_decoder_seek_samples (decoder, samples, err);
 
 }
 
-void
-xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples)
+gboolean
+xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err)
 {
 	xmms_decoder_seek_method_t meth;
 	
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (decoder, FALSE);
 
 	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_SEEK);
 
-	g_return_if_fail (meth);
+	g_return_val_if_fail (meth, FALSE);
 
 	xmms_output_flush (decoder->output);
 
-	meth (decoder, samples);
+	if (meth (decoder, samples)) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not seek there");
+		return FALSE;
+	}
 
 	xmms_output_played_samples_set (decoder->output, samples);
+
+	return TRUE;
 }
 
 /**

@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
 #include <pwd.h>
 #include <sys/types.h>
@@ -47,79 +48,6 @@
 
 #define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
 
-
-/**
- * @internal
- */
-
-typedef enum {
-	XMMSC_TYPE_UINT32,
-	XMMSC_TYPE_STRING,
-	XMMSC_TYPE_NONE,
-	XMMSC_TYPE_VIS,
-	XMMSC_TYPE_MOVE,
-	XMMSC_TYPE_LIST,
-	XMMSC_TYPE_MEDIAINFO,
-	XMMSC_TYPE_PLAYLIST,
-	XMMSC_TYPE_TRANSPORT_LIST,
-} xmmsc_types_t;
-
-
-/**
- * @internal
- */
-
-typedef struct xmmsc_signal_callbacks_St {
-	char *signal_name;
-	xmmsc_types_t type;
-} xmmsc_signal_callbacks_t;
-
-
-/**
- * @internal
- */
-
-typedef struct xmmsc_callback_desc_St {
-	void (*func)(void *, void *);
-	void *userdata;
-} xmmsc_callback_desc_t;
-
-
-/**
- * @internal
- */
-
-static xmmsc_signal_callbacks_t callbacks[] = {
-	{ XMMS_SIGNAL_PLAYBACK_PLAYTIME, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYBACK_JUMP, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYBACK_STATUS, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYBACK_CURRENTID, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_CORE_INFORMATION, XMMSC_TYPE_STRING },
-	{ XMMS_SIGNAL_CORE_DISCONNECT, XMMSC_TYPE_NONE },
-	{ XMMS_SIGNAL_PLAYLIST_ADD, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO, XMMSC_TYPE_MEDIAINFO },
-	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYLIST_SHUFFLE, XMMSC_TYPE_NONE },
-	{ XMMS_SIGNAL_PLAYLIST_CLEAR, XMMSC_TYPE_NONE },
-	{ XMMS_SIGNAL_PLAYLIST_REMOVE, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_MOVE },
-	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_PLAYLIST },
-	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
-	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
-	{ XMMS_SIGNAL_TRANSPORT_LIST, XMMSC_TYPE_TRANSPORT_LIST },
-	{ XMMS_SIGNAL_CONFIG_LIST, XMMSC_TYPE_LIST },
-	{ XMMS_SIGNAL_CONFIG_GET, XMMSC_TYPE_STRING },
-	{ NULL, 0 },
-};
-
-
-/*
- * Forward declartions
- */
-
-static xmmsc_signal_callbacks_t *get_callback (const char *signal);
-static DBusHandlerResult handle_callback (DBusConnection *conn, DBusMessage *msg, void *user_data);
-static void xmmsc_register_signal (xmmsc_connection_t *conn, char *signal);
 
 /*
  * Public methods
@@ -269,7 +197,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 
 	memset (&vtable, 0, sizeof (vtable));
 
-	dbus_connection_add_filter (conn, handle_callback, c, NULL);
+	/*dbus_connection_add_filter (conn, handle_callback, c, NULL);*/
 
 	c->conn=conn;
 	return TRUE;
@@ -318,6 +246,24 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
 }
 
 
+static int
+free_callback (void *key, void *value, void *udata)
+{
+	x_list_t *list = value;
+	void *ldata;
+
+	while (list) {
+		ldata = list->data;
+		list = x_list_remove (list, list->data);
+		free (ldata);
+	}
+
+	free (key);
+
+	return 1;
+}
+
+
 /**
  * Frees up any resources used by xmmsc_connection_t
  */
@@ -328,6 +274,8 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	dbus_connection_flush (c->conn);
 	dbus_connection_disconnect (c->conn);
 	dbus_connection_unref (c->conn);
+
+	x_hash_foreach_remove (c->callbacks, free_callback, NULL);
 	x_hash_destroy(c->callbacks);
 	x_hash_destroy(c->replies);
 	free(c);
@@ -340,212 +288,10 @@ xmmsc_deinit (xmmsc_connection_t *c)
  * @{
  */
 
-/**
- * @def XMMS_SIGNAL_PLAYBACK_PLAYTIME
- *
- * This callback is called after each sample
- * played by core. This should update the playtime.
- * The argument will be a UINT32 with the number of
- * milliseconds played. The latency is already accounted
- * for in the value you get.
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYBACK_STOP
- *
- * This callback is called after someone pressed
- * "stop". The core will remain "stopped" until 
- * XMMS_SIGNAL_PLAYBACK_CURRENTID is called. This
- * callback is called with %NULL argument.
- *
- * @sa xmmsc_playback_stop
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYBACK_CURRENTID
- *
- * This callback will be called when playback changed.
- * If playback is stopped this means that someone pressed
- * play. The argument to this function is a UINT32 with the
- * id of the song that is being played. Call xmmsc_playlist_mediainfo
- * to get the information on the song.
- *
- * @sa xmmsc_playlist_get_mediainfo
- * @sa xmmsc_playback_current_id
- */
-
-/**
- * @def XMMS_SIGNAL_CORE_INFORMATION
- *
- * This callback will be called when there is information from
- * the server that should be presented to the user.
- * The argument is a zero terminated string.
- */
-
-/**
- * @def XMMS_SIGNAL_CORE_DISCONNECT
- *
- * This callback will be called when the server wants us
- * to disconnect. This usely means that server exits.
- * Argument is %NULL.
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_ADD
- *
- * This callback will be called when something is added to
- * the playlist. 
- * 
- * The argument is a UINT32 with the id of the added song.
- *
- * @sa xmmsc_playlist_add
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_MEDIAINFO
- *
- * This will be called with information about a specific
- * song. The arugment is a pointer to x_hash_t with 
- * information about the song.
- *
- * @sa xmmsc_playlist_get_mediainfo
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID
- *
- * This will be called when information for a specific
- * entry has been changed. The argument is a UINT32 with
- * the id of the changed entry.
- *
- * @sa xmmsc_playlist_get_mediainfo
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_SHUFFLE
- *
- * This is called when the playlist is shuffled.
- * You will have to reread the playlist with xmmsc_playlist_list.
- * The callback is called with %NULL as argument.
- *
- * @sa xmmsc_playlist_list
- * @sa xmmsc_playlist_shuffle
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_CLEAR
- *
- * This callback is called when the playlist is cleared.
- * 
- * @sa xmmsc_playlist_clear
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_REMOVE
- *
- * This is called when a song is removed from the playlist.
- * The argument is a UINT32 with the removed songs id.
- *
- * @sa xmmsc_playlist_remove
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYBACK_JUMP
- *
- * This is called when someone moves the current song pointer
- * in the playlist. 
- * The argument is a UINT32 with the new current entry.
- *
- * @sa xmmsc_playlist_jump
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_MOVE
- *
- * This is called when someone is moving something in the playlist
- * @todo figure out how the argument should work.
- *
- * @sa xmmsc_playlist_move
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_LIST
- *
- * This will be called with a list of ids that is in the playlist.
- * The argument is a UINT32 Array that will be zeroterminated.
- *
- * @sa xmmsc_playlist_list
- */
-
-/**
- * @def XMMS_SIGNAL_PLAYLIST_SORT
- *
- * This will be called when someone has sorted the playlist.
- * You will have to reread the playlist to ensure you have
- * the correct data.
- *
- * @sa xmmsc_playlist_sort
- */
-
-/**
- * @def XMMS_SIGNAL_VISUALISATION_SPECTRUM
- *
- * This will be called for each sample with the fft data for that
- * sample. The argument is a array with 10 doubles. This can be
- * used for output a spectrumanalyzer.
- */
-
-/**
- * @def XMMS_SIGNAL_TRANSPORT_LIST
- *
- * This will be called when a file list is ready.
- * This is generated by a xmmsc_file_list call.
- *
- * @sa xmmsc_file_list
- */
-
-/**
- * Set a callback for the signal you want to handle.
- * the callback function should have the following prototype
- * void callback (void *userdata, void *callbackdata)
- * What callbackdata points to is diffrent for each callback.
- */
-
-void
-xmmsc_set_callback (xmmsc_connection_t *conn, 
-		    char *callback, 
-		    void (*func) (void *, void*), 
-		    void *userdata)
-{
-	x_list_t *l = NULL;
-	xmmsc_callback_desc_t *desc;
-
-	desc = calloc (1, sizeof (xmmsc_callback_desc_t));
-
-	desc->func = func;
-	desc->userdata = userdata;
-
-	l = x_hash_lookup (conn->callbacks, callback);
-	if (!l) {
-		xmmsc_register_signal (conn, callback);
-		l = x_list_append (l, desc);
-		x_hash_insert (conn->callbacks, strdup (callback), l);
-	} else {
-		l = x_list_append (l, desc);
-	}
-
-}
-
-/** @} */
-
-/**
- * Disconnects you from the current XMMS server.
- */
-
-void
+xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
 }
 
 /**
@@ -767,26 +513,56 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 /** @} */
 
 
+#define XMMSC_DEFAULT_TIMEOUT -1 /* Default DBUS behavior */
+
 /**
  * @internal
  */
 
-int
-xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
+xmmsc_result_t *
+xmmsc_send_msg_no_arg (xmmsc_connection_t *c, char *object, char *method)
 {
 	DBusMessage *msg;
-	int cserial;
+	DBusPendingCall *pending;
 	
 	msg = dbus_message_new_method_call (NULL, object, XMMS_DBUS_INTERFACE, method);
-	dbus_connection_send (c->conn, msg, &cserial);
+	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, XMMSC_DEFAULT_TIMEOUT)) {
+		return NULL;
+	}
 	dbus_message_unref (msg);
-	return cserial;
+
+	dbus_connection_flush (c->conn);
+
+	return xmmsc_result_new (pending);
+
 }
 
-void
-xmmsc_connection_add_reply (xmmsc_connection_t *c, int serial, char *type)
+xmmsc_result_t *
+xmmsc_send_msg (xmmsc_connection_t *c, DBusMessage *msg)
 {
-	x_hash_insert (c->replies, XUINT_TO_POINTER (serial), type);
+	DBusPendingCall *pending;
+	
+	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, XMMSC_DEFAULT_TIMEOUT)) {
+		return NULL;
+	}
+	
+	dbus_connection_flush (c->conn);
+
+	return xmmsc_result_new (pending);
+}
+
+xmmsc_result_t *
+xmmsc_send_on_change (xmmsc_connection_t *c, DBusMessage *msg)
+{
+	DBusPendingCall *pending;
+	
+	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, INT_MAX)) {
+		return NULL;
+	}
+	
+	dbus_connection_flush (c->conn);
+
+	return xmmsc_result_new (pending);
 }
 
 x_hash_t *
@@ -814,189 +590,3 @@ xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
 	}
 	return tab;
 }
-
-/*
- * Static utils
- */
-
-static xmmsc_signal_callbacks_t *
-get_callback (const char *signal)
-{
-	int i = 0;
-
-	while (callbacks[i].signal_name) {
-
-		if (strcasecmp (callbacks[i].signal_name, signal) == 0)
-			return &callbacks[i];
-		i++;
-	}
-
-	return NULL;
-}
-
-
-static DBusHandlerResult
-handle_callback (DBusConnection *conn, DBusMessage *msg, 
-		void *user_data)
-{
-	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
-	xmmsc_signal_callbacks_t *c;
-	x_list_t *cb_list;
-	char msgname[256];
-        DBusMessageIter itr;
-	unsigned int tmp[2]; /* used by MOVE */
-	void *arg = NULL;
-
-
-	/** allt det här apet hade vi gott kunna göra snyggare */
-	snprintf (msgname, 255, "%s::%s", dbus_message_get_path (msg), dbus_message_get_member (msg));
-
-	c = get_callback (msgname);
-
-	if (!c) {
-		int rep_ser;
-
-		rep_ser = dbus_message_get_reply_serial (msg);
-		if (rep_ser > 0) {
-			char *a;
-
-			a = x_hash_lookup (xmmsconn->replies, XUINT_TO_POINTER (rep_ser));
-			if (a != NULL) {
-				x_hash_remove (xmmsconn->replies, XUINT_TO_POINTER (rep_ser));
-				c = get_callback (a);
-			}
-			snprintf (msgname, 255, "%s", a);
-		}
-
-		if (c == NULL) {
-			printf("\nNo callback for: %s -- %s -- %d\n", msgname, dbus_message_get_interface (msg), dbus_message_get_reply_serial (msg));
-			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-		}
-	}
-
-	dbus_message_iter_init (msg, &itr);
-
-
-	switch (c->type) {
-		case XMMSC_TYPE_STRING:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING)
-				arg = dbus_message_iter_get_string (&itr);
-			break;
-		case XMMSC_TYPE_UINT32:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
-				arg = XUINT_TO_POINTER (dbus_message_iter_get_uint32 (&itr));
-			break;
-		case XMMSC_TYPE_VIS:
-			{
-				int len=0;
-				dbus_message_iter_get_double_array (&itr, (double **) &arg, &len);
-			}
-			break;
-
-		case XMMSC_TYPE_MOVE:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-				tmp[0] = dbus_message_iter_get_uint32 (&itr);
-				tmp[1] = dbus_message_iter_get_uint32 (&itr);
-				arg = &tmp;
-			}
-			break;
-
-		case XMMSC_TYPE_LIST:
-			{
-				x_list_t *list = NULL;
-				while (42) {
-					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-						list = x_list_append (list, dbus_message_iter_get_string (&itr));
-					}
-					if (!dbus_message_iter_has_next (&itr))
-						break;
-					dbus_message_iter_next (&itr);
-				}
-				arg = list;
-			}
-			break;
-
-		case XMMSC_TYPE_PLAYLIST:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-				unsigned int len = dbus_message_iter_get_uint32 (&itr);
-				if (len > 0) {
-					unsigned int *arr;
-					int len;
-					unsigned int *tmp;
-
-					dbus_message_iter_next (&itr);
-					dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
-
-					arr = malloc (sizeof (unsigned int) * (len + 1));
-					memcpy (arr, tmp, len * sizeof(unsigned int));
-					arr[len] = '\0';
-					
-					arg = arr;
-				}
-			}
-			break;
-		case XMMSC_TYPE_MEDIAINFO:
-			arg = xmmsc_deserialize_mediainfo (&itr);
-			break;
-
-		case XMMSC_TYPE_TRANSPORT_LIST:
-			{
-				x_list_t *list = NULL;
-
-				while (42) {
-					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-						xmmsc_file_t *f;
-					
-						f = malloc (sizeof (xmmsc_file_t));
-					
-						f->path = dbus_message_iter_get_string (&itr);
-						dbus_message_iter_next (&itr);
-						f->file = dbus_message_iter_get_boolean (&itr);
-						list = x_list_append (list, f);
-					}
-
-					if (!dbus_message_iter_has_next (&itr))
-						break;
-
-					dbus_message_iter_next (&itr);
-				}
-
-				arg = list;
-			}
-
-			break;
-
-		case XMMSC_TYPE_NONE:
-			/* don't really know how to handle this yet. */
-			break;
-	}
-
-	cb_list = x_hash_lookup (xmmsconn->callbacks, msgname);
-	if (cb_list) {
-		x_list_t *node;
-		for (node = cb_list; node; node = x_list_next (node)) {
-			xmmsc_callback_desc_t *cb = node->data;
-			cb->func (cb->userdata, arg);
-		}
-	}
-
-	return DBUS_HANDLER_RESULT_HANDLED;
-}
-
-
-static void
-xmmsc_register_signal (xmmsc_connection_t *conn, char *signal)
-{
-	DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT, XMMS_DBUS_INTERFACE, XMMS_METHOD_REGISTER);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, signal);
-	dbus_connection_send (conn->conn, msg, &cserial);
-	dbus_message_unref (msg);
-
-}
-
-
