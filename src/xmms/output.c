@@ -551,6 +551,7 @@ xmms_output_destroy (xmms_object_t *object)
 	if (dest) {
 		dest (output);
 	}
+	output->running = FALSE;
 
 	xmms_object_unref (output->plugin);
 
