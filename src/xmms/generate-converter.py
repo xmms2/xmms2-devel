@@ -1,5 +1,5 @@
 
-types = ['u8', 's8', 'u16', 's16']
+types = ['u8', 's8', 'u16', 's16', 'float']
 
 #should convert to and from uint16
 readwriters = """
@@ -9,11 +9,13 @@ readwriters = """
 #define READs8(a)  ((a+128) << 8)
 #define READu16(a)  (a)
 #define READs16(a) ((a)+32768)
+#define READfloat(a) ((a)*65536)
 
 #define WRITEu8(a)  ((a) >> 8)
 #define WRITEs8(a)  (((a) - 32768) >> 8)
 #define WRITEu16(a) (a)
 #define WRITEs16(a) ((a) - 32768)
+#define WRITEfloat(a) ((a)/65536.0)
 
 
 
