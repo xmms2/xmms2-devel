@@ -70,7 +70,7 @@ def checkFlags(base_env):
 		base_env.AddFlagsToGroup("Cocoa", "-ObjC -framework Cocoa")
 	   	base_env.AddFlagsToGroup("CoreFoundation", "-framework CoreFoundation")
 
-	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
+	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc --version") :
 		print "PyREX compiler found!"
 	else:
 		print "PyREX not found, no cookie for you!"
@@ -95,6 +95,7 @@ def checkFlags(base_env):
 		import distutils
 		import distutils.sysconfig
 		base_env.AddFlagsToGroup ("python", "-I"+distutils.sysconfig.get_python_inc ())
+		base_env.optional_config["pythonlibdir"] = distutils.sysconfig.get_python_lib()
 	except:
 		pass
 	##

@@ -76,7 +76,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
 
 		self.SharedLibrary (target, source, SHLIBPREFIX='', SHLIBSUFFIX=".so")
-		self.Install(self.installdir+self.libpath, target+".so")
+		self.Install(self.optional_config["pythonlibdir"], target+".so")
 
 	def XmmsRuby(self, target, source):
 		if self.sys == 'Darwin':
