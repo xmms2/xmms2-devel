@@ -297,6 +297,28 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 
 }
 
+void
+xmms_playlist_clear (xmms_playlist_t *playlist)
+{
+	GList *node;
+
+	g_return_if_fail (playlist);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	for (node = playlist->list; node; node = g_list_next (node)) {
+		xmms_playlist_entry_t *entry = node->data;
+		xmms_playlist_entry_free (entry);
+	}
+
+	g_list_free (playlist->list);
+	playlist->list = NULL;
+
+	playlist->nextentry = NULL;
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+}
+
 /** Get next entry.
  *
  *  The playlist holds a pointer to the last "taken" entry from it.
@@ -313,7 +335,7 @@ xmms_playlist_get_next (xmms_playlist_t *playlist)
 	g_return_val_if_fail (playlist, NULL);
 
 	XMMS_PLAYLIST_LOCK (playlist);
-	while (xmms_playlist_entries_left (playlist) < 1) {
+	while (!playlist->nextentry) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
 		xmms_playlist_wait (playlist);
 		XMMS_PLAYLIST_LOCK (playlist);

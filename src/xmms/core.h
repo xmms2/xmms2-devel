@@ -13,7 +13,17 @@ typedef struct xmms_core_St {
 
 	xmms_playlist_t *playlist;
 	xmms_playlist_entry_t *curr_song;
+	
+	GCond *cond;
+	GMutex *mutex;
+	
+	gint status;
 } xmms_core_t;
+
+typedef enum {
+	XMMS_CORE_PLAYBACK_RUNNING,
+	XMMS_CORE_PLAYBACK_STOPPED
+} xmms_core_playback_status_t;
 
 extern xmms_core_t *core;
 
@@ -26,6 +36,7 @@ void xmms_core_playlist_adduri (gchar *nuri);
 void xmms_core_playlist_jump (guint id);
 void xmms_core_playlist_remove (guint id);
 void xmms_core_playlist_shuffle ();
+void xmms_core_playlist_clear ();
 xmms_playlist_t * xmms_core_get_playlist ();
 
 void xmms_core_quit ();
@@ -36,6 +47,9 @@ gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);
 xmms_playlist_entry_t *xmms_core_playlist_entry_mediainfo (guint id);
 gchar *xmms_core_get_uri ();
 gint xmms_core_get_id ();
+
+void xmms_core_playback_stop ();
+void xmms_core_playback_start ();
 
 void xmms_core_init ();
 void xmms_core_start ();

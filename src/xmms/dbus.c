@@ -35,6 +35,9 @@ static const char *listmsgs[]={"org.xmms.playlist.list"};
 static const char *jumpmsgs[]={"org.xmms.playlist.jump"};
 static const char *removemsgs[]={"org.xmms.playlist.remove"};
 static const char *shufflemsgs[]={"org.xmms.playlist.shuffle"};
+static const char *playmsgs[]={"org.xmms.playback.start"};
+static const char *stopmsgs[]={"org.xmms.playback.stop"};
+static const char *clearmsgs[]={"org.xmms.playlist.clear"};
 static const char *quitmsgs[]={"org.xmms.core.quit"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
@@ -127,6 +130,39 @@ handle_next(DBusMessageHandler *handler,
 
 	XMMS_DBG ("next!");
 	xmms_core_play_next();
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_play(DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	XMMS_DBG ("play!");
+	xmms_core_playback_start ();
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_stop(DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	XMMS_DBG ("stop!");
+	xmms_core_playback_stop ();
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_clear (DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	XMMS_DBG ("clear!");
+	xmms_core_playlist_clear ();
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
@@ -332,7 +368,10 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	register_handler(conn,handle_playlist_mediainfo,mediainfomsgs,1);
 	register_handler(conn,handle_playlist_list,listmsgs,1);
 	register_handler(conn,handle_playlist_shuffle,shufflemsgs,1);
+	register_handler(conn,handle_playlist_clear,clearmsgs,1);
 	register_handler(conn,handle_playlist_remove,removemsgs,1);
+	register_handler(conn,handle_play,playmsgs,1);
+	register_handler(conn,handle_stop,stopmsgs,1);
 	register_handler(conn,handle_next,nextmsgs,1);
 	register_handler(conn,handle_quit,quitmsgs,1);
 	register_handler(conn,handle_disconnect,disconnectmsgs,1);

@@ -200,6 +200,23 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 	xmmsc_send_void(c,"org.xmms.playlist.shuffle");
 }
 
+void
+xmmsc_playlist_clear (xmmsc_connection_t *c)
+{
+	xmmsc_send_void(c,"org.xmms.playlist.clear");
+}
+
+void
+xmmsc_playback_stop (xmmsc_connection_t *c)
+{
+	xmmsc_send_void(c,"org.xmms.playback.stop");
+}
+
+void
+xmmsc_playback_start (xmmsc_connection_t *c)
+{
+	xmmsc_send_void(c,"org.xmms.playback.start");
+}
 
 void
 xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)

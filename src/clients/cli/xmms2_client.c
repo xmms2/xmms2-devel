@@ -26,7 +26,10 @@ handle_playtime (void *userdata, void *arg) {
 void
 handle_mediainfo (void *userdata, void *arg) {
 	guint id = GPOINTER_TO_UINT(arg);
-	printf ("\nnow playing id: %d\n", id);
+	xmmsc_connection_t *conn = userdata;
+	GHashTable *entry;
+	entry = xmmsc_playlist_get_mediainfo (conn, id);
+	printf ("Playing %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
 	fflush (stdout);
 }
 
@@ -38,7 +41,7 @@ status_main(xmmsc_connection_t *conn)
 	mainloop = g_main_loop_new (NULL, FALSE);
 
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYTIME_CHANGED, handle_playtime, NULL);
-	xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, NULL);
+	xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, conn);
 
 	id = xmmsc_get_playing_id (conn);
 	if (id) {
@@ -89,6 +92,28 @@ main(int argc, char **argv)
 			xmmsc_deinit (c);
 
 			exit (0);
+
+		} else if ( streq (argv[1], "clear") ) {
+
+			xmmsc_playlist_clear (c);
+			xmmsc_deinit (c);
+
+			exit (0);
+
+		} else if ( streq (argv[1], "stop") ) {
+
+			xmmsc_playback_stop (c);
+			xmmsc_deinit (c);
+
+			exit (0);
+
+		} else if ( streq (argv[1], "play") ) {
+
+			xmmsc_playback_start (c);
+			xmmsc_deinit (c);
+
+			exit (0);
+
 
 		} else if ( streq (argv[1], "jump") ) {
 
