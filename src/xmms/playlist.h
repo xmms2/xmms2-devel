@@ -2,7 +2,6 @@
 #define __PLAYLIST_H_
 
 #include <glib.h>
-#include <db.h>
 
 #define XMMS_PL_PROPERTY 128
 
@@ -14,8 +13,7 @@
 #define XMMS_MEDIA_DATA_LEN 1024
 
 typedef struct xmms_playlist_St {
-	gchar *path;
-	DB *dbp;
+	GSList *list;
 } xmms_playlist_t;
 
 typedef struct xmms_playlist_entry_St {
@@ -40,8 +38,7 @@ typedef struct xmms_playlist_entry_St {
 } xmms_playlist_entry_t;
 
 
-void xmms_playlist_db3_err (const char *errpfx, char *msg);
 gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options);
-xmms_playlist_t * xmms_playlist_open_create (gchar *path);
+xmms_playlist_t * xmms_playlist_init ();
 
 #endif
