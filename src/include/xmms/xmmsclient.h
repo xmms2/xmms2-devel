@@ -110,6 +110,9 @@ xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c);
 
+xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c);
+
+
 /* Syncronous commands */
 x_list_t *xmmscs_configval_list (xmmsc_connection_t *c);
 char *xmmscs_configval_get (xmmsc_connection_t *c, char *key);

@@ -17,7 +17,8 @@ if base_env.sys == 'Darwin':
 SConscript('cli/SConscript')
 
 # SDL NOT YET IN NEW API
-#if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
+if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
+	SConscript('sdl-vis/SConscript')
 #	SConscript('sdl-client/SConscript')
 
 #if base_env.HasGroup("ecore") :

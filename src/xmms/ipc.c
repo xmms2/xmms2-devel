@@ -572,6 +572,25 @@ xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
 	return TRUE;
 }
 
+gboolean
+xmms_ipc_has_pending (guint signalid)
+{
+	GList *c;
+
+	g_mutex_lock (global_ipc_lock);
+
+	for (c = global_ipc->clients; c; c = g_list_next (c)) {
+		xmms_ipc_client_t *cli = c->data;
+		if (cli->pendingsignals[signalid]) {
+			g_mutex_unlock (global_ipc_lock);
+			return TRUE;
+		}
+	}
+
+	g_mutex_unlock (global_ipc_lock);
+	return FALSE;
+}
+
 static void
 xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 {

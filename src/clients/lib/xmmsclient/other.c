@@ -120,6 +120,13 @@ xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
 }
 
+
+xmmsc_result_t *
+xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
+{
+	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_VISUALISATION_DATA);
+}
+
 /** @} */
 
 
