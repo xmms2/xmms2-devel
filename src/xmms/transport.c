@@ -1,7 +1,8 @@
 /** @file 
-  * Controls transport plugins.
-  * This file is responsible for the transportlayer.
-  */
+ * Controls transport plugins.
+ *
+ * This file is responsible for the transportlayer.
+ */
 
 #include "transport.h"
 #include "transport_int.h"
@@ -21,7 +22,7 @@
  */
 
 static void xmms_transport_destroy (xmms_transport_t *transport);
-static xmms_plugin_t *xmms_transport_find_plugin (const gchar *uri);
+static xmms_plugin_t *xmms_transport_plugin_find (const gchar *url);
 static gpointer xmms_transport_thread (gpointer data);
 
 /*
@@ -33,6 +34,9 @@ struct xmms_transport_St {
 	xmms_object_t object;
 	xmms_plugin_t *plugin; /**< The plugin used as media. */
 
+	/** The entry that are transported.
+	 * The url will be extracted from this
+	 * upon open */
 	xmms_playlist_entry_t *entry;
 
 	GMutex *mutex;
@@ -48,7 +52,7 @@ struct xmms_transport_St {
 	/** Private plugin data */
 	gpointer plugin_data;
 
-	gchar *suburi;
+	gchar *suburl;
 
 	/* Seek */
 	/** Set to TRUE if a seek is scheduled. */
@@ -97,8 +101,19 @@ xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
 	xmms_transport_unlock (transport);
 }
 
+/**
+ * Wether this transport is a local one.
+ * 
+ * A local transport is file / socket / fd
+ * Remote transports are http / ftp.
+ * This is decided by the plugin with the property 
+ * XMMS_PLUGIN_PROPERTY_LOCAL
+ *
+ * @param transport the transport structure.
+ * @returns TRUE if this transport plugin has XMMS_PLUGIN_PROPERTY_LOCAL
+ */
 gboolean
-xmms_transport_is_local (xmms_transport_t *transport)
+xmms_transport_islocal (xmms_transport_t *transport)
 {
 	g_return_val_if_fail (transport, FALSE);
 
@@ -112,7 +127,7 @@ xmms_transport_is_local (xmms_transport_t *transport)
  * This should be called from the plugin to propagate the mimetype
  */
 void
-xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype)
+xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 {
 	g_return_if_fail (transport);
 	g_return_if_fail (mimetype);
@@ -136,38 +151,71 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
  * xmms_transport_close ()
  */
 xmms_transport_t *
-xmms_transport_open (xmms_playlist_entry_t *entry)
+xmms_transport_new ()
 {
-	xmms_plugin_t *plugin;
+	xmms_transport_t *transport;
 
-	g_return_val_if_fail (entry, NULL);
+	transport = g_new0 (xmms_transport_t, 1);
+	xmms_object_init (XMMS_OBJECT (transport));
+	transport->mutex = g_mutex_new ();
+	transport->cond = g_cond_new ();
+	transport->seek_cond = g_cond_new ();
+	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
+	transport->want_seek = FALSE;
 
-	XMMS_DBG ("Trying to open stream: %s", xmms_playlist_entry_get_uri (entry));
+	return transport;
+}
+
+/**
+ * Opens the transport.
+ *
+ * This will call the plugins open function. 
+ * Could be a socket opening or a FD or something
+ * like that.
+ *
+ * @param transport the transport structure.
+ * @param entry A entry containing a URL that should be
+ * 	  used by this transport.
+ */
+
+gboolean
+xmms_transport_open (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
+{
+	g_return_val_if_fail (entry, FALSE);
+	g_return_val_if_fail (transport, FALSE);
+
+	XMMS_DBG ("Trying to open stream: %s", xmms_playlist_entry_url_get (entry));
 	
-	plugin = xmms_transport_find_plugin (xmms_playlist_entry_get_uri (entry));
-	if (!plugin)
-		return NULL;
+	transport->plugin = xmms_transport_plugin_find 
+		(xmms_playlist_entry_url_get (entry));
+	if (!transport->plugin)
+		return FALSE;
+	transport->entry = entry;
 	
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (transport->plugin));
 
-	return xmms_transport_open_plugin (plugin, entry, NULL);
+	return xmms_transport_plugin_open (transport, entry, NULL);
 }
 
 /** 
- * Gets the current URI from the transport.
+ * Gets the current URL from the transport.
  */
 const gchar *
-xmms_transport_uri_get(const xmms_transport_t *const transport){
+xmms_transport_url_get (const xmms_transport_t *const transport)
+{
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
 	xmms_transport_lock (transport);
-	ret =  xmms_playlist_entry_get_uri (transport->entry);
+	ret =  xmms_playlist_entry_url_get (transport->entry);
 	xmms_transport_unlock (transport);
 
 	return ret;
 }
 
+/**
+ * Gets the current entry
+ */
 xmms_playlist_entry_t *
 xmms_transport_entry_get (xmms_transport_t *transport)
 {
@@ -183,15 +231,16 @@ xmms_transport_entry_get (xmms_transport_t *transport)
 }
 
 /**
- * Gets the suburi from the transport.
+ * Gets the suburl from the transport.
  */
 const gchar *
-xmms_transport_suburi_get(const xmms_transport_t *const transport){
+xmms_transport_suburl_get (const xmms_transport_t *const transport)
+{
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
 	xmms_transport_lock (transport);
-	ret =  transport->suburi;
+	ret =  transport->suburl;
 	xmms_transport_unlock (transport);
 
 	return ret;
@@ -200,9 +249,8 @@ xmms_transport_suburi_get(const xmms_transport_t *const transport){
 /**
   * Gets the current mimetype
   */
-
 const gchar *
-xmms_transport_mime_type_get (xmms_transport_t *transport)
+xmms_transport_mimetype_get (xmms_transport_t *transport)
 {
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
@@ -317,8 +365,8 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 /**
   * Gets the total size of the transports media.
-  * @returns size of the media, or -1 if it can't be determined.
   *
+  * @returns size of the media, or -1 if it can't be determined.
   */
 gint
 xmms_transport_size (xmms_transport_t *transport)
@@ -349,57 +397,51 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
  * Instantiate a transport plugin.
  *
  */
-xmms_transport_t *
-xmms_transport_open_plugin (xmms_plugin_t *plugin, xmms_playlist_entry_t *entry, 
+
+gboolean
+xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *entry, 
 		gpointer data)
 {
 	xmms_transport_open_method_t init_method;
-	xmms_transport_t *transport;
-	gchar *uri;
+	xmms_plugin_t *plugin;
+	gchar *url;
+	
+	plugin = transport->plugin;
 	
 	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
 
 	if (!init_method) {
 		XMMS_DBG ("Transport has no init method!");
-		return NULL;
+		return FALSE;
 	}
 
-	transport = g_new0 (xmms_transport_t, 1);
-	xmms_object_init (XMMS_OBJECT (transport));
-	transport->plugin = plugin;
-	transport->mutex = g_mutex_new ();
-	transport->cond = g_cond_new ();
-	transport->seek_cond = g_cond_new ();
-	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
-	transport->want_seek = FALSE;
-	transport->entry = entry;
 	xmms_transport_plugin_data_set (transport, data);
 
-	uri = xmms_playlist_entry_get_uri (transport->entry);
+	url = xmms_playlist_entry_url_get (transport->entry);
 
-	transport->suburi = uri + strlen(uri); /* empty string */
+	transport->suburl = url + strlen(url); /* empty string */
 
-	while (!init_method (transport, uri)) {
+	while (!init_method (transport, url)) {
 
-		while (*--transport->suburi != '/' ){
-			if (*transport->suburi == 0){ /* restore */
-				*transport->suburi = '/';
+		while (*--transport->suburl != '/' ){
+			if (*transport->suburl == 0){ /* restore */
+				*transport->suburl = '/';
 			}
-			if (transport->suburi <= uri) {
+			if (transport->suburl <= url) {
 				xmms_ringbuf_destroy (transport->buffer);
 				g_mutex_free (transport->mutex);
 				g_free (transport);
 				transport = NULL;
-				return NULL;
+				return FALSE;
 			}
 		}
-		*transport->suburi = 0;
-		transport->suburi++;
-		XMMS_DBG ("Trying %s  (suburi: %s)",uri,transport->suburi);
+		*transport->suburl = 0;
+		transport->suburl++;
+		XMMS_DBG ("Trying %s  (suburl: %s)",url,transport->suburl);
 	}
 
-	transport->suburi = g_strdup (transport->suburi);
-	return transport;
+	transport->suburl = g_strdup (transport->suburl);
+	return TRUE;
 }
 
 
@@ -410,6 +452,7 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, xmms_playlist_entry_t *entry,
 /**
   * Start the transport thread.
   * This should be called to make the transport start buffer.
+  *
   * @internal
   */
 
@@ -425,6 +468,7 @@ xmms_transport_start (xmms_transport_t *transport)
 
 /**
   * Tells the transport thread to quit and call xmms_transport_destroy
+  *
   * @internal
   */
 
@@ -460,6 +504,8 @@ xmms_transport_seek_real (xmms_transport_t *transport)
 	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
 	g_return_if_fail (seek_method);
 
+	XMMS_DBG ("Seeking to %d", transport->seek_offset);
+
 	xmms_ringbuf_clear (transport->buffer);
 	xmms_transport_unlock (transport);
 	seek_method (transport, transport->seek_offset, transport->seek_whence);
@@ -485,18 +531,24 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	g_mutex_free (transport->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (transport));
 
-	g_free (transport->suburi);
+	g_free (transport->suburl);
 	g_free (transport);
 }
 
+/**
+ * Finds a transportplugin for this URL.
+ *
+ * @internal
+ */
+
 static xmms_plugin_t *
-xmms_transport_find_plugin (const gchar *uri)
+xmms_transport_plugin_find (const gchar *url)
 {
 	GList *list, *node;
 	xmms_plugin_t *plugin = NULL;
 	xmms_transport_can_handle_method_t can_handle;
 
-	g_return_val_if_fail (uri, NULL);
+	g_return_val_if_fail (url, NULL);
 
 	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_TRANSPORT);
 	
@@ -508,7 +560,7 @@ xmms_transport_find_plugin (const gchar *uri)
 		if (!can_handle)
 			continue;
 
-		if (can_handle (uri)) {
+		if (can_handle (url)) {
 			xmms_plugin_ref (plugin);
 			break;
 		}

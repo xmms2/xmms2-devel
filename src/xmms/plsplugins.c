@@ -22,6 +22,21 @@ static xmms_plugin_t * xmms_playlist_plugin_find (const gchar *mimetype);
  * Public functions.
  */
 
+gboolean
+xmms_playlist_plugin_save (xmms_playlist_plugin_t *plsplugin,
+		xmms_playlist_t *playlist, gchar *filename)
+{
+	xmms_playlist_plugin_write_method_t write;
+
+	g_return_val_if_fail (plsplugin, FALSE);
+	g_return_val_if_fail (playlist, FALSE);
+	g_return_val_if_fail (filename, FALSE);
+
+	write = xmms_plugin_method_get (plsplugin->plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST);
+	
+	return write (playlist, filename);
+}
+
 xmms_playlist_plugin_t *
 xmms_playlist_plugin_new (const gchar *mimetype)
 {
@@ -52,7 +67,7 @@ xmms_playlist_plugin_free (xmms_playlist_plugin_t *plsplugin)
 void
 xmms_playlist_plugin_read (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, xmms_transport_t *transport)
 {
-	xmms_playlist_plugin_read_method read_method;
+	xmms_playlist_plugin_read_method_t read_method;
 	g_return_if_fail (plsplugin);
 	g_return_if_fail (transport);
 
@@ -71,7 +86,7 @@ xmms_playlist_plugin_find (const gchar *mimetype)
 {
 	GList *list, *node;
 	xmms_plugin_t *plugin = NULL;
-	xmms_playlist_plugin_can_handle_method can_handle;
+	xmms_playlist_plugin_can_handle_method_t can_handle;
 	
 	g_return_val_if_fail (mimetype, NULL);
 

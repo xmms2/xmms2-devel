@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#define XMMS_OBJECT_MID 0xdeadbeef
+#define XMMS_OBJECT_MID 0x00455574
 
 typedef struct xmms_object_St {
 	guint32 id;

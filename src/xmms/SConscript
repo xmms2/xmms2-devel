@@ -5,7 +5,8 @@ Import('base_env')
 xmms2d_sources = Split ("config_xmms.c plugin.c object.c ringbuf.c "+
 			"transport.c decoder.c output.c playlist.c magic.c "+
 			"core.c plsplugins.c dbus.c unixsignal.c "+
-			"log.c util.c visualisation.c main.c mediainfo.c effect.c")
+			"log.c util.c visualisation.c main.c mediainfo.c effect.c "+
+			"playlist_entry.c")
 
 
 env = base_env.Copy()

@@ -56,7 +56,7 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 }
 
 guint
-xmms_ringbuf_free (const xmms_ringbuf_t *ringbuf)
+xmms_ringbuf_bytes_free (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
 
@@ -66,7 +66,7 @@ xmms_ringbuf_free (const xmms_ringbuf_t *ringbuf)
 }
 
 guint
-xmms_ringbuf_used (const xmms_ringbuf_t *ringbuf)
+xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
      
@@ -83,7 +83,7 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 
 	g_return_val_if_fail (ringbuf, 0);
 	
-	to_read = MIN (length, xmms_ringbuf_used (ringbuf));
+	to_read = MIN (length, xmms_ringbuf_bytes_used (ringbuf));
 	while (to_read > 0) {
 		cnt = MIN (to_read, ringbuf->buffer_size - ringbuf->rd_index);
 		memcpy (data_ptr, ringbuf->buffer + ringbuf->rd_index, cnt);
@@ -106,7 +106,7 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 
 	g_return_val_if_fail (ringbuf, 0);
 
-	to_write = MIN (length, xmms_ringbuf_free(ringbuf));
+	to_write = MIN (length, xmms_ringbuf_bytes_free(ringbuf));
 	while (to_write > 0) {
 		cnt = MIN (to_write, ringbuf->buffer_size - ringbuf->wr_index);
 		memcpy (&ringbuf->buffer[ringbuf->wr_index], &data_ptr[w], cnt);
@@ -120,19 +120,6 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 	return w;
 }
 
-guint
-xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
-{
-	gint cnt;
-
-	g_return_val_if_fail (ringbuf, 0);
-
-	cnt = MIN (length, xmms_ringbuf_free(ringbuf));
-	ringbuf->rd_index = (ringbuf->buffer_size + ((ringbuf->rd_index - cnt) % ringbuf->buffer_size)) % ringbuf->buffer_size;
-	return cnt;     
-}
-
-
 void
 xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
@@ -141,7 +128,7 @@ xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (mtx);
 
 	
-	while ((xmms_ringbuf_free (ringbuf) < len) && !ringbuf->eos)
+	while ((xmms_ringbuf_bytes_free (ringbuf) < len) && !ringbuf->eos)
 		g_cond_wait (ringbuf->free_cond, mtx);
 }
 
@@ -153,16 +140,16 @@ xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (len <= ringbuf->buffer_size);
 	g_return_if_fail (mtx);
 
-	while ((xmms_ringbuf_used (ringbuf) < len) && !ringbuf->eos)
+	while ((xmms_ringbuf_bytes_used (ringbuf) < len) && !ringbuf->eos)
 		g_cond_wait (ringbuf->used_cond, mtx);
 }
 
 gboolean
-xmms_ringbuf_eos (const xmms_ringbuf_t *ringbuf)
+xmms_ringbuf_iseos (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, TRUE);
 
-	if (xmms_ringbuf_used (ringbuf) > 0)
+	if (xmms_ringbuf_bytes_used (ringbuf) > 0)
 		return FALSE;
 	
 	return ringbuf->eos;
@@ -187,7 +174,7 @@ xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (mtx);
 
-	while (!xmms_ringbuf_eos (ringbuf))
+	while (!xmms_ringbuf_iseos (ringbuf))
 		g_cond_wait (ringbuf->eos_cond, mtx);
 
 }

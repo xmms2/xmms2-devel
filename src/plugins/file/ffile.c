@@ -22,8 +22,8 @@ typedef struct {
  * Function prototypes
  */
 
-static gboolean xmms_file_can_handle (const gchar *uri);
-static gboolean xmms_file_open (xmms_transport_t *transport, const gchar *uri);
+static gboolean xmms_file_can_handle (const gchar *url);
+static gboolean xmms_file_open (xmms_transport_t *transport, const gchar *url);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gboolean xmms_file_eof (xmms_transport_t *transport);
 
@@ -52,38 +52,38 @@ xmms_plugin_get (void)
  */
 
 static gboolean
-xmms_file_can_handle (const gchar *uri)
+xmms_file_can_handle (const gchar *url)
 {
-	g_return_val_if_fail (uri, FALSE);
+	g_return_val_if_fail (url, FALSE);
 
-	XMMS_DBG ("xmms_file_can_handle (%s)", uri);
+	XMMS_DBG ("xmms_file_can_handle (%s)", url);
 	
-	if ((g_strncasecmp (uri, "file:", 5) == 0) || (uri[0] == '/'))
+	if ((g_strncasecmp (url, "file:", 5) == 0) || (url[0] == '/'))
 		return TRUE;
 	return FALSE;
 }
 
 static gboolean
-xmms_file_open (xmms_transport_t *transport, const gchar *uri)
+xmms_file_open (xmms_transport_t *transport, const gchar *url)
 {
 	FILE *fp;
 	xmms_file_data_t *data;
-	const gchar *uriptr;
+	const gchar *urlptr;
 
-	XMMS_DBG ("xmms_file_open (%p, %s)", transport, uri);
+	XMMS_DBG ("xmms_file_open (%p, %s)", transport, url);
 	
 	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (uri, FALSE);
+	g_return_val_if_fail (url, FALSE);
 
-	if (g_strncasecmp (uri, "file:", 5) == 0)
-		uriptr = strchr (uri, '/');
+	if (g_strncasecmp (url, "file:", 5) == 0)
+		urlptr = strchr (url, '/');
 	else
-		uriptr = uri;
-	if (!uriptr)
+		urlptr = url;
+	if (!urlptr)
 		return FALSE;
 
-	XMMS_DBG ("Opening %s", uriptr);
-	fp = fopen (uriptr, "rb");
+	XMMS_DBG ("Opening %s", urlptr);
+	fp = fopen (urlptr, "rb");
 	XMMS_DBG ("fp: %p", fp);
 	if (!fp)
 		return FALSE;

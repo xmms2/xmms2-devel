@@ -403,7 +403,7 @@ xmms_output_thread (gpointer data)
 			xmms_core_playtime_set (played_time);
 
 			
-		} else if (xmms_ringbuf_eos (output->buffer)) {
+		} else if (xmms_ringbuf_iseos (output->buffer)) {
 			GTimeVal time;
 
 			xmms_output_unlock (output);
@@ -411,7 +411,7 @@ xmms_output_thread (gpointer data)
 			xmms_output_lock (output);
 			output->played = 0;
 			
-			while (xmms_ringbuf_eos (output->buffer)) {
+			while (xmms_ringbuf_iseos (output->buffer)) {
 				g_get_current_time (&time);
 				g_time_val_add (&time, 10 * G_USEC_PER_SEC);
 				if (!g_cond_timed_wait (output->cond, output->mutex, &time)){

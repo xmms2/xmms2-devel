@@ -149,6 +149,20 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
 }
 
 void
+xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename)
+{
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SAVE, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, filename);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
+}
+
+void
 xmmsc_playback_stop (xmmsc_connection_t *c)
 {
 	xmmsc_send_void(c,XMMS_SIGNAL_PLAYBACK_STOP);
@@ -225,7 +239,7 @@ xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
 }
 
 void
-xmmsc_playlist_add (xmmsc_connection_t *c, char *uri)
+xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
@@ -233,7 +247,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *uri)
 	
 	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_ADD, NULL);
 	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, uri);
+	dbus_message_iter_append_string (&itr, url);
 	dbus_connection_send (c->conn, msg, &cserial);
 	dbus_message_unref (msg);
 
@@ -276,7 +290,7 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 				entry = calloc(1,sizeof(xmmsc_playlist_entry_t));
 			        entry->id = dbus_message_iter_get_uint32 (&itr);
 				entry->properties = xmmsc_playlist_get_mediainfo (c, entry->id);
-				entry->url = (gchar *)g_hash_table_lookup (entry->properties, "uri");
+				entry->url = (gchar *)g_hash_table_lookup (entry->properties, "url");
 				list = g_list_append (list, entry);
 
 			}

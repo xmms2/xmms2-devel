@@ -37,17 +37,15 @@ void xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data);
 xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);
 xmms_plugin_t *xmms_decoder_plugin_get (xmms_decoder_t *);
-
-xmms_playlist_entry_t * xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_transport_t *transport);
-void xmms_decoder_set_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
-
 void xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len);
 void xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate);
 guint xmms_decoder_samplerate_get (xmms_decoder_t *decoder);
-
-void xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
-
-xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xmms_playlist_entry_t *entry);
-void xmms_decoder_destroy (xmms_decoder_t *decoder);
+xmms_playlist_entry_t *xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
+			    		           xmms_transport_t *transport);
+void xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, 
+				       xmms_playlist_entry_t *entry);
+xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, 
+					  xmms_transport_t *transport, 
+					  xmms_playlist_entry_t *entry);
 
 #endif /* __XMMS_DECODER_H__ */

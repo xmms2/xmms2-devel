@@ -18,6 +18,7 @@
 #include "core.h"
 #include "signal_xmms.h"
 #include "visualisation.h"
+#include "config_xmms.h"
 
 #include <string.h>
 
@@ -50,16 +51,17 @@ typedef enum {
 	XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO = 1 << 15,
 	XMMS_SIGNAL_MASK_PLAYLIST_MOVE = 1 << 16,
 	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 17,
+	XMMS_SIGNAL_MASK_PLAYLIST_SAVE = 1 << 18,
 
-	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 18,
-	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 19,
-	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 20,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 21,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 22,
+	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 19,
+	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 20,
+	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 21,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 22,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 23,
 
-	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 23,
+	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 24,
 
-	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 24,
+	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 25,
 } xmms_dbus_signal_mask_t;
 
 
@@ -79,6 +81,7 @@ static gboolean handle_playlist_remove (guint arg);
 static gboolean handle_playlist_list (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_shuffle ();
 static gboolean handle_playlist_clear ();
+static gboolean handle_playlist_save (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_jump (guint arg);
 static gboolean handle_playlist_move (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg);
@@ -177,6 +180,9 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_PLAYLIST_MOVE,
 		XMMS_SIGNAL_MASK_PLAYLIST_MOVE, 
 		NULL, handle_playlist_move, NULL, NULL },
+	{ XMMS_SIGNAL_PLAYLIST_SAVE,
+		XMMS_SIGNAL_MASK_PLAYLIST_SAVE, 
+		NULL, handle_playlist_save, NULL, NULL },
 	{ XMMS_SIGNAL_PLAYLIST_CHANGED,
 		XMMS_SIGNAL_MASK_PLAYLIST_CHANGED, 
 		send_playlist_changed, NULL, NULL, NULL },
@@ -486,8 +492,6 @@ handle_config_change (DBusConnection *conn, DBusMessage *msg)
 		dbus_message_iter_next (&itr);
 		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
 			val = dbus_message_iter_get_string (&itr);
-
-
 			xmms_config_set (key, val);
 
 		}
@@ -597,10 +601,10 @@ handle_playlist_add (DBusConnection *conn, DBusMessage *msg)
  
         dbus_message_iter_init (msg, &itr);
         if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-                gchar *uri = dbus_message_iter_get_string (&itr);
-                XMMS_DBG ("adding to playlist: %s", uri);
-                xmms_core_playlist_adduri (uri);
-		g_free (uri);
+                gchar *url = dbus_message_iter_get_string (&itr);
+                XMMS_DBG ("adding to playlist: %s", url);
+                xmms_core_playlist_addurl (url);
+		g_free (url);
         }
 	
 	return TRUE;
@@ -665,6 +669,21 @@ handle_playlist_clear ()
 }
 
 static gboolean
+handle_playlist_save (DBusConnection *conn, DBusMessage *msg)
+{
+        DBusMessageIter itr;
+ 
+        dbus_message_iter_init (msg, &itr);
+        if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+                gchar *filename = dbus_message_iter_get_string (&itr);
+                xmms_core_playlist_save (filename);
+		g_free (filename);
+        }
+	
+	return TRUE;
+}
+
+static gboolean
 handle_playlist_move (DBusConnection *conn, DBusMessage *msg)
 {
 	/** @todo add this function */
@@ -698,7 +717,7 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
         }
 
         if (entry) {
-                gchar *uri = xmms_playlist_entry_get_uri (entry);
+                gchar *url = xmms_playlist_entry_url_get (entry);
 
 		reply = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
 
@@ -709,14 +728,14 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
 		dbus_message_iter_append_dict_key (&dictitr, "id");
 		dbus_message_iter_append_uint32 (&dictitr, id);
 
-		/* add uri to Dict */
-                if (uri) {
-                        dbus_message_iter_append_dict_key (&dictitr, "uri");
-                        dbus_message_iter_append_string (&dictitr, uri);
+		/* add url to Dict */
+                if (url) {
+                        dbus_message_iter_append_dict_key (&dictitr, "url");
+                        dbus_message_iter_append_string (&dictitr, url);
                 }
 
 		/* add the rest of the properties to Dict */
-                xmms_playlist_entry_foreach_prop (entry, hash_to_dict, &dictitr);
+                xmms_playlist_entry_property_foreach (entry, hash_to_dict, &dictitr);
 
 		xmms_playlist_entry_unref (entry);
                 dbus_connection_send (conn, reply, &serial);

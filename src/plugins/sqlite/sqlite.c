@@ -98,7 +98,7 @@ xmms_sqlite_new (xmms_medialib_t *medialib)
 		return FALSE;
 	}
 
-	sqlite_exec (sql, "create table song (id int primary_key, uri, " 
+	sqlite_exec (sql, "create table song (id int primary_key, url, " 
 			XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST ","
 			XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM ","
 			XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE ","
@@ -168,35 +168,35 @@ xmms_sqlite_foreach (void *pArg, int argc, char **argv, char **columnName)
 			continue;
 		}
 
-		if (g_strcasecmp (columnName[i], "uri") == 0)
-			xmms_playlist_entry_set_uri (entry, argv[i]);
+		if (g_strcasecmp (columnName[i], "url") == 0)
+			xmms_playlist_entry_url_set (entry, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "title") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "artist") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "album") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "genre") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "comment") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "bitrate") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "duration") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "tracknr") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "year") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, argv[i]);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "properties") == 0) {
 			gchar **prop;
@@ -223,7 +223,7 @@ xmms_sqlite_foreach (void *pArg, int argc, char **argv, char **columnName)
 				value = xmms_sqlite_korv_decode (val[1]);
 
 				XMMS_DBG ("Adding %s=%s", key, value);
-				xmms_playlist_entry_set_prop (entry, key, value);
+				xmms_playlist_entry_property_set (entry, key, value);
 
 				g_free (key);
 				g_free (value);
@@ -263,7 +263,7 @@ xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search)
 	gchar *query;
 	GList *ret;
 	gchar *err;
-	gchar *uri;
+	gchar *url;
 
 	g_return_val_if_fail (medialib, NULL);
 	g_return_val_if_fail (search, NULL);
@@ -272,20 +272,20 @@ xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search)
 
 	g_return_val_if_fail (data, NULL);
 
-	uri = xmms_playlist_entry_get_uri (search);
+	url = xmms_playlist_entry_url_get (search);
 
-	if (uri) {
+	if (url) {
 		gchar *p;
 
-		while ((p=strchr (uri, '*')))
+		while ((p=strchr (url, '*')))
 			*p='%';
 
-		query = g_strdup_printf ("SELECT * FROM SONG WHERE URI LIKE \"%s\" ", uri);
+		query = g_strdup_printf ("SELECT * FROM SONG WHERE URI LIKE \"%s\" ", url);
 	} else {
 		query = g_strdup_printf ("SELECT * FROM SONG ");
 	}
 
-	xmms_playlist_entry_foreach_prop (search, xmms_sqlite_foreach_prop, &query);
+	xmms_playlist_entry_property_foreach (search, xmms_sqlite_foreach_prop, &query);
 	
 	XMMS_DBG ("Medialib query = %s", query);
 
@@ -307,7 +307,7 @@ xmms_sqlite_add_foreach (gpointer key, gpointer value, gpointer udata)
 {
 	gchar **store = (gchar **)udata;
 
-	if (xmms_playlist_entry_is_wellknown ((gchar*)key)) {
+	if (xmms_playlist_entry_iswellknown ((gchar*)key)) {
 	
 		if (store[0]) {
 			gchar *f = store[0];
@@ -371,7 +371,7 @@ xmms_sqlite_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 	store[1] = NULL;
 	store[2] = NULL;
 	
-	xmms_playlist_entry_foreach_prop (entry, xmms_sqlite_add_foreach, store);
+	xmms_playlist_entry_property_foreach (entry, xmms_sqlite_add_foreach, store);
 
 	values = store[0];
 	keys = store[1];
@@ -381,13 +381,13 @@ xmms_sqlite_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 		goto cleanup;
 
 	if (props) {
-		query = g_strdup_printf ("INSERT INTO SONG (uri, %s, properties) VALUES (\"%s\", %s, \"%s\")",
-				keys, xmms_playlist_entry_get_uri (entry),
+		query = g_strdup_printf ("INSERT INTO SONG (url, %s, properties) VALUES (\"%s\", %s, \"%s\")",
+				keys, xmms_playlist_entry_url_get (entry),
 				values, props);
 	} else {
-		query = g_strdup_printf ("INSERT INTO SONG (uri, %s) VALUES (\"%s\", %s)",
+		query = g_strdup_printf ("INSERT INTO SONG (url, %s) VALUES (\"%s\", %s)",
 				keys,
-				xmms_playlist_entry_get_uri (entry),
+				xmms_playlist_entry_url_get (entry),
 				values);
 	}
 

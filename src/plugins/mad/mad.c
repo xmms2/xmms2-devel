@@ -213,7 +213,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint fil
 			XMMS_DBG ("XING duration %d", duration);
 			tmp = g_strdup_printf ("%d", duration);
 
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 			g_free (tmp);
 		}
 
@@ -223,7 +223,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint fil
 
 			tmp = g_strdup_printf ("%u", (gint)((xmms_xing_get_bytes (xing) * 8 / fsize);
 			XMMS_DBG ("XING bitrate %d", tmp);
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
 		}*/
 
@@ -236,16 +236,16 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint fil
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
 	} else {
 		tmp = g_strdup_printf ("%d", (gint) (filesize*(gdouble)8000.0/bitrate));
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 		XMMS_DBG ("duration = %s", tmp);
 		g_free (tmp);
 	}
 		
 	tmp = g_strdup_printf ("%d", bitrate / 1000);
-	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 	g_free (tmp);
 
 }
@@ -276,7 +276,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		return;
 	}
 
-	if (xmms_transport_is_local (transport) && 
+	if (xmms_transport_islocal (transport) && 
 			ret >= 10 && 
 			xmms_mad_id3v2_header (buf, &head)) {
 		gchar *id3v2buf;
@@ -316,7 +316,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	
 	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
 
-	if (xmms_transport_is_local (transport) && !id3handled) {
+	if (xmms_transport_islocal (transport) && !id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 		ret = xmms_transport_read (transport, buf, 128);

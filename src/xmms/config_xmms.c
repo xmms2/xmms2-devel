@@ -320,9 +320,9 @@ xmms_config_save_to_file (xmms_config_data_t *config, gchar *filename)
 	fwrite ("\t<transport>\n",13, 1, fp);
 	g_hash_table_foreach (config->transport, xmms_config_save_section, (gpointer) fp);
 	fwrite ("\t</transport>\n\n",14, 1, fp);
-	fwrite ("\t<effect>\n",13, 1, fp);
+	fwrite ("\t<effect>\n",10, 1, fp);
 	g_hash_table_foreach (config->effect, xmms_config_save_section, (gpointer) fp);
-	fwrite ("\t</effect>\n\n",14, 1, fp);
+	fwrite ("\t</effect>\n\n",12, 1, fp);
 
 	fwrite ("</XMMS>\n", 8, 1, fp);
 	XMMS_CONFIG_UNLOCK;

@@ -162,8 +162,9 @@ render_vis (gpointer data)
 }
 
 static void
-set_mediainfo (xmmsc_connection_t *conn, void *arg)
+set_mediainfo (void *userdata, void *arg)
 {
+	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
 	guint id = GPOINTER_TO_UINT (arg);
 
 	xmmsc_playlist_get_mediainfo (conn, id);
@@ -172,7 +173,7 @@ set_mediainfo (xmmsc_connection_t *conn, void *arg)
 
 
 static void
-handle_mediainfo (xmmsc_connection_t *conn, void *arg)
+handle_mediainfo (void *userdata, void *arg)
 {
 	GHashTable *entry = (GHashTable *)arg;
 

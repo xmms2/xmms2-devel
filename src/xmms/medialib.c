@@ -121,7 +121,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry
 	if (!xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE)) {
 		gchar *ap;
 		
-		ap = xmms_playlist_entry_get_uri (entry);
+		ap = xmms_playlist_entry_get_url (entry);
 		p = strrchr (ap, '/');
 		p++;
 		if (!p)
@@ -152,15 +152,15 @@ xmms_medialib_list_free (GList *list)
 }
 
 gboolean
-xmms_medialib_check_if_exists (xmms_medialib_t *medialib, gchar *uri)
+xmms_medialib_check_if_exists (xmms_medialib_t *medialib, gchar *url)
 {
 	xmms_playlist_entry_t *f;
 	GList *list;
 	
 	g_return_val_if_fail (medialib, FALSE);
-	g_return_val_if_fail (uri, FALSE);
+	g_return_val_if_fail (url, FALSE);
 
-	f = xmms_playlist_entry_new (uri);
+	f = xmms_playlist_entry_new (url);
 
 	list = xmms_medialib_search (medialib, f);
 
@@ -238,7 +238,7 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 
 			if (entry) {
 				XMMS_DBG ("Adding %s", path);
-				xmms_playlist_entry_set_uri (entry, path);
+				xmms_playlist_entry_set_url (entry, path);
 				xmms_medialib_add_entry (medialib, entry);
 				xmms_playlist_entry_unref (entry);
 			} else {

@@ -30,7 +30,7 @@ print_mediainfo (GHashTable *entry)
 	if (!entry)
 		return;
 
-	url = (gchar *)g_hash_table_lookup (entry, "uri");
+	url = (gchar *)g_hash_table_lookup (entry, "url");
 	url = xmmsc_decode_path (url);
 	printf ("URI:    %s\n", url);
 	g_free (url);
@@ -130,21 +130,22 @@ handle_currentid (void *userdata, void *arg) {
 static guint lastid;
 
 void
-handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
+handle_playlist_list_mediainfo (void *userdata, void *arg)
 {
 	GHashTable *entry = (GHashTable *) arg;
 	gchar *artist;
 	gchar *title;
 	gchar *str;
-	gchar *uri;
+	gchar *url;
 	gchar *duration;
 	guint id;
 	guint tme;
+	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
 
 	id = GPOINTER_TO_UINT (g_hash_table_lookup (entry, "id"));
 	artist = (gchar *)g_hash_table_lookup (entry, "artist");
 	title = (gchar *)g_hash_table_lookup (entry, "title");
-	uri = (gchar *)g_hash_table_lookup (entry, "uri");
+	url = (gchar *)g_hash_table_lookup (entry, "url");
 	duration = (gchar *)g_hash_table_lookup (entry, "duration");
 
 	if (tme && duration)
@@ -157,9 +158,9 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 	if (artist && title) {
 		str = g_strdup_printf ("%s - %s", artist, title);
 	} else {
-		str = strrchr (uri, '/');
+		str = strrchr (url, '/');
 		if (!str || !str[1])
-			str = uri;
+			str = url;
 		else
 			str++;
 
@@ -180,8 +181,9 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 }
 
 void
-handle_playlist_list (xmmsc_connection_t *conn, void *arg)
+handle_playlist_list (void *userdata, void *arg)
 {
+	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
 	guint32 *list=arg;
 	gint i=0;
 
@@ -406,6 +408,17 @@ main(int argc, char **argv)
 
 			setup_playlist (c);
 
+		} else if ( streq (argv[1], "savelist") ) {
+
+			if (argc < 3) {
+				printf ("usage: savelist filename\n");
+				return 1;
+			}
+			xmmsc_playlist_save (c, argv[2]);
+
+			xmmsc_deinit (c);
+			exit (0);
+
 		} else if ( streq (argv[1], "add") ) {
 			int i;
 			if ( argc < 3 ) {
@@ -413,20 +426,20 @@ main(int argc, char **argv)
 				return 1;
 			}
 			for (i=2;i<argc;i++) {
-				gchar nuri[XMMS_MAX_URI_LEN];
+				gchar nurl[XMMS_MAX_URI_LEN];
 				if (!strchr (argv[i], ':')) {
 					if (argv[i][0] == '/') {
-						g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s", argv[i]);
+						g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s", argv[i]);
 					} else {
 						gchar *cwd = g_get_current_dir ();
-						g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[i]);
+						g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[i]);
 						g_free (cwd);
 					}
 				} else {
-					g_snprintf (nuri, XMMS_MAX_URI_LEN, "%s", argv[i]);
+					g_snprintf (nurl, XMMS_MAX_URI_LEN, "%s", argv[i]);
 				}
 
-				xmmsc_playlist_add (c, xmmsc_encode_path (nuri));
+				xmmsc_playlist_add (c, xmmsc_encode_path (nurl));
 			}
 			xmmsc_deinit (c);
 			exit (0);

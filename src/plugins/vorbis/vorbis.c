@@ -126,13 +126,13 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		gint fsize = xmms_transport_size (xmms_decoder_transport_get (decoder)) * 8;
 
 		if (!fsize) {
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
 		} else {
 			gchar *tmp;
 			duration = fsize / data->vi.bitrate_nominal * 1000;
 			tmp = g_strdup_printf ("%d", duration);
 
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 			g_free (tmp);
 		}
 	}
@@ -142,7 +142,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 			gchar **s;
 			s = g_strsplit (*ptr, "=", 2);
 			if (s && s[0] && s[1]) {
-				xmms_playlist_entry_set_prop (entry, s[0], s[1]);
+				xmms_playlist_entry_property_set (entry, s[0], s[1]);
 			}
 
 			g_strfreev (s);
@@ -152,7 +152,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	}
 	
 
-	xmms_playlist_entry_set_prop (entry, "vendor", data->vc.vendor);
+	xmms_playlist_entry_property_set (entry, "vendor", data->vc.vendor);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_playlist_entry_unref (entry);
