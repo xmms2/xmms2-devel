@@ -30,11 +30,13 @@
 #include <math.h>
 
 #include "xmms/playlist.h"
+#include "xmms/plsplugins.h"
 #include "xmms/dbus.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/mediainfo.h"
+#include "xmms/magic.h"
 
 
 /** @defgroup PlaylistClientMethods PlaylistClientMethods
@@ -674,6 +676,37 @@ xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 	return r;
 }
 
+XMMS_METHOD_DEFINE (save, xmms_playlist_save, xmms_playlist_t *, NONE, STRING, NONE);
+
+void
+xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *err)
+{
+	gboolean ret;
+	const gchar *mime;
+	xmms_playlist_plugin_t *plsplugin;
+
+	mime = xmms_magic_mime_from_file (filename);
+
+	if (!mime) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Could not determine format of output file");
+		return;
+	}
+
+	plsplugin = xmms_playlist_plugin_new (mime);
+
+	if (!plsplugin) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Could not determine format of output file");
+		return;
+	}
+
+	ret = xmms_playlist_plugin_save (plsplugin, playlist, filename);
+	xmms_playlist_plugin_free (plsplugin);
+
+	if (!ret) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Something went wrong when writing");
+	}
+}
+
 
 /** initializes a new xmms_playlist_t.
   */
@@ -744,6 +777,10 @@ xmms_playlist_init (void)
 	xmms_object_method_add (XMMS_OBJECT (ret), 
 				XMMS_METHOD_SORT, 
 				XMMS_METHOD_FUNC (sort));
+
+	xmms_object_method_add (XMMS_OBJECT (ret),
+				XMMS_METHOD_SAVE,
+				XMMS_METHOD_FUNC (save));
 
 	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
 
