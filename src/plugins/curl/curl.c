@@ -112,7 +112,12 @@ xmms_curl_can_handle (const gchar *uri)
 static size_t 
 xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 {
-	xmms_curl_data_t *data = (xmms_curl_data_t *) stream;
+	xmms_curl_data_t *data;
+	xmms_transport_t *transport = (xmms_transport_t *) stream;
+
+	g_return_val_if_fail (transport, 0);
+
+	data = xmms_transport_plugin_data_get (transport);
 
 	if (!data->mime) {
 		curl_easy_getinfo (data->curl, CURLINFO_CONTENT_TYPE, &data->mime);
@@ -122,6 +127,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 			XMMS_DBG ("Shoutcast detected...");
 			data->mime = "audio/mpeg"; /* quite safe */
+			xmms_transport_mime_type_set (transport, data->mime);
 			data->stream = TRUE;
 
 /*			tmp = g_strsplit (ptr, "\r\n", 0);
@@ -140,7 +146,10 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 			return size*nmemb;
 		}
+
+		xmms_transport_mime_type_set (transport, data->mime);
 	}
+
 	
 	data->buf = g_malloc (size*nmemb);
 	data->data_in_buf = size*nmemb;
@@ -171,7 +180,7 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *uri, gint offset)
 	curl_easy_setopt (curl, CURLOPT_URL, xmms_util_decode_path (uri));
 	curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, xmms_curl_cwrite);
-	curl_easy_setopt (curl, CURLOPT_WRITEDATA, data);
+	curl_easy_setopt (curl, CURLOPT_WRITEDATA, transport);
 	curl_easy_setopt (curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (curl, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
 	curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headerlist);
@@ -211,7 +220,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 	}
 	
 	/** @todo mimetype from header? */
-	xmms_transport_mime_type_set (transport, "audio/mpeg");
+	/*xmms_transport_mime_type_set (transport, "audio/mpeg");*/
 
 	FD_ZERO (&data->fdread);
 	FD_ZERO (&data->fdwrite);

@@ -13,6 +13,7 @@ typedef struct xmms_core_St {
 
 	xmms_output_t *output;
 	xmms_decoder_t *decoder;
+	xmms_transport_t *transport;
 
 	xmms_playlist_t *playlist;
 	xmms_playlist_entry_t *curr_song;

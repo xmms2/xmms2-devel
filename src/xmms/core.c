@@ -226,15 +226,60 @@ xmms_core_init ()
 
 }
 
-static gpointer 
-core_thread (gpointer data)
+static void
+xmms_core_mimetype_callback (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	xmms_transport_t *transport;
-	xmms_decoder_t *decoder;
 	xmms_playlist_plugin_t *plsplugin;
 	const gchar *mime;
 
+	mime = xmms_transport_mime_type_get (core->transport);
+	if (!mime) {
+		xmms_transport_close (core->transport);
+		xmms_core_play_next ();
+	}
+
+	XMMS_DBG ("mime-type: %s", mime);
+
+	plsplugin = xmms_playlist_plugin_new (mime);
+	if (plsplugin) {
+
+		/* This is a playlist file... */
+		XMMS_DBG ("Playlist!!");
+		xmms_playlist_plugin_read (plsplugin, core->playlist, core->transport);
+
+		/* we don't want it in the playlist. */
+		xmms_playlist_id_remove (core->playlist, xmms_playlist_entry_id_get (core->curr_song));
+
+		/* cleanup */
+		xmms_playlist_plugin_free (plsplugin);
+		xmms_core_play_next ();
+	}
+
+	xmms_playlist_entry_mimetype_set (core->curr_song, mime);
+
+	core->decoder = xmms_decoder_new (core->curr_song);
+	if (!core->decoder) {
+		xmms_core_play_next ();
+	}
+
+	xmms_object_connect (XMMS_OBJECT (core->decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID,
+			     handle_mediainfo_changed, NULL);
+
+	XMMS_DBG ("starting threads..");
+	XMMS_DBG ("transport started");
+	xmms_decoder_start (core->decoder, core->transport, core->effects, core->output);
+	XMMS_DBG ("decoder started");
+
+}
+
+static gpointer 
+core_thread (gpointer data)
+{
+
 	while (running) {
+
+		core->transport = NULL;
+		core->decoder = NULL;
 		
 		while (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
 			XMMS_DBG ("Waiting until playback starts...");
@@ -252,68 +297,35 @@ core_thread (gpointer data)
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
-		transport = xmms_transport_open (core->curr_song->uri);
+		core->transport = xmms_transport_open (core->curr_song);
 
-		if (!transport) {
+		if (!core->transport) {
 			xmms_core_play_next ();
 			continue;
 		}
+		
+		xmms_object_connect (XMMS_OBJECT (core->transport), 
+				XMMS_SIGNAL_TRANSPORT_MIMETYPE,
+				xmms_core_mimetype_callback, NULL);
 
-		mime = xmms_transport_mime_type_get (transport);
-		if (!mime) {
-			xmms_transport_close (transport);
-			xmms_core_play_next ();
-			continue;
-		}
+		XMMS_DBG ("Starting transport");
+		xmms_transport_start (core->transport);
 
-		XMMS_DBG ("mime-type: %s", mime);
 
-		plsplugin = xmms_playlist_plugin_new (mime);
-		if (plsplugin) {
-
-			/* This is a playlist file... */
-			XMMS_DBG ("Playlist!!");
-			xmms_transport_start (transport);
-			XMMS_DBG ("transport started");
-			xmms_playlist_plugin_read (plsplugin, core->playlist, transport);
-
-			/* we don't want it in the playlist. */
-			xmms_playlist_id_remove (core->playlist, xmms_playlist_entry_id_get (core->curr_song));
-
-			/* cleanup */
-			xmms_playlist_plugin_free (plsplugin);
-			xmms_transport_close (transport);
-			continue;
-		}
-
-		xmms_playlist_entry_mimetype_set (core->curr_song, mime);
-
-		core->decoder = decoder = xmms_decoder_new (core->curr_song);
-		if (!decoder) {
-			xmms_transport_close (transport);
-			xmms_core_play_next ();
-			continue;
-		}
-
-		xmms_object_connect (XMMS_OBJECT (decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID,
-				     handle_mediainfo_changed, NULL);
-
-		XMMS_DBG ("starting threads..");
-		xmms_transport_start (transport);
-		XMMS_DBG ("transport started");
-		xmms_decoder_start (decoder, transport, core->effects, core->output);
-		XMMS_DBG ("decoder started");
-
+		XMMS_DBG ("Waiting for mimetype");
 		g_mutex_lock (core->mutex);
 		g_cond_wait (core->cond, core->mutex);
 		g_mutex_unlock (core->mutex);
 
 		XMMS_DBG ("destroying decoder");
-		xmms_decoder_destroy (decoder);
+		if (core->decoder)
+			xmms_decoder_destroy (core->decoder);
 		XMMS_DBG ("closing transport");
-		xmms_transport_close (transport);
+		if (core->transport)
+			xmms_transport_close (core->transport);
 		XMMS_DBG ("Flushing buffers");
-		xmms_output_flush (core->output);
+		if (core->output)
+			xmms_output_flush (core->output);
 		
 	}
 
