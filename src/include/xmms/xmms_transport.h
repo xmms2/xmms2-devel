@@ -34,6 +34,9 @@ gint xmms_transport_size (xmms_transport_t *transport);
 const gchar *xmms_transport_url_get (const xmms_transport_t *const transport);
 void xmms_transport_buffering_start (xmms_transport_t *transport);
 
+#define XMMS_TRANSPORT_MAX_LINE_SIZE 1024
+gchar *xmms_transport_read_line (xmms_transport_t *transport, gchar *line, xmms_error_t *err);
+
 
 gboolean xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence);
 

@@ -115,6 +115,12 @@ struct xmms_transport_St {
 	xmms_error_t status;
 
 	guint64 current_position; 	
+
+	/** Used for linereading */
+	struct {
+		gchar buf[XMMS_TRANSPORT_MAX_LINE_SIZE];
+		gchar *bufend;
+	} lr;
 };
 
 /** @} */
@@ -300,6 +306,7 @@ xmms_transport_new ()
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
+	transport->lr.bufend = &transport->lr.buf[0];
 	
 	return transport;
 }
@@ -484,6 +491,64 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 	g_mutex_unlock (transport->mutex);
 
 	return ret;
+}
+
+
+/**
+ * Read line.
+ *
+ * Reads one line from the transport. The length of the line can be up
+ * to XMMS_TRANSPORT_MAX_LINE_SIZE bytes. Should not be mixed with
+ * calls to xmms_transport_read.
+ *
+ * @param transport transport to read from.
+ * @param line buffer to store the line in,
+ *             must be atleast XMMS_TRANSPORT_MAX_LINE_SIZE bytes.
+ * @param error a #xmms_error_t structure that can hold errors.
+ * @returns the line or NULL on EOF or error.
+ */
+gchar *
+xmms_transport_read_line (xmms_transport_t *transport, gchar *line, xmms_error_t *err)
+{
+	gchar *p;
+	
+	g_return_val_if_fail (transport, NULL);
+
+	p = strchr (transport->lr.buf, '\n');
+	
+	if (!p) {
+		gint l, r;
+
+		l = (XMMS_TRANSPORT_MAX_LINE_SIZE - 1) - (transport->lr.bufend - transport->lr.buf);
+		if (l) {
+			r = xmms_transport_read (transport, transport->lr.bufend, l, err);
+			if (r < 0) {
+				return NULL;
+			}
+			transport->lr.bufend += r;
+		}
+		if (transport->lr.bufend == transport->lr.buf)
+			return NULL;
+
+		*(transport->lr.bufend) = '\0';
+
+		p = strchr (transport->lr.buf, '\n');
+		if (!p) {
+			p = transport->lr.bufend;
+		}
+	}
+	if (p > transport->lr.buf && *(p-1) == '\r') {
+		*(p-1) = '\0';
+	} else {
+		*p = '\0';
+	}
+
+	strcpy (line, transport->lr.buf);
+	memmove (transport->lr.buf, p + 1, transport->lr.bufend - p);
+	transport->lr.bufend -= (p - transport->lr.buf) + 1;
+	*transport->lr.bufend = '\0';
+	return line;
+
 }
 
 /**

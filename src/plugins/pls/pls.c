@@ -39,12 +39,10 @@
 
 static gboolean xmms_pls_can_handle (const gchar *mimetype);
 static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);
-/* hahahaha ... g string */
 static GString *xmms_pls_write_playlist (guint32 *list);
 
-static gchar * get_value (const gchar *pair, const gchar *key);
-static gchar * build_encoded_url (const gchar *plspath, const gchar *file);
-static gchar * path_get_body (const gchar *path);
+static gchar *build_encoded_url (const gchar *plspath, const gchar *file);
+static gchar *path_get_body (const gchar *path);
 
 /*
  * Plugin header
@@ -89,113 +87,108 @@ xmms_pls_can_handle (const gchar *mime)
 	return FALSE;
 }
 
+
+typedef struct {
+	gint num;
+	gchar *file;
+	gchar *title;
+	gchar *length;
+} xmms_pls_entry_t;
+
+static void
+xmms_pls_add_entry (const gchar *plspath, guint playlist_id, xmms_pls_entry_t *e)
+{
+	if (e->file) {
+		xmms_medialib_entry_t entry;
+		gchar *url;
+
+		url = build_encoded_url (plspath, e->file);
+		entry = xmms_medialib_entry_new (url);
+		g_free (url);
+		
+		if (e->title)
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, e->title);
+
+		if (e->length && atoi (e->length) > 0)
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, e->length);
+
+		xmms_medialib_playlist_add (playlist_id, entry);
+
+		g_free (e->file);
+		e->file = NULL;
+	}
+	if (e->title) {
+		g_free (e->title);
+		e->title = NULL;
+	}
+	if (e->length) {
+		g_free (e->length);
+		e->length = NULL;
+	}
+}
+
 static gboolean
 xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 {
-	gchar *buffer;
+	gchar buffer[XMMS_TRANSPORT_MAX_LINE_SIZE];
+	gint num = -1;
+	gchar **val;
 	const gchar *plspath;
-	gchar **lines;
-	guint current = 1;	/* Line that contains first "File" val */
-	xmms_error_t error;
-	gint read_bytes, size;
+	xmms_pls_entry_t entry;
+	xmms_error_t err;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (playlist_id,  FALSE);
 
-	size = xmms_transport_size (transport);
+	xmms_error_reset (&err);
 
-	if (size == 0) {
-		return TRUE;
-	}
+	plspath = xmms_transport_url_get (transport);
 
-	if (size == -1) {
-		size = 4096;
-	}
-
-	buffer = g_malloc0 (size);
-	g_return_val_if_fail (buffer, FALSE);
-
-	read_bytes = 0;
-	while (read_bytes < size) {
-		gint ret = xmms_transport_read (transport, buffer + read_bytes,
-		                                size - read_bytes, &error);
-
-		XMMS_DBG ("Got %d bytes", ret);
-
-		if (ret <= 0) {
-			if (read_bytes > 0) {
-				break;
-			}
-
-			g_free (buffer);
-			return FALSE;
-		}
-
-		read_bytes += ret;
-		g_assert (read_bytes >= 0);
-	}
-
-	lines = g_strsplit (buffer, "\n", 0);
-	g_free (buffer);
-	g_return_val_if_fail (lines, FALSE);
-
-	if (lines[0] == NULL) {
+	if (!xmms_transport_read_line (transport, buffer, &err)) {
+		XMMS_DBG ("Error reading pls-file");
 		return FALSE;
 	}
-
-	if (g_ascii_strncasecmp (lines[0], "[playlist]", 10) != 0) {
-		g_strfreev (lines);
+	
+	if (g_ascii_strncasecmp (buffer, "[playlist]", 10) != 0) {
 		XMMS_DBG ("Not a PLS file");
 		return FALSE;
 	}
 
-	if (g_ascii_strncasecmp (lines[current], "PlaylistName", 12) == 0) {
-		current++;
-	}
+	memset (&entry, 0, sizeof (entry));
+	entry.num=-1;
 
-	if (g_ascii_strncasecmp (lines[current], "numberofentries", 15) == 0) {
-		current++;
-	}
+	while (xmms_transport_read_line (transport, buffer, &err)) {
+		gchar *np, *ep;
 
-	plspath = xmms_transport_url_get (transport);
-
-	for (; lines[current] != NULL; current += 3) {
-		gchar *file, *title, *length, *url;
-		xmms_medialib_entry_t entry;
-
-		file = get_value (lines[current], "File");
-
-		if (!file) {
-			break;
+		if (g_ascii_strncasecmp (buffer, "File", 4) == 0) {
+			np = &buffer[4];
+			val = &entry.file;
+		} else if (g_ascii_strncasecmp (buffer, "Length", 6) == 0) {
+			np = &buffer[6];
+			val = &entry.length;
+		} else if (g_ascii_strncasecmp (buffer, "Title", 5) == 0) {
+			np = &buffer[5];
+			val = &entry.title;
+		} else {
+			continue;
 		}
 
-		title = get_value (lines[current + 1], "Title");
-		if (!title) {
-			g_free (file);
-			break;
+		num = strtol (np, &ep, 10);
+		if (!ep || *ep != '=') {
+			XMMS_DBG ("Broken line '%s', skipping", buffer);
+			continue;
 		}
 
-		length = get_value (lines[current + 2], "Length");
-		if (!length) {
-			g_free (file);
-			g_free (title);
-			break;
+		if (entry.num != num && entry.num != -1) {
+			xmms_pls_add_entry (plspath, playlist_id, &entry);
 		}
 
-		url = build_encoded_url (plspath, file);
-		entry = xmms_medialib_entry_new (url);
-
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, length);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-		xmms_medialib_playlist_add (playlist_id, entry);
-
-		g_free (url);
-		g_free (file);
-		g_free (title);
-		g_free (length);
+		*val = g_strdup (ep + 1);
+		entry.num = num;
 	}
 
-	g_strfreev (lines);
+	xmms_pls_add_entry (plspath, playlist_id, &entry);
+
 	return TRUE;
 }
 
@@ -244,34 +237,6 @@ xmms_pls_write_playlist (guint32 *list)
 }
 
 static gchar *
-get_value (const gchar *pair, const gchar *key)
-{
-	gchar **split;
-	gchar *ret;
-
-	g_return_val_if_fail (pair, NULL);
-	g_return_val_if_fail (key, NULL);
-
-	split = g_strsplit (pair, "=", 2);
-	g_return_val_if_fail (split, NULL);
-
-	if (g_ascii_strncasecmp (split[0], key, strlen (key)) != 0) {
-		g_strfreev (split);
-		return NULL;
-	}
-
-	if (split[1] == NULL) {
-		g_strfreev (split);
-		return NULL;
-	}
-
-	ret = g_strstrip (g_strdup (split[1]));
-
-	g_strfreev (split);
-	return ret;
-}
-
-static gchar *
 path_get_body (const gchar *path)
 {
 	gchar *beg, *end;
@@ -308,15 +273,10 @@ build_encoded_url (const gchar *plspath, const gchar *file)
 	}
 
 	if (file[0] == '/') {
-
 		path = path_get_body (plspath);
-		url = g_build_filename (path, file, NULL);
-
-		g_free (path);
-		return url;
+	} else {
+		path = g_path_get_dirname (plspath);
 	}
-
-	path = g_path_get_dirname (plspath);
 	url = g_build_filename (path, file, NULL);
 
 	g_free (path);

@@ -105,6 +105,7 @@ xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 	}
 
 	ret = read_method (transport, playlist_id);
+	xmms_transport_stop (transport);
 	xmms_object_unref (transport);
 	xmms_object_unref (plugin);
 

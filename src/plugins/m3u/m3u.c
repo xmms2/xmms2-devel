@@ -138,83 +138,40 @@ parse_line (const gchar *line, const gchar *m3u_path)
 static gboolean
 xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 {
-	gint len = 0, buffer_len = 0;
-	gchar **lines, **line, *buffer;
-	xmms_error_t error;
+	gchar line[XMMS_TRANSPORT_MAX_LINE_SIZE];
+	xmms_error_t err;
 	gboolean extm3u = FALSE;
 
 	g_return_val_if_fail (transport, FALSE);
 
-	buffer_len = xmms_transport_size (transport);
+	xmms_error_reset (&err);
 
-	if (buffer_len == 0) {
-		return TRUE;
+	if (!xmms_transport_read_line (transport, line, &err)) {
+		XMMS_DBG ("Error reading m3u-file");
+		return FALSE;
 	}
 
-	if (buffer_len == -1) {
-		buffer_len = 1024;
-	}
-
-	buffer = g_malloc0 (buffer_len + 1);
-
-	while (len < buffer_len) {
-		gint ret;
-
-		ret = xmms_transport_read (transport, buffer + len, buffer_len, &error);
-		XMMS_DBG ("Got %d bytes.", ret);
-
-		if (ret <= 0) {
-
-			if (len > 0) {
-				break;
-			}
-
-			g_free (buffer);
+	if (strcmp (line, "#EXTM3U") == 0) {
+		extm3u = TRUE;
+		if (!xmms_transport_read_line (transport, line, &err)) {
 			return FALSE;
 		}
-
-		len += ret;
-		g_assert (len >= 0);
 	}
 
-	buffer[len] = '\0';
-
-	lines = g_strsplit (buffer, "\n", 0);
-	g_free (buffer);
-
-	if (!lines)
-		return FALSE;
-
-	line = lines;
-	if (!line) {
-		g_strfreev (lines);
-		return FALSE;
-	}
-
-	if (strcmp (*line, "#EXTM3U") == 0) {
-		extm3u = TRUE;
-		line++;
-	}
-
-	while (*line) {
+	do {
 		xmms_medialib_entry_t entry;
+		gchar *title = NULL, *duration = NULL;
 
-		if (!**line) {
-			line++;
-			continue;
-		}
-
-		if (extm3u && **line == '#') {
-			gchar *title, *p, *duration;
+		if (extm3u && line[0] == '#') {
+			gchar *p;
 			int read, write;
 
-			p = strchr (*line, ',');
+			p = strchr (line, ',');
 			if (p) {
 				*p = '\0';
 				*p++;
 			} else {
 				xmms_log_error ("Malformated m3u");
-				g_strfreev (lines);
 				return FALSE;
 			}
 
@@ -224,35 +181,31 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 			 */
 			title = g_convert (p, strlen (p), "UTF-8", "ISO-8859-1",
 			                   &read, &write, NULL);
-			duration = *line + 8;
+			duration = g_strdup (line + 8);
 
-			line++; /* skip to track */
 
-			if (*line) {
-				entry = parse_line (*line,
-				                    xmms_transport_url_get (transport));
+
+			if (!xmms_transport_read_line (transport, line, &err)) {
+				return FALSE;
 			}
-
-			g_assert (entry);
-
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                                  duration);
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-			g_free (title);
-		} else {
-			entry = parse_line (*line,
-			                    xmms_transport_url_get (transport));
 		}
 
-		g_assert (entry);
+		entry = parse_line (line,
+				    xmms_transport_url_get (transport));
+
+		if (title) {
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
+			g_free (title);
+		}
+		if (duration) {
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+			                                  duration);
+			g_free (duration);
+		}
 
 		xmms_medialib_playlist_add (playlist_id, entry);
 
-		if (*line)
-			line++;
-	}
-
-	g_strfreev (lines);
+	} while (xmms_transport_read_line (transport, line, &err));
 
 	return TRUE;
 }
