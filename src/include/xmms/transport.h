@@ -85,6 +85,7 @@ const gchar *xmms_transport_suburl_get (const xmms_transport_t *const transport)
 void xmms_transport_close (xmms_transport_t *transport);
 gboolean xmms_transport_can_seek (xmms_transport_t *transport);
 gboolean xmms_transport_islocal (xmms_transport_t *transport);
+gboolean xmms_transport_iseos (xmms_transport_t *transport);
 gboolean xmms_transport_plugin_open (xmms_transport_t *transport, 
 				     xmms_playlist_entry_t *entry, gpointer data);
 gint xmms_transport_tell (xmms_transport_t *transport); 

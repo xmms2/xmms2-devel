@@ -233,8 +233,16 @@ flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, const FL
 FLAC__bool
 flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder, void *client_data)
 {
-	/* FIX! */
-	return false;
+	xmms_decoder_t *data = (xmms_decoder_t *) client_data;
+	xmms_transport_t *transport;
+
+	g_return_val_if_fail (flacdecoder, TRUE);
+	g_return_val_if_fail (data, TRUE);
+
+	transport = xmms_decoder_transport_get (data);
+	g_return_val_if_fail (transport, TRUE);
+
+	return xmms_transport_iseos (transport);
 }
 
 void
