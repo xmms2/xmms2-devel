@@ -118,12 +118,10 @@ xmmsc_init (char *clientname)
 
 	x_return_val_if_fail (clientname, NULL);
 
-	if (!(c = malloc (sizeof (xmmsc_connection_t)))) {
+	if (!(c = x_new0 (xmmsc_connection_t, 1))) {
 		return NULL;
 	}
 
-	memset (c, 0, sizeof (xmmsc_connection_t));
-	
 	c->clientname = strdup (clientname);
 	cmd_id = 0;
 
