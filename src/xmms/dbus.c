@@ -17,6 +17,7 @@
 #include "playlist.h"
 #include "core.h"
 #include "signal_xmms.h"
+#include "visualisation.h"
 
 #include <string.h>
 
@@ -54,6 +55,8 @@ typedef enum {
 	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 19,
 	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 20,
 	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 21,
+
+	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 22,
 } xmms_dbus_signal_mask_t;
 
 
@@ -90,6 +93,10 @@ static void send_core_information (xmms_object_t *object,
 	gconstpointer data, gpointer userdata);
 static void send_playlist_changed (xmms_object_t *object, 
 	gconstpointer data, gpointer userdata);
+static void send_visualisation_spectrum (xmms_object_t *object,
+					 gconstpointer data,
+					 gpointer userdata);
+
 
 typedef void (*xmms_dbus_object_callback_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
 
@@ -179,7 +186,10 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 		NULL, handle_core_signal_register, NULL, NULL },
 	{ XMMS_SIGNAL_CORE_SIGNAL_UNREGISTER,
 		XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER, 
-		NULL, handle_core_signal_unregister, NULL, NULL }
+		NULL, handle_core_signal_unregister, NULL, NULL },
+	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
+		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
+		send_visualisation_spectrum, NULL, NULL, NULL },
 };
 
 typedef struct xmms_dbus_connection_St {
@@ -349,6 +359,36 @@ send_playback_playtime (xmms_object_t *object,
                 dbus_message_unref (msg);
         }
                                                                                                     
+	g_mutex_unlock(connectionslock);
+
+}
+
+static void
+send_visualisation_spectrum (xmms_object_t *object,
+		gconstpointer data,
+		gpointer userdata)
+{
+
+        g_mutex_lock(connectionslock);
+
+        if (connections) {
+                DBusMessage *msg;
+                DBusMessageIter itr;
+		double val[FFT_LEN/2];
+		float *fval = (float *)data;
+		int i;
+
+		for (i=0; i<FFT_LEN/2+1; i++) {
+			val[i]=fval[i];
+		}
+
+                msg = dbus_message_new (XMMS_SIGNAL_VISUALISATION_SPECTRUM, NULL);
+                dbus_message_append_iter_init (msg, &itr);
+		dbus_message_iter_append_double_array (&itr, val, FFT_LEN/2+1);
+                g_slist_foreach (connections, do_send, msg);
+                dbus_message_unref (msg);
+        }
+
 	g_mutex_unlock(connectionslock);
 
 }

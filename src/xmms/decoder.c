@@ -18,6 +18,7 @@
 #include "transport_int.h"
 #include "ringbuf.h"
 #include "playlist.h"
+#include "visualisation.h"
 
 #include <string.h>
 
@@ -26,6 +27,7 @@
  */
 
 #define FRAC_BITS 16
+
 
 /**
  * Structure describing decoder-objects.
@@ -66,12 +68,12 @@ struct xmms_decoder_St {
 
         guint32 ipos;      /* position in the input stream */
 
-
-
 	xmms_output_t *output;       /**< output associated with decoder.
 				      *   The decoded data will be written
 				      *   to this output.
 				      */
+	xmms_visualisation_t *vis;
+
 };
 
 /*
@@ -180,6 +182,7 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	g_return_if_fail (rate);
 	
 	if (decoder->samplerate != rate) {
+		xmms_visualisation_samplerate_set (decoder->vis, rate);
 		decoder->samplerate = rate;
 		decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
 		recalculate_resampler (decoder);
@@ -239,6 +242,7 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, co
 }
 
 
+
 /**
  * Write decoded data.
  * Should be used in XMMS_PLUGIN_METHOD_DECODE_BLOCK to write the decoded
@@ -262,6 +266,8 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	output = xmms_decoder_output_get (decoder);
 
 	g_return_if_fail (output);
+
+	xmms_visualisation_calc (decoder->vis, buf, len);
 
 	if (decoder->samplerate != decoder->output_samplerate) {
 		guint32 res;
@@ -298,6 +304,8 @@ xmms_decoder_new (const gchar *mimetype)
 	xmms_object_init (XMMS_OBJECT (decoder));
 	decoder->plugin = plugin;
 	decoder->mutex = g_mutex_new ();
+
+	decoder->vis = xmms_visualisation_init();
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
@@ -481,6 +489,8 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 		destroy_method (decoder);
 
 	g_mutex_free (decoder->mutex);
+
+	xmms_visualisation_destroy(decoder->vis);
 	xmms_object_cleanup (XMMS_OBJECT (decoder));
 	g_free (decoder);
 }
