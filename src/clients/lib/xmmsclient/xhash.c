@@ -174,12 +174,12 @@ x_hash_new_full (XHashFunc       hash_func,
   x_hash_t *hash_table;
   unsigned int i;
   
-  hash_table = malloc (sizeof (x_hash_t));
+  hash_table = calloc (1, sizeof (x_hash_t));
   hash_table->size               = HASH_TABLE_MIN_SIZE;
   hash_table->nnodes             = 0;
   hash_table->hash_func          = hash_func ? hash_func : x_direct_hash;
   hash_table->key_equal_func     = key_equal_func;
-  hash_table->nodes              = malloc (sizeof (x_hash_node_t*) * hash_table->size);
+  hash_table->nodes              = calloc (1, sizeof (x_hash_node_t*) * hash_table->size);
   
   for (i = 0; i < hash_table->size; i++)
     hash_table->nodes[i] = NULL;
@@ -583,7 +583,7 @@ x_hash_resize (x_hash_t *hash_table)
   new_size = x_spaced_primes_closest (hash_table->nnodes);
   new_size = CLAMP (new_size, HASH_TABLE_MIN_SIZE, HASH_TABLE_MAX_SIZE);
  
-  new_nodes = malloc (sizeof (x_hash_node_t*) * new_size);
+  new_nodes = calloc (1, sizeof (x_hash_node_t*) * new_size);
   
   for (i = 0; i < hash_table->size; i++)
     for (node = hash_table->nodes[i]; node; node = next)
@@ -607,7 +607,7 @@ x_hash_node_new (void * key,
 {
   x_hash_node_t *hash_node;
   
-  hash_node = malloc (sizeof (x_hash_node_t));
+  hash_node = calloc (1, sizeof (x_hash_node_t));
   
   hash_node->key = key;
   hash_node->value = value;
