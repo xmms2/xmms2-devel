@@ -7,6 +7,7 @@
 #include <qlabel.h>
 #include <qpushbutton.h>
 #include <qstatusbar.h>
+#include <qprogressbar.h>
 
 #include <xmms/xmmsclient.h>
 #include <xmms/xmmsclient-qt.h>
@@ -23,12 +24,24 @@ handle_currentid (void *userdata, void *arg) {
 	int id = XPOINTER_TO_UINT (arg);
 	xmmsc_connection_t *conn;
 	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	XMMSListViewItem *citem;
 	
 	qDebug ("id: %d", id);
 	if (id != 0) {
 		conn = mw->client ()->getConnection ();
 		xmmsc_playlist_get_mediainfo (conn, id);
 	}
+
+	citem = (XMMSListViewItem *) x_hash_lookup (mw->idHash (), arg);
+
+	if (citem) {
+		if (mw->cItem ()) {
+			mw->cItem ()->setCurrent (FALSE);
+		}
+		citem->setCurrent (TRUE);
+		mw->setcItem (citem);
+	}
+
 	mw->setID (id);
 }
 
@@ -59,13 +72,35 @@ handle_playlist_list (void *userdata, void *arg)
 	while (list && list[i])
 		i++;
 
+	mw->bar ()->setTotalSteps (i);
+	mw->bartxt ()->setText ("Reading playlist ...");
+
 	qDebug ("%d entries in playlist", i);
 
 	while (list && list[j]) {
 		mw->add (list[j]);
 		j++;
+		mw->bar ()->setProgress (j);
 		qApp->processEvents ();
 	}
+
+	mw->bar ()->reset ();
+	mw->bartxt ()->setText ("Waiting for events");
+}
+
+static void
+handle_playlist_mediainfo_id (void *userdata, void *arg)
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	printf ("Got id %d\n", XPOINTER_TO_INT (arg));
+	xmmsc_playlist_get_mediainfo (mw->client ()->getConnection (), XPOINTER_TO_INT (arg));
+}
+
+static void
+handle_playlist_add (void *userdata, void *arg)
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	mw->add (XPOINTER_TO_INT (arg));
 }
 
 static void
@@ -73,6 +108,7 @@ handle_playlist_mediainfo (void *userdata, void *arg)
 {
         x_hash_t *tab = (x_hash_t *)arg;
 	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	XMMSListViewItem *it;
         unsigned int id;
 	char d[9];
         char *artist, *album, *title, *channel;
@@ -84,38 +120,45 @@ handle_playlist_mediainfo (void *userdata, void *arg)
                 return;
 
         id = XPOINTER_TO_UINT (x_hash_lookup (tab, "id"));
+
+
+        t = (char *)x_hash_lookup (tab, "duration");
+
+	if (t) {
+		dur = atoi (t);	
+		snprintf (d, 9, "%02d:%02d", dur/60000, (dur/1000)%60);
+	} else {
+		dur = 0;
+		snprintf (d, 9, "00:00");
+	}
+
+	it = (XMMSListViewItem *)x_hash_lookup (mw->idHash (), XUINT_TO_POINTER (id));
+
+
+	if (!it) {
+		printf ("Apan\n");
+	} else {
+		it->setArtist ((char *)x_hash_lookup (tab, "artist"));
+		it->setTitle ((char *)x_hash_lookup (tab, "title"));
+		it->setAlbum ((char *)x_hash_lookup (tab, "album"));
+		it->setDuration (dur);
+		it->repaint ();
+	}
+
 	
         if (id == mw->ID()) {
 		QString *s;
 		
-                t = (char *)x_hash_lookup (tab, "duration");
-
-		if (t) {
-			dur = atoi (t);	
-			snprintf (d, 9, "%02d:%02d", dur/60000, (dur/1000)%60);
-		} else {
-			snprintf (d, 9, "00:00");
-		}
-
 		mw->toolbar ()->setTME (new QString (d));
 
+		memset (fstr, 0, 1024);
 		xmmsc_entry_format (fstr, 1024, "%a - %b - %t", tab);
 
 		mw->toolbar ()->setText (new QString (fstr));
 
-        } else {
-	        t = (char *)x_hash_lookup (tab, "duration");
-
-		if (t) {
-			dur = atoi (t);	
-			snprintf (d, 9, "%02d:%02d", dur/60000, (dur/1000)%60);
-		} else {
-			snprintf (d, 9, "00:00");
-		}
-
-	}
-                                                                                                                         
-        xmmsc_playlist_entry_free (tab);
+        } 
+        
+	xmmsc_playlist_entry_free (tab);
 }
 
 
@@ -136,14 +179,25 @@ XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) :
 
 	/* playlist listview */
 	m_listview = new XMMSListView (m_client, box, NULL);
+	m_bartxt = new QLabel (statusBar ());
+	statusBar ()->addWidget (m_bartxt, 2, FALSE);
+	m_bar = new QProgressBar (statusBar ());
+	statusBar ()->addWidget (m_bar, 1, TRUE);
+
+	m_citem = NULL;
+
+	/* id hash table */
+	m_idhash = x_hash_new (x_direct_hash, x_direct_equal);
 	
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*)this);
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, (void*)this);
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void*)this);
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_LIST, handle_playlist_list, (void*)this);
+	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, (void*)this);
+	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, handle_playlist_mediainfo_id, (void*)this);
+	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_ADD, handle_playlist_add, (void*)this);
 
-	xmmsc_playback_current_id (m_client->getConnection ());
 	xmmsc_playlist_list (m_client->getConnection ());
+	xmmsc_playback_current_id (m_client->getConnection ());
 
 	setCentralWidget (box);
 	resize (710, 500);
@@ -157,7 +211,6 @@ XMMSMainWindow::add (int id)
 	QListViewItem *l = m_listview->lastItem ();
 
 	it = new XMMSListViewItem (m_listview, id, l);
+	x_hash_insert (m_idhash, XUINT_TO_POINTER (id), (void *)it);
 	xmmsc_playlist_get_mediainfo (m_client->getConnection (), id);
 }
-
-

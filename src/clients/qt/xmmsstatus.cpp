@@ -65,7 +65,6 @@ XMMSStatus::paintEvent (QPaintEvent *event)
 QSize
 XMMSStatus::sizeHint () const
 {
-	qDebug ("Hejhopp");
 	return QSize (300,30);
 }
 

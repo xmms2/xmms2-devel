@@ -21,8 +21,10 @@
 #define __XMMSMAINWINDOW_H__
 
 #include <qapplication.h>
+#include <qprogressbar.h>
 #include <qmainwindow.h>
 #include <qstatusbar.h>
+#include <qlabel.h>
 #include <xmms/xmmsclient-qt.h>
 #include <internal/xhash-int.h>
 
@@ -46,13 +48,23 @@ public:
 	int ID (void) { return m_id; };
 	XMMSToolbar *toolbar (void) { return m_toolbar; };
 	XMMSListView *pl (void) { return m_listview; };
+	x_hash_t *idHash (void) { return m_idhash; };
+	XMMSListViewItem *cItem (void) { return m_citem; };
+	void *setcItem (XMMSListViewItem *i) { m_citem = i; };
+	QProgressBar *bar (void) {return m_bar; };
+	QLabel *bartxt (void) {return m_bartxt; };
 
 protected:
 	XMMSListView *m_listview;
 	XMMSToolbar *m_toolbar;
+	QProgressBar *m_bar;
+	QLabel *m_bartxt;
+
+	XMMSListViewItem *m_citem;
 	
 	XMMSClientQT *m_client;
 	int m_id;
+	x_hash_t *m_idhash;
 };
 
 #endif

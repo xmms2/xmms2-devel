@@ -86,7 +86,7 @@ watch_add (DBusWatch *watch,
 	if (!dbus_watch_get_enabled (watch))
 		return TRUE;
 
-	x_watch = malloc (sizeof (xmmsc_watch_t));
+	x_watch = calloc (1, sizeof (xmmsc_watch_t));
 	x_watch->fd = dbus_watch_get_fd (watch);
 	x_watch->dbus_watch = watch;
 
@@ -158,7 +158,7 @@ timeout_add (DBusTimeout *timeout,
 	if (!dbus_timeout_get_enabled (timeout))
 		return TRUE;
 	
-	time = malloc (sizeof (xmmsc_timeout_t));
+	time = calloc (1, sizeof (xmmsc_timeout_t));
 	time->dbus_timeout = timeout;
 	time->interval = dbus_timeout_get_interval (timeout);
 	time->cb = timeout_handler;

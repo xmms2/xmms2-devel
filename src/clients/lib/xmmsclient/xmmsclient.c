@@ -29,6 +29,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <pwd.h>
+#include <sys/types.h>
+
 #include <dbus/dbus.h>
 /*#include <glib.h>*/
 
@@ -221,10 +224,25 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 	if (!c)
 		return FALSE;
 
-	if (!dbuspath)
-		snprintf (path, 256, "unix:path=/tmp/xmms-dbus-%d", getuid ());
-	else
+	if (!dbuspath) {
+		struct passwd *pwd;
+		char *user = NULL;
+		int uid = getuid();
+
+		while ((pwd = getpwent ())) {
+			if (uid == pwd->pw_uid) {
+				user = pwd->pw_name;
+				break;
+			}
+		}
+
+		if (!user)
+			exit(-1);
+
+		snprintf (path, 256, "unix:path=/tmp/xmms-dbus-%s", user);
+	} else {
 		snprintf (path, 256, "%s", dbuspath);
+	}
 
 	conn = dbus_connection_open (path, &err);
 	

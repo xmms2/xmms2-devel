@@ -91,7 +91,7 @@ XMMSListViewItem::text (int pos) const
 				char s[10];
 				snprintf (s, 10, "%02d:%02d",
 						m_duration/60000,
-						(m_duration/60000)%60);
+						(m_duration/1000)%60);
 
 				return QString (s);
 			}
@@ -126,6 +126,7 @@ XMMSListView::onDoubleClick (QListViewItem *i, const QPoint &, int)
 	XMMSListViewItem *it = (XMMSListViewItem *)i;
 
 	if (it) {
+		xmmsc_playback_stop (m_client->getConnection ());
 		xmmsc_playlist_jump (m_client->getConnection (), it->Id ());
 		xmmsc_playback_start (m_client->getConnection ());
 	}
