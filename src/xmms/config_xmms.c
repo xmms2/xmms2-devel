@@ -15,6 +15,8 @@
 /* Huge configlock */
 static GMutex *config_lock;
 
+extern xmms_core_t *core;
+
 struct xmms_config_value_St {
 	xmms_object_t obj;
 
@@ -532,7 +534,7 @@ xmms_config_set (gchar *key, gchar *value)
 
 	XMMS_DBG ("Set configval '%s' to '%s'", key ,value);
 
-	config = core->config;
+	config = xmms_core_config_get (core);
 
 	parts = g_strsplit (key, ".", 16);
 

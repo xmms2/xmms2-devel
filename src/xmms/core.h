@@ -8,35 +8,8 @@
 #include "xmms/effect.h"
 #include "xmms/config_xmms.h"
 
-typedef struct xmms_core_St {
-	xmms_object_t object;
-
-	xmms_output_t *output;
-	xmms_decoder_t *decoder;
-	xmms_transport_t *transport;
-
-	xmms_playlist_t *playlist;
-	xmms_playlist_entry_t *curr_song;
-	xmms_mediainfo_thread_t *mediainfothread;
-
-	xmms_effect_t *effects;
-	
-	xmms_config_data_t *config;
-
-	GCond *cond;
-	GMutex *mutex;
-	
-	gint status;
-	gint playlist_op;
-} xmms_core_t;
-
-typedef enum {
-	XMMS_CORE_PLAYBACK_RUNNING,
-	XMMS_CORE_PLAYBACK_STOPPED
-} xmms_core_playback_status_t;
-
-extern xmms_core_t *core;
-
+struct xmms_core_St;
+typedef struct xmms_core_St xmms_core_t;
 
 void xmms_core_output_set (xmms_output_t *output);
 
@@ -50,7 +23,8 @@ void xmms_core_playlist_remove (guint id);
 void xmms_core_playlist_shuffle ();
 void xmms_core_playlist_clear ();
 void xmms_core_playlist_save (gchar *filename);
-xmms_playlist_t * xmms_core_get_playlist ();
+xmms_playlist_t *xmms_core_get_playlist ();
+xmms_config_data_t *xmms_core_config_get (xmms_core_t *core);
 
 void xmms_core_quit ();
 

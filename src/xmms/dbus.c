@@ -29,6 +29,7 @@
 static DBusServer *server;
 static GMutex *connectionslock;
 static GSList *connections = NULL;
+extern xmms_core_t *core;
 
 /** Ids in signal mask */
 typedef enum {
