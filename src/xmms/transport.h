@@ -20,23 +20,28 @@
  */
 
 struct xmms_transport_St {
+	/** Object for emiting signals */
 	xmms_object_t object;
-	xmms_plugin_t *plugin;
+	xmms_plugin_t *plugin; /**< The plugin used as media. */
 
 	GMutex *mutex;
 	GCond *cond;
 	GCond *seek_cond;
 	GThread *thread;
+	/** This is true if we are currently buffering. */
 	gboolean running;
 
 	xmms_ringbuf_t *buffer;
+	/** String containing current mimetype */
 	gchar *mime_type;
+	/** Private plugin data */
 	gpointer plugin_data;
 
 	gchar *uri;
 	gchar *suburi;
 
 	/* Seek */
+	/** Set to TRUE if a seek is scheduled. */
 	gboolean want_seek;
 	gint seek_offset;
 	gint seek_whence;
@@ -85,7 +90,6 @@ void xmms_transport_uri_set(xmms_transport_t *const transport, gchar *uri);
 void xmms_transport_suburi_set(xmms_transport_t *const transport, gchar *suburi);
 
 
-xmms_transport_t *xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data);
 void xmms_transport_close (xmms_transport_t *transport);
 
 /*

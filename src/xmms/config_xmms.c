@@ -14,7 +14,9 @@ static GMutex *config_lock;
 #define XMMS_CONFIG_LOCK g_mutex_lock (config_lock)
 #define XMMS_CONFIG_UNLOCK g_mutex_unlock (config_lock)
 
-/*
+/** @file
+ * Configfile parser and handler
+ *
  * The entire structure of this configfile and internal structures
  * orginated from tilde (http://tilde.sourceforge.net) but has
  * been redesigned to fit XMMS. 
@@ -28,7 +30,7 @@ static GMutex *config_lock;
  */
 
 
-/*
+/**
  * sets the associated data to a xmms_config_value_t
  */
 
@@ -42,7 +44,7 @@ xmms_config_value_data_set (xmms_config_value_t *value, gchar *data)
 	XMMS_CONFIG_UNLOCK;
 }
 
-/*
+/**
  * adds a XML child to 'val' with 'name' as name and 'data' as associated
  * data. the directive name will be "property"
  *
@@ -66,7 +68,7 @@ xmms_config_add_property (xmms_config_value_t *val, gchar *name, gchar *data)
 	return TRUE;
 }
 
-/*
+/**
  * Looks up a value from the hashtable 
  */
 
@@ -83,7 +85,7 @@ xmms_config_value_lookup (GHashTable *h, const gchar *valuename)
 	return ret;
 }
 
-/*
+/**
  * This adds a section to the config file, this should be called
  * by a plugin the first time to create an own node in the XML
  * tree.
@@ -101,7 +103,7 @@ xmms_config_add_section (GHashTable *h, gchar *name)
 	return new;
 }
 
-/*
+/**
  * Looks up a value with the name 'subvalue'
  */
 
@@ -129,7 +131,7 @@ xmms_config_value_list_lookup (xmms_config_value_t *value, const gchar *subvalue
 	return NULL;
 }
 
-/*
+/**
  * Looks up a value with the property name set to 'property'
  */
 
@@ -156,7 +158,7 @@ xmms_config_value_property_lookup (xmms_config_value_t *val, const gchar *proper
 
 }
 
-/*
+/**
  * returns the type of 'value'
  */
 
@@ -168,7 +170,7 @@ gint xmms_config_value_type (xmms_config_value_t *value) {
 	return ret;
 }
 
-/*
+/**
  * returns the data of 'value' as a int
  */
 
@@ -184,7 +186,7 @@ gint xmms_config_value_as_int (xmms_config_value_t *value) {
 	return i;
 }
 
-/*
+/**
  * returns the data of 'value' as a string
  */
 
