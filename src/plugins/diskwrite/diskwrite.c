@@ -59,7 +59,7 @@ xmms_diskwrite_open (xmms_output_t *output, const gchar *path)
 	g_return_val_if_fail (path, FALSE);
 
 	XMMS_DBG ("Opening %s", path);
-	fp = fopen (path, "rb");
+	fp = fopen (path, "wb");
 	XMMS_DBG ("fp: %p", fp);
 	if (!fp)
 		return FALSE;

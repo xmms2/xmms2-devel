@@ -69,12 +69,14 @@ xmms_decoder_new (const gchar *mimetype)
 }
 
 void
-xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport)
+xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
+	g_return_if_fail (output);
 
 	decoder->running = TRUE;
 	decoder->transport = transport;
+	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 

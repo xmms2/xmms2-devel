@@ -45,6 +45,6 @@ void xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data);
 
 xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
 
-void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport);
+void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
 
 #endif /* __XMMS_DECODER_H__ */

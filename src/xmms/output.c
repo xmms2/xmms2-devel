@@ -49,6 +49,20 @@ xmms_output_open (xmms_plugin_t *plugin)
 
 	return output;
 }
+
+
+xmms_plugin_t *
+xmms_output_find_plugin ()
+{
+	GList *list;
+	xmms_plugin_t *plugin = NULL;
+
+	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_OUTPUT);
+
+	plugin = list->data;
+
+	return plugin;
+}
 	
 void
 xmms_output_start (xmms_output_t *output)
@@ -64,7 +78,8 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 {
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
-	g_return_if_fail (len < 0);
+
+	XMMS_DBG ("Writing %d bytes to output", len);
 
 	xmms_output_lock (output);
 	xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
@@ -80,11 +95,12 @@ xmms_output_read (xmms_output_t *output, gchar *buffer, gint len)
 
 	g_return_val_if_fail (output, -1);
 	g_return_val_if_fail (buffer, -1);
-	g_return_val_if_fail (len < 0, -1);
+
+	XMMS_DBG ("Reading %d bytes from output", len);
 
 	xmms_output_lock (output);
 	xmms_ringbuf_wait_used (output->buffer, len, output->mutex);
-	xmms_ringbuf_read (output->buffer, buffer, len);
+	ret = xmms_ringbuf_read (output->buffer, buffer, len);
 	xmms_output_unlock (output);
 
 	return ret;
@@ -99,13 +115,13 @@ xmms_output_thread (gpointer data)
 	output = (xmms_output_t*)data;
 	g_return_val_if_fail (data, NULL);
 
+	XMMS_DBG ("Plugin %s", output->plugin->name);
 	write_method = xmms_plugin_method_get (output->plugin, "write");
 	g_return_val_if_fail (write_method, NULL);
 
 	while (output->running) {
 		gchar buffer[4096];
 		gint ret;
-		xmms_output_lock (output);
 
 		ret = xmms_output_read (output, buffer, 4096);
 		
@@ -116,7 +132,6 @@ xmms_output_thread (gpointer data)
 			XMMS_DBG ("Not good?!");
 		}
 
-		xmms_output_unlock (output);
 
 	}
 

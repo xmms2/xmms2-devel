@@ -16,9 +16,11 @@ int
 main (int argc, char **argv)
 {
 	xmms_transport_t *transport;
+	xmms_output_t *output;
 	xmms_decoder_t *decoder;
 	xmms_playlist_t *pl;
 	xmms_playlist_entry_t *entry;
+	xmms_plugin_t *o_plugin;
 	int opt;
 	int verbose=0;
 	const gchar *mime;
@@ -68,6 +70,11 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (pl));
 
+
+	o_plugin = xmms_output_find_plugin ();
+	output = xmms_output_open (o_plugin);
+	xmms_output_start (output);
+
 	while ((entry = xmms_playlist_pop (pl))) { /* start playback */
 
 		XMMS_DBG ("Playing %s", entry->uri);
@@ -79,7 +86,7 @@ main (int argc, char **argv)
 			decoder = xmms_decoder_new (mime);
 			if (!decoder)
 				return 1;
-			xmms_decoder_start (decoder, transport);
+			xmms_decoder_start (decoder, transport, output);
 		}
 
 		xmms_transport_start (transport);
