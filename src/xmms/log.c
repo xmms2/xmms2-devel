@@ -28,7 +28,6 @@
 #endif
 
 #include "xmms/log.h"
-#include "xmms/core.h"
 
 #include <stdio.h>
 #include <stdarg.h>

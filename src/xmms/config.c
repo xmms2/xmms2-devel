@@ -226,11 +226,11 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 
 	XMMS_DBG ("Configvalue list");
 
-	g_mutex_lock (conf->mutex);
+	XMMS_MTX_LOCK (conf->mutex);
 	
 	g_hash_table_foreach (conf->values, add_to_list_foreach, &ret);
 
-	g_mutex_unlock (conf->mutex);
+	XMMS_MTX_UNLOCK (conf->mutex);
 
 	ret = g_list_sort (ret, (GCompareFunc) g_strcasecmp);
 
@@ -322,9 +322,9 @@ xmms_config_lookup (const gchar *path)
 	
 	XMMS_DBG ("Looking up %s", path);
 	
-	g_mutex_lock (global_config->mutex);
+	XMMS_MTX_LOCK (global_config->mutex);
 	value = g_hash_table_lookup (global_config->values, path);
-	g_mutex_unlock (global_config->mutex);
+	XMMS_MTX_UNLOCK (global_config->mutex);
 
 
 	return value;
@@ -456,9 +456,9 @@ xmms_config_plugins_get (void)
 	GList *plugins;
 	g_return_val_if_fail (global_config, NULL);
 
-	g_mutex_lock (global_config->mutex);
+	XMMS_MTX_LOCK (global_config->mutex);
 	plugins = global_config->plugins;
-	g_mutex_unlock (global_config->mutex);
+	XMMS_MTX_UNLOCK (global_config->mutex);
 
 	return plugins;
 }
@@ -552,7 +552,7 @@ xmms_config_value_register (const gchar *path,
 
 	XMMS_DBG ("Registering: %s", path);
 
-	g_mutex_lock (global_config->mutex);
+	XMMS_MTX_LOCK (global_config->mutex);
 
 	val = g_hash_table_lookup (global_config->values, path);
 	if (!val) {
@@ -571,7 +571,7 @@ xmms_config_value_register (const gchar *path,
 
 	g_hash_table_insert (global_config->values, g_strdup (path), val);
 
-	g_mutex_unlock (global_config->mutex);
+	XMMS_MTX_UNLOCK (global_config->mutex);
 
 	return val;
 }

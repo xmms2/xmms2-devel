@@ -39,6 +39,7 @@
 #define XMMS_METHOD_NEXT "next"
 #define XMMS_METHOD_PREV "prev"
 #define XMMS_METHOD_PLAY "play"
+#define XMMS_METHOD_START "start"
 #define XMMS_METHOD_STOP "stop"
 #define XMMS_METHOD_PAUSE "pause"
 #define XMMS_METHOD_STATUS "status"

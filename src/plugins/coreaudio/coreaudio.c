@@ -134,7 +134,7 @@ xmms_ca_buffersize_get (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
-	g_mutex_lock (data->mtx);
+	XMMS_MTX_LOCK (data->mtx);
 	ret = xmms_ringbuf_bytes_used (data->buffer) / 2;
 
 	size = sizeof (UInt32);
@@ -145,7 +145,7 @@ xmms_ca_buffersize_get (xmms_output_t *output)
 
 	ret += (f * 4);
 
-	g_mutex_unlock (data->mtx);
+	XMMS_MTX_UNLOCK (data->mtx);
 
 	return ret;
 }
@@ -285,7 +285,7 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 
 	memset (&prop, 0, sizeof (prop));
 
-	g_mutex_lock (data->mtx);
+	XMMS_MTX_LOCK (data->mtx);
 
 	data->rate = rate;
 
@@ -298,6 +298,7 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 		return 0;
 	}
 
+	XMMS_DBG ("output is reporting %llf as samplesize", prop.mSampleRate);
 
 	/*prop.mSampleRate = rate;
 	prop.mFormatID = kAudioFormatLinearPCM;
@@ -314,7 +315,7 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 		exit (-1);
 	}*/
 
-	g_mutex_unlock (data->mtx);
+	XMMS_MTX_UNLOCK (data->mtx);
 
 	return prop.mSampleRate;
 }
@@ -352,10 +353,10 @@ xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len)
 		buf[i] = ((gfloat) buffer2[i] + 32768.0) / (32768.0*2);
 	}
 	
-	g_mutex_lock (data->mtx);
+	XMMS_MTX_LOCK (data->mtx);
 	xmms_ringbuf_wait_free (data->buffer, len*2, data->mtx);
 	xmms_ringbuf_write (data->buffer, buf, len*2);
-	g_mutex_unlock (data->mtx);
+	XMMS_MTX_UNLOCK (data->mtx);
 
 	g_free (buf);
 

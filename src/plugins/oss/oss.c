@@ -186,9 +186,9 @@ xmms_oss_flush (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	/* reset soundcard buffer */
-	g_mutex_lock (data->mutex);
+	XMMS_MTX_LOCK (data->mutex);
 	ioctl (data->fd, SNDCTL_DSP_RESET, 0);
-	g_mutex_unlock (data->mutex);
+	XMMS_MTX_UNLOCK (data->mutex);
 
 }
 
@@ -325,8 +325,8 @@ xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len)
 	data = xmms_output_private_data_get (output);
 
 	/* make sure that we don't flush buffers when we are writing */
-	g_mutex_lock (data->mutex);
+	XMMS_MTX_LOCK (data->mutex);
 	write (data->fd, buffer, len);
-	g_mutex_unlock (data->mutex);
+	XMMS_MTX_UNLOCK (data->mutex);
 
 }

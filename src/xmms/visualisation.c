@@ -28,7 +28,7 @@
 
 #include "xmms/visualisation.h"
 #include "xmms/object.h"
-#include "xmms/core.h"
+#include "xmms/util.h"
 
 static GMutex *visuserslock;
 static guint32 visusers = 0;
@@ -41,7 +41,6 @@ static guint32 visusers = 0;
 
 struct xmms_visualisation_St {
 	xmms_object_t object;
-	xmms_core_t *core;
 	guint32 pos;
 	guint samplerate;
 	gint fft_data;
@@ -58,14 +57,11 @@ xmms_visualisation_init_mutex ()
 }
 
 xmms_visualisation_t *
-xmms_visualisation_init (xmms_core_t *core)
+xmms_visualisation_init ()
 {
 	xmms_visualisation_t *res;
 
-	g_return_val_if_fail (core, NULL);
-
 	res = xmms_object_new (xmms_visualisation_t, NULL);
-	res->core = core;
 
 	return res;
 }
@@ -73,17 +69,17 @@ xmms_visualisation_init (xmms_core_t *core)
 void
 xmms_visualisation_users_inc ()
 {
-	g_mutex_lock (visuserslock);
+	XMMS_MTX_LOCK (visuserslock);
 	visusers++;
-	g_mutex_unlock (visuserslock);
+	XMMS_MTX_UNLOCK (visuserslock);
 }
 
 void
 xmms_visualisation_users_dec ()
 {
-	g_mutex_lock (visuserslock);
+	XMMS_MTX_LOCK (visuserslock);
 	visusers--;
-	g_mutex_unlock (visuserslock);
+	XMMS_MTX_UNLOCK (visuserslock);
 }
 
 static gboolean
@@ -91,9 +87,9 @@ xmms_visualisation_has_users ()
 {
 	gboolean res;
 
-	g_mutex_lock (visuserslock);
+	XMMS_MTX_LOCK (visuserslock);
 	res = !!visusers;
-	g_mutex_unlock (visuserslock);
+	XMMS_MTX_UNLOCK (visuserslock);
 
 	return res;
 }

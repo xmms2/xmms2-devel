@@ -27,10 +27,8 @@
 
 typedef struct xmms_visualisation_St xmms_visualisation_t;
 
-#include "xmms/core.h"
-
 void xmms_visualisation_init_mutex ();
-xmms_visualisation_t *xmms_visualisation_init (xmms_core_t *core);
+xmms_visualisation_t *xmms_visualisation_init ();
 void xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len);
 void xmms_visualisation_destroy (xmms_visualisation_t *vis);
 void xmms_visualisation_samplerate_set (xmms_visualisation_t *vis, guint rate);

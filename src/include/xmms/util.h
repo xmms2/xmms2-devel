@@ -36,6 +36,9 @@
 #define XMMS_DBG(fmt,...)
 #endif
 
+#define XMMS_MTX_LOCK(a)  g_mutex_lock (a)
+#define XMMS_MTX_UNLOCK(a) g_mutex_unlock (a)
+
 gchar *xmms_util_decode_path (const gchar *path);
 gchar *xmms_util_encode_path (gchar *path);
 guint xmms_util_time (void);

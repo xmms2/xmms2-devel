@@ -21,7 +21,6 @@
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
-#include "xmms/core.h"
 #include "xmms/playlist.h"
 #include "xmms/transport.h"
 #include "id3.h"
@@ -342,7 +341,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (data) {
 		data->entry = entry;
 
-		xmms_decoder_entry_mediainfo_set (decoder, entry);
+/*FIXME!		xmms_decoder_entry_mediainfo_set (decoder, entry);*/
 	}
 
 	xmms_object_unref (entry);
@@ -403,7 +402,7 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	return TRUE;
 }
 
-gint
+gint16
 clipping (mad_fixed_t v)
 {
 	if (v >= 1 << MAD_F_FRACBITS)
@@ -439,6 +438,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	ret = xmms_transport_read (transport, 
 				   data->buffer + data->buffer_length,
 				   4096 - data->buffer_length);
+	
 	if (ret <= 0) {
 		XMMS_DBG ("EOF");
 		return FALSE;
@@ -462,7 +462,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		ch2 = data->synth.pcm.samples[1];
 
 		for (i = 0; i < data->synth.pcm.length; i++) {
-			gint l, r;
+			gint16 l, r;
 			
 			l = clipping (*(ch1++));
 			if (data->synth.pcm.channels > 1)

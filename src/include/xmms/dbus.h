@@ -20,9 +20,9 @@
 #ifndef __XMMS_DBUS_H__
 #define __XMMS_DBUS_H__
 
-#include "xmms/core.h"
+#include "xmms/object.h"
 
-gboolean xmms_dbus_init (xmms_core_t *core, const gchar *path);
+gboolean xmms_dbus_init (const gchar *path);
 GList *xmms_dbus_stats (GList *list);
 void xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object);
 void xmms_dbus_register_onchange (xmms_object_t *object, gchar *signal);

@@ -42,7 +42,6 @@
 #include "xmms/playlist.h"
 #include "xmms/unixsignal.h"
 #include "xmms/util.h"
-#include "xmms/core.h"
 #include "xmms/medialib.h"
 #include "xmms/output.h"
 #include "xmms/xmms.h"
@@ -108,8 +107,8 @@ int
 main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
-	xmms_core_t *core;
 	xmms_config_value_t *cv;
+	xmms_output_t *output;
 	int opt;
 	int verbose = 0;
 	sigset_t signals;
@@ -181,7 +180,6 @@ main (int argc, char **argv)
 	
 	playlist = xmms_playlist_init ();
 
-	core = xmms_core_init (playlist);
 	xmms_visualisation_init_mutex ();
 	
 	if (!xmms_plugin_init (ppath))
@@ -197,32 +195,27 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("output = %s", outname);
 
-	xmms_config_value_register ("core.output_buffersize", 
-			XMMS_OUTPUT_DEFAULT_BUFFERSIZE, NULL, NULL);
+	xmms_config_value_register ("core.decoder_buffersize", 
+			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("core.transport_buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
-	{
-		xmms_output_t *output = xmms_output_new (core, o_plugin);
-		g_return_val_if_fail (output, -1);
+
+	output = xmms_output_new (o_plugin);
+	g_return_val_if_fail (output, -1);
+
+	xmms_output_playlist_set (output, playlist);
 		
-		xmms_core_output_set (core, output);
-
-		xmms_output_start (output);
-	}
-
 	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
 				g_get_user_name ());
 	cv = xmms_config_value_register ("core.dbuspath", path, NULL, NULL);
 	path = xmms_config_value_string_get (cv);
 
-	xmms_dbus_init (core, path);
+	xmms_dbus_init (path);
 
 	xmms_signal_init ();
-
-	xmms_core_start (core);
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);
