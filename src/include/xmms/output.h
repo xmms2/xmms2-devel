@@ -84,7 +84,4 @@ gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
 void xmms_output_flush (xmms_output_t *output);
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 
-GList *xmms_output_stats (xmms_output_t *output, GList *list); 
-gboolean xmms_output_decoder_start (xmms_output_t *output);
-
 #endif

@@ -329,12 +329,10 @@ main (int argc, char **argv)
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
-	mainobj->output = xmms_output_new (o_plugin);
+	mainobj->output = xmms_output_new (o_plugin, playlist);
 	g_return_val_if_fail (mainobj->output, -1);
 
 	init_volume_config_proxy (outname);
-
-	xmms_output_playlist_set (mainobj->output, playlist);
 
 	/*
 	xmms_medialib_init ();
