@@ -682,7 +682,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 			else
 				curr_dur = 0;
 		}
-		xmmsc_playlist_entry_free (hash);
+		x_hash_destroy (hash);
 	}
 
 }
