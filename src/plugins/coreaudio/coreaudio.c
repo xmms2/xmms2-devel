@@ -27,6 +27,9 @@
 #include "xmms/config.h"
 #include "xmms/signal_xmms.h"
 
+#undef DEBUG
+#include <CoreServices/CoreServices.h>
+
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -35,15 +38,15 @@
 
 #include <glib.h>
 
-#include <CoreAudio/CoreAudio.h>
+#include <AudioUnit/AudioUnit.h>
 
 /*
  * Type definitions
  */
 
 typedef struct xmms_ca_data_St {
-	AudioDeviceID outputdevice;
-	guint rate;
+	AudioUnit au;
+	AudioStreamBasicDescription sF;
 } xmms_ca_data_t;
 
 /*
@@ -58,16 +61,6 @@ static void xmms_ca_close (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
-
-static OSStatus
-xmms_ca_write_cb (AudioDeviceID inDevice,
-		  const AudioTimeStamp *inNow,
-		  const AudioBufferList *inInputData,
-		  const AudioTimeStamp *inInputTime,
-		  AudioBufferList *outOutputData,
-		  const AudioTimeStamp *inOutputTime,
-		  void *inClientData);
-
 
 /*
  * Plugin header
@@ -113,35 +106,16 @@ xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
 
 	XMMS_DBG ("changed status! %d", status);
 	if (status == XMMS_OUTPUT_STATUS_PLAY) {
-		AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
+		AudioOutputUnitStart (data->au);
 	} else {
-		AudioDeviceStop (data->outputdevice, xmms_ca_write_cb);
+		AudioOutputUnitStop (data->au);
 	}
 }
 
 static guint
 xmms_ca_buffersize_get (xmms_output_t *output)
 {
-	guint ret;
-	xmms_ca_data_t *data;
-	UInt32 f;
-	UInt32 size;
-	OSStatus res;
-
-	g_return_val_if_fail (output, 0);
-
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, 0);
-
-	size = sizeof (UInt32);
-
-	res = AudioDeviceGetProperty (data->outputdevice, 1, 0, 
-				      kAudioDevicePropertyLatency,
-				      &size, &f);
-
-	ret = (f * 4);
-
-	return ret;
+	return 0;
 }
 
 static void
@@ -150,57 +124,6 @@ xmms_ca_flush (xmms_output_t *output)
 	XMMS_DBG ("Xmms wants us to flush!");
 }
 
-
-/* CoreAudio Callback */
-static OSStatus
-xmms_ca_write_cb (AudioDeviceID inDevice,
-		  const AudioTimeStamp *inNow,
-		  const AudioBufferList *inInputData,
-		  const AudioTimeStamp *inInputTime,
-		  AudioBufferList *outOutputData,
-		  const AudioTimeStamp *inOutputTime,
-		  void *inClientData)
-{
-
-	xmms_ca_data_t *data;
-	xmms_output_t *output;
-	int b;
-
-	output = (xmms_output_t *)inClientData;
-	g_return_val_if_fail (output, kAudioHardwareUnspecifiedError);
-
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, kAudioHardwareUnspecifiedError);
-
-	for (b = 0; b < outOutputData->mNumberBuffers; ++b) {
-		gint m;
-		gint i;
-		gint ret;
-		gint16 *buffer;
-
-		m = outOutputData->mBuffers[b].mDataByteSize;
-
-		buffer = g_new0 (gint16, m/2);
-
-		ret = xmms_output_read (output, 
-					(gchar *)buffer, 
-					m/2);
-
-		for (i = 0; i < (ret/2) ; i++) {
-			((gfloat*)outOutputData->mBuffers[0].mData)[i] = ((gfloat) buffer[i] + 32768.0) / (32768.0*2);
-		}
-
-		g_free (buffer);
-
-
-		/** @todo fix so coreaudio knows if we
-		    don't fill the buffer ? */
-
-	}
-
-	return kAudioHardwareNoError;
-
-}
 
 static gboolean
 xmms_ca_open (xmms_output_t *output)
@@ -218,45 +141,147 @@ xmms_ca_open (xmms_output_t *output)
 	return TRUE;
 }
 
+OSStatus
+xmms_ca_render_cb (void *inRefCon,
+		   AudioUnitRenderActionFlags *ioActionFlags,
+		   const AudioTimeStamp *inTimeStamp,
+		   UInt32 inBusNumber,
+		   UInt32 inNumberFrames,
+		   AudioBufferList *ioData)
+{
+	xmms_ca_data_t *data;
+	gint b;
+
+	xmms_output_t *output = (xmms_output_t *)inRefCon;
+	g_return_val_if_fail (output, kAudioHardwareUnspecifiedError);
+
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, kAudioHardwareUnspecifiedError);
+
+	for (b = 0; b < ioData->mNumberBuffers; ++ b) {
+		gint size;
+		gint ret;
+
+		size = ioData->mBuffers[b].mDataByteSize;
+
+		ret = xmms_output_read (output, (gchar *)ioData->mBuffers[b].mData, size);
+		if (ret < size) 
+			memset (ioData->mBuffers[b].mData+ret, 0, size - ret);
+	}
+
+	return noErr;
+}
+
 static gboolean
 xmms_ca_new (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
 	OSStatus res;
-	UInt32 size;
+	ComponentDescription desc;
+	AURenderCallbackStruct input;
+	Component comp;
+	AudioDeviceID device = NULL;
+	UInt32 size = sizeof(device);
+
 	
 	g_return_val_if_fail (output, FALSE);
 
-	data = g_new0 (xmms_ca_data_t, 1);
-	size = sizeof (data->outputdevice);
+	desc.componentType = kAudioUnitType_Output;
+	desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+	desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+	desc.componentFlags = 0;
+	desc.componentFlagsMask = 0;
 
-	/* Maybe the kAudio... could be configurable ? */
-	res = AudioHardwareGetProperty (kAudioHardwarePropertyDefaultOutputDevice,
-					&size, &data->outputdevice);
-
-	if (res) {
-		xmms_log_error ("Error %d from CoreAudio", (int) res);
+	comp = FindNextComponent (NULL, &desc);
+	if (!comp) {
 		return FALSE;
 	}
 
-	/*size = sizeof (guint32);
-	bsize = 4096;
-	res = AudioDeviceSetProperty (data->outputdevice, 0, 0, 0,
-					kAudioDevicePropertyBufferSize,
-					size,
-					&bsize);
+	data = g_new0 (xmms_ca_data_t, 1);
+
+	res = OpenAComponent (comp, &data->au);
+	if (comp == NULL) {
+		g_free (data);
+		return FALSE;
+	}
+
+
+	input.inputProc = xmms_ca_render_cb;
+	input.inputProcRefCon = (void*)output;
+
+	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_SetRenderCallback,
+				    kAudioUnitScope_Input, 0,
+				    &input, sizeof (input));
 
 	if (res) {
-		xmms_log_error ("Setbuffersize failed");
+		XMMS_DBG ("Set Callback failed!");
+		g_free (data);
 		return FALSE;
-	}*/
+	}
 
-	res = AudioDeviceAddIOProc (data->outputdevice, xmms_ca_write_cb, (void *) output);
+
+	data->sF.mSampleRate = 44000.0;
+	data->sF.mFormatID = kAudioFormatLinearPCM;
+	data->sF.mFormatFlags = 0;
+	data->sF.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
+	data->sF.mBytesPerPacket = 4;
+	data->sF.mFramesPerPacket = 1;
+	data->sF.mBytesPerFrame = 4;
+	data->sF.mChannelsPerFrame = 2;
+	data->sF.mBitsPerChannel = 16;
+
+	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
+				    kAudioUnitScope_Input, 0, &data->sF,
+				    sizeof(AudioStreamBasicDescription));
+
+	if (res) {
+		g_free (data);
+		return FALSE;
+	}
+
+
+	res = AudioUnitInitialize (data->au);
+	if (res) {
+		g_free (data);
+		return FALSE;
+	}
+
+
+	res = AudioUnitGetProperty( data->au,
+				    kAudioOutputUnitProperty_CurrentDevice,
+				    kAudioUnitScope_Global,
+				    0,
+				    &device,
+				    &size);
+
+	if (res) {
+		XMMS_DBG ("getprop failed!");
+		g_free (data);
+		return FALSE;
+	}
 	
+	if (device != NULL) {
+		AudioTimeStamp ts;
+		ts.mFlags = 0;
+		UInt32 bufferSize = 4096;
+		res = AudioDeviceSetProperty( device,
+					      &ts, 
+					      0,
+					      0,
+					      kAudioDevicePropertyBufferFrameSize,
+					      sizeof(UInt32),
+					      &bufferSize);
+		if (res) {
+			XMMS_DBG ("Set prop failed!");
+			g_free (data);
+			return FALSE;
+		}
+	}
+
+
+	XMMS_DBG ("CoreAudio initialized!");
+
 	xmms_output_private_data_set (output, data);
-
-	XMMS_DBG ("CoreAudio initilized!");
-	
 	return TRUE;
 }
 
@@ -269,10 +294,8 @@ xmms_ca_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	/** @todo
-	 *  Do we have to take care of data->outputdevice
-	 *  here, too?
-	 */
+	AudioUnitUninitialize (data->au);
+	CloseComponent (data->au);
 
 	g_free (data);
 }
@@ -281,47 +304,34 @@ static guint
 xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 {
 	xmms_ca_data_t *data;
+	Float64 sR;
 	OSStatus res;
-	struct AudioStreamBasicDescription prop;
-	UInt32 size;
+	UInt32 size = sizeof (Float64);
 
 	g_return_val_if_fail (output, 0);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
-	size = sizeof (struct AudioStreamBasicDescription);
+	data->sF.mSampleRate = (Float64) rate;
 
-	memset (&prop, 0, sizeof (prop));
-
-
-	data->rate = rate;
-
-	res = AudioDeviceGetProperty (data->outputdevice, 1, 0, 
-				      kAudioDevicePropertyStreamFormat,
-				      &size, &prop);
-
+	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
+				    kAudioUnitScope_Input, 0, &data->sF,
+				    sizeof(AudioStreamBasicDescription));
 	if (res) {
-		xmms_log_error ("GetProp failed!");
-		return 0;
+		XMMS_DBG ("Failed to set samplerate!");
+		return rate;
 	}
 
-	/*prop.mSampleRate = rate;
-	prop.mFormatID = kAudioFormatLinearPCM;
-	prop.mFormatFlags |= ~kAudioFormatFlagIsFloat;
-	prop.mBitsPerChannel = 32;
-	prop.mBytesPerFrame = 8;
-	prop.mChannelsPerFrame = 2;
+	res = AudioUnitGetProperty (data->au, kAudioUnitProperty_StreamFormat,
+				    kAudioUnitScope_Output, 0, &sR,
+				    &size);
 
-	res = AudioDeviceSetProperty (data->outputdevice, 0, 0, 0,
-				      kAudioDevicePropertyStreamFormat,
-				      size, &prop);
 	if (res) {
-		xmms_log_error ("Error %d", (int) res);
-		exit (-1);
-	}*/
+		XMMS_DBG ("Failed to get samplerate!");
+		return rate;
+	}
 
-
-	return prop.mSampleRate;
+	return (guint)sR;
 }
 
 static void
@@ -333,7 +343,7 @@ xmms_ca_close (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	AudioDeviceStop (data->outputdevice, xmms_ca_write_cb);
+	AudioUnitReset (data->au, kAudioUnitScope_Input, 0);
 }
 
 /*
