@@ -161,13 +161,19 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 xmmsc_result_t *
 xmmsc_playback_current_id (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
+	xmmsc_result_t *res;
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_PLAYBACK_CURRENTID);
+	return res;
 }
 
 xmmsc_result_t *
 xmmsc_playback_status (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
+	xmmsc_result_t *res;
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_PLAYBACK_STATUS);
+	return res;
 }
 
 unsigned int
@@ -196,7 +202,10 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_playtime (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CPLAYTIME);
+	xmmsc_result_t *res;
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CPLAYTIME);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_PLAYBACK_PLAYTIME);
+	return res;
 }
 
 int

@@ -672,14 +672,40 @@ xmms_playlist_init (void)
 	xmms_object_init (XMMS_OBJECT (ret));
 	xmms_dbus_register_object ("playlist", XMMS_OBJECT (ret));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SHUFFLE, XMMS_METHOD_FUNC (shuffle));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_ADD, XMMS_METHOD_FUNC (add));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_GETMEDIAINFO, XMMS_METHOD_FUNC (getmediainfo));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_REMOVE, XMMS_METHOD_FUNC (remove));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_MOVE, XMMS_METHOD_FUNC (move));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_LIST, XMMS_METHOD_FUNC (list));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_CLEAR, XMMS_METHOD_FUNC (clear));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SORT, XMMS_METHOD_FUNC (sort));
+	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
+				     XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_SHUFFLE, 
+				XMMS_METHOD_FUNC (shuffle));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_ADD, 
+				XMMS_METHOD_FUNC (add));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_GETMEDIAINFO, 
+				XMMS_METHOD_FUNC (getmediainfo));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_REMOVE, 
+				XMMS_METHOD_FUNC (remove));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_MOVE, 
+				XMMS_METHOD_FUNC (move));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_LIST, 
+				XMMS_METHOD_FUNC (list));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_CLEAR, 
+				XMMS_METHOD_FUNC (clear));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_SORT, 
+				XMMS_METHOD_FUNC (sort));
 
 	return ret;
 }

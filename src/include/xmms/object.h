@@ -66,6 +66,9 @@ typedef struct {
 	xmms_error_t error;
 } xmms_object_method_arg_t;
 
+xmms_object_method_arg_t *xmms_object_arg_new (xmms_object_method_arg_type_t type, 
+					       gpointer val);
+
 typedef void (*xmms_object_method_func_t) (xmms_object_t *object, xmms_object_method_arg_t *arg);
 
 typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);

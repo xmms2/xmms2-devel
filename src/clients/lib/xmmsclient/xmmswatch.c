@@ -133,12 +133,8 @@ watch_toggled (DBusWatch *watch,
 
 /* Timeout functions */
 static void
-timeout_free (xmmsc_timeout_t *time)
+timeout_free (xmmsc_connection_t *conn)
 {
-	if (time) {
-		free (time);
-		time = NULL;
-	}
 }
 
 static int

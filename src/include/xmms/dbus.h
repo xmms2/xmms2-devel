@@ -24,5 +24,6 @@
 
 gboolean xmms_dbus_init (xmms_core_t *core, const gchar *path);
 void xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object);
+void xmms_dbus_register_onchange (xmms_object_t *object, gchar *signal);
 
 #endif

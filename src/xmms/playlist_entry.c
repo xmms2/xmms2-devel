@@ -284,7 +284,10 @@ xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *e
 	g_return_if_fail (playlist);
 	g_return_if_fail (entry);
 
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, GUINT_TO_POINTER (entry->id));
+	xmms_object_emit (XMMS_OBJECT (playlist), 
+			  XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, 
+			  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32,
+					       GUINT_TO_POINTER (entry->id)));
 	
 }
 

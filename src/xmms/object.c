@@ -19,11 +19,50 @@
 
 #include "xmms/object.h"
 #include "xmms/util.h"
+#include "xmms/playlist.h"
+#include "xmms/playlist_entry.h"
 
 typedef struct {
 	xmms_object_handler_t handler;
 	gpointer userdata;
 } xmms_object_handler_entry_t;
+
+xmms_object_method_arg_t *
+xmms_object_arg_new (xmms_object_method_arg_type_t type,
+		     gpointer val)
+{
+	xmms_object_method_arg_t *ret;
+
+	ret = g_new0 (xmms_object_method_arg_t, 1);
+	switch (type) {
+		case XMMS_OBJECT_METHOD_ARG_UINT32:
+			ret->retval.uint32 = GPOINTER_TO_UINT (val);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_INT32:
+			ret->retval.int32 = GPOINTER_TO_INT (val);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_STRING:
+			ret->retval.string = (gchar*) val;
+			break;
+		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
+			ret->retval.playlist_entry = (xmms_playlist_entry_t *)val;
+			break;
+		case XMMS_OBJECT_METHOD_ARG_UINTLIST:
+			ret->retval.uintlist = (GList*)val;
+			break;
+		case XMMS_OBJECT_METHOD_ARG_INTLIST:
+			ret->retval.intlist = (GList*)val;
+			break;
+		case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
+			ret->retval.stringlist = (GList*)val;
+			break;
+		case XMMS_OBJECT_METHOD_ARG_NONE:
+			break;
+	}
+	ret->rettype = type;
+
+	return ret;
+}
 
 void
 xmms_object_init (xmms_object_t *object)

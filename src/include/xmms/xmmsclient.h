@@ -22,13 +22,15 @@
 
 #include "internal/xhash-int.h"
 #include "internal/xlist-int.h"
-#include "xmms/xmmsclient-result.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct xmmsc_connection_St xmmsc_connection_t;
+
+#include "xmms/xmmsclient-result.h"
+
 typedef struct xmmsc_playlist_entry_St { /* no use to share them between client and core */
 	char *url;
 	unsigned int id;
@@ -59,6 +61,7 @@ xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename);
 xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
+xmmsc_result_t *xmmsc_playlist_entry_changed (xmmsc_connection_t *c);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
 
 xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c);
@@ -71,6 +74,7 @@ xmmsc_result_t *xmmsc_playback_next(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playback_prev(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id);
 xmmsc_result_t *xmmsc_playback_status (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_playtime (xmmsc_connection_t *c);
 
 xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
 xmmsc_result_t *xmmsc_file_list (xmmsc_connection_t *c, char *path);

@@ -24,13 +24,16 @@
 #define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
 #define XMMS_OBJECT_CLIENT "/xmms/client"
 #define XMMS_OBJECT_CORE "/xmms/core"
+#define XMMS_OBJECT_DBUS "/xmms/dbus"
 #define XMMS_OBJECT_CONFIG "/xmms/config"
 #define XMMS_OBJECT_TRANSPORT "/xmms/transport"
 #define XMMS_OBJECT_VISUALISATION "/xmms/visualisation"
 
 #define XMMS_DBUS_INTERFACE "org.xmms"
 
-#define XMMS_METHOD_QUIT "quit"
+#define XMMS_METHOD_DUMMY "quit"
+#define XMMS_METHOD_QUIT "dummy"
+#define XMMS_METHOD_ONCHANGE "onchange"
 #define XMMS_METHOD_NEXT "next"
 #define XMMS_METHOD_PREV "prev"
 #define XMMS_METHOD_PLAY "play"
