@@ -269,7 +269,6 @@ xmms_playback_playtime_set (xmms_playback_t *playback, guint time)
 
 	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (time));
 	xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_PLAYTIME, arg);
-	XMMS_DBG ("korv");
 	g_free (arg);
 }
 
