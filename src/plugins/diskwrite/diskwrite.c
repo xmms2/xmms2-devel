@@ -34,8 +34,6 @@
 #include <errno.h>
 #include <string.h>
 
-#warning "CONVERT TO SAMPLE_T"
-
 /*
  * Defines
  */
@@ -76,7 +74,6 @@ static gboolean xmms_diskwrite_new (xmms_output_t *output);
 static void xmms_diskwrite_destroy (xmms_output_t *output);
 static gboolean xmms_diskwrite_open (xmms_output_t *output);
 static void xmms_diskwrite_close (xmms_output_t *output);
-static guint xmms_diskwrite_samplerate_set (xmms_output_t *output, guint rate);
 static void xmms_diskwrite_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_diskwrite_flush (xmms_output_t *output);
 
@@ -111,10 +108,6 @@ xmms_plugin_get (void)
 	                        xmms_diskwrite_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE,
 	                        xmms_diskwrite_close);
-/*
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET,
-	                        xmms_diskwrite_samplerate_set);
-*/
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
 	                        xmms_diskwrite_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
@@ -144,6 +137,8 @@ xmms_diskwrite_new (xmms_output_t *output)
 	g_return_val_if_fail (data, FALSE);
 
 	xmms_output_private_data_set (output, data);
+
+	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 
 	plugin = xmms_output_plugin_get (output);
 	val = xmms_plugin_config_lookup (plugin, "destination_directory");
@@ -220,12 +215,6 @@ xmms_diskwrite_close (xmms_output_t *output)
 		fclose (data->fp);
 		data->fp = NULL;
 	}
-}
-
-static guint
-xmms_diskwrite_samplerate_set (xmms_output_t *output, guint rate)
-{
-	return 44100;
 }
 
 static void
