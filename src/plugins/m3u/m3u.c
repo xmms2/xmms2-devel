@@ -159,6 +159,15 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 	g_return_val_if_fail (playlist, FALSE);
 
 	buffer_len = xmms_transport_size (transport);
+
+	if (buffer_len == 0) {
+		return TRUE;
+	}
+
+	if (buffer_len == -1) {
+		buffer_len = 1024;
+	}
+
 	buffer = g_malloc0 (buffer_len + 1);
 
 	while (len < buffer_len) {
@@ -168,6 +177,11 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 		XMMS_DBG ("Got %d bytes.", ret);
 
 		if (ret <= 0) {
+
+			if (len > 0) {
+				break;
+			}
+
 			g_free (buffer);
 			return FALSE;
 		}
