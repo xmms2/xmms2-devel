@@ -354,6 +354,7 @@ main(int argc, char **argv)
 	XMMS_CALLBACK_SET (connection, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (connection, xmmsc_signal_visualisation_data, handle_vis, NULL);
 	XMMS_CALLBACK_SET (connection, xmmsc_broadcast_playback_current_id, handle_mediainfo, connection);
+	XMMS_CALLBACK_SET (connection, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo, connection);
 	XMMS_CALLBACK_SET (connection, xmmsc_playback_current_id, handle_mediainfo, connection);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);
