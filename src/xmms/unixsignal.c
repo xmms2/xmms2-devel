@@ -9,7 +9,9 @@
 
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <glib.h>
+#include <unistd.h>
 
 
 static gpointer 

@@ -179,7 +179,7 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
 			xmms_playlist_entry_t *entry;
-			gchar *mime;
+			const gchar *mime;
 
 			if (xmms_medialib_check_if_exists (medialib, path)) {
 				XMMS_DBG ("%s in db", name);

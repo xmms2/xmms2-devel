@@ -49,7 +49,7 @@ typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder,
 											   const gchar *mimetype);
 typedef gboolean (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);
-typedef gboolean (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
+typedef xmms_playlist_entry_t *(*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
 
 /*
  * Public function prototypes
