@@ -177,10 +177,10 @@ xmms_cdae_decode_block (xmms_decoder_t *decoder)
 static void 
 xmms_cdae_seek (xmms_decoder_t *decoder, guint samples)
 {
-	g_return_if_fail (decoder);
-
 	gint bps = 44100 * 2 * 2 * 8;
 	gint bytes;
+
+	g_return_if_fail (decoder);
 
 	bytes = (guint)(((gdouble)samples) * bps / 44100) / 8;
 
