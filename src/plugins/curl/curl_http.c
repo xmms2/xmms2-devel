@@ -101,13 +101,13 @@ xmms_curl_can_handle (const gchar *url)
 
 	XMMS_DBG ("xmms_curl_can_handle (%s)", dec); 
 
-	if ((g_strncasecmp (dec, "http", 5) == 0) || (dec[0] == '/')) {
+	if ((g_strncasecmp (dec, "http", 4) == 0) || (dec[0] == '/')) {
 		g_free (dec); 
 		return TRUE; 
 	}
 
 	g_free (dec); 
-	return TRUE; 
+	return FALSE; 
 }
 
 static gboolean
