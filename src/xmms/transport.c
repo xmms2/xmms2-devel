@@ -18,7 +18,7 @@
 
 
 /** @file 
- * Controls transport plugins.
+ * Control transport plugins.
  *
  * This file is responsible for the transportlayer.
  */
@@ -130,7 +130,6 @@ struct xmms_transport_St {
 /** 
  * @defgroup TransportPlugin TransportPlugin
  * @ingroup XMMSPlugin
- *
  * @{
  */
 
@@ -152,7 +151,7 @@ xmms_transport_private_data_get (xmms_transport_t *transport)
 }
 
 /**
- * Set a transport's private data
+ * Set transport private data
  *
  * @param transport the transport to store the pointer in.
  * @param data pointer to private data.
@@ -167,7 +166,7 @@ xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 }
 
 /**
- * Sets this transports mimetype.
+ * Set transport mimetype.
  * This should be called from the plugin to propagate the mimetype
  *
  * @param mimetype A zero-terminated string with the mimetype of the
@@ -199,7 +198,7 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 }
 
 /** 
- * Gets the current URL from the transport.
+ * Get the current URL from the transport.
  */
 const gchar *
 xmms_transport_url_get (const xmms_transport_t *const transport)
@@ -215,7 +214,7 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 }
 
 /** 
- * Gets the current #xmms_medialib_entry_t from the transport.
+ * Get the current #xmms_medialib_entry_t from the transport.
  */
 xmms_medialib_entry_t
 xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
@@ -227,12 +226,14 @@ xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
 /** @} */
 
 /** 
- * @ingroup Decoder
+ * @defgroup Transport Transport
+ * @ingroup XMMSServer
+ *
  * @{
  */
 
 /**
- * Returns the #xmms_plugin_t for this transport.
+ * Return the #xmms_plugin_t for this transport.
  */
 
 xmms_plugin_t *
@@ -312,7 +313,7 @@ xmms_transport_new ()
 }
 
 /**
- * Makes the transport ready for buffering and reading.
+ * Make the transport ready for buffering and reading.
  * It will take the entry URL and pass it to all transport
  * plugins and let them decide if they can handle this URL
  * or not. When the it finds a plugin that claims to handle
@@ -404,7 +405,7 @@ xmms_transport_buffering_start (xmms_transport_t *transport)
 }
 
 /**
- * Reads len bytes into buffer.
+ * Read #len bytes into buffer.
  *
  * This function reads from the transport thread buffer, if you want to
  * read more then currently are buffered, it will wait for you. Does not
@@ -413,6 +414,7 @@ xmms_transport_buffering_start (xmms_transport_t *transport)
  * @param transport transport to read from.
  * @param buffer where to store read data.
  * @param len number of bytes to read.
+ * @param error a #xmms_error_t structure that can hold errors.
  * @returns number of bytes actually read, or -1 on error.
  *
  */
@@ -598,7 +600,7 @@ xmms_transport_iseos (xmms_transport_t *transport)
 }
 
 /**
- * Gets the total size in bytes of the transports source.
+ * Get the total size in bytes of the transports source.
  * @returns size of the media, or -1 if it can't be determined.
  */
 gint
@@ -614,7 +616,7 @@ xmms_transport_size (xmms_transport_t *transport)
 }
 
 /**
- * Gets the plugin that was used to instantiate this transport.
+ * Get the plugin that was used to instantiate this transport.
  */
 xmms_plugin_t *
 xmms_transport_get_plugin (const xmms_transport_t *transport)
@@ -625,7 +627,7 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
 }
 
 /**
- * Open the transports plugin. This is called by #xmms_transport_plugin_find
+ * Open the transport plugin. This is called by #xmms_transport_plugin_find
  * which is called by #xmms_transport_open.
  *
  * @return TRUE if the operation was a success.
@@ -693,7 +695,8 @@ xmms_transport_start (xmms_transport_t *transport)
 
 
 /**
-  * Tells the transport thread to quit and call xmms_transport_destroy
+  * Tell the transport to stop buffering.
+  * You still have to deref the object to free memory.
   *
   * @internal
   */
@@ -748,7 +751,7 @@ xmms_transport_destroy (xmms_object_t *object)
 }
 
 /**
- * Finds a transportplugin for this URL.
+ * Find a transportplugin for this URL.
  *
  * @internal
  */

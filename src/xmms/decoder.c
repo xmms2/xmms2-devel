@@ -409,9 +409,12 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 /** @} */
 
 
-/** @ingroup Decoder
-  * @{
-  */
+/** 
+ * @defgroup Decoder
+ * @ingroup XMMSServer
+ *
+ * @{
+ */
 
 gboolean
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
