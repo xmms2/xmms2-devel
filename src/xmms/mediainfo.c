@@ -182,7 +182,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 				continue;
 			}
 
-
 			xmms_decoder_mediainfo_get (decoder, transport);
 
 			xmms_object_unref (entry);

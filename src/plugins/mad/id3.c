@@ -345,25 +345,41 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 	XMMS_DBG ("Found ID3v1 TAG!");
 
 	tmp = g_convert (tag->artist, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	g_strstrip (tmp);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
-	g_free (tmp);
+	if (!tmp) {
+		g_clear_error (&err);
+	} else {
+		g_strstrip (tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
+		g_free (tmp);
+	}
 	
 	tmp = g_convert (tag->album, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	g_strstrip (tmp);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
-	g_free (tmp);
+	if (!tmp) {
+		g_clear_error (&err);
+	} else {
+		g_strstrip (tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
+		g_free (tmp);
+	}
 	
 	tmp = g_convert (tag->title, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	g_strstrip (tmp);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
-	g_free (tmp);
+	if (!tmp) {
+		g_clear_error (&err);
+	} else {
+		g_strstrip (tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
+		g_free (tmp);
+	}
 	
 	tmp = g_convert (tag->year, 4, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	g_strstrip (tmp);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
-	g_free (tmp);
-	
+	if (!tmp) {
+		g_clear_error (&err);
+	} else {
+		g_strstrip (tmp);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
+		g_free (tmp);
+	}
+
 	if (tag->genre > GENRE_MAX) {
 		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {

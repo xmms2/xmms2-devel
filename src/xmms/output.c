@@ -602,6 +602,7 @@ xmms_output_thread (gpointer data)
 				output->status = XMMS_OUTPUT_STATUS_PAUSE;
 				XMMS_OUTPUT_STATUS_EMIT (output->status);
 			}
+
 			g_cond_wait (output->cond, output->mutex);
 			continue;
 		}
@@ -658,6 +659,7 @@ xmms_output_thread (gpointer data)
 		if (xmms_decoder_iseos (output->decoder)) {
 			XMMS_DBG ("decoder is EOS!");
 			xmms_playlist_get_next_entry (output->playlist);
+			xmms_decoder_stop (output->decoder);
 			xmms_object_unref (output->decoder);
 			output->decoder = NULL;
 			xmms_output_flush (output);
@@ -667,6 +669,7 @@ xmms_output_thread (gpointer data)
 	}
 
 	if (output->decoder) {
+		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (output->decoder);
 		output->decoder = NULL;
 		xmms_output_flush (output);

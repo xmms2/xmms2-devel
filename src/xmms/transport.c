@@ -370,6 +370,8 @@ xmms_transport_new ()
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
+	
+	XMMS_DBG ("MEMDBG: TRANSPORT NEW %p", transport);
 
 	return transport;
 }
@@ -798,9 +800,13 @@ xmms_transport_destroy (xmms_object_t *object)
 	g_cond_free (transport->mime_cond);
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
+	
+	XMMS_DBG ("MEMDBG: TRANSPORT DESTROY %p", object);
 
 	if (transport->mimetype)
 		g_free (transport->mimetype);
+	if (transport->suburl) 
+		g_free (transport->suburl);
 }
 
 /**
