@@ -356,6 +356,8 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 
 	mt = xmms_playlist_mediainfo_thread_get (medialib->playlist);
 	xmms_mediainfo_entry_add (mt, entry);
+
+	xmms_object_unref (XMMS_OBJECT (entry));
 }
 
 static int
