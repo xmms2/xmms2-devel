@@ -70,10 +70,6 @@
 #define XMMS_METHOD_DECODER_KILL "decoder_kill"
 
 
-/* Playback msgs */
-#define XMMS_SIGNAL_PLAYBACK_STATUS "/xmms/playback::status"
-#define XMMS_SIGNAL_PLAYBACK_JUMP "/xmms/playback::jump"
-
 /* Playlist msgs */
 #define XMMS_SIGNAL_PLAYLIST_LIST "/xmms/playlist::list"
 #define XMMS_SIGNAL_PLAYLIST_CURRENTID "/xmms/playlist::currentid"
@@ -105,6 +101,7 @@
 #define XMMS_SIGNAL_OUTPUT_OPEN_FAIL "/xmms/output::open_fail"
 #define XMMS_SIGNAL_OUTPUT_MIXER_CHANGED "/xmms/output::mixer_changed"
 #define XMMS_SIGNAL_OUTPUT_PLAYTIME "/xmms/playback::playtime"
+#define XMMS_SIGNAL_OUTPUT_STATUS "/xmms/output::status"
 
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"

@@ -133,16 +133,16 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
  * Make server emit the current id.
  */
 
-/* FIXME
 xmmsc_result_t *
 xmmsc_playback_status (xmmsc_connection_t *c)
 {
 	xmmsc_result_t *res;
-	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
-	xmmsc_result_restartable (res, c, XMMS_SIGNAL_PLAYBACK_STATUS);
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_STATUS);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_OUTPUT_STATUS);
 	return res;
 }
 
+/* FIXME
 xmmsc_result_t *
 xmmsc_playback_statistics (xmmsc_connection_t *c)
 {

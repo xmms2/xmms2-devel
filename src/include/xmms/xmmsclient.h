@@ -66,14 +66,12 @@ unsigned int xmmscs_playlist_current_id (xmmsc_connection_t *c);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
 
 xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_next (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_start (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_pause (xmmsc_connection_t *c);
-xmmsc_result_t *xmmsc_playback_next(xmmsc_connection_t *);
-xmmsc_result_t *xmmsc_playback_prev(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playback_status (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_playtime (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_statistics (xmmsc_connection_t *c);
-xmmsc_result_t *xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id);
 xmmsc_result_t *xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds);
 xmmsc_result_t *xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples);
 
