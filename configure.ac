@@ -60,6 +60,9 @@ AC_CHECK_LIB(sqlite,sqlite_open,[
 	AC_MSG_WARN("sqlite not found. disabling it")
 ])
 
+AM_PATH_SDL(1.2.5,,AC_MSG_WARN("No sdl. Skipping stuff"))
+AM_CONDITIONAL(HAVE_SDL, test "$SDL_CFLAGS" != "")
+
 AC_SUBST(SQLITE_LDFLAGS)
 AC_SUBST(SQLITE_CFLAGS)
 AM_CONDITIONAL(HAVE_SQLITE, test "$SQLITE_LDFLAGS" != "")
@@ -76,6 +79,7 @@ src/Makefile
 src/xmms/Makefile
 src/clients/Makefile
 src/clients/cli/Makefile
+src/clients/sdl-vis/Makefile
 src/clients/lib/Makefile
 src/clients/lib/xmmsclient/Makefile
 src/plugins/Makefile
