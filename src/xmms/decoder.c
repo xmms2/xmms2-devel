@@ -981,6 +981,7 @@ xmms_decoder_thread (gpointer data)
 	if (decoder->running) {
 		/* This means that we eofed... */
 		XMMS_DBG ("EOF!");
+		xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 		xmms_object_emit_f (XMMS_OBJECT (decoder),
 				XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
 				XMMS_OBJECT_CMD_ARG_NONE,
