@@ -320,7 +320,7 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 		} else {
 			a = argv[i];
 		}
-		g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (argv[i]));
+		g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (a));
 	}
 
 	*l = g_list_prepend (*l, table);
@@ -587,16 +587,18 @@ xmms_medialib_select_entries (gchar *query, xmms_error_t *error)
 
 		for (n = l; n; n = g_list_next (n)) {
 			gchar *tmp = g_hash_table_lookup (n->data, "url");
+			XMMS_DBG ("got %s", tmp);
 			if (tmp) {
 				e = xmms_playlist_entry_new (tmp);
 				g_hash_table_foreach (n->data, ghash_to_entry, e);
 				ret = g_list_prepend (ret, e);
 				g_hash_table_destroy (n->data);
 			}
-			n = g_list_delete_link (n, n);
 		}
 
 		ret = g_list_reverse (ret);
+
+		g_list_free (l);
 
 		return ret;
 	}
