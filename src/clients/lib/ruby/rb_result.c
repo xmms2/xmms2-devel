@@ -169,7 +169,7 @@ static void xhash_to_rhash (const void *key, const void *value,
 	rb_hash_aset (*hash, rb_str_new2 (key), val);
 }
 
-static VALUE c_mediainfo_get (VALUE self)
+static VALUE c_hashtable_get (VALUE self)
 {
 	VALUE rhash = rb_hash_new ();
 	x_hash_t *hash = NULL;
@@ -178,7 +178,7 @@ static VALUE c_mediainfo_get (VALUE self)
 
 	if (!xmmsc_result_get_hashtable (res->real, &hash))
 		rb_raise (rb_eRuntimeError,
-		          "xmmsc_result_get_hash() failed");
+		          "xmmsc_result_get_hashtable() failed");
 
 	x_hash_foreach (hash, (XHFunc) xhash_to_rhash, &rhash);
 
@@ -279,7 +279,7 @@ void Init_Result (void)
 	rb_define_method (cResult, "int", c_int_get, 0);
 	rb_define_method (cResult, "uint", c_uint_get, 0);
 	rb_define_method (cResult, "string", c_string_get, 0);
-	rb_define_method (cResult, "mediainfo", c_mediainfo_get, 0);
+	rb_define_method (cResult, "hashtable", c_hashtable_get, 0);
 	rb_define_method (cResult, "intlist", c_intlist_get, 0);
 	rb_define_method (cResult, "uintlist", c_uintlist_get, 0);
 	rb_define_method (cResult, "stringlist", c_stringlist_get, 0);
