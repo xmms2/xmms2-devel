@@ -8,6 +8,7 @@ import sys;
 class XmmsEnvironment(SCons.Environment.Environment):
 	pass
 	def __init__(self, options=None, **kw):
+		self.sys = os.popen("uname").read().strip()
 		SCons.Environment.Environment.__init__(self, options=options)
 		self.flag_groups = {}
 		apply(self.Replace, (), kw)
@@ -30,6 +31,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.Install(self.installdir+self.mandir, source)
 
 	def XmmsPlugin(self,target,source):
+		if self.sys == 'Darwin':
+			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
+			self['SHLIBSUFFIX'] = '.so'
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.pluginpath,self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
@@ -38,6 +42,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.Install(self.installdir+self.binpath,target)
 
 	def XmmsLibrary(self,target,source):
+		if self.sys == 'Darwin':
+			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
+			self['SHLIBSUFFIX'] = '.dylib'
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
@@ -100,9 +107,15 @@ class XmmsEnvironment(SCons.Environment.Environment):
 					self.Append( CPPFLAGS = [ arg ] )
 	    			elif arg[1:4] == 'Wl,':
 					self.Append( LINKFLAGS = [ arg ] )
+				elif arg[1:] == 'framework':
+					self.Append( LINKFLAGS = [ arg ] )
+					self.Append( LINKFLAGS = [ params[i+1] ] )
+					i = i + 1
+				elif arg[1:5] == 'arch':
+					i = i + 1
 		    		else:
 					print 'garbage in flags: ' + arg
-					sys.xit(1)
+					sys.exit(1)
 			elif switch == '/':
 				if arg[-3:] == '.la':
 # Ok, this is a libtool file, someday maybe we should parse it.

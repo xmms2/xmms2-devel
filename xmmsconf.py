@@ -33,6 +33,9 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 
+	if base_env.sys == 'Darwin':
+		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
+
 	##
 	## Write cache
 	##
