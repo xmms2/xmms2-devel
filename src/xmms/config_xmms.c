@@ -202,7 +202,7 @@ gint xmms_config_value_as_int (xmms_config_value_t *value) {
 	if(!value || value->type != XMMS_CONFIG_VALUE_PLAIN || !value->data) return -1;
 
 	XMMS_CONFIG_LOCK;
-	i=strtol(value->data,NULL,10);
+	i=strtol(value->data,NULL,0);
 	XMMS_CONFIG_UNLOCK;
 
 	return i;

@@ -32,21 +32,6 @@ GList *xmmsc_playlist_list (xmmsc_connection_t *);
 guint xmmsc_get_playing_id (xmmsc_connection_t *);
 GHashTable *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
 
-#define XMMSC_CALLBACK_PLAYTIME_CHANGED "playtime-changed"
-#define XMMSC_CALLBACK_INFORMATION "information"
-#define XMMSC_CALLBACK_MEDIAINFO_CHANGED "mediainfo-changed"
-#define XMMSC_CALLBACK_PLAYBACK_STOPPED "playback-stopped"
-#define XMMSC_CALLBACK_DISCONNECTED "disconnected"
-
-#define XMMSC_CALLBACK_PLAYLIST_ADDED "playlist-added"
-#define XMMSC_CALLBACK_PLAYLIST_CLEARED "playlist-cleared"
-#define XMMSC_CALLBACK_PLAYLIST_SHUFFLED "playlist-shuffled"
-#define XMMSC_CALLBACK_PLAYLIST_REMOVED "playlist-removed"
-#define XMMSC_CALLBACK_PLAYLIST_JUMPED "playlist-jumped"
-#define XMMSC_CALLBACK_PLAYLIST_MOVED "playlist-moved"
-
-#define XMMSC_CALLBACK_VISUALISATION_SPECTRUM "visualisation-spectrum"
-
 void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), void *);
 
 void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);

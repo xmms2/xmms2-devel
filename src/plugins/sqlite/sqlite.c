@@ -3,6 +3,7 @@
 #include "xmms/util.h"
 #include "xmms/magic.h"
 #include "xmms/playlist.h"
+#include "xmms/xmms.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,7 +44,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_MEDIALIB, "sqlite",
-			"SQLite medialib " VERSION,
+			"SQLite medialib " XMMS_VERSION,
 		 	"SQLite backend to medialib");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -83,14 +84,12 @@ xmms_sqlite_new (xmms_medialib_t *medialib)
 	xmms_sqlite_data_t *data;
 	gchar dbpath[XMMS_PATH_MAX];
 	gchar *err;
-	gchar *hdir;
+	const gchar *hdir;
 	g_return_val_if_fail (medialib, FALSE);
 
 	hdir = g_get_home_dir ();
 
 	g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", hdir);
-
-	g_free (hdir);
 
 	sql = sqlite_open (dbpath, 0644, &err);
 	if (!sql) {

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * 
+ */
+
 #include "output.h"
 #include "output_int.h"
 #include "object.h"
@@ -70,8 +75,17 @@ xmms_output_set_config (xmms_output_t *output, GHashTable *config)
 	}
 
 	output->config = val;
-}	
+}
 
+
+/*
+ * Retrieve a config variable for a certain output section as a string.
+ * If the requested value isn't available NULL is returned. 
+ *
+ * @param output The output structure so we know where in the config to look
+ * @param val The config variable to inquire
+ * @return a gchar with the config data, or NULL if not available
+ */
 gchar *
 xmms_output_config_string_get (xmms_output_t *output, gchar *val)
 {
@@ -85,13 +99,43 @@ xmms_output_config_string_get (xmms_output_t *output, gchar *val)
 	return xmms_config_value_as_string (value);
 }
 
+
+/*
+ * Retrieve a config variable for a certain output section as an integer. 
+ * If the requested value isn't available 0 is returned. 
+ *
+ * @param output The output structure so we know where in the config to look
+ * @param val The config variable to inquire
+ * @return a gint with the config data, or 0 if not available
+ */
+gint 
+xmms_output_config_int_get (xmms_output_t *output, gchar *val)
+{
+	xmms_config_value_t *value;
+	
+	g_return_val_if_fail (output, 0);
+	g_return_val_if_fail (val, 0);
+	
+	value = xmms_config_value_list_lookup (output->config, val);
+	
+	return xmms_config_value_as_int (value);
+}
+
+
 void
 xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
 {
 	output->plugin_data = data;
 }
 
+/*
+ * Private functions
+ */
 
+
+/**
+ * @internal
+ */
 void
 xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 {
@@ -104,10 +148,6 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 	xmms_output_unlock (output);
 
 }
-
-/*
- * Private functions
- */
 
 guint
 xmms_output_samplerate_set (xmms_output_t *output, guint rate)

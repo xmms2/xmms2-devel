@@ -1,6 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/output.h"
 #include "xmms/util.h"
+#include "xmms/xmms.h"
 #include "xmms/ringbuf.h"
 
 #include <sys/types.h>
@@ -44,7 +45,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "oss",
-			"OSS Output " VERSION,
+			"OSS Output " XMMS_VERSION,
 			"OpenSoundSystem output plugin");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");

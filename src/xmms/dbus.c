@@ -190,6 +190,7 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
 		send_visualisation_spectrum, NULL, NULL, NULL },
+	{ NULL, 0, NULL, NULL, NULL, NULL },
 };
 
 typedef struct xmms_dbus_connection_St {
@@ -274,8 +275,7 @@ send_playlist_changed (xmms_object_t *object,
         const xmms_playlist_changed_msg_t *chmsg = data;
         DBusMessage *msg=NULL;
         DBusMessageIter itr;
-                                                                                                    
-                                                                                                    
+
         switch (chmsg->type) {
                 case XMMS_PLAYLIST_CHANGED_ADD:
                         msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_ADD, NULL);
@@ -306,15 +306,15 @@ send_playlist_changed (xmms_object_t *object,
                         dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
                         break;
         }
-                                                                                                    
+
         XMMS_DBG ("Sending playlist changed message: %s", dbus_message_get_name (msg));
-                                                                                                    
+
         g_mutex_lock (connectionslock);
-                                                                                                    
+
         if (connections) {
                 g_slist_foreach (connections, do_send, msg);
         }
-                                                                                                    
+
         g_mutex_unlock (connectionslock);
 
         dbus_message_unref (msg);
@@ -327,16 +327,15 @@ send_playback_stop (xmms_object_t *object,
 		gpointer userdata)
 {
         g_mutex_lock (connectionslock);
-                                                                                                    
+
         if (connections) {
                 DBusMessage *msg;
-                                                                                                    
+
                 msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_STOP, NULL);
                 g_slist_foreach (connections, do_send, msg);
                 dbus_message_unref (msg);
         }
-                                                                                                    
-                                                                                                    
+
         g_mutex_unlock (connectionslock);
 }
 
@@ -347,18 +346,18 @@ send_playback_playtime (xmms_object_t *object,
 {
 
         g_mutex_lock(connectionslock);
-                                                                                                    
+
         if (connections) {
                 DBusMessage *msg;
                 DBusMessageIter itr;
-                                                                                                    
+
                 msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_PLAYTIME, NULL);
                 dbus_message_append_iter_init (msg, &itr);
                 dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT(data));
                 g_slist_foreach (connections, do_send, msg);
                 dbus_message_unref (msg);
         }
-                                                                                                    
+
 	g_mutex_unlock(connectionslock);
 
 }
@@ -400,18 +399,18 @@ send_playback_currentid (xmms_object_t *object,
 {
 
         g_mutex_lock(connectionslock);
-                                                                                                    
+
         if (connections) {
                 DBusMessage *msg;
                 DBusMessageIter itr;
-                                                                                                    
+
                 msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_CURRENTID, NULL);
                 dbus_message_append_iter_init (msg, &itr);
                 dbus_message_iter_append_uint32 (&itr, xmms_core_get_id ());
                 g_slist_foreach (connections, do_send, msg);
                 dbus_message_unref (msg);
         }
-                                                                                                    
+
         g_mutex_unlock(connectionslock);
 
 }
@@ -433,7 +432,7 @@ send_core_information (xmms_object_t *object,
                 g_slist_foreach (connections, do_send, msg);
                 dbus_message_unref (msg);
         }
-                                                                                                    
+
         g_mutex_unlock (connectionslock);
 }
 
@@ -582,21 +581,21 @@ handle_playlist_list (DBusConnection *conn, DBusMessage *msg)
         xmms_playlist_t *playlist;
         GList *list,*save;
         int clientser;
-                                                                                                    
+
         rpy = dbus_message_new_reply (msg);
         dbus_message_append_iter_init (rpy, &itr);
         playlist = xmms_core_get_playlist ();
         save = list = xmms_playlist_list (playlist);
-                                                                                                    
+
         while (list) {
                 xmms_playlist_entry_t *entry=list->data;
                 dbus_message_iter_append_uint32 (&itr, xmms_playlist_entry_id_get (entry));
                 list = g_list_next (list);
         }
-                                                                                                    
+
         dbus_connection_send (conn, rpy, &clientser);
         dbus_message_unref (rpy);
-                                                                                                    
+
         g_list_free (save);
 
 	return TRUE;
@@ -639,16 +638,16 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
         DBusMessageIter dictitr;
         DBusMessage *reply=NULL;
         gint serial;
-                                                                                                    
+
         XMMS_DBG ("playlist_mediainfomsg!");
-                                                                                                    
+
         dbus_message_iter_init (msg, &itr);
         if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
                 guint id = dbus_message_iter_get_uint32 (&itr);
                 XMMS_DBG ("Getting info for %d", id);
                 entry = xmms_core_playlist_entry_mediainfo (id);
         }
-                                                                                                    
+
         if (entry) {
                 gchar *uri = xmms_playlist_entry_get_uri (entry);
                 reply = dbus_message_new_reply (msg);
@@ -659,9 +658,8 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
                         dbus_message_iter_append_dict_key (&dictitr, "uri");
                         dbus_message_iter_append_string (&dictitr, uri);
                 }
-                                                                                                    
         }
-                                                                                                    
+
         if (reply) {
                 dbus_connection_send (conn, reply, &serial);
                 dbus_message_unref (reply);

@@ -1,3 +1,4 @@
+#include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/util.h"
@@ -39,7 +40,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "file",
-			"File transport " VERSION,
+			"File transport " XMMS_VERSION,
 		 	"Plain file transport");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
