@@ -164,11 +164,14 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
  */
 
 gboolean
-xmms_plugin_init (void)
+xmms_plugin_init (gchar *path)
 {
 	xmms_plugin_mtx = g_mutex_new ();
 
-	xmms_plugin_scan_directory (PKGLIBDIR);
+	if (!path)
+		path = PKGLIBDIR;
+
+	xmms_plugin_scan_directory (path);
 	
 	return TRUE;
 }

@@ -5,7 +5,7 @@
  * Private functions
  */
 
-gboolean xmms_plugin_init (void);
+gboolean xmms_plugin_init (gchar *path);
 void xmms_plugin_scan_directory (const gchar *dir);
 
 void xmms_plugin_ref (xmms_plugin_t *plugin);

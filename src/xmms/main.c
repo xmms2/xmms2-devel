@@ -90,6 +90,7 @@ main (int argc, char **argv)
 	gchar *outname = NULL;
 	gboolean daemonize = FALSE;
 	gchar *path;
+	gchar *ppath = NULL;
 	pid_t ppid=0;
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -100,7 +101,7 @@ main (int argc, char **argv)
 
 	
 	while (42) {
-		opt = getopt (argc, argv, "dvVo:");
+		opt = getopt (argc, argv, "dvVo:p:");
 
 		if (opt == -1)
 			break;
@@ -121,6 +122,9 @@ main (int argc, char **argv)
 
 			case 'd':
 				daemonize = TRUE;
+				break;
+			case 'p':
+				ppath = g_strdup (optarg);
 				break;
 				
 		}
@@ -148,7 +152,7 @@ main (int argc, char **argv)
 
 	xmms_core_init ();
 
-	if (!xmms_plugin_init ())
+	if (!xmms_plugin_init (ppath))
 		return 1;
 
 	
