@@ -302,7 +302,7 @@ xmms_output_open (xmms_output_t *output)
 	open_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
 
 	if (!open_method || !open_method (output)) {
-		XMMS_DBG ("Couldnt open output device");
+		XMMS_DBG ("Couldn't open output device");
 		return FALSE;
 	}
 

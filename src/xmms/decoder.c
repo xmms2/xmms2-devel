@@ -635,7 +635,7 @@ xmms_decoder_thread (gpointer data)
 	g_mutex_unlock (decoder->mutex);
 
 	decoder->thread = NULL;
-	XMMS_DBG ("Decoder thread quiting");
+	XMMS_DBG ("Decoder thread quitting");
 	xmms_decoder_destroy_real (decoder);
 
 	return NULL;

@@ -447,7 +447,7 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 
 	xmms_transport_lock (transport);
 	if (!transport->mimetype) {
-		XMMS_DBG ("Wating for mime_cond");
+		XMMS_DBG ("Waiting for mime_cond");
 		g_cond_wait (transport->mime_cond, transport->mutex);
 	}
 	ret = transport->mimetype;
@@ -495,7 +495,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	xmms_transport_lock (transport);
 	
 	if (!transport->buffering && transport->numread++ > 1) {
-		XMMS_DBG ("Lets start buffering");
+		XMMS_DBG ("Let's start buffering");
 		transport->buffering = TRUE;
 		g_cond_signal (transport->cond);
 	}

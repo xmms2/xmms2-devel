@@ -51,7 +51,7 @@ xmms_magic_mime_from_file (const gchar *file)
 
 	while (mimemap[i].ext) {
 		if (g_strcasecmp (mimemap[i].ext, p) == 0) {
-			XMMS_DBG ("Mimetype acording to ext: %s", mimemap[i].mime);
+			XMMS_DBG ("Mimetype according to ext: %s", mimemap[i].mime);
 			return mimemap[i].mime;
 		}
 		i++;

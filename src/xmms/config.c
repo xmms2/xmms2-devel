@@ -310,7 +310,7 @@ xmms_config_save (const gchar *file)
 	list = g_list_sort (list, (GCompareFunc) g_strcasecmp);
 
 	if (!(fp = fopen (file, "wb+"))) {
-		XMMS_DBG ("Couldnt open %s for writing.", file);
+		XMMS_DBG ("Couldn't open %s for writing.", file);
 		return FALSE;
 	}
 
@@ -500,7 +500,7 @@ xmms_config_value_register (const gchar *path,
 
 	xmms_config_value_t *val;
 
-	XMMS_DBG ("Registring: %s", path);
+	XMMS_DBG ("Registering: %s", path);
 
 	g_mutex_lock (global_config->mutex);
 
