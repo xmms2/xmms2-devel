@@ -30,6 +30,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self.Append(CPPFLAGS='-DXMMS_OS_LINUX')
 		elif self.sys == 'Darwin':
 			self.Append(CPPFLAGS='-DXMMS_OS_DARWIN')
+			self['SHLIBSUFFIX'] = '.dylib'
 		elif self.sys == 'OpenBSD':
 			self.Append(CPPFLAGS='-DXMMS_OS_OPENBSD')
 
@@ -42,7 +43,6 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	def XmmsPlugin(self,target,source):
 		if self.sys == 'Darwin':
 			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
-			self['SHLIBSUFFIX'] = '.so'
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.pluginpath,self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
@@ -53,7 +53,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	def XmmsLibrary(self,target,source):
 		if self.sys == 'Darwin':
 			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
-			self['SHLIBSUFFIX'] = '.dylib'
+
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 

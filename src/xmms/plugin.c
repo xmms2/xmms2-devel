@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #include "xmms/plugin.h"
 #include "xmms/util.h"
 #include "xmms/config.h"
@@ -26,6 +23,13 @@
 
 #include <gmodule.h>
 #include <string.h>
+
+#ifdef XMMS_OS_DARWIN
+#define XMMS_LIBSUFFIX ".dylib"
+#else
+#define XMMS_LIBSUFFIX ".so"
+#endif
+
 
 extern xmms_config_t *global_config;
 
@@ -300,7 +304,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 		if (strncmp (name, "lib", 3) != 0)
 			continue;
 
-		if (!strstr (name, ".so"))
+		if (!strstr (name, XMMS_LIBSUFFIX))
 			continue;
 
 		path = g_build_filename (dir, name, NULL);
