@@ -216,8 +216,8 @@ xmms_object_emit_f (xmms_object_t *object, const gchar *signal,
 		case XMMS_OBJECT_METHOD_ARG_UINTLIST:
 			arg.retval.uintlist = (GList*) va_arg (ap, gpointer);
 			break;
-		case XMMS_OBJECT_METHOD_ARG_ENTRYLIST:
-			arg.retval.entrylist = (GList*) va_arg (ap, gpointer);
+		case XMMS_OBJECT_METHOD_ARG_HASHLIST:
+			arg.retval.hashlist = (GList*) va_arg (ap, gpointer);
 			break;
 		case XMMS_OBJECT_METHOD_ARG_INTLIST:
 			arg.retval.intlist = (GList*) va_arg (ap, gpointer);

@@ -576,6 +576,29 @@ xmmsc_send_on_change (xmmsc_connection_t *c, DBusMessage *msg)
 }
 
 x_hash_t *
+xmmsc_deserialize_hashtable (DBusMessageIter *itr)
+{
+	x_hash_t *tab = NULL;
+
+	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
+		DBusMessageIter dictitr;
+		dbus_message_iter_init_dict_iterator (itr, &dictitr);
+		
+		tab = x_hash_new (x_str_hash, x_str_equal);
+		
+		while (42) {
+			char *key = dbus_message_iter_get_dict_key (&dictitr);
+			x_hash_insert (tab, key, dbus_message_iter_get_string (&dictitr));
+			
+			if (!dbus_message_iter_has_next (&dictitr))
+				break;
+			dbus_message_iter_next (&dictitr);
+		}
+	}
+	return tab;
+}
+
+x_hash_t *
 xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
 {
 	x_hash_t *tab = NULL;

@@ -51,6 +51,7 @@ xmmsc_result_t * xmmsc_send_msg_no_arg (xmmsc_connection_t *c, char *object, cha
 xmmsc_result_t * xmmsc_send_msg (xmmsc_connection_t *c, DBusMessage *msg);
 xmmsc_result_t * xmmsc_send_on_change (xmmsc_connection_t *c, DBusMessage *msg);
 void xmmsc_connection_add_reply (xmmsc_connection_t *c, int serial, char *type);
+x_hash_t *xmmsc_deserialize_hashtable (DBusMessageIter *itr);
 x_hash_t *xmmsc_deserialize_mediainfo (DBusMessageIter *itr);
 xmmsc_result_t *xmmsc_result_new (DBusPendingCall *pending); 
 

@@ -64,6 +64,12 @@ print_info (const char *fmt, ...)
 	printf ("%s\n", buf);
 }
 
+static void
+print_hash (const void *key, const void *value, void *udata)
+{
+	printf ("%s = %s\n", (char *)key, (char *)value);
+}
+
 /**
  * here comes all the cmd callbacks
  */
@@ -94,18 +100,22 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 
 		res = xmmsc_medialib_select (conn, argv[3]);
 		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
 		
 		{
 			x_list_t *l, *n;
 			x_hash_t *e;
 
-			if (!xmmsc_result_get_entrylist (res, &l)) {
+			if (!xmmsc_result_get_hashlist (res, &l)) {
 				print_error ("Broken resultset...");
 			}
 
 			for (n = l; n; n = x_list_next (n)) {
 				e = n->data;
-				print_info ("%s - %s - %s", x_hash_lookup (e, "artist"), x_hash_lookup (e, "album"), x_hash_lookup (e, "title"));
+				x_hash_foreach (e, print_hash, NULL);
 			}
 			
 		}
@@ -655,12 +665,28 @@ handle_plch (xmmsc_result_t *res, void *userdata)
 }
 
 static void
+handle_entry_plch (xmmsc_result_t *res, void *userdata)
+{
+	int id;
+
+	if (!xmmsc_result_get_uint (res, &id)) {
+		print_error ("Could't fetch uid!");
+	}
+
+	print_info ("Mediainfo for id = %d is updated", id);
+	
+	xmmsc_result_unref (xmmsc_result_restart (res));
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
 
 	ml = g_main_loop_new (NULL, FALSE);
 	XMMS_CALLBACK_SET (conn, xmmsc_playlist_changed, handle_plch, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playlist_entry_changed, handle_entry_plch, conn);
 
 	xmmsc_setup_with_gmain (conn, NULL);
 	g_main_loop_run (ml);

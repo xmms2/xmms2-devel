@@ -161,6 +161,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			/* Check if this is in the medialib first.*/
 			if (xmms_medialib_entry_get (entry)) {
+				xmms_playlist_entry_changed (mtt->playlist, entry);
 				xmms_object_unref (entry);
 				continue;
 			}
@@ -213,6 +214,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			}
 
 			xmms_decoder_mediainfo_get (decoder, transport);
+			xmms_playlist_entry_changed (mtt->playlist, entry);
 
 			/* Store this in the database */
 			xmms_medialib_entry_store (entry);
