@@ -467,7 +467,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 	} else {
 		output->running = TRUE;
 		xmms_object_ref (output); /* thread takes one ref */
-		output->thread = g_thread_create (xmms_output_thread, output, TRUE, NULL);
+		output->thread = g_thread_create (xmms_output_thread, output, FALSE, NULL);
 	}
 
 	if (output->type == XMMS_OUTPUT_TYPE_FILL) {

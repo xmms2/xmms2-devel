@@ -48,7 +48,7 @@ void xmms_medialib_id_set (xmms_medialib_t *medialib, guint id);
 void xmms_medialib_sql_set (xmms_medialib_t *medialib, sqlite *sql);
 sqlite *xmms_medialib_sql_get (xmms_medialib_t *medialib);
 gboolean xmms_sqlite_open (xmms_medialib_t *medialib);
-gboolean xmms_sqlite_query (xmms_medialib_t *medialib, char *query, xmms_medialib_row_method_t method, void *udata);
+gboolean xmms_sqlite_query (xmms_medialib_t *medialib, xmms_medialib_row_method_t method, void *udata, char *query, ...);
 void xmms_sqlite_close (xmms_medialib_t *medialib);
 #endif
 

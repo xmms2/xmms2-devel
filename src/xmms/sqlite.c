@@ -96,22 +96,28 @@ xmms_sqlite_open (xmms_medialib_t *medialib)
 }
 
 gboolean
-xmms_sqlite_query (xmms_medialib_t *medialib, char *query, xmms_medialib_row_method_t method, void *udata)
+xmms_sqlite_query (xmms_medialib_t *medialib, xmms_medialib_row_method_t method, void *udata, char *query, ...)
 {
 	gchar *err;
 	sqlite *sql;
+	va_list ap;
 
 	g_return_val_if_fail (medialib, FALSE);
 	g_return_val_if_fail (query, FALSE);
+
+	va_start (ap, query);
 
 	sql = xmms_medialib_sql_get (medialib);
 
 	XMMS_DBG ("Running query: %s", query);
 
-	if (sqlite_exec (sql, query, (sqlite_callback) method, udata, &err) != SQLITE_OK) {
+	if (sqlite_exec_vprintf (sql, query, (sqlite_callback) method, udata, &err, ap) != SQLITE_OK) {
 		XMMS_DBG ("Error in query! %s", err);
+		va_end (ap);
 		return FALSE;
 	}
+
+	va_end (ap);
 
 	return TRUE;
 	

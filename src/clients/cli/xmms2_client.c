@@ -18,6 +18,7 @@
 #include <xmms/xmmsclient-glib.h>
 #include <xmms/signal_xmms.h>
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -79,20 +80,20 @@ cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 	for (i = 2; argv[i]; i++) {
 		char url[4096];
 		xmmsc_result_t *res;
+		char rpath[PATH_MAX];
+		char *p;
 
-		if (!strchr (argv[i], ':')) {
+		p = strchr (argv[i], ':');
+		if (!(p && p[1] == '/' && p[2] == '/')) {
 			/* OK, so this is NOT an valid URL */
 
-			if (!g_file_test (argv[i], G_FILE_TEST_IS_REGULAR))
+			if (!realpath (argv[i], rpath))
+				continue;
+
+			if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR))
 				continue;
 			
-			if (argv[i][0] == '/') {
-				g_snprintf (url, 4096, "file://%s", argv[i]);
-			} else {
-				char *cwd = g_get_current_dir ();
-				g_snprintf (url, 4096, "file://%s/%s", cwd, argv[i]);
-				g_free (cwd);
-			}
+			g_snprintf (url, 4096, "file://%s", rpath);
 		} else {
 			g_snprintf (url, 4096, "%s", argv[i]);
 		}
@@ -428,6 +429,8 @@ static void
 handle_playtime (xmmsc_result_t *res, void *userdata)
 {
 	guint dur;
+	GError *err = NULL;
+	int r, w;
 	
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
@@ -437,7 +440,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 		print_error ("korv");
 	}
 	
-	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", songname, dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
+	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err) , dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
 	fflush (stdout);
 
 	xmmsc_result_unref (xmmsc_result_restart (res));
