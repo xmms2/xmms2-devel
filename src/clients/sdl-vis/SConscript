@@ -1,0 +1,14 @@
+#cli client
+
+Import('base_env')
+
+env = base_env.Copy(CPPPATH = ['../lib/xmmsclient','../..'],
+	LIBPATH = ["../lib/xmmsclient/"],
+	LIBS = ["xmmsclient","SDL_ttf"])
+
+env.AddFlagsFromGroup("glib")
+env.AddFlagsFromGroup("sdl")
+
+env.Program(target = "sdl-vis" , source = ['sdl-vis.c'] )
+
+env.Install("/usr/local/bin", "sdl-vis")

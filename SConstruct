@@ -23,6 +23,8 @@ base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus
 ## Check for optional libs
 ##
 
+base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
+
 
 Export('base_env')
 
