@@ -158,6 +158,8 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	xmmsc_result_cleanup_data (res);
 	xmmsc_ipc_result_unregister (res->ipc, res);
+	x_list_free (res->func_list);
+	x_list_free (res->udata_list);
 	
 	free (res);
 }
