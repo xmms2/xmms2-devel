@@ -164,7 +164,7 @@ xmms_output_playlist_set (xmms_output_t *output, xmms_playlist_t *playlist)
 {
 	g_return_if_fail (output);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 
 	if (output->playlist)
 		xmms_object_unref (output->playlist);
@@ -174,7 +174,7 @@ xmms_output_playlist_set (xmms_output_t *output, xmms_playlist_t *playlist)
 
 	output->playlist = playlist;
 
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 }
 
 /*
@@ -189,36 +189,36 @@ xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
 {
 	g_return_if_fail (output);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	if (output->decoder) {
 		xmms_decoder_stop (output->decoder);
 	}
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 }
 
 static void
 xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
 {
 	g_return_if_fail (output);
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	if (output->decoder) {
 		xmms_decoder_seek_ms (output->decoder, ms, error);
 	} else {
 		/* Here we should set some data to the entry so it will start
 		   play from the offset */
 	}
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 }
 
 static void
 xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error)
 {
 	g_return_if_fail (output);
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	if (output->decoder) {
 		xmms_decoder_seek_samples (output->decoder, samples, error);
 	}
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 }
 
 static void
@@ -226,7 +226,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 
 	if (output->running) {
 		if (output->is_paused)
@@ -246,7 +246,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		st (output, XMMS_OUTPUT_STATUS_PLAY); /* @TODO */
 	}
 
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 
 }
 
@@ -255,7 +255,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 
 	if (output->type == XMMS_OUTPUT_TYPE_WR) {
 		XMMS_DBG ("STOP!");
@@ -272,14 +272,14 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 		g_cond_signal (output->fill_cond);
 	}
 
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 }
 
 static void
 xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	if (output->decoder) {
 		XMMS_DBG ("pause!");
 		output->is_paused = TRUE;
@@ -287,7 +287,7 @@ xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 			g_cond_signal (output->fill_cond);
 		}
 	}
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 }
 
 
@@ -297,9 +297,9 @@ xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 	g_return_val_if_fail (output, XMMS_OUTPUT_STATUS_STOP);
 	guint ret;
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	ret = output->status;
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 	return ret;
 }
 
@@ -329,11 +329,11 @@ xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_playlist_entry_t *ret;
 	g_return_val_if_fail (output, NULL);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	ret = output->playing_entry;
 	if (ret)
 		xmms_object_ref (ret);
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 	return ret;
 }
 
@@ -347,9 +347,9 @@ xmms_output_playtime (xmms_output_t *output, xmms_error_t *error)
 	guint32 ret;
 	g_return_val_if_fail (output, 0);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	ret = output->played_time;
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 
 	return ret;
 }
@@ -380,12 +380,12 @@ static void
 xmms_output_status_set (xmms_output_t *output, gint status)
 {
 	output->status = status;
-	XMMS_MTX_UNLOCK (output->mutex); /* must not hold lock in emit */
+	g_mutex_unlock (output->mutex); /* must not hold lock in emit */
 	xmms_object_emit_f (XMMS_OBJECT (output),
 			    XMMS_SIGNAL_OUTPUT_STATUS,
 			    XMMS_OBJECT_METHOD_ARG_UINT32,
 			    status);
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 }
 
 GList *
@@ -396,12 +396,12 @@ xmms_output_stats (xmms_output_t *output, GList *list)
 
 	g_return_val_if_fail (output, NULL);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	tmp = g_strdup_printf ("output.total_bytes=%llu", output->bytes_written);
 	ret = g_list_append (list, tmp);
 	tmp = g_strdup_printf ("output.buffer_underruns=%d", output->buffer_underruns);
 	ret = g_list_append (ret, tmp);
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 
 	return ret;
 }
@@ -609,10 +609,10 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 	buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	
 	if (!output->decoder) {
-		XMMS_MTX_UNLOCK (output->mutex);
+		g_mutex_unlock (output->mutex);
 		return 0;
 	}
 	
@@ -653,7 +653,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 	output->bytes_written += ret;
 	
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 
 	return ret;
 }
@@ -679,7 +679,7 @@ xmms_output_thread (gpointer data)
 
 	buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
 
-	XMMS_MTX_LOCK (output->mutex);
+	g_mutex_lock (output->mutex);
 	while (output->running) {
 		gchar buffer[4096];
 		gint ret;
@@ -736,10 +736,10 @@ xmms_output_thread (gpointer data)
 
 		if (ret > 0 && output->type == XMMS_OUTPUT_TYPE_WR) {
 
-			XMMS_MTX_UNLOCK (output->mutex);
+			g_mutex_unlock (output->mutex);
 			/* Call the plugins write method */
 			write_method (output, buffer, ret);
-			XMMS_MTX_LOCK (output->mutex);
+			g_mutex_lock (output->mutex);
 
 			/* For statistics! */
 			output->bytes_written += ret;
@@ -792,7 +792,7 @@ xmms_output_thread (gpointer data)
 		output->is_paused = FALSE;
 	}
 
-	XMMS_MTX_UNLOCK (output->mutex);
+	g_mutex_unlock (output->mutex);
 
 	xmms_output_close (output);
 

@@ -144,22 +144,22 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 		sek = xmms_playlist_entry_property_get (entry, "laststarted");
 		g_return_if_fail (sek);
 
-		XMMS_MTX_LOCK (medialib->mutex);
+		g_mutex_lock (medialib->mutex);
 		ret = xmms_sqlite_query (NULL, NULL, 
 					 "update Log set value=%d where id=%s and starttime=%s", 
 					 value, mid, sek);
 		
-		XMMS_MTX_UNLOCK (medialib->mutex);
+		g_mutex_unlock (medialib->mutex);
 	} else if (status == XMMS_OUTPUT_STATUS_PLAY) {
 		char tmp[16];
 		time_t stime = time (NULL);
 		
-		XMMS_MTX_LOCK (medialib->mutex);
+		g_mutex_lock (medialib->mutex);
 		ret = xmms_sqlite_query (NULL, NULL, 
 					 "insert into Log (id, starttime) values (%s, %u)", 
 					 mid, (guint)stime);
 
-		XMMS_MTX_UNLOCK (medialib->mutex);
+		g_mutex_unlock (medialib->mutex);
 		if (!ret) {
 			return;
 		}
@@ -234,7 +234,7 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 
 	g_return_val_if_fail (medialib, FALSE);
 	XMMS_DBG ("Storing entry to medialib!");
-	XMMS_MTX_LOCK (medialib->mutex);
+	g_mutex_lock (medialib->mutex);
 
 	id = xmms_medialib_next_id (medialib);
 	ret = xmms_sqlite_query (NULL, NULL,
@@ -257,7 +257,7 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 	g_free (tmp);
 				 
 	
-	XMMS_MTX_UNLOCK (medialib->mutex);
+	g_mutex_unlock (medialib->mutex);
 
 	return TRUE;
 }
@@ -352,19 +352,19 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 	g_return_val_if_fail (medialib, FALSE);
 	g_return_val_if_fail (entry, FALSE);
 
-	XMMS_MTX_LOCK (medialib->mutex);
+	g_mutex_lock (medialib->mutex);
 
 	ret = xmms_sqlite_query (mediarow_callback, (void *)entry, 
 				 "select * from Media where url = '%q' order by id limit 1", 
 				 xmms_playlist_entry_url_get (entry));
 
 	if (!ret) {
-		XMMS_MTX_UNLOCK (medialib->mutex);
+		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
 
 	if (!xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID)) {
-		XMMS_MTX_UNLOCK (medialib->mutex);
+		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
 
@@ -373,11 +373,11 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
 
 	if (!ret) {
-		XMMS_MTX_UNLOCK (medialib->mutex);
+		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
 
-	XMMS_MTX_UNLOCK (medialib->mutex);
+	g_mutex_unlock (medialib->mutex);
 
 
 	return TRUE;

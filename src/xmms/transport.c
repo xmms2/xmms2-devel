@@ -110,7 +110,7 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 	if (!transport)
 		return list;
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	tmp = g_strdup_printf ("transport.total_bytes=%llu", transport->total_bytes);
 	list = g_list_append (list, tmp);
 	tmp2 = xmms_util_encode_path (xmms_playlist_entry_url_get (transport->entry));
@@ -121,7 +121,7 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 	list = g_list_append (list, tmp);
 	tmp = g_strdup_printf ("transport.buffer_underruns=%u", transport->buffer_underruns);
 	list = g_list_append (list, tmp);
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	return list;
 }
@@ -165,9 +165,9 @@ xmms_transport_private_data_get (xmms_transport_t *transport)
 void
 xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 {
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	transport->plugin_data = data;
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 }
 
 /**
@@ -209,13 +209,13 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 	g_return_if_fail (transport);
 	g_return_if_fail (mimetype);
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	
 	if (transport->mimetype)
 		g_free (transport->mimetype);
 	transport->mimetype = g_strdup (mimetype);
 
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 	
 	if (transport->running)
 		xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
@@ -292,9 +292,9 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	ret =  xmms_playlist_entry_url_get (transport->entry);
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	return ret;
 }
@@ -333,9 +333,9 @@ xmms_transport_mimetype_get (xmms_transport_t *transport)
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	ret =  transport->mimetype;
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	return ret;
 }
@@ -350,13 +350,13 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	if (!transport->mimetype) {
 		XMMS_DBG ("Waiting for mime_cond");
 		g_cond_wait (transport->mime_cond, transport->mutex);
 	}
 	ret = transport->mimetype;
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	return ret;
 }
@@ -369,10 +369,10 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 void
 xmms_transport_buffering_start (xmms_transport_t *transport)
 {
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	transport->buffering = TRUE;
 	g_cond_signal (transport->cond);
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 }
 
 /**
@@ -397,7 +397,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (len > 0, -1);
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 
 	if (transport->running && !transport->buffering && transport->numread++ > 1) {
 		XMMS_DBG ("Let's start buffering");
@@ -410,7 +410,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		
 		XMMS_DBG ("Doing unbuffered read...");
 
-		XMMS_MTX_UNLOCK (transport->mutex);
+		g_mutex_unlock (transport->mutex);
 		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 		if (read_method) {
 			gint ret = read_method (transport, buffer, len);
@@ -437,7 +437,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	transport->total_bytes += ret;
 	transport->current_position += ret; 
 	
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	return ret;
 }
@@ -467,10 +467,10 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	g_return_val_if_fail (transport, FALSE);
 
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 
 	if (!xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK)) {
-		XMMS_MTX_UNLOCK (transport->mutex);
+		g_mutex_unlock (transport->mutex);
 		return -1;
 	}
 	
@@ -491,7 +491,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	if (ret != -1)
 		transport->current_position = ret; 
 
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	return ret;
 }
@@ -618,12 +618,12 @@ xmms_transport_close (xmms_transport_t *transport)
 	g_return_if_fail (transport);
 
 	if (transport->thread) {
-		XMMS_MTX_LOCK (transport->mutex);
+		g_mutex_lock (transport->mutex);
 		transport->running = FALSE;
 		xmms_ringbuf_set_eos (transport->buffer, TRUE);
 		XMMS_DBG("Waking transport");
 		g_cond_signal (transport->cond);
-		XMMS_MTX_UNLOCK (transport->mutex);
+		g_mutex_unlock (transport->mutex);
 		g_thread_join (transport->thread);
 	}
 }
@@ -709,7 +709,7 @@ xmms_transport_thread (gpointer data)
 	xmms_object_ref (transport->entry);
 
 	xmms_object_ref (transport);
-	XMMS_MTX_LOCK (transport->mutex);
+	g_mutex_lock (transport->mutex);
 	while (transport->running) {
 
 		if (!transport->buffering) {
@@ -718,9 +718,9 @@ xmms_transport_thread (gpointer data)
 			
 		}
 
-		XMMS_MTX_UNLOCK (transport->mutex);
+		g_mutex_unlock (transport->mutex);
 		ret = read_method (transport, buffer, sizeof(buffer));
-		XMMS_MTX_LOCK (transport->mutex);
+		g_mutex_lock (transport->mutex);
 
 		if (!transport->buffering)
 			continue;
@@ -738,7 +738,7 @@ xmms_transport_thread (gpointer data)
 			}
 		}
 	}
-	XMMS_MTX_UNLOCK (transport->mutex);
+	g_mutex_unlock (transport->mutex);
 
 	xmms_object_unref (transport->entry);
 

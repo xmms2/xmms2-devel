@@ -86,7 +86,7 @@ xmms_dbus_stats (GList *list)
 	GSList *n;
 	gint i = 1;
 
-	XMMS_MTX_LOCK (connectionslock);
+	g_mutex_lock (connectionslock);
 
 	for (n = connections; n; n = g_slist_next (n)) {
 		xmms_dbus_connection_t *c = n->data;
@@ -99,7 +99,7 @@ xmms_dbus_stats (GList *list)
 		i++;
 	}
 
-	XMMS_MTX_UNLOCK (connectionslock);
+	g_mutex_unlock (connectionslock);
 
 	return list;
 }
@@ -129,7 +129,7 @@ xmms_dbus_onchange (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 	gchar *signal = userdata;
 
 	if (pending_onchange) {
-		XMMS_MTX_LOCK (pending_mutex);
+		g_mutex_lock (pending_mutex);
 		l = g_hash_table_lookup (pending_onchange, signal);
 		if (l) {
 			GList *n;
@@ -155,7 +155,7 @@ xmms_dbus_onchange (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 
 			g_hash_table_remove (pending_onchange, signal);
 		}
-		XMMS_MTX_UNLOCK (pending_mutex);
+		g_mutex_unlock (pending_mutex);
 	}
 				   
 }
@@ -188,7 +188,7 @@ xmms_dbus_clientcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 		gchar *t = g_strdup (signal);
 
 
-		XMMS_MTX_LOCK (pending_mutex);
+		g_mutex_lock (pending_mutex);
 		if (!pending_onchange)
 			pending_onchange = g_hash_table_new (g_str_hash, g_str_equal);
 
@@ -208,7 +208,7 @@ xmms_dbus_clientcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 
 		g_hash_table_insert (pending_onchange, t, list);
 		
-		XMMS_MTX_UNLOCK (pending_mutex);
+		g_mutex_unlock (pending_mutex);
 
 		if (!strcmp (signal, XMMS_SIGNAL_VISUALISATION_SPECTRUM)) {
 			xmms_visualisation_users_inc ();
@@ -434,15 +434,15 @@ xmms_dbus_localcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	if (!strcmp (dbus_message_get_member (msg), "Disconnected")) {
 		XMMS_DBG ("Client disconnected");
 
-		XMMS_MTX_LOCK(connectionslock);
+		g_mutex_lock(connectionslock);
 		connections = g_slist_remove (connections, client);
-		XMMS_MTX_UNLOCK(connectionslock);
+		g_mutex_unlock(connectionslock);
 
-		XMMS_MTX_LOCK (pending_mutex);
+		g_mutex_lock (pending_mutex);
 		for (n = client->onchange_list; n; n = g_list_next (n)) {
 			((xmms_dbus_onchange_t*)n->data)->gone = 1;
 		}
-		XMMS_MTX_UNLOCK (pending_mutex);
+		g_mutex_unlock (pending_mutex);
 
 		g_list_free (client->onchange_list);
 		g_free (client);
@@ -488,9 +488,9 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 	vtable.message_function = xmms_dbus_localcall;
 	dbus_connection_register_fallback (conn, local_obj, &vtable, client);
 
-	XMMS_MTX_LOCK(connectionslock);
+	g_mutex_lock(connectionslock);
 	connections = g_slist_prepend (connections, client);
-	XMMS_MTX_UNLOCK(connectionslock);
+	g_mutex_unlock(connectionslock);
 
 	dbus_connection_setup_with_g_main (conn, g_main_context_default());
 

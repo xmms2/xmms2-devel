@@ -92,9 +92,9 @@ static void xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gin
  */
 
 /** Lock the playlist for changes and queries */
-#define XMMS_PLAYLIST_LOCK(a) XMMS_MTX_LOCK (a->mutex)
+#define XMMS_PLAYLIST_LOCK(a) g_mutex_lock (a->mutex)
 /** Unlock the playlist for changes and queries */
-#define XMMS_PLAYLIST_UNLOCK(a) XMMS_MTX_UNLOCK (a->mutex)
+#define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
 
 /** Gererate statistics for this playlist */
 GList *

@@ -122,7 +122,7 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 	g_return_if_fail (signal);
 	g_return_if_fail (handler);
 
-	XMMS_MTX_LOCK (object->mutex);
+	g_mutex_lock (object->mutex);
 	
 	if (!g_hash_table_lookup_extended (object->signals, signal, &key, &val))
 		goto unlock;
@@ -149,7 +149,7 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 		g_hash_table_insert (object->signals, key, list);
 	}
 unlock:
-	XMMS_MTX_UNLOCK (object->mutex);
+	g_mutex_unlock (object->mutex);
 }
 
 /**
@@ -170,7 +170,7 @@ xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 	g_return_if_fail (signal);
 
-	XMMS_MTX_LOCK (object->mutex);
+	g_mutex_lock (object->mutex);
 	
 	list = g_hash_table_lookup (object->signals, signal);
 	for (node = list; node; node = g_list_next (node)) {
@@ -179,7 +179,7 @@ xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data
 		list2 = g_list_prepend (list2, entry);
 	}
 
-	XMMS_MTX_UNLOCK (object->mutex);
+	g_mutex_unlock (object->mutex);
 
 	for (node = list2; node; node = g_list_next (node)) {
 		entry = node->data;

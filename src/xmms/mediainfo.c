@@ -95,14 +95,14 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 void
 xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
 {
-	XMMS_MTX_LOCK (mit->mutex);
+	g_mutex_lock (mit->mutex);
 
 	while (g_queue_pop_head (mit->queue))
 		;
 	mit->running = FALSE;
 	g_cond_signal (mit->cond);
 
-	XMMS_MTX_UNLOCK (mit->mutex);
+	g_mutex_unlock (mit->mutex);
 
 	g_thread_join (mit->thread);
 
@@ -119,13 +119,13 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
 
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
-		XMMS_MTX_LOCK (mit->mutex);
+		g_mutex_lock (mit->mutex);
 
 		g_queue_push_tail (mit->queue, GUINT_TO_POINTER (chmsg->id));
 
 		g_cond_signal (mit->cond);
 
-		XMMS_MTX_UNLOCK (mit->mutex);
+		g_mutex_unlock (mit->mutex);
 	}
 }
 
@@ -134,7 +134,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 {
 	xmms_mediainfo_thread_t *mtt = (xmms_mediainfo_thread_t *) data;
 
-	XMMS_MTX_LOCK (mtt->mutex);
+	g_mutex_lock (mtt->mutex);
 
 	while (mtt->running) {
 		xmms_playlist_entry_t *entry;
@@ -155,7 +155,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			xmms_error_reset (&err);
 
-			XMMS_MTX_UNLOCK (mtt->mutex);
+			g_mutex_unlock (mtt->mutex);
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
@@ -222,13 +222,13 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_object_unref (decoder);
 				
 
-			XMMS_MTX_LOCK (mtt->mutex);
+			g_mutex_lock (mtt->mutex);
 
 		}
 
 	}
 
-	XMMS_MTX_UNLOCK (mtt->mutex);
+	g_mutex_unlock (mtt->mutex);
 
 	return NULL;
 }

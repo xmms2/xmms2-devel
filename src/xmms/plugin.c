@@ -150,9 +150,9 @@ xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 	g_return_if_fail (name);
 	g_return_if_fail (method);
 
-	XMMS_MTX_LOCK (plugin->mutex);
+	g_mutex_lock (plugin->mutex);
 	g_hash_table_insert (plugin->method_table, g_strdup (name), method);
-	XMMS_MTX_UNLOCK (plugin->mutex);
+	g_mutex_unlock (plugin->mutex);
 }
 
 /**
@@ -298,7 +298,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 		return;
 	}
 
-	XMMS_MTX_LOCK (xmms_plugin_mtx);
+	g_mutex_lock (xmms_plugin_mtx);
 	while ((name = g_dir_read_name (d))) {
 		if (strncmp (name, "lib", 3) != 0)
 			continue;
@@ -349,7 +349,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 
 		g_free (path);
 	}
-	XMMS_MTX_UNLOCK (xmms_plugin_mtx);
+	g_mutex_unlock (xmms_plugin_mtx);
 	g_dir_close (d);
 }
 
@@ -358,9 +358,9 @@ xmms_plugin_ref (xmms_plugin_t *plugin)
 {
 	g_return_if_fail (plugin);
 
-	XMMS_MTX_LOCK (plugin->mutex);
+	g_mutex_lock (plugin->mutex);
 	plugin->users++;
-	XMMS_MTX_UNLOCK (plugin->mutex);
+	g_mutex_unlock (plugin->mutex);
 }
 
 void
@@ -368,13 +368,13 @@ xmms_plugin_unref (xmms_plugin_t *plugin)
 {
 	g_return_if_fail (plugin);
 
-	XMMS_MTX_LOCK (plugin->mutex);
+	g_mutex_lock (plugin->mutex);
 	if (plugin->users > 0) {
 		plugin->users--;
 	} else {
 		g_warning ("Tried to unref plugin %s with 0 users", plugin->name);
 	}
-	XMMS_MTX_UNLOCK (plugin->mutex);
+	g_mutex_unlock (plugin->mutex);
 }
 
 GList *
@@ -382,7 +382,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 {
 	GList *list = NULL, *node;
 
-	XMMS_MTX_LOCK (xmms_plugin_mtx);
+	g_mutex_lock (xmms_plugin_mtx);
 
 	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
 		xmms_plugin_t *plugin = node->data;
@@ -393,7 +393,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 		}
 	}
 	
-	XMMS_MTX_UNLOCK (xmms_plugin_mtx);
+	g_mutex_unlock (xmms_plugin_mtx);
 	
 	return list;
 }
@@ -420,9 +420,9 @@ xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	g_return_val_if_fail (plugin, NULL);
 	g_return_val_if_fail (method, NULL);
 
-	XMMS_MTX_LOCK (plugin->mutex);
+	g_mutex_lock (plugin->mutex);
 	ret = g_hash_table_lookup (plugin->method_table, method);
-	XMMS_MTX_UNLOCK (plugin->mutex);
+	g_mutex_unlock (plugin->mutex);
 
 	return ret;
 }

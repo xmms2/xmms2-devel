@@ -248,9 +248,9 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 	xmms_transport_t *ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 	ret = decoder->transport;
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 
 	return ret;
 }
@@ -313,9 +313,9 @@ xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len)
 	g_return_val_if_fail (decoder, -1);
 	g_return_val_if_fail (buf, -1);
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 	ret = xmms_ringbuf_read (decoder->buffer, buf, len);
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 
 	return ret;
 }
@@ -329,9 +329,9 @@ gboolean
 xmms_decoder_iseos (xmms_decoder_t *decoder)
 {
 	gboolean ret;
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 	ret = decoder->thread ? FALSE : TRUE;
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 	return ret;
 }
 
@@ -357,7 +357,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 /*	xmms_visualisation_calc (decoder->vis, buf, len);*/
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 
 	if (decoder->interpolator_ratio != decoder->decimator_ratio) {
 		/* resampling needed */
@@ -367,7 +367,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
 	xmms_ringbuf_write (decoder->buffer, buf, len);
 
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 	
 	
 }
@@ -431,9 +431,9 @@ xmms_decoder_output_get (xmms_decoder_t *decoder)
 	xmms_output_t *ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 	ret = decoder->output;
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 
 	return ret;
 }
@@ -447,9 +447,9 @@ xmms_decoder_plugin_get (xmms_decoder_t *decoder)
 	xmms_plugin_t *ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 	ret = decoder->plugin;
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 
 	return ret;
 }
@@ -568,10 +568,10 @@ void
 xmms_decoder_stop (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 	decoder->running = FALSE;
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 }
 
 void
@@ -789,20 +789,20 @@ xmms_decoder_thread (gpointer data)
 	
 	xmms_object_ref (decoder);
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 
 	while (42) {
 		gboolean ret;
 		
-		XMMS_MTX_UNLOCK (decoder->mutex);
+		g_mutex_unlock (decoder->mutex);
 		ret = decode_block (decoder);
-		XMMS_MTX_LOCK (decoder->mutex);
+		g_mutex_lock (decoder->mutex);
 		
 		if (!ret || !decoder->running) {
 			break;
 		}
 	}
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 
 	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quitting");

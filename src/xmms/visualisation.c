@@ -69,17 +69,17 @@ xmms_visualisation_init ()
 void
 xmms_visualisation_users_inc ()
 {
-	XMMS_MTX_LOCK (visuserslock);
+	g_mutex_lock (visuserslock);
 	visusers++;
-	XMMS_MTX_UNLOCK (visuserslock);
+	g_mutex_unlock (visuserslock);
 }
 
 void
 xmms_visualisation_users_dec ()
 {
-	XMMS_MTX_LOCK (visuserslock);
+	g_mutex_lock (visuserslock);
 	visusers--;
-	XMMS_MTX_UNLOCK (visuserslock);
+	g_mutex_unlock (visuserslock);
 }
 
 static gboolean
@@ -87,9 +87,9 @@ xmms_visualisation_has_users ()
 {
 	gboolean res;
 
-	XMMS_MTX_LOCK (visuserslock);
+	g_mutex_lock (visuserslock);
 	res = !!visusers;
-	XMMS_MTX_UNLOCK (visuserslock);
+	g_mutex_unlock (visuserslock);
 
 	return res;
 }
