@@ -340,14 +340,12 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		
 		tab = xmmscs_playlist_get_mediainfo (conn, i);
 
-		memset (line, '\0', 80);
-
 		if (x_hash_lookup (tab, "channel")) {
-			xmmsc_entry_format (line, sizeof (line)-1, "%c - %t", tab);
+			xmmsc_entry_format (line, sizeof (line), "%c - %t", tab);
 		} else if (!x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof(line)-1, "%f (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line), "%f (%m:%s)", tab);
 		} else {
-			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line), "%a - %t (%m:%s)", tab);
 		}
 
 		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
@@ -669,12 +667,13 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		mid = atoi (tmp);
 
 		if (id == mid) {
-			memset (songname, 0, 60);
 			printf ("\n");
 			if (x_hash_lookup (hash, "channel")) {
-				xmmsc_entry_format (songname, 60, "%c", hash);
+				xmmsc_entry_format (songname, sizeof (songname),
+				                    "%c", hash);
 			} else {
-				xmmsc_entry_format (songname, 60, "%a - %t", hash);
+				xmmsc_entry_format (songname, sizeof (songname),
+				                    "%a - %t", hash);
 			}
 			tmp = x_hash_lookup (hash, "duration");
 			if (tmp)
