@@ -893,7 +893,7 @@ static void
 xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 {
 	gint written;
-	gint written_frames;
+	gint frames;
 	xmms_alsa_data_t *data;
 
 	g_return_if_fail (output);
@@ -901,19 +901,16 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	while (len > 0) {
-		written_frames = snd_pcm_writei (data->pcm, buffer, 
-										 len / data->frame_size);
-		if (written_frames > 0) {
-			written = written_frames * data->frame_size;
-			len -= written;
-			buffer += written;
-		}
-		else if (written_frames == -EAGAIN || (written_frames > 0 
-				 && written_frames < (len / data->frame_size))) {
+	frames = len / data->frame_size;
+
+	while (frames > 0) {
+		written = snd_pcm_writei (data->pcm, buffer, frames);
+		if (written > 0) {
+			frames -= written;
+			buffer += written * data->frame_size;
+		} else if (written == -EAGAIN) {
 			snd_pcm_wait (data->pcm, 100);
-		}
-		else  {
+		} else {
 			xmms_alsa_xrun_recover (data);
 		}
 	}
