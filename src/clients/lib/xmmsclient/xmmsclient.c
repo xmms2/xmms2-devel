@@ -542,10 +542,10 @@ xmmsc_set_callback (xmmsc_connection_t *conn,
  * Disconnects you from the current XMMS server.
  */
 
-void
+xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
 }
 
 /**
@@ -767,20 +767,38 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 /** @} */
 
 
+#define XMMSC_DEFAULT_TIMEOUT -1 /* Default DBUS behavior */
+
 /**
  * @internal
  */
 
-int
-xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
+xmmsc_result_t *
+xmmsc_send_msg_no_arg (xmmsc_connection_t *c, char *object, char *method)
 {
 	DBusMessage *msg;
-	int cserial;
+	DBusPendingCall *pending;
 	
 	msg = dbus_message_new_method_call (NULL, object, XMMS_DBUS_INTERFACE, method);
-	dbus_connection_send (c->conn, msg, &cserial);
+	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, XMMSC_DEFAULT_TIMEOUT)) {
+		return NULL;
+	}
 	dbus_message_unref (msg);
-	return cserial;
+
+	return xmmsc_result_new (pending);
+
+}
+
+xmmsc_result_t *
+xmmsc_send_msg (xmmsc_connection_t *c, DBusMessage *msg)
+{
+	DBusPendingCall *pending;
+	
+	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, XMMSC_DEFAULT_TIMEOUT)) {
+		return NULL;
+	}
+
+	return xmmsc_result_new (pending);
 }
 
 void
