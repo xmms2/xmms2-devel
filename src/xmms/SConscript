@@ -26,6 +26,9 @@ env.AddFlagsFromGroup("glib-module")
 env.AddFlagsFromGroup("math")
 env.AddFlagsFromGroup("sqlite")
 
+if env.HasGroup ("valgrind") :
+	env.AddFlagsFromGroup("valgrind")
+
 #env.Program(target = "xmms2d" , source = xmms2d_sources )
 #env.Install("/usr/local/bin","xmms2d")
 

@@ -61,6 +61,9 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("samba","libsmbclient","smbc_init")
 	base_env.CheckAndAddFlagsToGroup("jack", "pkg-config --libs --cflags jack")
 	base_env.CheckAndAddFlagsToGroup("modplug", "pkg-config --libs --cflags libmodplug")
+	base_env.CheckAndAddFlagsToGroup("valgrind", "pkg-config --libs --cflags valgrind")
+	if base_env.HasGroup("valgrind"):
+		base_env.AddFlagsToGroup("valgrind", " -DHAVE_VALGRIND");
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")

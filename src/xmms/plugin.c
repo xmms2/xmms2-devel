@@ -24,6 +24,10 @@
 #include <gmodule.h>
 #include <string.h>
 
+#ifdef HAVE_VALGRIND
+# include <memcheck.h>
+#endif
+
 #ifdef XMMS_OS_DARWIN
 #define XMMS_LIBSUFFIX ".dylib"
 #else
@@ -283,6 +287,17 @@ xmms_plugin_init (gchar *path)
 void
 xmms_plugin_shutdown ()
 {
+#ifdef HAVE_VALGRIND
+	/* print out a leak summary at this point, because the final leak
+	 * summary won't include proper backtraces of leaks found in
+	 * plugins, since we close the so's here.
+	 *
+	 * note: the following call doesn't do anything if we're not run
+	 * in valgrind
+	 */
+	VALGRIND_DO_LEAK_CHECK
+#endif
+
 	/* at this point, there's only one thread left,
 	 * so we don't need to take care of the mutex here.
 	 * xmms_plugin_destroy() will try to lock it, though, so
