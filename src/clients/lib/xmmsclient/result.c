@@ -53,6 +53,7 @@ struct xmmsc_result_St {
 	void *user_data;
 
 	int error;
+	char *error_str;
 };
 
 
@@ -64,6 +65,24 @@ xmmsc_result_ref (xmmsc_result_t *res)
 	dbus_pending_call_ref (res->dbus_call);
 	res->ref++;
 }
+
+/**
+ * @todo Deallocate all types here
+ */
+static void
+xmmsc_result_free (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	if (res->error_str)
+		free (res->error_str);
+
+	if (res->reply)
+		dbus_message_unref (res->reply);
+
+	free (res);
+}
+
 
 void 
 xmmsc_result_unref (xmmsc_result_t *res)
@@ -91,6 +110,7 @@ static void
 xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 {
 	DBusMessage *reply;
+	DBusError err;
 	xmmsc_result_t *res = user_data;
 
 	x_return_if_fail (pending);
@@ -103,11 +123,19 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 	}
 
 	res->reply = reply;
+	dbus_error_init (&err);
+	if (dbus_set_error_from_message (&err, res->reply)) {
+		res->error = 1; /* @todo add real error */
+		res->error_str = strdup (err.message);
+	}
 	dbus_message_ref (res->reply);
 
 	if (res->func) {
 		res->func (res, (void*)res->user_data);
 	}
+
+	/* the pending call returns one ref */
+	xmmsc_result_unref (res);
 }
 
 xmmsc_result_t *
@@ -118,29 +146,19 @@ xmmsc_result_new (DBusPendingCall *pending)
 	res = x_new0 (xmmsc_result_t, 1);
 
 	res->dbus_call = pending;
+
+	/* user must give this back */
 	xmmsc_result_ref (res);
 
+	/* The pending call takes one ref */
+	xmmsc_result_ref (res);
 	dbus_pending_call_set_notify (res->dbus_call, 
 				      xmmsc_result_pending_notifier, 
 				      res, 
 				      NULL);
-
 	return res;
 }
 
-/**
- * @todo Deallocate all types here
- */
-void
-xmmsc_result_free (xmmsc_result_t *res)
-{
-	x_return_if_fail (res);
-
-	if (res->reply)
-		dbus_message_unref (res->reply);
-
-	free (res);
-}
 
 void
 xmmsc_result_wait (xmmsc_result_t *res)
@@ -152,6 +170,26 @@ xmmsc_result_wait (xmmsc_result_t *res)
 				
 
 /* value retrivial */
+
+int
+xmmsc_result_iserror (xmmsc_result_t *res)
+{
+	x_return_val_if_fail (res, 1);
+
+	if (res->error > 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+const char *
+xmmsc_result_get_error (xmmsc_result_t *res)
+{
+	x_return_null_if_fail (res);
+
+	return res->error_str;
+}
 
 static int
 result_check_sanity (xmmsc_result_t *res, DBusMessageIter *itr)

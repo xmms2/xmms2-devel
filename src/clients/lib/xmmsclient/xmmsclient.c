@@ -865,7 +865,6 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 	unsigned int tmp[2]; /* used by MOVE */
 	void *arg = NULL;
 
-
 	/** allt det här apet hade vi gott kunna göra snyggare */
 	snprintf (msgname, 255, "%s::%s", dbus_message_get_path (msg), dbus_message_get_member (msg));
 
