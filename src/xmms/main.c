@@ -115,8 +115,17 @@ static void
 xmms_main_destroy (xmms_object_t *object)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
+	xmms_object_cmd_arg_t arg;
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 
+	/* stop output */
+	memset (&arg, 0, sizeof (arg));
+	xmms_error_reset (&arg.error);
+
+	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output),
+	                      XMMS_IPC_CMD_STOP, &arg);
+
+	sleep(1); /* wait for the output thread to end */
 	xmms_object_unref (mainobj->output);
 
 	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
@@ -139,7 +148,7 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
-	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MAIN);
+	xmms_ipc_shutdown ();
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);

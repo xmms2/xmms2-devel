@@ -662,11 +662,10 @@ xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 }
 
 void
-xmms_ipc_broadcast_unregister (xmms_object_t *object, xmms_ipc_signals_t signalid)
+xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 {
 	xmms_object_t *obj;
 
-	g_return_if_fail (object);
 	g_mutex_lock (global_ipc_lock);
 
 	obj = global_ipc->broadcasts[signalid];
@@ -702,11 +701,10 @@ xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 }
 
 void
-xmms_ipc_signal_unregister (xmms_object_t *object, xmms_ipc_signals_t signalid)
+xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 {
 	xmms_object_t *obj;
 
-	g_return_if_fail (object);
 	g_mutex_lock (global_ipc_lock);
 
 	obj = global_ipc->signals[signalid];
@@ -762,6 +760,27 @@ xmms_ipc_init (void)
 	global_ipc = ipc;
 
 	return ipc;
+}
+
+void
+xmms_ipc_shutdown (void)
+{
+	xmms_ipc_objects_t obj;
+	xmms_ipc_signals_t sig;
+
+	for (obj = XMMS_IPC_OBJECT_MAIN;
+	     obj < XMMS_IPC_OBJECT_END; obj++) {
+		xmms_ipc_object_unregister (obj);
+	}
+
+	for (sig = XMMS_IPC_SIGNAL_OBJECT_DESTROYED;
+	     sig < XMMS_IPC_SIGNAL_END; sig++) {
+		xmms_ipc_signal_unregister (sig);
+		xmms_ipc_broadcast_unregister (sig);
+	}
+
+	g_free (global_ipc);
+	g_mutex_free (global_ipc_lock);
 }
 
 gboolean
