@@ -118,6 +118,11 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
 	xmms_config_save (filename);
 
+	xmms_dbus_shutdown ();
+	xmms_config_shutdown ();
+	xmms_medialib_shutdown ();
+	xmms_log_shutdown ();
+
 	exit (EXIT_SUCCESS);
 }
 
@@ -138,7 +143,7 @@ main (int argc, char **argv)
 	const gchar *outname = NULL;
 	gboolean daemonize = FALSE;
 	gboolean doLog = TRUE;
-	const gchar *path;
+	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	pid_t ppid=0;
 
@@ -238,12 +243,12 @@ main (int argc, char **argv)
 	xmms_medialib_init ();
 	xmms_medialib_output_register (output);
 		
-	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
-				g_get_user_name ());
-	cv = xmms_config_value_register ("core.dbuspath", path, NULL, NULL);
-	path = xmms_config_value_string_get (cv);
+	g_snprintf (default_path, sizeof (default_path),
+	            "unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	cv = xmms_config_value_register ("core.dbuspath", default_path,
+	                                 NULL, NULL);
 
-	xmms_dbus_init (path);
+	xmms_dbus_init (xmms_config_value_string_get (cv));
 
 	xmms_signal_init ();
 

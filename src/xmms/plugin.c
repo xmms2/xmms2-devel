@@ -452,7 +452,7 @@ xmms_plugin_config_value_register (xmms_plugin_t *plugin,
 				   xmms_object_handler_t cb,
 				   gpointer userdata)
 {
-	const gchar *fullpath;
+	gchar *fullpath;
 	xmms_config_value_t *val;
 
 	g_return_val_if_fail (plugin, NULL);
@@ -464,6 +464,12 @@ xmms_plugin_config_value_register (xmms_plugin_t *plugin,
 	val = xmms_config_value_register (fullpath, 
 					  default_value, 
 					  cb, userdata);
+
+	/* xmms_config_value_register() copies the given path,
+	 * so we have to free our copy here
+	 */
+	g_free (fullpath);
+
 	return val;
 }
 

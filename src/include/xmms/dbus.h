@@ -23,6 +23,7 @@
 #include "xmms/object.h"
 
 gboolean xmms_dbus_init (const gchar *path);
+void xmms_dbus_shutdown ();
 GList *xmms_dbus_stats (GList *list);
 void xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object);
 void xmms_dbus_register_onchange (xmms_object_t *object, gchar *signal);
