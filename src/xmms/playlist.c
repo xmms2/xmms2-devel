@@ -307,6 +307,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 	}
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SHUFFLE, 0, 0);
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 
 	g_mutex_unlock (playlist->mutex);
 }
