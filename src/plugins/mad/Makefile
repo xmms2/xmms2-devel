@@ -6,5 +6,5 @@ MAD_OBJS = 	mad.o \
 		id3.o \
 		xing.o 
 
-MAD_PLUGIN=libxmms_mad.so
+MAD_PLUGIN=libxmms_mad.la
 MAD_DEPENDS=GLIB MAD

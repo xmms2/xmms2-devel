@@ -10,6 +10,6 @@ LIBXMMSCLIENT_OBJS = 	medialib.o \
 			xhash.o \
 			xlist.o \
 			xmmsclient.o \
-			xmmswatch.o 
-LIBXMMSCLIENT_LIBRARIES = libxmmsclient.so
+			xmmswatch.o
+LIBXMMSCLIENT_LIBRARIES = libxmmsclient.la
 LIBXMMSCLIENT_DEPENDS = DBUS
