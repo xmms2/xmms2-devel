@@ -18,6 +18,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include <tar.h>
+
 /*
  * Type definitions
  */
@@ -32,6 +34,30 @@ typedef struct xmms_tar_transport_data_St {
 	guint length;
 	guint relpos;
 } xmms_tar_transport_data_t;
+
+/* see tar.h for more information about the tar-format */
+union tar_record {
+	gchar data[512];
+	struct {
+		gchar name[100];
+		gchar mode[8];
+		gchar uid[8];
+		gchar gid[8];
+		gchar size[12];
+		gchar mtime[12];
+		gchar chksum[8];
+		gchar linkflag;
+		gchar linkname[100];
+		gchar magic[8];
+		gchar uname[32];
+		gchar gname[32];
+		gchar devmajor[8];
+		gchar devminor[8];
+		gchar prefix[155];
+	} header;
+};
+#define RECORDSIZE sizeof(union tar_record)
+
 
 /*
  * Function prototypes
@@ -146,50 +172,21 @@ xmms_tar_can_handle (const gchar *mimetype)
 	return FALSE;
 }
 
-
-#define  RECORDSIZE  512
-#define  NAMSIZ      100
-#define  TUNMLEN      32
-#define  TGNMLEN      32
-
-#define  LF_OLDNORMAL '\0'       /* Normal disk file, Unix compatible */
-#define  LF_NORMAL    '0'        /* Normal disk file */
-
-
-union record {
-	char        charptr[RECORDSIZE];
-	struct header {
-		char    name[NAMSIZ];
-		char    mode[8];
-		char    uid[8];
-		char    gid[8];
-		char    size[12];
-		char    mtime[12];
-		char    chksum[8];
-		char    linkflag;
-		char    linkname[NAMSIZ];
-		char    magic[8];
-		char    uname[TUNMLEN];
-		char    gname[TGNMLEN];
-		char    devmajor[8];
-		char    devminor[8];
-	} header;
-};
-
 static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 	xmms_tar_transport_data_t *data;
-	union record buf;
-	char lenbuf[13];
+	union tar_record buf;
+	gchar lenbuf[13];
+	gchar *name = NULL;
 	gint ret;
-	gint len,pos=0;
+	gint namelen,len,pos=0;
 
 	lenbuf[12]=0;
 
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, FALSE);
 	while(42){
-		ret = xmms_transport_read (data->parenttransport, (gchar *)&buf, RECORDSIZE);
-		if (ret != RECORDSIZE) {
+		ret = xmms_transport_read (data->parenttransport, buf.data, 512);
+		if (ret != 512) {
 			break;
 		}
 		pos += ret;
@@ -198,37 +195,59 @@ static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 			break;
 		}
 
-		if (buf.header.linkflag != LF_OLDNORMAL && buf.header.linkflag != LF_NORMAL) {
+		memcpy(lenbuf,buf.header.size,12);
+		len=strtol(lenbuf,NULL,8);
+
+		/* Handle long filenames */
+		if (buf.header.linkflag == 'L' && strcmp (buf.header.name, "././@LongLink") == 0) {
+			name=g_malloc(len+1);
+			ret = xmms_transport_read (data->parenttransport, name, len);
+			if (ret != len) {
+				XMMS_DBG ("error reading longname");
+				break;
+			}
+			name[len] = 0;
+
+			if (len%512) {
+				xmms_transport_read (data->parenttransport,
+						     buf.data, 512-(len%512));
+				
+			}
 			continue;
 		}
 
-		memcpy(lenbuf,buf.header.size,12);
-		len=strtol(lenbuf,NULL,8);
-		XMMS_DBG ("found file: %s (%d)", buf.header.name,len);
-		/* matcha fil */
-		{ 
-			gint namelen=0;
-			while (buf.header.name[namelen] && namelen < NAMSIZ) {
-				namelen++;
-			}
-
-			if (strncmp (buf.header.name, uri, namelen) == 0 && (uri[namelen]==0 || uri[namelen]=='/')) {
-				gchar *uribuf = g_strdup (uri);
-				gchar *suburibuf = uribuf + namelen;
-				if (*suburibuf == '/') {
-					*suburibuf++ = 0;
-				}
-				XMMS_DBG (" uri: %s  -- suburi: %s", uribuf, suburibuf);
-				xmms_transport_uri_set (transport, uribuf);
-				xmms_transport_suburi_set (transport, g_strdup (suburibuf));
-
-				data->startpos = pos;
-				data->relpos = 0;
-				data->length = len;
-				return TRUE;
-			}
+		if (buf.header.linkflag != REGTYPE && buf.header.linkflag != AREGTYPE) {
+			continue;
 		}
 
+		if (!name) {
+			name = g_strndup (buf.header.name, 100);
+		}
+		
+		namelen = strlen (name);
+
+		XMMS_DBG ("found file: %s (%d)", name,len);
+		/* matcha fil */
+		
+		if (strncmp (name, uri, namelen) == 0 && (uri[namelen]==0 || uri[namelen]=='/')) {
+			gchar *uribuf = g_strdup (uri);
+			gchar *suburibuf = uribuf + namelen;
+			if (*suburibuf == '/') {
+				*suburibuf++ = 0;
+			}
+			XMMS_DBG (" uri: %s  -- suburi: %s", uribuf, suburibuf);
+			xmms_transport_uri_set (transport, uribuf);
+			xmms_transport_suburi_set (transport, g_strdup (suburibuf));
+			
+			g_free (name);
+			data->startpos = pos;
+			data->relpos = 0;
+			data->length = len;
+			return TRUE;
+		}
+	
+		g_free (name);
+		name = NULL;
 		pos += RECORDSIZE*((int)((len+(RECORDSIZE-1))/RECORDSIZE));
 		
 		xmms_transport_seek(data->parenttransport, pos, XMMS_TRANSPORT_SEEK_SET);
