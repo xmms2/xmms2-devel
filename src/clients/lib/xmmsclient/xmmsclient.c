@@ -149,6 +149,20 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
 }
 
 void
+xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename)
+{
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SAVE, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, filename);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
+}
+
+void
 xmmsc_playback_stop (xmmsc_connection_t *c)
 {
 	xmmsc_send_void(c,XMMS_SIGNAL_PLAYBACK_STOP);

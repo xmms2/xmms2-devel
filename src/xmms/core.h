@@ -48,6 +48,7 @@ void xmms_core_playlist_jump (guint id);
 void xmms_core_playlist_remove (guint id);
 void xmms_core_playlist_shuffle ();
 void xmms_core_playlist_clear ();
+void xmms_core_playlist_save (gchar *filename);
 xmms_playlist_t * xmms_core_get_playlist ();
 
 void xmms_core_quit ();

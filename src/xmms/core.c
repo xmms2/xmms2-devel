@@ -14,6 +14,7 @@
 #include "util.h"
 #include "core.h"
 #include "signal_xmms.h"
+#include "magic.h"
 
 #include <glib.h>
 #include <stdlib.h>
@@ -116,6 +117,22 @@ xmms_core_playback_stop ()
 	}
 }
 
+void
+xmms_core_playlist_save (gchar *filename)
+{
+	const gchar *mime;
+	xmms_playlist_plugin_t *plugin;
+
+	mime = xmms_magic_mime_from_file (filename);
+	if (!mime)
+		return;
+
+	plugin = xmms_playlist_plugin_new (mime);
+
+	g_return_if_fail (plugin);
+
+	xmms_playlist_plugin_save (plugin, core->playlist, filename);
+}
 
 void
 xmms_core_playback_start ()
@@ -191,6 +208,9 @@ xmms_core_playback_seek_samples (guint samples)
 void
 xmms_core_quit ()
 {
+	gchar *filename;
+	filename = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
+	xmms_config_save_to_file (core->config, filename);
 	exit (0); /** @todo BUSKIS! */
 }
 

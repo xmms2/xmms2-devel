@@ -15,6 +15,8 @@ typedef struct xmms_config_data_St {
 #define XMMS_CONFIG_VALUE_PLAIN 0
 #define XMMS_CONFIG_VALUE_LIST 1
 
+#define XMMS_MAX_CONFIGFILE_LEN 255
+
 #define XMMS_CONFIG_SYSTEMWIDE SYSCONFDIR "/xmms2.conf"
 
 typedef struct xmms_config_value_St xmms_config_value_t;
@@ -33,6 +35,8 @@ xmms_config_value_t *xmms_config_data_get (xmms_config_info_t *config,
 			                  gchar *key);
 
 xmms_config_value_t *xmms_config_value_lookup (GHashTable *h, const gchar *valuename);
+
+void xmms_config_set (gchar *key, gchar *value);
 
 /* misc support functions */
 

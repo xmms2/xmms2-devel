@@ -130,7 +130,7 @@ handle_currentid (void *userdata, void *arg) {
 static guint lastid;
 
 void
-handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
+handle_playlist_list_mediainfo (void *userdata, void *arg)
 {
 	GHashTable *entry = (GHashTable *) arg;
 	gchar *artist;
@@ -140,6 +140,7 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 	gchar *duration;
 	guint id;
 	guint tme;
+	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
 
 	id = GPOINTER_TO_UINT (g_hash_table_lookup (entry, "id"));
 	artist = (gchar *)g_hash_table_lookup (entry, "artist");
@@ -180,8 +181,9 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 }
 
 void
-handle_playlist_list (xmmsc_connection_t *conn, void *arg)
+handle_playlist_list (void *userdata, void *arg)
 {
+	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
 	guint32 *list=arg;
 	gint i=0;
 
@@ -405,6 +407,17 @@ main(int argc, char **argv)
 			xmmsc_playlist_list (c);
 
 			setup_playlist (c);
+
+		} else if ( streq (argv[1], "savelist") ) {
+
+			if (argc < 3) {
+				printf ("usage: savelist filename\n");
+				return 1;
+			}
+			xmmsc_playlist_save (c, argv[2]);
+
+			xmmsc_deinit (c);
+			exit (0);
 
 		} else if ( streq (argv[1], "add") ) {
 			int i;

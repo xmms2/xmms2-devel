@@ -23,6 +23,7 @@
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO "org.xmms.playlist.mediainfo"
 #define XMMS_SIGNAL_PLAYLIST_MOVE "org.xmms.playlist.move"
 #define XMMS_SIGNAL_PLAYLIST_CHANGED "org.xmms.playlist.change"
+#define XMMS_SIGNAL_PLAYLIST_SAVE "org.xmms.playlist.save"
 
 /* Core msgs */
 #define XMMS_SIGNAL_CORE_QUIT "org.xmms.core.quit"

@@ -19,7 +19,8 @@
 static gboolean xmms_m3u_can_handle (const gchar *mimetype);
 static gboolean xmms_m3u_read_playlist (xmms_transport_t *transport, 
 		xmms_playlist_t *playlist);
-static gchar *xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gint *size);
+static gboolean xmms_m3u_write_playlist (xmms_playlist_t *playlist, 
+		gchar *filename);
 
 /*
  * Plugin header
@@ -183,8 +184,71 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 
 }
 
-static gchar *
-xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gint *size)
+static gboolean
+xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 {
-	return NULL;
+	FILE *fp;
+	GList *lista, *tmp;
+
+	fp = fopen (filename, "w+");
+	if (!fp)
+		return FALSE;
+
+	lista = xmms_playlist_list (playlist);
+
+	fwrite ("#EXTM3U\n", 8, 1, fp);
+
+	for (tmp = lista; tmp; tmp = g_list_next (tmp)) {
+		xmms_playlist_entry_t *entry;
+		gchar *d, *artist, *title;
+		gint duration;
+		gchar *uri;
+		gchar *uri2;
+
+		entry = (xmms_playlist_entry_t *)tmp->data;
+
+		d = xmms_playlist_entry_get_prop (entry, 
+				XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
+
+		if (d)
+			duration = atoi (d);
+		else
+			d = 0;
+
+		artist = xmms_playlist_entry_get_prop (entry,
+				XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST);
+		
+		title = xmms_playlist_entry_get_prop (entry,
+				XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE);
+
+		xmms_playlist_entry_unref (entry);
+
+		if (title && artist && duration) {
+			gchar *t;
+
+			t = g_strdup_printf ("#EXTINF:%d,%s - %s\n", duration / 1000,
+					artist, title);
+
+			fwrite (t, strlen (t), 1, fp);
+			g_free (t);
+		}
+
+		uri2 = xmms_util_decode_path (xmms_playlist_entry_get_uri (entry));
+		uri = strchr (uri2, ':');
+		if (!uri)
+			continue;
+
+		uri = uri + 2;
+
+		uri = g_strdup_printf ("%s\n", uri);
+
+		fwrite (uri, strlen (uri), 1, fp);
+
+		g_free (uri);
+		g_free (uri2);
+	}
+	
+	fclose (fp);
+	
+	return TRUE;
 }

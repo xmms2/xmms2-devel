@@ -34,17 +34,15 @@ static GMainLoop *mainloop;
 gboolean xmms_dbus_init (void);
 
 
-#define MAX_CONFIGFILE_LEN 255
-
 xmms_config_data_t *
 parse_config ()
 {
 	xmms_config_data_t *config;
-	gchar filename[MAX_CONFIGFILE_LEN];
-	gchar configdir[MAX_CONFIGFILE_LEN];
+	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
+	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
 
-	g_snprintf (filename, MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
-	g_snprintf (configdir, MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
+	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
+	g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
 
 	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
 		config = xmms_config_init (filename);
