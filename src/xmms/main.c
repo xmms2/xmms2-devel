@@ -122,6 +122,7 @@ xmms_main_destroy (xmms_object_t *object)
 	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
 	xmms_config_save (filename);
 
+	xmms_visualisation_shutdown ();
 	xmms_dbus_shutdown ();
 	xmms_config_shutdown ();
 	xmms_medialib_shutdown ();
@@ -223,7 +224,7 @@ main (int argc, char **argv)
 	
 	playlist = xmms_playlist_init ();
 
-	xmms_visualisation_init_mutex ();
+	xmms_visualisation_init ();
 	
 	if (!xmms_plugin_init (ppath))
 		return 1;

@@ -542,7 +542,7 @@ xmms_decoder_new ()
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
-/*	decoder->vis = xmms_visualisation_init ();*/
+/*	decoder->vis = xmms_visualisation_new ();*/
 
 	val = xmms_config_lookup ("decoder.buffersize");
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
