@@ -536,6 +536,32 @@ cmd_save_playlist (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
+static void
+cmd_move (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	unsigned int id;
+	signed int movement;
+
+	if (argc < 4) {
+		print_error ("You'll need to specifiy id and movement");
+	}
+
+
+	id = atoi (argv[2]);
+	movement = atoi (argv[3]);
+
+	res = xmmsc_playlist_move (conn, id, movement);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Unable to move playlist entry: %s\n", xmmsc_result_get_error (res));
+		exit (-1);
+	}
+
+	print_info ("Moved %u, %d steps", id, movement);
+	
+}
+
 
 static void
 cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
@@ -682,7 +708,7 @@ cmds commands[] = {
 	{ "seek", "seek to a specific place in current song", cmd_seek },
 	{ "jump", "take a leap in the playlist", cmd_jump },
 	{ "save", "save the playlist", cmd_save_playlist },
-//	{ "move", "move a entry in the playlist", cmd_move },
+	{ "move", "move a entry in the playlist", cmd_move },
 
 	{ "mlib", "medialib manipulation", cmd_mlib },
 

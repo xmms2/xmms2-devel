@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003	Peter Alm, Tobias RundstrÃ¶m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -116,8 +116,7 @@ xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
 
-	if (!g_thread_supported ()) 
-		g_thread_init (NULL);
+	g_thread_init (NULL);
 	
 	if (!(c = malloc (sizeof (xmmsc_connection_t)))) {
 		return NULL;
@@ -183,7 +182,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 		}
 
 		if (!user)
-			exit(-1);
+			return FALSE;
 
 		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", user);
 	} else {
@@ -283,6 +282,20 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	free(c);
 }
 
+/**
+ * Set locking functions for a connection. Allows simultanous usage of
+ * a connection from several threads.
+ *
+ * @param conn connection
+ * @param lock the locking primitive passed to the lock and unlock functions
+ * @param lockfunc function called when entering critical region, called with lock as argument.
+ * @param unlockfunc funciotn called when leaving critical region.
+ */
+void
+xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *))
+{
+	xmmsc_ipc_lock_set (conn->ipc, lock, lockfunc, unlockfunc);
+}
 
 /**
  * Tell the server to quit. This will terminate the server.
@@ -611,7 +624,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 
 	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
 		return NULL;
-	
+
 	h = x_hash_new (x_str_hash, x_str_equal);
 
 	for (i = 1; i < entries; i++) {

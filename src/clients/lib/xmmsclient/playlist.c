@@ -161,6 +161,27 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 }
 
 /**
+ * Move a playlist entry relative to it's current postion.
+ * eg move (id, -1) will move id one step *up* in the playlist.
+ */
+
+xmmsc_result_t *
+xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MOVE);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_int32 (msg, moves);
+	res = xmmsc_send_msg (c, msg);
+	xmms_ipc_msg_destroy (msg);
+
+	return res;
+
+}
+
+/**
  *
  * @param c The connection structure.
  * @param query sql-query to medialib.

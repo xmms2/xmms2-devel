@@ -31,7 +31,6 @@
 #include "internal/client_ipc.h"
 
 struct xmmsc_ipc_St {
-	GMutex *mutex;
 	xmms_ringbuf_t *read_buffer;
 	xmms_ipc_transport_t *transport;
 	gchar *error;
@@ -39,15 +38,20 @@ struct xmmsc_ipc_St {
 	gboolean disconnect;
 	gint pollopts;
 	GHashTable *results_table;
+	void *lockdata;
+	void (*lockfunc)(void *lock);
+	void (*unlockfunc)(void *lock);
 };
+
+static inline void xmmsc_ipc_lock (xmmsc_ipc_t *ipc);
+static inline void xmmsc_ipc_unlock (xmmsc_ipc_t *ipc);
 
 xmmsc_ipc_t *
 xmmsc_ipc_init (void)
 {
 	xmmsc_ipc_t *ipc;
 	ipc = g_new0 (xmmsc_ipc_t, 1);
-	ipc->mutex = g_mutex_new ();
-	ipc->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_MAX_SIZE);
+	ipc->read_buffer = xmms_ringbuf_new_unlocked (XMMS_IPC_MSG_MAX_SIZE);
 	ipc->disconnect = FALSE;
 	ipc->pollopts = XMMSC_IPC_IO_IN;
 	ipc->results_table = g_hash_table_new (NULL, NULL);
@@ -56,14 +60,22 @@ xmmsc_ipc_init (void)
 }
 
 void
+xmmsc_ipc_lock_set (xmmsc_ipc_t *ipc, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *))
+{
+	ipc->lockdata = lock;
+	ipc->lockfunc = lockfunc;
+	ipc->unlockfunc = unlockfunc;
+}
+
+void
 xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 {
 	g_return_if_fail (ipc);
 	g_return_if_fail (res);
 
-	g_mutex_lock (ipc->mutex);
+	xmmsc_ipc_lock (ipc);
 	g_hash_table_insert (ipc->results_table, GUINT_TO_POINTER (xmmsc_result_cid (res)), res);
-	g_mutex_unlock (ipc->mutex);
+	xmmsc_ipc_unlock (ipc);
 }
 
 xmmsc_result_t *
@@ -72,9 +84,9 @@ xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid)
 	xmmsc_result_t *res;
 	g_return_val_if_fail (ipc, NULL);
 
-	g_mutex_lock (ipc->mutex);
+	xmmsc_ipc_lock (ipc);
 	res = g_hash_table_lookup (ipc->results_table, GUINT_TO_POINTER (cid));
-	g_mutex_unlock (ipc->mutex);
+	xmmsc_ipc_unlock (ipc);
 	return res;
 }
 
@@ -84,9 +96,9 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	g_return_if_fail (ipc);
 	g_return_if_fail (res);
 
-	g_mutex_lock (ipc->mutex);
+	xmmsc_ipc_lock (ipc);
 	g_hash_table_remove (ipc->results_table, GUINT_TO_POINTER (xmmsc_result_cid (res)));
-	g_mutex_unlock (ipc->mutex);
+	xmmsc_ipc_unlock (ipc);
 }
 	
 static void
@@ -128,16 +140,16 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 		} else if (ret == 0) {
 			break;
 		}
-		g_mutex_lock (ipc->mutex);
+		xmmsc_ipc_lock (ipc);
 		xmms_ringbuf_write (ipc->read_buffer, buffer, ret);
-		g_mutex_unlock (ipc->mutex);
+		xmmsc_ipc_unlock (ipc);
 	} while (ret > 0);
 
 #if HEAVY_DEBUG
 	printf ("got %d bytes in ringbuffer!\n", xmms_ringbuf_bytes_used (ipc->read_buffer));
 #endif
 
-	g_mutex_lock (ipc->mutex);
+	xmmsc_ipc_lock (ipc);
 	do {
 		if (!xmms_ipc_msg_can_read (ipc->read_buffer)) {
 			break;
@@ -145,15 +157,15 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 			msg = xmms_ipc_msg_read (ipc->read_buffer);
 			if (!msg)
 				continue;
-			g_mutex_unlock (ipc->mutex);
+			xmmsc_ipc_unlock (ipc);
 #if HEAVY_DEBUG
 			printf ("Read msg with command %d\n", msg->cmd);
 #endif
 			xmmsc_ipc_exec_msg (ipc, msg);
-			g_mutex_lock (ipc->mutex);
+			xmmsc_ipc_lock (ipc);
 		}
 	} while (msg);
-	g_mutex_unlock (ipc->mutex);
+	xmmsc_ipc_unlock (ipc);
 
 	return TRUE;
 }
@@ -249,7 +261,6 @@ void
 xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 {
 	xmms_ringbuf_destroy (ipc->read_buffer);
-	g_mutex_free (ipc->mutex);
 	g_hash_table_destroy (ipc->results_table);
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
@@ -274,3 +285,16 @@ xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path)
 	return TRUE;
 }
 
+static inline void
+xmmsc_ipc_lock (xmmsc_ipc_t *ipc)
+{
+	if (ipc->lockdata)
+		ipc->lockfunc (ipc->lockdata);
+}
+
+static inline void
+xmmsc_ipc_unlock (xmmsc_ipc_t *ipc)
+{
+	if (ipc->lockdata)
+		ipc->lockfunc (ipc->lockdata);
+}

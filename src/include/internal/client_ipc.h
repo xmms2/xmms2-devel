@@ -26,6 +26,7 @@ typedef struct xmmsc_ipc_St xmmsc_ipc_t;
 typedef void (*xmmsc_ipc_wakeup_t) (xmmsc_ipc_t *);
 
 xmmsc_ipc_t *xmmsc_ipc_init (void);
+void xmmsc_ipc_lock_set (xmmsc_ipc_t *ipc, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 gboolean xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc);
 gboolean xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid);
 void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc);
