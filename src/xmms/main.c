@@ -49,6 +49,7 @@
 #include "xmms/dbus.h"
 #include "xmms/visualisation.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/ipc.h"
 
 
 #include "internal/plugin_int.h"
@@ -145,6 +146,7 @@ main (int argc, char **argv)
 	xmms_plugin_t *o_plugin;
 	xmms_config_value_t *cv;
 	xmms_main_t *mainobj;
+	xmms_ipc_t *ipc;
 
 	int opt;
 	int verbose = 0;
@@ -256,11 +258,18 @@ main (int argc, char **argv)
 	xmms_medialib_output_register (mainobj->output);
 		
 	g_snprintf (default_path, sizeof (default_path),
-	            "unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
-	cv = xmms_config_value_register ("core.dbuspath", default_path,
+	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());
+	cv = xmms_config_value_register ("core.ipcsocket", default_path,
 	                                 NULL, NULL);
 
+	ipc = xmms_ipc_init (xmms_config_value_string_get (cv));
+	if (!ipc) {
+		xmms_log_fatal ("IPC failed to init!");
+	}
+	xmms_ipc_setup_with_gmain (ipc);
+	/*
 	xmms_dbus_init (xmms_config_value_string_get (cv));
+	*/
 
 	xmms_signal_init ();
 

@@ -2,7 +2,7 @@
 
 Import('base_env')
 
-ipclib_sources = Split ("ipc_transport.c socket_unix.c")
+ipclib_sources = Split ("transport.c socket_unix.c msg.c")
 
 env = base_env.Copy()
 
@@ -10,8 +10,8 @@ env.AddFlagsFromGroup("glib")
 
 env.XmmsStaticLibrary('xmmsipc', ipclib_sources)
 
-test = base_env.Copy(LIBPATH=["#builddir/lib/xmmsipc"], LIBS=["xmmsipc"])
-test.AddFlagsFromGroup("glib")
-test.XmmsProgram ("testipc", ["test.c"])
-test.XmmsProgram ("testipcclient", ["testclient.c"])
+#test = base_env.Copy(LIBPATH=["#builddir/lib/xmmsipc"], LIBS=["xmmsipc"])
+#test.AddFlagsFromGroup("glib")
+#test.XmmsProgram ("testipc", ["test.c"])
+#test.XmmsProgram ("testipcclient", ["testclient.c"])
 

@@ -1,9 +1,10 @@
 #
 Import('base_env')
 
-env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsutil"],LIBPATH=["#builddir/lib/xmmsutil"])
+env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsipc", "xmmsutil"],
+		    LIBPATH=["#builddir/lib/xmmsutil", "#builddir/lib/xmmsipc"])
 
-xmms2d_sources = Split ("config.c plugin.c object.c "+
+xmms2d_sources = Split ("config.c plugin.c object.c ipc.c "+
 			"transport.c decoder.c output.c playlist.c magic.c "+
 			"plsplugins.c dbus.c unixsignal.c "+
 			"log.c visualisation.c main.c mediainfo.c "+
@@ -13,7 +14,7 @@ xmms2d_sources = Split ("config.c plugin.c object.c "+
 if env.HasGroup ("sqlite") :
 	xmms2d_sources.append ("sqlite.c")
 
-xmms2_test_s = Split ("config.c testcnf.c util.c object.c");
+xmms2_test_s = Split ("testclient.c");
 
 
 env.AddFlagsFromGroup("glib")
@@ -27,5 +28,5 @@ env.AddFlagsFromGroup("sqlite")
 env.XmmsConfig("xmms2.conf")
 
 env.XmmsProgram("xmms2d", xmms2d_sources)
-#env.XmmsProgram("testcnf", xmms2_test_s)
+env.XmmsProgram("testipc", xmms2_test_s)
 
