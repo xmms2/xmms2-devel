@@ -300,7 +300,7 @@ main(int argc, char **argv)
 					g_snprintf (nuri, XMMS_MAX_URI_LEN, "%s", argv[i]);
 				}
 
-				xmmsc_playlist_add (c, nuri);
+				xmmsc_playlist_add (c, xmmsc_encode_path (nuri));
 			}
 			xmmsc_deinit (c);
 			exit (0);

@@ -7,6 +7,7 @@
 #include "config_xmms.h"
 #include "plugin.h"
 #include "plugin_int.h"
+#include "signal_xmms.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
@@ -28,6 +29,8 @@ struct xmms_output_St {
 
 	guint played;
 	gboolean is_open;
+
+	guint samplerate;
 
 	xmms_ringbuf_t *buffer;
 	xmms_config_value_t *config;
@@ -70,15 +73,15 @@ xmms_output_set_config (xmms_output_t *output, GHashTable *config)
 }	
 
 gchar *
-xmms_output_get_config_string (xmms_output_t *output, gchar *val)
+xmms_output_config_string_get (xmms_output_t *output, gchar *val)
 {
 	xmms_config_value_t *value;
-
+	
 	g_return_val_if_fail (output, NULL);
-		g_return_val_if_fail (val, NULL);
+	g_return_val_if_fail (val, NULL);
 	
 	value = xmms_config_value_list_lookup (output->config, val);
-
+	
 	return xmms_config_value_as_string (value);
 }
 
@@ -87,6 +90,7 @@ xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
 {
 	output->plugin_data = data;
 }
+
 
 void
 xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
@@ -104,6 +108,22 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 /*
  * Private functions
  */
+
+guint
+xmms_output_samplerate_set (xmms_output_t *output, guint rate)
+{
+	g_return_val_if_fail (output, 0);
+	g_return_val_if_fail (rate, 0);
+
+	xmms_output_lock (output);
+	if (rate != output->samplerate) {
+		xmms_output_samplerate_set_method_t samplerate_method;
+		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
+		output->samplerate = samplerate_method (output, rate);
+	}
+	xmms_output_unlock (output);
+	return output->samplerate;
+}
 
 gboolean
 xmms_output_open (xmms_output_t *output)
@@ -214,6 +234,7 @@ static gpointer
 xmms_output_thread (gpointer data)
 {
 	xmms_output_t *output;
+	xmms_output_buffersize_get_method_t buffersize_get_method;
 	xmms_output_write_method_t write_method;
 
 	output = (xmms_output_t*)data;
@@ -221,6 +242,8 @@ xmms_output_thread (gpointer data)
 
 	write_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_WRITE);
 	g_return_val_if_fail (write_method, NULL);
+
+	buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
 
 	xmms_output_lock (output);
 	while (output->running) {
@@ -235,18 +258,37 @@ xmms_output_thread (gpointer data)
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
 		
 		if (ret > 0) {
+			guint played_time;
 			xmms_output_unlock (output);
 			write_method (output, buffer, ret);
 			xmms_output_lock (output);
 
 			output->played += ret;
-			xmms_core_playtime_set((guint)(output->played/(4.0f*44.1f)));
+			/** @todo some places we are counting in bytes,
+			    in other in number of samples. Maybe we
+			    want a xmms_sample_t and a XMMS_SAMPLE_SIZE */
+			
+			played_time = (guint)(output->played/(4.0f*output->samplerate/1000.0f));
+
+			if (buffersize_get_method) {
+				guint buffersize = buffersize_get_method (output);
+				buffersize = buffersize/(2.0f*output->samplerate/1000.0f);
+/*				XMMS_DBG ("buffer: %dms", buffersize);*/
+
+				if (played_time >= buffersize) {
+					played_time -= buffersize;
+				} else {
+					played_time = 0;
+				}
+			}
+			xmms_core_playtime_set (played_time);
+
 			
 		} else if (xmms_ringbuf_eos (output->buffer)) {
 			GTimeVal time;
 
 			xmms_output_unlock (output);
-			xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
+			xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, NULL);
 			xmms_output_lock (output);
 			output->played = 0;
 			

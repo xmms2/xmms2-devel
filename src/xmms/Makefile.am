@@ -17,7 +17,9 @@ xmmscore_sources=config_xmms.c config_xmms.h \
 	medialib.c medialib.h \
 	core.c core.h \
 	plsplugins.c plsplugins.h \
-	log.c log.h 
+	log.c log.h \
+	visualisation.c visualisation.h \
+	util.c util.h
 
 xmms2d_LDADD = @GLIB_LIBS@ @XML_LIBS@ @DBUS_LIBS@ @DBUSGLIB_LIBS@
 xmms2d_SOURCES=main.c \

@@ -17,4 +17,6 @@
 #define XMMS_DBG(fmt,...)
 #endif
 
+gchar *xmms_util_decode_path (const gchar *path);
+
 #endif

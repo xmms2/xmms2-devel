@@ -1,16 +1,21 @@
 CORE
 	* Should check if other server is running
 	* Volyme
-	* Resampler
 	* Equalizer
+	* Check names of functions
+           - especially get/set-functions
+           - konsekvent med init/new/create/destroy/free/deinit 
+	* playlist should figure out mimetype upon playlist_add
+		(mediainfo thread?)
+	* licenseheader in all sourcefiles?
 
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
 	* make clientlib and implement following features:
 		* seek
-	* print mediainfo nicer
 
 PLUGINS:
+	* make all decoderplugins seek-able
 	* http transport should be remade
 	* vorbis
 		* should calculate duration more correctly
@@ -38,6 +43,11 @@ PLUGINS:
 		* ARTS
 		* ALSA
 		* ESD - Tack Gnome.. tack som fan
+                    "esound is junk. The only thing esd has is a good
+                     client API for going boing at approximately the
+	             right time. Anything else is beyond it."
+                                                            -- Alan Cox
+
 	
 LIBL44T:
 	* specification.
