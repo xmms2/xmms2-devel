@@ -18,6 +18,36 @@
 #include <string.h>
 
 /*
+ * Type definitions
+ */
+
+/**
+ * Structure describing decoder-objects.
+ * Do not modify this structure directly outside this file, use the functions.
+ */
+struct xmms_decoder_St {
+	xmms_object_t object;
+
+	gboolean running;
+	GThread *thread;
+	GMutex *mutex;
+	GCond *cond;
+
+	xmms_plugin_t *plugin;
+	xmms_transport_t *transport; /**< transport associated with decoder.
+				      *   This is where the decoder gets it
+				      *   data from
+				      */
+
+	gpointer plugin_data;
+
+	xmms_output_t *output;       /**< output associated with decoder.
+				      *   The decoded data will be written
+				      *   to this output.
+				      */
+};
+
+/*
  * Static function prototypes
  */
 
@@ -84,6 +114,19 @@ xmms_decoder_output_get (xmms_decoder_t *decoder)
 
 	xmms_decoder_lock (decoder);
 	ret = decoder->output;
+	xmms_decoder_unlock (decoder);
+
+	return ret;
+}
+
+xmms_plugin_t *
+xmms_decoder_plugin_get (xmms_decoder_t *decoder)
+{
+	xmms_plugin_t *ret;
+	g_return_val_if_fail (decoder, NULL);
+
+	xmms_decoder_lock (decoder);
+	ret = decoder->plugin;
 	xmms_decoder_unlock (decoder);
 
 	return ret;

@@ -19,35 +19,6 @@
  * Type definitions
  */
 
-struct xmms_transport_St {
-	/** Object for emiting signals */
-	xmms_object_t object;
-	xmms_plugin_t *plugin; /**< The plugin used as media. */
-
-	GMutex *mutex;
-	GCond *cond;
-	GCond *seek_cond;
-	GThread *thread;
-	/** This is true if we are currently buffering. */
-	gboolean running;
-
-	xmms_ringbuf_t *buffer;
-	/** String containing current mimetype */
-	gchar *mime_type;
-	/** Private plugin data */
-	gpointer plugin_data;
-
-	gchar *uri;
-	gchar *suburi;
-
-	/* Seek */
-	/** Set to TRUE if a seek is scheduled. */
-	gboolean want_seek;
-	gint seek_offset;
-	gint seek_whence;
-	
-};
-
 typedef struct xmms_transport_St xmms_transport_t;
 
 #define XMMS_TRANSPORT_SEEK_SET 0

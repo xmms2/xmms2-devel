@@ -4,6 +4,20 @@
 #include <gmodule.h>
 #include <string.h>
 
+struct xmms_plugin_St {
+	GMutex *mtx;
+	GModule *module;
+	GList *info_list;
+	xmms_plugin_type_t type;
+	gchar *name;
+	gchar *shortname;
+	gchar *description;
+	gint properties;
+
+	guint users;
+	GHashTable *method_table;
+};
+
 /*
  * Global variables
  */

@@ -12,6 +12,28 @@
 static gpointer xmms_output_thread (gpointer data);
 
 /*
+ * Type definitions
+ */
+
+struct xmms_output_St {
+	xmms_object_t object;
+	xmms_plugin_t *plugin;
+
+	GMutex *mutex;
+	GCond *cond;
+	GThread *thread;
+	gboolean running;
+
+	guint played;
+	gboolean is_open;
+
+	xmms_ringbuf_t *buffer;
+	xmms_config_value_t *config;
+	
+	gpointer plugin_data;
+};
+
+/*
  * Public functions
  */
 
@@ -195,7 +217,6 @@ xmms_output_thread (gpointer data)
 	output = (xmms_output_t*)data;
 	g_return_val_if_fail (data, NULL);
 
-	XMMS_DBG ("Plugin %s", output->plugin->name);
 	write_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_WRITE);
 	g_return_val_if_fail (write_method, NULL);
 
