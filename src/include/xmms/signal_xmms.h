@@ -87,6 +87,8 @@
 #define XMMS_SIGNAL_PLAYLIST_MOVE "/xmms/playlist::move"
 #define XMMS_SIGNAL_PLAYLIST_SORT "/xmms/playlist::sort"
 
+#define XMMS_SIGNAL_OBJECT_DESTROYED "/xmms/object::destroyed"
+
 /* Core msgs */
 #define XMMS_SIGNAL_CORE_QUIT "/xmms/core::quit"
 #define XMMS_SIGNAL_CORE_DISCONNECT "/org/freedesktop/Local::Disconnected"

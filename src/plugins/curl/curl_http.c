@@ -456,7 +456,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 		xmms_transport_mimetype_set (transport, data->mime);
 
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 	}
 
 

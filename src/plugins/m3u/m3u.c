@@ -258,7 +258,7 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 		title = xmms_playlist_entry_property_get (entry,
 				XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE);
 
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 
 		if (title && artist && duration) {
 			gchar *t;

@@ -94,7 +94,6 @@ struct xmms_decoder_St {
  * Static function prototypes
  */
 
-static void xmms_decoder_destroy_real (xmms_decoder_t *decoder);
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
 
@@ -409,7 +408,7 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 {
 	xmms_decoder_t *decoder;
 
-	xmms_playlist_entry_ref (entry);
+	xmms_object_ref (entry);
 
 	decoder = xmms_decoder_new (xmms_transport_core_get (transport));
 	/** @todo felhantering??? */
@@ -429,6 +428,25 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
  * Private functions
  */
 
+static void
+xmms_decoder_destroy (xmms_object_t *object) 
+{
+	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
+	xmms_decoder_destroy_method_t destroy_method;
+
+	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+
+	if (destroy_method)
+		destroy_method (decoder);
+
+	if (decoder->entry)
+		xmms_object_unref (decoder->entry);
+
+	g_mutex_free (decoder->mutex);
+	xmms_object_unref (decoder->vis);
+	xmms_object_unref (decoder->core);
+}
+
 xmms_decoder_t *
 xmms_decoder_new (xmms_core_t *core)
 {
@@ -436,11 +454,11 @@ xmms_decoder_new (xmms_core_t *core)
 
 	g_return_val_if_fail (core, NULL);
 
-	decoder = g_new0 (xmms_decoder_t, 1);
-	xmms_object_init (XMMS_OBJECT (decoder));
+	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
 	decoder->vis = xmms_visualisation_init (core);
 	decoder->core = core;
+	xmms_object_ref (core);
 
 	return decoder;
 }
@@ -463,7 +481,7 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 	if (!plugin)
 		return FALSE;
 	
-	xmms_playlist_entry_ref (entry);
+	xmms_object_ref (entry);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
@@ -474,38 +492,13 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 
 	if (!new_method || !new_method (decoder, mimetype)) {
 		XMMS_DBG ("open failed");
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
-
-/**
- * Free resources used by decoder.
- *
- * The decoder is signalled to stop working and free up any resources
- * it has been using.
- *
- * @param decoder the decoder to free. After this called it must not be referenced again.
- */
-void
-xmms_decoder_destroy (xmms_decoder_t *decoder)
-{
-	g_return_if_fail (decoder);
-
-	if (decoder->thread) {
-		XMMS_DBG ("decoder thread still alive?");
-		xmms_decoder_lock (decoder);
-		decoder->running = FALSE;
-		xmms_decoder_unlock (decoder);
-		//g_thread_join (decoder->thread);
-	} else {
-		xmms_decoder_destroy_real (decoder);
-	}
-		
-}
 
 /**
  * Dispatch execution of the decoder.
@@ -534,6 +527,15 @@ xmms_decoder_start (xmms_decoder_t *decoder,
 	decoder->output = output;
 	xmms_output_set_eos (output, FALSE);
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
+}
+
+void
+xmms_decoder_stop (xmms_decoder_t *decoder)
+{
+	g_return_if_fail (decoder);
+	xmms_decoder_lock (decoder);
+	decoder->running = FALSE;
+	xmms_decoder_unlock (decoder);
 }
 
 void
@@ -572,27 +574,6 @@ xmms_decoder_mediainfo_get (xmms_decoder_t *decoder,
 /*
  * Static functions
  */
-
-static void
-xmms_decoder_destroy_real (xmms_decoder_t *decoder)
-{
-	xmms_decoder_destroy_method_t destroy_method;
-	
-	g_return_if_fail (decoder);
-	
-	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-	if (destroy_method)
-		destroy_method (decoder);
-
-	g_mutex_free (decoder->mutex);
-
-	XMMS_DBG ("Decoder unref");
-	xmms_playlist_entry_unref (decoder->entry);
-
-	xmms_visualisation_destroy(decoder->vis);
-	xmms_object_cleanup (XMMS_OBJECT (decoder));
-	g_free (decoder);
-}
 
 static xmms_plugin_t *
 xmms_decoder_find_plugin (const gchar *mimetype)
@@ -638,7 +619,7 @@ xmms_decoder_thread (gpointer data)
 	xmms_decoder_init_method_t init_meth;
 
 	g_return_val_if_fail (decoder, NULL);
-	
+
 	decode_block = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK);
 	if (!decode_block)
 		return NULL;
@@ -648,6 +629,8 @@ xmms_decoder_thread (gpointer data)
 		if (!init_meth (decoder))
 			return NULL;
 	}
+	
+	xmms_object_ref (decoder);
 
 	xmms_object_emit (XMMS_OBJECT (decoder), 
 			  XMMS_SIGNAL_PLAYBACK_CURRENTID, 
@@ -671,7 +654,8 @@ xmms_decoder_thread (gpointer data)
 
 	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quitting");
-	xmms_decoder_destroy_real (decoder);
+
+	xmms_object_unref (decoder);
 
 	return NULL;
 }

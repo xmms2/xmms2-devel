@@ -124,7 +124,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 	g_free (tmp);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
-	xmms_playlist_entry_unref (entry);
+	xmms_object_unref (entry);
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "usecddb");
 	if (xmms_config_value_int_get (val) == 1) {

@@ -64,12 +64,8 @@ xmms_visualisation_init (xmms_core_t *core)
 
 	g_return_val_if_fail (core, NULL);
 
-	res = g_new0 (xmms_visualisation_t, 1);
+	res = xmms_object_new (xmms_visualisation_t, NULL);
 	res->core = core;
-
-	if (res) {
-		xmms_object_init (XMMS_OBJECT (res));
-	}
 
 	return res;
 }
@@ -101,14 +97,6 @@ xmms_visualisation_has_users ()
 
 	return res;
 }
-
-void
-xmms_visualisation_destroy (xmms_visualisation_t *vis)
-{
-	xmms_object_cleanup (XMMS_OBJECT (vis));
-	g_free(vis);
-}
-
 
 static void output_spectrum (xmms_visualisation_t *vis) {
 

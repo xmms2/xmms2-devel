@@ -138,8 +138,8 @@ xmms_core_thread (gpointer data)
 
 		core->decoder = xmms_decoder_new (core);
 		if (!xmms_decoder_open (core->decoder, entry)) {
-			xmms_transport_close (core->transport);
-			xmms_decoder_destroy (core->decoder);
+			xmms_object_unref (core->transport);
+			xmms_object_unref (core->decoder);
 			continue;
 		}
 
@@ -210,7 +210,7 @@ xmms_core_decoder_stop (xmms_core_t *core)
 {
 	g_return_if_fail (core);
 	if (core->decoder)
-		xmms_decoder_destroy (core->decoder);
+		xmms_decoder_stop (core->decoder);
 }
 
 void
@@ -231,6 +231,15 @@ xmms_core_quit (xmms_core_t *core, xmms_error_t *err)
 	exit (0); /** @todo BUSKIS! */
 }
 
+static void
+xmms_core_destroy (xmms_object_t *object)
+{
+	xmms_core_t *core = (xmms_core_t *)object;
+	g_cond_free (core->cond);
+	g_mutex_free (core->mutex);
+	xmms_object_unref (core->playback);
+}
+
 /**
  * Intializes a new core object
  */
@@ -239,16 +248,14 @@ xmms_core_init (xmms_playlist_t *playlist)
 {
 	xmms_core_t *core;
 
-	core = g_new0 (xmms_core_t, 1);
-	
+	core = xmms_object_new (xmms_core_t, xmms_core_destroy);
+
 	xmms_playlist_core_set (playlist, core);
 	
-	xmms_object_init (XMMS_OBJECT (core));
 	core->cond = g_cond_new ();
 	core->mutex = g_mutex_new ();
 	core->flush = FALSE;
 	core->playback = xmms_playback_init (core, playlist);
-
 
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));
 

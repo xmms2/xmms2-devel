@@ -268,7 +268,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	xmms_decoder_samplerate_set (decoder, vi->rate);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
-	xmms_playlist_entry_unref (entry);
+	xmms_object_unref (entry);
 
 }
 

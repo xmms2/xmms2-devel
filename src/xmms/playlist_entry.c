@@ -37,9 +37,10 @@
   * @{
   */
 	
-static void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
+static void xmms_playlist_entry_destroy (xmms_object_t *object);
 
 struct xmms_playlist_entry_St {
+	xmms_object_t object;
 	gchar *url;
 	gchar *mimetype;
 	
@@ -59,11 +60,10 @@ xmms_playlist_entry_new (gchar *url)
 {
 	xmms_playlist_entry_t *ret;
 
-	ret = g_new0 (xmms_playlist_entry_t, 1);
+	ret = xmms_object_new (xmms_playlist_entry_t, xmms_playlist_entry_destroy);
 	ret->url = g_strdup (url);
 	ret->properties = g_hash_table_new (g_str_hash, g_str_equal);
 	ret->id = 0;
-	ret->ref = 1;
 
 	return ret;
 }
@@ -186,8 +186,9 @@ xmms_playlist_entry_foreach_free (gpointer key, gpointer value, gpointer udata)
 }
 
 static void
-xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
+xmms_playlist_entry_destroy (xmms_object_t *object)
 {
+	xmms_playlist_entry_t *entry = (xmms_playlist_entry_t *)object;
 
 	if (entry->url)
 		g_free (entry->url);
@@ -197,8 +198,6 @@ xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 
 	g_hash_table_foreach_remove (entry->properties, xmms_playlist_entry_foreach_free, NULL);
 	g_hash_table_destroy (entry->properties);
-
-	g_free (entry);
 }
 
 static gchar *wellknowns[] = {
@@ -250,28 +249,6 @@ xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
 	return entry->mimetype;
 }
 
-
-void
-xmms_playlist_entry_ref (xmms_playlist_entry_t *entry)
-{
-	g_return_if_fail (entry);
-	entry->ref ++;
-}
-
-void
-xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
-{
-
-	g_return_if_fail (entry);
-
-	entry->ref --;
-
-	if (entry->ref < 1) {
-		/* free entry */
-		xmms_playlist_entry_free (entry);
-	}
-
-}
 
 /**
  * Tell all clients that this entry has been changed
