@@ -254,7 +254,7 @@ free_callback (void *key, void *value, void *udata)
 
 	while (list) {
 		ldata = list->data;
-		list = x_list_remove (list, list->data);
+		list = x_list_delete_link (list, list);
 		free (ldata);
 	}
 
