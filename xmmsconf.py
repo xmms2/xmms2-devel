@@ -58,7 +58,7 @@ def checkFlags(base_env):
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
 
 	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
-	       	print "PyREX compiler found!"
+		print "PyREX compiler found!"
 	else:
 		print "PyREX not found, no cookie for you!"
 
