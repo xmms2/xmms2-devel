@@ -204,7 +204,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_playlist_entry_t *entry;
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
-	gchar buf[8129];
+	gchar buf[8192];
 	gboolean id3handled = FALSE;
 	gint ret;
 
@@ -217,7 +217,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	entry = xmms_playlist_entry_new (NULL);
 
-	ret = xmms_transport_read (transport, buf, 8129);
+	ret = xmms_transport_read (transport, buf, 8192);
 	if (ret <= 0) {
 		return entry;
 	}
@@ -240,18 +240,18 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 			while (pos < head.len) {
 				ret = xmms_transport_read (transport,
 							   id3v2buf + pos,
-							   head.len - pos);
+							   MIN(4096,head.len - pos));
 				if (ret <= 0) {
 					XMMS_DBG ("error reading data for id3v2-tag");
 					return entry;
 				}
 				pos += ret;
 			}
-			ret = xmms_transport_read (transport, buf, 8129);
+			ret = xmms_transport_read (transport, buf, 8192);
 		} else {
 			/* just make sure buf is full */
-			memmove (buf, buf + head.len + 10, 8129 - (head.len+10));
-			ret = xmms_transport_read (transport, buf + 8129 - (head.len+10), head.len + 10);
+			memmove (buf, buf + head.len + 10, 8192 - (head.len+10));
+			ret = xmms_transport_read (transport, buf + 8192 - (head.len+10), head.len + 10);
 		}
 		
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
