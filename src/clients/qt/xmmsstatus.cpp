@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <qpainter.h>
 #include <qwidget.h>
+#include <math.h>
 
 #include <xmms/xmmsclient.h>
 #include <xmms/xmmsclient-qt.h>
@@ -62,10 +63,21 @@ XMMSStatus::paintEvent (QPaintEvent *event)
 
 	p.setWindow (0, 0, 300, 30);
 
-	for (i=0; i < FFT_BITS; i++) {
-		int h = (int)((m_vis_data[i]/255.0)*30.0);
-		p.fillRect (10+i*29, 30-h, 15, h, QBrush(Qt::black, Qt::SolidPattern));
+	for (i=0; i<FFT_LEN/32/2; i++) {
+		float sum = 0.0f;
+		int s;
+		int j;
+		for (j=0; j < 32; j++) {
+			sum += m_vis_data[i*16+j];
+		}
+		if (sum != 0) {
+			sum = log (sum/32);
+		}
+		sum = sum*64;
+		s = (int)((sum / 255.0) * 30.0);
+		p.fillRect (i*16, 30-s, 15, s, QBrush(Qt::black, Qt::SolidPattern));
 	}
+
 	free (m_vis_data);
 	m_vis_data = NULL;
 }
