@@ -32,7 +32,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 2
+#define DB_VERSION 3
 
 const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id primary_key, url, artist, album, title, genre, lmod, added)";

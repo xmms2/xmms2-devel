@@ -264,7 +264,7 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 		i++;
 	}
 
-	xmms_sqlite_query (NULL, NULL, "insert into Property values (%d, '%q', '%q')", medialib->id - 1, k, v);
+	xmms_sqlite_query (NULL, NULL, "insert into Property (id, key, value) values (%d, '%q', '%q')", medialib->id - 1, k, v);
 }
 
 /** 
