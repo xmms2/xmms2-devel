@@ -9,6 +9,7 @@
 
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <netinet/in.h>
 
@@ -31,6 +32,7 @@ typedef struct {
 	gchar *requestp;
 	struct sockaddr *sa;
 	gint salen;
+	gint ctimeout;
 	struct addrinfo *res;
 } xmms_http_data_t;
 
@@ -173,11 +175,14 @@ x_trynextaddr(xmms_transport_t *transport){
 	data = xmms_transport_plugin_data_get (transport);
 
 	/** Get next address from list */
-	if (!data->res) 
+	if (!data->res) {
+		data->sa = NULL;
 		return FALSE;
+	}
 	sa = (struct sockaddr *)data->res->ai_addr;
 	salen = data->res->ai_addrlen;
 
+	data->ctimeout = 0;
 	data->sa = sa;
 	data->salen = salen;
 	data->res = data->res->ai_next;
@@ -214,40 +219,58 @@ x_request (xmms_transport_t *transport)
 
 	data = xmms_transport_plugin_data_get (transport);
 	if (data->state == RESOLVED){
-		error = (connect (data->fd, data->sa, data->salen) == -1);
-		if (error && 
-		    errno != EAGAIN && 
-		    errno != EISCONN && 
-		    errno != EINTR &&
-		    errno != EALREADY &&
-		    errno != EINPROGRESS) {
-			XMMS_DBG ("connect error: %s", strerror(errno) );
-			return x_trynextaddr (transport);
-		} else if (error && (errno == EAGAIN || errno == EINTR || errno == EALREADY || errno == EINPROGRESS)) { 
-			XMMS_DBG ("connect msg: %s", strerror(errno) );
-			return TRUE;
+		struct pollfd fdlist;
+
+		fdlist.fd = data->fd;
+		fdlist.events = POLLOUT;
+		
+/*		error = (connect (data->fd, data->sa, data->salen) == -1);
+		if (error) {
+		       	if (errno == EINPROGRESS || errno == EAGAIN || errno == EINTR || errno == EALREADY) { 
+*/
+				XMMS_DBG ( "Polling %d...", data->fd);
+				if (poll(&fdlist, 1, 1000) < 1) {
+					data->ctimeout ++;
+					if (data->ctimeout > 60) { /* Don't try this again, try next addr instead */
+						return x_trynextaddr (transport);
+					} else {
+						return TRUE;
+					}
+				} else if ( (fdlist.revents & POLLERR) ||
+					    (fdlist.revents & POLLNVAL) ) {
+					return x_trynextaddr (transport); /* Error condition, try next addr */
+				} else {
+					data->state = CONNECTED;
+				}
+/*			} else if (errno == EISCONN) {
+				data->state = CONNECTED;
+			} else {
+				XMMS_DBG ("connect error: %s", strerror(errno) );
+				return x_trynextaddr (transport);
+			}
 		} else {
 			data->state = CONNECTED;
-			freeaddrinfo(data->res);
-			data->res = NULL;
-			XMMS_DBG ("connected!");
-			data->request = g_malloc(1024);
-			if(data->path[0] == '/'){
-				g_snprintf (data->request, 1024, "GET %s HTTP/1.1\r\n"
-					   "Host: %s\r\n"
-					   "Connection: close\r\n"
-					   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
-					   data->path, data->server);
-			} else {
-				g_snprintf (data->request, 1024, "GET /%s HTTP/1.1\r\n"
-					   "Host: %s\r\n"
-					   "Connection: close\r\n"
-					   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
-					   data->path, data->server);
-			}
-			data->requestp = data->request;
-			XMMS_DBG ("%s", data->request);
 		}
+*/
+		freeaddrinfo(data->res);
+		data->res = NULL;
+		XMMS_DBG ("connected!");
+		data->request = g_malloc(1024);
+		if(data->path[0] == '/'){
+			g_snprintf (data->request, 1024, "GET %s HTTP/1.1\r\n"
+				   "Host: %s\r\n"
+				   "Connection: close\r\n"
+				   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
+				   data->path, data->server);
+		} else {
+			g_snprintf (data->request, 1024, "GET /%s HTTP/1.1\r\n"
+				   "Host: %s\r\n"
+				   "Connection: close\r\n"
+				   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
+				   data->path, data->server);
+		}
+		data->requestp = data->request;
+		XMMS_DBG ("%s", data->request);
 	}
 
 	reqlen = strlen(data->requestp);
@@ -282,14 +305,18 @@ xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	G_BREAKPOINT();
-	
+	XMMS_DBG ("state: %d", data->state);
+
 	switch(data->state){
 		case NONE:
 		case RESOLVED:
 /*			x_trynextaddr(transport);*/
 		case CONNECTED:
-			x_request(transport); return 0;
+			if(!x_request(transport)){
+				return -1;
+			} else {
+				return 0;
+			}
 		case REQUEST_SENT:
 		default: 	
 		/** @todo FIXME: !*/
