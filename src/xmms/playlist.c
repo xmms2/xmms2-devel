@@ -240,6 +240,10 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	g_return_val_if_fail (playlist, 0);
 	
 	g_mutex_lock (playlist->mutex);
+
+	if (playlist->currentpos == -1 && (playlist->list->len > 0))
+		playlist->currentpos = 0;
+
 	if (playlist->currentpos < playlist->list->len) {
 		ent = g_array_index (playlist->list, guint32, playlist->currentpos);
 	}
