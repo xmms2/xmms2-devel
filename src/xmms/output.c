@@ -273,7 +273,9 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 	if (output->type == XMMS_OUTPUT_TYPE_WR) {
 		XMMS_DBG ("STOP!");
 		output->running = FALSE;
-		xmms_decoder_stop (output->decoder);
+		if (output->decoder) {
+			xmms_decoder_stop (output->decoder);
+		}
 		g_cond_signal (output->cond);
 	} else {
 		xmms_output_status_method_t st;
