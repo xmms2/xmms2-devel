@@ -12,10 +12,10 @@
 #include <ctype.h>
 
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
 #include <glib.h>
 
 #include "xmmsclient.h"
+#include "xmmsclient_int.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
@@ -48,19 +48,6 @@ typedef struct xmmsc_signal_callbacks_St {
 	xmmsc_types_t type;
 } xmmsc_signal_callbacks_t;
 
-
-/**
- * @typedef xmmsc_connection_t
- *
- * Holds all data about the current connection to
- * the XMMS server.
- */
-
-struct xmmsc_connection_St {
-	DBusConnection *conn;	
-	gchar *error;
-	GHashTable *callbacks;
-};
 
 /**
  * @internal
@@ -944,27 +931,6 @@ xmmsc_file_list (xmmsc_connection_t *c, gchar *url)
 	dbus_message_iter_append_string (&itr, url);
 	dbus_connection_send (c->conn, msg, &cserial);
 	dbus_message_unref (msg);
-}
-
-/** @} */
-
-
-/**
- * @defgroup GLib GLib
- * @ingroup XMMSClient
- * @brief Functions for integrating an XMMSClient into glib.
- *
- * @{
- */
-
-/**
- * Setup all events with a g_mainloop.
- */
-
-void
-xmmsc_glib_setup_mainloop (xmmsc_connection_t *conn, GMainContext *context)
-{
-	dbus_connection_setup_with_g_main (conn->conn, context);
 }
 
 /** @} */

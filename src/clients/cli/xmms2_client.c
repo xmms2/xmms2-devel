@@ -9,6 +9,7 @@
 #include <glib.h>
 
 #include "xmmsclient.h"
+#include "xmmsclient-glib.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
@@ -245,7 +246,7 @@ setup_flist (xmmsc_connection_t *conn, gchar *arg)
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
 
 	xmmsc_file_list (conn, arg);
-	xmmsc_glib_setup_mainloop (conn, NULL);
+	xmmsc_setup_with_gmain (conn, NULL);
 	return;
 }
 
@@ -260,7 +261,7 @@ setup_playlist (xmmsc_connection_t *conn)
 
 	xmmsc_playback_current_id (conn);
 	
-	xmmsc_glib_setup_mainloop (conn, NULL);
+	xmmsc_setup_with_gmain (conn, NULL);
 
 	return;
 }
@@ -279,7 +280,7 @@ status_main(xmmsc_connection_t *conn)
 
 	xmmsc_playback_current_id (conn);
 
-	xmmsc_glib_setup_mainloop (conn, NULL);
+	xmmsc_setup_with_gmain (conn, NULL);
 
 	return 0;
 

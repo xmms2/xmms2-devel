@@ -2,7 +2,7 @@
 
 Import('base_env')
 
-xmmsc_sources = Split ("xmmsclient.c")
+xmmsc_sources = Split ("xmmsclient.c xmmswatch.c")
 
 env = base_env.Copy()
 
