@@ -783,7 +783,6 @@ main (int argc, char **argv)
 {
 	xmmsc_connection_t *connection;
 	char *path;
-	char *dbuspath;
 	int i;
 
 	connection = xmmsc_init ("XMMS2 CLI");
@@ -792,12 +791,7 @@ main (int argc, char **argv)
 		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
 	}
 
-	dbuspath = getenv ("XMMS_PATH");
-	if (!dbuspath) {
-		path = g_strdup_printf ("unix:///tmp/xmms-ipc-%s", g_get_user_name ());
-	} else {
-		path = dbuspath;
-	}
+	path = getenv ("XMMS_PATH");
 
 	if (!xmmsc_connect (connection, path)) {
 		print_error ("Could not connect to xmms2d: %s", xmmsc_get_last_error (connection));
