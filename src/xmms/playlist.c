@@ -441,8 +441,6 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file)
 
 	g_mutex_lock (playlist->mutex);
 	g_array_append_val (playlist->list, file);
-	if (playlist->currentpos == -1) 
-		playlist->currentpos = 0;
 
 	/** propagate the MID ! */
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_ADD, 
@@ -469,7 +467,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	g_array_free (playlist->list, FALSE);
 	playlist->list = g_array_new (FALSE, FALSE, sizeof (guint32));
-	playlist->currentpos = 0;
+	playlist->currentpos = -1;
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_CLEAR, 0, 0);
 	g_mutex_unlock (playlist->mutex);
