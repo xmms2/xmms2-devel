@@ -203,7 +203,7 @@ xmms_core_flush_set (xmms_core_t *core, gboolean b)
 
 XMMS_METHOD_DEFINE (quit, xmms_core_quit, xmms_core_t *, NONE, NONE, NONE);
 void
-xmms_core_quit (xmms_core_t *core)
+xmms_core_quit (xmms_core_t *core, xmms_error_t *err)
 {
 	gchar *filename;
 	filename = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());

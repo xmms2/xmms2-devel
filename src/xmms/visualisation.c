@@ -110,7 +110,7 @@ static void output_spectrum (xmms_visualisation_t *vis) {
 
 	vis->spec[0] = 1000.0f * vis->pos * FFT_LEN / vis->samplerate;
 	
-	xmms_playback_vis_spectrum (xmms_core_playback_get (vis->core), vis->spec);
+	xmms_playback_vis_spectrum (vis->core, vis->spec);
 
 	vis->pos++;
 }

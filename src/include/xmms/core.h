@@ -34,7 +34,7 @@ typedef struct xmms_core_St xmms_core_t;
 
 xmms_core_t *xmms_core_init (xmms_playlist_t *playlist);
 void xmms_core_start (xmms_core_t *core);
-void xmms_core_quit (xmms_core_t *core);
+void xmms_core_quit (xmms_core_t *core, xmms_error_t *err);
 
 void xmms_core_set_playlist (xmms_core_t *core, xmms_playlist_t *playlist);
 void xmms_core_output_set (xmms_core_t *core, xmms_output_t *output);
