@@ -1,1 +1,1 @@
-SUBDIRS=cli
+SUBDIRS=lib cli
