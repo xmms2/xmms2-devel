@@ -116,6 +116,8 @@ xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
 
+	x_return_val_if_fail (clientname, NULL);
+
 	if (!(c = malloc (sizeof (xmmsc_connection_t)))) {
 		return NULL;
 	}
