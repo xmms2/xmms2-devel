@@ -21,6 +21,8 @@ PKG_CHECK_MODULES(MAD, mad >= 0.14.0,,AC_MSG_ERROR(Install libmad!))
 AC_SUBST(MAD_LIBS)
 AC_SUBST(MAD_CFLAGS)
 
+AM_PATH_SDL(1.2.5,,AC_MSG_ERROR(Install LibSDL!))
+
 AC_OUTPUT([
 Makefile
 src/Makefile
