@@ -557,10 +557,15 @@ xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid)
 void
 xmmsc_result_wait (xmmsc_result_t *res)
 {
+	const char *err;
 	x_return_if_fail (res);
 
-	while (!res->parsed) {
+	while (!res->parsed && !(err =xmmsc_ipc_error_get (res->ipc))) {
 		xmmsc_ipc_wait_for_event (res->ipc, 5);
+	}
+
+	if (err) {
+		xmmsc_result_seterror (res, g_strdup (err));
 	}
 }
 				

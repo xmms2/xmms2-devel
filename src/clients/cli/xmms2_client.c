@@ -446,6 +446,7 @@ cmd_clear (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_t *res;
 
 	res = xmmsc_playlist_clear (conn);
+	xmmsc_result_wait (res);
 	xmmsc_result_unref (res);
 
 }
@@ -456,6 +457,7 @@ cmd_shuffle (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_t *res;
 	
 	res = xmmsc_playlist_shuffle (conn);
+	xmmsc_result_wait (res);
 	xmmsc_result_unref (res);
 	
 }
@@ -726,7 +728,13 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_quit (conn);
+	xmmsc_result_t *res;
+	res = xmmsc_quit (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't read result for command: %s\n", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
 }
 
 static void

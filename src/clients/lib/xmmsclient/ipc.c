@@ -21,7 +21,6 @@
 #include <string.h>
 
 #include "xmms/util.h"
-#include "xmms/ringbuf.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/xmmsclient.h"
 
@@ -141,6 +140,9 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 {
 	gboolean disco = FALSE;
 
+	g_return_val_if_fail (ipc, FALSE);
+	g_return_val_if_fail (!ipc->disconnect, FALSE);
+
 	while (!disco) {
 		if (!ipc->read_msg)
 			ipc->read_msg = xmms_ipc_msg_alloc ();
@@ -166,7 +168,7 @@ xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 {
 	g_return_val_if_fail (ipc, FALSE);
 
-	return !g_queue_is_empty (ipc->out_msg);
+	return !g_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
 }
 
 gboolean
@@ -175,6 +177,7 @@ xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 	gboolean disco = FALSE;
 
 	g_return_val_if_fail (ipc, FALSE);
+	g_return_val_if_fail (!ipc->disconnect, FALSE);
 
 	while (!g_queue_is_empty (ipc->out_msg)) {
 		xmms_ipc_msg_t *msg = g_queue_peek_head (ipc->out_msg);
@@ -206,6 +209,13 @@ xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error)
 	ipc->error = error;
 }
 
+const char *
+xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
+{
+	g_return_if_fail (ipc);
+	return ipc->error;
+}
+
 void
 xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 {
@@ -215,6 +225,8 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 	int fd;
 
 	g_return_if_fail (ipc);
+	g_return_if_fail (!ipc->disconnect);
+
 	tmout.tv_sec = timeout;
 	tmout.tv_usec = 0;
 
@@ -241,7 +253,6 @@ gboolean
 xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
 {
 	g_return_val_if_fail (ipc, FALSE);
-/*	return xmms_ipc_msg_write_direct (msg, ipc->transport, cid);*/
 	xmms_ipc_msg_set_cid (msg, cid);
 	g_queue_push_tail (ipc->out_msg, msg);
 	return TRUE;
@@ -251,6 +262,7 @@ void
 xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 {
 	ipc->disconnect = TRUE;
+	xmmsc_ipc_error_set (ipc, g_strdup ("Disconnected"));
 	if (ipc->disconnect_callback) {
 		ipc->disconnect_callback (ipc->disconnect_data);
 	}
@@ -294,7 +306,7 @@ xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path)
 
 	ipc->transport = xmms_ipc_client_init (path);
 	if (!ipc->transport) {
-		ipc->error = "Could not init client!";
+		ipc->error = g_strdup ("Could not init client!");
 		return FALSE;
 	}
 
