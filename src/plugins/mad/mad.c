@@ -9,6 +9,8 @@
 #include <glib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 /*
  * Type definitions
@@ -75,6 +77,21 @@ xmms_plugin_get (void)
 }
 
 static void
+remove_trail_space (gchar *str)
+{
+
+	int len = strlen (str);
+	int i;
+
+	for (i=(len-1); i > 0; i--) {
+		if (!isspace (str[i])) {
+			str[i+1] = '\0';
+			return;
+		}
+	}
+}
+
+static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
@@ -101,10 +118,23 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		XMMS_DBG ("Found ID3v1 TAG!");
 
 		entry = g_new0 (xmms_playlist_entry_t, 1);
-		memcpy (entry->artist, tag.artist, 30);
-		memcpy (entry->album, tag.album, 30);
-		memcpy (entry->title, tag.title, 30);
-		/* FIXME */
+		sprintf (entry->artist, "%30.30s", tag.artist);
+		remove_trail_space (entry->artist);
+		sprintf (entry->album, "%30.30s", tag.album);
+		remove_trail_space (entry->album);
+		sprintf (entry->title, "%30.30s", tag.title);
+		remove_trail_space (entry->title);
+		entry->year = strtol (tag.year, NULL, 10);
+		if (atoi (&tag.u.v1_1.track_number) > 0) {
+			/* V1.1 */
+			sprintf (entry->comment, "%28.28s", tag.u.v1_1.comment);
+			entry->tracknr = atoi (&tag.u.v1_1.track_number);
+		} else {
+			sprintf (entry->comment, "%30.30s", tag.u.v1_0.comment);
+		}
+
+		remove_trail_space (entry->comment);
+
 		decoder->mediainfo = entry;
 	}
 

@@ -108,7 +108,7 @@ main (int argc, char **argv)
 		xmms_transport_start (transport);
 		
 		if (xmms_decoder_get_mediainfo (decoder, entry)) {
-			XMMS_DBG ("id3tag: Artist=%s, album=%s, title=%s", entry->artist, entry->album, entry->title);
+			XMMS_DBG ("id3tag: Artist=%s, album=%s, title=%s, year=%d, comment=%s, tracknr=%d", entry->artist, entry->album, entry->title, entry->year, entry->comment, entry->tracknr);
 		}
 
 		xmms_transport_wait (transport);
