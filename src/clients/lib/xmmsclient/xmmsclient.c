@@ -400,6 +400,19 @@ xmmsc_set_callback (xmmsc_connection_t *conn, gchar *callback, void (*func)(void
 		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYBACK_STOP);
 	} else if (g_strcasecmp (XMMSC_CALLBACK_DISCONNECTED, callback) == 0) {
 		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_CORE_DISCONNECT);
+
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_CLEARED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_ADDED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYLIST_ADD);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_REMOVED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_SHUFFLED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_JUMPED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYLIST_JUMP);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_MOVED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYLIST_MOVE);
 	}
 
 	/** @todo more than one callback of each type */

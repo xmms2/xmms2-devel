@@ -21,6 +21,7 @@
 #define XMMS_DBUS_SIGNAL_PLAYLIST_JUMP "org.xmms.playlist.jump"
 #define XMMS_DBUS_SIGNAL_PLAYLIST_MEDIAINFO "org.xmms.playlist.mediainfo"
 #define XMMS_DBUS_SIGNAL_PLAYLIST_MOVE "org.xmms.playlist.move"
+#define XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED "org.xmms.playlist.change"
 
 /* Core msgs */
 #define XMMS_DBUS_SIGNAL_CORE_QUIT "org.xmms.core.quit"
