@@ -24,6 +24,7 @@ typedef gboolean (*xmms_decoder_init_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder, const gchar *mimetype);
 typedef gboolean (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);
+typedef guint (*xmms_decoder_skip_bytes_get_method_t) (xmms_decoder_t *decoder, guint milliseconds);
 typedef void (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
 
 /*
@@ -48,5 +49,6 @@ void xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_en
 xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xmms_playlist_entry_t *entry);
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 
+void xmms_decoder_seek (xmms_decoder_t *decoder, guint milliseconds);
 
 #endif /* __XMMS_DECODER_H__ */

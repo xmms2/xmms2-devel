@@ -2,7 +2,8 @@
  *  OGG / Vorbis decoder for XMMS2
  *
  *  This uses a lot of decoder_example.c's code from vorbis_tools
- * 
+ *
+ *  @todo support seek
  */
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
@@ -128,7 +129,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
 		} else {
 			gchar *tmp;
-			duration = fsize / data->vi.bitrate_nominal;
+			duration = fsize / data->vi.bitrate_nominal * 1000;
 			tmp = g_strdup_printf ("%d", duration);
 
 			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);

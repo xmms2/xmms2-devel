@@ -22,6 +22,7 @@
 #define XMMS_PLUGIN_METHOD_DESTROY "destroy"
 #define XMMS_PLUGIN_METHOD_WRITE "write"
 #define XMMS_PLUGIN_METHOD_SEARCH "search"
+#define XMMS_PLUGIN_METHOD_CALC_SKIP "calc_skip"
 #define XMMS_PLUGIN_METHOD_ADD_ENTRY "add_entry"
 #define XMMS_PLUGIN_METHOD_INIT "init"
 #define XMMS_PLUGIN_METHOD_READ_PLAYLIST "read_playlist"

@@ -58,8 +58,8 @@ handle_playtime (void *userdata, void *arg) {
 	printf ("played time: %02d:%02d of %02d:%02d\r",
 		tme/60000,
 		(tme/1000)%60,
-		duration/60,
-		(duration)%60);
+		duration/60000,
+		(duration/1000)%60);
 	fflush (stdout);
 }
 
@@ -222,6 +222,20 @@ main(int argc, char **argv)
 			}
 
 			xmmsc_playlist_jump (c, atoi (argv[2]));
+
+			xmmsc_deinit (c);
+			exit (0);
+		} else if ( streq (argv[1], "seek") ) {
+			guint seconds;
+
+			if ( argc < 3 ) {
+				printf ("usage: seek seconds\n");
+				return 1;
+			}
+
+			seconds = atoi (argv[2]) * 1000;
+
+			xmmsc_playback_seek (c, seconds);
 
 			xmmsc_deinit (c);
 			exit (0);

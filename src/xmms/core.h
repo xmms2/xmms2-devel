@@ -10,6 +10,7 @@ typedef struct xmms_core_St {
 	xmms_object_t object;
 
 	xmms_output_t *output;
+	xmms_decoder_t *decoder;
 
 	xmms_playlist_t *playlist;
 	xmms_playlist_entry_t *curr_song;
@@ -57,6 +58,7 @@ void xmms_core_vis_spectrum (gfloat *spec);
 
 void xmms_core_playback_stop ();
 void xmms_core_playback_start ();
+void xmms_core_playback_seek (guint milliseconds);
 
 void xmms_core_init ();
 void xmms_core_start ();
