@@ -182,7 +182,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 		}
 
 		if (!user)
-			exit(-1);
+			return FALSE;
 
 		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", user);
 	} else {
@@ -610,7 +610,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 
 	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
 		return NULL;
-	
+
 	h = x_hash_new (x_str_hash, x_str_equal);
 
 	for (i = 1; i < entries; i++) {
