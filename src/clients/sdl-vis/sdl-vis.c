@@ -26,6 +26,8 @@ static GList *queue = NULL;
 static GList *time_queue = NULL;
 
 static TTF_Font *font;
+static SDL_Surface *text = NULL;
+static gchar mediainfo[64];
 
 static xmmsc_connection_t *connection;
 
@@ -68,7 +70,7 @@ dequeue (guint32 time)
 }
 
 static void
-draw_bar(SDL_Surface *bar, int val,int xpos)
+draw_bar (SDL_Surface *bar, int val, int xpos)
 {
 	int y,x;
 	guint32 *lfb;
@@ -89,7 +91,6 @@ draw_bar(SDL_Surface *bar, int val,int xpos)
 	SDL_UnlockSurface (bar);
 }
 
-static SDL_Surface *text = NULL;
 
 /* called periodically from the mainloop */
 static gboolean
@@ -141,13 +142,13 @@ render_vis (gpointer data)
 	}
 
 	for (i=0; i<FFT_LEN/32/2; i++) {
-		float sum=0.0f;
+		float sum = 0.0f;
 		int j;
-		for(j=0;j<32;j++){
-			sum+=spec[i*16+j];
+		for (j=0; j<32; j++){
+			sum += spec[i*16+j];
 		}
-		if(sum!=0){
-			sum=log (sum/32);
+		if (sum != 0) {
+			sum = log (sum/32);
 		}
 
 		draw_bar (surf, MIN (255, sum*64), i*32 + (surf->w-(FFT_LEN/2))/2);
@@ -160,7 +161,6 @@ render_vis (gpointer data)
 	return TRUE;
 }
 
-static gchar mediainfo[64];
 
 static void
 set_mediainfo (xmmsc_connection_t *conn, guint id)
@@ -193,11 +193,12 @@ handle_playtime (void *userdata, void *arg)
 	if (tme/1000 != lasttime) {
 		gchar buf[64];
 		if (text) {
-			SDL_FreeSurface(text);
+			SDL_FreeSurface (text);
 		}
 
-		snprintf (buf, 63, "%02d:%02d : %s", tme/60000, (tme/1000)%60, mediainfo);
-		lasttime = tme/1000;
+		snprintf (buf, 63, "%02d:%02d : %s",
+			  tme/60000, (tme/1000)%60, mediainfo);
+		lasttime = tme / 1000;
 		text = TTF_RenderUTF8_Blended (font, buf, white);
 	}
 }
@@ -218,7 +219,7 @@ new_data (void *userdata, void *arg)
 	}
 
 	for (i=0; i<FFT_LEN/2; i++) {
-		spec[i]=s[i+1];
+		spec[i] = s[i+1];
 	}
 
 	enqueue (time-300, spec); /* @todo measure dbus-delay for real! */
@@ -305,4 +306,3 @@ main()
 
 	return 0;
 }
-
