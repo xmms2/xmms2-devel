@@ -35,6 +35,8 @@ typedef enum {
 
 typedef struct xmms_playlist_St {
 	GSList *list;
+	GMutex *mutex;
+	GCond *cond;
 } xmms_playlist_t;
 
 typedef struct xmms_playlist_entry_St {
@@ -57,6 +59,7 @@ xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
  * Entry modifications
  */
 
+void xmms_playlist_wait (xmms_playlist_t *playlist);
 xmms_playlist_entry_t * xmms_playlist_entry_new (gchar *uri);
 xmms_playlist_entry_t * xmms_playlist_pop (xmms_playlist_t *playlist);
 void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);

@@ -29,7 +29,7 @@ sigwaiter(gpointer data){
 		switch (caught){
 		case SIGINT:
 			XMMS_DBG ("Got SIGINT!");
-			xmms_core_play_next ();
+			exit (0);
 			break;
 		}
 	}

@@ -59,8 +59,6 @@ play_next (void)
 		}
 		
 		core->curr_song = xmms_playlist_pop (core->playlist);
-		if (!core->curr_song)
-			exit (1); /** @todo use glib tjoff */
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
