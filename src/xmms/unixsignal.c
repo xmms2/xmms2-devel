@@ -35,8 +35,9 @@
 #include <unistd.h>
 
 
-static gpointer 
-sigwaiter(gpointer data){
+static gpointer
+sigwaiter (gpointer data)
+{
 	xmms_object_t *obj = (xmms_object_t *) data;
 	xmms_object_method_arg_t arg;
 	sigset_t signals;
@@ -45,26 +46,28 @@ sigwaiter(gpointer data){
 	memset (&signals, 0, sizeof (sigset_t));
 	sigaddset (&signals, SIGINT);
 	sigaddset (&signals, SIGTERM);
-	
+
 	while (1337) {
 		sigwait (&signals, &caught);
-		switch (caught){
-		case SIGINT:
-			XMMS_DBG ("Got SIGINT!");
 
-			memset (&arg, 0, sizeof (arg));
-			xmms_error_reset (&arg.error);
-			xmms_object_method_call (obj, XMMS_METHOD_QUIT, &arg);
-			break;
-		case SIGTERM:
-			XMMS_DBG ("Got SIGTERM! Bye!");
-			exit (0);
-			break;
+		switch (caught){
+			case SIGINT:
+				XMMS_DBG ("Got SIGINT!");
+
+				memset (&arg, 0, sizeof (arg));
+				xmms_error_reset (&arg.error);
+				xmms_object_method_call (obj, XMMS_METHOD_QUIT, &arg);
+				break;
+			case SIGTERM:
+				XMMS_DBG ("Got SIGTERM! Bye!");
+				exit (0);
+				break;
 		}
 	}
 }
 
 void
-xmms_signal_init (xmms_object_t *obj) {
+xmms_signal_init (xmms_object_t *obj)
+{
 	g_thread_create (sigwaiter, obj, FALSE, NULL);
 }
