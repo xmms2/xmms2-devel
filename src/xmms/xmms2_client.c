@@ -2,6 +2,9 @@
  *
  */
 
+/* YES! I know that this api may change under my feet */
+#define DBUS_API_SUBJECT_TO_CHANGE
+
 #include <stdio.h>
 
 #include <dbus/dbus.h>
@@ -65,7 +68,7 @@ main(int argc, char **argv)
 	dbus_error_init (&err);
 
 	conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
-	
+
 	if (!conn) {
 		printf ("error opening connection\n");
 		return 1;
@@ -76,7 +79,6 @@ main(int argc, char **argv)
 
 	hand = dbus_message_handler_new (handle_mediainfo, NULL, NULL);
 	dbus_connection_register_handler (conn, hand, mediainfo_message, 1);
-
 
 	msg = dbus_message_new ("org.xmms.core.mediainfo", NULL);
 	
@@ -95,6 +97,7 @@ main(int argc, char **argv)
 		}
 	}
 
+	dbus_message_unref (msg);
 	dbus_connection_flush (conn);
 
 	dbus_connection_setup_with_g_main (conn, NULL);

@@ -6,9 +6,12 @@
  * are passed to the clients. The clients can send dbus-messages that
  * causes xmms-signals to be emitted.
  *
- * @url http://www.freedesktop.org/software/dbus
+ * @url http://www.freedesktop.org/software/dbus/
  *
  */
+
+/* YES! I know that this api may change under my feet */
+#define DBUS_API_SUBJECT_TO_CHANGE
 
 #include "util.h"
 #include "playlist.h"
@@ -87,7 +90,6 @@ handle_mediainfo(DBusMessageHandler *handler,
 	dbus_message_iter_append_string (&itr, uri);
 	dbus_connection_send (connections, rpy, &clientser);
 	dbus_message_unref (rpy);
-	dbus_message_unref (msg);
 
 	g_free (uri);
 
@@ -102,8 +104,7 @@ handle_disconnect (DBusMessageHandler *handler,
 
 	XMMS_DBG ("disconnect");
 	connections = NULL;
-//	dbus_message_unref (message);
-//	dbus_connection_unref (connection);
+	dbus_connection_unref (connection);
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
@@ -142,7 +143,7 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 
 	connections = conn; /* -> add to (hash)table... */
 
-	dbus_connection_setup_with_g_main (conn, NULL);
+	dbus_connection_setup_with_g_main (conn, g_main_context_default());
 
 }
 
@@ -161,7 +162,7 @@ gboolean
 xmms_dbus_init(){
         DBusError err;
 
-	//dbus_gthread_init ();  dbus_enable_deadlocks ();
+	dbus_gthread_init (); //  dbus_enable_deadlocks ();
 
         dbus_error_init (&err);
 
@@ -171,10 +172,10 @@ xmms_dbus_init(){
                 return FALSE;
         }
         dbus_server_ref (server);
-        dbus_server_set_new_connection_function (server, new_connect,
+	dbus_server_set_new_connection_function (server, new_connect,
 						 NULL, NULL);
 	
-	dbus_server_setup_with_g_main (server, NULL);
+	dbus_server_setup_with_g_main (server, g_main_context_default());
 	
 	xmms_object_connect (XMMS_OBJECT (core), "playtime-changed",
 			     handle_playtime_changed, NULL);
