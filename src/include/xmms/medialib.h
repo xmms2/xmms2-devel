@@ -75,6 +75,7 @@ GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry);
 guint xmms_medialib_entry_id_get (xmms_medialib_entry_t entry);
 gboolean xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry);
 void xmms_medialib_playlist_save_autosaved ();
+void xmms_medialib_playlist_load_autosaved ();
 
 sqlite *xmms_sqlite_open ();
 gboolean xmms_sqlite_query (sqlite *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);

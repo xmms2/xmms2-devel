@@ -132,7 +132,7 @@ xmms_playlist_t *
 xmms_playlist_init (void)
 {
 	xmms_playlist_t *ret;
-	xmms_config_value_t *val;
+	xmms_config_value_t *val, *load_autosaved;
 
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->mutex = g_mutex_new ();
@@ -148,6 +148,9 @@ xmms_playlist_init (void)
 	ret->repeat_one = xmms_config_value_int_get (val);
 	val = xmms_config_value_register ("playlist.repeat_all", "0", on_playlist_r_all_changed, ret);
 	ret->repeat_all = xmms_config_value_int_get (val);
+	load_autosaved =
+		xmms_config_value_register ("playlist.load_autosaved", "0",
+		                            NULL, NULL);
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_CURRENT_POS, 
@@ -195,6 +198,10 @@ xmms_playlist_init (void)
 
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 	xmms_medialib_init (ret);
+
+	if (xmms_config_value_int_get (load_autosaved)) {
+		xmms_medialib_playlist_load_autosaved ();
+	}
 
 	return ret;
 }
