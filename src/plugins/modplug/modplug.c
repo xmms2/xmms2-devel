@@ -152,6 +152,18 @@ xmms_modplug_can_handle (const gchar *mimetype)
 	if ((g_strcasecmp (mimetype, "audio/xm") == 0))
 		return TRUE;
 
+	if ((g_strcasecmp (mimetype, "audio/s3m") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/it") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/mod") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/med") == 0))
+		return TRUE;
+
 	return FALSE;
 
 }

@@ -110,9 +110,9 @@ xmms_ipc_tcp_client_init (const gchar *path)
 	} else {
 		sent = getservbyname (tokens[1], "tcp");
 		if (!sent) {
-			saddr.sin_port = htons ((uint16_t) strtoul (tokens[1], NULL, 0));
+			saddr.sin_port = htons ((guint16) strtoul (tokens[1], NULL, 0));
 		} else {
-			saddr.sin_port = (uint16_t) sent->s_port;
+			saddr.sin_port = (guint16) sent->s_port;
 		}
 	}
 
@@ -233,9 +233,9 @@ xmms_ipc_tcp_server_init (const gchar *path)
 	} else {
 		sent = getservbyname (tokens[1], "tcp");
 		if (!sent) {
-			saddr.sin_port = htons ((uint16_t) strtoul (tokens[1], NULL, 0));
+			saddr.sin_port = htons ((guint16) strtoul (tokens[1], NULL, 0));
 		} else {
-			saddr.sin_port = (uint16_t) sent->s_port;
+			saddr.sin_port = (guint16) sent->s_port;
 		}
 	}
 
