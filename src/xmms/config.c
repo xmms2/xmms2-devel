@@ -371,11 +371,16 @@ static int
 common_chars (gchar *n1, gchar *n2)
 {
 	gint i, j = 0;
-	gchar **tmp = g_strsplit (n1, ".", 0);
+	gchar **tmp;
+
+	tmp = g_strsplit (n1, ".", 0);
+	g_assert (tmp);
 
 	while (tmp[j])
 		j++;
-	
+
+	g_strfreev (tmp);
+
 	for (i = 0; i < strlen (n1); i++) {
 		if (n1[i] == '.') {
 			if (j == 0)
@@ -422,7 +427,10 @@ xmms_config_save (const gchar *file)
 	for (n = list; n; n = g_list_next (n)) {
 		gint nume = 0;
 		gchar *line = (gchar *)n->data;
-		gchar **tmp = g_strsplit ((gchar *)n->data, ".", 0);
+		gchar **tmp;
+
+		tmp = g_strsplit ((gchar *)n->data, ".", 0);
+		g_assert (tmp);
 
 //		printf ("%s\n", line);
 
@@ -478,6 +486,8 @@ xmms_config_save (const gchar *file)
 //			printf ("%d %d\n", nume2, nume);
 
 		}
+
+		g_strfreev (tmp);
 
 		last = (gchar *)n->data;
 		lastn = nume;
