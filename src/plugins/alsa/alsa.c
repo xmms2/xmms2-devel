@@ -1,7 +1,7 @@
 /** @file alsa.c
- * Output plugin for the Advanced Linux Sound Architechture.
+ *  Output plugin for the Advanced Linux Sound Architechture.
  * 
- *  Copyright (C) 2003  Daniel Svensson, <nano@nittioonio.nu>
+ *  Copyright (C) 2003-2005 Daniel Svensson, <daniel@nittionio.nu>
  * 
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -113,9 +113,9 @@ xmms_plugin_get (void)
 							  "Advanced Linux Sound Architecture \
 							   output plugin");
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.nittionio.nu/");
+	xmms_plugin_info_add (plugin, "URL", "http://www.alsa-project.org");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
-	xmms_plugin_info_add (plugin, "E-Mail", "nano@nittionino.nu");
+	xmms_plugin_info_add (plugin, "E-Mail", "daniel@nittionino.nu");
 
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, 
@@ -263,9 +263,8 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 	/* Setup all parameters to configuration space */
 	err = snd_pcm_hw_params_any (pcm, params);
 	if (err < 0) {
-		xmms_log_error ("cannot initialize hardware "
-		                "parameter structure (%s)",
-		                snd_strerror (-err));
+		xmms_log_error ("Broken configuration for playback: no configurations "
+						"available: %s", snd_strerror (err));
 		return;
 	}
 
@@ -273,26 +272,27 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 	err = snd_pcm_hw_params_set_access (pcm, params,
 	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
-		xmms_log_error ("cannot set access type (%s)", snd_strerror (-err));
+		xmms_log_error ("Access type not available for playback: %s", 
+						snd_strerror (err));
 		return;
 	}
 
 	err = snd_pcm_hw_params_set_format (pcm, params, alsa_fmt);
 	if (err < 0) {
-		XMMS_DBG ("cannot set format to %i", alsa_fmt);
+		XMMS_DBG ("Sample format (%i) not available for playback.", alsa_fmt);
 		return;
 	}
 
 	err = snd_pcm_hw_params_set_channels (pcm, params, channels);
 	if (err < 0) {
-		XMMS_DBG ("cannot set channels to %i", channels);
+		XMMS_DBG ("Channels count (%i) not available for playbacks.", channels);
 		return;
 	}
 
 	tmp = rate;
 	err = snd_pcm_hw_params_set_rate_near (pcm, params, &tmp, NULL);
 	if (err < 0) {
-		XMMS_DBG ("cannot set samplerate to %i", rate);
+		XMMS_DBG ("Rate %iHz not available for playback.", rate);
 		return;
 	}
 
@@ -356,7 +356,7 @@ xmms_alsa_open (xmms_output_t *output)
 	/* Open the device */
 	err = snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0);
 	if (err < 0) {
-		xmms_log_error ("Cannot open audio device (%s)", snd_strerror (-err));
+		xmms_log_error ("Cannot open audio device: %s", snd_strerror (err));
 		return FALSE;
 	}
 
@@ -385,8 +385,8 @@ xmms_alsa_close (xmms_output_t *output)
 	if (data->mixer) {
 		err = snd_mixer_close (data->mixer);
 		if (err != 0) {
-			xmms_log_error ("Unable to release mixer device. (%s)", 
-							snd_strerror (-err));
+			xmms_log_error ("Unable to release mixer device: %s", 
+							snd_strerror (err));
 		} else {
 			XMMS_DBG ("mixer device closed.");
 		}
@@ -395,8 +395,8 @@ xmms_alsa_close (xmms_output_t *output)
 	/* Close device */
 	err = snd_pcm_close (data->pcm);
 	if (err != 0) { 
-		xmms_log_error ("Audio device could not be released. (%s)",
-						snd_strerror (-err));
+		xmms_log_error ("Audio device could not be released: %s",
+						snd_strerror (err));
 	} else {
 		XMMS_DBG ("audio device closed.");
 	}
@@ -434,8 +434,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	/* Setup all parameters to configuration space */
 	err = snd_pcm_hw_params_any (data->pcm, data->hwparams);
 	if (err < 0) {
-		xmms_log_error ("cannot initialize hardware parameter structure (%s)", 
-						snd_strerror (-err));
+		xmms_log_error ("Broken configuration for playback: no configurations "
+						"available: %s", snd_strerror (err));
 		return FALSE;
 	}
 
@@ -443,7 +443,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams, 
 	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
-		xmms_log_error ("cannot set access type (%s)", snd_strerror (-err));
+		xmms_log_error ("Access type not available for playback: %s", 
+						snd_strerror (err));
 		return FALSE;
 	}
 
@@ -451,7 +452,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams,
 	                                    alsa_format);
 	if (err < 0) {
-		xmms_log_error ("cannot set sample format (%s)", snd_strerror (-err));
+		xmms_log_error ("Sample format not available for playback: %s", 
+						snd_strerror (err));
 		return FALSE;
 	}
 
@@ -459,7 +461,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
 	                                      format->channels);
 	if (err < 0) {
-		xmms_log_error ("cannot set channel count (%s)", snd_strerror (-err));
+		xmms_log_error ("Channels count (%i) not available for playbacks: %s", 
+						format->channels, snd_strerror (err));
 		return FALSE;
 	}
 	
@@ -470,16 +473,18 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_set_rate (data->pcm, data->hwparams,
 	                                  format->samplerate, 0);
 	if (err < 0) {
-		xmms_log_error ("cannot set sample rate (%s)\n", snd_strerror (-err));
+		xmms_log_error ("Rate %iHz not available for playback: %s", 
+						format->samplerate, snd_strerror (err));
 		return FALSE;
 	}
-
+	
 	tmp = requested_buffer_time;
 	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
 	                                              &requested_buffer_time, 
 	                                              NULL);
 	if (err < 0) {
-		xmms_log_error ("Buffer time <= 0 (%s)", snd_strerror (-err));  
+		xmms_log_error ("Unable to set buffer time %i for playback: %s", 
+						tmp, snd_strerror (err));
 		return FALSE;
 	}
 
@@ -489,7 +494,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
 	                                         &data->buffer_size);
 	if (err != 0) {
-		xmms_log_error ("unable to get buffer size (%s)", snd_strerror (-err));
+		xmms_log_error ("Unable to get buffer size for playback: %s", 
+						snd_strerror (err));
 		return FALSE;
 	}
 	
@@ -499,26 +505,23 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	                                              &requested_period_time, 
 	                                              NULL);
 	if (err < 0) {
-		xmms_log_error ("cannot set periods (%s)", snd_strerror (-err));
+		xmms_log_error ("Unable to set period time %i for playback: %s", 
+						tmp, snd_strerror (err));
 		return FALSE;
 	}
 
 	XMMS_DBG ("Period time requested: %dms, got: %dms",
 	          tmp / 1000, requested_period_time / 1000);
 
+
+	/* Sometimes the soundcard is just not ready for the new shit */
+	xmms_alsa_xrun_recover (data);
+	
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
 	if (err < 0) {
-		xmms_log_error ("cannot set hw parameters (%s), %d", 
-						snd_strerror (-err), snd_pcm_state (data->pcm));
-		return FALSE;
-	}
-
-	/* Prepare sound card for teh shit */
-	err = snd_pcm_prepare (data->pcm);
-	if (err < 0) {
-		xmms_log_error ("cannot prepare audio interface for use (%s)", 
-						snd_strerror (-err));
+		xmms_log_error ("Unable to set hw params for playback: %s",
+						snd_strerror (err));
 		return FALSE;
 	}
 
@@ -556,7 +559,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
-		xmms_log_error ("Failed to open empty mixer: %s", snd_strerror (-err));
+		xmms_log_error ("Failed to open empty mixer: %s", snd_strerror (err));
 		data->mixer = NULL;
 		return FALSE;
 	}
@@ -564,7 +567,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	err = snd_mixer_attach (data->mixer, dev);
 	if (err < 0) {
 		xmms_log_error ("Attaching to mixer %s failed: %s", dev, 
-						snd_strerror(-err));
+						snd_strerror(err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		return FALSE;
@@ -572,7 +575,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 
 	err = snd_mixer_selem_register (data->mixer, NULL, NULL);
 	if (err < 0) {
-		xmms_log_error ("Failed to register mixer: %s", snd_strerror (-err));
+		xmms_log_error ("Failed to register mixer: %s", snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		return FALSE;
@@ -580,7 +583,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 
 	err = snd_mixer_load (data->mixer);
 	if (err < 0) {
-		xmms_log_error ("Failed to load mixer: %s", snd_strerror (-err));
+		xmms_log_error ("Failed to load mixer: %s", snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		return FALSE;
@@ -687,13 +690,13 @@ xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 	/* Get rid of old cow if any */
 	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_RUNNING) {
 		err = snd_pcm_drain (data->pcm);
-		XMMS_DBG ("did we drain? --> %s", snd_strerror (-err));
+		XMMS_DBG ("did we drain? --> %s", snd_strerror (err));
 	}
 
 	/* Set new audio format*/
 	if (!xmms_alsa_set_hwparams (data, format)) {
 		xmms_log_error ("Could not set hwparams, consult your local "
-		                "guru for meditation courses");
+		                "guru for meditation courses.");
 		return FALSE;
 	}
 
@@ -768,8 +771,8 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 
 	err = snd_mixer_handle_events (data->mixer);
 	if (err != 0) {
-		xmms_log_error ("Handling of pending mixer events failed (%s)",
-						snd_strerror (-err));
+		xmms_log_error ("Handling of pending mixer events failed: %s",
+						snd_strerror (err));
 		return FALSE;
 	}
 
@@ -812,8 +815,8 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 		xmms_alsa_xrun_recover (data);
 		avail = snd_pcm_avail_update (data->pcm);
 		if (avail == -EPIPE) {
-			xmms_log_error ("Unable to get available frames in buffer (%s)", 
-					  snd_strerror (-avail));		
+			xmms_log_error ("Unable to get available frames in buffer: %s", 
+							snd_strerror (avail));
 			return 0;
 		}
 	}
@@ -850,7 +853,7 @@ xmms_alsa_flush (xmms_output_t *output)
 	}
 
 	if (err < 0) {
-		xmms_log_error ("Flush failed (%s)", snd_strerror (-err));
+		xmms_log_error ("Flush failed: %s", snd_strerror (err));
 	}
 }
 
@@ -858,8 +861,8 @@ xmms_alsa_flush (xmms_output_t *output)
 
 /**
  * XRUN recovery.
- * If stuff gets messy (audio buffer cross-run), xrun recovery will 
- * perform some healthy clean up.
+ * Checks if any buffer underrun has happened and performes the 
+ * necessary 'repairs'.
  *
  * @param data The private plugin data. 
  */
@@ -875,7 +878,8 @@ xmms_alsa_xrun_recover (xmms_alsa_data_t *data)
 	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN) {
 		err = snd_pcm_prepare (data->pcm);
 		if (err < 0) {
-			xmms_log_error ("xrun: prepare error, %s", snd_strerror (-err));
+			xmms_log_error ("Unable to recover from underrun, prepare failed: "
+							"%s", snd_strerror (err));
 		}
 	}
 }
