@@ -34,6 +34,10 @@ m3u = base_env.Copy()
 m3u.AddFlagsFromGroup("glib")
 m3u.XmmsPlugin('xmms_m3u', ['m3u/m3u.c'])
 
+pls = base_env.Copy()
+pls.AddFlagsFromGroup("glib")
+pls.XmmsPlugin('xmms_pls', ['pls/pls.c'])
+
 html = base_env.Copy()
 html.AddFlagsFromGroup("glib")
 html.XmmsPlugin('xmms_html', ['html/html.c'])
