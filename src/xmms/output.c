@@ -44,9 +44,11 @@ static gpointer xmms_output_thread (gpointer data);
 
 void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
 void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
+void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
 
 XMMS_METHOD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
+XMMS_METHOD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
 
 /*
  * Type definitions
@@ -371,6 +373,10 @@ xmms_output_new (xmms_plugin_t *plugin)
 	xmms_object_method_add (XMMS_OBJECT (output), 
 				XMMS_METHOD_STOP, 
 				XMMS_METHOD_FUNC (stop));
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_PAUSE, 
+				XMMS_METHOD_FUNC (pause));
+
 	
 	return output;
 }
@@ -421,9 +427,14 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 	xmms_output_lock (output);
 
 	if (output->type == XMMS_OUTPUT_TYPE_WR) {
-		output->running = TRUE;
-		xmms_object_ref (output); /* thread takes one ref */
-		output->thread = g_thread_create (xmms_output_thread, output, TRUE, NULL);
+		if (output->running) {
+			if (output->is_paused)
+				xmms_output_resume (output);
+		} else {
+			output->running = TRUE;
+			xmms_object_ref (output); /* thread takes one ref */
+			output->thread = g_thread_create (xmms_output_thread, output, TRUE, NULL);
+		}
 	} else {
 		xmms_output_status_method_t st;
 
@@ -446,7 +457,9 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 	xmms_output_lock (output);
 
 	if (output->type == XMMS_OUTPUT_TYPE_WR) {
+		XMMS_DBG ("STOP!");
 		output->is_paused = FALSE;
+		output->running = FALSE;
 		g_cond_signal (output->cond);
 	} else {
 		xmms_output_status_method_t st;
@@ -486,10 +499,11 @@ xmms_output_is_paused (xmms_output_t *output)
 }
 
 void
-xmms_output_pause (xmms_output_t *output)
+xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
 	xmms_output_lock (output);
+	XMMS_DBG ("pause!");
 	output->is_paused = TRUE;
 	xmms_output_unlock (output);
 }
@@ -498,10 +512,9 @@ void
 xmms_output_resume (xmms_output_t *output)
 {
 	g_return_if_fail (output);
-	xmms_output_lock (output);
+	XMMS_DBG ("resuming");
 	output->is_paused = FALSE;
 	g_cond_signal (output->cond);
-	xmms_output_unlock (output);
 }
 
 
@@ -539,6 +552,7 @@ xmms_output_thread (gpointer data)
 		}
 
 		if (output->is_paused || !output->decoder) {
+			XMMS_DBG ("output is waiting!");
 			g_cond_wait (output->cond, output->mutex);
 			continue;
 		}
@@ -581,10 +595,17 @@ xmms_output_thread (gpointer data)
 
 		if (xmms_decoder_iseos (output->decoder)) {
 			XMMS_DBG ("decoder is EOS!");
+			xmms_playlist_get_next_entry (output->playlist);
 			xmms_object_unref (output->decoder);
 			output->decoder = NULL;
 		}
 	}
+
+	if (output->decoder) {
+		xmms_object_unref (output->decoder);
+		output->decoder = NULL;
+	}
+
 	xmms_output_unlock (output);
 
 	xmms_output_close (output);

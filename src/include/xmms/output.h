@@ -78,7 +78,7 @@ void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
 gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right);
 
 void xmms_output_flush (xmms_output_t *output);
-void xmms_output_pause (xmms_output_t *output);
+void xmms_output_pause (xmms_output_t *output, xmms_error_t *error);
 void xmms_output_resume (xmms_output_t *output);
 gboolean xmms_output_is_paused (xmms_output_t *output);
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);

@@ -513,7 +513,7 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 	xmms_decoder_t *d;
 	const gchar *mime;
 
-	entry = xmms_playlist_get_next_entry (playlist);
+	entry = xmms_playlist_get_current_entry (playlist);
 
 	XMMS_DBG ("Starting up for %s", xmms_playlist_entry_url_get (entry));
 
