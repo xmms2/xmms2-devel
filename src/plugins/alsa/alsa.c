@@ -806,13 +806,8 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 				 && written_frames < (len / data->frame_size))) {
 			snd_pcm_wait (data->pcm, 100);
 		}
-		else if (written_frames == -EPIPE) {
+		else  {
 			xmms_alsa_xrun_recover (data);
-		}
-		else {
-			/* this will probably never happen */
-			xmms_log_error ("Unknown error occured, report to maintainer: (%s)",
-							snd_strerror (-written_frames));
 		}
 	}
 }

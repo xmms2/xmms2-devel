@@ -182,6 +182,8 @@ METHOD_ADD_HANDLER(playback_playtime);
 METHOD_ADD_HANDLER(playback_statistics);
 METHOD_ADD_HANDLER(playback_current_id);
 
+METHOD_ADD_HANDLER(configval_on_change);
+
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
 	VALUE o;
@@ -256,6 +258,42 @@ static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
 	return o;
 }
 
+static VALUE c_configval_get (VALUE self, VALUE key)
+{
+	VALUE o;
+	xmmsc_result_t *res;
+
+	GET_OBJ (self, RbXmmsClient, xmms);
+
+	Check_Type (key, T_STRING);
+
+	res = xmmsc_configval_get (xmms->real, StringValuePtr (key));
+
+	o = TO_XMMS_CLIENT_RESULT (self, res);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
+{
+	VALUE o;
+	xmmsc_result_t *res;
+
+	GET_OBJ (self, RbXmmsClient, xmms);
+
+	Check_Type (key, T_STRING);
+	Check_Type (val, T_STRING);
+
+	res = xmmsc_configval_set (xmms->real, StringValuePtr (key),
+	                           StringValuePtr (val));
+
+	o = TO_XMMS_CLIENT_RESULT (self, res);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
 void Init_XmmsClient (void)
 {
 	VALUE c;
@@ -291,6 +329,10 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playlist_list, 0);
 	METHOD_ADD (c, playlist_set_next, 2);
 	METHOD_ADD (c, playlist_get_mediainfo, 1);
+
+	METHOD_ADD (c, configval_get, 1);
+	METHOD_ADD (c, configval_set, 2);
+	METHOD_ADD (c, configval_on_change, 0);
 
 	rb_define_const (c, "PLAY",
 	                 INT2FIX (XMMSC_PLAYBACK_PLAY));

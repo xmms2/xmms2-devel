@@ -33,11 +33,38 @@ eq = base_env.Copy()
 eq.AddFlagsFromGroup("glib")
 eq.XmmsPlugin('xmms_eq', ['eq/eq.c'])
 
+diskwrite = base_env.Copy()
+diskwrite.AddFlagsFromGroup("glib")
+diskwrite.XmmsPlugin('xmms_diskwrite', ['diskwrite/diskwrite.c'])
+
+wave = base_env.Copy()
+wave.AddFlagsFromGroup("glib")
+wave.XmmsPlugin("xmms_wave", ["wave/wave.c"])
+
 if base_env.HasGroup("mad"):
 	mad = base_env.Copy()
 	mad.AddFlagsFromGroup("glib")
 	mad.AddFlagsFromGroup("mad")
 	mad.XmmsPlugin('xmms_mad', ['mad/mad.c', 'mad/id3.c', 'mad/xing.c'])
+
+if base_env.HasGroup("modplug"):
+	mad = base_env.Copy()
+	mad.AddFlagsFromGroup("glib")
+	mad.AddFlagsFromGroup("modplug")
+	mad.XmmsPlugin('xmms_modplug', ['modplug/modplug.c'])
+
+if base_env.HasGroup("speex") and base_env.HasGroup("ogg"):
+	speex = base_env.Copy()
+	speex.AddFlagsFromGroup("glib")
+	speex.AddFlagsFromGroup("speex")
+	speex.AddFlagsFromGroup("ogg")
+	speex.XmmsPlugin('xmms_speex', ['speex/speex.c'])
+
+if base_env.HasGroup("flac"):
+	flac = base_env.Copy()
+	flac.AddFlagsFromGroup("glib")
+	flac.AddFlagsFromGroup("flac")
+	flac.XmmsPlugin('xmms_flac', ['flac/flac.c'])
 
 if base_env.HasGroup("vorbis"):
 	vorbis = base_env.Copy()
@@ -64,6 +91,12 @@ if base_env.HasGroup("curl"):
 	curl_http.AddFlagsFromGroup("glib")
 	curl_http.AddFlagsFromGroup("curl")
 	curl_http.XmmsPlugin('xmms_curlhttp', ['curl/curl_http.c'])
+
+if base_env.HasGroup("samba"):
+	samba = base_env.Copy()
+	samba.AddFlagsFromGroup("glib")
+	samba.AddFlagsFromGroup("samba")
+	samba.XmmsPlugin('xmms_samba', ['samba/samba.c'])
 
 if base_env.HasGroup("alsa"):
 	alsa = base_env.Copy()

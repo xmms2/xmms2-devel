@@ -95,7 +95,7 @@ static VALUE c_wait (VALUE self)
 
 	xmmsc_result_wait (res->real);
 
-	return Qnil;
+	return self;
 }
 
 static VALUE c_restart (VALUE self)
@@ -107,7 +107,7 @@ static VALUE c_restart (VALUE self)
 	if ((res2 = xmmsc_result_restart (res->real)))
 		xmmsc_result_unref (res2);
 
-	return Qnil;
+	return self;
 }
 
 static VALUE c_int_get (VALUE self)

@@ -427,7 +427,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		len = xmms_ringbuf_size (transport->buffer);;
 	}
 
-	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);
+	xmms_ringbuf_wait_used (transport->buffer, 1, transport->mutex); 
 	ret = xmms_ringbuf_read (transport->buffer, buffer, len);
 
 	if (ret < len) {

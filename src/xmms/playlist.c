@@ -35,6 +35,7 @@
 #include "xmms/signal_xmms.h"
 #include "xmms/ipc.h"
 #include "xmms/mediainfo.h"
+#include "xmms/magic.h"
 
 
 /** @defgroup PlaylistClientMethods PlaylistClientMethods
@@ -70,7 +71,7 @@ struct xmms_playlist_St {
 	xmms_object_t object;
 	/** The current list first node. */
 	GList *list;
-	/** Next song that will be retured by xmms_playlist_get_next */
+	/** Next song that will be retured by xmms_playlist_advance */
 	GList *nextentry;
 
 	xmms_playlist_mode_t mode;
@@ -119,6 +120,18 @@ xmms_playlist_stats (xmms_playlist_t *playlist, GList *list)
 
 }
 
+/** Pointer on the current entry. */
+GList *
+xmms_playlist_current_entry(xmms_playlist_t *playlist)
+{
+	GList *ret;
+	if (playlist->nextentry) {
+		ret = playlist->nextentry->prev;
+	} else {
+		ret = g_list_last(playlist->list);
+	}
+	return ret;
+}
 
 /** Total number of entries in the playlist. */
 
@@ -150,16 +163,22 @@ static void
 xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 {
 	gint len, i, j;
-	GList *node, **ptrs;
+	GList *cur = NULL, *node, **ptrs;
 
 	g_return_if_fail (playlist);
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	len = xmms_playlist_entries_total (playlist);
-	if (!len) {
+	cur = xmms_playlist_current_entry(playlist);
+
+	if (len < 2) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
 		return;
+	}
+	if (cur) {
+		playlist->list = g_list_remove_link (playlist->list, cur);
+		len-=1;
 	}
 
 	ptrs = g_new (GList *, len);
@@ -182,7 +201,16 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 		ptrs[i + j] = ptrs[i];
 	}
 
-	playlist->list->prev = NULL;
+	if (cur) {
+		playlist->list->prev = cur;
+		cur->next = playlist->list;
+		cur->prev = NULL;
+		playlist->list = cur;
+		playlist->nextentry = cur->next;
+	} else {
+		playlist->list->prev = NULL;
+		playlist->nextentry = playlist->list;
+	}
 
 	g_free (ptrs);
 
@@ -214,9 +242,15 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 		XMMS_PLAYLIST_UNLOCK (playlist);
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to remove nonexistant playlist entry");
 		return FALSE;
-	}
+	} 
 	if (node == playlist->nextentry) {
 		playlist->nextentry = g_list_next (playlist->nextentry);
+	} else if (node == xmms_playlist_current_entry(playlist)) {
+		if (node == playlist->list) {
+			playlist->nextentry = playlist->list->next;
+		} else {
+			playlist->nextentry = playlist->list;
+		}
 	}
 	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
 	xmms_object_unref (node->data);
@@ -241,8 +275,7 @@ XMMS_CMD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, IN
 static gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err)
 {
-	xmms_playlist_entry_t *entry;
-	GList *node;
+	GList *cur, *node;
 	gint i;
 
 	g_return_val_if_fail (playlist, FALSE);
@@ -254,14 +287,13 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 	XMMS_PLAYLIST_LOCK (playlist);
 	
 	node = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER (id));
+	cur = xmms_playlist_current_entry(playlist);
 	
 	if (!node) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to move nonexistant playlist entry");
 		return FALSE;
 	}
-
-	entry = node->data;
 
 	if (steps > 0) {
 		GList *next=node->next;
@@ -295,6 +327,12 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 		}
 		g_list_free_1 (node);
 
+	}
+
+	if (cur) {
+		playlist->nextentry = cur->next;
+	} else {
+		playlist->nextentry = playlist->list;
 	}
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_MOVE, id, steps);
@@ -506,12 +544,12 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 
 }
 
-/** Get next entry.
+/** Advance in the playlist.
  *
  */
 
 xmms_playlist_entry_t *
-xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
+xmms_playlist_advance (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r = NULL;
 
@@ -521,15 +559,13 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	if (playlist->nextentry) {
 		r = playlist->nextentry->data;
-	}
-
-	if (!r) {
+	} else {
 		/* next entry is the first song again, but only return
 		 * that entry, if the user wants us to
 		 */
 		playlist->nextentry = playlist->list;
 
-		if (playlist->mode == XMMS_PLAYLIST_MODE_REPEAT_ALL) {
+		if (playlist->mode == XMMS_PLAYLIST_MODE_REPEAT_ALL && playlist->nextentry) {
 			r = playlist->nextentry->data;
 		}
 	}
@@ -549,7 +585,7 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 /** Set the nextentry pointer in the playlist.
  *
  *  This will set the pointer for the next entry to be
- *  returned by xmms_playlist_get_next. This function
+ *  returned by xmms_playlist_advance. This function
  *  will also wake xmms_playlist_wait
  */
 
@@ -644,7 +680,7 @@ xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gint32 moment, 
 	}
 
 	if (!next) {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "Trying to move to non exsisting entry");
+		xmms_error_set (error, XMMS_ERROR_NOENT, "Trying to move to non existing entry");
 	} else {
 		playlist->nextentry = next;
 	}
@@ -682,6 +718,37 @@ xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	return r;
+}
+
+XMMS_METHOD_DEFINE (save, xmms_playlist_save, xmms_playlist_t *, NONE, STRING, NONE);
+
+void
+xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *err)
+{
+	gboolean ret;
+	const gchar *mime;
+	xmms_playlist_plugin_t *plsplugin;
+
+	mime = xmms_magic_mime_from_file (filename);
+
+	if (!mime) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Could not determine format of output file");
+		return;
+	}
+
+	plsplugin = xmms_playlist_plugin_new (mime);
+
+	if (!plsplugin) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "Could not determine format of output file");
+		return;
+	}
+
+	ret = xmms_playlist_plugin_save (plsplugin, playlist, filename);
+	xmms_playlist_plugin_free (plsplugin);
+
+	if (!ret) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Something went wrong when writing");
+	}
 }
 
 
@@ -752,6 +819,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 				XMMS_IPC_CMD_SORT, 
 				XMMS_CMD_FUNC (sort));
+
+	xmms_object_method_add (XMMS_OBJECT (ret),
+				XMMS_METHOD_SAVE,
+				XMMS_METHOD_FUNC (save));
 
 	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
 

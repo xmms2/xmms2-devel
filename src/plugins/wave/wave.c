@@ -1,0 +1,374 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
+/**
+  * @file wave decoder.
+  * @url http://msdn.microsoft.com/library/en-us/dnnetcomp/html/WaveInOut.asp?frame=true#waveinout_topic_003
+  */
+
+
+#include "xmms/plugin.h"
+#include "xmms/decoder.h"
+#include "xmms/util.h"
+#include "xmms/output.h"
+#include "xmms/transport.h"
+#include "xmms/xmms.h"
+
+#include <glib.h>
+#include <string.h>
+
+typedef struct xmms_wave_data_St {
+	guint16 channels;
+	guint32 samplerate;
+	guint16 bits_per_sample;
+	guint bytes_total;
+	gboolean inited;
+} xmms_wave_data_t;
+
+/*
+ * Defines
+ */
+#define WAVE_HEADER_SIZE 44
+
+#define GET_16(buf, val) \
+	g_assert (sizeof (val) == 2); \
+	memcpy (&val, buf, 2); \
+	buf += 2; \
+	val = GUINT16_TO_LE (val);
+
+#define GET_32(buf, val) \
+	g_assert (sizeof (val) == 4); \
+	memcpy (&val, buf, 4); \
+	buf += 4; \
+	val = GUINT32_TO_LE (val);
+
+#define GET_STR(buf, str, len) \
+	strncpy (str, buf, len); \
+	str[len] = '\0'; \
+	buf += len;
+
+/*
+ * Function prototypes
+ */
+
+static gboolean xmms_wave_can_handle (const gchar *mimetype);
+static gboolean xmms_wave_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_wave_decode_block (xmms_decoder_t *decoder);
+static void xmms_wave_get_media_info (xmms_decoder_t *decoder);
+static void xmms_wave_destroy (xmms_decoder_t *decoder);
+static gboolean xmms_wave_init (xmms_decoder_t *decoder);
+static gboolean xmms_wave_seek (xmms_decoder_t *decoder, guint samples);
+
+static gboolean read_wave_header (xmms_wave_data_t *data, guint8 *buf);
+
+/*
+ * Plugin header
+ */
+
+xmms_plugin_t *
+xmms_plugin_get (void)
+{
+	xmms_plugin_t *plugin;
+
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "wave",
+	                          "Wave decoder " XMMS_VERSION,
+	                          "Wave decoder");
+
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "URL", "http://msdn.microsoft.com/"
+	                                     "library/en-us/dnnetcomp/html/"
+	                                     "WaveInOut.asp?frame=true"
+	                                     "#waveinout_topic_003");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_wave_can_handle);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_wave_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_wave_decode_block);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_wave_destroy);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_wave_init);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_wave_seek);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_wave_get_media_info);
+
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+
+	return plugin;
+}
+
+static gboolean
+xmms_wave_can_handle (const gchar *mimetype)
+{
+	g_return_val_if_fail (mimetype, FALSE);
+
+	if (!g_strcasecmp (mimetype, "audio/x-wav")) {
+		return TRUE;
+	}
+
+	if (!g_strcasecmp (mimetype, "audio/wave")) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static gboolean
+xmms_wave_new (xmms_decoder_t *decoder, const gchar *mimetype)
+{
+	xmms_wave_data_t *data;
+
+	data = g_new0 (xmms_wave_data_t, 1);
+	g_return_val_if_fail (data, FALSE);
+
+	xmms_decoder_private_data_set (decoder, data);
+
+	return TRUE;
+}
+
+static void
+xmms_wave_get_media_info (xmms_decoder_t *decoder)
+{
+	xmms_wave_data_t *data;
+	xmms_playlist_entry_t *entry;
+	gdouble playtime;
+	guint samples_total, bitrate;
+	gchar tmp[12];
+
+	g_return_if_fail (decoder);
+
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_if_fail (data);
+
+	xmms_wave_init (decoder);
+
+	entry = xmms_playlist_entry_new (NULL);
+
+	samples_total = data->bytes_total / (data->bits_per_sample / 8);
+	playtime = (gdouble) samples_total / data->samplerate;
+
+	g_snprintf (tmp, sizeof (tmp), "%i", (gint) playtime * 1000);
+	xmms_playlist_entry_property_set (entry,
+	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION,
+	                                  tmp);
+
+	bitrate = data->bits_per_sample * data->samplerate;
+	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate / 1000);
+	xmms_playlist_entry_property_set (entry,
+	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE,
+	                                  tmp);
+
+	xmms_decoder_samplerate_set (decoder, data->samplerate);
+
+	xmms_decoder_entry_mediainfo_set (decoder, entry);
+	xmms_object_unref (entry);
+}
+
+static gboolean
+xmms_wave_init (xmms_decoder_t *decoder)
+{
+	xmms_transport_t *transport;
+	xmms_wave_data_t *data;
+	guint8 hdr[WAVE_HEADER_SIZE];
+	gint read;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_val_if_fail (data, FALSE);
+
+	if (data->inited) {
+		return TRUE;
+	}
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
+	read = xmms_transport_read (transport, hdr, sizeof (hdr));
+	if (read != sizeof (hdr)) {
+		XMMS_DBG ("Cannot read Wave header");
+		return FALSE;
+	}
+
+	if (!read_wave_header (data, hdr)) {
+		XMMS_DBG ("Not a valid Wave stream");
+		return FALSE;
+	}
+
+	xmms_wave_get_media_info (decoder);
+
+	data->inited = TRUE;
+
+	return TRUE;
+}
+
+static gboolean
+xmms_wave_decode_block (xmms_decoder_t *decoder)
+{
+	xmms_transport_t *transport;
+	xmms_wave_data_t *data;
+	gint16 sbuf[2048], mbuf[1024];
+	gint ret, i, j;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_val_if_fail (data, FALSE);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
+	if (data->channels == 1) {
+		ret = xmms_transport_read (transport,
+		                           (gchar *) mbuf, sizeof (mbuf));
+	} else {
+		ret = xmms_transport_read (transport,
+		                           (gchar *) sbuf, sizeof (sbuf));
+	}
+
+	if (ret <= 0) {
+		return FALSE;
+	}
+
+	if (data->channels == 1) {
+		for (i = 0, j = 0; i < (ret / 2); i++) {
+			sbuf[j++] = mbuf[i];
+			sbuf[j++] = mbuf[i];
+		}
+
+		ret *= 2; /* we have doubled every sample now */
+	}
+
+	xmms_decoder_write (decoder, (gchar *) sbuf, ret);
+
+	return TRUE;
+}
+
+static gboolean
+xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
+{
+	xmms_transport_t *transport;
+	xmms_wave_data_t *data;
+	guint offset = WAVE_HEADER_SIZE;
+	gint ret;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_val_if_fail (data, FALSE);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
+	offset += samples * (data->bits_per_sample / 8);
+	if (offset > data->bytes_total) {
+		XMMS_DBG ("Trying to seek past end of stream");
+
+		return FALSE;
+	}
+
+	ret = xmms_transport_seek (transport, offset,
+	                           XMMS_TRANSPORT_SEEK_SET);
+
+	return ret != -1;
+}
+
+static void
+xmms_wave_destroy (xmms_decoder_t *decoder)
+{
+	g_return_if_fail (decoder);
+
+	g_free (xmms_decoder_private_data_get (decoder));
+}
+
+static gboolean
+read_wave_header (xmms_wave_data_t *data, guint8 *buf)
+{
+	gchar stmp[5];
+	guint32 tmp32, data_size;
+	guint16 tmp16;
+
+	GET_STR (buf, stmp, 4);
+	if (strcmp (stmp, "RIFF")) {
+		XMMS_DBG ("No RIFF data");
+		return FALSE;
+	}
+
+	GET_32 (buf, data_size);
+	data_size += 8;
+
+	GET_STR (buf, stmp, 4);
+	if (strcmp (stmp, "WAVE")) {
+		XMMS_DBG ("No Wave data");
+		return FALSE;
+	}
+
+	GET_STR (buf, stmp, 4);
+	if (strcmp (stmp, "fmt ")) {
+		XMMS_DBG ("Format chunk missing");
+		return FALSE;
+	}
+
+	GET_32 (buf, tmp32);
+	if (tmp32 != 16) {
+		XMMS_DBG ("Invalid format chunk length");
+		return FALSE;
+	}
+
+	GET_16 (buf, tmp16); /* format tag */
+	if (tmp16 != 1) {
+		XMMS_DBG ("Unhandled format tag: %i", tmp16);
+		return FALSE;
+	}
+
+	GET_16 (buf, data->channels);
+	if (data->channels > 2) {
+		XMMS_DBG ("Unhandled number of channels: %i", data->channels);
+		return FALSE;
+	}
+
+	GET_32 (buf, data->samplerate);
+	if (data->samplerate != 8000 && data->samplerate != 11025 &&
+	    data->samplerate != 22050 && data->samplerate != 44100) {
+		XMMS_DBG ("Invalid samplerate: %i", data->samplerate);
+		return FALSE;
+	}
+
+	GET_32 (buf, tmp32);
+	GET_16 (buf, tmp16);
+
+	GET_16 (buf, data->bits_per_sample);
+	if (data->bits_per_sample != 16) {
+		XMMS_DBG ("Unhandled bits per sample: %i",
+		          data->bits_per_sample);
+		return FALSE;
+	}
+
+	GET_STR (buf, stmp, 4);
+	if (strcmp (stmp, "data")) {
+		XMMS_DBG ("Data chunk missing");
+		return FALSE;
+	}
+
+	GET_32 (buf, data->bytes_total);
+	if (data->bytes_total + WAVE_HEADER_SIZE != data_size) {
+		XMMS_DBG ("Data chunk size doesn't match RIFF chunk size");
+		/* don't return FALSE here, we try to read it anyway */
+	}
+
+	return TRUE;
+}

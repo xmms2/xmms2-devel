@@ -102,6 +102,7 @@ unsigned int xmmscs_playback_current_id (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
 xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
+xmmsc_result_t *xmmsc_configval_on_change (xmmsc_connection_t *c);
 
 /* Syncronous commands */
 x_list_t *xmmscs_configval_list (xmmsc_connection_t *c);
