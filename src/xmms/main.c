@@ -113,6 +113,11 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 static void
 quit (xmms_object_t *object, xmms_error_t *error) 
 {
+	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
+
+	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
+	xmms_config_save (filename);
+
 	exit (EXIT_SUCCESS);
 }
 
