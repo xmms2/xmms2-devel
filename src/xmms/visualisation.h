@@ -14,4 +14,8 @@ void xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len);
 void xmms_visualisation_destroy (xmms_visualisation_t *vis);
 void xmms_visualisation_samplerate_set (xmms_visualisation_t *vis, guint rate);
 
+void xmms_visualisation_users_inc ();
+void xmms_visualisation_users_dec ();
+
+
 #endif

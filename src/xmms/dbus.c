@@ -107,11 +107,14 @@ static void send_visualisation_spectrum (xmms_object_t *object,
 					 gpointer userdata);
 
 
+static void register_visualisation_spectrum (gboolean state);
+
 typedef void (*xmms_dbus_object_callback_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
 
 typedef gboolean (*xmms_dbus_callback_with_dbusmsg_t) (DBusConnection *conn, DBusMessage *msg);
 typedef gboolean (*xmms_dbus_callback_with_noarg_t) ();
 typedef gboolean (*xmms_dbus_callback_with_intarg_t) (guint arg);
+typedef void (*xmms_dbus_callback_on_register_t) (gboolean state);
 
 typedef struct xmms_dbus_signal_mask_map_St {
 	/** The dbus signalname, ie org.xmms.playback.play */
@@ -127,6 +130,9 @@ typedef struct xmms_dbus_signal_mask_map_St {
 	xmms_dbus_callback_with_dbusmsg_t callback_with_dbusmsg;
 	xmms_dbus_callback_with_noarg_t callback_with_noarg;
 	xmms_dbus_callback_with_intarg_t callback_with_intarg;
+
+	xmms_dbus_callback_on_register_t register_callback;
+
 } xmms_dbus_signal_mask_map_t;
 
 static xmms_dbus_signal_mask_map_t mask_map [] = {
@@ -204,7 +210,7 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 		NULL, handle_core_signal_unregister, NULL, NULL },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
-		send_visualisation_spectrum, NULL, NULL, NULL },
+		send_visualisation_spectrum, NULL, NULL, NULL, register_visualisation_spectrum},
 	{ XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 	  XMMS_SIGNAL_MASK_CONFIG_CHANGE,
 		NULL, handle_config_change, NULL, NULL },
@@ -380,6 +386,19 @@ send_playback_playtime (xmms_object_t *object,
 
 }
 
+
+static void
+register_visualisation_spectrum (gboolean state)
+{
+	if (state) {
+		XMMS_DBG ("someone wants vis-data!");
+		xmms_visualisation_users_inc ();
+	} else {
+		xmms_visualisation_users_dec ();
+		XMMS_DBG ("someone doesn't want vis-data anymore!");
+	}
+}
+
 static void
 send_visualisation_spectrum (xmms_object_t *object,
 		gconstpointer data,
@@ -471,9 +490,15 @@ handle_core_signal_register (DBusConnection *conn, DBusMessage *msg)
 		if (map) {
 			xmms_dbus_connection_t *c;
 			g_mutex_lock(connectionslock);
+
 			c = get_conn (conn);
-			if (c)
+			if (c) {
+				if (!(c->signals & map->mask) && map->register_callback) {
+					map->register_callback (TRUE);
+				}
 				c->signals |= map->mask;
+			}
+
 			g_mutex_unlock(connectionslock);
 		}
 	}
@@ -513,9 +538,15 @@ handle_core_signal_unregister (DBusConnection *conn, DBusMessage *msg)
 		if (map) {
 			xmms_dbus_connection_t *c;
 			g_mutex_lock(connectionslock);
+
 			c = get_conn (conn);
-			if (c)
+			if (c) {
+				if ((c->signals & map->mask) && map->register_callback) {
+					map->register_callback (FALSE);
+				}
 				c->signals &= ~map->mask;
+			}
+
 			g_mutex_unlock(connectionslock);
 
 		}
@@ -764,6 +795,12 @@ handle_core_disconnect (DBusConnection *conn, DBusMessage *msg)
         g_mutex_lock(connectionslock);
 	c = get_conn (conn);
         if (c) {
+		gint i = 0;
+		while (mask_map[i].dbus_name) {
+			if ((mask_map[i].mask & c->signals) && mask_map[i].register_callback)
+				mask_map[i].register_callback (FALSE);
+			i++;
+		}
                 connections = g_slist_remove (connections, c);
                 g_free (c);
         }
