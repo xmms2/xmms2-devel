@@ -4,7 +4,7 @@
 
 package=xmms2
 
-SCONSFLAGS=PREFIX=/usr SYSCONFDIR=/etc/xmms CFLAGS="-O2 -Wall -g"
+SCONSFLAGS=MANDIR=/usr/share/man/man1 PREFIX=/usr SYSCONFDIR=/etc/xmms CFLAGS="-O2 -Wall -g"
 
 build:
 	$(checkdir)
@@ -35,7 +35,7 @@ binary-arch: checkroot build
 	find debian/tmp -name '.sconsign' |xargs rm
 # Must have debmake installed for this to work. Otherwise please copy
 # /usr/bin/debstd into the debian directory and change debstd to debian/debstd
-	debstd -u ChangeLog NEWS README 
+	debstd -m -u ChangeLog NEWS README 
 	dh_installdebconf
 #	dh_gencontrol
 	dpkg-gencontrol -isp -pxmms2-core
