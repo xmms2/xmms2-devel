@@ -61,15 +61,20 @@ print_mediainfo (GHashTable *entry)
 	if (tmp) {
 		printf ("Channel: %s\n", conv(tmp));
 		printf ("Genre:   %s\n", conv ((gchar *)g_hash_table_lookup (entry, "genre")));
-		printf ("Bitrate: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "bitrate")));
-	} else {
-		printf ("Artist:  %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "artist")));
-		printf ("Album: %-30s\n", conv ((gchar *)g_hash_table_lookup (entry, "album")));
-		printf ("Title:   %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "title")));
-		printf ("Year: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "date")));
-		printf ("Bitrate: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "bitrate")));
 	}
+	printf ("Artist:  %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "artist")));
+	printf ("Album: %-30s\n", conv ((gchar *)g_hash_table_lookup (entry, "album")));
+	printf ("Title:   %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "title")));
+	printf ("Year: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "date")));
+	printf ("Bitrate: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "bitrate")));
 
+}
+
+void
+handle_playlist_mediainfo_id (void *userdata, void *arg)
+{
+	printf ("Updated mediainfo on %d\n", GPOINTER_TO_UINT (arg));
+	xmmsc_playlist_get_mediainfo (userdata, GPOINTER_TO_UINT (arg));
 }
 
 void
@@ -291,6 +296,7 @@ status_main(xmmsc_connection_t *conn)
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_STOP, handle_playback_stopped, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, handle_playlist_mediainfo_id, conn);
 
 	xmmsc_playback_current_id (conn);
 
