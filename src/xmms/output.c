@@ -640,7 +640,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		}
 
 		output->playing_entry = g_queue_pop_head (output->entry_list);
-		output->played_time = 0;
+		output->played = 0;
 
 		xmms_object_emit_f (XMMS_OBJECT (output),
 		    		XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
@@ -805,7 +805,7 @@ xmms_output_thread (gpointer data)
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (XMMS_OBJECT (output->decoder));
 		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
-		output->played_time = 0;
+		output->played = 0;
 		output->decoder = NULL;
 	}
 
