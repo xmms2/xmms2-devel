@@ -44,7 +44,6 @@ struct xmms_mediainfo_thread_St {
 	gboolean running;
 	GQueue *queue;
 	xmms_playlist_t *playlist;
-	/* 45574 */
 };
 
 static gpointer xmms_mediainfo_thread_thread (gpointer data);

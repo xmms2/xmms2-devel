@@ -372,7 +372,7 @@ main (int argc, char **argv)
 
 
 	XMMS_CALLBACK_SET (connection, xmmsc_playback_playtime, handle_playtime, NULL);
-	XMMS_CALLBACK_SET (connection, xmmsc_playlist_current_id, handle_mediainfo, NULL);
+	XMMS_CALLBACK_SET (connection, xmmsc_playback_current_id, handle_mediainfo, NULL);
 	XMMS_CALLBACK_SET (connection, xmmsc_playback_status, handle_status, NULL);
 
 	g_timeout_add (20, render, (gpointer)screen);
