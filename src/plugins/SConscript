@@ -31,7 +31,8 @@ if base_env.HasGroup("vorbis"):
 	vorbis = base_env.Copy()
 	vorbis.AddFlagsFromGroup("glib")
 	vorbis.AddFlagsFromGroup("vorbis")
-	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbis.c'])
+	vorbis.AddFlagsFromGroup("vorbisfile")
+	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbisfile.c'])
 
 if base_env.HasGroup("vorbis") and base_env.HasGroup("shout") and base_env.HasGroup("vorbisenc"):
 	ices = base_env.Copy()

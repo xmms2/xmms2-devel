@@ -30,6 +30,7 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 	base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
 	base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
+	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 
 	##
