@@ -1,6 +1,6 @@
 AC_INIT(src/xmms/main.c)
 AC_CONFIG_AUX_DIR(acmacros)
-AM_INIT_AUTOMAKE(xmms, 1.9.2)
+AM_INIT_AUTOMAKE(xmms, 1.9.3)
 
 ACLOCAL_AMFLAGS="-I acmacros"
 AM_CONFIG_HEADER(config.h)

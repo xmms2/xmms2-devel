@@ -13,11 +13,32 @@ Description: XMMS2 - core package - private beta - DO NOT SPREAD!
  This package just contains the daemon that loads plugins and allows clients to connect.
  DO NOT SPREAD!
 
+Package: libxmms2client
+Architecture: any
+Depends: debconf (>= 0.2.78), ${shlibs:Depends}
+Description: XMMS2 - clientlibrary - private beta - DO NOT SPREAD!
+ This package contains the clientlib.
+ DO NOT SPREAD!
+
+Package: libxmms2client-dev
+Architecture: any
+Depends: debconf (>= 0.2.78), libxmms2client, ${shlibs:Depends}
+Description: XMMS2 - clientlibrary devel files - private beta - DO NOT SPREAD!
+ This package contains the headers for libxmms2client.
+ DO NOT SPREAD!
+
 Package: xmms2-client-cli
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
 Description: XMMS2 - cli client - private beta - DO NOT SPREAD!
  This package contains a simple text-ui for xmms2
+ DO NOT SPREAD!
+
+Package: xmms2-client-gtk2
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
+Description: XMMS2 - gtk2 client - private beta - DO NOT SPREAD!
+ This package contains a simple gtk2-ui for xmms2
  DO NOT SPREAD!
 
 Package: xmms2-decoder-sid
