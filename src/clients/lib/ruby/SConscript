@@ -5,20 +5,17 @@ if base_env.HasGroup ("ruby") :
 	                 "rb_xmmsclient.c "
 	                 "rb_result.c")
 
-	env = base_env.Copy (CPPPATH = ['../xmmsclient'],
-	                     LIBPATH = ['../xmmsclient'],
-	                     LIBS = ['xmmsclient'])
+	env = base_env.Copy (CPPPATH = ['#src/include'],
+	                     LIBPATH = ['#builddir/clients/lib/xmmsclient',
+	                                '#builddir/clients/lib/xmmsclient-glib'],
+	                     LIBS = ['xmmsclient', 'xmmsclient-glib'])
 
 	env.AddFlagsFromGroup ("ruby")
 	env.AddFlagsFromGroup ("glib")
-	env['CPPPATH'].append ("../xmmsclient-glib")
-	env['LIBPATH'].append ("../xmmsclient-glib")
-	env['LIBS'].append ("-lxmmsclient-glib")
 
 	if env.HasGroup ("ecore") :
 		env.AddFlagsFromGroup ("ecore")
-		env['CPPPATH'].append ("../xmmsclient-ecore")
-		env['LIBPATH'].append ("../xmmsclient-ecore")
-		env['LIBS'].append ("-lxmmsclient-ecore")
+		env['LIBPATH'].append ("#builddir/clients/lib/xmmsclient-ecore")
+		env['LIBS'].append ("xmmsclient-ecore")
 
 	env.XmmsRuby ('xmmsclient', sources)
