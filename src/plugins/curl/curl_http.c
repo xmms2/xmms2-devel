@@ -265,8 +265,8 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 				tmp2 = g_convert (tmp, strlen (tmp), "UTF-8", "ISO-8859-1",
 				                  &r, &w, NULL);
 
-				xmms_transport_mediainfo_property_set (transport,
-						XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp2);
+				xmms_medialib_entry_property_set (xmms_transport_medialib_entry_get (transport),
+								  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp2);
 				xmms_medialib_entry_send_update (data->pl_entry);
 				g_free (tmp2);
 			}
@@ -385,6 +385,7 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	gchar *header;
 	gchar *tmp;
 	gint r,w;
+	xmms_medialib_entry_t entry;
 
 	g_return_val_if_fail (transport, -1);
 
@@ -392,6 +393,8 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	g_return_val_if_fail (data, -1);
 
 	header = g_strndup (ptr, nmemb - 2);
+
+	entry = xmms_transport_medialib_entry_get (transport);
 
 	if (!data->first_header) {
 		data->first_header = TRUE;
@@ -422,13 +425,13 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		XMMS_DBG ("setting metaint to %d", data->meta_offset);
 	} else if (g_strncasecmp (header, "icy-name:", 9) == 0) {
 		tmp = g_convert (header+9, strlen (header+9), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-		xmms_transport_mediainfo_property_set (transport, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, tmp);
 		g_free (tmp);
 	} else if (g_strncasecmp (header, "icy-br:", 7) == 0) {
-		xmms_transport_mediainfo_property_set (transport, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header+7);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header+7);
 	} else if (g_strncasecmp (header, "icy-genre:", 10) == 0) {
 		tmp = g_convert (header+10, strlen (header+10), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-		xmms_transport_mediainfo_property_set (transport, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
 	}
 
@@ -438,7 +441,6 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	}
 
 	xmms_medialib_entry_send_update (data->pl_entry);
-/*	xmms_transport_entry_mediainfo_set (transport, data->pl_entry);*/
 
 	g_free (header);
 
