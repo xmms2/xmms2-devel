@@ -294,6 +294,21 @@ cdef class XMMSResult :
 		else :
 			raise ValueError
 
+	def GetPlaylistChange (self) :
+		"""
+		@return: a tuple with (changeid, id, argument)
+		"""
+		cdef unsigned int change
+		cdef unsigned int id
+		cdef unsigned int arg
+
+		self._check ()
+		if xmmsc_result_get_playlist_change (self.res, &change, &id, &arg) :
+			return (change, id, arg)
+		else :
+			raise ValueError
+
+
 	def Restart (self) :
 		cdef XMMSResult r
 		r = self
@@ -360,7 +375,15 @@ cdef class XMMS :
 		while True :
 			(i, o, e) = select ([fd], [], [])
 			xmmsc_ipc_io_in_callback (self.conn.ipc)
+
+	def inIO (self) :
+		xmmsc_ipc_io_in_callback (self.conn.ipc)
 		
+	def GetFD (self) :
+		"""
+		Return the fd of the server communication to the caller
+		"""
+		return xmmsc_ipc_fd_get (self.conn.ipc)
 
 	def Connect (self, path = None) :
 		"""
