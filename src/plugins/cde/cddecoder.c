@@ -31,8 +31,6 @@
 #include "cdae.h"
 
 
-#warning "CONVERT TO SAMPLE_T"
-
 /*
  * Function prototypes
  */
@@ -102,8 +100,6 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	xmms_decoder_samplerate_set (decoder, 44100);
-
 	transport = xmms_decoder_transport_get (decoder);
 	
 	data = xmms_transport_private_data_get (transport);
@@ -151,7 +147,9 @@ xmms_cdae_new (xmms_decoder_t *decoder, const gchar *mimetype)
 static gboolean
 xmms_cdae_init (xmms_decoder_t *decoder)
 {
-	xmms_decoder_samplerate_set (decoder, 44100);
+	//xmms_decoder_samplerate_set (decoder, 44100);
+	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
+	xmms_decoder_format_finish (decoder);
 	return TRUE;
 }
 
