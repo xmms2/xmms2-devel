@@ -5,7 +5,7 @@
 #include "xmms/util.h"
 #include "xmms/magic.h"
 #include "xmms/ringbuf.h"
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,7 +44,7 @@ typedef struct {
 
 	xmms_error_t status;
 
-	xmms_playlist_entry_t *pl_entry;
+	xmms_medialib_entry_t pl_entry;
 } xmms_curl_data_t;
 
 /*
@@ -138,7 +138,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	data->ringbuf = xmms_ringbuf_new (bufsize);
 	data->mutex = g_mutex_new ();
-	data->pl_entry = xmms_playlist_entry_new (g_strdup (url));
+	data->pl_entry = xmms_transport_medialib_entry_get (transport);
 
 	/* Set up easy handle */
 
@@ -266,8 +266,8 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 				                  &r, &w, NULL);
 
 				xmms_transport_mediainfo_property_set (transport,
-						XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp2);
-				xmms_transport_entry_mediainfo_set (transport, data->pl_entry);
+						XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp2);
+				xmms_medialib_entry_send_update (data->pl_entry);
 				g_free (tmp2);
 			}
 		}
@@ -346,8 +346,6 @@ xmms_curl_close (xmms_transport_t *transport)
 	curl_slist_free_all (data->http_aliases);
 	curl_slist_free_all (data->http_headers);
 
-	xmms_object_unref (data->pl_entry);
-
 	g_free (data->mime);
 	g_free (data);
 
@@ -424,13 +422,13 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		XMMS_DBG ("setting metaint to %d", data->meta_offset);
 	} else if (g_strncasecmp (header, "icy-name:", 9) == 0) {
 		tmp = g_convert (header+9, strlen (header+9), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-		xmms_transport_mediainfo_property_set (transport, XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL, tmp);
+		xmms_transport_mediainfo_property_set (transport, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, tmp);
 		g_free (tmp);
 	} else if (g_strncasecmp (header, "icy-br:", 7) == 0) {
-		xmms_transport_mediainfo_property_set (transport, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, header+7);
+		xmms_transport_mediainfo_property_set (transport, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header+7);
 	} else if (g_strncasecmp (header, "icy-genre:", 10) == 0) {
 		tmp = g_convert (header+10, strlen (header+10), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-		xmms_transport_mediainfo_property_set (transport, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, tmp);
+		xmms_transport_mediainfo_property_set (transport, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
 	}
 
@@ -439,6 +437,7 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		xmms_transport_mimetype_set (transport, data->mime);
 	}
 
+	xmms_medialib_entry_send_update (data->pl_entry);
 /*	xmms_transport_entry_mediainfo_set (transport, data->pl_entry);*/
 
 	g_free (header);

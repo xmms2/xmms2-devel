@@ -319,7 +319,7 @@ static void
 xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry *entry;
 	gint current, num_comments;
 	gchar tmp[20];
 
@@ -345,7 +345,7 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 		length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
 
 		val = g_strndup (s[1], length);
-		xmms_playlist_entry_property_set (entry, s[0], val);
+		xmms_medialib_entry_property_set (entry, s[0], val);
 		XMMS_DBG ("Setting %s to %s", s[0], val);
 		g_free (val);
 
@@ -353,13 +353,13 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 	}
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->bits_per_sample * data->sample_rate);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->total_samples / data->sample_rate * 1000);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
 
 	g_snprintf (tmp, sizeof (tmp), "%d", data->sample_rate);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, tmp);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, tmp);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_object_unref (entry);

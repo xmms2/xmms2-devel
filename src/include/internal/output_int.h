@@ -37,6 +37,6 @@ void xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt);
 
 void xmms_output_playlist_set (xmms_output_t *output, xmms_playlist_t *playlist);
 guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
-xmms_playlist_entry_t *xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *err);
+xmms_medialib_entry_t xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *err);
 
 #endif

@@ -147,7 +147,7 @@ xmms_sid_get_media_info (xmms_decoder_t *decoder)
 	char artist[32];
 	char title[32];
 	gint err;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry *entry;
 	
 	entry = xmms_playlist_entry_new (NULL);
 
@@ -156,10 +156,10 @@ xmms_sid_get_media_info (xmms_decoder_t *decoder)
 
 	err = sidplay_wrapper_songinfo (data->wrapper, artist, title);
 	if (err > 0) {
-		xmms_playlist_entry_property_set (entry, 
-				XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
-		xmms_playlist_entry_property_set (entry, 
-				XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, artist);
+		xmms_medialib_entry_property_set (entry, 
+				XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
+		xmms_medialib_entry_property_set (entry, 
+				XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, artist);
 		xmms_decoder_entry_mediainfo_set (decoder,entry);
 	}
 }

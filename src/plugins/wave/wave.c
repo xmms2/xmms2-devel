@@ -144,7 +144,7 @@ static void
 xmms_wave_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_wave_data_t *data;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 	gdouble playtime;
 	guint samples_total, bitrate;
 	gchar tmp[12];
@@ -156,24 +156,23 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 
 	xmms_wave_init (decoder);
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	samples_total = data->bytes_total / (data->bits_per_sample / 8);
 	playtime = (gdouble) samples_total / data->samplerate / data->channels;
 
 	g_snprintf (tmp, sizeof (tmp), "%i", (gint) playtime * 1000);
-	xmms_playlist_entry_property_set (entry,
-	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION,
+	xmms_medialib_entry_property_set (entry,
+	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 	                                  tmp);
 
 	bitrate = data->bits_per_sample * data->samplerate / data->channels;
 	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate / 1000);
-	xmms_playlist_entry_property_set (entry,
-	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE,
+	xmms_medialib_entry_property_set (entry,
+	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                                  tmp);
 
-	xmms_decoder_entry_mediainfo_set (decoder, entry);
-	xmms_object_unref (entry);
+	xmms_medialib_entry_send_update (entry);
 }
 
 static gboolean

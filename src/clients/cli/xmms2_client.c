@@ -499,7 +499,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 
 		for (cnt = 2; cnt < argc; cnt++) {
 			id = strtoul (argv[cnt], (char**) NULL, 10);
-			entry = xmmscs_playlist_get_mediainfo (conn, id);
+			entry = xmmscs_medialib_get_info (conn, id);
 
 			if (entry != NULL) {
 				x_hash_foreach (entry, print_entry, NULL);
@@ -509,7 +509,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 
 	} else {
 		id = xmmscs_playback_current_id (conn);
-		entry = xmmscs_playlist_get_mediainfo (conn, id);
+		entry = xmmscs_medialib_get_info (conn, id);
 
 		if (entry) {
 			x_hash_foreach (entry, print_entry, NULL);
@@ -527,6 +527,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	GError *err = NULL;
 	gulong total_playtime = 0;
 	int id;
+	guint pos = 0;
 	gsize r, w;
 
 	list = xmmscs_playlist_list (conn);
@@ -544,8 +545,8 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		unsigned int i = XPOINTER_TO_UINT (l->data);
 
 		g_clear_error (&err);
-		
-		tab = xmmscs_playlist_get_mediainfo (conn, i);
+
+		tab = xmmscs_medialib_get_info (conn, i);
 
 		playtime = x_hash_lookup (tab, "duration");
 		if (playtime) {
@@ -581,10 +582,12 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
 
 		if (id == i) {
-			print_info ("->[%d] %s", i, conv);
+			print_info ("->[%d/%d] %s", pos, i, conv);
 		} else {
-			print_info ("  [%d] %s", i, conv);
+			print_info ("  [%d/%d] %s", pos, i, conv);
 		}
+
+		pos ++ ;
 
 		g_free (conv);
 
@@ -683,7 +686,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 	
 	id = xmmscs_playback_current_id (conn);
-	lista = xmmscs_playlist_get_mediainfo (conn, id);
+	lista = xmmscs_medialib_get_info (conn, id);
 	duration = atoi (x_hash_lookup (lista, "duration"));
 	cur_playtime = xmmscs_playback_playtime (conn);
 	x_hash_destroy (lista);
@@ -926,7 +929,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 	gchar *tmp;
 	gint mid;
 
-	hash = xmmscs_playlist_get_mediainfo (c, id);
+	hash = xmmscs_medialib_get_info (c, id);
 
 	if (!hash) {
 		printf ("no mediainfo!\n");
@@ -990,7 +993,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
-	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playlist_entry_changed, handle_mediainfo_update, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
 
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_ipc_setup_with_gmain (conn);

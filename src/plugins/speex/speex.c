@@ -268,7 +268,7 @@ xmms_speex_destroy (xmms_decoder_t *decoder)
 static void
 xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 {
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry *entry;
 	xmms_speex_data_t *data;
 	gchar tmp[20];
 
@@ -283,13 +283,13 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 	entry = xmms_playlist_entry_new (NULL);
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->speexheader->rate);
-	xmms_playlist_entry_property_set (entry,
-	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE,
+	xmms_medialib_entry_property_set (entry,
+	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
 	                                  tmp);
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->speexheader->bitrate);
-	xmms_playlist_entry_property_set (entry,
-	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE,
+	xmms_medialib_entry_property_set (entry,
+	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                                  tmp);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);

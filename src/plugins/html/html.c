@@ -20,7 +20,7 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/playlist.h"
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 #include "xmms/plsplugins.h"
 #include "xmms/util.h"
 #include "xmms/xmms.h"
@@ -182,7 +182,7 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 	for (cnt = 0; tags[cnt] != NULL; cnt++) {
 		gchar *url, *full, *enc;
-		xmms_playlist_entry_t *entry = NULL;
+		xmms_medialib_entry_t entry;
 
 		url = parse_tag (tags[cnt], plsurl);
 		if (!url) {
@@ -197,14 +197,12 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 		full = build_url (plsurl, url);
 
 		enc = xmms_util_encode_path (full);
-		entry = xmms_playlist_entry_new (enc);
-		XMMS_DBG ("Adding %s", xmms_playlist_entry_url_get (entry));
+		entry = xmms_medialib_entry_new (enc);
 		xmms_playlist_add (playlist, entry);
 
 		g_free (enc);
 		g_free (url);
 		g_free (full);
-		xmms_object_unref (entry);
 	}
 
 	g_free (plsurl);
@@ -242,17 +240,15 @@ xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
 
 	/* get the playlists total playtime */
 	for (l = list; l; l = l->next) {
-		xmms_playlist_entry_t *entry;
+		xmms_medialib_entry_t entry;
 
 		num_entries++;
 
-		entry = xmms_playlist_get_byid (playlist,
-		                                GPOINTER_TO_UINT (l->data));
+		entry = GPOINTER_TO_UINT (l->data);
 
-		total_len += xmms_playlist_entry_property_get_int (entry,
-			XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
+		total_len += xmms_medialib_entry_property_get_int (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
-		xmms_object_unref (entry);
 	}
 
 	fprintf (fp, html_header, num_entries,
@@ -261,18 +257,17 @@ xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
 
 	while (list) {
 		gchar buf[256], *artist, *title;
-		xmms_playlist_entry_t *entry;
+		xmms_medialib_entry_t entry;
 		guint len;
 
-		entry = xmms_playlist_get_byid (playlist,
-		                                GPOINTER_TO_UINT (list->data));
+		entry = GPOINTER_TO_UINT (list->data);
 
-		artist = escape_html (xmms_playlist_entry_property_get (entry,
-			XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST));
-		title = escape_html (xmms_playlist_entry_property_get (entry,
-			XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE));
-		len = xmms_playlist_entry_property_get_int (entry,
-			XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
+		artist = escape_html (xmms_medialib_entry_property_get (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST));
+		title = escape_html (xmms_medialib_entry_property_get (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE));
+		len = xmms_medialib_entry_property_get_int (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
 		g_snprintf (buf, sizeof (buf), "%s - %s (%02i:%02i)",
 		            artist, title,
@@ -283,8 +278,6 @@ xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
 
 		fprintf (fp, is_even ? html_entry_even : html_entry_odd, buf);
 		is_even = !is_even;
-
-		xmms_object_unref (entry);
 
 		list = g_list_remove_link (list, list);
 	}

@@ -30,7 +30,7 @@
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
 #include "xmms/playlist.h"
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 #include "xmms/signal_xmms.h"
 #include "internal/output_int.h"
 
@@ -47,7 +47,7 @@
 
 typedef struct xmms_ices_data_St {
 	shout_t *shout;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry *entry;
 	vorbis_comment vc;
 	encoder_state *enc;
 	gint serial;
@@ -279,9 +279,9 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 		gchar *prop;
 		gchar *key;
 	} *pptr, props[] = {
-		{XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, "title"},
-		{XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, "artist"},
-		{XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, "album"},
+		{XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, "title"},
+		{XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, "artist"},
+		{XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, "album"},
 		{NULL, NULL}
 	};
 
@@ -300,7 +300,7 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 	for (pptr = props; pptr && pptr->prop; pptr++) {
 		const gchar *tmp;
 
-		tmp = xmms_playlist_entry_property_get (data->entry,
+		tmp = xmms_medialib_entry_property_get (data->entry,
 		                                        pptr->prop);
 		if (tmp) {
 			vorbis_comment_add_tag (&data->vc,

@@ -24,7 +24,7 @@
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
 #include "xmms/signal_xmms.h"
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 
 #include <glib.h>
 #include <sys/types.h>

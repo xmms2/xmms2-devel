@@ -14,13 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
-/** @file
- *  This controls the medialib.
- */
-
 #include "xmms/util.h"
 #include "xmms/playlist.h"
 #include "xmms/config.h"
@@ -41,791 +34,241 @@
 #include <glib.h>
 #include <time.h>
 
-#ifdef HAVE_SQLITE
 #include <sqlite.h>
-#endif
-
-/** @defgroup MediaLibrary MediaLibrary
-  * @ingroup XMMSServer
-  * @brief The library.
-  *
-  * The medialibrary is responsible for holding information about your whole
-  * music collection. 
-  * @{
-  */
 
 struct xmms_medialib_St {
 	xmms_object_t object;
-
+	struct sqlite *sql;
 	GMutex *mutex;
-	guint id;
-
-	xmms_playlist_t *playlist;
-
-#ifdef HAVE_SQLITE
-	sqlite *sql;
-#endif
+	guint32 nextid;
 };
 
 
-/** Global medialib */
-static xmms_medialib_t *medialib;
-  
-static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
-XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
-void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
-XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
-
-static void xmms_medialib_playlist_save_current (xmms_medialib_t *, gchar *, xmms_error_t *);
-XMMS_CMD_DEFINE (playlist_save_current, xmms_medialib_playlist_save_current, xmms_medialib_t *, NONE, STRING, NONE);
-static void xmms_medialib_playlist_load (xmms_medialib_t *, gchar *, xmms_error_t *);
-XMMS_CMD_DEFINE (playlist_load, xmms_medialib_playlist_load, xmms_medialib_t *, NONE, STRING, NONE);
-
-static void
-xmms_medialib_destroy (xmms_object_t *medialib)
-{
-	xmms_medialib_t *m = (xmms_medialib_t*) medialib;
-
-	g_mutex_free (m->mutex);
-
-	xmms_object_unref (m->playlist);
-
-#ifdef HAVE_SQLITE
-	if (m->sql) 
-		xmms_sqlite_close (m);
-#endif
-}
-
 /** 
- * Initialize the medialib.
- */
-gboolean
-xmms_medialib_init ()
-{
-
-	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
-
-
-#ifdef HAVE_SQLITE
-	if (!xmms_sqlite_open ()) {
-		xmms_object_unref (medialib);
-		medialib = NULL;
-		return FALSE;
-	}
-#endif /*HAVE_SQLITE*/
-	medialib->mutex = g_mutex_new ();
-
-	xmms_config_value_register ("medialib.dologging",
-				    "1",
-				    NULL, NULL);
-
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIALIB, XMMS_OBJECT (medialib));
-
-	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-				XMMS_IPC_CMD_SELECT, 
-				XMMS_CMD_FUNC (select));
-
-	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-				XMMS_IPC_CMD_ADD, 
-				XMMS_CMD_FUNC (mlib_add));
-
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT,
-	                     XMMS_CMD_FUNC (playlist_save_current));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PLAYLIST_LOAD,
-	                     XMMS_CMD_FUNC (playlist_load));
-
-	return TRUE;
-}
-
-void
-xmms_medialib_playlist_set (xmms_playlist_t *playlist)
-{
-	g_mutex_lock (medialib->mutex);
-
-	xmms_object_ref (playlist);
-	xmms_object_unref (medialib->playlist);
-	medialib->playlist = playlist;
-
-	g_mutex_unlock (medialib->mutex);
-}
-
-void
-xmms_medialib_logging_start (xmms_playlist_entry_t *entry)
-{
-	char tmp[16];
-	const char *mid;
-	time_t starttime;
-	gboolean ret;
-	xmms_config_value_t *cv;
-
-	g_return_if_fail (entry);
-	
-	cv = xmms_config_lookup ("medialib.dologging");
-	g_return_if_fail (cv);
-	
-	ret = xmms_config_value_int_get (cv);
-	if (!ret)
-		return;
-
-	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
-	g_return_if_fail (mid);
-
-	starttime = time (NULL);
-	g_mutex_lock (medialib->mutex);
-	ret = xmms_sqlite_query (NULL, NULL, 
-				 "INSERT INTO Log (id, starttime) VALUES (%s, %u)", 
-				 mid, (guint) starttime);
-	g_mutex_unlock (medialib->mutex);
-
-	if (ret) {
-		snprintf (tmp, 16, "%u", (guint) starttime);
-		xmms_playlist_entry_property_set (entry, "laststarted", tmp);
-	}
-}
-
-
-void
-xmms_medialib_logging_stop (xmms_playlist_entry_t *entry, xmms_output_t *output)
-{
-	const gchar *mid, *tmp, *sek;
-	gint value = 0.0;
-	gboolean ret;
-	xmms_config_value_t *cv;
-
-	cv = xmms_config_lookup ("medialib.dologging");
-	g_return_if_fail (cv);
-
-	ret = xmms_config_value_int_get (cv);
-	if (!ret)
-		return;
-
-	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
-	g_return_if_fail (mid);
-
-	tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
-	if (tmp) {
-		value = (gint) (100.0 * xmms_output_playtime (output, NULL) / (gdouble)atoi (tmp));
-	}
-		
-	sek = xmms_playlist_entry_property_get (entry, "laststarted");
-	g_return_if_fail (sek);
-
-	g_mutex_lock (medialib->mutex);
-	ret = xmms_sqlite_query (NULL, NULL, 
-					 "UPDATE Log SET value=%d WHERE id=%s AND starttime=%s", 
-					 value, mid, sek);
-	g_mutex_unlock (medialib->mutex);
-}
-
-
-void
-xmms_medialib_output_register (xmms_output_t *output)
-{
-  	return;
-}
-
-
-static guint
-xmms_medialib_next_id (xmms_medialib_t *medialib)
-{
-	guint id=0;
-	g_return_val_if_fail (medialib, 0);
-
-	id = medialib->id++;
-
-	return id;
-}
-
-
-
-static gchar *_e[] = { 	
-	"id", "url",
-	XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD,
-	XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED,
-	NULL
-};
-
-static void
-insert_foreach (gpointer key, gpointer value, gpointer userdata)
-{
-	gchar *k = key;
-	gchar *v = value;
-	gint i = 0;
-	guint id = GPOINTER_TO_UINT (userdata);
-
-	while (_e[i]) {
-		if (g_strcasecmp (_e[i], k) == 0) {
-		    return;
-		}
-		i++;
-	}
-
-	xmms_sqlite_query (NULL, NULL, "replace into Property (id, key, value) values (%d, %Q, %Q)", id, k, v);
-}
-
-/** 
-  * Takes an #xmms_playlist_entry_t and stores it
-  * to the library
-  *
-  * @todo what if the entry already exists?
+  * Ok, so the functions are written with reentrency in mind, but
+  * we choose to have a global medialib object here. It will be
+  * much easier, and I don't see the real use of multiple medialibs
+  * right now. This could be changed by removing this global one
+  * and altering the function callers...
   */
 
-gboolean
-xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
+static xmms_medialib_t *medialib;
+
+static GHashTable *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err);
+/** Methods */
+XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, HASHTABLE, UINT32, NONE);
+
+static void 
+xmms_medialib_destroy (xmms_object_t *object)
 {
-	gboolean ret;
-	guint id;
-	gchar *tmp;
+	xmms_medialib_t *mlib = (xmms_medialib_t *)object;
 
-	g_return_val_if_fail (medialib, FALSE);
+	g_mutex_free (mlib->mutex);
+	xmms_sqlite_close (mlib->sql);
+}
+ 
+gboolean
+xmms_medialib_init (xmms_playlist_t *playlist)
+{
+	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
+	medialib->sql = xmms_sqlite_open (&medialib->nextid);
+	medialib->mutex = g_mutex_new ();
 
-	if (xmms_medialib_entry_get (entry)) {
-		XMMS_DBG ("This entry already exsists, now we only update!");
-		g_mutex_lock (medialib->mutex);
-
-		id = atoi (xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
-
-		ret = xmms_sqlite_query (NULL, NULL, "update Media set artist=%Q, album=%Q, title=%Q, genre=%Q, lmod=%Q, resolved=%Q where id = %d",
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED),
-					 id);
-
-		if (!ret) {
-			g_mutex_unlock (medialib->mutex);
-			return FALSE;
-		}
-		xmms_playlist_entry_property_foreach (entry, insert_foreach, GUINT_TO_POINTER (id));
-	} else {
-
-		g_mutex_lock (medialib->mutex);
-
-		id = xmms_medialib_next_id (medialib);
-		ret = xmms_sqlite_query (NULL, NULL,
-					 "insert into Media values (%d, %Q, %Q, %Q, %Q, %Q, %Q, %d, %Q)",
-					 id, xmms_playlist_entry_url_get (entry),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD),
-					 time (NULL), 
-					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED));
-
-		if (!ret) {
-			g_mutex_unlock (medialib->mutex);
-			return FALSE;
-		}
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIALIB, XMMS_OBJECT (medialib));
+	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
+			     XMMS_IPC_CMD_INFO, 
+			     XMMS_CMD_FUNC (info));
 	
-		xmms_playlist_entry_property_foreach (entry, insert_foreach, GUINT_TO_POINTER (id));
+	return TRUE;
+}
 
-		tmp = g_strdup_printf ("%d", id);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, tmp);
+static int
+xmms_medialib_int_cb (void *pArg, int argc, char **argv, char **columnName) 
+{
+	guint *i = pArg;
+
+	if (argv[0])
+		*i = atoi (argv[0]);
+
+	return 0;
+}
+
+
+
+static int
+xmms_medialib_string_cb (void *pArg, int argc, char **argv, char **columnName) 
+{
+	gchar **str = pArg;
+
+	if (argv[0])
+		*str = g_strdup (argv[0]);
+
+	return 0;
+}
+
+
+gchar *
+xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gchar *property)
+{
+	gchar *ret = NULL;
+
+	g_return_val_if_fail (property, NULL);
+
+	g_mutex_lock (medialib->mutex);
+	xmms_sqlite_query (medialib->sql, xmms_medialib_string_cb, &ret,
+			   "select value from Media where key=%Q and id=%d", property, entry);
+	g_mutex_unlock (medialib->mutex);
+
+	return ret;
+}
+
+guint
+xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property)
+{
+	gchar *tmp = NULL;
+	guint ret;
+
+	tmp = xmms_medialib_entry_property_get (entry, property);
+	if (tmp) {
+		ret = atoi (tmp);
 		g_free (tmp);
-	}
-
-	g_mutex_unlock (medialib->mutex);
-
-	return TRUE;
-}
-
-static int
-select_callback (void *pArg, int argc, char **argv, char **cName)
-{
-	gint i=0;
-	GList **l = (GList **) pArg;
-	GHashTable *table = g_hash_table_new (g_str_hash, g_str_equal);
-
-	for (i = 0; i < argc; i++) {
-		if (argv[i] && cName[i]) {
-			g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (argv[i]));
-
-		}
-	}
-
-	*l = g_list_prepend (*l, table);
-
-	return 0;
-}
-
-static GList *
-xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
-{
-	return xmms_medialib_select (query, error);
-}
-
-void
-xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
-{
-	xmms_playlist_entry_t *entry;
-	xmms_mediainfo_thread_t *mt;
-
-	g_return_if_fail (medialib);
-	g_return_if_fail (url);
-
-	XMMS_DBG ("adding %s to the mediainfo db!", url);
-
-	entry = xmms_playlist_entry_new (url);
-
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED, "-1");
-
-	if (!xmms_medialib_entry_get (entry))
-		xmms_medialib_entry_store (entry);
-
-	mt = xmms_playlist_mediainfo_thread_get (medialib->playlist);
-	xmms_mediainfo_entry_add (mt, entry);
-
-	xmms_object_unref (XMMS_OBJECT (entry));
-}
-
-static int
-get_id_cb (void *pArg, int argc, char **argv, char **cName)
-{
-	guint *id = pArg;
-
-	*id = argv[0] ? atoi (argv[0]) : 0;
-
-	return 0;
-}
-
-static guint
-get_playlist_id (gchar *name)
-{
-	gint ret;
-	guint id = 0;
-
-	ret = xmms_sqlite_query (get_id_cb, &id,
-	                         "select id from Playlist "
-	                         "where name = '%s'", name);
-
-	return ret ? id : 0;
-}
-
-static guint
-prepare_playlist (guint id, gchar *name)
-{
-	gint ret;
-
-	/* if the playlist doesn't exist yet, add it.
-	 * if it does, delete the old entries
-	 */
-	if (id) {
-		ret = xmms_sqlite_query (NULL, NULL,
-		                         "delete from PlaylistEntries "
-		                         "where playlist_id = %u", id);
-		return ret ? id : 0;
-	}
-
-	/* supplied id is zero, so we need to add a new playlist first */
-	ret = xmms_sqlite_query (get_id_cb, &id,
-	                         "select MAX (id) from Playlist");
-	if (!ret) {
-		return 0;
-	}
-
-	id++; /* we want MAX + 1 */
-
-	ret = xmms_sqlite_query (NULL, NULL,
-	                         "insert into Playlist (id, name) "
-	                         "values (%u, '%s')", id, name);
-	return ret ? id : 0;
-}
-
-static void
-xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
-                                     gchar *name, xmms_error_t *error)
-{
-	GList *entries, *l;
-	gint ret;
-	guint playlist_id;
-
-	g_return_if_fail (medialib);
-	g_return_if_fail (name);
-
-	g_mutex_lock (medialib->mutex);
-
-	playlist_id = get_playlist_id (name);
-
-	if (!(playlist_id = prepare_playlist (playlist_id, name))) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC,
-		                "Couldn't prepare playlist");
-		g_mutex_unlock (medialib->mutex);
-
-		return;
-	}
-
-	/* finally, add the playlist entries */
-	entries = xmms_playlist_list (medialib->playlist, NULL);
-
-	for (l = entries; l; l = g_list_next (l)) {
-		xmms_playlist_entry_t *entry;
-		gchar mid[32];
-
-		entry = xmms_playlist_get_byid (medialib->playlist,
-		                                (guint) l->data);
-		if (!entry) {
-			g_mutex_unlock (medialib->mutex);
-
-			return;
-		}
-
-		g_snprintf (mid, sizeof (mid), "mid://%s",
-		            xmms_playlist_entry_property_get (entry,
-		            XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
-
-		ret = xmms_sqlite_query (NULL, NULL,
-		                         "insert into PlaylistEntries"
-		                         "(playlist_id, entry) "
-		                         "values (%u, %Q)",
-		                         playlist_id, mid);
-
-		if (!ret) {
-			gchar buf[64];
-
-			g_snprintf (buf, sizeof (buf),
-			            "Couldn't add entry %s to playlist %u",
-			            mid, playlist_id);
-			xmms_error_set (error, XMMS_ERROR_GENERIC, buf);
-			xmms_object_unref (entry);
-			g_mutex_unlock (medialib->mutex);
-
-			return;
-		}
-
-		xmms_object_unref (entry);
-	}
-
-	g_mutex_unlock (medialib->mutex);
-}
-
-static int
-get_playlist_entries_cb (void *pArg, int argc, char **argv,
-                         char **cName)
-{
-	GList **entries = pArg;
-
-	/* valid prefixes for the playlist entries are:
-	 * 'mid://' and 'sql://', so any valid string is longer
-	 * than 6 characters.
-	 */
-	if (argv[0] && strlen (argv[0]) > 6) {
-		*entries = g_list_prepend (*entries, g_strdup (argv[0]));
-	}
-
-	return 0;
-}
-
-static int
-get_media_url_cb (void *pArg, int argc, char **argv, char **cName)
-{
-	gchar **url = pArg;
-
-	*url = g_strdup (argv[0]);
-
-	return 0;
-}
-
-static int
-playlist_load_sql_query_cb (void *pArg, int argc, char **argv, char **cName)
-{
-	xmms_medialib_t *medialib = pArg;
-
-	xmms_playlist_addurl (medialib->playlist, argv[0], NULL);
-
-	return 0;
-}
-
-static void
-xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
-                             xmms_error_t *error)
-{
-	GList *entries = NULL;
-	gint ret;
-	guint playlist_id;
-
-	g_return_if_fail (medialib);
-	g_return_if_fail (name);
-
-	g_mutex_lock (medialib->mutex);
-
-	if (!(playlist_id = get_playlist_id (name))) {
-		xmms_error_set (error, XMMS_ERROR_NOENT, "Playlist not found");
-		g_mutex_unlock (medialib->mutex);
-
-		return;
-	}
-
-	ret = xmms_sqlite_query (get_playlist_entries_cb, &entries,
-	                         "select entry from PlaylistEntries "
-	                         "where playlist_id = %u", playlist_id);
-	if (!ret) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC,
-		                "Couldn't retrieve playlist entries");
-		g_mutex_unlock (medialib->mutex);
-
-		return;
-	}
-
-	/* we use g_list_prepend() in get_playlist_entries_cb(), so
-	 * we need to reverse the list now
-	 */
-	entries = g_list_reverse (entries);
-
-	while (entries) {
-		gchar *entry = entries->data, *url = NULL;
-		guint mid;
-
-		if (!strncmp (entry, "mid://", 6)) {
-			mid = atoi (entry + 6);
-			if (mid) {
-				ret = xmms_sqlite_query (get_media_url_cb, &url,
-				                         "select url from Media "
-				                         "where id = %u", mid);
-				if (ret) {
-					xmms_playlist_addurl (medialib->playlist, url, NULL);
-					g_free (url);
-				}
-			}
-		} else if (!strncmp (entry, "sql://", 6)) {
-			xmms_sqlite_query (playlist_load_sql_query_cb,
-			                   medialib, "select url from Media where %q", entry);
-		}
-
-		g_free (entry);
-		entries = g_list_delete_link (entries, entries);
-	}
-
-	g_mutex_unlock (medialib->mutex);
-}
-
-static void
-ghash_to_entry (gpointer key, gpointer value, gpointer udata)
-{
-	xmms_playlist_entry_t *entry = (xmms_playlist_entry_t *)udata;
-	if (g_strcasecmp ((gchar *)key, "id") == 0) {
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, (gchar*)value);
-	} else if (g_strcasecmp ((gchar *)key, "url") == 0) {
-		return;
 	} else {
-		xmms_playlist_entry_property_set (entry, (gchar*)key, (gchar*)value);
+		ret = 0;
 	}
+	return ret;
 }
 
-/**
- * Get a list of #xmms_playlist_entry_t 's that matches the query.
- * To use this function you'll need to select the URL column from the
- * database.
- *
- * Make sure that query are correctly escaped before entering here!
- */
-GList *
-xmms_medialib_select_entries (gchar *query, xmms_error_t *error)
-{
-	GList *l = NULL;
-
-	l = xmms_medialib_select (query, error);
-	if (l) {
-		GList *ret = NULL;
-		GList *n;
-		xmms_playlist_entry_t *e;
-
-		for (n = l; n; n = g_list_next (n)) {
-			gchar *tmp = g_hash_table_lookup (n->data, "url");
-			XMMS_DBG ("got %s", tmp);
-			if (tmp) {
-				e = xmms_playlist_entry_new (tmp);
-				g_hash_table_foreach (n->data, ghash_to_entry, e);
-				ret = g_list_prepend (ret, e);
-				g_hash_table_destroy (n->data);
-			}
-		}
-
-		ret = g_list_reverse (ret);
-
-		g_list_free (l);
-
-		return ret;
-	}
-
-	return NULL;
-		
-}
-
-/**
- * Get a list of #GHashTables 's that matches the query.
- *
- * Make sure that query are correctly escaped before entering here!
- */
-GList *
-xmms_medialib_select (gchar *query, xmms_error_t *error)
-{
-	GList *res = NULL;
-	gint ret;
-
-	g_return_val_if_fail (query, 0);
-
-	g_mutex_lock (medialib->mutex);
-
-	ret = xmms_sqlite_query (select_callback, (void *)&res, query);
-
-	g_mutex_unlock (medialib->mutex);
-
-	if (!ret)
-		return NULL;
-
-	res = g_list_reverse (res);
-	return res;
-}
-
-static int
-mediarow_callback (void *pArg, int argc, char **argv, char **columnName) 
-{
-	gint i;
-	xmms_playlist_entry_t *entry = pArg;
-
-	for (i = 0; i < argc; i ++) {
-
-		if (!argv[i])
-			continue;
-
-		XMMS_DBG ("Setting %s to %s", columnName[i], argv[i]);
-		if (g_strcasecmp (columnName[i], "id") == 0) {
-			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, argv[i]);
-		} else if (g_strcasecmp (columnName[i], "url") == 0) {
-			continue;
-		} else {
-			xmms_playlist_entry_property_set (entry, columnName[i], argv[i]);
-		}
-	}
-
-	return 0;
-	
-}
-
-static int
-proprow_callback (void *pArg, int argc, char **argv, char **columnName) 
-{
-	xmms_playlist_entry_t *entry = pArg;
-
-	XMMS_DBG ("Setting %s to %s", argv[0], argv[1]);
-	xmms_playlist_entry_property_set (entry, argv[0], argv[1]);
-
-	return 0;
-}
-
-/**
- * Takes a mid and returns a entry
- */
-xmms_playlist_entry_t *
-xmms_medialib_entry_get_byid (guint id)
-{
-	gboolean ret;
-	gchar *url = NULL;
-
-	g_mutex_lock (medialib->mutex);
-
-	ret = xmms_sqlite_query (get_media_url_cb, &url,
-	                         "select url from Media where id=%d", id);
-
-	g_mutex_unlock (medialib->mutex);
-
-	if (url) {
-		xmms_playlist_entry_t *entry = xmms_playlist_entry_new (url);
-
-		g_free (url);
-
-		if (xmms_medialib_entry_get (entry))
-			return entry;
-		xmms_object_unref (XMMS_OBJECT (entry));
-	}
-
-	return NULL;
-}
-
-/**
-  * Takes a #xmms_playlist_entry_t and fills in the blanks as
-  * they are in the database.
-  */ 
 gboolean
-xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
+xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *property, const gchar *value)
 {
 	gboolean ret;
+	g_return_val_if_fail (property, FALSE);
 
-	g_return_val_if_fail (medialib, FALSE);
-	g_return_val_if_fail (entry, FALSE);
+	g_mutex_lock (medialib->mutex);
+	ret = xmms_sqlite_query (medialib->sql, NULL, NULL,
+				 "insert or replace into Media (id, value, key) values (%d, %Q, %Q)", entry, value, property);
+	g_mutex_unlock (medialib->mutex);
+
+	return ret;
+
+}
+
+gboolean
+xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry)
+{
+	return xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
+}
+
+/** Just a convient function wrapper */
+guint
+xmms_medialib_entry_id_get (xmms_medialib_entry_t entry)
+{
+	return xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ID);
+}
+
+void
+xmms_medialib_entry_send_update (xmms_medialib_entry_t entry)
+{
+	g_mutex_lock (medialib->mutex);
+	xmms_object_emit_f (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE, 
+			    XMMS_OBJECT_CMD_ARG_UINT32, entry);
+	g_mutex_unlock (medialib->mutex);
+}
+
+xmms_medialib_entry_t
+xmms_medialib_entry_new (const char *url)
+{
+	guint id = 0;
+	guint ret;
+
+	g_return_val_if_fail (url, 0);
+	g_mutex_lock (medialib->mutex);
+
+	if (g_strncasecmp (url, "mlib://", 7) == 0) {
+		const gchar *p = url+9;
+		id = strtol (p, NULL, 10);
+		/* Hmmm, maybe verify that this entry exists? */
+	} else {
+		xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
+			     	"select id from Media where key='url' and value=%Q", url);
+	}
+
+	if (id) {
+		ret = id;
+	} else {
+		ret = ++medialib->nextid;
+		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
+				       "insert into Media (id, key, value) values (%d, 'url', %Q)",
+				       ret, url)) {
+			ret = 0;
+		}
+		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
+				       "insert or replace into Media (id, key, value) values (%d, 'resolved', '0')",
+				       ret)) {
+			ret = 0;
+		}
+
+	}
+	g_mutex_unlock (medialib->mutex);
+
+	return ret;
+
+}
+
+static int
+xmms_medialib_hashtable_cb (void *pArg, int argc, char **argv, char **columnName) 
+{
+	GHashTable *hash = pArg;
+
+	g_hash_table_insert (hash, g_strdup (argv[1]), g_strdup (argv[2]));
+	XMMS_DBG ("adding %s = %s to hash", argv[1], argv[2]);
+
+	return 0;
+}
+
+GHashTable *
+xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry)
+{
+	GHashTable *ret;
+	
+	ret = g_hash_table_new (g_str_hash, g_str_equal);
 
 	g_mutex_lock (medialib->mutex);
 
-	ret = xmms_sqlite_query (mediarow_callback, (void *)entry, 
-				 "select * from Media where url = %Q order by id limit 1", 
-				 xmms_playlist_entry_url_get (entry));
-
-	if (!ret) {
-		g_mutex_unlock (medialib->mutex);
-		return FALSE;
-	}
-
-	if (!xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID)) {
-		XMMS_DBG ("%s not found i mlib!", xmms_playlist_entry_url_get (entry));
-		g_mutex_unlock (medialib->mutex);
-		return FALSE;
-	}
-
-	ret = xmms_sqlite_query (proprow_callback, (void *) entry, 
-				 "select key, value from Property where id = %q", 
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
-
-	if (!ret) {
-		g_mutex_unlock (medialib->mutex);
-		XMMS_DBG ("error in query?!");
-		return FALSE;
-	}
+	xmms_sqlite_query (medialib->sql, xmms_medialib_hashtable_cb, ret, 
+			   "select * from Media where id=%d", entry);
 
 	g_mutex_unlock (medialib->mutex);
 
-
-	return TRUE;
+	return ret;
 }
 
-/** Shutdown the medialib. */
-void
-xmms_medialib_shutdown ()
+
+static GHashTable *
+xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err)
 {
-	g_return_if_fail (medialib);
-
-	xmms_object_unref (medialib);
+	GHashTable *ret = xmms_medialib_entry_to_hashtable (id);
+	if (!ret) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Could not retrive info for that entry!");
+		return NULL;
+	}
+	return ret;
 }
 
-#ifdef HAVE_SQLITE
-void
-xmms_medialib_sql_set (sqlite *sql)
+/*
+GList *
+xmms_medialib_query (const char *query)
 {
-	medialib->sql = sql;
 }
 
-sqlite *
-xmms_medialib_sql_get ()
+gboolean
+xmms_medialib_playlist_save (const char *name)
 {
-	return medialib->sql;
 }
 
-#endif
-
-/** @internal */
-void
-xmms_medialib_id_set (guint id)
+gboolean
+xmms_medialib_playlist_load (const char *name)
 {
-	medialib->id = id;
 }
-
-/** @} */
-
+*/

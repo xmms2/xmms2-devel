@@ -20,7 +20,7 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/playlist.h"
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 #include "xmms/plsplugins.h"
 #include "xmms/util.h"
 #include "xmms/xmms.h"
@@ -167,7 +167,7 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 	for (; lines[current] != NULL; current += 3) {
 		gchar *file, *title, *length, *url;
-		xmms_playlist_entry_t *entry = NULL;
+		xmms_medialib_entry_t entry;
 
 		file = get_value (lines[current], "File");
 
@@ -189,17 +189,16 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 		}
 
 		url = build_encoded_url (plspath, file);
-		entry = xmms_playlist_entry_new (url);
+		entry = xmms_medialib_entry_new (url);
 
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, length);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, length);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
 		xmms_playlist_add (playlist, entry);
 
 		g_free (url);
 		g_free (file);
 		g_free (title);
 		g_free (length);
-		xmms_object_unref (entry);
 	}
 
 	g_free (plspath);
@@ -236,13 +235,13 @@ xmms_pls_write_playlist (xmms_playlist_plugin_t *plsplugin,
 	fprintf (fp, "[playlist]\n");
 
 	for (current = 1, node = list; node != NULL; node = g_list_next (node)) {
-		xmms_playlist_entry_t *entry = xmms_playlist_get_byid (playlist, (guint) node->data);
-		const gchar *url, *title, *duration;
-		gchar *dec;
+		xmms_medialib_entry_t entry = GPOINTER_TO_UINT (node->data);
+		const gchar *title, *duration;
+		gchar *url, *dec;
 
-		duration = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
-		title = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE);
-		url = xmms_playlist_entry_url_get (entry);
+		duration = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		title = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
+		url = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 		dec = xmms_util_decode_path (url);
 
 		fprintf (fp, "File%u=%s\n", current, dec);
@@ -253,7 +252,7 @@ xmms_pls_write_playlist (xmms_playlist_plugin_t *plsplugin,
 			fprintf (fp, "Length%u=%s\n", current, duration);
 		}
 
-		xmms_object_unref (entry);
+		g_free (url);
 		g_free (dec);
 		current++;
 	}

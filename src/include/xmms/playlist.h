@@ -64,7 +64,7 @@ typedef struct xmms_playlist_changed_msg_St {
 	guint arg;
 } xmms_playlist_changed_msg_t;
 
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 #include "xmms/decoder.h"
 #include "xmms/mediainfo.h"
 #include "xmms/error.h"
@@ -75,19 +75,15 @@ typedef struct xmms_playlist_changed_msg_St {
 
 xmms_playlist_t * xmms_playlist_init (void);
 
-gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file);
+gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file);
 guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
 guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
-gboolean xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id);
+guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint pos);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
-xmms_playlist_entry_t *xmms_playlist_advance (xmms_playlist_t *playlist);
-xmms_playlist_entry_t *xmms_playlist_get_prev_entry (xmms_playlist_t *playlist);
-xmms_playlist_entry_t *xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
-xmms_playlist_entry_t *xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id);
-GHashTable *xmms_playlist_get_hashtable_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
+xmms_medialib_entry_t xmms_playlist_advance (xmms_playlist_t *playlist);
+xmms_medialib_entry_t xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
 xmms_decoder_t *xmms_playlist_next_start (xmms_playlist_t *playlist);
-void xmms_playlist_entry_stop (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry, guint time);
 gboolean xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err);
 void xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *err);
 GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
@@ -95,7 +91,6 @@ GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 void xmms_playlist_wait (xmms_playlist_t *playlist);
 GList *xmms_playlist_stats (xmms_playlist_t *playlist, GList *list);
 
-xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
 xmms_mediainfo_thread_t *xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist);
 
 /*

@@ -132,7 +132,6 @@ xmms_main_destroy (xmms_object_t *object)
 
 	xmms_visualisation_shutdown ();
 	xmms_config_shutdown ();
-	xmms_medialib_shutdown ();
 	xmms_plugin_shutdown ();
 	xmms_log_shutdown ();
 }
@@ -338,9 +337,11 @@ main (int argc, char **argv)
 
 	xmms_output_playlist_set (mainobj->output, playlist);
 
+	/*
 	xmms_medialib_init ();
 	xmms_medialib_output_register (mainobj->output);
 	xmms_medialib_playlist_set (playlist);
+	*/
 		
 	g_snprintf (default_path, sizeof (default_path),
 	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());

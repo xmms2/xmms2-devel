@@ -259,7 +259,7 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 
-	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100.0);
+	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, 2, 44100.0);
 
 	res = AudioUnitInitialize (data->au);
 	if (res) {

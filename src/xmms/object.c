@@ -18,7 +18,7 @@
 #include "xmms/signal_xmms.h"
 #include "xmms/util.h"
 #include "xmms/playlist.h"
-#include "xmms/playlist_entry.h"
+#include "xmms/medialib.h"
 
 #include <stdarg.h>
 #include <string.h>

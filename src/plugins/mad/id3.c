@@ -73,7 +73,7 @@
  */
 
 static void
-add_to_entry (xmms_playlist_entry_t *entry, gchar *key, guchar *val, gint len)
+add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
 {
 	gchar *nval;
 	gsize readsize,writsize;
@@ -93,12 +93,12 @@ add_to_entry (xmms_playlist_entry_t *entry, gchar *key, guchar *val, gint len)
 		return;
 	}
 	XMMS_DBG ("%s=%s", key, nval);
-	xmms_playlist_entry_property_set (entry, key, nval);	
+	xmms_medialib_entry_property_set (entry, key, nval);	
 	g_free (nval);
 }
 
 static void
-xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmms_playlist_entry_t *entry)
+xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
 {
 
 	if (len < 1) {
@@ -118,32 +118,32 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 	switch (type) {
 	case quad2long('T','Y','E',0):
 	case quad2long('T','Y','E','R'): {
-		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, buf, len);
+		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, buf, len);
 		break;
 	}
 	case quad2long('T','A','L',0):
 	case quad2long('T','A','L','B'): {
-		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, buf, len);
+		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, buf, len);
 		break;
 	}
 	case quad2long('T','T','2',0):
 	case quad2long('T','I','T','2'): {
-		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, buf, len);
+		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, buf, len);
 		break;
 	}
 	case quad2long('T','P','1',0):
 	case quad2long('T','P','E','1'): {
-		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, buf, len);
+		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, buf, len);
 		break;
 	}
 	case quad2long('T','R','K',0):
 	case quad2long('T','R','C','K'): {
-		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, buf, len);
+		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, buf, len);
 		break;
 	}
 	case quad2long('T','C','O','N'): {
 		/* @todo we could resolve numeric types here */
-		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, buf, len);
+		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
 		break;
 	}
 	case quad2long('T','B','P',0):
@@ -186,7 +186,7 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
  * 
  */
 gboolean
-xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_playlist_entry_t *entry)
+xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entry_t entry)
 {
 	gint len=head->len;
 
@@ -336,7 +336,7 @@ typedef struct id3v1tag_St {
  * Samma, på svenska.
  */
 gboolean
-xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
+xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 {
 	id3v1tag_t *tag = (id3v1tag_t *) buf;
 	gsize readsize,writsize;
@@ -354,7 +354,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, tmp);
 		g_free (tmp);
 	}
 	
@@ -363,7 +363,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, tmp);
 		g_free (tmp);
 	}
 	
@@ -372,7 +372,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp);
 		g_free (tmp);
 	}
 	
@@ -381,15 +381,15 @@ xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tmp);
 		g_free (tmp);
 	}
 
 	if (tag->genre > GENRE_MAX) {
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, "Unknown");
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {
 		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
 	}
 	
@@ -397,16 +397,16 @@ xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
 		/* V1.1 */
 		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 		
 		tmp = g_strdup_printf ("%d", (gint) tag->u.v1_1.track_number);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, tmp);
 		g_free (tmp);
 	} else {
 		tmp = g_convert (tag->u.v1_1.comment, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 	}
 

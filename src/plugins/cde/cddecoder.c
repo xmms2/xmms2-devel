@@ -92,7 +92,7 @@ static void
 xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_cdae_data_t *data;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 	xmms_transport_t *transport;
 	xmms_config_value_t *val;
 	gint duration;
@@ -111,18 +111,17 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 
 	duration = (duration * 1000) / 75;
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_decoder_mediainfo_entry_get (decoder);
 
 	tmp = g_strdup_printf ("%d", duration);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
 	g_free (tmp);
 
 	tmp = g_strdup_printf ("CDAE Track %d", data->track);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp);
 	g_free (tmp);
 
-	xmms_decoder_entry_mediainfo_set (decoder, entry);
-	xmms_object_unref (entry);
+	xmms_medialib_entry_send_update (entry);
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "usecddb");
 	if (xmms_config_value_int_get (val) == 1) {
@@ -130,10 +129,8 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_value_string_get (val), data->track);
 	}
 
-	if (entry) {
-		xmms_decoder_entry_mediainfo_set (decoder, entry);
-		xmms_object_unref (entry);
-	}
+	xmms_medialib_entry_send_update (entry);
+
 }
 
 static gboolean

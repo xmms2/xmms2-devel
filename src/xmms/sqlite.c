@@ -32,16 +32,15 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 5
+#define DB_VERSION 6
 
 const char create_Control_stm[] = "create table Control (version)";
-const char create_Media_stm[] = "create table Media (id primary_key, url unique, artist, album, title, genre, lmod, added, resolved)";
-const char create_Property_stm[] = "create table Property (id, value, key, unique (id, key))";
+const char create_Media_stm[] = "create table Media (id primary_key, key, value)";
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary_key, name)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
-const char create_idx_stm[] = "create unique index url_idx on Media (url);"
-                              "create unique index prop_idx on Property (id, key);"
+const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
+			      "create index prop_idx on Media (value);"
                               "create index log_id on Log (id);"
                               "create index playlist_idx on Playlist (name);";
 
@@ -73,15 +72,15 @@ xmms_sqlite_version_cb (void *pArg, int argc, char **argv, char **columnName)
 	return 0;
 }
 
-gboolean
-xmms_sqlite_open ()
+sqlite *
+xmms_sqlite_open (guint *id)
 {
 	sqlite *sql;
 	gchar *err;
 	const gchar *hdir;
 	gboolean create = TRUE;
 	gchar dbpath[XMMS_PATH_MAX];
-	guint id, version = 0;
+	gint version = 0;
 
 	hdir = g_get_home_dir ();
 
@@ -115,7 +114,7 @@ xmms_sqlite_open ()
 			if (!sql) {
 				xmms_log_fatal ("Error creating sqlite db: %s", err);
 				free (err);
-				return FALSE;
+				return NULL;
 			}
 
 			create = TRUE;
@@ -133,39 +132,35 @@ xmms_sqlite_open ()
 		sqlite_exec (sql, create_Control_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, buf, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Media_stm, NULL, NULL, NULL);
-		sqlite_exec (sql, create_Property_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Log_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_idx_stm, NULL, NULL, NULL);
-		id = 1;
+		*id = 1;
 	} else {
-		sqlite_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, &id, NULL);
+		sqlite_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
 	}
 
-	xmms_medialib_sql_set (sql);
-	xmms_medialib_id_set (id);
-
-	return TRUE;
+	return sql;
 }
 
 gboolean
-xmms_sqlite_query (xmms_medialib_row_method_t method, void *udata, char *query, ...)
+xmms_sqlite_query (sqlite *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...)
 {
 	gchar *err;
-	sqlite *sql;
 	va_list ap;
+	gint ret;
 
 	g_return_val_if_fail (query, FALSE);
+	g_return_val_if_fail (sql, FALSE);
 
 	va_start (ap, query);
 
-	sql = xmms_medialib_sql_get ();
-
 	XMMS_DBG ("Running query: %s", query);
 
-	if (sqlite_exec_vprintf (sql, query, (sqlite_callback) method, udata, &err, ap) != SQLITE_OK) {
-		xmms_log_error ("Error in query! %s", err);
+	ret = sqlite_exec_vprintf (sql, query, (sqlite_callback) method, udata, &err, ap);
+	if (ret != SQLITE_OK) {
+		xmms_log_error ("Error in query! (%d) - %s", ret, err);
 		va_end (ap);
 		return FALSE;
 	}
@@ -177,9 +172,8 @@ xmms_sqlite_query (xmms_medialib_row_method_t method, void *udata, char *query, 
 }
 
 void
-xmms_sqlite_close ()
+xmms_sqlite_close (sqlite *sql)
 {
-	sqlite *sql;
-	sql = xmms_medialib_sql_get ();
+	g_return_if_fail (sql);
 	sqlite_close (sql);
 }

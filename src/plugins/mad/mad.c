@@ -166,7 +166,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
   */
 
 static void
-xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint filesize, xmms_playlist_entry_t *entry)
+xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint filesize, xmms_medialib_entry_t entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
@@ -197,7 +197,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
 	if (filesize == -1) {
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "0");
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, "0");
 		return;
 	}
 
@@ -229,7 +229,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 			XMMS_DBG ("XING duration %d", duration);
 			tmp = g_strdup_printf ("%d", duration);
 
-			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
 			g_free (tmp);
 		}
 
@@ -239,7 +239,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 
 			tmp = g_strdup_printf ("%u", (gint)((xmms_xing_get_bytes (xing) * 8 / fsize);
 			XMMS_DBG ("XING bitrate %d", tmp);
-			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
 		}*/
 
@@ -252,16 +252,16 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, "-1");
 	} else {
 		tmp = g_strdup_printf ("%d", (gint) (filesize*(gdouble)8000.0/bitrate));
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
 		XMMS_DBG ("duration = %s", tmp);
 		g_free (tmp);
 	}
 		
 	tmp = g_strdup_printf ("%d", bitrate / 1000);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
 	g_free (tmp);
 
 }
@@ -270,7 +270,7 @@ static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
 	xmms_error_t error;
@@ -285,11 +285,10 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_if_fail (transport);
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	ret = xmms_transport_read (transport, buf, 8192, &error);
 	if (ret <= 0) {
-		xmms_object_unref (entry);
 		return;
 	}
 
@@ -316,7 +315,6 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   MIN(4096,head.len - pos), &error);
 				if (ret <= 0) {
 					XMMS_DBG ("error reading data for id3v2-tag");
-					xmms_object_unref (entry);
 					return;
 				}
 				pos += ret;
@@ -347,9 +345,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	XMMS_DBG ("Seeking to first bytes");
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
-	xmms_decoder_entry_mediainfo_set (decoder, entry);
-
-	xmms_object_unref (entry);
+	xmms_medialib_entry_send_update (entry);
 
 	return;
 }

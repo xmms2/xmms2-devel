@@ -22,6 +22,7 @@
 #include "xmms/output.h"
 #include "xmms/transport.h"
 #include "xmms/xmms.h"
+#include "xmms/medialib.h"
 
 #include <glib.h>
 #include <string.h>
@@ -123,7 +124,7 @@ xmms_cdae_cddb_read_url (guint discid, gchar *category)
 #ifdef HAVE_CURL
 
 typedef struct {
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 	gint state; /* 1 query, 2 read */
 	gchar *category;
 	guint discid;
@@ -258,10 +259,10 @@ xmms_cdae_cddb_request (xmms_cdae_toc_t *toc, gchar *server)
 
 }
 
-xmms_playlist_entry_t *
+xmms_medialib_entry_t
 xmms_cdae_cddb_parse (FILE *fp, gint track)
 {
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 	gchar buffer[2046];
 	gchar **lines;
 	gint ret;
@@ -270,7 +271,7 @@ xmms_cdae_cddb_parse (FILE *fp, gint track)
 
 	ret = fread (buffer, 1, 2046, fp);
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_medialib_entry_new (NULL);
 
 	buffer[ret] = '\0';
 
@@ -291,15 +292,13 @@ xmms_cdae_cddb_parse (FILE *fp, gint track)
 				*(p-1)='\0';
 
 				conv = g_convert (kv[1], strlen(kv[1]),
-				                  "UTF-8", "ISO-8859-1", &r, &w, NULL);
-				xmms_playlist_entry_property_set (entry, 
-						XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, conv);
+						  "UTF-8", "ISO-8859-1", &r, &w, NULL);
+				xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, conv);
 				g_free (conv);
 
 				conv = g_convert (p + 2, strlen (p + 2),
 				                  "UTF-8", "ISO-8859-1", &r, &w, NULL);
-				xmms_playlist_entry_property_set (entry, 
-						XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, conv);
+				xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, conv);
 				g_free (conv);
 			} else if (g_strncasecmp (kv[0], "TTITLE", 6) == 0) {
 				if (t == track) {
@@ -308,8 +307,7 @@ xmms_cdae_cddb_parse (FILE *fp, gint track)
 
 					conv = g_convert (kv[1], strlen (kv[1]),
 					                  "UTF-8", "ISO-8859-1", &r, &w, NULL);
-					xmms_playlist_entry_property_set (entry, 
-							XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, conv);
+					xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, conv);
 					g_free (conv);
 				}
 				t++;
@@ -331,13 +329,13 @@ xmms_cdae_cddb_parse (FILE *fp, gint track)
 	return entry;
 }
 
-xmms_playlist_entry_t *
+xmms_medialib_entry_t
 xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track)
 {
 	FILE *fp;
 	gchar *file;
 	gchar *dir;
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 
 	dir = g_strdup_printf ("%s/.cddb/", g_get_home_dir ());
 	file = g_strdup_printf ("%s/.cddb/%08x", g_get_home_dir (), xmms_cdae_cddb_discid (toc));
@@ -372,10 +370,10 @@ xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track)
 
 
 #else
-xmms_playlist_entry_t *
+xmms_medialib_entry
 xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track)
 {
-	return NULL;
+	return 0;
 }
 #endif
 

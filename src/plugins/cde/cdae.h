@@ -52,7 +52,7 @@ xmms_cdae_toc_t *xmms_cdae_get_toc (int fd);
 gint xmms_cdae_read_data (gint fd, gint pos, gchar *buffer, gint len);
 
 /** CDDB Meck */
-xmms_playlist_entry_t *xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track);
+xmms_medialib_entry_t xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track);
 
 #endif
 	

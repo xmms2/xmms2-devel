@@ -85,7 +85,7 @@ struct xmms_decoder_St {
 
 	gpointer plugin_data;
 
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 
 	GList *effects; /* list of xmms_effect_t */
 
@@ -129,9 +129,8 @@ struct xmms_decoder_St {
 
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
-static void xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value);
 static void on_replaygain_cfg_changed (xmms_object_t *obj, gconstpointer data, gpointer udata);
-static gfloat get_replaygain (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry, gboolean *has_replaygain);
+static gfloat get_replaygain (xmms_decoder_t *decoder, xmms_medialib_entry_t entry, gboolean *has_replaygain);
 static void apply_replaygain (gint16 *buf, guint len, gfloat gain);
 
 /*
@@ -198,9 +197,6 @@ static void apply_replaygain (gint16 *buf, guint len, gfloat gain);
  * @code
  * void mediainfo (xmms_decoder_t *decoder);
  * @endcode
- * After the data is extracted it should be filled in a
- * #xmms_playlist_entry_t and be set with 
- * xmms_decoder_entry_mediainfo_set()
  *
  * #XMMS_PLUGIN_METHOD_SEEK Will be called when XMMS wants to
  * seek in the current source. The prototype is:
@@ -332,29 +328,6 @@ xmms_decoder_audio_format_to_get (xmms_decoder_t *decoder)
 
 	return ret;
 }
-
-/**
- * Update Mediainfo in the entry.
- * Should be used in #XMMS_PLUGIN_METHOD_GET_MEDIAINFO to update the info and
- * propagate it to the clients.
- */
-void
-xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
-{
-	g_return_if_fail (decoder);
-	g_return_if_fail (entry);
-	g_return_if_fail (decoder->transport);
-
-	xmms_object_ref (entry);
-	xmms_object_unref (decoder->entry);
-	decoder->entry = entry;
-
-	decoder->replaygain = get_replaygain (decoder, entry,
-	                                      &decoder->has_replaygain);
-	xmms_transport_entry_mediainfo_set (decoder->transport, entry);
-
-}
-
 
 /**
  * Read decoded data
@@ -551,7 +524,6 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_object_unref (decoder->transport);
 	xmms_object_unref (decoder->plugin);
 	xmms_object_unref (decoder->converter);
-	xmms_object_unref (decoder->entry);
 	xmms_object_unref (decoder->vis);
 }
 
@@ -607,6 +579,7 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	g_return_val_if_fail (transport, FALSE);
 
 	mimetype = xmms_transport_mimetype_get (transport);
+	decoder->entry = xmms_transport_medialib_entry_get (transport);
 
 	XMMS_DBG ("Trying to create decoder for mime-type %s", mimetype);
 	
@@ -724,6 +697,13 @@ xmms_decoder_mediainfo_get (xmms_decoder_t *decoder,
 	return;
 }
 
+xmms_medialib_entry_t
+xmms_decoder_medialib_entry_get (xmms_decoder_t *decoder)
+{
+	g_return_val_if_fail (decoder, 0);
+	return decoder->entry;
+}
+
 /*
  * Static functions
  */
@@ -759,26 +739,28 @@ on_replaygain_cfg_changed (xmms_object_t *obj, gconstpointer data,
 }
 
 static gfloat
-get_replaygain (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry,
+get_replaygain (xmms_decoder_t *decoder, xmms_medialib_entry_t entry,
                 gboolean *has_replaygain)
 {
 	gfloat s, p;
 	gchar *key_s, *key_p;
-	const gchar *tmp;
+	gchar *tmp;
 
 	if (decoder->replaygain_mode == XMMS_REPLAYGAIN_MODE_TRACK) {
-		key_s = XMMS_PLAYLIST_ENTRY_PROPERTY_GAIN_TRACK;
-		key_p = XMMS_PLAYLIST_ENTRY_PROPERTY_PEAK_TRACK;
+		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
+		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
 	} else {
-		key_s = XMMS_PLAYLIST_ENTRY_PROPERTY_GAIN_ALBUM;
-		key_p = XMMS_PLAYLIST_ENTRY_PROPERTY_PEAK_ALBUM;
+		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
+		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 	}
 
-	tmp = xmms_playlist_entry_property_get (entry, key_s);
+	tmp = xmms_medialib_entry_property_get (entry, key_s);
 	s = tmp ? atof (tmp) : 1.0;
+	g_free (tmp);
 
-	tmp = xmms_playlist_entry_property_get (entry, key_p);
+	tmp = xmms_medialib_entry_property_get (entry, key_p);
 	p = tmp ? atof (tmp) : 1.0;
+	g_free (tmp);
 
 	s *= 2; /* 6db pre-amp */
 
@@ -843,24 +825,10 @@ xmms_decoder_find_plugin (const gchar *mimetype)
         return plugin;
 }
 
-static void
-xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar
-*value)
-{
-        g_return_if_fail (decoder);
-        g_return_if_fail (key);
-        g_return_if_fail (value);
-        g_return_if_fail (decoder->transport);
-
-        xmms_transport_mediainfo_property_set (decoder->transport, key, value);
-
-}
-
 static gpointer
 xmms_decoder_thread (gpointer data)
 {
         xmms_transport_t *transport;
-        xmms_playlist_entry_t *entry;
 
         xmms_decoder_t *decoder = data;
         xmms_decoder_decode_block_method_t decode_block;
@@ -874,8 +842,7 @@ xmms_decoder_thread (gpointer data)
         xmms_object_ref (decoder);
 
         transport = xmms_decoder_transport_get (decoder);
-        entry = xmms_transport_entry_get (transport);
-        xmms_medialib_logging_start (entry);
+        /*xmms_medialib_logging_start (entry);*/
 
         g_mutex_lock (decoder->mutex);
 
@@ -893,7 +860,7 @@ xmms_decoder_thread (gpointer data)
 
         decoder->thread = NULL;
         XMMS_DBG ("Decoder thread quitting");
-        xmms_medialib_logging_stop (entry, decoder->output);
+        /*xmms_medialib_logging_stop (entry, decoder->output);*/
 
         if (decoder->running) {
                 /* This means that we eofed... */

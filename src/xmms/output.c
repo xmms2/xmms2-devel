@@ -104,7 +104,7 @@ struct xmms_output_St {
 
 	xmms_playlist_t *playlist;
 
-	xmms_playlist_entry_t *playing_entry;
+	xmms_medialib_entry_t playing_entry;
 
 	/** Supported formats */
 	GList *format_list;
@@ -350,7 +350,6 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 		if (output->decoder) {
 			xmms_decoder_stop (output->decoder);
 			xmms_object_unref (output->decoder);
-			xmms_object_unref (output->playing_entry);
 			output->decoder = NULL;
 			output->playing_entry = NULL;
 			output->running = FALSE;
@@ -397,33 +396,30 @@ xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 static guint
 xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 {
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 	guint ret;
 
 	entry = xmms_output_playing_entry_get (output, error);
 	if (!entry)
 		return 0;
 
-	ret = xmms_playlist_entry_id_get (entry);
-	xmms_object_unref (entry);
+	ret = xmms_medialib_entry_id_get (entry);
 	return ret;
 }
 
 /**
-  * Get the current #xmms_playlist_entry_t for the output.
+  * Get the current #xmms_medialib_entry for the output.
   * This is the one is currently played.
   */
 
-xmms_playlist_entry_t *
+xmms_medialib_entry_t
 xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *error)
 {
-	xmms_playlist_entry_t *ret;
+	xmms_medialib_entry_t ret;
 	g_return_val_if_fail (output, NULL);
 
 	g_mutex_lock (output->mutex);
 	ret = output->playing_entry;
-	if (ret)
-		xmms_object_ref (ret);
 	g_mutex_unlock (output->mutex);
 	return ret;
 }
@@ -734,13 +730,13 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 			return -1;
 		}
 
-		output->playing_entry = g_queue_pop_head (output->entry_list);
+		output->playing_entry = GPOINTER_TO_UINT (g_queue_pop_head (output->entry_list));
 		output->played = 0;
 
 		xmms_object_emit_f (XMMS_OBJECT (output),
 		    		XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
 		    		XMMS_OBJECT_CMD_ARG_UINT32,
-		    		xmms_playlist_entry_id_get (output->playing_entry));
+		    		xmms_medialib_entry_id_get (output->playing_entry));
 	}
 	
 	g_mutex_unlock (output->mutex);
@@ -770,7 +766,6 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	} else if (xmms_decoder_iseos (output->decoder)) {
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (output->decoder);
-		xmms_object_unref (output->playing_entry);
 		output->decoder = NULL;
 		output->playing_entry = NULL;
 		g_mutex_unlock (output->mutex);
@@ -801,8 +796,8 @@ decoder_ended (xmms_object_t *object, gconstpointer arg, gpointer data)
 gboolean
 xmms_output_decoder_start (xmms_output_t *output)
 {
-	xmms_playlist_entry_t *entry;
-	xmms_decoder_t *decoder;
+	xmms_medialib_entry_t entry;
+	xmms_decoder_t *decoder = NULL;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -814,11 +809,11 @@ xmms_output_decoder_start (xmms_output_t *output)
 			return FALSE;
 		}
 
-		decoder = xmms_playlist_entry_start (entry);
+		/* HERE WE NEED A NEW DECODER!!!
+		decoder = xmms__entry_start (entry);
+		*/
 
-		if (!decoder) {
-			xmms_object_unref (entry);
-		} else {
+		if (decoder) {
 			break;
 		}
 	}
@@ -837,7 +832,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	xmms_decoder_start (decoder, output->effects, output);
 	g_queue_push_tail (output->decoder_list, decoder);
-	g_queue_push_tail (output->entry_list, entry);
+	g_queue_push_tail (output->entry_list, GUINT_TO_POINTER (entry));
 
 	return TRUE;
 }
@@ -911,10 +906,9 @@ xmms_output_thread (gpointer data)
 		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (XMMS_OBJECT (output->decoder));
-		xmms_object_unref (output->playing_entry);
 		output->played = 0;
 		output->decoder = NULL;
-		output->playing_entry = NULL;
+		output->playing_entry = 0;
 	}
 
 	output->running = FALSE;

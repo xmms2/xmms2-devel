@@ -75,6 +75,63 @@ xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_LOAD, name);
 }
 
+xmmsc_result_t *
+xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO);
+	xmms_ipc_msg_put_uint32 (msg, id);
+
+	res = xmmsc_send_msg (c, msg);
+	xmms_ipc_msg_destroy (msg);
+
+	return res;
+}
+
+static void
+hash_insert (const void *key, const void *value, void *udata)
+{
+	x_hash_t *hash = udata;
+	x_hash_insert (hash, strdup ((char *)key), strdup ((char *)value));
+}
+
+x_hash_t *
+xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
+{
+	xmmsc_result_t *res;
+	x_hash_t *hash, *ret;
+
+	res = xmmsc_medialib_get_info (c, id);
+	if (!res)
+		return NULL;
+
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		return NULL;
+	}
+
+	if (!xmmsc_result_get_hashtable (res, &hash)) {
+		xmmsc_result_unref (res);
+		return NULL;
+	}
+
+	ret = x_hash_new_full (x_str_hash, x_str_equal, g_free, g_free);
+
+	x_hash_foreach (hash, hash_insert, ret);
+
+	xmmsc_result_unref (res);
+	return ret;
+}
+
+xmmsc_result_t *
+xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
+{
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+}
+
 /** @} */
 
 

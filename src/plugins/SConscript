@@ -1,7 +1,7 @@
 
 Import('base_env')
 
-base_env = base_env.Copy(LINKFLAGS=["-module", "-avoid-version"])
+base_env = base_env.Copy(LINKFLAGS=["-module", "-avoid-version"], LIBS=["xmmsutil"], LIBPATH=["#builddir/lib/xmmsutil"])
 
 Export('base_env')
 

@@ -71,7 +71,7 @@ struct xmms_transport_St {
 	/** The entry that are transported.
 	 * The url will be extracted from this
 	 * upon open */
-	xmms_playlist_entry_t *entry;
+	xmms_medialib_entry_t entry;
 
 	GMutex *mutex;
 	GCond *cond;
@@ -104,30 +104,6 @@ struct xmms_transport_St {
 /*
  * Public functions
  */
-
-GList *
-xmms_transport_stats (xmms_transport_t *transport, GList *list)
-{
-	gchar *tmp, *tmp2;
-
-	if (!transport)
-		return list;
-
-	g_mutex_lock (transport->mutex);
-	tmp = g_strdup_printf ("transport.total_bytes=%llu", transport->total_bytes);
-	list = g_list_append (list, tmp);
-	tmp2 = xmms_util_encode_path (xmms_playlist_entry_url_get (transport->entry));
-	tmp = g_strdup_printf ("transport.url=%s", tmp2);
-	g_free (tmp2);
-	list = g_list_append (list, tmp);
-	tmp = g_strdup_printf ("transport.mimetype=%s", transport->mimetype);
-	list = g_list_append (list, tmp);
-	tmp = g_strdup_printf ("transport.buffer_underruns=%u", transport->buffer_underruns);
-	list = g_list_append (list, tmp);
-	g_mutex_unlock (transport->mutex);
-
-	return list;
-}
 
 /**
  * Returns the plugin for this transport.
@@ -272,19 +248,21 @@ xmms_transport_new ()
  */
 
 gboolean
-xmms_transport_open (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
+xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 {
+	gchar *tmp;
 	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
-	XMMS_DBG ("Trying to open stream: %s", xmms_playlist_entry_url_get (entry));
+	tmp = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	XMMS_DBG ("Trying to open stream: %s", tmp);
 	
-	transport->plugin = xmms_transport_plugin_find 
-		(xmms_playlist_entry_url_get (entry));
+	transport->plugin = xmms_transport_plugin_find (tmp);
+	g_free (tmp);
 	if (!transport->plugin)
 		return FALSE;
+
 	transport->entry = entry;
-	xmms_object_ref (transport->entry);
 	
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (transport->plugin));
 
@@ -301,7 +279,7 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 	g_return_val_if_fail (transport, NULL);
 
 	g_mutex_lock (transport->mutex);
-	ret =  xmms_playlist_entry_url_get (transport->entry);
+	ret =  xmms_medialib_entry_property_get (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	g_mutex_unlock (transport->mutex);
 
 	return ret;
@@ -310,37 +288,11 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 /** 
  * Gets the current playlist entry from the transport.
  */
-xmms_playlist_entry_t *
-xmms_transport_entry_get (const xmms_transport_t *const transport)
+xmms_medialib_entry_t
+xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
 {
 	g_return_val_if_fail (transport, NULL);
 	return transport->entry;
-}
-
-
-
-/**
- * Updates the current entry 
- */
-void
-xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
-{
-	g_return_if_fail (transport);
-	g_return_if_fail (entry);
-
-	xmms_playlist_entry_property_copy (entry, transport->entry);
-	xmms_playlist_entry_changed (transport->entry);
-}
-
-void
-xmms_transport_mediainfo_property_set (xmms_transport_t *transport, gchar *key, gchar *value)
-{
-	g_return_if_fail (transport);
-	g_return_if_fail (transport->entry);
-	g_return_if_fail (key);
-	g_return_if_fail (value);
-
-	xmms_playlist_entry_property_set (transport->entry, key, value);
 }
 
 /**
@@ -621,13 +573,13 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
  */
 
 gboolean
-xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *entry, 
+xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t entry, 
 		gpointer data)
 {
 	xmms_transport_open_method_t init_method;
 	xmms_transport_lmod_method_t lmod_method;
 	xmms_plugin_t *plugin;
-	const gchar *url;
+	gchar *url;
 	
 	plugin = transport->plugin;
 	
@@ -641,18 +593,21 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 
 	xmms_transport_private_data_set (transport, data);
 
-	url = xmms_playlist_entry_url_get (transport->entry);
+	url = xmms_medialib_entry_property_get (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
 	if (!init_method (transport, url)) {
+		g_free (url);
 		return FALSE;
 	}
+
+	g_free (url);
 
 	if (lmod_method) {
 		guint lmod;
 		gchar *lmod_str;
 		lmod = lmod_method (transport);
 		lmod_str = g_strdup_printf ("%d", lmod);
-		xmms_playlist_entry_property_set (transport->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD, lmod_str);
+		xmms_medialib_entry_property_set (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod_str);
 		g_free (lmod_str);
 	}
 
@@ -719,7 +674,6 @@ xmms_transport_destroy (xmms_object_t *object)
 		close_method (transport);
 
 	xmms_object_unref (transport->plugin);
-	xmms_object_unref (transport->entry);
 
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->mime_cond);
