@@ -20,6 +20,10 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
+typedef enum {
+	XMMS_IPC_SIGNAL_END,
+} xmms_ipc_signals_t;
+
 #define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
 #define XMMS_OBJECT_MAIN "/xmms/main"
 #define XMMS_OBJECT_CLIENT "/xmms/client"

@@ -112,6 +112,18 @@ xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 }
 
 guint
+xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
+{
+	gint cnt;
+
+	g_return_val_if_fail (ringbuf, 0);
+
+	cnt = MIN (length, xmms_ringbuf_bytes_free (ringbuf));
+	ringbuf->rd_index = (ringbuf->buffer_size + ((ringbuf->rd_index - cnt) % ringbuf->buffer_size)) % ringbuf->buffer_size;
+	return cnt;
+}
+
+guint
 xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 {
 	guint to_read, r = 0, cnt;

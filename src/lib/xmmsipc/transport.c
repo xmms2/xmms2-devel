@@ -1,7 +1,14 @@
 #include <glib.h>
 
-#include "ipc_transport.h"
+#include "xmms/ipc_transport.h"
+#include "socket_unix.h"
 
+void
+xmms_ipc_transport_destroy (xmms_ipc_transport_t *ipct)
+{
+	g_return_if_fail (ipct);
+	
+}
 
 gint
 xmms_ipc_transport_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
