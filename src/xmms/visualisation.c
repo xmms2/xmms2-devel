@@ -33,6 +33,12 @@
 static GMutex *visuserslock;
 static guint32 visusers = 0;
 
+
+/** @defgroup Visualisation Visualisation
+  * @ingroup XMMSServer
+  * @{
+  */
+
 struct xmms_visualisation_St {
 	xmms_object_t object;
 	xmms_core_t *core;
@@ -110,8 +116,6 @@ static void output_spectrum (xmms_visualisation_t *vis) {
 
 	vis->spec[0] = 1000.0f * vis->pos * FFT_LEN / vis->samplerate;
 	
-	xmms_playback_vis_spectrum (vis->core, vis->spec);
-
 	vis->pos++;
 }
 
@@ -231,3 +235,5 @@ static void fft(gint16 *samples, gfloat *spec){
 	spec[FFT_LEN/2-1] /= 2;
 
 }
+
+/** @} */

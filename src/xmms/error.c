@@ -24,6 +24,11 @@
 #include <glib.h>
 #include <xmms/error.h>
 
+/** @defgroup Error Error
+  * @ingroup XMMSServer
+  * @{
+  */
+
 static const gchar *typenames[XMMS_ERROR_COUNT] = {
 	[XMMS_ERROR_NONE] = "org.xmms.Error.NoError",
 	[XMMS_ERROR_GENERIC] = "org.xmms.Error.GenericError",
@@ -50,3 +55,4 @@ xmms_error_message_get (xmms_error_t *err)
 	return err->message;
 }
 
+/** @} */

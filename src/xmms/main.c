@@ -21,6 +21,18 @@
  * This file controls XMMS2 mainloop.
  */
 
+/** @defgroup XMMSServer XMMSServer
+  * @brief look at this if you want to code inside the server.
+  * The XMMS2 project is splitted in to a server part and a Clientpart.
+  * This documents the server part of the project.
+  */
+
+/**
+  * @defgroup Main
+  * @ingroup XMMSServer
+  * @{ 
+  */
+
 #include <glib.h>
 
 #include "xmms/plugin.h"
@@ -222,3 +234,5 @@ main (int argc, char **argv)
 
 	return 0;
 }
+
+/** @} */

@@ -56,9 +56,12 @@ char *xmms_log_filename = NULL;
 static FILE *xmms_log_stream = NULL;
 static int xmms_log_daemonized = 0;
 
-/* Public function definitions */
+/** @defgroup Log Log
+  * @ingroup XMMSServer
+  * @{
+  */
 
-/* Initialize the log module, creates log file */
+/** Initialize the log module, creates log file */
 gint
 xmms_log_initialize (const gchar *filename)
 {
@@ -80,7 +83,7 @@ xmms_log_initialize (const gchar *filename)
 	return 1;
 }
 
-/* Shutdown the log module, close the logfile */
+/** Shutdown the log module, close the logfile */
 void
 xmms_log_shutdown (void)
 {
@@ -90,7 +93,7 @@ xmms_log_shutdown (void)
 		g_free (xmms_log_filename);
 }
 
-/* Close everything, start up with clean slate when 
+/** Close everything, start up with clean slate when 
  * run as a daemon */
 void
 xmms_log_daemonize (void)
@@ -108,7 +111,7 @@ xmms_log_daemonize (void)
 #endif
 }
 
-/* Log only if verbose mode is set. Prepend output with DEBUG:  */
+/** Log only if verbose mode is set. Prepend output with DEBUG:  */
 void
 xmms_log_debug (const gchar *fmt, ...)
 {
@@ -126,7 +129,7 @@ xmms_log_debug (const gchar *fmt, ...)
 	xmms_log_string_with_time (XMMS_LOG_DEBUG, "DEBUG: %s\n", buff);
 }
 
-/* Log to console and file */
+/** Log to console and file */
 void
 xmms_log (const char *fmt, ...)
 {
@@ -140,6 +143,7 @@ xmms_log (const char *fmt, ...)
 	xmms_log_string_with_time (XMMS_LOG_INFORMATION, "%s\n", buff);
 }
 
+/** Fatal log message. Terminate server */
 void
 xmms_log_fatal (const gchar *fmt, ...)
 {
@@ -246,3 +250,5 @@ xmms_log_close_logfile ()
 
 	return 1;
 }
+
+/** @} */

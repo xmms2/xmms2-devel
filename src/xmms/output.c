@@ -49,6 +49,11 @@ static void xmms_output_status_changed (xmms_object_t *object, gconstpointer dat
  * Type definitions
  */
 
+/** @defgroup Output Output
+  * @ingroup XMMSServer
+  * @{
+  */
+
 typedef enum {
 	XMMS_OUTPUT_TYPE_WR,
 	XMMS_OUTPUT_TYPE_FILL,

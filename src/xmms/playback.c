@@ -14,9 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-/** @file
- *
- */
+/** @file Playback support */
 
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
@@ -40,35 +38,63 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * @defgroup PlayBack PlayBack
+ * @ingroup XMMSServer
+ * @brief Playback support.
+ * @{
+ */
+ 
+
+/** The different playlist operations. This describes
+  * What to do when core is asking for the next entry
+  * in the playlist
+  */
 typedef enum {
+	/** Play next entry */
 	XMMS_PLAYBACK_NEXT,
+	/** Play previous entry */
 	XMMS_PLAYBACK_PREV,
+	/** Hold the same entry as now */
 	XMMS_PLAYBACK_HOLD,
 } xmms_playback_pl_op_t;
 
+/** The different modes that the playback can act */
 typedef enum {
+	/** Normal mode, upon next, choose the next song */
 	XMMS_PLAYBACK_MODE_NONE,
+	/** Repeat the whole playlist when we reach the end */
 	XMMS_PLAYBACK_MODE_REPEATALL,
+	/** Repeat the same entry on and on and on and on .. */
 	XMMS_PLAYBACK_MODE_REPEATONE,
+	/** Stop right after we played one entry */
 	XMMS_PLAYBACK_MODE_STOPAFTERONE,
 } xmms_playback_mode_t;
 
 
+/** Structure for the playback */
 struct xmms_playback_St {
 	xmms_object_t object;
 
+	/** Core that we use */
 	xmms_core_t *core;
 
 	GCond *cond;
 	GMutex *mtx;
+	/** How far we have played */
 	guint current_playtime;
 
+	/** Playlist that tells us which songs to play */
 	xmms_playlist_t *playlist;
+	/** Current song playing */
 	xmms_playlist_entry_t *current_song;
 	xmms_mediainfo_thread_t *mediainfothread;
 
+	/** The current mode */
 	xmms_playback_mode_t mode;
+	/** Next Playlist operation */ 
 	xmms_playback_pl_op_t playlist_op;
+	/** Are we playing or just ideling? */
 	xmms_playback_status_t status;
 };
 
@@ -82,6 +108,8 @@ static void xmms_playback_seekms (xmms_playback_t *playback, guint32 millisecond
 static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_error_t *err);
 static void xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err);
 static guint xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err);
+static guint xmms_playback_currentid (xmms_playback_t *playback, xmms_error_t *err);
+static guint xmms_playback_current_playtime (xmms_playback_t *playback, xmms_error_t *err); 
 
 /** 
  * Convinent macro for use inside playback.c
@@ -129,6 +157,16 @@ xmms_playback_wakeup (xmms_playback_t *playback)
 	g_cond_signal (playback->cond);
 }
 
+/**
+  * @defgroup PlaybackClientMethods PlaybackClientMethods
+  * @ingroup PlayBack
+  * @{
+  */
+
+/** This jumps to a certain ID in the playlist and plays it,
+  * if status is playing. Otherwise it just aligns the playlist for
+  * next entry 
+  */
 XMMS_METHOD_DEFINE (jump, xmms_playback_jump, xmms_playback_t *, NONE, UINT32, NONE);
 static void
 xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err)
@@ -154,6 +192,9 @@ xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err)
 
 }
 
+/**
+  * This jumps to the next song in the playlist
+  */
 XMMS_METHOD_DEFINE (next, xmms_playback_next, xmms_playback_t *, NONE, NONE, NONE);
 static void
 xmms_playback_next (xmms_playback_t *playback, xmms_error_t *err)
@@ -172,6 +213,10 @@ xmms_playback_next (xmms_playback_t *playback, xmms_error_t *err)
 
 }
 
+
+/**
+  * This jumps to the previous song in the playlist
+  */
 XMMS_METHOD_DEFINE (prev, xmms_playback_prev, xmms_playback_t *, NONE, NONE, NONE);
 static void
 xmms_playback_prev (xmms_playback_t *playback, xmms_error_t *err)
@@ -189,6 +234,9 @@ xmms_playback_prev (xmms_playback_t *playback, xmms_error_t *err)
 	prev_song (playback);
 }
 
+/**
+  * Starts playback
+  */
 XMMS_METHOD_DEFINE (start, xmms_playback_start, xmms_playback_t *, NONE, NONE, NONE);
 static void
 xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err)
@@ -206,6 +254,9 @@ xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err)
 	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_PLAY);
 }
 
+/**
+  * Stops playback and destroys the decoder
+  */
 XMMS_METHOD_DEFINE (stop, xmms_playback_stop, xmms_playback_t *, NONE, NONE, NONE);
 static void
 xmms_playback_stop (xmms_playback_t *playback, xmms_error_t *err)
@@ -219,6 +270,9 @@ xmms_playback_stop (xmms_playback_t *playback, xmms_error_t *err)
 	}
 }
 
+/**
+  * Suspends playback
+  */
 XMMS_METHOD_DEFINE (pause, xmms_playback_pause, xmms_playback_t *, NONE, NONE, NONE);
 static void
 xmms_playback_pause (xmms_playback_t *playback, xmms_error_t *err)
@@ -231,8 +285,11 @@ xmms_playback_pause (xmms_playback_t *playback, xmms_error_t *err)
 
 }
 
+/**
+  * Gives the client the current playing ID
+  */
 XMMS_METHOD_DEFINE (currentid, xmms_playback_currentid, xmms_playback_t *, UINT32, NONE, NONE);
-guint
+static guint
 xmms_playback_currentid (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (!playback->current_song)
@@ -240,6 +297,9 @@ xmms_playback_currentid (xmms_playback_t *playback, xmms_error_t *err)
 	return xmms_playlist_entry_id_get (playback->current_song);
 }
 
+/**
+  * Gives the client the status
+  */
 XMMS_METHOD_DEFINE (status, xmms_playback_status, xmms_playback_t *, UINT32, NONE, NONE);
 static guint
 xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err)
@@ -247,6 +307,9 @@ xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err)
 	return (guint) playback->status;
 }
 
+/**
+  * Seeks the specified number of milliseconds
+  */
 XMMS_METHOD_DEFINE (seek_ms, xmms_playback_seekms, xmms_playback_t *, NONE, UINT32, NONE);
 static void
 xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds, xmms_error_t *err)
@@ -254,6 +317,9 @@ xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds, xmms_erro
 	xmms_decoder_seek_ms (xmms_core_decoder_get (playback->core), milliseconds, err);
 }
 
+/**
+  * Seeks the specified number of samples
+  */
 XMMS_METHOD_DEFINE (seek_samples, xmms_playback_seeksamples, xmms_playback_t *, NONE, UINT32, NONE);
 static void
 xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_error_t *err)
@@ -261,8 +327,11 @@ xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_erro
 	xmms_decoder_seek_samples (xmms_core_decoder_get (playback->core), samples, err);
 }
 
+/**
+  * Gives the client the playback time in milliseconds
+  */
 XMMS_METHOD_DEFINE (current_playtime, xmms_playback_current_playtime, xmms_playback_t *, UINT32, NONE, NONE);
-guint
+static guint
 xmms_playback_current_playtime (xmms_playback_t *playback, xmms_error_t *err)
 {
 	return playback->current_playtime;
@@ -283,10 +352,14 @@ status_str (xmms_playback_t *playback)
 	return "unknown";
 }
 
-GList *xmms_playback_stats (xmms_playback_t *playback, xmms_error_t *err);
+static GList *xmms_playback_stats (xmms_playback_t *playback, xmms_error_t *err);
+
+/**
+  * Shows some statistics about the Server
+  */
 XMMS_METHOD_DEFINE (statistics, xmms_playback_stats, xmms_playback_t *, STRINGLIST, NONE, NONE);
 
-GList *
+static GList *
 xmms_playback_stats (xmms_playback_t *playback, xmms_error_t *err)
 {
 	GList *ret = NULL;
@@ -307,6 +380,13 @@ xmms_playback_stats (xmms_playback_t *playback, xmms_error_t *err)
 	return ret;
 }
 
+/** @} */
+
+/**
+  * Sets the playback time to #time
+  * @param playback the playback to modify
+  * @param time the current playback time in milliseconds
+  */
 void
 xmms_playback_playtime_set (xmms_playback_t *playback, guint time)
 {
@@ -334,6 +414,9 @@ xmms_playback_modechr_to_int (const gchar *mode)
 }
 
 /**
+ * Return the next entry in the playlist, the one to be played.
+ * @param playback the #xmms_playback_t to query
+ * @return next #xmms_playlist_entry_t to play
  * @todo fix stopafterone
  */
 
@@ -404,28 +487,13 @@ mode_change (xmms_object_t *object, gconstpointer data, gpointer userdata)
 
 }
 
-/*
-static void
-handle_playlist_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	const xmms_playlist_changed_msg_t *plch = data;
-	xmms_playback_t *playback = userdata;
-
-	if (plch->type == XMMS_PLAYLIST_CHANGED_CLEAR) {
-		playback->playlist_op = XMMS_PLAYBACK_NEXT;
-	}
-		
-	xmms_object_emit (XMMS_OBJECT ((xmms_playback_t *)userdata), 
-			  XMMS_SIGNAL_PLAYLIST_CHANGED, data);
-}
-
-static void
-handle_playlist_entry_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	xmms_object_emit (XMMS_OBJECT ((xmms_playback_t *)userdata), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, data);
-}
-*/
-
+/**
+  * Initialize a new #xmms_playback_t for use by core.
+  *
+  * @param core a core to be linked to this playback.
+  * @param playlist the #xmms_playlist_t to be used.
+  * @returns newly allocated #xmms_playback_t
+  */
 xmms_playback_t *
 xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 {
@@ -440,6 +508,10 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 	playback->cond = g_cond_new ();
 	playback->mtx = g_mutex_new ();
 	playback->playlist_op = XMMS_PLAYBACK_NEXT;
+	playback->playlist = playlist;
+	playback->core = core;
+	playback->mediainfothread = xmms_mediainfo_thread_start (core, playlist);
+
 	val = xmms_config_value_register ("core.next_mode", "none", mode_change, playback);
 	playback->mode = xmms_playback_modechr_to_int (xmms_config_value_string_get (val));
 
@@ -495,27 +567,21 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 
 	xmms_dbus_register_object ("playback", XMMS_OBJECT (playback));
 
-	xmms_dbus_register_onchange (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_PLAYTIME);
-	xmms_dbus_register_onchange (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_CURRENTID);
-	xmms_dbus_register_onchange (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_STATUS);
-
-	playback->playlist = playlist;
-
-	/*
-	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED,
-			     handle_playlist_changed, playback);
-	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID,
-			     handle_playlist_entry_changed, playback);
-			     
-	*/
-
-	playback->core = core;
-
-	playback->mediainfothread = xmms_mediainfo_thread_start (core, playlist);
+	xmms_dbus_register_onchange (XMMS_OBJECT (playback), 
+				     XMMS_SIGNAL_PLAYBACK_PLAYTIME);
+	xmms_dbus_register_onchange (XMMS_OBJECT (playback), 
+				     XMMS_SIGNAL_PLAYBACK_CURRENTID);
+	xmms_dbus_register_onchange (XMMS_OBJECT (playback), 
+				     XMMS_SIGNAL_PLAYBACK_STATUS);
 
 	return playback;
 }
 
+/**
+  * Calls #xmms_mediainfo_thread_add to schedule a mediainfo extraction.
+  * @param playback a #xmms_playback_t
+  * @param entry the entry to schedule
+  */
 void
 xmms_playback_mediainfo_add_entry (xmms_playback_t *playback, xmms_playlist_entry_t *entry)
 {
@@ -526,21 +592,24 @@ xmms_playback_mediainfo_add_entry (xmms_playback_t *playback, xmms_playlist_entr
 	xmms_mediainfo_thread_add (playback->mediainfothread, xmms_playlist_entry_id_get (entry));
 }
 
+/**
+  * Fetch the #xmms_playlist_t from the playback
+  * 
+  * @return a #xmms_playlist_t that are used by the playback
+  */
 xmms_playlist_t *
 xmms_playback_playlist_get (xmms_playback_t *playback)
 {
 	return playback->playlist;
 }
 
+/**
+  * Deallocate all memory used by the playback
+  */
 void
 xmms_playback_destroy (xmms_playback_t *playback)
 {
 	g_free (playback);
 }
 
-void
-xmms_playback_vis_spectrum (xmms_core_t *playback, gfloat *spec)
-{
-	xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_VISUALISATION_SPECTRUM, spec);
-}
-
+/** @} */

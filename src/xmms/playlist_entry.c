@@ -31,6 +31,11 @@
 /*
  * Type definitions.
  */
+
+/** @defgroup PlaylistEntry PlaylistEntry
+  * @ingroup Playlist
+  * @{
+  */
 	
 static void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
 
@@ -289,3 +294,4 @@ xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *e
 	g_free (arg);
 }
 
+/** @} */

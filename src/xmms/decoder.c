@@ -50,6 +50,10 @@
  */
 
 
+/** @defgroup Decoder Decoder
+  * @ingroup XMMSServer
+  * @{
+  */
 
 /**
  * Structure describing decoder-objects.
@@ -105,9 +109,11 @@ static gpointer xmms_decoder_thread (gpointer data);
  * Public functions
  */
 
+/** @} */
+
 
 /**
- * @defgroup Decoder Decoder
+ * @defgroup DecoderPlugin DecoderPlugin
  * @ingroup XMMSPLugin
  * @brief Decoder plugin documentation.
  *
@@ -303,6 +309,11 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 }
 
 /** @} */
+
+
+/** @ingroup Decoder
+  * @{
+  */
 
 guint
 xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
@@ -663,3 +674,4 @@ xmms_decoder_thread (gpointer data)
 	return NULL;
 }
 
+/** @} */

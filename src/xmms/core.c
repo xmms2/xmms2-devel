@@ -39,6 +39,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** @defgroup Core Core
+  * @ingroup XMMSServer
+  * @{
+  */
+
 /** Core object */
 struct xmms_core_St {
 	xmms_object_t object;

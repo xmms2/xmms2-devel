@@ -33,6 +33,11 @@
 
 #include "internal/plugin_int.h"
 
+/** @defgroup Effect Effect
+  * @ingroup XMMSServer
+  * @{
+  */
+
 struct xmms_effect_St {
 	struct xmms_effect_St *next;
 	void (*deinit) (xmms_effect_t *);
@@ -156,3 +161,6 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 	}
 	return stack;
 }
+
+/** @} */
+

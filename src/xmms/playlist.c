@@ -35,6 +35,20 @@
 #include "xmms/core.h"
 #include "xmms/signal_xmms.h"
 
+/** @defgroup PlaylistClientMethods PlaylistClientMethods
+  * @ingroup Playlist
+  * @brief the playlist methods that could be used by the client
+  */
+
+/** @defgroup Playlist Playlist
+  * @ingroup XMMSServer
+  * @brief This is the playlist control.
+  *
+  * A playlist is a central thing in the XMMS server, it
+  * tells us what to do after we played the following entry
+  * @{
+  */
+
 /* Internal macro to emit XMMS_SIGNAL_PLAYLIST_CHANGED */
 #define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) { \
 	xmms_object_method_arg_t *arg; \
@@ -76,10 +90,12 @@ static gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint
  * Public functions
  */
 
+/** Lock the playlist for changes and queries */
 #define XMMS_PLAYLIST_LOCK(a) g_mutex_lock (a->mutex)
+/** Unlock the playlist for changes and queries */
 #define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
 
-
+/** Gererate statistics for this playlist */
 GList *
 xmms_playlist_stats (xmms_playlist_t *playlist, GList *list)
 {
@@ -134,9 +150,12 @@ xmms_playlist_entries_left (xmms_playlist_t *playlist)
 	return ret;
 }
 
-/** shuffles playlist */
+/** Shuffles the playlist
+  * @ingroup PlaylistClientMethods
+  */
 XMMS_METHOD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 
+/** shuffles playlist */
 static void
 xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 {
@@ -184,10 +203,13 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 	XMMS_PLAYLIST_UNLOCK (playlist);
 }
 
-/** removes entry from playlist */
+/** Removes the id from the playlist
+  * @ingroup PlaylistClientMethods
+  */
 
 XMMS_METHOD_DEFINE (remove, xmms_playlist_id_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 
+/** removes entry from playlist */
 gboolean 
 xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 {
@@ -220,9 +242,12 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 	return TRUE;
 }
 
-/** move entry in playlist */
+/** Move the id a certain number of steps.
+ * @ingroup PlaylistClientMethods
+ */
 XMMS_METHOD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
 
+/** move entry in playlist */
 static gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err)
 {
@@ -292,7 +317,16 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 
 }
 
-
+/**
+  * Convenient function for adding a URL to the playlist,
+  * Creates a #xmms_playlist_entry_t for you and adds it
+  * to the list.
+  *
+  * @param playlist the playlist to add it URL to.
+  * @param nurl the URL to add
+  * @param err an #xmms_error_t that should be defined upon error.
+  * @return TRUE on success and FALSE otherwise.
+  */
 gboolean
 xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 {
@@ -313,6 +347,9 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	return res;
 }
 
+/** Add a URL to the playlist
+ * @ingroup PlaylistClientMethods
+ */
 XMMS_METHOD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
 
 
@@ -321,7 +358,9 @@ XMMS_METHOD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, 
  *  This will append or prepend the entry according to
  *  the option.
  *  This function will wake xmms_playlist_wait.
+ *  @param playlist the playlist to add the entry to.
  *  @param options should be XMMS_PLAYLIST_APPEND or XMMS_PLAYLIST_PREPEND
+ *  @param file the #xmms_playlist_entry_t to add
  */
 
 gboolean
@@ -380,6 +419,10 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 }
 
+/** Return the mediainfo for the entry
+ * @ingroup PlaylistClientMethods
+ */
+
 XMMS_METHOD_DEFINE (getmediainfo, xmms_playlist_get_byid, xmms_playlist_t *, PLAYLIST_ENTRY, UINT32, NONE);
 
 /** Get a entry based on position in playlist.
@@ -387,7 +430,6 @@ XMMS_METHOD_DEFINE (getmediainfo, xmms_playlist_get_byid, xmms_playlist_t *, PLA
  *  @returns a xmms_playlist_entry_t that lives on the given position.
  *  @param pos is the position in the playlist where 0 is the first.
  */
-
 xmms_playlist_entry_t *
 xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 {
@@ -412,8 +454,12 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 
 }
 
+/** Clear the playlist
+ * @ingroup PlaylistClientMethods
+ */
 XMMS_METHOD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 
+/** Clear the playlist */
 static void
 xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 {
@@ -478,6 +524,9 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 }
 
+/**
+  * Get the previous entry in the playlist
+  */
 xmms_playlist_entry_t *
 xmms_playlist_get_prev_entry (xmms_playlist_t *playlist)
 {
@@ -507,6 +556,10 @@ xmms_playlist_get_prev_entry (xmms_playlist_t *playlist)
 
 }
 
+/**
+  * Get the current (the one that might be playing) entry from
+  * the playlist
+  */
 xmms_playlist_entry_t *
 xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 {
@@ -603,6 +656,11 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 	return g_strcasecmp (tmpa, tmpb);
 }
 
+/** Sort the playlist 
+ * @ingroup PlaylistClientMethods
+ */
+XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
+
 /** Sorts the playlist by properties.
  *
  *  This will sort the list.
@@ -610,7 +668,6 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
  *  should use when sorting. 
  */
 
-XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
 static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
@@ -628,14 +685,17 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 
 }
 
+/** List the playlist
+ * @ingroup PlaylistClientMethods
+ */
+XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
+
 /** Lists the current playlist.
  *
  * @returns A newly allocated GList with the current playlist.
  * Remeber that it is only the LIST that is copied. Not the entries.
  * The entries are however referenced, and must be unreffed!
  */
-XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
-
 GList *
 xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 {
@@ -712,6 +772,9 @@ xmms_playlist_init (void)
 	return ret;
 }
 
+/**
+  * Tell the playlist which #xmms_core_t to use.
+  */
 void
 xmms_playlist_core_set (xmms_playlist_t *playlist, xmms_core_t *core)
 {
@@ -746,4 +809,6 @@ xmms_playlist_close (xmms_playlist_t *playlist)
 
 	g_list_free (playlist->list);
 }
+
+/** @} */
 

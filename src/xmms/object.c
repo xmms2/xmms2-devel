@@ -22,6 +22,11 @@
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
 
+/** @defgroup Object Object
+  * @ingroup XMMSServer
+  * @{
+  */
+
 typedef struct {
 	xmms_object_handler_t handler;
 	gpointer userdata;
@@ -251,3 +256,5 @@ xmms_object_method_call (xmms_object_t *object, const char *method, xmms_object_
 	if (func)
 		func (object, arg);
 }
+
+/** @} */

@@ -21,6 +21,11 @@
 #include "xmms/util.h"
 #include <string.h>
 
+/** @defgroup Ringbuffer Ringbuffer
+  * @ingroup XMMSServer
+  * @{
+  */
+
 struct xmms_ringbuf_St {
 	guint8 *buffer;
 	gint buffer_size;
@@ -235,3 +240,4 @@ xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
 		g_cond_wait (ringbuf->eos_cond, mtx);
 
 }
+/** @} */

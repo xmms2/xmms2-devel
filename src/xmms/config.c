@@ -35,6 +35,11 @@
 #include "xmms/plugin.h"
 #include "xmms/dbus.h"
 
+/**
+  * @defgroup Config Config
+  * @ingroup XMMSServer
+  * @{
+  */
 
 struct xmms_config_St {
 	xmms_object_t obj;
@@ -578,3 +583,4 @@ xmms_config_value_register (const gchar *path,
 
 	return val;
 }
+/** @} */

@@ -44,6 +44,11 @@
 #include <dbus/dbus-glib.h>
 #include <glib.h>
 
+/** @defgroup DBus DBus
+  * @ingroup XMMSServer
+  * @{
+  */
+
 typedef struct xmms_dbus_connection_St {
         DBusConnection *connection;
 	GList *onchange_list;
@@ -544,3 +549,4 @@ xmms_dbus_init (xmms_core_t *core, const gchar *path)
 
         return TRUE;
 }
+/** @} */

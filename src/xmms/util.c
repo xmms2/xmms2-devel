@@ -28,6 +28,11 @@
 
 #include <sys/time.h>
 
+/** @defgroup Utils Utils
+  * @ingroup XMMSServer
+  * @{
+  */
+
 /** Returns TRUE if the char is regular. ie, not to be encoded. */
 #define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
 
@@ -120,3 +125,5 @@ xmms_util_time (void)
 	gettimeofday (&tv, NULL);
 	return tv.tv_sec;
 }
+
+/** @} */

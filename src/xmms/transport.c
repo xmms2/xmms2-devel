@@ -52,6 +52,11 @@ static gpointer xmms_transport_thread (gpointer data);
  * Type definitions
  */
 
+/** @defgroup Transport Transport
+  * @ingroup XMMSServer
+  * @{
+  */
+
 /** This describes a directory or a file */
 struct xmms_transport_entry_St {
 	/** Absolute path to entry */
@@ -906,3 +911,5 @@ xmms_transport_thread (gpointer data)
 	
 	return NULL;
 }
+
+/** @} */
