@@ -200,6 +200,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 				elif arg[1:] == 'pthread':
 					self.Append( LINKFLAGS = [ arg ] )
 					self.Append( CPPFLAGS = [ arg ] )
+				elif arg[1:6] == 'rpath':
+					self.Append( LINKFLAGS = [ arg ] )
 				elif arg[1:4] == 'Wl,':
 					self.Append( LINKFLAGS = [ arg ] )
 				elif arg[1:] == 'framework':
