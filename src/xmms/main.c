@@ -79,7 +79,6 @@ parse_config ()
 int
 main (int argc, char **argv)
 {
-
 	xmms_plugin_t *o_plugin;
 	xmms_config_data_t *config;
 	int opt;
@@ -92,7 +91,6 @@ main (int argc, char **argv)
         sigaddset (&signals, SIGHUP);
 	sigaddset (&signals, SIGTERM);
 	sigaddset (&signals, SIGINT);
-	sigaddset (&signals, SIGSEGV);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	

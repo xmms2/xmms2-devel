@@ -24,30 +24,36 @@
 #include <glib.h>
 
 static DBusServer *server;
-static DBusConnection *connections; /** @todo should be (hash)table */
+static GMutex *connectionslock;
+static GSList *connections = NULL;
 
 static const char *messages[]={"org.xmms.core.mediainfo"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
+
+static void do_send(gpointer data, gpointer user_data)
+{
+	 int clientser;
+	 dbus_connection_send (data, user_data, &clientser);
+}
+
 static void
 handle_playtime_changed (xmms_object_t *object, gconstpointer data, gpointer userdata) {
 
-	/* connectionslock.down */
+	 g_mutex_lock(connectionslock);
 
-	/* foreach connection */
 	if (connections) { 
 		DBusMessage *msg;
 		DBusMessageIter itr;
-		int clientser;
 
 		msg = dbus_message_new ("org.xmms.core.playtime-changed", NULL);
 		dbus_message_append_iter_init (msg, &itr);
 		dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT(data));
-		dbus_connection_send (connections, msg, &clientser);
+		g_slist_foreach (connections, do_send, msg);
 		dbus_message_unref (msg);
 	}
 
-	/* connectionslock.up */
+	 g_mutex_unlock(connectionslock);
 
 }
 
@@ -55,22 +61,20 @@ static void
 handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 
-	/* connectionslock.down */
+	 g_mutex_lock(connectionslock);
 
-	/* foreach connection */
 	if (connections) { 
 		DBusMessage *msg;
 		DBusMessageIter itr;
-		int clientser;
 
 		msg = dbus_message_new ("org.xmms.core.mediainfo-changed", NULL);
 		dbus_message_append_iter_init (msg, &itr);
 		dbus_message_iter_append_string (&itr, xmms_core_get_uri ());
-		dbus_connection_send (connections, msg, &clientser);
+		g_slist_foreach (connections, do_send, msg);
 		dbus_message_unref (msg);
 	}
 
-	/* connectionslock.up */
+	 g_mutex_unlock(connectionslock);
 
 }
 
@@ -88,7 +92,7 @@ handle_mediainfo(DBusMessageHandler *handler,
 	dbus_message_append_iter_init (rpy, &itr);
 	uri = xmms_core_get_uri ();
 	dbus_message_iter_append_string (&itr, uri);
-	dbus_connection_send (connections, rpy, &clientser);
+	dbus_connection_send (conn, rpy, &clientser);
 	dbus_message_unref (rpy);
 
 	g_free (uri);
@@ -100,11 +104,17 @@ static DBusHandlerResult
 handle_disconnect (DBusMessageHandler *handler,
 		   DBusConnection     *connection,
 		   DBusMessage        *message,
-                   void               *user_data) {
+                   void               *user_data)
+{
 
 	XMMS_DBG ("disconnect");
-	connections = NULL;
+
+	g_mutex_lock(connectionslock);
+	connections = g_slist_remove (connections, connection);
+	g_mutex_unlock(connectionslock);
+
 	dbus_connection_unref (connection);
+
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
@@ -114,8 +124,6 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	DBusMessageHandler *hand;
 
 	XMMS_DBG ("new connection");
-
-	g_assert(connections==NULL);
 
 	dbus_connection_ref (conn);
 
@@ -141,7 +149,9 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	}
 	dbus_connection_register_handler (conn, hand, disconnectmsgs, 1);
 
-	connections = conn; /* -> add to (hash)table... */
+	g_mutex_lock(connectionslock);
+	connections = g_slist_prepend (connections, conn);
+	g_mutex_unlock(connectionslock);
 
 	dbus_connection_setup_with_g_main (conn, g_main_context_default());
 
@@ -163,6 +173,8 @@ xmms_dbus_init(){
         DBusError err;
 
 	dbus_gthread_init (); //  dbus_enable_deadlocks ();
+
+	connectionslock = g_mutex_new ();
 
         dbus_error_init (&err);
 
