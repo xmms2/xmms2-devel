@@ -92,7 +92,6 @@ xmms_plugin_get (void)
 							xmms_samba_lmod);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
 	
 	return plugin;
 }
