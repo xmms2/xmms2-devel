@@ -81,6 +81,8 @@ struct xmms_output_St {
 	GQueue *entry_list;
 	xmms_decoder_t *decoder;
 
+	GList *effects;
+
 	GMutex *mutex;
 	GCond *cond;
 	GCond *fill_cond;
@@ -501,6 +503,52 @@ xmms_output_close (xmms_output_t *output)
 
 }
 
+static GList *
+get_effect_list ()
+{
+	GList *list = NULL;
+	gint i = 0;
+
+	while (42) {
+		xmms_config_value_t *cfg;
+		xmms_plugin_t *plugin;
+		gchar key[64];
+		const gchar *name;
+
+		g_snprintf (key, sizeof (key), "effect.order.%i", i++);
+
+		cfg = xmms_config_lookup (key);
+		if (!cfg)
+			break;
+
+		name = xmms_config_value_string_get (cfg);
+
+		/* check whether this plugin is enabled.
+		 * if the plugin doesn't provide the "enabled" config key,
+		 * we'll just assume it cannot be disabled.
+		 */
+		g_snprintf (key, sizeof (key), "effect.%s.enabled", name);
+
+		cfg = xmms_config_lookup (key);
+		if (cfg && !xmms_config_value_int_get (cfg)) {
+			continue;
+		}
+
+		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_EFFECT, name);
+		if (plugin) {
+			list = g_list_prepend (list, xmms_effect_new (plugin));
+
+			/* xmms_plugin_find() increases the refcount and
+			 * xmms_effect_new() does, too, so release one reference
+			 * again here
+			 */
+			xmms_object_unref (plugin);
+		}
+	}
+
+	return g_list_reverse (list);
+}
+
 static void
 xmms_output_destroy (xmms_object_t *object)
 {
@@ -514,6 +562,13 @@ xmms_output_destroy (xmms_object_t *object)
 	}
 
 	xmms_object_unref (output->plugin);
+
+	while (output->effects) {
+		xmms_effect_free (output->effects->data);
+
+		output->effects = g_list_remove_link (output->effects,
+		                                      output->effects);
+	}
 
 	g_queue_free (output->decoder_list);
 	g_queue_free (output->entry_list);
@@ -540,6 +595,7 @@ xmms_output_new (xmms_plugin_t *plugin)
 	output->fill_cond = g_cond_new ();
 	output->decoder_list = g_queue_new ();
 	output->entry_list = g_queue_new ();
+	output->effects = get_effect_list ();
 
 	output->samplerate = 44100;
 	output->bytes_written = 0;
@@ -739,7 +795,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
 			     decoder_ended, output);
 
-	xmms_decoder_start (decoder, NULL, output);
+	xmms_decoder_start (decoder, output->effects, output);
 	g_queue_push_tail (output->decoder_list, decoder);
 	g_queue_push_tail (output->entry_list, entry);
 

@@ -87,7 +87,7 @@ struct xmms_decoder_St {
 
 	xmms_playlist_entry_t *entry;
 
-	xmms_effect_t *effect;
+	GList *effects; /* list of xmms_effect_t */
 
 
 	xmms_output_t *output; /**< output associated with decoder.
@@ -293,6 +293,7 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 void
 xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 {
+	GList *l;
 	gchar samplerate[8];
 
 	g_return_if_fail (decoder);
@@ -307,7 +308,10 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 
 
 /*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
-/*	xmms_effect_samplerate_set (decoder->effect, rate);*/
+
+	for (l = decoder->effects; l; l = l->next) {
+		xmms_effect_samplerate_set (l->data, rate);
+	}
 	
 	g_snprintf (samplerate, sizeof (samplerate), "%d", rate);
 	xmms_decoder_mediainfo_property_set (decoder,
@@ -389,6 +393,8 @@ xmms_decoder_iseos (xmms_decoder_t *decoder)
 void
 xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 {
+	GList *l;
+
 	g_return_if_fail (decoder);
 
 	if (decoder->has_replaygain && decoder->use_replaygain) {
@@ -396,7 +402,9 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 		                  decoder->replaygain);
 	}
 	
-	xmms_effect_run (decoder->effect, buf, len);
+	for (l = decoder->effects; l; l = l->next) {
+		xmms_effect_run (l->data, buf, len);
+	}
 
 /*	xmms_visualisation_calc (decoder->vis, buf, len);*/
 
@@ -623,20 +631,20 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
  *
  * @param decoder
  * @param transport
- * @param effect
+ * @param effects
  * @param output
  *
  */
 void
 xmms_decoder_start (xmms_decoder_t *decoder, 
-		    xmms_effect_t *effect, 
+		    GList *effects, 
 		    xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);
 
 	decoder->running = TRUE;
-	decoder->effect = effect;
+	decoder->effects = effects;
 	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }

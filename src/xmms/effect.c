@@ -39,33 +39,28 @@
   */
 
 struct xmms_effect_St {
-	struct xmms_effect_St *next;
 	void (*deinit) (xmms_effect_t *);
 	void (*samplerate_change) (xmms_effect_t *, guint rate);
 	void (*run) (xmms_effect_t *, gchar *buf, guint len);
+
 	gpointer *private_data;
 	guint rate;
 	xmms_plugin_t *plugin;
 };
 
 void
-xmms_effect_samplerate_set (xmms_effect_t *effects, guint rate)
+xmms_effect_samplerate_set (xmms_effect_t *e, guint rate)
 {
-
-	for (; effects; effects = effects->next) {
-		if (rate != effects->rate) {
-			effects->rate = rate;
-			effects->samplerate_change (effects, rate);
-		}
+	if (rate != e->rate) {
+		e->rate = rate;
+		e->samplerate_change (e, rate);
 	}
 }
 
 void
-xmms_effect_run (xmms_effect_t *effects, gchar *buf, guint len)
+xmms_effect_run (xmms_effect_t *e, gchar *buf, guint len)
 {
-	for (; effects; effects = effects->next) {
-		effects->run (effects, buf, len);
-	}
+	e->run (e, buf, len);
 }
 
 /**
@@ -113,69 +108,55 @@ xmms_effect_plugin_get (xmms_effect_t *effect)
  */
 
 xmms_effect_t *
-xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
+xmms_effect_new (xmms_plugin_t *plugin)
 {
-	GList *list, *l;
-	xmms_plugin_t *plugin = NULL;
 	void (*initfunc) (xmms_effect_t *);
 	xmms_effect_t *effect;
 
-	g_return_val_if_fail (name, NULL);
-
-	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_EFFECT);
-
-	for (l = list; l; l = g_list_next (l)) {
-		if (!g_strcasecmp (xmms_plugin_shortname_get (l->data),
-		                   name)) {
-			plugin = l->data;
-			xmms_object_ref (plugin);
-			break;
-		}
-	}
-
-	xmms_plugin_list_destroy (list);
-
-	if (!plugin) {
-		XMMS_DBG ("Skipping unknown plugin: %s", name);
-		return stack;
-	}
+	g_return_val_if_fail (plugin, NULL);
 
 	effect = g_new0 (xmms_effect_t, 1);
-
-	/* if we exit early here, make sure we also unref
-	 * the plugin again
-	 */
-	if (!effect) {
-		xmms_object_unref (plugin);
-	}
-	g_return_val_if_fail (effect, stack);
+	if (!effect)
+		return NULL;
 
 	effect->plugin = plugin;
+	xmms_object_ref (effect->plugin);
 
-	initfunc = xmms_plugin_method_get (plugin, 
-			XMMS_PLUGIN_METHOD_INIT);
-
-	/* see above */
+	initfunc = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
 	if (!initfunc) {
-		xmms_object_unref (plugin);
+		xmms_object_unref (effect->plugin);
+		g_free (effect);
+
+		return NULL;
 	}
-	g_return_val_if_fail (initfunc, stack);
 
 	initfunc (effect);
 
-	effect->samplerate_change = xmms_plugin_method_get (plugin, 
+	effect->samplerate_change = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
 
-	effect->run = xmms_plugin_method_get (plugin, 
+	effect->run = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_PROCESS);
 
-	effect->deinit = xmms_plugin_method_get (plugin, 
+	effect->deinit = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_DEINIT);
 
-	effect->next = stack;
-	stack = effect;
+	return effect;
+}
 
-	return stack;
+void
+xmms_effect_free (xmms_effect_t *effect)
+{
+	if (!effect)
+		return;
+
+	if (effect->deinit) {
+		effect->deinit (effect);
+	}
+
+	xmms_object_unref (effect->plugin);
+
+	g_free (effect);
 }
 
 /** @} */

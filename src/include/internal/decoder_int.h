@@ -34,7 +34,7 @@ xmms_decoder_t * xmms_decoder_new ();
 gboolean xmms_decoder_open (xmms_decoder_t *decoder,
 			    xmms_transport_t *transport);
 void xmms_decoder_start (xmms_decoder_t *decoder, 
-			xmms_effect_t *effect, 
+			GList *effects, 
 			xmms_output_t *output);
 gboolean xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err);
 gboolean xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err);
