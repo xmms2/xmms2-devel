@@ -16,6 +16,7 @@ xmmscore_sources=config_xmms.c config_xmms.h \
 	magic.c magic.h \
 	medialib.c medialib.h \
 	core.c core.h \
+	plsplugins.c plsplugins.h \
 	log.c log.h 
 
 xmms2d_LDADD = @GLIB_LIBS@ @XML_LIBS@ @DBUS_LIBS@ @DBUSGLIB_LIBS@

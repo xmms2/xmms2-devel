@@ -8,6 +8,7 @@
 #include "config.h"
 #include "config_xmms.h"
 #include "playlist.h"
+#include "plsplugins.h"
 #include "unixsignal.h"
 #include "util.h"
 #include "core.h"
@@ -166,6 +167,7 @@ static gpointer
 core_thread(gpointer data){
 	xmms_transport_t *transport;
 	xmms_decoder_t *decoder;
+	xmms_playlist_plugin_t *plsplugin;
 	const gchar *mime;
 
 	while (running) {
@@ -193,6 +195,25 @@ core_thread(gpointer data){
 		}
 
 		XMMS_DBG ("mime-type: %s", mime);
+
+		plsplugin = xmms_playlist_plugin_new (mime);
+		if (plsplugin) {
+
+			/* This is a playlist file... */
+			XMMS_DBG ("Playlist!!");
+			xmms_transport_start (transport);
+			XMMS_DBG ("transport started");
+			xmms_playlist_plugin_read (plsplugin, core->playlist, transport);
+
+			/* we don't want it in the playlist. */
+			xmms_playlist_id_remove (core->playlist, xmms_playlist_entry_id_get (core->curr_song));
+
+			/* cleanup */
+			xmms_playlist_plugin_free (plsplugin);
+			xmms_transport_close (transport);
+			continue;
+		}
+
 		decoder = xmms_decoder_new (mime);
 		if (!decoder) {
 			xmms_transport_close (transport);

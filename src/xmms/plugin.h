@@ -22,7 +22,8 @@
 #define XMMS_PLUGIN_METHOD_SEARCH "search"
 #define XMMS_PLUGIN_METHOD_ADD_ENTRY "add_entry"
 #define XMMS_PLUGIN_METHOD_INIT "init"
-#define XMMS_PLUGIN_METHOD_TO_PLAYLIST "to_playlist"
+#define XMMS_PLUGIN_METHOD_READ_PLAYLIST "read_playlist"
+#define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST "write_playlist"
 
 /*
  * Plugin properties.

@@ -1,5 +1,6 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
+#include "xmms/playlist.h"
 #include "xmms/util.h"
 
 #include <string.h>
@@ -15,9 +16,9 @@
  */
 
 static gboolean xmms_m3u_can_handle (const gchar *mimetype);
-static gboolean xmms_m3u_read_playlist (const xmms_transport_t *transport, 
-		const xmms_playlist_t *playlist);
-static gboolean xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gchar *file);
+static gboolean xmms_m3u_read_playlist (xmms_transport_t *transport, 
+		xmms_playlist_t *playlist);
+static gchar *xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gint *size);
 
 /*
  * Plugin header
@@ -35,12 +36,13 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_http_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_http_open);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_http_read);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE,
+				xmms_m3u_can_handle);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, 
+				xmms_m3u_read_playlist);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, 
+				xmms_m3u_write_playlist);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
-	
 	return plugin;
 }
 
@@ -49,131 +51,135 @@ xmms_plugin_get (void)
  */
 
 static gboolean
-xmms_http_can_handle (const gchar *uri)
+xmms_m3u_can_handle (const gchar *mime)
 {
-	g_return_val_if_fail (uri, FALSE);
+	g_return_val_if_fail (mime, FALSE);
 
-	XMMS_DBG ("xmms_http_can_handle (%s)", uri);
+	XMMS_DBG ("xmms_m3u_can_handle (%s)", mime);
 	
-	if ((g_strncasecmp (uri, "http:", 5) == 0))
+	if ((g_strncasecmp (mime, "audio/mpegurl", 13) == 0))
 		return TRUE;
 
 	return FALSE;
 }
 
-gint
-x_connect (const gchar *server, const gchar *path, gint port)
-{
-
-	struct sockaddr_in sa;
-	struct hostent *hp;
-	gint sock;
-
-	if ((hp = gethostbyname (server)) == NULL) {
-		XMMS_DBG ("Host not found!");
-		return 0;
-	}
-
-	memcpy (&sa.sin_addr, hp->h_addr, hp->h_length);
-	sa.sin_family = hp->h_addrtype;
-	sa.sin_port = g_htons (port);
-
-	if ((sock = socket (hp->h_addrtype, SOCK_STREAM, 0)) == -1) {
-		XMMS_DBG ("socket error!");
-		free (hp);
-		return 0;
-	}
-
-	if (connect (sock, (struct sockaddr *)&sa, sizeof (sa)) == -1) {
-		XMMS_DBG ("connect error!");
-		free (hp);
-		return 0;
-	}
-
-	return sock;
-
-}
-
 static gboolean
-xmms_http_open (xmms_transport_t *transport, const gchar *uri)
+xmms_m3u_read_playlist (xmms_transport_t *transport, 
+			xmms_playlist_t *playlist)
 {
-	xmms_http_data_t *data;
-	const gchar *server;
-	gchar *path;
-	gchar request[1024];
-	gchar *p;
-	gint port;
-	gint fd;
+	gint len = 0;
+	gint buffer_len = 0;
+	gint i;
+	gchar *buffer;
+	gchar **lines;
+	gboolean extm3u = FALSE;
 
 	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (uri, FALSE);
-
-	/* http://server:port/path */
-
-	server = strchr (uri, ':');
-	server=server+3;/* skip // */
+	g_return_val_if_fail (playlist, FALSE);
 	
-	if ( (p = strchr (server, ':')) ) {
-		*p='\0';
-		*p++;
+	buffer_len = xmms_transport_size (transport);
+	buffer = g_malloc (buffer_len);
 
-		if (!(path = strchr (p, '/'))) {
-			XMMS_DBG ("Malformated URI");
+	while (len < buffer_len) {
+		gint ret;
+
+		ret = xmms_transport_read (transport, buffer+len, buffer_len);
+		XMMS_DBG ("Got %d bytes.", ret);
+
+		if ( ret < 0 ) {
+			g_free (buffer);
+			buffer=NULL;
 			return FALSE;
 		}
-		
-		port = strtol (p, NULL, 10);
-	} else {
-		path = strchr (server, '/');
-		*path='\0';
-		*path++;
-		port = 80;
-		if (!path) {
-			XMMS_DBG ("Malformated URI");
-			return FALSE;
-		}
+		len += ret;
+		g_assert (len >= 0);
 	}
 
-	XMMS_DBG ("Host: %s, port: %d, path: %s", server, port, path);
+	lines = g_strsplit (buffer, "\n", 0);
 
-
-	fd = x_connect (server, path, port);
-
-	if (!fd)
+	if (!lines && !lines[0])
 		return FALSE;
 
-	XMMS_DBG ("connected!");
+	i = 0;
 
-	g_snprintf (request, 1024, "GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: XMMS/" VERSION "\r\n\r\n", path, server);
+	if (strcmp (lines[0], "#EXTM3U") == 0) {
+		extm3u = TRUE;
+		i = 1;
+	}
 
-	XMMS_DBG ("%s", request);
+	while (lines[i]) {
+		xmms_playlist_entry_t *entry = NULL;
 
-	send (fd, request, strlen (request), 0);
+		if (extm3u && lines[i][0] == '#') {
+			gchar *len;
+			gchar *title;
+			gchar *p;
 
-	data = g_new0 (xmms_http_data_t, 1);
+			p = strchr (lines[i], ',');
+			if (p) {
+				*p = '\0';
+				*p++;
+			} else {
+				XMMS_DBG ("Malformated m3u");
+				return FALSE;
+			}
 
-	data->fd = fd;
+			len = lines[i]+8;
+			title = p;
 
-	xmms_transport_plugin_data_set (transport, data);
+			i++; /* skip to track */
 
-	xmms_transport_mime_type_set (transport, "audio/mpeg");
-	
+			if (lines[i] && lines[i][0]) {
+				if (lines[i][0] != '/') {
+					gchar *new, *path, *p;
+					path = g_strdup (xmms_transport_uri_get (transport));
+					
+					p = strrchr (path, '/');
+					if (p) {
+						*p = '\0';
+						new = g_strdup_printf ("%s/%s", path, lines[i]);
+						entry = xmms_playlist_entry_new (new);
+						g_free (path);
+					}
+				} else {
+					entry = xmms_playlist_entry_new (lines[i]);
+				}
+			}
+
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, len);
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, title);
+		} else {
+			if (lines[i] && lines[i][0]) {
+				if (lines[i][0] != '/') {
+					gchar *new, *path, *p;
+					path = g_strdup (xmms_transport_uri_get (transport));
+					
+					p = strrchr (path, '/');
+					if (p) {
+						*p = '\0';
+						new = g_strdup_printf ("%s/%s", path, lines[i]);
+						entry = xmms_playlist_entry_new (new);
+						g_free (path);
+					}
+				} else {
+					entry = xmms_playlist_entry_new (lines[i]);
+				}
+			}
+		}
+
+		if (entry) {
+			XMMS_DBG ("Adding %s", xmms_playlist_entry_get_uri (entry));
+			xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
+		}
+			
+		i++;
+	}
+
 	return TRUE;
+
 }
 
-static gint
-xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len)
+static gchar *
+xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gint *size)
 {
-	xmms_http_data_t *data;
-	gint ret;
-
-	g_return_val_if_fail (transport, -1);
-	g_return_val_if_fail (buffer, -1);
-	data = xmms_transport_plugin_data_get (transport);
-	g_return_val_if_fail (data, -1);
-
-	ret = recv (data->fd, buffer, len, 0);
-
-	return ret;
 }
-

@@ -75,4 +75,5 @@ src/plugins/oss/Makefile
 src/plugins/sid/Makefile
 src/plugins/tar/Makefile
 src/plugins/sqlite/Makefile
+src/plugins/m3u/Makefile
 src/plugins/file/Makefile])
