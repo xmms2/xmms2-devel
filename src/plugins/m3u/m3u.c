@@ -201,7 +201,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 		}
 
 		if (extm3u && **line == '#') {
-			gchar *title, *p;
+			gchar *title, *p, *duration;
 			int read, write;
 
 			p = strchr (*line, ',');
@@ -220,6 +220,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 			 */
 			title = g_convert (p, strlen (p), "UTF-8", "ISO-8859-1",
 			                   &read, &write, NULL);
+			duration = *line + 8;
 
 			line++; /* skip to track */
 
@@ -231,7 +232,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 			g_assert (entry);
 
 			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION,
-			                                  *line + 8);
+			                                  duration);
 			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
 			g_free (title);
 		} else {
