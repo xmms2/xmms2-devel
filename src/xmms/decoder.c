@@ -29,7 +29,6 @@
  * Type definitions
  */
 
-#define FRAC_BITS 16
 
 
 /**
@@ -54,31 +53,14 @@ struct xmms_decoder_St {
 
 	xmms_effect_t *effect;
 
-	guint samplerate;
-	guint output_samplerate;
-
-	guint resamplelen;
-	gint16 *resamplebuf;
-
-	guint interpolator_ratio;
-	guint decimator_ratio;
-
-	gint16 last_r;
-	gint16 last_l;
-
-        guint32 opos;      /* position in output */
-        guint32 opos_frac;
-
-        guint32 opos_inc;  /* increment in output for each input-sample */
-        guint32 opos_inc_frac;
-
-        guint32 ipos;      /* position in the input stream */
 
 	xmms_output_t *output;       /**< output associated with decoder.
 				      *   The decoded data will be written
 				      *   to this output.
 				      */
 	xmms_visualisation_t *vis;
+
+	gint samplerate;
 
 };
 
@@ -89,7 +71,6 @@ struct xmms_decoder_St {
 static void xmms_decoder_destroy_real (xmms_decoder_t *decoder);
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
-static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
 
 /*
  * Macros
@@ -140,47 +121,6 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 	return ret;
 }
 
-static void
-recalculate_resampler (xmms_decoder_t *decoder)
-{
-	guint a,b;
-	guint32 incr;
-
-	/* calculate ratio */
-	if(decoder->samplerate > decoder->output_samplerate){
-		a = decoder->samplerate;
-		b = decoder->output_samplerate;
-	} else {
-		b = decoder->samplerate;
-		a = decoder->output_samplerate;
-	}
-
-	while (b != 0) { /* good 'ol euclid is helpful as usual */
-		guint t = a % b;
-		a = b;
-		b = t;
-	}
-
-	XMMS_DBG ("Resampling ratio: %d:%d", 
-		  decoder->samplerate / a, decoder->output_samplerate / a);
-
-	decoder->interpolator_ratio = decoder->output_samplerate/a;
-	decoder->decimator_ratio = decoder->samplerate/a;
-
-	incr = ((gdouble)decoder->decimator_ratio / (gdouble) decoder->interpolator_ratio * (gdouble) (1UL << FRAC_BITS));
-	
-	decoder->opos_inc_frac=incr & ((1UL<<FRAC_BITS)-1);
-	decoder->opos_inc = incr>>FRAC_BITS;
-
-	/*
-	 * calculate filter here
-	 *
-	 * We don't use no stinkning filter. Maybe we should,
-	 * but I'm deaf anyway, I wont hear any difference.
-	 */
-
-}
-
 void
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds)
 {
@@ -222,20 +162,19 @@ xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
 void
 xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 {
+	gchar *r;
+
 	g_return_if_fail (decoder);
 	g_return_if_fail (rate);
+
+	if (decoder->output)
+		xmms_output_samplerate_set (decoder->output, rate);
+	xmms_visualisation_samplerate_set (decoder->vis, rate);
+	xmms_effect_samplerate_set (decoder->effect, rate);
+	decoder->samplerate = rate;
 	
-	if (decoder->samplerate != rate) {
-		gchar *r;
-		xmms_visualisation_samplerate_set (decoder->vis, rate);
-		decoder->samplerate = rate;
-		if (decoder->output)
-			decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
-		r = g_strdup_printf ("%d", rate);
-		xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
-		xmms_effect_samplerate_set (decoder->effect, decoder->samplerate);
-		recalculate_resampler (decoder);
-	}
+	r = g_strdup_printf ("%d", rate);
+	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
 }
 
 /**
@@ -338,19 +277,11 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	g_return_if_fail (output);
 
-
 	xmms_effect_run (decoder->effect, buf, len);
 
 	xmms_visualisation_calc (decoder->vis, buf, len);
 
-	if (decoder->samplerate != decoder->output_samplerate) {
-		guint32 res;
-		res=resample (decoder, (gint16 *)buf, len);
-		xmms_output_write (output, decoder->resamplebuf, res);
-	} else {
-		xmms_output_write (output, buf, len);
-	}
-
+	xmms_output_write (output, buf, len);
 }
 
 /*
@@ -488,83 +419,6 @@ xmms_decoder_mediainfo_get (xmms_decoder_t *decoder,
 /*
  * Static functions
  */
-
-/*
- * This resampler is based on the one in sox's rate.c:
- *
- * August 21, 1998
- * Copyright 1998 Fabrice Bellard.
- *
- * [Rewrote completly the code of Lance Norskog And Sundry
- * Contributors with a more efficient algorithm.]
- *
- * This source code is freely redistributable and may be used for
- * any purpose.  This copyright notice must be maintained. 
- * Lance Norskog And Sundry Contributors are not responsible for 
- * the consequences of using this software.  
- *
- */
-static guint32
-resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
-{
-
-	guint32 written = 0;
-	guint outlen;
-	gint inlen = len / 4;
-	gint16 last_r = decoder->last_r;
-	gint16 last_l = decoder->last_l;
-	gint16 *ibuf = buf;
-	gint16 *obuf;
-	
-	outlen = 1 + len * decoder->interpolator_ratio  / decoder->decimator_ratio;
-
-	if (decoder->resamplelen != outlen) {
-		decoder->resamplelen = outlen;
-		decoder->resamplebuf = g_realloc (decoder->resamplebuf, outlen*4);
-		g_return_val_if_fail (decoder->resamplebuf, 0);
-	}
-	
-	obuf = decoder->resamplebuf;
-	
-	while (inlen > 0) {
-		guint32 tmp;
-		gint16 cur_r,cur_l;
-		gdouble t; /** @todo we need no double here,
-			       could go fixed point all way */
-		
-		while (decoder->ipos <= decoder->opos) {
-			last_r = *ibuf++;
-			last_l = *ibuf++;
-			decoder->ipos++;
-			inlen--;
-			if (inlen <= 0) {
-				goto done;
-			}
-		}
-		cur_r = *ibuf;
-		cur_l = *(ibuf+1);
-		
-		t = ((gdouble)decoder->opos_frac) / (1UL<<FRAC_BITS);
-		*obuf++ = (gdouble) last_r * (1.0-t) + (gdouble) cur_r * t;
-		*obuf++ = (gdouble) last_l * (1.0-t) + (gdouble) cur_l * t;
-		
-		/* update output position */
-		tmp = decoder->opos_frac + decoder->opos_inc_frac;
-		decoder->opos += decoder->opos_inc + (tmp >> FRAC_BITS);
-		decoder->opos_frac = tmp & ((1UL << FRAC_BITS)-1);
-
-		written += 2*sizeof(gint16); /* count bytes */
-
-	}
- done:
-	decoder->last_r = last_r;
-	decoder->last_l = last_l;
-	
-	g_return_val_if_fail (written/4<outlen, 0);
-	
-	return written;
-		
-}
 
 static void
 xmms_decoder_destroy_real (xmms_decoder_t *decoder)

@@ -17,7 +17,10 @@
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
 
+#define FRAC_BITS 16
+
 static gpointer xmms_output_thread (gpointer data);
+static guint32 resample (xmms_output_t *output, gint16 *buf, guint len);
 
 /*
  * Type definitions
@@ -35,13 +38,31 @@ struct xmms_output_St {
 	guint played;
 	gboolean is_open;
 
-	guint samplerate;
 	guint open_samplerate;
+	guint samplerate;
 
 	xmms_ringbuf_t *buffer;
 	xmms_config_value_t *config;
 	
 	gpointer plugin_data;
+
+	guint resamplelen;
+	gint16 *resamplebuf;
+
+	guint interpolator_ratio;
+	guint decimator_ratio;
+
+	gint16 last_r;
+	gint16 last_l;
+
+	guint32 opos;      /* position in output */
+        guint32 opos_frac;
+
+        guint32 opos_inc;  /* increment in output for each input-sample */
+        guint32 opos_inc_frac;
+
+        guint32 ipos;      /* position in the input stream */
+
 };
 
 /*
@@ -164,6 +185,123 @@ xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
  * Private functions
  */
 
+static void
+recalculate_resampler (xmms_output_t *output)
+{
+	guint a,b;
+	guint32 incr;
+
+	/* calculate ratio */
+	if(output->samplerate > output->open_samplerate){
+		a = output->samplerate;
+		b = output->open_samplerate;
+	} else {
+		b = output->samplerate;
+		a = output->open_samplerate;
+	}
+
+	while (b != 0) { /* good 'ol euclid is helpful as usual */
+		guint t = a % b;
+		a = b;
+		b = t;
+	}
+
+	XMMS_DBG ("Resampling ratio: %d:%d", 
+		  output->samplerate / a, output->open_samplerate / a);
+
+	output->interpolator_ratio = output->open_samplerate/a;
+	output->decimator_ratio = output->samplerate/a;
+
+	incr = ((gdouble)output->decimator_ratio / (gdouble) output->interpolator_ratio * (gdouble) (1UL << FRAC_BITS));
+	
+	output->opos_inc_frac=incr & ((1UL<<FRAC_BITS)-1);
+	output->opos_inc = incr>>FRAC_BITS;
+
+	/*
+	 * calculate filter here
+	 *
+	 * We don't use no stinkning filter. Maybe we should,
+	 * but I'm deaf anyway, I wont hear any difference.
+	 */
+
+}
+
+/*
+ * This resampler is based on the one in sox's rate.c:
+ *
+ * August 21, 1998
+ * Copyright 1998 Fabrice Bellard.
+ *
+ * [Rewrote completly the code of Lance Norskog And Sundry
+ * Contributors with a more efficient algorithm.]
+ *
+ * This source code is freely redistributable and may be used for
+ * any purpose.  This copyright notice must be maintained. 
+ * Lance Norskog And Sundry Contributors are not responsible for 
+ * the consequences of using this software.  
+ *
+ */
+static guint32
+resample (xmms_output_t *output, gint16 *buf, guint len)
+{
+
+	guint32 written = 0;
+	guint outlen;
+	gint inlen = len / 4;
+	gint16 last_r = output->last_r;
+	gint16 last_l = output->last_l;
+	gint16 *ibuf = buf;
+	gint16 *obuf;
+	
+	outlen = 1 + len * output->interpolator_ratio  / output->decimator_ratio;
+
+	if (output->resamplelen != outlen) {
+		output->resamplelen = outlen;
+		output->resamplebuf = g_realloc (output->resamplebuf, outlen*4);
+		g_return_val_if_fail (output->resamplebuf, 0);
+	}
+	
+	obuf = output->resamplebuf;
+	
+	while (inlen > 0) {
+		guint32 tmp;
+		gint16 cur_r,cur_l;
+		gdouble t; /** @todo we need no double here,
+			       could go fixed point all way */
+		
+		while (output->ipos <= output->opos) {
+			last_r = *ibuf++;
+			last_l = *ibuf++;
+			output->ipos++;
+			inlen--;
+			if (inlen <= 0) {
+				goto done;
+			}
+		}
+		cur_r = *ibuf;
+		cur_l = *(ibuf+1);
+		
+		t = ((gdouble)output->opos_frac) / (1UL<<FRAC_BITS);
+		*obuf++ = (gdouble) last_r * (1.0-t) + (gdouble) cur_r * t;
+		*obuf++ = (gdouble) last_l * (1.0-t) + (gdouble) cur_l * t;
+		
+		/* update output position */
+		tmp = output->opos_frac + output->opos_inc_frac;
+		output->opos += output->opos_inc + (tmp >> FRAC_BITS);
+		output->opos_frac = tmp & ((1UL << FRAC_BITS)-1);
+
+		written += 2*sizeof(gint16); /* count bytes */
+
+	}
+ done:
+	output->last_r = last_r;
+	output->last_l = last_l;
+	
+	g_return_val_if_fail (written/4<outlen, 0);
+	
+	return written;
+		
+}
 
 /**
  * @internal
@@ -175,32 +313,37 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 	g_return_if_fail (buffer);
 
 	xmms_output_lock (output);
-	xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
-	xmms_ringbuf_write (output->buffer, buffer, len);
+	if (output->samplerate != output->open_samplerate) {
+		guint32 res;
+		res = resample (output, (gint16 *)buffer, len);
+		xmms_ringbuf_wait_free (output->buffer, res, output->mutex);
+		xmms_ringbuf_write (output->buffer, output->resamplebuf, res);
+	} else {
+		xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
+		xmms_ringbuf_write (output->buffer, buffer, len);
+	}
 	xmms_output_unlock (output);
 
 }
 
-guint
+void
 xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 {
-	g_return_val_if_fail (output, 0);
-	g_return_val_if_fail (rate, 0);
+	xmms_output_samplerate_set_method_t samplerate_method;
 
-	if (!output->is_open) {
-		output->open_samplerate = rate;
-		return rate;
-	}
+	g_return_if_fail (output);
+	g_return_if_fail (rate);
 
-	/** @todo fix this later? if device has been relesed in between
-	 *  we can't just skip running this. */
-/*	if (rate != output->samplerate) {*/
-		xmms_output_samplerate_set_method_t samplerate_method;
+	output->samplerate = rate;
+	if (output->is_open) {
 		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
-		output->samplerate = samplerate_method (output, rate);
-		XMMS_DBG ("samplerate set to: %d", output->samplerate);
-/*	}*/
-	return output->samplerate;
+		XMMS_DBG ("want samplerate %d", rate);
+		output->open_samplerate = samplerate_method (output, rate);
+		XMMS_DBG ("samplerate set to: %d", output->open_samplerate);
+	} else {
+		output->open_samplerate = rate;
+	}
+	recalculate_resampler (output);
 }
 
 gboolean
