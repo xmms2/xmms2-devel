@@ -11,6 +11,7 @@ xmms2_SOURCES=main.c \
 	transport.c transport.h \
 	decoder.c decoder.h \
 	output.c output.h \
-	playlist.c playlist.h
+	playlist.c playlist.h \
+	magic.c magic.h
 
 xmms2_LDADD = @GLIB_LIBS@ @XML_LIBS@
