@@ -32,7 +32,8 @@ typedef struct xmmsc_result_St xmmsc_result_t;
 
 xmmsc_connection_t *xmmsc_init (char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
-void xmmsc_deinit (xmmsc_connection_t *);
+void xmmsc_disconnect (xmmsc_connection_t *c);
+void xmmsc_unref (xmmsc_connection_t *c);
 void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata);
 
@@ -42,6 +43,8 @@ char *xmmsc_decode_path (const char *path);
 int xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table);
 
 xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
+
+void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
 
 /*
  * PLAYLIST ************************************************
@@ -160,7 +163,7 @@ typedef enum {
 
 typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 
-void xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *c, unsigned int signalid);
+void xmmsc_result_restartable (xmmsc_result_t *res, unsigned int signalid);
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 
@@ -185,7 +188,6 @@ int xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r);
 int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument);
 int xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r);
 void xmmsc_result_seterror (xmmsc_result_t *res, char *errstr);
-
 
 #ifdef __cplusplus
 }

@@ -45,6 +45,7 @@
  */
 
 struct xmmsc_connection_St {
+	int ref;
 	
 	xmmsc_ipc_t *ipc;
 
@@ -56,6 +57,8 @@ struct xmmsc_connection_St {
 
 	char *clientname;
 };
+
+void xmmsc_ref (xmmsc_connection_t *c);
 
 xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
 xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);

@@ -127,6 +127,8 @@ xmmsc_result_free (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
 
+	xmmsc_unref (res->c);
+
 	if (res->error_str)
 		free (res->error_str);
 
@@ -178,12 +180,10 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 /** @internal */
 void
-xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *c, uint32_t signalid)
+xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
 {
 	x_return_if_fail (res);
-	x_return_if_fail (c);
 
-	res->c = c;
 	res->restart_signal = signalid;
 }
 
@@ -204,7 +204,7 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	xmms_ipc_msg_destroy (msg);
 	
 	xmmsc_result_notifier_set (newres, res->func, res->user_data);
-	xmmsc_result_restartable (newres, res->c, res->restart_signal);
+	xmmsc_result_restartable (newres, res->restart_signal);
 	
 	return newres;
 }
@@ -297,6 +297,9 @@ xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid)
 	xmmsc_result_t *res;
 
 	res = x_new0 (xmmsc_result_t, 1);
+
+	res->c = c;
+	xmmsc_ref (c);
 
 	res->cid = commandid;
 

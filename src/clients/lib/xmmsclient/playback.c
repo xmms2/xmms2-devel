@@ -127,11 +127,7 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 xmmsc_result_t *
 xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_STATUS);
-
-	return res;
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_STATUS);
 }
 
 /**
@@ -147,11 +143,7 @@ xmmsc_playback_status (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_playback_current_id (xmmsc_connection_t *c)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
-	
-	return res;
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
 }
 
 /**
