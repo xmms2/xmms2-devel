@@ -22,7 +22,7 @@ typedef struct {
  * Function prototypes
  */
 
-static gboolean xmms_diskwrite_open (xmms_output_t *output, const gchar *path);
+static gboolean xmms_diskwrite_open (xmms_output_t *output);
 void xmms_diskwrite_write (xmms_output_t *output, gchar *buffer, gint len);
 
 /*
@@ -37,6 +37,9 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "diskwrite",
 			"Diskwriter output " VERSION,
 			"Saves a wavefile");
+
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_METHOD_WRITE, xmms_diskwrite_write);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_diskwrite_open);
@@ -49,15 +52,21 @@ xmms_plugin_get (void)
  */
 
 static gboolean
-xmms_diskwrite_open (xmms_output_t *output, const gchar *path)
+xmms_diskwrite_open (xmms_output_t *output)
 {
 	FILE *fp;
+	gchar *path;
 	xmms_diskwrite_data_t *data;
 
-	XMMS_DBG ("xmms_diskwrite_open (%p, %s)", output, path);
+	XMMS_DBG ("xmms_diskwrite_open (%p)", output);
 	
 	g_return_val_if_fail (output, FALSE);
-	g_return_val_if_fail (path, FALSE);
+
+	path = xmms_output_get_config_string (output, "file");
+
+	if (path) {
+		path = "/tmp/apanap";
+	}
 
 	XMMS_DBG ("Opening %s", path);
 	fp = fopen (path, "wb");

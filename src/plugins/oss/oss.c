@@ -28,7 +28,7 @@ typedef struct xmms_oss_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_oss_open (xmms_output_t *output, const gchar *path);
+static gboolean xmms_oss_open (xmms_output_t *output);
 void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
 
 /*
@@ -43,6 +43,9 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "oss",
 			"OSS Output " VERSION,
 			"OpenSoundSystem output plugin");
+
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_METHOD_WRITE, xmms_oss_write);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_oss_open);
@@ -55,16 +58,15 @@ xmms_plugin_get (void)
  */
 
 static gboolean
-xmms_oss_open (xmms_output_t *output, const gchar *path)
+xmms_oss_open (xmms_output_t *output)
 {
 	xmms_oss_data_t *data;
 	gchar *dev;
 	guint param;
 
-	XMMS_DBG ("xmms_oss_open (%p, %s)", output, path);
+	XMMS_DBG ("xmms_oss_open (%p)", output);
 	
 	g_return_val_if_fail (output, FALSE);
-	g_return_val_if_fail (path, FALSE);
 
 	dev = xmms_output_get_config_string (output, "device");
 	if (!dev) {

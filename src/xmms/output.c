@@ -101,7 +101,7 @@ xmms_output_open (xmms_plugin_t *plugin, xmms_config_data_t *config)
 	
 	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
 
-	if (!open_method || !open_method (output, "/tmp/foo")) {
+	if (!open_method || !open_method (output)) {
 		XMMS_DBG ("Couldnt open output device");
 		xmms_ringbuf_destroy (output->buffer);
 		g_mutex_free (output->mutex);

@@ -32,7 +32,7 @@ typedef struct xmms_output_St {
  */
 
 typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer, gint len);
-typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output, const gchar *path);
+typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
 
 /*
  * Public function prototypes
