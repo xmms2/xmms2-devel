@@ -28,7 +28,6 @@
 #include "xmms/ipc_transport.h"
 #include "xmms/ipc_msg.h"
 
-
 #include "internal/client_ipc.h"
 
 struct xmmsc_ipc_St {
@@ -175,8 +174,14 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 	FD_ZERO (&fdset);
 	FD_SET (xmms_ipc_transport_fd_get (ipc->transport), &fdset);
 
+#ifdef HEAVY_DEBUG
+	fprintf (stderr, "Waiting for event!\n");
+#endif
 	if (select (xmms_ipc_transport_fd_get (ipc->transport) + 1, &fdset, 
 		    NULL, NULL, &tmout) == -1) {
+#ifdef HEAVY_DEBUG
+		fprintf (stderr, "select returned -1\n");
+#endif
 		return;
 	}
 

@@ -46,7 +46,7 @@ xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
  */
 
 /* commands */
-xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *);
 xmmsc_result_t *xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);

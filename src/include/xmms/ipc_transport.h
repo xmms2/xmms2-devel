@@ -30,8 +30,8 @@ gint xmms_ipc_transport_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint le
 gint xmms_ipc_transport_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len);
 gint xmms_ipc_transport_fd_get (xmms_ipc_transport_t *ipct);
 xmms_ipc_transport_t * xmms_ipc_server_accept (xmms_ipc_transport_t *ipct);
-xmms_ipc_transport_t * xmms_ipc_client_init (gchar *path);
-xmms_ipc_transport_t * xmms_ipc_server_init (gchar *path);
+xmms_ipc_transport_t * xmms_ipc_client_init (const gchar *path);
+xmms_ipc_transport_t * xmms_ipc_server_init (const gchar *path);
 
 struct xmms_ipc_transport_St {
 	gchar *path;

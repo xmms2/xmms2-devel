@@ -59,7 +59,7 @@ xmms_ipc_server_accept (xmms_ipc_transport_t *ipct)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_client_init (gchar *path)
+xmms_ipc_client_init (const gchar *path)
 {
 	xmms_ipc_transport_t *transport = NULL;
 
@@ -75,7 +75,7 @@ xmms_ipc_client_init (gchar *path)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_server_init (gchar *path)
+xmms_ipc_server_init (const gchar *path)
 {
 	xmms_ipc_transport_t *transport = NULL;
 

@@ -172,6 +172,7 @@ main (int argc, char **argv)
 	sigaddset (&signals, SIGHUP);
 	sigaddset (&signals, SIGTERM);
 	sigaddset (&signals, SIGINT);
+	sigaddset (&signals, SIGPIPE);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	

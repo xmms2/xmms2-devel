@@ -16,6 +16,9 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/select.h>
 
 #include "xmms/signal_xmms.h"
 #include "xmms/ipc_transport.h"
@@ -31,9 +34,7 @@ struct xmms_ipc_St {
 	GList *clients;
 	GSource *source;
 	GPollFD *pollfd;
-	GCond *msg_cond;
 	GMutex *mutex;
-	gboolean run;
 
 	xmms_object_t *objects[XMMS_IPC_OBJECT_END];
 
@@ -42,18 +43,17 @@ struct xmms_ipc_St {
 };
 
 struct xmms_ipc_client_St {
-	GMutex *mutex;
-	GPollFD *gpoll;
-	GSource *gsource;
-	GQueue *msgs;
+	GThread *thread;
 
 	xmms_ipc_transport_t *transport;
-	xmms_ringbuf_t *write_buffer;
 	xmms_ringbuf_t *read_buffer;
 	xmms_ipc_t *ipc;
 
+	gboolean run;
+
 	gint status;
-	gint poll_opts;
+
+	GMutex *ref_lock;
 	gint ref;
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
@@ -63,327 +63,33 @@ struct xmms_ipc_client_St {
 static GMutex *global_ipc_lock;
 static xmms_ipc_t *global_ipc;
 
-
-static gboolean xmms_ipc_client_setup_with_gmain (xmms_ipc_client_t *client);
+static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 
 
 #define xmms_ipc_client_ref(a) do {\
 	if (a) { \
+		g_mutex_lock (a->ref_lock); \
 		a->ref++;\
+		g_mutex_unlock (a->ref_lock); \
 	} \
 } while (0)
 
 #define xmms_ipc_client_unref(a) do {\
 	if (a) { \
+		g_mutex_lock (a->ref_lock); \
 		a->ref--;\
 		if (a->ref == 0) {\
+			g_mutex_unlock (a->ref_lock); \
 			xmms_ipc_client_destroy (a); \
 			a = NULL; \
+		} else { \
+			g_mutex_unlock (a->ref_lock);\
 		} \
 	} \
 } while (0)
 
 typedef gboolean (*xmms_ipc_client_callback_t) (GSource *, xmms_ipc_client_t *);
 typedef gboolean (*xmms_ipc_server_callback_t) (GSource *, xmms_ipc_t *);
-
-static xmms_ipc_client_t *
-xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
-{
-	xmms_ipc_client_t *client;
-
-	g_return_val_if_fail (transport, NULL);
-
-	client = g_new0 (xmms_ipc_client_t, 1);
-	client->status = XMMS_IPC_CLIENT_STATUS_NEW;
-	client->transport = transport;
-	client->write_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
-	client->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
-	client->poll_opts = G_IO_IN | G_IO_HUP | G_IO_ERR;
-	client->ipc = ipc;
-	client->mutex = g_mutex_new ();
-	client->msgs = g_queue_new ();
-	
-	xmms_ipc_client_ref (client);
-
-	return client;
-}
-
-static void
-xmms_ipc_client_destroy (xmms_ipc_client_t *client)
-{
-	xmms_ipc_msg_t *msg;
-
-	XMMS_DBG ("Destroying client!");
-
-	if (client->gsource && client->gpoll) {
-		g_source_remove_poll (client->gsource, client->gpoll);
-		g_free (client->gpoll);
-		client->gpoll = NULL;
-	}
-	if (client->gsource) {
-		g_source_remove (g_source_get_id (client->gsource));
-		g_source_destroy (client->gsource);
-		client->gsource = NULL;
-	}
-
-	g_mutex_lock (client->ipc->mutex);
-	client->ipc->clients = g_list_remove (client->ipc->clients, client);
-	g_mutex_unlock (client->ipc->mutex);
-
-	while ((msg = g_queue_pop_head (client->msgs))) {
-		xmms_ipc_msg_destroy (msg);
-	}
-
-	g_queue_free (client->msgs);
-
-	xmms_ipc_transport_destroy (client->transport);
-	xmms_ringbuf_destroy (client->write_buffer);
-	xmms_ringbuf_destroy (client->read_buffer);
-	g_mutex_free (client->mutex);
-	g_free (client);
-}
-
-gboolean
-xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
-{
-	g_return_val_if_fail (client, FALSE);
-	g_return_val_if_fail (msg, FALSE);
-
-	g_mutex_lock (client->mutex);
-	if (!xmms_ipc_msg_write (client->write_buffer, msg, msg->cid)) {
-		g_mutex_unlock (client->mutex);
-		return FALSE;
-	}
-	client->poll_opts = G_IO_IN | G_IO_OUT | G_IO_HUP | G_IO_ERR;
-	xmms_ipc_client_setup_with_gmain (client);
-	g_mutex_unlock (client->mutex);
-
-	/* @todo: Should we take a ref to the client here? Yes maybe, but on the
-	 * other hand, if the connections breaks the client can't get the data
-	 * anyway...
-	 */
-
-	g_main_context_wakeup (NULL);
-
-	return TRUE;
-}
-
-xmms_ipc_msg_t *
-xmms_ipc_client_msg_read (xmms_ipc_client_t *client)
-{
-	xmms_ipc_msg_t *msg;
-	g_return_val_if_fail (client, NULL);
-
-	g_mutex_lock (client->mutex);
-	msg = xmms_ipc_msg_read (client->read_buffer);
-	g_mutex_unlock (client->mutex);
-
-	return msg;
-}
-	
-static gboolean
-xmms_ipc_client_source_prepare (GSource *source, gint *timeout_)
-{
-	/* No timeout here */
-	return FALSE;
-}
-
-static gboolean
-xmms_ipc_client_source_check (GSource *source)
-{
-	return TRUE;
-}
-
-static gboolean
-xmms_ipc_client_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
-{
-	((xmms_ipc_server_callback_t)callback) (source, user_data);
-	return TRUE;
-}
-
-static gboolean
-xmms_ipc_client_source_callback (GSource *source, xmms_ipc_client_t *client)
-{
-	xmms_ipc_msg_t *msg;
-	gboolean disconnect = FALSE;
-
-	g_mutex_lock (client->mutex);
-	xmms_ipc_client_ref (client);
-	g_mutex_unlock (client->mutex);
-
-	if (client->gpoll->revents & G_IO_IN) {
-		gchar buffer[4096];
-		gint ret=0;
-
-		do {
-			ret = xmms_ipc_transport_read (client->transport, buffer, 4096);
-			if (ret == -1) {
-				break;
-			} else if (ret == 0) {
-				disconnect = TRUE;
-				break;
-			}
-			g_mutex_lock (client->mutex);
-			xmms_ringbuf_write (client->read_buffer, buffer, ret);
-			g_mutex_unlock (client->mutex);
-		} while (ret > 0);
-
-		g_mutex_lock (client->mutex);
-		do {
-			if (!xmms_ipc_msg_can_read (client->read_buffer)) {
-				break;
-			} else {
-				msg = xmms_ipc_msg_read (client->read_buffer);
-				/* We ref this one time per msg we add */
-				xmms_ipc_client_ref (client);
-				g_queue_push_tail (client->msgs, msg);
-			}
-		} while (msg);
-		g_cond_signal (client->ipc->msg_cond);
-		g_mutex_unlock (client->mutex);
-			
-	} else if (client->gpoll->revents & G_IO_OUT) {
-		gint len;
-		g_mutex_lock (client->mutex);
-		while (xmms_ringbuf_bytes_used (client->write_buffer)) {
-			gchar buf[4096];
-			gint ret;
-
-
-			len = MIN (xmms_ringbuf_bytes_used (client->write_buffer), 4096);
-			ret = xmms_ringbuf_read (client->write_buffer, buf, len);
-			xmms_ipc_transport_write (client->transport, buf, ret);
-		/*	xmms_ipc_client_unref (client); give back the ref that client_write took */
-		}
-		client->poll_opts = G_IO_IN | G_IO_HUP | G_IO_ERR;
-		g_mutex_unlock (client->mutex);
-	}
-
-	xmms_ipc_client_unref (client);
-
-	if (client && client->gpoll && client->gpoll->revents & G_IO_HUP) {
-		disconnect = TRUE;
-	}
-
-	if (disconnect) {
-		xmms_ipc_client_unref (client);
-
-		return FALSE;
-	} else if (client) {
-		xmms_ipc_client_setup_with_gmain (client);
-	}
-
-	return TRUE;
-}
-
-static GSourceFuncs xmms_ipc_client_funcs = {
-	xmms_ipc_client_source_prepare,
-	xmms_ipc_client_source_check,
-	xmms_ipc_client_source_dispatch,
-	NULL
-};
-
-static gboolean
-xmms_ipc_client_setup_with_gmain (xmms_ipc_client_t *client)
-{
-	GPollFD *pollfd;
-
-	pollfd = g_new0 (GPollFD, 1);
-	pollfd->fd = xmms_ipc_transport_fd_get (client->transport);
-	pollfd->events = client->poll_opts;
-	
-	if (client->gsource) {
-		if (client->gpoll) {
-			g_source_remove_poll (client->gsource, client->gpoll);
-			g_free (client->gpoll);
-		}
-	} else {
-		client->gsource = g_source_new (&xmms_ipc_client_funcs, sizeof (GSource));
-		g_source_attach (client->gsource, NULL);
-		g_source_set_callback (client->gsource, (GSourceFunc)xmms_ipc_client_source_callback, (gpointer) client, NULL);
-	}
-
-	g_source_add_poll (client->gsource, pollfd);
-	client->gpoll = pollfd;
-
-
-	return TRUE;
-}
-
-static gboolean
-xmms_ipc_source_prepare (GSource *source, gint *timeout_)
-{
-	/* No timeout here */
-	return FALSE;
-}
-
-static gboolean
-xmms_ipc_source_check (GSource *source)
-{
-	/* Maybe check for errors here? */
-	return TRUE;
-}
-
-static gboolean
-xmms_ipc_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
-{
-	((xmms_ipc_client_callback_t)callback) (source, user_data);
-	return TRUE;
-}
-
-static gboolean
-xmms_ipc_source_accept (GSource *source, xmms_ipc_t *ipc)
-{
-	xmms_ipc_transport_t *transport;
-	xmms_ipc_client_t *client;
-
-	if (!(ipc->pollfd->revents & G_IO_IN)) {
-		return FALSE;
-	}
-
-	XMMS_DBG ("Client connect?!");
-	transport = xmms_ipc_server_accept (ipc->transport);
-	if (!transport) {
-		XMMS_DBG ("accept returned null!");
-		return FALSE;
-	}
-
-	client = xmms_ipc_client_new (ipc, transport);
-
-	if (xmms_ipc_client_setup_with_gmain (client)) {
-		g_mutex_lock (ipc->mutex);
-		ipc->clients = g_list_append (ipc->clients, client);
-		g_mutex_unlock (ipc->mutex);
-	}
-
-	return TRUE;
-}
-
-static GSourceFuncs xmms_ipc_server_funcs = {
-	xmms_ipc_source_prepare,
-	xmms_ipc_source_check,
-	xmms_ipc_source_dispatch,
-	NULL
-};
-
-gboolean
-xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
-{
-	GSource *source;
-
-	ipc->pollfd = g_new0 (GPollFD, 1);
-	ipc->pollfd->fd = xmms_ipc_transport_fd_get (ipc->transport);
-	ipc->pollfd->events = G_IO_IN | G_IO_HUP | G_IO_ERR;
-
-	source = g_source_new (&xmms_ipc_server_funcs, sizeof (GSource));
-	ipc->source = source;
-
-	g_source_set_callback (source, (GSourceFunc)xmms_ipc_source_accept, (gpointer) ipc, NULL);
-	g_source_add_poll (source, ipc->pollfd);
-	g_source_attach (source, NULL);
-
-	return TRUE;
-}
 
 static gboolean
 type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
@@ -604,47 +310,224 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 }
 
 
+
 static gpointer
-xmms_ipc_handle_thread (gpointer data)
+xmms_ipc_client_thread (gpointer data)
 {
-	xmms_ipc_t *ipc = data;
+	fd_set fdset;
+	gint fd;
+	xmms_ipc_client_t *client = data;
+	struct timeval tmout;
 
-	g_mutex_lock (ipc->mutex);
-	while (ipc->run) {
+	g_return_val_if_fail (client, NULL);
+	
+	xmms_ipc_client_ref (client);
+
+	fd = xmms_ipc_transport_fd_get (client->transport);
+
+	while (client->run) {
+		gint ret;
+		gboolean disconnect = FALSE;
 		xmms_ipc_msg_t *msg;
-		GList *c;
 
-		for (c = ipc->clients; c; c = g_list_next (c)) {
-			xmms_ipc_client_t *client = c->data;
+		FD_ZERO (&fdset);
+		FD_SET (fd, &fdset);
+	
+		tmout.tv_usec = 0;
+		tmout.tv_sec = 5;
 
-			if (!client)
-				continue;
-
-			g_mutex_lock (client->mutex);
-			xmms_ipc_client_ref (client);
-			do {
-				msg = g_queue_pop_head (client->msgs);
-
-				if (!msg) 
-					break;
-
-				g_mutex_unlock (client->mutex);
-				process_msg (client, ipc, msg);
-				g_mutex_lock (client->mutex);
-
-				xmms_ipc_msg_destroy (msg);
-				xmms_ipc_client_unref (client); /* we give back the ref that the message reader took */
-			} while (msg);
-			g_mutex_unlock (client->mutex);
+		ret = select (fd + 1, &fdset, NULL, &fdset, &tmout);
+		if (ret == -1) {
+			/* Woot client destroyed? */
+			XMMS_DBG ("Error from select, maybe the client died?");
 			xmms_ipc_client_unref (client);
+			return NULL;
+		} else if (ret == 0) {
+			continue;
 		}
 
-		g_cond_wait (ipc->msg_cond, ipc->mutex);
-		
+		while (TRUE) {
+			gchar buffer[4096];
+			ret = xmms_ipc_transport_read (client->transport, buffer, 4096);
+			if (ret == -1) {
+				break;
+			} else if (ret == 0) {
+				disconnect = TRUE;
+				break;
+			}
+			xmms_ringbuf_write (client->read_buffer, buffer, ret);
+		}
+
+		while (TRUE) {
+			if (!xmms_ipc_msg_can_read (client->read_buffer)) {
+				break;
+			} else {
+				msg = xmms_ipc_msg_read (client->read_buffer);
+				if (!msg)
+					continue;
+				process_msg (client, client->ipc, msg);
+				xmms_ipc_msg_destroy (msg);
+			}
+		}
+
+		if (disconnect) {
+			xmms_ipc_client_unref (client);
+			return NULL;
+		}
 	}
-	g_mutex_unlock (ipc->mutex);
 
 	return NULL;
+
+}
+
+static xmms_ipc_client_t *
+xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
+{
+	xmms_ipc_client_t *client;
+
+	g_return_val_if_fail (transport, NULL);
+
+	client = g_new0 (xmms_ipc_client_t, 1);
+	client->status = XMMS_IPC_CLIENT_STATUS_NEW;
+	client->transport = transport;
+	client->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
+	client->ipc = ipc;
+	client->ref_lock = g_mutex_new ();
+	client->run = TRUE;
+	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
+	
+	return client;
+}
+
+static void
+xmms_ipc_client_destroy (xmms_ipc_client_t *client)
+{
+	XMMS_DBG ("Destroying client!");
+
+	g_mutex_lock (client->ipc->mutex);
+	client->ipc->clients = g_list_remove (client->ipc->clients, client);
+	g_mutex_unlock (client->ipc->mutex);
+
+	client->run = FALSE;
+
+	XMMS_DBG ("Now everyone is done with client!");
+
+	xmms_ipc_transport_destroy (client->transport);
+	xmms_ringbuf_destroy (client->read_buffer);
+	g_mutex_free (client->ref_lock);
+
+	g_free (client);
+}
+
+gboolean
+xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
+{
+	fd_set fdset;
+	gint fd;
+	struct timeval tmout;
+
+	g_return_val_if_fail (client, FALSE);
+	g_return_val_if_fail (msg, FALSE);
+
+	tmout.tv_sec = 5;
+	tmout.tv_usec = 0;
+
+	xmms_ipc_client_ref (client);
+
+	fd = xmms_ipc_transport_fd_get (client->transport);
+	
+	FD_ZERO (&fdset);
+	FD_SET (fd, &fdset);
+
+	/* We don't want to hold mutex while selecting the socket */
+
+	if (select (fd + 1, NULL, &fdset, NULL, &tmout) == -1) {
+		xmms_ipc_client_unref (client);
+		XMMS_DBG ("Nah, failed!");
+		return FALSE;
+	}
+
+	if (!xmms_ipc_msg_write_fd (fd, msg, msg->cid)) {
+		xmms_ipc_client_unref (client);
+		return FALSE;
+	}
+
+	xmms_ipc_client_unref (client);
+
+	return TRUE;
+}
+
+static gboolean
+xmms_ipc_source_prepare (GSource *source, gint *timeout_)
+{
+	/* No timeout here */
+	return FALSE;
+}
+
+static gboolean
+xmms_ipc_source_check (GSource *source)
+{
+	/* Maybe check for errors here? */
+	return TRUE;
+}
+
+static gboolean
+xmms_ipc_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
+{
+	((xmms_ipc_client_callback_t)callback) (source, user_data);
+	return TRUE;
+}
+
+static gboolean
+xmms_ipc_source_accept (GSource *source, xmms_ipc_t *ipc)
+{
+	xmms_ipc_transport_t *transport;
+	xmms_ipc_client_t *client;
+
+	if (!(ipc->pollfd->revents & G_IO_IN)) {
+		return FALSE;
+	}
+
+	XMMS_DBG ("Client connect?!");
+	transport = xmms_ipc_server_accept (ipc->transport);
+	if (!transport) {
+		XMMS_DBG ("accept returned null!");
+		return FALSE;
+	}
+
+	client = xmms_ipc_client_new (ipc, transport);
+
+	g_mutex_lock (ipc->mutex);
+	ipc->clients = g_list_append (ipc->clients, client);
+	g_mutex_unlock (ipc->mutex);
+
+	return TRUE;
+}
+
+static GSourceFuncs xmms_ipc_server_funcs = {
+	xmms_ipc_source_prepare,
+	xmms_ipc_source_check,
+	xmms_ipc_source_dispatch,
+	NULL
+};
+
+gboolean
+xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
+{
+	GSource *source;
+
+	ipc->pollfd = g_new0 (GPollFD, 1);
+	ipc->pollfd->fd = xmms_ipc_transport_fd_get (ipc->transport);
+	ipc->pollfd->events = G_IO_IN | G_IO_HUP | G_IO_ERR;
+
+	source = g_source_new (&xmms_ipc_server_funcs, sizeof (GSource));
+	ipc->source = source;
+
+	g_source_set_callback (source, (GSourceFunc)xmms_ipc_source_accept, (gpointer) ipc, NULL);
+	g_source_add_poll (source, ipc->pollfd);
+	g_source_attach (source, NULL);
+
+	return TRUE;
 }
 
 static void
@@ -660,7 +543,6 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 		if (cli->pendingsignals[signalid]) {
 			xmms_ipc_msg_t *msg;
 			
-
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 			msg->cid = cli->pendingsignals[signalid];
 			xmms_ipc_handle_arg_value (msg, (xmms_object_cmd_arg_t*)arg);
@@ -686,7 +568,6 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 		xmms_ipc_client_t *cli = c->data;
 		if (cli->broadcasts[broadcastid]) {
 			xmms_ipc_msg_t *msg;
-
 
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
 			msg->cid = cli->broadcasts[broadcastid];
@@ -816,8 +697,6 @@ xmms_ipc_init (void)
 	
 	ipc = g_new0 (xmms_ipc_t, 1);
 	ipc->mutex = g_mutex_new ();
-	ipc->msg_cond = g_cond_new ();
-	ipc->run = TRUE;
 
 	XMMS_DBG ("IPC Initialized with %d CMDs!", XMMS_IPC_CMD_END);
 
@@ -843,7 +722,6 @@ xmms_ipc_setup_server (const gchar *path)
 	global_ipc->transport = transport;
 
 	XMMS_DBG ("Starting ipc thread!");
-	g_thread_create (xmms_ipc_handle_thread, global_ipc, FALSE, NULL);
 
 	return TRUE;
 }
