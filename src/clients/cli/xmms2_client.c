@@ -526,8 +526,8 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	x_list_t *l;
 	GError *err = NULL;
 	gulong total_playtime = 0;
-	int id;
-	guint pos = 0;
+	guint p;
+	guint pos = 1;
 	gsize r, w;
 
 	list = xmmscs_playlist_list (conn);
@@ -535,7 +535,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	if (!list)
 		return;
 
-	id = xmmscs_playback_current_id (conn);
+	p = xmmscs_playlist_current_pos (conn);
 
 	for (l = list; l; l = x_list_next (l)) {
 		x_hash_t *tab;
@@ -581,7 +581,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
 
-		if (id == i) {
+		if (p == pos) {
 			print_info ("->[%d/%d] %s", pos, i, conv);
 		} else {
 			print_info ("  [%d/%d] %s", pos, i, conv);
@@ -657,9 +657,17 @@ cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 {
+	guint pos;
 	xmmsc_result_t *res;
-	res = xmmsc_playlist_set_next (conn, 0, -2);
+
+	pos = xmmscs_playlist_current_pos (conn);
+
+	if (pos > 1) 
+		pos --;
+
+	res = xmmsc_playlist_set_next (conn, pos);
 	xmmsc_result_wait (res);
+
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
 		return;
@@ -836,7 +844,7 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 		print_error ("You'll need to specify a ID to jump to.");
 	}
 
-	res = xmmsc_playlist_set_next (conn, 1, atoi (argv[2]));
+	res = xmmsc_playlist_set_next (conn,  atoi (argv[2]));
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Couldn't jump to that song: %s\n", xmmsc_result_get_error (res));
@@ -927,7 +935,6 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 {
 	x_hash_t *hash;
 	gchar *tmp;
-	gint mid;
 
 	hash = xmmscs_medialib_get_info (c, id);
 

@@ -90,7 +90,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property) 
-	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
+	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, int pos)
 	xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int movement)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
@@ -936,20 +936,9 @@ cdef class XMMS :
 		
 		return ret
 
-	def playlist_set_next (self, type, moment, myClass = None) :
+	def playlist_set_next (self, position, myClass = None) :
 		"""
-		Set the relative position to jump to, when calling
-		L{PlaybackNext}. For example,
-		C{xmms.PlaylistSetNext (0, 1)}
-		followed by C{xmms.PlaybackNext ()} causes the daemon to
-		jump forward in the playlist. To jump backward in the playlist,
-		use C{xmms.PlaylistSetNext (0, -1)}. You can check the return
-		value from this function to make sure it's safe to move to the
-		next playlist item. The 'type' argument can either be:
-		C{XMMS_PLAYLIST_SET_NEXT_RELATIVE (0)} or
-		C{XMMS_PLAYLIST_SET_NEXT_BYID (1)}.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
+		Sets the position in the playlist. 
 		"""
 		cdef XMMSResult ret
 		
@@ -958,7 +947,7 @@ cdef class XMMS :
 		else :
 			ret = XMMSResult ()
 		
-		ret.res = xmmsc_playlist_set_next (self.conn, type, moment)
+		ret.res = xmmsc_playlist_set_next (self.conn, position)
 		ret.more_init ()
 		
 		return ret

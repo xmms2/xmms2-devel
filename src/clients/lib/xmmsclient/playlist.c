@@ -36,6 +36,36 @@
  */
 
 /**
+ * Retrive the current position in the playlist
+ */
+xmmsc_result_t *
+xmmsc_playlist_current_pos (xmmsc_connection_t *c)
+{
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
+}
+
+unsigned int
+xmmscs_playlist_current_pos (xmmsc_connection_t *c)
+{
+	unsigned int i = 0;
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_current_pos (c);
+	if (!res)
+		return NULL;
+
+	xmmsc_result_wait (res);
+
+	xmmsc_result_get_uint (res, &i);
+
+	xmmsc_result_unref (res);
+
+	return i;
+}
+
+
+
+/**
  * Shuffles the current playlist.
  */
 
@@ -233,14 +263,13 @@ xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
 }
 
 xmmsc_result_t *
-xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
+xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int pos)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_JUMP);
-	xmms_ipc_msg_put_uint32 (msg, type);
-	xmms_ipc_msg_put_int32 (msg, moment);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SET_POS);
+	xmms_ipc_msg_put_uint32 (msg, pos);
 
 	res = xmmsc_send_msg (c, msg);
 
