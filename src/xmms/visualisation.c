@@ -44,14 +44,16 @@ struct xmms_visualisation_St {
 
 static void fft(gint16 *samples, gfloat *spec);
 
+void
+xmms_visualisation_init_mutex ()
+{
+	visuserslock = g_mutex_new ();
+}
 
 xmms_visualisation_t *
 xmms_visualisation_init()
 {
 	xmms_visualisation_t *res;
-
-	if (!visuserslock)
-		visuserslock = g_mutex_new ();
 
 	res = g_new0 (xmms_visualisation_t, 1);
 

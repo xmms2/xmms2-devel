@@ -167,6 +167,7 @@ main (int argc, char **argv)
 	xmms_log_initialize ("xmmsd");
 
 	xmms_core_init ();
+	xmms_visualisation_init_mutex ();
 	
 	parse_config ();
 
