@@ -6,6 +6,10 @@
 #include <dbus/dbus.h>
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	XMMSC_WATCH_IN = 1 << 0,
 	XMMSC_WATCH_OUT = 1 << 1,
@@ -47,5 +51,8 @@ void xmmsc_watch_data_set (xmmsc_connection_t *connection, gpointer data);
 gboolean xmmsc_watch_more (xmmsc_connection_t *conn);
 void xmmsc_watch_dispatch (xmmsc_connection_t *conn, xmmsc_watch_t *watch, unsigned int event);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

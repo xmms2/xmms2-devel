@@ -3,6 +3,10 @@
 
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct xmmsc_connection_St xmmsc_connection_t;
 typedef struct xmmsc_playlist_entry_St { /* no use to share them between client and core */
 	gchar *url;
@@ -52,5 +56,9 @@ void xmmsc_playlist_mode_set_stop (xmmsc_connection_t *c);
 void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), void *);
 
 void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -16,6 +16,27 @@
 //#define DBG(fmt, args...) printf (__FILE__ ": " fmt "\n", ## args)
 #define DBG(fmt, args...)
 
+void
+playlist_set_id_data (playlist_t *pl, unsigned int id, gpointer data)
+{
+	playlist_entry_t *e;
+
+	e = playlist_entry_get (pl, id);
+	if (e)
+		e->data = data;
+}
+
+gpointer
+playlist_get_id_data (playlist_t *pl, unsigned int id)
+{
+	playlist_entry_t *e;
+
+	e = playlist_entry_get (pl, id);
+	if (e)
+		return e->data;
+	return NULL;
+}
+
 static void
 playlist_add (void *userdata, void *arg)
 {
