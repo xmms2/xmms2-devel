@@ -609,7 +609,7 @@ xmms_decoder_start (xmms_decoder_t *decoder,
 	decoder->running = TRUE;
 	decoder->effect = effect;
 	decoder->output = output;
-	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
+	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
 void
@@ -621,19 +621,6 @@ xmms_decoder_stop (xmms_decoder_t *decoder)
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 	xmms_decoder_unlock (decoder);
 }
-
-void
-xmms_decoder_wait (xmms_decoder_t *decoder)
-{
-	g_return_if_fail (decoder);
-
-	if (decoder->running) {
-		g_thread_join (decoder->thread);
-		//decoder->thread = NULL;
-	}
-
-}
-
 
 void
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
