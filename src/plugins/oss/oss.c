@@ -32,6 +32,7 @@ static gboolean xmms_oss_open (xmms_output_t *output);
 static void xmms_oss_close (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
 static guint xmms_oss_samplerate_set (xmms_output_t *output, guint rate);
+static guint xmms_oss_buffersize_get (xmms_output_t *output);
 
 /*
  * Plugin header
@@ -53,6 +54,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_oss_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_oss_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_oss_samplerate_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_oss_buffersize_get);
 
 	return plugin;
 }
@@ -60,6 +62,22 @@ xmms_plugin_get (void)
 /*
  * Member functions
  */
+
+static guint
+xmms_oss_buffersize_get (xmms_output_t *output)
+{
+	xmms_oss_data_t *data;
+	audio_buf_info buf_info;
+
+	g_return_val_if_fail (output, 0);
+
+	data = xmms_output_plugin_data_get (output);
+
+	if(!ioctl(data->fd, SNDCTL_DSP_GETOSPACE, &buf_info)){
+		return (buf_info.fragstotal * buf_info.fragsize) - buf_info.bytes;
+	}
+	return 0;
+}
 
 static gboolean
 xmms_oss_open (xmms_output_t *output)
@@ -137,4 +155,5 @@ xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len)
 
 	data = xmms_output_plugin_data_get (output);
 	write (data->fd, buffer, len);
+
 }

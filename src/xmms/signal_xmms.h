@@ -36,4 +36,8 @@
 /* Output msgs */
 #define XMMS_SIGNAL_OUTPUT_EOS_REACHED "org.xmms.output.eos.reached"
 
+/* Visualisation msgs */
+#define XMMS_SIGNAL_VISUALISATION_SPECTRUM "org.xmms.visualisation.spectrum"
+
+
 #endif /* __SIGNAL_XMMS_H__ */

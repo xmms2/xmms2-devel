@@ -48,6 +48,8 @@ gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);
 xmms_playlist_entry_t *xmms_core_playlist_entry_mediainfo (guint id);
 gchar *xmms_core_get_uri ();
 gint xmms_core_get_id ();
+void xmms_core_vis_spectrum (gfloat *spec);
+
 
 void xmms_core_playback_stop ();
 void xmms_core_playback_start ();

@@ -234,6 +234,7 @@ static gpointer
 xmms_output_thread (gpointer data)
 {
 	xmms_output_t *output;
+	xmms_output_buffersize_get_method_t buffersize_get_method;
 	xmms_output_write_method_t write_method;
 
 	output = (xmms_output_t*)data;
@@ -241,6 +242,8 @@ xmms_output_thread (gpointer data)
 
 	write_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_WRITE);
 	g_return_val_if_fail (write_method, NULL);
+
+	buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
 
 	xmms_output_lock (output);
 	while (output->running) {
@@ -255,7 +258,7 @@ xmms_output_thread (gpointer data)
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
 		
 		if (ret > 0) {
-
+			guint played_time;
 			xmms_output_unlock (output);
 			write_method (output, buffer, ret);
 			xmms_output_lock (output);
@@ -264,7 +267,22 @@ xmms_output_thread (gpointer data)
 			/** @todo some places we are counting in bytes,
 			    in other in number of samples. Maybe we
 			    want a xmms_sample_t and a XMMS_SAMPLE_SIZE */
-			xmms_core_playtime_set ((guint)(output->played/(4.0f*output->samplerate/1000.0f)));
+			
+			played_time = (guint)(output->played/(4.0f*output->samplerate/1000.0f));
+
+			if (buffersize_get_method) {
+				guint buffersize = buffersize_get_method (output);
+				buffersize = buffersize/(2.0f*output->samplerate/1000.0f);
+/*				XMMS_DBG ("buffer: %dms", buffersize);*/
+
+				if (played_time >= buffersize) {
+					played_time -= buffersize;
+				} else {
+					played_time = 0;
+				}
+			}
+			xmms_core_playtime_set (played_time);
+
 			
 		} else if (xmms_ringbuf_eos (output->buffer)) {
 			GTimeVal time;

@@ -196,6 +196,16 @@ xmms_core_information (gint loglevel, gchar *information)
 }
 
 /**
+ * 
+ */
+void
+xmms_core_vis_spectrum (gfloat *spec)
+{
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_VISUALISATION_SPECTRUM, spec);
+}
+
+
+/**
  * Initializes the coreobject.
  *
  * @internal
