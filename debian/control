@@ -1,0 +1,14 @@
+Source: xmms2
+Section: sound
+Priority: optional
+Maintainer: Anders Gustafsson <andersg@xmms.org>
+Standards-Version: 3.5.8
+Build-Depends: debmake
+
+Package: xmms2
+Architecture: any
+Depends: debconf (>= 0.2.78), ${shlibs:Depends}
+Description: XMMS2 - private beta - DO NOT SPREAD!
+ DO NOT SPREAD!
+ .
+ FIXME! The sid and SDL plugin should be built in a separate package
