@@ -4,6 +4,22 @@
 #include <glib.h>
 #include <gmodule.h>
 
+/* 
+ * Plugin methods
+ */
+
+#define XMMS_METHOD_CAN_HANDLE "can_handle"
+#define XMMS_METHOD_OPEN "open"
+#define XMMS_METHOD_CLOSE "close"
+#define XMMS_METHOD_READ "read"
+#define XMMS_METHOD_SIZE "size"
+#define XMMS_METHOD_SEEK "seek"
+#define XMMS_METHOD_NEW "new"
+#define XMMS_METHOD_DECODE_BLOCK "decode_block"
+#define XMMS_METHOD_GET_MEDIAINFO "get_mediainfo"
+#define XMMS_METHOD_DESTROY "destroy"
+#define XMMS_METHOD_WRITE "write"
+
 /*
  * Type declarations
  */

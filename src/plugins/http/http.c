@@ -45,9 +45,9 @@ xmms_plugin_get (void)
 			"HTTP transport " VERSION,
 			"HTTP streaming transport");
 	
-	xmms_plugin_method_add (plugin, "can_handle", xmms_http_can_handle);
-	xmms_plugin_method_add (plugin, "open", xmms_http_open);
-	xmms_plugin_method_add (plugin, "read", xmms_http_read);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_http_can_handle);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_http_open);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_READ, xmms_http_read);
 	
 	return plugin;
 }

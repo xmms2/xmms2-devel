@@ -42,12 +42,12 @@ xmms_plugin_get (void)
 			"File transport " VERSION,
 		 	"Plain file transport");
 	
-	xmms_plugin_method_add (plugin, "can_handle", xmms_file_can_handle);
-	xmms_plugin_method_add (plugin, "open", xmms_file_open);
-	xmms_plugin_method_add (plugin, "close", xmms_file_close);
-	xmms_plugin_method_add (plugin, "read", xmms_file_read);
-	xmms_plugin_method_add (plugin, "size", xmms_file_size);
-	xmms_plugin_method_add (plugin, "seek", xmms_file_seek);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_file_can_handle);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_file_open);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_CLOSE, xmms_file_close);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_READ, xmms_file_read);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_SIZE, xmms_file_size);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_SEEK, xmms_file_seek);
 	
 	return plugin;
 }

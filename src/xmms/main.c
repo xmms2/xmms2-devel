@@ -110,25 +110,20 @@ main (int argc, char **argv)
 
 	xmms_plugin_t *o_plugin;
 	int opt;
-	int verbose=0;
+	int verbose = 0;
+	int stamp = 0;
 	sigset_t signals;
 	gchar *outname = NULL;
 
 	memset (&signals, 0, sizeof (sigset_t));
-        sigaddset(&signals,SIGHUP);
-	sigaddset(&signals,SIGTERM);
-	sigaddset(&signals,SIGINT);
-	sigaddset(&signals,SIGSEGV);
-	pthread_sigmask(SIG_BLOCK,&signals,NULL);
+        sigaddset (&signals, SIGHUP);
+	sigaddset (&signals, SIGTERM);
+	sigaddset (&signals, SIGINT);
+	sigaddset (&signals, SIGSEGV);
+	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 	
 	if (argc < 2)
 		exit (1);
-	
-	g_thread_init (NULL);
-	if (!xmms_plugin_init ())
-		return 1;
-
-	playlist = xmms_playlist_init ();
 
 	while (42) {
 		opt = getopt (argc, argv, "vVo:");
@@ -152,6 +147,12 @@ main (int argc, char **argv)
 				
 		}
 	}
+
+	g_thread_init (NULL);
+	if (!xmms_plugin_init ())
+		return 1;
+
+	playlist = xmms_playlist_init ();
 
 	if (optind) {
 		while (argv[optind]) {
@@ -183,8 +184,6 @@ main (int argc, char **argv)
 	g_return_val_if_fail (output, -1);
 	xmms_output_start (output);
 	play_next ();
-
-
 
 	while (42) {
 		int caught;

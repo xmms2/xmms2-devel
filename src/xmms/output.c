@@ -64,7 +64,7 @@ xmms_output_open (xmms_plugin_t *plugin)
 	output->cond = g_cond_new ();
 	output->buffer = xmms_ringbuf_new (32768);
 	
-	open_method = xmms_plugin_method_get (plugin, "open");
+	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
 
 	if (!open_method || !open_method (output, "/tmp/foo")) {
 		XMMS_DBG ("Couldnt open output device");
@@ -129,7 +129,7 @@ xmms_output_thread (gpointer data)
 	g_return_val_if_fail (data, NULL);
 
 	XMMS_DBG ("Plugin %s", output->plugin->name);
-	write_method = xmms_plugin_method_get (output->plugin, "write");
+	write_method = xmms_plugin_method_get (output->plugin, XMMS_METHOD_WRITE);
 	g_return_val_if_fail (write_method, NULL);
 
 	xmms_output_lock (output);

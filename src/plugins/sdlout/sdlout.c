@@ -46,8 +46,8 @@ xmms_plugin_get (void)
 			"SDL Output " VERSION,
 			"Uses SDLlib for output");
 	
-	xmms_plugin_method_add (plugin, "write", xmms_sdlout_write);
-	xmms_plugin_method_add (plugin, "open", xmms_sdlout_open);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_WRITE, xmms_sdlout_write);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_sdlout_open);
 	
 	return plugin;
 }

@@ -38,8 +38,8 @@ xmms_plugin_get (void)
 			"Diskwriter output " VERSION,
 			"Saves a wavefile");
 	
-	xmms_plugin_method_add (plugin, "write", xmms_diskwrite_write);
-	xmms_plugin_method_add (plugin, "open", xmms_diskwrite_open);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_WRITE, xmms_diskwrite_write);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_diskwrite_open);
 	
 	return plugin;
 }

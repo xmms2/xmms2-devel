@@ -101,7 +101,7 @@ xmms_decoder_new (const gchar *mimetype)
 	decoder->mutex = g_mutex_new ();
 	decoder->cond = g_cond_new ();
 
-	new_method = xmms_plugin_method_get (plugin, "new");
+	new_method = xmms_plugin_method_get (plugin, XMMS_METHOD_NEW);
 
 	if (!new_method || !new_method (decoder, mimetype)) {
 		XMMS_DBG ("new failed");
@@ -193,7 +193,7 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 	
 	g_return_if_fail (decoder);
 	
-	destroy_method = xmms_plugin_method_get (decoder->plugin, "destroy");
+	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_METHOD_DESTROY);
 	if (destroy_method)
 		destroy_method (decoder);
 
@@ -224,7 +224,7 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 	for (node = list; node; node = g_list_next (node)) {
 		plugin = node->data;
 		XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
-		can_handle = xmms_plugin_method_get (plugin, "can_handle");
+		can_handle = xmms_plugin_method_get (plugin, XMMS_METHOD_CAN_HANDLE);
 		
 		if (!can_handle)
 			continue;
@@ -253,7 +253,7 @@ xmms_decoder_thread (gpointer data)
 
 	g_return_val_if_fail (decoder, NULL);
 	
-	decode_block = xmms_plugin_method_get (decoder->plugin, "decode_block");
+	decode_block = xmms_plugin_method_get (decoder->plugin, XMMS_METHOD_DECODE_BLOCK);
 	if (!decode_block)
 		return NULL;
 
