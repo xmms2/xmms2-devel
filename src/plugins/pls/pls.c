@@ -175,15 +175,24 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 			break;
 		}
 
+		title = get_value (lines[current + 1], "Title");
+		if (!title) {
+			g_free (file);
+			break;
+		}
+
+		length = get_value (lines[current + 2], "Length");
+		if (!length) {
+			g_free (file);
+			g_free (title);
+			break;
+		}
+
 		url = build_encoded_url (plspath, file);
 		entry = xmms_playlist_entry_new (url);
 
-		title = get_value (lines[current + 1], "Title");
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
-
-		length = get_value (lines[current + 2], "Length");
 		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, length);
-
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
 		xmms_playlist_add (playlist, entry);
 
 		g_free (url);
