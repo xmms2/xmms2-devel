@@ -757,7 +757,7 @@ main (int argc, char **argv)
 		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
 	}
 
-	dbuspath = getenv ("DBUS_PATH");
+	dbuspath = getenv ("XMMS_PATH");
 	if (!dbuspath) {
 		path = g_strdup_printf ("unix:///tmp/xmms-ipc-%s", g_get_user_name ());
 	} else {
