@@ -200,6 +200,18 @@ xmms_modplug_init (xmms_decoder_t *decoder)
 	g_return_val_if_fail (decoder, FALSE);
 
 
+	/* 
+	   ModPlug always decodes sound at 44100kHz, 32 bit, stereo
+	   and then down-mixes to the selected settings.  So there is
+	   no need exporting any other formats, it's better to let
+	   xmms2 do the conversion
+	*/
+
+	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
+	if (xmms_decoder_format_finish (decoder) == NULL) {
+		return FALSE;
+	}
+
 	data->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR;
 	data->settings.mChannels = 2;
 	data->settings.mBits = 16;

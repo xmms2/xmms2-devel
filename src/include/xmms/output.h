@@ -45,6 +45,7 @@ typedef struct xmms_output_St xmms_output_t;
 
 #include "xmms/config.h"
 #include "xmms/plugin.h"
+#include "xmms/sample.h"
 
 typedef enum {
 	XMMS_OUTPUT_STATUS_PLAY,
@@ -65,7 +66,7 @@ typedef gboolean (*xmms_output_mixer_get_method_t) (xmms_output_t *output, gint 
 typedef gboolean (*xmms_output_mixer_set_method_t) (xmms_output_t *output, gint left, gint right);
 typedef void (*xmms_output_flush_method_t) (xmms_output_t *output);
 typedef void (*xmms_output_close_method_t) (xmms_output_t *output);
-typedef guint (*xmms_output_samplerate_set_method_t) (xmms_output_t *output, guint rate);
+typedef gboolean (*xmms_output_format_set_method_t) (xmms_output_t *output, xmms_audio_format_t *fmt);
 typedef guint (*xmms_output_buffersize_get_method_t) (xmms_output_t *output);
 
 /*
@@ -75,6 +76,8 @@ typedef guint (*xmms_output_buffersize_get_method_t) (xmms_output_t *output);
 xmms_plugin_t *xmms_output_plugin_get (xmms_output_t *output);
 gpointer xmms_output_private_data_get (xmms_output_t *output);
 void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
+
+void xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint channels, guint rate);
 
 gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right);
 

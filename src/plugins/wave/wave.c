@@ -33,6 +33,10 @@
 #include <glib.h>
 #include <string.h>
 
+
+#warning "CONVERT TO SAMPLE_T"
+
+
 typedef struct xmms_wave_data_St {
 	guint16 channels;
 	guint32 samplerate;

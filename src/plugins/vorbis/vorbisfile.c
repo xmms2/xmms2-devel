@@ -44,7 +44,7 @@ typedef struct xmms_vorbis_data_St {
 	OggVorbis_File vorbisfile;
 	ov_callbacks callbacks;
 	gint current;
-	gint channels;
+	xmms_audio_format_t *format;
 	gboolean inited;
 } xmms_vorbis_data_t;
 
@@ -307,9 +307,6 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		get_replaygain (entry, ptr);
 	}
 		
-	if (vi)
-		xmms_decoder_samplerate_set (decoder, vi->rate);
-
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_object_unref (entry);
 
@@ -325,7 +322,6 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
-
 	if (!data->inited) {
 		vorbis_info *vi;
 		gint ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
@@ -334,10 +330,17 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 			return FALSE;
 		}
 		vi = ov_info (&data->vorbisfile, -1);
-		data->channels = vi->channels;
 		data->inited = TRUE;
 
-		XMMS_DBG ("channels == %d", data->channels);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U16, vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S8, vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U8, vi->channels, vi->rate);
+		data->format = xmms_decoder_format_finish (decoder);
+		if (data->format == NULL) {
+			return FALSE;
+		}
+
 		XMMS_DBG ("Vorbis inited!!!!");
 	}
 
@@ -352,27 +355,17 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	gint c;
 	xmms_vorbis_data_t *data;
 	guint16 buffer[2048];
-	guint16 monobuffer[1024];
-#ifdef WORDS_BIGENDIAN
-	static gint bigendian = 1;
-#else
-	static gint bigendian = 0;
-#endif
 
 	g_return_val_if_fail (decoder, FALSE);
 	
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
-	/* this produces 16bit signed PCM littleendian PCM data */
-	if (data->channels == 2) {
-		ret = ov_read (&data->vorbisfile, (gchar *)buffer, 4096, bigendian, 2, 1, &c);
-	} else if (data->channels == 1) {
-		ret = ov_read (&data->vorbisfile, (gchar *)monobuffer, 2048, bigendian, 2, 1, &c);
-	} else {
-		xmms_log_error ("Plugin doesn't handle %d number of channels", data->channels);
-		return FALSE;
-	}
+	ret = ov_read (&data->vorbisfile, (gchar *)buffer, sizeof (buffer),
+		       G_BYTE_ORDER == G_BIG_ENDIAN,
+		       xmms_sample_size_get (data->format->format),
+		       xmms_sample_signed_get (data->format->format),
+		       &c);
 
 	if (ret == 0) {
 		XMMS_DBG ("got ZERO from ov_read");
@@ -385,17 +378,6 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 		XMMS_DBG ("current = %d, c = %d", data->current, c);
 		xmms_vorbis_get_media_info (decoder);
 		data->current = c;
-	}
-
-	if (data->channels == 1) {
-		gint i;
-		gint j = 0;
-		for (i = 0; i < (ret/2); i++) {
-			buffer[j++] = monobuffer[i];
-			buffer[j++] = monobuffer[i];
-		}
-
-		ret = ret * 2; /* we have doubled every sample now */
 	}
 
 	xmms_decoder_write (decoder,(gchar *) buffer, ret);

@@ -34,6 +34,8 @@
 #include <errno.h>
 #include <string.h>
 
+#warning "CONVERT TO SAMPLE_T"
+
 /*
  * Defines
  */
@@ -109,8 +111,10 @@ xmms_plugin_get (void)
 	                        xmms_diskwrite_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE,
 	                        xmms_diskwrite_close);
+/*
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET,
 	                        xmms_diskwrite_samplerate_set);
+*/
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
 	                        xmms_diskwrite_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,

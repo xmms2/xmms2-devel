@@ -39,6 +39,7 @@ typedef struct xmms_decoder_St xmms_decoder_t;
 #include "xmms/playlist.h"
 #include "xmms/transport.h"
 #include "xmms/output.h"
+#include "xmms/sample.h"
 
 /*
  * Decoder plugin methods
@@ -63,8 +64,11 @@ xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);
 xmms_plugin_t *xmms_decoder_plugin_get (xmms_decoder_t *);
 void xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len);
-void xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate);
-guint xmms_decoder_samplerate_get (xmms_decoder_t *decoder);
+
+void xmms_decoder_format_add (xmms_decoder_t *decoder, xmms_sample_format_t fmt, guint channels, guint rate);
+xmms_audio_format_t *xmms_decoder_format_finish (xmms_decoder_t *decoder);
+
+
 void xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 				 xmms_transport_t *transport);
 xmms_playlist_entry_t * xmms_decoder_playlist_entry_get (xmms_decoder_t *decoder);

@@ -39,7 +39,6 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_METHOD_SIZE "size"
 #define XMMS_PLUGIN_METHOD_SEEK "seek"
 #define XMMS_PLUGIN_METHOD_NEW "new"
-#define XMMS_PLUGIN_METHOD_SAMPLERATE_SET "samplerate_set"
 #define XMMS_PLUGIN_METHOD_BUFFERSIZE_GET "buffersize_get"
 #define XMMS_PLUGIN_METHOD_DECODE_BLOCK "decode_block"
 #define XMMS_PLUGIN_METHOD_GET_MEDIAINFO "get_mediainfo"
@@ -58,6 +57,7 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_METHOD_LIST "list"
 #define XMMS_PLUGIN_METHOD_STATUS "status"
 #define XMMS_PLUGIN_METHOD_LMOD "lmod"
+#define XMMS_PLUGIN_METHOD_FORMAT_SET "format_set"
 
 /*
  * Plugin properties.

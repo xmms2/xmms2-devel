@@ -106,7 +106,10 @@ struct xmms_output_St {
 
 	xmms_playlist_entry_t *playing_entry;
 
-	guint samplerate;
+	/** Supported formats */
+	GList *format_list;
+	/** Active format */
+	xmms_audio_format_t *format;
 
 	/** 
 	 * Number of bytes totaly written to output driver,
@@ -185,6 +188,55 @@ xmms_output_playlist_set (xmms_output_t *output, xmms_playlist_t *playlist)
 
 	g_mutex_unlock (output->mutex);
 }
+
+
+void
+xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint channels, guint rate)
+{
+        xmms_audio_format_t *f;
+	
+        g_return_if_fail (output);
+        g_return_if_fail (fmt);
+        g_return_if_fail (channels);
+        g_return_if_fail (rate);
+	
+        f = xmms_sample_audioformat_new (fmt, channels, rate);
+	
+        g_return_if_fail (f);
+	
+	XMMS_DBG ("Adding outputformat %s-%d-%d",
+	          xmms_sample_name_get (fmt),
+	          channels, rate);
+
+        output->format_list = g_list_append (output->format_list, f);
+}
+
+GList *
+xmms_output_formatlist_get (xmms_output_t *output)
+{
+        g_return_val_if_fail (output, NULL);
+	
+        return output->format_list;
+}
+
+/**
+ * fmt must be one of the formats returned from xmms_output_formatlist_get
+ */
+void
+xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt)
+{
+        g_return_if_fail (output);
+        g_return_if_fail (fmt);
+	
+        if (output->open) {
+                xmms_output_format_set_method_t fmt_set;
+                fmt_set = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FORMAT_SET);
+                fmt_set (output, fmt);
+        }
+        output->format = fmt;
+}
+
+
 
 /*
  * Private functions
@@ -444,43 +496,13 @@ xmms_output_stats (xmms_output_t *output, GList *list)
 	return ret;
 }
 
-void
-xmms_output_samplerate_set (xmms_output_t *output, guint rate)
-{
-	xmms_output_samplerate_set_method_t samplerate_method;
-
-	g_return_if_fail (output);
-	g_return_if_fail (rate);
-
-	g_mutex_lock (output->mutex);
-
-	if (output->open) {
-		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
-		XMMS_DBG ("want samplerate %d", rate);
-		output->samplerate = samplerate_method (output, rate);
-		XMMS_DBG ("samplerate set to: %d", output->samplerate);
-	} else {
-		output->samplerate = rate;
-	}
-
-	g_mutex_unlock (output->mutex);
-}
-
-guint
-xmms_output_samplerate_get (xmms_output_t *output)
-{
-	g_return_val_if_fail (output, 0);
-
-	return output->samplerate;
-}
-
 gboolean
 xmms_output_open (xmms_output_t *output)
 {
 	xmms_output_open_method_t open_method;
+	xmms_output_format_set_method_t format_set_method;
 
 	g_return_val_if_fail (output, FALSE);
-
 
 	open_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
 
@@ -489,12 +511,16 @@ xmms_output_open (xmms_output_t *output)
 		return FALSE;
 	}
 
+	if (output->format) {
+		format_set_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FORMAT_SET);
+		
+		if (format_set_method)
+			format_set_method (output, output->format);
+	}
+
 	g_mutex_lock (output->mutex);
 	output->open = TRUE;
 	g_mutex_unlock (output->mutex);
-
-	XMMS_DBG ("opening with samplerate: %d",output->samplerate);
-	xmms_output_samplerate_set (output, output->samplerate);
 
 	return TRUE;
 
@@ -604,7 +630,6 @@ xmms_output_new (xmms_plugin_t *plugin)
 	output->entry_list = g_queue_new ();
 	output->effects = get_effect_list (output);
 
-	output->samplerate = 44100;
 	output->bytes_written = 0;
 	output->buffer_underruns = 0;
 
@@ -722,24 +747,19 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	g_mutex_lock (output->mutex);
 
 	if (ret > 0) {
-	
-		output->played += ret;
-		/** @todo some places we are counting in bytes,
-		  in other in number of samples. Maybe we
-		  want a xmms_sample_t and a XMMS_SAMPLE_SIZE */
+		guint buffersize = 0;
 
-		output->played_time = (guint)(output->played/(4.0f*output->samplerate/1000.0f));
+		output->played += ret;
 
 		if (buffersize_get_method) {
-			guint buffersize = buffersize_get_method (output);
-			buffersize = buffersize/(2.0f*output->samplerate/1000.0f);
+			buffersize = buffersize_get_method (output);
 
-			if (output->played_time >= buffersize) {
-				output->played_time -= buffersize;
-			} else {
-				output->played_time = 0;
+			if (output->played < buffersize) {
+				buffersize = output->played;
 			}
 		}
+
+		output->played_time = xmms_sample_bytes_to_ms (output->format, output->played - buffersize);
 
 		xmms_object_emit_f (XMMS_OBJECT (output),
 				    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,

@@ -55,6 +55,32 @@ typedef struct xmms_oss_data_St {
 	GMutex *mutex;
 } xmms_oss_data_t;
 
+static struct {
+	xmms_sample_format_t xmms_fmt;
+	int oss_fmt;
+} formats[] = {
+	{XMMS_SAMPLE_FORMAT_U8, AFMT_U8},
+	{XMMS_SAMPLE_FORMAT_S8, AFMT_S8},
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	{XMMS_SAMPLE_FORMAT_S16, AFMT_S16_LE},
+	{XMMS_SAMPLE_FORMAT_U16, AFMT_U16_LE},
+#else
+	{XMMS_SAMPLE_FORMAT_S16, AFMT_S16_BE},
+	{XMMS_SAMPLE_FORMAT_U16, AFMT_U16_BE},
+#endif
+};
+
+static int rates[] = {
+	1337,
+	8000,
+	12025,
+	16000,
+	22050,
+	44100,
+	48000,
+	96000,
+};
+
 /*
  * Function prototypes
  */
@@ -65,8 +91,8 @@ static void xmms_oss_destroy (xmms_output_t *output);
 static void xmms_oss_close (xmms_output_t *output);
 static void xmms_oss_flush (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
-static guint xmms_oss_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_oss_buffersize_get (xmms_output_t *output);
+static gboolean xmms_oss_format_set (xmms_output_t *output, xmms_audio_format_t *format);
 static gboolean xmms_oss_mixer_set (xmms_output_t *output, gint left, 
 									gint right);
 static gboolean xmms_oss_mixer_get (xmms_output_t *output, gint *left, 
@@ -82,60 +108,60 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "oss",
-							  "OSS Output " XMMS_VERSION,
-							  "OpenSoundSystem output plugin");
+	                          "OSS Output " XMMS_VERSION,
+	                          "OpenSoundSystem output plugin");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, 
-							xmms_oss_write);
+	                        xmms_oss_write);
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, 
-							xmms_oss_open);
+	                        xmms_oss_open);
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
-							xmms_oss_new);
+	                        xmms_oss_new);
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
 	                        xmms_oss_destroy);
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
-							xmms_oss_close);
-	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
-							xmms_oss_samplerate_set);
-	
+	                        xmms_oss_close);
+
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, 
+	                        xmms_oss_format_set);
+ 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, 
-							xmms_oss_buffersize_get);
+	                        xmms_oss_buffersize_get);
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
-							xmms_oss_flush);
+	                        xmms_oss_flush);
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, 
-							xmms_oss_mixer_get);
+	                        xmms_oss_mixer_get);
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, 
-							xmms_oss_mixer_set);
+	                        xmms_oss_mixer_set);
 
 	xmms_plugin_config_value_register (plugin,
-									   "mixer",
-									   "/dev/mixer",
-									   NULL,
-									   NULL);
+	                                   "mixer",
+	                                   "/dev/mixer",
+	                                   NULL,
+	                                   NULL);
 	
 	xmms_plugin_config_value_register (plugin,
-									   "device",
-									   "/dev/dsp",
-									   NULL,
-									   NULL);
+	                                   "device",
+	                                   "/dev/dsp",
+	                                   NULL,
+	                                   NULL);
 
 	xmms_plugin_config_value_register (plugin,
-									   "volume",
-									   "70/70",
-									   NULL,
-									   NULL);
-
+	                                   "volume",
+	                                   "70/70",
+	                                   NULL,
+	                                   NULL);
+	
 	return plugin;
 }
 
@@ -242,24 +268,12 @@ xmms_oss_open (xmms_output_t *output)
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
 	dev = xmms_config_value_string_get (val);
 
-	XMMS_DBG ("device = %s", dev);
-
 	data->fd = open (dev, O_WRONLY);
 	if (data->fd == -1)
 		return FALSE;
 
-	
 	param = (32 << 16) | 0xC; /* 32 * 4096 */
 	if (ioctl (data->fd, SNDCTL_DSP_SETFRAGMENT, &param) == -1)
-		goto error;
-	param = AFMT_S16_NE;
-	if (ioctl (data->fd, SNDCTL_DSP_SETFMT, &param) == -1)
-		goto error;
-	param = 1;
-	if (ioctl (data->fd, SNDCTL_DSP_STEREO, &param) == -1)
-		goto error;
-	param = 44100;
-	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &param) == -1)
 		goto error;
 
 	return TRUE;
@@ -278,7 +292,9 @@ xmms_oss_new (xmms_output_t *output)
 {
 	xmms_oss_data_t *data;
 	xmms_config_value_t *val;
+	const gchar *dev;
 	const gchar *mixdev;
+	int i,j,k, param, fmts, fd;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -309,9 +325,54 @@ xmms_oss_new (xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data);
 
+	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
+	dev = xmms_config_value_string_get (val);
+
+	XMMS_DBG ("device = %s", dev);
+
+	fd = open (dev, O_WRONLY);
+	if (!fd)
+		goto err;
+
+	if (ioctl (fd, SNDCTL_DSP_GETFMTS, &fmts) == -1)
+		goto err;
+
+	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+		if (formats[i].oss_fmt & fmts) {
+			for (j = 0; j < 2; j++) {
+				gboolean added = FALSE;
+				param = formats[i].xmms_fmt;
+				if (ioctl (fd, SNDCTL_DSP_SETFMT, &param) == -1)
+					continue;
+				param = j;
+				if (ioctl (fd, SNDCTL_DSP_STEREO, &param) == -1)
+					continue;
+
+				for (k = 0; k < G_N_ELEMENTS(rates); k++) {
+					param = rates[k];
+					if (ioctl (fd, SNDCTL_DSP_SPEED, &param) == -1 || param != rates[k])
+						continue;
+
+
+					xmms_output_format_add (output, formats[i].xmms_fmt, j + 1, rates[k]);
+					added = TRUE;
+				}
+				if (!added) {
+					XMMS_DBG ("Adding fallback format...");
+					xmms_output_format_add (output, formats[i].xmms_fmt, j + 1, param);
+				}
+			}
+		}
+	}
+
+	close (fd);
 	XMMS_DBG ("OpenSoundSystem initilized!");
 	
 	return TRUE;
+
+ err:
+	close (fd);
+	return FALSE;
 }
 
 static void
@@ -330,25 +391,45 @@ xmms_oss_destroy (xmms_output_t *output)
 	g_free (data);
 }
 
-static guint
-xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
+static gboolean
+xmms_oss_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 {
-	int err = 0;
+	guint param;
+	int i;
 	xmms_oss_data_t *data;
 
-	g_return_val_if_fail (output, 0);
+	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels, format->samplerate);
+
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, 0);
+	g_return_val_if_fail (data, FALSE);
 
 	/* we must first drain the buffer.. */
 	ioctl (data->fd, SNDCTL_DSP_SYNC, 0);
 
-	err = ioctl (data->fd, SNDCTL_DSP_SPEED, &rate);
-	if (err == -1) {
-		xmms_log_error ("Error setting samplerate");
-		rate = 0;
+	param = -1;
+	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+		if (formats[i].xmms_fmt == format->format) {
+			param = formats[i].oss_fmt;
+			break;
+		}
 	}
-	return rate;
+	g_return_val_if_fail (param != -1, FALSE);
+
+	if (ioctl (data->fd, SNDCTL_DSP_SETFMT, &param) == -1)
+		goto error;
+
+	param = (format->channels == 2);
+	if (ioctl (data->fd, SNDCTL_DSP_STEREO, &param) == -1)
+		goto error;
+
+	param = format->samplerate;
+	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &param) == -1)
+		goto error;
+
+	return TRUE;
+ error:
+	return FALSE;
 }
 
 static void
