@@ -511,8 +511,10 @@ xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
 	while (42) {
 		if (!xmms_ipc_msg_get_string_alloc (res->reply, &tmp, &len))
 			break;
-		list = x_list_append (list, tmp);
+		list = x_list_prepend (list, tmp);
 	}
+
+	list = x_list_reverse (list);
 
 	if (!list)
 		*r = NULL;
@@ -543,8 +545,10 @@ xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
 	while (42) {
 		if (!xmms_ipc_msg_get_uint32 (res->reply, &tmp))
 			break;
-		list = x_list_append (list, XUINT_TO_POINTER (tmp));
+		list = x_list_prepend (list, XUINT_TO_POINTER (tmp));
 	}
+
+	list = x_list_reverse (list);
 
 	if (!list)
 		*r = NULL;
@@ -575,8 +579,10 @@ xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
 	while (42) {
 		if (!xmms_ipc_msg_get_int32 (res->reply, &tmp))
 			break;
-		list = x_list_append (list, XINT_TO_POINTER (tmp));
+		list = x_list_prepend (list, XINT_TO_POINTER (tmp));
 	}
+
+	list = x_list_reverse (list);
 
 	if (!list)
 		*r = NULL;
@@ -607,10 +613,12 @@ xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r)
 	while (42) {
 		e = xmmsc_deserialize_hashtable (res->reply);
 		if (e) 
-			list = x_list_append (list, e);
+			list = x_list_prepend (list, e);
 		else
 			break;
 	}
+
+	list = x_list_reverse (list);
 
 	if (!list)
 		*r = NULL;

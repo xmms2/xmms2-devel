@@ -811,13 +811,14 @@ xmms_output_thread (gpointer data)
 			continue;
 		}
 		
-		if (output->status != XMMS_OUTPUT_STATUS_PLAY) {
-			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PLAY);
-		}
 
 		g_mutex_unlock (output->mutex);
 		ret = xmms_output_read (output, buffer, 4096);
 		g_mutex_lock (output->mutex);
+
+		if (output->status != XMMS_OUTPUT_STATUS_PLAY) {
+			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PLAY);
+		}
 
 		if (ret == -1) {
 			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
