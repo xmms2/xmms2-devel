@@ -848,8 +848,12 @@ xmms_alsa_flush (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 	
-	err = snd_pcm_reset (data->pcm);
-	if (err != 0) {
+	err = snd_pcm_drop (data->pcm);
+	if (err >= 0) {
+		err = snd_pcm_prepare (data->pcm);
+	}
+
+	if (err < 0) {
 		xmms_log_error ("Flush failed (%s)", snd_strerror (-err));
 	}
 }
