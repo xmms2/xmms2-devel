@@ -712,9 +712,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	/* Setup onchange signal for mediainfo */
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_mediainfo, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
-	
-	res = xmmsc_playback_current_id (conn);
-	xmmsc_result_notifier_set (res, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
 
 	xmmsc_ipc_setup_with_gmain (conn, NULL);
 
