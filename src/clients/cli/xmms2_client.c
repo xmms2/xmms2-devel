@@ -124,7 +124,7 @@ read_config ()
 		if (!fp) {
 			print_error ("Could not create default configfile!!");
 		}
-		fwrite (defaultconfig, sizeof (defaultconfig), 1, fp);
+		fwrite (defaultconfig, strlen (defaultconfig), 1, fp);
 		fclose (fp);
 	}
 
