@@ -506,6 +506,10 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	XMMS_DBG ("Period time requested: %dms, got: %dms",
 	          tmp / 1000, requested_period_time / 1000);
 
+
+	/* Sometimes the soundcard is just not ready for the new shit */
+	xmms_alsa_xrun_recover (data);
+	
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
 	if (err < 0) {
