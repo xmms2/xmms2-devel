@@ -95,7 +95,7 @@ xmms_sample_converter_init (xmms_audio_format_t *from, xmms_audio_format_t *to)
 xmms_audio_format_t *
 xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 {
-	g_return_val_if_fail (conv);
+	g_return_val_if_fail (conv, NULL);
 
 	return conv->from;
 }
@@ -103,7 +103,7 @@ xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 xmms_audio_format_t *
 xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 {
-	g_return_val_if_fail (conv);
+	g_return_val_if_fail (conv, NULL);
 
 	return conv->to;
 }
