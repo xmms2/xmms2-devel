@@ -174,8 +174,8 @@ xmms_medialib_logging_start (xmms_playlist_entry_t *entry)
 	starttime = time (NULL);
 	g_mutex_lock (medialib->mutex);
 	ret = xmms_sqlite_query (NULL, NULL, 
-							 "INSERT INTO Log (id, starttime) VALUES (%s, %u)", 
-							 mid, (guint) starttime);
+				 "INSERT INTO Log (id, starttime) VALUES (%s, %u)", 
+				 mid, (guint) starttime);
 	g_mutex_unlock (medialib->mutex);
 
 	if (ret) {
@@ -246,6 +246,7 @@ static gchar *_e[] = {
 	XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
 	XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE,
 	XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED,
 	NULL
 };
 
@@ -254,8 +255,8 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 {
 	gchar *k = key;
 	gchar *v = value;
-	xmms_medialib_t *medialib = userdata;
 	gint i = 0;
+	guint id = GPOINTER_TO_UINT (userdata);
 
 	while (_e[i]) {
 		if (g_strcasecmp (_e[i], k) == 0) {
@@ -264,7 +265,7 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 		i++;
 	}
 
-	xmms_sqlite_query (NULL, NULL, "insert into Property (id, key, value) values (%d, %Q, %Q)", medialib->id - 1, k, v);
+	xmms_sqlite_query (NULL, NULL, "replace into Property (id, key, value) values (%d, %Q, %Q)", id, k, v);
 }
 
 /** 
@@ -282,32 +283,55 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 	gchar *tmp;
 
 	g_return_val_if_fail (medialib, FALSE);
-	XMMS_DBG ("Storing entry to medialib!");
-	g_mutex_lock (medialib->mutex);
 
-	id = xmms_medialib_next_id (medialib);
-	ret = xmms_sqlite_query (NULL, NULL,
-				 "insert into Media values (%d, %Q, %Q, %Q, %Q, %Q, %Q, %d)",
-				 id, xmms_playlist_entry_url_get (entry),
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
-				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD),
-				 time (NULL));
+	if (xmms_medialib_entry_get (entry)) {
+		XMMS_DBG ("This entry already exsists, now we only update!");
+		g_mutex_lock (medialib->mutex);
 
-	if (!ret) {
-		g_mutex_unlock (medialib->mutex);
-		return FALSE;
+		id = atoi (xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
+
+		ret = xmms_sqlite_query (NULL, NULL, "update Media set artist=%Q, album=%Q, title=%Q, genre=%Q, lmod=%Q, resolved=%Q where id = %d",
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED),
+					 id);
+
+		if (!ret) {
+			g_mutex_unlock (medialib->mutex);
+			return FALSE;
+		}
+		xmms_playlist_entry_property_foreach (entry, insert_foreach, GUINT_TO_POINTER (id));
+	} else {
+
+		g_mutex_lock (medialib->mutex);
+
+		id = xmms_medialib_next_id (medialib);
+		ret = xmms_sqlite_query (NULL, NULL,
+					 "insert into Media values (%d, %Q, %Q, %Q, %Q, %Q, %Q, %d, %Q)",
+					 id, xmms_playlist_entry_url_get (entry),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD),
+					 time (NULL), 
+					 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED));
+
+		if (!ret) {
+			g_mutex_unlock (medialib->mutex);
+			return FALSE;
+		}
+	
+		xmms_playlist_entry_property_foreach (entry, insert_foreach, GUINT_TO_POINTER (id));
+
+		tmp = g_strdup_printf ("%d", id);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, tmp);
+		g_free (tmp);
 	}
 
-	xmms_playlist_entry_property_foreach (entry, insert_foreach, medialib);
-
-	tmp = g_strdup_printf ("%d", id);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, tmp);
-	g_free (tmp);
-				 
-	
 	g_mutex_unlock (medialib->mutex);
 
 	return TRUE;
@@ -350,6 +374,11 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	XMMS_DBG ("adding %s to the mediainfo db!", url);
 
 	entry = xmms_playlist_entry_new (url);
+
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED, "-1");
+
+	if (!xmms_medialib_entry_get (entry))
+		xmms_medialib_entry_store (entry);
 
 	mt = xmms_playlist_mediainfo_thread_get (medialib->playlist);
 	xmms_mediainfo_entry_add (mt, entry);
@@ -745,6 +774,7 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 	}
 
 	if (!xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID)) {
+		XMMS_DBG ("%s not found i mlib!", xmms_playlist_entry_url_get (entry));
 		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
@@ -755,6 +785,7 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 
 	if (!ret) {
 		g_mutex_unlock (medialib->mutex);
+		XMMS_DBG ("error in query?!");
 		return FALSE;
 	}
 
