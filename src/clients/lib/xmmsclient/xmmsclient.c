@@ -442,7 +442,7 @@ xmmsc_playback_current_id (xmmsc_connection_t *c)
 /**
  * @defgroup PlaylistControl PlaylistControl
  * @ingroup XMMSClient
- * @breif This controls the playlist.
+ * @brief This controls the playlist.
  *
  * @{
  */
@@ -634,7 +634,7 @@ xmmsc_playlist_entry_free (GHashTable *entry)
 /**
  * @defgroup OtherControl OtherControl
  * @ingroup XMMSClient
- * @breif This controls various other functions of the XMMS server.
+ * @brief This controls various other functions of the XMMS server.
  *
  * @{
  */
@@ -664,7 +664,7 @@ xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
 /**
  * @defgroup XMMSCGLib XMMSCGLib
  * @ingroup XMMSClient
- * @breif Functions for integrating an XMMSClient into glib.
+ * @brief Functions for integrating an XMMSClient into glib.
  *
  * @{
  */
