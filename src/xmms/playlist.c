@@ -11,6 +11,7 @@
 
 #include "playlist.h"
 #include "util.h"
+#include "core.h"
 #include "signal_xmms.h"
 
 static void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
@@ -289,6 +290,8 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	XMMS_DBG ("Added with id %d - %s", file->id, file->uri);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	xmms_core_mediainfo_add_entry (file->id);
 
 	return TRUE;
 

@@ -10,6 +10,7 @@
 #include "xmms/util.h"
 #include "xmms/playlist.h"
 #include "xmms/mediainfo.h"
+#include "xmms/plsplugins.h"
 
 #include <glib.h>
 
@@ -77,6 +78,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 		while ((node = g_list_nth (mtt->list, 0))) {
 			xmms_transport_t *transport;
 			xmms_playlist_entry_t *newentry;
+			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
 			const gchar *mime;
 			const gchar *uri;
@@ -100,15 +102,36 @@ xmms_mediainfo_thread_thread (gpointer data)
 			}
 
 			mime = xmms_transport_mime_type_get (transport);
-			if (mime) {
-				xmms_playlist_entry_mimetype_set (entry, mime);
-				decoder = xmms_decoder_new (entry);
-				if (!decoder) {
-					xmms_playlist_entry_unref (entry);
-					xmms_transport_close (transport);
-					continue;
-				}
-			} else {
+
+			if (!mime) {
+				xmms_playlist_entry_unref (entry);
+				xmms_transport_close (transport);
+				continue;
+			}
+
+			plsplugin = xmms_playlist_plugin_new (mime);
+			if (plsplugin) {
+
+				/* This is a playlist file... */
+				XMMS_DBG ("Playlist!!");
+				xmms_transport_start (transport);
+				XMMS_DBG ("transport started");
+				xmms_playlist_plugin_read (plsplugin, mtt->playlist, transport);
+
+				/* we don't want it in the playlist. */
+				xmms_playlist_id_remove (mtt->playlist, xmms_playlist_entry_id_get (entry));
+				xmms_playlist_entry_unref (entry);
+
+				/* cleanup */
+				xmms_playlist_plugin_free (plsplugin);
+				xmms_transport_close (transport);
+				continue;
+			}
+
+
+			xmms_playlist_entry_mimetype_set (entry, mime);
+			decoder = xmms_decoder_new (entry);
+			if (!decoder) {
 				xmms_playlist_entry_unref (entry);
 				xmms_transport_close (transport);
 				continue;

@@ -130,13 +130,16 @@ xmms_core_playback_start ()
 }
 
 void
+xmms_core_mediainfo_add_entry (guint id)
+{
+	xmms_mediainfo_thread_add (core->mediainfothread, id);
+}
+
+void
 xmms_core_playlist_adduri (gchar *nuri)
 {
 	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nuri);
 	xmms_playlist_add (core->playlist, entry, XMMS_PLAYLIST_APPEND);
-	xmms_mediainfo_thread_add (core->mediainfothread,
-			xmms_playlist_entry_id_get (entry));
-
 }
 
 void
