@@ -402,6 +402,12 @@ cdef class XMMSResult :
 cdef python_disconnect_fun (obj) :
 	obj._disconnect_cb ()
 
+def encode_path (path):
+	return xmmsc_encode_path(path)
+
+def decode_path (path):
+	return xmmsc_decode_path(path)
+
 cdef class XMMS :
 	"""
 	This is the class representing the XMMS2 client itself. The methods in
@@ -427,11 +433,6 @@ cdef class XMMS :
 	def _disconnect_cb (self) :
 		self.disconnect_fun (self)
 
-	def encode_path (self, path):
-		return xmmsc_encode_path(path)
-
-	def decode_path (self, path):
-		return xmmsc_decode_path(path)
 
 	def glib_loop (self) :
 		"""
