@@ -325,47 +325,44 @@ xmms_config_init (const gchar *filename)
 	config->state = XMMS_CONFIG_STATE_START;
 	global_config = config;
 
-	if (!filename)
-		return TRUE;
-
 	memset (&pars, 0, sizeof (pars));
 
 	pars.start_element = xmms_config_parse_start;
 	pars.end_element = xmms_config_parse_end;
 	pars.text = xmms_config_parse_text;
 
-	ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
 
 	fd = open (filename, O_RDONLY);
 
-	if (fd == -1) return FALSE;
+	if (fd) {
+		ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
+		while (42) {
+			GError *error = NULL;
+			gchar buffer[1024];
 
-	while (42) {
-		GError *error = NULL;
-		gchar buffer[1024];
+			ret = read (fd, buffer, 1024);
+			if (ret < 1) {
+				g_markup_parse_context_end_parse (ctx, &error);
+				if (error) {
+					xmms_log_error ("Cannot parse config file: %s",
+							error->message);
+					g_error_free (error);
+				}
 
-		ret = read (fd, buffer, 1024);
-		if (ret < 1) {
-			g_markup_parse_context_end_parse (ctx, &error);
-			if (error) {
-				xmms_log_error ("Cannot parse config file: %s",
-				                error->message);
-				g_error_free (error);
+				break;
 			}
 
-			break;
+			g_markup_parse_context_parse (ctx, buffer, ret, &error);
+			if (error) {
+				xmms_log_error ("Cannot parse config file: %s",
+						error->message);
+				g_error_free (error);
+			}
 		}
-
-		g_markup_parse_context_parse (ctx, buffer, ret, &error);
-		if (error) {
-			xmms_log_error ("Cannot parse config file: %s",
-			                error->message);
-			g_error_free (error);
-		}
+		close (fd);
+		g_markup_parse_context_free (ctx);
 	}
 
-	close (fd);
-	g_markup_parse_context_free (ctx);
 
 	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
 	xmms_object_method_add (XMMS_OBJECT (config), "get", XMMS_METHOD_FUNC (getvalue));
