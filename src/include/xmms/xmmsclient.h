@@ -82,6 +82,7 @@ xmmsc_result_t *xmmsc_file_list (xmmsc_connection_t *c, char *path);
 void xmmsc_set_callback (xmmsc_connection_t *, char *, void (*)(void *,void*), void *);
 xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
+xmmsc_result_t *xmmsc_configval_on_change (xmmsc_connection_t *c);
 
 xmmsc_result_t *xmmsc_output_mixer_set (xmmsc_connection_t *c, int left, int right);
 xmmsc_result_t *xmmsc_output_mixer_get (xmmsc_connection_t *c);

@@ -357,6 +357,8 @@ xmms_config_init (const gchar *filename)
 	xmms_object_method_add (XMMS_OBJECT (config), "get", XMMS_METHOD_FUNC (getvalue));
 	xmms_object_method_add (XMMS_OBJECT (config), "list", XMMS_METHOD_FUNC (listvalues));
 	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
+	xmms_dbus_register_onchange (XMMS_OBJECT (config),
+	                             XMMS_SIGNAL_CONFIG_VALUE_CHANGE);
 
 	return TRUE;
 }
@@ -627,6 +629,8 @@ xmms_config_value_name_get (const xmms_config_value_t *value)
 void
 xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 {
+	GList *list = NULL;
+
 	g_return_if_fail (val);
 	g_return_if_fail (data);
 
@@ -636,6 +640,14 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	val->data = data;
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 			  (gpointer) data);
+
+	list = g_list_prepend (list, val->data);
+	list = g_list_prepend (list, (gpointer) val->name);
+
+	xmms_object_emit_f (XMMS_OBJECT (global_config),
+	                    XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
+						XMMS_OBJECT_METHOD_ARG_STRINGLIST,
+	                    list);
 }
 
 /**

@@ -158,6 +158,29 @@ xmmscs_configval_list (xmmsc_connection_t *c)
 	return list;
 }
 
+xmmsc_result_t *
+xmmsc_configval_on_change (xmmsc_connection_t *c)
+{
+	DBusMessage *msg;
+	DBusMessageIter itr;
+	xmmsc_result_t *res;
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT,
+	                                    XMMS_DBUS_INTERFACE,
+	                                    XMMS_METHOD_ONCHANGE);
+
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr,
+	                                 XMMS_SIGNAL_CONFIG_VALUE_CHANGE);
+
+	res = xmmsc_send_on_change (c, msg);
+	dbus_message_unref (msg);
+
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_CONFIG_VALUE_CHANGE);
+
+	return res;
+}
+
 /**
  * Retrives a list of files from url.
  * @todo horrible broken!
