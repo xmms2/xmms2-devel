@@ -71,6 +71,7 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_CORE_DISCONNECT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_ADD, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO, XMMSC_TYPE_MEDIAINFO },
+	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_SHUFFLE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_CLEAR, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_REMOVE, XMMSC_TYPE_NONE },
@@ -139,6 +140,7 @@ xmmsc_init ()
 
 /**
  * Connects to the XMMS server.
+ * If dbuspath is NULL, it will try to open the default path.
  * @todo document dbuspath.
  *
  * @returns TRUE on success and FALSE if some problem
@@ -154,13 +156,19 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 	DBusError err;
 	DBusMessageHandler *hand;
 	gint i = 0;
+	gchar *path;
 
 	dbus_error_init (&err);
 
-	if (!c || !dbuspath)
+	if (!c)
 		return FALSE;
 
-	conn = dbus_connection_open (dbuspath, &err);
+	if (!dbuspath)
+		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	else
+		path = dbuspath;
+
+	conn = dbus_connection_open (path, &err);
 	
 	if (!conn) {
 		int ret;
@@ -175,7 +183,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "started!\n");
 
 		dbus_error_init (&err);
-		conn = dbus_connection_open (dbuspath, &err);
+		conn = dbus_connection_open (path, &err);
 		if (!conn) {
 			c->error = "Couldn't connect to xmms2d even tough I started it... Bad, very bad.";
 			return FALSE;
@@ -323,6 +331,16 @@ xmmsc_deinit (xmmsc_connection_t *c)
  * This will be called with information about a specific
  * song. The arugment is a pointer to GHashTable with 
  * information about the song.
+ *
+ * @sa xmmsc_playlist_get_mediainfo
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID
+ *
+ * This will be called when information for a specific
+ * entry has been changed. The argument is a UINT32 with
+ * the id of the changed entry.
  *
  * @sa xmmsc_playlist_get_mediainfo
  */
@@ -1003,14 +1021,13 @@ handle_callback (DBusMessageHandler *handler,
 
 		case XMMSC_TYPE_PLAYLIST:
 			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-				int len = dbus_message_iter_get_uint32 (&itr);
-				if (len > 0 && 
-				    dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_ARRAY &&
-				    dbus_message_iter_get_array_type (&itr) == DBUS_TYPE_UINT32) {
+				guint len = dbus_message_iter_get_uint32 (&itr);
+				if (len > 0) {
 					guint32 *arr;
 					gint len;
 					guint32 *tmp;
 
+					dbus_message_iter_next (&itr);
 					dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
 					arr = g_new0 (guint32, len+1);

@@ -487,7 +487,7 @@ xmms_core_start (xmms_config_data_t *config)
 void
 xmms_core_playlist_mediainfo_changed (guint id)
 {
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYLIST_MEDIAINFO, 
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, 
 			GUINT_TO_POINTER (id));
 }
 

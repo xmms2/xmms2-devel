@@ -21,6 +21,7 @@
 #define XMMS_SIGNAL_PLAYLIST_CLEAR "org.xmms.playlist.clear"
 #define XMMS_SIGNAL_PLAYLIST_JUMP "org.xmms.playlist.jump"
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO "org.xmms.playlist.mediainfo"
+#define XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID "org.xmms.playlist.mediainfo.id"
 #define XMMS_SIGNAL_PLAYLIST_MOVE "org.xmms.playlist.move"
 #define XMMS_SIGNAL_PLAYLIST_CHANGED "org.xmms.playlist.change"
 #define XMMS_SIGNAL_PLAYLIST_SAVE "org.xmms.playlist.save"

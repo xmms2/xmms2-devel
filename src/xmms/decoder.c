@@ -213,7 +213,7 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 	g_return_if_fail (entry);
 
 	xmms_playlist_entry_property_copy (entry, decoder->entry);
-	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (entry));
+	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (decoder->entry));
 }
 
 
