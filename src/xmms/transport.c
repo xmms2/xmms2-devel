@@ -312,7 +312,7 @@ xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_e
 	g_return_if_fail (entry);
 
 	xmms_playlist_entry_property_copy (entry, transport->entry);
-	xmms_playlist_entry_changed (entry);
+	xmms_playlist_entry_changed (transport->entry);
 }
 
 void

@@ -279,6 +279,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 
 				xmms_transport_mediainfo_property_set (transport,
 						XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp2);
+				xmms_transport_entry_mediainfo_set (transport, data->pl_entry);
 				g_free (tmp2);
 			}
 		}
@@ -448,7 +449,7 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		xmms_transport_mimetype_set (transport, data->mime);
 	}
 
-	xmms_transport_entry_mediainfo_set (transport, data->pl_entry);
+/*	xmms_transport_entry_mediainfo_set (transport, data->pl_entry);*/
 
 	g_free (header);
 
