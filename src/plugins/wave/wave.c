@@ -252,7 +252,7 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	if (data->bits_per_sample == 16) {
-		guint16 *s = buf;
+		gint16 *s = (gint16 *) buf;
 		gint i;
 
 		for (i = 0; i < (ret / 2); i++) {
