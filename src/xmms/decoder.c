@@ -191,9 +191,17 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->transport = transport;
 	decoder->output = output;
 	xmms_output_set_eos (output, FALSE);
-	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
+	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
 }
 
+void
+xmms_decoder_wait (xmms_decoder_t *decoder)
+{
+	g_return_if_fail (decoder);
+
+	g_thread_join (decoder->thread);
+
+}
 
 xmms_playlist_entry_t *
 xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, 

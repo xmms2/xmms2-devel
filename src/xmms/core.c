@@ -43,57 +43,6 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 }
 
 
-void
-play_next (void)
-{
-	xmms_transport_t *transport;
-	xmms_decoder_t *decoder;
-	const gchar *mime;
-
-	g_return_if_fail (core->decoder == NULL);
-
-	do {
-		if (core->curr_song) {
-			xmms_playlist_entry_free (core->curr_song);
-			core->curr_song = NULL;
-		}
-		
-		core->curr_song = xmms_playlist_pop (core->playlist);
-		
-		XMMS_DBG ("Playing %s", core->curr_song->uri);
-		
-		transport = xmms_transport_open (core->curr_song->uri);
-		
-	} while (!transport);
-	
-	mime = xmms_transport_mime_type_get (transport);
-	if (mime) {
-		XMMS_DBG ("mime-type: %s", mime);
-		decoder = xmms_decoder_new (mime);
-		if (!decoder) {
-			xmms_transport_close (transport);
-			play_next ();
-			return;
-		}
-	} else {
-		xmms_transport_close (transport);
-		play_next (); /** @todo FIXME */
-		return;
-	}
-
-	xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", 
-			     handle_mediainfo_changed, NULL);
-
-	XMMS_DBG ("starting threads..");
-	xmms_transport_start (transport);
-	XMMS_DBG ("transport started");
-	xmms_decoder_start (decoder, transport, core->output);
-	XMMS_DBG ("output started");
-
-	core->decoder = decoder;
-
-}
-
 static void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
@@ -125,14 +74,12 @@ void xmms_core_output_set (xmms_output_t *output)
  */
 void xmms_core_play_next ()
 {
-	XMMS_DBG ("closing transport");
-	xmms_transport_close (xmms_decoder_transport_get (core->decoder));
-	XMMS_DBG ("destroying decoder");
-	xmms_decoder_destroy (core->decoder);
-	core->decoder = NULL;
-	XMMS_DBG ("playing next");
-	play_next ();
-	XMMS_DBG ("done");
+	if (core->decoder) {
+		XMMS_DBG ("playing next");
+		xmms_transport_close (xmms_decoder_transport_get (core->decoder));
+		xmms_decoder_destroy (core->decoder);
+		core->decoder = NULL;
+	}
 }
 
 /**
@@ -147,13 +94,77 @@ xmms_core_init ()
 	xmms_object_init (XMMS_OBJECT (core));
 }
 
+static gpointer 
+core_thread(gpointer data){
+	xmms_transport_t *transport;
+	xmms_decoder_t *decoder;
+	const gchar *mime;
+
+	while (42) {
+		
+		if (core->curr_song) { /* yes, it looks a bit ugly to
+					  begin with deallocations,
+					  but it makes the code much more
+					  readable 'cos we can just use
+					  continue on error */
+			 xmms_playlist_entry_free (core->curr_song);
+			 core->curr_song = NULL;
+		}
+
+		core->curr_song = xmms_playlist_pop (core->playlist);
+		
+		XMMS_DBG ("Playing %s", core->curr_song->uri);
+		
+		transport = xmms_transport_open (core->curr_song->uri);
+
+		if (!transport)
+			continue;
+
+		mime = xmms_transport_mime_type_get (transport);
+		if (!mime) {
+			xmms_transport_close (transport);
+			continue;
+		}
+
+		XMMS_DBG ("mime-type: %s", mime);
+		decoder = xmms_decoder_new (mime);
+		if (!decoder) {
+			xmms_transport_close (transport);
+			continue;
+		}
+
+		xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", 
+				     handle_mediainfo_changed, NULL);
+
+		XMMS_DBG ("starting threads..");
+		xmms_transport_start (transport);
+		XMMS_DBG ("transport started");
+		xmms_decoder_start (decoder, transport, core->output);
+		XMMS_DBG ("output started");
+		
+		core->decoder = decoder;
+
+		xmms_decoder_wait (core->decoder);
+
+		if (core->decoder) {
+			XMMS_DBG ("closing transport");
+			xmms_transport_close (xmms_decoder_transport_get (core->decoder));
+			XMMS_DBG ("destroying decoder");
+			xmms_decoder_destroy (core->decoder);
+			core->decoder = NULL;
+		}
+		
+	}
+	return NULL;
+}
+
 /**
  * Starts playing of the first song in playlist.
  */
 void
 xmms_core_start ()
 {
-	play_next ();
+	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 
 /**

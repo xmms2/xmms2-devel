@@ -72,5 +72,6 @@ xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 
 void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
+void xmms_decoder_wait (xmms_decoder_t *decoder);
 
 #endif /* __XMMS_DECODER_H__ */
