@@ -241,6 +241,12 @@ main (int argc, char **argv)
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
+	xmms_config_value_register ("decoder.use_replaygain", "0",
+	                            NULL, NULL);
+	xmms_config_value_register ("decoder.replaygain_mode", "track",
+	                            NULL, NULL);
+	xmms_config_value_register ("decoder.use_replaygain_anticlip", "1",
+	                            NULL, NULL);
 
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
