@@ -337,6 +337,13 @@ mode_change (xmms_object_t *object, gconstpointer data, gpointer userdata)
 static void
 handle_playlist_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
+	const xmms_playlist_changed_msg_t *plch = data;
+	xmms_playback_t *playback = userdata;
+
+	if (plch->type == XMMS_PLAYLIST_CHANGED_CLEAR) {
+		playback->playlist_op = XMMS_PLAYBACK_NEXT;
+	}
+		
 	xmms_object_emit (XMMS_OBJECT ((xmms_playback_t *)userdata), XMMS_SIGNAL_PLAYLIST_CHANGED, data);
 }
 
