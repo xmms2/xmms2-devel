@@ -277,6 +277,7 @@ void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_destroy (c->ipc);
+	free (c->clientname);
 	free(c);
 }
 
@@ -356,19 +357,18 @@ xmmsc_decode_path (const char *path)
 static int
 add (char *target, int max, int len, char *str)
 {
-	int tmpl;
+	int tmpl, left;
 
 	tmpl = strlen (str);
+	left = (max - 1) - len;
 
-	if ((len + tmpl) > max)
+	if (left < 1)
 		return 0;
 
-	if (len == 0)
-		strcpy (target, str);
-	else 
-		strcat (target, str);
+	left = MIN (left, tmpl);
+	strncat (target, str, left);
 
-	return tmpl;
+	return left;
 }
 
 static int
@@ -403,7 +403,12 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 	int i = 0;
 	char c;
 
-	while (*fmt) {
+	if (!target)
+		return 0;
+
+	*target = '\0';
+
+	while (*fmt && i < (len - 1)) {
 
 		c = *(fmt++);
 
@@ -516,13 +521,11 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 			}
 			*fmt++;
 		} else {
-			if (i < len) 
-				target[i++] = c;
+			target[i++] = c;
+			target[i] = '\0';
 		}
 
 	}
-
-	target[len] = '\0';
 
 	return i;
 
@@ -588,6 +591,7 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 
 	cid = xmmsc_next_id ();
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
+	xmms_ipc_msg_destroy (msg);
 
 	return xmmsc_result_new (c, cid);
 }
@@ -603,14 +607,6 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	return xmmsc_result_new (c, cid);
 }
 
-int 
-destroy_hash (void *key, void *value, void *userdata)
-{
-	g_free (key);
-	g_free (value);
-	return 0;
-}
-
 x_hash_t *
 xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 {
@@ -623,9 +619,9 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
 		return NULL;
 
-	h = x_hash_new (x_str_hash, x_str_equal);
+	h = x_hash_new_full (x_str_hash, x_str_equal, g_free, g_free);
 
-	for (i = 1; i < entries; i++) {
+	for (i = 1; i <= entries; i++) {
 		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
 			goto err;
 		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len))
@@ -637,7 +633,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	return h;
 
 err:
-	x_hash_foreach_remove (h, destroy_hash, NULL);
+	x_hash_destroy (h);
 	return NULL;
 
 }

@@ -2,7 +2,7 @@
 
 Import('base_env')
 
-ipclib_sources = Split ("transport.c socket_unix.c msg.c")
+ipclib_sources = Split ("transport.c socket_unix.c socket_tcp.c msg.c")
 
 env = base_env.Copy()
 

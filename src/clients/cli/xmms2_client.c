@@ -120,6 +120,27 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 
 		xmmsc_result_unref (res);
+	} else if (g_strcasecmp (argv[2], "save_playlist") == 0 ||
+	           g_strcasecmp (argv[2], "load_playlist") == 0) {
+		xmmsc_result_t *res;
+
+		if (argc < 4) {
+			print_error ("Supply a playlist name");
+		}
+
+		if (g_strcasecmp (argv[2], "save_playlist") == 0) {
+			res = xmmsc_medialib_playlist_save_current (conn, argv[3]);
+		} else if (g_strcasecmp (argv[2], "load_playlist") == 0) {
+			res = xmmsc_medialib_playlist_load (conn, argv[3]);
+		}
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
 }
 
@@ -319,14 +340,12 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		
 		tab = xmmscs_playlist_get_mediainfo (conn, i);
 
-		memset (line, '\0', 80);
-
 		if (x_hash_lookup (tab, "channel")) {
-			xmmsc_entry_format (line, sizeof (line)-1, "%c - %t", tab);
+			xmmsc_entry_format (line, sizeof (line), "%c - %t", tab);
 		} else if (!x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof(line)-1, "%f (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line), "%f (%m:%s)", tab);
 		} else {
-			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line), "%a - %t (%m:%s)", tab);
 		}
 
 		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
@@ -648,12 +667,13 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		mid = atoi (tmp);
 
 		if (id == mid) {
-			memset (songname, 0, 60);
 			printf ("\n");
 			if (x_hash_lookup (hash, "channel")) {
-				xmmsc_entry_format (songname, 60, "%c", hash);
+				xmmsc_entry_format (songname, sizeof (songname),
+				                    "%c", hash);
 			} else {
-				xmmsc_entry_format (songname, 60, "%a - %t", hash);
+				xmmsc_entry_format (songname, sizeof (songname),
+				                    "%a - %t", hash);
 			}
 			tmp = x_hash_lookup (hash, "duration");
 			if (tmp)
@@ -661,7 +681,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 			else
 				curr_dur = 0;
 		}
-		xmmsc_playlist_entry_free (hash);
+		x_hash_destroy (hash);
 	}
 
 }
@@ -737,7 +757,7 @@ main (int argc, char **argv)
 		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
 	}
 
-	dbuspath = getenv ("DBUS_PATH");
+	dbuspath = getenv ("XMMS_PATH");
 	if (!dbuspath) {
 		path = g_strdup_printf ("unix:///tmp/xmms-ipc-%s", g_get_user_name ());
 	} else {

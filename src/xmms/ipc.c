@@ -106,9 +106,11 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
         gchar *v = value;
 	xmms_ipc_msg_t *msg = udata;
 
+	xmms_ipc_msg_put_string (msg, k);
 	if (v) {
-		xmms_ipc_msg_put_string (msg, k);
 		xmms_ipc_msg_put_string (msg, v);
+	} else {
+		xmms_ipc_msg_put_string (msg, "");
 	}
 	
 }
@@ -377,12 +379,13 @@ xmms_ipc_client_thread (gpointer data)
 				disconnect = TRUE;
 				break;
 			} else if (ret == 0) {
+				XMMS_DBG ("read returned 0");
 				disconnect = TRUE;
 				break;
 			}
 			xmms_ringbuf_write (client->read_buffer, buffer, ret);
 		}
-
+		
 		while (TRUE) {
 
 			if (!xmms_ipc_msg_can_read (client->read_buffer)) {
@@ -398,8 +401,10 @@ xmms_ipc_client_thread (gpointer data)
 			}
 		}
 
-		if (disconnect)
+		if (disconnect) {
+			XMMS_DBG ("disconnect was true!");
 			break;
+		}
 
 	}
 
@@ -460,13 +465,13 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	g_return_val_if_fail (client, FALSE);
 	g_return_val_if_fail (msg, FALSE);
 
+	/*
 	if (client->out_msg->length > 10) {
-		/* This client is teh suxx! */
-		client->run = FALSE;
 		xmms_ipc_msg_destroy (msg);
 		g_mutex_unlock (global_ipc_lock);
 		return FALSE;	
 	}
+	*/
 	g_queue_push_tail (client->out_msg, msg);
 	/* Wake the client thread! */
 	write (client->wakeup_in, "42", 2);

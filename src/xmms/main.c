@@ -274,6 +274,7 @@ main (int argc, char **argv)
 
 	xmms_medialib_init ();
 	xmms_medialib_output_register (mainobj->output);
+	xmms_medialib_playlist_set (playlist);
 		
 	g_snprintf (default_path, sizeof (default_path),
 	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());

@@ -963,6 +963,11 @@ xmms_decoder_thread (gpointer data)
 	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quitting");
 
+	xmms_object_emit_f (XMMS_OBJECT (decoder),
+			    XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
+			    XMMS_OBJECT_CMD_ARG_NONE,
+			    NULL);
+
 	xmms_object_unref (decoder);
 
 	return NULL;
