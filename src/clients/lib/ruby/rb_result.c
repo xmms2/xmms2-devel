@@ -15,6 +15,7 @@
  */
 
 #include <xmms/xmmsclient.h>
+#include <xmms/object.h>
 
 #include <ruby.h>
 #include <stdbool.h>
@@ -212,7 +213,7 @@ static VALUE c_intlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_intlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_int_list() failed");
+		rb_raise (rb_eRuntimeError, "xmmsc_result_get_intlist() failed");
 		return Qnil;
 	}
 
@@ -232,7 +233,7 @@ static VALUE c_uintlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_uintlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_uint_list() failed");
+		rb_raise (rb_eRuntimeError, "xmmsc_result_get_uintlist() failed");
 		return Qnil;
 	}
 
@@ -252,7 +253,7 @@ static VALUE c_stringlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_stringlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_string_list() failed");
+		rb_raise (rb_eRuntimeError, "xmmsc_result_get_stringlist() failed");
 		return Qnil;
 	}
 
@@ -260,6 +261,31 @@ static VALUE c_stringlist_get (VALUE self)
 
 	for (l = list; l; l = l->next)
 		rb_ary_push (a, rb_str_new2 (l->data));
+
+	return a;
+}
+
+static VALUE c_hashlist_get (VALUE self)
+{
+	VALUE a;
+	x_list_t *list = NULL, *l;
+
+	GET_OBJ (self, RbResult, res);
+
+	if (!xmmsc_result_get_hashlist (res->real, &list)) {
+		rb_raise (rb_eRuntimeError, "xmmsc_result_get_hashlist() failed");
+		return Qnil;
+	}
+
+	a = rb_ary_new ();
+
+	for (l = list; l; l = l->next) {
+		VALUE rhash = rb_hash_new ();
+
+		x_hash_foreach (l->data, (XHFunc) xhash_to_rhash, &rhash);
+
+		rb_ary_push (a, rhash);
+	}
 
 	return a;
 }
@@ -279,6 +305,46 @@ static VALUE c_playlist_change_get (VALUE self)
 
 	return rb_ary_new3 (3, UINT2NUM (type), UINT2NUM (id),
 	                    UINT2NUM (arg));
+}
+
+static VALUE c_value_get (VALUE self)
+{
+	VALUE ret = Qnil;
+
+	GET_OBJ (self, RbResult, res);
+
+	switch (xmmsc_result_get_type (res->real)) {
+		case XMMS_OBJECT_CMD_ARG_UINT32:
+			ret = c_uint_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_INT32:
+			ret = c_int_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_STRING:
+			ret = c_string_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_UINTLIST:
+			ret = c_uintlist_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_INTLIST:
+			ret = c_intlist_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
+			ret = c_stringlist_get (self);
+		case XMMS_OBJECT_CMD_ARG_HASHTABLE:
+			ret = c_hashtable_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_HASHLIST:
+			ret = c_hashlist_get (self);
+			break;
+		case XMMS_OBJECT_CMD_ARG_PLCH:
+			ret = c_playlist_change_get (self);
+			break;
+		default:
+			break;
+	}
+
+	return ret;
 }
 
 void Init_Result (void)
@@ -304,8 +370,10 @@ void Init_Result (void)
 	rb_define_method (cResult, "intlist", c_intlist_get, 0);
 	rb_define_method (cResult, "uintlist", c_uintlist_get, 0);
 	rb_define_method (cResult, "stringlist", c_stringlist_get, 0);
+	rb_define_method (cResult, "hashlist", c_hashlist_get, 0);
 	rb_define_method (cResult, "playlist_change",
 	                  c_playlist_change_get, 0);
+	rb_define_method (cResult, "value", c_value_get, 0);
 
 	rb_define_const (cResult, "PLAYLIST_ADD",
 	                 INT2FIX (XMMSC_PLAYLIST_ADD));
