@@ -638,13 +638,15 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 
-	list = g_list_prepend (list, g_strdup (val->data));
-	list = g_list_prepend (list, g_strdup (val->name));
+	list = g_list_prepend (list, val->data);
+	list = g_list_prepend (list, val->name);
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 	                    XMMS_OBJECT_CMD_ARG_STRINGLIST,
 	                    list);
+
+	g_list_free (list);
 
 	/* save the database to disk, so we don't loose any data
 	 * if the daemon crashes

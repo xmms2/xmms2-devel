@@ -134,10 +134,11 @@ xmms_ipc_do_hashtable (xmms_ipc_msg_t *msg, GHashTable *table)
 static void
 xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 {
+	GList *n;
+
 	switch (arg->rettype) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
-			xmms_ipc_msg_put_string (msg, arg->retval.string); /*convert to utf8?*/
-			g_free (arg->retval.string);
+			xmms_ipc_msg_put_string (msg, arg->retval.string);
 			break;
 		case XMMS_OBJECT_CMD_ARG_UINT32:
 			xmms_ipc_msg_put_uint32 (msg, arg->retval.uint32);
@@ -146,49 +147,25 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 			xmms_ipc_msg_put_int32 (msg, arg->retval.int32);
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
-			{
-				GList *l = arg->retval.stringlist;
-
-				while (l) {
-					xmms_ipc_msg_put_string (msg, l->data);
-					g_free (l->data);
-					l = g_list_delete_link (l, l);
-				}
-				break;
+			for (n = arg->retval.stringlist; n; n = g_list_next (n)) {
+				xmms_ipc_msg_put_string (msg, n->data);
 			}
+			break;
 		case XMMS_OBJECT_CMD_ARG_UINTLIST:
-			{
-				GList *l = arg->retval.uintlist;
-
-				while (l) {
-					xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (l->data));
-					l = g_list_delete_link (l, l);
-				}
-				break;
+			for (n = arg->retval.uintlist; n; n = g_list_next (n)) {
+				xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (n->data));
 			}
+			break;
 		case XMMS_OBJECT_CMD_ARG_INTLIST:
-			{
-				GList *l = arg->retval.intlist;
-
-				while (l) {
-					xmms_ipc_msg_put_int32 (msg, GPOINTER_TO_INT (l->data));
-					l = g_list_delete_link (l, l);
-				}
-				break;
+			for (n = arg->retval.intlist; n; n = g_list_next (n)) {
+				xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (n->data));
 			}
+			break;
 		case XMMS_OBJECT_CMD_ARG_HASHLIST:
-			{
-				GList *l = arg->retval.hashlist;
-
-				while (l) {
-					if (l->data) {
-						xmms_ipc_do_hashtable (msg, (GHashTable *)l->data);
-						g_hash_table_destroy (l->data);
-					}
-					l = g_list_delete_link (l,l);
-				}
-				break;
+			for (n = arg->retval.hashlist; n; n = g_list_next (n)) {
+				xmms_ipc_do_hashtable (msg, (GHashTable *)n->data);
 			}
+			break;
 		case XMMS_OBJECT_CMD_ARG_PLCH:
 			{
 				xmms_playlist_changed_msg_t *chmsg = arg->retval.plch;
@@ -196,18 +173,56 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_HASHTABLE: 
-			{
-				if (arg->retval.hashtable)  {
-					xmms_ipc_do_hashtable (msg, arg->retval.hashtable);
-					g_hash_table_destroy (arg->retval.hashtable);
-				}
-
-				break;
-			}
+			xmms_ipc_do_hashtable (msg, arg->retval.hashtable);
+			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
 		default:
 			xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", arg->rettype);
+			break;
+	}
+}
+
+
+static void
+xmms_ipc_free_arg_value (xmms_object_cmd_arg_t *arg)
+{
+	GList *n, *nxt;
+
+	switch (arg->rettype) {
+		case XMMS_OBJECT_CMD_ARG_STRING:
+			g_free (arg->retval.string);
+			break;
+		case XMMS_OBJECT_CMD_ARG_UINT32:
+		case XMMS_OBJECT_CMD_ARG_INT32:
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			/* nop */
+			break;
+		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
+			for (n = arg->retval.stringlist; n; n = nxt) {
+				g_free (n->data);
+				nxt = g_list_next (n);
+				g_list_free_1 (n);
+			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_UINTLIST:
+			g_list_free (arg->retval.uintlist);
+			break;
+		case XMMS_OBJECT_CMD_ARG_INTLIST:
+			g_list_free (arg->retval.intlist);
+			break;
+		case XMMS_OBJECT_CMD_ARG_HASHLIST:
+			for (n = arg->retval.hashlist; n; n = nxt) {
+				g_hash_table_destroy (n->data);
+				nxt = g_list_next (n);
+				g_list_free_1 (n);
+			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_PLCH:
+			g_free (arg->retval.plch);
+			break;
+		case XMMS_OBJECT_CMD_ARG_HASHTABLE: 
+			g_hash_table_destroy (arg->retval.hashtable);
 			break;
 	}
 }
@@ -291,6 +306,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		g_free (arg.values[0].string);
 	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
 		g_free (arg.values[1].string);
+
+	xmms_ipc_free_arg_value (&arg);
 
 	retmsg->cid = msg->cid;
 	xmms_ipc_client_msg_write (client, retmsg);
