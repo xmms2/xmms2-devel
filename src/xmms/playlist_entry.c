@@ -1,6 +1,8 @@
 
 #include <glib.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "playlist.h"
 #include "playlist_entry.h"
@@ -91,7 +93,7 @@ xmms_playlist_entry_property_set (xmms_playlist_entry_t *entry, gchar *key, gcha
 	g_return_if_fail (key);
 	g_return_if_fail (value);
 
-	g_hash_table_insert (entry->properties, g_strdup (key), g_strdup (value));
+	g_hash_table_insert (entry->properties, g_ascii_strdown (key, strlen (key)), g_strdup (value));
 	
 }
 

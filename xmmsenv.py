@@ -18,6 +18,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
 
+	def XmmsConfig(self,source):
+		self.Install(self.installdir+self.sysconfdir, source)
+
 	def XmmsPlugin(self,target,source):
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.pluginpath,self['LIBPREFIX']+target+self['SHLIBSUFFIX'])

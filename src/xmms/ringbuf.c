@@ -8,6 +8,10 @@ struct xmms_ringbuf_St {
 	gint rd_index, wr_index;
 	gboolean eos;
 
+	gint hotspot_pos;
+	void (*hotspot_callback) (void *);
+	void *hotspot_arg;
+
 	GCond *free_cond, *used_cond, *eos_cond;
 };
 
@@ -84,6 +88,16 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 	g_return_val_if_fail (ringbuf, 0);
 	
 	to_read = MIN (length, xmms_ringbuf_bytes_used (ringbuf));
+ 	if (ringbuf->hotspot_callback) {
+ 		if (ringbuf->hotspot_pos != ringbuf->rd_index) {
+ 			/* make sure we don't cross a hotspot */
+ 			to_read = MIN (to_read,
+ 				       (ringbuf->hotspot_pos - ringbuf->rd_index) % ringbuf->buffer_size);
+ 		} else {
+ 			ringbuf->hotspot_callback (ringbuf->hotspot_arg);
+ 			ringbuf->hotspot_callback = NULL;
+ 		}
+ 	} 
 	while (to_read > 0) {
 		cnt = MIN (to_read, ringbuf->buffer_size - ringbuf->rd_index);
 		memcpy (data_ptr, ringbuf->buffer + ringbuf->rd_index, cnt);
@@ -96,6 +110,22 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 	g_cond_broadcast (ringbuf->free_cond);
 	
 	return r;
+}
+
+/**
+ * 
+ */
+void
+xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void *arg)
+{
+	g_return_if_fail (ringbuf);
+
+	g_return_if_fail (!ringbuf->hotspot_callback);
+
+	ringbuf->hotspot_pos = ringbuf->wr_index;
+	ringbuf->hotspot_callback = cb;
+	ringbuf->hotspot_arg = arg;
+
 }
 
 guint
