@@ -43,6 +43,15 @@ opts.Add('NOCACHE', 'do not use cache', 0)
 ##                correctly when we descend into subdirs
 base_env = xmmsenv.XmmsEnvironment(options=opts, LINK="gcc", CPPPATH = ['#src'])
 
+#check endian
+import struct;
+if struct.pack ("@h", 1)[0] == '\x01' :
+	endian = "-DWORDS_LITTLEENDIAN"
+else :
+	endian = "-DWORDS_BIGENDIAN"
+
+base_env['CCFLAGS'] = base_env['CCFLAGS'] + " " + endian
+
 if base_env['NOCACHE']:
 	print "We don't want any cache"
 	checkFlags(base_env)

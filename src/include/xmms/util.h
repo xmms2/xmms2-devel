@@ -36,10 +36,6 @@
 #define XMMS_DBG(fmt,...)
 #endif
 
-#if __BYTE_ORDER == __BIG_ENDIAN /* @todo fix for other compilers */
-#define WORDS_BIGENDIAN
-#endif
-
 gchar *xmms_util_decode_path (const gchar *path);
 gchar *xmms_util_encode_path (gchar *path);
 
