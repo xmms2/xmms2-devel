@@ -37,6 +37,11 @@ inline static void xmms_plugin_unlock (xmms_plugin_t *plugin);
  * Public functions
  */
 
+/**
+ * @defgroup XMMSPLugin XMMSPlugin
+ * @brief All functions relevant to a plugin.
+ */
+
 xmms_plugin_t *
 xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 				const gchar *name,
