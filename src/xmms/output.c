@@ -231,7 +231,8 @@ xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt)
         if (output->open) {
                 xmms_output_format_set_method_t fmt_set;
                 fmt_set = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FORMAT_SET);
-                fmt_set (output, fmt);
+				if (fmt_set)
+					fmt_set (output, fmt);
         }
         output->format = fmt;
 }
