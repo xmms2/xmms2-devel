@@ -88,6 +88,7 @@ xmms_core_playback_stop ()
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
+		xmms_object_emit (XMMS_OBJECT (core), "playback-stopped", NULL);
 		g_cond_signal (core->cond);
 	} else {
 		XMMS_DBG ("xmms_core_playback_stop with status != XMMS_CORE_PLAYBACK_RUNNING");
