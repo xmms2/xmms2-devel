@@ -5,10 +5,35 @@ Maintainer: Anders Gustafsson <andersg@xmms.org>
 Standards-Version: 3.5.8
 Build-Depends: debmake
 
-Package: xmms2
+Package: xmms2-core
 Architecture: any
 Depends: debconf (>= 0.2.78), ${shlibs:Depends}
-Description: XMMS2 - private beta - DO NOT SPREAD!
+Description: XMMS2 - core package - private beta - DO NOT SPREAD!
+ This package just contains the daemon that loads plugins and allows clients to connect.
  DO NOT SPREAD!
- .
- FIXME! The sid and SDL plugin should be built in a separate package
+
+Package: xmms2-client-cli
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - cli client - private beta - DO NOT SPREAD!
+ This package contains a simple text-ui for xmms2
+ DO NOT SPREAD!
+
+Package: xmms2-decoder-sid
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - sid decoder - private beta - DO NOT SPREAD!
+ This package let you play those funcy SID tunes from the C64 with xmms2
+
+Package: xmms2-decoder-vorbis
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - vorbis decoder - private beta - DO NOT SPREAD!
+ This package let you play ogg-vorbis-tunes
+
+Package: xmms2-sqlite
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - sqlitebased medialib - private beta - DO NOT SPREAD!
+ This package is a backed for the medialib based on sqlite
+
