@@ -33,6 +33,8 @@
 xmms_decoder_t * xmms_decoder_new ();
 gboolean xmms_decoder_open (xmms_decoder_t *decoder,
 			    xmms_transport_t *transport);
+gboolean xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list);
+xmms_audio_format_t *xmms_decoder_audio_format_to_get (xmms_decoder_t *decoder);
 void xmms_decoder_start (xmms_decoder_t *decoder, 
 			GList *effects, 
 			xmms_output_t *output);

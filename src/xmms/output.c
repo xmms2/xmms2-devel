@@ -823,6 +823,15 @@ xmms_output_decoder_start (xmms_output_t *output)
 		}
 	}
 
+	if (!xmms_decoder_init (decoder, output->format_list)) {
+		XMMS_DBG ("Couldn't initialize decoder");
+
+		xmms_object_unref (decoder);
+		return FALSE;
+	}
+
+	xmms_output_format_set (output, xmms_decoder_audio_format_to_get (decoder));
+
 	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
 			     decoder_ended, output);
 
