@@ -150,6 +150,7 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 	guint ret, len;
 
 	g_return_val_if_fail (msg, FALSE);
+	g_return_val_if_fail (msg->data, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
 	len = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN;

@@ -48,8 +48,8 @@ typedef struct xmms_output_St xmms_output_t;
 #include "xmms/sample.h"
 
 typedef enum {
-	XMMS_OUTPUT_STATUS_PLAY,
 	XMMS_OUTPUT_STATUS_STOP,
+	XMMS_OUTPUT_STATUS_PLAY,
 	XMMS_OUTPUT_STATUS_PAUSE,
 } xmms_output_status_t; /** @todo RENAME */
 

@@ -29,11 +29,6 @@
  */
 
 xmms_output_t * xmms_output_new (xmms_plugin_t *plugin);
-gboolean xmms_output_open (xmms_output_t *output);
-void xmms_output_close (xmms_output_t *output);
-void xmms_output_played_samples_set (xmms_output_t *output, guint samples);
-GList *xmms_output_formatlist_get (xmms_output_t *output);
-void xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt);
 
 void xmms_output_playlist_set (xmms_output_t *output, xmms_playlist_t *playlist);
 guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);

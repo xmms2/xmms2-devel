@@ -7,6 +7,7 @@ if base_env.HasGroup ("python"):
 			     LIBS = ["xmmsclient"])
 
 	env.Append(BUILDERS = {'Pyx' : pyx})
+	env['CCFLAGS'] += ' -Wno-unused-function -Wno-unused-label'
 
 	env.AddFlagsFromGroup ("glib")
 	env.AddFlagsFromGroup ("python")
