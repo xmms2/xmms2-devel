@@ -70,6 +70,9 @@ xmms_log_initialize (const gchar *filename)
 	} else if (strcmp (filename, "stderr") == 0) {
 		xmms_log_stream = stderr;
 		xmms_log_filename = g_strdup (filename);
+	} else if (strcmp (filename, "null") == 0) {
+		xmms_log_stream = NULL;
+		xmms_log_filename = g_strdup (filename);
 	} else {
 
 		xmms_log_filename = g_strdup_printf ("/tmp/%s.%d", filename, (int)time(NULL));

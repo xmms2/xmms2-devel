@@ -115,6 +115,7 @@ main (int argc, char **argv)
 	xmms_playlist_t *playlist;
 	const gchar *outname = NULL;
 	gboolean daemonize = FALSE;
+	gboolean doLog = TRUE;
 	const gchar *path;
 	gchar *ppath = NULL;
 	pid_t ppid=0;
@@ -127,7 +128,7 @@ main (int argc, char **argv)
 
 	
 	while (42) {
-		opt = getopt (argc, argv, "dvVo:p:");
+		opt = getopt (argc, argv, "dvVno:p:");
 
 		if (opt == -1)
 			break;
@@ -140,6 +141,10 @@ main (int argc, char **argv)
 			case 'V':
 				printf ("XMMS version %s\n", XMMS_VERSION);
 				exit (0);
+				break;
+
+			case 'n':
+				doLog = FALSE;
 				break;
 
 			case 'o':
@@ -174,7 +179,7 @@ main (int argc, char **argv)
 
 	g_thread_init (NULL);
 
-	xmms_log_initialize ("xmmsd");
+	xmms_log_initialize (doLog?"xmmsd":"null");
 	
 	parse_config ();
 	
