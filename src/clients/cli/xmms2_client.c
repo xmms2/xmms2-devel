@@ -51,12 +51,13 @@ print_mediainfo (GHashTable *entry)
 
 	url = (gchar *)g_hash_table_lookup (entry, "url");
 	url = xmmsc_decode_path (url);
-	printf ("URI:    %s\n", url);
+	printf ("URL:    %s\n", url);
 	g_free (url);
 	tmp = (gchar *)g_hash_table_lookup (entry, "channel");
 	if (tmp) {
-		printf ("Channel name: %s\n", conv(tmp));
-		printf ("Genre: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "genre")));
+		printf ("Channel: %s\n", conv(tmp));
+		printf ("Genre:   %s\n", conv ((gchar *)g_hash_table_lookup (entry, "genre")));
+		printf ("Bitrate: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "bitrate")));
 	} else {
 		printf ("Artist:  %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "artist")));
 		printf ("Album: %-30s\n", conv ((gchar *)g_hash_table_lookup (entry, "album")));
