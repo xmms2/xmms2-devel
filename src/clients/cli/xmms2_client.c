@@ -230,20 +230,27 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	if (!duration)
 		duration = 0;
 
-	if (g_strncasecmp (argv[2], "+", 1) == 0) {
+	if (argv[2][0] == '+') {
+		
 		seconds=(atoi (argv[2]+1) * 1000) + cur_playtime;
+
 		if (seconds >= duration) {
 			printf ("Trying to seek to a higher value then total_playtime, Skipping to next song\n");
 			xmmsc_playback_next (conn);
-		} else
-			printf("Adding %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
-	} else if (g_strncasecmp (argv[2], "-", 1) == 0) {
+		} else {
+			printf ("Adding %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
+		}
+		
+	} else if (argv[2][0] == '-') {
 		seconds = cur_playtime - atoi (argv[2]+1) * 1000;
+		
 		if (seconds < 0) {
 			printf ("Trying to seek to a non positive value, seeking to 0\n");
 			seconds=0;
-		} else
-			printf("Removing %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
+		} else {
+			printf ("Removing %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
+		}
+		
 	} else {
 		seconds = atoi (argv[2]) * 1000;
 	}
