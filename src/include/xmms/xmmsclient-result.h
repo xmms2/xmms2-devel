@@ -21,12 +21,14 @@
 typedef struct xmmsc_result_St xmmsc_result_t;
 
 #include <xmms/xmmsclient.h>
+#include <glib.h>
 
 typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 
-void xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *conn, char *signal); 
+void xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *c, unsigned int signalid);
 xmmsc_result_t * xmmsc_result_restart (xmmsc_result_t *res);
 
+xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid);
 void xmmsc_result_ref (xmmsc_result_t *res);
 void xmmsc_result_unref (xmmsc_result_t *res);
 
@@ -35,6 +37,7 @@ void xmmsc_result_wait (xmmsc_result_t *res);
 
 int xmmsc_result_iserror (xmmsc_result_t *res);
 const char * xmmsc_result_get_error (xmmsc_result_t *res);
+int xmmsc_result_cid (xmmsc_result_t *res);
 
 int xmmsc_result_get_int (xmmsc_result_t *res, int *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r);

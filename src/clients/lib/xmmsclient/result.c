@@ -20,15 +20,16 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #include <pwd.h>
 #include <sys/types.h>
 
-#define DBUS_API_SUBJECT_TO_CHANGE
-#include <dbus/dbus.h>
-
+#include "xmms/ipc.h"
+#include "xmms/ipc_msg.h"
 #include "internal/xhash-int.h"
 #include "internal/xlist-int.h"
+#include "internal/client_ipc.h"
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
@@ -38,15 +39,8 @@
 
 
 struct xmmsc_result_St {
-	int resultid;
-	/* xmmsc_result_type_t type; */
-	xmmsc_connection_t *conn;
+	xmmsc_connection_t *c;
 
-	DBusPendingCall *dbus_call;
-	
-	/** Stored value */
-	DBusMessage *reply;
-	
 	/** refcounting */
 	int ref;
 
@@ -57,12 +51,14 @@ struct xmmsc_result_St {
 	int error;
 	char *error_str;
 
+	uint32_t cid;
 
-	/** 
-	 * signal to restore set by
-	 * the send funciton 
-	 * */
-	char *restart_signal; 
+	/** reply */
+	xmms_ipc_msg_t *reply;
+
+	uint32_t restart_signal;
+
+	xmmsc_ipc_t *ipc;
 };
 
 /**
@@ -134,15 +130,11 @@ xmmsc_result_free (xmmsc_result_t *res)
 	if (res->error_str)
 		free (res->error_str);
 
-	if (res->dbus_call) 
-		dbus_pending_call_unref (res->dbus_call);
-	
-	/*
 	if (res->reply)
-		dbus_message_unref (res->reply);
+		xmms_ipc_msg_destroy (res->reply);
 
-		*/
-
+	xmmsc_ipc_result_unregister (res->ipc, res);
+	
 	free (res);
 }
 
@@ -186,51 +178,65 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 /** @internal */
 void
-xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *conn, char *signal)
+xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *c, uint32_t signalid)
 {
 	x_return_if_fail (res);
-	x_return_if_fail (conn);
-	x_return_if_fail (signal);
+	x_return_if_fail (c);
 
-	res->restart_signal = signal;
-	res->conn = conn;
-
+	res->c = c;
+	res->restart_signal = signalid;
 }
-
-/**
- * Restarts the result. This will return a new #xmmsc_result_t.
- * You will not need to run #xmmsc_result_set_notifier since the 
- * restart command will use the same handler as you told it to
- * use the first time
- * @returns newly allocated #xmmsc_result_t upon success otherwise NULL
- * @param res A restartable #xmmsc_result_t
- */
 
 xmmsc_result_t *
 xmmsc_result_restart (xmmsc_result_t *res)
 {
-	DBusMessageIter itr;
-	DBusMessage *msg;
-	xmmsc_result_t *ret;
+	xmmsc_result_t *newres;
+	xmms_ipc_msg_t *msg;
 
 	x_return_null_if_fail (res);
-	x_return_null_if_fail (res->conn);
+	x_return_null_if_fail (res->c);
+
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
+	xmms_ipc_msg_put_uint32 (msg, res->restart_signal);
 	
-	if (!res->restart_signal) {
-		return NULL;
+	newres = xmmsc_send_msg (res->c, msg);
+	xmms_ipc_msg_destroy (msg);
+	
+	xmmsc_result_notifier_set (newres, res->func, res->user_data);
+	xmmsc_result_restartable (newres, res->c, res->restart_signal);
+	
+	return newres;
+}
+
+void
+xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
+{
+	x_return_if_fail (res);
+	x_return_if_fail (msg);
+
+	res->reply = msg;
+
+	if (res->func) {
+		res->func (res, res->user_data);
 	}
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT, XMMS_DBUS_INTERFACE, XMMS_METHOD_ONCHANGE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, res->restart_signal);
-	ret = xmmsc_send_on_change (res->conn, msg);
-	dbus_message_unref (msg);
+	if (res->reply && res->reply->cmd == XMMS_IPC_CMD_BROADCAST) {
+		/* Post-cleanup of broadcast callback
+		 * User have to make sure that he DOESN'T
+		 * save the resultset somewhere! */
+		xmms_ipc_msg_destroy (res->reply);
+		res->reply = NULL;
+	}
+}
 
-	xmmsc_result_notifier_set (ret, res->func, res->user_data);
-	xmmsc_result_restartable (ret, res->conn, res->restart_signal);
+int
+xmmsc_result_cid (xmmsc_result_t *res)
+{
+	if (!res)
+		return 0;
 
-	return ret;
-	
+	return res->cid;
 }
 
 /** @} */
@@ -276,65 +282,28 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 }
 
 /**
- * @internal
- */
-
-static void
-xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
-{
-	DBusMessage *reply;
-	DBusError err;
-	xmmsc_result_t *res = user_data;
-
-	x_return_if_fail (pending);
-	x_return_if_fail (user_data);
-
-	if (!(reply = dbus_pending_call_get_reply (pending))) {
-		fprintf (stderr, "This shouldn't really happen, something in DBUS is VERY VERY WRONG!\n");
-		res->error = XMMS_ERROR_API_UNRECOVERABLE;
-		xmmsc_result_unref (res);
-		return;
-	}
-
-	res->reply = reply;
-	dbus_error_init (&err);
-	if (dbus_set_error_from_message (&err, res->reply)) {
-		res->error = 1; /** @todo add real error */
-		res->error_str = strdup (err.message);
-	}
-
-	if (res->func) {
-		res->func (res, (void*)res->user_data);
-	}
-
-	xmmsc_result_unref (res);
-}
-
-
-/**
  * Allocates new #xmmsc_result_t and refereces it.
  * Should not be used from a client.
  * @internal
  */
 
 xmmsc_result_t *
-xmmsc_result_new (DBusPendingCall *pending)
+xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid)
 {
 	xmmsc_result_t *res;
 
 	res = x_new0 (xmmsc_result_t, 1);
 
-	res->dbus_call = pending;
+	res->cid = commandid;
 
 	/* user must give this back */
 	xmmsc_result_ref (res);
-	/* one for the notifier */
-	xmmsc_result_ref (res);
 
-	dbus_pending_call_set_notify (res->dbus_call, 
-				      xmmsc_result_pending_notifier, 
-				      res, 
-				      NULL);
+	/* Add it to the loop */
+	xmmsc_ipc_result_register (c->ipc, res);
+
+	/* For the destroy func */
+	res->ipc = c->ipc;
 
 	return res;
 }
@@ -348,8 +317,10 @@ void
 xmmsc_result_wait (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
-
-	dbus_pending_call_block (res->dbus_call);
+	xmmsc_ipc_flush  (res->ipc);
+	while (!res->reply) {
+		xmmsc_ipc_wait_for_event (res->ipc, 5);
+	}
 }
 				
 
@@ -406,29 +377,8 @@ xmmsc_result_get_playlist_change (xmmsc_result_t *res,
 				  unsigned int *id, 
 				  unsigned int *argument)
 {
-	DBusMessageIter itr;
 
 	x_return_val_if_fail (res, 0);
-
-	dbus_message_iter_init (res->reply, &itr);
-
-	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
-		return 0;
-	}
-	*change = dbus_message_iter_get_uint32 (&itr);
-
-	dbus_message_iter_next (&itr);
-	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
-		return 0;
-	}
-
-	*id = dbus_message_iter_get_uint32 (&itr);
-	dbus_message_iter_next (&itr);
-	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
-		return 0;
-	}
-
-	*argument = dbus_message_iter_get_uint32 (&itr);
 
 	return 1;
 }
@@ -443,18 +393,13 @@ xmmsc_result_get_playlist_change (xmmsc_result_t *res,
 int
 xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 {
-	DBusMessageIter itr;
-
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
-	
-	dbus_message_iter_init (res->reply, &itr);
-	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_INT32) {
-		return 0;
-	}
-	*r = dbus_message_iter_get_int32 (&itr);
 
+	if (!xmms_ipc_msg_get_int32 (res->reply, r))
+		return 0;
+	
 	return 1;
 }
 
@@ -468,18 +413,13 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 int
 xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
 {
-	DBusMessageIter itr;
-
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
-	
-	dbus_message_iter_init (res->reply, &itr);
-	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
-		return 0;
-	}
-	*r = dbus_message_iter_get_uint32 (&itr);
 
+	if (!xmms_ipc_msg_get_uint32 (res->reply, r))
+		return 0;
+	
 	return 1;
 }
 
@@ -493,18 +433,15 @@ xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
 int
 xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 {
-	DBusMessageIter itr;
+	int len;
 
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
-	
-	dbus_message_iter_init (res->reply, &itr);
-	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_STRING) {
-		return 0;
-	}
-	*r = dbus_message_iter_get_string (&itr);
 
+	if (!xmms_ipc_msg_get_string_alloc (res->reply, r, &len))
+		return 0;
+	
 	return 1;
 }
 
@@ -516,19 +453,15 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
  */
 
 int
-xmmsc_result_get_mediainfo (xmmsc_result_t *res, x_hash_t **r)
+xmmsc_result_get_hashtable (xmmsc_result_t *res, x_hash_t **r)
 {
-	DBusMessageIter itr;
-
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
-
-	dbus_message_iter_init (res->reply, &itr);
-	*r = xmmsc_deserialize_mediainfo (&itr);
+	
+	*r = xmmsc_deserialize_hashtable (res->reply);
 
 	if (!*r) {
-		printf ("snett snett\n");
 		return 0;
 	}
 
@@ -546,34 +479,25 @@ xmmsc_result_get_mediainfo (xmmsc_result_t *res, x_hash_t **r)
 int
 xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
 {
-	DBusMessageIter itr;
 	x_list_t *list = NULL;
+	char *tmp;
+	int len;
 
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
 
-	dbus_message_iter_init (res->reply, &itr);
-
 	while (42) {
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-			list = x_list_append (list, dbus_message_iter_get_string (&itr));
-		} else {
-			list = NULL;
+		if (!xmms_ipc_msg_get_string_alloc (res->reply, &tmp, &len))
 			break;
-		}
-
-		if (!dbus_message_iter_has_next (&itr))
-			break;
-		
-		dbus_message_iter_next (&itr);
-
+		list = x_list_append (list, tmp);
 	}
 
 	if (!list)
-		return 0;
+		*r = NULL;
+	else
+		*r = list;
 
-	*r = list;
 
 	return 1;
 }
@@ -588,34 +512,24 @@ xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
 int
 xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
 {
-	DBusMessageIter itr;
 	x_list_t *list = NULL;
+	unsigned int tmp;
 
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
 
-	dbus_message_iter_init (res->reply, &itr);
-
 	while (42) {
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-			list = x_list_append (list, XUINT_TO_POINTER (dbus_message_iter_get_uint32 (&itr)));
-		} else {
-			list = NULL;
+		if (!xmms_ipc_msg_get_uint32 (res->reply, &tmp))
 			break;
-		}
-
-		if (!dbus_message_iter_has_next (&itr))
-			break;
-		
-		dbus_message_iter_next (&itr);
-
+		list = x_list_append (list, XUINT_TO_POINTER (tmp));
 	}
 
 	if (!list)
-		return 0;
+		*r = NULL;
+	else
+		*r = list;
 
-	*r = list;
 
 	return 1;
 }
@@ -630,34 +544,24 @@ xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
 int
 xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
 {
-	DBusMessageIter itr;
 	x_list_t *list = NULL;
+	int tmp;
 
 	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
 
-	dbus_message_iter_init (res->reply, &itr);
-
 	while (42) {
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_INT32) {
-			list = x_list_append (list, XINT_TO_POINTER (dbus_message_iter_get_int32 (&itr)));
-		} else {
-			list = NULL;
+		if (!xmms_ipc_msg_get_int32 (res->reply, &tmp))
 			break;
-		}
-
-		if (!dbus_message_iter_has_next (&itr))
-			break;
-		
-		dbus_message_iter_next (&itr);
-
+		list = x_list_append (list, XINT_TO_POINTER (tmp));
 	}
 
 	if (!list)
-		return 0;
+		*r = NULL;
+	else
+		*r = list;
 
-	*r = list;
 
 	return 1;
 }
@@ -672,7 +576,6 @@ xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
 int
 xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r)
 {
-	DBusMessageIter itr;
 	x_list_t *list = NULL;
 	x_hash_t *e = NULL;
 
@@ -680,30 +583,19 @@ xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r)
 		return 0;
 	}
 
-	dbus_message_iter_init (res->reply, &itr);
-
 	while (42) {
-
-		e = xmmsc_deserialize_hashtable (&itr);
-		if (!e) {
-			/** @todo Leak? */
-			return 0;
-		}
-
-		list = x_list_prepend (list, e);
-		
-		if (!dbus_message_iter_has_next (&itr))
+		e = xmmsc_deserialize_hashtable (res->reply);
+		if (e) 
+			list = x_list_append (list, e);
+		else
 			break;
-		
-		dbus_message_iter_next (&itr);
 	}
 
 	if (!list)
-		return 0;
+		*r = NULL;
+	else
+		*r = list;
 
-	list = x_list_reverse (list);
-
-	*r = list;
 
 	return 1;
 }

@@ -124,23 +124,31 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_config_save (filename);
 
 	xmms_visualisation_shutdown ();
-	xmms_dbus_shutdown ();
+/*	xmms_dbus_shutdown ();*/
 	xmms_config_shutdown ();
 	xmms_medialib_shutdown ();
 	xmms_plugin_shutdown ();
 	xmms_log_shutdown ();
 }
 
+static guint
+hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error)
+{
+	XMMS_DBG ("Client %s with protocol version %d sent hello!", client, protocolver);
+	return 1;
+}
+
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
-	xmms_dbus_unregister_object ("main");
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MAIN);
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
 }
 
-XMMS_METHOD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
+XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
+XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
 
 int
 main (int argc, char **argv)
@@ -220,6 +228,8 @@ main (int argc, char **argv)
 
 	g_thread_init (NULL);
 
+	ipc = xmms_ipc_init ();
+
 	parse_config ();
 	
 	xmms_log_init (doLog ? "xmmsd" : "null");
@@ -270,10 +280,10 @@ main (int argc, char **argv)
 	cv = xmms_config_value_register ("core.ipcsocket", default_path,
 	                                 NULL, NULL);
 
-	ipc = xmms_ipc_init (xmms_config_value_string_get (cv));
-	if (!ipc) {
+	if (!xmms_ipc_setup_server (xmms_config_value_string_get (cv))) {
 		xmms_log_fatal ("IPC failed to init!");
 	}
+
 	xmms_ipc_setup_with_gmain (ipc);
 	/*
 	xmms_dbus_init (xmms_config_value_string_get (cv));
@@ -281,8 +291,9 @@ main (int argc, char **argv)
 
 	xmms_signal_init (XMMS_OBJECT (mainobj));
 
-	xmms_dbus_register_object ("main", XMMS_OBJECT (mainobj));
-	xmms_object_method_add (XMMS_OBJECT (mainobj), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_MAIN, XMMS_OBJECT (mainobj));
+	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_QUIT, XMMS_CMD_FUNC (quit));
+	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);

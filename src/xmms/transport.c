@@ -218,7 +218,7 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 	g_mutex_unlock (transport->mutex);
 	
 	if (transport->running)
-		xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
+		xmms_object_emit (XMMS_OBJECT (transport), XMMS_IPC_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
 
 	g_cond_signal (transport->mime_cond);
 }

@@ -39,7 +39,7 @@ typedef struct xmmsc_file_St {
 	int file; /**< set to true if entry is a regular file */
 } xmmsc_file_t;
 
-xmmsc_connection_t *xmmsc_init();
+xmmsc_connection_t *xmmsc_init (char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_deinit(xmmsc_connection_t *);
 

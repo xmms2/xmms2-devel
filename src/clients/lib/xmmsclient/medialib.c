@@ -22,8 +22,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <dbus/dbus.h>
-
 #include "xmms/xmmsclient.h"
 #include "xmms/xmmsclient-result.h"
 #include "xmms/signal_xmms.h"
@@ -44,17 +42,14 @@
 xmmsc_result_t *
 xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 {
-	DBusMessageIter itr;
-	DBusMessage *msg;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_MEDIALIB, XMMS_DBUS_INTERFACE, XMMS_METHOD_SELECT);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, query);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_SELECT);
+	xmms_ipc_msg_put_string (msg, query);
 
 	res = xmmsc_send_msg (conn, msg);
-
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }

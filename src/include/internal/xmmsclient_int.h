@@ -22,12 +22,17 @@
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 
-#include <dbus/dbus.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdint.h>
 
-#include "xmms/xmmswatch.h"
+#include "xmms/ipc_msg.h"
 
 #include "internal/xhash-int.h"
 #include "internal/xlist-int.h"
+#include "internal/client_ipc.h"
 
 /**
  * @typedef xmmsc_connection_t
@@ -37,23 +42,25 @@
  */
 
 struct xmmsc_connection_St {
-	DBusConnection *conn;	
+	
+	xmmsc_ipc_t *ipc;
+
 	x_hash_t *callbacks;
 	x_hash_t *replies;
 	char *error;
 	int timeout;
-	xmmsc_watch_callback_t watch_callback;
 	void *data;
+
+	char *clientname;
 };
 
-
-xmmsc_result_t * xmmsc_send_msg_no_arg (xmmsc_connection_t *c, char *object, char *method);
-xmmsc_result_t * xmmsc_send_msg (xmmsc_connection_t *c, DBusMessage *msg);
-xmmsc_result_t * xmmsc_send_on_change (xmmsc_connection_t *c, DBusMessage *msg);
-void xmmsc_connection_add_reply (xmmsc_connection_t *c, int serial, char *type);
-x_hash_t *xmmsc_deserialize_hashtable (DBusMessageIter *itr);
-x_hash_t *xmmsc_deserialize_mediainfo (DBusMessageIter *itr);
-xmmsc_result_t *xmmsc_result_new (DBusPendingCall *pending); 
+xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
+xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
+xmmsc_result_t *xmmsc_send_msg_flush (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
+x_hash_t * xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg);
+x_hash_t * xmmsc_deserialize_mediainfo (xmms_ipc_msg_t *msg);
+xmmsc_result_t * xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid);
+xmmsc_result_t * xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
 
 #endif
 

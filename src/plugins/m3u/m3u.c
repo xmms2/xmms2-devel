@@ -239,7 +239,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 		g_assert (entry);
 
 		XMMS_DBG ("Adding %s", xmms_playlist_entry_url_get (entry));
-		xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
+		xmms_playlist_add (playlist, entry);
 
 		if (*line)
 			line++;

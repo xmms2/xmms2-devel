@@ -14,15 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-/* YES! I know that this api may change under my feet */
-#define DBUS_API_SUBJECT_TO_CHANGE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-#include <dbus/dbus.h>
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
@@ -45,7 +40,7 @@
 xmmsc_result_t *
 xmmsc_playback_next (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_DECODER_KILL);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_DECODER_KILL);
 }
 
 /**
@@ -56,7 +51,7 @@ xmmsc_playback_next (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_stop (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_STOP);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_STOP);
 }
 
 /**
@@ -67,7 +62,7 @@ xmmsc_playback_stop (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_pause (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_PAUSE);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_PAUSE);
 }
 
 /**
@@ -77,7 +72,7 @@ xmmsc_playback_pause (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_start (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_START);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_START);
 }
 
 
@@ -93,16 +88,15 @@ xmmsc_playback_start (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
 {
-        DBusMessageIter itr;
-	DBusMessage *msg;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_OUTPUT, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKMS);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_SEEKMS);
+	xmms_ipc_msg_put_uint32 (msg, milliseconds);
 
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, milliseconds);
 	res = xmmsc_send_msg (c, msg);
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
+
 	return res;
 }
 
@@ -117,15 +111,36 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
 xmmsc_result_t *
 xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 {
-        DBusMessageIter itr;
-	DBusMessage *msg;
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_SEEKSAMPLES);
+	xmms_ipc_msg_put_uint32 (msg, samples);
+
+	res = xmmsc_send_msg (c, msg);
+	xmms_ipc_msg_destroy (msg);
+
+	return res;
+}
+
+
+xmmsc_result_t *
+xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
+{
 	xmmsc_result_t *res;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_OUTPUT, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKSAMPLES);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, samples);
-	res = xmmsc_send_msg (c, msg);
-	dbus_message_unref (msg);
+	res = xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_STATUS);
+
+	return res;
+}
+
+xmmsc_result_t *
+xmmsc_broadcast_playback_current_id (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
+	
 	return res;
 }
 
@@ -134,21 +149,9 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
  */
 
 xmmsc_result_t *
-xmmsc_playback_status (xmmsc_connection_t *c)
-{
-	xmmsc_result_t *res;
-	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_STATUS);
-	xmmsc_result_restartable (res, c, XMMS_SIGNAL_OUTPUT_STATUS);
-	return res;
-}
-
-xmmsc_result_t *
 xmmsc_playback_current_id (xmmsc_connection_t *c)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_CURRENTID);
-	xmmsc_result_restartable (res, c, XMMS_SIGNAL_OUTPUT_CURRENTID);
-	return res;
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_CURRENTID);
 }
 
 unsigned int
@@ -174,15 +177,16 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 
 }
 
-
+xmmsc_result_t *
+xmmsc_signal_playback_playtime (xmmsc_connection_t *c)
+{
+	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME);
+}
 
 xmmsc_result_t *
 xmmsc_playback_playtime (xmmsc_connection_t *c)
 {
-	xmmsc_result_t *res;
-	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_CPLAYTIME);
-	xmmsc_result_restartable (res, c, XMMS_SIGNAL_OUTPUT_PLAYTIME);
-	return res;
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_CPLAYTIME);
 }
 
 int

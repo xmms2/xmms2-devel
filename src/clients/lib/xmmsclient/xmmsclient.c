@@ -28,19 +28,21 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <limits.h>
 
 #include <pwd.h>
 #include <sys/types.h>
-
-#include <dbus/dbus.h>
-/*#include <glib.h>*/
 
 #include "internal/xhash-int.h"
 #include "internal/xlist-int.h"
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/ipc.h"
+#include "xmms/ipc_msg.h"
+#include "xmms/signal_xmms.h"
+#include "internal/client_ipc.h"
 
 #include "internal/xmmsclient_int.h"
 
@@ -48,6 +50,7 @@
 
 #define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
 
+static uint32_t cmd_id;
 
 /*
  * Public methods
@@ -109,9 +112,11 @@
  */
 
 xmmsc_connection_t *
-xmmsc_init ()
+xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
+
+	g_thread_init (NULL);
 	
 	if (!(c = malloc (sizeof (xmmsc_connection_t)))) {
 		return NULL;
@@ -119,22 +124,26 @@ xmmsc_init ()
 
 	memset (c, 0, sizeof (xmmsc_connection_t));
 	
-	if (!(c->callbacks = x_hash_new (x_str_hash, x_str_equal))) {
-		free (c);
-
-		return NULL;
-	}
-
-	if (!(c->replies = x_hash_new (NULL, NULL))) {
-		x_hash_destroy (c->callbacks);
-		free (c);
-
-		return NULL;
-	}
-
-	c->timeout = 2000; /* ms */
+	c->clientname = strdup (clientname);
+	cmd_id = 0;
 
 	return c;
+}
+
+xmmsc_result_t *
+xmmsc_send_hello (xmmsc_connection_t *c)
+{
+	xmms_ipc_msg_t *msg;
+	xmmsc_result_t *result;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_HELLO);
+	xmms_ipc_msg_put_int32 (msg, 1); /* PROTOCOL VERSION */
+	xmms_ipc_msg_put_string (msg, c->clientname);
+
+	result = xmmsc_send_msg (c, msg);
+	xmms_ipc_msg_destroy (msg);
+
+	return result;
 }
 
 /**
@@ -149,20 +158,18 @@ xmmsc_init ()
  */
 
 int
-xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
+xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 {
-	DBusConnection *conn;
-	DBusError err;
-	DBusObjectPathVTable vtable;
+	xmmsc_ipc_t *ipc;
+	xmmsc_result_t *result;
+	int i;
 
 	char path[256];
-
-	dbus_error_init (&err);
 
 	if (!c)
 		return FALSE;
 
-	if (!dbuspath) {
+	if (!ipcpath) {
 		struct passwd *pwd;
 		char *user = NULL;
 		int uid = getuid();
@@ -177,16 +184,18 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		if (!user)
 			exit(-1);
 
-		snprintf (path, 256, "unix:path=/tmp/xmms-dbus-%s", user);
+		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", user);
 	} else {
-		snprintf (path, 256, "%s", dbuspath);
+		snprintf (path, 256, "%s", ipcpath);
 	}
 
-	conn = dbus_connection_open (path, &err);
+	ipc = xmmsc_ipc_init ();
 	
-	if (!conn) {
-		int ret;
-		
+	if (!xmmsc_ipc_connect (ipc, path)) {
+		c->error = "Error starting xmms2d";
+		return FALSE;
+
+		/*
 		ret = system ("xmms2d -d");
 
 		if (ret != 0) {
@@ -200,15 +209,20 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 			c->error = "Couldn't connect to xmms2d even tough I started it... Bad, very bad.";
 			return FALSE;
 		}
+		*/
 	}
 
-	memset (&vtable, 0, sizeof (vtable));
+	c->ipc = ipc;
 
-	/*dbus_connection_add_filter (conn, handle_callback, c, NULL);*/
+	result = xmmsc_send_hello (c);
+	xmmsc_result_wait (result);
+	if (!xmmsc_result_get_uint (result, &i))
+		return FALSE;
 
-	c->conn=conn;
 	return TRUE;
 }
+
+
 
 
 /**
@@ -282,13 +296,7 @@ free_callback (void *key, void *value, void *udata)
 void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
-	dbus_connection_flush (c->conn);
-	dbus_connection_disconnect (c->conn);
-	dbus_connection_unref (c->conn);
-
-	x_hash_foreach_remove (c->callbacks, free_callback, NULL);
-	x_hash_destroy(c->callbacks);
-	x_hash_destroy(c->replies);
+	xmmsc_ipc_destroy (c->ipc);
 	free(c);
 }
 
@@ -301,7 +309,7 @@ xmmsc_deinit (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_MAIN, XMMS_METHOD_QUIT);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_QUIT);
 }
 
 /**
@@ -536,99 +544,123 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
  * @internal
  */
 
-xmmsc_result_t *
-xmmsc_send_msg_no_arg (xmmsc_connection_t *c, char *object, char *method)
+static uint32_t
+xmmsc_next_id (void)
 {
-	DBusMessage *msg;
-	DBusPendingCall *pending;
-	
-	msg = dbus_message_new_method_call (NULL, object, XMMS_DBUS_INTERFACE, method);
-	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, XMMSC_DEFAULT_TIMEOUT)) {
-		return NULL;
-	}
-	dbus_message_unref (msg);
-
-	dbus_connection_flush (c->conn);
-
-	return xmmsc_result_new (pending);
-
+	return cmd_id++;
 }
 
 xmmsc_result_t *
-xmmsc_send_msg (xmmsc_connection_t *c, DBusMessage *msg)
+xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 {
-	DBusPendingCall *pending;
+	xmms_ipc_msg_t *msg;
+	xmmsc_result_t *res;
 	
-	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, XMMSC_DEFAULT_TIMEOUT)) {
-		return NULL;
-	}
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
+	xmms_ipc_msg_put_uint32 (msg, signalid);
 	
-	dbus_connection_flush (c->conn);
+	res = xmmsc_send_msg (c, msg);
+	xmms_ipc_msg_destroy (msg);
 
-	return xmmsc_result_new (pending);
+	xmmsc_result_restartable (res, c, signalid);
+
+	return res;
 }
 
 xmmsc_result_t *
-xmmsc_send_on_change (xmmsc_connection_t *c, DBusMessage *msg)
+xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
 {
-	DBusPendingCall *pending;
+	xmms_ipc_msg_t *msg;
+	xmmsc_result_t *res;
 	
-	if (!dbus_connection_send_with_reply (c->conn, msg, &pending, INT_MAX)) {
-		return NULL;
-	}
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
+	xmms_ipc_msg_put_uint32 (msg, signalid);
 	
-	dbus_connection_flush (c->conn);
+	res = xmmsc_send_msg (c, msg);
+	xmms_ipc_msg_destroy (msg);
+	
+	xmmsc_result_restartable (res, c, signalid);
 
-	return xmmsc_result_new (pending);
+	return res;
+}
+
+xmmsc_result_t *
+xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
+{
+	uint32_t cid;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (object, method);
+
+	cid = xmmsc_next_id ();
+	xmmsc_ipc_msg_write (c->ipc, msg, cid);
+
+	return xmmsc_result_new (c, cid);
+}
+
+xmmsc_result_t *
+xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
+{
+	uint32_t cid;
+	cid = xmmsc_next_id ();
+
+	xmmsc_ipc_msg_write (c->ipc, msg, cid);
+	msg->cid = cid;
+	xmmsc_ipc_flush (c->ipc);
+	return xmmsc_result_new (c, cid);
+}
+
+void *
+destroy_hash (void *key, void *value, void *userdata)
+{
+	g_free (key);
+	g_free (value);
 }
 
 x_hash_t *
-xmmsc_deserialize_hashtable (DBusMessageIter *itr)
+xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 {
-	x_hash_t *tab = NULL;
+	unsigned int entries;
+	unsigned int i;
+	unsigned int len;
+	x_hash_t *h;
+	char *key, *val;
 
-	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
-		DBusMessageIter dictitr;
-		dbus_message_iter_init_dict_iterator (itr, &dictitr);
-		
-		tab = x_hash_new (x_str_hash, x_str_equal);
-		
-		while (42) {
-			char *key = dbus_message_iter_get_dict_key (&dictitr);
-			x_hash_insert (tab, key, dbus_message_iter_get_string (&dictitr));
-			
-			if (!dbus_message_iter_has_next (&dictitr))
-				break;
-			dbus_message_iter_next (&dictitr);
-		}
+	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
+		return NULL;
+	
+	h = x_hash_new (x_str_hash, x_str_equal);
+
+	for (i = 1; i < entries; i++) {
+		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
+			goto err;
+		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len))
+			goto err;
+
+		x_hash_insert (h, key, val);
 	}
-	return tab;
+
+	return h;
+
+err:
+	x_hash_foreach (h, destroy_hash, NULL);
+	return NULL;
+
 }
 
-x_hash_t *
-xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
+void xmms_log_debug (const gchar *fmt, ...)
 {
-	x_hash_t *tab = NULL;
+	char buff[1024];
+	va_list ap;
 
-	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
-		DBusMessageIter dictitr;
-		dbus_message_iter_init_dict_iterator (itr, &dictitr);
-		
-		tab = x_hash_new (x_str_hash, x_str_equal);
-		
-		while (42) {
-			char *key = dbus_message_iter_get_dict_key (&dictitr);
-			if (strcasecmp (key, "id") == 0) {
-				x_hash_insert (tab, key, XUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
-			} else {
-				x_hash_insert (tab, key, dbus_message_iter_get_string (&dictitr));
-			}
+	va_start (ap, fmt);
+#ifdef HAVE_VSNPRINTF
+	vsnprintf (buff, 1024, fmt, ap);
+#else
+	vsprintf (buff, fmt, ap);
+#endif
+	va_end (ap);
 
-			
-			if (!dbus_message_iter_has_next (&dictitr))
-				break;
-			dbus_message_iter_next (&dictitr);
-		}
-	}
-	return tab;
+	fprintf (stderr, "%s\n", buff);
 }
+

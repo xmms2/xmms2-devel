@@ -59,6 +59,34 @@ struct xmms_playlist_entry_St {
  * Public functions
  */
 
+static void
+insert_to_table (gpointer key, gpointer value, gpointer udata)
+{
+	gchar *k = key;
+	gchar *v = value;
+	GHashTable *table = udata;
+	g_hash_table_insert (table, g_strdup (k), g_strdup (v));
+}
+
+GHashTable *
+xmms_playlist_entry_to_ghashtable (xmms_playlist_entry_t *entry)
+{
+	GHashTable *hashtable;
+
+	g_return_val_if_fail (entry, NULL);
+
+
+	hashtable = g_hash_table_new_full (g_str_hash, g_str_equal,
+					   g_free, g_free);
+
+	g_hash_table_insert (hashtable, g_strdup ("id"), g_strdup_printf ("%d", entry->id));
+	g_hash_table_insert (hashtable, g_strdup ("url"), g_strdup (entry->url));
+	g_hash_table_insert (hashtable, g_strdup ("mimetype"), g_strdup (entry->mimetype));
+	g_hash_table_foreach (entry->properties, insert_to_table, hashtable);
+
+	return hashtable;
+}
+
 /**
   * Allocate a new #xmms_playlist_entry_t
   * @param url create the playlist_entry with a set url, it could also be set NULL
@@ -305,8 +333,8 @@ xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *e
 	XMMS_DBG ("info for %d updated", entry->id);
 	
 	xmms_object_emit_f (XMMS_OBJECT (playlist), 
-			    XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID,
-			    XMMS_OBJECT_METHOD_ARG_UINT32,
+			    XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID,
+			    XMMS_OBJECT_CMD_ARG_UINT32,
 			    entry->id);
 
 }

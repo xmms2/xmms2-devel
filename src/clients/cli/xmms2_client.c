@@ -63,7 +63,6 @@ print_info (const char *fmt, ...)
 
 	printf ("%s\n", buf);
 }
-
 static void
 print_hash (const void *key, const void *value, void *udata)
 {
@@ -560,7 +559,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	GError *err = NULL;
 	int r, w;
 	gchar *conv;
-	
+
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
 	}
@@ -577,9 +576,10 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 
 	fflush (stdout);
 
-	xmmsc_result_unref (xmmsc_result_restart (res));
+	xmmsc_result_restart (res);
 	xmmsc_result_unref (res);
 }
+
 
 static void
 handle_mediainfo (xmmsc_result_t *res, void *userdata)
@@ -602,7 +602,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 	} else {
 		tmp = x_hash_lookup (hash, "id");
 
-		mid = GPOINTER_TO_UINT (tmp);
+		mid = atoi (tmp);
 
 		if (id == mid) {
 			memset (songname, 0, 60);
@@ -621,96 +621,27 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		xmmsc_playlist_entry_free (hash);
 	}
 
-	xmmsc_result_unref (xmmsc_result_restart (res));
-
-	xmmsc_result_unref (res);
-
 }
 
 static void
 cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
+	xmmsc_result_t *res;
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
 	/* Setup onchange signal for mediainfo */
-	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
-	XMMS_CALLBACK_SET (conn, xmmsc_playback_playtime, handle_playtime, NULL);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
+	
+	res = xmmsc_playback_current_id (conn);
+	xmmsc_result_notifier_set (res, handle_mediainfo, conn);
 
-	xmmsc_setup_with_gmain (conn, NULL);
+	xmmsc_ipc_setup_with_gmain (conn, NULL);
 
 	g_main_loop_run (ml);
 }
-
-static void
-handle_plch (xmmsc_result_t *res, void *userdata)
-{
-	unsigned int type, id, arg;
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("Huston we have a problem %s", xmmsc_result_get_error (res));
-	}
-
-	if (!xmmsc_result_get_playlist_change (res, &type, &id, &arg)) {
-		print_error ("Couldn't fetch plch message!");
-	}
-
-	switch (type) {
-		case XMMSC_PLAYLIST_ADD:
-			print_info ("Added to playlist id = %d", id);
-			break;
-		case XMMSC_PLAYLIST_CLEAR:
-			print_info ("Playlist was cleared!");
-			break;
-		case XMMSC_PLAYLIST_REMOVE:
-			print_info ("%d was removed from the playlist", id);
-			break;
-		case XMMSC_PLAYLIST_SORT:
-			print_info ("Playlist was sorted");
-			break;
-		case XMMSC_PLAYLIST_SHUFFLE:
-			print_info ("Playlist was shuffled");
-			break;
-		default:
-			print_info ("Playlist was altered, but only apan knows how..");
-			break;
-	}
-	
-	xmmsc_result_unref (xmmsc_result_restart (res));
-	xmmsc_result_unref (res);
-}
-
-static void
-handle_entry_plch (xmmsc_result_t *res, void *userdata)
-{
-	int id;
-	
-	xmmsc_result_unref (xmmsc_result_restart (res));
-
-	if (!xmmsc_result_get_uint (res, &id)) {
-		print_error ("Could't fetch uid!");
-	}
-
-	print_info ("Mediainfo for id = %d is updated", id);
-	
-	xmmsc_result_unref (res);
-}
-
-static void
-cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
-{
-	GMainLoop *ml;
-
-	ml = g_main_loop_new (NULL, FALSE);
-	XMMS_CALLBACK_SET (conn, xmmsc_playlist_changed, handle_plch, conn);
-	XMMS_CALLBACK_SET (conn, xmmsc_playlist_entry_changed, handle_entry_plch, conn);
-
-	xmmsc_setup_with_gmain (conn, NULL);
-	g_main_loop_run (ml);
-}
-
-
 
 /**
  * Defines all available commands.
@@ -739,7 +670,6 @@ cmds commands[] = {
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
-	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	/*{ "statistics", "get statistics from server", cmd_stats },
@@ -749,7 +679,6 @@ cmds commands[] = {
 	{ NULL, NULL, NULL },
 };
 
-
 int
 main (int argc, char **argv)
 {
@@ -758,7 +687,7 @@ main (int argc, char **argv)
 	char *dbuspath;
 	int i;
 
-	connection = xmmsc_init ();
+	connection = xmmsc_init ("XMMS2 CLI");
 
 	if (!connection) {
 		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
@@ -766,7 +695,7 @@ main (int argc, char **argv)
 
 	dbuspath = getenv ("DBUS_PATH");
 	if (!dbuspath) {
-		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+		path = g_strdup_printf ("unix:///tmp/xmms-ipc-%s", g_get_user_name ());
 	} else {
 		path = dbuspath;
 	}

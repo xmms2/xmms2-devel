@@ -21,102 +21,74 @@
 #define __SIGNAL_XMMS_H__
 
 typedef enum {
-	XMMS_IPC_SIGNAL_END,
+	XMMS_IPC_OBJECT_MAIN,
+	XMMS_IPC_OBJECT_PLAYLIST,
+	XMMS_IPC_OBJECT_CONFIG,
+	XMMS_IPC_OBJECT_OUTPUT,
+	XMMS_IPC_OBJECT_MEDIALIB,
+	XMMS_IPC_OBJECT_SIGNAL,
+	XMMS_IPC_OBJECT_END,
+} xmms_ipc_objects_t;
+
+typedef enum {
+	XMMS_IPC_SIGNAL_OBJECT_DESTROYED = 1,
+	XMMS_IPC_SIGNAL_PLAYLIST_CHANGED = 4,
+	XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED = 8,
+	XMMS_IPC_SIGNAL_OUTPUT_STATUS = 16,
+	XMMS_IPC_SIGNAL_OUTPUT_MIXER_CHANGED = 32,
+	XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME = 64,
+	XMMS_IPC_SIGNAL_OUTPUT_CURRENTID = 128,
+	XMMS_IPC_SIGNAL_OUTPUT_OPEN_FAIL = 256,
+	XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID = 512,
+	XMMS_IPC_SIGNAL_TRANSPORT_MIMETYPE = 1024,
+	XMMS_IPC_SIGNAL_END = 2048,
 } xmms_ipc_signals_t;
 
-#define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
-#define XMMS_OBJECT_MAIN "/xmms/main"
-#define XMMS_OBJECT_CLIENT "/xmms/client"
-#define XMMS_OBJECT_OUTPUT "/xmms/output"
-#define XMMS_OBJECT_DBUS "/xmms/dbus"
-#define XMMS_OBJECT_CONFIG "/xmms/config"
-#define XMMS_OBJECT_TRANSPORT "/xmms/transport"
-#define XMMS_OBJECT_VISUALISATION "/xmms/visualisation"
-#define XMMS_OBJECT_MEDIALIB "/xmms/medialib"
+typedef enum {
+	/* Main */
+	XMMS_IPC_CMD_HELLO,
+	XMMS_IPC_CMD_QUIT,
+	XMMS_IPC_CMD_REPLY,
+	XMMS_IPC_CMD_ERROR,
 
-#define XMMS_DBUS_INTERFACE "org.xmms"
+	/* Playlist */
+	XMMS_IPC_CMD_SHUFFLE,
+	XMMS_IPC_CMD_JUMP,
+	XMMS_IPC_CMD_ADD,
+	XMMS_IPC_CMD_MEDIALIBADD,
+	XMMS_IPC_CMD_GETMEDIAINFO,
+	XMMS_IPC_CMD_REMOVE,
+	XMMS_IPC_CMD_MOVE,
+	XMMS_IPC_CMD_LIST,
+	XMMS_IPC_CMD_CLEAR,
+	XMMS_IPC_CMD_SORT,
+	XMMS_IPC_CMD_SAVE,
 
-#define XMMS_METHOD_STATS "stats"
-#define XMMS_METHOD_DUMMY "quit"
-#define XMMS_METHOD_QUIT "dummy"
-#define XMMS_METHOD_ONCHANGE "onchange"
-#define XMMS_METHOD_NEXT "next"
-#define XMMS_METHOD_PREV "prev"
-#define XMMS_METHOD_PLAY "play"
-#define XMMS_METHOD_START "start"
-#define XMMS_METHOD_STOP "stop"
-#define XMMS_METHOD_PAUSE "pause"
-#define XMMS_METHOD_STATUS "status"
-#define XMMS_METHOD_CURRENTID "currentid"
-#define XMMS_METHOD_SHUFFLE "shuffle"
-#define XMMS_METHOD_SEEKMS "seekms"
-#define XMMS_METHOD_SEEKSAMPLES "seeksamples"
-#define XMMS_METHOD_SAVE "save"
-#define XMMS_METHOD_SORT "sort"
-#define XMMS_METHOD_JUMP "jump"
-#define XMMS_METHOD_ADD "add"
-#define XMMS_METHOD_LIST "list"
-#define XMMS_METHOD_REMOVE "remove"
-#define XMMS_METHOD_MOVE "move"
-#define XMMS_METHOD_CLEAR "clear"
-#define XMMS_METHOD_GET "get"
-#define XMMS_METHOD_GETMEDIAINFO "getmediainfo"
-#define XMMS_METHOD_MEDIAINFO_ID "mediainfoid"
-#define XMMS_METHOD_SETMODE "setmode"
-#define XMMS_METHOD_SETVALUE "setvalue"
-#define XMMS_METHOD_REGISTER "register"
-#define XMMS_METHOD_UNREGISTER "unregister"
-#define XMMS_METHOD_PLAYTIME "playtime"
-#define XMMS_METHOD_CPLAYTIME "cplaytime"
-#define XMMS_METHOD_INFORMATION "information"
-#define XMMS_METHOD_SPECTRUM "spectrum"
-#define XMMS_METHOD_MIXERSET "mixer_set"
-#define XMMS_METHOD_MIXERGET "mixer_get"
-#define XMMS_METHOD_DECODER_KILL "decoder_kill"
-#define XMMS_METHOD_MEDIALIBADD "medialibadd"
-#define XMMS_METHOD_SELECT "select"
+	/* Config */
+	XMMS_IPC_CMD_GETVALUE,
+	XMMS_IPC_CMD_SETVALUE,
+	XMMS_IPC_CMD_LISTVALUES,
 
+	/* output */
+	XMMS_IPC_CMD_START,
+	XMMS_IPC_CMD_STOP,
+	XMMS_IPC_CMD_PAUSE,
+	XMMS_IPC_CMD_DECODER_KILL,
+	XMMS_IPC_CMD_CPLAYTIME,
+	XMMS_IPC_CMD_SEEKMS,
+	XMMS_IPC_CMD_SEEKSAMPLES,
+	XMMS_IPC_CMD_STATUS,
+	XMMS_IPC_CMD_CURRENTID,
 
-/* Playlist msgs */
-#define XMMS_SIGNAL_PLAYLIST_LIST "/xmms/playlist::list"
-#define XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID "/xmms/playlist::mediainfoid"
-#define XMMS_SIGNAL_PLAYLIST_CHANGED "/xmms/playlist::change"
-#define XMMS_SIGNAL_PLAYLIST_MEDIAINFO "/xmms/playlist::mediainfo"
-#define XMMS_SIGNAL_PLAYLIST_ADD "/xmms/playlist::add"
-#define XMMS_SIGNAL_PLAYLIST_REMOVE "/xmms/playlist::remove"
-#define XMMS_SIGNAL_PLAYLIST_SHUFFLE "/xmms/playlist::shuffle"
-#define XMMS_SIGNAL_PLAYLIST_CLEAR "/xmms/playlist::clear"
-#define XMMS_SIGNAL_PLAYLIST_MOVE "/xmms/playlist::move"
-#define XMMS_SIGNAL_PLAYLIST_SORT "/xmms/playlist::sort"
+	/* Medialib */
+	XMMS_IPC_CMD_SELECT,
 
-#define XMMS_SIGNAL_OBJECT_DESTROYED "/xmms/object::destroyed"
+	/* Signal subsystem */
+	XMMS_IPC_CMD_SIGNAL,
+	XMMS_IPC_CMD_BROADCAST,
 
-/* Core msgs */
-#define XMMS_SIGNAL_CORE_QUIT "/xmms/core::quit"
-#define XMMS_SIGNAL_CORE_DISCONNECT "/org/freedesktop/Local::Disconnected"
-#define XMMS_SIGNAL_CORE_INFORMATION "/xmms/core::information"
-#define XMMS_SIGNAL_CORE_SIGNAL_REGISTER "/xmms/core::register"
-#define XMMS_SIGNAL_CORE_SIGNAL_UNREGISTER "/xmms/core::unregister"
-
-/* Transport msgs */
-#define XMMS_SIGNAL_TRANSPORT_MIMETYPE "/xmms/transport::mimetype"
-#define XMMS_SIGNAL_TRANSPORT_LIST "/xmms/transport::list"
-
-/* Output msgs */
-#define XMMS_SIGNAL_OUTPUT_EOS_REACHED "/xmms/output::eos_reached"
-#define XMMS_SIGNAL_OUTPUT_OPEN_FAIL "/xmms/output::open_fail"
-#define XMMS_SIGNAL_OUTPUT_MIXER_CHANGED "/xmms/output::mixer_changed"
-#define XMMS_SIGNAL_OUTPUT_PLAYTIME "/xmms/playback::playtime"
-#define XMMS_SIGNAL_OUTPUT_STATUS "/xmms/output::status"
-#define XMMS_SIGNAL_OUTPUT_CURRENTID "/xmms/output::currentid"
-
-/* Visualisation msgs */
-#define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"
-
-/* Config msgs */
-#define XMMS_SIGNAL_CONFIG_SAVE "/xmms/config::save"
-#define XMMS_SIGNAL_CONFIG_VALUE_CHANGE "/xmms/config::value_change"
-#define XMMS_SIGNAL_CONFIG_LIST "/xmms/config::list"
-#define XMMS_SIGNAL_CONFIG_GET "/xmms/config::get"
+	/* end */
+	XMMS_IPC_CMD_END,
+} xmms_ipc_cmds_t;
 
 #endif /* __SIGNAL_XMMS_H__ */

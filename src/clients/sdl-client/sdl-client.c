@@ -337,7 +337,7 @@ main (int argc, char **argv)
 
 	timer = g_timer_new ();
 
-	xmmsc_setup_with_gmain (connection, NULL);
+	xmmsc_ipc_setup_with_gmain (connection, NULL);
 
         if (SDL_Init(SDL_INIT_VIDEO) > 0) {
                 fprintf(stderr, "Unable to init SDL: %s \n", SDL_GetError());

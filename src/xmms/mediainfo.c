@@ -82,7 +82,7 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
 
-	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
+	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
 	
 
 	return mtt;
@@ -115,7 +115,7 @@ static void
 xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 {
 	xmms_mediainfo_thread_t *mit = userdata;
-	const xmms_object_method_arg_t *oarg = arg;
+	const xmms_object_cmd_arg_t *oarg = arg;
 	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
 
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
@@ -157,7 +157,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			g_mutex_unlock (mtt->mutex);
 
-			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
+			entry = xmms_playlist_get_byid (mtt->playlist, id);
 
 			/* Check if this is in the medialib first.*/
 			if (xmms_medialib_entry_get (entry)) {

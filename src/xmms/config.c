@@ -31,6 +31,7 @@
 #include "xmms/signal_xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/dbus.h"
+#include "xmms/ipc.h"
 
 /**
   * @defgroup Config Config
@@ -210,7 +211,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
  * Sets a key to a new value
  */
 
-XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
+XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 void
 xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err)
 {
@@ -230,7 +231,7 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_
 
 }
 
-XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
+XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
 
 /**
   * List all keys and values in the list.
@@ -279,7 +280,7 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 }
 
 
-XMMS_METHOD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
+XMMS_CMD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
 
 static void
 xmms_config_destroy (xmms_object_t *object) 
@@ -353,10 +354,10 @@ xmms_config_init (const gchar *filename)
 	}
 
 
-	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
-	xmms_object_method_add (XMMS_OBJECT (config), "get", XMMS_METHOD_FUNC (getvalue));
-	xmms_object_method_add (XMMS_OBJECT (config), "list", XMMS_METHOD_FUNC (listvalues));
-	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES, XMMS_CMD_FUNC (listvalues));
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
 
 	return TRUE;
 }
@@ -365,6 +366,7 @@ void
 xmms_config_shutdown ()
 {
 	xmms_object_unref (global_config);
+	
 }
 
 /**
@@ -634,7 +636,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 
 	g_free (val->data);
 	val->data = data;
-	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
+	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 }
 
@@ -688,7 +690,7 @@ xmms_config_value_callback_set (xmms_config_value_t *val,
 		return;
 
 	xmms_object_connect (XMMS_OBJECT (val), 
-			     XMMS_SIGNAL_CONFIG_VALUE_CHANGE, 
+			     XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, 
 			     (xmms_object_handler_t) cb, userdata);
 }
 
@@ -702,7 +704,7 @@ xmms_config_value_callback_remove (xmms_config_value_t *val,
 		return;
 
 	xmms_object_disconnect (XMMS_OBJECT (val),
-	                        XMMS_SIGNAL_CONFIG_VALUE_CHANGE, cb);
+	                        XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, cb);
 }
 
 /**

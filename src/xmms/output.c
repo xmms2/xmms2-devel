@@ -27,6 +27,7 @@
 #include "xmms/config.h"
 #include "xmms/plugin.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/ipc.h"
 
 #include "internal/plugin_int.h"
 #include "internal/output_int.h"
@@ -45,15 +46,15 @@ static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 
 static void xmms_output_resume (xmms_output_t *output);
 
-XMMS_METHOD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
-XMMS_METHOD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
-XMMS_METHOD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
-XMMS_METHOD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
-XMMS_METHOD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_METHOD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
-XMMS_METHOD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
-XMMS_METHOD_DEFINE (status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_METHOD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
 
 /*
  * Type definitions
@@ -382,8 +383,8 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 	output->status = status;
 	g_mutex_unlock (output->mutex); /* must not hold lock in emit */
 	xmms_object_emit_f (XMMS_OBJECT (output),
-			    XMMS_SIGNAL_OUTPUT_STATUS,
-			    XMMS_OBJECT_METHOD_ARG_UINT32,
+			    XMMS_IPC_SIGNAL_OUTPUT_STATUS,
+			    XMMS_OBJECT_CMD_ARG_UINT32,
 			    status);
 	g_mutex_lock (output->mutex);
 }
@@ -519,45 +520,50 @@ xmms_output_new (xmms_plugin_t *plugin)
 		output->type = XMMS_OUTPUT_TYPE_WR;
 	}
 
-	xmms_dbus_register_object ("output", XMMS_OBJECT (output));
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_OUTPUT, XMMS_OBJECT (output));
 
-	xmms_dbus_register_onchange (XMMS_OBJECT (output),
-				     XMMS_SIGNAL_OUTPUT_MIXER_CHANGED);
-	xmms_dbus_register_onchange (XMMS_OBJECT (output),
-				     XMMS_SIGNAL_OUTPUT_PLAYTIME);
-	xmms_dbus_register_onchange (XMMS_OBJECT (output),
-				     XMMS_SIGNAL_OUTPUT_STATUS);
-	xmms_dbus_register_onchange (XMMS_OBJECT (output),
-				     XMMS_SIGNAL_OUTPUT_CURRENTID);
+	/* Broadcasts are always transmitted to the client if he
+	 * listens to them. */
+	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
+				     XMMS_IPC_SIGNAL_OUTPUT_MIXER_CHANGED);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
+				     XMMS_IPC_SIGNAL_OUTPUT_STATUS);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
+				     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
+	
+	/* Signals are only emitted if the client has a pending question to it
+	 * after the client recivies a signal, he must ask for it again */
+	xmms_ipc_signal_register (XMMS_OBJECT (output),
+				  XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME);
 
 
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_START, 
-				XMMS_METHOD_FUNC (start));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_STOP, 
-				XMMS_METHOD_FUNC (stop));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_PAUSE, 
-				XMMS_METHOD_FUNC (pause));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_DECODER_KILL, 
-				XMMS_METHOD_FUNC (decoder_kill));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_CPLAYTIME, 
-				XMMS_METHOD_FUNC (playtime));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_SEEKMS, 
-				XMMS_METHOD_FUNC (seekms));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_SEEKSAMPLES, 
-				XMMS_METHOD_FUNC (seeksamples));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_STATUS, 
-				XMMS_METHOD_FUNC (status));
-	xmms_object_method_add (XMMS_OBJECT (output), 
-				XMMS_METHOD_CURRENTID, 
-				XMMS_METHOD_FUNC (currentid));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_START, 
+				XMMS_CMD_FUNC (start));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_STOP, 
+				XMMS_CMD_FUNC (stop));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_PAUSE, 
+				XMMS_CMD_FUNC (pause));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_DECODER_KILL, 
+				XMMS_CMD_FUNC (decoder_kill));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_CPLAYTIME, 
+				XMMS_CMD_FUNC (playtime));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_SEEKMS, 
+				XMMS_CMD_FUNC (seekms));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_SEEKSAMPLES, 
+				XMMS_CMD_FUNC (seeksamples));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_STATUS, 
+				XMMS_CMD_FUNC (status));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_CURRENTID, 
+				XMMS_CMD_FUNC (currentid));
 
 	output->status = XMMS_OUTPUT_STATUS_STOP;
 	
@@ -644,8 +650,8 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		}
 
 		xmms_object_emit_f (XMMS_OBJECT (output),
-				    XMMS_SIGNAL_OUTPUT_PLAYTIME,
-				    XMMS_OBJECT_METHOD_ARG_UINT32,
+				    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
+				    XMMS_OBJECT_CMD_ARG_UINT32,
 				    output->played_time);
 
 	} else if (xmms_decoder_iseos (output->decoder)) {
@@ -675,7 +681,7 @@ xmms_output_thread (gpointer data)
 
 	if (!xmms_output_open (output)) {
 		xmms_log_error ("Couldn't open output device");
-		xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, NULL);
+		xmms_object_emit (XMMS_OBJECT (output), XMMS_IPC_SIGNAL_OUTPUT_OPEN_FAIL, NULL);
 		xmms_object_unref (output);
 		return NULL;
 	}
@@ -709,8 +715,8 @@ xmms_output_thread (gpointer data)
 			output->playing_entry = entry;
 
 			xmms_object_emit_f (XMMS_OBJECT (output),
-					    XMMS_SIGNAL_OUTPUT_CURRENTID,
-					    XMMS_OBJECT_METHOD_ARG_UINT32,
+					    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
+					    XMMS_OBJECT_CMD_ARG_UINT32,
 					    xmms_playlist_entry_id_get (entry));
 
 			output->played = 0;
@@ -769,8 +775,8 @@ xmms_output_thread (gpointer data)
 
 			/* Emit playtime */
 			xmms_object_emit_f (XMMS_OBJECT (output),
-					    XMMS_SIGNAL_OUTPUT_PLAYTIME,
-					    XMMS_OBJECT_METHOD_ARG_UINT32,
+					    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
+					    XMMS_OBJECT_CMD_ARG_UINT32,
 					    output->played_time);
 		}
 

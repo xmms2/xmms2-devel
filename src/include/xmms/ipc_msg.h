@@ -8,17 +8,19 @@
 #define XMMS_IPC_MSG_DATA_SIZE 32768
 
 typedef struct xmms_ipc_msg_St {
+	guint32 object;
 	guint32 cmd;
+	guint32 cid;
 	guint16 get_pos, data_length;
 	guint8 data[XMMS_IPC_MSG_DATA_SIZE];
 } xmms_ipc_msg_t;
 
-xmms_ipc_msg_t *xmms_ipc_msg_new (guint32 cmd);
+xmms_ipc_msg_t *xmms_ipc_msg_new (guint32 object, guint32 cmd);
 void xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg);
 
 gboolean xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf);
 xmms_ipc_msg_t *xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf);
-gboolean xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, const xmms_ipc_msg_t *msg);
+gboolean xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, const xmms_ipc_msg_t *msg, guint32 cid);
 
 gpointer xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len);
 gpointer xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, guint32 v);
@@ -52,10 +54,12 @@ __XMMS_IPC_MSG_DO_IDENTITY_FUNC(char)
 
 void xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg);
 #define xmms_ipc_msg_get_cmd(msg) (msg)->cmd
+#define xmms_ipc_msg_get_object(msg) (msg)->object
 gboolean xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, guint32 *v);
 gboolean xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, gint32 *v);
 gboolean xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, gfloat *v);
 gboolean xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *str, guint maxlen);
+gboolean xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, guint *len);
 gboolean xmms_ipc_msg_get (xmms_ipc_msg_t *msg, ...);
 gboolean xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, gpointer buf, guint len);
 

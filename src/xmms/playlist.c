@@ -34,6 +34,7 @@
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/ipc.h"
 #include "xmms/mediainfo.h"
 
 
@@ -56,7 +57,7 @@
 	xmms_playlist_changed_msg_t *chmsg; \
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
 	chmsg->type = ttype; chmsg->id=iid; chmsg->arg=argument; \
-	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, XMMS_OBJECT_METHOD_ARG_PLCH, chmsg);\
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, XMMS_OBJECT_CMD_ARG_PLCH, chmsg);\
 	g_free (chmsg); \
 } while (0)
 
@@ -143,7 +144,7 @@ xmms_playlist_entries_left (xmms_playlist_t *playlist)
 /** Shuffles the playlist
   * @ingroup PlaylistClientMethods
   */
-XMMS_METHOD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 
 /** shuffles playlist */
 static void
@@ -197,7 +198,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
   * @ingroup PlaylistClientMethods
   */
 
-XMMS_METHOD_DEFINE (remove, xmms_playlist_id_remove, xmms_playlist_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (remove, xmms_playlist_id_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 
 /** removes entry from playlist */
 gboolean 
@@ -235,7 +236,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 /** Move the id a certain number of steps.
  * @ingroup PlaylistClientMethods
  */
-XMMS_METHOD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
+XMMS_CMD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
 
 /** move entry in playlist */
 static gboolean
@@ -328,7 +329,7 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 		return FALSE;
 	}
 
-	res = xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
+	res = xmms_playlist_add (playlist, entry);
 
 	/* Since playlist_add will reference this entry now we turn
 	   total control to it */
@@ -340,7 +341,7 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 /** Add a URL to the playlist
  * @ingroup PlaylistClientMethods
  */
-XMMS_METHOD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
 
 /**
  * Add entries from medialib
@@ -362,7 +363,7 @@ xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t
 		/** @todo
 		    this could be better,
 		    setting ids and using g_list_concat and stuff */
-		xmms_playlist_add (playlist, n->data, XMMS_PLAYLIST_APPEND);
+		xmms_playlist_add (playlist, n->data);
 		xmms_object_unref (n->data);
 	}
 	g_list_free (res);
@@ -373,7 +374,7 @@ xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t
 /** Add entries from medialib to the playlist
  * @ingroup PlaylistClientMethods
  */
-XMMS_METHOD_DEFINE (medialibadd, xmms_playlist_medialibadd, xmms_playlist_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (medialibadd, xmms_playlist_medialibadd, xmms_playlist_t *, NONE, STRING, NONE);
 
 
 /** Adds a xmms_playlist_entry_t to the playlist.
@@ -387,7 +388,7 @@ XMMS_METHOD_DEFINE (medialibadd, xmms_playlist_medialibadd, xmms_playlist_t *, N
  */
 
 gboolean
-xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
+xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file)
 {
 	GList *node;
 
@@ -398,16 +399,8 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	xmms_playlist_entry_id_set (file, playlist->nextid++);
 	xmms_object_ref (file); /* reference this entry */
 	
-	switch (options) {
-		case XMMS_PLAYLIST_APPEND:
-			playlist->list = g_list_append (playlist->list, file);
-			node = g_list_last (playlist->list);
-			break;
-		case XMMS_PLAYLIST_PREPEND:
-			playlist->list = g_list_prepend (playlist->list, file);
-			node = playlist->list;
-			break;
-	}
+	playlist->list = g_list_append (playlist->list, file);
+	node = g_list_last (playlist->list);
 	
 	g_hash_table_insert (playlist->id_table, 
 			     GUINT_TO_POINTER (xmms_playlist_entry_id_get (file)), 
@@ -419,8 +412,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_ADD, 
-				   xmms_playlist_entry_id_get (file),
-				   options);
+				   xmms_playlist_entry_id_get (file), 0);
 
 	g_cond_signal (playlist->cond);
 
@@ -432,15 +424,36 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
  * @ingroup PlaylistClientMethods
  */
 
-XMMS_METHOD_DEFINE (getmediainfo, xmms_playlist_get_byid, xmms_playlist_t *, PLAYLIST_ENTRY, UINT32, NONE);
+XMMS_CMD_DEFINE (getmediainfo, xmms_playlist_get_hashtable_byid, xmms_playlist_t *, HASHTABLE, UINT32, NONE);
 
 /** Get a entry based on position in playlist.
  * 
  *  @returns a xmms_playlist_entry_t that lives on the given position.
  *  @param pos is the position in the playlist where 0 is the first.
  */
+GHashTable *
+xmms_playlist_get_hashtable_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
+{
+	GHashTable *ret;
+	xmms_playlist_entry_t *entry;
+
+	entry = xmms_playlist_get_byid (playlist, id);
+
+	if (!entry) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to query nonexistant playlist entry");
+		return NULL;
+	}
+
+	ret = xmms_playlist_entry_to_ghashtable (entry);
+
+	xmms_object_unref (entry);
+
+	return ret;
+
+}
+
 xmms_playlist_entry_t *
-xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
+xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 {
 	GList *r = NULL;
 
@@ -451,7 +464,6 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 	r = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
 
 	if (!r) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to query nonexistant playlist entry");
 		XMMS_PLAYLIST_UNLOCK (playlist);
 		return NULL;
 	}
@@ -461,13 +473,12 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	return r->data;
-
 }
 
 /** Clear the playlist
  * @ingroup PlaylistClientMethods
  */
-XMMS_METHOD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 
 /** Clear the playlist */
 static void
@@ -580,7 +591,7 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 /** Sort the playlist 
  * @ingroup PlaylistClientMethods
  */
-XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
 
 /** Sorts the playlist by properties.
  *
@@ -606,7 +617,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 
 }
 
-XMMS_METHOD_DEFINE (set_next, xmms_playlist_set_next, xmms_playlist_t *, NONE, UINT32, INT32);
+XMMS_CMD_DEFINE (set_next, xmms_playlist_set_next, xmms_playlist_t *, NONE, UINT32, INT32);
 
 static void
 xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gint32 moment, xmms_error_t *error)
@@ -645,7 +656,7 @@ xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gint32 moment, 
 /** List the playlist
  * @ingroup PlaylistClientMethods
  */
-XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
+XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
 
 /** Lists the current playlist.
  *
@@ -693,57 +704,55 @@ xmms_playlist_init (void)
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 	ret->is_waiting = FALSE;
 
-	xmms_dbus_register_object ("playlist", XMMS_OBJECT (ret));
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYLIST, XMMS_OBJECT (ret));
 
-	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
-				     XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
-	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
-				     XMMS_SIGNAL_PLAYLIST_CHANGED);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 
 	val = xmms_config_value_register ("playlist.mode", "none",
 	                                  on_playlist_mode_changed, ret);
 	tmp = xmms_config_value_string_get (val);
 	ret->mode = playlist_mode_from_str (tmp);
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_SHUFFLE, 
-				XMMS_METHOD_FUNC (shuffle));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_SHUFFLE, 
+				XMMS_CMD_FUNC (shuffle));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_JUMP, 
-				XMMS_METHOD_FUNC (set_next));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_JUMP, 
+				XMMS_CMD_FUNC (set_next));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_ADD, 
-				XMMS_METHOD_FUNC (add));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_ADD, 
+				XMMS_CMD_FUNC (add));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_MEDIALIBADD, 
-				XMMS_METHOD_FUNC (medialibadd));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_MEDIALIBADD, 
+				XMMS_CMD_FUNC (medialibadd));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_GETMEDIAINFO, 
-				XMMS_METHOD_FUNC (getmediainfo));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_GETMEDIAINFO, 
+				XMMS_CMD_FUNC (getmediainfo));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_REMOVE, 
-				XMMS_METHOD_FUNC (remove));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_REMOVE, 
+				XMMS_CMD_FUNC (remove));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_MOVE, 
-				XMMS_METHOD_FUNC (move));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_MOVE, 
+				XMMS_CMD_FUNC (move));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_LIST, 
-				XMMS_METHOD_FUNC (list));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_LIST, 
+				XMMS_CMD_FUNC (list));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_CLEAR, 
-				XMMS_METHOD_FUNC (clear));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_CLEAR, 
+				XMMS_CMD_FUNC (clear));
 
-	xmms_object_method_add (XMMS_OBJECT (ret), 
-				XMMS_METHOD_SORT, 
-				XMMS_METHOD_FUNC (sort));
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+				XMMS_IPC_CMD_SORT, 
+				XMMS_CMD_FUNC (sort));
 
 	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
 

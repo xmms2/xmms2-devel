@@ -5,8 +5,8 @@ Import('base_env')
 xmms2_sources = Split ("xmms2_client.c")
 
 env = base_env.Copy(CPPPATH = ['#src', '#src/include'],
-	LIBPATH = ["../lib/xmmsclient/", "../lib/xmmsclient-glib" ],
-	LIBS = ["xmmsclient", "xmmsclient-glib"]);
+	LIBPATH = ["../lib/xmmsclient/"],
+	LIBS = ["xmmsclient"]);
 
 env.AddFlagsFromGroup("glib")
 

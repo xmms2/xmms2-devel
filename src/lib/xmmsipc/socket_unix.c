@@ -20,7 +20,6 @@
 void
 xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
 {
-	XMMS_DBG ("Closing socket %d", ipct->fd);
 	g_free (ipct->path);
 	close (ipct->fd);
 	g_free (ipct);
@@ -37,10 +36,6 @@ xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 	fd = ipct->fd;
 
 	ret =  recv (fd, buffer, len, 0);
-	XMMS_DBG ("ret == %d", ret);
-	if (ret == -1) {
-		XMMS_DBG ("error %s (%d)", strerror (errno), errno);
-	}
 
 	return ret;
 }

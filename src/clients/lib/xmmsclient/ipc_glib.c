@@ -2,30 +2,36 @@
 
 #include <stdio.h>
 
+#include "internal/client_ipc.h"
+#include "xmms/xmmsclient.h"
+#include "internal/xmmsclient_int.h"
+
 struct xmmsc_ipc_glib_St {
 	GSource *source;
 	GPollFD *pollfd;
 };
 
 typedef struct xmmsc_ipc_glib_St xmmsc_ipc_glib_t;
-
 typedef gboolean (*xmmsc_ipc_callback_t) (GSource *, xmmsc_ipc_t *);
 
-gboolean
+
+static void xmmsc_ipc_glib_destroy (xmmsc_ipc_glib_t *gipc);
+
+static gboolean
 xmmsc_ipc_source_prepare (GSource *source, gint *timeout_)
 {
 	/* No timeout here */
 	return FALSE;
 }
 
-gboolean
+static gboolean
 xmmsc_ipc_source_check (GSource *source)
 {
 	/* Maybe check for errors here? */
 	return TRUE;
 }
 
-gboolean
+static gboolean
 xmmsc_ipc_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
 {
 	xmmsc_ipc_t *ipc = user_data;
@@ -34,15 +40,15 @@ xmmsc_ipc_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_
 
 	gipc = xmmsc_ipc_private_data_get (ipc);
 
-	if (gipc->gpoll->revents & G_IO_ERR || gipc->gpoll->revents & G_IO_HUP) {
+	if (gipc->pollfd->revents & G_IO_ERR || gipc->pollfd->revents & G_IO_HUP) {
 		xmmsc_ipc_glib_destroy (gipc);
+		xmmsc_ipc_error_set (ipc, "Remote host disconnected, or something!");
 		xmmsc_ipc_disconnect (ipc);
-		ipc->error = "Remote host did disconnect, or something";
 		return FALSE;
-	} else if (gipc->gpoll->revents & G_IO_IN) {
-		ret = xmmsc_ipc_io_in_callback (gipc->ipc);
-	} else if (gcip->gpoll->revents & G_IO_OUT) {
-		ret = xmmsc_ipc_io_out_callback (gipc->ipc);
+	} else if (gipc->pollfd->revents & G_IO_IN) {
+		ret = xmmsc_ipc_io_in_callback (ipc);
+	} else if (gipc->pollfd->revents & G_IO_OUT) {
+		ret = xmmsc_ipc_io_out_callback (ipc);
 	}
 
 	return ret;
@@ -50,18 +56,18 @@ xmmsc_ipc_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_
 
 
 static GSourceFuncs xmmsc_ipc_callback_funcs = {
-	xmms_ipc_source_prepare,
-	xmms_ipc_source_check,
-	xmms_ipc_source_dispatch,
+	xmmsc_ipc_source_prepare,
+	xmmsc_ipc_source_check,
+	xmmsc_ipc_source_dispatch,
 	NULL
 };
 
-void
+static void
 xmmsc_ipc_glib_destroy (xmmsc_ipc_glib_t *gipc)
 {
-	if (gipc->gpoll) {
-		g_source_remove_poll (gipc->source, gipc->gpoll);
-		g_free (gipc->gpoll);
+	if (gipc->pollfd) {
+		g_source_remove_poll (gipc->source, gipc->pollfd);
+		g_free (gipc->pollfd);
 	}
 	if (gipc->source) {
 		g_source_remove (g_source_get_id (gipc->source));
@@ -71,7 +77,7 @@ xmmsc_ipc_glib_destroy (xmmsc_ipc_glib_t *gipc)
 	g_free (gipc);
 }
 
-void
+static void
 xmmsc_ipc_glib_wakeup (xmmsc_ipc_t *ipc)
 {
 	g_return_if_fail (ipc);
@@ -81,17 +87,18 @@ xmmsc_ipc_glib_wakeup (xmmsc_ipc_t *ipc)
 
 
 gboolean
-xmmsc_ipc_setup_with_gmain (xmmsc_ipc_t *ipc, xmmsc_ipc_callback_t callback)
+xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *c, xmmsc_ipc_callback_t callback)
 {
 	xmmsc_ipc_glib_t *gipc;
-	gipc = g_new0 (xmms_ipc_glib_t, 1);
+	xmmsc_ipc_t *ipc = c->ipc;
+
+	gipc = g_new0 (xmmsc_ipc_glib_t, 1);
 
 	gipc->pollfd = g_new0 (GPollFD, 1);
 	gipc->pollfd->fd = xmmsc_ipc_fd_get (ipc);
 	gipc->pollfd->events = G_IO_IN | G_IO_HUP | G_IO_ERR;
 
 	gipc->source = g_source_new (&xmmsc_ipc_callback_funcs, sizeof (GSource));
-	gipc->source = source;
 
 	xmmsc_ipc_private_data_set (ipc, gipc);
 	xmmsc_ipc_wakeup_set (ipc, xmmsc_ipc_glib_wakeup);

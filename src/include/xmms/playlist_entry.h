@@ -80,5 +80,6 @@ gboolean xmms_playlist_entry_iswellknown (gchar *property);
 void xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry);
 
 struct xmms_decoder_St *xmms_playlist_entry_start (xmms_playlist_entry_t *entry);
+GHashTable *xmms_playlist_entry_to_ghashtable (xmms_playlist_entry_t *entry);
 
 #endif

@@ -39,7 +39,7 @@ static gpointer
 sigwaiter (gpointer data)
 {
 	xmms_object_t *obj = (xmms_object_t *) data;
-	xmms_object_method_arg_t arg;
+	xmms_object_cmd_arg_t arg;
 	sigset_t signals;
 	int caught;
 
@@ -56,7 +56,7 @@ sigwaiter (gpointer data)
 
 				memset (&arg, 0, sizeof (arg));
 				xmms_error_reset (&arg.error);
-				xmms_object_method_call (obj, XMMS_METHOD_QUIT, &arg);
+				xmms_object_cmd_call (obj, XMMS_IPC_CMD_QUIT, &arg);
 				break;
 			case SIGTERM:
 				XMMS_DBG ("Got SIGTERM! Bye!");

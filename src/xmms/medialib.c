@@ -30,6 +30,7 @@
 #include "xmms/decoder.h"
 #include "xmms/plugin.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/ipc.h"
 #include "internal/plugin_int.h"
 #include "internal/decoder_int.h"
 #include "internal/output_int.h"
@@ -70,7 +71,7 @@ struct xmms_medialib_St {
 static xmms_medialib_t *medialib;
   
 static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
-XMMS_METHOD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
+XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
 
 static void
 xmms_medialib_destroy (xmms_object_t *medialib)
@@ -106,11 +107,11 @@ xmms_medialib_init ()
 				    "1",
 				    NULL, NULL);
 
-	xmms_dbus_register_object ("medialib", XMMS_OBJECT (medialib));
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIALIB, XMMS_OBJECT (medialib));
 
-	xmms_object_method_add (XMMS_OBJECT (medialib), 
-				XMMS_METHOD_SELECT, 
-				XMMS_METHOD_FUNC (select));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
+				XMMS_IPC_CMD_SELECT, 
+				XMMS_CMD_FUNC (select));
 	return TRUE;
 }
 
@@ -121,7 +122,7 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	gboolean ret;
 	xmms_playlist_entry_t *entry;
 	xmms_config_value_t *cv;
-	guint32 status = ((xmms_object_method_arg_t *) data)->retval.uint32;
+	guint32 status = ((xmms_object_cmd_arg_t *) data)->retval.uint32;
 
 	cv = xmms_config_lookup ("medialib.dologging");
 	g_return_if_fail (cv);
@@ -186,7 +187,7 @@ void
 xmms_medialib_output_register (xmms_output_t *output)
 {
 	xmms_object_connect (XMMS_OBJECT (output),
-			     XMMS_SIGNAL_OUTPUT_STATUS,
+			     XMMS_IPC_SIGNAL_OUTPUT_STATUS,
 			     (xmms_object_handler_t) statuschange, NULL);
 }
 

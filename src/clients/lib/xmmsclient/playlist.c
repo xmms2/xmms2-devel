@@ -22,8 +22,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <dbus/dbus.h>
-
 #include "xmms/xmmsclient.h"
 #include "xmms/xmmsclient-result.h"
 #include "xmms/signal_xmms.h"
@@ -48,7 +46,7 @@
 xmmsc_result_t *
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_SHUFFLE);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SHUFFLE);
 }
 
 /**
@@ -58,18 +56,15 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 {
-	DBusMessageIter itr;
-	DBusMessage *msg;
+	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SORT);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, property);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
+	xmms_ipc_msg_put_string (msg, property);
 
 	res = xmmsc_send_msg (c, msg);
-
-	dbus_message_unref (msg);
-
+	xmms_ipc_msg_destroy (msg);
+	
 	return res;
 }
 
@@ -80,7 +75,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 xmmsc_result_t *
 xmmsc_playlist_clear (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_CLEAR);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CLEAR);
 }
 
 /**
@@ -96,15 +91,13 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 {
-        DBusMessageIter itr;
-	DBusMessage *msg;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SAVE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, filename);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SAVE);
+	xmms_ipc_msg_put_string (msg, filename);
 	res = xmmsc_send_msg (c, msg);
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -118,7 +111,7 @@ xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 xmmsc_result_t *
 xmmsc_playlist_list (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
 }
 
 x_list_t *
@@ -157,18 +150,15 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 {
-        DBusMessageIter itr;
-	DBusMessage *msg;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_ADD);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, url);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
+	xmms_ipc_msg_put_string (msg, url);
 	res = xmmsc_send_msg (c, msg);
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
 
 	return res;
-
 }
 
 /**
@@ -181,15 +171,13 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 xmmsc_result_t *
 xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *query)
 {
-        DBusMessageIter itr;
-	DBusMessage *msg;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_MEDIALIBADD);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, query);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MEDIALIBADD);
+	xmms_ipc_msg_put_string (msg, query);
 	res = xmmsc_send_msg (c, msg);
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
 
 	return res;
 
@@ -206,54 +194,28 @@ xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *query)
 xmmsc_result_t *
 xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
 {
-        DBusMessageIter itr;
-	DBusMessage *msg;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_REMOVE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REMOVE);
+	xmms_ipc_msg_put_uint32 (msg, id);
 	res = xmmsc_send_msg (c, msg);
-	dbus_message_unref (msg);
 
+	xmms_ipc_msg_destroy (msg);
 	return res;
 
 }
 
 xmmsc_result_t *
-xmmsc_playlist_changed (xmmsc_connection_t *c)
+xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 {
-	DBusMessage *msg;
-	DBusMessageIter itr;
-	xmmsc_result_t *ret;
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT, XMMS_DBUS_INTERFACE, XMMS_METHOD_ONCHANGE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, XMMS_SIGNAL_PLAYLIST_CHANGED);
-	ret = xmmsc_send_on_change (c, msg);
-	dbus_message_unref (msg);
-
-	xmmsc_result_restartable (ret, c, XMMS_SIGNAL_PLAYLIST_CHANGED);
-
-	return ret;
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 }
 
 xmmsc_result_t *
-xmmsc_playlist_entry_changed (xmmsc_connection_t *c)
+xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
 {
-	DBusMessage *msg;
-	DBusMessageIter itr;
-	xmmsc_result_t *ret;
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT, XMMS_DBUS_INTERFACE, XMMS_METHOD_ONCHANGE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
-	ret = xmmsc_send_on_change (c, msg);
-	dbus_message_unref (msg);
-
-	xmmsc_result_restartable (ret, c, XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
-
-	return ret;
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 }
 
 
@@ -263,17 +225,14 @@ xmmsc_playlist_entry_changed (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 {
-	DBusMessage *msg;
-	DBusMessageIter itr;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_GETMEDIAINFO);
+	xmms_ipc_msg_put_uint32 (msg, id);
 
 	res = xmmsc_send_msg (c, msg);
-
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -294,7 +253,7 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 		return NULL;
 	}
 
-	if (!xmmsc_result_get_mediainfo (res, &ret)) {
+	if (!xmmsc_result_get_hashtable (res, &ret)) {
 		xmmsc_result_unref (res);
 		return NULL;
 	}
@@ -306,18 +265,15 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 xmmsc_result_t *
 xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
 {
-	DBusMessage *msg;
-	DBusMessageIter itr;
 	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, type);
-	dbus_message_iter_append_int32 (&itr, moment);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_JUMP);
+	xmms_ipc_msg_put_uint32 (msg, type);
+	xmms_ipc_msg_put_int32 (msg, moment);
 
 	res = xmmsc_send_msg (c, msg);
-
-	dbus_message_unref (msg);
+	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -352,11 +308,4 @@ xmmsc_playlist_entry_free (x_hash_t *entry)
 	}
 }
 
-/**
- * @todo fix the integers here, this will b0rk b0rk if we
- * change the enum in core.
- */
-
 /** @} */
-
-

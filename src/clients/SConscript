@@ -4,16 +4,16 @@ Import('base_env')
 Export('base_env')
 
 SConscript('lib/xmmsclient/SConscript')
-SConscript('lib/xmmsclient-glib/SConscript')
+#SConscript('lib/xmmsclient-glib/SConscript')
 
-if base_env.HasGroup("ruby") :
-	SConscript('lib/ruby/SConscript')
+#if base_env.HasGroup("ruby") :
+#	SConscript('lib/ruby/SConscript')
 
 SConscript('cli/SConscript')
 
 # SDL NOT YET IN NEW API
-if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
-	SConscript('sdl-client/SConscript')
+#if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
+#	SConscript('sdl-client/SConscript')
 
-if base_env.HasGroup("ecore") :
-	SConscript('lib/xmmsclient-ecore/SConscript')
+#if base_env.HasGroup("ecore") :
+#	SConscript('lib/xmmsclient-ecore/SConscript')
