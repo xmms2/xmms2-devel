@@ -322,8 +322,6 @@ xmms_decoder_new (xmms_playlist_entry_t *entry)
 
 	g_return_val_if_fail (entry, NULL);
 
-	xmms_playlist_entry_ref (entry);
-
 	mimetype = xmms_playlist_entry_mimetype_get (entry);
 
 	XMMS_DBG ("Trying to create decoder for mime-type %s", mimetype);
@@ -332,6 +330,8 @@ xmms_decoder_new (xmms_playlist_entry_t *entry)
 	if (!plugin)
 		return NULL;
 	
+	xmms_playlist_entry_ref (entry);
+
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
 	decoder = g_new0 (xmms_decoder_t, 1);
