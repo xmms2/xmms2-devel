@@ -63,6 +63,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	signed int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
 
 	xmmsc_connection_t *xmmsc_init (char *clientname)
+	void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, object (*callback) (object), object userdata)
 	signed int xmmsc_connect (xmmsc_connection_t *c, signed char *p)
 	void xmmsc_deinit (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit (xmmsc_connection_t *conn)
@@ -351,6 +352,9 @@ cdef class XMMSResult :
 		if self.res :
 			xmmsc_result_unref (self.res)
 
+cdef python_disconnect_fun (obj) :
+	obj._disconnect_cb ()
+
 cdef class XMMS :
 	"""
 	This is the class representing the XMMS2 client itself. The methods in
@@ -359,6 +363,7 @@ cdef class XMMS :
 	cdef xmmsc_connection_t *conn
 	cdef object loop
 	cdef object wakeup
+	cdef object disconnect_fun
 
 	def __new__ (self, clientname = "Python XMMSClient") :
 		"""
@@ -371,6 +376,9 @@ cdef class XMMS :
 		""" destroys it all! """
 
 		xmmsc_deinit (self.conn)
+
+	def _disconnect_cb (self) :
+		self.disconnect_fun (self)
 
 	def GLibLoop (self) :
 		"""
@@ -413,10 +421,13 @@ cdef class XMMS :
 
 		while self.loop :
 
-			(i, o, e) = select ([fd, r], [], [])
+			(i, o, e) = select ([fd, r], [], [fd])
 
-			if i[0] == fd :
+			if i and i[0] == fd :
 				xmmsc_ipc_io_in_callback (self.conn.ipc)
+			if e and e[0] == fd :
+				xmmsc_ipc_disconnect (self.conn.ipc)
+				self.loop = False
 
 	def inIO (self) :
 		"""
@@ -437,7 +448,7 @@ cdef class XMMS :
 		"""
 		return xmmsc_ipc_fd_get (self.conn.ipc)
 
-	def Connect (self, path = None) :
+	def Connect (self, path = None, disconnect_func = None) :
 		"""
 		Connect to the appropriate IPC path, for communication with the
 		XMMS2 daemon. This path defaults to /tmp/xmms-ipc-<username> if
@@ -452,13 +463,16 @@ cdef class XMMS :
 		...
 		"""
 		if path :
-			if xmmsc_connect (self.conn, path) :
-				return
+			ret = xmmsc_connect (self.conn, path) 
 		else :
-			if xmmsc_connect (self.conn, NULL) :
-				return
+			ret = xmmsc_connect (self.conn, NULL)
 
-		raise IOError ("Couldn't connect to server!")
+		if not ret :
+			raise IOError ("Couldn't connect to server!")
+
+		self.disconnect_fun = disconnect_func
+		xmmsc_disconnect_callback_set (self.conn, python_disconnect_fun, self)
+
 
 	def Quit (self, myClass = None):
 		"""
