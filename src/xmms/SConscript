@@ -1,21 +1,25 @@
 #
 Import('base_env')
 
+env = base_env.Copy(INCLUDES=["include"])
 
 xmms2d_sources = Split ("config.c plugin.c object.c ringbuf.c "+
 			"transport.c decoder.c output.c playlist.c magic.c "+
 			"plsplugins.c dbus.c unixsignal.c "+
 			"log.c util.c visualisation.c main.c mediainfo.c "+
-			"effect.c playlist_entry.c error.c")
+			"effect.c playlist_entry.c error.c medialib.c")
+
+
+if env.HasGroup ("sqlite") :
+	xmms2d_sources.append ("sqlite.c")
 
 xmms2_test_s = Split ("config.c testcnf.c util.c object.c");
-
-env = base_env.Copy(INCLUDES=["include"])
 
 
 env.AddFlagsFromGroup("glib")
 env.AddFlagsFromGroup("math")
 env.AddFlagsFromGroup("dbusglib")
+env.AddFlagsFromGroup("sqlite")
 
 #env.Program(target = "xmms2d" , source = xmms2d_sources )
 #env.Install("/usr/local/bin","xmms2d")

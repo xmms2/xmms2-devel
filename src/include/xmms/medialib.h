@@ -20,43 +20,37 @@
 #ifndef __XMMS_MEDIALIB_H__
 #define __XMMS_MEDIALIB_H__
 
+typedef struct xmms_medialib_St xmms_medialib_t;
+
 #include "xmms/plugin.h"
 #include "xmms/playlist.h"
 #include <glib.h>
-
-typedef struct xmms_medialib_St {
-	GMutex *mutex;
-	
-	xmms_plugin_t *plugin;
-
-	/** Private data */
-	gpointer data;
-} xmms_medialib_t;
 
 /*
  * Method defintions.
  */ 
 
-typedef gboolean (*xmms_medialib_new_method_t) (xmms_medialib_t *medialib);
-typedef GList *(*xmms_medialib_search_method_t) (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
-typedef void (*xmms_medialib_add_entry_method_t) (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
-typedef void (*xmms_medialib_close_method_t) (xmms_medialib_t *medialib);
+/** Callback to the query function. */
+typedef int (*xmms_medialib_row_method_t) (void *pArg, int argc, char **argv, char **columnName);
 
 /*
- * Public interface
+ * Public functions
  */
-
-xmms_plugin_t *xmms_medialib_find_plugin (gchar *name);
-xmms_medialib_t *xmms_medialib_init (xmms_plugin_t *plugin);
+xmms_medialib_t *xmms_medialib_init (void);
+gboolean xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
 void xmms_medialib_close (xmms_medialib_t *medialib);
 
-void xmms_medialib_set_data (xmms_medialib_t *medialib, gpointer data);
-gpointer xmms_medialib_get_data (xmms_medialib_t *medialib);
-GList *xmms_medialib_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
-void xmms_medialib_list_free (GList *list);
-void xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
-void xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir);
-gboolean xmms_medialib_check_if_exists (xmms_medialib_t *medialib, gchar *uri);
+void xmms_medialib_id_set (xmms_medialib_t *medialib, guint id);
+
+#ifdef HAVE_SQLITE
+#include <sqlite.h>
+
+void xmms_medialib_sql_set (xmms_medialib_t *medialib, sqlite *sql);
+sqlite *xmms_medialib_sql_get (xmms_medialib_t *medialib);
+gboolean xmms_sqlite_open (xmms_medialib_t *medialib);
+gboolean xmms_sqlite_query (xmms_medialib_t *medialib, char *query, xmms_medialib_row_method_t method, void *udata);
+void xmms_sqlite_close (xmms_medialib_t *medialib);
+#endif
 
 
 #endif /* __XMMS_MEDIALIB_H__ */

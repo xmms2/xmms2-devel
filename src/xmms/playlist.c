@@ -553,6 +553,7 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 
 	if (!xmms_transport_open (t, entry)) {
 		xmms_transport_close (t);
+		xmms_object_unref (t);
 		return NULL;
 	}
 
@@ -567,6 +568,7 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 	mime = xmms_transport_mimetype_get_wait (t);
 	if (!mime) {
 		xmms_transport_close (t);
+		xmms_object_unref (t);
 		return NULL;
 	}
 
@@ -578,14 +580,18 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 
 	if (!d) {
 		xmms_transport_close (t);
+		xmms_object_unref (t);
 		return NULL;
 	}
 
 	if (!xmms_decoder_open (d, t)) {
 		xmms_transport_close (t);
+		xmms_object_unref (t);
 		xmms_object_unref (d);
 		return NULL;
 	}
+
+	xmms_object_unref (t);
 
 	playlist->playing_entry = entry;
 

@@ -513,6 +513,7 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_decoder_destroy_method_t destroy_method;
 
 	XMMS_DBG ("Destroying decoder!");
+	XMMS_DBG ("MEMDBG: DECODER DEAD %p", object);
 
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 
@@ -523,6 +524,9 @@ xmms_decoder_destroy (xmms_object_t *object)
 
 	xmms_ringbuf_destroy (decoder->buffer);
 	g_mutex_free (decoder->mutex);
+	xmms_transport_close (decoder->transport);
+	xmms_object_unref (decoder->transport);
+	xmms_object_unref (decoder->plugin);
 /*	xmms_object_unref (decoder->vis);*/
 }
 
@@ -538,6 +542,8 @@ xmms_decoder_new ()
 	decoder->mutex = g_mutex_new ();
 /*	decoder->vis = xmms_visualisation_init ();*/
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
+	
+	XMMS_DBG ("MEMDBG: DECODER NEW %p", decoder);
 
 	return decoder;
 }
@@ -561,6 +567,7 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 		return FALSE;
 	
 	xmms_object_ref (transport);
+	xmms_object_ref (plugin);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
