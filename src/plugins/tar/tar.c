@@ -12,6 +12,7 @@
 #include "xmms/output.h"
 #include "xmms/transport.h"
 #include "xmms/magic.h"
+#include "xmms/xmms.h"
 
 #include <glib.h>
 #include <string.h>
@@ -90,11 +91,11 @@ xmms_plugin_get (void)
 	xmms_plugin_t *decoder_plugin;
 
 	decoder_plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "tardec",
-					  "TAR decoder " VERSION,
+					  "TAR decoder " XMMS_VERSION,
 					  "tar mekk mekk");
 
 	transport_plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "tartransp",
-					    "TAR transport " VERSION,
+					    "TAR transport " XMMS_VERSION,
 					    "tar mekk mekk");
 
 

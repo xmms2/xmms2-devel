@@ -7,7 +7,6 @@
 #include "transport_int.h"
 #include "decoder.h"
 #include "decoder_int.h"
-#include "config.h"
 #include "config_xmms.h"
 #include "playlist.h"
 #include "plsplugins.h"

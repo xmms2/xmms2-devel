@@ -34,11 +34,12 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.ParseConfigFlagsString(self.flag_groups[group])
 
 	def CheckLibAndAddFlagsToGroup(self, group, library, function, depends=""):
+		test_env = self.Copy()
 		if depends != "":
 			if not self.HasGroup(depends):
 				return 0
-		test_env = self.Copy()
-		test_env.AddFlagsFromGroup(depends)
+			test_env.AddFlagsFromGroup(depends)
+
 		conf = SCons.SConf.SConf( test_env )
 		if conf.CheckLib(library, function, 0):
 			self.AddFlagsToGroup(group, '-l'+library)

@@ -6,5 +6,9 @@ base_env = base_env.Copy(LINKFLAGS=["-module", "-avoid-version"])
 Export('base_env')
 
 SConscript('file/SConscript')
+SConscript('oss/SConscript')
+SConscript('m3u/SConscript')
+SConscript('tar/SConscript')
 if base_env.HasGroup("mad"):
+	print "bajs"
 	SConscript('mad/SConscript')
