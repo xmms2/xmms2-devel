@@ -17,6 +17,14 @@
 #ifndef __XMMSCLIENT_ECORE_H__
 #define __XMMSCLIENT_ECORE_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *connection);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

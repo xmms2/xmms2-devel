@@ -22,6 +22,14 @@
 
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
