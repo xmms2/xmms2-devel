@@ -3,7 +3,7 @@ Import('base_env')
 if base_env.HasGroup ("python"):
 	pyx = Builder(action = "(" + base_env["PYREX"] + ' $SOURCE' + " || true)")
 	env = base_env.Copy (CPPPATH = ['#src', '#src/include'],
-			     LIBPATH = ["../lib/xmmsclient/", "../lib/xmmsclient-glib" ],
+			     LIBPATH = ["#builddir/clients/lib/xmmsclient/", "#builddir/clients/lib/xmmsclient-glib" ],
 			     LIBS = ["xmmsclient", "xmmsclient-glib"])
 
 	env.Append(BUILDERS = {'Pyx' : pyx})
