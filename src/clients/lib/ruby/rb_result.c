@@ -17,6 +17,7 @@
 #include <xmms/xmmsclient.h>
 
 #include <ruby.h>
+#include <stdbool.h>
 
 #include "rb_xmmsclient_main.h"
 #include "rb_result.h"
@@ -25,6 +26,7 @@ typedef struct {
 	xmmsc_result_t *real;
 	VALUE parent;
 	VALUE callback;
+	bool unref_on_free;
 } RbResult;
 
 static VALUE cResult;
@@ -40,13 +42,14 @@ static void c_mark (RbResult *res)
 
 static void c_free (RbResult *res)
 {
-	if (res->real)
+	if (res->real && res->unref_on_free)
 		xmmsc_result_unref (res->real);
 
 	free (res);
 }
 
-VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res)
+VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res,
+                             bool unref_on_free)
 {
 	VALUE self;
 	RbResult *rbres = NULL;
@@ -59,6 +62,7 @@ VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res)
 	rbres->real = res;
 	rbres->parent = parent;
 	rbres->callback = Qnil;
+	rbres->unref_on_free = unref_on_free;
 
 	rb_obj_call_init (self, 0, NULL);
 
@@ -72,7 +76,7 @@ static void on_signal (xmmsc_result_t *res2, void *data)
 	GET_OBJ (self, RbResult, res);
 
 	rb_funcall (res->callback, rb_intern ("call"), 1,
-	            TO_XMMS_CLIENT_RESULT (self, res2));
+	            TO_XMMS_CLIENT_RESULT (self, res2, res->unref_on_free));
 }
 
 static VALUE c_notifier_set (VALUE self)
@@ -158,7 +162,7 @@ static void xhash_to_rhash (const void *key, const void *value,
 	VALUE val;
 
 	if (!strcmp (key, "id"))
-		val = UINT2NUM ((unsigned int) value);
+		val = rb_uint_new (strtoul (value, NULL, 10));
 	else
 		val = rb_str_new2 ((char *) value);
 
@@ -172,9 +176,9 @@ static VALUE c_mediainfo_get (VALUE self)
 
 	GET_OBJ (self, RbResult, res);
 
-	if (!xmmsc_result_get_mediainfo (res->real, &hash))
+	if (!xmmsc_result_get_hashtable (res->real, &hash))
 		rb_raise (rb_eRuntimeError,
-		          "xmmsc_result_get_mediainfo() failed");
+		          "xmmsc_result_get_hash() failed");
 
 	x_hash_foreach (hash, (XHFunc) xhash_to_rhash, &rhash);
 
