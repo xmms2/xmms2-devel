@@ -106,9 +106,16 @@ xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
 
 	XMMS_DBG ("changed status! %d", status);
 	if (status == XMMS_OUTPUT_STATUS_PLAY) {
-		AudioOutputUnitStart (data->au);
+		if (!data->running) {
+			AudioOutputUnitStart (data->au);
+			data->running = TRUE;
+		}
 	} else {
-		AudioOutputUnitStop (data->au);
+		if (data->running) {
+			AudioOutputUnitStop (data->au);
+			data->running = FALSE;
+		}
+
 	}
 }
 
