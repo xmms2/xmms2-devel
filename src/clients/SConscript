@@ -6,10 +6,13 @@ Export('base_env')
 SConscript('lib/xmmsclient/SConscript')
 SConscript('lib/xmmsclient-glib/SConscript')
 SConscript('cli/SConscript')
+
 if base_env.HasGroup("qt") and environ.has_key ('QTDIR'):
 	SConscript('qt/SConscript')
 	SConscript('lib/xmmsclient-qt/SConscript')
+
 if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
 	SConscript('sdl-vis/SConscript')
-if base_env.HasGroup("ecore")
+
+if base_env.HasGroup("ecore") :
 	SConscript('lib/xmmsclient-ecore/SConscript')
