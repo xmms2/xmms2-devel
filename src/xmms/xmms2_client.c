@@ -78,7 +78,7 @@ main(int argc, char **argv)
 	dbus_connection_register_handler (conn, hand, mediainfo_message, 1);
 
 
-	msg = dbus_message_new (NULL, "org.xmms.core.mediainfo");
+	msg = dbus_message_new ("org.xmms.core.mediainfo", NULL);
 	
 	res = dbus_connection_send_with_reply_and_block (conn, msg, 2000, &err);
 
@@ -97,7 +97,7 @@ main(int argc, char **argv)
 
 	dbus_connection_flush (conn);
 
-	dbus_connection_setup_with_g_main (conn);
+	dbus_connection_setup_with_g_main (conn, NULL);
 
         g_main_loop_run (mainloop);
 

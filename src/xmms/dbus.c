@@ -37,10 +37,11 @@ handle_playtime_changed (xmms_object_t *object, gconstpointer data, gpointer use
 		DBusMessageIter itr;
 		int clientser;
 
-		msg = dbus_message_new (NULL, "org.xmms.core.playtime-changed");
+		msg = dbus_message_new ("org.xmms.core.playtime-changed", NULL);
 		dbus_message_append_iter_init (msg, &itr);
 		dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT(data));
 		dbus_connection_send (connections, msg, &clientser);
+		dbus_message_unref (msg);
 	}
 
 	/* connectionslock.up */
@@ -48,7 +49,8 @@ handle_playtime_changed (xmms_object_t *object, gconstpointer data, gpointer use
 }
 
 static void
-handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata) {
+handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
 
 	/* connectionslock.down */
 
@@ -58,10 +60,11 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 		DBusMessageIter itr;
 		int clientser;
 
-		msg = dbus_message_new (NULL, "org.xmms.core.mediainfo-changed");
+		msg = dbus_message_new ("org.xmms.core.mediainfo-changed", NULL);
 		dbus_message_append_iter_init (msg, &itr);
 		dbus_message_iter_append_string (&itr, xmms_core_get_uri ());
 		dbus_connection_send (connections, msg, &clientser);
+		dbus_message_unref (msg);
 	}
 
 	/* connectionslock.up */
@@ -83,6 +86,8 @@ handle_mediainfo(DBusMessageHandler *handler,
 	uri = xmms_core_get_uri ();
 	dbus_message_iter_append_string (&itr, uri);
 	dbus_connection_send (connections, rpy, &clientser);
+	dbus_message_unref (rpy);
+	dbus_message_unref (msg);
 
 	g_free (uri);
 
@@ -95,7 +100,10 @@ handle_disconnect (DBusMessageHandler *handler,
 		   DBusMessage        *message,
                    void               *user_data) {
 
-	dbus_connection_unref (connection);
+	XMMS_DBG ("disconnect");
+	connections = NULL;
+//	dbus_message_unref (message);
+//	dbus_connection_unref (connection);
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
@@ -103,7 +111,11 @@ handle_disconnect (DBusMessageHandler *handler,
 static void 
 new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	DBusMessageHandler *hand;
+
 	XMMS_DBG ("new connection");
+
+	g_assert(connections==NULL);
+
 	dbus_connection_ref (conn);
 
 	hand = dbus_message_handler_new (handle_mediainfo, NULL, NULL);
@@ -130,7 +142,7 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 
 	connections = conn; /* -> add to (hash)table... */
 
-	dbus_connection_setup_with_g_main (conn);
+	dbus_connection_setup_with_g_main (conn, NULL);
 
 }
 
@@ -149,7 +161,7 @@ gboolean
 xmms_dbus_init(){
         DBusError err;
 
-	dbus_gthread_init ();
+	//dbus_gthread_init ();  dbus_enable_deadlocks ();
 
         dbus_error_init (&err);
 
@@ -161,12 +173,12 @@ xmms_dbus_init(){
         dbus_server_ref (server);
         dbus_server_set_new_connection_function (server, new_connect,
 						 NULL, NULL);
-
-        dbus_server_setup_with_g_main (server);
-
+	
+	dbus_server_setup_with_g_main (server, NULL);
+	
 	xmms_object_connect (XMMS_OBJECT (core), "playtime-changed",
 			     handle_playtime_changed, NULL);
-
+	
 	xmms_object_connect (XMMS_OBJECT (core), "mediainfo-changed",
 			     handle_mediainfo_changed, NULL);
 
