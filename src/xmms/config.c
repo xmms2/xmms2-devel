@@ -46,13 +46,13 @@
 
 struct xmms_config_St {
 	xmms_object_t obj;
-	const gchar *url;
 
 	GHashTable *values;
 
 	GMutex *mutex;
 
 	/* parsing */
+	gboolean is_parsing;
 	GQueue *states;
 	GQueue *sections;
 	gchar *value_name;
@@ -363,6 +363,7 @@ xmms_config_init (const gchar *filename)
 		fd = open (filename, O_RDONLY);
 
 	if (fd > -1) {
+		config->is_parsing = TRUE;
 		config->states = g_queue_new ();
 		config->sections = g_queue_new ();
 		ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
@@ -400,6 +401,8 @@ xmms_config_init (const gchar *filename)
 
 		g_queue_free (config->states);
 		g_queue_free (config->sections);
+
+		config->is_parsing = FALSE;
 	}
 
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
@@ -553,6 +556,10 @@ xmms_config_save (const gchar *file)
 	g_return_val_if_fail (global_config, FALSE);
 	g_return_val_if_fail (file, FALSE);
 
+	/* don't try to save config while it's being read */
+	if (global_config->is_parsing)
+		return FALSE;
+
 	if (!(fp = fopen (file, "w"))) {
 		xmms_log_error ("Couldn't open %s for writing.", file);
 		return FALSE;
@@ -615,9 +622,7 @@ void
 xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 {
 	GList *list = NULL;
-#if 0
 	gchar file[XMMS_PATH_MAX];
-#endif
 
 	g_return_if_fail (val);
 	g_return_if_fail (data);
@@ -637,7 +642,6 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	                    XMMS_OBJECT_CMD_ARG_STRINGLIST,
 	                    list);
 
-#if 0
 	/* save the database to disk, so we don't loose any data
 	 * if the daemon crashes
 	 */
@@ -645,7 +649,6 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	            g_get_home_dir ());
 
 	xmms_config_save (file);
-#endif
 }
 
 /**
