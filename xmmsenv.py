@@ -8,6 +8,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	pass
 	def __init__(self, options=None, **kw):
 		self.sys = os.popen("uname").read().strip()
+		self.rev = os.popen("bk prs -r+ -h -d ':CSETKEY:' ChangeSet").read().replace("|", "\|")
+		if len (self.rev) < 1 :
+			self.rev = "Non BitKeeper"
+		print "Building for BitKeeper version:", self.rev
 		SCons.Environment.Environment.__init__(self, options=options)
 		self.flag_groups = {}
 		self.optional_config = {}
@@ -24,7 +28,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
-		self.Append(CPPFLAGS=['-DBUILDTIME=\\"'+time.strftime("%Y-%m-%d %H:%M:%S")+'\\"'])
+		self.Append(CPPFLAGS=['-DBUILDREV=\\"'+self.rev+'\\"'])
 		self.Append(LIBPATH=['/usr/lib'])
 		self.Append(LIBPATH=['/usr/local/lib'])
 		self.Append(CPPFLAGS=['-I/usr/local/include'])

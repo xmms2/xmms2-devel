@@ -20,6 +20,6 @@
 #ifndef __XMMS_H__
 #define __XMMS_H__
 
-#define XMMS_VERSION "1.9.5 (BK " BUILDTIME ")"
+#define XMMS_VERSION "1.9.5 (BK " BUILDREV ")"
 
 #endif
