@@ -64,6 +64,8 @@ struct xmms_transport_St {
 	xmms_object_t object;
 	xmms_plugin_t *plugin; /**< The plugin used as media. */
 
+	xmms_core_t *core;
+
 	/** The entry that are transported.
 	 * The url will be extracted from this
 	 * upon open */
@@ -325,9 +327,11 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
  * xmms_transport_close ()
  */
 xmms_transport_t *
-xmms_transport_new ()
+xmms_transport_new (xmms_core_t *core)
 {
 	xmms_transport_t *transport;
+
+	g_return_val_if_fail (core, NULL);
 
 	transport = g_new0 (xmms_transport_t, 1);
 	xmms_object_init (XMMS_OBJECT (transport));
@@ -336,6 +340,7 @@ xmms_transport_new ()
 	transport->mime_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
 	transport->buffering = FALSE; /* maybe should be true? */
+	transport->core = core;
 
 	return transport;
 }
@@ -394,11 +399,21 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 void
 xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
+	xmms_playlist_t *playlist;
 	g_return_if_fail (transport);
 	g_return_if_fail (entry);
 
+	playlist = xmms_core_playlist_get (xmms_transport_core_get (transport));
 	xmms_playlist_entry_property_copy (entry, transport->entry);
-	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (transport->entry));
+	xmms_playlist_entry_changed (playlist, transport->entry);
+}
+
+xmms_core_t *
+xmms_transport_core_get (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+
+	return transport->core;
 }
 
 /**

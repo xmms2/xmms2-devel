@@ -20,9 +20,6 @@
 #ifndef __XMMS_DECODER_H__
 #define __XMMS_DECODER_H__
 
-#include "xmms/transport.h"
-#include "xmms/output.h"
-#include "xmms/playlist.h"
 
 /*
  * Type definitions
@@ -32,7 +29,12 @@
  * Structure describing decoder-objects.
  * Do not modify this structure directly, use the functions.
  */
+struct xmms_decoder_St;
 typedef struct xmms_decoder_St xmms_decoder_t;
+
+#include "xmms/playlist.h"
+#include "xmms/transport.h"
+#include "xmms/output.h"
 
 /*
  * Decoder plugin methods

@@ -26,6 +26,7 @@
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
+#include "xmms/signal_xmms.h"
 
 /*
  * Type definitions.
@@ -270,5 +271,20 @@ xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
 		xmms_playlist_entry_free (entry);
 	}
 
+}
+
+/**
+ * Tell all clients that this entry has been changed
+ */
+
+void
+xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry)
+{
+
+	g_return_if_fail (playlist);
+	g_return_if_fail (entry);
+
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, GUINT_TO_POINTER (entry->id));
+	
 }
 

@@ -300,7 +300,7 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 	nombr = xmms_config_value_int_get (val);
 	XMMS_DBG ("Inited a encoder with rate %d nombr %d", rate, nombr);
 
-	entry = xmms_core_playlist_entry_mediainfo (xmms_core_get_id (core));
+//	entry = xmms_core_playlist_entry_mediainfo (xmms_core_get_id (core));
 
 	vorbis_comment_clear (&data->vc);
 	vorbis_comment_init (&data->vc);

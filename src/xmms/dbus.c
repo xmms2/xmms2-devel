@@ -38,6 +38,7 @@
 #include "xmms/signal_xmms.h"
 #include "xmms/visualisation.h"
 #include "xmms/config.h"
+#include "xmms/playback.h"
 
 #include <string.h>
 
@@ -169,8 +170,8 @@ send_playlist_changed (xmms_object_t *object,
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         break;
                 case XMMS_PLAYLIST_CHANGED_SET_POS:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
-			signame = XMMS_SIGNAL_PLAYLIST_JUMP;
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
+			signame = XMMS_SIGNAL_PLAYBACK_JUMP;
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         break;
@@ -328,7 +329,7 @@ send_playback_currentid (xmms_object_t *object,
 
                 msg = dbus_message_new_signal (XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CURRENTID);
                 dbus_message_append_iter_init (msg, &itr);
-                dbus_message_iter_append_uint32 (&itr, xmms_core_get_id ((xmms_core_t *)object));
+                dbus_message_iter_append_uint32 (&itr, xmms_playback_currentid ((xmms_playback_t *)object));
 		broadcast_msg (msg, XMMS_SIGNAL_PLAYBACK_CURRENTID);
                 dbus_message_unref (msg);
         }
@@ -699,7 +700,7 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
  *
  */
 gboolean
-xmms_dbus_init (const gchar *path) 
+xmms_dbus_init (xmms_core_t *core, const gchar *path) 
 {
 	gint i=0;
         DBusError err;
@@ -741,7 +742,7 @@ xmms_dbus_init (const gchar *path)
 
 	while (mask_map[i].dbus_name) {
 		if (mask_map[i].object_callback)
-			xmms_object_connect (XMMS_OBJECT (core), mask_map[i].dbus_name,
+			xmms_object_connect (XMMS_OBJECT (xmms_core_playback_get (core)), mask_map[i].dbus_name,
 					mask_map[i].object_callback, (gpointer) mask_map[i].dbus_name);
 		i++;
 	}

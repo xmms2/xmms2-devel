@@ -62,6 +62,8 @@ struct xmms_decoder_St {
 	GThread *thread;
 	GMutex *mutex;
 
+	xmms_core_t *core;
+
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport; /**< transport associated with decoder.
 				      *   This is where the decoder gets it
@@ -264,7 +266,8 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 	g_return_if_fail (entry);
 
 	xmms_playlist_entry_property_copy (entry, decoder->entry);
-	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (decoder->entry));
+	xmms_playlist_entry_changed (xmms_core_playlist_get (xmms_decoder_core_get (decoder)), 
+			decoder->entry);
 }
 
 
@@ -371,6 +374,13 @@ xmms_decoder_plugin_get (xmms_decoder_t *decoder)
 	return ret;
 }
 
+xmms_core_t *
+xmms_decoder_core_get (xmms_decoder_t *decoder)
+{
+	g_return_val_if_fail (decoder, NULL);
+
+	return decoder->core;
+}
 
 /**
  * Creates a new decoder for the specified mimetype.
@@ -385,7 +395,7 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 
 	xmms_playlist_entry_ref (entry);
 
-	decoder = xmms_decoder_new ();
+	decoder = xmms_decoder_new (xmms_transport_core_get (transport));
 	/** @todo felhantering??? */
 	xmms_decoder_open (decoder, entry);
 	decoder->transport = transport;
@@ -404,14 +414,17 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
  */
 
 xmms_decoder_t *
-xmms_decoder_new ()
+xmms_decoder_new (xmms_core_t *core)
 {
 	xmms_decoder_t *decoder;
+
+	g_return_val_if_fail (core, NULL);
 
 	decoder = g_new0 (xmms_decoder_t, 1);
 	xmms_object_init (XMMS_OBJECT (decoder));
 	decoder->mutex = g_mutex_new ();
-	decoder->vis = xmms_visualisation_init();
+	decoder->vis = xmms_visualisation_init (core);
+	decoder->core = core;
 
 	return decoder;
 }

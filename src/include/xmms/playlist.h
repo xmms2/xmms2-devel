@@ -23,7 +23,6 @@
 #include <glib.h>
 
 #include "xmms/object.h"
-#include "xmms/playlist_entry.h"
 
 /*
  * Public definitions
@@ -46,14 +45,6 @@ typedef enum {
 	XMMS_PLAYLIST_CHANGED_SORT
 } xmms_playlist_changed_actions_t;
 
-typedef enum {
-	XMMS_PLAYLIST_MODE_NONE = 0,
-	XMMS_PLAYLIST_MODE_REPEAT_ALL = 1,
-	XMMS_PLAYLIST_MODE_REPEAT_ONE = 2,
-	XMMS_PLAYLIST_MODE_STOP = 3,
-} xmms_playlist_mode_t;
-
-
 /*
  * Private defintions
  */
@@ -65,6 +56,9 @@ typedef enum {
 struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
+#include "xmms/playlist_entry.h"
+#include "xmms/core.h"
+
 typedef struct xmms_playlist_changed_msg_St {
 	gint type;
 	guint id;
@@ -75,7 +69,8 @@ typedef struct xmms_playlist_changed_msg_St {
  * Public functions
  */
 
-xmms_playlist_t * xmms_playlist_init ();
+xmms_playlist_t * xmms_playlist_init (void);
+void xmms_playlist_core_set (xmms_playlist_t *playlist, xmms_core_t *core);
 
 gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options);
 guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
@@ -95,8 +90,6 @@ gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id);
 gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps);
 
 xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
-xmms_playlist_mode_t xmms_playlist_mode_get (xmms_playlist_t *playlist);
-void xmms_playlist_mode_set (xmms_playlist_t *playlist, xmms_playlist_mode_t mode);
 
 /*
  * Entry modifications

@@ -168,9 +168,9 @@ xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *stri
 	gchar *msg;
 
 	/* send the information to core */
-	msg = g_strdup_printf (format, string);
+	/*msg = g_strdup_printf (format, string);
 	xmms_core_information (loglevel, msg);
-	g_free (msg);
+	g_free (msg);*/
 	
 	if (xmms_log_stream) {
 		now = time (NULL);

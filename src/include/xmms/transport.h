@@ -21,8 +21,6 @@
 #define __XMMS_TRANSPORT_H__
 
 #include <glib.h>
-#include "xmms/plugin.h"
-#include "xmms/playlist.h"
 
 /*
  * Type definitions
@@ -35,6 +33,9 @@ typedef enum {
 
 typedef struct xmms_transport_St xmms_transport_t;
 typedef struct xmms_transport_entry_St xmms_transport_entry_t;
+
+#include "xmms/plugin.h"
+#include "xmms/playlist.h"
 
 #define XMMS_TRANSPORT_SEEK_SET 0
 #define XMMS_TRANSPORT_SEEK_END 1

@@ -192,13 +192,13 @@ cmd_pause (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_play_next (conn);
+	xmmsc_playback_next (conn);
 }
 
 static void
 cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_play_prev (conn);
+	xmmsc_playback_prev (conn);
 }
 
 static void
@@ -235,9 +235,7 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 		print_error ("You'll need to specify a ID to jump to.");
 	}
 
-	xmmsc_playback_stop (conn);
-	xmmsc_playlist_jump (conn, atoi (argv[2]));
-	xmmsc_playback_start (conn);
+	xmmsc_playback_jump (conn, atoi (argv[2]));
 }
 
 /* STATUS FUNCTIONS */

@@ -38,12 +38,26 @@
  * @{
  */
 
+void
+xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id)
+{
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_uint32 (&itr, id);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
+}
+
 /**
  * Plays the next track in playlist.
  */
 
 void
-xmmsc_play_next (xmmsc_connection_t *c)
+xmmsc_playback_next (xmmsc_connection_t *c)
 {
 	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_NEXT);
 }
@@ -53,7 +67,7 @@ xmmsc_play_next (xmmsc_connection_t *c)
  */
 
 void
-xmmsc_play_prev (xmmsc_connection_t *c)
+xmmsc_playback_prev (xmmsc_connection_t *c)
 {
 	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PREV);
 }

@@ -96,6 +96,7 @@ int
 main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
+	xmms_core_t *core;
 	xmms_config_value_t *cv;
 	int opt;
 	int verbose = 0;
@@ -163,17 +164,16 @@ main (int argc, char **argv)
 	g_thread_init (NULL);
 
 	xmms_log_initialize ("xmmsd");
-
-	xmms_core_init ();
-	xmms_visualisation_init_mutex ();
 	
 	parse_config ();
-
-	if (!xmms_plugin_init (ppath))
-		return 1;
 	
 	playlist = xmms_playlist_init ();
-	xmms_core_set_playlist (playlist);
+
+	core = xmms_core_init (playlist);
+	xmms_visualisation_init_mutex ();
+	
+	if (!xmms_plugin_init (ppath))
+		return 1;
 	
 	cv = xmms_config_value_register ("core.outputplugin", "oss", change_output, NULL);
 	outname = xmms_config_value_string_get (cv);
@@ -182,10 +182,10 @@ main (int argc, char **argv)
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
 	{
-		xmms_output_t *output = xmms_output_new (o_plugin);
+		xmms_output_t *output = xmms_output_new (core, o_plugin);
 		g_return_val_if_fail (output, -1);
 		
-		xmms_core_output_set (output);
+		xmms_core_output_set (core, output);
 
 		xmms_output_start (output);
 	}
@@ -195,11 +195,11 @@ main (int argc, char **argv)
 	cv = xmms_config_value_register ("core.dbuspath", path, NULL, NULL);
 	path = xmms_config_value_string_get (cv);
 
-	xmms_dbus_init (path);
+	xmms_dbus_init (core, path);
 
 	xmms_signal_init ();
 
-	xmms_core_start ();
+	xmms_core_start (core);
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);

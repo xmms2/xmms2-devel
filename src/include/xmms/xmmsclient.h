@@ -49,24 +49,27 @@ char *xmmsc_decode_path (const char *path);
 int xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table);
 
 void xmmsc_quit(xmmsc_connection_t *);
-void xmmsc_play_next(xmmsc_connection_t *);
-void xmmsc_play_prev(xmmsc_connection_t *);
+
 void xmmsc_playlist_shuffle(xmmsc_connection_t *);
-void xmmsc_playlist_jump (xmmsc_connection_t *, unsigned int);
 void xmmsc_playlist_add (xmmsc_connection_t *, char *);
 void xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
 void xmmsc_playlist_clear (xmmsc_connection_t *c);
 void xmmsc_playlist_save (xmmsc_connection_t *c, char *filename);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
+void xmmsc_playlist_list (xmmsc_connection_t *c);
+void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
+void xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
+
 void xmmsc_playback_stop (xmmsc_connection_t *c);
 void xmmsc_playback_start (xmmsc_connection_t *c);
 void xmmsc_playback_pause (xmmsc_connection_t *c);
 void xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds);
 void xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples);
 void xmmsc_playback_current_id (xmmsc_connection_t *c);
-void xmmsc_playlist_list (xmmsc_connection_t *c);
-void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
-void xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
+void xmmsc_playback_next(xmmsc_connection_t *);
+void xmmsc_playback_prev(xmmsc_connection_t *);
+void xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id);
+
 void xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
 void xmmsc_file_list (xmmsc_connection_t *c, char *path);
 

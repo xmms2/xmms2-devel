@@ -29,6 +29,7 @@
 #include "xmms/core.h"
 #include "xmms/config.h"
 #include "xmms/plugin.h"
+#include "xmms/playback.h"
 #include "xmms/signal_xmms.h"
 
 #include "internal/plugin_int.h"
@@ -49,6 +50,8 @@ static guint32 resample (xmms_output_t *output, gint16 *buf, guint len);
 struct xmms_output_St {
 	xmms_object_t object;
 	xmms_plugin_t *plugin;
+
+	xmms_core_t *core;
 
 	GMutex *mutex;
 	GCond *cond;
@@ -334,12 +337,13 @@ xmms_output_close (xmms_output_t *output)
 }
 
 xmms_output_t *
-xmms_output_new (xmms_plugin_t *plugin)
+xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 {
 	xmms_output_t *output;
 	xmms_output_new_method_t new;
 	
 	g_return_val_if_fail (plugin, NULL);
+	g_return_val_if_fail (core, NULL);
 
 	XMMS_DBG ("Trying to open output");
 
@@ -351,6 +355,7 @@ xmms_output_new (xmms_plugin_t *plugin)
 	output->buffer = xmms_ringbuf_new (32768);
 	output->is_open = FALSE;
 	output->open_samplerate = 44100;
+	output->core = core;
 	
 	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
@@ -523,7 +528,7 @@ xmms_output_thread (gpointer data)
 					played_time = 0;
 				}
 			}
-			xmms_core_playtime_set (played_time);
+			xmms_playback_playtime_set (xmms_core_playback_get (output->core), played_time);
 
 			
 		} else if (xmms_ringbuf_iseos (output->buffer)) {

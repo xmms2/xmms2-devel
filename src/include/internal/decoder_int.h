@@ -28,9 +28,10 @@
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_decoder_t *xmms_decoder_new (void);
+xmms_decoder_t * xmms_decoder_new (xmms_core_t *core);
 gboolean xmms_decoder_open (xmms_decoder_t *decoder,
 			    xmms_playlist_entry_t *entry);
+xmms_core_t * xmms_decoder_core_get (xmms_decoder_t *decoder);
 void xmms_decoder_start (xmms_decoder_t *decoder, 
 			xmms_transport_t *transport, 
 			xmms_effect_t *effect, 

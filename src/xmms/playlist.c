@@ -29,6 +29,7 @@
 #include <glib.h>
 
 #include "xmms/playlist.h"
+#include "xmms/dbus.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
 #include "xmms/core.h"
@@ -43,6 +44,8 @@ struct xmms_playlist_St {
 	/** Next song that will be retured by xmms_playlist_get_next */
 	GList *currententry;
 
+	xmms_core_t *core;
+
 	GHashTable *id_table;
 	guint nextid;
 
@@ -50,8 +53,6 @@ struct xmms_playlist_St {
 	GCond *cond;
 	gboolean is_waiting;
 
-	/** XMMS_PLAYLIST_MODE_[NONE|ALL|ONE|STOP] */
-	xmms_config_value_t *next_mode;
 };
 
 /*
@@ -62,34 +63,6 @@ struct xmms_playlist_St {
 #define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
 
 
-
-/**
- * Sets the mode of the playlist.
- */
-void
-xmms_playlist_mode_set (xmms_playlist_t *playlist, xmms_playlist_mode_t mode)
-{
-	gchar *m;
-	XMMS_PLAYLIST_LOCK (playlist);
-	m = g_strdup_printf ("%d", mode); /* FIXME: memory loss??? */
-	xmms_config_value_data_set (playlist->next_mode, m);
-	XMMS_PLAYLIST_UNLOCK (playlist);
-}
-
-/**
- * Get the current mode of the playlist.
- */
-xmms_playlist_mode_t
-xmms_playlist_mode_get (xmms_playlist_t *playlist)
-{
-	xmms_playlist_mode_t m;
-
-	XMMS_PLAYLIST_LOCK (playlist);
-	m = (xmms_playlist_mode_t) xmms_config_value_int_get (playlist->next_mode);
-	XMMS_PLAYLIST_UNLOCK (playlist);
-	
-	return m;
-}
 
 /** Waits for something to happen in playlist
  * 
@@ -381,7 +354,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	xmms_core_mediainfo_add_entry (xmms_playlist_entry_id_get (file));
+	xmms_playback_mediainfo_add_entry (xmms_core_playback_get (playlist->core), file);
 
 	return TRUE;
 
@@ -461,20 +434,13 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r=NULL;
 	GList *n = NULL;
-	xmms_playlist_mode_t mode;
 
 	g_return_val_if_fail (playlist, NULL);
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
-	mode = xmms_config_value_int_get (playlist->next_mode);
-	
 	if (playlist->currententry) {
-		if (mode == XMMS_PLAYLIST_MODE_REPEAT_ONE) {
-			n = playlist->currententry;
-		} else {
-			n = g_list_next (playlist->currententry);
-		}
+		n = g_list_next (playlist->currententry);
 	} else {
 		n = playlist->list;
 	}
@@ -488,9 +454,6 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
-	if (mode == XMMS_PLAYLIST_MODE_STOP)
-		return NULL;
-
 	return r;
 
 }
@@ -561,8 +524,6 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
  *  will also wake xmms_playlist_wait
  */
 
-XMMS_METHOD_DEFINE (jump, xmms_playlist_set_current_position, xmms_playlist_t *, NONE, UINT32, NONE);
-  
 gboolean
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 {
@@ -677,7 +638,7 @@ xmms_playlist_list (xmms_playlist_t *playlist)
   */
 
 xmms_playlist_t *
-xmms_playlist_init ()
+xmms_playlist_init (void)
 {
 	xmms_playlist_t *ret;
 
@@ -691,8 +652,8 @@ xmms_playlist_init ()
 	ret->is_waiting = FALSE;
 
 	/* 0 = MODE_NONE */
-	ret->next_mode = xmms_config_value_register ("core.next_mode", "0", NULL, NULL);
 	xmms_object_init (XMMS_OBJECT (ret));
+	xmms_dbus_register_object ("playlist", XMMS_OBJECT (ret));
 
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SHUFFLE, XMMS_METHOD_FUNC (shuffle));
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_ADD, XMMS_METHOD_FUNC (add));
@@ -702,9 +663,16 @@ xmms_playlist_init ()
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_LIST, XMMS_METHOD_FUNC (list));
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_CLEAR, XMMS_METHOD_FUNC (clear));
 	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SORT, XMMS_METHOD_FUNC (sort));
-	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_JUMP, XMMS_METHOD_FUNC (jump));
 
 	return ret;
+}
+
+void
+xmms_playlist_core_set (xmms_playlist_t *playlist, xmms_core_t *core)
+{
+	g_return_if_fail (playlist);
+	g_return_if_fail (core);
+	playlist->core = core;
 }
 
 

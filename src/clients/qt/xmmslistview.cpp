@@ -126,9 +126,7 @@ XMMSListView::onDoubleClick (QListViewItem *i, const QPoint &, int)
 	XMMSListViewItem *it = (XMMSListViewItem *)i;
 
 	if (it) {
-		xmmsc_playback_stop (m_client->getConnection ());
-		xmmsc_playlist_jump (m_client->getConnection (), it->Id ());
-		xmmsc_playback_start (m_client->getConnection ());
+		xmmsc_playback_jump (m_client->getConnection (), it->Id ());
 	}
 	
 }

@@ -95,7 +95,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, xmms_oss_mixer_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, xmms_oss_mixer_set);
 
-	xmms_plugin_config_value_register (plugin, 
+	xmms_plugin_config_value_register(plugin, 
 		  	   	 	   "mixer",
 					   "/dev/mixer",
 					   NULL,

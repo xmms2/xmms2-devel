@@ -35,6 +35,7 @@ static guint32 visusers = 0;
 
 struct xmms_visualisation_St {
 	xmms_object_t object;
+	xmms_core_t *core;
 	guint32 pos;
 	guint samplerate;
 	gint fft_data;
@@ -51,11 +52,14 @@ xmms_visualisation_init_mutex ()
 }
 
 xmms_visualisation_t *
-xmms_visualisation_init()
+xmms_visualisation_init (xmms_core_t *core)
 {
 	xmms_visualisation_t *res;
 
+	g_return_val_if_fail (core, NULL);
+
 	res = g_new0 (xmms_visualisation_t, 1);
+	res->core = core;
 
 	if (res) {
 		xmms_object_init (XMMS_OBJECT (res));
@@ -106,7 +110,7 @@ static void output_spectrum (xmms_visualisation_t *vis) {
 
 	vis->spec[0] = 1000.0f * vis->pos * FFT_LEN / vis->samplerate;
 	
-	xmms_core_vis_spectrum (vis->spec);
+	xmms_playback_vis_spectrum (xmms_core_playback_get (vis->core), vis->spec);
 
 	vis->pos++;
 }

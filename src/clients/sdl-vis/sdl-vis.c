@@ -135,7 +135,7 @@ render_vis (gpointer data)
 				SDL_WM_ToggleFullScreen (surf);
 				break;
 			case 'n':
-				xmmsc_play_next (connection);
+				xmmsc_playback_next (connection);
 				break;
 			case 'q':
 			case SDLK_ESCAPE:

@@ -84,13 +84,13 @@ XMMSToolbar::onStop ()
 void
 XMMSToolbar::onNext ()
 {
-	xmmsc_play_next (m_client->getConnection ());
+	xmmsc_playback_next (m_client->getConnection ());
 }
 
 void
 XMMSToolbar::onPrev ()
 {
-	xmmsc_play_prev (m_client->getConnection ());
+	xmmsc_playback_prev (m_client->getConnection ());
 }
 
 void

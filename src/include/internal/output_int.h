@@ -27,7 +27,7 @@
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_output_t * xmms_output_new (xmms_plugin_t *plugin);
+xmms_output_t * xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin);
 gboolean xmms_output_open (xmms_output_t *output);
 void xmms_output_close (xmms_output_t *output);
 void xmms_output_start (xmms_output_t *output);

@@ -38,7 +38,6 @@ xmms_cdae_read_data (gint fd, gint pos, gchar *buffer, gint len)
 {
 	struct cdrom_read_audio cdra;
 	gint frames_read = len / XMMS_CDAE_FRAMESIZE;
-	gint bytes_read = XMMS_CDAE_FRAMESIZE * frames_read;
 
 	cdra.addr.lba = pos - MSF_OFFSET;
 	cdra.addr_format = CDROM_LBA;

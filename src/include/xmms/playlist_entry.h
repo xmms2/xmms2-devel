@@ -73,5 +73,6 @@ void xmms_playlist_entry_property_copy (xmms_playlist_entry_t *entry,
 gboolean xmms_playlist_entry_iswellknown (gchar *property);
 void xmms_playlist_entry_ref (xmms_playlist_entry_t *entry);
 void xmms_playlist_entry_unref (xmms_playlist_entry_t *entry);
+void xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry);
 
 #endif

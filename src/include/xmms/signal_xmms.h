@@ -74,6 +74,7 @@
 #define XMMS_SIGNAL_PLAYBACK_STATUS "/xmms/playback::status"
 #define XMMS_SIGNAL_PLAYBACK_CURRENTID "/xmms/playback::currentid"
 #define XMMS_SIGNAL_PLAYBACK_PLAYTIME "/xmms/playback::playtime"
+#define XMMS_SIGNAL_PLAYBACK_JUMP "/xmms/playback::jump"
 
 /* Playlist msgs */
 #define XMMS_SIGNAL_PLAYLIST_LIST "/xmms/playlist::list"
@@ -84,7 +85,6 @@
 #define XMMS_SIGNAL_PLAYLIST_REMOVE "/xmms/playlist::remove"
 #define XMMS_SIGNAL_PLAYLIST_SHUFFLE "/xmms/playlist::shuffle"
 #define XMMS_SIGNAL_PLAYLIST_CLEAR "/xmms/playlist::clear"
-#define XMMS_SIGNAL_PLAYLIST_JUMP "/xmms/playlist::jump"
 #define XMMS_SIGNAL_PLAYLIST_MOVE "/xmms/playlist::move"
 #define XMMS_SIGNAL_PLAYLIST_SORT "/xmms/playlist::sort"
 
