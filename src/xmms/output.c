@@ -42,7 +42,6 @@ struct xmms_output_St {
 	guint samplerate;
 
 	xmms_ringbuf_t *buffer;
-	xmms_config_t *config;
 	
 	gpointer plugin_data;
 
@@ -314,7 +313,7 @@ xmms_output_close (xmms_output_t *output)
 }
 
 xmms_output_t *
-xmms_output_new (xmms_plugin_t *plugin, xmms_config_t *config)
+xmms_output_new (xmms_plugin_t *plugin)
 {
 	xmms_output_t *output;
 	xmms_output_new_method_t new;

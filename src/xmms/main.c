@@ -34,10 +34,9 @@ static GMainLoop *mainloop;
 gboolean xmms_dbus_init (gchar *path);
 
 
-static xmms_config_t *
+static gboolean
 parse_config ()
 {
-	xmms_config_t *config;
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
 
@@ -45,16 +44,14 @@ parse_config ()
 	g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
 
 	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
-		config = xmms_config_init (filename);
-		if (!config) {
+		if (!xmms_config_init (filename)) {
 			XMMS_DBG ("XMMS was unable to parse configfile %s", filename);
 			exit (EXIT_FAILURE);
 		}
-		return config;
+		return TRUE;
 	} else {
 		if (g_file_test (XMMS_CONFIG_SYSTEMWIDE, G_FILE_TEST_EXISTS)) {
-			config = xmms_config_init (XMMS_CONFIG_SYSTEMWIDE);
-			if (!config) {
+			if (!xmms_config_init (XMMS_CONFIG_SYSTEMWIDE)) {
 				XMMS_DBG ("XMMS was unable to parse configfile %s", filename);
 				exit (EXIT_FAILURE);
 			}
@@ -63,18 +60,18 @@ parse_config ()
 				mkdir (configdir, 0755);
 			}
 
-			/*if (!xmms_config_save_to_file (config, filename)) {
+			if (!xmms_config_save_to_file (config, filename)) {
 				XMMS_DBG ("Could't write file %s!", filename);
 				exit (EXIT_FAILURE);
-			}*/
+			}
 
-			return config;
+			return TRUE;
 		} else {
 			XMMS_DBG ("XMMS was unable to find systemwide configfile %s", XMMS_CONFIG_SYSTEMWIDE);
 			exit (EXIT_FAILURE);
 		}
 	}
-	return NULL;
+	return FALSE;
 }
 
 
@@ -82,7 +79,6 @@ int
 main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
-	xmms_config_t *config;
 	xmms_config_value_t *cv;
 	int opt;
 	int verbose = 0;
@@ -153,9 +149,9 @@ main (int argc, char **argv)
 
 	xmms_core_init ();
 	
-	config = parse_config ();
+	parse_config ();
 
-	if (!xmms_plugin_init (config, ppath))
+	if (!xmms_plugin_init (ppath))
 		return 1;
 	
 	playlist = xmms_playlist_init ();
@@ -184,14 +180,14 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries_total (playlist));
 
-	cv = xmms_config_value_register (config, "core.outputplugin", "oss", NULL, NULL);
+	cv = xmms_config_value_register ("core.outputplugin", "oss", NULL, NULL);
 	outname = xmms_config_value_string_get (cv);
 	XMMS_DBG ("output = %s", outname);
 
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
 	{
-		xmms_output_t *output = xmms_output_new (o_plugin, config);
+		xmms_output_t *output = xmms_output_new (o_plugin);
 		g_return_val_if_fail (output, -1);
 		
 		xmms_core_output_set (output);
@@ -201,14 +197,14 @@ main (int argc, char **argv)
 
 	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
 				g_get_user_name ());
-	cv = xmms_config_value_register (config, "core.dbuspath", path, NULL, NULL);
+	cv = xmms_config_value_register ("core.dbuspath", path, NULL, NULL);
 	path = xmms_config_value_string_get (cv);
 
 	xmms_dbus_init (path);
 
 	xmms_signal_init ();
 
-	xmms_core_start (config);
+	xmms_core_start ();
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);

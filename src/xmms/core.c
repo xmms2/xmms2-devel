@@ -41,8 +41,6 @@ struct xmms_core_St {
 
 	xmms_effect_t *effects;
 	
-	xmms_config_t *config;
-
 	GCond *cond;
 	GMutex *mutex;
 	
@@ -62,7 +60,7 @@ static gboolean running = TRUE;
  *
  */
 
-static void xmms_core_effect_init (xmms_config_t *config);
+static void xmms_core_effect_init (void);
 
 
 static void
@@ -129,7 +127,7 @@ xmms_core_config_set (gchar *key, gchar *value)
 {
 	xmms_config_value_t *val;
 
-	val = xmms_config_lookup (core->config, key);
+	val = xmms_config_lookup (key);
 	if (val)
 		xmms_config_value_data_set (val, g_strdup (value));
 
@@ -142,14 +140,6 @@ wake_core ()
 		xmms_decoder_destroy (core->decoder);
 		core->decoder = NULL;
 	}
-}
-
-xmms_config_t *
-xmms_core_config_get (xmms_core_t *core)
-{
-	g_return_val_if_fail (core, NULL);
-
-	return core->config;
 }
 
 /**
@@ -321,7 +311,7 @@ xmms_core_quit ()
 {
 	gchar *filename;
 	filename = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
-	//xmms_config_save (core->config, filename);
+	xmms_config_save (filename);
 	exit (0); /** @todo BUSKIS! */
 }
 
@@ -486,11 +476,10 @@ core_thread (gpointer data)
  * Starts playing of the first song in playlist.
  */
 void
-xmms_core_start (xmms_config_t *config)
+xmms_core_start (void)
 {
-	core->config = config;
 	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
-	xmms_core_effect_init (config);
+	xmms_core_effect_init ();
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 
@@ -646,16 +635,16 @@ xmms_core_effect_compare (gconstpointer a, gconstpointer b)
 }
 
 static void
-xmms_core_effect_init (xmms_config_t *config)
+xmms_core_effect_init (void)
 {
 	xmms_config_value_t *cv;
 	GList *lst = NULL;
 	GList *effectlist = NULL;
 	core->effects = NULL;
 
-	for (lst = xmms_config_plugins_get (config); lst; lst = g_list_next (lst)) {
+	for (lst = xmms_config_plugins_get (); lst; lst = g_list_next (lst)) {
 		gchar *tmp = g_strdup_printf ("effect.%s.position", (gchar *)lst->data);
-		cv = xmms_config_lookup (config, tmp);
+		cv = xmms_config_lookup (tmp);
 		if (cv && (xmms_config_value_int_get (cv) > 0)) {
 			XMMS_DBG ("Adding %s to list", (gchar *)lst->data);
 			effectlist = g_list_insert_sorted (effectlist, cv, xmms_core_effect_compare);

@@ -573,7 +573,7 @@ handle_config_change (DBusConnection *conn, DBusMessage *msg)
 		dbus_message_iter_next (&itr);
 		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
 			val = dbus_message_iter_get_string (&itr);
-			xmms_core_config_set (val, key);
+			xmms_core_config_set (key, val);
 		}
 	}
 

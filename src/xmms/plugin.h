@@ -94,7 +94,6 @@ void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
 gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property);
 void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
 const GList *xmms_plugin_info_get (const xmms_plugin_t *plugin);
-const xmms_config_t *xmms_plugin_config_get (const xmms_plugin_t *plugin);
 
 xmms_plugin_method_t xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *member);
 

@@ -7,6 +7,8 @@
 #include <gmodule.h>
 #include <string.h>
 
+extern xmms_config_t *global_config;
+
 struct xmms_plugin_St {
 	GMutex *mtx;
 	GModule *module;
@@ -19,7 +21,6 @@ struct xmms_plugin_St {
 
 	guint users;
 	GHashTable *method_table;
-	xmms_config_t *config;
 };
 
 /*
@@ -236,33 +237,25 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 	return plugin->info_list;
 }
 
-const xmms_config_t *
-xmms_plugin_config_get (const xmms_plugin_t *plugin)
-{
-	g_return_val_if_fail (plugin, NULL);
-
-	return plugin->config;
-}
-
 /*
  * Private functions
  */
 
 gboolean
-xmms_plugin_init (xmms_config_t *config, gchar *path)
+xmms_plugin_init (gchar *path)
 {
 	xmms_plugin_mtx = g_mutex_new ();
 
 	if (!path)
 		path = PKGLIBDIR;
 
-	xmms_plugin_scan_directory (config, path);
+	xmms_plugin_scan_directory (path);
 	
 	return TRUE;
 }
 
 void
-xmms_plugin_scan_directory (xmms_config_t *config, const gchar *dir)
+xmms_plugin_scan_directory (const gchar *dir)
 {
 	GDir *d;
 	const char *name;
@@ -272,7 +265,7 @@ xmms_plugin_scan_directory (xmms_config_t *config, const gchar *dir)
 	xmms_plugin_t *plugin;
 	gpointer sym;
 
-	g_return_if_fail (config);
+	g_return_if_fail (global_config);
 
 	XMMS_DBG ("Scanning directory: %s", dir);
 	
@@ -326,7 +319,6 @@ xmms_plugin_scan_directory (xmms_config_t *config, const gchar *dir)
 				info = g_list_next (info);
 			}
 			plugin->module = module;
-			plugin->config = config;
 			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
 		} else {
 			g_module_close (module);
@@ -423,7 +415,7 @@ xmms_plugin_config_lookup (xmms_plugin_t *plugin,
 	g_return_val_if_fail (value, NULL);
 	
 	ppath = plugin_config_path (plugin, value);
-	val = xmms_config_lookup (plugin->config, ppath);
+	val = xmms_config_lookup (ppath);
 
 	g_free (ppath);
 
@@ -438,7 +430,6 @@ xmms_plugin_config_value_register (xmms_plugin_t *plugin,
 				   gpointer userdata)
 {
 	const gchar *fullpath;
-	gchar *pl;
 	xmms_config_value_t *val;
 
 	g_return_val_if_fail (plugin, NULL);
@@ -447,12 +438,9 @@ xmms_plugin_config_value_register (xmms_plugin_t *plugin,
 
 	fullpath = plugin_config_path (plugin, value);
 
-	val = xmms_config_value_register (xmms_plugin_config_get (plugin), 
-					   fullpath, 
-					   default_value, 
-					   cb, userdata);
-	g_free (fullpath);
-
+	val = xmms_config_value_register (fullpath, 
+					  default_value, 
+					  cb, userdata);
 	return val;
 }
 

@@ -73,6 +73,24 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, xmms_oss_mixer_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, xmms_oss_mixer_set);
 
+	xmms_plugin_config_value_register (plugin, 
+		  	   	 	   "mixer",
+					   "/dev/mixer",
+					   NULL,
+					   NULL);
+	
+	xmms_plugin_config_value_register (plugin, 
+			   	 	   "volume",
+					   "70/70",
+					   NULL,
+					   NULL);
+
+	xmms_plugin_config_value_register (plugin,
+					   "device",
+					   "/dev/dsp",
+					   NULL,
+					   NULL);
+	
 	return plugin;
 }
 
@@ -240,11 +258,8 @@ xmms_oss_new (xmms_output_t *output)
 
 	data = g_new0 (xmms_oss_data_t, 1);
 
-	val = xmms_plugin_config_value_register (xmms_output_plugin_get (output), 
-				  	   	 "mixer",
-					   	 "/dev/mixer",
-					   	 NULL,
-					   	 NULL);
+	val = xmms_plugin_config_lookup (
+			xmms_output_plugin_get (output), "mixer");
 	mixdev = xmms_config_value_string_get (val);
 
 	/* Open mixer here. I am not sure this is entirely correct. */
@@ -257,17 +272,14 @@ xmms_oss_new (xmms_output_t *output)
 	XMMS_DBG ("Have mixer = %d", data->have_mixer);
 
 	/* retrive keys for mixer settings. but ignore current values */
-	data->mixer = xmms_plugin_config_value_register (xmms_output_plugin_get (output), 
-					   	 "volume",
-					   	 "70/70",
-					   	 xmms_oss_mixer_config_changed,
-					   	 output);
-	/* register device */
-	val = xmms_plugin_config_value_register (xmms_output_plugin_get (output),
-						 "device",
-						 "/dev/dsp",
-						 NULL,
-						 NULL);
+	data->mixer = xmms_plugin_config_lookup (
+			xmms_output_plugin_get (output), "volume");
+
+	/* since we don't have this data when we are register the configvalue
+	   we need to set the callback here */
+	xmms_config_value_callback_set (data->mixer, 
+			xmms_oss_mixer_config_changed, 
+			(gpointer) output);
 
 	xmms_output_plugin_data_set (output, data);
 
