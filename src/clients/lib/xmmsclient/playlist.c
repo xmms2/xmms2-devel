@@ -295,9 +295,10 @@ free_str (void * key, void * value, void * udata)
 void
 xmmsc_playlist_entry_free (x_hash_t *entry)
 {
-	x_hash_foreach_remove (entry, free_str, NULL);
-
-	x_hash_destroy (entry);
+	if (entry) {
+		x_hash_foreach_remove (entry, free_str, NULL);
+		x_hash_destroy (entry);
+	}
 }
 
 /**
