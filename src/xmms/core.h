@@ -23,13 +23,17 @@ void xmms_core_output_set (xmms_output_t *output);
 void xmms_core_playtime_set (guint time);
 void xmms_core_play_next ();
 void xmms_core_playlist_adduri (gchar *nuri);
+void xmms_core_playlist_jump (guint id);
+xmms_playlist_t * xmms_core_get_playlist ();
 
 void xmms_core_quit ();
 
 void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);
 void xmms_core_set_playlist (xmms_playlist_t *playlist);
 gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);
+xmms_playlist_entry_t *xmms_core_playlist_entry_mediainfo (guint id);
 gchar *xmms_core_get_uri ();
+gint xmms_core_get_id ();
 
 void xmms_core_init ();
 void xmms_core_start ();

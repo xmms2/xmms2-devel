@@ -30,7 +30,9 @@ static GSList *connections = NULL;
 static const char *messages[]={"org.xmms.core.mediainfo"};
 static const char *nextmsgs[]={"org.xmms.core.play-next"};
 static const char *addmsgs[]={"org.xmms.playlist.add"};
+static const char *mediainfomsgs[]={"org.xmms.playlist.mediainfo"};
 static const char *listmsgs[]={"org.xmms.playlist.list"};
+static const char *jumpmsgs[]={"org.xmms.playlist.jump"};
 static const char *quitmsgs[]={"org.xmms.core.quit"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
@@ -73,7 +75,7 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 
 		msg = dbus_message_new ("org.xmms.core.mediainfo-changed", NULL);
 		dbus_message_append_iter_init (msg, &itr);
-		dbus_message_iter_append_string (&itr, xmms_core_get_uri ());
+		dbus_message_iter_append_uint32 (&itr, xmms_core_get_id ());
 		g_slist_foreach (connections, do_send, msg);
 		dbus_message_unref (msg);
 	}
@@ -90,24 +92,17 @@ handle_mediainfo(DBusMessageHandler *handler,
 	DBusMessage *rpy;
 	DBusMessageIter itr;
 	int clientser;
-	char *uri;
+	gint id;
 	
 	XMMS_DBG ("mediainfo!");
 
 	rpy = dbus_message_new_reply (msg);
 	dbus_message_append_iter_init (rpy, &itr);
-	uri = xmms_core_get_uri ();
-	if (uri) {
-		dbus_message_iter_append_string (&itr, uri);
-	} else {
-		dbus_message_iter_append_string (&itr, "nothing");
-	}
+	id = xmms_core_get_id ();
+	dbus_message_iter_append_uint32 (&itr, id);
 
 	dbus_connection_send (conn, rpy, &clientser);
 	dbus_message_unref (rpy);
-
-	if (uri)
-		g_free (uri);
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
@@ -172,7 +167,7 @@ handle_playlist_list(DBusMessageHandler *handler,
 
 	while (list) {
 		xmms_playlist_entry_t *entry=list->data;
-		dbus_message_iter_append_string (&itr, entry->uri);
+		dbus_message_iter_append_uint32 (&itr, xmms_playlist_entry_id_get (entry));
 		list = g_list_next (list);
 	}
 
@@ -203,6 +198,81 @@ handle_disconnect (DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+static DBusHandlerResult
+handle_playlist_jump (DBusMessageHandler *handler,
+		   	DBusConnection     *connection,
+			DBusMessage        *msg,
+			void               *user_data)
+{
+        DBusMessageIter itr;
+
+	XMMS_DBG ("jumpmsg!");
+
+	dbus_message_iter_init (msg, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+		guint id = dbus_message_iter_get_uint32 (&itr);
+		XMMS_DBG ("Jumping to %d", id);
+		xmms_core_playlist_jump (id);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static void
+hash_to_dict (gpointer key, gpointer value, gpointer udata)
+{
+	gchar *k = key;
+	gchar *v = value;
+	DBusMessageIter *itr = udata;
+
+	dbus_message_iter_append_dict_key (itr, k);
+	dbus_message_iter_append_string (itr, v);
+}
+
+static DBusHandlerResult
+handle_playlist_mediainfo (DBusMessageHandler *handler,
+				DBusConnection     *connection,
+				DBusMessage        *msg,
+				void               *user_data)
+{
+
+	xmms_playlist_entry_t *entry=NULL;
+	DBusMessageIter itr;
+	DBusMessageIter dictitr;
+	DBusMessage *reply=NULL;
+	gint serial;
+
+	XMMS_DBG ("playlist_mediainfomsg!");
+
+	dbus_message_iter_init (msg, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+		guint id = dbus_message_iter_get_uint32 (&itr);
+		XMMS_DBG ("Getting info for %d", id);
+		entry = xmms_core_playlist_entry_mediainfo (id);
+	}
+
+	if (entry) {
+		gchar *uri = xmms_playlist_entry_get_uri (entry);
+		reply = dbus_message_new_reply (msg);
+		dbus_message_append_iter_init (reply, &itr);
+		dbus_message_iter_append_dict (&itr, &dictitr);
+		xmms_playlist_entry_foreach_prop (entry, hash_to_dict, &dictitr);
+		if (uri) {
+			dbus_message_iter_append_dict_key (&dictitr, "uri");
+			dbus_message_iter_append_string (&dictitr, uri);
+		}
+		
+	}
+
+	if (reply) {
+		dbus_connection_send (connection, reply, &serial);
+		dbus_message_unref (reply);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+
 static void
 register_handler(DBusConnection *conn, DBusHandleMessageFunction func, const char **msgs, int n)
 {
@@ -225,6 +295,8 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 
 	register_handler(conn,handle_mediainfo,messages,1);
 	register_handler(conn,handle_playlist_add,addmsgs,1);
+	register_handler(conn,handle_playlist_jump,jumpmsgs,1);
+	register_handler(conn,handle_playlist_mediainfo,mediainfomsgs,1);
 	register_handler(conn,handle_playlist_list,listmsgs,1);
 	register_handler(conn,handle_next,nextmsgs,1);
 	register_handler(conn,handle_quit,quitmsgs,1);

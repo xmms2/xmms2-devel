@@ -51,9 +51,9 @@ handle_mediainfo(DBusMessageHandler *handler,
         DBusMessageIter itr;
 
 	dbus_message_iter_init (msg, &itr);
-	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-		gchar *uri = dbus_message_iter_get_string (&itr);
-		printf ("playing uri: %s\n", uri);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+		int id = dbus_message_iter_get_uint32 (&itr);
+		printf ("playing id: %d\n", id);
 		fflush (stdout);
 	}
 
@@ -78,12 +78,82 @@ handle_disconnect (DBusMessageHandler *handler,
 }
 
 
+static guint
+get_current_id (DBusConnection *conn)
+{
+	DBusMessage *res;
+	DBusMessage *msg = dbus_message_new ("org.xmms.core.mediainfo", NULL);
+	DBusError err;
+	guint id = 0;
+
+	dbus_error_init (&err);
+	
+	res = dbus_connection_send_with_reply_and_block (conn, msg, 2000, &err);
+
+	if (res) {
+		DBusMessageIter itr;
+		
+		dbus_message_iter_init (res, &itr);
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			id = dbus_message_iter_get_uint32 (&itr);
+		} else {
+			printf ("bad response :(\n");
+		}
+	}
+
+	dbus_message_unref (msg);
+
+	return id;
+}
+
+static GHashTable *
+get_mediainfo (DBusConnection *conn, guint id)
+{
+	DBusMessage *msg, *ret;
+	DBusMessageIter itr;
+	DBusError err;
+	GHashTable *tab = NULL;
+
+	dbus_error_init (&err);
+
+	msg = dbus_message_new ("org.xmms.playlist.mediainfo", NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_uint32 (&itr, id);
+	ret = dbus_connection_send_with_reply_and_block (conn, msg, 2000, &err);
+	if (ret) {
+		DBusMessageIter itr;
+		
+		dbus_message_iter_init (ret, &itr);
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_DICT) {
+			DBusMessageIter dictitr;
+			dbus_message_iter_init_dict_iterator (&itr, &dictitr);
+
+			tab = g_hash_table_new (g_str_hash, g_str_equal);
+
+			while (42) {
+				g_hash_table_insert (tab, dbus_message_iter_get_dict_key (&dictitr), dbus_message_iter_get_string (&dictitr));
+				if (!dbus_message_iter_has_next (&dictitr))
+					break;
+				dbus_message_iter_next (&dictitr);
+			}
+
+		} else {
+			printf ("bad response :(\n");
+		}
+	}
+
+	dbus_message_unref (msg);
+	dbus_connection_flush (conn);
+
+	return tab;
+}
+
 int
 status_main(DBusConnection *conn)
 {
-	DBusMessage *msg, *res;
 	DBusError err;
 	DBusMessageHandler *hand;
+	guint id;
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 
@@ -99,24 +169,13 @@ status_main(DBusConnection *conn)
 	dbus_connection_register_handler (conn, hand, disconnectmsgs, 1);
 
 
-	msg = dbus_message_new ("org.xmms.core.mediainfo", NULL);
-	
-	res = dbus_connection_send_with_reply_and_block (conn, msg, 2000, &err);
-
-	if (res) {
-		DBusMessageIter itr;
-		
-		dbus_message_iter_init (res, &itr);
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-			gchar *url = dbus_message_iter_get_string (&itr);
-			printf ("Playing: %s\n",url);
-			url = NULL;
-		} else {
-			printf ("bad response :(\n");
-		}
+	id = get_current_id (conn);
+	if (id) {
+		GHashTable *entry;
+		entry = get_mediainfo (conn, id);
+		printf ("Playing %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
 	}
 
-	dbus_message_unref (msg);
 	dbus_connection_flush (conn);
 
 	dbus_connection_setup_with_g_main (conn, NULL);
@@ -173,6 +232,33 @@ main(int argc, char **argv)
 			dbus_connection_disconnect (conn);
 			dbus_connection_unref (conn);
 			exit(0);
+		} else if ( streq (argv[1], "jump") ) {
+			DBusMessage *msg;
+			DBusMessageIter itr;
+			int cserial;
+			int id;
+
+			if ( argc < 3 ) {
+				printf ("usage: jump id\n");
+				return 1;
+			}
+
+			id = atoi (argv[2]);
+
+			msg = dbus_message_new ("org.xmms.playlist.jump", NULL);
+			dbus_message_append_iter_init (msg, &itr);
+			dbus_message_iter_append_uint32 (&itr, id);
+			dbus_connection_send (conn, msg, &cserial);
+			dbus_message_unref (msg);
+
+			msg = dbus_message_new ("org.xmms.core.play-next", NULL);
+			dbus_connection_send (conn, msg, &cserial);
+			dbus_message_unref (msg);
+
+			dbus_connection_flush (conn);
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
 		} else if ( streq (argv[1], "quit") ) {
 			DBusMessage *msg;
 			int cserial;
@@ -186,18 +272,26 @@ main(int argc, char **argv)
 			exit(0);
 		} else if ( streq (argv[1], "list") ) {
 			DBusMessage *msg,*res;
-			int cserial;
 
 			msg = dbus_message_new ("org.xmms.playlist.list", NULL);
 			res = dbus_connection_send_with_reply_and_block (conn, msg, 2000, &err);
 			if (res) {
 				DBusMessageIter itr;
+				gint curr = get_current_id (conn);
 				
 				dbus_message_iter_init (res, &itr);
+				printf ("   id:\turi:\n");
 				while (42) {
-					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-						gchar *url = dbus_message_iter_get_string (&itr);
-						printf ("list: %s\n",url);
+					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+						GHashTable *entry;
+						guint id = dbus_message_iter_get_uint32 (&itr);
+						if (curr == id) {
+							printf ("-->%d\t", id);
+						} else {
+							printf ("   %d\t",id);
+						}
+						entry = get_mediainfo (conn, id);
+						printf ("%s\n", (gchar*) g_hash_table_lookup (entry, "uri"));
 					}
 					if (!dbus_message_iter_has_next (&itr)){
 						break;

@@ -93,6 +93,12 @@ xmms_core_playlist_adduri (gchar *nuri)
 }
 
 void
+xmms_core_playlist_jump (guint id)
+{
+	xmms_playlist_set_current_position (core->playlist, id);
+}
+
+void
 xmms_core_quit ()
 {
 	exit (0); /** @todo BUSKIS! */
@@ -246,6 +252,19 @@ xmms_core_get_uri ()
 	return core->curr_song ? core->curr_song->uri ? g_strdup(core->curr_song->uri) : NULL : NULL;
 }
 
+gint
+xmms_core_get_id ()
+{
+	if (core->curr_song) 
+		return xmms_playlist_entry_id_get (core->curr_song);
+	return 0;
+}
+
+xmms_playlist_entry_t *
+xmms_core_playlist_entry_mediainfo (guint id)
+{
+	return xmms_playlist_get_byid (core->playlist, id);
+}
 
 /**
  * Set time current tune have been played.
