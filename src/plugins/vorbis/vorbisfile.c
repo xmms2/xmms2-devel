@@ -59,7 +59,7 @@ static gboolean xmms_vorbis_decode_block (xmms_decoder_t *decoder);
 static void xmms_vorbis_get_media_info (xmms_decoder_t *decoder);
 static void xmms_vorbis_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_vorbis_init (xmms_decoder_t *decoder);
-static void xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples);
+static gboolean xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples);
 
 /*
  * Plugin header
@@ -361,18 +361,19 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 }
 
 
-static void 
+static gboolean 
 xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 {
 	xmms_vorbis_data_t *data;
 
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (decoder, FALSE);
 
 	data = xmms_decoder_private_data_get (decoder);
 
-	g_return_if_fail (data);
+	g_return_val_if_fail (data, FALSE);
 
 	ov_pcm_seek (&data->vorbisfile, samples);
+	return TRUE;
 }
 
 	
