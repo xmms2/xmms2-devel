@@ -429,6 +429,8 @@ static void
 handle_playtime (xmmsc_result_t *res, void *userdata)
 {
 	guint dur;
+	GError *err = NULL;
+	int r, w;
 	
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
@@ -438,7 +440,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 		print_error ("korv");
 	}
 	
-	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", songname, dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
+	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err) , dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
 	fflush (stdout);
 
 	xmmsc_result_unref (xmmsc_result_restart (res));
