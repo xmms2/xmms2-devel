@@ -1,11 +1,11 @@
-/** @file MPEG Layer 1/2/3 decoder.
-  *
-  * This is based on MAD by Robert Leslie.
-  * Supports Xing VBR and id3v1/v2
-  *
-  * This code basicly sucks at some places. But hey, the
-  * standard is fucked. Please convert to OGG ;-)
-  */
+/** @file 
+ * MPEG Layer 1/2/3 decoder plugin.
+ *
+ * Supports Xing VBR and id3v1/v2
+ *
+ * This code basicly sucks at some places. But hey, the
+ * standard is fucked. Please convert to OGG ;-)
+ */
 
 
 #include "xmms/xmms.h"
@@ -28,9 +28,6 @@
 /*
  * Type definitions
  */
-
-
-
 
 typedef struct xmms_mad_data_St {
 	struct mad_stream stream;

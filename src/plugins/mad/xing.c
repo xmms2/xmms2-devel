@@ -1,5 +1,6 @@
-/** @file This is the Xing Header parser.
-  */
+/** @file 
+ * Xing-header parser.
+ */
 
 #include "xmms/xmms.h"
 #include "xmms/util.h"

@@ -1,7 +1,7 @@
-/** @file XMMS client lib.
-  *
-  * epatraktor 2003
-  */
+/** @file 
+ * XMMS client lib.
+ *
+ */
 
 /* YES! I know that this api may change under my feet */
 #define DBUS_API_SUBJECT_TO_CHANGE

@@ -1,7 +1,8 @@
-/** @file Handles debuglog.
-  * 
-  * Based on gstp_log by Alexander Haväng.
-  */
+/** @file 
+ * Logging functions.
+ * 
+ * Based on gstp_log by Alexander Haväng.
+ */
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -226,5 +227,3 @@ xmms_log_close_logfile ()
 
 	return 1;
 }
-
-

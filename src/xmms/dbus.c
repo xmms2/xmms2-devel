@@ -6,7 +6,7 @@
  * are passed to the clients. The clients can send dbus-messages that
  * causes xmms-signals to be emitted.
  *
- * @url http://www.freedesktop.org/software/dbus/
+ * @sa http://www.freedesktop.org/software/dbus/
  *
  */
 
