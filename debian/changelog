@@ -1,3 +1,15 @@
+xmms2 (1.94-rc3-3) unstable; urgency=low
+
+  * Damn manpages.
+
+ -- Tobias <tru@xmms.org>  Sun, 23 Nov 2003 12:05:51 +0100
+
+xmms2 (1.94-rc3-2) unstable; urgency=low
+
+  * New streaming and vorbis plugins. 
+
+ -- Tobias <tru@xmms.org>  Sun, 23 Nov 2003 11:47:28 +0100
+
 xmms2 (1.94-rc3-1) unstable; urgency=high
 
   * New Upstream. Should correct some dbus errors.

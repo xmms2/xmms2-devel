@@ -54,15 +54,3 @@ Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - ices effect - private beta - DO NOT SPREAD!
  This package let you stream to a icecast2 server.
 
-Package: xmms2-sqlite
-Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
-Description: XMMS2 - sqlitebased medialib - private beta - DO NOT SPREAD!
- This package is a backed for the medialib based on sqlite
-
-Package: xmms2-client-sdl
-Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
-Description: XMMS2 - simple vis - private beta - DO NOT SPREAD!
- This is a very simple visualization for xmms2.
-
