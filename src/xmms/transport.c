@@ -8,25 +8,6 @@
  * Type definitions
  */
 
-struct xmms_transport_St {
-	xmms_object_t object;
-	xmms_plugin_t *plugin;
-
-	GMutex *mutex;
-	GThread *thread;
-	gboolean running;
-
-	xmms_ringbuf_t *buffer;
-	gchar *mime_type;
-	gpointer plugin_data;
-};
-
-/*
- * Macros
- */
-
-#define xmms_transport_lock(t) g_mutex_lock ((t)->mutex)
-#define xmms_transport_unlock(t) g_mutex_unlock ((t)->mutex)
 
 
 /*
@@ -149,6 +130,25 @@ xmms_transport_wait (xmms_transport_t *transport)
 }
 
 gint
+xmms_transport_read_directly (xmms_transport_t *transport, gchar *buffer,
+				guint len)
+{
+	gint ret;
+	xmms_transport_read_method_t read_method;
+	g_return_val_if_fail (transport, -1);
+	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (len > 0, -1);
+
+	read_method = xmms_plugin_method_get (transport->plugin, "read");
+
+	g_return_val_if_fail (read_method, -1);
+	ret = read_method (transport, buffer, len);
+
+	return ret;
+
+}
+
+gint
 xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 {
 	gint ret;
@@ -165,6 +165,31 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	xmms_transport_unlock (transport);
 
 	return ret;
+}
+
+gint
+xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
+{
+	xmms_transport_seek_method_t seek;
+	g_return_val_if_fail (transport, -1);
+
+	seek = xmms_plugin_method_get (transport->plugin, "seek");
+	g_return_val_if_fail (seek, -1);
+	
+	return seek (transport, offset, whence);
+
+}
+
+gint
+xmms_transport_size (xmms_transport_t *transport)
+{
+	xmms_transport_size_method_t size;
+	g_return_val_if_fail (transport, -1);
+
+	size = xmms_plugin_method_get (transport->plugin, "size");
+	g_return_val_if_fail (size, -1);
+
+	return size (transport);
 }
 
 /*

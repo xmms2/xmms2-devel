@@ -38,7 +38,7 @@ typedef struct xmms_playlist_entry_St {
 	gchar album[XMMS_PL_PROPERTY];
 	gchar title[XMMS_PL_PROPERTY];
 	gchar comment[XMMS_PL_PROPERTY];
-	gint genre;
+	gchar genre[XMMS_PL_PROPERTY];
 	gint year;
 	gint tracknr;
 

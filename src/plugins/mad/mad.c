@@ -2,6 +2,7 @@
 #include "xmms/decoder.h"
 #include "xmms/util.h"
 #include "xmms/output.h"
+#include "xmms/transport.h"
 #include "mad_misc.h"
 #include <mad.h>
 
@@ -12,6 +13,26 @@
 /*
  * Type definitions
  */
+
+
+struct id3v1tag_t {
+        char tag[3]; /* always "TAG": defines ID3v1 tag 128 bytes before EOF */
+        char title[30];
+        char artist[30];
+        char album[30];
+        char year[4];
+        union {
+                struct {
+                        char comment[30];
+                } v1_0;
+                struct {
+                        char comment[28];
+                        char __zero;
+                        unsigned char track_number;
+                } v1_1;
+        } u;
+        unsigned char genre;
+};
 
 
 typedef struct xmms_mad_data_St {
@@ -30,6 +51,7 @@ typedef struct xmms_mad_data_St {
 static gboolean xmms_mad_can_handle (const gchar *mimetype);
 static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport);
+static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 
 /*
  * Plugin header
@@ -47,8 +69,46 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, "can_handle", xmms_mad_can_handle);
 	xmms_plugin_method_add (plugin, "new", xmms_mad_new);
 	xmms_plugin_method_add (plugin, "decode_block", xmms_mad_decode_block);
+	xmms_plugin_method_add (plugin, "get_media_info", xmms_mad_get_media_info);
 
 	return plugin;
+}
+
+static void
+xmms_mad_get_media_info (xmms_decoder_t *decoder)
+{
+	xmms_transport_t *transport;
+	xmms_playlist_entry_t *entry;
+	xmms_mad_data_t *data;
+	struct id3v1tag_t tag;
+	gint size;
+
+	g_return_if_fail (decoder);
+
+	data = xmms_decoder_plugin_data_get (decoder);
+	g_return_if_fail (data);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_if_fail (transport);
+
+	xmms_transport_lock (transport);
+	xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
+	xmms_transport_read_directly (transport, (gchar *)&tag, 128);
+	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
+	xmms_transport_unlock (transport);
+
+	if (strncmp (tag.tag, "TAG", 3) == 0) {
+		XMMS_DBG ("Found ID3v1 TAG!");
+
+		entry = g_new0 (xmms_playlist_entry_t, 1);
+		memcpy (entry->artist, tag.artist, 30);
+		memcpy (entry->album, tag.album, 30);
+		memcpy (entry->title, tag.title, 30);
+		/* FIXME */
+		decoder->mediainfo = entry;
+	}
+
+
 }
 
 static gboolean

@@ -3,6 +3,7 @@
 
 #include "xmms/transport.h"
 #include "xmms/output.h"
+#include "xmms/playlist.h"
 
 /*
  * Type definitions
@@ -15,6 +16,9 @@ typedef struct xmms_decoder_St {
 	GThread *thread;
 	GMutex *mutex;
 	GCond *eos_cond;
+
+	/* Mediainfo */
+	xmms_playlist_entry_t *mediainfo;
 	
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport;
@@ -34,12 +38,15 @@ typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder,
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder,
 														xmms_transport_t *transport);
 
+typedef void (*xmms_decoder_get_media_info_method_t) (xmms_decoder_t *decoder);
 /*
  * Public function prototypes
  */
 
 gpointer xmms_decoder_plugin_data_get (xmms_decoder_t *decoder);
 void xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data);
+gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
+xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 
 /*
  * Private function prototypes -- do NOT use in plugins.

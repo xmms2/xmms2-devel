@@ -1,6 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/util.h"
+#include "magic.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -24,6 +25,8 @@ typedef struct {
 static gboolean xmms_file_can_handle (const gchar *uri);
 static gboolean xmms_file_open (xmms_transport_t *transport, const gchar *uri);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gint xmms_file_size (xmms_transport_t *transport);
+static gint xmms_file_seek (xmms_transport_t *transport, guint offset, gint whence);
 
 /*
  * Plugin header
@@ -41,6 +44,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, "can_handle", xmms_file_can_handle);
 	xmms_plugin_method_add (plugin, "open", xmms_file_open);
 	xmms_plugin_method_add (plugin, "read", xmms_file_read);
+	xmms_plugin_method_add (plugin, "size", xmms_file_size);
+	xmms_plugin_method_add (plugin, "seek", xmms_file_seek);
 	
 	return plugin;
 }
@@ -67,6 +72,7 @@ xmms_file_open (xmms_transport_t *transport, const gchar *uri)
 	gint fd;
 	xmms_file_data_t *data;
 	const gchar *uriptr;
+	const gchar *mime;
 
 	XMMS_DBG ("xmms_file_open (%p, %s)", transport, uri);
 	
@@ -90,7 +96,9 @@ xmms_file_open (xmms_transport_t *transport, const gchar *uri)
 	data->fd = fd;
 	xmms_transport_plugin_data_set (transport, data);
 
-	xmms_transport_mime_type_set (transport, "audio/mpeg"); /* FIXME */
+	mime = xmms_magic_mime_from_file (uriptr);
+	g_return_val_if_fail (mime, FALSE);
+	xmms_transport_mime_type_set (transport, mime);
 	
 	return TRUE;
 }
@@ -109,5 +117,34 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	ret = read (data->fd, buffer, len);
 
 	return ret;
+}
+
+static gint
+xmms_file_seek (xmms_transport_t *transport, guint offset, gint whence)
+{
+	xmms_file_data_t *data;
+
+	g_return_val_if_fail (transport, -1);
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_val_if_fail (data, -1);
+
+	return lseek (data->fd, offset, whence);
+}
+
+static gint
+xmms_file_size (xmms_transport_t *transport)
+{
+	struct stat st;
+	xmms_file_data_t *data;
+
+	g_return_val_if_fail (transport, -1);
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_val_if_fail (data, -1);
+	
+	if (fstat (data->fd, &st) == -1) {
+		return -1;
+	}
+
+	return st.st_size;
 }
 

@@ -100,9 +100,17 @@ main (int argc, char **argv)
 			if (!decoder)
 				return 1;
 			xmms_decoder_start (decoder, transport, output);
+		} else {
+			return 1;
 		}
 
+		
 		xmms_transport_start (transport);
+		
+		if (xmms_decoder_get_mediainfo (decoder, entry)) {
+			XMMS_DBG ("id3tag: Artist=%s, album=%s, title=%s", entry->artist, entry->album, entry->title);
+		}
+
 		xmms_transport_wait (transport);
 		XMMS_DBG ("EOS");
 

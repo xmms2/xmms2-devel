@@ -5,6 +5,9 @@
 #include "output.h"
 #include "transport.h"
 #include "ringbuf.h"
+#include "playlist.h"
+
+#include <string.h>
 
 /*
  * Type definitions
@@ -33,6 +36,14 @@ void
 xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data)
 {
 	decoder->plugin_data = data;
+}
+
+xmms_transport_t *
+xmms_decoder_transport_get (xmms_decoder_t *decoder)
+{
+	g_return_val_if_fail (decoder, NULL);
+
+	return decoder->transport;
 }
 
 /*
@@ -84,6 +95,42 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
+gboolean
+xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
+			xmms_playlist_entry_t *entry)
+{
+	xmms_playlist_entry_t *mediainfo;
+	xmms_decoder_get_media_info_method_t get_media_info;
+
+	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (entry, FALSE);
+
+	get_media_info = xmms_plugin_method_get (decoder->plugin, "get_media_info");
+	if (get_media_info)
+		get_media_info (decoder);
+
+	g_return_val_if_fail (decoder->mediainfo, FALSE);
+
+	mediainfo = decoder->mediainfo;
+	
+	if (mediainfo->artist)
+		memcpy (entry->artist, mediainfo->artist, XMMS_PL_PROPERTY);
+	if (mediainfo->album)
+		memcpy (entry->album, mediainfo->album, XMMS_PL_PROPERTY);
+	if (mediainfo->title)
+		memcpy (entry->title, mediainfo->title, XMMS_PL_PROPERTY);
+	if (mediainfo->comment)
+		memcpy (entry->comment, mediainfo->comment, XMMS_PL_PROPERTY);
+	if (mediainfo->genre)
+		memcpy (entry->genre, mediainfo->genre, XMMS_PL_PROPERTY);
+
+	entry->year = mediainfo->year;
+	entry->tracknr = mediainfo->tracknr;
+
+	return TRUE;
+}
+
+
 /*
  * Static functions
  */
@@ -122,6 +169,8 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 	return plugin;
 }
 
+
+
 static gpointer
 xmms_decoder_thread (gpointer data)
 {
@@ -133,6 +182,7 @@ xmms_decoder_thread (gpointer data)
 	decode_block = xmms_plugin_method_get (decoder->plugin, "decode_block");
 	if (!decode_block)
 		return NULL;
+
 	
 	while (decoder->running) {
 		decode_block (decoder, decoder->transport);
