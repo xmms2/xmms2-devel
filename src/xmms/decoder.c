@@ -227,31 +227,13 @@ gboolean
 xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
 			xmms_playlist_entry_t *entry)
 {
-	xmms_playlist_entry_t *mediainfo;
-
 	g_return_val_if_fail (decoder, FALSE);
 	g_return_val_if_fail (entry, FALSE);
 
 	g_return_val_if_fail (decoder->mediainfo, FALSE);
 
-	mediainfo = decoder->mediainfo;
+	xmms_playlist_entry_copy_property (decoder->mediainfo, entry);
 	
-	if (mediainfo->artist)
-		memcpy (entry->artist, mediainfo->artist, XMMS_PL_PROPERTY);
-	if (mediainfo->album)
-		memcpy (entry->album, mediainfo->album, XMMS_PL_PROPERTY);
-	if (mediainfo->title)
-		memcpy (entry->title, mediainfo->title, XMMS_PL_PROPERTY);
-	if (mediainfo->comment)
-		memcpy (entry->comment, mediainfo->comment, XMMS_PL_PROPERTY);
-	if (mediainfo->genre)
-		memcpy (entry->genre, mediainfo->genre, XMMS_PL_PROPERTY);
-
-	entry->year = mediainfo->year;
-	entry->tracknr = mediainfo->tracknr;
-	entry->bitrate = mediainfo->bitrate;
-	entry->duration = mediainfo->duration;
-
 	return TRUE;
 }
 

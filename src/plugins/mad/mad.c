@@ -119,9 +119,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_if_fail (transport);
 
-	entry = g_new0 (xmms_playlist_entry_t, 1);
-
-	XMMS_DBG ("Duration %d", entry->duration);
+	entry = xmms_playlist_entry_new (NULL);
 
 	XMMS_DBG ("Seeking to last 128 bytes");
 	xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
@@ -130,24 +128,44 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
 	if (strncmp (tag.tag, "TAG", 3) == 0) {
+		gchar *tmp;
 		XMMS_DBG ("Found ID3v1 TAG!");
 
-		sprintf (entry->artist, "%30.30s", tag.artist);
-		g_strstrip (entry->artist);
-		sprintf (entry->album, "%30.30s", tag.album);
-		g_strstrip (entry->album);
-		sprintf (entry->title, "%30.30s", tag.title);
-		g_strstrip (entry->title);
-		entry->year = strtol (tag.year, NULL, 10);
+		tmp = g_strdup_printf ("%30.30s", tag.artist);
+		g_strstrip (tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST, tmp);
+		g_free (tmp);
+
+		tmp = g_strdup_printf ("%30.30s", tag.album);
+		g_strstrip (tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM, tmp);
+		g_free (tmp);
+
+		tmp = g_strdup_printf ("%30.30s", tag.title);
+		g_strstrip (tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, tmp);
+		g_free (tmp);
+
+		tmp = g_strdup_printf ("%4.4s", tag.year);
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_YEAR, tmp);
+		g_free (tmp);
+
 		if (atoi (&tag.u.v1_1.track_number) > 0) {
 			/* V1.1 */
-			sprintf (entry->comment, "%28.28s", tag.u.v1_1.comment);
-			entry->tracknr = atoi (&tag.u.v1_1.track_number);
-		} else {
-			sprintf (entry->comment, "%30.30s", tag.u.v1_0.comment);
-		}
+			tmp = g_strdup_printf ("%28.28s", tag.u.v1_1.comment);
+			g_strstrip (tmp);
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, tmp);
+			g_free (tmp);
 
-		g_strstrip (entry->comment);
+			tmp = g_strdup_printf ("%d", (gint) tag.u.v1_1.track_number);
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TRACKNR, tmp);
+			g_free (tmp);
+		} else {
+			tmp = g_strdup_printf ("%30.30s", tag.u.v1_1.comment);
+			g_strstrip (tmp);
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, tmp);
+			g_free (tmp);
+		}
 
 	}
 	
@@ -239,21 +257,26 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 			break;
 		}
 
-		if (!data->entry->duration) {
+		if (xmms_playlist_entry_get_prop_int (data->entry, XMMS_ENTRY_PROPERTY_DURATION) == 0) {
 			guint fsize=0;
 			guint bitrate=0;
+			gchar *tmp;
 
 			fsize = xmms_transport_size (transport) * 8;
 			bitrate = data->frame.header.bitrate;
 
 			if (!fsize) {
-				data->entry->duration = 0;
+				xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
 			} else {
-				data->entry->duration = fsize / bitrate;
-				XMMS_DBG ("duration = %d", fsize/bitrate);
+				tmp = g_strdup_printf ("%d", fsize / bitrate);
+				xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
+				XMMS_DBG ("duration = %s", tmp);
+				g_free (tmp);
 			}
 				
-			data->entry->bitrate = bitrate / 1000;
+			tmp = g_strdup_printf ("%d", bitrate / 1000);
+			xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
+			g_free (tmp);
 			xmms_decoder_set_mediainfo (decoder,data->entry);
 
 		}

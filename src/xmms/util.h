@@ -4,6 +4,9 @@
 
 #define XMMS_PATH_MAX 255
 
+#define XMMS_STRINGIFY_NOEXPAND(x) #x
+#define XMMS_STRINGIFY(x) XMMS_STRINGIFY_NOEXPAND(x)
+
 #define DEBUG
 
 #ifdef DEBUG

@@ -41,6 +41,9 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "file",
 			"File transport " VERSION,
 		 	"Plain file transport");
+
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_file_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_file_open);

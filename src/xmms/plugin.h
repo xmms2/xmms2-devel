@@ -19,6 +19,7 @@
 #define XMMS_METHOD_GET_MEDIAINFO "get_mediainfo"
 #define XMMS_METHOD_DESTROY "destroy"
 #define XMMS_METHOD_WRITE "write"
+#define XMMS_METHOD_SEARCH "search"
 
 /*
  * Plugin properties.
