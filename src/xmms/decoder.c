@@ -68,19 +68,19 @@ struct xmms_decoder_St {
 
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport; /**< transport associated with decoder.
-				      *   This is where the decoder gets it
-				      *   data from
-				      */
+	                               *   This is where the decoder gets it
+	                               *   data from
+	                               */
 
 	gpointer plugin_data;
 
 	xmms_effect_t *effect;
 
 
-	xmms_output_t *output;       /**< output associated with decoder.
-				      *   The decoded data will be written
-				      *   to this output.
-				      */
+	xmms_output_t *output; /**< output associated with decoder.
+	                         *   The decoded data will be written
+	                         *   to this output.
+	                         */
 	xmms_visualisation_t *vis;
 
 	guint samplerate;
@@ -98,12 +98,12 @@ struct xmms_decoder_St {
 	gint16 last_l;
 
 	guint32 opos;      /* position in output */
-        guint32 opos_frac;
+	guint32 opos_frac;
 
-        guint32 opos_inc;  /* increment in output for each input-sample */
-        guint32 opos_inc_frac;
+	guint32 opos_inc;  /* increment in output for each input-sample */
+	guint32 opos_inc_frac;
 
-        guint32 ipos;      /* position in the input stream */
+	guint32 ipos;      /* position in the input stream */
 
 };
 
