@@ -7,7 +7,7 @@ CORE:
 
 BUGS:
 	* seeking in stopped mode
-	* gap between songs
+	* gap between songs ?
 	* flush on seek
 	* Fix bug in transport_read () (triggers in cdex seeking)
 
@@ -40,7 +40,8 @@ PLUGINS:
 		* WAV
 		* WMA http://ffmpeg.sourceforge.net/ includes libavcodec
 		* Speex
-		* det däringa lossless formatet som nyligen gick med i vorbis
+		* FLAC, FLAC / OGG
+		* be able to change subtune without destroying the decoder.
 
 	* Output
 		* ARTS
@@ -54,6 +55,7 @@ PLUGINS:
 	* Effects
 		* move effects to output layer
 		* Replaygain
+		* fft-data should be applied to a window
 
 	
 LIBL44T:
