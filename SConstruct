@@ -39,6 +39,8 @@ opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
 opts.Add('NOCACHE', 'do not use cache', 0)
 opts.Add('EXCLUDE', 'exclude this modules', '')
 
+
+
 ## setup base environment...
 ## ...ok, this should be a bit configurable... later.
 ##
@@ -88,3 +90,7 @@ SConscript('src/plugins/SConscript',build_dir='builddir/plugins', duplicate=0)
 SConscript('src/lib/SConscript',build_dir='builddir/lib', duplicate=0)
 SConscript('src/clients/lib/python//SConscript')
 
+install=[base_env['PREFIX']]
+if base_env.optional_config.has_key("pythonlibdir"):
+	install.append(base_env.optional_config["pythonlibdir"])
+base_env.Alias('install', install)
