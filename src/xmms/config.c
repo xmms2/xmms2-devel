@@ -96,7 +96,7 @@ static xmms_config_value_t *xmms_config_value_new (const gchar *name);
 static void
 add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
 {
-	*(GList**)udata = g_list_append (*(GList**)udata, (gchar*) key);
+	*(GList**)udata = g_list_append (*(GList**)udata, g_strdup ((gchar*) key));
 }
 
 static void 
@@ -278,8 +278,13 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 	return xmms_config_value_string_get (val);
 }
 
+gchar *
+xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err)
+{
+	return g_strdup (xmms_config_value_lookup_string_get (conf, key, err));
+}
 
-XMMS_CMD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
+XMMS_CMD_DEFINE (getvalue, xmms_config_value_client_lookup, xmms_config_t *, STRING, STRING, NONE);
 
 static void
 xmms_config_destroy (xmms_object_t *object) 
