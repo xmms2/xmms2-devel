@@ -51,6 +51,9 @@ GList *xmms_medialib_select (gchar *query, xmms_error_t *error);
 GList * xmms_medialib_select_entries (gchar *query, xmms_error_t *error);
 xmms_playlist_entry_t * xmms_medialib_entry_get_byid (guint id);
 
+void xmms_medialib_logging_start (xmms_playlist_entry_t *entry);
+void xmms_medialib_logging_stop (xmms_playlist_entry_t *entry, xmms_output_t *output);
+
 
 #ifdef HAVE_SQLITE
 #include <sqlite.h>

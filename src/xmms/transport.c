@@ -306,6 +306,18 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 	return ret;
 }
 
+/** 
+ * Gets the current playlist entry from the transport.
+ */
+xmms_playlist_entry_t *
+xmms_transport_entry_get (const xmms_transport_t *const transport)
+{
+	g_return_val_if_fail (transport, NULL);
+	return transport->entry;
+}
+
+
+
 /**
  * Updates the current entry 
  */

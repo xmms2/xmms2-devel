@@ -80,6 +80,7 @@ gboolean xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whe
 gint xmms_transport_size (xmms_transport_t *transport);
 xmms_plugin_t *xmms_transport_plugin_get (const xmms_transport_t *transport);
 const gchar *xmms_transport_url_get (const xmms_transport_t *const transport);
+xmms_playlist_entry_t *xmms_transport_entry_get (const xmms_transport_t *const transport);
 void xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry);
 const gchar *xmms_transport_suburl_get (const xmms_transport_t *const transport);
 void xmms_transport_close (xmms_transport_t *transport);
