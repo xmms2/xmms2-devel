@@ -198,7 +198,7 @@ main(int argc, char **argv)
 			printf ("Artist: %-30s ", g_hash_table_lookup (entry, "artist"));
 			printf ("Album: %-30s\n", g_hash_table_lookup (entry, "album"));
 			printf ("Title:  %-30s ", g_hash_table_lookup (entry, "title"));
-			printf ("Year: %s\n", g_hash_table_lookup (entry, "year"));
+			printf ("Year: %s\n", g_hash_table_lookup (entry, "date"));
 
 			xmmsc_deinit (c);
 
