@@ -11,6 +11,7 @@ const xmms_mimemap_t mimemap[] = {
 	{ "mp3", "audio/mpeg" },
 	{ "ogg", "application/ogg" },
 	{ "wav", "audio/wave" },
+	{ "sid", "audio/prs.sid" },
 	{ NULL, NULL }
 };
 

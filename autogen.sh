@@ -1,7 +1,7 @@
 #!/bin/sh
 
 libtoolize --automake -c -f
-aclocal
+aclocal -I acmacros
 autoheader
 automake -a -c
 autoconf
