@@ -4,8 +4,8 @@
 #include "xmms/signal_xmms.h"
 #include <glib.h>
 
-static GMainLoop *mainloop;
-static xmmsc_connection_t *xmmsc_conn;
+static GMainLoop *mainloop = NULL;
+static xmmsc_connection_t *xmmsc_conn = NULL;
 
 static void
 handle_witharg (void *userdata, void *arg)
