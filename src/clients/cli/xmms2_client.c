@@ -838,6 +838,7 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 
 static gchar songname[60];
 static gint curr_dur;
+static guint last_dur = 0;
 
 static void
 handle_playtime (xmmsc_result_t *res, void *userdata)
@@ -850,11 +851,18 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
+		goto cont;
 	}
 	
 	if (!xmmsc_result_get_uint (res, &dur)) {
 		print_error ("korv");
+		goto cont;
 	}
+
+	if (((dur / 1000) % 60) == ((last_dur / 1000) % 60))
+		goto cont;
+
+	last_dur = dur;
 
 	conv =  g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
 	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", conv,
@@ -864,6 +872,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 
 	fflush (stdout);
 
+cont:
 	newres = xmmsc_result_restart (res);
 	xmmsc_result_unref (res);
 	xmmsc_result_unref (newres);
