@@ -42,8 +42,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "SDL Output " VERSION,
-							  "Uses SDLlib for output");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "sdlout",
+			"SDL Output " VERSION,
+			"Uses SDLlib for output");
 	
 	xmms_plugin_method_add (plugin, "write", xmms_sdlout_write);
 	xmms_plugin_method_add (plugin, "open", xmms_sdlout_open);

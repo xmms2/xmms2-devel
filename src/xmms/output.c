@@ -52,16 +52,24 @@ xmms_output_open (xmms_plugin_t *plugin)
 
 
 xmms_plugin_t *
-xmms_output_find_plugin ()
+xmms_output_find_plugin (gchar *name)
 {
 	GList *list;
 	xmms_plugin_t *plugin = NULL;
 
+	g_return_val_if_fail (name, NULL);
+
 	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_OUTPUT);
 
-	plugin = list->data;
+	while (list) {
+		plugin = (xmms_plugin_t*) list->data;
+		if (g_strcasecmp (xmms_plugin_shortname_get (plugin), name) == 0) {
+			return plugin;
+		}
+		list = g_list_next (list);
+	}
 
-	return plugin;
+	return NULL;
 }
 	
 void

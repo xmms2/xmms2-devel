@@ -16,6 +16,7 @@ xmms_ringbuf_new (guint size)
 
 	ringbuf->free_cond = g_cond_new ();
 	ringbuf->used_cond = g_cond_new ();
+	ringbuf->eos_cond = g_cond_new ();
 
 	return ringbuf;
 }
@@ -160,9 +161,21 @@ xmms_ringbuf_eos (const xmms_ringbuf_t *ringbuf)
 }
 
 void
-xmms_ringbuf_set_eos (const xmms_ringbuf_t *ringbuf, gboolean eos)
+xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
 {
 	g_return_if_fail (ringbuf);
 
 	ringbuf->eos = eos;
+	g_cond_broadcast (ringbuf->eos_cond);
+}
+
+void
+xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
+{
+	g_return_if_fail (ringbuf);
+	g_return_if_fail (mtx);
+
+	while (!xmms_ringbuf_eos (ringbuf))
+		g_cond_wait (ringbuf->eos_cond, mtx);
+
 }

@@ -108,6 +108,16 @@ xmms_transport_open (const gchar *uri)
 	return transport;
 }
 
+void
+xmms_transport_free (xmms_transport_t *transport)
+{
+	g_return_if_fail (transport);
+	
+	xmms_ringbuf_destroy (transport->buffer);
+	g_mutex_free (transport->mutex);
+	g_free (transport);
+}
+
 const gchar *
 xmms_transport_mime_type_get (xmms_transport_t *transport)
 {
@@ -129,10 +139,10 @@ void
 xmms_transport_wait (xmms_transport_t *transport)
 {
 
-	if (transport->running)
-		g_thread_join (transport->thread);
+	xmms_ringbuf_wait_eos (transport->buffer, transport->mutex);
 
-	transport->running = FALSE;
+
+	XMMS_DBG ("Done with this");
 
 	return;
 
@@ -219,11 +229,21 @@ xmms_transport_thread (gpointer data)
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
-		} else if (eof_method (transport)) {
+		} else {
+			XMMS_DBG ("Done with stream...");
+			xmms_ringbuf_set_eos (transport->buffer, TRUE);
 			transport->running = FALSE;
 		}
 		xmms_transport_unlock (transport);
 	}
 
 	return NULL;
+}
+
+
+xmms_ringbuf_t *
+xmms_transport_buffer (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+	return transport->buffer;
 }

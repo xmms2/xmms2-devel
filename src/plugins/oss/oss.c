@@ -40,8 +40,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "OSS Output " VERSION,
-							  "OpenSoundSystem output plugin");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "oss",
+			"OSS Output " VERSION,
+			"OpenSoundSystem output plugin");
 	
 	xmms_plugin_method_add (plugin, "write", xmms_oss_write);
 	xmms_plugin_method_add (plugin, "open", xmms_oss_open);

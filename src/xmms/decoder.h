@@ -13,6 +13,8 @@ typedef struct xmms_decoder_St {
 
 	gboolean running;
 	GThread *thread;
+	GMutex *mutex;
+	GCond *eos_cond;
 	
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport;
@@ -44,6 +46,7 @@ void xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data);
  */
 
 xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
+void xmms_decoder_wait (xmms_decoder_t *decoder);
 
 void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
 

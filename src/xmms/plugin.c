@@ -23,8 +23,9 @@ inline static void xmms_plugin_unlock (xmms_plugin_t *plugin);
  */
 
 xmms_plugin_t *
-xmms_plugin_new (xmms_plugin_type_t type, const gchar *name,
-				 const gchar *description)
+xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
+				const gchar *name,
+				const gchar *description)
 {
 	xmms_plugin_t *plugin;
 
@@ -36,6 +37,7 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *name,
 	plugin->mtx = g_mutex_new ();
 	plugin->type = type;
 	plugin->name = g_strdup (name);
+	plugin->shortname = g_strdup (shortname);
 	plugin->description = g_strdup (description);
 	plugin->method_table = g_hash_table_new (g_str_hash, g_str_equal);
 
@@ -69,6 +71,14 @@ xmms_plugin_name_get (const xmms_plugin_t *plugin)
 	g_return_val_if_fail (plugin, NULL);
 
 	return plugin->name;
+}
+
+const gchar *
+xmms_plugin_shortname_get (const xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, NULL);
+
+	return plugin->shortname;
 }
 
 const char *

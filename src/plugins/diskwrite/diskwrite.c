@@ -34,8 +34,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "Diskwriter output " VERSION,
-							  "Saves a wavefile");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "diskwrite",
+			"Diskwriter output " VERSION,
+			"Saves a wavefile");
 	
 	xmms_plugin_method_add (plugin, "write", xmms_diskwrite_write);
 	xmms_plugin_method_add (plugin, "open", xmms_diskwrite_open);

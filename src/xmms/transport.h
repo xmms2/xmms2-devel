@@ -2,6 +2,7 @@
 #define __XMMS_TRANSPORT_H__
 
 #include <glib.h>
+#include "ringbuf.h"
 
 /*
  * Type definitions
@@ -40,9 +41,11 @@ void xmms_transport_wait (xmms_transport_t *transport);
 
 xmms_transport_t *xmms_transport_open (const gchar *uri);
 void xmms_transport_close (xmms_transport_t *transport);
+void xmms_transport_free (xmms_transport_t *transport);
 
 const gchar *xmms_transport_mime_type_get (xmms_transport_t *transport);
 
 void xmms_transport_start (xmms_transport_t *transport);
+xmms_ringbuf_t *xmms_transport_buffer (xmms_transport_t *transport);
 
 #endif /* __XMMS_TRANSPORT_H__ */

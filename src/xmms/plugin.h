@@ -19,8 +19,9 @@ typedef struct {
 	GMutex *mtx;
 	GModule *module;
 	xmms_plugin_type_t type;
-	char *name;
-	char *description;
+	gchar *name;
+	gchar *shortname;
+	gchar *description;
 
 	guint users;
 	GHashTable *method_table;
@@ -32,13 +33,16 @@ typedef void *xmms_plugin_method_t;
  * Public functions
  */
 
-xmms_plugin_t *xmms_plugin_new (xmms_plugin_type_t type, const char *name,
-								const char *description);
+xmms_plugin_t *xmms_plugin_new (xmms_plugin_type_t type, 
+					const gchar *shortname,
+					const gchar *name,
+					const gchar *description);
 void xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 							 xmms_plugin_method_t method);
 
 xmms_plugin_type_t xmms_plugin_type_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_name_get (const xmms_plugin_t *plugin);
+const gchar *xmms_plugin_shortname_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_description_get (const xmms_plugin_t *plugin);
 
 /*

@@ -41,8 +41,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "HTTP transport " VERSION,
-							  "HTTP streaming transport");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "http",
+			"HTTP transport " VERSION,
+			"HTTP streaming transport");
 	
 	xmms_plugin_method_add (plugin, "can_handle", xmms_http_can_handle);
 	xmms_plugin_method_add (plugin, "open", xmms_http_open);

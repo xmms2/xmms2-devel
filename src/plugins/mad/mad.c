@@ -40,7 +40,8 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "MAD decoder " VERSION,
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "mad",
+			"MAD decoder " VERSION,
 			"MPEG Layer 1/2/3 decoder");
 
 	xmms_plugin_method_add (plugin, "can_handle", xmms_mad_can_handle);

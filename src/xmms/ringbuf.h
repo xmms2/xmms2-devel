@@ -10,7 +10,7 @@ typedef struct
 	gint rd_index, wr_index;
 	gboolean eos;
 
-	GCond *free_cond, *used_cond;
+	GCond *free_cond, *used_cond, *eos_cond;
 } xmms_ringbuf_t;
 
 xmms_ringbuf_t *xmms_ringbuf_new (guint size);
@@ -27,6 +27,7 @@ void xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *m
 void xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
 
 gboolean xmms_ringbuf_eos (const xmms_ringbuf_t *ringbuf);
-void xmms_ringbuf_eos_set (xmms_ringbuf_t *ringbuf, gboolean eos);
+void xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos);
+void xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx);
 
 #endif /* __XMMS_RINGBUF_H__ */

@@ -3,6 +3,8 @@
 #include "object.h"
 #include "util.h"
 #include "output.h"
+#include "transport.h"
+#include "ringbuf.h"
 
 /*
  * Type definitions
@@ -57,6 +59,8 @@ xmms_decoder_new (const gchar *mimetype)
 	decoder = g_new0 (xmms_decoder_t, 1);
 	xmms_object_init (XMMS_OBJECT (decoder));
 	decoder->plugin = plugin;
+	decoder->mutex = g_mutex_new ();
+	decoder->eos_cond = g_cond_new ();
 
 	new_method = xmms_plugin_method_get (plugin, "new");
 
@@ -118,6 +122,22 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 	return plugin;
 }
 
+void
+xmms_decoder_wait (xmms_decoder_t *decoder)
+{
+
+	g_return_if_fail (decoder);
+
+	XMMS_DBG ("Waiting for decoder");
+
+	while (decoder->running) 
+		g_cond_wait (decoder->eos_cond, decoder->mutex);
+
+
+	XMMS_DBG ("Done here");
+
+}
+
 static gpointer
 xmms_decoder_thread (gpointer data)
 {
@@ -131,8 +151,15 @@ xmms_decoder_thread (gpointer data)
 		return NULL;
 	
 	while (decoder->running) {
+		if (xmms_ringbuf_eos (xmms_transport_buffer (decoder->transport))) {
+			XMMS_DBG ("Decoder got EOS, killing thread");
+			g_cond_broadcast (decoder->eos_cond);
+			decoder->running = FALSE;
+		}
 		decode_block (decoder, decoder->transport);
 	}
+
+	XMMS_DBG ("Decoder thread quiting");
 
 	return NULL;
 }

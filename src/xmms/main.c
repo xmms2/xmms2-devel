@@ -24,6 +24,7 @@ main (int argc, char **argv)
 	int opt;
 	int verbose=0;
 	const gchar *mime;
+	gchar *outname = NULL;
 	
 	if (argc < 2)
 		exit (1);
@@ -35,7 +36,7 @@ main (int argc, char **argv)
 	pl = xmms_playlist_init ();
 
 	while (42) {
-		opt = getopt (argc, argv, "vV");
+		opt = getopt (argc, argv, "vVo:");
 
 		if (opt == -1)
 			break;
@@ -49,6 +50,11 @@ main (int argc, char **argv)
 				printf ("XMMS version %s\n", VERSION);
 				exit (0);
 				break;
+
+			case 'o':
+				outname = g_strdup (optarg);
+				break;
+				
 		}
 	}
 
@@ -70,9 +76,13 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (pl));
 
+	if (!outname)
+		outname = "oss";
 
-	o_plugin = xmms_output_find_plugin ();
+	o_plugin = xmms_output_find_plugin (outname);
+	g_return_val_if_fail (o_plugin, -1);
 	output = xmms_output_open (o_plugin);
+	g_return_val_if_fail (output, -1);
 	xmms_output_start (output);
 
 	while ((entry = xmms_playlist_pop (pl))) { /* start playback */
@@ -82,6 +92,7 @@ main (int argc, char **argv)
 		transport = xmms_transport_open (entry->uri);
 		if (!transport)
 			continue;
+
 		mime = xmms_transport_mime_type_get (transport);
 		if (mime) {
 			XMMS_DBG ("mime-type: %s", mime);
@@ -92,11 +103,13 @@ main (int argc, char **argv)
 		}
 
 		xmms_transport_start (transport);
+		
+		xmms_transport_wait (transport);
+		xmms_decoder_wait (decoder);
+		XMMS_DBG ("EOS");
 
-/*		xmms_transport_wait (transport);*/
-/*		xmms_playlist_entry_free (entry);*/
+		/*xmms_transport_free (transport);*/
 
-		sleep (1000);
 	}
 
 	return 0;
