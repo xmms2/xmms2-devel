@@ -232,6 +232,18 @@ main(int argc, char **argv)
 			dbus_connection_disconnect (conn);
 			dbus_connection_unref (conn);
 			exit(0);
+		} else if ( streq (argv[1], "shuffle") ) {
+			DBusMessage *msg;
+			int cserial;
+
+			msg = dbus_message_new ("org.xmms.playlist.shuffle", NULL);
+			dbus_connection_send (conn, msg, &cserial);
+			dbus_message_unref (msg);
+			dbus_connection_flush (conn);
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
+
 		} else if ( streq (argv[1], "jump") ) {
 			DBusMessage *msg;
 			DBusMessageIter itr;
@@ -255,6 +267,34 @@ main(int argc, char **argv)
 			dbus_connection_send (conn, msg, &cserial);
 			dbus_message_unref (msg);
 
+			dbus_connection_flush (conn);
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
+		} else if ( streq (argv[1], "remove") ) {
+			DBusMessage *msg;
+			DBusMessageIter itr;
+			int cserial;
+			int id;
+			guint current = get_current_id (conn);
+
+			if ( argc < 3 ) {
+				printf ("usage: remove id\n");
+				return 1;
+			}
+
+			id = atoi (argv[2]);
+
+			if (id == current) {
+				printf ("Can't remove playing song...\n");
+				exit (0);
+			}
+
+			msg = dbus_message_new ("org.xmms.playlist.remove", NULL);
+			dbus_message_append_iter_init (msg, &itr);
+			dbus_message_iter_append_uint32 (&itr, id);
+			dbus_connection_send (conn, msg, &cserial);
+			dbus_message_unref (msg);
 			dbus_connection_flush (conn);
 			dbus_connection_disconnect (conn);
 			dbus_connection_unref (conn);

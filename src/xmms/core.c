@@ -99,6 +99,18 @@ xmms_core_playlist_jump (guint id)
 }
 
 void
+xmms_core_playlist_shuffle ()
+{
+	xmms_playlist_shuffle (core->playlist);
+}
+
+void
+xmms_core_playlist_remove (guint id)
+{
+	xmms_playlist_id_remove (core->playlist, id);
+}
+
+void
 xmms_core_quit ()
 {
 	exit (0); /** @todo BUSKIS! */

@@ -33,6 +33,8 @@ static const char *addmsgs[]={"org.xmms.playlist.add"};
 static const char *mediainfomsgs[]={"org.xmms.playlist.mediainfo"};
 static const char *listmsgs[]={"org.xmms.playlist.list"};
 static const char *jumpmsgs[]={"org.xmms.playlist.jump"};
+static const char *removemsgs[]={"org.xmms.playlist.remove"};
+static const char *shufflemsgs[]={"org.xmms.playlist.shuffle"};
 static const char *quitmsgs[]={"org.xmms.core.quit"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
@@ -130,6 +132,17 @@ handle_next(DBusMessageHandler *handler,
 }
 
 static DBusHandlerResult
+handle_playlist_shuffle (DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	XMMS_DBG ("shuffle!");
+	xmms_core_playlist_shuffle ();
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
 handle_playlist_add(DBusMessageHandler *handler, 
 		    DBusConnection *conn, DBusMessage *msg, void *user_data)
 {
@@ -218,6 +231,26 @@ handle_playlist_jump (DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+static DBusHandlerResult
+handle_playlist_remove (DBusMessageHandler *handler,
+		   	DBusConnection     *connection,
+			DBusMessage        *msg,
+			void               *user_data)
+{
+        DBusMessageIter itr;
+
+	XMMS_DBG ("removemsg!");
+
+	dbus_message_iter_init (msg, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+		guint id = dbus_message_iter_get_uint32 (&itr);
+		XMMS_DBG ("removing %d", id);
+		xmms_core_playlist_remove (id);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
 static void
 hash_to_dict (gpointer key, gpointer value, gpointer udata)
 {
@@ -298,6 +331,8 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	register_handler(conn,handle_playlist_jump,jumpmsgs,1);
 	register_handler(conn,handle_playlist_mediainfo,mediainfomsgs,1);
 	register_handler(conn,handle_playlist_list,listmsgs,1);
+	register_handler(conn,handle_playlist_shuffle,shufflemsgs,1);
+	register_handler(conn,handle_playlist_remove,removemsgs,1);
 	register_handler(conn,handle_next,nextmsgs,1);
 	register_handler(conn,handle_quit,quitmsgs,1);
 	register_handler(conn,handle_disconnect,disconnectmsgs,1);
