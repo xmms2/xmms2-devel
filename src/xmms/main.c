@@ -11,6 +11,8 @@
 #include "config_xmms.h"
 #include "playlist.h"
 #include "util.h"
+#include "medialib.h"
+
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -44,14 +46,17 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 void
 mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	xmms_playlist_entry_t entry;
+	xmms_playlist_entry_t *entry;
 	xmms_decoder_t *decoder = (xmms_decoder_t *)data;
-	
-	xmms_decoder_get_mediainfo (decoder, &entry);
 
-	fprintf (stdout, "--------\n");
-	fprintf (stdout, "Artist=%s\nAlbum=%s\nTitle=%s\nYear=%d\nTracknr=%d\nBitrate=%d\nComment=%s\nDuration=%ds\n", entry.artist,entry.album,entry.title,entry.year,entry.tracknr,entry.bitrate,entry.comment,entry.duration);
-	fprintf (stdout, "--------\n");
+	entry = xmms_playlist_entry_new (NULL);
+	
+	xmms_decoder_get_mediainfo (decoder, entry);
+
+	xmms_playlist_entry_print (entry);
+
+	xmms_playlist_entry_free (entry);
+
 }
 
 void
@@ -68,9 +73,9 @@ play_next (void)
 	if (!entry)
 		exit (1);
 
-	XMMS_DBG ("Playing %s", entry->uri);
+	XMMS_DBG ("Playing %s", xmms_playlist_entry_get_uri (entry));
 	
-	transport = xmms_transport_open (entry->uri);
+	transport = xmms_transport_open (xmms_playlist_entry_get_uri (entry));
 
 	if (!transport) {
 		play_next ();
@@ -162,7 +167,6 @@ main (int argc, char **argv)
 	xmms_config_data_t *config;
 	int opt;
 	int verbose = 0;
-	int stamp = 0;
 	sigset_t signals;
 	gchar *outname = NULL;
 
@@ -222,7 +226,7 @@ main (int argc, char **argv)
 			}
 				
 			XMMS_DBG ("Adding uri %s to playlist", nuri);
-			xmms_playlist_add (playlist, xmms_playlist_entry_new (nuri), XMMS_PL_APPEND);
+			xmms_playlist_add (playlist, xmms_playlist_entry_new (nuri), XMMS_PLAYLIST_APPEND);
 			optind++;
 		}
 	}
@@ -243,6 +247,28 @@ main (int argc, char **argv)
 	g_return_val_if_fail (output, -1);
 
 	xmms_object_connect (XMMS_OBJECT (output), "eos-reached", eos_reached, NULL);
+
+	{
+		xmms_plugin_t *a;
+		xmms_medialib_t *medialib;
+
+		a = xmms_medialib_find_plugin ("sqlite");
+		if (a) {
+			xmms_playlist_entry_t *find;
+
+			find = xmms_playlist_entry_new (NULL);
+
+			medialib = xmms_medialib_init (a);
+
+			xmms_playlist_entry_set_prop (find, XMMS_ENTRY_PROPERTY_ARTIST, "*AP*");
+			xmms_playlist_entry_set_prop (find, XMMS_ENTRY_PROPERTY_BITRATE, "128");
+			xmms_medialib_search (medialib, find);
+
+			xmms_playlist_entry_free (find);
+		}
+
+		
+	}
 
 	xmms_output_start (output);
 	play_next ();

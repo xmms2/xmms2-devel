@@ -44,7 +44,8 @@ xmms_medialib_init (xmms_plugin_t *plugin)
 	medialib->plugin = plugin;
 	medialib->mutex = g_mutex_new ();
 	
-	if (new_method (medialib)) {
+	if (!new_method (medialib)) {
+		XMMS_DBG ("new_method failed");
 		g_mutex_free (medialib->mutex);
 		g_free (medialib);
 		return NULL;
@@ -71,5 +72,21 @@ xmms_medialib_get_data (xmms_medialib_t *medialib)
 
 	return medialib->data;
 
+}
+
+GList *
+xmms_medialib_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
+{
+	xmms_medialib_search_method_t search;
+
+	g_return_val_if_fail (medialib, NULL);
+	g_return_val_if_fail (entry, NULL);
+
+	search = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_SEARCH);
+
+	g_return_val_if_fail (search, NULL);
+
+	return (search (medialib, entry));
+	
 }
 
