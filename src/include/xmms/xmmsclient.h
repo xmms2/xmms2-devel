@@ -119,6 +119,8 @@ char *xmmscs_configval_get (xmmsc_connection_t *c, char *key);
 
 /* commands */
 xmmsc_result_t *xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query);
+xmmsc_result_t *xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn, const char *name);
+xmmsc_result_t *xmmsc_medialib_playlist_load (xmmsc_connection_t *conn, const char *name);
 
 
 /*

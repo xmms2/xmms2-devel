@@ -83,6 +83,8 @@ typedef enum {
 
 	/* Medialib */
 	XMMS_IPC_CMD_SELECT,
+	XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT,
+	XMMS_IPC_CMD_PLAYLIST_LOAD,
 
 	/* Signal subsystem */
 	XMMS_IPC_CMD_SIGNAL,

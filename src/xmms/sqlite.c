@@ -31,10 +31,20 @@
 #include <sqlite.h>
 #include <glib.h>
 
+/* increment this whenever there are incompatible db structure changes */
+#define DB_VERSION 1
+
+const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id primary_key, url, artist, album, title, genre, lmod)";
 const char create_Property_stm[] = "create table Property (id primary_key, value, key)";
 const char create_Log_stm[] = "create table Log (id primary_key, starttime, value)";
-const char create_idx_stm[] = "create index url_idx on Media (url) ; create index prop_key_idx on Property (key) ; create index log_starttime_idx on Log (starttime)";
+const char create_Playlist_stm[] = "create table Playlist (id primary_key, name)";
+const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
+const char create_idx_stm[] = "create index url_idx on Media (url);"
+                              "create index prop_key_idx on Property (key);"
+                              "create index log_starttime_idx on Log (starttime);"
+                              "create index playlist_idx on Playlist (name);";
+
 
 static int
 xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
@@ -50,6 +60,20 @@ xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName)
 	return 0;
 }
 
+static int
+xmms_sqlite_version_cb (void *pArg, int argc, char **argv, char **columnName)
+{
+	guint *id = pArg;
+
+	if (argv[0]) {
+		*id = atoi (argv[0]);
+	} else {
+		*id = 0;
+	}
+
+	return 0;
+}
+
 gboolean
 xmms_sqlite_open ()
 {
@@ -58,7 +82,7 @@ xmms_sqlite_open ()
 	const gchar *hdir;
 	gboolean create = TRUE;
 	gchar dbpath[XMMS_PATH_MAX];
-	guint id;
+	guint id, version = 0;
 
 	hdir = g_get_home_dir ();
 
@@ -75,11 +99,45 @@ xmms_sqlite_open ()
 		return FALSE; 
 	}
 
+	/* if the database already exists, check whether there have been
+	 * any incompatible changes. if so, we need to recreate the db.
+	 */
+	if (!create) {
+		sqlite_exec (sql, "select version from Control",
+		             xmms_sqlite_version_cb, &version, NULL);
+		if (version != DB_VERSION) {
+			gchar old[XMMS_PATH_MAX];
+
+			sqlite_close (sql);
+			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", hdir);
+			rename (dbpath, old);
+
+			sql = sqlite_open (dbpath, 0644, &err);
+			if (!sql) {
+				xmms_log_fatal ("Error creating sqlite db: %s", err);
+				free (err);
+				return FALSE;
+			}
+
+			create = TRUE;
+		}
+	}
+
 	if (create) {
+		gchar buf[128];
+
+		g_snprintf (buf, sizeof (buf),
+		            "insert into Control (version) VALUES (%i)",
+		            DB_VERSION);
+
 		XMMS_DBG ("Creating the database...");
+		sqlite_exec (sql, create_Control_stm, NULL, NULL, NULL);
+		sqlite_exec (sql, buf, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Property_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Log_stm, NULL, NULL, NULL);
+		sqlite_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
+		sqlite_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		id = 1;
 	} else {

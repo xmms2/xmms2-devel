@@ -38,19 +38,39 @@
  * @{
  */
 
-xmmsc_result_t *
-xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
+static xmmsc_result_t *
+do_methodcall (xmmsc_connection_t *conn, guint id, const gchar *arg)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 	
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_SELECT);
-	xmms_ipc_msg_put_string (msg, query);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, id);
+	xmms_ipc_msg_put_string (msg, arg);
 
 	res = xmmsc_send_msg (conn, msg);
 	xmms_ipc_msg_destroy (msg);
 
 	return res;
+}
+
+xmmsc_result_t *
+xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
+}
+
+xmmsc_result_t *
+xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
+                                      const char *name)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT, name);
+}
+
+xmmsc_result_t *
+xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
+                                      const char *name)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_LOAD, name);
 }
 
 /** @} */
