@@ -199,6 +199,7 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	
 	r = g_strdup_printf ("%d", rate);
 	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
+	g_free (r);
 }
 
 /**
@@ -378,6 +379,7 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
 	g_return_if_fail (decoder);
 
 	if (decoder->thread) {
+		XMMS_DBG ("decoder thread still alive?");
 		xmms_decoder_lock (decoder);
 		decoder->running = FALSE;
 		xmms_decoder_unlock (decoder);
@@ -418,8 +420,10 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
 
-	if (decoder->running)
+	if (decoder->running) {
 		g_thread_join (decoder->thread);
+		decoder->thread = NULL;
+	}
 
 }
 
@@ -461,6 +465,7 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 
 	g_mutex_free (decoder->mutex);
 
+	XMMS_DBG ("Decoder unref");
 	xmms_playlist_entry_unref (decoder->entry);
 
 	xmms_visualisation_destroy(decoder->vis);
@@ -541,7 +546,9 @@ xmms_decoder_thread (gpointer data)
 	xmms_output_set_eos (decoder->output, TRUE);
 	g_mutex_unlock (decoder->mutex);
 
+	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quiting");
+	xmms_decoder_destroy_real (decoder);
 
 	return NULL;
 }

@@ -56,7 +56,7 @@ struct xmms_transport_St {
 
 	xmms_ringbuf_t *buffer;
 	/** String containing current mimetype */
-	gchar *mime_type;
+	gchar *mimetype;
 	/** Private plugin data */
 	gpointer plugin_data;
 
@@ -245,9 +245,9 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 
 	xmms_transport_lock (transport);
 	
-	if (transport->mime_type)
-		g_free (transport->mime_type);
-	transport->mime_type = g_strdup (mimetype);
+	if (transport->mimetype)
+		g_free (transport->mimetype);
+	transport->mimetype = g_strdup (mimetype);
 
 	xmms_transport_unlock (transport);
 	
@@ -372,7 +372,7 @@ xmms_transport_mimetype_get (xmms_transport_t *transport)
 	g_return_val_if_fail (transport, NULL);
 
 	xmms_transport_lock (transport);
-	ret =  transport->mime_type;
+	ret =  transport->mimetype;
 	xmms_transport_unlock (transport);
 
 	return ret;
@@ -389,11 +389,11 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 	g_return_val_if_fail (transport, NULL);
 
 	xmms_transport_lock (transport);
-	if (!transport->mime_type) {
+	if (!transport->mimetype) {
 		XMMS_DBG ("Wating for mime_cond");
 		g_cond_wait (transport->mime_cond, transport->mutex);
 	}
-	ret = transport->mime_type;
+	ret = transport->mimetype;
 	xmms_transport_unlock (transport);
 
 	return ret;
@@ -670,6 +670,7 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	xmms_object_cleanup (XMMS_OBJECT (transport));
 
 	g_free (transport->suburl);
+	g_free (transport->mimetype);
 	g_free (transport);
 }
 

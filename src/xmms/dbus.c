@@ -244,18 +244,21 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 typedef struct xmms_dbus_connection_St {
         gint signals;
         DBusConnection *connection;
+	GList *handlers;
 } xmms_dbus_connection_t;
 
-static void
+static DBusMessageHandler *
 register_handler(DBusConnection *conn, DBusHandleMessageFunction func, const char **msgs, int n)
 {
 	DBusMessageHandler *hand;
 	hand = dbus_message_handler_new (func, NULL, NULL);
 	if (!hand) {
 		XMMS_DBG ("couldn't alloc handler - bad");
-		return;
+		return NULL;
 	}
+
 	dbus_connection_register_handler (conn, hand, msgs, n);
+	return hand;
 }
 
 static void
@@ -538,6 +541,7 @@ handle_core_signal_register (DBusConnection *conn, DBusMessage *msg)
 	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
 		gchar *signal = dbus_message_iter_get_string (&itr);
 		xmms_dbus_signal_mask_map_t *map = get_mask_map (signal);
+		g_free (signal);
 		if (map) {
 			xmms_dbus_connection_t *c;
 			g_mutex_lock(connectionslock);
@@ -876,6 +880,12 @@ handle_core_quit ()
 	return TRUE;
 }
 
+static void
+unref_handlers (gpointer data, gpointer userdata)
+{
+	dbus_message_handler_unref ((DBusMessageHandler *) data);
+}
+
 static gboolean
 handle_core_disconnect (DBusConnection *conn, DBusMessage *msg)
 {
@@ -891,10 +901,13 @@ handle_core_disconnect (DBusConnection *conn, DBusMessage *msg)
 			i++;
 		}
                 connections = g_slist_remove (connections, c);
-                g_free (c);
+
         }
         g_mutex_unlock(connectionslock);
  
+	g_list_foreach (c->handlers, unref_handlers, NULL);
+	g_list_free (c->handlers);
+	g_free (c);
         dbus_connection_unref (conn);
 
 	return TRUE;
@@ -991,21 +1004,26 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 
 	dbus_connection_ref (conn);
 
+	client = g_new0 (xmms_dbus_connection_t, 1);
+	client->connection = conn;
+	client->signals = 0;
+	client->handlers = NULL;
+
 	while (mask_map[i].dbus_name) {
 		if (mask_map[i].callback_with_dbusmsg || 
 			mask_map[i].callback_with_noarg || 
 			mask_map[i].callback_with_intarg) {
+			DBusMessageHandler *handler;
 
-			register_handler (conn, xmms_dbus_callback, &mask_map[i].dbus_name, 1);
+			handler = register_handler (conn, xmms_dbus_callback, &mask_map[i].dbus_name, 1);
+			if (handler)
+				client->handlers = g_list_append (client->handlers, handler);
 		}
 
 		i++;
 	}
 
 	g_mutex_lock(connectionslock);
-	client = g_new0 (xmms_dbus_connection_t, 1);
-	client->connection = conn;
-	client->signals = 0;
 	connections = g_slist_prepend (connections, client);
 	g_mutex_unlock(connectionslock);
 
@@ -1042,6 +1060,10 @@ xmms_dbus_init (gchar *path)
 		xmms_log_fatal ("Socket %s already in use...", path);
 	}
 
+	if (conn)
+		dbus_connection_unref (conn);
+
+	dbus_error_free (&err);
         dbus_error_init (&err);
 
         server = dbus_server_listen (path, &err);

@@ -244,6 +244,10 @@ xmms_core_playlist_addurl (gchar *nurl)
 {
 	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
 	xmms_playlist_add (core->playlist, entry, XMMS_PLAYLIST_APPEND);
+
+	/* Since playlist_add will reference this entry now we turn
+	   total control to it */
+	xmms_playlist_entry_unref (entry);
 }
 
 void
@@ -279,6 +283,7 @@ xmms_core_playlist_clear ()
 {
 	/** @todo Kanske inte skitsnygt. */
 	xmms_core_playback_stop ();
+	xmms_playlist_entry_unref (core->curr_song);
 	core->curr_song = NULL;
 	xmms_playlist_clear (core->playlist);
 }
@@ -381,6 +386,9 @@ core_thread (gpointer data)
 
 		core->playlist_op = XMMS_CORE_NEXT_SONG;
 		
+		if (core->curr_song) 
+			xmms_playlist_entry_unref (core->curr_song);
+
 		core->curr_song = xmms_playlist_get_current_entry (core->playlist);
 
 		if (!core->curr_song) {
@@ -448,7 +456,7 @@ core_thread (gpointer data)
 
 		XMMS_DBG ("destroying decoder");
 		if (core->decoder)
-			xmms_decoder_destroy (core->decoder);
+			core->decoder = NULL;
 		XMMS_DBG ("closing transport");
 		if (core->transport)
 			xmms_transport_close (core->transport);
