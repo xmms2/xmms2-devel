@@ -36,6 +36,7 @@
 #include "xmms/xmms.h"
 #include "xmms/effect.h"
 #include "xmms/dbus.h"
+#include "xmms/visualisation.h"
 
 
 #include "internal/plugin_int.h"

@@ -86,5 +86,6 @@ void xmms_transport_entry_free (xmms_transport_entry_t *entry);
 xmms_transport_entry_type_t xmms_transport_entry_type_get
 			    (xmms_transport_entry_t *entry);
 const gchar *xmms_transport_entry_path_get (xmms_transport_entry_t *entry);
+void xmms_transport_buffering_start (xmms_transport_t *transport);
 
 #endif /* __XMMS_TRANSPORT_H__ */
