@@ -318,7 +318,7 @@ free_queue_entry (gpointer data, gpointer udata)
 
 
 int
-main()
+main(int argc, char **argv)
 {
 	SDL_Surface *screen;
 	gchar *path;
