@@ -5,13 +5,15 @@ CORE:
 	* Core should be reentrant. Cleaned up anyway.
 	* Log should queue messages.
 	* Fix the last functions to new DBus API
+	* Fix bug in transport_read ()
 
 LIB:
 	* bindings to Python / PHP?
 	
 PLUGINS:
-	* mad
-		* broken frames sound bad.
+	* cdae 
+		* cddb
+		* other OSes (*BSD, Win32)
 
 	* sid - 1.9.4
 		* make it work
@@ -35,12 +37,10 @@ PLUGINS:
 		* WAV
 		* WMA http://ffmpeg.sourceforge.net/ includes libavcodec
 		* Speex
-		* CDA Must support DAE.
 		* det däringa lossless formatet som nyligen gick med i vorbis
 
 	* Output
 		* ARTS
-		* ALSA
 		* ESD - Tack Gnome.. tack som fan
                     "esound is junk. The only thing esd has is a good
                      client API for going boing at approximately the
