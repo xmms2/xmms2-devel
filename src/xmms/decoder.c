@@ -284,7 +284,9 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 
 	xmms_playlist_entry_ref (entry);
 
-	decoder = xmms_decoder_new (entry);
+	decoder = xmms_decoder_new ();
+	/** @todo felhantering??? */
+	xmms_decoder_open (decoder, entry);
 	decoder->transport = transport;
 	decoder->output = output;
 	decoder->entry = entry;
@@ -356,14 +358,27 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
  */
 
 xmms_decoder_t *
-xmms_decoder_new (xmms_playlist_entry_t *entry)
+xmms_decoder_new ()
+{
+	xmms_decoder_t *decoder;
+
+	decoder = g_new0 (xmms_decoder_t, 1);
+	xmms_object_init (XMMS_OBJECT (decoder));
+	decoder->mutex = g_mutex_new ();
+	decoder->vis = xmms_visualisation_init();
+
+	return decoder;
+}
+
+gboolean
+xmms_decoder_open (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 {
 	xmms_plugin_t *plugin;
-	xmms_decoder_t *decoder;
 	xmms_decoder_new_method_t new_method;
 	const gchar *mimetype;
 
-	g_return_val_if_fail (entry, NULL);
+	g_return_val_if_fail (entry, FALSE);
+	g_return_val_if_fail (decoder, FALSE);
 
 	mimetype = xmms_playlist_entry_mimetype_get (entry);
 
@@ -371,29 +386,24 @@ xmms_decoder_new (xmms_playlist_entry_t *entry)
 	
 	plugin = xmms_decoder_find_plugin (mimetype);
 	if (!plugin)
-		return NULL;
+		return FALSE;
 	
 	xmms_playlist_entry_ref (entry);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
-	decoder = g_new0 (xmms_decoder_t, 1);
-	xmms_object_init (XMMS_OBJECT (decoder));
-	decoder->plugin = plugin;
-	decoder->mutex = g_mutex_new ();
 	decoder->entry = entry;
-
-	decoder->vis = xmms_visualisation_init();
+	decoder->plugin = plugin;
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new_method || !new_method (decoder, mimetype)) {
-		XMMS_DBG ("new failed");
+		XMMS_DBG ("open failed");
 		xmms_playlist_entry_unref (entry);
-		g_free (decoder);
+		return FALSE;
 	}
 
-	return decoder;
+	return TRUE;
 }
 
 
@@ -455,8 +465,8 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 }
 */
 xmms_playlist_entry_t *
-xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
-				    xmms_transport_t *transport)
+xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
+			    xmms_transport_t *transport)
 {
 	xmms_decoder_get_mediainfo_method_t mediainfo;
 	g_return_val_if_fail (decoder, NULL);

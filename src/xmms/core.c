@@ -285,8 +285,9 @@ xmms_core_mimetype_callback (xmms_object_t *object, gconstpointer data, gpointer
 
 	xmms_playlist_entry_mimetype_set (core->curr_song, mime);
 
-	core->decoder = xmms_decoder_new (core->curr_song);
-	if (!core->decoder) {
+	core->decoder = xmms_decoder_new ();
+	if (!xmms_decoder_open (core->decoder, core->curr_song)) {
+		xmms_decoder_destroy (core->decoder);
 		xmms_core_play_next ();
 	}
 

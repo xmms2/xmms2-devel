@@ -130,16 +130,17 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 
 			xmms_playlist_entry_mimetype_set (entry, mime);
-			decoder = xmms_decoder_new (entry);
-			if (!decoder) {
+			decoder = xmms_decoder_new ();
+			if (xmms_decoder_open (decoder, entry)) {
 				xmms_playlist_entry_unref (entry);
 				xmms_transport_close (transport);
+				xmms_decoder_destroy (decoder);
 				continue;
 			}
 
 			/*xmms_transport_start (transport);*/
 
-			newentry = xmms_decoder_get_mediainfo (decoder, transport);
+			newentry = xmms_decoder_mediainfo_get (decoder, transport);
 			if (newentry) {
 				XMMS_DBG ("updating %s", xmms_playlist_entry_url_get (newentry));
 				//xmms_playlist_entry_copy_property (newentry, entry);

@@ -14,7 +14,7 @@
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_transport_t *xmms_transport_new ();
+xmms_transport_t *xmms_transport_new (void);
 gboolean xmms_transport_open (xmms_transport_t *transport, 
 			      xmms_playlist_entry_t *entry);
 const gchar *xmms_transport_mimetype_get (xmms_transport_t *transport);
