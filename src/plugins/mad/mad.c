@@ -385,8 +385,8 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		
 		/* pack_pcm is stolen from Leslie, thanks :) */
 		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
-		xmms_decoder_write (decoder, out, sizeof(out));
-		
+		xmms_decoder_write (decoder, out, ret);
+
 	}
 	
 	return TRUE;

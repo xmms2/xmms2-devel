@@ -427,11 +427,11 @@ resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
 	gint16 *ibuf = buf;
 	gint16 *obuf;
 	
-	outlen = len * decoder->decimator_ratio / decoder->interpolator_ratio;
+	outlen = 1 + len * decoder->interpolator_ratio  / decoder->decimator_ratio;
 
 	if (decoder->resamplelen != outlen) {
 		decoder->resamplelen = outlen;
-		decoder->resamplebuf = g_realloc (decoder->resamplebuf, outlen+4);
+		decoder->resamplebuf = g_realloc (decoder->resamplebuf, outlen*4);
 		g_return_val_if_fail (decoder->resamplebuf, 0);
 	}
 	
@@ -471,7 +471,7 @@ resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
 	decoder->last_r = last_r;
 	decoder->last_l = last_l;
 	
-	g_return_val_if_fail (written<outlen, 0);
+	g_return_val_if_fail (written/4<outlen, 0);
 	
 	return written;
 		
