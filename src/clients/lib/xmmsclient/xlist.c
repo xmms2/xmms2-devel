@@ -38,7 +38,7 @@ x_list_alloc (void)
 {
   x_list_t *list;
   
-  list = calloc (1, sizeof (list));
+  list = calloc (1, sizeof (x_list_t));
   
   return list;
 }
