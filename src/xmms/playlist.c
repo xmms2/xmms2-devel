@@ -93,6 +93,7 @@ static void xmms_playlist_destroy (xmms_object_t *object);
 static void xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gint32 moment, xmms_error_t *error);
 static void on_playlist_mode_changed (xmms_object_t *object, gconstpointer data, gpointer udata);
 static xmms_playlist_mode_t playlist_mode_from_str (const gchar *mode);
+static void on_entry_mediainfo_changed (xmms_object_t *object, gconstpointer arg, gpointer data);
 
 /*
  * Public functions
@@ -455,6 +456,10 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file)
 
 	if (!playlist->nextentry)
 		playlist->nextentry = node;
+
+	xmms_object_connect (XMMS_OBJECT (file),
+	                     XMMS_IPC_SIGNAL_PLAYLIST_ENTRY_MEDIAINFO_ID,
+	                     on_entry_mediainfo_changed, playlist);
 	
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
@@ -849,6 +854,18 @@ xmms_playlist_init (void)
 
 
 /** @} */
+
+static void
+on_entry_mediainfo_changed (xmms_object_t *object, gconstpointer arg,
+                            gpointer data)
+{
+	xmms_playlist_entry_t *entry = (xmms_playlist_entry_t *) object;
+	guint id = xmms_playlist_entry_id_get (entry);
+
+	xmms_object_emit_f (XMMS_OBJECT (data),
+	                    XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID,
+	                    XMMS_OBJECT_CMD_ARG_UINT32, id);
+}
 
 static xmms_playlist_mode_t
 playlist_mode_from_str (const gchar *mode)

@@ -324,16 +324,15 @@ xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
  */
 
 void
-xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry)
+xmms_playlist_entry_changed (xmms_playlist_entry_t *entry)
 {
-	g_return_if_fail (playlist);
 	g_return_if_fail (entry);
 
 	if (!entry->id)
 		return;
 	
-	xmms_object_emit_f (XMMS_OBJECT (playlist), 
-			    XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID,
+	xmms_object_emit_f (XMMS_OBJECT (entry),
+			    XMMS_IPC_SIGNAL_PLAYLIST_ENTRY_MEDIAINFO_ID,
 			    XMMS_OBJECT_CMD_ARG_UINT32,
 			    entry->id);
 
