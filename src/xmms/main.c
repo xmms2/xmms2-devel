@@ -95,6 +95,16 @@ parse_config ()
 }
 
 
+static void
+change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	gchar *outname = (gchar *)data;
+
+	XMMS_DBG ("Want to use %s as output instead", outname);
+
+	/** @todo fix this */
+}
+
 int
 main (int argc, char **argv)
 {
@@ -177,31 +187,8 @@ main (int argc, char **argv)
 	
 	playlist = xmms_playlist_init ();
 	xmms_core_set_playlist (playlist);
-	if (optind) {
-		while (argv[optind]) {
-			gchar nurl[XMMS_MAX_URI_LEN];
-			if (!strchr (argv[optind], ':')) {
-				XMMS_DBG ("No protocol, assuming file");
-				if (argv[optind][0] == '/') {
-					g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s", argv[optind]);
-				} else {
-					gchar *cwd = g_get_current_dir ();
-					g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[optind]);
-					g_free (cwd);
-				}
-			} else {
-				g_snprintf (nurl, XMMS_MAX_URI_LEN, "%s", argv[optind]);
-			}
-				
-			XMMS_DBG ("Adding url %s to playlist", nurl);
-			xmms_playlist_add (playlist, xmms_playlist_entry_new (nurl), XMMS_PLAYLIST_APPEND);
-			optind++;
-		}
-	}
-
-	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries_total (playlist));
-
-	cv = xmms_config_value_register ("core.outputplugin", "oss", NULL, NULL);
+	
+	cv = xmms_config_value_register ("core.outputplugin", "oss", change_output, NULL);
 	outname = xmms_config_value_string_get (cv);
 	XMMS_DBG ("output = %s", outname);
 

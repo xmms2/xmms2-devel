@@ -14,6 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
+/** @file A nice CDDB query tool */
 
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"

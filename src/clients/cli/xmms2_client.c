@@ -287,17 +287,26 @@ handle_mediainfo (void *userdata, void *arg)
 }
 
 static void
+handle_quit (void *userdata, void *arg)
+{
+	GMainLoop *ml = userdata;
+
+	g_main_loop_quit (ml);
+}
+
+static void
 cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
+	
+	ml = g_main_loop_new (NULL, FALSE);
 
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*) conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void *) conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_mediainfo, (void *) conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_QUIT, handle_quit, (void *) ml);
 
 	xmmsc_playback_current_id (conn);
-
-	ml = g_main_loop_new (NULL, FALSE);
 
 	xmmsc_setup_with_gmain (conn, NULL);
 

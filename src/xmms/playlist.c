@@ -618,8 +618,6 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 	tmpa = xmms_playlist_entry_property_get (entry1, prop);
 	tmpb = xmms_playlist_entry_property_get (entry2, prop);
 
-	XMMS_DBG ("CMP %s with %s", tmpa, tmpb);
-
 	return g_strcasecmp (tmpa, tmpb);
 }
 

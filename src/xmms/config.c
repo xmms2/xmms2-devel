@@ -187,8 +187,14 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
 	xmms_config_value_t *val;
 
 	val = xmms_config_lookup (key);
-	if (val)
+	if (val) {
+		gchar cf[255];
+		
+		g_snprintf (cf, 254, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
+		
 		xmms_config_value_data_set (val, g_strdup (value));
+		xmms_config_save (cf);
+	}
 
 }
 
@@ -328,7 +334,7 @@ xmms_config_save (const gchar *file)
 			nume ++;
 		
 		if (!last) {
-			gchar *data;
+			const gchar *data;
 			data = xmms_config_value_string_get (xmms_config_lookup (line));
 			
 			fprintf (fp, "\t<section name=\"%s\">\n", tmp[0]);
@@ -340,7 +346,7 @@ xmms_config_save (const gchar *file)
 			}
 		} else {
 			gchar **tmpv;
-			gchar *data;
+			const gchar *data;
 			gint nume2 = 0;
 			gint c = common_chars (last, line);
 			tmpv = g_strsplit (line+c, ".", 0);

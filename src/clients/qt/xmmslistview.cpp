@@ -105,7 +105,7 @@ XMMSListView::XMMSListView (XMMSClientQT *client, QWidget *parent, const char *n
 	addColumn ("ID", 42);
 	addColumn ("Artist", 200);
 	addColumn ("Album", 200);
-	addColumn ("Titel", 200);
+	addColumn ("Title", 200);
 	addColumn ("Duration", 60);
 	setSorting (-1, TRUE);
 	setSelectionMode (QListView::Extended);
