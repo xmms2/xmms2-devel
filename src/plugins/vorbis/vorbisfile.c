@@ -346,9 +346,11 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 			buffer[j++] = monobuffer[i];
 			buffer[j++] = monobuffer[i];
 		}
+
+		ret = ret * 2; /* we have doubled every sample now */
 	}
 
-	xmms_decoder_write (decoder,(gchar *) buffer, ret*2);
+	xmms_decoder_write (decoder,(gchar *) buffer, ret);
 
 	return TRUE;
 }
