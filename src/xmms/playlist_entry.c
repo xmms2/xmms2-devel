@@ -186,7 +186,7 @@ xmms_playlist_entry_property_foreach (xmms_playlist_entry_t *entry,
   * Get a value for a property in the playlist entry as a string.
   */
 
-gchar *
+const gchar *
 xmms_playlist_entry_property_get (const xmms_playlist_entry_t *entry, gchar *key)
 {
 	g_return_val_if_fail (entry, NULL);
@@ -304,6 +304,9 @@ xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *e
 {
 	g_return_if_fail (playlist);
 	g_return_if_fail (entry);
+
+
+	XMMS_DBG ("info for %d updated", entry->id);
 	
 	xmms_object_emit_f (XMMS_OBJECT (playlist), 
 			    XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID,

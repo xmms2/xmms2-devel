@@ -45,6 +45,6 @@ int xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r);
 int xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r);
 int xmmsc_result_get_double_array (xmmsc_result_t *res, double **r, int *len);
 int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument);
-int xmmsc_result_get_entrylist (xmmsc_result_t *res, x_list_t **r);
+int xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r);
 
 #endif
