@@ -38,8 +38,6 @@ xmms_playlist_wait (xmms_playlist_t *playlist)
 	g_cond_wait (playlist->cond, playlist->mutex);
 	playlist->is_waiting = FALSE;
 
-	XMMS_PLAYLIST_UNLOCK (playlist);
-
 }
 
 /** Total number of entries in the playlist. */
@@ -339,9 +337,7 @@ xmms_playlist_get_next (xmms_playlist_t *playlist)
 
 	XMMS_PLAYLIST_LOCK (playlist);
 	while (!playlist->nextentry) {
-		XMMS_PLAYLIST_UNLOCK (playlist);
 		xmms_playlist_wait (playlist);
-		XMMS_PLAYLIST_LOCK (playlist);
 	}
 
 	n = g_list_nth (playlist->nextentry, 0);
