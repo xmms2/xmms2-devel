@@ -66,8 +66,10 @@ static void xmms_oss_flush (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
 static guint xmms_oss_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_oss_buffersize_get (xmms_output_t *output);
-static gboolean xmms_oss_mixer_set (xmms_output_t *output, gint left, gint right);
-static gboolean xmms_oss_mixer_get (xmms_output_t *output, gint *left, gint *right);
+static gboolean xmms_oss_mixer_set (xmms_output_t *output, gint left, 
+									gint right);
+static gboolean xmms_oss_mixer_get (xmms_output_t *output, gint *left, 
+									gint *right);
 
 /*
  * Plugin header
@@ -79,34 +81,57 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "oss",
-			"OSS Output " XMMS_VERSION,
-			"OpenSoundSystem output plugin");
+							  "OSS Output " XMMS_VERSION,
+							  "OpenSoundSystem output plugin");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_oss_write);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_oss_open);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_oss_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_oss_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_oss_samplerate_set);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_oss_buffersize_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_oss_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, xmms_oss_mixer_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, xmms_oss_mixer_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, 
+							xmms_oss_write);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, 
+							xmms_oss_open);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
+							xmms_oss_new);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
+							xmms_oss_close);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
+							xmms_oss_samplerate_set);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, 
+							xmms_oss_buffersize_get);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
+							xmms_oss_flush);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, 
+							xmms_oss_mixer_get);
+	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, 
+							xmms_oss_mixer_set);
 
-	xmms_plugin_config_value_register(plugin, 
-		  	   	 	   "mixer",
-					   "/dev/mixer",
-					   NULL,
-					   NULL);
+	xmms_plugin_config_value_register (plugin,
+									   "mixer",
+									   "/dev/mixer",
+									   NULL,
+									   NULL);
 	
 	xmms_plugin_config_value_register (plugin,
-					   "device",
-					   "/dev/dsp",
-					   NULL,
-					   NULL);
-	
+									   "device",
+									   "/dev/dsp",
+									   NULL,
+									   NULL);
+
+	xmms_plugin_config_value_register (plugin,
+									   "volume",
+									   "70/70",
+									   NULL,
+									   NULL);
+
 	return plugin;
 }
 
@@ -163,6 +188,8 @@ xmms_oss_mixer_get (xmms_output_t *output, gint *left, gint *right)
 static guint
 xmms_oss_buffersize_get (xmms_output_t *output)
 {
+	int err = 0;
+	guint ret = 0;
 	xmms_oss_data_t *data;
 	audio_buf_info buf_info;
 
@@ -170,10 +197,12 @@ xmms_oss_buffersize_get (xmms_output_t *output)
 
 	data = xmms_output_private_data_get (output);
 
-	if(!ioctl(data->fd, SNDCTL_DSP_GETOSPACE, &buf_info)){
-		return (buf_info.fragstotal * buf_info.fragsize) - buf_info.bytes;
+	err = ioctl (data->fd, SNDCTL_DSP_GETOSPACE, &buf_info);
+	if (!err) {
+		ret = (buf_info.fragstotal * buf_info.fragsize) - buf_info.bytes;
 	}
-	return 0;
+	
+	return ret;
 }
 
 static void
@@ -252,8 +281,7 @@ xmms_oss_new (xmms_output_t *output)
 	data = g_new0 (xmms_oss_data_t, 1);
 	data->mutex = g_mutex_new ();
 
-	val = xmms_plugin_config_lookup (
-			xmms_output_plugin_get (output), "mixer");
+	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
 	mixdev = xmms_config_value_string_get (val);
 
 	/* Open mixer here. I am not sure this is entirely correct. */
@@ -267,13 +295,13 @@ xmms_oss_new (xmms_output_t *output)
 
 	/* retrive keys for mixer settings. but ignore current values */
 	data->mixer = xmms_plugin_config_lookup (
-			xmms_output_plugin_get (output), "volume");
+									xmms_output_plugin_get (output), "volume");
 
 	/* since we don't have this data when we are register the configvalue
 	   we need to set the callback here */
 	xmms_config_value_callback_set (data->mixer, 
-					NULL,
-					(gpointer) output);
+									NULL,
+									(gpointer) output);
 
 	xmms_output_private_data_set (output, data);
 
@@ -285,6 +313,7 @@ xmms_oss_new (xmms_output_t *output)
 static guint
 xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
 {
+	int err = 0;
 	xmms_oss_data_t *data;
 
 	g_return_val_if_fail (output, 0);
@@ -294,9 +323,10 @@ xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
 	/* we must first drain the buffer.. */
 	ioctl (data->fd, SNDCTL_DSP_SYNC, 0);
 
-	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &rate) == -1) {
+	err = ioctl (data->fd, SNDCTL_DSP_SPEED, &rate);
+	if (err == -1) {
 		xmms_log_error ("Error setting samplerate");
-		return 0;
+		rate = 0;
 	}
 	return rate;
 }
