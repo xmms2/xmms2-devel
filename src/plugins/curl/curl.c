@@ -38,9 +38,12 @@ typedef struct {
 	gchar *buf;
 	gint data_in_buf;
 
+	gboolean stream;
 	gchar *mime;
 	gchar *name;
 	gchar *genre;
+
+	gchar *url;
 } xmms_curl_data_t;
 
 /*
@@ -78,7 +81,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
 
-	//xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	
 	return plugin;
 }
@@ -116,11 +119,10 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 		XMMS_DBG ("mimetype here is %s", data->mime);
 		
 		if (!data->mime && g_strncasecmp (ptr, "ICY 200 OK", 10) == 0) {
-			gchar **tmp;
-			gint i=0;
 
 			XMMS_DBG ("Shoutcast detected...");
 			data->mime = "audio/mpeg"; /* quite safe */
+			data->stream = TRUE;
 
 /*			tmp = g_strsplit (ptr, "\r\n", 0);
 			while (tmp[i]) {
@@ -147,35 +149,59 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 	return size*nmemb;
 }
 
+CURL *
+xmms_curl_easy_new (xmms_transport_t *transport, const gchar *uri, gint offset)
+{
+	struct curl_slist *headerlist = NULL;
+	xmms_curl_data_t *data;
+	CURL *curl;
+
+	g_return_val_if_fail (transport, NULL);
+	g_return_val_if_fail (uri, NULL);
+
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_val_if_fail (data, NULL);
+
+	headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
+	
+	XMMS_DBG ("Setting up CURL");
+
+	curl = curl_easy_init ();
+
+	curl_easy_setopt (curl, CURLOPT_URL, xmms_util_decode_path (uri));
+	curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, xmms_curl_cwrite);
+	curl_easy_setopt (curl, CURLOPT_WRITEDATA, data);
+	curl_easy_setopt (curl, CURLOPT_HTTPGET, 1);
+	curl_easy_setopt (curl, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
+	curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headerlist);
+	if (offset)
+		curl_easy_setopt (curl, CURLOPT_RESUME_FROM, offset);
+
+	return curl;
+}
+
 static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 {
 	xmms_curl_data_t *data;
-	struct curl_slist *headerlist = NULL;
 	
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (uri, FALSE);
 
 	data = g_new0 (xmms_curl_data_t, 1);
 
-	data->curl = curl_easy_init ();
 	data->curlm = curl_multi_init ();
 	data->mime = NULL;
+	data->stream = FALSE;
+	data->url = g_strdup (uri);
 	
-	g_return_val_if_fail (data->curl, FALSE);
+	xmms_transport_plugin_data_set (transport, data);
+	
 	g_return_val_if_fail (data->curlm, FALSE);
 
-	XMMS_DBG ("Setting up CURL");
 
-	headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
-
-	curl_easy_setopt (data->curl, CURLOPT_URL, xmms_util_decode_path (uri));
-	curl_easy_setopt (data->curl, CURLOPT_VERBOSE, 1);
-	curl_easy_setopt (data->curl, CURLOPT_WRITEFUNCTION, xmms_curl_cwrite);
-	curl_easy_setopt (data->curl, CURLOPT_WRITEDATA, data);
-	curl_easy_setopt (data->curl, CURLOPT_HTTPGET, 1);
-	curl_easy_setopt (data->curl, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
-	curl_easy_setopt (data->curl, CURLOPT_HTTPHEADER, headerlist);
+	data->curl = xmms_curl_easy_new (transport, uri, 0);
 
 	curl_multi_add_handle (data->curlm, data->curl);
 
@@ -183,8 +209,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 			CURLM_CALL_MULTI_PERFORM) {
 		data->again = TRUE;
 	}
-	
-	xmms_transport_plugin_data_set (transport, data);
 	
 	/** @todo mimetype from header? */
 	xmms_transport_mime_type_set (transport, "audio/mpeg");
@@ -208,6 +232,10 @@ xmms_curl_close (xmms_transport_t *transport)
 	
 	curl_multi_cleanup (data->curlm);
 	curl_easy_cleanup (data->curl);
+
+	g_free (data->url);
+
+	g_free (data);
 }
 
 static gint
@@ -289,12 +317,49 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 static gint
 xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 {
-	return 0;
+	CURL *curl;
+	xmms_curl_data_t *data;
+
+	g_return_val_if_fail (transport, 0);
+
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_val_if_fail (data, 0);
+
+	
+	if (data->stream)
+		return 0;
+
+	curl = xmms_curl_easy_new (transport, data->url, offset);
+
+	curl_multi_remove_handle (data->curlm, data->curl);
+	curl_multi_add_handle (data->curlm, curl);
+	curl_easy_cleanup (data->curl);
+	data->curl = curl;
+
+	if (curl_multi_perform (data->curlm, &data->running) == 
+			CURLM_CALL_MULTI_PERFORM) {
+		data->again = TRUE;
+	}
+	
+	return offset;
 }
 
 static gint
 xmms_curl_size (xmms_transport_t *transport)
 {
-	return 0;
+	gdouble size;
+	xmms_curl_data_t *data;
+
+	g_return_val_if_fail (transport, 0);
+
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_val_if_fail (data, 0);
+
+	if (data->stream)
+		return 0;
+
+	curl_easy_getinfo (data->curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &size);
+
+	return (gint)size;
 }
 
