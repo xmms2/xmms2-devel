@@ -168,7 +168,7 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 		return 1;
 	}
 	
-	if (!xmms_transport_seek (transport, (gint) offset, whence))
+	if (xmms_transport_seek (transport, (gint) offset, whence) != -1)
 		return -1;
 
 	return 1;

@@ -583,24 +583,23 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 }
 
 /**
-  * Tells the transport thread to schedule a seek.
-  *
-  * This function will seek to a specific offset, it emulates the behaviour
-  * of lseek. It will also clear the buffer.
-  *
-  * The whence parameter should be one of:
-  * @li @c XMMS_TRANSPORT_SEEK_SET Sets position to offset from start of file
-  * @li @c XMMS_TRANSPORT_SEEK_END Sets position to offset from end of file
-  * @li @c XMMS_TRANSPORT_SEEK_CUR Sets position to offset from current position
-  *
-  * @param transport the transport to modify
-  * @param offset offset in bytes
-  * @param whence se above
-  * @returns TRUE if the seek is scheduled.
-  * 
-  */
-
-gboolean
+ * 
+ * Seek to a specific offset in a transport. Emulates the behaviour of
+ * lseek. Buffering is disabled after a seek (automatically enabled
+ * after two reads).
+ *
+ * The whence parameter should be one of:
+ * @li @c XMMS_TRANSPORT_SEEK_SET Sets position to offset from start of file
+ * @li @c XMMS_TRANSPORT_SEEK_END Sets position to offset from end of file
+ * @li @c XMMS_TRANSPORT_SEEK_CUR Sets position to offset from current position
+ *
+ * @param transport the transport to modify
+ * @param offset offset in bytes
+ * @param whence se above
+ * @returns new position, or -1 on error
+ * 
+ */
+gint
 xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
 	xmms_transport_seek_method_t seek_method;
@@ -612,7 +611,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	if (!xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK)) {
 		xmms_transport_unlock (transport);
-		return FALSE;
+		return -1;
 	}
 	
 	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
