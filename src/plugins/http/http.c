@@ -62,7 +62,7 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_http_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_http_init);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_http_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_http_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_http_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_http_size);
@@ -108,7 +108,7 @@ xmms_http_init (xmms_transport_t *transport, const gchar *uri)
 	/* http://server:port/path */
 
 	server = strchr (uri, ':');
-	server=server+3;/* skip // */
+	server = server + 3; /* skip // */
 	
 	if ( (p = strchr (server, ':')) ) {
 		*p='\0';
@@ -138,7 +138,7 @@ xmms_http_init (xmms_transport_t *transport, const gchar *uri)
 		return -1;
 	}
 
-	sa = calloc(1,sizeof(struct sockaddr_in));
+	sa = calloc (1, sizeof (struct sockaddr_in));
 	
 	memcpy (&(sa->sin_addr), hp->h_addr, hp->h_length);
 	sa->sin_family = hp->h_addrtype;
@@ -265,6 +265,7 @@ xmms_http_close (xmms_transport_t *transport)
 	}
 	g_free (data);
 }
+
 static gint
 xmms_http_size (xmms_transport_t *transport)
 {

@@ -329,13 +329,13 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
 xmms_transport_t *
 xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data)
 {
-	xmms_transport_open_method_t open_method;
+	xmms_transport_open_method_t init_method;
 	xmms_transport_t *transport;
 
-	open_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_OPEN);
+	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
 
-	if (!open_method) {
-		XMMS_DBG ("Transport has no open_method!");
+	if (!init_method) {
+		XMMS_DBG ("Transport has no init method!");
 		return NULL;
 	}
 
@@ -352,7 +352,7 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 	transport->uri = g_strdup(uri);
 	transport->suburi = transport->uri + strlen(uri); /* empty string */
 
-	while (!open_method (transport, transport->uri)) {
+	while (!init_method (transport, transport->uri)) {
 
 		while (*--transport->suburi != '/' ){
 			if (*transport->suburi == 0){ /* restore */
@@ -528,8 +528,12 @@ xmms_transport_thread (gpointer data)
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
 		} else {
-			xmms_ringbuf_set_eos (transport->buffer, TRUE);
-			g_cond_wait (transport->cond, transport->mutex);
+			if (ret == -1) {
+				xmms_ringbuf_set_eos (transport->buffer, TRUE);
+				g_cond_wait (transport->cond, transport->mutex);
+			} else { /* ret == 0 */
+				continue;
+			}
 		}
 	}
 	xmms_transport_unlock (transport);

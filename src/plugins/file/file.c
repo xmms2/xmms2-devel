@@ -23,7 +23,7 @@ typedef struct {
  */
 
 static gboolean xmms_file_can_handle (const gchar *uri);
-static gboolean xmms_file_open (xmms_transport_t *transport, const gchar *uri);
+static gboolean xmms_file_init (xmms_transport_t *transport, const gchar *uri);
 static void xmms_file_close (xmms_transport_t *transport);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_file_size (xmms_transport_t *transport);
@@ -46,7 +46,7 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_file_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_file_open);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_file_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_file_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_file_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_file_size);
@@ -75,14 +75,14 @@ xmms_file_can_handle (const gchar *uri)
 }
 
 static gboolean
-xmms_file_open (xmms_transport_t *transport, const gchar *uri)
+xmms_file_init (xmms_transport_t *transport, const gchar *uri)
 {
 	gint fd;
 	xmms_file_data_t *data;
 	const gchar *uriptr;
 	const gchar *mime;
 
-	XMMS_DBG ("xmms_file_open (%p, %s)", transport, uri);
+	XMMS_DBG ("xmms_file_init (%p, %s)", transport, uri);
 	
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (uri, FALSE);
@@ -136,6 +136,9 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (data, -1);
 
 	ret = read (data->fd, buffer, len);
+
+	if (ret == 0)
+		return -1;
 
 	return ret;
 }
