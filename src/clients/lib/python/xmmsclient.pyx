@@ -126,6 +126,9 @@ cdef extern from "xmms/xmmsclient.h" :
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
+	char *encode_path (char *path)
+	char *decode_path (char *path)
+
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
 
@@ -141,7 +144,7 @@ cdef foreach_hash (signed char *key, signed char *value, udata) :
 ObjectRef = {}
 
 cdef ResultNotifier (xmmsc_result_t *res, obj) :
-	obj.Callback ()
+	obj.callback ()
 	if not obj.get_broadcast () :
 		xmmsc_result_unref(res)
 		del ObjectRef[obj.get_cid ()]
@@ -418,6 +421,12 @@ cdef class XMMS :
 
 	def _disconnect_cb (self) :
 		self.disconnect_fun (self)
+
+	def encode_path (self, path):
+		return xmmsc_encode_path(path)
+
+	def decode_path (self, path):
+		return xmmsc_decode_path(path)
 
 	def glib_loop (self) :
 		"""
