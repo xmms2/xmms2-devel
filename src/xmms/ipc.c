@@ -390,7 +390,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client = g_new0 (xmms_ipc_client_t, 1);
 	client->status = XMMS_IPC_CLIENT_STATUS_NEW;
 	client->transport = transport;
-	client->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
+	client->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_MAX_SIZE * 2);
 	client->ipc = ipc;
 	client->ref_lock = g_mutex_new ();
 	client->run = TRUE;
