@@ -201,7 +201,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 						   st->where[1], 
 						   st->where[2]);
 
-	add_value (str, g_strdup (text));
+	add_value (str, (gchar *) text);
 }
 
 
@@ -222,7 +222,7 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_
 		
 		g_snprintf (cf, 254, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
 		
-		xmms_config_value_data_set (val, g_strdup (value));
+		xmms_config_value_data_set (val, value);
 		xmms_config_save (cf);
 	} else {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to set nonexistant configvalue");
@@ -637,7 +637,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	XMMS_DBG ("setting %s to %s", val->name, data);
 
 	g_free (val->data);
-	val->data = data;
+	val->data = g_strdup (data);
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 			  (gpointer) data);
 
@@ -753,7 +753,7 @@ xmms_config_value_register (const gchar *path,
 		else
 			val = xmms_config_value_new (name+1);
 
-		xmms_config_value_data_set (val, g_strdup (default_value));
+		xmms_config_value_data_set (val, (gchar *) default_value);
 		g_hash_table_insert (global_config->values, (gchar *) path, val);
 	}
 
