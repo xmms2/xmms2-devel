@@ -293,6 +293,7 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 	}
 
 	newres = xmmsc_result_restart (res);
+	xmmsc_result_unref (res);
 	xmmsc_result_unref (newres);
 
 }
