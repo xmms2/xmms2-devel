@@ -1,3 +1,9 @@
+xmms2 (1.92-1) unstable; urgency=low
+
+  * New upstream version :)
+
+ -- Anders Gustafsson <andersg@xmms.org>  Wed,  7 May 2003 00:26:42 +0200
+
 xmms2 (1.90-4) unstable; urgency=low
 
   * Configfile support
