@@ -374,6 +374,10 @@ mediarow_callback (void *pArg, int argc, char **argv, char **columnName)
 	xmms_playlist_entry_t *entry = pArg;
 
 	for (i = 0; i < argc; i ++) {
+
+		if (!argv[i])
+			continue;
+
 		XMMS_DBG ("Setting %s to %s", columnName[i], argv[i]);
 		if (g_strcasecmp (columnName[i], "id") == 0) {
 			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, argv[i]);
