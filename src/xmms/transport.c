@@ -717,15 +717,14 @@ xmms_transport_thread (gpointer data)
 		if (!transport->buffering) {
 			XMMS_DBG ("Holding pattern");
 			g_cond_wait (transport->cond, transport->mutex);
-			
 		}
+
+		if (!transport->buffering)
+			continue;
 
 		g_mutex_unlock (transport->mutex);
 		ret = read_method (transport, buffer, sizeof(buffer));
 		g_mutex_lock (transport->mutex);
-
-		if (!transport->buffering)
-			continue;
 
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
