@@ -8,6 +8,8 @@
 #include "transport.h"
 #include "decoder.h"
 
+#include <string.h>
+
 #include <glib.h>
 
 xmms_plugin_t *
@@ -98,12 +100,31 @@ void
 xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 {
 	xmms_medialib_add_entry_method_t add_entry;
+	gchar *p;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (entry);
 
 	add_entry = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_ADD_ENTRY);
 	g_return_if_fail (add_entry);
+
+	if (!xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST))
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST, "Unknown Artist");
+	if (!xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM))
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM, "Unknown Album");
+	if (!xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_GENRE))
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, "Unknown Genre");
+	if (!xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_TITLE)) {
+		gchar *ap;
+		
+		ap = xmms_playlist_entry_get_uri (entry);
+		p = strrchr (ap, '/');
+		p++;
+		if (!p)
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, ap);
+		else 
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, p);
+	}
 
 	add_entry (medialib, entry);
 
