@@ -1,3 +1,13 @@
+/** @file
+ * Configfile parser and handler
+ *
+ * The entire structure of this configfile and internal structures
+ * orginated from tilde (http://tilde.sourceforge.net) but has
+ * been redesigned to fit XMMS. 
+ *
+ * As now XMMS is not able to use "lists" as config values.
+ */
+
 #include <glib.h>
 
 #include <libxml/parser.h>
@@ -43,15 +53,6 @@ struct xmms_config_value_St {
 #define XMMS_CONFIG_LOCK g_mutex_lock (config_lock)
 #define XMMS_CONFIG_UNLOCK g_mutex_unlock (config_lock)
 
-/** @file
- * Configfile parser and handler
- *
- * The entire structure of this configfile and internal structures
- * orginated from tilde (http://tilde.sourceforge.net) but has
- * been redesigned to fit XMMS. 
- *
- * As now XMMS is not able to use "lists" as config values.
- */
 
 
 /*
@@ -139,7 +140,7 @@ xmms_config_add_section (GHashTable *h, gchar *name)
  */
 
 xmms_config_value_t *
-xmms_config_value_list_lookup (xmms_config_value_t *value, const gchar *subvalue) 
+xmms_config_value_list_lookup (const xmms_config_value_t *value, const gchar *subvalue) 
 {
 	xmms_config_value_t *tmp;
 
@@ -240,7 +241,7 @@ gchar *
 xmms_config_value_name_get (xmms_config_value_t *value)
 {
 	gchar *ret;
-	if(!value || value->type != XMMS_CONFIG_VALUE_PLAIN || !value->data) return NULL;
+	if(!value) return NULL;
 
 	XMMS_CONFIG_LOCK;
 	ret = value->directive;

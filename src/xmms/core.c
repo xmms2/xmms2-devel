@@ -62,6 +62,8 @@ static gboolean running = TRUE;
  *
  */
 
+static void xmms_core_effect_init (GHashTable *conf);
+
 
 static void
 handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
@@ -456,7 +458,7 @@ xmms_core_start (xmms_config_data_t *config)
 {
 	core->config = config;
 	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
-	core->effects = xmms_effect_prepend (NULL, "equalizer", config->effect);
+	xmms_core_effect_init (config->effect);
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 
@@ -598,4 +600,51 @@ void
 xmms_core_playtime_set (guint time)
 {
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_PLAYTIME, GUINT_TO_POINTER (time) );
+}
+
+
+static gint
+xmms_core_effect_compare (gconstpointer a, gconstpointer b)
+{
+	const xmms_config_value_t *cv1, *cv2;
+	gint pos1, pos2;
+
+	cv1 = a;
+	cv2 = b;
+
+	pos1 = xmms_config_value_as_int (xmms_config_value_list_lookup (cv1, "position"));
+	pos2 = xmms_config_value_as_int (xmms_config_value_list_lookup (cv2, "position"));
+
+	return (pos1-pos2);
+
+}
+
+static void
+xmms_core_effect_foreach (gpointer key, gpointer val, gpointer userdata)
+{
+	GList **lst = userdata;
+
+	if (xmms_config_value_as_int (xmms_config_value_list_lookup (val, "position")) > 0) {
+		*lst = g_list_insert_sorted (*lst, val, xmms_core_effect_compare);
+	}
+}
+
+static void
+xmms_core_effect_init (GHashTable *conf)
+{
+	xmms_config_value_t *cv;
+	GList *lst = NULL;
+	core->effects = NULL;
+
+	g_hash_table_foreach (conf, xmms_core_effect_foreach, &lst);
+
+	for (; lst; lst = g_list_next (lst)) {
+		cv = lst->data;
+		gchar *name = xmms_config_value_name_get (lst->data);
+		XMMS_DBG ("adding effect %s", name);
+		core->effects = xmms_effect_prepend (core->effects, name, conf);
+	}
+
+	g_list_free (lst);
+
 }
