@@ -1,7 +1,6 @@
 CORE
 	* licenseheader in all sourcefiles?
 	* Core should be reentrant. Cleaned up anyway.
-	* Configapi should be cleaned up.
 
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
@@ -22,11 +21,10 @@ PLUGINS:
 		* make sure they work
 
 	* Transport
-		* be able to set buffersizes based on path/fstype.
+		* be able to set buffersizes based on path?
 
 	* Transport Plugins
 		* SMB
-		* FTP 
 		* SSH
 		* RTP/RTCP/RTSP http://www.live.com/
 		* GSTP
