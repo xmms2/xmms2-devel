@@ -588,7 +588,7 @@ xmms_output_find_plugin (gchar *name)
 
 	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_OUTPUT);
 
-	for (l = list; l; l = g_list_next (list)) {
+	for (l = list; l; l = g_list_next (l)) {
 		if (!g_strcasecmp (xmms_plugin_shortname_get (l->data),
 		                   name)) {
 			plugin = l->data;
