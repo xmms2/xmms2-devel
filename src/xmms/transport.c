@@ -77,6 +77,24 @@ struct xmms_transport_St {
  */
 
 /**
+ * Recreates the Ringbuffer with new size.
+ * Danger will robinsson!!!! This will kill all data in the buffer. 
+ */
+
+void
+xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size)
+{
+	g_return_if_fail (transport);
+	g_return_if_fail (size);
+
+	g_mutex_lock (transport->mutex);
+	xmms_ringbuf_destroy (transport->buffer);
+	transport->buffer = xmms_ringbuf_new (size);
+
+	g_mutex_unlock (transport->mutex);
+}
+
+/**
  * Retrives a list of files from the transport plugin.
  *
  * @returns a list with xmms_transport_entry_t's
@@ -142,6 +160,18 @@ xmms_transport_entry_new (gchar *path, xmms_transport_entry_type_t type)
 	ret->type = type;
 
 	return ret;
+}
+
+/**
+ * Returns the plugin for this transport.
+ */
+
+xmms_plugin_t *
+xmms_transport_plugin_get (const xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+
+	return transport->plugin;
 }
 
 /**

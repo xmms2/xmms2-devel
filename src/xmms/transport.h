@@ -40,6 +40,7 @@ typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
  * Public function prototypes
  */
 
+void xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size);
 GList *xmms_transport_list (const gchar *path);
 void xmms_transport_list_free (GList *);
 gpointer xmms_transport_plugin_data_get (xmms_transport_t *transport);
