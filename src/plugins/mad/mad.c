@@ -169,6 +169,8 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint fil
 
 	data = xmms_decoder_plugin_data_get (decoder);
 
+	XMMS_DBG ("Buffer is %d bytes", len);
+
 	mad_stream_init (&stream);
 	mad_frame_init (&frame);
 
@@ -308,7 +310,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		} else {
 			/* just make sure buf is full */
 			memmove (buf, buf + head.len + 10, 8192 - (head.len+10));
-			ret = xmms_transport_read (transport, buf + 8192 - (head.len+10), head.len + 10);
+			ret += xmms_transport_read (transport, buf + 8192 - (head.len+10), head.len + 10) - head.len - 10;
 		}
 		
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
