@@ -156,6 +156,7 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 	switch (arg->rettype) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			xmms_ipc_msg_put_string (msg, arg->retval.string); /*convert to utf8?*/
+			g_free (arg->retval.string);
 			break;
 		case XMMS_OBJECT_CMD_ARG_UINT32:
 			xmms_ipc_msg_put_uint32 (msg, arg->retval.uint32);
@@ -169,6 +170,7 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 
 				while (l) {
 					xmms_ipc_msg_put_string (msg, l->data);
+					g_free (l->data);
 					l = g_list_delete_link (l, l);
 				}
 				break;
@@ -216,6 +218,7 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 			{
 				if (arg->retval.hashtable)  {
 					xmms_ipc_do_hashtable (msg, arg->retval.hashtable);
+					g_hash_table_destroy (arg->retval.hashtable);
 				}
 
 				break;
@@ -303,6 +306,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
 	}
 
+	if (cmd->arg1 == XMMS_OBJECT_CMD_ARG_STRING)
+		g_free (arg.values[0].string);
+	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
+		g_free (arg.values[1].string);
+
 	retmsg->cid = msg->cid;
 	xmms_ipc_client_msg_write (client, retmsg);
 
@@ -371,6 +379,7 @@ xmms_ipc_client_thread (gpointer data)
 					continue;
 
 				process_msg (client, client->ipc, msg);
+				xmms_ipc_msg_destroy (msg);
 			}
 		}
 
