@@ -581,6 +581,14 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 		return NULL;
 	}
 
+	{
+		xmms_object_method_arg_t *arg;
+		arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
+					   GUINT_TO_POINTER (xmms_playlist_entry_id_get (entry)));
+		xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CURRENTID, arg);
+		g_free (arg);
+	}
+
 
 	return d;
 	
@@ -861,6 +869,8 @@ xmms_playlist_init (void)
 				     XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
 				     XMMS_SIGNAL_PLAYLIST_CHANGED);
+	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
+				     XMMS_SIGNAL_PLAYLIST_CURRENTID);
 
 	xmms_object_method_add (XMMS_OBJECT (ret), 
 				XMMS_METHOD_CURRENTID, 

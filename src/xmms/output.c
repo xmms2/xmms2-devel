@@ -577,6 +577,7 @@ xmms_output_thread (gpointer data)
 				output->running = FALSE;
 				continue;
 			}
+			output->played = 0;
 			xmms_decoder_start (output->decoder, NULL, output);
 		}
 
