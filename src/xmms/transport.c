@@ -377,6 +377,7 @@ xmms_transport_close (xmms_transport_t *transport)
 	if (transport->thread) {
 		xmms_transport_lock (transport);
 		transport->running = FALSE;
+		xmms_ringbuf_set_eos (transport->buffer, TRUE);
 		g_cond_signal (transport->cond);
 		xmms_transport_unlock (transport);
 	} else {
