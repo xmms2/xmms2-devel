@@ -67,7 +67,7 @@ xmms_object_cleanup (xmms_object_t *object)
   * @todo fix the need for a unique handler adress?
   *
   * @param object the object that will emit the signal
-  * @param signal the signal to connect to @sa signal_xmms.h
+  * @param signalid the signalid to connect to @sa signal_xmms.h
   * @param handler the Callback function to be called when signal is emited.
   * @param userdata data to the callback function
   */
@@ -141,7 +141,7 @@ unlock:
   * Emit a signal and thus call all the handlers that are connected.
   *
   * @param object the object to signal on.
-  * @param signal the signal to emit
+  * @param signalid the signalid to emit
   * @param data the data that should be sent to the handler.
   */
 
@@ -236,7 +236,6 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
   * Add a command that could be called from the client API to a object.
   *
   * @param object the object that should have the method.
-  * @param func the function that should be called when the client lib wants it.
   */
 void
 xmms_object_cmd_add (xmms_object_t *object, guint cmdid, 

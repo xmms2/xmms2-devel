@@ -15,7 +15,8 @@
  */
 
 /**
- * @file Misc utils for various functions in XMMS.
+ * @file
+ * Misc utils for various functions in XMMS.
  */
 
 #include "xmms/util.h"

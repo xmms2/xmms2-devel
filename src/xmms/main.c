@@ -28,7 +28,7 @@
   */
 
 /**
-  * @defgroup Main
+  * @defgroup Main Main
   * @ingroup XMMSServer
   * @{ 
   */

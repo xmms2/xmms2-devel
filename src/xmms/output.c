@@ -124,13 +124,20 @@ struct xmms_output_St {
 	gint32 buffer_underruns;
 };
 
+/** @} */
+
 /*
  * Public functions
  */
 
+/** 
+ * @defgroup OutputPlugin OutputPlugin
+ * @ingroup XMMSPlugin
+ * @{
+ */
 
 /**
- * Retrive the private data for the plugin that was set with
+ * Retrieve the private data for the plugin that was set with
  * #xmms_output_private_data_set.
  */
 gpointer
@@ -194,12 +201,86 @@ xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint c
         output->format_list = g_list_append (output->format_list, f);
 }
 
+gint
+xmms_output_read (xmms_output_t *output, char *buffer, gint len)
+{
+	gint ret;
+	xmms_output_buffersize_get_method_t buffersize_get_method;
+
+	g_return_val_if_fail (output, -1);
+	g_return_val_if_fail (buffer, -1);
+
+	g_mutex_lock (output->decoder_mutex);
+	if (!output->decoder) {
+		output->decoder = g_queue_pop_head (output->decoder_list);
+		if (!output->decoder) {
+			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
+			g_mutex_unlock (output->decoder_mutex);
+			return -1;
+		}
+
+		xmms_output_format_set (output, xmms_decoder_audio_format_to_get (output->decoder));
+		output->played = 0;
+
+		xmms_object_emit_f (XMMS_OBJECT (output),
+		                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
+		                    XMMS_OBJECT_CMD_ARG_UINT32,
+		                    xmms_decoder_medialib_entry_get (output->decoder));
+	}
+	g_mutex_unlock (output->decoder_mutex);
+	
+	ret = xmms_decoder_read (output->decoder, buffer, len);
+
+	if (ret > 0) {
+		guint buffersize = 0;
+
+		output->played += ret;
+
+		buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
+		if (buffersize_get_method) {
+			buffersize = buffersize_get_method (output);
+
+			if (output->played < buffersize) {
+				buffersize = output->played;
+			}
+		}
+
+		g_mutex_lock (output->playtime_mutex);
+
+		output->played_time = xmms_sample_bytes_to_ms (output->format, output->played - buffersize);
+
+		xmms_object_emit_f (XMMS_OBJECT (output),
+				    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
+				    XMMS_OBJECT_CMD_ARG_UINT32,
+				    output->played_time);
+
+		g_mutex_unlock (output->playtime_mutex);
+
+	} else if (xmms_decoder_iseos (output->decoder)) {
+		xmms_decoder_stop (output->decoder);
+		xmms_object_unref (output->decoder);
+		output->decoder = NULL;
+		return 0;
+	}
+
+	if (ret < len) {
+		output->buffer_underruns++;
+	}
+
+	output->bytes_written += ret;
+	
+	return ret;
+}
+
+/** @} */
 
 /*
  * Private functions
  */
 
-
+/** @addtogroup Output
+ * @{
+ */
 /** Methods */
 
 static void
@@ -581,77 +662,6 @@ xmms_output_flush (xmms_output_t *output)
 
 	flush (output);
 
-}
-
-gint
-xmms_output_read (xmms_output_t *output, char *buffer, gint len)
-{
-	gint ret;
-	xmms_output_buffersize_get_method_t buffersize_get_method;
-
-	g_return_val_if_fail (output, -1);
-	g_return_val_if_fail (buffer, -1);
-
-	g_mutex_lock (output->decoder_mutex);
-	if (!output->decoder) {
-		output->decoder = g_queue_pop_head (output->decoder_list);
-		if (!output->decoder) {
-			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
-			g_mutex_unlock (output->decoder_mutex);
-			return -1;
-		}
-
-		xmms_output_format_set (output, xmms_decoder_audio_format_to_get (output->decoder));
-		output->played = 0;
-
-		xmms_object_emit_f (XMMS_OBJECT (output),
-		                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
-		                    XMMS_OBJECT_CMD_ARG_UINT32,
-		                    xmms_decoder_medialib_entry_get (output->decoder));
-	}
-	g_mutex_unlock (output->decoder_mutex);
-	
-	ret = xmms_decoder_read (output->decoder, buffer, len);
-
-	if (ret > 0) {
-		guint buffersize = 0;
-
-		output->played += ret;
-
-		buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
-		if (buffersize_get_method) {
-			buffersize = buffersize_get_method (output);
-
-			if (output->played < buffersize) {
-				buffersize = output->played;
-			}
-		}
-
-		g_mutex_lock (output->playtime_mutex);
-
-		output->played_time = xmms_sample_bytes_to_ms (output->format, output->played - buffersize);
-
-		xmms_object_emit_f (XMMS_OBJECT (output),
-				    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
-				    XMMS_OBJECT_CMD_ARG_UINT32,
-				    output->played_time);
-
-		g_mutex_unlock (output->playtime_mutex);
-
-	} else if (xmms_decoder_iseos (output->decoder)) {
-		xmms_decoder_stop (output->decoder);
-		xmms_object_unref (output->decoder);
-		output->decoder = NULL;
-		return 0;
-	}
-
-	if (ret < len) {
-		output->buffer_underruns++;
-	}
-
-	output->bytes_written += ret;
-	
-	return ret;
 }
 
 static void 

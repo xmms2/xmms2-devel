@@ -447,7 +447,6 @@ xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t
  *  the option.
  *  This function will wake xmms_playlist_wait.
  *  @param playlist the playlist to add the entry to.
- *  @param options should be XMMS_PLAYLIST_APPEND or XMMS_PLAYLIST_PREPEND
  *  @param file the #xmms_medialib_entry to add
  */
 

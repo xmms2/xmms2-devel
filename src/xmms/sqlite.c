@@ -14,7 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-/** @file Sqlite Backend. */
+/** @file
+ * Sqlite Backend.
+ */
 
 #include <stdlib.h>
 

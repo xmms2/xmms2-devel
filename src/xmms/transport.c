@@ -226,8 +226,7 @@ xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
 /** @} */
 
 /** 
- * @defgroup Transport Transport
- * @ingroup XMMSServer
+ * @addtogroup Transport Transport
  *
  * @{
  */

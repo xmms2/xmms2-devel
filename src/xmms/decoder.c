@@ -410,7 +410,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 
 /** 
- * @defgroup Decoder
+ * @defgroup Decoder Decoder
  * @ingroup XMMSServer
  *
  * @{
@@ -648,7 +648,6 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
  * Blesses it with a life of its own (a new thread is created)
  *
  * @param decoder
- * @param transport
  * @param effects
  * @param output
  *

@@ -32,7 +32,7 @@ typedef struct xmms_object_cmd_desc_St xmms_object_cmd_desc_t;
 
 typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
 
-/** @ingroup Object
+/** @addtogroup Object
   * @{
   */
 struct xmms_object_St {

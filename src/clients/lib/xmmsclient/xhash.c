@@ -123,21 +123,21 @@ static void x_hash_nodes_destroy (x_hash_node_t *hash_node, XDestroyNotify key_d
 
 /**
  * x_hash_new:
- * @hash_func: a function to create a hash value from a key.
+ * @param hash_func A function to create a hash value from a key.
  *   Hash values are used to determine where keys are stored within the
  *   #x_hash_t data structure. The g_direct_hash(), g_int_hash() and
  *   g_str_hash() functions are provided for some common types of keys.
  *   If hash_func is %NULL, g_direct_hash() is used.
- * @key_equal_func: a function to check two keys for equality.  This is
+ * @param key_equal_func A function to check two keys for equality.  This is
  *   used when looking up keys in the #x_hash_t.  The g_direct_equal(),
  *   g_int_equal() and g_str_equal() functions are provided for the most
- *   common types of keys. If @key_equal_func is %NULL, keys are compared
+ *   common types of keys. If #key_equal_func is %NULL, keys are compared
  *   directly in a similar fashion to g_direct_equal(), but without the
  *   overhead of a function call.
  *
  * Creates a new #x_hash_t.
  *
- * Return value: a new #x_hash_t.
+ * @return A new #x_hash_t.
  **/
 x_hash_t *
 x_hash_new (XHashFunc hash_func, XEqualFunc key_equal_func)
@@ -148,12 +148,12 @@ x_hash_new (XHashFunc hash_func, XEqualFunc key_equal_func)
 
 /**
  * x_hash_new_full:
- * @hash_func: a function to create a hash value from a key.
- * @key_equal_func: a function to check two keys for equality.
- * @key_destroy_func: a function to free the memory allocated for the key
+ * @param hash_func A function to create a hash value from a key.
+ * @param key_equal_func A function to check two keys for equality.
+ * @param key_destroy_func A function to free the memory allocated for the key
  *   used when removing the entry from the #x_hash_t or %NULL if you
  *   don't want to supply such a function.
- * @value_destroy_func: a function to free the memory allocated for the
+ * @param value_destroy_func A function to free the memory allocated for the
  *   value used when removing the entry from the #x_hash_t or %NULL if
  *   you don't want to supply such a function.
  *
@@ -161,7 +161,7 @@ x_hash_new (XHashFunc hash_func, XEqualFunc key_equal_func)
  * functions to free the memory allocated for the key and value that get
  * called when removing the entry from the #x_hash_t.
  *
- * Return value: a new #x_hash_t.
+ * @return A new #x_hash_t.
  **/
 x_hash_t *
 x_hash_new_full (XHashFunc hash_func, XEqualFunc key_equal_func,
@@ -188,7 +188,7 @@ x_hash_new_full (XHashFunc hash_func, XEqualFunc key_equal_func,
 
 /**
  * x_hash_destroy:
- * @hash_table: a #x_hash_t.
+ * @param hash_table A #x_hash_t.
  *
  * Destroys the #x_hash_t. If keys and/or values are dynamically
  * allocated, you should either free them first or create the #x_hash_t
@@ -237,12 +237,12 @@ x_hash_lookup_node (x_hash_t *hash_table, const void *key)
 
 /**
  * x_hash_lookup:
- * @hash_table: a #x_hash_t.
- * @key: the key to look up.
+ * @param hash_table A #x_hash_t.
+ * @param key The key to look up.
  *
  * Looks up a key in a #x_hash_t.
  *
- * Return value: the associated value, or %NULL if the key is not found.
+ * @return The associated value, or %NULL if the key is not found.
  **/
 void *
 x_hash_lookup (x_hash_t *hash_table, const void *key)
@@ -258,17 +258,17 @@ x_hash_lookup (x_hash_t *hash_table, const void *key)
 
 /**
  * x_hash_lookup_extended:
- * @hash_table: a #x_hash_t.
- * @lookup_key: the key to look up.
- * @orig_key: returns the original key.
- * @value: returns the value associated with the key.
+ * @param hash_table A #x_hash_t.
+ * @param lookup_key The key to look up.
+ * @param orig_key Returns the original key.
+ * @param value Returns the value associated with the key.
  *
  * Looks up a key in the #x_hash_t, returning the original key and the
  * associated value and a #int which is %TRUE if the key was found. This
  * is useful if you need to free the memory allocated for the original key,
  * for example before calling x_hash_remove().
  *
- * Return value: %TRUE if the key was found in the #x_hash_t.
+ * @return TRUE if the key was found in the #x_hash_t.
  **/
 int
 x_hash_lookup_extended (x_hash_t *hash_table,
@@ -294,16 +294,16 @@ x_hash_lookup_extended (x_hash_t *hash_table,
 
 /**
  * x_hash_insert:
- * @hash_table: a #x_hash_t.
- * @key: a key to insert.
- * @value: the value to associate with the key.
+ * @param hash_table A #x_hash_t.
+ * @param key A key to insert.
+ * @param value The value to associate with the key.
  *
  * Inserts a new key and value into a #x_hash_t.
  *
  * If the key already exists in the #x_hash_t its current value is replaced
- * with the new value. If you supplied a @value_destroy_func when creating the
+ * with the new value. If you supplied a #value_destroy_func when creating the
  * #x_hash_t, the old value is freed using that function. If you supplied
- * a @key_destroy_func when creating the #x_hash_t, the passed key is freed
+ * a #key_destroy_func when creating the #x_hash_t, the passed key is freed
  * using that function.
  **/
 void
@@ -331,15 +331,15 @@ x_hash_insert (x_hash_t *hash_table, void *key, void *value)
 
 /**
  * x_hash_replace:
- * @hash_table: a #x_hash_t.
- * @key: a key to insert.
- * @value: the value to associate with the key.
+ * @param hash_table A #x_hash_t.
+ * @param key A key to insert.
+ * @param value The value to associate with the key.
  *
  * Inserts a new key and value into a #x_hash_t similar to
  * x_hash_insert(). The difference is that if the key already exists
  * in the #x_hash_t, it gets replaced by the new key. If you supplied a
- * @value_destroy_func when creating the #x_hash_t, the old value is freed
- * using that function. If you supplied a @key_destroy_func when creating the
+ * #value_destroy_func when creating the #x_hash_t, the old value is freed
+ * using that function. If you supplied a #key_destroy_func when creating the
  * #x_hash_t, the old key is freed using that function.
  **/
 void
@@ -363,8 +363,8 @@ x_hash_replace (x_hash_t *hash_table, void *key, void *value)
 
 /**
  * x_hash_remove:
- * @hash_table: a #x_hash_t.
- * @key: the key to remove.
+ * @param hash_table A #x_hash_t.
+ * @param key The key to remove.
  *
  * Removes a key and its associated value from a #x_hash_t.
  *
@@ -373,7 +373,7 @@ x_hash_replace (x_hash_t *hash_table, void *key, void *value)
  * you have to make sure that any dynamically allocated values are freed
  * yourself.
  *
- * Return value: %TRUE if the key was found and removed from the #x_hash_t.
+ * @return TRUE if the key was found and removed from the #x_hash_t.
  **/
 int
 x_hash_remove (x_hash_t	*hash_table, const void *key)
@@ -399,9 +399,9 @@ x_hash_remove (x_hash_t	*hash_table, const void *key)
 
 /**
  * x_hash_foreach_remove:
- * @hash_table: a #x_hash_t.
- * @func: the function to call for each key/value pair.
- * @user_data: user data to pass to the function.
+ * @param hash_table A #x_hash_t.
+ * @param func The function to call for each key/value pair.
+ * @param user_data User data to pass to the function.
  *
  * Calls the given function for each key/value pair in the #x_hash_t.
  * If the function returns %TRUE, then the key/value pair is removed from the
@@ -409,7 +409,7 @@ x_hash_remove (x_hash_t	*hash_table, const void *key)
  * the #x_hash_t, they are used to free the memory allocated for the removed
  * keys and values.
  *
- * Return value: the number of key/value pairs removed.
+ * @return The number of key/value pairs removed.
  **/
 unsigned int
 x_hash_foreach_remove (x_hash_t *hash_table, XHRFunc func, void *user_data)
@@ -452,13 +452,13 @@ restart:
 
 /**
  * x_hash_foreach:
- * @hash_table: a #x_hash_t.
- * @func: the function to call for each key/value pair.
- * @user_data: user data to pass to the function.
+ * @param hash_table A #x_hash_t.
+ * @param func The function to call for each key/value pair.
+ * @param user_data User data to pass to the function.
  *
  * Calls the given function for each of the key/value pairs in the
  * #x_hash_t.  The function is passed the key and value of each
- * pair, and the given @user_data parameter.  The hash table may not
+ * pair, and the given #user_data parameter.  The hash table may not
  * be modified while iterating over it (you can't add/remove
  * items). To remove all items matching a predicate, use
  * x_hash_remove().
@@ -479,11 +479,11 @@ x_hash_foreach (x_hash_t *hash_table, XHFunc func, void *user_data)
 
 /**
  * x_hash_size:
- * @hash_table: a #x_hash_t.
+ * @param hash_table A #x_hash_t.
  *
  * Returns the number of elements contained in the #x_hash_t.
  *
- * Return value: the number of key/value pairs in the #x_hash_t.
+ * @return The number of key/value pairs in the #x_hash_t.
  **/
 unsigned int
 x_hash_size (x_hash_t *hash_table)

@@ -17,9 +17,10 @@
 
 
 
-/** @file This file controls the mediainfothread.
-  *
-  */
+/** @file
+ * This file controls the mediainfothread.
+ *
+ */
 
 #include <stdlib.h>
 
@@ -37,8 +38,6 @@
 #include "internal/decoder_int.h"
 
 #include <glib.h>
-
-/** @file Control for the mediainfo thread */
 
 /** @defgroup MediaInfoThread MediaInfoThread
   * @ingroup XMMSServer
