@@ -1,4 +1,4 @@
-#gtk2 client
+#qt client
 
 Import('base_env')
 
