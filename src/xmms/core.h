@@ -24,6 +24,8 @@ void xmms_core_playlist_shuffle ();
 void xmms_core_playlist_clear ();
 void xmms_core_playlist_save (gchar *filename);
 void xmms_core_playlist_sort (gchar *property);
+void xmms_core_playlist_mode_set (xmms_playlist_mode_t mode);
+xmms_playlist_mode_t xmms_core_playlist_mode_get ();
 xmms_playlist_t *xmms_core_get_playlist ();
 xmms_config_data_t *xmms_core_config_get (xmms_core_t *core);
 

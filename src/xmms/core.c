@@ -190,6 +190,19 @@ xmms_core_playback_stop ()
 }
 
 void
+xmms_core_playlist_mode_set (xmms_playlist_mode_t mode)
+{
+	xmms_playlist_mode_set (core->playlist, mode);
+}
+
+xmms_playlist_mode_t
+xmms_core_playlist_mode_get ()
+{
+	return (xmms_playlist_mode_get (core->playlist));
+}
+
+
+void
 xmms_core_playlist_save (gchar *filename)
 {
 	const gchar *mime;

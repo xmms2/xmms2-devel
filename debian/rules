@@ -4,9 +4,11 @@
 
 package=xmms2
 
+SCONSFLAGS=PREFIX=/usr SYSCONFDIR=/etc/xmms CFLAGS="-O2 -Wall -g"
+
 build:
 	$(checkdir)
-	scons PREFIX=/usr SYSCONFDIR=/etc/xmms
+	scons $(SCONSFLAGS)
 	touch build
 
 clean:
@@ -27,7 +29,7 @@ binary-arch: checkroot build
 	rm -rf debian/tmp
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
-	scons PREFIX=/usr SYSCONFDIR=/etc/xmms INSTALLDIR="`pwd`/debian/tmp/"
+	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/"
 	rm -f debian/tmp/usr/lib/xmms/*.la
 	rm -f debian/tmp/usr/lib/xmms/*.a
 	find debian/tmp -name '.sconsign' |xargs rm

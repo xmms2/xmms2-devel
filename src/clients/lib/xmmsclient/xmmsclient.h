@@ -38,6 +38,11 @@ void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
 void xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 void xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val);
 
+void xmmsc_playlist_mode_set_none (xmmsc_connection_t *c);
+void xmmsc_playlist_mode_set_repeatone (xmmsc_connection_t *c);
+void xmmsc_playlist_mode_set_repeatall (xmmsc_connection_t *c);
+void xmmsc_playlist_mode_set_stop (xmmsc_connection_t *c);
+
 void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), void *);
 
 void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);

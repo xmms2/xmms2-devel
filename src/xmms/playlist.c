@@ -30,6 +30,9 @@ struct xmms_playlist_St {
 	GMutex *mutex;
 	GCond *cond;
 	gboolean is_waiting;
+
+	/** XMMS_PLAYLIST_MODE_[NONE|ALL|ONE|STOP] */
+	xmms_playlist_mode_t next_mode;
 };
 
 /*
@@ -39,6 +42,33 @@ struct xmms_playlist_St {
 #define XMMS_PLAYLIST_LOCK(a) g_mutex_lock (a->mutex)
 #define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
 
+
+
+/**
+ * Sets the mode of the playlist.
+ */
+void
+xmms_playlist_mode_set (xmms_playlist_t *playlist, xmms_playlist_mode_t mode)
+{
+	XMMS_PLAYLIST_LOCK (playlist);
+	playlist->next_mode = mode;
+	XMMS_PLAYLIST_UNLOCK (playlist);
+}
+
+/**
+ * Get the current mode of the playlist.
+ */
+xmms_playlist_mode_t
+xmms_playlist_mode_get (xmms_playlist_t *playlist)
+{
+	xmms_playlist_mode_t m;
+
+	XMMS_PLAYLIST_LOCK (playlist);
+	m = playlist->next_mode;
+	XMMS_PLAYLIST_UNLOCK (playlist);
+	
+	return m;
+}
 
 /** Waits for something to happen in playlist
  * 
@@ -385,7 +415,11 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	XMMS_PLAYLIST_LOCK (playlist);
 	if (playlist->currententry) {
-		n = g_list_next (playlist->currententry);
+		if (playlist->next_mode == XMMS_PLAYLIST_MODE_REPEAT_ONE) {
+			n = playlist->currententry;
+		} else {
+			n = g_list_next (playlist->currententry);
+		}
 	} else {
 		n = playlist->list;
 	}
@@ -398,8 +432,10 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
-
 	
+	if (playlist->next_mode == XMMS_PLAYLIST_MODE_STOP)
+		return NULL;
+
 	return r;
 
 }

@@ -369,6 +369,29 @@ main(int argc, char **argv)
 			xmmsc_playlist_sort (c, argv[2]);
 			xmmsc_deinit (c);
 			exit (0);
+		} else if ( streq (argv[1], "mode") ) {
+			if (argc < 3) {
+				printf ("usage: mode [one|all|none|stop]\n");
+				xmmsc_deinit (c);
+				exit (0);
+			}
+			
+			if (streq (argv[2], "one"))
+				xmmsc_playlist_mode_set_repeatone (c);
+			else if (streq (argv[2], "all"))
+				xmmsc_playlist_mode_set_repeatall (c);
+			else if (streq (argv[2], "none"))
+				xmmsc_playlist_mode_set_none (c);
+			else if (streq (argv[2], "stop"))
+				xmmsc_playlist_mode_set_stop (c);
+			else {
+				printf ("usage: mode [one|all|none|stop]\n");
+				xmmsc_deinit (c);
+				exit (0);
+			}
+			xmmsc_deinit (c);
+			exit (0);
+		
 		} else if ( streq (argv[1], "info") ) {
 			gint id;
 
