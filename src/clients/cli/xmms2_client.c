@@ -360,6 +360,15 @@ main(int argc, char **argv)
 			xmmsc_deinit (c);
 
 			exit(0);
+		} else if ( streq (argv[1], "sort") ) {
+
+			if (argc < 3) {
+				printf ("usage: sort <attr>\n");
+				exit (0);
+			}
+			xmmsc_playlist_sort (c, argv[2]);
+			xmmsc_deinit (c);
+			exit (0);
 		} else if ( streq (argv[1], "info") ) {
 			gint id;
 
