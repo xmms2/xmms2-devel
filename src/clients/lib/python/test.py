@@ -2,30 +2,30 @@ import xmmsclient
 import sys
 
 class MediainfoRes (xmmsclient.XMMSResult) :
-	def Callback (self) :
-		print self.GetHashTable ()
+	def callback(self) :
+		print self.get_hashtable()
 
 class PlaytimeRes (xmmsclient.XMMSResult) :
-	def Callback (self) :
-		msec = self.GetUInt ()
+	def callback(self) :
+		msec = self.get_uint()
 		print "\r%02d:%02d" % (msec / 60000, (msec / 1000) % 60), 
-		sys.stdout.flush ()
-		self.Restart ()
+		sys.stdout.flush()
+		self.restart()
 
 class CurrentIDRes (xmmsclient.XMMSResult) :
 	def __init__ (self) :
 		self.xc = None
 
-	def Callback (self) :
-		id = self.GetUInt ()
-		self.xc.PlaylistGetMediainfo (id, MediainfoRes)
+	def callback (self) :
+		id = self.get_uint()
+		self.xc.medialib_get_info(id, MediainfoRes)
 
 xc = xmmsclient.XMMS ()
-xc.Connect ()
+xc.connect()
 	
-xc.SignalPlaybackPlaytime (PlaytimeRes)
-res = xc.BroadcastPlaybackCurrentID (CurrentIDRes)
-res.xc = xc
+xc.signal_playback_playtime(PlaytimeRes)
+#res = xc.broadcast_playback_current_id(CurrentIDRes)
+#res.xc = xc
 
-xc.PythonLoop ()
+xc.python_loop()
 

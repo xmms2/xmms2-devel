@@ -365,17 +365,10 @@ cdef class XMMSResult :
 
 
 	def restart (self) :
-		cdef XMMSResult r
-		r = self
-
-		xmmsc_result_unref (r.res)
-		r.res = xmmsc_result_restart (self.res)
-		self.more_init ()
-		# unref once more, due to ref in
-		# more_init->xmmsc_result_notifier_set
-		xmmsc_result_unref (r.res)
-
-		return r
+		self.res = xmmsc_result_restart (self.res)
+		self.cid = xmmsc_result_cid (self.res)
+		ObjectRef[self.cid] = self
+		xmmsc_result_unref (self.res)
 
 	def iserror (self) :
 		"""
@@ -475,12 +468,20 @@ cdef class XMMS :
 
 		while self.loop :
 
-			(i, o, e) = select ([fd, r], [], [fd])
+			if self.want_ioout():
+				w = [fd]
+			else:
+				w = []
+
+			(i, o, e) = select ([fd, r], w, [fd])
 
 			if i and i[0] == fd :
 				xmmsc_ipc_io_in_callback (self.conn.ipc)
+			if o and o[0] == fd:
+				xmmsc_ipc_io_out_callback (self.conn.ipc)
 			if e and e[0] == fd :
 				xmmsc_ipc_disconnect (self.conn.ipc)
+				self.loop = False
 				self.loop = False
 
 	def ioin (self) :
