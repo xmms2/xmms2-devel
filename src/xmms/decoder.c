@@ -725,6 +725,8 @@ get_replaygain (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry,
 	tmp = xmms_playlist_entry_property_get (entry, key_p);
 	p = tmp ? atof (tmp) : 1.0;
 
+	s *= 2; /* 6db pre-amp */
+
 	if (decoder->use_replaygain_anticlip && s * p > 1.0) {
 		s = 1.0 / p;
 	}
