@@ -34,8 +34,6 @@
 #define SND_CHANNELS     		2
 #define SND_FORMAT       		SND_PCM_FORMAT_S16_LE
 #define SND_STREAM       		SND_PCM_STREAM_PLAYBACK
-#define SND_DEFAULT_BUFFER_TIME 500 /* buffer time in config parameters later */
-#define SND_DEFAULT_PERIOD_TIME 50  /* same for period time */
 
 
 /*
@@ -121,8 +119,6 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	XMMS_DBG ("XMMS_ALSA_MIXER_SET");
 	
 	g_return_val_if_fail (output, FALSE);
-	g_return_val_if_fail (left, FALSE);
-	g_return_val_if_fail (right, FALSE);
 	
 	return FALSE;
 }
@@ -142,8 +138,6 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	XMMS_DBG ("XMMS_ALSA_MIXER_GET");
 
 	g_return_val_if_fail (output, FALSE);
-	g_return_val_if_fail (left, FALSE);
-	g_return_val_if_fail (right, FALSE);
 	
 	return FALSE;
 }
@@ -212,9 +206,6 @@ xmms_alsa_flush (xmms_output_t *output)
 	if ((err = snd_pcm_reset (data->pcm)) != 0)
 		XMMS_DBG ("Flush failed (%s)", snd_strerror (err));
 
-	/* This is probably not nessecary . */
-	if ((err = snd_pcm_prepare (data->pcm)) != 0)
-		XMMS_DBG ("Could not prepare soundcard (%s)", snd_strerror (err));
 }
 
 
@@ -234,7 +225,7 @@ xmms_alsa_open (xmms_output_t *output)
 	gint err;
 	gint alsa_bits_per_sample;
 	
-	XMMS_DBG("XMMS_ALSA_OPEN");	
+	XMMS_DBG ("XMMS_ALSA_OPEN");	
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_plugin_data_get (output);
@@ -297,7 +288,7 @@ xmms_alsa_new (xmms_output_t *output)
  * @return TRUE on success, FALSE on error
  */
 static gboolean 
-xmms_alsa_set_hwparams(xmms_alsa_data_t *data) 
+xmms_alsa_set_hwparams (xmms_alsa_data_t *data) 
 {
 	gint err;
 	gint dir;
@@ -353,7 +344,7 @@ xmms_alsa_set_hwparams(xmms_alsa_data_t *data)
 	
 	if ((err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, 
 					data->hwparams, &requested_buffer_time, &dir)) < 0) {
-		xmms_log_fatal ("Buffer time <= 0");  
+		xmms_log_fatal ("Buffer time <= 0 (%s)", snd_strerror (err));  
 		return FALSE;
 	}
 
@@ -454,11 +445,6 @@ xmms_alsa_close (xmms_output_t *output)
 	
 	XMMS_DBG("XMMS_ALSA_CLOSE");
 	
-	/* No more of that disco shit! */
-	if ((err = snd_pcm_drain (data->pcm)) != 0) {
-		xmms_log_fatal ("Buffer could not be drained. (%s)", snd_strerror (err));
-	}
-	
 	/* Close device */
 	if ((err = snd_pcm_close (data->pcm)) != 0) 
 		xmms_log_fatal ("Audio device could not be released. (%s)", 
@@ -511,9 +497,9 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 	gint written;
 	gint written_frames;
 
+	g_return_if_fail (output);
 	g_return_if_fail (buffer);
 	g_return_if_fail (len);
-	g_return_if_fail (output);
 	
 	data = xmms_output_plugin_data_get (output);
 	g_return_if_fail (data);
