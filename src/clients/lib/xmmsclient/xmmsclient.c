@@ -328,6 +328,9 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	dbus_connection_flush (c->conn);
 	dbus_connection_disconnect (c->conn);
 	dbus_connection_unref (c->conn);
+	x_hash_destroy(c->callbacks);
+	x_hash_destroy(c->replies);
+	free(c);
 }
 
 /** 
@@ -687,6 +690,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 						str = xmmsc_decode_path (str);
 
 						i += add (target, len, i, str);
+						free (str);
 					}
 
 					break;

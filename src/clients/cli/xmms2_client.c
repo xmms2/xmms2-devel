@@ -170,7 +170,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		if (err) {
 			print_info ("convert error %s", err->message);
 		}
-		free (tab);	
+		x_hash_destroy (tab);	
 	}
 	free (list);
 }
