@@ -69,7 +69,7 @@ xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_client_init (gchar *path)
+xmms_ipc_usocket_client_init (const gchar *path)
 {
 	gint fd;
 	gint flags;
@@ -162,7 +162,7 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_server_init (gchar *path)
+xmms_ipc_usocket_server_init (const gchar *path)
 {
 	gint fd;
 	gint flags;

@@ -454,6 +454,9 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 	g_return_val_if_fail (meth, FALSE);
 
 	xmms_output_flush (decoder->output);
+	g_mutex_lock (decoder->mutex);
+	xmms_ringbuf_clear (decoder->buffer);
+	g_mutex_unlock (decoder->mutex);
 
 	if (!meth (decoder, samples)) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not seek there");
@@ -958,15 +961,23 @@ xmms_decoder_thread (gpointer data)
 			break;
 		}
 	}
-	g_mutex_unlock (decoder->mutex);
 
 	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quitting");
 
-	xmms_object_emit_f (XMMS_OBJECT (decoder),
-			    XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
-			    XMMS_OBJECT_CMD_ARG_NONE,
-			    NULL);
+	if (decoder->running) {
+		/* This means that we eofed... */
+		XMMS_DBG ("EOF!");
+		xmms_object_emit_f (XMMS_OBJECT (decoder),
+				XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
+				XMMS_OBJECT_CMD_ARG_NONE,
+				NULL);
+	} else {
+		xmms_ringbuf_clear (decoder->buffer);
+		xmms_output_flush (decoder->output);
+	}
+
+	g_mutex_unlock (decoder->mutex);
 
 	xmms_object_unref (decoder);
 

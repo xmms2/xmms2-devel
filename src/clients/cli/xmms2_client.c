@@ -320,6 +320,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	x_list_t *list;
 	x_list_t *l;
 	GError *err = NULL;
+	gulong total_playtime = 0;
 	int id;
 	int r, w;
 
@@ -333,12 +334,18 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	for (l = list; l; l = x_list_next (l)) {
 		x_hash_t *tab;
 		char line[80];
+		const char *playtime;
 		gchar *conv;
 		unsigned int i = XPOINTER_TO_UINT (l->data);
 
 		g_clear_error (&err);
 		
 		tab = xmmscs_playlist_get_mediainfo (conn, i);
+
+		playtime = x_hash_lookup (tab, "duration");
+		if (playtime) {
+			total_playtime += strtoul (playtime, NULL, 10);
+		}
 
 		if (x_hash_lookup (tab, "channel")) {
 			xmmsc_entry_format (line, sizeof (line), "%c - %t", tab);
@@ -363,6 +370,12 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 		x_hash_destroy (tab);	
 	}
+
+	print_info ("\nTotal playtime: %d:%02d:%02d",
+	            total_playtime / 3600000,
+	            (total_playtime / 60000) % 60,
+	            (total_playtime / 1000) % 60);
+
 	free (list);
 }
 	
