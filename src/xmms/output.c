@@ -79,7 +79,7 @@ xmms_output_set_config (xmms_output_t *output, GHashTable *config)
 }
 
 
-/*
+/**
  * Retrieve a config variable for a certain output section as a string.
  * If the requested value isn't available NULL is returned. 
  *
@@ -101,7 +101,7 @@ xmms_output_config_string_get (xmms_output_t *output, gchar *val)
 }
 
 
-/*
+/**
  * Retrieve a config variable for a certain output section as an integer. 
  * If the requested value isn't available 0 is returned. 
  *
