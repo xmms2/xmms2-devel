@@ -156,24 +156,25 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		memset (line, '\0', 80);
 
 		if (!x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, 80, "%f (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line)-1, "%f (%m:%s)", tab);
 		} else {
-			xmmsc_entry_format (line, 80, "%a - %t (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
 		}
 
 		if (id == list[i]) {
-			print_info ("->[%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+			print_info ("->[%d] %s", list[i], 
+					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		} else {
-			print_info ("  [%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+			print_info ("  [%d] %s", list[i], 
+					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		}
 
 		if (err) {
 			print_info ("convert error %s", err->message);
 		}
-		
+		x_hash_destroy (tab);	
 	}
-	
-
+	free (list);
 }
 	
 static void
@@ -210,11 +211,52 @@ cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	unsigned int seconds;
+	int id,seconds,duration,cur_playtime;
+	x_hash_t *lista;
 
-	seconds = atoi (argv[2]) * 1000;
+	if (argc < 3) {
+		print_error ("You need to specify a number of seconds. Usage:\n"
+			     "xmms2 seek seconds  - will seek to seconds\n"
+			     "xmms2 seek +seconds - will add seconds\n"
+			     "xmms2 seek -seconds - will remove seconds");
+	}
+	
+	id= xmmscs_playback_current_id (conn);
+	lista = xmmscs_playlist_get_mediainfo (conn, id);
+	duration = atoi (x_hash_lookup (lista, "duration"));
+	cur_playtime = xmmsc_playback_current_playtime (conn);
+	x_hash_destroy (lista);
 
+	if (!duration)
+		duration = 0;
+
+	if (argv[2][0] == '+') {
+		
+		seconds=(atoi (argv[2]+1) * 1000) + cur_playtime;
+
+		if (seconds >= duration) {
+			printf ("Trying to seek to a higher value then total_playtime, Skipping to next song\n");
+			xmmsc_playback_next (conn);
+		} else {
+			printf ("Adding %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
+		}
+		
+	} else if (argv[2][0] == '-') {
+		seconds = cur_playtime - atoi (argv[2]+1) * 1000;
+		
+		if (seconds < 0) {
+			printf ("Trying to seek to a non positive value, seeking to 0\n");
+			seconds=0;
+		} else {
+			printf ("Removing %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
+		}
+		
+	} else {
+		seconds = atoi (argv[2]) * 1000;
+	}
+	
 	xmmsc_playback_seek_ms (conn, seconds);
+	
 }
 
 static void
@@ -249,6 +291,8 @@ cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 		print_info ("%s = %s", l->data, xmmscs_configval_get (conn, l->data));
 		l = x_list_next (l);
 	}
+	
+	x_list_free (l);
 }
 
 

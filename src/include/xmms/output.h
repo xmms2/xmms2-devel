@@ -25,6 +25,17 @@
 #include "xmms/config.h"
 #include "xmms/plugin.h"
 
+#ifdef XMMS_OS_LINUX /* ALSA might be default now a days? */
+#define XMMS_OUTPUT_DEFAULT "oss"
+#elif XMMS_OS_OPENBSD
+#define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_SOLARIS
+#define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_DARWIN
+#define XMMS_OUTPUT_DEFAULT "coreaudio"
+#endif
+
+
 /*
  * Type definitions
  */
@@ -37,6 +48,7 @@ typedef struct xmms_output_St xmms_output_t;
  */
 
 typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer, gint len);
+typedef void (*xmms_output_destroy_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_new_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_volume_get_method_t) (xmms_output_t *output, gint *left, gint *right);
@@ -58,6 +70,7 @@ gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
 void xmms_output_flush (xmms_output_t *output);
 void xmms_output_pause (xmms_output_t *output);
 void xmms_output_resume (xmms_output_t *output);
+void xmms_output_destroy (xmms_output_t *output);
 gboolean xmms_output_is_paused (xmms_output_t *output);
 
 #endif

@@ -120,14 +120,16 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 unsigned int *
 xmmscs_playlist_list (xmmsc_connection_t *c)
 {
-	DBusMessage *msg,*rmsg;
-        DBusMessageIter itr;
+	DBusMessage *msg = NULL;
+	DBusMessage *rmsg = NULL;
+	DBusMessageIter itr;
 	DBusError err;
-	unsigned int *arr;
+	unsigned int *arr = NULL;
 
 	dbus_error_init (&err);
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, 
+									XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
 
 	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
 
@@ -143,7 +145,7 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 				dbus_message_iter_next (&itr);
 				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
-				arr = malloc (sizeof (unsigned int) * len+1);
+				arr = malloc (sizeof (unsigned int) * (len+1));
 				memcpy (arr, tmp, len * sizeof(unsigned int));
 				arr[len] = '\0';
 			} else {

@@ -193,5 +193,32 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 
 }
 
+int
+xmmsc_playback_current_playtime (xmmsc_connection_t *c)
+{
+	DBusMessage *msg,*rmsg;
+        DBusMessageIter itr;
+	DBusError err;
+	int ret = -1;
+
+	dbus_error_init (&err);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CPLAYTIME);
+	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+
+	if (rmsg) {
+		dbus_message_iter_init (rmsg, &itr);
+
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
+			ret = dbus_message_iter_get_uint32 (&itr);
+
+		dbus_message_unref (rmsg);
+	} else {
+		printf ("Error: %s\n", err.message);
+	}
+	dbus_message_unref (msg);
+
+	return ret;
+}
+
 /** @} */
 

@@ -19,7 +19,7 @@
 
 /**
  * @file
- * 
+ * Output plugin helper
  */
 
 #include "xmms/output.h"
@@ -554,7 +554,28 @@ xmms_output_thread (gpointer data)
 	}
 	xmms_output_unlock (output);
 
-	/* FIXME: Cleanup */
-	
 	return NULL;
 }
+
+void
+xmms_output_destroy (xmms_output_t *output)
+{
+	xmms_output_destroy_method_t dest;
+
+	g_return_if_fail (output);
+
+	output->running = FALSE;
+	g_thread_join (output->thread);
+
+
+	dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+
+	if (dest) {
+		dest (output);
+	}
+
+	g_mutex_free (output->mutex);
+	g_free (output);
+
+}
+

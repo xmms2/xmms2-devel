@@ -86,6 +86,8 @@ xmmscs_configval_get (xmmsc_connection_t *c, char *key)
 	DBusMessageIter itr;
 	DBusError err;
 	char *ret = NULL;
+	
+	dbus_error_init (&err);
 
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CONFIG, XMMS_DBUS_INTERFACE, XMMS_METHOD_GET);
 	dbus_message_append_iter_init (msg, &itr);

@@ -16,6 +16,7 @@
  *
  *  @todo Proper error handling and less buskis code for mixer.
  *  @todo Handle config stuff nice.
+ *  @todo ungay xmms_alsa_buffersize_get
  */
 
 #include "xmms/plugin.h"
@@ -46,11 +47,12 @@
  */
 typedef struct xmms_alsa_data_St {
 	snd_pcm_t *pcm;
+	snd_mixer_t *mixer;
+	snd_mixer_elem_t *mixer_elem;
 	snd_pcm_hw_params_t *hwparams;
+ 	snd_pcm_uframes_t  buffer_size;
 	guint frame_size;
 	guint rate;
-	snd_mixer_elem_t *mixer_elem;
-	snd_mixer_t *mixer;
 	gboolean have_mixer;
 	xmms_config_value_t *mixer_conf;
 } xmms_alsa_data_t;
@@ -324,17 +326,24 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	
 	if ((err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, 
 					data->hwparams, &requested_buffer_time, &dir)) < 0) {
-		xmms_log_fatal ("Buffer time <= 0 (%s)", snd_strerror (err));  
+		xmms_log_fatal ("Buffer time <= 0 (%s)", snd_strerror (-err));  
 		return FALSE;
 	}
 
 	XMMS_DBG ("Buffer time requested: 500ms, got: %dms", 
 			requested_buffer_time / 1000); 
 
+	/*
+	if ((err = snd_pcm_hw_params_get_buffer_size (data->hwparams, &data->buffer_size)) != 0) {
+		xmms_log_fatal ("unable to get buffer size (%s)", snd_strerror (-err));
+		return FALSE;
+	}	
+	*/
+	
 	/* Set period time */
 	if ((err = snd_pcm_hw_params_set_period_time_near (data->pcm, 
 					data->hwparams, &requested_period_time, &dir)) < 0) {
-		xmms_log_fatal ("cannot set periods (%s)", snd_strerror (err));
+		xmms_log_fatal ("cannot set periods (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
@@ -626,8 +635,8 @@ xmms_alsa_buffersize_get (xmms_output_t *output)
 			return FALSE;
 		}
 	}
-	
-	return snd_pcm_frames_to_bytes (data->pcm, avail); 
+	return snd_pcm_frames_to_bytes (data->pcm, avail);
+
 }
 
 
