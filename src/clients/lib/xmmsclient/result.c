@@ -290,6 +290,11 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	gint type;
 	x_list_t *list = NULL;
 
+	if (xmmsc_result_iserror (res)) {
+		res->parsed = TRUE;
+		return TRUE;
+	}
+
 	if (!xmms_ipc_msg_get_int32 (msg, &type))
 		return FALSE;
 
