@@ -74,7 +74,7 @@ static int rates[] = {
 static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
-static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output);
+static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output, gint err);
 static void xmms_alsa_mixer_config_changed (xmms_object_t *object, 
 											gconstpointer data, 
 											gpointer userdata);
@@ -497,9 +497,6 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 		return FALSE;
 	}
 	
-	/* Sometimes the soundcard is just not ready for the new shit */
-	xmms_alsa_xrun_recover (data);
-	
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
 	if (err < 0) {
@@ -795,7 +792,7 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 	avail = snd_pcm_avail_update (data->pcm);
 	if (avail == -EPIPE) {
 		/* Spank alsa and give it another try */
-		xmms_alsa_xrun_recover (data);
+		xmms_alsa_xrun_recover (data, avail);
 		avail = snd_pcm_avail_update (data->pcm);
 		if (avail == -EPIPE) {
 			xmms_log_error ("Unable to get available frames in buffer: %s", 
@@ -845,24 +842,34 @@ xmms_alsa_flush (xmms_output_t *output)
 /**
  * XRUN recovery.
  * Checks if any buffer underrun has happened and performes the 
- * necessary 'repairs'.
+ * necessary 'repairs'. Straight from alsa pcm.c example.
  *
  * @param data The private plugin data. 
  */
 static void
-xmms_alsa_xrun_recover (xmms_alsa_data_t *data)
+xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
 {
-	gint err;
-	
 	XMMS_DBG ("XMMS_ALSA_XRUN_RECOVER");
 	
 	g_return_if_fail (data);
 
-	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN) {
+	if (err == -EPIPE) {
 		err = snd_pcm_prepare (data->pcm);
 		if (err < 0) {
 			xmms_log_error ("Unable to recover from underrun, prepare failed: "
 							"%s", snd_strerror (err));
+		}
+	} 
+	else if (err == -ESTRPIPE) {
+		while ((err = snd_pcm_resume (data->pcm)) == -EAGAIN) {
+			sleep (1);       /* wait until the suspend flag is released */
+		}
+		if (err < 0) {
+			err = snd_pcm_prepare (data->pcm);
+			if (err < 0) {
+				xmms_log_error ("Can't recovery from suspend, prepare failed: "
+								"%s\n", snd_strerror (err));
+			}
 		}
 	}
 }
@@ -897,8 +904,10 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 			buffer += snd_pcm_frames_to_bytes (data->pcm, written);
 		} else if (written == -EAGAIN) {
 			snd_pcm_wait (data->pcm, 100);
+		} else if (written == -EPIPE || written == -ESTRPIPE) {
+			xmms_alsa_xrun_recover (data, written);
 		} else {
-			xmms_alsa_xrun_recover (data);
+			xmms_log_fatal ("ALSA's doing some funky shit.. please report.");
 		}
 	}
 }
