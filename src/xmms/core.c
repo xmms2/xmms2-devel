@@ -235,12 +235,15 @@ core_thread(gpointer data){
 		
 		transport = xmms_transport_open (core->curr_song->uri);
 
-		if (!transport)
+		if (!transport) {
+			xmms_core_play_next ();
 			continue;
+		}
 
 		mime = xmms_transport_mime_type_get (transport);
 		if (!mime) {
 			xmms_transport_close (transport);
+			xmms_core_play_next ();
 			continue;
 		}
 
@@ -267,6 +270,7 @@ core_thread(gpointer data){
 		decoder = xmms_decoder_new (mime);
 		if (!decoder) {
 			xmms_transport_close (transport);
+			xmms_core_play_next ();
 			continue;
 		}
 
