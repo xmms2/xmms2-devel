@@ -6,7 +6,7 @@ from marshal import dump, load;
 from xmmsconf import checkFlags, showOpts;
 
 # Ok, hope that scons versionnumbers only will contain one dot...
-if float(SCons.__version__) < 0.94:
+if int (SCons.__version__.replace (".","")) < 94 :
 	print "You have too old scons version. 0.94 is required. You have:", SCons.__version__
 	sys.exit ()
 

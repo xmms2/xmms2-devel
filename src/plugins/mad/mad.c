@@ -329,12 +329,14 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		XMMS_DBG ("Seeking to last 128 bytes");
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 		ret = xmms_transport_read (transport, buf, 128);
-		XMMS_DBG ("Got %d bytes, Seeking to last first bytes", ret);
-		xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 		if (ret == 128) {
 			xmms_mad_id3_parse (buf, entry);
 		}
 	}
+
+
+	XMMS_DBG ("Seeking to first bytes");
+	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 
