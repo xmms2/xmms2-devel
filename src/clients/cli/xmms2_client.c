@@ -106,9 +106,11 @@ static GHashTable *
 read_config ()
 {
 	gchar *file;
-	gchar buffer[4096];
+	gchar *buffer;
 	gchar **split;
+	gint read_bytes;
 	FILE *fp;
+	struct stat st;
 	GHashTable *config;
 	int i = 0;
 
@@ -130,7 +132,24 @@ read_config ()
 		print_error ("Could not open configfile %s", file);
 	}
 
-	fread (buffer, 4096, 1, fp);
+	if (fstat (fileno (fp), &st) == -1) {
+		perror ("fstat");
+		return NULL;
+	}
+
+	buffer = g_malloc0 (st.st_size + 1);
+
+	read_bytes = 0;
+	while (read_bytes < st.st_size) {
+		guint ret = fread (buffer + read_bytes, st.st_size - read_bytes, 1, fp);
+
+		if (ret == 0) {
+			break;
+		}
+
+		read_bytes += ret;
+		g_assert (read_bytes >= 0);
+	}
 
 	config = g_hash_table_new (g_str_hash, g_str_equal);
 
@@ -151,7 +170,7 @@ read_config ()
 		i++;
 	}
 
-
+	g_free (buffer);
 	return config;
 	
 }
