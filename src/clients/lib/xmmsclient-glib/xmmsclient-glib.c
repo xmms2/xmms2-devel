@@ -31,6 +31,10 @@ typedef struct xmms_gsource_St {
 	GList *w_list;
 } xmmsc_gsource_t;
 
+static void xmmsc_g_mutex_lock (void *lock);
+static void xmmsc_g_mutex_unlock (void *lock);
+
+
 static int
 watch_callback (xmmsc_connection_t *conn,
 		xmmsc_watch_action_t action,
@@ -231,5 +235,29 @@ xmmsc_setup_with_gmain (xmmsc_connection_t *connection,
 
 	g_source_attach (source, context);
 }
+
+/**
+ * Set up threading support for this connection. Allows multiple
+ * threads to use this connection without interfering.
+ *
+ */
+void
+xmmsc_setup_for_gthread (xmmsc_connection_t *connection)
+{
+	xmmsc_lock_set (connection, g_mutex_new (), xmmsc_g_mutex_lock, xmmsc_g_mutex_unlock);
+}
+
+static void
+xmmsc_g_mutex_lock (void *lock)
+{
+	g_mutex_lock ((GMutex *)lock);
+}
+
+static void
+xmmsc_g_mutex_unlock (void *lock)
+{
+	g_mutex_unlock ((GMutex *)lock);
+}
+
 
 /* @} */

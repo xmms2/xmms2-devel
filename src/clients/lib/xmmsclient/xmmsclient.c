@@ -116,8 +116,6 @@ xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
 
-	g_thread_init (NULL);
-	
 	if (!(c = malloc (sizeof (xmmsc_connection_t)))) {
 		return NULL;
 	}
@@ -282,6 +280,20 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	free(c);
 }
 
+/**
+ * Set locking functions for a connection. Allows simultanous usage of
+ * a connection from several threads.
+ *
+ * @param conn connection
+ * @param lock the locking primitive passed to the lock and unlock functions
+ * @param lockfunc function called when entering critical region, called with lock as argument.
+ * @param unlockfunc funciotn called when leaving critical region.
+ */
+void
+xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *))
+{
+	xmmsc_ipc_lock_set (conn->ipc, lock, lockfunc, unlockfunc);
+}
 
 /**
  * Tell the server to quit. This will terminate the server.

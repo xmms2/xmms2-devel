@@ -33,6 +33,7 @@ typedef struct xmmsc_result_St xmmsc_result_t;
 xmmsc_connection_t *xmmsc_init (char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_deinit (xmmsc_connection_t *);
+void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 
 char *xmmsc_get_last_error (xmmsc_connection_t *c);
 char *xmmsc_encode_path (char *path);
