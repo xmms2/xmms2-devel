@@ -571,6 +571,7 @@ xmms_decoder_stop (xmms_decoder_t *decoder)
 	g_mutex_lock (decoder->mutex);
 	decoder->running = FALSE;
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
+	xmms_ringbuf_clear (decoder->buffer);
 	g_mutex_unlock (decoder->mutex);
 }
 
