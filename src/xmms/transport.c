@@ -95,6 +95,14 @@ xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
 	xmms_transport_unlock (transport);
 }
 
+gboolean
+xmms_transport_is_local (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
+}
+
 
 /**
  * Sets this transports mimetype.
@@ -437,6 +445,7 @@ xmms_transport_close (xmms_transport_t *transport)
 		xmms_transport_lock (transport);
 		transport->running = FALSE;
 		xmms_ringbuf_set_eos (transport->buffer, TRUE);
+		XMMS_DBG("Waking transport");
 		g_cond_signal (transport->cond);
 		xmms_transport_unlock (transport);
 		g_thread_join (transport->thread);
@@ -556,6 +565,7 @@ xmms_transport_thread (gpointer data)
 		} else {
 			if (ret == -1) {
 				xmms_ringbuf_set_eos (transport->buffer, TRUE);
+				XMMS_DBG("Sleeping on transport cond");
 				g_cond_wait (transport->cond, transport->mutex);
 			} else { /* ret == 0 */
 				continue;

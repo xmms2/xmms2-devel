@@ -101,6 +101,9 @@ xmms_mediainfo_thread_thread (gpointer data)
 				continue;
 			}
 
+			if (!xmms_transport_is_local (transport))
+				continue;
+
 			mime = xmms_transport_mime_type_get (transport);
 
 			if (!mime) {
