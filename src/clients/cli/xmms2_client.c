@@ -19,6 +19,8 @@
 #include <xmms/signal_xmms.h>
 
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -35,6 +37,11 @@ typedef struct {
 /**
  * Utils
  */
+
+static gchar *statusformat;
+static gchar *listformat;
+
+static gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=%a - %t\nlistformat=%a - %t (%m:%s)\n";
 
 static char *
 format_url (char *item)
@@ -94,6 +101,62 @@ print_hash (const void *key, const void *value, void *udata)
 {
 	printf ("%s = %s\n", (char *)key, (char *)value);
 }
+
+static GHashTable *
+read_config ()
+{
+	gchar *file;
+	gchar buffer[4096];
+	gchar **split;
+	FILE *fp;
+	GHashTable *config;
+	int i = 0;
+
+	file = g_strdup_printf ("%s/.xmms2/clients/cli.conf", g_get_home_dir ());
+
+	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
+		gchar *dir = g_strdup_printf ("%s/.xmms2/clients", g_get_home_dir ());
+		mkdir (dir, 0755);
+		g_free (dir);
+		fp = fopen (file, "w+");
+		if (!fp) {
+			print_error ("Could not create default configfile!!");
+		}
+		fwrite (defaultconfig, sizeof (defaultconfig), 1, fp);
+		fclose (fp);
+	}
+
+	if (!(fp = fopen (file, "r"))) {
+		print_error ("Could not open configfile %s", file);
+	}
+
+	fread (buffer, 4096, 1, fp);
+
+	config = g_hash_table_new (g_str_hash, g_str_equal);
+
+	split = g_strsplit (buffer, "\n", 0);
+	while (split[i]) {
+		if (!split[i])
+			break;
+
+		gchar **s = g_strsplit (split[i], "=", 2);
+		if (!s || !s[0] || !s[1])
+			break;
+		if (g_strcasecmp (s[1], "NULL") == 0) {
+			g_hash_table_insert (config, s[0], NULL);
+		} else {
+			g_hash_table_insert (config, s[0], s[1]);
+		}
+
+		i++;
+	}
+
+
+	return config;
+	
+}
+
+
 
 /**
  * here comes all the cmd callbacks
@@ -417,7 +480,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		} else if (!x_hash_lookup (tab, "title")) {
 			xmmsc_entry_format (line, sizeof(line), "%f (%m:%s)", tab);
 		} else {
-			xmmsc_entry_format (line, sizeof(line), "%a - %t (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line), listformat, tab);
 		}
 
 		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
@@ -756,7 +819,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 				                    "%c", hash);
 			} else {
 				xmmsc_entry_format (songname, sizeof (songname),
-				                    "%a - %t", hash);
+				                    statusformat, hash);
 			}
 			tmp = x_hash_lookup (hash, "duration");
 			if (tmp)
@@ -858,8 +921,16 @@ int
 main (int argc, char **argv)
 {
 	xmmsc_connection_t *connection;
+	GHashTable *config;
 	char *path;
 	int i;
+
+	config = read_config ();
+
+	statusformat = g_hash_table_lookup (config, "statusformat");
+	listformat = g_hash_table_lookup (config, "listformat");
+
+	printf ("listformat = %s\n", listformat);
 
 	connection = xmmsc_init ("XMMS2 CLI");
 
@@ -868,6 +939,9 @@ main (int argc, char **argv)
 	}
 
 	path = getenv ("XMMS_PATH");
+	if (!path) {
+		path = g_hash_table_lookup (config, "ipcpath");
+	}
 
 	if (!xmmsc_connect (connection, path)) {
 		print_error ("Could not connect to xmms2d: %s", xmmsc_get_last_error (connection));
