@@ -1,6 +1,6 @@
 
-pkglib_LTLIBRARIES = libfile.la
+pkglib_LTLIBRARIES = libxmms_file.la
 
-libfile_la_SOURCES = file.c
-libfile_la_LDFLAGS = @PLUGIN_LDFLAGS@
+libxmms_file_la_SOURCES = file.c
+libxmms_file_la_LDFLAGS = @PLUGIN_LDFLAGS@
 INCLUDES = @XMMS_CFLAGS@ @GLIB_CFLAGS@
