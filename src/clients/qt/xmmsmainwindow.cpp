@@ -73,6 +73,8 @@ handle_currentid (void *userdata, void *arg) {
 	mw->setID (id);
 }
 
+static float *vis_dequeue (void *userdata, uint time);
+
 static void
 handle_playtime (void *userdata, void *arg) 
 {
@@ -83,9 +85,10 @@ handle_playtime (void *userdata, void *arg)
 
 	snprintf (d, 9, "%02d:%02d", dur/60000, (dur/1000)%60);
 	s = new QString (d);
-	if (*s != *mw->toolbar ()->status ()->currentTME ()) 
-		mw->toolbar ()->setCTME (s);
-
+	if (*s != *mw->toolbar ()->status ()->currentTME ()) {
+	//	mw->toolbar ()->setCTME (s);
+		mw->toolbar ()->setVisData (vis_dequeue (mw, dur));
+	}
 	if (!mw->barBusy ()) {
 		if (mw->cItem ()) {
 			mw->bar ()->setTotalSteps (mw->cItem ()->duration ());
@@ -227,14 +230,19 @@ handle_playlist_mediainfo (void *userdata, void *arg)
 static void
 vis_enqueue (void *userdata, uint time, float *data) 
 {
-	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
-	x_list_t *vis_time = mw->getVisTime();
-	x_list_t *vis_data = mw->getVisData();
 
-	printf ("time: %i data: %f\n", time, data[1]);
+
 	
-	vis_time = x_list_append (vis_time, XINT_TO_POINTER(time));
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	x_list_t *vis_time = mw->getVisTime ();
+	x_list_t *vis_data = mw->getVisData ();
+
+	
+	vis_time = x_list_append (vis_time, XUINT_TO_POINTER (time));
 	vis_data = x_list_append (vis_data, data); 
+
+	mw->setVisTime (vis_time);
+	mw->setVisData (vis_data);
 }
 
 static float * 
@@ -245,21 +253,33 @@ vis_dequeue (void *userdata, uint time)
 	x_list_t *vis_data = mw->getVisData();
 	
 	float *retval;
+
+	printf ("dequeue called!\n");
 	
 	if (!vis_data) {
+		printf ("dequeue returned null!\n");
 		return NULL;
 	}
-
-	while ((time > XPOINTER_TO_INT (vis_time->data)) && vis_data->next) {
+	
+	while ((time > XPOINTER_TO_UINT (vis_time->data))) {
+		if (vis_data->next) {
 			printf ("dequeue: %i\n", vis_time->data);
 			vis_data = x_list_delete_link (vis_data, vis_data);
 			vis_time = x_list_delete_link (vis_time, vis_time);
+			mw->setVisTime (vis_time);
+			mw->setVisData (vis_data);
+		} else {
+			break;
+		}
 	}
 
 	retval = (float *)vis_data->data;
-
+	
 	vis_data = x_list_delete_link (vis_data, vis_data);
 	vis_time = x_list_delete_link (vis_time, vis_time);
+
+	mw->setVisTime (vis_time);
+	mw->setVisData (vis_data);
 
 	return retval;
 }
@@ -276,7 +296,6 @@ handle_vis_data (void *userdata, void *arg)
 	spec = (float *)malloc (FFT_LEN/2*sizeof(float));
 
 	for (i = 0; i < FFT_LEN/2; i++) {
-		printf ("data: %i\n", s[i+1]);
 		spec[i] = s[i+1];
 	}
 
@@ -353,7 +372,9 @@ XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) :
 			XMMS_SIGNAL_PLAYLIST_CLEAR, 
 			handle_playlist_clear, (void*)this);
 
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_VISUALISATION_SPECTRUM, handle_vis_data, (void*)this);
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_VISUALISATION_SPECTRUM, 
+			handle_vis_data, (void*)this);
 
 	xmmsc_playlist_list (m_client->getConnection ());
 

@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <qpainter.h>
 #include <qwidget.h>
 
@@ -17,6 +18,13 @@ XMMSStatus::XMMSStatus (XMMSClientQT *client, QWidget *parent) :
 	m_str = new QString ("XMMS2 - X Music Multiplexer System");
 	m_tme = new QString ("00:00");
 	m_ctme = new QString ("00:00");
+}
+
+void 
+XMMSStatus::setVisData (float *data) 
+{
+	m_vis_data = data;
+	repaint();
 }
 
 void
@@ -43,23 +51,33 @@ XMMSStatus::paintEvent (QPaintEvent *event)
 
 	QPainter p (this);
 	int i;
+
+	if (!m_vis_data)
+		return;
+	
 	p.setPen (Qt::black);
 
 	p.setWindow (0, 0, 300, 30);
 
-	QFont f ("fixed", 6);
+//	QFont f ("fixed", 6);
 	
 	p.drawRect (0, 0, 300, 30);
 
-	p.setFont (f);
-	QFontMetrics fm = p.fontMetrics();
-	int y = 2 + fm.ascent();
+//	p.setFont (f);
+//	QFontMetrics fm = p.fontMetrics();
+//	int y = 2 + fm.ascent();
 
 	/* Write song title */
-	p.drawText (2, y, *m_str);
-	p.drawText (300-fm.width (*m_tme)-1, y+fm.ascent(), *m_tme);
-	p.drawText (300-fm.width (*m_tme)-fm.width(*m_ctme+"/"), y+fm.ascent(), *m_ctme+"/");
+//	p.drawText (2, y, *m_str);
+//	p.drawText (300-fm.width (*m_tme)-1, y+fm.ascent(), *m_tme);
+//	p.drawText (300-fm.width (*m_tme)-fm.width(*m_ctme+"/"), y+fm.ascent(), *m_ctme+"/");
 
+	for (i=0; i < 10; i++) {
+		printf ("| %f ", m_vis_data[i]);
+	}
+	printf ("\n");
+	free (m_vis_data);
+	m_vis_data = NULL;
 }
 
 QSize

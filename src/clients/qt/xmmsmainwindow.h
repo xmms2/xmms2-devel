@@ -58,6 +58,8 @@ public:
 	void setBarBusy (bool m) { m_barbusy = m; };
 	x_list_t *getVisTime (void) { return m_vis_time; };
 	x_list_t *getVisData (void) { return m_vis_data; };
+	void setVisTime (x_list_t *vis_time) { m_vis_time = vis_time; };
+	void setVisData (x_list_t *vis_data) { m_vis_data = vis_data; };
 protected:
 	XMMSListView *m_listview;
 	XMMSToolbar *m_toolbar;

@@ -26,7 +26,6 @@ XMMSToolbar::XMMSToolbar (XMMSClientQT *client, QWidget *parent) : QWidget (pare
 	
 	m_status = new XMMSStatus (m_client, this);
 
-
 	button = new QPushButton (">", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onPlay ()));
 	button = new QPushButton ("S", this);
@@ -41,6 +40,12 @@ XMMSToolbar::XMMSToolbar (XMMSClientQT *client, QWidget *parent) : QWidget (pare
 	connect (button, SIGNAL (clicked ()), this, SLOT (onQuit ()));
 
 
+}
+
+void
+XMMSToolbar::setVisData (float *data)
+{
+	status ()->setVisData (data);
 }
 
 void

@@ -37,7 +37,7 @@ public:
 	void setText (QString *str);
 	void setCTME (QString *str);
 	void setTME (QString *str);
-
+	void setVisData (float *data);
 protected:
 	XMMSClientQT *m_client;
 	QHBoxLayout *m_layout;

@@ -35,7 +35,7 @@ public:
 	void setCTME (QString *str);
 	QString *currentTME (void) { return m_ctme; };
 	QString *str (void) { return m_str; };
-
+	void setVisData (float *data);
 protected:
 	void paintEvent (QPaintEvent *);
 
@@ -43,6 +43,7 @@ protected:
 	QString *m_str;
 	QString *m_tme;
 	QString *m_ctme;
+	float *m_vis_data;
 };
 
 #endif
