@@ -311,7 +311,7 @@ xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry)
 {
 	GHashTable *ret;
 	
-	ret = g_hash_table_new (g_str_hash, g_str_equal);
+	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
 	g_mutex_lock (medialib->mutex);
 
