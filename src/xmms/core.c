@@ -59,6 +59,9 @@ struct xmms_core_St {
 	gint status;
 
 	gboolean flush;
+	/** For calculation of uptime */
+	guint startuptime; 
+	guint songs_played;
 };
 
 static void xmms_core_effect_init (xmms_core_t *core);
@@ -75,6 +78,8 @@ xmms_core_thread (gpointer data)
 	gboolean running = TRUE;
 	xmms_core_t *core = data;
 
+	core->startuptime = xmms_util_time ();
+	
 	while (running) {
 
 		core->transport = NULL;
@@ -140,6 +145,7 @@ xmms_core_thread (gpointer data)
 		 * the decoder will wake this up when done
 		 */
 		xmms_decoder_wait (core->decoder);
+		core->songs_played++; 
 
 		XMMS_DBG ("destroying decoder");
 		if (core->decoder)
@@ -178,6 +184,13 @@ xmms_core_decoder_get (xmms_core_t *core)
 {
 	g_return_val_if_fail (core, NULL);
 	return core->decoder;
+}
+
+xmms_transport_t *
+xmms_core_transport_get (xmms_core_t *core)
+{
+	g_return_val_if_fail (core, NULL);
+	return core->transport;
 }
 
 xmms_output_t *
@@ -239,6 +252,22 @@ xmms_core_init (xmms_playlist_t *playlist)
 	xmms_dbus_register_object ("core", XMMS_OBJECT (core));
 
 	return core;
+}
+
+GList *
+xmms_core_stats (xmms_core_t *core, GList *list)
+{
+	gchar *tmp;
+
+	g_return_val_if_fail (core, NULL);
+	g_return_val_if_fail (list, NULL);
+
+	tmp = g_strdup_printf ("core.uptime=%u", xmms_util_time()-core->startuptime);
+	list = g_list_append (list, tmp);
+	tmp = g_strdup_printf ("core.songs_played=%u", core->songs_played);
+	list = g_list_append (list, tmp);
+
+	return list;
 }
 
 /**

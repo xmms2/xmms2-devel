@@ -31,18 +31,22 @@ typedef struct xmms_core_St xmms_core_t;
 #include "xmms/mediainfo.h"
 #include "xmms/effect.h"
 #include "xmms/config.h"
+#include "xmms/transport.h"
 
 xmms_core_t *xmms_core_init (xmms_playlist_t *playlist);
 void xmms_core_start (xmms_core_t *core);
 void xmms_core_quit (xmms_core_t *core, xmms_error_t *err);
+GList *xmms_core_stats (xmms_core_t *core, GList *list);
 
 void xmms_core_set_playlist (xmms_core_t *core, xmms_playlist_t *playlist);
 void xmms_core_output_set (xmms_core_t *core, xmms_output_t *output);
 void xmms_core_flush_set (xmms_core_t *core, gboolean b);
 void xmms_core_decoder_stop (xmms_core_t *core);
+
 xmms_output_t *xmms_core_output_get (xmms_core_t *core);
-xmms_decoder_t * xmms_core_decoder_get (xmms_core_t *core);
-xmms_playlist_t * xmms_core_playlist_get (xmms_core_t *core);
-xmms_playback_t * xmms_core_playback_get (xmms_core_t *core);
+xmms_decoder_t *xmms_core_decoder_get (xmms_core_t *core);
+xmms_playlist_t *xmms_core_playlist_get (xmms_core_t *core);
+xmms_playback_t *xmms_core_playback_get (xmms_core_t *core);
+xmms_transport_t *xmms_core_transport_get (xmms_core_t *core);
 
 #endif

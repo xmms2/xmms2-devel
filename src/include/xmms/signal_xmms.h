@@ -32,6 +32,7 @@
 
 #define XMMS_DBUS_INTERFACE "org.xmms"
 
+#define XMMS_METHOD_STATS "stats"
 #define XMMS_METHOD_DUMMY "quit"
 #define XMMS_METHOD_QUIT "dummy"
 #define XMMS_METHOD_ONCHANGE "onchange"

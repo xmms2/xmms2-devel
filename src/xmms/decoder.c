@@ -504,11 +504,15 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
  *
  * @param decoder
  * @param transport
+ * @param effect
  * @param output
  *
  */
 void
-xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_effect_t *effect, xmms_output_t *output)
+xmms_decoder_start (xmms_decoder_t *decoder, 
+		    xmms_transport_t *transport, 
+		    xmms_effect_t *effect, 
+		    xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);

@@ -88,4 +88,6 @@ gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 void xmms_output_mixer_set (xmms_output_t *output, gint left, gint right, xmms_error_t *err);
 guint xmms_output_mixer_get (xmms_output_t *output, xmms_error_t *err);
 
+GList *xmms_output_stats (xmms_output_t *output, GList *list); 
+
 #endif

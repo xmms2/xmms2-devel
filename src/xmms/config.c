@@ -72,6 +72,10 @@ enum xmms_config_states {
 
 xmms_config_t *global_config;
 
+
+void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err);
+GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
+
 /*
  * Config functions
  */
@@ -187,6 +191,9 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 	add_value (str, g_strdup (text));
 }
 
+
+XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
+
 void
 xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err)
 {
@@ -206,8 +213,7 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_
 
 }
 
-XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
-
+XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
 GList *
 xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
@@ -227,7 +233,6 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 
 }
 
-XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
 
 const gchar *
 xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error_t *err)

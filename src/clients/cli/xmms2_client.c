@@ -323,6 +323,24 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_stats (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	x_list_t *list;
+	xmmsc_result_t *res;
+
+	res = xmmsc_playback_statistics (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_get_stringlist (res, &list)) {
+		x_list_t *n;
+		for (n = list; n; n = x_list_next (n)) {
+			printf ("%s\n", (char*)n->data);
+		}
+	}
+
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_quit (conn);
@@ -394,7 +412,6 @@ static void
 handle_playtime (xmmsc_result_t *res, void *userdata)
 {
 	guint dur;
-	xmmsc_result_t *ret;
 	
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
@@ -542,6 +559,7 @@ cmds commands[] = {
 //	{ "move", "move a entry in the playlist", cmd_move },
 
 
+	{ "statistics", "get statistics from server", cmd_stats },
 	{ "status", "go into status mode", cmd_status },
 	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
 	{ "config", "set a config value", cmd_config },

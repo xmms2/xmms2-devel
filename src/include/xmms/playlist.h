@@ -86,7 +86,7 @@ gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_erro
 GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 
 void xmms_playlist_wait (xmms_playlist_t *playlist);
-
+GList *xmms_playlist_stats (xmms_playlist_t *playlist, GList *list);
 
 xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
 

@@ -308,6 +308,25 @@ resample (xmms_output_t *output, gint16 *buf, guint len)
 /**
  * @internal
  */
+
+GList *
+xmms_output_stats (xmms_output_t *output, GList *list)
+{
+	gchar *tmp;
+	GList *ret;
+
+	g_return_val_if_fail (output, NULL);
+
+	g_mutex_lock (output->mutex);
+	tmp = g_strdup_printf ("output.total_bytes=%llu", output->bytes_written);
+	ret = g_list_append (list, tmp);
+	tmp = g_strdup_printf ("output.buffer_underruns=%d", output->buffer_underruns);
+	ret = g_list_append (ret, tmp);
+	g_mutex_unlock (output->mutex);
+
+	return ret;
+}
+
 void
 xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 {
@@ -580,7 +599,6 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		if (buffersize_get_method) {
 			guint buffersize = buffersize_get_method (output);
 			buffersize = buffersize/(2.0f*output->open_samplerate/1000.0f);
-			/*				XMMS_DBG ("buffer: %dms", buffersize);*/
 
 			if (played_time >= buffersize) {
 				played_time -= buffersize;
@@ -591,16 +609,15 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		xmms_playback_playtime_set (xmms_core_playback_get (output->core), played_time);
 	}
 
-	xmms_output_unlock (output);
-
 	if (ret < len) {
 		output->buffer_underruns++;
 	}
 
 	output->bytes_written += ret;
+	
+	xmms_output_unlock (output);
 
 	return ret;
-	
 }
 
 
@@ -675,12 +692,21 @@ xmms_output_thread (gpointer data)
 		}
 
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
+
+		if (ret < 4096) {
+			output->buffer_underruns ++;
+		}
 		
 		if (ret > 0) {
 			guint played_time;
+
 			xmms_output_unlock (output);
+			/* Call the plugins write method */
 			write_method (output, buffer, ret);
 			xmms_output_lock (output);
+
+			/* For statistics! */
+			output->bytes_written += ret;
 
 			output->played += ret;
 			/** @todo some places we are counting in bytes,

@@ -41,6 +41,7 @@ const gchar *xmms_transport_mimetype_get (xmms_transport_t *transport);
 const gchar *xmms_transport_mimetype_get_wait (xmms_transport_t *transport);
 void xmms_transport_start (xmms_transport_t *transport);
 xmms_core_t * xmms_transport_core_get (xmms_transport_t *transport);
+GList *xmms_transport_stats (xmms_transport_t *transport, GList *list);
 
 /*
  * Private defines -- do NOT rely on these in plugins

@@ -50,9 +50,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <pthread.h>
+
 static GMainLoop *mainloop;
-
-
 
 static gboolean
 parse_config ()
@@ -154,7 +154,7 @@ main (int argc, char **argv)
 			sigaddset (&signals, SIGUSR1);
 			sigaddset (&signals, SIGCHLD);
 			sigwait (&signals, &caught);
-			exit (caught!=SIGUSR1);
+			exit (caught != SIGUSR1);
 		}
 		setsid();
 		if (fork ()) exit(0);

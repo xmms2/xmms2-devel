@@ -83,9 +83,14 @@ static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 sample
 static void xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err);
 static guint xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err);
 
+/** 
+ * Convinent macro for use inside playback.c
+ * Will emit #signal on the playback object.
+ */
 #define XMMS_PLAYBACK_EMIT(signal,argument) { \
-	xmms_object_method_arg_t *arg;\
-	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (argument));\
+	xmms_object_method_arg_t *arg; \
+	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, \
+				   GUINT_TO_POINTER (argument)); \
 	xmms_object_emit (XMMS_OBJECT (playback), signal, arg); \
 	g_free (arg);\
 }
@@ -261,6 +266,45 @@ guint
 xmms_playback_current_playtime (xmms_playback_t *playback, xmms_error_t *err)
 {
 	return playback->current_playtime;
+}
+
+static const gchar *
+status_str (xmms_playback_t *playback)
+{
+	g_return_val_if_fail (playback, NULL);
+
+	if (playback->status == XMMS_PLAYBACK_PLAY)
+		return "playing";
+	else if (playback->status == XMMS_PLAYBACK_STOP)
+		return "stopped";
+	else if (playback->status == XMMS_PLAYBACK_PAUSE)
+		return "paused";
+
+	return "unknown";
+}
+
+GList *xmms_playback_stats (xmms_playback_t *playback, xmms_error_t *err);
+XMMS_METHOD_DEFINE (statistics, xmms_playback_stats, xmms_playback_t *, STRINGLIST, NONE, NONE);
+
+GList *
+xmms_playback_stats (xmms_playback_t *playback, xmms_error_t *err)
+{
+	GList *ret = NULL;
+	gchar *tmp;
+
+	ret = xmms_output_stats (xmms_core_output_get (playback->core), ret);
+	ret = xmms_core_stats (playback->core, ret);
+	ret = xmms_transport_stats (xmms_core_transport_get (playback->core), ret);
+	ret = xmms_playlist_stats (playback->playlist, ret);
+	ret = xmms_dbus_stats (ret);
+
+	/* Add more values */
+	tmp = g_strdup_printf ("playback.status=%s", status_str (playback));
+	ret = g_list_append (ret, tmp);
+
+	/** @todo This list is horribly leaked! Should we have
+	  * a _free callback to METHOD_DEFINE? yes maybe */
+	return ret;
 }
 
 void
@@ -444,6 +488,10 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 	xmms_object_method_add (XMMS_OBJECT (playback), 
 				XMMS_METHOD_STATUS, 
 				XMMS_METHOD_FUNC (status));
+
+	xmms_object_method_add (XMMS_OBJECT (playback), 
+				XMMS_METHOD_STATS, 
+				XMMS_METHOD_FUNC (statistics));
 
 	xmms_dbus_register_object ("playback", XMMS_OBJECT (playback));
 

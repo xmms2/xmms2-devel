@@ -15,8 +15,6 @@
  */
 
 
-
-
 /** @file
  * D-BUS handler.
  *
@@ -49,12 +47,19 @@
 typedef struct xmms_dbus_connection_St {
         DBusConnection *connection;
 	GList *onchange_list;
+	/** Which time did client connect ? */
+	guint connecttime;
+	/** How many commands have the client issued */
+	guint nrcommands;
+	/** What is this client ? */
+	gchar *clientstr;
 } xmms_dbus_connection_t;
 
 
 typedef struct xmms_dbus_onchange_St {
 	xmms_dbus_connection_t *client;
 	DBusMessage *msg;
+	/** If this bit is set, this should not be used */
 	gint gone;
 } xmms_dbus_onchange_t;
 
@@ -72,6 +77,31 @@ static void xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg
 /*
  * dbus callbacks
  */
+
+GList *
+xmms_dbus_stats (GList *list) 
+{
+	gchar *tmp;
+	GSList *n;
+	gint i = 1;
+
+	g_mutex_lock (connectionslock);
+
+	for (n = connections; n; n = g_slist_next (n)) {
+		xmms_dbus_connection_t *c = n->data;
+		tmp = g_strdup_printf ("dbus.client%d.name=%s", i, c->clientstr);
+		list = g_list_append (list, tmp);
+		tmp = g_strdup_printf ("dbus.client%d.commands=%u", i, c->nrcommands);
+		list = g_list_append (list, tmp);
+		tmp = g_strdup_printf ("dbus.client%d.uptime=%u", i, xmms_util_time ()-c->connecttime);
+		list = g_list_append (list, tmp);
+		i++;
+	}
+
+	g_mutex_unlock (connectionslock);
+
+	return list;
+}
 
 void
 xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object)
@@ -154,6 +184,7 @@ xmms_dbus_clientcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 		GList *list;
 		gchar *signal = dbus_message_iter_get_string (&itr);
 		gchar *t = g_strdup (signal);
+
 
 		g_mutex_lock (pending_mutex);
 		if (!pending_onchange)
@@ -376,6 +407,7 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 
 	dbus_connection_send (conn, retmsg, &serial);
 	dbus_message_unref (retmsg);
+	client->nrcommands++;
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 
@@ -435,6 +467,8 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 	client = g_new0 (xmms_dbus_connection_t, 1);
 	client->connection = conn;
 	client->onchange_list = NULL;
+	client->connecttime = xmms_util_time ();
+	client->nrcommands = 0;
 
 	vtable.message_function = xmms_dbus_clientcall;
 	dbus_connection_register_fallback (conn, client_obj, &vtable, client);
@@ -450,6 +484,11 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 	g_mutex_unlock(connectionslock);
 
 	dbus_connection_setup_with_g_main (conn, g_main_context_default());
+
+	/** 
+	 * @todo How does D-BUS properties work? We'll need them for
+	 * clientstring and protocol version.
+	 */
 }
 
 /**

@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 /**
  * @file Misc utils for various functions in XMMS.
  */
@@ -28,6 +25,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <glib.h>
+
+#include <sys/time.h>
 
 /** Returns TRUE if the char is regular. ie, not to be encoded. */
 #define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
@@ -107,4 +106,17 @@ xmms_util_encode_path (gchar *path)
 	}
 
 	return outreal;
+}
+
+/**
+ * Time since 1 jan 1970
+ * @returns number of seconds since 1970
+ */
+
+guint
+xmms_util_time (void)
+{
+	struct timeval tv;
+	gettimeofday (&tv, NULL);
+	return tv.tv_sec;
 }

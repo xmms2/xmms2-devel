@@ -80,6 +80,20 @@ static gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint
 #define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
 
 
+GList *
+xmms_playlist_stats (xmms_playlist_t *playlist, GList *list)
+{
+	gchar *tmp;
+
+	XMMS_PLAYLIST_LOCK (playlist);
+	tmp = g_strdup_printf ("playlist.entries=%u", xmms_playlist_entries_total (playlist));
+	list = g_list_append (list, tmp);
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return list;
+
+}
+
 
 /** Waits for something to happen in playlist
  * 

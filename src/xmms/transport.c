@@ -73,7 +73,6 @@ struct xmms_transport_St {
 
 	GMutex *mutex;
 	GCond *cond;
-/*	GCond *seek_cond; */
 	GCond *mime_cond;
 	GThread *thread;
 	/** This is true if we are currently buffering. */
@@ -87,19 +86,44 @@ struct xmms_transport_St {
 
 	gchar *suburl;
 
-	/* Seek */
-	/** Set to TRUE if a seek is scheduled. */
-/*	gboolean want_seek;
-	gint seek_offset;
-	gint seek_whence;*/
 	gint numread; /**< times we have read since the last seek / start */
 	gboolean buffering;
+
+	/** Number of bytes read from the transport */
+	guint64 total_bytes;
+
+	/** Number of buffer underruns */
+	guint32 buffer_underruns;
 	
 };
 
 /*
  * Public functions
  */
+
+GList *
+xmms_transport_stats (xmms_transport_t *transport, GList *list)
+{
+	gchar *tmp, *tmp2;
+
+	if (!transport)
+		return list;
+
+	g_mutex_lock (transport->mutex);
+	tmp = g_strdup_printf ("transport.total_bytes=%llu", transport->total_bytes);
+	list = g_list_append (list, tmp);
+	tmp2 = xmms_util_encode_path (xmms_playlist_entry_url_get (transport->entry));
+	tmp = g_strdup_printf ("transport.url=%s", tmp2);
+	g_free (tmp2);
+	list = g_list_append (list, tmp);
+	tmp = g_strdup_printf ("transport.mimetype=%s", transport->mimetype);
+	list = g_list_append (list, tmp);
+	tmp = g_strdup_printf ("transport.buffer_underruns=%u", transport->buffer_underruns);
+	list = g_list_append (list, tmp);
+	g_mutex_unlock (transport->mutex);
+
+	return list;
+}
 
 /**
  * Recreates the Ringbuffer with new size.
@@ -344,6 +368,8 @@ xmms_transport_new (xmms_core_t *core)
 	transport->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 	transport->buffering = FALSE; /* maybe should be true? */
 	transport->core = core;
+	transport->total_bytes = 0;
+	transport->buffer_underruns = 0;
 
 	return transport;
 }
@@ -539,6 +565,12 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);
 	ret = xmms_ringbuf_read (transport->buffer, buffer, len);
+
+	if (ret < len) {
+		transport->buffer_underruns ++;
+	}
+
+	transport->total_bytes += ret;
 	
 	xmms_transport_unlock (transport);
 
