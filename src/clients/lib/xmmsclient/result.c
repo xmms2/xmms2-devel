@@ -219,7 +219,6 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	x_return_null_if_fail (res);
 	x_return_null_if_fail (res->c);
 
-
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 	xmms_ipc_msg_put_uint32 (msg, res->restart_signal);
 	
@@ -229,6 +228,8 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	l = res->udata_list;
 	for (n = res->func_list; n; n = x_list_next (n)) {
 		xmmsc_result_notifier_set (newres, n->data, l->data);
+		l->data = NULL;
+		n->data = NULL;
 		l = x_list_next (l);
 	}
 	xmmsc_result_restartable (newres, res->restart_signal);
@@ -449,7 +450,9 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		l = res->udata_list;
 		for (n = res->func_list; n; n = x_list_next (n)) {
 			xmmsc_result_notifier_t notifier = n->data;
-			notifier (res, l->data);
+			if (notifier) {
+				notifier (res, l->data);
+			}
 			l = x_list_next (l);
 		}
 	}
