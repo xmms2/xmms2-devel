@@ -85,7 +85,7 @@ gboolean xmms_transport_can_seek (xmms_transport_t *transport);
 gboolean xmms_transport_islocal (xmms_transport_t *transport);
 gboolean xmms_transport_plugin_open (xmms_transport_t *transport, 
 				     xmms_playlist_entry_t *entry, gpointer data);
-
+gint xmms_transport_tell (xmms_transport_t *transport); 
 
 xmms_transport_entry_t *xmms_transport_entry_new 
 			(gchar *path, xmms_transport_entry_type_t type);

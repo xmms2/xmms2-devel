@@ -46,7 +46,6 @@ typedef struct xmms_vorbis_data_St {
 	gint current;
 	gint channels;
 	gboolean inited;
-	gboolean tell_size;
 } xmms_vorbis_data_t;
 
 /*
@@ -162,13 +161,7 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 		offset == 0)
 		return 1;
 
-	if (whence == XMMS_TRANSPORT_SEEK_END &&
-		offset == 0) {
-		data->tell_size = TRUE;
-		return 1;
-	}
-	
-	if (xmms_transport_seek (transport, (gint) offset, whence) != -1)
+	if (xmms_transport_seek (transport, (gint) offset, whence) == -1)
 		return -1;
 
 	return 1;
@@ -184,16 +177,11 @@ static long
 vorbis_callback_tell (void *datasource)
 {
 	xmms_decoder_t *decoder = datasource;
-	xmms_vorbis_data_t *data;
+	xmms_transport_t *transport; 
 
-	data = xmms_decoder_private_data_get (decoder);
-	
-	if (data->tell_size) {
-		data->tell_size = FALSE;
-		return xmms_transport_size (xmms_decoder_transport_get (decoder));
-	}
-		
-	return 0;
+	transport = xmms_decoder_transport_get (decoder);  
+
+	return xmms_transport_tell (transport); 
 }
 
 static gboolean 
@@ -371,6 +359,11 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 	data = xmms_decoder_private_data_get (decoder);
 
 	g_return_val_if_fail (data, FALSE);
+
+	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
+		XMMS_DBG ("Trying to seek past end of stream"); 
+		return FALSE; 
+	}
 
 	ov_pcm_seek (&data->vorbisfile, samples);
 	return TRUE;

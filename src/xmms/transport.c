@@ -99,7 +99,8 @@ struct xmms_transport_St {
 
 	/** Number of buffer underruns */
 	guint32 buffer_underruns;
-	
+
+	guint64 current_position; 	
 };
 
 /*
@@ -374,6 +375,7 @@ xmms_transport_new (xmms_core_t *core)
 	transport->core = core;
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
+	transport->current_position = 0; 
 
 	return transport;
 }
@@ -558,6 +560,9 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		if (read_method) {
 			gint ret = read_method (transport, buffer, len);
 			if (ret == -1) return 0; /*FIXME*/
+
+			transport->current_position += ret; 
+
 			return ret;
 		}
 		return -1;
@@ -575,6 +580,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	}
 
 	transport->total_bytes += ret;
+	transport->current_position += ret; 
 	
 	xmms_transport_unlock (transport);
 
@@ -627,9 +633,25 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	XMMS_DBG ("Seek method returned %d", ret);
 
+	if (ret != -1)
+		transport->current_position = ret; 
+
 	xmms_transport_unlock (transport);
 
 	return ret;
+}
+
+/**
+  * Obtain the current value of the stream position indicator for transport
+  * 
+  * @returns current position in stream 
+  */
+gint
+xmms_transport_tell (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, -1); 
+
+	return transport->current_position; 
 }
 
 /**
