@@ -18,3 +18,4 @@ if base_env.HasGroup("sqlite"):
 	SConscript('sqlite/SConscript')
 if base_env.HasGroup("alsa"):
 	SConscript('alsa/SConscript')
+SConscript('sap/SConscript')
