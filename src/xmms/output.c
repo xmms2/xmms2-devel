@@ -313,8 +313,8 @@ xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 static guint
 xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 {
-	g_return_val_if_fail (output, XMMS_OUTPUT_STATUS_STOP);
 	guint ret;
+	g_return_val_if_fail (output, XMMS_OUTPUT_STATUS_STOP);
 
 	g_mutex_lock (output->mutex);
 	ret = output->status;
