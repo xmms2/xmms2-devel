@@ -27,6 +27,8 @@ static GList *time_queue = NULL;
 
 static TTF_Font *font;
 
+static xmmsc_connection_t *connection;
+
 
 /*
  * 
@@ -79,7 +81,7 @@ draw_bar(SDL_Surface *bar, int val,int xpos)
 		guint32 col = ((255-y) << 16) | ( (y) << 8 );
 
 		for (x=0; x<30; x++) {
-			lfb[512*y + xpos + x] = col;
+			lfb[bar->pitch/4*y + xpos + x] = col;
 		}
 
 	}
@@ -103,8 +105,21 @@ render_vis (gpointer data)
 	while (SDL_PollEvent (&event)) {
 		switch (event.type) {
 		case SDL_KEYDOWN:
-			g_main_loop_quit (mainloop);
-			return FALSE;
+			switch (event.key.keysym.sym) {
+			case SDLK_F1:
+				SDL_WM_ToggleFullScreen (surf);
+				break;
+			case 'n':
+				xmmsc_play_next (connection);
+				break;
+			case 'q':
+			case SDLK_ESCAPE:
+				g_main_loop_quit (mainloop);
+				return FALSE;
+				break;
+			default:
+				;
+			}
 		}
 	}
 
@@ -135,7 +150,7 @@ render_vis (gpointer data)
 			sum=log (sum/32);
 		}
 
-		draw_bar (surf, MIN (255, sum*64), i*32);
+		draw_bar (surf, MIN (255, sum*64), i*32 + (surf->w-(FFT_LEN/2))/2);
 	}
 
 	SDL_UpdateRect (surf, 0, 0, 0, 0);
@@ -220,19 +235,18 @@ free_queue_entry (gpointer data, gpointer udata)
 int
 main()
 {
-	xmmsc_connection_t *c;
 	SDL_Surface *screen;
 
-	c = xmmsc_init ();
+	connection = xmmsc_init ();
 
-	if(!c){
+	if(!connection){
 		printf ("bad\n");
 		return 1;
 	}
 
-	if (!xmmsc_connect (c)){
+	if (!xmmsc_connect (connection)){
 		printf ("couldn't connect to xmms2d: %s\n",
-			xmmsc_get_last_error(c));
+			xmmsc_get_last_error(connection));
 		return 1;
 	}
 
@@ -240,7 +254,7 @@ main()
 
 	timer = g_timer_new ();
 
-	xmmsc_glib_setup_mainloop (c, NULL);
+	xmmsc_glib_setup_mainloop (connection, NULL);
 
         if (SDL_Init(SDL_INIT_VIDEO) > 0) {
                 fprintf(stderr, "Unable to init SDL: %s \n", SDL_GetError());
@@ -259,24 +273,23 @@ main()
 		return 1;
 	}
 
-	screen = SDL_SetVideoMode(512, 300, 32, 0);
+	screen = SDL_SetVideoMode(640, 480, 32, 0);
 
+	set_mediainfo (connection, xmmsc_get_playing_id (connection));
 
-	set_mediainfo (c, xmmsc_get_playing_id (c));
-
-	xmmsc_set_callback (c, XMMS_SIGNAL_VISUALISATION_SPECTRUM,
+	xmmsc_set_callback (connection, XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 			    new_data, NULL);
-	xmmsc_set_callback (c, XMMS_SIGNAL_PLAYBACK_PLAYTIME,
+	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_PLAYTIME,
 			    handle_playtime, NULL);
-	xmmsc_set_callback (c, XMMS_SIGNAL_PLAYBACK_CURRENTID,
-			    set_mediainfo, c);
+	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_CURRENTID,
+			    set_mediainfo, connection);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);
 
 	g_main_loop_run (mainloop); /* GO GO GO! */
 
-	if (c) {
-		xmmsc_deinit (c);
+	if (connection) {
+		xmmsc_deinit (connection);
 	}
 
 	g_list_foreach (queue, free_queue_entry, NULL);
