@@ -11,3 +11,5 @@ if base_env.HasGroup("qt") and environ.has_key ('QTDIR'):
 	SConscript('lib/xmmsclient-qt/SConscript')
 if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
 	SConscript('sdl-vis/SConscript')
+if base_env.HasGroup("ecore")
+	SConscript('lib/xmmsclient-ecore/SConscript')
