@@ -605,14 +605,6 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	return xmmsc_result_new (c, cid);
 }
 
-int 
-destroy_hash (void *key, void *value, void *userdata)
-{
-	g_free (key);
-	g_free (value);
-	return 0;
-}
-
 x_hash_t *
 xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 {
@@ -625,7 +617,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
 		return NULL;
 
-	h = x_hash_new (x_str_hash, x_str_equal);
+	h = x_hash_new_full (x_str_hash, x_str_equal, g_free, g_free);
 
 	for (i = 1; i < entries; i++) {
 		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
@@ -639,7 +631,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	return h;
 
 err:
-	x_hash_foreach_remove (h, destroy_hash, NULL);
+	x_hash_destroy (h);
 	return NULL;
 
 }

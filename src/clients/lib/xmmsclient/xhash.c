@@ -106,6 +106,8 @@ struct _x_hash_t
   x_hash_node_t      **nodes;
   XHashFunc        hash_func;
   XEqualFunc       key_equal_func;
+  XDestroyNotify key_destroy_func;
+  XDestroyNotify value_destroy_func;
 };
 
 #define X_HASH_TABLE_RESIZE(hash_table)				\
@@ -121,7 +123,7 @@ static x_hash_node_t**	x_hash_lookup_node  (x_hash_t     *hash_table,
 static x_hash_node_t*	x_hash_node_new		  (void *	   key,
                                                    void *        value);
 static void		x_hash_node_destroy	  (x_hash_node_t	  *hash_node);
-static void		x_hash_nodes_destroy	  (x_hash_node_t	  *hash_node);
+static void x_hash_nodes_destroy (x_hash_node_t *hash_node, XDestroyNotify key_destroy_func, XDestroyNotify value_destroy_func);
 
 
 /**
@@ -146,7 +148,7 @@ x_hash_t*
 x_hash_new (XHashFunc    hash_func,
 		  XEqualFunc   key_equal_func)
 {
-  return x_hash_new_full (hash_func, key_equal_func);
+  return x_hash_new_full (hash_func, key_equal_func, NULL, NULL);
 }
 
 
@@ -168,8 +170,9 @@ x_hash_new (XHashFunc    hash_func,
  * Return value: a new #x_hash_t.
  **/
 x_hash_t*
-x_hash_new_full (XHashFunc       hash_func,
-		       XEqualFunc      key_equal_func)
+x_hash_new_full (XHashFunc hash_func, XEqualFunc key_equal_func,
+                 XDestroyNotify key_destroy_func,
+                 XDestroyNotify value_destroy_func)
 {
   x_hash_t *hash_table;
   unsigned int i;
@@ -179,6 +182,8 @@ x_hash_new_full (XHashFunc       hash_func,
   hash_table->nnodes             = 0;
   hash_table->hash_func          = hash_func ? hash_func : x_direct_hash;
   hash_table->key_equal_func     = key_equal_func;
+  hash_table->key_destroy_func   = key_destroy_func;
+  hash_table->value_destroy_func = value_destroy_func;
   hash_table->nodes              = calloc (1, sizeof (x_hash_node_t*) * hash_table->size);
   
   for (i = 0; i < hash_table->size; i++)
@@ -205,7 +210,9 @@ x_hash_destroy (x_hash_t *hash_table)
   assert (hash_table != NULL);
   
   for (i = 0; i < hash_table->size; i++)
-    x_hash_nodes_destroy (hash_table->nodes[i]);
+    x_hash_nodes_destroy (hash_table->nodes[i],
+                          hash_table->key_destroy_func,
+                          hash_table->value_destroy_func);
   
   free (hash_table->nodes);
   free (hash_table);
@@ -626,11 +633,18 @@ x_hash_node_destroy (x_hash_node_t      *hash_node)
 }
 
 static void
-x_hash_nodes_destroy (x_hash_node_t *hash_node)
+x_hash_nodes_destroy (x_hash_node_t *hash_node,
+                      XDestroyNotify key_destroy_func,
+                      XDestroyNotify value_destroy_func)
 {
   while (hash_node)
     {
       x_hash_node_t *next = hash_node->next;
+
+      if (key_destroy_func)
+          key_destroy_func (hash_node->key);
+      if (value_destroy_func)
+          value_destroy_func (hash_node->value);
 
       free (hash_node);
       hash_node = next;

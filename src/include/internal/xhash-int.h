@@ -38,7 +38,7 @@ typedef struct _x_hash_t  x_hash_t;
 /* Hash tables
  */
 x_hash_t* x_hash_new (XHashFunc hash_func, XEqualFunc key_equal_func);
-x_hash_t* x_hash_new_full (XHashFunc hash_func, XEqualFunc key_equal_func);
+x_hash_t* x_hash_new_full (XHashFunc hash_func, XEqualFunc key_equal_func, XDestroyNotify key_destroy_func, XDestroyNotify value_destroy_func);
 void x_hash_destroy (x_hash_t *hash_table);
 void x_hash_insert (x_hash_t *hash_table, void *key, void *value);
 void x_hash_replace (x_hash_t *hash_table, void *key, void *value);

@@ -20,5 +20,6 @@ typedef int (*XFunc) (void *data, void *user_data);
 typedef unsigned int (*XHashFunc) (const void *key);
 typedef void (*XHFunc) (const void *key, const void *value, void *user_data);
 typedef int  (*XHRFunc) (void *key, void *value, void *user_data);
+typedef void (*XDestroyNotify) (void *data);
 
 #endif /* __XUTILS_H__ */
