@@ -141,8 +141,8 @@ xmms_playlist_init (void)
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYLIST, XMMS_OBJECT (ret));
 
-	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 
 	val = xmms_config_value_register ("playlist.repeat_one", "0", on_playlist_r_one_changed, ret);
 	ret->repeat_one = xmms_config_value_int_get (val);
@@ -221,6 +221,7 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 		playlist->currentpos++;
 		playlist->currentpos %= playlist->list->len;
 		ret = (playlist->currentpos != 0) || playlist->repeat_all;
+		xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 	}
 	g_mutex_unlock (playlist->mutex);
 
@@ -325,6 +326,8 @@ xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 	}
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_REMOVE, pos, 0);
+	
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_INT32, playlist->currentpos);
 
 	g_mutex_unlock (playlist->mutex);
 
@@ -500,8 +503,8 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos, x
 	XMMS_DBG ("newpos! %d", pos);
 	playlist->currentpos = pos;
 
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SET_POS, pos, 0);
 	mid = g_array_index (playlist->list, guint32, playlist->currentpos);
 
 	return mid;

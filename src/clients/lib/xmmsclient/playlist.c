@@ -237,10 +237,11 @@ xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 }
 
+
 xmmsc_result_t *
-xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
+xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 {
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID);
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 }
 
 xmmsc_result_t *

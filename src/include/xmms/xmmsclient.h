@@ -66,6 +66,7 @@ xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c);
 
 /* Syncronous commands */
 unsigned int xmmscs_playlist_current_id (xmmsc_connection_t *c);

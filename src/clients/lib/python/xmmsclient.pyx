@@ -96,6 +96,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_tickle (xmmsc_connection_t *c)
@@ -984,6 +985,25 @@ cdef class XMMS :
 
 		return ret
 
+	def broadcast_playlist_current_pos (self, myClass = None) :
+		"""
+		Set a class to handle the playlist current position updates 
+		from the XMMS2 daemon. 
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is updated with the
+		appropriate info.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_broadcast_playlist_current_pos (self.conn)
+		ret.more_init (1)
+		
+		return ret
 
 	def broadcast_playlist_changed (self, myClass = None) :
 		"""
