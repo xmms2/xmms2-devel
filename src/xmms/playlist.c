@@ -17,11 +17,28 @@
  * Public functions
  */
 
+#define XMMS_PLAYLIST_LOCK(a) g_mutex_lock (a->mutex)
+#define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
+
+
+void
+xmms_playlist_wait (xmms_playlist_t *playlist)
+{
+	g_return_if_fail (playlist);
+
+	XMMS_DBG ("Waiting for playlist ...");
+	
+	g_cond_wait (playlist->cond, playlist->mutex);
+}
 
 guint
 xmms_playlist_entries (xmms_playlist_t *playlist)
 {
-	return g_slist_length (playlist->list);
+	guint ret;
+	XMMS_PLAYLIST_LOCK (playlist);
+	ret = g_slist_length (playlist->list);
+	XMMS_PLAYLIST_UNLOCK (playlist);
+	return ret;
 }
 
 gboolean
@@ -33,6 +50,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 		exit (1);
 	}
 	
+	XMMS_PLAYLIST_LOCK (playlist);
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
 			playlist->list = g_slist_append (playlist->list, (gpointer) file);
@@ -42,6 +60,10 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 		case XMMS_PLAYLIST_INSERT:
 			break;
 	}
+
+	g_cond_signal (playlist->cond);
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	return TRUE;
 
@@ -53,12 +75,18 @@ xmms_playlist_pop (xmms_playlist_t *playlist)
 	xmms_playlist_entry_t *r=NULL;
 	GSList *n;
 
+	while (xmms_playlist_entries (playlist) < 1)
+		xmms_playlist_wait (playlist);
+
+	XMMS_PLAYLIST_LOCK (playlist);
 	n = g_slist_nth (playlist->list, 0);
 
 	if (n) {
 		r = n->data;
 		playlist->list = g_slist_remove (playlist->list, r);
 	}
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
 	
 	return r;
 
@@ -70,6 +98,8 @@ xmms_playlist_init ()
 	xmms_playlist_t *ret;
 
 	ret = g_new0 (xmms_playlist_t, 1);
+	ret->cond = g_cond_new ();
+	ret->mutex = g_mutex_new ();
 	ret->list = NULL;
 
 	return ret;
@@ -78,6 +108,22 @@ xmms_playlist_init ()
 void
 xmms_playlist_close (xmms_playlist_t *playlist)
 {
+	GSList *node;
+
+	g_return_if_fail (playlist);
+
+	g_cond_free (playlist->cond);
+	g_mutex_free (playlist->mutex);
+
+	node = playlist->list;
+	
+	while (node) {
+		xmms_playlist_entry_t *entry = node->data;
+		xmms_playlist_entry_free (entry);
+		node = g_slist_next (node);
+	}
+
+	g_slist_free (playlist->list);
 }
 
 /* playlist_entry_* */

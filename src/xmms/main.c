@@ -94,9 +94,6 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	
-	if (argc < 2)
-		exit (1);
-
 	while (42) {
 		opt = getopt (argc, argv, "vVo:");
 
