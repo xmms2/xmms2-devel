@@ -1,6 +1,5 @@
 GLOBAL:
 	* Log messages should be more interesting.
-	* licenseheader in all sourcefiles?
 
 CORE:
 	* Core should be reentrant. Cleaned up anyway.
@@ -8,13 +7,8 @@ CORE:
 	* Fix the last functions to new DBus API
 
 LIB:
-	* Synclib
-	  - bindings to Python / PHP?
+	* bindings to Python / PHP?
 	
-CLI:
-	* xmms2 <file> should imply xmms2 play <file>
-	* use synclib
-
 PLUGINS:
 	* mad
 		* broken frames sound bad.
