@@ -55,19 +55,18 @@ typedef enum {
 	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 18,
 	XMMS_SIGNAL_MASK_PLAYLIST_SAVE = 1 << 19,
 	XMMS_SIGNAL_MASK_PLAYLIST_SORT = 1 << 20,
-	XMMS_SIGNAL_MASK_PLAYLIST_MODE_SET = 1 << 21,
 
-	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 22,
-	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 23,
-	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 24,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 25,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 26,
+	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 21,
+	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 22,
+	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 23,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 24,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 25,
 
-	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 27,
+	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 26,
 
-	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 28,
+	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 27,
 	
-	XMMS_SIGNAL_MASK_TRANSPORT_LIST = 1 << 29,
+	XMMS_SIGNAL_MASK_TRANSPORT_LIST = 1 << 28,
 } xmms_dbus_signal_mask_t;
 
 
@@ -90,7 +89,6 @@ static gboolean handle_playlist_sort (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_clear ();
 static gboolean handle_playlist_save (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_jump (guint arg);
-static gboolean handle_playlist_mode_set (guint arg);
 static gboolean handle_playlist_move (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_core_quit ();
@@ -192,9 +190,6 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_PLAYLIST_JUMP,
 		XMMS_SIGNAL_MASK_PLAYLIST_JUMP, 
 		NULL, NULL, NULL, handle_playlist_jump },
-	{ XMMS_SIGNAL_PLAYLIST_MODE_SET,
-		XMMS_SIGNAL_MASK_PLAYLIST_MODE_SET, 
-		NULL, NULL, NULL, handle_playlist_mode_set },
 	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO, 
 		XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO, 
 		NULL, handle_playlist_mediainfo, NULL, NULL },
@@ -814,13 +809,6 @@ static gboolean
 handle_playlist_jump (guint arg)
 {
 	xmms_core_playlist_jump (arg);
-	return TRUE;
-}
-
-static gboolean
-handle_playlist_mode_set (guint arg)
-{
-	xmms_core_playlist_mode_set ((xmms_playlist_mode_t) arg);
 	return TRUE;
 }
 

@@ -32,7 +32,7 @@ struct xmms_playlist_St {
 	gboolean is_waiting;
 
 	/** XMMS_PLAYLIST_MODE_[NONE|ALL|ONE|STOP] */
-	xmms_playlist_mode_t next_mode;
+	xmms_config_value_t *next_mode;
 };
 
 /*
@@ -50,8 +50,10 @@ struct xmms_playlist_St {
 void
 xmms_playlist_mode_set (xmms_playlist_t *playlist, xmms_playlist_mode_t mode)
 {
+	gchar *m;
 	XMMS_PLAYLIST_LOCK (playlist);
-	playlist->next_mode = mode;
+	m = g_strdup_printf ("%d", mode); /* FIXME: memory loss??? */
+	xmms_config_value_data_set (playlist->next_mode, m);
 	XMMS_PLAYLIST_UNLOCK (playlist);
 }
 
@@ -64,7 +66,7 @@ xmms_playlist_mode_get (xmms_playlist_t *playlist)
 	xmms_playlist_mode_t m;
 
 	XMMS_PLAYLIST_LOCK (playlist);
-	m = playlist->next_mode;
+	m = (xmms_playlist_mode_t) xmms_config_value_int_get (playlist->next_mode);
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
 	return m;
@@ -410,12 +412,16 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r=NULL;
 	GList *n = NULL;
+	xmms_playlist_mode_t mode;
 
 	g_return_val_if_fail (playlist, NULL);
 
 	XMMS_PLAYLIST_LOCK (playlist);
+
+	mode = xmms_config_value_int_get (playlist->next_mode);
+	
 	if (playlist->currententry) {
-		if (playlist->next_mode == XMMS_PLAYLIST_MODE_REPEAT_ONE) {
+		if (mode == XMMS_PLAYLIST_MODE_REPEAT_ONE) {
 			n = playlist->currententry;
 		} else {
 			n = g_list_next (playlist->currententry);
@@ -433,7 +439,7 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
-	if (playlist->next_mode == XMMS_PLAYLIST_MODE_STOP)
+	if (mode == XMMS_PLAYLIST_MODE_STOP)
 		return NULL;
 
 	return r;
@@ -630,6 +636,9 @@ xmms_playlist_init ()
 	ret->nextid = 1;
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 	ret->is_waiting = FALSE;
+
+	/* 0 = MODE_NONE */
+	ret->next_mode = xmms_config_value_register ("core.next_mode", "0", NULL, NULL);
 	xmms_object_init (XMMS_OBJECT (ret));
 
 	return ret;
