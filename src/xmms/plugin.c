@@ -126,7 +126,6 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 	plugin->shortname = g_strdup (shortname);
 	plugin->description = g_strdup (description);
 	plugin->method_table = g_hash_table_new (g_str_hash, g_str_equal);
-	plugin->info_list = g_list_alloc ();
 
 	return plugin;
 }
@@ -205,7 +204,7 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 	info->key = key;
 	info->value = value;
 
-	g_list_append (plugin->info_list, info);
+	plugin->info_list = g_list_append (plugin->info_list, info);
 }
 
 /* @} */
