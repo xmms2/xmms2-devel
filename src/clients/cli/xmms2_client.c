@@ -150,6 +150,8 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	for (i = 0; list[i]; i++) {
 		x_hash_t *tab;
 		char line[80];
+
+		g_clear_error (&err);
 		
 		tab = xmmscs_playlist_get_mediainfo (conn, list[i]);
 
@@ -432,8 +434,6 @@ main (int argc, char **argv)
 	} else {
 		path = dbuspath;
 	}
-
-	print_info ("Using path: %s", path);
 
 	if (!xmmsc_connect (connection, path)) {
 		print_error ("Could not connect to xmms2d: %s", xmmsc_get_last_error (connection));
