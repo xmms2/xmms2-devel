@@ -41,11 +41,10 @@
 
 struct xmms_effect_St {
 	void (*destroy) (xmms_effect_t *);
-	void (*samplerate_change) (xmms_effect_t *, guint rate);
-	void (*run) (xmms_effect_t *, gchar *buf, guint len);
+	gboolean (*format_set) (xmms_effect_t *, xmms_audio_format_t *);
+	void (*run) (xmms_effect_t *, gchar *, guint);
 
 	gpointer *private_data;
-	guint rate;
 	xmms_plugin_t *plugin;
 
 	/* configval for effect.foo.enabled */
@@ -54,21 +53,19 @@ struct xmms_effect_St {
 };
 
 void
-xmms_effect_samplerate_set (xmms_effect_t *e, guint rate)
-{
-	if (rate != e->rate) {
-		e->rate = rate;
-		e->samplerate_change (e, rate);
-	}
-}
-
-void
-xmms_effect_run (xmms_effect_t *e, gchar *buf, guint len)
+xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)
 {
 	if (e->enabled) {
 		e->run (e, buf, len);
 	}
 }
+
+gboolean
+xmms_effect_format_set (xmms_effect_t *e, xmms_audio_format_t *fmt)
+{
+	return e->format_set (e, fmt);
+}
+
 
 /**
  * Retreive plugin-private data.
@@ -148,15 +145,14 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 
 	newfunc (effect, output);
 
-/*
-	effect->samplerate_change = xmms_plugin_method_get (plugin,
-			XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
-*/
+	effect->format_set = xmms_plugin_method_get (plugin,
+	                                             XMMS_PLUGIN_METHOD_FORMAT_SET);
+
 	effect->run = xmms_plugin_method_get (plugin,
-			XMMS_PLUGIN_METHOD_PROCESS);
+	                                      XMMS_PLUGIN_METHOD_PROCESS);
 
 	effect->destroy = xmms_plugin_method_get (plugin,
-			XMMS_PLUGIN_METHOD_DESTROY);
+	                                          XMMS_PLUGIN_METHOD_DESTROY);
 
 	/* check whether this plugin is enabled.
 	 * if the plugin doesn't provide the "enabled" config key,

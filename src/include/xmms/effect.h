@@ -31,8 +31,8 @@
 
 typedef struct xmms_effect_St xmms_effect_t;
 
-void xmms_effect_samplerate_set (xmms_effect_t *effect, guint rate);
-void xmms_effect_run (xmms_effect_t *effect, gchar *buf, guint len);
+gboolean xmms_effect_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
+void xmms_effect_run (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
 gpointer xmms_effect_private_data_get (xmms_effect_t *effect);
 void xmms_effect_private_data_set (xmms_effect_t *effect, gpointer data);
 xmms_plugin_t * xmms_effect_plugin_get (xmms_effect_t *effect);

@@ -288,7 +288,8 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 {
         xmms_output_t *output;
 	xmms_sample_converter_t *converter;
-        GList *outfmts;
+	xmms_audio_format_t *fmt;
+        GList *outfmts, *l;
 
         g_return_val_if_fail (decoder, NULL);
 
@@ -303,8 +304,22 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 
         xmms_output_format_set (output, xmms_sample_converter_get_to (converter));
 	decoder->converter = converter;
+	
+	fmt = xmms_sample_converter_get_from (converter);
 
-        return xmms_sample_converter_get_from (converter);
+	for (l = decoder->effects; l; ) {
+		if (!xmms_effect_format_set (l->data, fmt)) {
+			GList *n;
+			XMMS_DBG ("Rockstar ate my effect (didn't support format)");
+			n = l->next;
+			decoder->effects = g_list_delete_link (decoder->effects, l);
+			l = n;
+		} else {
+			l = g_list_next (l);
+		}
+	}
+
+        return fmt;
 }
 
 
@@ -392,11 +407,11 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 		                  decoder->replaygain);
 	}
 
-	/*
-	for (l = decoder->effects; l; l = l->next) {
+	for (l = decoder->effects; l; l = g_list_next (l)) {
 		xmms_effect_run (l->data, buf, len);
 	}
 	
+	/*
 	xmms_visualisation_calc (decoder->vis, buf, len, decoder->decoded_frames);
 	*/
 
@@ -520,6 +535,8 @@ xmms_decoder_destroy (xmms_object_t *object)
 	}
 	g_list_free (decoder->format_list);
 
+	g_list_free (decoder->effects);
+
 	xmms_ringbuf_destroy (decoder->buffer);
 	g_mutex_free (decoder->mutex);
 	xmms_transport_close (decoder->transport);
@@ -629,7 +646,7 @@ xmms_decoder_start (xmms_decoder_t *decoder,
 	g_return_if_fail (output);
 	
 	decoder->running = TRUE;
-	decoder->effects = effects;
+	decoder->effects = g_list_copy (effects);
 	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
