@@ -132,6 +132,8 @@ xmms_core_playlist_save (gchar *filename)
 	g_return_if_fail (plugin);
 
 	xmms_playlist_plugin_save (plugin, core->playlist, filename);
+
+	xmms_playlist_plugin_free (plugin);
 }
 
 void
