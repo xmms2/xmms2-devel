@@ -270,7 +270,7 @@ xmms_transport_size (xmms_transport_t *transport)
 	xmms_transport_size_method_t size;
 	g_return_val_if_fail (transport, -1);
 
-	size = xmms_plugin_method_get (transport->plugin, XMMS_METHOD_SIZE);
+	size = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SIZE);
 	g_return_val_if_fail (size, -1);
 
 	return size (transport);
@@ -299,7 +299,7 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 	xmms_transport_open_method_t open_method;
 	xmms_transport_t *transport;
 
-	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
+	open_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_OPEN);
 
 	if (!open_method) {
 		XMMS_DBG ("Transport has no open_method!");
@@ -396,7 +396,7 @@ xmms_transport_seek_real (xmms_transport_t *transport)
 	xmms_transport_seek_method_t seek_method;
 	g_return_if_fail (transport);
 
-	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_METHOD_SEEK);
+	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
 	g_return_if_fail (seek_method);
 
 	xmms_ringbuf_clear (transport->buffer);
@@ -414,7 +414,7 @@ xmms_transport_destroy (xmms_transport_t *transport)
 {
 	xmms_transport_close_method_t close_method;
 
-	close_method = xmms_plugin_method_get (transport->plugin, XMMS_METHOD_CLOSE);
+	close_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_CLOSE);
 	
 	if (close_method)
 		close_method (transport);
@@ -443,7 +443,7 @@ xmms_transport_find_plugin (const gchar *uri)
 	for (node = list; node; node = g_list_next (node)) {
 		plugin = node->data;
 		XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
-		can_handle = xmms_plugin_method_get (plugin, XMMS_METHOD_CAN_HANDLE);
+		can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
 		
 		if (!can_handle)
 			continue;
@@ -472,7 +472,7 @@ xmms_transport_thread (gpointer data)
 
 	g_return_val_if_fail (transport, NULL);
 	
-	read_method = xmms_plugin_method_get (transport->plugin, XMMS_METHOD_READ);
+	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 	if (!read_method)
 		return NULL;
 

@@ -57,10 +57,10 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 
-	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_sid_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_sid_new);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_sid_decode_block);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_sid_destroy);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_sid_can_handle);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_sid_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_sid_decode_block);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_sid_destroy);
 
 	/* Can only fastforward SIDs, not rewind */
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);

@@ -8,20 +8,21 @@
  * Plugin methods
  */
 
-#define XMMS_METHOD_CAN_HANDLE "can_handle"
-#define XMMS_METHOD_OPEN "open"
-#define XMMS_METHOD_CLOSE "close"
-#define XMMS_METHOD_READ "read"
-#define XMMS_METHOD_SIZE "size"
-#define XMMS_METHOD_SEEK "seek"
-#define XMMS_METHOD_NEW "new"
-#define XMMS_METHOD_DECODE_BLOCK "decode_block"
-#define XMMS_METHOD_GET_MEDIAINFO "get_mediainfo"
-#define XMMS_METHOD_DESTROY "destroy"
-#define XMMS_METHOD_WRITE "write"
-#define XMMS_METHOD_SEARCH "search"
-#define XMMS_METHOD_ADD_ENTRY "add_entry"
-#define XMMS_METHOD_INIT "init"
+#define XMMS_PLUGIN_METHOD_CAN_HANDLE "can_handle"
+#define XMMS_PLUGIN_METHOD_OPEN "open"
+#define XMMS_PLUGIN_METHOD_CLOSE "close"
+#define XMMS_PLUGIN_METHOD_READ "read"
+#define XMMS_PLUGIN_METHOD_SIZE "size"
+#define XMMS_PLUGIN_METHOD_SEEK "seek"
+#define XMMS_PLUGIN_METHOD_NEW "new"
+#define XMMS_PLUGIN_METHOD_DECODE_BLOCK "decode_block"
+#define XMMS_PLUGIN_METHOD_GET_MEDIAINFO "get_mediainfo"
+#define XMMS_PLUGIN_METHOD_DESTROY "destroy"
+#define XMMS_PLUGIN_METHOD_WRITE "write"
+#define XMMS_PLUGIN_METHOD_SEARCH "search"
+#define XMMS_PLUGIN_METHOD_ADD_ENTRY "add_entry"
+#define XMMS_PLUGIN_METHOD_INIT "init"
+#define XMMS_PLUGIN_METHOD_TO_PLAYLIST "to_playlist"
 
 /*
  * Plugin properties.
@@ -46,7 +47,8 @@ typedef enum {
 	XMMS_PLUGIN_TYPE_TRANSPORT,
 	XMMS_PLUGIN_TYPE_DECODER,
 	XMMS_PLUGIN_TYPE_OUTPUT,
-	XMMS_PLUGIN_TYPE_MEDIALIB
+	XMMS_PLUGIN_TYPE_MEDIALIB,
+	XMMS_PLUGIN_TYPE_PLAYLIST
 } xmms_plugin_type_t;
 
 typedef struct {

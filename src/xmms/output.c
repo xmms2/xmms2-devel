@@ -88,7 +88,7 @@ xmms_output_open (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 
-	open_method = xmms_plugin_method_get (output->plugin, XMMS_METHOD_OPEN);
+	open_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
 
 	if (!open_method || !open_method (output)) {
 		XMMS_DBG ("Couldnt open output device");
@@ -108,7 +108,7 @@ xmms_output_close (xmms_output_t *output)
 
 	g_return_if_fail (output);
 
-	close_method = xmms_plugin_method_get (output->plugin, XMMS_METHOD_CLOSE);
+	close_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_CLOSE);
 
 	if (!close_method)
 		return;
@@ -196,7 +196,7 @@ xmms_output_thread (gpointer data)
 	g_return_val_if_fail (data, NULL);
 
 	XMMS_DBG ("Plugin %s", output->plugin->name);
-	write_method = xmms_plugin_method_get (output->plugin, XMMS_METHOD_WRITE);
+	write_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_WRITE);
 	g_return_val_if_fail (write_method, NULL);
 
 	xmms_output_lock (output);

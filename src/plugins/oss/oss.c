@@ -48,9 +48,9 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
-	xmms_plugin_method_add (plugin, XMMS_METHOD_WRITE, xmms_oss_write);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_oss_open);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_CLOSE, xmms_oss_close);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_oss_write);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_oss_open);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_oss_close);
 	
 	return plugin;
 }

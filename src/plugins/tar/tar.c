@@ -105,27 +105,27 @@ xmms_plugin_get (void)
 
 
 	xmms_plugin_method_add (decoder_plugin,
-				XMMS_METHOD_CAN_HANDLE, xmms_tar_can_handle);
+				XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_tar_can_handle);
 	xmms_plugin_method_add (decoder_plugin,
-				XMMS_METHOD_NEW, xmms_tar_new);
+				XMMS_PLUGIN_METHOD_NEW, xmms_tar_new);
 	xmms_plugin_method_add (decoder_plugin,
-				XMMS_METHOD_DECODE_BLOCK, xmms_tar_decode_block);
+				XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_tar_decode_block);
 	xmms_plugin_method_add (decoder_plugin,
-				XMMS_METHOD_DESTROY, xmms_tar_destroy);
+				XMMS_PLUGIN_METHOD_DESTROY, xmms_tar_destroy);
 
 	xmms_plugin_properties_add (decoder_plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES);
 
 
 	xmms_plugin_method_add (transport_plugin,
-				XMMS_METHOD_OPEN, xmms_tar_open);
+				XMMS_PLUGIN_METHOD_OPEN, xmms_tar_open);
 	xmms_plugin_method_add (transport_plugin,
-				XMMS_METHOD_CLOSE, xmms_tar_close);
+				XMMS_PLUGIN_METHOD_CLOSE, xmms_tar_close);
 	xmms_plugin_method_add (transport_plugin,
-				XMMS_METHOD_READ, xmms_tar_read);
+				XMMS_PLUGIN_METHOD_READ, xmms_tar_read);
 	xmms_plugin_method_add (transport_plugin,
-				XMMS_METHOD_SIZE, xmms_tar_size);
+				XMMS_PLUGIN_METHOD_SIZE, xmms_tar_size);
 	xmms_plugin_method_add (transport_plugin,
-				XMMS_METHOD_SEEK, xmms_tar_seek);
+				XMMS_PLUGIN_METHOD_SEEK, xmms_tar_seek);
 
 	xmms_plugin_properties_add (transport_plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (transport_plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
@@ -386,7 +386,7 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 
 	}
 
-	decode_block = xmms_plugin_method_get (data->subdecoder->plugin, XMMS_METHOD_DECODE_BLOCK);
+	decode_block = xmms_plugin_method_get (data->subdecoder->plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK);
 	g_return_val_if_fail (decode_block, FALSE);
 
 	res = decode_block (data->subdecoder);

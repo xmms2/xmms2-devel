@@ -50,10 +50,10 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.sqlite.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
-	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_sqlite_new);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_SEARCH, xmms_sqlite_search);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_ADD_ENTRY, xmms_sqlite_add_entry);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_CLOSE, xmms_sqlite_close);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_sqlite_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEARCH, xmms_sqlite_search);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_ADD_ENTRY, xmms_sqlite_add_entry);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_sqlite_close);
 
 	return plugin;
 }

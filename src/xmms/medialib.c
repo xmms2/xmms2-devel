@@ -39,7 +39,7 @@ xmms_medialib_init (xmms_plugin_t *plugin)
 	xmms_medialib_new_method_t new_method;
 	xmms_medialib_t *medialib;
 	
-	new_method = xmms_plugin_method_get (plugin, XMMS_METHOD_NEW);
+	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new_method)
 		return NULL;
@@ -87,7 +87,7 @@ xmms_medialib_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 	g_return_val_if_fail (medialib, NULL);
 	g_return_val_if_fail (entry, NULL);
 
-	search = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_SEARCH);
+	search = xmms_plugin_method_get (medialib->plugin, XMMS_PLUGIN_METHOD_SEARCH);
 
 	g_return_val_if_fail (search, NULL);
 
@@ -105,7 +105,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry
 	g_return_if_fail (medialib);
 	g_return_if_fail (entry);
 
-	add_entry = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_ADD_ENTRY);
+	add_entry = xmms_plugin_method_get (medialib->plugin, XMMS_PLUGIN_METHOD_ADD_ENTRY);
 	g_return_if_fail (add_entry);
 
 	if (!xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST))
@@ -262,7 +262,7 @@ xmms_medialib_close (xmms_medialib_t *medialib)
 
 	g_return_if_fail (medialib);
 
-	cm = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_CLOSE);
+	cm = xmms_plugin_method_get (medialib->plugin, XMMS_PLUGIN_METHOD_CLOSE);
 
 	if (cm)
 		cm (medialib);

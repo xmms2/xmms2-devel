@@ -2,16 +2,6 @@
 #include "xmms/transport.h"
 #include "xmms/util.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <netdb.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <netinet/in.h>
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,17 +10,14 @@
  * Type definitions
  */
 
-typedef struct {
-	gint fd;
-} xmms_http_data_t;
-
 /*
  * Function prototypes
  */
 
-static gboolean xmms_http_can_handle (const gchar *uri);
-static gboolean xmms_http_open (xmms_transport_t *transport, const gchar *uri);
-static gint xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gboolean xmms_m3u_can_handle (const gchar *mimetype);
+static gboolean xmms_m3u_read_playlist (const xmms_transport_t *transport, 
+		const xmms_playlist_t *playlist);
+static gboolean xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gchar *file);
 
 /*
  * Plugin header
@@ -41,9 +28,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "http",
-			"HTTP transport " VERSION,
-			"HTTP streaming transport");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, "m3u",
+			"M3U Playlist " VERSION,
+			"M3U Playlist reader / writer");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");

@@ -45,12 +45,12 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
-	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_file_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_file_open);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_CLOSE, xmms_file_close);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_READ, xmms_file_read);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_SIZE, xmms_file_size);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_SEEK, xmms_file_seek);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_file_can_handle);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_file_open);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_file_close);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_file_read);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_file_size);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_file_seek);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
