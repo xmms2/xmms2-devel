@@ -90,6 +90,81 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+add_item_to_playlist (xmmsc_connection_t *conn, char *item)
+{
+	char url[4096];
+	xmmsc_result_t *res;
+	char rpath[PATH_MAX];
+	char *p;
+
+	p = strchr (item, ':');
+	if (!(p && p[1] == '/' && p[2] == '/')) {
+		/* OK, so this is NOT an valid URL */
+
+		if (!realpath (item, rpath))
+			return;
+
+		if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR))
+			return;
+
+		g_snprintf (url, 4096, "file://%s", rpath);
+	} else {
+		g_snprintf (url, 4096, "%s", item);
+	}
+
+	res = xmmsc_playlist_add (conn, xmmsc_encode_path (url));
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		printf ("something went wrong when adding it to the playlist\n");
+		exit (-1);
+	}
+	print_info ("Adding %s", url);
+	xmmsc_result_unref (res);
+}
+
+static void
+add_directory_to_playlist (xmmsc_connection_t *conn, char *directory,
+                           gboolean recursive)
+{
+	GDir *dir;
+	GSList *entries = NULL;
+	char *entry;
+	char buf[PATH_MAX];
+
+	if (!(dir = g_dir_open (directory, 0, NULL))) {
+		printf ("cannot open directory: %s\n", directory);
+		return;
+	}
+
+	while ((entry = g_dir_read_name (dir))) {
+		entries = g_slist_prepend (entries, strdup (entry));
+	}
+
+	g_dir_close (dir);
+
+	/* g_dir_read_name() will return the entries in a undefined
+	 * order, so sort the list now.
+	 */
+	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
+
+	while (entries) {
+		snprintf (buf, sizeof (buf), "%s/%s", directory,
+		          (char *) entries->data);
+
+		if (g_file_test (buf, G_FILE_TEST_IS_DIR)) {
+			if (recursive) {
+				add_directory_to_playlist (conn, buf, recursive);
+			}
+		} else {
+			add_item_to_playlist (conn, buf);
+		}
+
+		g_free (entries->data);
+		entries = g_slist_delete_link (entries, entries);
+	}
+}
+
+static void
 cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -99,34 +174,25 @@ cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	for (i = 2; argv[i]; i++) {
-		char url[4096];
-		xmmsc_result_t *res;
-		char rpath[PATH_MAX];
-		char *p;
+		add_item_to_playlist (conn, argv[i]);
+	}
+}
 
-		p = strchr (argv[i], ':');
-		if (!(p && p[1] == '/' && p[2] == '/')) {
-			/* OK, so this is NOT an valid URL */
+static void
+cmd_radd (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	int i;
 
-			if (!realpath (argv[i], rpath))
-				continue;
+	if (argc < 3)
+		print_error ("Need a directory to add");
 
-			if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR))
-				continue;
-			
-			g_snprintf (url, 4096, "file://%s", rpath);
-		} else {
-			g_snprintf (url, 4096, "%s", argv[i]);
+	for (i = 2; argv[i]; i++) {
+		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
+			printf ("not a directoy: %s\n", argv[i]);
+			continue;
 		}
-		
-		res = xmmsc_playlist_add (conn, xmmsc_encode_path (url));
-		xmmsc_result_wait (res);
-		if (xmmsc_result_iserror (res)) {
-			printf ("something went wrong when adding it to the playlist\n");
-			exit (-1);
-		}
-		print_info ("Adding %s", url);
-		xmmsc_result_unref (res);
+
+		add_directory_to_playlist (conn, argv[i], TRUE);
 	}
 }
 
@@ -584,6 +650,7 @@ cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
 cmds commands[] = {
 	/* Playlist managment */
 	{ "add", "adds a URL to the playlist", cmd_add },
+	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist and stops playback", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
 	{ "remove", "removes something from the playlist", cmd_remove },
