@@ -36,7 +36,7 @@ typedef int (*xmms_medialib_row_method_t) (void *pArg, int argc, char **argv, ch
 /*
  * Public functions
  */
-xmms_medialib_t *xmms_medialib_init (void);
+xmms_medialib_t *xmms_medialib_init (xmms_playlist_t *playlist);
 gboolean xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
 void xmms_medialib_close (xmms_medialib_t *medialib);
 

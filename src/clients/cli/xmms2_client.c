@@ -69,6 +69,27 @@ print_info (const char *fmt, ...)
  */
 
 static void
+cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
+{
+
+	if (argc < 3) {
+		print_error ("Need a command to the medialib");
+	}
+
+	if (g_strcasecmp (argv[2], "queryadd") == 0) {
+		xmmsc_result_t *res;
+		char query[1024];
+
+		g_snprintf (query, 1023, "select url from Media where %s", argv[3]);
+		print_info ("%s", query);
+		res = xmmsc_medialib_select_and_add (conn, query);
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
+	}
+
+}
+
+static void
 cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -561,6 +582,8 @@ cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
 	g_main_loop_run (ml);
 }
 
+
+
 /**
  * Defines all available commands.
  */
@@ -583,6 +606,7 @@ cmds commands[] = {
 	{ "jump", "take a leap in the playlist", cmd_jump },
 //	{ "move", "move a entry in the playlist", cmd_move },
 
+	{ "mlib", "medialib manipulation", cmd_mlib },
 
 	{ "status", "go into status mode", cmd_status },
 	{ "watchpl", "go into watch playlist mode", cmd_watchpl },

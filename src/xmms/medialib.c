@@ -22,12 +22,14 @@
  */
 
 #include "xmms/util.h"
+#include "xmms/playlist.h"
 #include "xmms/dbus.h"
 #include "xmms/config.h"
 #include "xmms/medialib.h"
 #include "xmms/transport.h"
 #include "xmms/decoder.h"
 #include "xmms/plugin.h"
+#include "xmms/signal_xmms.h"
 #include "internal/plugin_int.h"
 #include "internal/decoder_int.h"
 #include "internal/transport_int.h"
@@ -44,6 +46,8 @@
 struct xmms_medialib_St {
 	xmms_object_t object;
 
+	xmms_playlist_t *playlist;
+
 	GMutex *mutex;
 	guint id;
 
@@ -51,6 +55,10 @@ struct xmms_medialib_St {
 	sqlite *sql;
 #endif
 };
+
+
+gboolean xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
+XMMS_METHOD_DEFINE (selectandadd, xmms_medialib_select_and_add, xmms_medialib_t *, NONE, STRING, NONE);
 
 static void
 xmms_medialib_destroy (xmms_object_t *medialib)
@@ -67,7 +75,7 @@ xmms_medialib_destroy (xmms_object_t *medialib)
 
 
 xmms_medialib_t *
-xmms_medialib_init (void)
+xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	xmms_medialib_t *medialib = NULL;
 
@@ -81,8 +89,12 @@ xmms_medialib_init (void)
 	}
 #endif /*HAVE_SQLITE*/
 	medialib->mutex = g_mutex_new ();
+	medialib->playlist = playlist;
 
 	xmms_dbus_register_object ("medialib", XMMS_OBJECT (medialib));
+	xmms_object_method_add (XMMS_OBJECT (medialib), 
+				XMMS_METHOD_SELECTANDADD, 
+				XMMS_METHOD_FUNC (selectandadd));
 	xmms_config_value_register ("medialib.dologging",
 				    "1",
 				    NULL, NULL);
@@ -240,6 +252,50 @@ xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *ent
 	g_mutex_unlock (medialib->mutex);
 
 	return TRUE;
+}
+
+static int
+add_callback (void *pArg, int argc, char **argv, char **cName)
+{
+	gint i=0;
+	xmms_medialib_t *medialib = (xmms_medialib_t *) pArg;
+
+	g_return_val_if_fail (medialib, -1);
+
+	while (cName[i]) {
+		if (g_strcasecmp (cName[i], "url") == 0) {
+			xmms_playlist_addurl (medialib->playlist, argv[i], NULL);
+		}
+
+		i++;
+	}
+
+	return 0;
+}
+
+/**
+ * Make sure that query are correctly escaped before entering here!
+ */
+gboolean
+xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
+{
+	gint ret;
+
+	g_return_val_if_fail (medialib, 0);
+	g_return_val_if_fail (query, 0);
+
+	if (g_strncasecmp (query, "select", 6) != 0) {
+		XMMS_DBG ("Someone is calling select and add but without a select query!");
+		return FALSE;
+	}
+
+	ret = xmms_sqlite_query (medialib, add_callback, (void *)medialib, query);
+
+	if (!ret)
+		return FALSE;
+
+	return TRUE;
+
 }
 
 static int

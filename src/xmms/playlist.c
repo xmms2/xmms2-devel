@@ -901,7 +901,6 @@ xmms_playlist_init (void)
 	ret->nextid = 1;
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 	ret->is_waiting = FALSE;
-	ret->medialib = xmms_medialib_init ();
 
 	/* 0 = MODE_NONE */
 	xmms_dbus_register_object ("playlist", XMMS_OBJECT (ret));
@@ -953,6 +952,7 @@ xmms_playlist_init (void)
 				XMMS_METHOD_SORT, 
 				XMMS_METHOD_FUNC (sort));
 
+	ret->medialib = xmms_medialib_init (ret);
 	ret->mediainfothr = xmms_mediainfo_thread_start (ret, ret->medialib);
 
 	return ret;

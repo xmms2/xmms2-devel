@@ -28,6 +28,7 @@
 #define XMMS_OBJECT_CONFIG "/xmms/config"
 #define XMMS_OBJECT_TRANSPORT "/xmms/transport"
 #define XMMS_OBJECT_VISUALISATION "/xmms/visualisation"
+#define XMMS_OBJECT_MEDIALIB "/xmms/medialib"
 
 #define XMMS_DBUS_INTERFACE "org.xmms"
 
@@ -68,6 +69,7 @@
 #define XMMS_METHOD_MIXERSET "mixer_set"
 #define XMMS_METHOD_MIXERGET "mixer_get"
 #define XMMS_METHOD_DECODER_KILL "decoder_kill"
+#define XMMS_METHOD_SELECTANDADD "selectandadd"
 
 
 /* Playlist msgs */
