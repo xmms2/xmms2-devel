@@ -526,10 +526,12 @@ main(int argc, char **argv)
 			}
 			setup_flist (c, argv[2]);
 		} else if ( streq (argv[1], "test") ) {
-			xmmsc_sync_init (c);
-			xmmsc_sync_current_id_get ();
-			xmmsc_sync_played_time_get ();
-			xmmsc_deinit (c);
+			int id;
+			id = xmmscs_playback_current_id (c);
+
+			printf ("curr:: %d\n", id);
+			print_mediainfo (xmmscs_playlist_get_mediainfo (c, id));
+			exit (0);
 		} else if ( streq (argv[1], "savelist") ) {
 
 			if (argc < 3) {

@@ -171,6 +171,8 @@ xmmsc_init ()
 		return NULL;
 	}
 
+	c->timeout = 2000; /* ms */
+
 	return c;
 }
 
@@ -671,6 +673,36 @@ xmmsc_playback_current_id (xmmsc_connection_t *c)
 	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_CURRENTID);
 }
 
+int
+xmmscs_playback_current_id (xmmsc_connection_t *c)
+{
+	DBusMessage *msg,*rmsg;
+        DBusMessageIter itr;
+	DBusError err;
+	int ret = -1;
+	
+	dbus_error_init (&err);
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CURRENTID);
+
+	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+
+	if (rmsg) {
+		dbus_message_iter_init (rmsg, &itr);
+
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
+			ret = dbus_message_iter_get_uint32 (&itr);
+
+		dbus_message_unref (rmsg);
+	} else {
+		printf ("Error: %s\n", err.message);
+	}
+	dbus_message_unref (msg);
+
+	return ret;
+
+}
+
 /** @} */
 
 /**
@@ -757,6 +789,8 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	cserial = xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
 	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_LIST);
 }
+
+/** @todo xmmscs_playlist_list */
 
 /**
  * Set the current song in the playlist.
@@ -862,6 +896,36 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 
 	dbus_message_unref (msg);
 	dbus_connection_flush (c->conn);
+}
+
+GHashTable *
+xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
+{
+	DBusMessage *msg, *rmsg;
+	DBusMessageIter itr;
+	DBusError err;
+	GHashTable *res = NULL;
+
+	dbus_error_init (&err);
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_uint32 (&itr, id);
+	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+
+	if (rmsg) {
+		dbus_message_iter_init (rmsg, &itr);
+		res = deserialize_mediainfo (&itr);
+		dbus_message_unref (rmsg);
+	} else {
+		printf ("error: %s", err.message);
+	}
+
+	dbus_message_unref (msg);
+	dbus_connection_flush (c->conn);
+
+	return res;
+
 }
 
 static gboolean
@@ -1071,26 +1135,7 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 			}
 			break;
 		case XMMSC_TYPE_MEDIAINFO:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_DICT) {
-				DBusMessageIter dictitr;
-				GHashTable *tab;
-				dbus_message_iter_init_dict_iterator (&itr, &dictitr);
-
-				tab = g_hash_table_new (g_str_hash, g_str_equal);
-
-				while (42) {
-					gchar *key = dbus_message_iter_get_dict_key (&dictitr);
-					if (g_strcasecmp (key, "id") == 0) {
-						g_hash_table_insert (tab, key, GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
-					} else {
-						g_hash_table_insert (tab, key, dbus_message_iter_get_string (&dictitr));
-					}
-					if (!dbus_message_iter_has_next (&dictitr))
-						break;
-					dbus_message_iter_next (&dictitr);
-				}
-				arg = tab;
-			}
+			arg = deserialize_mediainfo (&itr);
 			break;
 
 		case XMMSC_TYPE_TRANSPORT_LIST:
@@ -1163,4 +1208,30 @@ xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
 	dbus_connection_send (c->conn, msg, &cserial);
 	dbus_message_unref (msg);
 	return cserial;
+}
+
+static GHashTable *
+deserialize_mediainfo (DBusMessageIter *itr)
+{
+	GHashTable *tab = NULL;
+
+	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
+		DBusMessageIter dictitr;
+		dbus_message_iter_init_dict_iterator (itr, &dictitr);
+		
+		tab = g_hash_table_new (g_str_hash, g_str_equal);
+		
+		while (42) {
+			gchar *key = dbus_message_iter_get_dict_key (&dictitr);
+			if (g_strcasecmp (key, "id") == 0) {
+				g_hash_table_insert (tab, key, GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
+			} else {
+				g_hash_table_insert (tab, key, dbus_message_iter_get_string (&dictitr));
+			}
+			if (!dbus_message_iter_has_next (&dictitr))
+				break;
+			dbus_message_iter_next (&dictitr);
+		}
+	}
+	return tab;
 }
