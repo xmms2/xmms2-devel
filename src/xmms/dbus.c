@@ -227,9 +227,11 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
         gchar *k = key;
         gchar *v = value;
         DBusMessageIter *itr = udata;
- 
-        dbus_message_iter_append_dict_key (itr, k);
-        dbus_message_iter_append_string (itr, v);
+
+	if (v) {
+		dbus_message_iter_append_dict_key (itr, k);
+		dbus_message_iter_append_string (itr, v);
+	}
 	
 }
 
@@ -239,6 +241,15 @@ xmms_dbus_handle_playlist_chmsg (DBusMessageIter *itr, xmms_playlist_changed_msg
 	dbus_message_iter_append_uint32 (itr, chpl->type);
 	dbus_message_iter_append_uint32 (itr, chpl->id);
 	dbus_message_iter_append_uint32 (itr, chpl->arg);
+}
+
+static void
+xmms_dbus_do_hashtable (DBusMessageIter *itr, GHashTable *table)
+{
+	DBusMessageIter dictitr;
+
+	dbus_message_iter_append_dict (itr, &dictitr);
+	g_hash_table_foreach (table, hash_to_dict, &dictitr);
 }
 
 static void
@@ -270,6 +281,7 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 {
 	DBusMessageIter itr;
 
+	
 	dbus_message_iter_init (msg, &itr);
 
 	switch (arg->rettype) {
@@ -312,14 +324,14 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 				}
 				break;
 			}
-		case XMMS_OBJECT_METHOD_ARG_ENTRYLIST:
+		case XMMS_OBJECT_METHOD_ARG_HASHLIST:
 			{
-				GList *l = arg->retval.entrylist;
+				GList *l = arg->retval.hashlist;
 
 				while (l) {
 					if (l->data) {
-						xmms_dbus_do_playlist_entry (&itr, (xmms_playlist_entry_t *)l->data);
-						xmms_object_unref (l->data);
+						xmms_dbus_do_hashtable (&itr, (GHashTable *)l->data);
+						g_hash_table_destroy (l->data);
 					}
 					l = g_list_delete_link (l,l);
 				}

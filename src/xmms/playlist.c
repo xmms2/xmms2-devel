@@ -344,7 +344,7 @@ xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t
 {
 	GList *res, *n;
 
-	res = xmms_medialib_select (query, err);
+	res = xmms_medialib_select_entries (query, err);
 
 	if (xmms_error_iserror(err)) {
 		return FALSE;

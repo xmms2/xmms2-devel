@@ -70,7 +70,7 @@ struct xmms_medialib_St {
 static xmms_medialib_t *medialib;
   
 static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
-XMMS_METHOD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, ENTRYLIST, STRING, NONE);
+XMMS_METHOD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
 
 static void
 xmms_medialib_destroy (xmms_object_t *medialib)
@@ -274,32 +274,18 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 {
 	gint i=0;
 	GList **l = (GList **) pArg;
-	xmms_playlist_entry_t *e = NULL;
+	GHashTable *table = g_hash_table_new (g_str_hash, g_str_equal);
 
 	while (cName[i]) {
-		if (g_strcasecmp (cName[i], "url") == 0) {
-			e = xmms_playlist_entry_new (argv[i]);
-			*l = g_list_prepend (*l, e);
-		}
-
+		XMMS_DBG ("%s = %s", cName[i], argv[i]);
+		g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (argv[i]));
 		i++;
 	}
 
-	i = 0;
-	if (e) {
-		while (cName[i]) {
-			if (g_strcasecmp (cName[i], "id") == 0) {
-				xmms_playlist_entry_property_set (e, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, argv[i]);
-			} else if (g_strcasecmp (cName[i], "url") != 0) {
-				xmms_playlist_entry_property_set (e, cName[i], argv[i]);
-			}
-			i++;
-		}
-	}
+	*l = g_list_prepend (*l, table);
 
 	return 0;
 }
-
 
 static GList *
 xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
@@ -307,10 +293,60 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
 	return xmms_medialib_select (query, error);
 }
 
+
+static void
+ghash_to_entry (gpointer key, gpointer value, gpointer udata)
+{
+	xmms_playlist_entry_t *entry = (xmms_playlist_entry_t *)udata;
+	if (g_strcasecmp ((gchar *)key, "id") == 0) {
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, (gchar*)value);
+	} else if (g_strcasecmp ((gchar *)key, "url") == 0) {
+		return;
+	} else {
+		xmms_playlist_entry_property_set (entry, (gchar*)key, (gchar*)value);
+	}
+}
+
 /**
  * Get a list of #xmms_playlist_entry_t 's that matches the query.
  * To use this function you'll need to select the URL column from the
  * database.
+ *
+ * Make sure that query are correctly escaped before entering here!
+ */
+GList *
+xmms_medialib_select_entries (gchar *query, xmms_error_t *error)
+{
+	GList *l = NULL;
+
+	l = xmms_medialib_select (query, error);
+	if (l) {
+		GList *ret = NULL;
+		GList *n;
+		xmms_playlist_entry_t *e;
+
+		for (n = l; n; n = g_list_next (n)) {
+			gchar *tmp = g_hash_table_lookup (n->data, "url");
+			if (tmp) {
+				e = xmms_playlist_entry_new (tmp);
+				g_hash_table_foreach (n->data, ghash_to_entry, e);
+				ret = g_list_prepend (ret, e);
+				g_hash_table_destroy (n->data);
+			}
+			n = g_list_delete_link (n, n);
+		}
+
+		ret = g_list_reverse (ret);
+
+		return ret;
+	}
+
+	return NULL;
+		
+}
+
+/**
+ * Get a list of #GHashTables 's that matches the query.
  *
  * Make sure that query are correctly escaped before entering here!
  */
