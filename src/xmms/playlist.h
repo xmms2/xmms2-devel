@@ -16,15 +16,15 @@ typedef enum {
 
 #define xmms_playlist_entry_foreach_prop(a,b,c) g_hash_table_foreach(a->properties, b, c)
 
-#define XMMS_ENTRY_PROPERTY_ARTIST "artist"
-#define XMMS_ENTRY_PROPERTY_ALBUM "album"
-#define XMMS_ENTRY_PROPERTY_TITLE "title"
-#define XMMS_ENTRY_PROPERTY_YEAR "date"
-#define XMMS_ENTRY_PROPERTY_TRACKNR "tracknr"
-#define XMMS_ENTRY_PROPERTY_GENRE "genre"
-#define XMMS_ENTRY_PROPERTY_BITRATE "bitrate"
-#define XMMS_ENTRY_PROPERTY_COMMENT "comment"
-#define XMMS_ENTRY_PROPERTY_DURATION "duration"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST "artist"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM "album"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE "title"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR "date"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR "tracknr"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE "genre"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE "bitrate"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT "comment"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION "duration"
 
 /*
  * Private defintions

@@ -146,8 +146,8 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 				}
 			}
 
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, len);
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, title);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, len);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
 		} else {
 			if (lines[i] && lines[i][0]) {
 				if (lines[i][0] != '/') {

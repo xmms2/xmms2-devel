@@ -575,14 +575,14 @@ xmms_playlist_entry_print (xmms_playlist_entry_t *entry)
 
 	fprintf (stdout, "--------\n");
 	fprintf (stdout, "Artist=%s\nAlbum=%s\nTitle=%s\nYear=%s\nTracknr=%s\nBitrate=%s\nComment=%s\nDuration=%ss\n", 
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_TITLE),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_YEAR),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_TRACKNR),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_BITRATE),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT),
-		xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_DURATION));
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT),
+		xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION));
 	fprintf (stdout, "--------\n");
 }
 
@@ -646,15 +646,15 @@ xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 }
 
 static gchar *wellknowns[] = {
-	XMMS_ENTRY_PROPERTY_ARTIST,
-	XMMS_ENTRY_PROPERTY_ALBUM,
-	XMMS_ENTRY_PROPERTY_TITLE,
-	XMMS_ENTRY_PROPERTY_YEAR,
-	XMMS_ENTRY_PROPERTY_TRACKNR,
-	XMMS_ENTRY_PROPERTY_GENRE,
-	XMMS_ENTRY_PROPERTY_BITRATE,
-	XMMS_ENTRY_PROPERTY_COMMENT,
-	XMMS_ENTRY_PROPERTY_DURATION,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION,
 	NULL 
 };
 

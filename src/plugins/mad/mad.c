@@ -162,7 +162,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			XMMS_DBG ("XING duration %d", duration);
 			tmp = g_strdup_printf ("%d", duration);
 
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 			g_free (tmp);
 		}
 
@@ -170,7 +170,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			gchar *tmp;
 
 			tmp = g_strdup_printf ("%ld", xing_h.bytes / fsize);
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
 		}
 
@@ -183,16 +183,16 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
 	} else {
 		tmp = g_strdup_printf ("%d", fsize / bitrate);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 		XMMS_DBG ("duration = %s", tmp);
 		g_free (tmp);
 	}
 		
 	tmp = g_strdup_printf ("%d", bitrate / 1000);
-	xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
+	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 	g_free (tmp);
 
 }

@@ -108,28 +108,28 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 
 	switch (type) {
 	case quad2long('T','Y','E','R'): {
-		add_to_entry(entry, XMMS_ENTRY_PROPERTY_YEAR, buf, len);
+		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, buf, len);
 		break;
 	}
 	case quad2long('T','A','L','B'): {
-		add_to_entry(entry, XMMS_ENTRY_PROPERTY_ALBUM, buf, len);
+		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, buf, len);
 		break;
 	}
 	case quad2long('T','I','T','2'): {
-		add_to_entry(entry, XMMS_ENTRY_PROPERTY_TITLE, buf, len);
+		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, buf, len);
 		break;
 	}
 	case quad2long('T','P','E','1'): {
-		add_to_entry(entry, XMMS_ENTRY_PROPERTY_ARTIST, buf, len);
+		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, buf, len);
 		break;
 	}
 	case quad2long('T','R','C','K'): {
-		add_to_entry(entry, XMMS_ENTRY_PROPERTY_TRACKNR, buf, len);
+		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, buf, len);
 		break;
 	}
 	case quad2long('T','C','O','N'): {
 		/* @todo we could resolve numeric types here */
-		add_to_entry(entry, XMMS_ENTRY_PROPERTY_GENRE, buf, len);
+		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, buf, len);
 		break;
 	}
 	case quad2long('T','B','P','M'): {
@@ -301,28 +301,28 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 
 	tmp = g_strdup_printf ("%30.30s", tag->artist);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST, tmp);
+	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
 	g_free (tmp);
 	
 	tmp = g_strdup_printf ("%30.30s", tag->album);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM, tmp);
+	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
 	g_free (tmp);
 	
 	tmp = g_strdup_printf ("%30.30s", tag->title);
 	g_strstrip (tmp);
-	xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, tmp);
+	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
 	g_free (tmp);
 	
 	tmp = g_strdup_printf ("%4.4s", tag->year);
-	xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_YEAR, tmp);
+	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
 	g_free (tmp);
 	
 	if (tag->genre > GENRE_MAX) {
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, "Unknown");
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {
 		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
 	}
 	
@@ -330,16 +330,16 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 		/* V1.1 */
 		tmp = g_strdup_printf ("%28.28s", tag->u.v1_1.comment);
 		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 		
 		tmp = g_strdup_printf ("%d", (gint) tag->u.v1_1.track_number);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TRACKNR, tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, tmp);
 		g_free (tmp);
 	} else {
 		tmp = g_strdup_printf ("%30.30s", tag->u.v1_1.comment);
 		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 	}
 

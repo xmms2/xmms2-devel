@@ -100,15 +100,15 @@ xmms_sqlite_new (xmms_medialib_t *medialib)
 	}
 
 	sqlite_exec (sql, "create table song (id int primary_key, uri, " 
-			XMMS_ENTRY_PROPERTY_ARTIST ","
-			XMMS_ENTRY_PROPERTY_ALBUM ","
-			XMMS_ENTRY_PROPERTY_TITLE ","
-			XMMS_ENTRY_PROPERTY_YEAR ","
-			XMMS_ENTRY_PROPERTY_TRACKNR ","
-			XMMS_ENTRY_PROPERTY_GENRE ","
-			XMMS_ENTRY_PROPERTY_BITRATE ","
-			XMMS_ENTRY_PROPERTY_COMMENT ","
-			XMMS_ENTRY_PROPERTY_DURATION ", properties)", NULL, NULL, NULL);
+			XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT ","
+			XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION ", properties)", NULL, NULL, NULL);
 
 	data = g_new0 (xmms_sqlite_data_t, 1);
 	data->sq = sql;
@@ -173,31 +173,31 @@ xmms_sqlite_foreach (void *pArg, int argc, char **argv, char **columnName)
 			xmms_playlist_entry_set_uri (entry, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "title") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "artist") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "album") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "genre") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "comment") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "bitrate") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_BITRATE, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "duration") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "tracknr") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TRACKNR, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "year") == 0)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_YEAR, argv[i]);
+			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, argv[i]);
 
 		if (g_strcasecmp (columnName[i], "properties") == 0) {
 			gchar **prop;

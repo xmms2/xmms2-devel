@@ -16,7 +16,7 @@ int main ()
 	for (i=0; i < 10 ; i++) {
 		gchar *apa = g_strdup_printf ("%d", i);
 		xmms_playlist_entry_t *e = xmms_playlist_entry_new (apa);
-		xmms_playlist_entry_set_prop (e, XMMS_ENTRY_PROPERTY_ARTIST, apa);
+		xmms_playlist_entry_set_prop (e, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, apa);
 		xmms_playlist_add (pl, e, XMMS_PLAYLIST_APPEND);
 	}
 
