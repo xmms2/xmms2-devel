@@ -45,9 +45,7 @@ guint
 xmms_playlist_entries_total (xmms_playlist_t *playlist)
 {
 	guint ret;
-	XMMS_PLAYLIST_LOCK (playlist);
-	ret = g_list_length (playlist->list);
-	XMMS_PLAYLIST_UNLOCK (playlist);
+	ret = g_hash_table_size (playlist->id_table);
 	return ret;
 }
 
@@ -57,10 +55,144 @@ guint
 xmms_playlist_entries_left (xmms_playlist_t *playlist)
 {
 	guint ret;
-	XMMS_PLAYLIST_LOCK (playlist);
 	ret = g_list_length (playlist->nextentry);
-	XMMS_PLAYLIST_UNLOCK (playlist);
 	return ret;
+}
+
+/** shuffles playlist */
+
+void
+xmms_playlist_shuffle (xmms_playlist_t *playlist)
+{
+        gint len;
+        gint i, j;
+        GList *node, **ptrs;
+
+	g_return_if_fail (playlist);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	len = xmms_playlist_entries_total (playlist);
+                                                                                  
+        if (!len) {
+		XMMS_PLAYLIST_UNLOCK (playlist);
+                return;
+	}
+                                                                                  
+        ptrs = g_new (GList *, len);
+                                                                                  
+        for (node = playlist->list, i = 0; i < len; node = g_list_next (node), i++)
+                ptrs[i] = node;
+                                                                                  
+        j = random() % len;
+        playlist->list = ptrs[j];
+        ptrs[j]->next = NULL;
+        ptrs[j] = ptrs[0];
+
+        for (i = 1; i < len; i++)
+        {
+                j = random() % (len - i);
+                playlist->list->prev = ptrs[i + j];
+                ptrs[i + j]->next = playlist->list;
+                playlist->list = ptrs[i + j];
+                ptrs[i + j] = ptrs[i];
+        }
+        playlist->list->prev = NULL;
+                                                                                  
+        g_free(ptrs);
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+}
+
+/** removes entry from playlist */
+
+gboolean 
+xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
+{
+	GList *node;
+
+	g_return_val_if_fail (playlist, FALSE);
+	g_return_val_if_fail (id, FALSE);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+	node = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER (id));
+	if (!node) {
+		XMMS_PLAYLIST_UNLOCK (playlist);
+		return FALSE;
+	}
+	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
+	xmms_playlist_entry_free (node->data);
+	playlist->list = g_list_remove_link (playlist->list, node);
+	g_list_free_1 (node);
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return TRUE;
+}
+
+/** move entry in playlist */
+
+gboolean
+xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
+{
+	xmms_playlist_entry_t *entry;
+	GList *node;
+	gint i;
+
+	g_return_val_if_fail (playlist, FALSE);
+	g_return_val_if_fail (id, FALSE);
+	g_return_val_if_fail (steps != 0, FALSE);
+
+	XMMS_DBG ("Moving %d, %d steps", id, steps);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+	
+	node = g_hash_table_lookup (playlist->id_table, GINT_TO_POINTER (id));
+	
+	if (!node) {
+		XMMS_PLAYLIST_UNLOCK (playlist);
+		return FALSE;
+	}
+
+	entry = node->data;
+
+	if (steps > 0) {
+		GList *next=node->next;
+
+		playlist->list = g_list_remove_link (playlist->list, node);
+
+		for (i=0; next && (i < steps); i++) {
+			next = g_list_next (next);
+		}
+
+		if (next) {
+			playlist->list = g_list_insert_before (playlist->list, next, node->data);
+		} else {
+			playlist->list = g_list_append (playlist->list, node->data);
+		}
+
+		g_list_free_1 (node);
+	} else {
+		GList *prev=node->prev;
+
+		playlist->list = g_list_remove_link (playlist->list, node);
+
+		for (i=0; prev && (i < abs (steps) - 1); i++) {
+			prev = g_list_previous (prev);
+		}
+
+		if (prev) {
+			playlist->list= g_list_insert_before (playlist->list, prev, node->data);
+		} else {
+			playlist->list = g_list_prepend (playlist->list, node->data);
+		}
+		g_list_free_1 (node);
+
+	}
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return TRUE;
+
 }
 
 /** Adds a xmms_playlist_entry_t to the playlist.
@@ -74,27 +206,53 @@ xmms_playlist_entries_left (xmms_playlist_t *playlist)
 gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
 {
+	GList *new, *node;
 
 	if (file->uri && strstr (file->uri, "britney")) {
 		XMMS_DBG ("Popular music detected: consider playing better music");
 		exit (1);
 	}
-	
+
+	g_return_val_if_fail (!file->id, FALSE);
+
+	new = g_list_alloc ();
+	new->data = (gpointer) file;
+
 	XMMS_PLAYLIST_LOCK (playlist);
+
+	file->id = playlist->nextid++;
+	
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
-			playlist->list = g_list_append (playlist->list, (gpointer) file);
+			node = g_list_last (playlist->list);
+			if (!node) {
+				playlist->list = new;
+			} else {
+				node->next = new;
+				new->prev = node;
+			}
 			break;
 		case XMMS_PLAYLIST_PREPEND:
-			playlist->list = g_list_prepend (playlist->list, (gpointer) file);
+			if (!playlist->list) {
+				playlist->list = new;
+			} else {
+				new->next = playlist->list;
+				new->prev = NULL;
+				playlist->list = new;
+			}
+			break;
 		case XMMS_PLAYLIST_INSERT:
 			break;
 	}
+	
+	g_hash_table_insert (playlist->id_table, GUINT_TO_POINTER (file->id), new);
 
 	if (!playlist->nextentry)
 		playlist->nextentry = playlist->list;
 
 	g_cond_signal (playlist->cond);
+
+	XMMS_DBG ("Added with id %d - %s", file->id, file->uri);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
@@ -109,22 +267,19 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
  */
 
 xmms_playlist_entry_t *
-xmms_playlist_get_position (xmms_playlist_t *playlist, gint pos)
+xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 {
-	xmms_playlist_entry_t *r = NULL;
+	GList *r = NULL;
 
 	g_return_val_if_fail (playlist, NULL);
 
-	if (pos > xmms_playlist_entries_left (playlist))
-		return NULL;
-
 	XMMS_PLAYLIST_LOCK (playlist);
 
-	r = g_list_nth_data (playlist->list, pos);
+	r = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	return r;
+	return r->data;
 
 }
 
@@ -143,10 +298,13 @@ xmms_playlist_get_next (xmms_playlist_t *playlist)
 
 	g_return_val_if_fail (playlist, NULL);
 
-	while (xmms_playlist_entries_left (playlist) < 1)
-		xmms_playlist_wait (playlist);
-
 	XMMS_PLAYLIST_LOCK (playlist);
+	while (xmms_playlist_entries_left (playlist) < 1) {
+		XMMS_PLAYLIST_UNLOCK (playlist);
+		xmms_playlist_wait (playlist);
+		XMMS_PLAYLIST_LOCK (playlist);
+	}
+
 	n = g_list_nth (playlist->nextentry, 0);
 
 	if (n) {
@@ -168,16 +326,13 @@ xmms_playlist_get_next (xmms_playlist_t *playlist)
  */
   
 gboolean
-xmms_playlist_set_current_position (xmms_playlist_t *playlist, gint pos)
+xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 {
 	g_return_val_if_fail (playlist, FALSE);
 
-	if (pos > xmms_playlist_entries_left (playlist) || pos < 0)
-		return FALSE;
-
 	XMMS_PLAYLIST_LOCK (playlist);
 
-	playlist->nextentry = g_list_nth (playlist->list, pos);
+	playlist->nextentry = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
 	
 	g_cond_signal (playlist->cond);
 
@@ -279,6 +434,8 @@ xmms_playlist_init ()
 	ret->mutex = g_mutex_new ();
 	ret->list = NULL;
 	ret->nextentry = NULL;
+	ret->nextid = 1;
+	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 
 	return ret;
 }
@@ -320,8 +477,17 @@ xmms_playlist_entry_new (gchar *uri)
 	ret = g_new0 (xmms_playlist_entry_t, 1);
 	ret->uri = g_strdup (uri);
 	ret->properties = g_hash_table_new (g_str_hash, g_str_equal);
+	ret->id = 0;
 
 	return ret;
+}
+
+guint
+xmms_playlist_entry_id_get (xmms_playlist_entry_t *entry)
+{
+	g_return_val_if_fail (entry, 0);
+
+	return entry->id;
 }
 
 static void
