@@ -116,22 +116,27 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 	}
 
 	switch (type) {
+	case quad2long('T','Y','E',0):
 	case quad2long('T','Y','E','R'): {
 		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, buf, len);
 		break;
 	}
+	case quad2long('T','A','L',0):
 	case quad2long('T','A','L','B'): {
 		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, buf, len);
 		break;
 	}
+	case quad2long('T','T','2',0):
 	case quad2long('T','I','T','2'): {
 		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, buf, len);
 		break;
 	}
+	case quad2long('T','P','1',0):
 	case quad2long('T','P','E','1'): {
 		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, buf, len);
 		break;
 	}
+	case quad2long('T','R','K',0):
 	case quad2long('T','R','C','K'): {
 		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, buf, len);
 		break;
@@ -141,6 +146,7 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 		add_to_entry(entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, buf, len);
 		break;
 	}
+	case quad2long('T','B','P',0):
 	case quad2long('T','B','P','M'): {
 		add_to_entry(entry, "bpm", buf, len);
 		break;
@@ -155,7 +161,7 @@ xmms_mad_id3v2_header (gchar *buf, xmms_id3v2_header_t *header)
 		header->ver = buf[3];
 		header->rev = buf[4];
 		
-		if (header->ver == 3) { /** @todo handle ver == 2 too */
+		if (header->ver == 3 || header->ver == 2) {
 			gint32 len;
 			
 			header->flags = buf[5];
@@ -167,6 +173,7 @@ xmms_mad_id3v2_header (gchar *buf, xmms_id3v2_header_t *header)
 
 			return TRUE;
 		}
+		XMMS_DBG ("Unsupported id3v2 version (%d)", header->ver);
 	}
 	return FALSE;
 }
@@ -188,34 +195,61 @@ xmms_mad_id3v2_parse (gchar *buf, xmms_id3v2_header_t *head, xmms_playlist_entry
 		guint size;
 		guint flags;
 		guint32 type;
-		if ( len < 10) {
-			XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
-			return FALSE;
+
+
+		if (head->ver == 3) {
+			if ( len < 10) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
+				return FALSE;
+			}
+			
+			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | (buf[3]);
+			
+			size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
+			
+			if (size+10 > len) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
+				return FALSE;
+			}
+			
+			flags = buf[8] | buf[9];
+
+			if (buf[0] == 'T') {
+				xmms_mad_handle_id3v2_text (type, buf + 10, flags, size, entry);
+			}
+			
+			if (buf[0] == 0) { /* padding */
+				return TRUE;
+			}
+			
+			buf += size+10;
+			len -= size+10;
+		} else if (head->ver == 2) {
+			if ( len < 6) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
+				return FALSE;
+			}
+			
+			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8);
+			size = (buf[3]<<16) | (buf[4]<<8) | buf[5];
+
+			if (size+6 > len) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
+				return FALSE;
+			}
+
+			if (buf[0] == 'T') {
+				xmms_mad_handle_id3v2_text (type, buf + 6, 0, size, entry);
+			}
+			
+			if (buf[0] == 0) { /* padding */
+				return TRUE;
+			}
+			
+			buf += size+6;
+			len -= size+6;
 		}
 
-		type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | (buf[3]);
-
-		size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
-		
-		/** @todo sanitycheck size */
-
-		if (size+10 > len) {
-			XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
-			return FALSE;
-		}
-
-		flags = buf[8] | buf[9];
-
-		if (buf[0] == 'T') {
-			xmms_mad_handle_id3v2_text (type, buf + 10, flags, size, entry);
-		}
-		
-		if (buf[0] == 0) { /* padding */
-			return TRUE;
-		}
-
-		buf += size+10;
-		len -= size+10;
 	}
 
 	return TRUE;
