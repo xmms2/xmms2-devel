@@ -185,14 +185,16 @@ static void
 cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 {
 
+	static char *mlibHelp = "Available medialib commands:\n\
+search [\"artist=Dismantled and tracknr=1\"]\n\
+searchadd [\"artist=Dismantled and tracknr=1\"]\n\
+query [\"raw sql statment\"]\n\
+save_playlist [\"playlistname\"]\n\
+load_playlist [\"playlistname\"]\n\
+add [url]";
+
 	if (argc < 3) {
-		print_info ("Available medialib commands:");
-		print_info ("select [\"artist=Dismantled and tracknr=1\"]");
-		print_info ("selectadd [\"artist=Dismantled and tracknr=1\"]");
-		print_info ("query [\"raw sql statment\"]");
-		print_info ("save_playlist [\"playlistname\"]");
-		print_info ("load_playlist [\"playlistname\"]");
-		print_info ("add [url]");
+		print_info (mlibHelp);
 		return;
 	}
 
@@ -335,6 +337,10 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 
 		xmmsc_result_unref (res);
+	}
+	else {
+		print_info (mlibHelp);
+		print_error ("Unrecognised mlib command: %s\n", argv[2]);
 	}
 }
 
