@@ -198,8 +198,8 @@ xmms_ca_write_cb (AudioDeviceID inDevice,
 		g_free (buffer);
 
 
-		/* FIXME: fix so coreaudio knows if we
-		   don't fill the buffer ? */
+		/** @todo fix so coreaudio knows if we
+		    don't fill the buffer ? */
 
 	}
 

@@ -39,7 +39,7 @@
 #include <string.h>
 
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
 #include <glib.h>
 
 /** @defgroup DBus DBus
@@ -493,9 +493,6 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 {
 	xmms_dbus_connection_t *client;
 	DBusObjectPathVTable vtable;
-	static const char *xmms_obj[] = {"xmms", NULL};
-	static const char *client_obj[] = {"xmms", "client", NULL};
-	static const char *local_obj[] = {"org", "freedesktop", "Local", NULL};
 
 	XMMS_DBG ("new connection");
 
@@ -510,13 +507,16 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 	client->nrcommands = 0;
 
 	vtable.message_function = xmms_dbus_clientcall;
-	dbus_connection_register_fallback (conn, client_obj, &vtable, client);
+	dbus_connection_register_fallback (conn, "/xmms/client",
+	                                   &vtable, client);
 
 	vtable.message_function = xmms_dbus_methodcall;
-	dbus_connection_register_fallback (conn, xmms_obj, &vtable, client);
+	dbus_connection_register_fallback (conn, "/xmms",
+	                                   &vtable, client);
 
 	vtable.message_function = xmms_dbus_localcall;
-	dbus_connection_register_fallback (conn, local_obj, &vtable, client);
+	dbus_connection_register_fallback (conn, "/org/freedesktop/Local",
+	                                   &vtable, client);
 
 	g_mutex_lock(connectionslock);
 	connections = g_slist_prepend (connections, client);

@@ -11,6 +11,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.sys = os.popen("uname").read().strip()
 		SCons.Environment.Environment.__init__(self, options=options)
 		self.flag_groups = {}
+		self.optional_config = {}
 		apply(self.Replace, (), kw)
 		self.plugins = []
 		self.install_prefix=self['PREFIX']
@@ -61,6 +62,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.SharedLibrary (target, source, SHLIBPREFIX='', SHLIBSUFFIX=".so")
 		self.Install(self.installdir+self.libpath, target+".so")
 
+	def XmmsRuby(self, target, source):
+		self.SharedLibrary(target, source, SHLIBPREFIX = "", SHLIBSUFFIX=".so")
+		self.Install(self.optional_config["rubysitedir"], target + ".so")
+
 	def XmmsLibrary(self,target,source):
 		if self.sys == 'Darwin':
 			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
@@ -80,6 +85,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			else:
 				self.flag_groups[group] = flags
 
+	def RemoveGroup(self, group):
+		if self.HasGroup(group):
+			del self.flag_groups[group]
 
 	def HasGroup(self,group):
 		return self.flag_groups.has_key(group)
@@ -136,17 +144,32 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		my_conf.Finish()
 		return 0
 
-	def CheckProgramAndAddFlagsToGroup (self, group, program) :
+	def CheckProgram (self, program) :
 		test_env = self.Copy ()
 		my_conf = SCons.SConf.SConf (test_env)
 		print "Checking for program " + program
 		(s, o) = my_conf.TryAction (program)
-		if (s) :
-		    self.AddFlagsToGroup (group, "yes")
-		    my_conf.Finish ()
-		    return 1
 		my_conf.Finish ()
+
+		if (s) :
+		    return 1
 		return 0
+
+	def CheckProgramAndAddFlagsToGroup (self, group, program) :
+		if self.CheckProgram (program) :
+		    self.AddFlagsToGroup (group, "yes")
+		    return 1
+		return 0
+
+	def CheckCHeader (self, header, cpppath) :
+		test_env = self.Copy()
+		test_env["CPPPATH"].append(cpppath)
+
+		my_conf = SCons.SConf.SConf(test_env)
+		res = my_conf.CheckCHeader(header)
+		my_conf.Finish()
+
+		return res
 
 	def ParseConfigFlagsString(self, flags ):
 		"""We want our own ParseConfig, that supports some more
@@ -162,16 +185,16 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			if switch == '-':
 				if opt == 'L':
 					self.Append( LIBPATH = [ arg[2:] ] )
-	    			elif opt == 'l':
+				elif opt == 'l':
 					self.Append( LIBS = [ arg[2:] ] )
-		    		elif opt == 'I':
+				elif opt == 'I':
 					self.Append( CPPPATH = [ arg[2:] ] )
-		    		elif opt == 'D':
+				elif opt == 'D':
 					self.Append( CPPFLAGS = [ arg ] )
-	    			elif arg[1:] == 'pthread':
+				elif arg[1:] == 'pthread':
 					self.Append( LINKFLAGS = [ arg ] )
 					self.Append( CPPFLAGS = [ arg ] )
-	    			elif arg[1:4] == 'Wl,':
+				elif arg[1:4] == 'Wl,':
 					self.Append( LINKFLAGS = [ arg ] )
 				elif arg[1:] == 'framework':
 					self.Append( LINKFLAGS = [ arg ] )
@@ -179,7 +202,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 					i = i + 1
 				elif arg[1:5] == 'arch':
 					i = i + 1
-		    		else:
+				else:
 					print 'garbage in flags: ' + arg
 					sys.exit(1)
 			elif arg[:3] == 'yes' :

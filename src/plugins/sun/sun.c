@@ -473,7 +473,8 @@ xmms_sun_mixer_get (xmms_output_t *output, gint *left, gint *right)
 
 /**
  * Get buffersize.
- * TODO: This is fucked up, please help me.
+ *
+ * @todo This is fucked up, please help me.
  *
  * @param output The output structure.
  * 

@@ -134,15 +134,6 @@ xmmsc_result_free (xmmsc_result_t *res)
 	if (res->error_str)
 		free (res->error_str);
 
-	/*
-	if (res->reply)
-		dbus_message_unref (res->reply);
-	*/
-	
-	if (res->dbus_call)  {
-		dbus_pending_call_unref (res->dbus_call);
-	}
-
 	free (res);
 }
 
@@ -307,9 +298,7 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 		res->func (res, (void*)res->user_data);
 	}
 
-	dbus_pending_call_unref (pending);
 	xmmsc_result_unref (res);
-
 }
 
 

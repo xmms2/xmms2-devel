@@ -158,6 +158,11 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	g_free (nurl);
 
 	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
+	if (!data->mime) {
+		g_free (data->urlptr);
+		g_free (data);
+		return FALSE;
+	}
 	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 	
 	return TRUE;
