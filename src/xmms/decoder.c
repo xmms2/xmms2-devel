@@ -1,5 +1,8 @@
-/**
+/** @file
  * Decoder.
+ *
+ * This file contains functions that manipulate xmms_decoder_t objects.
+ *
  */
 
 
@@ -144,6 +147,15 @@ xmms_decoder_new (const gchar *mimetype)
 	return decoder;
 }
 
+
+/**
+ * Free resources used by decoder.
+ *
+ * The decoder is signalled to stop working and free up any resources
+ * it has been using.
+ *
+ * @param decoder the decoder to free. After this called it must not be referenced again.
+ */
 void
 xmms_decoder_destroy (xmms_decoder_t *decoder)
 {
@@ -160,6 +172,17 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
 		
 }
 
+/**
+ * Dispatch execution of the decoder.
+ *
+ * Associates the decoder with a transport and output.
+ * Blesses it with a life of its own (a new thread is created)
+ *
+ * @param decoder
+ * @param transport
+ * @param output
+ *
+ */
 void
 xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output)
 {
@@ -173,6 +196,16 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
+
+/**
+ * Sets information about what is beeing decoded.
+ *
+ * The caller is responsibe to keep the entry around as long
+ * as the decoder exists or the mediainfo is changed to something else. 
+ *
+ * @param decoder 
+ * @param entry the information to set.
+ */
 void
 xmms_decoder_set_mediainfo (xmms_decoder_t *decoder,
 			xmms_playlist_entry_t *entry)
@@ -181,6 +214,15 @@ xmms_decoder_set_mediainfo (xmms_decoder_t *decoder,
 	xmms_object_emit (XMMS_OBJECT (decoder), "mediainfo-changed", decoder);
 }
 
+/**
+ * Get a copy of structure describing what is beeing decoded.
+ *
+ * @param decoder
+ * @param entry 
+ *
+ * @return TRUE if entry was successfully filled in with information, 
+ * FALSE otherwise.
+ */
 gboolean
 xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
 			xmms_playlist_entry_t *entry)

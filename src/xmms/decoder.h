@@ -9,6 +9,10 @@
  * Type definitions
  */
 
+/**
+ * Structure describing decoder-objects.
+ * Do not modify this structure directly, use the functions.
+ */
 typedef struct xmms_decoder_St {
 	xmms_object_t object;
 
@@ -17,15 +21,23 @@ typedef struct xmms_decoder_St {
 	GMutex *mutex;
 	GCond *cond;
 
-	/* Mediainfo */
+	/** Mediainfo.
+	 *  Stores information about what is beeing decoded right now. 
+	 */
 	xmms_playlist_entry_t *mediainfo;
 	
 	xmms_plugin_t *plugin;
-	xmms_transport_t *transport;
+	xmms_transport_t *transport; /**< transport associated with decoder.
+				      *   This is where the decoder gets it
+				      *   data from
+				      */
 
 	gpointer plugin_data;
 
-	xmms_output_t *output;
+	xmms_output_t *output;       /**< output associated with decoder.
+				      *   The decoded data will be written
+				      *   to this output.
+				      */
 } xmms_decoder_t;
 
 /*
