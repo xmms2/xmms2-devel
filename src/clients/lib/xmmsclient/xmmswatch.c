@@ -169,7 +169,7 @@ timeout_add (DBusTimeout *timeout,
 
 	conn->watch_callback (conn, XMMSC_TIMEOUT_ADD, time);
 
-	return FALSE;
+	return TRUE;
 }
 
 static void
@@ -178,8 +178,6 @@ timeout_remove (DBusTimeout *timeout,
 {
 	xmmsc_timeout_t *time;
 	xmmsc_connection_t *conn = data;
-
-	printf ("apan\n");
 
 	time = dbus_timeout_get_data (timeout);
 	if (!time)
