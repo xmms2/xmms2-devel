@@ -199,6 +199,7 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 
 	g_cond_free (decoder->cond);
 	g_mutex_free (decoder->mutex);
+	xmms_playlist_entry_free (decoder->mediainfo);
 	g_free (decoder);
 }
 
