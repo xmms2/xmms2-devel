@@ -57,6 +57,7 @@ def checkFlags(base_env):
 	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "libresid-builder.la")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")
 	base_env.CheckAndAddFlagsToGroup("jack", "pkg-config --libs --cflags jack")
+	base_env.CheckAndAddFlagsToGroup("modplug", "pkg-config --libs --cflags libmodplug")
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
