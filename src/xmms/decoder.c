@@ -20,6 +20,7 @@
 #include "ringbuf.h"
 #include "playlist.h"
 #include "visualisation.h"
+#include "signal_xmms.h"
 
 #include <string.h>
 
@@ -579,6 +580,8 @@ xmms_decoder_thread (gpointer data)
 		if (!init_meth (decoder))
 			return NULL;
 	}
+
+	xmms_object_emit (XMMS_OBJECT (decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID, GUINT_TO_POINTER (xmms_playlist_entry_id_get (decoder->entry)));
 	
 	xmms_decoder_lock (decoder);
 

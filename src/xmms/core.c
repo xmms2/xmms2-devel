@@ -32,18 +32,7 @@ static gboolean running = TRUE;
 static void
 handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	xmms_playlist_entry_t *entry;
-
-	entry = xmms_playlist_entry_new (NULL);
-	
-	xmms_core_get_mediainfo (entry);
-
-	xmms_playlist_entry_print (entry);
-
-	xmms_playlist_entry_unref (entry);
-
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, NULL);
-
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, data);
 }
 
 
