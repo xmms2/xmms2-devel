@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -44,6 +45,35 @@ typedef struct xmmsc_callback_desc_St {
 	void (*func)(void *, void *);
 	void *userdata;
 } xmmsc_callback_desc_t;
+
+#define REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
+
+/* encode URL */
+gchar *
+xmmsc_encode_path (gchar *path) {
+	gchar *out, *outreal;
+	gint i;
+	gint len;
+
+	len = strlen (path);
+	outreal = out = (gchar *)g_malloc0 (len * 3 + 1);
+
+	for ( i = 0; i < len; i++) {
+		if (path[i] == '/' || 
+			REGULARCHAR ((gint) path[i]) || 
+			path[i] == '_' ||
+			path[i] == '-' ){
+			*(out++) = path[i];
+		} else if (path[i] == ' '){
+			*(out++) = '+';
+		} else {
+			g_snprintf (out, 4, "%%%02x", (guchar) path[i]);
+			out += 3;
+		}
+	}
+
+	return outreal;
+}
 
 gchar *
 xmmsc_get_last_error (xmmsc_connection_t *c)
