@@ -10,6 +10,7 @@
 #include "xmms/output.h"
 #include "xmms/transport.h"
 #include "xmms/core.c"
+#include "xmms/xmms.h"
 
 #include <math.h>
 #include <vorbis/codec.h>
@@ -60,7 +61,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "vorbis",
-			"Vorbis decoder " VERSION,
+			"Vorbis decoder " XMMS_VERSION,
 			"Xiph's OGG/Vorbis decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -375,7 +376,7 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 				ptr += 2;
 			}
 
-			xmms_decoder_write (decoder, convbuffer, 4*bout);
+			xmms_decoder_write (decoder, (gpointer) convbuffer, 4*bout);
 			vorbis_synthesis_read (&data->vd, bout);
 		}
 
