@@ -34,7 +34,7 @@ typedef enum {
 	XMMSC_TYPE_VIS,
 	XMMSC_TYPE_MOVE,
 	XMMSC_TYPE_MEDIAINFO,
-	XMMSC_TYPE_UINT32_ARRAY,
+	XMMSC_TYPE_PLAYLIST,
 	XMMSC_TYPE_TRANSPORT_LIST,
 } xmmsc_types_t;
 
@@ -71,12 +71,13 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_CORE_DISCONNECT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_ADD, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO, XMMSC_TYPE_MEDIAINFO },
+	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_SHUFFLE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_CLEAR, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_REMOVE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_JUMP, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_MOVE },
-	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_UINT32_ARRAY },
+	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_PLAYLIST },
 	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
 	{ XMMS_SIGNAL_TRANSPORT_LIST, XMMSC_TYPE_TRANSPORT_LIST },
@@ -102,8 +103,43 @@ static void xmmsc_send_void (xmmsc_connection_t *c, char *message);
  * @defgroup XMMSClient XMMSClient
  * @brief This functions will connect a client to a XMMS server.
  *
- * The clientlib is actually a wrapper around DBus message protocol.
- * So this is mearly for your convinence.
+ * To connect to a XMMS server you first need to init the
+ * xmmsc_connection_t and the connect it.
+ * If you want to handle callbacks from the server (not only send
+ * commands to it) you need to setup either a GMainLoop or QT-mainloop
+ * with a XMMSWatch.
+ * 
+ * A GLIB example:
+ * @code
+ * int main () {
+ *	xmmsc_connection_t *conn;
+ *	GMainLoop *mainloop;
+ *
+ *	conn = xmmsc_init ();
+ *	if (!xmmsc_connect (conn, NULL))
+ *		return 0;
+ *	
+ *	mainloop = g_main_loop_new (NULL, FALSE);
+ *	xmmsc_setup_with_gmain (conn, NULL);
+ * }
+ * @endcode
+ *
+ * And a QT example:
+ * @code
+ * int main (int argc, char **argv) {
+ * 	XMMSClientQT *qtClient;
+ *	xmmsc_connection_t *conn;
+ *	QApplication app (argc, argv);
+ *
+ *	conn = xmmsc_init ();
+ *	if (!xmmsc_connect (conn, NULL))
+ *		return 0;
+ *
+ *	qtClient = new XMMSClientQT (conn, &app);
+ *
+ *	return app.exec ();	
+ * }
+ * @endcode
  *
  * @{
  */
@@ -139,6 +175,7 @@ xmmsc_init ()
 
 /**
  * Connects to the XMMS server.
+ * If dbuspath is NULL, it will try to open the default path.
  * @todo document dbuspath.
  *
  * @returns TRUE on success and FALSE if some problem
@@ -154,13 +191,19 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 	DBusError err;
 	DBusMessageHandler *hand;
 	gint i = 0;
+	gchar *path;
 
 	dbus_error_init (&err);
 
-	if (!c || !dbuspath)
+	if (!c)
 		return FALSE;
 
-	conn = dbus_connection_open (dbuspath, &err);
+	if (!dbuspath)
+		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	else
+		path = dbuspath;
+
+	conn = dbus_connection_open (path, &err);
 	
 	if (!conn) {
 		int ret;
@@ -175,7 +218,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "started!\n");
 
 		dbus_error_init (&err);
-		conn = dbus_connection_open (dbuspath, &err);
+		conn = dbus_connection_open (path, &err);
 		if (!conn) {
 			c->error = "Couldn't connect to xmms2d even tough I started it... Bad, very bad.";
 			return FALSE;
@@ -323,6 +366,16 @@ xmmsc_deinit (xmmsc_connection_t *c)
  * This will be called with information about a specific
  * song. The arugment is a pointer to GHashTable with 
  * information about the song.
+ *
+ * @sa xmmsc_playlist_get_mediainfo
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID
+ *
+ * This will be called when information for a specific
+ * entry has been changed. The argument is a UINT32 with
+ * the id of the changed entry.
  *
  * @sa xmmsc_playlist_get_mediainfo
  */
@@ -1001,20 +1054,23 @@ handle_callback (DBusMessageHandler *handler,
 			}
 			break;
 
-		case XMMSC_TYPE_UINT32_ARRAY:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_ARRAY &&
-				dbus_message_iter_get_array_type (&itr) == DBUS_TYPE_UINT32) {
-				guint32 *arr;
-				gint len;
-				guint32 *tmp;
+		case XMMSC_TYPE_PLAYLIST:
+			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+				guint len = dbus_message_iter_get_uint32 (&itr);
+				if (len > 0) {
+					guint32 *arr;
+					gint len;
+					guint32 *tmp;
 
-				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
+					dbus_message_iter_next (&itr);
+					dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
-				arr = g_new0 (guint32, len+1);
-				memcpy (arr, tmp, len * sizeof(guint32));
-				arr[len] = '\0';
-				
-				arg = arr;
+					arr = g_new0 (guint32, len+1);
+					memcpy (arr, tmp, len * sizeof(guint32));
+					arr[len] = '\0';
+					
+					arg = arr;
+				}
 			}
 			break;
 		case XMMSC_TYPE_MEDIAINFO:

@@ -40,8 +40,46 @@ inline static void xmms_plugin_unlock (xmms_plugin_t *plugin);
 /**
  * @defgroup XMMSPLugin XMMSPlugin
  * @brief All functions relevant to a plugin.
+ *
+ * Every plugin has a initfunction. That should be defined like following:
+ * @code
+ * xmms_plugin_t *xmms_plugin_get (void)
+ * @endcode
+ * 
+ * This function must call xmms_plugin_new() with the appropiate
+ * arguments. 
+ * This function can also call xmms_plugin_info_add(), xmms_plugin_method_add(),
+ * xmms_plugin_properties_add()
+ *
+ * A example plugin here is:
+ * @code
+ * xmms_plugin_t *
+ * xmms_plugin_get (void) {
+ * 	xmms_plugin_t *plugin;
+ *	
+ *	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EXAMPLE, "test",
+ *				  "Test plugin" XMMS_VERSION,
+ *				  "A very simple plugin");
+ *	xmms_plugin_info_add (plugin, "Author", "Karsten Brinkmann");
+ *	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_TEST, xmms_test);
+ *	return plugin;
+ * }
+ * @endcode
+ *
+ * @{
  */
 
+/**
+ * The following function creates a new plugin.
+ *
+ * @param type The type of plugin. Each type is
+ * explained in the chapters about that plugintype.
+ * @param shortname The short version of pluginname. Eg. "oss"
+ * @param name The fullname of the plugin. Eg. "Open Sound System"
+ * @param description A descriptive text about the plugin.
+ *
+ * @return a new plugin of the given type.
+ */
 xmms_plugin_t *
 xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 				const gchar *name,
@@ -65,9 +103,20 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 	return plugin;
 }
 
+/**
+ * Adds a method to this plugin. Each diffrent type must define
+ * diffrent type of methods.
+ *
+ * @param plugin A new plugin created from xmms_plugin_new()
+ * @param name The name of the name that method to add. The names are
+ * defined and should not just be a string. Se each plugintype for
+ * documentation.
+ * @param method The function pointer to the method.
+ */
+
 void
 xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
-						xmms_plugin_method_t method)
+			xmms_plugin_method_t method)
 {
 	g_return_if_fail (plugin);
 	g_return_if_fail (name);
@@ -77,6 +126,12 @@ xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 	g_hash_table_insert (plugin->method_table, g_strdup (name), method);
 	xmms_plugin_unlock (plugin);
 }
+
+/**
+ * Set a property for this plugin.
+ * The diffrent properties are defined under each
+ * plugintypes documentation.
+ */
 
 void
 xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property)
@@ -88,6 +143,10 @@ xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property)
 
 }
 
+/**
+ * Remove property for this plugin.
+ */
+
 void
 xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property)
 {
@@ -98,6 +157,31 @@ xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property)
 
 }
 
+/**
+ * Add information to the plugin. This information can be
+ * viewed in a client. The information can be for example
+ * the name of the author or the webpage of the plugin.
+ *
+ * @param plugin The plugin to set the info in.
+ * @param key This can be any given string.
+ * @param value Value of this key.
+ */
+
+void
+xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
+{
+	xmms_plugin_info_t *info;
+	g_return_if_fail (plugin);
+
+	info = g_new0 (xmms_plugin_info_t, 1);
+	info->key = key;
+	info->value = value;
+
+	g_list_append (plugin->info_list, info);
+}
+
+/* @} */
+
 gboolean
 xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property)
 {
@@ -107,8 +191,6 @@ xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property)
 	return plugin->properties & property;
 
 }
-
-
 
 xmms_plugin_type_t
 xmms_plugin_type_get (const xmms_plugin_t *plugin)
@@ -149,20 +231,6 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 
 	return plugin->info_list;
 }
-
-void
-xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
-{
-	xmms_plugin_info_t *info;
-	g_return_if_fail (plugin);
-
-	info = g_new0 (xmms_plugin_info_t, 1);
-	info->key = key;
-	info->value = value;
-
-	g_list_append (plugin->info_list, info);
-}
-
 
 /*
  * Private functions

@@ -176,6 +176,7 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 
 	if (artist && title) {
 		str = g_strdup_printf ("%s - %s", artist, title);
+		str = conv (str);
 	} else {
 		str = strrchr (url, '/');
 		if (!str || !str[1])
@@ -188,7 +189,7 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 		
 	printf ("%s%d\t%s (%s)\n", 
 		(currentid == id) ? "->":"  ",
-		id, conv (str), duration);
+		id, str, duration);
 
 	g_free (duration);
 	g_free (str);
@@ -206,9 +207,11 @@ handle_playlist_list (void *userdata, void *arg)
 	guint32 *list=arg;
 	gint i=0;
 
-	while (list[i]) {
-		xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
-		i++;
+	if (list) {
+		while (list[i]) {
+			xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
+			i++;
+		}
 	}
 	
 	if (i == 0) {
@@ -216,7 +219,8 @@ handle_playlist_list (void *userdata, void *arg)
 		exit (0);
 	}
 
-	lastid = GPOINTER_TO_UINT(list[--i]);
+	if (list) 
+		lastid = GPOINTER_TO_UINT(list[--i]);
 	
 }
 

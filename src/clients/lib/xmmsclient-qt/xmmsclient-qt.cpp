@@ -51,6 +51,10 @@ watch_callback (xmmsc_connection_t *conn,
 	return 1;
 }
 
+/**
+ * @internal
+ */
+
 XMMSClientWatch::XMMSClientWatch (xmmsc_connection_t *conn, 
 				  xmmsc_watch_t *watch, 
 				  QObject *parent) :
@@ -70,9 +74,9 @@ XMMSClientWatch::XMMSClientWatch (xmmsc_connection_t *conn,
 		m_notifier_w->setEnabled (TRUE);
 	}
 
-	m_notifier_e = new QSocketNotifier (watch->fd, QSocketNotifier::Exception, this);
-	connect (m_notifier_e, SIGNAL (activated (int)), this, SLOT (onException ()));
-	m_notifier_e->setEnabled (TRUE);
+//	m_notifier_e = new QSocketNotifier (watch->fd, QSocketNotifier::Exception, this);
+//	connect (m_notifier_e, SIGNAL (activated (int)), this, SLOT (onException ()));
+//	m_notifier_e->setEnabled (TRUE);
 
 }
 
@@ -87,6 +91,8 @@ XMMSClientWatch::onRead ()
 
 	flags |= XMMSC_WATCH_IN;
 
+	qDebug ("Dispatch Read");
+
 	xmmsc_watch_dispatch (m_conn, m_watch, flags);
 }
 
@@ -96,6 +102,7 @@ XMMSClientWatch::onWrite ()
 	unsigned int flags = 0;
 
 	flags |= XMMSC_WATCH_OUT;
+	qDebug ("Dispatch Write");
 
 	xmmsc_watch_dispatch (m_conn, m_watch, flags);
 }
@@ -110,6 +117,26 @@ XMMSClientWatch::onException ()
 	xmmsc_watch_dispatch (m_conn, m_watch, flags);
 }
 
+/**
+ * @defgroup XMMSWatchQT XMMSWatchQT
+ * @brief QT Watch bindnings.
+ * 
+ * This functions should be used in a QT client to get the 
+ * Messages from the server.
+ *
+ * @ingroup XMMSWatch
+ * @{
+ */
+
+/**
+ * This class should be inited after xmmsc_connect() is called.
+ * When this is inited you don't have to bother about it anymore.
+ * Callbacks will still be set by xmmsc_set_callback()
+ *
+ * @sa xmmsc_connect
+ * @sa xmmsc_set_callback
+ */
+
 XMMSClientQT::XMMSClientQT (xmmsc_connection_t *conn, QObject *parent) : 
 	      QObject (parent)
 {
@@ -119,11 +146,14 @@ XMMSClientQT::XMMSClientQT (xmmsc_connection_t *conn, QObject *parent) :
 	xmmsc_watch_init (conn);
 }
 
+/** @} */
+
 void
 XMMSClientQT::watch_add (xmmsc_watch_t *watch)
 {
 	XMMSClientWatch *q_watch = new XMMSClientWatch (m_conn, watch, this);
 	watch->data = q_watch;
+	qDebug ("Adding watch for %d", watch->fd);
 	m_watch_list.append (q_watch);
 }
 
@@ -131,6 +161,7 @@ void
 XMMSClientQT::watch_remove (xmmsc_watch_t *watch)
 {
 	XMMSClientWatch *w = (XMMSClientWatch *)watch->data;
+	qDebug ("Removing watch for %d", watch->fd);
 	m_watch_list.remove (w);
 
 	delete w;
@@ -139,15 +170,16 @@ XMMSClientQT::watch_remove (xmmsc_watch_t *watch)
 void
 XMMSClientQT::timeout_add (xmmsc_timeout_t *timeout)
 {
+	qDebug ("Want a timeout");
 }
 
 void
 XMMSClientQT::timeout_remove (xmmsc_timeout_t *timeout)
 {
+	qDebug ("Want to remove timeout");
 }
 
 void
 XMMSClientQT::wakeUp ()
 {
-	qDebug ("Wakeup");
 }

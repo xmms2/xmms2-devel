@@ -62,7 +62,7 @@ xmms_playlist_entry_clone_foreach (gpointer key, gpointer value, gpointer udata)
 {
 	xmms_playlist_entry_t *new = (xmms_playlist_entry_t *) udata;
 
-	xmms_playlist_entry_property_set (new, g_strdup ((gchar *)key), g_strdup ((gchar *)value));
+	xmms_playlist_entry_property_set (new, (gchar *)key, (gchar *)value);
 }
 
 /** Make a copy of all properties in entry to new
@@ -163,7 +163,9 @@ xmms_playlist_entry_foreach_free (gpointer key, gpointer value, gpointer udata)
 static void
 xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 {
-	g_free (entry->url);
+
+	if (entry->url)
+		g_free (entry->url);
 	
 	if (entry->mimetype)
 		g_free (entry->mimetype);
@@ -223,11 +225,13 @@ xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
 	return entry->mimetype;
 }
 
+
 void
 xmms_playlist_entry_ref (xmms_playlist_entry_t *entry)
 {
 	g_return_if_fail (entry);
 	entry->ref ++;
+	XMMS_DBG ("Entry refcount is %d", entry->ref);
 }
 
 void
@@ -237,6 +241,8 @@ xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
 	g_return_if_fail (entry);
 
 	entry->ref --;
+
+	XMMS_DBG ("for %s refcount is %d", entry->url, entry->ref);
 
 	if (entry->ref < 1) {
 		/* free entry */

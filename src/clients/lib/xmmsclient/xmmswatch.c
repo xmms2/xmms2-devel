@@ -197,6 +197,21 @@ wakeup_main (void *data)
 }
 
 /* xmmsc_watch functions */
+
+/**
+ * @defgroup XMMSWatch XMMSWatch
+ *
+ * These functions is used by xmmsclient-qt and xmmsclient-glib.
+ *
+ * @ingroup XMMSClient
+ *
+ * @{
+ */
+
+
+/**
+ * Set the watch callback on this connection.
+ */
 void
 xmmsc_watch_callback_set (xmmsc_connection_t *conn, xmmsc_watch_callback_t cb)
 {
@@ -206,12 +221,20 @@ xmmsc_watch_callback_set (xmmsc_connection_t *conn, xmmsc_watch_callback_t cb)
 	conn->watch_callback = cb;
 }
 
+/**
+ * Set private data for this watch.
+ */
+
 void
 xmmsc_watch_data_set (xmmsc_connection_t *connection, gpointer data)
 {
 	g_return_if_fail (connection);
 	connection->data = data;
 }
+
+/**
+ * Get private data from watch.
+ */
 
 gpointer
 xmmsc_watch_data_get (xmmsc_connection_t *connection)
@@ -220,6 +243,10 @@ xmmsc_watch_data_get (xmmsc_connection_t *connection)
 	
 	return connection->data;
 }
+
+/**
+ * Init a xmms watch on a DBusConnection.
+ */
 
 void
 xmmsc_watch_init (xmmsc_connection_t *connection)
@@ -245,3 +272,7 @@ xmmsc_watch_init (xmmsc_connection_t *connection)
 						  connection, NULL);
 
 }
+
+/**
+ * @}
+ */

@@ -13,8 +13,8 @@
 
 #include <stdio.h>
 
-//#define DBG(fmt, args...) printf (__FILE__ ": " fmt "\n", ## args)
-#define DBG(fmt, args...)
+#define DBG(fmt, args...) printf (__FILE__ ": " fmt "\n", ## args)
+//#define DBG(fmt, args...)
 
 void
 playlist_set_id_data (playlist_t *pl, unsigned int id, gpointer data)
@@ -65,8 +65,6 @@ playlist_add (void *userdata, void *arg)
 
 	g_hash_table_insert (pl->id_table, GUINT_TO_POINTER (id), (gpointer) new);
 	
-	/* Get the information about this entry */
-	xmmsc_playlist_get_mediainfo (pl->conn, id);
 }
 
 static gboolean
@@ -137,7 +135,7 @@ playlist_list (void *userdata, void *arg)
 
 	playlist_clear (userdata, NULL);
 
-	while (list[i]) {
+	while (list && list[i]) {
 		playlist_add (userdata, GUINT_TO_POINTER (list[i]));
 		i++;
 	}

@@ -144,7 +144,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	gint fd;
 	xmms_file_data_t *data;
 	const gchar *urlptr;
-	const gchar *nurl;
+	gchar *nurl;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -157,20 +157,27 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 		urlptr = strchr (nurl, '/');
 	else
 		urlptr = nurl;
-	if (!urlptr)
+
+	if (!urlptr) {
+		g_free (nurl);
 		return FALSE;
+	}
 
 	XMMS_DBG ("Opening %s", urlptr);
 	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
 	XMMS_DBG ("fd: %d", fd);
-	if (fd == -1)
+	if (fd == -1) {
+		g_free (nurl);
 		return FALSE;
+	}
 
 	data = g_new0 (xmms_file_data_t, 1);
 	data->fd = fd;
 	data->mime = NULL;
 	data->urlptr = g_strdup (urlptr);
 	xmms_transport_plugin_data_set (transport, data);
+
+	g_free (nurl);
 
 	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
 	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
