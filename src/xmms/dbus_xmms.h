@@ -30,4 +30,10 @@
 #define XMMS_DBUS_SIGNAL_CORE_SIGNAL_REGISTER "org.xmms.core.signal.register"
 #define XMMS_DBUS_SIGNAL_CORE_SIGNAL_UNREGISTER "org.xmms.core.signal.unregister"
 
+/* Transport msgs */
+#define XMMS_DBUS_SIGNAL_TRANSPORT_MIMETYPE "org.xmms.transport.mimetype"
+
+/* Output msgs */
+#define XMMS_DBUS_SIGNAL_OUTPUT_EOS_REACHED "org.xmms.output.eos.reached"
+
 #endif /* __DBUS_XMMS_H__ */

@@ -100,8 +100,6 @@ typedef gboolean (*xmms_dbus_callback_with_intarg_t) (guint arg);
 typedef struct xmms_dbus_signal_mask_map_St {
 	/** The dbus signalname, ie org.xmms.playback.play */
 	gchar *dbus_name;
-	/** The xmms_object signal. */
-	gchar *xmms_name;
 	xmms_dbus_signal_mask_t mask;
 
 	/** This will be called when the xmms_name 
@@ -116,70 +114,70 @@ typedef struct xmms_dbus_signal_mask_map_St {
 } xmms_dbus_signal_mask_map_t;
 
 static xmms_dbus_signal_mask_map_t mask_map [] = {
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PLAY, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_PLAY, 
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PLAY, 
 		NULL, NULL, handle_playback_play, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_STOP, "playback-stopped", 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_STOP, 
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_STOP, 
 		send_playback_stop, NULL, handle_playback_stop, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PAUSE, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_PAUSE, 
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PAUSE, 
 		NULL, NULL, handle_playback_pause, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_NEXT, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_NEXT,
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_NEXT, 
 		NULL, NULL, handle_playback_next, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PREV, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_PREV, 
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PREV, 
 		NULL, NULL, handle_playback_prev, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_SEEK, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_SEEK, 
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_SEEK, 
 		NULL, handle_playback_seek, NULL,  NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID, "mediainfo-changed", 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID,
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_CURRENTID, 
 		send_playback_currentid, handle_playback_currentid, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME, "playtime-changed", 
+	{ XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME,
 		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PLAYTIME, 
 		send_playback_playtime, NULL, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_ADD, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_ADD,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_ADD, 
 		NULL, handle_playlist_add, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_REMOVE, 
 		NULL, NULL, NULL, handle_playlist_remove },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_LIST, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_LIST,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_LIST, 
 		NULL, handle_playlist_list, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_SHUFFLE, 
 		NULL, NULL, handle_playlist_shuffle, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_CLEAR, 
 		NULL, NULL, handle_playlist_clear, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_JUMP, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_JUMP,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_JUMP, 
 		NULL, NULL, NULL, handle_playlist_jump },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_MEDIAINFO, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_MEDIAINFO, 
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_MEDIAINFO, 
 		NULL, handle_playlist_mediainfo, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_MOVE, NULL, 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_MOVE,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_MOVE, 
 		NULL, handle_playlist_move, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, "playlist-changed", 
+	{ XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED,
 		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_CHANGED, 
 		send_playlist_changed, NULL, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_QUIT, NULL, 
+	{ XMMS_DBUS_SIGNAL_CORE_QUIT,
 		XMMS_DBUS_SIGNAL_MASK_CORE_QUIT, 
 		NULL, NULL, handle_core_quit, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_DISCONNECT, NULL, 
+	{ XMMS_DBUS_SIGNAL_CORE_DISCONNECT,
 		XMMS_DBUS_SIGNAL_MASK_CORE_DISCONNECT, 
 		NULL, handle_core_disconnect, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_INFORMATION, "information", 
+	{ XMMS_DBUS_SIGNAL_CORE_INFORMATION, 
 		XMMS_DBUS_SIGNAL_MASK_CORE_INFORMATION, 
 		send_core_information, NULL, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_SIGNAL_REGISTER, NULL, 
+	{ XMMS_DBUS_SIGNAL_CORE_SIGNAL_REGISTER,
 		XMMS_DBUS_SIGNAL_MASK_CORE_SIGNAL_REGISTER, 
 		NULL, handle_core_signal_register, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_SIGNAL_UNREGISTER, NULL, 
+	{ XMMS_DBUS_SIGNAL_CORE_SIGNAL_UNREGISTER,
 		XMMS_DBUS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER, 
 		NULL, handle_core_signal_unregister, NULL, NULL }
 };
@@ -764,8 +762,8 @@ xmms_dbus_init(){
 
 
 	while (mask_map[i].dbus_name) {
-		if (mask_map[i].xmms_name)
-			xmms_object_connect (XMMS_OBJECT (core), mask_map[i].xmms_name,
+		if (mask_map[i].object_callback)
+			xmms_object_connect (XMMS_OBJECT (core), mask_map[i].dbus_name,
 					mask_map[i].object_callback, (gpointer) mask_map[i].dbus_name);
 		i++;
 	}
