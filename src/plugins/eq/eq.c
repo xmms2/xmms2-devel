@@ -36,7 +36,6 @@
 #include <string.h>
 
 static void xmms_eq_init (xmms_effect_t *effect);
-static void xmms_eq_deinit (xmms_effect_t *effect);
 static void xmms_eq_samplerate_set (xmms_effect_t *effect, guint rate);
 static void xmms_eq_process (xmms_effect_t *effect, gchar *buf, guint len);
 
@@ -111,7 +110,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_eq_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DEINIT, xmms_eq_deinit);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_eq_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_eq_process);
 
@@ -185,12 +183,6 @@ xmms_eq_init (xmms_effect_t *effect) {
 		priv->gains[i] = xmms_config_value_float_get (priv->configvals[i]);
 	}
 
-}
-
-static void
-xmms_eq_deinit (xmms_effect_t *effect) 
-{
-	
 }
 
 static void
