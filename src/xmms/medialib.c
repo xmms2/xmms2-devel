@@ -685,8 +685,8 @@ proprow_callback (void *pArg, int argc, char **argv, char **columnName)
 {
 	xmms_playlist_entry_t *entry = pArg;
 
-	XMMS_DBG ("Setting %s to %s", argv[1], argv[0]);
-	xmms_playlist_entry_property_set (entry, argv[1], argv[0]);
+	XMMS_DBG ("Setting %s to %s", argv[0], argv[1]);
+	xmms_playlist_entry_property_set (entry, argv[0], argv[1]);
 
 	return 0;
 }
