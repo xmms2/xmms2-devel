@@ -11,12 +11,18 @@ CLI:
 		* seek
 
 PLUGINS:
+	* mad
+		* broken frames sound bad.
+
 	* make all decoderplugins seek-able
 	* vorbis
 		* should calculate duration more correctly
 		  before playing file.
 	* sid
 		* parse STIL.txt
+
+	* tar and stacking
+		* make sure they work
 
 	* Transport
 		* SMB
