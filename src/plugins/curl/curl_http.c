@@ -86,7 +86,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
 	//xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+	//xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 
 	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "prebuffersize", "32768", NULL, NULL);
@@ -133,7 +133,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void *stream)
 	xmms_ringbuf_write (data->buffer, ptr, size*nmemb);
 	g_mutex_unlock (data->mutex);
 
-//	XMMS_DBG ("Wrote %d bytes to the CURL buffer", size*nmemb);
+	//XMMS_DBG ("Wrote %d bytes to the CURL buffer", size*nmemb);
 
 	return size*nmemb;
 
@@ -161,6 +161,7 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 
 	curl_easy_setopt (curl, CURLOPT_URL, xmms_util_decode_path (url));
 	curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt (curl, CURLOPT_HEADER, 1);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, xmms_curl_cwrite);
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, transport);
 	curl_easy_setopt (curl, CURLOPT_HTTPGET, 1);
@@ -202,7 +203,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 
-	while (data->run) {
+	while (data->run && data->running) {
 		gint ret;
 
 		ret = select (data->maxfd+1, &data->fdread, 
@@ -334,14 +335,17 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	ret = xmms_ringbuf_read (data->buffer, buffer, len);
 	g_mutex_unlock (data->mutex);
 
+	if (xmms_ringbuf_bytes_used (data->buffer) < 8128)
+		XMMS_DBG ("Buffer is very small!");
+
 	if (!data->mime) {
+		xmms_playlist_entry_t *entry;
 		curl_easy_getinfo (data->curl, CURLINFO_CONTENT_TYPE, &data->mime);
 
 		if (!data->mime && g_strncasecmp (buffer, "ICY 200 OK", 10) == 0) {
 			gchar **tmp;
 			gchar *header;
 			gint i=0;
-			xmms_playlist_entry_t *entry;
 
 			data->mime = "audio/mpeg";
 			data->stream = TRUE;
@@ -377,17 +381,62 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 				i++;
 			}
 
-			entry = xmms_transport_entry_get (transport);
+		} else if (g_strncasecmp (buffer, "HTTP/1.0 200 OK", 15) == 0) {
+			gchar **tmp;
+			gchar *header;
+			gint i=0;
 
-			if (data->name);
-				xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL, data->name);
-			if (data->genre)
-				xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, data->genre);
-			if (data->br)
-				xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, data->br);
-		} 
+			header = buffer;
+
+			buffer = strstr (header, "\r\n\r\n");
+
+			if (!buffer) {
+				XMMS_DBG ("Malformated HTTP response");
+				return -1;
+			}
+
+			*buffer = '\0';
+			buffer += 2;
+
+			len -= strlen (header) + 2;
+			
+			XMMS_DBG ("%s", header);
+			XMMS_DBG ("First is %x", *buffer);
+
+			tmp = g_strsplit (header, "\r\n", 0);
+			while (tmp[i]) {
+				if (g_strncasecmp (tmp[i], "ice-name:", 9) == 0)
+					data->name = g_strdup (tmp[i]+9);
+				if (g_strncasecmp (tmp[i], "ice-genre:", 10) == 0)
+					data->genre = g_strdup (tmp[i]+10);
+				/* bitrate can be a string here... strange ... */
+				if (g_strncasecmp (tmp[i], "ice-bitrate:", 7) == 0)
+					data->br = g_strdup (tmp[i]+7);
+
+				i++;
+			}
+
+			if (data->name) {
+				data->stream = TRUE;
+			}
+
+		}
+		
+
+		entry = xmms_playlist_entry_new (NULL);
+
+		if (data->name);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL, data->name);
+		if (data->genre)
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, data->genre);
+		if (data->br)
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, data->br);
+
+		xmms_transport_entry_mediainfo_set (transport, entry);
 
 		xmms_transport_mimetype_set (transport, data->mime);
+
+		xmms_playlist_entry_unref (entry);
 	}
 
 
