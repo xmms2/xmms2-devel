@@ -58,6 +58,7 @@ typedef enum {
 	XMMSC_TYPE_NONE,
 	XMMSC_TYPE_VIS,
 	XMMSC_TYPE_MOVE,
+	XMMSC_TYPE_LIST,
 	XMMSC_TYPE_MEDIAINFO,
 	XMMSC_TYPE_PLAYLIST,
 	XMMSC_TYPE_TRANSPORT_LIST,
@@ -106,6 +107,8 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
 	{ XMMS_SIGNAL_TRANSPORT_LIST, XMMSC_TYPE_TRANSPORT_LIST },
+	{ XMMS_SIGNAL_CONFIG_LIST, XMMSC_TYPE_LIST },
+	{ XMMS_SIGNAL_CONFIG_GET, XMMSC_TYPE_STRING },
 	{ NULL, 0 },
 };
 
@@ -891,6 +894,21 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 				tmp[0] = dbus_message_iter_get_uint32 (&itr);
 				tmp[1] = dbus_message_iter_get_uint32 (&itr);
 				arg = &tmp;
+			}
+			break;
+
+		case XMMSC_TYPE_LIST:
+			{
+				x_list_t *list = NULL;
+				while (42) {
+					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+						list = x_list_append (list, dbus_message_iter_get_string (&itr));
+					}
+					if (!dbus_message_iter_has_next (&itr))
+						break;
+					dbus_message_iter_next (&itr);
+				}
+				arg = list;
 			}
 			break;
 

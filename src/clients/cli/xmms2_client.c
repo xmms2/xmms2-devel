@@ -234,6 +234,25 @@ cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	x_list_t *l;
+
+	l = xmmscs_configval_list (conn);
+	
+	if (!l)
+		print_error ("Ooops :%s", xmmsc_get_last_error (conn));
+	
+	print_info ("Config Values:");
+	
+	while (l) {
+		print_info ("%s = %s", l->data, xmmscs_configval_get (conn, l->data));
+		l = x_list_next (l);
+	}
+}
+
+
+static void
 cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 {
 
@@ -342,6 +361,7 @@ cmds commands[] = {
 
 	{ "status", "go into status mode", cmd_status },
 	{ "config", "set a config value", cmd_config },
+	{ "configlist", "list all config values", cmd_config_list },
 	{ "quit", "make the server quit", cmd_quit },
 
 	{ NULL, NULL, NULL },

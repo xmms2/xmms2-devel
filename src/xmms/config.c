@@ -76,6 +76,12 @@ xmms_config_t *global_config;
  * Config functions
  */
 
+static void
+add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
+{
+	*(GList**)udata = g_list_append (*(GList**)udata, (gchar*) key);
+}
+
 static void 
 xmms_config_parse_start (GMarkupParseContext *ctx,
 		    	 const gchar *name,
@@ -200,7 +206,42 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
 
 XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 
+GList *
+xmms_config_listvalues (xmms_config_t *conf)
+{
+	GList *ret = NULL;
 
+	XMMS_DBG ("Configvalue list");
+
+	g_mutex_lock (conf->mutex);
+	
+	g_hash_table_foreach (conf->values, add_to_list_foreach, &ret);
+
+	g_mutex_unlock (conf->mutex);
+
+	ret = g_list_sort (ret, (GCompareFunc) g_strcasecmp);
+
+	return ret;
+
+}
+
+XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, LIST, NONE, NONE);
+
+const gchar *
+xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key)
+{
+	xmms_config_value_t *val;
+
+	val = xmms_config_lookup (key);
+	if (!val) {
+		return NULL;
+	}
+
+	return xmms_config_value_string_get (val);
+}
+
+
+XMMS_METHOD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
 
 gboolean
 xmms_config_init (const gchar *filename)
@@ -244,6 +285,8 @@ xmms_config_init (const gchar *filename)
 
 
 	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
+	xmms_object_method_add (XMMS_OBJECT (config), "get", XMMS_METHOD_FUNC (getvalue));
+	xmms_object_method_add (XMMS_OBJECT (config), "list", XMMS_METHOD_FUNC (listvalues));
 	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
 
 	return TRUE;
@@ -269,12 +312,6 @@ xmms_config_lookup (const gchar *path)
 
 
 	return value;
-}
-
-static void
-add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
-{
-	*(GList**)udata = g_list_append (*(GList**)udata, (gchar*) key);
 }
 
 static int
