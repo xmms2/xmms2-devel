@@ -434,7 +434,10 @@ x_hash_foreach_remove (x_hash_t *hash_table,
   x_hash_node_t *node, *prev;
   unsigned int i;
   unsigned int deleted = 0;
-  
+
+  assert (hash_table != NULL);
+  assert (func != NULL);
+
   for (i = 0; i < hash_table->size; i++)
     {
     restart:
