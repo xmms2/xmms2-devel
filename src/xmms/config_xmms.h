@@ -47,7 +47,7 @@ void xmms_config_value_data_set (xmms_config_value_t *value,
 
 gchar *xmms_config_value_name_get (xmms_config_value_t *value);
 
-xmms_config_value_t *xmms_config_value_list_lookup (xmms_config_value_t *value,
+xmms_config_value_t *xmms_config_value_list_lookup (const xmms_config_value_t *value,
 					 	    const gchar *subvalue);
 
 xmms_config_value_t *xmms_config_value_property_lookup (xmms_config_value_t *val, const gchar *property);
