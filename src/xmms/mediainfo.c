@@ -190,10 +190,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 				goto cont;
 			}
 
-			if (!xmms_transport_islocal (transport)) {
-				xmms_object_unref (transport);
-				goto cont;
-			}
 
 			if (lmod) {
 				const gchar *tmp;
@@ -204,7 +200,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 				}
 			}
 
-			mime = xmms_transport_mimetype_get (transport);
+			mime = xmms_transport_mimetype_get_wait (transport);
 
 			if (!mime) {
 				xmms_object_unref (transport);
@@ -235,6 +231,10 @@ xmms_mediainfo_thread_thread (gpointer data)
 				goto cont;
 			}
 
+			if (!xmms_transport_islocal (transport)) {
+				xmms_object_unref (transport);
+				goto cont;
+			}
 
 			xmms_playlist_entry_mimetype_set (entry, mime);
 			decoder = xmms_decoder_new ();
