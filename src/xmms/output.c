@@ -35,7 +35,7 @@
 static gpointer xmms_output_thread (gpointer data);
 
 static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
-static void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
+void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
@@ -239,8 +239,12 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 			xmms_output_resume (output);
 	} else {
 		output->running = TRUE;
-		xmms_object_ref (output); /* thread takes one ref */
-		output->thread = g_thread_create (xmms_output_thread, output, FALSE, NULL);
+		if (output->type == XMMS_OUTPUT_TYPE_WR) {
+			xmms_object_ref (output); /* thread takes one ref */
+			output->thread = g_thread_create (xmms_output_thread, output, FALSE, NULL);
+		} else {
+			xmms_output_decoder_start (output);
+		}
 	}
 
 	if (output->type == XMMS_OUTPUT_TYPE_FILL) {
@@ -256,7 +260,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 
 }
 
-static void
+void
 xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
@@ -274,8 +278,13 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 					     XMMS_PLUGIN_METHOD_STATUS);
 
 		st (output, XMMS_OUTPUT_STATUS_STOP); 
-		output->running = FALSE;
-		g_cond_signal (output->fill_cond);
+		if (output->decoder) {
+			xmms_decoder_stop (output->decoder);
+			xmms_object_unref (output->decoder);
+			output->decoder = NULL;
+			output->playing_entry = NULL;
+		}
+		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 	}
 
 	g_mutex_unlock (output->mutex);
@@ -632,6 +641,12 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	g_mutex_lock (output->mutex);
 	
 	if (!output->decoder) {
+		
+		if (!output->type == XMMS_OUTPUT_TYPE_FILL && 
+		    g_queue_is_empty (output->decoder_list)) {
+			xmms_output_decoder_start (output);
+		}
+
 		XMMS_DBG ("Switching decoder!");
 		output->decoder = g_queue_pop_head (output->decoder_list);
 		if (!output->decoder) {
