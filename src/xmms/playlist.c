@@ -370,12 +370,29 @@ gboolean
 xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 {
 	gboolean res;
+	xmms_playlist_entry_t *entry;
+	
+	if (g_strncasecmp (nurl, "mlib", 4) == 0) {
+		guint id;
+		gchar *p = nurl+9;
 
-	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
+		id = atoi (p);
+		if (id) {
+			entry = xmms_medialib_entry_get_byid (id);
+		}
+
+	}
+
+	if (!entry)
+		 entry = xmms_playlist_entry_new (nurl);
+
 	if (!entry) {
 		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
 		return FALSE;
 	}
+
+	/* okey let's see if this is something that should be
+	 * picked out of our medialib */
 
 	res = xmms_playlist_add (playlist, entry);
 
