@@ -291,7 +291,7 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 xmms_medialib_entry_t
 xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
 {
-	g_return_val_if_fail (transport, NULL);
+	g_return_val_if_fail (transport, 0);
 	return transport->entry;
 }
 

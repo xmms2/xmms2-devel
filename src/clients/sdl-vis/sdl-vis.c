@@ -204,30 +204,25 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		return;
 	}
 
-	hash = xmmscs_playlist_get_mediainfo (c, id);
+	hash = xmmscs_medialib_get_info (c, id);
 
 	if (!hash) {
 		printf ("no mediainfo!\n");
 	} else {
 		tmp = x_hash_lookup (hash, "id");
 
-		mid = atoi (tmp);
-
-		if (id == mid) {
-			if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
-				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-				                    "[stream] ${title}", hash);
-			} else if (x_hash_lookup (hash, "channel")) {
-				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-				                    "${channel}", hash);
-			} else {
-				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-				                    "${artist} - ${title}", hash);
-			}
+		if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
+			xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+					    "[stream] ${title}", hash);
+		} else if (x_hash_lookup (hash, "channel")) {
+			xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+					    "${channel}", hash);
+		} else {
+			xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+					    "${artist} - ${title}", hash);
 		}
 		x_hash_destroy (hash);
 	}
-
 }
 
 

@@ -65,10 +65,8 @@ struct xmms_playlist_St {
 
 	/* the list is an array */
 	GArray *list;
-	/* this holds the current lenght of list */
-	guint32 list_len;
 
-	guint32 currentpos;
+	gint32 currentpos;
 
 	gboolean repeat_one;
 	gboolean repeat_all;
@@ -110,7 +108,7 @@ xmms_playlist_init (void)
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->mutex = g_mutex_new ();
 	ret->list = g_array_new (TRUE, TRUE, sizeof (guint32));
-	ret->currentpos = 0;
+	ret->currentpos = -1;
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYLIST, XMMS_OBJECT (ret));
 
@@ -184,13 +182,13 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 		ent = g_array_index (playlist->list, guint32, playlist->currentpos);
 	} else if (playlist->currentpos + 1 > playlist->list->len) {
 		if (playlist->repeat_all) {
-			playlist->currentpos = 1;
+			playlist->currentpos = 0;
 			ent = g_array_index (playlist->list, 
 					     guint32, 
 					     playlist->currentpos);
 		} else {
 			ent = 0;
-			playlist->currentpos = 0;
+			playlist->currentpos = -1;
 		}
 	} else {
 		playlist->currentpos++;
@@ -441,7 +439,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	g_array_free (playlist->list, FALSE);
 	playlist->list = g_array_new (TRUE, TRUE, sizeof (guint32));
-	playlist->currentpos = 0;
+	playlist->currentpos = -1;
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_CLEAR, 0, 0);
 	g_mutex_unlock (playlist->mutex);
