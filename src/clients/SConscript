@@ -4,5 +4,6 @@ Export('base_env')
 
 SConscript('lib/xmmsclient/SConscript')
 SConscript('cli/SConscript')
+SConscript('gtk2/SConscript')
 if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
 	SConscript('sdl-vis/SConscript')

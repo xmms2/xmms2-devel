@@ -27,6 +27,7 @@ base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
 base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
+base_env.CheckAndAddFlagsToGroup("gtk2", "pkg-config --libs --cflags gtk+-x11-2.0")
 
 Export('base_env')
 
