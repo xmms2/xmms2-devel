@@ -146,6 +146,11 @@ xmms_http_init (xmms_transport_t *transport, const gchar *uri)
 	}
 	free (hp);
 
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0) {
+		XMMS_DBG ("Error when changing from blocking to nonblocking socket\n");
+		return -1;
+	}
+	
 	if (connect (fd, (struct sockaddr *)sa, sizeof (struct sockaddr_in)) == -1 && errno != EAGAIN) {
 		XMMS_DBG ("connect error!");
 		return -1;
