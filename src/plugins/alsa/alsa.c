@@ -1,45 +1,47 @@
 /** @file 
  * This file adds ALSA output.
  *
+ * Written by Daniel Svensson, <nano@nittioonio.nu>
+ *
  * @todo Fiddle around with the buffer so that no xruns wil appear.
  */
 #include "xmms/output.h"
 #include "xmms/util.h"
 #include "xmms/plugin.h"
 
+#define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>
 
 /*
  *  Defines
  */
-#define SND_RATE         44100
-#define SND_CHANNELS     2
-#define SND_FORMAT       SND_PCM_FORMAT_S16_LE
-#define SND_PERIODS      2
-#define SND_BUFF_SIZE    8192
-#define SND_FRAG_SIZE    2048
-#define SND_FRAG_COUNT   16
-#define SND_STREAM       SND_PCM_STREAM_PLAYBACK
+#define SND_CHANNELS     		2
+#define SND_FORMAT       		SND_PCM_FORMAT_S16_LE
+#define SND_FRAG_SIZE    		2048
+#define SND_FRAG_COUNT   		16
+#define SND_STREAM       		SND_PCM_STREAM_PLAYBACK
+#define SND_DEFAULT_BUFFER_TIME 500
+#define SND_DEFAULT_PERIOD_TIME 50
 
 
 /*
  * Type definitions
  */
-
 typedef struct xmms_alsa_data_St {
 	snd_pcm_t *pcm;
 	snd_pcm_hw_params_t *hwparams;
 	gint alsa_frame_size;
-	gint written_frames;
+	gint rate;
 } xmms_alsa_data_t;
+
 
 /*
  * Function prototypes
  */
-
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
+static guint xmms_alsa_set_hwparams(xmms_alsa_data_t *data); 
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_alsa_xrun_recover (xmms_output_t *output);
@@ -54,7 +56,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "alsa",
-			"ALSA Output " VERSION,
+			"ALSA Output 0.1",
 			"Advanced Linux Sound Architecture output plugin");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.nittionio.nu/");
@@ -64,7 +66,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_alsa_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_alsa_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_alsa_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_alsa_samplerate_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
+			xmms_alsa_samplerate_set);
 
 	return plugin;
 }
@@ -89,14 +92,16 @@ xmms_alsa_open (xmms_output_t *output)
 	gint err;
 	gint alsa_bits_per_sample;
 
+	
 	snd_pcm_info_t *info;
 	gchar *alsa_name;
 	static gint alsa_card;
 	static gint alsa_device;
 	static gint alsa_subdevice;
+
+	if (!(data = xmms_output_plugin_data_get (output)))
+		data = g_new0 (xmms_alsa_data_t, 1);
 	
-	data = g_new0 (xmms_alsa_data_t, 1);
-		
 	dev = xmms_output_config_string_get (output, "device");
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -106,9 +111,9 @@ xmms_alsa_open (xmms_output_t *output)
 	XMMS_DBG ("opening device: %s", dev);
 	
 	if ((err = snd_pcm_open (&(data->pcm), "default", SND_STREAM, 0)) < 0) {
-		xmms_log_fatal ("cannot open audio device default (%s)", 
-				snd_strerror (err));
-		goto error;
+		xmms_log_fatal ("FATAL: %s: cannot open audio device default (%s)", 
+				__FILE__, snd_strerror (err));
+		return FALSE;
 	}
 	
 	snd_pcm_info_malloc (&info);
@@ -125,75 +130,110 @@ xmms_alsa_open (xmms_output_t *output)
 			alsa_device, alsa_subdevice, alsa_name);
 	
 	snd_pcm_hw_params_alloca (&(data->hwparams));
-	
-	if ((err = snd_pcm_hw_params_any (data->pcm, data->hwparams)) < 0) {
-		xmms_log_fatal ("cannot initialize hardware parameter structure (%s)", 
-				snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params_set_access (data->pcm, 
-					data->hwparams, 
-					SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-		xmms_log_fatal ("cannot set access type (%s)", snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams, 
-					SND_FORMAT)) < 0) {
-		xmms_log_fatal ("cannot set sample format (%s)", snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params_set_rate_near (data->pcm, data->hwparams, 
-					SND_RATE, 0)) < 0) {
-		xmms_log_fatal ("cannot set sample rate (%s)\n", snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
-					SND_CHANNELS)) < 0) {
-		xmms_log_fatal ("cannot set channel count (%s)", snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params_set_periods (data->pcm, data->hwparams, 
-					SND_PERIODS, 0)) < 0) {
-		xmms_log_fatal ("cannot set periods (%s)", snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params_set_buffer_size_near (data->pcm, data->hwparams, 
-					(SND_BUFF_SIZE * SND_PERIODS)>>2)) < 0) {
-		xmms_log_fatal ("cannot set buffer size (%s)", snd_strerror (err));
-		goto error;
-	}
-	
-	if ((err = snd_pcm_hw_params (data->pcm, data->hwparams)) < 0) {
-		xmms_log_fatal ("cannot set hw parameters (%s)", snd_strerror (err));
-		goto error;
-	}
-	
-	snd_pcm_hw_params_free (data->hwparams);
 
-	if ((err = snd_pcm_prepare (data->pcm)) < 0) {
-		xmms_log_fatal ("cannot prepare audio interface for use (%s)", 
-				snd_strerror (err));
-		goto error;
-	}
 	
 	alsa_bits_per_sample = snd_pcm_format_physical_width (SND_FORMAT);
-	data->alsa_frame_size = (alsa_bits_per_sample * SND_CHANNELS) / 8;                                                
+	data->alsa_frame_size = (alsa_bits_per_sample * SND_CHANNELS) / 8;
+
 	XMMS_DBG ("bps: %d, fs: %d", alsa_bits_per_sample, data->alsa_frame_size);
 	
 	xmms_output_plugin_data_set (output, data);
 
 	return TRUE;
-error:
-	xmms_alsa_close ((xmms_output_t *)data);
-	g_free (data);
-	return FALSE;
+
 }
+
+
+static guint 
+xmms_alsa_set_hwparams(xmms_alsa_data_t *data) {
+	gint err;
+	gint dir;
+	gint requested_buffer_time;
+	gint requested_period_time;
+
+	g_return_val_if_fail(data, 0);
+	
+	/* choose all parameters */
+	if ((err = snd_pcm_hw_params_any (data->pcm, data->hwparams)) < 0) {
+		xmms_log_fatal ("cannot initialize hardware parameter structure (%s)", 
+				snd_strerror (err));
+		return err;
+	}
+
+	/* set the interleaved read/write format */
+	if ((err = snd_pcm_hw_params_set_access (data->pcm, 
+					data->hwparams, 
+					SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+		xmms_log_fatal ("cannot set access type (%s)", snd_strerror (err));
+		return err;
+	}
+
+	/* set the sample format */
+	if ((err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams, 
+					SND_FORMAT)) < 0) {
+		xmms_log_fatal ("cannot set sample format (%s)", snd_strerror (err));
+		return err;
+	}
+
+	/* set the count of channels */
+	if ((err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
+					SND_CHANNELS)) < 0) {
+		xmms_log_fatal ("cannot set channel count (%s)", snd_strerror (err));
+		return err;
+	}
+	
+	/* set the sample rate */
+	if ((err = snd_pcm_hw_params_set_rate_near (data->pcm, data->hwparams, 
+					&data->rate, 0)) < 0) {
+		xmms_log_fatal ("cannot set sample rate (%s)\n", snd_strerror (err));
+		return err;
+	}
+	
+	snd_pcm_hw_params_get_rate(data->hwparams, &err, 0);
+	XMMS_DBG("rate: %d", err);
+	
+	requested_buffer_time = 500000; 
+	requested_period_time = 100000;
+	
+	if ((err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, 
+					data->hwparams, &requested_buffer_time, &dir)) < 0) {
+		xmms_log_fatal ("Buffer time <= 0");  
+		return err;
+	}
+
+	XMMS_DBG ("Buffer time requested: 500ms, got: %dms", 
+			requested_buffer_time / 1000); 
+	
+	if ((err = snd_pcm_hw_params_set_period_time_near (data->pcm, 
+					data->hwparams, &requested_period_time, &dir)) < 0) {
+		xmms_log_fatal ("cannot set periods (%s)", snd_strerror (err));
+		return err;
+	}
+
+	XMMS_DBG ("Period time requested: 100ms, got: %dms", 
+			requested_period_time / 1000); 
+	
+	if ((err = snd_pcm_hw_params (data->pcm, data->hwparams)) < 0) {
+		xmms_log_fatal ("cannot set hw parameters (%s), %d", 
+				snd_strerror (err), snd_pcm_state(data->pcm));
+
+		return err;
+	}
+
+
+/*	snd_pcm_hw_params_free (data->hwparams); */
+
+	if ((err = snd_pcm_prepare (data->pcm)) < 0) {
+		xmms_log_fatal ("cannot prepare audio interface for use (%s)", 
+				snd_strerror (err));
+		return err;
+	}
+
+	return TRUE;
+}
+
+
+
 
 
 /**
@@ -202,11 +242,40 @@ error:
  * @param output The output structure.
  * @param rate The to-be-set sample rate.
  * @return a guint with the sample rate.
+ *
+ * @todo Something is fucked up.. next doesn't work
+ * @todo Stop/start doesn't work well..
+ * @todo Return the new rate and not the one that was inputed ;)
  */
 static guint
 xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
 {
-	return 44100;
+	xmms_alsa_data_t *data;
+	gint err;
+	
+	XMMS_DBG("trying to change rate to: %d", rate);
+	
+	g_return_val_if_fail (output, 0);
+	data = xmms_output_plugin_data_get (output);
+	g_return_val_if_fail (data, 0);	
+
+	/* Do we need to change our current rate? */
+	if (data->rate != rate) {
+		data->rate = rate;
+		xmms_output_plugin_data_set (output, data);
+		
+		/* Get rid of old cow if any */
+		if (snd_pcm_state(data->pcm) == SND_PCM_STATE_RUNNING) {
+			err = snd_pcm_drain(data->pcm);	
+			XMMS_DBG("did we drain? --> %s", snd_strerror(err));
+		}
+		
+		/* Set new sample rate */
+		snd_pcm_hw_params_alloca (&(data->hwparams));
+		xmms_alsa_set_hwparams(data);
+	}
+
+	return rate;
 }
 
 
@@ -225,11 +294,18 @@ xmms_alsa_close (xmms_output_t *output)
 	data = xmms_output_plugin_data_get (output);
 	g_return_if_fail (data);
 
-	if ((err = snd_pcm_close (data->pcm)) != 0)
-		xmms_log_fatal ("error closing audio device (%s)", snd_strerror (err));
-	else
-		XMMS_DBG ("audio device closed");
+	/* No more of that disco shit! */
+	if ((err = snd_pcm_drain (data->pcm)) != 0) {
+		xmms_log_fatal ("error draining buffer (%s)", snd_strerror (err));
+	}
 
+	/* Close device */
+	if ((err = snd_pcm_close (data->pcm)) != 0) {
+		xmms_log_fatal ("error closing audio device (%s)", snd_strerror (err));
+	} else {
+		XMMS_DBG ("audio device closed");
+	}
+	
 	g_free (data);
 }
 
@@ -251,15 +327,17 @@ xmms_alsa_xrun_recover (xmms_output_t *output)
 
 	XMMS_DBG ("xrun recover");
 	
-	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN)
-		if ((err = snd_pcm_prepare (data->pcm)) < 0)
+	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN) {
+		if ((err = snd_pcm_prepare (data->pcm)) < 0) {
 			xmms_log_fatal ("xrun: prepare error, %s", snd_strerror (err));
+		}
+	}
 }
 
 
 
 /**
- * Write data to the output device.
+ * Write buffer to the output device.
  *
  * @param output The output structure filled with alsa data.
  * @param buffer Audio data to be written to audio device.
@@ -270,6 +348,7 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 {
 	xmms_alsa_data_t *data;
 	gint written;
+	gint written_frames;
 
 	g_return_if_fail (buffer);
 	g_return_if_fail (len);
@@ -280,22 +359,21 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 
 	while (len > 0) {
 
-		if ((data->written_frames = snd_pcm_writei (data->pcm, buffer, 
+		if ((written_frames = snd_pcm_writei (data->pcm, buffer, 
 						len / data->alsa_frame_size)) > 0) {
-			written = data->written_frames * data->alsa_frame_size;
+			written = written_frames * data->alsa_frame_size;
 			len -= written;
 			buffer += written;
 		}
-		else if (data->written_frames == -EAGAIN || (data->written_frames > 0 && 
-					data->written_frames < (len / data->alsa_frame_size))) {
+		else if (written_frames == -EAGAIN || (written_frames > 0 
+					&& written_frames < (len / data->alsa_frame_size))) {
 			snd_pcm_wait (data->pcm, 100);
 		}
-		else if (data->written_frames == -EPIPE) {
+		else if (written_frames == -EPIPE) {
 			xmms_alsa_xrun_recover (output);
 		}
 		else {
-			xmms_log_fatal ("read/write error: %d", data->written_frames);
-			break;
+			xmms_log_debug ("read/write error: %d", written_frames);
 		}
 	}
 }

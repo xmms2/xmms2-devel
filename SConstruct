@@ -46,6 +46,7 @@ base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
 base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 #enable gtk2 gui again, someday.
 #base_env.CheckAndAddFlagsToGroup("gtk2", "pkg-config --libs --cflags gtk+-x11-2.0")
+base_env.CheckLibAndAddFlagsToGroup("alsa","libasound","snd_pcm_open")
 
 Export('base_env')
 
