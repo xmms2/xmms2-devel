@@ -8,8 +8,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <string.h>
+
+extern int errno;
 
 /*
  * Type definitions
@@ -226,8 +229,14 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 		data->mime = NULL;
 	}
-	
-	ret = read (data->fd, buffer, len);
+
+	do {
+		ret = read (data->fd, buffer, len);
+		if (ret == -1) {
+			XMMS_DBG ("errno (%d) %s", errno, strerror (errno));
+		}
+	} while (ret == -1 && (errno == EINTR ||
+			       errno == EIO));
 
 	if (ret == 0)
 		return -1;
