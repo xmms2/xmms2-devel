@@ -155,6 +155,7 @@ void
 xmms_medialib_logging_start (xmms_playlist_entry_t *entry)
 {
 	char tmp[16];
+	const char *mid;
 	time_t starttime;
 	gboolean ret;
 	xmms_config_value_t *cv;
@@ -168,7 +169,7 @@ xmms_medialib_logging_start (xmms_playlist_entry_t *entry)
 	if (!ret)
 		return;
 
-	const gchar *mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
+	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
 	g_return_if_fail (mid);
 
 	starttime = time (NULL);
