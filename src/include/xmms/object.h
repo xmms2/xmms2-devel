@@ -72,7 +72,7 @@ typedef struct {
 	union {
 		guint32 uint32;
 		gint32 int32;
-		const char *string;
+		char *string;
 		GHashTable *hashtable;
 		GList *uintlist;
 		GList *intlist;
