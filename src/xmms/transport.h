@@ -20,6 +20,8 @@ typedef void (*xmms_transport_close_method_t) (xmms_transport_t *transport);
 typedef gint (*xmms_transport_read_method_t) (xmms_transport_t *transport,
 											  gchar *buffer, guint length);
 
+typedef gboolean (*xmms_transport_eof_method_t) (xmms_transport_t *transport);
+
 /*
  * Public function prototypes
  */
@@ -30,6 +32,7 @@ void xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
 void xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype);
 
 gint xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len);
+void xmms_transport_wait (xmms_transport_t *transport);
  
 /*
  * Private function prototypes -- do NOT use in plugins.

@@ -11,6 +11,30 @@
  * Public functions
  */
 
+xmms_playlist_entry_t *
+xmms_playlist_entry_new (gchar *uri)
+{
+	xmms_playlist_entry_t *ret;
+
+	ret = g_new0 (xmms_playlist_entry_t, 1);
+
+	strncpy (ret->uri, uri, XMMS_MAX_URI_LEN);
+
+	return ret;
+}
+
+void
+xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
+{
+	g_free (entry);
+}
+
+guint
+xmms_playlist_entries (xmms_playlist_t *playlist)
+{
+	return g_slist_length (playlist->list);
+}
+
 gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
 {
@@ -34,7 +58,7 @@ xmms_playlist_pop (xmms_playlist_t *playlist)
 	xmms_playlist_entry_t *r=NULL;
 	GSList *n;
 
-	n = g_slist_nth (playlist->list, 0);
+	n = g_slist_nth (playlist->list, 1);
 
 	if (n) {
 		r = n->data;

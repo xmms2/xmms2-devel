@@ -121,7 +121,20 @@ xmms_transport_start (xmms_transport_t *transport)
 	g_return_if_fail (transport);
 
 	transport->running = TRUE;
-	transport->thread = g_thread_create (xmms_transport_thread, transport, FALSE, NULL); 
+	transport->thread = g_thread_create (xmms_transport_thread, transport, TRUE, NULL); 
+}
+
+void
+xmms_transport_wait (xmms_transport_t *transport)
+{
+
+	if (transport->running)
+		g_thread_join (transport->thread);
+
+	transport->running = FALSE;
+
+	return;
+
 }
 
 gint
@@ -187,6 +200,7 @@ xmms_transport_thread (gpointer data)
 	xmms_transport_t *transport = data;
 	gchar buffer[4096];
 	xmms_transport_read_method_t read_method;
+	xmms_transport_eof_method_t eof_method;
 	gint ret;
 
 	g_return_val_if_fail (transport, NULL);
@@ -194,6 +208,8 @@ xmms_transport_thread (gpointer data)
 	read_method = xmms_plugin_method_get (transport->plugin, "read");
 	if (!read_method)
 		return NULL;
+
+	eof_method = xmms_plugin_method_get (transport->plugin, "eof");
 	
 	while (transport->running) {
 		xmms_transport_lock (transport);
@@ -204,6 +220,8 @@ xmms_transport_thread (gpointer data)
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
+		} else if (eof_method (transport)) {
+			transport->running = FALSE;
 		}
 		xmms_transport_unlock (transport);
 	}

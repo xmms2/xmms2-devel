@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "config_xmms.h"
 
 /*
  * The entire structure of this configfile and internal structures

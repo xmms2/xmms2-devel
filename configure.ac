@@ -14,8 +14,12 @@ AC_SUBST(XMMS_CFLAGS)
 PLUGIN_LDFLAGS="-module -avoid-version -export -symbols-regex \"xmms_plugin_get\""
 AC_SUBST(PLUGIN_LDFLAGS)
 
-AM_PATH_GLIB_2_0(1.0.0,,AC_MSG_ERROR(Install GLib!),gmodule gthread)
+AM_PATH_GLIB_2_0(2.0.0,,AC_MSG_ERROR(Install GLib!),gmodule gthread)
 AM_PATH_XML2(2.4.0,,AC_MSG_ERROR(Install libxml2!))
+
+PKG_CHECK_MODULES(MAD, mad >= 0.14.0,,AC_MSG_ERROR(Install libmad!))
+AC_SUBST(MAD_LIBS)
+AC_SUBST(MAD_CFLAGS)
 
 AC_OUTPUT([
 Makefile
