@@ -171,6 +171,31 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 	return r;
 }
 
+guint
+xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx)
+{
+	guint read_bytes = 0;
+	guint8 *dst = data;
+
+	g_return_val_if_fail (ringbuf, 0);
+	g_return_val_if_fail (length > 0, 0);
+	g_return_val_if_fail (length <= ringbuf->buffer_size, 0);
+	g_return_val_if_fail (mtx, 0);
+	g_return_val_if_fail (ringbuf->used_cond != NULL, 0);
+
+	while (read_bytes < length) {
+		read_bytes += xmms_ringbuf_read (ringbuf, dst + read_bytes, length - read_bytes);
+
+		if (read_bytes == length || ringbuf->eos) {
+			break;
+		}
+
+		g_cond_wait (ringbuf->used_cond, mtx);
+	}
+
+	return read_bytes;
+}
+
 /**
  * 
  */
@@ -208,6 +233,30 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 		g_cond_broadcast (ringbuf->used_cond);
 	
 	return w;
+}
+
+guint
+xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length, GMutex *mtx)
+{
+	guint written = 0;
+	const guint8 *src = data;
+
+	g_return_val_if_fail (ringbuf, 0);
+	g_return_val_if_fail (length > 0, 0);
+	g_return_val_if_fail (mtx, 0);
+	g_return_val_if_fail (ringbuf->free_cond != NULL, 0);
+
+	while (written < length) {
+		written += xmms_ringbuf_write (ringbuf, src + written, length - written);
+
+		if (written == length) {
+			break;
+		}
+
+		g_cond_wait (ringbuf->free_cond, mtx);
+	}
+
+	return written;
 }
 
 void
