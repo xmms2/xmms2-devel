@@ -13,9 +13,6 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- * Known to work on: 
- *  ALSA Version 1.0.2c (Thu Feb 05 15:41:49 2004 UTC) on kernel 2.6.3 x86
- *
  * @todo Some nice deinit stuff if init of mixer or pcm fails.
  * @todo The first time xmms2 plays a tune, visualization data gets
  *       out of sync, lagged or something. This is _only_ the first time
@@ -58,7 +55,7 @@ typedef struct xmms_alsa_data_St {
 	guint frame_size;
 	guint rate;
 	gboolean have_mixer;
-	xmms_config_value_t *mixer_conf;
+	xmms_config_value_t *volume;
 } xmms_alsa_data_t;
 
 
@@ -68,7 +65,7 @@ typedef struct xmms_alsa_data_St {
 static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
-static void xmms_alsa_xrun_recover (xmms_output_t *output);
+static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output);
 static void xmms_alsa_mixer_config_changed (xmms_object_t *object, 
 											gconstpointer data, 
 											gpointer userdata);
@@ -177,9 +174,9 @@ xmms_alsa_new (xmms_output_t *output)
 	data = g_new0 (xmms_alsa_data_t, 1);
 
 	plugin = xmms_output_plugin_get (output);
-	data->mixer_conf = xmms_plugin_config_lookup (plugin, "volume");
+	data->volume = xmms_plugin_config_lookup (plugin, "volume");
 
-	xmms_config_value_callback_set (data->mixer_conf,
+	xmms_config_value_callback_set (data->volume,
 									xmms_alsa_mixer_config_changed,
 									(gpointer) output);
 	
@@ -201,8 +198,8 @@ xmms_alsa_open (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
 	const gchar *dev;
-	gint err;
-	gint tmp;
+	gint err = 0;
+	gint tmp = 0;
 	
 	XMMS_DBG ("XMMS_ALSA_OPEN");	
 
@@ -674,7 +671,7 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 	avail = snd_pcm_avail_update (data->pcm);
 	if (avail == -EPIPE) {
 		/* Spank alsa and give it another try */
-		xmms_alsa_xrun_recover (output);
+		xmms_alsa_xrun_recover (data);
 		avail = snd_pcm_avail_update (data->pcm);
 		if (avail == -EPIPE) {
 			XMMS_DBG ("Unable to get available frames in buffer (%s)", 
@@ -722,18 +719,15 @@ xmms_alsa_flush (xmms_output_t *output)
  * If stuff gets messy (audio buffer cross-run), xrun recovery will 
  * perform some healthy clean up.
  *
- * @param output The output struct containing alsa data. 
+ * @param data The private plugin data. 
  */
 static void
-xmms_alsa_xrun_recover (xmms_output_t *output)
+xmms_alsa_xrun_recover (xmms_alsa_data_t *data)
 {
 	gint err;
-	xmms_alsa_data_t *data;
 	
 	XMMS_DBG ("XMMS_ALSA_XRUN_RECOVER");
 	
-	g_return_if_fail (output);
-	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN) {
@@ -778,7 +772,7 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 			snd_pcm_wait (data->pcm, 100);
 		}
 		else if (written_frames == -EPIPE) {
-			xmms_alsa_xrun_recover (output);
+			xmms_alsa_xrun_recover (data);
 		}
 		else {
 			/* this will probably never happen */
