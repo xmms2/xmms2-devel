@@ -164,12 +164,10 @@ xmmsc_playback_current_id (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
 }
 
-void
+xmmsc_result_t *
 xmmsc_playback_status (xmmsc_connection_t *c)
 {
-	int cserial;
-	cserial = xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_STATUS);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
 }
 
 int
