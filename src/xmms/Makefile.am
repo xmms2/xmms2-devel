@@ -36,6 +36,7 @@ medialibtool_SOURCES=medialibtool.c \
         transport.c transport.h \
         decoder.c decoder.h \
         output.c output.h \
+	core.c core.h \
         playlist.c playlist.h \
 	medialib.c medialib.h
 

@@ -93,7 +93,7 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
  * @internal
  */
 void xmms_core_output_set (xmms_output_t *output){
-	g_return_if_fail (m_output);
+	g_return_if_fail (m_output==NULL);
 	m_output = output;
 	xmms_object_connect (XMMS_OBJECT (output), "eos-reached", eos_reached, NULL);
 }
