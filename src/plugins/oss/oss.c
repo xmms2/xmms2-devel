@@ -30,7 +30,6 @@ typedef struct xmms_oss_data_St {
 
 static gboolean xmms_oss_open (xmms_output_t *output, const gchar *path);
 void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
-void xmms_oss_fill_audio (void *udata, guint8 *stream, gint len);
 
 /*
  * Plugin header
