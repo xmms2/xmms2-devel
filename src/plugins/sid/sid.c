@@ -180,6 +180,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	gchar out[4096];
 	xmms_transport_t *transport;
 	gint len,ret;
+	xmms_error_t error;
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
@@ -209,9 +210,9 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		
 		while (len<data->buffer_length) {
 			ret = xmms_transport_read (transport, data->buffer + len,
-									   data->buffer_length);
+									   data->buffer_length, &error);
 			
-			if ( ret < 0 ) {
+			if ( ret <= 0 ) {
 				g_free (data->buffer);
 				data->buffer = NULL;
 				return FALSE;
