@@ -14,14 +14,16 @@ struct xmms_ipc_St {
 	gint signal_array[XMMS_IPC_SIGNAL_END];
 	GSource *source;
 	GPollFD *pollfd;
+	GCond *msg_cond;
 	GMutex *mutex;
+	gboolean run;
 };
 
 typedef struct xmms_ipc_client_St {
 	GMutex *mutex;
 	GPollFD *gpoll;
 	GSource *gsource;
-	GList *msgs;
+	GQueue *msgs;
 	xmms_ipc_transport_t *transport;
 	xmms_ringbuf_t *write_buffer;
 	xmms_ringbuf_t *read_buffer;
@@ -48,6 +50,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->poll_opts = G_IO_IN | G_IO_HUP | G_IO_ERR;
 	client->ipc = ipc;
 	client->mutex = g_mutex_new ();
+	client->msgs = g_queue_new ();
 
 	return client;
 }
@@ -55,6 +58,8 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 void
 xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 {
+	xmms_ipc_msg_t *msg;
+
 	if (client->gsource && client->gpoll) {
 		g_source_remove_poll (client->gsource, client->gpoll);
 		g_free (client->gpoll);
@@ -63,9 +68,17 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 		g_source_remove (g_source_get_id (client->gsource));
 		g_source_destroy (client->gsource);
 	}
+
 	g_mutex_lock (client->ipc->mutex);
 	client->ipc->clients = g_list_remove (client->ipc->clients, client);
 	g_mutex_unlock (client->ipc->mutex);
+
+	while ((msg = g_queue_pop_head (client->msgs))) {
+		xmms_ipc_msg_destroy (msg);
+	}
+
+	g_queue_free (client->msgs);
+
 	xmms_ipc_transport_destroy (client->transport);
 	xmms_ringbuf_destroy (client->write_buffer);
 	xmms_ringbuf_destroy (client->read_buffer);
@@ -85,8 +98,10 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		return FALSE;
 	}
 	client->poll_opts = G_IO_IN | G_IO_OUT | G_IO_HUP | G_IO_ERR;
+	xmms_ipc_client_setup_with_gmain (client);
 	g_mutex_unlock (client->mutex);
 
+	XMMS_DBG ("Making noice!");
 	g_main_context_wakeup (NULL);
 
 	return TRUE;
@@ -156,10 +171,18 @@ xmms_ipc_client_source_callback (GSource *source, xmms_ipc_client_t *client)
 
 		XMMS_DBG ("got %d bytes in ringbuffer!", xmms_ringbuf_bytes_used (client->read_buffer));
 		g_mutex_lock (client->mutex);
-		while ((msg = xmms_ipc_msg_read (client->read_buffer))) {
-			client->msgs = g_list_append (client->msgs, msg);
-			XMMS_DBG ("Read msg with command %d", msg->cmd);
-		}
+		do {
+			if (!xmms_ipc_msg_can_read (client->read_buffer)) {
+				break;
+			} else {
+				msg = xmms_ipc_msg_read (client->read_buffer);
+				g_queue_push_tail (client->msgs, msg);
+				XMMS_DBG ("Read msg with command %d", msg->cmd);
+			}
+		} while (msg);
+		client->poll_opts = G_IO_IN | G_IO_HUP | G_IO_ERR;
+		xmms_ipc_client_setup_with_gmain (client);
+		g_cond_signal (client->ipc->msg_cond);
 		g_mutex_unlock (client->mutex);
 			
 	} else if (client->gpoll->revents & G_IO_OUT) {
@@ -293,6 +316,46 @@ xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
 	return TRUE;
 }
 
+static gpointer
+xmms_ipc_handle_thread (gpointer data)
+{
+	xmms_ipc_t *ipc = data;
+
+	g_mutex_lock (ipc->mutex);
+	while (ipc->run) {
+		xmms_ipc_msg_t *msg;
+		GList *c;
+
+		for (c = ipc->clients; c; c = g_list_next (c)) {
+			xmms_ipc_client_t *client = c->data;
+			do {
+				g_mutex_lock (client->mutex);
+				msg = g_queue_pop_head (client->msgs);
+				g_mutex_unlock (client->mutex);
+
+				if (!msg) 
+					break;
+
+				XMMS_DBG ("Processing msg %d", msg->cmd);
+
+				if (msg->cmd == 42) {
+					gchar str[128];
+					xmms_ipc_msg_get_string (msg, str, 128);
+					XMMS_DBG ("String is %s", str);
+				}
+
+				xmms_ipc_msg_destroy (msg);
+			} while (msg);
+		}
+
+		XMMS_DBG ("Waiting for msgs!");
+		g_cond_wait (ipc->msg_cond, ipc->mutex);
+		XMMS_DBG ("Got msgs...");
+		
+	}
+	g_mutex_unlock (ipc->mutex);
+}
+
 xmms_ipc_t *
 xmms_ipc_init (gchar *path)
 {
@@ -310,6 +373,10 @@ xmms_ipc_init (gchar *path)
 	ipc = g_new0 (xmms_ipc_t, 1);
 	ipc->transport = transport;
 	ipc->mutex = g_mutex_new ();
+	ipc->msg_cond = g_cond_new ();
+	ipc->run = TRUE;
+
+	g_thread_create (xmms_ipc_handle_thread, ipc, FALSE, NULL);
 
 	XMMS_DBG ("IPC Initialized!");
 

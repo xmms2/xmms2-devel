@@ -114,6 +114,8 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 
 	g_return_val_if_fail (transport, NULL);
 
+	sin_len = sizeof (sin);
+
 	fd = accept (transport->fd, (struct sockaddr *)&sin, &sin_len);
 	if (fd >= 0) {
 		gint flags;
