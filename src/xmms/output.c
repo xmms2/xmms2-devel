@@ -406,11 +406,8 @@ xmms_output_flush (xmms_output_t *output)
 	flush = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FLUSH);
 	g_return_if_fail (flush);
 
-	XMMS_MTX_LOCK (output->mutex);
-
 	flush (output);
 
-	XMMS_MTX_UNLOCK (output->mutex);
 }
 
 xmms_plugin_t *
@@ -633,12 +630,14 @@ xmms_output_thread (gpointer data)
 			xmms_playlist_get_next_entry (output->playlist);
 			xmms_object_unref (output->decoder);
 			output->decoder = NULL;
+			xmms_output_flush (output);
 		}
 	}
 
 	if (output->decoder) {
 		xmms_object_unref (output->decoder);
 		output->decoder = NULL;
+		xmms_output_flush (output);
 	}
 
 	xmms_output_unlock (output);
