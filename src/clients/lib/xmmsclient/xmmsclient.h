@@ -11,7 +11,7 @@ typedef struct xmmsc_playlist_entry_St { /* no use to share them between client 
 } xmmsc_playlist_entry_t;
 
 xmmsc_connection_t *xmmsc_init();
-gboolean xmmsc_connect (xmmsc_connection_t *);
+gboolean xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_deinit(xmmsc_connection_t *);
 
 gchar *xmmsc_get_last_error (xmmsc_connection_t *c);

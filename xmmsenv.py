@@ -13,20 +13,22 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.pluginpath=self.install_prefix + "/lib/xmms/"
 		self.binpath=self.install_prefix + "/bin/"
 		self.libpath=self.install_prefix + "/lib/"
+		self.sysconfdir=self['SYSCONFDIR']
+		self.installdir=self['INSTALLDIR']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
-		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"/etc/\\"'])
+		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
 
 	def XmmsPlugin(self,target,source):
 		self.SharedLibrary(target, source)
-		self.Install(self.pluginpath,self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
+		self.Install(self.installdir+self.pluginpath,self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
 	def XmmsProgram(self,target,source):
 		self.Program(target,source)
-		self.Install(self.binpath,target)
+		self.Install(self.installdir+self.binpath,target)
 
 	def XmmsLibrary(self,target,source):
 		self.SharedLibrary(target, source)
-		self.Install(self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
+		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
 	def AddFlagsToGroup(self, group, flags):
 		self.flag_groups[group] = flags

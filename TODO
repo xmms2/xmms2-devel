@@ -1,5 +1,4 @@
 CORE
-	* Should check if other server is running
 	* licenseheader in all sourcefiles?
 
 CLI:

@@ -436,7 +436,7 @@ xmmsc_init ()
 }
 
 gboolean
-xmmsc_connect (xmmsc_connection_t *c)
+xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 {
 	DBusConnection *conn;
 	DBusError err;
@@ -445,7 +445,10 @@ xmmsc_connect (xmmsc_connection_t *c)
 
 	dbus_error_init (&err);
 
-	conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
+	if (!c || !dbuspath)
+		return FALSE;
+
+	conn = dbus_connection_open (dbuspath, &err);
 	
 	if (!conn) {
 		int ret;
