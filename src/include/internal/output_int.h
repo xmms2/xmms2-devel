@@ -31,7 +31,6 @@
 xmms_output_t * xmms_output_new (xmms_plugin_t *plugin);
 gboolean xmms_output_open (xmms_output_t *output);
 void xmms_output_close (xmms_output_t *output);
-xmms_plugin_t * xmms_output_find_plugin ();
 void xmms_output_samplerate_set (xmms_output_t *output, guint rate);
 void xmms_output_played_samples_set (xmms_output_t *output, guint samples);
 guint xmms_output_samplerate_get (xmms_output_t *output);

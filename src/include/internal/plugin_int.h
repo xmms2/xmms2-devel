@@ -33,6 +33,8 @@ void xmms_plugin_scan_directory (const gchar *dir);
 GList *xmms_plugin_list_get (xmms_plugin_type_t type);
 void xmms_plugin_list_destroy (GList *list);
 
+xmms_plugin_t *xmms_plugin_find (xmms_plugin_type_t type, const gchar *name);
+
 xmms_plugin_method_t xmms_plugin_method_get (xmms_plugin_t *plugin,
 											 const gchar *member);
 

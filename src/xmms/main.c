@@ -295,7 +295,7 @@ main (int argc, char **argv)
 	xmms_config_value_register ("decoder.use_replaygain_anticlip", "1",
 	                            NULL, NULL);
 
-	o_plugin = xmms_output_find_plugin (outname);
+	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 	g_return_val_if_fail (o_plugin, -1);
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);

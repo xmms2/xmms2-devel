@@ -623,31 +623,6 @@ xmms_output_flush (xmms_output_t *output)
 
 }
 
-xmms_plugin_t *
-xmms_output_find_plugin (gchar *name)
-{
-	GList *list, *l;
-	xmms_plugin_t *plugin = NULL;
-
-	g_return_val_if_fail (name, NULL);
-
-	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_OUTPUT);
-
-	for (l = list; l; l = g_list_next (l)) {
-		if (!g_strcasecmp (xmms_plugin_shortname_get (l->data),
-		                   name)) {
-			plugin = l->data;
-			xmms_object_ref (plugin);
-			break;
-		}
-	}
-
-	xmms_plugin_list_destroy (list);
-
-	return plugin;
-}
-	
-
 gint
 xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 {

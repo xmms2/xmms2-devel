@@ -414,6 +414,33 @@ xmms_plugin_list_destroy (GList *list)
 	}
 }
 
+xmms_plugin_t *
+xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
+{
+	xmms_plugin_t *ret = NULL;
+	GList *l;
+
+	g_return_val_if_fail (name, NULL);
+
+	g_mutex_lock (xmms_plugin_mtx);
+
+	for (l = xmms_plugin_list; l; l = l->next) {
+		xmms_plugin_t *plugin = l->data;
+
+		if (plugin->type == type &&
+		    !g_strcasecmp (plugin->shortname, name)) {
+			ret = plugin;
+			xmms_object_ref (ret);
+
+			break;
+		}
+	}
+
+	g_mutex_unlock (xmms_plugin_mtx);
+
+	return ret;
+}
+
 xmms_plugin_method_t
 xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 {
