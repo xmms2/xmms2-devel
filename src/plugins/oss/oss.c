@@ -101,12 +101,6 @@ xmms_plugin_get (void)
 					   NULL,
 					   NULL);
 	
-	xmms_plugin_config_value_register (plugin, 
-			   	 	   "volume",
-					   "70/70",
-					   NULL,
-					   NULL);
-
 	xmms_plugin_config_value_register (plugin,
 					   "device",
 					   "/dev/dsp",
@@ -195,31 +189,6 @@ xmms_oss_flush (xmms_output_t *output)
 	g_mutex_lock (data->mutex);
 	ioctl (data->fd, SNDCTL_DSP_RESET, 0);
 	g_mutex_unlock (data->mutex);
-
-}
-
-static void
-xmms_oss_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	xmms_oss_data_t *oss_data;
-	gchar **tmp;
-	gint r,l;
-	xmms_output_t *output = userdata;
-	const gchar *newval = data;
-
-	oss_data = xmms_output_plugin_data_get (output);
-	g_return_if_fail (oss_data);
-
-	XMMS_DBG ("Volume changed %s", newval);
-
-	tmp = g_strsplit (newval, "/", 2);
-
-	l = atoi (tmp[0]);
-	r = atoi (tmp[1]);
-
-	xmms_oss_mixer_set (output, l, r);
-
-	g_strfreev (tmp);
 
 }
 

@@ -40,6 +40,37 @@
  * @{
  */
 
+xmmsc_result_t *
+xmmsc_output_mixer_set (xmmsc_connection_t *c, int left, int right)
+{
+	DBusMessage *msg;
+	DBusMessageIter itr;
+	xmmsc_result_t *res;
+
+	msg = dbus_message_new_method_call (NULL, 
+					    XMMS_OBJECT_OUTPUT, 
+					    XMMS_DBUS_INTERFACE, 
+					    XMMS_METHOD_MIXERSET);
+
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_int32 (&itr, left);
+	dbus_message_iter_append_int32 (&itr, right);
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+xmmsc_result_t *
+xmmsc_output_mixer_get (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_OUTPUT, XMMS_METHOD_MIXERGET);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_OUTPUT_MIXER_CHANGED);
+
+	return res;
+}
+
 
 /**
  * Sets a configvalue in the server.

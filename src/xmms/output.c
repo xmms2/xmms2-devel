@@ -27,6 +27,7 @@
 #include "xmms/ringbuf.h"
 #include "xmms/util.h"
 #include "xmms/core.h"
+#include "xmms/dbus.h"
 #include "xmms/config.h"
 #include "xmms/plugin.h"
 #include "xmms/playback.h"
@@ -94,6 +95,16 @@ struct xmms_output_St {
 
 	xmms_output_type_t type;
 
+	/** 
+	 * Number of bytes totaly written to output driver,
+	 * this is only for statistics...
+	 */
+	guint64 bytes_written; 
+
+	/**
+	 * How many times didn't we have enough data in the buffer?
+	 */
+	gint32 buffer_underruns;
 };
 
 /*
@@ -119,22 +130,57 @@ xmms_output_plugin_get (xmms_output_t *output)
 	return output->plugin;
 }
 
-gboolean
-xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
-{
-	xmms_output_volume_get_method_t vol;
-	g_return_val_if_fail (output, FALSE);
-
-	vol = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_MIXER_GET);
-	g_return_val_if_fail (vol, FALSE);
-
-	return vol (output, left, right);
-}
-
 void
 xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
 {
 	output->plugin_data = data;
+}
+
+XMMS_METHOD_DEFINE (mixer_set, xmms_output_mixer_set, xmms_output_t *, NONE, UINT32, UINT32);
+void
+xmms_output_mixer_set (xmms_output_t *output, gint left, gint right, xmms_error_t *err)
+{
+	xmms_output_mixer_set_method_t set;
+	g_return_if_fail (output);
+
+	set = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_MIXER_SET);
+	if (set) {
+		xmms_object_method_arg_t *arg;
+		if (!set (output, left, right)) {
+			xmms_error_set (err, XMMS_ERROR_GENERIC, 
+					"Couldn't set mixer");
+			return;
+		}
+
+		arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
+					   GUINT_TO_POINTER (left<<right));
+
+		xmms_object_emit (XMMS_OBJECT (output),
+				  XMMS_SIGNAL_OUTPUT_MIXER_CHANGED,
+				  arg);
+
+		g_free (arg);
+
+	}
+}
+
+XMMS_METHOD_DEFINE (mixer_get, xmms_output_mixer_get, xmms_output_t *, UINT32, NONE, NONE);
+guint
+xmms_output_mixer_get (xmms_output_t *output, xmms_error_t *err)
+{
+	xmms_output_mixer_get_method_t get;
+	guint left, right;
+
+	g_return_val_if_fail (output, 0);
+
+	get = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_MIXER_GET);
+	if (get) { 
+		if (get (output, &left, &right)) {
+			return 100;
+		}
+	}
+
+	return 0;
 }
 
 /*
@@ -368,7 +414,9 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	output->is_open = FALSE;
 	output->open_samplerate = 44100;
 	output->core = core;
-	
+	output->bytes_written = 0;
+	output->buffer_underruns = 0;
+
 	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new (output)) {
@@ -390,7 +438,18 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	} else {
 		output->type = XMMS_OUTPUT_TYPE_WR;
 	}
-					
+
+	xmms_dbus_register_object ("output", XMMS_OBJECT (output));
+
+	xmms_dbus_register_onchange (XMMS_OBJECT (output),
+				     XMMS_SIGNAL_OUTPUT_MIXER_CHANGED);
+
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_MIXERSET, 
+				XMMS_METHOD_FUNC (mixer_set));
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_MIXERGET, 
+				XMMS_METHOD_FUNC (mixer_get));
 	
 	return output;
 }
@@ -534,6 +593,12 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 	xmms_output_unlock (output);
 
+	if (ret < len) {
+		output->buffer_underruns++;
+	}
+
+	output->bytes_written += ret;
+
 	return ret;
 	
 }
@@ -547,7 +612,7 @@ xmms_output_status_changed (xmms_object_t *object,
 
 	xmms_output_t *output = (xmms_output_t *)udata;
 	xmms_output_status_method_t st;
-	xmms_object_method_arg_t *arg = data;
+	xmms_object_method_arg_t *arg = (xmms_object_method_arg_t *)data;
 
 	g_return_if_fail (output);
 	g_return_if_fail (arg);

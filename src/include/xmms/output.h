@@ -61,7 +61,8 @@ typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer
 typedef void (*xmms_output_destroy_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_new_method_t) (xmms_output_t *output);
-typedef gboolean (*xmms_output_volume_get_method_t) (xmms_output_t *output, gint *left, gint *right);
+typedef gboolean (*xmms_output_mixer_get_method_t) (xmms_output_t *output, gint *left, gint *right);
+typedef gboolean (*xmms_output_mixer_set_method_t) (xmms_output_t *output, gint left, gint right);
 typedef void (*xmms_output_flush_method_t) (xmms_output_t *output);
 typedef void (*xmms_output_close_method_t) (xmms_output_t *output);
 typedef guint (*xmms_output_samplerate_set_method_t) (xmms_output_t *output, guint rate);
@@ -83,5 +84,8 @@ void xmms_output_resume (xmms_output_t *output);
 void xmms_output_destroy (xmms_output_t *output);
 gboolean xmms_output_is_paused (xmms_output_t *output);
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
+
+void xmms_output_mixer_set (xmms_output_t *output, gint left, gint right, xmms_error_t *err);
+guint xmms_output_mixer_get (xmms_output_t *output, xmms_error_t *err);
 
 #endif

@@ -24,6 +24,7 @@
 #define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
 #define XMMS_OBJECT_CLIENT "/xmms/client"
 #define XMMS_OBJECT_CORE "/xmms/core"
+#define XMMS_OBJECT_OUTPUT "/xmms/output"
 #define XMMS_OBJECT_DBUS "/xmms/dbus"
 #define XMMS_OBJECT_CONFIG "/xmms/config"
 #define XMMS_OBJECT_TRANSPORT "/xmms/transport"
@@ -63,6 +64,8 @@
 #define XMMS_METHOD_INFORMATION "information"
 #define XMMS_METHOD_SPECTRUM "spectrum"
 #define XMMS_METHOD_CPLAYTIME "cplaytime"
+#define XMMS_METHOD_MIXERSET "mixer_set"
+#define XMMS_METHOD_MIXERGET "mixer_get"
 
 
 /* Playback msgs */
@@ -97,6 +100,7 @@
 /* Output msgs */
 #define XMMS_SIGNAL_OUTPUT_EOS_REACHED "/xmms/output::eos_reached"
 #define XMMS_SIGNAL_OUTPUT_OPEN_FAIL "/xmms/output::open_fail"
+#define XMMS_SIGNAL_OUTPUT_MIXER_CHANGED "/xmms/output::mixer_changed"
 
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"
