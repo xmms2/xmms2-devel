@@ -105,6 +105,7 @@
 #define XMMS_SIGNAL_OUTPUT_PLAYTIME "/xmms/playback::playtime"
 #define XMMS_SIGNAL_OUTPUT_STATUS "/xmms/output::status"
 #define XMMS_SIGNAL_OUTPUT_CURRENTID "/xmms/output::currentid"
+#define XMMS_SIGNAL_OUTPUT_CURRENT_ENTRY "/xmms/output::current_entry"
 
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"

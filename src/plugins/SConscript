@@ -33,6 +33,10 @@ eq = base_env.Copy()
 eq.AddFlagsFromGroup("glib")
 eq.XmmsPlugin('xmms_eq', ['eq/eq.c'])
 
+diskwrite = base_env.Copy()
+diskwrite.AddFlagsFromGroup("glib")
+diskwrite.XmmsPlugin('xmms_diskwrite', ['diskwrite/diskwrite.c'])
+
 if base_env.HasGroup("mad"):
 	mad = base_env.Copy()
 	mad.AddFlagsFromGroup("glib")
