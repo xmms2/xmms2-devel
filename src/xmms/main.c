@@ -12,9 +12,12 @@
 #include <getopt.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
 
 static xmms_playlist_t *playlist;
 static xmms_output_t *output;
+static xmms_decoder_t *m_decoder;
 
 void play_next (void);
 
@@ -91,6 +94,8 @@ play_next (void)
 	xmms_decoder_start (decoder, transport, output);
 	XMMS_DBG ("output started");
 
+	m_decoder = decoder;
+
 	xmms_playlist_entry_free (entry);
 	
 }
@@ -103,7 +108,15 @@ main (int argc, char **argv)
 	xmms_plugin_t *o_plugin;
 	int opt;
 	int verbose=0;
+	sigset_t signals;
 	gchar *outname = NULL;
+
+	memset (&signals, 0, sizeof (sigset_t));
+        sigaddset(&signals,SIGHUP);
+	sigaddset(&signals,SIGTERM);
+	sigaddset(&signals,SIGINT);
+	sigaddset(&signals,SIGSEGV);
+	pthread_sigmask(SIG_BLOCK,&signals,NULL);
 	
 	if (argc < 2)
 		exit (1);
@@ -168,7 +181,28 @@ main (int argc, char **argv)
 	xmms_output_start (output);
 	play_next ();
 
-	sleep (3600);
+
+
+	while (42) {
+		int caught;
+
+		memset (&signals, 0, sizeof (sigset_t));
+		sigaddset (&signals, SIGINT);
+
+		XMMS_DBG ("sigwait ()");
+
+		sigwait (&signals, &caught);
+
+		XMMS_DBG ("Got signal %d", caught);
+
+		switch (caught) {
+			case SIGINT:
+				XMMS_DBG ("Got Ctrl-C, next song...");
+				xmms_object_emit (XMMS_OBJECT (m_decoder), "eos-reached", NULL);
+				break;
+		}
+	}
+				
 
 	return 0;
 }
