@@ -725,9 +725,6 @@ xmms_config_value_register (const gchar *path,
 
 	xmms_config_value_t *val;
 
-	/* get our own copy of the string */
-	path = g_strdup (path);
-
 	XMMS_DBG ("Registering: %s", path);
 
 	g_mutex_lock (global_config->mutex);
@@ -735,6 +732,9 @@ xmms_config_value_register (const gchar *path,
 	val = g_hash_table_lookup (global_config->values, path);
 	if (!val) {
 		gchar *name = strrchr (path, '.');
+
+		/* get our own copy of the string */
+		path = g_strdup (path);
 
 		if (!name) 
 			val = xmms_config_value_new (path);

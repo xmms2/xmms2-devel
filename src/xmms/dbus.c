@@ -133,6 +133,7 @@ xmms_dbus_unregister_object (const gchar *objectpath)
 	XMMS_DBG ("UNREGISTERING: '%s'", fullpath);
 
 	g_hash_table_remove (exported_objects, fullpath);
+	g_free (fullpath);
 }
 
 static void
