@@ -254,9 +254,12 @@ xmms_config_lookup (const gchar *path)
 	xmms_config_value_t *value;
 	g_return_val_if_fail (global_config, NULL);
 	
+	XMMS_DBG ("Looking up %s", path);
+	
 	g_mutex_lock (global_config->mutex);
 	value = g_hash_table_lookup (global_config->values, path);
 	g_mutex_unlock (global_config->mutex);
+
 
 	return value;
 }
@@ -324,12 +327,15 @@ xmms_config_save (const gchar *file)
 			nume ++;
 		
 		if (!last) {
+			gchar *data;
+			data = xmms_config_value_string_get (xmms_config_lookup (line));
+			
 			fprintf (fp, "\t<section name=\"%s\">\n", tmp[0]);
 			if (nume == 3) {
 				fprintf (fp, "\t\t<plugin name=\"%s\">\n", tmp[1]);
-				fprintf (fp, "\t\t\t<value name=\"%s\">", tmp[2]);
+				fprintf (fp, "\t\t\t<value name=\"%s\">%s", tmp[2] ? tmp[2] : tmp[1], data);
 			} else {
-				fprintf (fp, "\t\t\t<value name=\"%s\">", tmp[1]);
+				fprintf (fp, "\t\t\t<value name=\"%s\">%s", tmp[2] ? tmp[2] : tmp[1], data);
 			}
 		} else {
 			gchar **tmpv;
