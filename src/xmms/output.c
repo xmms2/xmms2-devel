@@ -37,8 +37,8 @@
 #include "internal/output_int.h"
 #include "internal/decoder_int.h"
 
-#define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
-#define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
+#define xmms_output_lock(t) XMMS_MTX_LOCK ((t)->mutex)
+#define xmms_output_unlock(t) XMMS_MTX_UNLOCK ((t)->mutex)
 
 
 static gpointer xmms_output_thread (gpointer data);
@@ -69,6 +69,7 @@ struct xmms_output_St {
 	xmms_decoder_t *current_decoder;
 
 	GMutex *mutex;
+	GMutex *decoderlist_mutex;
 	GCond *cond;
 	GCond *decoder_cond;
 	GThread *thread;
@@ -187,12 +188,12 @@ xmms_output_stats (xmms_output_t *output, GList *list)
 
 	g_return_val_if_fail (output, NULL);
 
-	g_mutex_lock (output->mutex);
+	XMMS_MTX_LOCK (output->mutex);
 	tmp = g_strdup_printf ("output.total_bytes=%llu", output->bytes_written);
 	ret = g_list_append (list, tmp);
 	tmp = g_strdup_printf ("output.buffer_underruns=%d", output->buffer_underruns);
 	ret = g_list_append (ret, tmp);
-	g_mutex_unlock (output->mutex);
+	XMMS_MTX_UNLOCK (output->mutex);
 
 	return ret;
 }
@@ -301,8 +302,8 @@ xmms_output_destroy (xmms_object_t *object)
 	}
 
 	g_mutex_free (output->mutex);
+	g_mutex_free (output->decoderlist_mutex);
 	g_cond_free (output->cond);
-	xmms_ringbuf_destroy (output->buffer);
 }
 
 xmms_output_t *
@@ -323,6 +324,7 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
 	output->plugin = plugin;
 	output->mutex = g_mutex_new ();
+	output->decoderlist_mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
 	output->decoder_cond = g_cond_new ();
 	output->is_open = FALSE;
@@ -375,11 +377,11 @@ xmms_output_flush (xmms_output_t *output)
 	flush = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FLUSH);
 	g_return_if_fail (flush);
 
-	g_mutex_lock (output->mutex);
+	XMMS_MTX_LOCK (output->mutex);
 
 	flush (output);
 
-	g_mutex_unlock (output->mutex);
+	XMMS_MTX_UNLOCK (output->mutex);
 }
 
 xmms_plugin_t *
@@ -435,10 +437,10 @@ void
 xmms_output_played_samples_set (xmms_output_t *output, guint samples)
 {
 	g_return_if_fail (output);
-	g_mutex_lock (output->mutex);
+	XMMS_MTX_LOCK (output->mutex);
 	output->played = samples * 4;
 	XMMS_DBG ("Set played to %d", output->played);
-	g_mutex_unlock (output->mutex);
+	XMMS_MTX_UNLOCK (output->mutex);
 }
 
 
@@ -470,33 +472,53 @@ xmms_output_decoder_append (xmms_output_t *output, xmms_decoder_t *decoder)
 	g_return_if_fail (output);
 	g_return_if_fail (decoder);
 
-	xmms_output_lock (output);	
+	XMMS_MTX_LOCK (output->decoderlist_mutex);
 	XMMS_DBG ("Appending decoder %p", decoder);
 	output->decoder_list = g_list_append (output->decoder_list, decoder);
 	g_cond_signal (output->decoder_cond);
-	xmms_output_unlock (output);
+	xmms_object_ref (decoder);
+	XMMS_MTX_UNLOCK (output->decoderlist_mutex);
 }
 
 gboolean
 xmms_output_decoder_update (xmms_output_t *output)
 {
 	GList *n;
+	xmms_decoder_t *old;
+	gboolean ret = TRUE;
+
 	g_return_val_if_fail (output, FALSE);
-
+	
 	n = output->decoder_list;
+	old = output->current_decoder;
 
-	if (n) {
-		XMMS_DBG ("New decoder %p", n->data);
-		output->current_decoder = (xmms_decoder_t *) n->data;
-		/*output->decoder_list = g_list_remove_link (output->decoder_list, 
-							   (gpointer) output->current_decoder);*/
-		output->decoder_list = g_list_next (output->decoder_list);
+	XMMS_DBG ("!!!!!Trying to update decoder!!! old decoder %p", old);
+	XMMS_MTX_LOCK (output->decoderlist_mutex);
+
+	if (xmms_playback_status (xmms_core_playback_get (output->core), NULL) ==
+		XMMS_PLAYBACK_PLAY) {
+
+		if (n) {
+			XMMS_DBG ("New decoder %p", n->data);
+			output->current_decoder = (xmms_decoder_t *) n->data;
+			/*output->decoder_list = g_list_remove_link (output->decoder_list, 
+						     		(gpointer) output->current_decoder);*/
+			output->decoder_list = g_list_next (output->decoder_list);
+		} else {
+			output->current_decoder = NULL;
+			ret = FALSE;
+		}
 	} else {
 		output->current_decoder = NULL;
-		return FALSE;
+		ret = FALSE;
 	}
 
-	return TRUE;
+	if (old)
+		xmms_object_unref (old);
+	
+	XMMS_MTX_UNLOCK (output->decoderlist_mutex);
+
+	return ret;
 
 }
 
@@ -506,9 +528,9 @@ xmms_output_decoder_remove (xmms_output_t *output, xmms_decoder_t *decoder)
 	g_return_if_fail (output);
 	g_return_if_fail (decoder);
 
-	xmms_output_lock (output);
+	XMMS_MTX_LOCK (output->decoderlist_mutex);
 	output->decoder_list = g_list_remove_link (output->decoder_list, (gpointer)decoder);
-	xmms_output_unlock (output);
+	XMMS_MTX_UNLOCK (output->decoderlist_mutex);
 }
 
 static gint
@@ -554,7 +576,8 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	
 	if (!output->is_open) {
 		output->is_open = TRUE;
-		xmms_output_samplerate_set (output, output->open_samplerate);
+		/*xmms_output_samplerate_set (output, output->open_samplerate);
+		 */
 	}
 	
 	ret = xmms_output_decoder_read (output, buffer, len);

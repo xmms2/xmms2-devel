@@ -92,9 +92,9 @@ static void xmms_playlist_destroy (xmms_object_t *object);
  */
 
 /** Lock the playlist for changes and queries */
-#define XMMS_PLAYLIST_LOCK(a) g_mutex_lock (a->mutex)
+#define XMMS_PLAYLIST_LOCK(a) XMMS_MTX_LOCK (a->mutex)
 /** Unlock the playlist for changes and queries */
-#define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
+#define XMMS_PLAYLIST_UNLOCK(a) XMMS_MTX_UNLOCK (a->mutex)
 
 /** Gererate statistics for this playlist */
 GList *

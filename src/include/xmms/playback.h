@@ -33,6 +33,8 @@ typedef enum {
 xmms_playback_t *xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist);
 xmms_playlist_entry_t *xmms_playback_entry (xmms_playback_t *playback);
 xmms_playlist_t * xmms_playback_playlist_get (xmms_playback_t *playback);
+guint xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err);
+void xmms_playback_wait_for_play (xmms_playback_t *playback);
 void xmms_playback_playtime_set (xmms_playback_t *playback, guint time);
 void xmms_playback_mediainfo_add_entry (xmms_playback_t *playback, xmms_playlist_entry_t *entry);
 void xmms_playback_vis_spectrum (xmms_core_t *playback, gfloat *spec);

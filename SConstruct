@@ -27,6 +27,8 @@ Clean up the builddir by running:
 opts = Options(None, ARGUMENTS)
 opts.Add('CC', 'C compiler to use', 'gcc')
 opts.Add('CXX', 'C++ compiler to use', 'g++')
+opts.Add('LD', 'Linker to use', 'ld')
+opts.Add('LDFLAGS', 'Linker to use', '-L/sw/lib')
 opts.Add('CXXFLAGS', 'C++ compilerflags', '-g -Wall -O0')
 opts.Add('CCFLAGS', 'C compilerflags', '-g -Wall -O0')
 opts.Add('PREFIX', 'installprefix', '/usr/local')

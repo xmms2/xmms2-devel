@@ -120,7 +120,7 @@ xmms_core_play_entry (xmms_core_t *core, xmms_playlist_entry_t *entry,
 
 	if (!xmms_decoder_open (d, entry)) {
 		xmms_transport_close (t);
-		xmms_decoder_destroy (d);
+		xmms_object_unref (d);
 		return FALSE;
 	}
 
@@ -161,6 +161,9 @@ xmms_core_thread (gpointer data)
 			if (!xmms_core_play_entry (core, entry, &decoder, &transport)) {
 				continue;
 			}
+		} else {
+			xmms_playback_wait_for_play (core->playback);
+			XMMS_DBG ("Core is waiting for action!");
 		}
 
 		core->transport = transport;
@@ -183,6 +186,7 @@ xmms_core_thread (gpointer data)
 
 		while (entry && !xmms_core_play_entry (core, entry, &decoder, &transport)) {
 			entry = xmms_playback_entry (core->playback);
+		}
 
 		if (!entry) {
 			decoder = NULL;
@@ -197,8 +201,11 @@ xmms_core_thread (gpointer data)
 		core->songs_played++; 
 
 		XMMS_DBG ("destroying decoder");
-		if (core->decoder)
+		if (core->decoder) {
+			xmms_decoder_stop (core->decoder);
+			xmms_object_unref (core->decoder);
 			core->decoder = NULL;
+		}
 		XMMS_DBG ("closing transport");
 		if (core->transport)
 			xmms_object_unref (core->transport);

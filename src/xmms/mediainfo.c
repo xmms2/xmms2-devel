@@ -71,13 +71,13 @@ xmms_mediainfo_thread_start (xmms_core_t *core, xmms_playlist_t *playlist)
 void
 xmms_mediainfo_thread_add (xmms_mediainfo_thread_t *mthread, guint entryid)
 {
-	g_mutex_lock (mthread->mutex);
+	XMMS_MTX_LOCK (mthread->mutex);
 
 	mthread->list = g_list_append (mthread->list, GUINT_TO_POINTER (entryid));
 
 	g_cond_signal (mthread->cond);
 
-	g_mutex_unlock (mthread->mutex);
+	XMMS_MTX_UNLOCK (mthread->mutex);
 
 }
 
@@ -90,7 +90,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 	while (mtt->running) {
 		xmms_playlist_entry_t *entry;
 		
-		g_mutex_lock (mtt->mutex);
+		XMMS_MTX_LOCK (mtt->mutex);
 
 		XMMS_DBG ("MediainfoThread is idle.");
 		g_cond_wait (mtt->cond, mtt->mutex);
@@ -114,7 +114,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			g_list_free_1 (node);
 
-			g_mutex_unlock (mtt->mutex);
+			XMMS_MTX_UNLOCK (mtt->mutex);
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
@@ -176,11 +176,11 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_object_unref (decoder);
 				
 
-			g_mutex_lock (mtt->mutex);
+			XMMS_MTX_LOCK (mtt->mutex);
 
 		}
 
-		g_mutex_unlock (mtt->mutex);
+		XMMS_MTX_UNLOCK (mtt->mutex);
 
 	}
 

@@ -120,7 +120,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 	xmms_mad_data_t *data;
 	guint bytes;
 	
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (decoder, FALSE);
 
 	data = xmms_decoder_private_data_get (decoder);
 
@@ -439,6 +439,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	ret = xmms_transport_read (transport, 
 				   data->buffer + data->buffer_length,
 				   4096 - data->buffer_length);
+	
 	if (ret <= 0) {
 		XMMS_DBG ("EOF");
 		return FALSE;

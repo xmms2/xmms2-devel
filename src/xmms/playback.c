@@ -107,7 +107,6 @@ static void xmms_playback_pause (xmms_playback_t *playback, xmms_error_t *err);
 static void xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds, xmms_error_t *err);
 static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_error_t *err);
 static void xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err);
-static guint xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err);
 static guint xmms_playback_currentid (xmms_playback_t *playback, xmms_error_t *err);
 static guint xmms_playback_current_playtime (xmms_playback_t *playback, xmms_error_t *err); 
 
@@ -299,7 +298,7 @@ xmms_playback_currentid (xmms_playback_t *playback, xmms_error_t *err)
   * Gives the client the status
   */
 XMMS_METHOD_DEFINE (status, xmms_playback_status, xmms_playback_t *, UINT32, NONE, NONE);
-static guint
+guint
 xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err)
 {
 	return (guint) playback->status;
@@ -419,12 +418,26 @@ xmms_playback_active_entry_set (xmms_playback_t *playback,
 	g_return_if_fail (entry);
 
 	if (playback->current_song) {
-		xmms_playlist_entry_unref (playback->current_song);
+		xmms_object_unref (playback->current_song);
 	}
 	playback->current_song = entry;
 	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID,
 			    xmms_playlist_entry_id_get (entry));
 }
+
+void
+xmms_playback_wait_for_play (xmms_playback_t *playback)
+{
+	XMMS_MTX_LOCK (playback->mtx);
+
+	while (playback->status != XMMS_PLAYBACK_PLAY) {
+		g_cond_wait (playback->cond, playback->mtx);
+	}
+
+	XMMS_MTX_UNLOCK (playback->mtx);
+
+}
+
 
 /**
  * Return the next entry in the playlist, the one to be played.
@@ -442,7 +455,7 @@ xmms_playback_entry (xmms_playback_t *playback)
 
 	xmms_error_reset (&err);
 
-	g_mutex_lock (playback->mtx);
+	XMMS_MTX_LOCK (playback->mtx);
 	
 	mode = playback->mode;
 
@@ -476,10 +489,10 @@ xmms_playback_entry (xmms_playback_t *playback)
 			xmms_playback_stop (playback, &err);
 		}
 		playback->playlist_op = XMMS_PLAYBACK_NEXT; /* ugly hack */
-		g_mutex_unlock (playback->mtx);
+		XMMS_MTX_UNLOCK (playback->mtx);
 		return NULL;
 	}
-	g_mutex_unlock (playback->mtx);
+	XMMS_MTX_UNLOCK (playback->mtx);
 	return ret;
 }
 

@@ -114,7 +114,7 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 	if (!transport)
 		return list;
 
-	g_mutex_lock (transport->mutex);
+	XMMS_MTX_LOCK (transport->mutex);
 	tmp = g_strdup_printf ("transport.total_bytes=%llu", transport->total_bytes);
 	list = g_list_append (list, tmp);
 	tmp2 = xmms_util_encode_path (xmms_playlist_entry_url_get (transport->entry));
@@ -125,7 +125,7 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 	list = g_list_append (list, tmp);
 	tmp = g_strdup_printf ("transport.buffer_underruns=%u", transport->buffer_underruns);
 	list = g_list_append (list, tmp);
-	g_mutex_unlock (transport->mutex);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return list;
 }
@@ -141,11 +141,11 @@ xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size)
 	g_return_if_fail (transport);
 	g_return_if_fail (size);
 
-	g_mutex_lock (transport->mutex);
+	XMMS_MTX_LOCK (transport->mutex);
 	xmms_ringbuf_destroy (transport->buffer);
 	transport->buffer = xmms_ringbuf_new (size);
 
-	g_mutex_unlock (transport->mutex);
+	XMMS_MTX_UNLOCK (transport->mutex);
 }
 
 /**

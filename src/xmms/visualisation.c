@@ -28,6 +28,7 @@
 
 #include "xmms/visualisation.h"
 #include "xmms/object.h"
+#include "xmms/util.h"
 #include "xmms/core.h"
 
 static GMutex *visuserslock;
@@ -73,17 +74,17 @@ xmms_visualisation_init (xmms_core_t *core)
 void
 xmms_visualisation_users_inc ()
 {
-	g_mutex_lock (visuserslock);
+	XMMS_MTX_LOCK (visuserslock);
 	visusers++;
-	g_mutex_unlock (visuserslock);
+	XMMS_MTX_UNLOCK (visuserslock);
 }
 
 void
 xmms_visualisation_users_dec ()
 {
-	g_mutex_lock (visuserslock);
+	XMMS_MTX_LOCK (visuserslock);
 	visusers--;
-	g_mutex_unlock (visuserslock);
+	XMMS_MTX_UNLOCK (visuserslock);
 }
 
 static gboolean
@@ -91,9 +92,9 @@ xmms_visualisation_has_users ()
 {
 	gboolean res;
 
-	g_mutex_lock (visuserslock);
+	XMMS_MTX_LOCK (visuserslock);
 	res = !!visusers;
-	g_mutex_unlock (visuserslock);
+	XMMS_MTX_UNLOCK (visuserslock);
 
 	return res;
 }

@@ -125,8 +125,8 @@ static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
 
 #define FRAC_BITS 16
 
-#define xmms_decoder_lock(d) g_mutex_lock ((d)->mutex)
-#define xmms_decoder_unlock(d) g_mutex_unlock ((d)->mutex)
+#define xmms_decoder_lock(d) XMMS_MTX_LOCK ((d)->mutex)
+#define xmms_decoder_unlock(d) XMMS_MTX_UNLOCK ((d)->mutex)
 
 /*
  * Public functions
@@ -316,9 +316,9 @@ xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len)
 	g_return_val_if_fail (decoder, -1);
 	g_return_val_if_fail (buf, -1);
 
-	g_mutex_lock (decoder->mutex);
+	XMMS_MTX_LOCK (decoder->mutex);
 	ret = xmms_ringbuf_read (decoder->buffer, buf, len);
-	g_mutex_unlock (decoder->mutex);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	return ret;
 }
@@ -328,9 +328,9 @@ xmms_decoder_iseos (xmms_decoder_t *decoder)
 {
 	gboolean ret;
 
-	g_mutex_lock (decoder->mutex);
+	XMMS_MTX_LOCK (decoder->mutex);
 	ret = xmms_ringbuf_iseos (decoder->buffer);
-	g_mutex_unlock (decoder->mutex);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	return ret;
 
@@ -341,9 +341,9 @@ xmms_decoder_data_used (xmms_decoder_t *decoder)
 {
 	guint ret;
 
-	g_mutex_lock (decoder->mutex);
+	XMMS_MTX_LOCK (decoder->mutex);
 	ret = xmms_ringbuf_bytes_used (decoder->buffer);
-	g_mutex_unlock (decoder->mutex);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 	return ret;
 }
 
@@ -369,7 +369,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	xmms_visualisation_calc (decoder->vis, buf, len);
 
-	g_mutex_lock (decoder->mutex);
+	XMMS_MTX_LOCK (decoder->mutex);
 
 	/**
 	 * @todo Here resampling should be done. This is skipped right now
@@ -378,7 +378,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
 	xmms_ringbuf_write (decoder->buffer, buf, len);
 
-	g_mutex_unlock (decoder->mutex);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 	
 	
 }
@@ -499,7 +499,6 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 	return decoder;
 }
 
-
 /*
  * Private functions
  */
@@ -510,6 +509,10 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
 	xmms_decoder_destroy_method_t destroy_method;
 
+	XMMS_DBG ("Destroying decoder!");
+
+	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
+
 	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
 
 	if (destroy_method)
@@ -518,6 +521,7 @@ xmms_decoder_destroy (xmms_object_t *object)
 	if (decoder->entry)
 		xmms_object_unref (decoder->entry);
 
+	xmms_ringbuf_destroy (decoder->buffer);
 	g_mutex_free (decoder->mutex);
 	xmms_object_unref (decoder->vis);
 	xmms_object_unref (decoder->core);
@@ -614,6 +618,7 @@ xmms_decoder_stop (xmms_decoder_t *decoder)
 	g_return_if_fail (decoder);
 	xmms_decoder_lock (decoder);
 	decoder->running = FALSE;
+	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 	xmms_decoder_unlock (decoder);
 }
 
@@ -777,29 +782,6 @@ resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
 
 
 
-static void
-xmms_decoder_destroy_real (xmms_decoder_t *decoder)
-{
-	xmms_decoder_destroy_method_t destroy_method;
-	
-	g_return_if_fail (decoder);
-	
-	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-	if (destroy_method)
-		destroy_method (decoder);
-
-	g_mutex_free (decoder->mutex);
-	xmms_ringbuf_destroy (decoder->buffer);
-
-	xmms_playlist_entry_unref (decoder->entry);
-
-	xmms_visualisation_destroy(decoder->vis);
-	xmms_object_cleanup (XMMS_OBJECT (decoder));
-	g_free (decoder);
-
-	XMMS_DBG ("Decoder destroyed");
-}
-
 static xmms_plugin_t *
 xmms_decoder_find_plugin (const gchar *mimetype)
 {
@@ -874,10 +856,10 @@ xmms_decoder_thread (gpointer data)
 			break;
 		}
 	}
-	g_mutex_unlock (decoder->mutex);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	decoder->thread = NULL;
-	XMMS_DBG ("Decoder thread quitting");
+	XMMS_DBG ("Decoder %s thread quitting", xmms_playlist_entry_url_get (decoder->entry));
 
 	xmms_object_unref (decoder);
 

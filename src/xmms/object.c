@@ -79,9 +79,9 @@ xmms_object_parent_set (xmms_object_t *object, xmms_object_t *parent)
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 
-	g_mutex_lock (object->mutex);
+	XMMS_MTX_LOCK (object->mutex);
 	object->parent = parent;
-	g_mutex_unlock (object->mutex);
+	XMMS_MTX_UNLOCK (object->mutex);
 }
 
 static gboolean
@@ -132,7 +132,7 @@ xmms_object_connect (xmms_object_t *object, const gchar *signal,
 	entry->handler = handler;
 	entry->userdata = userdata;
 
-/*	g_mutex_lock (object->mutex);*/
+/*	XMMS_MTX_LOCK (object->mutex);*/
 	
 	if (g_hash_table_lookup_extended (object->signals, signal, &key, &val)) {
 		list = g_list_prepend (val, entry);
@@ -142,7 +142,7 @@ xmms_object_connect (xmms_object_t *object, const gchar *signal,
 		g_hash_table_insert (object->signals, g_strdup (signal), list);
 	}
 
-/*	g_mutex_unlock (object->mutex);*/
+/*	XMMS_MTX_UNLOCK (object->mutex);*/
 }
 
 void
@@ -159,7 +159,7 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 	g_return_if_fail (signal);
 	g_return_if_fail (handler);
 
-	g_mutex_lock (object->mutex);
+	XMMS_MTX_LOCK (object->mutex);
 	
 	if (!g_hash_table_lookup_extended (object->signals, signal, &key, &val))
 		goto unlock;
@@ -186,7 +186,7 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 		g_hash_table_insert (object->signals, key, list);
 	}
 unlock:
-	g_mutex_unlock (object->mutex);
+	XMMS_MTX_UNLOCK (object->mutex);
 }
 
 void
@@ -199,7 +199,7 @@ xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 	g_return_if_fail (signal);
 
-	g_mutex_lock (object->mutex);
+	XMMS_MTX_LOCK (object->mutex);
 	
 	list = g_hash_table_lookup (object->signals, signal);
 	for (node = list; node; node = g_list_next (node)) {
@@ -214,7 +214,7 @@ xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data
 		}
 	}
 
-	g_mutex_unlock (object->mutex);
+	XMMS_MTX_UNLOCK (object->mutex);
 
 	for (node = list2; node; node = g_list_next (node)) {
 		entry = node->data;

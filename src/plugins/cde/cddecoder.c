@@ -134,7 +134,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 
 	if (entry) {
 		xmms_decoder_entry_mediainfo_set (decoder, entry);
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 	}
 }
 
