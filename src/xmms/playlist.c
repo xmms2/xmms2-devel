@@ -87,7 +87,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
         gint len;
         gint i, j;
         GList *node, **ptrs;
-	xmms_playlist_changed_msg_t *chmsg;
+	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_if_fail (playlist);
 
@@ -122,9 +122,10 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
                                                                                   
         g_free(ptrs);
 
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_SHUFFLE;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_SHUFFLE;
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+
 	g_cond_signal (playlist->cond);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -136,7 +137,7 @@ gboolean
 xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 {
 	GList *node;
-	xmms_playlist_changed_msg_t *chmsg;
+	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_val_if_fail (playlist, FALSE);
 	g_return_val_if_fail (id, FALSE);
@@ -155,10 +156,11 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 	playlist->list = g_list_remove_link (playlist->list, node);
 	g_list_free_1 (node);
 
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_REMOVE;
-	chmsg->id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_REMOVE;
+	chmsg.id = id;
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+
 	g_cond_signal (playlist->cond);
 	
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -172,7 +174,7 @@ gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 {
 	xmms_playlist_entry_t *entry;
-	xmms_playlist_changed_msg_t *chmsg;
+	xmms_playlist_changed_msg_t chmsg;
 	GList *node;
 	gint i;
 
@@ -227,11 +229,11 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 
 	}
 
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_MOVE;
-	chmsg->id = id;
-	chmsg->arg = GINT_TO_POINTER (steps);
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_MOVE;
+	chmsg.id = id;
+	chmsg.arg = GINT_TO_POINTER (steps);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
 
 	g_cond_signal (playlist->cond);
 
@@ -253,7 +255,7 @@ gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
 {
 	GList *new, *node;
-	xmms_playlist_changed_msg_t *chmsg;
+	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_val_if_fail (file, FALSE);
 
@@ -292,11 +294,11 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 			     GUINT_TO_POINTER (xmms_playlist_entry_id_get (file)), 
 			     new);
 
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_ADD;
-	chmsg->id = xmms_playlist_entry_id_get (file);
-	chmsg->arg = GINT_TO_POINTER (options);
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_ADD;
+	chmsg.id = xmms_playlist_entry_id_get (file);
+	chmsg.arg = GINT_TO_POINTER (options);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
 
 	g_cond_signal (playlist->cond);
 
@@ -340,7 +342,7 @@ void
 xmms_playlist_clear (xmms_playlist_t *playlist)
 {
 	GList *node;
-	xmms_playlist_changed_msg_t *chmsg;
+	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_if_fail (playlist);
 
@@ -360,10 +362,9 @@ xmms_playlist_clear (xmms_playlist_t *playlist)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_CLEAR;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
-
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_CLEAR;
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
 
 }
 
@@ -472,18 +473,18 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 gboolean
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 {
-	xmms_playlist_changed_msg_t *chmsg;
+	xmms_playlist_changed_msg_t chmsg;
 	g_return_val_if_fail (playlist, FALSE);
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	playlist->currententry = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
 
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_SET_POS;
-	chmsg->id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
-	
+	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
+	chmsg.type = XMMS_PLAYLIST_CHANGED_SET_POS;
+	chmsg.id = id;
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+
 	g_cond_signal (playlist->cond);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);

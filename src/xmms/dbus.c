@@ -325,8 +325,6 @@ send_playlist_changed (xmms_object_t *object,
                         break;
         }
 
-	g_free (chmsg);
-
         XMMS_DBG ("Sending playlist changed message: %s", dbus_message_get_name (msg));
 
         g_mutex_lock (connectionslock);
@@ -472,9 +470,11 @@ handle_core_signal_register (DBusConnection *conn, DBusMessage *msg)
 		xmms_dbus_signal_mask_map_t *map = get_mask_map (signal);
 		if (map) {
 			xmms_dbus_connection_t *c;
+			g_mutex_lock(connectionslock);
 			c = get_conn (conn);
 			if (c)
 				c->signals |= map->mask;
+			g_mutex_unlock(connectionslock);
 		}
 	}
 
@@ -512,9 +512,12 @@ handle_core_signal_unregister (DBusConnection *conn, DBusMessage *msg)
 		xmms_dbus_signal_mask_map_t *map = get_mask_map (signal);
 		if (map) {
 			xmms_dbus_connection_t *c;
+			g_mutex_lock(connectionslock);
 			c = get_conn (conn);
 			if (c)
 				c->signals &= ~map->mask;
+			g_mutex_unlock(connectionslock);
+
 		}
 	}
 
