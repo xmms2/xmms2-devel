@@ -44,7 +44,7 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 }
 
 guint
-xmms_ringbuf_free (xmms_ringbuf_t *ringbuf)
+xmms_ringbuf_free (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
 
@@ -54,7 +54,7 @@ xmms_ringbuf_free (xmms_ringbuf_t *ringbuf)
 }
 
 guint
-xmms_ringbuf_used (xmms_ringbuf_t *ringbuf)
+xmms_ringbuf_used (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
      
@@ -122,7 +122,7 @@ xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
 
 
 void
-xmms_ringbuf_wait_free (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
+xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (len > 0);
@@ -141,7 +141,7 @@ xmms_ringbuf_wait_free (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 }
 
 void
-xmms_ringbuf_wait_used (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
+xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (len > 0);
@@ -149,4 +149,20 @@ xmms_ringbuf_wait_used (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 
 	while (xmms_ringbuf_used (ringbuf) < len)
 		g_cond_wait (ringbuf->used_cond, mtx);
+}
+
+gboolean
+xmms_ringbuf_eos (const xmms_ringbuf_t *ringbuf)
+{
+	g_return_val_if_fail (ringbuf, TRUE);
+
+	return ringbuf->eos;
+}
+
+void
+xmms_ringbuf_set_eos (const xmms_ringbuf_t *ringbuf, gboolean eos)
+{
+	g_return_if_fail (ringbuf);
+
+	ringbuf->eos = eos;
 }

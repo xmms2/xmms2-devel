@@ -8,13 +8,14 @@
 #include <unistd.h>
 
 #include <string.h>
+#include <stdio.h>
 
 /*
  * Type definitions
  */
 
 typedef struct {
-	gint fd;
+	FILE *fp;
 } xmms_file_data_t;
 
 /*
@@ -24,6 +25,7 @@ typedef struct {
 static gboolean xmms_file_can_handle (const gchar *uri);
 static gboolean xmms_file_open (xmms_transport_t *transport, const gchar *uri);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gboolean xmms_file_eof (xmms_transport_t *transport);
 
 /*
  * Plugin header
@@ -40,6 +42,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, "can_handle", xmms_file_can_handle);
 	xmms_plugin_method_add (plugin, "open", xmms_file_open);
 	xmms_plugin_method_add (plugin, "read", xmms_file_read);
+	xmms_plugin_method_add (plugin, "eof", xmms_file_eof);
 	
 	return plugin;
 }
@@ -63,7 +66,7 @@ xmms_file_can_handle (const gchar *uri)
 static gboolean
 xmms_file_open (xmms_transport_t *transport, const gchar *uri)
 {
-	gint fd;
+	FILE *fp;
 	xmms_file_data_t *data;
 	const gchar *uriptr;
 
@@ -80,13 +83,13 @@ xmms_file_open (xmms_transport_t *transport, const gchar *uri)
 		return FALSE;
 
 	XMMS_DBG ("Opening %s", uriptr);
-	fd = open (uriptr, O_RDONLY | O_NONBLOCK);
-	XMMS_DBG ("fd: %d", fd);
-	if (fd == -1)
+	fp = fopen (uriptr, "rb");
+	XMMS_DBG ("fp: %p", fp);
+	if (!fp)
 		return FALSE;
 
 	data = g_new0 (xmms_file_data_t, 1);
-	data->fd = fd;
+	data->fp = fp;
 	xmms_transport_plugin_data_set (transport, data);
 
 	xmms_transport_mime_type_set (transport, "audio/mpeg"); /* FIXME */
@@ -105,8 +108,22 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	ret = read (data->fd, buffer, len);
+	ret = fread (buffer, 1, len, data->fp);
 
 	return ret;
 }
 
+static gboolean
+xmms_file_eof (xmms_transport_t *transport)
+{
+	xmms_file_data_t *data;
+
+	g_return_val_if_fail (transport, -1);
+	data = xmms_transport_plugin_data_get (transport);
+	
+	if (feof (data->fp))
+		return TRUE;
+	
+	return FALSE;
+
+}

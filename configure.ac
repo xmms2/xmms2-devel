@@ -27,8 +27,8 @@ src/Makefile
 src/xmms/Makefile
 src/plugins/Makefile
 src/plugins/mad/Makefile
-src/plugins/id3/Makefile
 src/plugins/http/Makefile
 src/plugins/diskwrite/Makefile
 src/plugins/sdlout/Makefile
+src/plugins/oss/Makefile
 src/plugins/file/Makefile])

@@ -102,6 +102,7 @@ xmms_transport_open (const gchar *uri)
 		xmms_ringbuf_destroy (transport->buffer);
 		g_mutex_free (transport->mutex);
 		g_free (transport);
+		transport = NULL;
 	}
 	
 	return transport;

@@ -80,6 +80,8 @@ main (int argc, char **argv)
 		XMMS_DBG ("Playing %s", entry->uri);
 		
 		transport = xmms_transport_open (entry->uri);
+		if (!transport)
+			continue;
 		mime = xmms_transport_mime_type_get (transport);
 		if (mime) {
 			XMMS_DBG ("mime-type: %s", mime);
