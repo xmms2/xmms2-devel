@@ -1,3 +1,7 @@
+/** @file 
+ * This file controls XMMS2 mainloop.
+ */
+
 #include <glib.h>
 
 #include "plugin.h"

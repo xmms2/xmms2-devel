@@ -1,3 +1,8 @@
+/** @file 
+  * Controls transport plugins.
+  * This file is responsible for the transportlayer.
+  */
+
 #include "transport.h"
 #include "plugin.h"
 #include "object.h"
@@ -14,10 +19,18 @@
 static void xmms_transport_destroy (xmms_transport_t *transport);
 static xmms_plugin_t *xmms_transport_find_plugin (const gchar *uri);
 static gpointer xmms_transport_thread (gpointer data);
+static xmms_transport_t *xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data);
 
 /*
  * Public functions
  */
+
+
+/**
+  * Get the transportplugins private data.
+  *
+  * @returns Pointer to private data.
+  */
 
 gpointer
 xmms_transport_plugin_data_get (xmms_transport_t *transport)
@@ -32,6 +45,13 @@ xmms_transport_plugin_data_get (xmms_transport_t *transport)
 	return ret;
 }
 
+/**
+  * Set transportplugins private data
+  *
+  * @param transport the transport to store the pointer in.
+  * @param data pointer to private data.
+  */
+
 void
 xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
 {
@@ -39,6 +59,13 @@ xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
 	transport->plugin_data = data;
 	xmms_transport_unlock (transport);
 }
+
+
+/**
+  * Sets this transports mimetype.
+  *
+  * This should be called from the plugin to propagate the mimetype
+  */
 
 void
 xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype)
@@ -57,7 +84,253 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
 	xmms_object_emit (XMMS_OBJECT (transport), "mime-type-changed", mimetype);
 }
 
+/**
+  * Initialize a transport_t from a URI
+  *
+  * @returns a allocated xmms_transport_t that needs to be freed by a
+  * xmms_transport_close ()
+  */
+
 xmms_transport_t *
+xmms_transport_open (const gchar *uri)
+{
+	xmms_plugin_t *plugin;
+
+	g_return_val_if_fail (uri, NULL);
+
+	XMMS_DBG ("Trying to open stream: %s", uri);
+	
+	plugin = xmms_transport_find_plugin (uri);
+	if (!plugin)
+		return NULL;
+	
+	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+
+	return xmms_transport_open_plugin (plugin, uri, NULL);
+}
+
+/** 
+  * Gets the current URI from the transport.
+  */
+
+const gchar *
+xmms_transport_uri_get(const xmms_transport_t *const transport){
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	ret =  transport->uri;
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
+/**
+  * Gets the suburi from the transport.
+  */
+
+const gchar *
+xmms_transport_suburi_get(const xmms_transport_t *const transport){
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	ret =  transport->suburi;
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
+/**
+  * Sets the URI
+  */
+
+void
+xmms_transport_uri_set(xmms_transport_t *const transport, gchar *uri){
+	g_return_if_fail (transport);
+
+	xmms_transport_lock (transport);
+	transport->uri = uri;
+	xmms_transport_unlock (transport);
+}
+
+/**
+  * Sets the SUBURI
+  */
+
+void
+xmms_transport_suburi_set(xmms_transport_t *const transport, gchar *suburi){
+	g_return_if_fail (transport);
+
+	xmms_transport_lock (transport);
+	transport->suburi = suburi;
+	xmms_transport_unlock (transport);
+
+}
+
+
+/**
+  * Gets the current mimetype
+  */
+
+const gchar *
+xmms_transport_mime_type_get (xmms_transport_t *transport)
+{
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	ret =  transport->mime_type;
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
+
+/**
+  * Reads len bytes into buffer.
+  *
+  * This function reads from the transport thread buffer, if you want to
+  * read more then currently are buffered, it will wait for you.
+  */
+
+gint
+xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
+{
+	gint ret;
+
+	g_return_val_if_fail (transport, -1);
+	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (len > 0, -1);
+
+	xmms_transport_lock (transport);
+	
+	if (transport->want_seek) {
+		g_cond_signal (transport->cond);
+		g_cond_wait (transport->seek_cond, transport->mutex);
+	}
+
+	if (len > XMMS_TRANSPORT_RINGBUF_SIZE) {
+		len = XMMS_TRANSPORT_RINGBUF_SIZE;
+	}
+
+	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);
+	ret = xmms_ringbuf_read (transport->buffer, buffer, len);
+	
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
+/**
+  * Tells the transport thread to schedule a seek
+  *
+  * This function will seek to a specific offset, it emulates the behaviour
+  * of lseek. It will also clear the buffer.
+  * @param whence should be one of XMMS_TRANSPORT_SEEK_SET
+  * XMMS_TRANSPORT_SEEK_END, XMMS_TRANSPORT_SEEK_CUR
+  */
+
+void
+xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
+{
+	g_return_if_fail (transport);
+	g_return_if_fail (!transport->want_seek);
+
+	xmms_transport_lock (transport);
+
+	transport->seek_offset = offset;
+	transport->seek_whence = whence;
+	transport->want_seek = TRUE;
+
+	xmms_ringbuf_set_eos (transport->buffer, TRUE);
+
+	xmms_transport_unlock (transport);
+
+	g_cond_signal (transport->cond);
+}
+
+/**
+  * Gets the total size of the transports medium.
+  * This will be zero on medias that dont have a total size, like streams.
+  */
+
+gint
+xmms_transport_size (xmms_transport_t *transport)
+{
+	xmms_transport_size_method_t size;
+	g_return_val_if_fail (transport, -1);
+
+	size = xmms_plugin_method_get (transport->plugin, XMMS_METHOD_SIZE);
+	g_return_val_if_fail (size, -1);
+
+	return size (transport);
+}
+
+/**
+  * Gets the plugin that are being used.
+  */
+
+xmms_plugin_t *
+xmms_transport_get_plugin (const xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+
+	return transport->plugin;
+
+}
+
+
+/*
+ * Private functions
+ */
+
+/**
+  * Start the transport thread.
+  * This should be called to make the transport start buffer.
+  * @internal
+  */
+
+void
+xmms_transport_start (xmms_transport_t *transport)
+{
+	g_return_if_fail (transport);
+
+	transport->running = TRUE;
+	transport->thread = g_thread_create (xmms_transport_thread, transport, TRUE, NULL); 
+}
+
+
+/**
+  * Tells the transport thread to quit and call xmms_transport_destroy
+  * @internal
+  */
+
+void
+xmms_transport_close (xmms_transport_t *transport)
+{
+	g_return_if_fail (transport);
+
+	if (transport->thread) {
+		xmms_transport_lock (transport);
+		transport->running = FALSE;
+		g_cond_signal (transport->cond);
+		xmms_transport_unlock (transport);
+	} else {
+		xmms_transport_destroy (transport);
+	}
+}
+
+
+/*
+ * Static functions
+ */
+
+/**
+  * Called from xmms_transport_open ()
+  */
+
+static xmms_transport_t *
 xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data)
 {
 	xmms_transport_open_method_t open_method;
@@ -106,181 +379,6 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 	transport->suburi = g_strdup (transport->suburi);
 	return transport;
 }
-
-/*
- * Private functions
- */
-
-xmms_transport_t *
-xmms_transport_open (const gchar *uri)
-{
-	xmms_plugin_t *plugin;
-
-	g_return_val_if_fail (uri, NULL);
-
-	XMMS_DBG ("Trying to open stream: %s", uri);
-	
-	plugin = xmms_transport_find_plugin (uri);
-	if (!plugin)
-		return NULL;
-	
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
-
-	return xmms_transport_open_plugin (plugin, uri, NULL);
-}
-
-void
-xmms_transport_close (xmms_transport_t *transport)
-{
-	g_return_if_fail (transport);
-
-	if (transport->thread) {
-		xmms_transport_lock (transport);
-		transport->running = FALSE;
-		g_cond_signal (transport->cond);
-		xmms_transport_unlock (transport);
-	} else {
-		xmms_transport_destroy (transport);
-	}
-}
-
-const gchar *
-xmms_transport_uri_get(const xmms_transport_t *const transport){
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
-
-	xmms_transport_lock (transport);
-	ret =  transport->uri;
-	xmms_transport_unlock (transport);
-
-	return ret;
-}
-
-const gchar *
-xmms_transport_suburi_get(const xmms_transport_t *const transport){
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
-
-	xmms_transport_lock (transport);
-	ret =  transport->suburi;
-	xmms_transport_unlock (transport);
-
-	return ret;
-}
-
-void
-xmms_transport_uri_set(xmms_transport_t *const transport, gchar *uri){
-	g_return_if_fail (transport);
-
-	xmms_transport_lock (transport);
-	transport->uri = uri;
-	xmms_transport_unlock (transport);
-}
-
-void
-xmms_transport_suburi_set(xmms_transport_t *const transport, gchar *suburi){
-	g_return_if_fail (transport);
-
-	xmms_transport_lock (transport);
-	transport->suburi = suburi;
-	xmms_transport_unlock (transport);
-
-}
-
-
-const gchar *
-xmms_transport_mime_type_get (xmms_transport_t *transport)
-{
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
-
-	xmms_transport_lock (transport);
-	ret =  transport->mime_type;
-	xmms_transport_unlock (transport);
-
-	return ret;
-}
-
-void
-xmms_transport_start (xmms_transport_t *transport)
-{
-	g_return_if_fail (transport);
-
-	transport->running = TRUE;
-	transport->thread = g_thread_create (xmms_transport_thread, transport, TRUE, NULL); 
-}
-
-gint
-xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
-{
-	gint ret;
-
-	g_return_val_if_fail (transport, -1);
-	g_return_val_if_fail (buffer, -1);
-	g_return_val_if_fail (len > 0, -1);
-
-	xmms_transport_lock (transport);
-	
-	if (transport->want_seek) {
-		g_cond_signal (transport->cond);
-		g_cond_wait (transport->seek_cond, transport->mutex);
-	}
-
-	if (len > XMMS_TRANSPORT_RINGBUF_SIZE) {
-		len = XMMS_TRANSPORT_RINGBUF_SIZE;
-	}
-
-	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);
-	ret = xmms_ringbuf_read (transport->buffer, buffer, len);
-	
-	xmms_transport_unlock (transport);
-
-	return ret;
-}
-
-void
-xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
-{
-	g_return_if_fail (transport);
-	g_return_if_fail (!transport->want_seek);
-
-	xmms_transport_lock (transport);
-
-	transport->seek_offset = offset;
-	transport->seek_whence = whence;
-	transport->want_seek = TRUE;
-
-	xmms_ringbuf_set_eos (transport->buffer, TRUE);
-
-	xmms_transport_unlock (transport);
-
-	g_cond_signal (transport->cond);
-}
-
-gint
-xmms_transport_size (xmms_transport_t *transport)
-{
-	xmms_transport_size_method_t size;
-	g_return_val_if_fail (transport, -1);
-
-	size = xmms_plugin_method_get (transport->plugin, XMMS_METHOD_SIZE);
-	g_return_val_if_fail (size, -1);
-
-	return size (transport);
-}
-
-xmms_plugin_t *
-xmms_transport_get_plugin (const xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, NULL);
-
-	return transport->plugin;
-
-}
-
-/*
- * Static functions
- */
 
 static void
 xmms_transport_seek_real (xmms_transport_t *transport)
