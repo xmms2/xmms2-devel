@@ -140,6 +140,8 @@ xmms_ipc_msg_new (guint32 object, guint32 cmd)
 	msg->object = object;
 	msg->get_pos = 0;
 	msg->data_length = 0;
+	msg->data = g_malloc0 (XMMS_IPC_MSG_DEFAULT_SIZE);
+	msg->size = XMMS_IPC_MSG_DEFAULT_SIZE;
 
 	return msg;
 }
@@ -148,6 +150,7 @@ void
 xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 {
 	g_return_if_fail (msg);
+	g_free (msg->data);
 	g_free (msg);
 }
 
@@ -210,6 +213,10 @@ xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
 		return NULL;
 	}
 
+	if (msg->data_length > msg->size) {
+		msg->data = g_realloc (msg->data, msg->data_length);
+	}
+
 	xmms_ringbuf_read (ringbuf, msg->data, msg->data_length);
 	return msg;
 }
@@ -245,6 +252,7 @@ xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid)
 	guint32 object;
 	guint32 cmdid;
 	guint16 len;
+	guint32 data_len;
 	
 	cmd = g_htonl (msg->cmd);
 	cmdid = g_htonl (cid);
@@ -259,8 +267,15 @@ xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid)
 		return FALSE;
 	if (write (fd, &len, sizeof (len)) != sizeof (len))
 		return FALSE;
-	if (write (fd, msg->data, msg->data_length) != msg->data_length)
-		return FALSE;
+	data_len = msg->data_length;
+	while (data_len) {
+		guint32 ret;
+
+		ret = write (fd, msg->data, msg->data_length);
+		if (ret == 0)
+			return FALSE;
+		data_len -= ret;
+	}
 	
 	return TRUE;
 }
@@ -269,8 +284,19 @@ gpointer
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 {
 	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail ((msg->data_length + len) < XMMS_IPC_MSG_DATA_SIZE, NULL);
+	g_return_val_if_fail ((msg->data_length + len) < XMMS_IPC_MSG_MAX_SIZE, NULL);
 	
+	if ((msg->data_length + len) > msg->size) {
+		gint reallocsize = XMMS_IPC_MSG_DEFAULT_SIZE;
+
+		if (len > XMMS_IPC_MSG_DEFAULT_SIZE) 
+			reallocsize = len;
+
+		/* Realloc data portion */
+		msg->data = g_realloc (msg->data, msg->size + reallocsize);
+		msg->size += reallocsize;
+		XMMS_DBG ("Realloc to size %d", msg->size);
+	}
 	memcpy (&msg->data[msg->data_length], data, len);
 	msg->data_length += len;
 
@@ -307,7 +333,7 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	if (!str)
 		return xmms_ipc_msg_put_uint32 (msg, 0);
 	
-	if ((msg->data_length + strlen (str) + 5) > XMMS_IPC_MSG_DATA_SIZE)
+	if ((msg->data_length + strlen (str) + 5) > XMMS_IPC_MSG_MAX_SIZE)
 		return NULL;
 
 	xmms_ipc_msg_put_uint32 (msg, strlen (str) + 1);
