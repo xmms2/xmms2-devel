@@ -99,7 +99,7 @@ xmms_cdae_cddb_url (xmms_cdae_toc_t *toc)
 				toc->last_track - toc->first_track + 1,
 				tmp,
 				(toc->leadout.minute * 60) + toc->leadout.second,
-				XMMS_VERSION);
+				XMMS_SHORT_VERSION);
 
 	g_free (tmp);
 
@@ -115,7 +115,7 @@ xmms_cdae_cddb_read_url (guint discid, gchar *category)
 	ret = g_strdup_printf ("%s+%08x&hello=nobody+localhost+XMMS+%s&proto=1",
 				category,
 				discid,
-				XMMS_VERSION);
+				XMMS_SHORT_VERSION);
 
 	return ret;
 }
@@ -218,6 +218,8 @@ xmms_cdae_cddb_request (xmms_cdae_toc_t *toc, gchar *server)
 
 	cddburl = g_strdup_printf ("http://%s%s%s", server, CDDB_READ, url);
 	info->state = 2;
+
+	XMMS_DBG ("Read url: %s", cddburl);
 
 	file = g_strdup_printf ("%s/.cddb/%08x", g_get_home_dir (), info->discid);
 

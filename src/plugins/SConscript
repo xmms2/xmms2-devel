@@ -127,6 +127,8 @@ cdae = base_env.Copy()
 ossrc=""
 if cdae.sys == 'Linux':
 	ossrc = 'cde/os_linux.c'
+elif cdae.sys == 'FreeBSD' :
+	ossrc = 'cde/os_freebsd.c'
 
 if len (ossrc) > 1:
 	cdae_sources = Split ("cde/cdtransport.c " + ossrc)
