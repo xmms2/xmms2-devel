@@ -33,12 +33,6 @@
 #define XMMS_OUTPUT_DEFAULT "coreaudio"
 #endif
 
-/* Buffersizes */
-#ifdef XMMS_OS_DARWIN /* CoreAudio would like a bigger buffer to avoid skips */
-#define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "131072"
-#else
-#define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "32768"
-#endif
 
 
 
@@ -50,7 +44,12 @@ typedef struct xmms_output_St xmms_output_t;
 
 #include "xmms/config.h"
 #include "xmms/plugin.h"
-#include "xmms/playback.h"
+
+typedef enum {
+	XMMS_PLAYBACK_PLAY,
+	XMMS_PLAYBACK_STOP,
+	XMMS_PLAYBACK_PAUSE,
+} xmms_playback_status_t; /** @todo RENAME */
 
 /*
  * Output plugin methods
@@ -79,7 +78,7 @@ void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
 gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right);
 
 void xmms_output_flush (xmms_output_t *output);
-void xmms_output_pause (xmms_output_t *output);
+void xmms_output_pause (xmms_output_t *output, xmms_error_t *error);
 void xmms_output_resume (xmms_output_t *output);
 gboolean xmms_output_is_paused (xmms_output_t *output);
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);

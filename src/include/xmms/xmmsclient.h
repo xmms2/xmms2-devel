@@ -60,6 +60,7 @@ xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int
 xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 xmmsc_result_t *xmmsc_playlist_entry_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_changed (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
 
 xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c);

@@ -28,7 +28,6 @@
 #endif
 
 #include "xmms/log.h"
-#include "xmms/core.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -70,6 +69,9 @@ xmms_log_initialize (const gchar *filename)
 		xmms_log_stream = stdout;
 	} else if (strcmp (filename, "stderr") == 0) {
 		xmms_log_stream = stderr;
+		xmms_log_filename = g_strdup (filename);
+	} else if (strcmp (filename, "null") == 0) {
+		xmms_log_stream = NULL;
 		xmms_log_filename = g_strdup (filename);
 	} else {
 

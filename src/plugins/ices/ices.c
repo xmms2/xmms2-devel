@@ -31,7 +31,6 @@
 #include "xmms/ringbuf.h"
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
-#include "xmms/core.h"
 #include "xmms/signal_xmms.h"
 
 #include <math.h>
@@ -280,8 +279,6 @@ static void
 xmms_ices_deinit (xmms_effect_t *effect) 
 {
 }
-
-extern xmms_core_t *core;
 
 static void
 xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)

@@ -30,7 +30,6 @@
 #include "xmms/ringbuf.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/playlist.h"
-#include "xmms/core.h"
 
 #include "internal/transport_int.h"
 #include "internal/plugin_int.h"
@@ -68,8 +67,6 @@ struct xmms_transport_St {
 	/** Object for emiting signals */
 	xmms_object_t object;
 	xmms_plugin_t *plugin; /**< The plugin used as media. */
-
-	xmms_core_t *core;
 
 	/** The entry that are transported.
 	 * The url will be extracted from this
@@ -115,7 +112,7 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 	if (!transport)
 		return list;
 
-	g_mutex_lock (transport->mutex);
+	XMMS_MTX_LOCK (transport->mutex);
 	tmp = g_strdup_printf ("transport.total_bytes=%llu", transport->total_bytes);
 	list = g_list_append (list, tmp);
 	tmp2 = xmms_util_encode_path (xmms_playlist_entry_url_get (transport->entry));
@@ -126,7 +123,7 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 	list = g_list_append (list, tmp);
 	tmp = g_strdup_printf ("transport.buffer_underruns=%u", transport->buffer_underruns);
 	list = g_list_append (list, tmp);
-	g_mutex_unlock (transport->mutex);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return list;
 }
@@ -142,11 +139,11 @@ xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size)
 	g_return_if_fail (transport);
 	g_return_if_fail (size);
 
-	g_mutex_lock (transport->mutex);
+	XMMS_MTX_LOCK (transport->mutex);
 	xmms_ringbuf_destroy (transport->buffer);
 	transport->buffer = xmms_ringbuf_new (size);
 
-	g_mutex_unlock (transport->mutex);
+	XMMS_MTX_UNLOCK (transport->mutex);
 }
 
 /**
@@ -357,12 +354,10 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
  * xmms_transport_close ()
  */
 xmms_transport_t *
-xmms_transport_new (xmms_core_t *core)
+xmms_transport_new ()
 {
 	xmms_transport_t *transport;
 	xmms_config_value_t *val;
-
-	g_return_val_if_fail (core, NULL);
 
 	val = xmms_config_lookup ("core.transport_buffersize");
 
@@ -372,7 +367,6 @@ xmms_transport_new (xmms_core_t *core)
 	transport->mime_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 	transport->buffering = FALSE; /* maybe should be true? */
-	transport->core = core;
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
@@ -430,25 +424,24 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 /**
  * Updates the current entry 
  */
-
 void
 xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
-	xmms_playlist_t *playlist;
 	g_return_if_fail (transport);
 	g_return_if_fail (entry);
 
-	playlist = xmms_core_playlist_get (xmms_transport_core_get (transport));
 	xmms_playlist_entry_property_copy (entry, transport->entry);
-	xmms_playlist_entry_changed (playlist, transport->entry);
 }
 
-xmms_core_t *
-xmms_transport_core_get (xmms_transport_t *transport)
+void
+xmms_transport_mediainfo_property_set (xmms_transport_t *transport, gchar *key, gchar *value)
 {
-	g_return_val_if_fail (transport, NULL);
+	g_return_if_fail (transport);
+	g_return_if_fail (transport->entry);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
 
-	return transport->core;
+	xmms_playlist_entry_property_set (transport->entry, key, value);
 }
 
 /**

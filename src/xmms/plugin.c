@@ -299,7 +299,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 		return;
 	}
 
-	g_mutex_lock (xmms_plugin_mtx);
+	XMMS_MTX_LOCK (xmms_plugin_mtx);
 	while ((name = g_dir_read_name (d))) {
 		if (strncmp (name, "lib", 3) != 0)
 			continue;
@@ -350,7 +350,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 
 		g_free (path);
 	}
-	g_mutex_unlock (xmms_plugin_mtx);
+	XMMS_MTX_UNLOCK (xmms_plugin_mtx);
 	g_dir_close (d);
 }
 
@@ -383,7 +383,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 {
 	GList *list = NULL, *node;
 
-	g_mutex_lock (xmms_plugin_mtx);
+	XMMS_MTX_LOCK (xmms_plugin_mtx);
 
 	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
 		xmms_plugin_t *plugin = node->data;
@@ -394,7 +394,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 		}
 	}
 	
-	g_mutex_unlock (xmms_plugin_mtx);
+	XMMS_MTX_UNLOCK (xmms_plugin_mtx);
 	
 	return list;
 }
@@ -477,7 +477,7 @@ xmms_plugin_lock (xmms_plugin_t *plugin)
 {
 	g_return_if_fail (plugin);
 
-	g_mutex_lock (plugin->mtx);
+	XMMS_MTX_LOCK (plugin->mtx);
 }
 
 inline static void 
@@ -485,7 +485,7 @@ xmms_plugin_unlock (xmms_plugin_t *plugin)
 {
 	g_return_if_fail (plugin);
 
-	g_mutex_unlock (plugin->mtx);
+	XMMS_MTX_UNLOCK (plugin->mtx);
 }
 
 static gchar *

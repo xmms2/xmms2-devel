@@ -147,10 +147,10 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void *stream)
 
 	data = xmms_transport_private_data_get (transport);
 
-	g_mutex_lock (data->mutex);
+	XMMS_MTX_LOCK (data->mutex);
 	xmms_ringbuf_wait_free (data->buffer, size*nmemb, data->mutex);
 	xmms_ringbuf_write (data->buffer, ptr, size*nmemb);
-	g_mutex_unlock (data->mutex);
+	XMMS_MTX_UNLOCK (data->mutex);
 
 	//XMMS_DBG ("Wrote %d bytes to the CURL buffer", size*nmemb);
 
@@ -295,9 +295,9 @@ xmms_curl_close (xmms_transport_t *transport)
 
 	data->run = FALSE;
 
-	g_mutex_lock (data->mutex);
+	XMMS_MTX_LOCK (data->mutex);
 	xmms_ringbuf_clear (data->buffer);
-	g_mutex_unlock (data->mutex);
+	XMMS_MTX_UNLOCK (data->mutex);
 
 	XMMS_DBG ("Waiting for thread...");
 	g_thread_join (data->thread);
@@ -343,17 +343,17 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "prebuffersize");
 		size = xmms_config_value_int_get (val);
 		XMMS_DBG ("Prebuffer %d bytes...", size);
-		g_mutex_lock (data->mutex);
+		XMMS_MTX_LOCK (data->mutex);
 		xmms_ringbuf_wait_used (data->buffer, size, data->mutex);
-		g_mutex_unlock (data->mutex);
+		XMMS_MTX_UNLOCK (data->mutex);
 		XMMS_DBG ("Prebuffer done ... ");
 
 		return 0;
 	}
 
-	g_mutex_lock (data->mutex);
+	XMMS_MTX_LOCK (data->mutex);
 	ret = xmms_ringbuf_read (data->buffer, buffer, len);
-	g_mutex_unlock (data->mutex);
+	XMMS_MTX_UNLOCK (data->mutex);
 
 	if (xmms_ringbuf_bytes_used (data->buffer) < 8128)
 		XMMS_DBG ("Buffer is very small!");

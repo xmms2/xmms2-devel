@@ -41,6 +41,38 @@
  * @{
  */
 
+xmmsc_result_t *
+xmmsc_playlist_current_id (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_CURRENTID);
+	xmmsc_result_restartable (res, c, XMMS_SIGNAL_PLAYLIST_CURRENTID);
+	return res;
+}
+
+unsigned int
+xmmscs_playlist_current_id (xmmsc_connection_t *c)
+{
+	int ret = 0;
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_current_id (c);
+	if (!res)
+		return 0;
+
+	xmmsc_result_wait (res);
+
+	if (!xmmsc_result_get_uint (res, &ret)) {
+		xmmsc_result_unref (res);
+		return 0;
+	}
+
+	xmmsc_result_unref (res);
+
+	return ret;
+
+}
+
 /**
  * Shuffles the current playlist.
  */
@@ -277,6 +309,25 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 
 	xmmsc_result_unref (res);
 	return ret;
+}
+
+xmmsc_result_t *
+xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
+{
+	DBusMessage *msg;
+	DBusMessageIter itr;
+	xmmsc_result_t *res;
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_uint32 (&itr, type);
+	dbus_message_iter_append_int32 (&itr, moment);
+
+	res = xmmsc_send_msg (c, msg);
+
+	dbus_message_unref (msg);
+
+	return res;
 }
 
 static int
