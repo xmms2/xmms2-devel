@@ -125,24 +125,25 @@ xmms_config_parse_end (GMarkupParseContext *ctx,
 		case XMMS_CONFIG_STATE_SECTION:
 			g_free (st->where[0]);
 			st->where[0] = NULL;
+			st->state = XMMS_CONFIG_STATE_START;
 			break;
 		case XMMS_CONFIG_STATE_PLUGIN:
 			g_free (st->where[1]);
 			st->where[1] = NULL;
+			st->state = XMMS_CONFIG_STATE_SECTION;
 			break;
 		case XMMS_CONFIG_STATE_VALUE:
 			if (st->prevstate == XMMS_CONFIG_STATE_SECTION) {
 				g_free (st->where[1]);
 				st->where[1] = NULL;
+				st->state = XMMS_CONFIG_STATE_SECTION;
 			} else {
 				g_free (st->where[2]);
 				st->where[2] = NULL;
+				st->state = XMMS_CONFIG_STATE_PLUGIN;
 			}
 			break;
 	}
-
-
-	st->state = st->prevstate;
 
 }
 
