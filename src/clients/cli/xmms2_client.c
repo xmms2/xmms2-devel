@@ -491,6 +491,7 @@ main (int argc, char **argv)
 {
 	xmmsc_connection_t *connection;
 	char *path;
+	char *dbuspath;
 	int i;
 
 	connection = xmmsc_init ();
@@ -499,8 +500,15 @@ main (int argc, char **argv)
 		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
 	}
 
-	
-	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	dbuspath = getenv ("DBUS_PATH");
+	if (!dbuspath) {
+		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	} else {
+		path = dbuspath;
+	}
+
+	print_info ("Using path: %s", path);
+
 	if (!xmmsc_connect (connection, path)) {
 		print_error ("Could not connect to xmms2d: %s", xmmsc_get_last_error (connection));
 	}
