@@ -1,12 +1,11 @@
 
 INCLUDES=@XMMS_CFLAGS@ @GLIB_CFLAGS@ @XML_CFLAGS@ @DBUS_CFLAGS@
 
-bin_PROGRAMS=xmms2 xmms2_client medialibtool
-
+bin_PROGRAMS=xmms2d medialibtool
 
 sysconf_DATA = xmms2.conf
 
-xmms2_SOURCES=main.c \
+xmms2d_SOURCES=main.c \
 	config_xmms.c config_xmms.h \
 	plugin.c plugin.h \
 	object.c object.h \
@@ -21,11 +20,7 @@ xmms2_SOURCES=main.c \
 	dbus.c dbus.h \
 	core.c core.h
 
-xmms2_LDADD = @GLIB_LIBS@ @XML_LIBS@ @DBUS_LIBS@ @DBUSGLIB_LIBS@
-
-xmms2_client_SOURCES = xmms2_client.c
-
-xmms2_client_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ @DBUSGLIB_LIBS@
+xmms2d_LDADD = @GLIB_LIBS@ @XML_LIBS@ @DBUS_LIBS@ @DBUSGLIB_LIBS@
 
 medialibtool_SOURCES=medialibtool.c \
 	config_xmms.c config_xmms.h \
@@ -42,5 +37,3 @@ medialibtool_SOURCES=medialibtool.c \
 
 
 medialibtool_LDADD = @GLIB_LIBS@ @XML_LIBS@
-
-

@@ -1,1 +1,1 @@
-SUBDIRS=xmms plugins
+SUBDIRS=xmms clients plugins

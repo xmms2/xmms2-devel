@@ -62,6 +62,8 @@ AC_OUTPUT([
 Makefile
 src/Makefile
 src/xmms/Makefile
+src/clients/Makefile
+src/clients/cli/Makefile
 src/plugins/Makefile
 src/plugins/mad/Makefile
 src/plugins/vorbis/Makefile
