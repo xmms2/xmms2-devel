@@ -155,22 +155,22 @@ main (int argc, char **argv)
 	xmms_core_set_playlist (playlist);
 	if (optind) {
 		while (argv[optind]) {
-			gchar nuri[XMMS_MAX_URI_LEN];
+			gchar nurl[XMMS_MAX_URI_LEN];
 			if (!strchr (argv[optind], ':')) {
 				XMMS_DBG ("No protocol, assuming file");
 				if (argv[optind][0] == '/') {
-					g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s", argv[optind]);
+					g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s", argv[optind]);
 				} else {
 					gchar *cwd = g_get_current_dir ();
-					g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[optind]);
+					g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[optind]);
 					g_free (cwd);
 				}
 			} else {
-				g_snprintf (nuri, XMMS_MAX_URI_LEN, "%s", argv[optind]);
+				g_snprintf (nurl, XMMS_MAX_URI_LEN, "%s", argv[optind]);
 			}
 				
-			XMMS_DBG ("Adding uri %s to playlist", nuri);
-			xmms_playlist_add (playlist, xmms_playlist_entry_new (nuri), XMMS_PLAYLIST_APPEND);
+			XMMS_DBG ("Adding url %s to playlist", nurl);
+			xmms_playlist_add (playlist, xmms_playlist_entry_new (nurl), XMMS_PLAYLIST_APPEND);
 			optind++;
 		}
 	}

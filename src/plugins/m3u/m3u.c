@@ -203,8 +203,8 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 		xmms_playlist_entry_t *entry;
 		gchar *d, *artist, *title;
 		gint duration;
-		gchar *uri;
-		gchar *uri2;
+		gchar *url;
+		gchar *url2;
 
 		entry = (xmms_playlist_entry_t *)tmp->data;
 
@@ -234,19 +234,19 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 			g_free (t);
 		}
 
-		uri2 = xmms_util_decode_path (xmms_playlist_entry_url_get (entry));
-		uri = strchr (uri2, ':');
-		if (!uri)
+		url2 = xmms_util_decode_path (xmms_playlist_entry_url_get (entry));
+		url = strchr (url2, ':');
+		if (!url)
 			continue;
 
-		uri = uri + 2;
+		url = url + 2;
 
-		uri = g_strdup_printf ("%s\n", uri);
+		url = g_strdup_printf ("%s\n", url);
 
-		fwrite (uri, strlen (uri), 1, fp);
+		fwrite (url, strlen (url), 1, fp);
 
-		g_free (uri);
-		g_free (uri2);
+		g_free (url);
+		g_free (url2);
 	}
 	
 	fclose (fp);

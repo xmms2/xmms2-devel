@@ -30,7 +30,7 @@ print_mediainfo (GHashTable *entry)
 	if (!entry)
 		return;
 
-	url = (gchar *)g_hash_table_lookup (entry, "uri");
+	url = (gchar *)g_hash_table_lookup (entry, "url");
 	url = xmmsc_decode_path (url);
 	printf ("URI:    %s\n", url);
 	g_free (url);
@@ -136,7 +136,7 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 	gchar *artist;
 	gchar *title;
 	gchar *str;
-	gchar *uri;
+	gchar *url;
 	gchar *duration;
 	guint id;
 	guint tme;
@@ -145,7 +145,7 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 	id = GPOINTER_TO_UINT (g_hash_table_lookup (entry, "id"));
 	artist = (gchar *)g_hash_table_lookup (entry, "artist");
 	title = (gchar *)g_hash_table_lookup (entry, "title");
-	uri = (gchar *)g_hash_table_lookup (entry, "uri");
+	url = (gchar *)g_hash_table_lookup (entry, "url");
 	duration = (gchar *)g_hash_table_lookup (entry, "duration");
 
 	if (tme && duration)
@@ -158,9 +158,9 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 	if (artist && title) {
 		str = g_strdup_printf ("%s - %s", artist, title);
 	} else {
-		str = strrchr (uri, '/');
+		str = strrchr (url, '/');
 		if (!str || !str[1])
-			str = uri;
+			str = url;
 		else
 			str++;
 
@@ -426,20 +426,20 @@ main(int argc, char **argv)
 				return 1;
 			}
 			for (i=2;i<argc;i++) {
-				gchar nuri[XMMS_MAX_URI_LEN];
+				gchar nurl[XMMS_MAX_URI_LEN];
 				if (!strchr (argv[i], ':')) {
 					if (argv[i][0] == '/') {
-						g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s", argv[i]);
+						g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s", argv[i]);
 					} else {
 						gchar *cwd = g_get_current_dir ();
-						g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[i]);
+						g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[i]);
 						g_free (cwd);
 					}
 				} else {
-					g_snprintf (nuri, XMMS_MAX_URI_LEN, "%s", argv[i]);
+					g_snprintf (nurl, XMMS_MAX_URI_LEN, "%s", argv[i]);
 				}
 
-				xmmsc_playlist_add (c, xmmsc_encode_path (nuri));
+				xmmsc_playlist_add (c, xmmsc_encode_path (nurl));
 			}
 			xmmsc_deinit (c);
 			exit (0);

@@ -131,7 +131,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			xmms_playlist_entry_mimetype_set (entry, mime);
 			decoder = xmms_decoder_new ();
-			if (xmms_decoder_open (decoder, entry)) {
+			if (!xmms_decoder_open (decoder, entry)) {
 				xmms_playlist_entry_unref (entry);
 				xmms_transport_close (transport);
 				xmms_decoder_destroy (decoder);

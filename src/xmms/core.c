@@ -155,9 +155,9 @@ xmms_core_mediainfo_add_entry (guint id)
 }
 
 void
-xmms_core_playlist_adduri (gchar *nuri)
+xmms_core_playlist_addurl (gchar *nurl)
 {
-	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nuri);
+	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
 	xmms_playlist_add (core->playlist, entry, XMMS_PLAYLIST_APPEND);
 }
 
@@ -469,15 +469,15 @@ xmms_core_get_mediainfo (xmms_playlist_entry_t *entry)
 }
 
 /**
- * Get uri of current playing song.
+ * Get url of current playing song.
  *
- * Returns a copy of the uri to the song currently playing. I.e it
+ * Returns a copy of the url to the song currently playing. I.e it
  * should be freed by the caller.
  *
- * @returns uri or NULL if no song beeing played.
+ * @returns url or NULL if no song beeing played.
  */
 gchar *
-xmms_core_get_uri ()
+xmms_core_get_url ()
 {
 	if (core->curr_song)
 		return xmms_playlist_entry_url_get (core->curr_song);

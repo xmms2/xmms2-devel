@@ -50,8 +50,8 @@ typedef struct {
  * Function prototypes
  */
 
-static gboolean xmms_curl_can_handle (const gchar *uri);
-static gboolean xmms_curl_init (xmms_transport_t *transport, const gchar *uri);
+static gboolean xmms_curl_can_handle (const gchar *url);
+static gboolean xmms_curl_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_curl_close (xmms_transport_t *transport);
 static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_curl_size (xmms_transport_t *transport);
@@ -91,12 +91,12 @@ xmms_plugin_get (void)
  */
 
 static gboolean
-xmms_curl_can_handle (const gchar *uri)
+xmms_curl_can_handle (const gchar *url)
 {
 	gchar *dec;
-	g_return_val_if_fail (uri, FALSE);
+	g_return_val_if_fail (url, FALSE);
 
-	dec = xmms_util_decode_path (uri);
+	dec = xmms_util_decode_path (url);
 
 	XMMS_DBG ("xmms_curl_can_handle (%s)", dec);
 	
@@ -159,14 +159,14 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 }
 
 CURL *
-xmms_curl_easy_new (xmms_transport_t *transport, const gchar *uri, gint offset)
+xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 {
 	struct curl_slist *headerlist = NULL;
 	xmms_curl_data_t *data;
 	CURL *curl;
 
 	g_return_val_if_fail (transport, NULL);
-	g_return_val_if_fail (uri, NULL);
+	g_return_val_if_fail (url, NULL);
 
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, NULL);
@@ -177,7 +177,7 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *uri, gint offset)
 
 	curl = curl_easy_init ();
 
-	curl_easy_setopt (curl, CURLOPT_URL, xmms_util_decode_path (uri));
+	curl_easy_setopt (curl, CURLOPT_URL, xmms_util_decode_path (url));
 	curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, xmms_curl_cwrite);
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, transport);
@@ -191,26 +191,26 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *uri, gint offset)
 }
 
 static gboolean
-xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
+xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
 	
 	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (uri, FALSE);
+	g_return_val_if_fail (url, FALSE);
 
 	data = g_new0 (xmms_curl_data_t, 1);
 
 	data->curlm = curl_multi_init ();
 	data->mime = NULL;
 	data->stream = FALSE;
-	data->url = g_strdup (uri);
+	data->url = g_strdup (url);
 	
 	xmms_transport_plugin_data_set (transport, data);
 	
 	g_return_val_if_fail (data->curlm, FALSE);
 
 
-	data->curl = xmms_curl_easy_new (transport, uri, 0);
+	data->curl = xmms_curl_easy_new (transport, url, 0);
 
 	curl_multi_add_handle (data->curlm, data->curl);
 

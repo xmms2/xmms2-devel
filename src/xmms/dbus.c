@@ -601,10 +601,10 @@ handle_playlist_add (DBusConnection *conn, DBusMessage *msg)
  
         dbus_message_iter_init (msg, &itr);
         if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
-                gchar *uri = dbus_message_iter_get_string (&itr);
-                XMMS_DBG ("adding to playlist: %s", uri);
-                xmms_core_playlist_adduri (uri);
-		g_free (uri);
+                gchar *url = dbus_message_iter_get_string (&itr);
+                XMMS_DBG ("adding to playlist: %s", url);
+                xmms_core_playlist_addurl (url);
+		g_free (url);
         }
 	
 	return TRUE;
@@ -717,7 +717,7 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
         }
 
         if (entry) {
-                gchar *uri = xmms_playlist_entry_url_get (entry);
+                gchar *url = xmms_playlist_entry_url_get (entry);
 
 		reply = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
 
@@ -728,10 +728,10 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
 		dbus_message_iter_append_dict_key (&dictitr, "id");
 		dbus_message_iter_append_uint32 (&dictitr, id);
 
-		/* add uri to Dict */
-                if (uri) {
-                        dbus_message_iter_append_dict_key (&dictitr, "uri");
-                        dbus_message_iter_append_string (&dictitr, uri);
+		/* add url to Dict */
+                if (url) {
+                        dbus_message_iter_append_dict_key (&dictitr, "url");
+                        dbus_message_iter_append_string (&dictitr, url);
                 }
 
 		/* add the rest of the properties to Dict */

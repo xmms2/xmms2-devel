@@ -98,7 +98,7 @@ xmms_sqlite_new (xmms_medialib_t *medialib)
 		return FALSE;
 	}
 
-	sqlite_exec (sql, "create table song (id int primary_key, uri, " 
+	sqlite_exec (sql, "create table song (id int primary_key, url, " 
 			XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST ","
 			XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM ","
 			XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE ","
@@ -168,7 +168,7 @@ xmms_sqlite_foreach (void *pArg, int argc, char **argv, char **columnName)
 			continue;
 		}
 
-		if (g_strcasecmp (columnName[i], "uri") == 0)
+		if (g_strcasecmp (columnName[i], "url") == 0)
 			xmms_playlist_entry_url_set (entry, argv[i]);
 		
 		if (g_strcasecmp (columnName[i], "title") == 0)
@@ -263,7 +263,7 @@ xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search)
 	gchar *query;
 	GList *ret;
 	gchar *err;
-	gchar *uri;
+	gchar *url;
 
 	g_return_val_if_fail (medialib, NULL);
 	g_return_val_if_fail (search, NULL);
@@ -272,15 +272,15 @@ xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search)
 
 	g_return_val_if_fail (data, NULL);
 
-	uri = xmms_playlist_entry_url_get (search);
+	url = xmms_playlist_entry_url_get (search);
 
-	if (uri) {
+	if (url) {
 		gchar *p;
 
-		while ((p=strchr (uri, '*')))
+		while ((p=strchr (url, '*')))
 			*p='%';
 
-		query = g_strdup_printf ("SELECT * FROM SONG WHERE URI LIKE \"%s\" ", uri);
+		query = g_strdup_printf ("SELECT * FROM SONG WHERE URI LIKE \"%s\" ", url);
 	} else {
 		query = g_strdup_printf ("SELECT * FROM SONG ");
 	}
@@ -381,11 +381,11 @@ xmms_sqlite_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 		goto cleanup;
 
 	if (props) {
-		query = g_strdup_printf ("INSERT INTO SONG (uri, %s, properties) VALUES (\"%s\", %s, \"%s\")",
+		query = g_strdup_printf ("INSERT INTO SONG (url, %s, properties) VALUES (\"%s\", %s, \"%s\")",
 				keys, xmms_playlist_entry_url_get (entry),
 				values, props);
 	} else {
-		query = g_strdup_printf ("INSERT INTO SONG (uri, %s) VALUES (\"%s\", %s)",
+		query = g_strdup_printf ("INSERT INTO SONG (url, %s) VALUES (\"%s\", %s)",
 				keys,
 				xmms_playlist_entry_url_get (entry),
 				values);
