@@ -959,6 +959,28 @@ cdef class XMMS :
 		
 		return ret
 
+	def BroadcastConfigvalChanged (self, myClass = None) :
+		"""
+		Set a class to handle the config value changed broadcast
+		from the XMMS2 daemon. (i.e. some configuration value has
+		been modified) Note: the handler class is usually a child of
+		the XMMSResult class.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is updated with the
+		appropriate info. (the modified config key and its value)
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else:
+			ret = XMMSResult ()
+
+		ret.res = xmmsc_broadcast_configval_changed (self.conn)
+		ret.MoreInit (1)
+
+		return ret
+
 	def ConfigvalSet (self, key, val, myClass = None) :
 		"""
 		Set a configuration value on the daemon, given a key.
