@@ -197,6 +197,7 @@ xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
 	g_return_if_fail (output);
 
 	g_mutex_lock (output->mutex);
+	xmms_output_decoder_start (output);
 	if (output->decoder) {
 		xmms_decoder_stop (output->decoder);
 	}
