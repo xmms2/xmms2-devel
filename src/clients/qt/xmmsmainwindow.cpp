@@ -18,6 +18,10 @@
 #include "xmms/signal_xmms.h"
 
 #include "internal/xhash-int.h"
+#include "internal/xlist-int.h"
+
+#define FFT_BITS 	10
+#define FFT_LEN  	(1<<FFT_BITS)
 
 static void
 handle_currentid (void *userdata, void *arg) {
@@ -113,6 +117,7 @@ handle_playlist_add (void *userdata, void *arg)
 	mw->add (XPOINTER_TO_INT (arg));
 }
 
+
 static void
 handle_playlist_mediainfo (void *userdata, void *arg)
 {
@@ -173,6 +178,65 @@ handle_playlist_mediainfo (void *userdata, void *arg)
 	xmmsc_playlist_entry_free (tab);
 }
 
+static void
+vis_enqueue (void *userdata, uint time, float *data) 
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	x_list_t *vis_time = mw->getVisTime();
+	x_list_t *vis_data = mw->getVisData();
+
+	printf ("time: %i data: %f\n", time, data[1]);
+	
+	vis_time = x_list_append (vis_time, XINT_TO_POINTER(time));
+	vis_data = x_list_append (vis_data, data); 
+}
+
+static float * 
+vis_dequeue (void *userdata, uint time) 
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	x_list_t *vis_time = mw->getVisTime();
+	x_list_t *vis_data = mw->getVisData();
+	
+	float *retval;
+	
+	if (!vis_data) {
+		return NULL;
+	}
+
+	while ((time > XPOINTER_TO_INT (vis_time->data)) && vis_data->next) {
+			printf ("dequeue: %i\n", vis_time->data);
+			vis_data = x_list_delete_link (vis_data, vis_data);
+			vis_time = x_list_delete_link (vis_time, vis_time);
+	}
+
+	retval = (float *)vis_data->data;
+
+	vis_data = x_list_delete_link (vis_data, vis_data);
+	vis_time = x_list_delete_link (vis_time, vis_time);
+
+	return retval;
+}
+
+
+static void
+handle_vis_data (void *userdata, void *arg) 
+{
+	double *s = (double *)arg;
+	int time = (int)s[0];
+	int i;
+	float *spec;
+
+	spec = (float *)malloc (FFT_LEN/2*sizeof(float));
+
+	for (i = 0; i < FFT_LEN/2; i++) {
+		printf ("data: %i\n", s[i+1]);
+		spec[i] = s[i+1];
+	}
+
+	vis_enqueue (userdata, time - 300, spec);
+	
+}
 
 XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) : 
 			QMainWindow (0, "XMMSMainWindow", WDestructiveClose)
@@ -199,9 +263,13 @@ XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) :
 
 	m_citem = NULL;
 
+	m_vis_data = NULL;
+	m_vis_time = NULL;
+	
 	/* id hash table */
 	m_idhash = x_hash_new (x_direct_hash, x_direct_equal);
 	
+	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_VISUALISATION_SPECTRUM, handle_vis_data, (void*)this);
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*)this);
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void*)this);
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_LIST, handle_playlist_list, (void*)this);

@@ -27,6 +27,7 @@
 #include <qlabel.h>
 #include <xmms/xmmsclient-qt.h>
 #include <internal/xhash-int.h>
+#include <internal/xlist-int.h>
 
 #include "xmmslistview.h"
 #include "xmmstoolbar.h"
@@ -55,7 +56,8 @@ public:
 	QLabel *bartxt (void) { return m_bartxt; };
 	bool barBusy (void) { return m_barbusy; };
 	void setBarBusy (bool m) { m_barbusy = m; };
-
+	x_list_t *getVisTime (void) { return m_vis_time; };
+	x_list_t *getVisData (void) { return m_vis_data; };
 protected:
 	XMMSListView *m_listview;
 	XMMSToolbar *m_toolbar;
@@ -68,6 +70,8 @@ protected:
 	int m_id;
 	x_hash_t *m_idhash;
 	bool m_barbusy;
+	x_list_t *m_vis_data;
+	x_list_t *m_vis_time;
 };
 
 #endif

@@ -29,6 +29,10 @@
 
 #include "xutil-int.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _x_list_t		x_list_t;
 
 struct _x_list_t
@@ -92,6 +96,10 @@ void * x_list_nth_data       (x_list_t            *list,
 
 #define x_list_previous(list)	((list) ? (((x_list_t *)(list))->prev) : NULL)
 #define x_list_next(list)	((list) ? (((x_list_t *)(list))->next) : NULL)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __X_LIST_H__ */
 
