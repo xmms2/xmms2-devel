@@ -29,6 +29,7 @@
 #define XMMS_PLUGIN_METHOD_READ_PLAYLIST "read_playlist"
 #define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST "write_playlist"
 #define XMMS_PLUGIN_METHOD_PROCESS "process"
+#define XMMS_PLUGIN_METHOD_FLUSH "flush"
 
 /*
  * Plugin properties.

@@ -31,6 +31,7 @@ typedef struct xmms_oss_data_St {
 
 static gboolean xmms_oss_open (xmms_output_t *output);
 static void xmms_oss_close (xmms_output_t *output);
+static void xmms_oss_flush (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
 static guint xmms_oss_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_oss_buffersize_get (xmms_output_t *output);
@@ -56,6 +57,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_oss_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_oss_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_oss_buffersize_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_oss_flush);
 
 	return plugin;
 }
@@ -78,6 +80,20 @@ xmms_oss_buffersize_get (xmms_output_t *output)
 		return (buf_info.fragstotal * buf_info.fragsize) - buf_info.bytes;
 	}
 	return 0;
+}
+
+static void
+xmms_oss_flush (xmms_output_t *output)
+{
+	xmms_oss_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_plugin_data_get (output);
+	g_return_if_fail (data);
+
+	/* reset soundcard buffer */
+	ioctl (data->fd, SNDCTL_DSP_RESET, 0);
+
 }
 
 static gboolean

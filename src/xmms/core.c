@@ -312,6 +312,8 @@ core_thread (gpointer data)
 		xmms_decoder_destroy (decoder);
 		XMMS_DBG ("closing transport");
 		xmms_transport_close (transport);
+		XMMS_DBG ("Flushing buffers");
+		xmms_output_flush (core->output);
 		
 	}
 

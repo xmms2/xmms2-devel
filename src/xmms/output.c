@@ -234,6 +234,24 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
 	return output;
 }
 
+void
+xmms_output_flush (xmms_output_t *output)
+{
+	xmms_output_flush_method_t flush;
+
+	g_return_if_fail (output);
+	
+	flush = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FLUSH);
+	g_return_if_fail (flush);
+
+	g_mutex_lock (output->mutex);
+
+	xmms_ringbuf_clear (output->buffer);
+
+	flush (output);
+
+	g_mutex_unlock (output->mutex);
+}
 
 xmms_plugin_t *
 xmms_output_find_plugin (gchar *name)
