@@ -106,6 +106,9 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_medialib_select (xmmsc_connection_t *conn, char *query)
+	xmmsc_result_t *xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn, char *name)
+	xmmsc_result_t *xmmsc_medialib_playlist_load (xmmsc_connection_t *conn, char *name)
+	xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, char *url)
 
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
@@ -1048,6 +1051,57 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_select (self.conn, query)
+		ret.MoreInit ()
+		return ret
+
+	def MedialibAdd (self, file, myClass = None) :
+		"""
+		Add a entry to the MediaLib.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_add_entry (self.conn, file)
+		ret.MoreInit ()
+		return ret
+
+	def MedialibPlaylistSave (self, playlistname, myClass = None) :
+		"""
+		Save the current playlist to a medialib playlist
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_playlist_save_current (self.conn, playlistname)
+		ret.MoreInit ()
+		return ret
+
+	def MedialibPlaylistLoad (self, playlistname, myClass = None) :
+		"""
+		Load playlistname from the medialib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_playlist_load (self.conn, playlistname)
 		ret.MoreInit ()
 		return ret
 
