@@ -14,7 +14,6 @@
 #include "xmms/core.h"
 #include "xmms/playlist.h"
 #include "xmms/transport.h"
-#include "mad_misc.h"
 #include "id3.h"
 #include "xing.h"
 #include <mad.h>
@@ -334,6 +333,18 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	return TRUE;
 }
 
+gint
+clipping (mad_fixed_t v)
+{
+	if (v >= 1 << MAD_F_FRACBITS)
+		v = (1 << MAD_F_FRACBITS) - 1;
+
+	if (v <= -(1 << MAD_F_FRACBITS))
+		v = -((1 << MAD_F_FRACBITS) - 1);
+
+	return v >> (MAD_F_FRACBITS - 15);
+}
+
 static gboolean
 xmms_mad_decode_block (xmms_decoder_t *decoder)
 {
@@ -341,8 +352,6 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	xmms_transport_t *transport;
 	gchar out[1152 * 4];
 	mad_fixed_t *ch1, *ch2;
-	mad_fixed_t clipping = 0;
-	gulong clipped;
 	gint ret;
 
 	data = xmms_decoder_plugin_data_get (decoder);
@@ -366,8 +375,9 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 
 	data->buffer_length += ret;
 	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
-		
+
 	for (;;) {
+		gint i = 0;
 
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
@@ -382,9 +392,26 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		
 		ch1 = data->synth.pcm.samples[0];
 		ch2 = data->synth.pcm.samples[1];
-		
-		/* pack_pcm is stolen from Leslie, thanks :) */
-		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
+
+		/*ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);*/
+
+		for (i = 0; i < data->synth.pcm.length; i++) {
+			gint l, r;
+			
+			l = clipping (*(ch1++));
+			if (data->synth.pcm.channels > 1)
+				r = clipping (*(ch2++));
+			else
+				r = l;
+			
+			out[i*4+0] = l;
+			out[i*4+1] = l >> 8;
+			out[i*4+2] = r;
+			out[i*4+3] = r >> 8;
+		}
+
+		ret = i*4;
+
 		xmms_decoder_write (decoder, out, ret);
 
 	}
