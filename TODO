@@ -4,7 +4,12 @@ GLOBAL:
 CORE:
 	* Log should queue messages.
 	* Fix the last functions to new DBus API
-	* Fix bug in transport_read ()
+
+BUGS:
+	* seeking in stopped mode
+	* gap between songs
+	* flush on seek
+	* Fix bug in transport_read () (triggers in cdex seeking)
 
 LIB:
 	* bindings to Python / PHP?
