@@ -270,6 +270,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	size = xmms_config_value_int_get (val);
 
 	//xmms_transport_ringbuf_resize (transport, size);
+	xmms_transport_buffering_start (transport);
 
 	data->buffer = xmms_ringbuf_new (size);
 	data->mutex = g_mutex_new ();
