@@ -33,6 +33,14 @@ if base_env.HasGroup("vorbis"):
 	vorbis.AddFlagsFromGroup("vorbis")
 	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbis.c'])
 
+if base_env.HasGroup("vorbis") and base_env.HasGroup("shout") and base_env.HasGroup("vorbisenc"):
+	ices = base_env.Copy()
+	ices.AddFlagsFromGroup("glib")
+	ices.AddFlagsFromGroup("vorbis")
+	ices.AddFlagsFromGroup("vorbisenc")
+	ices.AddFlagsFromGroup("shout")
+	ices.XmmsPlugin('xmms_ices', ['ices/ices.c', 'ices/encode.c'])
+
 if base_env.HasGroup("sqlite"):
 	sqlite = base_env.Copy()
 	sqlite.AddFlagsFromGroup("glib")

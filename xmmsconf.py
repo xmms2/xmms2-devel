@@ -24,10 +24,12 @@ def checkFlags(base_env):
 	## Check for optional libs
 	##
 	base_env.CheckAndAddFlagsToGroup("qt", "pkg-config --libs --cflags qt")
+	base_env.CheckAndAddFlagsToGroup("shout", "pkg-config --libs --cflags shout")
 	base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
 	base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 	base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 	base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
+	base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 
 	##
