@@ -49,9 +49,7 @@ static void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	XMMS_DBG ("eos_reached");
-
-	xmms_core_play_next ();
-
+	g_cond_signal (core->cond);
 }
 
 /**
@@ -78,24 +76,21 @@ xmms_core_output_set (xmms_output_t *output)
 void
 xmms_core_play_next ()
 {
-	if (core->decoder) {
-		XMMS_DBG ("playing next");
-		xmms_decoder_destroy (core->decoder);
-		xmms_transport_close (xmms_decoder_transport_get (core->decoder));
-		core->decoder = NULL;
+	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
+		g_cond_signal (core->cond);
+	} else {
+		XMMS_DBG ("xmms_core_playback_next with status != XMMS_CORE_PLAYBACK_RUNNING");
 	}
 }
 
 void
 xmms_core_playback_stop ()
 {
-	if (core->decoder) {
-		XMMS_DBG ("Stopping playback");
-		xmms_transport_close (xmms_decoder_transport_get (core->decoder));
-		xmms_decoder_destroy (core->decoder);
-		core->decoder = NULL;
+	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
-		xmms_object_emit (XMMS_OBJECT (core), "playback-stopped", NULL);
+		g_cond_signal (core->cond);
+	} else {
+		XMMS_DBG ("xmms_core_playback_stop with status != XMMS_CORE_PLAYBACK_RUNNING");
 	}
 }
 
@@ -107,6 +102,8 @@ xmms_core_playback_start ()
 		/* @todo race condition? */
 		core->status = XMMS_CORE_PLAYBACK_RUNNING;
 		g_cond_signal (core->cond);
+	} else {
+		XMMS_DBG ("xmms_core_playback_start with status != XMMS_CORE_PLAYBACK_STOPPED");
 	}
 }
 
@@ -196,8 +193,10 @@ core_thread(gpointer data){
 			g_mutex_unlock (core->mutex);
 		}
 
-		if (!core->curr_song)
+		if (!core->curr_song) {
+			core->status = XMMS_CORE_PLAYBACK_STOPPED;
 			continue;
+		}
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
@@ -245,17 +244,16 @@ core_thread(gpointer data){
 		xmms_transport_start (transport);
 		XMMS_DBG ("transport started");
 		xmms_decoder_start (decoder, transport, core->output);
-		XMMS_DBG ("output started");
-		
-		core->decoder = decoder;
+		XMMS_DBG ("decoder started");
 
-		xmms_decoder_wait (core->decoder);
+		g_mutex_lock (core->mutex);
+		g_cond_wait (core->cond, core->mutex);
+		g_mutex_unlock (core->mutex);
 
-		if (core->decoder) {
-			XMMS_DBG ("closing transport");
-			xmms_transport_close (xmms_decoder_transport_get (core->decoder));
-			core->decoder = NULL;
-		}
+		XMMS_DBG ("destroying decoder");
+		xmms_decoder_destroy (decoder);
+		XMMS_DBG ("closing transport");
+		xmms_transport_close (transport);
 		
 	}
 
