@@ -31,7 +31,6 @@ struct xmms_decoder_St {
 	gboolean running;
 	GThread *thread;
 	GMutex *mutex;
-	GCond *cond;
 
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport; /**< transport associated with decoder.
@@ -176,7 +175,6 @@ xmms_decoder_new (const gchar *mimetype)
 	xmms_object_init (XMMS_OBJECT (decoder));
 	decoder->plugin = plugin;
 	decoder->mutex = g_mutex_new ();
-	decoder->cond = g_cond_new ();
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
@@ -205,8 +203,8 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
 	if (decoder->thread) {
 		xmms_decoder_lock (decoder);
 		decoder->running = FALSE;
-		g_cond_signal (decoder->cond);
 		xmms_decoder_unlock (decoder);
+		g_thread_join (decoder->thread);
 	} else {
 		xmms_decoder_destroy_real (decoder);
 	}
@@ -237,15 +235,14 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
 }
 
-void
+/*void
 xmms_decoder_wait (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
 
-	g_thread_join (decoder->thread);
 
 }
-
+*/
 xmms_playlist_entry_t *
 xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, 
 				    xmms_transport_t *transport)
@@ -283,7 +280,6 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 	if (destroy_method)
 		destroy_method (decoder);
 
-	g_cond_free (decoder->cond);
 	g_mutex_free (decoder->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (decoder));
 	g_free (decoder);
@@ -346,21 +342,19 @@ xmms_decoder_thread (gpointer data)
 	
 	xmms_decoder_lock (decoder);
 
-	while (decoder->running) {
+	while (42) {
 		gboolean ret;
 		
 		xmms_decoder_unlock (decoder);
 		ret = decode_block (decoder);
 		xmms_decoder_lock (decoder);
 		
-		if (!ret) {
-			xmms_output_set_eos (decoder->output, TRUE);
-			g_cond_wait (decoder->cond, decoder->mutex);
+		if (!ret || !decoder->running) {
+			break;
 		}
 	}
+	xmms_output_set_eos (decoder->output, TRUE);
 	g_mutex_unlock (decoder->mutex);
-
-	xmms_decoder_destroy_real (decoder);
 
 	XMMS_DBG ("Decoder thread quiting");
 
