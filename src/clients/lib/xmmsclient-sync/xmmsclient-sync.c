@@ -24,13 +24,12 @@ xmmsc_sync_wait_cmd_arg (gchar *cmd)
 	 * return arg passed to callback 
 	 */
 
-
 	xmmsc_set_callback (xmmsc_conn, cmd, handle_witharg, (void *) &arg);
-
-	xmmsc_setup_with_gmain (xmmsc_conn, NULL);
 
 	if (!mainloop)
 		mainloop = g_main_loop_new (NULL, FALSE);
+
+	xmmsc_setup_with_gmain (xmmsc_conn, NULL);
 
 	g_main_loop_run (mainloop);
 	
