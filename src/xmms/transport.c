@@ -30,7 +30,6 @@
 #include "xmms/ringbuf.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/playlist.h"
-#include "xmms/core.h"
 
 #include "internal/transport_int.h"
 #include "internal/plugin_int.h"
@@ -68,8 +67,6 @@ struct xmms_transport_St {
 	/** Object for emiting signals */
 	xmms_object_t object;
 	xmms_plugin_t *plugin; /**< The plugin used as media. */
-
-	xmms_core_t *core;
 
 	/** The entry that are transported.
 	 * The url will be extracted from this
@@ -356,12 +353,10 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
  * xmms_transport_close ()
  */
 xmms_transport_t *
-xmms_transport_new (xmms_core_t *core)
+xmms_transport_new ()
 {
 	xmms_transport_t *transport;
 	xmms_config_value_t *val;
-
-	g_return_val_if_fail (core, NULL);
 
 	val = xmms_config_lookup ("core.transport_buffersize");
 
@@ -371,7 +366,6 @@ xmms_transport_new (xmms_core_t *core)
 	transport->mime_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 	transport->buffering = FALSE; /* maybe should be true? */
-	transport->core = core;
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 
@@ -429,6 +423,7 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
  * Updates the current entry 
  */
 
+#if 0 /* FIXME */
 void
 xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
@@ -440,15 +435,7 @@ xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_e
 	xmms_playlist_entry_property_copy (entry, transport->entry);
 	xmms_playlist_entry_changed (playlist, transport->entry);
 }
-
-xmms_core_t *
-xmms_transport_core_get (xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, NULL);
-
-	return transport->core;
-}
-
+#endif
 /**
  * Gets the suburl from the transport.
  */

@@ -32,11 +32,9 @@
 
 #include "xmms/util.h"
 #include "xmms/playlist.h"
-#include "xmms/core.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/visualisation.h"
 #include "xmms/config.h"
-#include "xmms/playback.h"
 
 #include <string.h>
 
@@ -74,8 +72,6 @@ static GMutex *pending_mutex;
 static GSList *connections = NULL;
 static GHashTable *exported_objects = NULL;
 static GHashTable *pending_onchange = NULL;
-
-extern xmms_core_t *core;
 
 static void xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg);
 
@@ -120,6 +116,7 @@ xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object)
 	if (!exported_objects)
 		exported_objects = g_hash_table_new (g_str_hash, g_str_equal);
 
+	xmms_object_ref (object);
 	g_hash_table_insert (exported_objects, fullpath, object);
 
 }
@@ -506,7 +503,7 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
  *
  */
 gboolean
-xmms_dbus_init (xmms_core_t *core, const gchar *path) 
+xmms_dbus_init (const gchar *path) 
 {
         DBusError err;
 	DBusConnection *conn;

@@ -29,11 +29,13 @@
 #include <glib.h>
 
 #include "xmms/playlist.h"
+#include "internal/transport_int.h"
+#include "internal/decoder_int.h"
 #include "xmms/dbus.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
-#include "xmms/core.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/decoder.h"
 
 /** @defgroup PlaylistClientMethods PlaylistClientMethods
   * @ingroup Playlist
@@ -68,8 +70,6 @@ struct xmms_playlist_St {
 	GList *list;
 	/** Next song that will be retured by xmms_playlist_get_next */
 	GList *currententry;
-
-	xmms_core_t *core;
 
 	GHashTable *id_table;
 	guint nextid;
@@ -111,25 +111,6 @@ xmms_playlist_stats (xmms_playlist_t *playlist, GList *list)
 
 }
 
-
-/** Waits for something to happen in playlist
- * 
- *  This function will block until someone adds or reposition something
- *  in the playlist 
- */
-
-void
-xmms_playlist_wait (xmms_playlist_t *playlist)
-{
-	g_return_if_fail (playlist);
-
-	XMMS_DBG ("Waiting for playlist ...");
-	
-	playlist->is_waiting = TRUE;
-	g_cond_wait (playlist->cond, playlist->mutex);
-	playlist->is_waiting = FALSE;
-
-}
 
 /** Total number of entries in the playlist. */
 
@@ -414,8 +395,6 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	xmms_playback_mediainfo_add_entry (xmms_core_playback_get (playlist->core), file);
-
 	return TRUE;
 
 }
@@ -524,6 +503,68 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 	return r;
 
 }
+
+
+xmms_decoder_t *
+xmms_playlist_next_start (xmms_playlist_t *playlist)
+{
+	xmms_playlist_entry_t *entry;
+	xmms_transport_t *t;
+	xmms_decoder_t *d;
+	const gchar *mime;
+
+	entry = xmms_playlist_get_next_entry (playlist);
+
+	XMMS_DBG ("Starting up for %s", xmms_playlist_entry_url_get (entry));
+
+	t = xmms_transport_new ();
+
+	if (!t) {
+		return NULL;
+	}
+
+	if (!xmms_transport_open (t, entry)) {
+		xmms_transport_close (t);
+		return NULL;
+	}
+
+	xmms_transport_start (t);
+
+	/*
+	 * Waiting for the mimetype forever
+	 * All transporters MUST set a mimetype, 
+	 * NULL on error
+	 */
+	XMMS_DBG ("Waiting for mimetype");
+	mime = xmms_transport_mimetype_get_wait (t);
+	if (!mime) {
+		xmms_transport_close (t);
+		return NULL;
+	}
+
+	XMMS_DBG ("mime-type: %s", mime);
+
+	xmms_playlist_entry_mimetype_set (entry, mime);
+
+	d = xmms_decoder_new ();
+
+	if (!d) {
+		xmms_transport_close (t);
+		return NULL;
+	}
+
+	if (!xmms_decoder_open (d, t)) {
+		xmms_transport_close (t);
+		xmms_object_unref (d);
+		return NULL;
+	}
+
+
+	return d;
+	
+	
+}
+
 
 /**
   * Get the previous entry in the playlist
@@ -772,16 +813,6 @@ xmms_playlist_init (void)
 	return ret;
 }
 
-/**
-  * Tell the playlist which #xmms_core_t to use.
-  */
-void
-xmms_playlist_core_set (xmms_playlist_t *playlist, xmms_core_t *core)
-{
-	g_return_if_fail (playlist);
-	g_return_if_fail (core);
-	playlist->core = core;
-}
 
 /** @} */
 

@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <string.h>
 
+
+#include "xmms/object.h"
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"

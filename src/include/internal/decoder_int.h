@@ -21,6 +21,7 @@
 #define __XMMS_DECODER_INT_H__
 
 #include "xmms/transport.h"
+#include "xmms/decoder.h"
 #include "xmms/output.h"
 #include "xmms/effect.h"
 #include "xmms/error.h"
@@ -29,12 +30,10 @@
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_decoder_t * xmms_decoder_new (xmms_core_t *core);
+xmms_decoder_t * xmms_decoder_new ();
 gboolean xmms_decoder_open (xmms_decoder_t *decoder,
-			    xmms_playlist_entry_t *entry);
-xmms_core_t * xmms_decoder_core_get (xmms_decoder_t *decoder);
+			    xmms_transport_t *transport);
 void xmms_decoder_start (xmms_decoder_t *decoder, 
-			xmms_transport_t *transport, 
 			xmms_effect_t *effect, 
 			xmms_output_t *output);
 gboolean xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err);

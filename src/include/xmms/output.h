@@ -44,7 +44,12 @@ typedef struct xmms_output_St xmms_output_t;
 
 #include "xmms/config.h"
 #include "xmms/plugin.h"
-#include "xmms/playback.h"
+
+typedef enum {
+	XMMS_PLAYBACK_PLAY,
+	XMMS_PLAYBACK_STOP,
+	XMMS_PLAYBACK_PAUSE,
+} xmms_playback_status_t; /** @todo RENAME */
 
 /*
  * Output plugin methods

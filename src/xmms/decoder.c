@@ -26,7 +26,6 @@
 
 
 #include "xmms/decoder.h"
-#include "xmms/core.h"
 #include "xmms/plugin.h"
 #include "xmms/object.h"
 #include "xmms/util.h"
@@ -66,14 +65,11 @@ struct xmms_decoder_St {
 	GThread *thread;
 	GMutex *mutex;
 
-	xmms_core_t *core;
-
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport; /**< transport associated with decoder.
 				      *   This is where the decoder gets it
 				      *   data from
 				      */
-	xmms_playlist_entry_t *entry; /**< the current entry that is played */
 
 	gpointer plugin_data;
 
@@ -279,15 +275,17 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	recalculate_resampler (decoder);
 	*/
 
-	xmms_visualisation_samplerate_set (decoder->vis, rate);
+/*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
 	xmms_effect_samplerate_set (decoder->effect, rate);
 	decoder->samplerate = rate;
 	
-	r = g_strdup_printf ("%d", rate);
-	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
+/*	r = g_strdup_printf ("%d", rate);
+	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);*/
 	g_free (r);
 }
 
+
+#if 0
 /**
  * Update Mediainfo in the entry.
  * Should be used in #XMMS_PLUGIN_METHOD_GET_MEDIAINFO to update the info and
@@ -300,9 +298,12 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 	g_return_if_fail (entry);
 
 	xmms_playlist_entry_property_copy (entry, decoder->entry);
+#if 0
 	xmms_playlist_entry_changed (xmms_core_playlist_get (xmms_decoder_core_get (decoder)), 
 			decoder->entry);
+#endif
 }
+#endif
 
 /**
  * Read decoded data
@@ -367,7 +368,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	
 	xmms_effect_run (decoder->effect, buf, len);
 
-	xmms_visualisation_calc (decoder->vis, buf, len);
+/*	xmms_visualisation_calc (decoder->vis, buf, len);*/
 
 	XMMS_MTX_LOCK (decoder->mutex);
 
@@ -465,14 +466,7 @@ xmms_decoder_plugin_get (xmms_decoder_t *decoder)
 	return ret;
 }
 
-xmms_core_t *
-xmms_decoder_core_get (xmms_decoder_t *decoder)
-{
-	g_return_val_if_fail (decoder, NULL);
-
-	return decoder->core;
-}
-
+#if 0
 /**
  * Creates a new decoder for the specified mimetype.
  * This call creates a decoder that can handle the specified mimetype.
@@ -486,7 +480,7 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 
 	xmms_object_ref (entry);
 
-	decoder = xmms_decoder_new (xmms_transport_core_get (transport));
+	decoder = xmms_decoder_new ();
 	/** @todo felhantering??? */
 	xmms_decoder_open (decoder, entry);
 	decoder->transport = transport;
@@ -498,7 +492,7 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 	XMMS_DBG ("transport started");
 	return decoder;
 }
-
+#endif
 /*
  * Private functions
  */
@@ -518,46 +512,38 @@ xmms_decoder_destroy (xmms_object_t *object)
 	if (destroy_method)
 		destroy_method (decoder);
 
-	if (decoder->entry)
-		xmms_object_unref (decoder->entry);
-
 	xmms_ringbuf_destroy (decoder->buffer);
 	g_mutex_free (decoder->mutex);
-	xmms_object_unref (decoder->vis);
-	xmms_object_unref (decoder->core);
+/*	xmms_object_unref (decoder->vis);*/
 }
 
 xmms_decoder_t *
-xmms_decoder_new (xmms_core_t *core)
+xmms_decoder_new ()
 {
 	xmms_decoder_t *decoder;
 	xmms_config_value_t *val;
-
-	g_return_val_if_fail (core, NULL);
 
 	val = xmms_config_lookup ("core.decoder_buffersize");
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
-	decoder->vis = xmms_visualisation_init (core);
-	decoder->core = core;
-	xmms_object_ref (core);
+/*	decoder->vis = xmms_visualisation_init ();*/
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 
 	return decoder;
 }
 
 gboolean
-xmms_decoder_open (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
+xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 {
 	xmms_plugin_t *plugin;
 	xmms_decoder_new_method_t new_method;
 	const gchar *mimetype;
 
-	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (transport, FALSE);
 
-	mimetype = xmms_playlist_entry_mimetype_get (entry);
+	mimetype = xmms_transport_mimetype_get (transport);
 
 	XMMS_DBG ("Trying to create decoder for mime-type %s", mimetype);
 	
@@ -565,18 +551,18 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 	if (!plugin)
 		return FALSE;
 	
-	xmms_object_ref (entry);
+	xmms_object_ref (transport);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
-	decoder->entry = entry;
+	decoder->transport = transport;
 	decoder->plugin = plugin;
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new_method || !new_method (decoder, mimetype)) {
 		XMMS_DBG ("open failed");
-		xmms_object_unref (entry);
+		xmms_object_unref (transport);
 		return FALSE;
 	}
 
@@ -598,7 +584,6 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
  */
 void
 xmms_decoder_start (xmms_decoder_t *decoder, 
-		    xmms_transport_t *transport, 
 		    xmms_effect_t *effect, 
 		    xmms_output_t *output)
 {
@@ -606,7 +591,6 @@ xmms_decoder_start (xmms_decoder_t *decoder,
 	g_return_if_fail (output);
 
 	decoder->running = TRUE;
-	decoder->transport = transport;
 	decoder->effect = effect;
 	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
@@ -634,6 +618,7 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 
 }
 
+#if 0
 xmms_playlist_entry_t *
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)
@@ -654,6 +639,7 @@ xmms_decoder_mediainfo_get (xmms_decoder_t *decoder,
 
 	return decoder->entry;
 }
+#endif
 
 /*
  * Static functions
@@ -839,10 +825,6 @@ xmms_decoder_thread (gpointer data)
 	
 	xmms_object_ref (decoder);
 
-	xmms_object_emit (XMMS_OBJECT (decoder), 
-			  XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-			  GUINT_TO_POINTER (xmms_playlist_entry_id_get (decoder->entry)));
-	
 	xmms_decoder_lock (decoder);
 
 	while (42) {
@@ -859,7 +841,7 @@ xmms_decoder_thread (gpointer data)
 	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	decoder->thread = NULL;
-	XMMS_DBG ("Decoder %s thread quitting", xmms_playlist_entry_url_get (decoder->entry));
+	XMMS_DBG ("Decoder thread quitting");
 
 	xmms_object_unref (decoder);
 

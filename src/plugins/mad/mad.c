@@ -21,7 +21,6 @@
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
-#include "xmms/core.h"
 #include "xmms/playlist.h"
 #include "xmms/transport.h"
 #include "id3.h"
@@ -342,7 +341,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (data) {
 		data->entry = entry;
 
-		xmms_decoder_entry_mediainfo_set (decoder, entry);
+/*FIXME!		xmms_decoder_entry_mediainfo_set (decoder, entry);*/
 	}
 
 	xmms_object_unref (entry);

@@ -62,7 +62,6 @@ typedef struct xmms_playlist_changed_msg_St {
 } xmms_playlist_changed_msg_t;
 
 #include "xmms/playlist_entry.h"
-#include "xmms/core.h"
 #include "xmms/error.h"
 
 /*
@@ -70,7 +69,6 @@ typedef struct xmms_playlist_changed_msg_St {
  */
 
 xmms_playlist_t * xmms_playlist_init (void);
-void xmms_playlist_core_set (xmms_playlist_t *playlist, xmms_core_t *core);
 
 gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options);
 guint xmms_playlist_entries_total (xmms_playlist_t *playlist);

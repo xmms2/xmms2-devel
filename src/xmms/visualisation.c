@@ -29,7 +29,6 @@
 #include "xmms/visualisation.h"
 #include "xmms/object.h"
 #include "xmms/util.h"
-#include "xmms/core.h"
 
 static GMutex *visuserslock;
 static guint32 visusers = 0;
@@ -42,7 +41,6 @@ static guint32 visusers = 0;
 
 struct xmms_visualisation_St {
 	xmms_object_t object;
-	xmms_core_t *core;
 	guint32 pos;
 	guint samplerate;
 	gint fft_data;
@@ -59,14 +57,11 @@ xmms_visualisation_init_mutex ()
 }
 
 xmms_visualisation_t *
-xmms_visualisation_init (xmms_core_t *core)
+xmms_visualisation_init ()
 {
 	xmms_visualisation_t *res;
 
-	g_return_val_if_fail (core, NULL);
-
 	res = xmms_object_new (xmms_visualisation_t, NULL);
-	res->core = core;
 
 	return res;
 }

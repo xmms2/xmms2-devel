@@ -42,14 +42,13 @@ struct xmms_mediainfo_thread_St {
 	gboolean running;
 	GList *list;
 	xmms_playlist_t *playlist;
-	xmms_core_t *core;
 	/* 45574 */
 };
 
 static gpointer xmms_mediainfo_thread_thread (gpointer data);
 
 xmms_mediainfo_thread_t *
-xmms_mediainfo_thread_start (xmms_core_t *core, xmms_playlist_t *playlist)
+xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 {
 	xmms_mediainfo_thread_t *mtt;
 
@@ -60,7 +59,6 @@ xmms_mediainfo_thread_start (xmms_core_t *core, xmms_playlist_t *playlist)
 	mtt->mutex = g_mutex_new ();
 	mtt->cond = g_cond_new ();
 	mtt->playlist = playlist;
-	mtt->core = core;
 
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
@@ -118,7 +116,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
-			transport = xmms_transport_new (mtt->core);
+			transport = xmms_transport_new ();
 			xmms_transport_open (transport, entry);
 			if (!transport) {
 				xmms_object_unref (entry);
@@ -155,7 +153,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 
 			xmms_playlist_entry_mimetype_set (entry, mime);
-			decoder = xmms_decoder_new (mtt->core);
+			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, entry)) {
 				xmms_object_unref (entry);
 				xmms_object_unref (transport);
@@ -165,12 +163,15 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			/*xmms_transport_start (transport);*/
 
+
+
+#if 0 /* FIXME */
 			newentry = xmms_decoder_mediainfo_get (decoder, transport);
 			if (newentry) {
 				XMMS_DBG ("updating %s", xmms_playlist_entry_url_get (newentry));
 				//xmms_playlist_entry_copy_property (newentry, entry);
 			}
-
+#endif
 			xmms_object_unref (entry);
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
