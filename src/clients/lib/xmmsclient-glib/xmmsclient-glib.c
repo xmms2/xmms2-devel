@@ -125,8 +125,6 @@ gsource_connection_dispatch (GSource *source,
 	xmmsc_gsource_t *x_source = (xmmsc_gsource_t *)source;
 	guint flags = 0;
 
-	printf ("Dispatch\n");
-
 	for (n = x_source->w_list; n; n = g_list_next (n)) {
 		xmmsc_watch_t *w = n->data;
 		poll_fd = (GPollFD *) w->data;
