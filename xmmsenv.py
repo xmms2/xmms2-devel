@@ -49,7 +49,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
 	def AddFlagsToGroup(self, group, flags):
-		self.flag_groups[group] = flags
+		if self.flag_groups.has_key(group) :
+			self.flag_groups[group] += flags
+		else:
+			self.flag_groups[group] = flags
 
 	def HasGroup(self,group):
 		return self.flag_groups.has_key(group)

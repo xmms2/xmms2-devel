@@ -25,6 +25,8 @@ def checkFlags(base_env):
 	base_env.CheckAndAddFlagsToGroup("qt", "pkg-config --libs --cflags qt")
 	base_env.CheckAndAddFlagsToGroup("shout", "pkg-config --libs --cflags shout")
 	base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
+	if base_env.HasGroup("curl"):
+		base_env.AddFlagsToGroup("curl", " -DHAVE_CURL");
 	base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 	base_env.CheckAndAddFlagsToGroup("alsa","pkg-config --cflags --libs alsa")
 	base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
