@@ -105,6 +105,57 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
+static void
+xmms_mad_calc_duration (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
+{
+	struct mad_header header;
+	xmms_mad_data_t *data;
+	guint fsize=0;
+	guint bitrate=0;
+	gchar *tmp;
+	gchar buf[4096];
+	gint ret;
+
+
+	data = xmms_decoder_plugin_data_get (decoder);
+	if (!data)
+		return;
+
+	ret = xmms_transport_read (xmms_decoder_transport_get (decoder), buf, 4096);
+
+	if (ret <= 0) {
+		return;
+	}
+
+	mad_stream_buffer (&data->stream, buf, ret);
+		
+	if (mad_header_decode (&header, &data->stream) == -1) {
+		return;
+	}
+
+
+	fsize = xmms_transport_size (xmms_decoder_transport_get (decoder)) * 8;
+	bitrate = header.bitrate;
+
+	mad_header_finish (&header);
+	mad_stream_finish (&data->stream);
+
+	if (!fsize) {
+		xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
+	} else {
+		tmp = g_strdup_printf ("%d", fsize / bitrate);
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
+		XMMS_DBG ("duration = %s", tmp);
+		g_free (tmp);
+	}
+		
+	tmp = g_strdup_printf ("%d", bitrate / 1000);
+	xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
+	g_free (tmp);
+	xmms_decoder_set_mediainfo (decoder,data->entry);
+
+}
+
 static xmms_playlist_entry_t *
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
@@ -121,6 +172,8 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	g_return_val_if_fail (transport, NULL);
 
 	entry = xmms_playlist_entry_new (NULL);
+
+	xmms_mad_calc_duration (decoder, entry);
 
 	XMMS_DBG ("Seeking to last 128 bytes");
 	xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
@@ -267,30 +320,6 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
-		}
-
-		if (xmms_playlist_entry_get_prop_int (data->entry, XMMS_ENTRY_PROPERTY_DURATION) == 0) {
-			guint fsize=0;
-			guint bitrate=0;
-			gchar *tmp;
-
-			fsize = xmms_transport_size (transport) * 8;
-			bitrate = data->frame.header.bitrate;
-
-			if (!fsize) {
-				xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
-			} else {
-				tmp = g_strdup_printf ("%d", fsize / bitrate);
-				xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
-				XMMS_DBG ("duration = %s", tmp);
-				g_free (tmp);
-			}
-				
-			tmp = g_strdup_printf ("%d", bitrate / 1000);
-			xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
-			g_free (tmp);
-			xmms_decoder_set_mediainfo (decoder,data->entry);
-
 		}
 
 		mad_synth_frame (&data->synth, &data->frame);
