@@ -20,6 +20,7 @@
 
 #include "xmms/ipc_transport.h"
 #include "socket_unix.h"
+#include "socket_tcp.h"
 
 void
 xmms_ipc_transport_destroy (xmms_ipc_transport_t *ipct)
@@ -71,7 +72,7 @@ xmms_ipc_client_init (const gchar *path)
 	if (g_strncasecmp (path, "unix://", 7) == 0) {
 		transport = xmms_ipc_usocket_client_init (path+7);
 	} else if (g_strncasecmp (path, "tcp://", 6) == 0) {
-/*		transport = xmms_ipc_tcp_server_init (path+6);*/
+		transport = xmms_ipc_tcp_client_init (path+6);
 	}
 
 	return transport;
@@ -87,7 +88,7 @@ xmms_ipc_server_init (const gchar *path)
 	if (g_strncasecmp (path, "unix://", 7) == 0) {
 		transport = xmms_ipc_usocket_server_init (path+7);
 	} else if (g_strncasecmp (path, "tcp://", 6) == 0) {
-/*		transport = xmms_ipc_tcp_server_init (path+6);*/
+		transport = xmms_ipc_tcp_server_init (path+6);
 	}
 
 	return transport;
