@@ -8,9 +8,19 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	pass
 	def __init__(self, options=None, **kw):
 		self.sys = os.popen("uname").read().strip()
-		self.rev = os.popen("bk prs -r+ -h -d ':CSETKEY:' ChangeSet").read().replace("|", "\|")
-		if len (self.rev) < 1 :
-			self.rev = "Non BitKeeper"
+
+		tmp = os.popen("bk prs -r+ -h -d ':TAGS:' ChangeSet").read()
+		if tmp:
+			self.rev = tmp.split("\n")[0][2:]
+		else:
+			self.rev = os.popen("bk prs -r+ -h -d ':CSETKEY:' ChangeSet").read()
+
+		if self.rev:
+			if os.popen("bk -r diffs").read():
+				self.rev += "+DEV"
+		else:
+			self.rev = "NonBitKeeper"
+
 		print "Building for BitKeeper version:", self.rev
 		SCons.Environment.Environment.__init__(self, options=options)
 		self.flag_groups = {}
@@ -28,7 +38,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
-		self.Append(CPPFLAGS=['-DBUILDREV=\\"'+self.rev+'\\"'])
+		self.Append(CPPFLAGS=["-DBUILDREV='\""+self.rev+"\"'"])
 		self.Append(LIBPATH=['/usr/lib'])
 		self.Append(LIBPATH=['/usr/local/lib'])
 		self.Append(CPPFLAGS=['-I/usr/local/include'])
