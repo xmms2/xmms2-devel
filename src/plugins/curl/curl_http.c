@@ -158,7 +158,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 	return size*nmemb;
 }
 
-CURL *
+static CURL *
 xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 {
 	struct curl_slist *headerlist = NULL;
