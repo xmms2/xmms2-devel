@@ -126,17 +126,16 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_playlist_entry_unref (entry);
 
-	/*
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "usecddb");
 	if (xmms_config_value_int_get (val) == 1) {
 		val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "cddbserver");
-		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_value_string_get (val));
+		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_value_string_get (val), data->track);
 	}
 
 	if (entry) {
 		xmms_decoder_entry_mediainfo_set (decoder, entry);
 		xmms_playlist_entry_unref (entry);
-	}*/
+	}
 }
 
 static gboolean

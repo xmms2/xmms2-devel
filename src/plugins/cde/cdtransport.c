@@ -222,17 +222,6 @@ xmms_cdae_seek (xmms_transport_t *transport, guint offset, gint whence)
 static gint
 xmms_cdae_size (xmms_transport_t *transport)
 {
-	struct stat st;
-	xmms_cdae_data_t *data;
-
-	g_return_val_if_fail (transport, -1);
-	data = xmms_transport_plugin_data_get (transport);
-	g_return_val_if_fail (data, -1);
-	
-	if (fstat (data->fd, &st) == -1) {
-		return -1;
-	}
-
-	return st.st_size;
+	return 0;
 }
 
