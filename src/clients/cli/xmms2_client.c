@@ -274,11 +274,7 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 print_entry (const void *key, const void *value, void *udata)
 {
-	if (strcasecmp (key, "id") == 0) {
-		printf ("%s = %d\n", (char *)key, (unsigned int)value);
-	} else {
-		printf ("%s = %s\n", (char *)key, (char *)value);
-	}
+	printf ("%s = %s\n", (char *)key, (char *)value);
 }
 
 static void
