@@ -12,8 +12,8 @@
 #include "playlist.h"
 #include "unixsignal.h"
 #include "util.h"
+#include "core.h"
 #include "medialib.h"
-
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -23,29 +23,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-static xmms_playlist_t *playlist;
-static xmms_output_t *output;
-static xmms_decoder_t *m_decoder;
 static GMainLoop *mainloop;
 
 
 
-void play_next (void);
+gboolean xmms_dbus_init (void);
 
-void
-eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	XMMS_DBG ("eos_reached");
-
-	XMMS_DBG ("closing transport");
-	xmms_transport_close (xmms_decoder_transport_get (m_decoder));
-	XMMS_DBG ("destroying decoder");
-	xmms_decoder_destroy (m_decoder);
-	m_decoder = NULL;
-	XMMS_DBG ("playing next");
-	play_next ();
-	XMMS_DBG ("done");
-}
 
 void
 mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
@@ -61,60 +44,6 @@ mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 
 	xmms_playlist_entry_free (entry);
 
-}
-
-void
-play_next (void)
-{
-	xmms_transport_t *transport;
-	xmms_decoder_t *decoder;
-	xmms_playlist_entry_t *entry;
-	const gchar *mime;
-
-	g_return_if_fail (m_decoder == NULL);
-	
-	entry = xmms_playlist_pop (playlist);
-	if (!entry)
-		exit (1);
-
-	XMMS_DBG ("Playing %s", xmms_playlist_entry_get_uri (entry));
-	
-	transport = xmms_transport_open (xmms_playlist_entry_get_uri (entry));
-
-	if (!transport) {
-		play_next ();
-		return;
-	}
-	
-	mime = xmms_transport_mime_type_get (transport);
-	if (mime) {
-		XMMS_DBG ("mime-type: %s", mime);
-		decoder = xmms_decoder_new (mime);
-		if (!decoder) {
-			xmms_transport_close (transport);
-			xmms_playlist_entry_free (entry);
-			play_next ();
-			return;
-		}
-	} else {
-		xmms_transport_close (transport);
-		xmms_playlist_entry_free (entry);
-		play_next (); /* FIXME */
-		return;
-	}
-
-	xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", mediainfo_changed, NULL);
-
-	XMMS_DBG ("starting threads..");
-	xmms_transport_start (transport);
-	XMMS_DBG ("transport started");
-	xmms_decoder_start (decoder, transport, output);
-	XMMS_DBG ("output started");
-
-	m_decoder = decoder;
-
-	xmms_playlist_entry_free (entry);
-	
 }
 
 #define MAX_CONFIGFILE_LEN 255
@@ -209,11 +138,16 @@ main (int argc, char **argv)
 	}
 
 	g_thread_init (NULL);
+
+	xmms_core_init ();
+
 	if (!xmms_plugin_init ())
 		return 1;
 
-	playlist = xmms_playlist_init ();
-
+	{
+		extern xmms_playlist_t *playlist;
+		
+		playlist = xmms_playlist_init ();
 	if (optind) {
 		while (argv[optind]) {
 			gchar nuri[XMMS_MAX_URI_LEN];
@@ -238,6 +172,7 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (playlist));
 
+	}
 
 	config = parse_config ();
 	outname = xmms_config_value_as_string (xmms_config_value_lookup (config->core, "outputplugin"));
@@ -248,16 +183,20 @@ main (int argc, char **argv)
 
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
-	output = xmms_output_open (o_plugin, config);
-	g_return_val_if_fail (output, -1);
+	{
+		xmms_output_t *output = xmms_output_open (o_plugin, config);
+		g_return_val_if_fail (output, -1);
+		
+		xmms_core_output_set (output);
 
-	xmms_object_connect (XMMS_OBJECT (output), "eos-reached", eos_reached, NULL);
+		xmms_output_start (output);
+	}
 
-	xmms_output_start (output);
+	xmms_dbus_init ();
 
-	play_next ();
+	xmms_signal_init ();
 
-	xmms_signal_init (XMMS_OBJECT (output));
+	xmms_core_start ();
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 

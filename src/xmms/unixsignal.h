@@ -3,7 +3,7 @@
 
 #include "object.h"
 
-void xmms_signal_init(xmms_object_t *obj);
+void xmms_signal_init();
 
 #endif
 

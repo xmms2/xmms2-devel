@@ -224,12 +224,20 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 }
 
 /**
-  * Tells the transport thread to schedule a seek
+  * Tells the transport thread to schedule a seek.
   *
   * This function will seek to a specific offset, it emulates the behaviour
   * of lseek. It will also clear the buffer.
-  * @param whence should be one of XMMS_TRANSPORT_SEEK_SET
-  * XMMS_TRANSPORT_SEEK_END, XMMS_TRANSPORT_SEEK_CUR
+  *
+  * The whence parameter should be one of:
+  * @li @c XMMS_TRANSPORT_SEEK_SET Sets position to offset from start of file
+  * @li @c XMMS_TRANSPORT_SEEK_END Sets position to offset from end of file
+  * @li @c XMMS_TRANSPORT_SEEK_CUR Sets position to offset from current position
+  *
+  * @param transport the transport to modify
+  * @param offset offset in bytes
+  * @param whence se above
+  * 
   */
 
 void

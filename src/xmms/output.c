@@ -2,6 +2,7 @@
 #include "object.h"
 #include "ringbuf.h"
 #include "util.h"
+#include "core.h"
 #include "config_xmms.h"
 
 
@@ -159,6 +160,7 @@ xmms_output_thread (gpointer data)
 {
 	xmms_output_t *output;
 	xmms_output_write_method_t write_method;
+	guint played = 0;
 
 	output = (xmms_output_t*)data;
 	g_return_val_if_fail (data, NULL);
@@ -179,10 +181,15 @@ xmms_output_thread (gpointer data)
 			xmms_output_unlock (output);
 			write_method (output, buffer, ret);
 			xmms_output_lock (output);
+
+			played += ret;
+			xmms_core_playtime_set((guint)(played/(4.0f*44.1f)));
+			
 		} else if (xmms_ringbuf_eos (output->buffer)) {
 			xmms_output_unlock (output);
 			xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
 			xmms_output_lock (output);
+			played = 0;
 			if (xmms_ringbuf_eos (output->buffer))
 				g_cond_wait (output->cond, output->mutex);
 		}
