@@ -132,6 +132,26 @@ xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 	g_free (msg);
 }
 
+gboolean
+xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf)
+{
+        guint32 cmd;
+        guint16 length;
+        gboolean ret = FALSE;
+
+        if (xmms_ringbuf_bytes_used (ringbuf) < 6)
+                return FALSE;
+
+        xmms_ringbuf_read (ringbuf, &cmd, sizeof (guint32));
+        xmms_ringbuf_read (ringbuf, &length, sizeof (guint16));
+        length = g_ntohs (length);
+        if (xmms_ringbuf_bytes_used (ringbuf) >= length)
+                ret = TRUE;
+        xmms_ringbuf_unread (ringbuf, 6);
+
+        return ret;
+}
+
 xmms_ipc_msg_t *
 xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
 {
@@ -150,7 +170,12 @@ xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
 	xmms_ringbuf_read (ringbuf, &msg->data_length, sizeof (guint16));
 	msg->data_length = g_ntohs (msg->data_length);
 	
-	g_return_val_if_fail (xmms_ringbuf_bytes_used (ringbuf) > msg->data_length, NULL);
+	if (xmms_ringbuf_bytes_used (ringbuf) < msg->data_length) {
+		xmms_ipc_msg_destroy (msg);
+		g_printerr ("Not enough data in buffer (had %d, want %d)\n", xmms_ringbuf_bytes_used (ringbuf), msg->data_length);
+        	xmms_ringbuf_unread (ringbuf, 6);
+		return NULL;
+	}
 
 	xmms_ringbuf_read (ringbuf, msg->data, msg->data_length);
 	return msg;
