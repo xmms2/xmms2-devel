@@ -91,8 +91,6 @@ XMMSClientWatch::onRead ()
 
 	flags |= XMMSC_WATCH_IN;
 
-	qDebug ("Dispatch Read");
-
 	xmmsc_watch_dispatch (m_conn, m_watch, flags);
 }
 
@@ -102,7 +100,6 @@ XMMSClientWatch::onWrite ()
 	unsigned int flags = 0;
 
 	flags |= XMMSC_WATCH_OUT;
-	qDebug ("Dispatch Write");
 
 	xmmsc_watch_dispatch (m_conn, m_watch, flags);
 }
@@ -159,7 +156,6 @@ XMMSClientQT::watch_add (xmmsc_watch_t *watch)
 {
 	XMMSClientWatch *q_watch = new XMMSClientWatch (m_conn, watch, this);
 	watch->data = q_watch;
-	qDebug ("Adding watch for %d", watch->fd);
 	m_watch_list.append (q_watch);
 }
 
@@ -167,7 +163,6 @@ void
 XMMSClientQT::watch_remove (xmmsc_watch_t *watch)
 {
 	XMMSClientWatch *w = (XMMSClientWatch *)watch->data;
-	qDebug ("Removing watch for %d", watch->fd);
 	m_watch_list.remove (w);
 
 	delete w;
