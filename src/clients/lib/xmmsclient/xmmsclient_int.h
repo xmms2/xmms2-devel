@@ -19,6 +19,7 @@ struct xmmsc_connection_St {
 	GHashTable *callbacks;
 	GHashTable *replies;
 	gchar *error;
+	gint timeout;
 	xmmsc_watch_callback_t watch_callback;
 	gpointer data;
 };
