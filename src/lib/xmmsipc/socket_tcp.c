@@ -32,6 +32,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <syslog.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
 
 #include "xmms/util.h"
 #include "xmms/ipc_transport.h"
@@ -162,6 +165,7 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 	fd = accept (transport->fd, (struct sockaddr *)&sin, &sin_len);
 	if (fd >= 0) {
 		gint flags;
+		int off = 1;
 		xmms_ipc_transport_t *ret;
 
 		flags = fcntl (fd, F_GETFL, 0);
@@ -178,6 +182,8 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 			close (fd);
 			return NULL;
 		}
+
+		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char *) &off, sizeof (off));
 
 		ret = g_new0 (xmms_ipc_transport_t, 1);
 		ret->fd = fd;
@@ -203,6 +209,7 @@ xmms_ipc_tcp_server_init (const gchar *path)
 	struct sockaddr_in saddr;
 	struct hostent *hent;
 	struct servent *sent;
+	int off = 1;
 
 	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd == -1) {
@@ -262,6 +269,8 @@ xmms_ipc_tcp_server_init (const gchar *path)
 		close (fd);
 		return NULL;
 	}
+		
+	setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char *) &off, sizeof (off));
 		
 	ipct = g_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;

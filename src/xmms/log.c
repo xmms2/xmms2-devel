@@ -98,6 +98,10 @@ xmms_log_init (const gchar *filename)
 		xmms_log_stream = NULL;
 		xmms_log_filename = g_strdup (filename);
 	} else {
+		char *tmpdir = getenv ("TMPDIR");
+
+		if (!tmpdir)
+			tmpdir = "/tmp";
 
 		xmms_log_filename = g_strdup_printf ("/tmp/%s.%d", filename, 
 											 (int)time (NULL));

@@ -86,6 +86,7 @@ struct xmms_output_St {
 	GCond *fill_cond;
 	GThread *thread;
 	gboolean running;
+	gboolean open;
 
 	guint played;
 	guint played_time;
@@ -196,6 +197,7 @@ xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
 	g_return_if_fail (output);
 
 	g_mutex_lock (output->mutex);
+	xmms_output_decoder_start (output);
 	if (output->decoder) {
 		xmms_decoder_stop (output->decoder);
 	}
@@ -239,12 +241,11 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 			xmms_output_resume (output);
 	} else {
 		XMMS_DBG ("starting new output thread!");
+		xmms_output_decoder_start (output);
 		output->running = TRUE;
 		if (output->type == XMMS_OUTPUT_TYPE_WR) {
 			xmms_object_ref (output); /* thread takes one ref */
 			output->thread = g_thread_create (xmms_output_thread, output, FALSE, NULL);
-		} else {
-			xmms_output_decoder_start (output);
 		}
 	}
 
@@ -272,6 +273,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 	if (output->type == XMMS_OUTPUT_TYPE_WR) {
 		XMMS_DBG ("STOP!");
 		output->running = FALSE;
+		xmms_decoder_stop (output->decoder);
 		g_cond_signal (output->cond);
 	} else {
 		xmms_output_status_method_t st;
@@ -431,10 +433,18 @@ xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 	g_return_if_fail (output);
 	g_return_if_fail (rate);
 
-	samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
-	XMMS_DBG ("want samplerate %d", rate);
-	output->samplerate = samplerate_method (output, rate);
-	XMMS_DBG ("samplerate set to: %d", output->samplerate);
+	g_mutex_lock (output->mutex);
+
+	if (output->open) {
+		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
+		XMMS_DBG ("want samplerate %d", rate);
+		output->samplerate = samplerate_method (output, rate);
+		XMMS_DBG ("samplerate set to: %d", output->samplerate);
+	} else {
+		output->samplerate = rate;
+	}
+
+	g_mutex_unlock (output->mutex);
 }
 
 guint
@@ -452,12 +462,17 @@ xmms_output_open (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 
+
 	open_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
 
 	if (!open_method || !open_method (output)) {
 		xmms_log_error ("Couldn't open output device");
 		return FALSE;
 	}
+
+	g_mutex_lock (output->mutex);
+	output->open = TRUE;
+	g_mutex_unlock (output->mutex);
 
 	XMMS_DBG ("opening with samplerate: %d",output->samplerate);
 	xmms_output_samplerate_set (output, output->samplerate);
@@ -479,6 +494,10 @@ xmms_output_close (xmms_output_t *output)
 		return;
 
 	close_method (output);
+
+	g_mutex_lock (output->mutex);
+	output->open = FALSE;
+	g_mutex_unlock (output->mutex);
 
 }
 
@@ -778,10 +797,6 @@ xmms_output_thread (gpointer data)
 		gchar buffer[4096];
 		gint ret;
 
-		if (!output->decoder && g_queue_is_empty (output->decoder_list)) {
-			xmms_output_decoder_start (output);
-		}
-  
 		if (!output->decoder && g_queue_is_empty (output->decoder_list)) {
 			break;
 		}
