@@ -91,15 +91,16 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_alsa_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_alsa_flush);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
-			xmms_alsa_samplerate_set);
+							xmms_alsa_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
-			xmms_alsa_buffersize_get);
+							xmms_alsa_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET,
-			xmms_alsa_mixer_get);
+							xmms_alsa_mixer_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET,
-			xmms_alsa_mixer_set);
+							xmms_alsa_mixer_set);
 
-	return plugin;
+
+	return (plugin);
 }
 
 /*
@@ -120,6 +121,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	
 	g_return_val_if_fail (output, FALSE);
 	
+	
 	return FALSE;
 }
 
@@ -138,6 +140,8 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	XMMS_DBG ("XMMS_ALSA_MIXER_GET");
 
 	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (right, FALSE);
+	g_return_val_if_fail (left, FALSE);
 	
 	return FALSE;
 }

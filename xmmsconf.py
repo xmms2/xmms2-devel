@@ -24,10 +24,10 @@ def checkFlags(base_env):
 	##
 	base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
 	base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
+	base_env.CheckAndAddFlagsToGroup("alsa","pkg-config --cflags --libs alsa")
 	base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 	base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
 	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
-
 	##
 	## Write cache
 	##
