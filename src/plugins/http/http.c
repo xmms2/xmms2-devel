@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 /*
  * Type definitions
@@ -22,15 +23,24 @@
 
 typedef struct {
 	gint fd;
+	gint state;
+	gchar *path;
+	gchar *server;
+	gchar *request;
+	struct sockaddr_in *sa;
+	struct hostent *hp;
 } xmms_http_data_t;
+
+extern int errno;
 
 /*
  * Function prototypes
  */
 
 static gboolean xmms_http_can_handle (const gchar *uri);
-static gboolean xmms_http_open (xmms_transport_t *transport, const gchar *uri);
+static gboolean xmms_http_init (xmms_transport_t *transport, const gchar *uri);
 static gint xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gboolean x_request (xmms_transport_t *transport);
 
 /*
  * Plugin header
@@ -49,7 +59,7 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_http_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_http_open);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_http_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_http_read);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
@@ -74,49 +84,18 @@ xmms_http_can_handle (const gchar *uri)
 	return FALSE;
 }
 
-gint
-x_connect (const gchar *server, const gchar *path, gint port)
-{
-
-	struct sockaddr_in sa;
-	struct hostent *hp;
-	gint sock;
-
-	if ((hp = gethostbyname (server)) == NULL) {
-		XMMS_DBG ("Host not found!");
-		return 0;
-	}
-
-	memcpy (&sa.sin_addr, hp->h_addr, hp->h_length);
-	sa.sin_family = hp->h_addrtype;
-	sa.sin_port = g_htons (port);
-
-	if ((sock = socket (hp->h_addrtype, SOCK_STREAM, 0)) == -1) {
-		XMMS_DBG ("socket error!");
-		free (hp);
-		return 0;
-	}
-
-	if (connect (sock, (struct sockaddr *)&sa, sizeof (sa)) == -1) {
-		XMMS_DBG ("connect error!");
-		free (hp);
-		return 0;
-	}
-
-	return sock;
-
-}
-
 static gboolean
-xmms_http_open (xmms_transport_t *transport, const gchar *uri)
+xmms_http_init (xmms_transport_t *transport, const gchar *uri)
 {
 	xmms_http_data_t *data;
-	const gchar *server;
+	gchar *server;
 	gchar *path;
-	gchar request[1024];
 	gchar *p;
 	gint port;
 	gint fd;
+	struct sockaddr_in *sa;
+	struct hostent *hp;
+
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (uri, FALSE);
@@ -141,7 +120,7 @@ xmms_http_open (xmms_transport_t *transport, const gchar *uri)
 		*path='\0';
 		*path++;
 		port = 80;
-		if (!path) {
+		if (!*path) {
 			XMMS_DBG ("Malformated URI");
 			return FALSE;
 		}
@@ -149,28 +128,89 @@ xmms_http_open (xmms_transport_t *transport, const gchar *uri)
 
 	XMMS_DBG ("Host: %s, port: %d, path: %s", server, port, path);
 
+	if ((hp = gethostbyname (server)) == NULL) {
+		XMMS_DBG ("Host not found!");
+		return -1;
+	}
 
-	fd = x_connect (server, path, port);
+	sa = calloc(1,sizeof(struct sockaddr_in));
+	
+	memcpy (&(sa->sin_addr), hp->h_addr, hp->h_length);
+	sa->sin_family = hp->h_addrtype;
+	sa->sin_port = g_htons (port);
 
-	if (!fd)
-		return FALSE;
+	if ((fd = socket (hp->h_addrtype, SOCK_STREAM, 0)) == -1) {
+		XMMS_DBG ("socket error!");
+		free (hp);
+		return -1;
+	}
+	free (hp);
 
-	XMMS_DBG ("connected!");
-
-	g_snprintf (request, 1024, "GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: XMMS/" VERSION "\r\n\r\n", path, server);
-
-	XMMS_DBG ("%s", request);
-
-	send (fd, request, strlen (request), 0);
+	if (connect (fd, (struct sockaddr *)sa, sizeof (struct sockaddr_in)) == -1 && errno != EAGAIN) {
+		XMMS_DBG ("connect error!");
+		return -1;
+	}
 
 	data = g_new0 (xmms_http_data_t, 1);
 
 	data->fd = fd;
+	data->server = server;
+	data->path = path;
+	data->sa = sa;
 
 	xmms_transport_plugin_data_set (transport, data);
 
-	xmms_transport_mime_type_set (transport, "audio/mpeg");
+	return x_request(transport);
+}
+static gboolean
+x_request (xmms_transport_t *transport)
+{
+	xmms_http_data_t *data;
+	gint sent;
+	gint reqlen;
 	
+	data = xmms_transport_plugin_data_get (transport);
+	if (data->state == 0){
+		if (connect (data->fd, (struct sockaddr *)data->sa, sizeof (struct sockaddr_in)) == -1 && 
+				errno != EAGAIN && 
+				errno != EISCONN) {
+			XMMS_DBG ("connect error!");
+			return -1;
+		} else if (errno == EAGAIN) { 
+			return TRUE;
+		} else {
+
+			data->state ++;
+			XMMS_DBG ("connected!");
+			data->request = calloc(1,1024);
+			g_snprintf (data->request, 1024, "GET /%s HTTP/1.1\r\n"
+				   "Host: %s\r\n"
+				   "Connection: close\r\n"
+				   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
+				   data->path, data->server);
+
+			XMMS_DBG ("%s", data->request);
+		}
+	}
+
+	reqlen = strlen(data->request);
+	
+	while (reqlen > 0) {
+		sent = send (data->fd, data->request, reqlen, 0);
+		if(sent == -1 && errno == EAGAIN){
+			xmms_transport_plugin_data_set (transport, data);
+			return TRUE;
+		} else if(sent == -1){
+			return -1;
+		} else {
+			data->request += sent;
+			reqlen -= sent;
+		}
+	}
+
+	data->state ++;
+	xmms_transport_plugin_data_set (transport, data);
+
 	return TRUE;
 }
 
@@ -185,8 +225,17 @@ xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	ret = recv (data->fd, buffer, len, 0);
-
-	return ret;
+	switch(data->state){
+		case 0: 
+		case 1:
+			x_request(transport); return 0;
+		default: 	
+		/** @todo FIXME: !*/
+		xmms_transport_mime_type_set (transport, "audio/mpeg");
+		
+		ret = recv (data->fd, buffer, len, 0);
+	
+		return ret;
+	}
 }
 
