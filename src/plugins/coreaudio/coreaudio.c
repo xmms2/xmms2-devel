@@ -62,6 +62,9 @@ static void xmms_ca_close (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
+static void xmms_ca_mixer_config_changed (xmms_object_t *object, gconstpointer data,
+										  gpointer userdata);
+void xmms_ca_mixer_set (xmms_output_t *output, guint left, guint right);
 
 /*
  * Plugin header
@@ -88,6 +91,13 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ca_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
+	
+	
+	xmms_plugin_config_value_register (plugin,
+									   "volume",
+									   "70/70",
+									   NULL,
+									   NULL);
 
 	return plugin;
 }
@@ -188,6 +198,10 @@ static gboolean
 xmms_ca_new (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
+	xmms_plugin_t *plugin;
+	xmms_config_value_t *volume;
+	
+
 	OSStatus res;
 	ComponentDescription desc;
 	AURenderCallbackStruct input;
@@ -289,7 +303,12 @@ xmms_ca_new (xmms_output_t *output)
 			return FALSE;
 		}
 	}
-
+	
+	plugin = xmms_output_plugin_get (output);
+	volume = xmms_plugin_config_lookup (plugin, "volume");
+	xmms_config_value_callback_set (volume,
+									xmms_ca_mixer_config_changed,
+									(gpointer) output);
 
 	XMMS_DBG ("CoreAudio initialized!");
 
@@ -303,10 +322,18 @@ static void
 xmms_ca_destroy (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
+	xmms_plugin_t *plugin;
+	xmms_config_value_t *volume;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
+
+	plugin = xmms_output_plugin_get (output);
+	volume = xmms_plugin_config_lookup (plugin, "volume");
+	xmms_config_value_callback_remove (volume,
+	                                   xmms_ca_mixer_config_changed);
+
 
 	AudioUnitUninitialize (data->au);
 	CloseComponent (data->au);
@@ -346,6 +373,43 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 	}
 
 	return (guint)sR;
+}
+static void xmms_ca_mixer_config_changed (xmms_object_t *object, 
+										  gconstpointer data,
+										  gpointer userdata)
+{
+  	xmms_ca_data_t *ca_data;
+  	guint res, left, right;
+	
+	g_return_if_fail (data);
+	g_return_if_fail (userdata);
+	ca_data = xmms_output_private_data_get (userdata);
+	g_return_if_fail (ca_data);
+
+	res = sscanf (data, "%u/%u", &left, &right);
+
+	if (res == 0) {
+	  	xmms_log_error ("Unable to change volume");
+	}
+	else {
+		xmms_ca_mixer_set (userdata, left, right);
+	}
+}
+
+void xmms_ca_mixer_set (xmms_output_t *output, guint left, 
+						guint right)
+{
+  	Float32 volume;
+  	xmms_ca_data_t *data;
+ 	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+	
+	volume = (Float32)(left/255.0);
+	AudioUnitSetParameter(data->au, 
+						  kHALOutputParam_Volume, 
+						  kAudioUnitScope_Global, 
+						  0, volume, 0);
 }
 
 static void
