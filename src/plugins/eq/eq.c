@@ -37,7 +37,16 @@ typedef struct xmms_eq_priv_St {
 	guint rate;
 } xmms_eq_priv_t;
 
-static gdouble freqs[XMMS_EQ_BANDS] = { 31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000 };
+static gdouble freqs[XMMS_EQ_BANDS] = { 0.0007142857,
+					0.0014285714,
+					0.0028344671,
+					0.0056689342,
+					0.0113378684,
+					0.0226757369,
+					0.0453514739,
+					0.0907029478,
+					0.1814058956,
+					0.3628117913 };
 
 /**
  * Calculate a filter with specified gain and relative center frequence
@@ -46,7 +55,7 @@ static void
 xmms_eq_calc_filter (xmms_eq_filter_t *filter, gdouble gain, gdouble relfreq)
 {
 	gdouble omega, sn, cs, alpha, temp1, temp2, A;
-	
+
 	A = sqrt (gain);
 	omega = 2 * M_PI * relfreq;
 
@@ -112,7 +121,7 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 	priv->gains[i] = atof (newval);
 
 	xmms_eq_calc_filter (&priv->filters[i], 
-			     priv->gains[i], ((gdouble)freqs[i])/((gdouble)priv->rate));
+			     priv->gains[i], freqs[i]);
 
 }
 
@@ -156,7 +165,7 @@ xmms_eq_samplerate_set (xmms_effect_t *effect, guint rate)
 
 	for (i=0; i<XMMS_EQ_BANDS; i++) {
 		xmms_eq_calc_filter (&priv->filters[i], 
-				     priv->gains[i], ((gdouble)freqs[i])/((gdouble)rate));
+				     priv->gains[i], freqs[i]);
 	}
 
 	priv->rate = rate;
