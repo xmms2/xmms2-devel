@@ -23,6 +23,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
+		self.Append(LIBPATH=['/usr/lib'])
 		self.Append(LIBPATH=['/usr/local/lib'])
 		self.Append(CPPFLAGS=['-I/usr/local/include'])
 
@@ -57,6 +58,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
+	
 	def AddFlagsToGroup(self, group, flags):
 		if self.flag_groups.has_key(group) :
 			self.flag_groups[group] += flags
@@ -65,6 +67,23 @@ class XmmsEnvironment(SCons.Environment.Environment):
 
 	def HasGroup(self,group):
 		return self.flag_groups.has_key(group)
+
+	def CheckAndAddFlagsToGroupFromLibTool(self, group, ltfile):
+		file_found = 0	
+		for path in self['LIBPATH']:
+			if os.path.exists(os.path.join(path, ltfile)):
+				file_found = 1
+				flags = ""
+				f=open(os.path.join(path, ltfile))
+				for line in f.readlines():
+					if line[0:6] == 'dlname':
+						flags += " -l"+line[11:line.index('.so')]
+					elif line[0:6] == 'libdir':
+						flags += " -L"+line[8:-2]
+		if file_found == 0:
+			print "Could not find "+ltfile+". Aborting!"
+		else:
+			self.AddFlagsToGroup(group,flags)
 
 	def CheckAndAddFlagsToGroup(self, group, cmd, fail=0):
 		res = os.popen(cmd).read().strip()
