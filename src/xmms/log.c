@@ -28,6 +28,7 @@
 #endif
 
 #include "xmms/log.h"
+#include "xmms/config.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -43,17 +44,38 @@
 #include <sys/types.h>
 #include <signal.h>
 
+#include <regex.h>
+
 #ifndef BUFSIZE
 #define BUFSIZE 8192
 #endif
 
 /* Private function declarations */
-static void xmms_log_string_with_time (gint loglevel, const char *format, const char *string);
+static void xmms_log_string_with_time (gint loglevel, const char *format, 
+									   const char *string);
 static int xmms_log_open_logfile ();
 static int xmms_log_close_logfile ();
 char *xmms_log_filename = NULL;
 static FILE *xmms_log_stream = NULL;
 static int xmms_log_daemonized = 0;
+
+xmms_config_value_t *regex_cv = NULL;
+regex_t re;
+
+static void
+xmms_log_config_regex_changed (xmms_object_t *object, gconstpointer data,
+							   gpointer userdata)
+{
+	int err;
+	
+	xmms_log_debug ("XMMS_LOG_CONFIG_REGEX_CHANGED");
+	g_return_if_fail (data);
+
+	err = regcomp (&re, data, REG_EXTENDED);
+	if (err != 0) {
+		xmms_log_error ("Unable to compile regular expression");
+	}
+}
 
 /** @defgroup Log Log
   * @ingroup XMMSServer
@@ -75,13 +97,23 @@ xmms_log_initialize (const gchar *filename)
 		xmms_log_filename = g_strdup (filename);
 	} else {
 
-		xmms_log_filename = g_strdup_printf ("/tmp/%s.%d", filename, (int)time(NULL));
+		xmms_log_filename = g_strdup_printf ("/tmp/%s.%d", filename, 
+											 (int)time (NULL));
 		  
 		if (!xmms_log_open_logfile ()) {
 			return 0;
 		}
 	}
-	 
+
+	xmms_config_value_register ("log.regexp", ".*", NULL, NULL);
+	regex_cv = xmms_config_lookup ("log.regexp");
+	xmms_config_value_callback_set (regex_cv, xmms_log_config_regex_changed,
+									NULL);
+	
+	xmms_log_config_regex_changed ((xmms_object_t *)regex_cv, 
+					(gconstpointer *)xmms_config_value_string_get (regex_cv), 
+					NULL);
+	
 	return 1;
 }
 
@@ -120,13 +152,13 @@ xmms_log_debug (const gchar *fmt, ...)
 	char buff[BUFSIZE];
 	va_list ap;
 
-	va_start(ap, fmt);
+	va_start (ap, fmt);
 #ifdef HAVE_VSNPRINTF
-	vsnprintf(buff, BUFSIZE, fmt, ap);
+	vsnprintf (buff, BUFSIZE, fmt, ap);
 #else
-	vsprintf(buff, fmt, ap);
+	vsprintf (buff, fmt, ap);
 #endif
-	va_end(ap);
+	va_end (ap);
 
 	xmms_log_string_with_time (XMMS_LOG_DEBUG, "DEBUG: %s\n", buff);
 }
@@ -138,9 +170,9 @@ xmms_log (const char *fmt, ...)
 	char buff[BUFSIZE];
 	va_list ap;
 
-	va_start(ap, fmt);
-	g_vsnprintf(buff, BUFSIZE, fmt, ap);
-	va_end(ap);
+	va_start (ap, fmt);
+	g_vsnprintf (buff, BUFSIZE, fmt, ap);
+	va_end (ap);
 
 	xmms_log_string_with_time (XMMS_LOG_INFORMATION, "%s\n", buff);
 }
@@ -152,9 +184,9 @@ xmms_log_fatal (const gchar *fmt, ...)
 	char buff[BUFSIZE];
 	va_list ap;
 
-	va_start(ap, fmt);
-	g_vsnprintf(buff, BUFSIZE, fmt, ap);
-	va_end(ap);
+	va_start (ap, fmt);
+	g_vsnprintf (buff, BUFSIZE, fmt, ap);
+	va_end (ap);
 
 	xmms_log_string_with_time (XMMS_LOG_FATAL, "%s\n", buff);
 	xmms_log_string_with_time (XMMS_LOG_FATAL, "%s\n", "Shutting down...");
@@ -171,7 +203,14 @@ xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *stri
 #endif
 	time_t now;
 	gchar timestring[20];
-
+	
+	int err = REG_NOMATCH;
+	regmatch_t pm;
+	
+	err = regexec (&re, string, 0, &pm, 0);
+	if (err == REG_NOMATCH)
+		return;
+	
 	/* send the information to core */
 	/*msg = g_strdup_printf (format, string);
 	xmms_core_information (loglevel, msg);
@@ -228,9 +267,8 @@ xmms_log_open_logfile ()
 	logfp = fopen (xmms_log_filename, "w+");
 
 	if (!logfp) {
-		fprintf (stderr, "Error while opening %s, error: %s\n", xmms_log_filename, 
-				 strerror (errno));
-
+		fprintf (stderr, "Error while opening %s, error: %s\n", 
+				 xmms_log_filename, strerror (errno));
 		return 0;
 	}
 

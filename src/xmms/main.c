@@ -196,9 +196,9 @@ main (int argc, char **argv)
 
 	g_thread_init (NULL);
 
-	xmms_log_initialize (doLog?"xmmsd":"null");
-	
 	parse_config ();
+	
+	xmms_log_initialize (doLog?"xmmsd":"null");
 	
 	playlist = xmms_playlist_init ();
 
