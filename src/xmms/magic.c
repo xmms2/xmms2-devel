@@ -12,6 +12,7 @@ const xmms_mimemap_t mimemap[] = {
 	{ "ogg", "application/ogg" },
 	{ "wav", "audio/wave" },
 	{ "sid", "audio/prs.sid" },
+	{ "tar", "application/x-tar" },
 	{ NULL, NULL }
 };
 

@@ -45,4 +45,5 @@ src/plugins/diskwrite/Makefile
 src/plugins/sdlout/Makefile
 src/plugins/oss/Makefile
 src/plugins/sid/Makefile
+src/plugins/tar/Makefile
 src/plugins/file/Makefile])

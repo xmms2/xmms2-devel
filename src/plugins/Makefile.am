@@ -1,2 +1,2 @@
-SUBDIRS=file mad diskwrite sdlout http oss sid
+SUBDIRS=file mad diskwrite sdlout http oss sid tar
 

@@ -53,27 +53,11 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
 	xmms_object_emit (XMMS_OBJECT (transport), "mime-type-changed", mimetype);
 }
 
-
-/*
- * Private functions
- */
-
 xmms_transport_t *
-xmms_transport_open (const gchar *uri)
+xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data)
 {
-	xmms_plugin_t *plugin;
-	xmms_transport_t *transport;
 	xmms_transport_open_method_t open_method;
-
-	g_return_val_if_fail (uri, NULL);
-
-	XMMS_DBG ("Trying to open stream: %s", uri);
-	
-	plugin = xmms_transport_find_plugin (uri);
-	if (!plugin)
-		return NULL;
-	
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+	xmms_transport_t *transport;
 
 	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
 
@@ -90,6 +74,7 @@ xmms_transport_open (const gchar *uri)
 	transport->seek_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
 	transport->want_seek = FALSE;
+	xmms_transport_plugin_data_set (transport, data);
 
 	transport->uri = g_strdup(uri);
 	transport->suburi = transport->uri + strlen(uri); /* empty string */
@@ -114,6 +99,28 @@ xmms_transport_open (const gchar *uri)
 	}
 	
 	return transport;
+}
+
+/*
+ * Private functions
+ */
+
+xmms_transport_t *
+xmms_transport_open (const gchar *uri)
+{
+	xmms_plugin_t *plugin;
+
+	g_return_val_if_fail (uri, NULL);
+
+	XMMS_DBG ("Trying to open stream: %s", uri);
+	
+	plugin = xmms_transport_find_plugin (uri);
+	if (!plugin)
+		return NULL;
+	
+	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+
+	return xmms_transport_open_plugin (plugin, uri, NULL);
 }
 
 void
@@ -332,7 +339,7 @@ xmms_transport_thread (gpointer data)
 		}
 
 		xmms_transport_unlock (transport);
-		ret = read_method (transport, buffer, 4096);
+		ret = read_method (transport, buffer, sizeof(buffer));
 		xmms_transport_lock (transport);
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
