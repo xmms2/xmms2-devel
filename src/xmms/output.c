@@ -56,7 +56,7 @@ XMMS_METHOD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NON
 XMMS_METHOD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
 XMMS_METHOD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
 XMMS_METHOD_DEFINE (status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_METHOD_DEFINE (currentid, xmms_output_current_id, xmms_playlist_t *, UINT32, NONE, NONE);
+XMMS_METHOD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
 
 /*
  * Type definitions
