@@ -490,7 +490,7 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 
 	if (decoder->running) {
 		g_thread_join (decoder->thread);
-		decoder->thread = NULL;
+		//decoder->thread = NULL;
 	}
 
 }
