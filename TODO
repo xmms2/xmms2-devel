@@ -7,12 +7,7 @@ CORE:
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
 	* make clientlib and implement following features:
-		* show playlist
-		* delete from playlist
-		* stop
 		* seek
-		* play
-	* after issuing a command we shouldnt stick in mediamode
 	* print mediainfo nicer
 
 PLUGINS:
@@ -21,13 +16,12 @@ PLUGINS:
 		* support VBR
 		* support ID3V2
 	* vorbis
-		* calculate duration
-		* map comments to entry_t
+		* should calculate duration more correctly
+		  before playing file.
 	* sid
 		* parse STIL.txt
 
 	* Transport
-
 		* SMB
 		* HTTP
 		* FTP
@@ -36,7 +30,6 @@ PLUGINS:
 		* GSTP
 
 	* Decoders
-
 		* WAV
 		* WMA http://ffmpeg.sourceforge.net/ includes libavcodec
 		* Speex

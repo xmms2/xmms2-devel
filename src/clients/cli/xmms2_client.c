@@ -13,13 +13,16 @@
 #define XMMS_MAX_URI_LEN 1024
 
 static GMainLoop *mainloop;
+gint duration;
 
 void
 handle_playtime (void *userdata, void *arg) {
 	guint tme = GPOINTER_TO_UINT(arg);
-	printf ("played time: %02d:%02d\r",
+	printf ("played time: %02d:%02d of %02d:%02d\r",
 		tme/60000,
-		(tme/1000)%60);
+		(tme/1000)%60,
+		duration/60,
+		(duration)%60);
 	fflush (stdout);
 }
 
@@ -28,7 +31,16 @@ handle_mediainfo (void *userdata, void *arg) {
 	guint id = GPOINTER_TO_UINT(arg);
 	xmmsc_connection_t *conn = userdata;
 	GHashTable *entry;
+	gchar *d;
+
 	entry = xmmsc_playlist_get_mediainfo (conn, id);
+	d = (gchar *)g_hash_table_lookup (entry, "duration");
+
+	if (d) 
+		duration = atoi (d);
+	else
+		duration = 0;
+	
 	printf ("Playing %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
 	fflush (stdout);
 }
@@ -46,8 +58,18 @@ status_main(xmmsc_connection_t *conn)
 	id = xmmsc_get_playing_id (conn);
 	if (id) {
 		GHashTable *entry;
+		gchar *d;
 		entry = xmmsc_playlist_get_mediainfo (conn, id);
-		printf ("Playing %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
+		printf ("Playing %s\n",
+				(gchar *)g_hash_table_lookup (entry, "uri"));
+
+		d = (gchar *)g_hash_table_lookup (entry, "duration");
+		if (d) {
+			duration = atoi (d);
+		} else {
+			duration = 0;
+		}
+
 	}
 
 	xmmsc_glib_setup_mainloop (conn, NULL);
@@ -62,6 +84,8 @@ int
 main(int argc, char **argv)
 {
 	xmmsc_connection_t *c;
+
+	duration = 0;
 
 	c = xmmsc_init ();
 
@@ -150,6 +174,32 @@ main(int argc, char **argv)
 		} else if ( streq (argv[1], "quit") ) {
 
 			xmmsc_quit (c);
+			xmmsc_deinit (c);
+
+			exit(0);
+		} else if ( streq (argv[1], "info") ) {
+			gint id;
+			GHashTable *entry;
+
+			if (argc < 3)
+				id = xmmsc_get_playing_id (c);
+			else
+				id = atoi (argv[2]);
+
+			entry = xmmsc_playlist_get_mediainfo (c, id);
+
+			if (!entry) {
+				printf ("id %d doesn't exist in playlist", id);
+				xmmsc_deinit (c);
+				exit (1);
+			}
+			
+			printf ("URI:    %s\n", g_hash_table_lookup (entry, "uri"));
+			printf ("Artist: %-30s ", g_hash_table_lookup (entry, "artist"));
+			printf ("Album: %-30s\n", g_hash_table_lookup (entry, "album"));
+			printf ("Title:  %-30s ", g_hash_table_lookup (entry, "title"));
+			printf ("Year: %s\n", g_hash_table_lookup (entry, "year"));
+
 			xmmsc_deinit (c);
 
 			exit(0);

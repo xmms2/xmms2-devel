@@ -19,7 +19,7 @@ typedef enum {
 #define XMMS_ENTRY_PROPERTY_ARTIST "artist"
 #define XMMS_ENTRY_PROPERTY_ALBUM "album"
 #define XMMS_ENTRY_PROPERTY_TITLE "title"
-#define XMMS_ENTRY_PROPERTY_YEAR "year"
+#define XMMS_ENTRY_PROPERTY_YEAR "date"
 #define XMMS_ENTRY_PROPERTY_TRACKNR "tracknr"
 #define XMMS_ENTRY_PROPERTY_GENRE "genre"
 #define XMMS_ENTRY_PROPERTY_BITRATE "bitrate"
