@@ -452,6 +452,7 @@ handle_callback (DBusMessageHandler *handler,
 	xmmsc_signal_callbacks_t *c;
 	xmmsc_callback_desc_t *cb;
         DBusMessageIter itr;
+	guint tmp[2]; /* used by MOVE */
 	void *arg = NULL;
 
 	c = get_callback (dbus_message_get_name (msg));
@@ -475,19 +476,16 @@ handle_callback (DBusMessageHandler *handler,
 			break;
 		case XMMSC_TYPE_VIS:
 			{
-				double *arr;
 				int len=0;
-				dbus_message_iter_get_double_array (&itr, &arr, &len);
-				arg = &arr;
+				dbus_message_iter_get_double_array (&itr, (double *) &arg, &len);
 			}
 			break;
 
 		case XMMSC_TYPE_MOVE:
 			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-				guint id = dbus_message_iter_get_uint32 (&itr);
-				guint newpos = dbus_message_iter_get_uint32 (&itr);
-				guint foo[] = {id, newpos};
-				arg = &foo;
+				tmp[0] = dbus_message_iter_get_uint32 (&itr);
+				tmp[1] = dbus_message_iter_get_uint32 (&itr);
+				arg = &tmp;
 			}
 			break;
 
