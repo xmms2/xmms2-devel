@@ -208,7 +208,7 @@ main (int argc, char **argv)
 
 	parse_config ();
 	
-	xmms_log_initialize (doLog?"xmmsd":"null");
+	xmms_log_init (doLog ? "xmmsd" : "null");
 	
 	playlist = xmms_playlist_init ();
 

@@ -86,7 +86,7 @@ xmms_log_config_regex_changed (xmms_object_t *object, gconstpointer data,
 
 /** Initialize the log module, creates log file */
 gint
-xmms_log_initialize (const gchar *filename)
+xmms_log_init (const gchar *filename)
 {
 	if (strcmp (filename, "stdout") == 0) {
 		xmms_log_filename = g_strdup (filename);
