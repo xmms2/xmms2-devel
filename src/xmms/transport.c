@@ -502,7 +502,11 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	}
 	
 	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-	g_return_val_if_fail (seek_method, FALSE);
+	if (!seek_method) {
+		XMMS_DBG ("This plugin has XMMS_PLUGIN_PROPERTY_SEEK but no seek method, that's stupid");
+		g_mutex_unlock (transport->mutex);
+		return -1;
+	}
 
 	XMMS_DBG ("Seeking to %d", offset);
 
