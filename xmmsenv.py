@@ -33,6 +33,17 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	def AddFlagsFromGroup(self, group):
 		self.ParseConfigFlagsString(self.flag_groups[group])
 
+	def CheckLibAndAddFlagsToGroup(self, group, library, function, depends=""):
+		if depends != "":
+			if not self.HasGroup(depends):
+				return 0
+		test_env = self.Copy()
+		test_env.AddFlagsFromGroup(depends)
+		conf = SCons.SConf.SConf( test_env )
+		if conf.CheckLib(library, function, 0):
+			self.AddFlagsToGroup(group, '-l'+library)
+
+
 	def ParseConfigFlagsString(self, flags ):
 		"""We want our own ParseConfig, that supports some more
 		flags, and that takes the argument as a string"""

@@ -4,6 +4,7 @@ import os;
 
 
 ## setup base environment...
+## ...ok, this should be a bit configurable... later.
 ##
 ## SCons-tips 42: start paths with '#' to have them change
 ##                correctly when we descend into subdirs
@@ -24,7 +25,7 @@ base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus
 ##
 
 base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
-
+base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 
 Export('base_env')
 

@@ -207,9 +207,8 @@ static void
 new_data (void *userdata, void *arg) 
 {
 	gdouble *s = arg;
-	guint32 time;
+	guint32 time=s[0];
 	int i;
-	time=s[0];
 	float *spec;
 
 	if (free_buffers) {
