@@ -151,7 +151,7 @@ xmms_http_open (xmms_transport_t *transport, const gchar *uri)
 
 	XMMS_DBG ("connected!");
 
-	g_snprintf (request, 1024, "GET /%s HTTP/1.1\r\nHost: %s\r\nUser-Agent: XMMS/" VERSION "\r\n\r\n", path, server);
+	g_snprintf (request, 1024, "GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: XMMS/" VERSION "\r\n\r\n", path, server);
 
 	XMMS_DBG ("%s", request);
 

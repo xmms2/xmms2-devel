@@ -1,2 +1,2 @@
-SUBDIRS=file mad diskwrite sdlout
+SUBDIRS=file mad diskwrite sdlout http
 
