@@ -156,7 +156,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 	g_return_val_if_fail (playlist, FALSE);
 
 	buffer_len = xmms_transport_size (transport);
-	buffer = g_malloc0 (buffer_len);
+	buffer = g_malloc0 (buffer_len + 1);
 
 	while (len < buffer_len) {
 		gint ret;
@@ -172,6 +172,8 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 		len += ret;
 		g_assert (len >= 0);
 	}
+
+	buffer[len] = '\0';
 
 	lines = g_strsplit (buffer, "\n", 0);
 	g_free (buffer);
