@@ -213,7 +213,7 @@ xmms_medialib_entry_new (const char *url)
 	g_return_val_if_fail (url, 0);
 	g_mutex_lock (medialib->mutex);
 
-	if (g_strncasecmp (url, "mlib://", 7) == 0) {
+	if (g_strncasecmp (url, "mlib", 4) == 0) {
 		const gchar *p = url+9;
 		id = strtol (p, NULL, 10);
 		/* Hmmm, maybe verify that this entry exists? */
