@@ -630,47 +630,27 @@ xmms_core_playtime_set (guint time)
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_PLAYTIME, GUINT_TO_POINTER (time) );
 }
 
-static gint
-xmms_core_effect_compare (gconstpointer a, gconstpointer b)
-{
-	const xmms_config_value_t *cv1, *cv2;
-	gint pos1, pos2;
-
-	cv1 = a;
-	cv2 = b;
-
-	pos1 = xmms_config_value_int_get (cv1);
-	pos2 = xmms_config_value_int_get (cv2);
-
-	return (pos1-pos2);
-
-}
-
 static void
 xmms_core_effect_init (void)
 {
 	xmms_config_value_t *cv;
-	GList *lst = NULL;
-	GList *effectlist = NULL;
+	const gchar *order;
+	gchar **list;
+	gint i;
+
 	core->effects = NULL;
 
-	for (lst = xmms_config_plugins_get (); lst; lst = g_list_next (lst)) {
-		gchar *tmp = g_strdup_printf ("effect.%s.position", (gchar *)lst->data);
-		cv = xmms_config_lookup (tmp);
-		if (cv && (xmms_config_value_int_get (cv) > 0)) {
-			XMMS_DBG ("Adding %s to list", (gchar *)lst->data);
-			effectlist = g_list_insert_sorted (effectlist, cv, xmms_core_effect_compare);
-		}
+	cv = xmms_config_value_register ("core.effectorder", "", NULL, NULL);
+	order = xmms_config_value_string_get (cv);
+	XMMS_DBG ("effectorder = '%s'", order);
+
+	list = g_strsplit (order, ",", 0);
+
+	for (i = 0; list[i]; i++) {
+		XMMS_DBG ("adding effect '%s'", list[i]);
+		core->effects = xmms_effect_prepend (core->effects, list[i]);
 	}
 
-	for (; effectlist; effectlist = g_list_next (effectlist)) {
-		cv = effectlist->data;
-		const gchar *name = xmms_config_value_name_get (effectlist->data);
-		XMMS_DBG ("adding effect %s", name);
-		core->effects = xmms_effect_prepend (core->effects, name);
-	}
-
-	g_list_free (lst);
-	g_list_free (effectlist);
+	g_strfreev (list);
 
 }

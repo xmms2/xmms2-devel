@@ -79,7 +79,6 @@ xmms_plugin_t *
 xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
-	gint i;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, "equalizer",
 					    "Equalizer effect " XMMS_VERSION,
@@ -100,17 +99,6 @@ xmms_plugin_get (void)
 					   NULL,
 					   NULL);
 
-	for (i = 0; i < XMMS_EQ_BANDS; i++) {
-		gchar buf[20];
-		snprintf (buf, 20, "gain%d", i);
-		xmms_plugin_config_value_register (plugin,
-			   			   g_strdup (buf), 
-			   			   "1.0",
-						   NULL,
-						   NULL);
-	}
-	
-	
 	return plugin;
 }
 
@@ -155,12 +143,11 @@ xmms_eq_init (xmms_effect_t *effect) {
 	xmms_effect_plugin_data_set (effect, priv);
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
+
 		gchar buf[20];
 		snprintf (buf, 20, "gain%d", i);
 
-		priv->configvals[i] = 
-			xmms_plugin_config_lookup (xmms_effect_plugin_get (effect),
-						   buf);
+		priv->configvals[i] =  xmms_plugin_config_value_register (xmms_effect_plugin_get (effect), g_strdup (buf), "1.0", xmms_eq_configval_changed, (gpointer) effect);
 
 		xmms_config_value_callback_set (priv->configvals[i], 
 						xmms_eq_configval_changed, 

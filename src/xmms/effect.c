@@ -110,6 +110,8 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 
 		g_return_val_if_fail (effect, stack);
 
+		effect->plugin = plugin;
+
 		initfunc = xmms_plugin_method_get (plugin, 
 						   XMMS_PLUGIN_METHOD_INIT);
 		
@@ -127,7 +129,6 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 							 XMMS_PLUGIN_METHOD_DEINIT);
 
 		effect->next = stack;
-		effect->plugin = plugin;
 		stack = effect;
 
 	} else {
