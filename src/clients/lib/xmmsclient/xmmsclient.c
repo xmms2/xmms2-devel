@@ -983,8 +983,6 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 	DBusError err;
 	unsigned int *arr;
 
-	*arr = -1;
-	
 	dbus_error_init (&err);
 
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
@@ -1006,6 +1004,9 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 				arr = g_new0 (guint32, len+1);
 				memcpy (arr, tmp, len * sizeof(guint32));
 				arr[len] = '\0';
+			} else {
+				arr = g_new0 (guint32, 1);
+				*arr = -1;
 			}
 		}
 
