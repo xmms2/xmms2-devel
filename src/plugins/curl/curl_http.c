@@ -477,6 +477,9 @@ xmms_curl_thread (xmms_transport_t *transport)
 	curl_multi_fdset (data->curl_multi, &data->fdread, &data->fdwrite, &data->fdexcp,  &data->maxfd);
 
 	while (data->running && data->running_handles) {
+		CURLMsg *msg;
+		CURLMcode code;
+		gint msgs_in_queue = 0;
 		gint ret;
 
 		timeout.tv_sec = 1;
@@ -485,6 +488,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 		ret = select (data->maxfd + 1, &data->fdread, &data->fdwrite, &data->fdexcp, &timeout);
 
 		switch (ret) {
+
 			case -1:
 				g_mutex_lock (data->mutex);
 				XMMS_DBG ("Disconnected?");
@@ -495,12 +499,22 @@ xmms_curl_thread (xmms_transport_t *transport)
 			case 0:
 				continue;
 			default:
-				curl_multi_perform (data->curl_multi, &data->running_handles);
+				do {
+					code = curl_multi_perform (data->curl_multi, &data->running_handles);
+				} while (code == CURLM_CALL_MULTI_PERFORM);
 
 				g_mutex_lock (data->mutex);
 				if (!data->running_handles) {
 					xmms_ringbuf_set_eos (data->ringbuf, TRUE);
 				}
+
+				do {
+					msg = curl_multi_info_read (data->curl_multi, &msgs_in_queue);
+					if (msg && msg->msg == CURLMSG_DONE) {
+						xmms_error_set (&data->status, XMMS_ERROR_EOS, "End of Stream");
+					}
+				} while (msg && (msgs_in_queue > 0));
+
 				g_mutex_unlock (data->mutex);
 				break;
 		}
