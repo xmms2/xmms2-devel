@@ -1,3 +1,9 @@
+xmms2 (1.94-rc2) unstable; urgency=high
+
+  * New Upstream
+
+ -- Tobias <tru@xmms.org>  Tue, 26 Aug 2003 23:14:13 +0200
+
 xmms2 (1.94-rc1-2) unstable; urgency=low
 
   * Some minor tweaks

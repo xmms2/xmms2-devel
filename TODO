@@ -1,5 +1,7 @@
 CORE
 	* licenseheader in all sourcefiles?
+	* Core should be reentrant. Cleaned up anyway.
+	* Configapi should be cleaned up.
 
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
@@ -9,21 +11,26 @@ PLUGINS:
 		* broken frames sound bad.
 
 	* make all decoderplugins seek-able
-	* vorbis
+	* vorbis - 1.9.4
 		* should calculate duration more correctly
 		  before playing file.
-	* sid
+	* sid - 1.9.4
+		* make it work
 		* parse STIL.txt
 
-	* tar and stacking
+	* tar and stacking - 1.9.4
 		* make sure they work
 
 	* Transport
+		* API support listing. - 1.9.4
+
+	* Transport Plugins
 		* SMB
-		* FTP
+		* FTP 
 		* SSH
 		* RTP/RTCP/RTSP http://www.live.com/
 		* GSTP
+		
 
 	* Decoders
 		* WAV
@@ -33,9 +40,6 @@ PLUGINS:
 		* det däringa lossless formatet som nyligen gick med i vorbis
 
 	* Output
-
-		* output is always stereo. how shall we do with
- 		  mono?
 		* ARTS
 		* ALSA
 		* ESD - Tack Gnome.. tack som fan
@@ -45,6 +49,7 @@ PLUGINS:
                                                             -- Alan Cox
 
 	* Effects
+		* move effects to output layer
 		* Replaygain
 
 	

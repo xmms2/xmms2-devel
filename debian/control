@@ -7,6 +7,7 @@ Build-Depends: debmake
 
 Package: xmms2-core
 Architecture: any
+Conflicts: xmms2-client-gtk2, xmms2-decoder-sid
 Depends: debconf (>= 0.2.78), ${shlibs:Depends}
 Conflicts: xmms2
 Description: XMMS2 - core package - private beta - DO NOT SPREAD!
