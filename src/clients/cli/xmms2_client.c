@@ -35,7 +35,7 @@ print_mediainfo (xmmsc_connection_t *conn, gint id)
 	printf ("Artist: %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
 	printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
 	printf ("Title:  %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
-	printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "year"));
+	printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "date"));
 
 	xmmsc_playlist_entry_free (entry);
 }
