@@ -1,3 +1,9 @@
+xmms2 (1.94-rc3-1) unstable; urgency=high
+
+  * New Upstream. Should correct some dbus errors.
+
+ -- Tobias <tru@xmms.org>  Sat, 15 Nov 2003 14:41:19 +0100
+
 xmms2 (1.94-rc2-1) unstable; urgency=low
 
   * Optimize code
