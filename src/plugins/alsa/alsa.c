@@ -3,7 +3,7 @@
  *
  * Written by Daniel Svensson, <nano@nittioonio.nu>
  *
- * @todo Fiddle around with the buffer so that no xruns wil appear.
+ * @todo xmms2d crashes if the audiodevice is closed and then restarted. 
  */
 
 #include "xmms/plugin.h"
@@ -141,7 +141,15 @@ xmms_alsa_buffersize_get (xmms_output_t *output) {
  */
 static void
 xmms_alsa_flush (xmms_output_t *output) {
-	return;
+	gint res;
+	xmms_alsa_data_t *data;	
+	
+	g_return_if_fail (output);
+	data = xmms_output_plugin_data_get (output);
+	g_return_if_fail (data);
+	
+	if ((res = snd_pcm_reset(data->pcm)) != 0)
+		g_return_if_reached();
 }
 
 
@@ -182,7 +190,10 @@ xmms_alsa_open (xmms_output_t *output)
 				__FILE__, snd_strerror (err));
 		return FALSE;
 	}
-	
+
+
+
+	/* extract card information */
 	snd_pcm_info_malloc (&info);
 	snd_pcm_info (data->pcm, info);
 	
@@ -195,7 +206,10 @@ xmms_alsa_open (xmms_output_t *output)
 	
 	XMMS_DBG ("Card: %i, Device: %i, Subdevice: %i, Name: %s", alsa_card, 
 			alsa_device, alsa_subdevice, alsa_name);
-	
+	/* end of card information */
+
+
+
 	snd_pcm_hw_params_alloca (&(data->hwparams));
 
 	
@@ -207,14 +221,25 @@ xmms_alsa_open (xmms_output_t *output)
 	xmms_output_plugin_data_set (output, data);
 
 	return TRUE;
-
 }
 
+
+/***
+ * New mekkodon
+ *
+ * @param output The output structure
+ */
 static gboolean
 xmms_alsa_new (xmms_output_t *output) {
 	return TRUE;
 }
 
+
+/**
+ * Setup hardware parameters.
+ *
+ * @param data Internal plugin structure
+ */
 static guint 
 xmms_alsa_set_hwparams(xmms_alsa_data_t *data) {
 	gint err;
@@ -259,7 +284,8 @@ xmms_alsa_set_hwparams(xmms_alsa_data_t *data) {
 		xmms_log_fatal ("cannot set sample rate (%s)\n", snd_strerror (err));
 		return err;
 	}
-	
+
+	/* extract the rate we got */
 	snd_pcm_hw_params_get_rate(data->hwparams, &err, 0);
 	XMMS_DBG("rate: %d", err);
 	
@@ -314,9 +340,6 @@ xmms_alsa_set_hwparams(xmms_alsa_data_t *data) {
  * @param rate The to-be-set sample rate.
  * @return a guint with the sample rate.
  *
- * @todo Something is fucked up.. next doesn't work
- * @todo Stop/start doesn't work well..
- * @todo Return the new rate and not the one that was inputed ;)
  */
 static guint
 xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
