@@ -38,9 +38,11 @@
 /*
  *  Defines
  */
-#define SND_CHANNELS     		2
-#define SND_FORMAT       		SND_PCM_FORMAT_S16
-#define SND_STREAM       		SND_PCM_STREAM_PLAYBACK
+#define SND_CHANNELS       2
+#define SND_FORMAT         SND_PCM_FORMAT_S16
+#define SND_STREAM         SND_PCM_STREAM_PLAYBACK
+#define BUFFER_TIME        500000
+#define PERIOD_TIME        100000
 
 
 /*
@@ -286,10 +288,9 @@ xmms_alsa_close (xmms_output_t *output)
 static gboolean 
 xmms_alsa_set_hwparams (xmms_alsa_data_t *data) 
 {
-	gint err;
-	gint dir;
-	gint requested_buffer_time;
-	gint requested_period_time;
+	gint err, tmp;
+	gint requested_buffer_time = BUFFER_TIME;
+	gint requested_period_time = PERIOD_TIME;
 
 	g_return_val_if_fail (data, FALSE);
 
@@ -305,7 +306,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 
 	/* Set the interleaved read/write format */
 	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams, 
-										SND_PCM_ACCESS_RW_INTERLEAVED);
+	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
 		xmms_log_error ("cannot set access type (%s)", snd_strerror (-err));
 		return FALSE;
@@ -320,56 +321,55 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 
 	/* Set the count of channels */
 	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
-										  SND_CHANNELS);
+	                                      SND_CHANNELS);
 	if (err < 0) {
 		xmms_log_error ("cannot set channel count (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
 	/* Set the sample rate */
+	tmp = data->rate;
 	err = snd_pcm_hw_params_set_rate_near (data->pcm, data->hwparams, 
-										   &data->rate, 0);
+	                                       &data->rate, NULL);
 	if (err < 0) {
 		xmms_log_error ("cannot set sample rate (%s)\n", snd_strerror (-err));
 		return FALSE;
 	}
 
-	/* Extract the rate we got */
-	snd_pcm_hw_params_get_rate (data->hwparams, &err, 0);
-	XMMS_DBG ("rate: %d", err);
-	
-	requested_buffer_time = 500000; 
-	requested_period_time = 100000;
-	
+	XMMS_DBG ("Sample rate requested: %dhz, got: %dhz",
+	          tmp, data->rate);
+
+	tmp = requested_buffer_time;
 	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
-												  &requested_buffer_time, 
-												  &dir); 
+	                                              &requested_buffer_time, 
+	                                              NULL);
 	if (err < 0) {
 		xmms_log_error ("Buffer time <= 0 (%s)", snd_strerror (-err));  
 		return FALSE;
 	}
 
-	XMMS_DBG ("Buffer time requested: 500ms, got: %dms", 
-			  requested_buffer_time / 1000); 
+	XMMS_DBG ("Buffer time requested: %dms, got: %dms",
+	          tmp / 1000, requested_buffer_time / 1000);
 
 	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
-											 &data->buffer_size);
+	                                         &data->buffer_size);
 	if (err != 0) {
 		xmms_log_error ("unable to get buffer size (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
 	/* Set period time */
+	tmp = requested_period_time;
 	err = snd_pcm_hw_params_set_period_time_near (data->pcm, data->hwparams, 
-												  &requested_period_time, 
-												  &dir);
+	                                              &requested_period_time, 
+	                                              NULL);
 	if (err < 0) {
 		xmms_log_error ("cannot set periods (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
-	XMMS_DBG ("Period time requested: 100ms, got: %dms", 
-			  requested_period_time / 1000); 
+	XMMS_DBG ("Period time requested: %dms, got: %dms",
+	          tmp / 1000, requested_period_time / 1000);
 
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
