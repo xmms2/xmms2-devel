@@ -113,9 +113,6 @@ static void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	XMMS_DBG ("eos_reached");
-
-	if (core->playlist_op == XMMS_CORE_PREV_SONG)
-		core->playlist_op = XMMS_CORE_NEXT_SONG;
 }
 
 static void
