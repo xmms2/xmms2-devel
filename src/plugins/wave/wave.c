@@ -209,6 +209,8 @@ xmms_wave_init (xmms_decoder_t *decoder)
 		return FALSE;
 	}
 
+	xmms_wave_get_media_info (decoder);
+
 	data->inited = TRUE;
 
 	return TRUE;
@@ -260,18 +262,29 @@ static gboolean
 xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 {
 	xmms_transport_t *transport;
+	xmms_wave_data_t *data;
+	guint offset = WAVE_HEADER_SIZE;
+	gint ret;
 
 	g_return_val_if_fail (decoder, FALSE);
+
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_val_if_fail (data, FALSE);
 
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
-	if (xmms_transport_seek (transport, samples,
-	                         XMMS_TRANSPORT_SEEK_SET) == -1) {
+	offset += samples * (data->bits_per_sample / 8);
+	if (offset > data->bytes_total) {
+		XMMS_DBG ("Trying to seek past end of stream");
+
 		return FALSE;
 	}
 
-	return TRUE;
+	ret = xmms_transport_seek (transport, offset,
+	                           XMMS_TRANSPORT_SEEK_SET);
+
+	return ret != -1;
 }
 
 static void
