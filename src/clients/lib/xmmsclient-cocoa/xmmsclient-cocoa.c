@@ -1,9 +1,9 @@
-#include <CoreFoundation/CoreFoundation.h>
-#include <Cocoa/Cocoa.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <Cocoa/Cocoa.h>
 
-#include "xmms/xmmsclient.h"
-#include "internal/client_ipc.h"
-#include "internal/xmmsclient_int.h"
+#import "xmms/xmmsclient.h"
+#import "xmms/xmmsclient-cocoa.h"
+#import "internal/client_ipc.h"
 
 gboolean 
 xmmsc_ipc_setup_with_cocoa (xmmsc_connection_t *c)
