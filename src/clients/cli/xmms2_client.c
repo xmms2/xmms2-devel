@@ -158,8 +158,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	status_main (conn);
 	if (argc<2 || streq (argv[1], "status")) {
+		status_main (conn);
 	} else {
 
 		if ( streq (argv[1], "next") ) {
@@ -170,7 +170,9 @@ main(int argc, char **argv)
 			dbus_connection_send (conn, msg, &cserial);
 			dbus_message_unref (msg);
 			dbus_connection_flush (conn);
-
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
 		} else if ( streq (argv[1], "quit") ) {
 			DBusMessage *msg;
 			int cserial;
@@ -179,7 +181,39 @@ main(int argc, char **argv)
 			dbus_connection_send (conn, msg, &cserial);
 			dbus_message_unref (msg);
 			dbus_connection_flush (conn);
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
+		} else if ( streq (argv[1], "list") ) {
+			DBusMessage *msg,*res;
+			int cserial;
 
+			msg = dbus_message_new ("org.xmms.playlist.list", NULL);
+			res = dbus_connection_send_with_reply_and_block (conn, msg, 2000, &err);
+			if (res) {
+				DBusMessageIter itr;
+				
+				dbus_message_iter_init (res, &itr);
+				while (42) {
+					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+						gchar *url = dbus_message_iter_get_string (&itr);
+						printf ("list: %s\n",url);
+					}
+					if (!dbus_message_iter_has_next (&itr)){
+						break;
+					}
+					dbus_message_iter_next (&itr);
+				}
+				dbus_message_unref (res);
+			} else {
+				printf ("no response?\n");
+			}
+			
+			dbus_message_unref (msg);
+			dbus_connection_flush (conn);
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
 		} else if ( streq (argv[1], "add") ) {
 			int i;
 			if ( argc < 3 ) {
@@ -210,6 +244,9 @@ main(int argc, char **argv)
 				dbus_connection_flush (conn);
 				dbus_message_unref (msg);
 			}
+			dbus_connection_disconnect (conn);
+			dbus_connection_unref (conn);
+			exit(0);
 		} else {
 			printf ("Unknown command '%s'\n", argv[1]);
 			return 1;

@@ -30,6 +30,7 @@ static GSList *connections = NULL;
 static const char *messages[]={"org.xmms.core.mediainfo"};
 static const char *nextmsgs[]={"org.xmms.core.play-next"};
 static const char *addmsgs[]={"org.xmms.playlist.add"};
+static const char *listmsgs[]={"org.xmms.playlist.list"};
 static const char *quitmsgs[]={"org.xmms.core.quit"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
@@ -135,7 +136,7 @@ handle_next(DBusMessageHandler *handler,
 
 static DBusHandlerResult
 handle_playlist_add(DBusMessageHandler *handler, 
-		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+		    DBusConnection *conn, DBusMessage *msg, void *user_data)
 {
 
         DBusMessageIter itr;
@@ -148,6 +149,37 @@ handle_playlist_add(DBusMessageHandler *handler,
 		XMMS_DBG ("adding to playlist: %s", uri);
 		xmms_core_playlist_adduri (uri);
 	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_list(DBusMessageHandler *handler, 
+		     DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	DBusMessage *rpy;
+	DBusMessageIter itr;
+	xmms_playlist_t *playlist;
+	GList *list,*save;
+	int clientser;
+
+	XMMS_DBG ("list!");
+
+	rpy = dbus_message_new_reply (msg);
+	dbus_message_append_iter_init (rpy, &itr);
+	playlist = xmms_core_get_playlist ();
+	save = list = xmms_playlist_list (playlist);
+
+	while (list) {
+		xmms_playlist_entry_t *entry=list->data;
+		dbus_message_iter_append_string (&itr, entry->uri);
+		list = g_list_next (list);
+	}
+
+	dbus_connection_send (conn, rpy, &clientser);
+	dbus_message_unref (rpy);
+
+	g_list_free (save);
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
@@ -171,58 +203,32 @@ handle_disconnect (DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+static void
+register_handler(DBusConnection *conn, DBusHandleMessageFunction func, const char **msgs, int n)
+{
+	DBusMessageHandler *hand;
+	hand = dbus_message_handler_new (func, NULL, NULL);
+	if (!hand) {
+		XMMS_DBG ("couldn't alloc handler - bad");
+		return;
+	}
+	dbus_connection_register_handler (conn, hand, msgs, n);
+}
+
 
 static void 
 new_connect (DBusServer *server, DBusConnection *conn, void * data){
-	DBusMessageHandler *hand;
 
 	XMMS_DBG ("new connection");
 
 	dbus_connection_ref (conn);
 
-	hand = dbus_message_handler_new (handle_mediainfo, NULL, NULL);
-	if (!hand) {
-		XMMS_DBG ("couldn't alloc handler");
-		dbus_connection_unref (conn);
-		return;
-	}
-	dbus_connection_register_handler (conn, hand, messages, 1);
-
-
-	hand = dbus_message_handler_new (handle_playlist_add, NULL, NULL);
-	if (!hand) {
-		XMMS_DBG ("couldn't alloc handler");
-		dbus_connection_unref (conn);
-		return;
-	}
-	dbus_connection_register_handler (conn, hand, addmsgs, 1);
-
-
-	hand = dbus_message_handler_new (handle_next, NULL, NULL);
-	if (!hand) {
-		XMMS_DBG ("couldn't alloc handler");
-		dbus_connection_unref (conn);
-		return;
-	}
-	dbus_connection_register_handler (conn, hand, nextmsgs, 1);
-
-
-	hand = dbus_message_handler_new (handle_quit, NULL, NULL);
-	if (!hand) {
-		XMMS_DBG ("couldn't alloc handler\n");
-		dbus_connection_unref (conn);
-		return;
-	}
-	dbus_connection_register_handler (conn, hand, quitmsgs, 1);
-
-
-	hand = dbus_message_handler_new (handle_disconnect, NULL, NULL);
-	if (!hand) {
-		XMMS_DBG ("couldn't alloc handler\n");
-		dbus_connection_unref (conn);
-		return;
-	}
-	dbus_connection_register_handler (conn, hand, disconnectmsgs, 1);
+	register_handler(conn,handle_mediainfo,messages,1);
+	register_handler(conn,handle_playlist_add,addmsgs,1);
+	register_handler(conn,handle_playlist_list,listmsgs,1);
+	register_handler(conn,handle_next,nextmsgs,1);
+	register_handler(conn,handle_quit,quitmsgs,1);
+	register_handler(conn,handle_disconnect,disconnectmsgs,1);
 
 	g_mutex_lock(connectionslock);
 	connections = g_slist_prepend (connections, conn);

@@ -118,15 +118,6 @@ core_thread(gpointer data){
 
 	while (running) {
 		
-		if (core->curr_song) { /* yes, it looks a bit ugly to
-					  begin with deallocations,
-					  but it makes the code much more
-					  readable 'cos we can just use
-					  continue on error */
-			 xmms_playlist_entry_free (core->curr_song);
-			 core->curr_song = NULL;
-		}
-
 		core->curr_song = xmms_playlist_get_next (core->playlist);
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
@@ -207,6 +198,18 @@ xmms_core_set_playlist (xmms_playlist_t *playlist)
 {
 	core->playlist = playlist;
 }
+
+/**
+ *
+ * @internal
+ */
+xmms_playlist_t *
+xmms_core_get_playlist ()
+{
+	return core->playlist;
+}
+
+
 
 /**
  * Get a copy of structure describing what is beeing decoded.
