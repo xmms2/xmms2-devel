@@ -207,26 +207,7 @@ xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
 
 }
 
-/**
- *
- * @param c The connection structure.
- * @param query sql-query to medialib.
- *
- */
 
-xmmsc_result_t *
-xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *query)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-	
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MEDIALIBADD);
-	xmms_ipc_msg_put_string (msg, query);
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
-
-}
 
 /**
  * Remove an entry from the playlist.

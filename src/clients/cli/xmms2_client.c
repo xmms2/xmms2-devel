@@ -274,10 +274,16 @@ add [url]";
 	} else if (g_strcasecmp (argv[2], "searchadd") == 0) {
 		xmmsc_result_t *res;
 		char query[1024];
+		char **s;
+		
+		s = g_strsplit (argv[3], "=", 0);
 
-		g_snprintf (query, 1023, "select url from Media where %s", argv[3]);
+		if (!s[0] || !s[1])
+			print_error ("key=value");
+
+		g_snprintf (query, 1023, "select id from Media where key='%s' and value='%s'",s[0],s[1]);
 		print_info ("%s", query);
-		res = xmmsc_playlist_medialibadd (conn, query);
+		res = xmmsc_medialib_add_to_playlist (conn, query);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
 	} else if (g_strcasecmp (argv[2], "search") == 0) {

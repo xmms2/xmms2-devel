@@ -131,6 +131,27 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 }
 
+/**
+ *
+ * @param c The connection structure.
+ * @param query sql-query to medialib.
+ *
+ */
+
+xmmsc_result_t *
+xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_ADD_TO_PLAYLIST);
+	xmms_ipc_msg_put_string (msg, query);
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+
+}
+
 /** @} */
 
 

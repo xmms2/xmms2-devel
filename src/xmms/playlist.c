@@ -86,7 +86,6 @@ static void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms
 static void xmms_playlist_destroy (xmms_object_t *object);
 gboolean xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_error_t *err);
-gboolean xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t *err);
 static guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
 static guint xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error);
 
