@@ -285,20 +285,30 @@ xmms_cdae_cddb_parse (FILE *fp, gint track)
 		if (kv && kv[0] && kv[1]) {
 			if (g_strcasecmp (kv[0], "DTITLE") == 0) {
 				gint r,w;
-				gchar *p = strchr (kv[1], '/');
+				gchar *p = strchr (kv[1], '/'), *conv;
 				*(p-1)='\0';
+
+				conv = g_convert (kv[1], strlen(kv[1]),
+				                  "UTF-8", "ISO-8859-1", &r, &w, NULL);
 				xmms_playlist_entry_property_set (entry, 
-						XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, 
-						g_convert (kv[1], strlen(kv[1]), "UTF-8", "ISO-8859-1", &r, &w, NULL));
+						XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, conv);
+				g_free (conv);
+
+				conv = g_convert (p + 2, strlen (p + 2),
+				                  "UTF-8", "ISO-8859-1", &r, &w, NULL);
 				xmms_playlist_entry_property_set (entry, 
-						XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, 
-						g_convert (p+2, strlen (p+2), "UTF-8", "ISO-8859-1", &r, &w, NULL));
+						XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, conv);
+				g_free (conv);
 			} else if (g_strncasecmp (kv[0], "TTITLE", 6) == 0) {
 				if (t == track) {
 					gint r,w;
+					gchar *conv;
+
+					conv = g_convert (kv[1], strlen (kv[1]),
+					                  "UTF-8", "ISO-8859-1", &r, &w, NULL);
 					xmms_playlist_entry_property_set (entry, 
-							XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, 
-							g_convert (kv[1], strlen (kv[1]), "UTF-8", "ISO-8859-1", &r, &w, NULL));
+							XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, conv);
+					g_free (conv);
 				}
 				t++;
 			}
