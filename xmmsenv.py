@@ -23,6 +23,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
+		self.Append(LIBPATH=['/usr/local/lib'])
+		self.Append(CPPFLAGS=['-I/usr/local/include'])
 
 		if self.sys == 'Linux':
 			self.Append(CPPFLAGS='-DXMMS_OS_LINUX')
@@ -30,10 +32,6 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self.Append(CPPFLAGS='-DXMMS_OS_DARWIN')
 		elif self.sys == 'OpenBSD':
 			self.Append(CPPFLAGS='-DXMMS_OS_OPENBSD')
-
-		if self.sys == 'OpenBSD':
-			self.Append(LIBPATH=['/usr/local/lib'])
-			self.Append(CPPFLAGS=['-I/usr/local/include'])
 
 	def XmmsConfig(self,source):
 		self.Install(self.installdir+self.sysconfdir, source)
