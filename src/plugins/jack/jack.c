@@ -864,6 +864,22 @@ xmms_jack_new(xmms_output_t *output)
 	return TRUE; 
 }
 
+/**
+ * Frees the plugin data allocated in xmms_jack_new()
+ */
+static void
+xmms_jack_destroy (xmms_output_t *output)
+{
+	xmms_jack_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	xmms_config_value_callback_remove (data->mixer_conf,
+	                                   xmms_jack_mixer_config_changed);
+	g_free (data);
+}
 
 /**
  * Get buffersize.
@@ -927,6 +943,8 @@ xmms_plugin_get (void)
 				xmms_jack_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 				xmms_jack_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, 
+	                        xmms_jack_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
 				xmms_jack_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 

@@ -79,10 +79,10 @@ xmms_medialib_destroy (xmms_object_t *medialib)
 
 	g_mutex_free (m->mutex);
 
+#ifdef HAVE_SQLITE
 	if (m->sql) 
-		xmms_medialib_close (m);
-
-	g_free (m);
+		xmms_sqlite_close (m);
+#endif
 }
 
 /** Initialize the medialib */
@@ -448,14 +448,11 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 
 /** Shutdown the medialib. */
 void
-xmms_medialib_close ()
+xmms_medialib_shutdown ()
 {
 	g_return_if_fail (medialib);
 
-#ifdef HAVE_SQLITE
-	xmms_sqlite_close (medialib);
-	medialib->sql = NULL;
-#endif
+	xmms_object_unref (medialib);
 }
 
 #ifdef HAVE_SQLITE

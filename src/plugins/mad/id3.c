@@ -94,7 +94,7 @@ add_to_entry (xmms_playlist_entry_t *entry, gchar *key, guchar *val, gint len)
 	}
 	XMMS_DBG ("%s=%s", key, nval);
 	xmms_playlist_entry_property_set (entry, key, nval);	
-	
+	g_free (nval);
 }
 
 static void

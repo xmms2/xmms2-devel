@@ -85,6 +85,7 @@ static guint xmms_sun_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_sun_buffersize_get (xmms_output_t *output);
 static gboolean xmms_sun_open (xmms_output_t *output);
 static gboolean xmms_sun_new (xmms_output_t *output);
+static void xmms_sun_destroy (xmms_output_t *output);
 static gboolean xmms_sun_mixer_set (xmms_output_t *output, gint left, 
 									gint right);
 static gboolean xmms_sun_mixer_get (xmms_output_t *output, gint *left, 
@@ -114,6 +115,8 @@ xmms_plugin_get (void)
 							xmms_sun_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 							xmms_sun_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
+	                        xmms_sun_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
 							xmms_sun_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
@@ -197,6 +200,26 @@ xmms_sun_new (xmms_output_t *output)
 	return TRUE; 
 }
 
+/**
+ * Free mekkodon
+ */
+static void
+xmms_sun_destroy (xmms_output_t *output)
+{
+	xmms_sun_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	if (data->have_mixer) {
+		close (data->mixerfd);
+	}
+
+	xmms_config_value_callback_remove (data->mixer_conf,
+	                                   xmms_sun_mixer_config_changed);
+	g_free (data);
+}
 
 /** 
  * Open audio device and configure it to play a stream.

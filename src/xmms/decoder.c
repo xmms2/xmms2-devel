@@ -68,19 +68,19 @@ struct xmms_decoder_St {
 
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport; /**< transport associated with decoder.
-				      *   This is where the decoder gets it
-				      *   data from
-				      */
+	                               *   This is where the decoder gets it
+	                               *   data from
+	                               */
 
 	gpointer plugin_data;
 
 	xmms_effect_t *effect;
 
 
-	xmms_output_t *output;       /**< output associated with decoder.
-				      *   The decoded data will be written
-				      *   to this output.
-				      */
+	xmms_output_t *output; /**< output associated with decoder.
+	                         *   The decoded data will be written
+	                         *   to this output.
+	                         */
 	xmms_visualisation_t *vis;
 
 	guint samplerate;
@@ -98,12 +98,12 @@ struct xmms_decoder_St {
 	gint16 last_l;
 
 	guint32 opos;      /* position in output */
-        guint32 opos_frac;
+	guint32 opos_frac;
 
-        guint32 opos_inc;  /* increment in output for each input-sample */
-        guint32 opos_inc_frac;
+	guint32 opos_inc;  /* increment in output for each input-sample */
+	guint32 opos_inc_frac;
 
-        guint32 ipos;      /* position in the input stream */
+	guint32 ipos;      /* position in the input stream */
 
 };
 
@@ -262,7 +262,7 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 void
 xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 {
-	gchar *r;
+	gchar samplerate[8];
 
 	g_return_if_fail (decoder);
 	g_return_if_fail (rate);
@@ -278,9 +278,10 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 /*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
 /*	xmms_effect_samplerate_set (decoder->effect, rate);*/
 	
-	r = g_strdup_printf ("%d", rate);
-	xmms_decoder_mediainfo_property_set (decoder, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
-	g_free (r);
+	g_snprintf (samplerate, sizeof (samplerate), "%d", rate);
+	xmms_decoder_mediainfo_property_set (decoder,
+	                                     XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE,
+	                                     samplerate);
 }
 
 
@@ -488,7 +489,7 @@ xmms_decoder_new ()
 	xmms_decoder_t *decoder;
 	xmms_config_value_t *val;
 
-	val = xmms_config_lookup ("core.decoder_buffersize");
+	val = xmms_config_lookup ("decoder.buffersize");
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
@@ -519,7 +520,6 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 		return FALSE;
 	
 	xmms_object_ref (transport);
-	xmms_object_ref (plugin);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
@@ -743,7 +743,7 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 			continue;
 
 		if (can_handle (mimetype)) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}

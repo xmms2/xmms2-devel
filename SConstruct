@@ -87,6 +87,7 @@ SConscript('src/xmms/SConscript',build_dir='builddir/xmms',duplicate=0)
 SConscript('src/clients/SConscript',build_dir='builddir/clients',duplicate=0)
 SConscript('src/plugins/SConscript',build_dir='builddir/plugins', duplicate=0)
 SConscript('src/clients/lib/python/SConscript')
+SConscript('src/lib/SConscript', build_dir="builddir/lib", duplicate=0)
 
 #base_env.XmmsManual('doc/xmms2.1')
 

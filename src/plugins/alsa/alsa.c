@@ -38,9 +38,11 @@
 /*
  *  Defines
  */
-#define SND_CHANNELS     		2
-#define SND_FORMAT       		SND_PCM_FORMAT_S16
-#define SND_STREAM       		SND_PCM_STREAM_PLAYBACK
+#define SND_CHANNELS       2
+#define SND_FORMAT         SND_PCM_FORMAT_S16
+#define SND_STREAM         SND_PCM_STREAM_PLAYBACK
+#define BUFFER_TIME        500000
+#define PERIOD_TIME        100000
 
 
 /*
@@ -55,7 +57,6 @@ typedef struct xmms_alsa_data_St {
 	guint frame_size;
 	guint rate;
 	gboolean have_mixer;
-	xmms_config_value_t *volume;
 } xmms_alsa_data_t;
 
 
@@ -73,6 +74,7 @@ static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
+static void xmms_alsa_destroy (xmms_output_t *output);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data); 
 static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left, 
 									 gint right);
@@ -105,6 +107,8 @@ xmms_plugin_get (void)
 							xmms_alsa_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 							xmms_alsa_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
+	                        xmms_alsa_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
 							xmms_alsa_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
@@ -167,6 +171,7 @@ xmms_alsa_new (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
+	xmms_config_value_t *volume;
 	
 	XMMS_DBG ("XMMS_ALSA_NEW"); 
 	
@@ -174,9 +179,9 @@ xmms_alsa_new (xmms_output_t *output)
 	data = g_new0 (xmms_alsa_data_t, 1);
 
 	plugin = xmms_output_plugin_get (output);
-	data->volume = xmms_plugin_config_lookup (plugin, "volume");
+	volume = xmms_plugin_config_lookup (plugin, "volume");
 
-	xmms_config_value_callback_set (data->volume,
+	xmms_config_value_callback_set (volume,
 									xmms_alsa_mixer_config_changed,
 									(gpointer) output);
 	
@@ -185,6 +190,28 @@ xmms_alsa_new (xmms_output_t *output)
 	return TRUE; 
 }
 
+/**
+ * Frees data for this plugin allocated in xmms_alsa_new().
+ */
+static void
+xmms_alsa_destroy (xmms_output_t *output)
+{
+	xmms_alsa_data_t *data;
+	xmms_plugin_t *plugin;
+	xmms_config_value_t *volume;
+
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	plugin = xmms_output_plugin_get (output);
+	volume = xmms_plugin_config_lookup (plugin, "volume");
+
+	xmms_config_value_callback_remove (volume,
+	                                   xmms_alsa_mixer_config_changed);
+
+	g_free (data);
+}
 
 /** 
  * Open audio device.
@@ -286,10 +313,9 @@ xmms_alsa_close (xmms_output_t *output)
 static gboolean 
 xmms_alsa_set_hwparams (xmms_alsa_data_t *data) 
 {
-	gint err;
-	gint dir;
-	gint requested_buffer_time;
-	gint requested_period_time;
+	gint err, tmp;
+	gint requested_buffer_time = BUFFER_TIME;
+	gint requested_period_time = PERIOD_TIME;
 
 	g_return_val_if_fail (data, FALSE);
 
@@ -305,7 +331,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 
 	/* Set the interleaved read/write format */
 	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams, 
-										SND_PCM_ACCESS_RW_INTERLEAVED);
+	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
 		xmms_log_error ("cannot set access type (%s)", snd_strerror (-err));
 		return FALSE;
@@ -320,56 +346,55 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 
 	/* Set the count of channels */
 	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
-										  SND_CHANNELS);
+	                                      SND_CHANNELS);
 	if (err < 0) {
 		xmms_log_error ("cannot set channel count (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
 	/* Set the sample rate */
+	tmp = data->rate;
 	err = snd_pcm_hw_params_set_rate_near (data->pcm, data->hwparams, 
-										   &data->rate, 0);
+	                                       &data->rate, NULL);
 	if (err < 0) {
 		xmms_log_error ("cannot set sample rate (%s)\n", snd_strerror (-err));
 		return FALSE;
 	}
 
-	/* Extract the rate we got */
-	snd_pcm_hw_params_get_rate (data->hwparams, &err, 0);
-	XMMS_DBG ("rate: %d", err);
-	
-	requested_buffer_time = 500000; 
-	requested_period_time = 100000;
-	
+	XMMS_DBG ("Sample rate requested: %dhz, got: %dhz",
+	          tmp, data->rate);
+
+	tmp = requested_buffer_time;
 	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
-												  &requested_buffer_time, 
-												  &dir); 
+	                                              &requested_buffer_time, 
+	                                              NULL);
 	if (err < 0) {
 		xmms_log_error ("Buffer time <= 0 (%s)", snd_strerror (-err));  
 		return FALSE;
 	}
 
-	XMMS_DBG ("Buffer time requested: 500ms, got: %dms", 
-			  requested_buffer_time / 1000); 
+	XMMS_DBG ("Buffer time requested: %dms, got: %dms",
+	          tmp / 1000, requested_buffer_time / 1000);
 
 	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
-											 &data->buffer_size);
+	                                         &data->buffer_size);
 	if (err != 0) {
 		xmms_log_error ("unable to get buffer size (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
 	/* Set period time */
+	tmp = requested_period_time;
 	err = snd_pcm_hw_params_set_period_time_near (data->pcm, data->hwparams, 
-												  &requested_period_time, 
-												  &dir);
+	                                              &requested_period_time, 
+	                                              NULL);
 	if (err < 0) {
 		xmms_log_error ("cannot set periods (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
-	XMMS_DBG ("Period time requested: 100ms, got: %dms", 
-			  requested_period_time / 1000); 
+	XMMS_DBG ("Period time requested: %dms, got: %dms",
+	          tmp / 1000, requested_period_time / 1000);
 
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
@@ -430,18 +455,24 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	if (err < 0) {
 		xmms_log_error ("Attaching to mixer %s failed: %s", dev, 
 						snd_strerror(-err));
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}   
 
 	err = snd_mixer_selem_register (data->mixer, NULL, NULL);
 	if (err < 0) {
 		xmms_log_error ("Failed to register mixer: %s", snd_strerror (-err));
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}
 
 	err = snd_mixer_load (data->mixer);
 	if (err < 0) {
 		xmms_log_error ("Failed to load mixer: %s", snd_strerror (-err));
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}       
 
@@ -458,6 +489,8 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	data->mixer_elem = snd_mixer_find_selem (data->mixer, selem_id);
 	if (data->mixer_elem == NULL) {
 		xmms_log_error ("Failed to find mixer element");
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}
 	
@@ -466,6 +499,8 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
 	
 	if (alsa_max_vol == 0) {
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		data->mixer_elem = NULL;
 		return FALSE;
 	}

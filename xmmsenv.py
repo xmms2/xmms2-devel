@@ -73,6 +73,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.SharedLibrary(target, source)
 		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
+	def XmmsStaticLibrary(self,target,source):
+		self.Library(target, source)
 	
 	def AddFlagsToGroup(self, group, flags):
 		excluded = self['EXCLUDE'].split()
@@ -197,6 +199,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 				elif arg[1:4] == 'Wl,':
 					self.Append( LINKFLAGS = [ arg ] )
 				elif arg[1:] == 'framework':
+					self.Append( LINKFLAGS = [ arg ] )
+					self.Append( LINKFLAGS = [ params[i+1] ] )
+					i = i + 1
+				elif arg[1:] == 'z':
 					self.Append( LINKFLAGS = [ arg ] )
 					self.Append( LINKFLAGS = [ params[i+1] ] )
 					i = i + 1

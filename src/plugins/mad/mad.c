@@ -13,7 +13,7 @@
  * Supports Xing VBR and id3v1/v2
  *
  * This code basicly sucks at some places. But hey, the
- * standard is fucked. Please convert to OGG ;-)
+ * standard is fucked. Please convert to Ogg ;-)
  */
 
 

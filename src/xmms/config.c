@@ -281,12 +281,24 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 
 XMMS_METHOD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
 
+static void foreach_value (gpointer key, gpointer value, gpointer udata)
+{
+	xmms_object_unref (value);
+}
+
 static void
 xmms_config_destroy (xmms_object_t *object) 
 {
 	xmms_config_t *config = (xmms_config_t *)object;
+
 	g_mutex_free (config->mutex);
-	/** @todo free all values? */
+
+	/* instead of calling g_hash_table_foreach() here, we could also
+	 * pass xmms_object_unref as the GDestroyNotify for the value
+	 * to g_hash_table_new_full(), but that leads to other memory
+	 * management errors
+	 */
+	g_hash_table_foreach (config->values, foreach_value, NULL);
 	g_hash_table_destroy (config->values);
 }
 
@@ -306,12 +318,12 @@ xmms_config_init (const gchar *filename)
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
-	config->values = g_hash_table_new (g_str_hash, g_str_equal);
+
+	/* don't pass xmms_object_unref as the last parameter here! */
+	config->values = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                        g_free, NULL);
 	config->state = XMMS_CONFIG_STATE_START;
 	global_config = config;
-
-	if (!filename)
-		return TRUE;
 
 	memset (&pars, 0, sizeof (pars));
 
@@ -319,23 +331,38 @@ xmms_config_init (const gchar *filename)
 	pars.end_element = xmms_config_parse_end;
 	pars.text = xmms_config_parse_text;
 
-	ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
 
 	fd = open (filename, O_RDONLY);
 
-	if (fd == -1) return FALSE;
+	if (fd) {
+		ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
+		while (42) {
+			GError *error = NULL;
+			gchar buffer[1024];
 
-	while (42) {
-		gchar buffer[1024];
-		ret = read (fd, buffer, 1024);
+			ret = read (fd, buffer, 1024);
+			if (ret < 1) {
+				g_markup_parse_context_end_parse (ctx, &error);
+				if (error) {
+					xmms_log_error ("Cannot parse config file: %s",
+							error->message);
+					g_error_free (error);
+				}
 
-		if (ret == 0) 
-			break;
+				break;
+			}
 
-		g_markup_parse_context_parse (ctx, buffer, ret, NULL);
+			g_markup_parse_context_parse (ctx, buffer, ret, &error);
+			if (error) {
+				xmms_log_error ("Cannot parse config file: %s",
+						error->message);
+				g_error_free (error);
+			}
+		}
+		close (fd);
+		g_markup_parse_context_free (ctx);
 	}
 
-	g_markup_parse_context_free (ctx);
 
 	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
 	xmms_object_method_add (XMMS_OBJECT (config), "get", XMMS_METHOD_FUNC (getvalue));
@@ -343,6 +370,12 @@ xmms_config_init (const gchar *filename)
 	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
 
 	return TRUE;
+}
+
+void
+xmms_config_shutdown ()
+{
+	xmms_object_unref (global_config);
 }
 
 /**
@@ -367,33 +400,151 @@ xmms_config_lookup (const gchar *path)
 	return value;
 }
 
-static int
-common_chars (gchar *n1, gchar *n2)
+static GNode *
+add_node (GNode *parent, gpointer new_data[2])
 {
-	gint i, j = 0;
-	gchar **tmp;
+	GNode *node;
+	gpointer *node_data;
+	int i;
 
-	tmp = g_strsplit (n1, ".", 0);
-	g_assert (tmp);
+	/* loop over the childs of parent */
+	for (node = g_node_first_child (parent); node;
+	     node = g_node_next_sibling (node)) {
+		node_data = node->data;
 
-	while (tmp[j])
-		j++;
+		i = g_ascii_strcasecmp (node_data[0], new_data[0]);
+		if (!i) {
+			/* the node we want already exists, so we don't need
+			 * new_data anymore.
+			 * note that this never happens for "value" nodes, so
+			 * data[1] = ... below is safe.
+			 */
+			g_free (new_data[0]);
+			g_free (new_data);
 
-	g_strfreev (tmp);
-
-	for (i = 0; i < strlen (n1); i++) {
-		if (n1[i] == '.') {
-			if (j == 0)
-				return i;
-			else
-				j--;
+			return node;
+		} else if (i > 0) {
+			/* an exact match is impossible at this point, so create
+			 * a new node and return
+			 */
+			return g_node_insert_data_before (parent, node, new_data);
 		}
-
-		if (n1[i] != n2[i])
-			return i;
 	}
 
-	return 0;
+	return g_node_append_data (parent, new_data);
+}
+
+static void
+add_to_tree_foreach (gpointer key, gpointer value, gpointer udata)
+{
+	GNode *node = udata;
+	gchar **subkey, **ptr;
+	gpointer *data;
+
+	subkey = g_strsplit (key, ".", 0);
+	g_assert (subkey);
+
+	for (ptr = subkey; *ptr; ptr++) {
+		data = g_new0 (gpointer, 2);
+		data[0] = g_strdup (*ptr);
+
+		node = add_node (node, data);
+	}
+
+	/* only the last node gets a value */
+	data[1] = g_strdup (xmms_config_value_string_get (value));
+
+	g_strfreev (subkey);
+}
+
+static void
+dump_value (GNode *value, gpointer arg[3])
+{
+	gchar key[1024];
+	gpointer *data = value->data;
+
+	/* assemble the key */
+	g_snprintf (key, sizeof (key), "%s.", (gchar *) arg[1]);
+
+	if (arg[2]) {
+		g_strlcat (key, (gchar *) arg[2], sizeof (key));
+		g_strlcat (key, ".", sizeof (key));
+	}
+
+	g_strlcat (key, (gchar *) data[0], sizeof (key));
+
+	if (arg[2])
+		fprintf (arg[0], "\t");
+
+	fprintf (arg[0], "\t\t<value name=\"%s\">%s</value>\n",
+	         (gchar *) data[0], (gchar *) data[1]);
+}
+
+static void
+dump_plugin (GNode *plugin, gpointer arg[3])
+{
+	gpointer *data = plugin->data;
+
+	/* if there are no child nodes here, its a "value" node, not
+	 * a "plugin" node
+	 */
+	if (!(g_node_n_children (plugin))) {
+		dump_value (plugin, arg);
+		return;
+	}
+
+	fprintf (arg[0], "\t\t<plugin name=\"%s\">\n", (gchar *) data[0]);
+
+	arg[2] = data[0];
+	g_node_children_foreach (plugin, G_TRAVERSE_ALL,
+	                         (GNodeForeachFunc) dump_value, arg);
+	arg[2] = NULL;
+
+	fprintf (arg[0], "\t\t</plugin>\n");
+}
+
+static void
+dump_section (GNode *section, FILE *fp)
+{
+	gpointer *data, arg[3];
+
+	data = section->data;
+	fprintf (fp, "\t<section name=\"%s\">\n", (gchar *) data[0]);
+
+	arg[0] = fp;
+	arg[1] = data[0];
+	arg[2] = NULL; /* filled later */
+	g_node_children_foreach (section, G_TRAVERSE_ALL,
+	                         (GNodeForeachFunc) dump_plugin, arg);
+
+	fprintf (fp, "\t</section>\n");
+}
+
+static void
+dump_tree (GNode *tree, FILE *fp)
+{
+	fprintf (fp, "<?xml version=\"1.0\"?>\n");
+
+	fprintf (fp, "<%s>\n", (gchar *) tree->data);
+	g_node_children_foreach (tree, G_TRAVERSE_ALL,
+	                         (GNodeForeachFunc) dump_section, fp);
+	fprintf (fp, "</%s>\n", (gchar *) tree->data);
+}
+
+static gboolean
+destroy_node (GNode *node, gpointer udata)
+{
+	gpointer *data = node->data;
+
+	/* the root just carries a single string */
+	if (!G_NODE_IS_ROOT (node)) {
+		g_free (data[0]);
+		g_free (data[1]);
+	}
+
+	g_free (data);
+
+	return FALSE; /* go on */
 }
 
 /**
@@ -405,104 +556,26 @@ common_chars (gchar *n1, gchar *n2)
 gboolean
 xmms_config_save (const gchar *file)
 {
-	GList *list = NULL;
-	GList *n;
-	gchar *last = NULL;
-	guint lastn = 0;
+	GNode *tree;
 	FILE *fp = NULL;
 
 	g_return_val_if_fail (global_config, FALSE);
+	g_return_val_if_fail (file, FALSE);
 
-	g_hash_table_foreach (global_config->values, add_to_list_foreach, &list);
+	tree = g_node_new (g_strdup ("xmms"));
+	g_hash_table_foreach (global_config->values, add_to_tree_foreach, tree);
 
-	list = g_list_sort (list, (GCompareFunc) g_strcasecmp);
-
-	if (!(fp = fopen (file, "wb+"))) {
+	if (!(fp = fopen (file, "w"))) {
 		xmms_log_error ("Couldn't open %s for writing.", file);
 		return FALSE;
 	}
 
-	fprintf (fp, "<xmms>\n");
-
-	for (n = list; n; n = g_list_next (n)) {
-		gint nume = 0;
-		gchar *line = (gchar *)n->data;
-		gchar **tmp;
-
-		tmp = g_strsplit ((gchar *)n->data, ".", 0);
-		g_assert (tmp);
-
-//		printf ("%s\n", line);
-
-		while (tmp[nume])
-			nume ++;
-		
-		if (!last) {
-			const gchar *data;
-			data = xmms_config_value_string_get (xmms_config_lookup (line));
-			
-			fprintf (fp, "\t<section name=\"%s\">\n", tmp[0]);
-			if (nume == 3) {
-				fprintf (fp, "\t\t<plugin name=\"%s\">\n", tmp[1]);
-				fprintf (fp, "\t\t\t<value name=\"%s\">%s", tmp[2] ? tmp[2] : tmp[1], data);
-			} else {
-				fprintf (fp, "\t\t\t<value name=\"%s\">%s", tmp[2] ? tmp[2] : tmp[1], data);
-			}
-		} else {
-			gchar **tmpv;
-			const gchar *data;
-			gint nume2 = 0;
-			gint c = common_chars (last, line);
-
-			tmpv = g_strsplit (line+c, ".", 0);
-			g_assert (tmpv);
-
-			while (tmpv[nume2])
-				nume2 ++;
-
-			g_strfreev (tmpv);
-
-			fprintf (fp, "</value>\n");
-			if (nume == 3 && lastn == 3 && nume2 >= 2) {
-				/* closing a plugin */
-				fprintf (fp, "\t\t</plugin>\n");
-			} 
-
-			if (nume == nume2)
-				fprintf (fp, "\t</section>\n");
-
-			if (nume == nume2)
-				fprintf (fp, "\t<section name=\"%s\">\n", tmp[0]);
-
-			if (nume == 3 && nume2 > 1) {
-				fprintf (fp, "\t\t<plugin name=\"%s\">\n", tmp[1]);
-			}
-
-			data = xmms_config_value_string_get (xmms_config_lookup (line));
-			
-			fprintf (fp, "\t\t\t<value name=\"%s\">%s", tmp[2] ? tmp[2] : tmp[1], data);
-
-
-//			printf ("%d %d\n", nume2, nume);
-
-		}
-
-		g_strfreev (tmp);
-
-		last = (gchar *)n->data;
-		lastn = nume;
-
-		if (!g_list_next (n)) {
-			if (nume == 3) {
-				fprintf (fp, "</value>\n\t\t</plugin>\n\t</section>\n");
-			} else if (nume == 2)
-				fprintf (fp, "</value>\n\t</section>\n");
-		}
-	}
-
-	fprintf (fp, "</xmms>\n");
-
+	dump_tree (tree, fp);
 	fclose (fp);
+
+	/* destroy the tree */
+	g_node_traverse (tree, G_IN_ORDER, G_TRAVERSE_ALL, -1,
+	                 destroy_node, NULL);
 
 	return TRUE;
 }
@@ -524,12 +597,23 @@ xmms_config_plugins_get (void)
  * Value manipulation 
  */
 
+static void
+xmms_config_value_destroy (xmms_object_t *object)
+{
+	xmms_config_value_t *val = (xmms_config_value_t *) object;
+
+	/* don't free val->name here, it's taken care of in
+	 * xmms_config_destroy()
+	 */
+	g_free (val->data);
+}
+
 static xmms_config_value_t *
 xmms_config_value_new (const gchar *name)
 {
 	xmms_config_value_t *ret;
 
-	ret = xmms_object_new (xmms_config_value_t, NULL);
+	ret = xmms_object_new (xmms_config_value_t, xmms_config_value_destroy);
 	ret->name = name;
 
 	return ret;
@@ -559,6 +643,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 
 	XMMS_DBG ("setting %s to %s", val->name, data);
 
+	g_free (val->data);
 	val->data = data;
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 			  (gpointer) data);
@@ -618,6 +703,19 @@ xmms_config_value_callback_set (xmms_config_value_t *val,
 			     (xmms_object_handler_t) cb, userdata);
 }
 
+void
+xmms_config_value_callback_remove (xmms_config_value_t *val,
+                                   xmms_object_handler_t cb)
+{
+	g_return_if_fail (val);
+
+	if (!cb)
+		return;
+
+	xmms_object_disconnect (XMMS_OBJECT (val),
+	                        XMMS_SIGNAL_CONFIG_VALUE_CHANGE, cb);
+}
+
 /**
   * Register a new configvalue. This should be called in the initcode
   * as XMMS2 won't allow set/get on values that hasn't been registered.
@@ -638,6 +736,9 @@ xmms_config_value_register (const gchar *path,
 
 	xmms_config_value_t *val;
 
+	/* get our own copy of the string */
+	path = g_strdup (path);
+
 	XMMS_DBG ("Registering: %s", path);
 
 	g_mutex_lock (global_config->mutex);
@@ -657,7 +758,7 @@ xmms_config_value_register (const gchar *path,
 	if (cb) 
 		xmms_config_value_callback_set (val, cb, userdata);
 
-	g_hash_table_insert (global_config->values, g_strdup (path), val);
+	g_hash_table_insert (global_config->values, (gchar *) path, val);
 
 	g_mutex_unlock (global_config->mutex);
 

@@ -511,7 +511,10 @@ cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 	print_info ("Config Values:");
 	
 	while (l) {
-		print_info ("%s = %s", l->data, xmmscs_configval_get (conn, l->data));
+		char *val = xmmscs_configval_get (conn, l->data);
+
+		print_info ("%s = %s", l->data, val);
+		g_free (val);
 		l = x_list_next (l);
 	}
 	

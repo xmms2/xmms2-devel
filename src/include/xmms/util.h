@@ -31,7 +31,7 @@
 #define DEBUG
 
 #ifdef DEBUG
-#define XMMS_DBG(fmt, args...) xmms_log_debug (__FILE__ ": " fmt, ## args)
+#define XMMS_DBG(fmt, args...) xmms_log_debug (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## args)
 #else
 #define XMMS_DBG(fmt,...)
 #endif
