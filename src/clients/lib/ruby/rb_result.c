@@ -124,6 +124,15 @@ static VALUE c_restart (VALUE self)
 	return o;
 }
 
+static VALUE c_disconnect_broadcast (VALUE self)
+{
+	GET_OBJ (self, RbResult, res);
+
+	xmmsc_broadcast_disconnect (res->real);
+
+	return self;
+}
+
 static VALUE c_int_get (VALUE self)
 {
 	int id = 0;
@@ -286,6 +295,8 @@ void Init_Result (void)
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "restart", c_restart, 0);
+	rb_define_method (cResult, "disconnect_broadcast",
+	                  c_disconnect_broadcast, 0);
 	rb_define_method (cResult, "int", c_int_get, 0);
 	rb_define_method (cResult, "uint", c_uint_get, 0);
 	rb_define_method (cResult, "string", c_string_get, 0);
