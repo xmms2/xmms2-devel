@@ -1,10 +1,12 @@
 #include "output.h"
+#include "output_int.h"
 #include "object.h"
 #include "ringbuf.h"
 #include "util.h"
 #include "core.h"
 #include "config_xmms.h"
-
+#include "plugin.h"
+#include "plugin_int.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)

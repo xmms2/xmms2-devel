@@ -1,4 +1,5 @@
 #include "plugin.h"
+#include "plugin_int.h"
 #include "util.h"
 
 #include <gmodule.h>

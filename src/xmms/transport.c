@@ -4,7 +4,9 @@
   */
 
 #include "transport.h"
+#include "transport_int.h"
 #include "plugin.h"
+#include "plugin_int.h"
 #include "object.h"
 #include "util.h"
 #include "ringbuf.h"

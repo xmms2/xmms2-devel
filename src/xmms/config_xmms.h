@@ -16,27 +16,7 @@ typedef struct xmms_config_data_St {
 
 #define XMMS_CONFIG_SYSTEMWIDE SYSCONFDIR "/xmms2.conf"
 
-typedef struct xmms_config_value_St {
-	
-	/* either XMMS_CONFIG_VALUE_PLAIN or XMMS_CONFIG_VALUE_LIST */
-	gint type;
-
-	/* all properties associated to this site. */
-	GHashTable *prop;
-	
-	/* if type equals to XMMS_CONFIG_VALUE_LIST this value is set
-	 * to a sorted list with values */
-	struct xmms_config_value_St *child;
-
-	/* this values are set if it is a plain value */
-	gchar *directive;
-	gchar *data;
-
-	/* list pointers */
-	struct xmms_config_value_St *next;
-	
-} xmms_config_value_t;
-	
+typedef struct xmms_config_value_St xmms_config_value_t;
 
 typedef GHashTable xmms_config_info_t;
 

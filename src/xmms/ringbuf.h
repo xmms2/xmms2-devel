@@ -3,15 +3,7 @@
 
 #include <glib.h>
 
-typedef struct
-{
-	guint8 *buffer;
-	gint buffer_size;
-	gint rd_index, wr_index;
-	gboolean eos;
-
-	GCond *free_cond, *used_cond, *eos_cond;
-} xmms_ringbuf_t;
+typedef struct xmms_ringbuf_St xmms_ringbuf_t;
 
 xmms_ringbuf_t *xmms_ringbuf_new (guint size);
 void xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf);

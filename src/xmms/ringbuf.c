@@ -2,7 +2,15 @@
 #include "util.h"
 #include <string.h>
 
-#define DEBUG
+struct xmms_ringbuf_St {
+	guint8 *buffer;
+	gint buffer_size;
+	gint rd_index, wr_index;
+	gboolean eos;
+
+	GCond *free_cond, *used_cond, *eos_cond;
+};
+
 
 xmms_ringbuf_t *
 xmms_ringbuf_new (guint size)

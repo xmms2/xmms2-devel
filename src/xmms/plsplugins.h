@@ -2,8 +2,8 @@
 #define __XMMS_PLAYLIST_PLUGIN_H__
 
 
-#include "transport.h"
-#include "playlist.h"
+#include "xmms/transport.h"
+#include "xmms/playlist.h"
 
 /* Type definitions */
 
