@@ -18,7 +18,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.flag_groups[group] = flags
 
 	def HasGroup(self,group):
-		self.flag_groups.has_key(group)
+		return self.flag_groups.has_key(group)
 
 	def CheckAndAddFlagsToGroup(self, group, cmd, fail=0):
 		res = os.popen(cmd).read().strip()
@@ -51,14 +51,16 @@ class XmmsEnvironment(SCons.Environment.Environment):
 					self.Append( LIBS = [ arg[2:] ] )
 		    		elif opt == 'I':
 					self.Append( CPPPATH = [ arg[2:] ] )
+		    		elif opt == 'D':
+					self.Append( CPPFLAGS = [ arg ] )
 	    			elif arg[1:] == 'pthread':
-					self.Append( LINKFLAGS = [ params[i] ] )
-					self.Append( CPPFLAGS = [ params[i] ] )
+					self.Append( LINKFLAGS = [ arg ] )
+					self.Append( CPPFLAGS = [ arg ] )
 	    			elif arg[1:4] == 'Wl,':
-					self.Append( LINKFLAGS = [ params[i] ] )
+					self.Append( LINKFLAGS = [ arg ] )
 		    		else:
-					print 'garbage: ' + arg
-					Exit(1)
+					print 'garbage in flags: ' + arg
+					sys.xit(1)
 			else:
 				print 'garbage error: ' + arg
 
