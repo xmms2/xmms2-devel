@@ -9,5 +9,6 @@ env.Append(BUILDERS = {'Pyx' : pyx})
 
 env.AddFlagsFromGroup ("glib")
 env.AddFlagsFromGroup ("python")
-env.Pyx ("xmmsclient_binding.c", ["xmmsclient_binding.pyx"])
-env.XmmsPython ("xmmsclient_binding", ["xmmsclient_binding.c"])
+if base_env.HasGroup ("pyrex") :
+	env.Pyx ("xmmsclient_binding.c", ["xmmsclient_binding.pyx"])
+	env.XmmsPython ("xmmsclient_binding", ["xmmsclient_binding.c"])
