@@ -81,7 +81,7 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 	mrt->playlist = playlist;
 	mrt->queue = g_queue_new ();
 	mrt->running = TRUE;
-	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, FALSE, NULL);
+	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, TRUE, NULL);
 
 	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mrt);
 	
