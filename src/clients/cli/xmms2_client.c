@@ -930,8 +930,6 @@ main (int argc, char **argv)
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
 
-	printf ("listformat = %s\n", listformat);
-
 	connection = xmmsc_init ("XMMS2 CLI");
 
 	if (!connection) {
