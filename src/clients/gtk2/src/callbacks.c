@@ -12,6 +12,7 @@
 
 extern GtkWidget *playlistwin;
 extern xmmsc_connection_t *conn;
+extern GHashTable *idtable;
 
 void fill_playlist ();
 
@@ -42,7 +43,7 @@ on_playlist_clicked                    (GtkButton       *button,
 
 	if (!playlistwin) {
 		playlistwin = create_playlist ();
-		fill_playlist ();
+		setup_playlist ();
 		gtk_widget_show (playlistwin);
 	}
 }
@@ -82,6 +83,20 @@ on_playlist_row_activated              (GtkTreeView     *treeview,
                                         GtkTreeViewColumn *column,
                                         gpointer         user_data)
 {
+	GtkWidget *tree;
+	GtkTreeModel *store;
+	GtkTreeIter itr;
+	GValue val;
+	guint id;
+
+	store = gtk_tree_view_get_model (treeview);
+
+	if (!gtk_tree_model_get_iter (store, &itr, path))
+		return;
+
+	gtk_tree_model_get (store, &itr, 2, &id, -1);
+
+	xmmsc_playlist_jump (conn, id);
 
 }
 
@@ -144,10 +159,43 @@ on_playlist_clear_clicked              (GtkButton       *button,
 }
 
 
+static void
+delete_foreach (GtkTreeModel *model, GtkTreePath *path, 
+		GtkTreeIter *iter, gpointer data)
+{
+
+	guint id;
+
+	gtk_tree_model_get (model, iter, 2, &id, -1);
+
+	xmmsc_playlist_remove (conn, id);
+
+}
+
 void
 on_playlist_delete_clicked             (GtkButton       *button,
                                         gpointer         user_data)
 {
+
+	GtkWidget *tree;
+	GtkTreeModel *store;
+	GtkTreeSelection *sel;
+
+	tree = lookup_widget (playlistwin, "treeview1");
+	sel = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree));
+
+	gtk_tree_selection_selected_foreach (sel, delete_foreach, NULL);
+
+
+}
+
+
+void
+on_shuffle_clicked                     (GtkButton       *button,
+                                        gpointer         user_data)
+{
+
+	xmmsc_playlist_shuffle (conn);
 
 }
 

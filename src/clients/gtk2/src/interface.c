@@ -40,9 +40,9 @@ create_mainwindow (void)
   GtkWidget *image4;
   GtkWidget *playlist;
   GtkWidget *image5;
-  GtkWidget *hscale1;
   GtkWidget *stop;
   GtkWidget *image2;
+  GtkWidget *hscale1;
   GtkWidget *title;
 
   mainwindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -104,14 +104,6 @@ create_mainwindow (void)
   gtk_widget_show (image5);
   gtk_container_add (GTK_CONTAINER (playlist), image5);
 
-  hscale1 = gtk_hscale_new (GTK_ADJUSTMENT (gtk_adjustment_new (0, 0, 100, 1, 0, 0)));
-  gtk_widget_set_name (hscale1, "hscale1");
-  gtk_widget_show (hscale1);
-  gtk_fixed_put (GTK_FIXED (fixed1), hscale1, 0, 0);
-  gtk_widget_set_size_request (hscale1, 120, 24);
-  gtk_scale_set_draw_value (GTK_SCALE (hscale1), FALSE);
-  gtk_range_set_update_policy (GTK_RANGE (hscale1), GTK_UPDATE_DISCONTINUOUS);
-
   stop = gtk_button_new ();
   gtk_widget_set_name (stop, "stop");
   gtk_widget_show (stop);
@@ -122,6 +114,14 @@ create_mainwindow (void)
   gtk_widget_set_name (image2, "image2");
   gtk_widget_show (image2);
   gtk_container_add (GTK_CONTAINER (stop), image2);
+
+  hscale1 = gtk_hscale_new (GTK_ADJUSTMENT (gtk_adjustment_new (0, 0, 100, 1, 0, 0)));
+  gtk_widget_set_name (hscale1, "hscale1");
+  gtk_widget_show (hscale1);
+  gtk_fixed_put (GTK_FIXED (fixed1), hscale1, 0, 0);
+  gtk_widget_set_size_request (hscale1, 120, 24);
+  gtk_scale_set_draw_value (GTK_SCALE (hscale1), FALSE);
+  gtk_range_set_update_policy (GTK_RANGE (hscale1), GTK_UPDATE_DISCONTINUOUS);
 
   title = gtk_label_new ("xmms2 - it really whips the GNUs ass");
   gtk_widget_set_name (title, "title");
@@ -160,9 +160,9 @@ create_mainwindow (void)
   GLADE_HOOKUP_OBJECT (mainwindow, image4, "image4");
   GLADE_HOOKUP_OBJECT (mainwindow, playlist, "playlist");
   GLADE_HOOKUP_OBJECT (mainwindow, image5, "image5");
-  GLADE_HOOKUP_OBJECT (mainwindow, hscale1, "hscale1");
   GLADE_HOOKUP_OBJECT (mainwindow, stop, "stop");
   GLADE_HOOKUP_OBJECT (mainwindow, image2, "image2");
+  GLADE_HOOKUP_OBJECT (mainwindow, hscale1, "hscale1");
   GLADE_HOOKUP_OBJECT (mainwindow, title, "title");
 
   gtk_widget_grab_focus (hscale1);
@@ -184,8 +184,21 @@ create_playlist (void)
   GtkWidget *hbox1;
   GtkWidget *image6;
   GtkWidget *label3;
-  GtkWidget *clear;
+  GtkWidget *shuffle;
+  GtkWidget *alignment2;
+  GtkWidget *hbox2;
+  GtkWidget *image7;
+  GtkWidget *label4;
   GtkWidget *delete;
+  GtkWidget *alignment3;
+  GtkWidget *hbox3;
+  GtkWidget *image8;
+  GtkWidget *label5;
+  GtkWidget *clear;
+  GtkWidget *alignment4;
+  GtkWidget *hbox4;
+  GtkWidget *image9;
+  GtkWidget *label6;
 
   playlist = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_widget_set_name (playlist, "playlist");
@@ -252,17 +265,86 @@ create_playlist (void)
   gtk_box_pack_start (GTK_BOX (hbox1), label3, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label3), GTK_JUSTIFY_LEFT);
 
-  clear = gtk_button_new_from_stock ("gtk-clear");
+  shuffle = gtk_button_new ();
+  gtk_widget_set_name (shuffle, "shuffle");
+  gtk_widget_show (shuffle);
+  gtk_fixed_put (GTK_FIXED (fixed2), shuffle, 216, 0);
+  gtk_widget_set_size_request (shuffle, 72, 24);
+
+  alignment2 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_set_name (alignment2, "alignment2");
+  gtk_widget_show (alignment2);
+  gtk_container_add (GTK_CONTAINER (shuffle), alignment2);
+
+  hbox2 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_set_name (hbox2, "hbox2");
+  gtk_widget_show (hbox2);
+  gtk_container_add (GTK_CONTAINER (alignment2), hbox2);
+
+  image7 = gtk_image_new_from_stock ("gtk-refresh", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_set_name (image7, "image7");
+  gtk_widget_show (image7);
+  gtk_box_pack_start (GTK_BOX (hbox2), image7, FALSE, FALSE, 0);
+
+  label4 = gtk_label_new_with_mnemonic ("Shuffle");
+  gtk_widget_set_name (label4, "label4");
+  gtk_widget_show (label4);
+  gtk_box_pack_start (GTK_BOX (hbox2), label4, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label4), GTK_JUSTIFY_LEFT);
+
+  delete = gtk_button_new ();
+  gtk_widget_set_name (delete, "delete");
+  gtk_widget_show (delete);
+  gtk_fixed_put (GTK_FIXED (fixed2), delete, 72, 0);
+  gtk_widget_set_size_request (delete, 72, 24);
+
+  alignment3 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_set_name (alignment3, "alignment3");
+  gtk_widget_show (alignment3);
+  gtk_container_add (GTK_CONTAINER (delete), alignment3);
+
+  hbox3 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_set_name (hbox3, "hbox3");
+  gtk_widget_show (hbox3);
+  gtk_container_add (GTK_CONTAINER (alignment3), hbox3);
+
+  image8 = gtk_image_new_from_stock ("gtk-remove", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_set_name (image8, "image8");
+  gtk_widget_show (image8);
+  gtk_box_pack_start (GTK_BOX (hbox3), image8, FALSE, FALSE, 0);
+
+  label5 = gtk_label_new_with_mnemonic ("Delete");
+  gtk_widget_set_name (label5, "label5");
+  gtk_widget_show (label5);
+  gtk_box_pack_start (GTK_BOX (hbox3), label5, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label5), GTK_JUSTIFY_LEFT);
+
+  clear = gtk_button_new ();
   gtk_widget_set_name (clear, "clear");
   gtk_widget_show (clear);
   gtk_fixed_put (GTK_FIXED (fixed2), clear, 144, 0);
   gtk_widget_set_size_request (clear, 72, 24);
 
-  delete = gtk_button_new_from_stock ("gtk-remove");
-  gtk_widget_set_name (delete, "delete");
-  gtk_widget_show (delete);
-  gtk_fixed_put (GTK_FIXED (fixed2), delete, 72, 0);
-  gtk_widget_set_size_request (delete, 72, 24);
+  alignment4 = gtk_alignment_new (0.5, 0.5, 0, 0);
+  gtk_widget_set_name (alignment4, "alignment4");
+  gtk_widget_show (alignment4);
+  gtk_container_add (GTK_CONTAINER (clear), alignment4);
+
+  hbox4 = gtk_hbox_new (FALSE, 2);
+  gtk_widget_set_name (hbox4, "hbox4");
+  gtk_widget_show (hbox4);
+  gtk_container_add (GTK_CONTAINER (alignment4), hbox4);
+
+  image9 = gtk_image_new_from_stock ("gtk-clear", GTK_ICON_SIZE_BUTTON);
+  gtk_widget_set_name (image9, "image9");
+  gtk_widget_show (image9);
+  gtk_box_pack_start (GTK_BOX (hbox4), image9, FALSE, FALSE, 0);
+
+  label6 = gtk_label_new_with_mnemonic ("Clear");
+  gtk_widget_set_name (label6, "label6");
+  gtk_widget_show (label6);
+  gtk_box_pack_start (GTK_BOX (hbox4), label6, FALSE, FALSE, 0);
+  gtk_label_set_justify (GTK_LABEL (label6), GTK_JUSTIFY_LEFT);
 
   g_signal_connect ((gpointer) playlist, "destroy",
                     G_CALLBACK (on_playlist_destroy),
@@ -273,11 +355,14 @@ create_playlist (void)
   g_signal_connect ((gpointer) Add, "clicked",
                     G_CALLBACK (on_playlist_Add_clicked),
                     NULL);
-  g_signal_connect ((gpointer) clear, "clicked",
-                    G_CALLBACK (on_playlist_clear_clicked),
+  g_signal_connect ((gpointer) shuffle, "clicked",
+                    G_CALLBACK (on_shuffle_clicked),
                     NULL);
   g_signal_connect ((gpointer) delete, "clicked",
                     G_CALLBACK (on_playlist_delete_clicked),
+                    NULL);
+  g_signal_connect ((gpointer) clear, "clicked",
+                    G_CALLBACK (on_playlist_clear_clicked),
                     NULL);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
@@ -293,8 +378,21 @@ create_playlist (void)
   GLADE_HOOKUP_OBJECT (playlist, hbox1, "hbox1");
   GLADE_HOOKUP_OBJECT (playlist, image6, "image6");
   GLADE_HOOKUP_OBJECT (playlist, label3, "label3");
-  GLADE_HOOKUP_OBJECT (playlist, clear, "clear");
+  GLADE_HOOKUP_OBJECT (playlist, shuffle, "shuffle");
+  GLADE_HOOKUP_OBJECT (playlist, alignment2, "alignment2");
+  GLADE_HOOKUP_OBJECT (playlist, hbox2, "hbox2");
+  GLADE_HOOKUP_OBJECT (playlist, image7, "image7");
+  GLADE_HOOKUP_OBJECT (playlist, label4, "label4");
   GLADE_HOOKUP_OBJECT (playlist, delete, "delete");
+  GLADE_HOOKUP_OBJECT (playlist, alignment3, "alignment3");
+  GLADE_HOOKUP_OBJECT (playlist, hbox3, "hbox3");
+  GLADE_HOOKUP_OBJECT (playlist, image8, "image8");
+  GLADE_HOOKUP_OBJECT (playlist, label5, "label5");
+  GLADE_HOOKUP_OBJECT (playlist, clear, "clear");
+  GLADE_HOOKUP_OBJECT (playlist, alignment4, "alignment4");
+  GLADE_HOOKUP_OBJECT (playlist, hbox4, "hbox4");
+  GLADE_HOOKUP_OBJECT (playlist, image9, "image9");
+  GLADE_HOOKUP_OBJECT (playlist, label6, "label6");
 
   return playlist;
 }

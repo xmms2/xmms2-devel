@@ -42,3 +42,7 @@ on_playlist_clear_clicked              (GtkButton       *button,
 void
 on_playlist_delete_clicked             (GtkButton       *button,
                                         gpointer         user_data);
+
+void
+on_shuffle_clicked                     (GtkButton       *button,
+                                        gpointer         user_data);

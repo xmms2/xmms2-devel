@@ -21,6 +21,7 @@ enum status_codes {
 
 GtkWidget *playlistwin=NULL;
 GtkWidget *mainwindow;
+GHashTable *idtable;
 xmmsc_connection_t *conn;
 gint lasttime;
 gint state;
@@ -30,25 +31,23 @@ get_icon ()
 {
 	GtkWidget *image;
 	image = gtk_image_new_from_file ("cdaudio_mount.png");
-	if (!image) {
-		printf ("auf\n");
-	}
 	return gtk_image_get_pixbuf(GTK_IMAGE(image));
 }
 
 void
 fill_playlist ()
 {
-	GtkListStore *store;
+	GtkTreeModel *store;
 	GtkTreeIter iter1;
-	GtkCellRenderer *renderer, *renderer_img;
-	GtkTreeViewColumn *column;
 	GList *node;
 	GtkWidget *tree = lookup_widget (playlistwin, "treeview1");
 	gint id = xmmsc_get_playing_id (conn);
 	GList *list = xmmsc_playlist_list (conn);
 
-	store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
+	store = gtk_tree_view_get_model (GTK_TREE_VIEW (tree));
+
+	if (!idtable)
+		idtable = g_hash_table_new (g_direct_hash, g_direct_equal);
 
 	for (node = list; node; node = g_list_next (node)) {
 		gchar *file;
@@ -56,22 +55,39 @@ fill_playlist ()
 	
 		file = strrchr (entry->url, '/');
 		
-		gtk_list_store_append (store, &iter1);
+		gtk_list_store_append (GTK_LIST_STORE (store), &iter1);
 		
 		if (id == entry->id) {
-			printf ("%d\n", entry->id);
-			gtk_list_store_set (store, &iter1, 
+			gtk_list_store_set (GTK_LIST_STORE (store), &iter1, 
 					0, get_icon (), 
 					1, file+1, 
 					2, entry->id, 
 					-1);
 		} else {
-			gtk_list_store_set (store, &iter1, 
+			gtk_list_store_set (GTK_LIST_STORE (store), &iter1, 
 					1, file+1, 
 					2, entry->id, 
 					-1);
 		}
+		g_hash_table_insert (idtable, GUINT_TO_POINTER (entry->id), 
+				(gpointer) gtk_tree_row_reference_new (store, gtk_tree_model_get_path (GTK_TREE_MODEL (store), 
+				&iter1)));
 	}
+
+
+}
+
+void
+setup_playlist ()
+{
+	GtkListStore *store;
+	GtkTreeIter iter1;
+	GtkCellRenderer *renderer, *renderer_img;
+	GtkTreeViewColumn *column;
+	GtkWidget *tree = lookup_widget (playlistwin, "treeview1");
+	
+
+	store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_UINT);
 
 	gtk_tree_view_set_model (GTK_TREE_VIEW (tree), GTK_TREE_MODEL (store));
 	g_object_unref (G_OBJECT (store));
@@ -90,6 +106,8 @@ fill_playlist ()
 				NULL);
 
 	gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+
+	fill_playlist ();
 
 }
 
@@ -173,7 +191,6 @@ handle_mediainfo (void *userdata, void *arg)
 static void
 handle_playback_stopped (void *userdata, void *arg)
 {
-	printf ("Stopped!\n");
 	state = STOP;
 	mediainfo (0);
 }
@@ -189,7 +206,6 @@ handle_playlist_added (void *userdata, void *arg)
 	guint * foo = arg;
 	guint id, option;
 
-	printf ("DEBUG: playlist_added\n");
 
 	if (!playlistwin)
 		return;
@@ -214,39 +230,62 @@ handle_playlist_added (void *userdata, void *arg)
 			1, file+1,
 			2, id,
 			-1);
+
+	if (!idtable)
+		idtable = g_hash_table_new (g_direct_hash, g_direct_equal);
+
+	g_hash_table_insert (idtable, GUINT_TO_POINTER (id), 
+		(gpointer) gtk_tree_row_reference_new (GTK_TREE_MODEL (store), gtk_tree_model_get_path (GTK_TREE_MODEL (store), 
+		&iter1)));
 }
 
 static void
 handle_playlist_removed (void *userdata, void *arg)
 {
-	printf ("DEBUG: playlist_removed\n");
+	GtkTreeModel *store;
+	GtkTreeIter itr;
+	GtkTreePath *path;
+	GtkTreeRowReference *ref;
+	
+	GtkWidget *tree;
+	guint id = (guint)arg;
+
+	if (!playlistwin)
+		return;
+
+	ref = g_hash_table_lookup (idtable, GUINT_TO_POINTER (id));
+
+	if (!ref)
+		return;
+	
+	path = gtk_tree_row_reference_get_path (ref);
+
+	tree = lookup_widget (playlistwin, "treeview1");
+	store = gtk_tree_view_get_model (GTK_TREE_VIEW (tree));
+	
+	gtk_tree_model_get_iter (GTK_TREE_MODEL (store), &itr, path);
+	
+	if (gtk_list_store_remove (GTK_LIST_STORE (store), &itr))
+		g_hash_table_remove (idtable, GUINT_TO_POINTER (arg));
+
+
 }
 
 static void
 handle_playlist_moved (void *userdata, void *arg)
 {
-	printf ("DEBUG: playlist_moved\n");
 }
 
 static void
 handle_playlist_jumped (void *userdata, void *arg)
 {
-	printf ("DEBUG: playlist_jumped\n");
 }
 
 static void
 handle_playlist_shuffled (void *userdata, void *arg)
 {
-	printf ("DEBUG: playlist_shuffled\n");
-}
-
-static void
-handle_playlist_cleared (void *userdata, void *arg)
-{
 	GtkTreeModel *store;
 	GtkWidget *tree;
-
-	printf ("DEBUG: playlist_cleared\n");
 
 	if (!playlistwin)
 		return;
@@ -255,6 +294,30 @@ handle_playlist_cleared (void *userdata, void *arg)
 	store = gtk_tree_view_get_model (GTK_TREE_VIEW (tree));
 
 	gtk_list_store_clear (GTK_LIST_STORE (store));
+	g_hash_table_destroy (idtable);
+	idtable = NULL;
+
+	fill_playlist ();
+		
+}
+
+static void
+handle_playlist_cleared (void *userdata, void *arg)
+{
+	GtkTreeModel *store;
+	GtkWidget *tree;
+
+
+	if (!playlistwin)
+		return;
+
+	tree = lookup_widget (playlistwin, "treeview1");
+	store = gtk_tree_view_get_model (GTK_TREE_VIEW (tree));
+
+	gtk_list_store_clear (GTK_LIST_STORE (store));
+
+	g_hash_table_destroy (idtable);
+	idtable = NULL;
 
 }
 

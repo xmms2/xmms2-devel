@@ -262,8 +262,6 @@ handle_playlist_added (DBusMessageHandler *handler,
 
 	dbus_message_iter_init (msg, &itr);
 
-	printf ("DEBUG: apor är gröna!\n");
-
 	if (cb) {
 		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
 			guint id = dbus_message_iter_get_uint32 (&itr);
