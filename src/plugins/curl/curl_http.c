@@ -409,13 +409,17 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	header = g_strndup (ptr, nmemb - 2);
 
 	if (g_strncasecmp (header, "content-type: ", 14) == 0) {
-		data->mime = g_strdup (header + 14);
-		xmms_transport_mimetype_set (transport, data->mime);
+		if (!data->mime) {
+			data->mime = g_strdup (header + 14);
+			xmms_transport_mimetype_set (transport, data->mime);
+		}
 	}
 
 	else if (g_strncasecmp (header, "content-type:", 13) == 0) {
-		data->mime = g_strdup (header + 13);
-		xmms_transport_mimetype_set (transport, data->mime);
+		if (!data->mime) {
+			data->mime = g_strdup (header + 13);
+			xmms_transport_mimetype_set (transport, data->mime);
+		}
 	}
 
 	else if (g_strncasecmp (header, "content-length: ", 16) == 0) {
@@ -437,6 +441,11 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		tmp = g_convert (header+10, strlen (header+10), "UTF-8", "ISO-8859-1", &r, &w, NULL);
 		xmms_transport_mediainfo_property_set (transport, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
+	}
+
+	if (!data->mime && (g_strncasecmp (header, "icy-", 4) == 0)) {
+		data->mime = g_strdup ("audio/mpeg");
+		xmms_transport_mimetype_set (transport, data->mime);
 	}
 
 	xmms_transport_entry_mediainfo_set (transport, data->pl_entry);
