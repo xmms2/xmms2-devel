@@ -713,6 +713,11 @@ xmms_output_thread (gpointer data)
 					    XMMS_OBJECT_METHOD_ARG_UINT32,
 					    xmms_playlist_entry_id_get (entry));
 
+			xmms_object_emit_f (XMMS_OBJECT (output),
+			                    XMMS_SIGNAL_OUTPUT_CURRENT_ENTRY,
+			                    XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY,
+			                    output->playing_entry);
+
 			output->played = 0;
 			xmms_decoder_start (output->decoder, NULL, output);
 		}
