@@ -127,27 +127,25 @@ static guint xmms_playback_current_playtime (xmms_playback_t *playback, xmms_err
 /**
  * @internal
  */
-static void
+static xmms_playlist_entry_t *
 next_song (xmms_playback_t *playback)
 {
-	XMMS_DBG ("Next song");
-	playback->current_song = xmms_playlist_get_next_entry (playback->playlist);
-	if (playback->current_song) 
-		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-				    xmms_playlist_entry_id_get (playback->current_song));
+	xmms_playlist_entry_t *ret;
+	ret = xmms_playlist_get_next_entry (playback->playlist);
+	XMMS_DBG ("Next song %p", ret);
+	return ret;
 }
 
 /**
  * @internal
  */
-static void
+static xmms_playlist_entry_t *
 prev_song (xmms_playback_t *playback)
 {
+	xmms_playlist_entry_t *ret;
 	XMMS_DBG ("Prev song");
-	playback->current_song = xmms_playlist_get_prev_entry (playback->playlist);
-	if (playback->current_song) 
-		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-				    xmms_playlist_entry_id_get (playback->current_song));
+	ret = xmms_playlist_get_prev_entry (playback->playlist);
+	return ret;
 }
 
 static void
@@ -413,6 +411,21 @@ xmms_playback_modechr_to_int (const gchar *mode)
 	return XMMS_PLAYBACK_MODE_NONE;
 }
 
+void
+xmms_playback_active_entry_set (xmms_playback_t *playback, 
+				xmms_playlist_entry_t *entry)
+{
+	g_return_if_fail (playback);
+	g_return_if_fail (entry);
+
+	if (playback->current_song) {
+		xmms_playlist_entry_unref (playback->current_song);
+	}
+	playback->current_song = entry;
+	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID,
+			    xmms_playlist_entry_id_get (entry));
+}
+
 /**
  * Return the next entry in the playlist, the one to be played.
  * @param playback the #xmms_playback_t to query
@@ -424,6 +437,7 @@ xmms_playlist_entry_t *
 xmms_playback_entry (xmms_playback_t *playback)
 {
 	xmms_playback_mode_t mode;
+	xmms_playlist_entry_t *ret;
 	xmms_error_t err;
 
 	xmms_error_reset (&err);
@@ -432,8 +446,10 @@ xmms_playback_entry (xmms_playback_t *playback)
 	
 	mode = playback->mode;
 
+	/*
 	if (playback->current_song && playback->playlist_op != XMMS_PLAYBACK_HOLD)
 		xmms_playlist_entry_unref (playback->current_song);
+	*/
 	
 	if (playback->status == XMMS_PLAYBACK_STOP || 
 	    playback->status == XMMS_PLAYBACK_PAUSE) {
@@ -449,23 +465,18 @@ xmms_playback_entry (xmms_playback_t *playback)
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
 		if (playback->playlist_op == XMMS_PLAYBACK_NEXT) {
 			if (mode == XMMS_PLAYBACK_MODE_REPEATONE) {
-				playback->current_song = xmms_playlist_get_current_entry (playback->playlist);
-				if (playback->current_song)
-					XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID,
-							    xmms_playlist_entry_id_get (playback->current_song));
+				ret = xmms_playlist_get_current_entry (playback->playlist);
 			} else {
-				next_song (playback);
+				ret = next_song (playback);
 			}
 		}
 		else if (playback->playlist_op == XMMS_PLAYBACK_PREV)
-			prev_song (playback);
+			ret = prev_song (playback);
 	} 
 
 	playback->playlist_op = XMMS_PLAYBACK_NEXT;
 
-	XMMS_DBG ("Current song: %p", playback->current_song);
-
-	if (!playback->current_song) {
+	if (!ret) {
 		if (mode != XMMS_PLAYBACK_MODE_REPEATALL) {
 			xmms_playback_stop (playback, &err);
 		}
@@ -474,7 +485,7 @@ xmms_playback_entry (xmms_playback_t *playback)
 		return NULL;
 	}
 	g_mutex_unlock (playback->mtx);
-	return playback->current_song;
+	return ret;
 }
 
 static void
@@ -514,6 +525,7 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 
 	val = xmms_config_value_register ("core.next_mode", "none", mode_change, playback);
 	playback->mode = xmms_playback_modechr_to_int (xmms_config_value_string_get (val));
+	playback->status = XMMS_PLAYBACK_STOP;
 
 	xmms_object_init (XMMS_OBJECT (playback));
 

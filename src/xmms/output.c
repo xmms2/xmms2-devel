@@ -35,14 +35,13 @@
 
 #include "internal/plugin_int.h"
 #include "internal/output_int.h"
+#include "internal/decoder_int.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
 
-#define FRAC_BITS 16
 
 static gpointer xmms_output_thread (gpointer data);
-static guint32 resample (xmms_output_t *output, gint16 *buf, guint len);
 static void xmms_output_status_changed (xmms_object_t *object, gconstpointer data, gpointer udata);
 
 /*
@@ -65,8 +64,13 @@ struct xmms_output_St {
 
 	xmms_core_t *core;
 
+	GList *decoder_list;
+	/** the decoder we read data from right now .. */
+	xmms_decoder_t *current_decoder;
+
 	GMutex *mutex;
 	GCond *cond;
+	GCond *decoder_cond;
 	GThread *thread;
 	gboolean running;
 
@@ -75,28 +79,7 @@ struct xmms_output_St {
 	gboolean is_paused;
 
 	guint open_samplerate;
-	guint samplerate;
-
-	xmms_ringbuf_t *buffer;
-	
 	gpointer plugin_data;
-
-	guint resamplelen;
-	gint16 *resamplebuf;
-
-	guint interpolator_ratio;
-	guint decimator_ratio;
-
-	gint16 last_r;
-	gint16 last_l;
-
-	guint32 opos;      /* position in output */
-        guint32 opos_frac;
-
-        guint32 opos_inc;  /* increment in output for each input-sample */
-        guint32 opos_inc_frac;
-
-        guint32 ipos;      /* position in the input stream */
 
 	xmms_output_type_t type;
 
@@ -192,124 +175,6 @@ xmms_output_mixer_get (xmms_output_t *output, xmms_error_t *err)
  * Private functions
  */
 
-static void
-recalculate_resampler (xmms_output_t *output)
-{
-	guint a,b;
-	guint32 incr;
-
-	/* calculate ratio */
-	if(output->samplerate > output->open_samplerate){
-		a = output->samplerate;
-		b = output->open_samplerate;
-	} else {
-		b = output->samplerate;
-		a = output->open_samplerate;
-	}
-
-	while (b != 0) { /* good 'ol euclid is helpful as usual */
-		guint t = a % b;
-		a = b;
-		b = t;
-	}
-
-	XMMS_DBG ("Resampling ratio: %d:%d", 
-		  output->samplerate / a, output->open_samplerate / a);
-
-	output->interpolator_ratio = output->open_samplerate/a;
-	output->decimator_ratio = output->samplerate/a;
-
-	incr = ((gdouble)output->decimator_ratio / (gdouble) output->interpolator_ratio * (gdouble) (1UL << FRAC_BITS));
-	
-	output->opos_inc_frac=incr & ((1UL<<FRAC_BITS)-1);
-	output->opos_inc = incr>>FRAC_BITS;
-
-	/*
-	 * calculate filter here
-	 *
-	 * We don't use no stinkning filter. Maybe we should,
-	 * but I'm deaf anyway, I wont hear any difference.
-	 */
-
-}
-
-/*
- * This resampler is based on the one in sox's rate.c:
- *
- * August 21, 1998
- * Copyright 1998 Fabrice Bellard.
- *
- * [Rewrote completly the code of Lance Norskog And Sundry
- * Contributors with a more efficient algorithm.]
- *
- * This source code is freely redistributable and may be used for
- * any purpose.  This copyright notice must be maintained. 
- * Lance Norskog And Sundry Contributors are not responsible for 
- * the consequences of using this software.  
- *
- */
-static guint32
-resample (xmms_output_t *output, gint16 *buf, guint len)
-{
-
-	guint32 written = 0;
-	guint outlen;
-	gint inlen = len / 4;
-	gint16 last_r = output->last_r;
-	gint16 last_l = output->last_l;
-	gint16 *ibuf = buf;
-	gint16 *obuf;
-	
-	outlen = 1 + len * output->interpolator_ratio  / output->decimator_ratio;
-
-	if (output->resamplelen != outlen) {
-		output->resamplelen = outlen;
-		output->resamplebuf = g_realloc (output->resamplebuf, outlen*4);
-		g_return_val_if_fail (output->resamplebuf, 0);
-	}
-	
-	obuf = output->resamplebuf;
-	
-	while (inlen > 0) {
-		guint32 tmp;
-		gint16 cur_r,cur_l;
-		gdouble t; /** @todo we need no double here,
-			       could go fixed point all way */
-		
-		while (output->ipos <= output->opos) {
-			last_r = *ibuf++;
-			last_l = *ibuf++;
-			output->ipos++;
-			inlen--;
-			if (inlen <= 0) {
-				goto done;
-			}
-		}
-		cur_r = *ibuf;
-		cur_l = *(ibuf+1);
-		
-		t = ((gdouble)output->opos_frac) / (1UL<<FRAC_BITS);
-		*obuf++ = (gdouble) last_r * (1.0-t) + (gdouble) cur_r * t;
-		*obuf++ = (gdouble) last_l * (1.0-t) + (gdouble) cur_l * t;
-		
-		/* update output position */
-		tmp = output->opos_frac + output->opos_inc_frac;
-		output->opos += output->opos_inc + (tmp >> FRAC_BITS);
-		output->opos_frac = tmp & ((1UL << FRAC_BITS)-1);
-
-		written += 2*sizeof(gint16); /* count bytes */
-
-	}
- done:
-	output->last_r = last_r;
-	output->last_l = last_l;
-	
-	g_return_val_if_fail (written/4<outlen, 0);
-	
-	return written;
-		
-}
-
 /**
  * @internal
  */
@@ -332,6 +197,8 @@ xmms_output_stats (xmms_output_t *output, GList *list)
 	return ret;
 }
 
+
+/*
 void
 xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 {
@@ -351,6 +218,7 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 	xmms_output_unlock (output);
 
 }
+*/
 
 void
 xmms_output_samplerate_set (xmms_output_t *output, guint rate)
@@ -360,7 +228,6 @@ xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 	g_return_if_fail (output);
 	g_return_if_fail (rate);
 
-	output->samplerate = rate;
 	if (output->is_open) {
 		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
 		XMMS_DBG ("want samplerate %d", rate);
@@ -369,8 +236,15 @@ xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 	} else {
 		output->open_samplerate = rate;
 	}
-	recalculate_resampler (output);
 
+}
+
+guint
+xmms_output_samplerate_get (xmms_output_t *output)
+{
+	g_return_val_if_fail (output, 0);
+
+	return output->open_samplerate;
 }
 
 gboolean
@@ -434,7 +308,7 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	output->plugin = plugin;
 	output->mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
-	output->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
+	output->decoder_cond = g_cond_new ();
 	output->is_open = FALSE;
 	output->open_samplerate = 44100;
 	output->core = core;
@@ -446,7 +320,6 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	if (!new (output)) {
 		g_mutex_free (output->mutex);
 		g_cond_free (output->cond);
-		xmms_ringbuf_destroy (output->buffer);
 		g_free (output);
 		return NULL;
 	}
@@ -490,8 +363,6 @@ xmms_output_flush (xmms_output_t *output)
 
 	g_mutex_lock (output->mutex);
 
-	xmms_ringbuf_clear (output->buffer);
-
 	flush (output);
 
 	g_mutex_unlock (output->mutex);
@@ -529,6 +400,8 @@ xmms_output_start (xmms_output_t *output)
 	}
 }
 
+
+/*
 void
 xmms_output_set_eos (xmms_output_t *output, gboolean eos)
 {
@@ -542,6 +415,7 @@ xmms_output_set_eos (xmms_output_t *output, gboolean eos)
 	output->played = 0;
 
 }
+*/
 
 void
 xmms_output_played_samples_set (xmms_output_t *output, guint samples)
@@ -576,6 +450,81 @@ xmms_output_resume (xmms_output_t *output)
 	g_cond_signal (output->cond);
 }
 
+void
+xmms_output_decoder_append (xmms_output_t *output, xmms_decoder_t *decoder)
+{
+	g_return_if_fail (output);
+	g_return_if_fail (decoder);
+
+	xmms_output_lock (output);	
+	XMMS_DBG ("Appending decoder %p", decoder);
+	output->decoder_list = g_list_append (output->decoder_list, decoder);
+	g_cond_signal (output->decoder_cond);
+	xmms_output_unlock (output);
+}
+
+gboolean
+xmms_output_decoder_update (xmms_output_t *output)
+{
+	GList *n;
+	g_return_val_if_fail (output, FALSE);
+
+	n = output->decoder_list;
+
+	if (n) {
+		XMMS_DBG ("New decoder %p", n->data);
+		output->current_decoder = (xmms_decoder_t *) n->data;
+		/*output->decoder_list = g_list_remove_link (output->decoder_list, 
+							   (gpointer) output->current_decoder);*/
+		output->decoder_list = g_list_next (output->decoder_list);
+	} else {
+		output->current_decoder = NULL;
+		return FALSE;
+	}
+
+	return TRUE;
+
+}
+
+void
+xmms_output_decoder_remove (xmms_output_t *output, xmms_decoder_t *decoder)
+{
+	g_return_if_fail (output);
+	g_return_if_fail (decoder);
+
+	xmms_output_lock (output);
+	output->decoder_list = g_list_remove_link (output->decoder_list, (gpointer)decoder);
+	xmms_output_unlock (output);
+}
+
+static gint
+xmms_output_decoder_read (xmms_output_t *output, char *buffer, gint len)
+{
+	gint r, r2;
+
+	g_return_val_if_fail (output, -1);
+	g_return_val_if_fail (buffer, -1);
+
+	if (!output->current_decoder) {
+		if (!xmms_output_decoder_update (output)) {
+			return -1;
+		}
+	}
+
+	r = xmms_decoder_read (output->current_decoder, buffer, len);
+	if (r < len) {
+		if (xmms_decoder_iseos (output->current_decoder)) {
+			XMMS_DBG ("Time to change ringbuffer");
+		    	if (xmms_output_decoder_update (output)) {
+				r2 = xmms_decoder_read (output->current_decoder, buffer+r, len-r);
+				return r+r2;
+			}
+		}
+	}
+
+	return r;
+}
+
 gint
 xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 {
@@ -589,7 +538,12 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 	xmms_output_lock (output);
 	
-	ret = xmms_ringbuf_read (output->buffer, buffer, len);
+	if (!output->is_open) {
+		output->is_open = TRUE;
+		xmms_output_samplerate_set (output, output->open_samplerate);
+	}
+	
+	ret = xmms_output_decoder_read (output, buffer, len);
 
 	if (ret > 0) {
 		guint played_time;
@@ -641,20 +595,8 @@ xmms_output_status_changed (xmms_object_t *object,
 
 	st = xmms_plugin_method_get (output->plugin,
 				     XMMS_PLUGIN_METHOD_STATUS);
+
 	if (st) {
-		if (arg->retval.uint32 == XMMS_PLAYBACK_PLAY) {
-			XMMS_DBG ("Let the buffer be filled...");
-			g_mutex_lock (output->mutex);
-			xmms_ringbuf_wait_used (output->buffer, 
-					xmms_ringbuf_size (output->buffer) * 0.7,
-					output->mutex);
-			g_mutex_unlock (output->mutex);
-			XMMS_DBG ("Buffer is now %d", xmms_ringbuf_bytes_used (output->buffer));
-		} else if (arg->retval.uint32 == XMMS_PLAYBACK_STOP) {
-			g_mutex_lock (output->mutex);
-			xmms_ringbuf_clear (output->buffer);
-			g_mutex_unlock (output->mutex);
-		}
 		st (output, arg->retval.uint32);
 	}
 
@@ -680,8 +622,6 @@ xmms_output_thread (gpointer data)
 		gchar buffer[4096];
 		gint ret;
 
-		xmms_ringbuf_wait_used (output->buffer, 4096, output->mutex);
-
 		if (!output->is_open) {
 			if (!xmms_output_open (output)) {
 				XMMS_DBG ("Couldn't open output device");
@@ -696,7 +636,7 @@ xmms_output_thread (gpointer data)
 			output->is_paused = FALSE;
 		}
 
-		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
+		ret = xmms_output_decoder_read (output, buffer, 4096);
 
 		if (ret < 4096) {
 			output->buffer_underruns ++;
@@ -734,25 +674,11 @@ xmms_output_thread (gpointer data)
 			xmms_playback_playtime_set (xmms_core_playback_get (output->core), played_time);
 
 			
-		} else if (xmms_ringbuf_iseos (output->buffer)) {
-			GTimeVal time;
-
-			xmms_output_unlock (output);
-			xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, NULL);
-			xmms_output_lock (output);
-			output->played = 0;
-			
-			while (xmms_ringbuf_iseos (output->buffer)) {
-				g_get_current_time (&time);
-				g_time_val_add (&time, 10 * G_USEC_PER_SEC);
-				if (!g_cond_timed_wait (output->cond, output->mutex, &time)){
-					if (output->is_open) {
-						XMMS_DBG ("Timed out");
-						xmms_output_close (output);
-					}
-				}
-			}
-
+		} else if (!output->current_decoder) {
+			xmms_output_close (output);
+			XMMS_DBG ("Sleeping for decoder");
+			g_cond_wait (output->decoder_cond, output->mutex);
+			XMMS_DBG ("Output awake!");
 		}
 	}
 	xmms_output_unlock (output);

@@ -42,4 +42,7 @@ gboolean xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 void xmms_decoder_wait (xmms_decoder_t *decoder);
 
+guint xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len);
+gboolean xmms_decoder_iseos (xmms_decoder_t *decoder);
+
 #endif /* __XMMS_DECODER_INT_H__ */

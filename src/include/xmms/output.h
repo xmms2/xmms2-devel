@@ -33,12 +33,6 @@
 #define XMMS_OUTPUT_DEFAULT "coreaudio"
 #endif
 
-/* Buffersizes */
-#ifdef XMMS_OS_DARWIN /* CoreAudio would like a bigger buffer to avoid skips */
-#define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "131072"
-#else
-#define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "32768"
-#endif
 
 
 

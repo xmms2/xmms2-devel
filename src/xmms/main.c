@@ -197,8 +197,8 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("output = %s", outname);
 
-	xmms_config_value_register ("core.output_buffersize", 
-			XMMS_OUTPUT_DEFAULT_BUFFERSIZE, NULL, NULL);
+	xmms_config_value_register ("core.decoder_buffersize", 
+			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("core.transport_buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 

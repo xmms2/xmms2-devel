@@ -25,6 +25,14 @@
  * Type definitions
  */
 
+/* Buffersizes */
+#ifdef XMMS_OS_DARWIN /* CoreAudio would like a bigger buffer to avoid skips */
+#define XMMS_DECODER_DEFAULT_BUFFERSIZE "131072"
+#else
+#define XMMS_DECODER_DEFAULT_BUFFERSIZE "32768"
+#endif
+
+
 /**
  * Structure describing decoder-objects.
  * Do not modify this structure directly, use the functions.
