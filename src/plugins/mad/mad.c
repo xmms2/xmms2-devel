@@ -120,7 +120,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 	xmms_mad_data_t *data;
 	guint bytes;
 	
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (decoder, FALSE);
 
 	data = xmms_decoder_private_data_get (decoder);
 
