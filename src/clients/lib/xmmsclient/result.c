@@ -339,10 +339,9 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 					list = x_list_prepend (list, XUINT_TO_POINTER (tmp));
 				}
 
-				if (!list)
-					return FALSE;
+				if (list)
+					list = x_list_reverse (list);
 
-				list = x_list_reverse (list);
 				res->data.uintlist = list;
 			}
 			break;
@@ -356,10 +355,9 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 					list = x_list_prepend (list, XINT_TO_POINTER (tmp));
 				}
 
-				if (!list)
-					return FALSE;
+				if (list)
+					list = x_list_reverse (list);
 
-				list = x_list_reverse (list);
 				res->data.uintlist = list;
 
 			}
@@ -375,10 +373,9 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 					list = x_list_prepend (list, tmp);
 				}
 
-				if (!list)
-					return FALSE;
+				if (list)
+					list = x_list_reverse (list);
 
-				list = x_list_reverse (list);
 				res->data.stringlist = list;
 			}
 			break;
@@ -404,10 +401,8 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 						break;
 				}
 
-				if (!list)
-					return FALSE;
-
-				list = x_list_reverse (list);
+				if (list) 
+					list = x_list_reverse (list);
 
 				res->data.hashlist = list;
 
