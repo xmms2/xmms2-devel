@@ -130,7 +130,17 @@ error:
 static guint
 xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
 {
-	return 44100; /** @todo do good ioctl here instead... */
+	xmms_oss_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_plugin_data_get (output);
+	g_return_if_fail (data);
+
+	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &rate) == -1) {
+		XMMS_DBG ("Error setting samplerate");
+		return 0;
+	}
+	return rate;
 }
 
 static void

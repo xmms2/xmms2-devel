@@ -36,6 +36,7 @@ struct xmms_output_St {
 	gboolean is_open;
 
 	guint samplerate;
+	guint open_samplerate;
 
 	xmms_ringbuf_t *buffer;
 	xmms_config_value_t *config;
@@ -155,13 +156,17 @@ xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 	g_return_val_if_fail (output, 0);
 	g_return_val_if_fail (rate, 0);
 
-	xmms_output_lock (output);
+	if (!output->is_open) {
+		output->open_samplerate = rate;
+		return rate;
+	}
+
 	if (rate != output->samplerate) {
 		xmms_output_samplerate_set_method_t samplerate_method;
 		samplerate_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
 		output->samplerate = samplerate_method (output, rate);
+		XMMS_DBG ("samplerate set to: %d", output->samplerate);
 	}
-	xmms_output_unlock (output);
 	return output->samplerate;
 }
 
@@ -180,6 +185,9 @@ xmms_output_open (xmms_output_t *output)
 	}
 
 	output->is_open = TRUE;
+
+	XMMS_DBG ("opening with samplerate: %d",output->open_samplerate);
+	xmms_output_samplerate_set (output, output->open_samplerate);
 
 	return TRUE;
 
@@ -219,6 +227,7 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
 	output->cond = g_cond_new ();
 	output->buffer = xmms_ringbuf_new (32768);
 	output->is_open = FALSE;
+	output->open_samplerate = 44100;
 	
 	xmms_output_set_config (output, config->output);
 	
