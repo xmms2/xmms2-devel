@@ -430,13 +430,13 @@ main(int argc, char **argv)
 			}
 			
 			if (streq (argv[2], "one"))
-				xmmsc_playlist_mode_set_repeatone (c);
+				xmmsc_configval_set (c, "core.next_mode", "0");
 			else if (streq (argv[2], "all"))
-				xmmsc_playlist_mode_set_repeatall (c);
+				xmmsc_configval_set (c, "core.next_mode", "1");
 			else if (streq (argv[2], "none"))
-				xmmsc_playlist_mode_set_none (c);
+				xmmsc_configval_set (c, "core.next_mode", "2");
 			else if (streq (argv[2], "stop"))
-				xmmsc_playlist_mode_set_stop (c);
+				xmmsc_configval_set (c, "core.next_mode", "3");
 			else {
 				printf ("usage: mode [one|all|none|stop]\n");
 				xmmsc_deinit (c);
