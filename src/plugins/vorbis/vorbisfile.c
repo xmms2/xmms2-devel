@@ -310,6 +310,11 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	xmms_vorbis_data_t *data;
 	guint16 buffer[2048];
 	guint16 monobuffer[1024];
+#ifdef WORDS_BIGENDIAN
+	static gint bigendian = 1;
+#else
+	static gint bigendian = 0;
+#endif
 
 	g_return_val_if_fail (decoder, FALSE);
 	
@@ -318,9 +323,9 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 
 	/* this produces 16bit signed PCM littleendian PCM data */
 	if (data->channels == 2) {
-		ret = ov_read (&data->vorbisfile, (gchar *)buffer, 4096, 0, 2, 1, &c);
+		ret = ov_read (&data->vorbisfile, (gchar *)buffer, 4096, bigendian, 2, 1, &c);
 	} else if (data->channels == 1) {
-		ret = ov_read (&data->vorbisfile, (gchar *)monobuffer, 2048, 0, 2, 1, &c);
+		ret = ov_read (&data->vorbisfile, (gchar *)monobuffer, 2048, bigendian, 2, 1, &c);
 	} else {
 		XMMS_DBG ("Plugin doesn't handle %d number of channels", data->channels);
 		return FALSE;
