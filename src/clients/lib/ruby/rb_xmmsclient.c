@@ -139,7 +139,7 @@ METHOD_ADD_HANDLER(quit, true);
 METHOD_ADD_HANDLER(playback_start, true);
 METHOD_ADD_HANDLER(playback_pause, true);
 METHOD_ADD_HANDLER(playback_stop, true);
-METHOD_ADD_HANDLER(playback_next, true);
+METHOD_ADD_HANDLER(playback_tickle, true);
 METHOD_ADD_HANDLER(playback_status, false);
 METHOD_ADD_HANDLER(broadcast_playback_status, false);
 METHOD_ADD_HANDLER(playback_playtime, true);
@@ -184,10 +184,10 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 }
 
 METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
-METHOD_ADD_HANDLER(broadcast_playlist_entry_changed, false);
+METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
 METHOD_ADD_HANDLER(playlist_list, true);
 
-static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
+static VALUE c_playlist_set_next (VALUE self, VALUE type)
 {
 	VALUE o;
 	xmmsc_result_t *res;
@@ -195,10 +195,8 @@ static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
 	GET_OBJ (self, RbXmmsClient, xmms);
 
 	Check_Type (type, T_FIXNUM);
-	Check_Type (moment, T_FIXNUM);
 
-	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (type),
-	                               FIX2INT (moment));
+	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (type));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
@@ -206,7 +204,7 @@ static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
 	return o;
 }
 
-static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
+static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
 	VALUE o;
 	xmmsc_result_t *res;
@@ -215,7 +213,7 @@ static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
 
 	Check_Type (id, T_FIXNUM);
 
-	res = xmmsc_playlist_get_mediainfo (xmms->real, FIX2INT (id));
+	res = xmmsc_medialib_get_info (xmms->real, FIX2INT (id));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
@@ -280,7 +278,7 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playback_start, 0);
 	METHOD_ADD (c, playback_pause, 0);
 	METHOD_ADD (c, playback_stop, 0);
-	METHOD_ADD (c, playback_next, 0);
+	METHOD_ADD (c, playback_tickle, 0);
 	METHOD_ADD (c, broadcast_playback_status, 0);
 	METHOD_ADD (c, playback_status, 0);
 	METHOD_ADD (c, playback_playtime, 0);
@@ -291,10 +289,10 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playback_seek_samples, 1);
 
 	METHOD_ADD (c, broadcast_playlist_changed, 0);
-	METHOD_ADD (c, broadcast_playlist_entry_changed, 0);
+	METHOD_ADD (c, broadcast_medialib_entry_changed, 0);
 	METHOD_ADD (c, playlist_list, 0);
-	METHOD_ADD (c, playlist_set_next, 2);
-	METHOD_ADD (c, playlist_get_mediainfo, 1);
+	METHOD_ADD (c, playlist_set_next, 1);
+	METHOD_ADD (c, medialib_get_info, 1);
 
 	METHOD_ADD (c, configval_get, 1);
 	METHOD_ADD (c, configval_set, 2);
