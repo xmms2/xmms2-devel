@@ -170,10 +170,9 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		if (err) {
 			print_info ("convert error %s", err->message);
 		}
-		
+		free (tab);	
 	}
-	
-
+	free (list);
 }
 	
 static void
@@ -212,8 +211,11 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	unsigned int seconds;
 
-	seconds = atoi (argv[2]) * 1000;
+	if (argc < 3) {
+		print_error ("You need to specify a number of seconds");
+	}
 
+	seconds = atoi (argv[2]) * 1000;
 	xmmsc_playback_seek_ms (conn, seconds);
 }
 

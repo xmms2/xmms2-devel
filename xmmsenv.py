@@ -23,6 +23,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
+		if self.sys == 'OpenBSD':
+			self.Append(LIBPATH=['/usr/local/lib'])
+			self.Append(CPPFLAGS=['-I/usr/local/include'])
 
 	def XmmsConfig(self,source):
 		self.Install(self.installdir+self.sysconfdir, source)
