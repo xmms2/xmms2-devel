@@ -37,6 +37,10 @@ diskwrite = base_env.Copy()
 diskwrite.AddFlagsFromGroup("glib")
 diskwrite.XmmsPlugin('xmms_diskwrite', ['diskwrite/diskwrite.c'])
 
+wave = base_env.Copy()
+wave.AddFlagsFromGroup("glib")
+wave.XmmsPlugin("xmms_wave", ["wave/wave.c"])
+
 if base_env.HasGroup("mad"):
 	mad = base_env.Copy()
 	mad.AddFlagsFromGroup("glib")
