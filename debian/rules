@@ -6,6 +6,7 @@ package=xmms2
 
 build:
 	$(checkdir)
+	./autogen.sh
 	./configure --prefix=/usr
 	$(MAKE) CFLAGS="-g -Wall"
 	touch build
@@ -29,11 +30,14 @@ binary-arch: checkroot build
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
 	$(MAKE) install prefix=`pwd`/debian/tmp/usr
+	rm -f debian/tmp/usr/lib/xmms/*.la
+	rm -f debian/tmp/usr/lib/xmms/*.a
 # Must have debmake installed for this to work. Otherwise please copy
 # /usr/bin/debstd into the debian directory and change debstd to debian/debstd
 	debstd -u ChangeLog NEWS README 
 	dh_installdebconf
-	dpkg-gencontrol -isp
+#	dh_gencontrol
+	dpkg-gencontrol -isp -pxmms2-core
 	chown -R root.root debian/tmp
 	chmod -R go=rX debian/tmp
 	dpkg --build debian/tmp ..

@@ -1,0 +1,8 @@
+usr/bin/xmms2d
+usr/lib/xmms/libxmms_file.so
+usr/lib/xmms/libxmms_mad.so
+usr/lib/xmms/libxmms_diskwrite.so
+usr/lib/xmms/libxmms_http.so
+usr/lib/xmms/liboss.so
+usr/lib/xmms/libxmms_tar.so
+usr/etc/xmms2.conf
