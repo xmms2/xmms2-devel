@@ -59,6 +59,18 @@ xmms_output_plugin_data_get (xmms_output_t *output)
 	return ret;
 }
 
+gboolean
+xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
+{
+	xmms_output_volume_get_method_t vol;
+	g_return_val_if_fail (output, FALSE);
+
+	vol = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_MIXER_GET);
+	g_return_val_if_fail (vol, FALSE);
+
+	return vol (output, left, right);
+}
+
 void
 xmms_output_set_config (xmms_output_t *output, GHashTable *config)
 {
@@ -76,6 +88,25 @@ xmms_output_set_config (xmms_output_t *output, GHashTable *config)
 	}
 
 	output->config = val;
+}
+
+xmms_config_value_t *
+xmms_output_config_value_get (xmms_output_t *output, gchar *key, gchar *def)
+{
+	xmms_config_value_t *value;
+	
+	g_return_val_if_fail (output, NULL);
+	g_return_val_if_fail (key, NULL);
+	
+	value = xmms_config_value_list_lookup (output->config, key);
+
+	if (!value) {
+		value = xmms_config_value_create (XMMS_CONFIG_VALUE_PLAIN, key);
+		xmms_config_value_data_set (value, g_strdup (def));
+		xmms_config_value_list_add (output->config, value);
+	}
+
+	return value;
 }
 
 
@@ -215,6 +246,7 @@ xmms_output_t *
 xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
 {
 	xmms_output_t *output;
+	xmms_output_new_method_t new;
 	
 	g_return_val_if_fail (plugin, NULL);
 
@@ -230,6 +262,16 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
 	output->open_samplerate = 44100;
 	
 	xmms_output_set_config (output, config->output);
+
+	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+
+	if (!new (output)) {
+		g_mutex_free (output->mutex);
+		g_cond_free (output->cond);
+		xmms_ringbuf_destroy (output->buffer);
+		g_free (output);
+		return NULL;
+	}
 	
 	return output;
 }
