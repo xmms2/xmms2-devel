@@ -370,7 +370,7 @@ gboolean
 xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 {
 	gboolean res;
-	xmms_playlist_entry_t *entry;
+	xmms_playlist_entry_t *entry = NULL;
 	
 	if (g_strncasecmp (nurl, "mlib", 4) == 0) {
 		guint id;
