@@ -290,6 +290,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 		if (output->decoder) {
 			xmms_decoder_stop (output->decoder);
 			xmms_object_unref (output->decoder);
+			xmms_object_unref (output->playing_entry);
 			output->decoder = NULL;
 			output->playing_entry = NULL;
 		}
@@ -734,6 +735,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	} else if (xmms_decoder_iseos (output->decoder)) {
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (output->decoder);
+		xmms_object_unref (output->playing_entry);
 		output->decoder = NULL;
 		output->playing_entry = NULL;
 		g_mutex_unlock (output->mutex);
@@ -865,8 +867,10 @@ xmms_output_thread (gpointer data)
 		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (XMMS_OBJECT (output->decoder));
+		xmms_object_unref (output->playing_entry);
 		output->played = 0;
 		output->decoder = NULL;
+		output->playing_entry = NULL;
 	}
 
 	output->running = FALSE;
