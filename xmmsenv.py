@@ -16,6 +16,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.sysconfdir=self['SYSCONFDIR']
 		self.installdir=self['INSTALLDIR']
 		self.mandir=self['MANDIR']
+		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
 
