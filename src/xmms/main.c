@@ -133,6 +133,18 @@ xmms_main_destroy (xmms_object_t *object)
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
+	xmms_main_t *mainobj = (xmms_main_t *) object;
+	xmms_object_method_arg_t arg;
+
+	/* stop output */
+	memset (&arg, 0, sizeof (arg));
+	xmms_error_reset (&arg.error);
+	xmms_object_method_call (XMMS_OBJECT (mainobj->output),
+	                         XMMS_METHOD_STOP, &arg);
+	/** @todo Wait until the output thread exists,
+	 *        so the allocated resources are freed properly
+	 */
+
 	xmms_dbus_unregister_object ("main");
 	xmms_object_unref (object);
 
