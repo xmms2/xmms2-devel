@@ -135,7 +135,7 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmmsc_result_run (res, msg);
 }
 
-gboolean
+int
 xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 {
 	gboolean disco = FALSE;
@@ -163,7 +163,7 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 	return TRUE;
 }
 
-gboolean
+int
 xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 {
 	g_return_val_if_fail (ipc, FALSE);
@@ -171,7 +171,7 @@ xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 	return !g_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
 }
 
-gboolean
+int
 xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 {
 	gboolean disco = FALSE;
@@ -212,7 +212,7 @@ xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error)
 const char *
 xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
 {
-	g_return_if_fail (ipc);
+	g_return_val_if_fail (ipc, NULL);
 	return ipc->error;
 }
 

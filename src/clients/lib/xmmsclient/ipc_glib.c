@@ -82,8 +82,8 @@ xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *c)
 	xmmsc_ipc_t *ipc = c->ipc;
 	xmmsc_ipc_glib_watch_t *src;
 
-	src = g_source_new (&xmmsc_ipc_glib_funcs,
-	                    sizeof (xmmsc_ipc_glib_watch_t));
+	src = (xmmsc_ipc_glib_watch_t *)g_source_new (&xmmsc_ipc_glib_funcs,
+						      sizeof (xmmsc_ipc_glib_watch_t));
 	src->pollfd.fd = xmmsc_ipc_fd_get (ipc);
 	src->pollfd.events = G_IO_IN | G_IO_HUP | G_IO_ERR;
 	src->ipc = ipc;

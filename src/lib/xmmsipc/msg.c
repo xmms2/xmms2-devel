@@ -23,7 +23,6 @@
 #include <time.h>
 #include "xmms/ipc_transport.h"
 #include "xmms/ipc_msg.h"
-#include "xmms/ringbuf.h"
 #include "xmms/util.h"
 
 typedef union {

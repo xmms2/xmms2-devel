@@ -40,6 +40,7 @@ void xmmsc_ipc_private_data_set (xmmsc_ipc_t *ipc, gpointer data);
 void xmmsc_ipc_destroy (xmmsc_ipc_t *ipc);
 gboolean xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path);
 void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error);
+const char *xmmsc_ipc_error_get (xmmsc_ipc_t *ipc);
 gint xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc);
 
 void xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
@@ -47,10 +48,9 @@ xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid);
 void xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
 void xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout);
 
-enum {
-	XMMSC_IPC_IO_IN,
-	XMMSC_IPC_IO_OUT
-};
+int xmmsc_ipc_io_out (xmmsc_ipc_t *ipc);
+int xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc);
+int xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc);
 
 #ifdef __cplusplus
 }

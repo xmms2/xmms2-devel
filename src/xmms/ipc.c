@@ -350,7 +350,6 @@ xmms_ipc_client_thread (gpointer data)
 	while (client->run) {
 		gint ret;
 		gboolean disconnect = FALSE;
-		xmms_ipc_msg_t *msg;
 
 		FD_ZERO (&rfdset);
 		FD_ZERO (&wfdset);
