@@ -588,7 +588,6 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 	msg->cid = cid;
-	xmmsc_ipc_flush (c->ipc);
 	return xmmsc_result_new (c, cid);
 }
 

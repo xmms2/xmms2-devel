@@ -38,7 +38,6 @@ gboolean xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path);
 void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error);
 gint xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc);
 gboolean xmmsc_ipc_want_io_out (xmmsc_ipc_t *ipc);
-gboolean xmmsc_ipc_flush (xmmsc_ipc_t *ipc);
 
 void xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
 xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid);

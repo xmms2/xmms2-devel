@@ -33,13 +33,11 @@
 
 struct xmmsc_ipc_St {
 	GMutex *mutex;
-	xmms_ringbuf_t *write_buffer;
 	xmms_ringbuf_t *read_buffer;
 	xmms_ipc_transport_t *transport;
 	gchar *error;
 	gpointer private_data;
 	gboolean disconnect;
-	xmmsc_ipc_wakeup_t wakeup;
 	gint pollopts;
 	GHashTable *results_table;
 };
@@ -50,7 +48,6 @@ xmmsc_ipc_init (void)
 	xmmsc_ipc_t *ipc;
 	ipc = g_new0 (xmmsc_ipc_t, 1);
 	ipc->mutex = g_mutex_new ();
-	ipc->write_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
 	ipc->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
 	ipc->disconnect = FALSE;
 	ipc->pollopts = XMMSC_IPC_IO_IN;
@@ -93,13 +90,6 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	g_mutex_unlock (ipc->mutex);
 }
 	
-
-void
-xmmsc_ipc_wakeup_set (xmmsc_ipc_t *ipc, xmmsc_ipc_wakeup_t wakeupfunc)
-{
-	ipc->wakeup = wakeupfunc;
-}
-
 static void
 xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 {
@@ -172,66 +162,6 @@ xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error)
 	ipc->error = error;
 }
 
-gboolean
-xmmsc_ipc_want_io_out (xmmsc_ipc_t *ipc)
-{
-	gboolean ret;
-
-	g_return_val_if_fail (ipc, FALSE);
-	g_mutex_lock (ipc->mutex);
-	if (xmms_ringbuf_bytes_used (ipc->write_buffer) > 0) {
-		ret = TRUE;
-	} else {
-		ret = FALSE;
-	}
-	g_mutex_unlock (ipc->mutex);
-	return ret;
-}
-
-gboolean
-xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
-{
-	g_return_val_if_fail (ipc, FALSE);
-	gint len;
-
-	g_mutex_lock (ipc->mutex);
-	while (xmms_ringbuf_bytes_used (ipc->write_buffer)) {
-		gchar buf[4096];
-		gint ret, iret;
-
-		len = MIN (xmms_ringbuf_bytes_used (ipc->write_buffer), 4096);
-		ret = xmms_ringbuf_read (ipc->write_buffer, buf, len);
-		iret = xmms_ipc_transport_write (ipc->transport, buf, ret);
-		if (iret == -1)
-			break;
-	}
-	g_mutex_unlock (ipc->mutex);
-
-	return TRUE;
-
-}
-
-gboolean
-xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
-{
-	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (msg, FALSE);
-
-	g_mutex_lock (ipc->mutex);
-	if (!xmms_ipc_msg_write (ipc->write_buffer, msg, cid)) {
-		g_mutex_unlock (ipc->mutex);
-		return FALSE;
-	}
-	g_mutex_unlock (ipc->mutex);
-
-	/* we need to tell the binding that we want to poll on OUT to. */
-	ipc->pollopts = XMMSC_IPC_IO_OUT | XMMSC_IPC_IO_IN;
-	if (ipc->wakeup)
-		ipc->wakeup (ipc);
-
-	return TRUE;
-}
-
 void
 xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 {
@@ -254,16 +184,13 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 }
 
 gboolean
-xmmsc_ipc_flush (xmmsc_ipc_t *ipc)
+xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
 {
 	fd_set fdset;
 	struct timeval tmout;
 
 	g_return_val_if_fail (ipc, FALSE);
-
-	if (!xmmsc_ipc_want_io_out (ipc)) {
-		return TRUE;
-	}
+	g_return_val_if_fail (ipc, FALSE);
 
 	tmout.tv_sec = 5;
 	tmout.tv_usec = 0;
@@ -277,9 +204,8 @@ xmmsc_ipc_flush (xmmsc_ipc_t *ipc)
 		return FALSE;
 	}
 
-	xmmsc_ipc_io_out_callback (ipc);
-
-	return TRUE;
+	return xmms_ipc_msg_write_fd (xmms_ipc_transport_fd_get (ipc->transport), 
+				      msg, cid);
 }
 
 void
@@ -306,7 +232,6 @@ xmmsc_ipc_private_data_set (xmmsc_ipc_t *ipc, gpointer data)
 void
 xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 {
-	xmms_ringbuf_destroy (ipc->write_buffer);
 	xmms_ringbuf_destroy (ipc->read_buffer);
 	g_mutex_free (ipc->mutex);
 	g_hash_table_destroy (ipc->results_table);

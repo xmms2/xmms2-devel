@@ -321,7 +321,6 @@ void
 xmmsc_result_wait (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
-	xmmsc_ipc_flush  (res->ipc);
 	while (!res->reply) {
 		xmmsc_ipc_wait_for_event (res->ipc, 5);
 	}
