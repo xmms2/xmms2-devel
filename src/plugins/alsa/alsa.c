@@ -42,7 +42,7 @@
  *  Defines
  */
 #define SND_CHANNELS     		2
-#define SND_FORMAT       		SND_PCM_FORMAT_S16_LE
+#define SND_FORMAT       		SND_PCM_FORMAT_S16
 #define SND_STREAM       		SND_PCM_STREAM_PLAYBACK
 
 
