@@ -1,3 +1,8 @@
+/** @file interface to libcurl.
+  *
+  * This plugin will provide HTTP/HTTPS/FTP transports.
+  */
+
 #include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
@@ -32,6 +37,10 @@ typedef struct {
 
 	gchar *buf;
 	gint data_in_buf;
+
+	gchar *mime;
+	gchar *name;
+	gchar *genre;
 } xmms_curl_data_t;
 
 /*
@@ -101,11 +110,40 @@ static size_t
 xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 {
 	xmms_curl_data_t *data = (xmms_curl_data_t *) stream;
+
+	if (!data->mime) {
+		curl_easy_getinfo (data->curl, CURLINFO_CONTENT_TYPE, &data->mime);
+		XMMS_DBG ("mimetype here is %s", data->mime);
+		
+		if (!data->mime && g_strncasecmp (ptr, "ICY 200 OK", 10) == 0) {
+			gchar **tmp;
+			gint i=0;
+
+			XMMS_DBG ("Shoutcast detected...");
+			data->mime = "audio/mpeg"; /* quite safe */
+
+/*			tmp = g_strsplit (ptr, "\r\n", 0);
+			while (tmp[i]) {
+				XMMS_DBG ("%s", tmp[i]);
+				if (g_strncasecmp (tmp[i], "icy-name:", 9) == 0)
+					data->name = g_strdup (tmp[i]+9);
+				if (g_strncasecmp (tmp[i], "icy-genre:", 10) == 0)
+					data->genre = g_strdup (tmp[i]+10);
+				i++;
+			}
+
+			XMMS_DBG ("Got %s that plays %s", data->name, data->genre);
+
+			g_strfreev (tmp);*/
+
+			return size*nmemb;
+		}
+	}
 	
 	data->buf = g_malloc (size*nmemb);
 	data->data_in_buf = size*nmemb;
 	memcpy (data->buf, ptr, size*nmemb);
-	
+
 	return size*nmemb;
 }
 
@@ -113,7 +151,7 @@ static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 {
 	xmms_curl_data_t *data;
-/*	curl_slist *headerlist = NULL;*/
+	struct curl_slist *headerlist = NULL;
 	
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (uri, FALSE);
@@ -122,11 +160,14 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 
 	data->curl = curl_easy_init ();
 	data->curlm = curl_multi_init ();
+	data->mime = NULL;
 	
 	g_return_val_if_fail (data->curl, FALSE);
 	g_return_val_if_fail (data->curlm, FALSE);
 
 	XMMS_DBG ("Setting up CURL");
+
+	headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
 
 	curl_easy_setopt (data->curl, CURLOPT_URL, xmms_util_decode_path (uri));
 	curl_easy_setopt (data->curl, CURLOPT_VERBOSE, 1);
@@ -134,6 +175,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 	curl_easy_setopt (data->curl, CURLOPT_WRITEDATA, data);
 	curl_easy_setopt (data->curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (data->curl, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
+	curl_easy_setopt (data->curl, CURLOPT_HTTPHEADER, headerlist);
 
 	curl_multi_add_handle (data->curlm, data->curl);
 
@@ -207,6 +249,9 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 		return ret;
 	}
+
+	if (!data->running)
+		return -1;
 		
 	if (data->again) {
 		if (curl_multi_perform (data->curlm, &data->running) ==
