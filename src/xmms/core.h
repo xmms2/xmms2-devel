@@ -27,6 +27,7 @@ typedef struct xmms_core_St {
 	GMutex *mutex;
 	
 	gint status;
+	gint playlist_op;
 } xmms_core_t;
 
 typedef enum {

@@ -20,6 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define XMMS_CORE_NEXT_SONG 1
+#define XMMS_CORE_PREV_SONG 2
+#define XMMS_CORE_HOLD_SONG 3
+
 /** @todo detta är lite buskis */
 static xmms_core_t core_object;
 xmms_core_t *core = &core_object;
@@ -36,12 +40,45 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, data);
 }
 
+static gboolean
+next_song ()
+{
+	if (core->curr_song)
+		xmms_playlist_entry_unref (core->curr_song);
+
+	core->curr_song = xmms_playlist_get_next_entry (core->playlist);
+
+	if (!core->curr_song) {
+		xmms_core_playback_stop ();
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static gboolean
+prev_song ()
+{
+	if (core->curr_song)
+		xmms_playlist_entry_unref (core->curr_song);
+
+	core->curr_song = xmms_playlist_get_prev_entry (core->playlist);
+
+	if (!core->curr_song) {
+		xmms_core_playback_stop ();
+		return FALSE;
+	}
+	return TRUE;
+}
 
 static void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	XMMS_DBG ("eos_reached");
-	xmms_core_play_next ();
+
+	if (core->playlist_op == XMMS_CORE_PREV_SONG)
+		core->playlist_op = XMMS_CORE_NEXT_SONG;
+
+	g_cond_signal (core->cond);
 }
 
 /**
@@ -65,43 +102,26 @@ xmms_core_output_set (xmms_output_t *output)
  * song in playlist.
  *
  */
+
 void
 xmms_core_play_next ()
 {
-	if (core->curr_song)
-		xmms_playlist_entry_unref (core->curr_song);
-
-	core->curr_song = xmms_playlist_get_next_entry (core->playlist);
-
-	if (!core->curr_song) {
-		xmms_core_playback_stop ();
-		return;
-	}
-
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
+		core->playlist_op = XMMS_CORE_NEXT_SONG;
 		g_cond_signal (core->cond);
 	} else {
-		XMMS_DBG ("xmms_core_playback_next with status != XMMS_CORE_PLAYBACK_RUNNING");
+		next_song ();
 	}
 }
 
 void
 xmms_core_play_prev ()
 {
-	if (core->curr_song)
-		xmms_playlist_entry_unref (core->curr_song);
-
-	core->curr_song = xmms_playlist_get_prev_entry (core->playlist);
-
-	if (!core->curr_song) {
-		xmms_core_playback_stop ();
-		return;
-	}
-
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
+		core->playlist_op = XMMS_CORE_PREV_SONG;
 		g_cond_signal (core->cond);
 	} else {
-		XMMS_DBG ("xmms_core_playback_next with status != XMMS_CORE_PLAYBACK_RUNNING");
+		prev_song ();
 	}
 }
 
@@ -165,6 +185,8 @@ void
 xmms_core_playlist_jump (guint id)
 {
 	xmms_playlist_set_current_position (core->playlist, id);
+
+	core->playlist_op = XMMS_CORE_HOLD_SONG;
 
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		g_cond_signal (core->cond);
@@ -305,6 +327,8 @@ static gpointer
 core_thread (gpointer data)
 {
 
+	core->playlist_op = XMMS_CORE_HOLD_SONG;
+
 	while (running) {
 
 		core->transport = NULL;
@@ -316,6 +340,18 @@ core_thread (gpointer data)
 			g_cond_wait (core->cond, core->mutex);
 			g_mutex_unlock (core->mutex);
 		}
+
+		if (core->playlist_op == XMMS_CORE_NEXT_SONG) {
+			if (!next_song ()) {
+				continue;
+			}
+		} else if (core->playlist_op == XMMS_CORE_PREV_SONG) {
+			if (!prev_song ()) {
+				continue;
+			}
+		}
+
+		core->playlist_op = XMMS_CORE_NEXT_SONG;
 		
 		core->curr_song = xmms_playlist_get_current_entry (core->playlist);
 
@@ -330,7 +366,6 @@ core_thread (gpointer data)
 		xmms_transport_open (core->transport, core->curr_song);
 
 		if (!core->transport) {
-			xmms_core_play_next ();
 			continue;
 		}
 		
