@@ -22,7 +22,9 @@
 #include "xmms/xmmsclient.h"
 #include "internal/xmmsclient_int.h"
 
-gboolean xmmsc_ipc_io_dispatch (GIOChannel *source, GIOCondition condition, gpointer data)
+static gboolean
+xmmsc_ipc_io_dispatch (GIOChannel *source, GIOCondition condition,
+                       gpointer data)
 {
 	gboolean ret;
 	xmmsc_ipc_t *ipc = (xmmsc_ipc_t *) data;
@@ -42,12 +44,14 @@ gboolean
 xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_t *ipc = c->ipc;
-	gint ipcFD;
-	GIOChannel *ipcChannel;
+	gint fd;
+	GIOChannel *channel;
 
-	ipcFD = xmmsc_ipc_fd_get(ipc);
-	ipcChannel = g_io_channel_unix_new(ipcFD);
-	g_io_add_watch(ipcChannel, G_IO_IN | G_IO_HUP | G_IO_ERR, xmmsc_ipc_io_dispatch, ipc);
+	fd = xmmsc_ipc_fd_get (ipc);
+	channel = g_io_channel_unix_new (fd);
+
+	g_io_add_watch (channel, G_IO_IN | G_IO_HUP | G_IO_ERR,
+	                xmmsc_ipc_io_dispatch, ipc);
 
 	return TRUE;
 }
