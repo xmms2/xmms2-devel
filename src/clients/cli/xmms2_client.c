@@ -223,12 +223,15 @@ add [url]";
 	} else if (g_strcasecmp (argv[2], "search") == 0) {
 		xmmsc_result_t *res;
 		char query[1024];
+		char **s;
 
 		if (argc < 4) {
 			print_error ("Supply a select statement");
 		}
+
+		s = g_strsplit (argv[3], "=", 0);
 		
-		g_snprintf (query, sizeof (query), "SELECT id, url, artist, album, title FROM Media WHERE %s", argv[3]);
+		g_snprintf (query, sizeof (query), "SELECT id FROM Media WHERE key='%s' and value='%s'", s[0], s[1]);
 		printf ("-[Result]-----------------------------------------------------------------------\n");
 		printf ("Id   | Artist            | Album                     | Title\n");
 
@@ -242,7 +245,7 @@ add [url]";
 		{
 		  	uint count = 0;
 			x_list_t *l, *n;
-			x_hash_t *e;
+			x_hash_t *e = NULL, *r;
 			char *mid;
 
 			if (!xmmsc_result_get_hashlist (res, &l)) {
@@ -251,8 +254,19 @@ add [url]";
 
 			for (n = l; n; n = x_list_next (n)) {
 			  	char *artist, *album, *title;
-				e = n->data;
-				mid = x_hash_lookup (e, "id");
+				xmmsc_result_t *res2;
+				r = n->data;
+				mid = x_hash_lookup (r, "id");
+
+				if (mid) {
+					res2 = xmmsc_medialib_get_info (conn, atoi (mid));
+					xmmsc_result_wait (res2);
+					if (!xmmsc_result_get_hashtable (res2, &e))
+						print_error ("broken result!");
+				} else {
+					print_error ("Empty result!");
+				}
+				
 				title = x_hash_lookup (e, "title");
 				if (title) {
 					artist = x_hash_lookup (e, "artist");
@@ -281,6 +295,7 @@ add [url]";
 					}
 				}
 				count++;
+				xmmsc_result_unref (res2);
 			}
 			printf ("-------------------------------------------------------------[Count:%6.d]-----\n", count);
 		}
