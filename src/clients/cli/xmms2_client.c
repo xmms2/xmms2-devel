@@ -273,9 +273,20 @@ main(int argc, char **argv)
 
 			while (list) {
 				xmmsc_playlist_entry_t *entry = list->data;
+				gchar *nurl;
+
+				nurl = strrchr (entry->url, '/');
+				if (!nurl)
+					nurl = entry->url;
+				else 
+					nurl++;
+
+				nurl = xmmsc_decode_path (nurl);
+
+				
 				printf ("%s%d\t%s\n",
 					(curr==entry->id) ? "->":"  ",
-					entry->id, entry->url);
+					entry->id, nurl);
 				list = g_list_next (list);
 			}
 			xmmsc_deinit (c);

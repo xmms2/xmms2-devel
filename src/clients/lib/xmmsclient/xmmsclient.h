@@ -16,6 +16,7 @@ void xmmsc_deinit(xmmsc_connection_t *);
 
 gchar *xmmsc_get_last_error (xmmsc_connection_t *c);
 gchar *xmmsc_encode_path (gchar *path);
+gchar *xmmsc_decode_path (const gchar *path);
 
 void xmmsc_quit(xmmsc_connection_t *);
 void xmmsc_play_next(xmmsc_connection_t *);
