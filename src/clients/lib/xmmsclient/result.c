@@ -292,6 +292,7 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 	if (!(reply = dbus_pending_call_get_reply (pending))) {
 		fprintf (stderr, "This shouldn't really happen, something in DBUS is VERY VERY WRONG!\n");
 		res->error = XMMS_ERROR_API_UNRECOVERABLE;
+		xmmsc_result_unref (res);
 		return;
 	}
 
@@ -307,6 +308,7 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 	}
 
 	dbus_pending_call_unref (pending);
+	xmmsc_result_unref (res);
 
 }
 
@@ -327,6 +329,8 @@ xmmsc_result_new (DBusPendingCall *pending)
 	res->dbus_call = pending;
 
 	/* user must give this back */
+	xmmsc_result_ref (res);
+	/* one for the notifier */
 	xmmsc_result_ref (res);
 
 	dbus_pending_call_set_notify (res->dbus_call, 

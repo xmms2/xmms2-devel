@@ -272,8 +272,8 @@ xmms_oss_new (xmms_output_t *output)
 	/* since we don't have this data when we are register the configvalue
 	   we need to set the callback here */
 	xmms_config_value_callback_set (data->mixer, 
-			xmms_oss_mixer_config_changed, 
-			(gpointer) output);
+					NULL,
+					(gpointer) output);
 
 	xmms_output_plugin_data_set (output, data);
 
