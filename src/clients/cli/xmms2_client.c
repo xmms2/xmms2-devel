@@ -127,10 +127,8 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 add_item_to_playlist (xmmsc_connection_t *conn, char *item)
 {
-	char url[4096];
 	xmmsc_result_t *res;
-	char rpath[PATH_MAX];
-	char *p;
+	char url[4096], rpath[PATH_MAX], *encoded, *p;
 
 	p = strchr (item, ':');
 	if (!(p && p[1] == '/' && p[2] == '/')) {
@@ -147,7 +145,10 @@ add_item_to_playlist (xmmsc_connection_t *conn, char *item)
 		g_snprintf (url, 4096, "%s", item);
 	}
 
-	res = xmmsc_playlist_add (conn, xmmsc_encode_path (url));
+	encoded = xmmsc_encode_path (url);
+	res = xmmsc_playlist_add (conn, encoded);
+	g_free (encoded);
+
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		printf ("something went wrong when adding it to the playlist\n");
