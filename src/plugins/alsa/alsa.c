@@ -61,7 +61,6 @@ static struct {
 };
 
 static int rates[] = {
-	42,
 	8000,
 	12025,
 	16000,
@@ -281,15 +280,12 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 
 	tmp = rate;
 	err = snd_pcm_hw_params_set_rate_near (pcm, params, &tmp, NULL);
-
-	if (err >= 0 && rate == tmp) {
-		XMMS_DBG ("adding format %i %i %i", fmt, channels, rate);
-	} else {
-		rate = tmp;
-		XMMS_DBG ("adding fallback format %i %i %i", fmt, channels, rate);
+	if (err < 0) {
+		XMMS_DBG ("cannot set samplerate to %i", rate);
+		return;
 	}
 
-	xmms_output_format_add (output, fmt, channels, rate);
+	xmms_output_format_add (output, fmt, channels, tmp);
 }
 
 /**
@@ -516,10 +512,6 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 
 	tmp = snd_pcm_format_physical_width (alsa_format);
 	data->frame_size = (gint)(tmp * format->channels) / 8;
-
-	/*data->channels = format->channels;
-	data->rate = format->samplerate;
-	data->format = format->format;*/
 
 	return TRUE;
 }
