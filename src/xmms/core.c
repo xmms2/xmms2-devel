@@ -222,7 +222,8 @@ xmms_core_init ()
 }
 
 static gpointer 
-core_thread(gpointer data){
+core_thread (gpointer data)
+{
 	xmms_transport_t *transport;
 	xmms_decoder_t *decoder;
 	xmms_playlist_plugin_t *plsplugin;
@@ -295,7 +296,7 @@ core_thread(gpointer data){
 		XMMS_DBG ("starting threads..");
 		xmms_transport_start (transport);
 		XMMS_DBG ("transport started");
-		xmms_decoder_start (decoder, transport, core->output);
+		xmms_decoder_start (decoder, transport, NULL, core->output);
 		XMMS_DBG ("decoder started");
 
 		g_mutex_lock (core->mutex);
