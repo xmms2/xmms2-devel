@@ -27,6 +27,7 @@
 #include <SDL/SDL_ttf.h>
 #include <glib.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include "xmms/xmmsclient.h"
 #include "xmms/xmmsclient-glib.h"
@@ -67,7 +68,7 @@ static float *
 dequeue (guint32 time)
 {
 	float *res;
-
+	int skipped = 0;
 	if (!queue) {
 		return NULL;
 	}
@@ -79,7 +80,11 @@ dequeue (guint32 time)
 		} else {
 			break;
 		}
+		skipped++;
 	}
+
+	if (skipped)
+		printf("Skipped %d\n", skipped);
 
 	res = queue->data;
 
@@ -165,17 +170,18 @@ render_vis (gpointer data)
                 SDL_BlitSurface(text, NULL, surf, NULL);
 	}
 
-	for (i=0; i<FFT_LEN/32/2; i++) {
+	for (i=0; i<FFT_LEN/2/32 - 1; i++) {
 		float sum = 0.0f;
 		int j;
 		for (j=0; j<32; j++){
 			sum += spec[i*16+j];
 		}
-		if (sum != 0) {
-			sum = log (sum/32);
+		sum /= 32.0;
+		if (sum != 0.0) {
+			sum = log10 (1.0 + 9.0 * sum);
 		}
 
-		draw_bar (surf, MIN (255, sum*64), i*32 + (surf->w-(FFT_LEN/2))/2);
+		draw_bar (surf, 256*sum, i*32 + (surf->w-(FFT_LEN/2))/2);
 	}
 
 	SDL_UpdateRect (surf, 0, 0, 0, 0);
@@ -186,36 +192,68 @@ render_vis (gpointer data)
 }
 
 static void
-set_mediainfo (void *userdata, void *arg)
+handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
-	guint id = GPOINTER_TO_UINT (arg);
+	x_hash_t *hash;
+	gchar *tmp;
+	gint mid;
+	guint id;
+	xmmsc_connection_t *c = userdata;
 
-	xmmsc_playlist_get_mediainfo (conn, id);
+	if (!xmmsc_result_get_uint (res, &id)) {
+		printf ("no id!\n");
+		return;
+	}
+
+	hash = xmmscs_playlist_get_mediainfo (c, id);
+
+	if (!hash) {
+		printf ("no mediainfo!\n");
+	} else {
+		tmp = x_hash_lookup (hash, "id");
+
+		mid = atoi (tmp);
+
+		if (id == mid) {
+			if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
+				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+				                    "[stream] %t", hash);
+			} else if (x_hash_lookup (hash, "channel")) {
+				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+				                    "%c", hash);
+			} else {
+				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+				                    "%a - %t", hash);
+			}
+		}
+		x_hash_destroy (hash);
+	}
 
 }
 
 
 static void
-handle_mediainfo (void *userdata, void *arg)
+handle_playtime (xmmsc_result_t *res, void *userdata)
 {
-	GHashTable *entry = (GHashTable *)arg;
-
-	snprintf (mediainfo, 63, "%s - %s",
-		  (gchar *)g_hash_table_lookup (entry, "artist"),
-		  (gchar *)g_hash_table_lookup (entry, "title"));
-
-}
-
-static void
-handle_playtime (void *userdata, void *arg)
-{
-	guint tme = GPOINTER_TO_UINT (arg);
+	guint tme;
+	static guint lasttime = -1;
 	SDL_Color white = { 0xFF, 0xFF, 0xFF, 0 };
-	static guint lasttime = 0xffffffff;
+	xmmsc_result_t *newres;
+
+	if (xmmsc_result_iserror (res)) {
+		return;
+	}
+	
+	if (!xmmsc_result_get_uint (res, &tme)) {
+		return;
+	}
 
 	g_timer_start (timer); /* restart timer */
 	basetime = tme;
+
+	newres = xmmsc_result_restart (res);
+	xmmsc_result_unref (res);
+	xmmsc_result_unref (newres);
 
 	if (tme/1000 != lasttime) {
 		gchar buf[64];
@@ -228,27 +266,47 @@ handle_playtime (void *userdata, void *arg)
 		lasttime = tme / 1000;
 		text = TTF_RenderUTF8_Blended (font, buf, white);
 	}
+
 }
 
 static void
-new_data (void *userdata, void *arg) 
+handle_vis (xmmsc_result_t *res, void *userdata)
 {
-	gdouble *s = arg;
-	guint32 time=s[0];
+	guint32 time;
 	int i;
 	float *spec;
+	xmmsc_result_t *newres;
+	x_list_t *list, *n;
 
-	if (free_buffers) {
-		spec = g_trash_stack_pop (&free_buffers);
-	} else {
-		spec = g_malloc(FFT_LEN/2*sizeof(float));
+	if (xmmsc_result_iserror (res)) {
+		return;
 	}
 
-	for (i=0; i<FFT_LEN/2; i++) {
-		spec[i] = s[i+1];
+	if (xmmsc_result_get_uintlist (res, &list)) {
+
+		if (free_buffers) {
+			spec = g_trash_stack_pop (&free_buffers);
+		} else {
+			spec = g_malloc(FFT_LEN/2*sizeof(float));
+		}
+		
+		n = list;
+		time = (guint) n->data;
+		n = x_list_next (n);
+		i = 0;
+		for (; n; n = x_list_next (n)) {
+			spec[i++] = ((gdouble)((guint32) n->data)) / ((gdouble)(G_MAXUINT32));
+		}
+
+		/* @todo measure ipc-delay for real! */
+		enqueue (time-300, spec); 
+		x_list_free (list);
+
 	}
 
-	enqueue (time-300, spec); /* @todo measure dbus-delay for real! */
+	newres = xmmsc_result_restart (res);
+	xmmsc_result_unref (res);
+	xmmsc_result_unref (newres);
 
 }
 
@@ -265,15 +323,14 @@ main()
 	SDL_Surface *screen;
 	gchar *path;
 
-	connection = xmmsc_init ();
+	connection = xmmsc_init ("XMMS2 SDL VIS");
 
 	if(!connection){
 		printf ("bad\n");
 		return 1;
 	}
 
-	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
-
+	path = getenv ("XMMS_PATH");
 	if (!xmmsc_connect (connection, path)){
 		printf ("couldn't connect to xmms2d: %s\n",
 			xmmsc_get_last_error(connection));
@@ -284,7 +341,7 @@ main()
 
 	timer = g_timer_new ();
 
-	xmmsc_setup_with_gmain (connection, NULL);
+	xmmsc_ipc_setup_with_gmain (connection);
 
         if (SDL_Init(SDL_INIT_VIDEO) > 0) {
                 fprintf(stderr, "Unable to init SDL: %s \n", SDL_GetError());
@@ -296,7 +353,7 @@ main()
 		return 1;
         }
 
-	font = TTF_OpenFont("font.ttf", 14);
+	font = TTF_OpenFont("font.ttf", 24);
 
 	if(!font){
 		fprintf(stderr, "couldn't open font.ttf\n");
@@ -307,16 +364,10 @@ main()
 
 	//set_mediainfo (connection, xmmsc_get_playing_id (connection));
 
-	xmmsc_playback_current_id (connection);
-
-	xmmsc_set_callback (connection, XMMS_SIGNAL_VISUALISATION_SPECTRUM,
-			    new_data, NULL);
-	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_PLAYTIME,
-			    handle_playtime, NULL);
-	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_CURRENTID,
-			    set_mediainfo, (void *) connection);
-	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYLIST_MEDIAINFO,
-			    handle_mediainfo, (void *) connection);
+	XMMS_CALLBACK_SET (connection, xmmsc_signal_playback_playtime, handle_playtime, NULL);
+	XMMS_CALLBACK_SET (connection, xmmsc_signal_visualisation_data, handle_vis, NULL);
+	XMMS_CALLBACK_SET (connection, xmmsc_broadcast_playback_current_id, handle_mediainfo, connection);
+	XMMS_CALLBACK_SET (connection, xmmsc_playback_current_id, handle_mediainfo, connection);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);
 
@@ -334,7 +385,7 @@ main()
 		g_free (g_trash_stack_pop (&free_buffers));
 	}
 
-	TTF_Quit ();
+/*	TTF_Quit ();*/
 	SDL_Quit ();
 
 	return 0;

@@ -96,6 +96,8 @@ struct xmms_decoder_St {
 	                         */
 	xmms_visualisation_t *vis;
 
+	guint decoded_frames; /**< Number of frames decoded so far */
+
 	guint samplerate;
 
 	xmms_ringbuf_t *buffer;
@@ -307,7 +309,7 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	}
 
 
-/*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
+	xmms_visualisation_samplerate_set (decoder->vis, rate);
 
 	for (l = decoder->effects; l; l = l->next) {
 		xmms_effect_samplerate_set (l->data, rate);
@@ -397,6 +399,8 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	g_return_if_fail (decoder);
 
+	decoder->decoded_frames += len / 4;
+
 	if (decoder->has_replaygain && decoder->use_replaygain) {
 		apply_replaygain ((gint16 *) buf, len / 2,
 		                  decoder->replaygain);
@@ -405,8 +409,8 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	for (l = decoder->effects; l; l = l->next) {
 		xmms_effect_run (l->data, buf, len);
 	}
-
-/*	xmms_visualisation_calc (decoder->vis, buf, len);*/
+	
+	xmms_visualisation_calc (decoder->vis, buf, len, decoder->decoded_frames);
 
 	g_mutex_lock (decoder->mutex);
 
@@ -553,7 +557,7 @@ xmms_decoder_new ()
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
-/*	decoder->vis = xmms_visualisation_new ();*/
+	decoder->vis = xmms_visualisation_new ();
 
 	val = xmms_config_lookup ("decoder.buffersize");
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));

@@ -29,10 +29,7 @@
 #include "xmms/visualisation.h"
 #include "xmms/object.h"
 #include "xmms/util.h"
-
-static GMutex *visuserslock;
-static guint32 visusers = 0;
-
+#include "xmms/ipc.h"
 
 /** @defgroup Visualisation Visualisation
   * @ingroup XMMSServer
@@ -41,103 +38,114 @@ static guint32 visusers = 0;
 
 struct xmms_visualisation_St {
 	xmms_object_t object;
-	guint32 pos;
 	guint samplerate;
 	gint fft_data;
 	gchar fft_buf[FFT_LEN*4];
-	gfloat spec[FFT_LEN/2+1];
+	gfloat spec[FFT_LEN/2];
+	GList *list;
+	gint needed;
 };
 
+gfloat window[FFT_LEN];
+
+static xmms_visualisation_t *vis;
 static void fft(gint16 *samples, gfloat *spec);
 
 void
 xmms_visualisation_init ()
 {
-	visuserslock = g_mutex_new ();
+	int i;
+	vis = xmms_object_new (xmms_visualisation_t, NULL);
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_VISUALISATION, XMMS_OBJECT (vis));
+	xmms_ipc_signal_register (XMMS_OBJECT (vis),
+				  XMMS_IPC_SIGNAL_VISUALISATION_DATA);
+
+	/* prealloc list */
+	for (i = 0; i < FFT_LEN/2 + 1; i++) {
+		vis->list = g_list_prepend (vis->list, NULL);
+	}
+
+	for (i = 0; i < FFT_LEN; i++) {
+		window[i] = 0.5 - 0.5 * cos(2.0*M_PI*i/FFT_LEN);
+	}
+
 }
 
 void xmms_visualisation_shutdown ()
 {
-	g_mutex_free (visuserslock);
 }
 
 xmms_visualisation_t *
 xmms_visualisation_new ()
 {
-	xmms_visualisation_t *res;
-
-	res = xmms_object_new (xmms_visualisation_t, NULL);
-
-	return res;
+	xmms_object_ref (vis);
+	return vis;
 }
 
-void
-xmms_visualisation_users_inc ()
+static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 {
-	g_mutex_lock (visuserslock);
-	visusers++;
-	g_mutex_unlock (visuserslock);
-}
+	GList *node = vis->list;
+	int i;
 
-void
-xmms_visualisation_users_dec ()
-{
-	g_mutex_lock (visuserslock);
-	visusers--;
-	g_mutex_unlock (visuserslock);
-}
+	node->data = GUINT_TO_POINTER ((guint)((((gfloat)pos) * 1000.0 / vis->samplerate)));
+	node = g_list_next (node);
 
-static gboolean
-xmms_visualisation_has_users ()
-{
-	gboolean res;
+	for (i = 0; i < FFT_LEN / 2; i++) {
+		gfloat tmp = vis->spec[i];
+		if (tmp >= 1.0)
+			node->data = GUINT_TO_POINTER (G_MAXUINT32);
+		else if (tmp < 0.0)
+			node->data = GUINT_TO_POINTER (0);
+		else
+			node->data = GUINT_TO_POINTER ((guint)(tmp * G_MAXUINT32));
+		node = g_list_next (node);
+	}
 
-	g_mutex_lock (visuserslock);
-	res = !!visusers;
-	g_mutex_unlock (visuserslock);
-
-	return res;
-}
-
-static void output_spectrum (xmms_visualisation_t *vis) {
-
-	g_return_if_fail (vis->samplerate);
-
-	vis->spec[0] = 1000.0f * vis->pos * FFT_LEN / vis->samplerate;
+	xmms_object_emit_f (XMMS_OBJECT (vis),
+			    XMMS_IPC_SIGNAL_VISUALISATION_DATA,
+			    XMMS_OBJECT_CMD_ARG_UINTLIST,
+			    vis->list);
 	
-	vis->pos++;
 }
 
 void
-xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len)
+xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len, guint32 pos)
 {
 	gint t;
 
 	g_return_if_fail (vis);
 
-	if (!xmms_visualisation_has_users ()) {
-		return;
+	if (xmms_ipc_has_pending (XMMS_IPC_SIGNAL_VISUALISATION_DATA)) {
+		vis->needed = 20;
+	} else if (vis->needed) {
+		vis->needed--;
 	}
 
+	if (!vis->needed)
+		return;
+
 	if (vis->fft_data) {
+		pos -= vis->fft_data / 4;
+
 		t = MIN (len, (FFT_LEN*4)-vis->fft_data);
 		memcpy (vis->fft_buf + vis->fft_data, buf, t);
 		vis->fft_data += t;
 		len -= t;
 		buf += t;
 		if (vis->fft_data == FFT_LEN*4) {
-			fft ((gint16 *)vis->fft_buf, vis->spec+1);
-			output_spectrum (vis);
+			fft ((gint16 *)vis->fft_buf, vis->spec);
+			output_spectrum (vis, pos);
 			vis->fft_data = 0;
 		}
 	}
 
 	while (len > FFT_LEN*4) {
-		fft ((gint16 *)buf, vis->spec+1);
-		output_spectrum (vis);
+		fft ((gint16 *)buf, vis->spec);
+		output_spectrum (vis, pos);
 
 		buf += FFT_LEN*4;
 		len -= FFT_LEN*4;
+		pos += FFT_LEN;
 	}
 
 	if (len) {
@@ -163,7 +171,8 @@ fft (gint16 *samples, gfloat *spec)
 	for (i = 0; i < FFT_LEN; i++){
 		buf[i][0]  = (float) samples[j++];
 		buf[i][0] += (float) samples[j++];
-		buf[i][0] /= (float) (1 << 15);
+		buf[i][0] /= (float) (1 << 17);
+		buf[i][0] *= window[i];
 		buf[i][1] = 0.0f;
 	}
 

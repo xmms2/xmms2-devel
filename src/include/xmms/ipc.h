@@ -38,6 +38,7 @@ void xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t sign
 void xmms_ipc_broadcast_unregister (xmms_object_t *object, xmms_ipc_signals_t signalid);
 void xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid);
 void xmms_ipc_signal_unregister (xmms_object_t *object, xmms_ipc_signals_t signalid);
+gboolean xmms_ipc_has_pending (guint signalid);
 
 #endif
 
