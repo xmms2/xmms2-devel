@@ -115,7 +115,7 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name, GHashTable *config)
 		}
 		list = g_list_next (list);
 	}
-	if (plugin) {
+	if (list) {
 		void (*initfunc) (xmms_effect_t *);
 		xmms_effect_t *effect = g_new0 (xmms_effect_t, 1);
 
@@ -132,7 +132,6 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name, GHashTable *config)
 			effect->config = xmms_config_add_section (config, g_strdup (name));
 		}
 
-		XMMS_DBG (" conf: %p  conf: %p", effect->config, xmms_config_value_lookup (config, name));
 
 		initfunc (effect);
 
@@ -150,6 +149,8 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name, GHashTable *config)
 
 
 
+	} else {
+		XMMS_DBG ("Skipping unknown plugin: %s", name);
 	}
 	return stack;
 }
