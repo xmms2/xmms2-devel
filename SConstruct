@@ -8,7 +8,7 @@ import os;
 ##
 ## SCons-tips 42: start paths with '#' to have them change
 ##                correctly when we descend into subdirs
-base_env = xmmsenv.XmmsEnvironment(CC="gcc", LINK="gcc", CPPPATH = ['#src','#.'],
+base_env = xmmsenv.XmmsEnvironment(CC="gcc", LINK="gcc", CPPPATH = ['#src'],
 	CPPFLAGS = ['-DPKGLIBDIR=\\"/usr/local/lib/xmms\\"','-DSYSCONFDIR=\\"/etc/\\"','-g'])
 
 
@@ -23,7 +23,6 @@ base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus
 ##
 ## Check for optional libs
 ##
-
 base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")

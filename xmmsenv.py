@@ -14,6 +14,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.SharedLibrary(target, source)
 		self.Install("/usr/local/lib/xmms/",self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
 
+	def XmmsProgram(self,target,source):
+		self.Program(target,source)
+		self.Install("/usr/local/bin/",target);
+
 	def AddFlagsToGroup(self, group, flags):
 		self.flag_groups[group] = flags
 

@@ -10,6 +10,5 @@ env.AddFlagsFromGroup("glib")
 env.AddFlagsFromGroup("sdl")
 env.AddFlagsFromGroup("sdl-ttf")
 
-env.Program(target = "sdl-vis" , source = ['sdl-vis.c'] )
+env.XmmsProgram("sdl-vis", ['sdl-vis.c'])
 
-env.Install("/usr/local/bin", "sdl-vis")
