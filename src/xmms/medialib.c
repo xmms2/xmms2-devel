@@ -117,8 +117,8 @@ xmms_medialib_init ()
 static void
 statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-        gchar *mid;
-        gboolean ret;
+	const gchar *mid;
+	gboolean ret;
 	xmms_playlist_entry_t *entry;
 	xmms_config_value_t *cv;
 	guint32 status = ((xmms_object_method_arg_t *) data)->retval.uint32;
@@ -138,9 +138,8 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 		return;
 
 	if (status == XMMS_OUTPUT_STATUS_STOP) {
-		char *tmp;
+		const gchar *tmp, *sek;
 		gint value = 0.0;
-		gchar *sek;
 
 		tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
 		if (tmp) {

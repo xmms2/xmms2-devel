@@ -552,7 +552,7 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 	gchar *prop = data;
 	const xmms_playlist_entry_t *entry1 = a;
 	const xmms_playlist_entry_t *entry2 = b;
-	gchar *tmpa=NULL, *tmpb=NULL;
+	const gchar *tmpa=NULL, *tmpb=NULL;
 
 	tmpa = xmms_playlist_entry_property_get (entry1, prop);
 	tmpb = xmms_playlist_entry_property_get (entry2, prop);
