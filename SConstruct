@@ -3,7 +3,7 @@ import sys;
 import xmmsenv;
 import SCons
 from marshal import dump, load;
-from xmmsconf import checkFlags;
+from xmmsconf import checkFlags, showOpts;
 
 # Ok, hope that scons versionnumbers only will contain one dot...
 if float(SCons.__version__) < 0.94:
@@ -35,6 +35,7 @@ opts.Add('INSTALLDIR', 'runtime install dir', '')
 opts.Add('MANDIR', 'manual directory', '/usr/local/man')
 opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
 opts.Add('NOCACHE', 'do not use cache', 0)
+opts.Add('EXCLUDE', 'exclude this modules', '')
 
 ## setup base environment...
 ## ...ok, this should be a bit configurable... later.
@@ -55,6 +56,8 @@ base_env['CCFLAGS'] = base_env['CCFLAGS'] + " " + endian
 if base_env['NOCACHE']:
 	print "We don't want any cache"
 	checkFlags(base_env)
+	showOpts (base_env)
+	sys.exit ()
 else:
 	try:
 		statefile = open('scons.cache','rb+')
@@ -70,6 +73,8 @@ else:
 	except IOError:
 		print "No cachefile"
 		checkFlags(base_env)
+		showOpts (base_env)
+		sys.exit ()
 
 Export('base_env')
 

@@ -5,6 +5,18 @@ from marshal import dump, load;
 import os;
 import sys;
 
+
+def showOpts(base_env):
+	print "\n* Configuration options\n"
+	print "C-Compiler: ", base_env["CC"]
+	print "C++-Compiler: ", base_env["CXX"]
+	print "C-Flags: ", base_env["CCFLAGS"]
+	print "Installation prefix: ", base_env["PREFIX"]
+	print "\nModules: "
+	for x in base_env.flag_groups.keys():
+		print "Module " + x + ": " + base_env.flag_groups[x]
+	print "\n* Now run scons again to compile...\n"
+
 ##
 ## This function will check for all libs that XMMS2
 ## might need. Or its plugins.

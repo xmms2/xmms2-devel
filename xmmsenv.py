@@ -12,6 +12,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		SCons.Environment.Environment.__init__(self, options=options)
 		self.flag_groups = {}
 		apply(self.Replace, (), kw)
+		self.plugins = []
 		self.install_prefix=self['PREFIX']
 		self.pluginpath=self.install_prefix + "/lib/xmms/"
 		self.binpath=self.install_prefix + "/bin/"
@@ -60,10 +61,16 @@ class XmmsEnvironment(SCons.Environment.Environment):
 
 	
 	def AddFlagsToGroup(self, group, flags):
-		if self.flag_groups.has_key(group) :
-			self.flag_groups[group] += flags
-		else:
-			self.flag_groups[group] = flags
+		excluded = self['EXCLUDE'].split()
+		try :
+			i = excluded.index(group)
+			print "Skipping " + group
+		except :
+			if self.flag_groups.has_key(group) :
+				self.flag_groups[group] += flags
+			else:
+				self.flag_groups[group] = flags
+
 
 	def HasGroup(self,group):
 		return self.flag_groups.has_key(group)
@@ -86,6 +93,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self.AddFlagsToGroup(group,flags)
 
 	def CheckAndAddFlagsToGroup(self, group, cmd, fail=0):
+		print "Running " + cmd
 		res = os.popen(cmd).read().strip()
 		if res == "":
 			if fail != 0:
