@@ -182,6 +182,9 @@ core_thread(gpointer data){
 			g_cond_wait (core->cond, core->mutex);
 			g_mutex_unlock (core->mutex);
 		}
+
+		if (!core->curr_song)
+			continue;
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
