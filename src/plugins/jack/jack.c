@@ -42,14 +42,14 @@ typedef struct xmms_jack_data_St {
 	gboolean            have_mixer;
 	xmms_config_value_t *mixer_conf;
 
-	char*               sound_buffer;                  /* temporary buffer used to process data before sending to jack */
+	unsigned char*      sound_buffer;                  /* temporary buffer used to process data before sending to jack */
 	struct timeval      previousTime;                  /* time of last JACK_Callback() write to jack, allows for MS accurate bytes played  */
 
 	jack_port_t*        output_port[MAX_OUTPUT_PORTS]; /* output ports */
 	jack_client_t*      client;                        /* pointer to jack client */
 	enum status_enum    state;                         /* one of PLAYING, PAUSED, STOPPED, CLOSED, RESET etc*/
 
-	int                 volume[MAX_OUTPUT_PORTS];
+	float               volume[MAX_OUTPUT_PORTS];
 	long                sample_rate;                   /* samples(frames) per second */
 	unsigned long       num_input_channels;            /* number of input channels(1 is mono, 2 stereo etc..) */
 	unsigned long       num_output_channels;           /* number of output channels(1 is mono, 2 stereo etc..) */
@@ -83,28 +83,38 @@ _JACK_Open(xmms_output_t *output, unsigned int bytes_per_channel, unsigned long 
 static gboolean xmms_jack_mixer_set(xmms_output_t *output, gint l, gint r);
 
 /**
- * Alsaplayer function that applies volume changes to a buffer
- * volume is a pointer to an array of integers with the volume\
- * for each channel
- * @param 16bit buffer to apply volume adjustment to
- * @param number of frames to process
- * @param number of channels interleaved in the 16bit buffer
- * @param array of volume values to use, one for each channel
+ * floating point volume routine
+ * volume should be a value between 0.0 and 1.0
+ * @param sample buffer to apply volume adjustment to
+ * @param number of samples to process
+ * @param value to apply to these samples
  */
 static void
-_JACK_volume_effect(void *buffer, int frames, int channels, int* volume)
+_JACK_float_volume_effect(jack_default_audio_sample_t **buffer, unsigned long nsamples, 
+                          unsigned int output_channels, float* volume)
 {
-	short *data = (short *)buffer;
-	int i, v, j;
+    unsigned int x;
 
-	for(i = 0; i < frames; i++)
-	{
-		for(j = 0; j < channels; j++)
-		{
-			v = (int) ((*(data) * volume[j]) / 100);
-			*(data++) = (v>32767) ? 32767 : ((v<-32768) ? -32768 : v);
-		}
-	}
+    jack_default_audio_sample_t *buf;
+    unsigned long samples;
+    float vol;
+
+    /* process each output channel */
+    for(x = 0; x < output_channels; x++)
+    {
+        buf = buffer[x];
+        samples = nsamples;
+        vol = volume[x];
+
+        if(vol < 0)   vol = 0;
+        if(vol > 1.0) vol = 1.0;
+
+        while (samples--)
+        {
+            *buf = (*buf) * vol;
+            buf++;
+        }    
+    }
 }
 
 
@@ -166,6 +176,7 @@ _JACK_sample_move_d16_s16 (jack_default_audio_sample_t *dst[MAX_OUTPUT_PORTS], s
 		nDstOffset++; /* go to the next frame in the output buffer */
 	}
 }
+
 
 /**
  * fill dst buffer with nsamples worth of silence
@@ -262,15 +273,8 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 		this->clientBytesInJack = read; /* record the input bytes we wrote to jack */
 
 		/* Now that we have finished filling the buffer either until it is full or until */
-		/* we have run out of application sound data to process, apply volume and output */
+		/* we have run out of application sound data to process, output */
 		/* the audio to the jack server */
-
-		/* apply volume to the 16bit output sound buffer */
-		XMMS_CALLBACK_DBG("applying volume of %d, %d to %ld frames and %ld channels",
-				  this->volume[0], this->volume[1],
-				  (nframes - jackFramesAvailable), this->num_output_channels);
-		_JACK_volume_effect(this->sound_buffer, (nframes - jackFramesAvailable),
-				    this->num_output_channels, this->volume);
 
 		/* convert from stereo 16 bit to single channel 32 bit float */
 		/* for each output channel */
@@ -280,6 +284,13 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 		_JACK_sample_move_d16_s16(out_buffer, (short*)this->sound_buffer,
 					  (nframes - jackFramesAvailable), this->num_output_channels,
 					  this->num_input_channels);
+
+		/* apply volume to the floating point output sound buffer */
+		XMMS_CALLBACK_DBG("applying volume of %d, %d to %ld frames and %ld channels",
+				  this->volume[0], this->volume[1],
+				  (nframes - jackFramesAvailable), this->num_output_channels);
+		_JACK_float_volume_effect(out_buffer, (nframes - jackFramesAvailable),
+				    this->num_output_channels, this->volume);
 
 		/* see if we still have jackBytesLeft here, if we do that means that we
 		   ran out of wave data to play and had a buffer underrun, fill in
@@ -678,31 +689,8 @@ xmms_jack_mixer_set(xmms_output_t *output, gint l, gint r)
 	g_return_val_if_fail (data, 0);
 
 	XMMS_DBG("l(%d), r(%d)", l, r);
-	data->volume[0] = l;
-	data->volume[1] = r;
-
-	return TRUE;
-}
-
-/**
- * Get the current volume setting
- * @param output xmms object
- * @param pointer to left volume level
- * @param pointer to right volume level
- **/
-static gboolean
-xmms_jack_mixer_get(xmms_output_t *output, gint *l, gint *r)
-{
-	xmms_jack_data_t *data;
-
-	g_return_val_if_fail (output, 0);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, 0);
-
-	*l = data->volume[0];
-	*r = data->volume[1];
-
-	XMMS_DBG("l(%d), r(%d)", *l, *r);
+	data->volume[0] = (float)l / 100.0;
+	data->volume[1] = (float)r / 100.0;
 
 	return TRUE;
 }
@@ -856,8 +844,8 @@ xmms_jack_new(xmms_output_t *output)
 	}
 
 	data->rate = outputFrequency;
-	data->volume[0] = 80; /* set volume to 80% */
-	data->volume[1] = 80;
+	data->volume[0] = .80; /* set volume to 80% */
+	data->volume[1] = .80;
 
 	XMMS_DBG("jack initialized!!");
 
