@@ -227,7 +227,7 @@ xmmscs_playback_playtime (xmmsc_connection_t *c)
 		return 0;
 
 	xmmsc_result_wait (res);
-	if (!xmmsc_result_get_int (res, &ret)) {
+	if (!xmmsc_result_get_uint (res, &ret)) {
 		xmmsc_result_unref (res);
 		return 0;
 	}
