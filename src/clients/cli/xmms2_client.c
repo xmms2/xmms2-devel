@@ -81,6 +81,10 @@ cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 
 		if (!strchr (argv[i], ':')) {
 			/* OK, so this is NOT an valid URL */
+
+			if (!g_file_test (argv[i], G_FILE_TEST_IS_REGULAR))
+				continue;
+			
 			if (argv[i][0] == '/') {
 				g_snprintf (url, 4096, "file://%s", argv[i]);
 			} else {
@@ -101,8 +105,8 @@ static void
 cmd_clear (xmmsc_connection_t *conn, int argc, char **argv)
 {
 
-	xmmsc_playlist_clear (conn);
 	xmmsc_playback_stop (conn);
+	xmmsc_playlist_clear (conn);
 
 }
 
