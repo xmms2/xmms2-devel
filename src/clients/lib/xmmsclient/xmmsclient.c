@@ -453,7 +453,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 	if (!conn) {
 		int ret;
 		
-		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Couldn't connect to xmms2d, starning it...\n");
+		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Couldn't connect to xmms2d, startning it...\n");
 		ret = system ("xmms2d -d");
 
 		if (ret != 0) {
