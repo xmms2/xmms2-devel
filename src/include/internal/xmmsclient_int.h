@@ -28,11 +28,16 @@
 #include <ctype.h>
 #include <stdint.h>
 
+#ifdef XMMS_OS_DARWIN
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include "xmms/ipc_msg.h"
 
 #include "internal/xhash-int.h"
 #include "internal/xlist-int.h"
 #include "internal/client_ipc.h"
+
 
 /**
  * @typedef xmmsc_connection_t
@@ -62,5 +67,6 @@ x_hash_t * xmmsc_deserialize_mediainfo (xmms_ipc_msg_t *msg);
 xmmsc_result_t * xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid);
 xmmsc_result_t * xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
 
+gboolean xmmsc_ipc_setup_with_cf (xmmsc_connection_t *c, CFRunLoopRef loop);
 #endif
 

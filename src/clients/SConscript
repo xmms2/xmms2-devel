@@ -9,6 +9,11 @@ SConscript('lib/xmmsclient/SConscript')
 if base_env.HasGroup("ruby") :
 	SConscript('lib/ruby/SConscript')
 
+if base_env.sys == 'Darwin':
+	SConscript('lib/xmmsclient-carbon/SConscript')
+	SConscript('lib/xmmsclient-cocoa/SConscript')
+
+
 SConscript('cli/SConscript')
 
 # SDL NOT YET IN NEW API
