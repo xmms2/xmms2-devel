@@ -268,6 +268,7 @@ xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
 	xmms_file_data_t *data;
 	gint w = 0;
+	gint ret;
 
 	g_return_val_if_fail (transport, -1);
 	data = xmms_transport_plugin_data_get (transport);
@@ -285,7 +286,11 @@ xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence)
 			break;
 	}
 
-	return lseek (data->fd, offset, w);
+	ret = lseek (data->fd, offset, w);
+	if (ret == (offset-1))
+		return 0;
+	else
+		return ret;
 }
 
 static gint

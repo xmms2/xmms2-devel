@@ -251,7 +251,6 @@ xmms_playlist_entry_ref (xmms_playlist_entry_t *entry)
 {
 	g_return_if_fail (entry);
 	entry->ref ++;
-	XMMS_DBG ("Entry refcount is %d", entry->ref);
 }
 
 void
@@ -262,12 +261,8 @@ xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
 
 	entry->ref --;
 
-	XMMS_DBG ("for %s refcount is %d", entry->url, entry->ref);
-
 	if (entry->ref < 1) {
 		/* free entry */
-
-		XMMS_DBG("Freeing %s", entry->url);
 		xmms_playlist_entry_free (entry);
 	}
 

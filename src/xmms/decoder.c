@@ -337,7 +337,7 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 
 	xmms_output_flush (decoder->output);
 
-	if (meth (decoder, samples)) {
+	if (!meth (decoder, samples)) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not seek there");
 		return FALSE;
 	}
