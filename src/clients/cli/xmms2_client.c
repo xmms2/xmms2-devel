@@ -575,6 +575,8 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	GError *err = NULL;
 	int r, w;
 	gchar *conv;
+	xmmsc_result_t *newres;
+
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
 	}
@@ -591,8 +593,9 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 
 	fflush (stdout);
 
-	xmmsc_result_restart (res);
+	newres = xmmsc_result_restart (res);
 	xmmsc_result_unref (res);
+	xmmsc_result_unref (newres);
 }
 
 static void
