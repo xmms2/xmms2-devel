@@ -340,7 +340,9 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 {
 	gint i=0;
 	GList **l = (GList **) pArg;
-	GHashTable *table = g_hash_table_new (g_str_hash, g_str_equal);
+	GHashTable *table;
+
+	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
 	for (i = 0; i < argc; i++) {
 		if (argv[i] && cName[i]) {
