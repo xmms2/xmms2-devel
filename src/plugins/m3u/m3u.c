@@ -140,6 +140,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 			gchar *len;
 			gchar *title;
 			gchar *p;
+			int read, write;
 
 			p = strchr (lines[i], ',');
 			if (p) {
@@ -151,7 +152,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 			}
 
 			len = lines[i]+8;
-			title = p;
+			title = g_convert (p, strlen (p), "UTF-8", "ISO-8859-1", &read, &write, NULL);
 
 			i++; /* skip to track */
 
