@@ -118,6 +118,9 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 	res = xmmsc_ipc_result_lookup (ipc, msg->cid);
 
+	if (!res)
+		return;
+
 	if (msg->cmd == XMMS_IPC_CMD_ERROR) {
 		gchar *errstr;
 		gint len;
