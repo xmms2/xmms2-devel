@@ -190,6 +190,20 @@ init_volume_config_proxy (const gchar *output)
 	xmms_config_value_data_set (cfg, (gchar *) vol);
 }
 
+static void usage (void)
+{
+	static char *usageText = "XMMS2 Daemon\n\
+Options:\n\
+	-v		Increase verbosity\n\
+	-V|--version	Print version\n\
+	-n		Disable logging\n\
+	-o <x>		Use 'x' as output plugin\n\
+	-d		Daemonise\n\
+	-p <foo>	Search for plugins in directory 'foo'\n\
+	-h|--help	Print this help\n";
+       printf(usageText);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -216,9 +230,13 @@ main (int argc, char **argv)
 	sigaddset (&signals, SIGPIPE);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
-	
+	static struct option long_opts[] = {
+		{"version", 0, NULL, 'V'},
+		{"help", 0, NULL, 'h'}
+	};
+
 	while (42) {
-		opt = getopt (argc, argv, "dvVno:p:");
+		opt = getopt_long (argc, argv, "dvVno:p:h", long_opts, NULL);
 
 		if (opt == -1)
 			break;
@@ -247,7 +265,10 @@ main (int argc, char **argv)
 			case 'p':
 				ppath = g_strdup (optarg);
 				break;
-				
+			case 'h':
+				usage();
+				exit(0);
+				break;
 		}
 	}
 
