@@ -45,6 +45,7 @@ gboolean xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf);
 xmms_ipc_msg_t *xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf);
 gboolean xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, xmms_ipc_msg_t *msg, guint32 cid);
 gboolean xmms_ipc_msg_write_direct (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, guint32 cid);
+gboolean xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected);
 
 gboolean xmms_ipc_msg_put_header (xmms_ipc_msg_t *msg, gconstpointer header);
 gpointer xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len);

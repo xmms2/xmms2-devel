@@ -331,7 +331,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 static gpointer
 xmms_ipc_client_thread (gpointer data)
 {
-	fd_set fdset;
+	fd_set rfdset;
+	fd_set wfdset;
 	gint fd;
 	gint wakeup[2];
 	xmms_ipc_client_t *client = data;
@@ -344,8 +345,6 @@ xmms_ipc_client_thread (gpointer data)
 		return NULL;
 	}
 
-	XMMS_DBG ("Wakeup is %d %d", wakeup[0], wakeup[1]);
-	
 	client->wakeup_in = wakeup[1];
 	fd = xmms_ipc_transport_fd_get (client->transport);
 
@@ -354,14 +353,19 @@ xmms_ipc_client_thread (gpointer data)
 		gboolean disconnect = FALSE;
 		xmms_ipc_msg_t *msg;
 
-		FD_ZERO (&fdset);
-		FD_SET (fd, &fdset);
-		FD_SET (wakeup[0], &fdset);
+		FD_ZERO (&rfdset);
+		FD_ZERO (&wfdset);
+
+		FD_SET (fd, &rfdset);
+		FD_SET (wakeup[0], &rfdset);
 	
+		if (!g_queue_is_empty (client->out_msg))
+			FD_SET (fd, &wfdset);
+
 		tmout.tv_usec = 0;
 		tmout.tv_sec = 5;
 
-		ret = select (MAX (fd, wakeup[0]) + 1, &fdset, NULL, NULL, &tmout);
+		ret = select (MAX (fd, wakeup[0]) + 1, &rfdset, &wfdset, NULL, &tmout);
 		if (ret == -1) {
 			/* Woot client destroyed? */
 			XMMS_DBG ("Error from select, maybe the client died?");
@@ -370,67 +374,69 @@ xmms_ipc_client_thread (gpointer data)
 			continue;
 		}
 
-		if (FD_ISSET (wakeup[0], &fdset)) {
-			/* 
+		if (FD_ISSET (wakeup[0], &rfdset)) {
+			/**
 			 * This means that client_msg_write sent a notification
-			 * to the thread to wakeup !
+			 * to the thread to wakeup! This means that we will set
+			 * fd in wfdset on next iteration...
 			 */
 
 			gchar buf[2];
 			gint ret;
 
 			ret = read (wakeup[0], buf, 2);
+		}
 
+		if (FD_ISSET (fd, &wfdset)) {
 			while (!g_queue_is_empty (client->out_msg)) {
-				xmms_ipc_msg_t *msg = g_queue_pop_head (client->out_msg);
+				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
 
-				if (!xmms_ipc_msg_write_direct (msg, client->transport, xmms_ipc_msg_get_cid (msg))) {
+				if (xmms_ipc_msg_write_transport (msg, client->transport, &disconnect)) {
+					g_queue_pop_head (client->out_msg);
 					xmms_ipc_msg_destroy (msg);
-					break;
-				}
-
-				xmms_ipc_msg_destroy (msg);
-			}
-		}
-
-		if (!FD_ISSET (fd, &fdset))
-			continue;
-
-		while (TRUE) {
-			gchar buffer[4096];
-			ret = xmms_ipc_transport_read (client->transport, buffer, 4096);
-			if (ret == -1) {
-				if (errno == EAGAIN) 
-					break;
-				if (errno == EINTR)
-					break;
-				XMMS_DBG ("Error %s", strerror (errno));
-				disconnect = TRUE;
-				break;
-			} else if (ret == 0) {
-				XMMS_DBG ("read returned 0");
-				disconnect = TRUE;
-				break;
-			}
-			xmms_ringbuf_write (client->read_buffer, buffer, ret);
-
-			while (TRUE) {
-
-				if (!xmms_ipc_msg_can_read (client->read_buffer)) {
-					break;
 				} else {
-					msg = xmms_ipc_msg_read (client->read_buffer);
-
-					if (!msg)
-						continue;
-
-					process_msg (client, client->ipc, msg);
-					xmms_ipc_msg_destroy (msg);
+					XMMS_DBG ("Partial write...");
+					break;
 				}
 			}
-
 		}
-		
+
+		if (FD_ISSET (fd, &rfdset)) {
+			while (TRUE) {
+				gchar buffer[4096];
+				ret = xmms_ipc_transport_read (client->transport, buffer, 4096);
+				if (ret == -1) {
+					if (errno == EAGAIN) 
+						break;
+					if (errno == EINTR)
+						break;
+					XMMS_DBG ("Error %s", strerror (errno));
+					disconnect = TRUE;
+					break;
+				} else if (ret == 0) {
+					XMMS_DBG ("read returned 0");
+					disconnect = TRUE;
+					break;
+				}
+				xmms_ringbuf_write (client->read_buffer, buffer, ret);
+				
+				while (TRUE) {
+					
+					if (!xmms_ipc_msg_can_read (client->read_buffer)) {
+						break;
+					} else {
+						msg = xmms_ipc_msg_read (client->read_buffer);
+						
+						if (!msg)
+							continue;
+						
+						process_msg (client, client->ipc, msg);
+						xmms_ipc_msg_destroy (msg);
+					}
+				}
+				
+			}
+		}
 
 		if (disconnect) {
 			XMMS_DBG ("disconnect was true!");

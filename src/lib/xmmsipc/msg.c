@@ -42,6 +42,7 @@ struct xmms_ipc_msg_St {
 	xmms_ipc_msg_data_t *data;
 	guint32 get_pos;
 	guint32 size;
+	guint32 written;
 };
 
 xmms_ipc_msg_t *
@@ -196,6 +197,39 @@ xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, xmms_ipc_msg_t *msg, guint32 cid)
 			    xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN);
 
 	return TRUE;
+}
+
+/**
+ * Try to write message to transport.
+ *
+ * @returns TRUE if succeeded, FALSE otherwise. disconnected is set if transport was disconnected
+ */
+gboolean
+xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected)
+{
+	guint ret, len;
+
+	g_return_val_if_fail (msg, FALSE);
+	g_return_val_if_fail (transport, FALSE);
+
+	len = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN;
+	
+	g_return_val_if_fail (len > msg->written, TRUE);
+	
+	ret = xmms_ipc_transport_write (transport, 
+					msg->data->rawdata + msg->written,
+					len - msg->written);
+	if (ret == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return FALSE;
+	} else if (ret == 0) {
+		if (disconnected)
+			*disconnected = TRUE;
+	} else {
+		msg->written += ret;
+	}
+
+	return len == msg->written;
 }
 
 gboolean
