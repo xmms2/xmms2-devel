@@ -273,20 +273,29 @@ main(int argc, char **argv)
 
 			while (list) {
 				xmmsc_playlist_entry_t *entry = list->data;
-				gchar *nurl;
+				gchar *artist;
+				gchar *title;
+				gchar *str;
 
-				nurl = strrchr (entry->url, '/');
-				if (!nurl)
-					nurl = entry->url;
-				else 
-					nurl++;
+				artist = (gchar *)g_hash_table_lookup (entry->properties, "artist");
+				title = (gchar *)g_hash_table_lookup (entry->properties, "title");
+				if (artist && title) {
+					str = g_strdup_printf ("%s - %s", artist, title);
+				} else {
+				
+					str = strrchr (entry->url, '/');
+					if (!str)
+						str = entry->url;
+					else 
+						str++;
 
-				nurl = xmmsc_decode_path (nurl);
+					str = xmmsc_decode_path (str);
 
+				}
 				
 				printf ("%s%d\t%s\n",
 					(curr==entry->id) ? "->":"  ",
-					entry->id, nurl);
+					entry->id, str);
 				list = g_list_next (list);
 			}
 			xmmsc_deinit (c);

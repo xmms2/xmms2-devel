@@ -2,6 +2,16 @@
 import xmmsenv;
 import os;
 
+Help ("""XMMS2 SCons help
+Build XMMS2 by running:
+	
+	scons
+
+Clean up the builddir by running:
+
+	scons -c
+""")
+
 ##
 ## Get options
 ##
@@ -41,3 +51,4 @@ Export('base_env')
 SConscript('src/xmms/SConscript')
 SConscript('src/clients/SConscript')
 SConscript('src/plugins/SConscript')
+
