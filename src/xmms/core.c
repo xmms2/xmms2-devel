@@ -91,6 +91,23 @@ xmms_core_play_next ()
 }
 
 void
+xmms_core_play_prev ()
+{
+	core->curr_song = xmms_playlist_get_prev_entry (core->playlist);
+
+	if (!core->curr_song) {
+		xmms_core_playback_stop ();
+		return;
+	}
+
+	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
+		g_cond_signal (core->cond);
+	} else {
+		XMMS_DBG ("xmms_core_playback_next with status != XMMS_CORE_PLAYBACK_RUNNING");
+	}
+}
+
+void
 xmms_core_playback_stop ()
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {

@@ -16,6 +16,7 @@ void xmmsc_deinit(xmmsc_connection_t *);
 
 void xmmsc_quit(xmmsc_connection_t *);
 void xmmsc_play_next(xmmsc_connection_t *);
+void xmmsc_play_prev(xmmsc_connection_t *);
 void xmmsc_playlist_shuffle(xmmsc_connection_t *);
 void xmmsc_playlist_jump (xmmsc_connection_t *, guint);
 void xmmsc_playlist_add (xmmsc_connection_t *, char *);

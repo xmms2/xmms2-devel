@@ -176,6 +176,14 @@ main(int argc, char **argv)
 
 			exit (0);
 
+		} else if ( streq (argv[1], "prev") ) {
+
+			xmmsc_play_prev (c);
+			xmmsc_deinit (c);
+
+			exit (0);
+
+
 		} else if ( streq (argv[1], "shuffle") ) {
 
 			xmmsc_playlist_shuffle (c);

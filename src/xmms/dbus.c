@@ -29,6 +29,7 @@ static GSList *connections = NULL;
 
 static const char *messages[]={"org.xmms.core.mediainfo"};
 static const char *nextmsgs[]={"org.xmms.core.play-next"};
+static const char *prevmsgs[]={"org.xmms.core.play-prev"};
 static const char *addmsgs[]={"org.xmms.playlist.add"};
 static const char *mediainfomsgs[]={"org.xmms.playlist.mediainfo"};
 static const char *listmsgs[]={"org.xmms.playlist.list"};
@@ -170,6 +171,17 @@ handle_next(DBusMessageHandler *handler,
 
 	XMMS_DBG ("next!");
 	xmms_core_play_next();
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_prev(DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	XMMS_DBG ("prev!");
+	xmms_core_play_prev();
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
@@ -413,6 +425,7 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	register_handler(conn,handle_play,playmsgs,1);
 	register_handler(conn,handle_stop,stopmsgs,1);
 	register_handler(conn,handle_next,nextmsgs,1);
+	register_handler(conn,handle_prev,prevmsgs,1);
 	register_handler(conn,handle_quit,quitmsgs,1);
 	register_handler(conn,handle_disconnect,disconnectmsgs,1);
 

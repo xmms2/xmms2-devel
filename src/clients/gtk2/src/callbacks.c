@@ -20,6 +20,8 @@ on_prev_clicked                        (GtkButton       *button,
                                         gpointer         user_data)
 {
 
+	xmmsc_play_prev (conn);
+
 }
 
 

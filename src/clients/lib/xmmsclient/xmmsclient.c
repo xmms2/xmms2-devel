@@ -260,6 +260,12 @@ xmmsc_play_next (xmmsc_connection_t *c)
 }
 
 void
+xmmsc_play_prev (xmmsc_connection_t *c)
+{
+	xmmsc_send_void(c,"org.xmms.core.play-prev");
+}
+
+void
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
 	xmmsc_send_void(c,"org.xmms.playlist.shuffle");

@@ -31,6 +31,7 @@ void xmms_core_output_set (xmms_output_t *output);
 
 void xmms_core_playtime_set (guint time);
 void xmms_core_play_next ();
+void xmms_core_play_prev ();
 void xmms_core_playlist_adduri (gchar *nuri);
 void xmms_core_playlist_jump (guint id);
 void xmms_core_playlist_remove (guint id);

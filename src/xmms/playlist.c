@@ -383,6 +383,33 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 }
 
 xmms_playlist_entry_t *
+xmms_playlist_get_prev_entry (xmms_playlist_t *playlist)
+{
+	xmms_playlist_entry_t *r=NULL;
+	GList *n = NULL;
+
+	g_return_val_if_fail (playlist, NULL);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+	if (playlist->currententry) {
+		n = g_list_previous (playlist->currententry);
+	} else {
+		n = playlist->list;
+	}
+
+	if (n) {
+		r = n->data;
+	}
+
+	playlist->currententry = n;
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+	
+	return r;
+
+}
+
+xmms_playlist_entry_t *
 xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r=NULL;
