@@ -264,13 +264,6 @@ static void
 cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	res = xmmsc_playlist_set_next (conn, 0, 1);
-	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
-		return;
-	}
-	xmmsc_result_unref (res);
 
 	res = xmmsc_playback_next (conn);
 	xmmsc_result_wait (res);
@@ -282,7 +275,7 @@ static void
 cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	res = xmmsc_playlist_set_next (conn, 0, -1);
+	res = xmmsc_playlist_set_next (conn, 0, -2);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
