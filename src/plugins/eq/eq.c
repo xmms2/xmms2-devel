@@ -33,6 +33,7 @@
 #include <math.h>
 #include <glib.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void xmms_eq_init (xmms_effect_t *effect);
 static void xmms_eq_deinit (xmms_effect_t *effect);
@@ -134,7 +135,7 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 	xmms_config_value_t *val = (xmms_config_value_t *)object;
 	xmms_effect_t *effect = userdata;
 	xmms_eq_priv_t *priv;
-	const gchar *name;
+	const gchar *name, *ptr;
 	gint i;
 
 	priv = xmms_effect_private_data_get (effect);
@@ -146,7 +147,12 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 	XMMS_DBG ("configval changed! %s => %f", name,
 		  xmms_config_value_float_get (val));
 
-	i = atoi (name+4);
+	/* we are passed the full config key, not just the last token,
+	 * which makes this code kinda ugly.
+	 * fix when bug 97 has been resolved
+	 */
+	ptr = strrchr (name, '.');
+	i = atoi (ptr + 5);
 
 	XMMS_DBG ("changing filter #%d", i);
 
@@ -169,9 +175,9 @@ xmms_eq_init (xmms_effect_t *effect) {
 	xmms_effect_private_data_set (effect, priv);
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
-
 		gchar buf[20];
-		snprintf (buf, 20, "gain%d", i);
+
+		g_snprintf (buf, sizeof (buf), "gain%d", i);
 
 		priv->configvals[i] =  xmms_plugin_config_lookup (xmms_effect_plugin_get (effect), buf);
 		g_return_if_fail (priv->configvals[i]);
