@@ -9,8 +9,8 @@
 #include <glib.h>
 #include <math.h>
 
-#include "xmmsclient.h"
-#include "xmmsclient-glib.h"
+#include "xmms/xmmsclient.h"
+#include "xmms/xmmsclient-glib.h"
 #include "xmms/signal_xmms.h"
 
 /** @todo these should be pulled in from an include-file */

@@ -2,7 +2,7 @@
 
 Import('base_env')
 
-env = base_env.Copy(CPPPATH = ['../lib/xmmsclient','../lib/xmmsclient-glib','#src'],
+env = base_env.Copy(CPPPATH = ['../lib/xmmsclient','../lib/xmmsclient-glib','#src/include'],
 	LIBPATH = ["../lib/xmmsclient/", "../lib/xmmsclient-glib"],
 	LIBS = ["xmmsclient", "xmmsclient-glib"])
 
