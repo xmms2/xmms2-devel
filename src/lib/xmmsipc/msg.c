@@ -159,14 +159,17 @@ xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid)
 		return FALSE;
 	if (write (fd, &len, sizeof (len)) != sizeof (len))
 		return FALSE;
-	data_len = msg->data_length;
-	while (data_len) {
+	data_len = 0;
+	while (data_len < msg->data_length) {
 		guint32 ret;
 
-		ret = write (fd, msg->data, msg->data_length);
+		ret = write (fd, msg->data + data_len, msg->data_length - data_len);
 		if (ret == 0)
 			return FALSE;
-		data_len -= ret;
+		if (ret == -1)
+			continue;
+
+		data_len += ret;
 	}
 	
 	return TRUE;
