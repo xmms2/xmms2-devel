@@ -238,25 +238,30 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 
 	g_mutex_lock (output->mutex);
 
-	if (output->running) {
-		if (output->is_paused)
-			xmms_output_resume (output);
-	} else {
-		XMMS_DBG ("starting new output thread!");
-		xmms_output_decoder_start (output);
-		output->running = TRUE;
-		if (output->type == XMMS_OUTPUT_TYPE_WR) {
-			xmms_object_ref (output); /* thread takes one ref */
-			output->thread = g_thread_create (xmms_output_thread, output, FALSE, NULL);
+	if (output->type == XMMS_OUTPUT_TYPE_WR) {
+		if (output->running) {
+			if (output->is_paused)
+				xmms_output_resume (output);
+		} else {
+			XMMS_DBG ("starting new output thread!");
+			xmms_output_decoder_start (output);
+			output->running = TRUE;
+			if (output->type == XMMS_OUTPUT_TYPE_WR) {
+				xmms_object_ref (output); /* thread takes one ref */
+				output->thread = g_thread_create (xmms_output_thread, output, FALSE, NULL);
+			}
 		}
-	}
-
-	if (output->type == XMMS_OUTPUT_TYPE_FILL) {
+	} else if (output->type == XMMS_OUTPUT_TYPE_FILL) {
 		xmms_output_status_method_t st;
+
+		if (!output->is_paused) {
+			xmms_output_decoder_start (output);
+		}
 
 		st = xmms_plugin_method_get (output->plugin,
 					     XMMS_PLUGIN_METHOD_STATUS);
 
+		output->is_paused = FALSE;
 		st (output, XMMS_OUTPUT_STATUS_PLAY); 
 		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PLAY);
 	}
@@ -308,7 +313,13 @@ xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 		XMMS_DBG ("pause!");
 		output->is_paused = TRUE;
 		if (output->type == XMMS_OUTPUT_TYPE_FILL) {
-			g_cond_signal (output->fill_cond);
+			xmms_output_status_method_t st;
+
+			st = xmms_plugin_method_get (output->plugin,
+						     XMMS_PLUGIN_METHOD_STATUS);
+
+			st (output, XMMS_OUTPUT_STATUS_STOP); 
+			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PAUSE);
 		}
 	}
 	g_mutex_unlock (output->mutex);
