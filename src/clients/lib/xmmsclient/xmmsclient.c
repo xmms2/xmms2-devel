@@ -444,8 +444,6 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 
 		if (result) {
 			strncat (target, result, len - strlen (target) - 1);
-		} else {
-			strncat (target, "\"\"", len - strlen (target) - 1);
 		}
 
 cont:
