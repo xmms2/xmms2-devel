@@ -18,6 +18,18 @@ cdef extern from "internal/xhash-int.h" :
 
 	void x_hash_foreach (x_hash_t *hash_table, XHFunc func, object user_data)
 
+cdef extern from "xmms/object.h":
+	int XMMS_OBJECT_CMD_ARG_NONE
+	int XMMS_OBJECT_CMD_ARG_UINT32,
+	int XMMS_OBJECT_CMD_ARG_INT32,
+	int XMMS_OBJECT_CMD_ARG_STRING,
+	int XMMS_OBJECT_CMD_ARG_HASHTABLE,
+	int XMMS_OBJECT_CMD_ARG_UINTLIST,
+	int XMMS_OBJECT_CMD_ARG_INTLIST,
+	int XMMS_OBJECT_CMD_ARG_STRINGLIST,
+	int XMMS_OBJECT_CMD_ARG_PLCH,
+	int XMMS_OBJECT_CMD_ARG_HASHLIST,
+
 # Actually we don't want a GLib Mainloop here. but for the time beeing....
 cdef extern from "glib.h" :
 	ctypedef struct GMainContext
@@ -51,6 +63,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	signed int xmmsc_result_iserror (xmmsc_result_t *res)
 	signed char *xmmsc_result_get_error (xmmsc_result_t *res)
 	int xmmsc_result_cid (xmmsc_result_t *res)
+	int xmmsc_result_get_type (xmmsc_result_t *res)
 
 	signed int xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 	signed int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
@@ -129,9 +142,9 @@ ObjectRef = {}
 
 cdef ResultNotifier (xmmsc_result_t *res, obj) :
 	obj.Callback ()
-	if not obj.GetBroadcast () :
+	if not obj.get_broadcast () :
 		xmmsc_result_unref(res)
-		del ObjectRef[obj.GetCid ()]
+		del ObjectRef[obj.get_cid ()]
 		
 	
 cdef class XMMSResult :
@@ -147,19 +160,43 @@ cdef class XMMSResult :
 	def __new__ (self) :
 		self.cid = 0
 
-	def MoreInit (self, broadcast = 0) :
+	def more_init (self, broadcast = 0) :
 		self.cid = xmmsc_result_cid (self.res)
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set (self.res, ResultNotifier, self)
 		ObjectRef[self.cid] = self
 
-	def GetBroadcast (self) :
+	def value(self):
+		self._check()
+	
+		type = xmmsc_result_get_type(self.res)
+
+		if type == XMMS_OBJECT_CMD_ARG_UINT32:
+			return self.get_uint()
+		elif type == XMMS_OBJECT_CMD_ARG_INT32:
+			return self.get_int()
+		elif type == XMMS_OBJECT_CMD_ARG_STRING:
+			return self.get_string()
+		elif type == XMMS_OBJECT_CMD_ARG_UINTLIST:
+			return self.get_uintlist()
+		elif type == XMMS_OBJECT_CMD_ARG_INTLIST:
+			return self.get_intlist()
+		elif type == XMMS_OBJECT_CMD_ARG_STRINGLIST:
+			return self.get_stringlist()
+		elif type == XMMS_OBJECT_CMD_ARG_HASHTABLE:
+			return self.get_hashtable()
+		elif type == XMMS_OBJECT_CMD_ARG_HASHLIST:
+			return self.get_hashlist()
+		elif type == XMMS_OBJECT_CMD_ARG_PLCH:
+			return self.get_playlistchange()
+
+	def get_broadcast (self) :
 		return self.broadcast
 
-	def GetCid (self) :
+	def get_cid (self) :
 		return self.cid
 
-	def Callback (self) :
+	def callback (self) :
 		""" Override me! """
 		pass
 
@@ -167,14 +204,14 @@ cdef class XMMSResult :
 		if not self.res :
 			raise ValueError ("The resultset did not contain a reply!")
 
-	def Wait (self) :
+	def wait (self) :
 		"""
 		Wait for the result from the daemon.
 		"""
 		self._check ()
 		xmmsc_result_wait (self.res)
 
-	def GetInt (self) :
+	def get_int (self) :
 		"""
 		Get data from the result structure as an int.
 		@rtype: int
@@ -186,7 +223,7 @@ cdef class XMMSResult :
 		else :
 			raise ValueError ("Failed to retrieve value!")
 
-	def GetUInt (self) :
+	def get_uint (self) :
 		"""
 		Get data from the result structure as an unsigned int.
 		@rtype: uint
@@ -198,7 +235,7 @@ cdef class XMMSResult :
 		else :
 			raise ValueError ("Failed to retrieve value!")
 
-	def GetString (self) :
+	def get_string (self) :
 		"""
 		Get data from the result structure as a string.
 		@rtype: string
@@ -212,7 +249,7 @@ cdef class XMMSResult :
 			raise ValueError ("Failed to retrieve value!")
 
 
-	def GetHashTable (self) :
+	def get_hashtable (self) :
 		"""
 		@return: A hash table containing media info.
 		"""
@@ -226,7 +263,7 @@ cdef class XMMSResult :
 		else :
 			raise ValueError ("Failed to retrieve value!")
 			
-	def GetIntList (self) :
+	def get_intlist (self) :
 		"""
 		@return: A list of ints from the result structure.
 		"""
@@ -245,7 +282,7 @@ cdef class XMMSResult :
 		else :
 			raise ValueError ("Failed to retrieve value!")
 
-	def GetUIntList (self) :
+	def get_uintlist (self) :
 		"""
 		@return: A list of unsigned ints from the result structure.
 		"""
@@ -264,7 +301,7 @@ cdef class XMMSResult :
 		else :
 			raise ValueError ("Failed to retrieve value!")
 
-	def GetHashList (self) :
+	def get_hashlist (self) :
 		"""
 		@return: A list of dicts from the result structure.
 		"""
@@ -285,7 +322,7 @@ cdef class XMMSResult :
 			raise ValueError ("Failed to retrieve value!")
 
 
-	def GetStringList (self) :
+	def get_stringlist (self) :
 		"""
 		@return: A list of strings from the result structure.
 		"""
@@ -304,7 +341,7 @@ cdef class XMMSResult :
 		else :
 			raise ValueError ("Failed to retrieve value!")
 
-	def GetPlaylistChange (self) :
+	def get_playlistchange (self) :
 		"""
 		@return: a tuple with (changeid, id, argument)
 		"""
@@ -319,27 +356,27 @@ cdef class XMMSResult :
 			raise ValueError ("Failed to retrieve value!")
 
 
-	def Restart (self) :
+	def restart (self) :
 		cdef XMMSResult r
 		r = self
 
 		xmmsc_result_unref (r.res)
 		r.res = xmmsc_result_restart (self.res)
-		self.MoreInit ()
+		self.more_init ()
 		# unref once more, due to ref in
-		# MoreInit->xmmsc_result_notifier_set
+		# more_init->xmmsc_result_notifier_set
 		xmmsc_result_unref (r.res)
 
 		return r
 
-	def IsError (self) :
+	def iserror (self) :
 		"""
 		@return: Whether the result represents an error or not.
 		@rtype: Boolean
 		"""
 		return xmmsc_result_iserror (self.res)
 
-	def GetError (self) :
+	def get_error (self) :
 		"""
 		@return: Error string from the result.
 		@rtype: String
@@ -382,7 +419,7 @@ cdef class XMMS :
 	def _disconnect_cb (self) :
 		self.disconnect_fun (self)
 
-	def GLibLoop (self) :
+	def glib_loop (self) :
 		"""
 		Main client loop for clients using GLib. Call this to run the
 		client once everything has been set up. Note: This should not
@@ -397,19 +434,19 @@ cdef class XMMS :
 
 		g_main_loop_run (ml)
 
-	def SetupWithGmain (self) :
+	def setup_with_gmain (self) :
 		"""
 		Adds the IPC connection to a GMainLoop. pyGTK clients need to
 		call this after L{Connect} and before gtk.main()
 		"""
 		xmmsc_ipc_setup_with_gmain (self.conn)
 
-	def ExitPythonLoop (self) :
+	def exit_python_loop (self) :
 		""" Exits from the PythonLoop() call """
 		self.loop = False
 		write (self.wakeup, "42")
 
-	def PythonLoop (self) :
+	def python_loop (self) :
 		"""
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up. This function blocks
@@ -431,7 +468,7 @@ cdef class XMMS :
 				xmmsc_ipc_disconnect (self.conn.ipc)
 				self.loop = False
 
-	def inIO (self) :
+	def ioin (self) :
 		"""
 		Use this relatively low level function to write your own
 		custom main loops, if needed. See the PythonLoop code for an
@@ -439,7 +476,7 @@ cdef class XMMS :
 		"""
 		xmmsc_ipc_io_in_callback (self.conn.ipc)
 		
-	def GetFD (self) :
+	def get_fd (self) :
 		"""
 		Get the underlying file descriptor used for communication with
 		the XMMS2 daemon. You can use this in a client to ensure that
@@ -450,7 +487,7 @@ cdef class XMMS :
 		"""
 		return xmmsc_ipc_fd_get (self.conn.ipc)
 
-	def Connect (self, path = None, disconnect_func = None) :
+	def connect (self, path = None, disconnect_func = None) :
 		"""
 		Connect to the appropriate IPC path, for communication with the
 		XMMS2 daemon. This path defaults to /tmp/xmms-ipc-<username> if
@@ -476,7 +513,7 @@ cdef class XMMS :
 		xmmsc_disconnect_callback_set (self.conn, python_disconnect_fun, self)
 
 
-	def Quit (self, myClass = None):
+	def quit (self, myClass = None):
 		"""
 		Tell the XMMS2 daemon to quit.
 		@rtype: L{XMMSResult}
@@ -490,11 +527,11 @@ cdef class XMMS :
 			ret = XMMSResult()
 
 		ret.res = xmmsc_quit(self.conn)
-		ret.MoreInit()
+		ret.more_init()
 
 		return ret
 
-	def PlaybackStart (self, myClass = None) :
+	def playback_start (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to start playing the currently
 		selected file from the playlist.
@@ -509,11 +546,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_start (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackStop (self, myClass = None) :
+	def playback_stop (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to stop playing the file
 		currently being played.
@@ -528,11 +565,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_stop (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackNext (self, myClass = None) :
+	def playback_next (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to move on to the next file in the
 		playlist.
@@ -547,11 +584,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_next (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackPause (self, myClass = None) :
+	def playback_pause (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to pause playback.
 		@rtype: L{XMMSResult}
@@ -565,11 +602,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_pause (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackCurrentID (self, myClass = None) :
+	def playback_current_id (self, myClass = None) :
 		"""
 		@rtype: L{XMMSResult} (UInt)
 		@return: The playlist id of the item currently selected.
@@ -582,11 +619,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_current_id (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackSeekMS (self, ms, myClass = None) :
+	def playback_seek_ms (self, ms, myClass = None) :
 		"""
 		Seek to an absolute time position in the current file or
 		stream in playback.
@@ -601,11 +638,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_seek_ms (self.conn, ms)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackSeekSamples (self, samples, myClass = None) :
+	def playback_seek_samples (self, samples, myClass = None) :
 		"""
 		Seek to an absolute number of samples in the current file or
 		stream in playback.
@@ -620,11 +657,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_seek_samples (self.conn, samples)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaybackStatus (self, myClass = None) :
+	def playback_status (self, myClass = None) :
 		"""Get current playback status from XMMS2 daemon. This is
 		essentially the more direct version of
 		L{BroadcastPlaybackStatus}.
@@ -637,10 +674,10 @@ cdef class XMMS :
 		else :
 			ret = XMMSResult ()
 		ret.res = xmmsc_playback_status (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def BroadcastPlaybackStatus (self, myClass = None) :
+	def broadcast_playback_status (self, myClass = None) :
 		"""
 		Set a class to handle the playback status broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
@@ -657,11 +694,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_broadcast_playback_status (self.conn)
-		ret.MoreInit (1)
+		ret.more_init (1)
 		
 		return ret
 
-	def BroadcastPlaybackCurrentID (self, myClass = None) :
+	def broadcast_playback_current_id (self, myClass = None) :
 		"""
 		Set a class to handle the playback id broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
@@ -678,11 +715,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_broadcast_playback_current_id (self.conn)
-		ret.MoreInit (1)
+		ret.more_init (1)
 		
 		return ret
 
-	def PlaybackPlaytime (self, myClass = None) :
+	def playback_playtime (self, myClass = None) :
 		"""
 		Return playtime on current file/stream. This is essentially a
 		more direct version of L{SignalPlaybackPlaytime}
@@ -697,11 +734,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playback_playtime (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 
 		return ret
 
-	def SignalPlaybackPlaytime (self, myClass = None) :
+	def signal_playback_playtime (self, myClass = None) :
 		"""
 		Set a class to handle the playback playtime signal from the
 		XMMS2 daemon. This can be used to keep track of the amount of
@@ -718,11 +755,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_signal_playback_playtime (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistShuffle (self, myClass = None) :
+	def playlist_shuffle (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to shuffle the playlist.
 		@rtype: L{XMMSResult}
@@ -736,11 +773,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_shuffle (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistAdd (self, url, myClass = None) :
+	def playlist_add (self, url, myClass = None) :
 		"""
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -756,11 +793,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_add (self.conn, url)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistMedialibAdd (self, query, myClass = None) :
+	def playlist_medialibadd (self, query, myClass = None) :
 		"""
 		Add items in the playlist by querying the MediaLib.
 		@rtype: L{XMMSResult}
@@ -774,11 +811,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_medialibadd (self.conn, query)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistRemove (self, id, myClass = None) :
+	def playlist_remove (self, id, myClass = None) :
 		"""
 		Remove a certain media item from the playlist.
 		Requires a number 'id' as argument.
@@ -793,11 +830,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_remove (self.conn, id)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistClear (self, myClass = None) :
+	def playlist_clear (self, myClass = None) :
 		"""
 		Clear the playlist.
 		@rtype: L{XMMSResult}
@@ -811,11 +848,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_clear (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistSave (self, filename, myClass = None) :
+	def playlist_save (self, filename, myClass = None) :
 		"""
 		Save the current playlist to file.
 		Requires a string 'fname' (filename to save to) as argument.
@@ -830,11 +867,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_save (self.conn, filename)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistList (self, myClass = None) :
+	def playlist_list (self, myClass = None) :
 		"""
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
@@ -850,11 +887,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_list (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistGetMediainfo (self, id, myClass = None) :
+	def playlist_get_mediainfo (self, id, myClass = None) :
 		"""
 		@rtype: L{XMMSResult} (HashTable)
 		@return: Information about the media item at the playlist
@@ -868,11 +905,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_get_mediainfo (self.conn, id)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistSort (self, prop, myClass = None) :
+	def playlist_sort (self, prop, myClass = None) :
 		"""
 		Sorts the playlist according to the property specified.
 		@rtype: L{XMMSResult}
@@ -886,11 +923,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_sort (self.conn, prop)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistSetNext (self, type, moment, myClass = None) :
+	def playlist_set_next (self, type, moment, myClass = None) :
 		"""
 		Set the relative position to jump to, when calling
 		L{PlaybackNext}. For example,
@@ -913,11 +950,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_set_next (self.conn, type, moment)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
-	def PlaylistMove (self, id, movement, myClass = None) :
+	def playlist_move (self, id, movement, myClass = None) :
 		"""
 		Move a playlist entry relative to it's current position in
 		the playlist. The movement should be a postive value when
@@ -934,12 +971,12 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_move (self.conn, id, movement)
-		ret.MoreInit ()
+		ret.more_init ()
 		
 		return ret
 
 
-	def BroadcastPlaylistChanged (self, myClass = None) :
+	def broadcast_playlist_changed (self, myClass = None) :
 		"""
 		Set a class to handle the playlist changed broadcast from the
 		XMMS2 daemon. (i.e. the player's playlist has changed) Note:
@@ -956,11 +993,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_broadcast_playlist_changed (self.conn)
-		ret.MoreInit (1)
+		ret.more_init (1)
 		
 		return ret
 
-	def BroadcastPlaylistEntryChanged (self, myClass = None) :
+	def broadcast_playlist_entry_changed (self, myClass = None) :
 		"""
 		Set a class to handle the playlist entry changed broadcast
 		from the XMMS2 daemon. (i.e. the current entry in the playlist
@@ -978,11 +1015,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_broadcast_playlist_entry_changed (self.conn)
-		ret.MoreInit (1)
+		ret.more_init (1)
 		
 		return ret
 
-	def BroadcastConfigvalChanged (self, myClass = None) :
+	def broadcast_configval_changed (self, myClass = None) :
 		"""
 		Set a class to handle the config value changed broadcast
 		from the XMMS2 daemon. (i.e. some configuration value has
@@ -1000,11 +1037,11 @@ cdef class XMMS :
 			ret = XMMSResult ()
 
 		ret.res = xmmsc_broadcast_configval_changed (self.conn)
-		ret.MoreInit (1)
+		ret.more_init (1)
 
 		return ret
 
-	def ConfigvalSet (self, key, val, myClass = None) :
+	def configval_set (self, key, val, myClass = None) :
 		"""
 		Set a configuration value on the daemon, given a key.
 		@rtype: L{XMMSResult}
@@ -1018,10 +1055,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_configval_set (self.conn, key, val)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def ConfigvalGet (self, key, myClass = None) :
+	def configval_get (self, key, myClass = None) :
 		"""
 		Get the configuration value of a given key, from the daemon.
 		@rtype: L{XMMSResult} (String)
@@ -1035,10 +1072,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_configval_get (self.conn, key)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def ConfigvalList (self, myClass = None) :
+	def configval_list (self, myClass = None) :
 		"""
 		Get list of configuration keys on the daemon. Use
 		L{ConfigvalGet} to retrieve the values corresponding to the
@@ -1054,10 +1091,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_configval_list (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def MedialibQuery (self, query, myClass = None) :
+	def medialib_select (self, query, myClass = None) :
 		"""
 		Query the MediaLib.
 		@rtype: L{XMMSResult}
@@ -1071,10 +1108,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_select (self.conn, query)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def MedialibAdd (self, file, myClass = None) :
+	def medialib_add_entry (self, file, myClass = None) :
 		"""
 		Add a entry to the MediaLib.
 		@rtype: L{XMMSResult}
@@ -1088,10 +1125,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_add_entry (self.conn, file)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def MedialibPlaylistSave (self, playlistname, myClass = None) :
+	def medialib_playlist_save_current (self, playlistname, myClass = None) :
 		"""
 		Save the current playlist to a medialib playlist
 		@rtype: L{XMMSResult}
@@ -1105,10 +1142,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_playlist_save_current (self.conn, playlistname)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def MedialibPlaylistLoad (self, playlistname, myClass = None) :
+	def medialib_playlist_load (self, playlistname, myClass = None) :
 		"""
 		Load playlistname from the medialib
 		@rtype: L{XMMSResult}
@@ -1122,10 +1159,10 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_playlist_load (self.conn, playlistname)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
-	def SignalVisualisationData (self, myClass = None) :
+	def signal_visualisation_data (self, myClass = None) :
 		"""
 		Tell server to send you VisData updates.
 		For drawing peek analyzer.
@@ -1140,6 +1177,6 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_signal_visualisation_data (self.conn)
-		ret.MoreInit ()
+		ret.more_init ()
 		return ret
 
