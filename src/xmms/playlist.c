@@ -102,10 +102,9 @@ XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *,
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 
 
-/** initializes a new xmms_playlist_t.
-  */
-
-
+/**
+ * Initializes a new xmms_playlist_t.
+ */
 xmms_playlist_t *
 xmms_playlist_init (void)
 {
@@ -176,58 +175,38 @@ xmms_playlist_init (void)
 	return ret;
 }
 
-/** advance and return the mid for this playlist. */
-
+/**
+ * Go to next song in playlist according to current playlist mode.
+ * xmms_playlist_current_entry is to be used to retrieve the entry.
+ *
+ * @sa xmms_playlist_current_entry
+ *
+ * @returns FALSE if end of playlist is reached, TRUE otherwise.
+ */
 gboolean
 xmms_playlist_advance (xmms_playlist_t *playlist)
 {
+	gboolean ret = TRUE;
 	g_return_val_if_fail (playlist, FALSE);
 
-	/** @todo maybe not fulhack the threadsaftey */
 	g_mutex_lock (playlist->mutex);
-	if (playlist->list->len == 0) {
-		g_mutex_unlock (playlist->mutex);
-		return FALSE;
-	}
 
-	if (playlist->repeat_one) {
-		/* no need to do anything */
-	} else /* if (playlist->currentpos + 1 > playlist->list->len) {
-		if (playlist->repeat_all) {
-			playlist->currentpos = 0;
-		} else {
-			playlist->currentpos = 0;
-			g_mutex_unlock (playlist->mutex);
-			return FALSE;
-		}
-		} else */
-	{
+	if (playlist->list->len == 0) {
+		ret = FALSE;
+	} else if (!playlist->repeat_one) {
 		playlist->currentpos++;
 		playlist->currentpos %= playlist->list->len;
-		if (!playlist->currentpos) {
-			g_mutex_unlock (playlist->mutex);
-			return FALSE;
-		}
+		ret = (playlist->currentpos != 0) || playlist->repeat_all;
 	}
 	g_mutex_unlock (playlist->mutex);
 
-	return TRUE;
+	return ret;
 }
 
-static guint32
-xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error)
-{
-	guint32 pos;
-	g_return_val_if_fail (playlist, 0);
-	
-	g_mutex_lock (playlist->mutex);
-	pos = playlist->currentpos;
-	g_mutex_unlock (playlist->mutex);
-
-	return pos;
-}
-
-/** return the current mid */
+/**
+ * Retrive the currently active xmms_medialib_entry_t.
+ *
+ */
 xmms_medialib_entry_t
 xmms_playlist_current_entry (xmms_playlist_t *playlist)
 {
@@ -244,68 +223,53 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	return ent;
 }
 
-/** Total number of entries in the playlist. */
-guint
-xmms_playlist_entries_total (xmms_playlist_t *playlist)
-{
-	guint len;
 
+/**
+ * Retrieve the position of the currently active xmms_medialib_entry_t
+ *
+ */
+static guint32
+xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error)
+{
+	guint32 pos;
+	g_return_val_if_fail (playlist, 0);
+	
 	g_mutex_lock (playlist->mutex);
-	len = playlist->list->len;
+	pos = playlist->currentpos;
 	g_mutex_unlock (playlist->mutex);
-	return len;
+
+	return pos;
 }
 
-static void
-xmms_playlist_remove_pos (xmms_playlist_t *playlist, guint pos)
-{
-	g_return_if_fail (playlist);
-
-	/** @todo hmm, should we do currentpos++ or current-- 
-	  when we remove the current entry? */
-	if (playlist->currentpos >= pos) {
-		playlist->currentpos--;
-	}
-
-	g_array_remove_index (playlist->list, pos);
-}
-
-
+/**
+ * Shuffle the playlist.
+ *
+ */
 static void
 xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 {
 	guint j,i;
-	guint32 cur;
-	guint32 len;
-	GArray *new;
+	gint len;
 
 	g_return_if_fail (playlist);
 
-	if (playlist->list->len < 2) {
-		return;
-	}
-
 	g_mutex_lock (playlist->mutex);
 
-	new = g_array_sized_new (FALSE, FALSE, sizeof (guint32), playlist->list->len);
-	cur = playlist->currentpos;
-	if (cur) {
-		g_array_append_val (new, g_array_index (playlist->list, guint32, cur));
-		xmms_playlist_remove_pos (playlist, cur);
-	}
-
 	len = playlist->list->len;
-	for (i = 1; i < len; i++) {
-		j = g_random_int_range (1, len - i);
-		g_array_append_val (new, g_array_index (playlist->list, guint32, j));
-		xmms_playlist_remove_pos (playlist, j);
+	if (len > 1) {
+		guint32 tmp;
+
+		/* knuth <3 */
+		for (i = 0; i < len; i++) {
+			j = g_random_int_range (i, len);
+			
+			/* swap(list, i, j) */
+			tmp = g_array_index (playlist->list, guint32, i);
+			g_array_index (playlist->list, guint32, i) = g_array_index (playlist->list, guint32, j);
+			g_array_index (playlist->list, guint32, j) = tmp;
+		}
+
 	}
-
-	if (cur)
-		playlist->currentpos = 1;
-
-	g_array_free (playlist->list, FALSE);
-	playlist->list = new;
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SHUFFLE, 0, 0);
 
@@ -313,26 +277,30 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 }
 
 
-/** removes entry from playlist */
+/**
+ * Remove an entry from playlist.
+ *
+ */
 gboolean 
 xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 {
-	guint32 id;
-
 	g_return_val_if_fail (playlist, FALSE);
-	g_return_val_if_fail (id, FALSE);
 
 	g_mutex_lock (playlist->mutex);
-	id = g_array_index (playlist->list, guint32, pos);
-	if (!id) {
+	if (pos >= playlist->list->len) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");
 		g_mutex_unlock (playlist->mutex);
 		return FALSE;
 	}
 
-	xmms_playlist_remove_pos (playlist, pos);
+	g_array_remove_index (playlist->list, pos);
 
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_REMOVE, id, 0);
+	/* decrease currentpos if removed entry was before */
+	if (pos < playlist->currentpos) {
+		playlist->currentpos--;
+	}
+
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_REMOVE, pos, 0);
 
 	g_mutex_unlock (playlist->mutex);
 
@@ -341,7 +309,10 @@ xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 
 
 
-/** move entry in playlist */
+/**
+ * Move an entry in playlist
+ *
+ */
 static gboolean
 xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_error_t *err)
 {
