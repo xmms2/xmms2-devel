@@ -2,8 +2,7 @@ import SCons
 
 import os;
 import sys;
-
-
+import time
 
 class XmmsEnvironment(SCons.Environment.Environment):
 	pass
@@ -25,6 +24,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
+		self.Append(CPPFLAGS=['-DBUILDTIME=\\"'+time.strftime("%Y-%m-%d %H:%M:%S")+'\\"'])
 		self.Append(LIBPATH=['/usr/lib'])
 		self.Append(LIBPATH=['/usr/local/lib'])
 		self.Append(CPPFLAGS=['-I/usr/local/include'])
