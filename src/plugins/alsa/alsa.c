@@ -5,13 +5,21 @@
  *
  * @todo Fiddle around with the buffer so that no xruns wil appear.
  */
+
+#include "xmms/plugin.h"
 #include "xmms/output.h"
 #include "xmms/util.h"
-#include "xmms/plugin.h"
+#include "xmms/xmms.h"
+#include "xmms/object.h"
+#include "xmms/ringbuf.h"
+#include "xmms/config_xmms.h"
+#include "xmms/signal_xmms.h"
 
 #define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>
+
+#include <glib.h>
 
 /*
  *  Defines
@@ -39,12 +47,18 @@ typedef struct xmms_alsa_data_St {
 /*
  * Function prototypes
  */
-static gboolean xmms_alsa_open (xmms_output_t *output);
-static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
-static guint xmms_alsa_set_hwparams(xmms_alsa_data_t *data); 
+static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_alsa_xrun_recover (xmms_output_t *output);
+static guint xmms_alsa_set_hwparams(xmms_alsa_data_t *data); 
+static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
+static guint xmms_alsa_buffersize_get (xmms_output_t *output);
+static gboolean xmms_alsa_open (xmms_output_t *output);
+static gboolean xmms_alsa_new (xmms_output_t *output);
+static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right);
+static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right);
+
 
 /*
  * Plugin header
@@ -65,9 +79,18 @@ xmms_plugin_get (void)
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_alsa_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_alsa_open);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_alsa_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_alsa_close);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_alsa_flush);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
 			xmms_alsa_samplerate_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
+			xmms_alsa_buffersize_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET,
+			xmms_alsa_mixer_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET,
+			xmms_alsa_mixer_set);
+
 
 	return plugin;
 }
@@ -76,6 +99,50 @@ xmms_plugin_get (void)
  * Member functions
  */
 
+
+/**
+ * Change mixer parameters.
+ *
+ * @param output The output structure
+ */
+static gboolean
+xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right) {
+	return TRUE;
+}
+
+
+
+/**
+ * Get mixer parameters.
+ *
+ * @param output The output structure
+ */
+static gboolean
+xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right) {
+	return TRUE;
+}
+
+
+/**
+ * Get buffersize.
+ *
+ * @param output The output structure
+ */
+static guint
+xmms_alsa_buffersize_get (xmms_output_t *output) {
+	return TRUE;
+}
+
+
+/**
+ * Flush buffer
+ *
+ * @param output The output structure
+ */
+static void
+xmms_alsa_flush (xmms_output_t *output) {
+	return;
+}
 
 
 /** 
@@ -143,6 +210,10 @@ xmms_alsa_open (xmms_output_t *output)
 
 }
 
+static gboolean
+xmms_alsa_new (xmms_output_t *output) {
+	return TRUE;
+}
 
 static guint 
 xmms_alsa_set_hwparams(xmms_alsa_data_t *data) {
