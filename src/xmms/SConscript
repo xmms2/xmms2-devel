@@ -11,8 +11,11 @@ xmms2d_sources = Split ("config.c plugin.c object.c ipc.c "+
 			"effect.c playlist_entry.c error.c medialib.c "+
 			"sample.c")
 
-#XXX should fix so this file isn't rebuilt every time.
-env.Command('converter.c', 'generate-converter.py', 'python src/xmms/generate-converter.py >src/xmms/converter.c') 
+b = Builder(action = 'python src/xmms/generate-converter.py > $TARGET')
+env.Depends('#src/xmms/converter.c', 'generate-converter.py')
+env.SourceCode('#src/xmms/converter.c', b)
+
+#env.Command('converter.c', 'generate-converter.py', 'python src/xmms/generate-converter.py >src/xmms/converter.c') 
 
 if env.HasGroup ("sqlite") :
 	xmms2d_sources.append ("sqlite.c")
