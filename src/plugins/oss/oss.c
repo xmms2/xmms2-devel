@@ -61,6 +61,7 @@ typedef struct xmms_oss_data_St {
 
 static gboolean xmms_oss_open (xmms_output_t *output);
 static gboolean xmms_oss_new (xmms_output_t *output);
+static void xmms_oss_destroy (xmms_output_t *output);
 static void xmms_oss_close (xmms_output_t *output);
 static void xmms_oss_flush (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
@@ -96,6 +97,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 							xmms_oss_new);
 	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
+	                        xmms_oss_destroy);
+
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
 							xmms_oss_close);
 	
@@ -308,6 +312,22 @@ xmms_oss_new (xmms_output_t *output)
 	XMMS_DBG ("OpenSoundSystem initilized!");
 	
 	return TRUE;
+}
+
+static void
+xmms_oss_destroy (xmms_output_t *output)
+{
+	xmms_oss_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	if (data->have_mixer) {
+		close (data->mixer_fd);
+	}
+
+	g_free (data);
 }
 
 static guint
