@@ -36,6 +36,8 @@
 #include "xmms/util.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/decoder.h"
+#include "xmms/mediainfo.h"
+
 
 /** @defgroup PlaylistClientMethods PlaylistClientMethods
   * @ingroup Playlist
@@ -52,7 +54,7 @@
   */
 
 /* Internal macro to emit XMMS_SIGNAL_PLAYLIST_CHANGED */
-#define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) { \
+#define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) do { \
 	xmms_object_method_arg_t *arg; \
 	xmms_playlist_changed_msg_t *chmsg; \
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
@@ -60,7 +62,7 @@
 	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_PLCH, chmsg); \
 	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, arg);\
 	g_free (arg);\
-}
+} while (0)
 
 
 /** Playlist structure */
@@ -77,6 +79,8 @@ struct xmms_playlist_St {
 	GMutex *mutex;
 	GCond *cond;
 	gboolean is_waiting;
+
+	xmms_mediainfo_thread_t *mediainfothr;
 
 };
 
@@ -810,6 +814,8 @@ xmms_playlist_init (void)
 				XMMS_METHOD_SORT, 
 				XMMS_METHOD_FUNC (sort));
 
+	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
+
 	return ret;
 }
 
@@ -831,6 +837,8 @@ xmms_playlist_destroy (xmms_object_t *object)
 
 	g_cond_free (playlist->cond);
 	g_mutex_free (playlist->mutex);
+
+	xmms_mediainfo_thread_stop (playlist->mediainfothr);
 
 	node = playlist->list;
 	

@@ -285,7 +285,6 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 }
 
 
-#if 0
 /**
  * Update Mediainfo in the entry.
  * Should be used in #XMMS_PLUGIN_METHOD_GET_MEDIAINFO to update the info and
@@ -296,14 +295,12 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (entry);
+	g_return_if_fail (decoder->transport);
 
-	xmms_playlist_entry_property_copy (entry, decoder->entry);
-#if 0
-	xmms_playlist_entry_changed (xmms_core_playlist_get (xmms_decoder_core_get (decoder)), 
-			decoder->entry);
-#endif
+	xmms_transport_entry_mediainfo_set (decoder->transport, entry);
+
 }
-#endif
+
 
 /**
  * Read decoded data
@@ -615,28 +612,27 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 
 }
 
-#if 0
-xmms_playlist_entry_t *
+
+void
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)
 {
 	xmms_decoder_get_mediainfo_method_t mediainfo;
-	g_return_val_if_fail (decoder, NULL);
-	g_return_val_if_fail (transport, NULL);
+	g_return_if_fail (decoder);
+	g_return_if_fail (transport);
 
 	decoder->transport = transport;
 
 	mediainfo = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO);
 	if (!mediainfo) {
 		XMMS_DBG ("get_mediainfo failed");
-		return NULL;
+		return;
 	}
 
 	mediainfo (decoder);
 
-	return decoder->entry;
+	return;
 }
-#endif
 
 /*
  * Static functions

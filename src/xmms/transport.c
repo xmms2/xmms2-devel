@@ -422,8 +422,6 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 /**
  * Updates the current entry 
  */
-
-#if 0 /* FIXME */
 void
 xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
@@ -431,11 +429,9 @@ xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_e
 	g_return_if_fail (transport);
 	g_return_if_fail (entry);
 
-	playlist = xmms_core_playlist_get (xmms_transport_core_get (transport));
 	xmms_playlist_entry_property_copy (entry, transport->entry);
-	xmms_playlist_entry_changed (playlist, transport->entry);
 }
-#endif
+
 /**
  * Gets the suburl from the transport.
  */
