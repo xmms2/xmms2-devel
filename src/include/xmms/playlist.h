@@ -28,6 +28,11 @@
  */
 
 typedef enum {
+	XMMS_PLAYLIST_SET_NEXT_RELATIVE,
+	XMMS_PLAYLIST_SET_NEXT_BYID,
+} xmms_playlist_set_next_types_t;
+
+typedef enum {
 	XMMS_PLAYLIST_APPEND,
 	XMMS_PLAYLIST_PREPEND,
 	XMMS_PLAYLIST_INSERT,
@@ -62,6 +67,7 @@ typedef struct xmms_playlist_changed_msg_St {
 } xmms_playlist_changed_msg_t;
 
 #include "xmms/playlist_entry.h"
+#include "xmms/decoder.h"
 #include "xmms/error.h"
 
 /*
@@ -80,6 +86,7 @@ xmms_playlist_entry_t *xmms_playlist_get_prev_entry (xmms_playlist_t *playlist);
 xmms_playlist_entry_t *xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
 xmms_playlist_entry_t *xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
+xmms_decoder_t *xmms_playlist_next_start (xmms_playlist_t *playlist);
 
 GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 

@@ -20,10 +20,9 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
-#define XMMS_OBJECT_PLAYBACK "/xmms/playback"
 #define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
+#define XMMS_OBJECT_MAIN "/xmms/main"
 #define XMMS_OBJECT_CLIENT "/xmms/client"
-#define XMMS_OBJECT_CORE "/xmms/core"
 #define XMMS_OBJECT_OUTPUT "/xmms/output"
 #define XMMS_OBJECT_DBUS "/xmms/dbus"
 #define XMMS_OBJECT_CONFIG "/xmms/config"
@@ -63,21 +62,17 @@
 #define XMMS_METHOD_REGISTER "register"
 #define XMMS_METHOD_UNREGISTER "unregister"
 #define XMMS_METHOD_PLAYTIME "playtime"
+#define XMMS_METHOD_CPLAYTIME "cplaytime"
 #define XMMS_METHOD_INFORMATION "information"
 #define XMMS_METHOD_SPECTRUM "spectrum"
-#define XMMS_METHOD_CPLAYTIME "cplaytime"
 #define XMMS_METHOD_MIXERSET "mixer_set"
 #define XMMS_METHOD_MIXERGET "mixer_get"
+#define XMMS_METHOD_DECODER_KILL "decoder_kill"
 
-
-/* Playback msgs */
-#define XMMS_SIGNAL_PLAYBACK_STATUS "/xmms/playback::status"
-#define XMMS_SIGNAL_PLAYBACK_CURRENTID "/xmms/playback::currentid"
-#define XMMS_SIGNAL_PLAYBACK_PLAYTIME "/xmms/playback::playtime"
-#define XMMS_SIGNAL_PLAYBACK_JUMP "/xmms/playback::jump"
 
 /* Playlist msgs */
 #define XMMS_SIGNAL_PLAYLIST_LIST "/xmms/playlist::list"
+#define XMMS_SIGNAL_PLAYLIST_CURRENTID "/xmms/playlist::currentid"
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID "/xmms/playlist::mediainfoid"
 #define XMMS_SIGNAL_PLAYLIST_CHANGED "/xmms/playlist::change"
 #define XMMS_SIGNAL_PLAYLIST_MEDIAINFO "/xmms/playlist::mediainfo"
@@ -105,6 +100,8 @@
 #define XMMS_SIGNAL_OUTPUT_EOS_REACHED "/xmms/output::eos_reached"
 #define XMMS_SIGNAL_OUTPUT_OPEN_FAIL "/xmms/output::open_fail"
 #define XMMS_SIGNAL_OUTPUT_MIXER_CHANGED "/xmms/output::mixer_changed"
+#define XMMS_SIGNAL_OUTPUT_PLAYTIME "/xmms/playback::playtime"
+#define XMMS_SIGNAL_OUTPUT_STATUS "/xmms/output::status"
 
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "/xmms/visualisation::spectrum"

@@ -25,6 +25,6 @@
 typedef struct xmms_mediainfo_thread_St xmms_mediainfo_thread_t;
 
 xmms_mediainfo_thread_t *xmms_mediainfo_thread_start (xmms_playlist_t *playlist);
-void xmms_mediainfo_thread_add (xmms_mediainfo_thread_t *mthread, guint entryid);
+void xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit);
 
 #endif /* __XMMS_MEDIAINFO_H__ */

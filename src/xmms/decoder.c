@@ -26,6 +26,7 @@
 
 
 #include "xmms/decoder.h"
+#include "xmms/dbus.h"
 #include "xmms/plugin.h"
 #include "xmms/object.h"
 #include "xmms/util.h"
@@ -114,6 +115,7 @@ static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
 static void recalculate_resampler (xmms_decoder_t *decoder);
 static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
+static void xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value);
 
 /*
  * Macros
@@ -268,24 +270,23 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	g_return_if_fail (decoder);
 	g_return_if_fail (rate);
 
-	if (decoder->output)
-		xmms_output_samplerate_set (decoder->output, rate);
+	decoder->samplerate = rate;
 
-	/*
-	recalculate_resampler (decoder);
-	*/
+	if (decoder->output) {
+		xmms_output_samplerate_set (decoder->output, rate);
+		recalculate_resampler (decoder);
+	}
+
 
 /*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
-	xmms_effect_samplerate_set (decoder->effect, rate);
-	decoder->samplerate = rate;
+/*	xmms_effect_samplerate_set (decoder->effect, rate);*/
 	
-/*	r = g_strdup_printf ("%d", rate);
-	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
-	g_free (r);*/
+	r = g_strdup_printf ("%d", rate);
+	xmms_decoder_mediainfo_property_set (decoder, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
+	g_free (r);
 }
 
 
-#if 0
 /**
  * Update Mediainfo in the entry.
  * Should be used in #XMMS_PLUGIN_METHOD_GET_MEDIAINFO to update the info and
@@ -296,14 +297,24 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (entry);
+	g_return_if_fail (decoder->transport);
 
-	xmms_playlist_entry_property_copy (entry, decoder->entry);
-#if 0
-	xmms_playlist_entry_changed (xmms_core_playlist_get (xmms_decoder_core_get (decoder)), 
-			decoder->entry);
-#endif
+	xmms_transport_entry_mediainfo_set (decoder->transport, entry);
+
 }
-#endif
+
+static void
+xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value)
+{
+	g_return_if_fail (decoder);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
+	g_return_if_fail (decoder->transport);
+
+	xmms_transport_mediainfo_property_set (decoder->transport, key, value);
+
+}
+
 
 /**
  * Read decoded data
@@ -367,16 +378,17 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 /*	xmms_visualisation_calc (decoder->vis, buf, len);*/
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 
-	/**
-	 * @todo Here resampling should be done. This is skipped right now
-	 * cause of pending andersg patches.
-	 */
+	if (decoder->interpolator_ratio != decoder->decimator_ratio) {
+		/* resampling needed */
+		len = resample (decoder, (gint16 *)buf, len);
+		buf = (char *)decoder->resamplebuf;
+	}
 	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
 	xmms_ringbuf_write (decoder->buffer, buf, len);
 
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 	
 	
 }
@@ -421,7 +433,7 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 
 	xmms_output_flush (decoder->output);
 
-	if (meth (decoder, samples)) {
+	if (!meth (decoder, samples)) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not seek there");
 		return FALSE;
 	}
@@ -615,28 +627,27 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 
 }
 
-#if 0
-xmms_playlist_entry_t *
+
+void
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)
 {
 	xmms_decoder_get_mediainfo_method_t mediainfo;
-	g_return_val_if_fail (decoder, NULL);
-	g_return_val_if_fail (transport, NULL);
+	g_return_if_fail (decoder);
+	g_return_if_fail (transport);
 
 	decoder->transport = transport;
 
 	mediainfo = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO);
 	if (!mediainfo) {
 		XMMS_DBG ("get_mediainfo failed");
-		return NULL;
+		return;
 	}
 
 	mediainfo (decoder);
 
-	return decoder->entry;
+	return;
 }
-#endif
 
 /*
  * Static functions

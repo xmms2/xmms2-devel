@@ -28,6 +28,7 @@
 #include "xmms/playlist.h"
 #include "xmms/mediainfo.h"
 #include "xmms/plsplugins.h"
+#include "xmms/signal_xmms.h"
 
 #include "internal/transport_int.h"
 #include "internal/decoder_int.h"
@@ -40,12 +41,14 @@ struct xmms_mediainfo_thread_St {
 	GCond *cond;
 
 	gboolean running;
-	GList *list;
+	GQueue *queue;
 	xmms_playlist_t *playlist;
 	/* 45574 */
 };
 
 static gpointer xmms_mediainfo_thread_thread (gpointer data);
+static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata);
+
 
 xmms_mediainfo_thread_t *
 xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
@@ -59,60 +62,78 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 	mtt->mutex = g_mutex_new ();
 	mtt->cond = g_cond_new ();
 	mtt->playlist = playlist;
-
+	mtt->queue = g_queue_new ();
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
+
+	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
+	
 
 	return mtt;
 }
 
 void
-xmms_mediainfo_thread_add (xmms_mediainfo_thread_t *mthread, guint entryid)
+xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
 {
-	XMMS_MTX_LOCK (mthread->mutex);
+	g_mutex_lock (mit->mutex);
 
-	mthread->list = g_list_append (mthread->list, GUINT_TO_POINTER (entryid));
+	while (g_queue_pop_head (mit->queue))
+		;
+	mit->running = FALSE;
+	g_cond_signal (mit->cond);
 
-	g_cond_signal (mthread->cond);
+	g_mutex_unlock (mit->mutex);
 
-	XMMS_MTX_UNLOCK (mthread->mutex);
+	g_thread_join (mit->thread);
 
+	g_queue_free (mit->queue);
+}
+
+static void
+xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
+{
+	xmms_mediainfo_thread_t *mit = userdata;
+	const xmms_object_method_arg_t *oarg = arg;
+	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
+
+	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
+		g_mutex_lock (mit->mutex);
+
+		g_queue_push_tail (mit->queue, GUINT_TO_POINTER (chmsg->id));
+
+		g_cond_signal (mit->cond);
+
+		g_mutex_unlock (mit->mutex);
+	}
 }
 
 static gpointer
 xmms_mediainfo_thread_thread (gpointer data)
 {
 	xmms_mediainfo_thread_t *mtt = (xmms_mediainfo_thread_t *) data;
-	GList *node = NULL;
+
+	g_mutex_lock (mtt->mutex);
 
 	while (mtt->running) {
 		xmms_playlist_entry_t *entry;
+		guint id;
 		
-		XMMS_MTX_LOCK (mtt->mutex);
 
 		XMMS_DBG ("MediainfoThread is idle.");
 		g_cond_wait (mtt->cond, mtt->mutex);
 
 		XMMS_DBG ("MediainfoThread is awake!");
 
-		while ((node = g_list_nth (mtt->list, 0))) {
+		while ((id = GPOINTER_TO_UINT (g_queue_pop_head (mtt->queue)))) {
 			xmms_transport_t *transport;
-			xmms_playlist_entry_t *newentry;
 			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
 			const gchar *mime;
-			guint id;
 
 			xmms_error_reset (&err);
 
-			mtt->list = g_list_remove_link (mtt->list, node);
-
-			id = GPOINTER_TO_UINT (node->data);
-
-			g_list_free_1 (node);
-
-			XMMS_MTX_UNLOCK (mtt->mutex);
+			g_mutex_unlock (mtt->mutex);
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
@@ -154,37 +175,28 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			xmms_playlist_entry_mimetype_set (entry, mime);
 			decoder = xmms_decoder_new ();
-			if (!xmms_decoder_open (decoder, entry)) {
+			if (!xmms_decoder_open (decoder, transport)) {
 				xmms_object_unref (entry);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
 				continue;
 			}
 
-			/*xmms_transport_start (transport);*/
 
+			xmms_decoder_mediainfo_get (decoder, transport);
 
-
-#if 0 /* FIXME */
-			newentry = xmms_decoder_mediainfo_get (decoder, transport);
-			if (newentry) {
-				XMMS_DBG ("updating %s", xmms_playlist_entry_url_get (newentry));
-				//xmms_playlist_entry_copy_property (newentry, entry);
-			}
-#endif
 			xmms_object_unref (entry);
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 				
 
-			XMMS_MTX_LOCK (mtt->mutex);
+			g_mutex_lock (mtt->mutex);
 
 		}
 
-		XMMS_MTX_UNLOCK (mtt->mutex);
-
 	}
 
+	g_mutex_unlock (mtt->mutex);
 
 	return NULL;
 }

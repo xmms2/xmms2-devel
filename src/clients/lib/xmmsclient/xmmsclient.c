@@ -294,7 +294,7 @@ xmmsc_deinit (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_MAIN, XMMS_METHOD_QUIT);
 }
 
 /**

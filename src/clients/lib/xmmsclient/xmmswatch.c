@@ -131,12 +131,6 @@ watch_toggled (DBusWatch *watch,
 		watch_remove (watch, data);
 }
 
-/* Timeout functions */
-static void
-timeout_free (xmmsc_connection_t *conn)
-{
-}
-
 static int
 timeout_handler (void * data)
 {

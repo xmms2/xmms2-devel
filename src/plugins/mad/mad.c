@@ -42,8 +42,6 @@ typedef struct xmms_mad_data_St {
 	struct mad_frame frame;
 	struct mad_synth synth;
 
-	xmms_playlist_entry_t *entry;
-
 	gchar buffer[4096];
 	guint buffer_length;
 	guint bitrate;
@@ -338,11 +336,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		}
 	}
 
-	if (data) {
-		data->entry = entry;
-
-/*FIXME!		xmms_decoder_entry_mediainfo_set (decoder, entry);*/
-	}
+	xmms_decoder_entry_mediainfo_set (decoder, entry);
 
 	xmms_object_unref (entry);
 
@@ -374,8 +368,6 @@ xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 	mad_stream_init (&data->stream);
 	mad_frame_init (&data->frame);
 	mad_synth_init (&data->synth);
-
-	data->entry = NULL;
 
 	xmms_decoder_private_data_set (decoder, data);
 	
