@@ -110,7 +110,7 @@ xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 xmms_sample_converter_t *
 xmms_sample_audioformats_coerce (GList *declist, GList *outlist)
 {
-	xmms_audio_format_t *bestdf, *bestof;
+	xmms_audio_format_t *bestdf, *bestof = NULL;
 	GList *dn, *on;
 /*	gint bestscore = GINT_MAX;*/
 	gint bestscore = 100000;

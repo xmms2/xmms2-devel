@@ -298,6 +298,8 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
         outfmts = xmms_output_formatlist_get (output);
 
         converter = xmms_sample_audioformats_coerce (decoder->format_list, outfmts);
+	if (!converter)
+		return NULL;
 
         xmms_output_format_set (output, xmms_sample_converter_get_to (converter));
 	decoder->converter = converter;
