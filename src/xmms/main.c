@@ -24,14 +24,13 @@ void play_next (void);
 void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
 	XMMS_DBG ("eos_reached");
 
 	XMMS_DBG ("closing transport");
-	xmms_transport_close (xmms_decoder_transport_get (decoder));
+	xmms_transport_close (xmms_decoder_transport_get (m_decoder));
 	XMMS_DBG ("destroying decoder");
+	xmms_decoder_destroy (m_decoder);
 	m_decoder = NULL;
-	xmms_decoder_destroy (decoder);
 	XMMS_DBG ("playing next");
 	play_next ();
 	XMMS_DBG ("done");
@@ -90,7 +89,6 @@ play_next (void)
 		return;
 	}
 
-	xmms_object_connect (XMMS_OBJECT (decoder), "eos-reached", eos_reached, NULL);
 	xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", mediainfo_changed, NULL);
 
 	XMMS_DBG ("starting threads..");
@@ -238,6 +236,9 @@ main (int argc, char **argv)
 	g_return_val_if_fail (o_plugin, -1);
 	output = xmms_output_open (o_plugin, config);
 	g_return_val_if_fail (output, -1);
+
+	xmms_object_connect (XMMS_OBJECT (output), "eos-reached", eos_reached, NULL);
+
 	xmms_output_start (output);
 	play_next ();
 
@@ -251,7 +252,7 @@ main (int argc, char **argv)
 
 		switch (caught) {
 			case SIGINT:
-				xmms_object_emit (XMMS_OBJECT (m_decoder), "eos-reached", NULL);
+				xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
 				break;
 			case SIGHUP:
 			case SIGTERM:
