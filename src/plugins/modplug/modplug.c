@@ -123,8 +123,6 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 	xmms_playlist_entry_property_set (entry,
 					  XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
 					  tmp);
-	g_free (tmp);
-
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 
 	xmms_object_unref (entry);
