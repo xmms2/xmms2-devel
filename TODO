@@ -1,24 +1,32 @@
-CORE
+GLOBAL:
+	* Log messages should be more interesting.
 	* licenseheader in all sourcefiles?
-	* Core should be reentrant. Cleaned up anyway.
 
+CORE:
+	* Core should be reentrant. Cleaned up anyway.
+	* Log should queue messages.
+	* Fix the last functions to new DBus API
+
+LIB:
+	* Synclib
+	  - bindings to Python / PHP?
+	
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
+	* use synclib
 
 PLUGINS:
 	* mad
 		* broken frames sound bad.
 
-	* make all decoderplugins seek-able
-	* vorbis - 1.9.4
-		* should calculate duration more correctly
-		  before playing file.
 	* sid - 1.9.4
 		* make it work
 		* parse STIL.txt
 
 	* tar and stacking - 1.9.4
 		* make sure they work
+
+	* curl - fix seeking.
 
 	* Transport
 		* be able to set buffersizes based on path?
@@ -57,3 +65,4 @@ LIBL44T:
 		* qt
 		* gdk
 	* about box! *usefull*
+
