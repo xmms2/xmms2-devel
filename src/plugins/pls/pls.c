@@ -155,8 +155,12 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 		return FALSE;
 	}
 
-	if (g_ascii_strncasecmp (lines[1], "PlaylistName", 12) == 0) {
-		current = 2;
+	if (g_ascii_strncasecmp (lines[current], "PlaylistName", 12) == 0) {
+		current++;
+	}
+
+	if (g_ascii_strncasecmp (lines[current], "numberofentries", 15) == 0) {
+		current++;
 	}
 
 	plspath = xmms_util_decode_path (xmms_transport_url_get (transport));
