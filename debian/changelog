@@ -1,3 +1,9 @@
+xmms2 (1.94-rc1) unstable; urgency=high
+
+  * New Upstream
+
+ -- Tobias <tru@xmms.org>  Thu, 21 Aug 2003 22:08:35 +0200
+
 xmms2 (1.93-1) unstable; urgency=low
 
   * New upstream. Includes sweet gtk2ui.
