@@ -22,6 +22,7 @@ typedef struct xmms_output_St {
 	gboolean running;
 
 	guint played;
+	gboolean is_open;
 
 	xmms_ringbuf_t *buffer;
 	xmms_config_value_t *config;
@@ -35,6 +36,7 @@ typedef struct xmms_output_St {
 
 typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer, gint len);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
+typedef void (*xmms_output_close_method_t) (xmms_output_t *output);
 
 /*
  * Public function prototypes
@@ -51,7 +53,9 @@ gchar * xmms_output_get_config_string (xmms_output_t *output, gchar *val);
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_output_t * xmms_output_open (xmms_plugin_t *plugin, xmms_config_data_t *config);
+xmms_output_t * xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config);
+gboolean xmms_output_open (xmms_output_t *output);
+void xmms_output_close (xmms_output_t *output);
 void xmms_output_start (xmms_output_t *output);
 void xmms_output_set_eos (xmms_output_t *output, gboolean eos);
 xmms_plugin_t * xmms_output_find_plugin ();

@@ -177,7 +177,7 @@ main (int argc, char **argv)
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
 	{
-		xmms_output_t *output = xmms_output_open (o_plugin, config);
+		xmms_output_t *output = xmms_output_new (o_plugin, config);
 		g_return_val_if_fail (output, -1);
 		
 		xmms_core_output_set (output);
