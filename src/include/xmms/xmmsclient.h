@@ -185,6 +185,7 @@ int xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r);
 int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument);
 int xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r);
 void xmmsc_result_seterror (xmmsc_result_t *res, char *errstr);
+int xmmsc_result_get_type (xmmsc_result_t *res);
 
 
 #ifdef __cplusplus

@@ -126,7 +126,7 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	g_hash_table_remove (ipc->results_table, GUINT_TO_POINTER (xmmsc_result_cid (res)));
 	xmmsc_ipc_unlock (ipc);
 }
-	
+
 static void
 xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 {
@@ -146,7 +146,7 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 		xmmsc_result_seterror (res, errstr);
 	}
-		
+
 	if (res) {
 		xmmsc_result_run (res, msg);
 	} else {

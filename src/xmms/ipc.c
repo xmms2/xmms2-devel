@@ -147,6 +147,8 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 {
 	GList *n;
 
+	xmms_ipc_msg_put_int32 (msg, arg->rettype);
+
 	switch (arg->rettype) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			xmms_ipc_msg_put_string (msg, arg->retval.string);

@@ -115,7 +115,7 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 {
 	int i;
 	xmmsc_result_t *res;
-	x_list_t *list;
+	x_list_t *list, *ret = NULL;
 
 	res = xmmsc_playlist_list (c);
 	if (!res)
@@ -125,9 +125,12 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 
 	i = xmmsc_result_get_uintlist (res, &list);
 
+	if (i) 
+		ret = x_list_copy (list);
+
 	xmmsc_result_unref (res);
 
-	if (i) return list;
+	if (ret) return ret;
 	return NULL;
 }
 
@@ -254,11 +257,18 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 	return res;
 }
 
+static void
+hash_insert (const void *key, const void *value, void *udata)
+{
+	x_hash_t *hash = udata;
+	x_hash_insert (hash, strdup ((char *)key), strdup ((char *)value));
+}
+
 x_hash_t *
 xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 {
 	xmmsc_result_t *res;
-	x_hash_t *ret;
+	x_hash_t *hash, *ret;
 
 	res = xmmsc_playlist_get_mediainfo (c, id);
 	if (!res)
@@ -270,10 +280,14 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 		return NULL;
 	}
 
-	if (!xmmsc_result_get_hashtable (res, &ret)) {
+	if (!xmmsc_result_get_hashtable (res, &hash)) {
 		xmmsc_result_unref (res);
 		return NULL;
 	}
+
+	ret = x_hash_new_full (x_str_hash, x_str_equal, g_free, g_free);
+
+	x_hash_foreach (hash, hash_insert, ret);
 
 	xmmsc_result_unref (res);
 	return ret;
