@@ -10,7 +10,6 @@
 
 #include "xmmsclient.h"
 #include "xmmsclient-glib.h"
-#include "xmmsclient-sync.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
