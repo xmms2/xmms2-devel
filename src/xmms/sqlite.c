@@ -43,7 +43,7 @@ xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName)
 	guint *id = pArg;
 
 	if (argv[0]) {
-		*id = atoi (argv[0]);
+		*id = atoi (argv[0]) + 1;
 	} else {
 		*id = 1;
 	}

@@ -658,6 +658,9 @@ xmms_output_thread (gpointer data)
 
 		if (xmms_decoder_iseos (output->decoder)) {
 			XMMS_DBG ("decoder is EOS!");
+			xmms_playlist_entry_stop (output->playlist, 
+						  xmms_decoder_playlist_entry_get (output->decoder),
+						  output->played_time);
 			xmms_playlist_get_next_entry (output->playlist);
 			xmms_decoder_stop (output->decoder);
 			xmms_object_unref (output->decoder);
@@ -669,6 +672,9 @@ xmms_output_thread (gpointer data)
 	}
 
 	if (output->decoder) {
+		xmms_playlist_entry_stop (output->playlist, 
+					  xmms_decoder_playlist_entry_get (output->decoder),
+					  output->played_time);
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (output->decoder);
 		output->decoder = NULL;

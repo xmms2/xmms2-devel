@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <glib.h>
+#include <math.h>
 
 #include "xmms/playlist.h"
 #include "internal/transport_int.h"
@@ -83,6 +84,7 @@ struct xmms_playlist_St {
 
 	xmms_mediainfo_thread_t *mediainfothr;
 	xmms_playlist_entry_t *playing_entry;
+	xmms_medialib_t *medialib;
 
 };
 
@@ -595,6 +597,8 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 
 	playlist->playing_entry = entry;
 
+	xmms_medialib_log_entry_start (playlist->medialib, entry);
+
 	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
 				   GUINT_TO_POINTER (xmms_playlist_entry_id_get (entry)));
 	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CURRENTID, arg);
@@ -603,6 +607,30 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 	return d;
 	
 	
+}
+
+void
+xmms_playlist_entry_stop (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry, guint time)
+{
+	gdouble duration;
+	gdouble sum = 0;
+	gchar *tmp;
+
+	g_return_if_fail (playlist);
+	g_return_if_fail (entry);
+
+	tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
+	if (!tmp) {
+		/* Probably a stream */
+		sum = 0.0;
+	} else {
+		duration = (gfloat) atoi (tmp);
+		sum = 1 + (guint) (99.0*((gfloat)time)/duration);
+	}
+
+	XMMS_DBG ("ENTRY STOPPED time = %d and duration = %f and sum = %f", time, duration, sum);
+
+	xmms_medialib_log_entry_stop (playlist->medialib, entry, (guint) sum);
 }
 
 
@@ -873,6 +901,7 @@ xmms_playlist_init (void)
 	ret->nextid = 1;
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 	ret->is_waiting = FALSE;
+	ret->medialib = xmms_medialib_init ();
 
 	/* 0 = MODE_NONE */
 	xmms_dbus_register_object ("playlist", XMMS_OBJECT (ret));
@@ -924,7 +953,7 @@ xmms_playlist_init (void)
 				XMMS_METHOD_SORT, 
 				XMMS_METHOD_FUNC (sort));
 
-	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
+	ret->mediainfothr = xmms_mediainfo_thread_start (ret, ret->medialib);
 
 	return ret;
 }

@@ -41,6 +41,8 @@ gboolean xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_ent
 void xmms_medialib_close (xmms_medialib_t *medialib);
 
 void xmms_medialib_id_set (xmms_medialib_t *medialib, guint id);
+void xmms_medialib_log_entry_stop (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry, guint value);
+void xmms_medialib_log_entry_start (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
 
 #ifdef HAVE_SQLITE
 #include <sqlite.h>

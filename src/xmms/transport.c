@@ -146,6 +146,13 @@ xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size)
 	XMMS_MTX_UNLOCK (transport->mutex);
 }
 
+xmms_playlist_entry_t *
+xmms_transport_playlist_entry_get (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+	return transport->entry;
+}
+
 /**
  * Retrives a list of files from the transport plugin.
  *

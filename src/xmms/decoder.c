@@ -303,6 +303,13 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 
 }
 
+xmms_playlist_entry_t *
+xmms_decoder_playlist_entry_get (xmms_decoder_t *decoder)
+{
+	g_return_val_if_fail (decoder, NULL);
+	return xmms_transport_playlist_entry_get (decoder->transport);
+}
+
 static void
 xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value)
 {

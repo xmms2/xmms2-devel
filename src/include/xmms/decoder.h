@@ -78,4 +78,6 @@ xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output,
 					  xmms_playlist_entry_t *entry);
 void xmms_decoder_stop (xmms_decoder_t *decoder);
 
+xmms_playlist_entry_t *xmms_decoder_playlist_entry_get (xmms_decoder_t *decoder);
+
 #endif /* __XMMS_DECODER_H__ */
