@@ -25,7 +25,6 @@
 typedef struct xmms_ringbuf_St xmms_ringbuf_t;
 
 xmms_ringbuf_t *xmms_ringbuf_new (guint size);
-xmms_ringbuf_t *xmms_ringbuf_new_unlocked (guint size);
 void xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf);
 void xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf);
 guint xmms_ringbuf_bytes_free (const xmms_ringbuf_t *ringbuf);
