@@ -103,48 +103,6 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
-gint
-xmms_mad_calculate_duration (xmms_decoder_t *decoder)
-{
-
-	xmms_transport_t *transport;
-	struct mad_stream stream;
-	struct mad_header header;
-	mad_timer_t duration;
-	gint ret=1;
-	gchar buf[4096];
-	gint buf_len = 0;
-
-	g_return_val_if_fail (decoder, 0);
-
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, 0);
-
-	mad_stream_init (&stream);
-	mad_header_init (&header);
-	ret = xmms_transport_read (transport, buf + buf_len, 4096 - buf_len);
-
-	mad_stream_buffer (&stream, buf, buf_len);
-		
-	while (1) {
-		if (mad_header_decode (&header, &stream) == -1) {
-			if (MAD_RECOVERABLE (stream.error))
-				continue;
-			else
-				break;
-
-		}
-
-		mad_timer_add (&duration, header.duration);
-	}
-
-	mad_stream_finish (&stream);
-	mad_header_finish (&header);
-
-	return duration.seconds;
-
-}
-
 static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
@@ -162,8 +120,6 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	g_return_if_fail (transport);
 
 	entry = g_new0 (xmms_playlist_entry_t, 1);
-
-	entry->duration = xmms_mad_calculate_duration (decoder);
 
 	XMMS_DBG ("Duration %d", entry->duration);
 
@@ -278,21 +234,30 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
 		
 	for (;;) {
-		guint bitrate=0;
 
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
 		}
 
-		bitrate = data->frame.header.bitrate / 1000;
-		if (data->entry && bitrate != data->entry->bitrate) {
-			if (data->entry) {
-				XMMS_DBG ("Bitrate changed to: %d", bitrate);
-				data->entry->bitrate = bitrate;
-				xmms_decoder_set_mediainfo (decoder,data->entry);
+		if (!data->entry->duration) {
+			guint fsize=0;
+			guint bitrate=0;
+
+			fsize = xmms_transport_size (transport) * 8;
+			bitrate = data->frame.header.bitrate;
+
+			if (!fsize) {
+				data->entry->duration = 0;
+			} else {
+				data->entry->duration = fsize / bitrate;
+				XMMS_DBG ("duration = %d", fsize/bitrate);
 			}
+				
+			data->entry->bitrate = bitrate / 1000;
+			xmms_decoder_set_mediainfo (decoder,data->entry);
+
 		}
-		
+
 		mad_synth_frame (&data->synth, &data->frame);
 		
 		ch1 = data->synth.pcm.samples[0];
