@@ -725,18 +725,21 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 
-	entry = xmms_playlist_advance (output->playlist);
+	while (TRUE) {
+		entry = xmms_playlist_advance (output->playlist);
 
-	if (!entry) {
-		XMMS_DBG ("got NULL from advance!");
-		return FALSE;
-	}
+		if (!entry) {
+			XMMS_DBG ("got NULL from advance!");
+			return FALSE;
+		}
 
-	decoder = xmms_playlist_entry_start (entry);
+		decoder = xmms_playlist_entry_start (entry);
 
-	if (!decoder) {
-		xmms_object_unref (entry);
-		return FALSE;
+		if (!decoder) {
+			xmms_object_unref (entry);
+		} else {
+			break;
+		}
 	}
 
 	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
