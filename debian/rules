@@ -4,7 +4,7 @@
 
 package=xmms2
 
-SCONSFLAGS=MANDIR=/usr/share/man/man1 PREFIX=/usr SYSCONFDIR=/etc/xmms CFLAGS="-O2 -Wall -g"
+SCONSFLAGS=MANDIR=/usr/share/man PREFIX=/usr SYSCONFDIR=/etc/xmms CFLAGS="-O2 -Wall -g"
 
 build:
 	$(checkdir)

@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 /**
  * @file
  * 
@@ -8,10 +27,11 @@
 
 #include "xmms/effect.h"
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
 #include "xmms/object.h"
 #include "xmms/config.h"
 #include "xmms/util.h"
+
+#include "internal/plugin_int.h"
 
 struct xmms_effect_St {
 	struct xmms_effect_St *next;
@@ -110,6 +130,8 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 
 		g_return_val_if_fail (effect, stack);
 
+		effect->plugin = plugin;
+
 		initfunc = xmms_plugin_method_get (plugin, 
 						   XMMS_PLUGIN_METHOD_INIT);
 		
@@ -127,7 +149,6 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 							 XMMS_PLUGIN_METHOD_DEINIT);
 
 		effect->next = stack;
-		effect->plugin = plugin;
 		stack = effect;
 
 	} else {

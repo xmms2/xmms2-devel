@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 
 /** @file
  *  Controls playlist
@@ -9,11 +28,11 @@
 #include <string.h>
 #include <glib.h>
 
-#include "playlist.h"
-#include "playlist_entry.h"
-#include "util.h"
-#include "core.h"
-#include "signal_xmms.h"
+#include "xmms/playlist.h"
+#include "xmms/playlist_entry.h"
+#include "xmms/util.h"
+#include "xmms/core.h"
+#include "xmms/signal_xmms.h"
 
 
 /** Playlist structure */
@@ -32,7 +51,7 @@ struct xmms_playlist_St {
 	gboolean is_waiting;
 
 	/** XMMS_PLAYLIST_MODE_[NONE|ALL|ONE|STOP] */
-	xmms_playlist_mode_t next_mode;
+	xmms_config_value_t *next_mode;
 };
 
 /*
@@ -50,8 +69,10 @@ struct xmms_playlist_St {
 void
 xmms_playlist_mode_set (xmms_playlist_t *playlist, xmms_playlist_mode_t mode)
 {
+	gchar *m;
 	XMMS_PLAYLIST_LOCK (playlist);
-	playlist->next_mode = mode;
+	m = g_strdup_printf ("%d", mode); /* FIXME: memory loss??? */
+	xmms_config_value_data_set (playlist->next_mode, m);
 	XMMS_PLAYLIST_UNLOCK (playlist);
 }
 
@@ -64,7 +85,7 @@ xmms_playlist_mode_get (xmms_playlist_t *playlist)
 	xmms_playlist_mode_t m;
 
 	XMMS_PLAYLIST_LOCK (playlist);
-	m = playlist->next_mode;
+	m = (xmms_playlist_mode_t) xmms_config_value_int_get (playlist->next_mode);
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
 	return m;
@@ -110,6 +131,7 @@ xmms_playlist_entries_left (xmms_playlist_t *playlist)
 }
 
 /** shuffles playlist */
+XMMS_METHOD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 
 void
 xmms_playlist_shuffle (xmms_playlist_t *playlist)
@@ -129,7 +151,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 		XMMS_PLAYLIST_UNLOCK (playlist);
                 return;
 	}
-                                                                                  
+
         ptrs = g_new (GList *, len);
                                                                                   
         for (node = playlist->list, i = 0; i < len; node = g_list_next (node), i++)
@@ -162,6 +184,8 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 }
 
 /** removes entry from playlist */
+
+XMMS_METHOD_DEFINE (remove, xmms_playlist_id_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 
 gboolean 
 xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
@@ -199,6 +223,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 }
 
 /** move entry in playlist */
+XMMS_METHOD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
 
 gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
@@ -273,6 +298,28 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 
 }
 
+
+gboolean
+xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl)
+{
+	gboolean res;
+
+	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
+	if (!entry)
+		return FALSE;
+
+	res = xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
+
+	/* Since playlist_add will reference this entry now we turn
+	   total control to it */
+	xmms_playlist_entry_unref (entry);
+
+	return res;
+}
+
+XMMS_METHOD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
+
+
 /** Adds a xmms_playlist_entry_t to the playlist.
  *
  *  This will append or prepend the entry according to
@@ -340,6 +387,8 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 }
 
+XMMS_METHOD_DEFINE (getmediainfo, xmms_playlist_get_byid, xmms_playlist_t *, PLAYLIST_ENTRY, UINT32, NONE);
+
 /** Get a entry based on position in playlist.
  * 
  *  @returns a xmms_playlist_entry_t that lives on the given position.
@@ -367,6 +416,8 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 	return r->data;
 
 }
+
+XMMS_METHOD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 
 void
 xmms_playlist_clear (xmms_playlist_t *playlist)
@@ -410,12 +461,16 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r=NULL;
 	GList *n = NULL;
+	xmms_playlist_mode_t mode;
 
 	g_return_val_if_fail (playlist, NULL);
 
 	XMMS_PLAYLIST_LOCK (playlist);
+
+	mode = xmms_config_value_int_get (playlist->next_mode);
+	
 	if (playlist->currententry) {
-		if (playlist->next_mode == XMMS_PLAYLIST_MODE_REPEAT_ONE) {
+		if (mode == XMMS_PLAYLIST_MODE_REPEAT_ONE) {
 			n = playlist->currententry;
 		} else {
 			n = g_list_next (playlist->currententry);
@@ -433,7 +488,7 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
-	if (playlist->next_mode == XMMS_PLAYLIST_MODE_STOP)
+	if (mode == XMMS_PLAYLIST_MODE_STOP)
 		return NULL;
 
 	return r;
@@ -505,6 +560,8 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
  *  returned by xmms_playlist_get_next. This function
  *  will also wake xmms_playlist_wait
  */
+
+XMMS_METHOD_DEFINE (jump, xmms_playlist_set_current_position, xmms_playlist_t *, NONE, UINT32, NONE);
   
 gboolean
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
@@ -573,6 +630,7 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
  *  should use when sorting. 
  */
 
+XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
 void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
 {
@@ -595,9 +653,11 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
 
 /** Lists the current playlist.
  *
- *  @returns A newly allocated GList with the current playlist.
- *  Remeber that it is only the LIST that is copied. Not the entries.
+ * @returns A newly allocated GList with the current playlist.
+ * Remeber that it is only the LIST that is copied. Not the entries.
+ * The entries are however referenced, and must be unreffed!
  */
+XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, PLAYLIST, NONE, NONE);
 
 GList *
 xmms_playlist_list (xmms_playlist_t *playlist)
@@ -606,6 +666,7 @@ xmms_playlist_list (xmms_playlist_t *playlist)
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
+		xmms_playlist_entry_ref (node->data);
 		r = g_list_append (r, node->data);
 	}
 
@@ -630,7 +691,20 @@ xmms_playlist_init ()
 	ret->nextid = 1;
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 	ret->is_waiting = FALSE;
+
+	/* 0 = MODE_NONE */
+	ret->next_mode = xmms_config_value_register ("core.next_mode", "0", NULL, NULL);
 	xmms_object_init (XMMS_OBJECT (ret));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SHUFFLE, XMMS_METHOD_FUNC (shuffle));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_ADD, XMMS_METHOD_FUNC (add));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_GETMEDIAINFO, XMMS_METHOD_FUNC (getmediainfo));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_REMOVE, XMMS_METHOD_FUNC (remove));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_MOVE, XMMS_METHOD_FUNC (move));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_LIST, XMMS_METHOD_FUNC (list));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_CLEAR, XMMS_METHOD_FUNC (clear));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SORT, XMMS_METHOD_FUNC (sort));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_JUMP, XMMS_METHOD_FUNC (jump));
 
 	return ret;
 }

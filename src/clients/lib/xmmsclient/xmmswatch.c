@@ -1,14 +1,35 @@
-#include "xmmsclient.h"
-#include "xmmsclient_int.h"
-#include "xmmswatch.h"
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
+#include "xmms/xmmsclient.h"
+#include "xmms/xmmswatch.h"
+
+#include "internal/xmmsclient_int.h"
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 
 #include <dbus/dbus.h>
-#include <glib.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 
-gboolean
+int
 xmmsc_watch_more (xmmsc_connection_t *conn)
 {
 	return (dbus_connection_get_dispatch_status (conn->conn) ==
@@ -50,24 +71,22 @@ xmmsc_watch_dispatch (xmmsc_connection_t *conn,
 static void
 xmmsc_watch_free (xmmsc_watch_t *watch)
 {
-	g_free (watch);
+	free (watch);
 }
 
 /* Watch functions */
 static dbus_bool_t
 watch_add (DBusWatch *watch,
-	    gpointer data)
+	    void * data)
 {
 	xmmsc_connection_t *conn = data;
 	xmmsc_watch_t *x_watch;
-	guint flags = 0;
+	unsigned int flags = 0;
 	
-	g_return_val_if_fail (conn, FALSE);
-
 	if (!dbus_watch_get_enabled (watch))
 		return TRUE;
 
-	x_watch = g_new0 (xmmsc_watch_t, 1);
+	x_watch = calloc (1, sizeof (xmmsc_watch_t));
 	x_watch->fd = dbus_watch_get_fd (watch);
 	x_watch->dbus_watch = watch;
 
@@ -86,12 +105,10 @@ watch_add (DBusWatch *watch,
 
 static void
 watch_remove (DBusWatch *watch,
-	      gpointer data)
+	      void * data)
 {
 	xmmsc_connection_t *conn = data;
 	xmmsc_watch_t *x_watch;
-
-	g_return_if_fail (conn);
 
 	x_watch = dbus_watch_get_data (watch);
 	if (!x_watch)
@@ -106,7 +123,7 @@ watch_remove (DBusWatch *watch,
 
 static void
 watch_toggled (DBusWatch *watch,
-	       gpointer data)
+	       void * data)
 {
 	if (dbus_watch_get_enabled (watch))
 		watch_add (watch, data);
@@ -119,11 +136,11 @@ static void
 timeout_free (xmmsc_timeout_t *time)
 {
 	if (time)
-		g_free (time);
+		free (time);
 }
 
-static gboolean
-timeout_handler (gpointer data)
+static int
+timeout_handler (void * data)
 {
 	xmmsc_timeout_t *time = data;
 	dbus_timeout_handle (time->dbus_timeout);
@@ -132,18 +149,16 @@ timeout_handler (gpointer data)
 
 static dbus_bool_t
 timeout_add (DBusTimeout *timeout,
-	     gpointer data)
+	     void * data)
 {
 
 	xmmsc_connection_t *conn = data;
 	xmmsc_timeout_t *time;
 	
-	g_return_val_if_fail (conn, FALSE);
-
 	if (!dbus_timeout_get_enabled (timeout))
 		return TRUE;
 	
-	time = g_new0 (xmmsc_timeout_t, 1);
+	time = calloc (1, sizeof (xmmsc_timeout_t));
 	time->dbus_timeout = timeout;
 	time->interval = dbus_timeout_get_interval (timeout);
 	time->cb = timeout_handler;
@@ -157,12 +172,10 @@ timeout_add (DBusTimeout *timeout,
 
 static void
 timeout_remove (DBusTimeout *timeout,
-		gpointer data)
+		void * data)
 {
 	xmmsc_timeout_t *time;
 	xmmsc_connection_t *conn = data;
-
-	g_return_if_fail (conn);
 
 	time = dbus_timeout_get_data (timeout);
 	if (!time)
@@ -176,7 +189,7 @@ timeout_remove (DBusTimeout *timeout,
 
 static void
 timeout_toggled (DBusTimeout *timeout,
-		 gpointer data)
+		 void * data)
 {
 	if (dbus_timeout_get_enabled (timeout))
 		timeout_add (timeout, data);
@@ -213,9 +226,6 @@ wakeup_main (void *data)
 void
 xmmsc_watch_callback_set (xmmsc_connection_t *conn, xmmsc_watch_callback_t cb)
 {
-	g_return_if_fail (conn);
-	g_return_if_fail (cb);
-
 	conn->watch_callback = cb;
 }
 
@@ -224,9 +234,8 @@ xmmsc_watch_callback_set (xmmsc_connection_t *conn, xmmsc_watch_callback_t cb)
  */
 
 void
-xmmsc_watch_data_set (xmmsc_connection_t *connection, gpointer data)
+xmmsc_watch_data_set (xmmsc_connection_t *connection, void * data)
 {
-	g_return_if_fail (connection);
 	connection->data = data;
 }
 
@@ -234,11 +243,9 @@ xmmsc_watch_data_set (xmmsc_connection_t *connection, gpointer data)
  * Get private data from watch.
  */
 
-gpointer
+void *
 xmmsc_watch_data_get (xmmsc_connection_t *connection)
 {
-	g_return_val_if_fail (connection, NULL);
-	
 	return connection->data;
 }
 
@@ -249,9 +256,6 @@ xmmsc_watch_data_get (xmmsc_connection_t *connection)
 void
 xmmsc_watch_init (xmmsc_connection_t *connection)
 {
-
-	g_return_if_fail (connection);
-	g_return_if_fail (connection->watch_callback);
 
 	dbus_connection_set_watch_functions (connection->conn,
 					     watch_add,

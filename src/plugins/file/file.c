@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 #include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
@@ -8,8 +27,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <string.h>
+
+extern int errno;
 
 /*
  * Type definitions
@@ -145,6 +167,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	xmms_file_data_t *data;
 	const gchar *urlptr;
 	gchar *nurl;
+	struct stat st;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -162,6 +185,12 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 		g_free (nurl);
 		return FALSE;
 	}
+
+	if (stat (urlptr, &st) == -1)
+		return FALSE;
+
+	if (!S_ISREG (st.st_mode))
+		return FALSE;
 
 	XMMS_DBG ("Opening %s", urlptr);
 	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
@@ -192,7 +221,8 @@ xmms_file_close (xmms_transport_t *transport)
 	g_return_if_fail (transport);
 
 	data = xmms_transport_plugin_data_get (transport);
-	g_return_if_fail (data);
+	if (!data)
+		return;
 	
 	if (data->fd != -1)
 		close (data->fd);
@@ -218,8 +248,14 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 		data->mime = NULL;
 	}
-	
-	ret = read (data->fd, buffer, len);
+
+	do {
+		ret = read (data->fd, buffer, len);
+		if (ret == -1) {
+			XMMS_DBG ("errno (%d) %s", errno, strerror (errno));
+		}
+	} while (ret == -1 && (errno == EINTR ||
+			       errno == EIO));
 
 	if (ret == 0)
 		return -1;

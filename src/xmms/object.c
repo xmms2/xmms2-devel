@@ -1,5 +1,24 @@
-#include "object.h"
-#include "util.h"
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
+#include "xmms/object.h"
+#include "xmms/util.h"
 
 typedef struct {
 	xmms_object_handler_t handler;
@@ -12,6 +31,7 @@ xmms_object_init (xmms_object_t *object)
 	g_return_if_fail (object);
 	
 	object->id = XMMS_OBJECT_MID;
+	object->signals = g_hash_table_new (g_str_hash, g_str_equal);
 	object->methods = g_hash_table_new (g_str_hash, g_str_equal);
 	object->mutex = g_mutex_new ();
 	object->parent = NULL;
@@ -52,13 +72,13 @@ xmms_object_cleanup (xmms_object_t *object)
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 
-	g_hash_table_foreach_remove (object->methods, xmms_object_cleanup_foreach, NULL);
-	g_hash_table_destroy (object->methods);
+	g_hash_table_foreach_remove (object->signals, xmms_object_cleanup_foreach, NULL);
+	g_hash_table_destroy (object->signals);
 	g_mutex_free (object->mutex);
 }
 
 void
-xmms_object_connect (xmms_object_t *object, const gchar *method,
+xmms_object_connect (xmms_object_t *object, const gchar *signal,
 					 xmms_object_handler_t handler, gpointer userdata)
 {
 	GList *list = NULL;
@@ -68,7 +88,7 @@ xmms_object_connect (xmms_object_t *object, const gchar *method,
 
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
-	g_return_if_fail (method);
+	g_return_if_fail (signal);
 	g_return_if_fail (handler);
 
 	
@@ -78,19 +98,19 @@ xmms_object_connect (xmms_object_t *object, const gchar *method,
 
 /*	g_mutex_lock (object->mutex);*/
 	
-	if (g_hash_table_lookup_extended (object->methods, method, &key, &val)) {
+	if (g_hash_table_lookup_extended (object->signals, signal, &key, &val)) {
 		list = g_list_prepend (val, entry);
-		g_hash_table_insert (object->methods, key, list);
+		g_hash_table_insert (object->signals, key, list);
 	} else {
 		list = g_list_prepend (list, entry);
-		g_hash_table_insert (object->methods, g_strdup (method), list);
+		g_hash_table_insert (object->signals, g_strdup (signal), list);
 	}
 
 /*	g_mutex_unlock (object->mutex);*/
 }
 
 void
-xmms_object_disconnect (xmms_object_t *object, const gchar *method,
+xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 						xmms_object_handler_t handler)
 {
 	GList *list = NULL, *node;
@@ -100,12 +120,12 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *method,
 
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
-	g_return_if_fail (method);
+	g_return_if_fail (signal);
 	g_return_if_fail (handler);
 
 	g_mutex_lock (object->mutex);
 	
-	if (!g_hash_table_lookup_extended (object->methods, method, &key, &val))
+	if (!g_hash_table_lookup_extended (object->signals, signal, &key, &val))
 		goto unlock;
 	if (!val)
 		goto unlock;
@@ -124,37 +144,37 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *method,
 	
 	list = g_list_delete_link (list, node);
 	if (!list) {
-		g_hash_table_remove (object->methods, key);
+		g_hash_table_remove (object->signals, key);
 		g_free (key);
 	} else {
-		g_hash_table_insert (object->methods, key, list);
+		g_hash_table_insert (object->signals, key, list);
 	}
 unlock:
 	g_mutex_unlock (object->mutex);
 }
 
 void
-xmms_object_emit (xmms_object_t *object, const gchar *method, gconstpointer data)
+xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data)
 {
 	GList *list, *node, *list2 = NULL;
 	xmms_object_handler_entry_t *entry;
 	
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
-	g_return_if_fail (method);
+	g_return_if_fail (signal);
 
 	g_mutex_lock (object->mutex);
 	
-	list = g_hash_table_lookup (object->methods, method);
+	list = g_hash_table_lookup (object->signals, signal);
 	for (node = list; node; node = g_list_next (node)) {
 		entry = node->data;
 
 		list2 = g_list_prepend (list2, entry);
 	}
 
-	if (!list2) { /* no method -> send to parent */
+	if (!list2) { /* no handler -> send to parent */
 		if (object->parent) {
-			xmms_object_emit (object->parent, method, data);
+			xmms_object_emit (object->parent, signal, data);
 		}
 	}
 
@@ -168,4 +188,24 @@ xmms_object_emit (xmms_object_t *object, const gchar *method, gconstpointer data
 	}
 	g_list_free (list2);
 
+}
+
+void
+xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_func_t func)
+{
+
+	g_hash_table_insert (object->methods, method, func);
+
+}
+
+
+void
+xmms_object_method_call (xmms_object_t *object, const char *method, xmms_object_method_arg_t *arg)
+{
+	xmms_object_method_func_t func;
+
+	func = g_hash_table_lookup (object->methods, method);
+
+	if (func)
+		func (object, arg);
 }

@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 /** @file
  * Decoder.
  *
@@ -6,22 +25,23 @@
  */
 
 
-#include "decoder.h"
-#include "core.h"
-#include "decoder_int.h"
-#include "plugin.h"
-#include "plugin_int.h"
-#include "object.h"
-#include "util.h"
-#include "output.h"
-#include "output_int.h"
-#include "transport.h"
-#include "transport_int.h"
-#include "ringbuf.h"
-#include "playlist.h"
-#include "visualisation.h"
-#include "effect.h"
-#include "signal_xmms.h"
+#include "xmms/decoder.h"
+#include "xmms/core.h"
+#include "xmms/plugin.h"
+#include "xmms/object.h"
+#include "xmms/util.h"
+#include "xmms/output.h"
+#include "xmms/transport.h"
+#include "xmms/ringbuf.h"
+#include "xmms/playlist.h"
+#include "xmms/visualisation.h"
+#include "xmms/effect.h"
+#include "xmms/signal_xmms.h"
+
+#include "internal/decoder_int.h"
+#include "internal/transport_int.h"
+#include "internal/plugin_int.h"
+#include "internal/output_int.h"
 
 #include <string.h>
 
@@ -490,7 +510,7 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 
 	if (decoder->running) {
 		g_thread_join (decoder->thread);
-		decoder->thread = NULL;
+		//decoder->thread = NULL;
 	}
 
 }

@@ -4,7 +4,7 @@ Import('base_env')
 
 xmmsc_sources = Split ("xmmsclient-glib.c")
 
-env = base_env.Copy(CPPPATH = ['../xmmsclient', '#src'],
+env = base_env.Copy(CPPPATH = ['../xmmsclient', '#src/include'],
 		    LIBPATH = ['../xmmsclient'],
 		    LIBS = ['xmmsclient'])
 

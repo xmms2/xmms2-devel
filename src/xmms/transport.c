@@ -1,21 +1,44 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 /** @file 
  * Controls transport plugins.
  *
  * This file is responsible for the transportlayer.
  */
 
-#include "transport.h"
-#include "transport_int.h"
-#include "plugin.h"
-#include "plugin_int.h"
-#include "object.h"
-#include "util.h"
-#include "ringbuf.h"
-#include "signal_xmms.h"
-#include "playlist.h"
+#include "xmms/transport.h"
+#include "xmms/plugin.h"
+#include "xmms/object.h"
+#include "xmms/util.h"
+#include "xmms/ringbuf.h"
+#include "xmms/signal_xmms.h"
+#include "xmms/playlist.h"
+#include "xmms/core.h"
+
+#include "internal/transport_int.h"
+#include "internal/plugin_int.h"
 
 #include <glib.h>
 #include <string.h>
+
+#include <sys/stat.h>
 
 /*
  * Static function prototypes
@@ -73,6 +96,24 @@ struct xmms_transport_St {
 /*
  * Public functions
  */
+
+/**
+ * Recreates the Ringbuffer with new size.
+ * Danger will robinsson!!!! This will kill all data in the buffer. 
+ */
+
+void
+xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size)
+{
+	g_return_if_fail (transport);
+	g_return_if_fail (size);
+
+	g_mutex_lock (transport->mutex);
+	xmms_ringbuf_destroy (transport->buffer);
+	transport->buffer = xmms_ringbuf_new (size);
+
+	g_mutex_unlock (transport->mutex);
+}
 
 /**
  * Retrives a list of files from the transport plugin.
@@ -140,6 +181,18 @@ xmms_transport_entry_new (gchar *path, xmms_transport_entry_type_t type)
 	ret->type = type;
 
 	return ret;
+}
+
+/**
+ * Returns the plugin for this transport.
+ */
+
+xmms_plugin_t *
+xmms_transport_plugin_get (const xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+
+	return transport->plugin;
 }
 
 /**
@@ -229,6 +282,14 @@ xmms_transport_islocal (xmms_transport_t *transport)
 	g_return_val_if_fail (transport, FALSE);
 
 	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
+}
+
+gboolean
+xmms_transport_can_seek (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 }
 
 
@@ -328,20 +389,17 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 }
 
 /**
- * Gets the current entry
+ * Updates the current entry 
  */
-xmms_playlist_entry_t *
-xmms_transport_entry_get (xmms_transport_t *transport)
+
+void
+xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
-	xmms_playlist_entry_t *entry;
+	g_return_if_fail (transport);
+	g_return_if_fail (entry);
 
-	g_return_val_if_fail (transport, NULL);
-
-	xmms_transport_lock (transport);
-	entry = transport->entry;
-	xmms_transport_unlock (transport);
-
-	return entry;
+	xmms_playlist_entry_property_copy (entry, transport->entry);
+	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (transport->entry));
 }
 
 /**
@@ -429,6 +487,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 		if (read_method) {
 			gint ret = read_method (transport, buffer, len);
+			if (ret == -1) return 0; /*FIXME*/
 			return ret;
 		}
 		return -1;
@@ -467,26 +526,31 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
   * @param transport the transport to modify
   * @param offset offset in bytes
   * @param whence se above
+  * @returns TRUE if the seek is scheduled.
   * 
   */
 
-void
+gboolean
 xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
-	g_return_if_fail (transport);
-	g_return_if_fail (!transport->want_seek);
+	g_return_val_if_fail (transport, FALSE);
+	g_return_val_if_fail (!transport->want_seek, FALSE);
 
 	xmms_transport_lock (transport);
+
+	if (!xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK)) {
+		return FALSE;
+	}
 
 	if (!transport->running) {
 		xmms_transport_seek_method_t seek_method;
 
 		seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-		g_return_if_fail (seek_method);
+		g_return_val_if_fail (seek_method, FALSE);
 
 		xmms_transport_unlock (transport);
 		seek_method (transport, offset, whence);
-		return;
+		return TRUE;
 	}
 
 	transport->seek_offset = offset;
@@ -498,6 +562,8 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	xmms_transport_unlock (transport);
 
 	g_cond_signal (transport->cond);
+
+	return TRUE;
 }
 
 /**
@@ -574,6 +640,10 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 		}
 		*transport->suburl = 0;
 		transport->suburl++;
+
+		if (!g_file_test (url, G_FILE_TEST_IS_DIR))
+			return FALSE;
+
 		XMMS_DBG ("Trying %s  (suburl: %s)",url,transport->suburl);
 	}
 
@@ -638,6 +708,7 @@ xmms_transport_seek_real (xmms_transport_t *transport)
 	xmms_transport_seek_method_t seek_method;
 	g_return_if_fail (transport);
 
+
 	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
 	g_return_if_fail (seek_method);
 
@@ -669,8 +740,9 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	g_mutex_free (transport->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (transport));
 
-	g_free (transport->suburl);
-	g_free (transport->mimetype);
+	if (transport->mimetype)
+		g_free (transport->mimetype);
+
 	g_free (transport);
 }
 

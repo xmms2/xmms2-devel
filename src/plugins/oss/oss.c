@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 #include "xmms/plugin.h"
 #include "xmms/output.h"
 #include "xmms/util.h"
@@ -31,6 +50,9 @@ typedef struct xmms_oss_data_St {
 	gboolean have_mixer;
 
 	xmms_config_value_t *mixer;
+
+	/* ugly lock to avoid problems in kernel api */
+	GMutex *mutex;
 } xmms_oss_data_t;
 
 /*
@@ -73,6 +95,24 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, xmms_oss_mixer_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, xmms_oss_mixer_set);
 
+	xmms_plugin_config_value_register (plugin, 
+		  	   	 	   "mixer",
+					   "/dev/mixer",
+					   NULL,
+					   NULL);
+	
+	xmms_plugin_config_value_register (plugin, 
+			   	 	   "volume",
+					   "70/70",
+					   NULL,
+					   NULL);
+
+	xmms_plugin_config_value_register (plugin,
+					   "device",
+					   "/dev/dsp",
+					   NULL,
+					   NULL);
+	
 	return plugin;
 }
 
@@ -152,7 +192,9 @@ xmms_oss_flush (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	/* reset soundcard buffer */
+	g_mutex_lock (data->mutex);
 	ioctl (data->fd, SNDCTL_DSP_RESET, 0);
+	g_mutex_unlock (data->mutex);
 
 }
 
@@ -239,12 +281,10 @@ xmms_oss_new (xmms_output_t *output)
 	g_return_val_if_fail (output, FALSE);
 
 	data = g_new0 (xmms_oss_data_t, 1);
+	data->mutex = g_mutex_new ();
 
-	val = xmms_plugin_config_value_register (xmms_output_plugin_get (output), 
-				  	   	 "mixer",
-					   	 "/dev/mixer",
-					   	 NULL,
-					   	 NULL);
+	val = xmms_plugin_config_lookup (
+			xmms_output_plugin_get (output), "mixer");
 	mixdev = xmms_config_value_string_get (val);
 
 	/* Open mixer here. I am not sure this is entirely correct. */
@@ -257,17 +297,14 @@ xmms_oss_new (xmms_output_t *output)
 	XMMS_DBG ("Have mixer = %d", data->have_mixer);
 
 	/* retrive keys for mixer settings. but ignore current values */
-	data->mixer = xmms_plugin_config_value_register (xmms_output_plugin_get (output), 
-					   	 "volume",
-					   	 "70/70",
-					   	 xmms_oss_mixer_config_changed,
-					   	 output);
-	/* register device */
-	val = xmms_plugin_config_value_register (xmms_output_plugin_get (output),
-						 "device",
-						 "/dev/dsp",
-						 NULL,
-						 NULL);
+	data->mixer = xmms_plugin_config_lookup (
+			xmms_output_plugin_get (output), "volume");
+
+	/* since we don't have this data when we are register the configvalue
+	   we need to set the callback here */
+	xmms_config_value_callback_set (data->mixer, 
+			xmms_oss_mixer_config_changed, 
+			(gpointer) output);
 
 	xmms_output_plugin_data_set (output, data);
 
@@ -317,6 +354,10 @@ xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_return_if_fail (len > 0);
 
 	data = xmms_output_plugin_data_get (output);
+
+	/* make sure that we don't flush buffers when we are writing */
+	g_mutex_lock (data->mutex);
 	write (data->fd, buffer, len);
+	g_mutex_unlock (data->mutex);
 
 }

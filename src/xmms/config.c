@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 #include <glib.h>
 
 #include <libxml/parser.h>
@@ -12,9 +31,11 @@
 #include "xmms/object.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/plugin.h"
+#include "xmms/dbus.h"
 
 
 struct xmms_config_St {
+	xmms_object_t obj;
 	const gchar *url;
 
 	GHashTable *values;
@@ -32,22 +53,29 @@ struct xmms_config_value_St {
 };
 
 /*
+ * Global config
+ */
+
+xmms_config_t *global_config;
+
+/*
  * Config functions
  */
 
 static void
-add_value (xmms_config_t *config, gchar *key, gchar *value)
+add_value (gchar *key, gchar *value)
 {
 	xmms_config_value_t *val;
 	gchar *mykey = g_strdup (key);
 
 	val = xmms_config_value_new (mykey);
 	xmms_config_value_data_set (val, value);
-	g_hash_table_insert (config->values, mykey, val);
+
+	g_hash_table_insert (global_config->values, mykey, val);
 }
 
 static void
-parse_plugin (gchar *pluginname, xmms_config_t *config, xmlNodePtr n)
+parse_plugin (gchar *pluginname, xmlNodePtr n)
 {
 	xmlNodePtr node;
 
@@ -59,7 +87,7 @@ parse_plugin (gchar *pluginname, xmms_config_t *config, xmlNodePtr n)
 
 			if (name && node->children) {
 				valname = g_strdup_printf ("%s.%s", pluginname, name);
-				add_value (config, valname, g_strdup ((gchar *) node->children->content));
+				add_value (valname, g_strdup ((gchar *) node->children->content));
 			}
 		}
 
@@ -68,9 +96,11 @@ parse_plugin (gchar *pluginname, xmms_config_t *config, xmlNodePtr n)
 }
 
 static void
-parse_section (char *sectionname, xmms_config_t *config, xmlNodePtr n)
+parse_section (char *sectionname, xmlNodePtr n)
 {
 	xmlNodePtr node;
+
+	g_mutex_lock (global_config->mutex);
 
 	for (node = n; node; node = node->next) {
 		if (g_strcasecmp ("plugin", (char*) node->name) == 0) {
@@ -79,8 +109,8 @@ parse_section (char *sectionname, xmms_config_t *config, xmlNodePtr n)
 
 			if (name && node->children) {
 				pluginname = g_strdup_printf ("%s.%s", sectionname, name);
-				config->plugins = g_list_append (config->plugins, name);
-				parse_plugin (pluginname, config, node->children);
+				global_config->plugins = g_list_append (global_config->plugins, name);
+				parse_plugin (pluginname, node->children);
 			}
 
 		} else if (g_strcasecmp ("value", (char*) node->name) == 0) {
@@ -88,80 +118,219 @@ parse_section (char *sectionname, xmms_config_t *config, xmlNodePtr n)
 			gchar *name = (gchar *)xmlGetProp (node, (xmlChar *)"name");
 			if (name && node->children) {
 				valname = g_strdup_printf ("%s.%s", sectionname, name);
-				add_value (config, valname, g_strdup ((gchar *) node->children->content));
+				add_value (valname, g_strdup ((gchar *) node->children->content));
 			}
 
 		}
 	}
+
+	g_mutex_unlock (global_config->mutex);
 }
 
-xmms_config_t *
+
+void
+xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
+{
+	xmms_config_value_t *val;
+
+	val = xmms_config_lookup (key);
+	if (val)
+		xmms_config_value_data_set (val, g_strdup (value));
+
+}
+
+XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
+
+
+gboolean
 xmms_config_init (const gchar *filename)
 {
 	xmlDocPtr doc;
 	xmlNodePtr node,root;
 	xmms_config_t *config;
 
-	g_return_val_if_fail (filename, NULL);
+	g_return_val_if_fail (filename, FALSE);
 
 	config = g_new0 (xmms_config_t, 1);
+	xmms_object_init (XMMS_OBJECT (config));
 	config->mutex = g_mutex_new ();
 	config->values = g_hash_table_new (g_str_hash, g_str_equal);
 	config->url = g_strdup (filename);
 
 	if(!(doc = xmlParseFile(filename))) {
-		return NULL;
+		return FALSE;
 	}
+	
+	global_config = config;
 	
 	root = xmlDocGetRootElement (doc);
 	root = root->children;
 
 	for (node = root; node; node = node->next) {
 		if (g_strcasecmp ("section", (char *)node->name) == 0) {
-			parse_section ((char*)xmlGetProp (node, "name"), config, node->children);
+			parse_section ((char*)xmlGetProp (node, "name"), node->children);
 		}
 	}
-	
-	return config;
+
+	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
+	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
+
+	return TRUE;
 }
 
 void
-xmms_config_free (xmms_config_t *config)
+xmms_config_free (void)
 {
-	g_return_if_fail (config);
+	g_return_if_fail (global_config);
 }
 
 xmms_config_value_t *
-xmms_config_lookup (xmms_config_t *config, 
-		    const gchar *path)
+xmms_config_lookup (const gchar *path)
 {
-	g_return_val_if_fail (config, NULL);
+	xmms_config_value_t *value;
+	g_return_val_if_fail (global_config, NULL);
+	
+	g_mutex_lock (global_config->mutex);
+	value = g_hash_table_lookup (global_config->values, path);
+	g_mutex_unlock (global_config->mutex);
 
-	return g_hash_table_lookup (config->values, path);
+	return value;
 }
 
-void
-print_foreach (gpointer key, gpointer value, gpointer udata)
+static void
+add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
 {
-	printf ("%s = %s\n", (gchar*)key, xmms_config_value_string_get ((xmms_config_value_t *)value));
+	*(GList**)udata = g_list_append (*(GList**)udata, (gchar*) key);
+}
+
+static int
+common_chars (gchar *n1, gchar *n2)
+{
+	gint i, j = 0;
+	gchar **tmp = g_strsplit (n1, ".", 0);
+
+	while (tmp[j])
+		j++;
+	
+	for (i = 0; i < strlen (n1); i++) {
+		if (n1[i] == '.') {
+			if (j == 0)
+				return i;
+			else
+				j--;
+		}
+
+		if (n1[i] != n2[i])
+			return i;
+	}
+
+	return 0;
 }
 
 gboolean
-xmms_config_save (xmms_config_t *config)
+xmms_config_save (const gchar *file)
 {
-	g_return_val_if_fail (config, FALSE);
+	GList *list = NULL;
+	GList *n;
+	gchar *last = NULL;
+	guint lastn = 0;
+	FILE *fp = NULL;
 
-	g_hash_table_foreach (config->values, print_foreach, NULL);
+	g_return_val_if_fail (global_config, FALSE);
+
+	g_hash_table_foreach (global_config->values, add_to_list_foreach, &list);
+
+	list = g_list_sort (list, (GCompareFunc) g_strcasecmp);
+
+	if (!(fp = fopen (file, "wb+"))) {
+		XMMS_DBG ("Couldnt open %s for writing.", file);
+		return FALSE;
+	}
+
+	fprintf (fp, "<xmms>\n");
+
+	for (n = list; n; n = g_list_next (n)) {
+		gint nume = 0;
+		gchar *line = (gchar *)n->data;
+		gchar **tmp = g_strsplit ((gchar *)n->data, ".", 0);
+
+//		printf ("%s\n", line);
+
+		while (tmp[nume])
+			nume ++;
+		
+		if (!last) {
+			fprintf (fp, "\t<section name=\"%s\">\n", tmp[0]);
+			if (nume == 3) {
+				fprintf (fp, "\t\t<plugin name=\"%s\">\n", tmp[1]);
+				fprintf (fp, "\t\t\t<value name=\"%s\">", tmp[2]);
+			} else {
+				fprintf (fp, "\t\t\t<value name=\"%s\">", tmp[1]);
+			}
+		} else {
+			gchar **tmpv;
+			gchar *data;
+			gint nume2 = 0;
+			gint c = common_chars (last, line);
+			tmpv = g_strsplit (line+c, ".", 0);
+			
+			while (tmpv[nume2])
+				nume2 ++;
+
+			fprintf (fp, "</value>\n");
+			if (nume == 3 && lastn == 3 && nume2 >= 2) {
+				/* closing a plugin */
+				fprintf (fp, "\t\t</plugin>\n");
+			} 
+
+			if (nume == nume2)
+				fprintf (fp, "\t</section>\n");
+
+			if (nume == nume2)
+				fprintf (fp, "\t<section name=\"%s\">\n", tmp[0]);
+
+			if (nume == 3 && nume2 > 1) {
+				fprintf (fp, "\t\t<plugin name=\"%s\">\n", tmp[1]);
+			}
+
+			data = xmms_config_value_string_get (xmms_config_lookup (line));
+			
+			fprintf (fp, "\t\t\t<value name=\"%s\">%s", tmp[2] ? tmp[2] : tmp[1], data);
+
+
+//			printf ("%d %d\n", nume2, nume);
+
+		}
+
+		last = (gchar *)n->data;
+		lastn = nume;
+
+		if (!g_list_next (n)) {
+			if (nume == 3) {
+				fprintf (fp, "</value>\n\t\t</plugin>\n\t</section>\n");
+			} else if (nume == 2)
+				fprintf (fp, "</value>\n\t</section>\n");
+		}
+	}
+
+	fprintf (fp, "</xmms>\n");
+
+	fclose (fp);
 
 	return TRUE;
 }
 
 GList *
-xmms_config_plugins_get (xmms_config_t *config)
+xmms_config_plugins_get (void)
 {
-	g_return_val_if_fail (config, NULL);
+	GList *plugins;
+	g_return_val_if_fail (global_config, NULL);
 
-	return config->plugins;
+	g_mutex_lock (global_config->mutex);
+	plugins = global_config->plugins;
+	g_mutex_unlock (global_config->mutex);
+
+	return plugins;
 }
 
 /*
@@ -203,6 +372,8 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	g_return_if_fail (val);
 	g_return_if_fail (data);
 
+	XMMS_DBG ("setting %s to %s", val->name, data);
+
 	val->data = data;
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 			  (gpointer) data);
@@ -235,13 +406,23 @@ xmms_config_value_float_get (const xmms_config_value_t *val)
 	return 0.0;
 }
 
-/*
- * Plugin configcode.
- */
+void
+xmms_config_value_callback_set (xmms_config_value_t *val,
+				xmms_object_handler_t cb,
+				gpointer userdata)
+{
+	g_return_if_fail (val);
+
+	if (!cb)
+		return;
+
+	xmms_object_connect (XMMS_OBJECT (val), 
+			     XMMS_SIGNAL_CONFIG_VALUE_CHANGE, 
+			     (xmms_object_handler_t) cb, userdata);
+}
 
 xmms_config_value_t *
-xmms_config_value_register (xmms_config_t *config,
-			    const gchar *path, 
+xmms_config_value_register (const gchar *path, 
 			    const gchar *default_value,
 			    xmms_object_handler_t cb,
 			    gpointer userdata)
@@ -249,7 +430,11 @@ xmms_config_value_register (xmms_config_t *config,
 
 	xmms_config_value_t *val;
 
-	val = g_hash_table_lookup (config->values, path);
+	XMMS_DBG ("Registring: %s", path);
+
+	g_mutex_lock (global_config->mutex);
+
+	val = g_hash_table_lookup (global_config->values, path);
 	if (!val) {
 		gchar *name = strrchr (path, '.');
 
@@ -262,13 +447,11 @@ xmms_config_value_register (xmms_config_t *config,
 	}
 
 	if (cb) 
-		xmms_object_connect (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE, (xmms_object_handler_t)cb, userdata);
+		xmms_config_value_callback_set (val, cb, userdata);
 
-	g_hash_table_insert (config->values, g_strdup (path), val);
+	g_hash_table_insert (global_config->values, g_strdup (path), val);
+
+	g_mutex_unlock (global_config->mutex);
 
 	return val;
 }
-
-
-
-

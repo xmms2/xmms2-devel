@@ -9,9 +9,16 @@ file = base_env.Copy()
 file.AddFlagsFromGroup("glib")
 file.XmmsPlugin('xmms_file', ['file/file.c'])
 
-oss = base_env.Copy()
-oss.AddFlagsFromGroup("glib")
-oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
+if base_env.sys == 'Darwin':
+	ca = base_env.Copy()
+	ca.AddFlagsFromGroup("glib")
+	ca.AddFlagsFromGroup("CoreAudio")
+	ca.XmmsPlugin('xmms_ca', ['coreaudio/coreaudio.c'])
+
+if base_env.sys == 'Linux':
+	oss = base_env.Copy()
+	oss.AddFlagsFromGroup("glib")
+	oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
 
 m3u = base_env.Copy()
 m3u.AddFlagsFromGroup("glib")
@@ -31,13 +38,22 @@ if base_env.HasGroup("vorbis"):
 	vorbis = base_env.Copy()
 	vorbis.AddFlagsFromGroup("glib")
 	vorbis.AddFlagsFromGroup("vorbis")
-	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbis.c'])
+	vorbis.AddFlagsFromGroup("vorbisfile")
+	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbisfile.c'])
 
-if base_env.HasGroup("sqlite"):
-	sqlite = base_env.Copy()
-	sqlite.AddFlagsFromGroup("glib")
-	sqlite.AddFlagsFromGroup("sqlite")
-	sqlite.XmmsPlugin('xmms_sqlite', ['sqlite/sqlite.c'])
+if base_env.HasGroup("vorbis") and base_env.HasGroup("shout") and base_env.HasGroup("vorbisenc"):
+	ices = base_env.Copy()
+	ices.AddFlagsFromGroup("glib")
+	ices.AddFlagsFromGroup("vorbis")
+	ices.AddFlagsFromGroup("vorbisenc")
+	ices.AddFlagsFromGroup("shout")
+	ices.XmmsPlugin('xmms_ices', ['ices/ices.c', 'ices/encode.c'])
+
+#if base_env.HasGroup("sqlite"):
+#	sqlite = base_env.Copy()
+#	sqlite.AddFlagsFromGroup("glib")
+#	sqlite.AddFlagsFromGroup("sqlite")
+#	sqlite.XmmsPlugin('xmms_sqlite', ['sqlite/sqlite.c'])
 
 if base_env.HasGroup("curl"):
 	curl_http = base_env.Copy()
@@ -45,20 +61,8 @@ if base_env.HasGroup("curl"):
 	curl_http.AddFlagsFromGroup("curl")
 	curl_http.XmmsPlugin('xmms_curlhttp', ['curl/curl_http.c'])
 
-	curl_ftp = base_env.Copy()
-	curl_ftp.AddFlagsFromGroup("glib")
-	curl_ftp.AddFlagsFromGroup("curl")
-	curl_ftp.XmmsPlugin('xmms_curlftp', ['curl/curl_ftp.c'])
+#	curl_ftp = base_env.Copy()
+#	curl_ftp.AddFlagsFromGroup("glib")
+#	curl_ftp.AddFlagsFromGroup("curl")
+#	curl_ftp.XmmsPlugin('xmms_curlftp', ['curl/curl_ftp.c'])
 
-if base_env.HasGroup("sid"):
-	sid = base_env.Copy()
-	sid.AddFlagsFromGroup("glib")
-	sid.AddFlagsFromGroup("sid")
-	sid.XmmsPlugin('xmms_sid', ['sid/sid.c'])
-
-
-if base_env.HasGroup("alsa"):
-	alsa = base_env.Copy()
-	alsa.AddFlagsFromGroup("glib")
-	alsa.AddFlagsFromGroup("alsa")
-#	alsa.XmmsPlugin('xmms_alsa', ['alsa/alsa.c'])

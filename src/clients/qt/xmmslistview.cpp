@@ -1,6 +1,7 @@
 #include <qlistview.h>
 
-#include <xmmsclient.h>
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmsclient-qt.h>
 #include "xmmslistview.h"
 
 XMMSListViewItem::XMMSListViewItem (XMMSListView *parent, 
@@ -90,28 +91,29 @@ XMMSListViewItem::text (int pos) const
 				char s[10];
 				snprintf (s, 10, "%02d:%02d",
 						m_duration/60000,
-						(m_duration/60000)%60);
+						(m_duration/1000)%60);
 
 				return QString (s);
 			}
 	}
 }
 
-XMMSListView::XMMSListView (xmmsc_connection_t *conn, QWidget *parent, const char *name) :
+XMMSListView::XMMSListView (XMMSClientQT *client, QWidget *parent, const char *name) :
 	      QListView (parent, name)
 {
 
-	addColumn ("ID", 50);
+	addColumn ("ID", 42);
 	addColumn ("Artist", 200);
 	addColumn ("Album", 200);
 	addColumn ("Titel", 200);
-	addColumn ("Duration", 50);
+	addColumn ("Duration", 60);
 	setSorting (-1, TRUE);
 	setSelectionMode (QListView::Extended);
 	setAllColumnsShowFocus (TRUE);
 	setTreeStepSize (0);
+	setRootIsDecorated (TRUE);
 
-	m_connection = conn;
+	m_client = client;
 
 	connect (this, SIGNAL (doubleClicked (QListViewItem *, const QPoint &, int)),
 		 this, SLOT (onDoubleClick (QListViewItem *, const QPoint &, int)));
@@ -124,8 +126,9 @@ XMMSListView::onDoubleClick (QListViewItem *i, const QPoint &, int)
 	XMMSListViewItem *it = (XMMSListViewItem *)i;
 
 	if (it) {
-		xmmsc_playlist_jump (m_connection, it->Id ());
-		xmmsc_playback_start (m_connection);
+		xmmsc_playback_stop (m_client->getConnection ());
+		xmmsc_playlist_jump (m_client->getConnection (), it->Id ());
+		xmmsc_playback_start (m_client->getConnection ());
 	}
 	
 }

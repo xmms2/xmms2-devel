@@ -1,8 +1,14 @@
 import os;
 import sys;
 import xmmsenv;
+import SCons
 from marshal import dump, load;
 from xmmsconf import checkFlags;
+
+# Ok, hope that scons versionnumbers only will contain one dot...
+if float(SCons.__version__) < 0.94:
+	print "You have too old scons version. 0.94 is required. You have:", SCons.__version__
+	sys.exit ()
 
 Help ("""XMMS2 SCons help
 Build XMMS2 by running:
@@ -62,5 +68,5 @@ SConscript('src/xmms/SConscript',build_dir='builddir/xmms',duplicate=0)
 SConscript('src/clients/SConscript',build_dir='builddir/clients',duplicate=0)
 SConscript('src/plugins/SConscript',build_dir='builddir/plugins', duplicate=0)
 
-base_env.XmmsManual('doc/xmms2.1')
+#base_env.XmmsManual('doc/xmms2.1')
 

@@ -1,551 +1,390 @@
-/**
- *
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
  */
 
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmsclient-glib.h>
+#include <xmms/signal_xmms.h>
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <glib.h>
 
-#include "xmmsclient.h"
-#include "xmmsclient-glib.h"
-#include "xmms/signal_xmms.h"
+typedef struct {
+	char *name;
+	char *help;
+	void (*func) (xmmsc_connection_t *conn, int argc, char **argv);
+} cmds;
 
-#define XMMS_MAX_URI_LEN 1024
-#define STOPPED 1
-#define PLAYING 2
-
-static GMainLoop *mainloop;
-gint duration;
-gint status;
-guint currentid;
-
-static gchar *
-conv (gchar *str)
-{
-	gsize r, w;
-	GError *err = NULL;
-	gchar *ret;
-
-	if (!str)
-		return "";
-
-	ret = g_convert (str, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
-	if (err) {
-		printf ("Error %s in conv()\n", err->message);
-		return "";
-	}
-	return ret;
-}
+/**
+ * Utils
+ */
 
 void
-print_mediainfo (GHashTable *entry)
+print_error (const char *fmt, ...)
 {
-	/*entry = xmmsc_playlist_get_mediainfo (conn, id);*/
-	gchar *url;
-	gchar *tmp;
-
-	if (!entry)
-		return;
-
-	url = (gchar *)g_hash_table_lookup (entry, "url");
-	url = xmmsc_decode_path (url);
-	printf ("URI:    %s\n", url);
-	g_free (url);
-	tmp = (gchar *)g_hash_table_lookup (entry, "channel");
-	if (tmp) {
-		printf ("Channel name: %s\n", conv(tmp));
-		printf ("Genre: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "genre")));
-	} else {
-		printf ("Artist:  %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "artist")));
-		printf ("Album: %-30s\n", conv ((gchar *)g_hash_table_lookup (entry, "album")));
-		printf ("Title:   %-30s ", conv ((gchar *)g_hash_table_lookup (entry, "title")));
-		printf ("Year: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "date")));
-		printf ("Bitrate: %s\n", conv ((gchar *)g_hash_table_lookup (entry, "bitrate")));
-	}
-
-}
-
-void
-handle_playlist_mediainfo (void *userdata, void *arg)
-{
-	GHashTable *tab = (GHashTable *)arg;
-	guint id;
-
-	if (!arg)
-		return;
-
-
-	id = GPOINTER_TO_UINT (g_hash_table_lookup (tab, "id"));
+	char buf[1024];
+	va_list ap;
 	
-	printf ("Got mediainfo msg for %d, current id is %d\n", id, currentid);
+	va_start (ap, fmt);
+	vsnprintf (buf, 1024, fmt, ap);
+	va_end (ap);
+
+	printf ("ERROR: %s\n", buf);
+
+	exit (-1);
+}
+
+void
+print_info (const char *fmt, ...)
+{
+	char buf[8096];
+	va_list ap;
 	
-	if (id == currentid) {
-		gchar *d;
+	va_start (ap, fmt);
+	vsnprintf (buf, 8096, fmt, ap);
+	va_end (ap);
 
-		d = (gchar *)g_hash_table_lookup (tab, "duration");
+	printf ("%s\n", buf);
+}
 
-		if (d) 
-			duration = atoi (d);
-		else
-			duration = 0;
+/**
+ * here comes all the cmd callbacks
+ */
 
-		print_mediainfo (tab);
+static void
+cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	int i;
+
+	if (argc < 3) {
+		print_error ("Need a filename to add");
 	}
 
-	xmmsc_playlist_entry_free (tab);
-}
+	for (i = 2; argv[i]; i++) {
+		char url[4096];
 
-void
-handle_information (void *userdata, void *arg) 
-{
-	gchar *message = arg;
+		if (!strchr (argv[i], ':')) {
+			/* OK, so this is NOT an valid URL */
 
-	if (message) 
-		printf ("Information: %s\n", message);
-}
-
-void
-handle_playtime (void *userdata, void *arg) {
-	guint tme = GPOINTER_TO_UINT(arg);
-	if (status == STOPPED) 
-		return;
-	printf ("played time: %02d:%02d of %02d:%02d\r",
-		tme/60000,
-		(tme/1000)%60,
-		duration/60000,
-		(duration/1000)%60);
-	fflush (stdout);
-}
-
-void
-handle_playback_stopped (void *userdata, void *arg) 
-{
-	printf ("\nPlayback stopped...\n");
-	status = STOPPED;
-}
-
-void
-handle_disconnected (void *udata, void *arg)
-{
-	g_main_loop_quit (mainloop);
-}
-
-void
-handle_currentid (void *userdata, void *arg) {
-	guint id = GPOINTER_TO_UINT(arg);
-	xmmsc_connection_t *conn = userdata;
-
-	xmmsc_playlist_get_mediainfo (conn, id);
-
-	currentid = id;
-
-	status = PLAYING;
-
-	fflush (stdout);
-}
-
-static guint lastid;
-
-void
-handle_playlist_list_mediainfo (void *userdata, void *arg)
-{
-	GHashTable *entry = (GHashTable *) arg;
-	gchar *artist;
-	gchar *title;
-	gchar *str;
-	gchar *url;
-	gchar *duration;
-	guint id;
-	guint tme;
-	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
-
-	id = GPOINTER_TO_UINT (g_hash_table_lookup (entry, "id"));
-	artist = (gchar *)g_hash_table_lookup (entry, "artist");
-	title = (gchar *)g_hash_table_lookup (entry, "title");
-	url = (gchar *)g_hash_table_lookup (entry, "url");
-	duration = (gchar *)g_hash_table_lookup (entry, "duration");
-
-	if (tme && duration)
-		tme = atoi (duration);
-	else 
-		tme = 0;
-
-	duration = g_strdup_printf ("%02d:%02d", tme/60000, (tme/1000)%60);
-
-	if (artist && title) {
-		str = g_strdup_printf ("%s - %s", artist, title);
-		str = conv (str);
-	} else {
-		str = strrchr (url, '/');
-		if (!str || !str[1])
-			str = url;
-		else
-			str++;
-
-		str = xmmsc_decode_path (str);
-	}
-		
-	printf ("%s%d\t%s (%s)\n", 
-		(currentid == id) ? "->":"  ",
-		id, str, duration);
-
-	g_free (duration);
-	g_free (str);
-
-	if (id == lastid) {
-		xmmsc_deinit (conn);
-		exit (0);
-	}
-}
-
-void
-handle_playlist_list (void *userdata, void *arg)
-{
-	xmmsc_connection_t *conn = (xmmsc_connection_t *) userdata;
-	guint32 *list=arg;
-	gint i=0;
-
-	if (list) {
-		while (list[i]) {
-			xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
-			i++;
-		}
-	}
-	
-	if (i == 0) {
-		xmmsc_deinit (conn);
-		exit (0);
-	}
-
-	if (list) 
-		lastid = GPOINTER_TO_UINT(list[--i]);
-	
-}
-
-void
-handle_transport_list (void *userdata, void *arg)
-{
-	GList *list = arg;
-	GList *tmp;
-
-	for (tmp = list; tmp; tmp = g_list_next (tmp)) {
-		xmmsc_file_t *f = tmp->data;
-		printf ("%c\t%s\n", !f->file?'d':' ', xmmsc_decode_path (f->path));
-	}
-
-	xmmsc_deinit ((xmmsc_connection_t *)userdata);
-	exit (0);
-
-}
-
-void
-setup_flist (xmmsc_connection_t *conn, gchar *arg)
-{
-	mainloop = g_main_loop_new (NULL, FALSE);
-
-	xmmsc_set_callback (conn, XMMS_SIGNAL_TRANSPORT_LIST, handle_transport_list, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
-
-	xmmsc_file_list (conn, arg);
-	xmmsc_setup_with_gmain (conn, NULL);
-	return;
-}
-
-void
-setup_playlist (xmmsc_connection_t *conn)
-{
-	mainloop = g_main_loop_new (NULL, FALSE);
-
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_LIST, handle_playlist_list, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_list_mediainfo, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, conn);
-
-	xmmsc_playback_current_id (conn);
-	
-	xmmsc_setup_with_gmain (conn, NULL);
-
-	return;
-}
-
-int
-status_main(xmmsc_connection_t *conn)
-{
-	mainloop = g_main_loop_new (NULL, FALSE);
-
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, NULL);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_STOP, handle_playback_stopped, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, conn);
-
-	xmmsc_playback_current_id (conn);
-
-	xmmsc_setup_with_gmain (conn, NULL);
-
-	return 0;
-
-}
-
-
-#define streq(a,b) (strcmp(a,b)==0)
-
-int
-main(int argc, char **argv)
-{
-	xmmsc_connection_t *c;
-	char *path;
-
-	duration = 0;
-
-	c = xmmsc_init ();
-
-	if(!c){
-		printf ("bad\n");
-		exit (1);
-	}
-
-	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
-
-	if (!xmmsc_connect (c, path)){
-		printf ("couldn't connect to xmms2d: %s\n",xmmsc_get_last_error(c));
-		exit (1);
-	}
-
-	if (argc<2 || streq (argv[1], "status")) {
-		status_main (c);
-	} else {
-
-		if ( streq (argv[1], "next") ) {
-
-			xmmsc_play_next (c);
-			xmmsc_deinit (c);
-
-			exit (0);
-
-		} else if ( streq (argv[1], "prev") ) {
-
-			xmmsc_play_prev (c);
-			xmmsc_deinit (c);
-
-			exit (0);
-
-
-		} else if ( streq (argv[1], "shuffle") ) {
-
-			xmmsc_playlist_shuffle (c);
-			xmmsc_deinit (c);
-
-			exit (0);
-
-		} else if ( streq (argv[1], "clear") ) {
-
-			xmmsc_playlist_clear (c);
-			xmmsc_deinit (c);
-
-			exit (0);
-
-		} else if ( streq (argv[1], "stop") ) {
-
-			xmmsc_playback_stop (c);
-			xmmsc_deinit (c);
-
-			exit (0);
-
-		} else if ( streq (argv[1], "play") ) {
-
-			xmmsc_playback_start (c);
-			xmmsc_deinit (c);
-
-			exit (0);
-
-
-		} else if ( streq (argv[1], "jump") ) {
-
-			if ( argc < 3 ) {
-				printf ("usage: jump id\n");
-				return 1;
-			}
-
-			xmmsc_playlist_jump (c, atoi (argv[2]));
-
-			xmmsc_deinit (c);
-			exit (0);
-		} else if ( streq (argv[1], "seek") ) {
-			guint seconds;
-
-			if ( argc < 3 ) {
-				printf ("usage: seek seconds\n");
-				return 1;
-			}
-
-			seconds = atoi (argv[2]) * 1000;
-
-			xmmsc_playback_seek_ms (c, seconds);
-
-			xmmsc_deinit (c);
-			exit (0);
-		} else if ( streq (argv[1], "remove") ) {
-			int id;
-
-			if ( argc < 3 ) {
-				printf ("usage: remove id\n");
-				return 1;
-			}
-
-			id = atoi (argv[2]);
-
-			if (id == currentid) {
-				printf ("Can't remove playing song...\n");
-				exit (0);
-			}
-
-
-			xmmsc_playlist_remove (c, id);
-			xmmsc_deinit (c);
-			exit (0);
-		} else if ( streq (argv[1], "quit") ) {
-
-			xmmsc_quit (c);
-			xmmsc_deinit (c);
-
-			exit(0);
-		} else if ( streq (argv[1], "sort") ) {
-
-			if (argc < 3) {
-				printf ("usage: sort <attr>\n");
-				exit (0);
-			}
-			xmmsc_playlist_sort (c, argv[2]);
-			xmmsc_deinit (c);
-			exit (0);
-		} else if ( streq (argv[1], "mode") ) {
-			if (argc < 3) {
-				printf ("usage: mode [one|all|none|stop]\n");
-				xmmsc_deinit (c);
-				exit (0);
-			}
+			if (!g_file_test (argv[i], G_FILE_TEST_IS_REGULAR))
+				continue;
 			
-			if (streq (argv[2], "one"))
-				xmmsc_playlist_mode_set_repeatone (c);
-			else if (streq (argv[2], "all"))
-				xmmsc_playlist_mode_set_repeatall (c);
-			else if (streq (argv[2], "none"))
-				xmmsc_playlist_mode_set_none (c);
-			else if (streq (argv[2], "stop"))
-				xmmsc_playlist_mode_set_stop (c);
-			else {
-				printf ("usage: mode [one|all|none|stop]\n");
-				xmmsc_deinit (c);
-				exit (0);
+			if (argv[i][0] == '/') {
+				g_snprintf (url, 4096, "file://%s", argv[i]);
+			} else {
+				char *cwd = g_get_current_dir ();
+				g_snprintf (url, 4096, "file://%s/%s", cwd, argv[i]);
+				g_free (cwd);
 			}
-			xmmsc_deinit (c);
-			exit (0);
-		
-		} else if ( streq (argv[1], "info") ) {
-			gint id;
-
-			if (argc < 3)
-				id = currentid;
-			else
-				id = atoi (argv[2]);
-
-			xmmsc_playlist_get_mediainfo (c, id);
-
-			xmmsc_deinit (c);
-
-			exit(0);
-		} else if ( streq (argv[1], "volume") ) {
-			gchar *cstr;
-
-			if (argc < 3) {
-				printf ("usage: volume left [right]\n");
-				exit (0);
-			}
-			if (argc == 3) 
-				cstr = g_strdup_printf ("%s/%s", argv[2], argv[2]);
-			else if (argc == 4) 
-				cstr = g_strdup_printf ("%s/%s", argv[2], argv[3]);
-			else 
-				exit (0);
-
-			xmmsc_configval_set (c, "output.oss.volume", cstr);
-
-			g_free (cstr);
-			xmmsc_deinit (c);
-			exit (0);
-			
-		} else if ( streq (argv[1], "config") ) {
-
-			if (argc < 4) {
-				printf ("usage: config option value\n");
-				exit (0);
-			}
-
-			xmmsc_configval_set (c, argv[2], argv[3]);
-
-			xmmsc_deinit (c);
-
-			exit(0);
-		} else if ( streq (argv[1], "list") ) {
-
-			xmmsc_playlist_list (c);
-
-			setup_playlist (c);
-
-		} else if ( streq (argv[1], "flist") ) {
-			if (argc < 3) {
-				printf ("usage: flist url\n");
-				return 1;
-			}
-			setup_flist (c, argv[2]);
-		} else if ( streq (argv[1], "savelist") ) {
-
-			if (argc < 3) {
-				printf ("usage: savelist filename\n");
-				return 1;
-			}
-			xmmsc_playlist_save (c, argv[2]);
-
-			xmmsc_deinit (c);
-			exit (0);
-
-		} else if ( streq (argv[1], "add") ) {
-			int i;
-			if ( argc < 3 ) {
-				printf ("usage: add url [url...]\n");
-				return 1;
-			}
-			for (i=2;i<argc;i++) {
-				gchar nurl[XMMS_MAX_URI_LEN];
-				if (!strchr (argv[i], ':')) {
-					if (argv[i][0] == '/') {
-						g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s", argv[i]);
-					} else {
-						gchar *cwd = g_get_current_dir ();
-						g_snprintf (nurl, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[i]);
-						g_free (cwd);
-					}
-				} else {
-					g_snprintf (nurl, XMMS_MAX_URI_LEN, "%s", argv[i]);
-				}
-
-				xmmsc_playlist_add (c, xmmsc_encode_path (nurl));
-			}
-			xmmsc_deinit (c);
-			exit (0);
 		} else {
-			printf ("Unknown command '%s'\n", argv[1]);
-			return 1;
+			g_snprintf (url, 4096, "%s", argv[i]);
 		}
+		
+		print_info ("Adding %s", url);
+		xmmsc_playlist_add (conn, xmmsc_encode_path (url));
 	}
-	g_main_loop_run (mainloop);
-	if (c)
-		xmmsc_deinit (c);
-	printf ("\n...BOOM!\n");
-	return 0;
+}
+
+static void
+cmd_clear (xmmsc_connection_t *conn, int argc, char **argv)
+{
+
+	xmmsc_playback_stop (conn);
+	xmmsc_playlist_clear (conn);
 
 }
+
+static void
+cmd_shuffle (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_playlist_shuffle (conn);
+}
+
+static void
+cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	int i;
+
+	if (argc < 3) {
+		print_error ("Remove needs a ID to be removed");
+	}
+
+	for (i = 2; argv[i]; i++) {
+		xmmsc_playlist_remove (conn, atoi (argv[i]));
+	}
+}
+
+
+static void
+cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	unsigned int *list;
+	int i;
+	int id;
+
+	list = xmmscs_playlist_list (conn);
+
+	if (*list == -1)
+		return;
+
+	id = xmmscs_playback_current_id (conn);
+
+	for (i = 0; list[i]; i++) {
+		x_hash_t *tab;
+		char line[80];
+		
+		tab = xmmscs_playlist_get_mediainfo (conn, list[i]);
+
+		memset (line, '\0', 80);
+
+		if (!x_hash_lookup (tab, "title")) {
+			xmmsc_entry_format (line, 80, "%f (%m:%s)", tab);
+		} else {
+			xmmsc_entry_format (line, 80, "%a - %t (%m:%s)", tab);
+		}
+
+		if (id == list[i]) {
+			print_info ("->[%d] %s", list[i], line);
+		} else {
+			print_info ("  [%d] %s", list[i], line);
+		}
+		
+	}
+	
+
+}
+	
+static void
+cmd_play (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_playback_start (conn);
+}
+
+static void
+cmd_stop (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_playback_stop (conn);
+}
+
+static void
+cmd_pause (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_playback_pause (conn);
+
+}
+
+static void
+cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_play_next (conn);
+}
+
+static void
+cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_play_prev (conn);
+}
+
+static void
+cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	unsigned int seconds;
+
+	seconds = atoi (argv[2]) * 1000;
+
+	xmmsc_playback_seek_ms (conn, seconds);
+}
+
+static void
+cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_quit (conn);
+}
+
+static void
+cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	if (argc < 4) {
+		print_error ("You need to specify a configkey and a value");
+	}
+
+	xmmsc_configval_set (conn, argv[2], argv[3]);
+}
+
+static void
+cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
+{
+
+	if (argc < 3) {
+		print_error ("You'll need to specify a ID to jump to.");
+	}
+
+	xmmsc_playback_stop (conn);
+	xmmsc_playlist_jump (conn, atoi (argv[2]));
+	xmmsc_playback_start (conn);
+}
+
+/* STATUS FUNCTIONS */
+
+static gchar songname[60];
+static gint id;
+static gint curr_dur;
+
+static void
+handle_currentid (void *userdata, void *arg)
+{
+	id = GPOINTER_TO_UINT (arg);
+	xmmsc_playlist_get_mediainfo ((xmmsc_connection_t*)userdata, id);
+}
+
+static void
+handle_playtime (void *userdata, void *arg)
+{
+	guint dur = GPOINTER_TO_UINT (arg);
+
+	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", songname, dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
+	fflush (stdout);
+}
+
+static void
+handle_mediainfo (void *userdata, void *arg)
+{
+	x_hash_t *hash = arg;
+	gchar *tmp;
+	gint mid;
+
+	tmp = x_hash_lookup (hash, "id");
+
+	mid = GPOINTER_TO_UINT (tmp);
+
+	if (id == mid) {
+		memset (songname, 0, 60);
+		printf ("\n");
+		xmmsc_entry_format (songname, 60, "%a - %t", hash);
+		tmp = x_hash_lookup (hash, "duration");
+		if (tmp)
+			curr_dur = atoi (tmp);
+		else
+			curr_dur = 0;
+	}
+
+}
+
+static void
+cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	GMainLoop *ml;
+
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*) conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void *) conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_mediainfo, (void *) conn);
+
+	xmmsc_playback_current_id (conn);
+
+	ml = g_main_loop_new (NULL, FALSE);
+
+	xmmsc_setup_with_gmain (conn, NULL);
+
+	g_main_loop_run (ml);
+}
+
+/**
+ * Defines all available commands.
+ */
+
+cmds commands[] = {
+	/* Playlist managment */
+	{ "add", "adds a URL to the playlist", cmd_add },
+	{ "clear", "clears the playlist and stops playback", cmd_clear },
+	{ "shuffle", "shuffles the playlist", cmd_shuffle },
+	{ "remove", "removes something from the playlist", cmd_remove },
+	{ "list", "lists the playlist", cmd_list },
+	
+	/* Playback managment */
+	{ "play", "starts playback", cmd_play },
+	{ "stop", "stops playback", cmd_stop },
+	{ "pause", "pause playback", cmd_pause },
+	{ "next", "play next song", cmd_next },
+	{ "prev", "play previous song", cmd_prev },
+	{ "seek", "seek to a specific place in current song", cmd_seek },
+	{ "jump", "take a leap in the playlist", cmd_jump },
+//	{ "move", "move a entry in the playlist", cmd_move },
+
+
+	{ "status", "go into status mode", cmd_status },
+	{ "config", "set a config value", cmd_config },
+	{ "quit", "make the server quit", cmd_quit },
+
+	{ NULL, NULL, NULL },
+};
+
+
+int
+main (int argc, char **argv)
+{
+	xmmsc_connection_t *connection;
+	char *path;
+	int i;
+
+	connection = xmmsc_init ();
+
+	if (!connection) {
+		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
+	}
+
+	
+	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	if (!xmmsc_connect (connection, path)) {
+		print_error ("Could not connect to xmms2d: %s", xmmsc_get_last_error (connection));
+	}
+
+	if (argc < 2) {
+
+		xmmsc_deinit (connection);
+
+
+		print_info ("Available commands:");
+		
+		for (i = 0; commands[i].name; i++) {
+			print_info ("  %s - %s", commands[i].name, commands[i].help);
+		}
+		
+
+		exit (0);
+
+	}
+
+	for (i = 0; commands[i].name; i++) {
+
+		if (g_strcasecmp (commands[i].name, argv[1]) == 0) {
+			commands[i].func (connection, argc, argv);
+			xmmsc_deinit (connection);
+			exit (0);
+		}
+
+	}
+
+	xmmsc_deinit (connection);
+	
+	print_error ("Could not find any command called %s", argv[1]);
+
+	return -1;
+
+}
+

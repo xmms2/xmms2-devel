@@ -1,3 +1,22 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 /**
  * @file
  * Equalizer-effect
@@ -93,6 +112,12 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_eq_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_eq_process);
 
+	xmms_plugin_config_value_register (plugin,
+				    	   "position",
+					   "0",
+					   NULL,
+					   NULL);
+
 	return plugin;
 }
 
@@ -135,22 +160,17 @@ xmms_eq_init (xmms_effect_t *effect) {
 	g_return_if_fail (priv);
 
 	xmms_effect_plugin_data_set (effect, priv);
-	xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
-				    	   "position",
-					   "0",
-					   NULL,
-					   NULL);
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
+
 		gchar buf[20];
 		snprintf (buf, 20, "gain%d", i);
-		priv->configvals[i] = 
-			xmms_plugin_config_value_register (
-					xmms_effect_plugin_get (effect), 
-				   	g_strdup (buf), 
-				   	"1.0",
-					xmms_eq_configval_changed,
-					effect);
+
+		priv->configvals[i] =  xmms_plugin_config_value_register (xmms_effect_plugin_get (effect), g_strdup (buf), "1.0", xmms_eq_configval_changed, (gpointer) effect);
+
+		xmms_config_value_callback_set (priv->configvals[i], 
+						xmms_eq_configval_changed, 
+						(gpointer) effect);
 
 		g_return_if_fail (priv->configvals[i]);
 

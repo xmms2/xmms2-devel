@@ -1,14 +1,34 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 /** @file
  *  Playlist readers / writers.
  *
  * This file contains functions for manipulate xmms_playlist_plugin_t objects.
  */
 
-#include "plugin.h"
-#include "plugin_int.h"
-#include "util.h"
-#include "playlist.h"
-#include "plsplugins.h"
+#include "xmms/plugin.h"
+#include "xmms/util.h"
+#include "xmms/playlist.h"
+#include "xmms/plsplugins.h"
+
+#include "internal/plugin_int.h"
 
 #include <string.h>
 

@@ -1,18 +1,38 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
+
+
+
 /**
  * @file
  * 
  */
 
 #include "xmms/output.h"
-#include "xmms/output_int.h"
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
 #include "xmms/util.h"
 #include "xmms/core.h"
 #include "xmms/config.h"
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
 #include "xmms/signal_xmms.h"
+
+#include "internal/plugin_int.h"
+#include "internal/output_int.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
@@ -37,12 +57,12 @@ struct xmms_output_St {
 
 	guint played;
 	gboolean is_open;
+	gboolean is_paused;
 
 	guint open_samplerate;
 	guint samplerate;
 
 	xmms_ringbuf_t *buffer;
-	xmms_config_t *config;
 	
 	gpointer plugin_data;
 
@@ -314,7 +334,7 @@ xmms_output_close (xmms_output_t *output)
 }
 
 xmms_output_t *
-xmms_output_new (xmms_plugin_t *plugin, xmms_config_t *config)
+xmms_output_new (xmms_plugin_t *plugin)
 {
 	xmms_output_t *output;
 	xmms_output_new_method_t new;
@@ -418,6 +438,29 @@ xmms_output_played_samples_set (xmms_output_t *output, guint samples)
 	g_mutex_unlock (output->mutex);
 }
 
+
+gboolean
+xmms_output_is_paused (xmms_output_t *output)
+{
+	g_return_val_if_fail (output, FALSE);
+
+	return output->is_paused;
+}
+
+void
+xmms_output_pause (xmms_output_t *output)
+{
+	g_return_if_fail (output);
+	output->is_paused = TRUE;
+}
+
+void
+xmms_output_resume (xmms_output_t *output)
+{
+	g_return_if_fail (output);
+	g_cond_signal (output->cond);
+}
+
 static gpointer
 xmms_output_thread (gpointer data)
 {
@@ -440,8 +483,19 @@ xmms_output_thread (gpointer data)
 
 		xmms_ringbuf_wait_used (output->buffer, 4096, output->mutex);
 
-		if (!output->is_open)
-			xmms_output_open (output);
+		if (!output->is_open) {
+			if (!xmms_output_open (output)) {
+				XMMS_DBG ("Couldn't open output device");
+				xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, NULL);
+			}
+		}
+
+		if (output->is_paused) {
+			XMMS_DBG ("Paused");
+			g_cond_wait (output->cond, output->mutex);
+			XMMS_DBG ("Resumed");
+			output->is_paused = FALSE;
+		}
 
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
 		

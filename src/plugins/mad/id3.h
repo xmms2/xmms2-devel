@@ -1,3 +1,12 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ */
+
+
+
+
 #ifndef __XMMS_MAD_ID3_H__
 #define __XMMS_MAD_ID3_H__
 
