@@ -153,75 +153,81 @@ xmms_visualisation_samplerate_set (xmms_visualisation_t *vis, guint rate)
 	vis->samplerate = rate;
 }
 
-static void fft(gint16 *samples, gfloat *spec){
-	gfloat  u_r,u_i, w_r,w_i, t_r,t_i;
-	gint    nv2, k, l, le, le1, j, ip, i;
+static void
+fft (gint16 *samples, gfloat *spec)
+{
+	gint nv2, k, l, j = 0, i;
+	gfloat t_r, t_i;
 	gfloat buf[FFT_LEN][2];
 
-	j = 0;
-	for(i=0;i<FFT_LEN;i++){
-		buf[i][0]  = (float)samples[j++];
-		buf[i][0] += (float)samples[j++];
-		buf[i][0] /= (float)(1<<15);
-		buf[i][1]=0.0f;
+	for (i = 0; i < FFT_LEN; i++){
+		buf[i][0]  = (float) samples[j++];
+		buf[i][0] += (float) samples[j++];
+		buf[i][0] /= (float) (1 << 15);
+		buf[i][1] = 0.0f;
 	}
 
 	/* reorder... */  /* this is crappy! Go rewrite it using real bitreversing */
-    	nv2 = FFT_LEN / 2;
-    	j = 1;
- 	for (i = 1; i < FFT_LEN; i++ )
-    	{
-		if (i < j)
-		{
-	    		t_r = buf[i - 1][0];
-	    		t_i = buf[i - 1][1];
-	    		buf[i - 1][0] = buf[j - 1][0];
-	    		buf[i - 1][1] = buf[j - 1][1];
-	    		buf[j - 1][0] = t_r;
-	    		buf[j - 1][1] = t_i;
+	nv2 = FFT_LEN / 2;
+	j = 1;
+
+	for (i = 1; i < FFT_LEN; i++) {
+		if (i < j) {
+			t_r = buf[i - 1][0];
+			t_i = buf[i - 1][1];
+			buf[i - 1][0] = buf[j - 1][0];
+			buf[i - 1][1] = buf[j - 1][1];
+			buf[j - 1][0] = t_r;
+			buf[j - 1][1] = t_i;
 		}
+
 		k = nv2;
-		while (k < j)
-		{
-	    		j = j - k;
-	    		k = k / 2;
+
+		while (k < j) {
+			j -= k;
+			k /= 2;
 		}
-		j = j + k;
-    	}
+
+		j += k;
+	}
 
 	/* do fft */
- 	for (l = 1; l <= FFT_BITS; l++) {
-     	 	le = 1<<l;
-	  	le1 = le / 2;
-		u_r = 1.0;
-		u_i = 0.0;
-		w_r =  cos( M_PI / (float)le1 );
-		w_i = -sin( M_PI / (float)le1 );
+	for (l = 1; l <= FFT_BITS; l++) {
+		gint le = 1 << l;
+		gint le1 = le / 2;
+		gfloat u_r = 1.0;
+		gfloat u_i = 0.0;
+		gfloat w_r =  cos (M_PI / (float) le1);
+		gfloat w_i = -sin (M_PI / (float) le1);
+
 		for (j = 1; j <= le1; j++) {
-	    		for (i = j; i <= FFT_LEN; i += le) {
-				ip = i + le1;
+			for (i = j; i <= FFT_LEN; i += le) {
+				gint ip = i + le1;
+
 				t_r = buf[ip - 1][0] * u_r - u_i * buf[ip - 1][1];
 				t_i = buf[ip - 1][1] * u_r + u_i * buf[ip - 1][0];
 
 				buf[ip - 1][0] = buf[i - 1][0] - t_r;
-				buf[ip - 1][1] = buf[i - 1][1] - t_i; 
+				buf[ip - 1][1] = buf[i - 1][1] - t_i;
 
 				buf[i - 1][0] =  buf[i - 1][0] + t_r;
-				buf[i - 1][1] =  buf[i - 1][1] + t_i;  
-	    		} 
-	    		t_r = u_r * w_r - w_i * u_i;
-	    		u_i = w_r * u_i + w_i * u_r;
-	    		u_r = t_r;
-		} 
-    	}  
-	
-	/* output abs-value instead */
-	for (i=0; i<FFT_LEN/2; i++) {
-		spec[i] = hypot(buf[i][0],buf[i][1]);
+				buf[i - 1][1] =  buf[i - 1][1] + t_i;
+			}
+
+			t_r = u_r * w_r - w_i * u_i;
+			u_i = w_r * u_i + w_i * u_r;
+			u_r = t_r;
+		}
 	}
+
+	/* output abs-value instead */
+	for (i = 0; i < nv2; i++) {
+		spec[i] = hypot (buf[i][0], buf[i][1]);
+	}
+
 	/* correct the scale */
 	spec[0] /= 2;
-	spec[FFT_LEN/2-1] /= 2;
+	spec[nv2 - 1] /= 2;
 
 }
 
