@@ -113,6 +113,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (decoder_plugin,
 				XMMS_METHOD_DESTROY, xmms_tar_destroy);
 
+	xmms_plugin_properties_add (decoder_plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES);
+
 
 	xmms_plugin_method_add (transport_plugin,
 				XMMS_METHOD_OPEN, xmms_tar_open);

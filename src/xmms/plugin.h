@@ -31,6 +31,7 @@
 /* For decoders */
 #define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 2)
 #define XMMS_PLUGIN_PROPERTY_REWIND (1 << 3)
+#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 4)
 
 /* For output */
 
