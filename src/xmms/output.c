@@ -276,7 +276,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
 
-	if (!output->decoder && g_queue_get_length (output->decoder_list) == 0)
+	if (!output->decoder && output->decoder_list->length == 0)
 		xmms_output_decoder_start (output);
 
 	g_mutex_lock (output->mutex);

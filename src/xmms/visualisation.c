@@ -94,11 +94,11 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 	for (i = 0; i < FFT_LEN / 2; i++) {
 		gfloat tmp = vis->spec[i];
 		if (tmp >= 1.0)
-			node->data = GUINT_TO_POINTER (G_MAXUINT32);
+			node->data = GUINT_TO_POINTER (INT_MAX);
 		else if (tmp < 0.0)
 			node->data = GUINT_TO_POINTER (0);
 		else
-			node->data = GUINT_TO_POINTER ((guint)(tmp * G_MAXUINT32));
+			node->data = GUINT_TO_POINTER ((guint)(tmp * INT_MAX));
 		node = g_list_next (node);
 	}
 

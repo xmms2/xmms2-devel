@@ -285,7 +285,7 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 		n = x_list_next (n);
 		i = 0;
 		for (; n; n = x_list_next (n)) {
-			spec[i++] = ((gdouble)((guint32) n->data)) / ((gdouble)(G_MAXUINT32));
+			spec[i++] = ((gdouble)((guint32) n->data)) / ((gdouble)(INT_MAX));
 		}
 
 		/* @todo measure ipc-delay for real! */
