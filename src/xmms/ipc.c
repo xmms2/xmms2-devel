@@ -106,9 +106,11 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
         gchar *v = value;
 	xmms_ipc_msg_t *msg = udata;
 
+	xmms_ipc_msg_put_string (msg, k);
 	if (v) {
-		xmms_ipc_msg_put_string (msg, k);
 		xmms_ipc_msg_put_string (msg, v);
+	} else {
+		xmms_ipc_msg_put_string (msg, "");
 	}
 	
 }

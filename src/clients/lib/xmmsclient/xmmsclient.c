@@ -625,7 +625,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 
 	h = x_hash_new (x_str_hash, x_str_equal);
 
-	for (i = 0; i < entries; i++) {
+	for (i = 1; i <= entries; i++) {
 		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
 			goto err;
 		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len))
