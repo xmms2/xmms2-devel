@@ -27,6 +27,7 @@
 #include "xmms/util.h"
 #include "xmms/playlist.h"
 #include "xmms/mediainfo.h"
+#include "xmms/medialib.h"
 #include "xmms/plsplugins.h"
 #include "xmms/signal_xmms.h"
 
@@ -43,6 +44,7 @@ struct xmms_mediainfo_thread_St {
 	gboolean running;
 	GQueue *queue;
 	xmms_playlist_t *playlist;
+	xmms_medialib_t *medialib;
 	/* 45574 */
 };
 
@@ -65,6 +67,7 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 	mtt->queue = g_queue_new ();
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
+	mtt->medialib = xmms_medialib_init ();
 
 	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
 	
@@ -137,6 +140,14 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
+			/* Check if this is in the medialib first.*/
+			if (xmms_medialib_entry_get (mtt->medialib, entry)) {
+				xmms_object_unref (entry);
+				continue;
+			}
+
+			XMMS_DBG ("Entry is : %s", xmms_playlist_entry_url_get (entry));
+
 			transport = xmms_transport_new ();
 			xmms_transport_open (transport, entry);
 			if (!transport) {
@@ -184,6 +195,9 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 
 			xmms_decoder_mediainfo_get (decoder, transport);
+
+			/* Store this in the database */
+			xmms_medialib_entry_store (mtt->medialib, entry);
 
 			xmms_object_unref (entry);
 			xmms_object_unref (transport);

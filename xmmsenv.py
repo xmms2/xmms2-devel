@@ -33,6 +33,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		elif self.sys == 'Darwin':
 			self.Append(CPPFLAGS='-DXMMS_OS_DARWIN')
 			self['SHLIBSUFFIX'] = '.dylib'
+			self.Append(LIBPATH=['/sw/lib'])
+			self.Append(CPPFLAGS=['-I/sw/include'])
 		elif self.sys == 'OpenBSD':
 			self.Append(CPPFLAGS='-DXMMS_OS_OPENBSD')
 
