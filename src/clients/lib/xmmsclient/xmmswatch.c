@@ -22,31 +22,29 @@ xmmsc_watch_dispatch (xmmsc_connection_t *conn,
 {
 	unsigned int condition = 0;
 
-	switch (event) {
-		case XMMSC_WATCH_IN:
-			condition = DBUS_WATCH_READABLE;
-			break;
-		case XMMSC_WATCH_OUT:
-			condition = DBUS_WATCH_WRITABLE;
-			break;
-		case XMMSC_WATCH_ERROR:
-			condition = DBUS_WATCH_ERROR;
-			break;
-		case XMMSC_WATCH_HANGUP:
-			condition = DBUS_WATCH_HANGUP;
-			break;
+
+	if (event & XMMSC_WATCH_ERROR) {
+		condition |= DBUS_WATCH_ERROR;
 	}
+	if (event & XMMSC_WATCH_HANGUP) {
+		condition |= DBUS_WATCH_HANGUP;
+	}
+	if (event & XMMSC_WATCH_IN) {
+		condition |= DBUS_WATCH_READABLE;
+	}
+	if (event & XMMSC_WATCH_OUT) {
+		condition |= DBUS_WATCH_WRITABLE;
+	}
+		
+	dbus_connection_ref (conn->conn);
 
 	dbus_watch_handle (watch->dbus_watch, condition);
-
-	dbus_connection_ref (conn->conn);
 
 	while (dbus_connection_dispatch (conn->conn) == DBUS_DISPATCH_DATA_REMAINS)
 		;
 
 	dbus_connection_unref (conn->conn);
 
-	return TRUE;
 }
 
 static void

@@ -127,6 +127,10 @@ gsource_connection_dispatch (GSource *source,
 
 	for (n = x_source->w_list; n; n = g_list_next (n)) {
 		xmmsc_watch_t *w = n->data;
+
+		if (!w)
+			continue;
+
 		poll_fd = (GPollFD *) w->data;
 
 		if (poll_fd->revents == 0)
