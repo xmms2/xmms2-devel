@@ -89,13 +89,14 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property) 
 	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, int pos)
+	xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int)
 	xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int movement)
 	xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playback_next (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_playback_tickle (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_start (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_pause (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *c)
@@ -579,7 +580,7 @@ cdef class XMMS :
 		
 		return ret
 
-	def playback_next (self, myClass = None) :
+	def playback_tickle (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to move on to the next file in the
 		playlist.
@@ -593,7 +594,7 @@ cdef class XMMS :
 		else :
 			ret = XMMSResult ()
 		
-		ret.res = xmmsc_playback_next (self.conn)
+		ret.res = xmmsc_playback_tickle (self.conn)
 		ret.more_init ()
 		
 		return ret
@@ -901,6 +902,25 @@ cdef class XMMS :
 		ret.more_init ()
 		
 		return ret
+
+	def playlist_set_next_rel (self, position, myClass = None) :
+		"""
+		Sets the position in the playlist. Same as set_next but
+		does it relative. You can do set_next_rel(-1) to move backwards
+		for example
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_set_next_rel (self.conn, position)
+		ret.more_init ()
+		
+		return ret
+
 
 	def playlist_set_next (self, position, myClass = None) :
 		"""
