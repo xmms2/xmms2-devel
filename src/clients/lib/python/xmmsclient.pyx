@@ -377,11 +377,21 @@ cdef class XMMS :
 			xmmsc_ipc_io_in_callback (self.conn.ipc)
 
 	def inIO (self) :
+		"""
+		Use this relatively low level function to write your own
+		custom main loops, if needed. See the PythonLoop code for an
+		example
+		"""
 		xmmsc_ipc_io_in_callback (self.conn.ipc)
 		
 	def GetFD (self) :
 		"""
-		Return the fd of the server communication to the caller
+		Get the underlying file descriptor used for communication with
+		the XMMS2 daemon. You can use this in a client to ensure that
+		the IPC link is still active and safe to use. (e.g by calling
+		select() or poll())
+		@rtype: int
+		@return: IPC file descriptor
 		"""
 		return xmmsc_ipc_fd_get (self.conn.ipc)
 
