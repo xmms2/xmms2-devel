@@ -201,8 +201,8 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 	g_return_if_fail (plugin);
 
 	info = g_new0 (xmms_plugin_info_t, 1);
-	info->key = key;
-	info->value = value;
+	info->key = g_strdup (key);
+	info->value = g_strdup (value);
 
 	plugin->info_list = g_list_append (plugin->info_list, info);
 }
