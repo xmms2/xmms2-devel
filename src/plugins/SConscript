@@ -9,9 +9,16 @@ file = base_env.Copy()
 file.AddFlagsFromGroup("glib")
 file.XmmsPlugin('xmms_file', ['file/file.c'])
 
-oss = base_env.Copy()
-oss.AddFlagsFromGroup("glib")
-oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
+if base_env.sys == 'Darwin':
+	ca = base_env.Copy()
+	ca.AddFlagsFromGroup("glib")
+	ca.AddFlagsFromGroup("CoreAudio")
+	ca.XmmsPlugin('xmms_ca', ['coreaudio/coreaudio.c'])
+
+if base_env.sys == 'Linux':
+	oss = base_env.Copy()
+	oss.AddFlagsFromGroup("glib")
+	oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
 
 m3u = base_env.Copy()
 m3u.AddFlagsFromGroup("glib")
