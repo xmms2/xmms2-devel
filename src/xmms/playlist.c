@@ -60,6 +60,10 @@
 	g_free (chmsg); \
 } while (0)
 
+typedef enum {
+	XMMS_PLAYLIST_MODE_NONE,
+	XMMS_PLAYLIST_MODE_REPEAT_ALL
+} xmms_playlist_mode_t;
 
 /** Playlist structure */
 struct xmms_playlist_St {
@@ -68,6 +72,8 @@ struct xmms_playlist_St {
 	GList *list;
 	/** Next song that will be retured by xmms_playlist_get_next */
 	GList *nextentry;
+
+	xmms_playlist_mode_t mode;
 
 	GHashTable *id_table;
 	guint nextid;
@@ -86,7 +92,8 @@ static void xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err);
 static gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err);
 static void xmms_playlist_destroy (xmms_object_t *object);
 static void xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gint32 moment, xmms_error_t *error);
-
+static void on_playlist_mode_changed (xmms_object_t *object, gconstpointer data, gpointer udata);
+static xmms_playlist_mode_t playlist_mode_from_str (const gchar *mode);
 
 /*
  * Public functions
@@ -497,19 +504,29 @@ xmms_playlist_entry_t *
 xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r = NULL;
-	GList *n = NULL;
 
 	g_return_val_if_fail (playlist, NULL);
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
-	n = playlist->nextentry;
-	if (n) {
-		r = n->data;
+	if (playlist->nextentry) {
+		r = playlist->nextentry->data;
+	}
+
+	if (!r) {
+		/* next entry is the first song again, but only return
+		 * that entry, if the user wants us to
+		 */
+		playlist->nextentry = playlist->list;
+
+		if (playlist->mode == XMMS_PLAYLIST_MODE_REPEAT_ALL) {
+			r = playlist->nextentry->data;
+		}
+	}
+
+	if (r) {
 		xmms_object_ref (r);
 		playlist->nextentry = g_list_next (playlist->nextentry);
-	} else {
-		playlist->nextentry = playlist->list;
 	}
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -659,6 +676,8 @@ xmms_playlist_t *
 xmms_playlist_init (void)
 {
 	xmms_playlist_t *ret;
+	xmms_config_value_t *val;
+	const gchar *tmp;
 
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->cond = g_cond_new ();
@@ -674,6 +693,11 @@ xmms_playlist_init (void)
 				     XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
 				     XMMS_SIGNAL_PLAYLIST_CHANGED);
+
+	val = xmms_config_value_register ("playlist.mode", "none",
+	                                  on_playlist_mode_changed, ret);
+	tmp = xmms_config_value_string_get (val);
+	ret->mode = playlist_mode_from_str (tmp);
 
 	xmms_object_method_add (XMMS_OBJECT (ret), 
 				XMMS_METHOD_SHUFFLE, 
@@ -723,6 +747,29 @@ xmms_playlist_init (void)
 
 /** @} */
 
+static xmms_playlist_mode_t
+playlist_mode_from_str (const gchar *mode)
+{
+	if (!mode)
+		return XMMS_PLAYLIST_MODE_NONE;
+
+	if (!g_strcasecmp (mode, "repeat_all"))
+		return XMMS_PLAYLIST_MODE_REPEAT_ALL;
+
+	return XMMS_PLAYLIST_MODE_NONE;
+}
+
+static void
+on_playlist_mode_changed (xmms_object_t *object, gconstpointer data,
+                          gpointer udata)
+{
+	xmms_playlist_t *playlist = udata;
+
+	g_mutex_lock (playlist->mutex);
+	playlist->mode = playlist_mode_from_str (data);
+	g_mutex_unlock (playlist->mutex);
+}
+
 /** Free the playlist and other memory in the xmms_playlist_t
  *
  *  This will free all entries in the list!
@@ -733,11 +780,15 @@ xmms_playlist_destroy (xmms_object_t *object)
 {
 	GList *node;
 	xmms_playlist_t *playlist = (xmms_playlist_t *)object;
+	xmms_config_value_t *val;
 
 	g_return_if_fail (playlist);
 
 	g_cond_free (playlist->cond);
 	g_mutex_free (playlist->mutex);
+
+	val = xmms_config_lookup ("playlist.mode");
+	xmms_config_value_callback_remove (val, on_playlist_mode_changed);
 
 	xmms_mediainfo_thread_stop (playlist->mediainfothr);
 
