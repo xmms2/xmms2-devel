@@ -184,10 +184,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->thread = g_thread_create ((GThreadFunc) xmms_curl_thread, (gpointer) transport, TRUE, NULL);
 	g_return_val_if_fail (data->thread, FALSE);
 
-	/* Let's begin buffering too, just because it's so fun.. */
-
-	xmms_transport_buffering_start (transport);
-
 	return TRUE;
 }
 
