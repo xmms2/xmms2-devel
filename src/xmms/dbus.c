@@ -23,6 +23,22 @@
 #include <dbus/dbus-glib.h>
 #include <glib.h>
 
+typedef struct xmms_dbus_send_signals_St {
+	gchar *name;
+	gint signalnr;
+} xmms_dbus_send_signals_t;
+
+#define XMMS_DBUS_SIGNAL_PLAYTIME_CHANGED 0x100
+#define XMMS_DBUS_SIGNAL_MEDIAINFO_CHANGED 0x200
+#define XMMS_DBUS_SIGNAL_PLAYBACK_STOPPED 0x300
+#define XMMS_DBUS_SIGNAL_INFORMATION 0x400
+#define XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED 0x500
+
+typedef struct xmms_dbus_connection_St {
+	gint signals;
+	DBusConnection *connection;
+} xmms_dbus_connection_t;
+
 static DBusServer *server;
 static GMutex *connectionslock;
 static GSList *connections = NULL;
@@ -40,13 +56,16 @@ static const char *playmsgs[]={"org.xmms.playback.start"};
 static const char *stopmsgs[]={"org.xmms.playback.stop"};
 static const char *clearmsgs[]={"org.xmms.playlist.clear"};
 static const char *quitmsgs[]={"org.xmms.core.quit"};
+static const char *sigreg[]={"org.xmms.core.signal.register"};
+static const char *sigunreg[]={"org.xmms.core.signal.unregister"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
 
 static void do_send(gpointer data, gpointer user_data)
 {
 	 int clientser;
-	 dbus_connection_send (data, user_data, &clientser);
+	 xmms_dbus_connection_t *conn = data;
+	 dbus_connection_send (conn->connection, user_data, &clientser);
 }
 
 static void
@@ -338,11 +357,20 @@ handle_disconnect (DBusMessageHandler *handler,
 		   DBusMessage        *message,
                    void               *user_data)
 {
+	GSList *tmp;
 
 	XMMS_DBG ("disconnect");
 
 	g_mutex_lock(connectionslock);
-	connections = g_slist_remove (connections, connection);
+	for (tmp = connections; tmp; tmp = g_slist_next (tmp)) {
+		if (tmp->data == connection)
+			break;
+	}
+	if (tmp) {
+		xmms_dbus_connection_t *c = tmp->data;
+		connections = g_slist_remove (connections, connection);
+		g_free (c);
+	}
 	g_mutex_unlock(connectionslock);
 
 	dbus_connection_unref (connection);
@@ -457,11 +485,27 @@ register_handler(DBusConnection *conn, DBusHandleMessageFunction func, const cha
 	dbus_connection_register_handler (conn, hand, msgs, n);
 }
 
+static void
+handle_signal_register (DBusConnection *conn,
+			DBusHandleMessageFunction func,
+			const char *msgs, int n)
+{
+
+}
+
+static void
+handle_signal_unregister (DBusConnection *conn,
+			DBusHandleMessageFunction func,
+			const char *msgs, int n)
+{
+
+}
 
 static void 
 new_connect (DBusServer *server, DBusConnection *conn, void * data){
 
 	XMMS_DBG ("new connection");
+	xmms_dbus_connection_t *c;
 
 	dbus_connection_ref (conn);
 
@@ -478,16 +522,21 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	register_handler(conn,handle_next,nextmsgs,1);
 	register_handler(conn,handle_prev,prevmsgs,1);
 	register_handler(conn,handle_quit,quitmsgs,1);
+	register_handler(conn,handle_signal_register,sigreg,1);
+	register_handler(conn,handle_signal_unregister,sigunreg,1);
 	register_handler(conn,handle_disconnect,disconnectmsgs,1);
 
+	c = g_new0 (xmms_dbus_connection_t, 1);
+	c->connection = conn;
+	c->signals = 0;
+
 	g_mutex_lock(connectionslock);
-	connections = g_slist_prepend (connections, conn);
+	connections = g_slist_prepend (connections, c);
 	g_mutex_unlock(connectionslock);
 
 	dbus_connection_setup_with_g_main (conn, g_main_context_default());
 
 }
-
 
 
 /**
