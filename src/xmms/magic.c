@@ -35,6 +35,7 @@ const xmms_mimemap_t mimemap[] = {
 	{ "m3u", "audio/mpegurl" },
 	{ "flac", "application/x-flac" },
 	{ "xm",  "audio/xm" },
+	{ "spx", "audio/speex" },
 	{ NULL, NULL }
 };
 

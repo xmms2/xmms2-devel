@@ -53,6 +53,13 @@ if base_env.HasGroup("modplug"):
 	mad.AddFlagsFromGroup("modplug")
 	mad.XmmsPlugin('xmms_modplug', ['modplug/modplug.c'])
 
+if base_env.HasGroup("speex") and base_env.HasGroup("ogg"):
+	speex = base_env.Copy()
+	speex.AddFlagsFromGroup("glib")
+	speex.AddFlagsFromGroup("speex")
+	speex.AddFlagsFromGroup("ogg")
+	speex.XmmsPlugin('xmms_speex', ['speex/speex.c'])
+
 if base_env.HasGroup("flac"):
 	flac = base_env.Copy()
 	flac.AddFlagsFromGroup("glib")
