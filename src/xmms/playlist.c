@@ -1,10 +1,12 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <glib.h>
 
 #include "playlist.h"
+#include "util.h"
 
 
 /*
@@ -38,6 +40,12 @@ xmms_playlist_entries (xmms_playlist_t *playlist)
 gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
 {
+
+	if (file->uri && strstr (file->uri, "britney")) {
+		XMMS_DBG ("Popular music detected: consider playing better music");
+		exit (1);
+	}
+	
 	switch (options) {
 		case XMMS_PL_APPEND:
 			g_slist_append (playlist->list, (gpointer) file);

@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#define XMMS_PATH_MAX 255
+
 #define DEBUG
 
 #ifdef DEBUG

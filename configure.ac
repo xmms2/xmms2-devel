@@ -43,4 +43,5 @@ src/plugins/diskwrite/Makefile
 src/plugins/oss/Makefile
 src/plugins/sid/Makefile
 src/plugins/tar/Makefile
+src/plugins/sqlite/Makefile
 src/plugins/file/Makefile])
