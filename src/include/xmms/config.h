@@ -44,5 +44,6 @@ const gchar *xmms_config_value_name_get (const xmms_config_value_t *value);
 xmms_config_value_t *xmms_config_value_register (const gchar *path, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 
 void xmms_config_value_callback_set (xmms_config_value_t *val, xmms_object_handler_t cb, gpointer userdata);
+void xmms_config_value_callback_remove (xmms_config_value_t *val, xmms_object_handler_t cb);
 
 #endif

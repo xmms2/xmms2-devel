@@ -673,6 +673,19 @@ xmms_config_value_callback_set (xmms_config_value_t *val,
 			     (xmms_object_handler_t) cb, userdata);
 }
 
+void
+xmms_config_value_callback_remove (xmms_config_value_t *val,
+                                   xmms_object_handler_t cb)
+{
+	g_return_if_fail (val);
+
+	if (!cb)
+		return;
+
+	xmms_object_disconnect (XMMS_OBJECT (val),
+	                        XMMS_SIGNAL_CONFIG_VALUE_CHANGE, cb);
+}
+
 /**
   * Register a new configvalue. This should be called in the initcode
   * as XMMS2 won't allow set/get on values that hasn't been registered.
