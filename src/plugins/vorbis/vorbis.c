@@ -9,6 +9,7 @@
 #include "xmms/util.h"
 #include "xmms/output.h"
 #include "xmms/transport.h"
+#include "xmms/core.c"
 
 #include <math.h>
 #include <vorbis/codec.h>
@@ -122,8 +123,6 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		gint duration;
 		gint fsize = xmms_transport_size (xmms_decoder_transport_get (decoder)) * 8;
 
-		XMMS_DBG ("nominal bitrate %d", data->vi.bitrate_nominal);
-
 		if (!fsize) {
 			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
 		} else {
@@ -139,8 +138,6 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	if (ptr) {
 		while (*ptr) {
 			gchar **s;
-			GError *err = NULL;
-
 			s = g_strsplit (*ptr, "=", 2);
 			if (s && s[0] && s[1]) {
 				xmms_playlist_entry_set_prop (entry, s[0], s[1]);
@@ -324,8 +321,8 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	while (1) {
 		float **pcm;
 		int samples;
-		res = ogg_stream_packetout (&data->os, &data->op);
 		ogg_int16_t convbuffer[4096];
+		res = ogg_stream_packetout (&data->os, &data->op);
 
 		if (res == 0) break;
 
