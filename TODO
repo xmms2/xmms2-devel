@@ -48,6 +48,9 @@ PLUGINS:
 	             right time. Anything else is beyond it."
                                                             -- Alan Cox
 
+	* Effects
+		* Replaygain
+
 	
 LIBL44T:
 	* specification.
