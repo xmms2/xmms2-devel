@@ -26,7 +26,7 @@ base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus
 
 base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
-base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init",depends="")
+base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
 
 Export('base_env')
 
