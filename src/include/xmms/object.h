@@ -32,6 +32,9 @@ typedef struct xmms_object_cmd_desc_St xmms_object_cmd_desc_t;
 
 typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
 
+/** @ingroup Object
+  * @{
+  */
 struct xmms_object_St {
 	guint32 id;
 	GMutex *mutex;
@@ -42,6 +45,8 @@ struct xmms_object_St {
 	gint ref;
 	xmms_object_destroy_func_t destroy_func;
 };
+
+/** @} */
 
 typedef enum {
 	XMMS_OBJECT_CMD_ARG_NONE,
