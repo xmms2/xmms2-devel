@@ -43,15 +43,7 @@ xmms_playlist_entry_t * xmms_decoder_get_mediainfo_offline (xmms_decoder_t *deco
 void xmms_decoder_set_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 
 xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype);
-
-
-/*
- * Private function prototypes -- do NOT use in plugins.
- */
-
-xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 
-void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
 
 #endif /* __XMMS_DECODER_H__ */

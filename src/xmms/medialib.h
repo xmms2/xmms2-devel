@@ -1,8 +1,8 @@
 #ifndef __XMMS_MEDIALIB_H__
 #define __XMMS_MEDIALIB_H__
 
-#include "plugin.h"
-#include "playlist.h"
+#include "xmms/plugin.h"
+#include "xmms/playlist.h"
 #include <glib.h>
 
 typedef struct xmms_medialib_St {

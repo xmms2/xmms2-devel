@@ -5,6 +5,7 @@
  */
 
 #include "plugin.h"
+#include "plugin_int.h"
 #include "util.h"
 #include "playlist.h"
 #include "plsplugins.h"

@@ -82,20 +82,8 @@ gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint propert
 void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
 const GList *xmms_plugin_info_get (const xmms_plugin_t *plugin);
 
-/*
- * Private functions
- */
-
-gboolean xmms_plugin_init (void);
-void xmms_plugin_scan_directory (const gchar *dir);
-
-void xmms_plugin_ref (xmms_plugin_t *plugin);
-void xmms_plugin_unref (xmms_plugin_t *plugin);
-
-GList *xmms_plugin_list_get (xmms_plugin_type_t type);
-void xmms_plugin_list_destroy (GList *list);
-
 xmms_plugin_method_t xmms_plugin_method_get (xmms_plugin_t *plugin,
 											 const gchar *member);
+
 
 #endif /* __XMMS_PLUGIN_H__ */

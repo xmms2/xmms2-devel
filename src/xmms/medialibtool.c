@@ -3,6 +3,7 @@
 #include "playlist.h"
 #include "medialib.h"
 #include "plugin.h"
+#include "plugin_int.h"
 
 #include <glib.h>
 
