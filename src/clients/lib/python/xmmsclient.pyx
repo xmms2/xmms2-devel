@@ -77,6 +77,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property) 
 	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
+	xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int movement)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
@@ -764,6 +765,28 @@ cdef class XMMS :
 		ret.MoreInit ()
 		
 		return ret
+
+	def PlaylistMove (self, id, movement, myClass = None) :
+		"""
+		Move a playlist entry relative to it's current position in
+		the playlist. The movement should be a postive value when
+		moving down in the playlist and a negative value when moving
+		up in the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_move (self.conn, id, movement)
+		ret.MoreInit ()
+		
+		return ret
+
 
 	def BroadcastPlaylistChanged (self, myClass = None) :
 		"""
