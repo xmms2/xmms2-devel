@@ -20,13 +20,13 @@
 #ifndef __XMMS_CONFIG_H__
 #define __XMMS_CONFIG_H__
 
-#include "xmms/object.h"
-
 #define XMMS_MAX_CONFIGFILE_LEN 255
 #define XMMS_CONFIG_SYSTEMWIDE SYSCONFDIR "/xmms2.conf"
 
 typedef struct xmms_config_St xmms_config_t;
 typedef struct xmms_config_value_St xmms_config_value_t;
+
+#include "xmms/object.h"
 
 gboolean xmms_config_init (const gchar *filename);
 void xmms_config_free (void);

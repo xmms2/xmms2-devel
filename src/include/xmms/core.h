@@ -23,8 +23,8 @@
 struct xmms_core_St;
 typedef struct xmms_core_St xmms_core_t;
 
-#include "xmms/object.h"
 #include "xmms/playlist.h"
+#include "xmms/object.h"
 #include "xmms/playback.h"
 #include "xmms/output.h"
 #include "xmms/decoder.h"

@@ -22,7 +22,6 @@
 
 #include <glib.h>
 
-#include "xmms/object.h"
 
 /*
  * Public definitions
@@ -56,14 +55,15 @@ typedef enum {
 struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
-#include "xmms/playlist_entry.h"
-#include "xmms/core.h"
-
 typedef struct xmms_playlist_changed_msg_St {
 	gint type;
 	guint id;
-	gpointer arg;
+	guint arg;
 } xmms_playlist_changed_msg_t;
+
+#include "xmms/playlist_entry.h"
+#include "xmms/core.h"
+#include "xmms/error.h"
 
 /*
  * Public functions

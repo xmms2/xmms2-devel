@@ -56,6 +56,9 @@ xmms_object_arg_new (xmms_object_method_arg_type_t type,
 		case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
 			ret->retval.stringlist = (GList*)val;
 			break;
+		case XMMS_OBJECT_METHOD_ARG_PLCH:
+			ret->retval.plch = (xmms_playlist_changed_msg_t *)val;
+			break;
 		case XMMS_OBJECT_METHOD_ARG_NONE:
 			break;
 	}

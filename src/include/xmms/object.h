@@ -25,7 +25,6 @@
 
 #define XMMS_OBJECT_MID 0x00455574
 
-
 typedef struct xmms_object_St {
 	guint32 id;
 	GHashTable *signals;
@@ -43,7 +42,12 @@ typedef enum {
 	XMMS_OBJECT_METHOD_ARG_UINTLIST,
 	XMMS_OBJECT_METHOD_ARG_INTLIST,
 	XMMS_OBJECT_METHOD_ARG_STRINGLIST,
+	XMMS_OBJECT_METHOD_ARG_PLCH,
 } xmms_object_method_arg_type_t;
+
+typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
+
+#include <xmms/playlist.h>
 
 #define XMMS_OBJECT_METHOD_MAX_ARGS 2
 typedef struct {
@@ -62,16 +66,16 @@ typedef struct {
 		GList *uintlist;
 		GList *intlist;
 		GList *stringlist; /* GList of const gchar * */
+		xmms_playlist_changed_msg_t *plch;
 	} retval;
 	xmms_error_t error;
 } xmms_object_method_arg_t;
 
+typedef void (*xmms_object_method_func_t) (xmms_object_t *object, xmms_object_method_arg_t *arg);
+
 xmms_object_method_arg_t *xmms_object_arg_new (xmms_object_method_arg_type_t type, 
 					       gpointer val);
 
-typedef void (*xmms_object_method_func_t) (xmms_object_t *object, xmms_object_method_arg_t *arg);
-
-typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
 
 #define XMMS_OBJECT(p) ((xmms_object_t *)p)
 #define XMMS_IS_OBJECT(p) (XMMS_OBJECT (p)->id == XMMS_OBJECT_MID)
@@ -111,6 +115,7 @@ void xmms_object_method_call (xmms_object_t *object, const char *method, xmms_ob
 #define __XMMS_METHOD_DO_RETVAL_INTLIST() arg->retval.intlist = 
 #define __XMMS_METHOD_DO_RETVAL_STRINGLIST() arg->retval.stringlist = 
 #define __XMMS_METHOD_DO_RETVAL_STRING() arg->retval.string = 
+#define __XMMS_METHOD_DO_RETVAL_PLCH() arg->retval.plch = 
 
 #define XMMS_METHOD_DEFINE(methodname, realfunc, argtype0, _rettype, argtype1, argtype2) static void \
 __int_xmms_method_##methodname (xmms_object_t *object, xmms_object_method_arg_t *arg) \

@@ -83,6 +83,14 @@ static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 sample
 static void xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err);
 static guint xmms_playback_status (xmms_playback_t *playback, xmms_error_t *err);
 
+#define XMMS_PLAYBACK_EMIT(signal,argument) { \
+	xmms_object_method_arg_t *arg;\
+	xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (argument));\
+	xmms_object_emit (XMMS_OBJECT (playback), signal, arg); \
+	g_free (arg);\
+}
+	
+
 /**
  * @internal
  */
@@ -92,8 +100,8 @@ next_song (xmms_playback_t *playback)
 	XMMS_DBG ("Next song");
 	playback->current_song = xmms_playlist_get_next_entry (playback->playlist);
 	if (playback->current_song) 
-		xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-	      			  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (xmms_playlist_entry_id_get (playback->current_song))));
+		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID, 
+				    xmms_playlist_entry_id_get (playback->current_song));
 }
 
 /**
@@ -105,8 +113,8 @@ prev_song (xmms_playback_t *playback)
 	XMMS_DBG ("Prev song");
 	playback->current_song = xmms_playlist_get_prev_entry (playback->playlist);
 	if (playback->current_song) 
-		xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-	      			  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (xmms_playlist_entry_id_get (playback->current_song))));
+		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID, 
+				    xmms_playlist_entry_id_get (playback->current_song));
 }
 
 static void
@@ -128,8 +136,9 @@ xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err)
 	}
 	playback->current_song = xmms_playlist_get_current_entry (playback->playlist);
 	if (playback->current_song) 
-		xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-				  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (xmms_playlist_entry_id_get (playback->current_song))));
+		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID,
+				    xmms_playlist_entry_id_get (playback->current_song));
+
 	playback->playlist_op = XMMS_PLAYBACK_HOLD;
 
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
@@ -184,10 +193,7 @@ xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err)
 	}
 	
 
-	xmms_object_emit (XMMS_OBJECT (playback), 
-			  XMMS_SIGNAL_PLAYBACK_STATUS, 
-			  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
-					       GUINT_TO_POINTER (XMMS_PLAYBACK_PLAY)));
+	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_PLAY);
 	
 	playback->status = XMMS_PLAYBACK_PLAY;
 	xmms_playback_wakeup (playback);
@@ -201,10 +207,7 @@ xmms_playback_stop (xmms_playback_t *playback, xmms_error_t *err)
 		playback->status = XMMS_PLAYBACK_STOP;
 		xmms_core_flush_set (playback->core, TRUE);
 		playback->playlist_op = XMMS_PLAYBACK_HOLD;
-		xmms_object_emit (XMMS_OBJECT (playback), 
-				  XMMS_SIGNAL_PLAYBACK_STATUS, 
-				  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32,
-						       GUINT_TO_POINTER (XMMS_PLAYBACK_STOP)));
+		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_STOP);
 		xmms_core_decoder_stop (playback->core);
 	}
 }
@@ -215,10 +218,7 @@ xmms_playback_pause (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
 		xmms_output_pause (xmms_core_output_get (playback->core));
-		xmms_object_emit (XMMS_OBJECT (playback),
-				XMMS_SIGNAL_PLAYBACK_STATUS,
-				xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32,
-						     GUINT_TO_POINTER (XMMS_PLAYBACK_PAUSE)));
+		XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_PAUSE);
 		playback->status = XMMS_PLAYBACK_PAUSE;
 	}
 
@@ -269,6 +269,8 @@ xmms_playback_playtime_set (xmms_playback_t *playback, guint time)
 
 	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (time));
 	xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_PLAYTIME, arg);
+	XMMS_DBG ("korv");
+	g_free (arg);
 }
 
 static xmms_playback_mode_t
@@ -321,9 +323,8 @@ xmms_playback_entry (xmms_playback_t *playback)
 			if (mode == XMMS_PLAYBACK_MODE_REPEATONE) {
 				playback->current_song = xmms_playlist_get_current_entry (playback->playlist);
 				if (playback->current_song)
-					xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_CURRENTID, 
-							  xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, 
-									       GUINT_TO_POINTER (xmms_playlist_entry_id_get (playback->current_song))));
+					XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_CURRENTID,
+							    xmms_playlist_entry_id_get (playback->current_song));
 			} else {
 				next_song (playback);
 			}

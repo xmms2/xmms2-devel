@@ -69,69 +69,6 @@ extern xmms_core_t *core;
 
 static void xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg);
 
-/*static void
-send_playlist_changed (xmms_object_t *object,
-		gconstpointer data,
-		gpointer userdata)
-{
-
-        const xmms_playlist_changed_msg_t *chmsg = data;
-        DBusMessage *msg=NULL;
-        DBusMessageIter itr;
-	char *signame = NULL;
-
-        switch (chmsg->type) {
-                case XMMS_PLAYLIST_CHANGED_ADD:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_ADD);
-			signame = XMMS_SIGNAL_PLAYLIST_ADD;
-                        dbus_message_append_iter_init (msg, &itr);
-                        dbus_message_iter_append_uint32 (&itr, chmsg->id);
-                        dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
-                        break;
-                case XMMS_PLAYLIST_CHANGED_SHUFFLE:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SHUFFLE);
-			signame = XMMS_SIGNAL_PLAYLIST_SHUFFLE;
-                        break;
-                case XMMS_PLAYLIST_CHANGED_SORT:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SORT);
-			signame = XMMS_SIGNAL_PLAYLIST_SORT;
-                        break;
-                case XMMS_PLAYLIST_CHANGED_CLEAR:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_CLEAR);
-			signame = XMMS_SIGNAL_PLAYLIST_CLEAR;
-                        break;
-                case XMMS_PLAYLIST_CHANGED_REMOVE:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_REMOVE);
-			signame = XMMS_SIGNAL_PLAYLIST_REMOVE;
-                        dbus_message_append_iter_init (msg, &itr);
-                        dbus_message_iter_append_uint32 (&itr, chmsg->id);
-                        break;
-                case XMMS_PLAYLIST_CHANGED_SET_POS:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
-			signame = XMMS_SIGNAL_PLAYBACK_JUMP;
-                        dbus_message_append_iter_init (msg, &itr);
-                        dbus_message_iter_append_uint32 (&itr, chmsg->id);
-                        break;
-                case XMMS_PLAYLIST_CHANGED_MOVE:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_MOVE);
-			signame = XMMS_SIGNAL_PLAYLIST_MOVE;
-                        dbus_message_append_iter_init (msg, &itr);
-                        dbus_message_iter_append_uint32 (&itr, chmsg->id);
-                        dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
-                        break;
-        }
-
-	if (signame != NULL) {
-		g_mutex_lock (connectionslock);
-		broadcast_msg (msg, signame);
-		g_mutex_unlock (connectionslock);
-	}
-        dbus_message_unref (msg);
-	
-}
-*/
-
-
 /*
  * dbus callbacks
  */
@@ -171,8 +108,6 @@ xmms_dbus_onchange (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 				if (!oc->gone) {
 					retmsg = dbus_message_new_method_return (oc->msg);
 					xmms_dbus_handle_arg_value (retmsg, (xmms_object_method_arg_t*) arg);
-
-					g_free (arg);
 
 					dbus_connection_send (oc->client->connection, retmsg, &serial);
 					dbus_message_unref (retmsg);
@@ -265,6 +200,13 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
 	
 }
 
+static void
+xmms_dbus_handle_playlist_chmsg (DBusMessageIter *itr, xmms_playlist_changed_msg_t *chpl)
+{
+	dbus_message_iter_append_uint32 (itr, chpl->type);
+	dbus_message_iter_append_uint32 (itr, chpl->id);
+	dbus_message_iter_append_uint32 (itr, chpl->arg);
+}
 
 static void
 xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
@@ -312,6 +254,12 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 				}
 				break;
 			}
+		case XMMS_OBJECT_METHOD_ARG_PLCH:
+			{
+				xmms_playlist_changed_msg_t *chmsg = arg->retval.plch;
+				xmms_dbus_handle_playlist_chmsg (&itr, chmsg);
+			}
+			break;
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: 
 			{
 				gchar *url;

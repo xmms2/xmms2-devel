@@ -35,6 +35,17 @@
 #include "xmms/core.h"
 #include "xmms/signal_xmms.h"
 
+/* Internal macro to emit XMMS_SIGNAL_PLAYLIST_CHANGED */
+#define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) { \
+	xmms_object_method_arg_t *arg; \
+	xmms_playlist_changed_msg_t *chmsg; \
+	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
+	chmsg->type = ttype; chmsg->id=iid; chmsg->arg=argument; \
+	arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_PLCH, chmsg); \
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, arg);\
+	g_free (arg);\
+}
+
 
 /** Playlist structure */
 struct xmms_playlist_St {
@@ -118,7 +129,6 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
         gint len;
         gint i, j;
         GList *node, **ptrs;
-	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_if_fail (playlist);
 
@@ -153,9 +163,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
                                                                                   
         g_free(ptrs);
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_SHUFFLE;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SHUFFLE, 0, 0);
 
 	g_cond_signal (playlist->cond);
 
@@ -170,7 +178,6 @@ gboolean
 xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 {
 	GList *node;
-	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_val_if_fail (playlist, FALSE);
 	g_return_val_if_fail (id, FALSE);
@@ -190,10 +197,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 	playlist->list = g_list_remove_link (playlist->list, node);
 	g_list_free_1 (node);
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_REMOVE;
-	chmsg.id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_REMOVE, id, 0);
 
 	g_cond_signal (playlist->cond);
 	
@@ -209,7 +213,6 @@ static gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err)
 {
 	xmms_playlist_entry_t *entry;
-	xmms_playlist_changed_msg_t chmsg;
 	GList *node;
 	gint i;
 
@@ -265,11 +268,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 
 	}
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_MOVE;
-	chmsg.id = id;
-	chmsg.arg = GINT_TO_POINTER (steps);
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_MOVE, id, steps);
 
 	g_cond_signal (playlist->cond);
 
@@ -315,7 +314,6 @@ gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
 {
 	GList *new, *node;
-	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_val_if_fail (file, FALSE);
 
@@ -354,11 +352,9 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 			     GUINT_TO_POINTER (xmms_playlist_entry_id_get (file)), 
 			     new);
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_ADD;
-	chmsg.id = xmms_playlist_entry_id_get (file);
-	chmsg.arg = GINT_TO_POINTER (options);
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_ADD, 
+				   xmms_playlist_entry_id_get (file),
+				   options);
 
 	g_cond_signal (playlist->cond);
 
@@ -408,7 +404,6 @@ static void
 xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 {
 	GList *node;
-	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_if_fail (playlist);
 
@@ -429,9 +424,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_CLEAR;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_CLEAR, 0, 0);
 
 }
 
@@ -540,7 +533,6 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 gboolean
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 {
-	xmms_playlist_changed_msg_t chmsg;
 	GList *entry;
 	g_return_val_if_fail (playlist, FALSE);
 
@@ -552,10 +544,7 @@ xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 
 	playlist->currententry = entry;
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_SET_POS;
-	chmsg.id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SET_POS, id, 0);
 
 	g_cond_signal (playlist->cond);
 
@@ -611,7 +600,6 @@ XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, N
 static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
-	xmms_playlist_changed_msg_t chmsg;
 
 	g_return_if_fail (playlist);
 	XMMS_DBG ("Sorting on %s", property);
@@ -622,9 +610,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
-	chmsg.type = XMMS_PLAYLIST_CHANGED_SORT;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, &chmsg);
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0, 0);
 
 }
 
@@ -674,6 +660,8 @@ xmms_playlist_init (void)
 
 	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
 				     XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
+	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
+				     XMMS_SIGNAL_PLAYLIST_CHANGED);
 
 	xmms_object_method_add (XMMS_OBJECT (ret), 
 				XMMS_METHOD_SHUFFLE, 
