@@ -45,10 +45,14 @@ static gpointer xmms_output_thread (gpointer data);
 void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
 void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
 void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
+guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
+static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
 
 XMMS_METHOD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
+XMMS_METHOD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
+XMMS_METHOD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
 
 /*
  * Type definitions
@@ -76,6 +80,7 @@ struct xmms_output_St {
 	gboolean running;
 
 	guint played;
+	guint played_time;
 	gboolean is_paused;
 
 	gpointer plugin_data;
@@ -359,6 +364,9 @@ xmms_output_new (xmms_plugin_t *plugin)
 
 	xmms_dbus_register_onchange (XMMS_OBJECT (output),
 				     XMMS_SIGNAL_OUTPUT_MIXER_CHANGED);
+	xmms_dbus_register_onchange (XMMS_OBJECT (output),
+				     XMMS_SIGNAL_OUTPUT_PLAYTIME);
+
 
 	xmms_object_method_add (XMMS_OBJECT (output), 
 				XMMS_METHOD_MIXERSET, 
@@ -376,6 +384,13 @@ xmms_output_new (xmms_plugin_t *plugin)
 	xmms_object_method_add (XMMS_OBJECT (output), 
 				XMMS_METHOD_PAUSE, 
 				XMMS_METHOD_FUNC (pause));
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_DECODER_KILL, 
+				XMMS_METHOD_FUNC (decoder_kill));
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_CPLAYTIME, 
+				XMMS_METHOD_FUNC (playtime));
+
 
 	
 	return output;
@@ -517,6 +532,19 @@ xmms_output_resume (xmms_output_t *output)
 	g_cond_signal (output->cond);
 }
 
+guint32
+xmms_output_playtime (xmms_output_t *output, xmms_error_t *error)
+{
+	guint32 ret;
+	g_return_val_if_fail (output, 0);
+
+	g_mutex_lock (output->mutex);
+	ret = output->played_time;
+	g_mutex_unlock (output->mutex);
+
+	return ret;
+}
+
 
 static gpointer
 xmms_output_thread (gpointer data)
@@ -548,6 +576,10 @@ xmms_output_thread (gpointer data)
 
 		if (!output->decoder) {
 			output->decoder = xmms_playlist_next_start (output->playlist);
+			if (!output->decoder) {
+				output->running = FALSE;
+				continue;
+			}
 			xmms_decoder_start (output->decoder, NULL, output);
 		}
 
@@ -560,8 +592,6 @@ xmms_output_thread (gpointer data)
 		ret = xmms_decoder_read (output->decoder, buffer, 4096);
 
 		if (ret > 0) {
-			guint played_time;
-
 			xmms_output_unlock (output);
 			/* Call the plugins write method */
 			write_method (output, buffer, ret);
@@ -575,22 +605,27 @@ xmms_output_thread (gpointer data)
 			    in other in number of samples. Maybe we
 			    want a xmms_sample_t and a XMMS_SAMPLE_SIZE */
 			
-			played_time = (guint)(output->played/(4.0f*output->samplerate/1000.0f));
+			output->played_time = (guint)(output->played/(4.0f*output->samplerate/1000.0f));
 
 			if (buffersize_get_method) {
 				guint buffersize = buffersize_get_method (output);
 				buffersize = buffersize/(2.0f*output->samplerate/1000.0f);
 /*				XMMS_DBG ("buffer: %dms", buffersize);*/
 
-				if (played_time >= buffersize) {
-					played_time -= buffersize;
+				if (output->played_time >= buffersize) {
+					output->played_time -= buffersize;
 				} else {
-					played_time = 0;
+					output->played_time = 0;
 				}
 			}
 
-			/* put played_time on a suitable object here,
-			   so it easily can accessed from client */
+			/* Emit playtime */
+			{
+				xmms_object_method_arg_t *arg;
+				arg = xmms_object_arg_new (XMMS_OBJECT_METHOD_ARG_UINT32, GUINT_TO_POINTER (output->played_time));
+				xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_PLAYTIME, arg);
+				g_free (arg);
+			}
 		}
 
 		if (xmms_decoder_iseos (output->decoder)) {
@@ -615,6 +650,18 @@ xmms_output_thread (gpointer data)
 	return NULL;
 }
 
+
+static void
+xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
+{
+	g_return_if_fail (output);
+
+	XMMS_MTX_LOCK (output->mutex);
+	if (output->decoder) {
+		xmms_decoder_stop (output->decoder);
+	}
+	XMMS_MTX_UNLOCK (output->mutex);
+}
 
 
 
