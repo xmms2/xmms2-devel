@@ -24,6 +24,24 @@ static xmms_decoder_t *m_decoder;
  */
 xmms_object_t *core = &core_object;
 
+
+static void
+handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	xmms_playlist_entry_t *entry;
+	xmms_decoder_t *decoder = (xmms_decoder_t *)data;
+
+	entry = xmms_playlist_entry_new (NULL);
+	
+	xmms_decoder_get_mediainfo (decoder, entry);
+
+	xmms_playlist_entry_print (entry);
+
+	xmms_playlist_entry_free (entry);
+
+}
+
+
 void
 play_next (void)
 {
@@ -64,7 +82,8 @@ play_next (void)
 		return;
 	}
 
-//	xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", mediainfo_changed, NULL);
+	xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", 
+			     handle_mediainfo_changed, NULL);
 
 	XMMS_DBG ("starting threads..");
 	xmms_transport_start (transport);
@@ -92,7 +111,8 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
  *
  * @internal
  */
-void xmms_core_output_set (xmms_output_t *output){
+void xmms_core_output_set (xmms_output_t *output)
+{
 	g_return_if_fail (m_output==NULL);
 	m_output = output;
 	xmms_object_connect (XMMS_OBJECT (output), "eos-reached", eos_reached, NULL);
@@ -106,7 +126,8 @@ void xmms_core_output_set (xmms_output_t *output){
  * song in playlist.
  *
  */
-void xmms_core_play_next (){
+void xmms_core_play_next ()
+{
 	XMMS_DBG ("closing transport");
 	xmms_transport_close (xmms_decoder_transport_get (m_decoder));
 	XMMS_DBG ("destroying decoder");
@@ -123,7 +144,8 @@ void xmms_core_play_next (){
  * @internal
  */
 void
-xmms_core_init () {
+xmms_core_init ()
+{
 	xmms_object_init (&core_object);
 }
 
@@ -131,7 +153,8 @@ xmms_core_init () {
  * Starts playing of the first song in playlist.
  */
 void
-xmms_core_start () {
+xmms_core_start ()
+{
 	play_next ();
 }
 
@@ -147,6 +170,7 @@ xmms_core_start () {
  * @param time number of milliseconds played.
  */
 void
-xmms_core_playtime_set (guint time) {
+xmms_core_playtime_set (guint time)
+{
 	xmms_object_emit (core, "playtime-changed", GUINT_TO_POINTER (time) );
 }

@@ -30,22 +30,6 @@ static GMainLoop *mainloop;
 gboolean xmms_dbus_init (void);
 
 
-void
-mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	xmms_playlist_entry_t *entry;
-	xmms_decoder_t *decoder = (xmms_decoder_t *)data;
-
-	entry = xmms_playlist_entry_new (NULL);
-	
-	xmms_decoder_get_mediainfo (decoder, entry);
-
-	xmms_playlist_entry_print (entry);
-
-	xmms_playlist_entry_free (entry);
-
-}
-
 #define MAX_CONFIGFILE_LEN 255
 
 xmms_config_data_t *
