@@ -59,6 +59,7 @@ static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static xmms_playlist_entry_t *xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
+static gboolean xmms_mad_init (xmms_decoder_t *decoder);
 
 /*
  * Plugin header
@@ -81,6 +82,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_mad_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_mad_destroy);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_GET_MEDIAINFO, xmms_mad_get_media_info);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_INIT, xmms_mad_init);
+
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
@@ -110,6 +113,7 @@ static void
 xmms_mad_calc_duration (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 {
 	struct mad_header header;
+	struct mad_stream stream;
 	xmms_mad_data_t *data;
 	guint fsize=0;
 	guint bitrate=0;
@@ -128,9 +132,11 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 		return;
 	}
 
-	mad_stream_buffer (&data->stream, buf, ret);
+	mad_stream_init (&stream);
+
+	mad_stream_buffer (&stream, buf, ret);
 		
-	if (mad_header_decode (&header, &data->stream) == -1) {
+	if (mad_header_decode (&header, &stream) == -1) {
 		return;
 	}
 
@@ -139,7 +145,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 	bitrate = header.bitrate;
 
 	mad_header_finish (&header);
-	mad_stream_finish (&data->stream);
+	mad_stream_finish (&stream);
 
 	if (!fsize) {
 		xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
@@ -274,6 +280,26 @@ xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
+xmms_mad_init (xmms_decoder_t *decoder)
+{
+	xmms_transport_t *transport;
+	xmms_mad_data_t *data;
+
+	g_return_val_if_fail (decoder, FALSE);
+	
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+	
+	data = xmms_decoder_plugin_data_get (decoder);
+	g_return_val_if_fail (decoder, FALSE);
+	
+	data->buffer_length = 0;
+	xmms_mad_get_media_info (decoder);
+
+	return TRUE;
+}
+
+static gboolean
 xmms_mad_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
@@ -294,14 +320,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		gchar *buffer = data->buffer, *nf = data->stream.next_frame;
 		memmove (data->buffer, data->stream.next_frame,
 				 data->buffer_length = (&buffer[data->buffer_length] - nf));
-	} else {
-		data->buffer_length = 0;
-		if (xmms_plugin_properties_check (xmms_transport_get_plugin (transport), XMMS_PLUGIN_PROPERTY_LOCAL)) {
-			XMMS_DBG ("Transport is local, seeking whole file");
-			xmms_mad_get_media_info (decoder);
-		}
-	}
-
+	} 
 	
 	output = xmms_decoder_output_get (decoder);
 	g_return_val_if_fail (output, FALSE);

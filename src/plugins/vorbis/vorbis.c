@@ -1,5 +1,8 @@
 /** @file
  *  OGG / Vorbis decoder for XMMS2
+ *
+ *  This uses a lot of decoder_example.c's code from vorbis_tools
+ * 
  */
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
@@ -44,6 +47,7 @@ static gboolean xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 static gboolean xmms_vorbis_decode_block (xmms_decoder_t *decoder);
 static void xmms_vorbis_get_media_info (xmms_decoder_t *decoder);
 static void xmms_vorbis_destroy (xmms_decoder_t *decoder);
+static gboolean xmms_vorbis_init (xmms_decoder_t *decoder);
 
 /*
  * Plugin header
@@ -66,6 +70,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_vorbis_new);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_vorbis_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_vorbis_destroy);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_INIT, xmms_vorbis_init);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
@@ -165,11 +170,21 @@ xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
-xmms_vorbis_init (xmms_transport_t *transport, xmms_vorbis_data_t *data)
+xmms_vorbis_init (xmms_decoder_t *decoder)
 {
+	xmms_vorbis_data_t *data;
+	xmms_transport_t *transport;
 	gchar *buffer;
 	gint ret;
 	gint i;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
+	data = xmms_decoder_plugin_data_get (decoder);
+	g_return_val_if_fail (data, FALSE);
 
 	buffer = ogg_sync_buffer (&data->oy, 4096);
 	ret = xmms_transport_read (transport, buffer, 4096);
@@ -246,6 +261,8 @@ xmms_vorbis_init (xmms_transport_t *transport, xmms_vorbis_data_t *data)
 	vorbis_synthesis_init (&data->vd, &data->vi);
 	vorbis_block_init (&data->vd, &data->vb);
 
+	xmms_vorbis_get_media_info (decoder);
+
 	XMMS_DBG ("vorbis_init ok!");
 
 	data->inited = 1;
@@ -270,20 +287,11 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	output = xmms_decoder_output_get (decoder);
 	g_return_val_if_fail (output, FALSE);
 
-	if (!data->inited) {
-		if (!xmms_vorbis_init (transport, data)) {
-			XMMS_DBG ("Ouch!");
-			return FALSE;
-		}
-		xmms_vorbis_get_media_info (decoder);
-	} else {
-		buffer = ogg_sync_buffer (&data->oy, 4096);
-		ret = xmms_transport_read (transport, buffer, 4096);
-		ogg_sync_wrote (&data->oy, ret);
-		if (ret == 0) 
-			return FALSE;
-	}
-
+	buffer = ogg_sync_buffer (&data->oy, 4096);
+	ret = xmms_transport_read (transport, buffer, 4096);
+	ogg_sync_wrote (&data->oy, ret);
+	if (ret == 0) 
+		return FALSE;
 
 	res = ogg_sync_pageout (&data->oy, &data->og);
 	if (res == 0) return TRUE; /* need more data */

@@ -279,6 +279,7 @@ xmms_decoder_thread (gpointer data)
 {
 	xmms_decoder_t *decoder = data;
 	xmms_decoder_decode_block_method_t decode_block;
+	xmms_decoder_init_method_t init_meth;
 
 	g_return_val_if_fail (decoder, NULL);
 	
@@ -286,7 +287,14 @@ xmms_decoder_thread (gpointer data)
 	if (!decode_block)
 		return NULL;
 
+	init_meth = xmms_plugin_method_get (decoder->plugin, XMMS_METHOD_INIT);
+	if (init_meth) {
+		if (!init_meth (decoder))
+			return NULL;
+	}
+	
 	xmms_decoder_lock (decoder);
+
 	while (decoder->running) {
 		gboolean ret;
 		
@@ -304,8 +312,6 @@ xmms_decoder_thread (gpointer data)
 	xmms_decoder_destroy_real (decoder);
 
 	XMMS_DBG ("Decoder thread quiting");
-
-
 
 	return NULL;
 }
