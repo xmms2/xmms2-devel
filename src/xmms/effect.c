@@ -115,50 +115,66 @@ xmms_effect_plugin_get (xmms_effect_t *effect)
 xmms_effect_t *
 xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 {
-	GList *list;
+	GList *list, *l;
 	xmms_plugin_t *plugin = NULL;
+	void (*initfunc) (xmms_effect_t *);
+	xmms_effect_t *effect;
 
 	g_return_val_if_fail (name, NULL);
 
 	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_EFFECT);
 
-	while (list) {
-		plugin = (xmms_plugin_t*) list->data;
-		if (!g_strcasecmp (xmms_plugin_shortname_get (plugin), name)) {
+	for (l = list; l; l = g_list_next (l)) {
+		if (!g_strcasecmp (xmms_plugin_shortname_get (l->data),
+		                   name)) {
+			plugin = l->data;
+			xmms_plugin_ref (plugin);
 			break;
 		}
-		list = g_list_next (list);
 	}
-	if (list) {
-		void (*initfunc) (xmms_effect_t *);
-		xmms_effect_t *effect = g_new0 (xmms_effect_t, 1);
 
-		g_return_val_if_fail (effect, stack);
+	xmms_plugin_list_destroy (list);
 
-		effect->plugin = plugin;
-
-		initfunc = xmms_plugin_method_get (plugin, 
-						   XMMS_PLUGIN_METHOD_INIT);
-		
-		g_return_val_if_fail (initfunc, stack);
-
-		initfunc (effect);
-
-		effect->samplerate_change = xmms_plugin_method_get (plugin, 
-						   XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
-
-		effect->run = xmms_plugin_method_get (plugin, 
-						      XMMS_PLUGIN_METHOD_PROCESS);
-
-		effect->deinit = xmms_plugin_method_get (plugin, 
-							 XMMS_PLUGIN_METHOD_DEINIT);
-
-		effect->next = stack;
-		stack = effect;
-
-	} else {
+	if (!plugin) {
 		XMMS_DBG ("Skipping unknown plugin: %s", name);
+		return stack;
 	}
+
+	effect = g_new0 (xmms_effect_t, 1);
+
+	/* if we exit early here, make sure we also unref
+	 * the plugin again
+	 */
+	if (!effect) {
+		xmms_plugin_unref (plugin);
+	}
+	g_return_val_if_fail (effect, stack);
+
+	effect->plugin = plugin;
+
+	initfunc = xmms_plugin_method_get (plugin, 
+			XMMS_PLUGIN_METHOD_INIT);
+
+	/* see above */
+	if (!initfunc) {
+		xmms_plugin_unref (plugin);
+	}
+	g_return_val_if_fail (initfunc, stack);
+
+	initfunc (effect);
+
+	effect->samplerate_change = xmms_plugin_method_get (plugin, 
+			XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
+
+	effect->run = xmms_plugin_method_get (plugin, 
+			XMMS_PLUGIN_METHOD_PROCESS);
+
+	effect->deinit = xmms_plugin_method_get (plugin, 
+			XMMS_PLUGIN_METHOD_DEINIT);
+
+	effect->next = stack;
+	stack = effect;
+
 	return stack;
 }
 
