@@ -26,11 +26,7 @@
  */
 
 /* Buffersizes */
-#ifdef XMMS_OS_DARWIN /* CoreAudio would like a bigger buffer to avoid skips */
 #define XMMS_DECODER_DEFAULT_BUFFERSIZE "131072"
-#else
-#define XMMS_DECODER_DEFAULT_BUFFERSIZE "32768"
-#endif
 
 
 /**
@@ -71,6 +67,7 @@ void xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate);
 guint xmms_decoder_samplerate_get (xmms_decoder_t *decoder);
 void xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 				 xmms_transport_t *transport);
+xmms_playlist_entry_t * xmms_decoder_playlist_entry_get (xmms_decoder_t *decoder);
 void xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, 
 				       xmms_playlist_entry_t *entry);
 xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, 

@@ -281,10 +281,15 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 	GList **l = (GList **) pArg;
 	GHashTable *table = g_hash_table_new (g_str_hash, g_str_equal);
 
-	while (cName[i]) {
-		XMMS_DBG ("%s = %s", cName[i], argv[i]);
+	for (i = 0; i < argc; i++) {
+		gchar *a = NULL;
+
+		if (!argv[i]) {
+			a = " ";
+		} else {
+			a = argv[i];
+		}
 		g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (argv[i]));
-		i++;
 	}
 
 	*l = g_list_prepend (*l, table);

@@ -175,7 +175,7 @@ cdef class XMMSResult :
 		if xmmsc_result_get_int (self.res, &ret) :
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 	def GetUInt (self) :
 		"""
@@ -187,7 +187,7 @@ cdef class XMMSResult :
 		if xmmsc_result_get_uint (self.res, &ret) :
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 	def GetString (self) :
 		"""
@@ -200,7 +200,7 @@ cdef class XMMSResult :
 		if xmmsc_result_get_string (self.res, &ret) :
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 
 	def GetHashTable (self) :
@@ -215,7 +215,7 @@ cdef class XMMSResult :
 			x_hash_foreach (hash, foreach_hash, ret)
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 			
 	def GetIntList (self) :
 		"""
@@ -234,7 +234,7 @@ cdef class XMMSResult :
 
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 	def GetUIntList (self) :
 		"""
@@ -253,7 +253,7 @@ cdef class XMMSResult :
 
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 	def GetHashList (self) :
 		"""
@@ -270,9 +270,10 @@ cdef class XMMSResult :
 				hash = {}
 				x_hash_foreach (<x_hash_t *>n.data, foreach_hash, hash)
 				ret.append (hash)
+				n = n.next
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 
 	def GetStringList (self) :
@@ -292,7 +293,7 @@ cdef class XMMSResult :
 
 			return ret
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 	def GetPlaylistChange (self) :
 		"""
@@ -306,7 +307,7 @@ cdef class XMMSResult :
 		if xmmsc_result_get_playlist_change (self.res, &change, &id, &arg) :
 			return (change, id, arg)
 		else :
-			raise ValueError
+			raise ValueError ("Failed to retrieve value!")
 
 
 	def Restart (self) :
