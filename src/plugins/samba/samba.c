@@ -15,13 +15,9 @@
  *
  *  Valid url:
  *  smb://user:password@host/share/path/file
- *  (host can be IP, hostname or netbios name)
- */
-
-
-/*
- * @todo some sanitycheck for the url
- * @todo unable to read id3 tag from some mp3 files? (bad files?)
+ *  
+ *  - host can be IP, hostname or netbios name
+ *  - username and password is optional
  */
 
 #include "xmms/xmms.h"
@@ -115,7 +111,7 @@ xmms_samba_can_handle (const gchar *url)
 
 	XMMS_DBG ("xmms_samba_can_handle (%s)", dec);
 	
-	if (g_strncasecmp (dec, "smb:", 4) == 0) {
+	if (g_strncasecmp (dec, "smb://", 6) == 0) {
 		g_free (dec);
 		return TRUE;
 	}
@@ -151,10 +147,6 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 	
 	XMMS_DBG ("xmms_samba_init (%p, %s)", transport, urlptr);
 
-	/**
-	 * Ok.. some sanity check here would be nice.. 
-	 * Like .. is the url really smb://host/path/file?
-	 */
 	if (!urlptr) {
 		return FALSE;
 	}
@@ -216,7 +208,6 @@ xmms_samba_close (xmms_transport_t *transport)
 			xmms_log_error ("errno (%d) %s", errno, strerror (errno));
 		}
 	}
-
 
 	g_free (data->urlptr);
 	g_free (data);
