@@ -15,6 +15,7 @@
 #include "xmms/core.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/magic.h"
+#include "xmms/dbus.h"
 
 #include <glib.h>
 #include <stdlib.h>
@@ -69,6 +70,15 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, data);
 }
 
+
+static guint32
+handle_current_id_request (xmms_core_t *core)
+{
+	return xmms_core_get_id (core);
+
+}
+XMMS_METHOD_DEFINE (currid, handle_current_id_request, xmms_core_t *, UINT32, NONE, NONE);
+
 static gboolean
 next_song ()
 {
@@ -78,7 +88,7 @@ next_song ()
 	core->curr_song = xmms_playlist_get_next_entry (core->playlist);
 
 	if (!core->curr_song) {
-		xmms_core_playback_stop ();
+		xmms_core_playback_stop (core);
 		return FALSE;
 	}
 	return TRUE;
@@ -93,7 +103,7 @@ prev_song ()
 	core->curr_song = xmms_playlist_get_prev_entry (core->playlist);
 
 	if (!core->curr_song) {
-		xmms_core_playback_stop ();
+		xmms_core_playback_stop (core);
 		return FALSE;
 	}
 	return TRUE;
@@ -111,7 +121,7 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 static void
 open_fail (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	xmms_core_playback_stop ();
+	xmms_core_playback_stop (core);
 }
 
 
@@ -127,18 +137,6 @@ xmms_core_output_set (xmms_output_t *output)
 	core->output = output;
 	xmms_object_connect (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, eos_reached, NULL);
 	xmms_object_connect (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, open_fail, NULL);
-}
-
-
-void
-xmms_core_config_set (gchar *key, gchar *value)
-{
-	xmms_config_value_t *val;
-
-	val = xmms_config_lookup (key);
-	if (val)
-		xmms_config_value_data_set (val, g_strdup (value));
-
 }
 
 static void
@@ -159,8 +157,9 @@ wake_core ()
  *
  */
 
+XMMS_METHOD_DEFINE (next, xmms_core_play_next, xmms_core_t *, NONE, NONE, NONE);
 void
-xmms_core_play_next ()
+xmms_core_play_next (xmms_core_t *core)
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->playlist_op = XMMS_CORE_NEXT_SONG;
@@ -171,8 +170,9 @@ xmms_core_play_next ()
 	}
 }
 
+XMMS_METHOD_DEFINE (prev, xmms_core_play_prev, xmms_core_t *, NONE, NONE, NONE);
 void
-xmms_core_play_prev ()
+xmms_core_play_prev (xmms_core_t *core)
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->playlist_op = XMMS_CORE_PREV_SONG;
@@ -183,8 +183,10 @@ xmms_core_play_prev ()
 	}
 }
 
+XMMS_METHOD_DEFINE (stop, xmms_core_playback_stop, xmms_core_t *, NONE, NONE, NONE);
+
 void
-xmms_core_playback_stop ()
+xmms_core_playback_stop (xmms_core_t *core)
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
@@ -229,8 +231,9 @@ xmms_core_playlist_save (gchar *filename)
 	xmms_playlist_plugin_free (plugin);
 }
 
+XMMS_METHOD_DEFINE (start, xmms_core_playback_start, xmms_core_t *, NONE, NONE, NONE);
 void
-xmms_core_playback_start ()
+xmms_core_playback_start (xmms_core_t *core)
 {
 	if (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
 		/* @todo race condition? */
@@ -245,17 +248,6 @@ void
 xmms_core_mediainfo_add_entry (guint id)
 {
 	xmms_mediainfo_thread_add (core->mediainfothread, id);
-}
-
-void
-xmms_core_playlist_addurl (gchar *nurl)
-{
-	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
-	xmms_playlist_add (core->playlist, entry, XMMS_PLAYLIST_APPEND);
-
-	/* Since playlist_add will reference this entry now we turn
-	   total control to it */
-	xmms_playlist_entry_unref (entry);
 }
 
 void
@@ -290,7 +282,7 @@ void
 xmms_core_playlist_clear ()
 {
 	/** @todo Kanske inte skitsnygt. */
-	xmms_core_playback_stop ();
+	xmms_core_playback_stop (core);
 	xmms_playlist_entry_unref (core->curr_song);
 	core->curr_song = NULL;
 	xmms_playlist_clear (core->playlist);
@@ -302,20 +294,24 @@ xmms_core_playlist_remove (guint id)
 	xmms_playlist_id_remove (core->playlist, id);
 }
 
+XMMS_METHOD_DEFINE (seek_ms, xmms_core_playback_seek_ms, xmms_core_t *, NONE, UINT32, NONE);
+
 void
-xmms_core_playback_seek_ms (guint milliseconds)
+xmms_core_playback_seek_ms (xmms_core_t *core, guint32 milliseconds)
 {
 	xmms_decoder_seek_ms (core->decoder, milliseconds);
 }
 
+XMMS_METHOD_DEFINE (seek_samples, xmms_core_playback_seek_samples, xmms_core_t *, NONE, UINT32, NONE);
 void
-xmms_core_playback_seek_samples (guint samples)
+xmms_core_playback_seek_samples (xmms_core_t *core, guint32 samples)
 {
 	xmms_decoder_seek_samples (core->decoder, samples);
 }
 
+XMMS_METHOD_DEFINE (quit, xmms_core_quit, xmms_core_t *, NONE, NONE, NONE);
 void
-xmms_core_quit ()
+xmms_core_quit (xmms_core_t *core)
 {
 	gchar *filename;
 	filename = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
@@ -359,6 +355,21 @@ xmms_core_init ()
 	core->cond = g_cond_new ();
 	core->mutex = g_mutex_new ();
 	core->flush = FALSE;
+
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_PLAY, XMMS_METHOD_FUNC (start));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_STOP, XMMS_METHOD_FUNC (stop));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_NEXT, XMMS_METHOD_FUNC (next));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_PREV, XMMS_METHOD_FUNC (prev));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_CURRENTID, XMMS_METHOD_FUNC (currid));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_SEEKMS, XMMS_METHOD_FUNC (seek_ms));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_SEEKSAMPLES, XMMS_METHOD_FUNC (seek_samples));
+
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));
+
+	/** @todo really split this into to different objects */
+
+	xmms_dbus_register_object ("playback", XMMS_OBJECT (core));
+	xmms_dbus_register_object ("core", XMMS_OBJECT (core));
 
 }
 
@@ -428,7 +439,7 @@ core_thread (gpointer data)
 		mime = xmms_transport_mimetype_get_wait (core->transport);
 		if (!mime) {
 			xmms_transport_close (core->transport);
-			xmms_core_play_next ();
+			xmms_core_play_next (core);
 		}
 
 		XMMS_DBG ("mime-type: %s", mime);
@@ -445,7 +456,7 @@ core_thread (gpointer data)
 
 			/* cleanup */
 			xmms_playlist_plugin_free (plsplugin);
-			xmms_core_play_next ();
+			xmms_core_play_next (core);
 		}
 
 		xmms_playlist_entry_mimetype_set (core->curr_song, mime);
@@ -453,7 +464,7 @@ core_thread (gpointer data)
 		core->decoder = xmms_decoder_new ();
 		if (!xmms_decoder_open (core->decoder, core->curr_song)) {
 			xmms_decoder_destroy (core->decoder);
-			xmms_core_play_next ();
+			xmms_core_play_next (core);
 		}
 
 		xmms_object_connect (XMMS_OBJECT (core->decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID,
@@ -492,6 +503,7 @@ xmms_core_start (void)
 {
 	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
 	xmms_core_effect_init ();
+	xmms_dbus_register_object ("playlist", XMMS_OBJECT (core->playlist));
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 
@@ -600,7 +612,7 @@ xmms_core_get_url ()
 }
 
 gint
-xmms_core_get_id ()
+xmms_core_get_id (xmms_core_t *core)
 {
 	if (core->curr_song && core->status != XMMS_CORE_PLAYBACK_STOPPED) 
 		return xmms_playlist_entry_id_get (core->curr_song);

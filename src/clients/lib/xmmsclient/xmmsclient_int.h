@@ -17,6 +17,7 @@
 struct xmmsc_connection_St {
 	DBusConnection *conn;	
 	GHashTable *callbacks;
+	GHashTable *replies;
 	gchar *error;
 	xmmsc_watch_callback_t watch_callback;
 	gpointer data;

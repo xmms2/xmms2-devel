@@ -18,6 +18,7 @@
 #include "xmms/output_int.h"
 #include "xmms/xmms.h"
 #include "xmms/effect.h"
+#include "xmms/dbus.h"
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -29,9 +30,6 @@
 
 static GMainLoop *mainloop;
 
-
-
-gboolean xmms_dbus_init (gchar *path);
 
 
 static gboolean

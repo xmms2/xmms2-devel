@@ -110,6 +110,7 @@ xmms_playlist_entries_left (xmms_playlist_t *playlist)
 }
 
 /** shuffles playlist */
+XMMS_METHOD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 
 void
 xmms_playlist_shuffle (xmms_playlist_t *playlist)
@@ -129,7 +130,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 		XMMS_PLAYLIST_UNLOCK (playlist);
                 return;
 	}
-                                                                                  
+
         ptrs = g_new (GList *, len);
                                                                                   
         for (node = playlist->list, i = 0; i < len; node = g_list_next (node), i++)
@@ -162,6 +163,8 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 }
 
 /** removes entry from playlist */
+
+XMMS_METHOD_DEFINE (remove, xmms_playlist_id_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 
 gboolean 
 xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
@@ -199,6 +202,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 }
 
 /** move entry in playlist */
+XMMS_METHOD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
 
 gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
@@ -273,6 +277,28 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 
 }
 
+
+gboolean
+xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl)
+{
+	gboolean res;
+
+	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
+	if (!entry)
+		return FALSE;
+
+	res = xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
+
+	/* Since playlist_add will reference this entry now we turn
+	   total control to it */
+	xmms_playlist_entry_unref (entry);
+
+	return res;
+}
+
+XMMS_METHOD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
+
+
 /** Adds a xmms_playlist_entry_t to the playlist.
  *
  *  This will append or prepend the entry according to
@@ -340,6 +366,8 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 }
 
+XMMS_METHOD_DEFINE (getmediainfo, xmms_playlist_get_byid, xmms_playlist_t *, PLAYLIST_ENTRY, UINT32, NONE);
+
 /** Get a entry based on position in playlist.
  * 
  *  @returns a xmms_playlist_entry_t that lives on the given position.
@@ -367,6 +395,8 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 	return r->data;
 
 }
+
+XMMS_METHOD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 
 void
 xmms_playlist_clear (xmms_playlist_t *playlist)
@@ -573,6 +603,7 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
  *  should use when sorting. 
  */
 
+XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
 void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
 {
@@ -595,9 +626,11 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
 
 /** Lists the current playlist.
  *
- *  @returns A newly allocated GList with the current playlist.
- *  Remeber that it is only the LIST that is copied. Not the entries.
+ * @returns A newly allocated GList with the current playlist.
+ * Remeber that it is only the LIST that is copied. Not the entries.
+ * The entries are however referenced, and must be unreffed!
  */
+XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, PLAYLIST, NONE, NONE);
 
 GList *
 xmms_playlist_list (xmms_playlist_t *playlist)
@@ -606,6 +639,7 @@ xmms_playlist_list (xmms_playlist_t *playlist)
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
+		xmms_playlist_entry_ref (node->data);
 		r = g_list_append (r, node->data);
 	}
 
@@ -631,6 +665,15 @@ xmms_playlist_init ()
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 	ret->is_waiting = FALSE;
 	xmms_object_init (XMMS_OBJECT (ret));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SHUFFLE, XMMS_METHOD_FUNC (shuffle));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_ADD, XMMS_METHOD_FUNC (add));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_GETMEDIAINFO, XMMS_METHOD_FUNC (getmediainfo));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_REMOVE, XMMS_METHOD_FUNC (remove));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_MOVE, XMMS_METHOD_FUNC (move));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_LIST, XMMS_METHOD_FUNC (list));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_CLEAR, XMMS_METHOD_FUNC (clear));
+	xmms_object_method_add (XMMS_OBJECT (ret), XMMS_METHOD_SORT, XMMS_METHOD_FUNC (sort));
 
 	return ret;
 }

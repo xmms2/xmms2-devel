@@ -73,6 +73,7 @@ void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property);
 void xmms_playlist_shuffle (xmms_playlist_t *playlist);
 void xmms_playlist_clear (xmms_playlist_t *playlist);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id);
+gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps);
 
 xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
 xmms_playlist_mode_t xmms_playlist_mode_get (xmms_playlist_t *playlist);
