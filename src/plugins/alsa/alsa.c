@@ -45,12 +45,8 @@ typedef struct xmms_alsa_data_St {
 	snd_pcm_t *pcm;
 	snd_pcm_hw_params_t *hwparams;
 	gint alsa_frame_size;
+	gint written_frames;
 } xmms_alsa_data_t;
-
-static gint written_frames     = 0;
-static gint alsa_total_written = 0;
-
-
 
 /*
  * Function prototypes
@@ -94,7 +90,8 @@ xmms_plugin_get (void)
 /** 
  * Open audio device and configure it to play a stream.
  *
- * @param struct xmms_output_t
+ * @param output The outputstructure we are supposed to fill in with our 
+ *               private alsa-blessed data
  */
 static gboolean
 xmms_alsa_open (xmms_output_t *output)
@@ -120,29 +117,33 @@ xmms_alsa_open (xmms_output_t *output)
 		dev = "default";
 	}
 
-	XMMS_DBG("opening device: %s", dev);
+	XMMS_DBG ("opening device: %s", dev);
 	
 	if ((err = snd_pcm_open (&(data->pcm), "default", SND_STREAM, 0)) < 0) {
 		xmms_log_fatal ("cannot open audio device default (%s)", 
 				snd_strerror (err));
+		goto error;
 	}
 	
 #ifdef DEBUG
-	snd_pcm_info_malloc(&info);
-	snd_pcm_info(data->pcm, info);
-	alsa_card      = snd_pcm_info_get_card(info);
-	alsa_device    = snd_pcm_info_get_device(info);
-	alsa_subdevice = snd_pcm_info_get_subdevice(info);
-	alsa_name      = (gchar *)snd_pcm_info_get_name(info);
+	snd_pcm_info_malloc (&info);
+	snd_pcm_info (data->pcm, info);
+	
+	alsa_card = snd_pcm_info_get_card (info);
+	alsa_device = snd_pcm_info_get_device (info);
+	alsa_subdevice = snd_pcm_info_get_subdevice (info);
+	alsa_name = (gchar *)snd_pcm_info_get_name (info);
+	
 	XMMS_DBG ("Card: %i, Device: %i, Subdevice: %i, Name: %s", alsa_card, 
 			alsa_device, alsa_subdevice, alsa_name);
+
 	g_free(alsa_name);
 #endif
 	
-	snd_pcm_hw_params_alloca(&(data->hwparams));
+	snd_pcm_hw_params_alloca (&(data->hwparams));
 	
-	if ((err = snd_pcm_hw_params_any(data->pcm, data->hwparams)) < 0) {
-		xmms_log_fatal("cannot initialize hardware parameter structure (%s)", 
+	if ((err = snd_pcm_hw_params_any (data->pcm, data->hwparams)) < 0) {
+		xmms_log_fatal ("cannot initialize hardware parameter structure (%s)", 
 				snd_strerror (err));
 		goto error;
 	}
@@ -172,13 +173,13 @@ xmms_alsa_open (xmms_output_t *output)
 		goto error;
 	}
 	
-	if ((err = snd_pcm_hw_params_set_periods(data->pcm, data->hwparams, 
+	if ((err = snd_pcm_hw_params_set_periods (data->pcm, data->hwparams, 
 					SND_PERIODS, 0)) < 0) {
 		xmms_log_fatal ("cannot set periods (%s)", snd_strerror (err));
 		goto error;
 	}
 	
-	if ((err = snd_pcm_hw_params_set_buffer_size_near(data->pcm, data->hwparams, 
+	if ((err = snd_pcm_hw_params_set_buffer_size_near (data->pcm, data->hwparams, 
 					(SND_BUFF_SIZE * SND_PERIODS)>>2)) < 0) {
 		xmms_log_fatal ("cannot set buffer size (%s)", snd_strerror (err));
 		goto error;
@@ -197,11 +198,11 @@ xmms_alsa_open (xmms_output_t *output)
 		goto error;
 	}
 	
-	alsa_bits_per_sample = snd_pcm_format_physical_width(SND_FORMAT);
+	alsa_bits_per_sample = snd_pcm_format_physical_width (SND_FORMAT);
 	data->alsa_frame_size = (alsa_bits_per_sample * SND_CHANNELS) / 8;                                                
 	XMMS_DBG ("bps: %d, fs: %d", alsa_bits_per_sample, data->alsa_frame_size);
 	
-	xmms_output_plugin_data_set(output, data);
+	xmms_output_plugin_data_set (output, data);
 
 	return TRUE;
 error:
@@ -214,7 +215,7 @@ error:
 /**
  * Close audio device.
  *
- * @param struct xmms_output_t
+ * @param output The output structure filled with alsa data.  
  */
 static void
 xmms_alsa_close (xmms_output_t *output)
@@ -237,7 +238,7 @@ xmms_alsa_close (xmms_output_t *output)
 
 /**
  * XRUN recovery.
- * @param struct xmms_output_t
+ * @param output The output structure filled with alsa data. 
  */
 static void
 xmms_alsa_xrun_recover (xmms_output_t *output)
@@ -262,9 +263,9 @@ xmms_alsa_xrun_recover (xmms_output_t *output)
 /**
  * Write data to the output device.
  *
- * @param struct xmms_output_t
- * @param gchar
- * @param gint
+ * @param output The output structure filled with alsa data.
+ * @param buffer Audio data to be written to audio device.
+ * @param len The length of audio data.
  */
 static void
 xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
@@ -281,22 +282,21 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 
 	while (len > 0) {
 
-		if ((written_frames = snd_pcm_writei (data->pcm, buffer, 
+		if ((data->written_frames = snd_pcm_writei (data->pcm, buffer, 
 						len / data->alsa_frame_size)) > 0) {
-			written = written_frames * data->alsa_frame_size;
-			alsa_total_written += written;
+			written = data->written_frames * data->alsa_frame_size;
 			len -= written;
 			buffer += written;
 		}
-		else if (written_frames == -EAGAIN || (written_frames > 0 && 
-					written_frames < (len / data->alsa_frame_size))) {
+		else if (data->written_frames == -EAGAIN || (data->written_frames > 0 && 
+					data->written_frames < (len / data->alsa_frame_size))) {
 			snd_pcm_wait (data->pcm, 100);
 		}
-		else if (written_frames == -EPIPE) {
+		else if (data->written_frames == -EPIPE) {
 			xmms_alsa_xrun_recover (output);
 		}
 		else {
-			xmms_log_fatal ("read/write error: %d", written_frames);
+			xmms_log_fatal ("read/write error: %d", data->written_frames);
 			break;
 		}
 	}

@@ -64,6 +64,18 @@ AC_SUBST(SQLITE_LDFLAGS)
 AC_SUBST(SQLITE_CFLAGS)
 AM_CONDITIONAL(HAVE_SQLITE, test "$SQLITE_LDFLAGS" != "")
 
+dnl libasound 
+AC_CHECK_LIB(asound,snd_pcm_open,[
+	ASOUND_LDFLAGS="-lasound"
+	ASOUND_CFLAGS=""
+],[
+	AC_MSG_WARN("libasound2 not found. disabling it")
+])
+
+AC_SUBST(ASOUND_LDFLAGS)
+AC_SUBST(ASOUND_CFLAGS)
+AM_CONDITIONAL(HAVE_ASOUND, test "$ASOUND_LDFLAGS" != "")
+
 AM_CONDITIONAL(HAVE_GTK2, test "$GTK2" != "no")
 if test "$GTK2" != "no"; then
 	AC_CONFIG_SUBDIRS("src/clients/gtk2")
