@@ -121,7 +121,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			transport = xmms_transport_new (mtt->core);
 			xmms_transport_open (transport, entry);
 			if (!transport) {
-				xmms_playlist_entry_unref (entry);
+				xmms_object_unref (entry);
 				continue;
 			}
 
@@ -131,8 +131,8 @@ xmms_mediainfo_thread_thread (gpointer data)
 			mime = xmms_transport_mimetype_get (transport);
 
 			if (!mime) {
-				xmms_playlist_entry_unref (entry);
-				xmms_transport_close (transport);
+				xmms_object_unref (entry);
+				xmms_object_unref (transport);
 				continue;
 			}
 
@@ -145,11 +145,11 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 				/* we don't want it in the playlist. */
 				xmms_playlist_id_remove (mtt->playlist, xmms_playlist_entry_id_get (entry), &err);
-				xmms_playlist_entry_unref (entry);
+				xmms_object_unref (entry);
 
 				/* cleanup */
 				xmms_playlist_plugin_free (plsplugin);
-				xmms_transport_close (transport);
+				xmms_object_unref (transport);
 				continue;
 			}
 
@@ -157,9 +157,9 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_playlist_entry_mimetype_set (entry, mime);
 			decoder = xmms_decoder_new (mtt->core);
 			if (!xmms_decoder_open (decoder, entry)) {
-				xmms_playlist_entry_unref (entry);
-				xmms_transport_close (transport);
-				xmms_decoder_destroy (decoder);
+				xmms_object_unref (entry);
+				xmms_object_unref (transport);
+				xmms_object_unref (decoder);
 				continue;
 			}
 
@@ -171,9 +171,9 @@ xmms_mediainfo_thread_thread (gpointer data)
 				//xmms_playlist_entry_copy_property (newentry, entry);
 			}
 
-			xmms_playlist_entry_unref (entry);
-			xmms_transport_close (transport);
-			xmms_decoder_destroy (decoder);
+			xmms_object_unref (entry);
+			xmms_object_unref (transport);
+			xmms_object_unref (decoder);
 				
 
 			g_mutex_lock (mtt->mutex);

@@ -414,6 +414,23 @@ xmms_output_close (xmms_output_t *output)
 
 }
 
+static void
+xmms_output_destroy (xmms_object_t *object)
+{
+	xmms_output_t *output = (xmms_output_t *)object;
+	xmms_output_destroy_method_t dest;
+
+	dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+
+	if (dest) {
+		dest (output);
+	}
+
+	g_mutex_free (output->mutex);
+	g_cond_free (output->cond);
+	xmms_ringbuf_destroy (output->buffer);
+}
+
 xmms_output_t *
 xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 {
@@ -429,8 +446,7 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 
 	val = xmms_config_lookup ("core.output_buffersize");
 
-	output = g_new0 (xmms_output_t, 1);
-	xmms_object_init (XMMS_OBJECT (output));
+	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
 	output->plugin = plugin;
 	output->mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
@@ -444,10 +460,7 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new (output)) {
-		g_mutex_free (output->mutex);
-		g_cond_free (output->cond);
-		xmms_ringbuf_destroy (output->buffer);
-		g_free (output);
+		xmms_object_unref (output);
 		return NULL;
 	}
 	
@@ -675,6 +688,7 @@ xmms_output_thread (gpointer data)
 
 	buffersize_get_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
 
+	xmms_object_ref (output);
 	xmms_output_lock (output);
 	while (output->running) {
 		gchar buffer[4096];
@@ -756,29 +770,7 @@ xmms_output_thread (gpointer data)
 		}
 	}
 	xmms_output_unlock (output);
+	xmms_object_unref (output);
 
 	return NULL;
 }
-
-void
-xmms_output_destroy (xmms_output_t *output)
-{
-	xmms_output_destroy_method_t dest;
-
-	g_return_if_fail (output);
-
-	output->running = FALSE;
-	g_thread_join (output->thread);
-
-
-	dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-
-	if (dest) {
-		dest (output);
-	}
-
-	g_mutex_free (output->mutex);
-	g_free (output);
-
-}
-

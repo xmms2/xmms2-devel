@@ -284,7 +284,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	ret = xmms_transport_read (transport, buf, 8192);
 	if (ret <= 0) {
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 		return;
 	}
 
@@ -311,7 +311,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   MIN(4096,head.len - pos));
 				if (ret <= 0) {
 					XMMS_DBG ("error reading data for id3v2-tag");
-					xmms_playlist_entry_unref (entry);
+					xmms_object_unref (entry);
 					return;
 				}
 				pos += ret;
@@ -345,7 +345,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		xmms_decoder_entry_mediainfo_set (decoder, entry);
 	}
 
-	xmms_playlist_entry_unref (entry);
+	xmms_object_unref (entry);
 
 	return;
 }

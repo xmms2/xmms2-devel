@@ -256,6 +256,15 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 
 XMMS_METHOD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
 
+static void
+xmms_config_destroy (xmms_object_t *object) 
+{
+	xmms_config_t *config = (xmms_config_t *)object;
+	g_mutex_free (config->mutex);
+	/** @todo free all values? */
+	g_hash_table_destroy (config->values);
+}
+
 gboolean
 xmms_config_init (const gchar *filename)
 {
@@ -264,8 +273,7 @@ xmms_config_init (const gchar *filename)
 	xmms_config_t *config;
 	int ret, fd;
 
-	config = g_new0 (xmms_config_t, 1);
-	xmms_object_init (XMMS_OBJECT (config));
+	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
 	config->values = g_hash_table_new (g_str_hash, g_str_equal);
 	config->state = XMMS_CONFIG_STATE_START;
@@ -304,12 +312,6 @@ xmms_config_init (const gchar *filename)
 	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
 
 	return TRUE;
-}
-
-void
-xmms_config_free (void)
-{
-	g_return_if_fail (global_config);
 }
 
 xmms_config_value_t *
@@ -470,11 +472,8 @@ xmms_config_value_new (const gchar *name)
 {
 	xmms_config_value_t *ret;
 
-	ret = g_new0 (xmms_config_value_t, 1);
+	ret = xmms_object_new (xmms_config_value_t, NULL);
 	ret->name = name;
-
-	XMMS_DBG ("adding config value %s", name);
-	xmms_object_init (XMMS_OBJECT (ret));
 
 	return ret;
 }
@@ -485,13 +484,6 @@ xmms_config_value_name_get (const xmms_config_value_t *value)
 	g_return_val_if_fail (value, NULL);
 
 	return value->name;
-}
-
-void
-xmms_config_value_free (xmms_config_value_t *value)
-{
-	g_return_if_fail (value);
-	g_free (value);
 }
 
 void

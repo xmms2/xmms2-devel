@@ -433,7 +433,7 @@ xmms_playback_entry (xmms_playback_t *playback)
 	mode = playback->mode;
 
 	if (playback->current_song && playback->playlist_op != XMMS_PLAYBACK_HOLD)
-		xmms_playlist_entry_unref (playback->current_song);
+		xmms_object_unref (playback->current_song);
 	
 	if (playback->status == XMMS_PLAYBACK_STOP || 
 	    playback->status == XMMS_PLAYBACK_PAUSE) {
@@ -487,6 +487,17 @@ mode_change (xmms_object_t *object, gconstpointer data, gpointer userdata)
 
 }
 
+static void
+xmms_playback_destroy (xmms_object_t *object)
+{
+	xmms_playback_t *playback = (xmms_playback_t*)object;
+	g_mutex_free (playback->mtx);
+	g_cond_free (playback->cond);
+	xmms_object_unref (playback->mediainfothread);
+	xmms_object_unref (playback->core);
+	xmms_object_unref (playback->playlist);
+}
+
 /**
   * Initialize a new #xmms_playback_t for use by core.
   *
@@ -503,19 +514,22 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 	g_return_val_if_fail (core, NULL);
 	g_return_val_if_fail (playlist, NULL);
 
-	playback = g_new0 (xmms_playback_t, 1);
+	playback = xmms_object_new (xmms_playback_t, xmms_playback_destroy);
 
 	playback->cond = g_cond_new ();
 	playback->mtx = g_mutex_new ();
 	playback->playlist_op = XMMS_PLAYBACK_NEXT;
+
 	playback->playlist = playlist;
+	xmms_object_ref (playlist);
+
 	playback->core = core;
+	xmms_object_ref (core);
+
 	playback->mediainfothread = xmms_mediainfo_thread_start (core, playlist);
 
 	val = xmms_config_value_register ("core.next_mode", "none", mode_change, playback);
 	playback->mode = xmms_playback_modechr_to_int (xmms_config_value_string_get (val));
-
-	xmms_object_init (XMMS_OBJECT (playback));
 
 	xmms_object_method_add (XMMS_OBJECT (playback), 
 				XMMS_METHOD_PLAY, 
@@ -601,15 +615,6 @@ xmms_playlist_t *
 xmms_playback_playlist_get (xmms_playback_t *playback)
 {
 	return playback->playlist;
-}
-
-/**
-  * Deallocate all memory used by the playback
-  */
-void
-xmms_playback_destroy (xmms_playback_t *playback)
-{
-	g_free (playback);
 }
 
 /** @} */

@@ -44,7 +44,7 @@
  * Static function prototypes
  */
 
-static void xmms_transport_destroy (xmms_transport_t *transport);
+static void xmms_transport_destroy (xmms_object_t *object);
 static xmms_plugin_t *xmms_transport_plugin_find (const gchar *url);
 static gpointer xmms_transport_thread (gpointer data);
 
@@ -365,8 +365,7 @@ xmms_transport_new (xmms_core_t *core)
 
 	val = xmms_config_lookup ("core.transport_buffersize");
 
-	transport = g_new0 (xmms_transport_t, 1);
-	xmms_object_init (XMMS_OBJECT (transport));
+	transport = xmms_object_new (xmms_transport_t, xmms_transport_destroy);
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
 	transport->mime_cond = g_cond_new ();
@@ -763,57 +762,30 @@ xmms_transport_close (xmms_transport_t *transport)
 		g_cond_signal (transport->cond);
 		xmms_transport_unlock (transport);
 		g_thread_join (transport->thread);
-	} else {
-		xmms_transport_destroy (transport);
 	}
 }
-
 
 /*
  * Static functions
  */
-
-/*static void
-xmms_transport_seek_real (xmms_transport_t *transport)
-{
-	xmms_transport_seek_method_t seek_method;
-	g_return_if_fail (transport);
-
-
-	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-	g_return_if_fail (seek_method);
-
-	XMMS_DBG ("Seeking to %d", transport->seek_offset);
-
-	xmms_ringbuf_clear (transport->buffer);
-	xmms_transport_unlock (transport);
-	seek_method (transport, transport->seek_offset, transport->seek_whence);
-	xmms_transport_lock (transport);
-
-	transport->want_seek = FALSE;
-	xmms_ringbuf_set_eos (transport->buffer, FALSE);
-	g_cond_signal (transport->seek_cond);
-}*/
-
 static void
-xmms_transport_destroy (xmms_transport_t *transport)
+xmms_transport_destroy (xmms_object_t *object)
 {
+	xmms_transport_t *transport = (xmms_transport_t *)object;
 	xmms_transport_close_method_t close_method;
 
 	close_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_CLOSE);
 	
 	if (close_method)
 		close_method (transport);
+
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->mime_cond);
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
-	xmms_object_cleanup (XMMS_OBJECT (transport));
 
 	if (transport->mimetype)
 		g_free (transport->mimetype);
-
-	g_free (transport);
 }
 
 /**
@@ -869,8 +841,9 @@ xmms_transport_thread (gpointer data)
 	if (!read_method)
 		return NULL;
 
-	xmms_playlist_entry_ref (transport->entry);
+	xmms_object_ref (transport->entry);
 
+	xmms_object_ref (transport);
 	xmms_transport_lock (transport);
 	while (transport->running) {
 
@@ -902,11 +875,11 @@ xmms_transport_thread (gpointer data)
 	}
 	xmms_transport_unlock (transport);
 
-	xmms_playlist_entry_unref (transport->entry);
+	xmms_object_unref (transport->entry);
 
 	XMMS_DBG ("xmms_transport_thread: cleaning up");
 	
-	xmms_transport_destroy (transport);
+	xmms_object_unref (transport);
 	
 	return NULL;
 }

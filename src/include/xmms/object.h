@@ -25,13 +25,21 @@
 
 #define XMMS_OBJECT_MID 0x00455574
 
-typedef struct xmms_object_St {
+struct xmms_object_St;
+typedef struct xmms_object_St xmms_object_t;
+
+typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
+
+struct xmms_object_St {
 	guint32 id;
 	GHashTable *signals;
 	GMutex *mutex;
 	struct xmms_object_St *parent;
 	GHashTable *methods;
-} xmms_object_t;
+
+	gint ref;
+	xmms_object_destroy_func_t destroy_func;
+};
 
 typedef enum {
 	XMMS_OBJECT_METHOD_ARG_NONE,
@@ -80,7 +88,6 @@ xmms_object_method_arg_t *xmms_object_arg_new (xmms_object_method_arg_type_t typ
 #define XMMS_OBJECT(p) ((xmms_object_t *)p)
 #define XMMS_IS_OBJECT(p) (XMMS_OBJECT (p)->id == XMMS_OBJECT_MID)
 
-void xmms_object_init (xmms_object_t *object);
 void xmms_object_cleanup (xmms_object_t *object);
 
 void xmms_object_parent_set (xmms_object_t *object, xmms_object_t *parent);
@@ -92,8 +99,6 @@ void xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 
 void xmms_object_emit (xmms_object_t *object, const gchar *signal,
 					   gconstpointer data);
-
-
 
 
 void xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_func_t func);
@@ -129,5 +134,24 @@ arg->rettype = XMMS_OBJECT_METHOD_ARG_##_rettype; \
 
 #define XMMS_METHOD_FUNC(methodname) __int_xmms_method_##methodname
 
+
+void __int_xmms_object_unref (xmms_object_t *object);
+xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc);
+
+#define xmms_object_ref(obj) { \
+	if (XMMS_IS_OBJECT (obj)) { \
+		XMMS_OBJECT (obj)->ref++; \
+		XMMS_DBG ("Reffing %p(%d)", obj, XMMS_OBJECT (obj)->ref); \
+	} \
+};
+
+#define xmms_object_unref(obj) { \
+	if (XMMS_IS_OBJECT (obj)) { \
+		XMMS_DBG ("unreffing %p(%d)", obj, XMMS_OBJECT (obj)->ref); \
+		__int_xmms_object_unref (XMMS_OBJECT (obj)); \
+	} \
+};
+
+#define xmms_object_new(objtype,destroyfunc) (objtype *) __int_xmms_object_new (sizeof (objtype), destroyfunc)
 
 #endif /* __XMMS_OBJECT_H__ */

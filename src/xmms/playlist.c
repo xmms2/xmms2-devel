@@ -84,6 +84,7 @@ static void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms
 static void xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err);
 static gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err);
+static void xmms_playlist_destroy (xmms_object_t *object);
 
 
 /*
@@ -229,7 +230,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 		playlist->currententry = g_list_next (node);
 	}
 	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
-	xmms_playlist_entry_unref (node->data);
+	xmms_object_unref (node->data);
 	playlist->list = g_list_remove_link (playlist->list, node);
 	g_list_free_1 (node);
 
@@ -342,7 +343,7 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 
 	/* Since playlist_add will reference this entry now we turn
 	   total control to it */
-	xmms_playlist_entry_unref (entry);
+	xmms_object_unref (entry);
 
 	return res;
 }
@@ -376,7 +377,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	xmms_playlist_entry_id_set (file, playlist->nextid++);
-	xmms_playlist_entry_ref (file); /* reference this entry */
+	xmms_object_ref (file); /* reference this entry */
 	
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
@@ -448,7 +449,7 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 		return NULL;
 	}
 
-	xmms_playlist_entry_ref ((xmms_playlist_entry_t *)r->data);
+	xmms_object_ref ((xmms_playlist_entry_t *)r->data);
 
 	return r->data;
 
@@ -471,7 +472,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
 		xmms_playlist_entry_t *entry = node->data;
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 	}
 
 	g_list_free (playlist->list);
@@ -513,7 +514,7 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
-		xmms_playlist_entry_ref (r);
+		xmms_object_ref (r);
 	}
 
 	playlist->currententry = n;
@@ -544,7 +545,7 @@ xmms_playlist_get_prev_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
-		xmms_playlist_entry_ref (r);
+		xmms_object_ref (r);
 	}
 
 	playlist->currententry = n;
@@ -578,7 +579,7 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
-		xmms_playlist_entry_ref (r);
+		xmms_object_ref (r);
 	}
 
 	playlist->currententry = n;
@@ -719,7 +720,7 @@ xmms_playlist_init (void)
 {
 	xmms_playlist_t *ret;
 
-	ret = g_new0 (xmms_playlist_t, 1);
+	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->cond = g_cond_new ();
 	ret->mutex = g_mutex_new ();
 	ret->list = NULL;
@@ -729,7 +730,6 @@ xmms_playlist_init (void)
 	ret->is_waiting = FALSE;
 
 	/* 0 = MODE_NONE */
-	xmms_object_init (XMMS_OBJECT (ret));
 	xmms_dbus_register_object ("playlist", XMMS_OBJECT (ret));
 
 	xmms_dbus_register_onchange (XMMS_OBJECT (ret),
@@ -783,16 +783,18 @@ xmms_playlist_core_set (xmms_playlist_t *playlist, xmms_core_t *core)
 	playlist->core = core;
 }
 
+/** @} */
 
 /** Free the playlist and other memory in the xmms_playlist_t
  *
  *  This will free all entries in the list!
  */
 
-void
-xmms_playlist_close (xmms_playlist_t *playlist)
+static void
+xmms_playlist_destroy (xmms_object_t *object)
 {
 	GList *node;
+	xmms_playlist_t *playlist = (xmms_playlist_t *)object;
 
 	g_return_if_fail (playlist);
 
@@ -803,12 +805,9 @@ xmms_playlist_close (xmms_playlist_t *playlist)
 	
 	while (node) {
 		xmms_playlist_entry_t *entry = node->data;
-		xmms_playlist_entry_unref (entry);
+		xmms_object_unref (entry);
 		node = g_list_next (node);
 	}
 
 	g_list_free (playlist->list);
 }
-
-/** @} */
-

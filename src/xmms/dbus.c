@@ -321,7 +321,7 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 				xmms_playlist_entry_property_foreach (arg->retval.playlist_entry, hash_to_dict, &dictitr);
 
 				if (arg->retval.playlist_entry) 
-					xmms_playlist_entry_unref (arg->retval.playlist_entry);
+					xmms_object_unref (arg->retval.playlist_entry);
 
 				break;
 			}

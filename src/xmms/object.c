@@ -18,6 +18,7 @@
 
 
 #include "xmms/object.h"
+#include "xmms/signal_xmms.h"
 #include "xmms/util.h"
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
@@ -70,18 +71,6 @@ xmms_object_arg_new (xmms_object_method_arg_type_t type,
 	ret->rettype = type;
 
 	return ret;
-}
-
-void
-xmms_object_init (xmms_object_t *object)
-{
-	g_return_if_fail (object);
-	
-	object->id = XMMS_OBJECT_MID;
-	object->signals = g_hash_table_new (g_str_hash, g_str_equal);
-	object->methods = g_hash_table_new (g_str_hash, g_str_equal);
-	object->mutex = g_mutex_new ();
-	object->parent = NULL;
 }
 
 void
@@ -258,3 +247,35 @@ xmms_object_method_call (xmms_object_t *object, const char *method, xmms_object_
 }
 
 /** @} */
+
+void
+__int_xmms_object_unref (xmms_object_t *object)
+{
+	object->ref--;
+	if (object->ref == 0) {
+		XMMS_DBG ("Free %p", object);
+		xmms_object_emit (object, XMMS_SIGNAL_OBJECT_DESTROYED, NULL);
+		if (object->destroy_func)
+			object->destroy_func (object);
+		xmms_object_cleanup (object);
+		g_free (object);
+	}
+}
+
+xmms_object_t *
+__int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc)
+{
+	xmms_object_t *ret;
+
+	ret = g_malloc0 (size);
+	ret->destroy_func = destfunc;
+	ret->id = XMMS_OBJECT_MID;
+	ret->signals = g_hash_table_new (g_str_hash, g_str_equal);
+	ret->methods = g_hash_table_new (g_str_hash, g_str_equal);
+	ret->mutex = g_mutex_new ();
+	ret->parent = NULL;
+	xmms_object_ref (ret);
+
+	return ret;
+}
+
