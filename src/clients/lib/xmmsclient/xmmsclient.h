@@ -44,6 +44,8 @@ GHashTable *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
 #define XMMSC_CALLBACK_PLAYLIST_JUMPED "playlist-jumped"
 #define XMMSC_CALLBACK_PLAYLIST_MOVED "playlist-moved"
 
+#define XMMSC_CALLBACK_VISUALISATION_SPECTRUM "visualisation-spectrum"
+
 void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), void *);
 
 void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);

@@ -33,6 +33,8 @@ static const char *playlist_removed[] = {XMMS_SIGNAL_PLAYLIST_REMOVE};
 static const char *playlist_jumped[] = {XMMS_SIGNAL_PLAYLIST_JUMP};
 static const char *playlist_moved[] = {XMMS_SIGNAL_PLAYLIST_MOVE};
 
+static const char *visualisation_spectrum[] = {XMMS_SIGNAL_VISUALISATION_SPECTRUM};
+
 
 struct xmmsc_connection_St {
 	DBusConnection *conn;	
@@ -276,6 +278,27 @@ handle_playlist_added (DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+static DBusHandlerResult
+handle_visualisation_spectrum (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+	DBusMessageIter itr;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_VISUALISATION_SPECTRUM);
+
+	dbus_message_iter_init (msg, &itr);
+	if (cb) {
+		double *arr;
+		int len=0;
+		dbus_message_iter_get_double_array (&itr, &arr, &len);
+		cb->func (cb->userdata, arr);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
 xmmsc_connection_t *
 xmmsc_init ()
 {
@@ -355,6 +378,9 @@ xmmsc_connect (xmmsc_connection_t *c)
 	hand = dbus_message_handler_new (handle_playlist_moved, c, NULL);
 	dbus_connection_register_handler (conn, hand, playlist_moved, 1);
 
+	hand = dbus_message_handler_new (handle_visualisation_spectrum, c, NULL);
+	dbus_connection_register_handler (conn, hand, visualisation_spectrum, 1);
+
 	c->conn=conn;
 	return TRUE;
 }
@@ -413,6 +439,8 @@ xmmsc_set_callback (xmmsc_connection_t *conn, gchar *callback, void (*func)(void
 		xmmsc_register_signal (conn, XMMS_SIGNAL_PLAYLIST_JUMP);
 	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYLIST_MOVED, callback) == 0) {
 		xmmsc_register_signal (conn, XMMS_SIGNAL_PLAYLIST_MOVE);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_VISUALISATION_SPECTRUM, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_SIGNAL_VISUALISATION_SPECTRUM);
 	}
 
 	/** @todo more than one callback of each type */
