@@ -110,9 +110,75 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_ADD_TO_PLAYLIST,
 	                     XMMS_CMD_FUNC (addtopls));
+
+	xmms_config_value_register ("medialib.dologging",
+				    "1",
+				    NULL, NULL);
 	
 	return TRUE;
 }
+
+void
+xmms_medialib_logging_start (xmms_medialib_entry_t entry)
+{
+	char tmp[16];
+	time_t starttime;
+	gboolean ret;
+	xmms_config_value_t *cv;
+
+	g_return_if_fail (entry);
+	
+	cv = xmms_config_lookup ("medialib.dologging");
+	g_return_if_fail (cv);
+	
+	ret = xmms_config_value_int_get (cv);
+	if (!ret)
+		return;
+
+	starttime = time (NULL);
+	g_mutex_lock (medialib->mutex);
+	ret = xmms_sqlite_query (medialib->sql, NULL, NULL, 
+				 "INSERT INTO Log (id, starttime) VALUES (%u, %u)", 
+				 entry, (guint) starttime);
+	g_mutex_unlock (medialib->mutex);
+
+	if (ret) {
+		snprintf (tmp, 16, "%u", (guint) starttime);
+		xmms_medialib_entry_property_set (entry, "laststarted", tmp);
+	}
+}
+
+
+void
+xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime)
+{
+	const gchar *tmp, *sek;
+	gint value = 0.0;
+	gboolean ret;
+	xmms_config_value_t *cv;
+
+	cv = xmms_config_lookup ("medialib.dologging");
+	g_return_if_fail (cv);
+
+	ret = xmms_config_value_int_get (cv);
+	if (!ret)
+		return;
+
+	tmp = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+	if (tmp) {
+		value = (gint) (100.0 * playtime / (gdouble)atoi (tmp));
+	}
+		
+	sek = xmms_medialib_entry_property_get (entry, "laststarted");
+	g_return_if_fail (sek);
+
+	g_mutex_lock (medialib->mutex);
+	ret = xmms_sqlite_query (medialib->sql, NULL, NULL, 
+				 "UPDATE Log SET value=%d WHERE id=%u AND starttime=%s", 
+				 value, entry, sek);
+	g_mutex_unlock (medialib->mutex);
+}
+
 
 static int
 xmms_medialib_int_cb (void *pArg, int argc, char **argv, char **columnName) 

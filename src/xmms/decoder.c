@@ -716,7 +716,7 @@ xmms_decoder_thread (gpointer data)
 
         decoder->thread = NULL;
         XMMS_DBG ("Decoder thread quitting");
-        /*xmms_medialib_logging_stop (entry, decoder->output);*/
+        xmms_medialib_logging_stop (decoder->entry, xmms_output_playtime (decoder->output, NULL));
 
         if (decoder->running) {
                 /* This means that we eofed... */
