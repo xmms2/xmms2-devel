@@ -4,6 +4,9 @@
 #include "util.h"
 #include "ringbuf.h"
 
+#include <glib.h>
+#include <string.h>
+
 /*
  * Static function prototypes
  */
@@ -72,6 +75,13 @@ xmms_transport_open (const gchar *uri)
 	
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
+	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
+
+	if (!open_method) {
+		XMMS_DBG ("Transport has no open_method!");
+		return NULL;
+	}
+
 	transport = g_new0 (xmms_transport_t, 1);
 	xmms_object_init (XMMS_OBJECT (transport));
 	transport->plugin = plugin;
@@ -81,14 +91,26 @@ xmms_transport_open (const gchar *uri)
 	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
 	transport->want_seek = FALSE;
 
-	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
+	transport->uri = g_strdup(uri);
+	transport->suburi = transport->uri + strlen(uri); /* empty string */
 
-	if (!open_method || !open_method (transport, uri)) {
-		XMMS_DBG ("Open failed");
-		xmms_ringbuf_destroy (transport->buffer);
-		g_mutex_free (transport->mutex);
-		g_free (transport);
-		transport = NULL;
+	while (!open_method (transport, transport->uri)) {
+
+		while (*--transport->suburi != '/' ){
+			if (*transport->suburi == 0){ /* restore */
+				*transport->suburi = '/';
+			}
+			if (transport->suburi <= transport->uri) {
+				xmms_ringbuf_destroy (transport->buffer);
+				g_mutex_free (transport->mutex);
+				g_free (transport);
+				transport = NULL;
+				return NULL;
+			}
+		}
+		*transport->suburi = 0;
+		transport->suburi++;
+		XMMS_DBG ("Trying %s  (suburi: %s)",transport->uri,transport->suburi);
 	}
 	
 	return transport;
@@ -108,6 +130,31 @@ xmms_transport_close (xmms_transport_t *transport)
 		xmms_transport_destroy (transport);
 	}
 }
+
+const gchar *
+xmms_transport_uri_get(const xmms_transport_t *const transport){
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	ret =  transport->uri;
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
+const gchar *
+xmms_transport_suburi_get(const xmms_transport_t *const transport){
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	ret =  transport->suburi;
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
 
 const gchar *
 xmms_transport_mime_type_get (xmms_transport_t *transport)

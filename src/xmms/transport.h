@@ -33,6 +33,9 @@ struct xmms_transport_St {
 	gchar *mime_type;
 	gpointer plugin_data;
 
+	gchar *uri;
+	gchar *suburi;
+
 	/* Seek */
 	gboolean want_seek;
 	gint seek_offset;
@@ -74,7 +77,10 @@ void xmms_transport_wait (xmms_transport_t *transport);
 void xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence);
 gint xmms_transport_size (xmms_transport_t *transport);
 xmms_plugin_t *xmms_transport_get_plugin (const xmms_transport_t *transport);
- 
+
+const gchar *xmms_transport_uri_get(const xmms_transport_t *const transport);
+const gchar *xmms_transport_suburi_get(const xmms_transport_t *const transport);
+
 /*
  * Private function prototypes -- do NOT use in plugins.
  */

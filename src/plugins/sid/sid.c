@@ -2,6 +2,7 @@
  * SID-plugin using libsidplay2
  * 
  * Written by Anders Gustafsson - andersg@0x63.nu
+ *
  */
 
 
@@ -17,7 +18,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <ctype.h>
 
 /*
  * Type definitions
@@ -52,10 +52,18 @@ xmms_plugin_get (void)
 			"SID decoder " VERSION,
 			"libsidplay2 based SID decoder");
 
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "URL", "http://sidplay2.sourceforge.net/");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+
+
 	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_sid_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_sid_new);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_sid_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_sid_destroy);
+
+	/* Can only fastforward SIDs, not rewind */
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 
 	return plugin;
 }
@@ -113,7 +121,6 @@ xmms_sid_can_handle (const gchar *mimetype)
 		return TRUE;
 
 	return FALSE;
-
 }
 
 static gboolean
@@ -131,8 +138,20 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	/* We need to load whole song from transport,
 	   but that should be no problem, as SIDs generally are small */
 	if (!data->buffer) {
+		gint subtune, numsubtunes;
+		gchar *suburi;
+		gchar *suburiend;
 		transport = xmms_decoder_transport_get (decoder);
 		g_return_val_if_fail (transport, FALSE);
+
+		suburi = xmms_transport_suburi_get (transport);
+		subtune = strtol (suburi, &suburiend, 0);
+		if (*suburiend != 0) {
+			XMMS_DBG ("Bad suburi: %s, using default subsong", 
+				  suburi);
+			subtune = 0;
+		}
+
 		len = 0;
 		data->buffer_length = xmms_transport_size (transport);
 		data->buffer = g_malloc (data->buffer_length);
@@ -157,8 +176,14 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 			return FALSE;
 		}
 
-		XMMS_DBG("subtunes: %d\n",sidplay_wrapper_subtunes(data->wrapper));
-		sidplay_wrapper_set_subtune(data->wrapper,1);
+		numsubtunes = sidplay_wrapper_subtunes (data->wrapper);
+		XMMS_DBG ("subtunes: %d", numsubtunes);
+		if (subtune > numsubtunes || subtune < 0) {
+			XMMS_DBG ("Requested subtune %d not found, using default", subtune);
+			subtune = 0;
+		}
+
+		sidplay_wrapper_set_subtune(data->wrapper,subtune);
 
 		xmms_sid_get_media_info (decoder);
 
