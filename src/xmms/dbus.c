@@ -561,9 +561,22 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 		dbus_message_append_iter_init (retmsg, &itr);
 
 		switch (arg.rettype) {
+		case XMMS_OBJECT_METHOD_ARG_STRING:
+			dbus_message_iter_append_string (&itr, arg.retval.string); /*convert to utf8?*/
+			break;
 		case XMMS_OBJECT_METHOD_ARG_UINT32:
 
 			dbus_message_iter_append_uint32 (&itr, arg.retval.uint32);
+			break;
+		case XMMS_OBJECT_METHOD_ARG_LIST:
+			{
+				GList *list = arg.retval.playlist;
+	
+				while (list) {
+					dbus_message_iter_append_string (&itr, list->data);
+					list = g_list_next (list);
+				}
+			}
 			break;
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST:
 

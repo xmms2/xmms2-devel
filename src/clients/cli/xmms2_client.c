@@ -135,8 +135,10 @@ static void
 cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	unsigned int *list;
+	GError *err = NULL;
 	int i;
 	int id;
+	int r, w;
 
 	list = xmmscs_playlist_list (conn);
 
@@ -160,9 +162,13 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 
 		if (id == list[i]) {
-			print_info ("->[%d] %s", list[i], line);
+			print_info ("->[%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		} else {
-			print_info ("  [%d] %s", list[i], line);
+			print_info ("  [%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+		}
+
+		if (err) {
+			print_info ("convert error %s", err->message);
 		}
 		
 	}
@@ -226,6 +232,25 @@ cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
 
 	xmmsc_configval_set (conn, argv[2], argv[3]);
 }
+
+static void
+cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	x_list_t *l;
+
+	l = xmmscs_configval_list (conn);
+	
+	if (!l)
+		print_error ("Ooops :%s", xmmsc_get_last_error (conn));
+	
+	print_info ("Config Values:");
+	
+	while (l) {
+		print_info ("%s = %s", l->data, xmmscs_configval_get (conn, l->data));
+		l = x_list_next (l);
+	}
+}
+
 
 static void
 cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
@@ -336,6 +361,7 @@ cmds commands[] = {
 
 	{ "status", "go into status mode", cmd_status },
 	{ "config", "set a config value", cmd_config },
+	{ "configlist", "list all config values", cmd_config_list },
 	{ "quit", "make the server quit", cmd_quit },
 
 	{ NULL, NULL, NULL },

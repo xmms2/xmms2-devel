@@ -318,7 +318,6 @@ xmms_playback_entry (xmms_playback_t *playback)
 static void
 mode_change (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	gchar *tmp;
 	xmms_playback_t *playback = userdata;
 
 	XMMS_DBG ("%s", (gchar *) data);
@@ -330,6 +329,12 @@ static void
 handle_playlist_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	xmms_object_emit (XMMS_OBJECT ((xmms_playback_t *)userdata), XMMS_SIGNAL_PLAYLIST_CHANGED, data);
+}
+
+static void
+handle_playlist_entry_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	xmms_object_emit (XMMS_OBJECT ((xmms_playback_t *)userdata), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, data);
 }
 
 xmms_playback_t *
@@ -366,6 +371,8 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 	playback->playlist = playlist;
 	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED,
 			     handle_playlist_changed, playback);
+	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID,
+			     handle_playlist_entry_changed, playback);
 	playback->core = core;
 
 	playback->mediainfothread = xmms_mediainfo_thread_start (core, playlist);

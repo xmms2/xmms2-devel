@@ -60,6 +60,98 @@ xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val)
 }
 
 /**
+ * Retrives a list of configvalues in server
+ */
+
+void
+xmmsc_configval_get (xmmsc_connection_t *c, char *key)
+{
+	int cserial;
+	DBusMessage *msg;
+	DBusMessageIter itr;
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CONFIG, XMMS_DBUS_INTERFACE, XMMS_METHOD_GET);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, key);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
+
+	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_CONFIG_GET);
+}
+
+char *
+xmmscs_configval_get (xmmsc_connection_t *c, char *key)
+{
+	DBusMessage *msg, *rmsg;
+	DBusMessageIter itr;
+	DBusError err;
+	char *ret = NULL;
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CONFIG, XMMS_DBUS_INTERFACE, XMMS_METHOD_GET);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, key);
+	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+	if (rmsg) {
+		dbus_message_iter_init (rmsg, &itr);
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+			ret = dbus_message_iter_get_string (&itr);
+		}
+		dbus_message_unref (rmsg);
+	} else {
+		c->error = err.message;
+	}
+
+	dbus_message_unref (msg);
+
+	return ret;
+
+}
+
+void
+xmmsc_configval_list (xmmsc_connection_t *c)
+{
+	int cserial;
+	cserial = xmmsc_send_void (c, XMMS_OBJECT_CONFIG, XMMS_METHOD_LIST);
+	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_CONFIG_LIST);
+}
+
+x_list_t *
+xmmscs_configval_list (xmmsc_connection_t *c)
+{
+	DBusMessage *msg,*rmsg;
+        DBusMessageIter itr;
+	DBusError err;
+	x_list_t *list = NULL;
+
+	dbus_error_init (&err);
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CONFIG, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
+
+	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+
+	if (rmsg) {
+		dbus_message_iter_init (rmsg, &itr);
+
+		while (42) {
+			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+				list = x_list_append (list, dbus_message_iter_get_string (&itr));
+			}
+			if (!dbus_message_iter_has_next (&itr))
+				break;
+			dbus_message_iter_next (&itr);
+		}
+
+		dbus_message_unref (rmsg);
+
+	} else {
+		printf ("%s\n", err.message);
+	}
+
+	return list;
+
+}
+
+/**
  * Retrives a list of files from url.
  */
 void

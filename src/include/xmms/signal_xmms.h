@@ -49,6 +49,7 @@
 #define XMMS_METHOD_REMOVE "remove"
 #define XMMS_METHOD_MOVE "move"
 #define XMMS_METHOD_CLEAR "clear"
+#define XMMS_METHOD_GET "get"
 #define XMMS_METHOD_GETMEDIAINFO "getmediainfo"
 #define XMMS_METHOD_MEDIAINFO "mediainfo"
 #define XMMS_METHOD_MEDIAINFO_ID "mediainfoid"
@@ -62,15 +63,6 @@
 
 
 /* Playback msgs */
-/*
-#define XMMS_SIGNAL_PLAYBACK_PLAY "org.xmms.playback.play"
-#define XMMS_SIGNAL_PLAYBACK_PAUSE "org.xmms.playback.pause"
-#define XMMS_SIGNAL_PLAYBACK_NEXT "org.xmms.playback.next"
-#define XMMS_SIGNAL_PLAYBACK_PREV "org.xmms.playback.prev"
-#define XMMS_SIGNAL_PLAYBACK_SEEK_MS "org.xmms.playback.seek.ms"
-#define XMMS_SIGNAL_PLAYBACK_SEEK_SAMPLES "org.xmms.playback.seek.samples"
-#define XMMS_SIGNAL_PLAYBACK_STOP "/xmms/playback::stop"
-*/
 #define XMMS_SIGNAL_PLAYBACK_STATUS "/xmms/playback::status"
 #define XMMS_SIGNAL_PLAYBACK_CURRENTID "/xmms/playback::currentid"
 #define XMMS_SIGNAL_PLAYBACK_PLAYTIME "/xmms/playback::playtime"
@@ -88,12 +80,7 @@
 #define XMMS_SIGNAL_PLAYLIST_MOVE "/xmms/playlist::move"
 #define XMMS_SIGNAL_PLAYLIST_SORT "/xmms/playlist::sort"
 
-/*
-#define XMMS_SIGNAL_PLAYLIST_SAVE "org.xmms.playlist.save"
-#define XMMS_SIGNAL_PLAYLIST_MODE_SET "org.xmms.playlist.mode.set"
-*/
 /* Core msgs */
-
 #define XMMS_SIGNAL_CORE_QUIT "/xmms/core::quit"
 #define XMMS_SIGNAL_CORE_DISCONNECT "/org/freedesktop/Local::Disconnected"
 #define XMMS_SIGNAL_CORE_INFORMATION "/xmms/core::information"
@@ -114,5 +101,7 @@
 /* Config msgs */
 #define XMMS_SIGNAL_CONFIG_SAVE "/xmms/config::save"
 #define XMMS_SIGNAL_CONFIG_VALUE_CHANGE "/xmms/config::value_change"
+#define XMMS_SIGNAL_CONFIG_LIST "/xmms/config::list"
+#define XMMS_SIGNAL_CONFIG_GET "/xmms/config::get"
 
 #endif /* __SIGNAL_XMMS_H__ */
