@@ -48,6 +48,24 @@ typedef struct xmms_vorbis_data_St {
 	gboolean inited;
 } xmms_vorbis_data_t;
 
+typedef struct {
+	gchar *vname;
+	gchar *xname;
+} props;
+
+/** These are the properties that we extract from the comments */
+static props properties[] = {
+	{ "title", XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE },
+	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST },
+	{ "album", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM },
+	{ "tracknumber", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR },
+	{ "date", XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR },
+	{ "genre", XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE },
+	{ "musicbrainz_albumid", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID },
+	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID },
+	{ "musicbrainz_trackid", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID }
+};
+
 /*
  * Function prototypes
  */
@@ -297,10 +315,15 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 		for (temp = 0; temp < ptr->comments; temp++) {
 			gchar **s; 
+			gint i = 0;
 
 			s = g_strsplit (ptr->user_comments[temp], "=", 2); 
-			xmms_medialib_entry_property_set (entry, s[0], s[1]); 
-			
+			while (properties[i].vname) {
+				if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
+					xmms_medialib_entry_property_set (entry, properties[i].xname, s[1]);
+				}
+				i++;
+			}
 			g_strfreev (s); 
 		}
 
