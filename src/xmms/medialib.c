@@ -147,7 +147,7 @@ xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *prop
 
 	g_mutex_lock (medialib->mutex);
 	ret = xmms_sqlite_query (medialib->sql, NULL, NULL,
-				 "insert or replace into Media (id, value, key) values (%d, %Q, %Q)", entry, value, property);
+				 "insert or replace into Media (id, value, key) values (%d, %Q, LOWER(%Q))", entry, value, property);
 	g_mutex_unlock (medialib->mutex);
 
 	return ret;
@@ -222,7 +222,6 @@ xmms_medialib_hashtable_cb (void *pArg, int argc, char **argv, char **columnName
 	GHashTable *hash = pArg;
 
 	g_hash_table_insert (hash, g_strdup (argv[1]), g_strdup (argv[2]));
-	XMMS_DBG ("adding %s = %s to hash", argv[1], argv[2]);
 
 	return 0;
 }
