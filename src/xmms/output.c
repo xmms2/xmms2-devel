@@ -692,6 +692,8 @@ xmms_output_decoder_start (xmms_output_t *output)
 		if (!xmms_transport_open (t, entry)) {
 			xmms_transport_close (t);
 			xmms_object_unref (t);
+			if (!xmms_playlist_advance (output->playlist))
+				return FALSE;
 			continue;
 		}
 
