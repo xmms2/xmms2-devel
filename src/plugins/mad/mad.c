@@ -71,6 +71,9 @@ xmms_plugin_get (void)
 			"MAD decoder " VERSION,
 			"MPEG Layer 1/2/3 decoder");
 
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+
 	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_mad_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_mad_new);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_mad_decode_block);

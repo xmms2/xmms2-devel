@@ -40,6 +40,7 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 	plugin->shortname = g_strdup (shortname);
 	plugin->description = g_strdup (description);
 	plugin->method_table = g_hash_table_new (g_str_hash, g_str_equal);
+	plugin->info_list = g_list_alloc ();
 
 	return plugin;
 }
@@ -121,6 +122,28 @@ xmms_plugin_description_get (const xmms_plugin_t *plugin)
 	return plugin->description;
 }
 
+const GList*
+xmms_plugin_info_get (const xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, NULL);
+
+	return plugin->info_list;
+}
+
+void
+xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
+{
+	xmms_plugin_info_t *info;
+	g_return_if_fail (plugin);
+
+	info = g_new0 (xmms_plugin_info_t, 1);
+	info->key = key;
+	info->value = value;
+
+	g_list_append (plugin->info_list, info);
+}
+
+
 /*
  * Private functions
  */
@@ -184,7 +207,17 @@ xmms_plugin_scan_directory (const gchar *dir)
 
 		plugin = plugin_init ();
 		if (plugin) {
+			const GList *info;
+			const xmms_plugin_info_t *i;
+
 			XMMS_DBG ("Adding plugin: %s", plugin->name);
+			info = xmms_plugin_info_get (plugin);
+			while (info) {
+				i = info->data;
+				if (i)
+					XMMS_DBG ("INFO: %s = %s", i->key,i->value);
+				info = g_list_next (info);
+			}
 			plugin->module = module;
 			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
 		} else {

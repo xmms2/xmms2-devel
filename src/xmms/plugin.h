@@ -48,6 +48,7 @@ typedef enum {
 typedef struct {
 	GMutex *mtx;
 	GModule *module;
+	GList *info_list;
 	xmms_plugin_type_t type;
 	gchar *name;
 	gchar *shortname;
@@ -57,6 +58,11 @@ typedef struct {
 	guint users;
 	GHashTable *method_table;
 } xmms_plugin_t;
+
+typedef struct {
+	gchar *key;
+	gchar *value;
+} xmms_plugin_info_t;
 
 typedef void *xmms_plugin_method_t;
 
@@ -78,6 +84,8 @@ const char *xmms_plugin_description_get (const xmms_plugin_t *plugin);
 void xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
 gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property);
+void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
+const GList *xmms_plugin_info_get (const xmms_plugin_t *plugin);
 
 /*
  * Private functions
