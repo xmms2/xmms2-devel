@@ -25,6 +25,7 @@ print_mediainfo (GHashTable *entry)
 {
 	/*entry = xmmsc_playlist_get_mediainfo (conn, id);*/
 	gchar *url;
+	gchar *tmp;
 
 	if (!entry)
 		return;
@@ -33,11 +34,17 @@ print_mediainfo (GHashTable *entry)
 	url = xmmsc_decode_path (url);
 	printf ("URI:    %s\n", url);
 	g_free (url);
-	printf ("Artist:  %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
-	printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
-	printf ("Title:   %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
-	printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "date"));
-	printf ("Bitrate: %s\n", (gchar *)g_hash_table_lookup (entry, "bitrate"));
+	tmp = (gchar *)g_hash_table_lookup (entry, "channel");
+	if (tmp) {
+		printf ("Channel name: %s\n", tmp);
+		printf ("Genre: %s\n", (gchar *)g_hash_table_lookup (entry, "genre"));
+	} else {
+		printf ("Artist:  %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
+		printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
+		printf ("Title:   %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
+		printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "date"));
+		printf ("Bitrate: %s\n", (gchar *)g_hash_table_lookup (entry, "bitrate"));
+	}
 
 }
 
@@ -308,7 +315,7 @@ main(int argc, char **argv)
 
 			seconds = atoi (argv[2]) * 1000;
 
-			xmmsc_playback_seek (c, seconds);
+			xmmsc_playback_seek_ms (c, seconds);
 
 			xmmsc_deinit (c);
 			exit (0);

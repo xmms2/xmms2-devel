@@ -3,6 +3,8 @@
 
 #include <mad.h>
 
+#define XMMS_XING_TOC_SIZE 100
+
 typedef enum {
 	XMMS_XING_FRAMES = 1UL << 0,
 	XMMS_XING_BYTES  = 1UL << 1,

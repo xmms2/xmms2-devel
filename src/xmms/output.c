@@ -339,6 +339,16 @@ xmms_output_set_eos (xmms_output_t *output, gboolean eos)
 
 }
 
+void
+xmms_output_played_samples_set (xmms_output_t *output, guint samples)
+{
+	g_return_if_fail (output);
+	g_mutex_lock (output->mutex);
+	output->played = samples * 4;
+	XMMS_DBG ("Set played to %d", output->played);
+	g_mutex_unlock (output->mutex);
+}
+
 static gpointer
 xmms_output_thread (gpointer data)
 {

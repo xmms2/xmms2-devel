@@ -11,7 +11,7 @@ struct xmms_xing_St {
 	gint flags;
 	guint frames;
 	guint bytes;
-	guint toc[100];
+	guint toc[XMMS_XING_TOC_SIZE];
 };
 
 gboolean

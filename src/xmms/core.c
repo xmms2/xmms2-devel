@@ -177,9 +177,15 @@ xmms_core_playlist_remove (guint id)
 }
 
 void
-xmms_core_playback_seek (guint milliseconds)
+xmms_core_playback_seek_ms (guint milliseconds)
 {
-	xmms_decoder_seek (core->decoder, milliseconds);
+	xmms_decoder_seek_ms (core->decoder, milliseconds);
+}
+
+void
+xmms_core_playback_seek_samples (guint samples)
+{
+	xmms_decoder_seek_samples (core->decoder, samples);
 }
 
 void

@@ -36,29 +36,30 @@ typedef enum {
 	XMMS_SIGNAL_MASK_PLAYBACK_PAUSE = 1 << 2,
 	XMMS_SIGNAL_MASK_PLAYBACK_NEXT = 1 << 3,
 	XMMS_SIGNAL_MASK_PLAYBACK_PREV = 1 << 4,
-	XMMS_SIGNAL_MASK_PLAYBACK_SEEK = 1 << 5,
-	XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID = 1 << 6,
-	XMMS_SIGNAL_MASK_PLAYBACK_PLAYTIME = 1 << 7,
+	XMMS_SIGNAL_MASK_PLAYBACK_SEEK_MS = 1 << 5,
+	XMMS_SIGNAL_MASK_PLAYBACK_SEEK_SAMPLES = 1 << 6,
+	XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID = 1 << 7,
+	XMMS_SIGNAL_MASK_PLAYBACK_PLAYTIME = 1 << 8,
 
-	XMMS_SIGNAL_MASK_PLAYLIST_ADD = 1 << 8,
-	XMMS_SIGNAL_MASK_PLAYLIST_REMOVE = 1 << 9,
-	XMMS_SIGNAL_MASK_PLAYLIST_LIST = 1 << 10,
-	XMMS_SIGNAL_MASK_PLAYLIST_SHUFFLE = 1 << 11,
-	XMMS_SIGNAL_MASK_PLAYLIST_CLEAR = 1 << 12,
-	XMMS_SIGNAL_MASK_PLAYLIST_JUMP = 1 << 13,
-	XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO = 1 << 14,
-	XMMS_SIGNAL_MASK_PLAYLIST_MOVE = 1 << 15,
-	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 16,
+	XMMS_SIGNAL_MASK_PLAYLIST_ADD = 1 << 9,
+	XMMS_SIGNAL_MASK_PLAYLIST_REMOVE = 1 << 10,
+	XMMS_SIGNAL_MASK_PLAYLIST_LIST = 1 << 11,
+	XMMS_SIGNAL_MASK_PLAYLIST_SHUFFLE = 1 << 12,
+	XMMS_SIGNAL_MASK_PLAYLIST_CLEAR = 1 << 13,
+	XMMS_SIGNAL_MASK_PLAYLIST_JUMP = 1 << 14,
+	XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO = 1 << 15,
+	XMMS_SIGNAL_MASK_PLAYLIST_MOVE = 1 << 16,
+	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 17,
 
-	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 17,
-	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 18,
-	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 19,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 20,
-	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 21,
+	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 18,
+	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 19,
+	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 20,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 21,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 22,
 
-	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 22,
+	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 23,
 
-	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 23,
+	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 24,
 } xmms_dbus_signal_mask_t;
 
 
@@ -70,7 +71,8 @@ static gboolean handle_playback_stop ();
 static gboolean handle_playback_pause ();
 static gboolean handle_playback_next ();
 static gboolean handle_playback_prev ();
-static gboolean handle_playback_seek (guint arg);
+static gboolean handle_playback_seek_ms (guint arg);
+static gboolean handle_playback_seek_samples (guint arg);
 static gboolean handle_playback_currentid (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_add (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_remove (guint arg);
@@ -139,9 +141,12 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_PLAYBACK_PREV, 
 		XMMS_SIGNAL_MASK_PLAYBACK_PREV, 
 		NULL, NULL, handle_playback_prev, NULL },
-	{ XMMS_SIGNAL_PLAYBACK_SEEK, 
-		XMMS_SIGNAL_MASK_PLAYBACK_SEEK, 
-		NULL, NULL, NULL, handle_playback_seek },
+	{ XMMS_SIGNAL_PLAYBACK_SEEK_MS, 
+		XMMS_SIGNAL_MASK_PLAYBACK_SEEK_MS, 
+		NULL, NULL, NULL, handle_playback_seek_ms },
+	{ XMMS_SIGNAL_PLAYBACK_SEEK_SAMPLES, 
+		XMMS_SIGNAL_MASK_PLAYBACK_SEEK_SAMPLES, 
+		NULL, NULL, NULL, handle_playback_seek_samples },
 	{ XMMS_SIGNAL_PLAYBACK_CURRENTID,
 		XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID, 
 		send_playback_currentid, handle_playback_currentid, NULL, NULL },
@@ -551,9 +556,16 @@ handle_playback_prev ()
 }
 
 static gboolean
-handle_playback_seek (guint arg)
+handle_playback_seek_ms (guint arg)
 {
-	xmms_core_playback_seek (arg);
+	xmms_core_playback_seek_ms (arg);
+	return TRUE;
+}
+
+static gboolean
+handle_playback_seek_samples (guint arg)
+{
+	xmms_core_playback_seek_samples (arg);
 	return TRUE;
 }
 

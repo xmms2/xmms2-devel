@@ -65,7 +65,8 @@ void xmms_core_vis_spectrum (gfloat *spec);
 
 void xmms_core_playback_stop ();
 void xmms_core_playback_start ();
-void xmms_core_playback_seek (guint milliseconds);
+void xmms_core_playback_seek_ms (guint milliseconds);
+void xmms_core_playback_seek_samples (guint samples);
 
 void xmms_core_init ();
 void xmms_core_start ();
