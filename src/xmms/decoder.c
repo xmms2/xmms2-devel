@@ -1,3 +1,8 @@
+/**
+ * Decoder.
+ */
+
+
 #include "decoder.h"
 #include "plugin.h"
 #include "object.h"
@@ -48,6 +53,12 @@ xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data)
 	decoder->plugin_data = data;
 }
 
+/**
+ * Get the transport associated with the decoder.
+ *
+ * @param decoder apanap
+ * @return the associated transport
+ */
 xmms_transport_t *
 xmms_decoder_transport_get (xmms_decoder_t *decoder)
 {
@@ -61,6 +72,9 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 	return ret;
 }
 
+/**
+ * Get the output associated with the decoder.
+ */
 xmms_output_t *
 xmms_decoder_output_get (xmms_decoder_t *decoder)
 {
@@ -72,6 +86,25 @@ xmms_decoder_output_get (xmms_decoder_t *decoder)
 	xmms_decoder_unlock (decoder);
 
 	return ret;
+}
+
+
+/**
+ * Creates a new decoder for the specified mimetype.
+ * This call creates a decoder that can handle the specified mimetype.
+ * The transport is started but not the output, which must be driven by
+ * hand. See tar-plugin for example.
+ */
+xmms_decoder_t *
+xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype){
+	xmms_decoder_t *decoder;
+	decoder = xmms_decoder_new (mimetype);
+	decoder->transport = transport;
+	decoder->output = output;
+	XMMS_DBG ("starting threads..");
+	xmms_transport_start (transport);
+	XMMS_DBG ("transport started");
+	return decoder;
 }
 
 /*
@@ -136,8 +169,6 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->running = TRUE;
 	decoder->transport = transport;
 	decoder->output = output;
-	xmms_object_connect (XMMS_OBJECT (output), "eos-reached",
-						 xmms_decoder_output_eos, decoder);
 	xmms_output_set_eos (output, FALSE);
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
@@ -198,11 +229,8 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 	if (destroy_method)
 		destroy_method (decoder);
 
-	if (decoder->output) {
-		xmms_object_disconnect (XMMS_OBJECT (decoder->output), "eos-reached",
-								xmms_decoder_output_eos);
-	}
-	
+	g_return_if_fail (decoder->output);
+
 	g_cond_free (decoder->cond);
 	g_mutex_free (decoder->mutex);
 	xmms_playlist_entry_free (decoder->mediainfo);

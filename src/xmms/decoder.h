@@ -51,6 +51,9 @@ xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);
 gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 void xmms_decoder_set_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 
+xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype);
+
+
 /*
  * Private function prototypes -- do NOT use in plugins.
  */

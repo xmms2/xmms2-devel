@@ -315,18 +315,6 @@ static gint xmms_tar_seek (xmms_transport_t *transport, guint offset, gint whenc
 	return data->relpos;
 }
 
-xmms_decoder_t *
-xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype){
-	xmms_decoder_t *decoder;
-	decoder = xmms_decoder_new (mimetype);
-	decoder->transport = transport;
-	decoder->output = output;
-	XMMS_DBG ("starting threads..");
-	xmms_transport_start (transport);
-	XMMS_DBG ("transport started");
-	return decoder;
-}
-
 static gboolean
 xmms_tar_decode_block (xmms_decoder_t *decoder)
 {
