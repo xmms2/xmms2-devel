@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 /** @file 
  * XMMS client lib.
  *
@@ -27,11 +24,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
 
 #include <dbus/dbus.h>
-#include <glib.h>
+/*#include <glib.h>*/
+
+#include "internal/xhash-int.h"
+#include "internal/xlist-int.h"
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
@@ -64,7 +66,7 @@ typedef enum {
  */
 
 typedef struct xmmsc_signal_callbacks_St {
-	gchar *signal_name;
+	char *signal_name;
 	xmmsc_types_t type;
 } xmmsc_signal_callbacks_t;
 
@@ -109,9 +111,9 @@ static xmmsc_signal_callbacks_t callbacks[] = {
  * Forward declartions
  */
 
-static xmmsc_signal_callbacks_t *get_callback (const gchar *signal);
+static xmmsc_signal_callbacks_t *get_callback (const char *signal);
 static DBusHandlerResult handle_callback (DBusConnection *conn, DBusMessage *msg, void *user_data);
-static void xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal);
+static void xmmsc_register_signal (xmmsc_connection_t *conn, char *signal);
 
 /*
  * Public methods
@@ -177,15 +179,15 @@ xmmsc_init ()
 {
 	xmmsc_connection_t *c;
 	
-	c = g_new0 (xmmsc_connection_t,1);
+	c = malloc (sizeof (xmmsc_connection_t));
 	
 	if (c) {
-		c->callbacks = g_hash_table_new (g_str_hash,  g_str_equal);
-		c->replies = g_hash_table_new (NULL,  NULL);
+		c->callbacks = x_hash_new (x_str_hash, x_str_equal);
+		c->replies = x_hash_new (NULL, NULL);
 	}
 	
 	if (!c->callbacks) {
-		g_free (c);
+		free (c);
 		return NULL;
 	}
 
@@ -205,14 +207,14 @@ xmmsc_init ()
  * @sa xmmsc_get_last_error
  */
 
-gboolean
+int
 xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 {
 	DBusConnection *conn;
 	DBusError err;
 	DBusObjectPathVTable vtable;
 
-	const gchar *path;
+	char path[256];
 
 	dbus_error_init (&err);
 
@@ -220,23 +222,21 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		return FALSE;
 
 	if (!dbuspath)
-		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+		snprintf (path, 256, "unix:path=/tmp/xmms-dbus-%d", getuid ());
 	else
-		path = dbuspath;
+		snprintf (path, 256, "%s", dbuspath);
 
 	conn = dbus_connection_open (path, &err);
 	
 	if (!conn) {
 		int ret;
 		
-		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "Couldn't connect to xmms2d, startning it...\n");
 		ret = system ("xmms2d -d");
 
 		if (ret != 0) {
 			c->error = "Error starting xmms2d";
 			return FALSE;
 		}
-		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "started!\n");
 
 		dbus_error_init (&err);
 		conn = dbus_connection_open (path, &err);
@@ -260,25 +260,25 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
  *
  * @sa xmmsc_playlist_add
  */
-gchar *
-xmmsc_encode_path (gchar *path) {
-	gchar *out, *outreal;
-	gint i;
-	gint len;
+char *
+xmmsc_encode_path (char *path) {
+	char *out, *outreal;
+	int i;
+	int len;
 
 	len = strlen (path);
-	outreal = out = (gchar *)g_malloc0 (len * 3 + 1);
+	outreal = out = (char *)calloc (1, len * 3 + 1);
 
 	for ( i = 0; i < len; i++) {
 		if (path[i] == '/' || 
-			_REGULARCHAR ((gint) path[i]) || 
+			_REGULARCHAR ((int) path[i]) || 
 			path[i] == '_' ||
 			path[i] == '-' ){
 			*(out++) = path[i];
 		} else if (path[i] == ' '){
 			*(out++) = '+';
 		} else {
-			g_snprintf (out, 4, "%%%02x", (guchar) path[i]);
+			snprintf (out, 4, "%%%02x", (unsigned char) path[i]);
 			out += 3;
 		}
 	}
@@ -290,7 +290,7 @@ xmmsc_encode_path (gchar *path) {
 /**
  * Returns a string that descibes the last error.
  */
-gchar *
+char *
 xmmsc_get_last_error (xmmsc_connection_t *c)
 {
 	return c->error;
@@ -381,7 +381,7 @@ xmmsc_deinit (xmmsc_connection_t *c)
  * @def XMMS_SIGNAL_PLAYLIST_MEDIAINFO
  *
  * This will be called with information about a specific
- * song. The arugment is a pointer to GHashTable with 
+ * song. The arugment is a pointer to x_hash_t with 
  * information about the song.
  *
  * @sa xmmsc_playlist_get_mediainfo
@@ -489,24 +489,26 @@ xmmsc_deinit (xmmsc_connection_t *c)
 
 void
 xmmsc_set_callback (xmmsc_connection_t *conn, 
-		    gchar *callback, 
+		    char *callback, 
 		    void (*func) (void *, void*), 
 		    void *userdata)
 {
-	GList *l = NULL;
-	xmmsc_callback_desc_t *desc = g_new0 (xmmsc_callback_desc_t, 1);
+	x_list_t *l = NULL;
+	xmmsc_callback_desc_t *desc;
+
+	desc = malloc (sizeof (xmmsc_callback_desc_t));
 
 	desc->func = func;
 	desc->userdata = userdata;
 
 	/** @todo more than one callback of each type */
-	l = g_hash_table_lookup (conn->callbacks, callback);
+	l = x_hash_lookup (conn->callbacks, callback);
 	if (!l) {
 		xmmsc_register_signal (conn, callback);
-		l = g_list_append (l, desc);
-		g_hash_table_insert (conn->callbacks, g_strdup (callback), l);
+		l = x_list_append (l, desc);
+		x_hash_insert (conn->callbacks, strdup (callback), l);
 	} else {
-		l = g_list_append (l, desc);
+		l = x_list_append (l, desc);
 	}
 
 }
@@ -530,29 +532,29 @@ xmmsc_quit (xmmsc_connection_t *c)
  *
  * @param path encoded path.
  *
- * @returns a gchar * that needs to be freed with g_free.
+ * @returns a char * that needs to be freed with free.
  */
 
-gchar *
-xmmsc_decode_path (const gchar *path)
+char *
+xmmsc_decode_path (const char *path)
 {
-	gchar *qstr;
-	gchar tmp[3];
-	gint c1, c2;
+	char *qstr;
+	char tmp[3];
+	int c1, c2;
 
 	c1 = c2 = 0;
 
-	qstr = (gchar *)g_malloc0 (strlen (path) + 1);
+	qstr = (char *)calloc (1, strlen (path) + 1);
 
 	tmp[2] = '\0';
 	while (path[c1] != '\0'){
 		if (path[c1] == '%'){
-			gint l;
+			int l;
 			tmp[0] = path[c1+1];
 			tmp[1] = path[c1+2];
 			l = strtol(tmp,NULL,16);
 			if (l!=0){
-				qstr[c2] = (gchar)l;
+				qstr[c2] = (char)l;
 				c1+=2;
 			} else {
 				qstr[c2] = path[c1];
@@ -589,12 +591,12 @@ add (char *target, int max, int len, char *str)
 }
 
 static int
-lookup_and_add (char *target, int max, int len, GHashTable *table, const char *entry)
+lookup_and_add (char *target, int max, int len, x_hash_t *table, const char *entry)
 {
 	char *tmp;
 	int tmpl;
 
-	tmp = g_hash_table_lookup (table, entry);
+	tmp = x_hash_lookup (table, entry);
 	if (!tmp)
 		return 0;
 
@@ -608,7 +610,7 @@ lookup_and_add (char *target, int max, int len, GHashTable *table, const char *e
  */
 
 int
-xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table)
+xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 {
 	int i = 0;
 	char c;
@@ -652,7 +654,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table)
 					{
 						char *p;
 						char *str;
-						p = g_hash_table_lookup (table, "url");
+						p = x_hash_lookup (table, "url");
 
 						if (!p)
 							continue;
@@ -677,14 +679,14 @@ xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table)
 						char *p;
 						/* minutes */
 					
-						p = g_hash_table_lookup (table, "duration");
+						p = x_hash_lookup (table, "duration");
 						if (!p) {
 							i += add (target, len, i, "00");
 						} else {
 							int d = atoi (p);
-							char *t = g_strdup_printf ("%02d", d/60000);
+							char t[4];
+							snprintf (t, 4, "%02d", d/60000);
 							i += add (target, len, i, t);
-							g_free (t);
 						}
 						break;
 					}
@@ -701,14 +703,14 @@ xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table)
 						char *p;
 						/* seconds */
 					
-						p = g_hash_table_lookup (table, "duration");
+						p = x_hash_lookup (table, "duration");
 						if (!p) {
 							i += add (target, len, i, "00");
 						} else {
 							int d = atoi (p);
-							char *t = g_strdup_printf ("%02d", (d/1000)%60);
+							char t[4];
+							snprintf (t, 4, "%02d", (d/1000)%60);
 							i += add (target, len, i, t);
-							g_free (t);
 						}
 						break;
 					}
@@ -755,28 +757,28 @@ xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
 }
 
 void
-xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type)
+xmmsc_connection_add_reply (xmmsc_connection_t *c, int serial, char *type)
 {
-	g_hash_table_insert (c->replies, GUINT_TO_POINTER (serial), type);
+	x_hash_insert (c->replies, XUINT_TO_POINTER (serial), type);
 }
 
-GHashTable *
+x_hash_t *
 xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
 {
-	GHashTable *tab = NULL;
+	x_hash_t *tab = NULL;
 
 	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
 		DBusMessageIter dictitr;
 		dbus_message_iter_init_dict_iterator (itr, &dictitr);
 		
-		tab = g_hash_table_new (g_str_hash, g_str_equal);
+		tab = x_hash_new (x_str_hash, x_str_equal);
 		
 		while (42) {
-			gchar *key = dbus_message_iter_get_dict_key (&dictitr);
-			if (g_strcasecmp (key, "id") == 0) {
-				g_hash_table_insert (tab, key, GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
+			char *key = dbus_message_iter_get_dict_key (&dictitr);
+			if (strcasecmp (key, "id") == 0) {
+				x_hash_insert (tab, key, XUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
 			} else {
-				g_hash_table_insert (tab, key, dbus_message_iter_get_string (&dictitr));
+				x_hash_insert (tab, key, dbus_message_iter_get_string (&dictitr));
 			}
 			if (!dbus_message_iter_has_next (&dictitr))
 				break;
@@ -791,13 +793,13 @@ xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
  */
 
 static xmmsc_signal_callbacks_t *
-get_callback (const gchar *signal)
+get_callback (const char *signal)
 {
-	gint i = 0;
+	int i = 0;
 
 	while (callbacks[i].signal_name) {
 
-		if (g_strcasecmp (callbacks[i].signal_name, signal) == 0)
+		if (strcasecmp (callbacks[i].signal_name, signal) == 0)
 			return &callbacks[i];
 		i++;
 	}
@@ -812,31 +814,31 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 {
 	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
 	xmmsc_signal_callbacks_t *c;
-	GList *cb_list;
-	gchar msgname[256];
+	x_list_t *cb_list;
+	char msgname[256];
         DBusMessageIter itr;
-	guint tmp[2]; /* used by MOVE */
+	unsigned int tmp[2]; /* used by MOVE */
 	void *arg = NULL;
 
 
 	/** allt det här apet hade vi gott kunna göra snyggare */
-	g_snprintf (msgname, 255, "%s::%s", dbus_message_get_path (msg), dbus_message_get_member (msg));
+	snprintf (msgname, 255, "%s::%s", dbus_message_get_path (msg), dbus_message_get_member (msg));
 
 	c = get_callback (msgname);
 
 	if (!c) {
-		gint rep_ser;
+		int rep_ser;
 
 		rep_ser = dbus_message_get_reply_serial (msg);
 		if (rep_ser > 0) {
-			gchar *a;
+			char *a;
 
-			a = g_hash_table_lookup (xmmsconn->replies, GUINT_TO_POINTER (rep_ser));
+			a = x_hash_lookup (xmmsconn->replies, XUINT_TO_POINTER (rep_ser));
 			if (a != NULL) {
-				g_hash_table_remove (xmmsconn->replies, GUINT_TO_POINTER (rep_ser));
+				x_hash_remove (xmmsconn->replies, XUINT_TO_POINTER (rep_ser));
 				c = get_callback (a);
 			}
-			g_snprintf (msgname, 255, "%s", a);
+			snprintf (msgname, 255, "%s", a);
 		}
 
 		if (c == NULL) {
@@ -855,7 +857,7 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 			break;
 		case XMMSC_TYPE_UINT32:
 			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
-				arg = GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&itr));
+				arg = XUINT_TO_POINTER (dbus_message_iter_get_uint32 (&itr));
 			break;
 		case XMMSC_TYPE_VIS:
 			{
@@ -874,17 +876,17 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 
 		case XMMSC_TYPE_PLAYLIST:
 			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-				guint len = dbus_message_iter_get_uint32 (&itr);
+				unsigned int len = dbus_message_iter_get_uint32 (&itr);
 				if (len > 0) {
-					guint32 *arr;
-					gint len;
-					guint32 *tmp;
+					unsigned int *arr;
+					int len;
+					unsigned int *tmp;
 
 					dbus_message_iter_next (&itr);
 					dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
-					arr = g_new0 (guint32, len+1);
-					memcpy (arr, tmp, len * sizeof(guint32));
+					arr = malloc (sizeof (unsigned int) * len + 1);
+					memcpy (arr, tmp, len * sizeof(unsigned int));
 					arr[len] = '\0';
 					
 					arg = arr;
@@ -897,18 +899,18 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 
 		case XMMSC_TYPE_TRANSPORT_LIST:
 			{
-				GList *list = NULL;
+				x_list_t *list = NULL;
 
 				while (42) {
 					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
 						xmmsc_file_t *f;
 					
-						f = g_new (xmmsc_file_t, 1);
+						f = malloc (sizeof (xmmsc_file_t));
 					
 						f->path = dbus_message_iter_get_string (&itr);
 						dbus_message_iter_next (&itr);
 						f->file = dbus_message_iter_get_boolean (&itr);
-						list = g_list_append (list, f);
+						list = x_list_append (list, f);
 					}
 
 					if (!dbus_message_iter_has_next (&itr))
@@ -927,10 +929,10 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 			break;
 	}
 
-	cb_list = g_hash_table_lookup (xmmsconn->callbacks, msgname);
+	cb_list = x_hash_lookup (xmmsconn->callbacks, msgname);
 	if (cb_list) {
-		GList *node;
-		for (node = cb_list; node; node = g_list_next (node)) {
+		x_list_t *node;
+		for (node = cb_list; node; node = x_list_next (node)) {
 			xmmsc_callback_desc_t *cb = node->data;
 			cb->func(cb->userdata, arg);
 		}
@@ -941,7 +943,7 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 
 
 static void
-xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal)
+xmmsc_register_signal (xmmsc_connection_t *conn, char *signal)
 {
 	DBusMessageIter itr;
 	DBusMessage *msg;

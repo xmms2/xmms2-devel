@@ -23,7 +23,6 @@
 #include "xmmsclient.h"
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
-#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,11 +46,11 @@ typedef enum {
 typedef int (*xmmsc_watch_callback_t) (xmmsc_connection_t *conn, 
 				       xmmsc_watch_action_t action,
 				       void *data);
-typedef gboolean (*xmmsc_timeout_callback_t) (gpointer data);
+typedef int (*xmmsc_timeout_callback_t) (void *data);
 
 typedef struct xmmsc_watch_St {
 	DBusWatch *dbus_watch;
-	gpointer data;
+	void *data;
 	int fd;
 	unsigned int flags;
 } xmmsc_watch_t;
@@ -65,9 +64,9 @@ typedef struct xmmsc_timeout_St {
 
 void xmmsc_watch_init (xmmsc_connection_t *connection);
 void xmmsc_watch_callback_set (xmmsc_connection_t *conn, xmmsc_watch_callback_t cb);
-gpointer xmmsc_watch_data_get (xmmsc_connection_t *connection);
-void xmmsc_watch_data_set (xmmsc_connection_t *connection, gpointer data);
-gboolean xmmsc_watch_more (xmmsc_connection_t *conn);
+void *xmmsc_watch_data_get (xmmsc_connection_t *connection);
+void xmmsc_watch_data_set (xmmsc_connection_t *connection, void *data);
+int xmmsc_watch_more (xmmsc_connection_t *conn);
 void xmmsc_watch_dispatch (xmmsc_connection_t *conn, xmmsc_watch_t *watch, unsigned int event);
 
 #ifdef __cplusplus

@@ -24,6 +24,7 @@
 #include <qmainwindow.h>
 #include <qstatusbar.h>
 #include <xmms/xmmsclient-qt.h>
+#include <internal/xhash-int.h>
 
 #include "xmmslistview.h"
 #include "xmmstoolbar.h"
@@ -34,18 +35,24 @@ class XMMSMainWindow : public QMainWindow
 
 public:
 	XMMSMainWindow (XMMSClientQT *);
-	void setCurrentId (guint);
-	void setInfo (GHashTable *);
-	void getInfo (guint);
+	void setCurrentId (int);
+	void setInfo (x_hash_t *);
+	void getInfo (int);
+	void XMMSMainWindow::add (int id);
 	void add (unsigned int);
 	void clear ();
+	XMMSClientQT *client (void) { return m_client; };
+	void setID (int id) { m_id = id; };
+	int ID (void) { return m_id; };
+	XMMSToolbar *toolbar (void) { return m_toolbar; };
+	XMMSListView *pl (void) { return m_listview; };
 
 protected:
 	XMMSListView *m_listview;
 	XMMSToolbar *m_toolbar;
-	//XMMSStatusBar *m_statusbar;
 	
 	XMMSClientQT *m_client;
+	int m_id;
 };
 
 #endif

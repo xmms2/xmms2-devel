@@ -12,9 +12,29 @@ XMMSStatus::XMMSStatus (XMMSClientQT *client, QWidget *parent) :
 
 	m_client = client;
 	setBackgroundColor( white );
+	setSizePolicy (QSizePolicy (QSizePolicy::Fixed, QSizePolicy::Fixed, FALSE));
 
-	m_str = new QString ("Musik som fan apan");
-	m_tme = new QString ("00:30");
+	m_str = new QString ("XMMS2 - X Music Multiplexer System");
+	m_tme = new QString ("00:00");
+	m_ctme = new QString ("00:00");
+}
+
+void
+XMMSStatus::setDisplayText (QString *str)
+{
+	m_str = str;
+}
+
+void
+XMMSStatus::setTME (QString *str)
+{
+	m_tme = str;
+}
+
+void
+XMMSStatus::setCTME (QString *str)
+{
+	m_ctme = str;
 }
 
 void
@@ -25,30 +45,20 @@ XMMSStatus::paintEvent (QPaintEvent *event)
 	int i;
 	p.setPen (Qt::black);
 
-	p.setWindow (0, 0, 100, 50);
+	p.setWindow (0, 0, 300, 30);
 
-/*	for (i=0; i < FFT_LEN; i++) {
-
-		float sum = 0.0f;
-		int j;
-
-		for (j = 0; j < 32; j++) {
-			sum += spec
-		
-	}*/
-
-/*	QFont f ("fixed", 10, QFont::Light);
-	f.setStretch (QFont::ExtraCondensed);
+	QFont f ("fixed", 6);
 	
-	p.drawRect (1, 1, 99, 46);
+	p.drawRect (0, 0, 300, 30);
 
 	p.setFont (f);
 	QFontMetrics fm = p.fontMetrics();
-	int y = 10 + fm.ascent();
-	p.drawText (10, y, *m_str);*/
+	int y = 2 + fm.ascent();
 
-	
-	
+	/* Write song title */
+	p.drawText (2, y, *m_str);
+	p.drawText (300-fm.width (*m_tme)-1, y+fm.ascent(), *m_tme);
+	p.drawText (300-fm.width (*m_tme)-fm.width(*m_ctme+"/"), y+fm.ascent(), *m_ctme+"/");
 
 }
 
@@ -56,6 +66,6 @@ QSize
 XMMSStatus::sizeHint () const
 {
 	qDebug ("Hejhopp");
-	return QSize (100,100);
+	return QSize (300,30);
 }
 

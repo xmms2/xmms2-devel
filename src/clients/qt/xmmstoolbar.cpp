@@ -6,21 +6,26 @@
 #include <qfiledialog.h>
 #include <qstringlist.h>
 
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <xmms/xmmsclient.h>
 #include <xmms/xmmsclient-qt.h>
 
 #include "xmmstoolbar.h"
 #include "xmmsstatus.h"
 
-XMMSToolbar::XMMSToolbar (XMMSClientQT *client, QWidget *parent) : QHBox (parent)
+XMMSToolbar::XMMSToolbar (XMMSClientQT *client, QWidget *parent) : QWidget (parent)
 {
 	QPushButton *button;
 
+	m_layout = new QHBoxLayout (this);
+	m_layout->setAutoAdd (TRUE);
+
 	m_client = client;
 	
-	XMMSStatus *st = new XMMSStatus (m_client, this);
+	m_status = new XMMSStatus (m_client, this);
 
-	this->setStretchFactor (st, 15);
 
 	button = new QPushButton (">", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onPlay ()));
@@ -36,6 +41,27 @@ XMMSToolbar::XMMSToolbar (XMMSClientQT *client, QWidget *parent) : QHBox (parent
 	connect (button, SIGNAL (clicked ()), this, SLOT (onQuit ()));
 
 
+}
+
+void
+XMMSToolbar::setText (QString *str) 
+{
+	status ()->setDisplayText (str);
+	status ()->repaint ();
+}
+
+void
+XMMSToolbar::setTME (QString *str) 
+{
+	status ()->setTME (str);
+	status ()->repaint ();
+}
+
+void
+XMMSToolbar::setCTME (QString *str) 
+{
+	status ()->setCTME (str);
+	status ()->repaint ();
 }
 
 void
@@ -80,7 +106,7 @@ XMMSToolbar::onAdd ()
 		snprintf (tmp, 1024, "file://%s", (const char *)*it);
 		encoded = xmmsc_encode_path (tmp);
 		xmmsc_playlist_add (m_client->getConnection (), encoded);
-		g_free (encoded);
+		free (encoded);
 		++it;
 	}
 }

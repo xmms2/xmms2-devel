@@ -23,12 +23,13 @@
 #include <ctype.h>
 
 #include <dbus/dbus.h>
-#include <glib.h>
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
 
 #include "internal/xmmsclient_int.h"
+#include "internal/xhash-int.h"
+#include "internal/xlist-int.h"
 
 
 /**
@@ -88,7 +89,7 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
  */
 
 void
-xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename)
+xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
@@ -134,7 +135,7 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 		dbus_message_iter_init (rmsg, &itr);
 
 		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-			guint len = dbus_message_iter_get_uint32 (&itr);
+			unsigned int len = dbus_message_iter_get_uint32 (&itr);
 			if (len > 0) {
 				int len;
 				unsigned int *tmp;
@@ -142,11 +143,11 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 				dbus_message_iter_next (&itr);
 				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
-				arr = g_new0 (guint32, len+1);
-				memcpy (arr, tmp, len * sizeof(guint32));
+				arr = malloc (sizeof (unsigned int) * len+1);
+				memcpy (arr, tmp, len * sizeof(unsigned int));
 				arr[len] = '\0';
 			} else {
-				arr = g_new0 (guint32, 1);
+				arr = malloc (sizeof (unsigned int));
 				*arr = -1;
 			}
 		}
@@ -172,7 +173,7 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
  */
 
 void
-xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
+xmmsc_playlist_jump (xmmsc_connection_t *c, unsigned int id)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
@@ -222,7 +223,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
  */
 
 void
-xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
+xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
@@ -243,12 +244,12 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
  * Retrives information about a certain entry.
  */
 void
-xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
+xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 {
 	DBusMessage *msg;
 	DBusMessageIter itr;
 	DBusError err;
-	guint cserial;
+	unsigned int cserial;
 
 	dbus_error_init (&err);
 
@@ -263,13 +264,13 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 	dbus_connection_flush (c->conn);
 }
 
-GHashTable *
-xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
+x_hash_t *
+xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 {
 	DBusMessage *msg, *rmsg;
 	DBusMessageIter itr;
 	DBusError err;
-	GHashTable *res = NULL;
+	x_hash_t *res = NULL;
 
 	dbus_error_init (&err);
 
@@ -293,35 +294,33 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 
 }
 
-static gboolean
-free_str (gpointer key, gpointer value, gpointer udata)
+static int
+free_str (void * key, void * value, void * udata)
 {
-	gchar *k = (gchar *)key;
+	char *k = (char *)key;
 
-	if (g_strcasecmp (k, "id") == 0) {
-		g_free (key);
+	if (strcasecmp (k, "id") == 0) {
+		free (key);
 		return TRUE;
 	}
 
 	if (key)
-		g_free (key);
+		free (key);
 	if (value)
-		g_free (value);
+		free (value);
 
 	return TRUE;
 }
 
 /**
- * Free all strings in a GHashTable.
+ * Free all strings in a x_hash_t.
  */
 void
-xmmsc_playlist_entry_free (GHashTable *entry)
+xmmsc_playlist_entry_free (x_hash_t *entry)
 {
-	g_return_if_fail (entry);
+	x_hash_foreach_remove (entry, free_str, NULL);
 
-	g_hash_table_foreach_remove (entry, free_str, NULL);
-
-	g_hash_table_destroy (entry);
+	x_hash_destroy (entry);
 }
 
 /**

@@ -24,7 +24,6 @@
 
 #include <glib.h>
 
-
 typedef struct {
 	char *name;
 	char *help;
@@ -146,14 +145,14 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	id = xmmscs_playback_current_id (conn);
 
 	for (i = 0; list[i]; i++) {
-		GHashTable *tab;
+		x_hash_t *tab;
 		char line[80];
 		
 		tab = xmmscs_playlist_get_mediainfo (conn, list[i]);
 
 		memset (line, '\0', 80);
 
-		if (!g_hash_table_lookup (tab, "title")) {
+		if (!x_hash_lookup (tab, "title")) {
 			xmmsc_entry_format (line, 80, "%f (%m:%s)", tab);
 		} else {
 			xmmsc_entry_format (line, 80, "%a - %t (%m:%s)", tab);

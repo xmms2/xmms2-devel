@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <dbus/dbus.h>
-#include <glib.h>
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
@@ -46,7 +45,7 @@
  * Sets a configvalue in the server.
  */
 void
-xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
+xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
@@ -64,7 +63,7 @@ xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
  * Retrives a list of files from url.
  */
 void
-xmmsc_file_list (xmmsc_connection_t *c, gchar *url) 
+xmmsc_file_list (xmmsc_connection_t *c, char *url) 
 {
         DBusMessageIter itr;
 	DBusMessage *msg;

@@ -26,14 +26,22 @@
 #include <xmms/xmmsclient.h>
 #include <xmms/xmmsclient-qt.h>
 
-class XMMSToolbar : public QHBox
+#include "xmmsstatus.h"
+
+class XMMSToolbar : public QWidget
 {
 	Q_OBJECT
 public:
 	XMMSToolbar (XMMSClientQT *, QWidget *);
+	XMMSStatus *status (void) { return m_status; };
+	void setText (QString *str);
+	void setCTME (QString *str);
+	void setTME (QString *str);
 
 protected:
 	XMMSClientQT *m_client;
+	QHBoxLayout *m_layout;
+	XMMSStatus *m_status;
 
 protected slots:
 	void onPlay ();

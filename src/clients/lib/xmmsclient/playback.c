@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include <dbus/dbus.h>
-#include <glib.h>
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
@@ -101,7 +100,7 @@ xmmsc_playback_start (xmmsc_connection_t *c)
  */
 
 void
-xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds)
+xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
@@ -124,7 +123,7 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds)
  */
 
 void
-xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples)
+xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;

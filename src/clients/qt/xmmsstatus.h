@@ -30,6 +30,10 @@ class XMMSStatus : public QWidget
 public:
 	XMMSStatus (XMMSClientQT *, QWidget *);
 	QSize sizeHint () const;
+	void setDisplayText (QString *str);
+	void setTME (QString *str);
+	void setCTME (QString *str);
+	QString *currentTME (void) { return m_ctme; };
 
 protected:
 	void paintEvent (QPaintEvent *);
@@ -37,6 +41,7 @@ protected:
 	XMMSClientQT *m_client;
 	QString *m_str;
 	QString *m_tme;
+	QString *m_ctme;
 };
 
 #endif
