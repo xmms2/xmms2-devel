@@ -510,7 +510,7 @@ dump_node (GNode *node, FILE *fp)
 	static gsize siz = sizeof (indent);
 	gsize len;
 
-	if (G_NODE_IS_LEAF (node)) {
+	if (G_NODE_IS_LEAF (node) && !is_root) {
 		fprintf (fp, "%s<value name=\"%s\">%s</value>\n",
 		         indent, data[0], data[1]);
 	} else {
