@@ -20,6 +20,11 @@ if base_env.sys == 'Linux':
 	oss.AddFlagsFromGroup("glib")
 	oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
 
+if base_env.sys == 'FreeBSD':
+	oss = base_env.Copy()
+	oss.AddFlagsFromGroup("glib")
+	oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
+
 if base_env.sys == 'OpenBSD':
 	sun = base_env.Copy()
 	sun.AddFlagsFromGroup("glib")
