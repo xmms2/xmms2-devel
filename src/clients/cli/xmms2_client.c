@@ -12,8 +12,12 @@
 
 #define XMMS_MAX_URI_LEN 1024
 
+#define STOPPED 1
+#define PLAYING 2
+
 static GMainLoop *mainloop;
 gint duration;
+gint status;
 
 void
 print_mediainfo (xmmsc_connection_t *conn, gint id) 
@@ -39,12 +43,27 @@ print_mediainfo (xmmsc_connection_t *conn, gint id)
 void
 handle_playtime (void *userdata, void *arg) {
 	guint tme = GPOINTER_TO_UINT(arg);
+	if (status == STOPPED) 
+		return;
 	printf ("played time: %02d:%02d of %02d:%02d\r",
 		tme/60000,
 		(tme/1000)%60,
 		duration/60,
 		(duration)%60);
 	fflush (stdout);
+}
+
+void
+handle_playback_stopped (void *userdata, void *arg) 
+{
+	printf ("\nPlayback stopped...\n");
+	status = STOPPED;
+}
+
+void
+handle_disconnected (void *udata, void *arg)
+{
+	g_main_loop_quit (mainloop);
 }
 
 void
@@ -69,7 +88,11 @@ handle_mediainfo (void *userdata, void *arg) {
 	xmmsc_playlist_entry_free (entry);
 	
 	printf ("\n");
+
 	print_mediainfo (conn, id);
+
+	status = PLAYING;
+
 	fflush (stdout);
 }
 
@@ -82,6 +105,8 @@ status_main(xmmsc_connection_t *conn)
 
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYTIME_CHANGED, handle_playtime, NULL);
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, conn);
+	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYBACK_STOPPED, handle_playback_stopped, conn);
+	xmmsc_set_callback (conn, XMMSC_CALLBACK_DISCONNECTED, handle_disconnected, conn);
 
 	id = xmmsc_get_playing_id (conn);
 	if (id) {
@@ -268,7 +293,9 @@ main(int argc, char **argv)
 		}
 	}
 	g_main_loop_run (mainloop);
-	printf ("...BOOM!\n");
+	if (c)
+		xmmsc_deinit (c);
+	printf ("\n...BOOM!\n");
 	return 0;
 
 }

@@ -49,9 +49,28 @@ static void do_send(gpointer data, gpointer user_data)
 }
 
 static void
-handle_playtime_changed (xmms_object_t *object, gconstpointer data, gpointer userdata) {
+handle_playback_stop (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
 
-	 g_mutex_lock(connectionslock);
+	g_mutex_lock (connectionslock);
+
+	if (connections) { 
+		DBusMessage *msg;
+
+		msg = dbus_message_new ("org.xmms.playback.stopped", NULL);
+		g_slist_foreach (connections, do_send, msg);
+		dbus_message_unref (msg);
+	}
+
+
+	g_mutex_unlock (connectionslock);
+
+}
+
+static void
+handle_playtime_changed (xmms_object_t *object, gconstpointer data, gpointer userdata) 
+{
+	g_mutex_lock(connectionslock);
 
 	if (connections) { 
 		DBusMessage *msg;
@@ -65,7 +84,6 @@ handle_playtime_changed (xmms_object_t *object, gconstpointer data, gpointer use
 	}
 
 	 g_mutex_unlock(connectionslock);
-
 }
 
 static void
@@ -421,6 +439,9 @@ xmms_dbus_init(){
 	
 	xmms_object_connect (XMMS_OBJECT (core), "mediainfo-changed",
 			     handle_mediainfo_changed, NULL);
+	
+	xmms_object_connect (XMMS_OBJECT (core), "playback-stopped",
+			     handle_playback_stop, NULL);
 
 
 

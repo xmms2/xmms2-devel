@@ -19,9 +19,8 @@ guint played_time=0;
 
 #define XMMS_MAX_URI_LEN 1024
 
-static GMainLoop *mainloop;
-
 static const char *playtime_message[]={"org.xmms.core.playtime-changed"};
+static const char *playback_stopped_message[]={"org.xmms.playback.stopped"};
 static const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
@@ -88,6 +87,38 @@ handle_mediainfo(DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+static DBusHandlerResult
+handle_playback_stopped (DBusMessageHandler *handler, 
+	   DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYBACK_STOPPED);
+
+	if (cb) {
+		cb->func (cb->userdata, NULL);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_disconnect (DBusMessageHandler *handler, 
+	   DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_DISCONNECTED);
+
+	if (cb) {
+		cb->func (cb->userdata, NULL);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
 
 xmmsc_connection_t *
 xmmsc_init ()
@@ -135,8 +166,15 @@ xmmsc_connect (xmmsc_connection_t *c)
 	}
 	hand = dbus_message_handler_new (handle_playtime, c, NULL);
 	dbus_connection_register_handler (conn, hand, playtime_message, 1);
+
 	hand = dbus_message_handler_new (handle_mediainfo, c, NULL);
 	dbus_connection_register_handler (conn, hand, mediainfo_message, 1);
+	
+	hand = dbus_message_handler_new (handle_playback_stopped, c, NULL);
+	dbus_connection_register_handler (conn, hand, playback_stopped_message, 1);
+	
+	hand = dbus_message_handler_new (handle_disconnect, c, NULL);
+	dbus_connection_register_handler (conn, hand, disconnectmsgs, 1);
 
 	c->conn=conn;
 	return TRUE;
@@ -299,25 +337,8 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	}
 	
 	dbus_message_unref (msg);
-	return list;}
+	return list;
 
-
-
-
-static DBusHandlerResult
-handle_disconnect (DBusMessageHandler *handler,
-		   DBusConnection     *connection,
-		   DBusMessage        *message,
-                   void               *user_data)
-{
-
-	printf("Someone set us up the bomb...\n");
-
-	g_main_loop_quit (mainloop);
-
-	dbus_connection_unref (connection);
-
-	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
 

@@ -95,6 +95,7 @@ xmms_core_playback_stop ()
 		xmms_decoder_destroy (core->decoder);
 		core->decoder = NULL;
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
+		xmms_object_emit (XMMS_OBJECT (core), "playback-stopped", NULL);
 	}
 }
 
