@@ -30,6 +30,7 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	XMMS_DBG ("closing transport");
 	xmms_transport_close (xmms_decoder_transport_get (decoder));
 	XMMS_DBG ("destroying decoder");
+	m_decoder = NULL;
 	xmms_decoder_destroy (decoder);
 	XMMS_DBG ("playing next");
 	play_next ();
@@ -56,6 +57,8 @@ play_next (void)
 	xmms_decoder_t *decoder;
 	xmms_playlist_entry_t *entry;
 	const gchar *mime;
+
+	g_return_if_fail (m_decoder == NULL);
 	
 	entry = xmms_playlist_pop (playlist);
 	if (!entry)
