@@ -252,6 +252,23 @@ xmms_ipc_msg_write_direct (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport,
 	return !error;
 }
 
+/** 
+  Give this function headerlen - 4 bytes, since we don't want to put the length
+  in there. Remember that the put_data() function will increment the length field
+  */
+gboolean
+xmms_ipc_msg_put_header (xmms_ipc_msg_t *msg, gconstpointer header)
+{
+	g_return_val_if_fail (msg, FALSE);
+
+	if ((xmms_ipc_msg_get_length (msg) != 0))
+		return FALSE;
+
+	/* Put whole header, except length field ... */
+	memcpy (&msg->data->rawdata, header, XMMS_IPC_MSG_HEAD_LEN-4);
+	return TRUE;
+}
+
 gpointer
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 {

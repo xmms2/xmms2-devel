@@ -31,10 +31,12 @@
 
 #include "internal/client_ipc.h"
 
+#define XMMS_QUEUE_BUFFER_SIZE 4096*2
+
 typedef struct xmmsc_msg_queue_St {
 	GQueue *queue;					/* complete messages */
 	xmms_ipc_msg_t *incomplete;		/* message we have the header for but not enough data */
-	guint8 buffer[16];				/* incomplete header */
+	guint8 buffer[XMMS_QUEUE_BUFFER_SIZE];				
 	guint buffer_len;				/* bytes used in buffer */
 	guint bytes_used;				/* bytes used in incomplete message */
 	guint32 msg_len;
@@ -240,23 +242,8 @@ gboolean
 xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
 {
 	fd_set fdset;
-	struct timeval tmout;
 
 	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (ipc, FALSE);
-
-	tmout.tv_sec = 5;
-	tmout.tv_usec = 0;
-
-	FD_ZERO (&fdset);
-	FD_SET (xmms_ipc_transport_fd_get (ipc->transport), &fdset);
-
-	/* Block for 5 seconds ... */
-	if (select (xmms_ipc_transport_fd_get (ipc->transport) +1, 
-		    NULL, &fdset, NULL, &tmout) == -1) {
-		return FALSE;
-	}
-
 	return xmms_ipc_msg_write_direct (msg, ipc->transport, cid);
 }
 
@@ -376,59 +363,49 @@ xmmsc_msg_queue_write (xmmsc_msg_queue_t *queue, guint8 *buffer, guint size)
 	g_return_if_fail (queue);
 	g_return_if_fail (buffer);
 
-	while (size > 0 || queue->buffer_len == XMMS_IPC_MSG_HEAD_LEN) {
-		if (queue->buffer_len > 0) {
-			xmms_ipc_msg_t *msg;
-			guint32 cmd, object, cmdid, length;
-			guint towrite = MIN(size, XMMS_IPC_MSG_HEAD_LEN - queue->buffer_len);
 
-			memcpy (queue->buffer + queue->buffer_len, buffer, towrite);
-			queue->buffer_len += towrite;
-			buffer += towrite;
-			size -= towrite;
+	if (queue->buffer_len + size > XMMS_QUEUE_BUFFER_SIZE) {
+		/* Maybe realloc the buffer if this for some reason should occur.. */
+		XMMS_DBG ("THIS SHOULD NOT HAPPEN!");
+		return;
+	}
 
-			if (queue->buffer_len != XMMS_IPC_MSG_HEAD_LEN) {
-				return;
+	memcpy (queue->buffer+queue->buffer_len, buffer, size);
+	queue->buffer_len += size;
+
+	while (queue->buffer_len > 0) {
+		if (queue->incomplete) {
+			guint towrite;
+			guint ret;
+
+			towrite = MIN (queue->buffer_len, queue->msg_len);
+			xmms_ipc_msg_put_data (queue->incomplete, queue->buffer, towrite);
+
+			queue->msg_len -= towrite;
+			queue->buffer_len -= towrite;
+
+			if (queue->buffer_len > 0) {
+				memcpy (queue->buffer, queue->buffer+towrite, queue->buffer_len);
 			}
 
-			memcpy (&object, queue->buffer, sizeof (object));
-			memcpy (&cmd, queue->buffer + 4, sizeof (cmd));
-			memcpy (&cmdid, queue->buffer + 8, sizeof (cmdid));
-			memcpy (&length, queue->buffer + 12, sizeof (length));
+			if (queue->msg_len == 0) {
+				g_queue_push_tail (queue->queue, queue->incomplete);
+				queue->incomplete = NULL;
+			}
+		} else if (queue->buffer_len > XMMS_IPC_MSG_HEAD_LEN) {
+			xmms_ipc_msg_t *msg;
+			guint tmp;
 
 			msg = xmms_ipc_msg_alloc ();
-			xmms_ipc_msg_set_object (msg, g_ntohl (object));
-			xmms_ipc_msg_set_cmd (msg, g_ntohl (cmd));
-			queue->msg_len = g_ntohl (length);
-			xmms_ipc_msg_set_cid (msg, g_ntohl (cmdid));
+			xmms_ipc_msg_put_header (msg, queue->buffer);
+
+			memcpy (&tmp, queue->buffer+(XMMS_IPC_MSG_HEAD_LEN-sizeof (tmp)), sizeof (tmp));
+			queue->msg_len = g_ntohl (tmp);
 
 			queue->incomplete = msg;
-			queue->bytes_used = 0;
-			queue->buffer_len = 0;
-		}
-
-		if (queue->incomplete != NULL) {
-			xmms_ipc_msg_t *msg = queue->incomplete;
-			guint towrite = MIN(size, queue->msg_len - queue->bytes_used);
-
-			xmms_ipc_msg_put_data (msg, buffer, towrite);
-			queue->bytes_used += towrite;
-			buffer += towrite;
-			size -= towrite;
-
-			if (queue->bytes_used == xmms_ipc_msg_get_length (msg)) {
-				g_queue_push_tail (queue->queue, msg);
-				queue->incomplete = NULL;
-				queue->bytes_used = 0;
-			}
-		}
-
-		if (size > 0) {
-			guint towrite = MIN(size, XMMS_IPC_MSG_HEAD_LEN - queue->buffer_len);
-			memcpy (queue->buffer + queue->buffer_len, buffer, towrite);
-			queue->buffer_len += towrite;
-			buffer += towrite;
-			size -= towrite;
+			memcpy (queue->buffer, queue->buffer+XMMS_IPC_MSG_HEAD_LEN, 
+				queue->buffer_len - XMMS_IPC_MSG_HEAD_LEN);
+			queue->buffer_len -= XMMS_IPC_MSG_HEAD_LEN;
 		}
 	}
 }
