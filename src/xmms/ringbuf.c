@@ -140,6 +140,7 @@ xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (len > 0);
+	g_return_if_fail (len <= ringbuf->buffer_size);
 	g_return_if_fail (mtx);
 
 	while ((xmms_ringbuf_used (ringbuf) < len) && !ringbuf->eos)

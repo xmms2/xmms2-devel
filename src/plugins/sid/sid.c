@@ -131,18 +131,19 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	if (!data->buffer) {
 		transport = xmms_decoder_transport_get (decoder);
 		g_return_val_if_fail (transport, FALSE);
-		
-		len = data->buffer_length = xmms_transport_size (transport);
+		len = 0;
+		data->buffer_length = xmms_transport_size (transport);
 		data->buffer = g_malloc (data->buffer_length);
 		
-		while (len) {
-			ret = xmms_transport_read (transport, data->buffer, len);
+		while (len<data->buffer_length) {
+			ret = xmms_transport_read (transport, data->buffer+len, data->buffer_length);
+			XMMS_DBG ("read %d",ret);
 			if ( ret < 0 ) {
 				g_free (data->buffer);
 				data->buffer=NULL;
 				return FALSE;
 			}
-			len -= ret;
+			len += ret;
 			g_assert (len >= 0);
 		}
 		

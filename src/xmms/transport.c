@@ -78,7 +78,7 @@ xmms_transport_open (const gchar *uri)
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
 	transport->seek_cond = g_cond_new ();
-	transport->buffer = xmms_ringbuf_new (32768);
+	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
 	transport->want_seek = FALSE;
 
 	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
@@ -144,6 +144,10 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	
 	if (transport->want_seek) {
 		g_cond_wait (transport->seek_cond, transport->mutex);
+	}
+
+	if (len > XMMS_TRANSPORT_RINGBUF_SIZE) {
+		len = XMMS_TRANSPORT_RINGBUF_SIZE;
 	}
 
 	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);
