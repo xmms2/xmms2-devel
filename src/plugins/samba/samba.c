@@ -12,14 +12,16 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
+ *  Valid url:
+ *  smb://user:password@host/share/path/file
+ *  (host can be IP, hostname or netbios name)
  */
 
 
 /*
- * @todo add support for IP/hostname
  * @todo some sanitycheck for the url
- * @todo implement username/password stuff
- * @todo unable to read id3 tag from some mp3 files?
+ * @todo unable to read id3 tag from some mp3 files? (bad files?)
  */
 
 #include "xmms/xmms.h"
@@ -28,12 +30,7 @@
 #include "xmms/util.h"
 #include "xmms/magic.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <errno.h>
-
 #include <string.h>
 
 #include "libsmbclient.h"
@@ -118,7 +115,7 @@ xmms_samba_can_handle (const gchar *url)
 
 	XMMS_DBG ("xmms_samba_can_handle (%s)", dec);
 	
-	if ((g_strncasecmp (dec, "smb:", 4) == 0) || (dec[0] == '/')) {
+	if (g_strncasecmp (dec, "smb:", 4) == 0) {
 		g_free (dec);
 		return TRUE;
 	}
@@ -127,17 +124,14 @@ xmms_samba_can_handle (const gchar *url)
 	return FALSE;
 }
 
+
 static void 
-xmms_samba_auth_fn(const char *server, 
-		const char *share,
-		char *workgroup, int wgmaxlen, 
-		char *username, int unmaxlen,
-		char *password, int pwmaxlen)
+xmms_samba_auth_fn(const char *server,
+				   const char *share,
+				   char *workgroup, int wgmaxlen, 
+				   char *username, int unmaxlen,
+				   char *password, int pwmaxlen)
 {
-	/* How to handle this?
-	strncpy (username, "test", unmaxlen);
-	strncpy (password, "test", pwmaxlen); 
-	*/
 	return;
 }
 
@@ -159,7 +153,7 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 
 	/**
 	 * Ok.. some sanity check here would be nice.. 
-	 * Like .. is the url really smb://netbiosname/path/file?
+	 * Like .. is the url really smb://host/path/file?
 	 */
 	if (!urlptr) {
 		return FALSE;
@@ -204,6 +198,7 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 	return TRUE;
 }
 
+
 static void
 xmms_samba_close (xmms_transport_t *transport)
 {
@@ -226,6 +221,7 @@ xmms_samba_close (xmms_transport_t *transport)
 	g_free (data->urlptr);
 	g_free (data);
 }
+
 
 static gint
 xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len)
@@ -253,6 +249,7 @@ xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	return ret;
 }
 
+
 static gint
 xmms_samba_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
@@ -278,6 +275,7 @@ xmms_samba_seek (xmms_transport_t *transport, gint offset, gint whence)
 	return smbc_lseek (data->fd, offset, w);
 }
 
+
 static guint
 xmms_samba_lmod (xmms_transport_t *transport)
 {
@@ -297,6 +295,7 @@ xmms_samba_lmod (xmms_transport_t *transport)
 
 	return st.st_mtime;
 }
+
 
 static gint
 xmms_samba_size (xmms_transport_t *transport)
