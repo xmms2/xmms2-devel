@@ -385,6 +385,24 @@ cdef class XMMS :
 
 		raise IOError ("Couldn't connect to server!")
 
+	def Quit (self, myClass = None):
+		"""
+		Tell the XMMS2 daemon to quit.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		if myClass:
+			ret = myClass()
+		else:
+			ret = XMMSResult()
+
+		ret.res = xmmsc_quit(self.conn)
+		ret.MoreInit()
+
+		return ret
+
 	def PlaybackStart (self, myClass = None) :
 		"""
 		Instruct the XMMS2 daemon to start playing the currently
@@ -462,7 +480,7 @@ cdef class XMMS :
 
 	def PlaybackCurrentID (self, myClass = None) :
 		"""
-		@rtype: L{XMMSResult}
+		@rtype: L{XMMSResult} (UInt)
 		@return: The playlist id of the item currently selected.
 		"""
 		cdef XMMSResult ret
@@ -515,12 +533,28 @@ cdef class XMMS :
 		
 		return ret
 
+	def PlaybackStatus (self, myClass = None) :
+		"""Get current playback status from XMMS2 daemon. This is
+		essentially the more direct version of
+		L{BroadcastPlaybackStatus}.
+		@rtype: L{XMMSResult} (UInt)
+		@return: Current playback status (UInt)
+		"""
+		cdef XMMSResult ret
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		ret.res = xmmsc_playback_status (self.conn)
+		ret.MoreInit ()
+		return ret
+
 	def BroadcastPlaybackStatus (self, myClass = None) :
 		"""
 		Set a class to handle the playback status broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
 		XMMSResult class.
-		@rtype: L{XMMSResult}
+		@rtype: L{XMMSResult} (UInt)
 		@return: An XMMSResult object that is constantly updated with
 		the appropriate info.
 		"""
@@ -541,7 +575,7 @@ cdef class XMMS :
 		Set a class to handle the playback id broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
 		XMMSResult class.
-		@rtype: L{XMMSResult}
+		@rtype: L{XMMSResult} (UInt)
 		@return: An XMMSResult object that is constantly updated with
 		the appropriate info.
 		"""
@@ -557,12 +591,33 @@ cdef class XMMS :
 		
 		return ret
 
+	def PlaybackPlaytime (self, myClass = None) :
+		"""
+		Return playtime on current file/stream. This is essentially a
+		more direct version of L{SignalPlaybackPlaytime}
+		@rtype: L{XMMSResult} (UInt)
+		@return: The result of the operation. (playtime in milliseconds)
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playback_playtime (self.conn)
+		ret.MoreInit ()
+
+		return ret
+
 	def SignalPlaybackPlaytime (self, myClass = None) :
 		"""
 		Set a class to handle the playback playtime signal from the
 		XMMS2 daemon. This can be used to keep track of the amount of
 		time played on the current file/stream. Note: the handler
 		class is usually a child of the XMMSResult class.
+		@rtype: L{XMMSResult} (UInt)
+		@return: The result of the operation. (playtime in milliseconds)
 		"""
 		cdef XMMSResult ret
 		
@@ -690,7 +745,10 @@ cdef class XMMS :
 
 	def PlaylistList (self, myClass = None) :
 		"""
-		@rtype: L{XMMSResult}
+		Get the current playlist. This function returns a list of IDs
+		of the files/streams currently in the playlist. Use
+		L{PlaylistGetMediainfo} to retrieve more specific information.
+		@rtype: L{XMMSResult} (UIntList)
 		@return: The current playlist.
 		"""
 		cdef XMMSResult ret
@@ -707,7 +765,7 @@ cdef class XMMS :
 
 	def PlaylistGetMediainfo (self, id, myClass = None) :
 		"""
-		@rtype: L{XMMSResult}
+		@rtype: L{XMMSResult} (HashTable)
 		@return: Information about the media item at the playlist
 		position specified.
 		"""
@@ -750,7 +808,9 @@ cdef class XMMS :
 		jump forward in the playlist. To jump backward in the playlist,
 		use C{xmms.PlaylistSetNext (0, -1)}. You can check the return
 		value from this function to make sure it's safe to move to the
-		next playlist item.
+		next playlist item. The 'type' argument can either be:
+		C{XMMS_PLAYLIST_SET_NEXT_RELATIVE (0)} or
+		C{XMMS_PLAYLIST_SET_NEXT_BYID (1)}.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -851,7 +911,7 @@ cdef class XMMS :
 	def ConfigvalGet (self, key, myClass = None) :
 		"""
 		Get the configuration value of a given key, from the daemon.
-		@rtype: L{XMMSResult}
+		@rtype: L{XMMSResult} (String)
 		@return: The result of the operation.
 		"""
 		cdef XMMSResult ret
@@ -867,8 +927,10 @@ cdef class XMMS :
 
 	def ConfigvalList (self, myClass = None) :
 		"""
-		Get list of configuration values on the daemon.
-		@rtype: L{XMMSResult}
+		Get list of configuration keys on the daemon. Use
+		L{ConfigvalGet} to retrieve the values corresponding to the
+		configuration keys.
+		@rtype: L{XMMSResult} (StringList)
 		@return: The result of the operation.
 		"""
 		cdef XMMSResult ret
