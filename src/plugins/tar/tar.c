@@ -220,7 +220,7 @@ static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 				}
 				XMMS_DBG (" uri: %s  -- suburi: %s", uribuf, suburibuf);
 				xmms_transport_uri_set (transport, uribuf);
-				xmms_transport_suburi_set (transport, suburibuf);
+				xmms_transport_suburi_set (transport, g_strdup (suburibuf));
 
 				data->startpos = pos;
 				data->relpos = 0;

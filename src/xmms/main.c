@@ -158,10 +158,13 @@ main (int argc, char **argv)
 			gchar nuri[XMMS_MAX_URI_LEN];
 			if (!strchr (argv[optind], ':')) {
 				XMMS_DBG ("No protocol, assuming file");
-				if (argv[optind][0] == '/')
+				if (argv[optind][0] == '/') {
 					g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s", argv[optind]);
-				else 
-					g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s/%s", g_get_current_dir (), argv[optind]);
+				} else {
+					gchar *cwd = g_get_current_dir ();
+					g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[optind]);
+					g_free (cwd);
+				}
 			} else {
 				g_snprintf (nuri, XMMS_MAX_URI_LEN, "%s", argv[optind]);
 			}

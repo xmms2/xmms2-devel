@@ -88,6 +88,7 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 			if (transport->suburi <= transport->uri) {
 				xmms_ringbuf_destroy (transport->buffer);
 				g_mutex_free (transport->mutex);
+				g_free (transport->uri);
 				g_free (transport);
 				transport = NULL;
 				return NULL;
@@ -97,7 +98,8 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 		transport->suburi++;
 		XMMS_DBG ("Trying %s  (suburi: %s)",transport->uri,transport->suburi);
 	}
-	
+
+	transport->suburi = g_strdup (transport->suburi);
 	return transport;
 }
 
@@ -216,6 +218,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	xmms_transport_lock (transport);
 	
 	if (transport->want_seek) {
+		g_cond_signal (transport->cond);
 		g_cond_wait (transport->seek_cond, transport->mutex);
 	}
 
@@ -301,6 +304,9 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (transport));
+
+	g_free (transport->uri);
+	g_free (transport->suburi);
 	g_free (transport);
 }
 
