@@ -286,6 +286,7 @@ xmms_config_init (const gchar *filename)
 		g_markup_parse_context_parse (ctx, buffer, ret, NULL);
 	}
 
+	g_markup_parse_context_free (ctx);
 
 	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
 	xmms_object_method_add (XMMS_OBJECT (config), "get", XMMS_METHOD_FUNC (getvalue));
