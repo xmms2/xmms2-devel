@@ -32,8 +32,6 @@ AC_SUBST(LIBSIDPLAY2_RESID_LDFLAGS)
 AM_CONDITIONAL(HAVE_LIBSIDPLAY2,test "$LIBSIDPLAY2_RESID_LDFLAGS" != "")
 AC_LANG_C
 
-AM_PATH_SDL(1.2.5,,AC_MSG_ERROR(Install LibSDL!))
-
 AC_OUTPUT([
 Makefile
 src/Makefile
@@ -42,7 +40,6 @@ src/plugins/Makefile
 src/plugins/mad/Makefile
 src/plugins/http/Makefile
 src/plugins/diskwrite/Makefile
-src/plugins/sdlout/Makefile
 src/plugins/oss/Makefile
 src/plugins/sid/Makefile
 src/plugins/tar/Makefile

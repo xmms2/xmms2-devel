@@ -122,40 +122,20 @@ xmms_mad_calculate_duration (xmms_decoder_t *decoder)
 
 	mad_stream_init (&stream);
 	mad_header_init (&header);
-		mad_timer_reset (&duration);
+	ret = xmms_transport_read (transport, buf + buf_len, 4096 - buf_len);
 
-		while (42)
-		{
-
-			if (stream.next_frame) {
-				gchar *buffer = buf;
-				gchar *nf = stream.next_frame;
-			memmove (buffer, stream.next_frame, buf_len = (&buffer[buf_len] - nf));
-		} else {
-			buf_len = 0;
-		}
-
-		ret = xmms_transport_read (transport, buf + buf_len, 4096 - buf_len);
-		if (ret <= 0) {
-			XMMS_DBG ("EOF");
-			break;
-		}
-
-		buf_len += ret;
-		mad_stream_buffer (&stream, buf, buf_len);
+	mad_stream_buffer (&stream, buf, buf_len);
 		
-		while (1) {
-			if (mad_header_decode (&header, &stream) == -1) {
-				if (MAD_RECOVERABLE (stream.error))
-					continue;
-				else
-					break;
+	while (1) {
+		if (mad_header_decode (&header, &stream) == -1) {
+			if (MAD_RECOVERABLE (stream.error))
+				continue;
+			else
+				break;
 
-			}
-
-			mad_timer_add (&duration, header.duration);
 		}
 
+		mad_timer_add (&duration, header.duration);
 	}
 
 	mad_stream_finish (&stream);
