@@ -198,12 +198,17 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 
 	if (g_strcasecmp (argv[2], "add") == 0) {
 		xmmsc_result_t *res;
-		char *url = format_url (argv[3]);
-		if (!url) return;
-		res = xmmsc_medialib_add_entry (conn, url);
-		free (url);
-		xmmsc_result_wait (res);
-		xmmsc_result_unref (res);
+		gint i;
+
+		for (i = 3; argv[i]; i++) {
+			char *url = format_url (argv[i]);
+			if (!url) return;
+			res = xmmsc_medialib_add_entry (conn, url);
+			free (url);
+			xmmsc_result_wait (res);
+			printf ("Added %s to medialib\n", argv[i]);
+			xmmsc_result_unref (res);
+		}
 	} else if (g_strcasecmp (argv[2], "searchadd") == 0) {
 		xmmsc_result_t *res;
 		char query[1024];
@@ -273,11 +278,8 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 						}
 					}
 				}
-				x_hash_destroy (e);
 				count++;
 			}
-			x_list_free (l);
-			
 			printf ("-------------------------------------------------------------[Count:%6.d]-----\n", count);
 		}
 
