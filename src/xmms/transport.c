@@ -679,7 +679,7 @@ xmms_transport_plugin_find (const gchar *url)
 			continue;
 
 		if (can_handle (url)) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}

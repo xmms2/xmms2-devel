@@ -34,6 +34,7 @@
 extern xmms_config_t *global_config;
 
 struct xmms_plugin_St {
+	xmms_object_t object;
 	GMutex *mutex;
 	GModule *module;
 	GList *info_list;
@@ -59,6 +60,7 @@ static GList *xmms_plugin_list;
  * Function prototypes
  */
 
+static void xmms_plugin_destroy (xmms_object_t *object);
 static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
 
 /*
@@ -118,7 +120,7 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (description, NULL);
 	
-	plugin = g_new0 (xmms_plugin_t, 1);
+	plugin = xmms_object_new (xmms_plugin_t, xmms_plugin_destroy);
 
 	plugin->mutex = g_mutex_new ();
 	plugin->type = type;
@@ -277,6 +279,34 @@ xmms_plugin_init (gchar *path)
 }
 
 void
+xmms_plugin_shutdown ()
+{
+	/* at this point, there's only one thread left,
+	 * so we don't need to take care of the mutex here.
+	 * xmms_plugin_destroy() will try to lock it, though, so
+	 * don't free the mutex yet.
+	 */
+	while (xmms_plugin_list) {
+		xmms_plugin_t *p = xmms_plugin_list->data;
+
+		/* if this plugin's refcount is > 1, then there's a bug
+		 * in one of the other subsystems
+		 */
+		if (p->object.ref > 1) {
+			XMMS_DBG ("%s's refcount is %i",
+			          p->name, p->object.ref);
+		}
+
+		/* xmms_plugin_destroy() will remove the plugin from
+		 * xmms_plugin_list, so we must not do that here
+		 */
+		xmms_object_unref (p);
+	}
+
+	g_mutex_free (xmms_plugin_mtx);
+}
+
+void
 xmms_plugin_scan_directory (const gchar *dir)
 {
 	GDir *d;
@@ -352,30 +382,6 @@ xmms_plugin_scan_directory (const gchar *dir)
 	g_dir_close (d);
 }
 
-void
-xmms_plugin_ref (xmms_plugin_t *plugin)
-{
-	g_return_if_fail (plugin);
-
-	g_mutex_lock (plugin->mutex);
-	plugin->users++;
-	g_mutex_unlock (plugin->mutex);
-}
-
-void
-xmms_plugin_unref (xmms_plugin_t *plugin)
-{
-	g_return_if_fail (plugin);
-
-	g_mutex_lock (plugin->mutex);
-	if (plugin->users > 0) {
-		plugin->users--;
-	} else {
-		g_warning ("Tried to unref plugin %s with 0 users", plugin->name);
-	}
-	g_mutex_unlock (plugin->mutex);
-}
-
 GList *
 xmms_plugin_list_get (xmms_plugin_type_t type)
 {
@@ -387,7 +393,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 		xmms_plugin_t *plugin = node->data;
 
 		if (plugin->type == type) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			list = g_list_prepend (list, plugin);
 		}
 	}
@@ -400,15 +406,10 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 void
 xmms_plugin_list_destroy (GList *list)
 {
-	GList *node;
-
-	if (!list)
-		return;
-	
-	for (node = list; node; node = g_list_next (node))
-		xmms_plugin_unref ((xmms_plugin_t *)node->data);
-
-	g_list_free (list);
+	while (list) {
+		xmms_object_unref (list->data);
+		list = g_list_delete_link (list, list);
+	}
 }
 
 xmms_plugin_method_t
@@ -475,6 +476,34 @@ xmms_plugin_config_value_register (xmms_plugin_t *plugin,
 /*
  * Static functions
  */
+
+static void
+xmms_plugin_destroy (xmms_object_t *object)
+{
+	xmms_plugin_t *p = (xmms_plugin_t *) object;
+
+	g_mutex_free (p->mutex);
+	g_module_close (p->module);
+	g_free (p->name);
+	g_free (p->shortname);
+	g_free (p->description);
+	g_hash_table_destroy (p->method_table);
+
+	while (p->info_list) {
+		xmms_plugin_info_t *info = p->info_list->data;
+
+		g_free (info->key);
+		g_free (info->value);
+		g_free (info);
+
+		p->info_list = g_list_delete_link (p->info_list, p->info_list);
+	}
+
+	/* remove this plugin from the global plugin list */
+	g_mutex_lock (xmms_plugin_mtx);
+	xmms_plugin_list = g_list_remove (xmms_plugin_list, p);
+	g_mutex_unlock (xmms_plugin_mtx);
+}
 
 static gchar *
 plugin_config_path (xmms_plugin_t *plugin, const gchar *value)

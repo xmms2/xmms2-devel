@@ -121,6 +121,7 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	xmms_dbus_shutdown ();
 	xmms_config_shutdown ();
 	xmms_medialib_shutdown ();
+	xmms_plugin_shutdown ();
 	xmms_log_shutdown ();
 
 	exit (EXIT_SUCCESS);

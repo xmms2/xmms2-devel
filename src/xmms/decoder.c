@@ -742,7 +742,7 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 			continue;
 
 		if (can_handle (mimetype)) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}

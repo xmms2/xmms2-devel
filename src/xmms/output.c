@@ -590,7 +590,7 @@ xmms_output_find_plugin (gchar *name)
 		if (!g_strcasecmp (xmms_plugin_shortname_get (l->data),
 		                   name)) {
 			plugin = l->data;
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}

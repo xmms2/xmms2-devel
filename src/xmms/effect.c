@@ -128,7 +128,7 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 		if (!g_strcasecmp (xmms_plugin_shortname_get (l->data),
 		                   name)) {
 			plugin = l->data;
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}
@@ -146,7 +146,7 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 	 * the plugin again
 	 */
 	if (!effect) {
-		xmms_plugin_unref (plugin);
+		xmms_object_unref (plugin);
 	}
 	g_return_val_if_fail (effect, stack);
 
@@ -157,7 +157,7 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 
 	/* see above */
 	if (!initfunc) {
-		xmms_plugin_unref (plugin);
+		xmms_object_unref (plugin);
 	}
 	g_return_val_if_fail (initfunc, stack);
 
