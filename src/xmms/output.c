@@ -243,7 +243,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		st = xmms_plugin_method_get (output->plugin,
 					     XMMS_PLUGIN_METHOD_STATUS);
 
-		st (output, XMMS_OUTPUT_STATUS_PLAY); /* @TODO */
+		st (output, XMMS_OUTPUT_STATUS_PLAY); 
 	}
 
 	g_mutex_unlock (output->mutex);
@@ -267,7 +267,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 		st = xmms_plugin_method_get (output->plugin,
 					     XMMS_PLUGIN_METHOD_STATUS);
 
-		st (output, XMMS_OUTPUT_STATUS_STOP); /* @TODO */
+		st (output, XMMS_OUTPUT_STATUS_STOP); 
 		output->running = FALSE;
 		g_cond_signal (output->fill_cond);
 	}

@@ -446,27 +446,6 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
-/* FIXME
-static void
-cmd_stats (xmmsc_connection_t *conn, int argc, char **argv)
-{
-	x_list_t *list;
-	xmmsc_result_t *res;
-
-	res = xmmsc_playback_statistics (conn);
-	xmmsc_result_wait (res);
-	if (xmmsc_result_get_stringlist (res, &list)) {
-		x_list_t *n;
-		for (n = list; n; n = x_list_next (n)) {
-			printf ("%s\n", (char*)n->data);
-		}
-	}
-
-	xmmsc_result_unref (res);
-}
-
-*/
-
 static void
 cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 {
@@ -668,6 +647,8 @@ static void
 handle_entry_plch (xmmsc_result_t *res, void *userdata)
 {
 	int id;
+	
+	xmmsc_result_unref (xmmsc_result_restart (res));
 
 	if (!xmmsc_result_get_uint (res, &id)) {
 		print_error ("Could't fetch uid!");
@@ -675,7 +656,6 @@ handle_entry_plch (xmmsc_result_t *res, void *userdata)
 
 	print_info ("Mediainfo for id = %d is updated", id);
 	
-	xmmsc_result_unref (xmmsc_result_restart (res));
 	xmmsc_result_unref (res);
 }
 

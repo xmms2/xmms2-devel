@@ -414,7 +414,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 		if (read_method) {
 			gint ret = read_method (transport, buffer, len);
-			if (ret == -1) return 0; /*FIXME*/
+			if (ret == -1) return 0; /** @todo this is a by the book example on how you not should do*/
 
 			transport->current_position += ret; 
 

@@ -176,18 +176,6 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 
 
 
-/* FIXME
-xmmsc_result_t *
-xmmsc_playback_statistics (xmmsc_connection_t *c)
-{
-	xmmsc_result_t *res;
-	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATS);
-	return res;
-}
-*/
-
-
-
 xmmsc_result_t *
 xmmsc_playback_playtime (xmmsc_connection_t *c)
 {

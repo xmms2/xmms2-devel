@@ -108,8 +108,8 @@ parse_line (const gchar *line, const gchar *m3u_path)
 		p = strchr (line, ':');
 
 		if (p && p[1] == '/' && p[2] == '/') {
-			/* FIXME: how do we know whether the url is properly
-			 * encoded?
+			/** @todo 
+			 * how do we know whether the url is properly encoded?
 			 * the problem is, if we encode an encoded path, all we'll
 			 * get is junk :/
 			 */
@@ -210,8 +210,9 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 				return FALSE;
 			}
 
-			/* FIXME: check whether the data we read is actually
-			 * ISO-8859-1, might be anything else as well.
+			/** @todo 
+			 *  check whether the data we read is actually
+			 *  ISO-8859-1, might be anything else as well.
 			 */
 			title = g_convert (p, strlen (p), "UTF-8", "ISO-8859-1",
 			                   &read, &write, NULL);

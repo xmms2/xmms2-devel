@@ -135,7 +135,7 @@ xmms_sid_destroy (xmms_decoder_t *decoder)
 
 
 /**
- * TODO: Enable option to use STIL for media info and
+ * @todo  Enable option to use STIL for media info and
  * timedatabase for song length.
  */
 static void

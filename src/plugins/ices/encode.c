@@ -234,11 +234,12 @@ int encode_dataout(encoder_state *s, ogg_page *og)
                 ogg_stream_packetin(&s->os, &op);
         }
 
-        /* FIXME: Make this threshold configurable.
-         * We don't want to buffer too many samples in one page when doing
-         * live encoding - that's fine for non-live encoding, but breaks
-         * badly when doing things live. 
-         * So, we flush the stream if we have too many samples buffered
+        /** @todo 
+	 *  Make this threshold configurable.
+         *  We don't want to buffer too many samples in one page when doing
+         *  live encoding - that's fine for non-live encoding, but breaks
+         *  badly when doing things live. 
+         *  So, we flush the stream if we have too many samples buffered
          */
         if(s->samples_in_current_page > s->samplerate * 2)
         {

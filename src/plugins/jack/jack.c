@@ -820,7 +820,7 @@ xmms_jack_new(xmms_output_t *output)
 	xmms_jack_data_t *data;
 	long outputFrequency = 0;
 	int bytes_per_sample = 2;
-	int channels = 2;     //FIXME: stop hardcoding 2 channels here
+	int channels = 2;     /** @todo stop hardcoding 2 channels here */
 	int retval;
 
 	XMMS_DBG ("xmms_jack_new"); 
