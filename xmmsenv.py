@@ -75,7 +75,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		"""We want our own ParseConfig, that supports some more
 		flags, and that takes the argument as a string"""
 
-		params = SCons.Util.Split(flags)
+		params = self.Split(flags)
 		i = 0
 		while( i < len( params ) ):
 			arg = params[i]
