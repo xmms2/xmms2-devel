@@ -517,6 +517,14 @@ xmmsc_broadcast_disconnect (xmmsc_result_t *res)
 	xmmsc_result_unref (res);
 }
 
+void
+xmmsc_signal_disconnect (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	xmmsc_result_unref (res);
+}
+
 xmmsc_result_t *
 xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
 {

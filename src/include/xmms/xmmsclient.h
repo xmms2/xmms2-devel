@@ -45,6 +45,7 @@ int xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 
 void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
+void xmmsc_signal_disconnect (xmmsc_result_t *res);
 
 /*
  * PLAYLIST ************************************************
