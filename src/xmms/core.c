@@ -51,11 +51,6 @@ struct xmms_core_St {
 	gboolean flush;
 };
 
-typedef enum {
-	XMMS_CORE_PLAYBACK_RUNNING,
-	XMMS_CORE_PLAYBACK_STOPPED,
-	XMMS_CORE_PLAYBACK_PAUSED
-} xmms_core_playback_status_t;
 
 static gboolean running = TRUE;
 /**
@@ -190,7 +185,7 @@ xmms_core_playback_stop (xmms_core_t *core)
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
 		core->playlist_op = XMMS_CORE_HOLD_SONG;
-		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STOP, NULL);
+		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STATUS, GUINT_TO_POINTER (XMMS_CORE_PLAYBACK_STOPPED));
 		core->flush = TRUE;
 		wake_core ();
 	} else {
@@ -235,9 +230,11 @@ XMMS_METHOD_DEFINE (pause, xmms_core_playback_pause, xmms_core_t *, NONE, NONE, 
 void
 xmms_core_playback_pause (xmms_core_t *core)
 {
-	core->status = XMMS_CORE_PLAYBACK_PAUSED;
-	xmms_output_pause (core->output);
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_PAUSE, NULL);
+	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
+		core->status = XMMS_CORE_PLAYBACK_PAUSED;
+		xmms_output_pause (core->output);
+		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STATUS, GUINT_TO_POINTER (XMMS_CORE_PLAYBACK_PAUSED));
+	}
 }
 
 XMMS_METHOD_DEFINE (start, xmms_core_playback_start, xmms_core_t *, NONE, NONE, NONE);
@@ -247,11 +244,13 @@ xmms_core_playback_start (xmms_core_t *core)
 	if (core->status == XMMS_CORE_PLAYBACK_PAUSED) {
 		core->status = XMMS_CORE_PLAYBACK_RUNNING;
 		xmms_output_resume (core->output);
+		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STATUS, GUINT_TO_POINTER (XMMS_CORE_PLAYBACK_RUNNING));
 	}
 	
 	if (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
 		/* @todo race condition? */
 		core->status = XMMS_CORE_PLAYBACK_RUNNING;
+		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STATUS, GUINT_TO_POINTER (XMMS_CORE_PLAYBACK_RUNNING));
 		g_cond_signal (core->cond);
 	} else {
 		XMMS_DBG ("xmms_core_playback_start with status != XMMS_CORE_PLAYBACK_STOPPED");

@@ -8,6 +8,12 @@
 #include "xmms/effect.h"
 #include "xmms/config.h"
 
+typedef enum {
+	XMMS_CORE_PLAYBACK_RUNNING,
+	XMMS_CORE_PLAYBACK_STOPPED,
+	XMMS_CORE_PLAYBACK_PAUSED
+} xmms_core_playback_status_t;
+
 struct xmms_core_St;
 typedef struct xmms_core_St xmms_core_t;
 

@@ -33,7 +33,7 @@ static GHashTable *exported_objects = NULL;
 
 extern xmms_core_t *core;
 
-static void send_playback_stop (xmms_object_t *object, 
+static void send_playback_status (xmms_object_t *object, 
 	gconstpointer data, gpointer userdata);
 static void send_playlist_mediainfo_id (xmms_object_t *object, 
 	gconstpointer data, gpointer userdata);
@@ -71,8 +71,8 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_PLAYBACK_PLAYTIME,
 	  send_playback_playtime},
 	
-	{ XMMS_SIGNAL_PLAYBACK_STOP,
-	  send_playback_stop},
+	{ XMMS_SIGNAL_PLAYBACK_STATUS,
+	  send_playback_status},
 	
 	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, 
 	  send_playlist_mediainfo_id},
@@ -179,7 +179,7 @@ send_playlist_changed (xmms_object_t *object,
 
 
 static void
-send_playback_stop (xmms_object_t *object,
+send_playback_status (xmms_object_t *object,
 		gconstpointer data,
 		gpointer userdata)
 {
@@ -187,9 +187,13 @@ send_playback_stop (xmms_object_t *object,
 
         if (connections) {
                 DBusMessage *msg;
+                DBusMessageIter itr;
 
-                msg = dbus_message_new_signal (XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_STOP);
-		broadcast_msg (msg, XMMS_SIGNAL_PLAYBACK_STOP);
+                msg = dbus_message_new_signal (XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_STATUS);
+                dbus_message_append_iter_init (msg, &itr);
+                dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT(data));
+
+		broadcast_msg (msg, XMMS_SIGNAL_PLAYBACK_STATUS);
                 dbus_message_unref (msg);
         }
 

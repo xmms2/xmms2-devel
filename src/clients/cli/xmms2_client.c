@@ -130,9 +130,9 @@ handle_playtime (void *userdata, void *arg) {
 }
 
 void
-handle_playback_stopped (void *userdata, void *arg) 
+handle_playback_status (void *userdata, void *arg) 
 {
-	printf ("\nPlayback stopped...\n");
+	printf ("\nStatus changed to %d\n", GPOINTER_TO_UINT (arg));
 	status = STOPPED;
 }
 
@@ -293,7 +293,7 @@ status_main(xmmsc_connection_t *conn)
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, NULL);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_STOP, handle_playback_stopped, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_STATUS, handle_playback_status, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, handle_playlist_mediainfo_id, conn);

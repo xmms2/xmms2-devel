@@ -17,6 +17,7 @@
 #define XMMS_METHOD_PLAY "play"
 #define XMMS_METHOD_STOP "stop"
 #define XMMS_METHOD_PAUSE "pause"
+#define XMMS_METHOD_STATUS "status"
 #define XMMS_METHOD_CURRENTID "currentid"
 #define XMMS_METHOD_SHUFFLE "shuffle"
 #define XMMS_METHOD_SEEKMS "seekms"
@@ -49,8 +50,9 @@
 #define XMMS_SIGNAL_PLAYBACK_PREV "org.xmms.playback.prev"
 #define XMMS_SIGNAL_PLAYBACK_SEEK_MS "org.xmms.playback.seek.ms"
 #define XMMS_SIGNAL_PLAYBACK_SEEK_SAMPLES "org.xmms.playback.seek.samples"
-*/
 #define XMMS_SIGNAL_PLAYBACK_STOP "/xmms/playback::stop"
+*/
+#define XMMS_SIGNAL_PLAYBACK_STATUS "/xmms/playback::status"
 #define XMMS_SIGNAL_PLAYBACK_CURRENTID "/xmms/playback::currentid"
 #define XMMS_SIGNAL_PLAYBACK_PLAYTIME "/xmms/playback::playtime"
 
