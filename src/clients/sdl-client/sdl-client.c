@@ -333,6 +333,8 @@ main (int argc, char **argv)
 		return 1;
         }
 
+	SDL_WM_SetCaption ("XMMS2 - SDL Client", NULL);
+
         if ( TTF_Init() < 0 ) {
                 fprintf(stderr, "Couldn't initialize TTF: %s\n",SDL_GetError());
 		return 1;

@@ -96,6 +96,7 @@ watch_callback (xmmsc_connection_t *conn,
 				
 				if (id != 0) {
 					g_source_destroy (s);
+					g_source_unref (s);
 				}
 			}
 			break;

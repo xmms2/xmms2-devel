@@ -183,6 +183,8 @@ timeout_remove (DBusTimeout *timeout,
 
 	time->dbus_timeout = NULL;
 	dbus_timeout_set_data (timeout, NULL, NULL); /* Seems strange to me */
+	
+	free (time);
 }
 
 static void
