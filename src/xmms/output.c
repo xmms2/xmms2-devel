@@ -79,8 +79,6 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
 
-	XMMS_DBG ("Writing %d bytes to output", len);
-
 	xmms_output_lock (output);
 	xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
 	xmms_ringbuf_write (output->buffer, buffer, len);
@@ -95,8 +93,6 @@ xmms_output_read (xmms_output_t *output, gchar *buffer, gint len)
 
 	g_return_val_if_fail (output, -1);
 	g_return_val_if_fail (buffer, -1);
-
-	XMMS_DBG ("Reading %d bytes from output", len);
 
 	xmms_output_lock (output);
 	xmms_ringbuf_wait_used (output->buffer, len, output->mutex);
@@ -126,7 +122,7 @@ xmms_output_thread (gpointer data)
 		ret = xmms_output_read (output, buffer, 4096);
 		
 		if (ret > 0) {
-			xmms_ringbuf_wait_free (output->buffer, ret, output->mutex);
+		/*	xmms_ringbuf_wait_free (output->buffer, ret, output->mutex);*/
 			write_method (output, buffer, ret);
 		} else {
 			XMMS_DBG ("Not good?!");

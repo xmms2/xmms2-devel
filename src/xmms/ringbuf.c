@@ -2,6 +2,8 @@
 #include "util.h"
 #include <string.h>
 
+#undef DEBUG
+
 xmms_ringbuf_t *
 xmms_ringbuf_new (guint size)
 {
@@ -128,9 +130,13 @@ xmms_ringbuf_wait_free (xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 
 	
 	while (xmms_ringbuf_free (ringbuf) < len) {
+#ifdef DEBUG
 		XMMS_DBG ("waiting for %u free bytes in buffer", len); 
+#endif
 		g_cond_wait (ringbuf->free_cond, mtx);
+#ifdef DEBUG
 		XMMS_DBG ("woke up, %u bytes free", xmms_ringbuf_free (ringbuf));
+#endif
 	}
 }
 

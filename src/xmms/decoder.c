@@ -131,7 +131,6 @@ xmms_decoder_thread (gpointer data)
 		return NULL;
 	
 	while (decoder->running) {
-		XMMS_DBG ("decoding block");
 		decode_block (decoder, decoder->transport);
 	}
 

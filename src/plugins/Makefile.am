@@ -1,2 +1,2 @@
-SUBDIRS=file mad diskwrite
+SUBDIRS=file mad diskwrite sdlout
 

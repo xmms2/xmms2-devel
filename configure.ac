@@ -30,4 +30,5 @@ src/plugins/mad/Makefile
 src/plugins/id3/Makefile
 src/plugins/http/Makefile
 src/plugins/diskwrite/Makefile
+src/plugins/sdlout/Makefile
 src/plugins/file/Makefile])

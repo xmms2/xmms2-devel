@@ -215,8 +215,6 @@ xmms_transport_thread (gpointer data)
 		xmms_transport_lock (transport);
 
 		ret = read_method (transport, buffer, 4096);
-		XMMS_DBG ("read %d bytes", ret);
-
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
