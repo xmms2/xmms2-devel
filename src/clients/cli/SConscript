@@ -4,7 +4,7 @@ Import('base_env')
 
 xmms2_sources = Split ("xmms2_client.c")
 
-env = base_env.Copy(CPPPATH = ['../lib/xmmsclient','../..'],
+env = base_env.Copy(CPPPATH = ['../lib/xmmsclient','#src'],
 	LIBPATH = ["../lib/xmmsclient/"],
 	LIBS = ["xmmsclient"])
 

@@ -11,6 +11,9 @@
 #include "object.h"
 #include "core.h"
 
+static GMutex *visuserslock;
+static guint32 visusers = 0;
+
 struct xmms_visualisation_St {
 	xmms_object_t object;
 	guint32 pos;
@@ -28,11 +31,42 @@ xmms_visualisation_init()
 {
 	xmms_visualisation_t *res;
 
+	if (!visuserslock)
+		visuserslock = g_mutex_new ();
+
 	res = g_new0 (xmms_visualisation_t, 1);
 
 	if (res) {
 		xmms_object_init (XMMS_OBJECT (res));
 	}
+
+	return res;
+}
+
+void
+xmms_visualisation_users_inc ()
+{
+	g_mutex_lock (visuserslock);
+	visusers++;
+	g_mutex_unlock (visuserslock);
+}
+
+void
+xmms_visualisation_users_dec ()
+{
+	g_mutex_lock (visuserslock);
+	visusers--;
+	g_mutex_unlock (visuserslock);
+}
+
+static gboolean
+xmms_visualisation_has_users ()
+{
+	gboolean res;
+
+	g_mutex_lock (visuserslock);
+	res = !!visusers;
+	g_mutex_unlock (visuserslock);
 
 	return res;
 }
@@ -62,6 +96,10 @@ xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len)
 	gint t;
 
 	g_return_if_fail (vis);
+
+	if (!xmms_visualisation_has_users ()) {
+		return;
+	}
 
 	if (vis->fft_data) {
 		t = MIN (len, (FFT_LEN*4)-vis->fft_data);

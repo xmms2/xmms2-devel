@@ -83,6 +83,22 @@ static gpointer xmms_decoder_thread (gpointer data);
  * Public functions
  */
 
+
+/**
+ * @defgroup Decoder Decoder
+ * @ingroup XMMSPLugin
+ * @brief Decoder functions.
+ *
+ * @{
+ */
+
+/**
+ * Extract plugin specific data from the decoder.
+ * This should be set with xmms_decoder_plugin_data_set.
+ *
+ * @sa xmms_decoder_plugin_data_set
+ */
+
 gpointer
 xmms_decoder_plugin_data_get (xmms_decoder_t *decoder)
 {
@@ -93,6 +109,13 @@ xmms_decoder_plugin_data_get (xmms_decoder_t *decoder)
 
 	return ret;
 }
+
+/**
+ * Set the private data for the plugin.
+ * Data can be extracted by xmms_decoder_plugin_data_get.
+ *
+ * @sa xmms_decoder_plugin_data_get
+ */
 
 void
 xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data)
@@ -108,6 +131,7 @@ xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data)
  * @param decoder apanap
  * @return the associated transport
  */
+
 xmms_transport_t *
 xmms_decoder_transport_get (xmms_decoder_t *decoder)
 {
@@ -178,6 +202,55 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 }
 
 /**
+ * Update Mediainfo in the entry.
+ * Should be used in XMMS_PLUIGN_METHOD_GET_MEDIAINFO to update the info and
+ * propagate it to the clients.
+ */
+void
+xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
+{
+	g_return_if_fail (decoder);
+	g_return_if_fail (entry);
+
+	xmms_playlist_entry_property_copy (entry, decoder->entry);
+	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (entry));
+}
+
+
+/**
+ * Write decoded data.
+ * Should be used in XMMS_PLUGIN_METHOD_DECODE_BLOCK to write the decoded
+ * pcm-data to the output. The data should be 32bits per stereosample, ie
+ * pairs of signed 16-bits samples. (in what byter order?)
+ * xmms_decoder_samplerate_set must be called before any data is passed
+ * to this function.
+ *
+ * @param decoder
+ * @param buf buffer containing pcmdata in 2*S16
+ * @param len size of buffen in bytes
+ *
+ */
+void
+xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
+{
+	xmms_output_t *output;
+
+	g_return_if_fail (decoder);
+	
+	output = xmms_decoder_output_get (decoder);
+
+	g_return_if_fail (output);
+
+	xmms_effect_run (decoder->effect, buf, len);
+
+	xmms_visualisation_calc (decoder->vis, buf, len);
+
+	xmms_output_write (output, buf, len);
+}
+
+/** @} */
+
+/**
  * Get the output associated with the decoder.
  */
 xmms_output_t *
@@ -236,53 +309,6 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xm
 	return decoder;
 }
 
-
-/**
- * Update Mediainfo in the entry.
- * Should be used in XMMS_PLUIGN_METHOD_GET_MEDIAINFO to update the info and
- * propagate it to the clients.
- */
-void
-xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
-{
-	g_return_if_fail (decoder);
-	g_return_if_fail (entry);
-
-	xmms_playlist_entry_property_copy (entry, decoder->entry);
-	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (entry));
-}
-
-
-/**
- * Write decoded data.
- * Should be used in XMMS_PLUGIN_METHOD_DECODE_BLOCK to write the decoded
- * pcm-data to the output. The data should be 32bits per stereosample, ie
- * pairs of signed 16-bits samples. (in what byter order?)
- * xmms_decoder_samplerate_set must be called before any data is passed
- * to this function.
- *
- * @param decoder
- * @param buf buffer containing pcmdata in 2*S16
- * @param len size of buffen in bytes
- *
- */
-void
-xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
-{
-	xmms_output_t *output;
-
-	g_return_if_fail (decoder);
-	
-	output = xmms_decoder_output_get (decoder);
-
-	g_return_if_fail (output);
-
-	xmms_effect_run (decoder->effect, buf, len);
-
-	xmms_visualisation_calc (decoder->vis, buf, len);
-
-	xmms_output_write (output, buf, len);
-}
 
 /*
  * Private functions

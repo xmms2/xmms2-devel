@@ -210,7 +210,7 @@ setup_playlist (xmmsc_connection_t *conn)
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_list_mediainfo, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, conn);
 
-	xmmsc_get_playing_id (conn);
+	xmmsc_playback_current_id (conn);
 	
 	xmmsc_glib_setup_mainloop (conn, NULL);
 
@@ -229,7 +229,7 @@ status_main(xmmsc_connection_t *conn)
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, conn);
 
-	xmmsc_get_playing_id (conn);
+	xmmsc_playback_current_id (conn);
 
 	xmmsc_glib_setup_mainloop (conn, NULL);
 

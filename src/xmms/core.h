@@ -23,6 +23,7 @@ void xmms_core_playlist_remove (guint id);
 void xmms_core_playlist_shuffle ();
 void xmms_core_playlist_clear ();
 void xmms_core_playlist_save (gchar *filename);
+void xmms_core_playlist_sort (gchar *property);
 xmms_playlist_t *xmms_core_get_playlist ();
 xmms_config_data_t *xmms_core_config_get (xmms_core_t *core);
 

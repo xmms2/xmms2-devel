@@ -32,9 +32,10 @@ void xmmsc_playback_stop (xmmsc_connection_t *c);
 void xmmsc_playback_start (xmmsc_connection_t *c);
 void xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds);
 void xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples);
+void xmmsc_playback_current_id (xmmsc_connection_t *c);
 void xmmsc_playlist_list (xmmsc_connection_t *c);
-void xmmsc_get_playing_id (xmmsc_connection_t *c);
 void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
+void xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 void xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val);
 
 void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), void *);

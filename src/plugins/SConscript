@@ -5,17 +5,42 @@ base_env = base_env.Copy(LINKFLAGS=["-module", "-avoid-version"])
 
 Export('base_env')
 
-SConscript('file/SConscript')
-SConscript('oss/SConscript')
-SConscript('m3u/SConscript')
-#SConscript('tar/SConscript')
+file = base_env.Copy()
+file.AddFlagsFromGroup("glib")
+file.XmmsPlugin('xmms_file', ['file/file.c'])
+
+oss = base_env.Copy()
+oss.AddFlagsFromGroup("glib")
+oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
+
+m3u = base_env.Copy()
+m3u.AddFlagsFromGroup("glib")
+m3u.XmmsPlugin('xmms_m3u', ['m3u/m3u.c'])
+
+eq = base_env.Copy()
+eq.AddFlagsFromGroup("glib")
+eq.XmmsPlugin('xmms_eq', ['eq/eq.c'])
+
 if base_env.HasGroup("mad"):
-	SConscript('mad/SConscript')
+	mad = base_env.Copy()
+	mad.AddFlagsFromGroup("glib")
+	mad.AddFlagsFromGroup("mad")
+	mad.XmmsPlugin('xmms_mad', ['mad/mad.c', 'mad/id3.c', 'mad/xing.c'])
+
 if base_env.HasGroup("vorbis"):
-	SConscript('vorbis/SConscript')
+	vorbis = base_env.Copy()
+	vorbis.AddFlagsFromGroup("glib")
+	vorbis.AddFlagsFromGroup("vorbis")
+	vorbis.XmmsPlugin('xmms_vorbis', ['vorbis/vorbis.c'])
+
 if base_env.HasGroup("sqlite"):
-	SConscript('sqlite/SConscript')
-if base_env.HasGroup("alsa"):
-	SConscript('alsa/SConscript')
+	sqlite = base_env.Copy()
+	sqlite.AddFlagsFromGroup("glib")
+	sqlite.AddFlagsFromGroup("sqlite")
+	sqlite.XmmsPlugin('xmms_sqlite', ['sqlite/sqlite.c'])
+
 if base_env.HasGroup("curl"):
-	SConscript('curl/SConscript')
+	curl = base_env.Copy()
+	curl.AddFlagsFromGroup("glib")
+	curl.AddFlagsFromGroup("curl")
+	curl.XmmsPlugin('xmms_curl', ['curl/curl.c'])
