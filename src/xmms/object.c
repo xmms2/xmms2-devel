@@ -58,6 +58,7 @@ xmms_object_cleanup (xmms_object_t *object)
 
 	g_hash_table_foreach_remove (object->signals, xmms_object_cleanup_foreach, NULL);
 	g_hash_table_destroy (object->signals);
+	g_hash_table_destroy (object->methods);
 	g_mutex_free (object->mutex);
 }
 
