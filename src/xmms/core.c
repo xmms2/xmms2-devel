@@ -260,7 +260,7 @@ xmms_core_mimetype_callback (xmms_object_t *object, gconstpointer data, gpointer
 	xmms_playlist_plugin_t *plsplugin;
 	const gchar *mime;
 
-	mime = xmms_transport_mime_type_get (core->transport);
+	mime = xmms_transport_mimetype_get (core->transport);
 	if (!mime) {
 		xmms_transport_close (core->transport);
 		xmms_core_play_next ();
@@ -325,7 +325,8 @@ core_thread (gpointer data)
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
-		core->transport = xmms_transport_open (core->curr_song);
+		core->transport = xmms_transport_new ();
+		xmms_transport_open (core->transport, core->curr_song);
 
 		if (!core->transport) {
 			xmms_core_play_next ();

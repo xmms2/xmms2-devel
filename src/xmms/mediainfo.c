@@ -93,16 +93,17 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id);
 
-			transport = xmms_transport_open (entry);
+			transport = xmms_transport_new ();
+			xmms_transport_open (transport, entry);
 			if (!transport) {
 				xmms_playlist_entry_unref (entry);
 				continue;
 			}
 
-			if (!xmms_transport_is_local (transport))
+			if (!xmms_transport_islocal (transport))
 				continue;
 
-			mime = xmms_transport_mime_type_get (transport);
+			mime = xmms_transport_mimetype_get (transport);
 
 			if (!mime) {
 				xmms_playlist_entry_unref (entry);

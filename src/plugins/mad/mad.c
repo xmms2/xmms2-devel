@@ -276,7 +276,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		return;
 	}
 
-	if (xmms_transport_is_local (transport) && 
+	if (xmms_transport_islocal (transport) && 
 			ret >= 10 && 
 			xmms_mad_id3v2_header (buf, &head)) {
 		gchar *id3v2buf;
@@ -316,7 +316,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	
 	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
 
-	if (xmms_transport_is_local (transport) && !id3handled) {
+	if (xmms_transport_islocal (transport) && !id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 		ret = xmms_transport_read (transport, buf, 128);

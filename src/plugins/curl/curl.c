@@ -127,7 +127,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 			XMMS_DBG ("Shoutcast detected...");
 			data->mime = "audio/mpeg"; /* quite safe */
-			xmms_transport_mime_type_set (transport, data->mime);
+			xmms_transport_mimetype_set (transport, data->mime);
 			data->stream = TRUE;
 
 /*			tmp = g_strsplit (ptr, "\r\n", 0);
@@ -147,7 +147,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 			return size*nmemb;
 		}
 
-		xmms_transport_mime_type_set (transport, data->mime);
+		xmms_transport_mimetype_set (transport, data->mime);
 	}
 
 	
@@ -219,7 +219,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *uri)
 		data->again = TRUE;
 	}
 	
-	/** @todo mimetype from header? */
 	/*xmms_transport_mime_type_set (transport, "audio/mpeg");*/
 
 	FD_ZERO (&data->fdread);

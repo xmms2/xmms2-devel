@@ -119,7 +119,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *uri)
 	xmms_transport_plugin_data_set (transport, data);
 
 	data->mime = xmms_magic_mime_from_file ((const gchar*)data->uriptr);
-	xmms_transport_mime_type_set (transport, (const gchar*)data->mime);
+	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 	
 	return TRUE;
 }
@@ -154,7 +154,7 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	if (data->mime) {
 		data->mime = xmms_magic_mime_from_file ((const gchar*)data->uriptr);
-		xmms_transport_mime_type_set (transport, (const gchar*)data->mime);
+		xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 		data->mime = NULL;
 	}
 	

@@ -137,7 +137,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 			if (lines[i] && lines[i][0]) {
 				if (lines[i][0] != '/') {
 					gchar *new, *path, *p;
-					path = g_strdup (xmms_transport_uri_get (transport));
+					path = g_strdup (xmms_transport_url_get (transport));
 					
 					p = strrchr (path, '/');
 					if (p) {
@@ -157,7 +157,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 			if (lines[i] && lines[i][0]) {
 				if (lines[i][0] != '/') {
 					gchar *new, *path, *p;
-					path = g_strdup (xmms_transport_uri_get (transport));
+					path = g_strdup (xmms_transport_url_get (transport));
 					
 					p = strrchr (path, '/');
 					if (p) {
