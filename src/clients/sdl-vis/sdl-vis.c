@@ -287,7 +287,7 @@ main()
 
 	//set_mediainfo (connection, xmmsc_get_playing_id (connection));
 
-	xmmsc_get_playing_id (connection);
+	xmmsc_playback_current_id (connection);
 
 	xmmsc_set_callback (connection, XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 			    new_data, NULL);
