@@ -100,6 +100,7 @@ struct xmms_decoder_St {
 
 
 	GList *format_list;
+	GList *output_format_list;
 	xmms_sample_converter_t *converter;
 
 
@@ -286,23 +287,17 @@ xmms_decoder_format_add (xmms_decoder_t *decoder, xmms_sample_format_t fmt, guin
 xmms_audio_format_t *
 xmms_decoder_format_finish (xmms_decoder_t *decoder)
 {
-        xmms_output_t *output;
 	xmms_sample_converter_t *converter;
 	xmms_audio_format_t *fmt;
-        GList *outfmts, *l;
+        GList *l;
 
         g_return_val_if_fail (decoder, NULL);
 
-        output = xmms_decoder_output_get (decoder);
-        g_return_val_if_fail (output, NULL);
-
-        outfmts = xmms_output_formatlist_get (output);
-
-        converter = xmms_sample_audioformats_coerce (decoder->format_list, outfmts);
+        converter = xmms_sample_audioformats_coerce (decoder->format_list,
+		                                             decoder->output_format_list);
 	if (!converter)
 		return NULL;
 
-        xmms_output_format_set (output, xmms_sample_converter_get_to (converter));
 	decoder->converter = converter;
 	
 	fmt = xmms_sample_converter_get_from (converter);
@@ -324,6 +319,19 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
         return fmt;
 }
 
+xmms_audio_format_t *
+xmms_decoder_audio_format_to_get (xmms_decoder_t *decoder)
+{
+	xmms_audio_format_t *ret = NULL;
+
+	g_return_val_if_fail (decoder, NULL);
+
+	g_mutex_lock (decoder->mutex);
+	ret = xmms_sample_converter_get_to (decoder->converter);
+	g_mutex_unlock (decoder->mutex);
+
+	return ret;
+}
 
 /**
  * Update Mediainfo in the entry.
@@ -624,6 +632,39 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	return TRUE;
 }
 
+/**
+ * Initializes the coder.
+ * Only called by the output layer.
+ *
+ * @param decoder
+ * @param output_format_list List with xmms_audio_format_t's that are
+ *                           supported by the output plugin
+ */
+gboolean
+xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
+{
+	gboolean ret;
+	xmms_decoder_init_method_t init_meth;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	/* we need to store the format list here since the init method of
+	 * the decoder plugin will most likely call
+	 * xmms_decoder_format_finish() at some point, which relies on the
+	 * output format list.
+	 */
+	decoder->output_format_list = output_format_list;
+
+	init_meth = xmms_plugin_method_get (decoder->plugin,
+	                                    XMMS_PLUGIN_METHOD_INIT);
+
+	ret = init_meth && init_meth (decoder);
+	if (!ret) {
+		decoder->output_format_list = NULL;
+	}
+
+	return ret;
+}
 
 /**
  * Dispatch execution of the decoder.
@@ -823,19 +864,12 @@ xmms_decoder_thread (gpointer data)
 
         xmms_decoder_t *decoder = data;
         xmms_decoder_decode_block_method_t decode_block;
-        xmms_decoder_init_method_t init_meth;
 
         g_return_val_if_fail (decoder, NULL);
 
         decode_block = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK);
         if (!decode_block)
                 return NULL;
-
-        init_meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_INIT);
-        if (init_meth) {
-                if (!init_meth (decoder))
-                        return NULL;
-        }
 
         xmms_object_ref (decoder);
 
