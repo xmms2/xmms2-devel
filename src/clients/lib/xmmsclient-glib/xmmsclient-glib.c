@@ -170,6 +170,26 @@ static GSourceFuncs xmmsc_connection_funcs = {
 	NULL
 };
 
+/**
+ * @defgroup XMMSWatchGLIB XMMSWatchGLIB
+ * @brief GLIB bindnings to XMMSWatch.
+ * 
+ * These are the functions you want to use from a gmainloop client
+ * If your client is written with QT, see XMMSWatchQT
+ *
+ * @ingroup XMMSWatch
+ *
+ * @{
+ */
+
+
+/**
+ * Add a xmmsc_connection_t to a GMainLoop.
+ * Call this after you called xmmsc_connect().
+ *
+ * @sa xmmsc_connect
+ */
+
 void
 xmmsc_setup_with_gmain (xmmsc_connection_t *connection,
 			GMainContext *context)
@@ -186,3 +206,4 @@ xmmsc_setup_with_gmain (xmmsc_connection_t *connection,
 	g_source_attach (source, context);
 }
 
+/* @} */

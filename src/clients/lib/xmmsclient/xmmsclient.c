@@ -103,8 +103,47 @@ static void xmmsc_send_void (xmmsc_connection_t *c, char *message);
  * @defgroup XMMSClient XMMSClient
  * @brief This functions will connect a client to a XMMS server.
  *
- * The clientlib is actually a wrapper around DBus message protocol.
- * So this is mearly for your convinence.
+ * To connect to a XMMS server you first need to init the
+ * xmmsc_connection_t and the connect it.
+ * If you want to handle callbacks from the server (not only send
+ * commands to it) you need to setup either a GMainLoop or QT-mainloop
+ * with a XMMSWatch.
+ * 
+ * A GLIB example:
+ * @code
+ * int main () {
+ *	xmmsc_connection_t *conn;
+ *	GMainLoop *mainloop;
+ *
+ *	conn = xmmsc_init ();
+ *	if (!xmmsc_connect (conn, NULL))
+ *		return 0;
+ *	
+ *	mainloop = g_main_loop_new (NULL, FALSE);
+ *	xmmsc_setup_with_gmain (conn, NULL);
+ *	/* Setup some callbacks here */
+ *	g_main_loop_run (mainloop);
+ * }
+ * @endcode
+ *
+ * And a QT example:
+ * @code
+ * int main (int argc, char **argv) {
+ * 	XMMSClientQT *qtClient;
+ *	xmmsc_connection_t *conn;
+ *	QApplication app (argc, argv);
+ *
+ *	conn = xmmsc_init ();
+ *	if (!xmmsc_connect (conn, NULL))
+ *		return 0;
+ *
+ *	qtClient = new XMMSClientQT (conn, &app);
+ *
+ *	/* Here we need to create a window and setup
+ *	   some callbacks */
+ *	return app.exec ();	
+ * }
+ * @endcode
  *
  * @{
  */

@@ -51,6 +51,10 @@ watch_callback (xmmsc_connection_t *conn,
 	return 1;
 }
 
+/**
+ * @internal
+ */
+
 XMMSClientWatch::XMMSClientWatch (xmmsc_connection_t *conn, 
 				  xmmsc_watch_t *watch, 
 				  QObject *parent) :
@@ -113,6 +117,26 @@ XMMSClientWatch::onException ()
 	xmmsc_watch_dispatch (m_conn, m_watch, flags);
 }
 
+/**
+ * @defgroup XMMSWatchQT XMMSWatchQT
+ * @brief QT Watch bindnings.
+ * 
+ * This functions should be used in a QT client to get the 
+ * Messages from the server.
+ *
+ * @ingroup XMMSWatch
+ * @{
+ */
+
+/**
+ * This class should be inited after xmmsc_connect() is called.
+ * When this is inited you don't have to bother about it anymore.
+ * Callbacks will still be set by xmmsc_set_callback()
+ *
+ * @sa xmmsc_connect
+ * @sa xmmsc_set_callback
+ */
+
 XMMSClientQT::XMMSClientQT (xmmsc_connection_t *conn, QObject *parent) : 
 	      QObject (parent)
 {
@@ -121,6 +145,8 @@ XMMSClientQT::XMMSClientQT (xmmsc_connection_t *conn, QObject *parent) :
 	xmmsc_watch_data_set (conn, this);
 	xmmsc_watch_init (conn);
 }
+
+/** @} */
 
 void
 XMMSClientQT::watch_add (xmmsc_watch_t *watch)

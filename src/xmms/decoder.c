@@ -87,7 +87,71 @@ static gpointer xmms_decoder_thread (gpointer data);
 /**
  * @defgroup Decoder Decoder
  * @ingroup XMMSPLugin
- * @brief Decoder functions.
+ * @brief Decoder plugin documentation.
+ *
+ * A decoder plugin takes data from the transport and
+ * unpacks/transforms it to stereo PCM 16bit data. A decoder
+ * plugin needs to define the following methods to be valid:
+ *
+ * #XMMS_PLUGIN_METHOD_NEW allocates a new decoder. This will be 
+ * called if can_handle returns TRUE. The prototype is:
+ * @code
+ * gboolean new (xmms_decoder_t *decoder, const gchar *mimetype);
+ * @endcode
+ * This method need to set the private data with xmms_decoder_data_set()
+ *
+ * #XMMS_PLUGIN_METHOD_INIT Initializes the decoders private data.
+ * This is called when XMMS wants to play this file. Will only
+ * be called once. Prototype is:
+ * @code
+ * gboolean init (xmms_decoder_t *decoder);
+ * @endcode
+ * Return TRUE if all works out. FALSE will abort the playback
+ * of this source.
+ *
+ * #XMMS_PLUGIN_METHOD_DESTROY Destroys the decoder private data.
+ * Prototype is:
+ * @code
+ * void destroy (xmms_decoder_t *decoder);
+ * @endcode
+ * Free all private data in the decoder struct here.
+ *
+ * #XMMS_PLUGIN_METHOD_CAN_HANDLE this method will be called
+ * when XMMS has a new source of data to check if this plugin will
+ * take care of this. The prototype is:
+ * @code
+ * gboolean can_handle (const gchar *mimetype);
+ * @endcode
+ * This method should return TRUE if we want to handle this mimetype.
+ *
+ * #XMMS_PLUGIN_METHOD_DECODE_BLOCK unpacks or transforms a 
+ * block of data from the transporter. The method calls
+ * xmms_transport_read() to read the data and then xmms_decoder_write()
+ * after the data is transformed/unpacked. The prototype of this method
+ * is:
+ * @code
+ * gboolen decode_block (xmms_decoder_t *decoder);
+ * @endcode
+ * This method should return TRUE if decode_block can be called
+ * again. FALSE will discontinue decoding.
+ *
+ * #XMMS_PLUGIN_METHOD_GET_MEDIAINFO Extracts the mediainfo for this 
+ * sourcetype. This will be called from the mediainfo thread when
+ * something is added to the playlist. Prototype is:
+ * @code
+ * void mediainfo (xmms_decoder_t *decoder);
+ * @endcode
+ * After the data is extracted it should be filled in a
+ * #xmms_playlist_entry_t and be set with 
+ * xmms_decoder_entry_mediainfo_set()
+ *
+ * #XMMS_PLUGIN_METHOD_SEEK Will be called when XMMS wants to
+ * seek in the current source. The prototype is:
+ * @code
+ * void seek (xmms_decoder_t *decoder, guint samples);
+ * @endcode
+ * The argument is how many relative samples we want to seek to.
+ * This method should call xmms_transport_seek() to seek in transporter.
  *
  * @{
  */
@@ -145,44 +209,10 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 	return ret;
 }
 
-void
-xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds)
-{
-	guint samples;
-	g_return_if_fail (decoder);
-	
-	samples = (guint)(((gdouble) decoder->samplerate) * milliseconds / 1000);
-
-	xmms_decoder_seek_samples (decoder, samples);
-
-}
-
-void
-xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples)
-{
-	xmms_decoder_seek_method_t meth;
-	
-	g_return_if_fail (decoder);
-
-	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_SEEK);
-
-	g_return_if_fail (meth);
-
-	xmms_output_flush (decoder->output);
-
-	meth (decoder, samples);
-
-	xmms_output_played_samples_set (decoder->output, samples);
-}
-
-guint
-xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
-{
-	g_return_val_if_fail (decoder, 0);
-
-	return decoder->samplerate;
-}
-
+/**
+ * Set the samplerate to the decoder and resampler.
+ * This can be called in init or new method.
+ */
 void
 xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 {
@@ -204,7 +234,7 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 
 /**
  * Update Mediainfo in the entry.
- * Should be used in XMMS_PLUIGN_METHOD_GET_MEDIAINFO to update the info and
+ * Should be used in #XMMS_PLUGIN_METHOD_GET_MEDIAINFO to update the info and
  * propagate it to the clients.
  */
 void
@@ -220,7 +250,7 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 
 /**
  * Write decoded data.
- * Should be used in XMMS_PLUGIN_METHOD_DECODE_BLOCK to write the decoded
+ * Should be used in #XMMS_PLUGIN_METHOD_DECODE_BLOCK to write the decoded
  * pcm-data to the output. The data should be 32bits per stereosample, ie
  * pairs of signed 16-bits samples. (in what byter order?)
  * xmms_decoder_samplerate_set must be called before any data is passed
@@ -250,6 +280,44 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 }
 
 /** @} */
+
+guint
+xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
+{
+	g_return_val_if_fail (decoder, 0);
+
+	return decoder->samplerate;
+}
+
+void
+xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds)
+{
+	guint samples;
+	g_return_if_fail (decoder);
+	
+	samples = (guint)(((gdouble) decoder->samplerate) * milliseconds / 1000);
+
+	xmms_decoder_seek_samples (decoder, samples);
+
+}
+
+void
+xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples)
+{
+	xmms_decoder_seek_method_t meth;
+	
+	g_return_if_fail (decoder);
+
+	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_SEEK);
+
+	g_return_if_fail (meth);
+
+	xmms_output_flush (decoder->output);
+
+	meth (decoder, samples);
+
+	xmms_output_played_samples_set (decoder->output, samples);
+}
 
 /**
  * Get the output associated with the decoder.
