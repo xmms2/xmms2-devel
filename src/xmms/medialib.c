@@ -297,6 +297,7 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 				 time (NULL));
 
 	if (!ret) {
+		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
 
@@ -642,7 +643,11 @@ xmms_medialib_select (gchar *query, xmms_error_t *error)
 
 	g_return_val_if_fail (query, 0);
 
+	g_mutex_lock (medialib->mutex);
+
 	ret = xmms_sqlite_query (select_callback, (void *)&res, query);
+
+	g_mutex_unlock (medialib->mutex);
 
 	if (!ret)
 		return NULL;
