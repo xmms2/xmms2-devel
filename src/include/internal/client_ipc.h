@@ -35,8 +35,6 @@ void xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (vo
 gboolean xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc);
 gboolean xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid);
 void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc);
-gpointer xmmsc_ipc_private_data_get (xmmsc_ipc_t *ipc);
-void xmmsc_ipc_private_data_set (xmmsc_ipc_t *ipc, gpointer data);
 void xmmsc_ipc_destroy (xmmsc_ipc_t *ipc);
 gboolean xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path);
 void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error);

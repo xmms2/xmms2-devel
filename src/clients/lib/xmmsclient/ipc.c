@@ -35,7 +35,6 @@ struct xmmsc_ipc_St {
 	xmms_ipc_msg_t *read_msg;
 	GQueue *out_msg;
 	gchar *error;
-	gpointer private_data;
 	gboolean disconnect;
 	GHashTable *results_table;
 	void *lockdata;
@@ -266,20 +265,6 @@ xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 	if (ipc->disconnect_callback) {
 		ipc->disconnect_callback (ipc->disconnect_data);
 	}
-}
-
-gpointer
-xmmsc_ipc_private_data_get (xmmsc_ipc_t *ipc)
-{
-	g_return_val_if_fail (ipc, NULL);
-	return ipc->private_data;
-}
-
-void
-xmmsc_ipc_private_data_set (xmmsc_ipc_t *ipc, gpointer data)
-{
-	g_return_if_fail (ipc);
-	ipc->private_data = data;
 }
 
 void
