@@ -137,72 +137,13 @@ xmms_ipc_msg_get_cid (const xmms_ipc_msg_t *msg)
 	return g_ntohl (msg->data->header.cid);
 }
 
-gboolean
-xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf)
-{
-        gboolean ret = FALSE;
-	xmms_ipc_msg_data_t buf;
-
-        if (xmms_ringbuf_bytes_used (ringbuf) < XMMS_IPC_MSG_HEAD_LEN)
-                return FALSE;
-
-	xmms_ringbuf_read (ringbuf, &buf, XMMS_IPC_MSG_HEAD_LEN);
-
-        if (xmms_ringbuf_bytes_used (ringbuf) >= g_ntohl(buf.header.length))
-                ret = TRUE;
-
-        xmms_ringbuf_unread (ringbuf, XMMS_IPC_MSG_HEAD_LEN);
-
-        return ret;
-}
-
-xmms_ipc_msg_t *
-xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
-{
-	xmms_ipc_msg_t *msg;
-
-	if (xmms_ringbuf_bytes_used (ringbuf) < XMMS_IPC_MSG_HEAD_LEN)
-		return NULL;
-
-	msg = xmms_ipc_msg_alloc ();
-	g_return_val_if_fail (msg, NULL);
-
-	xmms_ringbuf_read (ringbuf, msg->data->rawdata, XMMS_IPC_MSG_HEAD_LEN);
-	
-	if (xmms_ringbuf_bytes_used (ringbuf) < xmms_ipc_msg_get_length (msg)) {
-		g_printerr ("Not enough data in buffer (had %d, want %d)\n", xmms_ringbuf_bytes_used (ringbuf), xmms_ipc_msg_get_length (msg));
-		xmms_ipc_msg_destroy (msg);
-        	xmms_ringbuf_unread (ringbuf, XMMS_IPC_MSG_HEAD_LEN);
-		return NULL;
-	}
-
-	if (xmms_ipc_msg_get_length (msg) > msg->size) {
-		msg->data = g_realloc (msg->data, xmms_ipc_msg_get_length (msg));
-	}
-
-	xmms_ringbuf_read (ringbuf, msg->data->header.data, xmms_ipc_msg_get_length (msg));
-	return msg;
-}
-
-gboolean
-xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, xmms_ipc_msg_t *msg, guint32 cid)
-{
-	g_return_val_if_fail (xmms_ringbuf_bytes_free (ringbuf) > 
-			      (xmms_ipc_msg_get_length (msg)+XMMS_IPC_MSG_HEAD_LEN), 
-			      FALSE);
-
-	xmms_ipc_msg_set_cid (msg, cid);
-
-	xmms_ringbuf_write (ringbuf, msg->data->rawdata, 
-			    xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN);
-
-	return TRUE;
-}
-
 /**
- * Try to write message to transport.
+ * Try to write message to transport. If full message isn't written
+ * the message will keep track of the amount of data written and not
+ * write already written data next time.
  *
- * @returns TRUE if succeeded, FALSE otherwise. disconnected is set if transport was disconnected
+ * @returns TRUE if full message was written, FALSE otherwise.
+ *               disconnected is set if transport was disconnected
  */
 gboolean
 xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected)
@@ -233,12 +174,17 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 }
 
 /**
+ * Try to read message from transport into msg.
  *
+ * @returns TRUE if message is fully read.
  */
 gboolean
 xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected)
 {
 	guint ret, len;
+
+	g_return_val_if_fail (msg, FALSE);
+	g_return_val_if_fail (transport, FALSE);
 
 	while (TRUE) {
 		len = XMMS_IPC_MSG_HEAD_LEN;
@@ -272,78 +218,8 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpor
 	}
 }
 
-gboolean
-xmms_ipc_msg_write_direct (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, guint32 cid)
-{
-	guint ret, len, i;
-	struct timeval tmout;
-	fd_set fdset;
-	gboolean error = FALSE;
 
-	g_return_val_if_fail (msg, FALSE);
-	g_return_val_if_fail (transport, FALSE);
-
-	i = len = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN;
-	
-	xmms_ipc_msg_set_cid (msg, cid);
-
-	while (len > 0) {
-		FD_ZERO (&fdset);
-		FD_SET (xmms_ipc_transport_fd_get (transport), &fdset);
-
-		tmout.tv_usec = 0;
-		tmout.tv_sec = 5;
-
-		ret = select (xmms_ipc_transport_fd_get (transport)+1,
-			      NULL,
-			      &fdset,
-			      NULL,
-			      &tmout);
-		if (ret == -1) {
-			error = TRUE;
-			break;
-		} else if (ret == 0) {
-			continue;
-		}
-		
-		ret = xmms_ipc_transport_write (transport, 
-						msg->data->rawdata+(i-len), 
-						len);
-		if (ret == -1) {
-			if (errno == EAGAIN)
-				continue;
-			if (errno == EINTR)
-				continue;
-			error = TRUE;
-			break;
-		} else if (ret == 0) {
-			error = TRUE;
-			break;
-		}
-		len -= ret;
-	}
-
-	return !error;
-}
-
-/** 
-  Give this function headerlen - 4 bytes, since we don't want to put the length
-  in there. Remember that the put_data() function will increment the length field
-  */
-gboolean
-xmms_ipc_msg_put_header (xmms_ipc_msg_t *msg, gconstpointer header)
-{
-	g_return_val_if_fail (msg, FALSE);
-
-	if ((xmms_ipc_msg_get_length (msg) != 0))
-		return FALSE;
-
-	/* Put whole header, except length field ... */
-	memcpy (&msg->data->rawdata, header, XMMS_IPC_MSG_HEAD_LEN-4);
-	return TRUE;
-}
-
-gpointer
+static gpointer
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 {
 	g_return_val_if_fail (msg, NULL);
@@ -406,7 +282,7 @@ xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg)
 	msg->get_pos = 0;
 }
 
-gboolean
+static gboolean
 xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, gpointer buf, guint len)
 {
 	if (!msg || ((msg->get_pos + len) > xmms_ipc_msg_get_length (msg)))

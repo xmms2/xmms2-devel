@@ -41,14 +41,9 @@ xmms_ipc_msg_t *xmms_ipc_msg_new (guint32 object, guint32 cmd);
 xmms_ipc_msg_t * xmms_ipc_msg_alloc (void);
 void xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg);
 
-gboolean xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf);
-xmms_ipc_msg_t *xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf);
-gboolean xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, xmms_ipc_msg_t *msg, guint32 cid);
-gboolean xmms_ipc_msg_write_direct (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, guint32 cid);
 gboolean xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected);
+gboolean xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected);
 
-gboolean xmms_ipc_msg_put_header (xmms_ipc_msg_t *msg, gconstpointer header);
-gpointer xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len);
 gpointer xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, guint32 v);
 gpointer xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, gint32 v);
 gpointer xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, gfloat v);
@@ -85,6 +80,5 @@ gboolean xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, gfloat *v);
 gboolean xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *str, guint maxlen);
 gboolean xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, guint *len);
 gboolean xmms_ipc_msg_get (xmms_ipc_msg_t *msg, ...);
-gboolean xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, gpointer buf, guint len);
 
 #endif 
