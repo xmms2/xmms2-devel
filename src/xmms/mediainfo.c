@@ -201,6 +201,11 @@ xmms_mediainfo_thread_thread (gpointer data)
 				}
 			}
 
+
+			xmms_playlist_entry_property_set (entry,
+							  XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED,
+							  "-1");
+
 			mime = xmms_transport_mimetype_get_wait (transport);
 
 			if (!mime) {
