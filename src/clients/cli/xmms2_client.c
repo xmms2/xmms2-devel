@@ -135,8 +135,10 @@ static void
 cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	unsigned int *list;
+	GError *err = NULL;
 	int i;
 	int id;
+	int r, w;
 
 	list = xmmscs_playlist_list (conn);
 
@@ -160,9 +162,13 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 
 		if (id == list[i]) {
-			print_info ("->[%d] %s", list[i], line);
+			print_info ("->[%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		} else {
-			print_info ("  [%d] %s", list[i], line);
+			print_info ("  [%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+		}
+
+		if (err) {
+			print_info ("convert error %s", err->message);
 		}
 		
 	}
