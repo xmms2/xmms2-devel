@@ -108,6 +108,13 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 		core->playlist_op = XMMS_CORE_NEXT_SONG;
 }
 
+static void
+open_fail (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	xmms_core_playback_stop ();
+}
+
+
 /**
  * Let core know about which output-plugin we use.
  *
@@ -119,6 +126,7 @@ xmms_core_output_set (xmms_output_t *output)
 	g_return_if_fail (core->output==NULL);
 	core->output = output;
 	xmms_object_connect (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, eos_reached, NULL);
+	xmms_object_connect (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, open_fail, NULL);
 }
 
 

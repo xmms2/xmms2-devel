@@ -439,8 +439,12 @@ xmms_output_thread (gpointer data)
 
 		xmms_ringbuf_wait_used (output->buffer, 4096, output->mutex);
 
-		if (!output->is_open)
-			xmms_output_open (output);
+		if (!output->is_open) {
+			if (!xmms_output_open (output)) {
+				XMMS_DBG ("Couldn't open output device");
+				xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, NULL);
+			}
+		}
 
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
 		
