@@ -156,6 +156,12 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 			break;
 		}
 	}
+
+	if (ipc->read_msg) {
+		xmms_ipc_msg_destroy (ipc->read_msg);
+		ipc->read_msg = NULL;
+	}
+
 	if (disco)
 		xmmsc_ipc_disconnect (ipc);
 

@@ -323,6 +323,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
 	xmms_ipc_client_msg_write (client, retmsg);
 
+	xmms_ipc_msg_destroy (msg);
 }
 
 
@@ -411,6 +412,11 @@ xmms_ipc_client_thread (gpointer data)
 					break;
 				}
 			}
+		}
+
+		if (client->read_msg) {
+			xmms_ipc_msg_destroy (client->read_msg);
+			client->read_msg = NULL;
 		}
 
 		if (disconnect) {
