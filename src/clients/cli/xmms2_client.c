@@ -161,7 +161,7 @@ main(int argc, char **argv)
 	}
 
 	if (!xmmsc_connect (c)){
-		printf ("couldn't connect to xmms2d\n");
+		printf ("couldn't connect to xmms2d: %s\n",xmmsc_get_last_error(c));
 		exit (1);
 	}
 

@@ -124,7 +124,6 @@ main (int argc, char **argv)
 	}
 
 	if (daemonize) {
-		xmms_log ("Going to background mode ...");
 		ppid = getpid ();
 		if (fork ()) {
 			sigset_t signals;
@@ -133,7 +132,6 @@ main (int argc, char **argv)
 			sigaddset (&signals, SIGUSR1);
 			sigaddset (&signals, SIGCHLD);
 			sigwait (&signals, &caught);
-			printf ("really started!\n");
 			exit (caught!=SIGUSR1);
 		}
 		setsid();
