@@ -645,7 +645,7 @@ xmms_decoder_start (xmms_decoder_t *decoder,
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);
-
+	
 	decoder->running = TRUE;
 	decoder->effects = effects;
 	decoder->output = output;
@@ -941,6 +941,9 @@ xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar 
 static gpointer
 xmms_decoder_thread (gpointer data)
 {
+  	xmms_transport_t *transport;
+	xmms_playlist_entry_t *entry;
+
 	xmms_decoder_t *decoder = data;
 	xmms_decoder_decode_block_method_t decode_block;
 	xmms_decoder_init_method_t init_meth;
@@ -958,9 +961,13 @@ xmms_decoder_thread (gpointer data)
 	}
 	
 	xmms_object_ref (decoder);
-
+	
+	transport = xmms_decoder_transport_get (decoder);
+	entry = xmms_transport_entry_get (transport);
+	xmms_medialib_logging_start (entry);
+	
 	g_mutex_lock (decoder->mutex);
-
+	
 	while (42) {
 		gboolean ret;
 		
@@ -975,6 +982,8 @@ xmms_decoder_thread (gpointer data)
 
 	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quitting");
+
+	xmms_medialib_logging_stop (entry, decoder->output);
 
 	if (decoder->running) {
 		/* This means that we eofed... */
