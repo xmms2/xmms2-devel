@@ -357,19 +357,18 @@ xmmsc_decode_path (const char *path)
 static int
 add (char *target, int max, int len, char *str)
 {
-	int tmpl;
+	int tmpl, left;
 
 	tmpl = strlen (str);
+	left = (max - 1) - len;
 
-	if ((len + tmpl) > max)
+	if (left < 1)
 		return 0;
 
-	if (len == 0)
-		strcpy (target, str);
-	else 
-		strcat (target, str);
+	left = MIN (left, tmpl);
+	strncat (target, str, left);
 
-	return tmpl;
+	return left;
 }
 
 static int
@@ -404,7 +403,12 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 	int i = 0;
 	char c;
 
-	while (*fmt) {
+	if (!target)
+		return 0;
+
+	*target = '\0';
+
+	while (*fmt && i < (len - 1)) {
 
 		c = *(fmt++);
 
@@ -517,13 +521,11 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 			}
 			*fmt++;
 		} else {
-			if (i < len) 
-				target[i++] = c;
+			target[i++] = c;
+			target[i] = '\0';
 		}
 
 	}
-
-	target[len] = '\0';
 
 	return i;
 
