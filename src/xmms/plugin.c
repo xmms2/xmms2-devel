@@ -72,7 +72,7 @@ static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
  */
 
 /**
- * @defgroup XMMSPLugin XMMSPlugin
+ * @defgroup XMMSPlugin XMMSPlugin
  * @brief All functions relevant to a plugin.
  *
  * Every plugin has a initfunction. That should be defined like following:

@@ -51,10 +51,17 @@ static gpointer xmms_transport_thread (gpointer data);
  * Type definitions
  */
 
-/** @defgroup Transport Transport
-  * @ingroup XMMSServer
-  * @{
-  */
+/** 
+ * @defgroup Transport Transport
+ * @ingroup XMMSServer
+ *
+ * The transport is responsible for reading encoded data from 
+ * a source. The data will be put in ringbuffer that the decoder 
+ * reads from. Transports are also responsible to tell what kind
+ * of mimetype the source data is.
+ *
+ * @{
+ */
 
 /** This describes a directory or a file */
 struct xmms_transport_entry_St {
@@ -63,30 +70,47 @@ struct xmms_transport_entry_St {
 	xmms_transport_entry_type_t type;
 };
 
+/** this is the main transport struct. */
 struct xmms_transport_St {
 	/** Object for emiting signals */
 	xmms_object_t object;
 	xmms_plugin_t *plugin; /**< The plugin used as media. */
 
-	/** The entry that are transported.
+	/** 
+	 * The entry that are transported.
 	 * The url will be extracted from this
-	 * upon open */
+	 * upon open 
+	 */
 	xmms_medialib_entry_t entry;
 
 	GMutex *mutex;
 	GCond *cond;
+	/**
+	 * Signal on this cond when the mimetype is extracted.
+	 */
 	GCond *mime_cond;
 	GThread *thread;
 	/** This is true if we are currently buffering. */
 	gboolean running;
 
+	/**
+	 * Put the source data in this buffer
+	 */
 	xmms_ringbuf_t *buffer;
 	/** String containing current mimetype */
 	gchar *mimetype;
 	/** Private plugin data */
 	gpointer plugin_data;
 
-	gint numread; /**< times we have read since the last seek / start */
+	
+	/**
+	 * in order to avoid a lot of buffer kills when
+	 * opening a file (many decoders need to seek a lot
+	 * when opening a file). We don't start buffering until
+	 * we read from the buffer twice in a row. If we seek
+	 * we reset the numread to 0.
+	 */
+	gint numread; 	
 	gboolean buffering;
 
 	/** Number of bytes read from the transport */
@@ -101,21 +125,14 @@ struct xmms_transport_St {
 	guint64 current_position; 	
 };
 
-/*
- * Public functions
+/** @} */
+
+/** 
+ * @defgroup TransportPlugin TransportPlugin
+ * @ingroup XMMSPlugin
+ *
+ * @{
  */
-
-/**
- * Returns the plugin for this transport.
- */
-
-xmms_plugin_t *
-xmms_transport_plugin_get (const xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, NULL);
-
-	return transport->plugin;
-}
 
 /**
   * Get a transport's private data.
@@ -150,37 +167,12 @@ xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 }
 
 /**
- * Wether this transport is a local one.
- * 
- * A local transport is file / socket / fd
- * Remote transports are http / ftp.
- * This is decided by the plugin with the property 
- * XMMS_PLUGIN_PROPERTY_LOCAL
- *
- * @param transport the transport structure.
- * @returns TRUE if this transport plugin has XMMS_PLUGIN_PROPERTY_LOCAL
- */
-gboolean
-xmms_transport_islocal (xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, FALSE);
-
-	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
-}
-
-gboolean
-xmms_transport_can_seek (xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, FALSE);
-
-	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK);
-}
-
-
-/**
  * Sets this transports mimetype.
- *
  * This should be called from the plugin to propagate the mimetype
+ *
+ * @param mimetype A zero-terminated string with the mimetype of the
+ * source. It will be duplicated into the transport and free'd when
+ * the transport is destroyed.
  */
 void
 xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
@@ -206,11 +198,95 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 	g_cond_signal (transport->mime_cond);
 }
 
+/** 
+ * Gets the current URL from the transport.
+ */
+const gchar *
+xmms_transport_url_get (const xmms_transport_t *const transport)
+{
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	g_mutex_lock (transport->mutex);
+	ret =  xmms_medialib_entry_property_get (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	g_mutex_unlock (transport->mutex);
+
+	return ret;
+}
+
+/** 
+ * Gets the current #xmms_medialib_entry_t from the transport.
+ */
+xmms_medialib_entry_t
+xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
+{
+	g_return_val_if_fail (transport, 0);
+	return transport->entry;
+}
+
+/** @} */
+
+/** 
+ * @ingroup Decoder
+ * @{
+ */
+
 /**
- * Initialize a transport_t from a URI
+ * Returns the #xmms_plugin_t for this transport.
+ */
+
+xmms_plugin_t *
+xmms_transport_plugin_get (const xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+
+	return transport->plugin;
+}
+
+/**
+ * Wether this transport is a local one.
+ * 
+ * A local transport is file / socket / fd
+ * Remote transports are http / ftp.
+ * This is decided by the plugin with the property 
+ * XMMS_PLUGIN_PROPERTY_LOCAL
  *
- * @returns a allocated xmms_transport_t that needs to be freed by a
- * xmms_transport_close ()
+ * @param transport the transport structure.
+ * @returns TRUE if this transport plugin has XMMS_PLUGIN_PROPERTY_LOCAL
+ */
+gboolean
+xmms_transport_islocal (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
+}
+
+/**
+ * This method can be called to check if the current plugin supports
+ * seeking. It will check that the plugin has XMMS_PLUGIN_PROPERTY_SEEK
+ * is set or not.
+ *
+ * @returns a gboolean wheter this plugin can do seeking or not.
+ */
+gboolean
+xmms_transport_can_seek (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+}
+
+
+/**
+ * Initialize a new #xmms_transport_t structure. This structure has to
+ * be dereffed by #xmms_object_unref to be freed. 
+ *
+ * To be able to read form this transport you'll have to call
+ * #xmms_transport_open after you created a structure with
+ * this function.
+ *
+ * @returns A newly allocated #xmms_transport_t
  */
 xmms_transport_t *
 xmms_transport_new ()
@@ -236,15 +312,14 @@ xmms_transport_new ()
 }
 
 /**
- * Opens the transport.
+ * Makes the transport ready for buffering and reading.
+ * It will take the entry URL and pass it to all transport
+ * plugins and let them decide if they can handle this URL
+ * or not. When the it finds a plugin that claims to handle
+ * it, the plugins open method will be called.
  *
- * This will call the plugins open function. 
- * Could be a socket opening or a FD or something
- * like that.
- *
- * @param transport the transport structure.
- * @param entry A entry containing a URL that should be
- * 	  used by this transport.
+ * @returns TRUE if a suitable plugin is found and the plugins
+ * open method is successfull, otherwise FALSE.
  */
 
 gboolean
@@ -269,36 +344,12 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	return xmms_transport_plugin_open (transport, entry, NULL);
 }
 
-/** 
- * Gets the current URL from the transport.
- */
-const gchar *
-xmms_transport_url_get (const xmms_transport_t *const transport)
-{
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
 
-	g_mutex_lock (transport->mutex);
-	ret =  xmms_medialib_entry_property_get (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-	g_mutex_unlock (transport->mutex);
-
-	return ret;
-}
-
-/** 
- * Gets the current playlist entry from the transport.
- */
-xmms_medialib_entry_t
-xmms_transport_medialib_entry_get (const xmms_transport_t *const transport)
-{
-	g_return_val_if_fail (transport, 0);
-	return transport->entry;
-}
 
 /**
- * Gets the current mimetype
- * This can return NULL if plugin has not
- * called xmms_transport_mimetype_set()
+ * Query the #xmms_transport_t for the current mimetype.
+ *
+ * @returns a zero-terminated string with the current mimetype.
  */
 const gchar *
 xmms_transport_mimetype_get (xmms_transport_t *transport)
@@ -314,8 +365,12 @@ xmms_transport_mimetype_get (xmms_transport_t *transport)
 }
 
 /**
- * Like xmms_transport_mimetype_get but blocks if
+ * Like #xmms_transport_mimetype_get but blocks if
  * transport plugin has not yet called mimetype_set
+ * This must be called on plugins that is remote. It might
+ * take them a while to get the mimetype.
+ *
+ * @returns a zero-terminated string with the current mimetype.
  */
 const gchar *
 xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
@@ -506,10 +561,10 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 }
 
 /**
-  * Obtain the current value of the stream position indicator for transport
-  * 
-  * @returns current position in stream 
-  */
+ * Obtain the current value of the stream position indicator for transport
+ * 
+ * @returns current position in bytes.
+ */
 gint
 xmms_transport_tell (xmms_transport_t *transport)
 {
@@ -518,6 +573,11 @@ xmms_transport_tell (xmms_transport_t *transport)
 	return transport->current_position; 
 }
 
+/**
+ * Query the transport to check wheter it's EOFed or
+ * not.
+ * @returns TRUE if the stream is EOFed.
+ */
 gboolean
 xmms_transport_iseos (xmms_transport_t *transport)
 {
@@ -538,10 +598,9 @@ xmms_transport_iseos (xmms_transport_t *transport)
 }
 
 /**
-  * Gets the total size of the transports media.
-  *
-  * @returns size of the media, or -1 if it can't be determined.
-  */
+ * Gets the total size in bytes of the transports source.
+ * @returns size of the media, or -1 if it can't be determined.
+ */
 gint
 xmms_transport_size (xmms_transport_t *transport)
 {
@@ -555,8 +614,7 @@ xmms_transport_size (xmms_transport_t *transport)
 }
 
 /**
- * Gets the plugin that was used to instantiate this transport
- *
+ * Gets the plugin that was used to instantiate this transport.
  */
 xmms_plugin_t *
 xmms_transport_get_plugin (const xmms_transport_t *transport)
@@ -564,14 +622,14 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
 	g_return_val_if_fail (transport, NULL);
 
 	return transport->plugin;
-
 }
 
 /**
- * Instantiate a transport plugin.
+ * Open the transports plugin. This is called by #xmms_transport_plugin_find
+ * which is called by #xmms_transport_open.
  *
+ * @return TRUE if the operation was a success.
  */
-
 gboolean
 xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t entry, 
 		gpointer data)
@@ -615,10 +673,7 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t e
 	return TRUE;
 }
 
-
-/*
- * Private functions
- */
+/** @} */
 
 /**
   * Start the transport thread.
@@ -662,6 +717,12 @@ xmms_transport_close (xmms_transport_t *transport)
 /*
  * Static functions
  */
+
+/**
+ * Destroy function. Called when all references to the 
+ * #xmms_transport_t is gone. Will free up memory and 
+ * close sockets.
+ */
 static void
 xmms_transport_destroy (xmms_object_t *object)
 {
@@ -691,7 +752,6 @@ xmms_transport_destroy (xmms_object_t *object)
  *
  * @internal
  */
-
 static xmms_plugin_t *
 xmms_transport_plugin_find (const gchar *url)
 {
@@ -775,5 +835,3 @@ xmms_transport_thread (gpointer data)
 	
 	return NULL;
 }
-
-/** @} */

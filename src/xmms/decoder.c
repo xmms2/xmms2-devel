@@ -52,10 +52,11 @@
  */
 
 
-/** @defgroup Decoder Decoder
-  * @ingroup XMMSServer
-  * @{
-  */
+/** 
+ * @defgroup Decoder Decoder
+ * @ingroup XMMSServer
+ * @{
+ */
 
 /**
  * Replaygain modes.
@@ -142,7 +143,7 @@ static void apply_replaygain (gint16 *buf, guint len, gfloat gain);
 
 /**
  * @defgroup DecoderPlugin DecoderPlugin
- * @ingroup XMMSPLugin
+ * @ingroup XMMSPlugin
  * @brief Decoder plugin documentation.
  *
  * A decoder plugin takes data from the transport and
