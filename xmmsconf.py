@@ -53,6 +53,7 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("math","m","cos")
+	base_env.CheckLibAndAddFlagsToGroup("flac", "FLAC", "FLAC__seekable_stream_decoder_get_state")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "libresid-builder.la")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")
 	base_env.CheckAndAddFlagsToGroup("jack", "pkg-config --libs --cflags jack")

@@ -519,7 +519,7 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 		 */
 		playlist->nextentry = playlist->list;
 
-		if (playlist->mode == XMMS_PLAYLIST_MODE_REPEAT_ALL) {
+		if (playlist->mode == XMMS_PLAYLIST_MODE_REPEAT_ALL && playlist->nextentry) {
 			r = playlist->nextentry->data;
 		}
 	}
