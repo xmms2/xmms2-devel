@@ -22,6 +22,7 @@
  */
 
 #include "xmms/util.h"
+#include "xmms/dbus.h"
 #include "xmms/config.h"
 #include "xmms/medialib.h"
 #include "xmms/transport.h"
@@ -34,19 +35,35 @@
 #include <string.h>
 
 #include <glib.h>
+#include <time.h>
 
 #ifdef HAVE_SQLITE
 #include <sqlite.h>
 #endif
 
 struct xmms_medialib_St {
+	xmms_object_t object;
+
 	GMutex *mutex;
-	
 	guint id;
+
 #ifdef HAVE_SQLITE
 	sqlite *sql;
 #endif
 };
+
+static void
+xmms_medialib_destroy (xmms_object_t *medialib)
+{
+	xmms_medialib_t *m = (xmms_medialib_t*) medialib;
+
+	g_mutex_free (m->mutex);
+
+	if (m->sql) 
+		xmms_medialib_close (m);
+
+	g_free (m);
+}
 
 
 xmms_medialib_t *
@@ -54,7 +71,9 @@ xmms_medialib_init (void)
 {
 	xmms_medialib_t *medialib = NULL;
 
-	medialib = g_new0 (xmms_medialib_t, 1);
+	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
+
+
 #ifdef HAVE_SQLITE
 	if (!xmms_sqlite_open (medialib)) {
 		g_free (medialib);
@@ -62,9 +81,80 @@ xmms_medialib_init (void)
 	}
 #endif /*HAVE_SQLITE*/
 	medialib->mutex = g_mutex_new ();
-	
+
+	xmms_dbus_register_object ("medialib", XMMS_OBJECT (medialib));
+
 	return medialib;
 }
+
+/*
+void
+xmms_medialib_log_entry_stop (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry, guint value)
+{
+	gchar *mid;
+	gchar *sek;
+	gchar *query;
+
+	g_return_if_fail (medialib);
+	g_return_if_fail (entry);
+
+	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
+
+	if (!mid) 
+		return;
+
+	sek = xmms_playlist_entry_property_get (entry, "laststarted");
+	if (!sek)
+		return;
+
+	query = g_strdup_printf ("update Log set value=%d where id=%s and starttime=%s", value, mid, sek);
+	
+	g_mutex_lock (medialib->mutex);
+	if (!xmms_sqlite_query (medialib, query, NULL, NULL)) {
+		g_free (query);
+		g_mutex_unlock (medialib->mutex);
+		return;
+	}
+
+	g_free (query);
+	g_mutex_unlock (medialib->mutex);
+
+}
+
+void
+xmms_medialib_log_entry_start (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
+{
+	time_t sek;
+	gchar *query, *lasttme, *mid;
+
+	g_return_if_fail (medialib);
+	g_return_if_fail (entry);
+
+	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
+
+	if (!mid) 
+		return;
+
+	sek = time (NULL);
+	
+	query = g_strdup_printf ("insert into Log (id, starttime) values (%s, %d)", mid, (gint)sek);
+
+	g_mutex_lock (medialib->mutex);
+	if (!xmms_sqlite_query (medialib, query, NULL, NULL)) {
+		g_free (query);
+		g_mutex_unlock (medialib->mutex);
+		return;
+	}
+	g_mutex_unlock (medialib->mutex);
+
+	g_free (query);
+
+	lasttme = g_strdup_printf ("%d", (gint)sek);
+	xmms_playlist_entry_property_set (entry, "laststarted", lasttme);
+	g_free (lasttme);
+	
+}
+*/
 
 guint
 xmms_medialib_next_id (xmms_medialib_t *medialib)
@@ -92,7 +182,6 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 {
 	gchar *k = key;
 	gchar *v = value;
-	gchar *query;
 	xmms_medialib_t *medialib = userdata;
 	gint i = 0;
 
@@ -103,14 +192,13 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 		i++;
 	}
 
-	query = g_strdup_printf ("insert into Property values (%d, '%s', '%s')", medialib->id - 1, k, v);
-	xmms_sqlite_query (medialib, query, NULL, NULL);
+	xmms_sqlite_query (medialib, NULL, NULL, "insert into Property values (%d, '%q', '%q')", medialib->id - 1, k, v);
 }
 
 gboolean
 xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 {
-	gchar *query;
+	gboolean ret;
 	guint id;
 
 	g_return_val_if_fail (medialib, FALSE);
@@ -118,7 +206,8 @@ xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *ent
 	g_mutex_lock (medialib->mutex);
 
 	id = xmms_medialib_next_id (medialib);
-	query = g_strdup_printf ("insert into Media values (%d, '%s', '%s', '%s', '%s', '%s', '%s')",
+	ret = xmms_sqlite_query (medialib, NULL, NULL,
+				 "insert into Media values (%d, '%q', '%q', '%q', '%q', '%q', '%q')",
 				 id, xmms_playlist_entry_url_get (entry),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
@@ -126,12 +215,9 @@ xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *ent
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD));
 
-	if (!xmms_sqlite_query (medialib, query, NULL, NULL)) {
-		g_free (query);
+	if (!ret) {
 		return FALSE;
 	}
-
-	g_free (query);
 
 	xmms_playlist_entry_property_foreach (entry, insert_foreach, medialib);
 				 
@@ -177,34 +263,35 @@ proprow_callback (void *pArg, int argc, char **argv, char **columnName)
 gboolean
 xmms_medialib_entry_get (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 {
-	gchar *query;
+	gboolean ret;
 
 	g_return_val_if_fail (medialib, FALSE);
 	g_return_val_if_fail (entry, FALSE);
 
 	g_mutex_lock (medialib->mutex);
 
-	query = g_strdup_printf ("select * from Media where url = '%s' order by id limit 1", xmms_playlist_entry_url_get (entry));
-	if (!xmms_sqlite_query (medialib, query, mediarow_callback, (void *)entry)) {
-		g_free (query);
+	ret = xmms_sqlite_query (medialib, mediarow_callback, (void *)entry, 
+				 "select * from Media where url = '%q' order by id limit 1", 
+				 xmms_playlist_entry_url_get (entry));
+
+	if (!ret) {
 		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
-	g_free (query);
 
 	if (!xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID)) {
 		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
 
-	query = g_strdup_printf ("select key, value from Property where id = %s", xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
+	ret = xmms_sqlite_query (medialib, proprow_callback, (void *) entry, 
+				 "select key, value from Property where id = %q", 
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
 
-	if (!xmms_sqlite_query (medialib, query, proprow_callback, (void *)entry)) {
-		g_free (query);
+	if (!ret) {
 		g_mutex_unlock (medialib->mutex);
 		return FALSE;
 	}
-	g_free (query);
 
 	g_mutex_unlock (medialib->mutex);
 
@@ -219,8 +306,8 @@ xmms_medialib_close (xmms_medialib_t *medialib)
 
 #ifdef HAVE_SQLITE
 	xmms_sqlite_close (medialib);
+	medialib->sql = NULL;
 #endif
-	g_free (medialib);
 }
 
 #ifdef HAVE_SQLITE
