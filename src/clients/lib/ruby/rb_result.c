@@ -42,10 +42,8 @@ static void c_mark (RbResult *res)
 
 static void c_free (RbResult *res)
 {
-	if (res->real && res->unref) {
-		printf ("rb_result.c: unreffing %p\n", res->real);
+	if (res->real && res->unref)
 		xmmsc_result_unref (res->real);
-	}
 
 	free (res);
 }
@@ -78,7 +76,7 @@ static void on_signal (xmmsc_result_t *res2, void *data)
 	VALUE o;
 
 	GET_OBJ (self, RbResult, res);
-printf("ON_SIGNAL\n");
+
 	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
 	                           res->unref_children);
 	rb_ary_push (res->children, o);
@@ -124,6 +122,15 @@ static VALUE c_restart (VALUE self)
 	rb_ary_push (res->children, o);
 
 	return o;
+}
+
+static VALUE c_disconnect_broadcast (VALUE self)
+{
+	GET_OBJ (self, RbResult, res);
+
+	xmmsc_broadcast_disconnect (res->real);
+
+	return self;
 }
 
 static VALUE c_int_get (VALUE self)
@@ -288,6 +295,8 @@ void Init_Result (void)
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "restart", c_restart, 0);
+	rb_define_method (cResult, "disconnect_broadcast",
+	                  c_disconnect_broadcast, 0);
 	rb_define_method (cResult, "int", c_int_get, 0);
 	rb_define_method (cResult, "uint", c_uint_get, 0);
 	rb_define_method (cResult, "string", c_string_get, 0);
