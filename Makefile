@@ -77,19 +77,19 @@ $(foreach l, $(TARGETS), $(eval $(l): $($(l)_OBJS)))
 # Makes a unique variable object_CFLAGS to support different CLFAGS for different objects
 $(foreach l, $(TARGETS), $(foreach o, $($l_OBJS), $(eval $(o)_CFLAGS=$($l_CFLAGS))))
 
-$(foreach l, $(TARGETS), $(eval $(l): $(foreach d, $($l_DEPENDS), $(if $(findstring $d,$(MODULE)), $(OUTPUT_LIB)/$($d_LIBRARIES)))))
+$(foreach l, $(TARGETS), $(eval $(l): $(foreach d, $($l_DEPENDS), $(if $(findstring $d,$(MODULE)), $(if $($d_LIBRARIES),$(OUTPUT_LIB)/$($d_LIBRARIES))))))
 
 $(LIBRARIES): 
-	$(LIBTOOL) --mode=link $(CC) -rpath /usr/lib -export-dynamic -version-info 4:0:1 $(LINKFLAGS) $($@_LINKFLAGS) $($@_OBJS) -o $@
+	$(LIBTOOL) --silent --mode=link $(CC) -rpath /usr/lib -export-dynamic -version-info 4:0:1 $(LINKFLAGS) $($@_LINKFLAGS) $($@_OBJS) -o $@
 
 $(PROGRAMS): 
-	$(LIBTOOL) --mode=link $(CC) -o $@ $($@_OBJS) $(LINKFLAGS) $($@_LINKFLAGS) 
+	$(LIBTOOL) --silent --mode=link $(CC) -o $@ $($@_OBJS) $(LINKFLAGS) $($@_LINKFLAGS) 
 
 $(PLUGINS): 
-	$(LIBTOOL) --mode=link $(CC) -module -o $@ $($@_OBJS) $(LINKFLAGS) $($@_LINKFLAGS)
+	$(LIBTOOL) --silent --mode=link $(CC) -module -o $@ $($@_OBJS) $(LINKFLAGS) $($@_LINKFLAGS)
 	
 builddir/%.lo: src/%.c 
-	$(LIBTOOL) --mode=compile $(CC) $(DEPEND) $(CFLAGS) $($@_CFLAGS) -c -o $@ $<
+	$(LIBTOOL) --silent --mode=compile $(CC) $(DEPEND) $(CFLAGS) $($@_CFLAGS) -c -o $@ $<
 	@sed 's,^$(notdir $(basename $@)).o,$@,' < .depend-tmp > .depend-$(subst /,_,$@) # Why oh why is GCC stupid?
 	@rm .depend-tmp
 
