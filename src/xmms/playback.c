@@ -53,12 +53,6 @@ typedef enum {
 	XMMS_PLAYBACK_MODE_STOPAFTERONE,
 } xmms_playback_mode_t;
 
-typedef enum {
-	XMMS_PLAYBACK_PLAY,
-	XMMS_PLAYBACK_STOP,
-	XMMS_PLAYBACK_PAUSE,
-} xmms_playback_status_t;
-
 
 struct xmms_playback_St {
 	xmms_object_t object;

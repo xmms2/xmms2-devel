@@ -24,6 +24,7 @@
 #include "xmms/xmms.h"
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
+#include "xmms/playback.h"
 #include "xmms/config.h"
 #include "xmms/signal_xmms.h"
 
@@ -52,13 +53,23 @@ typedef struct xmms_ca_data_St {
  * Function prototypes
  */
 
+static void xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
 static gboolean xmms_ca_open (xmms_output_t *output);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_close (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
-static void xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len);
 static guint xmms_ca_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
+
+static OSStatus
+xmms_ca_write_cb (AudioDeviceID inDevice,
+		  const AudioTimeStamp *inNow,
+		  const AudioBufferList *inInputData,
+		  const AudioTimeStamp *inInputTime,
+		  AudioBufferList *outOutputData,
+		  const AudioTimeStamp *inOutputTime,
+		  void *inClientData);
+
 
 /*
  * Plugin header
@@ -77,7 +88,7 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "INFO", "http://www.apple.com/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_ca_write);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS, xmms_ca_status);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_ca_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_ca_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_ca_close);
@@ -91,6 +102,23 @@ xmms_plugin_get (void)
 /*
  * Member functions
  */
+
+static void
+xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
+{
+	xmms_ca_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_plugin_data_get (output);
+	g_return_if_fail (data);
+
+	XMMS_DBG ("changed status! %d", status);
+	if (status == XMMS_PLAYBACK_PLAY) {
+		AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
+	} else {
+		AudioDeviceStop (data->outputdevice, xmms_ca_write_cb);
+	}
+}
 
 static guint
 xmms_ca_buffersize_get (xmms_output_t *output)
@@ -125,6 +153,7 @@ xmms_ca_buffersize_get (xmms_output_t *output)
 static void
 xmms_ca_flush (xmms_output_t *output)
 {
+	XMMS_DBG ("Xmms wants us to flush!");
 }
 
 
@@ -149,21 +178,31 @@ xmms_ca_write_cb (AudioDeviceID inDevice,
 	data = xmms_output_plugin_data_get (output);
 	g_return_val_if_fail (data, kAudioHardwareUnspecifiedError);
 
-	g_mutex_lock (data->mtx);
 	for (b = 0; b < outOutputData->mNumberBuffers; ++b) {
 		gint m;
+		gint i;
+		gint ret;
+		gint16 *buffer;
 
 		m = outOutputData->mBuffers[b].mDataByteSize;
 
-		xmms_ringbuf_wait_used (data->buffer, m, data->mtx);
+		buffer = g_new0 (gint16, m/2);
 
-		xmms_ringbuf_read (data->buffer, 
-				outOutputData->mBuffers[b].mData, 
-				m);
+		ret = xmms_output_read (output, 
+					(gchar *)buffer, 
+					m/2);
+
+		for (i = 0; i < (ret/2) ; i++) {
+			((gfloat*)outOutputData->mBuffers[0].mData)[i] = ((gfloat) buffer[i] + 32768.0) / (32768.0*2);
+		}
+
+		g_free (buffer);
+
+
+		/* FIXME: fix so coreaudio knows if we
+		   don't fill the buffer ? */
 
 	}
-
-	g_mutex_unlock (data->mtx);
 
 	return kAudioHardwareNoError;
 
@@ -178,7 +217,7 @@ xmms_ca_open (xmms_output_t *output)
 
 	data = xmms_output_plugin_data_get (output);
 
-	AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
+	//AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
 	
 	XMMS_DBG ("xmms_ca_open (%p)", output);
 
@@ -292,6 +331,7 @@ xmms_ca_close (xmms_output_t *output)
 	AudioDeviceStop (data->outputdevice, xmms_ca_write_cb);
 }
 
+/*
 static void
 xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len)
 {
@@ -312,7 +352,6 @@ xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len)
 		buf[i] = ((gfloat) buffer2[i] + 32768.0) / (32768.0*2);
 	}
 	
-	/* make sure that we don't flush buffers when we are writing */
 	g_mutex_lock (data->mtx);
 	xmms_ringbuf_wait_free (data->buffer, len*2, data->mtx);
 	xmms_ringbuf_write (data->buffer, buf, len*2);
@@ -321,3 +360,4 @@ xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_free (buf);
 
 }
+*/

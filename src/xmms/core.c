@@ -209,6 +209,7 @@ xmms_core_quit (xmms_core_t *core)
 	filename = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
 	xmms_config_save (filename);
 	/* xmms_output_destroy (core->output); */
+	/* remove socket in /tmp */
 	exit (0); /** @todo BUSKIS! */
 }
 

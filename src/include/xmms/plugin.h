@@ -56,6 +56,7 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_METHOD_MIXER_GET "mixer_get"
 #define XMMS_PLUGIN_METHOD_MIXER_SET "mixer_set"
 #define XMMS_PLUGIN_METHOD_LIST "list"
+#define XMMS_PLUGIN_METHOD_STATUS "status"
 
 /*
  * Plugin properties.
