@@ -6,7 +6,7 @@
 #include "xmms/util.h"
 
 struct xmms_sample_converter_St {
-	xmms_object_t *obj;
+	xmms_object_t obj;
 
 	xmms_audio_format_t *from;
 	xmms_audio_format_t *to;
