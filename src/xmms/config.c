@@ -19,11 +19,13 @@
 
 #include <glib.h>
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-
 #include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "xmms/config.h"
 #include "xmms/util.h"
@@ -42,6 +44,11 @@ struct xmms_config_St {
 	GList *plugins;
 
 	GMutex *mutex;
+
+	/* parsing */
+	gint state;
+	gint prevstate;
+	gchar *where[3];
 };
 
 struct xmms_config_value_St {
@@ -50,6 +57,13 @@ struct xmms_config_value_St {
 	const gchar *name;
 	gchar *data;
 	
+};
+
+enum xmms_config_states {
+	XMMS_CONFIG_STATE_START,
+	XMMS_CONFIG_STATE_SECTION,
+	XMMS_CONFIG_STATE_PLUGIN,
+	XMMS_CONFIG_STATE_VALUE,
 };
 
 /*
@@ -62,71 +76,109 @@ xmms_config_t *global_config;
  * Config functions
  */
 
+static void 
+xmms_config_parse_start (GMarkupParseContext *ctx,
+		    	 const gchar *name,
+		    	 const gchar **attr_name,
+		    	 const gchar **attr_data,
+		    	 gpointer userdata,
+		    	 GError **error)
+{
+	xmms_config_t *st = userdata;
+
+	if (g_strcasecmp (name, "section") == 0) {
+		st->state = XMMS_CONFIG_STATE_SECTION;
+		st->where[0] = g_strdup (attr_data[0]);
+	} else if (g_strcasecmp (name, "plugin") == 0) {
+		if (st->state == XMMS_CONFIG_STATE_SECTION) {
+			st->prevstate = st->state;
+			st->state = XMMS_CONFIG_STATE_PLUGIN;
+			st->where[1] = g_strdup (attr_data[0]);
+		} else {
+			xmms_log_fatal ("Config file is a mess");
+		}
+	} else if (g_strcasecmp (name, "value") == 0) {
+		if (st->state == XMMS_CONFIG_STATE_SECTION) {
+			st->prevstate = st->state;
+			st->state = XMMS_CONFIG_STATE_VALUE;
+			st->where[1] = g_strdup (attr_data[0]);
+		} else if (st->state == XMMS_CONFIG_STATE_PLUGIN) {
+			st->prevstate = st->state;
+			st->state = XMMS_CONFIG_STATE_VALUE;
+			st->where[2] = g_strdup (attr_data[0]);
+		} else {
+			xmms_log_fatal ("Config file is a mess");
+		}
+	} 
+
+}
+
+void 
+xmms_config_parse_end (GMarkupParseContext *ctx,
+		  	const gchar *name,
+		  	gpointer userdata,
+		  	GError **err)
+{
+	xmms_config_t *st = userdata;
+
+	switch (st->state) {
+		case XMMS_CONFIG_STATE_SECTION:
+			g_free (st->where[0]);
+			st->where[0] = NULL;
+			break;
+		case XMMS_CONFIG_STATE_PLUGIN:
+			g_free (st->where[1]);
+			st->where[1] = NULL;
+			break;
+		case XMMS_CONFIG_STATE_VALUE:
+			if (st->prevstate == XMMS_CONFIG_STATE_SECTION) {
+				g_free (st->where[1]);
+				st->where[1] = NULL;
+			} else {
+				g_free (st->where[2]);
+				st->where[2] = NULL;
+			}
+			break;
+	}
+
+
+	st->state = st->prevstate;
+
+}
+
 static void
 add_value (gchar *key, gchar *value)
 {
 	xmms_config_value_t *val;
-	gchar *mykey = g_strdup (key);
 
-	val = xmms_config_value_new (mykey);
+	val = xmms_config_value_new (key);
 	xmms_config_value_data_set (val, value);
 
-	g_hash_table_insert (global_config->values, mykey, val);
+	g_hash_table_insert (global_config->values, key, val);
 }
 
 static void
-parse_plugin (gchar *pluginname, xmlNodePtr n)
+xmms_config_parse_text (GMarkupParseContext *ctx,
+      			const gchar *text,
+      			gsize text_len,
+      			gpointer userdata,
+      			GError **err)
 {
-	xmlNodePtr node;
+	xmms_config_t *st = userdata;
+	gchar *str;
 
-	for (node = n; node; node = node->next) {
+	if (st->state != XMMS_CONFIG_STATE_VALUE)
+		return;
 
-		if (g_strcasecmp ("value", (gchar *) node->name) == 0) {
-			gchar *valname;
-			gchar *name = (gchar *)xmlGetProp (node, (xmlChar *)"name");
+	if (st->prevstate == XMMS_CONFIG_STATE_SECTION) {
+		str = g_strdup_printf ("%s.%s", st->where[0], st->where[1]);
+	} else 
+		str = g_strdup_printf ("%s.%s.%s", st->where[0], 
+						   st->where[1], 
+						   st->where[2]);
 
-			if (name && node->children) {
-				valname = g_strdup_printf ("%s.%s", pluginname, name);
-				add_value (valname, g_strdup ((gchar *) node->children->content));
-			}
-		}
-
-	}
-
+	add_value (str, g_strdup (text));
 }
-
-static void
-parse_section (char *sectionname, xmlNodePtr n)
-{
-	xmlNodePtr node;
-
-	g_mutex_lock (global_config->mutex);
-
-	for (node = n; node; node = node->next) {
-		if (g_strcasecmp ("plugin", (char*) node->name) == 0) {
-			gchar *pluginname;
-			gchar *name = (gchar *)xmlGetProp (node, (xmlChar *)"name");
-
-			if (name && node->children) {
-				pluginname = g_strdup_printf ("%s.%s", sectionname, name);
-				global_config->plugins = g_list_append (global_config->plugins, name);
-				parse_plugin (pluginname, node->children);
-			}
-
-		} else if (g_strcasecmp ("value", (char*) node->name) == 0) {
-			gchar *valname; 
-			gchar *name = (gchar *)xmlGetProp (node, (xmlChar *)"name");
-			if (name && node->children) {
-				valname = g_strdup_printf ("%s.%s", sectionname, name);
-				add_value (valname, g_strdup ((gchar *) node->children->content));
-			}
-
-		}
-	}
-
-	g_mutex_unlock (global_config->mutex);
-}
-
 
 void
 xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
@@ -142,12 +194,14 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
 XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 
 
+
 gboolean
 xmms_config_init (const gchar *filename)
 {
-	xmlDocPtr doc;
-	xmlNodePtr node,root;
+	GMarkupParser pars;
+	GMarkupParseContext *ctx;
 	xmms_config_t *config;
+	int ret, fd;
 
 	g_return_val_if_fail (filename, FALSE);
 
@@ -156,21 +210,31 @@ xmms_config_init (const gchar *filename)
 	config->mutex = g_mutex_new ();
 	config->values = g_hash_table_new (g_str_hash, g_str_equal);
 	config->url = g_strdup (filename);
-
-	if(!(doc = xmlParseFile(filename))) {
-		return FALSE;
-	}
-	
+	config->state = XMMS_CONFIG_STATE_START;
 	global_config = config;
-	
-	root = xmlDocGetRootElement (doc);
-	root = root->children;
 
-	for (node = root; node; node = node->next) {
-		if (g_strcasecmp ("section", (char *)node->name) == 0) {
-			parse_section ((char*)xmlGetProp (node, "name"), node->children);
-		}
+	memset (&pars, 0, sizeof (pars));
+
+	pars.start_element = xmms_config_parse_start;
+	pars.end_element = xmms_config_parse_end;
+	pars.text = xmms_config_parse_text;
+
+	ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
+
+	fd = open (filename, O_RDONLY);
+
+	if (fd == -1) return FALSE;
+
+	while (42) {
+		gchar buffer[1024];
+		ret = read (fd, buffer, 1024);
+
+		if (ret == 0) 
+			break;
+
+		g_markup_parse_context_parse (ctx, buffer, ret, NULL);
 	}
+
 
 	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
 	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
