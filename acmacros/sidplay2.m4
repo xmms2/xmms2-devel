@@ -72,7 +72,7 @@ AC_DEFUN(SID2_FIND_BUILDERS,
     done
 
     if test "$BUILDERS_LDFLAGS" = ""; then
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 No builder modules were found in the sidbuilders
 install dir.  Please check your installation!
                      ]);

@@ -74,7 +74,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_mad_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_mad_new);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_mad_decode_block);
-	xmms_plugin_method_add (plugin, XMMS_METHOD_GET_MEDIAINFO, xmms_mad_get_media_info);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_mad_destroy);
 
 	return plugin;

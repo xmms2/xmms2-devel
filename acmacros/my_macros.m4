@@ -306,7 +306,7 @@ AC_DEFUN(MY_FIND_PKG_CONFIG_LIB,
         my_dirs="$my_libdir $my_libdir/lib $my_libdir/src"
         MY_FIND_FILE(lib$1.la,$my_dirs,my_libdir)
         if test "$my_libdir" = NO; then
-            AC_MSG_ERROR([
+            AC_MSG_WARN([
 Unable to locate lib$1 library in:
     $my_dirs
 Please check your installation!
@@ -322,7 +322,7 @@ Please check your installation!
     if $PKG_CONFIG --atleast-version=$2 lib$1; then
         :
     else
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 pkg-config couldn't locate lib$1 $2 in:
     $PKG_CONFIG_PATH
 Please check your installation!
@@ -348,7 +348,7 @@ Please check your installation!
     dnl Check if found library works
     MY_TRY_COMPILE($my_cxxflags,$my_ldflags,$my_header,$5,my_works)
     if test "$my_works" = NO; then
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 $1 build test failed with found library and header files.
 Please check your installation!
         ])
@@ -466,7 +466,7 @@ AC_DEFUN(MY_FIND_LIB,
 
         AC_MSG_RESULT([library $my_libdir, headers $my_includedir])
         if test "$my_works" = NO; then
-            AC_MSG_ERROR([
+            AC_MSG_WARN([
 $1 build test failed with found library and header files.
 Please check your installation!
             ])
@@ -516,14 +516,14 @@ AC_DEFUN(MY_FIND_LIB_NO_CHECK,
     dnl Both paths must be provided
     if test "$my_libdir" = ""; then
         AC_MSG_RESULT(no)
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 $1 library path not supplied!
         ])
     fi
 
     if test "$my_includedir" = ""; then
         AC_MSG_RESULT(no)
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 $1 include path not supplied!
         ])
     fi
@@ -534,7 +534,7 @@ $1 include path not supplied!
 
     if test "$my_includedir" = NO; then
         AC_MSG_RESULT(no)
-        AC_MSG_ERROR([
+        AC_MSG_WARN([
 $1 headers not found!
         ])
     fi

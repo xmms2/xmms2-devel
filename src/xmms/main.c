@@ -191,15 +191,10 @@ main (int argc, char **argv)
 		memset (&signals, 0, sizeof (sigset_t));
 		sigaddset (&signals, SIGINT);
 
-		XMMS_DBG ("sigwait ()");
-
 		sigwait (&signals, &caught);
-
-		XMMS_DBG ("Got signal %d", caught);
 
 		switch (caught) {
 			case SIGINT:
-				XMMS_DBG ("Got Ctrl-C, next song...");
 				xmms_object_emit (XMMS_OBJECT (m_decoder), "eos-reached", NULL);
 				break;
 		}
