@@ -4,6 +4,7 @@
 #include "xmms/output.h"
 #include "xmms/transport.h"
 #include "mad_misc.h"
+#include "id3_genre.h"
 #include <mad.h>
 
 #include <glib.h>
@@ -149,6 +150,14 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		tmp = g_strdup_printf ("%4.4s", tag.year);
 		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_YEAR, tmp);
 		g_free (tmp);
+
+		if (tag.genre > GENRE_MAX)
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, "Unknown");
+		else {
+			tmp = g_strdup ((gchar *)id3_genres[tag.genre]);
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, tmp);
+			g_free (tmp);
+		}
 
 		if (atoi (&tag.u.v1_1.track_number) > 0) {
 			/* V1.1 */
