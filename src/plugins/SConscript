@@ -1,0 +1,19 @@
+
+Import('base_env')
+
+base_env = base_env.Copy(LINKFLAGS=["-module", "-avoid-version"])
+
+Export('base_env')
+
+SConscript('file/SConscript')
+SConscript('oss/SConscript')
+SConscript('m3u/SConscript')
+SConscript('tar/SConscript')
+SConscript('http/SConscript')
+SConscript('eq/SConscript')
+if base_env.HasGroup("mad"):
+	SConscript('mad/SConscript')
+if base_env.HasGroup("vorbis"):
+	SConscript('vorbis/SConscript')
+if base_env.HasGroup("sqlite"):
+	SConscript('sqlite/SConscript')

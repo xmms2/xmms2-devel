@@ -7,6 +7,7 @@
 
 
 #include "decoder.h"
+#include "core.h"
 #include "decoder_int.h"
 #include "plugin.h"
 #include "plugin_int.h"
@@ -18,6 +19,9 @@
 #include "transport_int.h"
 #include "ringbuf.h"
 #include "playlist.h"
+#include "visualisation.h"
+#include "effect.h"
+#include "signal_xmms.h"
 
 #include <string.h>
 
@@ -26,6 +30,7 @@
  */
 
 #define FRAC_BITS 16
+
 
 /**
  * Structure describing decoder-objects.
@@ -43,8 +48,11 @@ struct xmms_decoder_St {
 				      *   This is where the decoder gets it
 				      *   data from
 				      */
+	xmms_playlist_entry_t *entry; /**< the current entry that is played */
 
 	gpointer plugin_data;
+
+	xmms_effect_t *effect;
 
 	guint samplerate;
 	guint output_samplerate;
@@ -66,12 +74,12 @@ struct xmms_decoder_St {
 
         guint32 ipos;      /* position in the input stream */
 
-
-
 	xmms_output_t *output;       /**< output associated with decoder.
 				      *   The decoded data will be written
 				      *   to this output.
 				      */
+	xmms_visualisation_t *vis;
+
 };
 
 /*
@@ -82,6 +90,7 @@ static void xmms_decoder_destroy_real (xmms_decoder_t *decoder);
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
 static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
+static guint xmms_decoder_skip_bytes_get (xmms_decoder_t *decoder, guint milliseconds);
 
 /*
  * Macros
@@ -174,14 +183,53 @@ recalculate_resampler (xmms_decoder_t *decoder)
 }
 
 void
+xmms_decoder_seek (xmms_decoder_t *decoder, guint milliseconds)
+{
+	guint bytes;
+	g_return_if_fail (decoder);
+	
+	if (!milliseconds) 
+		return;
+
+	bytes = xmms_decoder_skip_bytes_get (decoder, milliseconds);
+
+
+	xmms_transport_seek (decoder->transport, bytes, XMMS_TRANSPORT_SEEK_SET);
+}
+
+static guint
+xmms_decoder_skip_bytes_get (xmms_decoder_t *decoder, guint milliseconds)
+{
+	xmms_decoder_skip_bytes_get_method_t meth;
+	guint bytes;
+	
+	g_return_val_if_fail (decoder, 0);
+
+	if (!milliseconds) 
+		return 0;
+
+	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_CALC_SKIP);
+
+	g_return_val_if_fail (meth, 0);
+
+	bytes = meth (decoder, milliseconds);
+
+	XMMS_DBG ("Bytes from skip_bytes_get %d", bytes);
+
+	return bytes;
+}
+
+void
 xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (rate);
 	
 	if (decoder->samplerate != rate) {
+		xmms_visualisation_samplerate_set (decoder->vis, rate);
 		decoder->samplerate = rate;
 		decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
+		xmms_effect_samplerate_set (decoder->effect, decoder->samplerate);
 		recalculate_resampler (decoder);
 	}
 }
@@ -226,16 +274,37 @@ xmms_decoder_plugin_get (xmms_decoder_t *decoder)
  * hand. @sa tar.c for example.
  */
 xmms_decoder_t *
-xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype)
+xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
 	xmms_decoder_t *decoder;
-	decoder = xmms_decoder_new (mimetype);
+
+	xmms_playlist_entry_ref (entry);
+
+	decoder = xmms_decoder_new (entry);
 	decoder->transport = transport;
 	decoder->output = output;
+	decoder->entry = entry;
+
 	XMMS_DBG ("starting threads..");
 	xmms_transport_start (transport);
 	XMMS_DBG ("transport started");
 	return decoder;
+}
+
+
+/**
+ * Update Mediainfo in the entry.
+ * Should be used in XMMS_PLUIGN_METHOD_GET_MEDIAINFO to update the info and
+ * propagate it to the clients.
+ */
+void
+xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
+{
+	g_return_if_fail (decoder);
+	g_return_if_fail (entry);
+
+	xmms_playlist_entry_copy_property (entry, decoder->entry);
+	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (entry));
 }
 
 
@@ -263,6 +332,11 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	g_return_if_fail (output);
 
+
+	xmms_effect_run (decoder->effect, buf, len);
+
+	xmms_visualisation_calc (decoder->vis, buf, len);
+
 	if (decoder->samplerate != decoder->output_samplerate) {
 		guint32 res;
 		res=resample (decoder, (gint16 *)buf, len);
@@ -278,13 +352,16 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
  */
 
 xmms_decoder_t *
-xmms_decoder_new (const gchar *mimetype)
+xmms_decoder_new (xmms_playlist_entry_t *entry)
 {
 	xmms_plugin_t *plugin;
 	xmms_decoder_t *decoder;
 	xmms_decoder_new_method_t new_method;
+	const gchar *mimetype;
 
-	g_return_val_if_fail (mimetype, NULL);
+	g_return_val_if_fail (entry, NULL);
+
+	mimetype = xmms_playlist_entry_mimetype_get (entry);
 
 	XMMS_DBG ("Trying to create decoder for mime-type %s", mimetype);
 	
@@ -292,17 +369,23 @@ xmms_decoder_new (const gchar *mimetype)
 	if (!plugin)
 		return NULL;
 	
+	xmms_playlist_entry_ref (entry);
+
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
 	decoder = g_new0 (xmms_decoder_t, 1);
 	xmms_object_init (XMMS_OBJECT (decoder));
 	decoder->plugin = plugin;
 	decoder->mutex = g_mutex_new ();
+	decoder->entry = entry;
+
+	decoder->vis = xmms_visualisation_init();
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new_method || !new_method (decoder, mimetype)) {
 		XMMS_DBG ("new failed");
+		xmms_playlist_entry_unref (entry);
 		g_free (decoder);
 	}
 
@@ -346,13 +429,14 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
  *
  */
 void
-xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output)
+xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_effect_t *effect, xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);
 
 	decoder->running = TRUE;
 	decoder->transport = transport;
+	decoder->effect = effect;
 	decoder->output = output;
 	xmms_output_set_eos (output, FALSE);
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
@@ -367,10 +451,9 @@ xmms_decoder_wait (xmms_decoder_t *decoder)
 }
 */
 xmms_playlist_entry_t *
-xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, 
+xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
 				    xmms_transport_t *transport)
 {
-	xmms_playlist_entry_t *entry;
 	xmms_decoder_get_mediainfo_method_t mediainfo;
 	g_return_val_if_fail (decoder, NULL);
 	g_return_val_if_fail (transport, NULL);
@@ -383,9 +466,9 @@ xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder,
 		return NULL;
 	}
 
-	entry = mediainfo (decoder);
+	mediainfo (decoder);
 
-	return entry;
+	return decoder->entry;
 }
 
 /*
@@ -419,11 +502,11 @@ resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
 	gint16 *ibuf = buf;
 	gint16 *obuf;
 	
-	outlen = len * decoder->decimator_ratio / decoder->interpolator_ratio;
+	outlen = 1 + len * decoder->interpolator_ratio  / decoder->decimator_ratio;
 
 	if (decoder->resamplelen != outlen) {
 		decoder->resamplelen = outlen;
-		decoder->resamplebuf = g_realloc (decoder->resamplebuf, outlen+4);
+		decoder->resamplebuf = g_realloc (decoder->resamplebuf, outlen*4);
 		g_return_val_if_fail (decoder->resamplebuf, 0);
 	}
 	
@@ -463,7 +546,7 @@ resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
 	decoder->last_r = last_r;
 	decoder->last_l = last_l;
 	
-	g_return_val_if_fail (written<outlen, 0);
+	g_return_val_if_fail (written/4<outlen, 0);
 	
 	return written;
 		
@@ -481,6 +564,10 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 		destroy_method (decoder);
 
 	g_mutex_free (decoder->mutex);
+
+	xmms_playlist_entry_unref (decoder->entry);
+
+	xmms_visualisation_destroy(decoder->vis);
 	xmms_object_cleanup (XMMS_OBJECT (decoder));
 	g_free (decoder);
 }
@@ -539,6 +626,8 @@ xmms_decoder_thread (gpointer data)
 		if (!init_meth (decoder))
 			return NULL;
 	}
+
+	xmms_object_emit (XMMS_OBJECT (decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID, GUINT_TO_POINTER (xmms_playlist_entry_id_get (decoder->entry)));
 	
 	xmms_decoder_lock (decoder);
 

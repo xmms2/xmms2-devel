@@ -4,15 +4,24 @@
 #include "xmms/object.h"
 #include "xmms/output.h"
 #include "xmms/decoder.h"
+#include "xmms/mediainfo.h"
+#include "xmms/effect.h"
+#include "xmms/config_xmms.h"
 
 typedef struct xmms_core_St {
 	xmms_object_t object;
 
 	xmms_output_t *output;
+	xmms_decoder_t *decoder;
 
 	xmms_playlist_t *playlist;
 	xmms_playlist_entry_t *curr_song;
+	xmms_mediainfo_thread_t *mediainfothread;
+
+	xmms_effect_t *effects;
 	
+	xmms_config_data_t *config;
+
 	GCond *cond;
 	GMutex *mutex;
 	
@@ -33,6 +42,7 @@ void xmms_core_playtime_set (guint time);
 void xmms_core_play_next ();
 void xmms_core_play_prev ();
 void xmms_core_playlist_adduri (gchar *nuri);
+void xmms_core_mediainfo_add_entry (guint id);
 void xmms_core_playlist_jump (guint id);
 void xmms_core_playlist_remove (guint id);
 void xmms_core_playlist_shuffle ();
@@ -41,16 +51,20 @@ xmms_playlist_t * xmms_core_get_playlist ();
 
 void xmms_core_quit ();
 
-void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);
+void xmms_core_playlist_mediainfo_changed (guint id);
+/*void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);*/
 void xmms_core_set_playlist (xmms_playlist_t *playlist);
 void xmms_core_information (gint loglevel, gchar *information);
 gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);
 xmms_playlist_entry_t *xmms_core_playlist_entry_mediainfo (guint id);
 gchar *xmms_core_get_uri ();
 gint xmms_core_get_id ();
+void xmms_core_vis_spectrum (gfloat *spec);
+
 
 void xmms_core_playback_stop ();
 void xmms_core_playback_start ();
+void xmms_core_playback_seek (guint milliseconds);
 
 void xmms_core_init ();
 void xmms_core_start ();

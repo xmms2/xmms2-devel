@@ -1,0 +1,20 @@
+#
+Import('base_env')
+
+
+xmms2d_sources = Split ("config_xmms.c plugin.c object.c ringbuf.c "+
+			"transport.c decoder.c output.c playlist.c magic.c "+
+			"core.c plsplugins.c dbus.c unixsignal.c "+
+			"log.c util.c visualisation.c main.c mediainfo.c effect.c")
+
+
+env = base_env.Copy()
+
+env.AddFlagsFromGroup("glib")
+env.AddFlagsFromGroup("dbus")
+env.AddFlagsFromGroup("xml2")
+
+#env.Program(target = "xmms2d" , source = xmms2d_sources )
+#env.Install("/usr/local/bin","xmms2d")
+
+env.XmmsProgram("xmms2d", xmms2d_sources)

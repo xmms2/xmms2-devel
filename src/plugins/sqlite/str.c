@@ -1,8 +1,10 @@
+/** @file 
+ * String functions for sqlite plugin.
+ */
+
 #include <string.h>
 #include <glib.h>
 
-/** @file str functions for sqlite plugin
- */
 
 gchar korvar[] = { "0123456789:;<=>?¤" };
 

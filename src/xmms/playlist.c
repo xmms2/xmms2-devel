@@ -11,7 +11,10 @@
 
 #include "playlist.h"
 #include "util.h"
+#include "core.h"
+#include "signal_xmms.h"
 
+static void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
 
 /*
  * Public functions
@@ -105,7 +108,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_SHUFFLE;
-	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 	g_cond_signal (playlist->cond);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -132,14 +135,14 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 		playlist->currententry = g_list_next (node);
 	}
 	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
-	xmms_playlist_entry_free (node->data);
+	xmms_playlist_entry_unref (node->data);
 	playlist->list = g_list_remove_link (playlist->list, node);
 	g_list_free_1 (node);
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_REMOVE;
 	chmsg->id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 	g_cond_signal (playlist->cond);
 	
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -212,7 +215,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 	chmsg->type = XMMS_PLAYLIST_CHANGED_MOVE;
 	chmsg->id = id;
 	chmsg->arg = GINT_TO_POINTER (steps);
-	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 	g_cond_signal (playlist->cond);
 
@@ -249,6 +252,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	file->id = playlist->nextid++;
+	xmms_playlist_entry_ref (file); /* reference this entry */
 	
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
@@ -279,13 +283,15 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	chmsg->type = XMMS_PLAYLIST_CHANGED_ADD;
 	chmsg->id = file->id;
 	chmsg->arg = GINT_TO_POINTER (options);
-	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 	g_cond_signal (playlist->cond);
 
 	XMMS_DBG ("Added with id %d - %s", file->id, file->uri);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	xmms_core_mediainfo_add_entry (file->id);
 
 	return TRUE;
 
@@ -313,6 +319,8 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 	if (!r)
 		return NULL;
 
+	xmms_playlist_entry_ref ((xmms_playlist_entry_t *)r->data);
+
 	return r->data;
 
 }
@@ -329,7 +337,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist)
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
 		xmms_playlist_entry_t *entry = node->data;
-		xmms_playlist_entry_free (entry);
+		xmms_playlist_entry_unref (entry);
 	}
 
 	g_list_free (playlist->list);
@@ -343,7 +351,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist)
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_CLEAR;
-	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 
 }
@@ -372,11 +380,13 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
+		xmms_playlist_entry_ref (r);
 	}
 
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
 	
 	return r;
 
@@ -399,11 +409,13 @@ xmms_playlist_get_prev_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
+		xmms_playlist_entry_ref (r);
 	}
 
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
 	
 	return r;
 
@@ -427,11 +439,13 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
+		xmms_playlist_entry_ref (r);
 	}
 
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
 	
 	return r;
 
@@ -457,7 +471,7 @@ xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_SET_POS;
 	chmsg->id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 	
 	g_cond_signal (playlist->cond);
 
@@ -587,7 +601,7 @@ xmms_playlist_close (xmms_playlist_t *playlist)
 	
 	while (node) {
 		xmms_playlist_entry_t *entry = node->data;
-		xmms_playlist_entry_free (entry);
+		xmms_playlist_entry_unref (entry);
 		node = g_list_next (node);
 	}
 
@@ -605,6 +619,7 @@ xmms_playlist_entry_new (gchar *uri)
 	ret->uri = g_strdup (uri);
 	ret->properties = g_hash_table_new (g_str_hash, g_str_equal);
 	ret->id = 0;
+	ret->ref = 1;
 
 	return ret;
 }
@@ -725,12 +740,17 @@ xmms_playlist_entry_foreach_free (gpointer key, gpointer value, gpointer udata)
 	return TRUE;
 }
 
-void
+static void
 xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 {
 	g_free (entry->uri);
+	
+	if (entry->mimetype)
+		g_free (entry->mimetype);
+
 	g_hash_table_foreach_remove (entry->properties, xmms_playlist_entry_foreach_free, NULL);
 	g_hash_table_destroy (entry->properties);
+
 	g_free (entry);
 }
 
@@ -760,5 +780,48 @@ xmms_playlist_entry_is_wellknown (gchar *property)
 	}
 
 	return FALSE;
+}
+
+void
+xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mimetype)
+{
+
+	g_return_if_fail (entry);
+	g_return_if_fail (mimetype);
+
+	entry->mimetype = g_strdup (mimetype);
+
+}
+
+const gchar *
+xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
+{
+	g_return_val_if_fail (entry, NULL);
+
+	return entry->mimetype;
+}
+
+void
+xmms_playlist_entry_ref (xmms_playlist_entry_t *entry)
+{
+	g_return_if_fail (entry);
+	entry->ref ++;
+}
+
+void
+xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
+{
+
+	g_return_if_fail (entry);
+
+	entry->ref --;
+
+	if (entry->ref < 1) {
+		/* free entry */
+
+		XMMS_DBG("Freeing %s", entry->uri);
+		xmms_playlist_entry_free (entry);
+	}
+
 }
 

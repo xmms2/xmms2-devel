@@ -7,12 +7,17 @@
 #include <string.h>
 
 #include "config_xmms.h"
+#include "object.h"
+#include "signal_xmms.h"
+#include "util.h"
+#include "core.h"
 
 /* Huge configlock */
 static GMutex *config_lock;
 
 struct xmms_config_value_St {
-	
+	xmms_object_t obj;
+
 	/* either XMMS_CONFIG_VALUE_PLAIN or XMMS_CONFIG_VALUE_LIST */
 	gint type;
 
@@ -64,6 +69,8 @@ xmms_config_value_data_set (xmms_config_value_t *value, gchar *data)
 	XMMS_CONFIG_LOCK;
 	value -> data = data;
 	XMMS_CONFIG_UNLOCK;
+
+	xmms_object_emit (XMMS_OBJECT (value), XMMS_SIGNAL_CONFIG_VALUE_CHANGE, data);
 }
 
 /**
@@ -202,7 +209,7 @@ gint xmms_config_value_as_int (xmms_config_value_t *value) {
 	if(!value || value->type != XMMS_CONFIG_VALUE_PLAIN || !value->data) return -1;
 
 	XMMS_CONFIG_LOCK;
-	i=strtol(value->data,NULL,10);
+	i=strtol(value->data,NULL,0);
 	XMMS_CONFIG_UNLOCK;
 
 	return i;
@@ -218,6 +225,23 @@ gchar *xmms_config_value_as_string (xmms_config_value_t *value) {
 
 	XMMS_CONFIG_LOCK;
 	ret = value->data;
+	XMMS_CONFIG_UNLOCK;
+	
+	return ret;
+}
+
+
+/**
+ * 
+ */
+gchar *
+xmms_config_value_name_get (xmms_config_value_t *value)
+{
+	gchar *ret;
+	if(!value || value->type != XMMS_CONFIG_VALUE_PLAIN || !value->data) return NULL;
+
+	XMMS_CONFIG_LOCK;
+	ret = value->directive;
 	XMMS_CONFIG_UNLOCK;
 	
 	return ret;
@@ -296,6 +320,9 @@ xmms_config_save_to_file (xmms_config_data_t *config, gchar *filename)
 	fwrite ("\t<transport>\n",13, 1, fp);
 	g_hash_table_foreach (config->transport, xmms_config_save_section, (gpointer) fp);
 	fwrite ("\t</transport>\n\n",14, 1, fp);
+	fwrite ("\t<effect>\n",13, 1, fp);
+	g_hash_table_foreach (config->effect, xmms_config_save_section, (gpointer) fp);
+	fwrite ("\t</effect>\n\n",14, 1, fp);
 
 	fwrite ("</XMMS>\n", 8, 1, fp);
 	XMMS_CONFIG_UNLOCK;
@@ -319,12 +346,13 @@ xmms_config_data_t *
 xmms_config_init (gchar *filename) 
 {
 	xmlDocPtr doc;
-	xmlNodePtr decodenode=NULL,outputnode=NULL,corenode=NULL,root,transportnode=NULL;
+	xmlNodePtr decodenode=NULL,outputnode=NULL,corenode=NULL,root,transportnode=NULL,effectnode=NULL;
 	extern gint xmlDoValidityCheckingDefaultValue;
 	GHashTable *decodertable;
 	GHashTable *outputtable;
 	GHashTable *coretable;
 	GHashTable *transporttable;
+	GHashTable *effecttable;
 	xmms_config_data_t *ret;
 	xmlDoValidityCheckingDefaultValue=0;
 
@@ -341,16 +369,19 @@ xmms_config_init (gchar *filename)
 	outputtable = g_hash_table_new (g_str_hash, g_str_equal);
 	transporttable = g_hash_table_new (g_str_hash, g_str_equal);
 	coretable = g_hash_table_new (g_str_hash, g_str_equal);
+	effecttable = g_hash_table_new (g_str_hash, g_str_equal);
 
 	while(root) {
-		if (g_strcasecmp ("core",(char*)root->name)==0) {
+		if (g_strcasecmp ("core", (char*)root->name)==0) {
 			corenode = root -> children;
-		} else if (g_strcasecmp ("decoder",(char*)root->name)==0) {
+		} else if (g_strcasecmp ("decoder", (char*)root->name)==0) {
 			decodenode = root -> children;
-		} else if (g_strcasecmp ("output",(char*)root->name)==0) {
+		} else if (g_strcasecmp ("output", (char*)root->name)==0) {
 			outputnode = root -> children;
-		} else if (g_strcasecmp("transport",(char*)root->name)==0) {
+		} else if (g_strcasecmp("transport", (char*)root->name)==0) {
 			transportnode = root -> children;
+		} else if (g_strcasecmp("effect", (char*)root->name)==0) {
+			effectnode = root -> children;
 		}
 		root=root->next;
 	}
@@ -359,6 +390,7 @@ xmms_config_init (gchar *filename)
 	xmms_config_add_prop (decodertable, NULL, decodenode);
 	xmms_config_add_prop (transporttable, NULL, transportnode);
 	xmms_config_add_prop (outputtable, NULL, outputnode);
+	xmms_config_add_prop (effecttable, NULL, effectnode);
 
 	ret = g_new0 (xmms_config_data_t, 1);
 
@@ -366,6 +398,7 @@ xmms_config_init (gchar *filename)
 	ret->decoder = decodertable;
 	ret->output = outputtable;
 	ret->transport = transporttable;
+	ret->effect = effecttable;
 
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
@@ -432,6 +465,7 @@ xmms_config_value_create (gint type, gchar *directive)
 
 	if(type == XMMS_CONFIG_VALUE_PLAIN || type == XMMS_CONFIG_VALUE_LIST) {
 		ret = g_new0 (xmms_config_value_t, 1);
+		xmms_object_init (XMMS_OBJECT (ret));
 		ret->type=type;
 		ret->directive=directive;
 		ret->prop = NULL;
@@ -488,3 +522,54 @@ xmms_config_value_prop_add (xmms_config_value_t *value,
 }
 	
 
+void
+xmms_config_set (gchar *key, gchar *value)
+{
+	xmms_config_data_t *config;
+	xmms_config_value_t *confval;
+	gchar **parts;
+	GHashTable *ht = NULL;
+
+	XMMS_DBG ("Set configval '%s' to '%s'", key ,value);
+
+	config = core->config;
+
+	parts = g_strsplit (key, ".", 16);
+
+	if (!strcmp(parts[0], "effect")) {
+		ht = config->effect;
+	} else 	if (!strcmp(parts[0], "output")) {
+		ht = config->output;
+	} else 	if (!strcmp(parts[0], "decoder")) {
+		ht = config->decoder;
+	} else 	if (!strcmp(parts[0], "core")) {
+		ht = config->core;
+	} else 	if (!strcmp(parts[0], "transport")) {
+		ht = config->transport;
+	}
+
+	if (!ht || !parts[1] || !parts[2]) {
+		XMMS_DBG ("bad config-key(1): %s", key);
+		g_strfreev (parts);
+		return;
+	}
+
+	confval = xmms_config_value_lookup (ht, parts[1]);
+
+	if (!confval) {
+		XMMS_DBG ("bad config-key(2): %s (%s) in %p", key, parts[1], ht);
+		g_strfreev (parts);
+		return;
+	}
+
+	confval = xmms_config_value_list_lookup (confval, parts[2]);
+
+	if (!confval) {
+		XMMS_DBG ("bad config-key(3): %s", key);
+		g_strfreev (parts);
+		return;
+	}
+
+	xmms_config_value_data_set (confval, value);
+	
+}

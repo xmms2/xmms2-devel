@@ -1,3 +1,4 @@
+#include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/util.h"
@@ -39,7 +40,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "file",
-			"File transport " VERSION,
+			"File transport " XMMS_VERSION,
 		 	"Plain file transport");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -65,12 +66,19 @@ xmms_plugin_get (void)
 static gboolean
 xmms_file_can_handle (const gchar *uri)
 {
+	gchar *dec;
 	g_return_val_if_fail (uri, FALSE);
 
-	XMMS_DBG ("xmms_file_can_handle (%s)", uri);
+	dec = xmms_util_decode_path (uri);
+
+	XMMS_DBG ("xmms_file_can_handle (%s)", dec);
 	
-	if ((g_strncasecmp (uri, "file:", 5) == 0) || (uri[0] == '/'))
+	if ((g_strncasecmp (dec, "file:", 5) == 0) || (dec[0] == '/')) {
+		g_free (dec);
 		return TRUE;
+	}
+
+	g_free (dec);
 	return FALSE;
 }
 
@@ -81,16 +89,19 @@ xmms_file_init (xmms_transport_t *transport, const gchar *uri)
 	xmms_file_data_t *data;
 	const gchar *uriptr;
 	const gchar *mime;
+	const gchar *nuri;
 
-	XMMS_DBG ("xmms_file_init (%p, %s)", transport, uri);
-	
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (uri, FALSE);
 
-	if (g_strncasecmp (uri, "file:", 5) == 0)
-		uriptr = strchr (uri, '/');
+	nuri = xmms_util_decode_path (uri);
+	
+	XMMS_DBG ("xmms_file_init (%p, %s)", transport, nuri);
+
+	if (g_strncasecmp (nuri, "file:", 5) == 0)
+		uriptr = strchr (nuri, '/');
 	else
-		uriptr = uri;
+		uriptr = nuri;
 	if (!uriptr)
 		return FALSE;
 

@@ -8,7 +8,6 @@
 #include "plugin_int.h"
 #include "transport.h"
 #include "decoder.h"
-#include "config.h"
 #include "config_xmms.h"
 #include "playlist.h"
 #include "unixsignal.h"
@@ -17,6 +16,8 @@
 #include "medialib.h"
 #include "output.h"
 #include "output_int.h"
+#include "xmms.h"
+#include "effect.h"
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -111,7 +112,7 @@ main (int argc, char **argv)
 				break;
 
 			case 'V':
-				printf ("XMMS version %s\n", VERSION);
+				printf ("XMMS version %s\n", XMMS_VERSION);
 				exit (0);
 				break;
 
@@ -200,7 +201,7 @@ main (int argc, char **argv)
 
 	xmms_signal_init ();
 
-	xmms_core_start ();
+	xmms_core_start (config);
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);

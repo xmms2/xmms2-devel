@@ -21,11 +21,11 @@ typedef struct xmms_decoder_St xmms_decoder_t;
 
 typedef gboolean (*xmms_decoder_can_handle_method_t) (const gchar *mimetype);
 typedef gboolean (*xmms_decoder_init_method_t) (xmms_decoder_t *decoder);
-typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder,
-											   const gchar *mimetype);
+typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder, const gchar *mimetype);
 typedef gboolean (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);
-typedef xmms_playlist_entry_t *(*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
+typedef guint (*xmms_decoder_skip_bytes_get_method_t) (xmms_decoder_t *decoder, guint milliseconds);
+typedef void (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
 
 /*
  * Public function prototypes
@@ -38,16 +38,17 @@ xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);
 xmms_plugin_t *xmms_decoder_plugin_get (xmms_decoder_t *);
 
-gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
-xmms_playlist_entry_t * xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, xmms_transport_t *transport);
+xmms_playlist_entry_t * xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_transport_t *transport);
 void xmms_decoder_set_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 
 void xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len);
 void xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate);
 
+void xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 
-xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype);
+xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xmms_playlist_entry_t *entry);
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 
+void xmms_decoder_seek (xmms_decoder_t *decoder, guint milliseconds);
 
 #endif /* __XMMS_DECODER_H__ */

@@ -36,6 +36,7 @@ on_next_clicked                        (GtkButton       *button,
 
 }
 
+void setup_playlist ();
 
 void
 on_playlist_clicked                    (GtkButton       *button,
@@ -84,10 +85,8 @@ on_playlist_row_activated              (GtkTreeView     *treeview,
                                         GtkTreeViewColumn *column,
                                         gpointer         user_data)
 {
-	GtkWidget *tree;
 	GtkTreeModel *store;
 	GtkTreeIter itr;
-	GValue val;
 	guint id;
 
 	store = gtk_tree_view_get_model (treeview);
@@ -182,7 +181,6 @@ on_playlist_delete_clicked             (GtkButton       *button,
 {
 
 	GtkWidget *tree;
-	GtkTreeModel *store;
 	GtkTreeSelection *sel;
 
 	tree = lookup_widget (playlistwin, "treeview1");

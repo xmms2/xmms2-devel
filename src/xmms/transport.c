@@ -10,6 +10,7 @@
 #include "object.h"
 #include "util.h"
 #include "ringbuf.h"
+#include "signal_xmms.h"
 
 #include <glib.h>
 #include <string.h>
@@ -114,7 +115,7 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
 
 	xmms_transport_unlock (transport);
 	
-	xmms_object_emit (XMMS_OBJECT (transport), "mime-type-changed", mimetype);
+	xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
 }
 
 /**
@@ -239,6 +240,18 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (len > 0, -1);
 
+
+	if (!transport->running) {
+		xmms_transport_read_method_t read_method;
+		XMMS_DBG ("Doing unbuffered read...");
+		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
+		if (read_method) {
+			gint ret = read_method (transport, buffer, len);
+			return ret;
+		}
+		return -1;
+	}
+	
 	xmms_transport_lock (transport);
 	
 	if (transport->want_seek) {
@@ -282,6 +295,17 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	g_return_if_fail (!transport->want_seek);
 
 	xmms_transport_lock (transport);
+
+	if (!transport->running) {
+		xmms_transport_seek_method_t seek_method;
+
+		seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
+		g_return_if_fail (seek_method);
+
+		xmms_transport_unlock (transport);
+		seek_method (transport, offset, whence);
+		return;
+	}
 
 	transport->seek_offset = offset;
 	transport->seek_whence = whence;

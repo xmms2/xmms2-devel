@@ -16,15 +16,20 @@
 #define XMMS_PLUGIN_METHOD_SEEK "seek"
 #define XMMS_PLUGIN_METHOD_NEW "new"
 #define XMMS_PLUGIN_METHOD_SAMPLERATE_SET "samplerate_set"
+#define XMMS_PLUGIN_METHOD_BUFFERSIZE_GET "buffersize_get"
 #define XMMS_PLUGIN_METHOD_DECODE_BLOCK "decode_block"
 #define XMMS_PLUGIN_METHOD_GET_MEDIAINFO "get_mediainfo"
 #define XMMS_PLUGIN_METHOD_DESTROY "destroy"
 #define XMMS_PLUGIN_METHOD_WRITE "write"
 #define XMMS_PLUGIN_METHOD_SEARCH "search"
+#define XMMS_PLUGIN_METHOD_CALC_SKIP "calc_skip"
 #define XMMS_PLUGIN_METHOD_ADD_ENTRY "add_entry"
 #define XMMS_PLUGIN_METHOD_INIT "init"
+#define XMMS_PLUGIN_METHOD_DEINIT "deinit"
 #define XMMS_PLUGIN_METHOD_READ_PLAYLIST "read_playlist"
 #define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST "write_playlist"
+#define XMMS_PLUGIN_METHOD_PROCESS "process"
+#define XMMS_PLUGIN_METHOD_FLUSH "flush"
 
 /*
  * Plugin properties.
@@ -50,7 +55,8 @@ typedef enum {
 	XMMS_PLUGIN_TYPE_DECODER,
 	XMMS_PLUGIN_TYPE_OUTPUT,
 	XMMS_PLUGIN_TYPE_MEDIALIB,
-	XMMS_PLUGIN_TYPE_PLAYLIST
+	XMMS_PLUGIN_TYPE_PLAYLIST,
+	XMMS_PLUGIN_TYPE_EFFECT
 } xmms_plugin_type_t;
 
 typedef struct xmms_plugin_St xmms_plugin_t;

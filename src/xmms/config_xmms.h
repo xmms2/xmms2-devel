@@ -9,6 +9,7 @@ typedef struct xmms_config_data_St {
 	GHashTable *decoder;
 	GHashTable *output;
 	GHashTable *transport;
+	GHashTable *effect;
 } xmms_config_data_t;
 
 #define XMMS_CONFIG_VALUE_PLAIN 0
@@ -40,6 +41,7 @@ xmms_config_value_t *xmms_config_value_create (gint type, gchar *directive);
 void xmms_config_value_data_set (xmms_config_value_t *value, 
 				 gchar *data);
 
+gchar *xmms_config_value_name_get (xmms_config_value_t *value);
 
 xmms_config_value_t *xmms_config_value_list_lookup (xmms_config_value_t *value,
 					 	    const gchar *subvalue);

@@ -1,20 +1,20 @@
-/** @file MPEG Layer 1/2/3 decoder.
-  *
-  * This is based on MAD by Robert Leslie.
-  * Supports Xing VBR and id3v1/v2
-  *
-  * This code basicly sucks at some places. But hey, the
-  * standard is fucked. Please convert to OGG ;-)
-  */
+/** @file 
+ * MPEG Layer 1/2/3 decoder plugin.
+ *
+ * Supports Xing VBR and id3v1/v2
+ *
+ * This code basicly sucks at some places. But hey, the
+ * standard is fucked. Please convert to OGG ;-)
+ */
 
 
+#include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
 #include "xmms/core.h"
 #include "xmms/playlist.h"
 #include "xmms/transport.h"
-#include "mad_misc.h"
 #include "id3.h"
 #include "xing.h"
 #include <mad.h>
@@ -29,9 +29,6 @@
  * Type definitions
  */
 
-
-
-
 typedef struct xmms_mad_data_St {
 	struct mad_stream stream;
 	struct mad_frame frame;
@@ -41,6 +38,10 @@ typedef struct xmms_mad_data_St {
 
 	gchar buffer[4096];
 	guint buffer_length;
+	guint bitrate;
+	guint fsize;
+
+	gboolean vbr;
 } xmms_mad_data_t;
 
 /*
@@ -50,9 +51,10 @@ typedef struct xmms_mad_data_St {
 static gboolean xmms_mad_can_handle (const gchar *mimetype);
 static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
-static xmms_playlist_entry_t *xmms_mad_get_media_info (xmms_decoder_t *decoder);
+static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_mad_init (xmms_decoder_t *decoder);
+static guint xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds);
 
 /*
  * Plugin header
@@ -64,7 +66,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "mad",
-			"MAD decoder " VERSION,
+			"MAD decoder " XMMS_VERSION,
 			"MPEG Layer 1/2/3 decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -76,6 +78,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_mad_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_mad_get_media_info);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_mad_init);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CALC_SKIP, xmms_mad_calc_skip_bytes);
 
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
@@ -102,6 +105,32 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
+static guint
+xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds)
+{
+	xmms_mad_data_t *data;
+	guint bytes;
+	
+	g_return_val_if_fail (decoder, 0);	
+
+	data = xmms_decoder_plugin_data_get (decoder);
+
+	if (!data->vbr) {
+		bytes = ((miliseconds / 1000) * data->bitrate) / 8 ;
+
+		XMMS_DBG ("Try seek %d bytes", bytes);
+
+		if (bytes < data->fsize)
+			return bytes;
+
+		return data->fsize;
+	}
+
+	/** @todo VBR must be supported */
+	return 0;
+	
+}
+
 /** This function will calculate the duration in seconds.
   *
   * This is very easy, until someone thougth that VBR was
@@ -116,18 +145,17 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
   */
 
 static void
-xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
+xmms_mad_calc_duration (xmms_mad_data_t *data, gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
-	struct xing xing_h;
+	xmms_xing_t *xing;
 	guint fsize=0;
 	guint bitrate=0;
 	gchar *tmp;
 
 	mad_stream_init (&stream);
 	mad_frame_init (&frame);
-	xing_init (&xing_h);
 
 	mad_stream_buffer (&stream, buf, len);
 
@@ -141,7 +169,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 	
 	fsize = filesize * 8;
 
-	if (xing_parse (&xing_h, stream.anc_ptr, stream.anc_bitlen) == 0) {
+	if ((xing = xmms_xing_parse (stream.anc_ptr))) {
 		
 		/* @todo Hmm? This is SO strange. */
 		while (42) {
@@ -152,14 +180,16 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			}
 		}
 
-		if (xing_h.flags & XING_FRAMES) {
+		data->vbr = TRUE;
+
+		if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
 			gchar *tmp;
 
 			timer = frame.header.duration;
-			mad_timer_multiply (&timer, xing_h.frames);
-			duration = mad_timer_count (timer, MAD_UNITS_SECONDS);
+			mad_timer_multiply (&timer, xmms_xing_get_frames (xing));
+			duration = mad_timer_count (timer, MAD_UNITS_MILLISECONDS);
 
 			XMMS_DBG ("XING duration %d", duration);
 			tmp = g_strdup_printf ("%d", duration);
@@ -168,18 +198,21 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			g_free (tmp);
 		}
 
-		if (xing_h.flags & XING_BYTES) {
+		/** @todo fix avg. bitrate in xing */
+/*		if (xmms_xing_has_flag (xing, XMMS_XING_BYTES)) {
 			gchar *tmp;
 
-			tmp = g_strdup_printf ("%ld", xing_h.bytes / fsize);
+			tmp = g_strdup_printf ("%u", (gint)((xmms_xing_get_bytes (xing) * 8 / fsize);
+			XMMS_DBG ("XING bitrate %d", tmp);
 			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
-		}
+		}*/
 
 		return;
 	}
 
-	bitrate = frame.header.bitrate;
+	data->bitrate = bitrate = frame.header.bitrate;
+	data->fsize = filesize;
 
 	mad_frame_finish (&frame);
 	mad_stream_finish (&stream);
@@ -187,7 +220,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 	if (!fsize) {
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
 	} else {
-		tmp = g_strdup_printf ("%d", fsize / bitrate);
+		tmp = g_strdup_printf ("%d", (gint) (filesize*(gdouble)8000.0/bitrate));
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 		XMMS_DBG ("duration = %s", tmp);
 		g_free (tmp);
@@ -199,7 +232,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 
 }
 
-static xmms_playlist_entry_t *
+static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
@@ -210,18 +243,19 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	gboolean id3handled = FALSE;
 	gint ret;
 
-	g_return_val_if_fail (decoder, NULL);
+	g_return_if_fail (decoder);
 
 	data = xmms_decoder_plugin_data_get (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, NULL);
+	g_return_if_fail (transport);
 
 	entry = xmms_playlist_entry_new (NULL);
 
 	ret = xmms_transport_read (transport, buf, 8192);
 	if (ret <= 0) {
-		return entry;
+		xmms_playlist_entry_unref (entry);
+		return;
 	}
 
 	if (ret >= 10 && xmms_mad_id3v2_header (buf, &head)) {
@@ -245,7 +279,8 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   MIN(4096,head.len - pos));
 				if (ret <= 0) {
 					XMMS_DBG ("error reading data for id3v2-tag");
-					return entry;
+					xmms_playlist_entry_unref (entry);
+					return;
 				}
 				pos += ret;
 			}
@@ -259,7 +294,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
 	}
 	
-	xmms_mad_calc_duration (buf, ret, xmms_transport_size (transport), entry);
+	xmms_mad_calc_duration (data, buf, ret, xmms_transport_size (transport), entry);
 
 	if (!id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");
@@ -275,10 +310,12 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (data) {
 		data->entry = entry;
 
-		xmms_core_set_mediainfo (entry);
+		xmms_decoder_entry_mediainfo_set (decoder, entry);
 	}
 
-	return entry;
+	xmms_playlist_entry_unref (entry);
+
+	return;
 }
 
 static gboolean
@@ -334,15 +371,25 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	return TRUE;
 }
 
+gint
+clipping (mad_fixed_t v)
+{
+	if (v >= 1 << MAD_F_FRACBITS)
+		v = (1 << MAD_F_FRACBITS) - 1;
+
+	if (v <= -(1 << MAD_F_FRACBITS))
+		v = -((1 << MAD_F_FRACBITS) - 1);
+
+	return v >> (MAD_F_FRACBITS - 15);
+}
+
 static gboolean
 xmms_mad_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
 	xmms_transport_t *transport;
-	gchar out[1152 * 4];
+	gint16 out[1152 * 2];
 	mad_fixed_t *ch1, *ch2;
-	mad_fixed_t clipping = 0;
-	gulong clipped;
 	gint ret;
 
 	data = xmms_decoder_plugin_data_get (decoder);
@@ -366,8 +413,9 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 
 	data->buffer_length += ret;
 	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
-		
+
 	for (;;) {
+		gint i = 0;
 
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
@@ -382,11 +430,24 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		
 		ch1 = data->synth.pcm.samples[0];
 		ch2 = data->synth.pcm.samples[1];
-		
-		/* pack_pcm is stolen from Leslie, thanks :) */
-		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
-		xmms_decoder_write (decoder, out, sizeof(out));
-		
+
+		for (i = 0; i < data->synth.pcm.length; i++) {
+			gint l, r;
+			
+			l = clipping (*(ch1++));
+			if (data->synth.pcm.channels > 1)
+				r = clipping (*(ch2++));
+			else
+				r = l;
+			
+			out[i*2+0] = l;
+			out[i*2+1] = r;
+		}
+
+		ret = i*4;
+
+		xmms_decoder_write (decoder, (gchar *)out, ret);
+
 	}
 	
 	return TRUE;

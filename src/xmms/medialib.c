@@ -143,7 +143,7 @@ xmms_medialib_list_free (GList *list)
 	while (list) {
 		xmms_playlist_entry_t *e = list->data;
 		if (e)
-			xmms_playlist_entry_free (e);
+			xmms_playlist_entry_unref (e);
 		list = g_list_next (list);
 	}
 
@@ -164,7 +164,7 @@ xmms_medialib_check_if_exists (xmms_medialib_t *medialib, gchar *uri)
 
 	list = xmms_medialib_search (medialib, f);
 
-	xmms_playlist_entry_free (f);
+	xmms_playlist_entry_unref (f);
 
 	if (!list)
 		return FALSE;
@@ -240,7 +240,7 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 				XMMS_DBG ("Adding %s", path);
 				xmms_playlist_entry_set_uri (entry, path);
 				xmms_medialib_add_entry (medialib, entry);
-				xmms_playlist_entry_free (entry);
+				xmms_playlist_entry_unref (entry);
 			} else {
 				XMMS_DBG ("Got null from apa");
 			}

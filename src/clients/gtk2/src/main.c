@@ -11,8 +11,11 @@
 
 #include "interface.h"
 #include "support.h"
+#include <stdlib.h>
+#include <string.h>
 
 #include <xmmsclient.h>
+#include <xmms/signal_xmms.h>
 
 GtkWidget *playlistwin=NULL;
 GtkWidget *mainwindow;
@@ -76,7 +79,6 @@ void
 setup_playlist ()
 {
 	GtkListStore *store;
-	GtkTreeIter iter1;
 	GtkCellRenderer *renderer, *renderer_img;
 	GtkTreeViewColumn *column;
 	GtkWidget *tree = lookup_widget (playlistwin, "treeview1");
@@ -340,7 +342,7 @@ main (int argc, char *argv[])
 	gtk_init (&argc, &argv);
 	GtkWidget *title;
 
-	add_pixmap_directory (PACKAGE_DATA_DIR "/" PACKAGE "/pixmaps");
+	//add_pixmap_directory (PACKAGE_DATA_DIR "/" PACKAGE "/pixmaps");
 
 	mainwindow = create_mainwindow ();
 
@@ -361,18 +363,18 @@ main (int argc, char *argv[])
 		buttonset_sensitive (FALSE);
 	} else {
 		/* set up xmmsclient callbacks */
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYTIME_CHANGED, handle_playtime, NULL);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_INFORMATION, handle_information, NULL);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, conn);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYBACK_STOPPED, handle_playback_stopped, conn);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_DISCONNECTED, handle_disconnected, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, NULL);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_mediainfo, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_STOP, handle_playback_stopped, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
 
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_ADDED, handle_playlist_added, NULL);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_REMOVED, handle_playlist_removed, NULL);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_MOVED, handle_playlist_moved, conn);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_JUMPED, handle_playlist_jumped, conn);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_SHUFFLED, handle_playlist_shuffled, conn);
-		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_CLEARED, handle_playlist_cleared, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_ADD, handle_playlist_added, NULL);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_REMOVE, handle_playlist_removed, NULL);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MOVE, handle_playlist_moved, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_JUMP, handle_playlist_jumped, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_SHUFFLE, handle_playlist_shuffled, conn);
+		xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_CLEAR, handle_playlist_cleared, conn);
 
 		xmmsc_glib_setup_mainloop (conn, NULL);
 
