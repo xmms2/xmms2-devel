@@ -198,7 +198,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	xmms_output_t *output;
 	gchar out[1152 * 4];
 	mad_fixed_t *ch1, *ch2;
-	mad_fixed_t clipping;
+	mad_fixed_t clipping = 0;
 	gulong clipped;
 	gint ret;
 
@@ -220,18 +220,17 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	
 	ret = xmms_transport_read (transport, data->buffer + data->buffer_length,
 							   4096 - data->buffer_length);
-	if (ret <= 0)
+	if (ret <= 0) {
+		XMMS_DBG ("EOF");
 		return FALSE;
-	
+	}
+
 	data->buffer_length += ret;
 	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
 		
 	for (;;) {
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
-			if (!MAD_RECOVERABLE (data->stream.error)) {
-				g_warning ("Non-recoverable error %u in frame", data->stream.error);
-				return FALSE;
-			}
+			break;
 		}
 		
 		mad_synth_frame (&data->synth, &data->frame);

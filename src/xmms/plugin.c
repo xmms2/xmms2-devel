@@ -160,6 +160,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 		}
 	}
 	g_mutex_unlock (xmms_plugin_mtx);
+	g_dir_close (d);
 }
 
 void

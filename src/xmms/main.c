@@ -11,19 +11,81 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <unistd.h>
+
+static xmms_playlist_t *playlist;
+static xmms_output_t *output;
+
+void play_next (void);
+
+void
+eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
+	XMMS_DBG ("eos_reached");
+
+	XMMS_DBG ("closing transport");
+	xmms_transport_close (xmms_decoder_transport_get (decoder));
+	XMMS_DBG ("destroying decoder");
+	xmms_decoder_destroy (decoder);
+	XMMS_DBG ("playing next");
+	play_next ();
+	XMMS_DBG ("done");
+}
+
+void
+play_next (void)
+{
+	xmms_transport_t *transport;
+	xmms_decoder_t *decoder;
+	xmms_playlist_entry_t *entry;
+	const gchar *mime;
+	
+	entry = xmms_playlist_pop (playlist);
+	if (!entry)
+		exit (1);
+
+	XMMS_DBG ("Playing %s", entry->uri);
+	
+	transport = xmms_transport_open (entry->uri);
+	xmms_playlist_entry_free (entry);
+
+	if (!transport)
+		play_next ();
+	
+	mime = xmms_transport_mime_type_get (transport);
+	if (mime) {
+		XMMS_DBG ("mime-type: %s", mime);
+		decoder = xmms_decoder_new (mime);
+		if (!decoder) {
+			xmms_transport_close (transport);
+			play_next ();
+			return;
+		}
+	} else {
+		xmms_transport_close (transport);
+		play_next (); /* FIXME */
+		return;
+	}
+
+	xmms_object_connect (XMMS_OBJECT (decoder), "eos-reached", eos_reached, NULL);
+
+	XMMS_DBG ("starting threads..");
+	xmms_transport_start (transport);
+	XMMS_DBG ("transport started");
+	xmms_decoder_start (decoder, transport, output);
+	XMMS_DBG ("output started");
+	
+}
+
 
 int
 main (int argc, char **argv)
 {
-	xmms_transport_t *transport;
-	xmms_output_t *output;
-	xmms_decoder_t *decoder;
-	xmms_playlist_t *pl;
-	xmms_playlist_entry_t *entry;
+
 	xmms_plugin_t *o_plugin;
 	int opt;
 	int verbose=0;
-	const gchar *mime;
 	gchar *outname = NULL;
 	
 	if (argc < 2)
@@ -33,7 +95,7 @@ main (int argc, char **argv)
 	if (!xmms_plugin_init ())
 		return 1;
 
-	pl = xmms_playlist_init ();
+	playlist = xmms_playlist_init ();
 
 	while (42) {
 		opt = getopt (argc, argv, "vVo:");
@@ -69,12 +131,12 @@ main (int argc, char **argv)
 			}
 				
 			XMMS_DBG ("Adding uri %s to playlist", nuri);
-			xmms_playlist_add (pl, xmms_playlist_entry_new (nuri), XMMS_PL_APPEND);
+			xmms_playlist_add (playlist, xmms_playlist_entry_new (nuri), XMMS_PL_APPEND);
 			optind++;
 		}
 	}
 
-	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (pl));
+	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (playlist));
 
 	if (!outname)
 		outname = "oss";
@@ -84,42 +146,9 @@ main (int argc, char **argv)
 	output = xmms_output_open (o_plugin);
 	g_return_val_if_fail (output, -1);
 	xmms_output_start (output);
+	play_next ();
 
-	while ((entry = xmms_playlist_pop (pl))) { /* start playback */
-
-		XMMS_DBG ("Playing %s", entry->uri);
-		
-		transport = xmms_transport_open (entry->uri);
-		if (!transport)
-			continue;
-
-		mime = xmms_transport_mime_type_get (transport);
-		if (mime) {
-			XMMS_DBG ("mime-type: %s", mime);
-			decoder = xmms_decoder_new (mime);
-			if (!decoder)
-				return 1;
-			xmms_decoder_start (decoder, transport, output);
-		} else {
-			return 1;
-		}
-
-		
-		xmms_transport_start (transport);
-
-		
-		if (xmms_decoder_get_mediainfo (decoder, entry)) {
-			XMMS_DBG ("id3tag: Artist=%s, album=%s, title=%s, year=%d, comment=%s, tracknr=%d", entry->artist, entry->album, entry->title, entry->year, entry->comment, entry->tracknr);
-		}
-
-		xmms_transport_wait (transport);
-		XMMS_DBG ("EOS");
-
-		xmms_transport_close (transport);
-
-		xmms_playlist_entry_free (entry);
-
-	}
+	sleep (3600);
 
 	return 0;
 }

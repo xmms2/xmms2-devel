@@ -115,11 +115,11 @@ void
 xmms_output_set_eos (xmms_output_t *output, gboolean eos)
 {
 	g_return_if_fail (output);
-
+	
 	xmms_ringbuf_set_eos (output->buffer, eos);
-
-	if (!eos)
+	if (!eos) {
 		g_cond_signal (output->cond);
+	}
 }
 
 static gpointer
@@ -148,8 +148,11 @@ xmms_output_thread (gpointer data)
 			write_method (output, buffer, ret);
 			xmms_output_lock (output);
 		} else if (xmms_ringbuf_eos (output->buffer)) {
+			xmms_output_unlock (output);
 			xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
-			g_cond_wait (output->cond, output->mutex);
+			xmms_output_lock (output);
+			if (xmms_ringbuf_eos (output->buffer))
+				g_cond_wait (output->cond, output->mutex);
 		}
 	}
 	xmms_output_unlock (output);

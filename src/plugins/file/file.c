@@ -24,6 +24,7 @@ typedef struct {
 
 static gboolean xmms_file_can_handle (const gchar *uri);
 static gboolean xmms_file_open (xmms_transport_t *transport, const gchar *uri);
+static void xmms_file_close (xmms_transport_t *transport);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_file_size (xmms_transport_t *transport);
 static gint xmms_file_seek (xmms_transport_t *transport, guint offset, gint whence);
@@ -43,6 +44,7 @@ xmms_plugin_get (void)
 	
 	xmms_plugin_method_add (plugin, "can_handle", xmms_file_can_handle);
 	xmms_plugin_method_add (plugin, "open", xmms_file_open);
+	xmms_plugin_method_add (plugin, "close", xmms_file_close);
 	xmms_plugin_method_add (plugin, "read", xmms_file_read);
 	xmms_plugin_method_add (plugin, "size", xmms_file_size);
 	xmms_plugin_method_add (plugin, "seek", xmms_file_seek);
@@ -101,6 +103,20 @@ xmms_file_open (xmms_transport_t *transport, const gchar *uri)
 	xmms_transport_mime_type_set (transport, mime);
 	
 	return TRUE;
+}
+
+static void
+xmms_file_close (xmms_transport_t *transport)
+{
+	xmms_file_data_t *data;
+	g_return_if_fail (transport);
+
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_if_fail (data);
+	
+	if (data->fd != -1)
+		close (data->fd);
+	g_free (data);
 }
 
 static gint

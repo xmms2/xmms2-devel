@@ -56,6 +56,7 @@ gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entr
  */
 
 xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
+void xmms_decoder_destroy (xmms_decoder_t *decoder);
 
 void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
 

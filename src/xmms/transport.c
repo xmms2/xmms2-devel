@@ -160,7 +160,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (len > 0, -1);
-	
+
 	xmms_transport_lock (transport);
 
 	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);
@@ -212,6 +212,7 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
+	xmms_object_cleanup (XMMS_OBJECT (transport));
 	g_free (transport);
 }
 
@@ -272,6 +273,7 @@ xmms_transport_thread (gpointer data)
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
 		} else {
+			xmms_ringbuf_set_eos (transport->buffer, TRUE);
 			g_cond_wait (transport->cond, transport->mutex);
 		}
 	}

@@ -1,4 +1,5 @@
 #include "object.h"
+#include "util.h"
 
 typedef struct {
 	xmms_object_handler_t handler;
@@ -62,7 +63,7 @@ xmms_object_connect (xmms_object_t *object, const gchar *method,
 	entry->handler = handler;
 	entry->userdata = userdata;
 
-	g_mutex_lock (object->mutex);
+/*	g_mutex_lock (object->mutex);*/
 	
 	if (g_hash_table_lookup_extended (object->methods, method, &key, (gpointer *)&list)) {
 		list = g_list_prepend (list, entry);
@@ -72,7 +73,7 @@ xmms_object_connect (xmms_object_t *object, const gchar *method,
 		g_hash_table_insert (object->methods, g_strdup (method), list);
 	}
 
-	g_mutex_unlock (object->mutex);
+/*	g_mutex_unlock (object->mutex);*/
 }
 
 void
@@ -119,8 +120,9 @@ unlock:
 void
 xmms_object_emit (xmms_object_t *object, const gchar *method, gconstpointer data)
 {
-	GList *list, *node;
-
+	GList *list, *node, *list2 = NULL;
+	xmms_object_handler_entry_t *entry;
+	
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 	g_return_if_fail (method);
@@ -129,11 +131,17 @@ xmms_object_emit (xmms_object_t *object, const gchar *method, gconstpointer data
 	
 	list = g_hash_table_lookup (object->methods, method);
 	for (node = list; node; node = g_list_next (node)) {
-		xmms_object_handler_entry_t *entry = node->data;
+		entry = node->data;
 
+		list2 = g_list_prepend (list2, entry);
+	}
+	g_mutex_unlock (object->mutex);
+
+	for (node = list2; node; node = g_list_next (node)) {
+		entry = node->data;
+		
 		if (entry && entry->handler)
 			entry->handler (object, data, entry->userdata);
 	}
-
-	g_mutex_unlock (object->mutex);
+	g_list_free (list2);
 }

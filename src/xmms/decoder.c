@@ -140,9 +140,9 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->running = TRUE;
 	decoder->transport = transport;
 	decoder->output = output;
-	xmms_output_set_eos (output, FALSE);
 	xmms_object_connect (XMMS_OBJECT (output), "eos-reached",
 						 xmms_decoder_output_eos, decoder);
+	xmms_output_set_eos (output, FALSE);
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
@@ -197,8 +197,14 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 	if (destroy_method)
 		destroy_method (decoder);
 
+	if (decoder->output) {
+		xmms_object_disconnect (XMMS_OBJECT (decoder->output), "eos-reached",
+								xmms_decoder_output_eos);
+	}
+	
 	g_cond_free (decoder->cond);
 	g_mutex_free (decoder->mutex);
+	xmms_object_cleanup (XMMS_OBJECT (decoder));
 	g_free (decoder);
 }
 
