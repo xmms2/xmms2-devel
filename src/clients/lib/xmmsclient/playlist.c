@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-/* YES! I know that this api may change under my feet */
-#define DBUS_API_SUBJECT_TO_CHANGE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

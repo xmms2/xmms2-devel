@@ -19,9 +19,6 @@
  *
  */
 
-/* YES! I know that this api may change under my feet */
-#define DBUS_API_SUBJECT_TO_CHANGE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -146,8 +143,8 @@ xmmsc_send_hello (xmmsc_connection_t *c)
 
 /**
  * Connects to the XMMS server.
- * If dbuspath is NULL, it will try to open the default path.
- * @todo document dbuspath.
+ * If ipcpath is NULL, it will try to open the default path.
+ * @todo document ipcpath.
  *
  * @returns TRUE on success and FALSE if some problem
  * occured. call xmmsc_get_last_error to find out.
@@ -537,9 +534,6 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 
 
 /** @} */
-
-
-#define XMMSC_DEFAULT_TIMEOUT -1 /* Default DBUS behavior */
 
 /**
  * @internal

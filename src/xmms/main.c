@@ -123,7 +123,6 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_config_save (filename);
 
 	xmms_visualisation_shutdown ();
-/*	xmms_dbus_shutdown ();*/
 	xmms_config_shutdown ();
 	xmms_medialib_shutdown ();
 	xmms_plugin_shutdown ();

@@ -20,8 +20,6 @@
 #ifndef __XMMSCLIENT_INT_H__
 #define __XMMSCLIENT_INT_H__
 
-#define DBUS_API_SUBJECT_TO_CHANGE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
