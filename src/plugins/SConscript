@@ -1,0 +1,8 @@
+
+plugin_linkflags="-module -avoid-version "
+#-export -symbols-regex \"xmms_plugin_get\" "
+
+Export('plugin_linkflags')
+
+SConscript('file/SConscript')
+SConscript('mad/SConscript')

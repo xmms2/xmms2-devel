@@ -1,0 +1,20 @@
+
+#we really really want this to be something like:
+#
+# Import(plugin_env)
+# plugin_env.xmms_module(["mad.c", 'id3.c', 'mad_misc.c'])
+#
+
+Import('plugin_linkflags', 'glib_linkflags', 'glib_ccflags')
+
+env = Environment(CPPPATH = ['../../'], CPPFLAGS = "-include config.h")
+
+env.Append(LINKFLAGS = plugin_linkflags)
+env.Append(LINKFLAGS = glib_linkflags)
+env.Append(CCFLAGS = glib_ccflags)
+
+ParseConfig(env,"pkg-config --libs-only-l --libs-only-L --cflags-only-I gthread-2.0 glib-2.0 gmodule-2.0")
+
+env.SharedLibrary('xmms_mad', ['mad.c', 'id3.c', 'mad_misc.c'])
+
+env.Install("/usr/local/lib/xmms/",env['LIBPREFIX']+"xmms_mad"+env['SHLIBSUFFIX'])

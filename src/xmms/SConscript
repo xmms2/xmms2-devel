@@ -1,0 +1,36 @@
+#
+
+Import('glib_linkflags','glib_ccflags')
+
+
+xmms2d_sources = Split ("config_xmms.c plugin.c object.c ringbuf.c "+
+			"transport.c decoder.c output.c playlist.c magic.c "+
+			"medialib.c core.c plsplugins.c dbus.c unixsignal.c "+
+			"log.c util.c visualisation.c main.c")
+
+
+
+
+env = Environment(CPPPATH = ['..','../..'])
+
+##
+## what we really wanna do is something like:
+##
+## env = default_env.Copy()
+## env.AddFlagGroup("glib")
+## env.AddFlagGroup("xml2")
+## env.AddFlagGroup("dbus")
+##
+
+
+env.Append(LINKFLAGS = glib_linkflags)
+env.Append(CCFLAGS = glib_ccflags)
+env.Append(CPPFLAGS = '-DPKGLIBDIR -DSYSCONFDIR=\\"/etc/\\" ')
+
+ParseConfig(env,"pkg-config --libs --cflags dbus-1 dbus-glib-1")
+ParseConfig(env,"xml2-config --libs --cflags")
+ParseConfig(env,"pkg-config --libs-only-l --libs-only-L --cflags-only-I gthread-2.0 glib-2.0 gmodule-2.0")
+
+env.Program(target = "xmms2d" , source = xmms2d_sources )
+env.Install("/usr/local/bin","xmms2d")
+

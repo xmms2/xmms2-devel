@@ -1,0 +1,13 @@
+
+Import('plugin_linkflags', 'glib_linkflags', 'glib_ccflags')
+
+env = Environment(CPPPATH = ['../../'], CPPFLAGS = "-include config.h")
+
+env.Append(LINKFLAGS = plugin_linkflags)
+env.Append(LINKFLAGS = glib_linkflags)
+env.Append(CCFLAGS = glib_ccflags)
+
+ParseConfig(env,"pkg-config --libs-only-l --libs-only-L --cflags-only-I gthread-2.0 glib-2.0 gmodule-2.0")
+
+env.SharedLibrary('xmms_file', ['file.c'])
+env.Install("/usr/local/lib/xmms/",env['LIBPREFIX']+"xmms_file"+env['SHLIBSUFFIX'])

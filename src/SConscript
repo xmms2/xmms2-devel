@@ -1,0 +1,5 @@
+# 
+
+SConscript('xmms/SConscript')
+SConscript('clients/SConscript')
+SConscript('plugins/SConscript')
