@@ -57,7 +57,7 @@ static gboolean xmms_curl_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_curl_close (xmms_transport_t *transport);
 static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_curl_size (xmms_transport_t *transport);
-static gint xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence);
+/*static gint xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence);*/
 
 /*
  * Plugin header
@@ -137,7 +137,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void *stream)
 static CURL *
 xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 {
-	struct curl_slist *headerlist = NULL;
+	//struct curl_slist *headerlist = NULL;
 	xmms_curl_data_t *data;
 	CURL *curl;
 
@@ -263,11 +263,20 @@ xmms_curl_close (xmms_transport_t *transport)
 
 	data->run = FALSE;
 
+	XMMS_DBG ("Waiting for thread...");
 	g_thread_join (data->thread);
 	XMMS_DBG ("Thread is joined");
 	
 	curl_multi_cleanup (data->curlm);
 	curl_easy_cleanup (data->curl);
+
+	g_mutex_free (data->mutex);
+	xmms_ringbuf_destroy (data->buffer);
+
+	if (data->genre)
+		g_free (data->genre);
+	if (data->name)
+		g_free (data->name);
 
 	g_free (data->url);
 
@@ -278,7 +287,6 @@ static gint
 xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 {
 	xmms_curl_data_t *data;
-	struct timeval timeout;
 	gint ret;
 
 	g_return_val_if_fail (transport, -1);
@@ -310,8 +318,32 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_mutex_unlock (data->mutex);
 
 	if (!data->mime) {
-		XMMS_DBG ("%s", buffer);
-		data->mime = "audio/mpeg";
+		curl_easy_getinfo (data->curl, CURLINFO_CONTENT_TYPE, &data->mime);
+
+		if (!data->mime && g_strncasecmp (buffer, "ICY 200 OK", 10) == 0) {
+			gchar **tmp;
+			gint i=0;
+			xmms_playlist_entry_t *entry;
+
+			data->mime = "audio/mpeg";
+			data->stream = TRUE;
+
+			tmp = g_strsplit (buffer, "\r\n", 0);
+			while (tmp[i]) {
+				if (g_strncasecmp (tmp[i], "icy-name:", 9) == 0)
+					data->name = g_strdup (tmp[i]+9);
+				if (g_strncasecmp (tmp[i], "icy-genre:", 10) == 0)
+					data->genre = g_strdup (tmp[i]+10);
+
+				i++;
+			}
+
+			entry = xmms_transport_entry_get (transport);
+
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL, data->name);
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, data->genre);
+		} 
+
 		xmms_transport_mimetype_set (transport, data->mime);
 	}
 
