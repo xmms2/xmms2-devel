@@ -5,10 +5,12 @@
 
 
 #include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 #include <glib.h>
 #include <math.h>
 
 #include "xmmsclient.h"
+#include "xmms/signal_xmms.h"
 
 /** @todo these should be pulled in from an include-file */
 #define FFT_BITS 10
@@ -22,6 +24,9 @@ static guint32 basetime = 0;
 static GTrashStack *free_buffers=NULL;
 static GList *queue = NULL;
 static GList *time_queue = NULL;
+
+static TTF_Font *font;
+
 
 /*
  * 
@@ -82,6 +87,8 @@ draw_bar(SDL_Surface *bar, int val,int xpos)
 	SDL_UnlockSurface (bar);
 }
 
+static SDL_Surface *text = NULL;
+
 /* called periodically from the mainloop */
 static gboolean
 render_vis (gpointer data)
@@ -91,6 +98,7 @@ render_vis (gpointer data)
 	int i;
 	gulong apa;
 	float *spec;
+
 
 	while (SDL_PollEvent (&event)) {
 		switch (event.type) {
@@ -113,6 +121,10 @@ render_vis (gpointer data)
 
 	SDL_FillRect (surf, NULL, 0xff000000);
 
+	if (text) {
+                SDL_BlitSurface(text, NULL, surf, NULL);
+	}
+
 	for (i=0; i<FFT_LEN/32/2; i++) {
 		float sum=0.0f;
 		int j;
@@ -133,12 +145,46 @@ render_vis (gpointer data)
 	return TRUE;
 }
 
+static gchar mediainfo[64];
+
+static void
+set_mediainfo (xmmsc_connection_t *conn, guint id)
+{
+	GHashTable *entry;
+
+	entry = xmmsc_playlist_get_mediainfo (conn, id);
+
+	if (!entry) {
+		fprintf (stderr, "id %d doesn't exist in playlist\n", id);
+		return;
+	}
+
+	snprintf (mediainfo, 63, "%s - %s",
+		  (gchar *)g_hash_table_lookup (entry, "artist"),
+		  (gchar *)g_hash_table_lookup (entry, "title"));
+
+}
+
 static void
 handle_playtime (void *userdata, void *arg)
 {
 	guint tme = GPOINTER_TO_UINT (arg);
+	SDL_Color white = { 0xFF, 0xFF, 0xFF, 0 };
+	static guint lasttime = 0xffffffff;
+
 	g_timer_start (timer); /* restart timer */
 	basetime = tme;
+
+	if (tme/1000 != lasttime) {
+		gchar buf[64];
+		if (text) {
+			SDL_FreeSurface(text);
+		}
+
+		snprintf (buf, 63, "%02d:%02d : %s", tme/60000, (tme/1000)%60, mediainfo);
+		lasttime = tme/1000;
+		text = TTF_RenderUTF8_Blended (font, buf, white);
+	}
 }
 
 static void
@@ -198,14 +244,32 @@ main()
 
         if (SDL_Init(SDL_INIT_VIDEO) > 0) {
                 fprintf(stderr, "Unable to init SDL: %s \n", SDL_GetError());
+		return 1;
         }
+
+        if ( TTF_Init() < 0 ) {
+                fprintf(stderr, "Couldn't initialize TTF: %s\n",SDL_GetError());
+		return 1;
+        }
+
+	font = TTF_OpenFont("font.ttf", 14);
+
+	if(!font){
+		fprintf(stderr, "couldn't open font.ttf\n");
+		return 1;
+	}
 
 	screen = SDL_SetVideoMode(512, 300, 32, 0);
 
-	xmmsc_set_callback (c, XMMSC_CALLBACK_VISUALISATION_SPECTRUM,
+
+	set_mediainfo (c, xmmsc_get_playing_id (c));
+
+	xmmsc_set_callback (c, XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 			    new_data, NULL);
-	xmmsc_set_callback (c, XMMSC_CALLBACK_PLAYTIME_CHANGED,
+	xmmsc_set_callback (c, XMMS_SIGNAL_PLAYBACK_PLAYTIME,
 			    handle_playtime, NULL);
+	xmmsc_set_callback (c, XMMS_SIGNAL_PLAYBACK_CURRENTID,
+			    set_mediainfo, c);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);
 
@@ -223,6 +287,7 @@ main()
 		g_free (g_trash_stack_pop (&free_buffers));
 	}
 
+	TTF_Quit ();
 	SDL_Quit ();
 
 	return 0;
