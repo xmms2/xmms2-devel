@@ -591,4 +591,10 @@ xmms_medialib_select (gchar *query, xmms_error_t *error)
 	return res;
 }
 
+void
+xmms_medialib_playlist_save_autosaved ()
+{
+	xmms_error_t err;
 
+	xmms_medialib_playlist_save_current (medialib, "autosaved", &err);
+}

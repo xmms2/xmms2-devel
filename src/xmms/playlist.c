@@ -680,6 +680,16 @@ xmms_playlist_destroy (xmms_object_t *object)
 
 	g_return_if_fail (playlist);
 
+	/* we need to save the playlist before we free the playlist
+	 * mutex, since the following call will eventually lead to a
+	 * call to the playlist object again, which will of course try
+	 * to lock the mutex.
+	 *
+	 * it's safe to do it like this, since there's only one thread left
+	 * anyway when we destroy the playlist.
+	 */
+	xmms_medialib_playlist_save_autosaved ();
+
 	g_mutex_free (playlist->mutex);
 
 	val = xmms_config_lookup ("playlist.repeat_one");

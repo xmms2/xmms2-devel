@@ -553,6 +553,8 @@ xmms_output_destroy (xmms_object_t *object)
 		                                      output->effects);
 	}
 
+	xmms_object_unref (output->playlist);
+
 	g_queue_free (output->decoder_list);
 	g_mutex_free (output->decoder_mutex);
 	g_mutex_free (output->status_mutex);
