@@ -326,6 +326,7 @@ add [url]";
 		}
 
 		format_pretty_list (conn, n);
+		x_list_free (n);
 
 	} else if (g_strcasecmp (argv[2], "query") == 0) {
 		xmmsc_result_t *res;
@@ -409,7 +410,7 @@ add [url]";
 		}
 
 		format_pretty_list (conn, n);
-
+		x_list_free (n);
 
 	} else if (g_strcasecmp (argv[2], "save_playlist") == 0 ||
 	           g_strcasecmp (argv[2], "load_playlist") == 0) {
