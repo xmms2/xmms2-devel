@@ -60,7 +60,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 	xmmsc_result_t *xmmsc_playback_playtime (xmmsc_connection_t *c)
 
-	xmmsc_result_t *xmmsc_playlist_current_id (xmmsc_connection_t *conn)
+	xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *conn)
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, signed char *)
 	xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int)
@@ -277,8 +277,8 @@ cdef class XMMS:
 
 
 
-	def PlaylistCurrentId (self) :
-		return self._res (xmmsc_playlist_current_id (self.conn))
+	def PlaybackCurrentId (self) :
+		return self._res (xmmsc_playback_current_id (self.conn))
 
 	def PlaylistShuffle (self) :
 		return self._res (xmmsc_playlist_shuffle (self.conn))

@@ -52,7 +52,7 @@ class cmd_list (Command) :
 		return self.xmms.PlaylistList ()
 
 	def listfunc (self, list) :
-		r = self.xmms.PlaylistCurrentId ()
+		r = self.xmms.PlaybackCurrentId ()
 		r.wait ()
 		id = r.uint ()
 		for i in list :
