@@ -12,6 +12,7 @@ handle_witharg (void *userdata, void *arg)
 {
 	*((void **)userdata) = arg;
 	g_main_loop_quit (mainloop);
+	mainloop = NULL;
 }
 
 static void *
@@ -28,6 +29,9 @@ xmmsc_sync_wait_cmd_arg (gchar *cmd)
 
 	xmmsc_setup_with_gmain (xmmsc_conn, NULL);
 
+	if (!mainloop)
+		mainloop = g_main_loop_new (NULL, FALSE);
+
 	g_main_loop_run (mainloop);
 	
 	return arg;
@@ -37,7 +41,6 @@ void
 xmmsc_sync_init (xmmsc_connection_t *conn)
 {
 	xmmsc_conn = conn;
-	mainloop = g_main_loop_new (NULL, FALSE);
 }
 
 GHashTable *
