@@ -56,6 +56,7 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("flac", "FLAC", "FLAC__seekable_stream_decoder_get_state")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "libresid-builder.la")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")
+	base_env.CheckLibAndAddFlagsToGroup("samba","libsmbclient","smbc_init")
 	base_env.CheckAndAddFlagsToGroup("jack", "pkg-config --libs --cflags jack")
 	base_env.CheckAndAddFlagsToGroup("modplug", "pkg-config --libs --cflags libmodplug")
 
