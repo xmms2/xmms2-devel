@@ -127,6 +127,7 @@ ObjectRef = {}
 cdef ResultNotifier (xmmsc_result_t *res, obj) :
 	obj.Callback ()
 	if not obj.GetBroadcast () :
+		xmmsc_result_unref(res)
 		del ObjectRef[obj.GetCid ()]
 		
 	
@@ -322,7 +323,10 @@ cdef class XMMSResult :
 		xmmsc_result_unref (r.res)
 		r.res = xmmsc_result_restart (self.res)
 		self.MoreInit ()
-		
+		# unref once more, due to ref in
+		# MoreInit->xmmsc_result_notifier_set
+		xmmsc_result_unref (r.res)
+
 		return r
 
 	def IsError (self) :
