@@ -3,6 +3,10 @@
 
 /* This code is cut&pasted from
  * MAD's WinAMP plugin.
+ *
+ * mad - MPEG audio decoder
+ * Copyright (C) 2000-2001 Robert Leslie
+ *
  */
 
 struct dither {

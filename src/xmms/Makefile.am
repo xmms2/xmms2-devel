@@ -1,7 +1,7 @@
 
 INCLUDES=@XMMS_CFLAGS@ @GLIB_CFLAGS@ @XML_CFLAGS@ @DBUS_CFLAGS@
 
-bin_PROGRAMS=xmms2d medialibtool testpl
+bin_PROGRAMS=xmms2d medialibtool
 
 sysconf_DATA = xmms2.conf
 
@@ -27,9 +27,5 @@ xmms2d_SOURCES=main.c \
 
 medialibtool_LDADD = @GLIB_LIBS@ @XML_LIBS@
 medialibtool_SOURCES=medialibtool.c \
-	$(xmmscore_sources)
-
-testpl_LDADD = @GLIB_LIBS@ @XML_LIBS@
-testpl_SOURCES=testpl.c \
 	$(xmmscore_sources)
 

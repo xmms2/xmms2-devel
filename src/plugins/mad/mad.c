@@ -1,3 +1,13 @@
+/** @file MPEG Layer 1/2/3 decoder.
+  *
+  * This is based on MAD by Robert Leslie.
+  * Supports Xing VBR and id3v1/v2
+  *
+  * This code basicly sucks at some places. But hey, the
+  * standard is fucked. Please convert to OGG ;-)
+  */
+
+
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
@@ -7,6 +17,7 @@
 #include "xmms/transport.h"
 #include "mad_misc.h"
 #include "id3.h"
+#include "xing.h"
 #include <mad.h>
 
 #include <glib.h>
@@ -92,30 +103,83 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
+/** This function will calculate the duration in seconds.
+  *
+  * This is very easy, until someone thougth that VBR was
+  * a good thing. That is a quite fucked up standard.
+  *
+  * We read the XING header and parse it accordingly to
+  * xing.c, then calculate the duration of the next frame
+  * and multiply it with the number of frames in the XING
+  * header.
+  * 
+  * Better than to stream the whole file I guess.
+  */
 
 static void
 xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
 {
-	struct mad_header header;
+	struct mad_frame frame;
 	struct mad_stream stream;
+	struct xing xing_h;
 	guint fsize=0;
 	guint bitrate=0;
 	gchar *tmp;
 
 	mad_stream_init (&stream);
+	mad_frame_init (&frame);
+	xing_init (&xing_h);
 
 	mad_stream_buffer (&stream, buf, len);
-		
-	if (mad_header_decode (&header, &stream) == -1) {
+
+	if (mad_frame_decode (&frame, &stream) == -1) {
 		XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
 		return;
 	}
-
-
+	
 	fsize = filesize * 8;
-	bitrate = header.bitrate;
 
-	mad_header_finish (&header);
+	if (xing_parse (&xing_h, stream.anc_ptr, stream.anc_bitlen) == 0) {
+		
+		/* @todo Hmm? This is SO strange. */
+		while (42) {
+			if (mad_frame_decode (&frame, &stream) == -1) {
+				if (MAD_RECOVERABLE (stream.error))
+					continue;
+				break;
+			}
+		}
+
+		if (xing_h.flags & XING_FRAMES) {
+			guint duration;
+			mad_timer_t timer;
+			gchar *tmp;
+
+			timer = frame.header.duration;
+			mad_timer_multiply (&timer, xing_h.frames);
+			duration = mad_timer_count (timer, MAD_UNITS_SECONDS);
+
+			XMMS_DBG ("XING duration %d", duration);
+			tmp = g_strdup_printf ("%d", duration);
+
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
+			g_free (tmp);
+		}
+
+		if (xing_h.flags & XING_BYTES) {
+			gchar *tmp;
+
+			tmp = g_strdup_printf ("%ld", xing_h.bytes / fsize);
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
+			g_free (tmp);
+		}
+
+		return;
+	}
+
+	bitrate = frame.header.bitrate;
+
+	mad_frame_finish (&frame);
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
@@ -140,7 +204,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_playlist_entry_t *entry;
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
-	gchar buf[4096];
+	gchar buf[8129];
 	gboolean id3handled = FALSE;
 	gint ret;
 
@@ -153,7 +217,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	entry = xmms_playlist_entry_new (NULL);
 
-	ret = xmms_transport_read (transport, buf, 4096);
+	ret = xmms_transport_read (transport, buf, 8129);
 	if (ret <= 0) {
 		return entry;
 	}
@@ -183,11 +247,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 				}
 				pos += ret;
 			}
-			ret = xmms_transport_read (transport, buf, 4096);
+			ret = xmms_transport_read (transport, buf, 8129);
 		} else {
 			/* just make sure buf is full */
-			memmove (buf, buf + head.len + 10, 4096 - (head.len+10));
-			ret = xmms_transport_read (transport, buf + 4096 - (head.len+10), head.len + 10);
+			memmove (buf, buf + head.len + 10, 8129 - (head.len+10));
+			ret = xmms_transport_read (transport, buf + 8129 - (head.len+10), head.len + 10);
 		}
 		
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
@@ -309,12 +373,14 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
 		}
-
+		
+		/* mad_synthpop_frame - go Depeche! */
 		mad_synth_frame (&data->synth, &data->frame);
 		
 		ch1 = data->synth.pcm.samples[0];
 		ch2 = data->synth.pcm.samples[1];
 		
+		/* pack_pcm is stolen from Leslie, thanks :) */
 		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
 		xmms_output_write (output, out, sizeof(out));
 		

@@ -1,4 +1,6 @@
-/*
+/** @file XING Header reader.
+ *
+ *
  * Orgin of this code from:
  * mad - MPEG audio decoder
  * Copyright (C) 2000-2001 Robert Leslie
@@ -15,7 +17,7 @@
 # define XING_MAGIC	(('X' << 24) | ('i' << 16) | ('n' << 8) | 'g') 
 /* * so lets do like this instead... */
 
-//#define XING_MAGIC "Xing"
+/*#define XING_MAGIC "Xing"*/
 
 /*
  * NAME:	xing->init()
@@ -33,7 +35,7 @@ void xing_init(struct xing *xing)
 int xing_parse(struct xing *xing, struct mad_bitptr ptr, unsigned int bitlen)
 {
 
- /* if (bitlen < 64 || memcmp (&ptr, XING_MAGIC, 4))*/
+/*  if (bitlen < 64 || memcmp (ptr.byte, XING_MAGIC, 4))*/
   if (bitlen < 64 || mad_bit_read(&ptr, 32) != XING_MAGIC)
     goto fail;
 
