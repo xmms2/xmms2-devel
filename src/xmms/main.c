@@ -34,6 +34,19 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 }
 
 void
+mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	xmms_playlist_entry_t entry;
+	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
+	XMMS_DBG ("mediainfo changed!");
+	
+	xmms_decoder_get_mediainfo (decoder, &entry);
+
+	XMMS_DBG ("Artist=%s, Album=%s, Title=%s, Year=%d, Tracknr=%d", entry.artist,entry.album,entry.title,entry.year,entry.tracknr);
+
+}
+
+void
 play_next (void)
 {
 	xmms_transport_t *transport;
@@ -70,16 +83,14 @@ play_next (void)
 	}
 
 	xmms_object_connect (XMMS_OBJECT (decoder), "eos-reached", eos_reached, NULL);
+	xmms_object_connect (XMMS_OBJECT (decoder), "mediainfo-changed", mediainfo_changed, NULL);
 
 	XMMS_DBG ("starting threads..");
 	xmms_transport_start (transport);
 	XMMS_DBG ("transport started");
 	xmms_decoder_start (decoder, transport, output);
 	XMMS_DBG ("output started");
-	
-	/*xmms_decoder_get_mediainfo (decoder, entry);*/
-	
-	
+
 	xmms_playlist_entry_free (entry);
 	
 }

@@ -71,6 +71,7 @@ xmms_output_open (xmms_plugin_t *plugin)
 		xmms_ringbuf_destroy (output->buffer);
 		g_mutex_free (output->mutex);
 		g_free (output);
+		return NULL;
 	}
 
 	return output;

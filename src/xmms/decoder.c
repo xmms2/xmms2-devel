@@ -142,19 +142,22 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
+void
+xmms_decoder_set_mediainfo (xmms_decoder_t *decoder,
+			xmms_playlist_entry_t *entry)
+{
+	decoder->mediainfo = entry;
+	xmms_object_emit (XMMS_OBJECT (decoder), "mediainfo-changed", NULL);
+}
+
 gboolean
 xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
 			xmms_playlist_entry_t *entry)
 {
 	xmms_playlist_entry_t *mediainfo;
-	xmms_decoder_get_media_info_method_t get_media_info;
 
 	g_return_val_if_fail (decoder, FALSE);
 	g_return_val_if_fail (entry, FALSE);
-
-	get_media_info = xmms_plugin_method_get (decoder->plugin, "get_media_info");
-	if (get_media_info)
-		get_media_info (decoder);
 
 	g_return_val_if_fail (decoder->mediainfo, FALSE);
 
