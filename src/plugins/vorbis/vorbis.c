@@ -118,12 +118,31 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	ptr = data->vc.user_comments;
 	entry = xmms_playlist_entry_new (NULL);
 
+	if (data->vi.bitrate_nominal) {
+		gint duration;
+		gint fsize = xmms_transport_size (xmms_decoder_transport_get (decoder)) * 8;
+
+		XMMS_DBG ("nominal bitrate %d", data->vi.bitrate_nominal);
+
+		if (!fsize) {
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
+		} else {
+			gchar *tmp;
+			duration = fsize / data->vi.bitrate_nominal;
+			tmp = g_strdup_printf ("%d", duration);
+
+			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
+			g_free (tmp);
+		}
+	}
+
 	if (ptr) {
 		while (*ptr) {
 			gchar **s;
 
 			s = g_strsplit (*ptr, "=", 2);
 			if (s && s[0] && s[1]) {
+				XMMS_DBG ("Vorbis comment: %s=%s", s[0], g_locale_from_utf8 (s[1], -1, NULL, NULL, NULL));
 				xmms_playlist_entry_set_prop (entry, s[0], s[1]);
 			}
 
