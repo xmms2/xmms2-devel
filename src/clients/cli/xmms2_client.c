@@ -78,10 +78,14 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 {
 
 	if (argc < 3) {
-		print_error ("Need a command to the medialib");
+		print_info ("Available medialib commands:");
+		print_info ("select [\"artist=Dismantled and tracknr=1\"]");
+		print_info ("selectadd [\"artist=Dismantled and tracknr=1\"]");
+		print_info ("query [\"raw sql statment\"]");
+		return;
 	}
 
-	if (g_strcasecmp (argv[2], "queryadd") == 0) {
+	if (g_strcasecmp (argv[2], "selectadd") == 0) {
 		xmmsc_result_t *res;
 		char query[1024];
 
@@ -92,11 +96,45 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 		xmmsc_result_unref (res);
 	} else if (g_strcasecmp (argv[2], "select") == 0) {
 		xmmsc_result_t *res;
+		char query[1024];
 
 		if (argc < 4) {
 			print_error ("Supply a select statement");
 		}
+		
+		g_snprintf (query, 1023, "select * from Media where %s", argv[3]);
+		print_info ("%s", query);
 
+		res = xmmsc_medialib_select (conn, query);
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+		
+		{
+			x_list_t *l, *n;
+			x_hash_t *e;
+
+			if (!xmmsc_result_get_hashlist (res, &l)) {
+				print_error ("Broken resultset...");
+			}
+
+			for (n = l; n; n = x_list_next (n)) {
+				e = n->data;
+				x_hash_foreach (e, print_hash, NULL);
+			}
+			
+		}
+
+		xmmsc_result_unref (res);
+	} else if (g_strcasecmp (argv[2], "query") == 0) {
+		xmmsc_result_t *res;
+
+		if (argc < 4) {
+			print_error ("Supply a query");
+		}
+		
 		res = xmmsc_medialib_select (conn, argv[3]);
 		xmmsc_result_wait (res);
 
