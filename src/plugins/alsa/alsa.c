@@ -45,6 +45,9 @@ typedef struct xmms_alsa_data_St {
 	snd_pcm_hw_params_t *hwparams;
 	gint frame_size;
 	gint rate;
+	snd_mixer_t *mixer;
+	gboolean have_mixer;
+	xmms_config_value_t *conf_mixer;
 } xmms_alsa_data_t;
 
 
@@ -110,6 +113,7 @@ xmms_plugin_get (void)
  */
 static gboolean
 xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right) {
+	XMMS_DBG ("XMMS_ALSA_MIXER_SET");
 	return TRUE;
 }
 
@@ -122,6 +126,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right) {
  */
 static gboolean
 xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right) {
+	XMMS_DBG ("XMMS_ALSA_MIXER_GET");
 	return TRUE;
 }
 
@@ -144,6 +149,8 @@ xmms_alsa_buffersize_get (xmms_output_t *output) {
 	data = xmms_output_plugin_data_get (output);
 	g_return_val_if_fail (data, 0);
 
+	XMMS_DBG ("XMMS_ALSA_BUFFERSIZE_GET");
+	
 	if ((err = snd_pcm_hw_params_get_buffer_size (data->hwparams, total_buf)) != 0) {
 		XMMS_DBG ("Unable to get buffer size (%s)", snd_strerror (err));
 		return FALSE;
@@ -174,9 +181,14 @@ xmms_alsa_flush (xmms_output_t *output) {
 	g_return_if_fail (output);
 	data = xmms_output_plugin_data_get (output);
 	g_return_if_fail (data);
+
+	XMMS_DBG("XMMS_ALSA_FLUSH");
 	
 	if ((err = snd_pcm_reset (data->pcm)) != 0)
 		XMMS_DBG ("flush failed (%s)", snd_strerror (err));
+
+	if ((err = snd_pcm_prepare (data->pcm)) != 0)
+		XMMS_DBG ("could not prepare soundcard (%s)", snd_strerror (err));
 }
 
 
@@ -200,9 +212,11 @@ xmms_alsa_open (xmms_output_t *output)
 	static gint alsa_device;
 	static gint alsa_subdevice;
 
-	if (!(data = xmms_output_plugin_data_get (output)))
-		data = g_new0 (xmms_alsa_data_t, 1);
+
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_plugin_data_get (output);
 	
+	XMMS_DBG("XMMS_ALSA_OPEN");	
 	dev = xmms_output_config_string_get (output, "device");
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -236,7 +250,7 @@ xmms_alsa_open (xmms_output_t *output)
 
 
 	/* allocate hardware parameters structure */
-	snd_pcm_hw_params_alloca (&(data->hwparams));
+	/*snd_pcm_hw_params_alloca (&(data->hwparams)); */
 
 	
 	alsa_bits_per_sample = snd_pcm_format_physical_width (SND_FORMAT);
@@ -244,9 +258,6 @@ xmms_alsa_open (xmms_output_t *output)
 
 	XMMS_DBG ("bps: %d, fs: %d", alsa_bits_per_sample, data->frame_size);
 	
-	/* give our output plugin to xmms2 and pray */
-	xmms_output_plugin_data_set (output, data);
-
 	return TRUE;
 }
 
@@ -258,7 +269,17 @@ xmms_alsa_open (xmms_output_t *output)
  */
 static gboolean
 xmms_alsa_new (xmms_output_t *output) {
-	return TRUE;
+	xmms_alsa_data_t *data;
+	
+	g_return_val_if_fail (output, FALSE);
+	data = g_new0 (xmms_alsa_data_t, 1);
+
+	data->have_mixer = FALSE;
+	XMMS_DBG ("XMMS_ALSA_NEW"); 
+	
+	xmms_output_plugin_data_set (output, data); 
+	
+	return TRUE; 
 }
 
 
@@ -275,6 +296,8 @@ xmms_alsa_set_hwparams(xmms_alsa_data_t *data) {
 	gint requested_period_time;
 
 	g_return_val_if_fail (data, 0);
+
+	XMMS_DBG ("XMMS_ALSA_SET_HWPARAMS");
 	
 	/* choose all parameters */
 	if ((err = snd_pcm_hw_params_any (data->pcm, data->hwparams)) < 0) {
@@ -371,7 +394,7 @@ xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
 	xmms_alsa_data_t *data;
 	gint err;
 	
-	XMMS_DBG ("trying to change rate to: %d", rate);
+	XMMS_DBG ("XMMS_ALSA_SAMPLERATE_SET: trying to change rate to: %d", rate);
 	
 	g_return_val_if_fail (output, 0);
 	data = xmms_output_plugin_data_get (output);
@@ -411,12 +434,20 @@ xmms_alsa_close (xmms_output_t *output)
 	g_return_if_fail (output);
 	data = xmms_output_plugin_data_get (output);
 	g_return_if_fail (data);
-
+	
+	XMMS_DBG("XMMS_ALSA_CLOSE");
+	
 	/* No more of that disco shit! */
 	if ((err = snd_pcm_drain (data->pcm)) != 0) {
 		xmms_log_fatal ("error draining buffer (%s)", snd_strerror (err));
 	}
 
+	if ((err = snd_pcm_hw_free (data->pcm)) != 0) {
+		xmms_log_fatal ("error freeing hwparams (%s)", snd_strerror (err));
+	}
+	
+	snd_pcm_hw_params_free (data->hwparams);
+	
 	/* Close device */
 	if ((err = snd_pcm_close (data->pcm)) != 0) {
 		xmms_log_fatal ("error closing audio device (%s)", snd_strerror (err));
@@ -424,7 +455,6 @@ xmms_alsa_close (xmms_output_t *output)
 		XMMS_DBG ("audio device closed");
 	}
 	
-	g_free (data);
 }
 
 
