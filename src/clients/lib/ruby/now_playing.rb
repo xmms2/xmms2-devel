@@ -18,7 +18,6 @@ xc.setup_with_gmain if $MODE == "GLIB"
 
 xc.broadcast_playback_current_id.notifier do |r|
 	puts "now playing: #{r.uint}"
-	r.restart
 end
 
 Ecore::main_loop_begin if $MODE == "ECORE"
