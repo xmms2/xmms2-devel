@@ -1,3 +1,7 @@
+"""
+Python bindings for XMMS2.
+"""
+
 cdef extern from "string.h" :
 	int strcmp (signed char *s1, signed char *s2)
 
@@ -93,6 +97,9 @@ cdef ResultNotifier (xmmsc_result_t *res, list) :
 	result.noti (result)
 
 cdef class XMMSResult :
+	"""
+	Class containing the results of some operation
+	"""
 	cdef xmmsc_result_t *res
 	cdef object notifier
 	cdef object user_data
@@ -107,10 +114,17 @@ cdef class XMMSResult :
 			raise ValueError
 
 	def wait (self) :
+		"""
+		Wait for the result from the daemon.
+		"""
 		self._check ()
 		xmmsc_result_wait (self.res)
 
 	def int (self) :
+		"""
+		Get data from the result structure as an int.
+		@rtype: int
+		"""
 		cdef signed int ret
 		self._check ()
 		if xmmsc_result_get_int (self.res, &ret) :
@@ -119,6 +133,10 @@ cdef class XMMSResult :
 			raise ValueError
 
 	def uint (self) :
+		"""
+		Get data from the result structure as an unsigned int.
+		@rtype: uint
+		"""
 		cdef unsigned int ret
 		self._check ()
 		if xmmsc_result_get_uint (self.res, &ret) :
@@ -127,6 +145,10 @@ cdef class XMMSResult :
 			raise ValueError
 
 	def string (self) :
+		"""
+		Get data from the result structure as a string.
+		@rtype: string
+		"""
 		cdef signed char *ret
 
 		self._check ()
@@ -137,6 +159,9 @@ cdef class XMMSResult :
 
 
 	def mediainfo (self) :
+		"""
+		@return: A hash table containing media info.
+		"""
 		cdef x_hash_t *hash
 		self._check ()
 
@@ -148,6 +173,9 @@ cdef class XMMSResult :
 			raise ValueError
 			
 	def intlist (self) :
+		"""
+		@return: A list of ints from the result structure.
+		"""
 		cdef x_list_t *l
 		cdef x_list_t *n
 
@@ -164,6 +192,9 @@ cdef class XMMSResult :
 			raise ValueError
 
 	def uintlist (self) :
+		"""
+		@return: A list of unsigned ints from the result structure.
+		"""
 		cdef x_list_t *l
 		cdef x_list_t *n
 
@@ -181,6 +212,9 @@ cdef class XMMSResult :
 
 
 	def stringlist (self) :
+		"""
+		@return: A list of strings from the result structure.
+		"""
 		cdef x_list_t *l
 		cdef x_list_t *n
 
@@ -221,22 +255,52 @@ cdef class XMMSResult :
 		return r
 
 	def iserror (self) :
+		"""
+		@return: Whether the result represents an error or not.
+		@rtype: Boolean
+		"""
 		return xmmsc_result_iserror (self.res)
 
 	def error (self) :
 		return xmmsc_result_get_error (self.res)
 
 	def __dealloc__ (self) :
+		"""
+		Deallocate the result.
+		"""
 		if self.res :
 			xmmsc_result_unref (self.res)
 	
 cdef class XMMS:
+	"""
+	This is the class representing the XMMS2 daemon itself. The methods in
+	this class may be used to control and interact with XMMS2.
+	"""
 	cdef xmmsc_connection_t *conn
 
 	def __init__ (self) :
+		"""
+		Constructs the object and initiates a connection to the XMMS2
+		daemon. All operations involving the daemon are done via this
+		connection.
+		"""
 		self.conn = xmmsc_init()
 
 	def connect (self, path) :
+		"""
+		Causes the XMMS object instance to connect to the appropriate
+		DBus path, for communication with the XMMS2 daemon. This path
+		defaults to /tmp/xmms-dbus-<username> if not specified.
+		Call this once you have instantiated the object:
+
+		C{import xmmsclient_binding}
+
+		C{xmms = xmmsclient_binding.XMMS ()}
+
+		C{xmms.connect (None)}
+
+		...
+		"""
 
 		if path :
 			if path[0] == '/' :
@@ -252,6 +316,9 @@ cdef class XMMS:
 			raise IOError
 
 	def quit (self) :
+		"""
+		Calling this method should cause the XMMS2 daemon to quit.
+		"""
 		xmmsc_quit (self.conn)
 
 	cdef _res (self, xmmsc_result_t *result) :
@@ -261,29 +328,70 @@ cdef class XMMS:
 		return r
 
 	def PlaybackPlaytime (self) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: Information about the playback time.
+		"""
 		return self._res (xmmsc_playback_playtime (self.conn))
 
 	def PlaybackStart (self) :
+		"""
+		Instructs the XMMS2 daemon to start playing the currently
+		selected file from the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playback_start (self.conn))
 
 	def PlaybackStop (self) :
+		"""
+		Instructs the XMMS2 daemon to stop playing the file
+		currently being played.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playback_stop (self.conn))
 
 	def PlaybackPause (self) :
+		"""
+		Instructs the XMMS2 daemon to pause playback.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playback_pause (self.conn))
 	
 	def PlaybackNext (self) :
+		"""
+		Instructs the XMMS2 daemon to move on to the next file in the
+		playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playback_next (self.conn))
 
-
-
 	def PlaybackCurrentId (self) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: The playlist id of the item currently selected.
+		"""
 		return self._res (xmmsc_playback_current_id (self.conn))
 
-	def PlaylistShuffle (self) :
+	def PlaylistShuffle (self):
+		"""
+		Instructs the XMMS2 daemon to shuffle the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playlist_shuffle (self.conn))
 
-	def PlaylistAdd (self, path) :
+	def PlaylistAdd(self, path):
+		"""
+		Adds a path or URL to a playable media item to the playlist.
+		Playable media items may be files or streams.
+		Requires a string 'path' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		if (path[0] == '/') :
 			cpath = "file://"+path
 		else :
@@ -292,21 +400,59 @@ cdef class XMMS:
 		return self._res (xmmsc_playlist_add (self.conn, cpath))
 
 	def PlaylistRemove (self, id) :
+		"""
+		Removes a certain media item from the playlist.
+		Requires a number 'id' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playlist_remove (self.conn, id))
 
 	def PlaylistSave (self, fname) :
+		"""
+		Saves the current playlist to file.
+		Requires a string 'fname' (filename to save to) as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playlist_save (self.conn, fname))
 
 	def PlaylistList (self) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: The current playlist.
+		"""
 		return self._res (xmmsc_playlist_list (self.conn))
 
 	def PlaylistSetNext (self, type, moment) :
+		"""
+		Sets the relative position to jump to, when calling
+		L{PlaybackNext}. For example,
+		C{xmms.PlaylistSetNext (0, 1)}
+		followed by C{xmms.PlaybackNext ()} causes the daemon to
+		jump forward in the playlist. To jump backward in the playlist,
+		use C{xmms.PlaylistSetNext (0, -1)}. You can check the return
+		value from this function to make sure it's safe to move to the
+		next playlist item.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playlist_set_next (self.conn, type, moment))
 
 	def PlaylistMediainfo (self, id) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: Information about the media item at the playlist
+		position specified.
+		"""
 		return self._res (xmmsc_playlist_get_mediainfo (self.conn, id))
 
 	def PlaylistSort (self, prop) :
+		"""
+		Sorts the playlist according to the property specified.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		return self._res (xmmsc_playlist_sort (self.conn, property))
 
 	def PlaylistEntryChanged (self) :
