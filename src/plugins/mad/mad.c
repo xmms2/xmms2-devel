@@ -174,11 +174,6 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 	guint bitrate=0;
 	gchar *tmp;
 
-	if (filesize == -1) {
-		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "0");
-		return;
-	}
-
 	data = xmms_decoder_private_data_get (decoder);
 
 	XMMS_DBG ("Buffer is %d bytes", len);
@@ -198,7 +193,12 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 
 	xmms_decoder_samplerate_set (decoder,
 		     frame.header.samplerate);
-	
+
+	if (filesize == -1) {
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "0");
+		return;
+	}
+
 	fsize = filesize * 8;
 	data->fsize = filesize;
 
