@@ -85,6 +85,12 @@ if base_env.HasGroup("curl"):
 	curl_http.AddFlagsFromGroup("curl")
 	curl_http.XmmsPlugin('xmms_curlhttp', ['curl/curl_http.c'])
 
+if base_env.HasGroup("samba"):
+	samba = base_env.Copy()
+	samba.AddFlagsFromGroup("glib")
+	samba.AddFlagsFromGroup("samba")
+	samba.XmmsPlugin('xmms_samba', ['samba/samba.c'])
+
 if base_env.HasGroup("alsa"):
 	alsa = base_env.Copy()
 	alsa.AddFlagsFromGroup("glib")

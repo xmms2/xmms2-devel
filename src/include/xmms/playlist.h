@@ -79,7 +79,7 @@ guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
 guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
 gboolean xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
-xmms_playlist_entry_t *xmms_playlist_get_next_entry (xmms_playlist_t *playlist);
+xmms_playlist_entry_t *xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_playlist_entry_t *xmms_playlist_get_prev_entry (xmms_playlist_t *playlist);
 xmms_playlist_entry_t *xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
 xmms_playlist_entry_t *xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err);

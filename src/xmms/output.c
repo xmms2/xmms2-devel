@@ -692,7 +692,7 @@ xmms_output_thread (gpointer data)
 		if (!output->decoder) {
 			xmms_playlist_entry_t *entry;
 
-			entry = xmms_playlist_get_next_entry (output->playlist);
+			entry = xmms_playlist_advance (output->playlist);
 
 			if (!entry) {
 				output->running = FALSE;
