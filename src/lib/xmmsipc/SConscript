@@ -10,7 +10,7 @@ env.AddFlagsFromGroup("glib")
 
 env.XmmsStaticLibrary('xmmsipc', ipclib_sources)
 
-test = base_env.Copy(LIBPATH=["#src/lib/xmmsipc"], LIBS=["xmmsipc"])
+test = base_env.Copy(LIBPATH=["#builddir/lib/xmmsipc"], LIBS=["xmmsipc"])
 test.AddFlagsFromGroup("glib")
 test.XmmsProgram ("testipc", ["test.c"])
 test.XmmsProgram ("testipcclient", ["testclient.c"])
