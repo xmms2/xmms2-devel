@@ -222,9 +222,9 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("output = %s", outname);
 
-	xmms_config_value_register ("core.decoder_buffersize", 
+	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
-	xmms_config_value_register ("core.transport_buffersize", 
+	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
 	o_plugin = xmms_output_find_plugin (outname);

@@ -235,7 +235,7 @@ xmms_transport_new ()
 	xmms_transport_t *transport;
 	xmms_config_value_t *val;
 
-	val = xmms_config_lookup ("core.transport_buffersize");
+	val = xmms_config_lookup ("transport.buffersize");
 
 	transport = xmms_object_new (xmms_transport_t, xmms_transport_destroy);
 	transport->mutex = g_mutex_new ();

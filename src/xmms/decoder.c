@@ -488,7 +488,7 @@ xmms_decoder_new ()
 	xmms_decoder_t *decoder;
 	xmms_config_value_t *val;
 
-	val = xmms_config_lookup ("core.decoder_buffersize");
+	val = xmms_config_lookup ("decoder.buffersize");
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
