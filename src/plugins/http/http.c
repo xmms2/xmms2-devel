@@ -27,6 +27,7 @@ typedef struct {
 	gchar *path;
 	gchar *server;
 	gchar *request;
+	gchar *requestp;
 	struct sockaddr_in *sa;
 	struct hostent *hp;
 } xmms_http_data_t;
@@ -41,6 +42,8 @@ static gboolean xmms_http_can_handle (const gchar *uri);
 static gboolean xmms_http_init (xmms_transport_t *transport, const gchar *uri);
 static gint xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gboolean x_request (xmms_transport_t *transport);
+static gint xmms_http_size (xmms_transport_t *transport);
+static void xmms_http_close (xmms_transport_t *transport);
 
 /*
  * Plugin header
@@ -61,6 +64,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_http_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_http_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_http_read);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_http_close);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_http_size);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	
@@ -193,22 +198,22 @@ x_request (xmms_transport_t *transport)
 				   "Connection: close\r\n"
 				   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
 				   data->path, data->server);
-
+			data->requestp = data->request;
 			XMMS_DBG ("%s", data->request);
 		}
 	}
 
-	reqlen = strlen(data->request);
+	reqlen = strlen(data->requestp);
 	
 	while (reqlen > 0) {
-		sent = send (data->fd, data->request, reqlen, 0);
+		sent = send (data->fd, data->requestp, reqlen, 0);
 		if(sent == -1 && errno == EAGAIN){
 			xmms_transport_plugin_data_set (transport, data);
 			return TRUE;
 		} else if(sent == -1){
 			return -1;
 		} else {
-			data->request += sent;
+			data->requestp += sent;
 			reqlen -= sent;
 		}
 	}
@@ -244,3 +249,24 @@ xmms_http_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	}
 }
 
+static void
+xmms_http_close (xmms_transport_t *transport)
+{
+	xmms_http_data_t *data;
+	g_return_if_fail (transport);
+
+	data = xmms_transport_plugin_data_get (transport);
+	g_return_if_fail (data);
+	
+	if (data->fd != -1){
+		close (data->fd);
+		free (data->sa);
+		free (data->request);
+	}
+	g_free (data);
+}
+static gint
+xmms_http_size (xmms_transport_t *transport)
+{
+	return 0;
+}
