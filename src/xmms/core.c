@@ -171,6 +171,9 @@ core_thread(gpointer data){
 	const gchar *mime;
 
 	while (running) {
+		
+		if (core->status != XMMS_CORE_PLAYBACK_STOPPED)
+			core->curr_song = xmms_playlist_get_next (core->playlist);
 
 		while (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
 			XMMS_DBG ("Waiting until playback starts...");
@@ -178,8 +181,6 @@ core_thread(gpointer data){
 			g_cond_wait (core->cond, core->mutex);
 			g_mutex_unlock (core->mutex);
 		}
-		
-		core->curr_song = xmms_playlist_get_next (core->playlist);
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
