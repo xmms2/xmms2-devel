@@ -431,9 +431,11 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 				   data->buffer + data->buffer_length,
 				   4096 - data->buffer_length);
 	
-	if (ret <= 0) {
+	if (ret < 0) {
 		XMMS_DBG ("EOF");
 		return FALSE;
+	} else if (ret == 0) {
+		return TRUE;
 	}
 
 	data->buffer_length += ret;
