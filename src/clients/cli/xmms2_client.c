@@ -721,6 +721,28 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	g_main_loop_run (ml);
 }
 
+cmds commands[];
+
+static void cmd_help (xmmsc_connection_t *conn, int argc, char **argv) {
+
+	int i;
+	if (argc == 2) {
+		// print help message for all commands
+		print_info ("Available commands:");
+		for (i = 0; commands[i].name; i++) {
+			print_info ("  %s - %s", commands[i].name, commands[i].help);
+		}
+	}
+	else if (argc == 3) {
+		// print help for specified command
+		for (i = 0; commands[i].name; i++) {
+			if (g_strcasecmp (commands[i].name, argv[2]) == 0) {
+				print_info ("  %s - %s", commands[i].name, commands[i].help);
+			}
+		}
+	}
+}
+
 /**
  * Defines all available commands.
  */
@@ -754,6 +776,7 @@ cmds commands[] = {
 	/*{ "statistics", "get statistics from server", cmd_stats },
 	 */
 	{ "quit", "make the server quit", cmd_quit },
+	{ "help", "print help about a command", cmd_help},
 
 	{ NULL, NULL, NULL },
 };
