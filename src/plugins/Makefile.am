@@ -1,2 +1,2 @@
-SUBDIRS=file mad
+SUBDIRS=file mad diskwrite
 

@@ -84,8 +84,10 @@ main (int argc, char **argv)
 
 		xmms_transport_start (transport);
 
-		xmms_transport_wait (transport);
-		xmms_playlist_entry_free (entry);
+/*		xmms_transport_wait (transport);*/
+/*		xmms_playlist_entry_free (entry);*/
+
+		sleep (1000);
 	}
 
 	return 0;
