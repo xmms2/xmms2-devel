@@ -139,7 +139,6 @@ xmmsc_send_hello (xmmsc_connection_t *c)
 	xmms_ipc_msg_put_string (msg, c->clientname);
 
 	result = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return result;
 }
@@ -501,7 +500,6 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 	xmms_ipc_msg_put_uint32 (msg, signalid);
 	
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	xmmsc_result_restartable (res, signalid);
 
@@ -529,7 +527,6 @@ xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
 	xmms_ipc_msg_put_uint32 (msg, signalid);
 	
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 	
 	xmmsc_result_restartable (res, signalid);
 
@@ -546,7 +543,6 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 
 	cid = xmmsc_next_id ();
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
-	xmms_ipc_msg_destroy (msg);
 
 	return xmmsc_result_new (c, cid);
 }

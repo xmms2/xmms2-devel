@@ -225,7 +225,6 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	xmms_ipc_msg_put_uint32 (msg, res->restart_signal);
 	
 	newres = xmmsc_send_msg (res->c, msg);
-	xmms_ipc_msg_destroy (msg);
 	
 	l = res->udata_list;
 	for (n = res->func_list; n; n = x_list_next (n)) {

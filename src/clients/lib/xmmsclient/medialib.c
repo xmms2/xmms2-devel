@@ -45,7 +45,6 @@ do_methodcall (xmmsc_connection_t *conn, guint id, const gchar *arg)
 	xmms_ipc_msg_put_string (msg, arg);
 
 	res = xmmsc_send_msg (conn, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }

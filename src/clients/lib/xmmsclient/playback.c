@@ -95,7 +95,6 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
 	xmms_ipc_msg_put_uint32 (msg, milliseconds);
 
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -118,7 +117,6 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 	xmms_ipc_msg_put_uint32 (msg, samples);
 
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }

@@ -59,7 +59,6 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 	xmms_ipc_msg_put_string (msg, property);
 
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 	
 	return res;
 }
@@ -93,7 +92,6 @@ xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SAVE);
 	xmms_ipc_msg_put_string (msg, filename);
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -155,7 +153,6 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
 	xmms_ipc_msg_put_string (msg, url);
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -175,7 +172,6 @@ xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
 	xmms_ipc_msg_put_uint32 (msg, id);
 	xmms_ipc_msg_put_int32 (msg, moves);
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 
@@ -197,7 +193,6 @@ xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *query)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MEDIALIBADD);
 	xmms_ipc_msg_put_string (msg, query);
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 
@@ -221,7 +216,6 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
 	xmms_ipc_msg_put_uint32 (msg, id);
 	res = xmmsc_send_msg (c, msg);
 
-	xmms_ipc_msg_destroy (msg);
 	return res;
 
 }
@@ -252,7 +246,6 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 	xmms_ipc_msg_put_uint32 (msg, id);
 
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -304,7 +297,6 @@ xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment)
 	xmms_ipc_msg_put_int32 (msg, moment);
 
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }

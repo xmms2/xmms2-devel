@@ -42,7 +42,7 @@ struct xmms_ipc_msg_St {
 	xmms_ipc_msg_data_t *data;
 	guint32 get_pos;
 	guint32 size;
-	guint32 written;
+	guint32 xfered;
 };
 
 xmms_ipc_msg_t *
@@ -214,11 +214,11 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 
 	len = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN;
 	
-	g_return_val_if_fail (len > msg->written, TRUE);
+	g_return_val_if_fail (len > msg->xfered, TRUE);
 	
 	ret = xmms_ipc_transport_write (transport, 
-					msg->data->rawdata + msg->written,
-					len - msg->written);
+					msg->data->rawdata + msg->xfered,
+					len - msg->xfered);
 	if (ret == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			return FALSE;
@@ -226,10 +226,50 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 		if (disconnected)
 			*disconnected = TRUE;
 	} else {
-		msg->written += ret;
+		msg->xfered += ret;
 	}
 
-	return len == msg->written;
+	return len == msg->xfered;
+}
+
+/**
+ *
+ */
+gboolean
+xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, gboolean *disconnected)
+{
+	guint ret, len;
+
+	while (TRUE) {
+		len = XMMS_IPC_MSG_HEAD_LEN;
+		if (msg->xfered >= XMMS_IPC_MSG_HEAD_LEN) {
+			len += xmms_ipc_msg_get_length (msg);
+			if (len > msg->size) {
+				msg->size = len;
+				msg->data = g_realloc (msg->data, msg->size);
+			}
+			if (msg->xfered == len)
+				return TRUE;
+		}
+
+
+		g_return_val_if_fail (msg->xfered < len, FALSE);
+
+		ret = xmms_ipc_transport_read (transport, 
+					       msg->data->rawdata + msg->xfered,
+					       len - msg->xfered);
+		
+		if (ret == -1) {
+			if (errno == EAGAIN || errno == EINTR)
+				return FALSE;
+		} else if (ret == 0) {
+			if (disconnected)
+				*disconnected = TRUE;
+			return FALSE;
+		} else {
+			msg->xfered += ret;
+		}
+	}
 }
 
 gboolean

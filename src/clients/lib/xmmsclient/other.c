@@ -45,7 +45,6 @@ xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val)
 	xmms_ipc_msg_put_string (msg, key);
 	xmms_ipc_msg_put_string (msg, val);
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
@@ -63,7 +62,6 @@ xmmsc_configval_get (xmmsc_connection_t *c, char *key)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_GETVALUE);
 	xmms_ipc_msg_put_string (msg, key);
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 	
 	return res;
 }
