@@ -9,6 +9,7 @@
 #include <glib.h>
 
 #include "xmmsclient.h"
+#include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
 
@@ -112,11 +113,11 @@ status_main(xmmsc_connection_t *conn)
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 
-	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYTIME_CHANGED, handle_playtime, NULL);
-	xmmsc_set_callback (conn, XMMSC_CALLBACK_INFORMATION, handle_information, NULL);
-	xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, conn);
-	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYBACK_STOPPED, handle_playback_stopped, conn);
-	xmmsc_set_callback (conn, XMMSC_CALLBACK_DISCONNECTED, handle_disconnected, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, NULL);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_mediainfo, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_STOP, handle_playback_stopped, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
 
 	id = xmmsc_get_playing_id (conn);
 	if (id) {

@@ -4,7 +4,7 @@ INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	@PACKAGE_CFLAGS@ \
-	-I$(top_srcdir)/../lib/xmmsclient
+	-I$(top_srcdir)/../lib/xmmsclient -I$(top_srcdir)/../../
 
 bin_PROGRAMS = xmms2-gtk2
 
