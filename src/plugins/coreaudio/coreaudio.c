@@ -297,8 +297,6 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 		return 0;
 	}
 
-	XMMS_DBG ("output is reporting %llf as samplesize", prop.mSampleRate);
-
 	/*prop.mSampleRate = rate;
 	prop.mFormatID = kAudioFormatLinearPCM;
 	prop.mFormatFlags |= ~kAudioFormatFlagIsFloat;

@@ -128,7 +128,7 @@ add_directory_to_playlist (xmmsc_connection_t *conn, char *directory,
 {
 	GDir *dir;
 	GSList *entries = NULL;
-	char *entry;
+	const char *entry;
 	char buf[PATH_MAX];
 
 	if (!(dir = g_dir_open (directory, 0, NULL))) {

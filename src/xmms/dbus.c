@@ -297,7 +297,7 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 			break;
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: 
 			{
-				gchar *url;
+				const gchar *url;
 				DBusMessageIter dictitr;
 
 				url = xmms_playlist_entry_url_get (arg->retval.playlist_entry);

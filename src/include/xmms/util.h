@@ -37,7 +37,7 @@
 #endif
 
 gchar *xmms_util_decode_path (const gchar *path);
-gchar *xmms_util_encode_path (gchar *path);
+gchar *xmms_util_encode_path (const gchar *path);
 guint xmms_util_time (void);
 
 #endif

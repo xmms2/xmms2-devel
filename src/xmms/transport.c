@@ -551,7 +551,7 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 	xmms_transport_open_method_t init_method;
 	xmms_transport_lmod_method_t lmod_method;
 	xmms_plugin_t *plugin;
-	gchar *url;
+	const gchar *url;
 	
 	plugin = transport->plugin;
 	
