@@ -303,6 +303,10 @@ cdef class XMMSResult :
 		return xmmsc_result_iserror (self.res)
 
 	def GetError (self) :
+		"""
+		@return: Error string from the result.
+		@rtype: String
+		"""
 		return xmmsc_result_get_error (self.res)
 
 	def __dealloc__ (self) :
@@ -314,12 +318,24 @@ cdef class XMMSResult :
 			xmmsc_result_unref (self.res)
 
 cdef class XMMS :
+	"""
+	This is the class representing the XMMS2 client itself. The methods in
+	this class may be used to control and interact with XMMS2.
+	"""
 	cdef xmmsc_connection_t *conn
 
 	def __new__ (self, clientname = "Python XMMSClient") :
+		"""
+		Initiates a connection to the XMMS2 daemon. All operations
+		involving the daemon are done via this connection.
+		"""
 		self.conn = xmmsc_init (clientname)
 
 	def GLibLoop (self) :
+		"""
+		Main client loop for PyGTK clients. Call this to run the client
+		once everything has been set up.
+		"""
 		cdef GMainLoop *ml
 		ml = g_main_loop_new (NULL, 0)
 		xmmsc_ipc_setup_with_gmain (self.conn, NULL)
@@ -327,6 +343,10 @@ cdef class XMMS :
 		g_main_loop_run (ml)
 
 	def PythonLoop (self) :
+		"""
+		Main client loop for most python clients. Call this to run the
+		client once everything has been set up.
+		"""
 		fd = xmmsc_ipc_fd_get (self.conn.ipc)
 		while True :
 			(i, o, e) = select ([fd], [], [])
@@ -334,6 +354,19 @@ cdef class XMMS :
 		
 
 	def Connect (self, path = None) :
+		"""
+		Connect to the appropriate IPC path, for communication with the
+		XMMS2 daemon. This path defaults to /tmp/xmms-ipc-<username> if
+		not specified. Call this once you have instantiated the object:
+
+		C{import xmmsclient}
+
+		C{xmms = xmmsclient.XMMS ()}
+
+		C{xmms.Connect ()}
+
+		...
+		"""
 		if path :
 			if xmmsc_connect (self.conn, path) :
 				return
@@ -344,6 +377,12 @@ cdef class XMMS :
 		raise IOError ("Couldn't connect to server!")
 
 	def PlaybackStart (self, myClass = None) :
+		"""
+		Instruct the XMMS2 daemon to start playing the currently
+		selected file from the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -357,6 +396,12 @@ cdef class XMMS :
 		return ret
 
 	def PlaybackStop (self, myClass = None) :
+		"""
+		Instruct the XMMS2 daemon to stop playing the file
+		currently being played.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -370,6 +415,12 @@ cdef class XMMS :
 		return ret
 
 	def PlaybackNext (self, myClass = None) :
+		"""
+		Instruct the XMMS2 daemon to move on to the next file in the
+		playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -383,6 +434,11 @@ cdef class XMMS :
 		return ret
 
 	def PlaybackPause (self, myClass = None) :
+		"""
+		Instruct the XMMS2 daemon to pause playback.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -396,6 +452,10 @@ cdef class XMMS :
 		return ret
 
 	def PlaybackCurrentID (self, myClass = None) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: The playlist id of the item currently selected.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -409,6 +469,12 @@ cdef class XMMS :
 		return ret
 
 	def PlaybackSeekMS (self, ms, myClass = None) :
+		"""
+		Seek to an absolute time position in the current file or
+		stream in playback.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -422,6 +488,12 @@ cdef class XMMS :
 		return ret
 
 	def PlaybackSeekSamples (self, samples, myClass = None) :
+		"""
+		Seek to an absolute number of samples in the current file or
+		stream in playback.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -435,6 +507,14 @@ cdef class XMMS :
 		return ret
 
 	def BroadcastPlaybackStatus (self, myClass = None) :
+		"""
+		Set a class to handle the playback status broadcast from the
+		XMMS2 daemon. Note: the handler class is usually a child of the
+		XMMSResult class.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is constantly updated with
+		the appropriate info.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -448,6 +528,14 @@ cdef class XMMS :
 		return ret
 
 	def BroadcastPlaybackCurrentID (self, myClass = None) :
+		"""
+		Set a class to handle the playback id broadcast from the
+		XMMS2 daemon. Note: the handler class is usually a child of the
+		XMMSResult class.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is constantly updated with
+		the appropriate info.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -461,6 +549,12 @@ cdef class XMMS :
 		return ret
 
 	def SignalPlaybackPlaytime (self, myClass = None) :
+		"""
+		Set a class to handle the playback playtime signal from the
+		XMMS2 daemon. This can be used to keep track of the amount of
+		time played on the current file/stream. Note: the handler
+		class is usually a child of the XMMSResult class.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -474,6 +568,11 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistShuffle (self, myClass = None) :
+		"""
+		Instruct the XMMS2 daemon to shuffle the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -487,6 +586,13 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistAdd (self, url, myClass = None) :
+		"""
+		Add a path or URL to a playable media item to the playlist.
+		Playable media items may be files or streams.
+		Requires a string 'url' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -500,6 +606,11 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistMedialibAdd (self, query, myClass = None) :
+		"""
+		Add items in the playlist by querying the MediaLib.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -513,6 +624,12 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistRemove (self, id, myClass = None) :
+		"""
+		Remove a certain media item from the playlist.
+		Requires a number 'id' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -526,6 +643,11 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistClear (self, myClass = None) :
+		"""
+		Clear the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -539,6 +661,12 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistSave (self, filename, myClass = None) :
+		"""
+		Save the current playlist to file.
+		Requires a string 'fname' (filename to save to) as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -552,6 +680,10 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistList (self, myClass = None) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: The current playlist.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -565,6 +697,11 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistGetMediainfo (self, id, myClass = None) :
+		"""
+		@rtype: L{XMMSResult}
+		@return: Information about the media item at the playlist
+		position specified.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -578,6 +715,11 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistSort (self, prop, myClass = None) :
+		"""
+		Sorts the playlist according to the property specified.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -591,6 +733,18 @@ cdef class XMMS :
 		return ret
 
 	def PlaylistSetNext (self, type, moment, myClass = None) :
+		"""
+		Set the relative position to jump to, when calling
+		L{PlaybackNext}. For example,
+		C{xmms.PlaylistSetNext (0, 1)}
+		followed by C{xmms.PlaybackNext ()} causes the daemon to
+		jump forward in the playlist. To jump backward in the playlist,
+		use C{xmms.PlaylistSetNext (0, -1)}. You can check the return
+		value from this function to make sure it's safe to move to the
+		next playlist item.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -604,6 +758,14 @@ cdef class XMMS :
 		return ret
 
 	def BroadcastPlaylistChanged (self, myClass = None) :
+		"""
+		Set a class to handle the playlist changed broadcast from the
+		XMMS2 daemon. (i.e. the player's playlist has changed) Note:
+		the handler class is usually a child of the XMMSResult class.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is updated with the
+		appropriate info.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -617,6 +779,15 @@ cdef class XMMS :
 		return ret
 
 	def BroadcastPlaylistEntryChanged (self, myClass = None) :
+		"""
+		Set a class to handle the playlist entry changed broadcast
+		from the XMMS2 daemon. (i.e. the current entry in the playlist
+		has changed) Note: the handler class is usually a child of the
+		XMMSResult class.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is updated with the
+		appropriate info.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -630,6 +801,11 @@ cdef class XMMS :
 		return ret
 
 	def ConfigvalSet (self, key, val, myClass = None) :
+		"""
+		Set a configuration value on the daemon, given a key.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -642,6 +818,11 @@ cdef class XMMS :
 		return ret
 
 	def ConfigvalGet (self, key, myClass = None) :
+		"""
+		Get the configuration value of a given key, from the daemon.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -654,6 +835,11 @@ cdef class XMMS :
 		return ret
 
 	def ConfigvalList (self, myClass = None) :
+		"""
+		Get list of configuration values on the daemon.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
@@ -666,6 +852,11 @@ cdef class XMMS :
 		return ret
 
 	def MedialibQuery (self, query, myClass = None) :
+		"""
+		Query the MediaLib.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
 		cdef XMMSResult ret
 		
 		if myClass :
