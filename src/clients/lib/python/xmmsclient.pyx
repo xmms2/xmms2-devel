@@ -110,6 +110,8 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_playlist_load (xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, char *url)
+	
+	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
@@ -1120,6 +1122,24 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_playlist_load (self.conn, playlistname)
+		ret.MoreInit ()
+		return ret
+
+	def SignalVisualisationData (self, myClass = None) :
+		"""
+		Tell server to send you VisData updates.
+		For drawing peek analyzer.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_signal_visualisation_data (self.conn)
 		ret.MoreInit ()
 		return ret
 
