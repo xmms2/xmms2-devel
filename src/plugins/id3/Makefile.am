@@ -1,0 +1,6 @@
+
+pkglib_LTLIBRARIES = libid3v1.la
+
+libid3v1_la_SOURCES = id3v1.c
+libid3v1_la_LDFLAGS = @PLUGIN_LDFLAGS@
+INCLUDES = @XMMS_CFLAGS@ @GLIB_CFLAGS@

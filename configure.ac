@@ -27,4 +27,5 @@ src/Makefile
 src/xmms/Makefile
 src/plugins/Makefile
 src/plugins/mad/Makefile
+src/plugins/id3/Makefile
 src/plugins/file/Makefile])
