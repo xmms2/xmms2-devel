@@ -11,6 +11,8 @@
 
 #include "interface.h"
 #include "support.h"
+#include <stdlib.h>
+#include <string.h>
 
 #include <xmmsclient.h>
 #include <xmms/signal_xmms.h>
@@ -77,7 +79,6 @@ void
 setup_playlist ()
 {
 	GtkListStore *store;
-	GtkTreeIter iter1;
 	GtkCellRenderer *renderer, *renderer_img;
 	GtkTreeViewColumn *column;
 	GtkWidget *tree = lookup_widget (playlistwin, "treeview1");

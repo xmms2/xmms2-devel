@@ -282,7 +282,7 @@ main()
 	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_PLAYTIME,
 			    handle_playtime, NULL);
 	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_CURRENTID,
-			    set_mediainfo, connection);
+			    set_mediainfo, (void *) connection);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);
 

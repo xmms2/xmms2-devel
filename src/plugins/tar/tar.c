@@ -367,7 +367,7 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 			return FALSE;
 		}
 
-		mime = xmms_magic_mime_from_file(xmms_transport_uri_get(thistransport));
+		mime = xmms_magic_mime_from_file (xmms_transport_uri_get(thistransport));
 		if (!mime) {
 			XMMS_DBG ("unknown mime in suburi");
 			g_free (transportdata);

@@ -226,7 +226,6 @@ x_request (xmms_transport_t *transport)
 	xmms_http_data_t *data;
 	gint sent;
 	gint reqlen;
-	gint error;
 
 	data = xmms_transport_plugin_data_get (transport);
 	if (data->state == RESOLVED){
