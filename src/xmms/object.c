@@ -21,6 +21,7 @@
 #include "xmms/playlist_entry.h"
 
 #include <stdarg.h>
+#include <string.h>
 
 /** @defgroup Object Object
   * @ingroup XMMSServer
@@ -174,7 +175,14 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 
 }
 
+void
+xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg)
+{
+	g_return_if_fail (arg);
 
+	memset (arg, 0, sizeof (xmms_object_cmd_arg_t));
+	xmms_error_reset (&arg->error);
+}
 
 void
 xmms_object_emit_f (xmms_object_t *object, guint32 signalid,

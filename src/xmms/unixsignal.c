@@ -54,6 +54,7 @@ sigwaiter (gpointer data)
 			case SIGINT:
 				XMMS_DBG ("Got SIGINT!");
 
+				xmms_object_cmd_arg_init (&arg);
 				memset (&arg, 0, sizeof (arg));
 				xmms_error_reset (&arg.error);
 				xmms_object_cmd_call (obj, XMMS_IPC_CMD_QUIT, &arg);

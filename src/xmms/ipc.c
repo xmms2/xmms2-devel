@@ -281,9 +281,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	}
 	g_mutex_unlock (global_ipc_lock);
 
-
-        memset (&arg, 0, sizeof (arg));
-        xmms_error_reset (&arg.error);
+	xmms_object_cmd_arg_init (&arg);
 
 	if (cmd->arg1) {
 		type_and_msg_to_arg (cmd->arg1, msg, &arg, 0);

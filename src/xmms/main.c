@@ -119,8 +119,7 @@ xmms_main_destroy (xmms_object_t *object)
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 
 	/* stop output */
-	memset (&arg, 0, sizeof (arg));
-	xmms_error_reset (&arg.error);
+	xmms_object_cmd_arg_init (&arg);
 
 	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output),
 	                      XMMS_IPC_CMD_STOP, &arg);

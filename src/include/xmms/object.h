@@ -113,6 +113,7 @@ void xmms_object_emit (xmms_object_t *object, guint32 signalid,
 void xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			 xmms_object_cmd_arg_type_t type, ...);
 
+void xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg);
 
 void xmms_object_cmd_add (xmms_object_t *object, guint cmdid, xmms_object_cmd_desc_t *desc);
 
