@@ -1,8 +1,9 @@
 
-plugin_linkflags="-module -avoid-version "
-#-export -symbols-regex \"xmms_plugin_get\" "
+Import('base_env')
 
-Export('plugin_linkflags')
+base_env = base_env.Copy(LINKFLAGS=["-module", "-avoid-version"])
 
+Export('base_env')
 SConscript('file/SConscript')
-SConscript('mad/SConscript')
+if base_env.HasGroup("mad"):
+	SConscript('mad/SConscript')
