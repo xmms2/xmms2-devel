@@ -99,6 +99,16 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 	return TRUE;
 }
 
+
+static void
+count_hash (gpointer key, gpointer value, gpointer udata)
+{
+	gint *i = (gint*)udata;
+
+	if (key && value)
+		(*i)++;
+}
+
 static void
 hash_to_dict (gpointer key, gpointer value, gpointer udata)
 {
@@ -124,8 +134,11 @@ xmms_ipc_handle_playlist_chmsg (xmms_ipc_msg_t *msg, xmms_playlist_changed_msg_t
 static void
 xmms_ipc_do_hashtable (xmms_ipc_msg_t *msg, GHashTable *table)
 {
-	guint s = g_hash_table_size (table);
-	xmms_ipc_msg_put_uint32 (msg, s);
+	gint i = 0;
+
+	g_hash_table_foreach (table, count_hash, &i);
+
+	xmms_ipc_msg_put_uint32 (msg, i);
 	g_hash_table_foreach (table, hash_to_dict, msg);
 }
 
