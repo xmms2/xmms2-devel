@@ -32,17 +32,14 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 6
+#define DB_VERSION 7
 
 const char create_Control_stm[] = "create table Control (version)";
-const char create_Media_stm[] = "create table Media (id primary_key, key, value)";
-const char create_Log_stm[] = "create table Log (id, starttime, value)";
+const char create_Media_stm[] = "create table Media (id, key, value, primary key (id, key))";
+const char create_Log_stm[] = "create table Log (id primary key, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary_key, name)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
-const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
-			      "create index prop_idx on Media (value);"
-                              "create index log_id on Log (id);"
-                              "create index playlist_idx on Playlist (name);";
+const char create_idx_stm[] = "create index prop_idx on Media (value);";
 
 static int
 xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
