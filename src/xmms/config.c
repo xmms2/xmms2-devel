@@ -275,6 +275,8 @@ xmms_config_save (const gchar *file)
 
 	fprintf (fp, "</xmms>\n");
 
+	fclose (fp);
+
 	return TRUE;
 }
 
