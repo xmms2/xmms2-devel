@@ -222,7 +222,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	xmms_playlist_entry_t *entry;
 	vorbis_info *vi;
 	double playtime;
-	char **ptr;
+	vorbis_comment *ptr;
 	gchar tmp[12];
 
 	g_return_if_fail (decoder);
@@ -249,21 +249,21 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 	}
 
-	ptr = ov_comment (&data->vorbisfile, -1)->user_comments;
+	ptr = ov_comment (&data->vorbisfile, -1);
 
 	if (ptr) {
-		while (*ptr) {
-			gchar **s;
-			s = g_strsplit (*ptr, "=", 2);
-			if (s && s[0] && s[1]) {
-				xmms_playlist_entry_property_set (entry, s[0], s[1]);
-			}
+		gint temp;
 
-			g_strfreev (s);
+		for (temp = 0; temp < ptr->comments; temp++) {
+			gchar **s; 
+
+			s = g_strsplit (ptr->user_comments[temp], "=", 2); 
+			xmms_playlist_entry_property_set (entry, s[0], s[1]); 
 			
-			++ptr;
+			g_strfreev (s); 
 		}
 	}
+		
 	
 	xmms_decoder_samplerate_set (decoder, vi->rate);
 
@@ -319,7 +319,7 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	g_return_val_if_fail (decoder, FALSE);
 	
 	data = xmms_decoder_private_data_get (decoder);
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (data, FALSE);
 
 	/* this produces 16bit signed PCM littleendian PCM data */
 	if (data->channels == 2) {
