@@ -13,6 +13,7 @@
 #include "ringbuf.h"
 #include "signal_xmms.h"
 #include "playlist.h"
+#include "core.h"
 
 #include <glib.h>
 #include <string.h>
@@ -263,6 +264,14 @@ xmms_transport_islocal (xmms_transport_t *transport)
 	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
 }
 
+gboolean
+xmms_transport_can_seek (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+}
+
 
 /**
  * Sets this transports mimetype.
@@ -360,20 +369,17 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 }
 
 /**
- * Gets the current entry
+ * Updates the current entry 
  */
-xmms_playlist_entry_t *
-xmms_transport_entry_get (xmms_transport_t *transport)
+
+void
+xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
-	xmms_playlist_entry_t *entry;
+	g_return_if_fail (transport);
+	g_return_if_fail (entry);
 
-	g_return_val_if_fail (transport, NULL);
-
-	xmms_transport_lock (transport);
-	entry = transport->entry;
-	xmms_transport_unlock (transport);
-
-	return entry;
+	xmms_playlist_entry_property_copy (entry, transport->entry);
+	xmms_core_playlist_mediainfo_changed (xmms_playlist_entry_id_get (transport->entry));
 }
 
 /**
@@ -681,6 +687,7 @@ xmms_transport_seek_real (xmms_transport_t *transport)
 {
 	xmms_transport_seek_method_t seek_method;
 	g_return_if_fail (transport);
+
 
 	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
 	g_return_if_fail (seek_method);
