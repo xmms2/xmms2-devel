@@ -9,6 +9,10 @@ file = base_env.Copy()
 file.AddFlagsFromGroup("glib")
 file.XmmsPlugin('xmms_file', ['file/file.c'])
 
+null = base_env.Copy()
+null.AddFlagsFromGroup("glib")
+null.XmmsPlugin('xmms_null', ['null/null.c'])
+
 if base_env.sys == 'Darwin':
 	ca = base_env.Copy()
 	ca.AddFlagsFromGroup("glib")
@@ -19,6 +23,11 @@ if base_env.sys == 'Linux':
 	oss = base_env.Copy()
 	oss.AddFlagsFromGroup("glib")
 	oss.XmmsPlugin('xmms_oss', ['oss/oss.c'])
+
+if base_env.sys == 'OpenBSD':
+	sun = base_env.Copy()
+	sun.AddFlagsFromGroup("glib")
+	sun.XmmsPlugin('xmms_sun', ['sun/sun.c'])
 
 m3u = base_env.Copy()
 m3u.AddFlagsFromGroup("glib")
@@ -82,14 +91,15 @@ cdae = base_env.Copy()
 if cdae.sys == 'Linux':
 	ossrc = 'cde/os_linux.c'
 
-cdae_sources = Split ("cde/cdtransport.c " + ossrc)
+	cdae_sources = Split ("cde/cdtransport.c " + ossrc)
 
-cdae.AddFlagsFromGroup("glib")
-cdae.XmmsPlugin('xmms_cdtransport', cdae_sources)
+	cdae.AddFlagsFromGroup("glib")
+	cdae.XmmsPlugin('xmms_cdtransport', cdae_sources)
 
-cdae_decoder = base_env.Copy ()
-cdae_decoder.AddFlagsFromGroup("glib")
-if cdae_decoder.HasGroup("curl"):
-	cdae_decoder.AddFlagsFromGroup("curl")
-cdae_decoder.XmmsPlugin('xmms_cddecoder', ['cde/cddecoder.c', 'cde/cddb.c'])
+	cdae_decoder = base_env.Copy ()
+	cdae_decoder.AddFlagsFromGroup("glib")
+
+	if cdae_decoder.HasGroup("curl"):
+		cdae_decoder.AddFlagsFromGroup("curl")
+	cdae_decoder.XmmsPlugin('xmms_cddecoder', ['cde/cddecoder.c', 'cde/cddb.c'])
 
