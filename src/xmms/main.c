@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 
 static xmms_playlist_t *playlist;

@@ -1,4 +1,11 @@
-xmms2 (1.90-2) unstable; urgency=low
+xmms2 (1.90-4) unstable; urgency=low
+
+  * Configfile support
+  * Bugfixes
+
+ -- Anders Gustafsson <andersg@xmms.org>  Sun, 20 Apr 2003 19:14:15 +0200
+
+xmms2 (1.90-3) unstable; urgency=low
 
   * Fixed copyright
 
