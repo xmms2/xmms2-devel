@@ -65,7 +65,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_connection_t *xmmsc_init (char *clientname)
 	void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, object (*callback) (object), object userdata)
 	signed int xmmsc_connect (xmmsc_connection_t *c, signed char *p)
-	void xmmsc_deinit (xmmsc_connection_t *c)
+	void xmmsc_unref (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit (xmmsc_connection_t *conn)
 
 	xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *)
@@ -377,7 +377,7 @@ cdef class XMMS :
 	def __dealloc__ (self) :
 		""" destroys it all! """
 
-		xmmsc_deinit (self.conn)
+		xmmsc_unref (self.conn)
 
 	def _disconnect_cb (self) :
 		self.disconnect_fun (self)

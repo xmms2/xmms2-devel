@@ -22,7 +22,7 @@
 
 void Init_Result (void);
 
-VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res,
-                             bool unref_on_free);
+VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
+                             bool unref, bool unref_children);
 
 #endif

@@ -34,7 +34,7 @@
 #include "rb_xmmsclient_main.h"
 #include "rb_result.h"
 
-#define METHOD_ADD_HANDLER(name, unref_on_free) \
+#define METHOD_ADD_HANDLER(name, unref) \
 	static VALUE c_##name (VALUE self) \
 	{ \
 		xmmsc_result_t *res; \
@@ -44,7 +44,7 @@
 \
 		res = xmmsc_##name (xmms->real); \
 \
-		o = TO_XMMS_CLIENT_RESULT (self, res, unref_on_free); \
+		o = TO_XMMS_CLIENT_RESULT (res, true, unref); \
 		rb_ary_push (xmms->results, o); \
 \
 		return o; \
@@ -65,8 +65,7 @@ static void c_mark (RbXmmsClient *xmms)
 
 static void c_free (RbXmmsClient *xmms)
 {
-	if (xmms->real)
-		xmmsc_deinit (xmms->real);
+	xmmsc_unref (xmms->real);
 
 #ifdef HAVE_ECORE
 	ecore_shutdown ();
@@ -115,18 +114,6 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 	return xmmsc_connect (xmms->real, p) ? Qtrue : Qfalse;
 }
 
-static VALUE c_disconnect (VALUE self)
-{
-	GET_OBJ (self, RbXmmsClient, xmms);
-
-	if (xmms->real) {
-		xmmsc_deinit (xmms->real);
-		xmms->real = NULL;
-	}
-
-	return Qtrue;
-}
-
 #ifdef HAVE_ECORE
 static VALUE c_setup_with_ecore (VALUE self)
 {
@@ -173,7 +160,7 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 
 	res = xmmsc_playback_seek_ms (xmms->real, NUM2UINT (ms));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res, true);
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -190,7 +177,7 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 
 	res = xmmsc_playback_seek_samples (xmms->real, NUM2UINT (samples));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res, true);
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -213,7 +200,7 @@ static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
 	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (type),
 	                               FIX2INT (moment));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res, true);
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -230,7 +217,7 @@ static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
 
 	res = xmmsc_playlist_get_mediainfo (xmms->real, FIX2INT (id));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res, true);
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -247,7 +234,7 @@ static VALUE c_configval_get (VALUE self, VALUE key)
 
 	res = xmmsc_configval_get (xmms->real, StringValuePtr (key));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res, true);
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -266,7 +253,7 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	res = xmmsc_configval_set (xmms->real, StringValuePtr (key),
 	                           StringValuePtr (val));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res, true);
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -282,7 +269,6 @@ void Init_XmmsClient (void)
 
 	rb_define_singleton_method (c, "new", c_new, 0);
 	rb_define_method (c, "connect", c_connect, -1);
-	rb_define_method (c, "disconnect", c_disconnect, 0);
 
 #ifdef HAVE_ECORE
 	rb_define_method (c, "setup_with_ecore", c_setup_with_ecore, 0);

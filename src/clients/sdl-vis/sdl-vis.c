@@ -374,7 +374,7 @@ main(int argc, char **argv)
 	g_main_loop_run (mainloop); /* GO GO GO! */
 
 	if (connection) {
-		xmmsc_deinit (connection);
+		xmmsc_unref (connection);
 	}
 
 	g_list_foreach (queue, free_queue_entry, NULL);
