@@ -186,10 +186,14 @@ xmms_mediainfo_thread_thread (gpointer data)
 			}
 
 			transport = xmms_transport_new ();
-			if (!transport || !xmms_transport_open (transport, entry)) {
+			if (!transport) {
 				goto cont;
 			}
 
+			if (!xmms_transport_open (transport, entry)) {
+				xmms_object_unref (transport);
+				goto cont;
+			}
 
 			if (lmod) {
 				const gchar *tmp;
