@@ -48,8 +48,10 @@ watch_callback (xmmsc_connection_t *conn, xmmsc_watch_action_t action,
                 void *data)
 {
 	xmmsc_watch_t *watch = data;
+	xmmsc_timeout_t *timeout = data;
 	void **watch_data;
 	int flags = ECORE_FD_ERROR;
+	double t;
 
 	switch (action) {
 		case XMMSC_WATCH_ADD:
@@ -57,7 +59,6 @@ watch_callback (xmmsc_connection_t *conn, xmmsc_watch_action_t action,
 				flags |= ECORE_FD_READ;
 			if (watch->flags & XMMSC_WATCH_OUT)
 				flags |= ECORE_FD_WRITE;
-
 
 			watch_data = malloc (2 * sizeof (void *));
 			watch->data = watch_data;
@@ -72,10 +73,17 @@ watch_callback (xmmsc_connection_t *conn, xmmsc_watch_action_t action,
 			break;
 		case XMMSC_WATCH_REMOVE:
 			watch_data = watch->data;
-
 			ecore_main_fd_handler_del (watch_data[1]);
-
 			free (watch->data);
+			break;
+		case XMMSC_TIMEOUT_ADD:
+			t = (double) timeout->interval / 1000;
+			timeout->data = ecore_timer_add (t, timeout->cb, timeout);
+			assert (timeout->data);
+			break;
+		case XMMSC_TIMEOUT_REMOVE:
+			assert (timeout->data);
+			ecore_timer_del (timeout->data);
 			break;
 		default:
 			break;
