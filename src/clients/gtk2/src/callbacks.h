@@ -30,3 +30,15 @@ on_playlist_row_activated              (GtkTreeView     *treeview,
                                         GtkTreePath     *path,
                                         GtkTreeViewColumn *column,
                                         gpointer         user_data);
+
+void
+on_playlist_Add_clicked                (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_playlist_clear_clicked              (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+on_playlist_delete_clicked             (GtkButton       *button,
+                                        gpointer         user_data);

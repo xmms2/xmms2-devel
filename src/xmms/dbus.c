@@ -49,8 +49,59 @@ static void do_send(gpointer data, gpointer user_data)
 	 dbus_connection_send (data, user_data, &clientser);
 }
 
-/** Send a dbus information message to all clients. */
+static void
+handle_playlist_changed_msg (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	const xmms_playlist_changed_msg_t *chmsg = data;
+	DBusMessage *msg=NULL;
+	DBusMessageIter itr;
 
+
+	switch (chmsg->type) {
+		case XMMS_PLAYLIST_CHANGED_ADD:
+			msg = dbus_message_new ("org.xmms.playlist.added", NULL);
+			dbus_message_append_iter_init (msg, &itr);
+			dbus_message_iter_append_uint32 (&itr, chmsg->id);
+			dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
+			break;
+		case XMMS_PLAYLIST_CHANGED_SHUFFLE:
+			msg = dbus_message_new ("org.xmms.playlist.shuffled", NULL);
+			break;
+		case XMMS_PLAYLIST_CHANGED_CLEAR:
+			msg = dbus_message_new ("org.xmms.playlist.cleared", NULL);
+			break;
+		case XMMS_PLAYLIST_CHANGED_REMOVE:
+			msg = dbus_message_new ("org.xmms.playlist.removed", NULL);
+			dbus_message_append_iter_init (msg, &itr);
+			dbus_message_iter_append_uint32 (&itr, chmsg->id);
+			break;
+		case XMMS_PLAYLIST_CHANGED_SET_POS:
+			msg = dbus_message_new ("org.xmms.playlist.jumped", NULL);
+			dbus_message_append_iter_init (msg, &itr);
+			dbus_message_iter_append_uint32 (&itr, chmsg->id);
+			break;
+		case XMMS_PLAYLIST_CHANGED_MOVE:
+			msg = dbus_message_new ("org.xmms.playlist.moved", NULL);
+			dbus_message_append_iter_init (msg, &itr);
+			dbus_message_iter_append_uint32 (&itr, chmsg->id);
+			dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
+			break;
+	}
+
+	XMMS_DBG ("Sending playlist changed message: %s", dbus_message_get_name (msg));
+	
+	g_mutex_lock (connectionslock);
+
+	if (connections) {
+		g_slist_foreach (connections, do_send, msg);
+	}
+
+	g_mutex_unlock (connectionslock);
+
+	dbus_message_unref (msg);
+}
+
+/** Send a dbus information message to all clients. */
 static void
 handle_information_msg (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
@@ -481,6 +532,9 @@ xmms_dbus_init(){
 	xmms_object_connect (XMMS_OBJECT (core), "information",
 			     handle_information_msg, NULL);
 
+
+	xmms_object_connect (XMMS_OBJECT (core), "playlist-changed",
+			     handle_playlist_changed_msg, NULL);
 
 
 	XMMS_DBG ("init done!");

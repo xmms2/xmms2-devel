@@ -342,6 +342,8 @@ handle_playlist_changed (xmms_object_t *object, gconstpointer data, gpointer use
 			XMMS_DBG ("We jumped in playlist");
 			break;
 	}
+
+	xmms_object_emit (XMMS_OBJECT (core), "playlist-changed", data);
 }
 
 

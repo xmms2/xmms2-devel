@@ -209,7 +209,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 	}
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
-	chmsg->type = XMMS_PLAYLIST_CHANGED_REMOVE;
+	chmsg->type = XMMS_PLAYLIST_CHANGED_MOVE;
 	chmsg->id = id;
 	chmsg->arg = GINT_TO_POINTER (steps);
 	xmms_object_emit (XMMS_OBJECT (playlist), "playlist-changed", chmsg);

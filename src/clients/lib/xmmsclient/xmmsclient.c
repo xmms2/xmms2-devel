@@ -25,6 +25,13 @@ static const char *playback_stopped_message[]={"org.xmms.playback.stopped"};
 static const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
+static const char *playlist_added[] = {"org.xmms.playlist.added"};
+static const char *playlist_shuffled[] = {"org.xmms.playlist.shuffled"};
+static const char *playlist_cleared[] = {"org.xmms.playlist.cleared"};
+static const char *playlist_removed[] = {"org.xmms.playlist.removed"};
+static const char *playlist_jumped[] = {"org.xmms.playlist.jumped"};
+static const char *playlist_moved[] = {"org.xmms.playlist.moved"};
+
 
 struct xmmsc_connection_St {
 	DBusConnection *conn;	
@@ -58,7 +65,7 @@ handle_playtime(DBusMessageHandler *handler,
 		cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYTIME_CHANGED);
 
 		if(cb){
-			cb->func(cb->userdata, GPOINTER_TO_UINT(tme));
+			cb->func(cb->userdata, GUINT_TO_POINTER (tme));
 		}
 	}
 
@@ -97,13 +104,13 @@ handle_mediainfo(DBusMessageHandler *handler,
 
 	dbus_message_iter_init (msg, &itr);
 	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-		int id = dbus_message_iter_get_uint32 (&itr);
+		guint id = dbus_message_iter_get_uint32 (&itr);
 		xmmsc_callback_desc_t *cb;
 
 		cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_MEDIAINFO_CHANGED);
 
 		if(cb){
-			cb->func(cb->userdata, GPOINTER_TO_UINT(id));
+			cb->func(cb->userdata, GUINT_TO_POINTER (id));
 		}
 	}
 
@@ -142,6 +149,133 @@ handle_disconnect (DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+
+static DBusHandlerResult
+handle_playlist_cleared (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYLIST_CLEARED);
+
+	if (cb) {
+		cb->func (cb->userdata, NULL);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_shuffled (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYLIST_SHUFFLED);
+
+	if (cb) {
+		cb->func (cb->userdata, NULL);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_jumped (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+	DBusMessageIter itr;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYLIST_JUMPED);
+
+	dbus_message_iter_init (msg, &itr);
+	if (cb) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			guint id = dbus_message_iter_get_uint32 (&itr);
+			cb->func (cb->userdata, GUINT_TO_POINTER (id));
+		}
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_removed (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+	DBusMessageIter itr;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYLIST_REMOVED);
+
+	dbus_message_iter_init (msg, &itr);
+	if (cb) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			guint id = dbus_message_iter_get_uint32 (&itr);
+			cb->func (cb->userdata, GUINT_TO_POINTER (id));
+		}
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_moved (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+	DBusMessageIter itr;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYLIST_MOVED);
+
+	dbus_message_iter_init (msg, &itr);
+
+	if (cb) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			guint id = dbus_message_iter_get_uint32 (&itr);
+			guint newpos = dbus_message_iter_get_uint32 (&itr);
+			guint foo[] = {id, newpos};
+
+			cb->func (cb->userdata, (void *)foo);
+		}
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_added (DBusMessageHandler *handler, 
+		DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+	xmmsc_callback_desc_t *cb;
+	DBusMessageIter itr;
+
+	cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_PLAYLIST_ADDED);
+
+	dbus_message_iter_init (msg, &itr);
+
+	printf ("DEBUG: apor är gröna!\n");
+
+	if (cb) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			guint id = dbus_message_iter_get_uint32 (&itr);
+			guint options = dbus_message_iter_get_uint32 (&itr);
+			guint foo[] = {id, options};
+
+			cb->func (cb->userdata, (void *)foo);
+		}
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
 
 xmmsc_connection_t *
 xmmsc_init ()
@@ -202,6 +336,25 @@ xmmsc_connect (xmmsc_connection_t *c)
 	hand = dbus_message_handler_new (handle_information, c, NULL);
 	dbus_connection_register_handler (conn, hand, information_message, 1);
 
+
+	/* playlist messages */
+	hand = dbus_message_handler_new (handle_playlist_added, c, NULL);
+	dbus_connection_register_handler (conn, hand, playlist_added, 1);
+
+	hand = dbus_message_handler_new (handle_playlist_shuffled, c, NULL);
+	dbus_connection_register_handler (conn, hand, playlist_shuffled, 1);
+
+	hand = dbus_message_handler_new (handle_playlist_removed, c, NULL);
+	dbus_connection_register_handler (conn, hand, playlist_removed, 1);
+
+	hand = dbus_message_handler_new (handle_playlist_cleared, c, NULL);
+	dbus_connection_register_handler (conn, hand, playlist_cleared, 1);
+
+	hand = dbus_message_handler_new (handle_playlist_jumped, c, NULL);
+	dbus_connection_register_handler (conn, hand, playlist_jumped, 1);
+	
+	hand = dbus_message_handler_new (handle_playlist_moved, c, NULL);
+	dbus_connection_register_handler (conn, hand, playlist_moved, 1);
 
 	c->conn=conn;
 	return TRUE;

@@ -270,6 +270,15 @@ create_playlist (void)
   g_signal_connect ((gpointer) treeview1, "row_activated",
                     G_CALLBACK (on_playlist_row_activated),
                     NULL);
+  g_signal_connect ((gpointer) Add, "clicked",
+                    G_CALLBACK (on_playlist_Add_clicked),
+                    NULL);
+  g_signal_connect ((gpointer) clear, "clicked",
+                    G_CALLBACK (on_playlist_clear_clicked),
+                    NULL);
+  g_signal_connect ((gpointer) delete, "clicked",
+                    G_CALLBACK (on_playlist_delete_clicked),
+                    NULL);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (playlist, playlist, "playlist");

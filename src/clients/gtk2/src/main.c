@@ -39,7 +39,7 @@ get_icon ()
 void
 fill_playlist ()
 {
-	GtkTreeStore *store;
+	GtkListStore *store;
 	GtkTreeIter iter1;
 	GtkCellRenderer *renderer, *renderer_img;
 	GtkTreeViewColumn *column;
@@ -48,7 +48,7 @@ fill_playlist ()
 	gint id = xmmsc_get_playing_id (conn);
 	GList *list = xmmsc_playlist_list (conn);
 
-	store = gtk_tree_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
+	store = gtk_list_store_new (3, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_INT);
 
 	for (node = list; node; node = g_list_next (node)) {
 		gchar *file;
@@ -56,17 +56,17 @@ fill_playlist ()
 	
 		file = strrchr (entry->url, '/');
 		
-		gtk_tree_store_append (store, &iter1, NULL);
+		gtk_list_store_append (store, &iter1);
 		
 		if (id == entry->id) {
 			printf ("%d\n", entry->id);
-			gtk_tree_store_set (store, &iter1, 
+			gtk_list_store_set (store, &iter1, 
 					0, get_icon (), 
 					1, file+1, 
 					2, entry->id, 
 					-1);
 		} else {
-			gtk_tree_store_set (store, &iter1, 
+			gtk_list_store_set (store, &iter1, 
 					1, file+1, 
 					2, entry->id, 
 					-1);
@@ -151,10 +151,17 @@ handle_playtime (void *userdata, void *arg)
 		lasttime = tme;
 	}
 }
+
 static void
 handle_information (void *userdata, void *arg)
 {
 }
+
+static void
+handle_disconnected (void *userdata, void *arg)
+{
+}
+
 static void
 handle_mediainfo (void *userdata, void *arg)
 {
@@ -162,6 +169,7 @@ handle_mediainfo (void *userdata, void *arg)
 
 	mediainfo (id);
 }
+
 static void
 handle_playback_stopped (void *userdata, void *arg)
 {
@@ -169,9 +177,85 @@ handle_playback_stopped (void *userdata, void *arg)
 	state = STOP;
 	mediainfo (0);
 }
+
 static void
-handle_disconnected (void *userdata, void *arg)
+handle_playlist_added (void *userdata, void *arg)
 {
+	GtkTreeModel *store;
+	GtkWidget *tree;
+	GHashTable *entry;
+	GtkTreeIter iter1;
+	gchar *file;
+	guint * foo = arg;
+	guint id, option;
+
+	printf ("DEBUG: playlist_added\n");
+
+	if (!playlistwin)
+		return;
+
+	id = foo[0];
+	option = foo[1];
+
+	tree = lookup_widget (playlistwin, "treeview1");
+	if (!tree)
+		return;
+	store = gtk_tree_view_get_model (GTK_TREE_VIEW (tree));
+
+	gtk_list_store_append (GTK_LIST_STORE (store), &iter1);
+
+	entry = xmmsc_playlist_get_mediainfo (conn, id);
+
+	file = g_hash_table_lookup (entry, "uri");
+	file = g_strdup (strrchr (file, '/'));
+
+	gtk_list_store_set (GTK_LIST_STORE (store), &iter1, 
+			0, NULL,
+			1, file+1,
+			2, id,
+			-1);
+}
+
+static void
+handle_playlist_removed (void *userdata, void *arg)
+{
+	printf ("DEBUG: playlist_removed\n");
+}
+
+static void
+handle_playlist_moved (void *userdata, void *arg)
+{
+	printf ("DEBUG: playlist_moved\n");
+}
+
+static void
+handle_playlist_jumped (void *userdata, void *arg)
+{
+	printf ("DEBUG: playlist_jumped\n");
+}
+
+static void
+handle_playlist_shuffled (void *userdata, void *arg)
+{
+	printf ("DEBUG: playlist_shuffled\n");
+}
+
+static void
+handle_playlist_cleared (void *userdata, void *arg)
+{
+	GtkTreeModel *store;
+	GtkWidget *tree;
+
+	printf ("DEBUG: playlist_cleared\n");
+
+	if (!playlistwin)
+		return;
+
+	tree = lookup_widget (playlistwin, "treeview1");
+	store = gtk_tree_view_get_model (GTK_TREE_VIEW (tree));
+
+	gtk_list_store_clear (GTK_LIST_STORE (store));
+
 }
 
 static void
@@ -224,6 +308,14 @@ main (int argc, char *argv[])
 		xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, conn);
 		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYBACK_STOPPED, handle_playback_stopped, conn);
 		xmmsc_set_callback (conn, XMMSC_CALLBACK_DISCONNECTED, handle_disconnected, conn);
+
+		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_ADDED, handle_playlist_added, NULL);
+		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_REMOVED, handle_playlist_removed, NULL);
+		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_MOVED, handle_playlist_moved, conn);
+		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_JUMPED, handle_playlist_jumped, conn);
+		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_SHUFFLED, handle_playlist_shuffled, conn);
+		xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYLIST_CLEARED, handle_playlist_cleared, conn);
+
 		xmmsc_glib_setup_mainloop (conn, NULL);
 
 		mediainfo (xmmsc_get_playing_id (conn));
