@@ -177,7 +177,9 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 		memset (line, '\0', 80);
 
-		if (!x_hash_lookup (tab, "title")) {
+		if (x_hash_lookup (tab, "channel")) {
+			xmmsc_entry_format (line, sizeof (line)-1, "%c - %g", tab);
+		} else if (!x_hash_lookup (tab, "title")) {
 			xmmsc_entry_format (line, sizeof(line)-1, "%f (%m:%s)", tab);
 		} else {
 			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
@@ -473,7 +475,11 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		if (id == mid) {
 			memset (songname, 0, 60);
 			printf ("\n");
-			xmmsc_entry_format (songname, 60, "%a - %t", hash);
+			if (x_hash_lookup (hash, "channel")) {
+				xmmsc_entry_format (songname, 60, "%c", hash);
+			} else {
+				xmmsc_entry_format (songname, 60, "%a - %t", hash);
+			}
 			tmp = x_hash_lookup (hash, "duration");
 			if (tmp)
 				curr_dur = atoi (tmp);
