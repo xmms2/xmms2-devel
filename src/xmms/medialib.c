@@ -134,8 +134,10 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 		return;
 
 	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
-	if (!mid) 
+	if (!mid) {
+		xmms_object_unref (entry);
 		return;
+	}
 
 	if (status == XMMS_OUTPUT_STATUS_STOP) {
 		const gchar *tmp, *sek;
@@ -147,7 +149,10 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 		}
 		
 		XMMS_DBG ("ENTRY STOPPED value = %d", value);
+
 		sek = xmms_playlist_entry_property_get (entry, "laststarted");
+		if (!sek)
+			xmms_object_unref (entry);
 		g_return_if_fail (sek);
 
 		g_mutex_lock (medialib->mutex);
@@ -166,13 +171,14 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 					 mid, (guint)stime);
 
 		g_mutex_unlock (medialib->mutex);
-		if (!ret) {
-			return;
-		}
 
-		snprintf (tmp, 16, "%u", (guint)stime);
-		xmms_playlist_entry_property_set (entry, "laststarted", tmp);
+		if (ret) {
+			snprintf (tmp, 16, "%u", (guint)stime);
+			xmms_playlist_entry_property_set (entry, "laststarted", tmp);
+		}
 	}
+
+	xmms_object_unref (entry);
 }
 
 

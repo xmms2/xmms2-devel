@@ -132,6 +132,7 @@ xmms_main_destroy (xmms_object_t *object)
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
+	xmms_dbus_unregister_object ("main");
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
@@ -241,6 +242,12 @@ main (int argc, char **argv)
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
+	xmms_config_value_register ("decoder.use_replaygain", "0",
+	                            NULL, NULL);
+	xmms_config_value_register ("decoder.replaygain_mode", "track",
+	                            NULL, NULL);
+	xmms_config_value_register ("decoder.use_replaygain_anticlip", "1",
+	                            NULL, NULL);
 
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);

@@ -123,6 +123,18 @@ xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object)
 
 }
 
+void
+xmms_dbus_unregister_object (const gchar *objectpath)
+{
+	gchar *fullpath;
+
+	fullpath = g_strdup_printf ("/xmms/%s", objectpath);
+
+	XMMS_DBG ("UNREGISTERING: '%s'", fullpath);
+
+	g_hash_table_remove (exported_objects, fullpath);
+}
+
 static void
 xmms_dbus_onchange (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 {
