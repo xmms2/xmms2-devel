@@ -21,6 +21,10 @@
 #include "xmms/ipc_msg.h"
 #include "xmms/xmmsclient.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct xmmsc_ipc_St xmmsc_ipc_t;
 
 typedef void (*xmmsc_ipc_wakeup_t) (xmmsc_ipc_t *);
@@ -46,6 +50,10 @@ enum {
 	XMMSC_IPC_IO_IN,
 	XMMSC_IPC_IO_OUT,
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
