@@ -869,6 +869,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_mediainfo, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playlist_entry_changed, handle_mediainfo, conn);
 
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_ipc_setup_with_gmain (conn);
