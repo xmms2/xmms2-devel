@@ -46,6 +46,10 @@ eq = base_env.Copy()
 eq.AddFlagsFromGroup("glib")
 eq.XmmsPlugin('xmms_eq', ['eq/eq.c'])
 
+replaygain = base_env.Copy()
+replaygain.AddFlagsFromGroup("glib")
+replaygain.XmmsPlugin('xmms_replaygain', ['replaygain/replaygain.c'])
+
 diskwrite = base_env.Copy()
 diskwrite.AddFlagsFromGroup("glib")
 diskwrite.XmmsPlugin('xmms_diskwrite', ['diskwrite/diskwrite.c'])

@@ -553,7 +553,7 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, x
 	return mid;
 }
 
-
+#if 0
 static gint
 xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 {
@@ -565,6 +565,7 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 
 	return g_strcasecmp (tmpa, tmpb);
 }
+#endif
 
 /** Sorts the playlist by properties.
  *

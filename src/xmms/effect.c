@@ -43,6 +43,7 @@ struct xmms_effect_St {
 	void (*destroy) (xmms_effect_t *);
 	gboolean (*format_set) (xmms_effect_t *, xmms_audio_format_t *);
 	void (*run) (xmms_effect_t *, gchar *, guint);
+	void (*current_mlib_entry) (xmms_effect_t *, xmms_medialib_entry_t);
 
 	gpointer *private_data;
 	xmms_plugin_t *plugin;
@@ -51,6 +52,11 @@ struct xmms_effect_St {
 	xmms_config_value_t *cfg_enabled;
 	gboolean enabled;
 };
+
+static void
+on_currentid_changed (xmms_object_t *object,
+                      const xmms_object_cmd_arg_t *arg,
+                      xmms_effect_t *effect);
 
 void
 xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)
@@ -151,6 +157,10 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 	effect->run = xmms_plugin_method_get (plugin,
 	                                      XMMS_PLUGIN_METHOD_PROCESS);
 
+	effect->current_mlib_entry =
+		xmms_plugin_method_get (plugin,
+		                        XMMS_PLUGIN_METHOD_CURRENT_MEDIALIB_ENTRY);
+
 	effect->destroy = xmms_plugin_method_get (plugin,
 	                                          XMMS_PLUGIN_METHOD_DESTROY);
 
@@ -168,6 +178,11 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 		xmms_config_value_callback_set (effect->cfg_enabled,
 		                                on_enabled_changed, effect);
 	}
+
+	xmms_object_connect (XMMS_OBJECT (output),
+	                     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
+	                     (xmms_object_handler_t ) on_currentid_changed,
+	                     effect);
 
 	return effect;
 }
@@ -190,6 +205,15 @@ xmms_effect_free (xmms_effect_t *effect)
 	}
 
 	g_free (effect);
+}
+
+static void
+on_currentid_changed (xmms_object_t *object,
+                      const xmms_object_cmd_arg_t *arg,
+                      xmms_effect_t *effect)
+{
+	effect->current_mlib_entry (effect,
+		(xmms_medialib_entry_t) arg->retval.uint32);
 }
 
 /** @} */

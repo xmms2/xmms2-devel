@@ -745,7 +745,8 @@ xmms_output_decoder_start (xmms_output_t *output)
 			break;
 	}
 
-	if (!xmms_decoder_init (decoder, output->format_list)) {
+	if (!xmms_decoder_init (decoder, output->format_list,
+	                        output->effects)) {
 		XMMS_DBG ("Couldn't initialize decoder");
 
 		xmms_object_unref (decoder);
@@ -755,7 +756,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
 			     decoder_ended, output);
 
-	xmms_decoder_start (decoder, output->effects, output);
+	xmms_decoder_start (decoder, output);
 
 	g_queue_push_tail (output->decoder_list, decoder);
 
