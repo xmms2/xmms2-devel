@@ -28,6 +28,35 @@
 static xmms_core_t core_object;
 xmms_core_t *core = &core_object;
 
+struct xmms_core_St {
+	xmms_object_t object;
+
+	xmms_output_t *output;
+	xmms_decoder_t *decoder;
+	xmms_transport_t *transport;
+
+	xmms_playlist_t *playlist;
+	xmms_playlist_entry_t *curr_song;
+	xmms_mediainfo_thread_t *mediainfothread;
+
+	xmms_effect_t *effects;
+	
+	xmms_config_data_t *config;
+
+	GCond *cond;
+	GMutex *mutex;
+	
+	gint status;
+	gint playlist_op;
+
+	gboolean flush;
+};
+
+typedef enum {
+	XMMS_CORE_PLAYBACK_RUNNING,
+	XMMS_CORE_PLAYBACK_STOPPED
+} xmms_core_playback_status_t;
+
 static gboolean running = TRUE;
 /**
  *
@@ -77,8 +106,6 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 
 	if (core->playlist_op == XMMS_CORE_PREV_SONG)
 		core->playlist_op = XMMS_CORE_NEXT_SONG;
-
-	g_cond_signal (core->cond);
 }
 
 /**
@@ -92,6 +119,25 @@ xmms_core_output_set (xmms_output_t *output)
 	g_return_if_fail (core->output==NULL);
 	core->output = output;
 	xmms_object_connect (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, eos_reached, NULL);
+}
+
+
+static void
+wake_core ()
+{
+	if (core->decoder) {
+		xmms_decoder_destroy (core->decoder);
+		core->decoder = NULL;
+	}
+}
+
+
+xmms_config_data_t *
+xmms_core_config_get (xmms_core_t *core)
+{
+	g_return_val_if_fail (core, NULL);
+
+	return core->config;
 }
 
 /**
@@ -108,7 +154,8 @@ xmms_core_play_next ()
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->playlist_op = XMMS_CORE_NEXT_SONG;
-		g_cond_signal (core->cond);
+		core->flush = TRUE;
+		wake_core ();
 	} else {
 		next_song ();
 	}
@@ -119,7 +166,8 @@ xmms_core_play_prev ()
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->playlist_op = XMMS_CORE_PREV_SONG;
-		g_cond_signal (core->cond);
+		core->flush = TRUE;
+		wake_core ();
 	} else {
 		prev_song ();
 	}
@@ -131,7 +179,8 @@ xmms_core_playback_stop ()
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
 		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STOP, NULL);
-		g_cond_signal (core->cond);
+		core->flush = TRUE;
+		wake_core ();
 	} else {
 		XMMS_DBG ("xmms_core_playback_stop with status != XMMS_CORE_PLAYBACK_RUNNING");
 	}
@@ -189,7 +238,8 @@ xmms_core_playlist_jump (guint id)
 	core->playlist_op = XMMS_CORE_HOLD_SONG;
 
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
-		g_cond_signal (core->cond);
+		core->flush = TRUE;
+		wake_core ();
 	} else {
 		XMMS_DBG ("xmms_core_playback_next with status != XMMS_CORE_PLAYBACK_RUNNING");
 	}
@@ -273,59 +323,15 @@ xmms_core_init ()
 	xmms_object_init (XMMS_OBJECT (core));
 	core->cond = g_cond_new ();
 	core->mutex = g_mutex_new ();
-
-}
-
-static void
-xmms_core_mimetype_callback (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	xmms_playlist_plugin_t *plsplugin;
-	const gchar *mime;
-
-	mime = xmms_transport_mimetype_get (core->transport);
-	if (!mime) {
-		xmms_transport_close (core->transport);
-		xmms_core_play_next ();
-	}
-
-	XMMS_DBG ("mime-type: %s", mime);
-
-	plsplugin = xmms_playlist_plugin_new (mime);
-	if (plsplugin) {
-
-		/* This is a playlist file... */
-		XMMS_DBG ("Playlist!!");
-		xmms_playlist_plugin_read (plsplugin, core->playlist, core->transport);
-
-		/* we don't want it in the playlist. */
-		xmms_playlist_id_remove (core->playlist, xmms_playlist_entry_id_get (core->curr_song));
-
-		/* cleanup */
-		xmms_playlist_plugin_free (plsplugin);
-		xmms_core_play_next ();
-	}
-
-	xmms_playlist_entry_mimetype_set (core->curr_song, mime);
-
-	core->decoder = xmms_decoder_new ();
-	if (!xmms_decoder_open (core->decoder, core->curr_song)) {
-		xmms_decoder_destroy (core->decoder);
-		xmms_core_play_next ();
-	}
-
-	xmms_object_connect (XMMS_OBJECT (core->decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID,
-			     handle_mediainfo_changed, NULL);
-
-	XMMS_DBG ("starting threads..");
-	XMMS_DBG ("transport started");
-	xmms_decoder_start (core->decoder, core->transport, core->effects, core->output);
-	XMMS_DBG ("decoder started");
+	core->flush = FALSE;
 
 }
 
 static gpointer 
 core_thread (gpointer data)
 {
+	xmms_playlist_plugin_t *plsplugin;
+	const gchar *mime;
 
 	core->playlist_op = XMMS_CORE_HOLD_SONG;
 
@@ -369,18 +375,54 @@ core_thread (gpointer data)
 			continue;
 		}
 		
-		xmms_object_connect (XMMS_OBJECT (core->transport), 
+/*		xmms_object_connect (XMMS_OBJECT (core->transport), 
 				XMMS_SIGNAL_TRANSPORT_MIMETYPE,
-				xmms_core_mimetype_callback, NULL);
+				xmms_core_mimetype_callback, NULL);*/
 
 		XMMS_DBG ("Starting transport");
 		xmms_transport_start (core->transport);
-
-
+		
 		XMMS_DBG ("Waiting for mimetype");
-		g_mutex_lock (core->mutex);
-		g_cond_wait (core->cond, core->mutex);
-		g_mutex_unlock (core->mutex);
+		mime = xmms_transport_mimetype_get_wait (core->transport);
+		if (!mime) {
+			xmms_transport_close (core->transport);
+			xmms_core_play_next ();
+		}
+
+		XMMS_DBG ("mime-type: %s", mime);
+	
+		plsplugin = xmms_playlist_plugin_new (mime);
+		if (plsplugin) {
+
+			/* This is a playlist file... */
+			XMMS_DBG ("Playlist!!");
+			xmms_playlist_plugin_read (plsplugin, core->playlist, core->transport);
+
+			/* we don't want it in the playlist. */
+			xmms_playlist_id_remove (core->playlist, xmms_playlist_entry_id_get (core->curr_song));
+
+			/* cleanup */
+			xmms_playlist_plugin_free (plsplugin);
+			xmms_core_play_next ();
+		}
+
+		xmms_playlist_entry_mimetype_set (core->curr_song, mime);
+
+		core->decoder = xmms_decoder_new ();
+		if (!xmms_decoder_open (core->decoder, core->curr_song)) {
+			xmms_decoder_destroy (core->decoder);
+			xmms_core_play_next ();
+		}
+
+		xmms_object_connect (XMMS_OBJECT (core->decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID,
+			    	handle_mediainfo_changed, NULL);
+
+		XMMS_DBG ("starting threads..");
+		XMMS_DBG ("transport started");
+		xmms_decoder_start (core->decoder, core->transport, core->effects, core->output);
+		XMMS_DBG ("decoder started");
+
+		xmms_decoder_wait (core->decoder);
 
 		XMMS_DBG ("destroying decoder");
 		if (core->decoder)
@@ -388,9 +430,12 @@ core_thread (gpointer data)
 		XMMS_DBG ("closing transport");
 		if (core->transport)
 			xmms_transport_close (core->transport);
-		XMMS_DBG ("Flushing buffers");
-		if (core->output)
-			xmms_output_flush (core->output);
+		if (core->flush) {
+			XMMS_DBG ("Flushing buffers");
+			if (core->output)
+				xmms_output_flush (core->output);
+			core->flush = FALSE;
+		}
 		
 	}
 

@@ -42,6 +42,7 @@ struct xmms_transport_St {
 	GMutex *mutex;
 	GCond *cond;
 	GCond *seek_cond;
+	GCond *mime_cond;
 	GThread *thread;
 	/** This is true if we are currently buffering. */
 	gboolean running;
@@ -142,6 +143,8 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 	
 	if (transport->running)
 		xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
+
+	g_cond_signal (transport->mime_cond);
 }
 
 /**
@@ -160,6 +163,7 @@ xmms_transport_new ()
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
 	transport->seek_cond = g_cond_new ();
+	transport->mime_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
 	transport->want_seek = FALSE;
 
@@ -247,8 +251,10 @@ xmms_transport_suburl_get (const xmms_transport_t *const transport)
 }
 
 /**
-  * Gets the current mimetype
-  */
+ * Gets the current mimetype
+ * This can return NULL if plugin has not
+ * called xmms_transport_mimetype_set()
+ */
 const gchar *
 xmms_transport_mimetype_get (xmms_transport_t *transport)
 {
@@ -257,6 +263,27 @@ xmms_transport_mimetype_get (xmms_transport_t *transport)
 
 	xmms_transport_lock (transport);
 	ret =  transport->mime_type;
+	xmms_transport_unlock (transport);
+
+	return ret;
+}
+
+/**
+ * Like xmms_transport_mimetype_get but blocks if
+ * transport plugin has not yet called mimetype_set
+ */
+const gchar *
+xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
+{
+	const gchar *ret;
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	if (!transport->mime_type) {
+		XMMS_DBG ("Wating for mime_cond");
+		g_cond_wait (transport->mime_cond, transport->mutex);
+	}
+	ret = transport->mime_type;
 	xmms_transport_unlock (transport);
 
 	return ret;
@@ -527,6 +554,7 @@ xmms_transport_destroy (xmms_transport_t *transport)
 		close_method (transport);
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->seek_cond);
+	g_cond_free (transport->mime_cond);
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (transport));

@@ -344,6 +344,7 @@ xmms_output_samplerate_set (xmms_output_t *output, guint rate)
 		output->open_samplerate = rate;
 	}
 	recalculate_resampler (output);
+
 }
 
 gboolean
@@ -532,11 +533,11 @@ xmms_output_thread (gpointer data)
 			    in other in number of samples. Maybe we
 			    want a xmms_sample_t and a XMMS_SAMPLE_SIZE */
 			
-			played_time = (guint)(output->played/(4.0f*output->samplerate/1000.0f));
+			played_time = (guint)(output->played/(4.0f*output->open_samplerate/1000.0f));
 
 			if (buffersize_get_method) {
 				guint buffersize = buffersize_get_method (output);
-				buffersize = buffersize/(2.0f*output->samplerate/1000.0f);
+				buffersize = buffersize/(2.0f*output->open_samplerate/1000.0f);
 /*				XMMS_DBG ("buffer: %dms", buffersize);*/
 
 				if (played_time >= buffersize) {

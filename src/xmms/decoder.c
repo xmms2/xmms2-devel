@@ -355,7 +355,7 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
 		xmms_decoder_lock (decoder);
 		decoder->running = FALSE;
 		xmms_decoder_unlock (decoder);
-		g_thread_join (decoder->thread);
+		//g_thread_join (decoder->thread);
 	} else {
 		xmms_decoder_destroy_real (decoder);
 	}
@@ -387,14 +387,16 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_e
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
 }
 
-/*void
+void
 xmms_decoder_wait (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
 
+	if (decoder->running)
+		g_thread_join (decoder->thread);
 
 }
-*/
+
 xmms_playlist_entry_t *
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)
