@@ -95,6 +95,17 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmmsc_result_t *res;
 
 	res = xmmsc_ipc_result_lookup (ipc, msg->cid);
+
+	if (msg->cmd == XMMS_IPC_CMD_ERROR) {
+		gchar *errstr;
+		gint len;
+
+		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len))
+			errstr = g_strdup ("No errormsg!");
+
+		xmmsc_result_seterror (res, errstr);
+	}
+		
 	if (res) {
 		xmmsc_result_run (res, msg);
 	} else {
