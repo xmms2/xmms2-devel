@@ -279,6 +279,9 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 
 	xmms_vorbis_get_media_info (decoder);
 
+	XMMS_DBG ("vorbis samplerate: %d", data->vi.rate);
+	xmms_decoder_samplerate_set (decoder, data->vi.rate);
+
 	XMMS_DBG ("vorbis_init ok!");
 
 	data->inited = 1;
