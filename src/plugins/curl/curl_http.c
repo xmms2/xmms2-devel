@@ -213,7 +213,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	}
 
 	/* Perhaps we should only wait for 1 byte? */
-	xmms_ringbuf_wait_used (data->ringbuf, len, data->mutex);
+	xmms_ringbuf_wait_used (data->ringbuf, 1, data->mutex);
 
 	if (xmms_ringbuf_iseos (data->ringbuf)) {
 		gint val = -1;
@@ -231,7 +231,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	/* normal file transfer */
 
 	if (!data->know_meta_offset || !data->stream_with_meta) {
-		ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
+		ret = xmms_ringbuf_read_wait (data->ringbuf, buffer, len, data->mutex);
 		g_mutex_unlock (data->mutex);
 		return ret;
 	}
@@ -246,22 +246,16 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 
 		data->bytes_since_meta = 0;
 
-		xmms_ringbuf_read (data->ringbuf, &magic, 1);
+		xmms_ringbuf_read_wait (data->ringbuf, &magic, 1, data->mutex);
 
 		if (magic == 0) {
-
-			ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
-			data->bytes_since_meta += ret;
-
-			g_mutex_unlock (data->mutex);
-			return ret;
+			goto cont;
 		}
 
 		metadata = g_malloc0 (magic * 16);
 		g_return_val_if_fail (metadata, -1);
 
-		xmms_ringbuf_wait_used (data->ringbuf, magic * 16, data->mutex);
-		ret = xmms_ringbuf_read (data->ringbuf, metadata, magic * 16);
+		ret = xmms_ringbuf_read_wait (data->ringbuf, metadata, magic * 16, data->mutex);
 
 		XMMS_DBG ("Shoutcast metadata: %s", metadata);
 
@@ -289,21 +283,20 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 		/* we want to read more data anyway, so fall thru here */
 	}
 
-	/* Make sure we have at least *something* to read */
-	xmms_ringbuf_wait_used (data->ringbuf, 1, data->mutex);
+cont:
 
 	/* are we trying to read past metadata? */
 
 	if (data->bytes_since_meta + len > data->meta_offset) {
-		ret = xmms_ringbuf_read (data->ringbuf, buffer,
-		                         data->meta_offset - data->bytes_since_meta);
+		ret = xmms_ringbuf_read_wait (data->ringbuf, buffer,
+		                         data->meta_offset - data->bytes_since_meta, data->mutex);
 		data->bytes_since_meta += ret;
 
 		g_mutex_unlock (data->mutex);
 		return ret;
 	}
 
-	ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
+	ret = xmms_ringbuf_read_wait (data->ringbuf, buffer, len, data->mutex);
 	data->bytes_since_meta += ret;
 
 	g_mutex_unlock (data->mutex);
@@ -384,8 +377,7 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 	g_return_val_if_fail (data, 0);
 
 	g_mutex_lock (data->mutex);
-	xmms_ringbuf_wait_free (data->ringbuf, size * nmemb, data->mutex);
-	ret = xmms_ringbuf_write (data->ringbuf, ptr, size * nmemb);
+	ret = xmms_ringbuf_write_wait (data->ringbuf, ptr, size * nmemb, data->mutex);
 	g_mutex_unlock (data->mutex);
 
 	return ret;
