@@ -39,7 +39,8 @@ public:
 	void setDuration (int);
 	void setCurrent (bool);
 	void paintCell (QPainter *, const QColorGroup &, int, int, int);
-	unsigned int Id () { return m_id; }
+	unsigned int Id (void) { return m_id; };
+	int duration (void) { return m_duration; };
 
 protected:
 	QString m_artist;

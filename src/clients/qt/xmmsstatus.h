@@ -34,6 +34,7 @@ public:
 	void setTME (QString *str);
 	void setCTME (QString *str);
 	QString *currentTME (void) { return m_ctme; };
+	QString *str (void) { return m_str; };
 
 protected:
 	void paintEvent (QPaintEvent *);
