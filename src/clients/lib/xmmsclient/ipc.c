@@ -117,7 +117,7 @@ gboolean
 xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 {
 	gchar buffer[4096];
-	xmms_ipc_msg_t *msg;
+	xmms_ipc_msg_t *msg = NULL;
 	gint ret;
 	g_return_val_if_fail (ipc, FALSE);
 
@@ -143,6 +143,8 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 			break;
 		} else {
 			msg = xmms_ipc_msg_read (ipc->read_buffer);
+			if (!msg)
+				continue;
 			g_mutex_unlock (ipc->mutex);
 #if HEAVY_DEBUG
 			printf ("Read msg with command %d\n", msg->cmd);
