@@ -19,9 +19,7 @@ xmms_output_plugin_data_get (xmms_output_t *output)
 	gpointer ret;
 	g_return_val_if_fail (output, NULL);
 
-	xmms_output_lock (output);
 	ret = output->plugin_data;
-	xmms_output_unlock (output);
 
 	return ret;
 }
@@ -29,9 +27,7 @@ xmms_output_plugin_data_get (xmms_output_t *output)
 void
 xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
 {
-	xmms_output_lock (output);
 	output->plugin_data = data;
-	xmms_output_unlock (output);
 }
 
 void

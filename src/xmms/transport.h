@@ -23,6 +23,7 @@ struct xmms_transport_St {
 
 	GMutex *mutex;
 	GCond *cond;
+	GCond *seek_cond;
 	GThread *thread;
 	gboolean running;
 

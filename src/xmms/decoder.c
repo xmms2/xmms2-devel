@@ -35,9 +35,7 @@ xmms_decoder_plugin_data_get (xmms_decoder_t *decoder)
 	gpointer ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	xmms_decoder_lock (decoder);
 	ret = decoder->plugin_data;
-	xmms_decoder_unlock (decoder);
 
 	return ret;
 }
@@ -47,9 +45,7 @@ xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data)
 {
 	g_return_if_fail (decoder);
 
-	xmms_decoder_lock (decoder);
 	decoder->plugin_data = data;
-	xmms_decoder_unlock (decoder);
 }
 
 xmms_transport_t *

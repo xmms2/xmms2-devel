@@ -131,15 +131,8 @@ xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (mtx);
 
 	
-	while ((xmms_ringbuf_free (ringbuf) < len) && (xmms_ringbuf_eos (ringbuf))) {
-#ifdef DEBUG
-		XMMS_DBG ("waiting for %u free bytes in buffer", len); 
-#endif
+	while ((xmms_ringbuf_free (ringbuf) < len) && !ringbuf->eos)
 		g_cond_wait (ringbuf->free_cond, mtx);
-#ifdef DEBUG
-		XMMS_DBG ("woke up, %u bytes free", xmms_ringbuf_free (ringbuf));
-#endif
-	}
 }
 
 void
@@ -149,7 +142,7 @@ xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (len > 0);
 	g_return_if_fail (mtx);
 
-	while ((xmms_ringbuf_used (ringbuf) < len) && (xmms_ringbuf_eos (ringbuf)))
+	while ((xmms_ringbuf_used (ringbuf) < len) && !ringbuf->eos)
 		g_cond_wait (ringbuf->used_cond, mtx);
 }
 
@@ -171,7 +164,6 @@ xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
 
 	ringbuf->eos = eos;
 	if (eos) {
-		XMMS_DBG ("Sending broadcasts");
 		g_cond_broadcast (ringbuf->eos_cond);
 		g_cond_broadcast (ringbuf->used_cond);
 		g_cond_broadcast (ringbuf->free_cond);
