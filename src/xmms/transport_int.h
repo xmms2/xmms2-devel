@@ -5,6 +5,8 @@
  * Macros
  */
 
+#include "playlist.h"
+
 #define xmms_transport_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_transport_unlock(t) g_mutex_unlock ((t)->mutex)
 
@@ -12,7 +14,7 @@
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_transport_t *xmms_transport_open (const gchar *uri);
+xmms_transport_t *xmms_transport_open (xmms_playlist_entry_t *entry);
 
 const gchar *xmms_transport_mime_type_get (xmms_transport_t *transport);
 
