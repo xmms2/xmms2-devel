@@ -163,6 +163,14 @@ xmmsc_playback_current_id (xmmsc_connection_t *c)
 	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_CURRENTID);
 }
 
+void
+xmmsc_playback_status (xmmsc_connection_t *c)
+{
+	int cserial;
+	cserial = xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
+	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_STATUS);
+}
+
 int
 xmmscs_playback_current_id (xmmsc_connection_t *c)
 {

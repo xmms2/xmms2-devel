@@ -87,6 +87,7 @@ static void xmms_playback_pause (xmms_playback_t *playback);
 static void xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds);
 static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples);
 static void xmms_playback_jump (xmms_playback_t *playback, guint id);
+static guint xmms_playback_status (xmms_playback_t *playback);
 
 /**
  * @internal
@@ -230,6 +231,13 @@ xmms_playback_currentid (xmms_playback_t *playback)
 	if (!playback->current_song)
 		return 0;
 	return xmms_playlist_entry_id_get (playback->current_song);
+}
+
+XMMS_METHOD_DEFINE (status, xmms_playback_status, xmms_playback_t *, UINT32, NONE, NONE);
+static guint
+xmms_playback_status (xmms_playback_t *playback)
+{
+	return (guint) playback->status;
 }
 
 XMMS_METHOD_DEFINE (seek_ms, xmms_playback_seekms, xmms_playback_t *, NONE, UINT32, NONE);
@@ -390,6 +398,7 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_SEEKSAMPLES, XMMS_METHOD_FUNC (seek_samples));
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_CPLAYTIME, XMMS_METHOD_FUNC (current_playtime));
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_JUMP, XMMS_METHOD_FUNC (jump));
+	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_STATUS, XMMS_METHOD_FUNC (status));
 	
 	xmms_dbus_register_object ("playback", XMMS_OBJECT (playback));
 

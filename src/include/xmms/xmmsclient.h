@@ -69,6 +69,7 @@ void xmmsc_playback_current_id (xmmsc_connection_t *c);
 void xmmsc_playback_next(xmmsc_connection_t *);
 void xmmsc_playback_prev(xmmsc_connection_t *);
 void xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id);
+void xmmsc_playback_status (xmmsc_connection_t *c);
 
 void xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
 void xmmsc_file_list (xmmsc_connection_t *c, char *path);
