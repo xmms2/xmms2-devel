@@ -48,7 +48,7 @@ void xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout);
 
 enum {
 	XMMSC_IPC_IO_IN,
-	XMMSC_IPC_IO_OUT,
+	XMMSC_IPC_IO_OUT
 };
 
 #ifdef __cplusplus
