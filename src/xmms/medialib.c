@@ -366,7 +366,7 @@ void
 xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
 {
 	xmms_medialib_entry_t entry;
-	xmms_mediainfo_thread_t *mt;
+	xmms_mediainfo_reader_t *mr;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (url);
@@ -375,8 +375,8 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 
 	entry = xmms_medialib_entry_new (url);
 
-	mt = xmms_playlist_mediainfo_thread_get (medialib->playlist);
-	xmms_mediainfo_entry_add (mt, entry);
+	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
+	xmms_mediainfo_entry_add (mr, entry);
 }
 
 static guint

@@ -89,7 +89,7 @@ GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 void xmms_playlist_wait (xmms_playlist_t *playlist);
 GList *xmms_playlist_stats (xmms_playlist_t *playlist, GList *list);
 
-xmms_mediainfo_thread_t *xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist);
+xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
 
 /*
  * Entry modifications

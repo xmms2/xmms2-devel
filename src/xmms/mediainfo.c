@@ -18,7 +18,7 @@
 
 
 /** @file
- * This file controls the mediainfothread.
+ * This file controls the mediainfo reader thread.
  *
  */
 
@@ -39,17 +39,17 @@
 
 #include <glib.h>
 
-/** @defgroup MediaInfoThread MediaInfoThread
+/** @defgroup MediaInfoReader MediaInfoReader
   * @ingroup XMMSServer
-  * @brief The mediainfo thread.
+  * @brief The mediainfo reader.
   *
-  * When a item is added to the playlist the mediainfo thread will
+  * When a item is added to the playlist the mediainfo reader will
   * start extracting the information from this entry and update it
   * if additional information is found.
   * @{
   */
 
-struct xmms_mediainfo_thread_St {
+struct xmms_mediainfo_reader_St {
 	GThread *thread;
 	GMutex *mutex;
 	GCond *cond;
@@ -59,67 +59,67 @@ struct xmms_mediainfo_thread_St {
 	xmms_playlist_t *playlist;
 };
 
-static gpointer xmms_mediainfo_thread_thread (gpointer data);
+static gpointer xmms_mediainfo_reader_thread (gpointer data);
 static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata);
 
 
 /**
-  * Start a new mediainfo thread
+  * Start a new mediainfo reader thread
   */
 
-xmms_mediainfo_thread_t *
-xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
+xmms_mediainfo_reader_t *
+xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 {
-	xmms_mediainfo_thread_t *mtt;
+	xmms_mediainfo_reader_t *mrt;
 
 	g_return_val_if_fail (playlist, NULL);
 
-	mtt = g_new0 (xmms_mediainfo_thread_t, 1);
+	mrt = g_new0 (xmms_mediainfo_reader_t, 1);
 
-	mtt->mutex = g_mutex_new ();
-	mtt->cond = g_cond_new ();
-	mtt->playlist = playlist;
-	mtt->queue = g_queue_new ();
-	mtt->running = TRUE;
-	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
+	mrt->mutex = g_mutex_new ();
+	mrt->cond = g_cond_new ();
+	mrt->playlist = playlist;
+	mrt->queue = g_queue_new ();
+	mrt->running = TRUE;
+	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, FALSE, NULL);
 
-	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
+	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mrt);
 	
 
-	return mtt;
+	return mrt;
 }
 
 /**
-  * Kill the mediainfo thread
+  * Kill the mediainfo reader thread
   */
 
 void
-xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
+xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
 {
-	g_mutex_lock (mit->mutex);
+	g_mutex_lock (mir->mutex);
 
-	while (g_queue_pop_head (mit->queue))
+	while (g_queue_pop_head (mir->queue))
 		;
-	mit->running = FALSE;
-	g_cond_signal (mit->cond);
+	mir->running = FALSE;
+	g_cond_signal (mir->cond);
 
-	g_mutex_unlock (mit->mutex);
+	g_mutex_unlock (mir->mutex);
 
-	g_thread_join (mit->thread);
+	g_thread_join (mir->thread);
 
-	g_queue_free (mit->queue);
+	g_queue_free (mir->queue);
 }
 
 void
-xmms_mediainfo_entry_add (xmms_mediainfo_thread_t *mt, xmms_medialib_entry_t entry)
+xmms_mediainfo_entry_add (xmms_mediainfo_reader_t *mr, xmms_medialib_entry_t entry)
 {
-	g_return_if_fail (mt);
+	g_return_if_fail (mr);
 	g_return_if_fail (entry);
 
-	g_mutex_lock (mt->mutex);
-	g_queue_push_tail (mt->queue, GUINT_TO_POINTER (entry));
-	g_cond_signal (mt->cond);
-	g_mutex_unlock (mt->mutex);
+	g_mutex_lock (mr->mutex);
+	g_queue_push_tail (mr->queue, GUINT_TO_POINTER (entry));
+	g_cond_signal (mr->cond);
+	g_mutex_unlock (mr->mutex);
 }
 
 /** @} */
@@ -127,32 +127,32 @@ xmms_mediainfo_entry_add (xmms_mediainfo_thread_t *mt, xmms_medialib_entry_t ent
 static void
 xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 {
-	xmms_mediainfo_thread_t *mit = userdata;
+	xmms_mediainfo_reader_t *mir = userdata;
 	const xmms_object_cmd_arg_t *oarg = arg;
 	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
 
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
 		xmms_medialib_entry_t entry = chmsg->id;
 
-		xmms_mediainfo_entry_add (mit, entry);
+		xmms_mediainfo_entry_add (mir, entry);
 	}
 }
 
 static gpointer
-xmms_mediainfo_thread_thread (gpointer data)
+xmms_mediainfo_reader_thread (gpointer data)
 {
-	xmms_mediainfo_thread_t *mtt = (xmms_mediainfo_thread_t *) data;
+	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 
-	g_mutex_lock (mtt->mutex);
+	g_mutex_lock (mrt->mutex);
 
-	while (mtt->running) {
+	while (mrt->running) {
 		xmms_medialib_entry_t entry;
 
 		XMMS_DBG ("MediainfoThread is idle.");
-		g_cond_wait (mtt->cond, mtt->mutex);
+		g_cond_wait (mrt->cond, mrt->mutex);
 		XMMS_DBG ("MediainfoThread is awake!");
 
-		while ((entry = GPOINTER_TO_UINT (g_queue_pop_head (mtt->queue)))) {
+		while ((entry = GPOINTER_TO_UINT (g_queue_pop_head (mrt->queue)))) {
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
@@ -161,7 +161,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			xmms_error_reset (&err);
 
-			g_mutex_unlock (mtt->mutex);
+			g_mutex_unlock (mrt->mutex);
 
 			if (xmms_medialib_entry_is_resolved (entry)) {
 				lmod = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
@@ -199,7 +199,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 				XMMS_DBG ("Playlist!!");
 				
-				xmms_playlist_plugin_read (plsplugin, mtt->playlist, transport);
+				xmms_playlist_plugin_read (plsplugin, mrt->playlist, transport);
 
 				xmms_playlist_plugin_free (plsplugin);
 				xmms_object_unref (transport);
@@ -223,13 +223,13 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_object_unref (decoder);
 
 cont:
-			g_mutex_lock (mtt->mutex);
+			g_mutex_lock (mrt->mutex);
 
 		}
 
 	}
 
-	g_mutex_unlock (mtt->mutex);
+	g_mutex_unlock (mrt->mutex);
 
 	return NULL;
 }

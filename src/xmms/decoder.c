@@ -544,12 +544,13 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 }
 
 /**
- * Initializes the coder.
+ * Initializes the decoder.
  * Only called by the output layer.
  *
  * @param decoder
  * @param output_format_list List with xmms_audio_format_t's that are
  *                           supported by the output plugin
+ * @param effects A list of effect plugins to apply
  */
 gboolean
 xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
@@ -589,7 +590,6 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
  * Blesses it with a life of its own (a new thread is created)
  *
  * @param decoder
- * @param effects
  * @param output
  *
  */

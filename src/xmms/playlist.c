@@ -73,7 +73,7 @@ struct xmms_playlist_St {
 
 	GMutex *mutex;
 
-	xmms_mediainfo_thread_t *mediainfothr;
+	xmms_mediainfo_reader_t *mediainfordr;
 
 };
 
@@ -193,7 +193,7 @@ xmms_playlist_init (void)
 			     XMMS_IPC_CMD_SAVE,
 			     XMMS_CMD_FUNC (save));
 
-	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
+	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 	xmms_medialib_init (ret);
 
 	return ret;
@@ -570,8 +570,11 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 /** Sorts the playlist by properties.
  *
  *  This will sort the list.
- *  @param property tells xmms_playlist_sort which property it
- *  should use when sorting. 
+ *  @param playlist The playlist to sort.
+ *  @param property Tells xmms_playlist_sort which property it
+ *  should use when sorting.
+ *  @param err An #xmms_error_t - needed since xmms_playlist_sort is an ipc
+ *  method handler.
  */
 
 static void
@@ -655,11 +658,11 @@ xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *er
 
 
 /** returns pointer to mediainfo thread. */
-xmms_mediainfo_thread_t *
-xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist)
+xmms_mediainfo_reader_t *
+xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist)
 {
 	g_return_val_if_fail (playlist, NULL);
-	return playlist->mediainfothr;
+	return playlist->mediainfordr;
 }
 
 /** @} */
@@ -684,7 +687,7 @@ xmms_playlist_destroy (xmms_object_t *object)
 	val = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_value_callback_remove (val, on_playlist_r_all_changed);
 
-	xmms_mediainfo_thread_stop (playlist->mediainfothr);
+	xmms_mediainfo_reader_stop (playlist->mediainfordr);
 
 	g_array_free (playlist->list, FALSE);
 }

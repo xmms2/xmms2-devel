@@ -235,7 +235,9 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 /**
   * Add a command that could be called from the client API to a object.
   *
-  * @param object the object that should have the method.
+  * @param object The object that should have the method.
+  * @param cmdid A command id.
+  * @param desc A command description.
   */
 void
 xmms_object_cmd_add (xmms_object_t *object, guint cmdid, 

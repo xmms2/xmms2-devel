@@ -169,6 +169,7 @@ xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
  * Set transport mimetype.
  * This should be called from the plugin to propagate the mimetype
  *
+ * @param transport The transport on which to set the mimetype.
  * @param mimetype A zero-terminated string with the mimetype of the
  * source. It will be duplicated into the transport and free'd when
  * the transport is destroyed.

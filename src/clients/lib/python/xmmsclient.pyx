@@ -439,7 +439,7 @@ cdef class XMMS :
 		Main client loop for clients using GLib. Call this to run the
 		client once everything has been set up. Note: This should not
 		be used for pyGTK clients, which require a call to gtk.main()
-		pyGTK clients should use L{SetupWithGmain} This function
+		pyGTK clients should use L{setup_with_gmain} This function
 		blocks in a g_main_loop_run call - see appropriate GLib
 		documentation for details.
 		"""
@@ -452,12 +452,12 @@ cdef class XMMS :
 	def setup_with_gmain (self) :
 		"""
 		Adds the IPC connection to a GMainLoop. pyGTK clients need to
-		call this after L{Connect} and before gtk.main()
+		call this after L{connect} and before gtk.main()
 		"""
 		xmmsc_ipc_setup_with_gmain (self.conn)
 
 	def exit_python_loop (self) :
-		""" Exits from the PythonLoop() call """
+		""" Exits from the L{python_loop} call """
 		self.loop = False
 		write (self.wakeup, "42")
 
@@ -465,7 +465,7 @@ cdef class XMMS :
 		"""
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up. This function blocks
-		until L{ExitPythonLoop} is called.
+		until L{exit_python_loop} is called.
 		"""
 		fd = xmmsc_ipc_fd_get (self.conn.ipc)
 		(r, w) = os.pipe ()
@@ -518,7 +518,7 @@ cdef class XMMS :
 
 		C{xmms = xmmsclient.XMMS ()}
 
-		C{xmms.Connect ()}
+		C{xmms.connect ()}
 
 		...
 		"""
@@ -685,7 +685,7 @@ cdef class XMMS :
 	def playback_status (self, myClass = None) :
 		"""Get current playback status from XMMS2 daemon. This is
 		essentially the more direct version of
-		L{BroadcastPlaybackStatus}.
+		L{broadcast_playback_status}.
 		@rtype: L{XMMSResult} (UInt)
 		@return: Current playback status (UInt)
 		"""
@@ -743,7 +743,7 @@ cdef class XMMS :
 	def playback_playtime (self, myClass = None) :
 		"""
 		Return playtime on current file/stream. This is essentially a
-		more direct version of L{SignalPlaybackPlaytime}
+		more direct version of L{signal_playback_playtime}
 		@rtype: L{XMMSResult} (UInt)
 		@return: The result of the operation. (playtime in milliseconds)
 		"""
@@ -878,7 +878,7 @@ cdef class XMMS :
 		"""
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
-		L{PlaylistGetMediainfo} to retrieve more specific information.
+		L{medialib_get_info} to retrieve more specific information.
 		@rtype: L{XMMSResult} (UIntList)
 		@return: The current playlist.
 		"""
@@ -1086,7 +1086,7 @@ cdef class XMMS :
 	def configval_list (self, myClass = None) :
 		"""
 		Get list of configuration keys on the daemon. Use
-		L{ConfigvalGet} to retrieve the values corresponding to the
+		L{configval_get} to retrieve the values corresponding to the
 		configuration keys.
 		@rtype: L{XMMSResult} (StringList)
 		@return: The result of the operation.
