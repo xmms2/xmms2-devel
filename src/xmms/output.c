@@ -3,16 +3,16 @@
  * 
  */
 
-#include "output.h"
-#include "output_int.h"
-#include "object.h"
-#include "ringbuf.h"
-#include "util.h"
-#include "core.h"
-#include "config_xmms.h"
-#include "plugin.h"
-#include "plugin_int.h"
-#include "signal_xmms.h"
+#include "xmms/output.h"
+#include "xmms/output_int.h"
+#include "xmms/object.h"
+#include "xmms/ringbuf.h"
+#include "xmms/util.h"
+#include "xmms/core.h"
+#include "xmms/config.h"
+#include "xmms/plugin.h"
+#include "xmms/plugin_int.h"
+#include "xmms/signal_xmms.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
@@ -42,7 +42,7 @@ struct xmms_output_St {
 	guint samplerate;
 
 	xmms_ringbuf_t *buffer;
-	xmms_config_value_t *config;
+	xmms_config_t *config;
 	
 	gpointer plugin_data;
 
@@ -80,6 +80,14 @@ xmms_output_plugin_data_get (xmms_output_t *output)
 	return ret;
 }
 
+xmms_plugin_t *
+xmms_output_plugin_get (xmms_output_t *output)
+{
+	g_return_val_if_fail (output, NULL);
+	
+	return output->plugin;
+}
+
 gboolean
 xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
 {
@@ -91,89 +99,6 @@ xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
 
 	return vol (output, left, right);
 }
-
-void
-xmms_output_set_config (xmms_output_t *output, GHashTable *config)
-{
-	const gchar *sn;
-	xmms_config_value_t *val;
-	g_return_if_fail (output);
-	g_return_if_fail (config);
-
-	sn = xmms_plugin_shortname_get (output->plugin);
-
-	val = xmms_config_value_lookup (config, sn);
-	if (!val) {
-	XMMS_DBG ("Adding section %s", sn);
-		val = xmms_config_add_section (config, g_strdup (sn));
-	}
-
-	output->config = val;
-}
-
-xmms_config_value_t *
-xmms_output_config_value_get (xmms_output_t *output, gchar *key, gchar *def)
-{
-	xmms_config_value_t *value;
-	
-	g_return_val_if_fail (output, NULL);
-	g_return_val_if_fail (key, NULL);
-	
-	value = xmms_config_value_list_lookup (output->config, key);
-
-	if (!value) {
-		value = xmms_config_value_create (XMMS_CONFIG_VALUE_PLAIN, key);
-		xmms_config_value_data_set (value, g_strdup (def));
-		xmms_config_value_list_add (output->config, value);
-	}
-
-	return value;
-}
-
-
-/**
- * Retrieve a config variable for a certain output section as a string.
- * If the requested value isn't available NULL is returned. 
- *
- * @param output The output structure so we know where in the config to look
- * @param val The config variable to inquire
- * @return a gchar with the config data, or NULL if not available
- */
-gchar *
-xmms_output_config_string_get (xmms_output_t *output, gchar *val)
-{
-	xmms_config_value_t *value;
-	
-	g_return_val_if_fail (output, NULL);
-	g_return_val_if_fail (val, NULL);
-	
-	value = xmms_config_value_list_lookup (output->config, val);
-	
-	return xmms_config_value_as_string (value);
-}
-
-
-/**
- * Retrieve a config variable for a certain output section as an integer. 
- * If the requested value isn't available 0 is returned. 
- *
- * @param output The output structure so we know where in the config to look
- * @param val The config variable to inquire
- * @return a gint with the config data, or 0 if not available
- */
-gint 
-xmms_output_config_int_get (xmms_output_t *output, gchar *val)
-{
-	xmms_config_value_t *value;
-	
-	g_return_val_if_fail (output, 0);
-	g_return_val_if_fail (val, 0);
-	
-	value = xmms_config_value_list_lookup (output->config, val);
-	
-	return xmms_config_value_as_int (value);
-}
-
 
 void
 xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
@@ -389,7 +314,7 @@ xmms_output_close (xmms_output_t *output)
 }
 
 xmms_output_t *
-xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
+xmms_output_new (xmms_plugin_t *plugin, xmms_config_t *config)
 {
 	xmms_output_t *output;
 	xmms_output_new_method_t new;
@@ -407,8 +332,6 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
 	output->is_open = FALSE;
 	output->open_samplerate = 44100;
 	
-	xmms_output_set_config (output, config->output);
-
 	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new (output)) {

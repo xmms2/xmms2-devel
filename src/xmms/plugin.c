@@ -1,6 +1,8 @@
-#include "plugin.h"
-#include "plugin_int.h"
-#include "util.h"
+#include "xmms/plugin.h"
+#include "xmms/plugin_int.h"
+#include "xmms/util.h"
+#include "xmms/config.h"
+#include "xmms/object.h"
 
 #include <gmodule.h>
 #include <string.h>
@@ -17,6 +19,7 @@ struct xmms_plugin_St {
 
 	guint users;
 	GHashTable *method_table;
+	xmms_config_t *config;
 };
 
 /*
@@ -32,6 +35,7 @@ static GList *xmms_plugin_list;
 
 inline static void xmms_plugin_lock (xmms_plugin_t *plugin);
 inline static void xmms_plugin_unlock (xmms_plugin_t *plugin);
+static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
 
 /*
  * Public functions
@@ -232,25 +236,33 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 	return plugin->info_list;
 }
 
+const xmms_config_t *
+xmms_plugin_config_get (const xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, NULL);
+
+	return plugin->config;
+}
+
 /*
  * Private functions
  */
 
 gboolean
-xmms_plugin_init (gchar *path)
+xmms_plugin_init (xmms_config_t *config, gchar *path)
 {
 	xmms_plugin_mtx = g_mutex_new ();
 
 	if (!path)
 		path = PKGLIBDIR;
 
-	xmms_plugin_scan_directory (path);
+	xmms_plugin_scan_directory (config, path);
 	
 	return TRUE;
 }
 
 void
-xmms_plugin_scan_directory (const gchar *dir)
+xmms_plugin_scan_directory (xmms_config_t *config, const gchar *dir)
 {
 	GDir *d;
 	const char *name;
@@ -259,6 +271,8 @@ xmms_plugin_scan_directory (const gchar *dir)
 	xmms_plugin_t *(*plugin_init) (void);
 	xmms_plugin_t *plugin;
 	gpointer sym;
+
+	g_return_if_fail (config);
 
 	XMMS_DBG ("Scanning directory: %s", dir);
 	
@@ -312,6 +326,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 				info = g_list_next (info);
 			}
 			plugin->module = module;
+			plugin->config = config;
 			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
 		} else {
 			g_module_close (module);
@@ -397,6 +412,50 @@ xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	return ret;
 }
 
+xmms_config_value_t *
+xmms_plugin_config_lookup (xmms_plugin_t *plugin,
+			   const gchar *value)
+{
+	gchar *ppath;
+	xmms_config_value_t *val;
+
+	g_return_val_if_fail (plugin, NULL);
+	g_return_val_if_fail (value, NULL);
+	
+	ppath = plugin_config_path (plugin, value);
+	val = xmms_config_lookup (plugin->config, ppath);
+
+	g_free (ppath);
+
+	return val;
+}
+
+xmms_config_value_t *
+xmms_plugin_config_value_register (xmms_plugin_t *plugin,
+				   const gchar *value,
+				   const gchar *default_value,
+				   xmms_object_handler_t cb,
+				   gpointer userdata)
+{
+	const gchar *fullpath;
+	gchar *pl;
+	xmms_config_value_t *val;
+
+	g_return_val_if_fail (plugin, NULL);
+	g_return_val_if_fail (value, NULL);
+	g_return_val_if_fail (default_value, NULL);
+
+	fullpath = plugin_config_path (plugin, value);
+
+	val = xmms_config_value_register (xmms_plugin_config_get (plugin), 
+					   fullpath, 
+					   default_value, 
+					   cb, userdata);
+	g_free (fullpath);
+
+	return val;
+}
+
 /*
  * Static functions
  */
@@ -415,5 +474,40 @@ xmms_plugin_unlock (xmms_plugin_t *plugin)
 	g_return_if_fail (plugin);
 
 	g_mutex_unlock (plugin->mtx);
+}
+
+static gchar *
+plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
+{
+	gchar *ret;
+	gchar *pl;
+
+	switch (xmms_plugin_type_get (plugin)) {
+		case XMMS_PLUGIN_TYPE_TRANSPORT:
+			pl = "transport";
+			break;
+		case XMMS_PLUGIN_TYPE_DECODER:
+			pl = "decoder";
+			break;
+		case XMMS_PLUGIN_TYPE_OUTPUT:
+			pl = "output";
+			break;
+		case XMMS_PLUGIN_TYPE_MEDIALIB:
+			pl = "medialib";
+			break;
+		case XMMS_PLUGIN_TYPE_PLAYLIST:
+			pl = "playlist";
+			break;
+		case XMMS_PLUGIN_TYPE_EFFECT:
+			pl = "effect";
+			break;
+		default:
+			pl = "noname";
+			break;
+	}
+
+	ret = g_strdup_printf ("%s.%s.%s", pl, xmms_plugin_shortname_get (plugin), value);
+
+	return ret;
 }
 

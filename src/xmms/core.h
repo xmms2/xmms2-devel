@@ -6,12 +6,13 @@
 #include "xmms/decoder.h"
 #include "xmms/mediainfo.h"
 #include "xmms/effect.h"
-#include "xmms/config_xmms.h"
+#include "xmms/config.h"
 
 struct xmms_core_St;
 typedef struct xmms_core_St xmms_core_t;
 
 void xmms_core_output_set (xmms_output_t *output);
+void xmms_core_config_set (gchar *key, gchar *value);
 
 void xmms_core_playtime_set (guint time);
 void xmms_core_play_next ();
@@ -27,7 +28,7 @@ void xmms_core_playlist_sort (gchar *property);
 void xmms_core_playlist_mode_set (xmms_playlist_mode_t mode);
 xmms_playlist_mode_t xmms_core_playlist_mode_get ();
 xmms_playlist_t *xmms_core_get_playlist ();
-xmms_config_data_t *xmms_core_config_get (xmms_core_t *core);
+xmms_config_t *xmms_core_config_get (xmms_core_t *core);
 
 void xmms_core_quit ();
 

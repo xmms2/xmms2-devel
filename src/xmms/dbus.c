@@ -13,12 +13,12 @@
 /* YES! I know that this api may change under my feet */
 #define DBUS_API_SUBJECT_TO_CHANGE
 
-#include "util.h"
-#include "playlist.h"
-#include "core.h"
-#include "signal_xmms.h"
-#include "visualisation.h"
-#include "config_xmms.h"
+#include "xmms/util.h"
+#include "xmms/playlist.h"
+#include "xmms/core.h"
+#include "xmms/signal_xmms.h"
+#include "xmms/visualisation.h"
+#include "xmms/config.h"
 
 #include <string.h>
 
@@ -573,8 +573,7 @@ handle_config_change (DBusConnection *conn, DBusMessage *msg)
 		dbus_message_iter_next (&itr);
 		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
 			val = dbus_message_iter_get_string (&itr);
-			xmms_config_set (key, val);
-
+			xmms_core_config_set (val, key);
 		}
 	}
 

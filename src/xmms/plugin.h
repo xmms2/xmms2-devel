@@ -4,6 +4,10 @@
 #include <glib.h>
 #include <gmodule.h>
 
+typedef struct xmms_plugin_St xmms_plugin_t;
+
+#include "xmms/config.h"
+
 /* 
  * Plugin methods
  */
@@ -63,8 +67,6 @@ typedef enum {
 	XMMS_PLUGIN_TYPE_EFFECT
 } xmms_plugin_type_t;
 
-typedef struct xmms_plugin_St xmms_plugin_t;
-
 typedef struct {
 	gchar *key;
 	gchar *value;
@@ -92,9 +94,12 @@ void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
 gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property);
 void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
 const GList *xmms_plugin_info_get (const xmms_plugin_t *plugin);
+const xmms_config_t *xmms_plugin_config_get (const xmms_plugin_t *plugin);
 
-xmms_plugin_method_t xmms_plugin_method_get (xmms_plugin_t *plugin,
-											 const gchar *member);
+xmms_plugin_method_t xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *member);
 
+/* config methods */
+xmms_config_value_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *value);
+xmms_config_value_t *xmms_plugin_config_value_register (xmms_plugin_t *plugin, const gchar *value, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 
 #endif /* __XMMS_PLUGIN_H__ */
