@@ -13,5 +13,6 @@ void xmms_core_playtime_set (guint time);
 void xmms_core_play_next ();
 
 void xmms_core_init ();
+void xmms_core_start ();
 
 #endif

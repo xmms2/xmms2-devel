@@ -3,11 +3,13 @@
  */
 
 
+#include "unixsignal.h"
 #include "util.h"
 #include "object.h"
-#include "unixsignal.h"
+#include "core.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <string.h>
 #include <glib.h>
