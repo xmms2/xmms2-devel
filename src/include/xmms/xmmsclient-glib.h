@@ -22,6 +22,6 @@
 
 #include <glib.h>
 
-void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection, GMainContext *context);
+void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection);
 
 #endif

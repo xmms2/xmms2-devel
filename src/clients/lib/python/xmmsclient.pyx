@@ -108,7 +108,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_medialib_select (xmmsc_connection_t *conn, char *query)
 
 cdef extern from "xmms/xmmsclient-glib.h" :
-	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection, GMainContext *context)
+	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
 
 #####################################################################
 
@@ -367,14 +367,25 @@ cdef class XMMS :
 
 	def GLibLoop (self) :
 		"""
-		Main client loop for PyGTK clients. Call this to run the client
-		once everything has been set up.
+		Main client loop for clients using GLib. Call this to run the
+		client once everything has been set up. Note: This should not
+		be used for pyGTK clients, which require a call to gtk.main()
+		pyGTK clients should use L{SetupWithGmain} This function
+		blocks in a g_main_loop_run call - see appropriate GLib
+		documentation for details.
 		"""
 		cdef GMainLoop *ml
 		ml = g_main_loop_new (NULL, 0)
-		xmmsc_ipc_setup_with_gmain (self.conn, NULL)
+		xmmsc_ipc_setup_with_gmain (self.conn)
 
 		g_main_loop_run (ml)
+
+	def SetupWithGmain (self) :
+		"""
+		Adds the IPC connection to a GMainLoop. pyGTK clients need to
+		call this after L{Connect} and before gtk.main()
+		"""
+		xmmsc_ipc_setup_with_gmain (self.conn)
 
 	def ExitPythonLoop (self) :
 		""" Exits from the PythonLoop() call """
@@ -384,7 +395,8 @@ cdef class XMMS :
 	def PythonLoop (self) :
 		"""
 		Main client loop for most python clients. Call this to run the
-		client once everything has been set up.
+		client once everything has been set up. This function blocks
+		until L{ExitPythonLoop} is called.
 		"""
 		fd = xmmsc_ipc_fd_get (self.conn.ipc)
 		(r, w) = os.pipe ()
