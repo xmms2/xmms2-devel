@@ -84,12 +84,19 @@ xmms_plugin_get (void)
 static gboolean
 xmms_http_can_handle (const gchar *uri)
 {
+	gchar *dec;
 	g_return_val_if_fail (uri, FALSE);
-
-	XMMS_DBG ("xmms_http_can_handle (%s)", uri);
 	
-	if ((g_strncasecmp (uri, "http:", 5) == 0))
+	dec = xmms_util_decode_path (uri);
+
+	XMMS_DBG ("xmms_http_can_handle (%s)", dec);
+	
+	if ((g_strncasecmp (dec, "http:", 5) == 0)) {
+		g_free (dec);
 		return TRUE;
+	}
+
+	g_free (dec);
 
 	return FALSE;
 }
@@ -105,13 +112,16 @@ xmms_http_init (xmms_transport_t *transport, const gchar *uri)
 	gint error;
 	struct addrinfo hints;
 	struct addrinfo *res;
+	gchar *nuri;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (uri, FALSE);
 
 	/* http://server:port/path */
 
-	server = strchr (uri, ':');
+	nuri = xmms_util_decode_path (uri);
+
+	server = strchr (nuri, ':');
 	server = server + 3; /* skip // */
 	
 	if ( (p = strchr (server, ':')) ) {
@@ -219,39 +229,34 @@ x_request (xmms_transport_t *transport)
 
 	data = xmms_transport_plugin_data_get (transport);
 	if (data->state == RESOLVED){
-		struct pollfd fdlist;
+		fd_set fdlist;
+		struct timeval tv;
+		int ret;
 
-		fdlist.fd = data->fd;
-		fdlist.events = POLLOUT;
-		
-/*		error = (connect (data->fd, data->sa, data->salen) == -1);
-		if (error) {
-		       	if (errno == EINPROGRESS || errno == EAGAIN || errno == EINTR || errno == EALREADY) { 
-*/
-				XMMS_DBG ( "Polling %d...", data->fd);
-				if (poll(&fdlist, 1, 1000) < 1) {
-					data->ctimeout ++;
-					if (data->ctimeout > 60) { /* Don't try this again, try next addr instead */
-						return x_trynextaddr (transport);
-					} else {
-						return TRUE;
-					}
-				} else if ( (fdlist.revents & POLLERR) ||
-					    (fdlist.revents & POLLNVAL) ) {
-					return x_trynextaddr (transport); /* Error condition, try next addr */
-				} else {
-					data->state = CONNECTED;
-				}
-/*			} else if (errno == EISCONN) {
-				data->state = CONNECTED;
-			} else {
-				XMMS_DBG ("connect error: %s", strerror(errno) );
+		FD_ZERO (&fdlist);
+		FD_SET (data->fd, &fdlist);
+
+		tv.tv_sec = 20;
+		tv.tv_usec = 0;
+
+		XMMS_DBG ( "Polling %d...", data->fd);
+		ret = select (data->fd+1, NULL, &fdlist, NULL, &tv);
+		if (ret == 0) {
+			XMMS_DBG ("select returned 0");
+			data->ctimeout ++;
+			if (data->ctimeout > 60) { /* Don't try this again, try next addr instead */
 				return x_trynextaddr (transport);
+			} else {
+				return TRUE;
 			}
+		} else if (ret == -1) {
+			XMMS_DBG ("Select returned -1");
+			return x_trynextaddr (transport); /* Error condition, try next addr */
 		} else {
+			XMMS_DBG ("select returned %d", ret);
 			data->state = CONNECTED;
 		}
-*/
+
 		freeaddrinfo(data->res);
 		data->res = NULL;
 		XMMS_DBG ("connected!");
