@@ -54,10 +54,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 
 	def XmmsPython(self,target,source):
 		if self.sys == 'Darwin':
-			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
+			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
 
-		self.SharedLibrary (target, source, SHLIBPREFIX='')
-		self.Install(self.installdir+self.libpath, target+self['SHLIBSUFFIX'])
+		self.SharedLibrary (target, source, SHLIBPREFIX='', SHLIBSUFFIX=".so")
+		self.Install(self.installdir+self.libpath, target+".so")
 
 	def XmmsLibrary(self,target,source):
 		if self.sys == 'Darwin':
