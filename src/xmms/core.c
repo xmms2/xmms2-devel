@@ -80,8 +80,8 @@ xmms_core_play_next ()
 {
 	if (core->decoder) {
 		XMMS_DBG ("playing next");
-		xmms_transport_close (xmms_decoder_transport_get (core->decoder));
 		xmms_decoder_destroy (core->decoder);
+		xmms_transport_close (xmms_decoder_transport_get (core->decoder));
 		core->decoder = NULL;
 	}
 }
@@ -241,8 +241,6 @@ core_thread(gpointer data){
 		if (core->decoder) {
 			XMMS_DBG ("closing transport");
 			xmms_transport_close (xmms_decoder_transport_get (core->decoder));
-			XMMS_DBG ("destroying decoder");
-			xmms_decoder_destroy (core->decoder);
 			core->decoder = NULL;
 		}
 		

@@ -413,6 +413,7 @@ xmms_transport_close (xmms_transport_t *transport)
 		xmms_ringbuf_set_eos (transport->buffer, TRUE);
 		g_cond_signal (transport->cond);
 		xmms_transport_unlock (transport);
+		g_thread_join (transport->thread);
 	} else {
 		xmms_transport_destroy (transport);
 	}
