@@ -169,8 +169,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			XMMS_DBG ("Entry is : %s", xmms_playlist_entry_url_get (entry));
 
 			transport = xmms_transport_new ();
-			xmms_transport_open (transport, entry);
-			if (!transport) {
+			if (!transport || !xmms_transport_open (transport, entry)) {
 				xmms_object_unref (entry);
 				continue;
 			}
