@@ -1,14 +1,9 @@
 CORE
 	* Should check if other server is running
-	* Check names of functions
-           - especially get/set-functions
-           - konsekvent med init/new/create/destroy/free/deinit 
 	* licenseheader in all sourcefiles?
 
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
-	* make clientlib and implement following features:
-		* seek
 
 PLUGINS:
 	* mad
