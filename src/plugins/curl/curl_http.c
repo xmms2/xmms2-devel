@@ -401,6 +401,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 				i++;
 			}
 
+			g_strfreev (tmp);
 		} else if (g_strncasecmp (buffer, "HTTP/1.0 200 OK", 15) == 0) {
 			gchar **tmp;
 			gchar *header;
@@ -435,6 +436,8 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 				i++;
 			}
+
+			g_strfreev (tmp);
 
 			if (data->name) {
 				data->stream = TRUE;
