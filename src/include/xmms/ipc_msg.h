@@ -21,14 +21,16 @@
 
 #include "xmms/ringbuf.h"
 
-#define XMMS_IPC_MSG_DATA_SIZE 32768
+#define XMMS_IPC_MSG_DEFAULT_SIZE 32768
+#define XMMS_IPC_MSG_MAX_SIZE 327680
 
 typedef struct xmms_ipc_msg_St {
 	guint32 object;
 	guint32 cmd;
 	guint32 cid;
 	guint16 get_pos, data_length;
-	guint8 data[XMMS_IPC_MSG_DATA_SIZE];
+	guint8 *data;
+	guint32 size;
 } xmms_ipc_msg_t;
 
 xmms_ipc_msg_t *xmms_ipc_msg_new (guint32 object, guint32 cmd);

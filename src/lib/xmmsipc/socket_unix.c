@@ -38,7 +38,6 @@ xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
 {
 	g_free (ipct->path);
 	close (ipct->fd);
-	g_free (ipct);
 }
 
 gint

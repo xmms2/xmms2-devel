@@ -47,7 +47,7 @@ xmmsc_ipc_init (void)
 	xmmsc_ipc_t *ipc;
 	ipc = g_new0 (xmmsc_ipc_t, 1);
 	ipc->mutex = g_mutex_new ();
-	ipc->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_DATA_SIZE * 10);
+	ipc->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_MAX_SIZE);
 	ipc->disconnect = FALSE;
 	ipc->pollopts = XMMSC_IPC_IO_IN;
 	ipc->results_table = g_hash_table_new (NULL, NULL);

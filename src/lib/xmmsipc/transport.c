@@ -25,7 +25,10 @@ void
 xmms_ipc_transport_destroy (xmms_ipc_transport_t *ipct)
 {
 	g_return_if_fail (ipct);
-	
+
+	ipct->destroy_func (ipct);
+
+	g_free (ipct);
 }
 
 gint
