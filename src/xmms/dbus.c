@@ -560,18 +560,18 @@ handle_playback_seek (guint arg)
 static gboolean
 handle_playback_currentid (DBusConnection *conn, DBusMessage *msg)
 {
-        DBusMessage *rpy;
+        DBusMessage *reply;
         DBusMessageIter itr;
         int clientser;
         gint id;
          
-        rpy = dbus_message_new_reply (msg);
-        dbus_message_append_iter_init (rpy, &itr);
+	reply = dbus_message_new (XMMS_SIGNAL_PLAYBACK_CURRENTID, NULL);
+        dbus_message_append_iter_init (reply, &itr);
         id = xmms_core_get_id ();
         dbus_message_iter_append_uint32 (&itr, id);
  
-        dbus_connection_send (conn, rpy, &clientser);
-        dbus_message_unref (rpy);
+        dbus_connection_send (conn, reply, &clientser);
+        dbus_message_unref (reply);
  
         return TRUE;
 }
@@ -606,25 +606,31 @@ handle_playlist_remove (guint arg)
 static gboolean
 handle_playlist_list (DBusConnection *conn, DBusMessage *msg)
 {
-        DBusMessage *rpy;
+        DBusMessage *reply;
         DBusMessageIter itr;
         xmms_playlist_t *playlist;
         GList *list,*save;
         int clientser;
+	int i = 0;
+	guint32 *arr;
 
-        rpy = dbus_message_new_reply (msg);
-        dbus_message_append_iter_init (rpy, &itr);
         playlist = xmms_core_get_playlist ();
         save = list = xmms_playlist_list (playlist);
 
+	arr = g_new0 (guint32, g_list_length (save));
+	
+	reply = dbus_message_new (XMMS_SIGNAL_PLAYLIST_LIST, NULL);
+	dbus_message_append_iter_init (reply, &itr);
+	
         while (list) {
                 xmms_playlist_entry_t *entry=list->data;
-                dbus_message_iter_append_uint32 (&itr, xmms_playlist_entry_id_get (entry));
+		arr[i++] = xmms_playlist_entry_id_get (entry);
                 list = g_list_next (list);
         }
 
-        dbus_connection_send (conn, rpy, &clientser);
-        dbus_message_unref (rpy);
+        dbus_message_iter_append_uint32_array (&itr, arr, i);
+       	dbus_connection_send (conn, reply, &clientser);
+	dbus_message_unref (reply);
 
         g_list_free (save);
 
@@ -668,31 +674,39 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
         DBusMessageIter dictitr;
         DBusMessage *reply=NULL;
         gint serial;
+	guint id;
 
         XMMS_DBG ("playlist_mediainfomsg!");
 
         dbus_message_iter_init (msg, &itr);
         if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-                guint id = dbus_message_iter_get_uint32 (&itr);
+                id = dbus_message_iter_get_uint32 (&itr);
                 XMMS_DBG ("Getting info for %d", id);
                 entry = xmms_core_playlist_entry_mediainfo (id);
         }
 
         if (entry) {
                 gchar *uri = xmms_playlist_entry_get_uri (entry);
-                reply = dbus_message_new_reply (msg);
+
+		reply = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
+
                 dbus_message_append_iter_init (reply, &itr);
                 dbus_message_iter_append_dict (&itr, &dictitr);
-                xmms_playlist_entry_foreach_prop (entry, hash_to_dict, &dictitr);
+
+		/* add id to Dict */
+		dbus_message_iter_append_dict_key (&dictitr, "id");
+		dbus_message_iter_append_uint32 (&dictitr, id);
+
+		/* add uri to Dict */
                 if (uri) {
                         dbus_message_iter_append_dict_key (&dictitr, "uri");
                         dbus_message_iter_append_string (&dictitr, uri);
                 }
 
-		xmms_playlist_entry_unref (entry);
-        }
+		/* add the rest of the properties to Dict */
+                xmms_playlist_entry_foreach_prop (entry, hash_to_dict, &dictitr);
 
-        if (reply) {
+		xmms_playlist_entry_unref (entry);
                 dbus_connection_send (conn, reply, &serial);
                 dbus_message_unref (reply);
         }
