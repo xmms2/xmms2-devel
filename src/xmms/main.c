@@ -201,7 +201,7 @@ main (int argc, char **argv)
 
 	xmms_signal_init ();
 
-	xmms_core_start ();
+	xmms_core_start (config);
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);

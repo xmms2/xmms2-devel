@@ -332,9 +332,10 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	g_return_if_fail (output);
 
-	xmms_visualisation_calc (decoder->vis, buf, len);
 
 	xmms_effect_run (decoder->effect, buf, len);
+
+	xmms_visualisation_calc (decoder->vis, buf, len);
 
 	if (decoder->samplerate != decoder->output_samplerate) {
 		guint32 res;

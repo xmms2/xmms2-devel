@@ -278,6 +278,14 @@ main(int argc, char **argv)
 			xmmsc_deinit (c);
 
 			exit(0);
+		} else if ( streq (argv[1], "config") ) {
+			gint id;
+
+			xmmsc_configval_set (c, argv[2], argv[3]);
+
+			xmmsc_deinit (c);
+
+			exit(0);
 		} else if ( streq (argv[1], "list") ) {
 
 			GList *list;

@@ -39,5 +39,8 @@
 /* Visualisation msgs */
 #define XMMS_SIGNAL_VISUALISATION_SPECTRUM "org.xmms.visualisation.spectrum"
 
+/* Config msgs */
+#define XMMS_SIGNAL_CONFIG_SAVE "org.xmms.config.save"
+#define XMMS_SIGNAL_CONFIG_VALUE_CHANGE "org.xmms.config.value.change"
 
 #endif /* __SIGNAL_XMMS_H__ */

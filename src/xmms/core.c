@@ -322,10 +322,11 @@ core_thread (gpointer data)
  * Starts playing of the first song in playlist.
  */
 void
-xmms_core_start ()
+xmms_core_start (xmms_config_data_t *config)
 {
+	core->config = config;
 	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
-	core->effects = xmms_effect_prepend (NULL, "equalizer");
+	core->effects = xmms_effect_prepend (NULL, "equalizer", config->effect);
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 

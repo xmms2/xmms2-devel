@@ -6,6 +6,7 @@
 #include "xmms/decoder.h"
 #include "xmms/mediainfo.h"
 #include "xmms/effect.h"
+#include "xmms/config_xmms.h"
 
 typedef struct xmms_core_St {
 	xmms_object_t object;
@@ -19,6 +20,8 @@ typedef struct xmms_core_St {
 
 	xmms_effect_t *effects;
 	
+	xmms_config_data_t *config;
+
 	GCond *cond;
 	GMutex *mutex;
 	

@@ -57,6 +57,8 @@ typedef enum {
 	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 21,
 
 	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 22,
+
+	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 23,
 } xmms_dbus_signal_mask_t;
 
 
@@ -82,6 +84,7 @@ static gboolean handle_core_quit ();
 static gboolean handle_core_disconnect (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_core_signal_register (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_core_signal_unregister (DBusConnection *conn, DBusMessage *msg);
+static gboolean handle_config_change (DBusConnection *conn, DBusMessage *msg);
 
 static void send_playback_stop (xmms_object_t *object, 
 	gconstpointer data, gpointer userdata);
@@ -190,6 +193,9 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
 		send_visualisation_spectrum, NULL, NULL, NULL },
+	{ XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
+	  XMMS_SIGNAL_MASK_CONFIG_CHANGE,
+		NULL, handle_config_change, NULL, NULL },
 	{ NULL, 0, NULL, NULL, NULL, NULL },
 };
 
@@ -457,6 +463,28 @@ handle_core_signal_register (DBusConnection *conn, DBusMessage *msg)
 			c = get_conn (conn);
 			if (c)
 				c->signals |= map->mask;
+		}
+	}
+
+	return TRUE;
+}
+
+static gboolean
+handle_config_change (DBusConnection *conn, DBusMessage *msg)
+{
+	gchar *key, *val;
+	DBusMessageIter itr;
+
+	dbus_message_iter_init (msg, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+		key = dbus_message_iter_get_string (&itr);
+		dbus_message_iter_next (&itr);
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+			val = dbus_message_iter_get_string (&itr);
+
+
+			xmms_config_set (key, val);
+
 		}
 	}
 
