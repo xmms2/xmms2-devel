@@ -42,7 +42,6 @@ typedef struct xmms_alsa_data_St {
 	snd_mixer_elem_t *mixer_elem;
 	snd_pcm_hw_params_t *hwparams;
  	snd_pcm_uframes_t  buffer_size;
-	guint frame_size;
 	gboolean have_mixer;
 } xmms_alsa_data_t;
 
@@ -523,9 +522,6 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 		return FALSE;
 	}
 
-	tmp = snd_pcm_format_physical_width (alsa_format);
-	data->frame_size = (gint)(tmp * format->channels) / 8;
-
 	return TRUE;
 }
 
@@ -905,13 +901,13 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	frames = len / data->frame_size;
+	frames = snd_pcm_bytes_to_frames (data->pcm, len);
 
 	while (frames > 0) {
 		written = snd_pcm_writei (data->pcm, buffer, frames);
 		if (written > 0) {
 			frames -= written;
-			buffer += written * data->frame_size;
+			buffer += snd_pcm_frames_to_bytes (data->pcm, written);
 		} else if (written == -EAGAIN) {
 			snd_pcm_wait (data->pcm, 100);
 		} else {
