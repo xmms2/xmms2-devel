@@ -839,8 +839,6 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 static gchar songname[60];
 static gint curr_dur;
 
-static void handle_mediainfo (xmmsc_result_t *res, void *userdata);
-
 static void
 handle_playtime (xmmsc_result_t *res, void *userdata)
 {
@@ -871,19 +869,37 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	xmmsc_result_unref (newres);
 }
 
+static guint current_id;
+static void do_mediainfo (xmmsc_connection_t *c, guint id);
+
 static void
-handle_mediainfo (xmmsc_result_t *res, void *userdata)
+handle_current_id (xmmsc_result_t *res, void *userdata)
+{
+	if (!xmmsc_result_get_uint (res, &current_id))
+		return;
+
+	do_mediainfo ((xmmsc_connection_t *)userdata, current_id);
+}
+
+static void
+handle_mediainfo_update (xmmsc_result_t *res, void *userdata)
+{
+	guint id;
+
+	if (!xmmsc_result_get_uint (res, &id))
+		return;
+
+	if (id == current_id)
+		do_mediainfo ((xmmsc_connection_t *)userdata, current_id);
+
+}
+
+static void
+do_mediainfo (xmmsc_connection_t *c, guint id)
 {
 	x_hash_t *hash;
 	gchar *tmp;
 	gint mid;
-	guint id;
-	xmmsc_connection_t *c = userdata;
-
-	if (!xmmsc_result_get_uint (res, &id)) {
-		printf ("no id!\n");
-		return;
-	}
 
 	hash = xmmscs_playlist_get_mediainfo (c, id);
 
@@ -946,10 +962,10 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	ml = g_main_loop_new (NULL, FALSE);
 
 	/* Setup onchange signal for mediainfo */
-	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
-	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
-	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playlist_entry_changed, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playlist_entry_changed, handle_mediainfo_update, conn);
 
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_ipc_setup_with_gmain (conn);
