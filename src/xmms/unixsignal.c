@@ -23,12 +23,17 @@ sigwaiter(gpointer data){
 
 	memset (&signals, 0, sizeof (sigset_t));
 	sigaddset (&signals, SIGINT);
+	sigaddset (&signals, SIGTERM);
 	
 	while (1337) {
 		sigwait (&signals, &caught);
 		switch (caught){
 		case SIGINT:
 			XMMS_DBG ("Got SIGINT!");
+			exit (0);
+			break;
+		case SIGTERM:
+			XMMS_DBG ("Got SIGTERM! Bye!");
 			exit (0);
 			break;
 		}

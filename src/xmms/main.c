@@ -86,6 +86,8 @@ main (int argc, char **argv)
 	sigset_t signals;
 	xmms_playlist_t *playlist;
 	gchar *outname = NULL;
+	gboolean daemonize = FALSE;
+	pid_t pid;
 
 	memset (&signals, 0, sizeof (sigset_t));
         sigaddset (&signals, SIGHUP);
@@ -95,7 +97,7 @@ main (int argc, char **argv)
 
 	
 	while (42) {
-		opt = getopt (argc, argv, "vVo:");
+		opt = getopt (argc, argv, "dvVo:");
 
 		if (opt == -1)
 			break;
@@ -113,6 +115,10 @@ main (int argc, char **argv)
 			case 'o':
 				outname = g_strdup (optarg);
 				break;
+
+			case 'd':
+				daemonize = TRUE;
+				break;
 				
 		}
 	}
@@ -120,6 +126,14 @@ main (int argc, char **argv)
 	g_thread_init (NULL);
 
 	xmms_log_initialize ("xmmsd");
+
+	if (daemonize) {
+		xmms_log ("Going to background mode ...");
+		xmms_log_daemonize ();
+		if ((pid = fork ())) {
+			exit (0);
+		}
+	}
 
 	xmms_core_init ();
 
