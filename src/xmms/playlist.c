@@ -405,6 +405,9 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 			     GUINT_TO_POINTER (xmms_playlist_entry_id_get (file)), 
 			     node);
 
+	if (!playlist->nextentry)
+		playlist->nextentry = node;
+
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_ADD, 
 				   xmms_playlist_entry_id_get (file),
 				   options);
