@@ -28,7 +28,7 @@ vorbis="no"
 XMMS_PATH_VORBIS(vorbis="yes",AC_MSG_WARN(No libvorbis))
 AC_SUBST(VORBIS_LIBS)
 AC_SUBST(VORBIS_CFLAGS)
-AM_CONDITIONAL(HAVE_VORBIS,test "$vorbis" != "")
+AM_CONDITIONAL(HAVE_VORBIS,test "$vorbis" != "no")
 
 PKG_CHECK_MODULES(DBUS, dbus-1 >= 0.10,,AC_MSG_ERROR(Install dbus!))
 AC_SUBST(DBUS_LIBS)
