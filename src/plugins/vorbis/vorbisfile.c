@@ -113,11 +113,15 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 	xmms_vorbis_data_t *data;
 	xmms_decoder_t *decoder = datasource;
 	xmms_transport_t *transport;
+	
 
 	g_return_val_if_fail (decoder, 0);
 
 	data = xmms_decoder_plugin_data_get (decoder);
 	transport = xmms_decoder_transport_get (decoder);
+
+	if (!xmms_transport_can_seek (transport))
+		return -1;
 
 	g_return_val_if_fail (transport, 0);
 	g_return_val_if_fail (data, 0);
@@ -140,7 +144,8 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 		return 1;
 	}
 	
-	xmms_transport_seek (transport, (gint) offset, whence);
+	if (!xmms_transport_seek (transport, (gint) offset, whence))
+		return -1;
 
 	return 1;
 }
@@ -178,6 +183,7 @@ xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 	data->callbacks.seek_func = vorbis_callback_seek;
 	data->callbacks.close_func = vorbis_callback_close;
 	data->callbacks.tell_func = vorbis_callback_tell;
+	data->current = -1;
 
 	xmms_decoder_plugin_data_set (decoder, data);
 
@@ -204,11 +210,15 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 	entry = xmms_playlist_entry_new (NULL);
 
+	XMMS_DBG ("Running get_media_info()");
+
 	vi = ov_info (&data->vorbisfile, -1);
 
-	playtime = ov_time_total (&data->vorbisfile, -1) * 1000;
-	g_snprintf (tmp, 12, "%d", (gint) playtime);
-	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+	playtime = ov_time_total (&data->vorbisfile, -1);
+	if (playtime != OV_EINVAL) {
+		g_snprintf (tmp, 12, "%d", (gint) playtime * 1000);
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
+	}
 
 	if (vi && vi->bitrate_nominal) {
 		g_snprintf (tmp, 12, "%d", (gint) vi->bitrate_nominal/1000);
@@ -231,6 +241,8 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		}
 	}
 	
+	xmms_decoder_samplerate_set (decoder, vi->rate);
+
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_playlist_entry_unref (entry);
 
@@ -246,8 +258,8 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 	data = xmms_decoder_plugin_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
+
 	if (!data->inited) {
-		vorbis_info *vi;
 		gint ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
 		if (ret != 0) {
 			XMMS_DBG ("Got %d from ov_open_callbacks", ret);
@@ -255,10 +267,6 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 		}
 		data->inited = TRUE;
 
-		vi = ov_info (&data->vorbisfile, -1);
-
-		xmms_decoder_samplerate_set (decoder, vi->rate);
-		
 		XMMS_DBG ("Vorbis inited!!!!");
 	}
 
@@ -270,6 +278,7 @@ static gboolean
 xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 {
 	gint ret;
+	gint c;
 	xmms_vorbis_data_t *data;
 	gchar buffer[4096];
 
@@ -277,13 +286,21 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	
 	data = xmms_decoder_plugin_data_get (decoder);
 	g_return_val_if_fail (decoder, FALSE);
-
+	
 	/* this produces 16bit signed PCM littleendian PCM data */
 	/* How about stereo? */
-	ret = ov_read (&data->vorbisfile, buffer, 4096, 0, 2, 1, &data->current);
+	ret = ov_read (&data->vorbisfile, buffer, 4096, 0, 2, 1, &c);
 	if (ret == 0) {
 		XMMS_DBG ("got ZERO from ov_read");
 		return FALSE;
+	} else if (ret < 0) {
+		return TRUE;
+	}
+
+	if (c != data->current) {
+		XMMS_DBG ("current = %d, c = %d", data->current, c);
+		xmms_vorbis_get_media_info (decoder);
+		data->current = c;
 	}
 
 	xmms_decoder_write (decoder, buffer, ret);
