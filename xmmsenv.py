@@ -40,6 +40,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		apply(self.Replace, (), kw)
 		self['INSTALL'] = installFunc
 		self.plugins = []
+		self.install_targets = []
 		self.install_prefix=self['PREFIX']
 		self.pluginpath=self.install_prefix + "/lib/xmms2/"
 		self.binpath=self.install_prefix + "/bin/"
@@ -67,6 +68,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self.Append(CPPFLAGS='-DXMMS_OS_OPENBSD')
 		elif self.sys == 'FreeBSD':
 			self.Append(CPPFLAGS='-DXMMS_OS_FREEBSD')
+
+	def Install(self, target, source):
+		SCons.Environment.Environment.Install(self, target, source)
+		self.install_targets.append(target)
 
 	def XmmsConfig(self,source):
 		self.Install(self.installdir+self.sysconfdir, source)
