@@ -44,6 +44,7 @@ static gboolean xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
                                           xmms_playlist_t *playlist,
                                           gchar *filename);
 
+static gchar *escape_html (const gchar *in);
 static gboolean valid_suffix (gchar **suffix, gchar *path);
 static gchar* parse_tag (const gchar *tag, const gchar *plspath);
 static gchar* build_url (const gchar *plspath, const gchar *file);
@@ -258,22 +259,26 @@ xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
 	         (total_len / 1000) % 60);
 
 	while (list) {
-		gchar buf[256];
+		gchar buf[256], *artist, *title;
 		xmms_playlist_entry_t *entry;
 		guint len;
 
 		entry = xmms_playlist_get_byid (playlist,
 		                                GPOINTER_TO_UINT (list->data));
 
+		artist = escape_html (xmms_playlist_entry_property_get (entry,
+			XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST));
+		title = escape_html (xmms_playlist_entry_property_get (entry,
+			XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE));
 		len = xmms_playlist_entry_property_get_int (entry,
 			XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
 
 		g_snprintf (buf, sizeof (buf), "%s - %s (%02i:%02i)",
-		            xmms_playlist_entry_property_get (entry,
-						XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
-		            xmms_playlist_entry_property_get (entry,
-						XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
+		            artist, title,
 		            len / 60000, (len / 1000) % 60);
+
+		g_free (artist);
+		g_free (title);
 
 		fprintf (fp, is_even ? html_entry_even : html_entry_odd, buf);
 		is_even = !is_even;
@@ -288,6 +293,71 @@ xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
 	fclose (fp);
 
 	return TRUE;
+}
+
+static gchar *
+escape_html (const gchar *in)
+{
+	gchar *ret = NULL, *retptr;
+	const gchar *inptr;
+	gsize len = 0;
+	gboolean need_escape = FALSE;
+
+	/* check whether we need to escape this string at all,
+	 * and if we do, get the required length of the new buffer.
+	 */
+	for (inptr = in; *inptr; inptr++) {
+		switch (*inptr) {
+			case '"':
+				need_escape = TRUE;
+				len += 6; /* &quot; */
+				break;
+			case '&':
+				need_escape = TRUE;
+				len += 5; /* &amp; */
+				break;
+			case '>':
+			case '<':
+				need_escape = TRUE;
+				len += 4; /* &gt; resp &lt; */
+				break;
+			default:
+				len++;
+		}
+	}
+
+	if (!need_escape)
+		return g_strdup (in);
+
+	len++; /* terminating NUL */
+	retptr = ret = g_malloc (len);
+	*ret = '\0';
+
+	for (inptr = in; *inptr; inptr++) {
+		gint n;
+
+		switch (*inptr) {
+			case '"':
+				n = g_snprintf (retptr, len, "&quot;");
+				break;
+			case '&':
+				n = g_snprintf (retptr, len, "&amp;");
+				break;
+			case '>':
+				n = g_snprintf (retptr, len, "&gt;");
+				break;
+			case '<':
+				n = g_snprintf (retptr, len, "&lt;");
+				break;
+			default:
+				n = g_snprintf (retptr, len, "%c", *inptr);
+		}
+
+		len -= n;
+		retptr += n;
+	}
+
+	return ret;
 }
 
 static gboolean
