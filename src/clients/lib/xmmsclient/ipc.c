@@ -176,19 +176,12 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 		xmmsc_ipc_unlock (ipc);
 	} while (ret > 0);
 
-#if HEAVY_DEBUG
-	printf ("got %d bytes in ringbuffer!\n", xmms_ringbuf_bytes_used (ipc->read_buffer));
-#endif
-
 	xmmsc_ipc_lock (ipc);
 	do {
 		msg = xmmsc_msg_queue_pop (ipc->queue);
 		if (!msg)
 			continue;
 		xmmsc_ipc_unlock (ipc);
-#if HEAVY_DEBUG
-		printf ("Read msg with command %d\n", xmms_ipc_msg_get_cmd (msg));
-#endif
 		xmmsc_ipc_exec_msg (ipc, msg);
 		xmmsc_ipc_lock (ipc);
 	} while (msg);
@@ -224,14 +217,8 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 	FD_ZERO (&fdset);
 	FD_SET (xmms_ipc_transport_fd_get (ipc->transport), &fdset);
 
-#ifdef HEAVY_DEBUG
-	fprintf (stderr, "Waiting for event!\n");
-#endif
 	if (select (xmms_ipc_transport_fd_get (ipc->transport) + 1, &fdset, 
 		    NULL, NULL, &tmout) == -1) {
-#ifdef HEAVY_DEBUG
-		fprintf (stderr, "select returned -1\n");
-#endif
 		return;
 	}
 
