@@ -47,14 +47,13 @@ struct xmms_ipc_client_St {
 	GThread *thread;
 
 	xmms_ipc_transport_t *transport;
-	xmms_ringbuf_t *read_buffer;
+	xmms_ipc_msg_t *read_msg;
 	xmms_ipc_t *ipc;
 
 	GQueue *out_msg;
 
 	gboolean run;
 
-	gint status;
 	gint wakeup_in;
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
@@ -395,7 +394,6 @@ xmms_ipc_client_thread (gpointer data)
 					g_queue_pop_head (client->out_msg);
 					xmms_ipc_msg_destroy (msg);
 				} else {
-					XMMS_DBG ("Partial write...");
 					break;
 				}
 			}
@@ -403,38 +401,16 @@ xmms_ipc_client_thread (gpointer data)
 
 		if (FD_ISSET (fd, &rfdset)) {
 			while (TRUE) {
-				gchar buffer[4096];
-				ret = xmms_ipc_transport_read (client->transport, buffer, 4096);
-				if (ret == -1) {
-					if (errno == EAGAIN) 
-						break;
-					if (errno == EINTR)
-						break;
-					XMMS_DBG ("Error %s", strerror (errno));
-					disconnect = TRUE;
-					break;
-				} else if (ret == 0) {
-					XMMS_DBG ("read returned 0");
-					disconnect = TRUE;
+				if (!client->read_msg)
+					client->read_msg = xmms_ipc_msg_alloc ();
+		
+				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
+					xmms_ipc_msg_t *msg = client->read_msg;
+					client->read_msg = NULL;
+					process_msg (client, client->ipc, msg);
+				} else {
 					break;
 				}
-				xmms_ringbuf_write (client->read_buffer, buffer, ret);
-				
-				while (TRUE) {
-					
-					if (!xmms_ipc_msg_can_read (client->read_buffer)) {
-						break;
-					} else {
-						msg = xmms_ipc_msg_read (client->read_buffer);
-						
-						if (!msg)
-							continue;
-						
-						process_msg (client, client->ipc, msg);
-						xmms_ipc_msg_destroy (msg);
-					}
-				}
-				
 			}
 		}
 
@@ -462,9 +438,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	g_return_val_if_fail (transport, NULL);
 
 	client = g_new0 (xmms_ipc_client_t, 1);
-	client->status = XMMS_IPC_CLIENT_STATUS_NEW;
 	client->transport = transport;
-	client->read_buffer = xmms_ringbuf_new (XMMS_IPC_MSG_MAX_SIZE * 2);
 	client->ipc = ipc;
 	client->run = TRUE;
 	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
@@ -486,7 +460,6 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	XMMS_DBG ("Now everyone is done with client!");
 
 	xmms_ipc_transport_destroy (client->transport);
-	xmms_ringbuf_destroy (client->read_buffer);
 
 	while (!g_queue_is_empty (client->out_msg)) {
 		xmms_ipc_msg_t *msg = g_queue_pop_head (client->out_msg);
