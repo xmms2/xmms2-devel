@@ -203,7 +203,6 @@ xmms_output_thread (gpointer data)
 	while (output->running) {
 		gchar buffer[4096];
 		gint ret;
-		gint val;
 
 		xmms_ringbuf_wait_used (output->buffer, 4096, output->mutex);
 

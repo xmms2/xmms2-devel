@@ -21,6 +21,12 @@
 #define XMMS_PLAYLIST_UNLOCK(a) g_mutex_unlock (a->mutex)
 
 
+/** Waits for something to happen in playlist
+ * 
+ *  This function will block until someone adds or reposition something
+ *  in the playlist 
+ */
+
 void
 xmms_playlist_wait (xmms_playlist_t *playlist)
 {
@@ -33,15 +39,37 @@ xmms_playlist_wait (xmms_playlist_t *playlist)
 
 }
 
+/** Total number of entries in the playlist. */
+
 guint
-xmms_playlist_entries (xmms_playlist_t *playlist)
+xmms_playlist_entries_total (xmms_playlist_t *playlist)
 {
 	guint ret;
 	XMMS_PLAYLIST_LOCK (playlist);
-	ret = g_slist_length (playlist->list);
+	ret = g_list_length (playlist->list);
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	return ret;
 }
+
+/** Number of entries *after* the nextsong pointer. */
+
+guint
+xmms_playlist_entries_left (xmms_playlist_t *playlist)
+{
+	guint ret;
+	XMMS_PLAYLIST_LOCK (playlist);
+	ret = g_list_length (playlist->nextentry);
+	XMMS_PLAYLIST_UNLOCK (playlist);
+	return ret;
+}
+
+/** Adds a xmms_playlist_entry_t to the playlist.
+ *
+ *  This will append or prepend the entry according to
+ *  the option.
+ *  This function will wake xmms_playlist_wait.
+ *  @param options should be XMMS_PLAYLIST_APPEND or XMMS_PLAYLIST_PREPEND
+ */
 
 gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint options)
@@ -55,13 +83,16 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	XMMS_PLAYLIST_LOCK (playlist);
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
-			playlist->list = g_slist_append (playlist->list, (gpointer) file);
+			playlist->list = g_list_append (playlist->list, (gpointer) file);
 			break;
 		case XMMS_PLAYLIST_PREPEND:
-			playlist->list = g_slist_prepend (playlist->list, (gpointer) file);
+			playlist->list = g_list_prepend (playlist->list, (gpointer) file);
 		case XMMS_PLAYLIST_INSERT:
 			break;
 	}
+
+	if (!playlist->nextentry)
+		playlist->nextentry = playlist->list;
 
 	g_cond_signal (playlist->cond);
 
@@ -71,28 +102,172 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 }
 
+/** Get a entry based on position in playlist.
+ * 
+ *  @returns a xmms_playlist_entry_t that lives on the given position.
+ *  @param pos is the position in the playlist where 0 is the first.
+ */
+
 xmms_playlist_entry_t *
-xmms_playlist_pop (xmms_playlist_t *playlist)
+xmms_playlist_get_position (xmms_playlist_t *playlist, gint pos)
+{
+	xmms_playlist_entry_t *r = NULL;
+
+	g_return_val_if_fail (playlist, NULL);
+
+	if (pos > xmms_playlist_entries_left (playlist))
+		return NULL;
+
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	r = g_list_nth_data (playlist->list, pos);
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return r;
+
+}
+
+/** Get next entry.
+ *
+ *  The playlist holds a pointer to the last "taken" entry from it.
+ *  xmms_playlist_get_next will return the current entry and move
+ *  the pointer forward in the list.
+ */
+
+xmms_playlist_entry_t *
+xmms_playlist_get_next (xmms_playlist_t *playlist)
 {
 	xmms_playlist_entry_t *r=NULL;
-	GSList *n;
+	GList *n = NULL;
 
-	while (xmms_playlist_entries (playlist) < 1)
+	g_return_val_if_fail (playlist, NULL);
+
+	while (xmms_playlist_entries_left (playlist) < 1)
 		xmms_playlist_wait (playlist);
 
 	XMMS_PLAYLIST_LOCK (playlist);
-	n = g_slist_nth (playlist->list, 0);
+	n = g_list_nth (playlist->nextentry, 0);
 
 	if (n) {
 		r = n->data;
-		playlist->list = g_slist_remove (playlist->list, r);
 	}
+	playlist->nextentry = g_list_next (n);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
 	return r;
 
 }
+
+/** Set the nextentry pointer in the playlist.
+ *
+ *  This will set the pointer for the next entry to be
+ *  returned by xmms_playlist_get_next. This function
+ *  will also wake xmms_playlist_wait
+ */
+  
+gboolean
+xmms_playlist_set_current_position (xmms_playlist_t *playlist, gint pos)
+{
+	g_return_val_if_fail (playlist, FALSE);
+
+	if (pos > xmms_playlist_entries_left (playlist) || pos < 0)
+		return FALSE;
+
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	playlist->nextentry = g_list_nth (playlist->list, pos);
+	
+	g_cond_signal (playlist->cond);
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return TRUE;
+}
+
+
+/** Ask where the nextsong pointer is.
+ *
+ *  @retruns a position in the playlist where we "are" now.
+ */ 
+
+gint
+xmms_playlist_get_current_position (xmms_playlist_t *playlist)
+{
+	gint r;
+
+	g_return_val_if_fail (playlist, 0);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	r = g_list_position (playlist->list, playlist->nextentry);
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return r;
+}
+
+static gint
+xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
+{
+	gchar *prop = data;
+	const xmms_playlist_entry_t *entry1 = a;
+	const xmms_playlist_entry_t *entry2 = b;
+	gchar *tmpa=NULL, *tmpb=NULL;
+
+	tmpa = xmms_playlist_entry_get_prop (entry1, prop);
+	tmpb = xmms_playlist_entry_get_prop (entry2, prop);
+
+	if (g_strcasecmp (tmpa, tmpb) == 0)
+		return 0;
+
+	return 1;
+}
+
+/** Sorts the playlist by properties.
+ *
+ *  This will sort the list.
+ *  @param property tells xmms_playlist_sort which property it
+ *  should use when sorting. 
+ */
+
+void
+xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
+{
+	g_return_if_fail (playlist);
+
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	playlist->list = g_list_sort_with_data (playlist->list, xmms_playlist_entry_compare, property);
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+}
+
+/** Lists the current playlist.
+ *
+ *  @returns A newly allocated GList with the current playlist.
+ *  Remeber that it is only the LIST that is copied. Not the entries.
+ */
+
+GList *
+xmms_playlist_list (xmms_playlist_t *playlist)
+{
+	GList *r=NULL, *node;
+	XMMS_PLAYLIST_LOCK (playlist);
+
+	for (node = playlist->list; node; node = g_list_next (node)) {
+		r = g_list_append (r, node->data);
+	}
+
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
+	return r;
+}
+
+/** initializes a new xmms_playlist_t.
+  */
 
 xmms_playlist_t *
 xmms_playlist_init ()
@@ -103,14 +278,21 @@ xmms_playlist_init ()
 	ret->cond = g_cond_new ();
 	ret->mutex = g_mutex_new ();
 	ret->list = NULL;
+	ret->nextentry = NULL;
 
 	return ret;
 }
 
+
+/** Free the playlist and other memory in the xmms_playlist_t
+ *
+ *  This will free all entries in the list!
+ */
+
 void
 xmms_playlist_close (xmms_playlist_t *playlist)
 {
-	GSList *node;
+	GList *node;
 
 	g_return_if_fail (playlist);
 
@@ -122,10 +304,10 @@ xmms_playlist_close (xmms_playlist_t *playlist)
 	while (node) {
 		xmms_playlist_entry_t *entry = node->data;
 		xmms_playlist_entry_free (entry);
-		node = g_slist_next (node);
+		node = g_list_next (node);
 	}
 
-	g_slist_free (playlist->list);
+	g_list_free (playlist->list);
 }
 
 /* playlist_entry_* */
@@ -210,7 +392,7 @@ xmms_playlist_entry_set_uri (xmms_playlist_entry_t *entry, gchar *uri)
 }
 
 gchar *
-xmms_playlist_entry_get_uri (xmms_playlist_entry_t *entry)
+xmms_playlist_entry_get_uri (const xmms_playlist_entry_t *entry)
 {
 	g_return_val_if_fail (entry, NULL);
 
@@ -218,7 +400,7 @@ xmms_playlist_entry_get_uri (xmms_playlist_entry_t *entry)
 }
 
 gchar *
-xmms_playlist_entry_get_prop (xmms_playlist_entry_t *entry, gchar *key)
+xmms_playlist_entry_get_prop (const xmms_playlist_entry_t *entry, gchar *key)
 {
 	g_return_val_if_fail (entry, NULL);
 	g_return_val_if_fail (key, NULL);
@@ -227,7 +409,7 @@ xmms_playlist_entry_get_prop (xmms_playlist_entry_t *entry, gchar *key)
 }
 
 gint
-xmms_playlist_entry_get_prop_int (xmms_playlist_entry_t *entry, gchar *key)
+xmms_playlist_entry_get_prop_int (const xmms_playlist_entry_t *entry, gchar *key)
 {
 	gchar *t;
 	g_return_val_if_fail (entry, -1);

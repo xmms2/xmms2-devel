@@ -175,7 +175,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (playlist));
+	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries_total (playlist));
 
 	config = parse_config ();
 	outname = xmms_config_value_as_string (xmms_config_value_lookup (config->core, "outputplugin"));

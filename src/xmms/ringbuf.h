@@ -25,6 +25,7 @@ guint xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length);
 
 void xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
 void xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx);
+gboolean xmms_ringbuf_timed_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx, GTimeVal *time);
 
 gboolean xmms_ringbuf_eos (const xmms_ringbuf_t *ringbuf);
 void xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos);

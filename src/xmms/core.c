@@ -127,7 +127,7 @@ core_thread(gpointer data){
 			 core->curr_song = NULL;
 		}
 
-		core->curr_song = xmms_playlist_pop (core->playlist);
+		core->curr_song = xmms_playlist_get_next (core->playlist);
 		
 		XMMS_DBG ("Playing %s", core->curr_song->uri);
 		
