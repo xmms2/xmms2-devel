@@ -1,3 +1,4 @@
+from os import environ;
 
 Import('base_env')
 Export('base_env')
@@ -5,7 +6,7 @@ Export('base_env')
 SConscript('lib/xmmsclient/SConscript')
 SConscript('lib/xmmsclient-glib/SConscript')
 SConscript('cli/SConscript')
-if base_env.HasGroup("qt"):
+if base_env.HasGroup("qt") and environ.has_key ('QTDIR'):
 	SConscript('qt/SConscript')
 	SConscript('lib/xmmsclient-qt/SConscript')
 if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
