@@ -200,6 +200,7 @@ static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 
 		/* Handle long filenames */
 		if (buf.header.linkflag == 'L' && strcmp (buf.header.name, "././@LongLink") == 0) {
+			len++;
 			name=g_malloc(len+1);
 			ret = xmms_transport_read (data->parenttransport, name, len);
 			if (ret != len) {
@@ -208,11 +209,9 @@ static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 			}
 			name[len] = 0;
 
-			if (len%512) {
-				xmms_transport_read (data->parenttransport,
-						     buf.data, 512-(len%512));
-				
-			}
+			pos += RECORDSIZE*((int)((len+(RECORDSIZE-1))/RECORDSIZE));
+			
+			xmms_transport_seek(data->parenttransport, pos, XMMS_TRANSPORT_SEEK_SET);
 			continue;
 		}
 
