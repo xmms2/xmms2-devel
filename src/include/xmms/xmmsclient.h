@@ -81,6 +81,7 @@ xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds);
 xmmsc_result_t *xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples);
 xmmsc_result_t *xmmsc_playback_playtime (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_status (xmmsc_connection_t *c);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playback_status (xmmsc_connection_t *c);

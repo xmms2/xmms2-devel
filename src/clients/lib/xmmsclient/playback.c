@@ -134,6 +134,16 @@ xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
 	return res;
 }
 
+/**
+ * Make server emit the playback status.
+ */
+
+xmmsc_result_t *
+xmmsc_playback_status (xmmsc_connection_t *c)
+{
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_STATUS);
+}
+
 xmmsc_result_t *
 xmmsc_broadcast_playback_current_id (xmmsc_connection_t *c)
 {
