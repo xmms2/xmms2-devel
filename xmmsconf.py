@@ -42,7 +42,7 @@ def checkFlags(base_env):
 		base_env.AddFlagsToGroup("ecore", " -DHAVE_ECORE")
 
 	base_env.CheckAndAddFlagsToGroup("qt", "pkg-config --libs --cflags qt")
-	base_env.CheckAndAddFlagsToGroup("shout", "pkg-config --libs --cflags shout")
+	#base_env.CheckAndAddFlagsToGroup("shout", "pkg-config --libs --cflags shout")
 	base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
 	if base_env.HasGroup("curl"):
 		base_env.AddFlagsToGroup("curl", " -DHAVE_CURL");
@@ -51,11 +51,11 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 	base_env.CheckLibAndAddFlagsToGroup("ogg","ogg","ogg_sync_init")
 	base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","vorbis_synthesis_init")
-	base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
+	#base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("math","m","cos")
-	base_env.CheckLibAndAddFlagsToGroup("flac", "FLAC", "FLAC__seekable_stream_decoder_get_state")
-	base_env.CheckLibAndAddFlagsToGroup("speex", "speex", "speex_bits_init")
+	#base_env.CheckLibAndAddFlagsToGroup("flac", "FLAC", "FLAC__seekable_stream_decoder_get_state")
+	#base_env.CheckLibAndAddFlagsToGroup("speex", "speex", "speex_bits_init")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "libresid-builder.la")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")
 	base_env.CheckLibAndAddFlagsToGroup("samba","libsmbclient","smbc_init")
