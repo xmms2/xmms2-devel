@@ -334,6 +334,13 @@ xmmsc_result_wait (xmmsc_result_t *res)
  * @{
  */
 
+void
+xmmsc_result_seterror (xmmsc_result_t *res, char *errstr)
+{
+	res->error_str = errstr;
+	res->error = 1;
+}
+
 /**
  * Check the #xmmsc_result_t for error.
  * @returns 1 if error was encountered, else 0

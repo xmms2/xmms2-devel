@@ -3,13 +3,13 @@ Import('base_env')
 if base_env.HasGroup ("python"):
 	pyx = Builder(action = "(" + base_env["PYREX"] + ' $SOURCE' + " || true)")
 	env = base_env.Copy (CPPPATH = ['#src', '#src/include'],
-			     LIBPATH = ["#builddir/clients/lib/xmmsclient/", "#builddir/clients/lib/xmmsclient-glib" ],
-			     LIBS = ["xmmsclient", "xmmsclient-glib"])
+			     LIBPATH = ["#builddir/clients/lib/xmmsclient/"],
+			     LIBS = ["xmmsclient"])
 
 	env.Append(BUILDERS = {'Pyx' : pyx})
 
 	env.AddFlagsFromGroup ("glib")
 	env.AddFlagsFromGroup ("python")
 	if base_env.HasGroup ("pyrex") :
-		env.Pyx ("xmmsclient_binding.c", ["xmmsclient_binding.pyx"])
-		env.XmmsPython ("xmmsclient_binding", ["xmmsclient_binding.c"])
+		env.Pyx ("xmmsclient.c", ["xmmsclient.pyx"])
+		env.XmmsPython ("xmmsclient", ["xmmsclient.c"])
