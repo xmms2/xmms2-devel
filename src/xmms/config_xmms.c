@@ -8,6 +8,12 @@
 
 #include "config_xmms.h"
 
+/* Huge configlock */
+static GMutex *config_lock;
+
+#define XMMS_CONFIG_LOCK g_mutex_lock (config_lock)
+#define XMMS_CONFIG_UNLOCK g_mutex_unlock (config_lock)
+
 /*
  * The entire structure of this configfile and internal structures
  * orginated from tilde (http://tilde.sourceforge.net) but has
@@ -31,7 +37,9 @@ xmms_config_value_data_set (xmms_config_value_t *value, gchar *data)
 {
 	if(!value || !data) return;
 
+	XMMS_CONFIG_LOCK;
 	value -> data = data;
+	XMMS_CONFIG_UNLOCK;
 }
 
 /*
@@ -51,9 +59,28 @@ xmms_config_add_property (xmms_config_value_t *val, gchar *name, gchar *data)
 	xmms_config_value_prop_add (new, "name", name);
 	xmms_config_value_data_set (new, data);
 
+	XMMS_CONFIG_LOCK;
 	xmms_config_value_list_add (val, new);
+	XMMS_CONFIG_UNLOCK;
 
 	return TRUE;
+}
+
+/*
+ * Looks up a value from the hashtable 
+ */
+
+xmms_config_value_t *
+xmms_config_value_lookup (GHashTable *h, const gchar *valuename)
+{
+	xmms_config_value_t *ret;
+	if (!h || !valuename) return NULL;
+
+	XMMS_CONFIG_LOCK;
+	ret = (xmms_config_value_t *) g_hash_table_lookup (h, valuename);
+	XMMS_CONFIG_UNLOCK;
+
+	return ret;
 }
 
 /*
@@ -68,7 +95,9 @@ xmms_config_add_section (GHashTable *h, gchar *name)
 	xmms_config_value_t *new;
 
 	new = xmms_config_value_create (XMMS_CONFIG_VALUE_LIST, name);
+	XMMS_CONFIG_LOCK;
 	g_hash_table_insert (h, name, new);
+	XMMS_CONFIG_UNLOCK;
 	return new;
 }
 
@@ -77,20 +106,25 @@ xmms_config_add_section (GHashTable *h, gchar *name)
  */
 
 xmms_config_value_t *
-xmms_config_value_list_lookup (xmms_config_value_t *value, char *subvalue) 
+xmms_config_value_list_lookup (xmms_config_value_t *value, const gchar *subvalue) 
 {
 	xmms_config_value_t *tmp;
 
 	if(value->type!=XMMS_CONFIG_VALUE_LIST || !value->child) return NULL;
 
+	XMMS_CONFIG_LOCK;
+
 	tmp = value->child;
 
 	while(tmp) {
 		if(g_strcasecmp(tmp->directive,subvalue)==0) {
+			XMMS_CONFIG_UNLOCK;
 			return tmp;
 		}
 		tmp=tmp->next;
 	}
+
+	XMMS_CONFIG_UNLOCK;
 
 	return NULL;
 }
@@ -100,21 +134,24 @@ xmms_config_value_list_lookup (xmms_config_value_t *value, char *subvalue)
  */
 
 xmms_config_value_t *
-xmms_config_value_property_lookup (xmms_config_value_t *val, gchar *property)
+xmms_config_value_property_lookup (xmms_config_value_t *val, const gchar *property)
 {
 	xmms_config_value_t *tmp;
 
 	if (val->type!=XMMS_CONFIG_VALUE_LIST || !val->child) return NULL;
 
+	XMMS_CONFIG_LOCK;
 	tmp = val->child;
 
 	while (tmp) {
 		if (g_strcasecmp (xmms_config_value_getprop (tmp, "name"), property) == 0) {
+			XMMS_CONFIG_UNLOCK;
 			return tmp;
 		}
 		tmp=tmp->next;
 	}
 	
+	XMMS_CONFIG_UNLOCK;
 	return NULL;
 
 }
@@ -124,7 +161,11 @@ xmms_config_value_property_lookup (xmms_config_value_t *val, gchar *property)
  */
 
 gint xmms_config_value_type (xmms_config_value_t *value) {
-	return value->type;
+	gint ret;
+
+	ret = value->type;
+
+	return ret;
 }
 
 /*
@@ -136,7 +177,9 @@ gint xmms_config_value_as_int (xmms_config_value_t *value) {
 
 	if(!value || value->type != XMMS_CONFIG_VALUE_PLAIN || !value->data) return -1;
 
+	XMMS_CONFIG_LOCK;
 	i=strtol(value->data,NULL,10);
+	XMMS_CONFIG_UNLOCK;
 
 	return i;
 }
@@ -146,9 +189,14 @@ gint xmms_config_value_as_int (xmms_config_value_t *value) {
  */
 
 gchar *xmms_config_value_as_string (xmms_config_value_t *value) {
+	gchar *ret;
 	if(!value || value->type != XMMS_CONFIG_VALUE_PLAIN || !value->data) return NULL;
+
+	XMMS_CONFIG_LOCK;
+	ret = value->data;
+	XMMS_CONFIG_UNLOCK;
 	
-	return value->data;
+	return ret;
 }
 
 /*
@@ -166,6 +214,7 @@ xmms_config_save_section (gpointer key, gpointer data, gpointer udata)
 	gchar *sect;
 	gint p=0;	
 
+
 	if (xmms_config_value_type (val) == XMMS_CONFIG_VALUE_LIST) {
 		sect = g_strdup_printf ("\t\t<%s>\n", (gchar *)key);
 		fwrite (sect, strlen (sect), 1, fp);
@@ -177,9 +226,8 @@ xmms_config_save_section (gpointer key, gpointer data, gpointer udata)
 
 	while (val) {
 		if (val->directive) {
-			sect = g_strdup_printf ("\t\t\t<%s name=\"%s\">%s</%s>\n", 
+			sect = g_strdup_printf ("\t\t\t<%s>%s</%s>\n", 
 					val->directive,
-					xmms_config_value_getprop (val, "name"),
 					val->data ? val->data : "",
 					val->directive);
 			fwrite (sect, strlen (sect), 1, fp);
@@ -194,6 +242,7 @@ xmms_config_save_section (gpointer key, gpointer data, gpointer udata)
 		fwrite (sect, strlen (sect), 1, fp);
 		g_free (sect);
 	}
+
 }
 
 gboolean
@@ -205,6 +254,8 @@ xmms_config_save_to_file (xmms_config_data_t *config, gchar *filename)
 	fp = fopen (filename, "w+");
 
 	if (!fp) return FALSE;
+	
+	XMMS_CONFIG_LOCK;
 
 	/* write header */
 	fwrite ("<XMMS>\n\n", 8, 1, fp);
@@ -223,6 +274,7 @@ xmms_config_save_to_file (xmms_config_data_t *config, gchar *filename)
 	fwrite ("\t</transport>\n\n",14, 1, fp);
 
 	fwrite ("</XMMS>\n", 8, 1, fp);
+	XMMS_CONFIG_UNLOCK;
 
 	return TRUE;
 }
@@ -258,7 +310,9 @@ xmms_config_init (gchar *filename)
 
 	root = xmlDocGetRootElement(doc);
 	root = root->children;
-	
+
+	config_lock = g_mutex_new ();
+
 	decodertable = g_hash_table_new (g_str_hash, g_str_equal);
 	outputtable = g_hash_table_new (g_str_hash, g_str_equal);
 	transporttable = g_hash_table_new (g_str_hash, g_str_equal);
@@ -277,7 +331,7 @@ xmms_config_init (gchar *filename)
 		root=root->next;
 	}
 
-	xmms_config_add_prop (coretable,NULL,corenode);
+	xmms_config_add_prop (coretable, NULL, corenode);
 	xmms_config_add_prop (decodertable, NULL, decodenode);
 	xmms_config_add_prop (transporttable, NULL, transportnode);
 	xmms_config_add_prop (outputtable, NULL, outputnode);

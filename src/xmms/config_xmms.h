@@ -14,6 +14,8 @@ typedef struct xmms_config_data_St {
 #define XMMS_CONFIG_VALUE_PLAIN 0
 #define XMMS_CONFIG_VALUE_LIST 1
 
+#define XMMS_CONFIG_SYSTEMWIDE SYSCONFDIR "/xmms2.conf"
+
 typedef struct xmms_config_value_St {
 	
 	/* either XMMS_CONFIG_VALUE_PLAIN or XMMS_CONFIG_VALUE_LIST */
@@ -40,19 +42,16 @@ typedef GHashTable xmms_config_info_t;
 
 /* forward declare */
 xmms_config_data_t *xmms_config_init (gchar *filename);
+gboolean xmms_config_save_to_file (xmms_config_data_t *config, gchar *filename);
+
 void xmms_config_deinit(xmms_config_data_t *data);
 
 xmms_config_value_t *xmms_config_value_get_from_list (xmms_config_value_t *value, gchar *directive);
 
-
-gint xmms_config_data_get_int (xmms_config_info_t *config,
-			       gchar *key);
- 
-gchar *xmms_config_data_get_string (xmms_config_info_t *config,
-			            gchar *key);
- 
 xmms_config_value_t *xmms_config_data_get (xmms_config_info_t *config, 
 			                  gchar *key);
+
+xmms_config_value_t *xmms_config_value_lookup (GHashTable *h, const gchar *valuename);
 
 /* misc support functions */
 
@@ -63,9 +62,9 @@ void xmms_config_value_data_set (xmms_config_value_t *value,
 
 
 xmms_config_value_t *xmms_config_value_list_lookup (xmms_config_value_t *value,
-					 	    gchar *subvalue);
+					 	    const gchar *subvalue);
 
-xmms_config_value_t *xmms_config_value_property_lookup (xmms_config_value_t *val, gchar *property);
+xmms_config_value_t *xmms_config_value_property_lookup (xmms_config_value_t *val, const gchar *property);
 
 void xmms_config_value_list_add ( xmms_config_value_t *value, 
 				  xmms_config_value_t *add);
