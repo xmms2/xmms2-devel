@@ -40,6 +40,33 @@ xmmsc_sync_init (xmmsc_connection_t *conn)
 	mainloop = g_main_loop_new (NULL, FALSE);
 }
 
+GHashTable *
+xmmsc_sync_entry_get (gint id)
+{
+	GHashTable *ret;
+
+	xmmsc_playlist_get_mediainfo (xmmsc_conn, id);
+	
+	ret = (GHashTable *) xmmsc_sync_wait_cmd_arg (XMMS_SIGNAL_PLAYLIST_MEDIAINFO);
+
+	return ret;
+}
+
+gint
+xmmsc_sync_current_id_get ()
+{
+	gint ret;
+	void *pt;
+
+	xmmsc_playback_current_id (xmmsc_conn);
+
+	pt = xmmsc_sync_wait_cmd_arg (XMMS_SIGNAL_PLAYBACK_CURRENTID);
+
+	ret = GPOINTER_TO_UINT (pt);
+
+	return ret;
+}
+
 gint
 xmmsc_sync_played_time_get ()
 {
