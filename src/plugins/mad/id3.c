@@ -73,9 +73,9 @@ add_to_entry (xmms_playlist_entry_t *entry, gchar *key, guchar *val, gint len)
 	g_return_if_fail (len>0);
 
 	if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
-		nval = g_convert (val, len, "USC-2", "UTF-8", &readsize, &writsize, &err);
+		nval = g_convert (val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
 	} else {
-		nval = g_convert (val, len, "ISO-8859-1", "UTF-8", &readsize, &writsize, &err);
+		nval = g_convert (val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	}
 
 	if (err) {
@@ -291,6 +291,8 @@ gboolean
 xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 {
 	id3v1tag_t *tag = (id3v1tag_t *) buf;
+	gsize readsize,writsize;
+	GError *err = NULL;
 	gchar *tmp;
 
 	if (strncmp (tag->tag, "TAG", 3) != 0) {
@@ -299,22 +301,23 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 
 	XMMS_DBG ("Found ID3v1 TAG!");
 
-	tmp = g_strdup_printf ("%30.30s", tag->artist);
+	tmp = g_convert (tag->artist, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
 	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, tmp);
 	g_free (tmp);
 	
-	tmp = g_strdup_printf ("%30.30s", tag->album);
+	tmp = g_convert (tag->album, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
 	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, tmp);
 	g_free (tmp);
 	
-	tmp = g_strdup_printf ("%30.30s", tag->title);
+	tmp = g_convert (tag->title, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 	g_strstrip (tmp);
 	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp);
 	g_free (tmp);
 	
-	tmp = g_strdup_printf ("%4.4s", tag->year);
+	tmp = g_convert (tag->year, 4, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+	g_strstrip (tmp);
 	xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_YEAR, tmp);
 	g_free (tmp);
 	
@@ -328,7 +331,7 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 	
 	if (atoi (&tag->u.v1_1.track_number) > 0) {
 		/* V1.1 */
-		tmp = g_strdup_printf ("%28.28s", tag->u.v1_1.comment);
+		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
@@ -337,7 +340,7 @@ xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TRACKNR, tmp);
 		g_free (tmp);
 	} else {
-		tmp = g_strdup_printf ("%30.30s", tag->u.v1_1.comment);
+		tmp = g_convert (tag->u.v1_1.comment, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
