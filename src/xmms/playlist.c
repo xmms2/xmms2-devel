@@ -211,3 +211,31 @@ xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 	g_free (entry);
 }
 
+static gchar *wellknowns[] = {
+	XMMS_ENTRY_PROPERTY_ARTIST,
+	XMMS_ENTRY_PROPERTY_ALBUM,
+	XMMS_ENTRY_PROPERTY_TITLE,
+	XMMS_ENTRY_PROPERTY_YEAR,
+	XMMS_ENTRY_PROPERTY_TRACKNR,
+	XMMS_ENTRY_PROPERTY_GENRE,
+	XMMS_ENTRY_PROPERTY_BITRATE,
+	XMMS_ENTRY_PROPERTY_COMMENT,
+	XMMS_ENTRY_PROPERTY_DURATION,
+	NULL 
+};
+
+gboolean
+xmms_playlist_entry_is_wellknown (gchar *property)
+{
+	gint i = 0;
+
+	while (wellknowns[i]) {
+		if (g_strcasecmp (wellknowns[i], property) == 0)
+			return TRUE;
+
+		i++;
+	}
+
+	return FALSE;
+}
+

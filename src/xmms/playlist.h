@@ -68,5 +68,6 @@ gchar *xmms_playlist_entry_get_prop (xmms_playlist_entry_t *entry, gchar *key);
 gint xmms_playlist_entry_get_prop_int (xmms_playlist_entry_t *entry, gchar *key);
 void xmms_playlist_entry_copy_property (xmms_playlist_entry_t *entry, xmms_playlist_entry_t *newentry);
 void xmms_playlist_entry_print (xmms_playlist_entry_t *entry);
+gboolean xmms_playlist_entry_is_wellknown (gchar *property);
 
 #endif

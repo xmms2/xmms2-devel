@@ -49,6 +49,7 @@ typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder,
 											   const gchar *mimetype);
 typedef gboolean (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);
+typedef gboolean (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
 
 /*
  * Public function prototypes
@@ -61,6 +62,7 @@ xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);
 
 gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
+xmms_playlist_entry_t * xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, xmms_transport_t *transport);
 void xmms_decoder_set_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 
 xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype);

@@ -55,7 +55,7 @@ typedef struct xmms_mad_data_St {
 static gboolean xmms_mad_can_handle (const gchar *mimetype);
 static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
-static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
+static xmms_playlist_entry_t *xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
 
 /*
@@ -78,6 +78,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_mad_new);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_mad_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_mad_destroy);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_GET_MEDIAINFO, xmms_mad_get_media_info);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
@@ -103,7 +104,7 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
-static void
+static xmms_playlist_entry_t *
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
@@ -111,13 +112,12 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_mad_data_t *data;
 	struct id3v1tag_t tag;
 
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (decoder, NULL);
 
 	data = xmms_decoder_plugin_data_get (decoder);
-	g_return_if_fail (data);
 
 	transport = xmms_decoder_transport_get (decoder);
-	g_return_if_fail (transport);
+	g_return_val_if_fail (transport, NULL);
 
 	entry = xmms_playlist_entry_new (NULL);
 
@@ -169,10 +169,13 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	}
 	
-	data->entry = entry;
+	if (data) {
+		data->entry = entry;
 
-	xmms_decoder_set_mediainfo (decoder,entry);
+		xmms_decoder_set_mediainfo (decoder,entry);
+	}
 
+	return entry;
 }
 
 static gboolean

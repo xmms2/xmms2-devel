@@ -20,6 +20,7 @@
 #define XMMS_METHOD_DESTROY "destroy"
 #define XMMS_METHOD_WRITE "write"
 #define XMMS_METHOD_SEARCH "search"
+#define XMMS_METHOD_ADD_ENTRY "add_entry"
 
 /*
  * Plugin properties.

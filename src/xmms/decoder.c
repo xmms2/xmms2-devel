@@ -237,6 +237,27 @@ xmms_decoder_get_mediainfo (xmms_decoder_t *decoder,
 	return TRUE;
 }
 
+xmms_playlist_entry_t *
+xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, 
+			xmms_transport_t *transport)
+{
+	xmms_playlist_entry_t *entry;
+	xmms_decoder_get_mediainfo_method_t mediainfo;
+	g_return_val_if_fail (decoder, NULL);
+	g_return_val_if_fail (transport, NULL);
+
+	decoder->transport = transport;
+
+	mediainfo = xmms_plugin_method_get (decoder->plugin, XMMS_METHOD_GET_MEDIAINFO);
+	if (!mediainfo) {
+		XMMS_DBG ("get_mediainfo failed");
+		return NULL;
+	}
+
+	entry = mediainfo (decoder);
+
+	return entry;
+}
 
 /*
  * Static functions

@@ -5,7 +5,10 @@
 #include "util.h"
 #include "config_xmms.h"
 #include "medialib.h"
+#include "transport.h"
+#include "decoder.h"
 
+#include <glib.h>
 
 xmms_plugin_t *
 xmms_medialib_find_plugin (gchar *name)
@@ -88,5 +91,86 @@ xmms_medialib_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 
 	return (search (medialib, entry));
 	
+}
+
+
+void
+xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
+{
+	xmms_medialib_add_entry_method_t add_entry;
+
+	g_return_if_fail (medialib);
+	g_return_if_fail (entry);
+
+	add_entry = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_ADD_ENTRY);
+	g_return_if_fail (add_entry);
+
+	add_entry (medialib, entry);
+
+}
+
+void
+xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
+{
+	GDir *d;
+	const gchar *name;
+
+	g_return_if_fail (medialib);
+	g_return_if_fail (dir);
+
+	d = g_dir_open (dir, 0, NULL);
+
+	if (!d) {
+		return;
+	}
+
+	while ((name = g_dir_read_name (d))) {
+		gchar *path = g_build_filename (dir, name, NULL);
+		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+			XMMS_DBG ("%s is dir", path);
+			xmms_medialib_add_dir (medialib, path);
+		} else {
+			xmms_transport_t *transport;
+			xmms_decoder_t *decoder;
+			xmms_playlist_entry_t *entry;
+			gchar *mime;
+
+			transport = xmms_transport_open (path);
+			if (!transport)
+				continue;
+
+			
+			mime = xmms_transport_mime_type_get (transport);
+			if (mime) {
+				decoder = xmms_decoder_new (mime);
+				if (!decoder) {
+					xmms_transport_close (transport);
+					continue;
+				}
+			} else {
+				xmms_transport_close (transport);
+				continue;
+			}
+
+			xmms_transport_start (transport);
+			entry = xmms_decoder_get_mediainfo_offline (decoder, transport);
+
+
+			if (entry) {
+				XMMS_DBG ("Adding %s", path);
+				xmms_playlist_entry_set_uri (entry, path);
+				xmms_medialib_add_entry (medialib, entry);
+				xmms_playlist_entry_free (entry);
+			} else {
+				XMMS_DBG ("Got null from apa");
+			}
+
+			xmms_transport_close (transport);
+			xmms_decoder_destroy (decoder);
+
+		}
+
+	}
+
 }
 
