@@ -296,8 +296,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
 	}
 	
-	if (xmms_transport_is_local (transport))
-		xmms_mad_calc_duration (data, buf, ret, xmms_transport_size (transport), entry);
+	xmms_mad_calc_duration (data, buf, ret, xmms_transport_size (transport), entry);
 
 	if (xmms_transport_is_local (transport) && !id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");
