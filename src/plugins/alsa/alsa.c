@@ -5,6 +5,7 @@
  */
 #include "xmms/output.h"
 #include "xmms/util.h"
+#include "xmms/plugin.h"
 
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>
@@ -38,6 +39,7 @@ typedef struct xmms_alsa_data_St {
  */
 
 static gboolean xmms_alsa_open (xmms_output_t *output);
+static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_alsa_xrun_recover (xmms_output_t *output);
@@ -62,7 +64,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_alsa_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_alsa_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_alsa_close);
-	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_alsa_samplerate_set);
+
 	return plugin;
 }
 
@@ -94,7 +97,7 @@ xmms_alsa_open (xmms_output_t *output)
 	
 	data = g_new0 (xmms_alsa_data_t, 1);
 		
-	dev = xmms_output_get_config_string (output, "device");
+	dev = xmms_output_config_string_get (output, "device");
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
 		dev = "default";
@@ -190,6 +193,20 @@ error:
 	xmms_alsa_close ((xmms_output_t *)data);
 	g_free (data);
 	return FALSE;
+}
+
+
+/**
+ * Set sample rate.
+ *
+ * @param output The output structure.
+ * @param rate The to-be-set sample rate.
+ * @return a guint with the sample rate.
+ */
+static guint
+xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
+{
+	return 44100;
 }
 
 
