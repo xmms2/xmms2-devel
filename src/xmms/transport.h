@@ -89,6 +89,7 @@ const gchar *xmms_transport_suburi_get(const xmms_transport_t *const transport);
 void xmms_transport_uri_set(xmms_transport_t *const transport, gchar *uri);
 void xmms_transport_suburi_set(xmms_transport_t *const transport, gchar *suburi);
 
+xmms_transport_t *xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data);
 
 void xmms_transport_close (xmms_transport_t *transport);
 
