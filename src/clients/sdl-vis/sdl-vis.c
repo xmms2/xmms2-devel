@@ -73,9 +73,12 @@ static void
 draw_bar (SDL_Surface *bar, int val, int xpos)
 {
 	int y,x;
+	int ybase;
 	guint32 *lfb;
 
 	SDL_LockSurface (bar);
+
+	ybase = (bar->h-256)/2;
 
 	lfb = bar->pixels;
 
@@ -83,7 +86,8 @@ draw_bar (SDL_Surface *bar, int val, int xpos)
 		guint32 col = ((255-y) << 16) | ( (y) << 8 );
 
 		for (x=0; x<30; x++) {
-			lfb[bar->pitch/4*y + xpos + x] = col;
+			if (0 < y+ybase && y+ybase < bar->h)
+				lfb[bar->pitch/4*(y+ybase) + xpos + x] = col;
 		}
 
 	}
