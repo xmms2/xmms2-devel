@@ -8,12 +8,32 @@
  * Type definitions
  */
 
+struct xmms_transport_St {
+	xmms_object_t object;
+	xmms_plugin_t *plugin;
 
+	GMutex *mutex;
+	GCond *cond;
+	GThread *thread;
+	gboolean running;
+
+	xmms_ringbuf_t *buffer;
+	gchar *mime_type;
+	gpointer plugin_data;
+};
+
+/*
+ * Macros
+ */
+
+#define xmms_transport_lock(t) g_mutex_lock ((t)->mutex)
+#define xmms_transport_unlock(t) g_mutex_unlock ((t)->mutex)
 
 /*
  * Static function prototypes
  */
 
+static void xmms_transport_destroy (xmms_transport_t *transport);
 static xmms_plugin_t *xmms_transport_find_plugin (const gchar *uri);
 static gpointer xmms_transport_thread (gpointer data);
 
@@ -24,15 +44,22 @@ static gpointer xmms_transport_thread (gpointer data);
 gpointer
 xmms_transport_plugin_data_get (xmms_transport_t *transport)
 {
+	gpointer ret;
 	g_return_val_if_fail (transport, NULL);
 
-	return transport->plugin_data;
+	xmms_transport_lock (transport);
+	ret = transport->plugin_data;
+	xmms_transport_unlock (transport);
+
+	return ret;
 }
 
 void
 xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
 {
+	xmms_transport_lock (transport);
 	transport->plugin_data = data;
+	xmms_transport_unlock (transport);
 }
 
 void
@@ -41,10 +68,14 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
 	g_return_if_fail (transport);
 	g_return_if_fail (mimetype);
 
+	xmms_transport_lock (transport);
+	
 	if (transport->mime_type)
 		g_free (transport->mime_type);
 	transport->mime_type = g_strdup (mimetype);
 
+	xmms_transport_unlock (transport);
+	
 	xmms_object_emit (XMMS_OBJECT (transport), "mime-type-changed", mimetype);
 }
 
@@ -74,6 +105,7 @@ xmms_transport_open (const gchar *uri)
 	xmms_object_init (XMMS_OBJECT (transport));
 	transport->plugin = plugin;
 	transport->mutex = g_mutex_new ();
+	transport->cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (32768);
 
 	open_method = xmms_plugin_method_get (plugin, "open");
@@ -90,21 +122,31 @@ xmms_transport_open (const gchar *uri)
 }
 
 void
-xmms_transport_free (xmms_transport_t *transport)
+xmms_transport_close (xmms_transport_t *transport)
 {
 	g_return_if_fail (transport);
-	
-	xmms_ringbuf_destroy (transport->buffer);
-	g_mutex_free (transport->mutex);
-	g_free (transport);
+
+	if (transport->thread) {
+		xmms_transport_lock (transport);
+		transport->running = FALSE;
+		g_cond_signal (transport->cond);
+		xmms_transport_unlock (transport);
+	} else {
+		xmms_transport_destroy (transport);
+	}
 }
 
 const gchar *
 xmms_transport_mime_type_get (xmms_transport_t *transport)
 {
+	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	return transport->mime_type;
+	xmms_transport_lock (transport);
+	ret =  transport->mime_type;
+	xmms_transport_unlock (transport);
+
+	return ret;
 }
 
 void
@@ -114,19 +156,6 @@ xmms_transport_start (xmms_transport_t *transport)
 
 	transport->running = TRUE;
 	transport->thread = g_thread_create (xmms_transport_thread, transport, TRUE, NULL); 
-}
-
-void
-xmms_transport_wait (xmms_transport_t *transport)
-{
-
-	xmms_ringbuf_wait_eos (transport->buffer, transport->mutex);
-
-
-	XMMS_DBG ("Done with this");
-
-	return;
-
 }
 
 gint
@@ -196,6 +225,21 @@ xmms_transport_size (xmms_transport_t *transport)
  * Static functions
  */
 
+static void
+xmms_transport_destroy (xmms_transport_t *transport)
+{
+	xmms_transport_close_method_t close_method;
+
+	close_method = xmms_plugin_method_get (transport->plugin, "close");
+	
+	if (close_method)
+		close_method (transport);
+	xmms_ringbuf_destroy (transport->buffer);
+	g_cond_free (transport->cond);
+	g_mutex_free (transport->mutex);
+	g_free (transport);
+}
+
 static xmms_plugin_t *
 xmms_transport_find_plugin (const gchar *uri)
 {
@@ -236,7 +280,6 @@ xmms_transport_thread (gpointer data)
 	xmms_transport_t *transport = data;
 	gchar buffer[4096];
 	xmms_transport_read_method_t read_method;
-	xmms_transport_eof_method_t eof_method;
 	gint ret;
 
 	g_return_val_if_fail (transport, NULL);
@@ -245,30 +288,24 @@ xmms_transport_thread (gpointer data)
 	if (!read_method)
 		return NULL;
 
-	eof_method = xmms_plugin_method_get (transport->plugin, "eof");
-	
+	xmms_transport_lock (transport);
 	while (transport->running) {
-		xmms_transport_lock (transport);
-
+		xmms_transport_unlock (transport);
 		ret = read_method (transport, buffer, 4096);
+		xmms_transport_lock (transport);
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
 		} else {
-			XMMS_DBG ("Done with stream...");
-			xmms_ringbuf_set_eos (transport->buffer, TRUE);
-			transport->running = FALSE;
+			g_cond_wait (transport->cond, transport->mutex);
 		}
-		xmms_transport_unlock (transport);
 	}
+	xmms_transport_unlock (transport);
 
+
+	XMMS_DBG ("xmms_transport_thread: cleaning up");
+	
+	xmms_transport_destroy (transport);
+	
 	return NULL;
-}
-
-
-xmms_ringbuf_t *
-xmms_transport_buffer (xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, NULL);
-	return transport->buffer;
 }
