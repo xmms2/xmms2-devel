@@ -573,6 +573,170 @@ xmmsc_decode_path (const gchar *path)
 	return qstr;
 }
 
+static int
+add (char *target, int max, int len, char *str)
+{
+	int tmpl;
+
+	tmpl = strlen (str);
+
+	if ((len + tmpl) > max)
+		return 0;
+
+	if (len == 0)
+		strcpy (target, str);
+	else 
+		strcat (target, str);
+
+	return tmpl;
+}
+
+static int
+lookup_and_add (char *target, int max, int len, GHashTable *table, const char *entry)
+{
+	char *tmp;
+	int tmpl;
+
+	tmp = g_hash_table_lookup (table, entry);
+	if (!tmp)
+		return 0;
+
+	tmpl = add (target, max, len, tmp);
+
+	return tmpl;
+}
+
+/**
+ * @todo Document this 
+ */
+
+int
+xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table)
+{
+	int i = 0;
+	char c;
+
+	while (*fmt) {
+
+		c = *(fmt++);
+
+		if (c == '%') {
+			switch (*fmt) {
+				case 'a':
+					/* artist */
+					i += lookup_and_add (target, len, i, table, "artist");
+					break;
+				case 'b':
+					/* album */
+					i += lookup_and_add (target, len, i, table, "album");
+					break;
+				case 'c':
+					/* channel name */
+					i += lookup_and_add (target, len, i, table, "channel");
+					break;
+				case 'd':
+					/* duration in ms */
+					i += lookup_and_add (target, len, i, table, "duration");
+					break;
+				case 'g':
+					/* genre */
+					i += lookup_and_add (target, len, i, table, "genre");
+					break;
+				case 'h':
+					/* samplerate */
+					i += lookup_and_add (target, len, i, table, "samplerate");
+					break;
+				case 'u':
+					/* URL */
+					i += lookup_and_add (target, len, i, table, "url");
+					break;
+				case 'f':
+					/* filename */
+					{
+						char *p;
+						char *str;
+						p = g_hash_table_lookup (table, "url");
+
+						if (!p)
+							continue;
+
+					      	str = strrchr (p, '/');
+						if (!str || !str[1])
+							str = p;
+						else
+							str++;
+						str = xmmsc_decode_path (str);
+
+						i += add (target, len, i, str);
+					}
+
+					break;
+				case 'o':
+					/* comment */
+					i += lookup_and_add (target, len, i, table, "comment");
+					break;
+				case 'm':
+					{
+						char *p;
+						/* minutes */
+					
+						p = g_hash_table_lookup (table, "duration");
+						if (!p) {
+							i += add (target, len, i, "00");
+						} else {
+							int d = atoi (p);
+							char *t = g_strdup_printf ("%02d", d/60000);
+							i += add (target, len, i, t);
+							g_free (t);
+						}
+						break;
+					}
+				case 'n':
+					/* tracknr */
+					i += lookup_and_add (target, len, i, table, "tracknr");
+					break;
+				case 'r':
+					/* bitrate */
+					i += lookup_and_add (target, len, i, table, "bitrate");
+					break;
+				case 's':
+					{
+						char *p;
+						/* seconds */
+					
+						p = g_hash_table_lookup (table, "duration");
+						if (!p) {
+							i += add (target, len, i, "00");
+						} else {
+							int d = atoi (p);
+							char *t = g_strdup_printf ("%02d", (d/1000)%60);
+							i += add (target, len, i, t);
+							g_free (t);
+						}
+						break;
+					}
+
+					break;
+				case 't':
+					/* title */
+					i += lookup_and_add (target, len, i, table, "title");
+					break;
+				case 'y':
+					/* year */
+					i += lookup_and_add (target, len, i, table, "year");
+					break;
+			}
+			*fmt++;
+		} else {
+			target[i++] = c;
+		}
+
+	}
+
+	return i;
+
+}
+
 /** @} */
 
 /**
@@ -811,7 +975,49 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_LIST);
 }
 
-/** @todo xmmscs_playlist_list */
+unsigned int *
+xmmscs_playlist_list (xmmsc_connection_t *c)
+{
+	DBusMessage *msg,*rmsg;
+        DBusMessageIter itr;
+	DBusError err;
+	unsigned int *arr;
+
+	*arr = -1;
+	
+	dbus_error_init (&err);
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
+
+	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+
+	if (rmsg) {
+		dbus_message_iter_init (rmsg, &itr);
+
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			guint len = dbus_message_iter_get_uint32 (&itr);
+			if (len > 0) {
+				int len;
+				unsigned int *tmp;
+
+				dbus_message_iter_next (&itr);
+				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
+
+				arr = g_new0 (guint32, len+1);
+				memcpy (arr, tmp, len * sizeof(guint32));
+				arr[len] = '\0';
+			}
+		}
+
+		dbus_message_unref (rmsg);
+	} else {
+		printf ("Error: %s\n", err.message);
+	}
+
+	dbus_message_unref (msg);
+
+	return arr;
+}
 
 /**
  * Set the current song in the playlist.

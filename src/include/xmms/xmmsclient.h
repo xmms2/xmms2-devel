@@ -45,6 +45,7 @@ void xmmsc_deinit(xmmsc_connection_t *);
 gchar *xmmsc_get_last_error (xmmsc_connection_t *c);
 gchar *xmmsc_encode_path (gchar *path);
 gchar *xmmsc_decode_path (const gchar *path);
+int xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table);
 
 void xmmsc_quit(xmmsc_connection_t *);
 void xmmsc_play_next(xmmsc_connection_t *);
@@ -75,6 +76,7 @@ void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);
 /* sync */
 int xmmscs_playback_current_id (xmmsc_connection_t *c);
 GHashTable *xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, guint id);
+unsigned int * xmmscs_playlist_list (xmmsc_connection_t *c);
 
 
 #ifdef __cplusplus
