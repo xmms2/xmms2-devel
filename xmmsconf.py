@@ -50,6 +50,9 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 	base_env.CheckLibAndAddFlagsToGroup("math","m","cos")
+	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "sidplay/builders/libresid-builder.la")
+	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")
+
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")

@@ -88,3 +88,23 @@ if len (ossrc) > 1:
 		cdae_decoder.AddFlagsFromGroup("curl")
 	cdae_decoder.XmmsPlugin('xmms_cddecoder', ['cde/cddecoder.c', 'cde/cddb.c'])
 
+if base_env.HasGroup("sid") and base_env.HasGroup("resid"):
+	sid = base_env.Copy()
+	sid.AddFlagsFromGroup("glib")
+	sid.AddFlagsFromGroup("sid")
+	sid.AddFlagsFromGroup("resid")
+	
+	# needed for libresid-builder.so.0 to be found
+	for path in sid['LIBPATH']:
+		try:
+			if path.index('sidplay') :
+				sid.Append(LINKFLAGS=['-Wl,-rpath'])
+				sid.Append(LINKFLAGS=[path])
+				break
+		except ValueError:
+			pass
+	
+	# needed to link the sidplay_wrapper
+	sid.Append(LIBS=['stdc++'])
+	
+	sid.XmmsPlugin('xmms_sid', ['sid/sidplay_wrapper.cpp', 'sid/sid.c'])

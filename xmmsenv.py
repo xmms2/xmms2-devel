@@ -83,7 +83,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		return self.flag_groups.has_key(group)
 
 	def CheckAndAddFlagsToGroupFromLibTool(self, group, ltfile):
-		file_found = 0	
+		file_found = 0
+		msg = "Checking for "+ltfile+"... "
 		for path in self['LIBPATH']:
 			if os.path.exists(os.path.join(path, ltfile)):
 				file_found = 1
@@ -94,8 +95,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 						flags += " -l"+line[11:line.index('.so')]
 					elif line[0:6] == 'libdir':
 						flags += " -L"+line[8:-2]
+				print msg + "yes"
 		if file_found == 0:
-			print "Could not find "+ltfile+". Aborting!"
+			print msg + "no"
 		else:
 			self.AddFlagsToGroup(group,flags)
 
