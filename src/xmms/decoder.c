@@ -519,7 +519,6 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 		return FALSE;
 	
 	xmms_object_ref (transport);
-	xmms_object_ref (plugin);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
