@@ -19,6 +19,8 @@ opts = Options(None, ARGUMENTS)
 opts.Add('CC', 'C compiler to use', 'gcc')
 opts.Add('CCFLAGS', 'compilerflags', '-g -Wall -O0')
 opts.Add('PREFIX', 'installprefix', '/usr/local')
+opts.Add('SYSCONFDIR', 'system configuration dir', '/usr/local/etc')
+opts.Add('INSTALLDIR', 'runtime install dir', '')
 
 ## setup base environment...
 ## ...ok, this should be a bit configurable... later.
@@ -43,6 +45,7 @@ base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
 base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
 base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
 base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
+#base_env.CheckLibAndAddFlagsToGroup("ffmpeg","avcodec","avcodec_init")
 #sid!
 base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
 #enable gtk2 gui again, someday.
