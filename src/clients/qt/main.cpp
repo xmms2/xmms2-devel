@@ -12,9 +12,13 @@ int main (int argc, char **argv)
 
 	c = xmmsc_init ();
 
-	if (!xmmsc_connect (c, "unix:path=/tmp/xmms-dbus-tru"))
+	if (!xmmsc_connect (c, NULL))
 		return 0;
 	
+	/* Here goes the Magic, this will create the
+	 * actuall cooperation between the mainloop and
+	 * dbus. 
+	 */
 	client = new XMMSClientQT (c, &app);
 
 	XMMSPlaylistWin *pl = new XMMSPlaylistWin (c);

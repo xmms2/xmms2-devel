@@ -1,5 +1,6 @@
 #include <qlistview.h>
 
+#include <xmmsclient.h>
 #include "xmmslistview.h"
 
 XMMSListViewItem::XMMSListViewItem (XMMSListView *parent, 
@@ -7,6 +8,7 @@ XMMSListViewItem::XMMSListViewItem (XMMSListView *parent,
 		  QListViewItem (parent, after)
 {
 	m_id = id;
+	m_current = FALSE;
 }
 
 void
@@ -39,6 +41,32 @@ XMMSListViewItem::setURL (const QString &url)
 	m_url = url.copy ();
 }
 
+void
+XMMSListViewItem::setCurrent (bool b)
+{
+	m_current = b;
+	repaint ();
+}
+
+void
+XMMSListViewItem::paintCell (QPainter *p, const QColorGroup &cg, int c, int w, int a)
+{
+
+	if (!m_current)
+		QListViewItem::paintCell (p, cg, c, w, a);
+	else {
+		QColorGroup ncg (cg);
+		QColor oc = ncg.text ();
+
+		ncg.setColor (QColorGroup::Text, Qt::red);
+
+		QListViewItem::paintCell (p, ncg, c, w, a);
+		
+		ncg.setColor (QColorGroup::Text, oc);
+	}
+
+}
+
 QString
 XMMSListViewItem::text (int pos) const
 {
@@ -50,7 +78,7 @@ XMMSListViewItem::text (int pos) const
 			if (m_artist)
 				return m_artist;
 
-			return m_url;
+			return m_url.right (m_url.length () - m_url.findRev ('/') - 1);
 		case 2:
 			return m_album ? m_album : "";
 		case 3:
@@ -67,7 +95,7 @@ XMMSListViewItem::text (int pos) const
 	}
 }
 
-XMMSListView::XMMSListView (QWidget *parent, const char *name) :
+XMMSListView::XMMSListView (xmmsc_connection_t *conn, QWidget *parent, const char *name) :
 	      QListView (parent, name)
 {
 
@@ -79,7 +107,24 @@ XMMSListView::XMMSListView (QWidget *parent, const char *name) :
 	setSorting (-1, TRUE);
 	setSelectionMode (QListView::Extended);
 	setAllColumnsShowFocus (TRUE);
+	setTreeStepSize (0);
+
+	m_connection = conn;
+
+	connect (this, SIGNAL (doubleClicked (QListViewItem *, const QPoint &, int)),
+		 this, SLOT (onDoubleClick (QListViewItem *, const QPoint &, int)));
 
 }
 
+void
+XMMSListView::onDoubleClick (QListViewItem *i, const QPoint &, int)
+{
+	XMMSListViewItem *it = (XMMSListViewItem *)i;
+
+	if (it) {
+		xmmsc_playlist_jump (m_connection, it->Id ());
+		xmmsc_playback_start (m_connection);
+	}
+	
+}
 
