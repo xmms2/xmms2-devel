@@ -266,6 +266,16 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error)
 	return pos;
 }
 
+static inline void
+swap_entries(GArray *l, gint i, gint j)
+{
+	guint32 tmp;
+	tmp = g_array_index (l, guint32, i);
+	g_array_index (l, guint32, i) = g_array_index (l, guint32, j);
+	g_array_index (l, guint32, j) = tmp;
+}
+
+
 /**
  * Shuffle the playlist.
  *
@@ -282,16 +292,16 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	len = playlist->list->len;
 	if (len > 1) {
-		guint32 tmp;
+
+		/* put current at top and exclude from shuffling */
+		swap_entries (playlist->list, 0, playlist->currentpos);
+		playlist->currentpos = 0;
 
 		/* knuth <3 */
-		for (i = 0; i < len; i++) {
+		for (i = 1; i < len; i++) {
 			j = g_random_int_range (i, len);
 			
-			/* swap(list, i, j) */
-			tmp = g_array_index (playlist->list, guint32, i);
-			g_array_index (playlist->list, guint32, i) = g_array_index (playlist->list, guint32, j);
-			g_array_index (playlist->list, guint32, j) = tmp;
+			swap_entries (playlist->list, i, j);
 		}
 
 	}
