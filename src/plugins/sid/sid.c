@@ -105,7 +105,8 @@ xmms_sid_destroy (xmms_decoder_t *decoder)
 static void
 xmms_sid_get_media_info (xmms_decoder_t *decoder)
 {
-/* FIXME - read STIL.txt
+/** @todo - read STIL.txt */
+/*
 	xmms_playlist_entry_t *entry = g_new0 (xmms_playlist_entry_t, 1);
 	strncpy(entry->title,"sid..",XMMS_PL_PROPERTY);
 	xmms_decoder_set_mediainfo (decoder,entry);
