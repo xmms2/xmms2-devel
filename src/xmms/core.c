@@ -164,7 +164,7 @@ xmms_core_playlist_shuffle ()
 void
 xmms_core_playlist_clear ()
 {
-	/* @todo Kanske inte skitsnygt. */
+	/** @todo Kanske inte skitsnygt. */
 	xmms_core_playback_stop ();
 	core->curr_song = NULL;
 	xmms_playlist_clear (core->playlist);

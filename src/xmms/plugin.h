@@ -30,6 +30,8 @@
 #define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST "write_playlist"
 #define XMMS_PLUGIN_METHOD_PROCESS "process"
 #define XMMS_PLUGIN_METHOD_FLUSH "flush"
+#define XMMS_PLUGIN_METHOD_MIXER_GET "mixer_get"
+#define XMMS_PLUGIN_METHOD_MIXER_SET "mixer_set"
 
 /*
  * Plugin properties.

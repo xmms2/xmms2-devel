@@ -1,12 +1,8 @@
 CORE
 	* Should check if other server is running
-	* Volyme
-	* Equalizer
 	* Check names of functions
            - especially get/set-functions
            - konsekvent med init/new/create/destroy/free/deinit 
-	* playlist should figure out mimetype upon playlist_add
-		(mediainfo thread?)
 	* licenseheader in all sourcefiles?
 
 CLI:

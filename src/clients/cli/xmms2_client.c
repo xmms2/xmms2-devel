@@ -140,8 +140,10 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 	uri = (gchar *)g_hash_table_lookup (entry, "uri");
 	duration = (gchar *)g_hash_table_lookup (entry, "duration");
 
-	if (tme)
+	if (tme && duration)
 		tme = atoi (duration);
+	else 
+		tme = 0;
 
 	duration = g_strdup_printf ("%02d:%02d", tme/60000, (tme/1000)%60);
 
@@ -149,7 +151,7 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 		str = g_strdup_printf ("%s - %s", artist, title);
 	} else {
 		str = strrchr (uri, '/');
-		if (!str)
+		if (!str || !str[1])
 			str = uri;
 		else
 			str++;
@@ -348,8 +350,27 @@ main(int argc, char **argv)
 			xmmsc_deinit (c);
 
 			exit(0);
+		} else if ( streq (argv[1], "volume") ) {
+			gchar *cstr;
+
+			if (argc < 3) {
+				printf ("usage: volume left [right]\n");
+				exit (0);
+			}
+			if (argc == 3) 
+				cstr = g_strdup_printf ("%s/%s", argv[2], argv[2]);
+			else if (argc == 4) 
+				cstr = g_strdup_printf ("%s/%s", argv[2], argv[3]);
+			else 
+				exit (0);
+
+			xmmsc_configval_set (c, "output.oss.volume", cstr);
+
+			g_free (cstr);
+			xmmsc_deinit (c);
+			exit (0);
+			
 		} else if ( streq (argv[1], "config") ) {
-			gint id;
 
 			if (argc < 4) {
 				printf ("usage: config option value\n");

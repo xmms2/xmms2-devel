@@ -53,4 +53,6 @@ xmms_transport_t *xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar
 
 void xmms_transport_close (xmms_transport_t *transport);
 
+gboolean xmms_transport_is_local (xmms_transport_t *transport);
+
 #endif /* __XMMS_TRANSPORT_H__ */
