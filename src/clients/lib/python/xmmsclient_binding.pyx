@@ -10,7 +10,7 @@ cdef extern from "internal/xlist-int.h" :
 cdef extern from "internal/xhash-int.h" :
 	ctypedef struct x_hash_t
 
-	ctypedef object (*XHFunc) (signed char *key, signed char *value, void user_data)
+	ctypedef object (*XHFunc) (signed char *key, signed char *value, void *user_data)
 
 	void x_hash_foreach (x_hash_t *hash_table, XHFunc func, object user_data)
 
