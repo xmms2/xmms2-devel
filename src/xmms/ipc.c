@@ -771,6 +771,7 @@ xmms_ipc_shutdown (void)
 		xmms_ipc_broadcast_unregister (sig);
 	}
 
+	xmms_ipc_transport_destroy (global_ipc->transport);
 	g_free (global_ipc);
 	g_mutex_free (global_ipc_lock);
 }
