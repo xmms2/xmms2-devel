@@ -53,7 +53,7 @@ static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpoi
 
 
 xmms_mediainfo_thread_t *
-xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
+xmms_mediainfo_thread_start (xmms_playlist_t *playlist, xmms_medialib_t *medialib)
 {
 	xmms_mediainfo_thread_t *mtt;
 
@@ -67,7 +67,7 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 	mtt->queue = g_queue_new ();
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
-	mtt->medialib = xmms_medialib_init ();
+	mtt->medialib = medialib;
 
 	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
 	

@@ -20,11 +20,12 @@
 #ifndef __XMMS_MEDIAINFO_H__
 #define __XMMS_MEDIAINFO_H__
 
-#include "xmms/playlist.h"
-
 typedef struct xmms_mediainfo_thread_St xmms_mediainfo_thread_t;
 
-xmms_mediainfo_thread_t *xmms_mediainfo_thread_start (xmms_playlist_t *playlist);
+#include "xmms/playlist.h"
+#include "xmms/medialib.h"
+
+xmms_mediainfo_thread_t * xmms_mediainfo_thread_start (xmms_playlist_t *playlist, xmms_medialib_t *medialib);
 void xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit);
 
 #endif /* __XMMS_MEDIAINFO_H__ */

@@ -70,6 +70,12 @@ if base_env.HasGroup("alsa"):
 	alsa.AddFlagsFromGroup("alsa")
 	alsa.XmmsPlugin('xmms_alsa', ['alsa/alsa.c'])
 
+if base_env.HasGroup("jack"):
+        jack = base_env.Copy()
+        jack.AddFlagsFromGroup("glib")
+        jack.AddFlagsFromGroup("jack")
+        jack.XmmsPlugin('xmms_jack', ['jack/jack.c'])
+
 cdae = base_env.Copy()
 ossrc=""
 if cdae.sys == 'Linux':

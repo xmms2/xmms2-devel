@@ -83,20 +83,29 @@ xmms_medialib_init (void)
 	medialib->mutex = g_mutex_new ();
 
 	xmms_dbus_register_object ("medialib", XMMS_OBJECT (medialib));
+	xmms_config_value_register ("medialib.dologging",
+				    "1",
+				    NULL, NULL);
 
 	return medialib;
 }
 
-/*
 void
 xmms_medialib_log_entry_stop (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry, guint value)
 {
 	gchar *mid;
 	gchar *sek;
-	gchar *query;
+	gboolean ret;
+	xmms_config_value_t *cv;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (entry);
+
+	cv = xmms_config_lookup ("medialib.dologging");
+	g_return_if_fail (cv);
+
+	if (!xmms_config_value_int_get (cv))
+		return;
 
 	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
 
@@ -107,28 +116,31 @@ xmms_medialib_log_entry_stop (xmms_medialib_t *medialib, xmms_playlist_entry_t *
 	if (!sek)
 		return;
 
-	query = g_strdup_printf ("update Log set value=%d where id=%s and starttime=%s", value, mid, sek);
-	
 	g_mutex_lock (medialib->mutex);
-	if (!xmms_sqlite_query (medialib, query, NULL, NULL)) {
-		g_free (query);
-		g_mutex_unlock (medialib->mutex);
-		return;
-	}
-
-	g_free (query);
+	ret = xmms_sqlite_query (medialib, NULL, NULL, 
+				 "update Log set value=%d where id=%s and starttime=%s", 
+				 value, mid, sek);
+	
 	g_mutex_unlock (medialib->mutex);
-
 }
 
 void
 xmms_medialib_log_entry_start (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 {
 	time_t sek;
-	gchar *query, *lasttme, *mid;
+	gchar *lasttme, *mid;
+	gboolean ret;
+	xmms_config_value_t *cv;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (entry);
+
+
+	cv = xmms_config_lookup ("medialib.dologging");
+	g_return_if_fail (cv);
+
+	if (!xmms_config_value_int_get (cv))
+		return;
 
 	mid = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID);
 
@@ -137,24 +149,22 @@ xmms_medialib_log_entry_start (xmms_medialib_t *medialib, xmms_playlist_entry_t 
 
 	sek = time (NULL);
 	
-	query = g_strdup_printf ("insert into Log (id, starttime) values (%s, %d)", mid, (gint)sek);
-
 	g_mutex_lock (medialib->mutex);
-	if (!xmms_sqlite_query (medialib, query, NULL, NULL)) {
-		g_free (query);
+	ret = xmms_sqlite_query (medialib, NULL, NULL, 
+				 "insert into Log (id, starttime) values (%s, %d)", 
+				 mid, (gint)sek);
+
+	if (!ret) {
 		g_mutex_unlock (medialib->mutex);
 		return;
 	}
 	g_mutex_unlock (medialib->mutex);
-
-	g_free (query);
 
 	lasttme = g_strdup_printf ("%d", (gint)sek);
 	xmms_playlist_entry_property_set (entry, "laststarted", lasttme);
 	g_free (lasttme);
 	
 }
-*/
 
 guint
 xmms_medialib_next_id (xmms_medialib_t *medialib)
@@ -200,6 +210,7 @@ xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *ent
 {
 	gboolean ret;
 	guint id;
+	gchar *tmp;
 
 	g_return_val_if_fail (medialib, FALSE);
 	XMMS_DBG ("Storing entry to medialib!");
@@ -220,6 +231,10 @@ xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *ent
 	}
 
 	xmms_playlist_entry_property_foreach (entry, insert_foreach, medialib);
+
+	tmp = g_strdup_printf ("%d", id);
+	xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, tmp);
+	g_free (tmp);
 				 
 	
 	g_mutex_unlock (medialib->mutex);

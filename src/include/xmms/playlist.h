@@ -87,6 +87,7 @@ xmms_playlist_entry_t *xmms_playlist_get_current_entry (xmms_playlist_t *playlis
 xmms_playlist_entry_t *xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
 xmms_decoder_t *xmms_playlist_next_start (xmms_playlist_t *playlist);
+void xmms_playlist_entry_stop (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry, guint time);
 
 GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 
