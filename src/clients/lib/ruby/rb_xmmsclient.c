@@ -119,8 +119,10 @@ static VALUE c_disconnect (VALUE self)
 {
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	xmmsc_deinit (xmms->real);
-	xmms->real = NULL;
+	if (xmms->real) {
+		xmmsc_deinit (xmms->real);
+		xmms->real = NULL;
+	}
 
 	return Qtrue;
 }
