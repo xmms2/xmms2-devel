@@ -770,6 +770,13 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 }
 
 static void
+quit (void *data)
+{
+	printf ("bye crule world!\n");
+	exit (0);
+}
+
+static void
 cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
@@ -781,6 +788,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
 
+	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_ipc_setup_with_gmain (conn);
 
 	g_main_loop_run (ml);
