@@ -274,11 +274,10 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 	if (destroy_method)
 		destroy_method (decoder);
 
-	g_return_if_fail (decoder->output);
-
 	g_cond_free (decoder->cond);
 	g_mutex_free (decoder->mutex);
-	xmms_playlist_entry_free (decoder->mediainfo);
+	if (decoder->mediainfo)
+		xmms_playlist_entry_free (decoder->mediainfo);
 	xmms_object_cleanup (XMMS_OBJECT (decoder));
 	g_free (decoder);
 }

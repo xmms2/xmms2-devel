@@ -35,10 +35,10 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
-			g_slist_append (playlist->list, (gpointer) file);
+			playlist->list = g_slist_append (playlist->list, (gpointer) file);
 			break;
 		case XMMS_PLAYLIST_PREPEND:
-			g_slist_prepend (playlist->list, (gpointer) file);
+			playlist->list = g_slist_prepend (playlist->list, (gpointer) file);
 		case XMMS_PLAYLIST_INSERT:
 			break;
 	}
@@ -53,11 +53,11 @@ xmms_playlist_pop (xmms_playlist_t *playlist)
 	xmms_playlist_entry_t *r=NULL;
 	GSList *n;
 
-	n = g_slist_nth (playlist->list, 1);
+	n = g_slist_nth (playlist->list, 0);
 
 	if (n) {
 		r = n->data;
-		g_slist_remove (playlist->list, r);
+		playlist->list = g_slist_remove (playlist->list, r);
 	}
 	
 	return r;
@@ -70,7 +70,7 @@ xmms_playlist_init ()
 	xmms_playlist_t *ret;
 
 	ret = g_new0 (xmms_playlist_t, 1);
-	ret->list = g_slist_alloc ();
+	ret->list = NULL;
 
 	return ret;
 }

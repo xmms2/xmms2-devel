@@ -223,6 +223,8 @@ xmms_plugin_scan_directory (const gchar *dir)
 		} else {
 			g_module_close (module);
 		}
+
+		g_free (path);
 	}
 	g_mutex_unlock (xmms_plugin_mtx);
 	g_dir_close (d);

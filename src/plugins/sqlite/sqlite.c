@@ -31,6 +31,7 @@ typedef struct {
 static gboolean xmms_sqlite_new (xmms_medialib_t *medialib);
 GList *xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search);
 void xmms_sqlite_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
+void xmms_sqlite_close (xmms_medialib_t *medialib);
 
 /*
  * Plugin header
@@ -52,6 +53,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_NEW, xmms_sqlite_new);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_SEARCH, xmms_sqlite_search);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_ADD_ENTRY, xmms_sqlite_add_entry);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_CLOSE, xmms_sqlite_close);
 
 	return plugin;
 }
@@ -60,6 +62,20 @@ xmms_plugin_get (void)
  * Member functions
  */
 
+void
+xmms_sqlite_close (xmms_medialib_t *medialib)
+{
+	xmms_sqlite_data_t *data;
+	g_return_if_fail (medialib);
+
+	data = xmms_medialib_get_data (medialib);
+
+	if (data) {
+		sqlite_close (data->sq);
+		g_free (data);
+	}
+}
+
 gboolean
 xmms_sqlite_new (xmms_medialib_t *medialib)
 {
@@ -67,9 +83,14 @@ xmms_sqlite_new (xmms_medialib_t *medialib)
 	xmms_sqlite_data_t *data;
 	gchar dbpath[XMMS_PATH_MAX];
 	gchar *err;
+	gchar *hdir;
 	g_return_val_if_fail (medialib, FALSE);
 
-	g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir ());
+	hdir = g_get_home_dir ();
+
+	g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", hdir);
+
+	g_free (hdir);
 
 	sql = sqlite_open (dbpath, 0644, &err);
 	if (!sql) {
@@ -133,7 +154,7 @@ add_to_query_str (gchar *query, gchar *str, gchar *field)
 static int
 xmms_sqlite_foreach (void *pArg, int argc, char **argv, char **columnName) 
 {
-	GList *list = (GList *)pArg;
+	GList **list = pArg;
 	xmms_playlist_entry_t *entry;
 	gint i = 0;
 
@@ -222,7 +243,7 @@ xmms_sqlite_foreach (void *pArg, int argc, char **argv, char **columnName)
 		i++;
 	}
 
-	g_list_append (list, entry);
+	*list = g_list_append (*list, entry);
 
 	return 0;
 }
@@ -243,6 +264,7 @@ xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search)
 	gchar *query;
 	GList *ret;
 	gchar *err;
+	gchar *uri;
 
 	g_return_val_if_fail (medialib, NULL);
 	g_return_val_if_fail (search, NULL);
@@ -251,30 +273,30 @@ xmms_sqlite_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *search)
 
 	g_return_val_if_fail (data, NULL);
 
-	query = g_strdup_printf ("SELECT * FROM SONG ");
+	uri = xmms_playlist_entry_get_uri (search);
+
+	if (uri) {
+		gchar *p;
+
+		while ((p=strchr (uri, '*')))
+			*p='%';
+
+		query = g_strdup_printf ("SELECT * FROM SONG WHERE URI LIKE \"%s\" ", uri);
+	} else {
+		query = g_strdup_printf ("SELECT * FROM SONG ");
+	}
 
 	xmms_playlist_entry_foreach_prop (search, xmms_sqlite_foreach_prop, &query);
 	
 	XMMS_DBG ("Medialib query = %s", query);
 
-	ret = g_list_alloc ();
-
-	if (sqlite_exec (data->sq, query, xmms_sqlite_foreach, ret, &err) != SQLITE_OK) {
+	if (sqlite_exec (data->sq, query, xmms_sqlite_foreach, &ret, &err) != SQLITE_OK) {
 		XMMS_DBG ("Query failed %s", err);
 		g_free (query);
 		return NULL;
 	}
 
 	g_free (query);
-
-
-	while (ret) {
-		xmms_playlist_entry_t *t = (xmms_playlist_entry_t*)ret->data;
-		if (t)
-			xmms_playlist_entry_print (t);
-
-		ret = g_list_next (ret);
-	}
 
 	return ret;
 	

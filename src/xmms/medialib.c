@@ -109,6 +109,52 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry
 
 }
 
+
+void
+xmms_medialib_list_free (GList *list)
+{
+	g_return_if_fail (list);
+
+	while (list) {
+		xmms_playlist_entry_t *e = list->data;
+		if (e)
+			xmms_playlist_entry_free (e);
+		list = g_list_next (list);
+	}
+
+	g_list_free (list);
+
+}
+
+gboolean
+xmms_medialib_check_if_exists (xmms_medialib_t *medialib, gchar *uri)
+{
+	xmms_playlist_entry_t *f;
+	GList *list;
+	
+	g_return_val_if_fail (medialib, FALSE);
+	g_return_val_if_fail (uri, FALSE);
+
+	f = xmms_playlist_entry_new (uri);
+
+	list = xmms_medialib_search (medialib, f);
+
+	xmms_playlist_entry_free (f);
+
+	if (!list)
+		return FALSE;
+
+	if (g_list_length (list) < 1) {
+		xmms_medialib_list_free (list);
+		return FALSE;
+	}
+
+	xmms_medialib_list_free (list);
+	
+	return TRUE;
+
+}
+
 void
 xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 {
@@ -135,20 +181,29 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 			xmms_playlist_entry_t *entry;
 			gchar *mime;
 
-			transport = xmms_transport_open (path);
-			if (!transport)
+			if (xmms_medialib_check_if_exists (medialib, path)) {
+				XMMS_DBG ("%s in db", name);
+				g_free (path);
 				continue;
+			}
 
+			transport = xmms_transport_open (path);
+			if (!transport) {
+				g_free (path);
+				continue;
+			}
 			
 			mime = xmms_transport_mime_type_get (transport);
 			if (mime) {
 				decoder = xmms_decoder_new (mime);
 				if (!decoder) {
 					xmms_transport_close (transport);
+					g_free (path);
 					continue;
 				}
 			} else {
 				xmms_transport_close (transport);
+				g_free (path);
 				continue;
 			}
 
@@ -161,6 +216,7 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 				xmms_playlist_entry_set_uri (entry, path);
 				xmms_medialib_add_entry (medialib, entry);
 				xmms_playlist_entry_free (entry);
+				decoder->mediainfo=NULL;
 			} else {
 				XMMS_DBG ("Got null from apa");
 			}
@@ -170,7 +226,29 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 
 		}
 
+		g_free (path);
+
+
 	}
+
+	g_dir_close (d);
+
+}
+
+void
+xmms_medialib_close (xmms_medialib_t *medialib)
+{
+	xmms_medialib_close_method_t cm;
+
+	g_return_if_fail (medialib);
+
+	cm = xmms_plugin_method_get (medialib->plugin, XMMS_METHOD_CLOSE);
+
+	if (cm)
+		cm (medialib);
+
+	g_mutex_free (medialib->mutex);
+	g_free (medialib);
 
 }
 

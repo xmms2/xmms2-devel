@@ -150,9 +150,8 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
 	}
 		
 	tmp = g_strdup_printf ("%d", bitrate / 1000);
-	xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
+	xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_BITRATE, tmp);
 	g_free (tmp);
-	xmms_decoder_set_mediainfo (decoder,data->entry);
 
 }
 
