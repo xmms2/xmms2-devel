@@ -132,12 +132,18 @@ xmms_playlist_entry_property_copy (xmms_playlist_entry_t *entry,
 void
 xmms_playlist_entry_property_set (xmms_playlist_entry_t *entry, gchar *key, gchar *value)
 {
+	gchar *tmp;
 	g_return_if_fail (entry);
 	g_return_if_fail (key);
 	g_return_if_fail (value);
 
+	tmp = g_hash_table_lookup (entry->properties, g_ascii_strdown (key, strlen (key)));
+
+	if (tmp) {
+		g_free (tmp);
+	} 
+
 	g_hash_table_insert (entry->properties, g_ascii_strdown (key, strlen (key)), g_strdup (value));
-	
 }
 
 /**
@@ -150,6 +156,9 @@ xmms_playlist_entry_url_set (xmms_playlist_entry_t *entry, gchar *url)
 	g_return_if_fail (entry);
 	g_return_if_fail (url);
 
+	if (entry->url) {
+		g_free (entry->url);
+	}
 	entry->url = g_strdup (url);
 }
 
