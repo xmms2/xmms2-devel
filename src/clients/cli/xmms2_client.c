@@ -327,7 +327,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		memset (line, '\0', 80);
 
 		if (x_hash_lookup (tab, "channel")) {
-			xmmsc_entry_format (line, sizeof (line)-1, "%c - %g", tab);
+			xmmsc_entry_format (line, sizeof (line)-1, "%c - %t", tab);
 		} else if (!x_hash_lookup (tab, "title")) {
 			xmmsc_entry_format (line, sizeof(line)-1, "%f (%m:%s)", tab);
 		} else {
