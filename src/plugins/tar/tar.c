@@ -386,7 +386,7 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 
 	}
 
-	decode_block = xmms_plugin_method_get (data->subdecoder->plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK);
+	decode_block = xmms_plugin_method_get (xmms_decoder_plugin_get (data->subdecoder), XMMS_PLUGIN_METHOD_DECODE_BLOCK);
 	g_return_val_if_fail (decode_block, FALSE);
 
 	res = decode_block (data->subdecoder);

@@ -52,19 +52,7 @@ typedef enum {
 	XMMS_PLUGIN_TYPE_PLAYLIST
 } xmms_plugin_type_t;
 
-typedef struct {
-	GMutex *mtx;
-	GModule *module;
-	GList *info_list;
-	xmms_plugin_type_t type;
-	gchar *name;
-	gchar *shortname;
-	gchar *description;
-	gint properties;
-
-	guint users;
-	GHashTable *method_table;
-} xmms_plugin_t;
+typedef struct xmms_plugin_St xmms_plugin_t;
 
 typedef struct {
 	gchar *key;

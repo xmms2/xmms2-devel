@@ -12,23 +12,8 @@
  * Type definitions
  */
 
-typedef struct xmms_output_St {
-	xmms_object_t object;
-	xmms_plugin_t *plugin;
+typedef struct xmms_output_St xmms_output_t;
 
-	GMutex *mutex;
-	GCond *cond;
-	GThread *thread;
-	gboolean running;
-
-	guint played;
-	gboolean is_open;
-
-	xmms_ringbuf_t *buffer;
-	xmms_config_value_t *config;
-	
-	gpointer plugin_data;
-} xmms_output_t;
 
 /*
  * Output plugin methods

@@ -13,27 +13,7 @@
  * Structure describing decoder-objects.
  * Do not modify this structure directly, use the functions.
  */
-typedef struct xmms_decoder_St {
-	xmms_object_t object;
-
-	gboolean running;
-	GThread *thread;
-	GMutex *mutex;
-	GCond *cond;
-
-	xmms_plugin_t *plugin;
-	xmms_transport_t *transport; /**< transport associated with decoder.
-				      *   This is where the decoder gets it
-				      *   data from
-				      */
-
-	gpointer plugin_data;
-
-	xmms_output_t *output;       /**< output associated with decoder.
-				      *   The decoded data will be written
-				      *   to this output.
-				      */
-} xmms_decoder_t;
+typedef struct xmms_decoder_St xmms_decoder_t;
 
 /*
  * Decoder plugin methods
@@ -56,6 +36,7 @@ void xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data);
 
 xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);
+xmms_plugin_t *xmms_decoder_plugin_get (xmms_decoder_t *);
 
 gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 xmms_playlist_entry_t * xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, xmms_transport_t *transport);
