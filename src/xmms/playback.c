@@ -143,6 +143,7 @@ xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err)
 
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
 		xmms_core_decoder_stop (playback->core);
+		xmms_core_flush_set (playback->core, TRUE);
 		xmms_playback_wakeup (playback);
 	}
 
@@ -156,6 +157,7 @@ xmms_playback_next (xmms_playback_t *playback, xmms_error_t *err)
 
 		playback->playlist_op = XMMS_PLAYBACK_NEXT;
 		xmms_core_decoder_stop (playback->core);
+		xmms_core_flush_set (playback->core, TRUE);
 		xmms_playback_wakeup (playback); /* Ding dong! */
 
 		return;
@@ -173,6 +175,7 @@ xmms_playback_prev (xmms_playback_t *playback, xmms_error_t *err)
 
 		playback->playlist_op = XMMS_PLAYBACK_PREV;
 		xmms_core_decoder_stop (playback->core);
+		xmms_core_flush_set (playback->core, TRUE);
 		xmms_playback_wakeup (playback); /* Ding dong! */
 
 		return;
@@ -192,7 +195,6 @@ xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err)
 		xmms_output_resume (xmms_core_output_get (playback->core));
 	}
 	
-
 	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_PLAY);
 	
 	playback->status = XMMS_PLAYBACK_PLAY;
