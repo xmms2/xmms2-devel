@@ -18,9 +18,10 @@ playlist_list (void *userdata, void *arg)
 
 	pl->clear ();
 
-	while (list[i]) {
+	while (list && list[i]) {
 		pl->add (list[i]);
 		i++;
+		qApp->processEvents ();
 	}
 }
 
@@ -29,6 +30,20 @@ playlist_mediainfo (void *userdata, void *arg)
 {
 	XMMSPlaylistWin *pl = (XMMSPlaylistWin *) userdata;
 	pl->setInfo ((GHashTable *)arg);
+}
+
+static void
+playlist_add (void *userdata, void *arg)
+{
+	XMMSPlaylistWin *pl = (XMMSPlaylistWin *) userdata;
+	pl->add (GPOINTER_TO_UINT (arg));
+}
+
+static void
+playlist_clear (void *userdata, void *arg)
+{
+	XMMSPlaylistWin *pl = (XMMSPlaylistWin *) userdata;
+	pl->clear ();
 }
 
 XMMSPlaylistWin::XMMSPlaylistWin (xmmsc_connection_t *conn) : 
@@ -45,6 +60,8 @@ XMMSPlaylistWin::XMMSPlaylistWin (xmmsc_connection_t *conn) :
 
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_LIST, playlist_list, this);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, playlist_mediainfo, this);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_ADD, playlist_add, this);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_CLEAR, playlist_clear, this);
 
 	xmmsc_playlist_list (conn);
 
@@ -62,10 +79,14 @@ void
 XMMSPlaylistWin::add (unsigned int id)
 {
 	XMMSListViewItem *it;
+	QListViewItem *l = m_listview->lastItem ();
 
 	qDebug ("adding %d", id);
-	it = new XMMSListViewItem (m_listview, id);
+	it = new XMMSListViewItem (m_listview, id, l);
 	playlist_set_id_data (m_playlist, id, it);
+
+	/* Get the information about this entry */
+	xmmsc_playlist_get_mediainfo (m_connection, id);
 }
 
 void
@@ -89,4 +110,7 @@ XMMSPlaylistWin::setInfo (GHashTable *t)
 		i->setDuration (atoi (tmp));
 	else
 		i->setDuration (0);
+
+
+	m_listview->repaintItem (i);
 }

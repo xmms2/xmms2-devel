@@ -2,8 +2,9 @@
 
 #include "xmmslistview.h"
 
-XMMSListViewItem::XMMSListViewItem (XMMSListView *parent, unsigned int id) :
-		  QListViewItem (parent)
+XMMSListViewItem::XMMSListViewItem (XMMSListView *parent, 
+				    unsigned int id, QListViewItem *after) :
+		  QListViewItem (parent, after)
 {
 	m_id = id;
 }
@@ -55,7 +56,14 @@ XMMSListViewItem::text (int pos) const
 		case 3:
 			return m_title ? m_title : "";
 		case 4:
-			return QString::number (m_duration);
+			{
+				char s[10];
+				snprintf (s, 10, "%02d:%02d",
+						m_duration/60000,
+						(m_duration/60000)%60);
+
+				return QString (s);
+			}
 	}
 }
 
@@ -68,6 +76,9 @@ XMMSListView::XMMSListView (QWidget *parent, const char *name) :
 	addColumn ("Album", 200);
 	addColumn ("Titel", 200);
 	addColumn ("Duration", 50);
+	setSorting (-1, TRUE);
+	setSelectionMode (QListView::Extended);
+	setAllColumnsShowFocus (TRUE);
 
 }
 

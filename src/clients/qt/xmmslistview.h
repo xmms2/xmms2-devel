@@ -8,7 +8,7 @@ class XMMSListView;
 class XMMSListViewItem : public QListViewItem
 {
 public:
-	XMMSListViewItem (XMMSListView *parent, unsigned int id);
+	XMMSListViewItem (XMMSListView *parent, unsigned int id, QListViewItem *after);
 	QString text (int) const;
 
 	void setArtist (const QString &);
