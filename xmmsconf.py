@@ -51,7 +51,15 @@ def checkFlags(base_env):
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
+	
+	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
+		print "PyREX compiler found!"
 
+	base_env.CheckLibAndAddFlagsToGroup("python", "python", "PyList_New", depends="pyrex")
+	if not base_env.HasGroup ("python") :
+		base_env.CheckLibAndAddFlagsToGroup("python", "python2.3", "PyList_New", depends="pyrex")
+	if not base_env.HasGroup ("python") :
+		base_env.CheckLibAndAddFlagsToGroup("python", "python2.2", "PyList_New", depends="pyrex")
 
 	##
 	## Write cache

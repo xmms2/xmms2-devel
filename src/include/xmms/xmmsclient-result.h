@@ -18,9 +18,10 @@
 #ifndef __XMMSCLIENT_RESULT_H__
 #define __XMMSCLIENT_RESULT_H__
 
+typedef struct xmmsc_result_St xmmsc_result_t;
+
 #include <xmms/xmmsclient.h>
 
-typedef struct xmmsc_result_St xmmsc_result_t;
 typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 
 void xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *conn, char *signal); 

@@ -52,6 +52,13 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.Program(target,source)
 		self.Install(self.installdir+self.binpath,target)
 
+	def XmmsPython(self,target,source):
+		if self.sys == 'Darwin':
+			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
+
+		self.SharedLibrary(target, source, SHLIBPREFIX='')
+		self.Install(self.installdir+self.libpath, target+self['SHLIBSUFFIX'])
+
 	def XmmsLibrary(self,target,source):
 		if self.sys == 'Darwin':
 			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
@@ -121,6 +128,17 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		my_conf.Finish()
 		return 0
 
+	def CheckProgramAndAddFlagsToGroup (self, group, program) :
+		test_env = self.Copy ()
+		my_conf = SCons.SConf.SConf (test_env)
+		(s, o) = my_conf.TryAction ("which "+program)
+		if (s) :
+		    self.AddFlagsToGroup (group, "yes")
+		    my_conf.Finish ()
+		    return 1
+		my_conf.Finish ()
+		return 0
+
 	def ParseConfigFlagsString(self, flags ):
 		"""We want our own ParseConfig, that supports some more
 		flags, and that takes the argument as a string"""
@@ -155,6 +173,9 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		    		else:
 					print 'garbage in flags: ' + arg
 					sys.exit(1)
+			elif arg[:3] == 'yes' :
+				i = i + 3
+				pass
 			elif switch == '/':
 				if arg[-3:] == '.la':
 # Ok, this is a libtool file, someday maybe we should parse it.
