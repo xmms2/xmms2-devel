@@ -40,11 +40,47 @@ static gboolean xmms_html_can_handle (const gchar *mime);
 static gboolean xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
                                          xmms_transport_t *transport,
                                          xmms_playlist_t *playlist);
+static gboolean xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
+                                          xmms_playlist_t *playlist,
+                                          gchar *filename);
 
 static gboolean valid_suffix (gchar **suffix, gchar *path);
 static gchar* parse_tag (const gchar *tag, const gchar *plspath);
 static gchar* build_url (const gchar *plspath, const gchar *file);
 static gchar* path_get_body (const gchar *path);
+
+static gchar html_header[] =
+"<?xml version=\"1.0\" encoding=\"utf8\"?>\n"
+"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
+"<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n"
+"<head>\n"
+"	<title>XMMS2 Playlist</title>\n"
+"	<meta name=\"generator\" content=\"XMMS2\"/>\n"
+"	<meta http-equiv=\"content-type\" content=\"text/xhtml; charset=utf8\"/>\n"
+"	<meta http-equiv=\"content-style-type\" content=\"text/css\"/>\n"
+"	<link href=\"playlist.css\" rel=\"stylesheet\" type=\"text/css\"/>\n"
+"</head>\n"
+"<body>\n"
+"	<h1>XMMS2 Playlist</h1>\n"
+"\n"
+"	<div id=\"container\">\n"
+"		<p>\n"
+"			Number of tracks: %i\n"
+"			<br/>\n"
+"			Total playtime: %i:%02i:%02i\n"
+"		</p>\n"
+"\n"
+"		<h2>Tracks</h2>\n"
+"\n"
+"		<ol id=\"playlist\">\n";
+
+static gchar html_entry_even[] = "\t\t\t<li class=\"entry_even\">%s</li>\n";
+static gchar html_entry_odd[] = "\t\t\t<li class=\"entry_odd\">%s</li>\n";
+static gchar html_footer[] =
+"		</div>\n"
+"	</div>\n"
+"</body>\n"
+"</html>\n";
 
 /*
  * Plugin header
@@ -64,6 +100,7 @@ xmms_plugin_get (void)
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_html_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_html_read_playlist);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_html_write_playlist);
 
 	xmms_plugin_config_value_register (plugin, "suffixes", "mp3,ogg,flac,wav,spx,sid", NULL, NULL);
 
@@ -171,6 +208,84 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 	g_free (plsurl);
 	g_strfreev (suffix);
 	g_strfreev (tags);
+
+	return TRUE;
+}
+
+static gboolean
+xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
+                          xmms_playlist_t *playlist, gchar *filename)
+{
+	FILE *fp;
+	GList *list, *l;
+	gboolean is_even = TRUE;
+	guint num_entries = 0, total_len = 0;
+	xmms_error_t err;
+
+	g_return_val_if_fail (plsplugin, FALSE);
+	g_return_val_if_fail (playlist, FALSE);
+	g_return_val_if_fail (filename, FALSE);
+
+	xmms_error_reset (&err);
+
+	fp = fopen (filename, "w");
+	if (!fp)
+		return FALSE;
+
+	list = xmms_playlist_list (playlist, &err);
+	if (!list) {
+		fclose (fp);
+		return FALSE;
+	}
+
+	/* get the playlists total playtime */
+	for (l = list; l; l = l->next) {
+		xmms_playlist_entry_t *entry;
+
+		num_entries++;
+
+		entry = xmms_playlist_get_byid (playlist,
+		                                GPOINTER_TO_UINT (l->data));
+
+		total_len += xmms_playlist_entry_property_get_int (entry,
+			XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
+
+		xmms_object_unref (entry);
+	}
+
+	fprintf (fp, html_header, num_entries,
+	         total_len / 3600000, (total_len / 60000) % 60,
+	         (total_len / 1000) % 60);
+
+	while (list) {
+		gchar buf[256];
+		xmms_playlist_entry_t *entry;
+		guint len;
+
+		entry = xmms_playlist_get_byid (playlist,
+		                                GPOINTER_TO_UINT (list->data));
+
+		len = xmms_playlist_entry_property_get_int (entry,
+			XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
+
+		g_snprintf (buf, sizeof (buf), "%s - %s (%02i:%02i)",
+		            xmms_playlist_entry_property_get (entry,
+						XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
+		            xmms_playlist_entry_property_get (entry,
+						XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
+		            len / 60000, (len / 1000) % 60);
+
+		fprintf (fp, is_even ? html_entry_even : html_entry_odd, buf);
+		is_even = !is_even;
+
+		xmms_object_unref (entry);
+
+		list = g_list_remove_link (list, list);
+	}
+
+	fprintf (fp, html_footer);
+
+	fclose (fp);
 
 	return TRUE;
 }
