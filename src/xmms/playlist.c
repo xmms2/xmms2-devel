@@ -293,6 +293,9 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
+	if (!r)
+		return NULL;
+
 	return r->data;
 
 }
