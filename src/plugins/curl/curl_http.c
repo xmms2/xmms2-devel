@@ -8,6 +8,7 @@
 #include "xmms/transport.h"
 #include "xmms/util.h"
 #include "xmms/magic.h"
+#include "xmms/ringbuf.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -27,16 +28,14 @@ typedef struct {
 	CURLM *curlm;
 
 	gint running;
-	gboolean again;
+	gboolean run;
 
 	fd_set fdread;
 	fd_set fdwrite;
 	fd_set fdexcep;
-
 	gint maxfd;
 
-	gchar *buf;
-	gint data_in_buf;
+	xmms_ringbuf_t *buffer;
 
 	gboolean stream;
 	gchar *mime;
@@ -44,6 +43,9 @@ typedef struct {
 	gchar *genre;
 
 	gchar *url;
+
+	GThread *thread;
+	GMutex *mutex;
 } xmms_curl_data_t;
 
 /*
@@ -79,11 +81,12 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_curl_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_curl_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
+	//xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 
 	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "prebuffersize", "32768", NULL, NULL);
 	
 	return plugin;
 }
@@ -111,8 +114,8 @@ xmms_curl_can_handle (const gchar *url)
 	return FALSE;
 }
 
-static size_t 
-xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
+static size_t
+xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	xmms_curl_data_t *data;
 	xmms_transport_t *transport = (xmms_transport_t *) stream;
@@ -121,43 +124,14 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 	data = xmms_transport_plugin_data_get (transport);
 
-	if (!data->mime) {
-		curl_easy_getinfo (data->curl, CURLINFO_CONTENT_TYPE, &data->mime);
-		XMMS_DBG ("mimetype here is %s", data->mime);
-		
-		if (!data->mime && g_strncasecmp (ptr, "ICY 200 OK", 10) == 0) {
+	g_mutex_lock (data->mutex);
+	xmms_ringbuf_write (data->buffer, ptr, size*nmemb);
+	g_mutex_unlock (data->mutex);
 
-			XMMS_DBG ("Shoutcast detected...");
-			data->mime = "audio/mpeg"; /* quite safe */
-			xmms_transport_mimetype_set (transport, data->mime);
-			data->stream = TRUE;
-
-/*			tmp = g_strsplit (ptr, "\r\n", 0);
-			while (tmp[i]) {
-				XMMS_DBG ("%s", tmp[i]);
-				if (g_strncasecmp (tmp[i], "icy-name:", 9) == 0)
-					data->name = g_strdup (tmp[i]+9);
-				if (g_strncasecmp (tmp[i], "icy-genre:", 10) == 0)
-					data->genre = g_strdup (tmp[i]+10);
-				i++;
-			}
-
-			XMMS_DBG ("Got %s that plays %s", data->name, data->genre);
-
-			g_strfreev (tmp);*/
-
-			return size*nmemb;
-		}
-
-		xmms_transport_mimetype_set (transport, data->mime);
-	}
-
-	
-	data->buf = g_malloc (size*nmemb);
-	data->data_in_buf = size*nmemb;
-	memcpy (data->buf, ptr, size*nmemb);
+//	XMMS_DBG ("Wrote %d bytes to the CURL buffer", size*nmemb);
 
 	return size*nmemb;
+
 }
 
 static CURL *
@@ -173,7 +147,7 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, NULL);
 
-	headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
+	//headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
 	
 	XMMS_DBG ("Setting up CURL");
 
@@ -185,11 +159,58 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, transport);
 	curl_easy_setopt (curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (curl, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
-	curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headerlist);
+	//curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headerlist);
 	if (offset)
 		curl_easy_setopt (curl, CURLOPT_RESUME_FROM, offset);
 
 	return curl;
+}
+
+static void
+xmms_curl_thread (xmms_transport_t *transport)
+{
+	xmms_curl_data_t *data;
+	struct timeval timeout;
+	
+	data = xmms_transport_plugin_data_get (transport);
+	
+	data->curl = xmms_curl_easy_new (transport, data->url, 0);
+
+	curl_multi_add_handle (data->curlm, data->curl);
+
+	while (curl_multi_perform (data->curlm, &data->running) == 
+			CURLM_CALL_MULTI_PERFORM);
+
+	FD_ZERO (&data->fdread);
+	FD_ZERO (&data->fdwrite);
+	FD_ZERO (&data->fdexcep);
+	
+	curl_multi_fdset (data->curlm, &data->fdread, 
+			  &data->fdwrite, &data->fdexcep, &data->maxfd);
+
+	timeout.tv_sec = 40;
+	timeout.tv_usec = 0;
+
+	while (data->run) {
+		gint ret;
+
+		ret = select (data->maxfd+1, &data->fdread, 
+			      &data->fdwrite, &data->fdexcep, &timeout);
+
+		switch (ret) {
+			case -1:
+				/* error ? reconnect */
+				XMMS_DBG ("Disconnected????");
+				continue;
+			case 0:
+				continue;
+			default:
+				while (curl_multi_perform (data->curlm, &data->running) ==
+						CURLM_CALL_MULTI_PERFORM);
+		}
+	}
+
+	
 }
 
 static gboolean
@@ -213,27 +234,19 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	
 	g_return_val_if_fail (data->curlm, FALSE);
 
-
-	data->curl = xmms_curl_easy_new (transport, url, 0);
-
-	curl_multi_add_handle (data->curlm, data->curl);
-
-	if (curl_multi_perform (data->curlm, &data->running) == 
-			CURLM_CALL_MULTI_PERFORM) {
-		data->again = TRUE;
-	}
-
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
 
 	size = xmms_config_value_int_get (val);
 
-	xmms_transport_ringbuf_resize (transport, size);
+	//xmms_transport_ringbuf_resize (transport, size);
+
+	data->buffer = xmms_ringbuf_new (size);
+	data->mutex = g_mutex_new ();
+	data->run = TRUE;
+
 	
 	/*xmms_transport_mime_type_set (transport, "audio/mpeg");*/
 
-	FD_ZERO (&data->fdread);
-	FD_ZERO (&data->fdwrite);
-	FD_ZERO (&data->fdexcep);
 	
 	return TRUE;
 }
@@ -247,6 +260,11 @@ xmms_curl_close (xmms_transport_t *transport)
 	
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_if_fail (data);
+
+	data->run = FALSE;
+
+	g_thread_join (data->thread);
+	XMMS_DBG ("Thread is joined");
 	
 	curl_multi_cleanup (data->curlm);
 	curl_easy_cleanup (data->curl);
@@ -270,69 +288,39 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	g_return_val_if_fail (data, -1);
 
-	if (data->data_in_buf) {
-		gint ret;
+	if (!data->thread) {
+		xmms_config_value_t *val;
+		gint size;
 
-		if (len < data->data_in_buf) {
-			gchar *tmp;
+		data->thread = g_thread_create ((GThreadFunc) xmms_curl_thread, (gpointer) transport, TRUE, NULL);
+		/* Prebuffer here ! */
+		val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "prebuffersize");
+		size = xmms_config_value_int_get (val);
+		XMMS_DBG ("Prebuffer %d bytes...", size);
+		g_mutex_lock (data->mutex);
+		xmms_ringbuf_wait_used (data->buffer, size, data->mutex);
+		g_mutex_unlock (data->mutex);
+		XMMS_DBG ("Prebuffer done ... ");
 
-			tmp = data->buf;
-			memcpy (buffer, data->buf, len);
-
-			data->buf = g_malloc (data->data_in_buf-len);
-			memcpy (data->buf, tmp+len, data->data_in_buf-len);
-			data->data_in_buf = data->data_in_buf - len;
-
-			g_free (tmp);
-
-			return len;
-		}
-
-		memcpy (buffer, data->buf, data->data_in_buf);
-		g_free (data->buf);
-		ret = data->data_in_buf;
-		data->data_in_buf = 0;
-
-		return ret;
-	}
-
-	if (!data->running)
-		return -1;
-		
-	if (data->again) {
-		if (curl_multi_perform (data->curlm, &data->running) ==
-				CURLM_CALL_MULTI_PERFORM) {
-			data->again = TRUE;
-			return 0;
-		}
-		data->again = FALSE;
-		if (!data->maxfd)
-			curl_multi_fdset (data->curlm, &data->fdread, &data->fdwrite, &data->fdexcep, &data->maxfd);
 		return 0;
 	}
-	
-	timeout.tv_sec = 1;
-	timeout.tv_usec = 0;
 
-	ret = select (data->maxfd+1, &data->fdread, &data->fdwrite, &data->fdexcep, &timeout);
+	g_mutex_lock (data->mutex);
+	ret = xmms_ringbuf_read (data->buffer, buffer, len);
+	g_mutex_unlock (data->mutex);
 
-	switch (ret) {
-		case -1:
-			return -1;
-		case 0:
-			return 0;
-		default:
-			if (curl_multi_perform (data->curlm, &data->running) ==
-					CURLM_CALL_MULTI_PERFORM) {
-				data->again = TRUE;
-			}
-			return 0;
+	if (!data->mime) {
+		XMMS_DBG ("%s", buffer);
+		data->mime = "audio/mpeg";
+		xmms_transport_mimetype_set (transport, data->mime);
 	}
 
-	return -1;
+
+	return ret;
+
 }
 
-static gint
+/*static gint
 xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 {
 	CURL *curl;
@@ -361,6 +349,7 @@ xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 	
 	return offset;
 }
+*/
 
 static gint
 xmms_curl_size (xmms_transport_t *transport)
@@ -380,4 +369,3 @@ xmms_curl_size (xmms_transport_t *transport)
 
 	return (gint)size;
 }
-
