@@ -199,6 +199,7 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 		g_free (file);
 		g_free (title);
 		g_free (length);
+		xmms_object_unref (entry);
 	}
 
 	g_free (plspath);

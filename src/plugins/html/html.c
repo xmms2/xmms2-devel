@@ -204,6 +204,7 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 		g_free (enc);
 		g_free (url);
 		g_free (full);
+		xmms_object_unref (entry);
 	}
 
 	g_free (plsurl);
