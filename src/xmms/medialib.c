@@ -357,11 +357,11 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 }
 
 static int
-get_playlist_id_cb (void *pArg, int argc, char **argv, char **cName)
+get_id_cb (void *pArg, int argc, char **argv, char **cName)
 {
-	guint *playlist_id = pArg;
+	guint *id = pArg;
 
-	*playlist_id = argv[0] ? atoi (argv[0]) : 0;
+	*id = argv[0] ? atoi (argv[0]) : 0;
 
 	return 0;
 }
@@ -372,7 +372,7 @@ get_playlist_id (gchar *name)
 	gint ret;
 	guint id = 0;
 
-	ret = xmms_sqlite_query (get_playlist_id_cb, &id,
+	ret = xmms_sqlite_query (get_id_cb, &id,
 	                         "select id from Playlist "
 	                         "where name = '%s'", name);
 
@@ -395,7 +395,7 @@ prepare_playlist (guint id, gchar *name)
 	}
 
 	/* supplied id is zero, so we need to add a new playlist first */
-	ret = xmms_sqlite_query (get_playlist_id_cb, &id,
+	ret = xmms_sqlite_query (get_id_cb, &id,
 	                         "select MAX (id) from Playlist");
 	if (!ret) {
 		return 0;
@@ -687,6 +687,34 @@ proprow_callback (void *pArg, int argc, char **argv, char **columnName)
 	return 0;
 }
 
+/**
+ * Takes a mid and returns a entry
+ */
+xmms_playlist_entry_t *
+xmms_medialib_entry_get_byid (guint id)
+{
+	gboolean ret;
+	gchar *url = NULL;
+
+	g_mutex_lock (medialib->mutex);
+
+	ret = xmms_sqlite_query (get_media_url_cb, &url,
+	                         "select url from Media where id=%d", id);
+
+	g_mutex_unlock (medialib->mutex);
+
+	if (url) {
+		xmms_playlist_entry_t *entry = xmms_playlist_entry_new (url);
+
+		g_free (url);
+
+		if (xmms_medialib_entry_get (entry))
+			return entry;
+		xmms_object_unref (XMMS_OBJECT (entry));
+	}
+
+	return NULL;
+}
 
 /**
   * Takes a #xmms_playlist_entry_t and fills in the blanks as
