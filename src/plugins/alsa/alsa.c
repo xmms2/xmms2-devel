@@ -195,6 +195,14 @@ xmms_alsa_new (xmms_output_t *output)
 	
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_alsa_data_t, 1);
+	g_return_val_if_fail (data, FALSE);
+
+	snd_pcm_hw_params_malloc (&data->hwparams);
+	if (!data->hwparams) {
+		g_free (data);
+	}
+
+	g_return_val_if_fail (data->hwparams, FALSE);
 
 	plugin = xmms_output_plugin_get (output);
 	volume = xmms_plugin_config_lookup (plugin, "volume");
@@ -312,6 +320,7 @@ xmms_alsa_destroy (xmms_output_t *output)
 	xmms_config_value_callback_remove (volume,
 	                                   xmms_alsa_mixer_config_changed);
 
+	snd_pcm_hw_params_free (data->hwparams);
 	g_free (data);
 }
 
@@ -686,8 +695,6 @@ xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 	}
 
 	/* Set new audio format*/
-	snd_pcm_hw_params_alloca (&(data->hwparams));
-
 	if (!xmms_alsa_set_hwparams (data, format)) {
 		xmms_log_error ("Could not set hwparams, consult your local "
 		                "guru for meditation courses");
