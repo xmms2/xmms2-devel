@@ -1,25 +1,31 @@
 
+import xmmsenv;
 import os;
 
-## check for required libs
-# xml
-if WhereIs("xml2-config") == None:
-	print "xms2-config not found"
-	Exit(1)
 
-# glib
+## setup base environment...
+##
+## SCons-tips 42: start paths with '#' to have them change
+##                correctly when we descend into subdirs
+base_env = xmmsenv.XmmsEnvironment(CC="gcc", LINK="gcc", CPPPATH = ['#src','#.'],
+	CPPFLAGS = ['-DPKGLIBDIR','-DSYSCONFDIR=\\"/etc/\\"'])
 
-# dbus
 
-## check for optional libs
-#if WhereIs("sdl-config") != None:
-#	have["sdl"] = 1
-#else:
-#	print "sdl-config not found, skipping sdl-vis"
+##
+## Check for essensial libs
+##
+base_env.CheckAndAddFlagsToGroup("mad", "pkg-config --libs --cflags mad", fail=1)
+base_env.CheckAndAddFlagsToGroup("xml2", "xml2-config --libs --cflags", fail=1)
+base_env.CheckAndAddFlagsToGroup("glib", "pkg-config --libs --cflags gthread-2.0 glib-2.0 gmodule-2.0", fail=1)
+base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus-glib-1", fail=1)
 
-glib_linkflags = os.popen("pkg-config --libs-only-other gthread-2.0 glib-2.0 gmodule-2.0").read().strip()
-glib_ccflags = os.popen("pkg-config --cflags-only-other gthread-2.0 glib-2.0 gmodule-2.0").read().strip()
+##
+## Check for optional libs
+##
 
-Export('glib_linkflags','glib_ccflags')
 
-SConscript('src/SConscript')
+Export('base_env')
+
+SConscript('src/xmms/SConscript')
+SConscript('src/clients/SConscript')
+SConscript('src/plugins/SConscript')

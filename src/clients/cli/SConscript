@@ -1,17 +1,14 @@
 #cli client
 
-Import('glib_linkflags','glib_ccflags')
-
+Import('base_env')
 
 xmms2_sources = Split ("xmms2_client.c")
 
-env = Environment(CPPPATH = ['../lib/xmmsclient'],LIBPATH = ["../lib/xmmsclient/"], LIBS = ["xmmsclient"])
+env = base_env.Copy(CPPPATH = ['../lib/xmmsclient','../..'],
+	LIBPATH = ["../lib/xmmsclient/"],
+	LIBS = ["xmmsclient"])
 
-env.Append(LINKFLAGS = glib_linkflags)
-env.Append(CCFLAGS = glib_ccflags)
-
-ParseConfig(env,"pkg-config --libs-only-l --libs-only-L --cflags-only-I gthread-2.0 glib-2.0 gmodule-2.0")
-
+env.AddFlagsFromGroup("glib")
 
 env.Program(target = "xmms2" , source = xmms2_sources )
 
