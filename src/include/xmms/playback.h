@@ -30,6 +30,7 @@ void xmms_playback_playtime_set (xmms_playback_t *playback, guint time);
 void xmms_playback_mediainfo_add_entry (xmms_playback_t *playback, xmms_playlist_entry_t *entry);
 guint xmms_playback_currentid (xmms_playback_t *playback);
 void xmms_playback_vis_spectrum (xmms_core_t *playback, gfloat *spec);
+guint xmms_playback_current_playtime (xmms_playback_t *playback);
 
 #endif /* __XMMS_PLAYBACK_H__ */
 

@@ -60,6 +60,7 @@
 #define XMMS_METHOD_PLAYTIME "playtime"
 #define XMMS_METHOD_INFORMATION "information"
 #define XMMS_METHOD_SPECTRUM "spectrum"
+#define XMMS_METHOD_CPLAYTIME "cplaytime"
 
 
 /* Playback msgs */

@@ -67,6 +67,7 @@ struct xmms_playback_St {
 
 	GCond *cond;
 	GMutex *mtx;
+	guint current_playtime;
 
 	xmms_playlist_t *playlist;
 	xmms_playlist_entry_t *current_song;
@@ -237,9 +238,17 @@ xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples)
 	xmms_decoder_seek_samples (xmms_core_decoder_get (playback->core), samples);
 }
 
+XMMS_METHOD_DEFINE (current_playtime, xmms_playback_current_playtime, xmms_playback_t *, UINT32, NONE, NONE);
+guint
+xmms_playback_current_playtime (xmms_playback_t *playback)
+{
+	return playback->current_playtime;
+}
+
 void
 xmms_playback_playtime_set (xmms_playback_t *playback, guint time)
 {
+	playback->current_playtime = time;
 	xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_PLAYTIME, GUINT_TO_POINTER (time));
 }
 
@@ -364,6 +373,7 @@ xmms_playback_init (xmms_core_t *core, xmms_playlist_t *playlist)
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_CURRENTID, XMMS_METHOD_FUNC (currentid));
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_SEEKMS, XMMS_METHOD_FUNC (seek_ms));
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_SEEKSAMPLES, XMMS_METHOD_FUNC (seek_samples));
+	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_CPLAYTIME, XMMS_METHOD_FUNC (current_playtime));
 	xmms_object_method_add (XMMS_OBJECT (playback), XMMS_METHOD_JUMP, XMMS_METHOD_FUNC (jump));
 	
 	xmms_dbus_register_object ("playback", XMMS_OBJECT (playback));
