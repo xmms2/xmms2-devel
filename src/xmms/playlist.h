@@ -45,6 +45,7 @@ typedef struct xmms_playlist_St {
 
 	GMutex *mutex;
 	GCond *cond;
+	gboolean is_waiting;
 } xmms_playlist_t;
 
 typedef struct xmms_playlist_entry_St {

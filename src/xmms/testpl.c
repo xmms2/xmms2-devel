@@ -10,6 +10,8 @@ int main ()
 	g_thread_init (NULL);
 
 	pl = xmms_playlist_init ();
+	
+	xmms_playlist_shuffle (pl);
 
 	for (i=0; i < 10 ; i++) {
 		gchar *apa = g_strdup_printf ("%d", i);
@@ -19,27 +21,10 @@ int main ()
 	}
 
 
-	/*
-	l = xmms_playlist_list (pl);
-	while (l) {
-		printf ("%s ", xmms_playlist_entry_get_prop (l->data, XMMS_ENTRY_PROPERTY_ARTIST));
-		l = g_list_next (l);
-	}*/
-
-/*	printf ("Sorterar\n");
-	xmms_playlist_sort (pl, XMMS_ENTRY_PROPERTY_ARTIST);*/
-
-/*	entry = xmms_playlist_get_byid (pl, 300);
-
-	printf ("aupa = %s", xmms_playlist_entry_get_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST));*/
-
-	xmms_playlist_shuffle (pl);
-
-	l = xmms_playlist_list (pl);
-	while (l) {
-		printf ("%s - %d\n", xmms_playlist_entry_get_prop (l->data, XMMS_ENTRY_PROPERTY_ARTIST), xmms_playlist_entry_id_get (l->data));
-		l = g_list_next (l);
+	while ((entry = xmms_playlist_get_next (pl))) {
+		printf ("Got %s from playlist\n", xmms_playlist_entry_get_uri (entry));
 	}
+
 
 	return 0;
 	

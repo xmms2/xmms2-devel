@@ -34,7 +34,10 @@ xmms_playlist_wait (xmms_playlist_t *playlist)
 
 	XMMS_DBG ("Waiting for playlist ...");
 	
+	playlist->is_waiting = TRUE;
 	g_cond_wait (playlist->cond, playlist->mutex);
+	playlist->is_waiting = FALSE;
+
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
 }
@@ -101,6 +104,8 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
                                                                                   
         g_free(ptrs);
 
+	g_cond_signal (playlist->cond);
+
 	XMMS_PLAYLIST_UNLOCK (playlist);
 }
 
@@ -124,6 +129,9 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 	xmms_playlist_entry_free (node->data);
 	playlist->list = g_list_remove_link (playlist->list, node);
 	g_list_free_1 (node);
+
+	g_cond_signal (playlist->cond);
+	
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	return TRUE;
@@ -189,6 +197,8 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 
 	}
 
+	g_cond_signal (playlist->cond);
+
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	return TRUE;
@@ -247,8 +257,9 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	
 	g_hash_table_insert (playlist->id_table, GUINT_TO_POINTER (file->id), new);
 
-	if (!playlist->nextentry)
-		playlist->nextentry = playlist->list;
+	if (!playlist->nextentry) {
+		playlist->nextentry = new;
+	}
 
 	g_cond_signal (playlist->cond);
 
@@ -311,6 +322,7 @@ xmms_playlist_get_next (xmms_playlist_t *playlist)
 		r = n->data;
 	}
 	playlist->nextentry = g_list_next (n);
+	XMMS_DBG ("Next id is %d", xmms_playlist_entry_id_get (playlist->nextentry));
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
@@ -436,6 +448,7 @@ xmms_playlist_init ()
 	ret->nextentry = NULL;
 	ret->nextid = 1;
 	ret->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
+	ret->is_waiting = FALSE;
 
 	return ret;
 }
