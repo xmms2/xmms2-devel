@@ -281,12 +281,24 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 
 XMMS_METHOD_DEFINE (getvalue, xmms_config_value_lookup_string_get, xmms_config_t *, STRING, STRING, NONE);
 
+static void foreach_value (gpointer key, gpointer value, gpointer udata)
+{
+	xmms_object_unref (value);
+}
+
 static void
 xmms_config_destroy (xmms_object_t *object) 
 {
 	xmms_config_t *config = (xmms_config_t *)object;
+
 	g_mutex_free (config->mutex);
-	/** @todo free all values? */
+
+	/* instead of calling g_hash_table_foreach() here, we could also
+	 * pass xmms_object_unref as the GDestroyNotify for the value
+	 * to g_hash_table_new_full(), but that leads to other memory
+	 * management errors
+	 */
+	g_hash_table_foreach (config->values, foreach_value, NULL);
 	g_hash_table_destroy (config->values);
 }
 
@@ -306,7 +318,10 @@ xmms_config_init (const gchar *filename)
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
-	config->values = g_hash_table_new (g_str_hash, g_str_equal);
+
+	/* don't pass xmms_object_unref as the last parameter here! */
+	config->values = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                        g_free, NULL);
 	config->state = XMMS_CONFIG_STATE_START;
 	global_config = config;
 
@@ -358,6 +373,12 @@ xmms_config_init (const gchar *filename)
 	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
 
 	return TRUE;
+}
+
+void
+xmms_config_shutdown ()
+{
+	xmms_object_unref (global_config);
 }
 
 /**
@@ -579,12 +600,23 @@ xmms_config_plugins_get (void)
  * Value manipulation 
  */
 
+static void
+xmms_config_value_destroy (xmms_object_t *object)
+{
+	xmms_config_value_t *val = (xmms_config_value_t *) object;
+
+	/* don't free val->name here, it's taken care of in
+	 * xmms_config_destroy()
+	 */
+	g_free (val->data);
+}
+
 static xmms_config_value_t *
 xmms_config_value_new (const gchar *name)
 {
 	xmms_config_value_t *ret;
 
-	ret = xmms_object_new (xmms_config_value_t, NULL);
+	ret = xmms_object_new (xmms_config_value_t, xmms_config_value_destroy);
 	ret->name = name;
 
 	return ret;
@@ -614,6 +646,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 
 	XMMS_DBG ("setting %s to %s", val->name, data);
 
+	g_free (val->data);
 	val->data = data;
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 			  (gpointer) data);
@@ -706,6 +739,9 @@ xmms_config_value_register (const gchar *path,
 
 	xmms_config_value_t *val;
 
+	/* get our own copy of the string */
+	path = g_strdup (path);
+
 	XMMS_DBG ("Registering: %s", path);
 
 	g_mutex_lock (global_config->mutex);
@@ -725,7 +761,7 @@ xmms_config_value_register (const gchar *path,
 	if (cb) 
 		xmms_config_value_callback_set (val, cb, userdata);
 
-	g_hash_table_insert (global_config->values, g_strdup (path), val);
+	g_hash_table_insert (global_config->values, (gchar *) path, val);
 
 	g_mutex_unlock (global_config->mutex);
 

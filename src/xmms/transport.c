@@ -642,6 +642,8 @@ xmms_transport_destroy (xmms_object_t *object)
 	if (close_method)
 		close_method (transport);
 
+	xmms_object_unref (transport->plugin);
+
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->mime_cond);
 	g_cond_free (transport->cond);
@@ -679,7 +681,7 @@ xmms_transport_plugin_find (const gchar *url)
 			continue;
 
 		if (can_handle (url)) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}

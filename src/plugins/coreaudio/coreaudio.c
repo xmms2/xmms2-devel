@@ -55,6 +55,7 @@ typedef struct xmms_ca_data_St {
 static void xmms_ca_status (xmms_output_t *output, xmms_output_status_t status);
 static gboolean xmms_ca_open (xmms_output_t *output);
 static gboolean xmms_ca_new (xmms_output_t *output);
+static void xmms_ca_destroy (xmms_output_t *output);
 static void xmms_ca_close (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_samplerate_set (xmms_output_t *output, guint rate);
@@ -90,6 +91,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS, xmms_ca_status);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_ca_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_ca_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ca_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_ca_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ca_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
@@ -266,6 +268,26 @@ xmms_ca_new (xmms_output_t *output)
 	XMMS_DBG ("CoreAudio initilized!");
 	
 	return TRUE;
+}
+
+static void
+xmms_ca_destroy (xmms_output_t *output)
+{
+	xmms_ca_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	g_mutex_free (data->mtx);
+	xmms_ringbuf_destroy (data->buffer);
+
+	/** @todo
+	 *  Do we have to take care of data->outputdevice
+	 *  here, too?
+	 */
+
+	g_free (data);
 }
 
 static guint

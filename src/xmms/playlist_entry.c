@@ -71,7 +71,8 @@ xmms_playlist_entry_new (gchar *url)
 
 	ret = xmms_object_new (xmms_playlist_entry_t, xmms_playlist_entry_destroy);
 	ret->url = g_strdup (url);
-	ret->properties = g_hash_table_new (g_str_hash, g_str_equal);
+	ret->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                         g_free, g_free);
 	ret->id = 0;
 
 	return ret;
@@ -132,18 +133,13 @@ xmms_playlist_entry_property_copy (xmms_playlist_entry_t *entry,
 void
 xmms_playlist_entry_property_set (xmms_playlist_entry_t *entry, gchar *key, gchar *value)
 {
-	gchar *tmp;
 	g_return_if_fail (entry);
 	g_return_if_fail (key);
 	g_return_if_fail (value);
 
-	tmp = g_hash_table_lookup (entry->properties, g_ascii_strdown (key, strlen (key)));
-
-	if (tmp) {
-		g_free (tmp);
-	} 
-
-	g_hash_table_insert (entry->properties, g_ascii_strdown (key, strlen (key)), g_strdup (value));
+	g_hash_table_insert (entry->properties,
+	                     g_ascii_strdown (key, strlen (key)),
+	                     g_strdup (value));
 }
 
 /**
@@ -224,14 +220,6 @@ xmms_playlist_entry_property_get_int (const xmms_playlist_entry_t *entry, gchar 
 }
 
 
-static gboolean
-xmms_playlist_entry_foreach_free (gpointer key, gpointer value, gpointer udata)
-{
-	g_free (key);
-	g_free (value);
-	return TRUE;
-}
-
 static void
 xmms_playlist_entry_destroy (xmms_object_t *object)
 {
@@ -243,7 +231,6 @@ xmms_playlist_entry_destroy (xmms_object_t *object)
 	if (entry->mimetype)
 		g_free (entry->mimetype);
 
-	g_hash_table_foreach_remove (entry->properties, xmms_playlist_entry_foreach_free, NULL);
 	g_hash_table_destroy (entry->properties);
 }
 

@@ -114,7 +114,9 @@ xmms_dbus_register_object (const gchar *objectpath, xmms_object_t *object)
 	XMMS_DBG ("REGISTERING: '%s'", fullpath);
 
 	if (!exported_objects)
-		exported_objects = g_hash_table_new (g_str_hash, g_str_equal);
+		exported_objects =
+			g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+			                       (GDestroyNotify) __int_xmms_object_unref);
 
 	xmms_object_ref (object);
 	g_hash_table_insert (exported_objects, fullpath, object);
@@ -551,7 +553,10 @@ xmms_dbus_init (const gchar *path)
 	pending_mutex = g_mutex_new ();
 
 	if (!exported_objects)
-		exported_objects = g_hash_table_new (g_str_hash, g_str_equal);
+		exported_objects =
+			g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+			                       (GDestroyNotify) __int_xmms_object_unref);
+
 
         dbus_error_init (&err);
 
@@ -582,5 +587,20 @@ xmms_dbus_init (const gchar *path)
 	XMMS_DBG ("init done!");
 
         return TRUE;
+}
+
+void
+xmms_dbus_shutdown ()
+{
+	if (exported_objects) {
+		g_hash_table_destroy (exported_objects);
+		exported_objects = NULL;
+	}
+
+	if (server) {
+		dbus_server_disconnect (server);
+		dbus_server_unref (server);
+		server = NULL;
+	}
 }
 /** @} */

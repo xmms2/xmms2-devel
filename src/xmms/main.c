@@ -66,6 +66,7 @@
 
 struct xmms_main_St {
 	xmms_object_t object;
+	xmms_output_t *output;
 };
 
 typedef struct xmms_main_St xmms_main_t;
@@ -111,12 +112,27 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 }
 
 static void
-quit (xmms_object_t *object, xmms_error_t *error) 
+xmms_main_destroy (xmms_object_t *object)
 {
+	xmms_main_t *mainobj = (xmms_main_t *) object;
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
+
+	xmms_object_unref (mainobj->output);
 
 	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
 	xmms_config_save (filename);
+
+	xmms_dbus_shutdown ();
+	xmms_config_shutdown ();
+	xmms_medialib_shutdown ();
+	xmms_plugin_shutdown ();
+	xmms_log_shutdown ();
+}
+
+static void
+quit (xmms_object_t *object, xmms_error_t *error)
+{
+	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
 }
@@ -128,7 +144,6 @@ main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
 	xmms_config_value_t *cv;
-	xmms_output_t *output;
 	xmms_main_t *mainobj;
 
 	int opt;
@@ -138,7 +153,7 @@ main (int argc, char **argv)
 	const gchar *outname = NULL;
 	gboolean daemonize = FALSE;
 	gboolean doLog = TRUE;
-	const gchar *path;
+	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	pid_t ppid=0;
 
@@ -203,7 +218,7 @@ main (int argc, char **argv)
 
 	parse_config ();
 	
-	xmms_log_initialize (doLog?"xmmsd":"null");
+	xmms_log_init (doLog ? "xmmsd" : "null");
 	
 	playlist = xmms_playlist_init ();
 
@@ -230,24 +245,25 @@ main (int argc, char **argv)
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
 
-	output = xmms_output_new (o_plugin);
-	g_return_val_if_fail (output, -1);
+	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
-	xmms_output_playlist_set (output, playlist);
+	mainobj->output = xmms_output_new (o_plugin);
+	g_return_val_if_fail (mainobj->output, -1);
+
+	xmms_output_playlist_set (mainobj->output, playlist);
 
 	xmms_medialib_init ();
-	xmms_medialib_output_register (output);
+	xmms_medialib_output_register (mainobj->output);
 		
-	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
-				g_get_user_name ());
-	cv = xmms_config_value_register ("core.dbuspath", path, NULL, NULL);
-	path = xmms_config_value_string_get (cv);
+	g_snprintf (default_path, sizeof (default_path),
+	            "unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+	cv = xmms_config_value_register ("core.dbuspath", default_path,
+	                                 NULL, NULL);
 
-	xmms_dbus_init (path);
+	xmms_dbus_init (xmms_config_value_string_get (cv));
 
 	xmms_signal_init ();
 
-	mainobj = xmms_object_new (xmms_main_t, NULL);
 	xmms_dbus_register_object ("main", XMMS_OBJECT (mainobj));
 	xmms_object_method_add (XMMS_OBJECT (mainobj), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));
 

@@ -262,7 +262,7 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 void
 xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 {
-	gchar *r;
+	gchar samplerate[8];
 
 	g_return_if_fail (decoder);
 	g_return_if_fail (rate);
@@ -278,9 +278,10 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 /*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
 /*	xmms_effect_samplerate_set (decoder->effect, rate);*/
 	
-	r = g_strdup_printf ("%d", rate);
-	xmms_decoder_mediainfo_property_set (decoder, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
-	g_free (r);
+	g_snprintf (samplerate, sizeof (samplerate), "%d", rate);
+	xmms_decoder_mediainfo_property_set (decoder,
+	                                     XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE,
+	                                     samplerate);
 }
 
 
@@ -519,7 +520,6 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 		return FALSE;
 	
 	xmms_object_ref (transport);
-	xmms_object_ref (plugin);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
@@ -743,7 +743,7 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 			continue;
 
 		if (can_handle (mimetype)) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 	}

@@ -40,7 +40,7 @@ typedef struct xmms_medialib_St xmms_medialib_t;
 gboolean xmms_medialib_init ();
 gboolean xmms_medialib_entry_get (xmms_playlist_entry_t *entry);
 gboolean xmms_medialib_entry_store (xmms_playlist_entry_t *entry);
-void xmms_medialib_close ();
+void xmms_medialib_shutdown ();
 
 void xmms_medialib_id_set ();
 

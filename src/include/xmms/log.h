@@ -22,7 +22,7 @@
 
 #include <glib.h>
 
-gint xmms_log_initialize (const char *filename);
+gint xmms_log_init (const char *filename);
 void xmms_log_shutdown (void);
 void xmms_log_daemonize (void);
 

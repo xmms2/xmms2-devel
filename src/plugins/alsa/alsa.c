@@ -74,6 +74,7 @@ static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
+static void xmms_alsa_destroy (xmms_output_t *output);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data); 
 static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left, 
 									 gint right);
@@ -106,6 +107,8 @@ xmms_plugin_get (void)
 							xmms_alsa_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 							xmms_alsa_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
+	                        xmms_alsa_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
 							xmms_alsa_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
@@ -187,6 +190,28 @@ xmms_alsa_new (xmms_output_t *output)
 	return TRUE; 
 }
 
+/**
+ * Frees data for this plugin allocated in xmms_alsa_new().
+ */
+static void
+xmms_alsa_destroy (xmms_output_t *output)
+{
+	xmms_alsa_data_t *data;
+	xmms_plugin_t *plugin;
+	xmms_config_value_t *volume;
+
+	g_return_if_fail (output);
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	plugin = xmms_output_plugin_get (output);
+	volume = xmms_plugin_config_lookup (plugin, "volume");
+
+	xmms_config_value_callback_remove (volume,
+	                                   xmms_alsa_mixer_config_changed);
+
+	g_free (data);
+}
 
 /** 
  * Open audio device.

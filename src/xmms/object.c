@@ -58,6 +58,7 @@ xmms_object_cleanup (xmms_object_t *object)
 
 	g_hash_table_foreach_remove (object->signals, xmms_object_cleanup_foreach, NULL);
 	g_hash_table_destroy (object->signals);
+	g_hash_table_destroy (object->methods);
 	g_mutex_free (object->mutex);
 }
 
@@ -247,10 +248,10 @@ xmms_object_emit_f (xmms_object_t *object, const gchar *signal,
   * @param func the function that should be called when the client lib wants it.
   */
 void
-xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_func_t func)
+xmms_object_method_add (xmms_object_t *object, gchar *method, xmms_object_method_func_t func)
 {
 
-	g_hash_table_insert (object->methods, method, func);
+	g_hash_table_insert (object->methods, g_strdup (method), func);
 
 }
 
@@ -274,6 +275,7 @@ xmms_object_method_call (xmms_object_t *object, const char *method, xmms_object_
 void
 __int_xmms_object_unref (xmms_object_t *object)
 {
+	XMMS_DBG ("unreffing %p(%d)", object, object->ref);
 	object->ref--;
 	if (object->ref == 0) {
 		XMMS_DBG ("Free %p", object);
@@ -294,7 +296,8 @@ __int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc)
 	ret->destroy_func = destfunc;
 	ret->id = XMMS_OBJECT_MID;
 	ret->signals = g_hash_table_new (g_str_hash, g_str_equal);
-	ret->methods = g_hash_table_new (g_str_hash, g_str_equal);
+	ret->methods = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                      g_free, NULL);
 	ret->mutex = g_mutex_new ();
 	xmms_object_ref (ret);
 

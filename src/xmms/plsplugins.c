@@ -80,7 +80,7 @@ xmms_playlist_plugin_new (const gchar *mimetype)
 void
 xmms_playlist_plugin_free (xmms_playlist_plugin_t *plsplugin)
 {
-	xmms_plugin_unref (plsplugin->plugin);
+	xmms_object_unref (plsplugin->plugin);
 	g_free (plsplugin);
 }
 
@@ -120,7 +120,7 @@ xmms_playlist_plugin_find (const gchar *mimetype)
 			continue;
 
 		if (can_handle (mimetype)) {
-			xmms_plugin_ref (plugin);
+			xmms_object_ref (plugin);
 			break;
 		}
 
