@@ -132,6 +132,7 @@ xmms_main_destroy (xmms_object_t *object)
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
+	xmms_dbus_unregister_object ("main");
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
