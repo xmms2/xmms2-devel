@@ -521,6 +521,26 @@ cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 	x_list_free (l);
 }
 
+static void
+cmd_save_playlist (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 3) {
+		print_error ("Need a filename to save playlist");
+		return;
+	}
+
+	res = xmmsc_playlist_save (conn, argv[2]);
+
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Unable to save playlist to file: %s\n", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
+}
+
 
 static void
 cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
@@ -740,6 +760,7 @@ cmds commands[] = {
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
 	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
+	{ "savepl", "save playlist as a file", cmd_save_playlist },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	/*{ "statistics", "get statistics from server", cmd_stats },

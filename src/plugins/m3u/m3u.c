@@ -272,7 +272,7 @@ xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *pla
 	fprintf (fp, "#EXTM3U\n");
 
 	for (l = list; l; l = l->next) {
-		xmms_playlist_entry_t *entry = l->data;
+		xmms_playlist_entry_t *entry = xmms_playlist_get_byid (playlist, (guint) l->data, &err);
 		gchar *url;
 		const gchar *d, *artist, *title;
 		gint duration = 0;
