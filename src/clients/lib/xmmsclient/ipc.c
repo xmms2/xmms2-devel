@@ -260,6 +260,9 @@ xmmsc_ipc_private_data_set (xmmsc_ipc_t *ipc, gpointer data)
 void
 xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 {
+	if (!ipc)
+		return;
+
 	xmms_ringbuf_destroy (ipc->read_buffer);
 	g_hash_table_destroy (ipc->results_table);
 	if (ipc->transport) {
@@ -274,6 +277,7 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 gboolean
 xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path) 
 {
+	g_return_val_if_fail (ipc, FALSE);
 	g_return_val_if_fail (path, FALSE);
 
 	ipc->transport = xmms_ipc_client_init (path);
