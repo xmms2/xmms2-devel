@@ -853,17 +853,28 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
  *
  */
 gboolean
-xmms_dbus_init(){
+xmms_dbus_init (gchar *path) 
+{
 	gint i=0;
         DBusError err;
+	DBusConnection *conn;
 
-	dbus_gthread_init (); //  dbus_enable_deadlocks ();
+	dbus_gthread_init (); /* dbus_enable_deadlocks (); */
 
 	connectionslock = g_mutex_new ();
 
         dbus_error_init (&err);
 
-        server = dbus_server_listen ("unix:path=/tmp/xmms-dbus", &err);
+	/* Check if other server is running */
+	if ((conn = dbus_connection_open (path, &err))) {
+		dbus_connection_disconnect (conn);
+		dbus_connection_unref (conn);
+		xmms_log_fatal ("Socket %s already in use...", path);
+	}
+
+        dbus_error_init (&err);
+
+        server = dbus_server_listen (path, &err);
         if (!server) {
                 XMMS_DBG ("couldn't create server!\n");
                 return FALSE;

@@ -239,6 +239,7 @@ int
 main()
 {
 	SDL_Surface *screen;
+	gchar *path;
 
 	connection = xmmsc_init ();
 
@@ -247,7 +248,9 @@ main()
 		return 1;
 	}
 
-	if (!xmmsc_connect (connection)){
+	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+
+	if (!xmmsc_connect (connection, path)){
 		printf ("couldn't connect to xmms2d: %s\n",
 			xmmsc_get_last_error(connection));
 		return 1;

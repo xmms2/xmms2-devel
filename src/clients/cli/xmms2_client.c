@@ -244,6 +244,7 @@ int
 main(int argc, char **argv)
 {
 	xmmsc_connection_t *c;
+	char *path;
 
 	duration = 0;
 
@@ -254,7 +255,9 @@ main(int argc, char **argv)
 		exit (1);
 	}
 
-	if (!xmmsc_connect (c)){
+	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", g_get_user_name ());
+
+	if (!xmmsc_connect (c, path)){
 		printf ("couldn't connect to xmms2d: %s\n",xmmsc_get_last_error(c));
 		exit (1);
 	}

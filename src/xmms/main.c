@@ -31,7 +31,7 @@ static GMainLoop *mainloop;
 
 
 
-gboolean xmms_dbus_init (void);
+gboolean xmms_dbus_init (gchar *path);
 
 
 xmms_config_data_t *
@@ -89,6 +89,7 @@ main (int argc, char **argv)
 	xmms_playlist_t *playlist;
 	gchar *outname = NULL;
 	gboolean daemonize = FALSE;
+	gchar *path;
 	pid_t ppid=0;
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -195,7 +196,16 @@ main (int argc, char **argv)
 		xmms_output_start (output);
 	}
 
-	xmms_dbus_init ();
+	path = xmms_config_value_as_string (xmms_config_value_lookup (config->core, "dbuspath"));
+
+	if (!path) {
+		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
+					g_get_user_name ());
+	} 
+
+	xmms_dbus_init (path);
+
+	g_free (path);
 
 	xmms_signal_init ();
 
