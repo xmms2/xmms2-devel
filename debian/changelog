@@ -1,3 +1,9 @@
+xmms2 (1.92-2) unstable; urgency=low
+
+  * New upstream with better playlist. 
+
+ -- Tobias <tru@xmms.org>  Mon, 26 May 2003 18:29:58 +0200
+
 xmms2 (1.92-1) unstable; urgency=low
 
   * New upstream version :)
