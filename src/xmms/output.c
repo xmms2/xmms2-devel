@@ -350,18 +350,21 @@ xmms_output_new (xmms_core_t *core, xmms_plugin_t *plugin)
 	xmms_output_t *output;
 	xmms_output_new_method_t new;
 	xmms_output_write_method_t wr;
+	xmms_config_value_t *val;
 	
 	g_return_val_if_fail (plugin, NULL);
 	g_return_val_if_fail (core, NULL);
 
 	XMMS_DBG ("Trying to open output");
 
+	val = xmms_config_lookup ("core.output_buffersize");
+
 	output = g_new0 (xmms_output_t, 1);
 	xmms_object_init (XMMS_OBJECT (output));
 	output->plugin = plugin;
 	output->mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
-	output->buffer = xmms_ringbuf_new (32768);
+	output->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 	output->is_open = FALSE;
 	output->open_samplerate = 44100;
 	output->core = core;
@@ -544,12 +547,29 @@ xmms_output_status_changed (xmms_object_t *object,
 
 	xmms_output_t *output = (xmms_output_t *)udata;
 	xmms_output_status_method_t st;
+	xmms_object_method_arg_t *arg = data;
+
 	g_return_if_fail (output);
+	g_return_if_fail (arg);
 
 	st = xmms_plugin_method_get (output->plugin,
 				     XMMS_PLUGIN_METHOD_STATUS);
-	if (st)
-		st (output, GPOINTER_TO_UINT(data));
+	if (st) {
+		if (arg->retval.uint32 == XMMS_PLAYBACK_PLAY) {
+			XMMS_DBG ("Let the buffer be filled...");
+			g_mutex_lock (output->mutex);
+			xmms_ringbuf_wait_used (output->buffer, 
+					xmms_ringbuf_size (output->buffer) * 0.7,
+					output->mutex);
+			g_mutex_unlock (output->mutex);
+			XMMS_DBG ("Buffer is now %d", xmms_ringbuf_bytes_used (output->buffer));
+		} else if (arg->retval.uint32 == XMMS_PLAYBACK_STOP) {
+			g_mutex_lock (output->mutex);
+			xmms_ringbuf_clear (output->buffer);
+			g_mutex_unlock (output->mutex);
+		}
+		st (output, arg->retval.uint32);
+	}
 
 }
 

@@ -330,15 +330,18 @@ xmms_transport_t *
 xmms_transport_new (xmms_core_t *core)
 {
 	xmms_transport_t *transport;
+	xmms_config_value_t *val;
 
 	g_return_val_if_fail (core, NULL);
+
+	val = xmms_config_lookup ("core.transport_buffersize");
 
 	transport = g_new0 (xmms_transport_t, 1);
 	xmms_object_init (XMMS_OBJECT (transport));
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
 	transport->mime_cond = g_cond_new ();
-	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
+	transport->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 	transport->buffering = FALSE; /* maybe should be true? */
 	transport->core = core;
 
@@ -509,7 +512,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	xmms_transport_lock (transport);
 
-	if (!transport->buffering && transport->numread++ > 1) {
+	if (transport->running && !transport->buffering && transport->numread++ > 1) {
 		XMMS_DBG ("Let's start buffering");
 		transport->buffering = TRUE;
 		g_cond_signal (transport->cond);
@@ -530,8 +533,8 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		return -1;
 	}
 	
-	if (len > XMMS_TRANSPORT_RINGBUF_SIZE) {
-		len = XMMS_TRANSPORT_RINGBUF_SIZE;
+	if (len > xmms_ringbuf_size (transport->buffer)) {
+		len = xmms_ringbuf_size (transport->buffer);;
 	}
 
 	xmms_ringbuf_wait_used (transport->buffer, len, transport->mutex);

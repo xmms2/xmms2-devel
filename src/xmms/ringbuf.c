@@ -35,6 +35,14 @@ struct xmms_ringbuf_St {
 };
 
 
+gint
+xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
+{
+	g_return_val_if_fail (ringbuf, 0);
+
+	return ringbuf->buffer_size;
+}
+
 xmms_ringbuf_t *
 xmms_ringbuf_new (guint size)
 {

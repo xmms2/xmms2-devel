@@ -106,7 +106,6 @@ xmms_dbus_onchange (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 				xmms_dbus_onchange_t *oc = n->data;
 
 				if (!oc->gone) {
-					XMMS_DBG ("apan");
 					retmsg = dbus_message_new_method_return (oc->msg);
 					xmms_dbus_handle_arg_value (retmsg, (xmms_object_method_arg_t*) arg);
 
@@ -155,8 +154,6 @@ xmms_dbus_clientcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 		GList *list;
 		gchar *signal = dbus_message_iter_get_string (&itr);
 		gchar *t = g_strdup (signal);
-
-		XMMS_DBG ("someone wants to look at %s", t);
 
 		g_mutex_lock (pending_mutex);
 		if (!pending_onchange)

@@ -185,6 +185,11 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("output = %s", outname);
 
+	xmms_config_value_register ("core.output_buffersize", 
+			XMMS_OUTPUT_DEFAULT_BUFFERSIZE, NULL, NULL);
+	xmms_config_value_register ("core.transport_buffersize", 
+			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
+
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
 	{

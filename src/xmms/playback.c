@@ -195,10 +195,10 @@ xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err)
 		xmms_output_resume (xmms_core_output_get (playback->core));
 	}
 	
-	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_PLAY);
-	
 	playback->status = XMMS_PLAYBACK_PLAY;
 	xmms_playback_wakeup (playback);
+	
+	XMMS_PLAYBACK_EMIT (XMMS_SIGNAL_PLAYBACK_STATUS, XMMS_PLAYBACK_PLAY);
 }
 
 XMMS_METHOD_DEFINE (stop, xmms_playback_stop, xmms_playback_t *, NONE, NONE, NONE);

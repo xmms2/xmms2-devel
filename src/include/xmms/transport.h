@@ -20,6 +20,12 @@
 #ifndef __XMMS_TRANSPORT_H__
 #define __XMMS_TRANSPORT_H__
 
+#ifdef XMMS_OS_DARWIN 
+#define XMMS_TRANSPORT_DEFAULT_BUFFERSIZE "131072"
+#else
+#define XMMS_TRANSPORT_DEFAULT_BUFFERSIZE "32768"
+#endif
+
 #include <glib.h>
 
 /*
