@@ -164,7 +164,7 @@ xmmsc_result_free (xmmsc_result_t *res)
 }
 
 /**
- * @defgroup RestartableResults RestartableResults
+ * @defgroup RestartableResult RestartableResult
  * @brief Covers Restartable #xmmsc_result_t's
  * @ingroup Result
  * A lot of signals you would like to get notified about
