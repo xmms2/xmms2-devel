@@ -268,20 +268,20 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	g_return_if_fail (decoder);
 	g_return_if_fail (rate);
 
-	if (decoder->output)
-		xmms_output_samplerate_set (decoder->output, rate);
+	decoder->samplerate = rate;
 
-	/*
-	recalculate_resampler (decoder);
-	*/
+	if (decoder->output) {
+		xmms_output_samplerate_set (decoder->output, rate);
+		recalculate_resampler (decoder);
+	}
+
 
 /*	xmms_visualisation_samplerate_set (decoder->vis, rate);*/
-	xmms_effect_samplerate_set (decoder->effect, rate);
-	decoder->samplerate = rate;
+/*	xmms_effect_samplerate_set (decoder->effect, rate);*/
 	
-/*	r = g_strdup_printf ("%d", rate);
-	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
-	g_free (r);*/
+	r = g_strdup_printf ("%d", rate);
+	xmms_decoder_mediainfo_property_set (decoder, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
+	g_free (r);
 }
 
 
@@ -298,6 +298,18 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 	g_return_if_fail (decoder->transport);
 
 	xmms_transport_entry_mediainfo_set (decoder->transport, entry);
+
+}
+
+void
+xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value)
+{
+	g_return_if_fail (decoder);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
+	g_return_if_fail (decoder->transport);
+
+	xmms_transport_mediainfo_property_set (decoder->transport, key, value);
 
 }
 
@@ -364,16 +376,17 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 /*	xmms_visualisation_calc (decoder->vis, buf, len);*/
 
-	XMMS_MTX_LOCK (decoder->mutex);
+	g_mutex_lock (decoder->mutex);
 
-	/**
-	 * @todo Here resampling should be done. This is skipped right now
-	 * cause of pending andersg patches.
-	 */
+	if (decoder->interpolator_ratio != decoder->decimator_ratio) {
+		/* resampling needed */
+		len = resample (decoder, buf, len);
+		buf = decoder->resamplebuf;
+	}
 	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
 	xmms_ringbuf_write (decoder->buffer, buf, len);
 
-	XMMS_MTX_UNLOCK (decoder->mutex);
+	g_mutex_unlock (decoder->mutex);
 	
 	
 }

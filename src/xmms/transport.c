@@ -425,11 +425,21 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 void
 xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 {
-	xmms_playlist_t *playlist;
 	g_return_if_fail (transport);
 	g_return_if_fail (entry);
 
 	xmms_playlist_entry_property_copy (entry, transport->entry);
+}
+
+void
+xmms_transport_mediainfo_property_set (xmms_transport_t *transport, gchar *key, gchar *value)
+{
+	g_return_if_fail (transport);
+	g_return_if_fail (transport->entry);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
+
+	xmms_playlist_entry_property_set (transport->entry, key, value);
 }
 
 /**
