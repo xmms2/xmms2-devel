@@ -18,9 +18,11 @@
 #define __RB_RESULT_H
 
 #include <xmms/xmmsclient.h>
+#include <stdbool.h>
 
 void Init_Result (void);
 
-VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res);
+VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res,
+                             bool unref_on_free);
 
 #endif

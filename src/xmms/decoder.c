@@ -44,6 +44,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <math.h>
 
 /*
@@ -750,7 +751,7 @@ apply_replaygain (gint16 *buf, guint len, gfloat gain)
 
 	for (i = 0; i < len; i++) {
 		gfloat sample = buf[i] * gain;
-		buf[i] = CLAMP (sample, G_MININT16, G_MAXINT16);
+		buf[i] = CLAMP (sample, INT16_MIN, INT16_MAX);
 	}
 }
 

@@ -11,12 +11,12 @@ Gtk.init if $MODE == "GLIB"
 
 xc = XmmsClient::XmmsClient.new
 
-xc.connect
+xc.connect("Ruby")
 
 xc.setup_with_ecore if $MODE == "ECORE"
 xc.setup_with_gmain if $MODE == "GLIB"
 
-xc.playback_current_id.notifier do |r|
+xc.broadcast_playback_current_id.notifier do |r|
 	puts "now playing: #{r.uint}"
 	r.restart
 end

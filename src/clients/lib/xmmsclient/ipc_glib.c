@@ -63,8 +63,6 @@ xmmsc_ipc_source_dispatch (GSource *source, GSourceFunc callback, gpointer user_
 		return FALSE;
 	} else if (gipc->pollfd->revents & G_IO_IN) {
 		ret = xmmsc_ipc_io_in_callback (ipc);
-	} else if (gipc->pollfd->revents & G_IO_OUT) {
-		ret = xmmsc_ipc_io_out_callback (ipc);
 	}
 
 	return ret;
@@ -93,15 +91,6 @@ xmmsc_ipc_glib_destroy (xmmsc_ipc_glib_t *gipc)
 	g_free (gipc);
 }
 
-static void
-xmmsc_ipc_glib_wakeup (xmmsc_ipc_t *ipc)
-{
-	g_return_if_fail (ipc);
-
-	g_main_context_wakeup (NULL);
-}
-
-
 gboolean
 xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *c, xmmsc_ipc_callback_t callback)
 {
@@ -117,7 +106,6 @@ xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *c, xmmsc_ipc_callback_t callback
 	gipc->source = g_source_new (&xmmsc_ipc_callback_funcs, sizeof (GSource));
 
 	xmmsc_ipc_private_data_set (ipc, gipc);
-	xmmsc_ipc_wakeup_set (ipc, xmmsc_ipc_glib_wakeup);
 
 	g_source_set_callback (gipc->source, 
 			       (GSourceFunc)callback,
@@ -128,4 +116,3 @@ xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *c, xmmsc_ipc_callback_t callback
 
 	return TRUE;
 }
-

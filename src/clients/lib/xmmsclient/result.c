@@ -216,6 +216,8 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	x_return_if_fail (msg);
 
 	res->reply = msg;
+	
+	xmmsc_result_ref (res);
 
 	if (res->func) {
 		res->func (res, res->user_data);
@@ -228,6 +230,8 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		xmms_ipc_msg_destroy (res->reply);
 		res->reply = NULL;
 	}
+
+	xmmsc_result_unref (res);
 }
 
 int
@@ -317,7 +321,6 @@ void
 xmmsc_result_wait (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
-	xmmsc_ipc_flush  (res->ipc);
 	while (!res->reply) {
 		xmmsc_ipc_wait_for_event (res->ipc, 5);
 	}

@@ -28,16 +28,13 @@
 
 #include <xmms/xmmsclient-glib.h>
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
-
 #include <ruby.h>
+#include <stdbool.h>
 
 #include "rb_xmmsclient_main.h"
 #include "rb_result.h"
 
-#define METHOD_ADD_HANDLER(name) \
+#define METHOD_ADD_HANDLER(name, unref_on_free) \
 	static VALUE c_##name (VALUE self) \
 	{ \
 		xmmsc_result_t *res; \
@@ -47,7 +44,7 @@
 \
 		res = xmmsc_##name (xmms->real); \
 \
-		o = TO_XMMS_CLIENT_RESULT (self, res); \
+		o = TO_XMMS_CLIENT_RESULT (self, res, unref_on_free); \
 		rb_ary_push (xmms->results, o); \
 \
 		return o; \
@@ -96,49 +93,26 @@ static VALUE c_new (VALUE klass)
 	return self;
 }
 
-static const char *get_login ()
-{
-	int uid = getuid ();
-	struct passwd *pw;
-	static char ret[64] = {0};
-
-	if (ret[0])
-		return ret;
-
-	setpwent ();
-
-	while ((pw = getpwent ()))
-		if (pw->pw_uid == uid)
-			snprintf (ret, sizeof (ret), "%s", pw->pw_name);
-
-	endpwent ();
-
-	return ret;
-}
-
 static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 {
-	VALUE vpath;
-	char *dbus_path, path[PATH_MAX + 1];
+	VALUE name, path;
+	char *p = NULL;
 
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	if (argc > 0) {
-		rb_scan_args (argc, argv, "1", &vpath);
-		Check_Type (vpath, T_STRING);
-		dbus_path = StringValuePtr (vpath);
-	} else if (!(dbus_path = getenv ("DBUS_PATH")))
-		snprintf (path, sizeof (path),
-		          "unix:path=/tmp/xmms-dbus-%s",
-		         get_login ());
+	rb_scan_args (argc, argv, "11", &name, &path);
 
-	if (dbus_path)
-		snprintf (path, sizeof (path), "%s", dbus_path);
+	Check_Type (name, T_STRING);
 
-	if (!(xmms->real = xmmsc_init ()))
+	if (!NIL_P (path)) {
+		Check_Type (path, T_STRING);
+		p = StringValuePtr (path);
+	}
+
+	if (!(xmms->real = xmmsc_init (StringValuePtr (name))))
 		return Qfalse;
 
-	return xmmsc_connect (xmms->real, path) ? Qtrue : Qfalse;
+	return xmmsc_connect (xmms->real, p) ? Qtrue : Qfalse;
 }
 
 static VALUE c_disconnect (VALUE self)
@@ -156,7 +130,7 @@ static VALUE c_setup_with_ecore (VALUE self)
 {
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	xmmsc_setup_with_ecore (xmms->real);
+	xmmsc_ipc_setup_with_ecore (xmms->real);
 
 	return Qnil;
 }
@@ -166,23 +140,25 @@ static VALUE c_setup_with_gmain (VALUE self)
 {
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	xmmsc_setup_with_gmain (xmms->real, g_main_context_default ());
+	xmmsc_ipc_setup_with_gmain (xmms->real, NULL);
 
 	return Qnil;
 }
 
-METHOD_ADD_HANDLER(quit);
+METHOD_ADD_HANDLER(quit, true);
 
-METHOD_ADD_HANDLER(playback_start);
-METHOD_ADD_HANDLER(playback_pause);
-METHOD_ADD_HANDLER(playback_stop);
-METHOD_ADD_HANDLER(playback_next);
-METHOD_ADD_HANDLER(playback_status);
-METHOD_ADD_HANDLER(playback_playtime);
-METHOD_ADD_HANDLER(playback_statistics);
-METHOD_ADD_HANDLER(playback_current_id);
+METHOD_ADD_HANDLER(playback_start, true);
+METHOD_ADD_HANDLER(playback_pause, true);
+METHOD_ADD_HANDLER(playback_stop, true);
+METHOD_ADD_HANDLER(playback_next, true);
+METHOD_ADD_HANDLER(playback_status, false);
+METHOD_ADD_HANDLER(broadcast_playback_status, false);
+METHOD_ADD_HANDLER(playback_playtime, true);
+METHOD_ADD_HANDLER(signal_playback_playtime, true);
+METHOD_ADD_HANDLER(playback_current_id, true);
+METHOD_ADD_HANDLER(broadcast_playback_current_id, false);
 
-METHOD_ADD_HANDLER(configval_on_change);
+METHOD_ADD_HANDLER(broadcast_configval_changed, false);
 
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
@@ -195,7 +171,7 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 
 	res = xmmsc_playback_seek_ms (xmms->real, NUM2UINT (ms));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res);
+	o = TO_XMMS_CLIENT_RESULT (self, res, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -212,15 +188,15 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 
 	res = xmmsc_playback_seek_samples (xmms->real, NUM2UINT (samples));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res);
+	o = TO_XMMS_CLIENT_RESULT (self, res, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
 }
 
-METHOD_ADD_HANDLER(playlist_changed);
-METHOD_ADD_HANDLER(playlist_entry_changed);
-METHOD_ADD_HANDLER(playlist_list);
+METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
+METHOD_ADD_HANDLER(broadcast_playlist_entry_changed, false);
+METHOD_ADD_HANDLER(playlist_list, true);
 
 static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
 {
@@ -235,7 +211,7 @@ static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
 	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (type),
 	                               FIX2INT (moment));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res);
+	o = TO_XMMS_CLIENT_RESULT (self, res, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -252,7 +228,7 @@ static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
 
 	res = xmmsc_playlist_get_mediainfo (xmms->real, FIX2INT (id));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res);
+	o = TO_XMMS_CLIENT_RESULT (self, res, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -269,7 +245,7 @@ static VALUE c_configval_get (VALUE self, VALUE key)
 
 	res = xmmsc_configval_get (xmms->real, StringValuePtr (key));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res);
+	o = TO_XMMS_CLIENT_RESULT (self, res, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -288,7 +264,7 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	res = xmmsc_configval_set (xmms->real, StringValuePtr (key),
 	                           StringValuePtr (val));
 
-	o = TO_XMMS_CLIENT_RESULT (self, res);
+	o = TO_XMMS_CLIENT_RESULT (self, res, true);
 	rb_ary_push (xmms->results, o);
 
 	return o;
@@ -317,22 +293,24 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playback_pause, 0);
 	METHOD_ADD (c, playback_stop, 0);
 	METHOD_ADD (c, playback_next, 0);
+	METHOD_ADD (c, broadcast_playback_status, 0);
 	METHOD_ADD (c, playback_status, 0);
 	METHOD_ADD (c, playback_playtime, 0);
-	METHOD_ADD (c, playback_statistics, 0);
+	METHOD_ADD (c, signal_playback_playtime, 0);
 	METHOD_ADD (c, playback_current_id, 0);
+	METHOD_ADD (c, broadcast_playback_current_id, 0);
 	METHOD_ADD (c, playback_seek_ms, 1);
 	METHOD_ADD (c, playback_seek_samples, 1);
 
-	METHOD_ADD (c, playlist_changed, 0);
-	METHOD_ADD (c, playlist_entry_changed, 0);
+	METHOD_ADD (c, broadcast_playlist_changed, 0);
+	METHOD_ADD (c, broadcast_playlist_entry_changed, 0);
 	METHOD_ADD (c, playlist_list, 0);
 	METHOD_ADD (c, playlist_set_next, 2);
 	METHOD_ADD (c, playlist_get_mediainfo, 1);
 
 	METHOD_ADD (c, configval_get, 1);
 	METHOD_ADD (c, configval_set, 2);
-	METHOD_ADD (c, configval_on_change, 0);
+	METHOD_ADD (c, broadcast_configval_changed, 0);
 
 	rb_define_const (c, "PLAY",
 	                 INT2FIX (XMMSC_PLAYBACK_PLAY));
