@@ -10,7 +10,6 @@
 #include "xmms/util.h"
 #include "xmms/output.h"
 #include "xmms/transport.h"
-#include "xmms/core.c"
 #include "xmms/xmms.h"
 
 #include <math.h>

@@ -4,7 +4,7 @@
 #include "xmms/xmms.h"
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
-#include "xmms/config_xmms.h"
+#include "xmms/config.h"
 #include "xmms/signal_xmms.h"
 
 #include <sys/types.h>
@@ -185,7 +185,8 @@ static gboolean
 xmms_oss_open (xmms_output_t *output)
 {
 	xmms_oss_data_t *data;
-	gchar *dev;
+	const xmms_config_value_t *val;
+	const gchar *dev;
 	guint param;
 
 	g_return_val_if_fail (output, FALSE);
@@ -194,12 +195,8 @@ xmms_oss_open (xmms_output_t *output)
 	
 	XMMS_DBG ("xmms_oss_open (%p)", output);
 
-	dev = xmms_output_config_string_get (output, "device");
-	if (!dev) {
-		XMMS_DBG ("device not found in config, using default");
-		dev = "/dev/dsp";
-	}
-
+	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
+	dev = xmms_config_value_string_get (val);
 
 	XMMS_DBG ("device = %s", dev);
 
@@ -236,17 +233,19 @@ static gboolean
 xmms_oss_new (xmms_output_t *output)
 {
 	xmms_oss_data_t *data;
-	gchar *mixdev;
+	xmms_config_value_t *val;
+	const gchar *mixdev;
 
 	g_return_val_if_fail (output, FALSE);
 
 	data = g_new0 (xmms_oss_data_t, 1);
 
-	mixdev = xmms_output_config_string_get (output, "mixer");
-	if (!mixdev) {
-		XMMS_DBG ("Mixer Device not found in config, using default");
-		mixdev = "/dev/mixer";
-	}
+	val = xmms_plugin_config_value_register (xmms_output_plugin_get (output), 
+				  	   	 "mixer",
+					   	 "/dev/mixer",
+					   	 NULL,
+					   	 NULL);
+	mixdev = xmms_config_value_string_get (val);
 
 	/* Open mixer here. I am not sure this is entirely correct. */
 	data->mixer_fd = open (mixdev, O_RDONLY);
@@ -258,10 +257,17 @@ xmms_oss_new (xmms_output_t *output)
 	XMMS_DBG ("Have mixer = %d", data->have_mixer);
 
 	/* retrive keys for mixer settings. but ignore current values */
-	data->mixer = xmms_output_config_value_get (output, "volume", "70/70");
-	xmms_object_connect (XMMS_OBJECT (data->mixer), 
-			XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
-			xmms_oss_mixer_config_changed, output);
+	data->mixer = xmms_plugin_config_value_register (xmms_output_plugin_get (output), 
+					   	 "volume",
+					   	 "70/70",
+					   	 xmms_oss_mixer_config_changed,
+					   	 output);
+	/* register device */
+	val = xmms_plugin_config_value_register (xmms_output_plugin_get (output),
+						 "device",
+						 "/dev/dsp",
+						 NULL,
+						 NULL);
 
 	xmms_output_plugin_data_set (output, data);
 

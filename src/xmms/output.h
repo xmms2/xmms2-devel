@@ -3,7 +3,8 @@
 
 #include <glib.h>
 
-#include "config_xmms.h"
+#include "xmms/config.h"
+#include "xmms/plugin.h"
 
 /*
  * Type definitions
@@ -29,14 +30,12 @@ typedef guint (*xmms_output_buffersize_get_method_t) (xmms_output_t *output);
  * Public function prototypes
  */
 
+xmms_plugin_t *xmms_output_plugin_get (xmms_output_t *output);
 gpointer xmms_output_plugin_data_get (xmms_output_t *output);
 void xmms_output_plugin_data_set (xmms_output_t *output, gpointer data);
 
 gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right);
 
-gchar *xmms_output_config_string_get (xmms_output_t *output, gchar *val);
 void xmms_output_flush (xmms_output_t *output);
-
-xmms_config_value_t *xmms_output_config_value_get (xmms_output_t *effect, gchar *key, gchar *def);
 
 #endif

@@ -4,20 +4,20 @@
 
 #include <glib.h>
 
-#include "plugin.h"
-#include "plugin_int.h"
-#include "transport.h"
-#include "decoder.h"
-#include "config_xmms.h"
-#include "playlist.h"
-#include "unixsignal.h"
-#include "util.h"
-#include "core.h"
-#include "medialib.h"
-#include "output.h"
-#include "output_int.h"
-#include "xmms.h"
-#include "effect.h"
+#include "xmms/plugin.h"
+#include "xmms/plugin_int.h"
+#include "xmms/transport.h"
+#include "xmms/decoder.h"
+#include "xmms/config.h"
+#include "xmms/playlist.h"
+#include "xmms/unixsignal.h"
+#include "xmms/util.h"
+#include "xmms/core.h"
+#include "xmms/medialib.h"
+#include "xmms/output.h"
+#include "xmms/output_int.h"
+#include "xmms/xmms.h"
+#include "xmms/effect.h"
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -34,10 +34,10 @@ static GMainLoop *mainloop;
 gboolean xmms_dbus_init (gchar *path);
 
 
-static xmms_config_data_t *
+static xmms_config_t *
 parse_config ()
 {
-	xmms_config_data_t *config;
+	xmms_config_t *config;
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
 
@@ -63,10 +63,10 @@ parse_config ()
 				mkdir (configdir, 0755);
 			}
 
-			if (!xmms_config_save_to_file (config, filename)) {
+			/*if (!xmms_config_save_to_file (config, filename)) {
 				XMMS_DBG ("Could't write file %s!", filename);
 				exit (EXIT_FAILURE);
-			}
+			}*/
 
 			return config;
 		} else {
@@ -82,14 +82,15 @@ int
 main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
-	xmms_config_data_t *config;
+	xmms_config_t *config;
+	xmms_config_value_t *cv;
 	int opt;
 	int verbose = 0;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
-	gchar *outname = NULL;
+	const gchar *outname = NULL;
 	gboolean daemonize = FALSE;
-	gchar *path;
+	const gchar *path;
 	gchar *ppath = NULL;
 	pid_t ppid=0;
 
@@ -151,10 +152,11 @@ main (int argc, char **argv)
 	xmms_log_initialize ("xmmsd");
 
 	xmms_core_init ();
+	
+	config = parse_config ();
 
-	if (!xmms_plugin_init (ppath))
+	if (!xmms_plugin_init (config, ppath))
 		return 1;
-
 	
 	playlist = xmms_playlist_init ();
 	xmms_core_set_playlist (playlist);
@@ -182,12 +184,9 @@ main (int argc, char **argv)
 
 	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries_total (playlist));
 
-	config = parse_config ();
-	outname = xmms_config_value_as_string (xmms_config_value_lookup (config->core, "outputplugin"));
+	cv = xmms_config_value_register (config, "core.outputplugin", "oss", NULL, NULL);
+	outname = xmms_config_value_string_get (cv);
 	XMMS_DBG ("output = %s", outname);
-
-	if (!outname)
-		outname = "oss";
 
 	o_plugin = xmms_output_find_plugin (outname);
 	g_return_val_if_fail (o_plugin, -1);
@@ -200,16 +199,12 @@ main (int argc, char **argv)
 		xmms_output_start (output);
 	}
 
-	path = xmms_config_value_as_string (xmms_config_value_lookup (config->core, "dbuspath"));
-
-	if (!path) {
-		path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
-					g_get_user_name ());
-	} 
+	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
+				g_get_user_name ());
+	cv = xmms_config_value_register (config, "core.dbuspath", path, NULL, NULL);
+	path = xmms_config_value_string_get (cv);
 
 	xmms_dbus_init (path);
-
-	g_free (path);
 
 	xmms_signal_init ();
 

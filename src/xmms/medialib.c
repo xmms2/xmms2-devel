@@ -2,15 +2,15 @@
  *  This controls the medialib.
  */
 
-#include "util.h"
-#include "config_xmms.h"
-#include "medialib.h"
-#include "transport.h"
-#include "transport_int.h"
-#include "decoder.h"
-#include "decoder_int.h"
-#include "plugin.h"
-#include "plugin_int.h"
+#include "xmms/util.h"
+#include "xmms/config.h"
+#include "xmms/medialib.h"
+#include "xmms/transport.h"
+#include "xmms/transport_int.h"
+#include "xmms/decoder.h"
+#include "xmms/decoder_int.h"
+#include "xmms/plugin.h"
+#include "xmms/plugin_int.h"
 
 #include <string.h>
 

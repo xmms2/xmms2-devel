@@ -1,12 +1,14 @@
 #ifndef __XMMS_PLUGIN_INT_H__
 #define __XMMS_PLUGIN_INT_H__
 
+#include "xmms/config.h"
+
 /*
  * Private functions
  */
 
-gboolean xmms_plugin_init (gchar *path);
-void xmms_plugin_scan_directory (const gchar *dir);
+gboolean xmms_plugin_init (xmms_config_t *config, gchar *path);
+void xmms_plugin_scan_directory (xmms_config_t *config, const gchar *dir);
 
 void xmms_plugin_ref (xmms_plugin_t *plugin);
 void xmms_plugin_unref (xmms_plugin_t *plugin);

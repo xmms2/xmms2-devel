@@ -6,12 +6,12 @@
 
 #include <glib.h>
 
-#include "effect.h"
-#include "plugin.h"
-#include "plugin_int.h"
-#include "object.h"
-#include "config_xmms.h"
-#include "util.h"
+#include "xmms/effect.h"
+#include "xmms/plugin.h"
+#include "xmms/plugin_int.h"
+#include "xmms/object.h"
+#include "xmms/config.h"
+#include "xmms/util.h"
 
 struct xmms_effect_St {
 	struct xmms_effect_St *next;
@@ -20,7 +20,7 @@ struct xmms_effect_St {
 	void (*run) (xmms_effect_t *, gchar *buf, guint len);
 	gpointer *plugin_data;
 	guint rate;
-	xmms_config_value_t *config;
+	xmms_plugin_t *plugin;
 };
 
 void
@@ -33,25 +33,6 @@ xmms_effect_samplerate_set (xmms_effect_t *effects, guint rate)
 			effects->samplerate_change (effects, rate);
 		}
 	}
-}
-
-xmms_config_value_t *
-xmms_effect_config_value_get (xmms_effect_t *effect, gchar *key, gchar *def)
-{
-	xmms_config_value_t *value;
-	
-	g_return_val_if_fail (effect, NULL);
-	g_return_val_if_fail (key, NULL);
-	
-	value = xmms_config_value_list_lookup (effect->config, key);
-
-	if (!value) {
-		value = xmms_config_value_create (XMMS_CONFIG_VALUE_PLAIN, key);
-		xmms_config_value_data_set (value, g_strdup (def));
-		xmms_config_value_list_add (effect->config, value);
-	}
-
-	return value;
 }
 
 void
@@ -93,13 +74,21 @@ xmms_effect_plugin_data_set (xmms_effect_t *effect, gpointer data)
 	effect->plugin_data = data;
 }
 
+xmms_plugin_t *
+xmms_effect_plugin_get (xmms_effect_t *effect)
+{
+	g_return_val_if_fail (effect, NULL);
+
+	return (effect->plugin);
+}
 
 /**
  *
  * @internal
  */
+
 xmms_effect_t *
-xmms_effect_prepend (xmms_effect_t *stack, gchar *name, GHashTable *config)
+xmms_effect_prepend (xmms_effect_t *stack, gchar *name)
 {
 	GList *list;
 	xmms_plugin_t *plugin = NULL;
@@ -126,13 +115,6 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name, GHashTable *config)
 		
 		g_return_val_if_fail (initfunc, stack);
 
-		effect->config = xmms_config_value_lookup (config, name);
-		if (!effect->config) {
-			XMMS_DBG ("Adding config-section %s in %p", name, effect->config);
-			effect->config = xmms_config_add_section (config, g_strdup (name));
-		}
-
-
 		initfunc (effect);
 
 		effect->samplerate_change = xmms_plugin_method_get (plugin, 
@@ -145,9 +127,8 @@ xmms_effect_prepend (xmms_effect_t *stack, gchar *name, GHashTable *config)
 							 XMMS_PLUGIN_METHOD_DEINIT);
 
 		effect->next = stack;
+		effect->plugin = plugin;
 		stack = effect;
-
-
 
 	} else {
 		XMMS_DBG ("Skipping unknown plugin: %s", name);

@@ -7,7 +7,7 @@
 #include "xmms/plugin.h"
 #include "xmms/effect.h"
 #include "xmms/util.h"
-#include "xmms/config_xmms.h"
+#include "xmms/config.h"
 #include "xmms/object.h"
 #include "xmms/signal_xmms.h"
 
@@ -102,8 +102,7 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 	xmms_config_value_t *val = (xmms_config_value_t *)object;
 	xmms_effect_t *effect = userdata;
 	xmms_eq_priv_t *priv;
-	const gchar *newval = data;
-	gchar *name;
+	const gchar *name;
 	gint i;
 
 	priv = xmms_effect_plugin_data_get (effect);
@@ -112,13 +111,14 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 
 	name = xmms_config_value_name_get (val);
 
-	XMMS_DBG ("configval changed! %s => %s", name, newval);
+	XMMS_DBG ("configval changed! %s => %f", name,
+		  xmms_config_value_float_get (val));
 
 	i = atoi (name+4);
 
 	XMMS_DBG ("changing filter #%d", i);
 
-	priv->gains[i] = atof (newval);
+	priv->gains[i] = xmms_config_value_float_get (val);
 
 	xmms_eq_calc_filter (&priv->filters[i], 
 			     priv->gains[i], freqs[i]);
@@ -135,23 +135,33 @@ xmms_eq_init (xmms_effect_t *effect) {
 	g_return_if_fail (priv);
 
 	xmms_effect_plugin_data_set (effect, priv);
+	xmms_plugin_config_value_register (xmms_effect_plugin_get (effect),
+				    	   "position",
+					   "0",
+					   NULL,
+					   NULL);
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
 		gchar buf[20];
 		snprintf (buf, 20, "gain%d", i);
-		priv->configvals[i] = xmms_effect_config_value_get (effect, g_strdup (buf), "1.0");
-		g_return_if_fail (priv->configvals[i]);
-		xmms_object_connect (XMMS_OBJECT (priv->configvals[i]),
-				     XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
-				     xmms_eq_configval_changed, effect);
+		priv->configvals[i] = 
+			xmms_plugin_config_value_register (
+					xmms_effect_plugin_get (effect), 
+				   	g_strdup (buf), 
+				   	"1.0",
+					xmms_eq_configval_changed,
+					effect);
 
-		priv->gains[i] = atof (xmms_config_value_as_string (priv->configvals[i]));
+		g_return_if_fail (priv->configvals[i]);
+
+		priv->gains[i] = xmms_config_value_float_get (priv->configvals[i]);
 	}
 
 }
 
 static void
-xmms_eq_deinit (xmms_effect_t *effect) {
+xmms_eq_deinit (xmms_effect_t *effect) 
+{
 	
 }
 

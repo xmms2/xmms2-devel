@@ -2,19 +2,19 @@
  *
  */
 
-#include "plugin.h"
-#include "transport.h"
-#include "transport_int.h"
-#include "decoder.h"
-#include "decoder_int.h"
-#include "config_xmms.h"
-#include "playlist.h"
-#include "plsplugins.h"
-#include "unixsignal.h"
-#include "util.h"
-#include "core.h"
-#include "signal_xmms.h"
-#include "magic.h"
+#include "xmms/plugin.h"
+#include "xmms/transport.h"
+#include "xmms/transport_int.h"
+#include "xmms/decoder.h"
+#include "xmms/decoder_int.h"
+#include "xmms/config.h"
+#include "xmms/playlist.h"
+#include "xmms/plsplugins.h"
+#include "xmms/unixsignal.h"
+#include "xmms/util.h"
+#include "xmms/core.h"
+#include "xmms/signal_xmms.h"
+#include "xmms/magic.h"
 
 #include <glib.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@ struct xmms_core_St {
 
 	xmms_effect_t *effects;
 	
-	xmms_config_data_t *config;
+	xmms_config_t *config;
 
 	GCond *cond;
 	GMutex *mutex;
@@ -62,7 +62,7 @@ static gboolean running = TRUE;
  *
  */
 
-static void xmms_core_effect_init (GHashTable *conf);
+static void xmms_core_effect_init (xmms_config_t *config);
 
 
 static void
@@ -124,6 +124,17 @@ xmms_core_output_set (xmms_output_t *output)
 }
 
 
+void
+xmms_core_config_set (gchar *key, gchar *value)
+{
+	xmms_config_value_t *val;
+
+	val = xmms_config_lookup (core->config, key);
+	if (val)
+		xmms_config_value_data_set (val, g_strdup (value));
+
+}
+
 static void
 wake_core ()
 {
@@ -133,8 +144,7 @@ wake_core ()
 	}
 }
 
-
-xmms_config_data_t *
+xmms_config_t *
 xmms_core_config_get (xmms_core_t *core)
 {
 	g_return_val_if_fail (core, NULL);
@@ -311,7 +321,7 @@ xmms_core_quit ()
 {
 	gchar *filename;
 	filename = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
-	xmms_config_save_to_file (core->config, filename);
+	//xmms_config_save (core->config, filename);
 	exit (0); /** @todo BUSKIS! */
 }
 
@@ -476,11 +486,11 @@ core_thread (gpointer data)
  * Starts playing of the first song in playlist.
  */
 void
-xmms_core_start (xmms_config_data_t *config)
+xmms_core_start (xmms_config_t *config)
 {
 	core->config = config;
 	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
-	xmms_core_effect_init (config->effect);
+	xmms_core_effect_init (config);
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 
@@ -628,39 +638,38 @@ xmms_core_effect_compare (gconstpointer a, gconstpointer b)
 	cv1 = a;
 	cv2 = b;
 
-	pos1 = xmms_config_value_as_int (xmms_config_value_list_lookup (cv1, "position"));
-	pos2 = xmms_config_value_as_int (xmms_config_value_list_lookup (cv2, "position"));
+	pos1 = xmms_config_value_int_get (cv1);
+	pos2 = xmms_config_value_int_get (cv2);
 
 	return (pos1-pos2);
 
 }
 
 static void
-xmms_core_effect_foreach (gpointer key, gpointer val, gpointer userdata)
-{
-	GList **lst = userdata;
-
-	if (xmms_config_value_as_int (xmms_config_value_list_lookup (val, "position")) > 0) {
-		*lst = g_list_insert_sorted (*lst, val, xmms_core_effect_compare);
-	}
-}
-
-static void
-xmms_core_effect_init (GHashTable *conf)
+xmms_core_effect_init (xmms_config_t *config)
 {
 	xmms_config_value_t *cv;
 	GList *lst = NULL;
+	GList *effectlist = NULL;
 	core->effects = NULL;
 
-	g_hash_table_foreach (conf, xmms_core_effect_foreach, &lst);
+	for (lst = xmms_config_plugins_get (config); lst; lst = g_list_next (lst)) {
+		gchar *tmp = g_strdup_printf ("effect.%s.position", (gchar *)lst->data);
+		cv = xmms_config_lookup (config, tmp);
+		if (cv && (xmms_config_value_int_get (cv) > 0)) {
+			XMMS_DBG ("Adding %s to list", (gchar *)lst->data);
+			effectlist = g_list_insert_sorted (effectlist, cv, xmms_core_effect_compare);
+		}
+	}
 
-	for (; lst; lst = g_list_next (lst)) {
-		cv = lst->data;
-		gchar *name = xmms_config_value_name_get (lst->data);
+	for (; effectlist; effectlist = g_list_next (effectlist)) {
+		cv = effectlist->data;
+		const gchar *name = xmms_config_value_name_get (effectlist->data);
 		XMMS_DBG ("adding effect %s", name);
-		core->effects = xmms_effect_prepend (core->effects, name, conf);
+		core->effects = xmms_effect_prepend (core->effects, name);
 	}
 
 	g_list_free (lst);
+	g_list_free (effectlist);
 
 }
