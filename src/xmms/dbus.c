@@ -30,6 +30,7 @@ static GSList *connections = NULL;
 static const char *messages[]={"org.xmms.core.mediainfo"};
 static const char *nextmsgs[]={"org.xmms.core.play-next"};
 static const char *addmsgs[]={"org.xmms.playlist.add"};
+static const char *quitmsgs[]={"org.xmms.core.quit"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
 
@@ -90,14 +91,33 @@ handle_mediainfo(DBusMessageHandler *handler,
 	int clientser;
 	char *uri;
 	
+	XMMS_DBG ("mediainfo!");
+
 	rpy = dbus_message_new_reply (msg);
 	dbus_message_append_iter_init (rpy, &itr);
 	uri = xmms_core_get_uri ();
-	dbus_message_iter_append_string (&itr, uri);
+	if (uri) {
+		dbus_message_iter_append_string (&itr, uri);
+	} else {
+		dbus_message_iter_append_string (&itr, "nothing");
+	}
+
 	dbus_connection_send (conn, rpy, &clientser);
 	dbus_message_unref (rpy);
 
-	g_free (uri);
+	if (uri)
+		g_free (uri);
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_quit(DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	XMMS_DBG ("quit!");
+	xmms_core_quit();
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
@@ -107,6 +127,7 @@ handle_next(DBusMessageHandler *handler,
 		 DBusConnection *conn, DBusMessage *msg, void *user_data)
 {
 
+	XMMS_DBG ("next!");
 	xmms_core_play_next();
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
@@ -118,6 +139,8 @@ handle_playlist_add(DBusMessageHandler *handler,
 {
 
         DBusMessageIter itr;
+
+	XMMS_DBG ("playlistmsg!");
 
 	dbus_message_iter_init (msg, &itr);
 	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
@@ -182,6 +205,15 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 		return;
 	}
 	dbus_connection_register_handler (conn, hand, nextmsgs, 1);
+
+
+	hand = dbus_message_handler_new (handle_quit, NULL, NULL);
+	if (!hand) {
+		XMMS_DBG ("couldn't alloc handler\n");
+		dbus_connection_unref (conn);
+		return;
+	}
+	dbus_connection_register_handler (conn, hand, quitmsgs, 1);
 
 
 	hand = dbus_message_handler_new (handle_disconnect, NULL, NULL);

@@ -22,6 +22,9 @@ void xmms_core_output_set (xmms_output_t *output);
 
 void xmms_core_playtime_set (guint time);
 void xmms_core_play_next ();
+void xmms_core_playlist_adduri (gchar *nuri);
+
+void xmms_core_quit ();
 
 void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);
 void xmms_core_set_playlist (xmms_playlist_t *playlist);

@@ -87,10 +87,10 @@ main (int argc, char **argv)
 	xmms_playlist_t *playlist;
 	gchar *outname = NULL;
 	gboolean daemonize = FALSE;
-	pid_t pid;
+	pid_t ppid=0;
 
 	memset (&signals, 0, sizeof (sigset_t));
-        sigaddset (&signals, SIGHUP);
+	sigaddset (&signals, SIGHUP);
 	sigaddset (&signals, SIGTERM);
 	sigaddset (&signals, SIGINT);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
@@ -123,17 +123,27 @@ main (int argc, char **argv)
 		}
 	}
 
+	if (daemonize) {
+		xmms_log ("Going to background mode ...");
+		ppid = getpid ();
+		if (fork ()) {
+			sigset_t signals;
+			int caught;
+			memset (&signals, 0, sizeof (sigset_t));
+			sigaddset (&signals, SIGUSR1);
+			sigaddset (&signals, SIGCHLD);
+			sigwait (&signals, &caught);
+			printf ("really started!\n");
+			exit (caught!=SIGUSR1);
+		}
+		setsid();
+		if (fork ()) exit(0);
+		xmms_log_daemonize ();
+	}
+
 	g_thread_init (NULL);
 
 	xmms_log_initialize ("xmmsd");
-
-	if (daemonize) {
-		xmms_log ("Going to background mode ...");
-		xmms_log_daemonize ();
-		if ((pid = fork ())) {
-			exit (0);
-		}
-	}
 
 	xmms_core_init ();
 
@@ -191,9 +201,13 @@ main (int argc, char **argv)
 
 	xmms_core_start ();
 
+	if (ppid) { /* signal that we are inited */
+		kill (ppid, SIGUSR1);
+	}
+
 	mainloop = g_main_loop_new (NULL, FALSE);
 
-        g_main_loop_run (mainloop);
+	g_main_loop_run (mainloop);
 
 	return 0;
 }

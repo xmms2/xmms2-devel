@@ -6,6 +6,8 @@
 #define DBUS_API_SUBJECT_TO_CHANGE
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -15,9 +17,11 @@ guint played_time=0;
 
 #define XMMS_MAX_URI_LEN 1024
 
+static GMainLoop *mainloop;
 
-const char *playtime_message[]={"org.xmms.core.playtime-changed"};
-const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
+static const char *playtime_message[]={"org.xmms.core.playtime-changed"};
+static const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
+static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
 static DBusHandlerResult
 handle_playtime(DBusMessageHandler *handler, 
@@ -56,10 +60,27 @@ handle_mediainfo(DBusMessageHandler *handler,
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
+
+static DBusHandlerResult
+handle_disconnect (DBusMessageHandler *handler,
+		   DBusConnection     *connection,
+		   DBusMessage        *message,
+                   void               *user_data)
+{
+
+	printf("Someone set us up the bomb...\n");
+
+	g_main_loop_quit (mainloop);
+
+	dbus_connection_unref (connection);
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+
 int
 status_main(DBusConnection *conn)
 {
-	GMainLoop *mainloop;
 	DBusMessage *msg, *res;
 	DBusError err;
 	DBusMessageHandler *hand;
@@ -73,6 +94,10 @@ status_main(DBusConnection *conn)
 
 	hand = dbus_message_handler_new (handle_mediainfo, NULL, NULL);
 	dbus_connection_register_handler (conn, hand, mediainfo_message, 1);
+
+	hand = dbus_message_handler_new (handle_disconnect, NULL, NULL);
+	dbus_connection_register_handler (conn, hand, disconnectmsgs, 1);
+
 
 	msg = dbus_message_new ("org.xmms.core.mediainfo", NULL);
 	
@@ -96,7 +121,6 @@ status_main(DBusConnection *conn)
 
 	dbus_connection_setup_with_g_main (conn, NULL);
 
-        g_main_loop_run (mainloop);
 
 	return 0;
 
@@ -113,14 +137,29 @@ main(int argc, char **argv)
 	dbus_error_init (&err);
 
 	conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
-
+	
 	if (!conn) {
-		printf ("error opening connection\n");
-		return 1;
+		int ret;
+		
+		printf ("Couldn't connect to xmms2d, starning it...\n");
+		ret = system ("xmms2d -d");
+
+		if (ret != 0) {
+			perror ("Error starting xmms2d");
+			exit (1);
+		}
+		printf ("started!\n");
+
+		dbus_error_init (&err);
+		conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
+		if (!conn) {
+			printf ("Couldn't connect to xmms2d even tough I started it... Bad, very bad.\n");
+			exit (1);
+		}
 	}
 
+	status_main (conn);
 	if (argc<2 || streq (argv[1], "status")) {
-		status_main (conn);
 	} else {
 
 		if ( streq (argv[1], "next") ) {
@@ -128,6 +167,15 @@ main(int argc, char **argv)
 			int cserial;
 
 			msg = dbus_message_new ("org.xmms.core.play-next", NULL);
+			dbus_connection_send (conn, msg, &cserial);
+			dbus_message_unref (msg);
+			dbus_connection_flush (conn);
+
+		} else if ( streq (argv[1], "quit") ) {
+			DBusMessage *msg;
+			int cserial;
+
+			msg = dbus_message_new ("org.xmms.core.quit", NULL);
 			dbus_connection_send (conn, msg, &cserial);
 			dbus_message_unref (msg);
 			dbus_connection_flush (conn);
@@ -159,16 +207,16 @@ main(int argc, char **argv)
 				dbus_message_append_iter_init (msg, &itr);
 				dbus_message_iter_append_string (&itr, nuri);
 				dbus_connection_send (conn, msg, &cserial);
+				dbus_connection_flush (conn);
 				dbus_message_unref (msg);
-				
 			}
-			dbus_connection_flush (conn);
 		} else {
 			printf ("Unknown command '%s'\n", argv[1]);
 			return 1;
 		}
 	}
-
+	g_main_loop_run (mainloop);
+	printf ("...BOOM!\n");
 	return 0;
 
 }

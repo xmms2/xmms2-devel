@@ -20,6 +20,7 @@
 static xmms_core_t core_object;
 xmms_core_t *core = &core_object;
 
+static gboolean running = TRUE;
 /**
  *
  */
@@ -57,7 +58,8 @@ eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
  *
  * @internal
  */
-void xmms_core_output_set (xmms_output_t *output)
+void
+xmms_core_output_set (xmms_output_t *output)
 {
 	g_return_if_fail (core->output==NULL);
 	core->output = output;
@@ -72,7 +74,8 @@ void xmms_core_output_set (xmms_output_t *output)
  * song in playlist.
  *
  */
-void xmms_core_play_next ()
+void
+xmms_core_play_next ()
 {
 	if (core->decoder) {
 		XMMS_DBG ("playing next");
@@ -82,10 +85,17 @@ void xmms_core_play_next ()
 	}
 }
 
-void xmms_core_playlist_adduri (gchar *nuri)
+void
+xmms_core_playlist_adduri (gchar *nuri)
 {
 	xmms_playlist_add (core->playlist, xmms_playlist_entry_new (nuri), XMMS_PLAYLIST_APPEND);
 
+}
+
+void
+xmms_core_quit ()
+{
+	exit (0); /** @todo BUSKIS! */
 }
 
 /**
@@ -106,7 +116,7 @@ core_thread(gpointer data){
 	xmms_decoder_t *decoder;
 	const gchar *mime;
 
-	while (42) {
+	while (running) {
 		
 		if (core->curr_song) { /* yes, it looks a bit ugly to
 					  begin with deallocations,
@@ -161,6 +171,7 @@ core_thread(gpointer data){
 		}
 		
 	}
+
 	return NULL;
 }
 
@@ -229,7 +240,7 @@ xmms_core_get_mediainfo (xmms_playlist_entry_t *entry)
 gchar *
 xmms_core_get_uri ()
 {
-	return core->curr_song->uri ? g_strdup(core->curr_song->uri) : NULL;
+	return core->curr_song ? core->curr_song->uri ? g_strdup(core->curr_song->uri) : NULL : NULL;
 }
 
 
