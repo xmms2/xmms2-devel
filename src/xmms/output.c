@@ -477,6 +477,8 @@ xmms_output_destroy (xmms_object_t *object)
 		dest (output);
 	}
 
+	xmms_object_unref (output->plugin);
+
 	g_mutex_free (output->mutex);
 	g_cond_free (output->cond);
 	g_cond_free (output->fill_cond);
