@@ -81,7 +81,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
 			const gchar *mime;
-			const gchar *uri;
 			guint id;
 
 			mtt->list = g_list_remove_link (mtt->list, node);
@@ -94,8 +93,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id);
 
-			uri = xmms_playlist_entry_get_uri (entry);
-			transport = xmms_transport_open (uri);
+			transport = xmms_transport_open (entry);
 			if (!transport) {
 				xmms_playlist_entry_unref (entry);
 				continue;
@@ -117,8 +115,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 				/* This is a playlist file... */
 				XMMS_DBG ("Playlist!!");
-				xmms_transport_start (transport);
-				XMMS_DBG ("transport started");
 				xmms_playlist_plugin_read (plsplugin, mtt->playlist, transport);
 
 				/* we don't want it in the playlist. */

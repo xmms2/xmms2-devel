@@ -90,7 +90,6 @@ static void xmms_decoder_destroy_real (xmms_decoder_t *decoder);
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
 static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
-static guint xmms_decoder_skip_bytes_get (xmms_decoder_t *decoder, guint milliseconds);
 
 /*
  * Macros
@@ -183,40 +182,41 @@ recalculate_resampler (xmms_decoder_t *decoder)
 }
 
 void
-xmms_decoder_seek (xmms_decoder_t *decoder, guint milliseconds)
+xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds)
 {
-	guint bytes;
+	guint samples;
 	g_return_if_fail (decoder);
 	
-	if (!milliseconds) 
-		return;
+	samples = (guint)(((gdouble) decoder->samplerate) * milliseconds / 1000);
 
-	bytes = xmms_decoder_skip_bytes_get (decoder, milliseconds);
+	xmms_decoder_seek_samples (decoder, samples);
 
-
-	xmms_transport_seek (decoder->transport, bytes, XMMS_TRANSPORT_SEEK_SET);
 }
 
-static guint
-xmms_decoder_skip_bytes_get (xmms_decoder_t *decoder, guint milliseconds)
+void
+xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples)
 {
-	xmms_decoder_skip_bytes_get_method_t meth;
-	guint bytes;
+	xmms_decoder_seek_method_t meth;
 	
+	g_return_if_fail (decoder);
+
+	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_SEEK);
+
+	g_return_if_fail (meth);
+
+	xmms_output_flush (decoder->output);
+
+	meth (decoder, samples);
+
+	xmms_output_played_samples_set (decoder->output, samples);
+}
+
+guint
+xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
+{
 	g_return_val_if_fail (decoder, 0);
 
-	if (!milliseconds) 
-		return 0;
-
-	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_CALC_SKIP);
-
-	g_return_val_if_fail (meth, 0);
-
-	bytes = meth (decoder, milliseconds);
-
-	XMMS_DBG ("Bytes from skip_bytes_get %d", bytes);
-
-	return bytes;
+	return decoder->samplerate;
 }
 
 void
@@ -226,9 +226,13 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	g_return_if_fail (rate);
 	
 	if (decoder->samplerate != rate) {
+		gchar *r;
 		xmms_visualisation_samplerate_set (decoder->vis, rate);
 		decoder->samplerate = rate;
-		decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
+		if (decoder->output)
+			decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
+		r = g_strdup_printf ("%d", rate);
+		xmms_playlist_entry_set_prop (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
 		xmms_effect_samplerate_set (decoder->effect, decoder->samplerate);
 		recalculate_resampler (decoder);
 	}

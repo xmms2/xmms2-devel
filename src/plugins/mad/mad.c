@@ -40,8 +40,8 @@ typedef struct xmms_mad_data_St {
 	guint buffer_length;
 	guint bitrate;
 	guint fsize;
-
-	gboolean vbr;
+	
+	xmms_xing_t *xing;
 } xmms_mad_data_t;
 
 /*
@@ -54,7 +54,7 @@ static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_mad_init (xmms_decoder_t *decoder);
-static guint xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds);
+static void xmms_mad_seek (xmms_decoder_t *decoder, guint samples);
 
 /*
  * Plugin header
@@ -78,8 +78,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_mad_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_mad_get_media_info);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_mad_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CALC_SKIP, xmms_mad_calc_skip_bytes);
-
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_mad_seek);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
@@ -105,30 +104,43 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
-static guint
-xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds)
+static void
+xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 {
 	xmms_mad_data_t *data;
 	guint bytes;
 	
-	g_return_val_if_fail (decoder, 0);	
+	g_return_if_fail (decoder);
 
 	data = xmms_decoder_plugin_data_get (decoder);
 
-	if (!data->vbr) {
-		bytes = ((miliseconds / 1000) * data->bitrate) / 8 ;
+	XMMS_DBG ("seek samples %d", samples);
 
-		XMMS_DBG ("Try seek %d bytes", bytes);
+	if (data->xing) {
+		guint i;
+		guint x_samples;
 
-		if (bytes < data->fsize)
-			return bytes;
+		x_samples = xmms_xing_get_frames (data->xing) * 1152;
 
-		return data->fsize;
+		i = (guint) (100.0 * (gdouble) samples) / (gdouble) x_samples;
+		XMMS_DBG ("i = %d x_samples = %d", i, x_samples);
+
+		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
+	} else {
+		bytes = (guint)(((gdouble)samples) * data->bitrate / xmms_decoder_samplerate_get (decoder)) / 8;
 	}
 
-	/** @todo VBR must be supported */
-	return 0;
-	
+	XMMS_DBG ("Try seek %d bytes", bytes);
+
+	if (bytes > data->fsize) {
+		XMMS_DBG ("To big value %d is filesize", data->fsize);
+		return;
+	}
+
+	xmms_transport_seek (xmms_decoder_transport_get (decoder), bytes, 
+			XMMS_TRANSPORT_SEEK_SET);
+
+	return;
 }
 
 /** This function will calculate the duration in seconds.
@@ -145,14 +157,17 @@ xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds)
   */
 
 static void
-xmms_mad_calc_duration (xmms_mad_data_t *data, gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
+xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
+	xmms_mad_data_t *data;
 	xmms_xing_t *xing;
 	guint fsize=0;
 	guint bitrate=0;
 	gchar *tmp;
+
+	data = xmms_decoder_plugin_data_get (decoder);
 
 	mad_stream_init (&stream);
 	mad_frame_init (&frame);
@@ -166,8 +181,12 @@ xmms_mad_calc_duration (xmms_mad_data_t *data, gchar *buf, gint len, guint files
 			return;
 		}
 	}
+
+	xmms_decoder_samplerate_set (decoder,
+		     frame.header.samplerate);
 	
 	fsize = filesize * 8;
+	data->fsize = filesize;
 
 	if ((xing = xmms_xing_parse (stream.anc_ptr))) {
 		
@@ -180,7 +199,7 @@ xmms_mad_calc_duration (xmms_mad_data_t *data, gchar *buf, gint len, guint files
 			}
 		}
 
-		data->vbr = TRUE;
+		data->xing = xing;
 
 		if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES)) {
 			guint duration;
@@ -212,7 +231,6 @@ xmms_mad_calc_duration (xmms_mad_data_t *data, gchar *buf, gint len, guint files
 	}
 
 	data->bitrate = bitrate = frame.header.bitrate;
-	data->fsize = filesize;
 
 	mad_frame_finish (&frame);
 	mad_stream_finish (&stream);
@@ -296,7 +314,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
 	}
 	
-	xmms_mad_calc_duration (data, buf, ret, xmms_transport_size (transport), entry);
+	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
 
 	if (xmms_transport_is_local (transport) && !id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");
@@ -423,10 +441,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 			break;
 		}
 
-		/** @todo move this to init! */
-		xmms_decoder_samplerate_set (decoder,
-					     data->frame.header.samplerate);
-		
+			
 		/* mad_synthpop_frame - go Depeche! */
 		mad_synth_frame (&data->synth, &data->frame);
 		

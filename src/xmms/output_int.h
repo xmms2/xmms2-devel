@@ -16,5 +16,6 @@ void xmms_output_set_eos (xmms_output_t *output, gboolean eos);
 xmms_plugin_t * xmms_output_find_plugin ();
 void xmms_output_write (xmms_output_t *output, gpointer buffer, gint len);
 guint xmms_output_samplerate_set (xmms_output_t *output, guint rate);
+void xmms_output_played_samples_set (xmms_output_t *output, guint samples);
 
 #endif

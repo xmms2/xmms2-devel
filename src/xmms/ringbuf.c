@@ -51,6 +51,8 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 
 	ringbuf->rd_index = 0;
 	ringbuf->wr_index = 0;
+
+	g_cond_signal (ringbuf->free_cond);
 }
 
 guint

@@ -37,6 +37,8 @@ typedef enum {
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE "bitrate"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_COMMENT "comment"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION "duration"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL "channel"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE "samplerate"
 
 /*
  * Private defintions
@@ -64,8 +66,11 @@ typedef struct xmms_playlist_St {
 typedef struct xmms_playlist_entry_St {
 	gchar *uri;
 	gchar *mimetype;
+	
 	guint id;
+	
 	guint ref;
+
 	GHashTable *properties;
 } xmms_playlist_entry_t;
 

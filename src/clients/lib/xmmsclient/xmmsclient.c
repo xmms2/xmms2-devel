@@ -182,15 +182,29 @@ xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
 }
 
 void
-xmmsc_playback_seek (xmmsc_connection_t *c, guint milliseconds)
+xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_SEEK, NULL);
+	msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_SEEK_MS, NULL);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, milliseconds);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
+}
+
+void
+xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples)
+{
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_SEEK_SAMPLES, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_uint32 (&itr, samples);
 	dbus_connection_send (c->conn, msg, &cserial);
 	dbus_message_unref (msg);
 }

@@ -17,6 +17,8 @@
 
 typedef struct {
 	gint fd;
+	gchar *uriptr;
+	const gchar *mime;
 } xmms_file_data_t;
 
 /*
@@ -88,7 +90,6 @@ xmms_file_init (xmms_transport_t *transport, const gchar *uri)
 	gint fd;
 	xmms_file_data_t *data;
 	const gchar *uriptr;
-	const gchar *mime;
 	const gchar *nuri;
 
 	g_return_val_if_fail (transport, FALSE);
@@ -113,10 +114,12 @@ xmms_file_init (xmms_transport_t *transport, const gchar *uri)
 
 	data = g_new0 (xmms_file_data_t, 1);
 	data->fd = fd;
+	data->mime = NULL;
+	data->uriptr = g_strdup (uriptr);
 	xmms_transport_plugin_data_set (transport, data);
 
-	mime = xmms_magic_mime_from_file (uriptr);
-	xmms_transport_mime_type_set (transport, mime);
+	data->mime = xmms_magic_mime_from_file ((const gchar*)data->uriptr);
+	xmms_transport_mime_type_set (transport, (const gchar*)data->mime);
 	
 	return TRUE;
 }
@@ -132,6 +135,9 @@ xmms_file_close (xmms_transport_t *transport)
 	
 	if (data->fd != -1)
 		close (data->fd);
+
+	g_free (data->uriptr);
+
 	g_free (data);
 }
 
@@ -146,6 +152,12 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	data = xmms_transport_plugin_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
+	if (data->mime) {
+		data->mime = xmms_magic_mime_from_file ((const gchar*)data->uriptr);
+		xmms_transport_mime_type_set (transport, (const gchar*)data->mime);
+		data->mime = NULL;
+	}
+	
 	ret = read (data->fd, buffer, len);
 
 	if (ret == 0)

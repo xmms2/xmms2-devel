@@ -167,6 +167,9 @@ xmms_vorbis_can_handle (const gchar *mimetype)
 	if ((g_strcasecmp (mimetype, "application/ogg") == 0))
 		return TRUE;
 
+	if ((g_strcasecmp (mimetype, "application/x-ogg") == 0))
+		return TRUE;
+
 	return FALSE;
 
 }

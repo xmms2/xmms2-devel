@@ -11,6 +11,7 @@
 #include "util.h"
 #include "ringbuf.h"
 #include "signal_xmms.h"
+#include "playlist.h"
 
 #include <glib.h>
 #include <string.h>
@@ -32,6 +33,8 @@ struct xmms_transport_St {
 	xmms_object_t object;
 	xmms_plugin_t *plugin; /**< The plugin used as media. */
 
+	xmms_playlist_entry_t *entry;
+
 	GMutex *mutex;
 	GCond *cond;
 	GCond *seek_cond;
@@ -45,7 +48,6 @@ struct xmms_transport_St {
 	/** Private plugin data */
 	gpointer plugin_data;
 
-	gchar *uri;
 	gchar *suburi;
 
 	/* Seek */
@@ -123,7 +125,8 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
 
 	xmms_transport_unlock (transport);
 	
-	xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
+	if (transport->running)
+		xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
 }
 
 /**
@@ -133,21 +136,21 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
  * xmms_transport_close ()
  */
 xmms_transport_t *
-xmms_transport_open (const gchar *uri)
+xmms_transport_open (xmms_playlist_entry_t *entry)
 {
 	xmms_plugin_t *plugin;
 
-	g_return_val_if_fail (uri, NULL);
+	g_return_val_if_fail (entry, NULL);
 
-	XMMS_DBG ("Trying to open stream: %s", uri);
+	XMMS_DBG ("Trying to open stream: %s", xmms_playlist_entry_get_uri (entry));
 	
-	plugin = xmms_transport_find_plugin (uri);
+	plugin = xmms_transport_find_plugin (xmms_playlist_entry_get_uri (entry));
 	if (!plugin)
 		return NULL;
 	
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
 
-	return xmms_transport_open_plugin (plugin, uri, NULL);
+	return xmms_transport_open_plugin (plugin, entry, NULL);
 }
 
 /** 
@@ -159,10 +162,24 @@ xmms_transport_uri_get(const xmms_transport_t *const transport){
 	g_return_val_if_fail (transport, NULL);
 
 	xmms_transport_lock (transport);
-	ret =  transport->uri;
+	ret =  xmms_playlist_entry_get_uri (transport->entry);
 	xmms_transport_unlock (transport);
 
 	return ret;
+}
+
+xmms_playlist_entry_t *
+xmms_transport_entry_get (xmms_transport_t *transport)
+{
+	xmms_playlist_entry_t *entry;
+
+	g_return_val_if_fail (transport, NULL);
+
+	xmms_transport_lock (transport);
+	entry = transport->entry;
+	xmms_transport_unlock (transport);
+
+	return entry;
 }
 
 /**
@@ -179,34 +196,6 @@ xmms_transport_suburi_get(const xmms_transport_t *const transport){
 
 	return ret;
 }
-
-/**
-  * Sets the URI
-  */
-
-void
-xmms_transport_uri_set(xmms_transport_t *const transport, gchar *uri){
-	g_return_if_fail (transport);
-
-	xmms_transport_lock (transport);
-	transport->uri = uri;
-	xmms_transport_unlock (transport);
-}
-
-/**
-  * Sets the SUBURI
-  */
-
-void
-xmms_transport_suburi_set(xmms_transport_t *const transport, gchar *suburi){
-	g_return_if_fail (transport);
-
-	xmms_transport_lock (transport);
-	transport->suburi = suburi;
-	xmms_transport_unlock (transport);
-
-}
-
 
 /**
   * Gets the current mimetype
@@ -361,11 +350,13 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
  *
  */
 xmms_transport_t *
-xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer data)
+xmms_transport_open_plugin (xmms_plugin_t *plugin, xmms_playlist_entry_t *entry, 
+		gpointer data)
 {
 	xmms_transport_open_method_t init_method;
 	xmms_transport_t *transport;
-
+	gchar *uri;
+	
 	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
 
 	if (!init_method) {
@@ -381,21 +372,22 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 	transport->seek_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (XMMS_TRANSPORT_RINGBUF_SIZE);
 	transport->want_seek = FALSE;
+	transport->entry = entry;
 	xmms_transport_plugin_data_set (transport, data);
 
-	transport->uri = g_strdup(uri);
-	transport->suburi = transport->uri + strlen(uri); /* empty string */
+	uri = xmms_playlist_entry_get_uri (transport->entry);
 
-	while (!init_method (transport, transport->uri)) {
+	transport->suburi = uri + strlen(uri); /* empty string */
+
+	while (!init_method (transport, uri)) {
 
 		while (*--transport->suburi != '/' ){
 			if (*transport->suburi == 0){ /* restore */
 				*transport->suburi = '/';
 			}
-			if (transport->suburi <= transport->uri) {
+			if (transport->suburi <= uri) {
 				xmms_ringbuf_destroy (transport->buffer);
 				g_mutex_free (transport->mutex);
-				g_free (transport->uri);
 				g_free (transport);
 				transport = NULL;
 				return NULL;
@@ -403,7 +395,7 @@ xmms_transport_open_plugin (xmms_plugin_t *plugin, const gchar *uri, gpointer da
 		}
 		*transport->suburi = 0;
 		transport->suburi++;
-		XMMS_DBG ("Trying %s  (suburi: %s)",transport->uri,transport->suburi);
+		XMMS_DBG ("Trying %s  (suburi: %s)",uri,transport->suburi);
 	}
 
 	transport->suburi = g_strdup (transport->suburi);
@@ -493,7 +485,6 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	g_mutex_free (transport->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (transport));
 
-	g_free (transport->uri);
 	g_free (transport->suburi);
 	g_free (transport);
 }
@@ -545,6 +536,8 @@ xmms_transport_thread (gpointer data)
 	if (!read_method)
 		return NULL;
 
+	xmms_playlist_entry_ref (transport->entry);
+
 	xmms_transport_lock (transport);
 	while (transport->running) {
 		if (transport->want_seek) {
@@ -574,6 +567,7 @@ xmms_transport_thread (gpointer data)
 	}
 	xmms_transport_unlock (transport);
 
+	xmms_playlist_entry_unref (transport->entry);
 
 	XMMS_DBG ("xmms_transport_thread: cleaning up");
 	

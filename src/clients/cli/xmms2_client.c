@@ -25,6 +25,7 @@ print_mediainfo (GHashTable *entry)
 {
 	/*entry = xmmsc_playlist_get_mediainfo (conn, id);*/
 	gchar *url;
+	gchar *tmp;
 
 	if (!entry)
 		return;
@@ -33,11 +34,17 @@ print_mediainfo (GHashTable *entry)
 	url = xmmsc_decode_path (url);
 	printf ("URI:    %s\n", url);
 	g_free (url);
-	printf ("Artist:  %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
-	printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
-	printf ("Title:   %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
-	printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "date"));
-	printf ("Bitrate: %s\n", (gchar *)g_hash_table_lookup (entry, "bitrate"));
+	tmp = (gchar *)g_hash_table_lookup (entry, "channel");
+	if (tmp) {
+		printf ("Channel name: %s\n", tmp);
+		printf ("Genre: %s\n", (gchar *)g_hash_table_lookup (entry, "genre"));
+	} else {
+		printf ("Artist:  %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
+		printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
+		printf ("Title:   %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
+		printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "date"));
+		printf ("Bitrate: %s\n", (gchar *)g_hash_table_lookup (entry, "bitrate"));
+	}
 
 }
 
@@ -159,7 +166,8 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 		str = xmmsc_decode_path (str);
 	}
 		
-	printf ("%d\t%s (%s)\n",
+	printf ("%s%d\t%s (%s)\n", 
+		(currentid == id) ? "->":"  ",
 		id, str, duration);
 
 	g_free (duration);
@@ -181,7 +189,14 @@ handle_playlist_list (xmmsc_connection_t *conn, void *arg)
 		xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
 		i++;
 	}
+	
+	if (i == 0) {
+		xmmsc_deinit (conn);
+		exit (0);
+	}
+
 	lastid = GPOINTER_TO_UINT(list[--i]);
+	
 }
 
 void
@@ -191,6 +206,9 @@ setup_playlist (xmmsc_connection_t *conn)
 
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_LIST, handle_playlist_list, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_list_mediainfo, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, conn);
+
+	xmmsc_get_playing_id (conn);
 	
 	xmmsc_glib_setup_mainloop (conn, NULL);
 
@@ -308,7 +326,7 @@ main(int argc, char **argv)
 
 			seconds = atoi (argv[2]) * 1000;
 
-			xmmsc_playback_seek (c, seconds);
+			xmmsc_playback_seek_ms (c, seconds);
 
 			xmmsc_deinit (c);
 			exit (0);

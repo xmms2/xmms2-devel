@@ -11,17 +11,21 @@ CLI:
 		* seek
 
 PLUGINS:
+	* mad
+		* broken frames sound bad.
+
 	* make all decoderplugins seek-able
-	* http transport should be remade
 	* vorbis
 		* should calculate duration more correctly
 		  before playing file.
 	* sid
 		* parse STIL.txt
 
+	* tar and stacking
+		* make sure they work
+
 	* Transport
 		* SMB
-		* HTTP
 		* FTP
 		* SSH
 		* RTP/RTCP/RTSP http://www.live.com/

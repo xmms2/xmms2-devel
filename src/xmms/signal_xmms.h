@@ -8,7 +8,8 @@
 #define XMMS_SIGNAL_PLAYBACK_PAUSE "org.xmms.playback.pause"
 #define XMMS_SIGNAL_PLAYBACK_NEXT "org.xmms.playback.next"
 #define XMMS_SIGNAL_PLAYBACK_PREV "org.xmms.playback.prev"
-#define XMMS_SIGNAL_PLAYBACK_SEEK "org.xmms.playback.seek"
+#define XMMS_SIGNAL_PLAYBACK_SEEK_MS "org.xmms.playback.seek.ms"
+#define XMMS_SIGNAL_PLAYBACK_SEEK_SAMPLES "org.xmms.playback.seek.samples"
 #define XMMS_SIGNAL_PLAYBACK_CURRENTID "org.xmms.playback.currentid"
 #define XMMS_SIGNAL_PLAYBACK_PLAYTIME "org.xmms.playback.playtime"
 
