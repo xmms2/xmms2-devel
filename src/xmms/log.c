@@ -171,7 +171,6 @@ xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *stri
 #endif
 	time_t now;
 	gchar timestring[20];
-	gchar *msg;
 
 	/* send the information to core */
 	/*msg = g_strdup_printf (format, string);

@@ -66,6 +66,7 @@ typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
  * Public function prototypes
  */
 
+void xmms_transport_mediainfo_property_set (xmms_transport_t *transport, gchar *key, gchar *value);
 void xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size);
 GList *xmms_transport_list (const gchar *path);
 void xmms_transport_list_free (GList *);

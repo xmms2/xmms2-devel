@@ -328,6 +328,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
+/* FIXME
 static void
 cmd_stats (xmmsc_connection_t *conn, int argc, char **argv)
 {
@@ -351,6 +352,7 @@ cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_quit (conn);
 }
+*/
 
 static void
 cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
@@ -572,12 +574,12 @@ cmds commands[] = {
 //	{ "move", "move a entry in the playlist", cmd_move },
 
 
-	{ "statistics", "get statistics from server", cmd_stats },
 	{ "status", "go into status mode", cmd_status },
 	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
-	{ "quit", "make the server quit", cmd_quit },
+	/*{ "statistics", "get statistics from server", cmd_stats },
+	{ "quit", "make the server quit", cmd_quit },*/
 
 	{ NULL, NULL, NULL },
 };

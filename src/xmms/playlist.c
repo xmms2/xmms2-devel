@@ -252,7 +252,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 
 	XMMS_PLAYLIST_LOCK (playlist);
 	
-	node = g_hash_table_lookup (playlist->id_table, GINT_TO_POINTER (id));
+	node = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER (id));
 	
 	if (!node) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
@@ -789,7 +789,7 @@ xmms_playlist_set_next (xmms_playlist_t *playlist, guint32 type, gint32 moment, 
 		} 
 
 	} else if (type == XMMS_PLAYLIST_SET_NEXT_BYID) {
-		next = g_hash_table_lookup (playlist->id_table, moment);
+		next = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER (moment));
 	}
 	
 	playlist->nextentry = next;

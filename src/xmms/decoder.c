@@ -114,6 +114,7 @@ static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
 static void recalculate_resampler (xmms_decoder_t *decoder);
 static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
+static void xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value);
 
 /*
  * Macros
@@ -301,7 +302,7 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 
 }
 
-void
+static void
 xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value)
 {
 	g_return_if_fail (decoder);
@@ -380,8 +381,8 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	if (decoder->interpolator_ratio != decoder->decimator_ratio) {
 		/* resampling needed */
-		len = resample (decoder, buf, len);
-		buf = decoder->resamplebuf;
+		len = resample (decoder, (gint16 *)buf, len);
+		buf = (char *)decoder->resamplebuf;
 	}
 	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
 	xmms_ringbuf_write (decoder->buffer, buf, len);

@@ -126,7 +126,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 		while ((id = GPOINTER_TO_UINT (g_queue_pop_head (mtt->queue)))) {
 			xmms_transport_t *transport;
-			xmms_playlist_entry_t *newentry;
 			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;

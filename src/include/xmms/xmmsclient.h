@@ -61,12 +61,13 @@ xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 xmmsc_result_t *xmmsc_playlist_entry_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment);
+xmmsc_result_t *xmmsc_playlist_current_id (xmmsc_connection_t *c);
+unsigned int xmmscs_playlist_current_id (xmmsc_connection_t *c);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
 
 xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_start (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_pause (xmmsc_connection_t *c);
-xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playback_next(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playback_prev(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playback_status (xmmsc_connection_t *c);

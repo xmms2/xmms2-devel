@@ -97,7 +97,7 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
 	DBusMessage *msg;
 	xmmsc_result_t *res;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKMS);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_OUTPUT, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKMS);
 
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, milliseconds);
@@ -121,7 +121,7 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 	DBusMessage *msg;
 	xmmsc_result_t *res;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKSAMPLES);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_OUTPUT, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKSAMPLES);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, samples);
 	res = xmmsc_send_msg (c, msg);
@@ -133,6 +133,7 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
  * Make server emit the current id.
  */
 
+/* FIXME
 xmmsc_result_t *
 xmmsc_playback_status (xmmsc_connection_t *c)
 {
@@ -149,6 +150,7 @@ xmmsc_playback_statistics (xmmsc_connection_t *c)
 	res = xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATS);
 	return res;
 }
+*/
 
 
 

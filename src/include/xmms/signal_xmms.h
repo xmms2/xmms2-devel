@@ -20,10 +20,8 @@
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
-#define XMMS_OBJECT_PLAYBACK "/xmms/playback"
 #define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
 #define XMMS_OBJECT_CLIENT "/xmms/client"
-#define XMMS_OBJECT_CORE "/xmms/core"
 #define XMMS_OBJECT_OUTPUT "/xmms/output"
 #define XMMS_OBJECT_DBUS "/xmms/dbus"
 #define XMMS_OBJECT_CONFIG "/xmms/config"
