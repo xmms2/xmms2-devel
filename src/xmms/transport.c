@@ -180,6 +180,15 @@ xmms_transport_size (xmms_transport_t *transport)
 	return size (transport);
 }
 
+xmms_plugin_t *
+xmms_transport_get_plugin (const xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, NULL);
+
+	return transport->plugin;
+
+}
+
 /*
  * Static functions
  */

@@ -42,6 +42,7 @@ typedef struct xmms_playlist_entry_St {
 	gint year;
 	gint tracknr;
 	guint bitrate;
+	guint duration; /* in seconds */
 
 } xmms_playlist_entry_t;
 

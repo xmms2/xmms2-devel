@@ -48,6 +48,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_READ, xmms_file_read);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_SIZE, xmms_file_size);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_SEEK, xmms_file_seek);
+
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
 	
 	return plugin;
 }

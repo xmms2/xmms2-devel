@@ -76,6 +76,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DECODE_BLOCK, xmms_mad_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_DESTROY, xmms_mad_destroy);
 
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+
 	return plugin;
 }
 
@@ -97,6 +100,68 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
+gint
+xmms_mad_calculate_duration (xmms_decoder_t *decoder)
+{
+
+	xmms_transport_t *transport;
+	struct mad_stream stream;
+	struct mad_header header;
+	mad_timer_t duration;
+	gint ret=1;
+	gchar buf[4096];
+	gint buf_len = 0;
+
+	g_return_val_if_fail (decoder, 0);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, 0);
+
+	mad_stream_init (&stream);
+	mad_header_init (&header);
+		mad_timer_reset (&duration);
+
+		while (42)
+		{
+
+			if (stream.next_frame) {
+				gchar *buffer = buf;
+				gchar *nf = stream.next_frame;
+			memmove (buffer, stream.next_frame, buf_len = (&buffer[buf_len] - nf));
+		} else {
+			buf_len = 0;
+		}
+
+		ret = xmms_transport_read (transport, buf + buf_len, 4096 - buf_len);
+		if (ret <= 0) {
+			XMMS_DBG ("EOF");
+			break;
+		}
+
+		buf_len += ret;
+		mad_stream_buffer (&stream, buf, buf_len);
+		
+		while (1) {
+			if (mad_header_decode (&header, &stream) == -1) {
+				if (MAD_RECOVERABLE (stream.error))
+					continue;
+				else
+					break;
+
+			}
+
+			mad_timer_add (&duration, header.duration);
+		}
+
+	}
+
+	mad_stream_finish (&stream);
+	mad_header_finish (&header);
+
+	return duration.seconds;
+
+}
+
 static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
@@ -113,6 +178,12 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_if_fail (transport);
 
+	entry = g_new0 (xmms_playlist_entry_t, 1);
+
+	entry->duration = xmms_mad_calculate_duration (decoder);
+
+	XMMS_DBG ("Duration %d", entry->duration);
+
 	XMMS_DBG ("Seeking to last 128 bytes");
 	xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 	xmms_transport_read (transport, (gchar *)&tag, 128);
@@ -122,7 +193,6 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (strncmp (tag.tag, "TAG", 3) == 0) {
 		XMMS_DBG ("Found ID3v1 TAG!");
 
-		entry = g_new0 (xmms_playlist_entry_t, 1);
 		sprintf (entry->artist, "%30.30s", tag.artist);
 		g_strstrip (entry->artist);
 		sprintf (entry->album, "%30.30s", tag.album);
@@ -194,17 +264,21 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 
 	data = xmms_decoder_plugin_data_get (decoder);
 
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
 	if (data->stream.next_frame) {
 		gchar *buffer = data->buffer, *nf = data->stream.next_frame;
 		memmove (data->buffer, data->stream.next_frame,
 				 data->buffer_length = (&buffer[data->buffer_length] - nf));
 	} else {
 		data->buffer_length = 0;
-		xmms_mad_get_media_info (decoder);
+		if (xmms_plugin_properties_check (xmms_transport_get_plugin (transport), XMMS_PLUGIN_PROPERTY_LOCAL)) {
+			XMMS_DBG ("Transport is local, seeking whole file");
+			xmms_mad_get_media_info (decoder);
+		}
 	}
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
 	
 	output = xmms_decoder_output_get (decoder);
 	g_return_val_if_fail (output, FALSE);
@@ -242,6 +316,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		
 		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
 		xmms_output_write (output, out, sizeof(out));
+		
 	}
 	
 	return TRUE;
