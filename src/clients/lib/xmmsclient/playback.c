@@ -34,11 +34,12 @@
  */
 
 /**
- * Plays the next track in playlist.
+ * Stop decoding of current song. This will start decoding of the song
+ * set with xmmsc_playlist_set_next, or the current song again if no
+ * xmmsc_playlist_set_next was executed.
  */
-
 xmmsc_result_t *
-xmmsc_playback_next (xmmsc_connection_t *c)
+xmmsc_playback_tickle (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_DECODER_KILL);
 }

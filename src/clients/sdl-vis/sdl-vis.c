@@ -138,9 +138,6 @@ render_vis (gpointer data)
 			case SDLK_F1:
 				SDL_WM_ToggleFullScreen (surf);
 				break;
-			case 'n':
-				xmmsc_playback_next (connection);
-				break;
 			case 'q':
 			case SDLK_ESCAPE:
 				g_main_loop_quit (mainloop);

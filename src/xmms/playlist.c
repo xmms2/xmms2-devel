@@ -66,8 +66,7 @@ struct xmms_playlist_St {
 	/* the list is an array */
 	GArray *list;
 
-	gint32 currentpos;
-	gint32 newpos;
+	guint32 currentpos;
 
 	gboolean repeat_one;
 	gboolean repeat_all;
@@ -87,6 +86,7 @@ static void xmms_playlist_destroy (xmms_object_t *object);
 gboolean xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_error_t *err);
 static guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
+static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
 static guint xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
@@ -99,12 +99,8 @@ XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NO
 XMMS_CMD_DEFINE (save, xmms_playlist_save, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
+XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 
-
-/** Ok this really buggers me but I have to make a variable out of anything I
- * put into the array... so here is a zero. */
-static guint32 zero = 0;
- 
 
 /** initializes a new xmms_playlist_t.
   */
@@ -118,8 +114,7 @@ xmms_playlist_init (void)
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->mutex = g_mutex_new ();
 	ret->list = g_array_new (FALSE, FALSE, sizeof (guint32));
-	g_array_append_val (ret->list, zero);
-	ret->currentpos = -1;
+	ret->currentpos = 0;
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYLIST, XMMS_OBJECT (ret));
 
@@ -142,6 +137,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_SET_POS, 
 			     XMMS_CMD_FUNC (set_pos));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+			     XMMS_IPC_CMD_SET_POS_REL,
+			     XMMS_CMD_FUNC (set_pos_rel));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_ADD, 
@@ -179,45 +178,40 @@ xmms_playlist_init (void)
 
 /** advance and return the mid for this playlist. */
 
-xmms_medialib_entry_t
+gboolean
 xmms_playlist_advance (xmms_playlist_t *playlist)
 {
-	xmms_medialib_entry_t ent;
-
-	g_return_val_if_fail (playlist, 0);
+	g_return_val_if_fail (playlist, FALSE);
 
 	/** @todo maybe not fulhack the threadsaftey */
 	g_mutex_lock (playlist->mutex);
 	if (playlist->list->len == 0) {
 		g_mutex_unlock (playlist->mutex);
-		return 0;
+		return FALSE;
 	}
 
-	if (playlist->newpos) {
-		ent = g_array_index (playlist->list, guint32, playlist->newpos);
-		playlist->currentpos = playlist->newpos;
-		playlist->newpos = 0;
-	} else if (playlist->repeat_one) {
-		ent = g_array_index (playlist->list, guint32, playlist->currentpos);
-	} else if (playlist->currentpos + 1 > playlist->list->len) {
+	if (playlist->repeat_one) {
+		/* no need to do anything */
+	} else /* if (playlist->currentpos + 1 > playlist->list->len) {
 		if (playlist->repeat_all) {
 			playlist->currentpos = 0;
-			ent = g_array_index (playlist->list, 
-					     guint32, 
-					     playlist->currentpos);
 		} else {
-			ent = 0;
 			playlist->currentpos = 0;
+			g_mutex_unlock (playlist->mutex);
+			return FALSE;
 		}
-	} else {
+		} else */
+	{
 		playlist->currentpos++;
-		ent = g_array_index (playlist->list, 
-				     guint32, 
-				     playlist->currentpos);
+		playlist->currentpos %= playlist->list->len;
+		if (!playlist->currentpos) {
+			g_mutex_unlock (playlist->mutex);
+			return FALSE;
+		}
 	}
 	g_mutex_unlock (playlist->mutex);
 
-	return ent;
+	return TRUE;
 }
 
 static guint32
@@ -237,12 +231,14 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error)
 xmms_medialib_entry_t
 xmms_playlist_current_entry (xmms_playlist_t *playlist)
 {
-	xmms_medialib_entry_t ent;
+	xmms_medialib_entry_t ent = 0;
 
 	g_return_val_if_fail (playlist, 0);
 	
 	g_mutex_lock (playlist->mutex);
-	ent = g_array_index (playlist->list, guint32, playlist->currentpos);
+	if (playlist->currentpos < playlist->list->len) {
+		ent = g_array_index (playlist->list, guint32, playlist->currentpos);
+	}
 	g_mutex_unlock (playlist->mutex);
 
 	return ent;
@@ -292,7 +288,6 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 	g_mutex_lock (playlist->mutex);
 
 	new = g_array_sized_new (FALSE, FALSE, sizeof (guint32), playlist->list->len);
-	g_array_append_val (new, zero);
 	cur = playlist->currentpos;
 	if (cur) {
 		g_array_append_val (new, g_array_index (playlist->list, guint32, cur));
@@ -479,8 +474,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	g_array_free (playlist->list, FALSE);
 	playlist->list = g_array_new (FALSE, FALSE, sizeof (guint32));
-	g_array_append_val (playlist->list, zero);
-	playlist->currentpos = -1;
+	playlist->currentpos = 0;
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_CLEAR, 0, 0);
 	g_mutex_unlock (playlist->mutex);
@@ -500,25 +494,50 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
  */
 
 static guint
+xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error)
+{
+	guint mid;
+	g_return_val_if_fail (playlist, FALSE);
+
+	if (pos >= playlist->list->len) {
+		xmms_error_set (error, XMMS_ERROR_INVAL, "Can't set pos outside the current playlist!");
+		return 0;
+	}
+
+	XMMS_DBG ("newpos! %d", pos);
+	playlist->currentpos = pos;
+
+
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SET_POS, pos, 0);
+	mid = g_array_index (playlist->list, guint32, playlist->currentpos);
+
+	return mid;
+}
+
+static guint
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error)
 {
 	guint mid;
 	g_return_val_if_fail (playlist, FALSE);
 
 	g_mutex_lock (playlist->mutex);
+	mid = xmms_playlist_set_current_position_do (playlist, pos, error);
+	g_mutex_unlock (playlist->mutex);
 
-	if (pos < playlist->list->len && pos > 0) {
-		XMMS_DBG ("newpos! %d", pos);
-		playlist->newpos = pos;
-	} else {
-		xmms_error_set (error, XMMS_ERROR_INVAL, "Can't set pos outside the current playlist!");
-		g_mutex_unlock (playlist->mutex);
-		return 0;
-	}
+	return mid;
+}
 
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SET_POS, pos, 0);
+static guint
+xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error)
+{
+	guint mid = 0;
+	g_return_val_if_fail (playlist, FALSE);
 
-	mid = g_array_index (playlist->list, guint32, playlist->newpos);
+	g_mutex_lock (playlist->mutex);
+
+	if (playlist->currentpos + pos >= 0)
+		mid = xmms_playlist_set_current_position_do (playlist, playlist->currentpos + pos, error);
+
 	g_mutex_unlock (playlist->mutex);
 
 	return mid;
@@ -576,7 +595,7 @@ xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	g_mutex_lock (playlist->mutex);
 
-	for (i = 1; i < playlist->list->len; i++) {
+	for (i = 0; i < playlist->list->len; i++) {
 		r = g_list_prepend (r, GUINT_TO_POINTER (g_array_index (playlist->list, guint32, i)));
 	}
 

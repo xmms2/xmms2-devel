@@ -257,6 +257,20 @@ xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int pos)
 	return res;
 }
 
+xmmsc_result_t *
+xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SET_POS_REL);
+	xmms_ipc_msg_put_uint32 (msg, pos);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
 static int
 free_str (void * key, void * value, void * udata)
 {
