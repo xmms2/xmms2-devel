@@ -33,10 +33,6 @@
 #include <glib.h>
 #include <string.h>
 
-
-#warning "CONVERT TO SAMPLE_T"
-
-
 typedef struct xmms_wave_data_St {
 	guint16 channels;
 	guint32 samplerate;
@@ -163,20 +159,18 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 	entry = xmms_playlist_entry_new (NULL);
 
 	samples_total = data->bytes_total / (data->bits_per_sample / 8);
-	playtime = (gdouble) samples_total / data->samplerate;
+	playtime = (gdouble) samples_total / data->samplerate / data->channels;
 
 	g_snprintf (tmp, sizeof (tmp), "%i", (gint) playtime * 1000);
 	xmms_playlist_entry_property_set (entry,
 	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION,
 	                                  tmp);
 
-	bitrate = data->bits_per_sample * data->samplerate;
+	bitrate = data->bits_per_sample * data->samplerate / data->channels;
 	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate / 1000);
 	xmms_playlist_entry_property_set (entry,
 	                                  XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE,
 	                                  tmp);
-
-	xmms_decoder_samplerate_set (decoder, data->samplerate);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_object_unref (entry);
@@ -188,6 +182,7 @@ xmms_wave_init (xmms_decoder_t *decoder)
 	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
 	xmms_error_t error;
+	xmms_sample_format_t sample_fmt;
 	guint8 hdr[WAVE_HEADER_SIZE];
 	gint read = 0;
 
@@ -221,11 +216,16 @@ xmms_wave_init (xmms_decoder_t *decoder)
 		return FALSE;
 	}
 
-	xmms_wave_get_media_info (decoder);
-
 	data->inited = TRUE;
 
-	return TRUE;
+	xmms_wave_get_media_info (decoder);
+
+	sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_S8
+	                                         : XMMS_SAMPLE_FORMAT_S16);
+	xmms_decoder_format_add (decoder, sample_fmt, data->channels,
+	                         data->samplerate);
+
+	return !!xmms_decoder_format_finish (decoder);
 }
 
 static gboolean
@@ -234,8 +234,8 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
 	xmms_error_t error;
-	gint16 sbuf[2048], mbuf[1024];
-	gint ret, i, j;
+	gchar buf[4096];
+	gint ret;
 
 	g_return_val_if_fail (decoder, FALSE);
 
@@ -245,40 +245,23 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
-	if (data->channels == 1) {
-		ret = xmms_transport_read (transport,
-		                           (gchar *) mbuf, sizeof (mbuf), &error);
-	} else {
-		ret = xmms_transport_read (transport,
-		                           (gchar *) sbuf, sizeof (sbuf), &error);
-	}
-
+	ret = xmms_transport_read (transport, buf, sizeof (buf), &error);
 	if (ret <= 0) {
 		return FALSE;
 	}
 
-#ifdef WORDS_BIGENDIAN
-	if (data->channels == 1) {
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+	if (data->bits_per_sample == 16) {
+		guint16 *s = buf;
+		gint i;
+
 		for (i = 0; i < (ret / 2); i++) {
-			mbuf[i] = GINT16_TO_LE (mbuf[i]);
-		}
-	} else {
-		for (i = 0; i < (ret / 2); i++) {
-			sbuf[i] = GINT16_TO_LE (sbuf[i]);
+			s[i] = GINT16_TO_LE (s[i]);
 		}
 	}
 #endif
 
-	if (data->channels == 1) {
-		for (i = 0, j = 0; i < (ret / 2); i++) {
-			sbuf[j++] = mbuf[i];
-			sbuf[j++] = mbuf[i];
-		}
-
-		ret *= 2; /* we have doubled every sample now */
-	}
-
-	xmms_decoder_write (decoder, (gchar *) sbuf, ret);
+	xmms_decoder_write (decoder, buf, ret);
 
 	return TRUE;
 }
@@ -299,7 +282,7 @@ xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
-	offset += samples * (data->bits_per_sample / 8);
+	offset += samples * (data->bits_per_sample / 8) * data->channels;
 	if (offset > data->bytes_total) {
 		XMMS_DBG ("Trying to seek past end of stream");
 
@@ -361,7 +344,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf)
 	}
 
 	GET_16 (buf, data->channels);
-	if (data->channels > 2) {
+	if (data->channels < 1 || data->channels > 2) {
 		XMMS_DBG ("Unhandled number of channels: %i", data->channels);
 		return FALSE;
 	}
@@ -377,7 +360,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf)
 	GET_16 (buf, tmp16);
 
 	GET_16 (buf, data->bits_per_sample);
-	if (data->bits_per_sample != 16) {
+	if (data->bits_per_sample != 8 && data->bits_per_sample != 16) {
 		XMMS_DBG ("Unhandled bits per sample: %i",
 		          data->bits_per_sample);
 		return FALSE;
