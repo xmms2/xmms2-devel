@@ -12,12 +12,6 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *
- * @todo Some nice deinit stuff if init of mixer or pcm fails.
- * @todo The first time xmms2 plays a tune, visualization data gets
- *       out of sync, lagged or something. This is _only_ the first time
- *       and is not affected by "xmms2 stop", wait for release, "xmms2 play".
- *       A really strange error, any ideas?
  */
 
 #include "xmms/plugin.h"
@@ -28,23 +22,16 @@
 #include "xmms/ringbuf.h"
 #include "xmms/signal_xmms.h"
 
-#define ALSA_PCM_NEW_HW_PARAMS_API
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>
 
 #include <glib.h>
 
-
-#warning "CONVERT TO SAMPLE_T"
 /*
  *  Defines
  */
-#define SND_CHANNELS       2
-#define SND_FORMAT         SND_PCM_FORMAT_S16
-#define SND_STREAM         SND_PCM_STREAM_PLAYBACK
 #define BUFFER_TIME        500000
 #define PERIOD_TIME        100000
-
 
 /*
  * Type definitions
@@ -56,10 +43,33 @@ typedef struct xmms_alsa_data_St {
 	snd_pcm_hw_params_t *hwparams;
  	snd_pcm_uframes_t  buffer_size;
 	guint frame_size;
-	guint rate;
 	gboolean have_mixer;
 } xmms_alsa_data_t;
 
+static struct {
+	xmms_sample_format_t xmms_fmt;
+	snd_pcm_format_t alsa_fmt;
+} formats[] = {
+	{XMMS_SAMPLE_FORMAT_U8, SND_PCM_FORMAT_U8},
+	{XMMS_SAMPLE_FORMAT_S8, SND_PCM_FORMAT_S8},
+	{XMMS_SAMPLE_FORMAT_S16, SND_PCM_FORMAT_S16},
+	{XMMS_SAMPLE_FORMAT_U16, SND_PCM_FORMAT_U16},
+	{XMMS_SAMPLE_FORMAT_S32, SND_PCM_FORMAT_S32},
+	{XMMS_SAMPLE_FORMAT_U32, SND_PCM_FORMAT_U32},
+	{XMMS_SAMPLE_FORMAT_FLOAT, SND_PCM_FORMAT_FLOAT},
+	{XMMS_SAMPLE_FORMAT_DOUBLE, SND_PCM_FORMAT_FLOAT64}
+};
+
+static int rates[] = {
+	42,
+	8000,
+	12025,
+	16000,
+	22050,
+	44100,
+	48000,
+	96000
+};
 
 /*
  * Function prototypes
@@ -71,17 +81,24 @@ static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output);
 static void xmms_alsa_mixer_config_changed (xmms_object_t *object, 
 											gconstpointer data, 
 											gpointer userdata);
-static guint xmms_alsa_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
 static void xmms_alsa_destroy (xmms_output_t *output);
-static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data); 
+static gboolean xmms_alsa_format_set (xmms_output_t *output,
+                                      xmms_audio_format_t *format);
+static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
+                                        xmms_audio_format_t *format);
 static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left, 
 									 gint right);
 static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left, 
 									 gint *right);
 static gboolean xmms_alsa_mixer_setup (xmms_output_t *output);
+static void xmms_alsa_probe_modes (xmms_output_t *output,
+                                   xmms_alsa_data_t *data);
+static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
+                                  xmms_sample_format_t fmt,
+                                  gint channels, gint rate);
 
 /*
  * Plugin header
@@ -114,17 +131,14 @@ xmms_plugin_get (void)
 							xmms_alsa_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
 							xmms_alsa_flush);
-/*
-  XXX
-  xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
-  xmms_alsa_samplerate_set);
-*/
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
 							xmms_alsa_buffer_bytes_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET,
 							xmms_alsa_mixer_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET,
 							xmms_alsa_mixer_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
+	                        xmms_alsa_format_set);
 
 
 	xmms_plugin_config_value_register (plugin,
@@ -190,8 +204,92 @@ xmms_alsa_new (xmms_output_t *output)
 									(gpointer) output);
 	
 	xmms_output_private_data_set (output, data); 
-	
+
+	xmms_alsa_probe_modes (output, data);
+
 	return TRUE; 
+}
+
+static void
+xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
+{
+	const xmms_config_value_t *cv;
+	const gchar *dev;
+	int i, j, k;
+
+	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
+	                                "device");
+	dev = xmms_config_value_string_get (cv);
+
+	if (!dev) {
+		XMMS_DBG ("Device not found in config, using default");
+		dev = "default";
+	}
+
+	XMMS_DBG ("Probing device: %s", dev);
+	snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0);
+
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
+		for (j = 1; j < 3; j++) {
+			for (k = 0; k < G_N_ELEMENTS (rates); k++) {
+				xmms_alsa_probe_mode (output, data->pcm,
+				                      formats[i].xmms_fmt, j, rates[k]);
+			}
+		}
+	}
+
+	snd_pcm_close (data->pcm);
+}
+
+static void
+xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
+                      xmms_sample_format_t fmt, gint channels, gint rate)
+{
+	snd_pcm_hw_params_t *params;
+	int err, tmp;
+
+	snd_pcm_hw_params_alloca (&params);
+
+	/* Setup all parameters to configuration space */
+	err = snd_pcm_hw_params_any (pcm, params);
+	if (err < 0) {
+		xmms_log_error ("cannot initialize hardware "
+		                "parameter structure (%s)",
+		                snd_strerror (-err));
+		return;
+	}
+
+	/* Set the interleaved read/write format */
+	err = snd_pcm_hw_params_set_access (pcm, params,
+	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
+	if (err < 0) {
+		xmms_log_error ("cannot set access type (%s)", snd_strerror (-err));
+		return;
+	}
+
+	err = snd_pcm_hw_params_set_format (pcm, params, fmt);
+	if (err < 0) {
+		XMMS_DBG ("cannot set format to %i", fmt);
+		return;
+	}
+
+	err = snd_pcm_hw_params_set_channels (pcm, params, channels);
+	if (err < 0) {
+		XMMS_DBG ("cannot set channels to %i", channels);
+		return;
+	}
+
+	tmp = rate;
+	err = snd_pcm_hw_params_set_rate_near (pcm, params, &tmp, NULL);
+
+	if (err >= 0 && rate == tmp) {
+		XMMS_DBG ("adding format %i %i %i", fmt, channels, rate);
+	} else {
+		rate = tmp;
+		XMMS_DBG ("adding fallback format %i %i %i", fmt, channels, rate);
+	}
+
+	xmms_output_format_add (output, fmt, channels, rate);
 }
 
 /**
@@ -230,7 +328,6 @@ xmms_alsa_open (xmms_output_t *output)
 	const xmms_config_value_t *cv;
 	const gchar *dev;
 	gint err = 0;
-	gint tmp = 0;
 	
 	XMMS_DBG ("XMMS_ALSA_OPEN");	
 
@@ -249,21 +346,16 @@ xmms_alsa_open (xmms_output_t *output)
 	XMMS_DBG ("Opening device: %s", dev);
 
 	/* Open the device */
-	err = snd_pcm_open (&(data->pcm), dev, SND_STREAM, 0);
+	err = snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0);
 	if (err < 0) {
 		xmms_log_error ("Cannot open audio device (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
-	tmp = snd_pcm_format_physical_width (SND_FORMAT);
-	data->frame_size = (gint)(tmp * SND_CHANNELS) / 8;
-
 	data->have_mixer = xmms_alsa_mixer_setup (output);
 	
 	return TRUE;
 }
-
-
 
 /**
  * Close audio device.
@@ -300,12 +392,7 @@ xmms_alsa_close (xmms_output_t *output)
 	} else {
 		XMMS_DBG ("audio device closed.");
 	}
-
-	/* reset rate */
-	data->rate = 0;
 }
-
-
 
 /**
  * Setup hardware parameters.
@@ -315,15 +402,26 @@ xmms_alsa_close (xmms_output_t *output)
  * @return TRUE on success, FALSE on error
  */
 static gboolean 
-xmms_alsa_set_hwparams (xmms_alsa_data_t *data) 
+xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 {
-	gint err, tmp;
+	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
+	gint err, tmp, i;
 	gint requested_buffer_time = BUFFER_TIME;
 	gint requested_period_time = PERIOD_TIME;
 
 	g_return_val_if_fail (data, FALSE);
 
 	XMMS_DBG ("XMMS_ALSA_SET_HWPARAMS");
+
+	/* what alsa format does this format correspond to? */
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
+		if (formats[i].xmms_fmt == format->format) {
+			alsa_format = formats[i].alsa_fmt;
+			break;
+		}
+	}
+
+	g_return_val_if_fail (alsa_format != SND_PCM_FORMAT_UNKNOWN, FALSE);
 	
 	/* Setup all parameters to configuration space */
 	err = snd_pcm_hw_params_any (data->pcm, data->hwparams);
@@ -342,7 +440,8 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	}
 
 	/* Set the sample format */
-	err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams, SND_FORMAT);
+	err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams,
+	                                    alsa_format);
 	if (err < 0) {
 		xmms_log_error ("cannot set sample format (%s)", snd_strerror (-err));
 		return FALSE;
@@ -350,23 +449,22 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 
 	/* Set the count of channels */
 	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
-	                                      SND_CHANNELS);
+	                                      format->channels);
 	if (err < 0) {
 		xmms_log_error ("cannot set channel count (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
-	/* Set the sample rate */
-	tmp = data->rate;
-	err = snd_pcm_hw_params_set_rate_near (data->pcm, data->hwparams, 
-	                                       &data->rate, NULL);
+	/* Set the sample rate.
+	 * Note: don't use snd_pcm_hw_params_set_rate_near(), we want to fail here
+	 *       if the core passed an unsupported samplerate to us!
+	 */
+	err = snd_pcm_hw_params_set_rate (data->pcm, data->hwparams,
+	                                  format->samplerate, 0);
 	if (err < 0) {
 		xmms_log_error ("cannot set sample rate (%s)\n", snd_strerror (-err));
 		return FALSE;
 	}
-
-	XMMS_DBG ("Sample rate requested: %dhz, got: %dhz",
-	          tmp, data->rate);
 
 	tmp = requested_buffer_time;
 	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
@@ -415,6 +513,13 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 						snd_strerror (-err));
 		return FALSE;
 	}
+
+	tmp = snd_pcm_format_physical_width (alsa_format);
+	data->frame_size = (gint)(tmp * format->channels) / 8;
+
+	/*data->channels = format->channels;
+	data->rate = format->samplerate;
+	data->format = format->format;*/
 
 	return TRUE;
 }
@@ -557,49 +662,44 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 
 
 /**
- * Set sample rate.
- * Drain the buffer if non-empty and then try to change samplerate. 
+ * Set audio format.
+ * Drain the buffer if non-empty and then try to change audio format.
  *
  * @param output The output struct containing alsa data. 
- * @param rate The to-be-set samplerate.
+ * @param format The new audio format.
  *
- * @return The new samplerate or 0 on error.
+ * @return Success/failure
  */
-static guint
-xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
+static gboolean
+xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 {
 	gint err;
 	xmms_alsa_data_t *data;
-	
-	XMMS_DBG ("XMMS_ALSA_SAMPLERATE_SET");
-	
-	g_return_val_if_fail (output, 0);
+
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, 0);	
+	g_return_val_if_fail (data, FALSE);
 
-	/* Do we need to change our current rate? */
-	if (data->rate != rate) {
-		data->rate = rate;
-		
-		/* Get rid of old cow if any */
-		if (snd_pcm_state (data->pcm) == SND_PCM_STATE_RUNNING) {
-			err = snd_pcm_drain (data->pcm);	
-			XMMS_DBG ("did we drain? --> %s", snd_strerror (-err));
-		}
-		
-		/* Set new sample rate */
-		snd_pcm_hw_params_alloca (&(data->hwparams)); 
-		if (!xmms_alsa_set_hwparams (data)) {
-			xmms_log_error ("Could not set hwparams, consult your local \
-							guru for meditation courses");
-			data->rate = 0;
-		}
-		xmms_output_private_data_set (output, data);
+	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels,
+	          format->samplerate);
+
+	/* Get rid of old cow if any */
+	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_RUNNING) {
+		err = snd_pcm_drain (data->pcm);
+		XMMS_DBG ("did we drain? --> %s", snd_strerror (-err));
 	}
-	return data->rate;
+
+	/* Set new audio format*/
+	snd_pcm_hw_params_alloca (&(data->hwparams));
+
+	if (!xmms_alsa_set_hwparams (data, format)) {
+		xmms_log_error ("Could not set hwparams, consult your local "
+		                "guru for meditation courses");
+		return FALSE;
+	}
+
+	return TRUE;
 }
-
-
 
 /**
  * Change mixer settings.
