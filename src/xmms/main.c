@@ -34,7 +34,7 @@ static GMainLoop *mainloop;
 gboolean xmms_dbus_init (gchar *path);
 
 
-xmms_config_data_t *
+static xmms_config_data_t *
 parse_config ()
 {
 	xmms_config_data_t *config;

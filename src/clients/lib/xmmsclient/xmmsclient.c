@@ -121,8 +121,6 @@ static void xmmsc_send_void (xmmsc_connection_t *c, char *message);
  *	
  *	mainloop = g_main_loop_new (NULL, FALSE);
  *	xmmsc_setup_with_gmain (conn, NULL);
- *	/* Setup some callbacks here */
- *	g_main_loop_run (mainloop);
  * }
  * @endcode
  *
@@ -139,8 +137,6 @@ static void xmmsc_send_void (xmmsc_connection_t *c, char *message);
  *
  *	qtClient = new XMMSClientQT (conn, &app);
  *
- *	/* Here we need to create a window and setup
- *	   some callbacks */
  *	return app.exec ();	
  * }
  * @endcode
