@@ -115,8 +115,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 				/* This is a playlist file... */
 				XMMS_DBG ("Playlist!!");
-				xmms_transport_start (transport);
-				XMMS_DBG ("transport started");
 				xmms_playlist_plugin_read (plsplugin, mtt->playlist, transport);
 
 				/* we don't want it in the playlist. */
