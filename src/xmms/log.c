@@ -107,10 +107,9 @@ xmms_log_init (const gchar *filename)
 		}
 	}
 
-	xmms_config_value_register ("log.regexp", ".*", NULL, NULL);
-	regex_cv = xmms_config_lookup ("log.regexp");
-	xmms_config_value_callback_set (regex_cv, xmms_log_config_regex_changed,
-									NULL);
+	regex_cv = xmms_config_value_register ("log.regexp", ".*",
+	                                       xmms_log_config_regex_changed,
+	                                       NULL);
 	
 	xmms_log_config_regex_changed ((xmms_object_t *)regex_cv, 
 					(gconstpointer *)xmms_config_value_string_get (regex_cv), 
