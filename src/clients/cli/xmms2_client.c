@@ -377,7 +377,7 @@ add [url]";
 		if (!xmmsc_result_get_hashlist (res, &l))
 			print_error ("Broken resultset!");
 
-		e = l->data;
+		e = l ? l->data : NULL;
 		if (!e) 
 			print_error ("No such playlist!");
 
