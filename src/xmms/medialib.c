@@ -216,7 +216,6 @@ xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
 				xmms_playlist_entry_set_uri (entry, path);
 				xmms_medialib_add_entry (medialib, entry);
 				xmms_playlist_entry_free (entry);
-				decoder->mediainfo=NULL;
 			} else {
 				XMMS_DBG ("Got null from apa");
 			}

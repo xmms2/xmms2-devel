@@ -24,8 +24,6 @@
 static void xmms_decoder_destroy_real (xmms_decoder_t *decoder);
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
-static void xmms_decoder_output_eos (xmms_object_t *object, gconstpointer data, gpointer userdata);
-
 /*
  * Macros
  */
@@ -197,49 +195,9 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_o
 }
 
 
-/**
- * Sets information about what is beeing decoded.
- *
- * The caller is responsibe to keep the entry around as long
- * as the decoder exists or the mediainfo is changed to something else. 
- *
- * @param decoder 
- * @param entry the information to set.
- */
-void
-xmms_decoder_set_mediainfo (xmms_decoder_t *decoder,
-			xmms_playlist_entry_t *entry)
-{
-	decoder->mediainfo = entry;
-	xmms_object_emit (XMMS_OBJECT (decoder), "mediainfo-changed", decoder);
-}
-
-/**
- * Get a copy of structure describing what is beeing decoded.
- *
- * @param decoder
- * @param entry 
- *
- * @return TRUE if entry was successfully filled in with information, 
- * FALSE otherwise.
- */
-gboolean
-xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, 
-			xmms_playlist_entry_t *entry)
-{
-	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (entry, FALSE);
-
-	g_return_val_if_fail (decoder->mediainfo, FALSE);
-
-	xmms_playlist_entry_copy_property (decoder->mediainfo, entry);
-	
-	return TRUE;
-}
-
 xmms_playlist_entry_t *
 xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, 
-			xmms_transport_t *transport)
+				    xmms_transport_t *transport)
 {
 	xmms_playlist_entry_t *entry;
 	xmms_decoder_get_mediainfo_method_t mediainfo;
@@ -276,8 +234,6 @@ xmms_decoder_destroy_real (xmms_decoder_t *decoder)
 
 	g_cond_free (decoder->cond);
 	g_mutex_free (decoder->mutex);
-	if (decoder->mediainfo)
-		xmms_playlist_entry_free (decoder->mediainfo);
 	xmms_object_cleanup (XMMS_OBJECT (decoder));
 	g_free (decoder);
 }
@@ -354,8 +310,3 @@ xmms_decoder_thread (gpointer data)
 	return NULL;
 }
 
-static void
-xmms_decoder_output_eos (xmms_object_t *object, gconstpointer data, gpointer userdata)
-{
-	xmms_object_emit (XMMS_OBJECT (userdata), "eos-reached", NULL);
-}

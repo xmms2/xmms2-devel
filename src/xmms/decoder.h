@@ -21,11 +21,6 @@ typedef struct xmms_decoder_St {
 	GMutex *mutex;
 	GCond *cond;
 
-	/** Mediainfo.
-	 *  Stores information about what is beeing decoded right now. 
-	 */
-	xmms_playlist_entry_t *mediainfo;
-	
 	xmms_plugin_t *plugin;
 	xmms_transport_t *transport; /**< transport associated with decoder.
 				      *   This is where the decoder gets it

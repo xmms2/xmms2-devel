@@ -85,6 +85,7 @@ main (int argc, char **argv)
 	int opt;
 	int verbose = 0;
 	sigset_t signals;
+	xmms_playlist_t *playlist;
 	gchar *outname = NULL;
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -128,10 +129,9 @@ main (int argc, char **argv)
 	if (!xmms_plugin_init ())
 		return 1;
 
-	{
-		extern xmms_playlist_t *playlist;
-		
-		playlist = xmms_playlist_init ();
+	
+	playlist = xmms_playlist_init ();
+	xmms_core_set_playlist (playlist);
 	if (optind) {
 		while (argv[optind]) {
 			gchar nuri[XMMS_MAX_URI_LEN];
@@ -155,8 +155,6 @@ main (int argc, char **argv)
 	}
 
 	XMMS_DBG ("Playlist contains %d entries", xmms_playlist_entries (playlist));
-
-	}
 
 	config = parse_config ();
 	outname = xmms_config_value_as_string (xmms_config_value_lookup (config->core, "outputplugin"));

@@ -1,6 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
+#include "xmms/core.h"
 #include "xmms/output.h"
 #include "xmms/transport.h"
 #include "mad_misc.h"
@@ -233,7 +234,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (data) {
 		data->entry = entry;
 
-		xmms_decoder_set_mediainfo (decoder,entry);
+		xmms_core_set_mediainfo (entry);
 	}
 
 	return entry;

@@ -21,6 +21,8 @@ typedef struct xmms_output_St {
 	GThread *thread;
 	gboolean running;
 
+	guint played;
+
 	xmms_ringbuf_t *buffer;
 	xmms_config_value_t *config;
 	

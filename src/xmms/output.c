@@ -153,6 +153,9 @@ xmms_output_set_eos (xmms_output_t *output, gboolean eos)
 	if (!eos) {
 		g_cond_signal (output->cond);
 	}
+
+	output->played = 0;
+
 }
 
 static gpointer
@@ -160,7 +163,6 @@ xmms_output_thread (gpointer data)
 {
 	xmms_output_t *output;
 	xmms_output_write_method_t write_method;
-	guint played = 0;
 
 	output = (xmms_output_t*)data;
 	g_return_val_if_fail (data, NULL);
@@ -182,14 +184,14 @@ xmms_output_thread (gpointer data)
 			write_method (output, buffer, ret);
 			xmms_output_lock (output);
 
-			played += ret;
-			xmms_core_playtime_set((guint)(played/(4.0f*44.1f)));
+			output->played += ret;
+			xmms_core_playtime_set((guint)(output->played/(4.0f*44.1f)));
 			
 		} else if (xmms_ringbuf_eos (output->buffer)) {
 			xmms_output_unlock (output);
 			xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
 			xmms_output_lock (output);
-			played = 0;
+			output->played = 0;
 			if (xmms_ringbuf_eos (output->buffer))
 				g_cond_wait (output->cond, output->mutex);
 		}
