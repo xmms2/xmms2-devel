@@ -52,7 +52,7 @@ xmmscs_playlist_current_pos (xmmsc_connection_t *c)
 
 	res = xmmsc_playlist_current_pos (c);
 	if (!res)
-		return NULL;
+		return 0;
 
 	xmmsc_result_wait (res);
 
