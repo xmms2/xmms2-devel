@@ -493,7 +493,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (len > 0, -1);
 
 	xmms_transport_lock (transport);
-	
+
 	if (!transport->buffering && transport->numread++ > 1) {
 		XMMS_DBG ("Let's start buffering");
 		transport->buffering = TRUE;
@@ -567,8 +567,8 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	/* reset the buffer */
 	transport->buffering = FALSE;
-	xmms_ringbuf_clear (transport->buffer);
 	transport->numread = 0;
+	xmms_ringbuf_clear (transport->buffer);
 
 	ret = seek_method (transport, offset, whence);
 
@@ -637,27 +637,31 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 
 	transport->suburl = url + strlen(url); /* empty string */
 
-	while (!init_method (transport, url)) {
+	if (xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES)) {
+		
+		while (!init_method (transport, url)) {
 
-		while (*--transport->suburl != '/' ){
-			if (*transport->suburl == 0){ /* restore */
-				*transport->suburl = '/';
+			while (*--transport->suburl != '/' ){
+				if (*transport->suburl == 0){ /* restore */
+					*transport->suburl = '/';
+				}
+				if (transport->suburl <= url) {
+					return FALSE;
+				}
 			}
-			if (transport->suburl <= url) {
-				xmms_ringbuf_destroy (transport->buffer);
-				g_mutex_free (transport->mutex);
-				g_free (transport);
-				transport = NULL;
+			*transport->suburl = 0;
+			transport->suburl++;
+
+			if (!g_file_test (url, G_FILE_TEST_IS_DIR))
 				return FALSE;
-			}
+
+			XMMS_DBG ("Trying %s  (suburl: %s)",url,transport->suburl);
 		}
-		*transport->suburl = 0;
-		transport->suburl++;
 
-		if (!g_file_test (url, G_FILE_TEST_IS_DIR))
+	} else {
+		if (!init_method (transport, url)) {
 			return FALSE;
-
-		XMMS_DBG ("Trying %s  (suburl: %s)",url,transport->suburl);
+		}
 	}
 
 	transport->suburl = g_strdup (transport->suburl);
@@ -817,7 +821,9 @@ xmms_transport_thread (gpointer data)
 	while (transport->running) {
 
 		if (!transport->buffering) {
+			XMMS_DBG ("Holding pattern");
 			g_cond_wait (transport->cond, transport->mutex);
+			
 		}
 
 		xmms_transport_unlock (transport);
