@@ -176,6 +176,7 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 
 	if (artist && title) {
 		str = g_strdup_printf ("%s - %s", artist, title);
+		str = conv (str);
 	} else {
 		str = strrchr (url, '/');
 		if (!str || !str[1])
@@ -188,7 +189,7 @@ handle_playlist_list_mediainfo (void *userdata, void *arg)
 		
 	printf ("%s%d\t%s (%s)\n", 
 		(currentid == id) ? "->":"  ",
-		id, conv (str), duration);
+		id, str, duration);
 
 	g_free (duration);
 	g_free (str);
