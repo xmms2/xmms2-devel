@@ -20,6 +20,30 @@
 #include "internal/xhash-int.h"
 
 static void
+handle_status (void *userdata, void *arg)
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	int id = XPOINTER_TO_UINT (arg);
+
+	switch (id) {
+		case 0:
+			qDebug ("run");
+			break;
+		case 1:
+			mw->bar ()->reset ();
+			mw->bar ()->setTotalSteps (0);
+			mw->toolbar ()->setText (new QString ("Playback stopped"));
+			mw->toolbar ()->setTME (new QString ("00:00"));
+			mw->toolbar ()->setCTME (new QString ("00:00"));
+			mw->bartxt ()->setText ("Waiting for events");
+			break;
+		case 2:
+			qDebug ("Pause");
+			break;
+	}
+}
+
+static void
 handle_currentid (void *userdata, void *arg) {
 	int id = XPOINTER_TO_UINT (arg);
 	xmmsc_connection_t *conn;
@@ -67,6 +91,22 @@ handle_playtime (void *userdata, void *arg)
 
 }
 
+static int
+remove_cb (void *k, void *v, void *u)
+{
+	return TRUE;
+}
+
+static void
+handle_playlist_clear (void *userdata, void *arg)
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+
+	x_hash_foreach_remove (mw->idHash (), remove_cb, NULL);
+	mw->pl ()->clear ();
+	mw->setcItem (NULL);
+}
+
 static void
 handle_playlist_list (void *userdata, void *arg)
 {
@@ -74,7 +114,9 @@ handle_playlist_list (void *userdata, void *arg)
 	int *list = (int *) arg;
 	int i = 0, j = 0;
 
+	x_hash_foreach_remove (mw->idHash (), remove_cb, NULL);
 	mw->pl ()->clear ();
+	mw->setcItem (NULL); /* fucking dangling pointer */
 
 	while (list && list[i])
 		i++;
@@ -114,6 +156,13 @@ handle_playlist_add (void *userdata, void *arg)
 }
 
 static void
+handle_playlist_shuffle (void *userdata, void *arg)
+{
+	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
+	xmmsc_playlist_list (mw->client ()->getConnection ());
+}
+
+static void
 handle_playlist_mediainfo (void *userdata, void *arg)
 {
         x_hash_t *tab = (x_hash_t *)arg;
@@ -145,9 +194,7 @@ handle_playlist_mediainfo (void *userdata, void *arg)
 	it = (XMMSListViewItem *)x_hash_lookup (mw->idHash (), XUINT_TO_POINTER (id));
 
 
-	if (!it) {
-		printf ("Apan\n");
-	} else {
+	if (it) {
 		it->setArtist ((char *)x_hash_lookup (tab, "artist"));
 		it->setTitle ((char *)x_hash_lookup (tab, "title"));
 		it->setAlbum ((char *)x_hash_lookup (tab, "album"));
@@ -191,23 +238,55 @@ XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) :
 
 	/* playlist listview */
 	m_listview = new XMMSListView (m_client, box, NULL);
+	
+	/* Statusbar at the bottom */
 	m_bartxt = new QLabel (statusBar ());
-	statusBar ()->addWidget (m_bartxt, 2, FALSE);
 	m_bar = new QProgressBar (statusBar ());
-	m_barbusy = FALSE;
+	statusBar ()->addWidget (m_bartxt, 2, FALSE);
 	statusBar ()->addWidget (m_bar, 1, TRUE);
+	m_barbusy = FALSE;
 
 	m_citem = NULL;
 
 	/* id hash table */
 	m_idhash = x_hash_new (x_direct_hash, x_direct_equal);
 	
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*)this);
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void*)this);
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_LIST, handle_playlist_list, (void*)this);
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_mediainfo, (void*)this);
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, handle_playlist_mediainfo_id, (void*)this);
-	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_ADD, handle_playlist_add, (void*)this);
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYBACK_CURRENTID, 
+			handle_currentid, (void*)this);
+	
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYBACK_PLAYTIME, 
+			handle_playtime, (void*)this);
+
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYBACK_STATUS, 
+			handle_status, (void*)this);
+	
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYLIST_LIST, 
+			handle_playlist_list, (void*)this);
+
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYLIST_MEDIAINFO, 
+			handle_playlist_mediainfo, (void*)this);
+
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, 
+			handle_playlist_mediainfo_id, (void*)this);
+
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYLIST_ADD, 
+			handle_playlist_add, (void*)this);
+
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYLIST_SHUFFLE, 
+			handle_playlist_shuffle, (void*)this);
+
+	xmmsc_set_callback (m_client->getConnection (), 
+			XMMS_SIGNAL_PLAYLIST_CLEAR, 
+			handle_playlist_clear, (void*)this);
+
 
 	xmmsc_playlist_list (m_client->getConnection ());
 

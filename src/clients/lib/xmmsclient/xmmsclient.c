@@ -514,12 +514,11 @@ xmmsc_set_callback (xmmsc_connection_t *conn,
 	x_list_t *l = NULL;
 	xmmsc_callback_desc_t *desc;
 
-	desc = malloc (sizeof (xmmsc_callback_desc_t));
+	desc = calloc (1, sizeof (xmmsc_callback_desc_t));
 
 	desc->func = func;
 	desc->userdata = userdata;
 
-	/** @todo more than one callback of each type */
 	l = x_hash_lookup (conn->callbacks, callback);
 	if (!l) {
 		xmmsc_register_signal (conn, callback);
@@ -906,7 +905,7 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 					dbus_message_iter_next (&itr);
 					dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
-					arr = malloc (sizeof (unsigned int) * len + 1);
+					arr = malloc (sizeof (unsigned int) * (len + 1));
 					memcpy (arr, tmp, len * sizeof(unsigned int));
 					arr[len] = '\0';
 					
@@ -955,7 +954,7 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 		x_list_t *node;
 		for (node = cb_list; node; node = x_list_next (node)) {
 			xmmsc_callback_desc_t *cb = node->data;
-			cb->func(cb->userdata, arg);
+			cb->func (cb->userdata, arg);
 		}
 	}
 
