@@ -1,6 +1,7 @@
 #include <qpushbutton.h>
 #include <qapplication.h>
 #include <qhbox.h>
+#include <qdir.h>
 #include <qfiledialog.h>
 #include <qstringlist.h>
 
@@ -59,7 +60,7 @@ void
 XMMSToolbar::onAdd ()
 {
 	QStringList files = QFileDialog::getOpenFileNames("Audiofiles (*.mp3 *.sid *.ogg)",
-							"/",
+							QDir::homeDirPath (),
 							this,
 							"select music"
 							"Select one or more audiofiles to open" );
@@ -88,5 +89,5 @@ void
 XMMSToolbar::onQuit ()
 {
 	xmmsc_deinit (m_connection);
-	delete qApp;
+	qApp->closeAllWindows ();
 }

@@ -59,10 +59,12 @@ XMMSListViewItem::paintCell (QPainter *p, const QColorGroup &cg, int c, int w, i
 		QColor oc = ncg.text ();
 
 		ncg.setColor (QColorGroup::Text, Qt::red);
+		ncg.setColor (QColorGroup::HighlightedText, Qt::red);
 
 		QListViewItem::paintCell (p, ncg, c, w, a);
 		
 		ncg.setColor (QColorGroup::Text, oc);
+		ncg.setColor (QColorGroup::HighlightedText, oc);
 	}
 
 }
