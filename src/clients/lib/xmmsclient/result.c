@@ -32,6 +32,7 @@
 
 #include "xmms/xmmsclient.h"
 #include "xmms/signal_xmms.h"
+#include "xmms/error_xmms.h"
 
 #include "internal/xmmsclient_int.h"
 
@@ -191,35 +192,251 @@ xmmsc_result_get_error (xmmsc_result_t *res)
 	return res->error_str;
 }
 
-static int
-result_check_sanity (xmmsc_result_t *res, DBusMessageIter *itr)
+int
+xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 {
-	x_return_val_if_fail (res, 0);
+	DBusMessageIter itr;
 
-	if (res->error)
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
-
-	if (!res->reply)
+	}
+	
+	dbus_message_iter_init (res->reply, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_INT32) {
 		return 0;
+	}
+	*r = dbus_message_iter_get_int32 (&itr);
 
-	dbus_message_iter_init (res->reply, itr);
+	return 1;
+}
+
+
+int
+xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
+{
+	DBusMessageIter itr;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+	
+	dbus_message_iter_init (res->reply, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
+		return 0;
+	}
+	*r = dbus_message_iter_get_uint32 (&itr);
 
 	return 1;
 }
 
 int
-xmmsc_result_get_int (xmmsc_result_t *res)
+xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 {
 	DBusMessageIter itr;
-	
-	if (!result_check_sanity (res, &itr)) {
-		res->error = XMMS_ERROR_API_RESULT_NOT_SANE;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
 		return 0;
 	}
 	
-	return dbus_message_iter_get_int32 (&itr);
+	dbus_message_iter_init (res->reply, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_STRING) {
+		return 0;
+	}
+	*r = dbus_message_iter_get_string (&itr);
+
+	return 1;
 }
 
+int
+xmmsc_result_get_mediainfo (xmmsc_result_t *res, x_hash_t **r)
+{
+	DBusMessageIter itr;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+	*r = xmmsc_deserialize_mediainfo (&itr);
+
+	if (!*r) {
+		return 0;
+	}
+
+	return 1;
+}
+
+
+int
+xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
+{
+	DBusMessageIter itr;
+	x_list_t *list = NULL;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	while (42) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+			list = x_list_append (list, dbus_message_iter_get_string (&itr));
+		} else {
+			list = NULL;
+			break;
+		}
+
+		if (!dbus_message_iter_has_next (&itr))
+			break;
+		
+		dbus_message_iter_next (&itr);
+
+	}
+
+	if (!list)
+		return 0;
+
+	*r = list;
+
+	return 1;
+}
+
+
+int
+xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
+{
+	DBusMessageIter itr;
+	x_list_t *list = NULL;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	while (42) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+			list = x_list_append (list, XUINT_TO_POINTER (dbus_message_iter_get_uint32 (&itr)));
+		} else {
+			list = NULL;
+			break;
+		}
+
+		if (!dbus_message_iter_has_next (&itr))
+			break;
+		
+		dbus_message_iter_next (&itr);
+
+	}
+
+	if (!list)
+		return 0;
+
+	*r = list;
+
+	return 1;
+}
+
+
+/*int
+xmmsc_result_get_double_array (xmmsc_result_t *res, double **r, int *len)
+{
+	DBusMessageIter itr;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_ARRAY)
+		return 0;
+
+	if (dbus_message_iter_get_array_type (&itr) != DBUS_TYPE_DOUBLE)
+		return 0;
+
+	dbus_message_iter_get_double_array (&itr, r, len);
+
+	return 1;
+}
+*/
+
+
+/*
+int
+xmmsc_result_get_doublelist (xmmsc_result_t *res, x_list_t **r)
+{
+	DBusMessageIter itr;
+	x_list_t *list = NULL;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	while (42) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_DOUBLE) {
+			list = x_list_append (list, (void)dbus_message_iter_get_double (&itr)); 
+		} else {
+			list = NULL;
+			break;
+		}
+
+		if (!dbus_message_iter_has_next (&itr))
+			break;
+		
+		dbus_message_iter_next (&itr);
+
+	}
+
+	if (!list)
+		return 0;
+
+	*r = list;
+
+	return 1;
+}
+*/
+
+
+int
+xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
+{
+	DBusMessageIter itr;
+	x_list_t *list = NULL;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	while (42) {
+		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_INT32) {
+			list = x_list_append (list, XINT_TO_POINTER (dbus_message_iter_get_int32 (&itr)));
+		} else {
+			list = NULL;
+			break;
+		}
+
+		if (!dbus_message_iter_has_next (&itr))
+			break;
+		
+		dbus_message_iter_next (&itr);
+
+	}
+
+	if (!list)
+		return 0;
+
+	*r = list;
+
+	return 1;
+}
+
+/*
 unsigned int
 xmmsc_result_get_uint (xmmsc_result_t *res)
 {
@@ -336,4 +553,4 @@ xmmsc_result_get_mediainfo (xmmsc_result_t *res)
 
 	return xmmsc_deserialize_mediainfo (&itr);
 
-}
+} */

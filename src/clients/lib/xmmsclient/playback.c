@@ -182,7 +182,10 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 
 	xmmsc_result_wait (res);
 
-	ret = xmmsc_result_get_int (res);
+	if (!xmmsc_result_get_int (res, &ret)) {
+		xmmsc_result_unref (res);
+		return 0;
+	}
 	xmmsc_result_unref (res);
 
 	return ret;
@@ -206,7 +209,12 @@ xmmscs_playback_playtime (xmmsc_connection_t *c)
 		return 0;
 
 	xmmsc_result_wait (res);
-	ret = xmmsc_result_get_int (res);
+	if (!xmmsc_result_get_int (res, &ret)) {
+		xmmsc_result_unref (res);
+		return 0;
+	}
+
+	xmmsc_result_unref (res);
 
 	return ret;
 }

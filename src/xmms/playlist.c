@@ -623,7 +623,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
  * Remeber that it is only the LIST that is copied. Not the entries.
  * The entries are however referenced, and must be unreffed!
  */
-XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, PLAYLIST, NONE, NONE);
+XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
 
 GList *
 xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
@@ -632,8 +632,7 @@ xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
-		xmms_playlist_entry_ref (node->data);
-		r = g_list_append (r, node->data);
+		r = g_list_append (r, GUINT_TO_POINTER (xmms_playlist_entry_id_get ((xmms_playlist_entry_t *)node->data)));
 	}
 
 	XMMS_PLAYLIST_UNLOCK (playlist);

@@ -571,32 +571,37 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 			
 			dbus_message_iter_append_uint32 (&itr, arg.retval.uint32);
 			break;
-		case XMMS_OBJECT_METHOD_ARG_PLAYLIST: {
-			gint len;
-
-			len = g_list_length (arg.retval.playlist);
+		case XMMS_OBJECT_METHOD_ARG_INT32:
 			
-			dbus_message_iter_append_uint32 (&itr, len);
-			
-			if (len > 0) {
-				GList *list = arg.retval.playlist;
-				guint32 *arr;
-				int i = 0;
-				
-				arr = g_new0 (guint32, len);
-				while (list) {
-					xmms_playlist_entry_t *entry=list->data;
-					arr[i++] = xmms_playlist_entry_id_get (entry);
-					xmms_playlist_entry_unref (entry);
-					list = g_list_next (list);
-				}
-				
-				dbus_message_iter_append_uint32_array (&itr, arr, len);
-				g_free (arr);
-			}
-			
+			dbus_message_iter_append_uint32 (&itr, arg.retval.int32);
 			break;
-		}
+		case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
+			{
+				GList *l;
+
+				for (l = arg.retval.stringlist; l; l = g_list_next (l)) {
+					dbus_message_iter_append_string (&itr, l->data);
+				}
+				break;
+			}
+		case XMMS_OBJECT_METHOD_ARG_UINTLIST:
+			{
+				GList *l;
+
+				for (l = arg.retval.uintlist; l; l = g_list_next (l)) {
+					dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT (l->data));
+				}
+				break;
+			}
+		case XMMS_OBJECT_METHOD_ARG_INTLIST:
+			{
+				GList *l;
+
+				for (l = arg.retval.uintlist; l; l = g_list_next (l)) {
+					dbus_message_iter_append_int32 (&itr, GPOINTER_TO_INT (l->data));
+				}
+				break;
+			}
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: {
 			gchar *url;
 			DBusMessageIter dictitr;
@@ -647,9 +652,6 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	switch (arg.rettype) {
 	case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
 		xmms_playlist_entry_unref (arg.retval.playlist_entry);
-		break;
-	case XMMS_OBJECT_METHOD_ARG_PLAYLIST:
-		g_list_free (arg.retval.playlist);
 		break;
 	case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
 		g_list_free (arg.retval.stringlist);

@@ -22,16 +22,7 @@
 
 #define XMMS_ERROR_MESSAGE_MAXLEN 255
 
-typedef enum {
-	XMMS_ERROR_NONE=0,
-	XMMS_ERROR_GENERIC,
-	XMMS_ERROR_OOM,
-	XMMS_ERROR_PERMISSION,
-	XMMS_ERROR_NOENT,
-	XMMS_ERROR_INVAL,
-	XMMS_ERROR_NO_SAUSAGE,
-	XMMS_ERROR_COUNT /* must be last */
-} xmms_error_code_t;
+#include "xmms/error_xmms.h"
 
 typedef struct xmms_error_St {
 	xmms_error_code_t code;

@@ -121,11 +121,12 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
 }
 
-unsigned int *
+x_list_t *
 xmmscs_playlist_list (xmmsc_connection_t *c)
 {
-	unsigned int *ret;
+	int i;
 	xmmsc_result_t *res;
+	x_list_t *list;
 
 	res = xmmsc_playlist_list (c);
 	if (!res)
@@ -133,12 +134,12 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 
 	xmmsc_result_wait (res);
 
-	ret = xmmsc_result_get_uint_array (res);
+	i = xmmsc_result_get_uintlist (res, &list);
 
 	xmmsc_result_unref (res);
 
-	return ret;
-
+	if (i) return list;
+	return NULL;
 }
 
 /**
@@ -231,9 +232,13 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 
 	xmmsc_result_wait (res);
 
-	ret = xmmsc_result_get_mediainfo (res);
+	if (xmmsc_result_get_mediainfo (res, &ret)) {
+		xmmsc_result_unref (res);
+		return ret;
+	}
 
-	return ret;
+	xmmsc_result_unref (res);
+	return NULL;
 }
 
 static int

@@ -92,7 +92,10 @@ xmmscs_configval_get (xmmsc_connection_t *c, char *key)
 		return NULL;
 
 	xmmsc_result_wait (res);
-	ret = xmmsc_result_get_string (res);
+	if (!xmmsc_result_get_string (res, &ret)) {
+		xmmsc_result_unref (res);
+		return NULL;
+	}
 	xmmsc_result_unref (res);
 
 	return ret;
@@ -115,7 +118,10 @@ xmmscs_configval_list (xmmsc_connection_t *c)
 		return NULL;
 
 	xmmsc_result_wait (res);
-	list = xmmsc_result_get_list (res);
+	if (!xmmsc_result_get_stringlist (res, &list)) {
+		xmmsc_result_unref (res);
+		return NULL;
+	}
 	xmmsc_result_unref (res);
 
 	return list;

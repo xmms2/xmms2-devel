@@ -155,9 +155,9 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	unsigned int *list;
+	x_list_t *list;
+	x_list_t *l;
 	GError *err = NULL;
-	int i;
 	int id;
 	int r, w;
 
@@ -168,11 +168,12 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 	id = xmmscs_playback_current_id (conn);
 
-	for (i = 0; list[i]; i++) {
+	for (l = list; l; l = x_list_next (l)) {
 		x_hash_t *tab;
 		char line[80];
+		unsigned int i = XPOINTER_TO_UINT (l->data);
 		
-		tab = xmmscs_playlist_get_mediainfo (conn, list[i]);
+		tab = xmmscs_playlist_get_mediainfo (conn, i);
 
 		memset (line, '\0', 80);
 
@@ -182,11 +183,11 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
 		}
 
-		if (id == list[i]) {
-			print_info ("->[%d] %s", list[i], 
+		if (id == i) {
+			print_info ("->[%d] %s", i, 
 					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		} else {
-			print_info ("  [%d] %s", list[i], 
+			print_info ("  [%d] %s", i, 
 					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		}
 

@@ -84,10 +84,10 @@ xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
 /* sync */
 int xmmscs_playback_current_id (xmmsc_connection_t *c);
 x_hash_t *xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id);
-unsigned int * xmmscs_playlist_list (xmmsc_connection_t *c);
-x_list_t * xmmscs_configval_list (xmmsc_connection_t *c);
+x_list_t *xmmscs_playlist_list (xmmsc_connection_t *c);
+x_list_t *xmmscs_configval_list (xmmsc_connection_t *c);
 char *xmmscs_configval_get (xmmsc_connection_t *c, char *key);
-int xmmsc_playback_current_playtime (xmmsc_connection_t *c);
+int xmmscs_playback_playtime (xmmsc_connection_t *c);
 
 /* API ERROR CODES */
 
