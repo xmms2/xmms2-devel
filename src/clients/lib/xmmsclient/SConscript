@@ -17,9 +17,14 @@ if env.HasGroup ("ecore") :
 	xmmsc_sources.append("ipc_ecore.c")
 	env.AddFlagsFromGroup("ecore")
 
-if env.HasGroup ("Carbon") :
+if base_env.sys == 'Darwin':
 	env.AddFlagsFromGroup("Carbon")
-	xmmsc_sources.append("ipc_carbon.c")
+	env.AddFlagsFromGroup("Cocoa")
+	env.AddFlagsFromGroup("CoreFoundation")
 	
+	xmmsc_sources.append("ipc_carbon.c")
+	xmmsc_sources.append("ipc_cocoa.c")
+	
+
 env.XmmsLibrary('xmmsclient', xmmsc_sources)
 

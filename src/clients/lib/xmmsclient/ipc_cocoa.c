@@ -1,16 +1,16 @@
 #include <CoreFoundation/CoreFoundation.h>
-#include <Carbon/Carbon.h>
+#include <Cocoa/Cocoa.h>
 
 #include "xmms/xmmsclient.h"
 #include "internal/client_ipc.h"
 #include "internal/xmmsclient_int.h"
 
 static void 
-xmmsc_ipc_carbon_event_callback (CFSocketRef s, 
-								 CFSocketCallBackType type, 
-								 CFDataRef address, 
-								 const void *data, 
-								 void *info)
+xmmsc_ipc_cocoa_event_callback (CFSocketRef s, 
+								CFSocketCallBackType type, 
+								CFDataRef address, 
+								const void *data, 
+								void *info)
 {
 	CFSocketContext context;
 
@@ -27,16 +27,14 @@ xmmsc_ipc_carbon_event_callback (CFSocketRef s,
 }
 
 gboolean
-xmmsc_ipc_setup_with_carbon (xmmsc_connection_t *c)
+xmmsc_ipc_setup_with_cocoa (xmmsc_connection_t *c)
 {
-	EventLoopRef evLoopRef;
 	CFRunLoopRef runLoopRef;
 	CFRunLoopSourceRef runLoopSourceRef;
 	CFSocketContext context;
 	CFSocketRef sockRef;
-	
-	evLoopRef = GetMainEventLoop ();
-	runLoopRef = (CFRunLoopRef) GetCFRunLoopFromEventLoop (evLoopRef);
+
+	runLoopRef = [[NSRunLoop currentRunLoop] getCFRunLoop];
 
 	context.version = 0;
 	context.info = c->ipc;
@@ -47,7 +45,7 @@ xmmsc_ipc_setup_with_carbon (xmmsc_connection_t *c)
 	sockRef = CFSocketCreateWithNative (kCFAllocatorDefault, 
 									    xmmsc_ipc_fd_get (c->ipc),
 									    kCFSocketReadCallBack,
-									    &xmmsc_ipc_carbon_event_callback,
+									    &xmmsc_ipc_cocoa_event_callback,
 									    &context);
 
 	runLoopSourceRef = CFSocketCreateRunLoopSource (kCFAllocatorDefault, 

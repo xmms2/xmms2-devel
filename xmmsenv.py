@@ -212,6 +212,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 					i = i + 1
 				elif arg[1:5] == 'arch':
 					i = i + 1
+				elif arg[1:] == 'ObjC':
+					self.Append( CPPFLAGS = [ arg ] )
 				else:
 					print 'garbage in flags: ' + arg
 					sys.exit(1)

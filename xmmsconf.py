@@ -66,7 +66,9 @@ def checkFlags(base_env):
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
 		base_env.AddFlagsToGroup("CoreAudio", " -framework AudioUnit")
 		base_env.AddFlagsToGroup("CoreAudio", " -framework CoreServices")
-		base_env.AddFlagsToGroup("Carbon", "-framework Carbon -framework CoreFoundation")
+		base_env.AddFlagsToGroup("Carbon", "-framework Carbon")
+		base_env.AddFlagsToGroup("Cocoa", "-ObjC -framework Cocoa")
+	   	base_env.AddFlagsToGroup("CoreFoundation", "-framework CoreFoundation")
 
 	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
 		print "PyREX compiler found!"
