@@ -38,6 +38,9 @@ def checkFlags(base_env):
 	## Check for optional libs
 	##
 	base_env.CheckAndAddFlagsToGroup("ecore", "ecore-config --libs --cflags")
+	if base_env.HasGroup("ecore") :
+		base_env.AddFlagsToGroup("ecore", " -DHAVE_ECORE")
+
 	base_env.CheckAndAddFlagsToGroup("qt", "pkg-config --libs --cflags qt")
 	base_env.CheckAndAddFlagsToGroup("shout", "pkg-config --libs --cflags shout")
 	base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
@@ -62,6 +65,22 @@ def checkFlags(base_env):
 	else:
 		print "PyREX not found, no cookie for you!"
 
+	if base_env.CheckProgram ("ruby --version") :
+		cmd = "ruby -rmkmf -e 'print Config::CONFIG[\"libdir\"]'"
+		rubylibdir = os.popen(cmd).read().strip()
+
+		cmd = "ruby -rmkmf -e 'print Config::CONFIG[\"archdir\"]'"
+		rubydir = os.popen(cmd).read().strip()
+
+		cmd = "ruby -rmkmf -e 'print Config::CONFIG[\"sitearchdir\"]'"
+		base_env.optional_config["rubysitedir"] = os.popen(cmd).read().strip()
+
+		flags = " -I" + rubydir + " -L" + rubydir
+		base_env.AddFlagsToGroup ("ruby", flags)
+
+		if base_env.CheckCHeader ("ruby.h", rubydir) == 0 :
+			base_env.RemoveGroup ("ruby")
+
 	try:
 		import distutils
 		import distutils.sysconfig
@@ -72,6 +91,8 @@ def checkFlags(base_env):
 	## Write cache
 	##
 	statefile = open('scons.cache','wb+')
-	dump(base_env.flag_groups, statefile);
+	dump({"flag_groups":base_env.flag_groups,
+	      "optional_config":base_env.optional_config},
+	     statefile)
 
 

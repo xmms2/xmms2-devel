@@ -64,9 +64,11 @@ if base_env['NOCACHE']:
 else:
 	try:
 		statefile = open('scons.cache','rb+')
-		base_env.flag_groups=load(statefile)
-		print "Cachefile scons.cache found, not checking libs"
+		dict = load(statefile)
+		base_env.flag_groups = dict["flag_groups"]
+		base_env.optional_config = dict["optional_config"]
 		statefile.close()
+		print "Cachefile scons.cache found, not checking libs"
 		if base_env['SHOWCACHE']:
 			for x in base_env.flag_groups.keys():
 				print "Module " + x + " has flags"

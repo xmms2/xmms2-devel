@@ -6,6 +6,7 @@ Export('base_env')
 SConscript('lib/xmmsclient/SConscript')
 SConscript('lib/xmmsclient-glib/SConscript')
 SConscript('lib/python/SConscript')
+SConscript('lib/ruby/SConscript')
 SConscript('cli/SConscript')
 
 if base_env.HasGroup("qt") and environ.has_key ('QTDIR'):
