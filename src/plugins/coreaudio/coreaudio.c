@@ -47,6 +47,7 @@
 typedef struct xmms_ca_data_St {
 	AudioUnit au;
 	AudioStreamBasicDescription sF;
+	gboolean running;
 } xmms_ca_data_t;
 
 /*
@@ -292,7 +293,9 @@ xmms_ca_new (xmms_output_t *output)
 
 	XMMS_DBG ("CoreAudio initialized!");
 
+	data->running = FALSE;
 	xmms_output_private_data_set (output, data);
+
 	return TRUE;
 }
 
