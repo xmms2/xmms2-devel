@@ -81,15 +81,14 @@ if base_env.HasGroup("alsa"):
 cdae = base_env.Copy()
 if cdae.sys == 'Linux':
 	ossrc = 'cde/os_linux.c'
+	cdae_sources = Split ("cde/cdtransport.c " + ossrc)
 
-cdae_sources = Split ("cde/cdtransport.c " + ossrc)
+	cdae.AddFlagsFromGroup("glib")
+	cdae.XmmsPlugin('xmms_cdtransport', cdae_sources)
 
-cdae.AddFlagsFromGroup("glib")
-cdae.XmmsPlugin('xmms_cdtransport', cdae_sources)
-
-cdae_decoder = base_env.Copy ()
-cdae_decoder.AddFlagsFromGroup("glib")
-#if cdae_decoder.HasGroup("curl"):
-#	cdae_decoder.AddFlagsFromGroup("curl")
-cdae_decoder.XmmsPlugin('xmms_cddecoder', ['cde/cddecoder.c']) #, 'cde/cddb.c'])
+	cdae_decoder = base_env.Copy ()
+	cdae_decoder.AddFlagsFromGroup("glib")
+	#if cdae_decoder.HasGroup("curl"):
+	#	cdae_decoder.AddFlagsFromGroup("curl")
+	cdae_decoder.XmmsPlugin('xmms_cddecoder', ['cde/cddecoder.c']) #, 'cde/cddb.c'])
 
