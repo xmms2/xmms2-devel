@@ -638,29 +638,18 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
  * @param output
  *
  */
-gboolean
+void
 xmms_decoder_start (xmms_decoder_t *decoder, 
 		    GList *effects, 
 		    xmms_output_t *output)
 {
-
-	xmms_decoder_init_method_t init_meth;
-
-	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (output, FALSE);
-
-	init_meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_INIT);
-	if (init_meth) {
-		if (!init_meth (decoder))
-			return FALSE;
-	}
+	g_return_if_fail (decoder);
+	g_return_if_fail (output);
 	
 	decoder->running = TRUE;
 	decoder->effects = effects;
 	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
-
-	return TRUE;
 }
 
 void
@@ -957,6 +946,7 @@ xmms_decoder_thread (gpointer data)
 
 	xmms_decoder_t *decoder = data;
 	xmms_decoder_decode_block_method_t decode_block;
+	xmms_decoder_init_method_t init_meth;
 
 	g_return_val_if_fail (decoder, NULL);
 
@@ -964,6 +954,11 @@ xmms_decoder_thread (gpointer data)
 	if (!decode_block)
 		return NULL;
 
+	init_meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_INIT);
+	if (init_meth) {
+		if (!init_meth (decoder))
+			return NULL;
+	}
 	
 	xmms_object_ref (decoder);
 	

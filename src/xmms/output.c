@@ -802,13 +802,10 @@ xmms_output_decoder_start (xmms_output_t *output)
 		}
 	}
 
-
-	if (!xmms_decoder_start (decoder, output->effects, output))
-		return FALSE;
-
 	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
 			     decoder_ended, output);
 
+	xmms_decoder_start (decoder, output->effects, output);
 	g_queue_push_tail (output->decoder_list, decoder);
 	g_queue_push_tail (output->entry_list, entry);
 
