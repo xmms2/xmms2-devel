@@ -43,8 +43,6 @@
 
 typedef struct xmms_ca_data_St {
 	AudioDeviceID outputdevice;
-	xmms_ringbuf_t *buffer;
-	GMutex *mtx;
 	guint rate;
 } xmms_ca_data_t;
 
@@ -135,18 +133,13 @@ xmms_ca_buffersize_get (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
-	g_mutex_lock (data->mtx);
-	ret = xmms_ringbuf_bytes_used (data->buffer) / 2;
-
 	size = sizeof (UInt32);
 
 	res = AudioDeviceGetProperty (data->outputdevice, 1, 0, 
 				      kAudioDevicePropertyLatency,
 				      &size, &f);
 
-	ret += (f * 4);
-
-	g_mutex_unlock (data->mtx);
+	ret = (f * 4);
 
 	return ret;
 }
@@ -235,9 +228,6 @@ xmms_ca_new (xmms_output_t *output)
 	g_return_val_if_fail (output, FALSE);
 
 	data = g_new0 (xmms_ca_data_t, 1);
-	data->mtx = g_mutex_new ();
-	data->buffer = xmms_ringbuf_new (4096 * 20);
-
 	size = sizeof (data->outputdevice);
 
 	/* Maybe the kAudio... could be configurable ? */
@@ -279,9 +269,6 @@ xmms_ca_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	g_mutex_free (data->mtx);
-	xmms_ringbuf_destroy (data->buffer);
-
 	/** @todo
 	 *  Do we have to take care of data->outputdevice
 	 *  here, too?
@@ -306,7 +293,6 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 
 	memset (&prop, 0, sizeof (prop));
 
-	g_mutex_lock (data->mtx);
 
 	data->rate = rate;
 
@@ -334,7 +320,6 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 		exit (-1);
 	}*/
 
-	g_mutex_unlock (data->mtx);
 
 	return prop.mSampleRate;
 }
