@@ -410,6 +410,9 @@ xmms_ipc_client_thread (gpointer data)
 
 	xmms_ipc_client_destroy (client);
 
+	close (wakeup[0]);
+	close (wakeup[1]);
+
 	return NULL;
 
 }
