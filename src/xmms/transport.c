@@ -508,13 +508,18 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 		return -1;
 	}
 
-	XMMS_DBG ("Seeking to %d", offset);
-
 	/* reset the buffer */
 	transport->buffering = FALSE;
 	transport->numread = 0;
 	xmms_ringbuf_clear (transport->buffer);
 	xmms_ringbuf_set_eos (transport->buffer, FALSE);
+
+	if (whence == XMMS_TRANSPORT_SEEK_CUR) {
+		whence = XMMS_TRANSPORT_SEEK_SET;
+		offset = transport->current_position + offset;
+	}
+
+	XMMS_DBG ("Seeking to %d", offset);
 
 	ret = seek_method (transport, offset, whence);
 
