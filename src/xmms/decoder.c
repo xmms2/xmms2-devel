@@ -186,13 +186,13 @@ static gpointer xmms_decoder_thread (gpointer data);
 
 /**
  * Extract plugin specific data from the decoder.
- * This should be set with xmms_decoder_plugin_data_set.
+ * This should be set with #xmms_decoder_private_data_set.
  *
- * @sa xmms_decoder_plugin_data_set
+ * @sa xmms_decoder_private_data_set
  */
 
 gpointer
-xmms_decoder_plugin_data_get (xmms_decoder_t *decoder)
+xmms_decoder_private_data_get (xmms_decoder_t *decoder)
 {
 	gpointer ret;
 	g_return_val_if_fail (decoder, NULL);
@@ -204,13 +204,13 @@ xmms_decoder_plugin_data_get (xmms_decoder_t *decoder)
 
 /**
  * Set the private data for the plugin.
- * Data can be extracted by xmms_decoder_plugin_data_get.
+ * Data can be extracted by #xmms_decoder_private_data_get.
  *
- * @sa xmms_decoder_plugin_data_get
+ * @sa xmms_decoder_private_data_get
  */
 
 void
-xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data)
+xmms_decoder_private_data_set (xmms_decoder_t *decoder, gpointer data)
 {
 	g_return_if_fail (decoder);
 
@@ -649,7 +649,9 @@ xmms_decoder_thread (gpointer data)
 			return NULL;
 	}
 
-	xmms_object_emit (XMMS_OBJECT (decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID, GUINT_TO_POINTER (xmms_playlist_entry_id_get (decoder->entry)));
+	xmms_object_emit (XMMS_OBJECT (decoder), 
+			  XMMS_SIGNAL_PLAYBACK_CURRENTID, 
+			  GUINT_TO_POINTER (xmms_playlist_entry_id_get (decoder->entry)));
 	
 	xmms_decoder_lock (decoder);
 

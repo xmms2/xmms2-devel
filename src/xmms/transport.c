@@ -271,7 +271,7 @@ xmms_transport_entry_path_get (xmms_transport_entry_t *entry)
   */
 
 gpointer
-xmms_transport_plugin_data_get (xmms_transport_t *transport)
+xmms_transport_private_data_get (xmms_transport_t *transport)
 {
 	gpointer ret;
 	g_return_val_if_fail (transport, NULL);
@@ -289,7 +289,7 @@ xmms_transport_plugin_data_get (xmms_transport_t *transport)
  */
 
 void
-xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data)
+xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 {
 	xmms_transport_lock (transport);
 	transport->plugin_data = data;
@@ -686,7 +686,7 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 		return FALSE;
 	}
 
-	xmms_transport_plugin_data_set (transport, data);
+	xmms_transport_private_data_set (transport, data);
 
 	url = xmms_playlist_entry_url_get (transport->entry);
 

@@ -130,7 +130,7 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 	const gchar *name;
 	gint i;
 
-	priv = xmms_effect_plugin_data_get (effect);
+	priv = xmms_effect_private_data_get (effect);
 
 	g_return_if_fail (priv);
 
@@ -159,7 +159,7 @@ xmms_eq_init (xmms_effect_t *effect) {
 
 	g_return_if_fail (priv);
 
-	xmms_effect_plugin_data_set (effect, priv);
+	xmms_effect_private_data_set (effect, priv);
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
 
@@ -189,7 +189,7 @@ static void
 xmms_eq_samplerate_set (xmms_effect_t *effect, guint rate)
 {
 	gint i;
-	xmms_eq_priv_t *priv = xmms_effect_plugin_data_get (effect);
+	xmms_eq_priv_t *priv = xmms_effect_private_data_get (effect);
 
 	g_return_if_fail (priv);
 
@@ -208,7 +208,7 @@ static void
 xmms_eq_process (xmms_effect_t *effect, gchar *buf, guint len)
 {
 	gint i;
-	xmms_eq_priv_t *priv = xmms_effect_plugin_data_get (effect);
+	xmms_eq_priv_t *priv = xmms_effect_private_data_get (effect);
 
 	g_return_if_fail (priv);
 

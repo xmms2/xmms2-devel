@@ -109,7 +109,7 @@ xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 	xmms_ca_data_t *data;
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	XMMS_DBG ("changed status! %d", status);
@@ -131,7 +131,7 @@ xmms_ca_buffersize_get (xmms_output_t *output)
 
 	g_return_val_if_fail (output, 0);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
 	g_mutex_lock (data->mtx);
@@ -175,7 +175,7 @@ xmms_ca_write_cb (AudioDeviceID inDevice,
 	output = (xmms_output_t *)inClientData;
 	g_return_val_if_fail (output, kAudioHardwareUnspecifiedError);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, kAudioHardwareUnspecifiedError);
 
 	for (b = 0; b < outOutputData->mNumberBuffers; ++b) {
@@ -215,7 +215,7 @@ xmms_ca_open (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 
 	//AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
 	
@@ -262,7 +262,7 @@ xmms_ca_new (xmms_output_t *output)
 
 	res = AudioDeviceAddIOProc (data->outputdevice, xmms_ca_write_cb, (void *) output);
 	
-	xmms_output_plugin_data_set (output, data);
+	xmms_output_private_data_set (output, data);
 
 	XMMS_DBG ("CoreAudio initilized!");
 	
@@ -278,7 +278,7 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 	UInt32 size;
 
 	g_return_val_if_fail (output, 0);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
 	size = sizeof (struct AudioStreamBasicDescription);
@@ -325,7 +325,7 @@ xmms_ca_close (xmms_output_t *output)
 	xmms_ca_data_t *data;
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	AudioDeviceStop (data->outputdevice, xmms_ca_write_cb);
@@ -344,7 +344,7 @@ xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_return_if_fail (buffer);
 	g_return_if_fail (len > 0);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 
 	buf = g_new0 (gfloat, (len/2));
 

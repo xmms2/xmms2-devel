@@ -165,7 +165,7 @@ xmms_tar_new (xmms_decoder_t *decoder, const gchar *mimetype)
 
 	/* */
 
-	xmms_decoder_plugin_data_set (decoder, data);
+	xmms_decoder_private_data_set (decoder, data);
 	
 	return TRUE;
 }
@@ -175,7 +175,7 @@ xmms_tar_destroy (xmms_decoder_t *decoder)
 {
 	xmms_tar_decoder_data_t *data;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
 	xmms_decoder_destroy(data->subdecoder);
@@ -204,7 +204,7 @@ static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 
 	lenbuf[12]=0;
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, FALSE);
 	while(42){
 		ret = xmms_transport_read (data->parenttransport, buf.data, 512);
@@ -285,7 +285,7 @@ xmms_tar_close (xmms_transport_t *transport)
 	xmms_tar_transport_data_t *data;
 	g_return_if_fail (transport);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
 	
 	xmms_transport_close (data->parenttransport);
@@ -298,7 +298,7 @@ xmms_tar_read (xmms_transport_t *transport, gchar *buffer, guint len){
 	xmms_tar_transport_data_t *data;
 	gint res;
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, FALSE);
 
 	if (data->relpos >= data->length) {
@@ -319,7 +319,7 @@ xmms_tar_read (xmms_transport_t *transport, gchar *buffer, guint len){
 static gint xmms_tar_size (xmms_transport_t *transport){
 	xmms_tar_transport_data_t *data;
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, FALSE);
 
 	return data->length;
@@ -329,7 +329,7 @@ static gint xmms_tar_seek (xmms_transport_t *transport, guint offset, gint whenc
 	guint pos=-1;
 
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
 	switch (whence) {
@@ -362,7 +362,7 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 	xmms_decoder_decode_block_method_t decode_block;
 	gboolean res;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
 	if (!data->subdecoder) {

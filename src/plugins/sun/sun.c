@@ -188,7 +188,7 @@ xmms_sun_new (xmms_output_t *output)
 			xmms_sun_mixer_config_changed,
 			(gpointer) output);
 	
-	xmms_output_plugin_data_set (output, data); 
+	xmms_output_private_data_set (output, data); 
 	
 	return TRUE; 
 }
@@ -214,7 +214,7 @@ xmms_sun_open (xmms_output_t *output)
 	XMMS_DBG ("XMMS_SUN_OPEN");	
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 	
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
@@ -280,7 +280,7 @@ xmms_sun_close (xmms_output_t *output)
 	xmms_sun_data_t *data;
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 	
 	XMMS_DBG("XMMS_SUN_CLOSE");
@@ -321,7 +321,7 @@ xmms_sun_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpoint
 	output = userdata;
 	g_return_if_fail (data);
 	newval = data;
-	sun_data = xmms_output_plugin_data_get (output);
+	sun_data = xmms_output_private_data_get (output);
 	g_return_if_fail (sun_data);
 
 	if (sun_data->have_mixer) {
@@ -362,7 +362,7 @@ xmms_sun_samplerate_set (xmms_output_t *output, guint rate)
 	XMMS_DBG ("XMMS_SUN_SAMPLERATE_SET");
 	
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);	
 
 	AUDIO_INITINFO(&info);
@@ -375,7 +375,7 @@ xmms_sun_samplerate_set (xmms_output_t *output, guint rate)
 			return FALSE;
 		} else {
 			data->rate = rate;
-			xmms_output_plugin_data_set (output, data);
+			xmms_output_private_data_set (output, data);
 		}
 	}
 	return data->rate;
@@ -399,7 +399,7 @@ xmms_sun_mixer_set (xmms_output_t *output, gint left, gint right)
 	XMMS_DBG ("XMMS_SUN_MIXER_SET");
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 	
 	if (!data->have_mixer) {
@@ -448,7 +448,7 @@ xmms_sun_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	XMMS_DBG ("XMMS_SUN_MIXER_GET");
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	if (!data->have_mixer) {
@@ -495,7 +495,7 @@ xmms_sun_buffersize_get (xmms_output_t *output)
 /*	XMMS_DBG ("XMMS_SUN_BUFFERSIZE_GET"); */
 	
 	g_return_val_if_fail (output, 0);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
 	AUDIO_INITINFO(&info);
@@ -525,7 +525,7 @@ xmms_sun_flush (xmms_output_t *output)
 	xmms_sun_data_t *data;	
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	XMMS_DBG("XMMS_SUN_FLUSH");
@@ -555,7 +555,7 @@ xmms_sun_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_return_if_fail (buffer);
 	g_return_if_fail (len);
 	
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 

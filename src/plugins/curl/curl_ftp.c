@@ -139,7 +139,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 	g_return_val_if_fail (transport, 0);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 
 	data->buf = g_malloc (size*nmemb);
 	data->data_in_buf = size*nmemb;
@@ -267,7 +267,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->url = xmms_util_decode_path (url);
 	data->mime = xmms_magic_mime_from_file (data->url);
 	
-	xmms_transport_plugin_data_set (transport, data);
+	xmms_transport_private_data_set (transport, data);
 	
 	g_return_val_if_fail (data->curlm, FALSE);
 
@@ -296,7 +296,7 @@ xmms_curl_close (xmms_transport_t *transport)
 
 	g_return_if_fail (transport);
 	
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
 	
 	curl_multi_cleanup (data->curlm);
@@ -317,7 +317,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 
 	g_return_val_if_fail (data, -1);
 
@@ -391,7 +391,7 @@ xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 
 	g_return_val_if_fail (transport, 0);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
 	
@@ -421,7 +421,7 @@ xmms_curl_size (xmms_transport_t *transport)
 
 	g_return_val_if_fail (transport, 0);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
 	if (data->stream)

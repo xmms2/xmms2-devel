@@ -104,7 +104,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 
 	transport = xmms_decoder_transport_get (decoder);
 	
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 
 	if (data->track == data->toc->last_track)
 		duration = LBA (data->toc->leadout) - LBA (data->toc->track[data->track]);

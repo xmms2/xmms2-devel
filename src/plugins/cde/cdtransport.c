@@ -153,7 +153,7 @@ xmms_cdae_init (xmms_transport_t *transport, const gchar *url)
 	data->pos = LBA(toc->track[track]);
 	data->endpos = LBA(toc->track[track+1]);
 	data->track = track;
-	xmms_transport_plugin_data_set (transport, data);
+	xmms_transport_private_data_set (transport, data);
 	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 	
 	return TRUE;
@@ -165,7 +165,7 @@ xmms_cdae_close (xmms_transport_t *transport)
 	xmms_cdae_data_t *data;
 	g_return_if_fail (transport);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	if (!data)
 		return;
 
@@ -182,7 +182,7 @@ xmms_cdae_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
 	if (data->pos < data->endpos) {
@@ -202,7 +202,7 @@ xmms_cdae_seek (xmms_transport_t *transport, guint offset, gint whence)
 	gint t;
 
 	g_return_val_if_fail (transport, -1);
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
 	if (whence != XMMS_TRANSPORT_SEEK_SET) return -1;

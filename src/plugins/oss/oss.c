@@ -122,7 +122,7 @@ xmms_oss_mixer_set (xmms_output_t *output, gint left, gint right)
 
 	g_return_val_if_fail (output, FALSE);
 	
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	if (!data->have_mixer)
@@ -146,7 +146,7 @@ xmms_oss_mixer_get (xmms_output_t *output, gint *left, gint *right)
 
 	g_return_val_if_fail (output, FALSE);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	if (!data->have_mixer)
@@ -168,7 +168,7 @@ xmms_oss_buffersize_get (xmms_output_t *output)
 
 	g_return_val_if_fail (output, 0);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 
 	if(!ioctl(data->fd, SNDCTL_DSP_GETOSPACE, &buf_info)){
 		return (buf_info.fragstotal * buf_info.fragsize) - buf_info.bytes;
@@ -182,7 +182,7 @@ xmms_oss_flush (xmms_output_t *output)
 	xmms_oss_data_t *data;
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	/* reset soundcard buffer */
@@ -202,7 +202,7 @@ xmms_oss_open (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	
 	XMMS_DBG ("xmms_oss_open (%p)", output);
 
@@ -275,7 +275,7 @@ xmms_oss_new (xmms_output_t *output)
 					NULL,
 					(gpointer) output);
 
-	xmms_output_plugin_data_set (output, data);
+	xmms_output_private_data_set (output, data);
 
 	XMMS_DBG ("OpenSoundSystem initilized!");
 	
@@ -288,7 +288,7 @@ xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
 	xmms_oss_data_t *data;
 
 	g_return_val_if_fail (output, 0);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
 	/* we must first drain the buffer.. */
@@ -307,7 +307,7 @@ xmms_oss_close (xmms_output_t *output)
 	xmms_oss_data_t *data;
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	close (data->fd);
@@ -322,7 +322,7 @@ xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_return_if_fail (buffer);
 	g_return_if_fail (len > 0);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 
 	/* make sure that we don't flush buffers when we are writing */
 	g_mutex_lock (data->mutex);

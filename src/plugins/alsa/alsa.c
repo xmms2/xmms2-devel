@@ -183,7 +183,7 @@ xmms_alsa_new (xmms_output_t *output)
 									xmms_alsa_mixer_config_changed,
 									(gpointer) output);
 	
-	xmms_output_plugin_data_set (output, data); 
+	xmms_output_private_data_set (output, data); 
 	
 	return TRUE; 
 }
@@ -207,7 +207,7 @@ xmms_alsa_open (xmms_output_t *output)
 	XMMS_DBG ("XMMS_ALSA_OPEN");	
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
@@ -249,7 +249,7 @@ xmms_alsa_close (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 	
 	XMMS_DBG("XMMS_ALSA_CLOSE");
@@ -415,7 +415,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	XMMS_DBG ("XMMS_ALSA_SETUP_MIXER");
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 	
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), 
@@ -501,7 +501,7 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 	
 	g_return_if_fail (data);
 	g_return_if_fail (userdata);
-	alsa_data = xmms_output_plugin_data_get (userdata);
+	alsa_data = xmms_output_private_data_get (userdata);
 	g_return_if_fail (alsa_data);
 
 	if (alsa_data->have_mixer) {
@@ -538,7 +538,7 @@ xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
 	XMMS_DBG ("XMMS_ALSA_SAMPLERATE_SET");
 	
 	g_return_val_if_fail (output, 0);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);	
 
 	/* Do we need to change our current rate? */
@@ -558,7 +558,7 @@ xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
 							guru for meditation courses");
 			data->rate = 0;
 		}
-		xmms_output_plugin_data_set (output, data);
+		xmms_output_private_data_set (output, data);
 	}
 	return data->rate;
 }
@@ -579,7 +579,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	XMMS_DBG ("XMMS_ALSA_MIXER_SET");
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 	
 	if (!data->have_mixer) {
@@ -619,7 +619,7 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	XMMS_DBG ("XMMS_ALSA_MIXER_GET");
 
 	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	if (!data->have_mixer) {
@@ -667,7 +667,7 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 	snd_pcm_sframes_t avail;
 	
 	g_return_val_if_fail (output, 0);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
 
 	/* Get number of available frames in buffer */
@@ -706,7 +706,7 @@ xmms_alsa_flush (xmms_output_t *output)
 	XMMS_DBG ("XMMS_ALSA_FLUSH");
 	
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 	
 	err = snd_pcm_reset (data->pcm);
@@ -733,7 +733,7 @@ xmms_alsa_xrun_recover (xmms_output_t *output)
 	XMMS_DBG ("XMMS_ALSA_XRUN_RECOVER");
 	
 	g_return_if_fail (output);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN) {
@@ -762,7 +762,7 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	while (len > 0) {

@@ -52,8 +52,8 @@ typedef void (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
  * Public function prototypes
  */
 
-gpointer xmms_decoder_plugin_data_get (xmms_decoder_t *decoder);
-void xmms_decoder_plugin_data_set (xmms_decoder_t *decoder, gpointer data);
+gpointer xmms_decoder_private_data_get (xmms_decoder_t *decoder);
+void xmms_decoder_private_data_set (xmms_decoder_t *decoder, gpointer data);
 
 xmms_transport_t *xmms_decoder_transport_get (xmms_decoder_t *decoder);
 xmms_output_t *xmms_decoder_output_get (xmms_decoder_t *decoder);

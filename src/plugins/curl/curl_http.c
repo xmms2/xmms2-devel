@@ -145,7 +145,7 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void *stream)
 
 	g_return_val_if_fail (transport, 0);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 
 	g_mutex_lock (data->mutex);
 	xmms_ringbuf_wait_free (data->buffer, size*nmemb, data->mutex);
@@ -169,7 +169,7 @@ xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 	g_return_val_if_fail (transport, NULL);
 	g_return_val_if_fail (url, NULL);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, NULL);
 
 	headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
@@ -201,7 +201,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 	xmms_curl_data_t *data;
 	struct timeval timeout;
 	
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	
 	data->curl = xmms_curl_easy_new (transport, data->url, 0);
 
@@ -261,7 +261,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->stream = FALSE;
 	data->url = g_strdup (url);
 	
-	xmms_transport_plugin_data_set (transport, data);
+	xmms_transport_private_data_set (transport, data);
 	
 	g_return_val_if_fail (data->curlm, FALSE);
 
@@ -290,7 +290,7 @@ xmms_curl_close (xmms_transport_t *transport)
 
 	g_return_if_fail (transport);
 	
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
 
 	data->run = FALSE;
@@ -330,7 +330,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 
 	g_return_val_if_fail (data, -1);
 
@@ -472,7 +472,7 @@ xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 
 	g_return_val_if_fail (transport, 0);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
 	
@@ -503,7 +503,7 @@ xmms_curl_size (xmms_transport_t *transport)
 
 	g_return_val_if_fail (transport, 0);
 
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
 	if (data->stream)

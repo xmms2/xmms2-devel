@@ -109,7 +109,7 @@ xmms_file_open (xmms_transport_t *transport, const gchar *url)
 
 	data = g_new0 (xmms_file_data_t, 1);
 	data->fp = fp;
-	xmms_transport_plugin_data_set (transport, data);
+	xmms_transport_private_data_set (transport, data);
 
 	xmms_transport_mime_type_set (transport, "audio/mpeg"); /* FIXME */
 	
@@ -124,7 +124,7 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
 	ret = fread (buffer, 1, len, data->fp);
@@ -138,7 +138,7 @@ xmms_file_eof (xmms_transport_t *transport)
 	xmms_file_data_t *data;
 
 	g_return_val_if_fail (transport, -1);
-	data = xmms_transport_plugin_data_get (transport);
+	data = xmms_transport_private_data_get (transport);
 	
 	if (feof (data->fp))
 		return TRUE;

@@ -117,7 +117,7 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb, void *datasource)
 	g_return_val_if_fail (decoder, 0);
 
 	transport = xmms_decoder_transport_get (decoder);
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	g_return_val_if_fail (data, 0);
 	g_return_val_if_fail (transport, 0);
@@ -141,7 +141,7 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 
 	g_return_val_if_fail (decoder, 0);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	transport = xmms_decoder_transport_get (decoder);
 
 	if (!xmms_transport_can_seek (transport))
@@ -186,7 +186,7 @@ vorbis_callback_tell (void *datasource)
 	xmms_decoder_t *decoder = datasource;
 	xmms_vorbis_data_t *data;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	
 	if (data->tell_size) {
 		data->tell_size = FALSE;
@@ -209,7 +209,7 @@ xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 	data->callbacks.tell_func = vorbis_callback_tell;
 	data->current = -1;
 
-	xmms_decoder_plugin_data_set (decoder, data);
+	xmms_decoder_private_data_set (decoder, data);
 
 
 	return TRUE;
@@ -227,7 +227,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
 	xmms_vorbis_init (decoder);
@@ -279,7 +279,7 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 
 	g_return_val_if_fail (decoder, FALSE);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
 
@@ -318,7 +318,7 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 
 	g_return_val_if_fail (decoder, FALSE);
 	
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (decoder, FALSE);
 
 	/* this produces 16bit signed PCM littleendian PCM data */
@@ -368,7 +368,7 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	g_return_if_fail (data);
 
@@ -383,7 +383,7 @@ xmms_vorbis_destroy (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	g_return_if_fail (data);
 

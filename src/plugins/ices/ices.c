@@ -110,7 +110,7 @@ xmms_ices_thread (xmms_effect_t *effect)
 	GMutex *mutex;
 
 	g_return_val_if_fail (effect, NULL);
-	data = xmms_effect_plugin_data_get (effect);
+	data = xmms_effect_private_data_get (effect);
 	g_return_val_if_fail (data, NULL);
 
 	mutex = g_mutex_new ();
@@ -271,7 +271,7 @@ xmms_ices_init (xmms_effect_t *effect)
 
 	data->serial = 1;
 	
-	xmms_effect_plugin_data_set (effect, data);
+	xmms_effect_private_data_set (effect, data);
 
 	data->thread = g_thread_create ((GThreadFunc) xmms_ices_thread, (gpointer) effect, TRUE, NULL);
 }
@@ -293,7 +293,7 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 	gchar *vc;
 	g_return_if_fail (effect);
 
-	data = xmms_effect_plugin_data_get (effect);
+	data = xmms_effect_private_data_get (effect);
 	g_return_if_fail (data);
 
 	val = xmms_plugin_config_lookup (xmms_effect_plugin_get (effect), "encodingnombr");
@@ -337,7 +337,7 @@ xmms_ices_process (xmms_effect_t *effect, gchar *buf, guint len)
 
 	g_return_if_fail (effect);
 
-	data = xmms_effect_plugin_data_get (effect);
+	data = xmms_effect_private_data_get (effect);
 	g_return_if_fail (data);
 
 	if (data->write_buf) 

@@ -117,7 +117,7 @@ struct xmms_output_St {
  */
 
 gpointer
-xmms_output_plugin_data_get (xmms_output_t *output)
+xmms_output_private_data_get (xmms_output_t *output)
 {
 	gpointer ret;
 	g_return_val_if_fail (output, NULL);
@@ -136,7 +136,7 @@ xmms_output_plugin_get (xmms_output_t *output)
 }
 
 void
-xmms_output_plugin_data_set (xmms_output_t *output, gpointer data)
+xmms_output_private_data_set (xmms_output_t *output, gpointer data)
 {
 	output->plugin_data = data;
 }

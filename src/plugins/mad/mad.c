@@ -103,7 +103,7 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
 	mad_stream_finish (&data->stream);
@@ -122,7 +122,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 	
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	XMMS_DBG ("seek samples %d", samples);
 
@@ -177,7 +177,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint fil
 	guint bitrate=0;
 	gchar *tmp;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	XMMS_DBG ("Buffer is %d bytes", len);
 
@@ -275,7 +275,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_if_fail (transport);
@@ -378,7 +378,7 @@ xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 
 	data->entry = NULL;
 
-	xmms_decoder_plugin_data_set (decoder, data);
+	xmms_decoder_private_data_set (decoder, data);
 	
 	return TRUE;
 }
@@ -394,7 +394,7 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 	
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (decoder, FALSE);
 	
 	data->buffer_length = 0;
@@ -424,7 +424,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	mad_fixed_t *ch1, *ch2;
 	gint ret;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
@@ -436,8 +436,9 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 				 data->buffer_length = (&buffer[data->buffer_length] - nf));
 	} 
 	
-	ret = xmms_transport_read (transport, data->buffer + data->buffer_length,
-							   4096 - data->buffer_length);
+	ret = xmms_transport_read (transport, 
+				   data->buffer + data->buffer_length,
+				   4096 - data->buffer_length);
 	if (ret <= 0) {
 		XMMS_DBG ("EOF");
 		return FALSE;

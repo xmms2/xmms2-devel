@@ -104,7 +104,7 @@ xmms_sid_new (xmms_decoder_t *decoder, const gchar *mimetype)
 
 	data->wrapper=sidplay_wrapper_init();
 
-	xmms_decoder_plugin_data_set (decoder, data);
+	xmms_decoder_private_data_set (decoder, data);
 	
 	return TRUE;
 }
@@ -114,7 +114,7 @@ xmms_sid_destroy (xmms_decoder_t *decoder)
 {
 	xmms_sid_data_t *data;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
 	sidplay_wrapper_destroy(data->wrapper);
@@ -156,7 +156,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	xmms_transport_t *transport;
 	gint len,ret;
 
-	data = xmms_decoder_plugin_data_get (decoder);
+	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
 	/* We need to load whole song from transport,

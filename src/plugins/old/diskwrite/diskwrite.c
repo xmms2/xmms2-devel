@@ -96,7 +96,7 @@ xmms_diskwrite_open (xmms_output_t *output)
 	data = g_new0 (xmms_diskwrite_data_t, 1);
 	data->fp = fp;
 
-	xmms_output_plugin_data_set (output, data);
+	xmms_output_private_data_set (output, data);
 	
 	return TRUE;
 }
@@ -110,7 +110,7 @@ xmms_diskwrite_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_return_if_fail (buffer);
 	g_return_if_fail (len > 0);
 
-	data = xmms_output_plugin_data_get (output);
+	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 	XMMS_DBG ("diskwriter writes %d to %p", len, data->fp);

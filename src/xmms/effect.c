@@ -43,7 +43,7 @@ struct xmms_effect_St {
 	void (*deinit) (xmms_effect_t *);
 	void (*samplerate_change) (xmms_effect_t *, guint rate);
 	void (*run) (xmms_effect_t *, gchar *buf, guint len);
-	gpointer *plugin_data;
+	gpointer *private_data;
 	guint rate;
 	xmms_plugin_t *plugin;
 };
@@ -75,12 +75,12 @@ xmms_effect_run (xmms_effect_t *effects, gchar *buf, guint len)
  * @returns the data
  */
 gpointer
-xmms_effect_plugin_data_get (xmms_effect_t *effect)
+xmms_effect_private_data_get (xmms_effect_t *effect)
 {
 	gpointer ret;
 	g_return_val_if_fail (effect, NULL);
 
-	ret = effect->plugin_data;
+	ret = effect->private_data;
 
 	return ret;
 }
@@ -92,11 +92,11 @@ xmms_effect_plugin_data_get (xmms_effect_t *effect)
  * @param data
  */
 void
-xmms_effect_plugin_data_set (xmms_effect_t *effect, gpointer data)
+xmms_effect_private_data_set (xmms_effect_t *effect, gpointer data)
 {
 	g_return_if_fail (effect);
 
-	effect->plugin_data = data;
+	effect->private_data = data;
 }
 
 xmms_plugin_t *

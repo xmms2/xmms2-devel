@@ -73,8 +73,8 @@ typedef guint (*xmms_output_buffersize_get_method_t) (xmms_output_t *output);
  */
 
 xmms_plugin_t *xmms_output_plugin_get (xmms_output_t *output);
-gpointer xmms_output_plugin_data_get (xmms_output_t *output);
-void xmms_output_plugin_data_set (xmms_output_t *output, gpointer data);
+gpointer xmms_output_private_data_get (xmms_output_t *output);
+void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
 
 gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right);
 
