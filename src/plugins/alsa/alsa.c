@@ -430,18 +430,24 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	if (err < 0) {
 		xmms_log_error ("Attaching to mixer %s failed: %s", dev, 
 						snd_strerror(-err));
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}   
 
 	err = snd_mixer_selem_register (data->mixer, NULL, NULL);
 	if (err < 0) {
 		xmms_log_error ("Failed to register mixer: %s", snd_strerror (-err));
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}
 
 	err = snd_mixer_load (data->mixer);
 	if (err < 0) {
 		xmms_log_error ("Failed to load mixer: %s", snd_strerror (-err));
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}       
 
@@ -458,6 +464,8 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	data->mixer_elem = snd_mixer_find_selem (data->mixer, selem_id);
 	if (data->mixer_elem == NULL) {
 		xmms_log_error ("Failed to find mixer element");
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		return FALSE;
 	}
 	
@@ -466,6 +474,8 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
 	
 	if (alsa_max_vol == 0) {
+		snd_mixer_close (data->mixer);
+		data->mixer = NULL;
 		data->mixer_elem = NULL;
 		return FALSE;
 	}
