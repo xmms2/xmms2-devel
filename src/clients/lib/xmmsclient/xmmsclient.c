@@ -94,6 +94,7 @@ static DBusHandlerResult handle_callback (DBusConnection *conn, DBusMessage *msg
 static void xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal);
 static int xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method);
 static void xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type);
+static GHashTable *deserialize_mediainfo (DBusMessageIter *itr);
 
 /*
  * Public methods
@@ -958,23 +959,6 @@ xmmsc_playlist_entry_free (GHashTable *entry)
 
 	g_hash_table_destroy (entry);
 }
-
-static void
-send_mode (xmmsc_connection_t *c, guint m)
-{
-	DBusMessage *msg;
-	DBusMessageIter itr;
-	guint cserial;
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SETMODE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, m);
-	dbus_connection_send (c->conn, msg, &cserial);
-
-	dbus_message_unref (msg);
-	dbus_connection_flush (c->conn);
-}
-
 
 /**
  * @todo fix the integers here, this will b0rk b0rk if we

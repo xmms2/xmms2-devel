@@ -53,6 +53,11 @@ void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), 
 
 void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);
 
+/* sync */
+int xmmscs_playback_current_id (xmmsc_connection_t *c);
+GHashTable *xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, guint id);
+
+
 #ifdef __cplusplus
 }
 #endif
