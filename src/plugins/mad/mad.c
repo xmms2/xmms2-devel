@@ -164,7 +164,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
   */
 
 static void
-xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
+xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint filesize, xmms_playlist_entry_t *entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
@@ -173,6 +173,11 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, guint fil
 	guint fsize=0;
 	guint bitrate=0;
 	gchar *tmp;
+
+	if (filesize == -1) {
+		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "0");
+		return;
+	}
 
 	data = xmms_decoder_private_data_get (decoder);
 
