@@ -321,8 +321,9 @@ xmmsc_connect (xmmsc_connection_t *c)
 	DBusConnection *conn;
 	DBusError err;
 	DBusMessageHandler *hand;
-	dbus_error_init (&err);
 	gint i = 0;
+
+	dbus_error_init (&err);
 
 	conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
 	
