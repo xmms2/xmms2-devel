@@ -253,6 +253,18 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 		return FALSE;
 	}
 
+#ifdef WORDS_BIGENDIAN
+	if (data->channels == 1) {
+		for (i = 0; i < (ret / 2); i++) {
+			mbuf[i] = GINT16_TO_LE (mbuf[i]);
+		}
+	} else {
+		for (i = 0; i < (ret / 2); i++) {
+			sbuf[i] = GINT16_TO_LE (sbuf[i]);
+		}
+	}
+#endif
+
 	if (data->channels == 1) {
 		for (i = 0, j = 0; i < (ret / 2); i++) {
 			sbuf[j++] = mbuf[i];
