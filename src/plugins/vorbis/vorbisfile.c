@@ -44,6 +44,7 @@ typedef struct xmms_vorbis_data_St {
 	OggVorbis_File vorbisfile;
 	ov_callbacks callbacks;
 	gint current;
+	gint channels;
 	gboolean inited;
 	gboolean tell_size;
 } xmms_vorbis_data_t;
@@ -279,13 +280,17 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 
 
 	if (!data->inited) {
+		vorbis_info *vi;
 		gint ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
 		if (ret != 0) {
 			XMMS_DBG ("Got %d from ov_open_callbacks", ret);
 			return FALSE;
 		}
+		vi = ov_info (&data->vorbisfile, -1);
+		data->channels = vi->channels;
 		data->inited = TRUE;
 
+		XMMS_DBG ("channels == %d", data->channels);
 		XMMS_DBG ("Vorbis inited!!!!");
 	}
 
@@ -296,19 +301,27 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 static gboolean
 xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 {
-	gint ret;
+	gint ret = 0;
 	gint c;
 	xmms_vorbis_data_t *data;
-	gchar buffer[4096];
+	guint16 buffer[2048];
+	guint16 monobuffer[1024];
 
 	g_return_val_if_fail (decoder, FALSE);
 	
 	data = xmms_decoder_plugin_data_get (decoder);
 	g_return_val_if_fail (decoder, FALSE);
-	
+
 	/* this produces 16bit signed PCM littleendian PCM data */
-	/* How about stereo? */
-	ret = ov_read (&data->vorbisfile, buffer, 4096, 0, 2, 1, &c);
+	if (data->channels == 2) {
+		ret = ov_read (&data->vorbisfile, (gchar *)buffer, 4096, 0, 2, 1, &c);
+	} else if (data->channels == 1) {
+		ret = ov_read (&data->vorbisfile, (gchar *)monobuffer, 2048, 0, 2, 1, &c);
+	} else {
+		XMMS_DBG ("Plugin doesn't handle %d number of channels", data->channels);
+		return FALSE;
+	}
+
 	if (ret == 0) {
 		XMMS_DBG ("got ZERO from ov_read");
 		return FALSE;
@@ -322,7 +335,16 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 		data->current = c;
 	}
 
-	xmms_decoder_write (decoder, buffer, ret);
+	if (data->channels == 1) {
+		gint i;
+		gint j = 0;
+		for (i = 0; i < (ret/2); i++) {
+			buffer[j++] = monobuffer[i];
+			buffer[j++] = monobuffer[i];
+		}
+	}
+
+	xmms_decoder_write (decoder,(gchar *) buffer, ret*2);
 
 	return TRUE;
 }
