@@ -420,6 +420,10 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 		ret = read_method (transport, buffer, len, error);
 		g_mutex_lock (transport->mutex);
 
+		if (ret <= 0) {
+			xmms_error_set (&transport->status, error->code, error->message);
+		}
+
 		if (ret != -1) {
 			transport->current_position += ret;
 		}
@@ -544,6 +548,25 @@ xmms_transport_tell (xmms_transport_t *transport)
 	g_return_val_if_fail (transport, -1); 
 
 	return transport->current_position; 
+}
+
+gboolean
+xmms_transport_iseos (xmms_transport_t *transport)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (transport, FALSE);
+
+	g_mutex_lock (transport->mutex);
+
+	if (transport->buffering) {
+		ret = xmms_ringbuf_iseos (transport->buffer);
+	} else if (xmms_error_iserror (&transport->status)) {
+		ret = TRUE;
+	}
+
+	g_mutex_unlock (transport->mutex);
+	return ret;
 }
 
 /**
