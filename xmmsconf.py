@@ -32,6 +32,9 @@ def checkFlags(base_env):
 	base_env.CheckAndAddFlagsToGroup("glib", "pkg-config --libs --cflags gthread-2.0 glib-2.0 gmodule-2.0", fail=1)
 	base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1", fail=1)
 	base_env.CheckAndAddFlagsToGroup("dbusglib", "pkg-config --libs --cflags dbus-1 dbus-glib-1", fail=1)
+	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open", fail=1)
+	if base_env.HasGroup("sqlite"):
+		base_env.AddFlagsToGroup("sqlite", " -DHAVE_SQLITE");
 
 	##
 	## Check for optional libs
@@ -48,9 +51,6 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
 	base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
-	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
-	if base_env.HasGroup("sqlite"):
-		base_env.AddFlagsToGroup("sqlite", " -DHAVE_SQLITE");
 	base_env.CheckLibAndAddFlagsToGroup("math","m","cos")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "sidplay/builders/libresid-builder.la")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")

@@ -117,7 +117,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	def AddFlagsFromGroup(self, group):
 		self.ParseConfigFlagsString(self.flag_groups[group])
 
-	def CheckLibAndAddFlagsToGroup(self, group, library, function, depends=""):
+	def CheckLibAndAddFlagsToGroup(self, group, library, function, depends="", fail=0):
 		test_env = self.Copy()
 		if depends != "":
 			if not self.HasGroup(depends):
@@ -129,6 +129,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self.AddFlagsToGroup(group, '-l'+library)
 			my_conf.Finish()
 			return 1
+		elif fail != 0 :
+			print "Could not find "+group+". Aborting!"
+			sys.exit(1)
+			
 		my_conf.Finish()
 		return 0
 
