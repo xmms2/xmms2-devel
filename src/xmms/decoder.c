@@ -123,9 +123,6 @@ static void xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar 
 
 #define FRAC_BITS 16
 
-#define xmms_decoder_lock(d) XMMS_MTX_LOCK ((d)->mutex)
-#define xmms_decoder_unlock(d) XMMS_MTX_UNLOCK ((d)->mutex)
-
 /*
  * Public functions
  */
@@ -251,9 +248,9 @@ xmms_decoder_transport_get (xmms_decoder_t *decoder)
 	xmms_transport_t *ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	xmms_decoder_lock (decoder);
+	XMMS_MTX_LOCK (decoder->mutex);
 	ret = decoder->transport;
-	xmms_decoder_unlock (decoder);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	return ret;
 }
@@ -303,25 +300,6 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 
 }
 
-xmms_playlist_entry_t *
-xmms_decoder_playlist_entry_get (xmms_decoder_t *decoder)
-{
-	g_return_val_if_fail (decoder, NULL);
-	return xmms_transport_playlist_entry_get (decoder->transport);
-}
-
-static void
-xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value)
-{
-	g_return_if_fail (decoder);
-	g_return_if_fail (key);
-	g_return_if_fail (value);
-	g_return_if_fail (decoder->transport);
-
-	xmms_transport_mediainfo_property_set (decoder->transport, key, value);
-
-}
-
 
 /**
  * Read decoded data
@@ -342,23 +320,17 @@ xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len)
 	return ret;
 }
 
+/**
+  * Get the EOS state on the decoder buffer.
+  * @returns TRUE if decoder is EOS
+  */
+
 gboolean
 xmms_decoder_iseos (xmms_decoder_t *decoder)
 {
 	gboolean ret;
 	XMMS_MTX_LOCK (decoder->mutex);
 	ret = decoder->thread ? FALSE : TRUE;
-	XMMS_MTX_UNLOCK (decoder->mutex);
-	return ret;
-}
-
-guint
-xmms_decoder_data_used (xmms_decoder_t *decoder)
-{
-	guint ret;
-
-	XMMS_MTX_LOCK (decoder->mutex);
-	ret = xmms_ringbuf_bytes_used (decoder->buffer);
 	XMMS_MTX_UNLOCK (decoder->mutex);
 	return ret;
 }
@@ -385,7 +357,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 /*	xmms_visualisation_calc (decoder->vis, buf, len);*/
 
-	g_mutex_lock (decoder->mutex);
+	XMMS_MTX_LOCK (decoder->mutex);
 
 	if (decoder->interpolator_ratio != decoder->decimator_ratio) {
 		/* resampling needed */
@@ -395,7 +367,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
 	xmms_ringbuf_write (decoder->buffer, buf, len);
 
-	g_mutex_unlock (decoder->mutex);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 	
 	
 }
@@ -459,9 +431,9 @@ xmms_decoder_output_get (xmms_decoder_t *decoder)
 	xmms_output_t *ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	xmms_decoder_lock (decoder);
+	XMMS_MTX_LOCK (decoder->mutex);
 	ret = decoder->output;
-	xmms_decoder_unlock (decoder);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	return ret;
 }
@@ -475,40 +447,13 @@ xmms_decoder_plugin_get (xmms_decoder_t *decoder)
 	xmms_plugin_t *ret;
 	g_return_val_if_fail (decoder, NULL);
 
-	xmms_decoder_lock (decoder);
+	XMMS_MTX_LOCK (decoder->mutex);
 	ret = decoder->plugin;
-	xmms_decoder_unlock (decoder);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 
 	return ret;
 }
 
-#if 0
-/**
- * Creates a new decoder for the specified mimetype.
- * This call creates a decoder that can handle the specified mimetype.
- * The transport is started but not the output, which must be driven by
- * hand. @sa tar.c for example.
- */
-xmms_decoder_t *
-xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, xmms_playlist_entry_t *entry)
-{
-	xmms_decoder_t *decoder;
-
-	xmms_object_ref (entry);
-
-	decoder = xmms_decoder_new ();
-	/** @todo felhantering??? */
-	xmms_decoder_open (decoder, entry);
-	decoder->transport = transport;
-	decoder->output = output;
-	decoder->entry = entry;
-
-	XMMS_DBG ("starting threads..");
-	xmms_transport_start (transport);
-	XMMS_DBG ("transport started");
-	return decoder;
-}
-#endif
 /*
  * Private functions
  */
@@ -623,10 +568,10 @@ void
 xmms_decoder_stop (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
-	xmms_decoder_lock (decoder);
+	XMMS_MTX_LOCK (decoder->mutex);
 	decoder->running = FALSE;
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
-	xmms_decoder_unlock (decoder);
+	XMMS_MTX_UNLOCK (decoder->mutex);
 }
 
 void
@@ -811,7 +756,17 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 	return plugin;
 }
 
+static void
+xmms_decoder_mediainfo_property_set (xmms_decoder_t *decoder, gchar *key, gchar *value)
+{
+	g_return_if_fail (decoder);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
+	g_return_if_fail (decoder->transport);
 
+	xmms_transport_mediainfo_property_set (decoder->transport, key, value);
+
+}
 
 static gpointer
 xmms_decoder_thread (gpointer data)
@@ -834,14 +789,14 @@ xmms_decoder_thread (gpointer data)
 	
 	xmms_object_ref (decoder);
 
-	xmms_decoder_lock (decoder);
+	XMMS_MTX_LOCK (decoder->mutex);
 
 	while (42) {
 		gboolean ret;
 		
-		xmms_decoder_unlock (decoder);
+		XMMS_MTX_UNLOCK (decoder->mutex);
 		ret = decode_block (decoder);
-		xmms_decoder_lock (decoder);
+		XMMS_MTX_LOCK (decoder->mutex);
 		
 		if (!ret || !decoder->running) {
 			break;

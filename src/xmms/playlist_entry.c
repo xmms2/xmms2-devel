@@ -59,6 +59,11 @@ struct xmms_playlist_entry_St {
  * Public functions
  */
 
+/**
+  * Allocate a new #xmms_playlist_entry_t
+  * @param url create the playlist_entry with a set url, it could also be set NULL
+  */
+
 xmms_playlist_entry_t *
 xmms_playlist_entry_new (gchar *url)
 {
@@ -72,12 +77,20 @@ xmms_playlist_entry_new (gchar *url)
 	return ret;
 }
 
+/**
+  * Retrieve the ID number for this playlist entry.
+  */
+
 guint
 xmms_playlist_entry_id_get (xmms_playlist_entry_t *entry)
 {
 	g_return_val_if_fail (entry, 0);
 	return entry->id;
 }
+
+/**
+  * Set the ID number for this playlist entry.
+  */
 
 void
 xmms_playlist_entry_id_set (xmms_playlist_entry_t *entry, guint id)
@@ -94,7 +107,8 @@ xmms_playlist_entry_clone_foreach (gpointer key, gpointer value, gpointer udata)
 	xmms_playlist_entry_property_set (new, (gchar *)key, (gchar *)value);
 }
 
-/** Make a copy of all properties in entry to new
+/** 
+  * Make a copy of all properties in entry to new
   */
 
 void
@@ -126,6 +140,10 @@ xmms_playlist_entry_property_set (xmms_playlist_entry_t *entry, gchar *key, gcha
 	
 }
 
+/**
+  * Set the URL for this playlist entry
+  */
+
 void
 xmms_playlist_entry_url_set (xmms_playlist_entry_t *entry, gchar *url)
 {
@@ -135,13 +153,21 @@ xmms_playlist_entry_url_set (xmms_playlist_entry_t *entry, gchar *url)
 	entry->url = g_strdup (url);
 }
 
-gchar *
+/**
+  * Set the URL for this playlist entry
+  */
+
+const gchar *
 xmms_playlist_entry_url_get (const xmms_playlist_entry_t *entry)
 {
 	g_return_val_if_fail (entry, NULL);
 
 	return entry->url;
 }
+
+/**
+  * Call #func for each property in the playlist entry.
+  */
 
 void
 xmms_playlist_entry_property_foreach (xmms_playlist_entry_t *entry,
@@ -156,6 +182,10 @@ xmms_playlist_entry_property_foreach (xmms_playlist_entry_t *entry,
 
 }
 
+/**
+  * Get a value for a property in the playlist entry as a string.
+  */
+
 gchar *
 xmms_playlist_entry_property_get (const xmms_playlist_entry_t *entry, gchar *key)
 {
@@ -164,6 +194,10 @@ xmms_playlist_entry_property_get (const xmms_playlist_entry_t *entry, gchar *key
 
 	return g_hash_table_lookup (entry->properties, key);
 }
+
+/**
+  * Get a value for a property in the playlist entry as a int
+  */
 
 gint
 xmms_playlist_entry_property_get_int (const xmms_playlist_entry_t *entry, gchar *key)
@@ -234,6 +268,10 @@ xmms_playlist_entry_is_wellknown (gchar *property)
 	return FALSE;
 }
 
+/**
+  * Set the mimetype for this entry.
+  */
+
 void
 xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mimetype)
 {
@@ -244,6 +282,10 @@ xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mim
 	entry->mimetype = g_strdup (mimetype);
 
 }
+
+/**
+  * Get the mimetype for this entry
+  */
 
 const gchar *
 xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
@@ -270,6 +312,10 @@ xmms_playlist_entry_changed (xmms_playlist_t *playlist, xmms_playlist_entry_t *e
 
 }
 
+
+/**
+  * Start a new decoder for this entry.
+  */
 
 xmms_decoder_t *
 xmms_playlist_entry_start (xmms_playlist_entry_t *entry)

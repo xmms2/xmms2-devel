@@ -45,6 +45,15 @@
 #include <sqlite.h>
 #endif
 
+/** @defgroup MediaLibrary MediaLibrary
+  * @ingroup XMMSServer
+  * @brief The library.
+  *
+  * The medialibrary is responsible for holding information about your whole
+  * music collection. 
+  * @{
+  */
+
 struct xmms_medialib_St {
 	xmms_object_t object;
 
@@ -56,6 +65,8 @@ struct xmms_medialib_St {
 #endif
 };
 
+
+/** Global medialib */
 static xmms_medialib_t *medialib;
 
 
@@ -72,6 +83,7 @@ xmms_medialib_destroy (xmms_object_t *medialib)
 	g_free (m);
 }
 
+/** Initialize the medialib */
 gboolean
 xmms_medialib_init ()
 {
@@ -132,22 +144,22 @@ statuschange (xmms_object_t *object, gconstpointer data, gpointer userdata)
 		sek = xmms_playlist_entry_property_get (entry, "laststarted");
 		g_return_if_fail (sek);
 
-		g_mutex_lock (medialib->mutex);
+		XMMS_MTX_LOCK (medialib->mutex);
 		ret = xmms_sqlite_query (NULL, NULL, 
 					 "update Log set value=%d where id=%s and starttime=%s", 
 					 value, mid, sek);
 		
-		g_mutex_unlock (medialib->mutex);
+		XMMS_MTX_UNLOCK (medialib->mutex);
 	} else if (status == XMMS_OUTPUT_STATUS_PLAY) {
 		char tmp[16];
 		time_t stime = time (NULL);
 		
-		g_mutex_lock (medialib->mutex);
+		XMMS_MTX_LOCK (medialib->mutex);
 		ret = xmms_sqlite_query (NULL, NULL, 
 					 "insert into Log (id, starttime) values (%s, %u)", 
 					 mid, (guint)stime);
 
-		g_mutex_unlock (medialib->mutex);
+		XMMS_MTX_UNLOCK (medialib->mutex);
 		if (!ret) {
 			return;
 		}
@@ -167,8 +179,7 @@ xmms_medialib_output_register (xmms_output_t *output)
 }
 
 
-
-guint
+static guint
 xmms_medialib_next_id (xmms_medialib_t *medialib)
 {
 	guint id=0;
@@ -207,6 +218,13 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 	xmms_sqlite_query (NULL, NULL, "insert into Property values (%d, '%q', '%q')", medialib->id - 1, k, v);
 }
 
+/** 
+  * Takes an #xmms_playlist_entry_t and stores it
+  * to the library
+  *
+  * @todo what if the entry already exists?
+  */
+
 gboolean
 xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 {
@@ -216,7 +234,7 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 
 	g_return_val_if_fail (medialib, FALSE);
 	XMMS_DBG ("Storing entry to medialib!");
-	g_mutex_lock (medialib->mutex);
+	XMMS_MTX_LOCK (medialib->mutex);
 
 	id = xmms_medialib_next_id (medialib);
 	ret = xmms_sqlite_query (NULL, NULL,
@@ -239,7 +257,7 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 	g_free (tmp);
 				 
 	
-	g_mutex_unlock (medialib->mutex);
+	XMMS_MTX_UNLOCK (medialib->mutex);
 
 	return TRUE;
 }
@@ -265,6 +283,10 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 }
 
 /**
+ * Get a list of #xmms_playlist_entry_t 's that matches the query.
+ * To use this function you'll need to select the URL column from the
+ * database.
+ *
  * Make sure that query are correctly escaped before entering here!
  */
 GList *
@@ -284,7 +306,6 @@ xmms_medialib_select (gchar *query, xmms_error_t *error)
 	return res;
 
 }
-
 
 static int
 mediarow_callback (void *pArg, int argc, char **argv, char **columnName) 
@@ -319,6 +340,10 @@ proprow_callback (void *pArg, int argc, char **argv, char **columnName)
 }
 
 
+/**
+  * Takes a #xmms_playlist_entry_t and fills in the blanks as
+  * they are in the database.
+  */ 
 gboolean
 xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 {
@@ -327,19 +352,19 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 	g_return_val_if_fail (medialib, FALSE);
 	g_return_val_if_fail (entry, FALSE);
 
-	g_mutex_lock (medialib->mutex);
+	XMMS_MTX_LOCK (medialib->mutex);
 
 	ret = xmms_sqlite_query (mediarow_callback, (void *)entry, 
 				 "select * from Media where url = '%q' order by id limit 1", 
 				 xmms_playlist_entry_url_get (entry));
 
 	if (!ret) {
-		g_mutex_unlock (medialib->mutex);
+		XMMS_MTX_UNLOCK (medialib->mutex);
 		return FALSE;
 	}
 
 	if (!xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID)) {
-		g_mutex_unlock (medialib->mutex);
+		XMMS_MTX_UNLOCK (medialib->mutex);
 		return FALSE;
 	}
 
@@ -348,16 +373,17 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
 
 	if (!ret) {
-		g_mutex_unlock (medialib->mutex);
+		XMMS_MTX_UNLOCK (medialib->mutex);
 		return FALSE;
 	}
 
-	g_mutex_unlock (medialib->mutex);
+	XMMS_MTX_UNLOCK (medialib->mutex);
 
 
 	return TRUE;
 }
 
+/** Shutdown the medialib. */
 void
 xmms_medialib_close ()
 {
@@ -384,9 +410,12 @@ xmms_medialib_sql_get ()
 
 #endif
 
+/** @internal */
 void
 xmms_medialib_id_set (guint id)
 {
 	medialib->id = id;
 }
+
+/** @} */
 

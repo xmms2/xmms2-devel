@@ -36,6 +36,18 @@
 
 #include <glib.h>
 
+/** @file Control for the mediainfo thread */
+
+/** @defgroup MediaInfoThread MediaInfoThread
+  * @ingroup XMMSServer
+  * @brief The mediainfo thread.
+  *
+  * When a item is added to the playlist the mediainfo thread will
+  * start extracting the information from this entry and update it
+  * if additional information is found.
+  * @{
+  */
+
 struct xmms_mediainfo_thread_St {
 	GThread *thread;
 	GMutex *mutex;
@@ -49,6 +61,10 @@ struct xmms_mediainfo_thread_St {
 static gpointer xmms_mediainfo_thread_thread (gpointer data);
 static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata);
 
+
+/**
+  * Start a new mediainfo thread
+  */
 
 xmms_mediainfo_thread_t *
 xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
@@ -72,22 +88,28 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 	return mtt;
 }
 
+/**
+  * Kill the mediainfo thread
+  */
+
 void
 xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
 {
-	g_mutex_lock (mit->mutex);
+	XMMS_MTX_LOCK (mit->mutex);
 
 	while (g_queue_pop_head (mit->queue))
 		;
 	mit->running = FALSE;
 	g_cond_signal (mit->cond);
 
-	g_mutex_unlock (mit->mutex);
+	XMMS_MTX_UNLOCK (mit->mutex);
 
 	g_thread_join (mit->thread);
 
 	g_queue_free (mit->queue);
 }
+
+/** @} */
 
 static void
 xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
@@ -97,13 +119,13 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
 
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
-		g_mutex_lock (mit->mutex);
+		XMMS_MTX_LOCK (mit->mutex);
 
 		g_queue_push_tail (mit->queue, GUINT_TO_POINTER (chmsg->id));
 
 		g_cond_signal (mit->cond);
 
-		g_mutex_unlock (mit->mutex);
+		XMMS_MTX_UNLOCK (mit->mutex);
 	}
 }
 
@@ -112,7 +134,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 {
 	xmms_mediainfo_thread_t *mtt = (xmms_mediainfo_thread_t *) data;
 
-	g_mutex_lock (mtt->mutex);
+	XMMS_MTX_LOCK (mtt->mutex);
 
 	while (mtt->running) {
 		xmms_playlist_entry_t *entry;
@@ -133,7 +155,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			xmms_error_reset (&err);
 
-			g_mutex_unlock (mtt->mutex);
+			XMMS_MTX_UNLOCK (mtt->mutex);
 
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
@@ -200,14 +222,13 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_object_unref (decoder);
 				
 
-			g_mutex_lock (mtt->mutex);
+			XMMS_MTX_LOCK (mtt->mutex);
 
 		}
 
 	}
 
-	g_mutex_unlock (mtt->mutex);
+	XMMS_MTX_UNLOCK (mtt->mutex);
 
 	return NULL;
 }
-

@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #include "xmms/object.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/util.h"
@@ -34,17 +31,6 @@ typedef struct {
 	xmms_object_handler_t handler;
 	gpointer userdata;
 } xmms_object_handler_entry_t;
-
-void
-xmms_object_parent_set (xmms_object_t *object, xmms_object_t *parent)
-{
-	g_return_if_fail (object);
-	g_return_if_fail (XMMS_IS_OBJECT (object));
-
-	XMMS_MTX_LOCK (object->mutex);
-	object->parent = parent;
-	XMMS_MTX_UNLOCK (object->mutex);
-}
 
 static gboolean
 xmms_object_cleanup_foreach (gpointer key, gpointer value, gpointer data)
@@ -75,6 +61,20 @@ xmms_object_cleanup (xmms_object_t *object)
 	g_mutex_free (object->mutex);
 }
 
+
+/**
+  * Connect to a signal that is emitted by this object.
+  * You can connect many handlers to the same signal as long as
+  * the handler address is unique.
+  * 
+  * @todo fix the need for a unique handler adress?
+  *
+  * @param object the object that will emit the signal
+  * @param signal the signal to connect to @sa signal_xmms.h
+  * @param handler the Callback function to be called when signal is emited.
+  * @param userdata data to the callback function
+  */
+
 void
 xmms_object_connect (xmms_object_t *object, const gchar *signal,
 					 xmms_object_handler_t handler, gpointer userdata)
@@ -94,7 +94,6 @@ xmms_object_connect (xmms_object_t *object, const gchar *signal,
 	entry->handler = handler;
 	entry->userdata = userdata;
 
-/*	XMMS_MTX_LOCK (object->mutex);*/
 	
 	if (g_hash_table_lookup_extended (object->signals, signal, &key, &val)) {
 		list = g_list_prepend (val, entry);
@@ -103,9 +102,11 @@ xmms_object_connect (xmms_object_t *object, const gchar *signal,
 		list = g_list_prepend (list, entry);
 		g_hash_table_insert (object->signals, g_strdup (signal), list);
 	}
-
-/*	XMMS_MTX_UNLOCK (object->mutex);*/
 }
+
+/**
+  * Disconnect from a signal
+  */
 
 void
 xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
@@ -151,6 +152,14 @@ unlock:
 	XMMS_MTX_UNLOCK (object->mutex);
 }
 
+/**
+  * Emit a signal and thus call all the handlers that are connected.
+  *
+  * @param object the object to signal on.
+  * @param signal the signal to emit
+  * @param data the data that should be sent to the handler.
+  */
+
 void
 xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data)
 {
@@ -168,12 +177,6 @@ xmms_object_emit (xmms_object_t *object, const gchar *signal, gconstpointer data
 		entry = node->data;
 
 		list2 = g_list_prepend (list2, entry);
-	}
-
-	if (!list2) { /* no handler -> send to parent */
-		if (object->parent) {
-			xmms_object_emit (object->parent, signal, data);
-		}
 	}
 
 	XMMS_MTX_UNLOCK (object->mutex);
@@ -233,6 +236,12 @@ xmms_object_emit_f (xmms_object_t *object, const gchar *signal,
 }
 
 
+/**
+  * Add a method that could be called from the client API to a object.
+  *
+  * @param object the object that should have the method.
+  * @param func the function that should be called when the client lib wants it.
+  */
 void
 xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_func_t func)
 {
@@ -241,6 +250,9 @@ xmms_object_method_add (xmms_object_t *object, char *method, xmms_object_method_
 
 }
 
+/**
+  * Call a method with argument.
+  */
 
 void
 xmms_object_method_call (xmms_object_t *object, const char *method, xmms_object_method_arg_t *arg)
@@ -280,7 +292,6 @@ __int_xmms_object_new (gint size, xmms_object_destroy_func_t destfunc)
 	ret->signals = g_hash_table_new (g_str_hash, g_str_equal);
 	ret->methods = g_hash_table_new (g_str_hash, g_str_equal);
 	ret->mutex = g_mutex_new ();
-	ret->parent = NULL;
 	xmms_object_ref (ret);
 
 	return ret;

@@ -63,7 +63,7 @@ void xmms_playlist_entry_url_set (xmms_playlist_entry_t *entry, gchar *url);
 void xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, 
 				       const gchar *mimetype);
 const gchar *xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry);
-gchar *xmms_playlist_entry_url_get (const xmms_playlist_entry_t *entry);
+const gchar *xmms_playlist_entry_url_get (const xmms_playlist_entry_t *entry);
 guint xmms_playlist_entry_id_get (xmms_playlist_entry_t *entry);
 void xmms_playlist_entry_id_set (xmms_playlist_entry_t *entry, guint id);
 gchar *xmms_playlist_entry_property_get (const xmms_playlist_entry_t *entry, 

@@ -70,7 +70,7 @@ int xmmsc_watch_more (xmmsc_connection_t *conn);
 void xmmsc_watch_dispatch (xmmsc_connection_t *conn, xmmsc_watch_t *watch, unsigned int event);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif

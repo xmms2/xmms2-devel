@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #include <glib.h>
 
 #include <stdlib.h>
@@ -37,6 +34,12 @@
 
 /**
   * @defgroup Config Config
+  * @brief controls configuration for the server.
+  * 
+  * The configuration is saved and loaded from a XML file. Its splitted in a plugin part and a
+  * core part. This documents the configuration for parts inside the server. For plugin config
+  * see each server objects documentation.
+  *
   * @ingroup XMMSServer
   * @{
   */
@@ -64,6 +67,8 @@ struct xmms_config_value_St {
 	
 };
 
+
+/** @internal */
 enum xmms_config_states {
 	XMMS_CONFIG_STATE_START,
 	XMMS_CONFIG_STATE_SECTION,
@@ -71,15 +76,18 @@ enum xmms_config_states {
 	XMMS_CONFIG_STATE_VALUE,
 };
 
-/*
- * Global config
- */
+/**
+  * Global config
+  * Since there can only be one configuration per server
+  * we can have the convineance to have it global.
+  */
 
 xmms_config_t *global_config;
 
 
 void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err);
 GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
+static xmms_config_value_t *xmms_config_value_new (const gchar *name);
 
 /*
  * Config functions
@@ -197,8 +205,12 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 }
 
 
-XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 
+/**
+ * Sets a key to a new value
+ */
+
+XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 void
 xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err)
 {
@@ -219,6 +231,11 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_
 }
 
 XMMS_METHOD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
+
+/**
+  * List all keys and values in the list.
+  * @returns a GList with strings with format "key=value"
+  */
 GList *
 xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
@@ -238,6 +255,14 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 
 }
 
+
+/**
+  * Lookup configvalue and return it as a string.
+  * This is a convinient function for removing the step
+  * with #xmms_config_value_string_get
+  *
+  * @returns a char with the value. If the value is a int it will return NULL
+  */
 
 const gchar *
 xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error_t *err)
@@ -264,6 +289,12 @@ xmms_config_destroy (xmms_object_t *object)
 	/** @todo free all values? */
 	g_hash_table_destroy (config->values);
 }
+
+/**
+  * Initialize and parse the configfile.
+  * @param filename a string with the absolute path to a configfile
+  * @returns TRUE if configfile is found and correctly parsed.
+  */
 
 gboolean
 xmms_config_init (const gchar *filename)
@@ -314,6 +345,12 @@ xmms_config_init (const gchar *filename)
 	return TRUE;
 }
 
+/**
+  * Look up a configvalue from the global config
+  * @param path a configuration path. could be core.myconfig or effect.foo.myconfig
+  * @returns a newly allocated #xmms_config_value_t
+  */
+
 xmms_config_value_t *
 xmms_config_lookup (const gchar *path)
 {
@@ -353,6 +390,12 @@ common_chars (gchar *n1, gchar *n2)
 
 	return 0;
 }
+
+/**
+  * Save the global configuration to disk.
+  * @param file absolute path to configfile. This will be overwritten.
+  * @returns #TRUE on success.
+  */
 
 gboolean
 xmms_config_save (const gchar *file)
@@ -467,7 +510,7 @@ xmms_config_plugins_get (void)
  * Value manipulation 
  */
 
-xmms_config_value_t *
+static xmms_config_value_t *
 xmms_config_value_new (const gchar *name)
 {
 	xmms_config_value_t *ret;
@@ -478,6 +521,10 @@ xmms_config_value_new (const gchar *name)
 	return ret;
 }
 
+/**
+  * Returns the name of this value.
+  */
+
 const gchar *
 xmms_config_value_name_get (const xmms_config_value_t *value)
 {
@@ -485,6 +532,10 @@ xmms_config_value_name_get (const xmms_config_value_t *value)
 
 	return value->name;
 }
+
+/**
+  * Set the data of the valuestruct to a new value
+  */
 
 void
 xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
@@ -499,12 +550,20 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 			  (gpointer) data);
 }
 
+/**
+  * Return the value in the struct as a string
+  */
+
 const gchar *
 xmms_config_value_string_get (const xmms_config_value_t *val)
 {
 	g_return_val_if_fail (val, NULL);
 	return val->data;
 }
+
+/**
+  * Return the value in the struct as a int
+  */
 
 gint
 xmms_config_value_int_get (const xmms_config_value_t *val)
@@ -515,6 +574,10 @@ xmms_config_value_int_get (const xmms_config_value_t *val)
 
 	return 0;
 }
+
+/**
+  * Return the value in the struct as a float
+  */
 
 gfloat
 xmms_config_value_float_get (const xmms_config_value_t *val)
@@ -540,6 +603,17 @@ xmms_config_value_callback_set (xmms_config_value_t *val,
 			     XMMS_SIGNAL_CONFIG_VALUE_CHANGE, 
 			     (xmms_object_handler_t) cb, userdata);
 }
+
+/**
+  * Register a new configvalue. This should be called in the initcode
+  * as XMMS2 won't allow set/get on values that hasn't been registered.
+  *
+  * @param path the path in the config tree.
+  * @param default_value if the value was not found in the configfile, what should we use?
+  * @param cb a callback function that will be called if the value is changed by the client. Could be set to NULL.
+  * @param userdata data to the callback function.
+  * @returns a newly allocated #xmms_config_value_t for the registered value.
+  */
 
 xmms_config_value_t *
 xmms_config_value_register (const gchar *path, 

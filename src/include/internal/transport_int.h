@@ -27,9 +27,6 @@
 #include "xmms/transport.h"
 #include "xmms/playlist.h"
 
-#define xmms_transport_lock(t) g_mutex_lock ((t)->mutex)
-#define xmms_transport_unlock(t) g_mutex_unlock ((t)->mutex)
-
 /*
  * Private function prototypes -- do NOT use in plugins.
  */

@@ -34,7 +34,6 @@ struct xmms_object_St {
 	guint32 id;
 	GHashTable *signals;
 	GMutex *mutex;
-	struct xmms_object_St *parent;
 	GHashTable *methods;
 
 	gint ref;

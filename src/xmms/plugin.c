@@ -34,9 +34,10 @@
 extern xmms_config_t *global_config;
 
 struct xmms_plugin_St {
-	GMutex *mtx;
+	GMutex *mutex;
 	GModule *module;
 	GList *info_list;
+
 	xmms_plugin_type_t type;
 	gchar *name;
 	gchar *shortname;
@@ -58,8 +59,6 @@ static GList *xmms_plugin_list;
  * Function prototypes
  */
 
-inline static void xmms_plugin_lock (xmms_plugin_t *plugin);
-inline static void xmms_plugin_unlock (xmms_plugin_t *plugin);
 static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
 
 /*
@@ -121,7 +120,7 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 	
 	plugin = g_new0 (xmms_plugin_t, 1);
 
-	plugin->mtx = g_mutex_new ();
+	plugin->mutex = g_mutex_new ();
 	plugin->type = type;
 	plugin->name = g_strdup (name);
 	plugin->shortname = g_strdup (shortname);
@@ -151,9 +150,9 @@ xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 	g_return_if_fail (name);
 	g_return_if_fail (method);
 
-	xmms_plugin_lock (plugin);
+	XMMS_MTX_LOCK (plugin->mutex);
 	g_hash_table_insert (plugin->method_table, g_strdup (name), method);
-	xmms_plugin_unlock (plugin);
+	XMMS_MTX_UNLOCK (plugin->mutex);
 }
 
 /**
@@ -359,9 +358,9 @@ xmms_plugin_ref (xmms_plugin_t *plugin)
 {
 	g_return_if_fail (plugin);
 
-	xmms_plugin_lock (plugin);
+	XMMS_MTX_LOCK (plugin->mutex);
 	plugin->users++;
-	xmms_plugin_unlock (plugin);
+	XMMS_MTX_UNLOCK (plugin->mutex);
 }
 
 void
@@ -369,13 +368,13 @@ xmms_plugin_unref (xmms_plugin_t *plugin)
 {
 	g_return_if_fail (plugin);
 
-	xmms_plugin_lock (plugin);
+	XMMS_MTX_LOCK (plugin->mutex);
 	if (plugin->users > 0) {
 		plugin->users--;
 	} else {
 		g_warning ("Tried to unref plugin %s with 0 users", plugin->name);
 	}
-	xmms_plugin_unlock (plugin);
+	XMMS_MTX_UNLOCK (plugin->mutex);
 }
 
 GList *
@@ -421,9 +420,9 @@ xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	g_return_val_if_fail (plugin, NULL);
 	g_return_val_if_fail (method, NULL);
 
-	xmms_plugin_lock (plugin);
+	XMMS_MTX_LOCK (plugin->mutex);
 	ret = g_hash_table_lookup (plugin->method_table, method);
-	xmms_plugin_unlock (plugin);
+	XMMS_MTX_UNLOCK (plugin->mutex);
 
 	return ret;
 }
@@ -471,22 +470,6 @@ xmms_plugin_config_value_register (xmms_plugin_t *plugin,
 /*
  * Static functions
  */
-
-inline static void 
-xmms_plugin_lock (xmms_plugin_t *plugin)
-{
-	g_return_if_fail (plugin);
-
-	XMMS_MTX_LOCK (plugin->mtx);
-}
-
-inline static void 
-xmms_plugin_unlock (xmms_plugin_t *plugin)
-{
-	g_return_if_fail (plugin);
-
-	XMMS_MTX_UNLOCK (plugin->mtx);
-}
 
 static gchar *
 plugin_config_path (xmms_plugin_t *plugin, const gchar *value)

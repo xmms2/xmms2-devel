@@ -86,8 +86,6 @@ struct xmms_transport_St {
 	/** Private plugin data */
 	gpointer plugin_data;
 
-	gchar *suburl;
-
 	gint numread; /**< times we have read since the last seek / start */
 	gboolean buffering;
 
@@ -129,99 +127,6 @@ xmms_transport_stats (xmms_transport_t *transport, GList *list)
 }
 
 /**
- * Recreates the Ringbuffer with new size.
- * Danger will robinsson!!!! This will kill all data in the buffer. 
- */
-
-void
-xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size)
-{
-	g_return_if_fail (transport);
-	g_return_if_fail (size);
-
-	XMMS_MTX_LOCK (transport->mutex);
-	xmms_ringbuf_destroy (transport->buffer);
-	transport->buffer = xmms_ringbuf_new (size);
-
-	XMMS_MTX_UNLOCK (transport->mutex);
-}
-
-xmms_playlist_entry_t *
-xmms_transport_playlist_entry_get (xmms_transport_t *transport)
-{
-	g_return_val_if_fail (transport, NULL);
-	return transport->entry;
-}
-
-/**
- * Retrives a list of files from the transport plugin.
- *
- * @returns a list with xmms_transport_entry_t's
- */
-
-GList *
-xmms_transport_list (const gchar *path)
-{
-	xmms_transport_list_method_t list;
-	xmms_plugin_t *plugin;
-
-	g_return_val_if_fail (path, NULL);
-
-	plugin = xmms_transport_plugin_find (path);
-
-	if (!xmms_plugin_properties_check (plugin, XMMS_PLUGIN_PROPERTY_LIST))
-		return NULL;
-
-	g_return_val_if_fail (plugin, NULL);
-
-	list = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LIST);
-	g_return_val_if_fail (list, NULL);
-
-	return list (path);
-}
-
-/**
- * Free all resources used by a list with xmms_transport_entry_t's
- */
-
-void
-xmms_transport_list_free (GList *list)
-{
-	GList *node;
-
-	g_return_if_fail (list);
-
-	for (node = list; node; node = g_list_next (node)) {
-		xmms_transport_entry_t *e = node->data;
-		xmms_transport_entry_free (e);
-	}
-
-	g_list_free (list);
-}
-
-
-/**
- * Allocates a xmms_transport_entry_t
- * call xmms_transport_entry_free to free resources used by entry.
- *
- * @sa xmms_transport_entry_free
- */
-
-xmms_transport_entry_t *
-xmms_transport_entry_new (gchar *path, xmms_transport_entry_type_t type)
-{
-	xmms_transport_entry_t *ret;
-
-	g_return_val_if_fail (path, NULL);
-
-	ret = g_new (xmms_transport_entry_t, 1);
-	g_strlcpy (ret->path, path, 1024);
-	ret->type = type;
-
-	return ret;
-}
-
-/**
  * Returns the plugin for this transport.
  */
 
@@ -231,42 +136,6 @@ xmms_transport_plugin_get (const xmms_transport_t *transport)
 	g_return_val_if_fail (transport, NULL);
 
 	return transport->plugin;
-}
-
-/**
- * Free all resources used by entry
- */
-
-void
-xmms_transport_entry_free (xmms_transport_entry_t *entry)
-{
-	g_return_if_fail (entry);
-
-	g_free (entry);
-}
-
-/**
- * Returns type of entry
- */
-
-xmms_transport_entry_type_t
-xmms_transport_entry_type_get (xmms_transport_entry_t *entry)
-{
-	g_return_val_if_fail (entry, 0);
-
-	return entry->type;
-}
-
-/**
- * Get path of entry.
- */
-
-const gchar *
-xmms_transport_entry_path_get (xmms_transport_entry_t *entry)
-{
-	g_return_val_if_fail (entry, NULL);
-
-	return entry->path;
 }
 
 /**
@@ -296,9 +165,9 @@ xmms_transport_private_data_get (xmms_transport_t *transport)
 void
 xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 {
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	transport->plugin_data = data;
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 }
 
 /**
@@ -340,13 +209,13 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 	g_return_if_fail (transport);
 	g_return_if_fail (mimetype);
 
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	
 	if (transport->mimetype)
 		g_free (transport->mimetype);
 	transport->mimetype = g_strdup (mimetype);
 
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 	
 	if (transport->running)
 		xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
@@ -423,9 +292,9 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	ret =  xmms_playlist_entry_url_get (transport->entry);
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return ret;
 }
@@ -454,22 +323,6 @@ xmms_transport_mediainfo_property_set (xmms_transport_t *transport, gchar *key, 
 }
 
 /**
- * Gets the suburl from the transport.
- */
-const gchar *
-xmms_transport_suburl_get (const xmms_transport_t *const transport)
-{
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
-
-	xmms_transport_lock (transport);
-	ret =  transport->suburl;
-	xmms_transport_unlock (transport);
-
-	return ret;
-}
-
-/**
  * Gets the current mimetype
  * This can return NULL if plugin has not
  * called xmms_transport_mimetype_set()
@@ -480,9 +333,9 @@ xmms_transport_mimetype_get (xmms_transport_t *transport)
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	ret =  transport->mimetype;
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return ret;
 }
@@ -497,13 +350,13 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 	const gchar *ret;
 	g_return_val_if_fail (transport, NULL);
 
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	if (!transport->mimetype) {
 		XMMS_DBG ("Waiting for mime_cond");
 		g_cond_wait (transport->mime_cond, transport->mutex);
 	}
 	ret = transport->mimetype;
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return ret;
 }
@@ -516,10 +369,10 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 void
 xmms_transport_buffering_start (xmms_transport_t *transport)
 {
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	transport->buffering = TRUE;
 	g_cond_signal (transport->cond);
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 }
 
 /**
@@ -544,7 +397,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (len > 0, -1);
 
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 
 	if (transport->running && !transport->buffering && transport->numread++ > 1) {
 		XMMS_DBG ("Let's start buffering");
@@ -557,7 +410,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		
 		XMMS_DBG ("Doing unbuffered read...");
 
-		xmms_transport_unlock (transport);
+		XMMS_MTX_UNLOCK (transport->mutex);
 		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 		if (read_method) {
 			gint ret = read_method (transport, buffer, len);
@@ -584,7 +437,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	transport->total_bytes += ret;
 	transport->current_position += ret; 
 	
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return ret;
 }
@@ -614,10 +467,10 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	g_return_val_if_fail (transport, FALSE);
 
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 
 	if (!xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK)) {
-		xmms_transport_unlock (transport);
+		XMMS_MTX_UNLOCK (transport->mutex);
 		return -1;
 	}
 	
@@ -638,7 +491,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	if (ret != -1)
 		transport->current_position = ret; 
 
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	return ret;
 }
@@ -714,33 +567,8 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 
 	url = xmms_playlist_entry_url_get (transport->entry);
 
-	transport->suburl = url + strlen(url); /* empty string */
-
-	if (xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES)) {
-		
-		while (!init_method (transport, url)) {
-
-			while (*--transport->suburl != '/' ){
-				if (*transport->suburl == 0){ /* restore */
-					*transport->suburl = '/';
-				}
-				if (transport->suburl <= url) {
-					return FALSE;
-				}
-			}
-			*transport->suburl = 0;
-			transport->suburl++;
-
-			if (!g_file_test (url, G_FILE_TEST_IS_DIR))
-				return FALSE;
-
-			XMMS_DBG ("Trying %s  (suburl: %s)",url,transport->suburl);
-		}
-
-	} else {
-		if (!init_method (transport, url)) {
-			return FALSE;
-		}
+	if (!init_method (transport, url)) {
+		return FALSE;
 	}
 
 	if (lmod_method) {
@@ -753,7 +581,6 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 	}
 
 
-	transport->suburl = g_strdup (transport->suburl);
 	return TRUE;
 }
 
@@ -791,12 +618,12 @@ xmms_transport_close (xmms_transport_t *transport)
 	g_return_if_fail (transport);
 
 	if (transport->thread) {
-		xmms_transport_lock (transport);
+		XMMS_MTX_LOCK (transport->mutex);
 		transport->running = FALSE;
 		xmms_ringbuf_set_eos (transport->buffer, TRUE);
 		XMMS_DBG("Waking transport");
 		g_cond_signal (transport->cond);
-		xmms_transport_unlock (transport);
+		XMMS_MTX_UNLOCK (transport->mutex);
 		g_thread_join (transport->thread);
 	}
 }
@@ -824,8 +651,6 @@ xmms_transport_destroy (xmms_object_t *object)
 
 	if (transport->mimetype)
 		g_free (transport->mimetype);
-	if (transport->suburl) 
-		g_free (transport->suburl);
 }
 
 /**
@@ -884,7 +709,7 @@ xmms_transport_thread (gpointer data)
 	xmms_object_ref (transport->entry);
 
 	xmms_object_ref (transport);
-	xmms_transport_lock (transport);
+	XMMS_MTX_LOCK (transport->mutex);
 	while (transport->running) {
 
 		if (!transport->buffering) {
@@ -893,9 +718,9 @@ xmms_transport_thread (gpointer data)
 			
 		}
 
-		xmms_transport_unlock (transport);
+		XMMS_MTX_UNLOCK (transport->mutex);
 		ret = read_method (transport, buffer, sizeof(buffer));
-		xmms_transport_lock (transport);
+		XMMS_MTX_LOCK (transport->mutex);
 
 		if (!transport->buffering)
 			continue;
@@ -913,7 +738,7 @@ xmms_transport_thread (gpointer data)
 			}
 		}
 	}
-	xmms_transport_unlock (transport);
+	XMMS_MTX_UNLOCK (transport->mutex);
 
 	xmms_object_unref (transport->entry);
 

@@ -34,7 +34,6 @@ xmms_config_value_t *xmms_config_lookup (const gchar *path);
 gboolean xmms_config_save (const gchar *file);
 GList *xmms_config_plugins_get (void);
 
-xmms_config_value_t *xmms_config_value_new (const gchar *name);
 void xmms_config_value_free (xmms_config_value_t *value);
 void xmms_config_value_data_set (xmms_config_value_t *val, gchar *data);
 const gchar *xmms_config_value_string_get (const xmms_config_value_t *val);
