@@ -64,6 +64,7 @@ xmmsc_ipc_init (void)
 void
 xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (void *), void *userdata)
 {
+	x_return_if_fail (ipc);
 	ipc->disconnect_callback = disconnect_callback;
 	ipc->disconnect_data = userdata;
 }
@@ -147,7 +148,7 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 		if (ret == -1) {
 			break;
 		} else if (ret == 0) {
-			printf ("Socket disconnected!\n");
+			xmmsc_ipc_disconnect (ipc);
 			break;
 		}
 		xmmsc_ipc_lock (ipc);
@@ -250,9 +251,9 @@ void
 xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 {
 	ipc->disconnect = TRUE;
-	if (ipc->disconnect_callback)
+	if (ipc->disconnect_callback) {
 		ipc->disconnect_callback (ipc->disconnect_data);
-	/* Maybe we should have a callback here ? */
+	}
 }
 
 gpointer
