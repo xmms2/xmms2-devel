@@ -18,4 +18,5 @@ env.AddFlagsFromGroup("xml2")
 #env.Program(target = "xmms2d" , source = xmms2d_sources )
 #env.Install("/usr/local/bin","xmms2d")
 
+env.XmmsConfig("xmms2.conf")
 env.XmmsProgram("xmms2d", xmms2d_sources)

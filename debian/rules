@@ -30,6 +30,7 @@ binary-arch: checkroot build
 	scons PREFIX=/usr SYSCONFDIR=/etc/xmms INSTALLDIR="`pwd`/debian/tmp/"
 	rm -f debian/tmp/usr/lib/xmms/*.la
 	rm -f debian/tmp/usr/lib/xmms/*.a
+	find debian/tmp -name '.sconsign' |xargs rm
 # Must have debmake installed for this to work. Otherwise please copy
 # /usr/bin/debstd into the debian directory and change debstd to debian/debstd
 	debstd -u ChangeLog NEWS README 
