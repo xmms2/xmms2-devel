@@ -958,15 +958,20 @@ xmms_decoder_thread (gpointer data)
 			break;
 		}
 	}
-	g_mutex_unlock (decoder->mutex);
 
 	decoder->thread = NULL;
 	XMMS_DBG ("Decoder thread quitting");
 
-	xmms_object_emit_f (XMMS_OBJECT (decoder),
-			    XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
-			    XMMS_OBJECT_CMD_ARG_NONE,
-			    NULL);
+	if (decoder->running) {
+		/* This means that we eofed... */
+		XMMS_DBG ("EOF!");
+		xmms_object_emit_f (XMMS_OBJECT (decoder),
+				XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
+				XMMS_OBJECT_CMD_ARG_NONE,
+				NULL);
+	}
+
+	g_mutex_unlock (decoder->mutex);
 
 	xmms_object_unref (decoder);
 

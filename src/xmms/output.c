@@ -238,6 +238,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		if (output->is_paused)
 			xmms_output_resume (output);
 	} else {
+		XMMS_DBG ("starting new output thread!");
 		output->running = TRUE;
 		if (output->type == XMMS_OUTPUT_TYPE_WR) {
 			xmms_object_ref (output); /* thread takes one ref */
@@ -254,6 +255,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 					     XMMS_PLUGIN_METHOD_STATUS);
 
 		st (output, XMMS_OUTPUT_STATUS_PLAY); 
+		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PLAY);
 	}
 
 	g_mutex_unlock (output->mutex);
@@ -278,13 +280,13 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 					     XMMS_PLUGIN_METHOD_STATUS);
 
 		st (output, XMMS_OUTPUT_STATUS_STOP); 
+		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 		if (output->decoder) {
 			xmms_decoder_stop (output->decoder);
 			xmms_object_unref (output->decoder);
 			output->decoder = NULL;
 			output->playing_entry = NULL;
 		}
-		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 	}
 
 	g_mutex_unlock (output->mutex);
@@ -642,11 +644,6 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	
 	if (!output->decoder) {
 		
-		if (!output->type == XMMS_OUTPUT_TYPE_FILL && 
-		    g_queue_is_empty (output->decoder_list)) {
-			xmms_output_decoder_start (output);
-		}
-
 		XMMS_DBG ("Switching decoder!");
 		output->decoder = g_queue_pop_head (output->decoder_list);
 		if (!output->decoder) {
@@ -731,6 +728,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 	entry = xmms_playlist_advance (output->playlist);
 
 	if (!entry) {
+		XMMS_DBG ("got NULL from advance!");
 		return FALSE;
 	}
 
@@ -780,9 +778,12 @@ xmms_output_thread (gpointer data)
 		if (!output->decoder && g_queue_is_empty (output->decoder_list)) {
 			xmms_output_decoder_start (output);
 		}
+  
+		if (!output->decoder && g_queue_is_empty (output->decoder_list)) {
+			break;
+		}
 
-		if (output->is_paused || 
-		    (!output->decoder && g_queue_is_empty (output->decoder_list))) {
+		if (output->is_paused) {
 			XMMS_DBG ("output is waiting!");
 			if (output->is_paused) {
 				xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PAUSE);
@@ -817,13 +818,15 @@ xmms_output_thread (gpointer data)
 	
 
 	if (output->decoder) {
+		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 		xmms_decoder_stop (output->decoder);
 		xmms_object_unref (XMMS_OBJECT (output->decoder));
-		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 		output->played = 0;
 		output->decoder = NULL;
 	}
 
+	output->running = FALSE;
+	
 	g_mutex_unlock (output->mutex);
 
 	xmms_output_close (output);

@@ -113,6 +113,8 @@ cdef extern from "xmms/xmmsclient-glib.h" :
 #####################################################################
 
 from select import select
+from os import write
+import os
 
 cdef foreach_hash (signed char *key, signed char *value, udata) :
 	udata[key] = value
@@ -348,6 +350,8 @@ cdef class XMMS :
 	this class may be used to control and interact with XMMS2.
 	"""
 	cdef xmmsc_connection_t *conn
+	cdef object loop
+	cdef object wakeup
 
 	def __new__ (self, clientname = "Python XMMSClient") :
 		"""
@@ -355,6 +359,11 @@ cdef class XMMS :
 		involving the daemon are done via this connection.
 		"""
 		self.conn = xmmsc_init (clientname)
+
+	def __dealloc__ (self) :
+		""" destroys it all! """
+
+		xmmsc_deinit (self.conn)
 
 	def GLibLoop (self) :
 		"""
@@ -367,15 +376,28 @@ cdef class XMMS :
 
 		g_main_loop_run (ml)
 
+	def ExitPythonLoop (self) :
+		""" Exits from the PythonLoop() call """
+		self.loop = False
+		write (self.wakeup, "42")
+
 	def PythonLoop (self) :
 		"""
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up.
 		"""
 		fd = xmmsc_ipc_fd_get (self.conn.ipc)
-		while True :
-			(i, o, e) = select ([fd], [], [])
-			xmmsc_ipc_io_in_callback (self.conn.ipc)
+		(r, w) = os.pipe ()
+
+		self.loop = True
+		self.wakeup = w
+
+		while self.loop :
+
+			(i, o, e) = select ([fd, r], [], [])
+
+			if i[0] == fd :
+				xmmsc_ipc_io_in_callback (self.conn.ipc)
 
 	def inIO (self) :
 		"""
