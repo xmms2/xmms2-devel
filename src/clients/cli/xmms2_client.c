@@ -24,15 +24,20 @@ void
 print_mediainfo (GHashTable *entry)
 {
 	/*entry = xmmsc_playlist_get_mediainfo (conn, id);*/
+	gchar *url;
 
 	if (!entry)
 		return;
 
-	printf ("URI:    %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
-	printf ("Artist: %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
+	url = (gchar *)g_hash_table_lookup (entry, "uri");
+	url = xmmsc_decode_path (url);
+	printf ("URI:    %s\n", url);
+	g_free (url);
+	printf ("Artist:  %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
 	printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
-	printf ("Title:  %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
+	printf ("Title:   %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
 	printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "date"));
+	printf ("Bitrate: %s\n", (gchar *)g_hash_table_lookup (entry, "bitrate"));
 
 }
 
@@ -345,6 +350,11 @@ main(int argc, char **argv)
 			exit(0);
 		} else if ( streq (argv[1], "config") ) {
 			gint id;
+
+			if (argc < 4) {
+				printf ("usage: config option value\n");
+				exit (0);
+			}
 
 			xmmsc_configval_set (c, argv[2], argv[3]);
 
