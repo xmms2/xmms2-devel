@@ -192,8 +192,8 @@ xmms_ipc_client_source_callback (GSource *source, xmms_ipc_client_t *client)
 			gchar buf[4096];
 			gint ret;
 
-			len = MIN (xmms_ringbuf_bytes_used (client->write_buffer), 4096);
 			g_mutex_lock (client->mutex);
+			len = MIN (xmms_ringbuf_bytes_used (client->write_buffer), 4096);
 			ret = xmms_ringbuf_read (client->write_buffer, buf, len);
 			g_mutex_unlock (client->mutex);
 			xmms_ipc_transport_write (client->transport, buf, ret);

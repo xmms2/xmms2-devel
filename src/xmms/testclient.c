@@ -29,6 +29,7 @@ int main (int argc, char **argv)
 	xmms_ipc_transport_t *transport;
 	xmms_ipc_msg_t *msg;
 	gint fd;
+	gint i;
 
 	if (argc < 1)
 		return 0;
@@ -44,9 +45,13 @@ int main (int argc, char **argv)
 	fd = xmms_ipc_transport_fd_get (transport);
 
 	msg = xmms_ipc_msg_string_new (42, "korv!");
+	
+	i = 5;
 
-	xmms_ipc_transport_write (transport, "korv", 4);
-	if (!xmms_ipc_msg_write_fd (fd, msg))
-		printf ("Korv?!");
-	sleep (42);
+	while (i) {
+		if (!xmms_ipc_msg_write_fd (fd, msg))
+			printf ("Korv?!");
+		i--;
+	}
+	sleep (1);
 }

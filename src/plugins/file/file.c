@@ -165,6 +165,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	if (!data->mime) {
 		g_free (data->urlptr);
 		g_free (data);
+		close (fd);
 		return FALSE;
 	}
 	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
