@@ -1,31 +1,34 @@
 #include "xmms/plugin.h"
+#include "xmms/decoder.h"
+#include "xmms/util.h"
 #include "mad_misc.h"
 #include <mad.h>
 
 #include <glib.h>
+#include <string.h>
+#include <unistd.h>
 
 /*
- * definitions
+ * Type definitions
  */
 
-typedef struct xmms_plugin_data_St {
-	void *data;
-} xmms_plugin_data_t;
 
 typedef struct xmms_mad_data_St {
 	struct mad_stream stream;
 	struct mad_frame frame;
 	struct mad_synth synth;
+
+	gchar buffer[4096];
+	guint buffer_length;
 } xmms_mad_data_t;
 
-
+/*
+ * Function prototypes
+ */
 
 static gboolean xmms_mad_can_handle (const gchar *mimetype);
-static xmms_plugin_data_t* xmms_mad_init ();
-static gchar *xmms_mad_decode_chunk (xmms_plugin_data_t *data, gint chunk_len, gchar *chunk);
-static gchar *xmms_mad_decode_flush ();
-static void xmms_mad_deinit ();
-
+static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport);
 
 /*
  * Plugin header
@@ -34,17 +37,14 @@ static void xmms_mad_deinit ();
 xmms_plugin_t *
 xmms_plugin_get (void)
 {
-
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "MAD decoder " VERSION,
 			"MPEG Layer 1/2/3 decoder");
 
 	xmms_plugin_method_add (plugin, "can_handle", xmms_mad_can_handle);
-	xmms_plugin_method_add (plugin, "init", xmms_mad_init);
-	xmms_plugin_method_add (plugin, "decode_chunk", xmms_mad_decode_chunk);
-	xmms_plugin_method_add (plugin, "decode_flush", xmms_mad_decode_flush);
-	xmms_plugin_method_add (plugin, "deinit", xmms_mad_deinit);
+	xmms_plugin_method_add (plugin, "new", xmms_mad_new);
+	xmms_plugin_method_add (plugin, "decode_block", xmms_mad_decode_block);
 
 	return plugin;
 }
@@ -52,76 +52,77 @@ xmms_plugin_get (void)
 static gboolean
 xmms_mad_can_handle (const gchar *mimetype)
 {
-
-	if ((g_strncasecmp (mimetype, "audio/mpeg", 10) == 0))
+	g_return_val_if_fail (mimetype, FALSE);
+	
+	if ((g_strcasecmp (mimetype, "audio/mpeg") == 0))
 		return TRUE;
 
 	return FALSE;
 
 }
 
-static xmms_plugin_data_t* 
-xmms_mad_init (/*här får man nog något bra*/)
+static gboolean
+xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 {
-	xmms_mad_data_t *mad_data;
-	xmms_plugin_data_t *data;
+	xmms_mad_data_t *data;
 
-	mad_data = g_new0 (xmms_mad_data_t, 1);
+	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (mimetype, FALSE);
 
-	mad_stream_init (&mad_data->stream);
-	mad_frame_init (&mad_data->frame);
-	mad_synth_init (&mad_data->synth);
+	data = g_new0 (xmms_mad_data_t, 1);
 
-	data = g_new0 (xmms_plugin_data_t, 1);
-	data->data = (void*) mad_data;
+	mad_stream_init (&data->stream);
+	mad_frame_init (&data->frame);
+	mad_synth_init (&data->synth);
 
-	return data;
-
-}
-
-static gchar *
-xmms_mad_decode_chunk (xmms_plugin_data_t *data, gint chunk_len, gchar *chunk)
-{
-	xmms_mad_data_t *mad_data = (xmms_mad_data_t *)data->data;
-	gchar out[576*4];
-	mad_fixed_t ch1, ch2;
-	mad_fixed_t o_len, clipping;
-	unsigned long clipped;
-
-	mad_stream_buffer (&mad_data->stream, chunk, chunk_len);
-
-	if (mad_frame_decode (&mad_data->frame, &mad_data->stream) == -1) {
-		if (!MAD_RECOVERABLE (mad_data->stream.error))
-			return NULL;
-
-		g_warning ("Error %d in frame", mad_data->stream.error);
-	}
-
-	mad_synth_frame (&mad_data->synth, &mad_data->frame);
+	xmms_decoder_plugin_data_set (decoder, data);
 	
-	ch1 = mad_data->synth.pcm.samples[0];
-	ch2 = mad_data->synth.pcm.samples[1];
-
-	o_len += pack_pcm (out, mad_data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
-
-	return out;
+	return TRUE;
 }
 
-static gchar *
-xmms_mad_decode_flush ()
+static gboolean
+xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport)
 {
+	xmms_mad_data_t *data;
+	gchar out[1152 * 4];
+	mad_fixed_t *ch1, *ch2;
+	mad_fixed_t clipping;
+	gulong clipped;
+	gint ret;
 
-	gchar *out;
+	data = xmms_decoder_plugin_data_get (decoder);
 
-	return out;
-
-}
-
-static void
-xmms_mad_deinit ()
-{
-
-	/*free som fan*/
-
+	if (data->stream.next_frame) {
+		gchar *buffer = data->buffer, *nf = data->stream.next_frame;
+		memmove (data->buffer, data->stream.next_frame,
+				 data->buffer_length = (&buffer[data->buffer_length] - nf));
+	} else {
+		data->buffer_length = 0;
+	}
+	
+	ret = xmms_transport_read (transport, data->buffer + data->buffer_length,
+						 4096 - data->buffer_length);
+	if (ret > 0)
+		data->buffer_length += ret;
+	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
+		
+	for (;;) {
+		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
+			if (!MAD_RECOVERABLE (data->stream.error))
+				break;
+			
+			g_warning ("Error %d in frame", data->stream.error);
+		}
+		
+		mad_synth_frame (&data->synth, &data->frame);
+		
+		ch1 = data->synth.pcm.samples[0];
+		ch2 = data->synth.pcm.samples[1];
+		
+		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
+		write (1, out, ret);
+	}
+	
+	return TRUE;
 }
 

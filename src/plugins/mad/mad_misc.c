@@ -83,74 +83,76 @@ signed long linear_dither(unsigned int bits, mad_fixed_t sample,
   return output >> scalebits;
 }
 
+#include <stdio.h>
+
 unsigned int 
 pack_pcm(unsigned char *data, unsigned int nsamples,
-      mad_fixed_t const *left, mad_fixed_t const *right,
-      int resolution, unsigned long *clipped,
-      mad_fixed_t *clipping)
+		 mad_fixed_t const *left, mad_fixed_t const *right,
+		 int resolution, unsigned long *clipped,
+		 mad_fixed_t *clipping)
 {
-  static struct dither left_dither, right_dither;
-  unsigned char const *start;
-  register signed long sample0, sample1;
-  int effective, bytes;
+	static struct dither left_dither, right_dither;
+	unsigned char const *start;
+	register signed long sample0, sample1;
+	int effective, bytes;
 
-  start     = data;
-  effective = (resolution > 24) ? 24 : resolution;
-  bytes     = resolution / 8;
+	start     = data;
+	effective = (resolution > 24) ? 24 : resolution;
+	bytes     = resolution / 8;
 
-  if (right) {  /* stereo */
-    while (nsamples--) {
-      sample0 = linear_dither(effective, *left++, &left_dither,
-			      clipped, clipping);
-      sample1 = linear_dither(effective, *right++, &right_dither,
-			      clipped, clipping);
+	if (right) {  /* stereo */
+		while (nsamples--) {
+			sample0 = linear_dither(effective, *left++, &left_dither,
+									clipped, clipping);
+			sample1 = linear_dither(effective, *right++, &right_dither,
+									clipped, clipping);
 
-      switch (resolution) {
-      case 8:
-	data[0] = sample0 ^ 0x80;
-	data[1] = sample1 ^ 0x80;
-	break;
+			switch (resolution) {
+				case 8:
+					data[0] = sample0 ^ 0x80;
+					data[1] = sample1 ^ 0x80;
+					break;
 
-      case 32:
-	sample0 <<= 8;
-	sample1 <<= 8;
-	data[        3] = sample0 >> 24;
-	data[bytes + 3] = sample1 >> 24;
-      case 24:
-	data[        2] = sample0 >> 16;
-	data[bytes + 2] = sample1 >> 16;
-      case 16:
-	data[        1] = sample0 >>  8;
-	data[bytes + 1] = sample1 >>  8;
-	data[        0] = sample0 >>  0;
-	data[bytes + 0] = sample1 >>  0;
-      }
+				case 32:
+					sample0 <<= 8;
+					sample1 <<= 8;
+					data[        3] = sample0 >> 24;
+					data[bytes + 3] = sample1 >> 24;
+				case 24:
+					data[        2] = sample0 >> 16;
+					data[bytes + 2] = sample1 >> 16;
+				case 16:
+					data[        1] = sample0 >>  8;
+					data[bytes + 1] = sample1 >>  8;
+					data[        0] = sample0 >>  0;
+					data[bytes + 0] = sample1 >>  0;
+			}
 
-      data += bytes * 2;
-    }
-  }
-  else {  /* mono */
-    while (nsamples--) {
-      sample0 = linear_dither(effective, *left++, &left_dither,
-			      clipped, clipping);
+			data += bytes * 2;
+		}
+	}
+	else {  /* mono */
+		while (nsamples--) {
+			sample0 = linear_dither(effective, *left++, &left_dither,
+									clipped, clipping);
 
-      switch (resolution) {
-      case 8:
-	data[0] = sample0 ^ 0x80;
-	break;
+			switch (resolution) {
+				case 8:
+					data[0] = sample0 ^ 0x80;
+					break;
 
-      case 32:
-	sample0 <<= 8;
-	data[3] = sample0 >> 24;
-      case 24:
-	data[2] = sample0 >> 16;
-      case 16:
-	data[1] = sample0 >>  8;
-	data[0] = sample0 >>  0;
-      }
-      data += bytes;
-    }
-  }
+				case 32:
+					sample0 <<= 8;
+					data[3] = sample0 >> 24;
+				case 24:
+					data[2] = sample0 >> 16;
+				case 16:
+					data[1] = sample0 >>  8;
+					data[0] = sample0 >>  0;
+			}
+			data += bytes;
+		}
+	}
 
-  return data - start;
+	return data - start;
 }

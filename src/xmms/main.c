@@ -2,19 +2,19 @@
 
 #include "plugin.h"
 #include "transport.h"
+#include "decoder.h"
 #include "config.h"
 #include "playlist.h"
+#include "util.h"
 
+#include <stdlib.h>
 
 int
 main (int argc, char **argv)
 {
-#if 0
 	xmms_transport_t *transport;
-	xmms_config_data_t *cdata;
-	xmms_config_value_t *val;
-	xmms_config_value_t *n;
-
+	xmms_decoder_t *decoder;
+	const gchar *mime;
 	
 	if (argc < 2)
 		exit (1);
@@ -24,18 +24,22 @@ main (int argc, char **argv)
 		return 1;
 
 	transport = xmms_transport_open (argv[1]);
+	mime = xmms_transport_mime_type_get (transport);
+	if (mime) {
+		XMMS_DBG ("mime-type: %s", mime);
+		decoder = xmms_decoder_new (mime);
+		if (!decoder)
+			return 1;
+		xmms_decoder_start (decoder, transport);
+	}
+
+	xmms_transport_start (transport);
+
+
+	for (;;)
+		sleep (1);
 	
-	cdata = xmms_config_init ("xmms2.conf");
-
-	if (!cdata)
-		return 1;
-
-	val = g_hash_table_lookup (cdata->decoder, "maddecoder");
-
-	printf ("%s\n", xmms_config_value_as_string (xmms_config_value_property_lookup (val, "rate")));
-	
-	xmms_config_save_to_file (cdata, "xmms2.conf");
-#endif
+#if 0
 
 	xmms_playlist_t *pl;
 	xmms_playlist_entry_t *entry;
@@ -51,6 +55,6 @@ main (int argc, char **argv)
 	xmms_playlist_add (pl, entry, XMMS_PL_APPEND);
 
 	xmms_playlist_close ();
-
+#endif
 	return 0;
 }

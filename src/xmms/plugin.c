@@ -128,6 +128,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 		XMMS_DBG ("Trying to load file: %s", path);
 		module = g_module_open (path, 0);
 		if (!module) {
+			XMMS_DBG ("%s", g_module_error ());
 			g_free (path);
 			continue;
 		}
