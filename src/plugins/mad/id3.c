@@ -146,6 +146,22 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
 		break;
 	}
+	case quad2long('T','X','X','X'): {
+		/* User defined, lets search for musicbrainz */
+		guint32 l2 = strlen (buf);
+		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
+			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, buf+l2+1, len-l2-1);
+		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
+			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, buf+l2+1, len-l2-1);
+		break;
+
+	}
+	case quad2long('U','F','I','D'): {
+		guint32 l2 = strlen (buf);
+		if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
+			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, buf+l2+1, len-l2-1);
+		break;
+	}
 	case quad2long('T','B','P',0):
 	case quad2long('T','B','P','M'): {
 		add_to_entry(entry, "bpm", buf, len);
@@ -219,7 +235,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 			
 			flags = buf[8] | buf[9];
 
-			if (buf[0] == 'T') {
+			if (buf[0] == 'T' || buf[0] == 'U') {
 				xmms_mad_handle_id3v2_text (type, buf + 10, flags, size, entry);
 			}
 			
