@@ -270,6 +270,7 @@ cdef class XMMSResult :
 				hash = {}
 				x_hash_foreach (<x_hash_t *>n.data, foreach_hash, hash)
 				ret.append (hash)
+				n = n.next
 			return ret
 		else :
 			raise ValueError
