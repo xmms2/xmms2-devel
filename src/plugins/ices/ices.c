@@ -32,7 +32,7 @@
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/signal_xmms.h"
-#include "xmms/internal/output_int.h"
+#include "internal/output_int.h"
 
 #include <math.h>
 #include <glib.h>
