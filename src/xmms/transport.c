@@ -284,6 +284,7 @@ xmms_transport_open (xmms_transport_t *transport, xmms_playlist_entry_t *entry)
 	if (!transport->plugin)
 		return FALSE;
 	transport->entry = entry;
+	xmms_object_ref (transport->entry);
 	
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (transport->plugin));
 
@@ -718,6 +719,7 @@ xmms_transport_destroy (xmms_object_t *object)
 		close_method (transport);
 
 	xmms_object_unref (transport->plugin);
+	xmms_object_unref (transport->entry);
 
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->mime_cond);
@@ -786,8 +788,6 @@ xmms_transport_thread (gpointer data)
 
 	xmms_error_reset (&error);
 
-	xmms_object_ref (transport->entry);
-
 	xmms_object_ref (transport);
 	g_mutex_lock (transport->mutex);
 	while (transport->running) {
@@ -814,8 +814,6 @@ xmms_transport_thread (gpointer data)
 		}
 	}
 	g_mutex_unlock (transport->mutex);
-
-	xmms_object_unref (transport->entry);
 
 	XMMS_DBG ("xmms_transport_thread: cleaning up");
 	
