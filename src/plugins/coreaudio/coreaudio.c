@@ -177,9 +177,9 @@ xmms_ca_render_cb (void *inRefCon,
 		size = ioData->mBuffers[b].mDataByteSize;
 
 		ret = xmms_output_read (output, (gchar *)ioData->mBuffers[b].mData, size);
-		if (ret == -1) {
-			return eofErr;
-		}
+		if (ret == -1)
+			ret = 0;
+
 		if (ret < size) 
 			memset (ioData->mBuffers[b].mData+ret, 0, size - ret);
 	}
