@@ -33,19 +33,6 @@ static GHashTable *exported_objects = NULL;
 
 extern xmms_core_t *core;
 
-/** Ids in signal mask */
-typedef enum {
-	XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID = 1 << 0,
-	XMMS_SIGNAL_MASK_PLAYBACK_PLAYTIME = 1 << 1,
-	XMMS_SIGNAL_MASK_PLAYBACK_STOP = 1 << 2,
-	XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO_ID = 1 << 3,
-	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 4,
-	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 5,
-	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 6,
-	XMMS_SIGNAL_MASK_TRANSPORT_LIST = 1 << 7,
-} xmms_dbus_signal_mask_t;
-
-
 static void send_playback_stop (xmms_object_t *object, 
 	gconstpointer data, gpointer userdata);
 static void send_playlist_mediainfo_id (xmms_object_t *object, 
@@ -65,68 +52,45 @@ static void send_visualisation_spectrum (xmms_object_t *object,
 static void broadcast_msg (DBusMessage *msg, const char *type);
 
 
-static void register_visualisation_spectrum (gboolean state);
-
 typedef void (*xmms_dbus_object_callback_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
-
-typedef void (*xmms_dbus_callback_on_register_t) (gboolean state);
 
 typedef struct xmms_dbus_signal_mask_map_St {
 	/** The dbus signalname, ie org.xmms.playback.play */
 	gchar *dbus_name;
-	xmms_dbus_signal_mask_t mask;
 
 	/** This will be called when the xmms_name 
 	  is received from the core object */
 	xmms_dbus_object_callback_t object_callback;
-
-	xmms_dbus_callback_on_register_t register_callback;
-
 } xmms_dbus_signal_mask_map_t;
 
-/** @todo this should be a hashtable maybe. should be faster. */
 static xmms_dbus_signal_mask_map_t mask_map [] = {
 
 	{ XMMS_SIGNAL_PLAYBACK_CURRENTID,
-		XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID, 
-		send_playback_currentid, NULL },
-
+	  send_playback_currentid},
+	
 	{ XMMS_SIGNAL_PLAYBACK_PLAYTIME,
-		XMMS_SIGNAL_MASK_PLAYBACK_PLAYTIME, 
-		send_playback_playtime, NULL },
-
+	  send_playback_playtime},
+	
 	{ XMMS_SIGNAL_PLAYBACK_STOP,
-		XMMS_SIGNAL_MASK_PLAYBACK_STOP, 
-		send_playback_stop, NULL },
-
+	  send_playback_stop},
+	
 	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID, 
-		XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO_ID, 
-		send_playlist_mediainfo_id, NULL },
-/*	{ XMMS_SIGNAL_PLAYLIST_CHANGED,
-		XMMS_SIGNAL_MASK_PLAYLIST_CHANGED, 
-		send_playlist_changed, NULL, NULL, NULL },*/
+	  send_playlist_mediainfo_id},
+	{ XMMS_SIGNAL_PLAYLIST_CHANGED,
+	  send_playlist_changed},
 	{ XMMS_SIGNAL_CORE_INFORMATION, 
-		XMMS_SIGNAL_MASK_CORE_INFORMATION, 
-		send_core_information, NULL },
+	  send_core_information},
 
 
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
-		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
-		send_visualisation_spectrum, 
-		register_visualisation_spectrum},
+	  send_visualisation_spectrum},
 
-/*
-	{ XMMS_SIGNAL_TRANSPORT_LIST, 
-	  	XMMS_SIGNAL_MASK_TRANSPORT_LIST,
-		NULL, handle_transport_list, NULL, NULL },
-*/
-
-	{ NULL, 0, NULL, NULL },
+	{ NULL, NULL},
 };
 
 typedef struct xmms_dbus_connection_St {
-        gint signals;
         DBusConnection *connection;
+	GHashTable *signals;
 } xmms_dbus_connection_t;
 
 
@@ -142,24 +106,11 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
 	
 }
 
-static xmms_dbus_signal_mask_map_t *
-get_mask_map (const gchar *name)
-{
-	gint i=0;
-	while (mask_map[i].dbus_name) {
-		if (g_strcasecmp (mask_map[i].dbus_name, name) == 0)
-			return &mask_map[i];
-		i++;
-	}
-	return NULL;
-}
-
 
 /*
  * object callbacks
  */
 
-#if 0 /* @todo */
 
 static void
 send_playlist_changed (xmms_object_t *object,
@@ -170,35 +121,43 @@ send_playlist_changed (xmms_object_t *object,
         const xmms_playlist_changed_msg_t *chmsg = data;
         DBusMessage *msg=NULL;
         DBusMessageIter itr;
+	char *signame = NULL;
 
         switch (chmsg->type) {
                 case XMMS_PLAYLIST_CHANGED_ADD:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_ADD);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_ADD);
+			signame = XMMS_SIGNAL_PLAYLIST_ADD;
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
                         break;
                 case XMMS_PLAYLIST_CHANGED_SHUFFLE:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_SHUFFLE);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SHUFFLE);
+			signame = XMMS_SIGNAL_PLAYLIST_SHUFFLE;
                         break;
                 case XMMS_PLAYLIST_CHANGED_SORT:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_SORT);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SORT);
+			signame = XMMS_SIGNAL_PLAYLIST_SORT;
                         break;
                 case XMMS_PLAYLIST_CHANGED_CLEAR:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_CLEAR);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_CLEAR);
+			signame = XMMS_SIGNAL_PLAYLIST_CLEAR;
                         break;
                 case XMMS_PLAYLIST_CHANGED_REMOVE:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_REMOVE);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_REMOVE);
+			signame = XMMS_SIGNAL_PLAYLIST_REMOVE;
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         break;
                 case XMMS_PLAYLIST_CHANGED_SET_POS:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_JUMP);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
+			signame = XMMS_SIGNAL_PLAYLIST_JUMP;
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         break;
                 case XMMS_PLAYLIST_CHANGED_MOVE:
-                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, NULL, XMMS_METHOD_MOVE);
+                        msg = dbus_message_new_signal (XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_MOVE);
+			signame = XMMS_SIGNAL_PLAYLIST_MOVE;
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
@@ -209,17 +168,15 @@ send_playlist_changed (xmms_object_t *object,
         XMMS_DBG ("Sending playlist changed message: %s", dbus_message_get_name (msg));
 */
 
-        g_mutex_lock (connectionslock);
-
-	/** @todo broadcast_msg (...); */
-
-        g_mutex_unlock (connectionslock);
-
+	if (signame != NULL) {
+		g_mutex_lock (connectionslock);
+		broadcast_msg (msg, signame);
+		g_mutex_unlock (connectionslock);
+	}
         dbus_message_unref (msg);
 	
 }
 
-#endif
 
 static void
 send_playback_stop (xmms_object_t *object,
@@ -266,14 +223,13 @@ send_playlist_mediainfo_id (xmms_object_t *object,
 static void
 broadcast_msg (DBusMessage *msg, const char *type)
 {
-	xmms_dbus_signal_mask_map_t *map = get_mask_map (type);
 	GSList *item;
 	xmms_dbus_connection_t *con;
 	int clientser;
 
 	for (item = connections; item; item = g_slist_next (item)) {
 		con = (xmms_dbus_connection_t *)item->data;
-		if (con->signals & map->mask) {
+		if (g_hash_table_lookup (con->signals, type)) {
 			dbus_connection_send (con->connection, msg, &clientser);
 		}
 	}
@@ -304,18 +260,6 @@ send_playback_playtime (xmms_object_t *object,
 
 }
 
-
-static void
-register_visualisation_spectrum (gboolean state)
-{
-	if (state) {
-		XMMS_DBG ("someone wants vis-data!");
-		xmms_visualisation_users_inc ();
-	} else {
-		xmms_visualisation_users_dec ();
-		XMMS_DBG ("someone doesn't want vis-data anymore!");
-	}
-}
 
 static void
 send_visualisation_spectrum (xmms_object_t *object,
@@ -413,13 +357,6 @@ handle_playlist_save (DBusConnection *conn, DBusMessage *msg)
 	return TRUE;
 }
 
-static gboolean
-handle_playlist_mode_set (guint arg)
-{
-	xmms_core_playlist_mode_set ((xmms_playlist_mode_t) arg);
-	return TRUE;
-}
-
 
 static gboolean
 handle_transport_list (DBusConnection *conn, DBusMessage *msg)
@@ -496,23 +433,27 @@ xmms_dbus_clientcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	dbus_message_iter_init (msg, &itr);
 	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
 		gchar *signal = dbus_message_iter_get_string (&itr);
-		xmms_dbus_signal_mask_map_t *map = get_mask_map (signal);
 		XMMS_DBG ("request for signal %s", signal);
-		if (map) {
-			XMMS_DBG ("with map: %d", map->mask);
-			g_mutex_lock(connectionslock);
 
-			if (!(client->signals & map->mask) && map->register_callback) {
-				map->register_callback (!strcmp (dbus_message_get_member (msg), XMMS_METHOD_REGISTER));
+		if (!strcmp (dbus_message_get_member (msg), XMMS_METHOD_REGISTER)) {
+			if (g_hash_table_lookup (client->signals, signal) == NULL) {
+				gchar *t = g_strdup (signal);
+				g_hash_table_insert (client->signals, t, t);
+				/** @todo Do nice methodcalls to teh object
+				    here instead */
+				if (!strcmp (signal, XMMS_SIGNAL_VISUALISATION_SPECTRUM)) {
+					xmms_visualisation_users_inc ();
+				}
+			}	
+		} else if (!strcmp (dbus_message_get_member (msg), XMMS_METHOD_UNREGISTER)) {
+			if (g_hash_table_lookup (client->signals, signal) != NULL) {
+				g_hash_table_remove (client->signals, signal);
+				if (!strcmp (signal, XMMS_SIGNAL_VISUALISATION_SPECTRUM)) {
+					xmms_visualisation_users_dec ();
+				}
 			}
-			if (!strcmp (dbus_message_get_member (msg), XMMS_METHOD_REGISTER)) {
-				client->signals |= map->mask;
-			} else {
-				client->signals &= ~map->mask;
-			}
-			
-			g_mutex_unlock(connectionslock);
 		}
+
 		g_free (signal);
 	}
 
@@ -674,6 +615,8 @@ xmms_dbus_localcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 		g_mutex_lock(connectionslock);
 		connections = g_slist_remove (connections, client);
 		g_mutex_unlock(connectionslock);
+
+		g_hash_table_destroy (client->signals);
 		g_free (client);
 		dbus_connection_unref (conn);
 		
@@ -704,7 +647,7 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 
 	client = g_new0 (xmms_dbus_connection_t, 1);
 	client->connection = conn;
-	client->signals = 0;
+	client->signals = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
 	vtable.message_function = xmms_dbus_clientcall;
 	dbus_connection_register_fallback (conn, client_obj, &vtable, client);
