@@ -388,7 +388,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
 	xmms_transport_t *transport;
-	gchar out[1152 * 4];
+	gint16 out[1152 * 2];
 	mad_fixed_t *ch1, *ch2;
 	gint ret;
 
@@ -431,8 +431,6 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		ch1 = data->synth.pcm.samples[0];
 		ch2 = data->synth.pcm.samples[1];
 
-		/*ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);*/
-
 		for (i = 0; i < data->synth.pcm.length; i++) {
 			gint l, r;
 			
@@ -442,15 +440,13 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 			else
 				r = l;
 			
-			out[i*4+0] = l;
-			out[i*4+1] = l >> 8;
-			out[i*4+2] = r;
-			out[i*4+3] = r >> 8;
+			out[i*2+0] = l;
+			out[i*2+1] = r;
 		}
 
 		ret = i*4;
 
-		xmms_decoder_write (decoder, out, ret);
+		xmms_decoder_write (decoder, (gchar *)out, ret);
 
 	}
 	
