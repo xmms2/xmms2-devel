@@ -92,6 +92,7 @@ xmms_speex_init (xmms_decoder_t *decoder)
 
 	xmms_config_value_t *val;
 	xmms_speex_data_t *data;
+	xmms_error_t error;
 	xmms_transport_t *transport;
 
 	g_return_val_if_fail (decoder, FALSE);
@@ -111,10 +112,10 @@ xmms_speex_init (xmms_decoder_t *decoder)
 		gint ret;
 
 		data->ogg_data = ogg_sync_buffer (&data->sync_state, 1024);
-		ret = xmms_transport_read (transport, data->ogg_data, 1024);
+		ret = xmms_transport_read (transport, data->ogg_data, 1024, &error);
 		ogg_sync_wrote (&data->sync_state, ret);
 
-		if (!ret) {
+		if (ret <= 0) {
 			return FALSE;
 		}
 
@@ -182,6 +183,7 @@ xmms_speex_decode_block (xmms_decoder_t *decoder)
 	gfloat outfloat [2000];
 	gint16 outshort [2000];
 	xmms_speex_data_t *data;
+	xmms_error_t error;
 	xmms_transport_t *transport;
 	SpeexStereoState stereo = SPEEX_STEREO_STATE_INIT;
 
@@ -224,10 +226,10 @@ xmms_speex_decode_block (xmms_decoder_t *decoder)
 	/* Need more data */
 
 	data->ogg_data = ogg_sync_buffer (&data->sync_state, 200);
-	ret = xmms_transport_read (transport, data->ogg_data, 200);
+	ret = xmms_transport_read (transport, data->ogg_data, 200, &error);
 	ogg_sync_wrote (&data->sync_state, ret);
 
-	if (!ret) {
+	if ( ret <= 0 ) {
 		return FALSE;
 	}
 

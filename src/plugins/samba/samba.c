@@ -52,7 +52,7 @@ static gboolean xmms_samba_init (xmms_transport_t *transport,
 								 const gchar *url);
 static void xmms_samba_close (xmms_transport_t *transport);
 static gint xmms_samba_read (xmms_transport_t *transport, 
-							 gchar *buffer, guint len);
+							 gchar *buffer, guint len, xmms_error_t *error);
 static gint xmms_samba_size (xmms_transport_t *transport);
 static gint xmms_samba_seek (xmms_transport_t *transport, 
 							 gint offset, gint whence);
@@ -215,7 +215,7 @@ xmms_samba_close (xmms_transport_t *transport)
 
 
 static gint
-xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len)
+xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_samba_data_t *data;
 	gint ret;

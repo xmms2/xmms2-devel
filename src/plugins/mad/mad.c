@@ -271,6 +271,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_playlist_entry_t *entry;
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
+	xmms_error_t error;
 	gchar buf[8192];
 	gboolean id3handled = FALSE;
 	gint ret;
@@ -284,7 +285,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	entry = xmms_playlist_entry_new (NULL);
 
-	ret = xmms_transport_read (transport, buf, 8192);
+	ret = xmms_transport_read (transport, buf, 8192, &error);
 	if (ret <= 0) {
 		xmms_object_unref (entry);
 		return;
@@ -310,7 +311,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 			while (pos < head.len) {
 				ret = xmms_transport_read (transport,
 							   id3v2buf + pos,
-							   MIN(4096,head.len - pos));
+							   MIN(4096,head.len - pos), &error);
 				if (ret <= 0) {
 					XMMS_DBG ("error reading data for id3v2-tag");
 					xmms_object_unref (entry);
@@ -318,11 +319,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 				}
 				pos += ret;
 			}
-			ret = xmms_transport_read (transport, buf, 8192);
+			ret = xmms_transport_read (transport, buf, 8192, &error);
 		} else {
 			/* just make sure buf is full */
 			memmove (buf, buf + head.len + 10, 8192 - (head.len+10));
-			ret += xmms_transport_read (transport, buf + 8192 - (head.len+10), head.len + 10) - head.len - 10;
+			ret += xmms_transport_read (transport, buf + 8192 - (head.len+10), head.len + 10, &error) - head.len - 10;
 		}
 		
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
@@ -334,7 +335,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (xmms_transport_islocal (transport) && !id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
-		ret = xmms_transport_read (transport, buf, 128);
+		ret = xmms_transport_read (transport, buf, 128, &error);
 		if (ret == 128) {
 			xmms_mad_id3_parse (buf, entry);
 		}
@@ -419,6 +420,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
 	xmms_transport_t *transport;
+	xmms_error_t error;
 	gint16 out[1152 * 2];
 	mad_fixed_t *ch1, *ch2;
 	gint ret;
@@ -437,7 +439,8 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	
 	ret = xmms_transport_read (transport, 
 				   data->buffer + data->buffer_length,
-				   4096 - data->buffer_length);
+				   4096 - data->buffer_length,
+				   &error);
 	
 	if (ret <= 0) {
 		XMMS_DBG ("EOF");

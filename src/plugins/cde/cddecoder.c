@@ -158,15 +158,17 @@ xmms_cdae_decode_block (xmms_decoder_t *decoder)
 {
 	gint ret;
 	xmms_transport_t *transport;
+	xmms_error_t error;
 	gchar buffer[4096];
 
 	g_return_val_if_fail (decoder, FALSE);
 	
 	transport = xmms_decoder_transport_get (decoder);
 
-	ret = xmms_transport_read (transport, buffer, 4096);
+	ret = xmms_transport_read (transport, buffer, 4096, &error);
 
-	if (ret == 0) return FALSE;
+	if (ret <= 0)
+		return FALSE;
 	
 	xmms_decoder_write (decoder, buffer, ret);
 

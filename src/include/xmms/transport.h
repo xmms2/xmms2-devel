@@ -57,7 +57,7 @@ typedef gboolean (*xmms_transport_open_method_t) (xmms_transport_t *transport,
 						  const gchar *uri);
 typedef void (*xmms_transport_close_method_t) (xmms_transport_t *transport);
 typedef gint (*xmms_transport_read_method_t) (xmms_transport_t *transport,
-					      gchar *buffer, guint length);
+					      gchar *buffer, guint length, xmms_error_t *error);
 typedef gint (*xmms_transport_seek_method_t) (xmms_transport_t *transport, 
 					      gint offset, gint whence);
 typedef gint (*xmms_transport_size_method_t) (xmms_transport_t *transport);
@@ -74,7 +74,7 @@ void xmms_transport_list_free (GList *);
 gpointer xmms_transport_private_data_get (xmms_transport_t *transport);
 void xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data);
 void xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype);
-gint xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len);
+gint xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 void xmms_transport_wait (xmms_transport_t *transport);
 gboolean xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence);
 gint xmms_transport_size (xmms_transport_t *transport);

@@ -101,6 +101,7 @@ flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__byte b
 {
 	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
 	xmms_transport_t *transport;
+	xmms_error_t error;
 	gint ret;
 
 	g_return_val_if_fail (decoder, FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
@@ -108,11 +109,12 @@ flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__byte b
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
 
-	ret = xmms_transport_read (transport, buffer, *bytes);
+	ret = xmms_transport_read (transport, buffer, *bytes, &error);
 	*bytes = ret;
 
-	if (ret == -1)
+	if (ret <= 0) {
 		return FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR;
+	}
 
 	return FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_OK;
 }
