@@ -52,7 +52,7 @@ static gboolean xmms_file_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_file_close (xmms_transport_t *transport);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_file_size (xmms_transport_t *transport);
-static gint xmms_file_seek (xmms_transport_t *transport, guint offset, gint whence);
+static gint xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence);
 static GList *xmms_file_list (const gchar *path);
 
 /*
@@ -264,7 +264,7 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 }
 
 static gint
-xmms_file_seek (xmms_transport_t *transport, guint offset, gint whence)
+xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
 	xmms_file_data_t *data;
 	gint w = 0;

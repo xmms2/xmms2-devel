@@ -52,7 +52,7 @@ typedef void (*xmms_transport_close_method_t) (xmms_transport_t *transport);
 typedef gint (*xmms_transport_read_method_t) (xmms_transport_t *transport,
 					      gchar *buffer, guint length);
 typedef gint (*xmms_transport_seek_method_t) (xmms_transport_t *transport, 
-					      guint offset, gint whence);
+					      gint offset, gint whence);
 typedef gint (*xmms_transport_size_method_t) (xmms_transport_t *transport);
 typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
 
