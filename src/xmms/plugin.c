@@ -181,6 +181,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 	GModule *module;
 	xmms_plugin_t *(*plugin_init) (void);
 	xmms_plugin_t *plugin;
+	gpointer sym;
 
 	XMMS_DBG ("Scanning directory: %s", dir);
 	
@@ -212,12 +213,13 @@ xmms_plugin_scan_directory (const gchar *dir)
 			continue;
 		}
 
-		if (!g_module_symbol (module, "xmms_plugin_get",
-							  (gpointer *)&plugin_init)) {
+		if (!g_module_symbol (module, "xmms_plugin_get", &sym)) {
 			g_module_close (module);
 			g_free (path);
 			continue;
 		}
+
+		plugin_init = sym;
 
 		plugin = plugin_init ();
 		if (plugin) {

@@ -182,4 +182,5 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 static gchar *
 xmms_m3u_write_playlist (const xmms_playlist_t *playlist, gint *size)
 {
+	return NULL;
 }

@@ -63,6 +63,7 @@ xmms_object_connect (xmms_object_t *object, const gchar *method,
 {
 	GList *list = NULL;
 	gpointer key;
+	gpointer val;
 	xmms_object_handler_entry_t *entry;
 
 	g_return_if_fail (object);
@@ -77,8 +78,8 @@ xmms_object_connect (xmms_object_t *object, const gchar *method,
 
 /*	g_mutex_lock (object->mutex);*/
 	
-	if (g_hash_table_lookup_extended (object->methods, method, &key, (gpointer *)&list)) {
-		list = g_list_prepend (list, entry);
+	if (g_hash_table_lookup_extended (object->methods, method, &key, &val)) {
+		list = g_list_prepend (val, entry);
 		g_hash_table_insert (object->methods, key, list);
 	} else {
 		list = g_list_prepend (list, entry);
@@ -94,6 +95,7 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *method,
 {
 	GList *list = NULL, *node;
 	gpointer key;
+	gpointer val;
 	xmms_object_handler_entry_t *entry;
 
 	g_return_if_fail (object);
@@ -103,10 +105,12 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *method,
 
 	g_mutex_lock (object->mutex);
 	
-	if (!g_hash_table_lookup_extended (object->methods, method, &key, (gpointer *)&list))
+	if (!g_hash_table_lookup_extended (object->methods, method, &key, &val))
 		goto unlock;
-	if (!list)
+	if (!val)
 		goto unlock;
+
+	list = (GList *)val;
 
 	for (node = list; node; node = g_list_next (node)) {
 		entry = node->data;

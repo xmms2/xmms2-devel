@@ -14,6 +14,8 @@ xmmsc_connection_t *xmmsc_init();
 gboolean xmmsc_connect (xmmsc_connection_t *);
 void xmmsc_deinit(xmmsc_connection_t *);
 
+gchar *xmmsc_get_last_error (xmmsc_connection_t *c);
+
 void xmmsc_quit(xmmsc_connection_t *);
 void xmmsc_play_next(xmmsc_connection_t *);
 void xmmsc_play_prev(xmmsc_connection_t *);

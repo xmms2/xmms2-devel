@@ -350,7 +350,8 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	g_return_val_if_fail (transport, FALSE);
 
 	if (data->stream.next_frame) {
-		gchar *buffer = data->buffer, *nf = data->stream.next_frame;
+		gchar *buffer = data->buffer;
+		const gchar *nf = data->stream.next_frame;
 		memmove (data->buffer, data->stream.next_frame,
 				 data->buffer_length = (&buffer[data->buffer_length] - nf));
 	} 
