@@ -220,7 +220,7 @@ xmms_alsa_open (xmms_output_t *output)
 	/* Open the device */
 	err = snd_pcm_open (&(data->pcm), dev, SND_STREAM, 0);
 	if (err < 0) {
-		xmms_log_fatal ("Cannot open audio device (%s)", snd_strerror (-err));
+		xmms_log_error ("Cannot open audio device (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
@@ -254,7 +254,7 @@ xmms_alsa_close (xmms_output_t *output)
 	if (data->mixer) {
 		err = snd_mixer_close (data->mixer);
 		if (err != 0) {
-			xmms_log_fatal ("Unable to release mixer device. (%s)", 
+			xmms_log_error ("Unable to release mixer device. (%s)", 
 							snd_strerror (-err));
 		} else {
 			XMMS_DBG ("mixer device closed.");
@@ -264,7 +264,7 @@ xmms_alsa_close (xmms_output_t *output)
 	/* Close device */
 	err = snd_pcm_close (data->pcm);
 	if (err != 0) { 
-		xmms_log_fatal ("Audio device could not be released. (%s)",
+		xmms_log_error ("Audio device could not be released. (%s)",
 						snd_strerror (-err));
 	} else {
 		XMMS_DBG ("audio device closed.");
@@ -298,7 +298,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	/* Setup all parameters to configuration space */
 	err = snd_pcm_hw_params_any (data->pcm, data->hwparams);
 	if (err < 0) {
-		xmms_log_fatal ("cannot initialize hardware parameter structure (%s)", 
+		xmms_log_error ("cannot initialize hardware parameter structure (%s)", 
 						snd_strerror (-err));
 		return FALSE;
 	}
@@ -307,14 +307,14 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams, 
 										SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
-		xmms_log_fatal ("cannot set access type (%s)", snd_strerror (-err));
+		xmms_log_error ("cannot set access type (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
 	/* Set the sample format */
 	err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams, SND_FORMAT);
 	if (err < 0) {
-		xmms_log_fatal ("cannot set sample format (%s)", snd_strerror (-err));
+		xmms_log_error ("cannot set sample format (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
@@ -322,7 +322,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
 										  SND_CHANNELS);
 	if (err < 0) {
-		xmms_log_fatal ("cannot set channel count (%s)", snd_strerror (-err));
+		xmms_log_error ("cannot set channel count (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
@@ -330,7 +330,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	err = snd_pcm_hw_params_set_rate_near (data->pcm, data->hwparams, 
 										   &data->rate, 0);
 	if (err < 0) {
-		xmms_log_fatal ("cannot set sample rate (%s)\n", snd_strerror (-err));
+		xmms_log_error ("cannot set sample rate (%s)\n", snd_strerror (-err));
 		return FALSE;
 	}
 
@@ -345,7 +345,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 												  &requested_buffer_time, 
 												  &dir); 
 	if (err < 0) {
-		xmms_log_fatal ("Buffer time <= 0 (%s)", snd_strerror (-err));  
+		xmms_log_error ("Buffer time <= 0 (%s)", snd_strerror (-err));  
 		return FALSE;
 	}
 
@@ -355,7 +355,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
 											 &data->buffer_size);
 	if (err != 0) {
-		xmms_log_fatal ("unable to get buffer size (%s)", snd_strerror (-err));
+		xmms_log_error ("unable to get buffer size (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 	
@@ -364,7 +364,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 												  &requested_period_time, 
 												  &dir);
 	if (err < 0) {
-		xmms_log_fatal ("cannot set periods (%s)", snd_strerror (-err));
+		xmms_log_error ("cannot set periods (%s)", snd_strerror (-err));
 		return FALSE;
 	}
 
@@ -374,7 +374,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
 	if (err < 0) {
-		xmms_log_fatal ("cannot set hw parameters (%s), %d", 
+		xmms_log_error ("cannot set hw parameters (%s), %d", 
 						snd_strerror (-err), snd_pcm_state (data->pcm));
 		return FALSE;
 	}
@@ -382,7 +382,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data)
 	/* Prepare sound card for teh shit */
 	err = snd_pcm_prepare (data->pcm);
 	if (err < 0) {
-		xmms_log_fatal ("cannot prepare audio interface for use (%s)", 
+		xmms_log_error ("cannot prepare audio interface for use (%s)", 
 						snd_strerror (-err));
 		return FALSE;
 	}
@@ -421,27 +421,27 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
-		xmms_log_fatal ("Failed to open empty mixer: %s", snd_strerror (-err));
+		xmms_log_error ("Failed to open empty mixer: %s", snd_strerror (-err));
 		data->mixer = NULL;
 		return FALSE;
 	}
 
 	err = snd_mixer_attach (data->mixer, dev);
 	if (err < 0) {
-		xmms_log_fatal ("Attaching to mixer %s failed: %s", dev, 
+		xmms_log_error ("Attaching to mixer %s failed: %s", dev, 
 						snd_strerror(-err));
 		return FALSE;
 	}   
 
 	err = snd_mixer_selem_register (data->mixer, NULL, NULL);
 	if (err < 0) {
-		xmms_log_fatal ("Failed to register mixer: %s", snd_strerror (-err));
+		xmms_log_error ("Failed to register mixer: %s", snd_strerror (-err));
 		return FALSE;
 	}
 
 	err = snd_mixer_load (data->mixer);
 	if (err < 0) {
-		xmms_log_fatal ("Failed to load mixer: %s", snd_strerror (-err));
+		xmms_log_error ("Failed to load mixer: %s", snd_strerror (-err));
 		return FALSE;
 	}       
 
@@ -457,7 +457,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	
 	data->mixer_elem = snd_mixer_find_selem (data->mixer, selem_id);
 	if (data->mixer_elem == NULL) {
-		xmms_log_fatal ("Failed to find mixer element");
+		xmms_log_error ("Failed to find mixer element");
 		return FALSE;
 	}
 	
@@ -505,7 +505,7 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 		res = sscanf (data, "%u/%u", &left, &right);
 
 		if (res == 0) {
-			XMMS_DBG ("Unable to change volume");
+			xmms_log_error ("Unable to change volume");
 			return;
 		}
 		if (res == 1) {
@@ -551,7 +551,7 @@ xmms_alsa_samplerate_set (xmms_output_t *output, guint rate)
 		/* Set new sample rate */
 		snd_pcm_hw_params_alloca (&(data->hwparams)); 
 		if (!xmms_alsa_set_hwparams (data)) {
-			xmms_log_fatal ("Could not set hwparams, consult your local \
+			xmms_log_error ("Could not set hwparams, consult your local \
 							guru for meditation courses");
 			data->rate = 0;
 		}
@@ -584,7 +584,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	}
 
 	if (!data->mixer_elem) {
-		xmms_log_fatal ("Mixer element not set!");
+		xmms_log_error ("Mixer element not set!");
 		return FALSE;
 	}
 
@@ -624,13 +624,13 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	}
 
 	if (!data->mixer_elem) {
-		xmms_log_fatal ("Mixer element not set!");
+		xmms_log_error ("Mixer element not set!");
 		return FALSE;
 	}
 
 	err = snd_mixer_handle_events (data->mixer);
 	if (err != 0) {
-		xmms_log_fatal ("Handling of pending mixer events failed (%s)",
+		xmms_log_error ("Handling of pending mixer events failed (%s)",
 						snd_strerror (-err));
 		return FALSE;
 	}
@@ -674,7 +674,7 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 		xmms_alsa_xrun_recover (data);
 		avail = snd_pcm_avail_update (data->pcm);
 		if (avail == -EPIPE) {
-			XMMS_DBG ("Unable to get available frames in buffer (%s)", 
+			xmms_log_error ("Unable to get available frames in buffer (%s)", 
 					  snd_strerror (-avail));		
 			return 0;
 		}
@@ -708,7 +708,7 @@ xmms_alsa_flush (xmms_output_t *output)
 	
 	err = snd_pcm_reset (data->pcm);
 	if (err != 0) {
-		XMMS_DBG ("Flush failed (%s)", snd_strerror (-err));
+		xmms_log_error ("Flush failed (%s)", snd_strerror (-err));
 	}
 }
 
@@ -733,7 +733,7 @@ xmms_alsa_xrun_recover (xmms_alsa_data_t *data)
 	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_XRUN) {
 		err = snd_pcm_prepare (data->pcm);
 		if (err < 0) {
-			xmms_log_fatal ("xrun: prepare error, %s", snd_strerror (-err));
+			xmms_log_error ("xrun: prepare error, %s", snd_strerror (-err));
 		}
 	}
 }
@@ -776,7 +776,7 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 		}
 		else {
 			/* this will probably never happen */
-			xmms_log_fatal ("Unknown error occured, report to maintainer: (%s)",
+			xmms_log_error ("Unknown error occured, report to maintainer: (%s)",
 							snd_strerror (-written_frames));
 		}
 	}

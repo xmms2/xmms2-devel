@@ -325,7 +325,7 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 		case XMMS_OBJECT_METHOD_ARG_NONE:
 			break;
 		default:
-			XMMS_DBG ("Unknown returnvalue: %d, couldn't serialize message", arg->rettype);
+			xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", arg->rettype);
 			break;
 	}
 }
@@ -371,7 +371,7 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 			break;
 		
 		if (args + 1 > XMMS_OBJECT_METHOD_MAX_ARGS) {
-			XMMS_DBG ("Too many arguments...");
+			xmms_log_error ("Too many arguments...");
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
 		
@@ -540,7 +540,7 @@ xmms_dbus_init (const gchar *path)
 
         server = dbus_server_listen (path, &err);
         if (!server) {
-                XMMS_DBG ("couldn't create server!\n");
+                xmms_log_fatal ("couldn't create server!\n");
                 return FALSE;
         }
         dbus_server_ref (server);

@@ -254,7 +254,7 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	do {
 		ret = read (data->fd, buffer, len);
 		if (ret == -1) {
-			XMMS_DBG ("errno (%d) %s", errno, strerror (errno));
+			xmms_log_error ("errno (%d) %s", errno, strerror (errno));
 		}
 	} while (ret == -1 && (errno == EINTR ||
 			       errno == EIO));

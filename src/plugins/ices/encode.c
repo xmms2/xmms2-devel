@@ -92,7 +92,7 @@ encoder_state *encode_initialise(int channels, int rate, int managed,
     if (managed) {
         if (vorbis_encode_setup_managed(&s->vi, channels, rate,
                     max_br>0?max_br:-1, nom_br, min_br>0?min_br:-1)) {
-            XMMS_DBG("Failed to configure managed encoding for "
+            xmms_log_error ("Failed to configure managed encoding for "
                     "%d channel(s), at %d Hz, with bitrates %d max %d "
                     "nominal, %d min", channels, rate, max_br, nom_br, min_br);
             vorbis_info_clear(&s->vi);
@@ -101,7 +101,7 @@ encoder_state *encode_initialise(int channels, int rate, int managed,
         }
     } else {
         if (vorbis_encode_setup_vbr(&s->vi, channels, rate, quality*0.1)) {
-            XMMS_DBG("Failed to configure VBR encoding for %d channel(s), "
+            xmms_log_error ("Failed to configure VBR encoding for %d channel(s), "
                     "at %d Hz, quality level %f", channels, rate, quality);
             vorbis_info_clear(&s->vi);
             free(s);

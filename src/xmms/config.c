@@ -370,7 +370,7 @@ xmms_config_save (const gchar *file)
 	list = g_list_sort (list, (GCompareFunc) g_strcasecmp);
 
 	if (!(fp = fopen (file, "wb+"))) {
-		XMMS_DBG ("Couldn't open %s for writing.", file);
+		xmms_log_error ("Couldn't open %s for writing.", file);
 		return FALSE;
 	}
 

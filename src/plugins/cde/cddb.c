@@ -199,7 +199,7 @@ xmms_cdae_cddb_request (xmms_cdae_toc_t *toc, gchar *server)
 	curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, error);
 
 	if (curl_easy_perform (curl) != 0) {
-		XMMS_DBG ("Error: %s when fetching CDDB information", error);
+		xmms_log_error ("Error: %s when fetching CDDB information", error);
 		curl_easy_cleanup (curl);
 		g_free (info);
 		g_free (cddburl);
@@ -240,7 +240,7 @@ xmms_cdae_cddb_request (xmms_cdae_toc_t *toc, gchar *server)
 	curl_easy_setopt (curl, CURLOPT_ERRORBUFFER, error);
 
 	if (curl_easy_perform (curl) != 0) {
-		XMMS_DBG ("Error: %s when fetching CDDB information", error);
+		xmms_log_error ("Error: %s when fetching CDDB information", error);
 		curl_easy_cleanup (curl);
 		fclose (info->fp);
 		g_free (info);

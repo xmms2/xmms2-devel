@@ -295,7 +295,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 	
 	d = g_dir_open (dir, 0, NULL);
 	if (!d) {
-		XMMS_DBG ("Failed to open directory");
+		xmms_log_error ("Failed to open directory");
 		return;
 	}
 

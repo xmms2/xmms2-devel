@@ -196,7 +196,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		suburi = xmms_transport_suburl_get (transport);
 		data->subtune = strtol (suburi, &suburiend, 0);
 		if (*suburiend != 0) {
-			XMMS_DBG ("Bad suburi: %s, using default subsong", suburi);
+			xmms_log_error ("Bad suburi: %s, using default subsong", suburi);
 			data->subtune = 0;
 		}
 
@@ -221,14 +221,14 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 									data->buffer_length);
 		
 		if (ret < 0) {
-			XMMS_DBG ("Load failed: %d", ret);
+			xmms_log_error ("Load failed: %d", ret);
 			return FALSE;
 		}
 
 		numsubtunes = sidplay_wrapper_subtunes (data->wrapper);
 		XMMS_DBG ("subtunes: %d", numsubtunes);
 		if (data->subtune > numsubtunes || data->subtune < 0) {
-			XMMS_DBG ("Requested subtune %d not found, using default", 
+			xmms_log_error ("Requested subtune %d not found, using default", 
 					  data->subtune);
 			data->subtune = 0;
 		}
@@ -245,7 +245,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 
 	ret = sidplay_wrapper_play (data->wrapper, out, sizeof (out));
 	if (!ret) {
-		XMMS_DBG ("play err: %s", sidplay_wrapper_error (data->wrapper));
+		xmms_log_error ("play err: %s", sidplay_wrapper_error (data->wrapper));
 		return FALSE;
 	} else {
 		xmms_decoder_write (decoder, out, ret);

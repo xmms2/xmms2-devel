@@ -83,7 +83,7 @@ parse_config ()
 
 	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
 		if (!xmms_config_init (filename)) {
-			XMMS_DBG ("XMMS was unable to parse configfile %s", filename);
+			xmms_log_error ("XMMS was unable to parse configfile %s", filename);
 			exit (EXIT_FAILURE);
 		}
 		return TRUE;

@@ -288,7 +288,7 @@ xmms_output_open (xmms_output_t *output)
 	open_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
 
 	if (!open_method || !open_method (output)) {
-		XMMS_DBG ("Couldn't open output device");
+		xmms_log_error ("Couldn't open output device");
 		return FALSE;
 	}
 
@@ -569,7 +569,7 @@ xmms_output_thread (gpointer data)
 	g_return_val_if_fail (data, NULL);
 
 	if (!xmms_output_open (output)) {
-		XMMS_DBG ("Couldn't open output device");
+		xmms_log_error ("Couldn't open output device");
 		xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, NULL);
 		xmms_object_unref (output);
 		return NULL;

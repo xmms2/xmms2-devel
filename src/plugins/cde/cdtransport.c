@@ -132,18 +132,18 @@ xmms_cdae_init (xmms_transport_t *transport, const gchar *url)
 
 	data->fd = open (dev, O_RDONLY | O_NONBLOCK);
 	if (data->fd == -1) {
-		XMMS_DBG ("Couldn't open %s as cdaudio", dev);
+		xmms_log_error ("Couldn't open %s as cdaudio", dev);
 		return FALSE;
 	}
 
 	toc = xmms_cdae_get_toc (data->fd);
 	if (!toc) {
-		XMMS_DBG ("Unable to read toc");
+		xmms_log_error ("Unable to read toc");
 		return FALSE;
 	}
 
 	if (track < toc->first_track || track > toc->last_track) {
-		XMMS_DBG ("Wrong wrong...");
+		xmms_log_error ("Wrong wrong...");
 		g_free (toc);
 		return FALSE;
 	}

@@ -95,7 +95,7 @@ xmms_ices_reconnect (xmms_ices_data_t *data)
 				shout_get_mount (data->shout));
 
 	} else {
-		XMMS_DBG ("Couldn't connect to shoutserver");
+		xmms_log_error ("Couldn't connect to shoutserver");
 		return FALSE;
 	}
 		

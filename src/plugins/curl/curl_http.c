@@ -231,7 +231,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 		switch (ret) {
 			case -1:
 				/* error ? reconnect */
-				XMMS_DBG ("Disconnected????");
+				xmms_log_error ("Disconnected????");
 				continue;
 			case 0:
 				continue;
@@ -375,7 +375,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 			buffer = strstr (header, "\r\n\r\n");
 
 			if (!buffer) {
-				XMMS_DBG ("Malformated icy response");
+				xmms_log_error ("Malformated icy response");
 				return -1;
 			}
 
@@ -411,7 +411,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 			buffer = strstr (header, "\r\n\r\n");
 
 			if (!buffer) {
-				XMMS_DBG ("Malformated HTTP response");
+				xmms_log_error ("Malformated HTTP response");
 				return -1;
 			}
 

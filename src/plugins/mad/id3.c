@@ -88,7 +88,7 @@ add_to_entry (xmms_playlist_entry_t *entry, gchar *key, guchar *val, gint len)
 	}
 
 	if (err) {
-		XMMS_DBG ("Couldn't convert: %s", err->message);
+		xmms_log_error ("Couldn't convert: %s", err->message);
 		g_error_free (err);
 		return;
 	}

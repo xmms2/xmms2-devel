@@ -73,9 +73,9 @@ xmms_sqlite_open (xmms_medialib_t *medialib)
 
 	sql = sqlite_open (dbpath, 0644, &err);
 	if (!sql) {
-		XMMS_DBG ("Error creating sqlite db: %s", err);
+		xmms_log_fatal ("Error creating sqlite db: %s", err);
 		free (err);
-		return NULL;
+		return FALSE; 
 	}
 
 	if (create) {
@@ -112,7 +112,7 @@ xmms_sqlite_query (xmms_medialib_t *medialib, xmms_medialib_row_method_t method,
 	XMMS_DBG ("Running query: %s", query);
 
 	if (sqlite_exec_vprintf (sql, query, (sqlite_callback) method, udata, &err, ap) != SQLITE_OK) {
-		XMMS_DBG ("Error in query! %s", err);
+		xmms_log_error ("Error in query! %s", err);
 		va_end (ap);
 		return FALSE;
 	}

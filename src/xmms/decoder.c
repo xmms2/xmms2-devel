@@ -584,7 +584,7 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 
 	if (!new_method || !new_method (decoder, mimetype)) {
-		XMMS_DBG ("open failed");
+		xmms_log_error ("open failed");
 		xmms_object_unref (transport);
 		return FALSE;
 	}
@@ -641,7 +641,7 @@ xmms_decoder_mediainfo_get (xmms_decoder_t *decoder,
 
 	mediainfo = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO);
 	if (!mediainfo) {
-		XMMS_DBG ("get_mediainfo failed");
+		xmms_log_error ("get_mediainfo failed");
 		return;
 	}
 

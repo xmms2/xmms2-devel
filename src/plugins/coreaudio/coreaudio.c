@@ -243,7 +243,7 @@ xmms_ca_new (xmms_output_t *output)
 					&size, &data->outputdevice);
 
 	if (res) {
-		XMMS_DBG ("Error %d from CoreAudio", (int) res);
+		xmms_log_error ("Error %d from CoreAudio", (int) res);
 		return FALSE;
 	}
 
@@ -255,7 +255,7 @@ xmms_ca_new (xmms_output_t *output)
 					&bsize);
 
 	if (res) {
-		XMMS_DBG ("Setbuffersize failed");
+		xmms_log_error ("Setbuffersize failed");
 		return FALSE;
 	}*/
 
@@ -293,7 +293,7 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 				      &size, &prop);
 
 	if (res) {
-		XMMS_DBG ("GetProp failed!");
+		xmms_log_error ("GetProp failed!");
 		return 0;
 	}
 
@@ -310,7 +310,7 @@ xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
 				      kAudioDevicePropertyStreamFormat,
 				      size, &prop);
 	if (res) {
-		XMMS_DBG ("Error %d", (int) res);
+		xmms_log_error ("Error %d", (int) res);
 		exit (-1);
 	}*/
 

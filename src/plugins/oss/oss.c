@@ -295,7 +295,7 @@ xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
 	ioctl (data->fd, SNDCTL_DSP_SYNC, 0);
 
 	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &rate) == -1) {
-		XMMS_DBG ("Error setting samplerate");
+		xmms_log_error ("Error setting samplerate");
 		return 0;
 	}
 	return rate;

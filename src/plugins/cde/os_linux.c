@@ -59,7 +59,7 @@ xmms_cdae_get_toc (int fd)
 	int i;
 
 	if (ioctl (fd, CDROMREADTOCHDR, &tochdr)) {
-		XMMS_DBG ("Couldn't read TOC");
+		xmms_log_error ("Couldn't read TOC");
 		return NULL;
 	}
 
@@ -71,7 +71,7 @@ xmms_cdae_get_toc (int fd)
 		tocentry.cdte_track = i;
 
 		if (ioctl (fd, CDROMREADTOCENTRY, &tocentry)) {
-			XMMS_DBG ("Couldn't read track %d", i);
+			xmms_log_error ("Couldn't read track %d", i);
 			g_free (toc);
 			return NULL;
 		}
@@ -88,7 +88,7 @@ xmms_cdae_get_toc (int fd)
 	tocentry.cdte_format = CDROM_MSF;
 
 	if (ioctl (fd, CDROMREADTOCENTRY, &tocentry)) {
-		XMMS_DBG ("Couldn't read leadout");
+		xmms_log_error ("Couldn't read leadout");
 		g_free (toc);
 		return NULL;
 	}

@@ -31,6 +31,9 @@ void xmms_log_daemonize (void);
 #define XMMS_LOG_FATAL 3 
 #define XMMS_LOG_THOMAS 3
 
+/* FIXME */
+#define xmms_log_error xmms_log
+
 #ifdef __GNUC__
 void xmms_log_debug (const gchar *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void xmms_log (const gchar *fmt, ...) __attribute__ ((format (printf, 1, 2)));

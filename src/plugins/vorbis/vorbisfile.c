@@ -315,7 +315,7 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	} else if (data->channels == 1) {
 		ret = ov_read (&data->vorbisfile, (gchar *)monobuffer, 2048, bigendian, 2, 1, &c);
 	} else {
-		XMMS_DBG ("Plugin doesn't handle %d number of channels", data->channels);
+		xmms_log_error ("Plugin doesn't handle %d number of channels", data->channels);
 		return FALSE;
 	}
 

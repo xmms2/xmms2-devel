@@ -147,7 +147,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 				*p = '\0';
 				*p++;
 			} else {
-				XMMS_DBG ("Malformated m3u");
+				xmms_log_error ("Malformated m3u");
 				return FALSE;
 			}
 
