@@ -292,6 +292,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	for (l = list; l; l = x_list_next (l)) {
 		x_hash_t *tab;
 		char line[80];
+		gchar *conv;
 		unsigned int i = XPOINTER_TO_UINT (l->data);
 
 		g_clear_error (&err);
@@ -308,13 +309,15 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
 		}
 
+		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
+
 		if (id == i) {
-			print_info ("->[%d] %s", i, 
-					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+			print_info ("->[%d] %s", i, conv);
 		} else {
-			print_info ("  [%d] %s", i, 
-					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+			print_info ("  [%d] %s", i, conv);
 		}
+
+		g_free (conv);
 
 		if (err) {
 			print_info ("convert error %s", err->message);
@@ -528,6 +531,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	guint dur;
 	GError *err = NULL;
 	int r, w;
+	gchar *conv;
 	
 	if (xmmsc_result_iserror (res)) {
 		print_error ("apan");
@@ -536,8 +540,13 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	if (!xmmsc_result_get_uint (res, &dur)) {
 		print_error ("korv");
 	}
-	
-	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err) , dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
+
+	conv =  g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
+	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", conv,
+	        dur / 60000, (dur / 1000) % 60, curr_dur / 60000,
+	        (curr_dur / 1000) % 60);
+	g_free (conv);
+
 	fflush (stdout);
 
 	xmmsc_result_unref (xmmsc_result_restart (res));
