@@ -176,21 +176,81 @@ read_config ()
 }
 
 
+static void
+format_pretty_list (xmmsc_connection_t *conn, x_list_t *list) {
+	uint count = 0;
+	x_list_t *n;
+	x_hash_t *e = NULL;
+	char *mid;
+
+	printf ("-[Result]-----------------------------------------------------------------------\n");
+	printf ("Id   | Artist            | Album                     | Title\n");
+
+	for (n = list; n; n = x_list_next (n)) {
+		char *artist, *album, *title;
+		xmmsc_result_t *res;
+		mid = n->data;
+
+		if (mid) {
+			res = xmmsc_medialib_get_info (conn, atoi (mid));
+			xmmsc_result_wait (res);
+			if (!xmmsc_result_get_hashtable (res, &e))
+				print_error ("broken result!");
+		} else {
+			print_error ("Empty result!");
+		}
+
+		title = x_hash_lookup (e, "title");
+		if (title) {
+			artist = x_hash_lookup (e, "artist");
+			if (!artist)
+				artist = "Unknown";
+
+			album = x_hash_lookup (e, "album");
+			if (!album)
+				album = "Unknown";
+
+			printf ("%-5.5s| %-17.17s | %-25.25s | %-25.25s\n", mid, artist, album, title);
+
+		} else {
+			char *url, *path, *filename;
+			url = x_hash_lookup (e, "url");
+			if (url) {
+				path = xmmsc_decode_path (url);
+				if (path) {
+					filename = g_path_get_basename (path);
+					g_free (path);
+					if (filename) {
+						printf ("%-5.5s| %s\n", mid, filename);
+						g_free (filename);
+					}
+				}
+			}
+		}
+		count++;
+		xmmsc_result_unref (res);
+	}
+	printf ("-------------------------------------------------------------[Count:%6.d]-----\n", count);
+}
+
 
 /**
  * here comes all the cmd callbacks
  */
+
+
 
 static void
 cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 {
 
 	static char *mlibHelp = "Available medialib commands:\n\
-search [\"artist=Dismantled and tracknr=1\"]\n\
-searchadd [\"artist=Dismantled and tracknr=1\"]\n\
+search [artist=Dismantled]\n\
+searchadd [artist=Dismantled]\n\
 query [\"raw sql statment\"]\n\
-save_playlist [\"playlistname\"]\n\
-load_playlist [\"playlistname\"]\n\
+save_playlist [playlistname]\n\
+load_playlist [playlistname]\n\
+list_playlist [playlistname]\n\
 add [url]";
 
 	if (argc < 3) {
@@ -221,9 +281,12 @@ add [url]";
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
 	} else if (g_strcasecmp (argv[2], "search") == 0) {
-		xmmsc_result_t *res;
 		char query[1024];
 		char **s;
+		x_list_t *l;
+		xmmsc_result_t *res;
+		x_hash_t *e;
+		x_list_t *n = NULL;
 
 		if (argc < 4) {
 			print_error ("Supply a select statement");
@@ -232,75 +295,32 @@ add [url]";
 		s = g_strsplit (argv[3], "=", 0);
 		
 		g_snprintf (query, sizeof (query), "SELECT id FROM Media WHERE key='%s' and value='%s'", s[0], s[1]);
-		printf ("-[Result]-----------------------------------------------------------------------\n");
-		printf ("Id   | Artist            | Album                     | Title\n");
-
+	
 		res = xmmsc_medialib_select (conn, query);
 		xmmsc_result_wait (res);
 
 		if (xmmsc_result_iserror (res)) {
 			print_error ("%s", xmmsc_result_get_error (res));
 		}
-		
-		{
-		  	uint count = 0;
-			x_list_t *l, *n;
-			x_hash_t *e = NULL, *r;
-			char *mid;
 
-			if (!xmmsc_result_get_hashlist (res, &l)) {
-				print_error ("Broken resultset...");
-			}
-
-			for (n = l; n; n = x_list_next (n)) {
-			  	char *artist, *album, *title;
-				xmmsc_result_t *res2;
-				r = n->data;
-				mid = x_hash_lookup (r, "id");
-
-				if (mid) {
-					res2 = xmmsc_medialib_get_info (conn, atoi (mid));
-					xmmsc_result_wait (res2);
-					if (!xmmsc_result_get_hashtable (res2, &e))
-						print_error ("broken result!");
-				} else {
-					print_error ("Empty result!");
-				}
-				
-				title = x_hash_lookup (e, "title");
-				if (title) {
-					artist = x_hash_lookup (e, "artist");
-					if (!artist)
-					  	artist = "Unknown";
-					
-					album = x_hash_lookup (e, "album");
-					if (!album)
-					  	album = "Unknown";
-
-					printf ("%-5.5s| %-17.17s | %-25.25s | %-25.25s\n", mid, artist, album, title);
-
-				} else {
-				  	char *url, *path, *filename;
-				   	url = x_hash_lookup (e, "url");
-					if (url) {
-					  	path = xmmsc_decode_path (url);
-						if (path) {
-						  	filename = g_path_get_basename (path);
-							g_free (path);
-							if (filename) {
-					  			printf ("%-5.5s| %s\n", mid, filename);
-								g_free (filename);
-							}
-						}
-					}
-				}
-				count++;
-				xmmsc_result_unref (res2);
-			}
-			printf ("-------------------------------------------------------------[Count:%6.d]-----\n", count);
+		if (!xmmsc_result_get_hashlist (res, &l)) {
+			print_error ("Broken resultset...");
 		}
 
-		xmmsc_result_unref (res);
+		for (l = l; l; l = x_list_next (l)) {
+			char *id;
+			e = l->data;
+			
+			id = x_hash_lookup (e, "id");
+			if (!id)
+				print_error ("broken resultset");
+
+			n = x_list_prepend (n, id);
+
+		}
+
+		format_pretty_list (conn, n);
+
 	} else if (g_strcasecmp (argv[2], "query") == 0) {
 		xmmsc_result_t *res;
 
@@ -331,6 +351,60 @@ add [url]";
 		}
 
 		xmmsc_result_unref (res);
+	} else if (g_strcasecmp (argv[2], "list_playlist") == 0) {
+		char query[1024];
+		x_list_t *l, *n = NULL;
+		x_hash_t *e;
+		char *id;
+		xmmsc_result_t *res;
+
+		if (argc < 4) {
+			print_error ("Supply a playlist name");
+		}
+
+		g_snprintf (query, sizeof (query), "SELECT id FROM Playlist WHERE name='%s'", argv[3]);
+
+		res = xmmsc_medialib_select (conn, query);
+		xmmsc_result_wait (res);
+
+		if (!xmmsc_result_get_hashlist (res, &l))
+			print_error ("Broken resultset!");
+
+		e = l->data;
+		if (!e) 
+			print_error ("No such playlist!");
+
+		id = x_hash_lookup (e, "id");
+		if (!id)
+			print_error ("broken resultset!");
+		
+		g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %s", id);
+		xmmsc_result_unref (res);
+
+		res = xmmsc_medialib_select (conn, query);
+		xmmsc_result_wait (res);
+		
+		if (!xmmsc_result_get_hashlist (res, &l))
+			print_error ("Broken resultset!");
+
+		for (l = l; l; l = x_list_next (l)) {
+			gchar *entry;
+			e = l->data;
+			
+			entry = x_hash_lookup (e, "entry");
+			if (!entry)
+				print_error ("broken resultset");
+
+			if (g_strncasecmp (entry, "mlib", 4) == 0) {
+				char *p = entry+7;
+				n = x_list_prepend (n, p);
+			}
+
+		}
+
+		format_pretty_list (conn, n);
+
+
 	} else if (g_strcasecmp (argv[2], "save_playlist") == 0 ||
 	           g_strcasecmp (argv[2], "load_playlist") == 0) {
 		xmmsc_result_t *res;
