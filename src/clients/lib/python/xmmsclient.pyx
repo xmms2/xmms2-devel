@@ -120,8 +120,8 @@ ObjectRef = {}
 
 cdef ResultNotifier (xmmsc_result_t *res, obj) :
 	obj.Callback ()
-	if not obj.broadcast :
-		del ObjectRef[obj.cid]
+	if not obj.GetBroadcast () :
+		del ObjectRef[obj.GetCid ()]
 		
 	
 cdef class XMMSResult :
@@ -131,6 +131,8 @@ cdef class XMMSResult :
 	cdef xmmsc_result_t *res
 	cdef object notifier
 	cdef object user_data
+	cdef int cid
+	cdef int broadcast
 
 	def __new__ (self) :
 		self.cid = 0
@@ -140,6 +142,12 @@ cdef class XMMSResult :
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set (self.res, ResultNotifier, self)
 		ObjectRef[self.cid] = self
+
+	def GetBroadcast (self) :
+		return self.broadcast
+
+	def GetCid (self) :
+		return self.cid
 
 	def Callback (self) :
 		""" Override me! """
