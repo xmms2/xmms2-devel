@@ -140,7 +140,8 @@ xmms_object_disconnect (xmms_object_t *object, const gchar *signal,
 
 	if (!node)
 		goto unlock;
-	
+
+	g_free (node->data);
 	list = g_list_delete_link (list, node);
 	if (!list) {
 		g_hash_table_remove (object->signals, key);
