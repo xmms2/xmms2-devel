@@ -188,18 +188,21 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	   but that should be no problem, as SIDs generally are small */
 	if (!data->buffer) {
 		gint numsubtunes;
+		/*
 		const gchar *suburi;
 		gchar *suburiend;
+		*/
 		transport = xmms_decoder_transport_get (decoder);
 		g_return_val_if_fail (transport, FALSE);
 
-		suburi = xmms_transport_suburl_get (transport);
+		/* suburi = xmms_transport_suburl_get (transport); 
 		data->subtune = strtol (suburi, &suburiend, 0);
 		if (*suburiend != 0) {
 			xmms_log_error ("Bad suburi: %s, using default subsong", suburi);
 			data->subtune = 0;
 		}
-
+		*/
+		
 		len = 0;
 		data->buffer_length = xmms_transport_size (transport);
 		data->buffer = g_malloc (data->buffer_length);
