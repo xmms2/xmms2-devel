@@ -31,6 +31,8 @@
 #define XMMS_OUTPUT_DEFAULT "sun"
 #elif XMMS_OS_DARWIN
 #define XMMS_OUTPUT_DEFAULT "coreaudio"
+#elif XMMS_OS_FREEBSD
+#define XMMS_OUTPUT_DEFAULT "oss"
 #endif
 
 #define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "131072"

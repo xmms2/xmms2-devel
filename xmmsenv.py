@@ -38,6 +38,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 			self.Append(CPPFLAGS=['-I/sw/include'])
 		elif self.sys == 'OpenBSD':
 			self.Append(CPPFLAGS='-DXMMS_OS_OPENBSD')
+		elif self.sys == 'FreeBSD':
+			self.Append(CPPFLAGS='-DXMMS_OS_FREEBSD')
 
 	def XmmsConfig(self,source):
 		self.Install(self.installdir+self.sysconfdir, source)
