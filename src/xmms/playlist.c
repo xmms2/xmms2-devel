@@ -101,6 +101,29 @@ XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 
+static void
+on_playlist_r_all_changed (xmms_object_t *object, gconstpointer data,
+			   gpointer udata)
+{
+	xmms_playlist_t *playlist = udata;
+
+	g_mutex_lock (playlist->mutex);
+	if (data) 
+		playlist->repeat_all = atoi ((gchar *)data);
+	g_mutex_unlock (playlist->mutex);
+}
+
+static void
+on_playlist_r_one_changed (xmms_object_t *object, gconstpointer data,
+			   gpointer udata)
+{
+	xmms_playlist_t *playlist = udata;
+
+	g_mutex_lock (playlist->mutex);
+	if (data)
+		playlist->repeat_one = atoi ((gchar *)data);
+	g_mutex_unlock (playlist->mutex);
+}
 
 /**
  * Initializes a new xmms_playlist_t.
@@ -109,6 +132,7 @@ xmms_playlist_t *
 xmms_playlist_init (void)
 {
 	xmms_playlist_t *ret;
+	xmms_config_value_t *val;
 
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->mutex = g_mutex_new ();
@@ -120,10 +144,10 @@ xmms_playlist_init (void)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 
-/*	val = xmms_config_value_register ("playlist.repeat", "none",
-	                                  on_playlist_mode_changed, ret);
-	tmp = xmms_config_value_string_get (val);
-	ret->mode = playlist_mode_from_str (tmp);*/
+	val = xmms_config_value_register ("playlist.repeat_one", "0", on_playlist_r_one_changed, ret);
+	ret->repeat_one = xmms_config_value_int_get (val);
+	val = xmms_config_value_register ("playlist.repeat_all", "0", on_playlist_r_all_changed, ret);
+	ret->repeat_all = xmms_config_value_int_get (val);
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_CURRENT_POS, 
@@ -632,18 +656,17 @@ xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist)
 static void
 xmms_playlist_destroy (xmms_object_t *object)
 {
+	xmms_config_value_t *val;
 	xmms_playlist_t *playlist = (xmms_playlist_t *)object;
 
 	g_return_if_fail (playlist);
 
 	g_mutex_free (playlist->mutex);
 
-	/*
-	val = xmms_config_lookup ("playlist.repeat");
-	xmms_config_value_callback_remove (val, on_playlist_mode_changed);
-	val = xmms_config_lookup ("playlist.stop_after_one");
-	xmms_config_value_callback_remove (val, on_playlist_mode_changed);
-	*/
+	val = xmms_config_lookup ("playlist.repeat_one");
+	xmms_config_value_callback_remove (val, on_playlist_r_one_changed);
+	val = xmms_config_lookup ("playlist.repeat_all");
+	xmms_config_value_callback_remove (val, on_playlist_r_all_changed);
 
 	xmms_mediainfo_thread_stop (playlist->mediainfothr);
 

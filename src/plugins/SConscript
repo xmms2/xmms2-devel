@@ -105,6 +105,13 @@ if base_env.HasGroup("curl"):
 	curl_http.AddFlagsFromGroup("curl")
 	curl_http.XmmsPlugin('xmms_curlhttp', ['curl/curl_http.c'])
 
+if base_env.HasGroup("gnomevfs"):
+	gnomevfs = base_env.Copy()
+	gnomevfs.AddFlagsFromGroup("glib")
+	gnomevfs.AddFlagsFromGroup("gnomevfs")
+	gnomevfs.XmmsPlugin('xmms_gnomevfs', ['gnomevfs/gnomevfs.c'])
+
+	
 if base_env.HasGroup("samba"):
 	samba = base_env.Copy()
 	samba.AddFlagsFromGroup("glib")
