@@ -664,4 +664,49 @@ xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
 	return 1;
 }
 
+/**
+ * Retrives a #x_list_t containing playlist entries from the resultset.
+ * @param res a #xmmsc_result_t containing a entrylist.
+ * @param r the return #x_list_t.
+ * @ret 1 upon success otherwise 0
+ */
+
+int
+xmmsc_result_get_entrylist (xmmsc_result_t *res, x_list_t **r)
+{
+	DBusMessageIter itr;
+	x_list_t *list = NULL;
+	x_hash_t *e = NULL;
+
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	while (42) {
+
+		e = xmmsc_deserialize_mediainfo (&itr);
+		if (!e) {
+			/** @todo Leak? */
+			return 0;
+		}
+
+		list = x_list_append (list, e);
+
+		if (!dbus_message_iter_has_next (&itr))
+			break;
+		
+		dbus_message_iter_next (&itr);
+	}
+
+	if (!list)
+		return 0;
+
+	*r = list;
+
+	return 1;
+}
+
+
 /** @} */

@@ -68,7 +68,9 @@ struct xmms_medialib_St {
 
 /** Global medialib */
 static xmms_medialib_t *medialib;
-
+  
+static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
+XMMS_METHOD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, ENTRYLIST, STRING, NONE);
 
 static void
 xmms_medialib_destroy (xmms_object_t *medialib)
@@ -104,6 +106,11 @@ xmms_medialib_init ()
 				    "1",
 				    NULL, NULL);
 
+	xmms_dbus_register_object ("medialib", XMMS_OBJECT (medialib));
+
+	xmms_object_method_add (XMMS_OBJECT (medialib), 
+				XMMS_METHOD_SELECT, 
+				XMMS_METHOD_FUNC (select));
 	return TRUE;
 }
 
@@ -267,19 +274,37 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 {
 	gint i=0;
 	GList **l = (GList **) pArg;
+	xmms_playlist_entry_t *e = NULL;
 
 	while (cName[i]) {
 		if (g_strcasecmp (cName[i], "url") == 0) {
-			xmms_playlist_entry_t *e;
 			e = xmms_playlist_entry_new (argv[i]);
-			xmms_medialib_entry_get (e);
 			*l = g_list_prepend (*l, e);
 		}
 
 		i++;
 	}
 
+	i = 0;
+	if (e) {
+		while (cName[i]) {
+			if (g_strcasecmp (cName[i], "id") == 0) {
+				xmms_playlist_entry_property_set (e, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, argv[i]);
+			} else if (g_strcasecmp (cName[i], "url") != 0) {
+				xmms_playlist_entry_property_set (e, cName[i], argv[i]);
+			}
+			i++;
+		}
+	}
+
 	return 0;
+}
+
+
+static GList *
+xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
+{
+	return xmms_medialib_select (query, error);
 }
 
 /**
@@ -304,7 +329,6 @@ xmms_medialib_select (gchar *query, xmms_error_t *error)
 
 	res = g_list_reverse (res);
 	return res;
-
 }
 
 static int

@@ -85,8 +85,33 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 		res = xmmsc_playlist_medialibadd (conn, query);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
-	}
+	} else if (g_strcasecmp (argv[2], "select") == 0) {
+		xmmsc_result_t *res;
 
+		if (argc < 4) {
+			print_error ("Supply a select statement");
+		}
+
+		res = xmmsc_medialib_select (conn, argv[3]);
+		xmmsc_result_wait (res);
+		
+		{
+			x_list_t *l, *n;
+			x_hash_t *e;
+
+			if (!xmmsc_result_get_entrylist (res, &l)) {
+				print_error ("Broken resultset...");
+			}
+
+			for (n = l; n; n = x_list_next (n)) {
+				e = n->data;
+				print_info ("%s - %s - %s", x_hash_lookup (e, "artist"), x_hash_lookup (e, "album"), x_hash_lookup (e, "title"));
+			}
+			
+		}
+
+		xmmsc_result_unref (res);
+	}
 }
 
 static void

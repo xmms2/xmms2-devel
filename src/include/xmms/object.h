@@ -50,6 +50,7 @@ typedef enum {
 	XMMS_OBJECT_METHOD_ARG_INTLIST,
 	XMMS_OBJECT_METHOD_ARG_STRINGLIST,
 	XMMS_OBJECT_METHOD_ARG_PLCH,
+	XMMS_OBJECT_METHOD_ARG_ENTRYLIST,
 } xmms_object_method_arg_type_t;
 
 typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
@@ -73,6 +74,7 @@ typedef struct {
 		GList *uintlist;
 		GList *intlist;
 		GList *stringlist; /* GList of const gchar * */
+		GList *entrylist;
 		xmms_playlist_changed_msg_t *plch;
 	} retval;
 	xmms_error_t error;
@@ -113,6 +115,7 @@ void xmms_object_method_call (xmms_object_t *object, const char *method, xmms_ob
 
 #define __XMMS_METHOD_DO_RETVAL_NONE()
 #define __XMMS_METHOD_DO_RETVAL_PLAYLIST_ENTRY() arg->retval.playlist_entry = 
+#define __XMMS_METHOD_DO_RETVAL_ENTRYLIST() arg->retval.entrylist = 
 #define __XMMS_METHOD_DO_RETVAL_UINT32() arg->retval.uint32 = 
 #define __XMMS_METHOD_DO_RETVAL_UINTLIST() arg->retval.uintlist = 
 #define __XMMS_METHOD_DO_RETVAL_INTLIST() arg->retval.intlist = 

@@ -593,6 +593,8 @@ xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
 			} else {
 				x_hash_insert (tab, key, dbus_message_iter_get_string (&dictitr));
 			}
+
+			
 			if (!dbus_message_iter_has_next (&dictitr))
 				break;
 			dbus_message_iter_next (&dictitr);

@@ -242,6 +242,30 @@ xmms_dbus_handle_playlist_chmsg (DBusMessageIter *itr, xmms_playlist_changed_msg
 }
 
 static void
+xmms_dbus_do_playlist_entry (DBusMessageIter *itr, xmms_playlist_entry_t *entry)
+{
+	const gchar *url;
+	DBusMessageIter dictitr;
+
+	url = xmms_playlist_entry_url_get (entry);
+
+	dbus_message_iter_append_dict (itr, &dictitr);
+
+	/* add id to Dict */
+	dbus_message_iter_append_dict_key (&dictitr, "id");
+	dbus_message_iter_append_uint32 (&dictitr, xmms_playlist_entry_id_get (entry));
+
+	/* add url to Dict */
+	if (url) {
+		dbus_message_iter_append_dict_key (&dictitr, "url");
+		dbus_message_iter_append_string (&dictitr, url);
+	}
+
+	/* add the rest of the properties to Dict */
+	xmms_playlist_entry_property_foreach (entry, hash_to_dict, &dictitr);
+}
+
+static void
 xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 {
 	DBusMessageIter itr;
@@ -288,6 +312,19 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 				}
 				break;
 			}
+		case XMMS_OBJECT_METHOD_ARG_ENTRYLIST:
+			{
+				GList *l = arg->retval.entrylist;
+
+				while (l) {
+					if (l->data) {
+						xmms_dbus_do_playlist_entry (&itr, (xmms_playlist_entry_t *)l->data);
+						xmms_object_unref (l->data);
+					}
+					l = g_list_delete_link (l,l);
+				}
+				break;
+			}
 		case XMMS_OBJECT_METHOD_ARG_PLCH:
 			{
 				xmms_playlist_changed_msg_t *chmsg = arg->retval.plch;
@@ -297,28 +334,10 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 			break;
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: 
 			{
-				const gchar *url;
-				DBusMessageIter dictitr;
-
-				url = xmms_playlist_entry_url_get (arg->retval.playlist_entry);
-
-				dbus_message_iter_append_dict (&itr, &dictitr);
-
-				/* add id to Dict */
-				dbus_message_iter_append_dict_key (&dictitr, "id");
-				dbus_message_iter_append_uint32 (&dictitr, xmms_playlist_entry_id_get (arg->retval.playlist_entry));
-
-				/* add url to Dict */
-				if (url) {
-					dbus_message_iter_append_dict_key (&dictitr, "url");
-					dbus_message_iter_append_string (&dictitr, url);
-				}
-
-				/* add the rest of the properties to Dict */
-				xmms_playlist_entry_property_foreach (arg->retval.playlist_entry, hash_to_dict, &dictitr);
-
-				if (arg->retval.playlist_entry) 
+				if (arg->retval.playlist_entry)  {
+					xmms_dbus_do_playlist_entry (&itr, arg->retval.playlist_entry);
 					xmms_object_unref (arg->retval.playlist_entry);
+				}
 
 				break;
 			}
