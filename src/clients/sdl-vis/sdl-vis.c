@@ -299,8 +299,6 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 
 		/* @todo measure ipc-delay for real! */
 		enqueue (time-300, spec); 
-		x_list_free (list);
-
 	}
 
 	newres = xmmsc_result_restart (res);
