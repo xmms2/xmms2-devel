@@ -270,7 +270,7 @@ main (int argc, char **argv)
 
 	xmms_dbus_init (xmms_config_value_string_get (cv));
 
-	xmms_signal_init ();
+	xmms_signal_init (XMMS_OBJECT (mainobj));
 
 	xmms_dbus_register_object ("main", XMMS_OBJECT (mainobj));
 	xmms_object_method_add (XMMS_OBJECT (mainobj), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));

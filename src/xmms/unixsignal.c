@@ -25,6 +25,7 @@
 #include "xmms/unixsignal.h"
 #include "xmms/util.h"
 #include "xmms/object.h"
+#include "xmms/signal_xmms.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,8 @@
 
 static gpointer 
 sigwaiter(gpointer data){
+	xmms_object_t *obj = (xmms_object_t *) data;
+	xmms_object_method_arg_t arg;
 	sigset_t signals;
 	int caught;
 
@@ -48,7 +51,10 @@ sigwaiter(gpointer data){
 		switch (caught){
 		case SIGINT:
 			XMMS_DBG ("Got SIGINT!");
-			exit (0);
+
+			memset (&arg, 0, sizeof (arg));
+			xmms_error_reset (&arg.error);
+			xmms_object_method_call (obj, XMMS_METHOD_QUIT, &arg);
 			break;
 		case SIGTERM:
 			XMMS_DBG ("Got SIGTERM! Bye!");
@@ -59,6 +65,6 @@ sigwaiter(gpointer data){
 }
 
 void
-xmms_signal_init() {
-	g_thread_create (sigwaiter, NULL, FALSE, NULL);
+xmms_signal_init (xmms_object_t *obj) {
+	g_thread_create (sigwaiter, obj, FALSE, NULL);
 }
