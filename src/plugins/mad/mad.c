@@ -3,9 +3,10 @@
 #include "xmms/util.h"
 #include "xmms/core.h"
 #include "xmms/output.h"
+#include "xmms/playlist.h"
 #include "xmms/transport.h"
 #include "mad_misc.h"
-#include "id3_genre.h"
+#include "id3.h"
 #include <mad.h>
 
 #include <glib.h>
@@ -19,24 +20,6 @@
  */
 
 
-struct id3v1tag_t {
-        char tag[3]; /* always "TAG": defines ID3v1 tag 128 bytes before EOF */
-        char title[30];
-        char artist[30];
-        char album[30];
-        char year[4];
-        union {
-                struct {
-                        char comment[30];
-                } v1_0;
-                struct {
-                        char comment[28];
-                        char __zero;
-                        unsigned char track_number;
-                } v1_1;
-        } u;
-        unsigned char genre;
-};
 
 
 typedef struct xmms_mad_data_St {
@@ -109,46 +92,34 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
+
 static void
-xmms_mad_calc_duration (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry)
+xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
 {
 	struct mad_header header;
 	struct mad_stream stream;
-	xmms_mad_data_t *data;
 	guint fsize=0;
 	guint bitrate=0;
 	gchar *tmp;
-	gchar buf[4096];
-	gint ret;
-
-
-	data = xmms_decoder_plugin_data_get (decoder);
-	if (!data)
-		return;
-
-	ret = xmms_transport_read (xmms_decoder_transport_get (decoder), buf, 4096);
-
-	if (ret <= 0) {
-		return;
-	}
 
 	mad_stream_init (&stream);
 
-	mad_stream_buffer (&stream, buf, ret);
+	mad_stream_buffer (&stream, buf, len);
 		
 	if (mad_header_decode (&header, &stream) == -1) {
+		XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
 		return;
 	}
 
 
-	fsize = xmms_transport_size (xmms_decoder_transport_get (decoder)) * 8;
+	fsize = filesize * 8;
 	bitrate = header.bitrate;
 
 	mad_header_finish (&header);
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_playlist_entry_set_prop (data->entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
+		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, "-1");
 	} else {
 		tmp = g_strdup_printf ("%d", fsize / bitrate);
 		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_DURATION, tmp);
@@ -168,7 +139,10 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_transport_t *transport;
 	xmms_playlist_entry_t *entry;
 	xmms_mad_data_t *data;
-	struct id3v1tag_t tag;
+	xmms_id3v2_header_t head;
+	gchar buf[4096];
+	gboolean id3handled = FALSE;
+	gint ret;
 
 	g_return_val_if_fail (decoder, NULL);
 
@@ -179,64 +153,59 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	entry = xmms_playlist_entry_new (NULL);
 
-	xmms_mad_calc_duration (decoder, entry);
+	ret = xmms_transport_read (transport, buf, 4096);
+	if (ret <= 0) {
+		return entry;
+	}
 
-	XMMS_DBG ("Seeking to last 128 bytes");
-	xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
-	xmms_transport_read (transport, (gchar *)&tag, 128);
-	XMMS_DBG ("Seeking to last first bytes");
-	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
+	if (ret >= 10 && xmms_mad_id3v2_header (buf, &head)) {
+		gchar *id3v2buf;
+		gint pos;
 
-	if (strncmp (tag.tag, "TAG", 3) == 0) {
-		gchar *tmp;
-		XMMS_DBG ("Found ID3v1 TAG!");
+		/** @todo sanitycheck head.len */
 
-		tmp = g_strdup_printf ("%30.30s", tag.artist);
-		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ARTIST, tmp);
-		g_free (tmp);
+		XMMS_DBG ("id3v2 len = %d", head.len);
 
-		tmp = g_strdup_printf ("%30.30s", tag.album);
-		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_ALBUM, tmp);
-		g_free (tmp);
-
-		tmp = g_strdup_printf ("%30.30s", tag.title);
-		g_strstrip (tmp);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TITLE, tmp);
-		g_free (tmp);
-
-		tmp = g_strdup_printf ("%4.4s", tag.year);
-		xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_YEAR, tmp);
-		g_free (tmp);
-
-		if (tag.genre > GENRE_MAX)
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, "Unknown");
-		else {
-			tmp = g_strdup ((gchar *)id3_genres[tag.genre]);
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_GENRE, tmp);
-			g_free (tmp);
-		}
-
-		if (atoi (&tag.u.v1_1.track_number) > 0) {
-			/* V1.1 */
-			tmp = g_strdup_printf ("%28.28s", tag.u.v1_1.comment);
-			g_strstrip (tmp);
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, tmp);
-			g_free (tmp);
-
-			tmp = g_strdup_printf ("%d", (gint) tag.u.v1_1.track_number);
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_TRACKNR, tmp);
-			g_free (tmp);
+		id3v2buf = g_malloc (head.len);
+		
+		memcpy (id3v2buf, buf+10, MIN (ret-10,head.len));
+		
+		if (ret-10 < head.len) { /* need more data */
+			pos = MIN (ret-10,head.len);
+			
+			while (pos < head.len) {
+				ret = xmms_transport_read (transport,
+							   id3v2buf + pos,
+							   head.len - pos);
+				if (ret <= 0) {
+					XMMS_DBG ("error reading data for id3v2-tag");
+					return entry;
+				}
+				pos += ret;
+			}
+			ret = xmms_transport_read (transport, buf, 4096);
 		} else {
-			tmp = g_strdup_printf ("%30.30s", tag.u.v1_1.comment);
-			g_strstrip (tmp);
-			xmms_playlist_entry_set_prop (entry, XMMS_ENTRY_PROPERTY_COMMENT, tmp);
-			g_free (tmp);
+			/* just make sure buf is full */
+			memmove (buf, buf + head.len + 10, 4096 - (head.len+10));
+			ret = xmms_transport_read (transport, buf + 4096 - (head.len+10), head.len + 10);
 		}
-
+		
+		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
 	}
 	
+	xmms_mad_calc_duration (buf, ret, xmms_transport_size (transport), entry);
+
+	if (!id3handled) {
+		XMMS_DBG ("Seeking to last 128 bytes");
+		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
+		ret = xmms_transport_read (transport, buf, 128);
+		XMMS_DBG ("Seeking to last first bytes");
+		xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
+		if (ret == 128) {
+			xmms_mad_id3_parse (buf, entry);
+		}
+	}
+
 	if (data) {
 		data->entry = entry;
 
