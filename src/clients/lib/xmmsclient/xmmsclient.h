@@ -33,13 +33,7 @@ void xmmsc_playback_seek (xmmsc_connection_t *c, guint milliseconds);
 void xmmsc_playlist_list (xmmsc_connection_t *c);
 void xmmsc_get_playing_id (xmmsc_connection_t *c);
 void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
-/*GList *xmmsc_playlist_list (xmmsc_connection_t *);*/
-/*guint xmmsc_get_playing_id (xmmsc_connection_t *);*/
-/*GHashTable *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);*/
 void xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val);
-GList *xmmsc_playlist_list (xmmsc_connection_t *);
-guint xmmsc_get_playing_id (xmmsc_connection_t *);
-GHashTable *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
 
 void xmmsc_set_callback (xmmsc_connection_t *, gchar *, void (*)(void *,void*), void *);
 
