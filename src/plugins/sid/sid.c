@@ -11,6 +11,11 @@
 #include "xmms/util.h"
 #include "xmms/transport.h"
 
+#include "xmms/output.h"                                                                  
+#include "xmms/xmms.h"                                                                    
+
+
+
 #include "sidplay_wrapper.h"
 
 #include <glib.h>
@@ -48,7 +53,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "sid",
-			"SID decoder " VERSION,
+			"SID decoder " XMMS_VERSION,
 			"libsidplay2 based SID decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -144,7 +149,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		transport = xmms_decoder_transport_get (decoder);
 		g_return_val_if_fail (transport, FALSE);
 
-		suburi = xmms_transport_suburi_get (transport);
+		suburi = xmms_transport_suburl_get (transport);
 		subtune = strtol (suburi, &suburiend, 0);
 		if (*suburiend != 0) {
 			XMMS_DBG ("Bad suburi: %s, using default subsong", 

@@ -40,11 +40,6 @@ if base_env.HasGroup("sqlite"):
 	sqlite.XmmsPlugin('xmms_sqlite', ['sqlite/sqlite.c'])
 
 if base_env.HasGroup("curl"):
-	curl = base_env.Copy()
-	curl.AddFlagsFromGroup("glib")
-	curl.AddFlagsFromGroup("curl")
-	curl.XmmsPlugin('xmms_curl', ['curl/curl.c'])
-
 	curl_http = base_env.Copy()
 	curl_http.AddFlagsFromGroup("glib")
 	curl_http.AddFlagsFromGroup("curl")
@@ -55,8 +50,15 @@ if base_env.HasGroup("curl"):
 	curl_ftp.AddFlagsFromGroup("curl")
 	curl_ftp.XmmsPlugin('xmms_curlftp', ['curl/curl_ftp.c'])
 
+if base_env.HasGroup("sid"):
+	sid = base_env.Copy()
+	sid.AddFlagsFromGroup("glib")
+	sid.AddFlagsFromGroup("sid")
+	sid.XmmsPlugin('xmms_sid', ['sid/sid.c'])
+
+
 if base_env.HasGroup("alsa"):
 	alsa = base_env.Copy()
 	alsa.AddFlagsFromGroup("glib")
 	alsa.AddFlagsFromGroup("alsa")
-	alsa.XmmsPlugin('xmms_alsa', ['alsa/alsa.c'])
+#	alsa.XmmsPlugin('xmms_alsa', ['alsa/alsa.c'])
