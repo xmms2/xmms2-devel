@@ -18,8 +18,11 @@
 #include <glib.h>
 
 #include <stdio.h>
+#include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <errno.h>
@@ -34,14 +37,14 @@
 #include "xmms/ipc_transport.h"
 
 void
-xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
+xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)
 {
 	g_free (ipct->path);
 	close (ipct->fd);
 }
 
 gint
-xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
+xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 {
 	gint fd;
 	gint ret;
@@ -56,7 +59,7 @@ xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 }
 
 gint
-xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
+xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 {
 	gint fd;
 	g_return_val_if_fail (ipct, -1);
@@ -69,21 +72,51 @@ xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_client_init (const gchar *path)
+xmms_ipc_tcp_client_init (const gchar *path)
 {
 	gint fd;
 	gint flags;
+	gchar **tokens;
 	xmms_ipc_transport_t *ipct;
-	struct sockaddr_un saddr;
+	struct sockaddr_in saddr;
+	struct hostent *hent;
+	struct servent *sent;
 
-
-	fd = socket (AF_UNIX, SOCK_STREAM, 0);
+	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd == -1) {
 		return NULL;
 	}
 
-	saddr.sun_family = AF_UNIX;
-	strncpy (saddr.sun_path, path, 108);
+	tokens = g_strsplit (path, ":", 0);
+	if (!tokens) {
+		close (fd);
+		return NULL;
+	}
+
+	hent = gethostbyname (tokens[0]);
+	if (!hent) {
+		close (fd);
+		g_strfreev (tokens);
+		return NULL;
+	}
+
+	memset (&saddr, '\0', sizeof (saddr));
+	memcpy (&saddr.sin_addr, *hent->h_addr_list, sizeof (struct in_addr));
+
+	saddr.sin_family = AF_INET;
+
+	if (!tokens[1]) {
+		saddr.sin_port = htons (5555);
+	} else {
+		sent = getservbyname (tokens[1], "tcp");
+		if (!sent) {
+			saddr.sin_port = htons ((guint16) strtoul (tokens[1], NULL, 0));
+		} else {
+			saddr.sin_port = (guint16) sent->s_port;
+		}
+	}
+
+	g_strfreev (tokens);
 
 	if (connect (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
@@ -104,22 +137,22 @@ xmms_ipc_usocket_client_init (const gchar *path)
 		close (fd);
 		return NULL;
 	}
-		
+
 	ipct = g_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
 	ipct->path = g_strdup (path);
-	ipct->read_func = xmms_ipc_usocket_read;
-	ipct->write_func = xmms_ipc_usocket_write;
-	ipct->destroy_func = xmms_ipc_usocket_destroy;
+	ipct->read_func = xmms_ipc_tcp_read;
+	ipct->write_func = xmms_ipc_tcp_write;
+	ipct->destroy_func = xmms_ipc_tcp_destroy;
 
 	return ipct;
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
+xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 {
 	gint fd;
-	struct sockaddr_un sin;
+	struct sockaddr_in sin;
 	socklen_t sin_len;
 
 	g_return_val_if_fail (transport, NULL);
@@ -146,12 +179,11 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 			return NULL;
 		}
 
-
 		ret = g_new0 (xmms_ipc_transport_t, 1);
 		ret->fd = fd;
-		ret->read_func = xmms_ipc_usocket_read;
-		ret->write_func = xmms_ipc_usocket_write;
-		ret->destroy_func = xmms_ipc_usocket_destroy;
+		ret->read_func = xmms_ipc_tcp_read;
+		ret->write_func = xmms_ipc_tcp_write;
+		ret->destroy_func = xmms_ipc_tcp_destroy;
 
 		return ret;
 	} else {
@@ -162,26 +194,53 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_server_init (const gchar *path)
+xmms_ipc_tcp_server_init (const gchar *path)
 {
 	gint fd;
 	gint flags;
+	gchar **tokens;
 	xmms_ipc_transport_t *ipct;
-	struct sockaddr_un saddr;
+	struct sockaddr_in saddr;
+	struct hostent *hent;
+	struct servent *sent;
 
-
-	fd = socket (AF_UNIX, SOCK_STREAM, 0);
+	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd == -1) {
 		return NULL;
 	}
 
-	saddr.sun_family = AF_UNIX;
-	strncpy (saddr.sun_path, path, 108);
-
-	if (g_file_test (path, G_FILE_TEST_EXISTS)) {
-		unlink (path);
+	tokens = g_strsplit (path, ":", 0);
+	if (!tokens) {
+		close (fd);
+		return NULL;
 	}
 
+	hent = gethostbyname (tokens[0]);
+	if (!hent) {
+		close (fd);
+		g_strfreev (tokens);
+		return NULL;
+	}
+
+	memset (&saddr, '\0', sizeof (saddr));
+	memcpy (&saddr.sin_addr, *hent->h_addr_list, sizeof (struct in_addr));
+	XMMS_DBG ("Binding to IP: %s", inet_ntoa (saddr.sin_addr));
+
+	saddr.sin_family = AF_INET;
+
+	if (!tokens[1]) {
+		saddr.sin_port = htons (5555);
+	} else {
+		sent = getservbyname (tokens[1], "tcp");
+		if (!sent) {
+			saddr.sin_port = htons ((guint16) strtoul (tokens[1], NULL, 0));
+		} else {
+			saddr.sin_port = (guint16) sent->s_port;
+		}
+	}
+
+	XMMS_DBG ("Binding to port: %u", (unsigned) ntohs (saddr.sin_port));
+	g_strfreev (tokens);
 	if (bind (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
 		return NULL;
@@ -207,10 +266,10 @@ xmms_ipc_usocket_server_init (const gchar *path)
 	ipct = g_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
 	ipct->path = g_strdup (path);
-	ipct->read_func = xmms_ipc_usocket_read;
-	ipct->write_func = xmms_ipc_usocket_write;
-	ipct->accept_func = xmms_ipc_usocket_accept;
-	ipct->destroy_func = xmms_ipc_usocket_destroy;
+	ipct->read_func = xmms_ipc_tcp_read;
+	ipct->write_func = xmms_ipc_tcp_write;
+	ipct->accept_func = xmms_ipc_tcp_accept;
+	ipct->destroy_func = xmms_ipc_tcp_destroy;
 
 	return ipct;
 }

@@ -36,6 +36,10 @@ const xmms_mimemap_t mimemap[] = {
 	{ "flac", "application/x-flac" },
 	{ "xm",  "audio/xm" },
 	{ "spx", "audio/speex" },
+	{ "s3m", "audio/s3m" },
+	{ "mod", "audio/mod" },
+	{ "med", "audio/med" },
+	{ "it",  "audio/it" },
 	{ NULL, NULL }
 };
 
