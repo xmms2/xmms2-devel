@@ -81,11 +81,48 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
  * Private functions
  */
 
+gboolean
+xmms_output_open (xmms_output_t *output)
+{
+	xmms_output_open_method_t open_method;
+
+	g_return_val_if_fail (output, FALSE);
+
+	open_method = xmms_plugin_method_get (output->plugin, XMMS_METHOD_OPEN);
+
+	if (!open_method || !open_method (output)) {
+		XMMS_DBG ("Couldnt open output device");
+		return FALSE;
+	}
+
+	output->is_open = TRUE;
+
+	return TRUE;
+
+}
+
+void
+xmms_output_close (xmms_output_t *output)
+{
+	xmms_output_close_method_t close_method;
+
+	g_return_if_fail (output);
+
+	close_method = xmms_plugin_method_get (output->plugin, XMMS_METHOD_CLOSE);
+
+	if (!close_method)
+		return;
+
+	close_method (output);
+
+	output->is_open = FALSE;
+
+}
+
 xmms_output_t *
-xmms_output_open (xmms_plugin_t *plugin, xmms_config_data_t *config)
+xmms_output_new (xmms_plugin_t *plugin, xmms_config_data_t *config)
 {
 	xmms_output_t *output;
-	xmms_output_open_method_t open_method;
 	
 	g_return_val_if_fail (plugin, NULL);
 
@@ -97,19 +134,10 @@ xmms_output_open (xmms_plugin_t *plugin, xmms_config_data_t *config)
 	output->mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
 	output->buffer = xmms_ringbuf_new (32768);
+	output->is_open = FALSE;
 	
 	xmms_output_set_config (output, config->output);
 	
-	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
-
-	if (!open_method || !open_method (output)) {
-		XMMS_DBG ("Couldnt open output device");
-		xmms_ringbuf_destroy (output->buffer);
-		g_mutex_free (output->mutex);
-		g_free (output);
-		return NULL;
-	}
-
 	return output;
 }
 
@@ -175,8 +203,13 @@ xmms_output_thread (gpointer data)
 	while (output->running) {
 		gchar buffer[4096];
 		gint ret;
+		gint val;
 
 		xmms_ringbuf_wait_used (output->buffer, 4096, output->mutex);
+
+		if (!output->is_open)
+			xmms_output_open (output);
+
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);
 		
 		if (ret > 0) {
@@ -188,12 +221,24 @@ xmms_output_thread (gpointer data)
 			xmms_core_playtime_set((guint)(output->played/(4.0f*44.1f)));
 			
 		} else if (xmms_ringbuf_eos (output->buffer)) {
+			GTimeVal time;
+
 			xmms_output_unlock (output);
 			xmms_object_emit (XMMS_OBJECT (output), "eos-reached", NULL);
 			xmms_output_lock (output);
 			output->played = 0;
-			if (xmms_ringbuf_eos (output->buffer))
-				g_cond_wait (output->cond, output->mutex);
+			
+			while (xmms_ringbuf_eos (output->buffer)) {
+				g_get_current_time (&time);
+				g_time_val_add (&time, 10 * G_USEC_PER_SEC);
+				if (!g_cond_timed_wait (output->cond, output->mutex, &time)){
+					if (output->is_open) {
+						XMMS_DBG ("Timed out");
+						xmms_output_close (output);
+					}
+				}
+			}
+
 		}
 	}
 	xmms_output_unlock (output);

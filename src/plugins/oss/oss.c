@@ -29,7 +29,8 @@ typedef struct xmms_oss_data_St {
  */
 
 static gboolean xmms_oss_open (xmms_output_t *output);
-void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
+static void xmms_oss_close (xmms_output_t *output);
+static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
 
 /*
  * Plugin header
@@ -49,6 +50,7 @@ xmms_plugin_get (void)
 	
 	xmms_plugin_method_add (plugin, XMMS_METHOD_WRITE, xmms_oss_write);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_oss_open);
+	xmms_plugin_method_add (plugin, XMMS_METHOD_CLOSE, xmms_oss_close);
 	
 	return plugin;
 }
@@ -104,7 +106,19 @@ error:
 	return FALSE;
 }
 
-void
+static void
+xmms_oss_close (xmms_output_t *output)
+{
+	xmms_oss_data_t *data;
+
+	g_return_if_fail (output);
+	data = xmms_output_plugin_data_get (output);
+	g_return_if_fail (data);
+
+	close (data->fd);
+}
+
+static void
 xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len)
 {
 	xmms_oss_data_t *data;
