@@ -40,9 +40,6 @@
 
 #include <AudioUnit/AudioUnit.h>
 
-
-#warning "CONVERT TO SAMPLE_T"
-
 /*
  * Type definitions
  */
@@ -63,11 +60,10 @@ static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
 static void xmms_ca_close (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
-static guint xmms_ca_samplerate_set (xmms_output_t *output, guint rate);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
-static void xmms_ca_mixer_config_changed (xmms_object_t *object, gconstpointer data,
-										  gpointer userdata);
+static void xmms_ca_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpointer userdata);
 void xmms_ca_mixer_set (xmms_output_t *output, guint left, guint right);
+static gboolean xmms_ca_format_set (xmms_output_t *output, xmms_audio_format_t *format);
 
 /*
  * Plugin header
@@ -91,16 +87,11 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_ca_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ca_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_ca_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ca_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_ca_format_set);
 	
-	
-	xmms_plugin_config_value_register (plugin,
-									   "volume",
-									   "70/70",
-									   NULL,
-									   NULL);
+	xmms_plugin_config_value_register (plugin, "volume", "70/70", NULL, NULL);
 
 	return plugin;
 }
@@ -249,7 +240,7 @@ xmms_ca_new (xmms_output_t *output)
 	}
 
 
-	data->sF.mSampleRate = 44000.0;
+	data->sF.mSampleRate = 44100.0;
 	data->sF.mFormatID = kAudioFormatLinearPCM;
 	data->sF.mFormatFlags = 0;
 	data->sF.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
@@ -268,6 +259,7 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 
+	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100.0);
 
 	res = AudioUnitInitialize (data->au);
 	if (res) {
@@ -344,39 +336,6 @@ xmms_ca_destroy (xmms_output_t *output)
 	g_free (data);
 }
 
-static guint
-xmms_ca_samplerate_set (xmms_output_t *output, guint rate)
-{
-	xmms_ca_data_t *data;
-	Float64 sR;
-	OSStatus res;
-	UInt32 size = sizeof (Float64);
-
-	g_return_val_if_fail (output, 0);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, 0);
-
-	data->sF.mSampleRate = (Float64) rate;
-
-	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
-				    kAudioUnitScope_Input, 0, &data->sF,
-				    sizeof(AudioStreamBasicDescription));
-	if (res) {
-		XMMS_DBG ("Failed to set samplerate!");
-		return rate;
-	}
-
-	res = AudioUnitGetProperty (data->au, kAudioUnitProperty_StreamFormat,
-				    kAudioUnitScope_Output, 0, &sR,
-				    &size);
-
-	if (res) {
-		XMMS_DBG ("Failed to get samplerate!");
-		return rate;
-	}
-
-	return (guint)sR;
-}
 static void xmms_ca_mixer_config_changed (xmms_object_t *object, 
 										  gconstpointer data,
 										  gpointer userdata)
@@ -427,33 +386,8 @@ xmms_ca_close (xmms_output_t *output)
 	AudioUnitReset (data->au, kAudioUnitScope_Input, 0);
 }
 
-/*
-static void
-xmms_ca_write (xmms_output_t *output, gchar *buffer, gint len)
+static gboolean
+xmms_ca_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 {
-	xmms_ca_data_t *data;
-	gfloat *buf;
-	gint i;
-	gint16 *buffer2 = (gint16 *) buffer;
-
-	g_return_if_fail (output);
-	g_return_if_fail (buffer);
-	g_return_if_fail (len > 0);
-
-	data = xmms_output_private_data_get (output);
-
-	buf = g_new0 (gfloat, (len/2));
-
-	for (i = 0; i < (len/2) ; i++) {
-		buf[i] = ((gfloat) buffer2[i] + 32768.0) / (32768.0*2);
-	}
-	
-	g_mutex_lock (data->mtx);
-	xmms_ringbuf_wait_free (data->buffer, len*2, data->mtx);
-	xmms_ringbuf_write (data->buffer, buf, len*2);
-	g_mutex_unlock (data->mtx);
-
-	g_free (buf);
-
+	return TRUE;
 }
-*/
