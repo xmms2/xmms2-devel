@@ -616,7 +616,8 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
  *                           supported by the output plugin
  */
 gboolean
-xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
+xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
+                   GList *effects)
 {
 	gboolean ret;
 	xmms_decoder_init_method_t init_meth;
@@ -627,8 +628,12 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
 	 * the decoder plugin will most likely call
 	 * xmms_decoder_format_finish() at some point, which relies on the
 	 * output format list.
+	 * ditto for the effect list.
+	 * also, we copy the list here, because we'll remove entries if they
+	 * don't accept our sample format.
 	 */
 	decoder->output_format_list = output_format_list;
+	decoder->effects = g_list_copy (effects);
 
 	init_meth = xmms_plugin_method_get (decoder->plugin,
 	                                    XMMS_PLUGIN_METHOD_INIT);
@@ -654,15 +659,12 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
  *
  */
 void
-xmms_decoder_start (xmms_decoder_t *decoder, 
-		    GList *effects, 
-		    xmms_output_t *output)
+xmms_decoder_start (xmms_decoder_t *decoder, xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);
 	
 	decoder->running = TRUE;
-	decoder->effects = g_list_copy (effects);
 	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
