@@ -24,7 +24,8 @@ typedef enum {
 	XMMSC_TYPE_UINT32,
 	XMMSC_TYPE_STRING,
 	XMMSC_TYPE_NONE,
-	XMMSC_TYPE_VOID,
+	XMMSC_TYPE_VIS,
+	XMMSC_TYPE_MOVE,
 } xmmsc_types_t;
 
 typedef struct xmmsc_signal_callbacks_St {
@@ -55,8 +56,8 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYLIST_CLEAR, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_REMOVE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_JUMP, XMMSC_TYPE_UINT32 },
-	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_VOID },
-	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VOID },
+	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_MOVE },
+	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
 	{ NULL, 0 },
 };
 
@@ -472,8 +473,25 @@ handle_callback (DBusMessageHandler *handler,
 			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
 				arg = GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&itr));
 			break;
+		case XMMSC_TYPE_VIS:
+			{
+				double *arr;
+				int len=0;
+				dbus_message_iter_get_double_array (&itr, &arr, &len);
+				arg = &arr;
+			}
+			break;
+
+		case XMMSC_TYPE_MOVE:
+			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+				guint id = dbus_message_iter_get_uint32 (&itr);
+				guint newpos = dbus_message_iter_get_uint32 (&itr);
+				guint foo[] = {id, newpos};
+				arg = &foo;
+			}
+			break;
+
 		case XMMSC_TYPE_NONE:
-		case XMMSC_TYPE_VOID:
 			/* don't really know how to handle this yet. */
 			break;
 	}
