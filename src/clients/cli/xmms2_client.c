@@ -156,15 +156,17 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		memset (line, '\0', 80);
 
 		if (!x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, 80, "%f (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line)-1, "%f (%m:%s)", tab);
 		} else {
-			xmmsc_entry_format (line, 80, "%a - %t (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line)-1, "%a - %t (%m:%s)", tab);
 		}
 
 		if (id == list[i]) {
-			print_info ("->[%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+			print_info ("->[%d] %s", list[i], 
+					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		} else {
-			print_info ("  [%d] %s", list[i], g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
+			print_info ("  [%d] %s", list[i], 
+					g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err));
 		}
 
 		if (err) {
