@@ -484,13 +484,28 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 	x_hash_t *entry;
 	int id;
 
-	id = xmmscs_playback_current_id (conn);
-	entry = xmmscs_playlist_get_mediainfo (conn, id);
-	if (entry) {
-		x_hash_foreach (entry, print_entry, NULL);
-		x_hash_destroy (entry);
-	}
+	if (argc > 2) {
+		int cnt;
 
+		for (cnt = 2; cnt < argc; cnt++) {
+			id = strtoul (argv[cnt], (char**) NULL, 10);
+			entry = xmmscs_playlist_get_mediainfo (conn, id);
+
+			if (entry != NULL) {
+				x_hash_foreach (entry, print_entry, NULL);
+				x_hash_destroy (entry);
+			}
+		}
+
+	} else {
+		id = xmmscs_playback_current_id (conn);
+		entry = xmmscs_playlist_get_mediainfo (conn, id);
+
+		if (entry) {
+			x_hash_foreach (entry, print_entry, NULL);
+			x_hash_destroy (entry);
+		}
+	}
 
 }
 
