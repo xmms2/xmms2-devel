@@ -100,7 +100,7 @@ xmms_modplug_destroy (xmms_decoder_t *decoder)
 static void
 xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 {
-	xmms_medialib_entry *entry;
+	xmms_medialib_entry_t entry;
 	xmms_modplug_data_t *data;
 	gchar tmp[256];
 
@@ -111,7 +111,7 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 
 	data = xmms_decoder_private_data_get (decoder);
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	/* */
 	g_snprintf (tmp, sizeof (tmp), "%d", ModPlug_GetLength (data->mod));
@@ -123,10 +123,6 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 	xmms_medialib_entry_property_set (entry,
 					  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 					  tmp);
-	xmms_decoder_entry_mediainfo_set (decoder, entry);
-
-	xmms_object_unref (entry);
-
 	return;
 }
 
