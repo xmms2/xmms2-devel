@@ -131,7 +131,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 	def CheckProgramAndAddFlagsToGroup (self, group, program) :
 		test_env = self.Copy ()
 		my_conf = SCons.SConf.SConf (test_env)
-		(s, o) = my_conf.TryAction ("which "+program)
+		print "Checking for program " + program
+		(s, o) = my_conf.TryAction (program)
 		if (s) :
 		    self.AddFlagsToGroup (group, "yes")
 		    my_conf.Finish ()

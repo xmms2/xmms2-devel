@@ -54,6 +54,8 @@ def checkFlags(base_env):
 	
 	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
 		print "PyREX compiler found!"
+	else :
+		print "PyREX not found, no cookie for you!"
 
 	base_env.CheckLibAndAddFlagsToGroup("python", "python", "PyList_New", depends="pyrex")
 	if not base_env.HasGroup ("python") :
