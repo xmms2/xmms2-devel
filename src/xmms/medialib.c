@@ -264,7 +264,7 @@ insert_foreach (gpointer key, gpointer value, gpointer userdata)
 		i++;
 	}
 
-	xmms_sqlite_query (NULL, NULL, "insert into Property (id, key, value) values (%d, '%q', '%q')", medialib->id - 1, k, v);
+	xmms_sqlite_query (NULL, NULL, "insert into Property (id, key, value) values (%d, %Q, %Q)", medialib->id - 1, k, v);
 }
 
 /** 
@@ -287,7 +287,7 @@ xmms_medialib_entry_store (xmms_playlist_entry_t *entry)
 
 	id = xmms_medialib_next_id (medialib);
 	ret = xmms_sqlite_query (NULL, NULL,
-				 "insert into Media values (%d, '%q', '%q', '%q', '%q', '%q', '%q', %d)",
+				 "insert into Media values (%d, %Q, %Q, %Q, %Q, %Q, %Q, %d)",
 				 id, xmms_playlist_entry_url_get (entry),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
 				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
@@ -320,14 +320,10 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 	GHashTable *table = g_hash_table_new (g_str_hash, g_str_equal);
 
 	for (i = 0; i < argc; i++) {
-		gchar *a = NULL;
+		if (argv[i] && cName[i]) {
+			g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (argv[i]));
 
-		if (!argv[i]) {
-			a = " ";
-		} else {
-			a = argv[i];
 		}
-		g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (a));
 	}
 
 	*l = g_list_prepend (*l, table);
@@ -458,7 +454,7 @@ xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
 		ret = xmms_sqlite_query (NULL, NULL,
 		                         "insert into PlaylistEntries"
 		                         "(playlist_id, entry) "
-		                         "values (%u, \"%q\")",
+		                         "values (%u, %Q)",
 		                         playlist_id, mid);
 
 		if (!ret) {
@@ -707,7 +703,7 @@ xmms_medialib_entry_get (xmms_playlist_entry_t *entry)
 	g_mutex_lock (medialib->mutex);
 
 	ret = xmms_sqlite_query (mediarow_callback, (void *)entry, 
-				 "select * from Media where url = '%q' order by id limit 1", 
+				 "select * from Media where url = %Q order by id limit 1", 
 				 xmms_playlist_entry_url_get (entry));
 
 	if (!ret) {
