@@ -64,6 +64,7 @@ xmms_plugin_get (void)
 
 	/* Can only fastforward SIDs, not rewind */
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES);
 
 	return plugin;
 }

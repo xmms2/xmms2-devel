@@ -16,5 +16,8 @@ xmms2_SOURCES=main.c \
 	playlist.c playlist.h \
 	magic.c magic.h \
 	medialib.c medialib.h
+	unixsignal.c unixsignal.h
 
 xmms2_LDADD = @GLIB_LIBS@ @XML_LIBS@
+
+
