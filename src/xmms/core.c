@@ -399,9 +399,13 @@ core_thread (gpointer data)
 		XMMS_DBG ("Playing %s", xmms_playlist_entry_url_get (core->curr_song));
 		
 		core->transport = xmms_transport_new ();
-		xmms_transport_open (core->transport, core->curr_song);
 
 		if (!core->transport) {
+			continue;
+		}
+		
+		if  (!xmms_transport_open (core->transport, core->curr_song)) {
+			xmms_transport_close (core->transport);
 			continue;
 		}
 		

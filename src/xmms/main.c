@@ -60,7 +60,7 @@ parse_config ()
 				mkdir (configdir, 0755);
 			}
 
-			if (!xmms_config_save_to_file (config, filename)) {
+			if (!xmms_config_save (filename)) {
 				XMMS_DBG ("Could't write file %s!", filename);
 				exit (EXIT_FAILURE);
 			}

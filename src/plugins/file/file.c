@@ -145,6 +145,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	xmms_file_data_t *data;
 	const gchar *urlptr;
 	gchar *nurl;
+	struct stat st;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -162,6 +163,12 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 		g_free (nurl);
 		return FALSE;
 	}
+
+	if (stat (urlptr, &st) == -1)
+		return FALSE;
+
+	if (!S_ISREG (st.st_mode))
+		return FALSE;
 
 	XMMS_DBG ("Opening %s", urlptr);
 	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
@@ -192,7 +199,8 @@ xmms_file_close (xmms_transport_t *transport)
 	g_return_if_fail (transport);
 
 	data = xmms_transport_plugin_data_get (transport);
-	g_return_if_fail (data);
+	if (!data)
+		return;
 	
 	if (data->fd != -1)
 		close (data->fd);

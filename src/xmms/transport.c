@@ -17,6 +17,8 @@
 #include <glib.h>
 #include <string.h>
 
+#include <sys/stat.h>
+
 /*
  * Static function prototypes
  */
@@ -574,6 +576,10 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 		}
 		*transport->suburl = 0;
 		transport->suburl++;
+
+		if (!g_file_test (url, G_FILE_TEST_IS_DIR))
+			return FALSE;
+
 		XMMS_DBG ("Trying %s  (suburl: %s)",url,transport->suburl);
 	}
 
@@ -669,8 +675,9 @@ xmms_transport_destroy (xmms_transport_t *transport)
 	g_mutex_free (transport->mutex);
 	xmms_object_cleanup (XMMS_OBJECT (transport));
 
-	g_free (transport->suburl);
-	g_free (transport->mimetype);
+	if (transport->mimetype)
+		g_free (transport->mimetype);
+
 	g_free (transport);
 }
 
