@@ -1,6 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
+#include "xmms/output.h"
 #include "mad_misc.h"
 #include <mad.h>
 
@@ -120,7 +121,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport)
 		ch2 = data->synth.pcm.samples[1];
 		
 		ret = pack_pcm (out, data->synth.pcm.length, ch1, ch2, 16, &clipped, &clipping);
-		xmms_output_write (decoder->output, ret);
+		xmms_output_write (decoder->output, out, sizeof(out));
 	}
 	
 	return TRUE;

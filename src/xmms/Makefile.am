@@ -10,6 +10,7 @@ xmms2_SOURCES=main.c \
 	ringbuf.c ringbuf.h \
 	transport.c transport.h \
 	decoder.c decoder.h \
+	output.c output.h \
 	playlist.c playlist.h
 
 xmms2_LDADD = @GLIB_LIBS@ @XML_LIBS@

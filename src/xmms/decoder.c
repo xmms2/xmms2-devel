@@ -2,22 +2,11 @@
 #include "plugin.h"
 #include "object.h"
 #include "util.h"
+#include "output.h"
 
 /*
  * Type definitions
  */
-
-struct xmms_decoder_St {
-	xmms_object_t object;
-
-	gboolean running;
-	GThread *thread;
-	
-	xmms_plugin_t *plugin;
-	xmms_transport_t *transport;
-
-	gpointer plugin_data;
-};
 
 /*
  * Static function prototypes

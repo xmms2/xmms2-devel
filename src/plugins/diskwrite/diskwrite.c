@@ -22,8 +22,8 @@ typedef struct {
  * Function prototypes
  */
 
-static gboolean xmms_diskwrite_open (xmms_transport_t *transport, const gchar *uri);
-static gint xmms_diskwrite_write (xmms_transport_t *transport, gchar *buffer, guint len);
+static gboolean xmms_diskwrite_open (xmms_output_t *output, const gchar *path);
+void xmms_diskwrite_write (xmms_output_t *output, gchar *buffer, gint len);
 
 /*
  * Plugin header

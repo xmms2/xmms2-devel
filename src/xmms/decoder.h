@@ -2,12 +2,25 @@
 #define __XMMS_DECODER_H__
 
 #include "xmms/transport.h"
+#include "xmms/output.h"
 
 /*
  * Type definitions
  */
 
-typedef struct xmms_decoder_St xmms_decoder_t;
+typedef struct xmms_decoder_St {
+	xmms_object_t object;
+
+	gboolean running;
+	GThread *thread;
+	
+	xmms_plugin_t *plugin;
+	xmms_transport_t *transport;
+
+	gpointer plugin_data;
+
+	xmms_output_t *output;
+} xmms_decoder_t;
 
 /*
  * Decoder plugin methods

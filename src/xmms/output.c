@@ -1,21 +1,12 @@
 #include "output.h"
+#include "object.h"
 #include "ringbuf.h"
-
-struct xmms_output_St {
-	xmms_object_t object;
-	xmms_plugin_t *plugin;
-
-	GMutex *mutex;
-	GThread *thread;
-	gboolean running;
-
-	xmms_ringbuf_t *buffer;
-	
-	gpointer plugin_data;
-};
+#include "util.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
+
+static gpointer xmms_output_thread (gpointer data);
 
 gpointer
 xmms_output_plugin_data_get (xmms_output_t *output)
@@ -49,9 +40,9 @@ xmms_output_open (xmms_plugin_t *plugin)
 	
 	open_method = xmms_plugin_method_get (plugin, "open");
 
-	if (!open_method || !open_method (output)) {
+	if (!open_method || !open_method (output, "/tmp/foo")) {
 		XMMS_DBG ("Couldnt open output device");
-		xmms_ringbuf_destroy (output->ringbuf);
+		xmms_ringbuf_destroy (output->buffer);
 		g_mutex_free (output->mutex);
 		g_free (output);
 	}
@@ -69,14 +60,15 @@ xmms_output_start (xmms_output_t *output)
 }
 
 void
-xmms_output_write (xmms_output_t *output, gint ret)
+xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
 {
 	g_return_if_fail (output);
-	g_return_if_fail (ret);
+	g_return_if_fail (buffer);
+	g_return_if_fail (len < 0);
 
 	xmms_output_lock (output);
-	xmms_ringbuf_wait_free (output->buffer, sizeof(gint), output->mutex);
-	xmms_ringbuf_write (output->buffer, G_INT_TO_POINTER (ret), sizeof (gint));
+	xmms_ringbuf_wait_free (output->buffer, len, output->mutex);
+	xmms_ringbuf_write (output->buffer, buffer, len);
 	xmms_output_unlock (output);
 
 }
@@ -88,7 +80,7 @@ xmms_output_read (xmms_output_t *output, gchar *buffer, gint len)
 
 	g_return_val_if_fail (output, -1);
 	g_return_val_if_fail (buffer, -1);
-	g_return_val_if_fail (len > 0, -1);
+	g_return_val_if_fail (len < 0, -1);
 
 	xmms_output_lock (output);
 	xmms_ringbuf_wait_used (output->buffer, len, output->mutex);
@@ -111,10 +103,11 @@ xmms_output_thread (gpointer data)
 	g_return_val_if_fail (write_method, NULL);
 
 	while (output->running) {
-		gchar buffer[512];
+		gchar buffer[4096];
+		gint ret;
 		xmms_output_lock (output);
 
-		ret = xmms_output_read (output, buffer, 512);
+		ret = xmms_output_read (output, buffer, 4096);
 		
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (output->buffer, ret, output->mutex);
@@ -123,7 +116,8 @@ xmms_output_thread (gpointer data)
 			XMMS_DBG ("Not good?!");
 		}
 
-		xmms_transport_unlock (output);
+		xmms_output_unlock (output);
+
 	}
 
 	return NULL;
