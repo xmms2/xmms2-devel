@@ -79,7 +79,7 @@ gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t fil
 guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
 guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
-xmms_medialib_entry_t xmms_playlist_advance (xmms_playlist_t *playlist);
+gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
 xmms_decoder_t *xmms_playlist_next_start (xmms_playlist_t *playlist);

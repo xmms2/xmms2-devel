@@ -622,7 +622,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 	GError *err = NULL;
 	gulong total_playtime = 0;
 	guint p;
-	guint pos = 1;
+	guint pos = 0;
 	gsize r, w;
 
 	list = xmmscs_playlist_list (conn);
@@ -741,26 +741,10 @@ cmd_pause (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_playback_next (conn);
-	xmmsc_result_wait (res);
-	xmmsc_result_unref (res);
-
-}
-
-static void
-cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
-{
 	guint pos;
 	xmmsc_result_t *res;
 
-	pos = xmmscs_playlist_current_pos (conn);
-
-	if (pos > 1) 
-		pos --;
-
-	res = xmmsc_playlist_set_next (conn, pos);
+	res = xmmsc_playlist_set_next_rel (conn, 1);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -769,7 +753,27 @@ cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 	xmmsc_result_unref (res);
 
-	res = xmmsc_playback_next (conn);
+	res = xmmsc_playback_tickle (conn);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+}
+
+static void
+cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	guint pos;
+	xmmsc_result_t *res;
+
+	res = xmmsc_playlist_set_next_rel (conn, -1);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
+		return;
+	}
+	xmmsc_result_unref (res);
+
+	res = xmmsc_playback_tickle (conn);
 	xmmsc_result_wait (res);
 	xmmsc_result_unref (res);
 }
@@ -803,7 +807,17 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 
 		if (seconds >= duration) {
 			printf ("Trying to seek to a higher value then total_playtime, Skipping to next song\n");
-			res = xmmsc_playback_next (conn);
+			res = xmmsc_playlist_set_next_rel (conn, 1);
+			xmmsc_result_wait (res);
+			
+			if (xmmsc_result_iserror (res)) {
+				fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
+				return;
+			}
+			xmmsc_result_unref (res);
+			
+			res = xmmsc_playback_tickle (conn);
+			xmmsc_result_wait (res);
 			xmmsc_result_unref (res);
 		} else {
 			printf ("Adding %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
@@ -948,7 +962,7 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 	xmmsc_result_unref (res);
 
-	res = xmmsc_playback_next (conn);
+	res = xmmsc_playback_tickle (conn);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Couldn't go to next song: %s\n", xmmsc_result_get_error (res));

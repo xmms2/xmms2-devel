@@ -276,6 +276,9 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
 
+	if (!output->decoder && g_queue_get_length (output->decoder_list) == 0)
+		xmms_output_decoder_start (output);
+
 	g_mutex_lock (output->mutex);
 	xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PLAY);
 	g_mutex_unlock (output->mutex);
@@ -305,7 +308,7 @@ xmms_output_pause (xmms_output_t *output, xmms_error_t *err)
 	g_return_if_fail (output);
 
 	g_mutex_lock (output->mutex);
-	xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
+	xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PAUSE);
 	g_mutex_unlock (output->mutex);
 }
 
@@ -357,6 +360,7 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 {
 	if (output->status == status)
 		return;
+
 	output->status = status;
 	g_mutex_unlock (output->mutex); /* must not hold lock in emit */
 	output->status_method (output, status); 
@@ -417,7 +421,7 @@ xmms_output_close (xmms_output_t *output)
 
 	close_method (output);
 
-
+	output->format = NULL;
 }
 
 static GList *
@@ -604,9 +608,6 @@ xmms_output_read_unlocked (xmms_output_t *output, char *buffer, gint len)
 	g_return_val_if_fail (buffer, -1);
 
 	if (!output->decoder) {
-		if (g_queue_get_length (output->decoder_list) == 0)
-			xmms_output_decoder_start (output);
-		
 		output->decoder = g_queue_pop_head (output->decoder_list);
 		if (!output->decoder) {
 			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
@@ -672,7 +673,8 @@ decoder_ended (xmms_object_t *object, gconstpointer arg, gpointer data)
 	xmms_output_t *output = data;
 	XMMS_DBG ("Whoops. Decoder is dead, lets start a new!");
 	if (output->running) {
-		xmms_output_decoder_start (output);
+		if (xmms_playlist_advance (output->playlist))
+			xmms_output_decoder_start (output);
 	}
 }
 
@@ -688,12 +690,9 @@ xmms_output_decoder_start (xmms_output_t *output)
 		xmms_transport_t *t;
 		const gchar *mime;
 
-		entry = xmms_playlist_advance (output->playlist);
+		entry = xmms_playlist_current_entry (output->playlist);
 
-		if (!entry) {
-			XMMS_DBG ("got NULL from advance!");
-			return FALSE;
-		}
+		g_return_val_if_fail (entry, FALSE);
 
 		t = xmms_transport_new ();
 		if (!t)
