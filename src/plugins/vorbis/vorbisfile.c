@@ -127,6 +127,10 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb, void *datasource)
 	return ret;
 }
 
+
+/** @todo
+ *  Remove fulhack here. Maybe should transport support tell?
+ */
 static int
 vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 {

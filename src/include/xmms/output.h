@@ -48,6 +48,7 @@ typedef struct xmms_output_St xmms_output_t;
  */
 
 typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer, gint len);
+typedef void (*xmms_output_destroy_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_new_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_volume_get_method_t) (xmms_output_t *output, gint *left, gint *right);
@@ -69,6 +70,7 @@ gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
 void xmms_output_flush (xmms_output_t *output);
 void xmms_output_pause (xmms_output_t *output);
 void xmms_output_resume (xmms_output_t *output);
+void xmms_output_destroy (xmms_output_t *output);
 gboolean xmms_output_is_paused (xmms_output_t *output);
 
 #endif
