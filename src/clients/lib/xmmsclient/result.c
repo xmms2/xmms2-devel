@@ -298,9 +298,7 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 		res->func (res, (void*)res->user_data);
 	}
 
-	dbus_pending_call_unref (pending);
 	xmmsc_result_unref (res);
-
 }
 
 
