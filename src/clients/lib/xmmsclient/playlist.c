@@ -232,13 +232,17 @@ xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 
 	xmmsc_result_wait (res);
 
-	if (xmmsc_result_get_mediainfo (res, &ret)) {
+	if (xmmsc_result_iserror (res)) {
+		return NULL;
+	}
+
+	if (!xmmsc_result_get_mediainfo (res, &ret)) {
 		xmmsc_result_unref (res);
-		return ret;
+		return NULL;
 	}
 
 	xmmsc_result_unref (res);
-	return NULL;
+	return ret;
 }
 
 static int

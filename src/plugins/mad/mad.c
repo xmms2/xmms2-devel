@@ -63,7 +63,7 @@ static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_mad_init (xmms_decoder_t *decoder);
-static void xmms_mad_seek (xmms_decoder_t *decoder, guint samples);
+static gboolean xmms_mad_seek (xmms_decoder_t *decoder, guint samples);
 
 /*
  * Plugin header
@@ -114,7 +114,7 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
-static void
+static gboolean
 xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 {
 	xmms_mad_data_t *data;
@@ -144,13 +144,13 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 
 	if (bytes > data->fsize) {
 		XMMS_DBG ("To big value %d is filesize", data->fsize);
-		return;
+		return FALSE;
 	}
 
 	xmms_transport_seek (xmms_decoder_transport_get (decoder), bytes, 
 			XMMS_TRANSPORT_SEEK_SET);
 
-	return;
+	return TRUE;
 }
 
 /** This function will calculate the duration in seconds.

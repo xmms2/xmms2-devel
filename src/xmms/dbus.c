@@ -651,7 +651,8 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	/* cleanup retval */
 	switch (arg.rettype) {
 	case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
-		xmms_playlist_entry_unref (arg.retval.playlist_entry);
+		if (arg.retval.playlist_entry) 
+			xmms_playlist_entry_unref (arg.retval.playlist_entry);
 		break;
 	case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
 		g_list_free (arg.retval.stringlist);

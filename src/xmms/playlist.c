@@ -179,6 +179,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 	node = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER (id));
 	if (!node) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to remove nonexistant playlist entry");
 		return FALSE;
 	}
 	if (node == playlist->currententry) {
@@ -224,6 +225,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 	
 	if (!node) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to move nonexistant playlist entry");
 		return FALSE;
 	}
 
@@ -284,8 +286,10 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	gboolean res;
 
 	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nurl);
-	if (!entry)
+	if (!entry) {
+		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
 		return FALSE;
+	}
 
 	res = xmms_playlist_add (playlist, entry, XMMS_PLAYLIST_APPEND);
 
@@ -387,8 +391,10 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
-	if (!r)
+	if (!r) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to query nonexistant playlist entry");
 		return NULL;
+	}
 
 	xmms_playlist_entry_ref ((xmms_playlist_entry_t *)r->data);
 
@@ -535,11 +541,16 @@ gboolean
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 {
 	xmms_playlist_changed_msg_t chmsg;
+	GList *entry;
 	g_return_val_if_fail (playlist, FALSE);
 
 	XMMS_PLAYLIST_LOCK (playlist);
+	
+	entry = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
+	if (!entry)
+		return FALSE;
 
-	playlist->currententry = g_hash_table_lookup (playlist->id_table, GUINT_TO_POINTER(id));
+	playlist->currententry = entry;
 
 	memset (&chmsg, 0, sizeof (xmms_playlist_changed_msg_t));
 	chmsg.type = XMMS_PLAYLIST_CHANGED_SET_POS;

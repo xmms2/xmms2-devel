@@ -170,10 +170,10 @@ xmmsc_playback_status (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STATUS);
 }
 
-int
+unsigned int
 xmmscs_playback_current_id (xmmsc_connection_t *c)
 {
-	int ret;
+	int ret = 0;
 	xmmsc_result_t *res;
 
 	res = xmmsc_playback_current_id (c);
@@ -182,10 +182,11 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 
 	xmmsc_result_wait (res);
 
-	if (!xmmsc_result_get_int (res, &ret)) {
+	if (!xmmsc_result_get_uint (res, &ret)) {
 		xmmsc_result_unref (res);
 		return 0;
 	}
+
 	xmmsc_result_unref (res);
 
 	return ret;

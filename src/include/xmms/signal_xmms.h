@@ -51,7 +51,6 @@
 #define XMMS_METHOD_CLEAR "clear"
 #define XMMS_METHOD_GET "get"
 #define XMMS_METHOD_GETMEDIAINFO "getmediainfo"
-#define XMMS_METHOD_MEDIAINFO "mediainfo"
 #define XMMS_METHOD_MEDIAINFO_ID "mediainfoid"
 #define XMMS_METHOD_SETMODE "setmode"
 #define XMMS_METHOD_SETVALUE "setvalue"

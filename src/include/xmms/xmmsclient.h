@@ -82,7 +82,7 @@ xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
 /*void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);*/
 
 /* sync */
-int xmmscs_playback_current_id (xmmsc_connection_t *c);
+unsigned int xmmscs_playback_current_id (xmmsc_connection_t *c);
 x_hash_t *xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id);
 x_list_t *xmmscs_playlist_list (xmmsc_connection_t *c);
 x_list_t *xmmscs_configval_list (xmmsc_connection_t *c);

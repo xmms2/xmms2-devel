@@ -389,11 +389,16 @@ static gchar songname[60];
 static gint id;
 static gint curr_dur;
 
+static void handle_mediainfo (xmmsc_result_t *res, void *userdata);
+
 static void
 handle_currentid (void *userdata, void *arg)
 {
+	xmmsc_result_t *res;
 	id = GPOINTER_TO_UINT (arg);
-	xmmsc_playlist_get_mediainfo ((xmmsc_connection_t*)userdata, id);
+	printf ("Current id = %d\n", id);
+	res = xmmsc_playlist_get_mediainfo ((xmmsc_connection_t*)userdata, id);
+	xmmsc_result_notifier_set (res, handle_mediainfo, NULL);
 }
 
 static void
@@ -406,11 +411,16 @@ handle_playtime (void *userdata, void *arg)
 }
 
 static void
-handle_mediainfo (void *userdata, void *arg)
+handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	x_hash_t *hash = arg;
+	x_hash_t *hash;
 	gchar *tmp;
 	gint mid;
+
+	if (!xmmsc_result_get_mediainfo (res, &hash)) {
+		printf ("No mediainfo!\n");
+		return;
+	}
 
 	tmp = x_hash_lookup (hash, "id");
 
@@ -441,15 +451,39 @@ static void
 cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
+	xmmsc_result_t *res;
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*) conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void *) conn);
-	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_mediainfo, (void *) conn);
+	/*xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_mediainfo, (void *) conn);*/
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_QUIT, handle_quit, (void *) ml);
 
-	xmmsc_playback_current_id (conn);
+	res = xmmsc_playback_current_id (conn);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		printf ("error %s\n", xmmsc_result_get_error (res));
+		xmmsc_result_unref (res);
+		exit (-1);
+	}
+
+	if (!xmmsc_result_get_uint (res, &id)) {
+		exit (-1);
+	}
+
+	xmmsc_result_unref (res);
+
+	res = xmmsc_playlist_get_mediainfo (conn, id);
+	/*xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		printf ("error %s\n", xmmsc_result_get_error (res));
+		xmmsc_result_unref (res);
+		exit (-1);
+	}*/
+	xmmsc_result_notifier_set (res, handle_mediainfo, NULL);
+	xmmsc_result_unref (res);
 
 	xmmsc_setup_with_gmain (conn, NULL);
 

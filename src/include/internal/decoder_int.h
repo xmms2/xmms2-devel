@@ -23,6 +23,7 @@
 #include "xmms/transport.h"
 #include "xmms/output.h"
 #include "xmms/effect.h"
+#include "xmms/error.h"
 
 /*
  * Private function prototypes -- do NOT use in plugins.
@@ -36,8 +37,8 @@ void xmms_decoder_start (xmms_decoder_t *decoder,
 			xmms_transport_t *transport, 
 			xmms_effect_t *effect, 
 			xmms_output_t *output);
-void xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds);
-void xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples);
+gboolean xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err);
+gboolean xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err);
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 void xmms_decoder_wait (xmms_decoder_t *decoder);
 

@@ -128,7 +128,10 @@ xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err)
 {
 	g_return_if_fail (playback);
 
-	xmms_playlist_set_current_position (playback->playlist, id);
+	if (!xmms_playlist_set_current_position (playback->playlist, id)) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to jump to nonexistant playlist entry");
+		return;
+	}
 	playback->current_song = xmms_playlist_get_current_entry (playback->playlist);
 	if (playback->current_song) 
 		xmms_object_emit (XMMS_OBJECT (playback), XMMS_SIGNAL_PLAYBACK_CURRENTID, 
@@ -244,14 +247,14 @@ XMMS_METHOD_DEFINE (seek_ms, xmms_playback_seekms, xmms_playback_t *, NONE, UINT
 static void
 xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds, xmms_error_t *err)
 {
-	xmms_decoder_seek_ms (xmms_core_decoder_get (playback->core), milliseconds);
+	xmms_decoder_seek_ms (xmms_core_decoder_get (playback->core), milliseconds, err);
 }
 
 XMMS_METHOD_DEFINE (seek_samples, xmms_playback_seeksamples, xmms_playback_t *, NONE, UINT32, NONE);
 static void
 xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_error_t *err)
 {
-	xmms_decoder_seek_samples (xmms_core_decoder_get (playback->core), samples);
+	xmms_decoder_seek_samples (xmms_core_decoder_get (playback->core), samples, err);
 }
 
 XMMS_METHOD_DEFINE (current_playtime, xmms_playback_current_playtime, xmms_playback_t *, UINT32, NONE, NONE);

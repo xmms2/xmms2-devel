@@ -62,8 +62,6 @@ void
 xmmsc_result_ref (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
-
-	dbus_pending_call_ref (res->dbus_call);
 	res->ref++;
 }
 
@@ -78,6 +76,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 	if (res->error_str)
 		free (res->error_str);
 
+	if (res->dbus_call)
+		dbus_pending_call_unref (res->dbus_call);
+
 	if (res->reply)
 		dbus_message_unref (res->reply);
 
@@ -91,7 +92,6 @@ xmmsc_result_unref (xmmsc_result_t *res)
 	x_return_if_fail (res);
 
 	res->ref--;
-	dbus_pending_call_unref (res->dbus_call);
 	if (res->ref == 0) {
 		xmmsc_result_free (res);
 	}
@@ -102,6 +102,9 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 {
 	x_return_if_fail (res);
 	x_return_if_fail (func);
+
+	/* The pending call takes one ref */
+	xmmsc_result_ref (res);
 
 	res->func = func;
 	res->user_data = user_data;
@@ -134,9 +137,6 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 	if (res->func) {
 		res->func (res, (void*)res->user_data);
 	}
-
-	/* the pending call returns one ref */
-	xmmsc_result_unref (res);
 }
 
 xmmsc_result_t *
@@ -151,8 +151,6 @@ xmmsc_result_new (DBusPendingCall *pending)
 	/* user must give this back */
 	xmmsc_result_ref (res);
 
-	/* The pending call takes one ref */
-	xmmsc_result_ref (res);
 	dbus_pending_call_set_notify (res->dbus_call, 
 				      xmmsc_result_pending_notifier, 
 				      res, 
@@ -260,6 +258,7 @@ xmmsc_result_get_mediainfo (xmmsc_result_t *res, x_hash_t **r)
 	*r = xmmsc_deserialize_mediainfo (&itr);
 
 	if (!*r) {
+		printf ("snett snett\n");
 		return 0;
 	}
 

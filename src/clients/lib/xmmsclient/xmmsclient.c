@@ -871,24 +871,8 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 	c = get_callback (msgname);
 
 	if (!c) {
-		int rep_ser;
-
-		rep_ser = dbus_message_get_reply_serial (msg);
-		if (rep_ser > 0) {
-			char *a;
-
-			a = x_hash_lookup (xmmsconn->replies, XUINT_TO_POINTER (rep_ser));
-			if (a != NULL) {
-				x_hash_remove (xmmsconn->replies, XUINT_TO_POINTER (rep_ser));
-				c = get_callback (a);
-			}
-			snprintf (msgname, 255, "%s", a);
-		}
-
-		if (c == NULL) {
-			printf("\nNo callback for: %s -- %s -- %d\n", msgname, dbus_message_get_interface (msg), dbus_message_get_reply_serial (msg));
-			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-		}
+		/*printf("\nNo callback for: %s -- %s -- %d\n", msgname, dbus_message_get_interface (msg), dbus_message_get_reply_serial (msg));*/
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
 
 	dbus_message_iter_init (msg, &itr);
