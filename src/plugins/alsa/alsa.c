@@ -31,7 +31,6 @@
  *  Defines
  */
 #define BUFFER_TIME        500000
-#define PERIOD_TIME        100000
 
 /*
  * Type definitions
@@ -415,7 +414,6 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
 	gint err, tmp, i;
 	gint requested_buffer_time = BUFFER_TIME;
-	gint requested_period_time = PERIOD_TIME;
 
 	g_return_val_if_fail (data, FALSE);
 
@@ -499,21 +497,6 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 		return FALSE;
 	}
 	
-	/* Set period time */
-	tmp = requested_period_time;
-	err = snd_pcm_hw_params_set_period_time_near (data->pcm, data->hwparams, 
-	                                              &requested_period_time, 
-	                                              NULL);
-	if (err < 0) {
-		xmms_log_error ("Unable to set period time %i for playback: %s", 
-						tmp, snd_strerror (err));
-		return FALSE;
-	}
-
-	XMMS_DBG ("Period time requested: %dms, got: %dms",
-	          tmp / 1000, requested_period_time / 1000);
-
-
 	/* Sometimes the soundcard is just not ready for the new shit */
 	xmms_alsa_xrun_recover (data);
 	
