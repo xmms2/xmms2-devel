@@ -4,3 +4,4 @@ Import('base_env')
 Export('base_env')
 
 SConscript('xmmsipc/SConscript')
+SConscript('xmmsutil/SConscript')

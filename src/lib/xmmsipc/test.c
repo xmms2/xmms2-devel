@@ -1,5 +1,8 @@
 
 #include <glib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
 
@@ -25,16 +28,19 @@ int main ()
 		FD_SET (fd, &set);
 
 		printf ("Select... %d\n", fd);
-		if (select (fd+1, &set, NULL, NULL, NULL) <= 0) {
+		if (select (fd+1, &set, NULL, NULL, NULL) > 0) {
 			gchar buffer[5];
+
 			xmms_ipc_transport_t *client = xmms_ipc_server_accept (transport);
 			if (client == NULL) 
-				break;
+				return 0;
 			
 			printf ("Client connected...\n");
 			xmms_ipc_transport_read (client, buffer, 4);
 			printf ("%s\n", buffer);
-			break;
+			return 0;
+		} else {
+			return 0;
 		}
 	}
 
