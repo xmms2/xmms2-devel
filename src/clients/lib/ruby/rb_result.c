@@ -42,10 +42,8 @@ static void c_mark (RbResult *res)
 
 static void c_free (RbResult *res)
 {
-	if (res->real && res->unref) {
-		printf ("rb_result.c: unreffing %p\n", res->real);
+	if (res->real && res->unref)
 		xmmsc_result_unref (res->real);
-	}
 
 	free (res);
 }
@@ -78,7 +76,7 @@ static void on_signal (xmmsc_result_t *res2, void *data)
 	VALUE o;
 
 	GET_OBJ (self, RbResult, res);
-printf("ON_SIGNAL\n");
+
 	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
 	                           res->unref_children);
 	rb_ary_push (res->children, o);
