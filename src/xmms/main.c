@@ -40,8 +40,7 @@ void
 mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	xmms_playlist_entry_t entry;
-	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
-	XMMS_DBG ("mediainfo changed!");
+	xmms_decoder_t *decoder = (xmms_decoder_t *)data;
 	
 	xmms_decoder_get_mediainfo (decoder, &entry);
 
