@@ -71,6 +71,8 @@ xmms_log_config_regex_changed (xmms_object_t *object, gconstpointer data,
 	xmms_log_debug ("XMMS_LOG_CONFIG_REGEX_CHANGED");
 	g_return_if_fail (data);
 
+	regfree (&re);
+
 	err = regcomp (&re, data, REG_EXTENDED);
 	if (err != 0) {
 		xmms_log_error ("Unable to compile regular expression");
@@ -125,6 +127,8 @@ xmms_log_shutdown (void)
 
 	if (xmms_log_filename)
 		g_free (xmms_log_filename);
+
+	regfree (&re);
 }
 
 /** Close everything, start up with clean slate when 
