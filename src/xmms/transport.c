@@ -162,6 +162,25 @@ xmms_transport_suburi_get(const xmms_transport_t *const transport){
 	return ret;
 }
 
+void
+xmms_transport_uri_set(xmms_transport_t *const transport, gchar *uri){
+	g_return_if_fail (transport);
+
+	xmms_transport_lock (transport);
+	transport->uri = uri;
+	xmms_transport_unlock (transport);
+}
+
+void
+xmms_transport_suburi_set(xmms_transport_t *const transport, gchar *suburi){
+	g_return_if_fail (transport);
+
+	xmms_transport_lock (transport);
+	transport->suburi = suburi;
+	xmms_transport_unlock (transport);
+
+}
+
 
 const gchar *
 xmms_transport_mime_type_get (xmms_transport_t *transport)

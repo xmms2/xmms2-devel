@@ -152,6 +152,10 @@ xmms_tar_can_handle (const gchar *mimetype)
 #define  TUNMLEN      32
 #define  TGNMLEN      32
 
+#define  LF_OLDNORMAL '\0'       /* Normal disk file, Unix compatible */
+#define  LF_NORMAL    '0'        /* Normal disk file */
+
+
 union record {
 	char        charptr[RECORDSIZE];
 	struct header {
@@ -194,15 +198,35 @@ static gboolean xmms_tar_open (xmms_transport_t *transport, const gchar *uri){
 			break;
 		}
 
+		if (buf.header.linkflag != LF_OLDNORMAL && buf.header.linkflag != LF_NORMAL) {
+			continue;
+		}
+
 		memcpy(lenbuf,buf.header.size,12);
 		len=strtol(lenbuf,NULL,8);
 		XMMS_DBG ("found file: %s (%d)", buf.header.name,len);
 		/* matcha fil */
-		if (strncmp (buf.header.name, uri, NAMSIZ) == 0) {
-			data->startpos = pos;
-			data->relpos = 0;
-			data->length = len;
-			return TRUE;
+		{ 
+			gint namelen=0;
+			while (buf.header.name[namelen] && namelen < NAMSIZ) {
+				namelen++;
+			}
+
+			if (strncmp (buf.header.name, uri, namelen) == 0 && (uri[namelen]==0 || uri[namelen]=='/')) {
+				gchar *uribuf = g_strdup (uri);
+				gchar *suburibuf = uribuf + namelen;
+				if (*suburibuf == '/') {
+					*suburibuf++ = 0;
+				}
+				XMMS_DBG (" uri: %s  -- suburi: %s", uribuf, suburibuf);
+				xmms_transport_uri_set (transport, uribuf);
+				xmms_transport_suburi_set (transport, suburibuf);
+
+				data->startpos = pos;
+				data->relpos = 0;
+				data->length = len;
+				return TRUE;
+			}
 		}
 
 		pos += RECORDSIZE*((int)((len+(RECORDSIZE-1))/RECORDSIZE));
@@ -328,13 +352,6 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 
 		suburi = xmms_transport_suburi_get (transportdata->parenttransport);
 
-		mime = xmms_magic_mime_from_file(suburi);
-		if (!mime) {
-			XMMS_DBG ("unknown mime in suburi");
-			g_free (transportdata);
-			return FALSE;
-		}
-		
 		thistransport = xmms_transport_open_plugin (transport_plugin, 
 							    suburi, transportdata);
 		if (!thistransport) {
@@ -343,6 +360,13 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 			return FALSE;
 		}
 
+		mime = xmms_magic_mime_from_file(xmms_transport_uri_get(thistransport));
+		if (!mime) {
+			XMMS_DBG ("unknown mime in suburi");
+			g_free (transportdata);
+			return FALSE;
+		}
+		
 		output = xmms_decoder_output_get (decoder);
 		g_return_val_if_fail (output, FALSE);
 
