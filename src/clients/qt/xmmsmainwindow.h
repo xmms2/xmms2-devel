@@ -51,8 +51,10 @@ public:
 	x_hash_t *idHash (void) { return m_idhash; };
 	XMMSListViewItem *cItem (void) { return m_citem; };
 	void *setcItem (XMMSListViewItem *i) { m_citem = i; };
-	QProgressBar *bar (void) {return m_bar; };
-	QLabel *bartxt (void) {return m_bartxt; };
+	QProgressBar *bar (void) { return m_bar; };
+	QLabel *bartxt (void) { return m_bartxt; };
+	bool barBusy (void) { return m_barbusy; };
+	void setBarBusy (bool m) { m_barbusy = m; };
 
 protected:
 	XMMSListView *m_listview;
@@ -65,6 +67,7 @@ protected:
 	XMMSClientQT *m_client;
 	int m_id;
 	x_hash_t *m_idhash;
+	bool m_barbusy;
 };
 
 #endif

@@ -58,6 +58,13 @@ handle_playtime (void *userdata, void *arg)
 	if (*s != *mw->toolbar ()->status ()->currentTME ()) 
 		mw->toolbar ()->setCTME (s);
 
+	if (!mw->barBusy ()) {
+		if (mw->cItem ()) {
+			mw->bar ()->setTotalSteps (mw->cItem ()->duration ());
+		}
+		mw->bar ()->setProgress (dur);
+	}
+
 }
 
 static void
@@ -72,6 +79,7 @@ handle_playlist_list (void *userdata, void *arg)
 	while (list && list[i])
 		i++;
 
+	mw->setBarBusy (TRUE);
 	mw->bar ()->setTotalSteps (i);
 	mw->bartxt ()->setText ("Reading playlist ...");
 
@@ -85,7 +93,9 @@ handle_playlist_list (void *userdata, void *arg)
 	}
 
 	mw->bar ()->reset ();
+	mw->setBarBusy (FALSE);
 	mw->bartxt ()->setText ("Waiting for events");
+	xmmsc_playback_current_id (mw->client ()->getConnection ());
 }
 
 static void
@@ -155,7 +165,9 @@ handle_playlist_mediainfo (void *userdata, void *arg)
 		xmmsc_entry_format (fstr, 1024, "%a - %b - %t", tab);
 
 		mw->toolbar ()->setText (new QString (fstr));
-
+		mw->bartxt ()->setText (QString ("Playing ") + QString (fstr));
+		if (!mw->barBusy ())
+			mw->bar ()->setTotalSteps (dur);
         } 
         
 	xmmsc_playlist_entry_free (tab);
@@ -182,6 +194,7 @@ XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) :
 	m_bartxt = new QLabel (statusBar ());
 	statusBar ()->addWidget (m_bartxt, 2, FALSE);
 	m_bar = new QProgressBar (statusBar ());
+	m_barbusy = FALSE;
 	statusBar ()->addWidget (m_bar, 1, TRUE);
 
 	m_citem = NULL;
@@ -197,7 +210,6 @@ XMMSMainWindow::XMMSMainWindow (XMMSClientQT *client) :
 	xmmsc_set_callback (m_client->getConnection (), XMMS_SIGNAL_PLAYLIST_ADD, handle_playlist_add, (void*)this);
 
 	xmmsc_playlist_list (m_client->getConnection ());
-	xmmsc_playback_current_id (m_client->getConnection ());
 
 	setCentralWidget (box);
 	resize (710, 500);
