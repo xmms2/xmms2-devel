@@ -101,6 +101,7 @@ xmms_playlist_entry_new (gchar *url)
 	ret->url = g_strdup (url);
 	ret->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free, g_free);
+	xmms_playlist_entry_property_set (ret, XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED, "0");
 	ret->id = 0;
 
 	return ret;
