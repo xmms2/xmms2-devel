@@ -64,6 +64,8 @@ def checkFlags(base_env):
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
+		base_env.AddFlagsToGroup("CoreAudio", " -framework AudioUnit")
+		base_env.AddFlagsToGroup("CoreAudio", " -framework CoreServices")
 
 	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
 		print "PyREX compiler found!"
