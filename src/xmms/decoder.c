@@ -7,11 +7,15 @@
 
 
 #include "decoder.h"
+#include "decoder_int.h"
 #include "plugin.h"
+#include "plugin_int.h"
 #include "object.h"
 #include "util.h"
 #include "output.h"
+#include "output_int.h"
 #include "transport.h"
+#include "transport_int.h"
 #include "ringbuf.h"
 #include "playlist.h"
 

@@ -5,6 +5,7 @@
 #include <glib.h>
 
 #include "plugin.h"
+#include "plugin_int.h"
 #include "transport.h"
 #include "decoder.h"
 #include "config.h"
@@ -14,6 +15,8 @@
 #include "util.h"
 #include "core.h"
 #include "medialib.h"
+#include "output.h"
+#include "output_int.h"
 
 #include <stdlib.h>
 #include <getopt.h>

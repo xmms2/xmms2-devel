@@ -3,7 +3,7 @@
 
 #include <glib.h>
 
-#include "object.h"
+#include "xmms/object.h"
 
 /*
  * Public definitions

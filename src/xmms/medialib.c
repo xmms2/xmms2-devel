@@ -6,7 +6,11 @@
 #include "config_xmms.h"
 #include "medialib.h"
 #include "transport.h"
+#include "transport_int.h"
 #include "decoder.h"
+#include "decoder_int.h"
+#include "plugin.h"
+#include "plugin_int.h"
 
 #include <string.h>
 

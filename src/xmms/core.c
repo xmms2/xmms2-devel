@@ -4,7 +4,9 @@
 
 #include "plugin.h"
 #include "transport.h"
+#include "transport_int.h"
 #include "decoder.h"
+#include "decoder_int.h"
 #include "config.h"
 #include "config_xmms.h"
 #include "playlist.h"
