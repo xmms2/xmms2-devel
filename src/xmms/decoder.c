@@ -122,22 +122,6 @@ xmms_decoder_find_plugin (const gchar *mimetype)
 	return plugin;
 }
 
-void
-xmms_decoder_wait (xmms_decoder_t *decoder)
-{
-
-	g_return_if_fail (decoder);
-
-	XMMS_DBG ("Waiting for decoder");
-
-	while (decoder->running) 
-		g_cond_wait (decoder->eos_cond, decoder->mutex);
-
-
-	XMMS_DBG ("Done here");
-
-}
-
 static gpointer
 xmms_decoder_thread (gpointer data)
 {
@@ -151,11 +135,6 @@ xmms_decoder_thread (gpointer data)
 		return NULL;
 	
 	while (decoder->running) {
-		if (xmms_ringbuf_eos (xmms_transport_buffer (decoder->transport))) {
-			XMMS_DBG ("Decoder got EOS, killing thread");
-			g_cond_broadcast (decoder->eos_cond);
-			decoder->running = FALSE;
-		}
 		decode_block (decoder, decoder->transport);
 	}
 

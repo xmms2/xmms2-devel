@@ -103,12 +103,10 @@ main (int argc, char **argv)
 		}
 
 		xmms_transport_start (transport);
-		
 		xmms_transport_wait (transport);
-		xmms_decoder_wait (decoder);
 		XMMS_DBG ("EOS");
 
-		/*xmms_transport_free (transport);*/
+		xmms_transport_free (transport);
 
 	}
 
