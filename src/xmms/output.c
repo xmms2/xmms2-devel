@@ -536,7 +536,6 @@ xmms_output_thread (gpointer data)
 		if (!output->decoder) {
 			output->decoder = xmms_playlist_next_start (output->playlist);
 			xmms_decoder_start (output->decoder, NULL, output);
-
 		}
 
 		if (output->is_paused || !output->decoder) {
@@ -579,7 +578,9 @@ xmms_output_thread (gpointer data)
 			/* put played_time on a suitable object here,
 			   so it easily can accessed from client */
 		}
+
 		if (xmms_decoder_iseos (output->decoder)) {
+			XMMS_DBG ("decoder is EOS!");
 			xmms_object_unref (output->decoder);
 			output->decoder = NULL;
 		}

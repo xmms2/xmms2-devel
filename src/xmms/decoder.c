@@ -280,8 +280,8 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 	decoder->samplerate = rate;
 	
 /*	r = g_strdup_printf ("%d", rate);
-	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);*/
-	g_free (r);
+	xmms_playlist_entry_property_set (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
+	g_free (r);*/
 }
 
 
@@ -328,13 +328,10 @@ gboolean
 xmms_decoder_iseos (xmms_decoder_t *decoder)
 {
 	gboolean ret;
-
 	XMMS_MTX_LOCK (decoder->mutex);
-	ret = xmms_ringbuf_iseos (decoder->buffer);
+	ret = decoder->thread ? FALSE : TRUE;
 	XMMS_MTX_UNLOCK (decoder->mutex);
-
 	return ret;
-
 }
 
 guint
