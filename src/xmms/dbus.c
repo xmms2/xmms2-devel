@@ -28,6 +28,8 @@ static GMutex *connectionslock;
 static GSList *connections = NULL;
 
 static const char *messages[]={"org.xmms.core.mediainfo"};
+static const char *nextmsgs[]={"org.xmms.core.play-next"};
+static const char *addmsgs[]={"org.xmms.playlist.add"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
 
 
@@ -101,6 +103,34 @@ handle_mediainfo(DBusMessageHandler *handler,
 }
 
 static DBusHandlerResult
+handle_next(DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+	xmms_core_play_next();
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_playlist_add(DBusMessageHandler *handler, 
+		 DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+
+        DBusMessageIter itr;
+
+	dbus_message_iter_init (msg, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+		gchar *uri = dbus_message_iter_get_string (&itr);
+		XMMS_DBG ("adding to playlist: %s", uri);
+		xmms_core_playlist_adduri (uri);
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+
+static DBusHandlerResult
 handle_disconnect (DBusMessageHandler *handler,
 		   DBusConnection     *connection,
 		   DBusMessage        *message,
@@ -128,17 +158,30 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data){
 	dbus_connection_ref (conn);
 
 	hand = dbus_message_handler_new (handle_mediainfo, NULL, NULL);
-
 	if (!hand) {
 		XMMS_DBG ("couldn't alloc handler");
 		dbus_connection_unref (conn);
 		return;
 	}
-
-// to get all messages
-//	dbus_connection_add_filter (conn, hand);
-
 	dbus_connection_register_handler (conn, hand, messages, 1);
+
+
+	hand = dbus_message_handler_new (handle_playlist_add, NULL, NULL);
+	if (!hand) {
+		XMMS_DBG ("couldn't alloc handler");
+		dbus_connection_unref (conn);
+		return;
+	}
+	dbus_connection_register_handler (conn, hand, addmsgs, 1);
+
+
+	hand = dbus_message_handler_new (handle_next, NULL, NULL);
+	if (!hand) {
+		XMMS_DBG ("couldn't alloc handler");
+		dbus_connection_unref (conn);
+		return;
+	}
+	dbus_connection_register_handler (conn, hand, nextmsgs, 1);
 
 
 	hand = dbus_message_handler_new (handle_disconnect, NULL, NULL);

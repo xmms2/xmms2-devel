@@ -13,6 +13,8 @@
 
 guint played_time=0;
 
+#define XMMS_MAX_URI_LEN 1024
+
 
 const char *playtime_message[]={"org.xmms.core.playtime-changed"};
 const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
@@ -55,10 +57,9 @@ handle_mediainfo(DBusMessageHandler *handler,
 }
 
 int
-main(int argc, char **argv)
+status_main(DBusConnection *conn)
 {
 	GMainLoop *mainloop;
-	DBusConnection *conn;
 	DBusMessage *msg, *res;
 	DBusError err;
 	DBusMessageHandler *hand;
@@ -66,13 +67,6 @@ main(int argc, char **argv)
 	mainloop = g_main_loop_new (NULL, FALSE);
 
 	dbus_error_init (&err);
-
-	conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
-
-	if (!conn) {
-		printf ("error opening connection\n");
-		return 1;
-	}
 
 	hand = dbus_message_handler_new (handle_playtime, NULL, NULL);
 	dbus_connection_register_handler (conn, hand, playtime_message, 1);
@@ -103,6 +97,77 @@ main(int argc, char **argv)
 	dbus_connection_setup_with_g_main (conn, NULL);
 
         g_main_loop_run (mainloop);
+
+	return 0;
+
+}
+
+#define streq(a,b) (strcmp(a,b)==0)
+
+int
+main(int argc, char **argv)
+{
+	DBusConnection *conn;
+	DBusError err;
+
+	dbus_error_init (&err);
+
+	conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
+
+	if (!conn) {
+		printf ("error opening connection\n");
+		return 1;
+	}
+
+	if (argc<2 || streq (argv[1], "status")) {
+		status_main (conn);
+	} else {
+
+		if ( streq (argv[1], "next") ) {
+			DBusMessage *msg;
+			int cserial;
+
+			msg = dbus_message_new ("org.xmms.core.play-next", NULL);
+			dbus_connection_send (conn, msg, &cserial);
+			dbus_message_unref (msg);
+			dbus_connection_flush (conn);
+
+		} else if ( streq (argv[1], "add") ) {
+			int i;
+			if ( argc < 3 ) {
+				printf ("usage: add url [url...]\n");
+				return 1;
+			}
+			for (i=2;i<argc;i++) {
+				DBusMessage *msg;
+				DBusMessageIter itr;
+				int cserial;
+				gchar nuri[XMMS_MAX_URI_LEN];
+				if (!strchr (argv[i], ':')) {
+					if (argv[i][0] == '/') {
+						g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s", argv[i]);
+					} else {
+						gchar *cwd = g_get_current_dir ();
+						g_snprintf (nuri, XMMS_MAX_URI_LEN, "file://%s/%s", cwd, argv[i]);
+						g_free (cwd);
+					}
+				} else {
+					g_snprintf (nuri, XMMS_MAX_URI_LEN, "%s", argv[i]);
+				}
+				
+				msg = dbus_message_new ("org.xmms.playlist.add", NULL);
+				dbus_message_append_iter_init (msg, &itr);
+				dbus_message_iter_append_string (&itr, nuri);
+				dbus_connection_send (conn, msg, &cserial);
+				dbus_message_unref (msg);
+				
+			}
+			dbus_connection_flush (conn);
+		} else {
+			printf ("Unknown command '%s'\n", argv[1]);
+			return 1;
+		}
+	}
 
 	return 0;
 

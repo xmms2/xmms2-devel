@@ -29,6 +29,8 @@ xmms_playlist_wait (xmms_playlist_t *playlist)
 	XMMS_DBG ("Waiting for playlist ...");
 	
 	g_cond_wait (playlist->cond, playlist->mutex);
+	XMMS_PLAYLIST_UNLOCK (playlist);
+
 }
 
 guint

@@ -82,6 +82,12 @@ void xmms_core_play_next ()
 	}
 }
 
+void xmms_core_playlist_adduri (gchar *nuri)
+{
+	xmms_playlist_add (core->playlist, xmms_playlist_entry_new (nuri), XMMS_PLAYLIST_APPEND);
+
+}
+
 /**
  * Initializes the coreobject.
  *
