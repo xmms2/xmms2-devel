@@ -611,6 +611,7 @@ xmms_output_read_unlocked (xmms_output_t *output, char *buffer, gint len)
 		output->decoder = g_queue_pop_head (output->decoder_list);
 		if (!output->decoder) {
 			xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
+			output->running = FALSE;
 			return -1;
 		}
 
