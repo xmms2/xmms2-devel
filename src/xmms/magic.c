@@ -40,6 +40,8 @@ const xmms_mimemap_t mimemap[] = {
 	{ "mod", "audio/mod" },
 	{ "med", "audio/med" },
 	{ "it",  "audio/it" },
+	{ "html", "text/html" },
+	{ "htm", "text/html" },
 	{ NULL, NULL }
 };
 
