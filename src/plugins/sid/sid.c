@@ -1,5 +1,7 @@
 /*
  * SID-plugin using libsidplay2
+ * 
+ * Written by Anders Gustafsson - andersg@0x63.nu
  */
 
 
@@ -136,8 +138,9 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		data->buffer = g_malloc (data->buffer_length);
 		
 		while (len<data->buffer_length) {
-			ret = xmms_transport_read (transport, data->buffer+len, data->buffer_length);
-			XMMS_DBG ("read %d",ret);
+			ret = xmms_transport_read (transport, data->buffer+len,
+						   data->buffer_length);
+
 			if ( ret < 0 ) {
 				g_free (data->buffer);
 				data->buffer=NULL;
@@ -153,6 +156,9 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 			XMMS_DBG ("Load failed: %d", ret);
 			return FALSE;
 		}
+
+		XMMS_DBG("subtunes: %d\n",sidplay_wrapper_subtunes(data->wrapper));
+		sidplay_wrapper_set_subtune(data->wrapper,1);
 
 		xmms_sid_get_media_info (decoder);
 

@@ -1,3 +1,7 @@
+/*
+ * Simple wrapper around libsidplay allowing it to be used from C.
+ */
+
 
 #include <sidplay/sidplay2.h>
 #include <sidplay/builders/resid.h>
@@ -37,22 +41,32 @@ gint sidplay_wrapper_play(struct sidplay_wrapper *wrap, void *buf, gint len){
 	return wrap->player->play(buf,len);
 }
 
+gint sidplay_wrapper_subtunes(struct sidplay_wrapper *wrap){
+	const SidTuneInfo *nfo = (wrap->player->info()).tuneInfo;
+	return nfo->songs;
+}
+
+void sidplay_wrapper_set_subtune(struct sidplay_wrapper *wrap, gint subtune){
+	wrap->currTune->selectSong (subtune);
+	wrap->player->load(wrap->currTune);
+}
+
 gint sidplay_wrapper_load(struct sidplay_wrapper *wrap, const void *buf, gint len){
 	int res;
 	
 	wrap->currTune=new SidTune(0);
 	res=wrap->currTune->read((const uint_least8_t *)buf, len);
-	wrap->currTune->selectSong (0);
-	
 	if (!res){
 		return -2;
 	}
+
+	wrap->currTune->selectSong (1);
 	
 	res=wrap->player->load(wrap->currTune);
 	if (res){
 		return -3;
 	}
-	
+
 	ReSIDBuilder *rs = new ReSIDBuilder("ReSID");
 	if (!rs) {
 		return -4;
