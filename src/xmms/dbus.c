@@ -341,7 +341,6 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 			{
 				xmms_playlist_changed_msg_t *chmsg = arg->retval.plch;
 				xmms_dbus_handle_playlist_chmsg (&itr, chmsg);
-				g_free (chmsg);
 			}
 			break;
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: 

@@ -65,7 +65,7 @@ print_info (const char *fmt, ...)
 }
 
 static void
-print_hash (void *key, void *value, void *udata)
+print_hash (const void *key, const void *value, void *udata)
 {
 	printf ("%s = %s\n", (char *)key, (char *)value);
 }
@@ -665,12 +665,28 @@ handle_plch (xmmsc_result_t *res, void *userdata)
 }
 
 static void
+handle_entry_plch (xmmsc_result_t *res, void *userdata)
+{
+	int id;
+
+	if (!xmmsc_result_get_uint (res, &id)) {
+		print_error ("Could't fetch uid!");
+	}
+
+	print_info ("Mediainfo for id = %d is updated", id);
+	
+	xmmsc_result_unref (xmmsc_result_restart (res));
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
 
 	ml = g_main_loop_new (NULL, FALSE);
 	XMMS_CALLBACK_SET (conn, xmmsc_playlist_changed, handle_plch, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playlist_entry_changed, handle_entry_plch, conn);
 
 	xmmsc_setup_with_gmain (conn, NULL);
 	g_main_loop_run (ml);

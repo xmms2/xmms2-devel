@@ -57,6 +57,7 @@
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
 	chmsg->type = ttype; chmsg->id=iid; chmsg->arg=argument; \
 	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, XMMS_OBJECT_METHOD_ARG_PLCH, chmsg);\
+	g_free (chmsg); \
 } while (0)
 
 
@@ -407,14 +408,14 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 
 	if (!playlist->nextentry)
 		playlist->nextentry = node;
+	
+	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_ADD, 
 				   xmms_playlist_entry_id_get (file),
 				   options);
 
 	g_cond_signal (playlist->cond);
-
-	XMMS_PLAYLIST_UNLOCK (playlist);
 
 	return TRUE;
 

@@ -46,6 +46,7 @@ void xmms_medialib_id_set ();
 
 void xmms_medialib_output_register (xmms_output_t *output);
 GList *xmms_medialib_select (gchar *query, xmms_error_t *error);
+GList * xmms_medialib_select_entries (gchar *query, xmms_error_t *error);
 
 
 #ifdef HAVE_SQLITE
