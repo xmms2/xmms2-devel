@@ -49,14 +49,13 @@ struct xmms_config_St {
 	const gchar *url;
 
 	GHashTable *values;
-	GList *plugins;
 
 	GMutex *mutex;
 
 	/* parsing */
-	gint state;
-	gint prevstate;
-	gchar *where[3];
+	GQueue *states;
+	GQueue *sections;
+	gchar *value_name;
 };
 
 struct xmms_config_value_St {
@@ -64,17 +63,16 @@ struct xmms_config_value_St {
 
 	const gchar *name;
 	gchar *data;
-	
 };
 
 
 /** @internal */
-enum xmms_config_states {
+typedef enum {
+	XMMS_CONFIG_STATE_INVALID,
 	XMMS_CONFIG_STATE_START,
 	XMMS_CONFIG_STATE_SECTION,
-	XMMS_CONFIG_STATE_PLUGIN,
-	XMMS_CONFIG_STATE_VALUE,
-};
+	XMMS_CONFIG_STATE_VALUE
+} xmms_config_state_t;
 
 /**
   * Global config
@@ -83,7 +81,6 @@ enum xmms_config_states {
   */
 
 xmms_config_t *global_config;
-
 
 void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err);
 GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
@@ -96,112 +93,156 @@ static xmms_config_value_t *xmms_config_value_new (const gchar *name);
 static void
 add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
 {
-	*(GList**)udata = g_list_append (*(GList**)udata, g_strdup ((gchar*) key));
+	GList **list = udata;
+
+	*list = g_list_prepend (*list, g_strdup ((gchar*) key));
 }
 
-static void 
-xmms_config_parse_start (GMarkupParseContext *ctx,
-		    	 const gchar *name,
-		    	 const gchar **attr_name,
-		    	 const gchar **attr_data,
-		    	 gpointer userdata,
-		    	 GError **error)
+static xmms_config_state_t
+get_current_state (const gchar *name)
 {
-	xmms_config_t *st = userdata;
+	static struct {
+		gchar *name;
+		xmms_config_state_t state;
+	} *ptr, lookup[] = {
+		{"xmms", XMMS_CONFIG_STATE_START},
+		{"section", XMMS_CONFIG_STATE_SECTION},
+		{"value", XMMS_CONFIG_STATE_VALUE},
+		{NULL, XMMS_CONFIG_STATE_INVALID}
+	};
 
-	if (g_strcasecmp (name, "section") == 0) {
-		st->state = XMMS_CONFIG_STATE_SECTION;
-		st->where[0] = g_strdup (attr_data[0]);
-	} else if (g_strcasecmp (name, "plugin") == 0) {
-		if (st->state == XMMS_CONFIG_STATE_SECTION) {
-			st->prevstate = st->state;
-			st->state = XMMS_CONFIG_STATE_PLUGIN;
-			st->where[1] = g_strdup (attr_data[0]);
-		} else {
-			xmms_log_fatal ("Config file is a mess");
+	for (ptr = lookup; ptr && ptr->name; ptr++) {
+		if (!strcmp (ptr->name, name)) {
+			return ptr->state;
 		}
-	} else if (g_strcasecmp (name, "value") == 0) {
-		if (st->state == XMMS_CONFIG_STATE_SECTION) {
-			st->prevstate = st->state;
-			st->state = XMMS_CONFIG_STATE_VALUE;
-			st->where[1] = g_strdup (attr_data[0]);
-		} else if (st->state == XMMS_CONFIG_STATE_PLUGIN) {
-			st->prevstate = st->state;
-			st->state = XMMS_CONFIG_STATE_VALUE;
-			st->where[2] = g_strdup (attr_data[0]);
-		} else {
-			xmms_log_fatal ("Config file is a mess");
-		}
-	} 
-
-}
-
-void 
-xmms_config_parse_end (GMarkupParseContext *ctx,
-		  	const gchar *name,
-		  	gpointer userdata,
-		  	GError **err)
-{
-	xmms_config_t *st = userdata;
-
-	switch (st->state) {
-		case XMMS_CONFIG_STATE_SECTION:
-			g_free (st->where[0]);
-			st->where[0] = NULL;
-			st->state = XMMS_CONFIG_STATE_START;
-			break;
-		case XMMS_CONFIG_STATE_PLUGIN:
-			g_free (st->where[1]);
-			st->where[1] = NULL;
-			st->state = XMMS_CONFIG_STATE_SECTION;
-			break;
-		case XMMS_CONFIG_STATE_VALUE:
-			if (st->prevstate == XMMS_CONFIG_STATE_SECTION) {
-				g_free (st->where[1]);
-				st->where[1] = NULL;
-				st->state = XMMS_CONFIG_STATE_SECTION;
-			} else {
-				g_free (st->where[2]);
-				st->where[2] = NULL;
-				st->state = XMMS_CONFIG_STATE_PLUGIN;
-			}
-			break;
 	}
 
+	return XMMS_CONFIG_STATE_INVALID;
+}
+
+static const gchar *
+lookup_attribute (const gchar **names, const gchar **values,
+                  const gchar *needle)
+{
+	const gchar **n, **v;
+
+	for (n = names, v = values; *n && *v; n++, v++) {
+		if (!strcmp ((gchar *) *n, needle)) {
+			return *v;
+		}
+	}
+
+	return NULL;
 }
 
 static void
-add_value (gchar *key, gchar *value)
+xmms_config_parse_start (GMarkupParseContext *ctx,
+                         const gchar *name,
+                         const gchar **attr_name,
+                         const gchar **attr_data,
+                         gpointer userdata,
+                         GError **error)
 {
-	xmms_config_value_t *val;
+	xmms_config_t *config = userdata;
+	xmms_config_state_t state;
+	const gchar *attr;
 
-	val = xmms_config_value_new (key);
-	xmms_config_value_data_set (val, value);
+	state = get_current_state (name);
+	g_queue_push_head (config->states, GINT_TO_POINTER (state));
 
-	g_hash_table_insert (global_config->values, key, val);
+	switch (state) {
+		case XMMS_CONFIG_STATE_INVALID:
+			*error = g_error_new (G_MARKUP_ERROR,
+			                      G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+			                      "Unknown element '%s'", name);
+			return;
+		case XMMS_CONFIG_STATE_START:
+			/* nothing to be done here */
+			return;
+		default:
+			break;
+	}
+
+	attr = lookup_attribute (attr_name, attr_data, "name");
+	if (!attr) {
+		*error = g_error_new (G_MARKUP_ERROR,
+		                      G_MARKUP_ERROR_INVALID_CONTENT,
+		                      "Attribute 'name' missing");
+		return;
+	}
+
+	switch (state) {
+		case XMMS_CONFIG_STATE_SECTION:
+			g_queue_push_head (config->sections, g_strdup (attr));
+
+			break;
+		case XMMS_CONFIG_STATE_VALUE:
+			g_free (config->value_name);
+			config->value_name = g_strdup (attr);
+
+			break;
+		default:
+			break;
+	}
+}
+
+void
+xmms_config_parse_end (GMarkupParseContext *ctx,
+                       const gchar *name,
+                       gpointer userdata,
+                       GError **error)
+{
+	xmms_config_t *config = userdata;
+	xmms_config_state_t state;
+
+	state = GPOINTER_TO_INT (g_queue_pop_head (config->states));
+
+	switch (state) {
+		case XMMS_CONFIG_STATE_SECTION:
+			g_free (g_queue_pop_head (config->sections));
+
+			break;
+		case XMMS_CONFIG_STATE_VALUE:
+			g_free (config->value_name);
+			config->value_name = NULL;
+
+			break;
+		default:
+			break;
+	}
 }
 
 static void
 xmms_config_parse_text (GMarkupParseContext *ctx,
-      			const gchar *text,
-      			gsize text_len,
-      			gpointer userdata,
-      			GError **err)
+                        const gchar *text,
+                        gsize text_len,
+                        gpointer userdata,
+                        GError **error)
 {
-	xmms_config_t *st = userdata;
-	gchar *str;
+	xmms_config_t *config = userdata;
+	xmms_config_state_t state;
+	xmms_config_value_t *val;
+	GList *l;
+	gchar key[256] = "";
+	gsize siz = sizeof (key);
 
-	if (st->state != XMMS_CONFIG_STATE_VALUE)
+	state = GPOINTER_TO_INT (g_queue_peek_head (config->states));
+
+	if (state != XMMS_CONFIG_STATE_VALUE)
 		return;
 
-	if (st->prevstate == XMMS_CONFIG_STATE_SECTION) {
-		str = g_strdup_printf ("%s.%s", st->where[0], st->where[1]);
-	} else 
-		str = g_strdup_printf ("%s.%s.%s", st->where[0], 
-						   st->where[1], 
-						   st->where[2]);
+	/* assemble the config key, based on the traversed sections */
+	for (l = config->sections->tail; l; l = l->prev) {
+		g_strlcat (key, l->data, siz);
+		g_strlcat (key, ".", siz);
+	}
 
-	add_value (str, (gchar *) text);
+	g_strlcat (key, config->value_name, siz);
+
+	val = xmms_config_value_new (g_strdup (key));
+	xmms_config_value_data_set (val, (gchar *) text);
+
+	g_hash_table_insert (config->values, (gchar *) val->name, val);
 }
 
 
@@ -218,12 +259,7 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_
 
 	val = xmms_config_lookup (key);
 	if (val) {
-		gchar cf[255];
-		
-		g_snprintf (cf, 254, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
-		
 		xmms_config_value_data_set (val, value);
-		xmms_config_save (cf);
 	} else {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to set nonexistant configvalue");
 	}
@@ -252,7 +288,6 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 	ret = g_list_sort (ret, (GCompareFunc) g_strcasecmp);
 
 	return ret;
-
 }
 
 
@@ -308,7 +343,7 @@ xmms_config_init (const gchar *filename)
 	GMarkupParser pars;
 	GMarkupParseContext *ctx;
 	xmms_config_t *config;
-	int ret, fd;
+	int ret, fd = -1;
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
@@ -316,7 +351,6 @@ xmms_config_init (const gchar *filename)
 	config->values = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                        g_free,
 	                                        (GDestroyNotify) __int_xmms_object_unref);
-	config->state = XMMS_CONFIG_STATE_START;
 	global_config = config;
 
 	memset (&pars, 0, sizeof (pars));
@@ -325,11 +359,14 @@ xmms_config_init (const gchar *filename)
 	pars.end_element = xmms_config_parse_end;
 	pars.text = xmms_config_parse_text;
 
+	if (filename)
+		fd = open (filename, O_RDONLY);
 
-	fd = open (filename, O_RDONLY);
-
-	if (fd) {
+	if (fd > -1) {
+		config->states = g_queue_new ();
+		config->sections = g_queue_new ();
 		ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
+
 		while (42) {
 			GError *error = NULL;
 			gchar buffer[1024];
@@ -339,7 +376,7 @@ xmms_config_init (const gchar *filename)
 				g_markup_parse_context_end_parse (ctx, &error);
 				if (error) {
 					xmms_log_error ("Cannot parse config file: %s",
-							error->message);
+					                error->message);
 					g_error_free (error);
 				}
 
@@ -349,14 +386,21 @@ xmms_config_init (const gchar *filename)
 			g_markup_parse_context_parse (ctx, buffer, ret, &error);
 			if (error) {
 				xmms_log_error ("Cannot parse config file: %s",
-						error->message);
+				                error->message);
 				g_error_free (error);
 			}
 		}
+
 		close (fd);
 		g_markup_parse_context_free (ctx);
-	}
 
+		while (!g_queue_is_empty (config->sections)) {
+			g_free (g_queue_pop_head (config->sections));
+		}
+
+		g_queue_free (config->states);
+		g_queue_free (config->sections);
+	}
 
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
@@ -455,93 +499,43 @@ add_to_tree_foreach (gpointer key, gpointer value, gpointer udata)
 }
 
 static void
-dump_value (GNode *value, gpointer arg[3])
+dump_node (GNode *node, FILE *fp)
 {
-	gchar key[1024];
-	gpointer *data = value->data;
+	gchar **data = node->data;
+	gboolean is_root = G_NODE_IS_ROOT (node);
+	static gchar indent[128] = "";
+	static gsize siz = sizeof (indent);
+	gsize len;
 
-	/* assemble the key */
-	g_snprintf (key, sizeof (key), "%s.", (gchar *) arg[1]);
+	if (G_NODE_IS_LEAF (node)) {
+		fprintf (fp, "%s<value name=\"%s\">%s</value>\n",
+		         indent, data[0], data[1]);
+	} else {
+		if (is_root) {
+			fprintf (fp, "<?xml version=\"1.0\"?>\n<%s>\n",
+			         (gchar *) node->data);
+		} else {
+			fprintf (fp, "%s<section name=\"%s\">\n",
+			         indent, data[0]);
+		}
 
-	if (arg[2]) {
-		g_strlcat (key, (gchar *) arg[2], sizeof (key));
-		g_strlcat (key, ".", sizeof (key));
+		len = g_strlcat (indent, "\t", siz);
+		g_node_children_foreach (node, G_TRAVERSE_ALL,
+		                         (GNodeForeachFunc) dump_node, fp);
+		indent[len - 1] = '\0';
+
+		if (is_root) {
+			fprintf (fp, "</%s>\n", (gchar *) node->data);
+		} else {
+			fprintf (fp, "%s</section>\n", indent);
+		}
 	}
 
-	g_strlcat (key, (gchar *) data[0], sizeof (key));
-
-	if (arg[2])
-		fprintf (arg[0], "\t");
-
-	fprintf (arg[0], "\t\t<value name=\"%s\">%s</value>\n",
-	         (gchar *) data[0], (gchar *) data[1]);
-}
-
-static void
-dump_plugin (GNode *plugin, gpointer arg[3])
-{
-	gpointer *data = plugin->data;
-
-	/* if there are no child nodes here, its a "value" node, not
-	 * a "plugin" node
-	 */
-	if (!(g_node_n_children (plugin))) {
-		dump_value (plugin, arg);
-		return;
-	}
-
-	fprintf (arg[0], "\t\t<plugin name=\"%s\">\n", (gchar *) data[0]);
-
-	arg[2] = data[0];
-	g_node_children_foreach (plugin, G_TRAVERSE_ALL,
-	                         (GNodeForeachFunc) dump_value, arg);
-	arg[2] = NULL;
-
-	fprintf (arg[0], "\t\t</plugin>\n");
-}
-
-static void
-dump_section (GNode *section, FILE *fp)
-{
-	gpointer *data, arg[3];
-
-	data = section->data;
-	fprintf (fp, "\t<section name=\"%s\">\n", (gchar *) data[0]);
-
-	arg[0] = fp;
-	arg[1] = data[0];
-	arg[2] = NULL; /* filled later */
-	g_node_children_foreach (section, G_TRAVERSE_ALL,
-	                         (GNodeForeachFunc) dump_plugin, arg);
-
-	fprintf (fp, "\t</section>\n");
-}
-
-static void
-dump_tree (GNode *tree, FILE *fp)
-{
-	fprintf (fp, "<?xml version=\"1.0\"?>\n");
-
-	fprintf (fp, "<%s>\n", (gchar *) tree->data);
-	g_node_children_foreach (tree, G_TRAVERSE_ALL,
-	                         (GNodeForeachFunc) dump_section, fp);
-	fprintf (fp, "</%s>\n", (gchar *) tree->data);
-}
-
-static gboolean
-destroy_node (GNode *node, gpointer udata)
-{
-	gpointer *data = node->data;
-
-	/* the root just carries a single string */
-	if (!G_NODE_IS_ROOT (node)) {
+	if (!is_root) {
 		g_free (data[0]);
 		g_free (data[1]);
+		g_free (data);
 	}
-
-	g_free (data);
-
-	return FALSE; /* go on */
 }
 
 /**
@@ -553,41 +547,26 @@ destroy_node (GNode *node, gpointer udata)
 gboolean
 xmms_config_save (const gchar *file)
 {
-	GNode *tree;
+	GNode *tree = NULL;
 	FILE *fp = NULL;
 
 	g_return_val_if_fail (global_config, FALSE);
 	g_return_val_if_fail (file, FALSE);
-
-	tree = g_node_new (g_strdup ("xmms"));
-	g_hash_table_foreach (global_config->values, add_to_tree_foreach, tree);
 
 	if (!(fp = fopen (file, "w"))) {
 		xmms_log_error ("Couldn't open %s for writing.", file);
 		return FALSE;
 	}
 
-	dump_tree (tree, fp);
+	tree = g_node_new ("xmms");
+	g_hash_table_foreach (global_config->values, add_to_tree_foreach, tree);
+
+	dump_node (tree, fp);
+
+	g_node_destroy (tree);
 	fclose (fp);
 
-	/* destroy the tree */
-	g_node_traverse (tree, G_IN_ORDER, G_TRAVERSE_ALL, -1,
-	                 destroy_node, NULL);
-
 	return TRUE;
-}
-
-GList *
-xmms_config_plugins_get (void)
-{
-	GList *plugins;
-	g_return_val_if_fail (global_config, NULL);
-
-	g_mutex_lock (global_config->mutex);
-	plugins = global_config->plugins;
-	g_mutex_unlock (global_config->mutex);
-
-	return plugins;
 }
 
 /*
@@ -636,6 +615,9 @@ void
 xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 {
 	GList *list = NULL;
+#if 0
+	gchar file[XMMS_PATH_MAX];
+#endif
 
 	g_return_if_fail (val);
 	g_return_if_fail (data);
@@ -647,13 +629,23 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 
-	list = g_list_prepend (list, val->data);
-	list = g_list_prepend (list, (gpointer) val->name);
+	list = g_list_prepend (list, g_strdup (val->data));
+	list = g_list_prepend (list, g_strdup (val->name));
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
-			    XMMS_OBJECT_CMD_ARG_STRINGLIST,
+	                    XMMS_OBJECT_CMD_ARG_STRINGLIST,
 	                    list);
+
+#if 0
+	/* save the database to disk, so we don't loose any data
+	 * if the daemon crashes
+	 */
+	g_snprintf (file, sizeof (file), "%s/.xmms2/xmms2.conf",
+	            g_get_home_dir ());
+
+	xmms_config_save (file);
+#endif
 }
 
 /**

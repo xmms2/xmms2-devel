@@ -32,7 +32,6 @@ gboolean xmms_config_init (const gchar *filename);
 void xmms_config_shutdown (void);
 xmms_config_value_t *xmms_config_lookup (const gchar *path);
 gboolean xmms_config_save (const gchar *file);
-GList *xmms_config_plugins_get (void);
 
 void xmms_config_value_free (xmms_config_value_t *value);
 void xmms_config_value_data_set (xmms_config_value_t *val, gchar *data);
