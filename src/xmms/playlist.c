@@ -361,8 +361,10 @@ xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t
 		    this could be better,
 		    setting ids and using g_list_concat and stuff */
 		xmms_playlist_add (playlist, n->data, XMMS_PLAYLIST_APPEND);
+		xmms_object_unref (n->data);
 	}
-	
+	g_list_free (res);
+
 	return TRUE;
 }
 
