@@ -69,7 +69,7 @@
 #define XMMS_METHOD_MIXERSET "mixer_set"
 #define XMMS_METHOD_MIXERGET "mixer_get"
 #define XMMS_METHOD_DECODER_KILL "decoder_kill"
-#define XMMS_METHOD_SELECTANDADD "selectandadd"
+#define XMMS_METHOD_MEDIALIBADD "medialibadd"
 
 
 /* Playlist msgs */

@@ -36,7 +36,6 @@ const char create_Property_stm[] = "create table Property (id primary_key, value
 const char create_Log_stm[] = "create table Log (id primary_key, starttime, value)";
 const char create_idx_stm[] = "create index url_idx on Media (url) ; create index prop_key_idx on Property (key) ; create index log_starttime_idx on Log (starttime)";
 
-
 static int
 xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
 {
@@ -52,7 +51,7 @@ xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName)
 }
 
 gboolean
-xmms_sqlite_open (xmms_medialib_t *medialib)
+xmms_sqlite_open ()
 {
 	sqlite *sql;
 	gchar *err;
@@ -60,8 +59,6 @@ xmms_sqlite_open (xmms_medialib_t *medialib)
 	gboolean create = TRUE;
 	gchar dbpath[XMMS_PATH_MAX];
 	guint id;
-
-	g_return_val_if_fail (medialib, FALSE);
 
 	hdir = g_get_home_dir ();
 
@@ -89,25 +86,24 @@ xmms_sqlite_open (xmms_medialib_t *medialib)
 		sqlite_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, &id, NULL);
 	}
 
-	xmms_medialib_sql_set (medialib, sql);
-	xmms_medialib_id_set (medialib, id);
+	xmms_medialib_sql_set (sql);
+	xmms_medialib_id_set (id);
 
 	return TRUE;
 }
 
 gboolean
-xmms_sqlite_query (xmms_medialib_t *medialib, xmms_medialib_row_method_t method, void *udata, char *query, ...)
+xmms_sqlite_query (xmms_medialib_row_method_t method, void *udata, char *query, ...)
 {
 	gchar *err;
 	sqlite *sql;
 	va_list ap;
 
-	g_return_val_if_fail (medialib, FALSE);
 	g_return_val_if_fail (query, FALSE);
 
 	va_start (ap, query);
 
-	sql = xmms_medialib_sql_get (medialib);
+	sql = xmms_medialib_sql_get ();
 
 	XMMS_DBG ("Running query: %s", query);
 
@@ -124,10 +120,9 @@ xmms_sqlite_query (xmms_medialib_t *medialib, xmms_medialib_row_method_t method,
 }
 
 void
-xmms_sqlite_close (xmms_medialib_t *medialib)
+xmms_sqlite_close ()
 {
 	sqlite *sql;
-	g_return_if_fail (medialib);
-	sql = xmms_medialib_sql_get (medialib);
+	sql = xmms_medialib_sql_get ();
 	sqlite_close (sql);
 }

@@ -204,6 +204,30 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 }
 
 /**
+ *
+ * @param c The connection structure.
+ * @param query sql-query to medialib.
+ *
+ */
+
+xmmsc_result_t *
+xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *query)
+{
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	xmmsc_result_t *res;
+	
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_MEDIALIBADD);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, query);
+	res = xmmsc_send_msg (c, msg);
+	dbus_message_unref (msg);
+
+	return res;
+
+}
+
+/**
  * Remove an entry from the playlist.
  *
  * param id the id to remove from the playlist.

@@ -52,6 +52,7 @@ xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 
 xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *);
+xmmsc_result_t *xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename);
@@ -85,7 +86,6 @@ xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
 xmmsc_result_t *xmmsc_output_mixer_set (xmmsc_connection_t *c, int left, int right);
 xmmsc_result_t *xmmsc_output_mixer_get (xmmsc_connection_t *c);
 
-xmmsc_result_t *xmmsc_medialib_select_and_add (xmmsc_connection_t *c, char *query);
 
 /*void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);*/
 

@@ -234,6 +234,9 @@ main (int argc, char **argv)
 	g_return_val_if_fail (output, -1);
 
 	xmms_output_playlist_set (output, playlist);
+
+	xmms_medialib_init ();
+	xmms_medialib_output_register (output);
 		
 	path = g_strdup_printf ("unix:path=/tmp/xmms-dbus-%s", 
 				g_get_user_name ());

@@ -20,7 +20,6 @@
 #ifndef __XMMS_MEDIALIB_H__
 #define __XMMS_MEDIALIB_H__
 
-typedef struct xmms_medialib_St xmms_medialib_t;
 
 #include "xmms/plugin.h"
 #include "xmms/playlist.h"
@@ -33,25 +32,30 @@ typedef struct xmms_medialib_St xmms_medialib_t;
 /** Callback to the query function. */
 typedef int (*xmms_medialib_row_method_t) (void *pArg, int argc, char **argv, char **columnName);
 
+typedef struct xmms_medialib_St xmms_medialib_t;
+
 /*
  * Public functions
  */
-xmms_medialib_t *xmms_medialib_init (xmms_playlist_t *playlist);
-gboolean xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
-void xmms_medialib_close (xmms_medialib_t *medialib);
+gboolean xmms_medialib_init ();
+gboolean xmms_medialib_entry_get (xmms_playlist_entry_t *entry);
+gboolean xmms_medialib_entry_store (xmms_playlist_entry_t *entry);
+void xmms_medialib_close ();
 
-void xmms_medialib_id_set (xmms_medialib_t *medialib, guint id);
-void xmms_medialib_log_entry_stop (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry, guint value);
-void xmms_medialib_log_entry_start (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry);
+void xmms_medialib_id_set ();
+
+void xmms_medialib_output_register (xmms_output_t *output);
+GList *xmms_medialib_select (gchar *query, xmms_error_t *error);
+
 
 #ifdef HAVE_SQLITE
 #include <sqlite.h>
 
-void xmms_medialib_sql_set (xmms_medialib_t *medialib, sqlite *sql);
-sqlite *xmms_medialib_sql_get (xmms_medialib_t *medialib);
-gboolean xmms_sqlite_open (xmms_medialib_t *medialib);
-gboolean xmms_sqlite_query (xmms_medialib_t *medialib, xmms_medialib_row_method_t method, void *udata, char *query, ...);
-void xmms_sqlite_close (xmms_medialib_t *medialib);
+void xmms_medialib_sql_set (sqlite *sql);
+sqlite *xmms_medialib_sql_get ();
+gboolean xmms_sqlite_open ();
+gboolean xmms_sqlite_query (xmms_medialib_row_method_t method, void *udata, char *query, ...);
+void xmms_sqlite_close ();
 #endif
 
 

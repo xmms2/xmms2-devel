@@ -36,5 +36,7 @@ void xmms_output_samplerate_set (xmms_output_t *output, guint rate);
 void xmms_output_played_samples_set (xmms_output_t *output, guint samples);
 guint xmms_output_samplerate_get (xmms_output_t *output);
 void xmms_output_playlist_set (xmms_output_t *output, xmms_playlist_t *playlist);
+guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
+xmms_playlist_entry_t *xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *err);
 
 #endif

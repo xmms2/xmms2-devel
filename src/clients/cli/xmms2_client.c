@@ -82,7 +82,7 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 
 		g_snprintf (query, 1023, "select url from Media where %s", argv[3]);
 		print_info ("%s", query);
-		res = xmmsc_medialib_select_and_add (conn, query);
+		res = xmmsc_playlist_medialibadd (conn, query);
 		xmmsc_result_wait (res);
 		xmmsc_result_unref (res);
 	}

@@ -81,7 +81,6 @@ struct xmms_playlist_St {
 
 	xmms_mediainfo_thread_t *mediainfothr;
 	xmms_playlist_entry_t *playing_entry;
-	xmms_medialib_t *medialib;
 
 };
 
@@ -341,6 +340,37 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
  */
 XMMS_METHOD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
 
+/**
+ * Add entries from medialib
+ *
+ * @return TRUE on success and FALSE otherwise.
+ */
+gboolean
+xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t *err)
+{
+	GList *res, *n;
+
+	res = xmms_medialib_select (query, err);
+
+	if (xmms_error_iserror(err)) {
+		return FALSE;
+	}
+
+	for (n = res; n; n = g_list_next (n)) {
+		/** @todo
+		    this could be better,
+		    setting ids and using g_list_concat and stuff */
+		xmms_playlist_add (playlist, n->data, XMMS_PLAYLIST_APPEND);
+	}
+	
+	return TRUE;
+}
+
+/** Add entries from medialib to the playlist
+ * @ingroup PlaylistClientMethods
+ */
+XMMS_METHOD_DEFINE (medialibadd, xmms_playlist_medialibadd, xmms_playlist_t *, NONE, STRING, NONE);
+
 
 /** Adds a xmms_playlist_entry_t to the playlist.
  *
@@ -593,8 +623,6 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 
 	playlist->playing_entry = entry;
 
-	xmms_medialib_log_entry_start (playlist->medialib, entry);
-
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 			    XMMS_SIGNAL_PLAYLIST_CURRENTID,
 			    XMMS_OBJECT_METHOD_ARG_UINT32,
@@ -603,31 +631,6 @@ xmms_playlist_next_start (xmms_playlist_t *playlist)
 	return d;
 	
 }
-
-void
-xmms_playlist_entry_stop (xmms_playlist_t *playlist, xmms_playlist_entry_t *entry, guint time)
-{
-	gdouble duration;
-	gdouble sum = 0;
-	gchar *tmp;
-
-	g_return_if_fail (playlist);
-	g_return_if_fail (entry);
-
-	tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION);
-	if (!tmp) {
-		/* Probably a stream */
-		sum = 0.0;
-	} else {
-		duration = (gfloat) atoi (tmp);
-		sum = 1 + (guint) (99.0*((gfloat)time)/duration);
-	}
-
-	XMMS_DBG ("ENTRY STOPPED time = %d and duration = %f and sum = %f", time, duration, sum);
-
-	xmms_medialib_log_entry_stop (playlist->medialib, entry, (guint) sum);
-}
-
 
 /**
   * Get the previous entry in the playlist
@@ -924,6 +927,10 @@ xmms_playlist_init (void)
 				XMMS_METHOD_FUNC (add));
 
 	xmms_object_method_add (XMMS_OBJECT (ret), 
+				XMMS_METHOD_MEDIALIBADD, 
+				XMMS_METHOD_FUNC (medialibadd));
+
+	xmms_object_method_add (XMMS_OBJECT (ret), 
 				XMMS_METHOD_GETMEDIAINFO, 
 				XMMS_METHOD_FUNC (getmediainfo));
 
@@ -947,8 +954,7 @@ xmms_playlist_init (void)
 				XMMS_METHOD_SORT, 
 				XMMS_METHOD_FUNC (sort));
 
-	ret->medialib = xmms_medialib_init (ret);
-	ret->mediainfothr = xmms_mediainfo_thread_start (ret, ret->medialib);
+	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
 
 	return ret;
 }

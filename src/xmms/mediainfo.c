@@ -44,7 +44,6 @@ struct xmms_mediainfo_thread_St {
 	gboolean running;
 	GQueue *queue;
 	xmms_playlist_t *playlist;
-	xmms_medialib_t *medialib;
 	/* 45574 */
 };
 
@@ -53,7 +52,7 @@ static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpoi
 
 
 xmms_mediainfo_thread_t *
-xmms_mediainfo_thread_start (xmms_playlist_t *playlist, xmms_medialib_t *medialib)
+xmms_mediainfo_thread_start (xmms_playlist_t *playlist)
 {
 	xmms_mediainfo_thread_t *mtt;
 
@@ -67,7 +66,6 @@ xmms_mediainfo_thread_start (xmms_playlist_t *playlist, xmms_medialib_t *mediali
 	mtt->queue = g_queue_new ();
 	mtt->running = TRUE;
 	mtt->thread = g_thread_create (xmms_mediainfo_thread_thread, mtt, FALSE, NULL);
-	mtt->medialib = medialib;
 
 	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mtt);
 	
@@ -141,7 +139,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
 			/* Check if this is in the medialib first.*/
-			if (xmms_medialib_entry_get (mtt->medialib, entry)) {
+			if (xmms_medialib_entry_get (entry)) {
 				xmms_object_unref (entry);
 				continue;
 			}
@@ -196,7 +194,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_decoder_mediainfo_get (decoder, transport);
 
 			/* Store this in the database */
-			xmms_medialib_entry_store (mtt->medialib, entry);
+			xmms_medialib_entry_store (entry);
 
 			xmms_object_unref (entry);
 			xmms_object_unref (transport);
