@@ -37,6 +37,7 @@ struct xmms_output_St {
 
 	guint played;
 	gboolean is_open;
+	gboolean is_paused;
 
 	guint open_samplerate;
 	guint samplerate;
@@ -417,6 +418,29 @@ xmms_output_played_samples_set (xmms_output_t *output, guint samples)
 	g_mutex_unlock (output->mutex);
 }
 
+
+gboolean
+xmms_output_is_paused (xmms_output_t *output)
+{
+	g_return_val_if_fail (output, FALSE);
+
+	return output->is_paused;
+}
+
+void
+xmms_output_pause (xmms_output_t *output)
+{
+	g_return_if_fail (output);
+	output->is_paused = TRUE;
+}
+
+void
+xmms_output_resume (xmms_output_t *output)
+{
+	g_return_if_fail (output);
+	g_cond_signal (output->cond);
+}
+
 static gpointer
 xmms_output_thread (gpointer data)
 {
@@ -444,6 +468,13 @@ xmms_output_thread (gpointer data)
 				XMMS_DBG ("Couldn't open output device");
 				xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_OPEN_FAIL, NULL);
 			}
+		}
+
+		if (output->is_paused) {
+			XMMS_DBG ("Paused");
+			g_cond_wait (output->cond, output->mutex);
+			XMMS_DBG ("Resumed");
+			output->is_paused = FALSE;
 		}
 
 		ret = xmms_ringbuf_read (output->buffer, buffer, 4096);

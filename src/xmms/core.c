@@ -53,7 +53,8 @@ struct xmms_core_St {
 
 typedef enum {
 	XMMS_CORE_PLAYBACK_RUNNING,
-	XMMS_CORE_PLAYBACK_STOPPED
+	XMMS_CORE_PLAYBACK_STOPPED,
+	XMMS_CORE_PLAYBACK_PAUSED
 } xmms_core_playback_status_t;
 
 static gboolean running = TRUE;
@@ -113,6 +114,7 @@ static void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	XMMS_DBG ("eos_reached");
+
 }
 
 static void
@@ -228,10 +230,25 @@ xmms_core_playlist_save (gchar *filename)
 	xmms_playlist_plugin_free (plugin);
 }
 
+
+XMMS_METHOD_DEFINE (pause, xmms_core_playback_pause, xmms_core_t *, NONE, NONE, NONE);
+void
+xmms_core_playback_pause (xmms_core_t *core)
+{
+	core->status = XMMS_CORE_PLAYBACK_PAUSED;
+	xmms_output_pause (core->output);
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_PAUSE, NULL);
+}
+
 XMMS_METHOD_DEFINE (start, xmms_core_playback_start, xmms_core_t *, NONE, NONE, NONE);
 void
 xmms_core_playback_start (xmms_core_t *core)
 {
+	if (core->status == XMMS_CORE_PLAYBACK_PAUSED) {
+		core->status = XMMS_CORE_PLAYBACK_RUNNING;
+		xmms_output_resume (core->output);
+	}
+	
 	if (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
 		/* @todo race condition? */
 		core->status = XMMS_CORE_PLAYBACK_RUNNING;
@@ -355,6 +372,7 @@ xmms_core_init ()
 
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_PLAY, XMMS_METHOD_FUNC (start));
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_STOP, XMMS_METHOD_FUNC (stop));
+	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_PAUSE, XMMS_METHOD_FUNC (pause));
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_NEXT, XMMS_METHOD_FUNC (next));
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_PREV, XMMS_METHOD_FUNC (prev));
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_CURRENTID, XMMS_METHOD_FUNC (currid));

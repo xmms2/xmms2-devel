@@ -16,6 +16,7 @@
 #define XMMS_METHOD_PREV "prev"
 #define XMMS_METHOD_PLAY "play"
 #define XMMS_METHOD_STOP "stop"
+#define XMMS_METHOD_PAUSE "pause"
 #define XMMS_METHOD_CURRENTID "currentid"
 #define XMMS_METHOD_SHUFFLE "shuffle"
 #define XMMS_METHOD_SEEKMS "seekms"

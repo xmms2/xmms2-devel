@@ -39,6 +39,7 @@ void xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename);
 void xmmsc_playlist_entry_free (GHashTable *entry);
 void xmmsc_playback_stop (xmmsc_connection_t *c);
 void xmmsc_playback_start (xmmsc_connection_t *c);
+void xmmsc_playback_pause (xmmsc_connection_t *c);
 void xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds);
 void xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples);
 void xmmsc_playback_current_id (xmmsc_connection_t *c);

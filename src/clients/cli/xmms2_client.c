@@ -378,6 +378,13 @@ main(int argc, char **argv)
 
 			exit (0);
 
+		} else if ( streq (argv[1], "pause") ) {
+
+			xmmsc_playback_pause (c);
+			xmmsc_deinit (c);
+
+			exit (0);
+
 
 		} else if ( streq (argv[1], "jump") ) {
 

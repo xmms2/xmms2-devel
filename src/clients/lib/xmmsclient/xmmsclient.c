@@ -592,6 +592,17 @@ xmmsc_playback_stop (xmmsc_connection_t *c)
 }
 
 /**
+ * Pause the current playback, will tell the output to not read
+ * nor write.
+ */
+
+void
+xmmsc_playback_pause (xmmsc_connection_t *c)
+{
+	xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PAUSE);
+}
+
+/**
  * Starts playback if server is idle.
  */
 
