@@ -14,23 +14,24 @@
 #include <glib.h>
 
 #include "xmmsclient.h"
+#include "xmms/dbus_xmms.h"
 
 guint played_time=0;
 
 #define XMMS_MAX_URI_LEN 1024
 
-static const char *playtime_message[]={"org.xmms.core.playtime-changed"};
-static const char *information_message[]={"org.xmms.core.information"};
-static const char *playback_stopped_message[]={"org.xmms.playback.stopped"};
-static const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
-static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
+static const char *playtime_message[]={XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME};
+static const char *information_message[]={XMMS_DBUS_SIGNAL_CORE_INFORMATION};
+static const char *playback_stopped_message[]={XMMS_DBUS_SIGNAL_PLAYBACK_STOP};
+static const char *mediainfo_message[]={XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID};
+static const char *disconnectmsgs[]={XMMS_DBUS_SIGNAL_CORE_DISCONNECT};
 
-static const char *playlist_added[] = {"org.xmms.playlist.added"};
-static const char *playlist_shuffled[] = {"org.xmms.playlist.shuffled"};
-static const char *playlist_cleared[] = {"org.xmms.playlist.cleared"};
-static const char *playlist_removed[] = {"org.xmms.playlist.removed"};
-static const char *playlist_jumped[] = {"org.xmms.playlist.jumped"};
-static const char *playlist_moved[] = {"org.xmms.playlist.moved"};
+static const char *playlist_added[] = {XMMS_DBUS_SIGNAL_PLAYLIST_ADD};
+static const char *playlist_shuffled[] = {XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE};
+static const char *playlist_cleared[] = {XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR};
+static const char *playlist_removed[] = {XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE};
+static const char *playlist_jumped[] = {XMMS_DBUS_SIGNAL_PLAYLIST_JUMP};
+static const char *playlist_moved[] = {XMMS_DBUS_SIGNAL_PLAYLIST_MOVE};
 
 
 struct xmmsc_connection_St {
@@ -366,6 +367,21 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	dbus_connection_unref (c->conn);
 }
 
+static void
+xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal)
+{
+	DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_DBUS_SIGNAL_CORE_SIGNAL_REGISTER, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, signal);
+	dbus_connection_send (conn->conn, msg, &cserial);
+	dbus_message_unref (msg);
+
+}
+
 void
 xmmsc_set_callback (xmmsc_connection_t *conn, gchar *callback, void (*func)(void *,void*), void *userdata)
 {
@@ -373,6 +389,18 @@ xmmsc_set_callback (xmmsc_connection_t *conn, gchar *callback, void (*func)(void
 
 	desc->func = func;
 	desc->userdata = userdata;
+
+	if (g_strcasecmp (XMMSC_CALLBACK_PLAYTIME_CHANGED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_INFORMATION , callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_CORE_INFORMATION);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_MEDIAINFO_CHANGED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_PLAYBACK_STOPPED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_PLAYBACK_STOP);
+	} else if (g_strcasecmp (XMMSC_CALLBACK_DISCONNECTED, callback) == 0) {
+		xmmsc_register_signal (conn, XMMS_DBUS_SIGNAL_CORE_DISCONNECT);
+	}
 
 	/** @todo more than one callback of each type */
 	g_hash_table_insert (conn->callbacks, g_strdup (callback), desc);
@@ -401,43 +429,43 @@ xmmsc_send_void (xmmsc_connection_t *c, char *message)
 void
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.core.quit");
+	xmmsc_send_void(c, XMMS_DBUS_SIGNAL_CORE_QUIT);
 }
 
 void
 xmmsc_play_next (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.core.play-next");
+	xmmsc_send_void(c, XMMS_DBUS_SIGNAL_PLAYBACK_NEXT);
 }
 
 void
 xmmsc_play_prev (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.core.play-prev");
+	xmmsc_send_void(c,XMMS_DBUS_SIGNAL_PLAYBACK_PREV);
 }
 
 void
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.playlist.shuffle");
+	xmmsc_send_void(c,XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE);
 }
 
 void
 xmmsc_playlist_clear (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.playlist.clear");
+	xmmsc_send_void(c,XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR);
 }
 
 void
 xmmsc_playback_stop (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.playback.stop");
+	xmmsc_send_void(c,XMMS_DBUS_SIGNAL_PLAYBACK_STOP);
 }
 
 void
 xmmsc_playback_start (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,"org.xmms.playback.start");
+	xmmsc_send_void(c,XMMS_DBUS_SIGNAL_PLAYBACK_PLAY);
 }
 
 void
@@ -447,7 +475,7 @@ xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new ("org.xmms.playlist.jump", NULL);
+	msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_JUMP, NULL);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -462,7 +490,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *uri)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new ("org.xmms.playlist.add", NULL);
+	msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_ADD, NULL);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, uri);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -477,7 +505,7 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new ("org.xmms.playlist.remove", NULL);
+	msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE, NULL);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -494,7 +522,7 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	
 	dbus_error_init (&err);
 	
-	msg = dbus_message_new ("org.xmms.playlist.list", NULL);
+	msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_LIST, NULL);
 	res = dbus_connection_send_with_reply_and_block (c->conn, msg, 2000, &err);
 	if (res) {
 		DBusMessageIter itr;
@@ -530,7 +558,7 @@ guint
 xmmsc_get_playing_id (xmmsc_connection_t *c)
 {
 	DBusMessage *res;
-	DBusMessage *msg = dbus_message_new ("org.xmms.core.mediainfo", NULL);
+	DBusMessage *msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID, NULL);
 	DBusError err;
 	guint id = 0;
 
@@ -564,7 +592,7 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 
 	dbus_error_init (&err);
 
-	msg = dbus_message_new ("org.xmms.playlist.mediainfo", NULL);
+	msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
 	ret = dbus_connection_send_with_reply_and_block (c->conn, msg, 2000, &err);
