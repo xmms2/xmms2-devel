@@ -1,7 +1,5 @@
 import SCons
 import xmmsenv
-import distutils
-import distutils.sysconfig
 from marshal import dump, load;
 
 import os;
@@ -58,14 +56,18 @@ def checkFlags(base_env):
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
-	
+
 	if base_env.CheckProgramAndAddFlagsToGroup ("pyrex", "pyrexc") :
-		print "PyREX compiler found!"
-	else :
+	       	print "PyREX compiler found!"
+	else:
 		print "PyREX not found, no cookie for you!"
 
-	base_env.AddFlagsToGroup ("python", "-I"+distutils.sysconfig.get_python_inc ())
-
+	try:
+		import distutils
+		import distutils.sysconfig
+		base_env.AddFlagsToGroup ("python", "-I"+distutils.sysconfig.get_python_inc ())
+	except:
+		pass
 	##
 	## Write cache
 	##
