@@ -34,6 +34,8 @@ PLUGINS:
 
 	* Output
 
+		* output is always stereo. how shall we do with
+ 		  mono?
 		* ARTS
 		* ALSA
 		* ESD - Tack Gnome.. tack som fan
