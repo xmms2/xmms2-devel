@@ -132,9 +132,12 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 
 	mad_stream_buffer (&stream, buf, len);
 
-	if (mad_frame_decode (&frame, &stream) == -1) {
-		XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
-		return;
+	while (mad_frame_decode (&frame, &stream) == -1) {
+		if (!MAD_RECOVERABLE (stream.error)) {
+			
+			XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
+			return;
+		}
 	}
 	
 	fsize = filesize * 8;
