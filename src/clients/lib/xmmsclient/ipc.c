@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/select.h>
+#include <string.h>
 
 #include "xmms/util.h"
 #include "xmms/ringbuf.h"
@@ -30,6 +31,14 @@
 
 #include "internal/client_ipc.h"
 
+typedef struct xmmsc_msg_queue_St {
+	GQueue *queue;					/* complete messages */
+	xmms_ipc_msg_t *incomplete;		/* message we have the header for but not enough data */
+	guint8 buffer[16];				/* incomplete header */
+	guint buffer_len;				/* bytes used in buffer */
+	guint bytes_used;				/* bytes used in incomplete message */
+} xmmsc_msg_queue_t;
+
 struct xmmsc_ipc_St {
 	xmms_ringbuf_t *read_buffer;
 	xmms_ipc_transport_t *transport;
@@ -38,6 +47,7 @@ struct xmmsc_ipc_St {
 	gboolean disconnect;
 	gint pollopts;
 	GHashTable *results_table;
+	xmmsc_msg_queue_t *queue;
 	void *lockdata;
 	void (*lockfunc)(void *lock);
 	void (*unlockfunc)(void *lock);
@@ -48,6 +58,11 @@ struct xmmsc_ipc_St {
 static inline void xmmsc_ipc_lock (xmmsc_ipc_t *ipc);
 static inline void xmmsc_ipc_unlock (xmmsc_ipc_t *ipc);
 
+xmmsc_msg_queue_t* xmmsc_msg_queue_new ();
+xmms_ipc_msg_t* xmmsc_msg_queue_pop (xmmsc_msg_queue_t *queue);
+void xmmsc_msg_queue_destroy (xmmsc_msg_queue_t *queue);
+void xmmsc_msg_queue_write (xmmsc_msg_queue_t *queue, guint8 *buffer, guint size);
+
 xmmsc_ipc_t *
 xmmsc_ipc_init (void)
 {
@@ -57,6 +72,7 @@ xmmsc_ipc_init (void)
 	ipc->disconnect = FALSE;
 	ipc->pollopts = XMMSC_IPC_IO_IN;
 	ipc->results_table = g_hash_table_new (NULL, NULL);
+	ipc->queue = xmmsc_msg_queue_new ();
 
 	return ipc;
 }
@@ -152,7 +168,7 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 			break;
 		}
 		xmmsc_ipc_lock (ipc);
-		xmms_ringbuf_write (ipc->read_buffer, buffer, ret);
+		xmmsc_msg_queue_write (ipc->queue, buffer, ret);
 		xmmsc_ipc_unlock (ipc);
 	} while (ret > 0);
 
@@ -162,19 +178,15 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 
 	xmmsc_ipc_lock (ipc);
 	do {
-		if (!xmms_ipc_msg_can_read (ipc->read_buffer)) {
-			break;
-		} else {
-			msg = xmms_ipc_msg_read (ipc->read_buffer);
-			if (!msg)
-				continue;
-			xmmsc_ipc_unlock (ipc);
+		msg = xmmsc_msg_queue_pop (ipc->queue);
+		if (!msg)
+			continue;
+		xmmsc_ipc_unlock (ipc);
 #if HEAVY_DEBUG
-			printf ("Read msg with command %d\n", msg->cmd);
+		printf ("Read msg with command %d\n", msg->cmd);
 #endif
-			xmmsc_ipc_exec_msg (ipc, msg);
-			xmmsc_ipc_lock (ipc);
-		}
+		xmmsc_ipc_exec_msg (ipc, msg);
+		xmmsc_ipc_lock (ipc);
 	} while (msg);
 	xmmsc_ipc_unlock (ipc);
 
@@ -276,6 +288,7 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (!ipc)
 		return;
 
+	xmmsc_msg_queue_destroy (ipc->queue);
 	xmms_ringbuf_destroy (ipc->read_buffer);
 	g_hash_table_destroy (ipc->results_table);
 	if (ipc->transport) {
@@ -315,3 +328,112 @@ xmmsc_ipc_unlock (xmmsc_ipc_t *ipc)
 	if (ipc->lockdata)
 		ipc->lockfunc (ipc->lockdata);
 }
+
+xmmsc_msg_queue_t *
+xmmsc_msg_queue_new ()
+{
+	xmmsc_msg_queue_t *queue = g_new0 (xmmsc_msg_queue_t, 1);
+	g_return_val_if_fail (queue, NULL);
+
+	queue->queue = g_queue_new ();
+	queue->incomplete = NULL;
+	queue->buffer_len = 0;
+	queue->bytes_used = 0;
+
+	return queue;
+}
+
+void
+xmmsc_msg_queue_destroy (xmmsc_msg_queue_t *queue)
+{
+	g_return_if_fail (queue);
+
+	while (g_queue_is_empty (queue->queue) != TRUE) {
+		xmms_ipc_msg_t *msg = g_queue_pop_head (queue->queue);
+		xmms_ipc_msg_destroy (msg);
+	}
+
+	if (queue->incomplete != NULL) {
+		xmms_ipc_msg_destroy (queue->incomplete);
+	}
+
+	g_queue_free (queue->queue);
+	g_free (queue);
+}
+
+xmms_ipc_msg_t *
+xmmsc_msg_queue_pop (xmmsc_msg_queue_t *queue)
+{
+	g_return_val_if_fail (queue, NULL);
+
+	return g_queue_pop_head (queue->queue);
+}
+
+void
+xmmsc_msg_queue_write (xmmsc_msg_queue_t *queue, guint8 *buffer, guint size)
+{
+	g_return_if_fail (queue);
+	g_return_if_fail (buffer);
+
+	while (size > 0 || queue->buffer_len == 16) {
+		if (queue->buffer_len > 0) {
+			xmms_ipc_msg_t *msg;
+			guint32 cmd, object, cmdid, length;
+			guint towrite = MIN(size, 16 - queue->buffer_len);
+
+			memcpy (queue->buffer + queue->buffer_len, buffer, towrite);
+			queue->buffer_len += towrite;
+			buffer += towrite;
+			size -= towrite;
+
+			if (queue->buffer_len != 16) {
+				return;
+			}
+
+			memcpy (&object, queue->buffer, sizeof (object));
+			memcpy (&cmd, queue->buffer + 4, sizeof (cmd));
+			memcpy (&cmdid, queue->buffer + 8, sizeof (cmdid));
+			memcpy (&length, queue->buffer + 12, sizeof (length));
+
+			object = g_ntohl (object);
+			cmd = g_ntohl (cmd);
+			cmdid = g_ntohl (cmdid);
+			length = g_ntohl (length);
+
+			msg = xmms_ipc_msg_new (object, cmd);
+			msg->cid = cmdid;
+			msg->data_length = length;
+			msg->data = g_realloc (msg->data, length);
+			msg->size = length;
+
+			queue->incomplete = msg;
+			queue->bytes_used = 0;
+			queue->buffer_len = 0;
+		}
+
+		if (queue->incomplete != NULL) {
+			xmms_ipc_msg_t *msg = queue->incomplete;
+			guint towrite = MIN(size, msg->data_length - queue->bytes_used);
+
+			memcpy (msg->data + queue->bytes_used, buffer, towrite);
+			queue->bytes_used += towrite;
+			buffer += towrite;
+			size -= towrite;
+
+			if (queue->bytes_used == msg->data_length) {
+				g_queue_push_tail (queue->queue, msg);
+				queue->incomplete = NULL;
+				queue->bytes_used = 0;
+			}
+		}
+
+		if (size > 0) {
+			guint towrite = MIN(size, 16 - queue->buffer_len);
+			memcpy (queue->buffer + queue->buffer_len, buffer, towrite);
+			queue->buffer_len += towrite;
+			buffer += towrite;
+			size -= towrite;
+		}
+	}
+}
+

@@ -179,7 +179,6 @@ gpointer
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 {
 	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail ((msg->data_length + len) < XMMS_IPC_MSG_MAX_SIZE, NULL);
 	
 	if ((msg->data_length + len) > msg->size) {
 		gint reallocsize = XMMS_IPC_MSG_DEFAULT_SIZE;
@@ -228,9 +227,6 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	if (!str)
 		return xmms_ipc_msg_put_uint32 (msg, 0);
 	
-	if ((msg->data_length + strlen (str) + 5) > XMMS_IPC_MSG_MAX_SIZE)
-		return NULL;
-
 	xmms_ipc_msg_put_uint32 (msg, strlen (str) + 1);
 
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
