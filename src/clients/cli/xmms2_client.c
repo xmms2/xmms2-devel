@@ -253,6 +253,8 @@ cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 		print_info ("%s = %s", l->data, xmmscs_configval_get (conn, l->data));
 		l = x_list_next (l);
 	}
+	
+	x_list_free (l);
 }
 
 
