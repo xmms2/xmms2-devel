@@ -1,7 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/util.h"
-#include "magic.h"
+#include "xmms/magic.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
