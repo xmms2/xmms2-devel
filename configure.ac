@@ -11,7 +11,7 @@ AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 
-XMMS_CFLAGS="-DPKGLIBDIR=\\\"\$(pkglibdir)\\\" -DSYSCONFDIR=\\\"\$(sysconfdir)\\\" -I\$(top_srcdir)/src -include config.h -Wall"
+XMMS_CFLAGS="-DPKGLIBDIR=\\\"\$(pkglibdir)\\\" -DSYSCONFDIR=\\\"\$(sysconfdir)\\\" -I\$(top_srcdir)/src -include \$(top_srcdir)/config.h -Wall"
 AC_SUBST(XMMS_CFLAGS)
 
 PLUGIN_LDFLAGS="-module -avoid-version -export -symbols-regex \"xmms_plugin_get\""
