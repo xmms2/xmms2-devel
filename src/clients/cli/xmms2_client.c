@@ -705,7 +705,6 @@ static void
 cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
-	xmmsc_result_t *res;
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
