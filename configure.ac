@@ -83,8 +83,9 @@ src/plugins/mad/Makefile
 src/plugins/vorbis/Makefile
 src/plugins/http/Makefile
 src/plugins/diskwrite/Makefile
-src/plugins/oss/Makefile
 src/plugins/sid/Makefile
+src/plugins/oss/Makefile
+src/plugins/alsa/Makefile
 src/plugins/tar/Makefile
 src/plugins/sqlite/Makefile
 src/plugins/m3u/Makefile
