@@ -42,6 +42,8 @@ typedef struct xmms_mad_data_St {
 	struct mad_frame frame;
 	struct mad_synth synth;
 
+	xmms_playlist_entry_t *entry;
+
 	gchar buffer[4096];
 	guint buffer_length;
 } xmms_mad_data_t;
@@ -72,7 +74,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, "can_handle", xmms_mad_can_handle);
 	xmms_plugin_method_add (plugin, "new", xmms_mad_new);
 	xmms_plugin_method_add (plugin, "decode_block", xmms_mad_decode_block);
-	xmms_plugin_method_add (plugin, "get_media_info", xmms_mad_get_media_info);
+	xmms_plugin_method_add (plugin, "get_mediainfo", xmms_mad_get_media_info);
 	xmms_plugin_method_add (plugin, "destroy", xmms_mad_destroy);
 
 	return plugin;
@@ -139,6 +141,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 		g_strstrip (entry->comment);
 
+		data->entry = entry;
 		xmms_decoder_set_mediainfo (decoder,entry);
 	}
 
@@ -170,6 +173,8 @@ xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 	mad_stream_init (&data->stream);
 	mad_frame_init (&data->frame);
 	mad_synth_init (&data->synth);
+
+	data->entry = NULL;
 
 	xmms_decoder_plugin_data_set (decoder, data);
 	
@@ -216,8 +221,19 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	mad_stream_buffer (&data->stream, data->buffer, data->buffer_length);
 		
 	for (;;) {
+		guint bitrate=0;
+
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
+		}
+
+		bitrate = data->frame.header.bitrate / 1000;
+		if (bitrate != data->entry->bitrate) {
+			if (data->entry) {
+				XMMS_DBG ("Bitrate changed to: %d", bitrate);
+				data->entry->bitrate = bitrate;
+				xmms_decoder_set_mediainfo (decoder,data->entry);
+			}
 		}
 		
 		mad_synth_frame (&data->synth, &data->frame);

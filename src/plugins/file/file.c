@@ -99,7 +99,6 @@ xmms_file_open (xmms_transport_t *transport, const gchar *uri)
 	xmms_transport_plugin_data_set (transport, data);
 
 	mime = xmms_magic_mime_from_file (uriptr);
-	g_return_val_if_fail (mime, FALSE);
 	xmms_transport_mime_type_set (transport, mime);
 	
 	return TRUE;

@@ -45,8 +45,9 @@ mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	
 	xmms_decoder_get_mediainfo (decoder, &entry);
 
-	XMMS_DBG ("Artist=%s, Album=%s, Title=%s, Year=%d, Tracknr=%d", entry.artist,entry.album,entry.title,entry.year,entry.tracknr);
-
+	fprintf (stdout, "--------\n");
+	fprintf (stdout, "Artist=%s\nAlbum=%s\nTitle=%s\nYear=%d\nTracknr=%d\nBitrate=%d\nComment=%s\n", entry.artist,entry.album,entry.title,entry.year,entry.tracknr,entry.bitrate,entry.comment);
+	fprintf (stdout, "--------\n");
 }
 
 void
@@ -65,8 +66,10 @@ play_next (void)
 	
 	transport = xmms_transport_open (entry->uri);
 
-	if (!transport)
+	if (!transport) {
 		play_next ();
+		return;
+	}
 	
 	mime = xmms_transport_mime_type_get (transport);
 	if (mime) {

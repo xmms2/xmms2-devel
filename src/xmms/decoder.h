@@ -38,7 +38,6 @@ typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder,
 typedef gboolean (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);
 
-typedef void (*xmms_decoder_get_media_info_method_t) (xmms_decoder_t *decoder);
 /*
  * Public function prototypes
  */

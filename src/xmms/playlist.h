@@ -41,6 +41,7 @@ typedef struct xmms_playlist_entry_St {
 	gchar genre[XMMS_PL_PROPERTY];
 	gint year;
 	gint tracknr;
+	guint bitrate;
 
 } xmms_playlist_entry_t;
 
