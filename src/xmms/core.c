@@ -330,7 +330,7 @@ xmms_core_get_uri ()
 gint
 xmms_core_get_id ()
 {
-	if (core->curr_song) 
+	if (core->curr_song && core->status != XMMS_CORE_PLAYBACK_STOPPED) 
 		return xmms_playlist_entry_id_get (core->curr_song);
 	return 0;
 }

@@ -139,10 +139,10 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	if (ptr) {
 		while (*ptr) {
 			gchar **s;
+			GError *err = NULL;
 
 			s = g_strsplit (*ptr, "=", 2);
 			if (s && s[0] && s[1]) {
-				XMMS_DBG ("Vorbis comment: %s=%s", s[0], g_locale_from_utf8 (s[1], -1, NULL, NULL, NULL));
 				xmms_playlist_entry_set_prop (entry, s[0], s[1]);
 			}
 

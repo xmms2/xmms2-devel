@@ -390,3 +390,25 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 
 	return tab;
 }
+
+static gboolean
+free_str (gpointer key, gpointer value, gpointer udata)
+{
+	if (key)
+		g_free (key);
+	if (value)
+		g_free (value);
+
+	return TRUE;
+}
+
+void
+xmmsc_playlist_entry_free (GHashTable *entry)
+{
+	g_return_if_fail (entry);
+
+	g_hash_table_foreach_remove (entry, free_str, NULL);
+
+	g_hash_table_destroy (entry);
+}
+

@@ -16,6 +16,27 @@ static GMainLoop *mainloop;
 gint duration;
 
 void
+print_mediainfo (xmmsc_connection_t *conn, gint id) 
+{
+	GHashTable *entry;
+
+	entry = xmmsc_playlist_get_mediainfo (conn, id);
+
+	if (!entry) {
+		printf ("id %d doesn't exist in playlist", id);
+		return;
+	}
+	
+	printf ("URI:    %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
+	printf ("Artist: %-30s ", (gchar *)g_hash_table_lookup (entry, "artist"));
+	printf ("Album: %-30s\n", (gchar *)g_hash_table_lookup (entry, "album"));
+	printf ("Title:  %-30s ", (gchar *)g_hash_table_lookup (entry, "title"));
+	printf ("Year: %s\n", (gchar *)g_hash_table_lookup (entry, "year"));
+
+	xmmsc_playlist_entry_free (entry);
+}
+
+void
 handle_playtime (void *userdata, void *arg) {
 	guint tme = GPOINTER_TO_UINT(arg);
 	printf ("played time: %02d:%02d of %02d:%02d\r",
@@ -34,14 +55,21 @@ handle_mediainfo (void *userdata, void *arg) {
 	gchar *d;
 
 	entry = xmmsc_playlist_get_mediainfo (conn, id);
+
+	if (!entry)
+		return;
+
 	d = (gchar *)g_hash_table_lookup (entry, "duration");
 
 	if (d) 
 		duration = atoi (d);
 	else
 		duration = 0;
+
+	xmmsc_playlist_entry_free (entry);
 	
-	printf ("Playing %s\n", (gchar *)g_hash_table_lookup (entry, "uri"));
+	printf ("\n");
+	print_mediainfo (conn, id);
 	fflush (stdout);
 }
 
@@ -60,16 +88,18 @@ status_main(xmmsc_connection_t *conn)
 		GHashTable *entry;
 		gchar *d;
 		entry = xmmsc_playlist_get_mediainfo (conn, id);
-		printf ("Playing %s\n",
-				(gchar *)g_hash_table_lookup (entry, "uri"));
-
 		d = (gchar *)g_hash_table_lookup (entry, "duration");
 		if (d) {
 			duration = atoi (d);
 		} else {
 			duration = 0;
 		}
+		xmmsc_playlist_entry_free (entry);
 
+		print_mediainfo (conn, id);
+
+	} else {
+		printf ("No playback...\n");
 	}
 
 	xmmsc_glib_setup_mainloop (conn, NULL);
@@ -77,6 +107,7 @@ status_main(xmmsc_connection_t *conn)
 	return 0;
 
 }
+
 
 #define streq(a,b) (strcmp(a,b)==0)
 
@@ -179,26 +210,13 @@ main(int argc, char **argv)
 			exit(0);
 		} else if ( streq (argv[1], "info") ) {
 			gint id;
-			GHashTable *entry;
 
 			if (argc < 3)
 				id = xmmsc_get_playing_id (c);
 			else
 				id = atoi (argv[2]);
 
-			entry = xmmsc_playlist_get_mediainfo (c, id);
-
-			if (!entry) {
-				printf ("id %d doesn't exist in playlist", id);
-				xmmsc_deinit (c);
-				exit (1);
-			}
-			
-			printf ("URI:    %s\n", g_hash_table_lookup (entry, "uri"));
-			printf ("Artist: %-30s ", g_hash_table_lookup (entry, "artist"));
-			printf ("Album: %-30s\n", g_hash_table_lookup (entry, "album"));
-			printf ("Title:  %-30s ", g_hash_table_lookup (entry, "title"));
-			printf ("Year: %s\n", g_hash_table_lookup (entry, "year"));
+			print_mediainfo (c, id);
 
 			xmmsc_deinit (c);
 
