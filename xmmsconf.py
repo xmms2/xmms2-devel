@@ -61,6 +61,7 @@ def checkFlags(base_env):
 	base_env.CheckLibAndAddFlagsToGroup("samba","libsmbclient","smbc_init")
 	base_env.CheckAndAddFlagsToGroup("jack", "pkg-config --libs --cflags jack")
 	base_env.CheckAndAddFlagsToGroup("modplug", "pkg-config --libs --cflags libmodplug")
+	base_env.CheckAndAddFlagsToGroup("gnomevfs", "pkg-config --libs --cflags gnome-vfs-2.0")
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
