@@ -11,7 +11,7 @@
 
 #include "playlist.h"
 #include "util.h"
-#include "dbus_xmms.h"
+#include "signal_xmms.h"
 
 
 /*
@@ -106,7 +106,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_SHUFFLE;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 	g_cond_signal (playlist->cond);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -140,7 +140,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_REMOVE;
 	chmsg->id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 	g_cond_signal (playlist->cond);
 	
 	XMMS_PLAYLIST_UNLOCK (playlist);
@@ -213,7 +213,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 	chmsg->type = XMMS_PLAYLIST_CHANGED_MOVE;
 	chmsg->id = id;
 	chmsg->arg = GINT_TO_POINTER (steps);
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 	g_cond_signal (playlist->cond);
 
@@ -280,7 +280,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	chmsg->type = XMMS_PLAYLIST_CHANGED_ADD;
 	chmsg->id = file->id;
 	chmsg->arg = GINT_TO_POINTER (options);
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 	g_cond_signal (playlist->cond);
 
@@ -344,7 +344,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist)
 
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_CLEAR;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 
 
 }
@@ -458,7 +458,7 @@ xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id)
 	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);
 	chmsg->type = XMMS_PLAYLIST_CHANGED_SET_POS;
 	chmsg->id = id;
-	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, chmsg);
+	xmms_object_emit (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED, chmsg);
 	
 	g_cond_signal (playlist->cond);
 

@@ -10,7 +10,7 @@
 #include "object.h"
 #include "util.h"
 #include "ringbuf.h"
-#include "dbus_xmms.h"
+#include "signal_xmms.h"
 
 #include <glib.h>
 #include <string.h>
@@ -115,7 +115,7 @@ xmms_transport_mime_type_set (xmms_transport_t *transport, const gchar *mimetype
 
 	xmms_transport_unlock (transport);
 	
-	xmms_object_emit (XMMS_OBJECT (transport), XMMS_DBUS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
+	xmms_object_emit (XMMS_OBJECT (transport), XMMS_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
 }
 
 /**

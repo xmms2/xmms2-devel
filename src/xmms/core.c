@@ -14,7 +14,7 @@
 #include "unixsignal.h"
 #include "util.h"
 #include "core.h"
-#include "dbus_xmms.h"
+#include "signal_xmms.h"
 
 #include <glib.h>
 #include <stdlib.h>
@@ -43,7 +43,7 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 
 	xmms_playlist_entry_free (entry);
 
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID, NULL);
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, NULL);
 
 }
 
@@ -65,7 +65,7 @@ xmms_core_output_set (xmms_output_t *output)
 {
 	g_return_if_fail (core->output==NULL);
 	core->output = output;
-	xmms_object_connect (XMMS_OBJECT (output), XMMS_DBUS_SIGNAL_OUTPUT_EOS_REACHED, eos_reached, NULL);
+	xmms_object_connect (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, eos_reached, NULL);
 }
 
 /**
@@ -115,7 +115,7 @@ xmms_core_playback_stop ()
 {
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		core->status = XMMS_CORE_PLAYBACK_STOPPED;
-		xmms_object_emit (XMMS_OBJECT (core), XMMS_DBUS_SIGNAL_PLAYBACK_STOP, NULL);
+		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_STOP, NULL);
 		g_cond_signal (core->cond);
 	} else {
 		XMMS_DBG ("xmms_core_playback_stop with status != XMMS_CORE_PLAYBACK_RUNNING");
@@ -192,7 +192,7 @@ void
 xmms_core_information (gint loglevel, gchar *information)
 {
 	if (loglevel > XMMS_LOG_DEBUG)
-		xmms_object_emit (XMMS_OBJECT (core), XMMS_DBUS_SIGNAL_CORE_INFORMATION, information);
+		xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_CORE_INFORMATION, information);
 }
 
 /**
@@ -277,7 +277,7 @@ core_thread(gpointer data){
 			continue;
 		}
 
-		xmms_object_connect (XMMS_OBJECT (decoder), XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID,
+		xmms_object_connect (XMMS_OBJECT (decoder), XMMS_SIGNAL_PLAYBACK_CURRENTID,
 				     handle_mediainfo_changed, NULL);
 
 		XMMS_DBG ("starting threads..");
@@ -320,7 +320,7 @@ void
 xmms_core_set_mediainfo (xmms_playlist_entry_t *entry)
 {
 	xmms_playlist_entry_copy_property (entry, core->curr_song);
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID, core);
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, core);
 }
 
 /**
@@ -350,7 +350,7 @@ handle_playlist_changed (xmms_object_t *object, gconstpointer data, gpointer use
 			break;
 	}
 
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED, data);
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYLIST_CHANGED, data);
 }
 
 
@@ -359,7 +359,7 @@ xmms_core_set_playlist (xmms_playlist_t *playlist)
 {
 	core->playlist = playlist;
 	
-	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED,
+	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_SIGNAL_PLAYLIST_CHANGED,
 			     handle_playlist_changed, NULL);
 }
 
@@ -437,5 +437,5 @@ xmms_core_playlist_entry_mediainfo (guint id)
 void
 xmms_core_playtime_set (guint time)
 {
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME, GUINT_TO_POINTER (time) );
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_PLAYTIME, GUINT_TO_POINTER (time) );
 }

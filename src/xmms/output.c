@@ -7,7 +7,7 @@
 #include "config_xmms.h"
 #include "plugin.h"
 #include "plugin_int.h"
-#include "dbus_xmms.h"
+#include "signal_xmms.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)
@@ -270,7 +270,7 @@ xmms_output_thread (gpointer data)
 			GTimeVal time;
 
 			xmms_output_unlock (output);
-			xmms_object_emit (XMMS_OBJECT (output), XMMS_DBUS_SIGNAL_OUTPUT_EOS_REACHED, NULL);
+			xmms_object_emit (XMMS_OBJECT (output), XMMS_SIGNAL_OUTPUT_EOS_REACHED, NULL);
 			xmms_output_lock (output);
 			output->played = 0;
 			

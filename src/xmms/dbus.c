@@ -16,7 +16,7 @@
 #include "util.h"
 #include "playlist.h"
 #include "core.h"
-#include "dbus_xmms.h"
+#include "signal_xmms.h"
 
 #include <string.h>
 
@@ -30,30 +30,30 @@ static GSList *connections = NULL;
 
 /** Ids in signal mask */
 typedef enum {
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PLAY = 1 << 0,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_STOP = 1 << 1,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PAUSE = 1 << 2,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_NEXT = 1 << 3,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PREV = 1 << 4,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_SEEK = 1 << 5,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_CURRENTID = 1 << 6,
-	XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PLAYTIME = 1 << 7,
+	XMMS_SIGNAL_MASK_PLAYBACK_PLAY = 1 << 0,
+	XMMS_SIGNAL_MASK_PLAYBACK_STOP = 1 << 1,
+	XMMS_SIGNAL_MASK_PLAYBACK_PAUSE = 1 << 2,
+	XMMS_SIGNAL_MASK_PLAYBACK_NEXT = 1 << 3,
+	XMMS_SIGNAL_MASK_PLAYBACK_PREV = 1 << 4,
+	XMMS_SIGNAL_MASK_PLAYBACK_SEEK = 1 << 5,
+	XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID = 1 << 6,
+	XMMS_SIGNAL_MASK_PLAYBACK_PLAYTIME = 1 << 7,
 
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_ADD = 1 << 8,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_REMOVE = 1 << 9,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_LIST = 1 << 10,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_SHUFFLE = 1 << 11,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_CLEAR = 1 << 12,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_JUMP = 1 << 13,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_MEDIAINFO = 1 << 14,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_MOVE = 1 << 15,
-	XMMS_DBUS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 16,
+	XMMS_SIGNAL_MASK_PLAYLIST_ADD = 1 << 8,
+	XMMS_SIGNAL_MASK_PLAYLIST_REMOVE = 1 << 9,
+	XMMS_SIGNAL_MASK_PLAYLIST_LIST = 1 << 10,
+	XMMS_SIGNAL_MASK_PLAYLIST_SHUFFLE = 1 << 11,
+	XMMS_SIGNAL_MASK_PLAYLIST_CLEAR = 1 << 12,
+	XMMS_SIGNAL_MASK_PLAYLIST_JUMP = 1 << 13,
+	XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO = 1 << 14,
+	XMMS_SIGNAL_MASK_PLAYLIST_MOVE = 1 << 15,
+	XMMS_SIGNAL_MASK_PLAYLIST_CHANGED = 1 << 16,
 
-	XMMS_DBUS_SIGNAL_MASK_CORE_QUIT = 1 << 17,
-	XMMS_DBUS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 18,
-	XMMS_DBUS_SIGNAL_MASK_CORE_INFORMATION = 1 << 19,
-	XMMS_DBUS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 20,
-	XMMS_DBUS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 21,
+	XMMS_SIGNAL_MASK_CORE_QUIT = 1 << 17,
+	XMMS_SIGNAL_MASK_CORE_DISCONNECT = 1 << 18,
+	XMMS_SIGNAL_MASK_CORE_INFORMATION = 1 << 19,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER = 1 << 20,
+	XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER = 1 << 21,
 } xmms_dbus_signal_mask_t;
 
 
@@ -114,71 +114,71 @@ typedef struct xmms_dbus_signal_mask_map_St {
 } xmms_dbus_signal_mask_map_t;
 
 static xmms_dbus_signal_mask_map_t mask_map [] = {
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PLAY, 
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PLAY, 
+	{ XMMS_SIGNAL_PLAYBACK_PLAY, 
+		XMMS_SIGNAL_MASK_PLAYBACK_PLAY, 
 		NULL, NULL, handle_playback_play, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_STOP, 
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_STOP, 
+	{ XMMS_SIGNAL_PLAYBACK_STOP, 
+		XMMS_SIGNAL_MASK_PLAYBACK_STOP, 
 		send_playback_stop, NULL, handle_playback_stop, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PAUSE, 
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PAUSE, 
+	{ XMMS_SIGNAL_PLAYBACK_PAUSE, 
+		XMMS_SIGNAL_MASK_PLAYBACK_PAUSE, 
 		NULL, NULL, handle_playback_pause, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_NEXT,
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_NEXT, 
+	{ XMMS_SIGNAL_PLAYBACK_NEXT,
+		XMMS_SIGNAL_MASK_PLAYBACK_NEXT, 
 		NULL, NULL, handle_playback_next, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PREV, 
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PREV, 
+	{ XMMS_SIGNAL_PLAYBACK_PREV, 
+		XMMS_SIGNAL_MASK_PLAYBACK_PREV, 
 		NULL, NULL, handle_playback_prev, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_SEEK, 
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_SEEK, 
+	{ XMMS_SIGNAL_PLAYBACK_SEEK, 
+		XMMS_SIGNAL_MASK_PLAYBACK_SEEK, 
 		NULL, handle_playback_seek, NULL,  NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID,
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_CURRENTID, 
+	{ XMMS_SIGNAL_PLAYBACK_CURRENTID,
+		XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID, 
 		send_playback_currentid, handle_playback_currentid, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME,
-		XMMS_DBUS_SIGNAL_MASK_PLAYBACK_PLAYTIME, 
+	{ XMMS_SIGNAL_PLAYBACK_PLAYTIME,
+		XMMS_SIGNAL_MASK_PLAYBACK_PLAYTIME, 
 		send_playback_playtime, NULL, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_ADD,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_ADD, 
+	{ XMMS_SIGNAL_PLAYLIST_ADD,
+		XMMS_SIGNAL_MASK_PLAYLIST_ADD, 
 		NULL, handle_playlist_add, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_REMOVE, 
+	{ XMMS_SIGNAL_PLAYLIST_REMOVE,
+		XMMS_SIGNAL_MASK_PLAYLIST_REMOVE, 
 		NULL, NULL, NULL, handle_playlist_remove },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_LIST,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_LIST, 
+	{ XMMS_SIGNAL_PLAYLIST_LIST,
+		XMMS_SIGNAL_MASK_PLAYLIST_LIST, 
 		NULL, handle_playlist_list, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_SHUFFLE, 
+	{ XMMS_SIGNAL_PLAYLIST_SHUFFLE,
+		XMMS_SIGNAL_MASK_PLAYLIST_SHUFFLE, 
 		NULL, NULL, handle_playlist_shuffle, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_CLEAR, 
+	{ XMMS_SIGNAL_PLAYLIST_CLEAR,
+		XMMS_SIGNAL_MASK_PLAYLIST_CLEAR, 
 		NULL, NULL, handle_playlist_clear, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_JUMP,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_JUMP, 
+	{ XMMS_SIGNAL_PLAYLIST_JUMP,
+		XMMS_SIGNAL_MASK_PLAYLIST_JUMP, 
 		NULL, NULL, NULL, handle_playlist_jump },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_MEDIAINFO, 
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_MEDIAINFO, 
+	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO, 
+		XMMS_SIGNAL_MASK_PLAYLIST_MEDIAINFO, 
 		NULL, handle_playlist_mediainfo, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_MOVE,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_MOVE, 
+	{ XMMS_SIGNAL_PLAYLIST_MOVE,
+		XMMS_SIGNAL_MASK_PLAYLIST_MOVE, 
 		NULL, handle_playlist_move, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_PLAYLIST_CHANGED,
-		XMMS_DBUS_SIGNAL_MASK_PLAYLIST_CHANGED, 
+	{ XMMS_SIGNAL_PLAYLIST_CHANGED,
+		XMMS_SIGNAL_MASK_PLAYLIST_CHANGED, 
 		send_playlist_changed, NULL, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_QUIT,
-		XMMS_DBUS_SIGNAL_MASK_CORE_QUIT, 
+	{ XMMS_SIGNAL_CORE_QUIT,
+		XMMS_SIGNAL_MASK_CORE_QUIT, 
 		NULL, NULL, handle_core_quit, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_DISCONNECT,
-		XMMS_DBUS_SIGNAL_MASK_CORE_DISCONNECT, 
+	{ XMMS_SIGNAL_CORE_DISCONNECT,
+		XMMS_SIGNAL_MASK_CORE_DISCONNECT, 
 		NULL, handle_core_disconnect, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_INFORMATION, 
-		XMMS_DBUS_SIGNAL_MASK_CORE_INFORMATION, 
+	{ XMMS_SIGNAL_CORE_INFORMATION, 
+		XMMS_SIGNAL_MASK_CORE_INFORMATION, 
 		send_core_information, NULL, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_SIGNAL_REGISTER,
-		XMMS_DBUS_SIGNAL_MASK_CORE_SIGNAL_REGISTER, 
+	{ XMMS_SIGNAL_CORE_SIGNAL_REGISTER,
+		XMMS_SIGNAL_MASK_CORE_SIGNAL_REGISTER, 
 		NULL, handle_core_signal_register, NULL, NULL },
-	{ XMMS_DBUS_SIGNAL_CORE_SIGNAL_UNREGISTER,
-		XMMS_DBUS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER, 
+	{ XMMS_SIGNAL_CORE_SIGNAL_UNREGISTER,
+		XMMS_SIGNAL_MASK_CORE_SIGNAL_UNREGISTER, 
 		NULL, handle_core_signal_unregister, NULL, NULL }
 };
 
@@ -268,29 +268,29 @@ send_playlist_changed (xmms_object_t *object,
                                                                                                     
         switch (chmsg->type) {
                 case XMMS_PLAYLIST_CHANGED_ADD:
-                        msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_ADD, NULL);
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_ADD, NULL);
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
                         break;
                 case XMMS_PLAYLIST_CHANGED_SHUFFLE:
-                        msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_SHUFFLE, NULL);
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SHUFFLE, NULL);
                         break;
                 case XMMS_PLAYLIST_CHANGED_CLEAR:
-                        msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_CLEAR, NULL);
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_CLEAR, NULL);
                         break;
                 case XMMS_PLAYLIST_CHANGED_REMOVE:
-                        msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_REMOVE, NULL);
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_REMOVE, NULL);
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         break;
                 case XMMS_PLAYLIST_CHANGED_SET_POS:
-                        msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_JUMP, NULL);
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_JUMP, NULL);
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         break;
                 case XMMS_PLAYLIST_CHANGED_MOVE:
-                        msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYLIST_MOVE, NULL);
+                        msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MOVE, NULL);
                         dbus_message_append_iter_init (msg, &itr);
                         dbus_message_iter_append_uint32 (&itr, chmsg->id);
                         dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_INT (chmsg->arg));
@@ -321,7 +321,7 @@ send_playback_stop (xmms_object_t *object,
         if (connections) {
                 DBusMessage *msg;
                                                                                                     
-                msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYBACK_STOP, NULL);
+                msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_STOP, NULL);
                 g_slist_foreach (connections, do_send, msg);
                 dbus_message_unref (msg);
         }
@@ -342,7 +342,7 @@ send_playback_playtime (xmms_object_t *object,
                 DBusMessage *msg;
                 DBusMessageIter itr;
                                                                                                     
-                msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYBACK_PLAYTIME, NULL);
+                msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_PLAYTIME, NULL);
                 dbus_message_append_iter_init (msg, &itr);
                 dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT(data));
                 g_slist_foreach (connections, do_send, msg);
@@ -365,7 +365,7 @@ send_playback_currentid (xmms_object_t *object,
                 DBusMessage *msg;
                 DBusMessageIter itr;
                                                                                                     
-                msg = dbus_message_new (XMMS_DBUS_SIGNAL_PLAYBACK_CURRENTID, NULL);
+                msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_CURRENTID, NULL);
                 dbus_message_append_iter_init (msg, &itr);
                 dbus_message_iter_append_uint32 (&itr, xmms_core_get_id ());
                 g_slist_foreach (connections, do_send, msg);
@@ -387,7 +387,7 @@ send_core_information (xmms_object_t *object,
                 DBusMessage *msg;
                 DBusMessageIter itr;
  
-                msg = dbus_message_new (XMMS_DBUS_SIGNAL_CORE_INFORMATION, NULL);
+                msg = dbus_message_new (XMMS_SIGNAL_CORE_INFORMATION, NULL);
                 dbus_message_append_iter_init (msg, &itr);
                 dbus_message_iter_append_string (&itr, (gchar *)data);
                 g_slist_foreach (connections, do_send, msg);
