@@ -49,7 +49,6 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_METHOD_CALC_SKIP "calc_skip"
 #define XMMS_PLUGIN_METHOD_ADD_ENTRY "add_entry"
 #define XMMS_PLUGIN_METHOD_INIT "init"
-#define XMMS_PLUGIN_METHOD_DEINIT "deinit"
 #define XMMS_PLUGIN_METHOD_READ_PLAYLIST "read_playlist"
 #define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST "write_playlist"
 #define XMMS_PLUGIN_METHOD_PROCESS "process"

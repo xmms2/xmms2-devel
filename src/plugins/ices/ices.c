@@ -58,8 +58,8 @@ typedef struct xmms_ices_data_St {
 	GThread *thread;
 } xmms_ices_data_t;
 
-static void xmms_ices_init (xmms_effect_t *effect, xmms_output_t *output);
-static void xmms_ices_deinit (xmms_effect_t *effect);
+static void xmms_ices_new (xmms_effect_t *effect, xmms_output_t *output);
+static void xmms_ices_destroy (xmms_effect_t *effect);
 static void xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate);
 static void xmms_ices_process (xmms_effect_t *effect, gchar *buf, guint len);
 static void on_playlist_entry_changed (xmms_output_t *output,
@@ -80,8 +80,8 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_ices_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DEINIT, xmms_ices_deinit);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_ices_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ices_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ices_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_ices_process);
 
@@ -182,7 +182,7 @@ xmms_ices_thread (xmms_effect_t *effect)
 }
 
 static void
-xmms_ices_init (xmms_effect_t *effect, xmms_output_t *output)
+xmms_ices_new (xmms_effect_t *effect, xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
 	xmms_plugin_t *plugin = xmms_effect_plugin_get (effect);
@@ -251,7 +251,7 @@ xmms_ices_init (xmms_effect_t *effect, xmms_output_t *output)
 }
 
 static void
-xmms_ices_deinit (xmms_effect_t *effect)
+xmms_ices_destroy (xmms_effect_t *effect)
 {
 	xmms_ices_data_t *data;
 

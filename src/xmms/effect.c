@@ -40,7 +40,7 @@
   */
 
 struct xmms_effect_St {
-	void (*deinit) (xmms_effect_t *);
+	void (*destroy) (xmms_effect_t *);
 	void (*samplerate_change) (xmms_effect_t *, guint rate);
 	void (*run) (xmms_effect_t *, gchar *buf, guint len);
 
@@ -126,7 +126,7 @@ on_enabled_changed (xmms_object_t *object, gconstpointer value,
 xmms_effect_t *
 xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 {
-	void (*initfunc) (xmms_effect_t *, xmms_output_t *);
+	void (*newfunc) (xmms_effect_t *, xmms_output_t *);
 	xmms_effect_t *effect;
 
 	g_return_val_if_fail (plugin, NULL);
@@ -138,15 +138,15 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 	effect->plugin = plugin;
 	xmms_object_ref (effect->plugin);
 
-	initfunc = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
-	if (!initfunc) {
+	newfunc = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+	if (!newfunc) {
 		xmms_object_unref (effect->plugin);
 		g_free (effect);
 
 		return NULL;
 	}
 
-	initfunc (effect, output);
+	newfunc (effect, output);
 
 	effect->samplerate_change = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
@@ -154,8 +154,8 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 	effect->run = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_PROCESS);
 
-	effect->deinit = xmms_plugin_method_get (plugin,
-			XMMS_PLUGIN_METHOD_DEINIT);
+	effect->destroy = xmms_plugin_method_get (plugin,
+			XMMS_PLUGIN_METHOD_DESTROY);
 
 	/* check whether this plugin is enabled.
 	 * if the plugin doesn't provide the "enabled" config key,
@@ -181,8 +181,8 @@ xmms_effect_free (xmms_effect_t *effect)
 	if (!effect)
 		return;
 
-	if (effect->deinit) {
-		effect->deinit (effect);
+	if (effect->destroy) {
+		effect->destroy (effect);
 	}
 
 	xmms_object_unref (effect->plugin);
