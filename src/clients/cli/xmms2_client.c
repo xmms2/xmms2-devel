@@ -36,6 +36,32 @@ typedef struct {
  * Utils
  */
 
+static char *
+format_url (char *item)
+{
+	char url[4096], rpath[PATH_MAX], *encoded, *p;
+
+	p = strchr (item, ':');
+	if (!(p && p[1] == '/' && p[2] == '/')) {
+		/* OK, so this is NOT an valid URL */
+
+		if (!realpath (item, rpath))
+			return NULL;
+
+		if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR))
+			return NULL;
+
+		g_snprintf (url, 4096, "file://%s", rpath);
+	} else {
+		g_snprintf (url, 4096, "%s", item);
+	}
+
+	encoded = xmmsc_encode_path (url);
+
+	return encoded;
+}
+
+
 void
 print_error (const char *fmt, ...)
 {
@@ -82,10 +108,21 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 		print_info ("select [\"artist=Dismantled and tracknr=1\"]");
 		print_info ("selectadd [\"artist=Dismantled and tracknr=1\"]");
 		print_info ("query [\"raw sql statment\"]");
+		print_info ("save_playlist [\"playlistname\"]");
+		print_info ("load_playlist [\"playlistname\"]");
+		print_info ("add [url]");
 		return;
 	}
 
-	if (g_strcasecmp (argv[2], "selectadd") == 0) {
+	if (g_strcasecmp (argv[2], "add") == 0) {
+		xmmsc_result_t *res;
+		char *url = format_url (argv[3]);
+		if (!url) return;
+		res = xmmsc_medialib_add_entry (conn, url);
+		free (url);
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
+	} else if (g_strcasecmp (argv[2], "selectadd") == 0) {
 		xmmsc_result_t *res;
 		char query[1024];
 
@@ -186,33 +223,21 @@ static void
 add_item_to_playlist (xmmsc_connection_t *conn, char *item)
 {
 	xmmsc_result_t *res;
-	char url[4096], rpath[PATH_MAX], *encoded, *p;
+	char *url;
 
-	p = strchr (item, ':');
-	if (!(p && p[1] == '/' && p[2] == '/')) {
-		/* OK, so this is NOT an valid URL */
+	url = format_url (item);
+	if (!url) return;
 
-		if (!realpath (item, rpath))
-			return;
-
-		if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR))
-			return;
-
-		g_snprintf (url, 4096, "file://%s", rpath);
-	} else {
-		g_snprintf (url, 4096, "%s", item);
-	}
-
-	encoded = xmmsc_encode_path (url);
-	res = xmmsc_playlist_add (conn, encoded);
-	g_free (encoded);
+	res = xmmsc_playlist_add (conn, url);
+	g_free (url);
 
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		printf ("something went wrong when adding it to the playlist\n");
 		exit (-1);
 	}
-	print_info ("Adding %s", url);
+
+	print_info ("Adding %s", item);
 	xmmsc_result_unref (res);
 }
 

@@ -761,6 +761,14 @@ xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *er
 	}
 }
 
+/** returns pointer to mediainfo thread. */
+xmms_mediainfo_thread_t *
+xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist)
+{
+	g_return_val_if_fail (playlist, NULL);
+	return playlist->mediainfothr;
+}
+
 
 /** initializes a new xmms_playlist_t.
   */

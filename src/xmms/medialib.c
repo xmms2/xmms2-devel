@@ -73,6 +73,8 @@ static xmms_medialib_t *medialib;
   
 static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
 XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
+void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
+XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
 
 static void xmms_medialib_playlist_save_current (xmms_medialib_t *, gchar *, xmms_error_t *);
 XMMS_CMD_DEFINE (playlist_save_current, xmms_medialib_playlist_save_current, xmms_medialib_t *, NONE, STRING, NONE);
@@ -120,6 +122,10 @@ xmms_medialib_init ()
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
 				XMMS_IPC_CMD_SELECT, 
 				XMMS_CMD_FUNC (select));
+
+	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
+				XMMS_IPC_CMD_ADD, 
+				XMMS_CMD_FUNC (mlib_add));
 
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT,
@@ -333,6 +339,23 @@ static GList *
 xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
 {
 	return xmms_medialib_select (query, error);
+}
+
+void
+xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
+{
+	xmms_playlist_entry_t *entry;
+	xmms_mediainfo_thread_t *mt;
+
+	g_return_if_fail (medialib);
+	g_return_if_fail (url);
+
+	XMMS_DBG ("adding %s to the mediainfo db!", url);
+
+	entry = xmms_playlist_entry_new (url);
+
+	mt = xmms_playlist_mediainfo_thread_get (medialib->playlist);
+	xmms_mediainfo_entry_add (mt, entry);
 }
 
 static int

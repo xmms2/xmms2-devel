@@ -23,6 +23,7 @@
 
 #include "xmms/plugin.h"
 #include "xmms/playlist.h"
+#include "xmms/output.h"
 #include <glib.h>
 
 /*

@@ -66,6 +66,7 @@ typedef struct xmms_playlist_changed_msg_St {
 
 #include "xmms/playlist_entry.h"
 #include "xmms/decoder.h"
+#include "xmms/mediainfo.h"
 #include "xmms/error.h"
 
 /*
@@ -95,6 +96,7 @@ void xmms_playlist_wait (xmms_playlist_t *playlist);
 GList *xmms_playlist_stats (xmms_playlist_t *playlist, GList *list);
 
 xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
+xmms_mediainfo_thread_t *xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist);
 
 /*
  * Entry modifications

@@ -111,6 +111,19 @@ xmms_mediainfo_thread_stop (xmms_mediainfo_thread_t *mit)
 	g_queue_free (mit->queue);
 }
 
+void
+xmms_mediainfo_entry_add (xmms_mediainfo_thread_t *mt, xmms_playlist_entry_t *entry)
+{
+	g_return_if_fail (mt);
+	g_return_if_fail (entry);
+
+	g_mutex_lock (mt->mutex);
+	xmms_object_ref (XMMS_OBJECT (entry));
+	g_queue_push_tail (mt->queue, entry);
+	g_cond_signal (mt->cond);
+	g_mutex_unlock (mt->mutex);
+}
+
 /** @} */
 
 static void
@@ -121,13 +134,16 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
 
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
-		g_mutex_lock (mit->mutex);
+		xmms_playlist_entry_t *entry;
 
-		g_queue_push_tail (mit->queue, GUINT_TO_POINTER (chmsg->id));
+		entry = xmms_playlist_get_byid (mit->playlist, chmsg->id);
+		if (!entry)
+			return;
 
-		g_cond_signal (mit->cond);
+		xmms_mediainfo_entry_add (mit, entry);
 
-		g_mutex_unlock (mit->mutex);
+		xmms_object_unref (XMMS_OBJECT (entry));
+		
 	}
 }
 
@@ -140,15 +156,12 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 	while (mtt->running) {
 		xmms_playlist_entry_t *entry;
-		guint id;
-		
 
 		XMMS_DBG ("MediainfoThread is idle.");
 		g_cond_wait (mtt->cond, mtt->mutex);
-
 		XMMS_DBG ("MediainfoThread is awake!");
 
-		while ((id = GPOINTER_TO_UINT (g_queue_pop_head (mtt->queue)))) {
+		while ((entry = g_queue_pop_head (mtt->queue))) {
 			xmms_transport_t *transport;
 			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
@@ -159,8 +172,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_error_reset (&err);
 
 			g_mutex_unlock (mtt->mutex);
-
-			entry = xmms_playlist_get_byid (mtt->playlist, id);
 
 			/* Check if this is in the medialib first.*/
 			if (xmms_medialib_entry_get (entry)) {
@@ -203,8 +214,16 @@ xmms_mediainfo_thread_thread (gpointer data)
 			plsplugin = xmms_playlist_plugin_new (mime);
 			if (plsplugin) {
 
+				/** @todo. playlist_plugin_read should return a list
+				  of entries. Then we could submit them to the 
+				  mediainfo thread again. now we cant...
+				 */
+				if (!xmms_playlist_entry_id_get (entry))
+					goto cont;
+
 				/* This is a playlist file... */
 				XMMS_DBG ("Playlist!!");
+				
 				xmms_playlist_plugin_read (plsplugin, mtt->playlist, transport);
 
 				/* we don't want it in the playlist. */
@@ -233,7 +252,6 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
-				
 
 cont:
 			xmms_object_unref (entry);

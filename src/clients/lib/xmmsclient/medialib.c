@@ -57,6 +57,12 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 }
 
 xmmsc_result_t *
+xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_ADD, url);
+}
+
+xmmsc_result_t *
 xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
                                       const char *name)
 {
