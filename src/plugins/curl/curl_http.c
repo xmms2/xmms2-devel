@@ -85,6 +85,8 @@ xmms_plugin_get (void)
 
 	xmms_plugin_config_value_register (plugin, "shoutcastinfo", "1", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
+
 	return plugin;
 }
 
@@ -117,9 +119,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
 	xmms_config_value_t *val;
-	gint bufsize, metaint;
-
-	XMMS_DBG ("xmms_curl_init ()");
+	gint bufsize, metaint, verbose;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -131,6 +131,10 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
 	metaint = xmms_config_value_int_get (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport),
+	                                 "verbose");
+	verbose = xmms_config_value_int_get (val);
 
 	data->ringbuf = xmms_ringbuf_new (bufsize);
 	data->mutex = g_mutex_new ();
@@ -164,7 +168,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	}
 
 	/* For some debugging output set this to 1 */
-	curl_easy_setopt (data->curl_easy, CURLOPT_VERBOSE, 0);
+	curl_easy_setopt (data->curl_easy, CURLOPT_VERBOSE, verbose);
 
 	/* Set up multi handle */
 
@@ -330,8 +334,6 @@ xmms_curl_close (xmms_transport_t *transport)
 {
 	xmms_curl_data_t *data;
 
-	XMMS_DBG ("xmms_curl_close ()");
-
 	g_return_if_fail (transport);
 
 	data = xmms_transport_private_data_get (transport);
@@ -342,8 +344,6 @@ xmms_curl_close (xmms_transport_t *transport)
 	g_mutex_lock (data->mutex);
 	xmms_ringbuf_clear (data->ringbuf);
 	g_mutex_unlock (data->mutex);
-
-	XMMS_DBG ("Ringbuffer cleared");
 
 	XMMS_DBG ("Waiting for thread...");
 	g_thread_join (data->thread);
@@ -356,8 +356,6 @@ xmms_curl_close (xmms_transport_t *transport)
 
 	xmms_ringbuf_clear (data->ringbuf);
 	xmms_ringbuf_destroy (data->ringbuf);
-
-	XMMS_DBG ("Ringbuffer destroyed");
 
 	g_mutex_free (data->mutex);
 
@@ -393,8 +391,6 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 	ret = xmms_ringbuf_write (data->ringbuf, ptr, size * nmemb);
 	g_mutex_unlock (data->mutex);
 
-	//XMMS_DBG ("xmms_curl_callback_write (%u), returning %u", size * nmemb, ret);
-
 	return ret;
 }
 
@@ -408,8 +404,6 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	gchar *header;
 	gchar *tmp;
 	gint r,w;
-
-	XMMS_DBG ("xmms_curl_callback_header ()");
 
 	g_return_val_if_fail (transport, -1);
 
@@ -449,10 +443,6 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		g_free (tmp);
 	}
 
-	else {
-		XMMS_DBG ("Unknown header: %s", header);
-	}
-
 	xmms_transport_entry_mediainfo_set (transport, data->pl_entry);
 
 	g_free (header);
@@ -469,8 +459,6 @@ xmms_curl_thread (xmms_transport_t *transport)
 {
 	xmms_curl_data_t *data;
 	struct timeval timeout;
-
-	XMMS_DBG ("xmms_curl_thread ()");
 
 	g_return_if_fail (transport);
 
