@@ -196,6 +196,23 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
 
 }
 
+xmmsc_result_t *
+xmmsc_playlist_changed (xmmsc_connection_t *c)
+{
+	DBusMessage *msg;
+	DBusMessageIter itr;
+	xmmsc_result_t *ret;
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT, XMMS_DBUS_INTERFACE, XMMS_METHOD_ONCHANGE);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, XMMS_SIGNAL_PLAYLIST_CHANGED);
+	ret = xmmsc_send_on_change (c, msg);
+	dbus_message_unref (msg);
+
+	xmmsc_result_restartable (ret, c, XMMS_SIGNAL_PLAYLIST_CHANGED);
+
+	return ret;
+}
 
 xmmsc_result_t *
 xmmsc_playlist_entry_changed (xmmsc_connection_t *c)
@@ -209,6 +226,8 @@ xmmsc_playlist_entry_changed (xmmsc_connection_t *c)
 	dbus_message_iter_append_string (&itr, XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 	ret = xmmsc_send_on_change (c, msg);
 	dbus_message_unref (msg);
+
+	xmmsc_result_restartable (ret, c, XMMS_SIGNAL_PLAYLIST_MEDIAINFO_ID);
 
 	return ret;
 }

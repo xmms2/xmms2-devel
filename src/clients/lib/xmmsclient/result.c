@@ -221,6 +221,7 @@ xmmsc_result_wait (xmmsc_result_t *res)
 
 /* value retrivial */
 
+
 int
 xmmsc_result_iserror (xmmsc_result_t *res)
 {
@@ -239,6 +240,39 @@ xmmsc_result_get_error (xmmsc_result_t *res)
 	x_return_null_if_fail (res);
 
 	return res->error_str;
+}
+
+int
+xmmsc_result_get_playlist_change (xmmsc_result_t *res, 
+				  unsigned int *change, 
+				  unsigned int *id, 
+				  unsigned int *argument)
+{
+	DBusMessageIter itr;
+
+	x_return_val_if_fail (res, 0);
+
+	dbus_message_iter_init (res->reply, &itr);
+
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
+		return 0;
+	}
+	*change = dbus_message_iter_get_uint32 (&itr);
+
+	dbus_message_iter_next (&itr);
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
+		return 0;
+	}
+
+	*id = dbus_message_iter_get_uint32 (&itr);
+	dbus_message_iter_next (&itr);
+	if (dbus_message_iter_get_arg_type (&itr) != DBUS_TYPE_UINT32) {
+		return 0;
+	}
+
+	*argument = dbus_message_iter_get_uint32 (&itr);
+
+	return 1;
 }
 
 int

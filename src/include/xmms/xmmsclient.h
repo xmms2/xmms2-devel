@@ -62,6 +62,7 @@ xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 xmmsc_result_t *xmmsc_playlist_entry_changed (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_changed (xmmsc_connection_t *c);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
 
 xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c);
@@ -93,12 +94,29 @@ x_list_t *xmmscs_configval_list (xmmsc_connection_t *c);
 char *xmmscs_configval_get (xmmsc_connection_t *c, char *key);
 int xmmscs_playback_playtime (xmmsc_connection_t *c);
 
+#define XMMS_CALLBACK_SET(conn,meth,callback,udata) {\
+	xmmsc_result_t *res = meth (conn); \
+	xmmsc_result_notifier_set (res, callback, udata);\
+	xmmsc_result_unref (res);\
+}
+	
+
 /* API ERROR CODES */
 
 #define XMMS_ERROR_API_UNRECOVERABLE 1
 #define XMMS_ERROR_API_RESULT_NOT_SANE 2
 
 /* end ERROR CODES */
+
+typedef enum {
+	XMMSC_PLAYLIST_ADD,
+	XMMSC_PLAYLIST_SET_POS,
+	XMMSC_PLAYLIST_SHUFFLE,
+	XMMSC_PLAYLIST_REMOVE,
+	XMMSC_PLAYLIST_CLEAR,
+	XMMSC_PLAYLIST_MOVE,
+	XMMSC_PLAYLIST_SORT
+} xmmsc_playlist_changed_actions_t;
 
 #ifdef __cplusplus
 }

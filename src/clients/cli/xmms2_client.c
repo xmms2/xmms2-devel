@@ -407,10 +407,8 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", songname, dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
 	fflush (stdout);
 
-	ret = xmmsc_result_restart (res);
-
+	xmmsc_result_unref (xmmsc_result_restart (res));
 	xmmsc_result_unref (res);
-	xmmsc_result_unref (ret);
 }
 
 static void
@@ -459,22 +457,65 @@ static void
 cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	GMainLoop *ml;
-	xmmsc_result_t *res;
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
 	/* Setup onchange signal for mediainfo */
-	res = xmmsc_playback_current_id (conn);
-	xmmsc_result_notifier_set (res, handle_mediainfo, conn);
-	xmmsc_result_unref (res);
-
-	/* setup onchange signal for playitem */
-	res = xmmsc_playback_playtime (conn);
-	xmmsc_result_notifier_set (res, handle_playtime, NULL);
-	xmmsc_result_unref (res);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_mediainfo, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_playtime, handle_playtime, NULL);
 
 	xmmsc_setup_with_gmain (conn, NULL);
 
+	g_main_loop_run (ml);
+}
+
+static void
+handle_plch (xmmsc_result_t *res, void *userdata)
+{
+	unsigned int type, id, arg;
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Huston we have a problem %s", xmmsc_result_get_error (res));
+	}
+
+	if (!xmmsc_result_get_playlist_change (res, &type, &id, &arg)) {
+		print_error ("Couldn't fetch plch message!");
+	}
+
+	switch (type) {
+		case XMMSC_PLAYLIST_ADD:
+			print_info ("Added to playlist id = %d", id);
+			break;
+		case XMMSC_PLAYLIST_CLEAR:
+			print_info ("Playlist was cleared!");
+			break;
+		case XMMSC_PLAYLIST_REMOVE:
+			print_info ("%d was removed from the playlist", id);
+			break;
+		case XMMSC_PLAYLIST_SORT:
+			print_info ("Playlist was sorted");
+			break;
+		case XMMSC_PLAYLIST_SHUFFLE:
+			print_info ("Playlist was shuffled");
+			break;
+		default:
+			print_info ("Playlist was altered, but only apan knows how..");
+			break;
+	}
+	
+	xmmsc_result_unref (xmmsc_result_restart (res));
+	xmmsc_result_unref (res);
+}
+
+static void
+cmd_watchpl (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	GMainLoop *ml;
+
+	ml = g_main_loop_new (NULL, FALSE);
+	XMMS_CALLBACK_SET (conn, xmmsc_playlist_changed, handle_plch, conn);
+
+	xmmsc_setup_with_gmain (conn, NULL);
 	g_main_loop_run (ml);
 }
 
@@ -502,6 +543,7 @@ cmds commands[] = {
 
 
 	{ "status", "go into status mode", cmd_status },
+	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	{ "quit", "make the server quit", cmd_quit },
