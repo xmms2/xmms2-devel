@@ -84,7 +84,7 @@ struct xmmsc_result_St {
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 
 /**
- * @defgroup XMMSC_Result XMMSC_Result
+ * @defgroup Result Result
  * @brief Result manipulation and error handling
  * @ingroup XMMSClient
  *
@@ -167,7 +167,7 @@ xmmsc_result_free (xmmsc_result_t *res)
 /**
  * @defgroup RestartableResults RestartableResults
  * @brief Covers Restartable #xmmsc_result_t's
- * @ingroup XMMSC_Result
+ * @ingroup Result
  * A lot of signals you would like to get notified about
  * when they change, instead of polling the server all the time.
  * This results are "restartable".
@@ -571,8 +571,8 @@ xmmsc_result_wait (xmmsc_result_t *res)
 				
 
 /**
- * @defgroup ResultValueRetivial ResultValueRetivial 
- * @ingroup XMMSC_Result
+ * @defgroup ResultValueRetrieval ResultValueRetrieval 
+ * @ingroup Result
  * @brief Explains how you can retrive values from a #xmmsc_result_t
  * @{
  */
