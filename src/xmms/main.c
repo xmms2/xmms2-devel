@@ -199,6 +199,10 @@ main (int argc, char **argv)
 			case SIGINT:
 				xmms_object_emit (XMMS_OBJECT (m_decoder), "eos-reached", NULL);
 				break;
+			case SIGHUP:
+			case SIGTERM:
+				exit (1);
+				
 		}
 	}
 				
