@@ -4,10 +4,10 @@
 #include <mad.h>
 
 typedef enum {
-  XMMS_XING_FRAMES = 0x00000001L,
-  XMMS_XING_BYTES  = 0x00000002L,
-  XMMS_XING_TOC    = 0x00000004L,
-  XMMS_XING_SCALE  = 0x00000008L
+	XMMS_XING_FRAMES = 1UL << 0,
+	XMMS_XING_BYTES  = 1UL << 1,
+	XMMS_XING_TOC    = 1UL << 2,
+	XMMS_XING_SCALE  = 1UL << 3,
 } xmms_xing_flags_t;
 
 struct xmms_xing_St;

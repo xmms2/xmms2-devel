@@ -34,7 +34,7 @@ xmms_xing_get_bytes (xmms_xing_t *xing)
 guint
 xmms_xing_get_toc (xmms_xing_t *xing, gint index)
 {
-	if (index > 100) return -1;
+	g_return_val_if_fail (0 <= index && index < 100, -1);
 
 	return xing->toc[index];
 }
@@ -43,14 +43,18 @@ xmms_xing_t *
 xmms_xing_parse (struct mad_bitptr ptr)
 {
 	xmms_xing_t *xing;
-	guint64 xing_h;
+	guint32 xing_magic;
+
+
+	xing_magic = mad_bit_read (&ptr, 4*8);
+
+	if (xing_magic != 0x58696e67) { /* "Xing" */
+		return NULL;
+	}
 
 	xing = g_new0 (xmms_xing_t, 1);
 
-	xing_h = mad_bit_read (&ptr, 4*8);
-
-	if (memcmp ("Xing", &xing_h, 4) != 0)
-		return NULL;
+	g_return_val_if_fail (xing, NULL);
 
 	xing->flags = mad_bit_read (&ptr, 32);
 
@@ -61,12 +65,13 @@ xmms_xing_parse (struct mad_bitptr ptr)
 		xing->bytes = mad_bit_read (&ptr, 32);
 
 	if (xmms_xing_has_flag (xing, XMMS_XING_TOC)) {
-		gint i = 0;
+		gint i;
 		for (i = 0; i < 100; i++)
 			xing->toc[i] = mad_bit_read (&ptr, 8);
 	}
 
-	if (xing->flags & XMMS_XING_SCALE) {
+	if (xmms_xing_has_flag (xing, XMMS_XING_SCALE)) {
+		/* just move the pointer forward */
 		mad_bit_read (&ptr, 32);
 	}
 
