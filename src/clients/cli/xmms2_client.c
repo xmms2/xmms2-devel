@@ -166,7 +166,8 @@ handle_playlist_list_mediainfo (xmmsc_connection_t *conn, void *arg)
 		str = xmmsc_decode_path (str);
 	}
 		
-	printf ("%d\t%s (%s)\n",
+	printf ("%s%d\t%s (%s)\n", 
+		(currentid == id) ? "->":"  ",
 		id, str, duration);
 
 	g_free (duration);
@@ -188,7 +189,14 @@ handle_playlist_list (xmmsc_connection_t *conn, void *arg)
 		xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
 		i++;
 	}
+	
+	if (i == 0) {
+		xmmsc_deinit (conn);
+		exit (0);
+	}
+
 	lastid = GPOINTER_TO_UINT(list[--i]);
+	
 }
 
 void
@@ -198,6 +206,9 @@ setup_playlist (xmmsc_connection_t *conn)
 
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_LIST, handle_playlist_list, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_playlist_list_mediainfo, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, conn);
+
+	xmmsc_get_playing_id (conn);
 	
 	xmmsc_glib_setup_mainloop (conn, NULL);
 

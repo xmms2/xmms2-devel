@@ -229,7 +229,8 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 		gchar *r;
 		xmms_visualisation_samplerate_set (decoder->vis, rate);
 		decoder->samplerate = rate;
-		decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
+		if (decoder->output)
+			decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
 		r = g_strdup_printf ("%d", rate);
 		xmms_playlist_entry_set_prop (decoder->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE, r);
 		xmms_effect_samplerate_set (decoder->effect, decoder->samplerate);
