@@ -25,13 +25,13 @@ sigwaiter(gpointer data){
 		switch (caught){
 		case SIGINT:
 			XMMS_DBG ("Got SIGINT!");
-			xmms_object_emit (XMMS_OBJECT (data), "eos-reached", NULL);
+			xmms_core_play_next ();
 			break;
 		}
 	}
 }
 
 void
-xmms_signal_init(xmms_object_t *obj) {
-	g_thread_create (sigwaiter, obj, FALSE, NULL);
+xmms_signal_init() {
+	g_thread_create (sigwaiter, NULL, FALSE, NULL);
 }

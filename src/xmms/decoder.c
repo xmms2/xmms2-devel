@@ -96,7 +96,7 @@ xmms_decoder_output_get (xmms_decoder_t *decoder)
  * Creates a new decoder for the specified mimetype.
  * This call creates a decoder that can handle the specified mimetype.
  * The transport is started but not the output, which must be driven by
- * hand. See tar-plugin for example.
+ * hand. @sa tar.c for example.
  */
 xmms_decoder_t *
 xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype){
