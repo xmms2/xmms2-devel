@@ -358,8 +358,7 @@ xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len)
 	g_return_val_if_fail (buf, -1);
 
 	g_mutex_lock (decoder->mutex);
-	xmms_ringbuf_wait_used (decoder->buffer, 1, decoder->mutex);
-	ret = xmms_ringbuf_read (decoder->buffer, buf, len);
+	ret = xmms_ringbuf_read_wait (decoder->buffer, buf, len, decoder->mutex);
 	g_mutex_unlock (decoder->mutex);
 
 	return ret;
@@ -420,8 +419,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 		len = resample (decoder, (gint16 *)buf, len);
 		buf = (char *)decoder->resamplebuf;
 	}
-	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
-	xmms_ringbuf_write (decoder->buffer, buf, len);
+	xmms_ringbuf_write_wait (decoder->buffer, buf, len, decoder->mutex);
 
 	g_mutex_unlock (decoder->mutex);
 	

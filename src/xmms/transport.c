@@ -446,8 +446,6 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 		len = xmms_ringbuf_size (transport->buffer);;
 	}
 
-	xmms_ringbuf_wait_used (transport->buffer, 1, transport->mutex);
-	/* Did we wake up because of an error? */
 	if (xmms_ringbuf_iseos (transport->buffer)) {
 		gint val = -1;
 
@@ -460,7 +458,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 		return val;
 	}
 
-	ret = xmms_ringbuf_read (transport->buffer, buffer, len);
+	ret = xmms_ringbuf_read_wait (transport->buffer, buffer, len, transport->mutex);
 
 	if (ret < len) {
 		transport->buffer_underruns ++;
@@ -791,8 +789,7 @@ xmms_transport_thread (gpointer data)
 		g_mutex_lock (transport->mutex);
 
 		if (ret > 0) {
-			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
-			xmms_ringbuf_write (transport->buffer, buffer, ret);
+			xmms_ringbuf_write_wait (transport->buffer, buffer, ret, transport->mutex);
 		} else {
 			xmms_ringbuf_set_eos (transport->buffer, TRUE);
 			xmms_error_set (&transport->status, error.code, error.message);
