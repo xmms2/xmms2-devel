@@ -174,9 +174,15 @@ main (int argc, char **argv)
 	
 	if (!xmms_plugin_init (ppath))
 		return 1;
+
 	
-	cv = xmms_config_value_register ("core.outputplugin", XMMS_OUTPUT_DEFAULT, change_output, NULL);
-	outname = xmms_config_value_string_get (cv);
+	if (!outname) {
+		cv = xmms_config_value_register ("core.outputplugin",
+		                                 XMMS_OUTPUT_DEFAULT,
+		                                 change_output, NULL);
+		outname = xmms_config_value_string_get (cv);
+	}
+
 	XMMS_DBG ("output = %s", outname);
 
 	o_plugin = xmms_output_find_plugin (outname);

@@ -178,10 +178,18 @@ XMMS_METHOD_DEFINE (start, xmms_playback_start, xmms_playback_t *, NONE, NONE, N
 static void
 xmms_playback_start (xmms_playback_t *playback)
 {
+	if (playback->status == XMMS_PLAYBACK_PLAY)
+		return;
+
 	if (playback->status == XMMS_PLAYBACK_PAUSE) {
 		xmms_output_resume (xmms_core_output_get (playback->core));
 	}
+	
 
+	xmms_object_emit (XMMS_OBJECT (playback), 
+			  XMMS_SIGNAL_PLAYBACK_STATUS, 
+			  GUINT_TO_POINTER (XMMS_PLAYBACK_PLAY));
+	
 	playback->status = XMMS_PLAYBACK_PLAY;
 	xmms_playback_wakeup (playback);
 }
