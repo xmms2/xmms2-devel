@@ -1,7 +1,7 @@
 /*
  * SID-plugin using libsidplay2
  * 
- * Written by Anders Gustafsson - andersg@0x63.nu
+ * Written by Anders Gustafsson - andersg@xmms.org
  *
  */
 
@@ -139,7 +139,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	   but that should be no problem, as SIDs generally are small */
 	if (!data->buffer) {
 		gint subtune, numsubtunes;
-		gchar *suburi;
+		const gchar *suburi;
 		gchar *suburiend;
 		transport = xmms_decoder_transport_get (decoder);
 		g_return_val_if_fail (transport, FALSE);
