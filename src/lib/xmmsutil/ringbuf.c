@@ -249,7 +249,7 @@ xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint leng
 	while (written < length) {
 		written += xmms_ringbuf_write (ringbuf, src + written, length - written);
 
-		if (written == length) {
+		if (written == length || ringbuf->eos) {
 			break;
 		}
 
