@@ -311,7 +311,7 @@ static gint xmms_tar_seek (xmms_transport_t *transport, guint offset, gint whenc
 
 	XMMS_DBG(" seeking to pos: %d",pos);
 	xmms_transport_seek(data->parenttransport, data->startpos + pos, XMMS_TRANSPORT_SEEK_SET);
-	data->relpos = data->startpos + pos;
+	data->relpos = pos;
 	return data->relpos;
 }
 
