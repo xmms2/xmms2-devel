@@ -19,6 +19,7 @@
 #include "ringbuf.h"
 #include "playlist.h"
 #include "visualisation.h"
+#include "effect.h"
 
 #include <string.h>
 
@@ -47,6 +48,8 @@ struct xmms_decoder_St {
 				      */
 
 	gpointer plugin_data;
+
+	xmms_effect_t *effect;
 
 	guint samplerate;
 	guint output_samplerate;
@@ -185,6 +188,7 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 		xmms_visualisation_samplerate_set (decoder->vis, rate);
 		decoder->samplerate = rate;
 		decoder->output_samplerate = xmms_output_samplerate_set (decoder->output, rate);
+		xmms_effect_samplerate_set (decoder->effect, decoder->samplerate);
 		recalculate_resampler (decoder);
 	}
 }
@@ -268,6 +272,8 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 	g_return_if_fail (output);
 
 	xmms_visualisation_calc (decoder->vis, buf, len);
+
+	xmms_effect_run (decoder->effect, buf, len);
 
 	if (decoder->samplerate != decoder->output_samplerate) {
 		guint32 res;
@@ -354,13 +360,14 @@ xmms_decoder_destroy (xmms_decoder_t *decoder)
  *
  */
 void
-xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output)
+xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_effect_t *effect, xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);
 
 	decoder->running = TRUE;
 	decoder->transport = transport;
+	decoder->effect = effect;
 	decoder->output = output;
 	xmms_output_set_eos (output, FALSE);
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 

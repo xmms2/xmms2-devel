@@ -3,6 +3,7 @@
 
 #include "xmms/transport.h"
 #include "xmms/output.h"
+#include "xmms/effect.h"
 
 /*
  * Private function prototypes -- do NOT use in plugins.
@@ -10,6 +11,6 @@
 
 xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
 
-void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
+void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_effect_t *effect, xmms_output_t *output);
 
 #endif
