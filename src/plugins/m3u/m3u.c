@@ -166,7 +166,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 						new = g_strdup_printf ("%s/%s", path, lines[i]);
 						t = xmms_util_encode_path (new);
 						entry = xmms_playlist_entry_new (t);
-						g_free (t);
+						g_free (new);
 						g_free (path);
 					}
 				} else {
@@ -174,7 +174,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 					new = g_strdup_printf ("file://%s", lines[i]);
 					t = xmms_util_encode_path (new);
 					entry = xmms_playlist_entry_new (t);
-					g_free (t);
+					g_free (new);
 				}
 			}
 
@@ -192,7 +192,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 						new = g_strdup_printf ("%s/%s", path, lines[i]);
 						t = xmms_util_encode_path (new);
 						entry = xmms_playlist_entry_new (t);
-						g_free (t);
+						g_free (new);
 						g_free (path);
 					}
 				} else {
@@ -200,7 +200,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 					new = g_strdup_printf ("file://%s", lines[i]);
 					t = xmms_util_encode_path (new);
 					entry = xmms_playlist_entry_new (lines[i]);
-					g_free (t);
+					g_free (new);
 				}
 			}
 		}
