@@ -231,7 +231,7 @@ main (int argc, char **argv)
 
 	
 	if (!outname) {
-		cv = xmms_config_value_register ("core.outputplugin",
+		cv = xmms_config_value_register ("output.plugin",
 		                                 XMMS_OUTPUT_DEFAULT,
 		                                 change_output, NULL);
 		outname = xmms_config_value_string_get (cv);
