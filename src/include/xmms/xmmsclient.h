@@ -130,7 +130,7 @@ typedef enum {
 } xmms_playback_status_t;
 
 
-#ifdef _cplusplus
+#ifdef __cplusplus
 }
 #endif
 
