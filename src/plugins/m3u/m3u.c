@@ -21,6 +21,7 @@
 #include "xmms/transport.h"
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
+#include "xmms/plsplugins.h"
 #include "xmms/util.h"
 #include "xmms/xmms.h"
 
@@ -37,9 +38,9 @@
  */
 
 static gboolean xmms_m3u_can_handle (const gchar *mimetype);
-static gboolean xmms_m3u_read_playlist (xmms_transport_t *transport,
+static gboolean xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *transport,
 		xmms_playlist_t *playlist);
-static gboolean xmms_m3u_write_playlist (xmms_playlist_t *playlist,
+static gboolean xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin,xmms_playlist_t *playlist,
 		gchar *filename);
 
 /*
@@ -143,13 +144,13 @@ parse_line (const gchar *line, const gchar *m3u_path)
 }
 
 static gboolean
-xmms_m3u_read_playlist (xmms_transport_t *transport,
-                        xmms_playlist_t *playlist)
+xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *transport, xmms_playlist_t *playlist)
 {
 	gint len = 0, buffer_len = 0;
 	gchar **lines, **line, *buffer;
 	gboolean extm3u = FALSE;
 
+	g_return_val_if_fail (plsplugin, FALSE); 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (playlist, FALSE);
 
@@ -250,12 +251,13 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 }
 
 static gboolean
-xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
+xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, gchar *filename)
 {
 	FILE *fp;
 	GList *list, *l;
 	xmms_error_t err;
 
+	g_return_val_if_fail (plsplugin, FALSE); 
 	g_return_val_if_fail (playlist, FALSE);
 	g_return_val_if_fail (filename, FALSE);
 

@@ -54,7 +54,7 @@ xmms_playlist_plugin_save (xmms_playlist_plugin_t *plsplugin,
 
 	write = xmms_plugin_method_get (plsplugin->plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST);
 	
-	return write (playlist, filename);
+	return write (plsplugin, playlist, filename);
 }
 
 xmms_playlist_plugin_t *
@@ -94,7 +94,7 @@ xmms_playlist_plugin_read (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *p
 	read_method = xmms_plugin_method_get (plsplugin->plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST);
 	g_return_if_fail (read_method);
 
-	read_method (transport, playlist);
+	read_method (plsplugin, transport, playlist);
 }
 
 /*

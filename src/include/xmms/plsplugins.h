@@ -34,9 +34,9 @@ typedef struct xmms_playlist_plugin_St {
  * Plugin methods.
  */
 
-typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_transport_t *transport, xmms_playlist_t *playlist);
+typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *transport, xmms_playlist_t *playlist);
 typedef gboolean (*xmms_playlist_plugin_can_handle_method_t) (const gchar *mimetype);
-typedef gboolean (*xmms_playlist_plugin_write_method_t) (xmms_playlist_t *playlist, gchar *filename);
+typedef gboolean (*xmms_playlist_plugin_write_method_t) (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, gchar *filename);
 
 /*
  * Public functions.
