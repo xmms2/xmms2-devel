@@ -34,6 +34,7 @@ const xmms_mimemap_t mimemap[] = {
 	{ "tar", "application/x-tar" },
 	{ "m3u", "audio/mpegurl" },
 	{ "flac", "application/x-flac" },
+	{ "xm",  "audio/xm" },
 	{ NULL, NULL }
 };
 
