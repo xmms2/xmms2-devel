@@ -6,8 +6,8 @@ Export('base_env')
 SConscript('lib/xmmsclient/SConscript')
 SConscript('lib/xmmsclient-glib/SConscript')
 
-# breaks the build :(
-# SConscript('lib/ruby/SConscript')
+if base_env.HasGroup("ruby") :
+	SConscript('lib/ruby/SConscript')
 
 SConscript('cli/SConscript')
 

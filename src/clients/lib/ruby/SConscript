@@ -1,21 +1,23 @@
 Import ('base_env')
 
-if base_env.HasGroup ("ruby") :
-	sources = Split ("rb_xmmsclient_main.c "
-	                 "rb_xmmsclient.c "
-	                 "rb_result.c")
+sources = Split ("rb_xmmsclient_main.c "
+                 "rb_xmmsclient.c "
+                 "rb_result.c")
 
-	env = base_env.Copy (CPPPATH = ['#src/include'],
-	                     LIBPATH = ['#builddir/clients/lib/xmmsclient',
-	                                '#builddir/clients/lib/xmmsclient-glib'],
-	                     LIBS = ['xmmsclient', 'xmmsclient-glib'])
+env = base_env.Copy (CPPPATH = ['#src/include'],
+                     LIBPATH = ['#builddir/clients/lib/xmmsclient',
+                                '#builddir/clients/lib/xmmsclient-glib'],
+                     LIBS = ['xmmsclient', 'xmmsclient-glib'])
 
-	env.AddFlagsFromGroup ("ruby")
-	env.AddFlagsFromGroup ("glib")
+env.AddFlagsFromGroup ("ruby")
+env.AddFlagsFromGroup ("glib")
 
-	if env.HasGroup ("ecore") :
-		env.AddFlagsFromGroup ("ecore")
-		env['LIBPATH'].append ("#builddir/clients/lib/xmmsclient-ecore")
-		env['LIBS'].append ("xmmsclient-ecore")
+if env.HasGroup ("ecore") :
+	env.Append (LIBPATH = ["#builddir/clients/lib/xmmsclient-ecore"],
+	            LIBS = ["xmmsclient-ecore"])
 
-	env.XmmsRuby ('xmmsclient', sources)
+	# append the ecore libs last, since it probably adds a path to LIBPATH
+	# thats not beneath buildir - this seems to mess up the build process
+	env.AddFlagsFromGroup ("ecore")
+
+env.XmmsRuby ('xmmsclient', sources)
