@@ -55,7 +55,6 @@ typedef struct xmms_alsa_data_St {
 	guint frame_size;
 	guint rate;
 	gboolean have_mixer;
-	xmms_config_value_t *volume;
 } xmms_alsa_data_t;
 
 
@@ -167,6 +166,7 @@ xmms_alsa_new (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
+	xmms_config_value_t *volume;
 	
 	XMMS_DBG ("XMMS_ALSA_NEW"); 
 	
@@ -174,9 +174,9 @@ xmms_alsa_new (xmms_output_t *output)
 	data = g_new0 (xmms_alsa_data_t, 1);
 
 	plugin = xmms_output_plugin_get (output);
-	data->volume = xmms_plugin_config_lookup (plugin, "volume");
+	volume = xmms_plugin_config_lookup (plugin, "volume");
 
-	xmms_config_value_callback_set (data->volume,
+	xmms_config_value_callback_set (volume,
 									xmms_alsa_mixer_config_changed,
 									(gpointer) output);
 	
