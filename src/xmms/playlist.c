@@ -13,6 +13,7 @@
 #include "util.h"
 #include "signal_xmms.h"
 
+static void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
 
 /*
  * Public functions
@@ -250,6 +251,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_playlist_entry_t *file, gint 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	file->id = playlist->nextid++;
+	xmms_playlist_entry_ref (file); /* reference this entry */
 	
 	switch (options) {
 		case XMMS_PLAYLIST_APPEND:
@@ -314,6 +316,8 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 	if (!r)
 		return NULL;
 
+	xmms_playlist_entry_ref ((xmms_playlist_entry_t *)r->data);
+
 	return r->data;
 
 }
@@ -330,7 +334,7 @@ xmms_playlist_clear (xmms_playlist_t *playlist)
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
 		xmms_playlist_entry_t *entry = node->data;
-		xmms_playlist_entry_free (entry);
+		xmms_playlist_entry_unref (entry);
 	}
 
 	g_list_free (playlist->list);
@@ -373,11 +377,13 @@ xmms_playlist_get_next_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
+		xmms_playlist_entry_ref (r);
 	}
 
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
 	
 	return r;
 
@@ -400,11 +406,13 @@ xmms_playlist_get_prev_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
+		xmms_playlist_entry_ref (r);
 	}
 
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
 	
 	return r;
 
@@ -428,11 +436,13 @@ xmms_playlist_get_current_entry (xmms_playlist_t *playlist)
 
 	if (n) {
 		r = n->data;
+		xmms_playlist_entry_ref (r);
 	}
 
 	playlist->currententry = n;
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
+
 	
 	return r;
 
@@ -588,7 +598,7 @@ xmms_playlist_close (xmms_playlist_t *playlist)
 	
 	while (node) {
 		xmms_playlist_entry_t *entry = node->data;
-		xmms_playlist_entry_free (entry);
+		xmms_playlist_entry_unref (entry);
 		node = g_list_next (node);
 	}
 
@@ -726,7 +736,7 @@ xmms_playlist_entry_foreach_free (gpointer key, gpointer value, gpointer udata)
 	return TRUE;
 }
 
-void
+static void
 xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 {
 	g_free (entry->uri);
@@ -761,5 +771,29 @@ xmms_playlist_entry_is_wellknown (gchar *property)
 	}
 
 	return FALSE;
+}
+
+void
+xmms_playlist_entry_ref (xmms_playlist_entry_t *entry)
+{
+	g_return_if_fail (entry);
+	entry->ref ++;
+}
+
+void
+xmms_playlist_entry_unref (xmms_playlist_entry_t *entry)
+{
+
+	g_return_if_fail (entry);
+
+	entry->ref --;
+
+	if (entry->ref < 1) {
+		/* free entry */
+
+		XMMS_DBG("Freeing %s", entry->uri);
+		xmms_playlist_entry_free (entry);
+	}
+
 }
 

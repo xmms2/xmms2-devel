@@ -64,6 +64,7 @@ typedef struct xmms_playlist_St {
 typedef struct xmms_playlist_entry_St {
 	gchar *uri;
 	guint id;
+	guint ref;
 	GHashTable *properties;
 } xmms_playlist_entry_t;
 
@@ -102,7 +103,6 @@ xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
  */
 
 xmms_playlist_entry_t * xmms_playlist_entry_new (gchar *uri);
-void xmms_playlist_entry_free (xmms_playlist_entry_t *entry);
 
 void xmms_playlist_entry_set_prop (xmms_playlist_entry_t *entry, gchar *key, gchar *value);
 void xmms_playlist_entry_set_uri (xmms_playlist_entry_t *entry, gchar *uri);
@@ -113,5 +113,7 @@ gint xmms_playlist_entry_get_prop_int (const xmms_playlist_entry_t *entry, gchar
 void xmms_playlist_entry_copy_property (xmms_playlist_entry_t *entry, xmms_playlist_entry_t *newentry);
 void xmms_playlist_entry_print (xmms_playlist_entry_t *entry);
 gboolean xmms_playlist_entry_is_wellknown (gchar *property);
+void xmms_playlist_entry_ref (xmms_playlist_entry_t *entry);
+void xmms_playlist_entry_unref (xmms_playlist_entry_t *entry);
 
 #endif

@@ -307,6 +307,8 @@ send_playlist_changed (xmms_object_t *object,
                         break;
         }
 
+	g_free (chmsg);
+
         XMMS_DBG ("Sending playlist changed message: %s", dbus_message_get_name (msg));
 
         g_mutex_lock (connectionslock);
@@ -559,6 +561,7 @@ handle_playlist_add (DBusConnection *conn, DBusMessage *msg)
                 gchar *uri = dbus_message_iter_get_string (&itr);
                 XMMS_DBG ("adding to playlist: %s", uri);
                 xmms_core_playlist_adduri (uri);
+		g_free (uri);
         }
 	
 	return TRUE;
@@ -658,6 +661,8 @@ handle_playlist_mediainfo (DBusConnection *conn, DBusMessage *msg)
                         dbus_message_iter_append_dict_key (&dictitr, "uri");
                         dbus_message_iter_append_string (&dictitr, uri);
                 }
+
+		xmms_playlist_entry_unref (entry);
         }
 
         if (reply) {

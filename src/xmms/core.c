@@ -40,7 +40,7 @@ handle_mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer us
 
 	xmms_playlist_entry_print (entry);
 
-	xmms_playlist_entry_free (entry);
+	xmms_playlist_entry_unref (entry);
 
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, NULL);
 
@@ -78,6 +78,9 @@ xmms_core_output_set (xmms_output_t *output)
 void
 xmms_core_play_next ()
 {
+	if (core->curr_song)
+		xmms_playlist_entry_unref (core->curr_song);
+
 	core->curr_song = xmms_playlist_get_next_entry (core->playlist);
 
 	if (!core->curr_song) {
@@ -95,6 +98,9 @@ xmms_core_play_next ()
 void
 xmms_core_play_prev ()
 {
+	if (core->curr_song)
+		xmms_playlist_entry_unref (core->curr_song);
+
 	core->curr_song = xmms_playlist_get_prev_entry (core->playlist);
 
 	if (!core->curr_song) {
