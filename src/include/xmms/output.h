@@ -83,5 +83,6 @@ gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right)
 
 void xmms_output_flush (xmms_output_t *output);
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
+guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err); 
 
 #endif

@@ -41,7 +41,6 @@ static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
-static guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
 static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
 static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
@@ -406,7 +405,7 @@ xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 /**
  * Get the current playtime in milliseconds.
  */
-static guint32
+guint32
 xmms_output_playtime (xmms_output_t *output, xmms_error_t *error)
 {
 	guint32 ret;
@@ -759,6 +758,8 @@ xmms_output_decoder_start (xmms_output_t *output)
 	xmms_decoder_start (decoder, output);
 
 	g_queue_push_tail (output->decoder_list, decoder);
+
+	xmms_medialib_logging_start (xmms_decoder_medialib_entry_get (decoder));
 
 	return TRUE;
 }
