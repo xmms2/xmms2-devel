@@ -309,7 +309,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	if (cmd->arg1 == XMMS_OBJECT_CMD_ARG_STRING)
 		g_free (arg.values[0].string);
 	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[0].string);
+		g_free (arg.values[1].string);
 
 	retmsg->cid = msg->cid;
 	xmms_ipc_client_msg_write (client, retmsg);
