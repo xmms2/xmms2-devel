@@ -133,15 +133,33 @@ xmms_sid_destroy (xmms_decoder_t *decoder)
 	g_free (data);
 }
 
+
+/**
+ * TODO: Enable option to use STIL for media info and
+ * timedatabase for song length.
+ */
 static void
 xmms_sid_get_media_info (xmms_decoder_t *decoder)
 {
-/** @todo - read STIL.txt */
-/*
-	xmms_playlist_entry_t *entry = g_new0 (xmms_playlist_entry_t, 1);
-	strncpy (entry->title,"sid..",XMMS_PL_PROPERTY);
-	xmms_decoder_set_mediainfo (decoder,entry);
-*/
+	xmms_sid_data_t *data;
+	char artist[32];
+	char title[32];
+	gint err;
+	xmms_playlist_entry_t *entry;
+	
+	entry = xmms_playlist_entry_new (NULL);
+
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_if_fail (data);
+
+	err = sidplay_wrapper_songinfo (data->wrapper, artist, title);
+	if (err > 0) {
+		xmms_playlist_entry_property_set (entry, 
+				XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, title);
+		xmms_playlist_entry_property_set (entry, 
+				XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, artist);
+		xmms_decoder_entry_mediainfo_set (decoder,entry);
+	}
 }
 
 static gboolean
