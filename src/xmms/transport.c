@@ -740,7 +740,7 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 		guint lmod;
 		gchar *lmod_str;
 		lmod = lmod_method (transport);
-		g_strdup_printf (lmod_str, "%d", lmod);
+		lmod_str = g_strdup_printf ("%d", lmod);
 		xmms_playlist_entry_property_set (transport->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD, lmod_str);
 		g_free (lmod_str);
 	}
