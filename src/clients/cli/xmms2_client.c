@@ -934,45 +934,39 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 	if (!hash) {
 		printf ("no mediainfo!\n");
 	} else {
-		tmp = x_hash_lookup (hash, "id");
-
-		mid = atoi (tmp);
-
-		if (id == mid) {
-			printf ("\n");
-			if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
-				xmmsc_entry_format (songname, sizeof (songname),
-				                    "[stream] ${title}", hash);
-			} else if (x_hash_lookup (hash, "channel")) {
-				xmmsc_entry_format (songname, sizeof (songname),
-				                    "${title}", hash);
-			} else if (!x_hash_lookup (hash, "title")) {
-			  	char *url, *path, *filename;
-			   	url = x_hash_lookup (hash, "url");
-				if (url) {
-				  	path = xmmsc_decode_path (url);
-					if (path) {
-					  	filename = g_path_get_basename (path);
-						g_free (path);
-						if (filename) {
-						  	g_snprintf (songname, sizeof (songname), "%s", filename);
-							g_free (filename);
-						}
+		printf ("\n");
+		if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
+			xmmsc_entry_format (songname, sizeof (songname),
+					    "[stream] ${title}", hash);
+		} else if (x_hash_lookup (hash, "channel")) {
+			xmmsc_entry_format (songname, sizeof (songname),
+					    "${title}", hash);
+		} else if (!x_hash_lookup (hash, "title")) {
+			char *url, *path, *filename;
+			url = x_hash_lookup (hash, "url");
+			if (url) {
+				path = xmmsc_decode_path (url);
+				if (path) {
+					filename = g_path_get_basename (path);
+					g_free (path);
+					if (filename) {
+						g_snprintf (songname, sizeof (songname), "%s", filename);
+						g_free (filename);
 					}
 				}
-			} else {
-				xmmsc_entry_format (songname, sizeof (songname),
-				                    statusformat, hash);
 			}
-			tmp = x_hash_lookup (hash, "duration");
-			if (tmp)
-				curr_dur = atoi (tmp);
-			else
-				curr_dur = 0;
+		} else {
+			xmmsc_entry_format (songname, sizeof (songname),
+					    statusformat, hash);
 		}
+		tmp = x_hash_lookup (hash, "duration");
+		if (tmp)
+			curr_dur = atoi (tmp);
+		else
+			curr_dur = 0;
+
 		x_hash_destroy (hash);
 	}
-
 }
 
 static void

@@ -85,7 +85,6 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	xmms_ipc_msg_put_uint32 (msg, id);
 
 	res = xmmsc_send_msg (c, msg);
-	xmms_ipc_msg_destroy (msg);
 
 	return res;
 }
