@@ -134,8 +134,10 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 	res = xmmsc_ipc_result_lookup (ipc, msg->cid);
 
-	if (!res)
+	if (!res) {
+		xmms_ipc_msg_destroy (msg);
 		return;
+	}
 
 	if (msg->cmd == XMMS_IPC_CMD_ERROR) {
 		gchar *errstr;
@@ -147,11 +149,7 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		xmmsc_result_seterror (res, errstr);
 	}
 
-	if (res) {
-		xmmsc_result_run (res, msg);
-	} else {
-		xmms_ipc_msg_destroy (msg);
-	}
+	xmmsc_result_run (res, msg);
 }
 
 gboolean
