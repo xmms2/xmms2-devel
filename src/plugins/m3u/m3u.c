@@ -86,6 +86,9 @@ xmms_m3u_can_handle (const gchar *mime)
 	if ((g_strncasecmp (mime, "audio/x-mpegurl", 15) == 0))
 		return TRUE;
 
+	if ((g_strncasecmp (mime, "audio/m3u", 9) == 0))
+		return TRUE;
+
 	return FALSE;
 }
 
