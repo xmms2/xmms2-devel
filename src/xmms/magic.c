@@ -33,6 +33,7 @@ const xmms_mimemap_t mimemap[] = {
 	{ "sid", "audio/prs.sid" },
 	{ "tar", "application/x-tar" },
 	{ "m3u", "audio/mpegurl" },
+	{ "flac", "application/x-flac" },
 	{ NULL, NULL }
 };
 
