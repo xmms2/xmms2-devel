@@ -16,6 +16,4 @@ xmms2_SOURCES=main.c \
 	playlist.c playlist.h \
 	magic.c magic.h
 
-CFLAGS+=-DSYSCONFDIR=\"$(sysconfdir)\"
-
 xmms2_LDADD = @GLIB_LIBS@ @XML_LIBS@
