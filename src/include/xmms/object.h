@@ -148,6 +148,7 @@ xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t dest
 
 #define xmms_object_unref(obj) do { \
 	if (obj && XMMS_IS_OBJECT (obj)) { \
+		XMMS_DBG ("unreffing %p(%d)", obj, XMMS_OBJECT (obj)->ref); \
 		__int_xmms_object_unref (XMMS_OBJECT (obj)); \
 	} \
 } while (0)

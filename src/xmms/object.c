@@ -275,7 +275,6 @@ xmms_object_method_call (xmms_object_t *object, const char *method, xmms_object_
 void
 __int_xmms_object_unref (xmms_object_t *object)
 {
-	XMMS_DBG ("unreffing %p(%d)", object, object->ref);
 	object->ref--;
 	if (object->ref == 0) {
 		XMMS_DBG ("Free %p", object);
