@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#include "xmms/log.h"
+
 #define XMMS_PATH_MAX 255
 
 #define XMMS_STRINGIFY_NOEXPAND(x) #x
@@ -10,11 +12,7 @@
 #define DEBUG
 
 #ifdef DEBUG
-#define XMMS_DBG(fmt, args...) { \
-    fprintf (stderr, __FILE__ ": "); \
-    fprintf (stderr, fmt, ## args); \
-    fprintf (stderr, "\n"); \
-}
+#define XMMS_DBG(fmt, args...) xmms_log_debug (__FILE__ ": " fmt, ## args)
 #else
 #define XMMS_DBG(fmt,...)
 #endif

@@ -124,6 +124,8 @@ main (int argc, char **argv)
 
 	g_thread_init (NULL);
 
+	xmms_log_initialize ("xmmsd");
+
 	xmms_core_init ();
 
 	if (!xmms_plugin_init ())

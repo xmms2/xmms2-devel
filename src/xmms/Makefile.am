@@ -18,6 +18,7 @@ xmms2d_SOURCES=main.c \
 	medialib.c medialib.h \
 	unixsignal.c unixsignal.h \
 	dbus.c dbus.h \
+	log.c log.h \
 	core.c core.h
 
 xmms2d_LDADD = @GLIB_LIBS@ @XML_LIBS@ @DBUS_LIBS@ @DBUSGLIB_LIBS@
@@ -33,6 +34,7 @@ medialibtool_SOURCES=medialibtool.c \
         output.c output.h \
 	core.c core.h \
         playlist.c playlist.h \
+	log.c log.h \
 	medialib.c medialib.h
 
 
