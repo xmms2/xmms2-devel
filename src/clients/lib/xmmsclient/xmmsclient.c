@@ -276,7 +276,9 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
 void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
-	xmmsc_ipc_destroy (c->ipc);
+	if (c->ipc)
+		xmmsc_ipc_destroy (c->ipc);
+
 	free (c->clientname);
 	free(c);
 }
