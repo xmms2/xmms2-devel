@@ -370,6 +370,8 @@ xmms_transport_new ()
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
+	
+	XMMS_DBG ("MEMDBG: TRANSPORT NEW %p", transport);
 
 	return transport;
 }
@@ -687,12 +689,14 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 		gpointer data)
 {
 	xmms_transport_open_method_t init_method;
+	xmms_transport_lmod_method_t lmod_method;
 	xmms_plugin_t *plugin;
 	gchar *url;
 	
 	plugin = transport->plugin;
 	
 	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
+	lmod_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LMOD);
 
 	if (!init_method) {
 		XMMS_DBG ("Transport has no init method!");
@@ -731,6 +735,16 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_playlist_entry_t *
 			return FALSE;
 		}
 	}
+
+	if (lmod_method) {
+		guint lmod;
+		gchar *lmod_str;
+		lmod = lmod_method (transport);
+		lmod_str = g_strdup_printf ("%d", lmod);
+		xmms_playlist_entry_property_set (transport->entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD, lmod_str);
+		g_free (lmod_str);
+	}
+
 
 	transport->suburl = g_strdup (transport->suburl);
 	return TRUE;
@@ -798,9 +812,13 @@ xmms_transport_destroy (xmms_object_t *object)
 	g_cond_free (transport->mime_cond);
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
+	
+	XMMS_DBG ("MEMDBG: TRANSPORT DESTROY %p", object);
 
 	if (transport->mimetype)
 		g_free (transport->mimetype);
+	if (transport->suburl) 
+		g_free (transport->suburl);
 }
 
 /**

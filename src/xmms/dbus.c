@@ -340,6 +340,7 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	xmms_object_t *obj;
 	DBusMessage *retmsg;
 	int serial;
+	gint i;
 
 
 	g_return_val_if_fail (client, DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
@@ -404,6 +405,12 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	} else {
 		/* create error message */
 		retmsg = dbus_message_new_error (msg, xmms_error_type_get_str (&arg.error), xmms_error_message_get (&arg.error));
+	}
+
+	for (i = 0; i < args; i ++) {
+		if (arg.types[i] == XMMS_OBJECT_METHOD_ARG_STRING) {
+			g_free (arg.values[i].string);
+		}
 	}
 
 

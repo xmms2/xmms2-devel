@@ -52,6 +52,7 @@ typedef struct xmms_transport_entry_St xmms_transport_entry_t;
  */
 
 typedef gboolean (*xmms_transport_can_handle_method_t) (const gchar *uri);
+typedef guint (*xmms_transport_lmod_method_t) (xmms_transport_t *transport);
 typedef gboolean (*xmms_transport_open_method_t) (xmms_transport_t *transport,
 						  const gchar *uri);
 typedef void (*xmms_transport_close_method_t) (xmms_transport_t *transport);

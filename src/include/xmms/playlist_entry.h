@@ -44,6 +44,8 @@ typedef struct xmms_playlist_entry_St xmms_playlist_entry_t;
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION "duration"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_CHANNEL "channel"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE "samplerate"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD "lmod"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_MID "mid"
 
 
 /*
