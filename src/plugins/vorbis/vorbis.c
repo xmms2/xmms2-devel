@@ -272,14 +272,14 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 		ogg_sync_wrote (&data->oy, ret);
 	}
 
-	data->convsize = 4096/data->vi.channels;
+	data->convsize = 4096/2; /* hm */
 	
 	vorbis_synthesis_init (&data->vd, &data->vi);
 	vorbis_block_init (&data->vd, &data->vb);
 
 	xmms_vorbis_get_media_info (decoder);
 
-	XMMS_DBG ("vorbis samplerate: %d", data->vi.rate);
+	XMMS_DBG ("vorbis samplerate: %ld", data->vi.rate);
 	xmms_decoder_samplerate_set (decoder, data->vi.rate);
 
 	XMMS_DBG ("vorbis_init ok!");
@@ -287,6 +287,19 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 	data->inited = 1;
 	return TRUE;
 }
+
+static void
+clipping (gint *val)
+{
+	if (*val > 32767) {
+		*val = 32767;
+	}
+
+	if (*val < -32767) {
+		*val = -32767;
+	}
+}
+
 
 static gboolean
 xmms_vorbis_decode_block (xmms_decoder_t *decoder)
@@ -328,33 +341,41 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 		if (vorbis_synthesis (&data->vb, &data->op) == 0)
 			vorbis_synthesis_blockin (&data->vd, &data->vb);
 
-
 		while ((samples = vorbis_synthesis_pcmout (&data->vd, &pcm)) > 0) {
-			int i,j;
+			int j;
 			int bout = (samples<data->convsize?samples:data->convsize);
+			ogg_int16_t *ptr = convbuffer;
+			float *mono = pcm[0];
 
-			for (i = 0; i < data->vi.channels; i++) {
-				ogg_int16_t *ptr = convbuffer+i;
-				float *mono = pcm[i];
-				for (j = 0; j < bout; j++) {
-					int val = mono[j]*32767.f;
-					
-					/* clipping */
-					if (val > 32767) {
-						val = 32767;
-					}
+			for (j = 0; j < bout; j++) {
+				int val = mono[j]*32767.f;
+				
+				/* clipping */
+				clipping (&val);
 
-					if (val < -32767) {
-						val = -32767;
-					}
-
-					*ptr = val;
-					ptr += data->vi.channels;
-
-				}
+				*ptr = val;
+				ptr += 2;
 			}
 
-			xmms_decoder_write (decoder, convbuffer, (2*data->vi.channels)*bout);
+			/* if we have mono, run the same
+			   samples again */
+			if (data->vi.channels == 2)
+				mono = pcm[1];
+			else
+				mono = pcm[0];
+
+			ptr = convbuffer+1;
+			for (j = 0; j < bout; j++) {
+				int val = mono[j]*32767.f;
+				
+				/* clipping */
+				clipping (&val);
+
+				*ptr = val;
+				ptr += 2;
+			}
+
+			xmms_decoder_write (decoder, convbuffer, 4*bout);
 			vorbis_synthesis_read (&data->vd, bout);
 		}
 
