@@ -22,6 +22,8 @@
 #include "xmms/util.h"
 #include "xmms/output.h"
 
+#warning "CONVERT TO SAMPLE_T"
+
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 
 #define MAX_OUTPUT_PORTS  10

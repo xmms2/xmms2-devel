@@ -29,6 +29,8 @@
 
 #include <glib.h>
 
+#warning "CONVERT TO SAMPLE_T"
+
 typedef struct xmms_flac_data_St {
 	FLAC__SeekableStreamDecoder *flacdecoder;
 	FLAC__StreamMetadata *vorbiscomment;

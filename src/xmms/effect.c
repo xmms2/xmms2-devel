@@ -148,9 +148,10 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 
 	newfunc (effect, output);
 
+/*
 	effect->samplerate_change = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_SAMPLERATE_SET);
-
+*/
 	effect->run = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_PROCESS);
 

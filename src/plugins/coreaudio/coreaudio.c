@@ -40,6 +40,9 @@
 
 #include <AudioUnit/AudioUnit.h>
 
+
+#warning "CONVERT TO SAMPLE_T"
+
 /*
  * Type definitions
  */

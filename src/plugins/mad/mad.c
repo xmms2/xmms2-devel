@@ -44,7 +44,9 @@ typedef struct xmms_mad_data_St {
 
 	gchar buffer[4096];
 	guint buffer_length;
+	guint channels;
 	guint bitrate;
+	guint samplerate;
 	guint fsize;
 	
 	xmms_xing_t *xing;
@@ -134,7 +136,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 
 		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
 	} else {
-		bytes = (guint)(((gdouble)samples) * data->bitrate / xmms_decoder_samplerate_get (decoder)) / 8;
+		bytes = (guint)(((gdouble)samples) * data->bitrate / data->samplerate) / 8;
 	}
 
 	XMMS_DBG ("Try seek %d bytes", bytes);
@@ -191,8 +193,8 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 		}
 	}
 
-	xmms_decoder_samplerate_set (decoder,
-		     frame.header.samplerate);
+	data->samplerate = frame.header.samplerate;
+	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
 	if (filesize == -1) {
 		xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "0");
@@ -400,6 +402,13 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	data->buffer_length = 0;
 	xmms_mad_get_media_info (decoder);
 
+	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, data->channels, data->samplerate);
+	/* we don't have to care about the return value other than NULL,
+	   as there is only one format (to rule them all) */
+	if (xmms_decoder_format_finish (decoder) == NULL) {
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -452,6 +461,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 
 	for (;;) {
 		gint i = 0;
+		gint j = 0;
 
 		if (mad_frame_decode (&data->frame, &data->stream) == -1) {
 			break;
@@ -465,19 +475,12 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		ch2 = data->synth.pcm.samples[1];
 
 		for (i = 0; i < data->synth.pcm.length; i++) {
-			gint16 l, r;
-			
-			l = clipping (*(ch1++));
-			if (data->synth.pcm.channels > 1)
-				r = clipping (*(ch2++));
-			else
-				r = l;
-			
-			out[i*2+0] = l;
-			out[i*2+1] = r;
+			out[j++] = clipping (*(ch1++));
+			if (data->channels == 2)
+				out[j++] = clipping (*(ch2++));
 		}
 
-		ret = i*4;
+		ret = j * xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
 
 		xmms_decoder_write (decoder, (gchar *)out, ret);
 

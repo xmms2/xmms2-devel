@@ -35,6 +35,7 @@
 #include <glib.h>
 
 
+#warning "CONVERT TO SAMPLE_T"
 /*
  *  Defines
  */
@@ -113,8 +114,11 @@ xmms_plugin_get (void)
 							xmms_alsa_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
 							xmms_alsa_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
-							xmms_alsa_samplerate_set);
+/*
+  XXX
+  xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
+  xmms_alsa_samplerate_set);
+*/
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
 							xmms_alsa_buffer_bytes_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET,

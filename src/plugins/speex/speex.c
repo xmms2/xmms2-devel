@@ -14,6 +14,8 @@
 #include <speex/speex_stereo.h>
 #include <ogg/ogg.h>
 
+#warning "CONVERT TO SAMPLE_T"
+
 typedef struct xmms_speex_data_St {
 	void *speex_state;
 	SpeexBits speex_bits;

@@ -42,6 +42,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#warning "CONVERT TO SAMPLE_T"
+
 /*
  * Type definitions
  */
