@@ -32,7 +32,7 @@ typedef struct {
 
 	gchar *mime;
 
-	gboolean error, running, know_length, stream_with_meta, know_meta_offset;
+	gboolean error, first_header, running, know_length, stream_with_meta, know_meta_offset;
 
 	struct curl_slist *http_aliases;
 	struct curl_slist *http_headers;
@@ -201,12 +201,6 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	g_return_val_if_fail (data, -1);
 
 	g_mutex_lock (data->mutex);
-
-	if (!data->running) {
-		XMMS_DBG ("Curl not inited?");
-		g_mutex_unlock (data->mutex);
-		return -1;
-	}
 
 	if (len > xmms_ringbuf_size (data->ringbuf)) {
 		len = xmms_ringbuf_size (data->ringbuf);
@@ -401,6 +395,10 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 
 	header = g_strndup (ptr, nmemb - 2);
 
+	if (!data->first_header) {
+		data->first_header = TRUE;
+	}
+
 	if (g_strncasecmp (header, "content-type: ", 14) == 0) {
 		if (!data->mime) {
 			data->mime = g_strdup (header + 14);
@@ -469,11 +467,9 @@ xmms_curl_thread (xmms_transport_t *transport)
 
 	while (curl_multi_perform (data->curl_multi, &data->running_handles) == CURLM_CALL_MULTI_PERFORM);
 
-
 	XMMS_DBG ("xmms_curl_thread is now running!");
 
-	curl_multi_fdset (data->curl_multi, &data->fdread, &data->fdwrite, &data->fdexcp,  &data->maxfd);
-
+	g_mutex_lock (data->mutex);
 	while (data->running && data->running_handles) {
 		CURLMsg *msg;
 		CURLMcode code;
@@ -483,38 +479,66 @@ xmms_curl_thread (xmms_transport_t *transport)
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 
-		ret = select (data->maxfd + 1, &data->fdread, &data->fdwrite, &data->fdexcp, &timeout);
-
-		switch (ret) {
-
-			case -1:
-				g_mutex_lock (data->mutex);
-				XMMS_DBG ("Disconnected?");
-				data->running = FALSE;
-				xmms_ringbuf_set_eos (data->ringbuf, TRUE);
-				g_mutex_unlock (data->mutex);
-				continue;
-			case 0:
-				continue;
-			default:
-				do {
-					code = curl_multi_perform (data->curl_multi, &data->running_handles);
-				} while (code == CURLM_CALL_MULTI_PERFORM);
-
-				g_mutex_lock (data->mutex);
-				if (!data->running_handles) {
-					xmms_ringbuf_set_eos (data->ringbuf, TRUE);
-				}
-
-				do {
-					msg = curl_multi_info_read (data->curl_multi, &msgs_in_queue);
-					if (msg && msg->msg == CURLMSG_DONE) {
-						xmms_error_set (&data->status, XMMS_ERROR_EOS, "End of Stream");
-					}
-				} while (msg && (msgs_in_queue > 0));
-
-				g_mutex_unlock (data->mutex);
-				break;
+		curl_multi_fdset (data->curl_multi, &data->fdread, &data->fdwrite, &data->fdexcp,  &data->maxfd);
+		g_mutex_unlock (data->mutex);
+		if (!data->first_header) {
+			ret = select (data->maxfd + 1,
+			              &data->fdread,
+			              &data->fdwrite,
+			              &data->fdexcp,
+			              &timeout);
+		} else {
+			ret = select (data->maxfd + 1,
+			              &data->fdread,
+			              NULL,
+			              &data->fdexcp,
+			              &timeout);
 		}
+		g_mutex_lock (data->mutex);
+
+		if (ret == -1) {
+			goto cont;
+		}
+
+		if (ret == 0) {
+			continue;
+		}
+
+		while (42) {
+			g_mutex_unlock (data->mutex);
+			code = curl_multi_perform (data->curl_multi, &data->running_handles);
+			g_mutex_lock (data->mutex);
+
+			if (code == CURLM_OK) {
+				break;
+			}
+
+			if (code != CURLM_CALL_MULTI_PERFORM) {
+				XMMS_DBG ("%s", curl_multi_strerror (code));
+				goto cont;
+			}
+		}
+
+		if (!data->running_handles) {
+			goto cont;
+		}
+
+		for (msgs_in_queue = 1; msgs_in_queue != 0;) {
+			msg = curl_multi_info_read (data->curl_multi, &msgs_in_queue);
+
+			if (msg && msg->msg == CURLMSG_DONE) {
+				XMMS_DBG ("%s", curl_easy_strerror (msg->data.result));
+				xmms_error_set (&data->status, XMMS_ERROR_EOS, "End of Stream");
+				goto cont;
+			}
+		}
+
 	}
+
+cont:
+	XMMS_DBG ("Curl thread quitting");
+
+	data->running = FALSE;
+	xmms_ringbuf_set_eos (data->ringbuf, TRUE);
+	g_mutex_unlock (data->mutex);
 }
