@@ -261,6 +261,8 @@ main (int argc, char **argv)
 
 	g_thread_init (NULL);
 
+	g_random_set_seed (time (NULL));
+
 	ipc = xmms_ipc_init ();
 
 	parse_config ();

@@ -186,13 +186,13 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 	     node = g_list_next (node), i++)
 		ptrs[i] = node;
 
-	j = random() % len;
+	j = g_random_int_range (0, len);
 	playlist->list = ptrs[j];
 	ptrs[j]->next = NULL;
 	ptrs[j] = ptrs[0];
 
 	for (i = 1; i < len; i++) {
-		j = random() % (len - i);
+		j = g_random_int_range (0, len - i);
 		playlist->list->prev = ptrs[i + j];
 		ptrs[i + j]->next = playlist->list;
 		playlist->list = ptrs[i + j];
