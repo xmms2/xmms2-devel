@@ -229,28 +229,31 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 			break;
 		case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
 			{
-				GList *l;
+				GList *l = arg->retval.stringlist;
 
-				for (l = arg->retval.stringlist; l; l = g_list_next (l)) {
+				while (l) {
 					dbus_message_iter_append_string (&itr, l->data);
+					l = g_list_delete_link (l, l);
 				}
 				break;
 			}
 		case XMMS_OBJECT_METHOD_ARG_UINTLIST:
 			{
-				GList *l;
+				GList *l = arg->retval.uintlist;
 
-				for (l = arg->retval.uintlist; l; l = g_list_next (l)) {
+				while (l) {
 					dbus_message_iter_append_uint32 (&itr, GPOINTER_TO_UINT (l->data));
+					l = g_list_delete_link (l, l);
 				}
 				break;
 			}
 		case XMMS_OBJECT_METHOD_ARG_INTLIST:
 			{
-				GList *l;
+				GList *l = arg->retval.intlist;
 
-				for (l = arg->retval.uintlist; l; l = g_list_next (l)) {
+				while (l) {
 					dbus_message_iter_append_int32 (&itr, GPOINTER_TO_INT (l->data));
+					l = g_list_delete_link (l, l);
 				}
 				break;
 			}
@@ -258,6 +261,7 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 			{
 				xmms_playlist_changed_msg_t *chmsg = arg->retval.plch;
 				xmms_dbus_handle_playlist_chmsg (&itr, chmsg);
+				g_free (chmsg);
 			}
 			break;
 		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: 
@@ -282,6 +286,8 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 				/* add the rest of the properties to Dict */
 				xmms_playlist_entry_property_foreach (arg->retval.playlist_entry, hash_to_dict, &dictitr);
 
+				if (arg->retval.playlist_entry) 
+					xmms_playlist_entry_unref (arg->retval.playlist_entry);
 
 				break;
 			}
@@ -291,20 +297,6 @@ xmms_dbus_handle_arg_value (DBusMessage *msg, xmms_object_method_arg_t *arg)
 			XMMS_DBG ("Unknown returnvalue: %d, couldn't serialize message", arg->rettype);
 			break;
 	}
-
-	/* cleanup retval */
-	switch (arg->rettype) {
-	case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
-		if (arg->retval.playlist_entry) 
-			xmms_playlist_entry_unref (arg->retval.playlist_entry);
-		break;
-	case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
-		g_list_free (arg->retval.stringlist);
-		break;
-	default:
-		;
-	}
-
 }
 
 static DBusHandlerResult
