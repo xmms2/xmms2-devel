@@ -674,7 +674,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	g_return_val_if_fail (output, FALSE);
 
-	if (g_queue_get_length (output->decoder_list) > 0)
+	if (output->decoder_list->length > 0)
 		return TRUE;
 
 	while (TRUE) {
