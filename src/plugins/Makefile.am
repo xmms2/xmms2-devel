@@ -1,2 +1,2 @@
-SUBDIRS=file mad diskwrite http oss sid tar sqlite
+SUBDIRS=file mad diskwrite http oss sid tar sqlite vorbis
 
