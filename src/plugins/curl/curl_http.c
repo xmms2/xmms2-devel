@@ -538,6 +538,10 @@ xmms_curl_thread (xmms_transport_t *transport)
 cont:
 	XMMS_DBG ("Curl thread quitting");
 
+	if (!data->mime) {
+		xmms_transport_mimetype_set (transport, NULL);
+	}
+
 	data->running = FALSE;
 	xmms_ringbuf_set_eos (data->ringbuf, TRUE);
 	g_mutex_unlock (data->mutex);

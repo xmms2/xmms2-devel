@@ -210,13 +210,17 @@ void
 xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 {
 	g_return_if_fail (transport);
-	g_return_if_fail (mimetype);
 
 	g_mutex_lock (transport->mutex);
 	
 	if (transport->mimetype)
 		g_free (transport->mimetype);
-	transport->mimetype = g_strdup (mimetype);
+
+	if (mimetype) {
+		transport->mimetype = g_strdup (mimetype);
+	} else {
+		transport->mimetype = NULL;
+	}
 
 	g_mutex_unlock (transport->mutex);
 	
