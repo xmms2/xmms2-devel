@@ -261,8 +261,6 @@ void Init_XmmsClient (void)
 {
 	VALUE c;
 
-	rb_require ("ecore");
-
 	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
 
 	rb_define_singleton_method (c, "new", c_new, 0);
