@@ -390,6 +390,17 @@ xmmsc_result_get_playlist_change (xmmsc_result_t *res,
 
 	x_return_val_if_fail (res, 0);
 
+	if (!res || res->error != XMMS_ERROR_NONE || !res->reply) {
+		return 0;
+	}
+
+	if (!xmms_ipc_msg_get_uint32 (res->reply, change))
+		return 0;
+	if (!xmms_ipc_msg_get_uint32 (res->reply, id))
+		return 0;
+	if (!xmms_ipc_msg_get_uint32 (res->reply, argument))
+		return 0;
+	
 	return 1;
 }
 
