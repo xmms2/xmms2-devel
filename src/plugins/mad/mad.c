@@ -120,14 +120,13 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
-	struct xing xing_h;
+	xmms_xing_t *xing;
 	guint fsize=0;
 	guint bitrate=0;
 	gchar *tmp;
 
 	mad_stream_init (&stream);
 	mad_frame_init (&frame);
-	xing_init (&xing_h);
 
 	mad_stream_buffer (&stream, buf, len);
 
@@ -141,7 +140,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 	
 	fsize = filesize * 8;
 
-	if (xing_parse (&xing_h, stream.anc_ptr, stream.anc_bitlen) == 0) {
+	if (xing = xmms_xing_parse (stream.anc_ptr)) {
 		
 		/* @todo Hmm? This is SO strange. */
 		while (42) {
@@ -152,13 +151,13 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			}
 		}
 
-		if (xing_h.flags & XING_FRAMES) {
+		if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
 			gchar *tmp;
 
 			timer = frame.header.duration;
-			mad_timer_multiply (&timer, xing_h.frames);
+			mad_timer_multiply (&timer, xmms_xing_get_frames (xing));
 			duration = mad_timer_count (timer, MAD_UNITS_SECONDS);
 
 			XMMS_DBG ("XING duration %d", duration);
@@ -168,10 +167,10 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			g_free (tmp);
 		}
 
-		if (xing_h.flags & XING_BYTES) {
+		if (xmms_xing_has_flag (xing, XMMS_XING_BYTES)) {
 			gchar *tmp;
 
-			tmp = g_strdup_printf ("%ld", xing_h.bytes / fsize);
+			tmp = g_strdup_printf ("%ld", xmms_xing_get_bytes (xing) / fsize);
 			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
 		}

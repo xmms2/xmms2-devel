@@ -1,86 +1,72 @@
-/** @file XING Header reader.
- *
- *
- * Orgin of this code from:
- * mad - MPEG audio decoder
- * Copyright (C) 2000-2001 Robert Leslie
- *
- * Modified for XMMS2.
- */
+/** @file This is the Xing Header parser.
+  */
 
-#include <string.h>
+#include "xmms/xmms.h"
+#include "xmms/util.h"
 
-# include "xing.h"
-# include "mad.h"
+#include "xing.h"
 
-/* Our indians may go poop-poop... */
-# define XING_MAGIC	(('X' << 24) | ('i' << 16) | ('n' << 8) | 'g') 
-/* * so lets do like this instead... */
+struct xmms_xing_St {
+	gint flags;
+	guint frames;
+	guint bytes;
+	guint toc[100];
+};
 
-/*#define XING_MAGIC "Xing"*/
-
-/*
- * NAME:	xing->init()
- * DESCRIPTION:	initialize Xing structure
- */
-void xing_init(struct xing *xing)
+gboolean
+xmms_xing_has_flag (xmms_xing_t *xing, xmms_xing_flags_t flag)
 {
-  xing->flags = 0;
+	return xing->flags & flag;
 }
 
-/*
- * NAME:	xing->parse()
- * DESCRIPTION:	parse a Xing VBR header
- */
-int xing_parse(struct xing *xing, struct mad_bitptr ptr, unsigned int bitlen)
+guint
+xmms_xing_get_frames (xmms_xing_t *xing)
 {
-
-/*  if (bitlen < 64 || memcmp (ptr.byte, XING_MAGIC, 4))*/
-  if (bitlen < 64 || mad_bit_read(&ptr, 32) != XING_MAGIC)
-    goto fail;
-
-  xing->flags = mad_bit_read(&ptr, 32);
-  bitlen -= 64;
-
-  if (xing->flags & XING_FRAMES) {
-    if (bitlen < 32)
-      goto fail;
-
-    xing->frames = mad_bit_read(&ptr, 32);
-    bitlen -= 32;
-  }
-
-  if (xing->flags & XING_BYTES) {
-    if (bitlen < 32)
-      goto fail;
-
-    xing->bytes = mad_bit_read(&ptr, 32);
-    bitlen -= 32;
-  }
-
-  if (xing->flags & XING_TOC) {
-    int i;
-
-    if (bitlen < 800)
-      goto fail;
-
-    for (i = 0; i < 100; ++i)
-      xing->toc[i] = mad_bit_read(&ptr, 8);
-
-    bitlen -= 800;
-  }
-
-  if (xing->flags & XING_SCALE) {
-    if (bitlen < 32)
-      goto fail;
-
-    xing->scale = mad_bit_read(&ptr, 32);
-    bitlen -= 32;
-  }
-
-  return 0;
-
- fail:
-  xing->flags = 0;
-  return -1;
+	return xing->frames;
 }
+
+guint
+xmms_xing_get_bytes (xmms_xing_t *xing)
+{
+	return xing->bytes;
+}
+
+guint
+xmms_xing_get_toc (xmms_xing_t *xing, gint index)
+{
+	if (index > 100) return -1;
+
+	return xing->toc[index];
+}
+
+xmms_xing_t *
+xmms_xing_parse (struct mad_bitptr *ptr)
+{
+	xmms_xing_t *xing;
+
+	xing = g_new0 (xmms_xing_t, 1);
+
+	if (g_strncasecmp ("XING", (gchar *)ptr.byte, 4) != 0)
+		return NULL;
+
+	xing->flags = mad_bit_read (&ptr, 32);
+
+	if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES))
+		xing->frames = mad_bit_read (&ptr, 32);
+
+	if (xmms_xing_has_flag (xing, XMMS_XING_BYTES))
+		xing->bytes = mad_bit_read (ptr, 32);
+
+	if (xmms_xing_has_flag (xing, XMMS_XING_TOC)) {
+		gint i = 0;
+		for (i = 0; i < 100; i++)
+			xing->toc[i] = mad_bit_read (ptr, 8);
+	}
+
+	if (xing->flags & XMMS_XING_SCALE) {
+		mad_bit_read (ptr, 32);
+	}
+
+	return xing;
+}
+
