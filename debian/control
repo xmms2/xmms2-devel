@@ -34,18 +34,12 @@ Description: XMMS2 - cli client - private beta - DO NOT SPREAD!
  This package contains a simple text-ui for xmms2
  DO NOT SPREAD!
 
-Package: xmms2-client-gtk2
-Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
-Description: XMMS2 - gtk2 client - private beta - DO NOT SPREAD!
- This package contains a simple gtk2-ui for xmms2
- DO NOT SPREAD!
-
-Package: xmms2-decoder-sid
+Package: xmms2-transport-curl
 Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
-Description: XMMS2 - sid decoder - private beta - DO NOT SPREAD!
- This package let you play those funcy SID tunes from the C64 with xmms2
+Description: XMMS2 - curl transport for HTTP - private beta DO NOT SPREAD!
+ This package contains a HTTP transport for xmms2.
+ DO NOT SPREAD!
 
 Package: xmms2-decoder-vorbis
 Architecture: any
@@ -58,4 +52,10 @@ Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - sqlitebased medialib - private beta - DO NOT SPREAD!
  This package is a backed for the medialib based on sqlite
+
+Package: xmms2-client-sdl
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
+Description: XMMS2 - simple vis - private beta - DO NOT SPREAD!
+ This is a very simple visualization for xmms2.
 

@@ -6,15 +6,13 @@ package=xmms2
 
 build:
 	$(checkdir)
-	./autogen.sh
-	./configure --prefix=/usr
-	$(MAKE) CFLAGS="-g -Wall"
+	scons PREFIX=/usr SYSCONFDIR=/etc/xmms
 	touch build
 
 clean:
 	$(checkdir)
 	rm -f build
-	-$(MAKE) distclean
+	scons -c 
 	rm -f `find . -name "*~"`
 	rm -rf debian/tmp debian/files* core debian/substvars
 
@@ -29,7 +27,7 @@ binary-arch: checkroot build
 	rm -rf debian/tmp
 	install -d debian/tmp
 	cd debian/tmp && install -d `cat ../dirs`
-	$(MAKE) install prefix=`pwd`/debian/tmp/usr
+	scons PREFIX=/usr SYSCONFDIR=/etc/xmms INSTALLDIR="`pwd`/debian/tmp/"
 	rm -f debian/tmp/usr/lib/xmms/*.la
 	rm -f debian/tmp/usr/lib/xmms/*.a
 # Must have debmake installed for this to work. Otherwise please copy
