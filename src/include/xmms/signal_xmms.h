@@ -21,6 +21,7 @@
 #define __SIGNAL_XMMS_H__
 
 #define XMMS_OBJECT_PLAYLIST "/xmms/playlist"
+#define XMMS_OBJECT_DECODER "/xmms/decoder"
 #define XMMS_OBJECT_CLIENT "/xmms/client"
 #define XMMS_OBJECT_OUTPUT "/xmms/output"
 #define XMMS_OBJECT_DBUS "/xmms/dbus"

@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 /**
  * @file
  * Output plugin helper
@@ -47,12 +44,16 @@ void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
 void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
 guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
+static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
+static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
 
 XMMS_METHOD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
 XMMS_METHOD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_METHOD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_METHOD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
 
 /*
  * Type definitions
@@ -390,6 +391,12 @@ xmms_output_new (xmms_plugin_t *plugin)
 	xmms_object_method_add (XMMS_OBJECT (output), 
 				XMMS_METHOD_CPLAYTIME, 
 				XMMS_METHOD_FUNC (playtime));
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_SEEKMS, 
+				XMMS_METHOD_FUNC (seekms));
+	xmms_object_method_add (XMMS_OBJECT (output), 
+				XMMS_METHOD_SEEKSAMPLES, 
+				XMMS_METHOD_FUNC (seeksamples));
 
 
 	
@@ -490,10 +497,8 @@ void
 xmms_output_played_samples_set (xmms_output_t *output, guint samples)
 {
 	g_return_if_fail (output);
-	XMMS_MTX_LOCK (output->mutex);
 	output->played = samples * 4;
 	XMMS_DBG ("Set played to %d", output->played);
-	XMMS_MTX_UNLOCK (output->mutex);
 }
 
 
@@ -663,6 +668,30 @@ xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
 	XMMS_MTX_UNLOCK (output->mutex);
 }
 
+static void
+xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
+{
+	g_return_if_fail (output);
+	XMMS_MTX_LOCK (output->mutex);
+	if (output->decoder) {
+		xmms_decoder_seek_ms (output->decoder, ms, error);
+	} else {
+		/* Here we should set some data to the entry so it will start
+		   play from the offset */
+	}
+	XMMS_MTX_UNLOCK (output->mutex);
+}
+
+static void
+xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error)
+{
+	g_return_if_fail (output);
+	XMMS_MTX_LOCK (output->mutex);
+	if (output->decoder) {
+		xmms_decoder_seek_samples (output->decoder, samples, error);
+	}
+	XMMS_MTX_UNLOCK (output->mutex);
+}
 
 
 #if 0 /* TO BE FIXED ---------------------------------------------

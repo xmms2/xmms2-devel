@@ -26,6 +26,7 @@
 
 
 #include "xmms/decoder.h"
+#include "xmms/dbus.h"
 #include "xmms/plugin.h"
 #include "xmms/object.h"
 #include "xmms/util.h"
@@ -407,6 +408,8 @@ xmms_decoder_samplerate_get (xmms_decoder_t *decoder)
 	return decoder->samplerate;
 }
 
+XMMS_METHOD_DEFINE (seek_ms, xmms_decoder_seek_ms, xmms_decoder_t *, NONE, UINT32, NONE);
+
 gboolean
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
 {
@@ -418,6 +421,8 @@ xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t 
 	return xmms_decoder_seek_samples (decoder, samples, err);
 
 }
+
+XMMS_METHOD_DEFINE (seek_samples, xmms_decoder_seek_samples, xmms_decoder_t *, NONE, UINT32, NONE);
 
 gboolean
 xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err)
