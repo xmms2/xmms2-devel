@@ -188,6 +188,7 @@ xmms_modplug_init (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
 	xmms_modplug_data_t *data;
+	xmms_error_t error;
 	gint len = 0;
 
 	g_return_val_if_fail (decoder, FALSE);
@@ -212,9 +213,9 @@ xmms_modplug_init (xmms_decoder_t *decoder)
 		
 	while (len < data->buffer_length) {
 		gint ret = xmms_transport_read (transport, data->buffer + len,
-						data->buffer_length);
+		                                data->buffer_length, &error);
 		
-		if ( ret < 0 ) {
+		if ( ret <= 0 ) {
 			g_free (data->buffer);
 			data->buffer = NULL;
 			return FALSE;

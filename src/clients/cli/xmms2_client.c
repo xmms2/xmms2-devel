@@ -385,8 +385,10 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			total_playtime += strtoul (playtime, NULL, 10);
 		}
 
-		if (x_hash_lookup (tab, "channel")) {
-			xmmsc_entry_format (line, sizeof (line), "%c - %t", tab);
+		if (x_hash_lookup (tab, "channel") && x_hash_lookup (tab, "title")) {
+			xmmsc_entry_format (line, sizeof (line), "[stream] %t", tab);
+		} else if (x_hash_lookup (tab, "channel") && !x_hash_lookup (tab, "title")) {
+			xmmsc_entry_format (line, sizeof (line), "%c", tab);
 		} else if (!x_hash_lookup (tab, "title")) {
 			xmmsc_entry_format (line, sizeof(line), "%f (%m:%s)", tab);
 		} else {
@@ -721,7 +723,10 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 
 		if (id == mid) {
 			printf ("\n");
-			if (x_hash_lookup (hash, "channel")) {
+			if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
+				xmmsc_entry_format (songname, sizeof (songname),
+				                    "[stream] %t", hash);
+			} else if (x_hash_lookup (hash, "channel")) {
 				xmmsc_entry_format (songname, sizeof (songname),
 				                    "%c", hash);
 			} else {

@@ -32,7 +32,7 @@ typedef struct {
 
 	gchar *mime;
 
-	gboolean error, run, know_length, stream_with_meta, know_meta_offset;
+	gboolean error, running, know_length, stream_with_meta, know_meta_offset;
 
 	struct curl_slist *http_aliases;
 	struct curl_slist *http_headers;
@@ -41,6 +41,8 @@ typedef struct {
 
 	GThread *thread;
 	GMutex *mutex;
+
+	xmms_error_t status;
 
 	xmms_playlist_entry_t *pl_entry;
 } xmms_curl_data_t;
@@ -52,7 +54,7 @@ typedef struct {
 static gboolean xmms_curl_can_handle (const gchar *url);
 static gboolean xmms_curl_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_curl_close (xmms_transport_t *transport);
-static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 static gint xmms_curl_size (xmms_transport_t *transport);
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
@@ -147,10 +149,11 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_FOLLOWLOCATION, 1);	/* Doesn't work in multi though... */
 	curl_easy_setopt (data->curl_easy, CURLOPT_AUTOREFERER, 1);
+	curl_easy_setopt (data->curl_easy, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt (data->curl_easy, CURLOPT_NOPROGRESS, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEHEADER, transport);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEDATA, transport);
-
 	curl_easy_setopt (data->curl_easy, CURLOPT_HTTP200ALIASES, data->http_aliases);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION, xmms_curl_callback_write);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION, xmms_curl_callback_header);
@@ -169,11 +172,11 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	curl_multi_add_handle (data->curl_multi, data->curl_easy);
 
-	/* And add the final touch of complexity to this mess: start up another thread */
-
 	xmms_transport_private_data_set (transport, data);
 
-	data->run = TRUE;
+	/* And add the final touch of complexity to this mess: start up another thread */
+
+	data->running = TRUE;
 	data->thread = g_thread_create ((GThreadFunc) xmms_curl_thread, (gpointer) transport, TRUE, NULL);
 	g_return_val_if_fail (data->thread, FALSE);
 
@@ -185,97 +188,124 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 }
 
 static gint
-xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
+xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_curl_data_t *data;
-	gchar *metadata;
 	gint ret;
-	guchar funky;
-
-	//XMMS_DBG ("xmms_curl_read ()");
 
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (error, -1);
 
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	if (!data->run) {
-		/* Thread ended... */
+	g_mutex_lock (data->mutex);
+
+	if (!data->running) {
+		XMMS_DBG ("Curl not inited?");
+		g_mutex_unlock (data->mutex);
 		return -1;
 	}
 
-	if (data->stream_with_meta && data->know_meta_offset) {
-		if (data->bytes_since_meta == data->meta_offset) {
-			gchar **tags;
-			gint i = 0;
+	if (len > xmms_ringbuf_size (data->ringbuf)) {
+		len = xmms_ringbuf_size (data->ringbuf);
+	}
 
-			data->bytes_since_meta = 0;
+	/* Perhaps we should only wait for 1 byte? */
+	xmms_ringbuf_wait_used (data->ringbuf, len, data->mutex);
 
-			g_mutex_lock (data->mutex);
-			xmms_ringbuf_wait_used (data->ringbuf, 1, data->mutex);
-			xmms_ringbuf_read (data->ringbuf, &funky, 1);
-			g_mutex_unlock (data->mutex);
+	if (xmms_ringbuf_iseos (data->ringbuf)) {
+		gint val = -1;
 
-			if (funky == 0)
-				return 0;
-
-			metadata = g_malloc (funky * 16);
-
-			g_mutex_lock (data->mutex);
-			xmms_ringbuf_wait_used (data->ringbuf, funky * 16, data->mutex);
-			ret = xmms_ringbuf_read (data->ringbuf, metadata, funky * 16);
-			g_mutex_unlock (data->mutex);
-
-			XMMS_DBG ("METADATA: %s", metadata);
-
-			tags = g_strsplit (metadata, ";", 0);
-			while (tags[i]) {
-				if (g_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
-					gint r,w;
-					gchar *tmp, *tmp2;
-					tmp = tags[i]+13;
-					tmp[strlen (tmp)-1] = '\0';
-
-					tmp2 = g_convert (tmp, strlen (tmp), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-					xmms_transport_mediainfo_property_set (transport,
-									       XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
-									       tmp2);
-					g_free (tmp2);
-				}
-
-				i++;
-			}
-
-			g_strfreev (tags);
-
-			g_free (metadata);
+		if (data->status.code == XMMS_ERROR_EOS) {
+			val = 0;
 		}
 
-		if (data->bytes_since_meta + len > data->meta_offset) {
-			g_mutex_lock (data->mutex);
-			ret = xmms_ringbuf_read (data->ringbuf, buffer, data->meta_offset - data->bytes_since_meta);
-			g_mutex_unlock (data->mutex);
+		xmms_error_set (error, data->status.code, NULL);
 
-			data->bytes_since_meta += ret;
+		g_mutex_unlock (data->mutex);
+		return val;
+	}
 
-			return ret;
-		}
+	/* normal file transfer */
 
-		g_mutex_lock (data->mutex);
+	if (!data->know_meta_offset || !data->stream_with_meta) {
 		ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
 		g_mutex_unlock (data->mutex);
-
-		data->bytes_since_meta += ret;
-	//	XMMS_DBG ("xmms_curl_read () returning %u bytes, bytes_since_meta = %u",
-	//					ret, data->bytes_since_meta);
 		return ret;
 	}
 
-	g_mutex_lock (data->mutex);
-	ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
-	g_mutex_unlock (data->mutex);
+	/* stream transfer with shoutcast metainfo */
 
+	if (data->bytes_since_meta == data->meta_offset) {
+		gchar **tags;
+		gchar *metadata;
+		guchar magic;
+		gint i;
+
+		data->bytes_since_meta = 0;
+
+		xmms_ringbuf_read (data->ringbuf, &magic, 1);
+
+		if (magic == 0) {
+
+			ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
+			data->bytes_since_meta += ret;
+
+			g_mutex_unlock (data->mutex);
+			return ret;
+		}
+
+		metadata = g_malloc0 (magic * 16);
+		g_return_val_if_fail (metadata, -1);
+
+		xmms_ringbuf_wait_used (data->ringbuf, magic * 16, data->mutex);
+		ret = xmms_ringbuf_read (data->ringbuf, metadata, magic * 16);
+
+		XMMS_DBG ("Shoutcast metadata: %s", metadata);
+
+		tags = g_strsplit (metadata, ";", 0);
+		for (i = 0; tags[i] != NULL; i++) {
+			if (g_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
+				gint r, w;
+				gchar *tmp, *tmp2;
+
+				tmp = tags[i] + 13;
+				tmp[strlen (tmp) - 1] = '\0';
+
+				tmp2 = g_convert (tmp, strlen (tmp), "UTF-8", "ISO-8859-1",
+				                  &r, &w, NULL);
+
+				xmms_transport_mediainfo_property_set (transport,
+						XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, tmp2);
+				g_free (tmp2);
+			}
+		}
+		g_strfreev (tags);
+		g_free (metadata);
+
+		/* we want to read more data anyway, so fall thru here */
+	}
+
+	/* Make sure we have at least *something* to read */
+	xmms_ringbuf_wait_used (data->ringbuf, 1, data->mutex);
+
+	/* are we trying to read past metadata? */
+
+	if (data->bytes_since_meta + len > data->meta_offset) {
+		ret = xmms_ringbuf_read (data->ringbuf, buffer,
+		                         data->meta_offset - data->bytes_since_meta);
+		data->bytes_since_meta += ret;
+
+		g_mutex_unlock (data->mutex);
+		return ret;
+	}
+
+	ret = xmms_ringbuf_read (data->ringbuf, buffer, len);
+	data->bytes_since_meta += ret;
+
+	g_mutex_unlock (data->mutex);
 	return ret;
 }
 
@@ -307,7 +337,7 @@ xmms_curl_close (xmms_transport_t *transport)
 	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
 
-	data->run = FALSE;
+	data->running = FALSE;
 
 	g_mutex_lock (data->mutex);
 	xmms_ringbuf_clear (data->ringbuf);
@@ -458,7 +488,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 
 	curl_multi_fdset (data->curl_multi, &data->fdread, &data->fdwrite, &data->fdexcp,  &data->maxfd);
 
-	while (data->run && data->running_handles) {
+	while (data->running && data->running_handles) {
 		gint ret;
 
 		timeout.tv_sec = 1;
@@ -468,13 +498,22 @@ xmms_curl_thread (xmms_transport_t *transport)
 
 		switch (ret) {
 			case -1:
+				g_mutex_lock (data->mutex);
 				XMMS_DBG ("Disconnected?");
-				data->run = FALSE;
+				data->running = FALSE;
+				xmms_ringbuf_set_eos (data->ringbuf, TRUE);
+				g_mutex_unlock (data->mutex);
 				continue;
 			case 0:
 				continue;
 			default:
 				curl_multi_perform (data->curl_multi, &data->running_handles);
+
+				g_mutex_lock (data->mutex);
+				if (!data->running_handles) {
+					xmms_ringbuf_set_eos (data->ringbuf, TRUE);
+				}
+				g_mutex_unlock (data->mutex);
 				break;
 		}
 	}

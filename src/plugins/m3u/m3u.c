@@ -148,6 +148,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 {
 	gint len = 0, buffer_len = 0;
 	gchar **lines, **line, *buffer;
+	xmms_error_t error;
 	gboolean extm3u = FALSE;
 
 	g_return_val_if_fail (plsplugin, FALSE); 
@@ -160,10 +161,10 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 	while (len < buffer_len) {
 		gint ret;
 
-		ret = xmms_transport_read (transport, buffer + len, buffer_len);
+		ret = xmms_transport_read (transport, buffer + len, buffer_len, &error);
 		XMMS_DBG ("Got %d bytes.", ret);
 
-		if (ret < 0) {
+		if (ret <= 0) {
 			g_free (buffer);
 			return FALSE;
 		}
