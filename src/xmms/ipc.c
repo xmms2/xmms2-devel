@@ -460,7 +460,7 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	g_return_val_if_fail (client, FALSE);
 	g_return_val_if_fail (msg, FALSE);
 
-	if (g_queue_get_length (client->out_msg) > 10) {
+	if (client->out_msg->length > 10) {
 		/* This client is teh suxx! */
 		client->run = FALSE;
 		xmms_ipc_msg_destroy (msg);
