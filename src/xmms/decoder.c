@@ -445,8 +445,6 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 		return FALSE;
 	}
 
-	xmms_output_played_samples_set (decoder->output, samples);
-
 	return TRUE;
 }
 
