@@ -23,6 +23,8 @@ PLUGINS:
 	* vorbis
 		* calculate duration
 		* map comments to entry_t
+	* sid
+		* parse STIL.txt
 
 	* Transport
 
