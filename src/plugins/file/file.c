@@ -135,11 +135,15 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 		return FALSE;
 	}
 
-	if (stat (urlptr, &st) == -1)
+	if (stat (urlptr, &st) == -1) {
+		g_free (nurl);
 		return FALSE;
+	}
 
-	if (!S_ISREG (st.st_mode))
+	if (!S_ISREG (st.st_mode)) {
+		g_free (nurl);
 		return FALSE;
+	}
 
 	XMMS_DBG ("Opening %s", urlptr);
 	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
