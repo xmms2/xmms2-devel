@@ -308,6 +308,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	if (xmms_error_isok (&arg.error)) {
 		retmsg = xmms_ipc_msg_new (msg->object, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_arg_value (retmsg, &arg);
+		xmms_ipc_free_arg_value (&arg);
 	} else {
 		retmsg = xmms_ipc_msg_new (msg->object, XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
@@ -317,8 +318,6 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		g_free (arg.values[0].string);
 	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
 		g_free (arg.values[1].string);
-
-	xmms_ipc_free_arg_value (&arg);
 
 	retmsg->cid = msg->cid;
 	xmms_ipc_client_msg_write (client, retmsg);
