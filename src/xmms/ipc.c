@@ -413,22 +413,24 @@ xmms_ipc_client_thread (gpointer data)
 				break;
 			}
 			xmms_ringbuf_write (client->read_buffer, buffer, ret);
+
+			while (TRUE) {
+
+				if (!xmms_ipc_msg_can_read (client->read_buffer)) {
+					break;
+				} else {
+					msg = xmms_ipc_msg_read (client->read_buffer);
+
+					if (!msg)
+						continue;
+
+					process_msg (client, client->ipc, msg);
+					xmms_ipc_msg_destroy (msg);
+				}
+			}
+
 		}
 		
-		while (TRUE) {
-
-			if (!xmms_ipc_msg_can_read (client->read_buffer)) {
-				break;
-			} else {
-				msg = xmms_ipc_msg_read (client->read_buffer);
-
-				if (!msg)
-					continue;
-
-				process_msg (client, client->ipc, msg);
-				xmms_ipc_msg_destroy (msg);
-			}
-		}
 
 		if (disconnect) {
 			XMMS_DBG ("disconnect was true!");
