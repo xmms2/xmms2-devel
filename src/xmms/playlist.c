@@ -134,7 +134,7 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 		playlist->currententry = g_list_next (node);
 	}
 	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
-	xmms_playlist_entry_free (node->data);
+	xmms_playlist_entry_unref (node->data);
 	playlist->list = g_list_remove_link (playlist->list, node);
 	g_list_free_1 (node);
 
@@ -616,6 +616,7 @@ xmms_playlist_entry_new (gchar *uri)
 	ret->uri = g_strdup (uri);
 	ret->properties = g_hash_table_new (g_str_hash, g_str_equal);
 	ret->id = 0;
+	ret->ref = 1;
 
 	return ret;
 }
@@ -740,8 +741,13 @@ static void
 xmms_playlist_entry_free (xmms_playlist_entry_t *entry)
 {
 	g_free (entry->uri);
+	
+	if (entry->mimetype)
+		g_free (entry->mimetype);
+
 	g_hash_table_foreach_remove (entry->properties, xmms_playlist_entry_foreach_free, NULL);
 	g_hash_table_destroy (entry->properties);
+
 	g_free (entry);
 }
 
@@ -771,6 +777,25 @@ xmms_playlist_entry_is_wellknown (gchar *property)
 	}
 
 	return FALSE;
+}
+
+void
+xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mimetype)
+{
+
+	g_return_if_fail (entry);
+	g_return_if_fail (mimetype);
+
+	entry->mimetype = g_strdup (mimetype);
+
+}
+
+const gchar *
+xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry)
+{
+	g_return_val_if_fail (entry, NULL);
+
+	return entry->mimetype;
 }
 
 void

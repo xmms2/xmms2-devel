@@ -63,6 +63,7 @@ typedef struct xmms_playlist_St {
 
 typedef struct xmms_playlist_entry_St {
 	gchar *uri;
+	gchar *mimetype;
 	guint id;
 	guint ref;
 	GHashTable *properties;
@@ -106,6 +107,8 @@ xmms_playlist_entry_t * xmms_playlist_entry_new (gchar *uri);
 
 void xmms_playlist_entry_set_prop (xmms_playlist_entry_t *entry, gchar *key, gchar *value);
 void xmms_playlist_entry_set_uri (xmms_playlist_entry_t *entry, gchar *uri);
+void xmms_playlist_entry_mimetype_set (xmms_playlist_entry_t *entry, const gchar *mimetype);
+const gchar *xmms_playlist_entry_mimetype_get (xmms_playlist_entry_t *entry);
 gchar *xmms_playlist_entry_get_uri (const xmms_playlist_entry_t *entry);
 guint xmms_playlist_entry_id_get (xmms_playlist_entry_t *entry);
 gchar *xmms_playlist_entry_get_prop (const xmms_playlist_entry_t *entry, gchar *key);

@@ -47,7 +47,7 @@ typedef struct xmms_mad_data_St {
 static gboolean xmms_mad_can_handle (const gchar *mimetype);
 static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
-static xmms_playlist_entry_t *xmms_mad_get_media_info (xmms_decoder_t *decoder);
+static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_mad_init (xmms_decoder_t *decoder);
 
@@ -137,7 +137,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 	
 	fsize = filesize * 8;
 
-	if (xing = xmms_xing_parse (stream.anc_ptr)) {
+	if ((xing = xmms_xing_parse (stream.anc_ptr))) {
 		
 		/* @todo Hmm? This is SO strange. */
 		while (42) {
@@ -167,7 +167,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 		if (xmms_xing_has_flag (xing, XMMS_XING_BYTES)) {
 			gchar *tmp;
 
-			tmp = g_strdup_printf ("%ld", xmms_xing_get_bytes (xing) / fsize);
+			tmp = g_strdup_printf ("%u", xmms_xing_get_bytes (xing) / fsize);
 			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
 		}
@@ -195,7 +195,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 
 }
 
-static xmms_playlist_entry_t *
+static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
@@ -206,18 +206,19 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	gboolean id3handled = FALSE;
 	gint ret;
 
-	g_return_val_if_fail (decoder, NULL);
+	g_return_if_fail (decoder);
 
 	data = xmms_decoder_plugin_data_get (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, NULL);
+	g_return_if_fail (transport);
 
 	entry = xmms_playlist_entry_new (NULL);
 
 	ret = xmms_transport_read (transport, buf, 8192);
 	if (ret <= 0) {
-		return entry;
+		xmms_playlist_entry_unref (entry);
+		return;
 	}
 
 	if (ret >= 10 && xmms_mad_id3v2_header (buf, &head)) {
@@ -241,7 +242,8 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   MIN(4096,head.len - pos));
 				if (ret <= 0) {
 					XMMS_DBG ("error reading data for id3v2-tag");
-					return entry;
+					xmms_playlist_entry_unref (entry);
+					return;
 				}
 				pos += ret;
 			}
@@ -271,10 +273,12 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (data) {
 		data->entry = entry;
 
-		xmms_core_set_mediainfo (entry);
+		xmms_decoder_entry_mediainfo_set (decoder, entry);
 	}
 
-	return entry;
+	xmms_playlist_entry_unref (entry);
+
+	return;
 }
 
 static gboolean

@@ -4,6 +4,7 @@
 #include "xmms/object.h"
 #include "xmms/output.h"
 #include "xmms/decoder.h"
+#include "xmms/mediainfo.h"
 
 typedef struct xmms_core_St {
 	xmms_object_t object;
@@ -12,6 +13,7 @@ typedef struct xmms_core_St {
 
 	xmms_playlist_t *playlist;
 	xmms_playlist_entry_t *curr_song;
+	xmms_mediainfo_thread_t *mediainfothread;
 	
 	GCond *cond;
 	GMutex *mutex;
@@ -41,7 +43,8 @@ xmms_playlist_t * xmms_core_get_playlist ();
 
 void xmms_core_quit ();
 
-void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);
+void xmms_core_playlist_mediainfo_changed (guint id);
+/*void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);*/
 void xmms_core_set_playlist (xmms_playlist_t *playlist);
 void xmms_core_information (gint loglevel, gchar *information);
 gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);

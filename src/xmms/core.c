@@ -143,7 +143,10 @@ xmms_core_playback_start ()
 void
 xmms_core_playlist_adduri (gchar *nuri)
 {
-	xmms_playlist_add (core->playlist, xmms_playlist_entry_new (nuri), XMMS_PLAYLIST_APPEND);
+	xmms_playlist_entry_t *entry = xmms_playlist_entry_new (nuri);
+	xmms_playlist_add (core->playlist, entry, XMMS_PLAYLIST_APPEND);
+	xmms_mediainfo_thread_add (core->mediainfothread,
+			xmms_playlist_entry_id_get (entry));
 
 }
 
@@ -285,7 +288,9 @@ core_thread(gpointer data){
 			continue;
 		}
 
-		decoder = xmms_decoder_new (mime);
+		xmms_playlist_entry_mimetype_set (core->curr_song, mime);
+
+		decoder = xmms_decoder_new (core->curr_song);
 		if (!decoder) {
 			xmms_transport_close (transport);
 			xmms_core_play_next ();
@@ -321,6 +326,7 @@ core_thread(gpointer data){
 void
 xmms_core_start ()
 {
+	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 
@@ -331,11 +337,18 @@ xmms_core_start ()
  *
  * @param entry Entry containing the information to set.
  */
-void
+/*void
 xmms_core_set_mediainfo (xmms_playlist_entry_t *entry)
 {
 	xmms_playlist_entry_copy_property (entry, core->curr_song);
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, core);
+}*/
+
+void
+xmms_core_playlist_mediainfo_changed (guint id)
+{
+	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYLIST_MEDIAINFO, 
+			GUINT_TO_POINTER (id));
 }
 
 /**

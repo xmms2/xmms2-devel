@@ -8,8 +8,8 @@
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_decoder_t *xmms_decoder_new (const gchar *mimetype);
+xmms_decoder_t *xmms_decoder_new (xmms_playlist_entry_t *entry);
 
 void xmms_decoder_start (xmms_decoder_t *decoder, xmms_transport_t *transport, xmms_output_t *output);
 
-#endif
+#endif /* __XMMS_DECODER_INT_H__ */
