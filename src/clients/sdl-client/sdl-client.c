@@ -33,11 +33,16 @@
 
 #define DEFAULT_FORMAT "%a - %t (%s:%m)"
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_ttf.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <glib.h>
 #include <math.h>
+#include <unistd.h>
+#include <string.h>
+
+#include <SDL/SDL.h>
+#include <SDL/SDL_ttf.h>
 
 #include "xmms/xmmsclient.h"
 #include "xmms/xmmsclient-glib.h"
@@ -70,12 +75,18 @@ render (gpointer data)
 						return FALSE;
 						break;
 					case 'n':
+						res = xmmsc_playlist_set_next (connection, 0, 1);
+						xmmsc_result_wait (res);
+						xmmsc_result_unref (res);
 						res = xmmsc_playback_next (connection);
 						xmmsc_result_wait (res);
 						xmmsc_result_unref (res);
 						break;
 					case 'p':
-						res = xmmsc_playback_prev (connection);
+						res = xmmsc_playlist_set_next (connection, 0, -1);
+						xmmsc_result_wait (res);
+						xmmsc_result_unref (res);
+						res = xmmsc_playback_next (connection);
 						xmmsc_result_wait (res);
 						xmmsc_result_unref (res);
 						break;
@@ -361,7 +372,7 @@ main (int argc, char **argv)
 
 
 	XMMS_CALLBACK_SET (connection, xmmsc_playback_playtime, handle_playtime, NULL);
-	XMMS_CALLBACK_SET (connection, xmmsc_playback_current_id, handle_mediainfo, NULL);
+	XMMS_CALLBACK_SET (connection, xmmsc_playlist_current_id, handle_mediainfo, NULL);
 	XMMS_CALLBACK_SET (connection, xmmsc_playback_status, handle_status, NULL);
 
 	g_timeout_add (20, render, (gpointer)screen);

@@ -12,8 +12,8 @@ if base_env.HasGroup("qt") and environ.has_key ('QTDIR'):
 #	SConscript('qt/SConscript')
 	SConscript('lib/xmmsclient-qt/SConscript')
 # SDL NOT YET IN NEW API
-#if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
-#	SConscript('sdl-client/SConscript')
+if base_env.HasGroup("sdl") and base_env.HasGroup("sdl-ttf"):
+	SConscript('sdl-client/SConscript')
 
 if base_env.HasGroup("ecore") :
 	SConscript('lib/xmmsclient-ecore/SConscript')
