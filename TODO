@@ -38,6 +38,11 @@ PLUGINS:
 		* ARTS
 		* ALSA
 		* ESD - Tack Gnome.. tack som fan
+                    "esound is junk. The only thing esd has is a good
+                     client API for going boing at approximately the
+	             right time. Anything else is beyond it."
+                                                            -- Alan Cox
+
 	
 LIBL44T:
 	* specification.

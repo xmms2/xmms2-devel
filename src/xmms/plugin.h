@@ -15,6 +15,7 @@
 #define XMMS_PLUGIN_METHOD_SIZE "size"
 #define XMMS_PLUGIN_METHOD_SEEK "seek"
 #define XMMS_PLUGIN_METHOD_NEW "new"
+#define XMMS_PLUGIN_METHOD_SAMPLERATE_SET "samplerate_set"
 #define XMMS_PLUGIN_METHOD_DECODE_BLOCK "decode_block"
 #define XMMS_PLUGIN_METHOD_GET_MEDIAINFO "get_mediainfo"
 #define XMMS_PLUGIN_METHOD_DESTROY "destroy"

@@ -31,6 +31,7 @@ typedef struct xmms_oss_data_St {
 static gboolean xmms_oss_open (xmms_output_t *output);
 static void xmms_oss_close (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
+static guint xmms_oss_samplerate_set (xmms_output_t *output, guint rate);
 
 /*
  * Plugin header
@@ -51,7 +52,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, xmms_oss_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_oss_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_oss_close);
-	
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_oss_samplerate_set);
+
 	return plugin;
 }
 
@@ -70,7 +72,7 @@ xmms_oss_open (xmms_output_t *output)
 	
 	g_return_val_if_fail (output, FALSE);
 
-	dev = xmms_output_get_config_string (output, "device");
+	dev = xmms_output_config_string_get (output, "device");
 	if (!dev) {
 		XMMS_DBG ("device not found in config, using default");
 		dev = "/dev/dsp";
@@ -95,7 +97,7 @@ xmms_oss_open (xmms_output_t *output)
 	param = 44100;
 	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &param) == -1)
 		goto error;
-	
+
 	xmms_output_plugin_data_set (output, data);
 
 	
@@ -104,6 +106,12 @@ error:
 	close (data->fd);
 	g_free (data);
 	return FALSE;
+}
+
+static guint
+xmms_oss_samplerate_set (xmms_output_t *output, guint rate)
+{
+	return 44100; /** @todo do good ioctl here instead... */
 }
 
 static void

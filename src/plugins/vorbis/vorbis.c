@@ -279,6 +279,9 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 
 	xmms_vorbis_get_media_info (decoder);
 
+	XMMS_DBG ("vorbis samplerate: %d", data->vi.rate);
+	xmms_decoder_samplerate_set (decoder, data->vi.rate);
+
 	XMMS_DBG ("vorbis_init ok!");
 
 	data->inited = 1;
@@ -290,7 +293,6 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_vorbis_data_t *data;
 	xmms_transport_t *transport;
-	xmms_output_t *output;
 	gchar *buffer;
 	gint res;
 	gint ret;
@@ -299,9 +301,6 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
-
-	output = xmms_decoder_output_get (decoder);
-	g_return_val_if_fail (output, FALSE);
 
 	buffer = ogg_sync_buffer (&data->oy, 4096);
 	ret = xmms_transport_read (transport, buffer, 4096);
@@ -355,7 +354,7 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 				}
 			}
 
-			xmms_output_write (output, convbuffer, (2*data->vi.channels)*bout);
+			xmms_decoder_write (decoder, convbuffer, (2*data->vi.channels)*bout);
 			vorbis_synthesis_read (&data->vd, bout);
 		}
 
