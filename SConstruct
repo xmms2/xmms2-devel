@@ -18,14 +18,14 @@ Clean up the builddir by running:
 opts = Options(None, ARGUMENTS)
 opts.Add('CC', 'C compiler to use', 'gcc')
 opts.Add('CCFLAGS', 'compilerflags', '-g -Wall -O0')
+opts.Add('PREFIX', 'installprefix', '/usr/local')
 
 ## setup base environment...
 ## ...ok, this should be a bit configurable... later.
 ##
 ## SCons-tips 42: start paths with '#' to have them change
 ##                correctly when we descend into subdirs
-base_env = xmmsenv.XmmsEnvironment(options=opts, LINK="gcc", CPPPATH = ['#src'],
-	CPPFLAGS = ['-DPKGLIBDIR=\\"/usr/local/lib/xmms\\"','-DSYSCONFDIR=\\"/etc/\\"'])
+base_env = xmmsenv.XmmsEnvironment(options=opts, LINK="gcc", CPPPATH = ['#src'])
 
 
 ##
