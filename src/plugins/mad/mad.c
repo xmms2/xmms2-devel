@@ -326,6 +326,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		}
 		
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
+		g_free (id3v2buf);
 	}
 	
 	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
