@@ -40,7 +40,13 @@ if base_env.HasGroup("sqlite"):
 	sqlite.XmmsPlugin('xmms_sqlite', ['sqlite/sqlite.c'])
 
 if base_env.HasGroup("curl"):
-	curl = base_env.Copy()
-	curl.AddFlagsFromGroup("glib")
-	curl.AddFlagsFromGroup("curl")
-	curl.XmmsPlugin('xmms_curl', ['curl/curl.c'])
+	curl_http = base_env.Copy()
+	curl_http.AddFlagsFromGroup("glib")
+	curl_http.AddFlagsFromGroup("curl")
+	curl_http.XmmsPlugin('xmms_curlhttp', ['curl/curl_http.c'])
+
+	curl_ftp = base_env.Copy()
+	curl_ftp.AddFlagsFromGroup("glib")
+	curl_ftp.AddFlagsFromGroup("curl")
+	curl_ftp.XmmsPlugin('xmms_curlftp', ['curl/curl_ftp.c'])
+

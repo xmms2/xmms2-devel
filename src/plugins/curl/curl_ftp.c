@@ -1,6 +1,6 @@
 /** @file interface to libcurl.
   *
-  * This plugin will provide HTTP/HTTPS/FTP transports.
+  * This plugin will provide FTP transport.
   */
 
 #include "xmms/xmms.h"
@@ -39,7 +39,7 @@ typedef struct {
 	gint data_in_buf;
 
 	gboolean stream;
-	gchar *mime;
+	const gchar *mime;
 	gchar *name;
 	gchar *genre;
 
@@ -56,6 +56,7 @@ static void xmms_curl_close (xmms_transport_t *transport);
 static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_curl_size (xmms_transport_t *transport);
 static gint xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence);
+static GList * xmms_curl_list (const gchar *url);
 
 /*
  * Plugin header
@@ -66,9 +67,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "curl",
-			"Curl transport for HTTP " XMMS_VERSION,
-		 	"HTTP transport using CURL");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "curl_ftp",
+			"Curl transport for FTP " XMMS_VERSION,
+		 	"FTP transport using CURL");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl/");
@@ -80,8 +81,10 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_curl_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_curl_list);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
 	return plugin;
 }
@@ -98,9 +101,9 @@ xmms_curl_can_handle (const gchar *url)
 
 	dec = xmms_util_decode_path (url);
 
-	XMMS_DBG ("xmms_curl_can_handle (%s)", dec);
+	XMMS_DBG ("xmms_curl_ftp_can_handle (%s)", dec);
 	
-	if ((g_strncasecmp (dec, "http:", 5) == 0) || (dec[0] == '/')) {
+	if ((g_strncasecmp (dec, "ftp:", 4) == 0) || (dec[0] == '/')) {
 		g_free (dec);
 		return TRUE;
 	}
@@ -119,38 +122,6 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 	data = xmms_transport_plugin_data_get (transport);
 
-	if (!data->mime) {
-		curl_easy_getinfo (data->curl, CURLINFO_CONTENT_TYPE, &data->mime);
-		XMMS_DBG ("mimetype here is %s", data->mime);
-		
-		if (!data->mime && g_strncasecmp (ptr, "ICY 200 OK", 10) == 0) {
-
-			XMMS_DBG ("Shoutcast detected...");
-			data->mime = "audio/mpeg"; /* quite safe */
-			xmms_transport_mimetype_set (transport, data->mime);
-			data->stream = TRUE;
-
-/*			tmp = g_strsplit (ptr, "\r\n", 0);
-			while (tmp[i]) {
-				XMMS_DBG ("%s", tmp[i]);
-				if (g_strncasecmp (tmp[i], "icy-name:", 9) == 0)
-					data->name = g_strdup (tmp[i]+9);
-				if (g_strncasecmp (tmp[i], "icy-genre:", 10) == 0)
-					data->genre = g_strdup (tmp[i]+10);
-				i++;
-			}
-
-			XMMS_DBG ("Got %s that plays %s", data->name, data->genre);
-
-			g_strfreev (tmp);*/
-
-			return size*nmemb;
-		}
-
-		xmms_transport_mimetype_set (transport, data->mime);
-	}
-
-	
 	data->buf = g_malloc (size*nmemb);
 	data->data_in_buf = size*nmemb;
 	memcpy (data->buf, ptr, size*nmemb);
@@ -161,33 +132,105 @@ xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 CURL *
 xmms_curl_easy_new (xmms_transport_t *transport, const gchar *url, gint offset)
 {
-	struct curl_slist *headerlist = NULL;
-	xmms_curl_data_t *data;
 	CURL *curl;
 
-	g_return_val_if_fail (transport, NULL);
 	g_return_val_if_fail (url, NULL);
+	g_return_val_if_fail (transport, NULL);
 
-	data = xmms_transport_plugin_data_get (transport);
-	g_return_val_if_fail (data, NULL);
-
-	headerlist = curl_slist_append (headerlist, "Icy-MetaData: 1");
-	
-	XMMS_DBG ("Setting up CURL");
+	XMMS_DBG ("Setting up CURL FTP");
 
 	curl = curl_easy_init ();
 
-	curl_easy_setopt (curl, CURLOPT_URL, xmms_util_decode_path (url));
+	curl_easy_setopt (curl, CURLOPT_URL, url);
 	curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, xmms_curl_cwrite);
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, transport);
-	curl_easy_setopt (curl, CURLOPT_HTTPGET, 1);
-	curl_easy_setopt (curl, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
-	curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headerlist);
 	if (offset)
 		curl_easy_setopt (curl, CURLOPT_RESUME_FROM, offset);
 
 	return curl;
+}
+
+struct xmms_curl_ftp_list {
+	const gchar *path;
+	GList *list;
+};
+
+
+static size_t 
+xmms_curl_list_write (void *ptr, size_t size, size_t nmemb, void  *stream)
+{
+	gchar **rows;
+	gint i=0;
+	struct xmms_curl_ftp_list *fl = stream;
+
+	((gchar*)ptr)[size*nmemb-2]='\0';
+	
+	rows = g_strsplit ((gchar *)ptr, "\r\n", 0);
+
+	while (rows[i]) {
+		xmms_transport_entry_t *e;
+		xmms_transport_entry_type_t t;
+		gchar *p, *tmp, *tmp2;
+
+		if (rows[i][0] == 'd') {
+			t = XMMS_TRANSPORT_ENTRY_DIR;
+		} else {
+			t = XMMS_TRANSPORT_ENTRY_FILE;
+		}
+
+		p = rows[i]+55;
+
+		tmp = g_strdup_printf ("%s/%s", fl->path, p);
+
+		tmp2 = xmms_util_encode_path (tmp);
+		g_free (tmp);
+		
+		e = xmms_transport_entry_new (tmp2, t);
+		g_free (tmp2);
+
+		fl->list = g_list_append (fl->list, e);
+
+		i++;
+	}
+	
+	g_strfreev (rows);
+	
+	return size*nmemb;
+}
+
+static GList *
+xmms_curl_list (const gchar *url)
+{
+	gchar *nurl;
+	CURL *curl;
+	struct xmms_curl_ftp_list *fl;
+	CURLcode res;
+
+	g_return_val_if_fail (url, FALSE);
+
+	nurl = xmms_util_decode_path (url);
+
+	fl = g_new (struct xmms_curl_ftp_list, 1);
+	fl->path = url;
+	fl->list = NULL;
+
+	curl = curl_easy_init ();
+
+	curl_easy_setopt (curl, CURLOPT_URL, url);
+	curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
+	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, xmms_curl_list_write);
+	curl_easy_setopt (curl, CURLOPT_WRITEDATA, fl);
+
+	res = curl_easy_perform (curl);
+
+	curl_easy_cleanup (curl);
+
+	if (res != CURLE_OK) {
+		return NULL;
+	}
+
+	return fl->list;
 }
 
 static gboolean
@@ -201,14 +244,13 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data = g_new0 (xmms_curl_data_t, 1);
 
 	data->curlm = curl_multi_init ();
-	data->mime = NULL;
 	data->stream = FALSE;
-	data->url = g_strdup (url);
+	data->url = xmms_util_decode_path (url);
+	data->mime = xmms_magic_mime_from_file (data->url);
 	
 	xmms_transport_plugin_data_set (transport, data);
 	
 	g_return_val_if_fail (data->curlm, FALSE);
-
 
 	data->curl = xmms_curl_easy_new (transport, url, 0);
 
@@ -219,7 +261,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 		data->again = TRUE;
 	}
 	
-	/*xmms_transport_mime_type_set (transport, "audio/mpeg");*/
+	xmms_transport_mimetype_set (transport, data->mime);
 
 	FD_ZERO (&data->fdread);
 	FD_ZERO (&data->fdwrite);

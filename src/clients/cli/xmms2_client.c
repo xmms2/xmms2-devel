@@ -227,7 +227,7 @@ handle_transport_list (void *userdata, void *arg)
 
 	for (tmp = list; tmp; tmp = g_list_next (tmp)) {
 		xmmsc_file_t *f = tmp->data;
-		printf ("%c\t%s\n", !f->file?'d':' ', f->path);
+		printf ("%c\t%s\n", !f->file?'d':' ', xmmsc_decode_path (f->path));
 	}
 
 	xmmsc_deinit ((xmmsc_connection_t *)userdata);
@@ -236,12 +236,15 @@ handle_transport_list (void *userdata, void *arg)
 }
 
 void
-setup_flist (xmmsc_connection_t *conn)
+setup_flist (xmmsc_connection_t *conn, gchar *arg)
 {
 	mainloop = g_main_loop_new (NULL, FALSE);
 
 	xmmsc_set_callback (conn, XMMS_SIGNAL_TRANSPORT_LIST, handle_transport_list, conn);
 	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
+
+	xmmsc_file_list (conn, arg);
 	xmmsc_glib_setup_mainloop (conn, NULL);
 	return;
 }
@@ -493,8 +496,7 @@ main(int argc, char **argv)
 				printf ("usage: flist url\n");
 				return 1;
 			}
-			xmmsc_file_list (c, argv[2]);
-			setup_flist (c);
+			setup_flist (c, argv[2]);
 		} else if ( streq (argv[1], "savelist") ) {
 
 			if (argc < 3) {
