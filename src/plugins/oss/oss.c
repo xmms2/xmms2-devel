@@ -58,15 +58,24 @@ static gboolean
 xmms_oss_open (xmms_output_t *output, const gchar *path)
 {
 	xmms_oss_data_t *data;
+	gchar *dev;
 	guint param;
 
 	XMMS_DBG ("xmms_oss_open (%p, %s)", output, path);
 	
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (path, FALSE);
-	
+
+	dev = xmms_output_get_config_string (output, "device");
+	if (!dev) {
+		XMMS_DBG ("device not found in config, using default");
+		dev = "/dev/dsp";
+	}
+
+	XMMS_DBG ("device = %s", dev);
+
 	data = g_new0 (xmms_oss_data_t, 1);
-	data->fd = open ("/dev/dsp", O_WRONLY);
+	data->fd = open (dev, O_WRONLY);
 	if (data->fd == -1)
 		return FALSE;
 

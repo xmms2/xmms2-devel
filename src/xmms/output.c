@@ -2,6 +2,7 @@
 #include "object.h"
 #include "ringbuf.h"
 #include "util.h"
+#include "config_xmms.h"
 
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
@@ -22,6 +23,38 @@ xmms_output_plugin_data_get (xmms_output_t *output)
 	ret = output->plugin_data;
 
 	return ret;
+}
+
+void
+xmms_output_set_config (xmms_output_t *output, GHashTable *config)
+{
+	const gchar *sn;
+	xmms_config_value_t *val;
+	g_return_if_fail (output);
+	g_return_if_fail (config);
+
+	sn = xmms_plugin_shortname_get (output->plugin);
+
+	val = xmms_config_value_lookup (config, sn);
+	if (!val) {
+	XMMS_DBG ("Adding section %s", sn);
+		val = xmms_config_add_section (config, g_strdup (sn));
+	}
+
+	output->config = val;
+}	
+
+gchar *
+xmms_output_get_config_string (xmms_output_t *output, gchar *val)
+{
+	xmms_config_value_t *value;
+
+	g_return_val_if_fail (output, NULL);
+		g_return_val_if_fail (val, NULL);
+	
+	value = xmms_config_value_list_lookup (output->config, val);
+
+	return xmms_config_value_as_string (value);
 }
 
 void
@@ -48,7 +81,7 @@ xmms_output_write (xmms_output_t *output, gpointer buffer, gint len)
  */
 
 xmms_output_t *
-xmms_output_open (xmms_plugin_t *plugin)
+xmms_output_open (xmms_plugin_t *plugin, xmms_config_data_t *config)
 {
 	xmms_output_t *output;
 	xmms_output_open_method_t open_method;
@@ -63,6 +96,8 @@ xmms_output_open (xmms_plugin_t *plugin)
 	output->mutex = g_mutex_new ();
 	output->cond = g_cond_new ();
 	output->buffer = xmms_ringbuf_new (32768);
+	
+	xmms_output_set_config (output, config->output);
 	
 	open_method = xmms_plugin_method_get (plugin, XMMS_METHOD_OPEN);
 
