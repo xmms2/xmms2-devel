@@ -448,7 +448,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	xmms_ipc_transport_destroy (client->transport);
 	xmms_ringbuf_destroy (client->read_buffer);
 
-	while (!g_queue_is_empty) {
+	while (!g_queue_is_empty (client->out_msg)) {
 		xmms_ipc_msg_t *msg = g_queue_pop_head (client->out_msg);
 		xmms_ipc_msg_destroy (msg);
 	}
