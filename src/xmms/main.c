@@ -116,6 +116,8 @@ main (int argc, char **argv)
 
 		xmms_transport_free (transport);
 
+		xmms_playlist_entry_free (entry);
+
 	}
 
 	return 0;
