@@ -255,6 +255,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		xmms_output_status_method_t st;
 
 		if (!output->is_paused) {
+			XMMS_DBG ("Running decoder_start");
 			xmms_output_decoder_start (output);
 		}
 
@@ -262,6 +263,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 					     XMMS_PLUGIN_METHOD_STATUS);
 
 		output->is_paused = FALSE;
+		output->running = TRUE;
 		st (output, XMMS_OUTPUT_STATUS_PLAY); 
 		xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PLAY);
 	}
@@ -298,6 +300,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 			xmms_object_unref (output->playing_entry);
 			output->decoder = NULL;
 			output->playing_entry = NULL;
+			output->running = FALSE;
 		}
 	}
 
