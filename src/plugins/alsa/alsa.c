@@ -3,23 +3,8 @@
  *
  * @todo Fiddle around with the buffer so that no xruns wil appear.
  */
-#include "xmms/plugin.h"
 #include "xmms/output.h"
 #include "xmms/util.h"
-#include "xmms/ringbuf.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include <string.h>
-#include <stdio.h>
-
-
-#include <glib.h>
-
 
 #include <alsa/asoundlib.h>
 #include <alsa/pcm.h>
@@ -70,7 +55,7 @@ xmms_plugin_get (void)
 			"ALSA Output " VERSION,
 			"Advanced Linux Sound Architecture output plugin");
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.alsa-project.org/");
+	xmms_plugin_info_add (plugin, "URL", "http://www.nittionio.nu/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
 	xmms_plugin_info_add (plugin, "E-Mail", "nano@nittionino.nu");
 	
@@ -101,13 +86,11 @@ xmms_alsa_open (xmms_output_t *output)
 	gint err;
 	gint alsa_bits_per_sample;
 
-#ifdef DEBUG
 	snd_pcm_info_t *info;
 	gchar *alsa_name;
 	static gint alsa_card;
 	static gint alsa_device;
 	static gint alsa_subdevice;
-#endif
 	
 	data = g_new0 (xmms_alsa_data_t, 1);
 		
@@ -125,7 +108,6 @@ xmms_alsa_open (xmms_output_t *output)
 		goto error;
 	}
 	
-#ifdef DEBUG
 	snd_pcm_info_malloc (&info);
 	snd_pcm_info (data->pcm, info);
 	
@@ -134,11 +116,10 @@ xmms_alsa_open (xmms_output_t *output)
 	alsa_subdevice = snd_pcm_info_get_subdevice (info);
 	alsa_name = (gchar *)snd_pcm_info_get_name (info);
 	
+	snd_pcm_info_free(info);
+	
 	XMMS_DBG ("Card: %i, Device: %i, Subdevice: %i, Name: %s", alsa_card, 
 			alsa_device, alsa_subdevice, alsa_name);
-
-	g_free(alsa_name);
-#endif
 	
 	snd_pcm_hw_params_alloca (&(data->hwparams));
 	
