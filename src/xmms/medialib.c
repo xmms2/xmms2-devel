@@ -204,23 +204,26 @@ xmms_medialib_entry_send_update (xmms_medialib_entry_t entry)
 	g_mutex_unlock (medialib->mutex);
 }
 
+
 xmms_medialib_entry_t
-xmms_medialib_entry_new (const char *url)
+xmms_medialib_entry_new_unlocked (const char *url)
 {
 	guint id = 0;
 	guint ret;
+	gchar *dec = xmms_util_decode_path (url);
 
 	g_return_val_if_fail (url, 0);
-	g_mutex_lock (medialib->mutex);
 
-	if (g_strncasecmp (url, "mlib", 4) == 0) {
-		const gchar *p = url+9;
+	if (g_strncasecmp (dec, "mlib://", 7) == 0) {
+		const gchar *p = url+7;
 		id = strtol (p, NULL, 10);
 		/* Hmmm, maybe verify that this entry exists? */
 	} else {
 		xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
 			     	"select id from Media where key='url' and value=%Q", url);
 	}
+
+	g_free (dec);
 
 	if (id) {
 		ret = id;
@@ -238,10 +241,21 @@ xmms_medialib_entry_new (const char *url)
 		}
 
 	}
-	g_mutex_unlock (medialib->mutex);
 
 	return ret;
 
+}
+
+xmms_medialib_entry_t
+xmms_medialib_entry_new (const char *url)
+{
+	xmms_medialib_entry_t ret;
+
+	g_mutex_lock (medialib->mutex);
+	ret = xmms_medialib_entry_new_unlocked (url);
+	g_mutex_unlock (medialib->mutex);
+
+	return ret;
 }
 
 static int
@@ -404,7 +418,7 @@ xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
 			return;
 		}
 
-		g_snprintf (mid, sizeof (mid), "mid://%d", entry);
+		g_snprintf (mid, sizeof (mid), "mlib://%d", entry);
 
 		ret = xmms_sqlite_query (medialib->sql, NULL, NULL,
 		                         "insert into PlaylistEntries"
@@ -436,7 +450,7 @@ get_playlist_entries_cb (void *pArg, int argc, char **argv,
 	GList **entries = pArg;
 
 	/* valid prefixes for the playlist entries are:
-	 * 'mid://' and 'sql://', so any valid string is longer
+	 * 'mlib://' and 'sql://', so any valid string is longer
 	 * than 6 characters.
 	 */
 	if (argv[0] && strlen (argv[0]) > 6) {
@@ -495,9 +509,9 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 	while (entries) {
 		gchar *entry = entries->data;
 
-		if (!strncmp (entry, "mid://", 6)) {
+		if (!strncmp (entry, "mlib://", 7)) {
 			xmms_medialib_entry_t e;
-			e = xmms_medialib_entry_new (entry);
+			e = xmms_medialib_entry_new_unlocked (entry);
 			xmms_playlist_add (medialib->playlist, e);
 		} else if (!strncmp (entry, "sql://", 6)) {
 			xmms_sqlite_query (medialib->sql, playlist_load_sql_query_cb,
