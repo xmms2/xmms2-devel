@@ -142,42 +142,42 @@ XMMS_METHOD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NON
 static void
 xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 {
-        gint len;
-        gint i, j;
-        GList *node, **ptrs;
+	gint len, i, j;
+	GList *node, **ptrs;
 
 	g_return_if_fail (playlist);
 
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	len = xmms_playlist_entries_total (playlist);
-                                                                                  
-        if (!len) {
+	if (!len) {
 		XMMS_PLAYLIST_UNLOCK (playlist);
-                return;
+		return;
 	}
 
-        ptrs = g_new (GList *, len);
-                                                                                  
-        for (node = playlist->list, i = 0; i < len; node = g_list_next (node), i++)
-                ptrs[i] = node;
-                                                                                  
-        j = random() % len;
-        playlist->list = ptrs[j];
-        ptrs[j]->next = NULL;
-        ptrs[j] = ptrs[0];
+	ptrs = g_new (GList *, len);
 
-        for (i = 1; i < len; i++)
-        {
-                j = random() % (len - i);
-                playlist->list->prev = ptrs[i + j];
-                ptrs[i + j]->next = playlist->list;
-                playlist->list = ptrs[i + j];
-                ptrs[i + j] = ptrs[i];
-        }
-        playlist->list->prev = NULL;
-                                                                                  
-        g_free(ptrs);
+	for (node = playlist->list, i = 0;
+	     i < len && node;
+	     node = g_list_next (node), i++)
+		ptrs[i] = node;
+
+	j = random() % len;
+	playlist->list = ptrs[j];
+	ptrs[j]->next = NULL;
+	ptrs[j] = ptrs[0];
+
+	for (i = 1; i < len; i++) {
+		j = random() % (len - i);
+		playlist->list->prev = ptrs[i + j];
+		ptrs[i + j]->next = playlist->list;
+		playlist->list = ptrs[i + j];
+		ptrs[i + j] = ptrs[i];
+	}
+
+	playlist->list->prev = NULL;
+
+	g_free (ptrs);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SHUFFLE, 0, 0);
 
