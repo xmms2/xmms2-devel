@@ -54,6 +54,7 @@ static gboolean xmms_mad_can_handle (const gchar *mimetype);
 static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder, xmms_transport_t *transport);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
+static void xmms_mad_destroy (xmms_decoder_t *decoder);
 
 /*
  * Plugin header
@@ -72,8 +73,23 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, "new", xmms_mad_new);
 	xmms_plugin_method_add (plugin, "decode_block", xmms_mad_decode_block);
 	xmms_plugin_method_add (plugin, "get_media_info", xmms_mad_get_media_info);
+	xmms_plugin_method_add (plugin, "destroy", xmms_mad_destroy);
 
 	return plugin;
+}
+
+static void
+xmms_mad_destroy (xmms_decoder_t *decoder)
+{
+	xmms_mad_data_t *data;
+
+	g_return_if_fail (decoder);
+
+	data = xmms_decoder_plugin_data_get (decoder);
+	g_return_if_fail (data);
+
+	g_free (data);
+
 }
 
 static void
@@ -89,6 +105,8 @@ remove_trail_space (gchar *str)
 			return;
 		}
 	}
+
+	str[i] = '\0';
 }
 
 static void
