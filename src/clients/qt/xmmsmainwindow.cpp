@@ -36,9 +36,6 @@ handle_status (void *userdata, void *arg)
 		case 1:
 			mw->bar ()->reset ();
 			mw->bar ()->setTotalSteps (0);
-			mw->toolbar ()->setText (new QString ("Playback stopped"));
-			mw->toolbar ()->setTME (new QString ("00:00"));
-			mw->toolbar ()->setCTME (new QString ("00:00"));
 			mw->bartxt ()->setText ("Waiting for events");
 			break;
 		case 2:
@@ -83,12 +80,8 @@ handle_playtime (void *userdata, void *arg)
 	QString *s;
 	XMMSMainWindow *mw = (XMMSMainWindow *)userdata;
 
-	snprintf (d, 9, "%02d:%02d", dur/60000, (dur/1000)%60);
-	s = new QString (d);
-	if (*s != *mw->toolbar ()->status ()->currentTME ()) {
-	//	mw->toolbar ()->setCTME (s);
-		mw->toolbar ()->setVisData (vis_dequeue (mw, dur));
-	}
+	mw->toolbar ()->setVisData (vis_dequeue (mw, dur));
+
 	if (!mw->barBusy ()) {
 		if (mw->cItem ()) {
 			mw->bar ()->setTotalSteps (mw->cItem ()->duration ());
@@ -295,6 +288,8 @@ handle_vis_data (void *userdata, void *arg)
 	for (i = 0; i < FFT_LEN/2; i++) {
 		spec[i] = s[i+1];
 	}
+
+	free (s);
 
 	vis_enqueue (userdata, time - 300, spec);
 	
