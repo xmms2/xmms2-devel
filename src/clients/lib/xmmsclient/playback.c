@@ -38,38 +38,40 @@
  * @{
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 	
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
-	dbus_connection_send (c->conn, msg, &cserial);
+	res = xmmsc_send_msg (c, msg);
 	dbus_message_unref (msg);
+
+	return res;
 }
 
 /**
  * Plays the next track in playlist.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_next (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_NEXT);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_NEXT);
 }
 
 /**
  * Plays the previos track in the playlist.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_prev (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PREV);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PREV);
 }
 
 /**
@@ -77,10 +79,10 @@ xmmsc_playback_prev (xmmsc_connection_t *c)
  * idle.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_stop (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STOP);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STOP);
 }
 
 /**
@@ -88,20 +90,20 @@ xmmsc_playback_stop (xmmsc_connection_t *c)
  * nor write.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_pause (xmmsc_connection_t *c)
 {
-	xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PAUSE);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PAUSE);
 }
 
 /**
  * Starts playback if server is idle.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_start (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PLAY);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PLAY);
 }
 
 
@@ -113,19 +115,20 @@ xmmsc_playback_start (xmmsc_connection_t *c)
  * playback should continue.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKMS);
 
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, milliseconds);
-	dbus_connection_send (c->conn, msg, &cserial);
+	res = xmmsc_send_msg (c, msg);
 	dbus_message_unref (msg);
+	return res;
 }
 
 /**
@@ -136,31 +139,29 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds)
  * should continue.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKSAMPLES);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, samples);
-	dbus_connection_send (c->conn, msg, &cserial);
+	res = xmmsc_send_msg (c, msg);
 	dbus_message_unref (msg);
+	return res;
 }
 
 /**
  * Make server emit the current id.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playback_current_id (xmmsc_connection_t *c)
 {
-	int cserial;
-
-	cserial = xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_CURRENTID);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
 }
 
 void
@@ -174,56 +175,40 @@ xmmsc_playback_status (xmmsc_connection_t *c)
 int
 xmmscs_playback_current_id (xmmsc_connection_t *c)
 {
-	DBusMessage *msg,*rmsg;
-        DBusMessageIter itr;
-	DBusError err;
-	int ret = -1;
-	
-	dbus_error_init (&err);
+	int ret;
+	xmmsc_result_t *res;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CURRENTID);
+	res = xmmsc_playback_current_id (c);
+	if (!res)
+		return 0;
 
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+	xmmsc_result_wait (res);
 
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
-
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
-			ret = dbus_message_iter_get_uint32 (&itr);
-
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("Error: %s\n", err.message);
-	}
-	dbus_message_unref (msg);
+	ret = xmmsc_result_get_int (res);
+	xmmsc_result_unref (res);
 
 	return ret;
 
 }
 
-int
-xmmsc_playback_current_playtime (xmmsc_connection_t *c)
+xmmsc_result_t *
+xmmsc_playback_playtime (xmmsc_connection_t *c)
 {
-	DBusMessage *msg,*rmsg;
-        DBusMessageIter itr;
-	DBusError err;
-	int ret = -1;
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CPLAYTIME);
+}
 
-	dbus_error_init (&err);
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CPLAYTIME);
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+int
+xmmscs_playback_playtime (xmmsc_connection_t *c)
+{
+	xmmsc_result_t *res;
+	int ret;
 
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
+	res = xmmsc_playback_playtime (c);
+	if (!res)
+		return 0;
 
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
-			ret = dbus_message_iter_get_uint32 (&itr);
-
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("Error: %s\n", err.message);
-	}
-	dbus_message_unref (msg);
+	xmmsc_result_wait (res);
+	ret = xmmsc_result_get_int (res);
 
 	return ret;
 }

@@ -55,6 +55,12 @@ struct xmms_playlist_St {
 
 };
 
+static void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err);
+static void xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err);
+static void xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err);
+static gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err);
+
+
 /*
  * Public functions
  */
@@ -106,8 +112,8 @@ xmms_playlist_entries_left (xmms_playlist_t *playlist)
 /** shuffles playlist */
 XMMS_METHOD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 
-void
-xmms_playlist_shuffle (xmms_playlist_t *playlist)
+static void
+xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 {
         gint len;
         gint i, j;
@@ -161,7 +167,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist)
 XMMS_METHOD_DEFINE (remove, xmms_playlist_id_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 
 gboolean 
-xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
+xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 {
 	GList *node;
 	xmms_playlist_changed_msg_t chmsg;
@@ -198,8 +204,8 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 /** move entry in playlist */
 XMMS_METHOD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
 
-gboolean
-xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
+static gboolean
+xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err)
 {
 	xmms_playlist_entry_t *entry;
 	xmms_playlist_changed_msg_t chmsg;
@@ -273,7 +279,7 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps)
 
 
 gboolean
-xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl)
+xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 {
 	gboolean res;
 
@@ -369,7 +375,7 @@ XMMS_METHOD_DEFINE (getmediainfo, xmms_playlist_get_byid, xmms_playlist_t *, PLA
  */
 
 xmms_playlist_entry_t *
-xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
+xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 {
 	GList *r = NULL;
 
@@ -392,8 +398,8 @@ xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id)
 
 XMMS_METHOD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 
-void
-xmms_playlist_clear (xmms_playlist_t *playlist)
+static void
+xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 {
 	GList *node;
 	xmms_playlist_changed_msg_t chmsg;
@@ -591,8 +597,8 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
  */
 
 XMMS_METHOD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
-void
-xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
+static void
+xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
 	xmms_playlist_changed_msg_t chmsg;
 
@@ -620,7 +626,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property)
 XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, PLAYLIST, NONE, NONE);
 
 GList *
-xmms_playlist_list (xmms_playlist_t *playlist)
+xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 {
 	GList *r=NULL, *node;
 	XMMS_PLAYLIST_LOCK (playlist);

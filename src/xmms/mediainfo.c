@@ -102,8 +102,11 @@ xmms_mediainfo_thread_thread (gpointer data)
 			xmms_playlist_entry_t *newentry;
 			xmms_playlist_plugin_t *plsplugin;
 			xmms_decoder_t *decoder;
+			xmms_error_t err;
 			const gchar *mime;
 			guint id;
+
+			xmms_error_reset (&err);
 
 			mtt->list = g_list_remove_link (mtt->list, node);
 
@@ -113,7 +116,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 			g_mutex_unlock (mtt->mutex);
 
-			entry = xmms_playlist_get_byid (mtt->playlist, id);
+			entry = xmms_playlist_get_byid (mtt->playlist, id, &err);
 
 			transport = xmms_transport_new (mtt->core);
 			xmms_transport_open (transport, entry);
@@ -141,7 +144,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 				xmms_playlist_plugin_read (plsplugin, mtt->playlist, transport);
 
 				/* we don't want it in the playlist. */
-				xmms_playlist_id_remove (mtt->playlist, xmms_playlist_entry_id_get (entry));
+				xmms_playlist_id_remove (mtt->playlist, xmms_playlist_entry_id_get (entry), &err);
 				xmms_playlist_entry_unref (entry);
 
 				/* cleanup */

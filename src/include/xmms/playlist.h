@@ -77,17 +77,16 @@ guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
 guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
 gboolean xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
-xmms_playlist_entry_t * xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id);
-xmms_playlist_entry_t * xmms_playlist_get_next_entry (xmms_playlist_t *playlist);
-xmms_playlist_entry_t * xmms_playlist_get_prev_entry (xmms_playlist_t *playlist);
-xmms_playlist_entry_t * xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
-GList * xmms_playlist_list (xmms_playlist_t *playlist);
+xmms_playlist_entry_t *xmms_playlist_get_next_entry (xmms_playlist_t *playlist);
+xmms_playlist_entry_t *xmms_playlist_get_prev_entry (xmms_playlist_t *playlist);
+xmms_playlist_entry_t *xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
+xmms_playlist_entry_t *xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
+gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
+
+GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
+
 void xmms_playlist_wait (xmms_playlist_t *playlist);
-void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property);
-void xmms_playlist_shuffle (xmms_playlist_t *playlist);
-void xmms_playlist_clear (xmms_playlist_t *playlist);
-gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id);
-gboolean xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps);
+
 
 xmms_playlist_entry_t *xmms_playlist_entry_alloc ();
 

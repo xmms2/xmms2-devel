@@ -25,6 +25,7 @@
 #include <dbus/dbus.h>
 
 #include "xmms/xmmsclient.h"
+#include "xmms/xmmsclient-result.h"
 #include "xmms/signal_xmms.h"
 
 #include "internal/xmmsclient_int.h"
@@ -44,38 +45,42 @@
  * Shuffles the current playlist.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_SHUFFLE);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_SHUFFLE);
 }
 
 /**
  * Sorts the playlist according to the property
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 {
 	DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 	
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SORT);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, property);
-	dbus_connection_send (c->conn, msg, &cserial);
+
+	res = xmmsc_send_msg (c, msg);
+
 	dbus_message_unref (msg);
+
+	return res;
 }
 
 /**
  * Clears the current playlist.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_clear (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_CLEAR);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_CLEAR);
 }
 
 /**
@@ -88,18 +93,20 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
  * in.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 	
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SAVE);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, filename);
-	dbus_connection_send (c->conn, msg, &cserial);
+	res = xmmsc_send_msg (c, msg);
 	dbus_message_unref (msg);
+
+	return res;
 }
 
 /**
@@ -108,60 +115,30 @@ xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
  * callback.
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_list (xmmsc_connection_t *c)
 {
-	int cserial;
-
-	cserial = xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_LIST);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
 }
 
 unsigned int *
 xmmscs_playlist_list (xmmsc_connection_t *c)
 {
-	DBusMessage *msg = NULL;
-	DBusMessage *rmsg = NULL;
-	DBusMessageIter itr;
-	DBusError err;
-	unsigned int *arr = NULL;
+	unsigned int *ret;
+	xmmsc_result_t *res;
 
-	dbus_error_init (&err);
+	res = xmmsc_playlist_list (c);
+	if (!res)
+		return NULL;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, 
-									XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
+	xmmsc_result_wait (res);
 
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+	ret = xmmsc_result_get_uint_array (res);
 
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
+	xmmsc_result_unref (res);
 
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-			unsigned int len = dbus_message_iter_get_uint32 (&itr);
-			if (len > 0) {
-				int len;
-				unsigned int *tmp;
+	return ret;
 
-				dbus_message_iter_next (&itr);
-				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
-
-				arr = malloc (sizeof (unsigned int) * (len+1));
-				memcpy (arr, tmp, len * sizeof(unsigned int));
-				arr[len] = '\0';
-			} else {
-				arr = malloc (sizeof (unsigned int));
-				*arr = -1;
-			}
-		}
-
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("Error: %s\n", err.message);
-	}
-
-	dbus_message_unref (msg);
-
-	return arr;
 }
 
 /**
@@ -176,18 +153,20 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
  * @sa xmmsc_encode_path
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 	
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_ADD);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, url);
-	dbus_connection_send (c->conn, msg, &cserial);
+	res = xmmsc_send_msg (c, msg);
 	dbus_message_unref (msg);
+
+	return res;
 
 }
 
@@ -199,18 +178,20 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
  * @sa xmmsc_playlist_list
  */
 
-void
+xmmsc_result_t *
 xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
 {
         DBusMessageIter itr;
 	DBusMessage *msg;
-	int cserial;
+	xmmsc_result_t *res;
 	
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_REMOVE);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
-	dbus_connection_send (c->conn, msg, &cserial);
+	res = xmmsc_send_msg (c, msg);
 	dbus_message_unref (msg);
+
+	return res;
 
 }
 
@@ -220,55 +201,39 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
 /**
  * Retrives information about a certain entry.
  */
-void
+xmmsc_result_t *
 xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 {
 	DBusMessage *msg;
 	DBusMessageIter itr;
-	DBusError err;
-	unsigned int cserial;
-
-	dbus_error_init (&err);
+	xmmsc_result_t *res;
 
 	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
-	dbus_connection_send (c->conn, msg, &cserial);
 
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_MEDIAINFO);
+	res = xmmsc_send_msg (c, msg);
 
 	dbus_message_unref (msg);
-	dbus_connection_flush (c->conn);
+
+	return res;
 }
 
 x_hash_t *
 xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, unsigned int id)
 {
-	DBusMessage *msg, *rmsg;
-	DBusMessageIter itr;
-	DBusError err;
-	x_hash_t *res = NULL;
+	xmmsc_result_t *res;
+	x_hash_t *ret;
 
-	dbus_error_init (&err);
+	res = xmmsc_playlist_get_mediainfo (c, id);
+	if (!res)
+		return NULL;
 
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
+	xmmsc_result_wait (res);
 
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
-		res = xmmsc_deserialize_mediainfo (&itr);
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("error: %s", err.message);
-	}
+	ret = xmmsc_result_get_mediainfo (res);
 
-	dbus_message_unref (msg);
-	dbus_connection_flush (c->conn);
-
-	return res;
-
+	return ret;
 }
 
 static int

@@ -78,15 +78,15 @@ struct xmms_playback_St {
 	xmms_playback_status_t status;
 };
 
-/* Callbacks */
-static void xmms_playback_next (xmms_playback_t *playback);
-static void xmms_playback_prev (xmms_playback_t *playback);
-static void xmms_playback_stop (xmms_playback_t *playback);
-static void xmms_playback_start (xmms_playback_t *playback);
-static void xmms_playback_pause (xmms_playback_t *playback);
-static void xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds);
-static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples);
-static void xmms_playback_jump (xmms_playback_t *playback, guint id);
+/* Methods */
+static void xmms_playback_next (xmms_playback_t *playback, xmms_error_t *err);
+static void xmms_playback_prev (xmms_playback_t *playback, xmms_error_t *err);
+static void xmms_playback_stop (xmms_playback_t *playback, xmms_error_t *err);
+static void xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err);
+static void xmms_playback_pause (xmms_playback_t *playback, xmms_error_t *err);
+static void xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds, xmms_error_t *err);
+static void xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_error_t *err);
+static void xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err);
 static guint xmms_playback_status (xmms_playback_t *playback);
 
 /**
@@ -124,7 +124,7 @@ xmms_playback_wakeup (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (jump, xmms_playback_jump, xmms_playback_t *, NONE, UINT32, NONE);
 static void
-xmms_playback_jump (xmms_playback_t *playback, guint id)
+xmms_playback_jump (xmms_playback_t *playback, guint id, xmms_error_t *err)
 {
 	g_return_if_fail (playback);
 
@@ -144,7 +144,7 @@ xmms_playback_jump (xmms_playback_t *playback, guint id)
 
 XMMS_METHOD_DEFINE (next, xmms_playback_next, xmms_playback_t *, NONE, NONE, NONE);
 static void
-xmms_playback_next (xmms_playback_t *playback)
+xmms_playback_next (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
 
@@ -161,7 +161,7 @@ xmms_playback_next (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (prev, xmms_playback_prev, xmms_playback_t *, NONE, NONE, NONE);
 static void
-xmms_playback_prev (xmms_playback_t *playback)
+xmms_playback_prev (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
 
@@ -177,7 +177,7 @@ xmms_playback_prev (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (start, xmms_playback_start, xmms_playback_t *, NONE, NONE, NONE);
 static void
-xmms_playback_start (xmms_playback_t *playback)
+xmms_playback_start (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (playback->status == XMMS_PLAYBACK_PLAY)
 		return;
@@ -197,7 +197,7 @@ xmms_playback_start (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (stop, xmms_playback_stop, xmms_playback_t *, NONE, NONE, NONE);
 static void
-xmms_playback_stop (xmms_playback_t *playback)
+xmms_playback_stop (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (playback->status != XMMS_PLAYBACK_STOP) {
 		playback->status = XMMS_PLAYBACK_STOP;
@@ -212,7 +212,7 @@ xmms_playback_stop (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (pause, xmms_playback_pause, xmms_playback_t *, NONE, NONE, NONE);
 static void
-xmms_playback_pause (xmms_playback_t *playback)
+xmms_playback_pause (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (playback->status == XMMS_PLAYBACK_PLAY) {
 		xmms_output_pause (xmms_core_output_get (playback->core));
@@ -226,7 +226,7 @@ xmms_playback_pause (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (currentid, xmms_playback_currentid, xmms_playback_t *, UINT32, NONE, NONE);
 guint
-xmms_playback_currentid (xmms_playback_t *playback)
+xmms_playback_currentid (xmms_playback_t *playback, xmms_error_t *err)
 {
 	if (!playback->current_song)
 		return 0;
@@ -242,21 +242,21 @@ xmms_playback_status (xmms_playback_t *playback)
 
 XMMS_METHOD_DEFINE (seek_ms, xmms_playback_seekms, xmms_playback_t *, NONE, UINT32, NONE);
 static void
-xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds)
+xmms_playback_seekms (xmms_playback_t *playback, guint32 milliseconds, xmms_error_t *err)
 {
 	xmms_decoder_seek_ms (xmms_core_decoder_get (playback->core), milliseconds);
 }
 
 XMMS_METHOD_DEFINE (seek_samples, xmms_playback_seeksamples, xmms_playback_t *, NONE, UINT32, NONE);
 static void
-xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples)
+xmms_playback_seeksamples (xmms_playback_t *playback, guint32 samples, xmms_error_t *err)
 {
 	xmms_decoder_seek_samples (xmms_core_decoder_get (playback->core), samples);
 }
 
 XMMS_METHOD_DEFINE (current_playtime, xmms_playback_current_playtime, xmms_playback_t *, UINT32, NONE, NONE);
 guint
-xmms_playback_current_playtime (xmms_playback_t *playback)
+xmms_playback_current_playtime (xmms_playback_t *playback, xmms_error_t *err)
 {
 	return playback->current_playtime;
 }
@@ -291,6 +291,10 @@ xmms_playlist_entry_t *
 xmms_playback_entry (xmms_playback_t *playback)
 {
 	xmms_playback_mode_t mode;
+	xmms_error_t err;
+
+	xmms_error_reset (&err);
+
 	g_mutex_lock (playback->mtx);
 	
 	mode = playback->mode;
@@ -330,7 +334,7 @@ xmms_playback_entry (xmms_playback_t *playback)
 
 	if (!playback->current_song) {
 		if (mode != XMMS_PLAYBACK_MODE_REPEATALL) {
-			xmms_playback_stop (playback);
+			xmms_playback_stop (playback, &err);
 		}
 		playback->playlist_op = XMMS_PLAYBACK_NEXT; /* ugly hack */
 		g_mutex_unlock (playback->mtx);

@@ -320,6 +320,9 @@ send_playback_currentid (xmms_object_t *object,
 		gconstpointer data,
 		gpointer userdata)
 {
+	xmms_error_t err;
+
+	xmms_error_reset (&err);
 
         g_mutex_lock(connectionslock);
 
@@ -329,8 +332,9 @@ send_playback_currentid (xmms_object_t *object,
 
                 msg = dbus_message_new_signal (XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CURRENTID);
                 dbus_message_append_iter_init (msg, &itr);
-                dbus_message_iter_append_uint32 (&itr, xmms_playback_currentid ((xmms_playback_t *)object));
-		broadcast_msg (msg, XMMS_SIGNAL_PLAYBACK_CURRENTID);
+                dbus_message_iter_append_uint32 (&itr, xmms_playback_currentid ((xmms_playback_t *)object, &err));
+		if (xmms_error_isok (&err))
+			broadcast_msg (msg, XMMS_SIGNAL_PLAYBACK_CURRENTID);
                 dbus_message_unref (msg);
         }
 
@@ -491,9 +495,12 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	xmms_dbus_connection_t *client = userdata;
 	xmms_object_method_arg_t arg;
 	gint args = 0;
-	gint len;
 	DBusMessageIter iter;
 	xmms_object_t *obj;
+	DBusMessage *retmsg;
+	DBusMessageIter itr;
+	int serial;
+
 
 	g_return_val_if_fail (client, DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
 	g_return_val_if_fail (client->connection == conn, DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
@@ -510,6 +517,7 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	/* */
 
 	memset (&arg, 0, sizeof (arg));
+	xmms_error_reset (&arg.error);
 
 	dbus_message_iter_init (msg, &iter);
 
@@ -550,14 +558,9 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 	
 	xmms_object_method_call (obj, dbus_message_get_member (msg), &arg);
 	
-	if (arg.rettype != XMMS_OBJECT_METHOD_ARG_NONE) {
-		gchar *url;
-		DBusMessage *retmsg;
-		int serial;
-		DBusMessageIter itr;
-		DBusMessageIter dictitr;
-
+	if (xmms_error_isok (&arg.error)) {
 		retmsg = dbus_message_new_method_return (msg);
+
 		dbus_message_append_iter_init (retmsg, &itr);
 
 		switch (arg.rettype) {
@@ -565,30 +568,21 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 			dbus_message_iter_append_string (&itr, arg.retval.string); /*convert to utf8?*/
 			break;
 		case XMMS_OBJECT_METHOD_ARG_UINT32:
-
+			
 			dbus_message_iter_append_uint32 (&itr, arg.retval.uint32);
 			break;
-		case XMMS_OBJECT_METHOD_ARG_LIST:
-			{
-				GList *list = arg.retval.playlist;
-	
-				while (list) {
-					dbus_message_iter_append_string (&itr, list->data);
-					list = g_list_next (list);
-				}
-			}
-			break;
-		case XMMS_OBJECT_METHOD_ARG_PLAYLIST:
+		case XMMS_OBJECT_METHOD_ARG_PLAYLIST: {
+			gint len;
 
 			len = g_list_length (arg.retval.playlist);
-
+			
 			dbus_message_iter_append_uint32 (&itr, len);
-
+			
 			if (len > 0) {
 				GList *list = arg.retval.playlist;
 				guint32 *arr;
 				int i = 0;
-
+				
 				arr = g_new0 (guint32, len);
 				while (list) {
 					xmms_playlist_entry_t *entry=list->data;
@@ -600,13 +594,15 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 				dbus_message_iter_append_uint32_array (&itr, arr, len);
 				g_free (arr);
 			}
-
-			g_list_free (arg.retval.playlist);
-
+			
 			break;
-		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
+		}
+		case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY: {
+			gchar *url;
+			DBusMessageIter dictitr;
+			
 			url = xmms_playlist_entry_url_get (arg.retval.playlist_entry);
-
+			
 			dbus_message_iter_append_dict (&itr, &dictitr);
 			
 			/* add id to Dict */
@@ -622,17 +618,48 @@ xmms_dbus_methodcall (DBusConnection *conn, DBusMessage *msg, void *userdata)
 			/* add the rest of the properties to Dict */
 			xmms_playlist_entry_property_foreach (arg.retval.playlist_entry, hash_to_dict, &dictitr);
 			
-			xmms_playlist_entry_unref (arg.retval.playlist_entry);
 			
+			break;
+		}
+		case XMMS_OBJECT_METHOD_ARG_NONE:
 			break;
 		default:
 			XMMS_DBG ("Unknown returnvalue: %d, couldn't serialize message", arg.rettype);
 			break;
 		}
+	} else {
+		/* create error message */
+		/* jag är inte helt säker på att detta kommer funka som
+		   vi vill på klientsidan.
+		   Det kanske är bättre att göra ett vanligt meddelande.
+		   Eller så sätter man första strängen där alltid
+		   till samma sak..
+		   Så borde man kunna använda
+		   dbus_message_is_error(...) på klientsidan..
+		*/
 
-		dbus_connection_send (conn, retmsg, &serial);
-                dbus_message_unref (retmsg);
+		XMMS_DBG ("error message");
+
+		retmsg = dbus_message_new_error (msg, xmms_error_type_get_str (&arg.error), xmms_error_message_get (&arg.error));
 	}
+
+	/* cleanup retval */
+	switch (arg.rettype) {
+	case XMMS_OBJECT_METHOD_ARG_PLAYLIST_ENTRY:
+		xmms_playlist_entry_unref (arg.retval.playlist_entry);
+		break;
+	case XMMS_OBJECT_METHOD_ARG_PLAYLIST:
+		g_list_free (arg.retval.playlist);
+		break;
+	case XMMS_OBJECT_METHOD_ARG_STRINGLIST:
+		g_list_free (arg.retval.stringlist);
+		break;
+	default:
+		;
+	}
+
+	dbus_connection_send (conn, retmsg, &serial);
+	dbus_message_unref (retmsg);
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 

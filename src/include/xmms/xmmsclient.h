@@ -22,6 +22,7 @@
 
 #include "internal/xhash-int.h"
 #include "internal/xlist-int.h"
+#include "xmms/xmmsclient-result.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,35 +49,35 @@ char *xmmsc_encode_path (char *path);
 char *xmmsc_decode_path (const char *path);
 int xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table);
 
-void xmmsc_quit(xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 
-void xmmsc_playlist_shuffle(xmmsc_connection_t *);
-void xmmsc_playlist_add (xmmsc_connection_t *, char *);
-void xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
-void xmmsc_playlist_clear (xmmsc_connection_t *c);
-void xmmsc_playlist_save (xmmsc_connection_t *c, char *filename);
+xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *);
+xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
+xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename);
+xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
+xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 void xmmsc_playlist_entry_free (x_hash_t *entry);
-void xmmsc_playlist_list (xmmsc_connection_t *c);
-void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
-void xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 
-void xmmsc_playback_stop (xmmsc_connection_t *c);
-void xmmsc_playback_start (xmmsc_connection_t *c);
-void xmmsc_playback_pause (xmmsc_connection_t *c);
-void xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds);
-void xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples);
-void xmmsc_playback_current_id (xmmsc_connection_t *c);
-void xmmsc_playback_next(xmmsc_connection_t *);
-void xmmsc_playback_prev(xmmsc_connection_t *);
-void xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id);
-void xmmsc_playback_status (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_start (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_pause (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_seek_ms (xmmsc_connection_t *c, unsigned int milliseconds);
+xmmsc_result_t *xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples);
+xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playback_next(xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_playback_prev(xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_playback_jump (xmmsc_connection_t *c, unsigned int id);
+xmmsc_result_t *xmmsc_playback_status (xmmsc_connection_t *c);
 
-void xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
-void xmmsc_file_list (xmmsc_connection_t *c, char *path);
+xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
+xmmsc_result_t *xmmsc_file_list (xmmsc_connection_t *c, char *path);
 
 void xmmsc_set_callback (xmmsc_connection_t *, char *, void (*)(void *,void*), void *);
-void xmmsc_configval_list (xmmsc_connection_t *c);
-void xmmsc_configval_get (xmmsc_connection_t *c, char *key);
+xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
 
 /*void xmmsc_glib_setup_mainloop (xmmsc_connection_t *, GMainContext *);*/
 
@@ -88,6 +89,12 @@ x_list_t * xmmscs_configval_list (xmmsc_connection_t *c);
 char *xmmscs_configval_get (xmmsc_connection_t *c, char *key);
 int xmmsc_playback_current_playtime (xmmsc_connection_t *c);
 
+/* API ERROR CODES */
+
+#define XMMS_ERROR_API_UNRECOVERABLE 1
+#define XMMS_ERROR_API_RESULT_NOT_SANE 2
+
+/* end ERROR CODES */
 
 #ifdef __cplusplus
 }

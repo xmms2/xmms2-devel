@@ -223,12 +223,15 @@ xmms_m3u_write_playlist (xmms_playlist_t *playlist, gchar *filename)
 {
 	FILE *fp;
 	GList *lista, *tmp;
+	xmms_error_t err;
+
+	xmms_error_reset (&err);
 
 	fp = fopen (filename, "w+");
 	if (!fp)
 		return FALSE;
 
-	lista = xmms_playlist_list (playlist);
+	lista = xmms_playlist_list (playlist, &err);
 
 	fwrite ("#EXTM3U\n", 8, 1, fp);
 
