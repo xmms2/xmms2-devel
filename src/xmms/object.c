@@ -131,12 +131,7 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 		goto unlock;
 
 	g_free (node->data);
-	list = g_list_delete_link (list, node);
-	if (!list) {
-		object->signals[signalid] = NULL;
-	} else {
-		object->signals[signalid] = list;
-	}
+	object->signals[signalid] = g_list_delete_link (list, node);
 unlock:
 	g_mutex_unlock (object->mutex);
 }
