@@ -1,0 +1,36 @@
+CORE:
+	* Should check if other server is running
+	* Volyme
+	* Resampler
+	* Equalizer
+
+CLI:
+	* xmms2 <file> should imply xmms2 play <file>
+	* make clientlib and implement following features:
+		* show playlist
+		* delete from playlist
+		* stop
+		* seek
+		* play
+	* after issuing a command we shouldnt stick in mediamode
+	* print mediainfo nicer
+
+PLUGINS:
+	* http transport should be remade
+	* mad
+		* support VBR
+		* support ID3V2
+	* vorbis
+		* calculate duration
+		* map comments to entry_t
+	* ffmpeg for wma
+	* cda
+	* wave
+	
+LIBL44T:
+	* specification.
+	* parser
+	* provider for:
+		* qt
+		* gdk
+	* about box! *usefull*
