@@ -27,7 +27,7 @@ typedef enum {
 	XMMS_IPC_OBJECT_OUTPUT,
 	XMMS_IPC_OBJECT_MEDIALIB,
 	XMMS_IPC_OBJECT_SIGNAL,
-	XMMS_IPC_OBJECT_END,
+	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
 typedef enum {
@@ -42,7 +42,7 @@ typedef enum {
 	XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID = 512,
 	XMMS_IPC_SIGNAL_TRANSPORT_MIMETYPE = 1024,
 	XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT = 2048, 
-	XMMS_IPC_SIGNAL_END = 4096,
+	XMMS_IPC_SIGNAL_END = 4096
 } xmms_ipc_signals_t;
 
 typedef enum {
@@ -91,7 +91,7 @@ typedef enum {
 	XMMS_IPC_CMD_BROADCAST,
 
 	/* end */
-	XMMS_IPC_CMD_END,
+	XMMS_IPC_CMD_END
 } xmms_ipc_cmds_t;
 
 #endif /* __SIGNAL_XMMS_H__ */

@@ -525,17 +525,6 @@ get_effect_list ()
 
 		name = xmms_config_value_string_get (cfg);
 
-		/* check whether this plugin is enabled.
-		 * if the plugin doesn't provide the "enabled" config key,
-		 * we'll just assume it cannot be disabled.
-		 */
-		g_snprintf (key, sizeof (key), "effect.%s.enabled", name);
-
-		cfg = xmms_config_lookup (key);
-		if (cfg && !xmms_config_value_int_get (cfg)) {
-			continue;
-		}
-
 		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_EFFECT, name);
 		if (plugin) {
 			list = g_list_prepend (list, xmms_effect_new (plugin));

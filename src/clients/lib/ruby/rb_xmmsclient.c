@@ -142,7 +142,7 @@ static VALUE c_setup_with_gmain (VALUE self)
 {
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	xmmsc_ipc_setup_with_gmain (xmms->real, NULL);
+	xmmsc_ipc_setup_with_gmain (xmms->real);
 
 	return Qnil;
 }

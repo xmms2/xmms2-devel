@@ -24,6 +24,7 @@
 
 
 #include <glib.h>
+#include <string.h>
 
 #include "xmms/effect.h"
 #include "xmms/plugin.h"
@@ -46,6 +47,10 @@ struct xmms_effect_St {
 	gpointer *private_data;
 	guint rate;
 	xmms_plugin_t *plugin;
+
+	/* configval for effect.foo.enabled */
+	xmms_config_value_t *cfg_enabled;
+	gboolean enabled;
 };
 
 void
@@ -60,7 +65,9 @@ xmms_effect_samplerate_set (xmms_effect_t *e, guint rate)
 void
 xmms_effect_run (xmms_effect_t *e, gchar *buf, guint len)
 {
-	e->run (e, buf, len);
+	if (e->enabled) {
+		e->run (e, buf, len);
+	}
 }
 
 /**
@@ -107,6 +114,15 @@ xmms_effect_plugin_get (xmms_effect_t *effect)
  * @internal
  */
 
+static void
+on_enabled_changed (xmms_object_t *object, gconstpointer value,
+                    gpointer udata)
+{
+	xmms_effect_t *effect = udata;
+
+	effect->enabled = !strcmp (value, "1");
+}
+
 xmms_effect_t *
 xmms_effect_new (xmms_plugin_t *plugin)
 {
@@ -141,6 +157,21 @@ xmms_effect_new (xmms_plugin_t *plugin)
 	effect->deinit = xmms_plugin_method_get (plugin,
 			XMMS_PLUGIN_METHOD_DEINIT);
 
+	/* check whether this plugin is enabled.
+	 * if the plugin doesn't provide the "enabled" config key,
+	 * we'll just assume it cannot be disabled.
+	 */
+	effect->cfg_enabled = xmms_plugin_config_lookup (plugin, "enabled");
+
+	if (!effect->cfg_enabled) {
+		effect->enabled = TRUE;
+	} else {
+		effect->enabled = !!xmms_config_value_int_get (effect->cfg_enabled);
+
+		xmms_config_value_callback_set (effect->cfg_enabled,
+		                                on_enabled_changed, effect);
+	}
+
 	return effect;
 }
 
@@ -155,6 +186,11 @@ xmms_effect_free (xmms_effect_t *effect)
 	}
 
 	xmms_object_unref (effect->plugin);
+
+	if (effect->cfg_enabled) {
+		xmms_config_value_callback_remove (effect->cfg_enabled,
+		                                   on_enabled_changed);
+	}
 
 	g_free (effect);
 }
