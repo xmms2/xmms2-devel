@@ -251,7 +251,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
 
-	if (msg->object == XMMS_IPC_OBJECT_SIGNAL && msg->cmd == XMMS_IPC_CMD_SIGNAL) {
+	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
+	    xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_SIGNAL) {
 		guint signalid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &signalid)) {
@@ -260,10 +261,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		}
 
 		g_mutex_lock (global_ipc_lock);
-		client->pendingsignals[signalid] = msg->cid;
+		client->pendingsignals[signalid] = xmms_ipc_msg_get_cid (msg);
 		g_mutex_unlock (global_ipc_lock);
 		return;
-	} else if (msg->object == XMMS_IPC_OBJECT_SIGNAL && msg->cmd == XMMS_IPC_CMD_BROADCAST) {
+	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
+		   xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
 		guint broadcastid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &broadcastid)) {
@@ -271,24 +273,24 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			return;
 		}
 		g_mutex_lock (global_ipc_lock);
-		client->broadcasts[broadcastid] = msg->cid;
+		client->broadcasts[broadcastid] = xmms_ipc_msg_get_cid (msg);
 		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
 
-	XMMS_DBG ("Executing %d/%d", msg->object, msg->cmd);
+	XMMS_DBG ("Executing %d/%d", xmms_ipc_msg_get_object (msg), xmms_ipc_msg_get_cmd (msg));
 
 	g_mutex_lock (global_ipc_lock);
-	object = ipc->objects[msg->object];
+	object = ipc->objects[xmms_ipc_msg_get_object (msg)];
 	if (!object) {
-		XMMS_DBG ("Object %d was not found!", msg->object);
+		XMMS_DBG ("Object %d was not found!", xmms_ipc_msg_get_object (msg));
 		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
 
-	cmd = object->cmds[msg->cmd];
+	cmd = object->cmds[xmms_ipc_msg_get_cmd (msg)];
 	if (!cmd) {
-		XMMS_DBG ("No such cmd %d on object %d", msg->cmd, msg->object);
+		XMMS_DBG ("No such cmd %d on object %d", xmms_ipc_msg_get_cmd (msg), xmms_ipc_msg_get_object (msg));
 		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
@@ -304,13 +306,13 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		type_and_msg_to_arg (cmd->arg2, msg, &arg, 1);
 	}
 
-	xmms_object_cmd_call (object, msg->cmd, &arg);
+	xmms_object_cmd_call (object, xmms_ipc_msg_get_cmd (msg), &arg);
 	if (xmms_error_isok (&arg.error)) {
-		retmsg = xmms_ipc_msg_new (msg->object, XMMS_IPC_CMD_REPLY);
+		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_arg_value (retmsg, &arg);
 		xmms_ipc_free_arg_value (&arg);
 	} else {
-		retmsg = xmms_ipc_msg_new (msg->object, XMMS_IPC_CMD_ERROR);
+		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
 	}
 
@@ -319,7 +321,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
 		g_free (arg.values[1].string);
 
-	retmsg->cid = msg->cid;
+	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
 	xmms_ipc_client_msg_write (client, retmsg);
 
 }
@@ -382,7 +384,7 @@ xmms_ipc_client_thread (gpointer data)
 			while (!g_queue_is_empty (client->out_msg)) {
 				xmms_ipc_msg_t *msg = g_queue_pop_head (client->out_msg);
 
-				if (!xmms_ipc_msg_write_fd (fd, msg, msg->cid)) {
+				if (!xmms_ipc_msg_write_direct (msg, client->transport, xmms_ipc_msg_get_cid (msg))) {
 					xmms_ipc_msg_destroy (msg);
 					break;
 				}
@@ -615,7 +617,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 			xmms_ipc_msg_t *msg;
 			
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-			msg->cid = cli->pendingsignals[signalid];
+			xmms_ipc_msg_set_cid (msg, cli->pendingsignals[signalid]);
 			xmms_ipc_handle_arg_value (msg, (xmms_object_cmd_arg_t*)arg);
 			xmms_ipc_client_msg_write (cli, msg);
 			cli->pendingsignals[signalid] = 0;
@@ -640,7 +642,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 			xmms_ipc_msg_t *msg;
 
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
-			msg->cid = cli->broadcasts[broadcastid];
+			xmms_ipc_msg_set_cid (msg, cli->broadcasts[broadcastid]);
 			xmms_ipc_handle_arg_value (msg, (xmms_object_cmd_arg_t*)arg);
 			xmms_ipc_client_msg_write (cli, msg);
 		}

@@ -18,22 +18,50 @@
 #include <glib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/select.h>
+#include <errno.h>
+#include <time.h>
+#include "xmms/ipc_transport.h"
 #include "xmms/ipc_msg.h"
 #include "xmms/ringbuf.h"
 #include "xmms/util.h"
 
+typedef union {
+	struct {
+		guint32 object;
+		guint32 cmd;
+		guint32 cid;
+		guint32 length;
+		guint8 data[0];
+	} header;
+	guint8 rawdata[0];
+} xmms_ipc_msg_data_t;
+
+
+struct xmms_ipc_msg_St {
+	xmms_ipc_msg_data_t *data;
+	guint32 get_pos;
+	guint32 size;
+};
+
 xmms_ipc_msg_t *
-xmms_ipc_msg_new (guint32 object, guint32 cmd)
+xmms_ipc_msg_alloc (void)
 {
 	xmms_ipc_msg_t *msg;
 	
 	msg = g_new0 (xmms_ipc_msg_t, 1);
-	msg->cmd = cmd;
-	msg->object = object;
-	msg->get_pos = 0;
-	msg->data_length = 0;
 	msg->data = g_malloc0 (XMMS_IPC_MSG_DEFAULT_SIZE);
 	msg->size = XMMS_IPC_MSG_DEFAULT_SIZE;
+	return msg;
+}
+
+xmms_ipc_msg_t *
+xmms_ipc_msg_new (guint32 object, guint32 cmd)
+{
+	xmms_ipc_msg_t *msg = xmms_ipc_msg_alloc ();
+
+	xmms_ipc_msg_set_cmd (msg, cmd);
+	xmms_ipc_msg_set_object (msg, object);
 
 	return msg;
 }
@@ -46,28 +74,83 @@ xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg)
 	g_free (msg);
 }
 
+void
+xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, guint32 len)
+{
+	g_return_if_fail (msg);
+	msg->data->header.length = g_htonl (len);
+}
+
+guint32
+xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg)
+{
+	g_return_val_if_fail (msg, 0);
+
+	return g_ntohl (msg->data->header.length);
+}
+
+guint32
+xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg)
+{
+	g_return_val_if_fail (msg, 0);
+
+	return g_ntohl (msg->data->header.object);
+}
+
+void
+xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, guint32 object)
+{
+	g_return_if_fail (msg);
+
+	msg->data->header.object = g_htonl (object);
+}
+
+
+guint32
+xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg)
+{
+	g_return_val_if_fail (msg, 0);
+
+	return g_ntohl (msg->data->header.cmd);
+}
+
+void
+xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, guint32 cmd)
+{
+	g_return_if_fail (msg);
+
+	msg->data->header.cmd = g_htonl (cmd);
+}
+
+void
+xmms_ipc_msg_set_cid (xmms_ipc_msg_t *msg, guint32 cid)
+{
+	msg->data->header.cid = g_htonl (cid);
+}
+
+guint32
+xmms_ipc_msg_get_cid (const xmms_ipc_msg_t *msg)
+{
+	g_return_val_if_fail (msg, 0);
+
+	return g_ntohl (msg->data->header.cid);
+}
+
 gboolean
 xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf)
 {
-        guint32 cmd;
-        guint32 object;
-	guint32 cmdid;
-        guint32 length;
         gboolean ret = FALSE;
+	xmms_ipc_msg_data_t buf;
 
-        if (xmms_ringbuf_bytes_used (ringbuf) < 16)
+        if (xmms_ringbuf_bytes_used (ringbuf) < XMMS_IPC_MSG_HEAD_LEN)
                 return FALSE;
 
-        xmms_ringbuf_read (ringbuf, &object, sizeof (guint32));
-        xmms_ringbuf_read (ringbuf, &cmd, sizeof (guint32));
-        xmms_ringbuf_read (ringbuf, &cmdid, sizeof (guint32));
-        xmms_ringbuf_read (ringbuf, &length, sizeof (guint32));
+	xmms_ringbuf_read (ringbuf, &buf, XMMS_IPC_MSG_HEAD_LEN);
 
-        length = g_ntohl (length);
-        if (xmms_ringbuf_bytes_used (ringbuf) >= length)
+        if (xmms_ringbuf_bytes_used (ringbuf) >= g_ntohl(buf.header.length))
                 ret = TRUE;
 
-        xmms_ringbuf_unread (ringbuf, 16);
+        xmms_ringbuf_unread (ringbuf, XMMS_IPC_MSG_HEAD_LEN);
 
         return ret;
 }
@@ -76,103 +159,97 @@ xmms_ipc_msg_t *
 xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
 {
 	xmms_ipc_msg_t *msg;
-	guint32 cmd;
-	guint32 cmdid;
-	guint32 object;
 
-	if (xmms_ringbuf_bytes_used (ringbuf) < 16)
+	if (xmms_ringbuf_bytes_used (ringbuf) < XMMS_IPC_MSG_HEAD_LEN)
 		return NULL;
 
-	xmms_ringbuf_read (ringbuf, &object, sizeof (guint32));
-	object = g_ntohl (object);
-	xmms_ringbuf_read (ringbuf, &cmd, sizeof (guint32));
-	cmd = g_ntohl (cmd);
-	xmms_ringbuf_read (ringbuf, &cmdid, sizeof (guint32));
-	cmdid = g_ntohl (cmdid);
-
-	msg = xmms_ipc_msg_new (object, cmd);
-	msg->cid = cmdid;
-
+	msg = xmms_ipc_msg_alloc ();
 	g_return_val_if_fail (msg, NULL);
+
+	xmms_ringbuf_read (ringbuf, msg->data->rawdata, XMMS_IPC_MSG_HEAD_LEN);
 	
-	xmms_ringbuf_read (ringbuf, &msg->data_length, sizeof (msg->data_length));
-	msg->data_length = g_ntohl (msg->data_length);
-	
-	if (xmms_ringbuf_bytes_used (ringbuf) < msg->data_length) {
-		g_printerr ("Not enough data in buffer (had %d, want %d)\n", xmms_ringbuf_bytes_used (ringbuf), msg->data_length);
+	if (xmms_ringbuf_bytes_used (ringbuf) < xmms_ipc_msg_get_length (msg)) {
+		g_printerr ("Not enough data in buffer (had %d, want %d)\n", xmms_ringbuf_bytes_used (ringbuf), xmms_ipc_msg_get_length (msg));
 		xmms_ipc_msg_destroy (msg);
-        	xmms_ringbuf_unread (ringbuf, 16);
+        	xmms_ringbuf_unread (ringbuf, XMMS_IPC_MSG_HEAD_LEN);
 		return NULL;
 	}
 
-	if (msg->data_length > msg->size) {
-		msg->data = g_realloc (msg->data, msg->data_length);
+	if (xmms_ipc_msg_get_length (msg) > msg->size) {
+		msg->data = g_realloc (msg->data, xmms_ipc_msg_get_length (msg));
 	}
 
-	xmms_ringbuf_read (ringbuf, msg->data, msg->data_length);
+	xmms_ringbuf_read (ringbuf, msg->data->header.data, xmms_ipc_msg_get_length (msg));
 	return msg;
 }
 
 gboolean
-xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, const xmms_ipc_msg_t *msg, guint32 cid)
+xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, xmms_ipc_msg_t *msg, guint32 cid)
 {
-	guint32 cmd;
-	guint32 object;
-	guint32 len;
-	guint32 cmdid;
+	g_return_val_if_fail (xmms_ringbuf_bytes_free (ringbuf) > 
+			      (xmms_ipc_msg_get_length (msg)+XMMS_IPC_MSG_HEAD_LEN), 
+			      FALSE);
 
-	g_return_val_if_fail (xmms_ringbuf_bytes_free (ringbuf) > (msg->data_length +10), FALSE);
+	xmms_ipc_msg_set_cid (msg, cid);
 
-	object = g_htonl (msg->object);
-	cmd = g_htonl (msg->cmd);
-	len = g_htonl (msg->data_length);
-	cmdid = g_htonl (cid);
-
-	xmms_ringbuf_write (ringbuf, &object, sizeof (object));
-	xmms_ringbuf_write (ringbuf, &cmd, sizeof (cmd));
-	xmms_ringbuf_write (ringbuf, &cmdid, sizeof (cmdid));
-	xmms_ringbuf_write (ringbuf, &len, sizeof (len));
-	xmms_ringbuf_write (ringbuf, msg->data, msg->data_length);
+	xmms_ringbuf_write (ringbuf, msg->data->rawdata, 
+			    xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN);
 
 	return TRUE;
 }
 
 gboolean
-xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid)
+xmms_ipc_msg_write_direct (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, guint32 cid)
 {
-	guint32 cmd;
-	guint32 object;
-	guint32 cmdid;
-	guint32 len;
-	guint32 data_len;
+	guint ret, len, i;
+	struct timeval tmout;
+	fd_set fdset;
+	gboolean error = FALSE;
+
+	g_return_val_if_fail (msg, FALSE);
+	g_return_val_if_fail (transport, FALSE);
+
+	i = len = xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN;
 	
-	cmd = g_htonl (msg->cmd);
-	cmdid = g_htonl (cid);
-	object = g_htonl (msg->object);
-	len = g_htonl (msg->data_length);
+	xmms_ipc_msg_set_cid (msg, cid);
 
-	if (write (fd, &object, sizeof (object)) != sizeof (object))
-		return FALSE;
-	if (write (fd, &cmd, sizeof (cmd)) != sizeof (cmd))
-		return FALSE;
-	if (write (fd, &cmdid, sizeof (cmdid)) != sizeof (cmdid))
-		return FALSE;
-	if (write (fd, &len, sizeof (len)) != sizeof (len))
-		return FALSE;
-	data_len = 0;
-	while (data_len < msg->data_length) {
-		guint32 ret;
+	while (len > 0) {
+		FD_ZERO (&fdset);
+		FD_SET (xmms_ipc_transport_fd_get (transport), &fdset);
 
-		ret = write (fd, msg->data + data_len, msg->data_length - data_len);
-		if (ret == 0)
-			return FALSE;
-		if (ret == -1)
+		tmout.tv_usec = 0;
+		tmout.tv_sec = 5;
+
+		ret = select (xmms_ipc_transport_fd_get (transport)+1,
+			      NULL,
+			      &fdset,
+			      NULL,
+			      &tmout);
+		if (ret == -1) {
+			error = TRUE;
+			break;
+		} else if (ret == 0) {
 			continue;
-
-		data_len += ret;
+		}
+		
+		ret = xmms_ipc_transport_write (transport, 
+						msg->data->rawdata+(i-len), 
+						len);
+		if (ret == -1) {
+			if (errno == EAGAIN)
+				continue;
+			if (errno == EINTR)
+				continue;
+			error = TRUE;
+			break;
+		} else if (ret == 0) {
+			error = TRUE;
+			break;
+		}
+		len -= ret;
 	}
-	
-	return TRUE;
+
+	return !error;
 }
 
 gpointer
@@ -180,7 +257,7 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 {
 	g_return_val_if_fail (msg, NULL);
 	
-	if ((msg->data_length + len) > msg->size) {
+	if ((xmms_ipc_msg_get_length (msg) + XMMS_IPC_MSG_HEAD_LEN + len) > msg->size) {
 		gint reallocsize = XMMS_IPC_MSG_DEFAULT_SIZE;
 
 		if (len > XMMS_IPC_MSG_DEFAULT_SIZE) 
@@ -191,10 +268,10 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 		msg->size += reallocsize;
 		XMMS_DBG ("Realloc to size %d", msg->size);
 	}
-	memcpy (&msg->data[msg->data_length], data, len);
-	msg->data_length += len;
+	memcpy (&msg->data->header.data[xmms_ipc_msg_get_length (msg)], data, len);
+	xmms_ipc_msg_set_length (msg, xmms_ipc_msg_get_length (msg) + len);
 
-	return &msg->data[msg->data_length - len];
+	return &msg->data->rawdata[xmms_ipc_msg_get_length (msg) - len];
 }
 
 gpointer
@@ -241,11 +318,11 @@ xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg)
 gboolean
 xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, gpointer buf, guint len)
 {
-	if (!msg || ((msg->get_pos + len) > msg->data_length))
+	if (!msg || ((msg->get_pos + len) > xmms_ipc_msg_get_length (msg)))
 		return FALSE;
 
 	if (buf)
-		memcpy (buf, &msg->data[msg->get_pos], len);
+		memcpy (buf, &msg->data->header.data[msg->get_pos], len);
 	msg->get_pos += len;
 
 	return TRUE;

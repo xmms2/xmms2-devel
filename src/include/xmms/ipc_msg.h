@@ -20,26 +20,31 @@
 #include <glib.h>
 
 #include "xmms/ringbuf.h"
+#include "xmms/ipc_transport.h"
 
 #define XMMS_IPC_MSG_DEFAULT_SIZE 32768
 #define XMMS_IPC_MSG_MAX_SIZE 327680
+#define XMMS_IPC_MSG_HEAD_LEN 16 /* all but data */
 
-typedef struct xmms_ipc_msg_St {
-	guint32 object;
-	guint32 cmd;
-	guint32 cid;
-	guint32 get_pos, data_length;
-	guint8 *data;
-	guint32 size;
-} xmms_ipc_msg_t;
+typedef struct xmms_ipc_msg_St xmms_ipc_msg_t;
+
+guint32 xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg);
+guint32 xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg);
+guint32 xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg);
+guint32 xmms_ipc_msg_get_cid (const xmms_ipc_msg_t *msg);
+void xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, guint32 len);
+void xmms_ipc_msg_set_cid (xmms_ipc_msg_t *msg, guint32 cid);
+void xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, guint32 cmd);
+void xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, guint32 object);
 
 xmms_ipc_msg_t *xmms_ipc_msg_new (guint32 object, guint32 cmd);
+xmms_ipc_msg_t * xmms_ipc_msg_alloc (void);
 void xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg);
 
 gboolean xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf);
 xmms_ipc_msg_t *xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf);
-gboolean xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, const xmms_ipc_msg_t *msg, guint32 cid);
-gboolean xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid);
+gboolean xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, xmms_ipc_msg_t *msg, guint32 cid);
+gboolean xmms_ipc_msg_write_direct (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, guint32 cid);
 
 gpointer xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len);
 gpointer xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, guint32 v);
@@ -72,8 +77,6 @@ __XMMS_IPC_MSG_DO_IDENTITY_FUNC(char)
 #define XMMS_IPC_MSG_END XMMS_IPC_MSG_ARG_TYPE_END
 
 void xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg);
-#define xmms_ipc_msg_get_cmd(msg) (msg)->cmd
-#define xmms_ipc_msg_get_object(msg) (msg)->object
 gboolean xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, guint32 *v);
 gboolean xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, gint32 *v);
 gboolean xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, gfloat *v);

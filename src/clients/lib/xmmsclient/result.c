@@ -442,7 +442,7 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		return;
 	}
 
-	cmd = msg->cmd;
+	cmd = xmms_ipc_msg_get_cmd (msg);
 
 	xmms_ipc_msg_destroy (msg);
 	
