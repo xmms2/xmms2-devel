@@ -222,6 +222,10 @@ main (int argc, char **argv)
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	pid_t ppid=0;
+	static struct option long_opts[] = {
+		{"version", 0, NULL, 'V'},
+		{"help", 0, NULL, 'h'}
+	};
 
 	memset (&signals, 0, sizeof (sigset_t));
 	sigaddset (&signals, SIGHUP);
@@ -229,11 +233,6 @@ main (int argc, char **argv)
 	sigaddset (&signals, SIGINT);
 	sigaddset (&signals, SIGPIPE);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
-
-	static struct option long_opts[] = {
-		{"version", 0, NULL, 'V'},
-		{"help", 0, NULL, 'h'}
-	};
 
 	while (42) {
 		opt = getopt_long (argc, argv, "dvVno:p:h", long_opts, NULL);
