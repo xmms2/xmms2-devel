@@ -38,7 +38,7 @@
 
 struct xmms_visualisation_St {
 	xmms_object_t object;
-	guint samplerate;
+	xmms_audio_format_t *format;
 	gint fft_data;
 	gchar fft_buf[FFT_LEN*4];
 	gfloat spec[FFT_LEN/2];
@@ -65,6 +65,7 @@ xmms_visualisation_init ()
 		vis->list = g_list_prepend (vis->list, NULL);
 	}
 
+	/* calculate Hann window used to reduce spectral leakage */
 	for (i = 0; i < FFT_LEN; i++) {
 		window[i] = 0.5 - 0.5 * cos(2.0*M_PI*i/FFT_LEN);
 	}
@@ -87,7 +88,7 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 	GList *node = vis->list;
 	int i;
 
-	node->data = GUINT_TO_POINTER ((guint)((((gfloat)pos) * 1000.0 / vis->samplerate)));
+	node->data = GUINT_TO_POINTER (xmms_sample_samples_to_ms (vis->format, pos));
 	node = g_list_next (node);
 
 	for (i = 0; i < FFT_LEN / 2; i++) {
@@ -109,11 +110,14 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 }
 
 void
-xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len, guint32 pos)
+xmms_visualisation_calc (xmms_visualisation_t *vis, xmms_sample_t *buf, int len, guint32 pos)
 {
 	gint t;
 
 	g_return_if_fail (vis);
+
+	if (vis->format->format != XMMS_SAMPLE_FORMAT_S16)
+		return;
 
 	if (xmms_ipc_has_pending (XMMS_IPC_SIGNAL_VISUALISATION_DATA)) {
 		vis->needed = 20;
@@ -156,9 +160,9 @@ xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len, guint32
 }
 
 void
-xmms_visualisation_samplerate_set (xmms_visualisation_t *vis, guint rate)
+xmms_visualisation_format_set (xmms_visualisation_t *vis, xmms_audio_format_t *fmt)
 {
-	vis->samplerate = rate;
+	vis->format = fmt;
 }
 
 static void

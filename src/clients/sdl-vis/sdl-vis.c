@@ -131,7 +131,6 @@ render_vis (gpointer data)
 	gulong apa;
 	float *spec;
 
-
 	while (SDL_PollEvent (&event)) {
 		switch (event.type) {
 		case SDL_KEYDOWN:
@@ -170,10 +169,10 @@ render_vis (gpointer data)
                 SDL_BlitSurface(text, NULL, surf, NULL);
 	}
 
-	for (i=0; i<FFT_LEN/2/32 - 1; i++) {
+	for (i=0; i<16; i++) {
 		float sum = 0.0f;
 		int j;
-		for (j=0; j<32; j++){
+		for (j=0; j<FFT_LEN/2/16; j++){
 			sum += spec[i*16+j];
 		}
 		sum /= 32.0;
@@ -181,7 +180,7 @@ render_vis (gpointer data)
 			sum = log10 (1.0 + 9.0 * sum);
 		}
 
-		draw_bar (surf, 256*sum, i*32 + (surf->w-(FFT_LEN/2))/2);
+		draw_bar (surf, 256*sum, i*32 + (surf->w-16*32)/2);
 	}
 
 	SDL_UpdateRect (surf, 0, 0, 0, 0);
@@ -305,7 +304,6 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 	}
 
 	newres = xmmsc_result_restart (res);
-	xmmsc_result_unref (res);
 	xmmsc_result_unref (newres);
 
 }

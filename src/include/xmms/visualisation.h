@@ -20,6 +20,8 @@
 #ifndef __XMMS_VISUALISATION_H__
 #define __XMMS_VISUALISATION_H__
 
+#include "sample.h"
+
 /* this is in number of samples! */
 #define FFT_BITS 10
 #define FFT_LEN (1<<FFT_BITS)
@@ -30,8 +32,9 @@ typedef struct xmms_visualisation_St xmms_visualisation_t;
 void xmms_visualisation_init ();
 void xmms_visualisation_shutdown ();
 xmms_visualisation_t *xmms_visualisation_new ();
-void xmms_visualisation_calc (xmms_visualisation_t *vis, gchar *buf, int len, guint32 pos);
-void xmms_visualisation_samplerate_set (xmms_visualisation_t *vis, guint rate);
+void xmms_visualisation_calc (xmms_visualisation_t *vis, xmms_sample_t *buf, int len, guint32 pos);
+void xmms_visualisation_format_set (xmms_visualisation_t *vis, xmms_audio_format_t *fmt);
+
 
 
 #endif

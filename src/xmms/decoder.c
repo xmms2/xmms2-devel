@@ -307,6 +307,8 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 	
 	fmt = xmms_sample_converter_get_from (converter);
 
+	xmms_visualisation_format_set (decoder->vis, fmt);
+
 	for (l = decoder->effects; l; ) {
 		if (!xmms_effect_format_set (l->data, fmt)) {
 			GList *n;
@@ -411,9 +413,7 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 		xmms_effect_run (l->data, buf, len);
 	}
 	
-	/*
 	xmms_visualisation_calc (decoder->vis, buf, len, decoder->decoded_frames);
-	*/
 
 	xmms_sample_convert (decoder->converter, buf, len, &outbuf, &outlen);
 
