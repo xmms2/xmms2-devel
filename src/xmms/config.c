@@ -445,10 +445,14 @@ xmms_config_save (const gchar *file)
 			const gchar *data;
 			gint nume2 = 0;
 			gint c = common_chars (last, line);
+
 			tmpv = g_strsplit (line+c, ".", 0);
-			
+			g_assert (tmpv);
+
 			while (tmpv[nume2])
 				nume2 ++;
+
+			g_strfreev (tmpv);
 
 			fprintf (fp, "</value>\n");
 			if (nume == 3 && lastn == 3 && nume2 >= 2) {
