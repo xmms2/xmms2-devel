@@ -500,26 +500,31 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
   * @param transport the transport to modify
   * @param offset offset in bytes
   * @param whence se above
+  * @returns TRUE if the seek is scheduled.
   * 
   */
 
-void
+gboolean
 xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
-	g_return_if_fail (transport);
-	g_return_if_fail (!transport->want_seek);
+	g_return_val_if_fail (transport, FALSE);
+	g_return_val_if_fail (!transport->want_seek, FALSE);
 
 	xmms_transport_lock (transport);
+
+	if (!xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK)) {
+		return FALSE;
+	}
 
 	if (!transport->running) {
 		xmms_transport_seek_method_t seek_method;
 
 		seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-		g_return_if_fail (seek_method);
+		g_return_val_if_fail (seek_method, FALSE);
 
 		xmms_transport_unlock (transport);
 		seek_method (transport, offset, whence);
-		return;
+		return TRUE;
 	}
 
 	transport->seek_offset = offset;
@@ -531,6 +536,8 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	xmms_transport_unlock (transport);
 
 	g_cond_signal (transport->cond);
+
+	return TRUE;
 }
 
 /**
