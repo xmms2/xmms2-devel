@@ -111,7 +111,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 
 	duration = (duration * 1000) / 75;
 
-	entry = xmms_decoder_mediainfo_entry_get (decoder);
+	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	tmp = g_strdup_printf ("%d", duration);
 	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);

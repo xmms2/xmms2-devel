@@ -192,7 +192,6 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
 	x_hash_t *hash;
 	gchar *tmp;
-	gint mid;
 	guint id;
 	xmmsc_connection_t *c = userdata;
 
