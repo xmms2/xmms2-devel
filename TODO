@@ -4,16 +4,18 @@ CORE
 	* Equalizer
 	* Check names of functions
            - especially get/set-functions
-           - signal-names
            - konsekvent med init/new/create/destroy/free/deinit 
+	* playlist should figure out mimetype upon playlist_add
+		(mediainfo thread?)
+	* licenseheader in all sourcefiles?
 
 CLI:
 	* xmms2 <file> should imply xmms2 play <file>
 	* make clientlib and implement following features:
 		* seek
-	* print mediainfo nicer
 
 PLUGINS:
+	* make all decoderplugins seek-able
 	* http transport should be remade
 	* vorbis
 		* should calculate duration more correctly
