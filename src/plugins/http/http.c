@@ -1,6 +1,7 @@
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
 #include "xmms/util.h"
+#include "xmms/xmms.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,7 +61,7 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "http",
-			"HTTP transport " VERSION,
+			"HTTP transport " XMMS_VERSION,
 			"HTTP streaming transport");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -265,13 +266,13 @@ x_request (xmms_transport_t *transport)
 			g_snprintf (data->request, 1024, "GET %s HTTP/1.1\r\n"
 				   "Host: %s\r\n"
 				   "Connection: close\r\n"
-				   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
+				   "User-Agent: XMMS/" XMMS_VERSION "\r\n\r\n", 
 				   data->path, data->server);
 		} else {
 			g_snprintf (data->request, 1024, "GET /%s HTTP/1.1\r\n"
 				   "Host: %s\r\n"
 				   "Connection: close\r\n"
-				   "User-Agent: XMMS/" VERSION "\r\n\r\n", 
+				   "User-Agent: XMMS/" XMMS_VERSION "\r\n\r\n", 
 				   data->path, data->server);
 		}
 		data->requestp = data->request;
