@@ -62,7 +62,7 @@ xmms_diskwrite_open (xmms_output_t *output)
 	
 	g_return_val_if_fail (output, FALSE);
 
-	path = xmms_output_get_config_string (output, "file");
+	path = xmms_output_config_string_get (output, "file");
 
 	if (path) {
 		path = "/tmp/apanap";

@@ -9,7 +9,6 @@
 #include "xmms/plugin.h"
 #include "xmms/decoder.h"
 #include "xmms/util.h"
-#include "xmms/output.h"
 #include "xmms/transport.h"
 
 #include "sidplay_wrapper.h"
@@ -129,7 +128,6 @@ static gboolean
 xmms_sid_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_sid_data_t *data;
-	xmms_output_t *output;
 	gchar out[4096];
 	xmms_transport_t *transport;
 	gint len,ret;
@@ -189,17 +187,18 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 
 		xmms_sid_get_media_info (decoder);
 
-	}
+		/** @todo don't you just love hardcoded values? */
+		xmms_decoder_samplerate_set (decoder, 44100); 
 
-	output = xmms_decoder_output_get (decoder);
-	g_return_val_if_fail (output, FALSE);
+
+	}
 
 	ret = sidplay_wrapper_play (data->wrapper, out, sizeof(out));
 	if (!ret) {
 		XMMS_DBG ("play err: %s", sidplay_wrapper_error(data->wrapper));
 		return FALSE;
 	} else {
-		xmms_output_write (output, out, ret);
+		xmms_decoder_write (decoder, out, ret);
 	}
 	return TRUE;
 }

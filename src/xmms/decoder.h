@@ -42,6 +42,10 @@ gboolean xmms_decoder_get_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entr
 xmms_playlist_entry_t * xmms_decoder_get_mediainfo_offline (xmms_decoder_t *decoder, xmms_transport_t *transport);
 void xmms_decoder_set_mediainfo (xmms_decoder_t *decoder, xmms_playlist_entry_t *entry);
 
+void xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len);
+void xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate);
+
+
 xmms_decoder_t *xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype);
 void xmms_decoder_destroy (xmms_decoder_t *decoder);
 
