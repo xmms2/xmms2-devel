@@ -656,12 +656,18 @@ XMMS_METHOD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE,
 GList *
 xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 {
-	GList *r=NULL, *node;
+	GList *r = NULL, *node;
+
 	XMMS_PLAYLIST_LOCK (playlist);
 
 	for (node = playlist->list; node; node = g_list_next (node)) {
-		r = g_list_append (r, GUINT_TO_POINTER (xmms_playlist_entry_id_get ((xmms_playlist_entry_t *)node->data)));
+		xmms_playlist_entry_t *entry = node->data;
+		guint id = xmms_playlist_entry_id_get (entry);
+
+		r = g_list_prepend (r, GUINT_TO_POINTER (id));
 	}
+
+	r = g_list_reverse (r);
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 
