@@ -82,6 +82,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+
+	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
 	
 	return plugin;
 }
@@ -194,6 +196,8 @@ static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
+	xmms_config_value_t *val;
+	gint size;
 	
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -218,6 +222,12 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 			CURLM_CALL_MULTI_PERFORM) {
 		data->again = TRUE;
 	}
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
+
+	size = xmms_config_value_int_get (val);
+
+	xmms_transport_ringbuf_resize (transport, size);
 	
 	/*xmms_transport_mime_type_set (transport, "audio/mpeg");*/
 
