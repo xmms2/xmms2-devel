@@ -162,27 +162,24 @@ xmms_mediainfo_thread_thread (gpointer data)
 			/* Check if this is in the medialib first.*/
 			if (xmms_medialib_entry_get (entry)) {
 				xmms_playlist_entry_changed (mtt->playlist, entry);
-				xmms_object_unref (entry);
-				continue;
+				goto cont;
 			}
 
 			XMMS_DBG ("Entry is : %s", xmms_playlist_entry_url_get (entry));
 
 			transport = xmms_transport_new ();
 			if (!transport || !xmms_transport_open (transport, entry)) {
-				xmms_object_unref (entry);
-				continue;
+				goto cont;
 			}
 
 			if (!xmms_transport_islocal (transport))
-				continue;
+				goto cont;
 
 			mime = xmms_transport_mimetype_get (transport);
 
 			if (!mime) {
-				xmms_object_unref (entry);
 				xmms_object_unref (transport);
-				continue;
+				goto cont;
 			}
 
 			plsplugin = xmms_playlist_plugin_new (mime);
@@ -194,22 +191,20 @@ xmms_mediainfo_thread_thread (gpointer data)
 
 				/* we don't want it in the playlist. */
 				xmms_playlist_id_remove (mtt->playlist, xmms_playlist_entry_id_get (entry), &err);
-				xmms_object_unref (entry);
 
 				/* cleanup */
 				xmms_playlist_plugin_free (plsplugin);
 				xmms_object_unref (transport);
-				continue;
+				goto cont;
 			}
 
 
 			xmms_playlist_entry_mimetype_set (entry, mime);
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
-				xmms_object_unref (entry);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
-				continue;
+				goto cont;
 			}
 
 			xmms_decoder_mediainfo_get (decoder, transport);
@@ -218,11 +213,12 @@ xmms_mediainfo_thread_thread (gpointer data)
 			/* Store this in the database */
 			xmms_medialib_entry_store (entry);
 
-			xmms_object_unref (entry);
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 				
 
+cont:
+			xmms_object_unref (entry);
 			g_mutex_lock (mtt->mutex);
 
 		}
