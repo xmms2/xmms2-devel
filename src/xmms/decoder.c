@@ -78,14 +78,6 @@ xmms_decoder_output_get (xmms_decoder_t *decoder)
 	return ret;
 }
 
-xmms_transport_t *
-xmms_decoder_transport_get (xmms_decoder_t *decoder)
-{
-	g_return_val_if_fail (decoder, NULL);
-
-	return decoder->transport;
-}
-
 /*
  * Private functions
  */

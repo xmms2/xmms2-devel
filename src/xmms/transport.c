@@ -5,31 +5,6 @@
 #include "ringbuf.h"
 
 /*
- * Type definitions
- */
-
-struct xmms_transport_St {
-	xmms_object_t object;
-	xmms_plugin_t *plugin;
-
-	GMutex *mutex;
-	GCond *cond;
-	GThread *thread;
-	gboolean running;
-
-	xmms_ringbuf_t *buffer;
-	gchar *mime_type;
-	gpointer plugin_data;
-};
-
-/*
- * Macros
- */
-
-#define xmms_transport_lock(t) g_mutex_lock ((t)->mutex)
-#define xmms_transport_unlock(t) g_mutex_unlock ((t)->mutex)
-
-/*
  * Static function prototypes
  */
 

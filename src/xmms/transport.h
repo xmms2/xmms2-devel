@@ -22,6 +22,7 @@ struct xmms_transport_St {
 	xmms_plugin_t *plugin;
 
 	GMutex *mutex;
+	GCond *cond;
 	GThread *thread;
 	gboolean running;
 
