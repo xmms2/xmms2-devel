@@ -22,6 +22,7 @@ def checkFlags(base_env):
 	##
 	## Check for optional libs
 	##
+	base_env.CheckAndAddFlagsToGroup("ecore", "ecore-config --libs --cflags")
 	base_env.CheckAndAddFlagsToGroup("qt", "pkg-config --libs --cflags qt")
 	base_env.CheckAndAddFlagsToGroup("shout", "pkg-config --libs --cflags shout")
 	base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
