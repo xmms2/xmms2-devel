@@ -1,0 +1,15 @@
+#clientlib
+
+Import('base_env')
+
+xmmsc_sources = Split ("xmmsclient-sync.c")
+
+env = base_env.Copy(CPPPATH = ['../xmmsclient', '#src', '../xmmsclient-glib'],
+		    LIBPATH = ['../xmmsclient', '../xmmsclient-glib'],
+		    LIBS = ['xmmsclient', 'xmmsclient-glib'])
+
+env.AddFlagsFromGroup("glib")
+env.AddFlagsFromGroup("dbus")
+
+env.XmmsLibrary('xmmsclient-sync', xmmsc_sources)
+
