@@ -41,6 +41,7 @@ PLUGINS:
 
 	* Output
 		* ARTS
+		* NULL
 		* ESD - Tack Gnome.. tack som fan
                     "esound is junk. The only thing esd has is a good
                      client API for going boing at approximately the
