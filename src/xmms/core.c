@@ -150,6 +150,19 @@ xmms_core_quit ()
 	exit (0); /** @todo BUSKIS! */
 }
 
+
+/**
+ *  This will send a information message to all clients.
+ *
+ *  Used by log code to send failures to connected clients.
+ */
+void 
+xmms_core_information (gint loglevel, gchar *information)
+{
+	if (loglevel > XMMS_LOG_DEBUG)
+		xmms_object_emit (XMMS_OBJECT (core), "information", information);
+}
+
 /**
  * Initializes the coreobject.
  *

@@ -314,6 +314,8 @@ xmms_playlist_clear (xmms_playlist_t *playlist)
 
 	g_list_free (playlist->list);
 	playlist->list = NULL;
+	g_hash_table_destroy (playlist->id_table);
+	playlist->id_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 
 	playlist->nextentry = NULL;
 

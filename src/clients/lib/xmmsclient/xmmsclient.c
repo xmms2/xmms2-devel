@@ -20,6 +20,7 @@ guint played_time=0;
 #define XMMS_MAX_URI_LEN 1024
 
 static const char *playtime_message[]={"org.xmms.core.playtime-changed"};
+static const char *information_message[]={"org.xmms.core.information"};
 static const char *playback_stopped_message[]={"org.xmms.playback.stopped"};
 static const char *mediainfo_message[]={"org.xmms.core.mediainfo-changed"};
 static const char *disconnectmsgs[]={"org.freedesktop.Local.Disconnect"};
@@ -58,6 +59,28 @@ handle_playtime(DBusMessageHandler *handler,
 
 		if(cb){
 			cb->func(cb->userdata, GPOINTER_TO_UINT(tme));
+		}
+	}
+
+	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static DBusHandlerResult
+handle_information(DBusMessageHandler *handler, 
+	   DBusConnection *conn, DBusMessage *msg, void *user_data)
+{
+	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
+        DBusMessageIter itr;
+
+	dbus_message_iter_init (msg, &itr);
+	if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+		gchar *info = dbus_message_iter_get_string (&itr); 
+		xmmsc_callback_desc_t *cb;
+
+		cb = g_hash_table_lookup (xmmsconn->callbacks, XMMSC_CALLBACK_INFORMATION);
+
+		if(cb){
+			cb->func(cb->userdata, info);
 		}
 	}
 
@@ -175,6 +198,10 @@ xmmsc_connect (xmmsc_connection_t *c)
 	
 	hand = dbus_message_handler_new (handle_disconnect, c, NULL);
 	dbus_connection_register_handler (conn, hand, disconnectmsgs, 1);
+
+	hand = dbus_message_handler_new (handle_information, c, NULL);
+	dbus_connection_register_handler (conn, hand, information_message, 1);
+
 
 	c->conn=conn;
 	return TRUE;

@@ -41,6 +41,15 @@ print_mediainfo (xmmsc_connection_t *conn, gint id)
 }
 
 void
+handle_information (void *userdata, void *arg) 
+{
+	gchar *message = arg;
+
+	if (message) 
+		printf ("Information: %s\n", message);
+}
+
+void
 handle_playtime (void *userdata, void *arg) {
 	guint tme = GPOINTER_TO_UINT(arg);
 	if (status == STOPPED) 
@@ -104,6 +113,7 @@ status_main(xmmsc_connection_t *conn)
 	mainloop = g_main_loop_new (NULL, FALSE);
 
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYTIME_CHANGED, handle_playtime, NULL);
+	xmmsc_set_callback (conn, XMMSC_CALLBACK_INFORMATION, handle_information, NULL);
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_MEDIAINFO_CHANGED, handle_mediainfo, conn);
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_PLAYBACK_STOPPED, handle_playback_stopped, conn);
 	xmmsc_set_callback (conn, XMMSC_CALLBACK_DISCONNECTED, handle_disconnected, conn);

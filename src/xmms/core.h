@@ -43,6 +43,7 @@ void xmms_core_quit ();
 
 void xmms_core_set_mediainfo (xmms_playlist_entry_t *entry);
 void xmms_core_set_playlist (xmms_playlist_t *playlist);
+void xmms_core_information (gint loglevel, gchar *information);
 gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);
 xmms_playlist_entry_t *xmms_core_playlist_entry_mediainfo (guint id);
 gchar *xmms_core_get_uri ();

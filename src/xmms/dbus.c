@@ -48,6 +48,28 @@ static void do_send(gpointer data, gpointer user_data)
 	 dbus_connection_send (data, user_data, &clientser);
 }
 
+/** Send a dbus information message to all clients. */
+
+static void
+handle_information_msg (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	g_mutex_lock (connectionslock);
+
+	if (connections) {
+		DBusMessage *msg;
+		DBusMessageIter itr;
+
+		msg = dbus_message_new ("org.xmms.core.information", NULL);
+		dbus_message_append_iter_init (msg, &itr);
+		dbus_message_iter_append_string (&itr, (gchar *)data);
+		g_slist_foreach (connections, do_send, msg);
+		dbus_message_unref (msg);
+	}
+
+	g_mutex_unlock (connectionslock);
+
+}
+
 static void
 handle_playback_stop (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
@@ -442,6 +464,9 @@ xmms_dbus_init(){
 	
 	xmms_object_connect (XMMS_OBJECT (core), "playback-stopped",
 			     handle_playback_stop, NULL);
+
+	xmms_object_connect (XMMS_OBJECT (core), "information",
+			     handle_information_msg, NULL);
 
 
 

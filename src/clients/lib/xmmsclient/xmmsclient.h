@@ -29,6 +29,7 @@ guint xmmsc_get_playing_id (xmmsc_connection_t *);
 GHashTable *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
 
 #define XMMSC_CALLBACK_PLAYTIME_CHANGED "playtime-changed"
+#define XMMSC_CALLBACK_INFORMATION "information"
 #define XMMSC_CALLBACK_MEDIAINFO_CHANGED "mediainfo-changed"
 #define XMMSC_CALLBACK_PLAYBACK_STOPPED "playback-stopped"
 #define XMMSC_CALLBACK_DISCONNECTED "disconnected"

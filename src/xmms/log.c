@@ -8,6 +8,7 @@
 #endif
 
 #include "log.h"
+#include "core.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -28,7 +29,7 @@
 #endif
 
 /* Private function declarations */
-static void xmms_log_string_with_time (const char *format, const char *string);
+static void xmms_log_string_with_time (gint loglevel, const char *format, const char *string);
 static int xmms_log_open_logfile ();
 static int xmms_log_close_logfile ();
 char *xmms_log_filename = NULL;
@@ -102,7 +103,7 @@ xmms_log_debug (const gchar *fmt, ...)
 #endif
 	va_end(ap);
 
-	xmms_log_string_with_time ("DEBUG: %s\n", buff);
+	xmms_log_string_with_time (XMMS_LOG_DEBUG, "DEBUG: %s\n", buff);
 }
 
 /* Log to console and file */
@@ -116,7 +117,7 @@ xmms_log (const char *fmt, ...)
 	g_vsnprintf(buff, BUFSIZE, fmt, ap);
 	va_end(ap);
 
-	xmms_log_string_with_time ("%s\n", buff);
+	xmms_log_string_with_time (XMMS_LOG_INFORMATION, "%s\n", buff);
 }
 
 void
@@ -129,14 +130,14 @@ xmms_log_fatal (const gchar *fmt, ...)
 	g_vsnprintf(buff, BUFSIZE, fmt, ap);
 	va_end(ap);
 
-	xmms_log_string_with_time ("%s\n", buff);
-	xmms_log_string_with_time ("%s\n", "Shutting down...");
+	xmms_log_string_with_time (XMMS_LOG_FATAL, "%s\n", buff);
+	xmms_log_string_with_time (XMMS_LOG_FATAL, "%s\n", "Shutting down...");
 	
 	exit (0);
 }
 
 static void
-xmms_log_string_with_time (const gchar *format, const gchar *string)
+xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *string)
 {
 	struct tm *tp;
 #ifdef HAVE_LOCALTIME_R
@@ -144,6 +145,12 @@ xmms_log_string_with_time (const gchar *format, const gchar *string)
 #endif
 	time_t now;
 	gchar timestring[20];
+	gchar *msg;
+
+	/* send the information to core */
+	msg = g_strdup_printf (format, string);
+	xmms_core_information (loglevel, msg);
+	g_free (msg);
 	
 	if (xmms_log_stream) {
 		now = time (NULL);
