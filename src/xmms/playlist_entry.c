@@ -91,7 +91,7 @@ xmms_playlist_entry_property_set (xmms_playlist_entry_t *entry, gchar *key, gcha
 	g_return_if_fail (key);
 	g_return_if_fail (value);
 
-	g_hash_table_insert (entry->properties, g_strdup (key), g_strdup (value));
+	g_hash_table_insert (entry->properties, g_string_ascii_down (key), g_strdup (value));
 	
 }
 
