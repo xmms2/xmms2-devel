@@ -126,8 +126,8 @@ cdef extern from "xmms/xmmsclient.h" :
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
-	char *encode_path (char *path)
-	char *decode_path (char *path)
+	char *xmmsc_encode_path (char *path)
+	char *xmmsc_decode_path (char *path)
 
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
