@@ -33,6 +33,8 @@
 #define XMMS_OUTPUT_DEFAULT "coreaudio"
 #endif
 
+#define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "131072"
+
 /*
  * Type definitions
  */

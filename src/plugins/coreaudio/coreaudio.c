@@ -24,7 +24,6 @@
 #include "xmms/xmms.h"
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
-#include "xmms/playback.h"
 #include "xmms/config.h"
 #include "xmms/signal_xmms.h"
 
@@ -53,7 +52,7 @@ typedef struct xmms_ca_data_St {
  * Function prototypes
  */
 
-static void xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
+static void xmms_ca_status (xmms_output_t *output, xmms_output_status_t status);
 static gboolean xmms_ca_open (xmms_output_t *output);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_close (xmms_output_t *output);
@@ -104,7 +103,7 @@ xmms_plugin_get (void)
  */
 
 static void
-xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
+xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
 {
 	xmms_ca_data_t *data;
 
@@ -113,7 +112,7 @@ xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 	g_return_if_fail (data);
 
 	XMMS_DBG ("changed status! %d", status);
-	if (status == XMMS_PLAYBACK_PLAY) {
+	if (status == XMMS_OUTPUT_STATUS_PLAY) {
 		AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
 	} else {
 		AudioDeviceStop (data->outputdevice, xmms_ca_write_cb);
