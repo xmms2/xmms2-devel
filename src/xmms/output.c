@@ -238,6 +238,7 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		if (output->is_paused)
 			xmms_output_resume (output);
 	} else {
+		XMMS_DBG ("starting new output thread!");
 		output->running = TRUE;
 		if (output->type == XMMS_OUTPUT_TYPE_WR) {
 			xmms_object_ref (output); /* thread takes one ref */
@@ -727,6 +728,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 	entry = xmms_playlist_advance (output->playlist);
 
 	if (!entry) {
+		XMMS_DBG ("got NULL from advance!");
 		return FALSE;
 	}
 
@@ -776,9 +778,12 @@ xmms_output_thread (gpointer data)
 		if (!output->decoder && g_queue_is_empty (output->decoder_list)) {
 			xmms_output_decoder_start (output);
 		}
+  
+		if (!output->decoder && g_queue_is_empty (output->decoder_list)) {
+			break;
+		}
 
-		if (output->is_paused || 
-		    (!output->decoder && g_queue_is_empty (output->decoder_list))) {
+		if (output->is_paused) {
 			XMMS_DBG ("output is waiting!");
 			if (output->is_paused) {
 				xmms_output_status_set (output, XMMS_OUTPUT_STATUS_PAUSE);
@@ -820,6 +825,8 @@ xmms_output_thread (gpointer data)
 		output->decoder = NULL;
 	}
 
+	output->running = FALSE;
+	
 	g_mutex_unlock (output->mutex);
 
 	xmms_output_close (output);
