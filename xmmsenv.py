@@ -41,7 +41,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self['INSTALL'] = installFunc
 		self.plugins = []
 		self.install_prefix=self['PREFIX']
-		self.pluginpath=self.install_prefix + "/lib/xmms/"
+		self.pluginpath=self.install_prefix + "/lib/xmms2/"
 		self.binpath=self.install_prefix + "/bin/"
 		self.libpath=self.install_prefix + "/lib/"
 		self.sysconfdir=self['SYSCONFDIR']
