@@ -1,10 +1,93 @@
 http://xmms2.xmms.org/
 
-Another Pathetic And Naive Audio Player
+----
 
-Pathetic Application Delivering Digital Audio
+Another Pathetic And Naive Audio Player (APANAP)
 
-X Music Multiplexing System
+Pathetic Application Delivering Digital Audio (PADDA)
 
-This is not public code. Go away.
+X Music Multiplexing System (XMMS)
+
+----
+
+This is the new generation of the XMMS player
+There are a lot of questions about the reason of XMMS2 and the
+design goals. I will try to clearify them.
+
+Q: Why rewrite XMMS?
+A: XMMS is a old project (started in -97) and was not aimed to be as popular
+as it became. The internal design of XMMS is somewhat ... troublesome. Also
+the frameworks around XMMS has changed a lot. The general feeling among the
+developers was that if ANYTHING would happen it should be a complete
+rewrite.
+
+Q: Who is responsible for XMMS2?
+A: Peter Alm (original author for XMMS) did the first design and the initial
+code. Most of the code is written by Tobias Rundström and Anders Gustafsson.
+The project is beeing maintained by Tobias and Anders. A big thanks goes out
+to Thomas "Fatal" Nilsson too, he bitches good.
+
+Q: Thats not the same developers that maintain XMMS?
+A: No that's true. This is a seperate project. Rest assure, XMMS will live
+on for a long long time. XMMS2 is not in years ready to take over for XMMS.
+
+Q: What are the design goals of XMMS2?
+A: XMMS2 is designed to be a kickass music-player. We wanted to  rectify a few 
+problems with the XMMS API's. For example the split of Inputplugin into Transport 
+and Decoder. We also wanted the UI to be separated from the main engine in
+order to allow other widgetsets then GTK+.
+
+Q: Why just a musicplayer?
+A: Lot of people ask us about video. But video will not be included nor
+supported in XMMS2. This path has numerous reasons. Music and video are
+highly seperate things, we belive that we can make the best musicplayer out
+there but not the best videoplayer, so we stick to what we are best at.
+
+Q: But XMMS stands for X MultiMedia System That includes video!
+A: That is wrong in XMMS2, XMMS stands for X(cross)platform Music 
+Multiplexing System.
+
+Q: Seems like you are using a non-standard buildsystem, why not make?
+A: make is a really good buildsystem, although to get all functionallity 
+needed for a bigger project you'll need automake, autoconf and libtool. We
+had a lot of problem getting this tools to do what we wanted, so we
+evaluated the alternatives. SCons is a good alternative. If you do not want
+to install python and SCons on your system, there will be binaries availible
+for most platforms.
+
+Q: And you are using BitKeeper as SCM? It's non-free software!!
+A: Yeah, you will be able to download daily snapshots and patches from our
+webpage if you can't use BK. We will not switch SCM, EOD.
+
+Q: What platforms will you support?
+A: Our aim is to be able to port it basicly everywhere, but development is 
+concentrated around Linux-x86, Linux-PPC and MacOSX. Support for other
+platforms is secondary. 
+
+Q: What about Windows?
+A: Our code should run on Windows without an problem. The showstopper is
+that D-BUS is not ported to Windows yet, since XMMS2 is heavily based around
+this lib we have to wait, or you can port it!
+
+Common questions about usage:
+
+Q: How do I use XMMS2?
+A: XMMS2 is based around a server-client model, where all the logic resides
+inside XMMS2D. With a client you can send commands to the daemon and play
+the music. For now we only have a textmode cli client. To install, read the
+INSTALL file. For usage of xmms2 cli client see the included manpage.
+
+Q: What clients are in progress?
+A: We probably will have a offical client based on somekind of
+skinned-widget library that are still in development (libl44t, questions
+about this is directed to andersg@xmms.org). Other people are working on a
+GTK+ client and a E17 client (enlightenment). 
+
+Q: When will XMMS2 be released for public consumption?
+A: We don't know. When it's done. RSN.
+
+Q: How do I get in contact with you guys?
+A: E-Mail: tru@xmms.org and andersg@xmms.org
+   IRC: debian.as:6667 #xmms2
+
 

@@ -246,6 +246,10 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
 }
 
 
+/**
+ * @internal
+ */
+
 static int
 free_callback (void *key, void *value, void *udata)
 {
@@ -281,11 +285,10 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	free(c);
 }
 
-/** 
- * @defgroup ClientCallbacks ClientCallbacks
- * @brief This callbacks can be set with xmmsc_set_callback
- * and will be called with one argument.
- * @{
+
+/**
+ * Tell the server to quit. This will terminate the server.
+ * If you only want to disconnect, use #xmmsc_deinit()
  */
 
 xmmsc_result_t *
@@ -375,7 +378,14 @@ lookup_and_add (char *target, int max, int len, x_hash_t *table, const char *ent
 }
 
 /**
- * @todo Document this 
+ * This function will make a pretty string about the information in
+ * the mediainfo hash supplied to it.
+ * @param target a allocated char *
+ * @param len length of target
+ * @param fmt a format string to use
+ * @param table the x_hash_t that you got from xmmsc_result_get_mediainfo
+ * @returns the number of chars written to #target
+ * @todo document format
  */
 
 int

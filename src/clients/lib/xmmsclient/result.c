@@ -65,6 +65,57 @@ struct xmmsc_result_St {
 	char *restart_signal; 
 };
 
+/**
+ * @defgroup XMMSC_Result XMMSC_Result
+ * @brief Result manipulation and error handling
+ * @ingroup XMMSClient
+ *
+ * Each command to the server will return a #xmmsc_result_t
+ * to the programmer. This object will be used to see the results
+ * off the call. It will handle errors and the results.
+ * 
+ * results could be used in both sync and async fashions. Here
+ * is a sync example:
+ * @code
+ * xmmsc_result_t *res;
+ * unsigned int id;
+ * res = xmmsc_playback_get_current_id (connection);
+ * xmmsc_result_wait (res);
+ * if (xmmsc_result_iserror) {
+ *   printf ("error: %s", xmmsc_result_get_error (res);
+ * }
+ * xmmsc_result_get_uint (res, &id);
+ * xmmsc_result_unref (res);
+ * printf ("current id is: %d", id);
+ * @endcode
+ *
+ * an async example is a bit more complex...
+ * @code
+ * static void handler (xmmsc_result_t *res, void *userdata) {
+ *   unsigned int id;
+ *   if (xmmsc_result_iserror) {
+ *      printf ("error: %s", xmmsc_result_get_error (res);
+ *   }
+ *   xmmsc_result_get_uint (res, &id);
+ *   xmmsc_result_unref (res);
+ *   printf ("current id is: %d", id);
+ * }
+ * 
+ * int main () {
+ *   // Connect blah blah ...
+ *   xmmsc_result_t *res;
+ *   res = xmmsc_playback_get_current_id (connection);
+ *   xmmsc_result_notifier_set (res, handler);
+ *   xmmsc_result_unref (res);
+ * }
+ * @endcode
+ * When the answer arrives #handler will be called. with the resulting #xmmsc_result_t
+ * @{
+**/
+
+/**
+ * References the #xmmsc_result_t
+ */
 void
 xmmsc_result_ref (xmmsc_result_t *res)
 {
@@ -95,6 +146,45 @@ xmmsc_result_free (xmmsc_result_t *res)
 	free (res);
 }
 
+/**
+ * @defgroup RestartableResults RestartableResults
+ * @brief Covers Restartable #xmmsc_result_t's
+ * @ingroup XMMSC_Result
+ * A lot of signals you would like to get notified about
+ * when they change, instead of polling the server all the time.
+ * This results are "restartable".
+ * Here is an example on how you use a restartable signal.
+ * @code
+ * static void handler (xmmsc_result_t *res, void *userdata) {
+ *   unsigned int id;
+ *   xmmsc_result_t *newres;
+ *
+ *   if (xmmsc_result_iserror) {
+ *      printf ("error: %s", xmmsc_result_get_error (res);
+ *   }
+ *
+ *   xmmsc_result_get_uint (res, &id);
+ *   newres = xmmsc_result_restart (res); // this tells the server to send updates to the SAME function again.
+ *   xmmsc_result_unref (res);
+ *   xmmsc_result_unref (newres);
+ *   printf ("current id is: %d", id);
+ * }
+ * 
+ * int main () {
+ *   // Connect blah blah ...
+ *   xmmsc_result_t *res;
+ *   res = xmmsc_playback_get_current_id (connection);
+ *   xmmsc_result_notifier_set (res, handler);
+ *   xmmsc_result_unref (res);
+ * }
+ * @endcode
+ * In the above example the #handler would be called when the id changes.
+ * Not all commands are restartable, please check the documentation for
+ * each function to see if it's restartable.
+ * @{
+ */
+
+/** @internal */
 void
 xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *conn, char *signal)
 {
@@ -106,6 +196,15 @@ xmmsc_result_restartable (xmmsc_result_t *res, xmmsc_connection_t *conn, char *s
 	res->conn = conn;
 
 }
+
+/**
+ * Restarts the result. This will return a new #xmmsc_result_t.
+ * You will not need to run #xmmsc_result_set_notifier since the 
+ * restart command will use the same handler as you told it to
+ * use the first time
+ * @returns newly allocated #xmmsc_result_t upon success otherwise NULL
+ * @param res A restartable #xmmsc_result_t
+ */
 
 xmmsc_result_t *
 xmmsc_result_restart (xmmsc_result_t *res)
@@ -134,6 +233,16 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	
 }
 
+/** @} */
+
+
+/**
+ * Decreases the references for the #xmmsc_result_t
+ * When the number of references reaches 0 it will
+ * be freed. And thus all data you extracted from it
+ * will be deallocated.
+ */
+
 void 
 xmmsc_result_unref (xmmsc_result_t *res)
 {
@@ -144,6 +253,14 @@ xmmsc_result_unref (xmmsc_result_t *res)
 		xmmsc_result_free (res);
 	}
 }
+
+/**
+ * Set up a callback for the result retrival. This callback
+ * Will be called when the answers arrives.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param func the function that should be called when we receive the answer
+ * @param user_data optional user data to the callback
+ */
 
 void
 xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data)
@@ -157,6 +274,10 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 	res->func = func;
 	res->user_data = user_data;
 }
+
+/**
+ * @internal
+ */
 
 static void
 xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
@@ -177,7 +298,7 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 	res->reply = reply;
 	dbus_error_init (&err);
 	if (dbus_set_error_from_message (&err, res->reply)) {
-		res->error = 1; /* @todo add real error */
+		res->error = 1; /** @todo add real error */
 		res->error_str = strdup (err.message);
 	}
 
@@ -188,6 +309,13 @@ xmmsc_result_pending_notifier (DBusPendingCall *pending, void *user_data)
 	dbus_pending_call_unref (pending);
 
 }
+
+
+/**
+ * Allocates new #xmmsc_result_t and refereces it.
+ * Should not be used from a client.
+ * @internal
+ */
 
 xmmsc_result_t *
 xmmsc_result_new (DBusPendingCall *pending)
@@ -210,6 +338,10 @@ xmmsc_result_new (DBusPendingCall *pending)
 }
 
 
+/**
+ * Block for the reply
+ */
+
 void
 xmmsc_result_wait (xmmsc_result_t *res)
 {
@@ -219,8 +351,17 @@ xmmsc_result_wait (xmmsc_result_t *res)
 }
 				
 
-/* value retrivial */
+/**
+ * @defgroup ResultValueRetivial ResultValueRetivial 
+ * @ingroup XMMSC_Result
+ * @brief Explains how you can retrive values from a #xmmsc_result_t
+ * @{
+ */
 
+/**
+ * Check the #xmmsc_result_t for error.
+ * @returns 1 if error was encountered, else 0
+ */
 
 int
 xmmsc_result_iserror (xmmsc_result_t *res)
@@ -234,6 +375,10 @@ xmmsc_result_iserror (xmmsc_result_t *res)
 	return 0;
 }
 
+/**
+ * Get an error string describing the error that occoured
+ */ 
+
 const char *
 xmmsc_result_get_error (xmmsc_result_t *res)
 {
@@ -241,6 +386,17 @@ xmmsc_result_get_error (xmmsc_result_t *res)
 
 	return res->error_str;
 }
+
+/**
+ * Retrieves a playlist change. This could be called on a
+ * result from #xmmsc_playlist_change
+ *
+ * @param res a #xmmsc_result_t containing a playlist change.
+ * @param change the type of change that occoured, possible changes are listed above
+ * @param id the id in the playlist that where affected (if applicable)
+ * @param argument optional argument to the change
+ * @returns 1 if there was a playlist change in this #xmmsc_result_t
+ */
 
 int
 xmmsc_result_get_playlist_change (xmmsc_result_t *res, 
@@ -275,6 +431,13 @@ xmmsc_result_get_playlist_change (xmmsc_result_t *res,
 	return 1;
 }
 
+/**
+ * Retrives a signed integer from the resultset.
+ * @param res a #xmmsc_result_t containing a integer.
+ * @param r the return integer.
+ * @ret 1 upon success otherwise 0
+ */
+
 int
 xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 {
@@ -293,6 +456,12 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 	return 1;
 }
 
+/**
+ * Retrives a unsigned integer from the resultset.
+ * @param res a #xmmsc_result_t containing a integer.
+ * @param r the return integer.
+ * @ret 1 upon success otherwise 0
+ */
 
 int
 xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
@@ -312,6 +481,13 @@ xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
 	return 1;
 }
 
+/**
+ * Retrives a string from the resultset.
+ * @param res a #xmmsc_result_t containing a string.
+ * @param r the return string.
+ * @ret 1 upon success otherwise 0
+ */
+
 int
 xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 {
@@ -329,6 +505,13 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 
 	return 1;
 }
+
+/**
+ * Retrives a #x_hash_t containing the mediainfo from the resultset.
+ * @param res a #xmmsc_result_t containing the mediainfo.
+ * @param r the return #x_hash_t.
+ * @ret 1 upon success otherwise 0
+ */
 
 int
 xmmsc_result_get_mediainfo (xmmsc_result_t *res, x_hash_t **r)
@@ -350,6 +533,13 @@ xmmsc_result_get_mediainfo (xmmsc_result_t *res, x_hash_t **r)
 	return 1;
 }
 
+
+/**
+ * Retrives a #x_list_t containing strings from the resultset.
+ * @param res a #xmmsc_result_t containing a stringlist.
+ * @param r the return #x_list_t.
+ * @ret 1 upon success otherwise 0
+ */
 
 int
 xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
@@ -386,6 +576,12 @@ xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
 	return 1;
 }
 
+/**
+ * Retrives a #x_list_t containing unsigned integers from the resultset.
+ * @param res a #xmmsc_result_t containing a uintlist.
+ * @param r the return #x_list_t.
+ * @ret 1 upon success otherwise 0
+ */
 
 int
 xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
@@ -422,6 +618,12 @@ xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
 	return 1;
 }
 
+/**
+ * Retrives a #x_list_t containing signed integers from the resultset.
+ * @param res a #xmmsc_result_t containing a intlist.
+ * @param r the return #x_list_t.
+ * @ret 1 upon success otherwise 0
+ */
 
 int
 xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
@@ -458,3 +660,4 @@ xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
 	return 1;
 }
 
+/** @} */
