@@ -1072,7 +1072,7 @@ main (int argc, char **argv)
 
 	if (argc < 2) {
 
-		xmmsc_deinit (connection);
+		xmmsc_unref (connection);
 
 
 		print_info ("Available commands:");
@@ -1090,13 +1090,13 @@ main (int argc, char **argv)
 
 		if (g_strcasecmp (commands[i].name, argv[1]) == 0) {
 			commands[i].func (connection, argc, argv);
-			xmmsc_deinit (connection);
+			xmmsc_unref (connection);
 			exit (0);
 		}
 
 	}
 
-	xmmsc_deinit (connection);
+	xmmsc_unref (connection);
 	
 	print_error ("Could not find any command called %s", argv[1]);
 

@@ -24,17 +24,17 @@
 
 typedef struct {
 	xmmsc_result_t *real;
-	VALUE parent;
+	VALUE children;
 	VALUE callback;
-	bool unref_on_free;
+	bool unref;
+	bool unref_children;
 } RbResult;
 
 static VALUE cResult;
 
 static void c_mark (RbResult *res)
 {
-	if (!NIL_P (res->parent))
-		rb_gc_mark (res->parent);
+	rb_gc_mark (res->children);
 
 	if (!NIL_P (res->callback))
 		rb_gc_mark (res->callback);
@@ -42,14 +42,16 @@ static void c_mark (RbResult *res)
 
 static void c_free (RbResult *res)
 {
-	if (res->real && res->unref_on_free)
+	if (res->real && res->unref) {
+		printf ("rb_result.c: unreffing %p\n", res->real);
 		xmmsc_result_unref (res->real);
+	}
 
 	free (res);
 }
 
-VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res,
-                             bool unref_on_free)
+VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
+                             bool unref, bool unref_children)
 {
 	VALUE self;
 	RbResult *rbres = NULL;
@@ -60,9 +62,10 @@ VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res,
 	self = Data_Make_Struct (cResult, RbResult, c_mark, c_free, rbres);
 
 	rbres->real = res;
-	rbres->parent = parent;
+	rbres->children = rb_ary_new ();
 	rbres->callback = Qnil;
-	rbres->unref_on_free = unref_on_free;
+	rbres->unref = unref;
+	rbres->unref_children = unref_children;
 
 	rb_obj_call_init (self, 0, NULL);
 
@@ -72,11 +75,15 @@ VALUE TO_XMMS_CLIENT_RESULT (VALUE parent, xmmsc_result_t *res,
 static void on_signal (xmmsc_result_t *res2, void *data)
 {
 	VALUE self = (VALUE) data;
+	VALUE o;
 
 	GET_OBJ (self, RbResult, res);
+printf("ON_SIGNAL\n");
+	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
+	                           res->unref_children);
+	rb_ary_push (res->children, o);
 
-	rb_funcall (res->callback, rb_intern ("call"), 1,
-	            TO_XMMS_CLIENT_RESULT (self, res2, res->unref_on_free));
+	rb_funcall (res->callback, rb_intern ("call"), 1, o);
 }
 
 static VALUE c_notifier_set (VALUE self)
@@ -104,14 +111,19 @@ static VALUE c_wait (VALUE self)
 
 static VALUE c_restart (VALUE self)
 {
+	VALUE o;
 	xmmsc_result_t *res2;
 
 	GET_OBJ (self, RbResult, res);
 
-	if ((res2 = xmmsc_result_restart (res->real)))
-		xmmsc_result_unref (res2);
+	if (!(res2 = xmmsc_result_restart (res->real)))
+		return Qnil;
 
-	return self;
+	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
+	                           res->unref_children);
+	rb_ary_push (res->children, o);
+
+	return o;
 }
 
 static VALUE c_int_get (VALUE self)

@@ -47,6 +47,8 @@
 
 #define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
 
+static void xmmsc_deinit (xmmsc_connection_t *c);
+
 static uint32_t cmd_id;
 
 /*
@@ -102,10 +104,10 @@ static uint32_t cmd_id;
  * Initializes a xmmsc_connection_t. Returns %NULL if you
  * runned out of memory.
  *
- * @return a xmmsc_connection_t that should be freed with
- * xmmsc_deinit.
+ * @return a xmmsc_connection_t that should be unreferenced with
+ * xmmsc_unref.
  *
- * @sa xmmsc_deinit
+ * @sa xmmsc_unref
  */
 
 xmmsc_connection_t *
@@ -119,6 +121,7 @@ xmmsc_init (char *clientname)
 		return NULL;
 	}
 
+	xmmsc_ref (c);
 	c->clientname = strdup (clientname);
 	cmd_id = 0;
 
@@ -157,7 +160,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 {
 	xmmsc_ipc_t *ipc;
 	xmmsc_result_t *result;
-	int i;
+	int i, ret;
 
 	char path[256];
 
@@ -211,12 +214,11 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 
 	result = xmmsc_send_hello (c);
 	xmmsc_result_wait (result);
-	if (!xmmsc_result_get_uint (result, &i))
-		return FALSE;
+	ret = xmmsc_result_get_uint (result, &i);
+	xmmsc_result_unref (result);
 
-	return TRUE;
+	return ret;
 }
-
 
 void
 xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata)
@@ -266,21 +268,36 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
 	return c->error;
 }
 
+void
+xmmsc_unref (xmmsc_connection_t *c)
+{
+	x_return_if_fail (c);
+
+	c->ref--;
+	if (c->ref == 0) {
+		xmmsc_deinit (c);
+	}
+}
 
 /**
  * @internal
  */
 
-/**
+void
+xmmsc_ref (xmmsc_connection_t *c)
+{
+	x_return_if_fail (c);
+
+	c->ref++;
+}
+
+/*
  * Frees up any resources used by xmmsc_connection_t
  */
 
-void
+static void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
-	if (!c)
-		return;
-
 	xmmsc_ipc_destroy (c->ipc);
 
 	free (c->clientname);
@@ -304,7 +321,7 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
 
 /**
  * Tell the server to quit. This will terminate the server.
- * If you only want to disconnect, use #xmmsc_deinit()
+ * If you only want to disconnect, use #xmmsc_unref()
  */
 
 xmmsc_result_t *
@@ -486,9 +503,20 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 	res = xmmsc_send_msg (c, msg);
 	xmms_ipc_msg_destroy (msg);
 
-	xmmsc_result_restartable (res, c, signalid);
+	xmmsc_result_restartable (res, signalid);
 
 	return res;
+}
+
+void
+xmmsc_broadcast_disconnect (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	/** @todo tell the server that we're not interested in the signal
+	 *        any more.
+	 */
+	xmmsc_result_unref (res);
 }
 
 xmmsc_result_t *
@@ -503,7 +531,7 @@ xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
 	res = xmmsc_send_msg (c, msg);
 	xmms_ipc_msg_destroy (msg);
 	
-	xmmsc_result_restartable (res, c, signalid);
+	xmmsc_result_restartable (res, signalid);
 
 	return res;
 }
@@ -531,6 +559,7 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 	msg->cid = cid;
+
 	return xmmsc_result_new (c, cid);
 }
 
