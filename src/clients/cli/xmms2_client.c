@@ -206,9 +206,11 @@ handle_playlist_list (void *userdata, void *arg)
 	guint32 *list=arg;
 	gint i=0;
 
-	while (list[i]) {
-		xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
-		i++;
+	if (list) {
+		while (list[i]) {
+			xmmsc_playlist_get_mediainfo (conn, GPOINTER_TO_UINT(list[i]));
+			i++;
+		}
 	}
 	
 	if (i == 0) {
@@ -216,7 +218,8 @@ handle_playlist_list (void *userdata, void *arg)
 		exit (0);
 	}
 
-	lastid = GPOINTER_TO_UINT(list[--i]);
+	if (list) 
+		lastid = GPOINTER_TO_UINT(list[--i]);
 	
 }
 

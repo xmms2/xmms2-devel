@@ -34,7 +34,7 @@ typedef enum {
 	XMMSC_TYPE_VIS,
 	XMMSC_TYPE_MOVE,
 	XMMSC_TYPE_MEDIAINFO,
-	XMMSC_TYPE_UINT32_ARRAY,
+	XMMSC_TYPE_PLAYLIST,
 	XMMSC_TYPE_TRANSPORT_LIST,
 } xmmsc_types_t;
 
@@ -76,7 +76,7 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYLIST_REMOVE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_JUMP, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_MOVE },
-	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_UINT32_ARRAY },
+	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_PLAYLIST },
 	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
 	{ XMMS_SIGNAL_TRANSPORT_LIST, XMMSC_TYPE_TRANSPORT_LIST },
@@ -1001,20 +1001,24 @@ handle_callback (DBusMessageHandler *handler,
 			}
 			break;
 
-		case XMMSC_TYPE_UINT32_ARRAY:
-			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_ARRAY &&
-				dbus_message_iter_get_array_type (&itr) == DBUS_TYPE_UINT32) {
-				guint32 *arr;
-				gint len;
-				guint32 *tmp;
+		case XMMSC_TYPE_PLAYLIST:
+			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
+				int len = dbus_message_iter_get_uint32 (&itr);
+				if (len > 0 && 
+				    dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_ARRAY &&
+				    dbus_message_iter_get_array_type (&itr) == DBUS_TYPE_UINT32) {
+					guint32 *arr;
+					gint len;
+					guint32 *tmp;
 
-				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
+					dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
 
-				arr = g_new0 (guint32, len+1);
-				memcpy (arr, tmp, len * sizeof(guint32));
-				arr[len] = '\0';
-				
-				arg = arr;
+					arr = g_new0 (guint32, len+1);
+					memcpy (arr, tmp, len * sizeof(guint32));
+					arr[len] = '\0';
+					
+					arg = arr;
+				}
 			}
 			break;
 		case XMMSC_TYPE_MEDIAINFO:

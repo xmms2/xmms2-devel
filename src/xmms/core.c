@@ -483,12 +483,6 @@ xmms_core_start (xmms_config_data_t *config)
  *
  * @param entry Entry containing the information to set.
  */
-/*void
-xmms_core_set_mediainfo (xmms_playlist_entry_t *entry)
-{
-	xmms_playlist_entry_copy_property (entry, core->curr_song);
-	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_CURRENTID, core);
-}*/
 
 void
 xmms_core_playlist_mediainfo_changed (guint id)
@@ -610,12 +604,12 @@ xmms_core_playlist_entry_mediainfo (guint id)
  *
  * @param time number of milliseconds played.
  */
+
 void
 xmms_core_playtime_set (guint time)
 {
 	xmms_object_emit (XMMS_OBJECT (core), XMMS_SIGNAL_PLAYBACK_PLAYTIME, GUINT_TO_POINTER (time) );
 }
-
 
 static gint
 xmms_core_effect_compare (gconstpointer a, gconstpointer b)

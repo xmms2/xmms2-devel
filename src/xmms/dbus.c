@@ -227,7 +227,7 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 		send_visualisation_spectrum, NULL, NULL, NULL, 
 		register_visualisation_spectrum},
 	{ XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
-	  XMMS_SIGNAL_MASK_CONFIG_CHANGE,
+		XMMS_SIGNAL_MASK_CONFIG_CHANGE,
 		NULL, handle_config_change, NULL, NULL },
 	{ XMMS_SIGNAL_TRANSPORT_LIST, 
 	  	XMMS_SIGNAL_MASK_TRANSPORT_LIST,
@@ -278,7 +278,7 @@ get_mask_map (const gchar *name)
 
 
 static void 
-do_send(gpointer data, gpointer user_data)
+do_send (gpointer data, gpointer user_data)
 {
          int clientser;
          xmms_dbus_connection_t *conn = data;
@@ -684,23 +684,32 @@ handle_playlist_list (DBusConnection *conn, DBusMessage *msg)
         GList *list,*save;
         int clientser;
 	int i = 0;
+	int len;
 	guint32 *arr;
 
         playlist = xmms_core_get_playlist ();
         save = list = xmms_playlist_list (playlist);
 
-	arr = g_new0 (guint32, g_list_length (save));
-	
+	len = g_list_length (save);
+
 	reply = dbus_message_new (XMMS_SIGNAL_PLAYLIST_LIST, NULL);
 	dbus_message_append_iter_init (reply, &itr);
-	
-        while (list) {
-                xmms_playlist_entry_t *entry=list->data;
-		arr[i++] = xmms_playlist_entry_id_get (entry);
-                list = g_list_next (list);
-        }
 
-        dbus_message_iter_append_uint32_array (&itr, arr, i);
+	/* Length of list */
+	dbus_message_iter_append_uint32 (&itr, len);
+	
+	/* If it is a empty list we only send the lenghtfield */
+	if (len > 0) {
+		arr = g_new0 (guint32, g_list_length (save));
+		while (list) {
+			xmms_playlist_entry_t *entry=list->data;
+			arr[i++] = xmms_playlist_entry_id_get (entry);
+			list = g_list_next (list);
+		}
+
+		dbus_message_iter_append_uint32_array (&itr, arr, i);
+	}
+
        	dbus_connection_send (conn, reply, &clientser);
 	dbus_message_unref (reply);
 
