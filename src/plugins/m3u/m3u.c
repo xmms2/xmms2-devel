@@ -134,6 +134,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 
 	while (lines[i]) {
 		xmms_playlist_entry_t *entry = NULL;
+		gchar *t;
 
 		if (extm3u && lines[i][0] == '#') {
 			gchar *len;
@@ -163,13 +164,17 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 					if (p) {
 						*p = '\0';
 						new = g_strdup_printf ("%s/%s", path, lines[i]);
-						entry = xmms_playlist_entry_new (new);
+						t = xmms_util_encode_path (new);
+						entry = xmms_playlist_entry_new (t);
+						g_free (t);
 						g_free (path);
 					}
 				} else {
 					gchar *new;
 					new = g_strdup_printf ("file://%s", lines[i]);
-					entry = xmms_playlist_entry_new (new);
+					t = xmms_util_encode_path (new);
+					entry = xmms_playlist_entry_new (t);
+					g_free (t);
 				}
 			}
 
@@ -185,13 +190,17 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 					if (p) {
 						*p = '\0';
 						new = g_strdup_printf ("%s/%s", path, lines[i]);
-						entry = xmms_playlist_entry_new (new);
+						t = xmms_util_encode_path (new);
+						entry = xmms_playlist_entry_new (t);
+						g_free (t);
 						g_free (path);
 					}
 				} else {
 					gchar *new;
 					new = g_strdup_printf ("file://%s", lines[i]);
+					t = xmms_util_encode_path (new);
 					entry = xmms_playlist_entry_new (lines[i]);
+					g_free (t);
 				}
 			}
 		}
