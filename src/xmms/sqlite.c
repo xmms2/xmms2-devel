@@ -34,7 +34,13 @@
 const char create_Media_stm[] = "create table Media (id primary_key, url, artist, album, title, genre, lmod)";
 const char create_Property_stm[] = "create table Property (id primary_key, value, key)";
 const char create_Log_stm[] = "create table Log (id primary_key, starttime, value)";
-const char create_idx_stm[] = "create index url_idx on Media (url) ; create index prop_key_idx on Property (key) ; create index log_starttime_idx on Log (starttime)";
+const char create_Playlist_stm[] = "create table Playlist (id primary_key, name)";
+const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
+const char create_idx_stm[] = "create index url_idx on Media (url);"
+                              "create index prop_key_idx on Property (key);"
+                              "create index log_starttime_idx on Log (starttime);"
+                              "create index playlist_idx on Playlist (name);";
+
 
 static int
 xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
@@ -80,6 +86,8 @@ xmms_sqlite_open ()
 		sqlite_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Property_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_Log_stm, NULL, NULL, NULL);
+		sqlite_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
+		sqlite_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		id = 1;
 	} else {

@@ -43,6 +43,7 @@ gboolean xmms_medialib_entry_store (xmms_playlist_entry_t *entry);
 void xmms_medialib_shutdown ();
 
 void xmms_medialib_id_set ();
+void xmms_medialib_playlist_set (xmms_playlist_t *p);
 
 void xmms_medialib_output_register (xmms_output_t *output);
 GList *xmms_medialib_select (gchar *query, xmms_error_t *error);

@@ -120,6 +120,27 @@ cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 
 		xmmsc_result_unref (res);
+	} else if (g_strcasecmp (argv[2], "save_playlist") == 0 ||
+	           g_strcasecmp (argv[2], "load_playlist") == 0) {
+		xmmsc_result_t *res;
+
+		if (argc < 4) {
+			print_error ("Supply a playlist name");
+		}
+
+		if (g_strcasecmp (argv[2], "save_playlist") == 0) {
+			res = xmmsc_medialib_playlist_save_current (conn, argv[3]);
+		} else if (g_strcasecmp (argv[2], "load_playlist") == 0) {
+			res = xmmsc_medialib_playlist_load (conn, argv[3]);
+		}
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
 }
 
