@@ -155,7 +155,7 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 }
 
 gboolean
-xmms_mad_id3v2_header (gchar *buf, xmms_id3v2_header_t *header)
+xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 {
 	if (buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') {
 		header->ver = buf[3];
@@ -168,6 +168,11 @@ xmms_mad_id3v2_header (gchar *buf, xmms_id3v2_header_t *header)
 			
 			len = (buf[6] << 21) | (buf[7] << 14) |
 				(buf[8] << 7) | buf[9];
+
+			if ((buf[6] | buf[7] | buf[8] | buf[9]) & 0x80) {
+				XMMS_DBG ("WARNING: id3v2 tag having lenpath with msb set! Probably broken tag/tag-writer. %02x %02x %02x %02x",
+					  buf[6], buf[7], buf[8], buf[9]);
+			}
 			
 			header->len = len;
 
@@ -181,7 +186,7 @@ xmms_mad_id3v2_header (gchar *buf, xmms_id3v2_header_t *header)
  * 
  */
 gboolean
-xmms_mad_id3v2_parse (gchar *buf, xmms_id3v2_header_t *head, xmms_playlist_entry_t *entry)
+xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_playlist_entry_t *entry)
 {
 	gint len=head->len;
 
@@ -331,7 +336,7 @@ typedef struct id3v1tag_St {
  * Samma, på svenska.
  */
 gboolean
-xmms_mad_id3_parse (gchar *buf, xmms_playlist_entry_t *entry)
+xmms_mad_id3_parse (guchar *buf, xmms_playlist_entry_t *entry)
 {
 	id3v1tag_t *tag = (id3v1tag_t *) buf;
 	gsize readsize,writsize;
