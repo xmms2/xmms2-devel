@@ -325,7 +325,6 @@ xmms_playlist_get_next (xmms_playlist_t *playlist)
 		r = n->data;
 	}
 	playlist->nextentry = g_list_next (n);
-	XMMS_DBG ("Next id is %d", xmms_playlist_entry_id_get (playlist->nextentry));
 
 	XMMS_PLAYLIST_UNLOCK (playlist);
 	
