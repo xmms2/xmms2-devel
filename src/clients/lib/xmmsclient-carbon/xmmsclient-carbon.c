@@ -10,7 +10,7 @@ xmmsc_ipc_setup_with_carbon (xmmsc_connection_t *c)
 {
 	EventLoopRef evLoopRef;
 	CFRunLoopRef runLoopRef;
-	 
+
 	evLoopRef = GetMainEventLoop ();
 	runLoopRef = (CFRunLoopRef) GetCFRunLoopFromEventLoop (evLoopRef);
 
