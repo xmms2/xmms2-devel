@@ -40,13 +40,16 @@ xmms_xing_get_toc (xmms_xing_t *xing, gint index)
 }
 
 xmms_xing_t *
-xmms_xing_parse (struct mad_bitptr *ptr)
+xmms_xing_parse (struct mad_bitptr ptr)
 {
 	xmms_xing_t *xing;
+	guint64 xing_h;
 
 	xing = g_new0 (xmms_xing_t, 1);
 
-	if (g_strncasecmp ("XING", (gchar *)ptr.byte, 4) != 0)
+	xing_h = mad_bit_read (&ptr, 4*8);
+
+	if (memcmp ("Xing", &xing_h, 4) != 0)
 		return NULL;
 
 	xing->flags = mad_bit_read (&ptr, 32);
@@ -55,16 +58,16 @@ xmms_xing_parse (struct mad_bitptr *ptr)
 		xing->frames = mad_bit_read (&ptr, 32);
 
 	if (xmms_xing_has_flag (xing, XMMS_XING_BYTES))
-		xing->bytes = mad_bit_read (ptr, 32);
+		xing->bytes = mad_bit_read (&ptr, 32);
 
 	if (xmms_xing_has_flag (xing, XMMS_XING_TOC)) {
 		gint i = 0;
 		for (i = 0; i < 100; i++)
-			xing->toc[i] = mad_bit_read (ptr, 8);
+			xing->toc[i] = mad_bit_read (&ptr, 8);
 	}
 
 	if (xing->flags & XMMS_XING_SCALE) {
-		mad_bit_read (ptr, 32);
+		mad_bit_read (&ptr, 32);
 	}
 
 	return xing;
