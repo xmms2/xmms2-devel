@@ -19,8 +19,6 @@
  *
  */
 
-/* required for strndup(), remove this when we start using glib.h */
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -401,12 +399,15 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 
 		strncat (target, pos, MIN (next_key - pos, len - strlen (target) - 1));
 		keylen = strcspn (next_key + 2, "}");
-		key = strndup(next_key + 2, keylen);
+		key = malloc (keylen + 1);
 
 		if (!key) {
 			fprintf (stderr, "Unable to allocate %u bytes of memory, OOM?", keylen);
 			break;
 		}
+
+		memset (key, '\0', keylen + 1);
+		strncpy (key, next_key + 2, keylen);
 
 		if (strcmp (key, "seconds") == 0) {
 			char seconds[10];

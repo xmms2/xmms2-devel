@@ -702,8 +702,10 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		    		xmms_playlist_entry_id_get (output->playing_entry));
 	}
 	
+	g_mutex_unlock (output->mutex);
 	ret = xmms_decoder_read (output->decoder, buffer, len);
-	
+	g_mutex_lock (output->mutex);
+
 	if (ret > 0) {
 	
 		output->played += ret;
