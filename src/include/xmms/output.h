@@ -25,6 +25,17 @@
 #include "xmms/config.h"
 #include "xmms/plugin.h"
 
+#ifdef XMMS_OS_LINUX /* ALSA might be default now a days? */
+#define XMMS_OUTPUT_DEFAULT "oss"
+#elif XMMS_OS_OPENBSD
+#define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_SOLARIS
+#define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_DARWIN
+#define XMMS_OUTPUT_DEFAULT "coreaudio"
+#endif
+
+
 /*
  * Type definitions
  */
