@@ -63,6 +63,8 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.Install(self.installdir+self.libpath, target+".so")
 
 	def XmmsRuby(self, target, source):
+		if self.sys == 'Darwin':
+			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
 		self.SharedLibrary(target, source, SHLIBPREFIX = "", SHLIBSUFFIX=".so")
 		self.Install(self.optional_config["rubysitedir"], target + ".so")
 
