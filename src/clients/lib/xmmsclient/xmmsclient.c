@@ -431,17 +431,26 @@ xmmsc_deinit (xmmsc_connection_t *c)
  */
 
 void
-xmmsc_set_callback (xmmsc_connection_t *conn, gchar *callback, void (*func)(void *,void*), void *userdata)
+xmmsc_set_callback (xmmsc_connection_t *conn, 
+		    gchar *callback, 
+		    void (*func) (void *, void*), 
+		    void *userdata)
 {
+	GList *l = NULL;
 	xmmsc_callback_desc_t *desc = g_new0 (xmmsc_callback_desc_t, 1);
 
 	desc->func = func;
 	desc->userdata = userdata;
 
-	xmmsc_register_signal (conn, callback);
-
 	/** @todo more than one callback of each type */
-	g_hash_table_insert (conn->callbacks, g_strdup (callback), desc);
+	l = g_hash_table_lookup (conn->callbacks, callback);
+	if (!l) {
+		xmmsc_register_signal (conn, callback);
+		l = g_list_append (l, desc);
+		g_hash_table_insert (conn->callbacks, g_strdup (callback), l);
+	} else {
+		l = g_list_append (l, desc);
+	}
 
 }
 
@@ -986,12 +995,10 @@ handle_callback (DBusMessageHandler *handler,
 {
 	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
 	xmmsc_signal_callbacks_t *c;
-	xmmsc_callback_desc_t *cb;
+	GList *cb_list;
         DBusMessageIter itr;
 	guint tmp[2]; /* used by MOVE */
 	void *arg = NULL;
-
-	printf ("DEBUG: Got signal %s\n", dbus_message_get_name (msg));
 
 	c = get_callback (dbus_message_get_name (msg));
 
@@ -1099,9 +1106,13 @@ handle_callback (DBusMessageHandler *handler,
 			break;
 	}
 
-	cb = g_hash_table_lookup (xmmsconn->callbacks, dbus_message_get_name (msg));
-	if(cb){
-		cb->func(cb->userdata, arg);
+	cb_list = g_hash_table_lookup (xmmsconn->callbacks, dbus_message_get_name (msg));
+	if (cb_list) {
+		GList *node;
+		for (node = cb_list; node; node = g_list_next (node)) {
+			xmmsc_callback_desc_t *cb = node->data;
+			cb->func(cb->userdata, arg);
+		}
 	}
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
