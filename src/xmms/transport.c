@@ -167,6 +167,9 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	transport->seek_offset = offset;
 	transport->seek_whence = whence;
 	transport->want_seek = TRUE;
+
+	xmms_ringbuf_set_eos (transport->buffer, TRUE);
+	
 }
 
 gint
@@ -198,6 +201,7 @@ xmms_transport_seek_real (xmms_transport_t *transport)
 	seek_method (transport, transport->seek_offset, transport->seek_whence);
 
 	transport->want_seek = FALSE;
+	xmms_ringbuf_set_eos (transport->buffer, FALSE);
 
 	/* Make sure to wake up the loop if EOS is reached. */
 	g_cond_broadcast (transport->cond);
@@ -272,14 +276,15 @@ xmms_transport_thread (gpointer data)
 	while (transport->running) {
 		if (transport->want_seek) {
 			XMMS_DBG ("Doing seek");
+			xmms_transport_unlock (transport);
 			xmms_transport_seek_real (transport);
+			xmms_transport_lock (transport);
 		}
 
 		xmms_transport_unlock (transport);
 		ret = read_method (transport, buffer, 4096);
 		xmms_transport_lock (transport);
 		if (ret > 0) {
-			XMMS_DBG ("Waiting for free");
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
 		} else {

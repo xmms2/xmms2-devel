@@ -209,6 +209,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 				 data->buffer_length = (&buffer[data->buffer_length] - nf));
 	} else {
 		data->buffer_length = 0;
+		xmms_mad_get_media_info (decoder);
 	}
 
 	transport = xmms_decoder_transport_get (decoder);
@@ -216,6 +217,8 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	
 	output = xmms_decoder_output_get (decoder);
 	g_return_val_if_fail (output, FALSE);
+
+	XMMS_DBG ("Start reading");
 	
 	ret = xmms_transport_read (transport, data->buffer + data->buffer_length,
 							   4096 - data->buffer_length);

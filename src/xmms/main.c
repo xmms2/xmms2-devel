@@ -77,7 +77,7 @@ play_next (void)
 	xmms_decoder_start (decoder, transport, output);
 	XMMS_DBG ("output started");
 	
-	xmms_decoder_get_mediainfo (decoder, entry);
+	/*xmms_decoder_get_mediainfo (decoder, entry);*/
 	
 	
 	xmms_playlist_entry_free (entry);
