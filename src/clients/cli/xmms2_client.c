@@ -272,6 +272,31 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 }
 
+static void
+print_entry (const void *key, const void *value, void *udata)
+{
+	if (strcasecmp (key, "id") == 0) {
+		printf ("%s = %d\n", (char *)key, (unsigned int)value);
+	} else {
+		printf ("%s = %s\n", (char *)key, (char *)value);
+	}
+}
+
+static void
+cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	x_hash_t *entry;
+	int id;
+
+	id = xmmscs_playback_current_id (conn);
+	entry = xmmscs_playlist_get_mediainfo (conn, id);
+	if (entry) {
+		x_hash_foreach (entry, print_entry, NULL);
+		x_hash_destroy (entry);
+	}
+
+
+}
 
 static void
 cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
@@ -710,6 +735,7 @@ cmds commands[] = {
 	{ "mlib", "medialib manipulation", cmd_mlib },
 
 	{ "status", "go into status mode", cmd_status },
+	{ "info", "information about current entry", cmd_info },
 	{ "watchpl", "go into watch playlist mode", cmd_watchpl },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
