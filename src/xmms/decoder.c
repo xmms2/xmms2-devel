@@ -147,7 +147,7 @@ xmms_decoder_set_mediainfo (xmms_decoder_t *decoder,
 			xmms_playlist_entry_t *entry)
 {
 	decoder->mediainfo = entry;
-	xmms_object_emit (XMMS_OBJECT (decoder), "mediainfo-changed", NULL);
+	xmms_object_emit (XMMS_OBJECT (decoder), "mediainfo-changed", decoder);
 }
 
 gboolean

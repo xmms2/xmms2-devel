@@ -315,7 +315,6 @@ static gint xmms_tar_seek (xmms_transport_t *transport, guint offset, gint whenc
 	return data->relpos;
 }
 
-
 xmms_decoder_t *
 xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, const gchar *mimetype){
 	xmms_decoder_t *decoder;
@@ -327,21 +326,6 @@ xmms_decoder_new_stacked (xmms_output_t *output, xmms_transport_t *transport, co
 	XMMS_DBG ("transport started");
 	return decoder;
 }
-
-static void
-mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer tardecoder)
-{
-	xmms_playlist_entry_t *entry;
-	xmms_decoder_t *subdecoder = (xmms_decoder_t *)object;
-	XMMS_DBG ("mediainfo changed!");
-
-	entry = g_new0 (xmms_playlist_entry_t, 1);
-	xmms_decoder_get_mediainfo (subdecoder, entry);
-
-	xmms_decoder_set_mediainfo (tardecoder, entry);
-	
-}
-
 
 static gboolean
 xmms_tar_decode_block (xmms_decoder_t *decoder)
@@ -390,8 +374,7 @@ xmms_tar_decode_block (xmms_decoder_t *decoder)
 
 		g_return_val_if_fail (data->subdecoder, FALSE);
 
-		xmms_object_connect (XMMS_OBJECT (data->subdecoder), "mediainfo-changed", mediainfo_changed, decoder);
-
+		xmms_object_parent_set (XMMS_OBJECT (data->subdecoder), XMMS_OBJECT (decoder));
 
 	}
 
