@@ -17,6 +17,6 @@
 #ifndef __XMMSCLIENT_ECORE_H__
 #define __XMMSCLIENT_ECORE_H__
 
-void xmmsc_setup_with_ecore (xmmsc_connection_t *connection);
+void xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *connection);
 
 #endif
