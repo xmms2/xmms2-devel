@@ -113,15 +113,22 @@ xmmsc_init ()
 {
 	xmmsc_connection_t *c;
 	
-	c = malloc (sizeof (xmmsc_connection_t));
-	
-	if (c) {
-		c->callbacks = x_hash_new (x_str_hash, x_str_equal);
-		c->replies = x_hash_new (NULL, NULL);
+	if (!(c = malloc (sizeof (xmmsc_connection_t)))) {
+		return NULL;
 	}
+
+	memset (c, 0, sizeof (xmmsc_connection_t));
 	
-	if (!c->callbacks) {
+	if (!(c->callbacks = x_hash_new (x_str_hash, x_str_equal))) {
 		free (c);
+
+		return NULL;
+	}
+
+	if (!(c->replies = x_hash_new (NULL, NULL))) {
+		x_hash_destroy (c->callbacks);
+		free (c);
+
 		return NULL;
 	}
 
