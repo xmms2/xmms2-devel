@@ -25,273 +25,222 @@
 #include "xmms/config.h"
 #include "xmms/medialib.h"
 #include "xmms/transport.h"
-#include "xmms/transport_int.h"
 #include "xmms/decoder.h"
-#include "xmms/decoder_int.h"
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
+#include "internal/plugin_int.h"
+#include "internal/decoder_int.h"
+#include "internal/transport_int.h"
 
 #include <string.h>
 
 #include <glib.h>
 
-xmms_plugin_t *
-xmms_medialib_find_plugin (gchar *name)
-{
-	GList *list;
-	xmms_plugin_t *plugin = NULL;
+#ifdef HAVE_SQLITE
+#include <sqlite.h>
+#endif
 
-	g_return_val_if_fail (name, NULL);
+struct xmms_medialib_St {
+	GMutex *mutex;
+	
+	guint id;
+#ifdef HAVE_SQLITE
+	sqlite *sql;
+#endif
+};
 
-	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_MEDIALIB);
-
-	while (list) {
-		plugin = (xmms_plugin_t *) list->data;
-		if (g_strcasecmp (xmms_plugin_shortname_get (plugin), name) == 0)
-			return plugin;
-
-		list = g_list_next (list);
-	}
-
-	return NULL;
-}
 
 xmms_medialib_t *
-xmms_medialib_init (xmms_plugin_t *plugin)
+xmms_medialib_init (void)
 {
-	xmms_medialib_new_method_t new_method;
-	xmms_medialib_t *medialib;
-	
-	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+	xmms_medialib_t *medialib = NULL;
 
-	if (!new_method)
-		return NULL;
-	
 	medialib = g_new0 (xmms_medialib_t, 1);
-
-	medialib->plugin = plugin;
-	medialib->mutex = g_mutex_new ();
-	
-	if (!new_method (medialib)) {
-		XMMS_DBG ("new_method failed");
-		g_mutex_free (medialib->mutex);
+#ifdef HAVE_SQLITE
+	if (!xmms_sqlite_open (medialib)) {
 		g_free (medialib);
 		return NULL;
 	}
+#endif /*HAVE_SQLITE*/
+	medialib->mutex = g_mutex_new ();
 	
 	return medialib;
 }
 
-void
-xmms_medialib_set_data (xmms_medialib_t *medialib, gpointer data)
+guint
+xmms_medialib_next_id (xmms_medialib_t *medialib)
 {
+	guint id=0;
+	g_return_val_if_fail (medialib, 0);
 
-	g_return_if_fail (medialib);
-	g_return_if_fail (data);
+	id = medialib->id ++;
 
-	medialib->data = data;
-
+	return id;
 }
 
-gpointer
-xmms_medialib_get_data (xmms_medialib_t *medialib)
+static gchar *_e[] = { 	
+	"id", "url",
+	XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE,
+	XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD,
+	NULL
+};
+
+static void
+insert_foreach (gpointer key, gpointer value, gpointer userdata)
 {
-	g_return_val_if_fail (medialib, NULL);
+	gchar *k = key;
+	gchar *v = value;
+	gchar *query;
+	xmms_medialib_t *medialib = userdata;
+	gint i = 0;
 
-	return medialib->data;
-
-}
-
-GList *
-xmms_medialib_search (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
-{
-	xmms_medialib_search_method_t search;
-
-	g_return_val_if_fail (medialib, NULL);
-	g_return_val_if_fail (entry, NULL);
-
-	search = xmms_plugin_method_get (medialib->plugin, XMMS_PLUGIN_METHOD_SEARCH);
-
-	g_return_val_if_fail (search, NULL);
-
-	return (search (medialib, entry));
-	
-}
-
-
-void
-xmms_medialib_add_entry (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
-{
-	xmms_medialib_add_entry_method_t add_entry;
-	gchar *p;
-
-	g_return_if_fail (medialib);
-	g_return_if_fail (entry);
-
-	add_entry = xmms_plugin_method_get (medialib->plugin, XMMS_PLUGIN_METHOD_ADD_ENTRY);
-	g_return_if_fail (add_entry);
-
-	if (!xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST))
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, "Unknown Artist");
-	if (!xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM))
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, "Unknown Album");
-	if (!xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE))
-		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE, "Unknown Genre");
-	if (!xmms_playlist_entry_get_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE)) {
-		gchar *ap;
-		
-		ap = xmms_playlist_entry_get_url (entry);
-		p = strrchr (ap, '/');
-		p++;
-		if (!p)
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, ap);
-		else 
-			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, p);
+	while (_e[i]) {
+		if (g_strcasecmp (_e[i], k) == 0) {
+		    return;
+		}
+		i++;
 	}
 
-	add_entry (medialib, entry);
-
-}
-
-
-void
-xmms_medialib_list_free (GList *list)
-{
-	g_return_if_fail (list);
-
-	while (list) {
-		xmms_playlist_entry_t *e = list->data;
-		if (e)
-			xmms_object_unref (e);
-		list = g_list_next (list);
-	}
-
-	g_list_free (list);
-
+	query = g_strdup_printf ("insert into Property values (%d, '%s', '%s')", medialib->id - 1, k, v);
+	xmms_sqlite_query (medialib, query, NULL, NULL);
 }
 
 gboolean
-xmms_medialib_check_if_exists (xmms_medialib_t *medialib, gchar *url)
+xmms_medialib_entry_store (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
 {
-	xmms_playlist_entry_t *f;
-	GList *list;
-	
+	gchar *query;
+	guint id;
+
 	g_return_val_if_fail (medialib, FALSE);
-	g_return_val_if_fail (url, FALSE);
+	XMMS_DBG ("Storing entry to medialib!");
+	g_mutex_lock (medialib->mutex);
 
-	f = xmms_playlist_entry_new (url);
+	id = xmms_medialib_next_id (medialib);
+	query = g_strdup_printf ("insert into Media values (%d, '%s', '%s', '%s', '%s', '%s', '%s')",
+				 id, xmms_playlist_entry_url_get (entry),
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST),
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM),
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE),
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_GENRE),
+				 xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD));
 
-	list = xmms_medialib_search (medialib, f);
-
-	xmms_object_unref (f);
-
-	if (!list)
-		return FALSE;
-
-	if (g_list_length (list) < 1) {
-		xmms_medialib_list_free (list);
+	if (!xmms_sqlite_query (medialib, query, NULL, NULL)) {
+		g_free (query);
 		return FALSE;
 	}
 
-	xmms_medialib_list_free (list);
-	
-	return TRUE;
+	g_free (query);
 
+	xmms_playlist_entry_property_foreach (entry, insert_foreach, medialib);
+				 
+	
+	g_mutex_unlock (medialib->mutex);
+
+	return TRUE;
 }
 
-void
-xmms_medialib_add_dir (xmms_medialib_t *medialib, const gchar *dir)
+static int
+mediarow_callback (void *pArg, int argc, char **argv, char **columnName) 
 {
-	GDir *d;
-	const gchar *name;
+	gint i;
+	xmms_playlist_entry_t *entry = pArg;
 
-	g_return_if_fail (medialib);
-	g_return_if_fail (dir);
-
-	d = g_dir_open (dir, 0, NULL);
-
-	if (!d) {
-		return;
-	}
-
-	while ((name = g_dir_read_name (d))) {
-		gchar *path = g_build_filename (dir, name, NULL);
-		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
-			XMMS_DBG ("%s is dir", path);
-			xmms_medialib_add_dir (medialib, path);
+	for (i = 0; i < argc; i ++) {
+		XMMS_DBG ("Setting %s to %s", columnName[i], argv[i]);
+		if (g_strcasecmp (columnName[i], "id") == 0) {
+			xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID, argv[i]);
+		} else if (g_strcasecmp (columnName[i], "url") == 0) {
+			continue;
 		} else {
-			xmms_transport_t *transport;
-			xmms_decoder_t *decoder;
-			xmms_playlist_entry_t *entry;
-			const gchar *mime;
-
-			if (xmms_medialib_check_if_exists (medialib, path)) {
-				XMMS_DBG ("%s in db", name);
-				g_free (path);
-				continue;
-			}
-
-			transport = xmms_transport_open (path);
-			if (!transport) {
-				g_free (path);
-				continue;
-			}
-			
-			mime = xmms_transport_mime_type_get (transport);
-			if (mime) {
-				decoder = xmms_decoder_new (mime);
-				if (!decoder) {
-					xmms_transport_close (transport);
-					g_free (path);
-					continue;
-				}
-			} else {
-				xmms_transport_close (transport);
-				g_free (path);
-				continue;
-			}
-
-			xmms_transport_start (transport);
-			entry = xmms_decoder_get_mediainfo_offline (decoder, transport);
-
-
-			if (entry) {
-				XMMS_DBG ("Adding %s", path);
-				xmms_playlist_entry_set_url (entry, path);
-				xmms_medialib_add_entry (medialib, entry);
-				xmms_object_unref (entry);
-			} else {
-				XMMS_DBG ("Got null from apa");
-			}
-
-			xmms_transport_close (transport);
-			xmms_decoder_destroy (decoder);
-
+			xmms_playlist_entry_property_set (entry, columnName[i], argv[i]);
 		}
-
-		g_free (path);
-
-
 	}
 
-	g_dir_close (d);
+	return 0;
+	
+}
 
+static int
+proprow_callback (void *pArg, int argc, char **argv, char **columnName) 
+{
+	xmms_playlist_entry_t *entry = pArg;
+
+	XMMS_DBG ("Setting %s to %s", argv[1], argv[0]);
+	xmms_playlist_entry_property_set (entry, argv[1], argv[0]);
+
+	return 0;
+}
+
+
+gboolean
+xmms_medialib_entry_get (xmms_medialib_t *medialib, xmms_playlist_entry_t *entry)
+{
+	gchar *query;
+
+	g_return_val_if_fail (medialib, FALSE);
+	g_return_val_if_fail (entry, FALSE);
+
+	g_mutex_lock (medialib->mutex);
+
+	query = g_strdup_printf ("select * from Media where url = '%s' order by id limit 1", xmms_playlist_entry_url_get (entry));
+	if (!xmms_sqlite_query (medialib, query, mediarow_callback, (void *)entry)) {
+		g_free (query);
+		g_mutex_unlock (medialib->mutex);
+		return FALSE;
+	}
+	g_free (query);
+
+	if (!xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID)) {
+		g_mutex_unlock (medialib->mutex);
+		return FALSE;
+	}
+
+	query = g_strdup_printf ("select key, value from Property where id = %s", xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_MID));
+
+	if (!xmms_sqlite_query (medialib, query, proprow_callback, (void *)entry)) {
+		g_free (query);
+		g_mutex_unlock (medialib->mutex);
+		return FALSE;
+	}
+	g_free (query);
+
+	g_mutex_unlock (medialib->mutex);
+
+
+	return TRUE;
 }
 
 void
 xmms_medialib_close (xmms_medialib_t *medialib)
 {
-	xmms_medialib_close_method_t cm;
-
 	g_return_if_fail (medialib);
 
-	cm = xmms_plugin_method_get (medialib->plugin, XMMS_PLUGIN_METHOD_CLOSE);
-
-	if (cm)
-		cm (medialib);
-
-	g_mutex_free (medialib->mutex);
+#ifdef HAVE_SQLITE
+	xmms_sqlite_close (medialib);
+#endif
 	g_free (medialib);
+}
 
+#ifdef HAVE_SQLITE
+void
+xmms_medialib_sql_set (xmms_medialib_t *medialib, sqlite *sql)
+{
+	medialib->sql = sql;
+}
+
+sqlite *
+xmms_medialib_sql_get (xmms_medialib_t *medialib)
+{
+	return medialib->sql;
+}
+
+#endif
+
+void
+xmms_medialib_id_set (xmms_medialib_t *medialib, guint id)
+{
+	medialib->id = id;
 }
 

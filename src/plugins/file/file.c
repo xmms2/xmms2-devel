@@ -53,6 +53,7 @@ static void xmms_file_close (xmms_transport_t *transport);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_file_size (xmms_transport_t *transport);
 static gint xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence);
+static guint xmms_file_lmod (xmms_transport_t *transport);
 static GList *xmms_file_list (const gchar *path);
 
 /*
@@ -78,6 +79,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_file_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_file_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_file_list);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LMOD, xmms_file_lmod);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
@@ -286,6 +288,23 @@ xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence)
 	}
 
 	return lseek (data->fd, offset, w);
+}
+
+static guint
+xmms_file_lmod (xmms_transport_t *transport)
+{
+	struct stat st;
+	xmms_file_data_t *data;
+
+	g_return_val_if_fail (transport, 0);
+	data = xmms_transport_private_data_get (transport);
+	g_return_val_if_fail (data, 0);
+
+	if (fstat (data->fd, &st) == -1) {
+		return 0;
+	}
+
+	return st.st_mtime;
 }
 
 static gint
