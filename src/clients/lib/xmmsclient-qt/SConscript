@@ -1,0 +1,13 @@
+Import('base_env')
+
+xmms2_sources = Split ("xmmsclient-qt.cpp")
+
+env = base_env.Copy(CPPPATH = ['#src/clients/lib/xmmsclient', '#src', '/usr/share/qt3/include'],
+	LIBPATH = ["../xmmsclient/"],
+	LIBS = ["xmmsclient", "qt"],
+	tools=['default', 'qt'])
+
+env.AddFlagsFromGroup("glib")
+env.AddFlagsFromGroup("dbus")
+
+env.XmmsLibrary("xmmsclient-qt", xmms2_sources)

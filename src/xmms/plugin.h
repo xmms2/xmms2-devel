@@ -32,6 +32,7 @@
 #define XMMS_PLUGIN_METHOD_FLUSH "flush"
 #define XMMS_PLUGIN_METHOD_MIXER_GET "mixer_get"
 #define XMMS_PLUGIN_METHOD_MIXER_SET "mixer_set"
+#define XMMS_PLUGIN_METHOD_LIST "list"
 
 /*
  * Plugin properties.
@@ -40,11 +41,12 @@
 /* For transports */
 #define XMMS_PLUGIN_PROPERTY_SEEK (1 << 0)
 #define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 1)
+#define XMMS_PLUGIN_PROPERTY_LIST (1 << 2)
 
 /* For decoders */
-#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 2)
-#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 3)
-#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 4)
+#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 3)
+#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 4)
+#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 5)
 
 /* For output */
 

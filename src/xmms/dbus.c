@@ -65,6 +65,8 @@ typedef enum {
 	XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM = 1 << 26,
 
 	XMMS_SIGNAL_MASK_CONFIG_CHANGE = 1 << 27,
+	
+	XMMS_SIGNAL_MASK_TRANSPORT_LIST = 1 << 28,
 } xmms_dbus_signal_mask_t;
 
 
@@ -95,6 +97,7 @@ static gboolean handle_core_disconnect (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_core_signal_register (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_core_signal_unregister (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_config_change (DBusConnection *conn, DBusMessage *msg);
+static gboolean handle_transport_list (DBusConnection *conn, DBusMessage *msg);
 
 static void send_playback_stop (xmms_object_t *object, 
 	gconstpointer data, gpointer userdata);
@@ -221,10 +224,14 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 		NULL, handle_core_signal_unregister, NULL, NULL },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
-		send_visualisation_spectrum, NULL, NULL, NULL, register_visualisation_spectrum},
+		send_visualisation_spectrum, NULL, NULL, NULL, 
+		register_visualisation_spectrum},
 	{ XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
 	  XMMS_SIGNAL_MASK_CONFIG_CHANGE,
 		NULL, handle_config_change, NULL, NULL },
+	{ XMMS_SIGNAL_TRANSPORT_LIST, 
+	  	XMMS_SIGNAL_MASK_TRANSPORT_LIST,
+		NULL, handle_transport_list, NULL, NULL },
 	{ NULL, 0, NULL, NULL, NULL, NULL },
 };
 
@@ -843,6 +850,46 @@ handle_core_disconnect (DBusConnection *conn, DBusMessage *msg)
         g_mutex_unlock(connectionslock);
  
         dbus_connection_unref (conn);
+
+	return TRUE;
+}
+
+static gboolean
+handle_transport_list (DBusConnection *conn, DBusMessage *msg)
+{
+        DBusMessage *reply;
+        DBusMessageIter itr;
+	gchar *path = NULL;
+ 
+        dbus_message_iter_init (msg, &itr);
+        if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+                path = dbus_message_iter_get_string (&itr);
+        }
+
+	if (path) {
+		GList *paths, *tmp;
+		gint clientser;
+
+		paths = xmms_transport_list (path);
+		
+		reply = dbus_message_new (XMMS_SIGNAL_TRANSPORT_LIST, NULL);
+		dbus_message_append_iter_init (reply, &itr);
+
+		for (tmp = paths; tmp; tmp = g_list_next (tmp)) {
+			xmms_transport_entry_t *e = tmp->data;
+			dbus_message_iter_append_string (&itr, xmms_transport_entry_path_get (e));
+			if (xmms_transport_entry_type_get (e) == XMMS_TRANSPORT_ENTRY_DIR)
+				dbus_message_iter_append_boolean (&itr, FALSE);
+			else
+				dbus_message_iter_append_boolean (&itr, TRUE);
+		}
+	
+		dbus_connection_send (conn, reply, &clientser);
+		dbus_message_unref (reply);
+
+		if (paths)
+			xmms_transport_list_free (paths);
+	}
 
 	return TRUE;
 }

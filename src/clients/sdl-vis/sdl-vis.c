@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "xmmsclient.h"
+#include "xmmsclient-glib.h"
 #include "xmms/signal_xmms.h"
 
 /** @todo these should be pulled in from an include-file */
@@ -264,7 +265,7 @@ main()
 
 	timer = g_timer_new ();
 
-	xmmsc_glib_setup_mainloop (connection, NULL);
+	xmmsc_setup_with_gmain (connection, NULL);
 
         if (SDL_Init(SDL_INIT_VIDEO) > 0) {
                 fprintf(stderr, "Unable to init SDL: %s \n", SDL_GetError());

@@ -45,6 +45,16 @@ if base_env.HasGroup("curl"):
 	curl.AddFlagsFromGroup("curl")
 	curl.XmmsPlugin('xmms_curl', ['curl/curl.c'])
 
+	curl_http = base_env.Copy()
+	curl_http.AddFlagsFromGroup("glib")
+	curl_http.AddFlagsFromGroup("curl")
+	curl_http.XmmsPlugin('xmms_curlhttp', ['curl/curl_http.c'])
+
+	curl_ftp = base_env.Copy()
+	curl_ftp.AddFlagsFromGroup("glib")
+	curl_ftp.AddFlagsFromGroup("curl")
+	curl_ftp.XmmsPlugin('xmms_curlftp', ['curl/curl_ftp.c'])
+
 if base_env.HasGroup("alsa"):
 	alsa = base_env.Copy()
 	alsa.AddFlagsFromGroup("glib")

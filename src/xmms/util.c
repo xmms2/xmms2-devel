@@ -1,11 +1,28 @@
+/**
+ * @file Misc utils for various functions in XMMS.
+ */
+
 #include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <glib.h>
 
-gchar *xmms_util_decode_path (const gchar *path){
+/** Returns TRUE if the char is regular. ie, not to be encoded. */
+#define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
+
+/**
+ * Decodes a path encoded string. We use ordinary URL encoding from
+ * HTTP/1.1 standard.
+ *
+ * @returns a allocated string that needs to be freed with g_free.
+ */
+
+gchar *
+xmms_util_decode_path (const gchar *path)
+{
 	gchar *qstr;
 	gchar tmp[3];
 	gint c1, c2;
@@ -38,4 +55,37 @@ gchar *xmms_util_decode_path (const gchar *path){
 	qstr[c2] = path[c1];
 
 	return qstr;
+}
+
+/**
+ * Encodes a string with URL endcoding.
+ *
+ * @returns a allocated string that needs to be freed with g_free
+ */
+
+gchar *
+xmms_util_encode_path (gchar *path) 
+{
+	gchar *out, *outreal;
+	gint i;
+	gint len;
+
+	len = strlen (path);
+	outreal = out = (gchar *)g_malloc0 (len * 3 + 1);
+
+	for ( i = 0; i < len; i++) {
+		if (path[i] == '/' || 
+			_REGULARCHAR ((gint) path[i]) || 
+			path[i] == '_' ||
+			path[i] == '-' ){
+			*(out++) = path[i];
+		} else if (path[i] == ' '){
+			*(out++) = '+';
+		} else {
+			g_snprintf (out, 4, "%%%02x", (guchar) path[i]);
+			out += 3;
+		}
+	}
+
+	return outreal;
 }

@@ -12,10 +12,10 @@
 #include <ctype.h>
 
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
 #include <glib.h>
 
 #include "xmmsclient.h"
+#include "xmmsclient_int.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
@@ -35,6 +35,7 @@ typedef enum {
 	XMMSC_TYPE_MOVE,
 	XMMSC_TYPE_MEDIAINFO,
 	XMMSC_TYPE_UINT32_ARRAY,
+	XMMSC_TYPE_TRANSPORT_LIST,
 } xmmsc_types_t;
 
 
@@ -47,19 +48,6 @@ typedef struct xmmsc_signal_callbacks_St {
 	xmmsc_types_t type;
 } xmmsc_signal_callbacks_t;
 
-
-/**
- * @typedef xmmsc_connection_t
- *
- * Holds all data about the current connection to
- * the XMMS server.
- */
-
-struct xmmsc_connection_St {
-	DBusConnection *conn;	
-	gchar *error;
-	GHashTable *callbacks;
-};
 
 /**
  * @internal
@@ -91,6 +79,7 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_UINT32_ARRAY },
 	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
+	{ XMMS_SIGNAL_TRANSPORT_LIST, XMMSC_TYPE_TRANSPORT_LIST },
 	{ NULL, 0 },
 };
 
@@ -120,10 +109,10 @@ static void xmmsc_send_void (xmmsc_connection_t *c, char *message);
  */
 
 /**
- * Initializes a xmmsc_connection_t. Returns #NULL if you
+ * Initializes a xmmsc_connection_t. Returns %NULL if you
  * runned out of memory.
  *
- * @param a xmmsc_connection_t that should be freed with
+ * @return a xmmsc_connection_t that should be freed with
  * xmmsc_deinit.
  *
  * @sa xmmsc_deinit
@@ -138,6 +127,11 @@ xmmsc_init ()
 	
 	if (c) {
 		c->callbacks = g_hash_table_new (g_str_hash,  g_str_equal);
+	}
+	
+	if (!c->callbacks) {
+		g_free (c);
+		return NULL;
 	}
 
 	return c;
@@ -255,6 +249,167 @@ xmmsc_deinit (xmmsc_connection_t *c)
 	dbus_connection_unref (c->conn);
 }
 
+/** 
+ * @defgroup ClientCallbacks ClientCallbacks
+ * @brief This callbacks can be set with xmmsc_set_callback
+ * and will be called with one argument.
+ * @{
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYBACK_PLAYTIME
+ *
+ * This callback is called after each sample
+ * played by core. This should update the playtime.
+ * The argument will be a UINT32 with the number of
+ * milliseconds played. The latency is already accounted
+ * for in the value you get.
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYBACK_STOP
+ *
+ * This callback is called after someone pressed
+ * "stop". The core will remain "stopped" until 
+ * XMMS_SIGNAL_PLAYBACK_CURRENTID is called. This
+ * callback is called with %NULL argument.
+ *
+ * @sa xmmsc_playback_stop
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYBACK_CURRENTID
+ *
+ * This callback will be called when playback changed.
+ * If playback is stopped this means that someone pressed
+ * play. The argument to this function is a UINT32 with the
+ * id of the song that is being played. Call xmmsc_playlist_mediainfo
+ * to get the information on the song.
+ *
+ * @sa xmmsc_playlist_get_mediainfo
+ * @sa xmmsc_playback_current_id
+ */
+
+/**
+ * @def XMMS_SIGNAL_CORE_INFORMATION
+ *
+ * This callback will be called when there is information from
+ * the server that should be presented to the user.
+ * The argument is a zero terminated string.
+ */
+
+/**
+ * @def XMMS_SIGNAL_CORE_DISCONNECT
+ *
+ * This callback will be called when the server wants us
+ * to disconnect. This usely means that server exits.
+ * Argument is %NULL.
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_ADD
+ *
+ * This callback will be called when something is added to
+ * the playlist. 
+ * 
+ * The argument is a UINT32 with the id of the added song.
+ *
+ * @sa xmmsc_playlist_add
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_MEDIAINFO
+ *
+ * This will be called with information about a specific
+ * song. The arugment is a pointer to GHashTable with 
+ * information about the song.
+ *
+ * @sa xmmsc_playlist_get_mediainfo
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_SHUFFLE
+ *
+ * This is called when the playlist is shuffled.
+ * You will have to reread the playlist with xmmsc_playlist_list.
+ * The callback is called with %NULL as argument.
+ *
+ * @sa xmmsc_playlist_list
+ * @sa xmmsc_playlist_shuffle
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_CLEAR
+ *
+ * This callback is called when the playlist is cleared.
+ * 
+ * @sa xmmsc_playlist_clear
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_REMOVE
+ *
+ * This is called when a song is removed from the playlist.
+ * The argument is a UINT32 with the removed songs id.
+ *
+ * @sa xmmsc_playlist_remove
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_JUMP
+ *
+ * This is called when someone moves the current song pointer
+ * in the playlist. 
+ * The argument is a UINT32 with the new current entry.
+ *
+ * @sa xmmsc_playlist_jump
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_MOVE
+ *
+ * This is called when someone is moving something in the playlist
+ * @todo figure out how the argument should work.
+ *
+ * @sa xmmsc_playlist_move
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_LIST
+ *
+ * This will be called with a list of ids that is in the playlist.
+ * The argument is a UINT32 Array that will be zeroterminated.
+ *
+ * @sa xmmsc_playlist_list
+ */
+
+/**
+ * @def XMMS_SIGNAL_PLAYLIST_SORT
+ *
+ * This will be called when someone has sorted the playlist.
+ * You will have to reread the playlist to ensure you have
+ * the correct data.
+ *
+ * @sa xmmsc_playlist_sort
+ */
+
+/**
+ * @def XMMS_SIGNAL_VISUALISATION_SPECTRUM
+ *
+ * This will be called for each sample with the fft data for that
+ * sample. The argument is a array with 10 doubles. This can be
+ * used for output a spectrumanalyzer.
+ */
+
+/**
+ * @def XMMS_SIGNAL_TRANSPORT_LIST
+ *
+ * This will be called when a file list is ready.
+ * This is generated by a xmmsc_file_list call.
+ *
+ * @sa xmmsc_file_list
+ */
+
 /**
  * Set a callback for the signal you want to handle.
  * the callback function should have the following prototype
@@ -263,19 +418,30 @@ xmmsc_deinit (xmmsc_connection_t *c)
  */
 
 void
-xmmsc_set_callback (xmmsc_connection_t *conn, gchar *callback, void (*func)(void *,void*), void *userdata)
+xmmsc_set_callback (xmmsc_connection_t *conn, 
+		    gchar *callback, 
+		    void (*func) (void *, void*), 
+		    void *userdata)
 {
+	GList *l = NULL;
 	xmmsc_callback_desc_t *desc = g_new0 (xmmsc_callback_desc_t, 1);
 
 	desc->func = func;
 	desc->userdata = userdata;
 
-	xmmsc_register_signal (conn, callback);
-
 	/** @todo more than one callback of each type */
-	g_hash_table_insert (conn->callbacks, g_strdup (callback), desc);
+	l = g_hash_table_lookup (conn->callbacks, callback);
+	if (!l) {
+		xmmsc_register_signal (conn, callback);
+		l = g_list_append (l, desc);
+		g_hash_table_insert (conn->callbacks, g_strdup (callback), l);
+	} else {
+		l = g_list_append (l, desc);
+	}
 
 }
+
+/** @} */
 
 /**
  * Disconnects you from the current XMMS server.
@@ -389,6 +555,7 @@ xmmsc_playback_start (xmmsc_connection_t *c)
 /**
  * Seek to a absolute time in the current playback.
  *
+ * @param c The connection structure.
  * @param milliseconds The total number of ms where
  * playback should continue.
  */
@@ -410,6 +577,7 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds)
 /**
  * Seek to a absoulte number of samples in the current playback.
  *
+ * @param c The connection structure.
  * @param samples the total number of samples where playback
  * should continue.
  */
@@ -491,6 +659,7 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
  * format of the playlist is detemined by checking the
  * extension of the filename.
  *
+ * @param c The connection structure.
  * @param filename file on server-side to save the playlist
  * in.
  */
@@ -524,6 +693,7 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 /**
  * Set the current song in the playlist.
  *
+ * @param c The connection structure.
  * @param id The id that should be the current song
  * in the playlist.
  *
@@ -551,6 +721,7 @@ xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
  * you will have to include the protocol for the url to. ie:
  * file://mp3/my_mp3s/first.mp3.
  *
+ * @param c The connection structure.
  * @param url an encoded path.
  *
  * @sa xmmsc_encode_path
@@ -745,25 +916,21 @@ xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
 	dbus_message_unref (msg);
 }
 
-/** @} */
-
-
 /**
- * @defgroup XMMSCGLib XMMSCGLib
- * @ingroup XMMSClient
- * @brief Functions for integrating an XMMSClient into glib.
- *
- * @{
+ * Retrives a list of files from url.
  */
-
-/**
- * Setup all events with a g_mainloop.
- */
-
 void
-xmmsc_glib_setup_mainloop (xmmsc_connection_t *conn, GMainContext *context)
+xmmsc_file_list (xmmsc_connection_t *c, gchar *url) 
 {
-	dbus_connection_setup_with_g_main (conn->conn, context);
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_SIGNAL_TRANSPORT_LIST, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, url);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
 }
 
 /** @} */
@@ -794,7 +961,7 @@ handle_callback (DBusMessageHandler *handler,
 {
 	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
 	xmmsc_signal_callbacks_t *c;
-	xmmsc_callback_desc_t *cb;
+	GList *cb_list;
         DBusMessageIter itr;
 	guint tmp[2]; /* used by MOVE */
 	void *arg = NULL;
@@ -808,6 +975,7 @@ handle_callback (DBusMessageHandler *handler,
 	}
 
 	dbus_message_iter_init (msg, &itr);
+
 
 	switch (c->type) {
 		case XMMSC_TYPE_STRING:
@@ -872,14 +1040,45 @@ handle_callback (DBusMessageHandler *handler,
 			}
 			break;
 
+		case XMMSC_TYPE_TRANSPORT_LIST:
+			{
+				GList *list = NULL;
+
+				while (42) {
+					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+						xmmsc_file_t *f;
+					
+						f = g_new (xmmsc_file_t, 1);
+					
+						f->path = dbus_message_iter_get_string (&itr);
+						dbus_message_iter_next (&itr);
+						f->file = dbus_message_iter_get_boolean (&itr);
+						list = g_list_append (list, f);
+					}
+
+					if (!dbus_message_iter_has_next (&itr))
+						break;
+
+					dbus_message_iter_next (&itr);
+				}
+
+				arg = list;
+			}
+
+			break;
+
 		case XMMSC_TYPE_NONE:
 			/* don't really know how to handle this yet. */
 			break;
 	}
 
-	cb = g_hash_table_lookup (xmmsconn->callbacks, dbus_message_get_name (msg));
-	if(cb){
-		cb->func(cb->userdata, arg);
+	cb_list = g_hash_table_lookup (xmmsconn->callbacks, dbus_message_get_name (msg));
+	if (cb_list) {
+		GList *node;
+		for (node = cb_list; node; node = g_list_next (node)) {
+			xmmsc_callback_desc_t *cb = node->data;
+			cb->func(cb->userdata, arg);
+		}
 	}
 
 	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;

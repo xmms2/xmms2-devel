@@ -9,7 +9,13 @@
  * Type definitions
  */
 
+typedef enum {
+	XMMS_TRANSPORT_ENTRY_FILE,
+	XMMS_TRANSPORT_ENTRY_DIR
+} xmms_transport_entry_type_t;
+
 typedef struct xmms_transport_St xmms_transport_t;
+typedef struct xmms_transport_entry_St xmms_transport_entry_t;
 
 #define XMMS_TRANSPORT_SEEK_SET 0
 #define XMMS_TRANSPORT_SEEK_END 1
@@ -28,11 +34,14 @@ typedef gint (*xmms_transport_read_method_t) (xmms_transport_t *transport,
 typedef gint (*xmms_transport_seek_method_t) (xmms_transport_t *transport, 
 					      guint offset, gint whence);
 typedef gint (*xmms_transport_size_method_t) (xmms_transport_t *transport);
+typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
 
 /*
  * Public function prototypes
  */
 
+GList *xmms_transport_list (const gchar *path);
+void xmms_transport_list_free (GList *);
 gpointer xmms_transport_plugin_data_get (xmms_transport_t *transport);
 void xmms_transport_plugin_data_set (xmms_transport_t *transport, gpointer data);
 void xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype);
@@ -49,5 +58,12 @@ gboolean xmms_transport_islocal (xmms_transport_t *transport);
 gboolean xmms_transport_plugin_open (xmms_transport_t *transport, 
 				     xmms_playlist_entry_t *entry, gpointer data);
 
+
+xmms_transport_entry_t *xmms_transport_entry_new 
+			(gchar *path, xmms_transport_entry_type_t type);
+void xmms_transport_entry_free (xmms_transport_entry_t *entry);
+xmms_transport_entry_type_t xmms_transport_entry_type_get
+			    (xmms_transport_entry_t *entry);
+const gchar *xmms_transport_entry_path_get (xmms_transport_entry_t *entry);
 
 #endif /* __XMMS_TRANSPORT_H__ */

@@ -22,7 +22,6 @@ PLUGINS:
 		* make sure they work
 
 	* Transport
-		* API support listing. - 1.9.4
 		* be able to set buffersizes based on path/fstype.
 
 	* Transport Plugins
@@ -31,7 +30,6 @@ PLUGINS:
 		* SSH
 		* RTP/RTCP/RTSP http://www.live.com/
 		* GSTP
-		
 
 	* Decoders
 		* WAV

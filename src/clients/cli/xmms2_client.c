@@ -9,6 +9,7 @@
 #include <glib.h>
 
 #include "xmmsclient.h"
+#include "xmmsclient-glib.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
@@ -220,6 +221,36 @@ handle_playlist_list (void *userdata, void *arg)
 }
 
 void
+handle_transport_list (void *userdata, void *arg)
+{
+	GList *list = arg;
+	GList *tmp;
+
+	for (tmp = list; tmp; tmp = g_list_next (tmp)) {
+		xmmsc_file_t *f = tmp->data;
+		printf ("%c\t%s\n", !f->file?'d':' ', xmmsc_decode_path (f->path));
+	}
+
+	xmmsc_deinit ((xmmsc_connection_t *)userdata);
+	exit (0);
+
+}
+
+void
+setup_flist (xmmsc_connection_t *conn, gchar *arg)
+{
+	mainloop = g_main_loop_new (NULL, FALSE);
+
+	xmmsc_set_callback (conn, XMMS_SIGNAL_TRANSPORT_LIST, handle_transport_list, conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_INFORMATION, handle_information, NULL);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_CORE_DISCONNECT, handle_disconnected, conn);
+
+	xmmsc_file_list (conn, arg);
+	xmmsc_setup_with_gmain (conn, NULL);
+	return;
+}
+
+void
 setup_playlist (xmmsc_connection_t *conn)
 {
 	mainloop = g_main_loop_new (NULL, FALSE);
@@ -230,7 +261,7 @@ setup_playlist (xmmsc_connection_t *conn)
 
 	xmmsc_playback_current_id (conn);
 	
-	xmmsc_glib_setup_mainloop (conn, NULL);
+	xmmsc_setup_with_gmain (conn, NULL);
 
 	return;
 }
@@ -249,7 +280,7 @@ status_main(xmmsc_connection_t *conn)
 
 	xmmsc_playback_current_id (conn);
 
-	xmmsc_glib_setup_mainloop (conn, NULL);
+	xmmsc_setup_with_gmain (conn, NULL);
 
 	return 0;
 
@@ -461,6 +492,12 @@ main(int argc, char **argv)
 
 			setup_playlist (c);
 
+		} else if ( streq (argv[1], "flist") ) {
+			if (argc < 3) {
+				printf ("usage: flist url\n");
+				return 1;
+			}
+			setup_flist (c, argv[2]);
 		} else if ( streq (argv[1], "savelist") ) {
 
 			if (argc < 3) {
