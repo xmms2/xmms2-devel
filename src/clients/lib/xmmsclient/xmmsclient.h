@@ -10,6 +10,11 @@ typedef struct xmmsc_playlist_entry_St { /* no use to share them between client 
 	GHashTable *properties;
 } xmmsc_playlist_entry_t;
 
+typedef struct xmmsc_file_St {
+	gchar *path;
+	gboolean file; /**< set to true if entry is a regular file */
+} xmmsc_file_t;
+
 xmmsc_connection_t *xmmsc_init();
 gboolean xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_deinit(xmmsc_connection_t *);
@@ -37,6 +42,7 @@ void xmmsc_playlist_list (xmmsc_connection_t *c);
 void xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, guint);
 void xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 void xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val);
+void xmmsc_file_list (xmmsc_connection_t *c, gchar *path);
 
 void xmmsc_playlist_mode_set_none (xmmsc_connection_t *c);
 void xmmsc_playlist_mode_set_repeatone (xmmsc_connection_t *c);

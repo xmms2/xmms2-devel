@@ -35,6 +35,7 @@ typedef enum {
 	XMMSC_TYPE_MOVE,
 	XMMSC_TYPE_MEDIAINFO,
 	XMMSC_TYPE_UINT32_ARRAY,
+	XMMSC_TYPE_TRANSPORT_LIST,
 } xmmsc_types_t;
 
 
@@ -91,6 +92,7 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_UINT32_ARRAY },
 	{ XMMS_SIGNAL_PLAYLIST_SORT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
+	{ XMMS_SIGNAL_TRANSPORT_LIST, XMMSC_TYPE_TRANSPORT_LIST },
 	{ NULL, 0 },
 };
 
@@ -745,6 +747,23 @@ xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
 	dbus_message_unref (msg);
 }
 
+/**
+ * Retrives a list of files from url.
+ */
+void
+xmmsc_file_list (xmmsc_connection_t *c, gchar *url) 
+{
+        DBusMessageIter itr;
+	DBusMessage *msg;
+	int cserial;
+	
+	msg = dbus_message_new (XMMS_SIGNAL_TRANSPORT_LIST, NULL);
+	dbus_message_append_iter_init (msg, &itr);
+	dbus_message_iter_append_string (&itr, url);
+	dbus_connection_send (c->conn, msg, &cserial);
+	dbus_message_unref (msg);
+}
+
 /** @} */
 
 
@@ -870,6 +889,33 @@ handle_callback (DBusMessageHandler *handler,
 				}
 				arg = tab;
 			}
+			break;
+
+		case XMMSC_TYPE_TRANSPORT_LIST:
+			{
+				GList *list = NULL;
+
+				while (42) {
+					if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_STRING) {
+						xmmsc_file_t *f;
+					
+						f = g_new (xmmsc_file_t, 1);
+					
+						f->path = dbus_message_iter_get_string (&itr);
+						dbus_message_iter_next (&itr);
+						f->file = dbus_message_iter_get_boolean (&itr);
+						list = g_list_append (list, f);
+					}
+
+					if (!dbus_message_iter_has_next (&itr))
+						break;
+
+					dbus_message_iter_next (&itr);
+				}
+
+				arg = list;
+			}
+
 			break;
 
 		case XMMSC_TYPE_NONE:

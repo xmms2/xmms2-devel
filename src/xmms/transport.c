@@ -29,6 +29,13 @@ static gpointer xmms_transport_thread (gpointer data);
  * Type definitions
  */
 
+/** This describes a directory or a file */
+struct xmms_transport_entry_St {
+	/** Absolute path to entry */
+	gchar path[1024];
+	xmms_transport_entry_type_t type;
+};
+
 struct xmms_transport_St {
 	/** Object for emiting signals */
 	xmms_object_t object;
@@ -67,6 +74,109 @@ struct xmms_transport_St {
  * Public functions
  */
 
+/**
+ * Retrives a list of files from the transport plugin.
+ *
+ * @returns a list with xmms_transport_entry_t's
+ */
+
+GList *
+xmms_transport_list (const gchar *path)
+{
+	xmms_transport_list_method_t list;
+	xmms_plugin_t *plugin;
+
+	g_return_val_if_fail (path, NULL);
+
+	plugin = xmms_transport_plugin_find (path);
+
+	if (!xmms_plugin_properties_check (plugin, XMMS_PLUGIN_PROPERTY_LIST))
+		return NULL;
+
+	g_return_val_if_fail (plugin, NULL);
+
+	list = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LIST);
+	g_return_val_if_fail (list, NULL);
+
+	return list (path);
+}
+
+/**
+ * Free all resources used by a list with xmms_transport_entry_t's
+ */
+
+void
+xmms_transport_list_free (GList *list)
+{
+	GList *node;
+
+	g_return_if_fail (list);
+
+	for (node = list; node; node = g_list_next (node)) {
+		xmms_transport_entry_t *e = node->data;
+		xmms_transport_entry_free (e);
+	}
+
+	g_list_free (list);
+}
+
+
+/**
+ * Allocates a xmms_transport_entry_t
+ * call xmms_transport_entry_free to free resources used by entry.
+ *
+ * @sa xmms_transport_entry_free
+ */
+
+xmms_transport_entry_t *
+xmms_transport_entry_new (gchar *path, xmms_transport_entry_type_t type)
+{
+	xmms_transport_entry_t *ret;
+
+	g_return_val_if_fail (path, NULL);
+
+	ret = g_new (xmms_transport_entry_t, 1);
+	g_strlcpy (ret->path, path, 1024);
+	ret->type = type;
+
+	return ret;
+}
+
+/**
+ * Free all resources used by entry
+ */
+
+void
+xmms_transport_entry_free (xmms_transport_entry_t *entry)
+{
+	g_return_if_fail (entry);
+
+	g_free (entry);
+}
+
+/**
+ * Returns type of entry
+ */
+
+xmms_transport_entry_type_t
+xmms_transport_entry_type_get (xmms_transport_entry_t *entry)
+{
+	g_return_val_if_fail (entry, 0);
+
+	return entry->type;
+}
+
+/**
+ * Get path of entry.
+ */
+
+const gchar *
+xmms_transport_entry_path_get (xmms_transport_entry_t *entry)
+{
+	g_return_val_if_fail (entry, NULL);
+
+	return entry->path;
+}
 
 /**
   * Get a transport's private data.

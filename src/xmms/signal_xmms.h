@@ -36,6 +36,7 @@
 
 /* Transport msgs */
 #define XMMS_SIGNAL_TRANSPORT_MIMETYPE "org.xmms.transport.mimetype"
+#define XMMS_SIGNAL_TRANSPORT_LIST "org.xmms.transport.list"
 
 /* Output msgs */
 #define XMMS_SIGNAL_OUTPUT_EOS_REACHED "org.xmms.output.eos.reached"

@@ -31,6 +31,7 @@ static void xmms_file_close (xmms_transport_t *transport);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
 static gint xmms_file_size (xmms_transport_t *transport);
 static gint xmms_file_seek (xmms_transport_t *transport, guint offset, gint whence);
+static GList *xmms_file_list (const gchar *path);
 
 /*
  * Plugin header
@@ -54,9 +55,11 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_file_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_file_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_file_seek);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_file_list);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
 	return plugin;
 }
@@ -64,6 +67,57 @@ xmms_plugin_get (void)
 /*
  * Member functions
  */
+
+static GList *
+xmms_file_list (const gchar *path)
+{
+	GList *ret = NULL;
+	const gchar *name;
+	GDir *d;
+	gchar *nurl, *urlptr;
+
+	nurl = xmms_util_decode_path (path);
+
+	if (g_strncasecmp (nurl, "file:", 5) == 0)
+		urlptr = strchr (nurl, '/');
+	else
+		urlptr = nurl;
+
+	if (!urlptr)
+		return FALSE;
+
+	if (!g_file_test (urlptr, G_FILE_TEST_IS_DIR))
+		return NULL;
+
+	
+	if (!(d = g_dir_open (urlptr, 0, NULL))) {
+		xmms_log ("Couldn't open directory %s", path);
+		return NULL;
+	}
+
+	while ((name = g_dir_read_name (d))) {
+		xmms_transport_entry_t *entry;
+		xmms_transport_entry_type_t t = XMMS_TRANSPORT_ENTRY_FILE;
+		gchar *tmp;
+
+		tmp = g_strdup_printf ("%s/%s", urlptr, name);
+		if (g_file_test (tmp, G_FILE_TEST_IS_DIR))
+			t = XMMS_TRANSPORT_ENTRY_DIR;
+
+		g_free (tmp);
+
+		tmp = g_strdup_printf ("file:%s/%s", urlptr, name);
+		entry = xmms_transport_entry_new (tmp, t);
+		g_free (tmp);
+
+		ret = g_list_append (ret, (gpointer) entry);
+	}
+
+	g_free (nurl);
+	g_dir_close (d);
+
+	return ret;
+}
 
 static gboolean
 xmms_file_can_handle (const gchar *url)
