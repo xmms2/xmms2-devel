@@ -322,8 +322,6 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
 	xmms_ipc_client_msg_write (client, retmsg);
-
-	xmms_ipc_msg_destroy (msg);
 }
 
 
@@ -408,6 +406,7 @@ xmms_ipc_client_thread (gpointer data)
 					xmms_ipc_msg_t *msg = client->read_msg;
 					client->read_msg = NULL;
 					process_msg (client, client->ipc, msg);
+					xmms_ipc_msg_destroy (msg);
 				} else {
 					break;
 				}
