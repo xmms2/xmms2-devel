@@ -24,6 +24,12 @@ PKG_CHECK_MODULES(MAD, mad >= 0.14.0,,AC_MSG_ERROR(Install libmad!))
 AC_SUBST(MAD_LIBS)
 AC_SUBST(MAD_CFLAGS)
 
+vorbis="no"
+XMMS_PATH_VORBIS(vorbis="yes",AC_MSG_WARN(No libvorbis))
+AC_SUBST(VORBIS_LIBS)
+AC_SUBST(VORBIS_CFLAGS)
+AM_CONDITIONAL(HAVE_VORBIS,test "$vorbis" != "")
+
 PKG_CHECK_MODULES(DBUS, dbus-1.0 >= 0.9,,AC_MSG_ERROR(Install dbus!))
 AC_SUBST(DBUS_LIBS)
 AC_SUBST(DBUS_CFLAGS)
@@ -58,6 +64,7 @@ src/Makefile
 src/xmms/Makefile
 src/plugins/Makefile
 src/plugins/mad/Makefile
+src/plugins/vorbis/Makefile
 src/plugins/http/Makefile
 src/plugins/diskwrite/Makefile
 src/plugins/oss/Makefile
