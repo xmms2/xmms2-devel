@@ -177,6 +177,7 @@ xmms_decoder_get_mediainfo (xmms_decoder_t *decoder,
 	entry->year = mediainfo->year;
 	entry->tracknr = mediainfo->tracknr;
 	entry->bitrate = mediainfo->bitrate;
+	entry->duration = mediainfo->duration;
 
 	return TRUE;
 }

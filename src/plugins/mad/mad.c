@@ -213,10 +213,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 		g_strstrip (entry->comment);
 
-		data->entry = entry;
-		xmms_decoder_set_mediainfo (decoder,entry);
 	}
+	
+	data->entry = entry;
 
+	xmms_decoder_set_mediainfo (decoder,entry);
 
 }
 
@@ -304,7 +305,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		}
 
 		bitrate = data->frame.header.bitrate / 1000;
-		if (bitrate != data->entry->bitrate) {
+		if (data->entry && bitrate != data->entry->bitrate) {
 			if (data->entry) {
 				XMMS_DBG ("Bitrate changed to: %d", bitrate);
 				data->entry->bitrate = bitrate;

@@ -46,7 +46,7 @@ mediainfo_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	xmms_decoder_get_mediainfo (decoder, &entry);
 
 	fprintf (stdout, "--------\n");
-	fprintf (stdout, "Artist=%s\nAlbum=%s\nTitle=%s\nYear=%d\nTracknr=%d\nBitrate=%d\nComment=%s\n", entry.artist,entry.album,entry.title,entry.year,entry.tracknr,entry.bitrate,entry.comment);
+	fprintf (stdout, "Artist=%s\nAlbum=%s\nTitle=%s\nYear=%d\nTracknr=%d\nBitrate=%d\nComment=%s\nDuration=%ds\n", entry.artist,entry.album,entry.title,entry.year,entry.tracknr,entry.bitrate,entry.comment,entry.duration);
 	fprintf (stdout, "--------\n");
 }
 
