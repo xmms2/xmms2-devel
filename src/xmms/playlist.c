@@ -9,11 +9,11 @@
 #include <string.h>
 #include <glib.h>
 
-#include "playlist.h"
-#include "playlist_entry.h"
-#include "util.h"
-#include "core.h"
-#include "signal_xmms.h"
+#include "xmms/playlist.h"
+#include "xmms/playlist_entry.h"
+#include "xmms/util.h"
+#include "xmms/core.h"
+#include "xmms/signal_xmms.h"
 
 
 /** Playlist structure */

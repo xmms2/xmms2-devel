@@ -4,15 +4,16 @@
  */
 
 #include "xmms/output.h"
-#include "xmms/output_int.h"
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
 #include "xmms/util.h"
 #include "xmms/core.h"
 #include "xmms/config.h"
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
 #include "xmms/signal_xmms.h"
+
+#include "internal/plugin_int.h"
+#include "internal/output_int.h"
 
 #define xmms_output_lock(t) g_mutex_lock ((t)->mutex)
 #define xmms_output_unlock(t) g_mutex_unlock ((t)->mutex)

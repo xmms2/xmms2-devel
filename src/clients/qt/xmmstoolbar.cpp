@@ -1,59 +1,65 @@
 #include <qpushbutton.h>
 #include <qapplication.h>
+#include <qlayout.h>
 #include <qhbox.h>
 #include <qdir.h>
 #include <qfiledialog.h>
 #include <qstringlist.h>
 
-#include <xmmsclient.h>
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmsclient-qt.h>
 
 #include "xmmstoolbar.h"
+#include "xmmsstatus.h"
 
-XMMSToolbar::XMMSToolbar (xmmsc_connection_t *conn, QWidget *parent) : QHBox (parent)
+XMMSToolbar::XMMSToolbar (XMMSClientQT *client, QWidget *parent) : QHBox (parent)
 {
 	QPushButton *button;
 
-	m_connection = conn;
+	m_client = client;
+	
+	XMMSStatus *st = new XMMSStatus (m_client, this);
 
-	button = new QPushButton ("Play", this);
+	this->setStretchFactor (st, 15);
+
+	button = new QPushButton (">", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onPlay ()));
-	button = new QPushButton ("Stop", this);
+	button = new QPushButton ("S", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onStop ()));
-	button = new QPushButton ("Next", this);
+	button = new QPushButton ("->", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onNext ()));
-	button = new QPushButton ("Prev", this);
+	button = new QPushButton ("<-", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onPrev ()));
-	button = new QPushButton ("Add", this);
+	button = new QPushButton ("^", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onAdd ()));
-	button = new QPushButton ("Clear", this);
-	connect (button, SIGNAL (clicked ()), this, SLOT (onClear ()));
-	button = new QPushButton ("Quit", this);
+	button = new QPushButton ("Q", this);
 	connect (button, SIGNAL (clicked ()), this, SLOT (onQuit ()));
+
 
 }
 
 void
 XMMSToolbar::onPlay ()
 {
-	xmmsc_playback_start (m_connection);
+	xmmsc_playback_start (m_client->getConnection ());
 }
 
 void
 XMMSToolbar::onStop ()
 {
-	xmmsc_playback_stop (m_connection);
+	xmmsc_playback_stop (m_client->getConnection ());
 }
 
 void
 XMMSToolbar::onNext ()
 {
-	xmmsc_play_next (m_connection);
+	xmmsc_play_next (m_client->getConnection ());
 }
 
 void
 XMMSToolbar::onPrev ()
 {
-	xmmsc_play_prev (m_connection);
+	xmmsc_play_prev (m_client->getConnection ());
 }
 
 void
@@ -73,21 +79,15 @@ XMMSToolbar::onAdd ()
 		
 		snprintf (tmp, 1024, "file://%s", (const char *)*it);
 		encoded = xmmsc_encode_path (tmp);
-		xmmsc_playlist_add (m_connection, encoded);
+		xmmsc_playlist_add (m_client->getConnection (), encoded);
 		g_free (encoded);
 		++it;
 	}
 }
 
 void
-XMMSToolbar::onClear ()
-{
-	xmmsc_playlist_clear (m_connection);
-}
-
-void
 XMMSToolbar::onQuit ()
 {
-	xmmsc_deinit (m_connection);
+	xmmsc_deinit (m_client->getConnection ());
 	qApp->closeAllWindows ();
 }

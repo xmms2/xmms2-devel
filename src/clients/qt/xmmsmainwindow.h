@@ -1,18 +1,20 @@
-#ifndef __XMMSPLAYLISTWIN_H__
-#define __XMMSPLAYLISTWIN_H__
+#ifndef __XMMSMAINWINDOW_H__
+#define __XMMSMAINWINDOW_H__
 
 #include <qapplication.h>
 #include <qmainwindow.h>
 #include <qstatusbar.h>
-#include "xmmslistview.h"
-#include "playlist.h"
+#include <xmms/xmmsclient-qt.h>
 
-class XMMSPlaylistWin : public QMainWindow
+#include "xmmslistview.h"
+#include "xmmstoolbar.h"
+
+class XMMSMainWindow : public QMainWindow
 {
 	Q_OBJECT
 
 public:
-	XMMSPlaylistWin (xmmsc_connection_t *);
+	XMMSMainWindow (XMMSClientQT *);
 	void setCurrentId (guint);
 	void setInfo (GHashTable *);
 	void getInfo (guint);
@@ -21,10 +23,10 @@ public:
 
 protected:
 	XMMSListView *m_listview;
-	playlist_t *m_playlist;
-	xmmsc_connection_t *m_connection;
-	QStatusBar *m_status;
-	XMMSListViewItem *m_currentItem;
+	XMMSToolbar *m_toolbar;
+	//XMMSStatusBar *m_statusbar;
+	
+	XMMSClientQT *m_client;
 };
 
 #endif

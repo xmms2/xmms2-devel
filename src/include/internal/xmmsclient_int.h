@@ -5,7 +5,7 @@
 
 #include <dbus/dbus.h>
 #include <glib.h>
-#include "xmmswatch.h"
+#include "xmms/xmmswatch.h"
 
 /**
  * @typedef xmmsc_connection_t

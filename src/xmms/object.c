@@ -1,5 +1,5 @@
-#include "object.h"
-#include "util.h"
+#include "xmms/object.h"
+#include "xmms/util.h"
 
 typedef struct {
 	xmms_object_handler_t handler;

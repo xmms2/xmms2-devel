@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "playlist.h"
-#include "playlist_entry.h"
-#include "util.h"
+#include "xmms/playlist.h"
+#include "xmms/playlist_entry.h"
+#include "xmms/util.h"
 
 /*
  * Type definitions.

@@ -7,9 +7,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "visualisation.h"
-#include "object.h"
-#include "core.h"
+#include "xmms/visualisation.h"
+#include "xmms/object.h"
+#include "xmms/core.h"
 
 static GMutex *visuserslock;
 static guint32 visusers = 0;

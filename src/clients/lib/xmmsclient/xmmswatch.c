@@ -1,6 +1,7 @@
-#include "xmmsclient.h"
-#include "xmmsclient_int.h"
-#include "xmmswatch.h"
+#include "xmms/xmmsclient.h"
+#include "xmms/xmmswatch.h"
+
+#include "internal/xmmsclient_int.h"
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 

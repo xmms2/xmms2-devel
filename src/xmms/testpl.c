@@ -1,4 +1,4 @@
-#include "playlist.h"
+#include "xmms/playlist.h"
 
 int main ()
 {

@@ -1,8 +1,8 @@
 #include <qapplication.h>
 
-#include "xmmsplaylistwin.h"
-#include "xmmsclient.h"
-#include "xmmsclient-qt.h"
+#include "xmmsmainwindow.h"
+#include "xmms/xmmsclient.h"
+#include "xmms/xmmsclient-qt.h"
 
 int main (int argc, char **argv)
 {
@@ -21,11 +21,11 @@ int main (int argc, char **argv)
 	 */
 	client = new XMMSClientQT (c, &app);
 
-	XMMSPlaylistWin *pl = new XMMSPlaylistWin (c);
+	XMMSMainWindow *mw = new XMMSMainWindow (client);
 
-	app.setMainWidget (pl);
+	app.setMainWidget (mw);
 
-	pl->show ();
+	mw->show ();
 	
 	return app.exec ();
 

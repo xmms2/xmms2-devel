@@ -8,8 +8,8 @@
 
 #include <glib.h>
 
-#include "xmmsclient.h"
-#include "xmmsclient-glib.h"
+#include "xmms/xmmsclient.h"
+#include "xmms/xmmsclient-glib.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024

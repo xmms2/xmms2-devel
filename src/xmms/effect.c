@@ -8,10 +8,11 @@
 
 #include "xmms/effect.h"
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
 #include "xmms/object.h"
 #include "xmms/config.h"
 #include "xmms/util.h"
+
+#include "internal/plugin_int.h"
 
 struct xmms_effect_St {
 	struct xmms_effect_St *next;

@@ -6,22 +6,23 @@
  */
 
 
-#include "decoder.h"
-#include "core.h"
-#include "decoder_int.h"
-#include "plugin.h"
-#include "plugin_int.h"
-#include "object.h"
-#include "util.h"
-#include "output.h"
-#include "output_int.h"
-#include "transport.h"
-#include "transport_int.h"
-#include "ringbuf.h"
-#include "playlist.h"
-#include "visualisation.h"
-#include "effect.h"
-#include "signal_xmms.h"
+#include "xmms/decoder.h"
+#include "xmms/core.h"
+#include "xmms/plugin.h"
+#include "xmms/object.h"
+#include "xmms/util.h"
+#include "xmms/output.h"
+#include "xmms/transport.h"
+#include "xmms/ringbuf.h"
+#include "xmms/playlist.h"
+#include "xmms/visualisation.h"
+#include "xmms/effect.h"
+#include "xmms/signal_xmms.h"
+
+#include "internal/decoder_int.h"
+#include "internal/transport_int.h"
+#include "internal/plugin_int.h"
+#include "internal/output_int.h"
 
 #include <string.h>
 

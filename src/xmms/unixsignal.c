@@ -3,10 +3,10 @@
  */
 
 
-#include "unixsignal.h"
-#include "util.h"
-#include "object.h"
-#include "core.h"
+#include "xmms/unixsignal.h"
+#include "xmms/util.h"
+#include "xmms/object.h"
+#include "xmms/core.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -4,10 +4,10 @@
 #include <qsocketnotifier.h>
 #include <qobject.h>
 
-#include "xmmswatch.h"
-#include "xmmsclient.h"
+#include "xmms/xmmswatch.h"
+#include "xmms/xmmsclient.h"
 
-#include "xmmsclient-qt.h"
+#include "xmms/xmmsclient-qt.h"
 
 static int
 watch_callback (xmmsc_connection_t *conn,
@@ -144,6 +144,12 @@ XMMSClientQT::XMMSClientQT (xmmsc_connection_t *conn, QObject *parent) :
 	xmmsc_watch_callback_set (conn, watch_callback);
 	xmmsc_watch_data_set (conn, this);
 	xmmsc_watch_init (conn);
+}
+
+xmmsc_connection_t *
+XMMSClientQT::getConnection ()
+{
+	return m_conn;
 }
 
 /** @} */

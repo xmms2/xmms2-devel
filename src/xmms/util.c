@@ -2,7 +2,7 @@
  * @file Misc utils for various functions in XMMS.
  */
 
-#include "util.h"
+#include "xmms/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>

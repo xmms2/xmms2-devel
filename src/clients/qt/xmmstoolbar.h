@@ -1,18 +1,20 @@
 #ifndef __XMMSTOOLBAR_H__
 #define __XMMSTOOLBAR_H__
 
+#include <qlayout.h>
 #include <qhbox.h>
 
-#include <xmmsclient.h>
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmsclient-qt.h>
 
 class XMMSToolbar : public QHBox
 {
 	Q_OBJECT
 public:
-	XMMSToolbar (xmmsc_connection_t *, QWidget *);
+	XMMSToolbar (XMMSClientQT *, QWidget *);
 
 protected:
-	xmmsc_connection_t *m_connection;
+	XMMSClientQT *m_client;
 
 protected slots:
 	void onPlay ();
@@ -20,7 +22,6 @@ protected slots:
 	void onNext ();
 	void onPrev ();
 	void onAdd ();
-	void onClear ();
 	void onQuit ();
 
 };

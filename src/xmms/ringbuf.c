@@ -1,5 +1,5 @@
-#include "ringbuf.h"
-#include "util.h"
+#include "xmms/ringbuf.h"
+#include "xmms/util.h"
 #include <string.h>
 
 struct xmms_ringbuf_St {

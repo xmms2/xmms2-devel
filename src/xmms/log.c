@@ -8,8 +8,8 @@
 #define _GNU_SOURCE
 #endif
 
-#include "log.h"
-#include "core.h"
+#include "xmms/log.h"
+#include "xmms/core.h"
 
 #include <stdio.h>
 #include <stdarg.h>

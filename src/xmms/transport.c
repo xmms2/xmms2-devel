@@ -4,16 +4,17 @@
  * This file is responsible for the transportlayer.
  */
 
-#include "transport.h"
-#include "transport_int.h"
-#include "plugin.h"
-#include "plugin_int.h"
-#include "object.h"
-#include "util.h"
-#include "ringbuf.h"
-#include "signal_xmms.h"
-#include "playlist.h"
-#include "core.h"
+#include "xmms/transport.h"
+#include "xmms/plugin.h"
+#include "xmms/object.h"
+#include "xmms/util.h"
+#include "xmms/ringbuf.h"
+#include "xmms/signal_xmms.h"
+#include "xmms/playlist.h"
+#include "xmms/core.h"
+
+#include "internal/transport_int.h"
+#include "internal/plugin_int.h"
 
 #include <glib.h>
 #include <string.h>

@@ -5,7 +5,6 @@
 #include <glib.h>
 
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
 #include "xmms/transport.h"
 #include "xmms/decoder.h"
 #include "xmms/config.h"
@@ -15,10 +14,13 @@
 #include "xmms/core.h"
 #include "xmms/medialib.h"
 #include "xmms/output.h"
-#include "xmms/output_int.h"
 #include "xmms/xmms.h"
 #include "xmms/effect.h"
 #include "xmms/dbus.h"
+
+
+#include "internal/plugin_int.h"
+#include "internal/output_int.h"
 
 #include <stdlib.h>
 #include <getopt.h>

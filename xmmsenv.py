@@ -3,6 +3,8 @@ import SCons
 import os;
 import sys;
 
+
+
 class XmmsEnvironment(SCons.Environment.Environment):
 	pass
 	def __init__(self, options=None, **kw):
@@ -16,6 +18,7 @@ class XmmsEnvironment(SCons.Environment.Environment):
 		self.sysconfdir=self['SYSCONFDIR']
 		self.installdir=self['INSTALLDIR']
 		self.mandir=self['MANDIR']
+		self.Append(CPPPATH=['#src/include'])
 		self['ENV']['TERM']=os.environ['TERM']
 		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
 		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])

@@ -4,13 +4,14 @@
 
 #include "xmms/xmms.h"
 #include "xmms/transport.h"
-#include "xmms/transport_int.h"
 #include "xmms/decoder.h"
-#include "xmms/decoder_int.h"
 #include "xmms/util.h"
 #include "xmms/playlist.h"
 #include "xmms/mediainfo.h"
 #include "xmms/plsplugins.h"
+
+#include "internal/transport_int.h"
+#include "internal/decoder_int.h"
 
 #include <glib.h>
 

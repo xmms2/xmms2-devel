@@ -4,11 +4,12 @@
  * This file contains functions for manipulate xmms_playlist_plugin_t objects.
  */
 
-#include "plugin.h"
-#include "plugin_int.h"
-#include "util.h"
-#include "playlist.h"
-#include "plsplugins.h"
+#include "xmms/plugin.h"
+#include "xmms/util.h"
+#include "xmms/playlist.h"
+#include "xmms/plsplugins.h"
+
+#include "internal/plugin_int.h"
 
 #include <string.h>
 

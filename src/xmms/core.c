@@ -4,9 +4,7 @@
 
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
-#include "xmms/transport_int.h"
 #include "xmms/decoder.h"
-#include "xmms/decoder_int.h"
 #include "xmms/config.h"
 #include "xmms/playlist.h"
 #include "xmms/plsplugins.h"
@@ -16,6 +14,9 @@
 #include "xmms/signal_xmms.h"
 #include "xmms/magic.h"
 #include "xmms/dbus.h"
+
+#include "internal/transport_int.h"
+#include "internal/decoder_int.h"
 
 #include <glib.h>
 #include <stdlib.h>

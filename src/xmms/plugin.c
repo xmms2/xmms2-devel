@@ -1,8 +1,9 @@
 #include "xmms/plugin.h"
-#include "xmms/plugin_int.h"
 #include "xmms/util.h"
 #include "xmms/config.h"
 #include "xmms/object.h"
+
+#include "internal/plugin_int.h"
 
 #include <gmodule.h>
 #include <string.h>

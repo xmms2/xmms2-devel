@@ -10,7 +10,8 @@ xmms2d_sources = Split ("config.c plugin.c object.c ringbuf.c "+
 
 xmms2_test_s = Split ("config.c testcnf.c util.c object.c");
 
-env = base_env.Copy()
+env = base_env.Copy(INCLUDES=["include"])
+
 
 env.AddFlagsFromGroup("glib")
 env.AddFlagsFromGroup("dbusglib")

@@ -1,5 +1,5 @@
-#include <xmmsclient.h>
-#include <xmmswatch.h>
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmswatch.h>
 
 #include <glib.h>
 

@@ -2,11 +2,11 @@
 
 Import('base_env')
 
-xmms2_sources = Split ("playlist.c main.cpp " +
-		       "xmmsplaylistwin.cpp xmmslistview.cpp " +
-		       "xmmstoolbar.cpp")
+xmms2_sources = Split ("main.cpp " +
+		       "xmmsmainwindow.cpp xmmslistview.cpp " +
+		       "xmmstoolbar.cpp xmmsstatus.cpp")
 
-env = base_env.Copy(CPPPATH = ['#src/clients//lib/xmmsclient', '#src', 
+env = base_env.Copy(CPPPATH = ['#src/clients//lib/xmmsclient', '#src/include', 
 		'#src/clients/lib/xmmsclient-qt', '/usr/include/qt3'],
 	LIBPATH = ["../lib/xmmsclient/", "../lib/xmmsclient-qt/"],
 	LIBS = ["xmmsclient","xmmsclient-qt"],

@@ -2,7 +2,8 @@
 #define __XMMSLISTVIEW_H__
 
 #include <qlistview.h>
-#include <xmmsclient.h>
+#include <xmms/xmmsclient.h>
+#include <xmms/xmmsclient-qt.h>
 
 class XMMSListView;
 
@@ -35,13 +36,13 @@ class XMMSListView : public QListView
 {
 	Q_OBJECT
 public:
-	XMMSListView (xmmsc_connection_t *, QWidget *parent, const char *name);
+	XMMSListView (XMMSClientQT *, QWidget *parent, const char *name);
 
 protected slots:
 	void onDoubleClick (QListViewItem *, const QPoint &, int);
 
 protected:
-	xmmsc_connection_t *m_connection;
+	XMMSClientQT *m_client;
 
 };
 
