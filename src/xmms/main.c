@@ -70,26 +70,13 @@ parse_config ()
 		}
 		return TRUE;
 	} else {
-		if (g_file_test (XMMS_CONFIG_SYSTEMWIDE, G_FILE_TEST_EXISTS)) {
-			if (!xmms_config_init (XMMS_CONFIG_SYSTEMWIDE)) {
-				XMMS_DBG ("XMMS was unable to parse configfile %s", filename);
-				exit (EXIT_FAILURE);
-			}
-
 			if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
 				mkdir (configdir, 0755);
 			}
 
-			if (!xmms_config_save (filename)) {
-				XMMS_DBG ("Could't write file %s!", filename);
-				exit (EXIT_FAILURE);
-			}
+			xmms_config_init (NULL);
 
 			return TRUE;
-		} else {
-			XMMS_DBG ("XMMS was unable to find systemwide configfile %s", XMMS_CONFIG_SYSTEMWIDE);
-			exit (EXIT_FAILURE);
-		}
 	}
 	return FALSE;
 }

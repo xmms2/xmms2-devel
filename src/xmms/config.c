@@ -210,15 +210,15 @@ xmms_config_init (const gchar *filename)
 	xmms_config_t *config;
 	int ret, fd;
 
-	g_return_val_if_fail (filename, FALSE);
-
 	config = g_new0 (xmms_config_t, 1);
 	xmms_object_init (XMMS_OBJECT (config));
 	config->mutex = g_mutex_new ();
 	config->values = g_hash_table_new (g_str_hash, g_str_equal);
-	config->url = g_strdup (filename);
 	config->state = XMMS_CONFIG_STATE_START;
 	global_config = config;
+
+	if (!filename)
+		return TRUE;
 
 	memset (&pars, 0, sizeof (pars));
 
