@@ -49,7 +49,7 @@ xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
 }
 
 xmms_ringbuf_t *
-xmms_ringbuf_new (guint size)
+xmms_ringbuf_new_unlocked (guint size)
 {
 	xmms_ringbuf_t *ringbuf = g_new0 (xmms_ringbuf_t, 1);
 
@@ -58,9 +58,19 @@ xmms_ringbuf_new (guint size)
 	ringbuf->buffer_size = size + 1;
 	ringbuf->buffer = g_malloc0 (ringbuf->buffer_size);
 
-	ringbuf->free_cond = g_cond_new ();
-	ringbuf->used_cond = g_cond_new ();
-	ringbuf->eos_cond = g_cond_new ();
+	return ringbuf;
+}
+
+xmms_ringbuf_t *
+xmms_ringbuf_new (guint size)
+{
+	xmms_ringbuf_t *ringbuf = xmms_ringbuf_new_unlocked (size);
+
+	if (ringbuf) {
+		ringbuf->free_cond = g_cond_new ();
+		ringbuf->used_cond = g_cond_new ();
+		ringbuf->eos_cond = g_cond_new ();
+	}
 
 	return ringbuf;
 }

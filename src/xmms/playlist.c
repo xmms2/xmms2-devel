@@ -267,13 +267,13 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err)
 /** Move the id a certain number of steps.
  * @ingroup PlaylistClientMethods
  */
-XMMS_CMD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, INT32, INT32);
+XMMS_CMD_DEFINE (move, xmms_playlist_id_move, xmms_playlist_t *, NONE, UINT32, INT32);
 
 /** move entry in playlist */
 static gboolean
 xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_error_t *err)
 {
-	GList *cur, *node;
+	GList *cur, *node, *newnode = NULL;
 	gint i;
 
 	g_return_val_if_fail (playlist, FALSE);
@@ -293,6 +293,8 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 		return FALSE;
 	}
 
+	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
+
 	if (steps > 0) {
 		GList *next=node->next;
 
@@ -304,8 +306,10 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 
 		if (next) {
 			playlist->list = g_list_insert_before (playlist->list, next, node->data);
+			newnode = g_list_previous (next);
 		} else {
 			playlist->list = g_list_append (playlist->list, node->data);
+			newnode = g_list_last (playlist->list);
 		}
 
 		g_list_free_1 (node);
@@ -320,12 +324,20 @@ xmms_playlist_id_move (xmms_playlist_t *playlist, guint id, gint steps, xmms_err
 
 		if (prev) {
 			playlist->list= g_list_insert_before (playlist->list, prev, node->data);
+			newnode = g_list_previous (prev);
 		} else {
 			playlist->list = g_list_prepend (playlist->list, node->data);
+			newnode = playlist->list;
 		}
 		g_list_free_1 (node);
 
 	}
+
+	if (newnode)
+		g_hash_table_insert (playlist->id_table, 
+				     GUINT_TO_POINTER (id),
+				     newnode);
+				     
 
 	if (cur) {
 		playlist->nextentry = cur->next;

@@ -33,6 +33,7 @@ typedef struct xmmsc_result_St xmmsc_result_t;
 xmmsc_connection_t *xmmsc_init (char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_deinit (xmmsc_connection_t *);
+void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 
 char *xmmsc_get_last_error (xmmsc_connection_t *c);
 char *xmmsc_encode_path (char *path);
@@ -56,6 +57,7 @@ xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property);
 xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int type, int moment);
+xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c);
