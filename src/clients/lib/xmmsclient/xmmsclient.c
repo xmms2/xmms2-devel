@@ -271,24 +271,6 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
  * @internal
  */
 
-static int
-free_callback (void *key, void *value, void *udata)
-{
-	x_list_t *list = value;
-	void *ldata;
-
-	while (list) {
-		ldata = list->data;
-		list = x_list_delete_link (list, list);
-		free (ldata);
-	}
-
-	free (key);
-
-	return 1;
-}
-
-
 /**
  * Frees up any resources used by xmmsc_connection_t
  */
@@ -610,11 +592,12 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	return xmmsc_result_new (c, cid);
 }
 
-void *
+int 
 destroy_hash (void *key, void *value, void *userdata)
 {
 	g_free (key);
 	g_free (value);
+	return 0;
 }
 
 x_hash_t *
@@ -643,7 +626,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	return h;
 
 err:
-	x_hash_foreach (h, destroy_hash, NULL);
+	x_hash_foreach_remove (h, destroy_hash, NULL);
 	return NULL;
 
 }

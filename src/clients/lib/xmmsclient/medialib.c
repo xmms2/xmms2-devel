@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include "xmms/xmmsclient.h"
-#include "xmms/xmmsclient-result.h"
 #include "xmms/signal_xmms.h"
 
 #include "internal/xmmsclient_int.h"

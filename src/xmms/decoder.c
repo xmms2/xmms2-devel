@@ -26,7 +26,6 @@
 
 
 #include "xmms/decoder.h"
-#include "xmms/dbus.h"
 #include "xmms/plugin.h"
 #include "xmms/object.h"
 #include "xmms/util.h"

@@ -30,7 +30,6 @@
 #include <math.h>
 
 #include "xmms/playlist.h"
-#include "xmms/dbus.h"
 #include "xmms/playlist_entry.h"
 #include "xmms/util.h"
 #include "xmms/signal_xmms.h"

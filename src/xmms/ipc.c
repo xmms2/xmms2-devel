@@ -812,7 +812,7 @@ xmms_ipc_init (void)
 }
 
 gboolean
-xmms_ipc_setup_server (gchar *path)
+xmms_ipc_setup_server (const gchar *path)
 {
 	xmms_ipc_transport_t *transport; 
 

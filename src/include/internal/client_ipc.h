@@ -2,7 +2,7 @@
 #define __XMMSC_IPC_H__
 
 #include "xmms/ipc_msg.h"
-#include "xmms/xmmsclient-result.h"
+#include "xmms/xmmsclient.h"
 
 typedef struct xmmsc_ipc_St xmmsc_ipc_t;
 
@@ -26,6 +26,7 @@ gboolean xmmsc_ipc_flush (xmmsc_ipc_t *ipc);
 void xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
 xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid);
 void xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
+void xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout);
 
 enum {
 	XMMSC_IPC_IO_IN,

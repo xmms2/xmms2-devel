@@ -1,5 +1,6 @@
 #include <glib.h>
 #include <string.h>
+#include <unistd.h>
 #include "xmms/ipc_msg.h"
 #include "xmms/ringbuf.h"
 #include "xmms/util.h"

@@ -46,7 +46,6 @@
 #include "xmms/output.h"
 #include "xmms/xmms.h"
 #include "xmms/effect.h"
-#include "xmms/dbus.h"
 #include "xmms/visualisation.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/ipc.h"
@@ -285,9 +284,6 @@ main (int argc, char **argv)
 	}
 
 	xmms_ipc_setup_with_gmain (ipc);
-	/*
-	xmms_dbus_init (xmms_config_value_string_get (cv));
-	*/
 
 	xmms_signal_init (XMMS_OBJECT (mainobj));
 

@@ -23,7 +23,6 @@
 
 #include "xmms/util.h"
 #include "xmms/playlist.h"
-#include "xmms/dbus.h"
 #include "xmms/config.h"
 #include "xmms/medialib.h"
 #include "xmms/transport.h"

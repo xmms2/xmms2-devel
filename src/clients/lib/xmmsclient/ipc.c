@@ -5,7 +5,7 @@
 #include "xmms/util.h"
 #include "xmms/ringbuf.h"
 #include "xmms/signal_xmms.h"
-#include "xmms/xmmsclient-result.h"
+#include "xmms/xmmsclient.h"
 
 #include "xmms/ipc.h"
 #include "xmms/ipc_transport.h"
@@ -209,6 +209,8 @@ xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
 	ipc->pollopts = XMMSC_IPC_IO_OUT | XMMSC_IPC_IO_IN;
 	if (ipc->wakeup)
 		ipc->wakeup (ipc);
+
+	return TRUE;
 }
 
 void

@@ -14,12 +14,8 @@ xmms2d_sources = Split ("config.c plugin.c object.c ipc.c "+
 if env.HasGroup ("sqlite") :
 	xmms2d_sources.append ("sqlite.c")
 
-xmms2_test_s = Split ("testclient.c");
-
-
 env.AddFlagsFromGroup("glib")
 env.AddFlagsFromGroup("math")
-env.AddFlagsFromGroup("dbusglib")
 env.AddFlagsFromGroup("sqlite")
 
 #env.Program(target = "xmms2d" , source = xmms2d_sources )
@@ -28,5 +24,3 @@ env.AddFlagsFromGroup("sqlite")
 env.XmmsConfig("xmms2.conf")
 
 env.XmmsProgram("xmms2d", xmms2d_sources)
-env.XmmsProgram("testipc", xmms2_test_s)
-

@@ -30,7 +30,6 @@
 #include "xmms/object.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/plugin.h"
-#include "xmms/dbus.h"
 #include "xmms/ipc.h"
 
 /**

@@ -23,7 +23,6 @@
 #include "xmms/object.h"
 #include "xmms/ringbuf.h"
 #include "xmms/util.h"
-#include "xmms/dbus.h"
 #include "xmms/config.h"
 #include "xmms/plugin.h"
 #include "xmms/signal_xmms.h"
