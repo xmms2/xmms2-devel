@@ -409,6 +409,7 @@ add [url]";
 
 		}
 
+		n = x_list_reverse (n);
 		format_pretty_list (conn, n);
 		x_list_free (n);
 
