@@ -546,7 +546,7 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_object_unref (decoder->transport);
 	xmms_object_unref (decoder->plugin);
 	xmms_object_unref (decoder->entry);
-/*	xmms_object_unref (decoder->vis);*/
+	xmms_object_unref (decoder->vis);
 }
 
 xmms_decoder_t *
