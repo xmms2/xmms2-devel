@@ -39,14 +39,14 @@ void xmms_core_information (gint loglevel, gchar *information);
 gboolean xmms_core_get_mediainfo (xmms_playlist_entry_t *entry);
 xmms_playlist_entry_t *xmms_core_playlist_entry_mediainfo (guint id);
 gchar *xmms_core_get_url ();
-gint xmms_core_get_id ();
+gint xmms_core_get_id (xmms_core_t *core);
 void xmms_core_vis_spectrum (gfloat *spec);
 
 
-void xmms_core_playback_stop ();
-void xmms_core_playback_start ();
-void xmms_core_playback_seek_ms (guint milliseconds);
-void xmms_core_playback_seek_samples (guint samples);
+void xmms_core_playback_stop (xmms_core_t *core);
+void xmms_core_playback_start (xmms_core_t *core);
+void xmms_core_playback_seek_ms (xmms_core_t *core, guint32 milliseconds);
+void xmms_core_playback_seek_samples (xmms_core_t *core, guint32 samples);
 
 void xmms_core_init ();
 void xmms_core_start ();

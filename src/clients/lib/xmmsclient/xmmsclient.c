@@ -90,10 +90,10 @@ static xmmsc_signal_callbacks_t callbacks[] = {
  */
 
 static xmmsc_signal_callbacks_t *get_callback (const gchar *signal);
-static DBusHandlerResult handle_callback (DBusMessageHandler *handler, 
-		DBusConnection *conn, DBusMessage *msg, void *user_data);
+static DBusHandlerResult handle_callback (DBusConnection *conn, DBusMessage *msg, void *user_data);
 static void xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal);
-static void xmmsc_send_void (xmmsc_connection_t *c, char *message);
+static int xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method);
+static void xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type);
 
 /*
  * Public methods
@@ -163,6 +163,7 @@ xmmsc_init ()
 	
 	if (c) {
 		c->callbacks = g_hash_table_new (g_str_hash,  g_str_equal);
+		c->replies = g_hash_table_new (NULL,  NULL);
 	}
 	
 	if (!c->callbacks) {
@@ -189,9 +190,9 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 {
 	DBusConnection *conn;
 	DBusError err;
-	DBusMessageHandler *hand;
-	gint i = 0;
-	gchar *path;
+	DBusObjectPathVTable vtable;
+
+	const gchar *path;
 
 	dbus_error_init (&err);
 
@@ -225,14 +226,10 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		}
 	}
 
+	memset (&vtable, 0, sizeof (vtable));
 
-	while (callbacks[i].signal_name) {
-		hand = dbus_message_handler_new (handle_callback, c, NULL);
-		dbus_connection_register_handler (conn, hand, &callbacks[i].signal_name, 1);
+	dbus_connection_add_filter (conn, handle_callback, c, NULL);
 
-		i++;
-	}
-	
 	c->conn=conn;
 	return TRUE;
 }
@@ -503,7 +500,7 @@ xmmsc_set_callback (xmmsc_connection_t *conn,
 void
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_SIGNAL_CORE_QUIT);
+	xmmsc_send_void(c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
 }
 
 /**
@@ -570,7 +567,7 @@ xmmsc_decode_path (const gchar *path)
 void
 xmmsc_play_next (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c, XMMS_SIGNAL_PLAYBACK_NEXT);
+	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_NEXT);
 }
 
 /**
@@ -580,7 +577,7 @@ xmmsc_play_next (xmmsc_connection_t *c)
 void
 xmmsc_play_prev (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,XMMS_SIGNAL_PLAYBACK_PREV);
+	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PREV);
 }
 
 /**
@@ -591,7 +588,7 @@ xmmsc_play_prev (xmmsc_connection_t *c)
 void
 xmmsc_playback_stop (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,XMMS_SIGNAL_PLAYBACK_STOP);
+	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STOP);
 }
 
 /**
@@ -601,7 +598,7 @@ xmmsc_playback_stop (xmmsc_connection_t *c)
 void
 xmmsc_playback_start (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,XMMS_SIGNAL_PLAYBACK_PLAY);
+	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PLAY);
 }
 
 
@@ -619,8 +616,9 @@ xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds)
         DBusMessageIter itr;
 	DBusMessage *msg;
 	int cserial;
-	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_SEEK_MS, NULL);
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKMS);
+
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, milliseconds);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -641,8 +639,8 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples)
         DBusMessageIter itr;
 	DBusMessage *msg;
 	int cserial;
-	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYBACK_SEEK_SAMPLES, NULL);
+
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKSAMPLES);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, samples);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -656,7 +654,10 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples)
 void
 xmmsc_playback_current_id (xmmsc_connection_t *c)
 {
-	xmmsc_send_void (c,XMMS_SIGNAL_PLAYBACK_CURRENTID);
+	int cserial;
+
+	cserial = xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
+	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_CURRENTID);
 }
 
 /** @} */
@@ -676,7 +677,7 @@ xmmsc_playback_current_id (xmmsc_connection_t *c)
 void
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,XMMS_SIGNAL_PLAYLIST_SHUFFLE);
+	xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_SHUFFLE);
 }
 
 /**
@@ -690,7 +691,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SORT, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SORT);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, property);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -704,7 +705,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 void
 xmmsc_playlist_clear (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,XMMS_SIGNAL_PLAYLIST_CLEAR);
+	xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_CLEAR);
 }
 
 /**
@@ -724,7 +725,7 @@ xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_SAVE, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SAVE);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, filename);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -740,7 +741,10 @@ xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename)
 void
 xmmsc_playlist_list (xmmsc_connection_t *c)
 {
-	xmmsc_send_void(c,XMMS_SIGNAL_PLAYLIST_LIST);
+	int cserial;
+
+	cserial = xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
+	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_LIST);
 }
 
 /**
@@ -760,7 +764,7 @@ xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_JUMP, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -787,7 +791,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_ADD, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_ADD);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, url);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -810,7 +814,7 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_REMOVE, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_REMOVE);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -818,10 +822,16 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
 
 }
 
+
+static void
+xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type)
+{
+	g_hash_table_insert (c->replies, GUINT_TO_POINTER (serial), type);
+}
+
 /**
  * Retrives information about a certain entry.
  */
-
 void
 xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 {
@@ -832,10 +842,12 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 
 	dbus_error_init (&err);
 
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
 	dbus_connection_send (c->conn, msg, &cserial);
+
+	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_MEDIAINFO);
 
 	dbus_message_unref (msg);
 	dbus_connection_flush (c->conn);
@@ -877,12 +889,9 @@ send_mode (xmmsc_connection_t *c, guint m)
 {
 	DBusMessage *msg;
 	DBusMessageIter itr;
-	DBusError err;
 	guint cserial;
 
-	dbus_error_init (&err);
-
-	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MODE_SET, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SETMODE);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, m);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -918,7 +927,7 @@ xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_CONFIG_VALUE_CHANGE, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CONFIG, XMMS_DBUS_INTERFACE, XMMS_METHOD_SETVALUE);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, key);
 	dbus_message_iter_append_string (&itr, val);
@@ -936,7 +945,7 @@ xmmsc_file_list (xmmsc_connection_t *c, gchar *url)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_TRANSPORT_LIST, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_TRANSPORT, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, url);
 	dbus_connection_send (c->conn, msg, &cserial);
@@ -964,24 +973,44 @@ get_callback (const gchar *signal)
 	return NULL;
 }
 
+
 static DBusHandlerResult
-handle_callback (DBusMessageHandler *handler, 
-		DBusConnection *conn, DBusMessage *msg, 
+handle_callback (DBusConnection *conn, DBusMessage *msg, 
 		void *user_data)
 {
 	xmmsc_connection_t *xmmsconn = (xmmsc_connection_t *) user_data;
 	xmmsc_signal_callbacks_t *c;
 	GList *cb_list;
+	gchar msgname[256];
         DBusMessageIter itr;
 	guint tmp[2]; /* used by MOVE */
 	void *arg = NULL;
 
-	c = get_callback (dbus_message_get_name (msg));
 
-	/* This shouldnt happen, this means that we have registered a signal
-	   there is no callback for. */
+	/** allt det här apet hade vi gott kunna göra snyggare */
+	g_snprintf (msgname, 255, "%s::%s", dbus_message_get_path (msg), dbus_message_get_member (msg));
+
+	c = get_callback (msgname);
+
 	if (!c) {
-		return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+		gint rep_ser;
+
+		rep_ser = dbus_message_get_reply_serial (msg);
+		if (rep_ser > 0) {
+			gchar *a;
+
+			a = g_hash_table_lookup (xmmsconn->replies, GUINT_TO_POINTER (rep_ser));
+			if (a != NULL) {
+				g_hash_table_remove (xmmsconn->replies, GUINT_TO_POINTER (rep_ser));
+				c = get_callback (a);
+			}
+			g_snprintf (msgname, 255, "%s", a);
+		}
+
+		if (c == NULL) {
+			printf("\nNo callback for: %s -- %s -- %d\n", msgname, dbus_message_get_interface (msg), dbus_message_get_reply_serial (msg));
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		}
 	}
 
 	dbus_message_iter_init (msg, &itr);
@@ -999,7 +1028,7 @@ handle_callback (DBusMessageHandler *handler,
 		case XMMSC_TYPE_VIS:
 			{
 				int len=0;
-				dbus_message_iter_get_double_array (&itr, (double *) &arg, &len);
+				dbus_message_iter_get_double_array (&itr, (double **) &arg, &len);
 			}
 			break;
 
@@ -1085,7 +1114,7 @@ handle_callback (DBusMessageHandler *handler,
 			break;
 	}
 
-	cb_list = g_hash_table_lookup (xmmsconn->callbacks, dbus_message_get_name (msg));
+	cb_list = g_hash_table_lookup (xmmsconn->callbacks, msgname);
 	if (cb_list) {
 		GList *node;
 		for (node = cb_list; node; node = g_list_next (node)) {
@@ -1094,8 +1123,9 @@ handle_callback (DBusMessageHandler *handler,
 		}
 	}
 
-	return DBUS_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
+
 
 static void
 xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal)
@@ -1104,7 +1134,7 @@ xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal)
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (XMMS_SIGNAL_CORE_SIGNAL_REGISTER, NULL);
+	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CLIENT, XMMS_DBUS_INTERFACE, XMMS_METHOD_REGISTER);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_string (&itr, signal);
 	dbus_connection_send (conn->conn, msg, &cserial);
@@ -1112,15 +1142,14 @@ xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal)
 
 }
 
-static void
-xmmsc_send_void (xmmsc_connection_t *c, char *message)
+static int
+xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
 {
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new (message, NULL);
+	msg = dbus_message_new_method_call (NULL, object, XMMS_DBUS_INTERFACE, method);
 	dbus_connection_send (c->conn, msg, &cserial);
 	dbus_message_unref (msg);
+	return cserial;
 }
-
-

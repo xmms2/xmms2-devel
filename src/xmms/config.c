@@ -12,9 +12,11 @@
 #include "xmms/object.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/plugin.h"
+#include "xmms/dbus.h"
 
 
 struct xmms_config_St {
+	xmms_object_t obj;
 	const gchar *url;
 
 	GHashTable *values;
@@ -106,6 +108,21 @@ parse_section (char *sectionname, xmlNodePtr n)
 	g_mutex_unlock (global_config->mutex);
 }
 
+
+void
+xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value)
+{
+	xmms_config_value_t *val;
+
+	val = xmms_config_lookup (key);
+	if (val)
+		xmms_config_value_data_set (val, g_strdup (value));
+
+}
+
+XMMS_METHOD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
+
+
 gboolean
 xmms_config_init (const gchar *filename)
 {
@@ -116,6 +133,7 @@ xmms_config_init (const gchar *filename)
 	g_return_val_if_fail (filename, FALSE);
 
 	config = g_new0 (xmms_config_t, 1);
+	xmms_object_init (XMMS_OBJECT (config));
 	config->mutex = g_mutex_new ();
 	config->values = g_hash_table_new (g_str_hash, g_str_equal);
 	config->url = g_strdup (filename);
@@ -134,6 +152,9 @@ xmms_config_init (const gchar *filename)
 			parse_section ((char*)xmlGetProp (node, "name"), node->children);
 		}
 	}
+
+	xmms_object_method_add (XMMS_OBJECT (config), "setvalue", XMMS_METHOD_FUNC (setvalue));
+	xmms_dbus_register_object ("config", XMMS_OBJECT (config));
 
 	return TRUE;
 }
