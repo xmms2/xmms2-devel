@@ -284,13 +284,21 @@ xmms_cdae_cddb_parse (FILE *fp, gint track)
 		kv = g_strsplit (lines[i], "=", 2);
 		if (kv && kv[0] && kv[1]) {
 			if (g_strcasecmp (kv[0], "DTITLE") == 0) {
+				gint r,w;
 				gchar *p = strchr (kv[1], '/');
 				*(p-1)='\0';
-				xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, g_strdup(kv[1]));
-				xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, g_strdup(p+2));
+				xmms_playlist_entry_property_set (entry, 
+						XMMS_PLAYLIST_ENTRY_PROPERTY_ARTIST, 
+						g_convert (kv[1], strlen(kv[1]), "UTF-8", "ISO-8859-1", &r, &w, NULL));
+				xmms_playlist_entry_property_set (entry, 
+						XMMS_PLAYLIST_ENTRY_PROPERTY_ALBUM, 
+						g_convert (p+2, strlen (p+2), "UTF-8", "ISO-8859-1", &r, &w, NULL));
 			} else if (g_strncasecmp (kv[0], "TTITLE", 6) == 0) {
 				if (t == track) {
-					xmms_playlist_entry_property_set (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, g_strdup (kv[1]));
+					gint r,w;
+					xmms_playlist_entry_property_set (entry, 
+							XMMS_PLAYLIST_ENTRY_PROPERTY_TITLE, 
+							g_convert (kv[1], strlen (kv[1]), "UTF-8", "ISO-8859-1", &r, &w, NULL));
 				}
 				t++;
 			}
