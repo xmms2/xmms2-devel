@@ -52,22 +52,22 @@ xmms_ipc_msg_can_read (xmms_ringbuf_t *ringbuf)
         guint32 cmd;
         guint32 object;
 	guint32 cmdid;
-        guint16 length;
+        guint32 length;
         gboolean ret = FALSE;
 
-        if (xmms_ringbuf_bytes_used (ringbuf) < 14)
+        if (xmms_ringbuf_bytes_used (ringbuf) < 16)
                 return FALSE;
 
         xmms_ringbuf_read (ringbuf, &object, sizeof (guint32));
         xmms_ringbuf_read (ringbuf, &cmd, sizeof (guint32));
         xmms_ringbuf_read (ringbuf, &cmdid, sizeof (guint32));
-        xmms_ringbuf_read (ringbuf, &length, sizeof (guint16));
+        xmms_ringbuf_read (ringbuf, &length, sizeof (guint32));
 
-        length = g_ntohs (length);
+        length = g_ntohl (length);
         if (xmms_ringbuf_bytes_used (ringbuf) >= length)
                 ret = TRUE;
 
-        xmms_ringbuf_unread (ringbuf, 14);
+        xmms_ringbuf_unread (ringbuf, 16);
 
         return ret;
 }
@@ -80,7 +80,7 @@ xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
 	guint32 cmdid;
 	guint32 object;
 
-	if (xmms_ringbuf_bytes_used (ringbuf) < 14)
+	if (xmms_ringbuf_bytes_used (ringbuf) < 16)
 		return NULL;
 
 	xmms_ringbuf_read (ringbuf, &object, sizeof (guint32));
@@ -95,13 +95,13 @@ xmms_ipc_msg_read (xmms_ringbuf_t *ringbuf)
 
 	g_return_val_if_fail (msg, NULL);
 	
-	xmms_ringbuf_read (ringbuf, &msg->data_length, sizeof (guint16));
-	msg->data_length = g_ntohs (msg->data_length);
+	xmms_ringbuf_read (ringbuf, &msg->data_length, sizeof (msg->data_length));
+	msg->data_length = g_ntohl (msg->data_length);
 	
 	if (xmms_ringbuf_bytes_used (ringbuf) < msg->data_length) {
-		xmms_ipc_msg_destroy (msg);
 		g_printerr ("Not enough data in buffer (had %d, want %d)\n", xmms_ringbuf_bytes_used (ringbuf), msg->data_length);
-        	xmms_ringbuf_unread (ringbuf, 14);
+		xmms_ipc_msg_destroy (msg);
+        	xmms_ringbuf_unread (ringbuf, 16);
 		return NULL;
 	}
 
@@ -118,14 +118,14 @@ xmms_ipc_msg_write (xmms_ringbuf_t *ringbuf, const xmms_ipc_msg_t *msg, guint32 
 {
 	guint32 cmd;
 	guint32 object;
-	guint16 len;
+	guint32 len;
 	guint32 cmdid;
 
 	g_return_val_if_fail (xmms_ringbuf_bytes_free (ringbuf) > (msg->data_length +10), FALSE);
 
 	object = g_htonl (msg->object);
 	cmd = g_htonl (msg->cmd);
-	len = g_htons (msg->data_length);
+	len = g_htonl (msg->data_length);
 	cmdid = g_htonl (cid);
 
 	xmms_ringbuf_write (ringbuf, &object, sizeof (object));
@@ -143,13 +143,13 @@ xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid)
 	guint32 cmd;
 	guint32 object;
 	guint32 cmdid;
-	guint16 len;
+	guint32 len;
 	guint32 data_len;
 	
 	cmd = g_htonl (msg->cmd);
 	cmdid = g_htonl (cid);
 	object = g_htonl (msg->object);
-	len = g_htons (msg->data_length);
+	len = g_htonl (msg->data_length);
 
 	if (write (fd, &object, sizeof (object)) != sizeof (object))
 		return FALSE;
@@ -159,14 +159,17 @@ xmms_ipc_msg_write_fd (gint fd, const xmms_ipc_msg_t *msg, guint32 cid)
 		return FALSE;
 	if (write (fd, &len, sizeof (len)) != sizeof (len))
 		return FALSE;
-	data_len = msg->data_length;
-	while (data_len) {
+	data_len = 0;
+	while (data_len < msg->data_length) {
 		guint32 ret;
 
-		ret = write (fd, msg->data, msg->data_length);
+		ret = write (fd, msg->data + data_len, msg->data_length - data_len);
 		if (ret == 0)
 			return FALSE;
-		data_len -= ret;
+		if (ret == -1)
+			continue;
+
+		data_len += ret;
 	}
 	
 	return TRUE;
@@ -176,7 +179,6 @@ gpointer
 xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 {
 	g_return_val_if_fail (msg, NULL);
-	g_return_val_if_fail ((msg->data_length + len) < XMMS_IPC_MSG_MAX_SIZE, NULL);
 	
 	if ((msg->data_length + len) > msg->size) {
 		gint reallocsize = XMMS_IPC_MSG_DEFAULT_SIZE;
@@ -225,9 +227,6 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	if (!str)
 		return xmms_ipc_msg_put_uint32 (msg, 0);
 	
-	if ((msg->data_length + strlen (str) + 5) > XMMS_IPC_MSG_MAX_SIZE)
-		return NULL;
-
 	xmms_ipc_msg_put_uint32 (msg, strlen (str) + 1);
 
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
