@@ -38,7 +38,7 @@
 static gboolean xmms_cdae_can_handle (const gchar *url);
 static gboolean xmms_cdae_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_cdae_close (xmms_transport_t *transport);
-static gint xmms_cdae_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gint xmms_cdae_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 static gint xmms_cdae_size (xmms_transport_t *transport);
 static gint xmms_cdae_seek (xmms_transport_t *transport, guint offset, gint whence);
 /*static GList *xmms_cdae_list (const gchar *path);*/
@@ -175,7 +175,7 @@ xmms_cdae_close (xmms_transport_t *transport)
 }
 
 static gint
-xmms_cdae_read (xmms_transport_t *transport, gchar *buffer, guint len)
+xmms_cdae_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_cdae_data_t *data;
 	gint ret;

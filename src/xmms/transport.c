@@ -95,6 +95,9 @@ struct xmms_transport_St {
 	/** Number of buffer underruns */
 	guint32 buffer_underruns;
 
+	/** Error status for when we're buffering */
+	xmms_error_t status;
+
 	guint64 current_position; 	
 };
 
@@ -389,45 +392,69 @@ xmms_transport_buffering_start (xmms_transport_t *transport)
  *
  */
 gint
-xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
+xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	gint ret;
 
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (len > 0, -1);
+	g_return_val_if_fail (error, -1);
 
 	g_mutex_lock (transport->mutex);
 
-	if (transport->running && !transport->buffering && transport->numread++ > 1) {
-		XMMS_DBG ("Let's start buffering");
-		transport->buffering = TRUE;
-		g_cond_signal (transport->cond);
-	}
+	/* Unbuffered read */
 
 	if (!transport->buffering) {
 		xmms_transport_read_method_t read_method;
-		
+
 		XMMS_DBG ("Doing unbuffered read...");
 
-		g_mutex_unlock (transport->mutex);
 		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
-		if (read_method) {
-			gint ret = read_method (transport, buffer, len);
-			if (ret == -1) return 0; /** @todo this is a by the book example on how you not should do*/
-
-			transport->current_position += ret; 
-
-			return ret;
+		if (!read_method) {
+			g_mutex_unlock (transport->mutex);
+			return -1;
 		}
-		return -1;
+
+		g_mutex_unlock (transport->mutex);
+		ret = read_method (transport, buffer, len, error);
+		g_mutex_lock (transport->mutex);
+
+		if (ret != -1) {
+			transport->current_position += ret;
+		}
+
+		if (transport->running && !transport->buffering && transport->numread++ > 1) {
+			XMMS_DBG ("Let's start buffering");
+			transport->buffering = TRUE;
+			g_cond_signal (transport->cond);
+		}
+
+
+		g_mutex_unlock (transport->mutex);
+		return ret;
 	}
-	
+
+	/* Buffered read */
+
 	if (len > xmms_ringbuf_size (transport->buffer)) {
 		len = xmms_ringbuf_size (transport->buffer);;
 	}
 
-	xmms_ringbuf_wait_used (transport->buffer, 1, transport->mutex); 
+	xmms_ringbuf_wait_used (transport->buffer, 1, transport->mutex);
+	/* Did we wake up because of an error? */
+	if (xmms_ringbuf_iseos (transport->buffer)) {
+		gint val = -1;
+
+		xmms_error_set (error, transport->status.code, transport->status.message);
+		if (transport->status.code == XMMS_ERROR_EOS) {
+			val = 0;
+		}
+
+		g_mutex_unlock (transport->mutex);
+		return val;
+	}
+
 	ret = xmms_ringbuf_read (transport->buffer, buffer, len);
 
 	if (ret < len) {
@@ -436,7 +463,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	transport->total_bytes += ret;
 	transport->current_position += ret; 
-	
+
 	g_mutex_unlock (transport->mutex);
 
 	return ret;
@@ -483,6 +510,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	transport->buffering = FALSE;
 	transport->numread = 0;
 	xmms_ringbuf_clear (transport->buffer);
+	xmms_ringbuf_set_eos (transport->buffer, FALSE);
 
 	ret = seek_method (transport, offset, whence);
 
@@ -699,6 +727,7 @@ xmms_transport_thread (gpointer data)
 {
 	xmms_transport_t *transport = data;
 	gchar buffer[4096];
+	xmms_error_t error;
 	xmms_transport_read_method_t read_method;
 	gint ret;
 
@@ -707,6 +736,8 @@ xmms_transport_thread (gpointer data)
 	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 	if (!read_method)
 		return NULL;
+
+	xmms_error_reset (&error);
 
 	xmms_object_ref (transport->entry);
 
@@ -723,20 +754,17 @@ xmms_transport_thread (gpointer data)
 			continue;
 
 		g_mutex_unlock (transport->mutex);
-		ret = read_method (transport, buffer, sizeof(buffer));
+		ret = read_method (transport, buffer, sizeof(buffer), &error);
 		g_mutex_lock (transport->mutex);
 
 		if (ret > 0) {
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
 		} else {
-			if (ret == -1) {
-				xmms_ringbuf_set_eos (transport->buffer, TRUE);
-				XMMS_DBG("Sleeping on transport cond");
-				g_cond_wait (transport->cond, transport->mutex);
-			} else { /* ret == 0 */
-				continue;
-			}
+			xmms_ringbuf_set_eos (transport->buffer, TRUE);
+			xmms_error_set (&transport->status, error.code, error.message);
+			XMMS_DBG("Sleeping on transport cond");
+			g_cond_wait (transport->cond, transport->mutex);
 		}
 	}
 	g_mutex_unlock (transport->mutex);

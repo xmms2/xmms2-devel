@@ -50,7 +50,7 @@ typedef struct {
 static gboolean xmms_file_can_handle (const gchar *url);
 static gboolean xmms_file_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_file_close (xmms_transport_t *transport);
-static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len);
+static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 static gint xmms_file_size (xmms_transport_t *transport);
 static gint xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence);
 static guint xmms_file_lmod (xmms_transport_t *transport);
@@ -189,13 +189,14 @@ xmms_file_close (xmms_transport_t *transport)
 }
 
 static gint
-xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
+xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_file_data_t *data;
 	gint ret;
 
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (error, -1);
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
@@ -207,14 +208,15 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	do {
 		ret = read (data->fd, buffer, len);
-		if (ret == -1) {
-			xmms_log_error ("errno (%d) %s", errno, strerror (errno));
-		}
-	} while (ret == -1 && (errno == EINTR ||
-			       errno == EIO));
+	} while (ret == -1 && errno == EAGAIN);
 
 	if (ret == 0)
-		return -1;
+		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");
+
+	if (ret == -1) {
+		xmms_log_error ("errno(%d) %s", errno, strerror (errno));
+		xmms_error_set (error, XMMS_ERROR_GENERIC, strerror (errno));
+	}
 
 	return ret;
 }

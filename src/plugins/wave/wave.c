@@ -183,8 +183,9 @@ xmms_wave_init (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
+	xmms_error_t error;
 	guint8 hdr[WAVE_HEADER_SIZE];
-	gint read;
+	gint read = 0;
 
 	g_return_val_if_fail (decoder, FALSE);
 
@@ -198,10 +199,17 @@ xmms_wave_init (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
-	read = xmms_transport_read (transport, hdr, sizeof (hdr));
-	if (read != sizeof (hdr)) {
-		XMMS_DBG ("Cannot read Wave header");
-		return FALSE;
+	while (read < sizeof (hdr)) {
+		gint ret = xmms_transport_read (transport, hdr + read,
+		                                sizeof (hdr) - read, &error);
+
+		if (ret <= 0) {
+			XMMS_DBG ("Could not read wave header");
+			return FALSE;
+		}
+
+		read += ret;
+		g_assert (read >= 0);
 	}
 
 	if (!read_wave_header (data, hdr)) {
@@ -221,6 +229,7 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
+	xmms_error_t error;
 	gint16 sbuf[2048], mbuf[1024];
 	gint ret, i, j;
 
@@ -234,10 +243,10 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 
 	if (data->channels == 1) {
 		ret = xmms_transport_read (transport,
-		                           (gchar *) mbuf, sizeof (mbuf));
+		                           (gchar *) mbuf, sizeof (mbuf), &error);
 	} else {
 		ret = xmms_transport_read (transport,
-		                           (gchar *) sbuf, sizeof (sbuf));
+		                           (gchar *) sbuf, sizeof (sbuf), &error);
 	}
 
 	if (ret <= 0) {

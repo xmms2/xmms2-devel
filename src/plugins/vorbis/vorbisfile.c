@@ -111,6 +111,7 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb, void *datasource)
 	xmms_vorbis_data_t *data;
 	xmms_decoder_t *decoder = datasource;
 	xmms_transport_t *transport;
+	xmms_error_t error;
 	size_t ret;
 
 	g_return_val_if_fail (decoder, 0);
@@ -121,7 +122,7 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb, void *datasource)
 	g_return_val_if_fail (data, 0);
 	g_return_val_if_fail (transport, 0);
 
-	ret = xmms_transport_read (transport, ptr, size*nmemb);
+	ret = xmms_transport_read (transport, ptr, size*nmemb, &error);
 
 	return ret;
 }
@@ -306,8 +307,8 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		get_replaygain (entry, ptr);
 	}
 		
-	
-	xmms_decoder_samplerate_set (decoder, vi->rate);
+	if (vi)
+		xmms_decoder_samplerate_set (decoder, vi->rate);
 
 	xmms_decoder_entry_mediainfo_set (decoder, entry);
 	xmms_object_unref (entry);
