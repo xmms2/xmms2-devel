@@ -148,6 +148,40 @@ quit (xmms_object_t *object, xmms_error_t *error)
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
 
+
+static void
+on_output_volume_changed (xmms_object_t *object, gconstpointer data,
+                          gpointer userdata)
+{
+	xmms_config_value_t *cfg;
+
+	cfg = xmms_config_lookup (userdata);
+	xmms_config_value_data_set (cfg, (gchar *) data);
+}
+
+static void
+init_volume_config_proxy (const gchar *output)
+{
+	xmms_config_value_t *cfg;
+	static gchar source[64];
+	const gchar *vol;
+
+	/* read the real volume value */
+	g_snprintf (source, sizeof (source), "output.%s.volume", output);
+
+	cfg = xmms_config_lookup (source);
+	vol = xmms_config_value_string_get (cfg);
+
+	xmms_config_value_callback_set (cfg, on_output_volume_changed,
+	                                "output.volume");
+
+	/* create the proxy value and assign the value */
+	cfg = xmms_config_value_register ("output.volume", vol,
+	                                  on_output_volume_changed,
+	                                  source);
+	xmms_config_value_data_set (cfg, (gchar *) vol);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -268,6 +302,8 @@ main (int argc, char **argv)
 
 	mainobj->output = xmms_output_new (o_plugin);
 	g_return_val_if_fail (mainobj->output, -1);
+
+	init_volume_config_proxy (outname);
 
 	xmms_output_playlist_set (mainobj->output, playlist);
 
