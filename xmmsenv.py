@@ -200,6 +200,10 @@ class XmmsEnvironment(SCons.Environment.Environment):
 					self.Append( LINKFLAGS = [ arg ] )
 					self.Append( LINKFLAGS = [ params[i+1] ] )
 					i = i + 1
+				elif arg[1:] == 'z':
+					self.Append( LINKFLAGS = [ arg ] )
+					self.Append( LINKFLAGS = [ params[i+1] ] )
+					i = i + 1
 				elif arg[1:5] == 'arch':
 					i = i + 1
 				else:
