@@ -1,6 +1,8 @@
-
-import xmmsenv;
 import os;
+import sys;
+import xmmsenv;
+from marshal import dump, load;
+from xmmsconf import checkFlags;
 
 Help ("""XMMS2 SCons help
 Build XMMS2 by running:
@@ -12,6 +14,7 @@ Clean up the builddir by running:
 	scons -c
 """)
 
+
 ##
 ## Get options
 ##
@@ -21,6 +24,8 @@ opts.Add('CCFLAGS', 'compilerflags', '-g -Wall -O0')
 opts.Add('PREFIX', 'installprefix', '/usr/local')
 opts.Add('SYSCONFDIR', 'system configuration dir', '/usr/local/etc')
 opts.Add('INSTALLDIR', 'runtime install dir', '')
+opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
+opts.Add('NOCACHE', 'do not use cache', 0)
 
 ## setup base environment...
 ## ...ok, this should be a bit configurable... later.
@@ -29,27 +34,25 @@ opts.Add('INSTALLDIR', 'runtime install dir', '')
 ##                correctly when we descend into subdirs
 base_env = xmmsenv.XmmsEnvironment(options=opts, LINK="gcc", CPPPATH = ['#src'])
 
+if base_env['NOCACHE']:
+	print "We don't want any cache"
+	checkFlags(base_env)
+else:
+	try:
+		statefile = open('scons.cache','rb+')
+		base_env.flag_groups=load(statefile)
+		print "Cachefile scons.cache found, not checking libs"
+		statefile.close()
+		if base_env['SHOWCACHE']:
+			for x in base_env.flag_groups.keys():
+				print "Module " + x + " has flags"
+				if base_env['SHOWCACHE'] == "2":
+					print "\t" + base_env.flag_groups[x]
+			sys.exit ()
+	except IOError:
+		print "No cachefile"
+		checkFlags(base_env)
 
-##
-## Check for essensial libs
-##
-base_env.CheckAndAddFlagsToGroup("mad", "pkg-config --libs --cflags mad", fail=1)
-base_env.CheckAndAddFlagsToGroup("xml2", "xml2-config --libs --cflags", fail=1)
-base_env.CheckAndAddFlagsToGroup("glib", "pkg-config --libs --cflags gthread-2.0 glib-2.0 gmodule-2.0", fail=1)
-base_env.CheckAndAddFlagsToGroup("dbus", "pkg-config --libs --cflags dbus-1 dbus-glib-1", fail=1)
-
-##
-## Check for optional libs
-##
-base_env.CheckAndAddFlagsToGroup("curl", "curl-config --libs --cflags")
-base_env.CheckAndAddFlagsToGroup("sdl", "sdl-config --libs --cflags")
-base_env.CheckLibAndAddFlagsToGroup("sdl-ttf","SDL_ttf","TTF_Init",depends="sdl")
-base_env.CheckLibAndAddFlagsToGroup("vorbis","vorbis","ogg_sync_init")
-#base_env.CheckLibAndAddFlagsToGroup("ffmpeg","avcodec","avcodec_init")
-#sid!
-base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open")
-#enable gtk2 gui again, someday.
-#base_env.CheckAndAddFlagsToGroup("gtk2", "pkg-config --libs --cflags gtk+-x11-2.0")
 
 Export('base_env')
 
