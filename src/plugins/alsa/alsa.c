@@ -289,11 +289,12 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 			buffer += written;
 		}
 		else if (written_frames == -EAGAIN || (written_frames > 0 && 
-					written_frames < (len / data->alsa_frame_size)))
+					written_frames < (len / data->alsa_frame_size))) {
 			snd_pcm_wait (data->pcm, 100);
-		else if (written_frames == -EPIPE)
+		}
+		else if (written_frames == -EPIPE) {
 			xmms_alsa_xrun_recover (output);
-
+		}
 		else {
 			xmms_log_fatal ("read/write error: %d", written_frames);
 			break;
