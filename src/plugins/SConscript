@@ -10,6 +10,7 @@ SConscript('oss/SConscript')
 SConscript('m3u/SConscript')
 SConscript('tar/SConscript')
 SConscript('http/SConscript')
+SConscript('eq/SConscript')
 if base_env.HasGroup("mad"):
 	SConscript('mad/SConscript')
 if base_env.HasGroup("vorbis"):
