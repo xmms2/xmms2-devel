@@ -204,6 +204,58 @@ xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static void
+get_replaygain (xmms_playlist_entry_t *entry,
+                vorbis_comment *vc)
+{
+	const char *tmp = NULL;
+	gchar buf[8];
+
+	/* track gain */
+	if (!(tmp = vorbis_comment_query (vc, "replaygain_track_gain", 0))) {
+		tmp = vorbis_comment_query (vc, "rg_radio", 0);
+	}
+
+	if (tmp) {
+		g_snprintf (buf, sizeof (buf), "%f",
+		            pow (10.0, g_strtod (tmp, NULL) / 20));
+		xmms_playlist_entry_property_set (entry,
+		                                  XMMS_PLAYLIST_ENTRY_PROPERTY_GAIN_TRACK,
+		                                  buf);
+	}
+
+	/* album gain */
+	if (!(tmp = vorbis_comment_query (vc, "replaygain_album_gain", 0))) {
+		tmp = vorbis_comment_query (vc, "rg_audiophile", 0);
+	}
+
+	if (tmp) {
+		g_snprintf (buf, sizeof (buf), "%f",
+		            pow (10.0, g_strtod (tmp, NULL) / 20));
+		xmms_playlist_entry_property_set (entry,
+		                                  XMMS_PLAYLIST_ENTRY_PROPERTY_GAIN_ALBUM,
+		                                  buf);
+	}
+
+	/* track peak */
+	if (!(tmp = vorbis_comment_query (vc, "replaygain_track_peak", 0))) {
+		tmp = vorbis_comment_query (vc, "rg_peak", 0);
+	}
+
+	if (tmp) {
+		xmms_playlist_entry_property_set (entry,
+		                                  XMMS_PLAYLIST_ENTRY_PROPERTY_PEAK_TRACK,
+		                                  (gchar *) tmp);
+	}
+
+	/* album peak */
+	if ((tmp = vorbis_comment_query (vc, "replaygain_album_peak", 0))) {
+		xmms_playlist_entry_property_set (entry,
+		                                  XMMS_PLAYLIST_ENTRY_PROPERTY_PEAK_ALBUM,
+		                                  (gchar *) tmp);
+	}
+}
+
+static void
 xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_vorbis_data_t *data;
@@ -250,6 +302,8 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 			
 			g_strfreev (s); 
 		}
+
+		get_replaygain (entry, ptr);
 	}
 		
 	
