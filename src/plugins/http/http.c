@@ -107,7 +107,7 @@ xmms_http_open (xmms_transport_t *transport, const gchar *uri)
 {
 	xmms_http_data_t *data;
 	const gchar *server;
-	const gchar *path;
+	gchar *path;
 	gchar request[1024];
 	gchar *p;
 	gint port;

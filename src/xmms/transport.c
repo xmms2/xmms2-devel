@@ -82,6 +82,7 @@ xmms_transport_open (const gchar *uri)
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (32768);
+	transport->want_seek = FALSE;
 
 	open_method = xmms_plugin_method_get (plugin, "open");
 
@@ -134,25 +135,6 @@ xmms_transport_start (xmms_transport_t *transport)
 }
 
 gint
-xmms_transport_read_directly (xmms_transport_t *transport, gchar *buffer,
-				guint len)
-{
-	gint ret;
-	xmms_transport_read_method_t read_method;
-	g_return_val_if_fail (transport, -1);
-	g_return_val_if_fail (buffer, -1);
-	g_return_val_if_fail (len > 0, -1);
-
-	read_method = xmms_plugin_method_get (transport->plugin, "read");
-
-	g_return_val_if_fail (read_method, -1);
-	ret = read_method (transport, buffer, len);
-
-	return ret;
-
-}
-
-gint
 xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 {
 	gint ret;
@@ -160,6 +142,11 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (len > 0, -1);
+
+	if (transport->want_seek) {
+		XMMS_DBG ("Waiting");
+		g_cond_wait (transport->cond, transport->mutex);
+	}
 
 	xmms_transport_lock (transport);
 
@@ -171,17 +158,15 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len)
 	return ret;
 }
 
-gint
+void
 xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
-	xmms_transport_seek_method_t seek;
-	g_return_val_if_fail (transport, -1);
+	g_return_if_fail (transport);
+	g_return_if_fail (!transport->want_seek);
 
-	seek = xmms_plugin_method_get (transport->plugin, "seek");
-	g_return_val_if_fail (seek, -1);
-	
-	return seek (transport, offset, whence);
-
+	transport->seek_offset = offset;
+	transport->seek_whence = whence;
+	transport->want_seek = TRUE;
 }
 
 gint
@@ -199,6 +184,25 @@ xmms_transport_size (xmms_transport_t *transport)
 /*
  * Static functions
  */
+
+static void
+xmms_transport_seek_real (xmms_transport_t *transport)
+{
+	xmms_transport_seek_method_t seek_method;
+	g_return_if_fail (transport);
+
+	seek_method = xmms_plugin_method_get (transport->plugin, "seek");
+	g_return_if_fail (seek_method);
+
+	xmms_ringbuf_clear (transport->buffer);
+	seek_method (transport, transport->seek_offset, transport->seek_whence);
+
+	transport->want_seek = FALSE;
+
+	/* Make sure to wake up the loop if EOS is reached. */
+	g_cond_broadcast (transport->cond);
+
+}
 
 static void
 xmms_transport_destroy (xmms_transport_t *transport)
@@ -266,10 +270,16 @@ xmms_transport_thread (gpointer data)
 
 	xmms_transport_lock (transport);
 	while (transport->running) {
+		if (transport->want_seek) {
+			XMMS_DBG ("Doing seek");
+			xmms_transport_seek_real (transport);
+		}
+
 		xmms_transport_unlock (transport);
 		ret = read_method (transport, buffer, 4096);
 		xmms_transport_lock (transport);
 		if (ret > 0) {
+			XMMS_DBG ("Waiting for free");
 			xmms_ringbuf_wait_free (transport->buffer, ret, transport->mutex);
 			xmms_ringbuf_write (transport->buffer, buffer, ret);
 		} else {

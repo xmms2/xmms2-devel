@@ -48,7 +48,6 @@ play_next (void)
 	XMMS_DBG ("Playing %s", entry->uri);
 	
 	transport = xmms_transport_open (entry->uri);
-	xmms_playlist_entry_free (entry);
 
 	if (!transport)
 		play_next ();
@@ -59,11 +58,13 @@ play_next (void)
 		decoder = xmms_decoder_new (mime);
 		if (!decoder) {
 			xmms_transport_close (transport);
+			xmms_playlist_entry_free (entry);
 			play_next ();
 			return;
 		}
 	} else {
 		xmms_transport_close (transport);
+		xmms_playlist_entry_free (entry);
 		play_next (); /* FIXME */
 		return;
 	}
@@ -75,6 +76,11 @@ play_next (void)
 	XMMS_DBG ("transport started");
 	xmms_decoder_start (decoder, transport, output);
 	XMMS_DBG ("output started");
+	
+	xmms_decoder_get_mediainfo (decoder, entry);
+	
+	
+	xmms_playlist_entry_free (entry);
 	
 }
 

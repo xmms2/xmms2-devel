@@ -116,7 +116,6 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_playlist_entry_t *entry;
 	xmms_mad_data_t *data;
 	struct id3v1tag_t tag;
-	gint size;
 
 	g_return_if_fail (decoder);
 
@@ -126,11 +125,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_if_fail (transport);
 
-	xmms_transport_lock (transport);
+	XMMS_DBG ("Seeking to last 128 bytes");
 	xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
-	xmms_transport_read_directly (transport, (gchar *)&tag, 128);
+	xmms_transport_read (transport, (gchar *)&tag, 128);
+	XMMS_DBG ("Seeking to last first bytes");
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
-	xmms_transport_unlock (transport);
 
 	if (strncmp (tag.tag, "TAG", 3) == 0) {
 		XMMS_DBG ("Found ID3v1 TAG!");
