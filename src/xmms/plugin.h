@@ -21,6 +21,20 @@
 #define XMMS_METHOD_WRITE "write"
 
 /*
+ * Plugin properties.
+ */
+
+/* For transports */
+#define XMMS_PLUGIN_PROPERTY_SEEK (1 << 0)
+#define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 1)
+
+/* For decoders */
+#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 2)
+#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 3)
+
+/* For output */
+
+/*
  * Type declarations
  */
 
@@ -38,6 +52,7 @@ typedef struct {
 	gchar *name;
 	gchar *shortname;
 	gchar *description;
+	gint properties;
 
 	guint users;
 	GHashTable *method_table;
@@ -60,6 +75,9 @@ xmms_plugin_type_t xmms_plugin_type_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_name_get (const xmms_plugin_t *plugin);
 const gchar *xmms_plugin_shortname_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_description_get (const xmms_plugin_t *plugin);
+void xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property);
+void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
+gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property);
 
 /*
  * Private functions

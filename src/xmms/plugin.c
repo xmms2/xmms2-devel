@@ -57,6 +57,38 @@ xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 	xmms_plugin_unlock (plugin);
 }
 
+void
+xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property)
+{
+	g_return_if_fail (plugin);
+	g_return_if_fail (property);
+
+	plugin->properties |= property;
+
+}
+
+void
+xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property)
+{
+	g_return_if_fail (plugin);
+	g_return_if_fail (property);
+
+	plugin->properties &= ~property;
+
+}
+
+gboolean
+xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property)
+{
+	g_return_val_if_fail (plugin, FALSE);
+	g_return_val_if_fail (property, FALSE);
+
+	return plugin->properties & property;
+
+}
+
+
+
 xmms_plugin_type_t
 xmms_plugin_type_get (const xmms_plugin_t *plugin)
 {

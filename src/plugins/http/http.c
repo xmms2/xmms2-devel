@@ -48,6 +48,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_METHOD_CAN_HANDLE, xmms_http_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_OPEN, xmms_http_open);
 	xmms_plugin_method_add (plugin, XMMS_METHOD_READ, xmms_http_read);
+
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	
 	return plugin;
 }
