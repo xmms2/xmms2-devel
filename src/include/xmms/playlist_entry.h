@@ -46,6 +46,7 @@ typedef struct xmms_playlist_entry_St xmms_playlist_entry_t;
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_SAMPLERATE "samplerate"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD "lmod"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_MID "mid"
+#define XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED "resolved"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_GAIN_TRACK "gain_track"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_GAIN_ALBUM "gain_album"
 #define XMMS_PLAYLIST_ENTRY_PROPERTY_PEAK_TRACK "peak_track"

@@ -196,6 +196,7 @@ xmms_mediainfo_thread_thread (gpointer data)
 				tmp = xmms_playlist_entry_property_get (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_LMOD);
 				if (tmp && lmod >= atoi (tmp)) {
 					xmms_object_unref (transport);
+
 					goto cont;
 				}
 			}
@@ -245,6 +246,9 @@ xmms_mediainfo_thread_thread (gpointer data)
 			}
 
 			xmms_decoder_mediainfo_get (decoder, transport);
+			xmms_playlist_entry_property_set (entry,
+							  XMMS_PLAYLIST_ENTRY_PROPERTY_RESOLVED,
+							  "1");
 			xmms_playlist_entry_changed (entry);
 
 			/* Store this in the database */
