@@ -83,19 +83,16 @@ cdef extern from "xmms/xmmsclient.h" :
 
 	xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *)
-	xmmsc_result_t *xmmsc_playlist_medialibadd (xmmsc_connection_t *c, char *)
 	xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 	xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_get_mediainfo (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property) 
 	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, int pos)
 	xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int movement)
+	xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 
-	xmmsc_result_t *xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
-
 	
 	xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_next (xmmsc_connection_t *c)
@@ -123,6 +120,10 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_playlist_load (xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, char *url)
+	xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, unsigned int id)
+	xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
+
+	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
@@ -806,24 +807,6 @@ cdef class XMMS :
 		
 		return ret
 
-	def playlist_medialibadd (self, query, myClass = None) :
-		"""
-		Add items in the playlist by querying the MediaLib.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		if myClass :
-			ret = myClass ()
-		else :
-			ret = XMMSResult ()
-		
-		ret.res = xmmsc_playlist_medialibadd (self.conn, query)
-		ret.more_init ()
-		
-		return ret
-
 	def playlist_remove (self, id, myClass = None) :
 		"""
 		Remove a certain media item from the playlist.
@@ -900,23 +883,6 @@ cdef class XMMS :
 		
 		return ret
 
-	def playlist_get_mediainfo (self, id, myClass = None) :
-		"""
-		@rtype: L{XMMSResult} (HashTable)
-		@return: Information about the media item at the playlist
-		position specified.
-		"""
-		cdef XMMSResult ret
-		
-		if myClass :
-			ret = myClass ()
-		else :
-			ret = XMMSResult ()
-		
-		ret.res = xmmsc_playlist_get_mediainfo (self.conn, id)
-		ret.more_init ()
-		
-		return ret
 
 	def playlist_sort (self, prop, myClass = None) :
 		"""
@@ -973,6 +939,23 @@ cdef class XMMS :
 		
 		return ret
 
+	def playlist_current_pos (self, myClass = None) :
+		"""
+		Returns the current position in the playlist. This value will
+		always be biggern than 0. The first entry in the list is 1
+		"""
+		cdef XMMSResult ret
+
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_current_pos (self.conn)
+		ret.more_init ()
+
+		return ret
+
 
 	def broadcast_playlist_changed (self, myClass = None) :
 		"""
@@ -991,28 +974,6 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_broadcast_playlist_changed (self.conn)
-		ret.more_init (1)
-		
-		return ret
-
-	def broadcast_playlist_entry_changed (self, myClass = None) :
-		"""
-		Set a class to handle the playlist entry changed broadcast
-		from the XMMS2 daemon. (i.e. the current entry in the playlist
-		has changed) Note: the handler class is usually a child of the
-		XMMSResult class.
-		@rtype: L{XMMSResult}
-		@return: An XMMSResult object that is updated with the
-		appropriate info.
-		"""
-		cdef XMMSResult ret
-		
-		if myClass :
-			ret = myClass ()
-		else :
-			ret = XMMSResult ()
-		
-		ret.res = xmmsc_broadcast_playlist_entry_changed (self.conn)
 		ret.more_init (1)
 		
 		return ret
@@ -1159,6 +1120,66 @@ cdef class XMMS :
 		ret.res = xmmsc_medialib_playlist_load (self.conn, playlistname)
 		ret.more_init ()
 		return ret
+
+	def medialib_get_info (self, id, myClass = None) :
+		"""
+		@rtype: L{XMMSResult} (HashTable)
+		@return: Information about the medialib entry
+		position specified.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_get_info (self.conn, id)
+		ret.more_init ()
+		
+		return ret
+
+	def medialib_add_to_playlist (self, query, myClass = None) :
+		"""
+		Add items in the playlist by querying the MediaLib.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_add_to_playlist (self.conn, query)
+		ret.more_init ()
+		
+		return ret
+
+	def broadcast_medialib_entry_changed (self, myClass = None) :
+		"""
+		Set a class to handle the playlist entry changed broadcast
+		from the XMMS2 daemon. (i.e. the current entry in the playlist
+		has changed) Note: the handler class is usually a child of the
+		XMMSResult class.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is updated with the
+		appropriate info.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_broadcast_medialib_entry_changed (self.conn)
+		ret.more_init (1)
+		
+		return ret
+
+
 
 	def signal_visualisation_data (self, myClass = None) :
 		"""
