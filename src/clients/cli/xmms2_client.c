@@ -347,12 +347,13 @@ cmd_stats (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
+*/
+
 static void
 cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_quit (conn);
 }
-*/
 
 static void
 cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
@@ -579,7 +580,8 @@ cmds commands[] = {
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	/*{ "statistics", "get statistics from server", cmd_stats },
-	{ "quit", "make the server quit", cmd_quit },*/
+	 */
+	{ "quit", "make the server quit", cmd_quit },
 
 	{ NULL, NULL, NULL },
 };

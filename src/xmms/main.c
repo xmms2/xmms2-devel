@@ -48,6 +48,7 @@
 #include "xmms/effect.h"
 #include "xmms/dbus.h"
 #include "xmms/visualisation.h"
+#include "xmms/signal_xmms.h"
 
 
 #include "internal/plugin_int.h"
@@ -62,6 +63,12 @@
 #include <sys/types.h>
 
 #include <pthread.h>
+
+struct xmms_main_St {
+	xmms_object_t object;
+};
+
+typedef struct xmms_main_St xmms_main_t;
 
 static GMainLoop *mainloop;
 
@@ -103,12 +110,22 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	/** @todo fix this */
 }
 
+static void
+quit (xmms_object_t *object, xmms_error_t *error) 
+{
+	exit (EXIT_SUCCESS);
+}
+
+XMMS_METHOD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
+
 int
 main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
 	xmms_config_value_t *cv;
 	xmms_output_t *output;
+	xmms_main_t *mainobj;
+
 	int opt;
 	int verbose = 0;
 	sigset_t signals;
@@ -221,6 +238,10 @@ main (int argc, char **argv)
 	xmms_dbus_init (path);
 
 	xmms_signal_init ();
+
+	mainobj = xmms_object_new (xmms_main_t, NULL);
+	xmms_dbus_register_object ("main", XMMS_OBJECT (mainobj));
+	xmms_object_method_add (XMMS_OBJECT (mainobj), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);

@@ -291,13 +291,11 @@ xmmsc_deinit (xmmsc_connection_t *c)
  * If you only want to disconnect, use #xmmsc_deinit()
  */
 
-/* FIXME
 xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_CORE, XMMS_METHOD_QUIT);
+	return xmmsc_send_msg_no_arg (c, XMMS_OBJECT_MAIN, XMMS_METHOD_QUIT);
 }
-*/
 
 /**
  * Decodes a path. All paths that are recived from
