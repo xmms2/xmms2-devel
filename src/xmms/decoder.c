@@ -86,7 +86,27 @@ struct xmms_decoder_St {
 				      */
 	xmms_visualisation_t *vis;
 
-	gint samplerate;
+	guint samplerate;
+
+	xmms_ringbuf_t *buffer;
+
+	/* below has todo with the resampler */
+	guint resamplelen;
+	gint16 *resamplebuf;
+
+	guint interpolator_ratio;
+	guint decimator_ratio;
+
+	gint16 last_r;
+	gint16 last_l;
+
+	guint32 opos;      /* position in output */
+        guint32 opos_frac;
+
+        guint32 opos_inc;  /* increment in output for each input-sample */
+        guint32 opos_inc_frac;
+
+        guint32 ipos;      /* position in the input stream */
 
 };
 
@@ -96,10 +116,14 @@ struct xmms_decoder_St {
 
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
+static void recalculate_resampler (xmms_decoder_t *decoder);
+static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
 
 /*
  * Macros
  */
+
+#define FRAC_BITS 16
 
 #define xmms_decoder_lock(d) g_mutex_lock ((d)->mutex)
 #define xmms_decoder_unlock(d) g_mutex_unlock ((d)->mutex)
@@ -250,6 +274,11 @@ xmms_decoder_samplerate_set (xmms_decoder_t *decoder, guint rate)
 
 	if (decoder->output)
 		xmms_output_samplerate_set (decoder->output, rate);
+
+	/*
+	recalculate_resampler (decoder);
+	*/
+
 	xmms_visualisation_samplerate_set (decoder->vis, rate);
 	xmms_effect_samplerate_set (decoder->effect, rate);
 	decoder->samplerate = rate;
@@ -275,6 +304,48 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 			decoder->entry);
 }
 
+/**
+ * Read decoded data
+ */
+
+guint
+xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len)
+{
+	guint ret;
+	
+	g_return_val_if_fail (decoder, -1);
+	g_return_val_if_fail (buf, -1);
+
+	g_mutex_lock (decoder->mutex);
+	ret = xmms_ringbuf_read (decoder->buffer, buf, len);
+	g_mutex_unlock (decoder->mutex);
+
+	return ret;
+}
+
+gboolean
+xmms_decoder_iseos (xmms_decoder_t *decoder)
+{
+	gboolean ret;
+
+	g_mutex_lock (decoder->mutex);
+	ret = xmms_ringbuf_iseos (decoder->buffer);
+	g_mutex_unlock (decoder->mutex);
+
+	return ret;
+
+}
+
+guint
+xmms_decoder_data_used (xmms_decoder_t *decoder)
+{
+	guint ret;
+
+	g_mutex_lock (decoder->mutex);
+	ret = xmms_ringbuf_bytes_used (decoder->buffer);
+	g_mutex_unlock (decoder->mutex);
+	return ret;
+}
 
 /**
  * Write decoded data.
@@ -292,19 +363,24 @@ xmms_decoder_entry_mediainfo_set (xmms_decoder_t *decoder, xmms_playlist_entry_t
 void
 xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 {
-	xmms_output_t *output;
-
 	g_return_if_fail (decoder);
 	
-	output = xmms_decoder_output_get (decoder);
-
-	g_return_if_fail (output);
-
 	xmms_effect_run (decoder->effect, buf, len);
 
 	xmms_visualisation_calc (decoder->vis, buf, len);
 
-	xmms_output_write (output, buf, len);
+	g_mutex_lock (decoder->mutex);
+
+	/**
+	 * @todo Here resampling should be done. This is skipped right now
+	 * cause of pending andersg patches.
+	 */
+	xmms_ringbuf_wait_free (decoder->buffer, len, decoder->mutex);
+	xmms_ringbuf_write (decoder->buffer, buf, len);
+
+	g_mutex_unlock (decoder->mutex);
+	
+	
 }
 
 /** @} */
@@ -451,14 +527,18 @@ xmms_decoder_t *
 xmms_decoder_new (xmms_core_t *core)
 {
 	xmms_decoder_t *decoder;
+	xmms_config_value_t *val;
 
 	g_return_val_if_fail (core, NULL);
+
+	val = xmms_config_lookup ("core.decoder_buffersize");
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
 	decoder->vis = xmms_visualisation_init (core);
 	decoder->core = core;
 	xmms_object_ref (core);
+	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 
 	return decoder;
 }
@@ -525,7 +605,6 @@ xmms_decoder_start (xmms_decoder_t *decoder,
 	decoder->transport = transport;
 	decoder->effect = effect;
 	decoder->output = output;
-	xmms_output_set_eos (output, FALSE);
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, TRUE, NULL); 
 }
 
@@ -574,6 +653,152 @@ xmms_decoder_mediainfo_get (xmms_decoder_t *decoder,
 /*
  * Static functions
  */
+
+static void
+recalculate_resampler (xmms_decoder_t *decoder)
+{
+	guint a,b;
+	guint32 incr;
+	guint open_samplerate;
+
+	open_samplerate = xmms_output_samplerate_get (decoder->output);
+
+	/* calculate ratio */
+	if(decoder->samplerate > open_samplerate){
+		a = decoder->samplerate;
+		b = open_samplerate;
+	} else {
+		b = decoder->samplerate;
+		a = open_samplerate;
+	}
+
+	while (b != 0) { /* good 'ol euclid is helpful as usual */
+		guint t = a % b;
+		a = b;
+		b = t;
+	}
+
+	XMMS_DBG ("Resampling ratio: %d:%d", 
+		  decoder->samplerate / a, open_samplerate / a);
+
+	decoder->interpolator_ratio = open_samplerate/a;
+	decoder->decimator_ratio = decoder->samplerate/a;
+
+	incr = ((gdouble)decoder->decimator_ratio / (gdouble) decoder->interpolator_ratio * (gdouble) (1UL << FRAC_BITS));
+	
+	decoder->opos_inc_frac=incr & ((1UL<<FRAC_BITS)-1);
+	decoder->opos_inc = incr>>FRAC_BITS;
+
+	/*
+	 * calculate filter here
+	 *
+	 * We don't use no stinkning filter. Maybe we should,
+	 * but I'm deaf anyway, I wont hear any difference.
+	 */
+
+}
+
+/*
+ * This resampler is based on the one in sox's rate.c:
+ *
+ * August 21, 1998
+ * Copyright 1998 Fabrice Bellard.
+ *
+ * [Rewrote completly the code of Lance Norskog And Sundry
+ * Contributors with a more efficient algorithm.]
+ *
+ * This source code is freely redistributable and may be used for
+ * any purpose.  This copyright notice must be maintained. 
+ * Lance Norskog And Sundry Contributors are not responsible for 
+ * the consequences of using this software.  
+ *
+ */
+static guint32
+resample (xmms_decoder_t *decoder, gint16 *buf, guint len)
+{
+
+	guint32 written = 0;
+	guint outlen;
+	gint inlen = len / 4;
+	gint16 last_r = decoder->last_r;
+	gint16 last_l = decoder->last_l;
+	gint16 *ibuf = buf;
+	gint16 *obuf;
+	
+	outlen = 1 + len * decoder->interpolator_ratio  / decoder->decimator_ratio;
+
+	if (decoder->resamplelen != outlen) {
+		decoder->resamplelen = outlen;
+		decoder->resamplebuf = g_realloc (decoder->resamplebuf, outlen*4);
+		g_return_val_if_fail (decoder->resamplebuf, 0);
+	}
+	
+	obuf = decoder->resamplebuf;
+	
+	while (inlen > 0) {
+		guint32 tmp;
+		gint16 cur_r,cur_l;
+		gdouble t; /** @todo we need no double here,
+			       could go fixed point all way */
+		
+		while (decoder->ipos <= decoder->opos) {
+			last_r = *ibuf++;
+			last_l = *ibuf++;
+			decoder->ipos++;
+			inlen--;
+			if (inlen <= 0) {
+				goto done;
+			}
+		}
+		cur_r = *ibuf;
+		cur_l = *(ibuf+1);
+		
+		t = ((gdouble)decoder->opos_frac) / (1UL<<FRAC_BITS);
+		*obuf++ = (gdouble) last_r * (1.0-t) + (gdouble) cur_r * t;
+		*obuf++ = (gdouble) last_l * (1.0-t) + (gdouble) cur_l * t;
+		
+		/* update output position */
+		tmp = decoder->opos_frac + decoder->opos_inc_frac;
+		decoder->opos += decoder->opos_inc + (tmp >> FRAC_BITS);
+		decoder->opos_frac = tmp & ((1UL << FRAC_BITS)-1);
+
+		written += 2*sizeof(gint16); /* count bytes */
+
+	}
+ done:
+	decoder->last_r = last_r;
+	decoder->last_l = last_l;
+	
+	g_return_val_if_fail (written/4<outlen, 0);
+	
+	return written;
+		
+}
+
+
+
+static void
+xmms_decoder_destroy_real (xmms_decoder_t *decoder)
+{
+	xmms_decoder_destroy_method_t destroy_method;
+	
+	g_return_if_fail (decoder);
+	
+	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+	if (destroy_method)
+		destroy_method (decoder);
+
+	g_mutex_free (decoder->mutex);
+	xmms_ringbuf_destroy (decoder->buffer);
+
+	xmms_playlist_entry_unref (decoder->entry);
+
+	xmms_visualisation_destroy(decoder->vis);
+	xmms_object_cleanup (XMMS_OBJECT (decoder));
+	g_free (decoder);
+
+	XMMS_DBG ("Decoder destroyed");
+}
 
 static xmms_plugin_t *
 xmms_decoder_find_plugin (const gchar *mimetype)
@@ -649,7 +874,6 @@ xmms_decoder_thread (gpointer data)
 			break;
 		}
 	}
-	xmms_output_set_eos (decoder->output, TRUE);
 	g_mutex_unlock (decoder->mutex);
 
 	decoder->thread = NULL;

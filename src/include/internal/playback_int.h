@@ -17,4 +17,6 @@
 #ifndef __XMMS_PLAYBACK_INT_H__
 #define __XMMS_PLAYBACK_INT_H__
 
+void xmms_playback_active_entry_set (xmms_playback_t *playback, xmms_playlist_entry_t *entry);
+
 #endif 

@@ -34,6 +34,8 @@
 
 #include "internal/transport_int.h"
 #include "internal/decoder_int.h"
+#include "internal/output_int.h"
+#include "internal/playback_int.h"
 
 #include <glib.h>
 #include <stdlib.h>
@@ -69,6 +71,71 @@ struct xmms_core_St {
 	guint songs_played;
 };
 
+
+gboolean
+xmms_core_play_entry (xmms_core_t *core, xmms_playlist_entry_t *entry,
+		      xmms_decoder_t **decoder, xmms_transport_t **transport)
+{
+	xmms_transport_t *t;
+	xmms_decoder_t *d;
+	const gchar *mime;
+
+	XMMS_DBG ("Starting up for %s", xmms_playlist_entry_url_get (entry));
+
+	t = xmms_transport_new (core);
+
+	if (!t) {
+		return FALSE;
+	}
+
+	if (!xmms_transport_open (t, entry)) {
+		xmms_transport_close (t);
+		return FALSE;
+	}
+
+	xmms_transport_start (t);
+
+	/*
+	 * Waiting for the mimetype forever
+	 * All transporters MUST set a mimetype, 
+	 * NULL on error
+	 */
+	XMMS_DBG ("Waiting for mimetype");
+	mime = xmms_transport_mimetype_get_wait (t);
+	if (!mime) {
+		xmms_transport_close (t);
+		return FALSE;
+	}
+
+	XMMS_DBG ("mime-type: %s", mime);
+
+	xmms_playlist_entry_mimetype_set (entry, mime);
+
+	d = xmms_decoder_new (core);
+
+	if (!d) {
+		xmms_transport_close (t);
+		return FALSE;
+	}
+
+	if (!xmms_decoder_open (d, entry)) {
+		xmms_transport_close (t);
+		xmms_decoder_destroy (d);
+		return FALSE;
+	}
+
+	xmms_decoder_start (d, t, core->effects, core->output);
+
+	/* make sure that the output can use this decoder */
+	xmms_output_decoder_append (core->output, d);
+
+	*transport = t;
+	*decoder = d;
+
+	return TRUE;
+}
+
+
 static void xmms_core_effect_init (xmms_core_t *core);
 
 /**
@@ -79,7 +146,8 @@ static gpointer
 xmms_core_thread (gpointer data)
 {
 	xmms_playlist_entry_t *entry = NULL;
-	const gchar *mime;
+	xmms_decoder_t *decoder = NULL;
+	xmms_transport_t *transport = NULL;
 	gboolean running = TRUE;
 	xmms_core_t *core = data;
 
@@ -87,68 +155,44 @@ xmms_core_thread (gpointer data)
 	
 	while (running) {
 
-		core->transport = NULL;
-		core->decoder = NULL;
+		if (!transport && !decoder) {
+			entry = xmms_playback_entry (core->playback);
 		
+			if (!xmms_core_play_entry (core, entry, &decoder, &transport)) {
+				continue;
+			}
+		}
+
+		core->transport = transport;
+		core->decoder = decoder;
+
+		xmms_playback_active_entry_set (core->playback, entry);
+
+		transport = NULL;
+		decoder = NULL;
+
 		/*
-		while (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
-			XMMS_DBG ("Waiting until playback starts...");
-			g_mutex_lock (core->mutex);
-			g_cond_wait (core->cond, core->mutex);
-			g_mutex_unlock (core->mutex);
-		}
-		*/
-
-		/* Block until entry is ready. */
-		while (!(entry = xmms_playback_entry (core->playback)))
-			;
-
-		XMMS_DBG ("Playing %s", xmms_playlist_entry_url_get (entry));
-		
-		core->transport = xmms_transport_new (core);
-
-		if (!core->transport) {
-			continue;
-		}
-		
-		if  (!xmms_transport_open (core->transport, entry)) {
-			xmms_transport_close (core->transport);
-			continue;
-		}
-		
-		xmms_transport_start (core->transport);
-		
-		/*
-		 * Waiting for the mimetype forever
-		 * All transporters MUST set a mimetype, 
-		 * NULL on error
+		 * Wait for the playback to say that we have two seconds left
 		 */
-		XMMS_DBG ("Waiting for mimetype");
-		mime = xmms_transport_mimetype_get_wait (core->transport);
-		if (!mime) {
-			xmms_transport_close (core->transport);
-			continue;
+
+		/*
+		xmms_playback_playtime_wait (core->playback, 10000);
+		*/
+			
+		entry = xmms_playback_entry (core->playback);
+
+		while (entry && !xmms_core_play_entry (core, entry, &decoder, &transport)) {
+			entry = xmms_playback_entry (core->playback);
+
+		if (!entry) {
+			decoder = NULL;
+			transport = NULL;
 		}
-
-		XMMS_DBG ("mime-type: %s", mime);
-
-		/* Make sure that mediainfo thread takes care of ALL playlists */
-
-		xmms_playlist_entry_mimetype_set (entry, mime);
-
-		core->decoder = xmms_decoder_new (core);
-		if (!xmms_decoder_open (core->decoder, entry)) {
-			xmms_object_unref (core->transport);
-			xmms_object_unref (core->decoder);
-			continue;
-		}
-
-		xmms_decoder_start (core->decoder, core->transport, core->effects, core->output);
 
 		/* 
-		 * Ok, now decode the whole file,
 		 * the decoder will wake this up when done
 		 */
+
 		xmms_decoder_wait (core->decoder);
 		core->songs_played++; 
 
@@ -157,7 +201,7 @@ xmms_core_thread (gpointer data)
 			core->decoder = NULL;
 		XMMS_DBG ("closing transport");
 		if (core->transport)
-			xmms_transport_close (core->transport);
+			xmms_object_unref (core->transport);
 		if (core->flush) {
 			XMMS_DBG ("Flushing buffers");
 			if (core->output)
@@ -259,8 +303,6 @@ xmms_core_init (xmms_playlist_t *playlist)
 
 	xmms_object_method_add (XMMS_OBJECT (core), XMMS_METHOD_QUIT, XMMS_METHOD_FUNC (quit));
 
-	/** @todo really split this into to different objects */
-
 	xmms_dbus_register_object ("core", XMMS_OBJECT (core));
 
 	return core;
@@ -329,3 +371,6 @@ xmms_core_effect_init (xmms_core_t *core)
 	g_strfreev (list);
 
 }
+
+/** @} */
+
