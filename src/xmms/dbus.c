@@ -68,7 +68,7 @@ static gboolean handle_playback_stop ();
 static gboolean handle_playback_pause ();
 static gboolean handle_playback_next ();
 static gboolean handle_playback_prev ();
-static gboolean handle_playback_seek (DBusConnection *conn, DBusMessage *msg);
+static gboolean handle_playback_seek (guint arg);
 static gboolean handle_playback_currentid (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_add (DBusConnection *conn, DBusMessage *msg);
 static gboolean handle_playlist_remove (guint arg);
@@ -138,7 +138,7 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 		NULL, NULL, handle_playback_prev, NULL },
 	{ XMMS_SIGNAL_PLAYBACK_SEEK, 
 		XMMS_SIGNAL_MASK_PLAYBACK_SEEK, 
-		NULL, handle_playback_seek, NULL,  NULL },
+		NULL, NULL, NULL, handle_playback_seek },
 	{ XMMS_SIGNAL_PLAYBACK_CURRENTID,
 		XMMS_SIGNAL_MASK_PLAYBACK_CURRENTID, 
 		send_playback_currentid, handle_playback_currentid, NULL, NULL },
@@ -523,10 +523,9 @@ handle_playback_prev ()
 }
 
 static gboolean
-handle_playback_seek (DBusConnection *conn, DBusMessage *msg)
+handle_playback_seek (guint arg)
 {
-	/** @todo make clients able to seek */
-
+	xmms_core_playback_seek (arg);
 	return TRUE;
 }
 
@@ -754,7 +753,6 @@ new_connect (DBusServer *server, DBusConnection *conn, void * data)
 			mask_map[i].callback_with_noarg || 
 			mask_map[i].callback_with_intarg) {
 
-			XMMS_DBG ("Register callback for %s", mask_map[i].dbus_name);
 			register_handler (conn, xmms_dbus_callback, &mask_map[i].dbus_name, 1);
 		}
 

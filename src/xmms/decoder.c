@@ -90,6 +90,7 @@ static void xmms_decoder_destroy_real (xmms_decoder_t *decoder);
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
 static guint32 resample (xmms_decoder_t *decoder, gint16 *buf, guint len);
+static guint xmms_decoder_skip_bytes_get (xmms_decoder_t *decoder, guint milliseconds);
 
 /*
  * Macros
@@ -179,6 +180,43 @@ recalculate_resampler (xmms_decoder_t *decoder)
 	 * but I'm deaf anyway, I wont hear any difference.
 	 */
 
+}
+
+void
+xmms_decoder_seek (xmms_decoder_t *decoder, guint milliseconds)
+{
+	guint bytes;
+	g_return_if_fail (decoder);
+	
+	if (!milliseconds) 
+		return;
+
+	bytes = xmms_decoder_skip_bytes_get (decoder, milliseconds);
+
+
+	xmms_transport_seek (decoder->transport, bytes, XMMS_TRANSPORT_SEEK_SET);
+}
+
+static guint
+xmms_decoder_skip_bytes_get (xmms_decoder_t *decoder, guint milliseconds)
+{
+	xmms_decoder_skip_bytes_get_method_t meth;
+	guint bytes;
+	
+	g_return_val_if_fail (decoder, 0);
+
+	if (!milliseconds) 
+		return 0;
+
+	meth = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_CALC_SKIP);
+
+	g_return_val_if_fail (meth, 0);
+
+	bytes = meth (decoder, milliseconds);
+
+	XMMS_DBG ("Bytes from skip_bytes_get %d", bytes);
+
+	return bytes;
 }
 
 void

@@ -38,6 +38,10 @@ typedef struct xmms_mad_data_St {
 
 	gchar buffer[4096];
 	guint buffer_length;
+	guint bitrate;
+	guint fsize;
+
+	gboolean vbr;
 } xmms_mad_data_t;
 
 /*
@@ -50,6 +54,7 @@ static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_mad_init (xmms_decoder_t *decoder);
+static guint xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds);
 
 /*
  * Plugin header
@@ -73,6 +78,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_mad_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_mad_get_media_info);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_mad_init);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CALC_SKIP, xmms_mad_calc_skip_bytes);
 
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
@@ -99,6 +105,32 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
 
 }
 
+static guint
+xmms_mad_calc_skip_bytes (xmms_decoder_t *decoder, guint miliseconds)
+{
+	xmms_mad_data_t *data;
+	guint bytes;
+	
+	g_return_val_if_fail (decoder, 0);	
+
+	data = xmms_decoder_plugin_data_get (decoder);
+
+	if (!data->vbr) {
+		bytes = ((miliseconds / 1000) * data->bitrate) / 8 ;
+
+		XMMS_DBG ("Try seek %d bytes", bytes);
+
+		if (bytes < data->fsize)
+			return bytes;
+
+		return data->fsize;
+	}
+
+	/** @todo VBR must be supported */
+	return 0;
+	
+}
+
 /** This function will calculate the duration in seconds.
   *
   * This is very easy, until someone thougth that VBR was
@@ -113,7 +145,7 @@ xmms_mad_destroy (xmms_decoder_t *decoder)
   */
 
 static void
-xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
+xmms_mad_calc_duration (xmms_mad_data_t *data, gchar *buf, gint len, guint filesize, xmms_playlist_entry_t *entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
@@ -148,6 +180,8 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			}
 		}
 
+		data->vbr = TRUE;
+
 		if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
@@ -155,7 +189,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 
 			timer = frame.header.duration;
 			mad_timer_multiply (&timer, xmms_xing_get_frames (xing));
-			duration = mad_timer_count (timer, MAD_UNITS_SECONDS);
+			duration = mad_timer_count (timer, MAD_UNITS_MILLISECONDS);
 
 			XMMS_DBG ("XING duration %d", duration);
 			tmp = g_strdup_printf ("%d", duration);
@@ -164,18 +198,21 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 			g_free (tmp);
 		}
 
-		if (xmms_xing_has_flag (xing, XMMS_XING_BYTES)) {
+		/** @todo fix avg. bitrate in xing */
+/*		if (xmms_xing_has_flag (xing, XMMS_XING_BYTES)) {
 			gchar *tmp;
 
-			tmp = g_strdup_printf ("%u", xmms_xing_get_bytes (xing) / fsize);
+			tmp = g_strdup_printf ("%u", (gint)((xmms_xing_get_bytes (xing) * 8 / fsize);
+			XMMS_DBG ("XING bitrate %d", tmp);
 			xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_BITRATE, tmp);
 			g_free (tmp);
-		}
+		}*/
 
 		return;
 	}
 
-	bitrate = frame.header.bitrate;
+	data->bitrate = bitrate = frame.header.bitrate;
+	data->fsize = filesize;
 
 	mad_frame_finish (&frame);
 	mad_stream_finish (&stream);
@@ -183,7 +220,7 @@ xmms_mad_calc_duration (gchar *buf, gint len, guint filesize, xmms_playlist_entr
 	if (!fsize) {
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, "-1");
 	} else {
-		tmp = g_strdup_printf ("%d", fsize / bitrate);
+		tmp = g_strdup_printf ("%d", (gint) (filesize*(gdouble)8000.0/bitrate));
 		xmms_playlist_entry_set_prop (entry, XMMS_PLAYLIST_ENTRY_PROPERTY_DURATION, tmp);
 		XMMS_DBG ("duration = %s", tmp);
 		g_free (tmp);
@@ -257,7 +294,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
 	}
 	
-	xmms_mad_calc_duration (buf, ret, xmms_transport_size (transport), entry);
+	xmms_mad_calc_duration (data, buf, ret, xmms_transport_size (transport), entry);
 
 	if (!id3handled) {
 		XMMS_DBG ("Seeking to last 128 bytes");

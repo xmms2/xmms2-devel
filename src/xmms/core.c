@@ -177,6 +177,12 @@ xmms_core_playlist_remove (guint id)
 }
 
 void
+xmms_core_playback_seek (guint milliseconds)
+{
+	xmms_decoder_seek (core->decoder, milliseconds);
+}
+
+void
 xmms_core_quit ()
 {
 	exit (0); /** @todo BUSKIS! */
@@ -282,7 +288,7 @@ core_thread (gpointer data)
 
 		xmms_playlist_entry_mimetype_set (core->curr_song, mime);
 
-		decoder = xmms_decoder_new (core->curr_song);
+		core->decoder = decoder = xmms_decoder_new (core->curr_song);
 		if (!decoder) {
 			xmms_transport_close (transport);
 			xmms_core_play_next ();
