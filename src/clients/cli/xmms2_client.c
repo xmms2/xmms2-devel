@@ -10,6 +10,7 @@
 
 #include "xmmsclient.h"
 #include "xmmsclient-glib.h"
+#include "xmmsclient-sync.h"
 #include "xmms/signal_xmms.h"
 
 #define XMMS_MAX_URI_LEN 1024
@@ -50,6 +51,9 @@ print_mediainfo (GHashTable *entry)
 		return;
 
 	url = (gchar *)g_hash_table_lookup (entry, "url");
+	if (!url)
+		return;
+
 	url = xmmsc_decode_path (url);
 	printf ("URL:    %s\n", url);
 	g_free (url);
@@ -79,7 +83,7 @@ handle_playlist_mediainfo (void *userdata, void *arg)
 
 
 	id = GPOINTER_TO_UINT (g_hash_table_lookup (tab, "id"));
-	
+
 	printf ("Got mediainfo msg for %d, current id is %d\n", id, currentid);
 	
 	if (id == currentid) {
@@ -137,6 +141,11 @@ void
 handle_currentid (void *userdata, void *arg) {
 	guint id = GPOINTER_TO_UINT(arg);
 	xmmsc_connection_t *conn = userdata;
+
+	if (id == 0) {
+		printf ("No playback!\n");
+		return;
+	}
 
 	xmmsc_playlist_get_mediainfo (conn, id);
 
@@ -503,6 +512,11 @@ main(int argc, char **argv)
 				return 1;
 			}
 			setup_flist (c, argv[2]);
+		} else if ( streq (argv[1], "test") ) {
+			xmmsc_sync_init (c);
+			xmmsc_sync_current_id_get ();
+			xmmsc_sync_played_time_get ();
+			xmmsc_deinit (c);
 		} else if ( streq (argv[1], "savelist") ) {
 
 			if (argc < 3) {
