@@ -43,5 +43,10 @@ struct xmmsc_connection_St {
 	gpointer data;
 };
 
+
+int xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method);
+void xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type);
+GHashTable *xmmsc_deserialize_mediainfo (DBusMessageIter *itr);
+
 #endif
 

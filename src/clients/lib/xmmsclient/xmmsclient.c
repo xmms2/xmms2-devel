@@ -112,9 +112,6 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 static xmmsc_signal_callbacks_t *get_callback (const gchar *signal);
 static DBusHandlerResult handle_callback (DBusConnection *conn, DBusMessage *msg, void *user_data);
 static void xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal);
-static int xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method);
-static void xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type);
-static GHashTable *deserialize_mediainfo (DBusMessageIter *itr);
 
 /*
  * Public methods
@@ -737,508 +734,57 @@ xmmsc_entry_format (char *target, int len, const char *fmt, GHashTable *table)
 
 }
 
+
 /** @} */
 
-/**
- * @defgroup PlaybackControl PlaybackControl
- * @ingroup XMMSClient
- * @brief This controls the playback.
- *
- * @{
- */
 
 /**
- * Plays the next track in playlist.
+ * @internal
  */
-
-void
-xmmsc_play_next (xmmsc_connection_t *c)
-{
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_NEXT);
-}
-
-/**
- * Plays the previos track in the playlist.
- */
-
-void
-xmmsc_play_prev (xmmsc_connection_t *c)
-{
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PREV);
-}
-
-/**
- * Stops the current playback. This will make the server
- * idle.
- */
-
-void
-xmmsc_playback_stop (xmmsc_connection_t *c)
-{
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_STOP);
-}
-
-/**
- * Pause the current playback, will tell the output to not read
- * nor write.
- */
-
-void
-xmmsc_playback_pause (xmmsc_connection_t *c)
-{
-	xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PAUSE);
-}
-
-/**
- * Starts playback if server is idle.
- */
-
-void
-xmmsc_playback_start (xmmsc_connection_t *c)
-{
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_PLAY);
-}
-
-
-/**
- * Seek to a absolute time in the current playback.
- *
- * @param c The connection structure.
- * @param milliseconds The total number of ms where
- * playback should continue.
- */
-
-void
-xmmsc_playback_seek_ms (xmmsc_connection_t *c, guint milliseconds)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKMS);
-
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, milliseconds);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-}
-
-/**
- * Seek to a absoulte number of samples in the current playback.
- *
- * @param c The connection structure.
- * @param samples the total number of samples where playback
- * should continue.
- */
-
-void
-xmmsc_playback_seek_samples (xmmsc_connection_t *c, guint samples)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_SEEKSAMPLES);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, samples);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-}
-
-/**
- * Make server emit the current id.
- */
-
-void
-xmmsc_playback_current_id (xmmsc_connection_t *c)
-{
-	int cserial;
-
-	cserial = xmmsc_send_void (c, XMMS_OBJECT_PLAYBACK, XMMS_METHOD_CURRENTID);
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYBACK_CURRENTID);
-}
 
 int
-xmmscs_playback_current_id (xmmsc_connection_t *c)
+xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
 {
-	DBusMessage *msg,*rmsg;
-        DBusMessageIter itr;
-	DBusError err;
-	int ret = -1;
-	
-	dbus_error_init (&err);
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYBACK, XMMS_DBUS_INTERFACE, XMMS_METHOD_CURRENTID);
-
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
-
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
-
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32)
-			ret = dbus_message_iter_get_uint32 (&itr);
-
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("Error: %s\n", err.message);
-	}
-	dbus_message_unref (msg);
-
-	return ret;
-
-}
-
-/** @} */
-
-/**
- * @defgroup PlaylistControl PlaylistControl
- * @ingroup XMMSClient
- * @brief This controls the playlist.
- *
- * @{
- */
-
-/**
- * Shuffles the current playlist.
- */
-
-void
-xmmsc_playlist_shuffle (xmmsc_connection_t *c)
-{
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_SHUFFLE);
-}
-
-/**
- * Sorts the playlist according to the property
- */
-
-void
-xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
-{
-	DBusMessageIter itr;
 	DBusMessage *msg;
 	int cserial;
 	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SORT);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, property);
+	msg = dbus_message_new_method_call (NULL, object, XMMS_DBUS_INTERFACE, method);
 	dbus_connection_send (c->conn, msg, &cserial);
 	dbus_message_unref (msg);
+	return cserial;
 }
-
-/**
- * Clears the current playlist.
- */
 
 void
-xmmsc_playlist_clear (xmmsc_connection_t *c)
-{
-	xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_CLEAR);
-}
-
-/**
- * Saves the playlist to the specified filename. The
- * format of the playlist is detemined by checking the
- * extension of the filename.
- *
- * @param c The connection structure.
- * @param filename file on server-side to save the playlist
- * in.
- */
-
-void
-xmmsc_playlist_save (xmmsc_connection_t *c, gchar *filename)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_SAVE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, filename);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-}
-
-/**
- * This will make the server list the current playlist.
- * The entries will be feed to the XMMS_SIGNAL_PLAYLIST_LIST
- * callback.
- */
-
-void
-xmmsc_playlist_list (xmmsc_connection_t *c)
-{
-	int cserial;
-
-	cserial = xmmsc_send_void(c, XMMS_OBJECT_PLAYLIST, XMMS_METHOD_LIST);
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_LIST);
-}
-
-unsigned int *
-xmmscs_playlist_list (xmmsc_connection_t *c)
-{
-	DBusMessage *msg,*rmsg;
-        DBusMessageIter itr;
-	DBusError err;
-	unsigned int *arr;
-
-	dbus_error_init (&err);
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
-
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
-
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
-
-		if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_UINT32) {
-			guint len = dbus_message_iter_get_uint32 (&itr);
-			if (len > 0) {
-				int len;
-				unsigned int *tmp;
-
-				dbus_message_iter_next (&itr);
-				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
-
-				arr = g_new0 (guint32, len+1);
-				memcpy (arr, tmp, len * sizeof(guint32));
-				arr[len] = '\0';
-			} else {
-				arr = g_new0 (guint32, 1);
-				*arr = -1;
-			}
-		}
-
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("Error: %s\n", err.message);
-	}
-
-	dbus_message_unref (msg);
-
-	return arr;
-}
-
-/**
- * Set the current song in the playlist.
- *
- * @param c The connection structure.
- * @param id The id that should be the current song
- * in the playlist.
- *
- * @sa xmmsc_playlist_list
- */
-
-void
-xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_JUMP);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-
-}
-
-/**
- * Add the url to the playlist. The url should be encoded with
- * xmmsc_encode_path and be absolute to the server-side. Note that
- * you will have to include the protocol for the url to. ie:
- * file://mp3/my_mp3s/first.mp3.
- *
- * @param c The connection structure.
- * @param url an encoded path.
- *
- * @sa xmmsc_encode_path
- */
-
-void
-xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_ADD);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, url);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-
-}
-
-/**
- * Remove an entry from the playlist.
- *
- * param id the id to remove from the playlist.
- *
- * @sa xmmsc_playlist_list
- */
-
-void
-xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_REMOVE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-
-}
-
-
-static void
 xmmsc_connection_add_reply (xmmsc_connection_t *c, gint serial, gchar *type)
 {
 	g_hash_table_insert (c->replies, GUINT_TO_POINTER (serial), type);
 }
 
-/**
- * Retrives information about a certain entry.
- */
-void
-xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
-{
-	DBusMessage *msg;
-	DBusMessageIter itr;
-	DBusError err;
-	guint cserial;
-
-	dbus_error_init (&err);
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
-	dbus_connection_send (c->conn, msg, &cserial);
-
-	xmmsc_connection_add_reply (c, cserial, XMMS_SIGNAL_PLAYLIST_MEDIAINFO);
-
-	dbus_message_unref (msg);
-	dbus_connection_flush (c->conn);
-}
-
 GHashTable *
-xmmscs_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
+xmmsc_deserialize_mediainfo (DBusMessageIter *itr)
 {
-	DBusMessage *msg, *rmsg;
-	DBusMessageIter itr;
-	DBusError err;
-	GHashTable *res = NULL;
+	GHashTable *tab = NULL;
 
-	dbus_error_init (&err);
-
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_PLAYLIST, XMMS_DBUS_INTERFACE, XMMS_METHOD_GETMEDIAINFO);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_uint32 (&itr, id);
-	rmsg = dbus_connection_send_with_reply_and_block (c->conn, msg, c->timeout, &err);
-
-	if (rmsg) {
-		dbus_message_iter_init (rmsg, &itr);
-		res = deserialize_mediainfo (&itr);
-		dbus_message_unref (rmsg);
-	} else {
-		printf ("error: %s", err.message);
+	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
+		DBusMessageIter dictitr;
+		dbus_message_iter_init_dict_iterator (itr, &dictitr);
+		
+		tab = g_hash_table_new (g_str_hash, g_str_equal);
+		
+		while (42) {
+			gchar *key = dbus_message_iter_get_dict_key (&dictitr);
+			if (g_strcasecmp (key, "id") == 0) {
+				g_hash_table_insert (tab, key, GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
+			} else {
+				g_hash_table_insert (tab, key, dbus_message_iter_get_string (&dictitr));
+			}
+			if (!dbus_message_iter_has_next (&dictitr))
+				break;
+			dbus_message_iter_next (&dictitr);
+		}
 	}
-
-	dbus_message_unref (msg);
-	dbus_connection_flush (c->conn);
-
-	return res;
-
+	return tab;
 }
-
-static gboolean
-free_str (gpointer key, gpointer value, gpointer udata)
-{
-	gchar *k = (gchar *)key;
-
-	if (g_strcasecmp (k, "id") == 0) {
-		g_free (key);
-		return TRUE;
-	}
-
-	if (key)
-		g_free (key);
-	if (value)
-		g_free (value);
-
-	return TRUE;
-}
-
-/**
- * Free all strings in a GHashTable.
- */
-void
-xmmsc_playlist_entry_free (GHashTable *entry)
-{
-	g_return_if_fail (entry);
-
-	g_hash_table_foreach_remove (entry, free_str, NULL);
-
-	g_hash_table_destroy (entry);
-}
-
-/**
- * @todo fix the integers here, this will b0rk b0rk if we
- * change the enum in core.
- */
-
-/** @} */
-
-/**
- * @defgroup OtherControl OtherControl
- * @ingroup XMMSClient
- * @brief This controls various other functions of the XMMS server.
- *
- * @{
- */
-
-
-/**
- * Sets a configvalue in the server.
- */
-void
-xmmsc_configval_set (xmmsc_connection_t *c, gchar *key, gchar *val)
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_CONFIG, XMMS_DBUS_INTERFACE, XMMS_METHOD_SETVALUE);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, key);
-	dbus_message_iter_append_string (&itr, val);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-}
-
-/**
- * Retrives a list of files from url.
- */
-void
-xmmsc_file_list (xmmsc_connection_t *c, gchar *url) 
-{
-        DBusMessageIter itr;
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, XMMS_OBJECT_TRANSPORT, XMMS_DBUS_INTERFACE, XMMS_METHOD_LIST);
-	dbus_message_append_iter_init (msg, &itr);
-	dbus_message_iter_append_string (&itr, url);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-}
-
-/** @} */
 
 /*
  * Static utils
@@ -1346,7 +892,7 @@ handle_callback (DBusConnection *conn, DBusMessage *msg,
 			}
 			break;
 		case XMMSC_TYPE_MEDIAINFO:
-			arg = deserialize_mediainfo (&itr);
+			arg = xmmsc_deserialize_mediainfo (&itr);
 			break;
 
 		case XMMSC_TYPE_TRANSPORT_LIST:
@@ -1409,40 +955,4 @@ xmmsc_register_signal (xmmsc_connection_t *conn, gchar *signal)
 
 }
 
-static int
-xmmsc_send_void (xmmsc_connection_t *c, char *object, char *method)
-{
-	DBusMessage *msg;
-	int cserial;
-	
-	msg = dbus_message_new_method_call (NULL, object, XMMS_DBUS_INTERFACE, method);
-	dbus_connection_send (c->conn, msg, &cserial);
-	dbus_message_unref (msg);
-	return cserial;
-}
 
-static GHashTable *
-deserialize_mediainfo (DBusMessageIter *itr)
-{
-	GHashTable *tab = NULL;
-
-	if (dbus_message_iter_get_arg_type (itr) == DBUS_TYPE_DICT) {
-		DBusMessageIter dictitr;
-		dbus_message_iter_init_dict_iterator (itr, &dictitr);
-		
-		tab = g_hash_table_new (g_str_hash, g_str_equal);
-		
-		while (42) {
-			gchar *key = dbus_message_iter_get_dict_key (&dictitr);
-			if (g_strcasecmp (key, "id") == 0) {
-				g_hash_table_insert (tab, key, GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
-			} else {
-				g_hash_table_insert (tab, key, dbus_message_iter_get_string (&dictitr));
-			}
-			if (!dbus_message_iter_has_next (&dictitr))
-				break;
-			dbus_message_iter_next (&dictitr);
-		}
-	}
-	return tab;
-}
