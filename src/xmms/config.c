@@ -627,6 +627,10 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	g_return_if_fail (val);
 	g_return_if_fail (data);
 
+	/* check whether the value changed at all */
+	if (val->data && !strcmp (val->data, data))
+		return;
+
 	XMMS_DBG ("setting %s to %s", val->name, data);
 
 	g_free (val->data);
