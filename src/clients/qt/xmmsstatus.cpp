@@ -6,13 +6,16 @@
 #include <xmms/xmmsclient-qt.h>
 #include "xmmsstatus.h"
 
+#define FFT_BITS    10                                                                                                                                                
+#define FFT_LEN     (1<<FFT_BITS)                                                                                                                                     
+
 
 XMMSStatus::XMMSStatus (XMMSClientQT *client, QWidget *parent) :
 			QWidget (parent, "XMMSStatus")
 {
 
 	m_client = client;
-	setBackgroundColor( white );
+//	setBackgroundColor( white );
 	setSizePolicy (QSizePolicy (QSizePolicy::Fixed, QSizePolicy::Fixed, FALSE));
 
 	m_str = new QString ("XMMS2 - X Music Multiplexer System");
@@ -59,23 +62,10 @@ XMMSStatus::paintEvent (QPaintEvent *event)
 
 	p.setWindow (0, 0, 300, 30);
 
-//	QFont f ("fixed", 6);
-	
-	p.drawRect (0, 0, 300, 30);
-
-//	p.setFont (f);
-//	QFontMetrics fm = p.fontMetrics();
-//	int y = 2 + fm.ascent();
-
-	/* Write song title */
-//	p.drawText (2, y, *m_str);
-//	p.drawText (300-fm.width (*m_tme)-1, y+fm.ascent(), *m_tme);
-//	p.drawText (300-fm.width (*m_tme)-fm.width(*m_ctme+"/"), y+fm.ascent(), *m_ctme+"/");
-
-	for (i=0; i < 10; i++) {
-		printf ("| %f ", m_vis_data[i]);
+	for (i=0; i < FFT_BITS; i++) {
+		int h = (int)((m_vis_data[i]/255.0)*30.0);
+		p.fillRect (10+i*29, 30-h, 15, h, QBrush(Qt::black, Qt::SolidPattern));
 	}
-	printf ("\n");
 	free (m_vis_data);
 	m_vis_data = NULL;
 }

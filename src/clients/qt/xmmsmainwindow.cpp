@@ -254,16 +254,13 @@ vis_dequeue (void *userdata, uint time)
 	
 	float *retval;
 
-	printf ("dequeue called!\n");
-	
+	/* In the beginning, there was no vis_data */
 	if (!vis_data) {
-		printf ("dequeue returned null!\n");
 		return NULL;
 	}
 	
 	while ((time > XPOINTER_TO_UINT (vis_time->data))) {
 		if (vis_data->next) {
-			printf ("dequeue: %i\n", vis_time->data);
 			vis_data = x_list_delete_link (vis_data, vis_data);
 			vis_time = x_list_delete_link (vis_time, vis_time);
 			mw->setVisTime (vis_time);
