@@ -12,6 +12,7 @@ struct xmms_sample_converter_St {
 	xmms_audio_format_t *to;
 
 	gboolean same;
+	gboolean resample;
 
 	/* buffer for result */
 	guint bufsiz;
@@ -69,18 +70,17 @@ static xmms_sample_converter_t *
 xmms_sample_converter_init (xmms_audio_format_t *from, xmms_audio_format_t *to)
 {
 	xmms_sample_converter_t *conv = xmms_object_new (xmms_sample_converter_t, xmms_sample_converter_destroy);
-	gboolean resample;
 
 	conv->from = from;
 	conv->to = to;
 
-	resample = from->samplerate != to->samplerate;
+	conv->resample = from->samplerate != to->samplerate;
 	
 	conv->func = xmms_sample_conv_get (from->channels, from->format,
 					   to->channels, to->format,
-					   resample);
+					   conv->resample);
 
-	if (resample)
+	if (conv->resample)
 		recalculate_resampler (conv, from->samplerate, to->samplerate);
 
 	if (from->channels == to->channels &&
@@ -267,8 +267,11 @@ xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len
 
 	outusiz = xmms_sample_size_get (conv->to->format) * conv->to->channels;
 
-	olen = (len * outusiz * conv->interpolator_ratio + outusiz) / conv->decimator_ratio;
-
+	if (conv->resample) {
+		olen = (len * outusiz * conv->interpolator_ratio + outusiz) / conv->decimator_ratio;
+	} else {
+		olen = len * outusiz;
+	}
 	if (olen > conv->bufsiz) {
 		void *t;
 		t = g_realloc (conv->buf, olen);
