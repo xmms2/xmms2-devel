@@ -20,6 +20,13 @@
 struct xmms_playback_St;
 typedef struct xmms_playback_St xmms_playback_t;
 
+typedef enum {
+	XMMS_PLAYBACK_PLAY,
+	XMMS_PLAYBACK_STOP,
+	XMMS_PLAYBACK_PAUSE,
+} xmms_playback_status_t;
+
+
 #include "xmms/core.h"
 #include "xmms/playlist.h"
 
