@@ -41,7 +41,7 @@ typedef struct {
 static gchar *statusformat;
 static gchar *listformat;
 
-static gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=%a - %t\nlistformat=%a - %t (%m:%s)\n";
+static gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\n";
 
 static char *
 format_url (char *item)
@@ -493,11 +493,11 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 
 		if (x_hash_lookup (tab, "channel") && x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof (line), "[stream] %t", tab);
+			xmmsc_entry_format (line, sizeof (line), "[stream] ${title}", tab);
 		} else if (x_hash_lookup (tab, "channel") && !x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof (line), "%c", tab);
+			xmmsc_entry_format (line, sizeof (line), "${channel}", tab);
 		} else if (!x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof(line), "%f (%m:%s)", tab);
+			xmmsc_entry_format (line, sizeof(line), "${url} (${minutes}:${seconds})", tab);
 		} else {
 			xmmsc_entry_format (line, sizeof(line), listformat, tab);
 		}
@@ -832,10 +832,10 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 			printf ("\n");
 			if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
 				xmmsc_entry_format (songname, sizeof (songname),
-				                    "[stream] %t", hash);
+				                    "[stream] ${title}", hash);
 			} else if (x_hash_lookup (hash, "channel")) {
 				xmmsc_entry_format (songname, sizeof (songname),
-				                    "%c", hash);
+				                    "${title}", hash);
 			} else {
 				xmmsc_entry_format (songname, sizeof (songname),
 				                    statusformat, hash);

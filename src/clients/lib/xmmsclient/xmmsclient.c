@@ -19,6 +19,8 @@
  *
  */
 
+/* required for strndup(), remove this when we start using glib.h */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -360,38 +362,6 @@ xmmsc_decode_path (const char *path)
 	return qstr;
 }
 
-static int
-add (char *target, int max, int len, char *str)
-{
-	int tmpl, left;
-
-	tmpl = strlen (str);
-	left = (max - 1) - len;
-
-	if (left < 1)
-		return 0;
-
-	left = MIN (left, tmpl);
-	strncat (target, str, left);
-
-	return left;
-}
-
-static int
-lookup_and_add (char *target, int max, int len, x_hash_t *table, const char *entry)
-{
-	char *tmp;
-	int tmpl;
-
-	tmp = x_hash_lookup (table, entry);
-	if (!tmp)
-		return 0;
-
-	tmpl = add (target, max, len, tmp);
-
-	return tmpl;
-}
-
 /**
  * This function will make a pretty string about the information in
  * the mediainfo hash supplied to it.
@@ -406,135 +376,90 @@ lookup_and_add (char *target, int max, int len, x_hash_t *table, const char *ent
 int
 xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 {
-	int i = 0;
-	char c;
+	const char *pos;
 
-	if (!target)
+	if (!target) {
 		return 0;
-
-	*target = '\0';
-
-	while (*fmt && i < (len - 1)) {
-
-		c = *(fmt++);
-
-		if (c == '%') {
-			switch (*fmt) {
-				case 'a':
-					/* artist */
-					i += lookup_and_add (target, len, i, table, "artist");
-					break;
-				case 'b':
-					/* album */
-					i += lookup_and_add (target, len, i, table, "album");
-					break;
-				case 'c':
-					/* channel name */
-					i += lookup_and_add (target, len, i, table, "channel");
-					break;
-				case 'd':
-					/* duration in ms */
-					i += lookup_and_add (target, len, i, table, "duration");
-					break;
-				case 'g':
-					/* genre */
-					i += lookup_and_add (target, len, i, table, "genre");
-					break;
-				case 'h':
-					/* samplerate */
-					i += lookup_and_add (target, len, i, table, "samplerate");
-					break;
-				case 'u':
-					/* URL */
-					i += lookup_and_add (target, len, i, table, "url");
-					break;
-				case 'f':
-					/* filename */
-					{
-						char *p;
-						char *str;
-						p = x_hash_lookup (table, "url");
-
-						if (!p)
-							continue;
-
-					      	str = strrchr (p, '/');
-						if (!str || !str[1])
-							str = p;
-						else
-							str++;
-						str = xmmsc_decode_path (str);
-
-						i += add (target, len, i, str);
-						free (str);
-					}
-
-					break;
-				case 'o':
-					/* comment */
-					i += lookup_and_add (target, len, i, table, "comment");
-					break;
-				case 'm':
-					{
-						char *p;
-						/* minutes */
-					
-						p = x_hash_lookup (table, "duration");
-						if (!p) {
-							i += add (target, len, i, "00");
-						} else {
-							int d = atoi (p);
-							char t[4];
-							snprintf (t, 4, "%02d", d/60000);
-							i += add (target, len, i, t);
-						}
-						break;
-					}
-				case 'n':
-					/* tracknr */
-					i += lookup_and_add (target, len, i, table, "tracknr");
-					break;
-				case 'r':
-					/* bitrate */
-					i += lookup_and_add (target, len, i, table, "bitrate");
-					break;
-				case 's':
-					{
-						char *p;
-						/* seconds */
-					
-						p = x_hash_lookup (table, "duration");
-						if (!p) {
-							i += add (target, len, i, "00");
-						} else {
-							int d = atoi (p);
-							char t[4];
-							snprintf (t, 4, "%02d", (d/1000)%60);
-							i += add (target, len, i, t);
-						}
-						break;
-					}
-
-					break;
-				case 't':
-					/* title */
-					i += lookup_and_add (target, len, i, table, "title");
-					break;
-				case 'y':
-					/* year */
-					i += lookup_and_add (target, len, i, table, "year");
-					break;
-			}
-			*fmt++;
-		} else {
-			target[i++] = c;
-			target[i] = '\0';
-		}
-
 	}
 
-	return i;
+	if (!fmt) {
+		return 0;
+	}
 
+	memset (target, '\0', len);
+
+	pos = fmt;
+	while (strlen (target) + 1 < len) {
+		char *next_key, *key, *result, *end;
+		int keylen;
+
+		next_key = strstr (pos, "${");
+		if (!next_key) {
+			strncat (target, pos, len - strlen (target) - 1);
+			break;
+		}
+
+		strncat (target, pos, MIN (next_key - pos, len - strlen (target) - 1));
+		keylen = strcspn (next_key + 2, "}");
+		key = strndup(next_key + 2, keylen);
+
+		if (!key) {
+			fprintf (stderr, "Unable to allocate %u bytes of memory, OOM?", keylen);
+			break;
+		}
+
+		if (strcmp (key, "seconds") == 0) {
+			char seconds[10];
+			int d;
+			char *duration = x_hash_lookup (table, "duration");
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+				goto cont;
+			}
+
+			d = atoi (duration);
+			snprintf (seconds, sizeof seconds, "%02d", (d/1000)%60);
+			strncat (target, seconds, len - strlen (target) - 1);
+			goto cont;
+		}
+
+		if (strcmp (key, "minutes") == 0) {
+			char minutes[10];
+			int d;
+			char *duration = x_hash_lookup (table, "duration");
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+				goto cont;
+			}
+
+			d = atoi (duration);
+			snprintf (minutes, sizeof minutes, "%02d", d/60000);
+			strncat (target, minutes, len - strlen (target) - 1);
+			goto cont;
+		}
+
+		result = x_hash_lookup (table, key);
+
+		if (result) {
+			strncat (target, result, len - strlen (target) - 1);
+		} else {
+			strncat (target, "\"\"", len - strlen (target) - 1);
+		}
+
+cont:
+		free (key);
+		end = strchr (next_key, '}');
+
+		if (!end) {
+			break;
+		}
+
+		pos = end + 1;
+	}
+
+	return strlen (target);
 }
 
 

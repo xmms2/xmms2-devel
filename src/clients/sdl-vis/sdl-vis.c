@@ -217,13 +217,13 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		if (id == mid) {
 			if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
 				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-				                    "[stream] %t", hash);
+				                    "[stream] ${title}", hash);
 			} else if (x_hash_lookup (hash, "channel")) {
 				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-				                    "%c", hash);
+				                    "${channel}", hash);
 			} else {
 				xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-				                    "%a - %t", hash);
+				                    "${artist} - ${title}", hash);
 			}
 		}
 		x_hash_destroy (hash);
