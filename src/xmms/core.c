@@ -49,7 +49,7 @@ static void
 eos_reached (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	XMMS_DBG ("eos_reached");
-	g_cond_signal (core->cond);
+	xmms_core_play_next ();
 }
 
 /**
@@ -76,6 +76,13 @@ xmms_core_output_set (xmms_output_t *output)
 void
 xmms_core_play_next ()
 {
+	core->curr_song = xmms_playlist_get_next_entry (core->playlist);
+
+	if (!core->curr_song) {
+		xmms_core_playback_stop ();
+		return;
+	}
+
 	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
 		g_cond_signal (core->cond);
 	} else {
@@ -119,6 +126,13 @@ void
 xmms_core_playlist_jump (guint id)
 {
 	xmms_playlist_set_current_position (core->playlist, id);
+
+	if (core->status == XMMS_CORE_PLAYBACK_RUNNING) {
+		g_cond_signal (core->cond);
+	} else {
+		XMMS_DBG ("xmms_core_playback_next with status != XMMS_CORE_PLAYBACK_RUNNING");
+	}
+
 }
 
 void
@@ -173,6 +187,8 @@ xmms_core_init ()
 	xmms_object_init (XMMS_OBJECT (core));
 	core->cond = g_cond_new ();
 	core->mutex = g_mutex_new ();
+
+
 }
 
 static gpointer 
@@ -184,15 +200,14 @@ core_thread(gpointer data){
 
 	while (running) {
 		
-		if (core->status != XMMS_CORE_PLAYBACK_STOPPED)
-			core->curr_song = xmms_playlist_get_next (core->playlist);
-
 		while (core->status == XMMS_CORE_PLAYBACK_STOPPED) {
 			XMMS_DBG ("Waiting until playback starts...");
 			g_mutex_lock (core->mutex);
 			g_cond_wait (core->cond, core->mutex);
 			g_mutex_unlock (core->mutex);
 		}
+		
+		core->curr_song = xmms_playlist_get_current_entry (core->playlist);
 
 		if (!core->curr_song) {
 			core->status = XMMS_CORE_PLAYBACK_STOPPED;
@@ -288,10 +303,38 @@ xmms_core_set_mediainfo (xmms_playlist_entry_t *entry)
  *
  * @internal
  */
+
+static void
+handle_playlist_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
+{
+	const xmms_playlist_changed_msg_t *chmsg = data;
+	switch (chmsg->type) {
+		case XMMS_PLAYLIST_CHANGED_ADD:
+			XMMS_DBG ("Something was added to playlist");
+			break;
+		case XMMS_PLAYLIST_CHANGED_SHUFFLE:
+			XMMS_DBG ("Playlist was shuffled");
+			break;
+		case XMMS_PLAYLIST_CHANGED_CLEAR:
+			XMMS_DBG ("Playlist was cleared");
+			break;
+		case XMMS_PLAYLIST_CHANGED_REMOVE:
+			XMMS_DBG ("Something was removed from playlist");
+			break;
+		case XMMS_PLAYLIST_CHANGED_SET_POS:
+			XMMS_DBG ("We jumped in playlist");
+			break;
+	}
+}
+
+
 void
 xmms_core_set_playlist (xmms_playlist_t *playlist)
 {
 	core->playlist = playlist;
+	
+	xmms_object_connect (XMMS_OBJECT (playlist), "playlist-changed", 
+			     handle_playlist_changed, NULL);
 }
 
 /**

@@ -213,7 +213,6 @@ main(int argc, char **argv)
 			}
 
 			xmmsc_playlist_jump (c, atoi (argv[2]));
-			xmmsc_play_next (c);
 
 			xmmsc_deinit (c);
 			exit (0);

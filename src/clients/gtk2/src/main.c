@@ -121,7 +121,8 @@ mediainfo (gint id)
 			gtk_label_set_text (GTK_LABEL (title), tmp);
 		} else {
 			tmp = (gchar *)g_hash_table_lookup (entry, "uri");
-			gtk_label_set_text (GTK_LABEL (title), tmp);
+			tmp = strrchr (tmp, '/');
+			gtk_label_set_text (GTK_LABEL (title), tmp+1);
 		}
 
 		state = PLAY;

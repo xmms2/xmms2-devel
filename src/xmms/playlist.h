@@ -3,6 +3,8 @@
 
 #include <glib.h>
 
+#include "object.h"
+
 /*
  * Public definitions
  */
@@ -13,6 +15,15 @@ typedef enum {
 	XMMS_PLAYLIST_INSERT,
 	XMMS_PLAYLIST_DELETE
 } xmms_playlist_actions_t;
+
+typedef enum {
+	XMMS_PLAYLIST_CHANGED_ADD,
+	XMMS_PLAYLIST_CHANGED_SET_POS,
+	XMMS_PLAYLIST_CHANGED_SHUFFLE,
+	XMMS_PLAYLIST_CHANGED_REMOVE,
+	XMMS_PLAYLIST_CHANGED_CLEAR
+} xmms_playlist_changed_actions_t;
+
 
 #define xmms_playlist_entry_foreach_prop(a,b,c) g_hash_table_foreach(a->properties, b, c)
 
@@ -35,10 +46,11 @@ typedef enum {
 
 /** Playlist structure */
 typedef struct xmms_playlist_St {
+	xmms_object_t object;
 	/** The current list first node. */
 	GList *list;
 	/** Next song that will be retured by xmms_playlist_get_next */
-	GList *nextentry;
+	GList *currententry;
 
 	GHashTable *id_table;
 	guint nextid;
@@ -54,6 +66,12 @@ typedef struct xmms_playlist_entry_St {
 	GHashTable *properties;
 } xmms_playlist_entry_t;
 
+typedef struct xmms_playlist_changed_msg_St {
+	gint type;
+	guint id;
+	gpointer arg;
+} xmms_playlist_changed_msg_t;
+
 /*
  * Public functions
  */
@@ -66,7 +84,8 @@ guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
 gboolean xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint id);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
 xmms_playlist_entry_t * xmms_playlist_get_byid (xmms_playlist_t *playlist, guint id);
-xmms_playlist_entry_t * xmms_playlist_get_next (xmms_playlist_t *playlist);
+xmms_playlist_entry_t * xmms_playlist_get_next_entry (xmms_playlist_t *playlist);
+xmms_playlist_entry_t * xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
 GList * xmms_playlist_list (xmms_playlist_t *playlist);
 void xmms_playlist_wait (xmms_playlist_t *playlist);
 void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property);
