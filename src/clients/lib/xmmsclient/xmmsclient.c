@@ -26,6 +26,8 @@ typedef enum {
 	XMMSC_TYPE_NONE,
 	XMMSC_TYPE_VIS,
 	XMMSC_TYPE_MOVE,
+	XMMSC_TYPE_MEDIAINFO,
+	XMMSC_TYPE_UINT32_ARRAY,
 } xmmsc_types_t;
 
 typedef struct xmmsc_signal_callbacks_St {
@@ -52,11 +54,13 @@ static xmmsc_signal_callbacks_t callbacks[] = {
 	{ XMMS_SIGNAL_PLAYBACK_CURRENTID, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_CORE_DISCONNECT, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_ADD, XMMSC_TYPE_UINT32 },
+	{ XMMS_SIGNAL_PLAYLIST_MEDIAINFO, XMMSC_TYPE_MEDIAINFO },
 	{ XMMS_SIGNAL_PLAYLIST_SHUFFLE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_CLEAR, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_REMOVE, XMMSC_TYPE_NONE },
 	{ XMMS_SIGNAL_PLAYLIST_JUMP, XMMSC_TYPE_UINT32 },
 	{ XMMS_SIGNAL_PLAYLIST_MOVE, XMMSC_TYPE_MOVE },
+	{ XMMS_SIGNAL_PLAYLIST_LIST, XMMSC_TYPE_UINT32_ARRAY },
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM, XMMSC_TYPE_VIS },
 	{ NULL, 0 },
 };
@@ -157,6 +161,12 @@ xmmsc_playback_start (xmmsc_connection_t *c)
 }
 
 void
+xmmsc_playlist_list (xmmsc_connection_t *c)
+{
+	xmmsc_send_void(c,XMMS_SIGNAL_PLAYLIST_LIST);
+}
+
+void
 xmmsc_playlist_jump (xmmsc_connection_t *c, guint id)
 {
         DBusMessageIter itr;
@@ -215,6 +225,7 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, guint id)
 
 }
 
+/*
 GList *
 xmmsc_playlist_list (xmmsc_connection_t *c)
 {
@@ -254,8 +265,15 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	return list;
 
 }
+*/
 
+void
+xmmsc_get_playing_id (xmmsc_connection_t *c)
+{
+	xmmsc_send_void (c,XMMS_SIGNAL_PLAYBACK_CURRENTID);
+}
 
+/*
 guint
 xmmsc_get_playing_id (xmmsc_connection_t *c)
 {
@@ -283,22 +301,24 @@ xmmsc_get_playing_id (xmmsc_connection_t *c)
 
 	return id;
 }
+*/
 
-GHashTable *
+void
 xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 {
-	DBusMessage *msg, *ret;
+	DBusMessage *msg;
 	DBusMessageIter itr;
 	DBusError err;
-	GHashTable *tab = NULL;
+	guint cserial;
 
 	dbus_error_init (&err);
 
 	msg = dbus_message_new (XMMS_SIGNAL_PLAYLIST_MEDIAINFO, NULL);
 	dbus_message_append_iter_init (msg, &itr);
 	dbus_message_iter_append_uint32 (&itr, id);
-	ret = dbus_connection_send_with_reply_and_block (c->conn, msg, 2000, &err);
-	if (ret) {
+	dbus_connection_send (c->conn, msg, &cserial);
+
+/*	if (ret) {
 		DBusMessageIter itr;
 		
 		dbus_message_iter_init (ret, &itr);
@@ -318,17 +338,22 @@ xmmsc_playlist_get_mediainfo (xmmsc_connection_t *c, guint id)
 		} else {
 			g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "bad response :(\n");
 		}
-	}
+	}*/
 
 	dbus_message_unref (msg);
 	dbus_connection_flush (c->conn);
-
-	return tab;
 }
 
 static gboolean
 free_str (gpointer key, gpointer value, gpointer udata)
 {
+	gchar *k = (gchar *)key;
+
+	if (g_strcasecmp (k, "id") == 0) {
+		g_free (key);
+		return TRUE;
+	}
+
 	if (key)
 		g_free (key);
 	if (value)
@@ -537,6 +562,45 @@ handle_callback (DBusMessageHandler *handler,
 				tmp[0] = dbus_message_iter_get_uint32 (&itr);
 				tmp[1] = dbus_message_iter_get_uint32 (&itr);
 				arg = &tmp;
+			}
+			break;
+
+		case XMMSC_TYPE_UINT32_ARRAY:
+			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_ARRAY &&
+				dbus_message_iter_get_array_type (&itr) == DBUS_TYPE_UINT32) {
+				guint32 *arr;
+				gint len;
+				guint32 *tmp;
+
+				dbus_message_iter_get_uint32_array (&itr, &tmp, &len);
+
+				arr = g_new0 (guint32, len+1);
+				memcpy (arr, tmp, len * sizeof(guint32));
+				arr[len] = '\0';
+				
+				arg = arr;
+			}
+			break;
+		case XMMSC_TYPE_MEDIAINFO:
+			if (dbus_message_iter_get_arg_type (&itr) == DBUS_TYPE_DICT) {
+				DBusMessageIter dictitr;
+				GHashTable *tab;
+				dbus_message_iter_init_dict_iterator (&itr, &dictitr);
+
+				tab = g_hash_table_new (g_str_hash, g_str_equal);
+
+				while (42) {
+					gchar *key = dbus_message_iter_get_dict_key (&dictitr);
+					if (g_strcasecmp (key, "id") == 0) {
+						g_hash_table_insert (tab, key, GUINT_TO_POINTER (dbus_message_iter_get_uint32 (&dictitr)));
+					} else {
+						g_hash_table_insert (tab, key, dbus_message_iter_get_string (&dictitr));
+					}
+					if (!dbus_message_iter_has_next (&dictitr))
+						break;
+					dbus_message_iter_next (&dictitr);
+				}
+				arg = tab;
 			}
 			break;
 

@@ -161,18 +161,20 @@ render_vis (gpointer data)
 	return TRUE;
 }
 
+static void
+set_mediainfo (xmmsc_connection_t *conn, void *arg)
+{
+	guint id = GPOINTER_TO_UINT (arg);
+
+	xmmsc_playlist_get_mediainfo (conn, id);
+
+}
+
 
 static void
-set_mediainfo (xmmsc_connection_t *conn, guint id)
+handle_mediainfo (xmmsc_connection_t *conn, void *arg)
 {
-	GHashTable *entry;
-
-	entry = xmmsc_playlist_get_mediainfo (conn, id);
-
-	if (!entry) {
-		fprintf (stderr, "id %d doesn't exist in playlist\n", id);
-		return;
-	}
+	GHashTable *entry = (GHashTable *)arg;
 
 	snprintf (mediainfo, 63, "%s - %s",
 		  (gchar *)g_hash_table_lookup (entry, "artist"),
@@ -275,7 +277,9 @@ main()
 
 	screen = SDL_SetVideoMode(640, 480, 32, 0);
 
-	set_mediainfo (connection, xmmsc_get_playing_id (connection));
+	//set_mediainfo (connection, xmmsc_get_playing_id (connection));
+
+	xmmsc_get_playing_id (connection);
 
 	xmmsc_set_callback (connection, XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 			    new_data, NULL);
@@ -283,6 +287,8 @@ main()
 			    handle_playtime, NULL);
 	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYBACK_CURRENTID,
 			    set_mediainfo, (void *) connection);
+	xmmsc_set_callback (connection, XMMS_SIGNAL_PLAYLIST_MEDIAINFO,
+			    handle_mediainfo, (void *) connection);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);
 
