@@ -42,6 +42,8 @@ cdef extern from "internal/client_ipc.h" :
 	ctypedef struct xmmsc_ipc_t
 
 	int xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
+	int xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
+	int xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 	int xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 	void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 	void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error)
@@ -486,6 +488,12 @@ cdef class XMMS :
 		example
 		"""
 		xmmsc_ipc_io_in_callback (self.conn.ipc)
+
+	def ioout(self):
+		xmmsc_ipc_io_out_callback (self.conn.ipc)
+
+	def want_ioout(self):
+		return xmmsc_ipc_io_out (self.conn.ipc)
 		
 	def get_fd (self) :
 		"""
