@@ -218,7 +218,6 @@ xmms_core_init ()
 	core->cond = g_cond_new ();
 	core->mutex = g_mutex_new ();
 
-
 }
 
 static gpointer 
@@ -296,7 +295,7 @@ core_thread (gpointer data)
 		XMMS_DBG ("starting threads..");
 		xmms_transport_start (transport);
 		XMMS_DBG ("transport started");
-		xmms_decoder_start (decoder, transport, NULL, core->output);
+		xmms_decoder_start (decoder, transport, core->effects, core->output);
 		XMMS_DBG ("decoder started");
 
 		g_mutex_lock (core->mutex);
@@ -320,6 +319,7 @@ void
 xmms_core_start ()
 {
 	core->mediainfothread = xmms_mediainfo_thread_start (core->playlist);
+	core->effects = xmms_effect_prepend (NULL, "equalizer");
 	g_thread_create (core_thread, NULL, FALSE, NULL);
 }
 

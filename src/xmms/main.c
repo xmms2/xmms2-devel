@@ -17,6 +17,7 @@
 #include "output.h"
 #include "output_int.h"
 #include "xmms.h"
+#include "effect.h"
 
 #include <stdlib.h>
 #include <getopt.h>
