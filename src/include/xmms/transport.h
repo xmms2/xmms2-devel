@@ -67,7 +67,6 @@ typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
  * Public function prototypes
  */
 
-void xmms_transport_mediainfo_property_set (xmms_transport_t *transport, gchar *key, gchar *value);
 void xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size);
 GList *xmms_transport_list (const gchar *path);
 void xmms_transport_list_free (GList *);
@@ -81,7 +80,6 @@ gint xmms_transport_size (xmms_transport_t *transport);
 xmms_plugin_t *xmms_transport_plugin_get (const xmms_transport_t *transport);
 const gchar *xmms_transport_url_get (const xmms_transport_t *const transport);
 xmms_medialib_entry_t xmms_transport_medialib_entry_get (const xmms_transport_t *const transport);
-void xmms_transport_entry_mediainfo_set (xmms_transport_t *transport, xmms_medialib_entry_t entry);
 const gchar *xmms_transport_suburl_get (const xmms_transport_t *const transport);
 void xmms_transport_close (xmms_transport_t *transport);
 gboolean xmms_transport_can_seek (xmms_transport_t *transport);
