@@ -96,7 +96,8 @@ static gboolean xmms_alsa_mixer_setup (xmms_output_t *output);
 static void xmms_alsa_probe_modes (xmms_output_t *output,
                                    xmms_alsa_data_t *data);
 static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
-                                  xmms_sample_format_t fmt,
+                                  snd_pcm_format_t alsa_fmt,
+                                  xmms_sample_format_t xmms_fmt,
                                   gint channels, gint rate);
 
 /*
@@ -232,6 +233,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 		for (j = 1; j < 3; j++) {
 			for (k = 0; k < G_N_ELEMENTS (rates); k++) {
 				xmms_alsa_probe_mode (output, data->pcm,
+				                      formats[i].alsa_fmt,
 				                      formats[i].xmms_fmt, j, rates[k]);
 			}
 		}
@@ -242,7 +244,9 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 
 static void
 xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
-                      xmms_sample_format_t fmt, gint channels, gint rate)
+                      snd_pcm_format_t alsa_fmt,
+                      xmms_sample_format_t xmms_fmt,
+                      gint channels, gint rate)
 {
 	snd_pcm_hw_params_t *params;
 	int err, tmp;
@@ -266,9 +270,9 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 		return;
 	}
 
-	err = snd_pcm_hw_params_set_format (pcm, params, fmt);
+	err = snd_pcm_hw_params_set_format (pcm, params, alsa_fmt);
 	if (err < 0) {
-		XMMS_DBG ("cannot set format to %i", fmt);
+		XMMS_DBG ("cannot set format to %i", alsa_fmt);
 		return;
 	}
 
@@ -285,7 +289,7 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 		return;
 	}
 
-	xmms_output_format_add (output, fmt, channels, tmp);
+	xmms_output_format_add (output, xmms_fmt, channels, tmp);
 }
 
 /**
