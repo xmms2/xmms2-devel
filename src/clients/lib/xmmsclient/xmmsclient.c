@@ -218,6 +218,11 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 }
 
 
+void
+xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata)
+{
+	xmmsc_ipc_disconnect_set (c->ipc, callback, userdata);
+}
 
 
 /**
