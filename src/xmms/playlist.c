@@ -15,9 +15,6 @@
  */
 
 
-
-
-
 /** @file
  *  Controls playlist
  */
@@ -31,6 +28,7 @@
 
 #include "xmms/playlist.h"
 #include "xmms/playlist_entry.h"
+#include "xmms/plsplugins.h"
 #include "xmms/util.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/ipc.h"
@@ -720,7 +718,7 @@ xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 	return r;
 }
 
-XMMS_METHOD_DEFINE (save, xmms_playlist_save, xmms_playlist_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (save, xmms_playlist_save, xmms_playlist_t *, NONE, STRING, NONE);
 
 void
 xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *err)
@@ -781,48 +779,48 @@ xmms_playlist_init (void)
 	ret->mode = playlist_mode_from_str (tmp);
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_SHUFFLE, 
-				XMMS_CMD_FUNC (shuffle));
+			     XMMS_IPC_CMD_SHUFFLE, 
+			     XMMS_CMD_FUNC (shuffle));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_JUMP, 
-				XMMS_CMD_FUNC (set_next));
+			     XMMS_IPC_CMD_JUMP, 
+			     XMMS_CMD_FUNC (set_next));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_ADD, 
-				XMMS_CMD_FUNC (add));
+			     XMMS_IPC_CMD_ADD, 
+			     XMMS_CMD_FUNC (add));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_MEDIALIBADD, 
-				XMMS_CMD_FUNC (medialibadd));
+			     XMMS_IPC_CMD_MEDIALIBADD, 
+			     XMMS_CMD_FUNC (medialibadd));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_GETMEDIAINFO, 
-				XMMS_CMD_FUNC (getmediainfo));
+			     XMMS_IPC_CMD_GETMEDIAINFO, 
+			     XMMS_CMD_FUNC (getmediainfo));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_REMOVE, 
-				XMMS_CMD_FUNC (remove));
+			     XMMS_IPC_CMD_REMOVE, 
+			     XMMS_CMD_FUNC (remove));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_MOVE, 
-				XMMS_CMD_FUNC (move));
+			     XMMS_IPC_CMD_MOVE, 
+			     XMMS_CMD_FUNC (move));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_LIST, 
-				XMMS_CMD_FUNC (list));
+			     XMMS_IPC_CMD_LIST, 
+			     XMMS_CMD_FUNC (list));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_CLEAR, 
-				XMMS_CMD_FUNC (clear));
+			     XMMS_IPC_CMD_CLEAR, 
+			     XMMS_CMD_FUNC (clear));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-				XMMS_IPC_CMD_SORT, 
-				XMMS_CMD_FUNC (sort));
+			     XMMS_IPC_CMD_SORT, 
+			     XMMS_CMD_FUNC (sort));
 
-	xmms_object_method_add (XMMS_OBJECT (ret),
-				XMMS_METHOD_SAVE,
-				XMMS_METHOD_FUNC (save));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+			     XMMS_IPC_CMD_SAVE,
+			     XMMS_CMD_FUNC (save));
 
 	ret->mediainfothr = xmms_mediainfo_thread_start (ret);
 

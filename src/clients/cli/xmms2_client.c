@@ -682,6 +682,7 @@ cmds commands[] = {
 	{ "prev", "play previous song", cmd_prev },
 	{ "seek", "seek to a specific place in current song", cmd_seek },
 	{ "jump", "take a leap in the playlist", cmd_jump },
+	{ "save", "save the playlist", cmd_save_playlist },
 //	{ "move", "move a entry in the playlist", cmd_move },
 
 	{ "mlib", "medialib manipulation", cmd_mlib },

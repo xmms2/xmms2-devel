@@ -357,8 +357,8 @@ xmms_config_init (const gchar *filename)
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES, XMMS_CMD_FUNC (listvalues));
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
-	xmms_dbus_register_onchange (XMMS_OBJECT (config),
-	                             XMMS_SIGNAL_CONFIG_VALUE_CHANGE);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (config),
+	                             XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
 
 	return TRUE;
 }
@@ -639,15 +639,15 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 
 	g_free (val->data);
 	val->data = g_strdup (data);
-	xmms_object_emit (XMMS_OBJECT (val), XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
+	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 
 	list = g_list_prepend (list, val->data);
 	list = g_list_prepend (list, (gpointer) val->name);
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
-	                    XMMS_SIGNAL_CONFIG_VALUE_CHANGE,
-						XMMS_OBJECT_METHOD_ARG_STRINGLIST,
+	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+			    XMMS_OBJECT_CMD_ARG_STRINGLIST,
 	                    list);
 }
 
