@@ -190,6 +190,7 @@ static xmms_dbus_signal_mask_map_t mask_map [] = {
 	{ XMMS_SIGNAL_VISUALISATION_SPECTRUM,
 		XMMS_SIGNAL_MASK_VISUALISATION_SPECTRUM, 
 		send_visualisation_spectrum, NULL, NULL, NULL },
+	{ NULL, 0, NULL, NULL, NULL, NULL },
 };
 
 typedef struct xmms_dbus_connection_St {
