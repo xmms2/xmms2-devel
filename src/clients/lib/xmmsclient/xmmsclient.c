@@ -181,7 +181,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *dbuspath)
 		g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, "started!\n");
 
 		dbus_error_init (&err);
-		conn = dbus_connection_open ("unix:path=/tmp/xmms-dbus", &err);
+		conn = dbus_connection_open (dbuspath, &err);
 		if (!conn) {
 			c->error = "Couldn't connect to xmms2d even tough I started it... Bad, very bad.";
 			return FALSE;
