@@ -165,7 +165,7 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 	fd = accept (transport->fd, (struct sockaddr *)&sin, &sin_len);
 	if (fd >= 0) {
 		gint flags;
-		int off = 1;
+		int one = 1;
 		xmms_ipc_transport_t *ret;
 
 		flags = fcntl (fd, F_GETFL, 0);
@@ -183,7 +183,8 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 			return NULL;
 		}
 
-		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char *) &off, sizeof (off));
+		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof (one));
+		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one));
 
 		ret = g_new0 (xmms_ipc_transport_t, 1);
 		ret->fd = fd;
