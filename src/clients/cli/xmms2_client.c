@@ -16,6 +16,7 @@
 
 #include <xmms/xmmsclient.h>
 #include <xmms/xmmsclient-glib.h>
+#include <xmms/signal_xmms.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -239,6 +240,70 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_playback_start (conn);
 }
 
+/* STATUS FUNCTIONS */
+
+static gchar songname[60];
+static gint id;
+static gint curr_dur;
+
+static void
+handle_currentid (void *userdata, void *arg)
+{
+	id = GPOINTER_TO_UINT (arg);
+	xmmsc_playlist_get_mediainfo ((xmmsc_connection_t*)userdata, id);
+}
+
+static void
+handle_playtime (void *userdata, void *arg)
+{
+	guint dur = GPOINTER_TO_UINT (arg);
+
+	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", songname, dur / 60000, (dur/1000)%60, curr_dur/60000, (curr_dur/1000)%60);
+	fflush (stdout);
+}
+
+static void
+handle_mediainfo (void *userdata, void *arg)
+{
+	x_hash_t *hash = arg;
+	gchar *tmp;
+	gint mid;
+
+	tmp = x_hash_lookup (hash, "id");
+
+	mid = GPOINTER_TO_UINT (tmp);
+
+	if (id == mid) {
+		memset (songname, 0, 60);
+		printf ("\n");
+		xmmsc_entry_format (songname, 60, "%a - %t", hash);
+		tmp = x_hash_lookup (hash, "duration");
+		if (tmp)
+			curr_dur = atoi (tmp);
+		else
+			curr_dur = 0;
+	}
+
+}
+
+static void
+cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	GMainLoop *ml;
+
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_CURRENTID, handle_currentid, (void*) conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYBACK_PLAYTIME, handle_playtime, (void *) conn);
+	xmmsc_set_callback (conn, XMMS_SIGNAL_PLAYLIST_MEDIAINFO, handle_mediainfo, (void *) conn);
+
+	xmmsc_playback_current_id (conn);
+
+	ml = g_main_loop_new (NULL, FALSE);
+
+	xmmsc_setup_with_gmain (conn, NULL);
+
+	g_main_loop_run (ml);
+}
+
 /**
  * Defines all available commands.
  */
@@ -261,9 +326,10 @@ cmds commands[] = {
 	{ "jump", "take a leap in the playlist", cmd_jump },
 //	{ "move", "move a entry in the playlist", cmd_move },
 
-	{ "quit", "make the server quit", cmd_quit },
 
+	{ "status", "go into status mode", cmd_status },
 	{ "config", "set a config value", cmd_config },
+	{ "quit", "make the server quit", cmd_quit },
 
 	{ NULL, NULL, NULL },
 };
