@@ -103,7 +103,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 	g_return_val_if_fail (playlist, FALSE);
 	
 	buffer_len = xmms_transport_size (transport);
-	buffer = g_malloc (buffer_len);
+	buffer = g_malloc0 (buffer_len);
 
 	while (len < buffer_len) {
 		gint ret;
@@ -167,7 +167,9 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 						g_free (path);
 					}
 				} else {
-					entry = xmms_playlist_entry_new (lines[i]);
+					gchar *new;
+					new = g_strdup_printf ("file://%s", lines[i]);
+					entry = xmms_playlist_entry_new (new);
 				}
 			}
 
@@ -187,6 +189,8 @@ xmms_m3u_read_playlist (xmms_transport_t *transport,
 						g_free (path);
 					}
 				} else {
+					gchar *new;
+					new = g_strdup_printf ("file://%s", lines[i]);
 					entry = xmms_playlist_entry_new (lines[i]);
 				}
 			}
