@@ -125,6 +125,9 @@ xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id)
 		XMMS_PLAYLIST_UNLOCK (playlist);
 		return FALSE;
 	}
+	if (node == playlist->nextentry) {
+		playlist->nextentry = g_list_next (node);
+	}
 	g_hash_table_remove (playlist->id_table, GUINT_TO_POINTER (id));
 	xmms_playlist_entry_free (node->data);
 	playlist->list = g_list_remove_link (playlist->list, node);
