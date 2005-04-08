@@ -104,11 +104,16 @@ parse_config ()
 static void
 change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
+	xmms_plugin_t *plugin;
+	xmms_main_t *mainobj = (xmms_main_t*)userdata;
+
 	gchar *outname = (gchar *)data;
 
 	XMMS_DBG ("Want to use %s as output instead", outname);
 
-	/** @todo fix this */
+	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
+
+	xmms_output_plugin_switch (mainobj->output, plugin);
 }
 
 static void
@@ -304,27 +309,26 @@ main (int argc, char **argv)
 		return 1;
 
 	
-	if (!outname) {
-		cv = xmms_config_value_register ("output.plugin",
-		                                 XMMS_OUTPUT_DEFAULT,
-		                                 change_output, NULL);
-		outname = xmms_config_value_string_get (cv);
-	}
-
-	XMMS_DBG ("output = %s", outname);
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
-	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
-	g_return_val_if_fail (o_plugin, -1);
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
+	if (!outname) {
+		cv = xmms_config_value_register ("output.plugin",
+		                                 XMMS_OUTPUT_DEFAULT,
+		                                 change_output, mainobj);
+		outname = xmms_config_value_string_get (cv);
+	}
+
+	XMMS_DBG ("output = %s", outname);
+
+	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 	mainobj->output = xmms_output_new (o_plugin, playlist);
-	g_return_val_if_fail (mainobj->output, -1);
 
 	init_volume_config_proxy (outname);
 
