@@ -361,12 +361,15 @@ xmms_plugin_scan_directory (const gchar *dir)
 		XMMS_DBG ("Trying to load file: %s", path);
 		module = g_module_open (path, 0);
 		if (!module) {
-			XMMS_DBG ("%s", g_module_error ());
+			xmms_log_error ("Failed to open plugin %s: %s",
+			                path, g_module_error ());
 			g_free (path);
 			continue;
 		}
 
 		if (!g_module_symbol (module, "xmms_plugin_get", &sym)) {
+			xmms_log_error ("Failed to open plugin %s: "
+			                "initialization function missing", path);
 			g_module_close (module);
 			g_free (path);
 			continue;
