@@ -571,52 +571,35 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 	xmms_output_new_method_t new;
 	xmms_output_write_method_t wr;
 	xmms_output_status_method_t st;
-	xmms_plugin_t *old_plugin = NULL;
-	gboolean run;
-	gboolean sw = TRUE;
 
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (new_plugin, FALSE);
 
-	g_mutex_lock (output->write_mutex);
+	xmms_output_stop (output, NULL);
 
-	run = output->write_running;
-	output->write_running = FALSE;
+	g_mutex_lock (output->status_mutex);
 
-	new = xmms_output_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_NEW);
-	if (new) {
-		old_plugin = output->plugin;
-		output->plugin = new_plugin;
-		if (!new (output)) {
-			sw = FALSE;
-		} else {
-			wr = xmms_output_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_WRITE);
-			st = xmms_output_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_STATUS);
-
-			if (!wr && !st) {
-				sw = FALSE;
-			}
-		}
-		output->plugin = old_plugin;
-
+	if (output->plugin) {
+		dest = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+		if (dest)
+			dest (output);
+		xmms_object_unref (output->plugin);
 	}
 
-	if (sw) {
-		if (output->plugin) {
-			dest = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-			if (dest)
-				dest (output);
-			xmms_object_unref (output->plugin);
+	output->plugin = new_plugin;
+	new = xmms_output_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_NEW);
+	if (new) {
+		if (new (output)) {
+			wr = xmms_output_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_WRITE);
+			st = xmms_output_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_STATUS);
+			output->status_method = st ? st : status_changed;
+		} else {
 			output->plugin = NULL;
 		}
-		output->plugin = new_plugin;
-		output->status_method = st ? st : status_changed;
 	} 
 	
 
-	output->write_running = run;
-
-	g_mutex_unlock (output->write_mutex);
+	g_mutex_unlock (output->status_mutex);
 
 	return TRUE;
 
