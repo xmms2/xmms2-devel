@@ -255,7 +255,7 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 		gint i;
 
 		for (i = 0; i < (ret / 2); i++) {
-			s[i] = GINT16_TO_LE (s[i]);
+			s[i] = GINT16_FROM_LE (s[i]);
 		}
 	}
 #endif
