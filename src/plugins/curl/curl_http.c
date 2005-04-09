@@ -326,7 +326,7 @@ xmms_curl_close (xmms_transport_t *transport)
 	data->running = FALSE;
 
 	g_mutex_lock (data->mutex);
-	xmms_ringbuf_clear (data->ringbuf);
+	xmms_ringbuf_set_eos (data->ringbuf, TRUE);
 	g_mutex_unlock (data->mutex);
 
 	XMMS_DBG ("Waiting for thread...");
