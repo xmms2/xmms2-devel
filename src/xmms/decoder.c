@@ -165,7 +165,7 @@ static gpointer xmms_decoder_thread (gpointer data);
  * again. FALSE will discontinue decoding.
  *
  * #XMMS_PLUGIN_METHOD_GET_MEDIAINFO Extracts the mediainfo for this 
- * sourcetype. This will be called from the mediainfo thread when
+ * sourcetype. This will be called from the mediainfo reader when
  * something is added to the playlist. Prototype is:
  * @code
  * void mediainfo (xmms_decoder_t *decoder);
