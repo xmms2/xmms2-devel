@@ -446,22 +446,6 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 	g_mutex_unlock (output->status_mutex);
 }
 
-static GList *
-xmms_output_stats (xmms_output_t *output, GList *list)
-{
-	gchar *tmp;
-	GList *ret;
-
-	g_return_val_if_fail (output, NULL);
-
-	tmp = g_strdup_printf ("output.total_bytes=%llu", output->bytes_written);
-	ret = g_list_append (list, tmp);
-	tmp = g_strdup_printf ("output.buffer_underruns=%d", output->buffer_underruns);
-	ret = g_list_append (ret, tmp);
-
-	return ret;
-}
-
 static gboolean
 xmms_output_open (xmms_output_t *output)
 {
