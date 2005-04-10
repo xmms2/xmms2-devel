@@ -368,8 +368,6 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 	guint32 id;
 
 	g_return_val_if_fail (playlist, FALSE);
-	g_return_val_if_fail (id, FALSE);
-	g_return_val_if_fail (newpos, FALSE);
 
 	XMMS_DBG ("Moving %d, to %d", pos, newpos);
 
