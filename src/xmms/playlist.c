@@ -664,7 +664,7 @@ xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *er
 }
 
 
-/** returns pointer to mediainfo thread. */
+/** returns pointer to mediainfo reader. */
 xmms_mediainfo_reader_t *
 xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist)
 {
