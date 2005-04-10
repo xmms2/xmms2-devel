@@ -384,6 +384,8 @@ xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry)
 	xmms_sqlite_query (medialib->sql, xmms_medialib_hashtable_cb, ret, 
 			   "select * from Media where id=%d", entry);
 
+	g_hash_table_insert (ret, g_strdup ("id"), g_strdup_printf ("%u", entry));
+
 	g_mutex_unlock (medialib->mutex);
 
 	return ret;
