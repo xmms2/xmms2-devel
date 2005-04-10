@@ -371,18 +371,20 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 	g_return_val_if_fail (id, FALSE);
 	g_return_val_if_fail (newpos, FALSE);
 
-	XMMS_DBG ("Moving %d, to %d", id, newpos);
+	XMMS_DBG ("Moving %d, to %d", pos, newpos);
 
 	g_mutex_lock (playlist->mutex);
 	id = g_array_index (playlist->list, guint32, pos);
-	if (!pos) {
+	if (!id) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");
 		g_mutex_unlock (playlist->mutex);
 		return FALSE;
 	}
-	
 
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_MOVE, id, newpos);
+	g_array_remove_index (playlist->list, pos);
+	g_array_insert_val (playlist->list, newpos, id);
+
+	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_MOVE, pos, newpos);
 
 	g_mutex_unlock (playlist->mutex);
 
