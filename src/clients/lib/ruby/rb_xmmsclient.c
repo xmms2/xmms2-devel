@@ -21,6 +21,7 @@
 #include <glib.h>
 
 #include <xmms/xmmsclient.h>
+#include <xmms/output.h>
 
 #ifdef HAVE_ECORE
 #include <xmms/xmmsclient-ecore.h>
@@ -297,9 +298,9 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, broadcast_configval_changed, 0);
 
 	rb_define_const (c, "PLAY",
-	                 INT2FIX (XMMSC_PLAYBACK_PLAY));
+	                 INT2FIX (XMMS_OUTPUT_STATUS_PLAY));
 	rb_define_const (c, "STOP",
-	                 INT2FIX (XMMSC_PLAYBACK_STOP));
+	                 INT2FIX (XMMS_OUTPUT_STATUS_STOP));
 	rb_define_const (c, "PAUSE",
-	                 INT2FIX (XMMSC_PLAYBACK_PAUSE));
+	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
 }
