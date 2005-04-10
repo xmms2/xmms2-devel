@@ -445,8 +445,8 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->transport = transport;
 	client->ipc = ipc;
 	client->run = TRUE;
-	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
 	client->out_msg = g_queue_new ();
+	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
 	
 	return client;
 }

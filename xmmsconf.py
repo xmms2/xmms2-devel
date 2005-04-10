@@ -64,7 +64,7 @@ def checkFlags(base_env):
 	base_env.CheckAndAddFlagsToGroup("valgrind", "pkg-config --libs --cflags valgrind")
 	if base_env.HasGroup("valgrind"):
 		base_env.AddFlagsToGroup("valgrind", " -DHAVE_VALGRIND");
-	base_env.CheckAndAddFlagsToGroup("gnomevfs", "pkg-config --libs --cflags gnome-vfs-2.0")
+#	base_env.CheckAndAddFlagsToGroup("gnomevfs", "pkg-config --libs --cflags gnome-vfs-2.0")
 
 	if base_env.sys == 'Darwin':
 		base_env.AddFlagsToGroup("CoreAudio", "-framework CoreAudio")
