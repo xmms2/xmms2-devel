@@ -50,12 +50,13 @@ gfloat window[FFT_LEN];
 
 static xmms_visualisation_t *vis;
 static void fft(gint16 *samples, gfloat *spec);
+static void xmms_visualisation_destroy (xmms_object_t *object);
 
 void
 xmms_visualisation_init ()
 {
 	int i;
-	vis = xmms_object_new (xmms_visualisation_t, NULL);
+	vis = xmms_object_new (xmms_visualisation_t, xmms_visualisation_destroy);
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_VISUALISATION, XMMS_OBJECT (vis));
 	xmms_ipc_signal_register (XMMS_OBJECT (vis),
 				  XMMS_IPC_SIGNAL_VISUALISATION_DATA);
@@ -74,6 +75,13 @@ xmms_visualisation_init ()
 
 void xmms_visualisation_shutdown ()
 {
+}
+
+static void
+xmms_visualisation_destroy (xmms_object_t *object)
+{
+	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_VISUALISATION_DATA);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_VISUALISATION);
 }
 
 xmms_visualisation_t *

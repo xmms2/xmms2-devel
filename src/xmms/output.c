@@ -546,6 +546,12 @@ xmms_output_destroy (xmms_object_t *object)
 	g_mutex_free (output->playtime_mutex);
 	g_mutex_free (output->write_mutex);
 	g_cond_free (output->write_cond);
+
+	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_OUTPUT_MIXER_CHANGED);
+	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_OUTPUT_STATUS);
+	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
+	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
 
 gboolean

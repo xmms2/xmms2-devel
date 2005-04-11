@@ -138,6 +138,10 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_visualisation_shutdown ();
 	xmms_config_shutdown ();
 	xmms_plugin_shutdown ();
+
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MAIN);
+	xmms_ipc_shutdown ();
+
 	xmms_log_shutdown ();
 }
 
@@ -151,7 +155,6 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
-	xmms_ipc_shutdown ();
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);

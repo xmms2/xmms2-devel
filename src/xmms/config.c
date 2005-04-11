@@ -329,6 +329,9 @@ xmms_config_destroy (xmms_object_t *object)
 	g_mutex_free (config->mutex);
 
 	g_hash_table_destroy (config->values);
+
+	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_CONFIG);
 }
 
 /**

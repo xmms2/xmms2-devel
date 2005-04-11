@@ -79,6 +79,9 @@ xmms_medialib_destroy (xmms_object_t *object)
 
 	g_mutex_free (mlib->mutex);
 	xmms_sqlite_close (mlib->sql);
+
+	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
  
 gboolean

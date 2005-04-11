@@ -639,18 +639,10 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 void
 xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
-	xmms_object_t *obj;
-
 	g_return_if_fail (object);
 
 	g_mutex_lock (global_ipc_lock);
 
-	obj = global_ipc->broadcasts[signalid];
-	if (obj) {
-		xmms_object_unref (obj);
-	}
-
-	xmms_object_ref (object);
 	global_ipc->broadcasts[signalid] = object;
 
 	xmms_object_connect (object, signalid, xmms_ipc_broadcast_cb, GUINT_TO_POINTER (signalid));
@@ -668,7 +660,6 @@ xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 	obj = global_ipc->broadcasts[signalid];
 	if (obj) {
 		xmms_object_disconnect (obj, signalid, xmms_ipc_broadcast_cb);
-		xmms_object_unref (obj);
 		global_ipc->broadcasts[signalid] = NULL;
 	}
 
@@ -678,18 +669,10 @@ xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 void
 xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
-	xmms_object_t *obj;
-
 	g_return_if_fail (object);
 
 	g_mutex_lock (global_ipc_lock);
 
-	obj = global_ipc->signals[signalid];
-	if (obj) {
-		xmms_object_unref (obj);
-	}
-
-	xmms_object_ref (object);
 	global_ipc->signals[signalid] = object;
 
 	xmms_object_connect (object, signalid, xmms_ipc_signal_cb, GUINT_TO_POINTER (signalid));
@@ -707,7 +690,6 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 	obj = global_ipc->signals[signalid];
 	if (obj) {
 		xmms_object_disconnect (obj, signalid, xmms_ipc_signal_cb);
-		xmms_object_unref (obj);
 		global_ipc->signals[signalid] = NULL;
 	}
 
@@ -719,12 +701,7 @@ xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 {
 	XMMS_DBG ("REGISTERING: '%d'", objectid);
 
-	xmms_object_ref (object);
-
 	g_mutex_lock (global_ipc_lock);
-	if (global_ipc->objects[objectid]) {
-		xmms_object_unref (global_ipc->objects[objectid]);
-	}
 	global_ipc->objects[objectid] = object;
 	g_mutex_unlock (global_ipc_lock);
 
@@ -736,10 +713,7 @@ xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
 	XMMS_DBG ("UNREGISTERING: '%d'", objectid);
 
 	g_mutex_lock (global_ipc_lock);
-	if (global_ipc->objects[objectid]) {
-		xmms_object_unref (global_ipc->objects[objectid]);
-		global_ipc->objects[objectid] = NULL;
-	}
+	global_ipc->objects[objectid] = NULL;
 	g_mutex_unlock (global_ipc_lock);
 }
 
@@ -762,20 +736,6 @@ xmms_ipc_init (void)
 void
 xmms_ipc_shutdown (void)
 {
-	xmms_ipc_objects_t obj;
-	xmms_ipc_signals_t sig;
-
-	for (obj = XMMS_IPC_OBJECT_MAIN;
-	     obj < XMMS_IPC_OBJECT_END; obj++) {
-		xmms_ipc_object_unregister (obj);
-	}
-
-	for (sig = XMMS_IPC_SIGNAL_OBJECT_DESTROYED;
-	     sig < XMMS_IPC_SIGNAL_END; sig++) {
-		xmms_ipc_signal_unregister (sig);
-		xmms_ipc_broadcast_unregister (sig);
-	}
-
 	xmms_ipc_transport_destroy (global_ipc->transport);
 	g_free (global_ipc);
 	g_mutex_free (global_ipc_lock);

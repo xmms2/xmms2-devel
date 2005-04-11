@@ -707,4 +707,8 @@ xmms_playlist_destroy (xmms_object_t *object)
 	xmms_mediainfo_reader_stop (playlist->mediainfordr);
 
 	g_array_free (playlist->list, FALSE);
+
+	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_PLAYLIST);
 }
