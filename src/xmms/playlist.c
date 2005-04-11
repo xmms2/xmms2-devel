@@ -382,7 +382,11 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 	g_array_remove_index (playlist->list, pos);
 	g_array_insert_val (playlist->list, newpos, id);
 
-	if (pos == playlist->currentpos)
+	if (newpos <= playlist->currentpos && pos > playlist->currentpos)
+		playlist->currentpos++;
+	else if (newpos >= playlist->currentpos && pos < playlist->currentpos)
+		playlist->currentpos--;
+	else if (pos == playlist->currentpos)
 		playlist->currentpos = newpos;
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_MOVE, pos, newpos);
