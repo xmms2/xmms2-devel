@@ -616,8 +616,6 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	new = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
 	if (new) {
 		new (output);
-		if (plugin)
-			plugin = NULL;
 	}
 	
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_OUTPUT, XMMS_OBJECT (output));
@@ -670,8 +668,7 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	wr = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
 	st = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
 
-	if (plugin)
-		g_return_val_if_fail ((!wr ^ !st), NULL);
+	g_return_val_if_fail ((!wr ^ !st), NULL);
 
 	output->status_method = st ? st : status_changed;
 
