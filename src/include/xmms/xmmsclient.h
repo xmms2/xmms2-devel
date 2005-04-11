@@ -159,12 +159,6 @@ typedef enum {
 	XMMSC_PLAYLIST_SORT
 } xmmsc_playlist_changed_actions_t;
 
-typedef enum {
-	XMMSC_PLAYBACK_PLAY,
-	XMMSC_PLAYBACK_STOP,
-	XMMSC_PLAYBACK_PAUSE,
-} xmms_playback_status_t;
-
 /*
  * RESULTS
  */
