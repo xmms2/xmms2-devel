@@ -157,11 +157,6 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 		}
 	}
 
-	if (ipc->read_msg) {
-		xmms_ipc_msg_destroy (ipc->read_msg);
-		ipc->read_msg = NULL;
-	}
-
 	if (disco)
 		xmmsc_ipc_disconnect (ipc);
 
@@ -267,6 +262,10 @@ void
 xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 {
 	ipc->disconnect = TRUE;
+	if (ipc->read_msg) {
+		xmms_ipc_msg_destroy (ipc->read_msg);
+		ipc->read_msg = NULL;
+	}
 	xmmsc_ipc_error_set (ipc, g_strdup ("Disconnected"));
 	if (ipc->disconnect_callback) {
 		ipc->disconnect_callback (ipc->disconnect_data);
