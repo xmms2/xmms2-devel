@@ -93,6 +93,7 @@ XMMS_CMD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, 
 XMMS_CMD_DEFINE (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (move, xmms_playlist_move, xmms_playlist_t *, NONE, UINT32, INT32);
 XMMS_CMD_DEFINE (add, xmms_playlist_addurl, xmms_playlist_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (addid, xmms_playlist_add, xmms_playlist_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
@@ -171,6 +172,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_ADD, 
 			     XMMS_CMD_FUNC (add));
+	
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+			     XMMS_IPC_CMD_ADD_ID, 
+			     XMMS_CMD_FUNC (addid));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_REMOVE, 
@@ -421,36 +426,10 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 		return FALSE;
 	}
 
-	res = xmms_playlist_add (playlist, entry);
+	res = xmms_playlist_add (playlist, entry, err);
 
 	return res;
 }
-
-/**
- * Add entries from medialib
- *
- * @return TRUE on success and FALSE otherwise.
- */
-/*
-gboolean
-xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t *err)
-{
-	GList *res, *n;
-
-	res = xmms_medialib_select_entries (query, err);
-
-	if (xmms_error_iserror(err)) {
-		return FALSE;
-	}
-
-	for (n = res; n; n = g_list_next (n)) {
-		xmms_playlist_add (playlist, GPOINTER_TO_UINT (n->data));
-	}
-	g_list_free (res);
-
-	return TRUE;
-}
-*/
 
 /** Add entries from medialib to the playlist
  * @ingroup PlaylistClientMethods
@@ -467,7 +446,7 @@ xmms_playlist_medialibadd (xmms_playlist_t *playlist, gchar *query, xmms_error_t
  */
 
 gboolean
-xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file)
+xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error)
 {
 
 	g_return_val_if_fail (file, FALSE);

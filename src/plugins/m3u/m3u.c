@@ -259,7 +259,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 
 		g_assert (entry);
 
-		xmms_playlist_add (playlist, entry);
+		xmms_playlist_add (playlist, entry, NULL);
 
 		if (*line)
 			line++;
