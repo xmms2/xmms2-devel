@@ -85,6 +85,7 @@ cdef extern from "xmms/xmmsclient.h" :
 
 	xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *)
+	xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
@@ -818,6 +819,25 @@ cdef class XMMS :
 		ret.more_init ()
 		
 		return ret
+
+	def playlist_add_id (self, id, myClass = None) :
+		"""
+		Add a medialib id to the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_add_id (self.conn, id)
+		ret.more_init ()
+		
+		return ret
+
 
 	def playlist_remove (self, id, myClass = None) :
 		"""
