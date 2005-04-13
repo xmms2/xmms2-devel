@@ -149,7 +149,7 @@ xmms_playlist_init (void)
 	val = xmms_config_value_register ("playlist.repeat_all", "0", on_playlist_r_all_changed, ret);
 	ret->repeat_all = xmms_config_value_int_get (val);
 	load_autosaved =
-		xmms_config_value_register ("playlist.load_autosaved", "0",
+		xmms_config_value_register ("playlist.load_autosaved", "1",
 		                            NULL, NULL);
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
