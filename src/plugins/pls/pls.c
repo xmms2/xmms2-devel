@@ -37,13 +37,11 @@
  * Function prototypes
  */
 
+
 static gboolean xmms_pls_can_handle (const gchar *mimetype);
-static gboolean xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
-                                        xmms_transport_t *transport,
-                                        xmms_playlist_t *playlist);
-static gboolean xmms_pls_write_playlist (xmms_playlist_plugin_t *plsplugin,
-                                         xmms_playlist_t *playlist,
-                                         gchar *filename);
+static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);
+/* hahahaha ... g string */
+static GString *xmms_pls_write_playlist (guint32 *list);
 
 static gchar * get_value (const gchar *pair, const gchar *key);
 static gchar * build_encoded_url (const gchar *plspath, const gchar *file);
@@ -93,9 +91,7 @@ xmms_pls_can_handle (const gchar *mime)
 }
 
 static gboolean
-xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
-                        xmms_transport_t *transport,
-                        xmms_playlist_t *playlist)
+xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 {
 	gchar *buffer;
 	gchar *plspath;
@@ -104,9 +100,8 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 	xmms_error_t error;
 	gint read_bytes, size;
 
-	g_return_val_if_fail (plsplugin, FALSE);
 	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (playlist,  FALSE);
+	g_return_val_if_fail (playlist_id,  FALSE);
 
 	size = xmms_transport_size (transport);
 
@@ -193,7 +188,7 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, length);
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-		xmms_playlist_add (playlist, entry, NULL);
+		xmms_medialib_playlist_add (playlist_id, entry);
 
 		g_free (url);
 		g_free (file);
@@ -206,36 +201,20 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 	return TRUE;
 }
 
-static gboolean
-xmms_pls_write_playlist (xmms_playlist_plugin_t *plsplugin,
-                         xmms_playlist_t *playlist,
-                         gchar *filename)
+static GString *
+xmms_pls_write_playlist (guint32 *list)
 {
-	FILE *fp;
 	gint current;
-	GList *list, *node;
-	xmms_error_t err;
+	GString *ret;
+	gint i = 0;
 
-	g_return_val_if_fail (plsplugin, FALSE);
-	g_return_val_if_fail (playlist, FALSE);
-	g_return_val_if_fail (filename, FALSE);
+	g_return_val_if_fail (list, FALSE);
 
-	fp = fopen (filename, "w+");
+	ret = g_string_new ("[playlist]\n");
 
-	if (!fp) {
-		return FALSE;
-	}
-
-	list = xmms_playlist_list (playlist, &err);
-
-	if (!list) {
-		return FALSE;
-	}
-
-	fprintf (fp, "[playlist]\n");
-
-	for (current = 1, node = list; node != NULL; node = g_list_next (node)) {
-		xmms_medialib_entry_t entry = GPOINTER_TO_UINT (node->data);
+	current = 1;
+	while (list[i]) {
+		xmms_medialib_entry_t entry = list[i];
 		const gchar *title, *duration;
 		gchar *url, *dec;
 
@@ -244,25 +223,28 @@ xmms_pls_write_playlist (xmms_playlist_plugin_t *plsplugin,
 		url = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 		dec = xmms_util_decode_path (url);
 
-		fprintf (fp, "File%u=%s\n", current, dec);
-		fprintf (fp, "Title%u=%s\n", current, title);
-		if (!duration) {
-			fprintf (fp, "Length%u=%s\n", current, "-1");
+		if (g_strncasecmp (dec, "file://", 7) == 0) {
+			g_string_append_printf (ret, "File%u=%s\n", current, dec+7);
 		} else {
-			fprintf (fp, "Length%u=%s\n", current, duration);
+			g_string_append_printf (ret, "File%u=%s\n", current, dec);
+		}
+		g_string_append_printf (ret, "Title%u=%s\n", current, title);
+		if (!duration) {
+			g_string_append_printf (ret, "Length%u=%s\n", current, "-1");
+		} else {
+			g_string_append_printf (ret, "Length%u=%s\n", current, duration);
 		}
 
 		g_free (url);
 		g_free (dec);
 		current++;
+		i++;
 	}
 
-	fprintf (fp, "NumberOfEntries=%u\n", current - 1);
-	fprintf (fp, "Version=2\n");
-	fclose (fp);
+	g_string_append_printf (ret, "NumberOfEntries=%u\n", current - 1);
+	g_string_append (ret, "Version=2\n");
 
-	g_list_free (list);
-	return TRUE;
+	return ret;
 }
 
 static gchar *

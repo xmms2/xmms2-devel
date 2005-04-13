@@ -434,8 +434,60 @@ add [url]";
 		}
 
 		xmmsc_result_unref (res);
-	}
-	else {
+	} else if (g_strcasecmp (argv[2], "import_playlist") == 0) {
+		xmmsc_result_t *res;
+		char *url;
+
+		if (argc < 5) {
+			print_error ("Supply a playlist name and url");
+		}
+	
+		url = format_url (argv[4]);
+
+		res = xmmsc_medialib_playlist_import (conn, argv[3], url);
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
+	} else if (g_strcasecmp (argv[2], "export_playlist") == 0) {
+		xmmsc_result_t *res;
+		char *file;
+		char *mime;
+
+		if (argc < 5) {
+			print_error ("Supply a playlist name and a mimetype");
+		}
+
+		if (strcasecmp (argv[4], "m3u") == 0) {
+			mime = "audio/mpegurl";
+		} else if (strcasecmp (argv[4], "pls") == 0) {
+			mime = "audio/x-scpls";
+		} else if (strcasecmp (argv[4], "html") == 0) {
+			mime = "text/html";
+		} else {
+			mime = argv[4];
+		}
+
+		res = xmmsc_medialib_playlist_export (conn, argv[3], mime);
+
+		xmmsc_result_wait (res);
+		
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+
+		if (!xmmsc_result_get_string (res, &file))
+			print_error ("broken resultset!");
+
+		fwrite (file, strlen (file), 1, stdout);
+
+		xmmsc_result_unref (res);
+	
+	} else {
 		print_info (mlibHelp);
 		print_error ("Unrecognised mlib command: %s\n", argv[2]);
 	}

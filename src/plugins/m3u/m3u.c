@@ -38,10 +38,9 @@
  */
 
 static gboolean xmms_m3u_can_handle (const gchar *mimetype);
-static gboolean xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *transport,
-		xmms_playlist_t *playlist);
-static gboolean xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin,xmms_playlist_t *playlist,
-		gchar *filename);
+static gboolean xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id);
+/* hahahaha ... g string */
+static GString *xmms_m3u_write_playlist (guint32 *list);
 
 /*
  * Plugin header
@@ -106,7 +105,7 @@ parse_line (const gchar *line, const gchar *m3u_path)
 	/* check for an absolute path */
 	if (line[0] == '/') {
 		encoded = xmms_util_encode_path (line);
-		g_snprintf (newp, sizeof (newp), "file://%s", encoded);
+		g_snprintf (newp, sizeof (newp), "file%%3a//%s", encoded);
 	} else {
 		/* check whether it's an url (proto://...) */
 		p = strchr (line, ':');
@@ -147,16 +146,14 @@ parse_line (const gchar *line, const gchar *m3u_path)
 }
 
 static gboolean
-xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *transport, xmms_playlist_t *playlist)
+xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 {
 	gint len = 0, buffer_len = 0;
 	gchar **lines, **line, *buffer;
 	xmms_error_t error;
 	gboolean extm3u = FALSE;
 
-	g_return_val_if_fail (plsplugin, FALSE); 
 	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (playlist, FALSE);
 
 	buffer_len = xmms_transport_size (transport);
 
@@ -259,7 +256,7 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 
 		g_assert (entry);
 
-		xmms_playlist_add (playlist, entry, NULL);
+		xmms_medialib_playlist_add (playlist_id, entry);
 
 		if (*line)
 			line++;
@@ -270,29 +267,21 @@ xmms_m3u_read_playlist (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *tra
 	return TRUE;
 }
 
-static gboolean
-xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, gchar *filename)
+static GString *
+xmms_m3u_write_playlist (guint32 *list)
 {
-	FILE *fp;
-	GList *list, *l;
 	xmms_error_t err;
+	gint i = 0;
+	GString *ret;
 
-	g_return_val_if_fail (plsplugin, FALSE); 
-	g_return_val_if_fail (playlist, FALSE);
-	g_return_val_if_fail (filename, FALSE);
+	g_return_val_if_fail (list, FALSE);
 
 	xmms_error_reset (&err);
 
-	fp = fopen (filename, "w");
-	if (!fp)
-		return FALSE;
+	ret = g_string_new ("#EXTM3U\n");
 
-	list = xmms_playlist_list (playlist, &err);
-
-	fprintf (fp, "#EXTM3U\n");
-
-	for (l = list; l; l = l->next) {
-		xmms_medialib_entry_t entry = GPOINTER_TO_UINT (l->data);
+	while (list[i]) {
+		xmms_medialib_entry_t entry = list[i];
 		gchar *url, *tmp;
 		gchar *artist, *title;
 		gint duration = 0;
@@ -307,8 +296,8 @@ xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *pla
 				XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
 
 		if (title && artist && duration) {
-			fprintf (fp, "#EXTINF:%d,%s - %s\n", duration / 1000,
-			         artist, title);
+			g_string_append_printf (ret, "#EXTINF:%d,%s - %s\n", 
+						duration / 1000, artist, title);
 			g_free (artist);
 			g_free (title);
 		}
@@ -318,11 +307,15 @@ xmms_m3u_write_playlist (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *pla
 		g_free (tmp);
 		g_assert (url);
 
-		fprintf (fp, "%s\n", url);
+		if (g_strncasecmp (url, "file://", 7) == 0) {
+			g_string_append_printf (ret, "%s\n", url+7);
+		} else {
+			g_string_append_printf (ret, "%s\n", url);
+		}
 		g_free (url);
+
+		i++;
 	}
 
-	fclose (fp);
-
-	return TRUE;
+	return ret;
 }
