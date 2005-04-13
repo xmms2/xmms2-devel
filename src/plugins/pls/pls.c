@@ -193,7 +193,7 @@ xmms_pls_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, length);
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-		xmms_playlist_add (playlist, entry);
+		xmms_playlist_add (playlist, entry, NULL);
 
 		g_free (url);
 		g_free (file);

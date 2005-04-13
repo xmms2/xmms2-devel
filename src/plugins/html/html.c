@@ -198,7 +198,7 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 		enc = xmms_util_encode_path (full);
 		entry = xmms_medialib_entry_new (enc);
-		xmms_playlist_add (playlist, entry);
+		xmms_playlist_add (playlist, entry, NULL);
 
 		g_free (enc);
 		g_free (url);

@@ -286,7 +286,7 @@ xmms_medialib_addtopls_cb (void *pArg, int argc, char **argv, char **columnName)
 	for (i = 0; i < argc; i++) {
 		if (g_strcasecmp (columnName[i], "id") == 0) {
 			if (argv[i])
-				xmms_playlist_add (playlist, atoi (argv[i]));
+				xmms_playlist_add (playlist, atoi (argv[i]), NULL);
 		}
 	}
 	
@@ -317,20 +317,11 @@ xmms_medialib_entry_new_unlocked (const char *url)
 {
 	guint id = 0;
 	guint ret;
-	gchar *dec = xmms_util_decode_path (url);
 
 	g_return_val_if_fail (url, 0);
 
-	if (g_strncasecmp (dec, "mlib://", 7) == 0) {
-		const gchar *p = url+7;
-		id = strtol (p, NULL, 10);
-		/* Hmmm, maybe verify that this entry exists? */
-	} else {
-		xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
-			     	"select id from Media where key='url' and value=%Q", url);
-	}
-
-	g_free (dec);
+	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
+			   "select id from Media where key='url' and value=%Q", url);
 
 	if (id) {
 		ret = id;
@@ -623,7 +614,7 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 		if (!strncmp (entry, "mlib://", 7)) {
 			xmms_medialib_entry_t e;
 			e = xmms_medialib_entry_new_unlocked (entry);
-			xmms_playlist_add (medialib->playlist, e);
+			xmms_playlist_add (medialib->playlist, e, NULL);
 		} else if (!strncmp (entry, "sql://", 6)) {
 			xmms_sqlite_query (medialib->sql, playlist_load_sql_query_cb,
 			                   medialib, "select url from Media where %q", entry);

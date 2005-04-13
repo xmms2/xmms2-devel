@@ -74,7 +74,7 @@ typedef struct xmms_playlist_changed_msg_St {
 
 xmms_playlist_t * xmms_playlist_init (void);
 
-gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file);
+gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error);
 guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
 guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
