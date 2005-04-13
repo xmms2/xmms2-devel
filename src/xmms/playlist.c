@@ -97,7 +97,6 @@ XMMS_CMD_DEFINE (addid, xmms_playlist_add, xmms_playlist_t *, NONE, UINT32, NONE
 XMMS_CMD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NONE);
-XMMS_CMD_DEFINE (save, xmms_playlist_save, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
@@ -196,10 +195,6 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_SORT, 
 			     XMMS_CMD_FUNC (sort));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret),
-			     XMMS_IPC_CMD_SAVE,
-			     XMMS_CMD_FUNC (save));
 
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 	xmms_medialib_init (ret);
@@ -614,43 +609,6 @@ xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err)
 
 	return r;
 }
-
-/** List the playlist
- * @ingroup PlaylistClientMethods
- */
-
-
-
-
-void
-xmms_playlist_save (xmms_playlist_t *playlist, gchar *filename, xmms_error_t *err)
-{
-	gboolean ret;
-	const gchar *mime;
-	xmms_playlist_plugin_t *plsplugin;
-
-	mime = xmms_magic_mime_from_file (filename);
-
-	if (!mime) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Could not determine format of output file");
-		return;
-	}
-
-	plsplugin = xmms_playlist_plugin_new (mime);
-
-	if (!plsplugin) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "Could not determine format of output file");
-		return;
-	}
-
-	ret = xmms_playlist_plugin_save (plsplugin, playlist, filename);
-	xmms_playlist_plugin_free (plsplugin);
-
-	if (!ret) {
-		xmms_error_set (err, XMMS_ERROR_GENERIC, "Something went wrong when writing");
-	}
-}
-
 
 /** returns pointer to mediainfo reader. */
 xmms_mediainfo_reader_t *

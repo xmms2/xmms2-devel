@@ -56,6 +56,36 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 }
 
 xmmsc_result_t *
+xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_string (msg, mime);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+xmmsc_result_t *
+xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_IMPORT);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_string (msg, url);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+xmmsc_result_t *
 xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 {
 	return do_methodcall (conn, XMMS_IPC_CMD_ADD, url);

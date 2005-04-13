@@ -37,12 +37,8 @@
  */
 
 static gboolean xmms_html_can_handle (const gchar *mime);
-static gboolean xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
-                                         xmms_transport_t *transport,
-                                         xmms_playlist_t *playlist);
-static gboolean xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
-                                          xmms_playlist_t *playlist,
-                                          gchar *filename);
+static gboolean xmms_html_read_playlist (xmms_transport_t *transport, guint playlist_id);
+static GString *xmms_html_write_playlist (guint32 *list);
 
 static gchar *escape_html (const gchar *in);
 static gboolean valid_suffix (gchar **suffix, gchar *path);
@@ -122,9 +118,8 @@ xmms_html_can_handle (const gchar *mime)
 }
 
 static gboolean
-xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
-                         xmms_transport_t *transport,
-                         xmms_playlist_t *playlist)
+xmms_html_read_playlist (xmms_transport_t *transport,
+			 guint32 playlist_id)
 {
 	gchar *buffer, *plsurl;
 	gchar **tags;
@@ -133,9 +128,8 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 	gint cnt, readlen, buflen;
 
-	g_return_val_if_fail (plsplugin, FALSE);
 	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (playlist, FALSE);
+	g_return_val_if_fail (playlist_id, FALSE);
 
 	buflen = xmms_transport_size (transport);
 	if (buflen == 0) {
@@ -175,7 +169,7 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 	tags = g_strsplit (buffer, "<", 0);
 	g_free (buffer);
 
-	val = xmms_plugin_config_lookup (plsplugin->plugin, "suffixes");
+	val = xmms_config_lookup ("playlist.html.suffixes");
 	suffix = g_strsplit (xmms_config_value_string_get (val), ",", 0);
 
 	plsurl = xmms_util_decode_path (xmms_transport_url_get (transport));
@@ -198,7 +192,7 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 
 		enc = xmms_util_encode_path (full);
 		entry = xmms_medialib_entry_new (enc);
-		xmms_playlist_add (playlist, entry, NULL);
+		xmms_medialib_playlist_add (playlist_id, entry);
 
 		g_free (enc);
 		g_free (url);
@@ -212,55 +206,38 @@ xmms_html_read_playlist (xmms_playlist_plugin_t *plsplugin,
 	return TRUE;
 }
 
-static gboolean
-xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
-                          xmms_playlist_t *playlist, gchar *filename)
+static GString *
+xmms_html_write_playlist (guint32 *list)
 {
-	FILE *fp;
-	GList *list, *l;
+	GString *ret;
 	gboolean is_even = TRUE;
 	guint num_entries = 0, total_len = 0;
-	xmms_error_t err;
+	guint i;
 
-	g_return_val_if_fail (plsplugin, FALSE);
-	g_return_val_if_fail (playlist, FALSE);
-	g_return_val_if_fail (filename, FALSE);
-
-	xmms_error_reset (&err);
-
-	fp = fopen (filename, "w");
-	if (!fp)
-		return FALSE;
-
-	list = xmms_playlist_list (playlist, &err);
-	if (!list) {
-		fclose (fp);
-		return FALSE;
-	}
+	g_return_val_if_fail (list, FALSE);
 
 	/* get the playlists total playtime */
-	for (l = list; l; l = l->next) {
-		xmms_medialib_entry_t entry;
-
-		num_entries++;
-
-		entry = GPOINTER_TO_UINT (l->data);
+	while (list[num_entries]) {
+		xmms_medialib_entry_t entry = list[num_entries];
 
 		total_len += xmms_medialib_entry_property_get_int (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
+		num_entries++;
 	}
 
-	fprintf (fp, html_header, num_entries,
-	         total_len / 3600000, (total_len / 60000) % 60,
-	         (total_len / 1000) % 60);
+	ret = g_string_new (NULL);
+	g_string_append_printf (ret, html_header, num_entries,
+				total_len / 3600000, (total_len / 60000) % 60,
+				(total_len / 1000) % 60);
 
-	while (list) {
+	i = 0;
+	while (list[i]) {
 		gchar buf[256], *artist, *title;
 		xmms_medialib_entry_t entry;
 		guint len;
 
-		entry = GPOINTER_TO_UINT (list->data);
+		entry = list[i];
 
 		artist = escape_html (xmms_medialib_entry_property_get (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST));
@@ -276,17 +253,15 @@ xmms_html_write_playlist (xmms_playlist_plugin_t *plsplugin,
 		g_free (artist);
 		g_free (title);
 
-		fprintf (fp, is_even ? html_entry_even : html_entry_odd, buf);
+		g_string_append_printf (ret, is_even ? html_entry_even : html_entry_odd, buf);
 		is_even = !is_even;
 
-		list = g_list_remove_link (list, list);
+		i ++;
 	}
 
-	fprintf (fp, html_footer);
+	g_string_append (ret, html_footer);
 
-	fclose (fp);
-
-	return TRUE;
+	return ret;
 }
 
 static gchar *

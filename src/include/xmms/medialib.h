@@ -77,6 +77,7 @@ gboolean xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry);
 void xmms_medialib_playlist_save_autosaved ();
 void xmms_medialib_playlist_load_autosaved ();
 
+gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry);
 
 void xmms_medialib_logging_start (xmms_medialib_entry_t entry);
 void xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime);

@@ -133,6 +133,8 @@ xmmsc_result_t *xmmsc_medialib_playlist_load (xmmsc_connection_t *conn, const ch
 xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query);
+xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url);
+xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime);
 
 /* Syncronous commands */
 x_hash_t *xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id);
