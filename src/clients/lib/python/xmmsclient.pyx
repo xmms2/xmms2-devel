@@ -127,6 +127,8 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, char *url)
 	xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, unsigned int id)
 	xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
+	xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *c, char *name, char *url)
+	xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *c, char *name, char *mime)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 	
@@ -1223,6 +1225,42 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_medialib_add_to_playlist (self.conn, query)
+		ret.more_init ()
+		
+		return ret
+
+	def medialib_playlist_import (self, name, url, myClass = None) :
+		"""
+		Imports a playlist to the medialib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_playlist_import (self.conn, name, url)
+		ret.more_init ()
+		
+		return ret
+
+	def medialib_playlist_export (self, name, mime, myClass = None) :
+		"""
+		Exports a playlist from medialib to a other format
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_playlist_export (self.conn, name, mime)
 		ret.more_init ()
 		
 		return ret
