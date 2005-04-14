@@ -205,6 +205,23 @@ static VALUE c_playlist_set_next (VALUE self, VALUE type)
 	return o;
 }
 
+static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
+{
+	VALUE o;
+	xmmsc_result_t *res;
+
+	GET_OBJ (self, RbXmmsClient, xmms);
+
+	Check_Type (pos, T_FIXNUM);
+
+	res = xmmsc_playlist_set_next_rel (xmms->real, FIX2INT (pos));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
 static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
 	VALUE o;
@@ -291,6 +308,7 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, broadcast_medialib_entry_changed, 0);
 	METHOD_ADD (c, playlist_list, 0);
 	METHOD_ADD (c, playlist_set_next, 1);
+	METHOD_ADD (c, playlist_set_next_rel, 1);
 	METHOD_ADD (c, medialib_get_info, 1);
 
 	METHOD_ADD (c, configval_get, 1);
