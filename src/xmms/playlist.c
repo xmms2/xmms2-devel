@@ -196,8 +196,9 @@ xmms_playlist_init (void)
 			     XMMS_IPC_CMD_SORT, 
 			     XMMS_CMD_FUNC (sort));
 
-	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 	xmms_medialib_init (ret);
+
+	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 
 	if (xmms_config_value_int_get (load_autosaved)) {
 		xmms_medialib_playlist_load_autosaved ();

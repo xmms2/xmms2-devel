@@ -334,6 +334,31 @@ xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_erro
 
 }
 
+void
+xmms_medialib_entry_remove (xmms_medialib_entry_t entry)
+{
+	g_mutex_lock (medialib->mutex);
+	xmms_sqlite_query (medialib->sql, NULL, NULL, "delete from Media where id=%d", entry);
+	xmms_sqlite_query (medialib->sql, NULL, NULL, "delete from Log where id=%d", entry);
+	/** @todo remove from playlists too? or should we do refcounting on this? */
+	g_mutex_unlock (medialib->mutex);
+}
+
+xmms_medialib_entry_t
+xmms_medialib_entry_not_resolved_get (void)
+{
+	xmms_medialib_entry_t ret = 0;
+
+	g_mutex_lock (medialib->mutex);
+
+	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &ret,
+			   "select id from Media where key='resolved' and value=0 limit 1");
+
+	g_mutex_unlock (medialib->mutex);
+	
+	return ret;
+}
+
 xmms_medialib_entry_t
 xmms_medialib_entry_new_unlocked (const char *url)
 {
@@ -460,7 +485,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	entry = xmms_medialib_entry_new (url);
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
-	xmms_mediainfo_entry_add (mr, entry);
+	xmms_mediainfo_reader_wakeup (mr);
 }
 
 static guint
@@ -539,7 +564,7 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 			       gchar *mime, xmms_error_t *error)
 {
 	GString *str;
-	GList *entries = NULL, *l;
+	GList *entries = NULL;
 	guint *list;
 	gint ret;
 	gint i;

@@ -27,6 +27,6 @@ typedef struct xmms_mediainfo_reader_St xmms_mediainfo_reader_t;
 
 xmms_mediainfo_reader_t * xmms_mediainfo_reader_start (xmms_playlist_t *playlist);
 void xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mit);
-void xmms_mediainfo_entry_add (xmms_mediainfo_reader_t *mt, xmms_medialib_entry_t entry);
+void xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr);
 
 #endif /* __XMMS_MEDIAINFO_H__ */

@@ -70,7 +70,11 @@ gchar *xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gcha
 guint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
 gboolean xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
+
 xmms_medialib_entry_t xmms_medialib_entry_new (const char *url);
+xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (void);
+void xmms_medialib_entry_remove (xmms_medialib_entry_t entry);
+
 GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry);
 guint xmms_medialib_entry_id_get (xmms_medialib_entry_t entry);
 gboolean xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry);
