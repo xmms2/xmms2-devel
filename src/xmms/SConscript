@@ -1,8 +1,8 @@
 #
 Import('base_env')
 
-env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsipc", "xmmsutil"],
-		    LIBPATH=["#builddir/lib/xmmsutil", "#builddir/lib/xmmsipc"])
+env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsipc"],
+		    LIBPATH=["#builddir/lib/xmmsipc"])
 
 xmms2d_sources = Split ("config.c plugin.c object.c ipc.c "+
 			"transport.c decoder.c output.c playlist.c magic.c "+

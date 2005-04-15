@@ -226,37 +226,6 @@ xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), 
 }
 
 
-/**
- * Encodes a path for use with xmmsc_playlist_add
- *
- * @sa xmmsc_playlist_add
- */
-char *
-xmmsc_encode_path (char *path) {
-	char *out, *outreal;
-	int i;
-	int len;
-
-	len = strlen (path);
-	outreal = out = (char *)calloc (1, len * 3 + 1);
-
-	for ( i = 0; i < len; i++) {
-		if (path[i] == '/' || 
-			_REGULARCHAR ((int) path[i]) || 
-			path[i] == '_' ||
-			path[i] == '-' ){
-			*(out++) = path[i];
-		} else if (path[i] == ' '){
-			*(out++) = '+';
-		} else {
-			snprintf (out, 4, "%%%02x", (unsigned char) path[i]);
-			out += 3;
-		}
-	}
-
-	return outreal;
-}
-
 
 /**
  * Returns a string that descibes the last error.
@@ -327,53 +296,6 @@ xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_QUIT);
-}
-
-/**
- * Decodes a path. All paths that are recived from
- * the server are encoded, to make them userfriendly
- * they need to be called with this function.
- *
- * @param path encoded path.
- *
- * @returns a char * that needs to be freed with free.
- */
-
-char *
-xmmsc_decode_path (const char *path)
-{
-	char *qstr;
-	char tmp[3];
-	int c1, c2;
-
-	c1 = c2 = 0;
-
-	qstr = (char *)calloc (1, strlen (path) + 1);
-
-	tmp[2] = '\0';
-	while (path[c1] != '\0'){
-		if (path[c1] == '%'){
-			int l;
-			tmp[0] = path[c1+1];
-			tmp[1] = path[c1+2];
-			l = strtol(tmp,NULL,16);
-			if (l!=0){
-				qstr[c2] = (char)l;
-				c1+=2;
-			} else {
-				qstr[c2] = path[c1];
-			}
-		} else if (path[c1] == '+') {
-			qstr[c2] = ' ';
-		} else {
-			qstr[c2] = path[c1];
-		}
-		c1++;
-		c2++;
-	}
-	qstr[c2] = path[c1];
-
-	return qstr;
 }
 
 /**

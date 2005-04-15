@@ -22,8 +22,8 @@
 #include "xmms/playlist.h"
 #include "xmms/medialib.h"
 #include "xmms/plsplugins.h"
-#include "xmms/util.h"
 #include "xmms/xmms.h"
+#include "xmms/util.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -94,7 +94,7 @@ static gboolean
 xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 {
 	gchar *buffer;
-	gchar *plspath;
+	const gchar *plspath;
 	gchar **lines;
 	guint current = 1;	/* Line that contains first "File" val */
 	xmms_error_t error;
@@ -158,7 +158,7 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		current++;
 	}
 
-	plspath = xmms_util_decode_path (xmms_transport_url_get (transport));
+	plspath = xmms_transport_url_get (transport);
 
 	for (; lines[current] != NULL; current += 3) {
 		gchar *file, *title, *length, *url;
@@ -196,7 +196,6 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		g_free (length);
 	}
 
-	g_free (plspath);
 	g_strfreev (lines);
 	return TRUE;
 }
@@ -216,17 +215,16 @@ xmms_pls_write_playlist (guint32 *list)
 	while (list[i]) {
 		xmms_medialib_entry_t entry = list[i];
 		const gchar *title, *duration;
-		gchar *url, *dec;
+		gchar *url;
 
 		duration = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 		title = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
 		url = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-		dec = xmms_util_decode_path (url);
 
-		if (g_strncasecmp (dec, "file://", 7) == 0) {
-			g_string_append_printf (ret, "File%u=%s\n", current, dec+7);
+		if (g_strncasecmp (url, "file://", 7) == 0) {
+			g_string_append_printf (ret, "File%u=%s\n", current, url+7);
 		} else {
-			g_string_append_printf (ret, "File%u=%s\n", current, dec);
+			g_string_append_printf (ret, "File%u=%s\n", current, url);
 		}
 		g_string_append_printf (ret, "Title%u=%s\n", current, title);
 		if (!duration) {
@@ -236,7 +234,6 @@ xmms_pls_write_playlist (guint32 *list)
 		}
 
 		g_free (url);
-		g_free (dec);
 		current++;
 		i++;
 	}
@@ -302,7 +299,6 @@ static gchar *
 build_encoded_url (const gchar *plspath, const gchar *file)
 {
 	gchar *url;
-	gchar *enc;
 	gchar *path;
 
 	g_return_val_if_fail (plspath, NULL);
@@ -324,8 +320,6 @@ build_encoded_url (const gchar *plspath, const gchar *file)
 	path = g_path_get_dirname (plspath);
 	url = g_build_filename (path, file, NULL);
 
-	enc = xmms_util_encode_path (url);
-	g_free (url);
 	g_free (path);
-	return enc;
+	return url;
 }

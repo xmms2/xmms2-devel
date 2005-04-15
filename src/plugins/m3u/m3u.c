@@ -95,7 +95,7 @@ static xmms_medialib_entry_t
 parse_line (const gchar *line, const gchar *m3u_path)
 {
 	xmms_medialib_entry_t entry;
-	gchar newp[XMMS_MAX_URI_LEN + 1], *encoded = NULL, *p;
+	gchar newp[XMMS_MAX_URI_LEN + 1], *p;
 
 	g_assert (line);
 
@@ -104,20 +104,13 @@ parse_line (const gchar *line, const gchar *m3u_path)
 
 	/* check for an absolute path */
 	if (line[0] == '/') {
-		encoded = xmms_util_encode_path (line);
-		g_snprintf (newp, sizeof (newp), "file%%3a//%s", encoded);
+		g_snprintf (newp, sizeof (newp), "file://%s", line);
 	} else {
 		/* check whether it's an url (proto://...) */
 		p = strchr (line, ':');
 
 		if (p && p[1] == '/' && p[2] == '/') {
-			/** @todo 
-			 * how do we know whether the url is properly encoded?
-			 * the problem is, if we encode an encoded path, all we'll
-			 * get is junk :/
-			 */
-			encoded = xmms_util_encode_path (line);
-			g_snprintf (newp, sizeof (newp), "%s", encoded);
+			g_snprintf (newp, sizeof (newp), "%s", line);
 		} else {
 			/* get the directory from the path to the m3u file.
 			 * since we must not mess with the original path, get our
@@ -129,9 +122,8 @@ parse_line (const gchar *line, const gchar *m3u_path)
 			g_assert (p); /* m3u_path is always an encoded path */
 			*p = '\0';
 
-			encoded = xmms_util_decode_path (line);
 			g_snprintf (newp, sizeof (newp), "%s/%s",
-			            m3u_path, encoded);
+			            m3u_path, line);
 			g_free ((gchar *) m3u_path); /* free our copy */
 		}
 	}
@@ -140,7 +132,6 @@ parse_line (const gchar *line, const gchar *m3u_path)
 	g_assert (newp[0]);
 
 	entry = xmms_medialib_entry_new (newp);
-	g_free (encoded);
 
 	return entry;
 }
@@ -282,7 +273,7 @@ xmms_m3u_write_playlist (guint32 *list)
 
 	while (list[i]) {
 		xmms_medialib_entry_t entry = list[i];
-		gchar *url, *tmp;
+		gchar *url;
 		gchar *artist, *title;
 		gint duration = 0;
 
@@ -302,9 +293,7 @@ xmms_m3u_write_playlist (guint32 *list)
 			g_free (title);
 		}
 
-		tmp = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-		url = xmms_util_decode_path (tmp);
-		g_free (tmp);
+		url = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 		g_assert (url);
 
 		if (g_strncasecmp (url, "file://", 7) == 0) {

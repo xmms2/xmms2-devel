@@ -134,9 +134,6 @@ cdef extern from "xmms/xmmsclient.h" :
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
-	char *xmmsc_encode_path (char *path)
-	char *xmmsc_decode_path (char *path)
-
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
 
@@ -397,12 +394,6 @@ cdef class XMMSResult :
 
 cdef python_disconnect_fun (obj) :
 	obj._disconnect_cb ()
-
-def encode_path (path):
-	return xmmsc_encode_path(path)
-
-def decode_path (path):
-	return xmmsc_decode_path(path)
 
 cdef class XMMS :
 	"""

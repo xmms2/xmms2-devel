@@ -98,20 +98,14 @@ xmms_plugin_get (void)
 static gboolean
 xmms_curl_can_handle (const gchar *url)
 {
-	gchar *dec;
-
 	g_return_val_if_fail (url, FALSE);
 
-	dec = xmms_util_decode_path (url);
+	XMMS_DBG ("xmms_curl_can_handle (%s)", url);
 
-	XMMS_DBG ("xmms_curl_can_handle (%s)", dec);
-
-	if ((g_strncasecmp (dec, "http", 4) == 0) || (dec[0] == '/')) {
-		g_free (dec);
+	if ((g_strncasecmp (url, "http", 4) == 0) || (url[0] == '/')) {
 		return TRUE;
 	}
 
-	g_free (dec);
 	return FALSE;
 }
 
@@ -152,7 +146,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	data->curl_easy = curl_easy_init ();
 
-	curl_easy_setopt (data->curl_easy, CURLOPT_URL, xmms_util_decode_path (url));
+	curl_easy_setopt (data->curl_easy, CURLOPT_URL, url);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADER, 0);	/* No, we _dont_ want headers in body */
 	curl_easy_setopt (data->curl_easy, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_FOLLOWLOCATION, 1);	/* Doesn't work in multi though... */

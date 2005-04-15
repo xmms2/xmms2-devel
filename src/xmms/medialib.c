@@ -406,10 +406,8 @@ process_dir (const gchar *path, xmms_error_t *error)
 				return FALSE;
 		} else if (g_file_test (realfile, G_FILE_TEST_EXISTS)) {
 			gchar *f = g_strdup_printf ("file://%s", realfile);
-			gchar *enc = xmms_util_encode_path (f);
+			xmms_medialib_entry_new_unlocked (f);
 			g_free (f);
-			xmms_medialib_entry_new_unlocked (enc);
-			g_free (enc);
 		}
 	}
 	g_dir_close (dir);
