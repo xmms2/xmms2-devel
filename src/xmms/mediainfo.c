@@ -160,6 +160,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			}
 
 			if (!xmms_transport_open (transport, entry)) {
+				xmms_medialib_entry_remove (entry);
 				xmms_object_unref (transport);
 				continue;
 			}
