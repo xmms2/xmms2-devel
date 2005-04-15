@@ -139,6 +139,8 @@ xmms_sqlite_open (guint *id)
 	} else {
 		sqlite3_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
 	}
+	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
 
 	return sql;
 }
