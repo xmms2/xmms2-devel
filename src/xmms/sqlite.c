@@ -81,16 +81,25 @@ xmms_sqlite_open (guint *id)
 	gchar *err;
 	const gchar *hdir;
 	gboolean create = TRUE;
-	gchar dbpath[XMMS_PATH_MAX];
+	gchar *dbpath;
 	gint version = 0;
+	xmms_config_value_t *cv;
 
-	hdir = g_get_home_dir ();
+	cv = xmms_config_lookup ("medialib.path");
+	if (cv) {
+		dbpath = xmms_config_value_string_get (cv);
+	} else {
+		hdir = g_get_home_dir ();
 
-	g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", hdir);
+		dbpath = g_malloc0 (XMMS_PATH_MAX+1);
+		g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", hdir);
+	}
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;
 	}
+
+	XMMS_DBG ("opening database: %s", dbpath);
 
 	sql = sqlite_open (dbpath, 0644, &err);
 	if (!sql) {

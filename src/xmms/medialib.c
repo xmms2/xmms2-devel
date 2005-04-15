@@ -93,10 +93,23 @@ xmms_medialib_destroy (xmms_object_t *object)
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
+
+void
+xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
+			    gpointer userdata)
+{
+	xmms_medialib_t *mlib = userdata;
+	g_mutex_lock (mlib->mutex);
+	xmms_sqlite_close (mlib->sql);
+	medialib->sql = xmms_sqlite_open (&medialib->nextid);
+	g_mutex_unlock (mlib->mutex);
+}
  
 gboolean
 xmms_medialib_init (xmms_playlist_t *playlist)
 {
+	gchar path[XMMS_PATH_MAX+1];
+
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->sql = xmms_sqlite_open (&medialib->nextid);
 	medialib->mutex = g_mutex_new ();
@@ -138,6 +151,12 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 				    "0",
 				    NULL, NULL);
 
+
+	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
+
+	xmms_config_value_register ("medialib.path",
+				    path,
+				    xmms_medialib_path_changed, medialib);
 	
 	return TRUE;
 }
