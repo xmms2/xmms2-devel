@@ -373,7 +373,7 @@ xmms_medialib_entry_new_unlocked (const char *url)
 	if (id) {
 		ret = id;
 	} else {
-		ret = ++medialib->nextid;
+		ret = medialib->nextid++;
 		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
 				       "insert into Media (id, key, value) values (%d, 'url', %Q)",
 				       ret, url)) {
