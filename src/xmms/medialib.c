@@ -420,8 +420,17 @@ static void
 xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
 {
 	xmms_mediainfo_reader_t *mr;
+	gchar *p;
+
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
+
+	p = path+strlen(path);
+
+	while (*(p-1) == '/')
+		*p--;
+
+	*p = '\0';
 
 	g_mutex_lock (medialib->mutex);
 
