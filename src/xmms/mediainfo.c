@@ -138,8 +138,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 {
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 
-	g_mutex_lock (mrt->mutex);
-
 	while (mrt->running) {
 		xmms_medialib_entry_t entry;
 
@@ -152,20 +150,18 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			xmms_error_reset (&err);
 
-			g_mutex_unlock (mrt->mutex);
-
 			if (xmms_medialib_entry_is_resolved (entry)) {
 				lmod = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 			}
 
 			transport = xmms_transport_new ();
 			if (!transport) {
-				goto cont;
+				continue;
 			}
 
 			if (!xmms_transport_open (transport, entry)) {
 				xmms_object_unref (transport);
-				goto cont;
+				continue;
 			}
 
 			if (lmod) {
@@ -174,7 +170,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 				if (tmp && lmod >= tmp) {
 					xmms_medialib_entry_remove (entry);
 					xmms_object_unref (transport);
-					goto cont;
+					continue;
 				}
 			}
 
@@ -183,7 +179,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			if (!mime) {
 				xmms_medialib_entry_remove (entry);
 				xmms_object_unref (transport);
-				goto cont;
+				continue;
 			}
 
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
@@ -192,7 +188,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 				xmms_medialib_entry_remove (entry);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
-				goto cont;
+				continue;
 			}
 
 			xmms_decoder_mediainfo_get (decoder, transport);
@@ -202,18 +198,15 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 
-cont:
-			g_mutex_lock (mrt->mutex);
-
 		}
 
 		XMMS_DBG ("MediainfoThread is idle.");
+		g_mutex_lock (mrt->mutex);
 		g_cond_wait (mrt->cond, mrt->mutex);
+		g_mutex_unlock (mrt->mutex);
 		XMMS_DBG ("MediainfoThread is awake!");
 
 	}
-
-	g_mutex_unlock (mrt->mutex);
 
 	return NULL;
 }
