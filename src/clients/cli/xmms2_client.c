@@ -487,6 +487,17 @@ add [url]";
 
 		xmmsc_result_unref (res);
 	
+	} else if (g_strcasecmp (argv[2], "addpath") == 0) {
+		xmmsc_result_t *res;
+		if (argc < 4) {
+			print_error ("Supply a path to add!");
+		}
+		res = xmmsc_medialib_path_import (conn, argv[3]);
+		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+		xmmsc_result_unref (res);
 	} else {
 		print_info (mlibHelp);
 		print_error ("Unrecognised mlib command: %s\n", argv[2]);

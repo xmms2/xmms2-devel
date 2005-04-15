@@ -58,6 +58,7 @@ static xmms_medialib_t *medialib;
 
 
 static int get_playlist_entries_cb (void *pArg, int argc, char **argv, char **cName);
+static xmms_medialib_entry_t xmms_medialib_entry_new_unlocked (const char *url);
 
 static GHashTable *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err);
 static void xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
@@ -70,6 +71,7 @@ static void xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *pla
 					   gchar *url, xmms_error_t *error);
 static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname, 
 					     gchar *mime, xmms_error_t *error);
+static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 
 /** Methods */
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, HASHTABLE, UINT32, NONE);
@@ -80,6 +82,7 @@ XMMS_CMD_DEFINE (playlist_load, xmms_medialib_playlist_load, xmms_medialib_t *, 
 XMMS_CMD_DEFINE (addtopls, xmms_medialib_select_and_add, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (playlist_import, xmms_medialib_playlist_import, xmms_medialib_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (playlist_export, xmms_medialib_playlist_export, xmms_medialib_t *, STRING, STRING, STRING);
+XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
 
 
 static void 
@@ -142,6 +145,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PLAYLIST_EXPORT,
 	                     XMMS_CMD_FUNC (playlist_export));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_PATH_IMPORT,
+	                     XMMS_CMD_FUNC (path_import));
 
 	xmms_config_value_register ("medialib.dologging",
 				    "1",
@@ -378,7 +384,63 @@ xmms_medialib_entry_not_resolved_get (void)
 	return ret;
 }
 
-xmms_medialib_entry_t
+static gboolean
+process_dir (const gchar *path, xmms_error_t *error)
+{
+	GDir *dir;
+	const gchar *file;
+
+	dir = g_dir_open (path, 0, NULL);
+	if (!dir) {
+		gchar *err = g_strdup_printf ("Failed to open dir %s", path);
+		xmms_error_set (error, XMMS_ERROR_GENERIC, err);
+		g_free (err);
+		return FALSE;
+	}
+
+	while ((file = g_dir_read_name (dir))) {
+		gchar realfile[XMMS_PATH_MAX+1];
+		g_snprintf (realfile, XMMS_PATH_MAX, "%s/%s", path, file);
+		if (g_file_test (realfile, G_FILE_TEST_IS_DIR)) {
+			if (!process_dir (realfile, error))
+				return FALSE;
+		} else if (g_file_test (realfile, G_FILE_TEST_EXISTS)) {
+			gchar *f = g_strdup_printf ("file://%s", realfile);
+			gchar *enc = xmms_util_encode_path (f);
+			g_free (f);
+			xmms_medialib_entry_new_unlocked (enc);
+			g_free (enc);
+		}
+	}
+	g_dir_close (dir);
+	return TRUE;
+}
+
+static void 
+xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
+{
+	xmms_mediainfo_reader_t *mr;
+	g_return_if_fail (medialib);
+	g_return_if_fail (path);
+
+	g_mutex_lock (medialib->mutex);
+
+	xmms_sqlite_query (medialib->sql, NULL, NULL, "BEGIN", NULL);
+
+	if (process_dir (path, error)) {
+		xmms_sqlite_query (medialib->sql, NULL, NULL, "COMMIT", NULL);
+	} else {
+		xmms_sqlite_query (medialib->sql, NULL, NULL, "ROLLBACK", NULL);
+	}
+
+	g_mutex_unlock (medialib->mutex);
+
+	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
+	xmms_mediainfo_reader_wakeup (mr);
+	
+}
+
+static xmms_medialib_entry_t
 xmms_medialib_entry_new_unlocked (const char *url)
 {
 	guint id = 0;
