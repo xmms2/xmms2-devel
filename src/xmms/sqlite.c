@@ -78,22 +78,14 @@ sqlite3 *
 xmms_sqlite_open (guint *id)
 {
 	sqlite3 *sql;
-	gchar *err;
 	const gchar *hdir;
 	gboolean create = TRUE;
-	gchar *dbpath;
+	const gchar *dbpath;
 	gint version = 0;
 	xmms_config_value_t *cv;
 
 	cv = xmms_config_lookup ("medialib.path");
-	if (cv) {
-		dbpath = xmms_config_value_string_get (cv);
-	} else {
-		hdir = g_get_home_dir ();
-
-		dbpath = g_malloc0 (XMMS_PATH_MAX+1);
-		g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", hdir);
-	}
+	dbpath = xmms_config_value_string_get (cv);
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;
