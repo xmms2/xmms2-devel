@@ -78,7 +78,6 @@ sqlite3 *
 xmms_sqlite_open (guint *id)
 {
 	sqlite3 *sql;
-	const gchar *hdir;
 	gboolean create = TRUE;
 	const gchar *dbpath;
 	gint version = 0;
@@ -108,7 +107,7 @@ xmms_sqlite_open (guint *id)
 			gchar old[XMMS_PATH_MAX];
 
 			sqlite3_close (sql);
-			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", hdir);
+			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", g_get_home_dir ());
 			rename (dbpath, old);
 
 			if (sqlite3_open (dbpath, &sql)) {
