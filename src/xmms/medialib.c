@@ -35,12 +35,12 @@
 #include <glib.h>
 #include <time.h>
 
-#include <sqlite.h>
+#include <sqlite3.h>
 
 struct xmms_medialib_St {
 	xmms_object_t object;
 	xmms_playlist_t *playlist;
-	struct sqlite *sql;
+	sqlite3 *sql;
 	GMutex *mutex;
 	guint32 nextid;
 };
@@ -371,7 +371,7 @@ xmms_medialib_entry_not_resolved_get (void)
 	g_mutex_lock (medialib->mutex);
 
 	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &ret,
-			   "select id from Media where key='resolved' and value=0 limit 1");
+			   "select id from Media where key='resolved' and value='0' limit 1");
 
 	g_mutex_unlock (medialib->mutex);
 	

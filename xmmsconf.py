@@ -30,9 +30,7 @@ def checkFlags(base_env):
 	base_env.CheckAndAddFlagsToGroup("glib", "pkg-config --libs --cflags glib-2.0", fail=1)
 	base_env.CheckAndAddFlagsToGroup("glib-thread", "pkg-config --libs --cflags gthread-2.0", fail=1)
 	base_env.CheckAndAddFlagsToGroup("glib-module", "pkg-config --libs --cflags gmodule-2.0", fail=1)
-	base_env.CheckLibAndAddFlagsToGroup("sqlite","sqlite","sqlite_open", fail=1)
-	if base_env.HasGroup("sqlite"):
-		base_env.AddFlagsToGroup("sqlite", " -DHAVE_SQLITE");
+	base_env.CheckAndAddFlagsToGroup("sqlite", "pkg-config --libs --cflags sqlite3", fail=1)
 
 	##
 	## Check for optional libs

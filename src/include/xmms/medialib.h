@@ -25,7 +25,7 @@
 #include "xmms/playlist.h"
 #include "xmms/output.h"
 #include <glib.h>
-#include <sqlite.h>
+#include <sqlite3.h>
 
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_MIME "mime"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ID "id"
@@ -86,8 +86,8 @@ gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t ent
 void xmms_medialib_logging_start (xmms_medialib_entry_t entry);
 void xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime);
 
-sqlite *xmms_sqlite_open ();
-gboolean xmms_sqlite_query (sqlite *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);
-void xmms_sqlite_close ();
+sqlite3 *xmms_sqlite_open ();
+gboolean xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);
+void xmms_sqlite_close (sqlite3 *sql);
 
 #endif /* __XMMS_MEDIALIB_H__ */
