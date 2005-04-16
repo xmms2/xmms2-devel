@@ -46,7 +46,7 @@ static gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\
 static char *
 format_url (char *item)
 {
-	char url[4096], rpath[PATH_MAX], *encoded, *p;
+	char *url, rpath[PATH_MAX], *p;
 
 	p = strchr (item, ':');
 	if (!(p && p[1] == '/' && p[2] == '/')) {
@@ -58,14 +58,12 @@ format_url (char *item)
 		if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR))
 			return NULL;
 
-		g_snprintf (url, 4096, "file://%s", rpath);
+		url = g_strdup_printf ("file://%s", rpath);
 	} else {
-		g_snprintf (url, 4096, "%s", item);
+		url = g_strdup_printf ("%s", item);
 	}
 
-	encoded = xmmsc_encode_path (url);
-
-	return encoded;
+	return url;
 }
 
 
@@ -213,17 +211,13 @@ format_pretty_list (xmmsc_connection_t *conn, x_list_t *list) {
 			printf ("%-5.5s| %-17.17s | %-25.25s | %-25.25s\n", mid, artist, album, title);
 
 		} else {
-			char *url, *path, *filename;
+			char *url, *filename;
 			url = x_hash_lookup (e, "url");
 			if (url) {
-				path = xmmsc_decode_path (url);
-				if (path) {
-					filename = g_path_get_basename (path);
-					g_free (path);
-					if (filename) {
-						printf ("%-5.5s| %s\n", mid, filename);
-						g_free (filename);
-					}
+				filename = g_path_get_basename (url);
+				if (filename) {
+					printf ("%-5.5s| %s\n", mid, filename);
+					g_free (filename);
 				}
 			}
 		}
@@ -487,6 +481,17 @@ add [url]";
 
 		xmmsc_result_unref (res);
 	
+	} else if (g_strcasecmp (argv[2], "addpath") == 0) {
+		xmmsc_result_t *res;
+		if (argc < 4) {
+			print_error ("Supply a path to add!");
+		}
+		res = xmmsc_medialib_path_import (conn, argv[3]);
+		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+		xmmsc_result_unref (res);
 	} else {
 		print_info (mlibHelp);
 		print_error ("Unrecognised mlib command: %s\n", argv[2]);
@@ -728,21 +733,17 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		} else if (x_hash_lookup (tab, "channel") && !x_hash_lookup (tab, "title")) {
 			xmmsc_entry_format (line, sizeof (line), "${channel}", tab);
 		} else if (!x_hash_lookup (tab, "title")) {
-			char *url, *path, *filename;
+			char *url, *filename;
 		  	char dur[10];
 			
 			xmmsc_entry_format (dur, sizeof (dur), "(${minutes}:${seconds})", tab);
 			
 			url = x_hash_lookup (tab, "url");
 			if (url) {
-			  	path = xmmsc_decode_path (url);
-				if (path) {
-				  	filename = g_path_get_basename (path);
-					g_free (path);
-					if (filename) {
-					  	g_snprintf (line, sizeof (line), "%s %s", filename, dur);
-						g_free (filename);
-					}
+				filename = g_path_get_basename (url);
+				if (filename) {
+					g_snprintf (line, sizeof (line), "%s %s", filename, dur);
+					g_free (filename);
 				}
 			}
 		} else {
@@ -1113,17 +1114,13 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 			xmmsc_entry_format (songname, sizeof (songname),
 					    "${title}", hash);
 		} else if (!x_hash_lookup (hash, "title")) {
-			char *url, *path, *filename;
+			char *url, *filename;
 			url = x_hash_lookup (hash, "url");
 			if (url) {
-				path = xmmsc_decode_path (url);
-				if (path) {
-					filename = g_path_get_basename (path);
-					g_free (path);
-					if (filename) {
-						g_snprintf (songname, sizeof (songname), "%s", filename);
-						g_free (filename);
-					}
+				filename = g_path_get_basename (url);
+				if (filename) {
+					g_snprintf (songname, sizeof (songname), "%s", filename);
+					g_free (filename);
 				}
 			}
 		} else {

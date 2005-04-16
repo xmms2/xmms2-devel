@@ -18,7 +18,6 @@
 #include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
-#include "xmms/util.h"
 #include "xmms/magic.h"
 
 #include <sys/types.h>
@@ -104,19 +103,16 @@ static gboolean
 xmms_gnomevfs_can_handle (const gchar *url)
 {
 	gboolean retval = TRUE;
-	gchar *dec;
 	
 	g_return_val_if_fail (url, FALSE);
-	dec = xmms_util_decode_path (url);
 
-	XMMS_DBG ("xmms_gnomevfs_can_handle (%s)", dec);
+	XMMS_DBG ("xmms_gnomevfs_can_handle (%s)", url);
 	
-	if ((g_strncasecmp (dec, "network:", 8) == 0))
+	if ((g_strncasecmp (url, "network:", 8) == 0))
 		retval = TRUE;
 	else 
 		retval = FALSE;
 	
-	g_free (dec);
 	return TRUE;
 }
 
@@ -133,38 +129,32 @@ xmms_gnomevfs_init (xmms_transport_t *transport, const gchar *url)
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
 
-	urlptr = xmms_util_decode_path (url);
-	
 	if (!gnome_vfs_init ())
 		return FALSE;
 	
 	info = gnome_vfs_file_info_new ();
-	result = gnome_vfs_get_file_info (urlptr, info, 
-									  GNOME_VFS_FILE_INFO_DEFAULT);
+	result = gnome_vfs_get_file_info (url, info, 
+					  GNOME_VFS_FILE_INFO_DEFAULT);
 	gnome_vfs_file_info_unref (info);
 
 	if (result != GNOME_VFS_OK) {
-		g_free (urlptr);
 		return FALSE;
 	}
 
-	result = gnome_vfs_open (&handle, urlptr, 
-							 GNOME_VFS_OPEN_READ | 
-							 GNOME_VFS_OPEN_RANDOM);
+	result = gnome_vfs_open (&handle, url, 
+				 GNOME_VFS_OPEN_READ | 
+				 GNOME_VFS_OPEN_RANDOM);
 	
 	if (result != GNOME_VFS_OK) {
-		g_free (urlptr);
 		return FALSE;
 	}
 
 	data = g_new0 (xmms_gnomevfs_data_t, 1);
 	data->mime = NULL;
-	data->urlptr = g_strdup (urlptr);
+	data->urlptr = g_strdup (url);
 	data->handle = handle;
 	xmms_transport_private_data_set (transport, data);
 
-	g_free (urlptr);
-	
 	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
 	if (!data->mime) {
 		return FALSE;

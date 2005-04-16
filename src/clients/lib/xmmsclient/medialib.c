@@ -106,6 +106,13 @@ xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
 }
 
 xmmsc_result_t *
+xmmsc_medialib_path_import (xmmsc_connection_t *conn,
+			    const char *path)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
+}
+
+xmmsc_result_t *
 xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 {
 	xmmsc_result_t *res;

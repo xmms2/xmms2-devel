@@ -55,7 +55,6 @@ struct xmms_mediainfo_reader_St {
 	GCond *cond;
 
 	gboolean running;
-	GQueue *queue;
 	xmms_playlist_t *playlist;
 };
 
@@ -79,12 +78,10 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 	mrt->mutex = g_mutex_new ();
 	mrt->cond = g_cond_new ();
 	mrt->playlist = playlist;
-	mrt->queue = g_queue_new ();
 	mrt->running = TRUE;
 	mrt->thread = g_thread_create (xmms_mediainfo_reader_thread, mrt, TRUE, NULL);
 
 	xmms_object_connect (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, xmms_mediainfo_playlist_changed_cb, mrt);
-	
 
 	return mrt;
 }
@@ -98,8 +95,6 @@ xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
 {
 	g_mutex_lock (mir->mutex);
 
-	while (g_queue_pop_head (mir->queue))
-		;
 	mir->running = FALSE;
 	g_cond_signal (mir->cond);
 
@@ -107,21 +102,19 @@ xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
 
 	g_thread_join (mir->thread);
 
-	g_queue_free (mir->queue);
 	g_cond_free (mir->cond);
 	g_mutex_free (mir->mutex);
-
 	g_free (mir);
 }
 
 void
-xmms_mediainfo_entry_add (xmms_mediainfo_reader_t *mr, xmms_medialib_entry_t entry)
+xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr)
 {
 	g_return_if_fail (mr);
-	g_return_if_fail (entry);
+
+	XMMS_DBG ("wake the korv up!");
 
 	g_mutex_lock (mr->mutex);
-	g_queue_push_tail (mr->queue, GUINT_TO_POINTER (entry));
 	g_cond_signal (mr->cond);
 	g_mutex_unlock (mr->mutex);
 }
@@ -136,9 +129,7 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
 
 	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
-		xmms_medialib_entry_t entry = chmsg->id;
-
-		xmms_mediainfo_entry_add (mir, entry);
+		xmms_mediainfo_reader_wakeup (mir);
 	}
 }
 
@@ -147,16 +138,10 @@ xmms_mediainfo_reader_thread (gpointer data)
 {
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 
-	g_mutex_lock (mrt->mutex);
-
 	while (mrt->running) {
 		xmms_medialib_entry_t entry;
 
-		XMMS_DBG ("MediainfoThread is idle.");
-		g_cond_wait (mrt->cond, mrt->mutex);
-		XMMS_DBG ("MediainfoThread is awake!");
-
-		while ((entry = GPOINTER_TO_UINT (g_queue_pop_head (mrt->queue)))) {
+		while ((entry = xmms_medialib_entry_not_resolved_get())) {
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
@@ -165,58 +150,46 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			xmms_error_reset (&err);
 
-			g_mutex_unlock (mrt->mutex);
-
 			if (xmms_medialib_entry_is_resolved (entry)) {
 				lmod = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 			}
 
 			transport = xmms_transport_new ();
 			if (!transport) {
-				goto cont;
+				continue;
 			}
 
 			if (!xmms_transport_open (transport, entry)) {
+				xmms_medialib_entry_remove (entry);
 				xmms_object_unref (transport);
-				goto cont;
+				continue;
 			}
 
 			if (lmod) {
 				guint tmp;
 				tmp = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 				if (tmp && lmod >= tmp) {
+					xmms_medialib_entry_remove (entry);
 					xmms_object_unref (transport);
-					goto cont;
+					continue;
 				}
 			}
 
 			mime = xmms_transport_mimetype_get_wait (transport);
 
 			if (!mime) {
+				xmms_medialib_entry_remove (entry);
 				xmms_object_unref (transport);
-				goto cont;
+				continue;
 			}
-
-			/** @todo enable playlists
-			if (xmms_medialib_entry_is_playlist (entry)) {
-				plsplugin = xmms_playlist_plugin_new (mime);
-
-				XMMS_DBG ("Playlist!!");
-				
-				xmms_playlist_plugin_read (plsplugin, mrt->playlist, transport);
-
-				xmms_playlist_plugin_free (plsplugin);
-				xmms_object_unref (transport);
-				goto cont;
-			}
-			*/
 
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
+				xmms_medialib_entry_remove (entry);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
-				goto cont;
+				continue;
 			}
 
 			xmms_decoder_mediainfo_get (decoder, transport);
@@ -226,14 +199,15 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 
-cont:
-			g_mutex_lock (mrt->mutex);
-
 		}
 
-	}
+		XMMS_DBG ("MediainfoThread is idle.");
+		g_mutex_lock (mrt->mutex);
+		g_cond_wait (mrt->cond, mrt->mutex);
+		g_mutex_unlock (mrt->mutex);
+		XMMS_DBG ("MediainfoThread is awake!");
 
-	g_mutex_unlock (mrt->mutex);
+	}
 
 	return NULL;
 }

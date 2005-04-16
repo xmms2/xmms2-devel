@@ -86,6 +86,7 @@ xmms_plugin_get (void)
 	xmms_plugin_config_value_register (plugin, "shoutcastinfo", "1", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
 
 	return plugin;
 }
@@ -97,20 +98,14 @@ xmms_plugin_get (void)
 static gboolean
 xmms_curl_can_handle (const gchar *url)
 {
-	gchar *dec;
-
 	g_return_val_if_fail (url, FALSE);
 
-	dec = xmms_util_decode_path (url);
+	XMMS_DBG ("xmms_curl_can_handle (%s)", url);
 
-	XMMS_DBG ("xmms_curl_can_handle (%s)", dec);
-
-	if ((g_strncasecmp (dec, "http", 4) == 0) || (dec[0] == '/')) {
-		g_free (dec);
+	if ((g_strncasecmp (url, "http", 4) == 0) || (url[0] == '/')) {
 		return TRUE;
 	}
 
-	g_free (dec);
 	return FALSE;
 }
 
@@ -119,7 +114,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
 	xmms_config_value_t *val;
-	gint bufsize, metaint, verbose;
+	gint bufsize, metaint, verbose, connecttimeout;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -128,6 +123,9 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
 	bufsize = xmms_config_value_int_get (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "connecttimeout");
+	connecttimeout = xmms_config_value_int_get (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
 	metaint = xmms_config_value_int_get (val);
@@ -148,7 +146,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	data->curl_easy = curl_easy_init ();
 
-	curl_easy_setopt (data->curl_easy, CURLOPT_URL, xmms_util_decode_path (url));
+	curl_easy_setopt (data->curl_easy, CURLOPT_URL, url);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADER, 0);	/* No, we _dont_ want headers in body */
 	curl_easy_setopt (data->curl_easy, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_FOLLOWLOCATION, 1);	/* Doesn't work in multi though... */
@@ -161,6 +159,8 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_HTTP200ALIASES, data->http_aliases);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION, xmms_curl_callback_write);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION, xmms_curl_callback_header);
+	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
+	curl_easy_setopt (data->curl_easy, CURLOPT_NOSIGNAL, 1);
 
 	if (metaint == 1) {
 		curl_easy_setopt (data->curl_easy, CURLOPT_HTTPHEADER, data->http_headers);

@@ -121,7 +121,8 @@ static gboolean
 xmms_html_read_playlist (xmms_transport_t *transport,
 			 guint32 playlist_id)
 {
-	gchar *buffer, *plsurl;
+	gchar *buffer;
+	const gchar *plsurl;
 	gchar **tags;
 	gchar **suffix;
 	xmms_config_value_t *val;
@@ -172,10 +173,10 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 	val = xmms_config_lookup ("playlist.html.suffixes");
 	suffix = g_strsplit (xmms_config_value_string_get (val), ",", 0);
 
-	plsurl = xmms_util_decode_path (xmms_transport_url_get (transport));
+	plsurl = xmms_transport_url_get (transport);
 
 	for (cnt = 0; tags[cnt] != NULL; cnt++) {
-		gchar *url, *full, *enc;
+		gchar *url, *full;
 		xmms_medialib_entry_t entry;
 
 		url = parse_tag (tags[cnt], plsurl);
@@ -190,16 +191,13 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 
 		full = build_url (plsurl, url);
 
-		enc = xmms_util_encode_path (full);
-		entry = xmms_medialib_entry_new (enc);
+		entry = xmms_medialib_entry_new (full);
 		xmms_medialib_playlist_add (playlist_id, entry);
 
-		g_free (enc);
 		g_free (url);
 		g_free (full);
 	}
 
-	g_free (plsurl);
 	g_strfreev (suffix);
 	g_strfreev (tags);
 

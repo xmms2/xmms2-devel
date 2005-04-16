@@ -93,19 +93,14 @@ xmms_plugin_get (void)
 static gboolean
 xmms_file_can_handle (const gchar *url)
 {
-	gchar *dec;
 	g_return_val_if_fail (url, FALSE);
 
-	dec = xmms_util_decode_path (url);
-
-	XMMS_DBG ("xmms_file_can_handle (%s)", dec);
+	XMMS_DBG ("xmms_file_can_handle (%s)", url);
 	
-	if ((g_strncasecmp (dec, "file:", 5) == 0) || (dec[0] == '/')) {
-		g_free (dec);
+	if ((g_strncasecmp (url, "file:", 5) == 0) || (url[0] == '/')) {
 		return TRUE;
 	}
 
-	g_free (dec);
 	return FALSE;
 }
 
@@ -115,33 +110,27 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	gint fd;
 	xmms_file_data_t *data;
 	const gchar *urlptr;
-	gchar *nurl;
 	struct stat st;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
 
-	nurl = xmms_util_decode_path (url);
-	
-	XMMS_DBG ("xmms_file_init (%p, %s)", transport, nurl);
+	XMMS_DBG ("xmms_file_init (%p, %s)", transport, url);
 
-	if (g_strncasecmp (nurl, "file:", 5) == 0)
-		urlptr = strchr (nurl, '/');
+	if (g_strncasecmp (url, "file:", 5) == 0)
+		urlptr = strchr (url, '/');
 	else
-		urlptr = nurl;
+		urlptr = url;
 
 	if (!urlptr) {
-		g_free (nurl);
 		return FALSE;
 	}
 
 	if (stat (urlptr, &st) == -1) {
-		g_free (nurl);
 		return FALSE;
 	}
 
 	if (!S_ISREG (st.st_mode)) {
-		g_free (nurl);
 		return FALSE;
 	}
 
@@ -149,7 +138,6 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
 	XMMS_DBG ("fd: %d", fd);
 	if (fd == -1) {
-		g_free (nurl);
 		return FALSE;
 	}
 
@@ -158,8 +146,6 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	data->mime = NULL;
 	data->urlptr = g_strdup (urlptr);
 	xmms_transport_private_data_set (transport, data);
-
-	g_free (nurl);
 
 	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
 	if (!data->mime) {
