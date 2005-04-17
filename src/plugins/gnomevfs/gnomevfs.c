@@ -15,10 +15,12 @@
  */
 
 
-#include "xmms/xmms.h"
+#include "xmms/log.h"
+#include "xmms/magic.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
-#include "xmms/magic.h"
+#include "xmms/util.h"
+#include "xmms/xmms.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -108,7 +110,7 @@ xmms_gnomevfs_can_handle (const gchar *url)
 
 	XMMS_DBG ("xmms_gnomevfs_can_handle (%s)", url);
 	
-	if ((g_strncasecmp (url, "network:", 8) == 0))
+	if ((g_strncasecmp (url, "ssh:", 4) == 0))
 		retval = TRUE;
 	else 
 		retval = FALSE;
@@ -124,7 +126,6 @@ xmms_gnomevfs_init (xmms_transport_t *transport, const gchar *url)
 	GnomeVFSFileInfo *info;
 	GnomeVFSHandle *handle;
 	GnomeVFSResult result;
-	char *urlptr;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -228,6 +229,7 @@ xmms_gnomevfs_seek (xmms_transport_t *transport, gint offset, gint whence)
 	xmms_gnomevfs_data_t *data;
 	GnomeVFSSeekPosition w = GNOME_VFS_SEEK_START;
 	GnomeVFSResult result;
+	GnomeVFSFileSize offset_return = -1;
 
 	g_return_val_if_fail (transport, -1);
 	
@@ -247,8 +249,18 @@ xmms_gnomevfs_seek (xmms_transport_t *transport, gint offset, gint whence)
 	}
 
 	result = gnome_vfs_seek (data->handle, w, offset);
+	if (result != GNOME_VFS_OK) {
+		xmms_log_error ("GnomeVFS failed to seek.");
+		return -1;
+	}
 
-	return (result == GNOME_VFS_OK ? 0 : -1);
+	result = gnome_vfs_tell (data->handle, &offset_return);
+	if (result != GNOME_VFS_OK) {
+		xmms_log_error ("GnomeVFS failed to tell.");
+		return -1;
+	}
+
+	return offset_return;
 }
 
 
