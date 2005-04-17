@@ -170,9 +170,9 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 	data->urlptr = g_strdup (url);
 	xmms_transport_private_data_set (transport, data);
 
-	data->mime = xmms_magic_mime_from_file ((const gchar*)data->url);
+	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
 	if (!data->mime) {
-		g_free (data->url);
+		g_free (data->urlptr);
 		g_free (data);
 		return FALSE;
 	}
