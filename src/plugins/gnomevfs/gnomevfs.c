@@ -104,7 +104,7 @@ xmms_plugin_get (void)
 static gboolean
 xmms_gnomevfs_can_handle (const gchar *url)
 {
-	gboolean retval = TRUE;
+	gboolean retval = FALSE;
 	
 	g_return_val_if_fail (url, FALSE);
 
@@ -112,10 +112,8 @@ xmms_gnomevfs_can_handle (const gchar *url)
 	
 	if ((g_strncasecmp (url, "ssh:", 4) == 0))
 		retval = TRUE;
-	else 
-		retval = FALSE;
 	
-	return TRUE;
+	return retval;
 }
 
 
