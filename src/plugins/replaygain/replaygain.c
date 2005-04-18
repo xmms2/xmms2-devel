@@ -274,7 +274,7 @@ xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
 			data->mode = XMMS_REPLAYGAIN_MODE_TRACK;
 		}
 	} else if (!g_ascii_strcasecmp (name,
-	                                "decoder.use_replaygain_anticlip")) {
+	                                "effect.replaygain.use_anticlip")) {
 		data->use_anticlip = !!atoi (value);
 	}
 
