@@ -5,7 +5,7 @@ Import('base_env')
 xmmsc_sources = Split ("xmmsclient.c ipc.c ipc_glib.c playback.c playlist.c "
 		       "xlist.c xhash.c result.c medialib.c other.c")
 
-env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsipc", "xmmsutil"],
+env = base_env.Copy(INCLUDES=["include"], LIBS=["xmmsipc"],
 		    LIBPATH=["#builddir/lib/xmmsutil", "#builddir/lib/xmmsipc"])
 
 

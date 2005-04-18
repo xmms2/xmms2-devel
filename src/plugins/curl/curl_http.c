@@ -30,7 +30,7 @@ typedef struct {
 
 	fd_set fdread, fdwrite, fdexcp;
 
-	gchar *mime;
+	gchar *mime, *url;
 
 	gboolean error, first_header, running, know_length, stream_with_meta, know_meta_offset;
 
@@ -137,6 +137,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->ringbuf = xmms_ringbuf_new (bufsize);
 	data->mutex = g_mutex_new ();
 	data->pl_entry = xmms_transport_medialib_entry_get (transport);
+	data->url = g_strdup (url);
 
 	/* Set up easy handle */
 
@@ -146,7 +147,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	data->curl_easy = curl_easy_init ();
 
-	curl_easy_setopt (data->curl_easy, CURLOPT_URL, url);
+	curl_easy_setopt (data->curl_easy, CURLOPT_URL, data->url);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADER, 0);	/* No, we _dont_ want headers in body */
 	curl_easy_setopt (data->curl_easy, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_FOLLOWLOCATION, 1);	/* Doesn't work in multi though... */
@@ -347,6 +348,7 @@ xmms_curl_close (xmms_transport_t *transport)
 	curl_slist_free_all (data->http_headers);
 
 	g_free (data->mime);
+	g_free (data->url);
 	g_free (data);
 
 	XMMS_DBG ("All done!");
