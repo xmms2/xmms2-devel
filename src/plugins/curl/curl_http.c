@@ -30,9 +30,9 @@ typedef struct {
 
 	fd_set fdread, fdwrite, fdexcp;
 
-	gchar *mime, *url;
+	gchar *url;
 
-	gboolean error, first_header, running, know_length, stream_with_meta, know_meta_offset;
+	gboolean error, first_header, running, know_length, stream_with_meta, know_meta_offset, know_mime;
 
 	struct curl_slist *http_aliases;
 	struct curl_slist *http_headers;
@@ -46,6 +46,33 @@ typedef struct {
 
 	xmms_medialib_entry_t pl_entry;
 } xmms_curl_data_t;
+
+typedef void (*handler_func_t) (xmms_transport_t *transport, gchar *header);
+
+static void header_handler_contenttype (xmms_transport_t *transport, gchar *header);
+static void header_handler_contentlength (xmms_transport_t *transport, gchar *header);
+static void header_handler_icy_metaint (xmms_transport_t *transport, gchar *header);
+static void header_handler_icy_name (xmms_transport_t *transport, gchar *header);
+static void header_handler_icy_genre (xmms_transport_t *transport, gchar *header);
+static void header_handler_icy_br (xmms_transport_t *transport, gchar *header);
+static void header_handler_last (xmms_transport_t *transport, gchar *header);
+static handler_func_t header_handler_find (gchar *header);
+
+typedef struct {
+	gchar *name;
+	handler_func_t func;
+} handler_t;
+
+handler_t handlers[] = {
+	{ "content-type", header_handler_contenttype },
+	{ "content-length", header_handler_contentlength },
+	{ "icy-metaint", header_handler_icy_metaint },
+	{ "icy-name", header_handler_icy_name },
+	{ "icy-genre", header_handler_icy_genre },
+	{ "icy-br", header_handler_icy_br },
+	{ "\r\n", header_handler_last },
+	{ NULL, NULL }
+};
 
 /*
  * Function prototypes
@@ -347,7 +374,6 @@ xmms_curl_close (xmms_transport_t *transport)
 	curl_slist_free_all (data->http_aliases);
 	curl_slist_free_all (data->http_headers);
 
-	g_free (data->mime);
 	g_free (data->url);
 	g_free (data);
 
@@ -377,75 +403,26 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 	return ret;
 }
 
-/* This can probably be made a lot better */
-
 static size_t
 xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	xmms_transport_t *transport = (xmms_transport_t *) stream;
-	xmms_curl_data_t *data;
+	handler_func_t func;
 	gchar *header;
-	gchar *tmp;
-	gint r,w;
-	xmms_medialib_entry_t entry;
 
 	g_return_val_if_fail (transport, -1);
 
-	data = xmms_transport_private_data_get (transport);
-	g_return_val_if_fail (data, -1);
+	header = g_strndup ((gchar*)ptr, size * nmemb);
 
-	header = g_strndup (ptr, nmemb - 2);
+	func = header_handler_find (header);
+	if (func != NULL) {
+		gchar *val = header + strcspn (header, ":") + 1;
 
-	entry = xmms_transport_medialib_entry_get (transport);
-
-	if (!data->first_header) {
-		data->first_header = TRUE;
+		g_strstrip (val);
+		func (transport, val);
 	}
-
-	if (g_strncasecmp (header, "content-type: ", 14) == 0) {
-		if (!data->mime) {
-			data->mime = g_strdup (header + 14);
-			xmms_transport_mimetype_set (transport, data->mime);
-		}
-	}
-
-	else if (g_strncasecmp (header, "content-type:", 13) == 0) {
-		if (!data->mime) {
-			data->mime = g_strdup (header + 13);
-			xmms_transport_mimetype_set (transport, data->mime);
-		}
-	}
-
-	else if (g_strncasecmp (header, "content-length: ", 16) == 0) {
-		data->know_length = TRUE;
-		data->length = atoi (header + 16);		/* stroul! */
-	}
-
-	else if (g_strncasecmp (header, "icy-metaint:", 12) == 0) {
-		data->know_meta_offset = TRUE;
-		data->meta_offset = atoi (header + 12);
-		XMMS_DBG ("setting metaint to %d", data->meta_offset);
-	} else if (g_strncasecmp (header, "icy-name:", 9) == 0) {
-		tmp = g_convert (header+9, strlen (header+9), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, tmp);
-		g_free (tmp);
-	} else if (g_strncasecmp (header, "icy-br:", 7) == 0) {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header+7);
-	} else if (g_strncasecmp (header, "icy-genre:", 10) == 0) {
-		tmp = g_convert (header+10, strlen (header+10), "UTF-8", "ISO-8859-1", &r, &w, NULL);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
-		g_free (tmp);
-	}
-
-	if (!data->mime && (g_strncasecmp (header, "icy-", 4) == 0)) {
-		data->mime = g_strdup ("audio/mpeg");
-		xmms_transport_mimetype_set (transport, data->mime);
-	}
-
-	xmms_medialib_entry_send_update (data->pl_entry);
 
 	g_free (header);
-
 	return size * nmemb;
 }
 
@@ -541,7 +518,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 cont:
 	XMMS_DBG ("Curl thread quitting");
 
-	if (!data->mime) {
+	if (!data->know_mime) {
 		xmms_transport_mimetype_set (transport, NULL);
 	}
 
@@ -549,3 +526,111 @@ cont:
 	xmms_ringbuf_set_eos (data->ringbuf, TRUE);
 	g_mutex_unlock (data->mutex);
 }
+
+static handler_func_t
+header_handler_find (gchar *header)
+{
+	guint i;
+
+	g_return_val_if_fail (header, NULL);
+
+	for (i = 0; handlers[i].name != NULL; i++) {
+		guint len = strlen (handlers[i].name);
+
+		if (g_ascii_strncasecmp (handlers[i].name, header, len) == 0)
+			return handlers[i].func;
+	}
+
+	return NULL;
+}
+
+static void
+header_handler_contenttype (xmms_transport_t *transport, gchar *header)
+{
+	xmms_curl_data_t *data;
+
+	data = xmms_transport_private_data_get (transport);
+
+	g_mutex_lock (data->mutex);
+	data->know_mime = TRUE;
+	g_mutex_unlock (data->mutex);
+
+	xmms_transport_mimetype_set (transport, header);
+}
+
+static void
+header_handler_contentlength (xmms_transport_t *transport, gchar *header)
+{
+	xmms_curl_data_t *data;
+
+	data = xmms_transport_private_data_get (transport);
+
+	g_mutex_lock (data->mutex);
+	data->length = strtoul (header, NULL, 10);
+	g_mutex_unlock (data->mutex);
+}
+
+static void
+header_handler_icy_metaint (xmms_transport_t *transport, gchar *header)
+{
+	xmms_curl_data_t *data;
+
+	data = xmms_transport_private_data_get (transport);
+
+	g_mutex_lock (data->mutex);
+	data->know_meta_offset = TRUE;
+	data->meta_offset = strtoul (header, NULL, 10);
+	g_mutex_unlock (data->mutex);
+}
+
+static void
+header_handler_icy_name (xmms_transport_t *transport, gchar *header)
+{
+	xmms_medialib_entry_t entry;
+
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, header);
+	xmms_medialib_entry_send_update (entry);
+}
+
+static void
+header_handler_icy_br (xmms_transport_t *transport, gchar *header)
+{
+	xmms_medialib_entry_t entry;
+
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header);
+	xmms_medialib_entry_send_update (entry);
+}
+
+static void
+header_handler_icy_genre (xmms_transport_t *transport, gchar *header)
+{
+	xmms_medialib_entry_t entry;
+
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, header);
+	xmms_medialib_entry_send_update (entry);
+}
+
+static void
+header_handler_last (xmms_transport_t *transport, gchar *header)
+{
+	xmms_curl_data_t *data;
+	gchar *mime = NULL;
+
+	data = xmms_transport_private_data_get (transport);
+
+	g_mutex_lock (data->mutex);
+
+	if (data->know_meta_offset)
+		mime = "audio/mpeg";
+
+	if (!data->know_mime)
+		xmms_transport_mimetype_set (transport, mime);
+
+	data->know_mime = TRUE;
+	data->first_header = TRUE;
+	g_mutex_unlock (data->mutex);
+}
+
