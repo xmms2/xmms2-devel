@@ -123,7 +123,7 @@ on_enabled_changed (xmms_object_t *object, gconstpointer value,
 {
 	xmms_effect_t *effect = udata;
 
-	effect->enabled = !strcmp (value, "1");
+	effect->enabled = value ? !!atoi (value) : FALSE;
 }
 
 xmms_effect_t *
