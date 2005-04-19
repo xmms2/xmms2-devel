@@ -307,8 +307,6 @@ xmms_transport_new ()
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
 	
-	XMMS_DBG ("MEMDBG: TRANSPORT NEW %p", transport);
-
 	return transport;
 }
 
@@ -331,7 +329,6 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	g_return_val_if_fail (transport, FALSE);
 
 	tmp = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-	XMMS_DBG ("Trying to open stream: %s", tmp);
 	
 	transport->plugin = xmms_transport_plugin_find (tmp);
 	g_free (tmp);
@@ -552,8 +549,6 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	ret = seek_method (transport, offset, whence);
 
-	XMMS_DBG ("Seek method returned %d", ret);
-
 	if (ret != -1)
 		transport->current_position = ret; 
 
@@ -744,8 +739,6 @@ xmms_transport_destroy (xmms_object_t *object)
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
 	
-	XMMS_DBG ("MEMDBG: TRANSPORT DESTROY %p", object);
-
 	if (transport->mimetype)
 		g_free (transport->mimetype);
 }
@@ -768,7 +761,7 @@ xmms_transport_plugin_find (const gchar *url)
 	
 	for (node = list; node; node = g_list_next (node)) {
 		plugin = node->data;
-		XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
+		XMMS_DBG ("Trying plugin: %s", xmms_plugin_shortname_get (plugin));
 		can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
 		
 		if (!can_handle)

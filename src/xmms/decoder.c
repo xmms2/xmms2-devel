@@ -462,9 +462,6 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_decoder_destroy_method_t destroy_method;
 	GList *n;
 
-	XMMS_DBG ("Destroying decoder!");
-	XMMS_DBG ("MEMDBG: DECODER DEAD %p", object);
-
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 
 	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
@@ -500,8 +497,6 @@ xmms_decoder_new ()
 
 	val = xmms_config_lookup ("decoder.buffersize");
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
-
-	XMMS_DBG ("MEMDBG: DECODER NEW %p", decoder);
 
 	return decoder;
 }
@@ -657,11 +652,10 @@ xmms_decoder_find_plugin (const gchar *mimetype)
         g_return_val_if_fail (mimetype, NULL);
 	
         list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_DECODER);
-        XMMS_DBG ("List: %p", list);
 	
         for (node = list; node; node = g_list_next (node)) {
                 plugin = node->data;
-                XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
+                XMMS_DBG ("Trying plugin: %s", xmms_plugin_shortname_get (plugin));
                 can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
 
                 if (!can_handle)
