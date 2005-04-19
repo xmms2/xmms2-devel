@@ -34,13 +34,13 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 8
+#define DB_VERSION 9
 
 const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name)";
-const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
+const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, pos int, primary key (playlist_id, entry))";
 const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
 			      "create index prop_idx on Media (value);"
                               "create index log_id on Log (id);"

@@ -631,8 +631,11 @@ xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry)
 
 	ret = xmms_sqlite_query (medialib->sql, NULL, NULL,
 				 "insert into PlaylistEntries"
-				 "(playlist_id, entry) "
-				 "values (%u, %Q)",
+				 "(playlist_id, entry, pos) "
+				 "values (%u, %Q, "
+
+				 /* @todo use a real autoincrement column */
+				 "ifnull((select MAX(ifnull(pos, 0)) from PlaylistEntries) + 1, 1))",
 				 playlist_id, mid);
 
 	if (!ret) {
@@ -669,7 +672,8 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 
 	ret = xmms_sqlite_query (medialib->sql, get_playlist_entries_cb, &entries,
 	                         "select entry from PlaylistEntries "
-	                         "where playlist_id = %u", plsid);
+	                         "where playlist_id = %u "
+	                         "order by pos", plsid);
 
 	if (!ret) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Failed to list entries!");
@@ -837,7 +841,8 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 
 	ret = xmms_sqlite_query (medialib->sql, get_playlist_entries_cb, &entries,
 	                         "select entry from PlaylistEntries "
-	                         "where playlist_id = %u", playlist_id);
+	                         "where playlist_id = %u "
+	                         "order by pos", playlist_id);
 	if (!ret) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "Couldn't retrieve playlist entries");
