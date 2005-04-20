@@ -465,12 +465,12 @@ xmms_medialib_entry_new_unlocked (const char *url)
 		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
 				       "insert into Media (id, key, value) values (%d, 'url', %Q)",
 				       ret, url)) {
-			ret = 0;
+			return 0;
 		}
 		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
 				       "insert or replace into Media (id, key, value) values (%d, 'resolved', '0')",
 				       ret)) {
-			ret = 0;
+			return 0;
 		}
 
 	}
