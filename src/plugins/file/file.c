@@ -95,8 +95,6 @@ xmms_file_can_handle (const gchar *url)
 {
 	g_return_val_if_fail (url, FALSE);
 
-	XMMS_DBG ("xmms_file_can_handle (%s)", url);
-	
 	if ((g_strncasecmp (url, "file:", 5) == 0) || (url[0] == '/')) {
 		return TRUE;
 	}
@@ -136,7 +134,6 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 
 	XMMS_DBG ("Opening %s", urlptr);
 	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
-	XMMS_DBG ("fd: %d", fd);
 	if (fd == -1) {
 		return FALSE;
 	}

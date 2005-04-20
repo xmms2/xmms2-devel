@@ -290,8 +290,6 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
 	GList *ret = NULL;
 
-	XMMS_DBG ("Configvalue list");
-
 	g_mutex_lock (conf->mutex);
 	
 	g_hash_table_foreach (conf->values, add_to_list_foreach, &ret);
@@ -455,8 +453,6 @@ xmms_config_lookup (const gchar *path)
 {
 	xmms_config_value_t *value;
 	g_return_val_if_fail (global_config, NULL);
-	
-	XMMS_DBG ("Looking up %s", path);
 	
 	g_mutex_lock (global_config->mutex);
 	value = g_hash_table_lookup (global_config->values, path);
@@ -653,8 +649,6 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	if (val->data && !strcmp (val->data, data))
 		return;
 
-	XMMS_DBG ("setting %s to %s", val->name, data);
-
 	g_free (val->data);
 	val->data = g_strdup (data);
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
@@ -772,8 +766,6 @@ xmms_config_value_register (const gchar *path,
 {
 
 	xmms_config_value_t *val;
-
-	XMMS_DBG ("Registering: %s", path);
 
 	g_mutex_lock (global_config->mutex);
 

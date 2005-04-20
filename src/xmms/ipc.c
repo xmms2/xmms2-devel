@@ -270,7 +270,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		guint signalid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &signalid)) {
-			XMMS_DBG ("No signalid in this msg?!");
+			xmms_log_error ("No signalid in this msg?!");
 			return;
 		}
 
@@ -283,7 +283,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		guint broadcastid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &broadcastid)) {
-			XMMS_DBG ("No broadcastid in this msg?!");
+			xmms_log_error ("No broadcastid in this msg?!");
 			return;
 		}
 		g_mutex_lock (global_ipc_lock);
@@ -292,19 +292,17 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		return;
 	}
 
-	XMMS_DBG ("Executing %d/%d", xmms_ipc_msg_get_object (msg), xmms_ipc_msg_get_cmd (msg));
-
 	g_mutex_lock (global_ipc_lock);
 	object = ipc->objects[xmms_ipc_msg_get_object (msg)];
 	if (!object) {
-		XMMS_DBG ("Object %d was not found!", xmms_ipc_msg_get_object (msg));
+		xmms_log_error ("Object %d was not found!", xmms_ipc_msg_get_object (msg));
 		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
 
 	cmd = object->cmds[xmms_ipc_msg_get_cmd (msg)];
 	if (!cmd) {
-		XMMS_DBG ("No such cmd %d on object %d", xmms_ipc_msg_get_cmd (msg), xmms_ipc_msg_get_object (msg));
+		xmms_log_error ("No such cmd %d on object %d", xmms_ipc_msg_get_cmd (msg), xmms_ipc_msg_get_object (msg));
 		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
@@ -380,7 +378,7 @@ xmms_ipc_client_thread (gpointer data)
 		ret = select (MAX (fd, wakeup[0]) + 1, &rfdset, &wfdset, NULL, &tmout);
 		if (ret == -1) {
 			/* Woot client destroyed? */
-			XMMS_DBG ("Error from select, maybe the client died?");
+			xmms_log_error ("Error from select, maybe the client died?");
 			break;
 		} else if (ret == 0) {
 			continue;
@@ -476,8 +474,6 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 
 	client->run = FALSE;
 
-	XMMS_DBG ("Now everyone is done with client!");
-
 	xmms_ipc_transport_destroy (client->transport);
 
 	while (!g_queue_is_empty (client->out_msg)) {
@@ -548,7 +544,7 @@ xmms_ipc_source_accept (GSource *source, xmms_ipc_t *ipc)
 	XMMS_DBG ("Client connect?!");
 	transport = xmms_ipc_server_accept (ipc->transport);
 	if (!transport) {
-		XMMS_DBG ("accept returned null!");
+		xmms_log_error ("accept returned null!");
 		return FALSE;
 	}
 
@@ -739,8 +735,6 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 void
 xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 {
-	XMMS_DBG ("REGISTERING: '%d'", objectid);
-
 	g_mutex_lock (global_ipc_lock);
 	global_ipc->objects[objectid] = object;
 	g_mutex_unlock (global_ipc_lock);
@@ -753,8 +747,6 @@ xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 void
 xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
 {
-	XMMS_DBG ("UNREGISTERING: '%d'", objectid);
-
 	g_mutex_lock (global_ipc_lock);
 	global_ipc->objects[objectid] = NULL;
 	g_mutex_unlock (global_ipc_lock);
@@ -802,7 +794,7 @@ xmms_ipc_setup_server (const gchar *path)
 	
 	transport = xmms_ipc_server_init (path);
 	if (!transport) {
-		XMMS_DBG ("THE FAIL!");
+		xmms_log_error ("THE FAIL!");
 		return FALSE;
 	}
 	global_ipc->transport = transport;

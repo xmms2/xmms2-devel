@@ -105,8 +105,6 @@ xmms_samba_can_handle (const gchar *url)
 {
 	g_return_val_if_fail (url, FALSE);
 
-	XMMS_DBG ("xmms_samba_can_handle (%s)", url);
-	
 	if (g_strncasecmp (url, "smb://", 6) == 0) {
 		return TRUE;
 	}

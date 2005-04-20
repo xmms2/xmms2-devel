@@ -116,8 +116,6 @@ xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr)
 {
 	g_return_if_fail (mr);
 
-	XMMS_DBG ("wake the korv up!");
-
 	g_mutex_lock (mr->mutex);
 	g_cond_signal (mr->cond);
 	g_mutex_unlock (mr->mutex);
@@ -205,11 +203,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		}
 
-		XMMS_DBG ("MediainfoThread is idle.");
 		g_mutex_lock (mrt->mutex);
 		g_cond_wait (mrt->cond, mrt->mutex);
 		g_mutex_unlock (mrt->mutex);
-		XMMS_DBG ("MediainfoThread is awake!");
 
 	}
 

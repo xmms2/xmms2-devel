@@ -184,7 +184,6 @@ xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata,
 	va_start (ap, query);
 
 	q = sqlite3_vmprintf (query, ap);
-	XMMS_DBG ("Running query: %s", q);
 
 	ret = sqlite3_exec (sql, q, method, udata, &err);
 	if (ret != SQLITE_OK) {

@@ -100,8 +100,6 @@ xmms_curl_can_handle (const gchar *url)
 {
 	g_return_val_if_fail (url, FALSE);
 
-	XMMS_DBG ("xmms_curl_can_handle (%s)", url);
-
 	if ((g_strncasecmp (url, "http", 4) == 0) || (url[0] == '/')) {
 		return TRUE;
 	}
@@ -351,7 +349,6 @@ xmms_curl_close (xmms_transport_t *transport)
 	g_free (data->url);
 	g_free (data);
 
-	XMMS_DBG ("All done!");
 }
 
 /*
@@ -517,7 +514,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 			}
 
 			if (code != CURLM_CALL_MULTI_PERFORM) {
-				XMMS_DBG ("%s", curl_multi_strerror (code));
+				xmms_log_error ("%s", curl_multi_strerror (code));
 				goto cont;
 			}
 		}
@@ -530,7 +527,7 @@ xmms_curl_thread (xmms_transport_t *transport)
 			msg = curl_multi_info_read (data->curl_multi, &msgs_in_queue);
 
 			if (msg && msg->msg == CURLMSG_DONE) {
-				XMMS_DBG ("%s", curl_easy_strerror (msg->data.result));
+				xmms_log_error ("%s", curl_easy_strerror (msg->data.result));
 				xmms_error_set (&data->status, XMMS_ERROR_EOS, "End of Stream");
 				goto cont;
 			}

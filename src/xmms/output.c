@@ -197,10 +197,6 @@ xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint c
 	
         g_return_if_fail (f);
 	
-	XMMS_DBG ("Adding outputformat %s-%d-%d",
-	          xmms_sample_name_get (fmt),
-	          channels, rate);
-
         output->format_list = g_list_append (output->format_list, f);
 }
 
@@ -808,7 +804,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	if (!xmms_decoder_init (decoder, output->format_list,
 	                        output->effects)) {
-		XMMS_DBG ("Couldn't initialize decoder");
+		xmms_log_error ("Couldn't initialize decoder");
 
 		xmms_object_unref (decoder);
 		return FALSE;
@@ -903,7 +899,6 @@ xmms_output_write_thread (gpointer data)
 		gint ret;
 
 		if (output->write_paused) {
-			XMMS_DBG ("output is waiting!");
 			g_cond_wait (output->write_cond, output->write_mutex);
 			continue;
 		}

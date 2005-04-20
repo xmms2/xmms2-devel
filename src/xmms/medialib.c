@@ -695,8 +695,6 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	g_return_if_fail (medialib);
 	g_return_if_fail (url);
 
-	XMMS_DBG ("adding %s to the mediainfo db!", url);
-
 	entry = xmms_medialib_entry_new (url);
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);

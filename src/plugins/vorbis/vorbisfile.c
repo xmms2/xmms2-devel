@@ -348,7 +348,6 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 		vorbis_info *vi;
 		gint ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
 		if (ret != 0) {
-			XMMS_DBG ("Got %d from ov_open_callbacks", ret);
 			return FALSE;
 		}
 		vi = ov_info (&data->vorbisfile, -1);
@@ -390,14 +389,12 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 		       &c);
 
 	if (ret == 0) {
-		XMMS_DBG ("got ZERO from ov_read");
 		return FALSE;
 	} else if (ret < 0) {
 		return TRUE;
 	}
 
 	if (c != data->current) {
-		XMMS_DBG ("current = %d, c = %d", data->current, c);
 		xmms_vorbis_get_media_info (decoder);
 		data->current = c;
 	}
@@ -420,7 +417,7 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 	g_return_val_if_fail (data, FALSE);
 
 	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
-		XMMS_DBG ("Trying to seek past end of stream"); 
+		xmms_log_error ("Trying to seek past end of stream"); 
 		return FALSE; 
 	}
 

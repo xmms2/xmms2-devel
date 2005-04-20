@@ -123,8 +123,6 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 
 	data = xmms_decoder_private_data_get (decoder);
 
-	XMMS_DBG ("seek samples %d", samples);
-
 	if (data->xing) {
 		guint i;
 		guint x_samples;
@@ -132,7 +130,6 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 		x_samples = xmms_xing_get_frames (data->xing) * 1152;
 
 		i = (guint) (100.0 * (gdouble) samples) / (gdouble) x_samples;
-		XMMS_DBG ("i = %d x_samples = %d", i, x_samples);
 
 		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
 	} else {
@@ -142,7 +139,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 	XMMS_DBG ("Try seek %d bytes", bytes);
 
 	if (bytes > data->fsize) {
-		XMMS_DBG ("To big value %d is filesize", data->fsize);
+		xmms_log_error ("To big value %d is filesize", data->fsize);
 		return FALSE;
 	}
 
@@ -177,8 +174,6 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint file
 	gchar *tmp;
 
 	data = xmms_decoder_private_data_get (decoder);
-
-	XMMS_DBG ("Buffer is %d bytes", len);
 
 	mad_stream_init (&stream);
 	mad_frame_init (&frame);
@@ -314,7 +309,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   id3v2buf + pos,
 							   MIN(4096,head.len - pos), &error);
 				if (ret <= 0) {
-					XMMS_DBG ("error reading data for id3v2-tag");
+					xmms_log_error ("error reading data for id3v2-tag");
 					return;
 				}
 				pos += ret;
@@ -333,7 +328,6 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
 
 	if (xmms_transport_islocal (transport) && !id3handled) {
-		XMMS_DBG ("Seeking to last 128 bytes");
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 		ret = xmms_transport_read (transport, buf, 128, &error);
 		if (ret == 128) {
@@ -341,8 +335,6 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		}
 	}
 
-
-	XMMS_DBG ("Seeking to first bytes");
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
 	xmms_medialib_entry_send_update (entry);
