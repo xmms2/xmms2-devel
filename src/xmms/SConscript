@@ -11,11 +11,13 @@ xmms2d_sources = Split ("config.c plugin.c object.c ipc.c "+
 			"effect.c error.c medialib.c "+
 			"sample.c")
 
-b = Builder(action = 'python src/xmms/generate-converter.py > $TARGET')
+# @todo fix so that we don't hardcode the target.
+b = Builder(action = 'python src/xmms/generate-converter.py > src/xmms/converter.c') 
 env.Depends('#src/xmms/converter.c', 'generate-converter.py')
-env.SourceCode('#src/xmms/converter.c', b)
+env.SourceCode('converter.c', b)
 
 #env.Command('converter.c', 'generate-converter.py', 'python src/xmms/generate-converter.py >src/xmms/converter.c') 
+env.Depends('sample.c', 'converter.c')
 
 if env.HasGroup ("sqlite") :
 	xmms2d_sources.append ("sqlite.c")
@@ -35,3 +37,5 @@ if env.HasGroup ("valgrind") :
 env.XmmsConfig("xmms2.conf")
 
 env.XmmsProgram("xmms2d", xmms2d_sources)
+env.Depends('#src/xmms/sample.c', '#src/xmms/converter.c')
+
