@@ -25,6 +25,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "xmms/effect.h"
 #include "xmms/plugin.h"
@@ -123,7 +124,7 @@ on_enabled_changed (xmms_object_t *object, gconstpointer value,
 {
 	xmms_effect_t *effect = udata;
 
-	effect->enabled = !strcmp (value, "1");
+	effect->enabled = value ? !!atoi (value) : FALSE;
 }
 
 xmms_effect_t *
@@ -164,20 +165,11 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 	effect->destroy = xmms_plugin_method_get (plugin,
 	                                          XMMS_PLUGIN_METHOD_DESTROY);
 
-	/* check whether this plugin is enabled.
-	 * if the plugin doesn't provide the "enabled" config key,
-	 * we'll just assume it cannot be disabled.
-	 */
-	effect->cfg_enabled = xmms_plugin_config_lookup (plugin, "enabled");
-
-	if (!effect->cfg_enabled) {
-		effect->enabled = TRUE;
-	} else {
-		effect->enabled = !!xmms_config_value_int_get (effect->cfg_enabled);
-
-		xmms_config_value_callback_set (effect->cfg_enabled,
-		                                on_enabled_changed, effect);
-	}
+	/* check whether this plugin is enabled. */
+	effect->cfg_enabled =
+		xmms_plugin_config_value_register (plugin, "enabled", "0",
+		                                   on_enabled_changed, effect);
+	effect->enabled = !!xmms_config_value_int_get (effect->cfg_enabled);
 
 	xmms_object_connect (XMMS_OBJECT (output),
 	                     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
@@ -199,10 +191,8 @@ xmms_effect_free (xmms_effect_t *effect)
 
 	xmms_object_unref (effect->plugin);
 
-	if (effect->cfg_enabled) {
-		xmms_config_value_callback_remove (effect->cfg_enabled,
-		                                   on_enabled_changed);
-	}
+	xmms_config_value_callback_remove (effect->cfg_enabled,
+	                                   on_enabled_changed);
 
 	g_free (effect);
 }

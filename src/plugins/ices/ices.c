@@ -85,7 +85,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ices_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_ices_process);
 
-	xmms_plugin_config_value_register (plugin, "enabled", "0", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "encodingnombr", "64000", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "host", "localhost", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "port", "8000", NULL, NULL);

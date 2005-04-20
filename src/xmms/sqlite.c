@@ -34,13 +34,13 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 8
+#define DB_VERSION 9
 
 const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name)";
-const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
+const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, pos int, primary key (playlist_id, entry))";
 const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
 			      "create index prop_idx on Media (value);"
                               "create index log_id on Log (id);"
@@ -72,6 +72,17 @@ xmms_sqlite_version_cb (void *pArg, int argc, char **argv, char **columnName)
 	}
 
 	return 0;
+}
+
+static int
+xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, const void *str2)
+{
+	guint32 a, b;
+	a = strtol(str1, NULL, 10);
+	b = strtol(str2, NULL, 10);
+	if (a < b) return -1;
+	if (a == b) return 0;
+	return 1;
 }
 
 sqlite3 *
@@ -140,6 +151,8 @@ xmms_sqlite_open (guint *id)
 	}
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
+
+	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
 
 	return sql;
 }
