@@ -54,6 +54,7 @@ static gpointer xmms_transport_thread (gpointer data);
 /** 
  * @defgroup Transport Transport
  * @ingroup XMMSServer
+ * @brief Responsible to read encoded data from source.
  *
  * The transport is responsible for reading encoded data from 
  * a source. The data will be put in ringbuffer that the decoder 

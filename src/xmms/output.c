@@ -66,6 +66,8 @@ XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NON
 
 /** @defgroup Output Output
   * @ingroup XMMSServer
+  * @brief Output is responsible to put the decoded data on
+  * the soundcard.
   * @{
   */
 
@@ -554,6 +556,12 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
 
+/**
+ * Switch to another output plugin.
+ * @param output output pointer
+ * @param new_plugin the new #xmms_plugin_t to use as output.
+ * @returns TRUE on success and FALSE on failure
+ */
 gboolean
 xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 {
@@ -595,6 +603,9 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 
 }
 
+/**
+ * Allocate a new #xmms_output_t
+ */
 xmms_output_t *
 xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 {
@@ -697,6 +708,9 @@ xmms_output_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	}
 }
 
+/**
+ * Flush the buffers in soundcard.
+ */
 void
 xmms_output_flush (xmms_output_t *output)
 {

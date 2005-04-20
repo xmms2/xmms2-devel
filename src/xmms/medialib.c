@@ -37,24 +37,10 @@
 
 #include <sqlite3.h>
 
-struct xmms_medialib_St {
-	xmms_object_t object;
-	xmms_playlist_t *playlist;
-	sqlite3 *sql;
-	GMutex *mutex;
-	guint32 nextid;
-};
-
-
-/** 
-  * Ok, so the functions are written with reentrency in mind, but
-  * we choose to have a global medialib object here. It will be
-  * much easier, and I don't see the real use of multiple medialibs
-  * right now. This could be changed by removing this global one
-  * and altering the function callers...
-  */
-
-static xmms_medialib_t *medialib;
+/**
+ * @file 
+ * Medialib is a metainfo cache that is searchable.
+ */
 
 
 static int get_playlist_entries_cb (void *pArg, int argc, char **argv, char **cName);
@@ -73,7 +59,6 @@ static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *p
 					     gchar *mime, xmms_error_t *error);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 
-/** Methods */
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, HASHTABLE, UINT32, NONE);
 XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
 XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
@@ -83,6 +68,45 @@ XMMS_CMD_DEFINE (addtopls, xmms_medialib_select_and_add, xmms_medialib_t *, NONE
 XMMS_CMD_DEFINE (playlist_import, xmms_medialib_playlist_import, xmms_medialib_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (playlist_export, xmms_medialib_playlist_export, xmms_medialib_t *, STRING, STRING, STRING);
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
+
+/**
+ *
+ * @defgroup Medialib Medialib
+ * @ingroup XMMSServer
+ * @brief Medialib caches metadata
+ *
+ * Controls metadata storage.
+ * 
+ * @{
+ */
+
+/**
+ * Medialib structure
+ */
+struct xmms_medialib_St {
+	xmms_object_t object;
+	/** The current playlist */
+	xmms_playlist_t *playlist;
+	/** SQLite pointer */
+	sqlite3 *sql;
+	/** SQLite mutex */
+	GMutex *mutex;
+	/** Nextid in the mediatable */
+	guint32 nextid;
+};
+
+
+/** 
+  * Ok, so the functions are written with reentrency in mind, but
+  * we choose to have a global medialib object here. It will be
+  * much easier, and I don't see the real use of multiple medialibs
+  * right now. This could be changed by removing this global one
+  * and altering the function callers...
+  */
+
+static xmms_medialib_t *medialib;
+
+
 
 
 static void 
@@ -97,7 +121,7 @@ xmms_medialib_destroy (xmms_object_t *object)
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
 
-void
+static void
 xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 			    gpointer userdata)
 {
@@ -107,6 +131,13 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 	medialib->sql = xmms_sqlite_open (&medialib->nextid);
 	g_mutex_unlock (mlib->mutex);
 }
+
+/**
+ * Initialize the medialib and open the database file.
+ * 
+ * @param playlist the current playlist pointer
+ * @returns TRUE if successful and FALSE if there was a problem
+ */
  
 gboolean
 xmms_medialib_init (xmms_playlist_t *playlist)
@@ -167,6 +198,17 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	return TRUE;
 }
 
+
+/**
+ * Called to start the logging of a entry.
+ * When this is called you *have* to call logging_stop in order to
+ * ensure database consistency.
+ *
+ * @param entry Entry to log.
+ *
+ * @sa xmms_medialib_logging_stop
+ */
+
 void
 xmms_medialib_logging_start (xmms_medialib_entry_t entry)
 {
@@ -197,6 +239,14 @@ xmms_medialib_logging_start (xmms_medialib_entry_t entry)
 	}
 }
 
+
+/**
+ * Stops logging for the entry. Will also write the value to the database
+ *
+ * @param entry The entry.
+ * @param playtime Playtime of the entry, this will be used to calculate how
+ * many % of the song that was played.
+ */
 
 void
 xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime)
@@ -254,6 +304,16 @@ xmms_medialib_string_cb (void *pArg, int argc, char **argv, char **columnName)
 }
 
 
+/**
+ * Retrieve a property from an entry.
+ *
+ * @param entry Entry to query.
+ * @param property The property to extract. Strings passed should 
+ * be defined in medialib.h 
+ * 
+ * @returns Newly allocated gchar that needs to be freed with g_free
+ */
+
 gchar *
 xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gchar *property)
 {
@@ -268,6 +328,17 @@ xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gchar *prop
 
 	return ret;
 }
+
+/**
+ * Retrieve a property as a int from a entry
+ *
+ * @param entry Entry to query.
+ * @param property The property to extract. Strings passed should 
+ * be defined in medialib.h 
+ * 
+ * @returns Property as integer, will not require you to free memory
+ * if you know the property is a int. On failure 0 will be returned.
+ */
 
 guint
 xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property)
@@ -285,6 +356,17 @@ xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *
 	return ret;
 }
 
+/**
+ * Set a entry property to a new value, overwriting the old value.
+ *
+ * @param entry Entry to alter.
+ * @param property The property to extract. Strings passed should 
+ * be defined in medialib.h 
+ * @param value gchar with the new value, will be copied in to the medialib
+ *
+ * @returns TRUE on success and FALSE on failure.
+ */
+
 gboolean
 xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *property, const gchar *value)
 {
@@ -300,18 +382,37 @@ xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *prop
 
 }
 
+/**
+ * A nice wrapper for @code xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_PROPERTY_RESOLVED); @endcode
+ *
+ * @return TRUE if the entry was resolved, else false.
+ */
+
 gboolean
 xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry)
 {
 	return xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
 }
 
-/** Just a convient function wrapper */
+/**
+ * A nice wrapper for @code xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_PROPERTY_ID); @endcode
+ *
+ * @return TRUE if the entry was resolved, else false.
+ */
+
 guint
 xmms_medialib_entry_id_get (xmms_medialib_entry_t entry)
 {
 	return xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ID);
 }
+
+/**
+ * Trigger a update signal to the client. This should be called
+ * when important information in the entry has been changed and 
+ * should be visible to the user.
+ *
+ * @param entry Entry to signal a update for.
+ */
 
 void
 xmms_medialib_entry_send_update (xmms_medialib_entry_t entry)
@@ -359,6 +460,12 @@ xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_erro
 
 }
 
+/**
+ * Remove a medialib entry from the database
+ *
+ * @param entry Entry to remove
+ */
+
 void
 xmms_medialib_entry_remove (xmms_medialib_entry_t entry)
 {
@@ -369,20 +476,7 @@ xmms_medialib_entry_remove (xmms_medialib_entry_t entry)
 	g_mutex_unlock (medialib->mutex);
 }
 
-xmms_medialib_entry_t
-xmms_medialib_entry_not_resolved_get (void)
-{
-	xmms_medialib_entry_t ret = 0;
 
-	g_mutex_lock (medialib->mutex);
-
-	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &ret,
-			   "select id from Media where key='resolved' and value='0' limit 1");
-
-	g_mutex_unlock (medialib->mutex);
-	
-	return ret;
-}
 
 static gboolean
 process_dir (const gchar *path, xmms_error_t *error)
@@ -479,6 +573,20 @@ xmms_medialib_entry_new_unlocked (const char *url)
 
 }
 
+
+/**
+ * Welcome to a function that should be called something else.
+ * Returns a entry for a URL, if the URL is already in the medialib
+ * the current entry will be returned otherwise a new one will be
+ * created and returned.
+ *
+ * @todo rename to something better?
+ *
+ * @param url URL to add/retrieve from the medialib
+ * 
+ * @returns Entry mapped to the URL
+ */
+
 xmms_medialib_entry_t
 xmms_medialib_entry_new (const char *url)
 {
@@ -500,6 +608,16 @@ xmms_medialib_hashtable_cb (void *pArg, int argc, char **argv, char **columnName
 
 	return 0;
 }
+
+/**
+ * Convert a entry and all properties to a hashtable that
+ * could be feed to the client or somewhere else in the daemon.
+ *
+ * @param entry Entry to convert.
+ *
+ * @returns Newly allocated hashtable with newly allocated strings
+ * make sure to free them all.
+ */
 
 GHashTable *
 xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry)
@@ -558,6 +676,15 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
 {
 	return xmms_medialib_select (query, error);
 }
+
+/**
+ * Add a entry to the medialib. Calls #xmms_medialib_entry_new and then
+ * wakes up the mediainfo_reader in order to resolve the metadata.
+ *
+ * @param medialib Medialib pointer
+ * @param url URL to add
+ * @param error In case of error this will be filled.
+ */
 
 void
 xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
@@ -618,6 +745,14 @@ prepare_playlist (guint id, gchar *name)
 	                         "values (%u, '%s')", id, name);
 	return ret ? id : 0;
 }
+
+/**
+ * Add a entry to a medialib playlist.
+ *
+ * @param playlist_id ID number of the playlist.
+ * @param entry Entry to add to playlist
+ * @returns TRUE upon success and FALSE if something went wrong
+ */
 
 gboolean
 xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry)
@@ -878,7 +1013,10 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 /**
  * Get a list of #GHashTables 's that matches the query.
  *
- * Make sure that query are correctly escaped before entering here!
+ * @param query SQL query that should be executed.
+ * @param error In case of error this will be filled.
+ * @returns GList containing GHashTables. Caller are responsible to 
+ * free all memory.
  */
 GList *
 xmms_medialib_select (gchar *query, xmms_error_t *error)
@@ -901,6 +1039,12 @@ xmms_medialib_select (gchar *query, xmms_error_t *error)
 	return res;
 }
 
+/** @} */
+
+/**
+ * @internal
+ */
+
 void
 xmms_medialib_playlist_save_autosaved ()
 {
@@ -909,10 +1053,34 @@ xmms_medialib_playlist_save_autosaved ()
 	xmms_medialib_playlist_save_current (medialib, "autosaved", &err);
 }
 
+/**
+ * @internal
+ */
+
 void
 xmms_medialib_playlist_load_autosaved ()
 {
 	xmms_error_t err;
 
 	xmms_medialib_playlist_load (medialib, "autosaved", &err);
+}
+
+/**
+ * @internal
+ * Get the next unresolved entry. Used by the mediainfo reader..
+ */
+
+xmms_medialib_entry_t
+xmms_medialib_entry_not_resolved_get (void)
+{
+	xmms_medialib_entry_t ret = 0;
+
+	g_mutex_lock (medialib->mutex);
+
+	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &ret,
+			   "select id from Media where key='resolved' and value='0' limit 1");
+
+	g_mutex_unlock (medialib->mutex);
+	
+	return ret;
 }

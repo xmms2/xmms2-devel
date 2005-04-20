@@ -1,3 +1,19 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ * 
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *                   
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 
 #include <glib.h>
 #include <math.h>
@@ -5,6 +21,16 @@
 #include "xmms/sample.h"
 #include "xmms/util.h"
 
+/**
+  * @defgroup Sample Sample Converter
+  * @ingroup XMMSServer
+  * @brief Convert sample formats back and forth.
+  * @{ 
+  */
+
+/**
+ * The converter module
+ */
 struct xmms_sample_converter_St {
 	xmms_object_t obj;
 
@@ -37,6 +63,9 @@ xmms_sample_conv_get (guint inchannels, xmms_sample_format_t intype,
                       gboolean resample);
 
 
+/**
+ * return a new audioformat.
+ */
 xmms_audio_format_t *
 xmms_sample_audioformat_new (xmms_sample_format_t fmt, guint channels, guint rate)
 {
@@ -51,6 +80,9 @@ xmms_sample_audioformat_new (xmms_sample_format_t fmt, guint channels, guint rat
 	return res;
 }
 
+/**
+ * Free all resources used by a #xmms_audio_format_t
+ */
 void
 xmms_sample_audioformat_destroy (xmms_audio_format_t *fmt)
 {
@@ -92,6 +124,9 @@ xmms_sample_converter_init (xmms_audio_format_t *from, xmms_audio_format_t *to)
 	return conv;
 }
 
+/**
+ * Return the audio format used by the converter as source
+ */
 xmms_audio_format_t *
 xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 {
@@ -100,6 +135,9 @@ xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 	return conv->from;
 }
 
+/**
+ * Return the audio format used by the converter as target
+ */
 xmms_audio_format_t *
 xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 {
@@ -187,18 +225,27 @@ xmms_sample_audioformats_coerce (GList *declist, GList *outlist)
 
 }
 
+/**
+ * convert from milliseconds to samples for this format.
+ */
 guint
 xmms_sample_ms_to_samples (xmms_audio_format_t *f, guint milliseconds)
 {
 	return (guint)(((gdouble) f->samplerate) * milliseconds / 1000);
 }
 
+/**
+ * Convert from samples to milliseconds for this format
+ */
 guint
 xmms_sample_samples_to_ms (xmms_audio_format_t *f, guint samples)
 {
 	return (guint) (((gdouble)samples) * 1000.0 / f->samplerate);
 }
 
+/**
+ * Convert from bytes to milliseconds for this format
+ */
 guint
 xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint bytes)
 {
@@ -245,6 +292,9 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 
 }
 
+/**
+ * do the actual converstion between two audio formats.
+ */
 void
 xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len, xmms_sample_t **out, guint *outlen)
 {

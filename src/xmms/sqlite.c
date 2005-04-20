@@ -46,6 +46,13 @@ const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
                               "create index log_id on Log (id);"
                               "create index playlist_idx on Playlist (name);";
 
+/**
+ * @defgroup SQLite SQLite
+ * @ingroup XMMSServer
+ * @brief The SQLite backend of medialib
+ * @{
+ */
+
 static int
 xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
 {
@@ -85,6 +92,9 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 	return 1;
 }
 
+/**
+ * Open a database or create a new one
+ */
 sqlite3 *
 xmms_sqlite_open (guint *id)
 {
@@ -157,6 +167,9 @@ xmms_sqlite_open (guint *id)
 	return sql;
 }
 
+/**
+ * Execute a query to the database.
+ */
 gboolean
 xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...)
 {
@@ -188,9 +201,14 @@ xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata,
 	
 }
 
+/**
+ * Close database and free all resources used.
+ */
 void
 xmms_sqlite_close (sqlite3 *sql)
 {
 	g_return_if_fail (sql);
 	sqlite3_close (sql);
 }
+
+/** @} */

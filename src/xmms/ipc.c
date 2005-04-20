@@ -30,7 +30,17 @@
 #include "xmms/ringbuf.h"
 #include "xmms/ipc.h"
 
+/**
+  * @defgroup IPC IPC
+  * @ingroup XMMSServer
+  * @brief IPC functions for XMMS2 Daemon
+  * @{ 
+  */
 
+
+/**
+ * The server IPC object
+ */
 struct xmms_ipc_St {
 	xmms_ipc_transport_t *transport;
 	GList *clients;
@@ -43,6 +53,9 @@ struct xmms_ipc_St {
 	xmms_object_t *broadcasts[XMMS_IPC_SIGNAL_END];
 };
 
+/**
+ * A IPC client representation.
+ */
 struct xmms_ipc_client_St {
 	GThread *thread;
 
@@ -50,6 +63,7 @@ struct xmms_ipc_client_St {
 	xmms_ipc_msg_t *read_msg;
 	xmms_ipc_t *ipc;
 
+	/** Messages waiting to be written */
 	GQueue *out_msg;
 
 	gboolean run;
@@ -64,6 +78,7 @@ static GMutex *global_ipc_lock;
 static xmms_ipc_t *global_ipc;
 
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
+static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 
 typedef gboolean (*xmms_ipc_client_callback_t) (GSource *, xmms_ipc_client_t *);
 typedef gboolean (*xmms_ipc_server_callback_t) (GSource *, xmms_ipc_t *);
@@ -476,7 +491,10 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	g_mutex_unlock (global_ipc_lock);
 }
 
-gboolean
+/**
+ * Put a message in the queue awaiting to be sent to the client.
+ */
+static gboolean
 xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 {
 	g_return_val_if_fail (client, FALSE);
@@ -550,6 +568,9 @@ static GSourceFuncs xmms_ipc_server_funcs = {
 	NULL
 };
 
+/**
+ * Enable IPC
+ */
 gboolean
 xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
 {
@@ -569,6 +590,9 @@ xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
 	return TRUE;
 }
 
+/**
+ * Checks if someone is waiting for #signalid
+ */
 gboolean
 xmms_ipc_has_pending (guint signalid)
 {
@@ -636,6 +660,9 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 	g_mutex_unlock (global_ipc_lock);
 }
 
+/**
+ * Register a broadcast signal.
+ */
 void
 xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
@@ -650,6 +677,9 @@ xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 	g_mutex_unlock (global_ipc_lock);
 }
 
+/**
+ * Unregister a broadcast signal.
+ */
 void
 xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 {
@@ -666,6 +696,9 @@ xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 	g_mutex_unlock (global_ipc_lock);
 }
 
+/**
+ * Register a signal
+ */
 void
 xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
@@ -680,6 +713,9 @@ xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 	g_mutex_unlock (global_ipc_lock);
 }
 
+/**
+ * Unregister a signal
+ */
 void
 xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 {
@@ -696,6 +732,10 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 	g_mutex_unlock (global_ipc_lock);
 }
 
+/**
+ * Register a object to the IPC core. This needs to be done if you 
+ * want to send commands to that object from the client.
+ */
 void
 xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 {
@@ -707,6 +747,9 @@ xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 
 }
 
+/**
+ * Remove a object from the IPC core.
+ */
 void
 xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
 {
@@ -717,7 +760,9 @@ xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
 	g_mutex_unlock (global_ipc_lock);
 }
 
-
+/**
+ * Initialize IPC
+ */
 xmms_ipc_t *
 xmms_ipc_init (void)
 {
@@ -733,6 +778,9 @@ xmms_ipc_init (void)
 	return ipc;
 }
 
+/**
+ * Disable IPC
+ */
 void
 xmms_ipc_shutdown (void)
 {
@@ -741,6 +789,9 @@ xmms_ipc_shutdown (void)
 	g_mutex_free (global_ipc_lock);
 }
 
+/**
+ * Start the server
+ */
 gboolean
 xmms_ipc_setup_server (const gchar *path)
 {
@@ -760,4 +811,6 @@ xmms_ipc_setup_server (const gchar *path)
 
 	return TRUE;
 }
+
+/** @} */
 

@@ -35,11 +35,18 @@
 
 #include "internal/plugin_int.h"
 
+
+static void on_enabled_changed (xmms_object_t *object, gconstpointer value, gpointer udata);
+
 /** @defgroup Effect Effect
   * @ingroup XMMSServer
+  * @brief Manipulates decoded data.
   * @{
   */
 
+/** 
+ * Effect structure
+ */
 struct xmms_effect_St {
 	void (*destroy) (xmms_effect_t *);
 	gboolean (*format_set) (xmms_effect_t *, xmms_audio_format_t *);
@@ -59,6 +66,14 @@ on_currentid_changed (xmms_object_t *object,
                       const xmms_object_cmd_arg_t *arg,
                       xmms_effect_t *effect);
 
+/**
+ * Run the current effect on the the data you feed it.
+ * 
+ * @param e the effect to use
+ * @param buf the buffer with unencoded data read from a decoder
+ * @param len the length of #buf
+ */
+
 void
 xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)
 {
@@ -66,6 +81,10 @@ xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)
 		e->run (e, buf, len);
 	}
 }
+
+/**
+ * Set the current stream format for the effect plugin
+ */
 
 gboolean
 xmms_effect_format_set (xmms_effect_t *e, xmms_audio_format_t *fmt)
@@ -105,6 +124,9 @@ xmms_effect_private_data_set (xmms_effect_t *effect, gpointer data)
 	effect->private_data = data;
 }
 
+/**
+ * Return the plugin that is used by this effect 
+ */
 xmms_plugin_t *
 xmms_effect_plugin_get (xmms_effect_t *effect)
 {
@@ -114,18 +136,8 @@ xmms_effect_plugin_get (xmms_effect_t *effect)
 }
 
 /**
- *
- * @internal
+ * Allocate a new effect for the plugin
  */
-
-static void
-on_enabled_changed (xmms_object_t *object, gconstpointer value,
-                    gpointer udata)
-{
-	xmms_effect_t *effect = udata;
-
-	effect->enabled = value ? !!atoi (value) : FALSE;
-}
 
 xmms_effect_t *
 xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
@@ -179,6 +191,11 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 	return effect;
 }
 
+
+/**
+ * Free all resources used by the effect
+ */
+
 void
 xmms_effect_free (xmms_effect_t *effect)
 {
@@ -207,4 +224,18 @@ on_currentid_changed (xmms_object_t *object,
 }
 
 /** @} */
+
+/**
+ * @internal
+ */
+
+static void
+on_enabled_changed (xmms_object_t *object, gconstpointer value,
+                    gpointer udata)
+{
+	xmms_effect_t *effect = udata;
+
+	effect->enabled = value ? !!atoi (value) : FALSE;
+}
+
 

@@ -23,12 +23,19 @@
 
 /** @defgroup Ringbuffer Ringbuffer
   * @ingroup XMMSServer
+  * @brief Ringbuffer primitive.
   * @{
   */
 
+/** 
+ * A ringbuffer
+ */
 struct xmms_ringbuf_St {
+	/** The actual bufferdata */
 	guint8 *buffer;
+	/** Number of bytes in #buffer */
 	gint buffer_size;
+	/** Read and write index */
 	gint rd_index, wr_index;
 	gboolean eos;
 
@@ -40,6 +47,9 @@ struct xmms_ringbuf_St {
 };
 
 
+/**
+ * The total size of the ringbuffer.
+ */
 gint
 xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
 {
@@ -48,6 +58,12 @@ xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
 	return ringbuf->buffer_size;
 }
 
+/**
+ * Allocate a new ringbuffer
+ *
+ * @param size The total size of the new ringbuffer
+ * @returns a new #xmms_ringbuf_t
+ */
 xmms_ringbuf_t *
 xmms_ringbuf_new (guint size)
 {
@@ -65,6 +81,9 @@ xmms_ringbuf_new (guint size)
 	return ringbuf;
 }
 
+/**
+ * Free all memory used by the ringbuffer
+ */
 void
 xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf)
 {
@@ -80,6 +99,9 @@ xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf)
 	g_free (ringbuf);
 }
 
+/**
+ * Clear the ringbuffers data
+ */
 void
 xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 {
@@ -91,6 +113,9 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 	g_cond_signal (ringbuf->free_cond);
 }
 
+/**
+ * Number of bytes free in the ringbuffer
+ */
 guint
 xmms_ringbuf_bytes_free (const xmms_ringbuf_t *ringbuf)
 {
@@ -101,6 +126,9 @@ xmms_ringbuf_bytes_free (const xmms_ringbuf_t *ringbuf)
 	return (ringbuf->buffer_size - (ringbuf->wr_index - ringbuf->rd_index)) - 1;
 }
 
+/**
+ * Number of bytes used in the buffer
+ */
 guint
 xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 {
@@ -111,6 +139,9 @@ xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 	return ringbuf->buffer_size - (ringbuf->rd_index - ringbuf->wr_index);     
 }
 
+/**
+ * Back-up the buffer with #length bytes.
+ */
 guint
 xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
 {
@@ -123,6 +154,16 @@ xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
 	return cnt;
 }
 
+/**
+ * Reads data from the ringbuffer. This is a non-blocking call and can
+ * return less data than you wanted. Use #xmms_ringbuf_wait_used to
+ * ensure that you get as much data as you want.
+ *
+ * @param ringbuf Buffer to read from
+ * @param data Allocated buffer where the readed data will end up
+ * @param length number of bytes to read
+ * @returns number of bytes that acutally was read.
+ */
 guint
 xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 {
@@ -156,6 +197,11 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 	return r;
 }
 
+/**
+ * Same as #xmms_ringbuf_read but blocks until you have all the data you want.
+ *
+ * @sa xmms_ringbuf_read
+ */
 guint
 xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx)
 {
@@ -180,22 +226,18 @@ xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GM
 	return read_bytes;
 }
 
+
 /**
+ * Write data to the ringbuffer. If not all data can be written 
+ * to the buffer the function will not block.
+ *
+ * @sa xmms_ringbuf_write_wait
  * 
+ * @param ringbuf Ringbuffer to put data in.
+ * @param data Data to put in ringbuffer
+ * @param length Length of #data
+ * @returns Number of bytes that was written
  */
-void
-xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void *arg)
-{
-	g_return_if_fail (ringbuf);
-
-	g_return_if_fail (!ringbuf->hotspot_callback);
-
-	ringbuf->hotspot_pos = ringbuf->wr_index;
-	ringbuf->hotspot_callback = cb;
-	ringbuf->hotspot_arg = arg;
-
-}
-
 guint
 xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 {
@@ -217,6 +259,10 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 	
 	return w;
 }
+
+/**
+ * Same as #xmms_ringbuf_write but blocks until there is enough free space.
+ */
 
 guint
 xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length, GMutex *mtx)
@@ -241,6 +287,9 @@ xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint leng
 	return written;
 }
 
+/**
+ * Block until we have free space in the ringbuffer.
+ */
 void
 xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 {
@@ -252,6 +301,10 @@ xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	while ((xmms_ringbuf_bytes_free (ringbuf) < len) && !ringbuf->eos)
 		g_cond_wait (ringbuf->free_cond, mtx);
 }
+
+/**
+ * Block until we have used space in the buffer
+ */
 
 void
 xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
@@ -266,6 +319,12 @@ xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 		g_cond_wait (ringbuf->used_cond, mtx);
 }
 
+/**
+ * Tell if the ringbuffer is EOS
+ *
+ * @returns TRUE if the ringbuffer is EOSed.
+ */
+
 gboolean
 xmms_ringbuf_iseos (const xmms_ringbuf_t *ringbuf)
 {
@@ -277,6 +336,9 @@ xmms_ringbuf_iseos (const xmms_ringbuf_t *ringbuf)
 	return ringbuf->eos;
 }
 
+/**
+ * Set EOS flag on ringbuffer.
+ */
 void
 xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
 {
@@ -290,6 +352,10 @@ xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
 	}
 }
 
+
+/**
+ * Block until we are EOSed
+ */
 void
 xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
 {
@@ -302,3 +368,22 @@ xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
 
 }
 /** @} */
+
+/**
+ * @internal 
+ * Unused
+ */
+void
+xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void *arg)
+{
+	g_return_if_fail (ringbuf);
+
+	g_return_if_fail (!ringbuf->hotspot_callback);
+
+	ringbuf->hotspot_pos = ringbuf->wr_index;
+	ringbuf->hotspot_callback = cb;
+	ringbuf->hotspot_arg = arg;
+
+}
+
+

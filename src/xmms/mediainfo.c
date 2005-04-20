@@ -107,6 +107,10 @@ xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
 	g_free (mir);
 }
 
+/**
+ * Wake the reader thread and start process the entries.
+ */
+
 void
 xmms_mediainfo_reader_wakeup (xmms_mediainfo_reader_t *mr)
 {

@@ -33,7 +33,6 @@ xmms_ipc_t * xmms_ipc_init (void);
 void xmms_ipc_shutdown (void);
 gboolean xmms_ipc_setup_server (const gchar *path);
 gboolean xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc);
-gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 void xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid);
 void xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid);
 void xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid);

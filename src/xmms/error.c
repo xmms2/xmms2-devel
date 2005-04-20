@@ -26,6 +26,7 @@
 
 /** @defgroup Error Error
   * @ingroup XMMSServer
+  * @brief Error reporting
   * @{
   */
 
@@ -39,6 +40,10 @@ static const gchar *typenames[XMMS_ERROR_COUNT] = {
 	[XMMS_ERROR_NO_SAUSAGE] = "org.xmms.Error.NoSausage",
 };
 
+
+/**
+ * Get the current errortype as a string.
+ */
 const gchar *
 xmms_error_type_get_str (xmms_error_t *err)
 {
@@ -47,6 +52,9 @@ xmms_error_type_get_str (xmms_error_t *err)
 	return typenames[err->code];
 }
 
+/**
+ * Get the human readable error
+ */
 const gchar *
 xmms_error_message_get (xmms_error_t *err)
 {

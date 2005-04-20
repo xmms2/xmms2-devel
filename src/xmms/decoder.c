@@ -55,6 +55,7 @@
 /** 
  * @defgroup Decoder Decoder
  * @ingroup XMMSServer
+ * @brief Decoder module takes encoded data and decodes it.
  * @{
  */
 
@@ -383,6 +384,16 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
  * @{
  */
 
+/**
+ * Get a offset from the decoder on how long we should seek.
+ * 
+ * @param decoder decoder pointer
+ * @param milliseconds The number of milliseconds we want to seek.
+ * @param err On failure this will be used.
+ * @returns Number of bytes in the encoded data that represents the
+ * number of #milliseconds that we passed to the function
+ */
+ 
 gboolean
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
 {
@@ -394,6 +405,16 @@ xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t 
 	return xmms_decoder_seek_samples (decoder, samples, err);
 
 }
+
+/**
+ * Same as #xmms_decoder_seek_ms but in samples instead.
+ * 
+ * @param decoder decoder pointer
+ * @param samples The number of samples we want to seek.
+ * @param err On failure this will be used.
+ * @returns Number of bytes in the encoded data that represents the
+ * number of #samples that we passed to the function
+ */
 
 gboolean
 xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err)
@@ -488,6 +509,11 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_object_unref (decoder->vis);
 }
 
+/**
+ * Allocate a new decoder.
+ * Remember to unref it to free memory!
+ */
+
 xmms_decoder_t *
 xmms_decoder_new ()
 {
@@ -505,6 +531,15 @@ xmms_decoder_new ()
 
 	return decoder;
 }
+
+/**
+ * Open a decoder for this transport. This must be done before you call
+ * #xmms_decoder_read.
+ *
+ * @param transport Initialized transport that points to encoded data.
+ * @param decoder A allocated decoder from #xmms_decoder_new
+ * @returns TRUE if a suitable decoder was found
+ */
 
 gboolean
 xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
@@ -604,6 +639,10 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_output_t *output)
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
+/**
+ * Quit all decoder operations.
+ */
+
 void
 xmms_decoder_stop (xmms_decoder_t *decoder)
 {
@@ -615,6 +654,10 @@ xmms_decoder_stop (xmms_decoder_t *decoder)
 	g_mutex_unlock (decoder->mutex);
 }
 
+
+/**
+ * Resolv metadata for the current entry
+ */
 void
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)

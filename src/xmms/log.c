@@ -81,6 +81,7 @@ xmms_log_config_regex_changed (xmms_object_t *object, gconstpointer data,
 
 /** @defgroup Log Log
   * @ingroup XMMSServer
+  * @brief Loging facility.
   * @{
   */
 
