@@ -340,21 +340,23 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
-	num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
+	if (data->vorbiscomment != NULL) {
+		num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
 
-	for (current = 0; current < num_comments; current++) {
-		gchar **s, *val;
-		guint length;
+		for (current = 0; current < num_comments; current++) {
+			gchar **s, *val;
+			guint length;
 
-		s = g_strsplit (data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
-		length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
+			s = g_strsplit (data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
+			length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
 
-		val = g_strndup (s[1], length);
-		xmms_medialib_entry_property_set (entry, s[0], val);
-		XMMS_DBG ("Setting %s to %s", s[0], val);
-		g_free (val);
+			val = g_strndup (s[1], length);
+			xmms_medialib_entry_property_set (entry, s[0], val);
+			XMMS_DBG ("Setting %s to %s", s[0], val);
+			g_free (val);
 
-		g_strfreev (s);
+			g_strfreev (s);
+		}
 	}
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->bits_per_sample * data->sample_rate);
@@ -414,7 +416,9 @@ xmms_flac_destroy (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
-	FLAC__metadata_object_delete (data->vorbiscomment);
+	if (data->vorbiscomment)
+		FLAC__metadata_object_delete (data->vorbiscomment);
+
 	FLAC__seekable_stream_decoder_finish (data->flacdecoder);
 	FLAC__seekable_stream_decoder_delete (data->flacdecoder);
 
