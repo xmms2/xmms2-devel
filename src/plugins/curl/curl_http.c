@@ -29,7 +29,7 @@ typedef struct {
 
 	gchar *url;
 
-	gboolean have_headers, running, know_length, know_mime, shoutcast;
+	gboolean running, know_length, know_mime, shoutcast;
 
 	struct curl_slist *http_aliases;
 	struct curl_slist *http_headers;
@@ -385,16 +385,12 @@ xmms_curl_thread (xmms_transport_t *transport)
 	struct timeval timeout;
 	gint handles, maxfd;
 
-	fd_set fdread, fdwrite, fdexcp, *fdtemp;
+	fd_set fdread, fdwrite, fdexcp;
 
 	g_return_if_fail (transport);
 
 	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
-
-	FD_ZERO (&fdread);
-	FD_ZERO (&fdwrite);
-	FD_ZERO (&fdexcp);
 
 	while (curl_multi_perform (data->curl_multi, &handles) == CURLM_CALL_MULTI_PERFORM);
 
@@ -406,15 +402,14 @@ xmms_curl_thread (xmms_transport_t *transport)
 		timeout.tv_sec = 1;
 		timeout.tv_usec = 0;
 
-		if (data->have_headers)
-			fdtemp = NULL;
-		else
-			fdtemp = &fdwrite;
+		FD_ZERO (&fdread);
+		FD_ZERO (&fdwrite);
+		FD_ZERO (&fdexcp);
 
 		curl_multi_fdset (data->curl_multi, &fdread, &fdwrite, &fdexcp,  &maxfd);
 
 		g_mutex_unlock (data->mutex);
-		ret = select (maxfd + 1, &fdread, fdtemp, &fdexcp, &timeout);
+		ret = select (maxfd + 1, &fdread, &fdwrite, &fdexcp, &timeout);
 		g_mutex_lock (data->mutex);
 
 		if (ret == -1)
@@ -561,7 +556,6 @@ header_handler_last (xmms_transport_t *transport, gchar *header)
 		xmms_transport_mimetype_set (transport, mime);
 
 	data->know_mime = TRUE;
-	data->have_headers = TRUE;
 	g_mutex_unlock (data->mutex);
 }
 
