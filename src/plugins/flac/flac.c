@@ -65,8 +65,8 @@ xmms_plugin_get (void)
 			"Free Lossless Audio Codec decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
-	xmms_plugin_info_add (plugin, "Author", "Michael Lindgren");
-	xmms_plugin_info_add (plugin, "E-Mail", "lindgren@debian.as");
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_flac_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
