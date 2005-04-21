@@ -26,7 +26,7 @@ def checkFlags(base_env):
 	##
 	## Check for essensial libs
 	##
-	base_env.CheckAndAddFlagsToGroup("mad", "pkg-config --libs --cflags mad", fail=1)
+	base_env.CheckLibAndAddFlagsToGroup("mad", "mad", "mad_synth_init", fail=1)
 	base_env.CheckAndAddFlagsToGroup("glib", "pkg-config --libs --cflags glib-2.0", fail=1)
 	base_env.CheckAndAddFlagsToGroup("glib-thread", "pkg-config --libs --cflags gthread-2.0", fail=1)
 	base_env.CheckAndAddFlagsToGroup("glib-module", "pkg-config --libs --cflags gmodule-2.0", fail=1)
@@ -52,7 +52,7 @@ def checkFlags(base_env):
 	#base_env.CheckLibAndAddFlagsToGroup("vorbisenc","vorbisenc","vorbis_encode_ctl",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("vorbisfile","vorbisfile","ov_open_callbacks",depends="vorbis")
 	base_env.CheckLibAndAddFlagsToGroup("math","m","cos")
-	#base_env.CheckLibAndAddFlagsToGroup("flac", "FLAC", "FLAC__seekable_stream_decoder_get_state")
+	base_env.CheckLibAndAddFlagsToGroup("flac", "FLAC", "FLAC__seekable_stream_decoder_get_state")
 	#base_env.CheckLibAndAddFlagsToGroup("speex", "speex", "speex_bits_init")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("resid", "libresid-builder.la")
 	base_env.CheckAndAddFlagsToGroupFromLibTool("sid", "libsidplay2.la")
