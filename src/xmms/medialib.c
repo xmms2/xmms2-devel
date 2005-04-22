@@ -520,11 +520,13 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 	if (id) {
 		g_mutex_lock (medialib->mutex);
-		xmms_sqlite_query (medialib->sql, NULL, NULL, "update Media set value = '0' where key='resolved' and id=%d", id);
+		xmms_sqlite_query (medialib->sql, NULL, NULL, "update Media set value = '0' where key='%s' and id=%d", 
+				   XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, id);
 		g_mutex_unlock (medialib->mutex);
 	} else {
 		g_mutex_lock (medialib->mutex);
-		xmms_sqlite_query (medialib->sql, NULL, NULL, "update Media set value = '0' where key='resolved'", id);
+		xmms_sqlite_query (medialib->sql, NULL, NULL, "update Media set value = '0' where key='%s'", 
+				   XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
 		g_mutex_unlock (medialib->mutex);
 	}
 
@@ -576,20 +578,26 @@ xmms_medialib_entry_new_unlocked (const char *url)
 	g_return_val_if_fail (url, 0);
 
 	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
-			   "select id from Media where key='url' and value=%Q", url);
+			   "select id from Media where key='%s' and value=%Q", 
+			   XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url);
 
 	if (id) {
 		ret = id;
 	} else {
 		ret = medialib->nextid++;
 		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
-				       "insert into Media (id, key, value) values (%d, 'url', %Q)",
-				       ret, url)) {
+				       "insert into Media (id, key, value) values (%d, '%s', %Q)",
+				       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url)) {
 			return 0;
 		}
 		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
-				       "insert or replace into Media (id, key, value) values (%d, 'resolved', '0')",
-				       ret)) {
+				       "insert or replace into Media (id, key, value) values (%d, '%s', '0')",
+				       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED)) {
+			return 0;
+		}
+		if (!xmms_sqlite_query (medialib->sql, NULL, NULL,
+				       "insert or replace into Media (id, key, value) values (%d, '%s', '%d')",
+				       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED, time(NULL))) {
 			return 0;
 		}
 
@@ -1102,7 +1110,8 @@ xmms_medialib_entry_not_resolved_get (void)
 	g_mutex_lock (medialib->mutex);
 
 	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &ret,
-			   "select id from Media where key='resolved' and value='0' limit 1");
+			   "select id from Media where key='%s' and value='0' limit 1", 
+			   XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
 
 	g_mutex_unlock (medialib->mutex);
 	

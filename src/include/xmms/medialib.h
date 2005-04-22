@@ -52,6 +52,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID "album_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID "artist_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID "track_id"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED "added"
 
 /*
  * Method defintions.
