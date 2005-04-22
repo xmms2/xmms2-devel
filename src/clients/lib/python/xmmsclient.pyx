@@ -1238,6 +1238,25 @@ cdef class XMMS :
 		
 		return ret
 
+	def medialib_rehash(self, id = 0, myClass = None) :
+		"""
+		Force metainfo update on medialib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_rehash (self.conn, id)
+		ret.more_init ()
+		
+		return ret
+
+
 	def medialib_playlist_export (self, name, mime, myClass = None) :
 		"""
 		Exports a playlist from medialib to a other format
