@@ -24,6 +24,8 @@
 #define ID3v2_HEADER_FLAGS_EXTENDED 0x40
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
 
+#define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
+
 #define quad2long(a,b,c,d) ((a << 24) | (b << 16) | (c << 8) | (d))
 
 
@@ -152,6 +154,10 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, buf+l2+1, len-l2-1);
 		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
 			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, buf+l2+1, len-l2-1);
+		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
+			 (g_strcasecmp (buf+l2+1, MUSICBRAINZ_VA_ID) == 0))
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+
 		break;
 
 	}
