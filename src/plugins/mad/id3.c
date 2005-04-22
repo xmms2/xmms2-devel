@@ -150,6 +150,8 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 	case quad2long('T','X','X','X'): {
 		/* User defined, lets search for musicbrainz */
 		guint32 l2 = strlen (buf);
+		if ((len - l2 -1) < 1)
+			break;
 		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
 			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, buf+l2+1, len-l2-1);
 		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
