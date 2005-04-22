@@ -155,8 +155,9 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
 			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, buf+l2+1, len-l2-1);
 		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
-			 (g_strcasecmp (buf+l2+1, MUSICBRAINZ_VA_ID) == 0))
+			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+		}
 
 		break;
 
@@ -264,7 +265,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 				return FALSE;
 			}
 
-			if (buf[0] == 'T') {
+			if (buf[0] == 'T' || buf[0] == 'U') {
 				xmms_mad_handle_id3v2_text (type, buf + 6, 0, size, entry);
 			}
 			
