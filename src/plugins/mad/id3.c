@@ -92,7 +92,6 @@ add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
 		g_error_free (err);
 		return;
 	}
-	XMMS_DBG ("%s=%s", key, nval);
 	xmms_medialib_entry_property_set (entry, key, nval);	
 	g_free (nval);
 }
