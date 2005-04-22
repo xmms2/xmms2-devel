@@ -58,6 +58,7 @@ static void xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *pla
 static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname, 
 					     gchar *mime, xmms_error_t *error);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
+static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, HASHTABLE, UINT32, NONE);
 XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, HASHLIST, STRING, NONE);
@@ -68,6 +69,7 @@ XMMS_CMD_DEFINE (addtopls, xmms_medialib_select_and_add, xmms_medialib_t *, NONE
 XMMS_CMD_DEFINE (playlist_import, xmms_medialib_playlist_import, xmms_medialib_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (playlist_export, xmms_medialib_playlist_export, xmms_medialib_t *, STRING, STRING, STRING);
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
 
 /**
  *
@@ -179,6 +181,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PATH_IMPORT,
 	                     XMMS_CMD_FUNC (path_import));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_REHASH,
+	                     XMMS_CMD_FUNC (rehash));
 
 	xmms_config_value_register ("medialib.dologging",
 				    "1",
@@ -506,6 +511,27 @@ process_dir (const gchar *path, xmms_error_t *error)
 	}
 	g_dir_close (dir);
 	return TRUE;
+}
+
+static void 
+xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error)
+{
+	xmms_mediainfo_reader_t *mr;
+
+	if (id) {
+		g_mutex_lock (medialib->mutex);
+		xmms_sqlite_query (medialib->sql, NULL, NULL, "update Media set value = '0' where key='resolved' and id=%d", id);
+		g_mutex_unlock (medialib->mutex);
+	} else {
+		g_mutex_lock (medialib->mutex);
+		xmms_sqlite_query (medialib->sql, NULL, NULL, "update Media set value = '0' where key='resolved'", id);
+		g_mutex_unlock (medialib->mutex);
+	}
+
+	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
+	xmms_mediainfo_reader_wakeup (mr);
+
+	
 }
 
 static void 

@@ -492,6 +492,21 @@ add [url]";
 			print_error ("%s", xmmsc_result_get_error (res));
 		}
 		xmmsc_result_unref (res);
+
+	} else if (g_strcasecmp (argv[2], "rehash") == 0) {
+		xmmsc_result_t *res;
+		unsigned int id = 0;
+		if (argc < 4) {
+			print_info ("Rehashing whole medialib!");
+		} else {
+			id = atoi (argv[3]);
+		}
+		res = xmmsc_medialib_rehash (conn, id);
+		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+		xmmsc_result_unref (res);
 	} else {
 		print_info (mlibHelp);
 		print_error ("Unrecognised mlib command: %s\n", argv[2]);
