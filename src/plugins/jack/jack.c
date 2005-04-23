@@ -22,8 +22,6 @@
 #include "xmms/util.h"
 #include "xmms/output.h"
 
-#warning "CONVERT TO SAMPLE_T"
-
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 
 #define MAX_OUTPUT_PORTS  10
@@ -45,7 +43,6 @@ typedef struct xmms_jack_data_St {
 	xmms_config_value_t *mixer_conf;
 
 	unsigned char*      sound_buffer;                  /* temporary buffer used to process data before sending to jack */
-	struct timeval      previousTime;                  /* time of last JACK_Callback() write to jack, allows for MS accurate bytes played  */
 
 	jack_port_t*        output_port[MAX_OUTPUT_PORTS]; /* output ports */
 	jack_client_t*      client;                        /* pointer to jack client */
@@ -55,15 +52,7 @@ typedef struct xmms_jack_data_St {
 	long                sample_rate;                   /* samples(frames) per second */
 	unsigned long       num_input_channels;            /* number of input channels(1 is mono, 2 stereo etc..) */
 	unsigned long       num_output_channels;           /* number of output channels(1 is mono, 2 stereo etc..) */
-	unsigned long       bytes_per_output_frame;        /* (num_output_channels * bits_per_channel) / 8 */
-	unsigned long       bytes_per_input_frame;         /* (num_input_channels * bits_per_channel) / 8 */
 
-	unsigned long       written_client_bytes;          /* input bytes we wrote to jack, not necessarily actual bytes we wrote to jack due to channel and other conversion */
-	unsigned long       played_client_bytes;           /* input bytes that jack has played */
-
-	unsigned long       client_bytes;                  /* total bytes written by the client via JACK_Write() */
-
-	long                clientBytesInJack;             /* number of INPUT bytes we wrote to jack(not necessary the number of bytes we wrote to jack */
 	unsigned long       buffer_size;                   /* number of bytes in the buffer allocated for processing data in JACK_Callback */
 } xmms_jack_data_t;
 
@@ -72,6 +61,10 @@ static int
 _JACK_OpenDevice(xmms_output_t *output);
 static int
 _JACK_Open(xmms_output_t *output, unsigned int bytes_per_channel, unsigned long *rate, int channels);
+
+
+
+#define CALLBACK_TRACE     0
 
 
 #if CALLBACK_TRACE
@@ -120,66 +113,6 @@ _JACK_float_volume_effect(jack_default_audio_sample_t **buffer, unsigned long ns
 }
 
 
-#define SAMPLE_MAX_16BIT  32767.0f
-
-/**
- * convert from 16 bit to floating point(jack's native format)
- * channels to a buffer that will hold a single channel stream
- * src_skip is in terms of 16bit samples
- * @param array of floating point destination buffers
- * @param source buffer that contains the interleaved 16bit output data
- * @param number of samples to process
- * @param number of destination channels
- * @param number of source channels
- */
-static void
-_JACK_sample_move_d16_s16 (jack_default_audio_sample_t *dst[MAX_OUTPUT_PORTS], short *src,
-			   unsigned long nsamples, int nDstChannels, int nSrcChannels)
-{
-	int nSrcCount;
-	int dstIndex;       /* the current dst output buffer */
-	int nDstOffset = 0; /* the current output frame offset */
-
-	if(!nSrcChannels && !nDstChannels)
-	{
-		xmms_log_fatal("nSrcChannels of %d, nDstChannels of %d, can't have zero channels",
-			       nSrcChannels, nDstChannels);
-		return; /* in the off chance we have zero channels somewhere */
-	}
-
-	while(nsamples--)
-	{
-		nSrcCount = nSrcChannels; /* keep track of how many output input channels we have */
-		dstIndex = 0; /* for each frame start off at the first output channel */
-
-		/* loop until all of our destination channels are filled */
-		while(dstIndex < nDstChannels)
-		{
-			nSrcCount--;
-
-			/* copy the data after converting to floating point */
-			*(dst[dstIndex] + nDstOffset) = (*src) / SAMPLE_MAX_16BIT;
-
-			src++; /* advance to the next src channel */
-
-			/* if we ran out of source channels but not destination channels */
-			/* then start the src channels back where we were */
-			if(!nSrcCount)
-			{
-				src-=nSrcChannels;
-				nSrcCount = nSrcChannels;
-			}
-
-			dstIndex++; /* go to the next output buffer */
-		}
-
-		/* advance the the position */
-		src+=nSrcCount; /* go to the next frame in the src buffer */
-		nDstOffset++; /* go to the next frame in the output buffer */
-	}
-}
-
-
 /**
  * fill dst buffer with nsamples worth of silence
  * @param buffer to fill with silence
@@ -210,16 +143,16 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 	int i;
 	xmms_output_t *output = (xmms_output_t*)arg;
 
-	/*  XMMS_CALLBACK_DBG("nframes %ld, sizeof(jack_default_audio_sample_t) == %d", (long)nframes,
-	    sizeof(jack_default_audio_sample_t));*/
+	XMMS_CALLBACK_DBG("nframes %ld, sizeof(jack_default_audio_sample_t) == %d", (long)nframes,
+	    sizeof(jack_default_audio_sample_t));
 
 	this = xmms_output_private_data_get (output);
 
 	if(!this->client)
 		xmms_log_fatal("client is closed, this is weird...");
 
-	/*  XMMS_CALLBACK_DBG("num_output_channels = %ld, num_input_channels = %ld",
-	    this->num_output_channels, this->num_input_channels);*/
+	XMMS_CALLBACK_DBG("num_output_channels = %ld, num_input_channels = %ld",
+	    this->num_output_channels, this->num_input_channels);
 
 	/* retrieve the buffers for the output ports */
 	for(i = 0; i < this->num_output_channels; i++)
@@ -229,12 +162,8 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 	if(this->state == PLAYING)
 	{
 		unsigned long jackFramesAvailable = nframes; /* frames we have left to write to jack */
-		unsigned long inputFramesAvailable;          /* frames we have available this loop */
+		long inputFramesAvailable;                   /* frames we have available this loop */
 		unsigned long numFramesToWrite;              /* num frames we are writing this loop */
-
-		long written, read;
-
-		written = read = 0;
 
 		XMMS_CALLBACK_DBG("playing... jackFramesAvailable = %ld", jackFramesAvailable);
 
@@ -242,17 +171,20 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 		/* ie. Buffer_size < (bytes we already wrote + bytes we are going to write in this loop) */
 		/* Note: sound_buffer is always filled with 16-bit data */
 		/* so frame * 2 bytes(16 bits) * X output channels */
-		if(this->buffer_size < (jackFramesAvailable * sizeof(short) * this->num_output_channels))
+		if(this->buffer_size < (jackFramesAvailable * sizeof(float) * this->num_output_channels))
 		{
 			XMMS_DBG("our buffer must have changed size");
 			xmms_log_fatal("allocated %ld bytes, need %ld bytes", this->buffer_size,
-				       jackFramesAvailable * sizeof(short) * this->num_output_channels);
+				       jackFramesAvailable * sizeof(float) * this->num_output_channels);
 			return 0;
 		}
 
-		XMMS_CALLBACK_DBG("trying to read %ld bytes\n", jackFramesAvailable * sizeof(short) * this->num_input_channels);
-		inputFramesAvailable = xmms_output_read(output, this->sound_buffer, jackFramesAvailable * sizeof(short) * this->num_input_channels);
-		inputFramesAvailable = inputFramesAvailable / (sizeof(short) * this->num_input_channels);
+		XMMS_CALLBACK_DBG("trying to read %ld bytes\n", jackFramesAvailable * sizeof(float) * this->num_input_channels);
+
+		inputFramesAvailable = xmms_output_read(output, this->sound_buffer, jackFramesAvailable * sizeof(float) * this->num_input_channels);
+		if(inputFramesAvailable == -1) inputFramesAvailable = 0;
+
+		inputFramesAvailable = inputFramesAvailable / (sizeof(float) * this->num_input_channels);
 
 		XMMS_CALLBACK_DBG("inputFramesAvailable == %ld, jackFramesAvailable == %ld", inputFramesAvailable, jackFramesAvailable);
 
@@ -261,34 +193,22 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 		XMMS_CALLBACK_DBG("nframes == %ld, jackFramesAvailable == %ld,\n\tthis->num_input_channels == %ld, this->num_output_channels == %ld",
 				  (long)nframes, jackFramesAvailable, this->num_input_channels, this->num_output_channels);
 
-		/* add on what we wrote to the byte counters */
-		written+=(numFramesToWrite * this->bytes_per_output_frame);
-		read+=(numFramesToWrite * this->bytes_per_input_frame);
+		for(i = 0; i < numFramesToWrite; i++)
+		{
+			out_buffer[0][i] = ((float*)this->sound_buffer)[i*2];
+			out_buffer[1][i] = ((float*)this->sound_buffer)[i*2+1];
+		}
 
 		jackFramesAvailable-=numFramesToWrite; /* take away what was written */
 
 		XMMS_CALLBACK_DBG("jackFramesAvailable == %ld", jackFramesAvailable);
 
-		gettimeofday(&this->previousTime, 0); /* record the current time */
-		this->written_client_bytes+=read;
-		this->played_client_bytes+=this->clientBytesInJack; /* move forward by the previous bytes we wrote since those must have finished by now */
-		this->clientBytesInJack = read; /* record the input bytes we wrote to jack */
-
 		/* Now that we have finished filling the buffer either until it is full or until */
 		/* we have run out of application sound data to process, output */
 		/* the audio to the jack server */
 
-		/* convert from stereo 16 bit to single channel 32 bit float */
-		/* for each output channel */
-		/* NOTE: we skip over the number shorts(16 bits) we have output channels as the channel data */
-		/* is encoded like chan1,chan2,chan3,chan1,chan2,chan3... */
-		XMMS_CALLBACK_DBG("outputting to each channel");
-		_JACK_sample_move_d16_s16(out_buffer, (short*)this->sound_buffer,
-					  (nframes - jackFramesAvailable), this->num_output_channels,
-					  this->num_input_channels);
-
 		/* apply volume to the floating point output sound buffer */
-		XMMS_CALLBACK_DBG("applying volume of %d, %d to %ld frames and %ld channels",
+		XMMS_CALLBACK_DBG("applying volume of %f, %f to %ld frames and %ld channels",
 				  this->volume[0], this->volume[1],
 				  (nframes - jackFramesAvailable), this->num_output_channels);
 		_JACK_float_volume_effect(out_buffer, (nframes - jackFramesAvailable),
@@ -309,9 +229,7 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 		this->state == STOPPED ||
 		this->state == CLOSED || this->state == RESET)
 	{
-		/*XMMS_CALLBACK_DBG("PAUSED or STOPPED or CLOSED, outputting silence");*/
-
-		gettimeofday(&this->previousTime, 0); /* record the current time */
+		XMMS_CALLBACK_DBG("PAUSED or STOPPED or CLOSED, outputting silence");
 
 		/* output silence if nothing is being outputted */
 		for(i = 0; i < this->num_output_channels; i++)
@@ -320,19 +238,10 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 		/* if we were told to reset then zero out some variables */
 		/* and transition to STOPPED */
 		if(this->state == RESET)
-		{
-			this->written_client_bytes    = 0;
-			this->played_client_bytes     = 0;  /* number of the clients bytes that jack has played */
-
-			this->client_bytes            = 0;  /* bytes that the client wrote to use */
-			this->clientBytesInJack       = 0;  /* number of input bytes in jack(not necessary the number of bytes written to jack) */
-
 			this->state = STOPPED; /* transition to STOPPED */
-		}
 	}
 
-	/*  XMMS_CALLBACK_DBG("callback done");
-	*/
+	XMMS_CALLBACK_DBG("callback done");
 
 	return 0;
 }
@@ -354,8 +263,8 @@ JACK_bufsize (jack_nframes_t nframes, void *arg)
 
 	/* make sure the callback routine has adequate memory for the nframes it will get */
 	/* ie. Buffer_size < (bytes we already wrote + bytes we are going to write in this loop) */
-	/* frames * 2 bytes in 16 bits * X channels of output */
-	buffer_required = nframes * sizeof(short) * this->num_output_channels;
+	/* frames * sizeof(float) * X channels of output */
+	buffer_required = nframes * sizeof(float) * this->num_output_channels;
 	if(this->buffer_size < buffer_required)
 	{
 		XMMS_DBG("expanding buffer from this->buffer_size == %ld, to %ld",
@@ -402,7 +311,7 @@ JACK_shutdown(void* arg)
 
 	this->client = 0; /* reset client */
 
-	XMMS_DBG("trying to reconnect after sleeping for a short while...");
+	XMMS_DBG("trying to reconnect to jack");
 
 	/* lets see if we can't reestablish the connection */
 	if(_JACK_OpenDevice(output) != ERR_SUCCESS)
@@ -419,8 +328,9 @@ JACK_shutdown(void* arg)
 static void
 JACK_Error(const char *desc)
 {
-	xmms_log_fatal("JACK_Error() %s", desc);
+	XMMS_DBG("JACK_Error() %s", desc);
 }
+
 
 /**
  * Set an internal variable to tell JACK_Callback() to reset this device
@@ -470,7 +380,7 @@ _JACK_CloseDevice(xmms_output_t *output)
 static int
 _JACK_OpenDevice(xmms_output_t *output)
 {
-	xmms_jack_data_t *this;
+	xmms_jack_data_t *data;
 	const char** ports;
 	int i;
 	char client_name[64];
@@ -478,27 +388,27 @@ _JACK_OpenDevice(xmms_output_t *output)
 
 	XMMS_DBG("creating jack client and setting up callbacks");
 
-	this = xmms_output_private_data_get(output);
+	data = xmms_output_private_data_get(output);
 
 	/* see if this device is already open */
-	if(this->client)
+	if(data->client)
 		return ERR_OPENING_JACK;
 
 	/* zero out the buffer pointer and the size of the buffer */
-	this->sound_buffer = 0;
-	this->buffer_size = 0;
+	data->sound_buffer = 0;
+	data->buffer_size = 0;
 
 	/* set up an error handler */
 	jack_set_error_function(JACK_Error);
 
 	/* try to become a client of the JACK server */
-	snprintf(client_name, sizeof(client_name), "xmms_jack_%d_%d", 0, getpid());
+	snprintf(client_name, sizeof(client_name), "xmms_jack_%d_%d", 0, rand());
 	XMMS_DBG("client name '%s'", client_name);
-	if ((this->client = jack_client_new(client_name)) == 0)
+	if ((data->client = jack_client_new(client_name)) == 0)
 	{
 		/* jack has problems with shutting down clients, so lets */
 		/* wait a short while and try once more before we give up */
-		if ((this->client = jack_client_new(client_name)) == 0)
+		if ((data->client = jack_client_new(client_name)) == 0)
 		{
 			xmms_log_fatal("jack server not running?");
 			return ERR_OPENING_JACK;
@@ -507,41 +417,41 @@ _JACK_OpenDevice(xmms_output_t *output)
 
 	/* JACK server to call `JACK_callback()' whenever
 	   there is work to be done. */
-	jack_set_process_callback(this->client, JACK_callback, output);
+	jack_set_process_callback(data->client, JACK_callback, output);
 
 	/* setup a buffer size callback */
-	jack_set_buffer_size_callback(this->client, JACK_bufsize, output);
+	jack_set_buffer_size_callback(data->client, JACK_bufsize, output);
 
 	/* tell the JACK server to call `srate()' whenever
 	   the sample rate of the system changes. */
-	jack_set_sample_rate_callback(this->client, JACK_srate, output);
+	jack_set_sample_rate_callback(data->client, JACK_srate, output);
 
 	/* tell the JACK server to call `jack_shutdown()' if
 	   it ever shuts down, either entirely, or if it
 	   just decides to stop calling us. */
-	jack_on_shutdown(this->client, JACK_shutdown, output);
+	jack_on_shutdown(data->client, JACK_shutdown, output);
 
 	/* display the current sample rate. once the client is activated
 	   (see below), you should rely on your own sample rate
 	   callback (see above) for this value. */
-	this->sample_rate = jack_get_sample_rate(this->client);
-	XMMS_DBG("engine sample rate: %lu", this->sample_rate);
+	data->sample_rate = jack_get_sample_rate(data->client);
+	XMMS_DBG("engine sample rate: %lu", data->sample_rate);
 
 	/* create the output ports */
-	for(i = 0; i < this->num_output_channels; i++)
+	for(i = 0; i < data->num_output_channels; i++)
 	{
 		char portname[32];
 		sprintf(portname, "out_%d", i);
 		XMMS_DBG("port %d is named '%s'", i, portname);
-		this->output_port[i] = jack_port_register(this->client, portname,
+		data->output_port[i] = jack_port_register(data->client, portname,
 							  JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
 	}
 
 	/* set the initial buffer size */
-	JACK_bufsize(jack_get_buffer_size(this->client), output);
+	JACK_bufsize(jack_get_buffer_size(data->client), output);
 
 	/* tell the JACK server that we are ready to roll */
-	if(jack_activate(this->client))
+	if(jack_activate(data->client))
 	{
 		xmms_log_fatal( "cannot activate client");
 		return ERR_OPENING_JACK;
@@ -549,7 +459,7 @@ _JACK_OpenDevice(xmms_output_t *output)
 
 
 	XMMS_DBG("jack_get_ports() passing in NULL/NULL");
-	ports = jack_get_ports(this->client, NULL, NULL, JackPortIsInput);
+	ports = jack_get_ports(data->client, NULL, NULL, JackPortIsInput);
 
 
 	/* display a trace of the output ports we found */
@@ -557,7 +467,7 @@ _JACK_OpenDevice(xmms_output_t *output)
 		XMMS_DBG("ports[%d] = '%s'", i, ports[i]);
 
 	/* see if we have enough ports */
-	if(i < this->num_output_channels)
+	if(i < data->num_output_channels)
 	{
 		XMMS_DBG("ERR: jack_get_ports() failed to find ports with jack port flags of 0x%X'", JackPortIsInput);
 		return ERR_PORT_NOT_FOUND;
@@ -565,10 +475,10 @@ _JACK_OpenDevice(xmms_output_t *output)
 
 	/* connect the ports. Note: you can't do this before
 	   the client is activated (this may change in the future). */
-	for(i = 0; i < this->num_output_channels; i++)
+	for(i = 0; i < data->num_output_channels; i++)
 	{
-		XMMS_DBG("jack_connect() to port '%p'", this->output_port[i]);
-		if(jack_connect(this->client, jack_port_name(this->output_port[i]), ports[i]))
+		XMMS_DBG("jack_connect() to port '%p'", data->output_port[i]);
+		if(jack_connect(data->client, jack_port_name(data->output_port[i]), ports[i]))
 		{
 			xmms_log_fatal("cannot connect to output port %d('%s')", i, ports[i]);
 			failed = 1;
@@ -600,6 +510,8 @@ _JACK_Open(xmms_output_t *output, unsigned int bytes_per_channel,
 { 
 	int retval;
 	int output_channels, input_channels;
+	long bytes_per_output_frame;
+	long bytes_per_input_frame;
 	xmms_jack_data_t *this;
 
 	this = xmms_output_private_data_get(output);
@@ -611,23 +523,23 @@ _JACK_Open(xmms_output_t *output, unsigned int bytes_per_channel,
 	/* this->sample_rate is set by _JACK_OpenDevice() */
 	this->num_input_channels     = input_channels;
 	this->num_output_channels    = output_channels;
-	this->bytes_per_input_frame  = (bytes_per_channel*this->num_input_channels);
-	this->bytes_per_output_frame = (bytes_per_channel*this->num_output_channels);
+	bytes_per_input_frame  = (bytes_per_channel*this->num_input_channels);
+	bytes_per_output_frame = (bytes_per_channel*this->num_output_channels);
 
 	XMMS_DBG("num_input_channels == %ld", this->num_input_channels);
 	XMMS_DBG("num_output_channels == %ld", this->num_output_channels);
-	XMMS_DBG("bytes_per_output_frame == %ld", this->bytes_per_output_frame);
-	XMMS_DBG("bytes_per_input_frame  == %ld", this->bytes_per_input_frame);
+	XMMS_DBG("bytes_per_output_frame == %ld", bytes_per_output_frame);
+	XMMS_DBG("bytes_per_input_frame  == %ld", bytes_per_input_frame);
 
 	/* make sure bytes_per_frame is valid and non-zero */
-	if(!this->bytes_per_output_frame)
+	if(!bytes_per_output_frame)
 	{
 		xmms_log_fatal("bytes_per_output_frame is zero");
 		return ERR_BYTES_PER_OUTPUT_FRAME_INVALID;
 	}
 
 	/* make sure bytes_per_frame is valid and non-zero */
-	if(!this->bytes_per_input_frame)
+	if(!bytes_per_input_frame)
 	{
 		xmms_log_fatal("bytes_per_output_frame is zero");
 		return ERR_BYTES_PER_INPUT_FRAME_INVALID;
@@ -659,23 +571,6 @@ _JACK_Open(xmms_output_t *output, unsigned int bytes_per_channel,
 
 
 /**
- * Open the device up
- * @param output xmms object
- */
-static gboolean
-xmms_jack_open(xmms_output_t *output)
-{
-	xmms_jack_data_t *data;
-	XMMS_DBG("xmms_jack_open() called");
-
-	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, FALSE);
-
-	return TRUE;
-}
-
-/**
  * Set volume
  * @param output xmms object
  * @param input left volume level(range of 0 to 100)
@@ -699,46 +594,31 @@ xmms_jack_mixer_set(xmms_output_t *output, gint l, gint r)
 
 
 /**
- * Set sample rate.
+ * Set audio format.
  *
- * @param output The output structure.
- * @param rate The to-be-set sample rate.
+ * @param output The output struct containing alsa data. 
+ * @param format The new audio format.
  *
- * @return the new sample rate or 0 on error
+ * @return Success/failure
  */
-static guint
-xmms_jack_samplerate_set (xmms_output_t *output, guint rate)
+static gboolean
+xmms_jack_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 {
 	xmms_jack_data_t *data;
 
-	XMMS_DBG ("xmms_jack_samplerate_set");
-	XMMS_DBG ("trying to change rate to: %d but we can't change jacks rate", rate);
-
-	g_return_val_if_fail (output, 0);
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, 0);	
+	g_return_val_if_fail (data, FALSE);
 
-	return data->rate;
+	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels,
+	          format->samplerate);
+
+	if(format->format != XMMS_SAMPLE_FORMAT_FLOAT)
+		return FALSE;
+
+	return TRUE;
 }
 
-/**
- * Close the device
- * @param output xmms object
- */
-static void
-xmms_jack_close(xmms_output_t *output)
-{
-	xmms_jack_data_t *this;
-
-	g_return_if_fail (output);
-	this = xmms_output_private_data_get (output);
-	g_return_if_fail (this);
-
-	XMMS_DBG("\n");
-
-	_JACK_CloseDevice(output);
-	_JACK_reset(this);
-}
 
 /**
  * Flush the audio output, doesn't apply as we don't buffer any
@@ -848,6 +728,11 @@ xmms_jack_new(xmms_output_t *output)
 	data->rate = outputFrequency;
 	data->volume[0] = .80; /* set volume to 80% */
 	data->volume[1] = .80;
+	data->state = STOPPED;
+
+	xmms_output_format_add(output,
+                           XMMS_SAMPLE_FORMAT_FLOAT,
+                           channels, outputFrequency);
 
 	XMMS_DBG("jack initialized!!");
 
@@ -868,6 +753,14 @@ xmms_jack_destroy (xmms_output_t *output)
 
 	xmms_config_value_callback_remove (data->mixer_conf,
 	                                   xmms_jack_mixer_config_changed);
+
+	/* if playing, stop and close the device */
+	if(data->state == PLAYING)
+	{
+		data->state = STOPPED;
+		_JACK_CloseDevice(output);
+	}
+
 	g_free (data);
 }
 
@@ -904,12 +797,11 @@ xmms_jack_status (xmms_output_t *output, xmms_output_status_t status)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	XMMS_DBG ("changed status! %d", status);
-	if(status == XMMS_OUTPUT_STATUS_PLAY) {
+	XMMS_DBG ("changed status! '%s'", (status == XMMS_OUTPUT_STATUS_PLAY) ? "PLAYING" : "STOPPED");
+	if(status == XMMS_OUTPUT_STATUS_PLAY)
 		data->state = PLAYING;
-	} else {
+	else
 		data->state = STOPPED;
-	}
 }
 
 /**
@@ -929,22 +821,18 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "E-Mail", "cmorgan@alum.wpi.edu");
 
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, 
-				xmms_jack_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 				xmms_jack_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, 
 	                        xmms_jack_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
-				xmms_jack_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
 				xmms_jack_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
-				xmms_jack_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
 				xmms_jack_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS,
 				xmms_jack_status); 
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
+				xmms_jack_format_set);
 
 	xmms_plugin_config_value_register (plugin,
 					   "volume",
