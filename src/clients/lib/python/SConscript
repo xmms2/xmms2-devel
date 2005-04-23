@@ -14,3 +14,5 @@ if base_env.HasGroup ("python"):
 	if base_env.HasGroup ("pyrex") :
 		env.Pyx ("xmmsclient.c", ["xmmsclient.pyx"])
 		env.XmmsPython ("xmmsclient", ["xmmsclient.c"])
+	
+	

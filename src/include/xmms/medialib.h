@@ -47,9 +47,12 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM "gain_album"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK "peak_track"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM "peak_album"
+/** Indicates that this album is a compilation */
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION "compilation"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID "album_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID "artist_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID "track_id"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED "added"
 
 /*
  * Method defintions.

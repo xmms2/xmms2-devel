@@ -113,6 +113,22 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn,
 }
 
 xmmsc_result_t *
+xmmsc_medialib_rehash (xmmsc_connection_t *conn,
+		       unsigned int id)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REHASH);
+	xmms_ipc_msg_put_uint32 (msg, id);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+
+}
+
+xmmsc_result_t *
 xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 {
 	xmmsc_result_t *res;

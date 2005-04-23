@@ -189,8 +189,6 @@ xmms_alsa_new (xmms_output_t *output)
 	xmms_plugin_t *plugin;
 	xmms_config_value_t *volume;
 	
-	XMMS_DBG ("XMMS_ALSA_NEW"); 
-	
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_alsa_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
@@ -278,20 +276,20 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 
 	err = snd_pcm_hw_params_set_format (pcm, params, alsa_fmt);
 	if (err < 0) {
-		XMMS_DBG ("Sample format (%i) not available for playback.", alsa_fmt);
+		xmms_log_error ("Sample format (%i) not available for playback.", alsa_fmt);
 		return;
 	}
 
 	err = snd_pcm_hw_params_set_channels (pcm, params, channels);
 	if (err < 0) {
-		XMMS_DBG ("Channels count (%i) not available for playbacks.", channels);
+		xmms_log_error ("Channels count (%i) not available for playbacks.", channels);
 		return;
 	}
 
 	tmp = rate;
 	err = snd_pcm_hw_params_set_rate_near (pcm, params, &tmp, NULL);
 	if (err < 0) {
-		XMMS_DBG ("Rate %iHz not available for playback.", rate);
+		xmms_log_error ("Rate %iHz not available for playback.", rate);
 		return;
 	}
 
@@ -336,8 +334,6 @@ xmms_alsa_open (xmms_output_t *output)
 	const gchar *dev;
 	gint err = 0;
 	
-	XMMS_DBG ("XMMS_ALSA_OPEN");	
-
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
@@ -379,8 +375,6 @@ xmms_alsa_close (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 	
-	XMMS_DBG("XMMS_ALSA_CLOSE");
-	
 	if (data->mixer) {
 		err = snd_mixer_close (data->mixer);
 		if (err != 0) {
@@ -416,8 +410,6 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	gint requested_buffer_time = BUFFER_TIME;
 
 	g_return_val_if_fail (data, FALSE);
-
-	XMMS_DBG ("XMMS_ALSA_SET_HWPARAMS");
 
 	/* what alsa format does this format correspond to? */
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
@@ -527,8 +519,6 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	long alsa_min_vol, alsa_max_vol;
 	gint err, index;
 	
-	XMMS_DBG ("XMMS_ALSA_SETUP_MIXER");
-
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
@@ -622,8 +612,6 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 	xmms_alsa_data_t *alsa_data;
 	guint left, right, res;
 	
-	XMMS_DBG ("XMMS_ALSA_MIXER_CONFIG_CHANGED");	
-	
 	g_return_if_fail (data);
 	g_return_if_fail (userdata);
 	alsa_data = xmms_output_private_data_get (userdata);
@@ -694,8 +682,6 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 {
 	xmms_alsa_data_t *data;
 
-	XMMS_DBG ("XMMS_ALSA_MIXER_SET");
-
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
@@ -733,8 +719,6 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 {
 	gint err;
 	xmms_alsa_data_t *data;
-
-	XMMS_DBG ("XMMS_ALSA_MIXER_GET");
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -821,8 +805,6 @@ xmms_alsa_flush (xmms_output_t *output)
 	gint err;
 	xmms_alsa_data_t *data;	
 
-	XMMS_DBG ("XMMS_ALSA_FLUSH");
-	
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
@@ -849,8 +831,6 @@ xmms_alsa_flush (xmms_output_t *output)
 static void
 xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
 {
-	XMMS_DBG ("XMMS_ALSA_XRUN_RECOVER");
-	
 	g_return_if_fail (data);
 
 	if (err == -EPIPE) {

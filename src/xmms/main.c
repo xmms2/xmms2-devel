@@ -15,23 +15,9 @@
  */
 
 
-
-
 /** @file 
  * This file controls XMMS2 mainloop.
  */
-
-/** @defgroup XMMSServer XMMSServer
-  * @brief look at this if you want to code inside the server.
-  * The XMMS2 project is splitted in to a server part and a Clientpart.
-  * This documents the server part of the project.
-  */
-
-/**
-  * @defgroup Main Main
-  * @ingroup XMMSServer
-  * @{ 
-  */
 
 #include <glib.h>
 
@@ -64,6 +50,29 @@
 
 #include <pthread.h>
 
+static void quit (xmms_object_t *object, xmms_error_t *error);
+static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
+
+XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
+XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
+
+/** @defgroup XMMSServer XMMSServer
+  * @brief look at this if you want to code inside the server.
+  * The XMMS2 project is splitted in to a server part and a Clientpart.
+  * This documents the server part of the project.
+  */
+
+/**
+  * @defgroup Main Main
+  * @ingroup XMMSServer
+  * @brief main object
+  * @{ 
+  */
+
+
+/**
+ * Main object, when this is unreffed, XMMS2 is quiting.
+ */
 struct xmms_main_St {
 	xmms_object_t object;
 	xmms_output_t *output;
@@ -160,8 +169,6 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	exit (EXIT_SUCCESS);
 }
 
-XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
-XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
 
 
 static void
@@ -210,6 +217,10 @@ Options:\n\
 	-h|--help	Print this help\n";
        printf(usageText);
 }
+
+/**
+ * Entry point function
+ */
 
 int
 main (int argc, char **argv)

@@ -25,14 +25,23 @@
 
 /** @defgroup Object Object
   * @ingroup XMMSServer
+  * @brief Object representation in XMMS server. A object can
+  * be used to emit signals.
   * @{
   */
 
+/**
+ * A signal handler and it's data.
+ */
 typedef struct {
 	xmms_object_handler_t handler;
 	gpointer userdata;
 } xmms_object_handler_entry_t;
 
+
+/**
+ * Cleanup all the resources for the object
+ */
 void
 xmms_object_cleanup (xmms_object_t *object)
 {
@@ -175,6 +184,10 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 
 }
 
+/**
+ * Initialize a command argument.
+ */
+
 void
 xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg)
 {
@@ -183,6 +196,17 @@ xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg)
 	memset (arg, 0, sizeof (xmms_object_cmd_arg_t));
 	xmms_error_reset (&arg->error);
 }
+
+/**
+ * Emits a signal on the current object. This is like xmms_object_emit
+ * but you don't have to create the #xmms_object_cmd_arg_t yourself.
+ * Use this when you creating non-complex signal arguments.
+ *
+ * @param object Object to signal on.
+ * @param signalid Signal to emit.
+ * @param type the argument type to emit followed by the argument data.
+ *
+ */
 
 void
 xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
@@ -273,7 +297,6 @@ __int_xmms_object_unref (xmms_object_t *object)
 {
 	object->ref--;
 	if (object->ref == 0) {
-		XMMS_DBG ("Free %p", object);
 		xmms_object_emit (object, XMMS_IPC_SIGNAL_OBJECT_DESTROYED, NULL);
 		if (object->destroy_func)
 			object->destroy_func (object);

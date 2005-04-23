@@ -54,6 +54,7 @@ static gpointer xmms_transport_thread (gpointer data);
 /** 
  * @defgroup Transport Transport
  * @ingroup XMMSServer
+ * @brief Responsible to read encoded data from source.
  *
  * The transport is responsible for reading encoded data from 
  * a source. The data will be put in ringbuffer that the decoder 
@@ -307,8 +308,6 @@ xmms_transport_new ()
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
 	
-	XMMS_DBG ("MEMDBG: TRANSPORT NEW %p", transport);
-
 	return transport;
 }
 
@@ -331,7 +330,6 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	g_return_val_if_fail (transport, FALSE);
 
 	tmp = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-	XMMS_DBG ("Trying to open stream: %s", tmp);
 	
 	transport->plugin = xmms_transport_plugin_find (tmp);
 	g_free (tmp);
@@ -381,7 +379,6 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 
 	g_mutex_lock (transport->mutex);
 	if (!transport->mimetype) {
-		XMMS_DBG ("Waiting for mime_cond");
 		g_cond_wait (transport->mime_cond, transport->mutex);
 	}
 	ret = transport->mimetype;
@@ -434,8 +431,6 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 
 	if (!transport->buffering) {
 		xmms_transport_read_method_t read_method;
-
-		XMMS_DBG ("Doing unbuffered read...");
 
 		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 		if (!read_method) {
@@ -532,7 +527,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 	
 	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
 	if (!seek_method) {
-		XMMS_DBG ("This plugin has XMMS_PLUGIN_PROPERTY_SEEK but no seek method, that's stupid");
+		xmms_log_error ("This plugin has XMMS_PLUGIN_PROPERTY_SEEK but no seek method, that's stupid");
 		g_mutex_unlock (transport->mutex);
 		return -1;
 	}
@@ -548,11 +543,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 		offset = transport->current_position + offset;
 	}
 
-	XMMS_DBG ("Seeking to %d", offset);
-
 	ret = seek_method (transport, offset, whence);
-
-	XMMS_DBG ("Seek method returned %d", ret);
 
 	if (ret != -1)
 		transport->current_position = ret; 
@@ -647,7 +638,7 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t e
 	lmod_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LMOD);
 
 	if (!init_method) {
-		XMMS_DBG ("Transport has no init method!");
+		xmms_log_error ("Transport has no init method!");
 		return FALSE;
 	}
 
@@ -710,7 +701,6 @@ xmms_transport_close (xmms_transport_t *transport)
 		g_mutex_lock (transport->mutex);
 		transport->running = FALSE;
 		xmms_ringbuf_set_eos (transport->buffer, TRUE);
-		XMMS_DBG("Waking transport");
 		g_cond_signal (transport->cond);
 		g_mutex_unlock (transport->mutex);
 		g_thread_join (transport->thread);
@@ -744,8 +734,6 @@ xmms_transport_destroy (xmms_object_t *object)
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
 	
-	XMMS_DBG ("MEMDBG: TRANSPORT DESTROY %p", object);
-
 	if (transport->mimetype)
 		g_free (transport->mimetype);
 }
@@ -768,7 +756,7 @@ xmms_transport_plugin_find (const gchar *url)
 	
 	for (node = list; node; node = g_list_next (node)) {
 		plugin = node->data;
-		XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
+		XMMS_DBG ("Trying plugin: %s", xmms_plugin_shortname_get (plugin));
 		can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
 		
 		if (!can_handle)
@@ -810,7 +798,6 @@ xmms_transport_thread (gpointer data)
 	while (transport->running) {
 
 		if (!transport->buffering) {
-			XMMS_DBG ("Holding pattern");
 			g_cond_wait (transport->cond, transport->mutex);
 		}
 
@@ -826,7 +813,6 @@ xmms_transport_thread (gpointer data)
 		} else {
 			xmms_ringbuf_set_eos (transport->buffer, TRUE);
 			xmms_error_set (&transport->status, error.code, error.message);
-			XMMS_DBG("Sleeping on transport cond");
 			g_cond_wait (transport->cond, transport->mutex);
 		}
 	}

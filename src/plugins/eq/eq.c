@@ -113,8 +113,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_eq_format_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_eq_process);
 
-	xmms_plugin_config_value_register (plugin, "enabled", "0", NULL, NULL);
-
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
 		g_snprintf (buf, sizeof (buf), "gain%d", i);
 		xmms_plugin_config_value_register (plugin, buf, "1.0", NULL, NULL);

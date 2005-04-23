@@ -55,6 +55,7 @@
 /** 
  * @defgroup Decoder Decoder
  * @ingroup XMMSServer
+ * @brief Decoder module takes encoded data and decodes it.
  * @{
  */
 
@@ -383,6 +384,16 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
  * @{
  */
 
+/**
+ * Get a offset from the decoder on how long we should seek.
+ * 
+ * @param decoder decoder pointer
+ * @param milliseconds The number of milliseconds we want to seek.
+ * @param err On failure this will be used.
+ * @returns Number of bytes in the encoded data that represents the
+ * number of #milliseconds that we passed to the function
+ */
+ 
 gboolean
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
 {
@@ -394,6 +405,16 @@ xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t 
 	return xmms_decoder_seek_samples (decoder, samples, err);
 
 }
+
+/**
+ * Same as #xmms_decoder_seek_ms but in samples instead.
+ * 
+ * @param decoder decoder pointer
+ * @param samples The number of samples we want to seek.
+ * @param err On failure this will be used.
+ * @returns Number of bytes in the encoded data that represents the
+ * number of #samples that we passed to the function
+ */
 
 gboolean
 xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err)
@@ -462,9 +483,6 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_decoder_destroy_method_t destroy_method;
 	GList *n;
 
-	XMMS_DBG ("Destroying decoder!");
-	XMMS_DBG ("MEMDBG: DECODER DEAD %p", object);
-
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 
 	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
@@ -488,6 +506,11 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_object_unref (decoder->vis);
 }
 
+/**
+ * Allocate a new decoder.
+ * Remember to unref it to free memory!
+ */
+
 xmms_decoder_t *
 xmms_decoder_new ()
 {
@@ -501,10 +524,17 @@ xmms_decoder_new ()
 	val = xmms_config_lookup ("decoder.buffersize");
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 
-	XMMS_DBG ("MEMDBG: DECODER NEW %p", decoder);
-
 	return decoder;
 }
+
+/**
+ * Open a decoder for this transport. This must be done before you call
+ * #xmms_decoder_read.
+ *
+ * @param transport Initialized transport that points to encoded data.
+ * @param decoder A allocated decoder from #xmms_decoder_new
+ * @returns TRUE if a suitable decoder was found
+ */
 
 gboolean
 xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
@@ -604,6 +634,10 @@ xmms_decoder_start (xmms_decoder_t *decoder, xmms_output_t *output)
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
 
+/**
+ * Quit all decoder operations.
+ */
+
 void
 xmms_decoder_stop (xmms_decoder_t *decoder)
 {
@@ -615,6 +649,10 @@ xmms_decoder_stop (xmms_decoder_t *decoder)
 	g_mutex_unlock (decoder->mutex);
 }
 
+
+/**
+ * Resolv metadata for the current entry
+ */
 void
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)
@@ -657,11 +695,10 @@ xmms_decoder_find_plugin (const gchar *mimetype)
         g_return_val_if_fail (mimetype, NULL);
 	
         list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_DECODER);
-        XMMS_DBG ("List: %p", list);
 	
         for (node = list; node; node = g_list_next (node)) {
                 plugin = node->data;
-                XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
+                XMMS_DBG ("Trying plugin: %s", xmms_plugin_shortname_get (plugin));
                 can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
 
                 if (!can_handle)
@@ -715,7 +752,6 @@ xmms_decoder_thread (gpointer data)
         }
 
         decoder->thread = NULL;
-        XMMS_DBG ("Decoder thread quitting");
         xmms_medialib_logging_stop (decoder->entry, xmms_output_playtime (decoder->output, NULL));
 
         if (decoder->running) {

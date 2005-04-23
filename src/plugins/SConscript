@@ -62,6 +62,7 @@ if base_env.HasGroup("mad"):
 	mad = base_env.Copy()
 	mad.AddFlagsFromGroup("glib")
 	mad.AddFlagsFromGroup("mad")
+	mad.AddFlagsFromGroup("math")
 	mad.XmmsPlugin('xmms_mad', ['mad/mad.c', 'mad/id3.c', 'mad/xing.c'])
 
 if base_env.HasGroup("modplug"):

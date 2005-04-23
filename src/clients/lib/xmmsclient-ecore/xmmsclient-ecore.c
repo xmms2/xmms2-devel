@@ -14,110 +14,59 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmms/xmmsclient.h>
-#include <xmms/xmmswatch.h>
-
 #include <Ecore.h>
+
 #include <stdio.h>
-#include <assert.h>
+
+#include "internal/client_ipc.h"
+#include "xmms/xmmsclient.h"
+#include "internal/xmmsclient_int.h"
 
 static int
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
-	xmmsc_watch_t *watch = udata;
-	void **data = watch->data;
-	xmmsc_connection_t *conn = data[0];
-	int flags = 0;
+	xmmsc_ipc_t *ipc = udata;
+
+	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_ERROR)) {
+		xmmsc_ipc_error_set (ipc, "Remote host disconnected, or something!");
+		xmmsc_ipc_disconnect (ipc);
+
+		return 0;
+	}
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_READ))
-		flags |= XMMSC_WATCH_IN;
+		xmmsc_ipc_io_in_callback (ipc);
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_WRITE))
-		flags |= XMMSC_WATCH_OUT;
-
-	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_ERROR))
-		flags |= XMMSC_WATCH_ERROR;
-
-	xmmsc_watch_dispatch (conn, watch, flags);
+		xmmsc_ipc_io_out_callback (ipc);
 
 	return 1;
 }
 
-static int
-watch_callback (xmmsc_connection_t *conn, xmmsc_watch_action_t action,
-                void *data)
+void on_prepare (void *udata, Ecore_Fd_Handler *handler)
 {
-	xmmsc_watch_t *watch = data;
-	xmmsc_timeout_t *timeout = data;
-	void **watch_data;
-	int flags = ECORE_FD_ERROR;
-	double t;
+	xmmsc_ipc_t *ipc = udata;
+	int flags = ECORE_FD_READ | ECORE_FD_ERROR;
 
-	switch (action) {
-		case XMMSC_WATCH_ADD:
-			if (watch->flags & XMMSC_WATCH_IN)
-				flags |= ECORE_FD_READ;
-			if (watch->flags & XMMSC_WATCH_OUT)
-				flags |= ECORE_FD_WRITE;
+	if (xmmsc_ipc_io_out (ipc))
+		flags |= ECORE_FD_WRITE;
 
-			watch_data = malloc (2 * sizeof (void *));
-			watch->data = watch_data;
+	ecore_main_fd_handler_active_set (handler, flags);
+}
 
-			watch_data[0] = conn;
-			watch_data[1] = ecore_main_fd_handler_add (watch->fd,
-			                                           flags,
-			                                           on_fd_data,
-			                                           watch, NULL,
-			                                           NULL);
+gboolean
+xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *c)
+{
+	Ecore_Fd_Handler *fdh;
+	int flags = ECORE_FD_READ | ECORE_FD_ERROR;
 
-			break;
-		case XMMSC_WATCH_REMOVE:
-			watch_data = watch->data;
-			ecore_main_fd_handler_del (watch_data[1]);
-			free (watch->data);
-			break;
-		case XMMSC_TIMEOUT_ADD:
-			t = (double) timeout->interval / 1000;
-			timeout->data = ecore_timer_add (t, timeout->cb, timeout);
-			assert (timeout->data);
-			break;
-		case XMMSC_TIMEOUT_REMOVE:
-			assert (timeout->data);
-			ecore_timer_del (timeout->data);
-			break;
-		default:
-			break;
-	}
+	if (xmmsc_ipc_io_out (c->ipc))
+		flags |= ECORE_FD_WRITE;
+
+	fdh = ecore_main_fd_handler_add (xmmsc_ipc_fd_get (c->ipc), flags,
+	                                 on_fd_data, c->ipc, NULL, NULL);
+	ecore_main_fd_handler_prepare_callback_set (fdh, on_prepare, c->ipc);
 
 	return TRUE;
 }
 
-/**
- * @defgroup XMMSWatchEcore XMMSWatchEcore
- * @brief Ecore bindings to XMMSWatch.
- *
- * These are the functions you want to use from a Ecore client
- * If your client is written with Glib, see XMMSWatchGLIB
- * If your client is written with QT, see XMMSWatchQT
- *
- * @ingroup XMMSWatch
- *
- * @{
- */
-
-
-/**
- * Add a xmmsc_connection_t to the Ecore main loop.
- * Call this after you called xmmsc_connect() and ecore_init().
- *
- * @sa xmmsc_connect
- */
-
-void
-xmmsc_setup_with_ecore (xmmsc_connection_t *connection)
-{
-	xmmsc_watch_callback_set (connection, watch_callback);
-	xmmsc_watch_init (connection);
-}
-
-/* @} */

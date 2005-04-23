@@ -35,49 +35,6 @@
 #include "xmms/mediainfo.h"
 #include "xmms/magic.h"
 
-
-/** @defgroup PlaylistClientMethods PlaylistClientMethods
-  * @ingroup Playlist
-  * @brief the playlist methods that could be used by the client
-  */
-
-/** @defgroup Playlist Playlist
-  * @ingroup XMMSServer
-  * @brief This is the playlist control.
-  *
-  * A playlist is a central thing in the XMMS server, it
-  * tells us what to do after we played the following entry
-  * @{
-  */
-
-/* Internal macro to emit XMMS_SIGNAL_PLAYLIST_CHANGED */
-#define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) do { \
-	xmms_playlist_changed_msg_t *chmsg; \
-	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
-	chmsg->type = ttype; chmsg->id=iid; chmsg->arg=argument; \
-	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, XMMS_OBJECT_CMD_ARG_PLCH, chmsg);\
-	g_free (chmsg); \
-} while (0)
-
-/** Playlist structure */
-struct xmms_playlist_St {
-	xmms_object_t object;
-
-	/* the list is an array */
-	GArray *list;
-
-	guint32 currentpos;
-
-	gboolean repeat_one;
-	gboolean repeat_all;
-
-	GMutex *mutex;
-
-	xmms_mediainfo_reader_t *mediainfordr;
-
-};
-
-
 static void xmms_playlist_destroy (xmms_object_t *object);
 static void xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err);
@@ -100,6 +57,43 @@ XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, UINTLIST, NONE, NO
 XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
+
+/** Internal macro to emit XMMS_SIGNAL_PLAYLIST_CHANGED */
+#define XMMS_PLAYLIST_CHANGED_MSG(ttype,iid,argument) do { \
+	xmms_playlist_changed_msg_t *chmsg; \
+	chmsg = g_new0 (xmms_playlist_changed_msg_t, 1);\
+	chmsg->type = ttype; chmsg->id=iid; chmsg->arg=argument; \
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED, XMMS_OBJECT_CMD_ARG_PLCH, chmsg);\
+	g_free (chmsg); \
+} while (0)
+
+/** @defgroup Playlist Playlist
+  * @ingroup XMMSServer
+  * @brief This is the playlist control.
+  *
+  * A playlist is a central thing in the XMMS server, it
+  * tells us what to do after we played the following entry
+  * @{
+  */
+
+/** Playlist structure */
+struct xmms_playlist_St {
+	xmms_object_t object;
+
+	/* the list is an array */
+	GArray *list;
+
+	guint32 currentpos;
+
+	gboolean repeat_one;
+	gboolean repeat_all;
+
+	GMutex *mutex;
+
+	xmms_mediainfo_reader_t *mediainfordr;
+
+};
+
 
 static void
 on_playlist_r_all_changed (xmms_object_t *object, gconstpointer data,
@@ -427,11 +421,6 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	return res;
 }
 
-/** Add entries from medialib to the playlist
- * @ingroup PlaylistClientMethods
- */
-
-
 /** Adds a xmms_medialib_entry to the playlist.
  *
  *  This will append or prepend the entry according to
@@ -439,6 +428,8 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
  *  This function will wake xmms_playlist_wait.
  *  @param playlist the playlist to add the entry to.
  *  @param file the #xmms_medialib_entry to add
+ *  @param error Upon error this will be set. 
+ *  @returns TRUE on success
  */
 
 gboolean
@@ -460,11 +451,6 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_e
 
 }
 
-/** Return the mediainfo for the entry
- * @ingroup PlaylistClientMethods
- */
-
-
 /** Clear the playlist */
 static void
 xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
@@ -481,10 +467,6 @@ xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err)
 	g_mutex_unlock (playlist->mutex);
 
 }
-
-/** Clear the playlist
- * @ingroup PlaylistClientMethods
- */
 
 
 /** Set the nextentry pointer in the playlist.
@@ -581,10 +563,6 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	g_mutex_unlock (playlist->mutex);
 
 }
-
-/** Sort the playlist 
- * @ingroup PlaylistClientMethods
- */
 
 /** Lists the current playlist.
  *

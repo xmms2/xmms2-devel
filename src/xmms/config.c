@@ -32,6 +32,24 @@
 #include "xmms/plugin.h"
 #include "xmms/ipc.h"
 
+
+/** @internal */
+typedef enum {
+	XMMS_CONFIG_STATE_INVALID,
+	XMMS_CONFIG_STATE_START,
+	XMMS_CONFIG_STATE_SECTION,
+	XMMS_CONFIG_STATE_VALUE
+} xmms_config_state_t;
+
+static void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err);
+static GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
+static xmms_config_value_t *xmms_config_value_new (const gchar *name);
+static gchar *xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
+
+XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
+XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
+XMMS_CMD_DEFINE (getvalue, xmms_config_value_client_lookup, xmms_config_t *, STRING, STRING, NONE);
+
 /**
   * @defgroup Config Config
   * @brief controls configuration for the server.
@@ -44,11 +62,15 @@
   * @{
   */
 
+/**
+ * Global parsed config
+ */
 struct xmms_config_St {
 	xmms_object_t obj;
 
 	GHashTable *values;
 
+	/* Lock on globals are great! */
 	GMutex *mutex;
 
 	/* parsing */
@@ -58,21 +80,18 @@ struct xmms_config_St {
 	gchar *value_name;
 };
 
+/**
+ * A value in the configuration file
+ */
 struct xmms_config_value_St {
 	xmms_object_t obj;
 
+	/** Name of the config directive */
 	const gchar *name;
+	/** The data */
 	gchar *data;
 };
 
-
-/** @internal */
-typedef enum {
-	XMMS_CONFIG_STATE_INVALID,
-	XMMS_CONFIG_STATE_START,
-	XMMS_CONFIG_STATE_SECTION,
-	XMMS_CONFIG_STATE_VALUE
-} xmms_config_state_t;
 
 /**
   * Global config
@@ -81,10 +100,6 @@ typedef enum {
   */
 
 xmms_config_t *global_config;
-
-void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err);
-GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
-static xmms_config_value_t *xmms_config_value_new (const gchar *name);
 
 /*
  * Config functions
@@ -186,7 +201,7 @@ xmms_config_parse_start (GMarkupParseContext *ctx,
 	}
 }
 
-void
+static void
 xmms_config_parse_end (GMarkupParseContext *ctx,
                        const gchar *name,
                        gpointer userdata,
@@ -251,8 +266,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
  * Sets a key to a new value
  */
 
-XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
-void
+static void
 xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err)
 {
 	xmms_config_value_t *val;
@@ -266,18 +280,15 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_
 
 }
 
-XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
 
 /**
   * List all keys and values in the list.
   * @returns a GList with strings with format "key=value"
   */
-GList *
+static GList *
 xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
 	GList *ret = NULL;
-
-	XMMS_DBG ("Configvalue list");
 
 	g_mutex_lock (conf->mutex);
 	
@@ -296,6 +307,10 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
   * This is a convinient function for removing the step
   * with #xmms_config_value_string_get
   *
+  * @param conf Global config
+  * @param key Configuration value to lookup
+  * @param err if error occurs this will be filled in
+  *
   * @returns a char with the value. If the value is a int it will return NULL
   */
 
@@ -313,13 +328,12 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 	return xmms_config_value_string_get (val);
 }
 
-gchar *
+static gchar *
 xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err)
 {
 	return g_strdup (xmms_config_value_lookup_string_get (conf, key, err));
 }
 
-XMMS_CMD_DEFINE (getvalue, xmms_config_value_client_lookup, xmms_config_t *, STRING, STRING, NONE);
 
 static void
 xmms_config_destroy (xmms_object_t *object) 
@@ -418,6 +432,9 @@ xmms_config_init (const gchar *filename)
 	return TRUE;
 }
 
+/**
+ * Free memory from the global configuration
+ */
 void
 xmms_config_shutdown ()
 {
@@ -436,8 +453,6 @@ xmms_config_lookup (const gchar *path)
 {
 	xmms_config_value_t *value;
 	g_return_val_if_fail (global_config, NULL);
-	
-	XMMS_DBG ("Looking up %s", path);
 	
 	g_mutex_lock (global_config->mutex);
 	value = g_hash_table_lookup (global_config->values, path);
@@ -634,8 +649,6 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	if (val->data && !strcmp (val->data, data))
 		return;
 
-	XMMS_DBG ("setting %s to %s", val->name, data);
-
 	g_free (val->data);
 	val->data = g_strdup (data);
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
@@ -699,6 +712,10 @@ xmms_config_value_float_get (const xmms_config_value_t *val)
 	return 0.0;
 }
 
+/**
+ * Set a callback function for the value.
+ * This will be called each time the value changes.
+ */
 void
 xmms_config_value_callback_set (xmms_config_value_t *val,
 				xmms_object_handler_t cb,
@@ -714,6 +731,9 @@ xmms_config_value_callback_set (xmms_config_value_t *val,
 			     (xmms_object_handler_t) cb, userdata);
 }
 
+/**
+ * Remove a callback from the value 
+ */
 void
 xmms_config_value_callback_remove (xmms_config_value_t *val,
                                    xmms_object_handler_t cb)
@@ -746,8 +766,6 @@ xmms_config_value_register (const gchar *path,
 {
 
 	xmms_config_value_t *val;
-
-	XMMS_DBG ("Registering: %s", path);
 
 	g_mutex_lock (global_config->mutex);
 

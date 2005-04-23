@@ -33,9 +33,13 @@
 
 /** @defgroup Visualisation Visualisation
   * @ingroup XMMSServer
+  * @brief Visulation draws a FFT and feeds it to the client.
   * @{
   */
 
+/**
+ * The structure for the vis module 
+ */
 struct xmms_visualisation_St {
 	xmms_object_t object;
 	xmms_audio_format_t *format;
@@ -52,6 +56,9 @@ static xmms_visualisation_t *vis;
 static void fft(gint16 *samples, gfloat *spec);
 static void xmms_visualisation_destroy (xmms_object_t *object);
 
+/**
+ * Initialize the Vis module.
+ */
 void
 xmms_visualisation_init ()
 {
@@ -73,6 +80,9 @@ xmms_visualisation_init ()
 
 }
 
+/**
+ * Free all resoures used by visualisation module.
+ */
 void xmms_visualisation_shutdown ()
 {
 }
@@ -84,6 +94,9 @@ xmms_visualisation_destroy (xmms_object_t *object)
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_VISUALISATION);
 }
 
+/**
+ * Allocate the visualisation.
+ */
 xmms_visualisation_t *
 xmms_visualisation_new ()
 {
@@ -117,6 +130,9 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 	
 }
 
+/**
+ * Calcualte the FFT on the decoded data buffer.
+ */
 void
 xmms_visualisation_calc (xmms_visualisation_t *vis, xmms_sample_t *buf, int len, guint32 pos)
 {
@@ -167,6 +183,9 @@ xmms_visualisation_calc (xmms_visualisation_t *vis, xmms_sample_t *buf, int len,
 	}
 }
 
+/**
+ * Tell the visualisation what audio format we use
+ */
 void
 xmms_visualisation_format_set (xmms_visualisation_t *vis, xmms_audio_format_t *fmt)
 {

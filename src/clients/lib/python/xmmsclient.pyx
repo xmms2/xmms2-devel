@@ -129,6 +129,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
 	xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *c, char *name, char *url)
 	xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *c, char *name, char *mime)
+	xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *c, unsigned int)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 	
@@ -1237,6 +1238,25 @@ cdef class XMMS :
 		ret.more_init ()
 		
 		return ret
+
+	def medialib_rehash(self, id = 0, myClass = None) :
+		"""
+		Force metainfo update on medialib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_rehash (self.conn, id)
+		ret.more_init ()
+		
+		return ret
+
 
 	def medialib_playlist_export (self, name, mime, myClass = None) :
 		"""
