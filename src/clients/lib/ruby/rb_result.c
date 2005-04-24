@@ -186,7 +186,7 @@ static void xhash_to_rhash (const void *key, const void *value,
 	else
 		val = rb_str_new2 ((char *) value);
 
-	rb_hash_aset (*hash, rb_str_new2 (key), val);
+	rb_hash_aset (*hash, ID2SYM (rb_intern (key)), val);
 }
 
 static VALUE c_hashtable_get (VALUE self)

@@ -96,7 +96,7 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
  * Open a database or create a new one
  */
 sqlite3 *
-xmms_sqlite_open (guint *id)
+xmms_sqlite_open (guint *id, gboolean *c)
 {
 	sqlite3 *sql;
 	gboolean create = TRUE;
@@ -156,13 +156,17 @@ xmms_sqlite_open (guint *id)
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		*id = 1;
+
 	} else {
 		sqlite3_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
 	}
+
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
+
+	*c = create;
 
 	return sql;
 }

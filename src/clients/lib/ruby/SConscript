@@ -15,6 +15,7 @@ if env.HasGroup ("ecore") :
 	# append the ecore libs last, since it probably adds a path to LIBPATH
 	# thats not beneath buildir - this seems to mess up the build process
 	env["LIBPATH"].append("#builddir/clients/lib/xmmsclient-ecore")
+	env["LIBS"].append("xmmsclient-ecore")
 	env.AddFlagsFromGroup ("ecore")
 
 env.XmmsRuby ('xmmsclient', sources)
