@@ -185,6 +185,8 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 }
 
 METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
+METHOD_ADD_HANDLER(playlist_current_pos, true);
+METHOD_ADD_HANDLER(broadcast_playlist_current_pos, false);
 METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
 METHOD_ADD_HANDLER(playlist_list, true);
 
@@ -305,6 +307,8 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playback_seek_samples, 1);
 
 	METHOD_ADD (c, broadcast_playlist_changed, 0);
+	METHOD_ADD (c, playlist_current_pos, 0);
+	METHOD_ADD (c, broadcast_playlist_current_pos, 0);
 	METHOD_ADD (c, broadcast_medialib_entry_changed, 0);
 	METHOD_ADD (c, playlist_list, 0);
 	METHOD_ADD (c, playlist_set_next, 1);
