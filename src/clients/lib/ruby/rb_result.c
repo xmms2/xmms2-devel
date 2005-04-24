@@ -23,6 +23,10 @@
 #include "rb_xmmsclient_main.h"
 #include "rb_result.h"
 
+#define DEF_CONST(mod, prefix, name) \
+	rb_define_const ((mod), #name, \
+	                 INT2FIX (prefix##name));
+
 typedef struct {
 	xmmsc_result_t *real;
 	VALUE children;
@@ -375,10 +379,10 @@ void Init_Result (void)
 	                  c_playlist_change_get, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
 
-	rb_define_const (cResult, "PLAYLIST_ADD",
-	                 INT2FIX (XMMSC_PLAYLIST_ADD));
-	rb_define_const (cResult, "PLAYLIST_CLEAR",
-	                 INT2FIX (XMMSC_PLAYLIST_CLEAR));
-	rb_define_const (cResult, "PLAYLIST_REMOVE",
-	                 INT2FIX (XMMSC_PLAYLIST_REMOVE));
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SHUFFLE);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_REMOVE);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_CLEAR);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
 }
