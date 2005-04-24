@@ -89,7 +89,7 @@ gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t ent
 void xmms_medialib_logging_start (xmms_medialib_entry_t entry);
 void xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime);
 
-sqlite3 *xmms_sqlite_open ();
+sqlite3 *xmms_sqlite_open (guint *nextid, gboolean *c);
 gboolean xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);
 void xmms_sqlite_close (sqlite3 *sql);
 

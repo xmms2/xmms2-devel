@@ -127,10 +127,11 @@ static void
 xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 			    gpointer userdata)
 {
+	gboolean c;
 	xmms_medialib_t *mlib = userdata;
 	g_mutex_lock (mlib->mutex);
 	xmms_sqlite_close (mlib->sql);
-	medialib->sql = xmms_sqlite_open (&medialib->nextid);
+	medialib->sql = xmms_sqlite_open (&medialib->nextid, &c);
 	g_mutex_unlock (mlib->mutex);
 }
 
@@ -145,9 +146,9 @@ gboolean
 xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar path[XMMS_PATH_MAX+1];
+	gboolean create;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
-	medialib->sql = xmms_sqlite_open (&medialib->nextid);
 	medialib->mutex = g_mutex_new ();
 	medialib->playlist = playlist;
 
@@ -199,6 +200,15 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_config_value_register ("medialib.path",
 				    path,
 				    xmms_medialib_path_changed, medialib);
+
+	medialib->sql = xmms_sqlite_open (&medialib->nextid, &create);
+	
+	if (create) {
+		xmms_medialib_entry_t entry;
+		entry = xmms_medialib_entry_new ("file://" SYSCONFDIR "/dismantled-the_swarm_clip.ogg");
+		xmms_playlist_add (medialib->playlist, entry, NULL);
+	}
+
 	
 	return TRUE;
 }

@@ -84,6 +84,8 @@ else:
 
 Export('base_env')
 
+base_env.XmmsConfig("dismantled-the_swarm_clip.ogg")
+
 SConscript('src/xmms/SConscript',build_dir='builddir/xmms',duplicate=0)
 SConscript('src/clients/SConscript',build_dir='builddir/clients',duplicate=0)
 SConscript('src/plugins/SConscript',build_dir='builddir/plugins', duplicate=0)
