@@ -23,8 +23,8 @@
 #include <glib.h>
 
 
-#ifdef XMMS_OS_LINUX /* ALSA might be default now a days? */
-#define XMMS_OUTPUT_DEFAULT "oss"
+#ifdef XMMS_OS_LINUX 
+#define XMMS_OUTPUT_DEFAULT "alsa"
 #elif XMMS_OS_OPENBSD
 #define XMMS_OUTPUT_DEFAULT "sun"
 #elif XMMS_OS_SOLARIS
