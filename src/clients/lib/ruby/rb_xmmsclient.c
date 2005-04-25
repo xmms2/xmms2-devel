@@ -77,44 +77,48 @@ static void c_free (RbXmmsClient *xmms)
 	free (xmms);
 }
 
-static VALUE c_new (VALUE klass)
+static VALUE c_alloc (VALUE klass)
 {
-	VALUE self;
 	RbXmmsClient *xmms;
 
 #ifdef HAVE_ECORE
 	ecore_init ();
 #endif
 
-	self = Data_Make_Struct (klass, RbXmmsClient,
+	return Data_Make_Struct (klass, RbXmmsClient,
 	                         c_mark, c_free, xmms);
-	xmms->results = rb_ary_new ();
+}
 
-	rb_obj_call_init (self, 0, NULL);
+static VALUE c_init (VALUE self, VALUE name)
+{
+	GET_OBJ (self, RbXmmsClient, xmms);
+
+	if (!(xmms->real = xmmsc_init (StringValuePtr (name)))) {
+		rb_raise (rb_eNoMemError, "failed to allocate memory");
+		return Qnil;
+	}
+
+	xmms->results = rb_ary_new ();
 
 	return self;
 }
 
 static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 {
-	VALUE name, path;
+	VALUE path;
 	char *p = NULL;
 
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	rb_scan_args (argc, argv, "11", &name, &path);
+	rb_scan_args (argc, argv, "01", &path);
 
-	Check_Type (name, T_STRING);
-
-	if (!NIL_P (path)) {
-		Check_Type (path, T_STRING);
+	if (!NIL_P (path))
 		p = StringValuePtr (path);
-	}
 
-	if (!(xmms->real = xmmsc_init (StringValuePtr (name))))
-		return Qfalse;
+	if (!xmmsc_connect (xmms->real, p))
+		rb_raise (eXmmsClientError, "cannot connect to daemon");
 
-	return xmmsc_connect (xmms->real, p) ? Qtrue : Qfalse;
+	return self;
 }
 
 #ifdef HAVE_ECORE
@@ -285,7 +289,8 @@ void Init_XmmsClient (void)
 
 	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
 
-	rb_define_singleton_method (c, "new", c_new, 0);
+	rb_define_alloc_func (c, c_alloc);
+	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
 
 #ifdef HAVE_ECORE
