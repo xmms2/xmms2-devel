@@ -266,7 +266,12 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error)
 	g_return_val_if_fail (playlist, 0);
 	
 	g_mutex_lock (playlist->mutex);
+
 	pos = playlist->currentpos;
+	if (pos == -1) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "no current entry");
+	}
+
 	g_mutex_unlock (playlist->mutex);
 
 	return pos;
