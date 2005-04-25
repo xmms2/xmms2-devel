@@ -317,6 +317,12 @@ static VALUE c_value_get (VALUE self)
 
 	GET_OBJ (self, RbResult, res);
 
+	if (xmmsc_result_iserror (res->real)) {
+		rb_raise (rb_eRuntimeError, "cannot retrieve value");
+
+		return Qnil;
+	}
+
 	switch (xmmsc_result_get_type (res->real)) {
 		case XMMS_OBJECT_CMD_ARG_UINT32:
 			ret = c_uint_get (self);
