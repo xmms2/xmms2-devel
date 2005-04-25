@@ -59,6 +59,8 @@ typedef struct {
 	VALUE results;
 } RbXmmsClient;
 
+VALUE eXmmsClientError;
+
 static void c_mark (RbXmmsClient *xmms)
 {
 	rb_gc_mark (xmms->results);
@@ -325,4 +327,8 @@ void Init_XmmsClient (void)
 	                 INT2FIX (XMMS_OUTPUT_STATUS_STOP));
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
+
+	eXmmsClientError = rb_define_class_under (mXmmsClient,
+	                                          "XmmsClientError",
+	                                          rb_eStandardError);
 }

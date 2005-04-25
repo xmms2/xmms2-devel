@@ -19,4 +19,8 @@
 
 void Init_XmmsClient (void);
 
+#ifndef __RB_XMMSCLIENT_C
+extern VALUE eXmmsClientError;
+#endif
+
 #endif
