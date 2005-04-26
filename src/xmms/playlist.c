@@ -131,7 +131,7 @@ xmms_playlist_init (void)
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->mutex = g_mutex_new ();
 	ret->list = g_array_new (FALSE, FALSE, sizeof (guint32));
-	ret->currentpos = 0;
+	ret->currentpos = -1; /* we start with an invalid entry */
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYLIST, XMMS_OBJECT (ret));
 
@@ -243,8 +243,12 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	
 	g_mutex_lock (playlist->mutex);
 
-	if (playlist->currentpos == -1 && (playlist->list->len > 0))
+	if (playlist->currentpos == -1 && (playlist->list->len > 0)) {
 		playlist->currentpos = 0;
+		xmms_object_emit_f (XMMS_OBJECT (playlist),
+		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+		                    XMMS_OBJECT_CMD_ARG_UINT32, 0);
+	}
 
 	if (playlist->currentpos < playlist->list->len) {
 		ent = g_array_index (playlist->list, guint32, playlist->currentpos);
