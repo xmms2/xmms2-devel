@@ -168,20 +168,12 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 
 	if (!ipcpath) {
 		struct passwd *pwd;
-		char *user = NULL;
-		int uid = getuid();
 
-		while ((pwd = getpwent ())) {
-			if (uid == pwd->pw_uid) {
-				user = pwd->pw_name;
-				break;
-			}
-		}
-
-		if (!user)
+		pwd = getpwuid (getuid ());
+		if (!pwd || !pwd->pw_name)
 			return FALSE;
 
-		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", user);
+		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", pwd->pw_name);
 	} else {
 		snprintf (path, 256, "%s", ipcpath);
 	}

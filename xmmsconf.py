@@ -35,7 +35,12 @@ def checkFlags(base_env):
 	##
 	## Check for optional libs
 	##
-	base_env.CheckAndAddFlagsToGroup("ecore", "ecore-config --libs --cflags")
+	# check for ecore, but remove some of the libs we don't need. crappy code ahead :)
+	rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb',
+	                  'config', 'file']
+	rem_misc_libs = ['eet', 'jpeg', 'z']
+	sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])
+	base_env.CheckAndAddFlagsToGroup("ecore", "ecore-config --libs --cflags | " + sed_call)
 	if base_env.HasGroup("ecore") :
 		base_env.AddFlagsToGroup("ecore", " -DHAVE_ECORE")
 
@@ -108,4 +113,8 @@ def checkFlags(base_env):
 	      "optional_config":base_env.optional_config},
 	     statefile)
 
+def lib2sed(lib):
+	return " -e 's/ -l" + lib + " / /'"
 
+def ecorelib2sed(lib):
+	return " -e 's/ -lecore_" + lib + " / /'"
