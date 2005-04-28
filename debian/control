@@ -8,11 +8,12 @@ Build-Depends: debmake
 Package: xmms2-core
 Architecture: any
 Conflicts: xmms2-client-gtk2, xmms2-decoder-sid
-Depends: debconf (>= 0.2.78), ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-output, ${shlibs:Depends}
 Conflicts: xmms2
+Recommends: xmms2-decoder-mad|xmms2-decoder-vorbis
+Suggests: xmms2-client
 Description: XMMS2 - core package - private beta - DO NOT SPREAD!
  This package just contains the daemon that loads plugins and allows clients to connect.
- DO NOT SPREAD!
 
 Package: libxmms2client
 Architecture: any
@@ -28,29 +29,88 @@ Description: XMMS2 - clientlibrary devel files - private beta - DO NOT SPREAD!
  This package contains the headers for libxmms2client.
  DO NOT SPREAD!
 
+Package: libxmms2client-ecore
+Architecture: any
+Depends: debconf (>= 0.2.78), ${shlibs:Depends}
+Description: XMMS2 - ecore clientlibrary - private beta - DO NOT SPREAD!
+ This package contains the clientlib.
+ DO NOT SPREAD!
+
+Package: libxmms2client-ecore-dev
+Architecture: any
+Depends: debconf (>= 0.2.78), libxmms2client-ecore, ${shlibs:Depends}
+Description: XMMS2 - ecore clientlibrary devel files - private beta - DO NOT SPREAD!
+ This package contains the headers for libxmms2client.
+ DO NOT SPREAD!
+
 Package: xmms2-client-cli
 Architecture: any
+Provides: xmms2-client
 Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
 Description: XMMS2 - cli client - private beta - DO NOT SPREAD!
- This package contains a simple text-ui for xmms2
- DO NOT SPREAD!
+ This package contains a simple text-ui for xmms2.
 
 Package: xmms2-transport-curl
 Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - curl transport for HTTP - private beta DO NOT SPREAD!
  This package contains a HTTP transport for xmms2.
- DO NOT SPREAD!
+
+Package: xmms2-transport-samba
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - Samba transport - private beta DO NOT SPREAD!
+ This package contains a Samba transport for xmms2.
+
+Package: xmms2-transport-html
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - HTML transport - private beta DO NOT SPREAD!
+ This package contains a HTML transport for xmms2.
+
+Package: xmms2-cd
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - CD transport and decoder - private beta DO NOT SPREAD!
+ This package enables direct reading of CDs for xmms2.
 
 Package: xmms2-decoder-vorbis
 Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - vorbis decoder - private beta - DO NOT SPREAD!
- This package let you play ogg-vorbis-tunes
+ This package enables ogg-vorbis decoding for xmms2.
 
-Package: xmms2-effect-ices
+Package: xmms2-decoder-mad
 Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
-Description: XMMS2 - ices effect - private beta - DO NOT SPREAD!
- This package let you stream to a icecast2 server.
+Description: XMMS2 - libmad based mp3 decoder - private beta - DO NOT SPREAD!
+ This package enables mp3 decoding for xmms2.
+
+Package: xmms2-output-oss
+Architecture: any
+Provides: xmms2-ouptut
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - OSS output - private beta - DO NOT SPREAD!
+ This package enables OSS output for xmms2.
+
+Package: xmms2-output-alsa
+Architecture: any
+Provides: xmms2-ouptut
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - ALSA output - private beta - DO NOT SPREAD!
+ This package enables ALSA output for xmms2.
+
+Package: xmms2-output-jack
+Architecture: any
+Provides: xmms2-ouptut
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - JACK output - private beta - DO NOT SPREAD!
+ This package enables JACK output for xmms2.
+
+Package: xmms2-output-diskwrite
+Architecture: any
+Provides: xmms2-ouptut
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - diskwrite ouput - private beta - DO NOT SPREAD!
+ This package enables writing of decoded streams to files for xmms2.
 
