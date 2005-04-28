@@ -9,9 +9,9 @@ require "gtk2" if $MODE == "GLIB"
 
 Gtk.init if $MODE == "GLIB"
 
-xc = XmmsClient::XmmsClient.new
+xc = XmmsClient::XmmsClient.new("Ruby")
 
-xc.connect("Ruby")
+xc.connect
 
 xc.setup_with_ecore if $MODE == "ECORE"
 xc.setup_with_gmain if $MODE == "GLIB"

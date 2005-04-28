@@ -71,7 +71,7 @@ struct xmms_ipc_client_St {
 	gint wakeup_in;
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
-	guint broadcasts[XMMS_IPC_SIGNAL_END];
+	GList *broadcasts[XMMS_IPC_SIGNAL_END];
 };
 
 static GMutex *global_ipc_lock;
@@ -287,7 +287,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			return;
 		}
 		g_mutex_lock (global_ipc_lock);
-		client->broadcasts[broadcastid] = xmms_ipc_msg_get_cid (msg);
+
+		client->broadcasts[broadcastid] =
+			g_list_append (client->broadcasts[broadcastid],
+			               GUINT_TO_POINTER (xmms_ipc_msg_get_cid (msg)));
+
 		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
@@ -467,6 +471,8 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 static void
 xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 {
+	guint i;
+
 	XMMS_DBG ("Destroying client!");
 
 	g_mutex_lock (global_ipc_lock);
@@ -482,6 +488,10 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	}
 
 	g_queue_free (client->out_msg);
+
+	for (i = 0; i < XMMS_IPC_SIGNAL_END; i++) {
+		g_list_free (client->broadcasts[i]);
+	}
 
 	g_free (client);
 	g_mutex_unlock (global_ipc_lock);
@@ -642,12 +652,14 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 	g_mutex_lock (global_ipc_lock);
 
 	for (c = global_ipc->clients; c; c = g_list_next (c)) {
+		GList *l;
 		xmms_ipc_client_t *cli = c->data;
-		if (cli->broadcasts[broadcastid]) {
+
+		for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
 			xmms_ipc_msg_t *msg;
 
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
-			xmms_ipc_msg_set_cid (msg, cli->broadcasts[broadcastid]);
+			xmms_ipc_msg_set_cid (msg, GPOINTER_TO_UINT (l->data));
 			xmms_ipc_handle_arg_value (msg, (xmms_object_cmd_arg_t*)arg);
 			xmms_ipc_client_msg_write (cli, msg);
 		}
