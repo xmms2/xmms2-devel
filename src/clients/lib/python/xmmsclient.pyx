@@ -176,6 +176,10 @@ cdef class XMMSResult :
 		ObjectRef[self.cid] = self
 
 	def value(self):
+		"""
+		Return value of appropriate data type contained in this result.
+		This can be used instead of most get_* functions in this class.
+		"""
 		self._check()
 	
 		type = xmmsc_result_get_type(self.res)
@@ -481,13 +485,18 @@ cdef class XMMS :
 
 	def ioin (self) :
 		"""
-		Use this relatively low level function to write your own
-		custom main loops, if needed. See the PythonLoop code for an
-		example
+		Read data from the daemon, when available. Note: This is a low
+		level function that should only be used in certain
+		circumstances. e.g. a custom event loop
 		"""
 		xmmsc_ipc_io_in_callback (self.conn.ipc)
 
 	def ioout(self):
+		"""
+		Write data out to the daemon, when available. Note: This is a
+		low level function that should only be used in certain
+		circumstances. e.g. a custom event loop
+		"""
 		xmmsc_ipc_io_out_callback (self.conn.ipc)
 
 	def want_ioout(self):
@@ -588,8 +597,7 @@ cdef class XMMS :
 
 	def playback_tickle (self, myClass = None) :
 		"""
-		Instruct the XMMS2 daemon to move on to the next file in the
-		playlist.
+		Instruct the XMMS2 daemon to move on to the next playlist item.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -626,7 +634,7 @@ cdef class XMMS :
 	def playback_current_id (self, myClass = None) :
 		"""
 		@rtype: L{XMMSResult} (UInt)
-		@return: The playlist id of the item currently selected.
+		@return: The medialib id of the item currently selected.
 		"""
 		cdef XMMSResult ret
 		
@@ -698,7 +706,8 @@ cdef class XMMS :
 		"""
 		Set a class to handle the playback status broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
-		XMMSResult class.
+		XMMSResult class. Updated data is sent when playback status
+		changes.
 		@rtype: L{XMMSResult} (UInt)
 		@return: An XMMSResult object that is constantly updated with
 		the appropriate info.
@@ -719,7 +728,8 @@ cdef class XMMS :
 		"""
 		Set a class to handle the playback id broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
-		XMMSResult class.
+		XMMSResult class. Updated data is sent when the mlib id of the
+		current item changes.
 		@rtype: L{XMMSResult} (UInt)
 		@return: An XMMSResult object that is constantly updated with
 		the appropriate info.
@@ -949,7 +959,8 @@ cdef class XMMS :
 
 	def playlist_set_next (self, position, myClass = None) :
 		"""
-		Sets the position in the playlist. 
+		Sets the position to move to, next, in the playlist. Calling
+		L{playback_tickle} will perform the jump to that position.
 		"""
 		cdef XMMSResult ret
 		
@@ -987,7 +998,8 @@ cdef class XMMS :
 	def playlist_current_pos (self, myClass = None) :
 		"""
 		Returns the current position in the playlist. This value will
-		always be biggern than 0. The first entry in the list is 1
+		always be equal to, or larger than 0. The first entry in the
+		list is 0.
 		"""
 		cdef XMMSResult ret
 
@@ -1004,7 +1016,11 @@ cdef class XMMS :
 	def broadcast_playlist_current_pos (self, myClass = None) :
 		"""
 		Set a class to handle the playlist current position updates 
-		from the XMMS2 daemon. 
+		from the XMMS2 daemon. Note: the handler class is usually a
+		child of the XMMSResult class. Updated data is sent when the
+		current item changes position. (e.g. finish playing song 1,
+		switch to song 2 & start playing) This is NOT when moving a
+		playlist item from one position to another.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info.
@@ -1026,6 +1042,7 @@ cdef class XMMS :
 		Set a class to handle the playlist changed broadcast from the
 		XMMS2 daemon. (i.e. the player's playlist has changed) Note:
 		the handler class is usually a child of the XMMSResult class.
+		Updated data is sent whenever the playlist is modified.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info.
@@ -1047,7 +1064,8 @@ cdef class XMMS :
 		Set a class to handle the config value changed broadcast
 		from the XMMS2 daemon. (i.e. some configuration value has
 		been modified) Note: the handler class is usually a child of
-		the XMMSResult class.
+		the XMMSResult class. Updated data is sent whenever a config
+		value is modified.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info. (the modified config key and its value)
@@ -1136,7 +1154,7 @@ cdef class XMMS :
 
 	def medialib_add_entry (self, file, myClass = None) :
 		"""
-		Add a entry to the MediaLib.
+		Add an entry to the MediaLib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1223,7 +1241,7 @@ cdef class XMMS :
 
 	def medialib_playlist_import (self, name, url, myClass = None) :
 		"""
-		Imports a playlist to the medialib
+		Import a playlist to the medialib
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1241,7 +1259,7 @@ cdef class XMMS :
 
 	def medialib_rehash(self, id = 0, myClass = None) :
 		"""
-		Force metainfo update on medialib
+		Force metadata info update on medialib
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1260,7 +1278,7 @@ cdef class XMMS :
 
 	def medialib_playlist_export (self, name, mime, myClass = None) :
 		"""
-		Exports a playlist from medialib to a other format
+		Export a playlist from medialib to another format
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1278,10 +1296,11 @@ cdef class XMMS :
 
 	def broadcast_medialib_entry_changed (self, myClass = None) :
 		"""
-		Set a class to handle the playlist entry changed broadcast
+		Set a class to handle the medialib entry changed broadcast
 		from the XMMS2 daemon. (i.e. the current entry in the playlist
 		has changed) Note: the handler class is usually a child of the
-		XMMSResult class.
+		XMMSResult class. Updated data is sent when the metadata for
+		a song is updated in the medialib.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info.
