@@ -40,10 +40,13 @@ class XMMSEnvironment(Environment):
 		self.pluginpath = self["INSTALLDIR"]+"/lib/xmms2"
 		self.binpath = self["INSTALLDIR"]+"/bin"
 		self.librarypath = self["INSTALLDIR"]+"/lib"
+		self.sharepath = self["INSTALLDIR"]+"/share/xmms2"
 		self["SHLIBPREFIX"] = "lib"
 
 		if sys.platform == 'linux2':
 			self.platform = 'linux'
+		elif sys.platform.startswith("freebsd"):
+			self.platform = 'freebsd'
 		else:
 			self.platform = sys.platform
 			
@@ -53,12 +56,14 @@ class XMMSEnvironment(Environment):
 	def Install(self, target, source):
 		SCons.Environment.Environment.Install(self, target, source)
 		self.install_targets.append(target)
-
 			
 	def tryaction(self, cmd):
 		try:
-			os.popen(cmd)
+			r = os.popen(cmd).read()
 		except:
+			return False
+
+		if r == '':
 			return False
 
 		return True
@@ -178,3 +183,7 @@ class XMMSEnvironment(Environment):
 		self.programs.append(target)
 		self.Program(target, source)
 		self.Install(self.binpath, target)
+
+	def add_shared(self, source):
+		self.Install(self.sharepath, source)
+

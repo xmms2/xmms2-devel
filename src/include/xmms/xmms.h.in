@@ -21,5 +21,6 @@
 #define %PLATFORM% 1
 #define SYSCONFDIR "%SYSCONFDIR%"
 #define PKGLIBDIR "%PKGLIBDIR%"
+#define SHAREDDIR "%SHAREDDIR%"
 
 #endif

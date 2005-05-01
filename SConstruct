@@ -95,7 +95,8 @@ base_env.SourceCode('converter.c', b)
 
 subst_dict = {"%VERSION%":"1.9.9 DR1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["INSTALLDIR"]+"/lib/xmms2",
-	      "%SYSCONFDIR%":base_env["SYSCONFDIR"]}
+	      "%SYSCONFDIR%":base_env["SYSCONFDIR"],
+	      "%SHAREDDIR%":base_env.sharepath}
 config = base_env.SubstInFile("src/include/xmms/xmms.h", "src/include/xmms/xmms.h.in", SUBST_DICT=subst_dict)
 
 class Target:
@@ -167,5 +168,6 @@ foo = []
 map(lambda x: foo.append(x[x.rindex("/")+1:]), base_env.plugins)
 print ", ".join(foo)
 
+base_env.add_shared("dismantled-the_swarm_clip.ogg")
 base_env.Alias('install', base_env.install_targets)
 

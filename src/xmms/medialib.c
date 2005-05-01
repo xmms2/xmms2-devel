@@ -205,7 +205,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	
 	if (create) {
 		xmms_medialib_entry_t entry;
-		entry = xmms_medialib_entry_new ("file://" SYSCONFDIR "/dismantled-the_swarm_clip.ogg");
+		entry = xmms_medialib_entry_new ("file://" SHAREDDIR "/dismantled-the_swarm_clip.ogg");
 		xmms_playlist_add (medialib->playlist, entry, NULL);
 	}
 
