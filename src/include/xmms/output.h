@@ -21,6 +21,7 @@
 #define _XMMS_OUTPUT_H_
 
 #include <glib.h>
+#include "xmms/xmms.h"
 
 
 #ifdef XMMS_OS_LINUX 

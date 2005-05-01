@@ -1,0 +1,11 @@
+"""
+This is a plugin build file for XMMS2
+"""
+
+# first we tell scons what our targets are
+target="eq"
+# then we tell scons where our sources are
+source=["eq.c"]
+
+def config(env):
+	return True

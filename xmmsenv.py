@@ -1,9 +1,8 @@
+from SCons.Environment import Environment
 import SCons
-
-import os;
-import sys;
-import time
+import sys, os
 import shutil
+from marshal import load
 from stat import *
 
 def installFunc(dest, source, env):
@@ -16,200 +15,97 @@ def installFunc(dest, source, env):
 	os.chmod(dest, mode)
 	return 0
 
-class XmmsEnvironment(SCons.Environment.Environment):
-	pass
-	def __init__(self, options=None, **kw):
-		self.sys = os.popen("uname").read().strip()
-
-		tmp = os.popen("bk prs -r+ -h -d ':TAGS:' ChangeSet").read()
-		if tmp:
-			self.rev = tmp.split("\n")[0][2:]
-		else:
-			self.rev = os.popen("bk prs -r+ -h -d ':CSETKEY:' ChangeSet").read()
-
-		if self.rev:
-			if os.popen("bk -r diffs").read():
-				self.rev += "+DEV"
-		else:
-			self.rev = "NonBitKeeper"
-
-		print "Building for BitKeeper version:", self.rev
-		SCons.Environment.Environment.__init__(self, options=options)
-		self.flag_groups = {}
-		self.optional_config = {}
+class XMMSEnvironment(Environment):
+	targets=[]
+	def __init__(self, parent=None, options=None, **kw):
+		Environment.__init__(self, options=options)
 		apply(self.Replace, (), kw)
-		self['INSTALL'] = installFunc
-		self.plugins = []
-		self.install_targets = []
-		self.install_prefix=self['PREFIX']
-		self.pluginpath=self.install_prefix + "/lib/xmms2/"
-		self.binpath=self.install_prefix + "/bin/"
-		self.libpath=self.install_prefix + "/lib/"
-		self.sysconfdir=self['SYSCONFDIR']
-		self.installdir=self['INSTALLDIR']
-		self.mandir=self['MANDIR']
-		self.Append(CPPPATH=['#src/include'])
-		self['ENV']['TERM']=os.environ['TERM']
-		self.Append(CPPFLAGS=['-DPKGLIBDIR=\\"'+self.pluginpath+'\\"'])
-		self.Append(CPPFLAGS=['-DSYSCONFDIR=\\"'+self.sysconfdir+'\\"'])
-		self.Append(CPPFLAGS=["-DBUILDREV='\""+self.rev+"\"'"])
-		self.Append(LIBPATH=['/usr/lib'])
-		self.Append(LIBPATH=['/usr/local/lib'])
-		self.Append(CPPFLAGS=['-I/usr/local/include'])
+		self.conf = SCons.SConf.SConf(self)
 
-		if self.sys == 'Linux':
-			self.Append(CPPFLAGS='-DXMMS_OS_LINUX')
-		elif self.sys == 'Darwin':
-			self.Append(CPPFLAGS='-DXMMS_OS_DARWIN')
-			self['SHLIBSUFFIX'] = '.dylib'
-			self.Append(LIBPATH=['/sw/lib'])
-			self.Append(CPPFLAGS=['-I/sw/include'])
-		elif self.sys == 'OpenBSD':
-			self.Append(CPPFLAGS='-DXMMS_OS_OPENBSD')
-		elif self.sys == 'FreeBSD':
-			self.Append(CPPFLAGS='-DXMMS_OS_FREEBSD')
+		if os.path.isfile("config.cache") and self["CONFIG"] == 0:
+			try:
+				self.config_cache=load(open("config.cache", 'rb+'))
+			except IOError:
+				print "Could not load config.cache!"
+				self.config_cache={}
+		else:
+			self.config_cache={}
 
+		self.plugins=[]
+		self.libs=[]
+		self.programs=[]
+		self.install_targets=[]
+
+		self["INSTALL"] = installFunc
+		self.pluginpath = self["INSTALLDIR"]+"/lib/xmms2"
+		self.binpath = self["INSTALLDIR"]+"/bin"
+		self.librarypath = self["INSTALLDIR"]+"/lib"
+		self["SHLIBPREFIX"] = "lib"
+
+		if sys.platform == 'linux2':
+			self.platform = 'linux'
+		else:
+			self.platform = sys.platform
+			
+		if self.platform == 'darwin':
+			self["SHLINKFLAGS"] = "$LINKFLAGS -multiply_defined suppress -flat_namespace -undefined suppress"
+	
 	def Install(self, target, source):
 		SCons.Environment.Environment.Install(self, target, source)
 		self.install_targets.append(target)
 
-	def XmmsConfig(self,source):
-		self.Install(self.installdir+self.sysconfdir, source)
-
-	def XmmsManual(self,source):
-		self.Install(self.installdir+self.mandir, source)
-
-	def XmmsPlugin(self,target,source):
-		if self.sys == 'Darwin':
-			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
-		self.SharedLibrary(target, source)
-		self.Install(self.installdir+self.pluginpath,self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
-
-	def XmmsProgram(self,target,source):
-		self.Program(target,source)
-		self.Install(self.installdir+self.binpath,target)
-
-	def XmmsPython(self,target,source):
-		if self.sys == 'Darwin':
-			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
-
-		self.SharedLibrary (target, source, SHLIBPREFIX='', SHLIBSUFFIX=".so")
-		self.Install(self.optional_config["pythonlibdir"], target+".so")
-
-	def XmmsRuby(self, target, source):
-		if self.sys == 'Darwin':
-			self['SHLINKFLAGS'] = '$LINKFLAGS -bundle -flat_namespace -undefined suppress'
-		self.SharedLibrary(target, source, SHLIBPREFIX = "", SHLIBSUFFIX=".so")
-		self.Install(self.optional_config["rubysitedir"], target + ".so")
-
-	def XmmsLibrary(self,target,source):
-		if self.sys == 'Darwin':
-			self['SHLINKFLAGS'] = '$LINKFLAGS -dynamiclib'
-
-		self.SharedLibrary(target, source)
-		self.Install(self.installdir+self.libpath, self['LIBPREFIX']+target+self['SHLIBSUFFIX'])
-
-	def XmmsStaticLibrary(self,target,source):
-		self.Library(target, source)
-	
-	def AddFlagsToGroup(self, group, flags):
-		excluded = self['EXCLUDE'].split()
-		try :
-			i = excluded.index(group)
-			print "Skipping " + group
-		except :
-			if self.flag_groups.has_key(group) :
-				self.flag_groups[group] += flags
-			else:
-				self.flag_groups[group] = flags
-
-	def RemoveGroup(self, group):
-		if self.HasGroup(group):
-			del self.flag_groups[group]
-
-	def HasGroup(self,group):
-		return self.flag_groups.has_key(group)
-
-	def CheckAndAddFlagsToGroupFromLibTool(self, group, ltfile):
-		file_found = 0
-		msg = "Checking for "+ltfile+"... "
-		for path in self['LIBPATH']:
-			if os.path.exists(os.path.join(path, ltfile)):
-				file_found = 1
-				flags = ""
-				f=open(os.path.join(path, ltfile))
-				for line in f.readlines():
-					if line[0:6] == 'dlname':
-						flags += " -l"+line[11:line.index('.so')]
-					elif line[0:6] == 'libdir':
-						flags += " -L"+line[8:-2]
-				print msg + "yes"
-		if file_found == 0:
-			print msg + "no"
-		else:
-			self.AddFlagsToGroup(group,flags)
-
-	def CheckAndAddFlagsToGroup(self, group, cmd, fail=0):
-		print "Running " + cmd
-		res = os.popen(cmd).read().strip()
-		if res == "":
-			if fail != 0:
-				print "Could not find "+group+". Aborting!"
-				sys.exit(1)
-			return 0
-		self.AddFlagsToGroup(group, res)
-		return 1
-
-	def AddFlagsFromGroup(self, group):
-		self.ParseConfigFlagsString(self.flag_groups[group])
-
-	def CheckLibAndAddFlagsToGroup(self, group, library, function, depends="", fail=0):
-		test_env = self.Copy()
-		if depends != "":
-			if not self.HasGroup(depends):
-				return 0
-			test_env.AddFlagsFromGroup(depends)
-
-		my_conf = SCons.SConf.SConf( test_env )
-		if my_conf.CheckLib(library, function, 0):
-			self.AddFlagsToGroup(group, '-l'+library)
-			my_conf.Finish()
-			return 1
-		elif fail != 0 :
-			print "Could not find "+group+". Aborting!"
-			sys.exit(1)
 			
-		my_conf.Finish()
-		return 0
+	def tryaction(self, cmd):
+		try:
+			os.popen(cmd)
+		except:
+			return False
 
-	def CheckProgram (self, program) :
-		test_env = self.Copy ()
-		my_conf = SCons.SConf.SConf (test_env)
-		print "Checking for program " + program
-		(s, o) = my_conf.TryAction (program)
-		my_conf.Finish ()
+		return True
+	def pkgconfig(self, module, fail=False, headers=True, libs=True):
+		cmd = "pkg-config --silence-errors"
+		if headers:
+			cmd += " --cflags"
+		if libs:
+			cmd += " --libs" 
+		cmd += " " + module
+		return self.configcmd(cmd, fail)
 
-		if (s) :
-		    return 1
-		return 0
+	def configcmd(self, cmd, fail=False):
+		if self.config_cache.has_key(cmd):
+			ret = self.config_cache[cmd]
+		else:
+			print "Running %s" % cmd
+			ret = os.popen(cmd).read()
+			self.config_cache[cmd] = ret
 
-	def CheckProgramAndAddFlagsToGroup (self, group, program) :
-		if self.CheckProgram (program) :
-		    self.AddFlagsToGroup (group, "yes")
-		    return 1
-		return 0
+		if ret == '':
+			if fail:
+				print "Could not find needed group %s!!! Aborting!" % cmd
+				sys.exit(-1)
+			return False
+		ret = ret.strip()
+		self.parse_config_string(ret)
 
-	def CheckCHeader (self, header, cpppath) :
-		test_env = self.Copy()
-		test_env["CPPPATH"].append(cpppath)
+		return True
 
-		my_conf = SCons.SConf.SConf(test_env)
-		res = my_conf.CheckCHeader(header)
-		my_conf.Finish()
+	def checklibs(self, lib, func, fail=False):
+		if self.config_cache.has_key((lib,func)):
+			ret = self.config_cache[(lib,func)]
+		else:
+			ret = self.conf.CheckLib(lib, func, 0)
+			self.config_cache[(lib,func)] = ret
+			
+		if not ret:
+			if fail:
+				print "Could not find needed group %s!!! Aborting!" % cmd
+				sys.exit(-1)
+			return False
 
-		return res
+		self.parse_config_string("-l"+lib)
+		return True
 
-	def ParseConfigFlagsString(self, flags ):
+	def parse_config_string(self, flags):
 		"""We want our own ParseConfig, that supports some more
 		flags, and that takes the argument as a string"""
 
@@ -251,20 +147,34 @@ class XmmsEnvironment(SCons.Environment.Environment):
 				elif opt == 'm':
 					pass
 				else:
-					print 'garbage in flags: ' + arg
-					sys.exit(1)
+					break
 			elif arg[:3] == 'yes' :
 				i = i + 3
 				pass
-			elif switch == '/':
-				if arg[-3:] == '.la':
-# Ok, this is a libtool file, someday maybe we should parse it.
-# Hate this shit. This is the reason we switch from autobajs.
-# Please do the same!
-					print "I have found some autobajs in " + arg + ". I'm just guessing here."
-					self.Append( LINKFLAGS = [ arg[:-3] + '.a' ] )
-			else:
-				print 'garbage error: ' + arg
 
 			i = i + 1
 
+	def add_plugin(self, target, source):
+		self.plugins.append(target)
+		self["SHLIBPREFIX"]="libxmms_"
+		self.SharedLibrary(target, source)
+		self.Install(self.pluginpath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
+
+	def add_library(self, target, source, static=True, shared=True):
+		self.libs.append(target)
+		if static:
+			self.Library(target, source)
+			self.Install(self.librarypath, self.dir+"/"+self["LIBPREFIX"]+target[target.rindex("/")+1:]+self["LIBSUFFIX"])
+		if shared:
+			self.SharedLibrary(target, source)
+			if self.platform == 'darwin':
+				self["SHLINKFLAGS"] += " -dynamiclib"
+			self.Install(self.librarypath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
+
+
+
+	
+	def add_program(self, target, source):
+		self.programs.append(target)
+		self.Program(target, source)
+		self.Install(self.binpath, target)

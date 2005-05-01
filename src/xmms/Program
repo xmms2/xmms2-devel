@@ -1,0 +1,31 @@
+target = "xmms2d"
+source = ["main.c",
+	  "sample.c", 
+	  "config.c",
+	  "mediainfo.c",
+	  "sqlite.c",
+	  "decoder.c",
+	  "medialib.c", 
+	  "effect.c",
+	  "object.c",
+	  "transport.c",
+	  "error.c",
+	  "output.c",
+	  "unixsignal.c",
+	  "playlist.c",
+	  "visualisation.c",
+	  "ipc.c",
+	  "plsplugins.c",
+	  "log.c",
+	  "plugin.c",
+	  "magic.c",
+	  "ringbuf.c"]
+
+def config(env):
+	env["LIBS"].append("xmmsipc")
+	env["LIBPATH"].append("src/lib/xmmsipc")
+	env.pkgconfig("gmodule-2.0", fail=True)
+	env.pkgconfig("gthread-2.0", fail=True)
+	env.pkgconfig("sqlite3", fail=True)
+	env.checklibs("m", "sin", fail=True)
+	return True

@@ -1,0 +1,17 @@
+import os
+
+target="xmmsclient"
+source=["rb_xmmsclient_main.c", "rb_xmmsclient.c", "rb_result.c"]
+static=False
+
+def config(env):
+	if env.tryaction ("ruby --version") :
+		cmd = "ruby -rrbconfig -e 'puts \"-I%s -L%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'"
+		env.configcmd(cmd)
+		cmd = "ruby -rmkmf -e 'print Config::CONFIG[\"sitearchdir\"]'"
+		env.librarypath = os.popen(cmd).read().strip()
+
+		env["LIBPATH"].append("src/clients/lib/xmmsclient")
+		env["LIBS"].append("xmmsclient")
+		return True
+	return False

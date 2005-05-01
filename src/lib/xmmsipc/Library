@@ -1,0 +1,7 @@
+target = "xmmsipc"
+source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c"]
+shared = False
+
+def config(env):
+	return True
+

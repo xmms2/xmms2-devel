@@ -1,0 +1,16 @@
+target="xmmsclient"
+source=["ipc.c", 
+	"ipc_glib.c", 
+	"medialib.c", 
+	"other.c", 
+	"playback.c", 
+	"playlist.c", 
+	"result.c", 
+	"xhash.c", 
+	"xlist.c", 
+	"xmmsclient.c"]
+
+def config(env):
+	env["LIBS"].append("xmmsipc")
+	env["LIBPATH"].append("src/lib/xmmsipc")
+	return True

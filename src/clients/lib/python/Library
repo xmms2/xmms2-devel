@@ -1,0 +1,38 @@
+target="xmmsclient"
+source=["xmmsclient.c"]
+static=False
+
+def config(env):
+	try:
+		import distutils
+		import distutils.sysconfig
+		env["CPPPATH"].append(distutils.sysconfig.get_python_inc())
+	except:
+		print "Python distutils not installed try again!"
+		return False
+	
+	if not env.tryaction("pyrexc --version"):
+		return False
+
+	# we need a custom builder to generate xmmsclient.c
+	pyx = env.Builder(action = 'pyrexc %s -o %s' % (env.dir+"/xmmsclient.pyx", env.dir+"/xmmsclient.c"))
+	env.Append(BUILDERS = {'Pyx' : pyx})
+	
+	# we need to get rid of some warnings.
+	env['CCFLAGS'].append("-Wno-unused-function")
+	env['CCFLAGS'].append("-Wno-unused-label")
+
+	# link with xmmsclient is nice.
+	env['LIBS'].append("xmmsclient")
+	env['LIBPATH'].append("src/client/lib/xmmsclient")
+
+	# otherwise it will be called libxmmsclient.so
+	env['SHLIBPREFIX']=""
+	
+	# make sure that we put it in the right directory
+	env.librarypath = distutils.sysconfig.get_python_lib()
+
+	# just do it
+	env.Pyx (env.dir+"/xmmsclient.c", [env.dir+"/xmmsclient.pyx"])
+
+	return True
