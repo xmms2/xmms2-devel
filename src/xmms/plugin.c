@@ -24,6 +24,10 @@
 #include <gmodule.h>
 #include <string.h>
 
+#ifdef HAVE_VALGRIND
+# include <memcheck.h>
+#endif
+
 #ifdef XMMS_OS_DARWIN
 #define XMMS_LIBSUFFIX ".dylib"
 #else
@@ -68,7 +72,7 @@ static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
  */
 
 /**
- * @defgroup XMMSPLugin XMMSPlugin
+ * @defgroup XMMSPlugin XMMSPlugin
  * @brief All functions relevant to a plugin.
  *
  * Every plugin has a initfunction. That should be defined like following:
@@ -283,6 +287,17 @@ xmms_plugin_init (gchar *path)
 void
 xmms_plugin_shutdown ()
 {
+#ifdef HAVE_VALGRIND
+	/* print out a leak summary at this point, because the final leak
+	 * summary won't include proper backtraces of leaks found in
+	 * plugins, since we close the so's here.
+	 *
+	 * note: the following call doesn't do anything if we're not run
+	 * in valgrind
+	 */
+	VALGRIND_DO_LEAK_CHECK
+#endif
+
 	/* at this point, there's only one thread left,
 	 * so we don't need to take care of the mutex here.
 	 * xmms_plugin_destroy() will try to lock it, though, so
@@ -346,12 +361,15 @@ xmms_plugin_scan_directory (const gchar *dir)
 		XMMS_DBG ("Trying to load file: %s", path);
 		module = g_module_open (path, 0);
 		if (!module) {
-			XMMS_DBG ("%s", g_module_error ());
+			xmms_log_error ("Failed to open plugin %s: %s",
+			                path, g_module_error ());
 			g_free (path);
 			continue;
 		}
 
 		if (!g_module_symbol (module, "xmms_plugin_get", &sym)) {
+			xmms_log_error ("Failed to open plugin %s: "
+			                "initialization function missing", path);
 			g_module_close (module);
 			g_free (path);
 			continue;

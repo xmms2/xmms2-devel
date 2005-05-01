@@ -14,7 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-/** @file Sqlite Backend. */
+/** @file
+ * Sqlite Backend.
+ */
 
 #include <stdlib.h>
 
@@ -28,18 +30,28 @@
 #include "xmms/plsplugins.h"
 #include "xmms/signal_xmms.h"
 
-#include <sqlite.h>
+#include <sqlite3.h>
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 7
+#define DB_VERSION 9
 
 const char create_Control_stm[] = "create table Control (version)";
-const char create_Media_stm[] = "create table Media (id, key, value, primary key (id, key))";
-const char create_Log_stm[] = "create table Log (id primary key, starttime, value)";
-const char create_Playlist_stm[] = "create table Playlist (id primary_key, name)";
-const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, primary key (playlist_id, entry))";
-const char create_idx_stm[] = "create index prop_idx on Media (value);";
+const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
+const char create_Log_stm[] = "create table Log (id, starttime, value)";
+const char create_Playlist_stm[] = "create table Playlist (id primary key, name)";
+const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id, entry, pos int, primary key (playlist_id, entry))";
+const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
+			      "create index prop_idx on Media (value);"
+                              "create index log_id on Log (id);"
+                              "create index playlist_idx on Playlist (name);";
+
+/**
+ * @defgroup SQLite SQLite
+ * @ingroup XMMSServer
+ * @brief The SQLite backend of medialib
+ * @{
+ */
 
 static int
 xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
@@ -69,28 +81,40 @@ xmms_sqlite_version_cb (void *pArg, int argc, char **argv, char **columnName)
 	return 0;
 }
 
-sqlite *
-xmms_sqlite_open (guint *id)
+static int
+xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, const void *str2)
 {
-	sqlite *sql;
-	gchar *err;
-	const gchar *hdir;
+	guint32 a, b;
+	a = strtol(str1, NULL, 10);
+	b = strtol(str2, NULL, 10);
+	if (a < b) return -1;
+	if (a == b) return 0;
+	return 1;
+}
+
+/**
+ * Open a database or create a new one
+ */
+sqlite3 *
+xmms_sqlite_open (guint *id, gboolean *c)
+{
+	sqlite3 *sql;
 	gboolean create = TRUE;
-	gchar dbpath[XMMS_PATH_MAX];
+	const gchar *dbpath;
 	gint version = 0;
+	xmms_config_value_t *cv;
 
-	hdir = g_get_home_dir ();
-
-	g_snprintf (dbpath, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", hdir);
+	cv = xmms_config_lookup ("medialib.path");
+	dbpath = xmms_config_value_string_get (cv);
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;
 	}
 
-	sql = sqlite_open (dbpath, 0644, &err);
-	if (!sql) {
-		xmms_log_fatal ("Error creating sqlite db: %s", err);
-		free (err);
+	XMMS_DBG ("opening database: %s", dbpath);
+
+	if (sqlite3_open (dbpath, &sql)) {
+		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg(sql));
 		return FALSE; 
 	}
 
@@ -98,19 +122,17 @@ xmms_sqlite_open (guint *id)
 	 * any incompatible changes. if so, we need to recreate the db.
 	 */
 	if (!create) {
-		sqlite_exec (sql, "select version from Control",
-		             xmms_sqlite_version_cb, &version, NULL);
+		sqlite3_exec (sql, "select version from Control",
+			      xmms_sqlite_version_cb, &version, NULL);
 		if (version != DB_VERSION) {
 			gchar old[XMMS_PATH_MAX];
 
-			sqlite_close (sql);
-			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", hdir);
+			sqlite3_close (sql);
+			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", g_get_home_dir ());
 			rename (dbpath, old);
 
-			sql = sqlite_open (dbpath, 0644, &err);
-			if (!sql) {
-				xmms_log_fatal ("Error creating sqlite db: %s", err);
-				free (err);
+			if (sqlite3_open (dbpath, &sql)) {
+				xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg (sql));
 				return NULL;
 			}
 
@@ -126,25 +148,37 @@ xmms_sqlite_open (guint *id)
 		            DB_VERSION);
 
 		XMMS_DBG ("Creating the database...");
-		sqlite_exec (sql, create_Control_stm, NULL, NULL, NULL);
-		sqlite_exec (sql, buf, NULL, NULL, NULL);
-		sqlite_exec (sql, create_Media_stm, NULL, NULL, NULL);
-		sqlite_exec (sql, create_Log_stm, NULL, NULL, NULL);
-		sqlite_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
-		sqlite_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
-		sqlite_exec (sql, create_idx_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_Control_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, buf, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_Log_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		*id = 1;
+
 	} else {
-		sqlite_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
+		sqlite3_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
 	}
+
+	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
+
+	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
+
+	*c = create;
 
 	return sql;
 }
 
+/**
+ * Execute a query to the database.
+ */
 gboolean
-xmms_sqlite_query (sqlite *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...)
+xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...)
 {
 	gchar *err;
+	gchar *q;
 	va_list ap;
 	gint ret;
 
@@ -153,24 +187,31 @@ xmms_sqlite_query (sqlite *sql, xmms_medialib_row_method_t method, void *udata, 
 
 	va_start (ap, query);
 
-	XMMS_DBG ("Running query: %s", query);
+	q = sqlite3_vmprintf (query, ap);
 
-	ret = sqlite_exec_vprintf (sql, query, (sqlite_callback) method, udata, &err, ap);
+	ret = sqlite3_exec (sql, q, method, udata, &err);
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! (%d) - %s", ret, err);
+		sqlite3_free (q);
 		va_end (ap);
 		return FALSE;
 	}
 
+	sqlite3_free (q);
 	va_end (ap);
 
 	return TRUE;
 	
 }
 
+/**
+ * Close database and free all resources used.
+ */
 void
-xmms_sqlite_close (sqlite *sql)
+xmms_sqlite_close (sqlite3 *sql)
 {
 	g_return_if_fail (sql);
-	sqlite_close (sql);
+	sqlite3_close (sql);
 }
+
+/** @} */

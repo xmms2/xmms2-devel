@@ -52,19 +52,12 @@
  */
 
 
-/** @defgroup Decoder Decoder
-  * @ingroup XMMSServer
-  * @{
-  */
-
-/**
- * Replaygain modes.
+/** 
+ * @defgroup Decoder Decoder
+ * @ingroup XMMSServer
+ * @brief Decoder module takes encoded data and decodes it.
+ * @{
  */
-typedef enum {
-	XMMS_REPLAYGAIN_MODE_TRACK,
-	XMMS_REPLAYGAIN_MODE_ALBUM
-	/** @todo implement dynamic replaygain */
-} xmms_replaygain_mode_t;
 
 /**
  * Structure describing decoder-objects.
@@ -105,22 +98,6 @@ struct xmms_decoder_St {
 
 
 	xmms_ringbuf_t *buffer;
-
-	gboolean use_replaygain; /**< is replaygain enabled in the
-	                           *  config?
-	                           */
-	xmms_replaygain_mode_t replaygain_mode;
-	gboolean use_replaygain_anticlip; /**< is replaygain
-	                                    *  clipping prevention
-	                                    *  enabled in the config?
-	                                    */
-
-	/* has_replaygain is used so we don't have to check
-	 * whether replaygain is 1.0 for efficiency
-	 */
-	gboolean has_replaygain;
-	gfloat replaygain; /* final gain, combines scale and peak values */
-
 };
 
 /*
@@ -129,9 +106,6 @@ struct xmms_decoder_St {
 
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
-static void on_replaygain_cfg_changed (xmms_object_t *obj, gconstpointer data, gpointer udata);
-static gfloat get_replaygain (xmms_decoder_t *decoder, xmms_medialib_entry_t entry, gboolean *has_replaygain);
-static void apply_replaygain (gint16 *buf, guint len, gfloat gain);
 
 /*
  * Public functions
@@ -142,7 +116,7 @@ static void apply_replaygain (gint16 *buf, guint len, gfloat gain);
 
 /**
  * @defgroup DecoderPlugin DecoderPlugin
- * @ingroup XMMSPLugin
+ * @ingroup XMMSPlugin
  * @brief Decoder plugin documentation.
  *
  * A decoder plugin takes data from the transport and
@@ -192,7 +166,7 @@ static void apply_replaygain (gint16 *buf, guint len, gfloat gain);
  * again. FALSE will discontinue decoding.
  *
  * #XMMS_PLUGIN_METHOD_GET_MEDIAINFO Extracts the mediainfo for this 
- * sourcetype. This will be called from the mediainfo thread when
+ * sourcetype. This will be called from the mediainfo reader when
  * something is added to the playlist. Prototype is:
  * @code
  * void mediainfo (xmms_decoder_t *decoder);
@@ -385,11 +359,6 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 
 	g_return_if_fail (decoder);
 
-	if (decoder->has_replaygain && decoder->use_replaygain) {
-		apply_replaygain ((gint16 *) buf, len / 2,
-		                  decoder->replaygain);
-	}
-
 	for (l = decoder->effects; l; l = g_list_next (l)) {
 		xmms_effect_run (l->data, buf, len);
 	}
@@ -408,10 +377,23 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
 /** @} */
 
 
-/** @ingroup Decoder
-  * @{
-  */
+/** 
+ * @defgroup Decoder Decoder
+ * @ingroup XMMSServer
+ *
+ * @{
+ */
 
+/**
+ * Get a offset from the decoder on how long we should seek.
+ * 
+ * @param decoder decoder pointer
+ * @param milliseconds The number of milliseconds we want to seek.
+ * @param err On failure this will be used.
+ * @returns Number of bytes in the encoded data that represents the
+ * number of #milliseconds that we passed to the function
+ */
+ 
 gboolean
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
 {
@@ -423,6 +405,16 @@ xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t 
 	return xmms_decoder_seek_samples (decoder, samples, err);
 
 }
+
+/**
+ * Same as #xmms_decoder_seek_ms but in samples instead.
+ * 
+ * @param decoder decoder pointer
+ * @param samples The number of samples we want to seek.
+ * @param err On failure this will be used.
+ * @returns Number of bytes in the encoded data that represents the
+ * number of #samples that we passed to the function
+ */
 
 gboolean
 xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err)
@@ -489,20 +481,9 @@ xmms_decoder_destroy (xmms_object_t *object)
 {
 	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
 	xmms_decoder_destroy_method_t destroy_method;
-	xmms_config_value_t *val;
 	GList *n;
 
-	XMMS_DBG ("Destroying decoder!");
-	XMMS_DBG ("MEMDBG: DECODER DEAD %p", object);
-
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
-
-	val = xmms_config_lookup ("decoder.use_replaygain");
-	xmms_config_value_callback_remove (val, on_replaygain_cfg_changed);
-	val = xmms_config_lookup ("decoder.replaygain_mode");
-	xmms_config_value_callback_remove (val, on_replaygain_cfg_changed);
-	val = xmms_config_lookup ("decoder.use_replaygain_anticlip");
-	xmms_config_value_callback_remove (val, on_replaygain_cfg_changed);
 
 	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
 
@@ -525,6 +506,11 @@ xmms_decoder_destroy (xmms_object_t *object)
 	xmms_object_unref (decoder->vis);
 }
 
+/**
+ * Allocate a new decoder.
+ * Remember to unref it to free memory!
+ */
+
 xmms_decoder_t *
 xmms_decoder_new ()
 {
@@ -538,33 +524,17 @@ xmms_decoder_new ()
 	val = xmms_config_lookup ("decoder.buffersize");
 	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 
-	val = xmms_config_lookup ("decoder.use_replaygain");
-	xmms_config_value_callback_set (val, on_replaygain_cfg_changed,
-	                                decoder);
-	decoder->use_replaygain = !!xmms_config_value_int_get (val);
-
-	val = xmms_config_lookup ("decoder.replaygain_mode");
-	xmms_config_value_callback_set (val, on_replaygain_cfg_changed,
-	                                decoder);
-	if (!g_ascii_strcasecmp (xmms_config_value_string_get (val),
-	                         "album")) {
-		decoder->replaygain_mode = XMMS_REPLAYGAIN_MODE_ALBUM;
-	} else {
-		decoder->replaygain_mode = XMMS_REPLAYGAIN_MODE_TRACK;
-	}
-
-	val = xmms_config_lookup ("decoder.use_replaygain_anticlip");
-	xmms_config_value_callback_set (val, on_replaygain_cfg_changed,
-	                                decoder);
-	decoder->use_replaygain_anticlip = !!xmms_config_value_int_get (val);
-
-	decoder->replaygain = 1.0;
-	decoder->has_replaygain = FALSE;
-	
-	XMMS_DBG ("MEMDBG: DECODER NEW %p", decoder);
-
 	return decoder;
 }
+
+/**
+ * Open a decoder for this transport. This must be done before you call
+ * #xmms_decoder_read.
+ *
+ * @param transport Initialized transport that points to encoded data.
+ * @param decoder A allocated decoder from #xmms_decoder_new
+ * @returns TRUE if a suitable decoder was found
+ */
 
 gboolean
 xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
@@ -604,15 +574,17 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 }
 
 /**
- * Initializes the coder.
+ * Initializes the decoder.
  * Only called by the output layer.
  *
  * @param decoder
  * @param output_format_list List with xmms_audio_format_t's that are
  *                           supported by the output plugin
+ * @param effects A list of effect plugins to apply
  */
 gboolean
-xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
+xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
+                   GList *effects)
 {
 	gboolean ret;
 	xmms_decoder_init_method_t init_meth;
@@ -623,8 +595,12 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
 	 * the decoder plugin will most likely call
 	 * xmms_decoder_format_finish() at some point, which relies on the
 	 * output format list.
+	 * ditto for the effect list.
+	 * also, we copy the list here, because we'll remove entries if they
+	 * don't accept our sample format.
 	 */
 	decoder->output_format_list = output_format_list;
+	decoder->effects = g_list_copy (effects);
 
 	init_meth = xmms_plugin_method_get (decoder->plugin,
 	                                    XMMS_PLUGIN_METHOD_INIT);
@@ -644,24 +620,23 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list)
  * Blesses it with a life of its own (a new thread is created)
  *
  * @param decoder
- * @param transport
- * @param effects
  * @param output
  *
  */
 void
-xmms_decoder_start (xmms_decoder_t *decoder, 
-		    GList *effects, 
-		    xmms_output_t *output)
+xmms_decoder_start (xmms_decoder_t *decoder, xmms_output_t *output)
 {
 	g_return_if_fail (decoder);
 	g_return_if_fail (output);
 	
 	decoder->running = TRUE;
-	decoder->effects = g_list_copy (effects);
 	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder, FALSE, NULL); 
 }
+
+/**
+ * Quit all decoder operations.
+ */
 
 void
 xmms_decoder_stop (xmms_decoder_t *decoder)
@@ -674,6 +649,10 @@ xmms_decoder_stop (xmms_decoder_t *decoder)
 	g_mutex_unlock (decoder->mutex);
 }
 
+
+/**
+ * Resolv metadata for the current entry
+ */
 void
 xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, 
 			    xmms_transport_t *transport)
@@ -706,89 +685,6 @@ xmms_decoder_medialib_entry_get (xmms_decoder_t *decoder)
  * Static functions
  */
 
-static void
-on_replaygain_cfg_changed (xmms_object_t *obj, gconstpointer data,
-                           gpointer udata)
-{
-	const gchar *name;
-	xmms_decoder_t *decoder = udata;
-
-	g_mutex_lock (decoder->mutex);
-
-	name = xmms_config_value_name_get ((xmms_config_value_t *) obj);
-
-	if (!g_ascii_strcasecmp (name, "decoder.use_replaygain")) {
-		decoder->use_replaygain = !!atoi (data);
-	} else if (!g_ascii_strcasecmp (name, "decoder.replaygain_mode")) {
-		if (!g_ascii_strcasecmp (data, "album")) {
-			decoder->replaygain_mode = XMMS_REPLAYGAIN_MODE_ALBUM;
-		} else {
-			decoder->replaygain_mode = XMMS_REPLAYGAIN_MODE_TRACK;
-		}
-	} else if (!g_ascii_strcasecmp (name,
-	                                "decoder.use_replaygain_anticlip")) {
-		decoder->use_replaygain_anticlip = !!atoi (data);
-	}
-
-	decoder->replaygain = get_replaygain (decoder, decoder->entry,
-	                                      &decoder->has_replaygain);
-
-	g_mutex_unlock (decoder->mutex);
-}
-
-static gfloat
-get_replaygain (xmms_decoder_t *decoder, xmms_medialib_entry_t entry,
-                gboolean *has_replaygain)
-{
-	gfloat s, p;
-	gchar *key_s, *key_p;
-	gchar *tmp;
-
-	if (decoder->replaygain_mode == XMMS_REPLAYGAIN_MODE_TRACK) {
-		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
-		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK;
-	} else {
-		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM;
-		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
-	}
-
-	tmp = xmms_medialib_entry_property_get (entry, key_s);
-	s = tmp ? atof (tmp) : 1.0;
-	g_free (tmp);
-
-	tmp = xmms_medialib_entry_property_get (entry, key_p);
-	p = tmp ? atof (tmp) : 1.0;
-	g_free (tmp);
-
-	s *= 2; /* 6db pre-amp */
-
-	if (decoder->use_replaygain_anticlip && s * p > 1.0) {
-		s = 1.0 / p;
-	}
-
-	s = MIN (s, 15.0);
-
-	/* This is NOT a value calculated by some scientist who has
-	 * studied the ear for two decades.
-	 * If you have a better value holler now, or keep your peace
-	 * forever.
-	 */
-	*has_replaygain = (fabs (s - 1.0) > 0.001);
-
-	return s;
-}
-
-static void
-apply_replaygain (gint16 *buf, guint len, gfloat gain)
-{
-	guint i;
-
-	for (i = 0; i < len; i++) {
-		gfloat sample = buf[i] * gain;
-		buf[i] = CLAMP (sample, INT16_MIN, INT16_MAX);
-	}
-}
-
 static xmms_plugin_t *
 xmms_decoder_find_plugin (const gchar *mimetype)
 {
@@ -799,11 +695,10 @@ xmms_decoder_find_plugin (const gchar *mimetype)
         g_return_val_if_fail (mimetype, NULL);
 	
         list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_DECODER);
-        XMMS_DBG ("List: %p", list);
 	
         for (node = list; node; node = g_list_next (node)) {
                 plugin = node->data;
-                XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
+                XMMS_DBG ("Trying plugin: %s", xmms_plugin_shortname_get (plugin));
                 can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
 
                 if (!can_handle)
@@ -857,8 +752,7 @@ xmms_decoder_thread (gpointer data)
         }
 
         decoder->thread = NULL;
-        XMMS_DBG ("Decoder thread quitting");
-        /*xmms_medialib_logging_stop (entry, decoder->output);*/
+        xmms_medialib_logging_stop (decoder->entry, xmms_output_playtime (decoder->output, NULL));
 
         if (decoder->running) {
                 /* This means that we eofed... */

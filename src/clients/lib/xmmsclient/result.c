@@ -45,46 +45,10 @@ typedef struct xmmsc_playlist_change_St {
 	uint32_t arg;
 } xmmsc_playlist_change_t;
 
-struct xmmsc_result_St {
-	xmmsc_connection_t *c;
-
-	/** refcounting */
-	int ref;
-
-	/** notifiers */
-	x_list_t *func_list;
-	x_list_t *udata_list;
-
-	int error;
-	char *error_str;
-
-	uint32_t cid;
-	uint32_t restart_signal;
-
-	xmmsc_ipc_t *ipc;
-
-	uint32_t datatype;
-
-	int parsed;
-
-	union {
-		uint32_t uint;
-		int32_t inte;
-		char *string;
-		x_list_t *uintlist;
-		x_list_t *intlist;
-		x_list_t *hashlist;
-		x_list_t *stringlist;
-		x_hash_t *hash;
-		xmmsc_playlist_change_t plch;
-	} data;
-};
-
-
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 
 /**
- * @defgroup XMMSC_Result XMMSC_Result
+ * @defgroup Result Result
  * @brief Result manipulation and error handling
  * @ingroup XMMSClient
  *
@@ -131,6 +95,41 @@ static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
  * @{
 **/
 
+struct xmmsc_result_St {
+	xmmsc_connection_t *c;
+
+	/** refcounting */
+	int ref;
+
+	/** notifiers */
+	x_list_t *func_list;
+	x_list_t *udata_list;
+
+	int error;
+	char *error_str;
+
+	uint32_t cid;
+	uint32_t restart_signal;
+
+	xmmsc_ipc_t *ipc;
+
+	uint32_t datatype;
+
+	int parsed;
+
+	union {
+		uint32_t uint;
+		int32_t inte;
+		char *string;
+		x_list_t *uintlist;
+		x_list_t *intlist;
+		x_list_t *hashlist;
+		x_list_t *stringlist;
+		x_hash_t *hash;
+		xmmsc_playlist_change_t plch;
+	} data;
+};
+
 /**
  * References the #xmmsc_result_t
  */
@@ -165,9 +164,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 }
 
 /**
- * @defgroup RestartableResults RestartableResults
+ * @defgroup RestartableResult RestartableResult
  * @brief Covers Restartable #xmmsc_result_t's
- * @ingroup XMMSC_Result
+ * @ingroup Result
  * A lot of signals you would like to get notified about
  * when they change, instead of polling the server all the time.
  * This results are "restartable".
@@ -571,8 +570,8 @@ xmmsc_result_wait (xmmsc_result_t *res)
 				
 
 /**
- * @defgroup ResultValueRetivial ResultValueRetivial 
- * @ingroup XMMSC_Result
+ * @defgroup ResultValueRetrieval ResultValueRetrieval 
+ * @ingroup Result
  * @brief Explains how you can retrive values from a #xmmsc_result_t
  * @{
  */
@@ -586,7 +585,7 @@ xmmsc_result_seterror (xmmsc_result_t *res, char *errstr)
 
 /**
  * Check the #xmmsc_result_t for error.
- * @returns 1 if error was encountered, else 0
+ * @return 1 if error was encountered, else 0
  */
 
 int
@@ -621,7 +620,7 @@ xmmsc_result_get_error (xmmsc_result_t *res)
  * @param change the type of change that occoured, possible changes are listed above
  * @param id the id in the playlist that where affected (if applicable)
  * @param argument optional argument to the change
- * @returns 1 if there was a playlist change in this #xmmsc_result_t
+ * @return 1 if there was a playlist change in this #xmmsc_result_t
  */
 
 int
@@ -652,7 +651,7 @@ xmmsc_result_get_playlist_change (xmmsc_result_t *res,
  * Retrives a signed integer from the resultset.
  * @param res a #xmmsc_result_t containing a integer.
  * @param r the return integer.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -674,7 +673,7 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
  * Retrives a unsigned integer from the resultset.
  * @param res a #xmmsc_result_t containing a integer.
  * @param r the return integer.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -696,7 +695,7 @@ xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
  * Retrives a string from the resultset.
  * @param res a #xmmsc_result_t containing a string.
  * @param r the return string.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -718,7 +717,7 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
  * Retrives a #x_hash_t containing the mediainfo from the resultset.
  * @param res a #xmmsc_result_t containing the mediainfo.
  * @param r the return #x_hash_t.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -741,7 +740,7 @@ xmmsc_result_get_hashtable (xmmsc_result_t *res, x_hash_t **r)
  * Retrives a #x_list_t containing strings from the resultset.
  * @param res a #xmmsc_result_t containing a stringlist.
  * @param r the return #x_list_t.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -763,7 +762,7 @@ xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
  * Retrives a #x_list_t containing unsigned integers from the resultset.
  * @param res a #xmmsc_result_t containing a uintlist.
  * @param r the return #x_list_t.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -785,7 +784,7 @@ xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
  * Retrives a #x_list_t containing signed integers from the resultset.
  * @param res a #xmmsc_result_t containing a intlist.
  * @param r the return #x_list_t.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int
@@ -807,7 +806,7 @@ xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
  * Retrives a #x_list_t containing hashes from the resultset.
  * @param res a #xmmsc_result_t containing a entrylist.
  * @param r the return #x_list_t.
- * @ret 1 upon success otherwise 0
+ * @return 1 upon success otherwise 0
  */
 
 int

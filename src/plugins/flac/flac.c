@@ -29,8 +29,6 @@
 
 #include <glib.h>
 
-#warning "CONVERT TO SAMPLE_T"
-
 typedef struct xmms_flac_data_St {
 	FLAC__SeekableStreamDecoder *flacdecoder;
 	FLAC__StreamMetadata *vorbiscomment;
@@ -67,8 +65,8 @@ xmms_plugin_get (void)
 			"Free Lossless Audio Codec decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
-	xmms_plugin_info_add (plugin, "Author", "Michael Lindgren");
-	xmms_plugin_info_add (plugin, "E-Mail", "lindgren@debian.as");
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_flac_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
@@ -126,31 +124,28 @@ flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder, const FLAC_
 {
 	xmms_decoder_t *decoder = (xmms_decoder_t *)client_data;
 	xmms_flac_data_t *data;
-	xmms_transport_t *transport;
-	FLAC__int16	*pcmdata;
-	guint cur_sample, cur_channel, bufpos = 0;
+	guint length = frame->header.blocksize * frame->header.channels * frame->header.bits_per_sample / 8;
+	guint sample, channel, pos = 0;
+	guint8 packed[length];
+	guint16 *packed16 = (guint16*)packed;
 
-	guint sample_rate;
-	guint samples;
-
-	transport = xmms_decoder_transport_get (decoder);
 	data = xmms_decoder_private_data_get (decoder);
 
-	sample_rate	= data->sample_rate;
-	samples	= frame->header.blocksize;
-
-	pcmdata = g_malloc0 (samples * data->channels * sizeof (FLAC__int16));
-
-	for (cur_sample = 0; cur_sample < samples; cur_sample++) {
-		for (cur_channel = 0; cur_channel < data->channels; cur_channel++) {
-			pcmdata[bufpos] = (FLAC__int16) buffer[cur_channel][cur_sample];
-			bufpos += 1;
+	for (sample = 0; sample < frame->header.blocksize; sample++) {
+		for (channel = 0; channel < frame->header.channels; channel++) {
+			switch (data->bits_per_sample) {
+				case 8:
+					packed[pos] = (guint8)buffer[channel][sample];
+					break;
+				case 16:
+					packed16[pos] = (guint16)buffer[channel][sample];
+					break;
+			}
+			pos++;
 		}
 	}
 
-	xmms_decoder_write (decoder, (gchar *) pcmdata, samples * data->channels * sizeof (FLAC__int16));
-
-	g_free (pcmdata);
+	xmms_decoder_write (decoder, (gchar *)packed, length);
 
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
@@ -286,6 +281,7 @@ static gboolean
 xmms_flac_init (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
+	xmms_sample_format_t sample_fmt;
 	FLAC__bool retval;
 	FLAC__SeekableStreamDecoderState init_status;
 
@@ -310,7 +306,18 @@ xmms_flac_init (xmms_decoder_t *decoder)
 
 	data->inited = TRUE;
 
-	xmms_decoder_samplerate_set (decoder, data->sample_rate);
+	if (data->bits_per_sample != 8 && data->bits_per_sample != 16)
+		return FALSE;
+
+	if (data->bits_per_sample == 8)
+		sample_fmt = XMMS_SAMPLE_FORMAT_S8;
+	else
+		sample_fmt = XMMS_SAMPLE_FORMAT_S16;
+
+	xmms_decoder_format_add (decoder, sample_fmt, data->channels, data->sample_rate);
+	if (xmms_decoder_format_finish (decoder) == NULL) {
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -319,7 +326,7 @@ static void
 xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
-	xmms_medialib_entry *entry;
+	xmms_medialib_entry_t entry;
 	gint current, num_comments;
 	gchar tmp[20];
 
@@ -331,25 +338,25 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 	if (!data->inited)
 		xmms_flac_init (decoder);
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_decoder_medialib_entry_get (decoder);
 
-	XMMS_DBG ("Vendorstring: %s", data->vorbiscomment->data.vorbis_comment.vendor_string.entry); /* hehehe */
+	if (data->vorbiscomment != NULL) {
+		num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
 
-	num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
+		for (current = 0; current < num_comments; current++) {
+			gchar **s, *val;
+			guint length;
 
-	for (current = 0; current < num_comments; current++) {
-		gchar **s, *val;
-		guint length;
+			s = g_strsplit (data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
+			length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
 
-		s = g_strsplit (data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
-		length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
+			val = g_strndup (s[1], length);
+			xmms_medialib_entry_property_set (entry, s[0], val);
+			XMMS_DBG ("Setting %s to %s", s[0], val);
+			g_free (val);
 
-		val = g_strndup (s[1], length);
-		xmms_medialib_entry_property_set (entry, s[0], val);
-		XMMS_DBG ("Setting %s to %s", s[0], val);
-		g_free (val);
-
-		g_strfreev (s);
+			g_strfreev (s);
+		}
 	}
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->bits_per_sample * data->sample_rate);
@@ -361,8 +368,7 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 	g_snprintf (tmp, sizeof (tmp), "%d", data->sample_rate);
 	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, tmp);
 
-	xmms_decoder_entry_mediainfo_set (decoder, entry);
-	xmms_object_unref (entry);
+	xmms_medialib_entry_send_update (entry);
 }
 
 static gboolean
@@ -410,7 +416,9 @@ xmms_flac_destroy (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
-	FLAC__metadata_object_delete (data->vorbiscomment);
+	if (data->vorbiscomment)
+		FLAC__metadata_object_delete (data->vorbiscomment);
+
 	FLAC__seekable_stream_decoder_finish (data->flacdecoder);
 	FLAC__seekable_stream_decoder_delete (data->flacdecoder);
 

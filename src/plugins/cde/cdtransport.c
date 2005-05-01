@@ -17,8 +17,8 @@
 #include "xmms/xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/transport.h"
-#include "xmms/util.h"
 #include "xmms/magic.h"
+#include "xmms/util.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -92,19 +92,12 @@ xmms_cdae_list (const gchar *path)
 static gboolean
 xmms_cdae_can_handle (const gchar *url)
 {
-	gchar *dec;
 	g_return_val_if_fail (url, FALSE);
 
-	dec = xmms_util_decode_path (url);
-
-	XMMS_DBG ("xmms_cdae_can_handle (%s)", dec);
-	
-	if ((g_strncasecmp (dec, "cdae:", 5) == 0) || (dec[0] == '/')) {
-		g_free (dec);
+	if ((g_strncasecmp (url, "cdae:", 5) == 0) || (url[0] == '/')) {
 		return TRUE;
 	}
 
-	g_free (dec);
 	return FALSE;
 }
 
@@ -120,7 +113,7 @@ xmms_cdae_init (xmms_transport_t *transport, const gchar *url)
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
 
-	track = atoi (url+9);
+	track = atoi (url+7);
 	
 	XMMS_DBG ("xmms_cdae_init (%d)", track);
 

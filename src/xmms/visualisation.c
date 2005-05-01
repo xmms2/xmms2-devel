@@ -33,9 +33,13 @@
 
 /** @defgroup Visualisation Visualisation
   * @ingroup XMMSServer
+  * @brief Visulation draws a FFT and feeds it to the client.
   * @{
   */
 
+/**
+ * The structure for the vis module 
+ */
 struct xmms_visualisation_St {
 	xmms_object_t object;
 	xmms_audio_format_t *format;
@@ -50,12 +54,16 @@ gfloat window[FFT_LEN];
 
 static xmms_visualisation_t *vis;
 static void fft(gint16 *samples, gfloat *spec);
+static void xmms_visualisation_destroy (xmms_object_t *object);
 
+/**
+ * Initialize the Vis module.
+ */
 void
 xmms_visualisation_init ()
 {
 	int i;
-	vis = xmms_object_new (xmms_visualisation_t, NULL);
+	vis = xmms_object_new (xmms_visualisation_t, xmms_visualisation_destroy);
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_VISUALISATION, XMMS_OBJECT (vis));
 	xmms_ipc_signal_register (XMMS_OBJECT (vis),
 				  XMMS_IPC_SIGNAL_VISUALISATION_DATA);
@@ -72,10 +80,23 @@ xmms_visualisation_init ()
 
 }
 
+/**
+ * Free all resoures used by visualisation module.
+ */
 void xmms_visualisation_shutdown ()
 {
 }
 
+static void
+xmms_visualisation_destroy (xmms_object_t *object)
+{
+	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_VISUALISATION_DATA);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_VISUALISATION);
+}
+
+/**
+ * Allocate the visualisation.
+ */
 xmms_visualisation_t *
 xmms_visualisation_new ()
 {
@@ -94,11 +115,11 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 	for (i = 0; i < FFT_LEN / 2; i++) {
 		gfloat tmp = vis->spec[i];
 		if (tmp >= 1.0)
-			node->data = GUINT_TO_POINTER (G_MAXUINT32);
+			node->data = GUINT_TO_POINTER (INT_MAX);
 		else if (tmp < 0.0)
 			node->data = GUINT_TO_POINTER (0);
 		else
-			node->data = GUINT_TO_POINTER ((guint)(tmp * G_MAXUINT32));
+			node->data = GUINT_TO_POINTER ((guint)(tmp * INT_MAX));
 		node = g_list_next (node);
 	}
 
@@ -109,6 +130,9 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 	
 }
 
+/**
+ * Calcualte the FFT on the decoded data buffer.
+ */
 void
 xmms_visualisation_calc (xmms_visualisation_t *vis, xmms_sample_t *buf, int len, guint32 pos)
 {
@@ -159,6 +183,9 @@ xmms_visualisation_calc (xmms_visualisation_t *vis, xmms_sample_t *buf, int len,
 	}
 }
 
+/**
+ * Tell the visualisation what audio format we use
+ */
 void
 xmms_visualisation_format_set (xmms_visualisation_t *vis, xmms_audio_format_t *fmt)
 {

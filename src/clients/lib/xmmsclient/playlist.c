@@ -163,6 +163,29 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
 }
 
 /**
+ * Add a medialib id to the playlist. 
+ *
+ * @param c The connection structure.
+ * @param id A medialib id.
+ *
+ */
+
+xmmsc_result_t *
+xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_ID);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+
+
+/**
  * Add the url to the playlist. The url should be encoded with
  * xmmsc_encode_path and be absolute to the server-side. Note that
  * you will have to include the protocol for the url to. ie:
@@ -207,8 +230,6 @@ xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
 
 }
 
-
-
 /**
  * Remove an entry from the playlist.
  *
@@ -237,10 +258,11 @@ xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 }
 
+
 xmmsc_result_t *
-xmmsc_broadcast_playlist_entry_changed (xmmsc_connection_t *c)
+xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 {
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_MEDIAINFO_ID);
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 }
 
 xmmsc_result_t *

@@ -177,10 +177,9 @@ xmms_ca_render_cb (void *inRefCon,
 		size = ioData->mBuffers[b].mDataByteSize;
 
 		ret = xmms_output_read (output, (gchar *)ioData->mBuffers[b].mData, size);
-		if (ret == -1) {
-			xmms_output_stop (output);
-			return noErr;
-		}
+		if (ret == -1)
+			ret = 0;
+
 		if (ret < size) 
 			memset (ioData->mBuffers[b].mData+ret, 0, size - ret);
 	}
@@ -259,7 +258,7 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 
-	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_FLOAT, 2, 44100.0);
+	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100.0);
 
 	res = AudioUnitInitialize (data->au);
 	if (res) {

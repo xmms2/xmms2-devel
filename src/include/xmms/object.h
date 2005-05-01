@@ -32,6 +32,9 @@ typedef struct xmms_object_cmd_desc_St xmms_object_cmd_desc_t;
 
 typedef void (*xmms_object_destroy_func_t) (xmms_object_t *object);
 
+/** @addtogroup Object
+  * @{
+  */
 struct xmms_object_St {
 	guint32 id;
 	GMutex *mutex;
@@ -42,6 +45,8 @@ struct xmms_object_St {
 	gint ref;
 	xmms_object_destroy_func_t destroy_func;
 };
+
+/** @} */
 
 typedef enum {
 	XMMS_OBJECT_CMD_ARG_NONE,
@@ -157,13 +162,11 @@ xmms_object_t *__int_xmms_object_new (gint size, xmms_object_destroy_func_t dest
 #define xmms_object_ref(obj) do { \
 	if (obj && XMMS_IS_OBJECT (obj)) { \
 		XMMS_OBJECT (obj)->ref++; \
-		XMMS_DBG ("Reffing %p(%d)", obj, XMMS_OBJECT (obj)->ref); \
 	} \
 } while (0)
 
 #define xmms_object_unref(obj) do { \
 	if (obj && XMMS_IS_OBJECT (obj)) { \
-		XMMS_DBG ("unreffing %p(%d)", obj, XMMS_OBJECT (obj)->ref); \
 		__int_xmms_object_unref (XMMS_OBJECT (obj)); \
 	} \
 } while (0)

@@ -21,7 +21,12 @@
 #include <stdbool.h>
 
 #include "rb_xmmsclient_main.h"
+#include "rb_xmmsclient.h"
 #include "rb_result.h"
+
+#define DEF_CONST(mod, prefix, name) \
+	rb_define_const ((mod), #name, \
+	                 INT2FIX (prefix##name));
 
 typedef struct {
 	xmmsc_result_t *real;
@@ -31,7 +36,7 @@ typedef struct {
 	bool unref_children;
 } RbResult;
 
-static VALUE cResult;
+static VALUE cResult, eResultError, eValueError;
 
 static void c_mark (RbResult *res)
 {
@@ -141,7 +146,7 @@ static VALUE c_int_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_int (res->real, &id)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_int() failed");
+		rb_raise (eValueError, "xmmsc_result_get_int() failed");
 		return Qnil;
 	}
 
@@ -155,7 +160,7 @@ static VALUE c_uint_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_uint (res->real, &id)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_uint() failed");
+		rb_raise (eValueError, "xmmsc_result_get_uint() failed");
 		return Qnil;
 	}
 
@@ -169,7 +174,7 @@ static VALUE c_string_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_string (res->real, &s)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_string() failed");
+		rb_raise (eValueError, "xmmsc_result_get_string() failed");
 		return Qnil;
 	}
 
@@ -186,7 +191,7 @@ static void xhash_to_rhash (const void *key, const void *value,
 	else
 		val = rb_str_new2 ((char *) value);
 
-	rb_hash_aset (*hash, rb_str_new2 (key), val);
+	rb_hash_aset (*hash, ID2SYM (rb_intern (key)), val);
 }
 
 static VALUE c_hashtable_get (VALUE self)
@@ -197,7 +202,7 @@ static VALUE c_hashtable_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_hashtable (res->real, &hash))
-		rb_raise (rb_eRuntimeError,
+		rb_raise (eValueError,
 		          "xmmsc_result_get_hashtable() failed");
 
 	x_hash_foreach (hash, (XHFunc) xhash_to_rhash, &rhash);
@@ -213,7 +218,7 @@ static VALUE c_intlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_intlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_intlist() failed");
+		rb_raise (eValueError, "xmmsc_result_get_intlist() failed");
 		return Qnil;
 	}
 
@@ -233,7 +238,7 @@ static VALUE c_uintlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_uintlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_uintlist() failed");
+		rb_raise (eValueError, "xmmsc_result_get_uintlist() failed");
 		return Qnil;
 	}
 
@@ -253,7 +258,7 @@ static VALUE c_stringlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_stringlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_stringlist() failed");
+		rb_raise (eValueError, "xmmsc_result_get_stringlist() failed");
 		return Qnil;
 	}
 
@@ -273,7 +278,7 @@ static VALUE c_hashlist_get (VALUE self)
 	GET_OBJ (self, RbResult, res);
 
 	if (!xmmsc_result_get_hashlist (res->real, &list)) {
-		rb_raise (rb_eRuntimeError, "xmmsc_result_get_hashlist() failed");
+		rb_raise (eValueError, "xmmsc_result_get_hashlist() failed");
 		return Qnil;
 	}
 
@@ -298,7 +303,7 @@ static VALUE c_playlist_change_get (VALUE self)
 
 	if (!(xmmsc_result_get_playlist_change (res->real, &type, &id,
 	                                        &arg))) {
-		rb_raise (rb_eRuntimeError,
+		rb_raise (eValueError,
 		          "xmmsc_result_get_playlist_change() failed");
 		return Qnil;
 	}
@@ -312,6 +317,12 @@ static VALUE c_value_get (VALUE self)
 	VALUE ret = Qnil;
 
 	GET_OBJ (self, RbResult, res);
+
+	if (xmmsc_result_iserror (res->real)) {
+		rb_raise (eValueError, "cannot retrieve value");
+
+		return Qnil;
+	}
 
 	switch (xmmsc_result_get_type (res->real)) {
 		case XMMS_OBJECT_CMD_ARG_UINT32:
@@ -375,10 +386,16 @@ void Init_Result (void)
 	                  c_playlist_change_get, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
 
-	rb_define_const (cResult, "PLAYLIST_ADD",
-	                 INT2FIX (XMMSC_PLAYLIST_ADD));
-	rb_define_const (cResult, "PLAYLIST_CLEAR",
-	                 INT2FIX (XMMSC_PLAYLIST_CLEAR));
-	rb_define_const (cResult, "PLAYLIST_REMOVE",
-	                 INT2FIX (XMMSC_PLAYLIST_REMOVE));
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SHUFFLE);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_REMOVE);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_CLEAR);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
+
+	eResultError = rb_define_class_under (mXmmsClient,
+	                                      "ResultError",
+	                                      eXmmsClientError);
+	eValueError = rb_define_class_under (mXmmsClient,
+	                                     "ValueError", eResultError);
 }

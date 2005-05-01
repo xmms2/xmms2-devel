@@ -48,6 +48,27 @@ typedef struct xmms_vorbis_data_St {
 	gboolean inited;
 } xmms_vorbis_data_t;
 
+typedef struct {
+	gchar *vname;
+	gchar *xname;
+} props;
+
+#define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
+
+/** These are the properties that we extract from the comments */
+static props properties[] = {
+	{ "title", XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE },
+	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST },
+	{ "album", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM },
+	{ "tracknumber", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR },
+	{ "date", XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR },
+	{ "genre", XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE },
+	{ "musicbrainz_albumid", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID },
+	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID },
+	{ "musicbrainz_trackid", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID },
+	{ NULL, 0 }
+};
+
 /*
  * Function prototypes
  */
@@ -297,10 +318,18 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 		for (temp = 0; temp < ptr->comments; temp++) {
 			gchar **s; 
+			gint i = 0;
 
 			s = g_strsplit (ptr->user_comments[temp], "=", 2); 
-			xmms_medialib_entry_property_set (entry, s[0], s[1]); 
-			
+			while (properties[i].vname) {
+				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
+				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
+					xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
+					xmms_medialib_entry_property_set (entry, properties[i].xname, s[1]);
+				}
+				i++;
+			}
 			g_strfreev (s); 
 		}
 
@@ -325,7 +354,6 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 		vorbis_info *vi;
 		gint ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
 		if (ret != 0) {
-			XMMS_DBG ("Got %d from ov_open_callbacks", ret);
 			return FALSE;
 		}
 		vi = ov_info (&data->vorbisfile, -1);
@@ -367,14 +395,12 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 		       &c);
 
 	if (ret == 0) {
-		XMMS_DBG ("got ZERO from ov_read");
 		return FALSE;
 	} else if (ret < 0) {
 		return TRUE;
 	}
 
 	if (c != data->current) {
-		XMMS_DBG ("current = %d, c = %d", data->current, c);
 		xmms_vorbis_get_media_info (decoder);
 		data->current = c;
 	}
@@ -397,7 +423,7 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 	g_return_val_if_fail (data, FALSE);
 
 	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
-		XMMS_DBG ("Trying to seek past end of stream"); 
+		xmms_log_error ("Trying to seek past end of stream"); 
 		return FALSE; 
 	}
 

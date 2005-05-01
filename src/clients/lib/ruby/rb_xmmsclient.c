@@ -21,6 +21,7 @@
 #include <glib.h>
 
 #include <xmms/xmmsclient.h>
+#include <xmms/output.h>
 
 #ifdef HAVE_ECORE
 #include <xmms/xmmsclient-ecore.h>
@@ -58,6 +59,8 @@ typedef struct {
 	VALUE results;
 } RbXmmsClient;
 
+VALUE eXmmsClientError;
+
 static void c_mark (RbXmmsClient *xmms)
 {
 	rb_gc_mark (xmms->results);
@@ -74,44 +77,48 @@ static void c_free (RbXmmsClient *xmms)
 	free (xmms);
 }
 
-static VALUE c_new (VALUE klass)
+static VALUE c_alloc (VALUE klass)
 {
-	VALUE self;
 	RbXmmsClient *xmms;
 
 #ifdef HAVE_ECORE
 	ecore_init ();
 #endif
 
-	self = Data_Make_Struct (klass, RbXmmsClient,
+	return Data_Make_Struct (klass, RbXmmsClient,
 	                         c_mark, c_free, xmms);
-	xmms->results = rb_ary_new ();
+}
 
-	rb_obj_call_init (self, 0, NULL);
+static VALUE c_init (VALUE self, VALUE name)
+{
+	GET_OBJ (self, RbXmmsClient, xmms);
+
+	if (!(xmms->real = xmmsc_init (StringValuePtr (name)))) {
+		rb_raise (rb_eNoMemError, "failed to allocate memory");
+		return Qnil;
+	}
+
+	xmms->results = rb_ary_new ();
 
 	return self;
 }
 
 static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 {
-	VALUE name, path;
+	VALUE path;
 	char *p = NULL;
 
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	rb_scan_args (argc, argv, "11", &name, &path);
+	rb_scan_args (argc, argv, "01", &path);
 
-	Check_Type (name, T_STRING);
-
-	if (!NIL_P (path)) {
-		Check_Type (path, T_STRING);
+	if (!NIL_P (path))
 		p = StringValuePtr (path);
-	}
 
-	if (!(xmms->real = xmmsc_init (StringValuePtr (name))))
-		return Qfalse;
+	if (!xmmsc_connect (xmms->real, p))
+		rb_raise (eXmmsClientError, "cannot connect to daemon");
 
-	return xmmsc_connect (xmms->real, p) ? Qtrue : Qfalse;
+	return self;
 }
 
 #ifdef HAVE_ECORE
@@ -139,7 +146,7 @@ METHOD_ADD_HANDLER(quit, true);
 METHOD_ADD_HANDLER(playback_start, true);
 METHOD_ADD_HANDLER(playback_pause, true);
 METHOD_ADD_HANDLER(playback_stop, true);
-METHOD_ADD_HANDLER(playback_next, true);
+METHOD_ADD_HANDLER(playback_tickle, true);
 METHOD_ADD_HANDLER(playback_status, false);
 METHOD_ADD_HANDLER(broadcast_playback_status, false);
 METHOD_ADD_HANDLER(playback_playtime, true);
@@ -184,21 +191,21 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 }
 
 METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
-METHOD_ADD_HANDLER(broadcast_playlist_entry_changed, false);
+METHOD_ADD_HANDLER(playlist_current_pos, true);
+METHOD_ADD_HANDLER(broadcast_playlist_current_pos, false);
+METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
 METHOD_ADD_HANDLER(playlist_list, true);
 
-static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
+static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 {
 	VALUE o;
 	xmmsc_result_t *res;
 
 	GET_OBJ (self, RbXmmsClient, xmms);
 
-	Check_Type (type, T_FIXNUM);
-	Check_Type (moment, T_FIXNUM);
+	Check_Type (pos, T_FIXNUM);
 
-	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (type),
-	                               FIX2INT (moment));
+	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (pos));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
@@ -206,7 +213,24 @@ static VALUE c_playlist_set_next (VALUE self, VALUE type, VALUE moment)
 	return o;
 }
 
-static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
+static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
+{
+	VALUE o;
+	xmmsc_result_t *res;
+
+	GET_OBJ (self, RbXmmsClient, xmms);
+
+	Check_Type (pos, T_FIXNUM);
+
+	res = xmmsc_playlist_set_next_rel (xmms->real, FIX2INT (pos));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
 	VALUE o;
 	xmmsc_result_t *res;
@@ -215,7 +239,7 @@ static VALUE c_playlist_get_mediainfo (VALUE self, VALUE id)
 
 	Check_Type (id, T_FIXNUM);
 
-	res = xmmsc_playlist_get_mediainfo (xmms->real, FIX2INT (id));
+	res = xmmsc_medialib_get_info (xmms->real, FIX2INT (id));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
@@ -263,11 +287,10 @@ void Init_XmmsClient (void)
 {
 	VALUE c;
 
-	rb_require ("ecore");
-
 	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
 
-	rb_define_singleton_method (c, "new", c_new, 0);
+	rb_define_alloc_func (c, c_alloc);
+	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
 
 #ifdef HAVE_ECORE
@@ -280,7 +303,7 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playback_start, 0);
 	METHOD_ADD (c, playback_pause, 0);
 	METHOD_ADD (c, playback_stop, 0);
-	METHOD_ADD (c, playback_next, 0);
+	METHOD_ADD (c, playback_tickle, 0);
 	METHOD_ADD (c, broadcast_playback_status, 0);
 	METHOD_ADD (c, playback_status, 0);
 	METHOD_ADD (c, playback_playtime, 0);
@@ -291,19 +314,26 @@ void Init_XmmsClient (void)
 	METHOD_ADD (c, playback_seek_samples, 1);
 
 	METHOD_ADD (c, broadcast_playlist_changed, 0);
-	METHOD_ADD (c, broadcast_playlist_entry_changed, 0);
+	METHOD_ADD (c, playlist_current_pos, 0);
+	METHOD_ADD (c, broadcast_playlist_current_pos, 0);
+	METHOD_ADD (c, broadcast_medialib_entry_changed, 0);
 	METHOD_ADD (c, playlist_list, 0);
-	METHOD_ADD (c, playlist_set_next, 2);
-	METHOD_ADD (c, playlist_get_mediainfo, 1);
+	METHOD_ADD (c, playlist_set_next, 1);
+	METHOD_ADD (c, playlist_set_next_rel, 1);
+	METHOD_ADD (c, medialib_get_info, 1);
 
 	METHOD_ADD (c, configval_get, 1);
 	METHOD_ADD (c, configval_set, 2);
 	METHOD_ADD (c, broadcast_configval_changed, 0);
 
 	rb_define_const (c, "PLAY",
-	                 INT2FIX (XMMSC_PLAYBACK_PLAY));
+	                 INT2FIX (XMMS_OUTPUT_STATUS_PLAY));
 	rb_define_const (c, "STOP",
-	                 INT2FIX (XMMSC_PLAYBACK_STOP));
+	                 INT2FIX (XMMS_OUTPUT_STATUS_STOP));
 	rb_define_const (c, "PAUSE",
-	                 INT2FIX (XMMSC_PLAYBACK_PAUSE));
+	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
+
+	eXmmsClientError = rb_define_class_under (mXmmsClient,
+	                                          "XmmsClientError",
+	                                          rb_eStandardError);
 }

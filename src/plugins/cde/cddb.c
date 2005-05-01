@@ -356,7 +356,7 @@ xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track)
 	if (!fp) {
 		if (!(fp = fopen (file, "rb"))) {
 			g_free (file);
-			return NULL;
+			return 0;
 		}
 	}
 
@@ -370,7 +370,7 @@ xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track)
 
 
 #else
-xmms_medialib_entry
+xmms_medialib_entry_t
 xmms_cdae_cddb_query (xmms_cdae_toc_t *toc, gchar *server, gint track)
 {
 	return 0;

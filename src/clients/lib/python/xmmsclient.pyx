@@ -42,6 +42,8 @@ cdef extern from "internal/client_ipc.h" :
 	ctypedef struct xmmsc_ipc_t
 
 	int xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
+	int xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
+	int xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 	int xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 	void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 	void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error)
@@ -83,19 +85,22 @@ cdef extern from "xmms/xmmsclient.h" :
 
 	xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *)
+	xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 	xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property) 
 	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, int pos)
+	xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int)
 	xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int movement)
 	xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_playback_stop (xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playback_next (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_playback_tickle (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_start (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_pause (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_current_id (xmmsc_connection_t *c)
@@ -122,13 +127,13 @@ cdef extern from "xmms/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, char *url)
 	xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, unsigned int id)
 	xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
+	xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *c, char *name, char *url)
+	xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *c, char *name, char *mime)
+	xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *c, unsigned int)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
-
-	char *xmmsc_encode_path (char *path)
-	char *xmmsc_decode_path (char *path)
 
 cdef extern from "xmms/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
@@ -171,6 +176,10 @@ cdef class XMMSResult :
 		ObjectRef[self.cid] = self
 
 	def value(self):
+		"""
+		Return value of appropriate data type contained in this result.
+		This can be used instead of most get_* functions in this class.
+		"""
 		self._check()
 	
 		type = xmmsc_result_get_type(self.res)
@@ -361,17 +370,10 @@ cdef class XMMSResult :
 
 
 	def restart (self) :
-		cdef XMMSResult r
-		r = self
-
-		xmmsc_result_unref (r.res)
-		r.res = xmmsc_result_restart (self.res)
-		self.more_init ()
-		# unref once more, due to ref in
-		# more_init->xmmsc_result_notifier_set
-		xmmsc_result_unref (r.res)
-
-		return r
+		self.res = xmmsc_result_restart (self.res)
+		self.cid = xmmsc_result_cid (self.res)
+		ObjectRef[self.cid] = self
+		xmmsc_result_unref (self.res)
 
 	def iserror (self) :
 		"""
@@ -423,18 +425,13 @@ cdef class XMMS :
 	def _disconnect_cb (self) :
 		self.disconnect_fun (self)
 
-	def encode_path (self, path):
-		return xmmsc_encode_path(path)
-
-	def decode_path (self, path):
-		return xmmsc_decode_path(path)
 
 	def glib_loop (self) :
 		"""
 		Main client loop for clients using GLib. Call this to run the
 		client once everything has been set up. Note: This should not
 		be used for pyGTK clients, which require a call to gtk.main()
-		pyGTK clients should use L{SetupWithGmain} This function
+		pyGTK clients should use L{setup_with_gmain} This function
 		blocks in a g_main_loop_run call - see appropriate GLib
 		documentation for details.
 		"""
@@ -447,12 +444,12 @@ cdef class XMMS :
 	def setup_with_gmain (self) :
 		"""
 		Adds the IPC connection to a GMainLoop. pyGTK clients need to
-		call this after L{Connect} and before gtk.main()
+		call this after L{connect} and before gtk.main()
 		"""
 		xmmsc_ipc_setup_with_gmain (self.conn)
 
 	def exit_python_loop (self) :
-		""" Exits from the PythonLoop() call """
+		""" Exits from the L{python_loop} call """
 		self.loop = False
 		write (self.wakeup, "42")
 
@@ -460,7 +457,7 @@ cdef class XMMS :
 		"""
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up. This function blocks
-		until L{ExitPythonLoop} is called.
+		until L{exit_python_loop} is called.
 		"""
 		fd = xmmsc_ipc_fd_get (self.conn.ipc)
 		(r, w) = os.pipe ()
@@ -470,21 +467,40 @@ cdef class XMMS :
 
 		while self.loop :
 
-			(i, o, e) = select ([fd, r], [], [fd])
+			if self.want_ioout():
+				w = [fd]
+			else:
+				w = []
+
+			(i, o, e) = select ([fd, r], w, [fd])
 
 			if i and i[0] == fd :
 				xmmsc_ipc_io_in_callback (self.conn.ipc)
+			if o and o[0] == fd:
+				xmmsc_ipc_io_out_callback (self.conn.ipc)
 			if e and e[0] == fd :
 				xmmsc_ipc_disconnect (self.conn.ipc)
+				self.loop = False
 				self.loop = False
 
 	def ioin (self) :
 		"""
-		Use this relatively low level function to write your own
-		custom main loops, if needed. See the PythonLoop code for an
-		example
+		Read data from the daemon, when available. Note: This is a low
+		level function that should only be used in certain
+		circumstances. e.g. a custom event loop
 		"""
 		xmmsc_ipc_io_in_callback (self.conn.ipc)
+
+	def ioout(self):
+		"""
+		Write data out to the daemon, when available. Note: This is a
+		low level function that should only be used in certain
+		circumstances. e.g. a custom event loop
+		"""
+		xmmsc_ipc_io_out_callback (self.conn.ipc)
+
+	def want_ioout(self):
+		return xmmsc_ipc_io_out (self.conn.ipc)
 		
 	def get_fd (self) :
 		"""
@@ -507,7 +523,7 @@ cdef class XMMS :
 
 		C{xmms = xmmsclient.XMMS ()}
 
-		C{xmms.Connect ()}
+		C{xmms.connect ()}
 
 		...
 		"""
@@ -579,10 +595,9 @@ cdef class XMMS :
 		
 		return ret
 
-	def playback_next (self, myClass = None) :
+	def playback_tickle (self, myClass = None) :
 		"""
-		Instruct the XMMS2 daemon to move on to the next file in the
-		playlist.
+		Instruct the XMMS2 daemon to move on to the next playlist item.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -593,7 +608,7 @@ cdef class XMMS :
 		else :
 			ret = XMMSResult ()
 		
-		ret.res = xmmsc_playback_next (self.conn)
+		ret.res = xmmsc_playback_tickle (self.conn)
 		ret.more_init ()
 		
 		return ret
@@ -619,7 +634,7 @@ cdef class XMMS :
 	def playback_current_id (self, myClass = None) :
 		"""
 		@rtype: L{XMMSResult} (UInt)
-		@return: The playlist id of the item currently selected.
+		@return: The medialib id of the item currently selected.
 		"""
 		cdef XMMSResult ret
 		
@@ -674,7 +689,7 @@ cdef class XMMS :
 	def playback_status (self, myClass = None) :
 		"""Get current playback status from XMMS2 daemon. This is
 		essentially the more direct version of
-		L{BroadcastPlaybackStatus}.
+		L{broadcast_playback_status}.
 		@rtype: L{XMMSResult} (UInt)
 		@return: Current playback status (UInt)
 		"""
@@ -691,7 +706,8 @@ cdef class XMMS :
 		"""
 		Set a class to handle the playback status broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
-		XMMSResult class.
+		XMMSResult class. Updated data is sent when playback status
+		changes.
 		@rtype: L{XMMSResult} (UInt)
 		@return: An XMMSResult object that is constantly updated with
 		the appropriate info.
@@ -712,7 +728,8 @@ cdef class XMMS :
 		"""
 		Set a class to handle the playback id broadcast from the
 		XMMS2 daemon. Note: the handler class is usually a child of the
-		XMMSResult class.
+		XMMSResult class. Updated data is sent when the mlib id of the
+		current item changes.
 		@rtype: L{XMMSResult} (UInt)
 		@return: An XMMSResult object that is constantly updated with
 		the appropriate info.
@@ -732,7 +749,7 @@ cdef class XMMS :
 	def playback_playtime (self, myClass = None) :
 		"""
 		Return playtime on current file/stream. This is essentially a
-		more direct version of L{SignalPlaybackPlaytime}
+		more direct version of L{signal_playback_playtime}
 		@rtype: L{XMMSResult} (UInt)
 		@return: The result of the operation. (playtime in milliseconds)
 		"""
@@ -807,6 +824,25 @@ cdef class XMMS :
 		
 		return ret
 
+	def playlist_add_id (self, id, myClass = None) :
+		"""
+		Add a medialib id to the playlist.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_add_id (self.conn, id)
+		ret.more_init ()
+		
+		return ret
+
+
 	def playlist_remove (self, id, myClass = None) :
 		"""
 		Remove a certain media item from the playlist.
@@ -867,7 +903,7 @@ cdef class XMMS :
 		"""
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
-		L{PlaylistGetMediainfo} to retrieve more specific information.
+		L{medialib_get_info} to retrieve more specific information.
 		@rtype: L{XMMSResult} (UIntList)
 		@return: The current playlist.
 		"""
@@ -902,9 +938,29 @@ cdef class XMMS :
 		
 		return ret
 
+	def playlist_set_next_rel (self, position, myClass = None) :
+		"""
+		Sets the position in the playlist. Same as set_next but
+		does it relative. You can do set_next_rel(-1) to move backwards
+		for example
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_set_next_rel (self.conn, position)
+		ret.more_init ()
+		
+		return ret
+
+
 	def playlist_set_next (self, position, myClass = None) :
 		"""
-		Sets the position in the playlist. 
+		Sets the position to move to, next, in the playlist. Calling
+		L{playback_tickle} will perform the jump to that position.
 		"""
 		cdef XMMSResult ret
 		
@@ -942,7 +998,8 @@ cdef class XMMS :
 	def playlist_current_pos (self, myClass = None) :
 		"""
 		Returns the current position in the playlist. This value will
-		always be biggern than 0. The first entry in the list is 1
+		always be equal to, or larger than 0. The first entry in the
+		list is 0.
 		"""
 		cdef XMMSResult ret
 
@@ -956,12 +1013,36 @@ cdef class XMMS :
 
 		return ret
 
+	def broadcast_playlist_current_pos (self, myClass = None) :
+		"""
+		Set a class to handle the playlist current position updates 
+		from the XMMS2 daemon. Note: the handler class is usually a
+		child of the XMMSResult class. Updated data is sent when the
+		current item changes position. (e.g. finish playing song 1,
+		switch to song 2 & start playing) This is NOT when moving a
+		playlist item from one position to another.
+		@rtype: L{XMMSResult}
+		@return: An XMMSResult object that is updated with the
+		appropriate info.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_broadcast_playlist_current_pos (self.conn)
+		ret.more_init (1)
+		
+		return ret
 
 	def broadcast_playlist_changed (self, myClass = None) :
 		"""
 		Set a class to handle the playlist changed broadcast from the
 		XMMS2 daemon. (i.e. the player's playlist has changed) Note:
 		the handler class is usually a child of the XMMSResult class.
+		Updated data is sent whenever the playlist is modified.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info.
@@ -983,7 +1064,8 @@ cdef class XMMS :
 		Set a class to handle the config value changed broadcast
 		from the XMMS2 daemon. (i.e. some configuration value has
 		been modified) Note: the handler class is usually a child of
-		the XMMSResult class.
+		the XMMSResult class. Updated data is sent whenever a config
+		value is modified.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info. (the modified config key and its value)
@@ -1037,7 +1119,7 @@ cdef class XMMS :
 	def configval_list (self, myClass = None) :
 		"""
 		Get list of configuration keys on the daemon. Use
-		L{ConfigvalGet} to retrieve the values corresponding to the
+		L{configval_get} to retrieve the values corresponding to the
 		configuration keys.
 		@rtype: L{XMMSResult} (StringList)
 		@return: The result of the operation.
@@ -1072,7 +1154,7 @@ cdef class XMMS :
 
 	def medialib_add_entry (self, file, myClass = None) :
 		"""
-		Add a entry to the MediaLib.
+		Add an entry to the MediaLib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1157,12 +1239,68 @@ cdef class XMMS :
 		
 		return ret
 
+	def medialib_playlist_import (self, name, url, myClass = None) :
+		"""
+		Import a playlist to the medialib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_playlist_import (self.conn, name, url)
+		ret.more_init ()
+		
+		return ret
+
+	def medialib_rehash(self, id = 0, myClass = None) :
+		"""
+		Force metadata info update on medialib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_rehash (self.conn, id)
+		ret.more_init ()
+		
+		return ret
+
+
+	def medialib_playlist_export (self, name, mime, myClass = None) :
+		"""
+		Export a playlist from medialib to another format
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_medialib_playlist_export (self.conn, name, mime)
+		ret.more_init ()
+		
+		return ret
+
 	def broadcast_medialib_entry_changed (self, myClass = None) :
 		"""
-		Set a class to handle the playlist entry changed broadcast
+		Set a class to handle the medialib entry changed broadcast
 		from the XMMS2 daemon. (i.e. the current entry in the playlist
 		has changed) Note: the handler class is usually a child of the
-		XMMSResult class.
+		XMMSResult class. Updated data is sent when the metadata for
+		a song is updated in the medialib.
 		@rtype: L{XMMSResult}
 		@return: An XMMSResult object that is updated with the
 		appropriate info.

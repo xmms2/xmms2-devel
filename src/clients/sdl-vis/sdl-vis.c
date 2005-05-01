@@ -192,7 +192,6 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
 	x_hash_t *hash;
 	gchar *tmp;
-	gint mid;
 	guint id;
 	xmmsc_connection_t *c = userdata;
 
@@ -286,7 +285,7 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 		n = x_list_next (n);
 		i = 0;
 		for (; n; n = x_list_next (n)) {
-			spec[i++] = ((gdouble)((guint32) n->data)) / ((gdouble)(G_MAXUINT32));
+			spec[i++] = ((gdouble)((guint32) n->data)) / ((gdouble)(INT_MAX));
 		}
 
 		/* @todo measure ipc-delay for real! */
@@ -294,6 +293,7 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 	}
 
 	newres = xmmsc_result_restart (res);
+	xmmsc_result_unref (res);
 	xmmsc_result_unref (newres);
 
 }
@@ -355,6 +355,7 @@ main(int argc, char **argv)
 	XMMS_CALLBACK_SET (connection, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (connection, xmmsc_signal_visualisation_data, handle_vis, NULL);
 	XMMS_CALLBACK_SET (connection, xmmsc_broadcast_playback_current_id, handle_mediainfo, connection);
+	XMMS_CALLBACK_SET (connection, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo, connection);
 	XMMS_CALLBACK_SET (connection, xmmsc_playback_current_id, handle_mediainfo, connection);
 
 	g_timeout_add (20, render_vis, (gpointer)screen);

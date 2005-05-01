@@ -58,6 +58,7 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_METHOD_STATUS "status"
 #define XMMS_PLUGIN_METHOD_LMOD "lmod"
 #define XMMS_PLUGIN_METHOD_FORMAT_SET "format_set"
+#define XMMS_PLUGIN_METHOD_CURRENT_MEDIALIB_ENTRY "current_medialib_entry"
 
 /*
  * Plugin properties.

@@ -25,7 +25,7 @@
 #include "xmms/playlist.h"
 #include "xmms/output.h"
 #include <glib.h>
-#include <sqlite.h>
+#include <sqlite3.h>
 
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_MIME "mime"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ID "id"
@@ -47,6 +47,12 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM "gain_album"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK "peak_track"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM "peak_album"
+/** Indicates that this album is a compilation */
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION "compilation"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID "album_id"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID "artist_id"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID "track_id"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED "added"
 
 /*
  * Method defintions.
@@ -67,13 +73,24 @@ gchar *xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gcha
 guint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
 gboolean xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
+
 xmms_medialib_entry_t xmms_medialib_entry_new (const char *url);
+xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (void);
+void xmms_medialib_entry_remove (xmms_medialib_entry_t entry);
+
 GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry);
 guint xmms_medialib_entry_id_get (xmms_medialib_entry_t entry);
 gboolean xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry);
+void xmms_medialib_playlist_save_autosaved ();
+void xmms_medialib_playlist_load_autosaved ();
 
-sqlite *xmms_sqlite_open ();
-gboolean xmms_sqlite_query (sqlite *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);
-void xmms_sqlite_close ();
+gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry);
+
+void xmms_medialib_logging_start (xmms_medialib_entry_t entry);
+void xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime);
+
+sqlite3 *xmms_sqlite_open (guint *nextid, gboolean *c);
+gboolean xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);
+void xmms_sqlite_close (sqlite3 *sql);
 
 #endif /* __XMMS_MEDIALIB_H__ */

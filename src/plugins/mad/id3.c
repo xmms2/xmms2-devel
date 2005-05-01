@@ -24,6 +24,8 @@
 #define ID3v2_HEADER_FLAGS_EXTENDED 0x40
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
 
+#define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
+
 #define quad2long(a,b,c,d) ((a << 24) | (b << 16) | (c << 8) | (d))
 
 
@@ -92,7 +94,6 @@ add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
 		g_error_free (err);
 		return;
 	}
-	XMMS_DBG ("%s=%s", key, nval);
 	xmms_medialib_entry_property_set (entry, key, nval);	
 	g_free (nval);
 }
@@ -144,6 +145,29 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 	case quad2long('T','C','O','N'): {
 		/* @todo we could resolve numeric types here */
 		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
+		break;
+	}
+	case quad2long('T','X','X','X'): {
+		/* User defined, lets search for musicbrainz */
+		guint32 l2 = strlen (buf);
+		if ((len - l2 -1) < 1)
+			break;
+		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
+			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, buf+l2+1, len-l2-1);
+		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
+			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, buf+l2+1, len-l2-1);
+		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
+			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+		}
+
+		break;
+
+	}
+	case quad2long('U','F','I','D'): {
+		guint32 l2 = strlen (buf);
+		if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
+			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, buf+l2+1, len-l2-1);
 		break;
 	}
 	case quad2long('T','B','P',0):
@@ -219,7 +243,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 			
 			flags = buf[8] | buf[9];
 
-			if (buf[0] == 'T') {
+			if (buf[0] == 'T' || buf[0] == 'U') {
 				xmms_mad_handle_id3v2_text (type, buf + 10, flags, size, entry);
 			}
 			
@@ -243,7 +267,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 				return FALSE;
 			}
 
-			if (buf[0] == 'T') {
+			if (buf[0] == 'T' || buf[0] == 'U') {
 				xmms_mad_handle_id3v2_text (type, buf + 6, 0, size, entry);
 			}
 			

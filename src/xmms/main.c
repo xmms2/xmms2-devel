@@ -15,23 +15,9 @@
  */
 
 
-
-
 /** @file 
  * This file controls XMMS2 mainloop.
  */
-
-/** @defgroup XMMSServer XMMSServer
-  * @brief look at this if you want to code inside the server.
-  * The XMMS2 project is splitted in to a server part and a Clientpart.
-  * This documents the server part of the project.
-  */
-
-/**
-  * @defgroup Main
-  * @ingroup XMMSServer
-  * @{ 
-  */
 
 #include <glib.h>
 
@@ -64,6 +50,29 @@
 
 #include <pthread.h>
 
+static void quit (xmms_object_t *object, xmms_error_t *error);
+static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
+
+XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
+XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
+
+/** @defgroup XMMSServer XMMSServer
+  * @brief look at this if you want to code inside the server.
+  * The XMMS2 project is splitted in to a server part and a Clientpart.
+  * This documents the server part of the project.
+  */
+
+/**
+  * @defgroup Main Main
+  * @ingroup XMMSServer
+  * @brief main object
+  * @{ 
+  */
+
+
+/**
+ * Main object, when this is unreffed, XMMS2 is quiting.
+ */
 struct xmms_main_St {
 	xmms_object_t object;
 	xmms_output_t *output;
@@ -104,11 +113,16 @@ parse_config ()
 static void
 change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
+	xmms_plugin_t *plugin;
+	xmms_main_t *mainobj = (xmms_main_t*)userdata;
+
 	gchar *outname = (gchar *)data;
 
 	XMMS_DBG ("Want to use %s as output instead", outname);
 
-	/** @todo fix this */
+	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
+
+	xmms_output_plugin_switch (mainobj->output, plugin);
 }
 
 static void
@@ -133,6 +147,10 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_visualisation_shutdown ();
 	xmms_config_shutdown ();
 	xmms_plugin_shutdown ();
+
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MAIN);
+	xmms_ipc_shutdown ();
+
 	xmms_log_shutdown ();
 }
 
@@ -146,14 +164,11 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
-	xmms_ipc_shutdown ();
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
 }
 
-XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
-XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
 
 
 static void
@@ -202,6 +217,10 @@ Options:\n\
 	-h|--help	Print this help\n";
        printf(usageText);
 }
+
+/**
+ * Entry point function
+ */
 
 int
 main (int argc, char **argv)
@@ -304,37 +323,28 @@ main (int argc, char **argv)
 		return 1;
 
 	
-	if (!outname) {
-		cv = xmms_config_value_register ("output.plugin",
-		                                 XMMS_OUTPUT_DEFAULT,
-		                                 change_output, NULL);
-		outname = xmms_config_value_string_get (cv);
-	}
-
-	XMMS_DBG ("output = %s", outname);
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
-	xmms_config_value_register ("decoder.use_replaygain", "0",
-	                            NULL, NULL);
-	xmms_config_value_register ("decoder.replaygain_mode", "track",
-	                            NULL, NULL);
-	xmms_config_value_register ("decoder.use_replaygain_anticlip", "1",
-	                            NULL, NULL);
 
-	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
-	g_return_val_if_fail (o_plugin, -1);
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
-	mainobj->output = xmms_output_new (o_plugin);
-	g_return_val_if_fail (mainobj->output, -1);
+	if (!outname) {
+		cv = xmms_config_value_register ("output.plugin",
+		                                 XMMS_OUTPUT_DEFAULT,
+		                                 change_output, mainobj);
+		outname = xmms_config_value_string_get (cv);
+	}
+
+	XMMS_DBG ("output = %s", outname);
+
+	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
+	mainobj->output = xmms_output_new (o_plugin, playlist);
 
 	init_volume_config_proxy (outname);
-
-	xmms_output_playlist_set (mainobj->output, playlist);
 
 	/*
 	xmms_medialib_init ();

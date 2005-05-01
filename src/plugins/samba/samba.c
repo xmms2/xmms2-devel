@@ -103,18 +103,11 @@ xmms_plugin_get (void)
 static gboolean
 xmms_samba_can_handle (const gchar *url)
 {
-	gchar *dec;
 	g_return_val_if_fail (url, FALSE);
 
-	dec = xmms_util_decode_path (url);
-
-	XMMS_DBG ("xmms_samba_can_handle (%s)", dec);
-	
-	if (g_strncasecmp (dec, "smb://", 6) == 0) {
-		g_free (dec);
+	if (g_strncasecmp (url, "smb://", 6) == 0) {
 		return TRUE;
 	}
-	g_free (dec);
 	
 	return FALSE;
 }
@@ -136,17 +129,14 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 {
 	gint fd, err;
 	xmms_samba_data_t *data;
-	const gchar *urlptr;
 	struct stat st;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
 
-	urlptr = xmms_util_decode_path (url);
-	
-	XMMS_DBG ("xmms_samba_init (%p, %s)", transport, urlptr);
+	XMMS_DBG ("xmms_samba_init (%p, %s)", transport, url);
 
-	if (!urlptr) {
+	if (!url) {
 		return FALSE;
 	}
 
@@ -156,18 +146,18 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 		return FALSE;
 	}
 
-	err = smbc_stat (urlptr, &st);
+	err = smbc_stat (url, &st);
 	if (err < 0) {
 		xmms_log_error ("errno (%d) %s", errno, strerror (errno));
 		return FALSE;
 	}
 	
 	if (!S_ISREG (st.st_mode)) {
-		xmms_log_error ("%s is not a regular file.", urlptr);
+		xmms_log_error ("%s is not a regular file.", url);
 		return FALSE;
 	}
 
-	fd = smbc_open (urlptr, O_RDONLY | O_NONBLOCK, 0);
+	fd = smbc_open (url, O_RDONLY | O_NONBLOCK, 0);
 	if (fd == -1) {
 		return FALSE;
 	}
@@ -175,7 +165,7 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 	data = g_new0 (xmms_samba_data_t, 1);
 	data->fd = fd;
 	data->mime = NULL;
-	data->urlptr = g_strdup (urlptr);
+	data->urlptr = g_strdup (url);
 	xmms_transport_private_data_set (transport, data);
 
 	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);

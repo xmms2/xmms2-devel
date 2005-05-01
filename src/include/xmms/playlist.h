@@ -39,7 +39,6 @@ typedef enum {
 
 typedef enum {
 	XMMS_PLAYLIST_CHANGED_ADD,
-	XMMS_PLAYLIST_CHANGED_SET_POS,
 	XMMS_PLAYLIST_CHANGED_SHUFFLE,
 	XMMS_PLAYLIST_CHANGED_REMOVE,
 	XMMS_PLAYLIST_CHANGED_CLEAR,
@@ -75,12 +74,12 @@ typedef struct xmms_playlist_changed_msg_St {
 
 xmms_playlist_t * xmms_playlist_init (void);
 
-gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file);
+gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error);
 guint xmms_playlist_entries_total (xmms_playlist_t *playlist);
 guint xmms_playlist_entries_left (xmms_playlist_t *playlist);
 gint xmms_playlist_get_current_position (xmms_playlist_t *playlist);
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
-xmms_medialib_entry_t xmms_playlist_get_current_entry (xmms_playlist_t *playlist);
+xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
 gboolean xmms_playlist_id_remove (xmms_playlist_t *playlist, guint id, xmms_error_t *err);
 xmms_decoder_t *xmms_playlist_next_start (xmms_playlist_t *playlist);
 gboolean xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err);
@@ -90,7 +89,7 @@ GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 void xmms_playlist_wait (xmms_playlist_t *playlist);
 GList *xmms_playlist_stats (xmms_playlist_t *playlist, GList *list);
 
-xmms_mediainfo_thread_t *xmms_playlist_mediainfo_thread_get (xmms_playlist_t *playlist);
+xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
 
 /*
  * Entry modifications

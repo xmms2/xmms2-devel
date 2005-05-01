@@ -23,6 +23,7 @@
  * This file contains functions for manipulate xmms_playlist_plugin_t objects.
  */
 
+#include "internal/transport_int.h"
 #include "xmms/plugin.h"
 #include "xmms/util.h"
 #include "xmms/playlist.h"
@@ -42,59 +43,71 @@ static xmms_plugin_t * xmms_playlist_plugin_find (const gchar *mimetype);
  * Public functions.
  */
 
-gboolean
-xmms_playlist_plugin_save (xmms_playlist_plugin_t *plsplugin,
-		xmms_playlist_t *playlist, gchar *filename)
+GString *
+xmms_playlist_plugin_save (gchar *mime,
+			   guint32 *list)
 {
+	GString *ret;
 	xmms_playlist_plugin_write_method_t write;
-
-	g_return_val_if_fail (plsplugin, FALSE);
-	g_return_val_if_fail (playlist, FALSE);
-	g_return_val_if_fail (filename, FALSE);
-
-	write = xmms_plugin_method_get (plsplugin->plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST);
-	
-	return write (plsplugin, playlist, filename);
-}
-
-xmms_playlist_plugin_t *
-xmms_playlist_plugin_new (const gchar *mimetype)
-{
 	xmms_plugin_t *plugin;
-	xmms_playlist_plugin_t *plsplugin;
-	
-	g_return_val_if_fail (mimetype, NULL);
 
-	plugin = xmms_playlist_plugin_find (mimetype);
-	if (!plugin)
+	g_return_val_if_fail (mime, NULL);
+	g_return_val_if_fail (list, NULL);
+	
+	plugin = xmms_playlist_plugin_find (mime);
+	if (!plugin) {
 		return NULL;
+	}
 
-	XMMS_DBG ("Playlist plugin %s wants this.", xmms_plugin_name_get (plugin));
+	write = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST);
 	
-	plsplugin = g_new0 (xmms_playlist_plugin_t, 1);
-	plsplugin->plugin = plugin;
-
-	return plsplugin;
+	ret = write (list);
+	xmms_object_unref (plugin);
+	return ret;
 }
 
-void
-xmms_playlist_plugin_free (xmms_playlist_plugin_t *plsplugin)
+gboolean
+xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 {
-	xmms_object_unref (plsplugin->plugin);
-	g_free (plsplugin);
-}
-
-void
-xmms_playlist_plugin_read (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, xmms_transport_t *transport)
-{
+	gboolean ret;
+	xmms_transport_t *transport;
 	xmms_playlist_plugin_read_method_t read_method;
-	g_return_if_fail (plsplugin);
-	g_return_if_fail (transport);
+	xmms_plugin_t *plugin;
+	const gchar *mime;
 
-	read_method = xmms_plugin_method_get (plsplugin->plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST);
-	g_return_if_fail (read_method);
+	transport = xmms_transport_new ();
+	if (!transport)
+		return FALSE;
 
-	read_method (plsplugin, transport, playlist);
+	if (!xmms_transport_open (transport, entry)) {
+		xmms_object_unref (XMMS_OBJECT (transport));
+		return FALSE;
+	}
+
+	mime = xmms_transport_mimetype_get_wait (transport);
+	if (!mime) {
+		xmms_object_unref (XMMS_OBJECT (transport));
+		return FALSE;
+	}
+
+	plugin = xmms_playlist_plugin_find (mime);
+	if (!plugin) {
+		xmms_object_unref (XMMS_OBJECT (transport));
+		return FALSE;
+	}
+
+	read_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST);
+	if (!read_method) {
+		xmms_object_unref (transport);
+		xmms_object_unref (plugin);
+		return FALSE;
+	}
+
+	ret = read_method (transport, playlist_id);
+	xmms_object_unref (transport);
+	xmms_object_unref (plugin);
+
+	return ret;
 }
 
 /*

@@ -23,29 +23,21 @@
 
 #include "xmms/transport.h"
 #include "xmms/playlist.h"
-
-/* Type definitions */
-
-typedef struct xmms_playlist_plugin_St {
-	xmms_plugin_t *plugin;
-} xmms_playlist_plugin_t;
+#include "xmms/medialib.h"
 
 /*
  * Plugin methods.
  */
 
-typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_playlist_plugin_t *plsplugin, xmms_transport_t *transport, xmms_playlist_t *playlist);
+typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_transport_t *transport, guint playlist_id);
 typedef gboolean (*xmms_playlist_plugin_can_handle_method_t) (const gchar *mimetype);
-typedef gboolean (*xmms_playlist_plugin_write_method_t) (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, gchar *filename);
+typedef GString *(*xmms_playlist_plugin_write_method_t) (guint32 *list);
 
 /*
  * Public functions.
  */
 
-xmms_playlist_plugin_t *xmms_playlist_plugin_new (const gchar *mimetype);
-void xmms_playlist_plugin_free (xmms_playlist_plugin_t *plsplugin);
-void xmms_playlist_plugin_read (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, xmms_transport_t *transport);
-gboolean xmms_playlist_plugin_save (xmms_playlist_plugin_t *plsplugin, xmms_playlist_t *playlist, gchar *filename);
-
+gboolean xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry);
+GString *xmms_playlist_plugin_save (gchar *mime, guint32 *list);
 
 #endif
