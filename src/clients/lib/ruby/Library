@@ -6,6 +6,16 @@ static=False
 
 def config(env):
 	if env.tryaction ("ruby --version") :
+		# we require ruby 1.8 or greater
+		print "Checking for Ruby 1.8 or greater... ",
+
+		version = os.popen("ruby -e 'puts VERSION'").read().strip()
+		if [int(a) for a in version.split(".")] < [1, 8] :
+			print "no"
+			return False
+
+		print version
+
 		cmd = "ruby -rrbconfig -e 'puts \"-I%s -L%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'"
 		env.configcmd(cmd)
 		cmd = "ruby -rmkmf -e 'print Config::CONFIG[\"sitearchdir\"]'"
