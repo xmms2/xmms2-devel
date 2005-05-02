@@ -1,0 +1,9 @@
+usr/bin/xmms2d
+usr/lib/xmms2/libxmms_file.so*
+usr/lib/xmms2/libxmms_wave.so*
+usr/lib/xmms2/libxmms_m3u.so*
+usr/lib/xmms2/libxmms_pls.so*
+usr/lib/xmms2/libxmms_eq.so*
+usr/lib/xmms2/libxmms_replaygain.so*
+etc/xmms/xmms2.conf
+usr/share/xmms2/dismantled-the_swarm_clip.ogg

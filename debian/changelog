@@ -1,3 +1,16 @@
+xmms2 (1.9.5+bk200504027-0) unstable; urgency=low
+
+  * Update to to tru's tree
+  * Include dismantled-the_swarm_clip.ogg
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Wed, 27 Apr 2005 19:46:44 +0200
+ 
+xmms2 (1.9.5+bk200504027-0) unstable; urgency=low
+
+  * Big update
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Wed, 27 Apr 2005 19:46:44 +0200
+
 xmms2 (1.94-rc3-3) unstable; urgency=low
 
   * Damn manpages.

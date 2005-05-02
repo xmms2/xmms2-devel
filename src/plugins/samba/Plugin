@@ -5,7 +5,7 @@ This is a plugin build file for XMMS2
 # first we tell scons what our targets are
 target="smb"
 # then we tell scons where our sources are
-source=["smb.c"]
+source=["samba.c"]
 
 def config(env):
 	""" 
