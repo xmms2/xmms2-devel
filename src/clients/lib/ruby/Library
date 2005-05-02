@@ -9,7 +9,7 @@ def config(env):
 		# we require ruby 1.8 or greater
 		print "Checking for Ruby 1.8 or greater... ",
 
-		version = os.popen("ruby -e 'puts VERSION'").read().strip()
+		version = env.run("ruby -e 'puts VERSION'").strip()
 		if [int(a) for a in version.split(".")] < [1, 8] :
 			print "no"
 			return False

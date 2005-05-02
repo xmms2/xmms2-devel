@@ -58,15 +58,36 @@ class XMMSEnvironment(Environment):
 		self.install_targets.append(target)
 			
 	def tryaction(self, cmd):
+		if self.config_cache.has_key(cmd):
+			return self.config_cache[cmd]
+
+		try:
+			os.popen(cmd).read()
+			r = True
+		except:
+			r = False
+
+		if r == '':
+			r = False
+
+		self.config_cache[cmd] = r
+
+		return r
+
+	def run(self, cmd):
+		if self.config_cache.has_key(cmd):
+			return self.config_cache[cmd]
+
+		print "Running", cmd
+
 		try:
 			r = os.popen(cmd).read()
 		except:
-			return False
+			r = None
 
-		if r == '':
-			return False
-
-		return True
+		self.config_cache[cmd] = r
+		return r
+	
 	def pkgconfig(self, module, fail=False, headers=True, libs=True):
 		cmd = "pkg-config --silence-errors"
 		if headers:
