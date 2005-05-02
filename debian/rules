@@ -12,7 +12,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 package=xmms2
 
-SCONSFLAGS=MANDIR=/usr/share/man SYSCONFDIR=/etc/xmms CCFLAGS="-O2 -Wall -g"
+SCONSFLAGS=MANDIR=/usr/share/man PREFIX=/usr SYSCONFDIR=/etc/xmms CCFLAGS="-O2 -Wall -g"
 
 build:
 	dh_testdir
