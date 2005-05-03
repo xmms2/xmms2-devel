@@ -1,3 +1,9 @@
+xmms2 (1.9.5+bk20050503-2) unstable; urgency=low
+
+  * Fix typos in control file.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Tue, 03 May 2005 18:13:37 +0200
+
 xmms2 (1.9.5+bk20050503-1) unstable; urgency=low
 
   * Add Ruby bindings package.

@@ -90,28 +90,28 @@ Description: XMMS2 - libmad based mp3 decoder - private beta - DO NOT SPREAD!
 
 Package: xmms2-output-oss
 Architecture: any
-Provides: xmms2-ouptut
+Provides: xmms2-output
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - OSS output - private beta - DO NOT SPREAD!
  This package enables OSS output for xmms2.
 
 Package: xmms2-output-alsa
 Architecture: any
-Provides: xmms2-ouptut
+Provides: xmms2-output
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - ALSA output - private beta - DO NOT SPREAD!
  This package enables ALSA output for xmms2.
 
 Package: xmms2-output-jack
 Architecture: any
-Provides: xmms2-ouptut
+Provides: xmms2-output
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - JACK output - private beta - DO NOT SPREAD!
  This package enables JACK output for xmms2.
 
 Package: xmms2-output-diskwrite
 Architecture: any
-Provides: xmms2-ouptut
+Provides: xmms2-output
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - diskwrite ouput - private beta - DO NOT SPREAD!
  This package enables writing of decoded streams to files for xmms2.
