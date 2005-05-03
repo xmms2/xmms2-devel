@@ -18,9 +18,9 @@ opts.Add('LINKFLAGS', 'Linker flags', '')
 opts.Add('LIBPATH', 'Path to libs', ['/sw/lib'])
 opts.Add('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0'])
 opts.Add('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0'])
-opts.Add('SYSCONFDIR', 'system configuration dir', '/usr/local/etc')
-opts.Add('INSTALLDIR', 'runtime install dir', '/usr/local')
-opts.Add('MANDIR', 'manual directory', '/usr/local/man')
+opts.Add('PREFIX', 'install prefix', '/usr/local')
+opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
+opts.Add('INSTALLDIR', 'install dir')
 opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
 opts.Add('CONFIG', 'run configuration commands again', 0)
 opts.Add('EXCLUDE', 'exclude this modules', '')
@@ -94,8 +94,7 @@ base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.SourceCode('converter.c', b)
 
 subst_dict = {"%VERSION%":"1.9.9 DR1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
-	      "%PKGLIBDIR%":base_env["INSTALLDIR"]+"/lib/xmms2",
-	      "%SYSCONFDIR%":base_env["SYSCONFDIR"],
+	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
 	      "%SHAREDDIR%":base_env.sharepath}
 config = base_env.SubstInFile("src/include/xmms/xmms.h", "src/include/xmms/xmms.h.in", SUBST_DICT=subst_dict)
 

@@ -7,6 +7,7 @@ from stat import *
 
 def installFunc(dest, source, env):
 	"""Copy file, setting sane permissions"""
+	
 	shutil.copy(source, dest)
 	st = os.stat(source)
 	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
@@ -36,11 +37,18 @@ class XMMSEnvironment(Environment):
 		self.programs=[]
 		self.install_targets=[]
 
+		if self.has_key("INSTALLDIR"):
+			self.installdir = os.path.normpath(self["INSTALLDIR"] + '/')
+		else:
+			self.installdir = ""
 		self["INSTALL"] = installFunc
-		self.pluginpath = self["INSTALLDIR"]+"/lib/xmms2"
-		self.binpath = self["INSTALLDIR"]+"/bin"
-		self.librarypath = self["INSTALLDIR"]+"/lib"
-		self.sharepath = self["INSTALLDIR"]+"/share/xmms2"
+
+		self.install_prefix = self["PREFIX"]
+		self["MANDIR"] = self["MANDIR"].replace("$PREFIX", self.install_prefix)
+		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
+		self.binpath = os.path.join(self.install_prefix, "bin")
+		self.librarypath = os.path.join(self.install_prefix, "lib")
+		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
 		self["SHLIBPREFIX"] = "lib"
 
 		if sys.platform == 'linux2':
@@ -54,6 +62,7 @@ class XMMSEnvironment(Environment):
 			self["SHLINKFLAGS"] = "$LINKFLAGS -multiply_defined suppress -flat_namespace -undefined suppress"
 	
 	def Install(self, target, source):
+		target = os.path.normpath(self.installdir + target)
 		SCons.Environment.Environment.Install(self, target, source)
 		self.install_targets.append(target)
 			
