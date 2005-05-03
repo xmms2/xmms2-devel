@@ -61,14 +61,14 @@ class XMMSEnvironment(Environment):
 		if self.config_cache.has_key(cmd):
 			return self.config_cache[cmd]
 
+		r = False
+
 		try:
 			os.popen(cmd).read()
-			r = True
+			if not r == '':
+				r = True
 		except:
-			r = False
-
-		if r == '':
-			r = False
+			pass
 
 		self.config_cache[cmd] = r
 
