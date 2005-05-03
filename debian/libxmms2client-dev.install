@@ -26,3 +26,4 @@ usr/include/xmms2/output.h
 usr/include/xmms2/decoder.h
 usr/include/xmms2/plugin.h
 usr/include/xmms2/ringbuf.h
+usr/lib/libxmmsclient.a
