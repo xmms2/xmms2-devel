@@ -1,3 +1,9 @@
+xmms2 (1.9.5+bk20050503-4) unstable; urgency=low
+
+  * More policy compliant Ruby packages.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Tue, 03 May 2005 23:10:46 +0200
+
 xmms2 (1.9.5+bk20050503-3) unstable; urgency=low
 
   * Add *.a files to -dev packages.
