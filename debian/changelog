@@ -1,7 +1,15 @@
-xmms2 (1.9.5+bk200504027-0) unstable; urgency=low
+xmms2 (1.9.5+bk20050503-1) unstable; urgency=low
+
+  * Add Ruby bindings package.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Wed, 27 Apr 2005 19:46:44 +0200
+
+xmms2 (1.9.5+bk20050503-0) unstable; urgency=low
 
   * Update to to tru's tree
   * Include dismantled-the_swarm_clip.ogg
+  * transport_cd temporarily removed until it is rewritten
+  * fixed version string
 
  -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Wed, 27 Apr 2005 19:46:44 +0200
  
