@@ -26,5 +26,6 @@ def config(env):
 
 		env["LIBPATH"].append("src/clients/lib/xmmsclient")
 		env["LIBS"].append("xmmsclient")
+		env["SHLIBPREFIX"]=''
 		return True
 	return False
