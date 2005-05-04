@@ -35,9 +35,12 @@ Description: XMMS2 - ecore clientlibrary - private beta - DO NOT SPREAD!
 
 Package: libxmms2client-ruby
 Architecture: all
-Depends: libxmms2client-ruby1.8
+Depends: libxmms2client-ruby1.8, ruby
 Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
  This package contains Ruby bindings for the xmms2 clientlib.
+ .
+ This package is an empty dummy package that always depends on a package
+ built for Debian's default Ruby version.
 
 Package: libxmms2client-ruby1.8
 Architecture: any
@@ -45,29 +48,35 @@ Build-Depends: ruby1.8
 Depends: ruby1.8
 Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
  This package contains Ruby bindings for the xmms2 clientlib.
+ .
  It is packaged for the version 1.8 series of Ruby.
 
-#Package: libxmms2client-python
-#Architecture: all
-#Depends: libxmms2client-python2.3
-#Build-Depends: python-pyrex
-#Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
-# This package contains Python bindings for the xmms2 clientlib.
+Package: python-xmms2client
+Architecture: all
+Depends: python (>= 2.3), python (<< 2.4), python2.3-xmms2client
+Build-Depends: debhelper (>= 4.1.67)
+Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
+ This package contains Python bindings for the xmms2 clientlib.
+ .
+ This package is an empty dummy package that always depends on a package
+ built for Debian's default Python version.
 
-#Package: libxmms2client-python2.3
-#Architecture: any
-#Depends: python2.3
-#Build-Depends: python2.3, python-pyrex
-#Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
-# This package contains Python bindings for the xmms2 clientlib.
-# It is packaged for the version 2.3 series of Python.
+Package: python2.3-xmms2client
+Architecture: any
+Depends: python2.3
+Build-Depends: python2.3 (>= 2.3-1), python2.3-dev (>= 2.3-1), python2.3-pyrex
+Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
+ This package contains Python bindings for the xmms2 clientlib.
+ .
+ It is packaged for the version 2.3 series of Python.
 
 #Package: libxmms2client-python2.4
 #Architecture: any
 #Depends: python2.4
-#Build-Depends: python2.4, python-pyrex
+#Build-Depends: python2.4, python2.4-pyrex
 #Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
 # This package contains Python bindings for the xmms2 clientlib.
+# .
 # It is packaged for the version 2.4 series of Python.
 
 Package: libxmms2client-ecore-dev
