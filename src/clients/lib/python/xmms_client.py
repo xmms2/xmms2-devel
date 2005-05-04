@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import xmmsclient_binding
+import xmmsclient
 import sys
 
-xmms = xmmsclient_binding.XMMS ()
+xmms = xmmsclient.XMMS ()
 xmms.connect (None)
 
 def fmt_time (tme) :
