@@ -73,8 +73,8 @@ class XMMSEnvironment(Environment):
 		r = False
 
 		try:
-			os.popen(cmd).read()
-			if not r == '':
+			buf = os.popen(cmd).read()
+			if not buf == '':
 				r = True
 		except:
 			pass
