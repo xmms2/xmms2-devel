@@ -4,10 +4,14 @@ import os.path
 import sys
 import SCons
 import re
+import string
 from marshal import dump
 
 EnsureSConsVersion(0, 94)
 EnsurePythonVersion(2, 1)
+
+def FlagOption(key, help, default=[]):
+	return(key, help, default, None, lambda val: string.split(val))
 
 opts = Options(None, ARGUMENTS)
 opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
@@ -17,8 +21,8 @@ opts.Add('LD', 'Linker to use', 'ld')
 opts.Add('LINKFLAGS', 'Linker flags', '')
 opts.Add('LIBPATH', 'Path to libs', ['/sw/lib'])
 opts.Add('RUBYLIBDIR', 'Path to install Ruby bindings')
-opts.Add('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0'])
-opts.Add('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0'])
+opts.Add(FlagOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
+opts.Add(FlagOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
 opts.Add('PREFIX', 'install prefix', '/usr/local')
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('INSTALLDIR', 'install dir')
