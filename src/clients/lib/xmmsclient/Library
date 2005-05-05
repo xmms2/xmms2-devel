@@ -12,5 +12,5 @@ source=["ipc.c",
 
 def config(env):
 	env["LIBS"].append("xmmsipc")
-	env["LIBPATH"].append("src/lib/xmmsipc")
+	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	return True

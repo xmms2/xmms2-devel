@@ -24,7 +24,7 @@ def config(env):
 
 	# link with xmmsclient is nice.
 	env['LIBS'].append("xmmsclient")
-	env['LIBPATH'].append("src/clients/lib/xmmsclient")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 
 	# otherwise it will be called libxmmsclient.so
 	env['SHLIBPREFIX']=""

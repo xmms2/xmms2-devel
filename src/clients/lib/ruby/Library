@@ -24,7 +24,7 @@ def config(env):
 			cmd = "ruby -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'"
 			env.librarypath = os.popen(cmd).read().strip()
 
-		env["LIBPATH"].append("src/clients/lib/xmmsclient")
+		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 		env["LIBS"].append("xmmsclient")
 		env["SHLIBPREFIX"]=''
 		return True
