@@ -192,6 +192,8 @@ class XMMSEnvironment(Environment):
 	def add_plugin(self, target, source):
 		self.plugins.append(target)
 		self["SHLIBPREFIX"]="libxmms_"
+		if self.platform == 'darwin':
+			self["SHLINKFLAGS"] += " -bundle"
 		self.SharedLibrary(target, source)
 		self.Install(self.pluginpath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
 
@@ -207,8 +209,6 @@ class XMMSEnvironment(Environment):
 			self.Install(self.librarypath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
 
 
-
-	
 	def add_program(self, target, source):
 		self.programs.append(target)
 		self.Program(target, source)

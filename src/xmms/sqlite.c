@@ -118,6 +118,9 @@ xmms_sqlite_open (guint *id, gboolean *c)
 		return FALSE; 
 	}
 
+	sqlite3_exec (sql, "PRAGMA synchronous = NORMAL", NULL, NULL, NULL);
+	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
+
 	/* if the database already exists, check whether there have been
 	 * any incompatible changes. if so, we need to recreate the db.
 	 */
@@ -161,8 +164,6 @@ xmms_sqlite_open (guint *id, gboolean *c)
 		sqlite3_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
 	}
 
-	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
 
