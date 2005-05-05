@@ -423,8 +423,8 @@ cdef class XMMS :
 		xmmsc_unref (self.conn)
 
 	def _disconnect_cb (self) :
-		self.disconnect_fun (self)
-
+		if self.disconnect_fun is not None:
+			self.disconnect_fun (self)
 
 	def glib_loop (self) :
 		"""
@@ -526,6 +526,12 @@ cdef class XMMS :
 		C{xmms.connect ()}
 
 		...
+		
+		You can provide a disconnect callback function to be activated
+		when the daemon disconnects. (e.g. daemon quit) This function
+		typically has to exit the main loop used by your application.
+		For example, if using L{python_loop}, your callback should call
+		L{exit_python_loop} at some point.
 		"""
 		if path :
 			ret = xmmsc_connect (self.conn, path) 
