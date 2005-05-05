@@ -9,6 +9,7 @@ from marshal import dump
 
 EnsureSConsVersion(0, 94)
 EnsurePythonVersion(2, 1)
+SConsignFile()
 
 def FlagOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
@@ -96,7 +97,7 @@ base_env['BUILDERS']['SubstInFile'] = Builder(action=subst_action, emitter=subst
 
 b = Builder(action = 'python src/xmms/generate-converter.py > src/xmms/converter.c')
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
-base_env.SourceCode('converter.c', b)
+base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":"1.9.9 DR1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
