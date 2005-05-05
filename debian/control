@@ -3,7 +3,7 @@ Section: sound
 Priority: optional
 Maintainer: Anders Gustafsson <andersg@xmms.org>
 Standards-Version: 3.5.8
-Build-Depends: debmake, scons
+Build-Depends: debmake, debhelper (>= 4.1.67), scons, python2.3 (>= 2.3-1), python2.3-dev (>= 2.3-1), python2.3-pyrex, ruby1.8
 
 Package: xmms2-core
 Architecture: any
@@ -23,7 +23,7 @@ Description: XMMS2 - clientlibrary - private beta - DO NOT SPREAD!
 
 Package: libxmms2client-dev
 Architecture: any
-Depends: debconf (>= 0.2.78), libxmms2client, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), libxmms2client
 Description: XMMS2 - clientlibrary devel files - private beta - DO NOT SPREAD!
  This package contains the headers for libxmms2client.
 
@@ -44,8 +44,7 @@ Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
 
 Package: libxmms2client-ruby1.8
 Architecture: any
-Build-Depends: ruby1.8
-Depends: ruby1.8
+Depends: ruby1.8, ${shlibs:Depends}
 Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
  This package contains Ruby bindings for the xmms2 clientlib.
  .
@@ -54,7 +53,6 @@ Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
 Package: python-xmms2client
 Architecture: all
 Depends: python (>= 2.3), python (<< 2.4), python2.3-xmms2client
-Build-Depends: debhelper (>= 4.1.67)
 Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
  This package contains Python bindings for the xmms2 clientlib.
  .
@@ -63,8 +61,7 @@ Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
 
 Package: python2.3-xmms2client
 Architecture: any
-Depends: python2.3
-Build-Depends: python2.3 (>= 2.3-1), python2.3-dev (>= 2.3-1), python2.3-pyrex
+Depends: python2.3, ${shlibs:Depends}
 Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
  This package contains Python bindings for the xmms2 clientlib.
  .
@@ -81,7 +78,7 @@ Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
 
 Package: libxmms2client-ecore-dev
 Architecture: any
-Depends: debconf (>= 0.2.78), libxmms2client-ecore, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), libxmms2client-ecore
 Description: XMMS2 - ecore clientlibrary devel files - private beta - DO NOT SPREAD!
  This package contains the headers for libxmms2client.
 
