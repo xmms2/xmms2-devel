@@ -23,7 +23,7 @@ source = ["main.c",
 
 def config(env):
 	env["LIBS"].append("xmmsipc")
-	env["LIBPATH"].append("src/lib/xmmsipc")
+	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	env.pkgconfig("gmodule-2.0", fail=True)
 	env.pkgconfig("gthread-2.0", fail=True)
 	env.pkgconfig("sqlite3", fail=True)
