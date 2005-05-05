@@ -25,6 +25,7 @@ opts.Add('RUBYLIBDIR', 'Path to install Ruby bindings')
 opts.Add(FlagOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
 opts.Add(FlagOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
 opts.Add('PREFIX', 'install prefix', '/usr/local')
+opts.Add('CPPPATH', 'path to include files', [])
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('INSTALLDIR', 'install dir')
 opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
@@ -32,9 +33,9 @@ opts.Add('CONFIG', 'run configuration commands again', 0)
 opts.Add('EXCLUDE', 'exclude this modules', '')
 
 # base CCPATH
-CPPPATH = ["#src", "#src/include"]
 
-base_env = xmmsenv.XMMSEnvironment(options=opts, CPPPATH=CPPPATH)
+base_env = xmmsenv.XMMSEnvironment(options=opts)
+base_env.Append(CPPPATH=["#src", "#src/include"])
 base_env.pkgconfig("glib-2.0", fail=True)
 base_env.pkgconfig("sqlite3", fail=True, libs=False)
 
