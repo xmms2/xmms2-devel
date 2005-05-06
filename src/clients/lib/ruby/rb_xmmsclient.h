@@ -17,6 +17,11 @@
 #ifndef __RB_XMMSCLIENT_H
 #define __RB_XMMSCLIENT_H
 
+typedef struct {
+	xmmsc_connection_t *real;
+	VALUE results;
+} RbXmmsClient;
+
 void Init_XmmsClient (void);
 
 #ifndef __RB_XMMSCLIENT_C
