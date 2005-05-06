@@ -3,7 +3,7 @@ Section: sound
 Priority: optional
 Maintainer: Anders Gustafsson <andersg@xmms.org>
 Standards-Version: 3.5.8
-Build-Depends: debmake, debhelper (>= 4.1.67), scons, python2.3 (>= 2.3-1), python2.3-dev (>= 2.3-1), python2.3-pyrex, ruby1.8
+Build-Depends: debmake, debhelper (>= 4.1.67), scons, python2.3 (>= 2.3-1), python2.3-dev (>= 2.3-1), python2.3-pyrex, ruby1.8, libsdl-ttf2.0-dev, libflac-dev, libspeex-dev, libmodplug-dev, libmad-dev, libvorbis-dev, libasound2-dev
 
 Package: xmms2-core
 Architecture: any
@@ -89,6 +89,13 @@ Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
 Description: XMMS2 - cli client - private beta - DO NOT SPREAD!
  This package contains a simple text-ui for xmms2.
 
+Package: xmms2-client-sdlvis
+Architecture: any
+Provides: xmms2-client
+Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
+Description: XMMS2 - simple SDL visualization client - private beta - DO NOT SPREAD!
+ This package contains a simple SDL visualization client for xmms2.
+
 Package: xmms2-transport-curl
 Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
@@ -118,6 +125,18 @@ Architecture: any
 Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - vorbis decoder - private beta - DO NOT SPREAD!
  This package enables ogg-vorbis decoding for xmms2.
+
+Package: xmms2-decoder-flac
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - flac decoder - private beta - DO NOT SPREAD!
+ This package enables flac decoding for xmms2.
+
+Package: xmms2-decoder-modplug
+Architecture: any
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Description: XMMS2 - flac decoder - private beta - DO NOT SPREAD!
+ This package enables modplug decoding for xmms2.
 
 Package: xmms2-decoder-mad
 Architecture: any

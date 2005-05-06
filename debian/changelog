@@ -1,3 +1,11 @@
+xmms2 (1.9.5+bk20050506-0) unstable; urgency=low
+
+  * Added FLAC decoder plugin package.
+  * Added modplug decoder plugin package.
+  * Added sdl-vis client package.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Fri, 06 May 2005 12:04:31 +0200
+ 
 xmms2 (1.9.5+bk20050505-0) unstable; urgency=low
 
   * Improved control file.
