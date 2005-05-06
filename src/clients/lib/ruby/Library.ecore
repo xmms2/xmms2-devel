@@ -1,8 +1,14 @@
 import os
 
-target="xmmsclient"
-source=["rb_xmmsclient_main.c", "rb_xmmsclient.c", "rb_result.c"]
+target="xmmsclient_ecore"
+source=["rb_xmmsclient_ecore.c"]
 static=False
+
+def lib2sed(lib):
+	return " -e 's/ -l" + lib + " / /'"
+
+def ecorelib2sed(lib):
+	return " -e 's/ -lecore_" + lib + " / /'"
 
 def config(env):
 	if env.tryaction ("ruby --version") :
@@ -28,5 +34,14 @@ def config(env):
 		env["LIBS"].append("xmmsclient")
 		env["SHLIBPREFIX"]=''
 
-		return True
+		# duplicated ecore check from xmmsclient-ecore.
+		# need to fix this the right way
+		rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb', 'config', 'file']
+		rem_misc_libs = ['eet', 'jpeg', 'z']
+		sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])
+		if env.configcmd("ecore-config --libs --cflags | " + sed_call):
+			env.Append(LIBPATH="src/clients/lib/xmmsclient-ecore")
+			env["LIBS"].append("xmmsclient-ecore")
+			return True
+		return False
 	return False

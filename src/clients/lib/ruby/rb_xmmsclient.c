@@ -14,18 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#ifdef HAVE_ECORE
-#include <Ecore.h>
-#endif
-
-#include <glib.h>
-
 #include <xmms/xmmsclient.h>
 #include <xmms/output.h>
-
-#ifdef HAVE_ECORE
-#include <xmms/xmmsclient-ecore.h>
-#endif
 
 #include <xmms/xmmsclient-glib.h>
 
@@ -33,6 +23,7 @@
 #include <stdbool.h>
 
 #include "rb_xmmsclient_main.h"
+#include "rb_xmmsclient.h"
 #include "rb_result.h"
 
 #define METHOD_ADD_HANDLER(name, unref) \
@@ -54,11 +45,6 @@
 #define METHOD_ADD(mod, name, argc) \
 	rb_define_method ((mod), #name, c_##name, (argc));
 
-typedef struct {
-	xmmsc_connection_t *real;
-	VALUE results;
-} RbXmmsClient;
-
 VALUE eXmmsClientError;
 
 static void c_mark (RbXmmsClient *xmms)
@@ -70,20 +56,12 @@ static void c_free (RbXmmsClient *xmms)
 {
 	xmmsc_unref (xmms->real);
 
-#ifdef HAVE_ECORE
-	ecore_shutdown ();
-#endif
-
 	free (xmms);
 }
 
 static VALUE c_alloc (VALUE klass)
 {
 	RbXmmsClient *xmms;
-
-#ifdef HAVE_ECORE
-	ecore_init ();
-#endif
 
 	return Data_Make_Struct (klass, RbXmmsClient,
 	                         c_mark, c_free, xmms);
@@ -119,26 +97,6 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 		rb_raise (eXmmsClientError, "cannot connect to daemon");
 
 	return self;
-}
-
-#ifdef HAVE_ECORE
-static VALUE c_setup_with_ecore (VALUE self)
-{
-	GET_OBJ (self, RbXmmsClient, xmms);
-
-	xmmsc_ipc_setup_with_ecore (xmms->real);
-
-	return Qnil;
-}
-#endif
-
-static VALUE c_setup_with_gmain (VALUE self)
-{
-	GET_OBJ (self, RbXmmsClient, xmms);
-
-	xmmsc_ipc_setup_with_gmain (xmms->real);
-
-	return Qnil;
 }
 
 METHOD_ADD_HANDLER(quit, true);
@@ -309,12 +267,6 @@ void Init_XmmsClient (void)
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
-
-#ifdef HAVE_ECORE
-	rb_define_method (c, "setup_with_ecore", c_setup_with_ecore, 0);
-#endif
-
-	rb_define_method (c, "setup_with_gmain", c_setup_with_gmain, 0);
 
 	METHOD_ADD (c, quit, 0);
 	METHOD_ADD (c, playback_start, 0);
