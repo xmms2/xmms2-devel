@@ -14,8 +14,6 @@
 #include <speex/speex_stereo.h>
 #include <ogg/ogg.h>
 
-#warning "CONVERT TO SAMPLE_T"
-
 typedef struct xmms_speex_data_St {
 	void *speex_state;
 	SpeexBits speex_bits;
@@ -140,8 +138,6 @@ xmms_speex_init (xmms_decoder_t *decoder)
 	                                            data->ogg_packet.bytes);
 	data->speex_state = speex_decoder_init(speex_mode_list[data->speexheader->mode]);
 
-	xmms_decoder_samplerate_set (decoder, data->speexheader->rate);
-
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder),
 	                                 "perceptual_enhancer");
 	pe = xmms_config_value_int_get (val);
@@ -150,6 +146,15 @@ xmms_speex_init (xmms_decoder_t *decoder)
 	ogg_sync_pageout (&data->sync_state, &data->ogg_page);
 	ogg_stream_pagein (&data->stream_state, &data->ogg_page);
 	ogg_stream_packetout (&data->stream_state, &data->ogg_packet);
+
+	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16,
+				 data->speexheader->nb_channels,
+				 data->speexheader->rate);
+	/* we don't have to care about the return value other than NULL,
+	   as there is only one format (to rule them all) */
+	if (xmms_decoder_format_finish (decoder) == NULL) {
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -268,7 +273,7 @@ xmms_speex_destroy (xmms_decoder_t *decoder)
 static void
 xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 {
-	xmms_medialib_entry *entry;
+	xmms_medialib_entry_t entry;
 	xmms_speex_data_t *data;
 	gchar tmp[20];
 
@@ -280,7 +285,7 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
-	entry = xmms_playlist_entry_new (NULL);
+	entry = xmms_medialib_entry_new (NULL);
 
 	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->speexheader->rate);
 	xmms_medialib_entry_property_set (entry,
@@ -292,8 +297,6 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                                  tmp);
 
-	xmms_decoder_entry_mediainfo_set (decoder, entry);
-
-	xmms_object_unref (entry);
+	xmms_medialib_entry_send_update (entry);
 }
 
