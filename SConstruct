@@ -11,7 +11,7 @@ EnsureSConsVersion(0, 94)
 EnsurePythonVersion(2, 1)
 SConsignFile()
 
-def FlagOption(key, help, default=[]):
+def SimpleListOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
 
 opts = Options(None, ARGUMENTS)
@@ -19,18 +19,18 @@ opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
 opts.Add('CC', 'C compiler to use', 'gcc')
 opts.Add('CXX', 'C++ compiler to use', 'g++')
 opts.Add('LD', 'Linker to use', 'ld')
-opts.Add('LINKFLAGS', 'Linker flags', '')
-opts.Add('LIBPATH', 'Path to libs', ['/sw/lib'])
-opts.Add('RUBYLIBDIR', 'Path to install Ruby bindings')
-opts.Add(FlagOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
-opts.Add(FlagOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
+opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
+opts.Add(SimpleListOption('LIBPATH', 'Path to libs', ['/sw/lib']))
+opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
+opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
+opts.Add(SimpleListOption('CPPPATH', 'path to include files', []))
 opts.Add('PREFIX', 'install prefix', '/usr/local')
-opts.Add('CPPPATH', 'path to include files', [])
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
+opts.Add('RUBYLIBDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
-opts.Add('SHOWCACHE', 'show what flags that lives inside cache', 0)
-opts.Add('CONFIG', 'run configuration commands again', 0)
-opts.Add('EXCLUDE', 'exclude this modules', '')
+opts.Add(BoolOption('SHOWCACHE', 'show what flags that lives inside cache', 0))
+opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
+opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
 
 # base CCPATH
 
