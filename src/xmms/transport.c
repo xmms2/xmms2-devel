@@ -114,6 +114,8 @@ struct xmms_transport_St {
 	gint numread; 	
 	gboolean buffering;
 
+	gboolean have_mimetype;
+
 	/** Number of bytes read from the transport */
 	guint64 total_bytes;
 
@@ -190,6 +192,8 @@ xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
 	} else {
 		transport->mimetype = NULL;
 	}
+
+	transport->have_mimetype = TRUE;
 
 	g_mutex_unlock (transport->mutex);
 	
@@ -378,7 +382,7 @@ xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
 	g_return_val_if_fail (transport, NULL);
 
 	g_mutex_lock (transport->mutex);
-	if (!transport->mimetype) {
+	if (!transport->have_mimetype) {
 		g_cond_wait (transport->mime_cond, transport->mutex);
 	}
 	ret = transport->mimetype;
