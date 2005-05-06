@@ -501,7 +501,7 @@ add_to_tree_foreach (gpointer key, gpointer value, gpointer udata)
 {
 	GNode *node = udata;
 	gchar **subkey, **ptr;
-	gpointer *data;
+	gpointer *data = NULL;
 
 	subkey = g_strsplit (key, ".", 0);
 	g_assert (subkey);

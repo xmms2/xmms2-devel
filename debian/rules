@@ -40,9 +40,6 @@ binary-arch: build
 	dh_installdirs
 	
 	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/"
-	rm -f debian/tmp/usr/lib/xmms/*.la
-	rm -f debian/tmp/usr/lib/xmms/*.a
-	find debian/tmp -name '.sconsign' |xargs rm
 	install -d debian/tmp/usr/include/xmms2/
 	install src/include/xmms/*.h debian/tmp/usr/include/xmms2/
 	
@@ -54,6 +51,7 @@ binary-arch: build
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs
+	dh_python
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol

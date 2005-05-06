@@ -11,13 +11,13 @@ def config(env):
 		print "Python distutils not installed try again!"
 		return False
 	
-	if not env.tryaction("pyrexc --version"):
+	if not env.tryaction("pyrexc 2>&1 --version"):
 		return False
 
 	# we need a custom builder to generate xmmsclient.c
 	pyx = env.Builder(action = 'pyrexc %s -o %s' % (env.dir+"/xmmsclient.pyx", env.dir+"/xmmsclient.c"))
 	env.Append(BUILDERS = {'Pyx' : pyx})
-	
+
 	# we need to get rid of some warnings.
 	env['CCFLAGS'].append("-Wno-unused-function")
 	env['CCFLAGS'].append("-Wno-unused-label")
