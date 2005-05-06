@@ -1,3 +1,9 @@
+xmms2 (1.9.5+bk20050506-1) unstable; urgency=low
+
+  * Added speex decoder plugin package.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Fri, 06 May 2005 16:57:33 +0200
+ 
 xmms2 (1.9.5+bk20050506-0) unstable; urgency=low
 
   * Added FLAC decoder plugin package.
