@@ -11,7 +11,7 @@ def config(env):
 		print "Python distutils not installed try again!"
 		return False
 	
-	if not env.tryaction("pyrexc 2>&1 --version"):
+	if not env.tryaction("which pyrexc"):
 		return False
 
 	# we need a custom builder to generate xmmsclient.c
