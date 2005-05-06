@@ -4,6 +4,12 @@ target="xmmsclient"
 source=["rb_xmmsclient_main.c", "rb_xmmsclient.c", "rb_result.c"]
 static=False
 
+def lib2sed(lib):
+	return " -e 's/ -l" + lib + " / /'"
+
+def ecorelib2sed(lib):
+	return " -e 's/ -lecore_" + lib + " / /'"
+
 def config(env):
 	if env.tryaction ("ruby --version") :
 		# we require ruby 1.8 or greater
@@ -27,5 +33,14 @@ def config(env):
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 		env["LIBS"].append("xmmsclient")
 		env["SHLIBPREFIX"]=''
+
+		# duplicated ecore check from xmmsclient-ecore.
+		# need to fix this the right way
+		rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb', 'config', 'file']
+		rem_misc_libs = ['eet', 'jpeg', 'z']
+		sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])
+		if env.configcmd("ecore-config --libs --cflags | " + sed_call):
+			env.Append(CPPDEFINES="-DHAVE_ECORE")
+
 		return True
 	return False
