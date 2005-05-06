@@ -41,6 +41,8 @@ def config(env):
 		sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])
 		if env.configcmd("ecore-config --libs --cflags | " + sed_call):
 			env.Append(CPPDEFINES="-DHAVE_ECORE")
+			env.Append(LIBPATH="src/clients/lib/xmmsclient-ecore")
+			env["LIBS"].append("xmmsclient-ecore")
 
 		return True
 	return False
