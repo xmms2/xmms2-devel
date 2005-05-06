@@ -133,11 +133,11 @@ def scan_dir(dir, dict):
 		if os.path.isdir(newdir):
 			scan_dir(newdir, dict)
 		if os.path.isfile(newdir):
-			if d == 'Plugin':
+			if d.startswith('Plugin'):
 				dict["plugin"].append(newdir)
-			if d == 'Library':
+			if d.startswith('Library'):
 				dict["library"].append(newdir)
-			if d == 'Program':
+			if d.startswith('Program'):
 				dict["program"].append(newdir)
 
 targets = {"plugin":[], "library":[], "program":[]}

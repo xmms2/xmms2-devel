@@ -4,8 +4,8 @@ $MODE = "GLIB"
 $MODE = "ECORE" if ARGV[0] == "-ecore"
 
 require "xmmsclient"
-require "ecore" if $MODE == "ECORE"
-require "gtk2" if $MODE == "GLIB"
+require "xmmsclient_ecore" if $MODE == "ECORE"
+require "xmmsclient_glib" if $MODE == "GLIB"
 
 Gtk.init if $MODE == "GLIB"
 
@@ -13,8 +13,8 @@ xc = XmmsClient::XmmsClient.new("Ruby")
 
 xc.connect
 
-xc.setup_with_ecore if $MODE == "ECORE"
-xc.setup_with_gmain if $MODE == "GLIB"
+xc.add_to_ecore_mainloop if $MODE == "ECORE"
+xc.add_to_glib_mainloop if $MODE == "GLIB"
 
 xc.broadcast_playback_current_id.notifier do |r|
 	puts "now playing: #{r.uint}"

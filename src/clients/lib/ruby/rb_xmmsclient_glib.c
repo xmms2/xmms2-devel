@@ -15,17 +15,34 @@
  */
 
 #include <xmms/xmmsclient.h>
+#include <xmms/xmmsclient-glib.h>
 
 #include <ruby.h>
+#include <stdbool.h>
 
-#include "rb_xmmsclient_main.h"
 #include "rb_xmmsclient.h"
-#include "rb_result.h"
+#include "rb_xmmsclient_main.h"
 
-void Init_xmmsclient (void)
+static VALUE c_add_to_glib_mainloop (VALUE self)
 {
-	mXmmsClient = rb_define_module ("XmmsClient");
+	GET_OBJ (self, RbXmmsClient, xmms);
 
-	Init_XmmsClient ();
-	Init_Result ();
+	xmmsc_ipc_setup_with_gmain (xmms->real);
+
+	return self;
+}
+
+void Init_xmmsclient_glib (void)
+{
+	VALUE c;
+	ID id;
+
+	rb_require ("xmmsclient");
+	rb_require ("glib");
+
+	id = rb_intern ("XmmsClient");
+	c = rb_const_get (rb_const_get (rb_cModule, id), id);
+
+	rb_define_method (c, "add_to_glib_mainloop",
+	                  c_add_to_glib_mainloop, 0);
 }
