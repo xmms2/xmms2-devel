@@ -30,13 +30,13 @@ typedef struct xmms_error_St {
 } xmms_error_t;
 
 static inline void
-xmms_error_set (xmms_error_t *err, xmms_error_code_t code, gchar *message)
+xmms_error_set (xmms_error_t *err, xmms_error_code_t code, const gchar *message)
 {
 	g_return_if_fail (err);
 
 	err->code = code;
 	if (message) {
-		g_strlcpy (err->message, message, 256);
+		g_strlcpy (err->message, message, XMMS_ERROR_MESSAGE_MAXLEN);
 	} else {
 		err->message[0] = 0;
 	}
