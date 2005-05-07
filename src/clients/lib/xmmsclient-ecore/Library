@@ -9,6 +9,7 @@ def ecorelib2sed(lib):
 
 def config(env):
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env["SHLIBSUFFIX"] += ".0"
 	env["LIBS"].append("xmmsclient")
 	rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb', 'config', 'file']
 	rem_misc_libs = ['eet', 'jpeg', 'z']

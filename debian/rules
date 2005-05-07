@@ -50,9 +50,7 @@ binary-arch: build
 	dh_strip
 	dh_compress
 	dh_fixperms
-	# this is generating broken shlibs files right now. I think due to
-	# missing version strings in the so names
-	# dh_makeshlibs
+	dh_makeshlibs -plibxmms2client -plibxmms2client-ecore
 	dh_python
 	dh_installdeb
 	dh_shlibdeps
