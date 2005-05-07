@@ -16,6 +16,10 @@ def config(env):
 
 		print version
 
+		got_ruby_h = env.run("ruby -rrbconfig -e 'puts File.exist?(Config::CONFIG[\"archdir\"] + \"/ruby.h\")'").strip()
+		if got_ruby_h != "true" :
+			return False
+
 		cmd = "ruby -rrbconfig -e 'puts \"-I%s -L%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'"
 		env.configcmd(cmd)
 		if env.has_key("RUBYARCHDIR"):
