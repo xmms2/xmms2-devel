@@ -46,6 +46,18 @@
 
 #include <pthread.h>
 
+#ifdef XMMS_OS_LINUX 
+# define XMMS_OUTPUT_DEFAULT "alsa"
+#elif XMMS_OS_OPENBSD
+# define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_SOLARIS
+# define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_DARWIN
+# define XMMS_OUTPUT_DEFAULT "coreaudio"
+#elif XMMS_OS_FREEBSD
+# define XMMS_OUTPUT_DEFAULT "oss"
+#endif
+
 static void quit (xmms_object_t *object, xmms_error_t *error);
 static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 

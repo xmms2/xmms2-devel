@@ -35,7 +35,7 @@ opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
 # base CCPATH
 
 base_env = xmmsenv.XMMSEnvironment(options=opts)
-base_env.Append(CPPPATH=["#src", "#src/include"])
+base_env.Append(CPPPATH=["#src/include"])
 base_env.pkgconfig("glib-2.0", fail=True)
 base_env.pkgconfig("sqlite3", fail=True, libs=False)
 
@@ -103,7 +103,7 @@ base_env.SourceCode('src/xmms/converter.c', b)
 subst_dict = {"%VERSION%":"1.9.9 DR1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
 	      "%SHAREDDIR%":base_env.sharepath}
-config = base_env.SubstInFile("src/include/xmms/xmms.h", "src/include/xmms/xmms.h.in", SUBST_DICT=subst_dict)
+config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
 
 class Target:
 	def __init__(self, target, type):

@@ -24,7 +24,7 @@
 
 typedef int (*xmms_medialib_row_method_t) (void *pArg, int argc, char **argv, char **columnName);
 
-sqlite3 *xmms_sqlite_open ();
+sqlite3 *xmms_sqlite_open (guint *nextid, gboolean *c);
 gboolean xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...);
 void xmms_sqlite_close (sqlite3 *sql);
 

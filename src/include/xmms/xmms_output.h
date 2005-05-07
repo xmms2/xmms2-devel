@@ -21,22 +21,6 @@
 #define _XMMS_OUTPUT_H_
 
 #include <glib.h>
-#include "xmms/xmms.h"
-
-
-#ifdef XMMS_OS_LINUX 
-#define XMMS_OUTPUT_DEFAULT "alsa"
-#elif XMMS_OS_OPENBSD
-#define XMMS_OUTPUT_DEFAULT "sun"
-#elif XMMS_OS_SOLARIS
-#define XMMS_OUTPUT_DEFAULT "sun"
-#elif XMMS_OS_DARWIN
-#define XMMS_OUTPUT_DEFAULT "coreaudio"
-#elif XMMS_OS_FREEBSD
-#define XMMS_OUTPUT_DEFAULT "oss"
-#endif
-
-#define XMMS_OUTPUT_DEFAULT_BUFFERSIZE "131072"
 
 /*
  * Type definitions

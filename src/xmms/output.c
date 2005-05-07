@@ -32,6 +32,7 @@
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_config.h"
 
+
 static gpointer xmms_output_write_thread (gpointer data);
 static gboolean xmms_output_decoder_start (xmms_output_t *output);
 static void xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt);
