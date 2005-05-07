@@ -26,15 +26,16 @@ typedef struct {
 
 	gchar *url;
 
-	gboolean running, know_length, know_mime, shoutcast;
+	gboolean know_length, know_mime, shoutcast;
 
 	struct curl_slist *http_aliases;
 	struct curl_slist *http_headers;
 
-	xmms_ringbuf_t *ringbuf;
+	gchar *buffer;
+	guint bufferpos, bufferlen;
 
-	GThread *thread;
-	GMutex *mutex;
+	gchar *metabuffer;
+	guint metabufferpos, metabufferleft;
 
 	xmms_error_t status;
 } xmms_curl_data_t;
@@ -80,7 +81,6 @@ static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint le
 static gint xmms_curl_size (xmms_transport_t *transport);
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
-static void xmms_curl_thread (xmms_transport_t *transport);
 
 /*
  * Plugin header
@@ -153,8 +153,9 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
 	verbose = xmms_config_value_int_get (val);
 
-	data->ringbuf = xmms_ringbuf_new (bufsize);
-	data->mutex = g_mutex_new ();
+	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
+	data->metabuffer = g_malloc (256 * 16);
+
 	data->url = g_strdup (url);
 
 	data->http_aliases = curl_slist_append (data->http_aliases, "ICY 200 OK");
@@ -189,53 +190,16 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	xmms_transport_private_data_set (transport, data);
 
-	data->running = TRUE;
-	data->thread = g_thread_create ((GThreadFunc) xmms_curl_thread, (gpointer) transport, TRUE, NULL);
-	g_return_val_if_fail (data->thread, FALSE);
+	xmms_transport_buffering_start (transport, data);
 
 	return TRUE;
-}
-
-static gint
-xmms_curl_read_with_meta (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
-{
-	xmms_curl_data_t *data;
-	guchar magic = 0;
-	gchar *metadata;
-	gint ret;
-
-	data = xmms_transport_private_data_get (transport);
-
-	if (data->bytes_since_meta == data->meta_offset) {
-		data->bytes_since_meta = 0;
-
-		xmms_ringbuf_read_wait (data->ringbuf, &magic, 1, data->mutex);
-
-		if (magic != 0) {
-
-			metadata = g_malloc0 (magic * 16);
-			xmms_ringbuf_read_wait (data->ringbuf, metadata, magic * 16, data->mutex);
-
-			handle_shoutcast_metadata (transport, metadata);
-			g_free (metadata);
-
-		}
-	}
-
-	if (data->bytes_since_meta + len > data->meta_offset)
-		len = data->meta_offset - data->bytes_since_meta;
-
-	ret = xmms_ringbuf_read_wait (data->ringbuf, buffer, len, data->mutex);
-	data->bytes_since_meta += ret;
-
-	return ret;
 }
 
 static gint
 xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_curl_data_t *data;
-	gint ret;
+	gint code, handles;
 
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
@@ -244,30 +208,64 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	g_mutex_lock (data->mutex);
+	code = CURLM_CALL_MULTI_PERFORM;
 
-	xmms_ringbuf_wait_used (data->ringbuf, 1, data->mutex);
+	while (TRUE) {
 
-	if (xmms_ringbuf_iseos (data->ringbuf)) {
+		/* if we have data available, just pick it up */
+		if (data->bufferlen) {
+			len = MIN (len, data->bufferlen);
+			memcpy (buffer, data->buffer, len);
+			data->bufferlen -= len;
+			if (data->bufferlen)
+				memmove (data->buffer, data->buffer + len, data->bufferlen);
+			return len;
+		}
 
-		if (data->status.code == XMMS_ERROR_EOS)
-			ret = 0;
-		else
-			ret = -1;
+		if (code == CURLM_OK) {
+			fd_set fdread, fdwrite, fdexcp;
+			struct timeval timeout;
+			gint ret, maxfd;
 
-		xmms_error_set (error, data->status.code, data->status.message);
+			timeout.tv_sec = 10;
+			timeout.tv_usec = 0;
+			
+			FD_ZERO (&fdread);
+			FD_ZERO (&fdwrite);
+			FD_ZERO (&fdexcp);
+			
+			curl_multi_fdset (data->curl_multi, &fdread, &fdwrite, &fdexcp,  &maxfd);
+			
+			ret = select (maxfd + 1, &fdread, &fdwrite, &fdexcp, &timeout);
 
-		g_mutex_unlock (data->mutex);
-		return ret;
+			if (ret == -1) {
+				xmms_error_set (error, XMMS_ERROR_GENERIC, "Error select");
+				break;
+			} else if (ret == 0) {
+				xmms_error_set (error, XMMS_ERROR_GENERIC, "Timeout");
+				break;
+			}
+
+		}
+
+		code = curl_multi_perform (data->curl_multi, &handles);
+
+		if (code != CURLM_CALL_MULTI_PERFORM && code != CURLM_OK) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, curl_multi_strerror (code));
+			break;
+		}
+
+		/* done */
+		if (handles == 0) {
+			return 0;
+		}
+
 	}
 
-	if (data->meta_offset > 0)
-		ret = xmms_curl_read_with_meta (transport, buffer, len, error);
-	else
-		ret = xmms_ringbuf_read_wait (data->ringbuf, buffer, len, data->mutex);
+	if (!data->know_mime)
+		xmms_transport_mimetype_set (transport, NULL);
 
-	g_mutex_unlock (data->mutex);
-	return ret;
+	return -1;
 }
 
 static gint
@@ -281,12 +279,10 @@ xmms_curl_size (xmms_transport_t *transport)
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	g_mutex_lock (data->mutex);
 	if (data->know_length)
 		len = data->length;
 	else
 		len = -1;
-	g_mutex_unlock (data->mutex);
 
 	return len;
 }
@@ -301,25 +297,14 @@ xmms_curl_close (xmms_transport_t *transport)
 	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
 
-	g_mutex_lock (data->mutex);
-	data->running = FALSE;
-	xmms_ringbuf_clear (data->ringbuf);
-	g_mutex_unlock (data->mutex);
-
-	XMMS_DBG ("Waiting for thread...");
-	g_thread_join (data->thread);
-	XMMS_DBG ("Thread is joined");
-
 	curl_multi_cleanup (data->curl_multi);
 	curl_easy_cleanup (data->curl_easy);
 
-	xmms_ringbuf_clear (data->ringbuf);
-	xmms_ringbuf_destroy (data->ringbuf);
-
-	g_mutex_free (data->mutex);
-
 	curl_slist_free_all (data->http_aliases);
 	curl_slist_free_all (data->http_headers);
+
+	g_free (data->buffer);
+	g_free (data->metabuffer);
 
 	g_free (data->url);
 	g_free (data);
@@ -334,18 +319,51 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	xmms_curl_data_t *data;
 	xmms_transport_t *transport = (xmms_transport_t *) stream;
-	gint ret;
+	gint len;
 
 	g_return_val_if_fail (transport, 0);
 
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
-	g_mutex_lock (data->mutex);
-	ret = xmms_ringbuf_write_wait (data->ringbuf, ptr, size * nmemb, data->mutex);
-	g_mutex_unlock (data->mutex);
+	g_return_val_if_fail (data->bufferlen == 0, 0);
 
-	return ret;
+	len = size * nmemb;
+
+	g_return_val_if_fail (len <= CURL_MAX_WRITE_SIZE, 0);
+
+	while (len) {
+		if (data->metabufferleft) {
+			gint tlen = MIN (len, data->metabufferleft);
+			memcpy (data->metabuffer + data->metabufferpos, ptr, tlen);
+			data->metabufferleft -= tlen;
+			data->metabufferpos += tlen;
+			if (!data->metabufferleft) {
+				handle_shoutcast_metadata (transport, data->metabuffer);
+				data->bytes_since_meta = 0;
+
+			}
+			len -= tlen;
+		} else if (data->meta_offset && data->bytes_since_meta == data->meta_offset) {
+			data->metabufferleft = (*((guchar *)ptr)) * 16;
+			data->metabufferpos = 0;
+			len--;
+			ptr++;
+			if (data->metabufferleft == 0)
+				data->bytes_since_meta = 0;
+		} else {
+			gint tlen = len;
+			if (data->meta_offset)
+				tlen = MIN (tlen, data->meta_offset - data->bytes_since_meta);
+			memcpy (data->buffer + data->bufferlen, ptr, tlen);
+			len -= tlen;
+			ptr += tlen;
+			data->bytes_since_meta += tlen;
+			data->bufferlen += tlen;
+		}
+	}
+
+	return size * nmemb;
 }
 
 static size_t
@@ -371,73 +389,6 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	return size * nmemb;
 }
 
-/*
- * Our curl thread
- */
-
-static void
-xmms_curl_thread (xmms_transport_t *transport)
-{
-	xmms_curl_data_t *data;
-	struct timeval timeout;
-	gint handles, maxfd;
-
-	fd_set fdread, fdwrite, fdexcp;
-
-	g_return_if_fail (transport);
-
-	data = xmms_transport_private_data_get (transport);
-	g_return_if_fail (data);
-
-	while (curl_multi_perform (data->curl_multi, &handles) == CURLM_CALL_MULTI_PERFORM);
-
-	g_mutex_lock (data->mutex);
-	while (data->running && handles) {
-		CURLMcode code;
-		gint ret;
-
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-
-		FD_ZERO (&fdread);
-		FD_ZERO (&fdwrite);
-		FD_ZERO (&fdexcp);
-
-		curl_multi_fdset (data->curl_multi, &fdread, &fdwrite, &fdexcp,  &maxfd);
-
-		g_mutex_unlock (data->mutex);
-		ret = select (maxfd + 1, &fdread, &fdwrite, &fdexcp, &timeout);
-		g_mutex_lock (data->mutex);
-
-		if (ret == -1)
-			goto cont;
-
-		if (ret == 0)
-			continue;
-
-		while (42) {
-			g_mutex_unlock (data->mutex);
-			code = curl_multi_perform (data->curl_multi, &handles);
-			g_mutex_lock (data->mutex);
-
-			if (code == CURLM_OK)
-				break;
-
-			if (code != CURLM_CALL_MULTI_PERFORM) {
-				xmms_log_error ("%s", curl_multi_strerror (code));
-				goto cont;
-			}
-		}
-	}
-
-cont:
-	if (!data->know_mime) {
-		xmms_transport_mimetype_set (transport, NULL);
-	}
-
-	xmms_ringbuf_set_eos (data->ringbuf, TRUE);
-	g_mutex_unlock (data->mutex);
-}
 
 static handler_func_t
 header_handler_find (gchar *header)
@@ -463,9 +414,7 @@ header_handler_contenttype (xmms_transport_t *transport, gchar *header)
 
 	data = xmms_transport_private_data_get (transport);
 
-	g_mutex_lock (data->mutex);
 	data->know_mime = TRUE;
-	g_mutex_unlock (data->mutex);
 
 	xmms_transport_mimetype_set (transport, header);
 }
@@ -477,9 +426,7 @@ header_handler_contentlength (xmms_transport_t *transport, gchar *header)
 
 	data = xmms_transport_private_data_get (transport);
 
-	g_mutex_lock (data->mutex);
 	data->length = strtoul (header, NULL, 10);
-	g_mutex_unlock (data->mutex);
 }
 
 static void
@@ -489,9 +436,7 @@ header_handler_icy_metaint (xmms_transport_t *transport, gchar *header)
 
 	data = xmms_transport_private_data_get (transport);
 
-	g_mutex_lock (data->mutex);
 	data->meta_offset = strtoul (header, NULL, 10);
-	g_mutex_unlock (data->mutex);
 }
 
 static void
@@ -521,9 +466,7 @@ header_handler_icy_ok (xmms_transport_t *transport, gchar *header)
 
 	data = xmms_transport_private_data_get (transport);
 
-	g_mutex_lock (data->mutex);
 	data->shoutcast = TRUE;
-	g_mutex_unlock (data->mutex);
 }
 
 static void
@@ -544,8 +487,6 @@ header_handler_last (xmms_transport_t *transport, gchar *header)
 
 	data = xmms_transport_private_data_get (transport);
 
-	g_mutex_lock (data->mutex);
-
 	if (data->shoutcast)
 		mime = "audio/mpeg";
 
@@ -553,7 +494,6 @@ header_handler_last (xmms_transport_t *transport, gchar *header)
 		xmms_transport_mimetype_set (transport, mime);
 
 	data->know_mime = TRUE;
-	g_mutex_unlock (data->mutex);
 }
 
 static void
@@ -566,10 +506,6 @@ handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 
 	data = xmms_transport_private_data_get (transport);
 	entry = xmms_transport_medialib_entry_get (transport);
-
-	if (!metadata) {
-		return;
-	}
 
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
