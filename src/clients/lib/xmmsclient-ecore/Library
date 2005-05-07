@@ -8,9 +8,10 @@ def ecorelib2sed(lib):
 	return " -e 's/ -lecore_" + lib + " / /'"
 
 def config(env):
-	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	env["SHLIBSUFFIX"] += ".0"
+	env["SHLINKFLAGS"] += " -Wl,-soname," + env["SHLIBPREFIX"] + target + env["SHLIBSUFFIX"]
 	env["LIBS"].append("xmmsclient")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb', 'config', 'file']
 	rem_misc_libs = ['eet', 'jpeg', 'z']
 	sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])

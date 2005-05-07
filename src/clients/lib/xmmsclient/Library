@@ -12,6 +12,7 @@ source=["ipc.c",
 
 def config(env):
 	env["SHLIBSUFFIX"] += ".0"
+	env["SHLINKFLAGS"] += " -Wl,-soname," + env["SHLIBPREFIX"] + target + env["SHLIBSUFFIX"]
 	env["LIBS"].append("xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	return True
