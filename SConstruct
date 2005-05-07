@@ -107,7 +107,7 @@ config = base_env.SubstInFile("src/include/xmms/xmms.h", "src/include/xmms/xmms.
 
 class Target:
 	def __init__(self, target, type):
-		self.dir = target[:target.rindex("/")]
+		self.dir = os.path.dirname(target)
 		self.type = type
 		self.static = True
 		self.shared = True
@@ -117,8 +117,8 @@ class Target:
 		c = compile(source, target, "exec")
 		eval(c, my_global)
 		if my_global["target"] and my_global["source"] and my_global["config"]:
-			self.source = [self.dir+"/"+s for s in my_global["source"]]
-			self.target = self.dir+"/"+my_global["target"]
+			self.source = [os.path.join(self.dir, s) for s in my_global["source"]]
+			self.target = os.path.join(self.dir, my_global["target"])
 			self.config = my_global["config"]
 			if my_global.has_key("static"):
 				self.static = my_global["static"]
