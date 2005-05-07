@@ -17,14 +17,10 @@
 
 
 
-#include "xmms/plugin.h"
-#include "xmms/output.h"
-#include "xmms/util.h"
-#include "xmms/xmms.h"
-#include "xmms/object.h"
-#include "xmms/ringbuf.h"
-#include "xmms/config.h"
-#include "xmms/signal_xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_output.h"
+#include "xmms/xmms_log.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

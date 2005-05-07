@@ -21,9 +21,8 @@
 #include <sys/select.h>
 #include <errno.h>
 #include <time.h>
-#include "xmms/ipc_transport.h"
-#include "xmms/ipc_msg.h"
-#include "xmms/util.h"
+#include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_ipc_msg.h"
 
 typedef union {
 	struct {
@@ -233,7 +232,6 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, gconstpointer data, guint len)
 		/* Realloc data portion */
 		msg->data = g_realloc (msg->data, msg->size + reallocsize);
 		msg->size += reallocsize;
-		XMMS_DBG ("Realloc to size %d", msg->size);
 	}
 	memcpy (&msg->data->header.data[xmms_ipc_msg_get_length (msg)], data, len);
 	xmms_ipc_msg_set_length (msg, xmms_ipc_msg_get_length (msg) + len);

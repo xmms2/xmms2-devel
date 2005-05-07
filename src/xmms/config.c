@@ -24,14 +24,20 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "xmms/config.h"
+#include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmspriv/xmms_config.h"
+#include "xmms/xmms_ipc.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_defs.h"
+
+/*
 #include "xmms/util.h"
 #include "xmms/xmms.h"
 #include "xmms/object.h"
 #include "xmms/signal_xmms.h"
 #include "xmms/plugin.h"
 #include "xmms/ipc.h"
-
+*/
 
 /** @internal */
 typedef enum {

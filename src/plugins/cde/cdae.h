@@ -19,7 +19,7 @@
 #define __CDAE_H__
 
 #include <glib.h>
-#include "xmms/playlist.h"
+#include "xmms/xmms_medialib.h"
 
 #define XMMS_CDAE_FRAMESIZE 2352
 

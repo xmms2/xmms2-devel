@@ -18,9 +18,10 @@
 
 #include <stdio.h>
 
-#include "internal/client_ipc.h"
-#include "xmms/xmmsclient.h"
-#include "internal/xmmsclient_int.h"
+#include "xmmsclient/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient_ipc.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 typedef struct {
 	GSource source;

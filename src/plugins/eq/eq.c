@@ -22,13 +22,13 @@
  * Equalizer-effect
  */
 
-#include "xmms/xmms.h"
-#include "xmms/plugin.h"
-#include "xmms/effect.h"
-#include "xmms/util.h"
-#include "xmms/config.h"
-#include "xmms/object.h"
-#include "xmms/signal_xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_effect.h"
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_sample.h"
+
 
 #include <math.h>
 #include <glib.h>

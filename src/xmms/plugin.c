@@ -14,12 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/plugin.h"
-#include "xmms/util.h"
-#include "xmms/config.h"
-#include "xmms/object.h"
-
-#include "internal/plugin_int.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_object.h"
+#include "xmms/xmms_log.h"
 
 #include <gmodule.h>
 #include <string.h>
@@ -29,11 +27,15 @@
 #endif
 
 #ifdef XMMS_OS_DARWIN
-#define XMMS_LIBSUFFIX ".dylib"
+# define XMMS_LIBSUFFIX ".dylib"
 #else
-#define XMMS_LIBSUFFIX ".so"
+# define XMMS_LIBSUFFIX ".so"
 #endif
 
+typedef struct {
+	gchar *key;
+	gchar *value;
+} xmms_plugin_info_t;
 
 extern xmms_config_t *global_config;
 

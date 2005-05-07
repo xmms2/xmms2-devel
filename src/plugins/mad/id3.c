@@ -11,8 +11,8 @@
  * id3 and id3v2
  */
 
-#include "xmms/util.h"
-#include "xmms/playlist.h"
+#include "xmms/xmms_medialib.h"
+#include "xmms/xmms_log.h"
 #include "id3.h"
 
 #include <glib.h>

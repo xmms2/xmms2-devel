@@ -23,12 +23,11 @@
   */
 
 
-#include "xmms/plugin.h"
-#include "xmms/decoder.h"
-#include "xmms/util.h"
-#include "xmms/output.h"
-#include "xmms/transport.h"
-#include "xmms/xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_transport.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_decoder.h"
 
 #include <math.h>
 #include <vorbis/codec.h>
