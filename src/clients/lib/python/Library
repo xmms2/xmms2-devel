@@ -15,6 +15,8 @@ def config(env):
 		return False
 
 	# we need a custom builder to generate xmmsclient.c
+	from os import environ
+	env['ENV']['PATH'] = environ['PATH']
 	pyx = env.Builder(action = 'pyrexc %s -o %s' % (env.dir+"/xmmsclient.pyx", env.dir+"/xmmsclient.c"))
 	env.Append(BUILDERS = {'Pyx' : pyx})
 
