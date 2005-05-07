@@ -39,18 +39,20 @@ binary-arch: build
 	dh_clean -k
 	dh_installdirs
 	
-	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/"
+	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/" install
 	install -d debian/tmp/usr/include/xmms2/
 	install src/include/xmms/*.h debian/tmp/usr/include/xmms2/
 	
 	dh_install --sourcedir=debian/tmp --list-missing
-	dh_installdocs AUTHORS README TODO INSTALL
+	dh_installdocs AUTHORS README TODO 
 	dh_installchangelogs
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs
+	# this is generating broken shlibs files right now. I think due to
+	# missing version strings in the so names
+	# dh_makeshlibs
 	dh_python
 	dh_installdeb
 	dh_shlibdeps
