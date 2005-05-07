@@ -258,11 +258,11 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	return o;
 }
 
-void Init_XmmsClient (void)
+void Init_XmmsClient (VALUE m)
 {
 	VALUE c;
 
-	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
+	c = rb_define_class_under (m, "XmmsClient", rb_cObject);
 
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
@@ -303,7 +303,6 @@ void Init_XmmsClient (void)
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
 
-	eXmmsClientError = rb_define_class_under (mXmmsClient,
-	                                          "XmmsClientError",
+	eXmmsClientError = rb_define_class_under (m, "XmmsClientError",
 	                                          rb_eStandardError);
 }

@@ -24,8 +24,8 @@
 
 void Init_xmmsclient (void)
 {
-	mXmmsClient = rb_define_module ("XmmsClient");
+	VALUE m = rb_define_module ("XmmsClient");
 
-	Init_XmmsClient ();
-	Init_Result ();
+	Init_XmmsClient (m);
+	Init_Result (m);
 }

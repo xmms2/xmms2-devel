@@ -22,6 +22,4 @@
 \
 	Data_Get_Struct ((obj), type, (o));
 
-VALUE mXmmsClient;
-
 #endif

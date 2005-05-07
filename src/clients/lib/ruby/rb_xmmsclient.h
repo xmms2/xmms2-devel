@@ -22,7 +22,7 @@ typedef struct {
 	VALUE results;
 } RbXmmsClient;
 
-void Init_XmmsClient (void);
+void Init_XmmsClient (VALUE m);
 
 #ifndef __RB_XMMSCLIENT_C
 extern VALUE eXmmsClientError;
