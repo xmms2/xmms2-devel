@@ -26,10 +26,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "xmms/visualisation.h"
-#include "xmms/object.h"
-#include "xmms/util.h"
-#include "xmms/ipc.h"
+#include "xmmspriv/xmms_visualisation.h"
+#include "xmmspriv/xmms_ipc.h"
+#include "xmmspriv/xmms_sample.h"
+#include "xmms/xmms_object.h"
+
 
 /** @defgroup Visualisation Visualisation
   * @ingroup XMMSServer

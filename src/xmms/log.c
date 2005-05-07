@@ -27,8 +27,8 @@
 #define _GNU_SOURCE
 #endif
 
-#include "xmms/log.h"
-#include "xmms/config.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_config.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -45,6 +45,11 @@
 #include <signal.h>
 
 #include <regex.h>
+
+#define XMMS_LOG_DEBUG 1
+#define XMMS_LOG_INFORMATION 2
+#define XMMS_LOG_FATAL 3 
+#define XMMS_LOG_THOMAS 3
 
 #ifndef BUFSIZE
 #define BUFSIZE 8192

@@ -22,10 +22,9 @@
  */
 
 
-#include "xmms/unixsignal.h"
-#include "xmms/util.h"
-#include "xmms/object.h"
-#include "xmms/signal_xmms.h"
+#include "xmmspriv/xmms_unixsignal.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_object.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -23,13 +23,10 @@
  * This file contains functions for manipulate xmms_playlist_plugin_t objects.
  */
 
-#include "internal/transport_int.h"
-#include "xmms/plugin.h"
-#include "xmms/util.h"
-#include "xmms/playlist.h"
-#include "xmms/plsplugins.h"
-
-#include "internal/plugin_int.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_plsplugins.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmms/xmms_log.h"
 
 #include <string.h>
 

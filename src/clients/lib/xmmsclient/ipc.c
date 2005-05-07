@@ -18,17 +18,17 @@
 
 #include <sys/types.h>
 #include <sys/select.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "xmms/util.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/xmmsclient.h"
+#include "xmmsclient/xmmsclient.h"
 
-#include "xmms/ipc.h"
-#include "xmms/ipc_transport.h"
-#include "xmms/ipc_msg.h"
+#include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_ipc_msg.h"
 
-#include "internal/client_ipc.h"
+#include "xmmsclientpriv/xmmsclient_ipc.h"
+#include "xmmsc/xmmsc_idnumbers.h"
+
 
 struct xmmsc_ipc_St {
 	xmms_ipc_transport_t *transport;

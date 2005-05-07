@@ -30,8 +30,8 @@
 #include <signal.h>
 #include <syslog.h>
 
-#include "xmms/util.h"
-#include "xmms/ipc_transport.h"
+#include "xmms/xmms_log.h"
+#include "xmmsc/xmmsc_ipc_transport.h"
 
 void
 xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)

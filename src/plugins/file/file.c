@@ -17,11 +17,10 @@
 
 
 
-#include "xmms/xmms.h"
-#include "xmms/plugin.h"
-#include "xmms/transport.h"
-#include "xmms/util.h"
-#include "xmms/magic.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_transportplugin.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_magic.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

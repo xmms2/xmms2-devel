@@ -18,7 +18,7 @@
 
 #include <glib.h>
 
-#include "xmms/ipc_transport.h"
+#include "xmmsc/xmmsc_ipc_transport.h"
 #include "socket_unix.h"
 #include "socket_tcp.h"
 

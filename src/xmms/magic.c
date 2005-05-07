@@ -16,10 +16,10 @@
 
 
 
-
 #include <glib.h>
 #include <string.h>
-#include "xmms/util.h"
+
+#include "xmms/xmms_log.h"
 
 typedef struct xmms_mimemap_St {
 	gchar *ext;

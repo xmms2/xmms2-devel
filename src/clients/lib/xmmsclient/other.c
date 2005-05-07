@@ -19,10 +19,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "xmms/xmmsclient.h"
-#include "xmms/signal_xmms.h"
-
-#include "internal/xmmsclient_int.h"
+#include "xmmsclient/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient_ipc.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 /**
  * @defgroup OtherControl OtherControl

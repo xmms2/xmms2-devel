@@ -17,13 +17,12 @@
 
 
 
-#include "xmms/plugin.h"
-#include "xmms/transport.h"
-#include "xmms/playlist.h"
-#include "xmms/medialib.h"
-#include "xmms/plsplugins.h"
-#include "xmms/util.h"
-#include "xmms/xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_transport.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_plsplugins.h"
+#include "xmms/xmms_medialib.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -95,7 +94,7 @@ static xmms_medialib_entry_t
 parse_line (const gchar *line, const gchar *m3u_path)
 {
 	xmms_medialib_entry_t entry;
-	gchar newp[XMMS_MAX_URI_LEN + 1], *p;
+	gchar newp[1024], *p;
 
 	g_assert (line);
 

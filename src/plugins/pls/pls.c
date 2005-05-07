@@ -17,13 +17,12 @@
 
 
 
-#include "xmms/plugin.h"
-#include "xmms/transport.h"
-#include "xmms/playlist.h"
-#include "xmms/medialib.h"
-#include "xmms/plsplugins.h"
-#include "xmms/xmms.h"
-#include "xmms/util.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_transport.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_plsplugins.h"
+#include "xmms/xmms_medialib.h"
 
 #include <string.h>
 #include <stdio.h>

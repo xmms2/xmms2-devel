@@ -29,9 +29,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "xmms/xmmsclient.h"
-#include "xmms/xmmsclient-glib.h"
-#include "xmms/signal_xmms.h"
+#include "xmmsclient/xmmsclient-glib.h"
 
 /** @todo these should be pulled in from an include-file */
 #define FFT_BITS 10
