@@ -14,8 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-#include <Ecore.h>
-
 #include <xmms/xmmsclient.h>
 #include <xmms/xmmsclient-ecore.h>
 
@@ -30,16 +28,7 @@ static VALUE c_add_to_ecore_mainloop (VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	ecore_init ();
-
 	xmmsc_ipc_setup_with_ecore (xmms->real);
-
-	return self;
-}
-
-static VALUE c_remove_from_ecore_mainloop (VALUE self)
-{
-	ecore_shutdown ();
 
 	return self;
 }
@@ -57,6 +46,4 @@ void Init_xmmsclient_ecore (void)
 
 	rb_define_method (c, "add_to_ecore_mainloop",
 	                  c_add_to_ecore_mainloop, 0);
-	rb_define_method (c, "remove_from_ecore_mainloop",
-	                  c_remove_from_ecore_mainloop, 0);
 }
