@@ -204,6 +204,7 @@ class XMMSEnvironment(Environment):
 			self.Install(self.librarypath, self.dir+"/"+self["LIBPREFIX"]+target[target.rindex("/")+1:]+self["LIBSUFFIX"])
 		if shared:
 			self.SharedLibrary(target, source)
+			self["SHLINKFLAGS"] += " -Wl,-soname,"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+".so"
 			if self.platform == 'darwin':
 				self["SHLINKFLAGS"] += " -dynamiclib"
 			self.Install(self.librarypath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
