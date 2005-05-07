@@ -129,6 +129,8 @@ class Target:
 
 def scan_dir(dir, dict):
 	for d in os.listdir(dir):
+		if d in base_env['EXCLUDE']:
+			continue
 		newdir = dir+"/"+d
 		if os.path.isdir(newdir):
 			scan_dir(newdir, dict)
