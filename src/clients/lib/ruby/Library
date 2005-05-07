@@ -18,8 +18,8 @@ def config(env):
 
 		cmd = "ruby -rrbconfig -e 'puts \"-I%s -L%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'"
 		env.configcmd(cmd)
-		if env.has_key("RUBYLIBDIR"):
-			env.librarypath = env["RUBYLIBDIR"]
+		if env.has_key("RUBYARCHDIR"):
+			env.librarypath = env["RUBYARCHDIR"]
 		else:
 			cmd = "ruby -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'"
 			env.librarypath = os.popen(cmd).read().strip()

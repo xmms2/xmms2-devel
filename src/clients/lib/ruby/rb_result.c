@@ -20,7 +20,6 @@
 #include <ruby.h>
 #include <stdbool.h>
 
-#include "rb_xmmsclient_main.h"
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
@@ -78,10 +77,10 @@ VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
 
 static void on_signal (xmmsc_result_t *res2, void *data)
 {
-	VALUE self = (VALUE) data;
-	VALUE o;
+	VALUE o, self = (VALUE) data;
+	RbResult *res = NULL;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
 	                           res->unref_children);
@@ -92,7 +91,9 @@ static void on_signal (xmmsc_result_t *res2, void *data)
 
 static VALUE c_notifier_set (VALUE self)
 {
-	GET_OBJ (self, RbResult, res);
+	RbResult *res = NULL;
+
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!rb_block_given_p ())
 		return Qnil;
@@ -106,7 +107,9 @@ static VALUE c_notifier_set (VALUE self)
 
 static VALUE c_wait (VALUE self)
 {
-	GET_OBJ (self, RbResult, res);
+	RbResult *res = NULL;
+
+	Data_Get_Struct (self, RbResult, res);
 
 	xmmsc_result_wait (res->real);
 
@@ -117,8 +120,9 @@ static VALUE c_restart (VALUE self)
 {
 	VALUE o;
 	xmmsc_result_t *res2;
+	RbResult *res = NULL;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!(res2 = xmmsc_result_restart (res->real)))
 		return Qnil;
@@ -132,7 +136,9 @@ static VALUE c_restart (VALUE self)
 
 static VALUE c_disconnect_broadcast (VALUE self)
 {
-	GET_OBJ (self, RbResult, res);
+	RbResult *res = NULL;
+
+	Data_Get_Struct (self, RbResult, res);
 
 	xmmsc_broadcast_disconnect (res->real);
 
@@ -141,9 +147,10 @@ static VALUE c_disconnect_broadcast (VALUE self)
 
 static VALUE c_int_get (VALUE self)
 {
+	RbResult *res = NULL;
 	int id = 0;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_int (res->real, &id)) {
 		rb_raise (eValueError, "xmmsc_result_get_int() failed");
@@ -155,9 +162,10 @@ static VALUE c_int_get (VALUE self)
 
 static VALUE c_uint_get (VALUE self)
 {
+	RbResult *res = NULL;
 	unsigned int id = 0;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_uint (res->real, &id)) {
 		rb_raise (eValueError, "xmmsc_result_get_uint() failed");
@@ -169,9 +177,10 @@ static VALUE c_uint_get (VALUE self)
 
 static VALUE c_string_get (VALUE self)
 {
+	RbResult *res = NULL;
 	char *s = NULL;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_string (res->real, &s)) {
 		rb_raise (eValueError, "xmmsc_result_get_string() failed");
@@ -197,9 +206,10 @@ static void xhash_to_rhash (const void *key, const void *value,
 static VALUE c_hashtable_get (VALUE self)
 {
 	VALUE rhash = rb_hash_new ();
+	RbResult *res = NULL;
 	x_hash_t *hash = NULL;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_hashtable (res->real, &hash))
 		rb_raise (eValueError,
@@ -213,9 +223,10 @@ static VALUE c_hashtable_get (VALUE self)
 static VALUE c_intlist_get (VALUE self)
 {
 	VALUE a;
+	RbResult *res = NULL;
 	x_list_t *list = NULL, *l;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_intlist (res->real, &list)) {
 		rb_raise (eValueError, "xmmsc_result_get_intlist() failed");
@@ -233,9 +244,10 @@ static VALUE c_intlist_get (VALUE self)
 static VALUE c_uintlist_get (VALUE self)
 {
 	VALUE a;
+	RbResult *res = NULL;
 	x_list_t *list = NULL, *l;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_uintlist (res->real, &list)) {
 		rb_raise (eValueError, "xmmsc_result_get_uintlist() failed");
@@ -253,9 +265,10 @@ static VALUE c_uintlist_get (VALUE self)
 static VALUE c_stringlist_get (VALUE self)
 {
 	VALUE a;
+	RbResult *res = NULL;
 	x_list_t *list = NULL, *l;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_stringlist (res->real, &list)) {
 		rb_raise (eValueError, "xmmsc_result_get_stringlist() failed");
@@ -273,9 +286,10 @@ static VALUE c_stringlist_get (VALUE self)
 static VALUE c_hashlist_get (VALUE self)
 {
 	VALUE a;
+	RbResult *res = NULL;
 	x_list_t *list = NULL, *l;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_hashlist (res->real, &list)) {
 		rb_raise (eValueError, "xmmsc_result_get_hashlist() failed");
@@ -297,9 +311,10 @@ static VALUE c_hashlist_get (VALUE self)
 
 static VALUE c_playlist_change_get (VALUE self)
 {
+	RbResult *res = NULL;
 	unsigned int type = 0, id = 0, arg = 0;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (!(xmmsc_result_get_playlist_change (res->real, &type, &id,
 	                                        &arg))) {
@@ -315,8 +330,9 @@ static VALUE c_playlist_change_get (VALUE self)
 static VALUE c_value_get (VALUE self)
 {
 	VALUE ret = Qnil;
+	RbResult *res;
 
-	GET_OBJ (self, RbResult, res);
+	Data_Get_Struct (self, RbResult, res);
 
 	if (xmmsc_result_iserror (res->real)) {
 		rb_raise (eValueError, "cannot retrieve value");
@@ -358,10 +374,9 @@ static VALUE c_value_get (VALUE self)
 	return ret;
 }
 
-void Init_Result (void)
+void Init_Result (VALUE m, VALUE eXmmsClientError)
 {
-	cResult = rb_define_class_under (mXmmsClient, "Result",
-	                                 rb_cObject);
+	cResult = rb_define_class_under (m, "Result", rb_cObject);
 
 	/* ugh, we have to define the "new" method,
 	 * so we can remove it again :(
@@ -393,9 +408,7 @@ void Init_Result (void)
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
 
-	eResultError = rb_define_class_under (mXmmsClient,
-	                                      "ResultError",
+	eResultError = rb_define_class_under (m, "ResultError",
 	                                      eXmmsClientError);
-	eValueError = rb_define_class_under (mXmmsClient,
-	                                     "ValueError", eResultError);
+	eValueError = rb_define_class_under (m, "ValueError", eResultError);
 }

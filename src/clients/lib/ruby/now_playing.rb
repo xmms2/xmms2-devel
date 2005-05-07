@@ -4,8 +4,13 @@ $MODE = "GLIB"
 $MODE = "ECORE" if ARGV[0] == "-ecore"
 
 require "xmmsclient"
-require "xmmsclient_ecore" if $MODE == "ECORE"
-require "xmmsclient_glib" if $MODE == "GLIB"
+
+if $MODE == "ECORE"
+	require "xmmsclient_ecore"
+else
+	require "gtk2"
+	require "xmmsclient_glib"
+end
 
 Gtk.init if $MODE == "GLIB"
 

@@ -14,18 +14,13 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmms/xmmsclient.h>
-
 #include <ruby.h>
 
-#include "rb_xmmsclient_main.h"
-#include "rb_xmmsclient.h"
-#include "rb_result.h"
+void Init_XmmsClient (VALUE m);
 
 void Init_xmmsclient (void)
 {
-	mXmmsClient = rb_define_module ("XmmsClient");
+	VALUE m = rb_define_module ("XmmsClient");
 
-	Init_XmmsClient ();
-	Init_Result ();
+	Init_XmmsClient (m); /* initializes Result, too */
 }

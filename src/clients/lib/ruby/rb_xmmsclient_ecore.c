@@ -22,12 +22,13 @@
 #include <ruby.h>
 #include <stdbool.h>
 
-#include "rb_xmmsclient_main.h"
 #include "rb_xmmsclient.h"
 
 static VALUE c_add_to_ecore_mainloop (VALUE self)
 {
-	GET_OBJ (self, RbXmmsClient, xmms);
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	ecore_init ();
 
