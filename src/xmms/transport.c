@@ -23,16 +23,12 @@
  * This file is responsible for the transportlayer.
  */
 
-#include "xmms/transport.h"
-#include "xmms/plugin.h"
-#include "xmms/object.h"
-#include "xmms/util.h"
-#include "xmms/ringbuf.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/playlist.h"
-
-#include "internal/transport_int.h"
-#include "internal/plugin_int.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_ringbuf.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmms/xmms_transportplugin.h"
+#include "xmms/xmms_object.h"
+#include "xmms/xmms_log.h"
 
 #include <glib.h>
 #include <string.h>
@@ -63,13 +59,6 @@ static gpointer xmms_transport_thread (gpointer data);
  *
  * @{
  */
-
-/** This describes a directory or a file */
-struct xmms_transport_entry_St {
-	/** Absolute path to entry */
-	gchar path[1024];
-	xmms_transport_entry_type_t type;
-};
 
 /** this is the main transport struct. */
 struct xmms_transport_St {

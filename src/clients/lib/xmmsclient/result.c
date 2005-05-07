@@ -27,17 +27,11 @@
 
 #include <glib.h>
 
-#include "xmms/ipc.h"
-#include "xmms/ipc_msg.h"
-#include "internal/xhash-int.h"
-#include "internal/xlist-int.h"
-#include "internal/client_ipc.h"
-
-#include "xmms/xmmsclient.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/error_xmms.h"
-
-#include "internal/xmmsclient_int.h"
+#include "xmmsclient/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient_ipc.h"
+#include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_errorcodes.h"
 
 typedef struct xmmsc_playlist_change_St {
 	int32_t type;

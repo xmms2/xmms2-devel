@@ -17,14 +17,10 @@
 
 
 
-#include "xmms/plugin.h"
-#include "xmms/output.h"
-#include "xmms/util.h"
-#include "xmms/xmms.h"
-#include "xmms/object.h"
-#include "xmms/ringbuf.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/medialib.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_output.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_defs.h"
 
 #include <glib.h>
 #include <sys/types.h>
@@ -33,6 +29,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 /*
  * Defines

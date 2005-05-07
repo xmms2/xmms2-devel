@@ -25,22 +25,17 @@
  */
 
 
-#include "xmms/decoder.h"
-#include "xmms/plugin.h"
-#include "xmms/object.h"
-#include "xmms/util.h"
-#include "xmms/output.h"
-#include "xmms/transport.h"
-#include "xmms/ringbuf.h"
-#include "xmms/playlist.h"
-#include "xmms/visualisation.h"
-#include "xmms/effect.h"
-#include "xmms/signal_xmms.h"
-
-#include "internal/decoder_int.h"
-#include "internal/transport_int.h"
-#include "internal/plugin_int.h"
-#include "internal/output_int.h"
+#include "xmmspriv/xmms_decoder.h"
+#include "xmmspriv/xmms_ringbuf.h"
+#include "xmmspriv/xmms_visualisation.h"
+#include "xmmspriv/xmms_effect.h"
+#include "xmmspriv/xmms_sample.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmms/xmms_object.h"
+#include "xmmspriv/xmms_output.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_medialib.h"
+#include "xmms/xmms_log.h"
 
 #include <string.h>
 #include <stdlib.h>

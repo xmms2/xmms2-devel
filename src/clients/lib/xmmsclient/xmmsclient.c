@@ -31,17 +31,12 @@
 #include <pwd.h>
 #include <sys/types.h>
 
-#include "internal/xhash-int.h"
-#include "internal/xlist-int.h"
+#include "xmmsclient/xmmsclient_hash.h"
+#include "xmmsclient/xmmsclient_list.h"
 
-#include "xmms/xmmsclient.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/ipc.h"
-#include "xmms/ipc_msg.h"
-#include "xmms/signal_xmms.h"
-#include "internal/client_ipc.h"
-
-#include "internal/xmmsclient_int.h"
+#include "xmmsclient/xmmsclient.h"
+#include "xmmsclientpriv/xmmsclient.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 #define XMMS_MAX_URI_LEN 1024
 

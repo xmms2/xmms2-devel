@@ -14,11 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/object.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/util.h"
-#include "xmms/playlist.h"
-#include "xmms/medialib.h"
+#include "xmms/xmms_object.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 #include <stdarg.h>
 #include <string.h>

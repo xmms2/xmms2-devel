@@ -16,13 +16,9 @@
 
 /** @file A nice CDDB query tool */
 
-#include "xmms/plugin.h"
-#include "xmms/decoder.h"
-#include "xmms/util.h"
-#include "xmms/output.h"
-#include "xmms/transport.h"
-#include "xmms/xmms.h"
-#include "xmms/medialib.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_defs.h"
 
 #include <glib.h>
 #include <string.h>

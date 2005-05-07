@@ -5,20 +5,20 @@ Python bindings for XMMS2.
 cdef extern from "string.h" :
 	int strcmp (signed char *s1, signed char *s2)
 
-cdef extern from "internal/xlist-int.h" :
+cdef extern from "xmmsclient/xmmsclient_list.h" :
 	ctypedef struct x_list_t :
 		void *data
 		x_list_t *next
 		x_list_t *prev
 
-cdef extern from "internal/xhash-int.h" :
+cdef extern from "xmmsclient/xmmsclient_hash.h" :
 	ctypedef struct x_hash_t
 
 	ctypedef object (*XHFunc) (signed char *key, signed char *value, object user_data)
 
 	void x_hash_foreach (x_hash_t *hash_table, XHFunc func, object user_data)
 
-cdef extern from "xmms/object.h":
+cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	int XMMS_OBJECT_CMD_ARG_NONE
 	int XMMS_OBJECT_CMD_ARG_UINT32,
 	int XMMS_OBJECT_CMD_ARG_INT32,
@@ -38,7 +38,7 @@ cdef extern from "glib.h" :
 	void g_main_loop_run (GMainLoop *loop)
 	GMainLoop *g_main_loop_new (GMainContext *context, signed int is_running)
 
-cdef extern from "internal/client_ipc.h" :
+cdef extern from "xmmsclientpriv/xmmsclient_ipc.h" :
 	ctypedef struct xmmsc_ipc_t
 
 	int xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
@@ -48,12 +48,11 @@ cdef extern from "internal/client_ipc.h" :
 	void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 	void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error)
 
-cdef extern from "internal/xmmsclient_int.h" :
+cdef extern from "xmmsclientpriv/xmmsclient.h" :
 	ctypedef struct xmmsc_connection_t :
 		xmmsc_ipc_t *ipc
 	
-cdef extern from "xmms/xmmsclient.h" :
-
+cdef extern from "xmmsclient/xmmsclient.h" :
 	ctypedef struct xmmsc_result_t
 	ctypedef object (*xmmsc_result_notifier_t) (xmmsc_result_t *res, object user_data)
 
@@ -134,7 +133,7 @@ cdef extern from "xmms/xmmsclient.h" :
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
-cdef extern from "xmms/xmmsclient-glib.h" :
+cdef extern from "xmmsclient/xmmsclient-glib.h" :
 	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
 
 #####################################################################

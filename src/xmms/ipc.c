@@ -22,13 +22,15 @@
 #include <sys/select.h>
 #include <errno.h>
 
-#include "xmms/signal_xmms.h"
-#include "xmms/ipc_transport.h"
-#include "xmms/ipc_msg.h"
+#include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_ipc_msg.h"
 
-#include "xmms/util.h"
-#include "xmms/ringbuf.h"
-#include "xmms/ipc.h"
+#include "xmms/xmms_log.h"
+
+#include "xmmspriv/xmms_ringbuf.h"
+#include "xmmspriv/xmms_ipc.h"
+#include "xmmspriv/xmms_playlist.h"
 
 /**
   * @defgroup IPC IPC
@@ -56,7 +58,7 @@ struct xmms_ipc_St {
 /**
  * A IPC client representation.
  */
-struct xmms_ipc_client_St {
+typedef struct xmms_ipc_client_St {
 	GThread *thread;
 
 	xmms_ipc_transport_t *transport;
@@ -72,7 +74,7 @@ struct xmms_ipc_client_St {
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
 	guint broadcasts[XMMS_IPC_SIGNAL_END];
-};
+} xmms_ipc_client_t;
 
 static GMutex *global_ipc_lock;
 static xmms_ipc_t *global_ipc;

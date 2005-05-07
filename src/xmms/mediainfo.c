@@ -24,18 +24,14 @@
 
 #include <stdlib.h>
 
-#include "xmms/xmms.h"
-#include "xmms/transport.h"
-#include "xmms/decoder.h"
-#include "xmms/util.h"
-#include "xmms/playlist.h"
-#include "xmms/mediainfo.h"
-#include "xmms/medialib.h"
-#include "xmms/plsplugins.h"
-#include "xmms/signal_xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_log.h"
+#include "xmmspriv/xmms_mediainfo.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_decoder.h"
+#include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_medialib.h"
 
-#include "internal/transport_int.h"
-#include "internal/decoder_int.h"
 
 #include <glib.h>
 
@@ -151,7 +147,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 			guint lmod = 0;
 
 			xmms_error_reset (&err);
-
 			if (xmms_medialib_entry_is_resolved (entry)) {
 				lmod = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 			}

@@ -18,17 +18,13 @@
  * Sqlite Backend.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
-#include "xmms/xmms.h"
-#include "xmms/transport.h"
-#include "xmms/medialib.h"
-#include "xmms/decoder.h"
-#include "xmms/util.h"
-#include "xmms/playlist.h"
-#include "xmms/mediainfo.h"
-#include "xmms/plsplugins.h"
-#include "xmms/signal_xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_log.h"
+#include "xmmspriv/xmms_sqlite.h"
 
 #include <sqlite3.h>
 #include <glib.h>

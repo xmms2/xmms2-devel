@@ -22,7 +22,7 @@
  */
 
 #include <glib.h>
-#include <xmms/error.h>
+#include <xmms/xmms_error.h>
 
 /** @defgroup Error Error
   * @ingroup XMMSServer

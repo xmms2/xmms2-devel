@@ -14,20 +14,13 @@
  *  Lesser General Public License for more details.
  */
 
-#include "xmms/util.h"
-#include "xmms/playlist.h"
-#include "xmms/config.h"
-#include "xmms/medialib.h"
-#include "xmms/plsplugins.h"
-#include "xmms/transport.h"
-#include "xmms/decoder.h"
-#include "xmms/plugin.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/ipc.h"
-#include "internal/plugin_int.h"
-#include "internal/decoder_int.h"
-#include "internal/output_int.h"
-#include "internal/transport_int.h"
+#include "xmmspriv/xmms_medialib.h"
+#include "xmmspriv/xmms_plsplugins.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_error.h"
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_object.h"
+#include "xmms/xmms_ipc.h"
 
 #include <string.h>
 #include <stdlib.h>

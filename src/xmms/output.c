@@ -19,19 +19,18 @@
  * Output plugin helper
  */
 
-#include "xmms/output.h"
-#include "xmms/object.h"
-#include "xmms/ringbuf.h"
-#include "xmms/util.h"
-#include "xmms/config.h"
-#include "xmms/plugin.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/ipc.h"
-
-#include "internal/plugin_int.h"
-#include "internal/output_int.h"
-#include "internal/transport_int.h"
-#include "internal/decoder_int.h"
+#include "xmmspriv/xmms_output.h"
+#include "xmmspriv/xmms_ringbuf.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmmspriv/xmms_effect.h"
+#include "xmmspriv/xmms_decoder.h"
+#include "xmmspriv/xmms_sample.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_medialib.h"
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_ipc.h"
+#include "xmms/xmms_object.h"
+#include "xmms/xmms_config.h"
 
 static gpointer xmms_output_write_thread (gpointer data);
 static gboolean xmms_output_decoder_start (xmms_output_t *output);

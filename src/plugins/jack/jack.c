@@ -18,9 +18,10 @@
 #include <unistd.h>
 #include <jack/jack.h>
 #include <sys/time.h>
-#include "xmms/xmms.h"
-#include "xmms/util.h"
-#include "xmms/output.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_output.h"
+#include "xmms/xmms_log.h"
 
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 

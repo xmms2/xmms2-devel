@@ -27,14 +27,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "xmms/effect.h"
-#include "xmms/plugin.h"
-#include "xmms/object.h"
-#include "xmms/config.h"
-#include "xmms/util.h"
-
-#include "internal/plugin_int.h"
-
+#include "xmmspriv/xmms_effect.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmms/xmms_object.h"
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_medialib.h"
 
 static void on_enabled_changed (xmms_object_t *object, gconstpointer value, gpointer udata);
 

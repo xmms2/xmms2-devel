@@ -11,9 +11,7 @@
  * Xing-header parser.
  */
 
-#include "xmms/xmms.h"
-#include "xmms/util.h"
-
+#include <glib.h>
 #include "xing.h"
 
 struct xmms_xing_St {

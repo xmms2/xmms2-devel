@@ -15,7 +15,7 @@
  */
 
 
-#include "xmms/util.h"
+#include "xmms/xmms_log.h"
 
 #include "cdae.h"
 

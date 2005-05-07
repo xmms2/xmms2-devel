@@ -21,25 +21,21 @@
 
 #include <glib.h>
 
-#include "xmms/plugin.h"
-#include "xmms/transport.h"
-#include "xmms/decoder.h"
-#include "xmms/config.h"
-#include "xmms/playlist.h"
-#include "xmms/unixsignal.h"
-#include "xmms/util.h"
-#include "xmms/medialib.h"
-#include "xmms/output.h"
-#include "xmms/xmms.h"
-#include "xmms/effect.h"
-#include "xmms/visualisation.h"
-#include "xmms/signal_xmms.h"
-#include "xmms/ipc.h"
+#include "xmmspriv/xmms_plugin.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_decoder.h"
+#include "xmmspriv/xmms_config.h"
+#include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_unixsignal.h"
+#include "xmmspriv/xmms_medialib.h"
+#include "xmmspriv/xmms_output.h"
+#include "xmmspriv/xmms_effect.h"
+#include "xmmspriv/xmms_visualisation.h"
+#include "xmmspriv/xmms_ipc.h"
+#include "xmmspriv/xmms_log.h"
+#include "xmms/xmms_defs.h"
 
-
-#include "internal/plugin_int.h"
-#include "internal/output_int.h"
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>

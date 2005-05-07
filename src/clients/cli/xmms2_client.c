@@ -14,9 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmms/xmmsclient.h>
-#include <xmms/xmmsclient-glib.h>
-#include <xmms/signal_xmms.h>
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-glib.h>
 
 #include <sys/param.h>
 #include <sys/types.h>

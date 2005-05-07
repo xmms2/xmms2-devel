@@ -17,8 +17,7 @@
 
 
 
-#include "xmms/ringbuf.h"
-#include "xmms/util.h"
+#include "xmmspriv/xmms_ringbuf.h"
 #include <string.h>
 
 /** @defgroup Ringbuffer Ringbuffer
