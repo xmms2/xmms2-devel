@@ -12,8 +12,8 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 package=xmms2
 
-RUBYLIBDIR=$(shell ruby -rrbconfig -e 'print Config::CONFIG["archdir"]')
-SCONSFLAGS=MANDIR=/usr/share/man PREFIX=/usr CCFLAGS="-O2 -Wall -g" RUBYLIBDIR=$(RUBYLIBDIR)
+RUBYARCHDIR=$(shell ruby -rrbconfig -e 'print Config::CONFIG["archdir"]')
+SCONSFLAGS=MANDIR=/usr/share/man PREFIX=/usr CCFLAGS="-O2 -Wall -g" RUBYARCHDIR=$(RUBYARCHDIR)
 
 build:
 	dh_testdir

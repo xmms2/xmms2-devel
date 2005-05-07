@@ -40,7 +40,6 @@ extern int errno;
 typedef struct {
 	gint fd;
 	gchar *urlptr;
-	const gchar *mime;
 } xmms_file_data_t;
 
 /*
@@ -140,15 +139,10 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 
 	data = g_new0 (xmms_file_data_t, 1);
 	data->fd = fd;
-	data->mime = NULL;
 	data->urlptr = g_strdup (urlptr);
 	xmms_transport_private_data_set (transport, data);
 
-	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
-	if (!data->mime) {
-		return FALSE;
-	}
-	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
+	xmms_transport_mimetype_set (transport, xmms_magic_mime_from_file (data->urlptr));
 	
 	return TRUE;
 }
@@ -182,12 +176,6 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	g_return_val_if_fail (error, -1);
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
-
-	if (data->mime) {
-		data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
-		xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
-		data->mime = NULL;
-	}
 
 	do {
 		ret = read (data->fd, buffer, len);

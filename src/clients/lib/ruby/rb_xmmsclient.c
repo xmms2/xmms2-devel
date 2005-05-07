@@ -22,17 +22,17 @@
 #include <ruby.h>
 #include <stdbool.h>
 
-#include "rb_xmmsclient_main.h"
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
 #define METHOD_ADD_HANDLER(name, unref) \
 	static VALUE c_##name (VALUE self) \
 	{ \
+		RbXmmsClient *xmms = NULL; \
 		xmmsc_result_t *res; \
 		VALUE o; \
 \
-		GET_OBJ (self, RbXmmsClient, xmms); \
+		Data_Get_Struct (self, RbXmmsClient, xmms); \
 \
 		res = xmmsc_##name (xmms->real); \
 \
@@ -45,7 +45,9 @@
 #define METHOD_ADD(mod, name, argc) \
 	rb_define_method ((mod), #name, c_##name, (argc));
 
-VALUE eXmmsClientError;
+void Init_Result (VALUE m, VALUE e);
+
+static VALUE eXmmsClientError;
 
 static void c_mark (RbXmmsClient *xmms)
 {
@@ -69,7 +71,9 @@ static VALUE c_alloc (VALUE klass)
 
 static VALUE c_init (VALUE self, VALUE name)
 {
-	GET_OBJ (self, RbXmmsClient, xmms);
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	if (!(xmms->real = xmmsc_init (StringValuePtr (name)))) {
 		rb_raise (rb_eNoMemError, "failed to allocate memory");
@@ -84,9 +88,10 @@ static VALUE c_init (VALUE self, VALUE name)
 static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 {
 	VALUE path;
+	RbXmmsClient *xmms = NULL;
 	char *p = NULL;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	rb_scan_args (argc, argv, "01", &path);
 
@@ -117,9 +122,10 @@ METHOD_ADD_HANDLER(broadcast_configval_changed, false);
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (ms, T_FIXNUM);
 
@@ -134,9 +140,10 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (samples, T_FIXNUM);
 
@@ -157,9 +164,10 @@ METHOD_ADD_HANDLER(playlist_list, true);
 static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (pos, T_FIXNUM);
 
@@ -174,9 +182,10 @@ static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (pos, T_FIXNUM);
 
@@ -191,11 +200,12 @@ static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 static VALUE c_playlist_add (VALUE self, VALUE path)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
 	StringValue (path);
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	res = xmmsc_playlist_add (xmms->real, StringValuePtr (path));
 
@@ -208,9 +218,10 @@ static VALUE c_playlist_add (VALUE self, VALUE path)
 static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (id, T_FIXNUM);
 
@@ -225,9 +236,10 @@ static VALUE c_medialib_get_info (VALUE self, VALUE id)
 static VALUE c_configval_get (VALUE self, VALUE key)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (key, T_STRING);
 
@@ -242,9 +254,10 @@ static VALUE c_configval_get (VALUE self, VALUE key)
 static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 {
 	VALUE o;
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	GET_OBJ (self, RbXmmsClient, xmms);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	Check_Type (key, T_STRING);
 	Check_Type (val, T_STRING);
@@ -258,11 +271,11 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	return o;
 }
 
-void Init_XmmsClient (void)
+void Init_XmmsClient (VALUE m)
 {
 	VALUE c;
 
-	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
+	c = rb_define_class_under (m, "XmmsClient", rb_cObject);
 
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
@@ -303,7 +316,8 @@ void Init_XmmsClient (void)
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
 
-	eXmmsClientError = rb_define_class_under (mXmmsClient,
-	                                          "XmmsClientError",
+	eXmmsClientError = rb_define_class_under (m, "XmmsClientError",
 	                                          rb_eStandardError);
+
+	Init_Result (m, eXmmsClientError);
 }
