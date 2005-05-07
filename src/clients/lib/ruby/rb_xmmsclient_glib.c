@@ -21,11 +21,12 @@
 #include <stdbool.h>
 
 #include "rb_xmmsclient.h"
-#include "rb_xmmsclient_main.h"
 
 static VALUE c_add_to_glib_mainloop (VALUE self)
 {
-	GET_OBJ (self, RbXmmsClient, xmms);
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	xmmsc_ipc_setup_with_gmain (xmms->real);
 

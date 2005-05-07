@@ -20,8 +20,6 @@
 #include <xmms/xmmsclient.h>
 #include <stdbool.h>
 
-void Init_Result (VALUE m);
-
 VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
                              bool unref, bool unref_children);
 
