@@ -133,7 +133,7 @@ class XMMSEnvironment(Environment):
 			
 		if not ret:
 			if fail:
-				print "Could not find needed group %s!!! Aborting!" % cmd
+				print "Could not find \'%s\'!!! Aborting!" % (func)
 				sys.exit(-1)
 			return False
 
