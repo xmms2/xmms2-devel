@@ -102,6 +102,30 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
+static VALUE c_disconnect (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	xmmsc_disconnect (xmms->real);
+
+	return self;
+}
+
+static VALUE c_last_error_get (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+	const char *s;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	s = xmmsc_get_last_error (xmms->real);
+
+	return s ? rb_str_new2 (s) : Qnil;
+}
+
+
 METHOD_ADD_HANDLER(quit, true);
 
 METHOD_ADD_HANDLER(playback_start, true);
@@ -157,7 +181,9 @@ METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
 METHOD_ADD_HANDLER(playlist_current_pos, true);
 METHOD_ADD_HANDLER(broadcast_playlist_current_pos, false);
 METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
+METHOD_ADD_HANDLER(playlist_shuffle, true);
 METHOD_ADD_HANDLER(playlist_list, true);
+METHOD_ADD_HANDLER(playlist_clear, true);
 
 static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 {
@@ -195,17 +221,46 @@ static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 	return o;
 }
 
-static VALUE c_playlist_add (VALUE self, VALUE path)
+static VALUE c_playlist_add (VALUE self, VALUE arg)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+	bool is_str;
+
+	if (!NIL_P (rb_check_string_type (arg)))
+		is_str = true;
+	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
+		is_str = false;
+	else {
+		rb_raise (eXmmsClientError, "unsupported argument");
+		return Qnil;
+	}
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	if (is_str)
+		res = xmmsc_playlist_add (xmms->real, StringValuePtr (arg));
+	else
+		res = xmmsc_playlist_add_id (xmms->real, NUM2UINT (arg));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_playlist_remove (VALUE self, VALUE pos)
 {
 	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	StringValue (path);
+	Check_Type (pos, T_FIXNUM);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	res = xmmsc_playlist_add (xmms->real, StringValuePtr (path));
+	res = xmmsc_playlist_remove (xmms->real, NUM2UINT (pos));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
@@ -269,6 +324,8 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	return o;
 }
 
+METHOD_ADD_HANDLER(signal_visualisation_data, true);
+
 void Init_XmmsClient (VALUE m)
 {
 	VALUE c;
@@ -278,6 +335,8 @@ void Init_XmmsClient (VALUE m)
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
+	rb_define_method (c, "disconnect", c_disconnect, 0);
+	rb_define_method (c, "last_error", c_last_error_get, 0);
 
 	METHOD_ADD (c, quit, 0);
 	METHOD_ADD (c, playback_start, 0);
@@ -297,11 +356,16 @@ void Init_XmmsClient (VALUE m)
 	METHOD_ADD (c, playlist_current_pos, 0);
 	METHOD_ADD (c, broadcast_playlist_current_pos, 0);
 	METHOD_ADD (c, broadcast_medialib_entry_changed, 0);
+	METHOD_ADD (c, playlist_shuffle, 0);
 	METHOD_ADD (c, playlist_list, 0);
+	METHOD_ADD (c, playlist_clear, 0);
 	METHOD_ADD (c, playlist_set_next, 1);
 	METHOD_ADD (c, playlist_set_next_rel, 1);
 	METHOD_ADD (c, playlist_add, 1);
+	METHOD_ADD (c, playlist_remove, 1);
 	METHOD_ADD (c, medialib_get_info, 1);
+
+	METHOD_ADD (c, signal_visualisation_data, 0);
 
 	METHOD_ADD (c, configval_get, 1);
 	METHOD_ADD (c, configval_set, 2);
