@@ -63,7 +63,7 @@ static VALUE c_alloc (VALUE klass)
 
 /*
  * call-seq:
- *  XmmsClient.XmmsClient.new(name) -> xc
+ *  XmmsClient::XmmsClient.new(name) -> xc
  *
  * Creates an XmmsClient::XmmsClient object.
  */
@@ -189,46 +189,100 @@ static VALUE c_playback_stop (VALUE self)
 	METHOD_ADD_HANDLER (playback_stop, true);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_tickle -> result
+ *
+ * Advances to the next playlist entry.
+ */
 static VALUE c_playback_tickle (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_tickle, true);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_status -> result
+ *
+ * Retrieves the playback status.
+ */
 static VALUE c_playback_status (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_status, false);
 }
 
+/*
+ * call-seq:
+ *  xc.broadcast_playback_status -> result
+ *
+ * Retrieves the playback status as a broadcast.
+ */
 static VALUE c_broadcast_playback_status (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_playback_status, false);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_playtime -> result
+ *
+ * Retrieves the playtime.
+ */
 static VALUE c_playback_playtime (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_playtime, true);
 }
 
+/*
+ * call-seq:
+ *  xc.signal_playback_playtime -> result
+ *
+ * Retrieves the playtime as a signal.
+ */
 static VALUE c_signal_playback_playtime (VALUE self)
 {
 	METHOD_ADD_HANDLER (signal_playback_playtime, true);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_current_id -> result
+ *
+ * Retrieves the media id of the currently played track.
+ */
 static VALUE c_playback_current_id (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_current_id, true);
 }
 
+/*
+ * call-seq:
+ *  xc.broadcast_playback_current_id -> result
+ *
+ * Retrieves the media id of the currently played track as a broadcast.
+ */
 static VALUE c_broadcast_playback_current_id (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_playback_current_id, false);
 }
 
+/*
+ * call-seq:
+ *  xc.broadcast_playback_current_id -> result
+ *
+ * Retrieves the media id of the currently played track as a broadcast.
+ */
 static VALUE c_broadcast_configval_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_configval_changed, false);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_seek_ms(ms) -> result
+ *
+ * Seek to the song position given in ms.
+ */
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
 	VALUE o;
@@ -247,6 +301,12 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 	return o;
 }
 
+/*
+ * call-seq:
+ *  xc.playback_seek_samples(samples) -> result
+ *
+ * Seek to the song position given in samples.
+ */
 static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 {
 	VALUE o;

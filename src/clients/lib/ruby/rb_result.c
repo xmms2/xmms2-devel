@@ -91,6 +91,13 @@ static void on_signal (xmmsc_result_t *res2, void *data)
 	rb_funcall (res->callback, rb_intern ("call"), 1, o);
 }
 
+/*
+ * call-seq:
+ *  res.notifier { |res2| }
+ *
+ * Sets the block that's executed when _res_' is handled.
+ * Used by asyncronous results only.
+ */
 static VALUE c_notifier_set (VALUE self)
 {
 	RbResult *res = NULL;
@@ -107,6 +114,12 @@ static VALUE c_notifier_set (VALUE self)
 	return Qnil;
 }
 
+/*
+ * call-seq:
+ *  res.wait -> self
+ *
+ * Waits for _res_ to be handled.
+ */
 static VALUE c_wait (VALUE self)
 {
 	RbResult *res = NULL;
@@ -118,6 +131,13 @@ static VALUE c_wait (VALUE self)
 	return self;
 }
 
+/*
+ * call-seq:
+ *  res.restart -> res2 or nil
+ *
+ * Restarts _res_. If _res_ is not restartable, an ResultError is raised,
+ * else a new Result object is returned.
+ */
 static VALUE c_restart (VALUE self)
 {
 	VALUE o;
@@ -126,8 +146,10 @@ static VALUE c_restart (VALUE self)
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!(res2 = xmmsc_result_restart (res->real)))
+	if (!(res2 = xmmsc_result_restart (res->real))) {
+		rb_raise (eResultError, "cannot restart result");
 		return Qnil;
+	}
 
 	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
 	                           res->unref_children);
@@ -158,6 +180,12 @@ static VALUE c_disconnect_signal (VALUE self)
 	return self;
 }
 
+/*
+ * call-seq:
+ *  res.int -> integer
+ *
+ * Returns the integer from _res_.
+ */
 static VALUE c_int_get (VALUE self)
 {
 	RbResult *res = NULL;
@@ -173,6 +201,12 @@ static VALUE c_int_get (VALUE self)
 	return INT2FIX (id);
 }
 
+/*
+ * call-seq:
+ *  res.uint -> integer
+ *
+ * Returns the unsigned integer from _res_.
+ */
 static VALUE c_uint_get (VALUE self)
 {
 	RbResult *res = NULL;
@@ -188,6 +222,12 @@ static VALUE c_uint_get (VALUE self)
 	return UINT2NUM (id);
 }
 
+/*
+ * call-seq:
+ *  res.string -> string
+ *
+ * Returns the string from _res_.
+ */
 static VALUE c_string_get (VALUE self)
 {
 	RbResult *res = NULL;
@@ -216,6 +256,12 @@ static void xhash_to_rhash (const void *key, const void *value,
 	rb_hash_aset (*hash, ID2SYM (rb_intern (key)), val);
 }
 
+/*
+ * call-seq:
+ *  res.hashtable -> hash
+ *
+ * Returns the hashtable from _res_.
+ */
 static VALUE c_hashtable_get (VALUE self)
 {
 	VALUE rhash = rb_hash_new ();
@@ -233,6 +279,12 @@ static VALUE c_hashtable_get (VALUE self)
 	return rhash;
 }
 
+/*
+ * call-seq:
+ *  res.intlist -> array
+ *
+ * Returns the intlist from _res_.
+ */
 static VALUE c_intlist_get (VALUE self)
 {
 	VALUE a;
@@ -254,6 +306,12 @@ static VALUE c_intlist_get (VALUE self)
 	return a;
 }
 
+/*
+ * call-seq:
+ *  res.uintlist -> array
+ *
+ * Returns the uintlist from _res_.
+ */
 static VALUE c_uintlist_get (VALUE self)
 {
 	VALUE a;
@@ -275,6 +333,12 @@ static VALUE c_uintlist_get (VALUE self)
 	return a;
 }
 
+/*
+ * call-seq:
+ *  res.stringlist -> array
+ *
+ * Returns the stringlist from _res_.
+ */
 static VALUE c_stringlist_get (VALUE self)
 {
 	VALUE a;
@@ -296,6 +360,12 @@ static VALUE c_stringlist_get (VALUE self)
 	return a;
 }
 
+/*
+ * call-seq:
+ *  res.hashlist -> array
+ *
+ * Returns the hashlist from _res_.
+ */
 static VALUE c_hashlist_get (VALUE self)
 {
 	VALUE a;
@@ -340,6 +410,12 @@ static VALUE c_playlist_change_get (VALUE self)
 	                    UINT2NUM (arg));
 }
 
+/*
+ * call-seq:
+ *  res.value -> int or string or hash or array
+ *
+ * Returns the value from _res_.
+ */
 static VALUE c_value_get (VALUE self)
 {
 	VALUE ret = Qnil;
