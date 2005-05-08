@@ -403,7 +403,7 @@ _JACK_OpenDevice(xmms_output_t *output)
 	jack_set_error_function(JACK_Error);
 
 	/* try to become a client of the JACK server */
-	snprintf(client_name, sizeof(client_name), "xmms_jack_%d_%d", 0, rand());
+	g_snprintf(client_name, sizeof(client_name), "xmms_jack_%d_%d", 0, rand());
 	XMMS_DBG("client name '%s'", client_name);
 	if ((data->client = jack_client_new(client_name)) == 0)
 	{
@@ -442,7 +442,7 @@ _JACK_OpenDevice(xmms_output_t *output)
 	for(i = 0; i < data->num_output_channels; i++)
 	{
 		char portname[32];
-		sprintf(portname, "out_%d", i);
+		g_snprintf(portname, 32, "out_%d", i);
 		XMMS_DBG("port %d is named '%s'", i, portname);
 		data->output_port[i] = jack_port_register(data->client, portname,
 							  JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
