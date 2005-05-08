@@ -32,6 +32,7 @@ typedef struct xmms_transport_St xmms_transport_t;
 gint xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 gint xmms_transport_size (xmms_transport_t *transport);
 const gchar *xmms_transport_url_get (const xmms_transport_t *const transport);
+void xmms_transport_buffering_start (xmms_transport_t *transport);
 
 
 gboolean xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence);
