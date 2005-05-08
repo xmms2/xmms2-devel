@@ -160,11 +160,14 @@ xmms_mediainfo_reader_thread (gpointer data)
 				continue;
 			}
 
+			xmms_transport_start (transport);
+
 			if (lmod) {
 				guint tmp;
 				tmp = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 				if (lmod >= tmp) {
 					xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, "1");
+					xmms_transport_stop (transport);
 					xmms_object_unref (transport);
 					continue;
 				}
@@ -176,6 +179,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			if (!mime) {
 				xmms_medialib_entry_remove (entry);
+				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				continue;
 			}
@@ -184,6 +188,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
 				xmms_medialib_entry_remove (entry);
+				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
 				continue;
@@ -193,6 +198,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, "1");
 
+			xmms_transport_stop (transport);
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 

@@ -494,7 +494,7 @@ xmms_decoder_destroy (xmms_object_t *object)
 
 	xmms_ringbuf_destroy (decoder->buffer);
 	g_mutex_free (decoder->mutex);
-	xmms_transport_close (decoder->transport);
+	xmms_transport_stop (decoder->transport);
 	xmms_object_unref (decoder->transport);
 	xmms_object_unref (decoder->plugin);
 	xmms_object_unref (decoder->converter);

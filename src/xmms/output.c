@@ -757,7 +757,6 @@ xmms_output_decoder_start (xmms_output_t *output)
 			return FALSE;
 		
 		if (!xmms_transport_open (t, entry)) {
-			xmms_transport_close (t);
 			xmms_object_unref (t);
 			if (!xmms_playlist_advance (output->playlist))
 				return FALSE;
@@ -774,7 +773,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 		XMMS_DBG ("Waiting for mimetype");
 		mime = xmms_transport_mimetype_get_wait (t);
 		if (!mime) {
-			xmms_transport_close (t);
+			xmms_transport_stop (t);
 			xmms_object_unref (t);
 			return FALSE;
 		}
@@ -784,13 +783,13 @@ xmms_output_decoder_start (xmms_output_t *output)
 		decoder = xmms_decoder_new ();
 		
 		if (!decoder) {
-			xmms_transport_close (t);
+			xmms_transport_stop (t);
 			xmms_object_unref (t);
 			return FALSE;
 		}
 		
 		if (!xmms_decoder_open (decoder, t)) {
-			xmms_transport_close (t);
+			xmms_transport_stop (t);
 			xmms_object_unref (t);
 			xmms_object_unref (decoder);
 			return FALSE;

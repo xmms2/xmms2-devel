@@ -36,8 +36,7 @@ gboolean xmms_transport_open (xmms_transport_t *transport,
 const gchar *xmms_transport_mimetype_get (xmms_transport_t *transport);
 const gchar *xmms_transport_mimetype_get_wait (xmms_transport_t *transport);
 void xmms_transport_start (xmms_transport_t *transport);
-
-void xmms_transport_close (xmms_transport_t *transport);
+void xmms_transport_stop (xmms_transport_t *transport);
 gboolean xmms_transport_plugin_open (xmms_transport_t *transport, 
 				     xmms_medialib_entry_t entry, gpointer data);
 

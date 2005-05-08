@@ -686,7 +686,7 @@ xmms_transport_start (xmms_transport_t *transport)
   */
 
 void
-xmms_transport_close (xmms_transport_t *transport)
+xmms_transport_stop (xmms_transport_t *transport)
 {
 	g_return_if_fail (transport);
 
@@ -697,6 +697,7 @@ xmms_transport_close (xmms_transport_t *transport)
 		g_cond_signal (transport->cond);
 		g_mutex_unlock (transport->mutex);
 		g_thread_join (transport->thread);
+		transport->thread = NULL;
 	}
 }
 
