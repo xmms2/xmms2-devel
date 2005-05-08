@@ -147,6 +147,17 @@ static VALUE c_disconnect_broadcast (VALUE self)
 	return self;
 }
 
+static VALUE c_disconnect_signal (VALUE self)
+{
+	RbResult *res = NULL;
+
+	Data_Get_Struct (self, RbResult, res);
+
+	xmmsc_signal_disconnect (res->real);
+
+	return self;
+}
+
 static VALUE c_int_get (VALUE self)
 {
 	RbResult *res = NULL;
@@ -391,6 +402,8 @@ void Init_Result (VALUE m, VALUE eXmmsClientError)
 	rb_define_method (cResult, "restart", c_restart, 0);
 	rb_define_method (cResult, "disconnect_broadcast",
 	                  c_disconnect_broadcast, 0);
+	rb_define_method (cResult, "disconnect_signal",
+	                  c_disconnect_signal, 0);
 	rb_define_method (cResult, "int", c_int_get, 0);
 	rb_define_method (cResult, "uint", c_uint_get, 0);
 	rb_define_method (cResult, "string", c_string_get, 0);
