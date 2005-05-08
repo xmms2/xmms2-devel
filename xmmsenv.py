@@ -190,6 +190,9 @@ class XMMSEnvironment(Environment):
 			i = i + 1
 
 	def libname(self, target):
+		return self["LIBPREFIX"] + os.path.basename(target) + self["LIBSUFFIX"]
+	
+	def shlibname(self, target):
 		return self["SHLIBPREFIX"] + os.path.basename(target) + self["SHLIBSUFFIX"]
 
 	def add_plugin(self, target, source):
@@ -198,17 +201,18 @@ class XMMSEnvironment(Environment):
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] += " -bundle"
 		self.SharedLibrary(target, source)
-		self.Install(self.pluginpath, os.path.join(self.dir, self.libname(target)))
+		self.Install(self.pluginpath, os.path.join(self.dir, self.shlibname(target)))
 
 	def add_library(self, target, source, static=True, shared=True):
 		self.libs.append(target)
 		if static:
 			self.Library(target, source)
+			self.Install(self.librarypath, os.path.join(self.dir, self.libname(target)))
 		if shared:
 			self.SharedLibrary(target, source)
 			if self.platform == 'darwin':
 				self["SHLINKFLAGS"] += " -dynamiclib"
-		self.Install(self.librarypath, os.path.join(self.dir, self.libname(target)))
+			self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
 
 	def add_program(self, target, source):
