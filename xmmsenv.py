@@ -220,6 +220,7 @@ class XMMSEnvironment(Environment):
 				shlibpath = os.path.join(self.dir, shlib)
 				self.Command(shlibpath_unversioned, shlibpath, 
 				             "ln -s %s %s" % (shlib, shlibpath_unversioned))
+				self.Install(self.librarypath, shlibpath_unversioned)
 			if system:
 				self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
 			self.SharedLibrary(target, source)
