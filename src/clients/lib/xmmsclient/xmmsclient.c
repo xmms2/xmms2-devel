@@ -52,45 +52,27 @@ static uint32_t cmd_id;
 
 /**
  * @defgroup XMMSClient XMMSClient
- * @brief This functions will connect a client to a XMMS server.
+ * @brief This functions are used to connect a client software
+ * to the XMMS2 daemon.
  *
- * To connect to a XMMS server you first need to init the
- * xmmsc_connection_t and the connect it.
- * If you want to handle callbacks from the server (not only send
- * commands to it) you need to setup either a GMainLoop or QT-mainloop
- * with a XMMSWatch.
- * 
- * A GLIB example:
- * @code
- * int main () {
- *	xmmsc_connection_t *conn;
- *	GMainLoop *mainloop;
+ * For proper integration with a client you need to hook the XMMSIPC
+ * to your clients mainloop. XMMS2 ships with a couple of default
+ * mainloop integrations but can easily be extended to fit your own
+ * application.
  *
- *	conn = xmmsc_init ();
- *	if (!xmmsc_connect (conn, NULL))
- *		return 0;
- *	
- *	mainloop = g_main_loop_new (NULL, FALSE);
- *	xmmsc_setup_with_gmain (conn, NULL);
- * }
- * @endcode
+ * There are three kinds of messages that will be involved in communication
+ * with the XMMS2 server. 
+ * - Commands: Sent by the client to the server with arguments. Commands will
+ * generate a reply to the client.
+ * - Broadcasts: Sent by the server to the client if requested. Requesting a 
+ * broadcast is done by calling one of the xmmsc_broadcast functions.
+ * - Signals: Like broadcasts but they are throttled, the client has to request
+ * the next signal when the callback is called. #xmmsc_result_restart is used to
+ * "restart" the next signal.
  *
- * And a QT example:
- * @code
- * int main (int argc, char **argv) {
- * 	XMMSClientQT *qtClient;
- *	xmmsc_connection_t *conn;
- *	QApplication app (argc, argv);
- *
- *	conn = xmmsc_init ();
- *	if (!xmmsc_connect (conn, NULL))
- *		return 0;
- *
- *	qtClient = new XMMSClientQT (conn, &app);
- *
- *	return app.exec ();	
- * }
- * @endcode
+ * Each client command will return a #xmmsc_result_t which holds the command id
+ * that will be used to map the result back to the right caller. The #xmmsc_result_t
+ * is used to get the result from the server. 
  *
  * @{
  */
@@ -123,7 +105,7 @@ xmmsc_init (char *clientname)
 	return c;
 }
 
-xmmsc_result_t *
+static xmmsc_result_t *
 xmmsc_send_hello (xmmsc_connection_t *c)
 {
 	xmms_ipc_msg_t *msg;
@@ -141,7 +123,14 @@ xmmsc_send_hello (xmmsc_connection_t *c)
 /**
  * Connects to the XMMS server.
  * If ipcpath is NULL, it will try to open the default path.
- * @todo document ipcpath.
+ * 
+ * @param c The connection to the server. This must be initialized
+ * with #xmmsc_init first.
+ * @param ipcpath The IPC path, it's broken down like this: <protocol>://<path>[:<port>].
+ * If ipcpath is %NULL it will default to "unix:///tmp/xmms-ipc-<username>"
+ * - Protocol could be "tcp" or "unix"
+ * - Path is either the UNIX socket, or the ipnumber of the server.
+ * - Port is only used when the protocol tcp.
  *
  * @returns TRUE on success and FALSE if some problem
  * occured. call xmmsc_get_last_error to find out.
@@ -176,24 +165,8 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	ipc = xmmsc_ipc_init ();
 	
 	if (!xmmsc_ipc_connect (ipc, path)) {
-		c->error = "Error starting xmms2d";
+		c->error = "xmms2d is not running.";
 		return FALSE;
-
-		/*
-		ret = system ("xmms2d -d");
-
-		if (ret != 0) {
-			c->error = "Error starting xmms2d";
-			return FALSE;
-		}
-
-		dbus_error_init (&err);
-		conn = dbus_connection_open (path, &err);
-		if (!conn) {
-			c->error = "Couldn't connect to xmms2d even tough I started it... Bad, very bad.";
-			return FALSE;
-		}
-		*/
 	}
 
 	c->ipc = ipc;
@@ -206,13 +179,15 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	return ret;
 }
 
+/**
+ * Set the disconnect callback. It will be called when client will
+ * be disconnected.
+ */
 void
 xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata)
 {
 	xmmsc_ipc_disconnect_set (c->ipc, callback, userdata);
 }
-
-
 
 /**
  * Returns a string that descibes the last error.
@@ -223,6 +198,10 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
 	return c->error;
 }
 
+/**
+ * Dereference the #xmmsc_connection_t and free
+ * the memory when reference count reaches zero.
+ */
 void
 xmmsc_unref (xmmsc_connection_t *c)
 {
@@ -237,7 +216,6 @@ xmmsc_unref (xmmsc_connection_t *c)
 /**
  * @internal
  */
-
 void
 xmmsc_ref (xmmsc_connection_t *c)
 {
@@ -246,10 +224,10 @@ xmmsc_ref (xmmsc_connection_t *c)
 	c->ref++;
 }
 
-/*
+/**
+ * @internal
  * Frees up any resources used by xmmsc_connection_t
  */
-
 static void
 xmmsc_deinit (xmmsc_connection_t *c)
 {
@@ -288,12 +266,12 @@ xmmsc_quit (xmmsc_connection_t *c)
 /**
  * This function will make a pretty string about the information in
  * the mediainfo hash supplied to it.
- * @param target a allocated char *
- * @param len length of target
- * @param fmt a format string to use
- * @param table the x_hash_t that you got from xmmsc_result_get_mediainfo
- * @returns the number of chars written to #target
- * @todo document format
+ * @param target A allocated char *
+ * @param len Length of target
+ * @param fmt A format string to use. You can insert items from the hash by
+ * using specialformat "${field}".
+ * @param table The x_hash_t that you got from xmmsc_result_get_mediainfo
+ * @returns The number of chars written to #target
  */
 
 int
@@ -386,6 +364,32 @@ cont:
 	return strlen (target);
 }
 
+/**
+ * Disconnect from a broadcast. This will cause the server
+ * to not send the broadcasts anymore.
+ */
+void
+xmmsc_broadcast_disconnect (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	/** @todo tell the server that we're not interested in the signal
+	 *        any more.
+	 */
+	xmmsc_result_unref (res);
+}
+
+/**
+ * Disconnect from a signal. This will cause the server
+ * to stop sending the signals.
+ */
+void
+xmmsc_signal_disconnect (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	xmmsc_result_unref (res);
+}
 
 /** @} */
 
@@ -415,24 +419,6 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 	return res;
 }
 
-void
-xmmsc_broadcast_disconnect (xmmsc_result_t *res)
-{
-	x_return_if_fail (res);
-
-	/** @todo tell the server that we're not interested in the signal
-	 *        any more.
-	 */
-	xmmsc_result_unref (res);
-}
-
-void
-xmmsc_signal_disconnect (xmmsc_result_t *res)
-{
-	x_return_if_fail (res);
-
-	xmmsc_result_unref (res);
-}
 
 xmmsc_result_t *
 xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)

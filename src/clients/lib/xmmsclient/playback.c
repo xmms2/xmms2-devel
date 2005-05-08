@@ -122,7 +122,10 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 	return res;
 }
 
-
+/**
+ * Requests the playback status broadcast. This will be called when
+ * events like play, stop and pause is triggered.
+ */
 xmmsc_result_t *
 xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
 {
@@ -132,13 +135,16 @@ xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
 /**
  * Make server emit the playback status.
  */
-
 xmmsc_result_t *
 xmmsc_playback_status (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_STATUS);
 }
 
+/**
+ * Request the current id signal. This will be called then the 
+ * current playing id is changed. New song for example.
+ */
 xmmsc_result_t *
 xmmsc_broadcast_playback_current_id (xmmsc_connection_t *c)
 {
@@ -148,13 +154,15 @@ xmmsc_broadcast_playback_current_id (xmmsc_connection_t *c)
 /**
  * Make server emit the current id.
  */
-
 xmmsc_result_t *
 xmmsc_playback_current_id (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_CURRENTID);
 }
 
+/**
+ * Synchronous variant of #xmmsc_playback_current_id
+ */
 unsigned int
 xmmscs_playback_current_id (xmmsc_connection_t *c)
 {
@@ -178,18 +186,28 @@ xmmscs_playback_current_id (xmmsc_connection_t *c)
 
 }
 
+/**
+ * Request the playback_playtime signal. Will update the
+ * time we have played the current entry.
+ */
 xmmsc_result_t *
 xmmsc_signal_playback_playtime (xmmsc_connection_t *c)
 {
 	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME);
 }
 
+/**
+ * Make server emit the current playtime.
+ */
 xmmsc_result_t *
 xmmsc_playback_playtime (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_CPLAYTIME);
 }
 
+/**
+ * Synchronous variant of #xmmsc_playback_playtime.
+ */
 int
 xmmscs_playback_playtime (xmmsc_connection_t *c)
 {
