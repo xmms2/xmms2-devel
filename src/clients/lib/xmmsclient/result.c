@@ -41,6 +41,42 @@ typedef struct xmmsc_playlist_change_St {
 
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 
+
+struct xmmsc_result_St {
+	xmmsc_connection_t *c;
+
+	/** refcounting */
+	int ref;
+
+	/** notifiers */
+	x_list_t *func_list;
+	x_list_t *udata_list;
+
+	int error;
+	char *error_str;
+
+	uint32_t cid;
+	uint32_t restart_signal;
+
+	xmmsc_ipc_t *ipc;
+
+	uint32_t datatype;
+
+	int parsed;
+
+	union {
+		uint32_t uint;
+		int32_t inte;
+		char *string;
+		x_list_t *uintlist;
+		x_list_t *intlist;
+		x_list_t *hashlist;
+		x_list_t *stringlist;
+		x_hash_t *hash;
+		xmmsc_playlist_change_t plch;
+	} data;
+};
+
 /**
  * @defgroup Result Result
  * @brief Result manipulation and error handling
@@ -89,41 +125,6 @@ static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
  * @{
 **/
 
-struct xmmsc_result_St {
-	xmmsc_connection_t *c;
-
-	/** refcounting */
-	int ref;
-
-	/** notifiers */
-	x_list_t *func_list;
-	x_list_t *udata_list;
-
-	int error;
-	char *error_str;
-
-	uint32_t cid;
-	uint32_t restart_signal;
-
-	xmmsc_ipc_t *ipc;
-
-	uint32_t datatype;
-
-	int parsed;
-
-	union {
-		uint32_t uint;
-		int32_t inte;
-		char *string;
-		x_list_t *uintlist;
-		x_list_t *intlist;
-		x_list_t *hashlist;
-		x_list_t *stringlist;
-		x_hash_t *hash;
-		xmmsc_playlist_change_t plch;
-	} data;
-};
-
 /**
  * References the #xmmsc_result_t
  */
@@ -158,9 +159,6 @@ xmmsc_result_free (xmmsc_result_t *res)
 }
 
 /**
- * @defgroup RestartableResult RestartableResult
- * @brief Covers Restartable #xmmsc_result_t's
- * @ingroup Result
  * A lot of signals you would like to get notified about
  * when they change, instead of polling the server all the time.
  * This results are "restartable".
@@ -184,26 +182,14 @@ xmmsc_result_free (xmmsc_result_t *res)
  * int main () {
  *   // Connect blah blah ...
  *   xmmsc_result_t *res;
- *   res = xmmsc_playback_get_current_id (connection);
+ *   res = xmmsc_signal_playback_playtime (connection);
  *   xmmsc_result_notifier_set (res, handler);
  *   xmmsc_result_unref (res);
  * }
  * @endcode
- * In the above example the #handler would be called when the id changes.
- * Not all commands are restartable, please check the documentation for
- * each function to see if it's restartable.
- * @{
+ * In the above example the #handler would be called when the playtime is updated.
+ * Only signals are restatable. Broadcasts will automaticly restart.
  */
-
-/** @internal */
-void
-xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
-{
-	x_return_if_fail (res);
-
-	res->restart_signal = signalid;
-}
-
 xmmsc_result_t *
 xmmsc_result_restart (xmmsc_result_t *res)
 {
@@ -231,6 +217,10 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	return newres;
 }
 
+/**
+ * Get the type of the result.
+ * @returns The data type in the result or -1 on error.
+ */
 int
 xmmsc_result_get_type (xmmsc_result_t *res)
 {
@@ -421,46 +411,10 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	return TRUE;
 }
 
-void
-xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
-{
-	x_return_if_fail (res);
-	x_return_if_fail (msg);
-	x_list_t *n, *l;
-	int cmd;
 
-	if (!xmmsc_result_parse_msg (res, msg)) {
-		xmms_ipc_msg_destroy (msg);
-		return;
-	}
-
-	cmd = xmms_ipc_msg_get_cmd (msg);
-
-	xmms_ipc_msg_destroy (msg);
-	
-	xmmsc_result_ref (res);
-
-	if (res->func_list) {
-		l = res->udata_list;
-		for (n = res->func_list; n; n = x_list_next (n)) {
-			xmmsc_result_notifier_t notifier = n->data;
-			if (notifier) {
-				notifier (res, l->data);
-			}
-			l = x_list_next (l);
-		}
-	}
-
-	if (cmd == XMMS_IPC_CMD_BROADCAST) {
-		/* Post-cleanup of broadcast callback
-		 * User have to make sure that he DOESN'T
-		 * save the resultset somewhere! */
-		xmmsc_result_cleanup_data (res);
-	}
-
-	xmmsc_result_unref (res);
-}
-
+/**
+ * return the command id of a resultset.
+ */
 int
 xmmsc_result_cid (xmmsc_result_t *res)
 {
@@ -469,9 +423,6 @@ xmmsc_result_cid (xmmsc_result_t *res)
 
 	return res->cid;
 }
-
-/** @} */
-
 
 /**
  * Decreases the references for the #xmmsc_result_t
@@ -512,39 +463,11 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 	res->udata_list = x_list_append (res->udata_list, user_data);
 }
 
-/**
- * Allocates new #xmmsc_result_t and refereces it.
- * Should not be used from a client.
- * @internal
- */
-
-xmmsc_result_t *
-xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid)
-{
-	xmmsc_result_t *res;
-
-	res = x_new0 (xmmsc_result_t, 1);
-
-	res->c = c;
-	xmmsc_ref (c);
-
-	res->cid = commandid;
-
-	/* user must give this back */
-	xmmsc_result_ref (res);
-
-	/* Add it to the loop */
-	xmmsc_ipc_result_register (c->ipc, res);
-
-	/* For the destroy func */
-	res->ipc = c->ipc;
-
-	return res;
-}
-
 
 /**
- * Block for the reply
+ * Block for the reply. In a synchronous application this
+ * can be used to wait for the result. Will return when
+ * the server replyed.
  */
 
 void
@@ -821,4 +744,87 @@ xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r)
 
 /** @} */
 
+/** @} */
+
+/** @internal */
+void
+xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
+{
+	x_return_if_fail (res);
+
+	res->restart_signal = signalid;
+}
+
+/**
+ * @internal
+ */
+void
+xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
+{
+	x_return_if_fail (res);
+	x_return_if_fail (msg);
+	x_list_t *n, *l;
+	int cmd;
+
+	if (!xmmsc_result_parse_msg (res, msg)) {
+		xmms_ipc_msg_destroy (msg);
+		return;
+	}
+
+	cmd = xmms_ipc_msg_get_cmd (msg);
+
+	xmms_ipc_msg_destroy (msg);
+	
+	xmmsc_result_ref (res);
+
+	if (res->func_list) {
+		l = res->udata_list;
+		for (n = res->func_list; n; n = x_list_next (n)) {
+			xmmsc_result_notifier_t notifier = n->data;
+			if (notifier) {
+				notifier (res, l->data);
+			}
+			l = x_list_next (l);
+		}
+	}
+
+	if (cmd == XMMS_IPC_CMD_BROADCAST) {
+		/* Post-cleanup of broadcast callback
+		 * User have to make sure that he DOESN'T
+		 * save the resultset somewhere! */
+		xmmsc_result_cleanup_data (res);
+	}
+
+	xmmsc_result_unref (res);
+}
+
+/**
+ * Allocates new #xmmsc_result_t and refereces it.
+ * Should not be used from a client.
+ * @internal
+ */
+
+xmmsc_result_t *
+xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid)
+{
+	xmmsc_result_t *res;
+
+	res = x_new0 (xmmsc_result_t, 1);
+
+	res->c = c;
+	xmmsc_ref (c);
+
+	res->cid = commandid;
+
+	/* user must give this back */
+	xmmsc_result_ref (res);
+
+	/* Add it to the loop */
+	xmmsc_ipc_result_register (c->ipc, res);
+
+	/* For the destroy func */
+	res->ipc = c->ipc;
+
+	return res;
+}
 
