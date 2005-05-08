@@ -63,7 +63,7 @@ static VALUE c_alloc (VALUE klass)
 
 /*
  * call-seq:
- *  XmmsClient.XmmsClient.new(name) -> xc
+ *  XmmsClient::XmmsClient.new(name) -> xc
  *
  * Creates an XmmsClient::XmmsClient object.
  */
