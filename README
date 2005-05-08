@@ -47,9 +47,6 @@ So, XMMS2 is definitely an audio player. But it is not a multimedia player - it 
     * Q: Seems like you are using a non-standard buildsystem, why not Make?
     * A: Make is a really good buildsystem, although to get all functionality needed for a bigger project you'll need automake, autoconf and libtool. We had a lot of problems getting these tools to do what we wanted, so we evaluated the alternatives. SCons is a good alternative. If you do not want to install Python and SCons on your system, there will be binaries available for the most common platforms. 
 
-    * Q: And you are using BitKeeper as SCM? It's non-free software!!
-    * A: Yes, and we will switch to another SCM now that bk/free is no more. We really like bitkeeper, and it's a shame we can't use it any more. And we are evaluating alternatives. Stay tuned. 
-
     * Q: What platforms will you support?
     * A: Our aim is to be able to port XMMS basically everywhere, but development is mainly done on Linux/x86, Linux/PPC and Mac OSX. Support for other platforms is currently secondary, although it has been known to work on OpenBSD and Solaris. 
 
