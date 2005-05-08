@@ -3,5 +3,6 @@ source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c"]
 shared = False
 
 def config(env):
+	env.Append(CCFLAGS=["-fPIC"])
 	return True
 
