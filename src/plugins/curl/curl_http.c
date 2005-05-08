@@ -190,7 +190,7 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	xmms_transport_private_data_set (transport, data);
 
-	xmms_transport_buffering_start (transport, data);
+	xmms_transport_buffering_start (transport);
 
 	return TRUE;
 }

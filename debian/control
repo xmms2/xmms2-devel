@@ -37,7 +37,7 @@ Package: libxmms2client-ruby
 Architecture: all
 Depends: libxmms2client-ruby1.8, ruby
 Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
- This package contains Ruby bindings for the xmms2 clientlib.
+ This package contains Ruby bindings for the xmms2 client library.
  .
  This package is an empty dummy package that always depends on a package
  built for Debian's default Ruby version.
@@ -46,7 +46,24 @@ Package: libxmms2client-ruby1.8
 Architecture: any
 Depends: ruby1.8, ${shlibs:Depends}
 Description: XMMS2 - Ruby bindings - private beta - DO NOT SPREAD!
- This package contains Ruby bindings for the xmms2 clientlib.
+ This package contains Ruby bindings for the xmms2 client library.
+ .
+ It is packaged for the version 1.8 series of Ruby.
+
+Package: libxmms2client-ecore-ruby
+Architecture: all
+Depends: libxmms2client-ecore-ruby1.8, ruby
+Description: XMMS2 - ecore client library Ruby bindings - private beta - DO NOT SPREAD!
+ This package contains Ruby bindings for the xmms2 ecore client library.
+ .
+ This package is an empty dummy package that always depends on a package
+ built for Debian's default Ruby version.
+
+Package: libxmms2client-ecore-ruby1.8
+Architecture: any
+Depends: ruby1.8, ${shlibs:Depends}
+Description: XMMS2 - ecore client library Ruby bindings - private beta - DO NOT SPREAD!
+ This package contains Ruby bindings for the xmms2 ecore client library.
  .
  It is packaged for the version 1.8 series of Ruby.
 
@@ -54,7 +71,7 @@ Package: python-xmms2client
 Architecture: all
 Depends: python (>= 2.3), python (<< 2.4), python2.3-xmms2client
 Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
- This package contains Python bindings for the xmms2 clientlib.
+ This package contains Python bindings for the xmms2 client library.
  .
  This package is an empty dummy package that always depends on a package
  built for Debian's default Python version.
@@ -63,7 +80,7 @@ Package: python2.3-xmms2client
 Architecture: any
 Depends: python2.3, ${shlibs:Depends}
 Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
- This package contains Python bindings for the xmms2 clientlib.
+ This package contains Python bindings for the xmms2 client library.
  .
  It is packaged for the version 2.3 series of Python.
 

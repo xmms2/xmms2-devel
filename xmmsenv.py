@@ -72,12 +72,16 @@ class XMMSEnvironment(Environment):
 
 		r = False
 
-		try:
-			buf = os.popen(cmd).read()
-			if not buf == '':
-				r = True
-		except:
-			pass
+		# Execute command and obtain returncode from process
+		# If ret is None the process exited with returncode 0
+		ret = os.popen(cmd).close()
+		if ret:
+			statuscode = ret >> 8
+		else:
+			statuscode = 0
+
+		if statuscode == 0:
+			r = True
 
 		self.config_cache[cmd] = r
 
@@ -133,7 +137,7 @@ class XMMSEnvironment(Environment):
 			
 		if not ret:
 			if fail:
-				print "Could not find needed group %s!!! Aborting!" % cmd
+				print "Could not find \'%s\'!!! Aborting!" % (func)
 				sys.exit(-1)
 			return False
 
@@ -189,24 +193,30 @@ class XMMSEnvironment(Environment):
 
 			i = i + 1
 
+	def libname(self, target):
+		return self["LIBPREFIX"] + os.path.basename(target) + self["LIBSUFFIX"]
+	
+	def shlibname(self, target):
+		return self["SHLIBPREFIX"] + os.path.basename(target) + self["SHLIBSUFFIX"]
+
 	def add_plugin(self, target, source):
 		self.plugins.append(target)
 		self["SHLIBPREFIX"]="libxmms_"
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] += " -bundle"
 		self.SharedLibrary(target, source)
-		self.Install(self.pluginpath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
+		self.Install(self.pluginpath, os.path.join(self.dir, self.shlibname(target)))
 
 	def add_library(self, target, source, static=True, shared=True):
 		self.libs.append(target)
 		if static:
 			self.Library(target, source)
-			self.Install(self.librarypath, self.dir+"/"+self["LIBPREFIX"]+target[target.rindex("/")+1:]+self["LIBSUFFIX"])
+			self.Install(self.librarypath, os.path.join(self.dir, self.libname(target)))
 		if shared:
 			self.SharedLibrary(target, source)
 			if self.platform == 'darwin':
 				self["SHLINKFLAGS"] += " -dynamiclib"
-			self.Install(self.librarypath, self.dir+"/"+self["SHLIBPREFIX"]+target[target.rindex("/")+1:]+self["SHLIBSUFFIX"])
+			self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
 
 	def add_program(self, target, source):
