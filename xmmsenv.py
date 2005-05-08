@@ -7,13 +7,17 @@ from stat import *
 
 def installFunc(dest, source, env):
 	"""Copy file, setting sane permissions"""
+	print "installFunc: " + dest + " " + source
 	
-	shutil.copy(source, dest)
-	st = os.stat(source)
-	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
-	if st[ST_MODE] & S_IXUSR:
-		mode |= S_IXUSR | S_IXGRP | S_IXOTH
-	os.chmod(dest, mode)
+	if os.path.islink(source):
+		os.symlink(os.readlink(source), dest)
+	else:
+		shutil.copy(source, dest)
+		st = os.stat(source)
+		mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+		if st[ST_MODE] & S_IXUSR:
+			mode |= S_IXUSR | S_IXGRP | S_IXOTH
+		os.chmod(dest, mode)
 	return 0
 
 class XMMSEnvironment(Environment):
