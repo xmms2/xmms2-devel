@@ -11,8 +11,7 @@ source=["ipc.c",
 	"xmmsclient.c"]
 
 def config(env):
-#	env["SHLIBSUFFIX"] += ".0"
-	env["SHLINKFLAGS"] += " -Wl,-soname," + env.libname(target)
+	env["SHLINKFLAGS"] += " -Wl,-soname," + env.shlibname(target)
 	env["LIBS"].append("xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	return True
