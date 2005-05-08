@@ -66,6 +66,11 @@ xmmsc_configval_get (xmmsc_connection_t *c, char *key)
 	return res;
 }
 
+/**
+ * Synchronous variant #xmmsc_configval_get
+ * @param c The #xmmsc_connection_t
+ * @param key The configuration key to query.
+ */
 char *
 xmmscs_configval_get (xmmsc_connection_t *c, char *key)
 {
@@ -88,12 +93,18 @@ xmmscs_configval_get (xmmsc_connection_t *c, char *key)
 	return ret;
 }
 
+/**
+ * Lists all configuration values.
+ */
 xmmsc_result_t *
 xmmsc_configval_list (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_LISTVALUES);
 }
 
+/**
+ * Synchronous variant of #xmmsc_configval_list
+ */
 x_list_t *
 xmmscs_configval_list (xmmsc_connection_t *c)
 {
@@ -119,13 +130,19 @@ xmmscs_configval_list (xmmsc_connection_t *c)
 	return ret;
 }
 
+/**
+ * Requests the configval_changed broadcast. This will be called when a configvalue
+ * has been updated.
+ */
 xmmsc_result_t *
 xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
 {
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
 }
 
-
+/**
+ * Request the visualisation data signal. This will be called with vis data
+ */
 xmmsc_result_t *
 xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 {

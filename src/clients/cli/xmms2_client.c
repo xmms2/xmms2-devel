@@ -966,26 +966,6 @@ cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-cmd_save_playlist (xmmsc_connection_t *conn, int argc, char **argv)
-{
-	xmmsc_result_t *res;
-
-	if (argc < 3) {
-		print_error ("Need a filename to save playlist");
-		return;
-	}
-
-	res = xmmsc_playlist_save (conn, argv[2]);
-
-	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Unable to save playlist to file: %s\n", xmmsc_result_get_error (res));
-	}
-
-	xmmsc_result_unref (res);
-}
-
-static void
 cmd_move (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
@@ -1218,7 +1198,6 @@ cmds commands[] = {
 	{ "prev", "play previous song", cmd_prev },
 	{ "seek", "seek to a specific place in current song", cmd_seek },
 	{ "jump", "take a leap in the playlist", cmd_jump },
-	{ "save", "save the playlist", cmd_save_playlist },
 	{ "move", "move a entry in the playlist", cmd_move },
 
 	{ "mlib", "medialib manipulation", cmd_mlib },

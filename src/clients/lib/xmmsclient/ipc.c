@@ -46,6 +46,142 @@ struct xmmsc_ipc_St {
 
 static inline void xmmsc_ipc_lock (xmmsc_ipc_t *ipc);
 static inline void xmmsc_ipc_unlock (xmmsc_ipc_t *ipc);
+static void xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg);
+
+
+/**
+ * @defgroup ClientIPC ClientIPC
+ * @ingroup XMMSClient
+ * @brief IPC functions for integration in your mainloop.
+ *
+ * If you want to integrate xmmsclient in your mainloop you need to
+ * retrive the fd by running #xmmsc_ipc_fd_get and and poll it for
+ * incoming data. When you have incoming data you do #xmmsc_ipc_io_in_callback.
+ * Before entering the poll loop you need to check if there is any
+ * data to be written. Call #xmmsc_ipc_io_out, if it returns TRUE add
+ * a write poll also. When the write poll is activated you call 
+ * #xmmsc_ipc_io_out_callback. If a error occours you call the #xmmsc_ipc_disconnect
+ * 
+ * @{
+ */
+
+/**
+ * Should be called when we have data on the socket.
+ * This will read data and call callbacks if we get a
+ * whole message. The call is completely non-blocking.
+ *
+ * @returns FALSE if something went wrong. #xmmsc_ipc_disconnected
+ * should be called if this happens.
+ */
+int
+xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
+{
+	gboolean disco = FALSE;
+
+	g_return_val_if_fail (ipc, FALSE);
+	g_return_val_if_fail (!ipc->disconnect, FALSE);
+
+	while (!disco) {
+		if (!ipc->read_msg)
+			ipc->read_msg = xmms_ipc_msg_alloc ();
+		
+		if (xmms_ipc_msg_read_transport (ipc->read_msg, ipc->transport, &disco)) {
+			xmms_ipc_msg_t *msg = ipc->read_msg;
+			/* must unset read_msg here,
+			   because exec_msg can cause reentrancy */
+			ipc->read_msg = NULL;
+			xmmsc_ipc_exec_msg (ipc, msg);
+		} else {
+			break;
+		}
+	}
+
+	if (disco)
+		xmmsc_ipc_disconnect (ipc);
+
+	return TRUE;
+}
+
+/**
+ * This function returns TRUE if there is something to be written.
+ */
+int
+xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
+{
+	g_return_val_if_fail (ipc, FALSE);
+
+	return !g_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
+}
+
+/**
+ * Call this to write messages to the server
+ */
+int
+xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
+{
+	gboolean disco = FALSE;
+
+	g_return_val_if_fail (ipc, FALSE);
+	g_return_val_if_fail (!ipc->disconnect, FALSE);
+
+	while (!g_queue_is_empty (ipc->out_msg)) {
+		xmms_ipc_msg_t *msg = g_queue_peek_head (ipc->out_msg);
+		if (xmms_ipc_msg_write_transport (msg, ipc->transport, &disco)) {
+			g_queue_pop_head (ipc->out_msg);
+			xmms_ipc_msg_destroy (msg);
+		} else {
+			break;
+		}
+	}
+
+	if (disco)
+		xmmsc_ipc_disconnect (ipc);
+
+	return TRUE;
+}
+
+/**
+ * The underlaying filedescriptor can be extracted with
+ * this function. It used to poll on.
+ */
+gint
+xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
+{
+	g_return_val_if_fail (ipc, -1);
+	return xmms_ipc_transport_fd_get (ipc->transport);
+}
+
+
+/**
+ * Get the error from the ipc. Could be called from the callback
+ * method in order to get a string describing the error causing
+ * the disconnect.
+ */
+const char *
+xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
+{
+	g_return_val_if_fail (ipc, NULL);
+	return ipc->error;
+}
+
+/**
+ * Disconnect the ipc.
+ */
+void
+xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
+{
+	ipc->disconnect = TRUE;
+	if (ipc->read_msg) {
+		xmms_ipc_msg_destroy (ipc->read_msg);
+		ipc->read_msg = NULL;
+	}
+	xmmsc_ipc_error_set (ipc, g_strdup ("Disconnected"));
+	if (ipc->disconnect_callback) {
+		ipc->disconnect_callback (ipc->disconnect_data);
+	}
+}
+
+/** @} */
 
 xmmsc_ipc_t *
 xmmsc_ipc_init (void)
@@ -109,111 +245,13 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	xmmsc_ipc_unlock (ipc);
 }
 
-static void
-xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
-{
-	xmmsc_result_t *res;
 
-	res = xmmsc_ipc_result_lookup (ipc, xmms_ipc_msg_get_cid (msg));
-
-	if (!res) {
-		xmms_ipc_msg_destroy (msg);
-		return;
-	}
-
-	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_ERROR) {
-		gchar *errstr;
-		gint len;
-
-		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len))
-			errstr = g_strdup ("No errormsg!");
-
-		xmmsc_result_seterror (res, errstr);
-	}
-
-	xmmsc_result_run (res, msg);
-}
-
-int
-xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
-{
-	gboolean disco = FALSE;
-
-	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (!ipc->disconnect, FALSE);
-
-	while (!disco) {
-		if (!ipc->read_msg)
-			ipc->read_msg = xmms_ipc_msg_alloc ();
-		
-		if (xmms_ipc_msg_read_transport (ipc->read_msg, ipc->transport, &disco)) {
-			xmms_ipc_msg_t *msg = ipc->read_msg;
-			/* must unset read_msg here,
-			   because exec_msg can cause reentrancy */
-			ipc->read_msg = NULL;
-			xmmsc_ipc_exec_msg (ipc, msg);
-		} else {
-			break;
-		}
-	}
-
-	if (disco)
-		xmmsc_ipc_disconnect (ipc);
-
-	return TRUE;
-}
-
-int
-xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
-{
-	g_return_val_if_fail (ipc, FALSE);
-
-	return !g_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
-}
-
-int
-xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
-{
-	gboolean disco = FALSE;
-
-	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (!ipc->disconnect, FALSE);
-
-	while (!g_queue_is_empty (ipc->out_msg)) {
-		xmms_ipc_msg_t *msg = g_queue_peek_head (ipc->out_msg);
-		if (xmms_ipc_msg_write_transport (msg, ipc->transport, &disco)) {
-			g_queue_pop_head (ipc->out_msg);
-			xmms_ipc_msg_destroy (msg);
-		} else {
-			break;
-		}
-	}
-
-	if (disco)
-		xmmsc_ipc_disconnect (ipc);
-
-	return TRUE;
-}
-
-gint
-xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
-{
-	g_return_val_if_fail (ipc, -1);
-	return xmms_ipc_transport_fd_get (ipc->transport);
-}
 
 void
 xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error)
 {
 	g_return_if_fail (ipc);
 	ipc->error = error;
-}
-
-const char *
-xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
-{
-	g_return_val_if_fail (ipc, NULL);
-	return ipc->error;
 }
 
 void
@@ -258,19 +296,6 @@ xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
 	return TRUE;
 }
 
-void
-xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
-{
-	ipc->disconnect = TRUE;
-	if (ipc->read_msg) {
-		xmms_ipc_msg_destroy (ipc->read_msg);
-		ipc->read_msg = NULL;
-	}
-	xmmsc_ipc_error_set (ipc, g_strdup ("Disconnected"));
-	if (ipc->disconnect_callback) {
-		ipc->disconnect_callback (ipc->disconnect_data);
-	}
-}
 
 void
 xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
@@ -317,3 +342,27 @@ xmmsc_ipc_unlock (xmmsc_ipc_t *ipc)
 		ipc->lockfunc (ipc->lockdata);
 }
 
+static void
+xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_ipc_result_lookup (ipc, xmms_ipc_msg_get_cid (msg));
+
+	if (!res) {
+		xmms_ipc_msg_destroy (msg);
+		return;
+	}
+
+	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_ERROR) {
+		gchar *errstr;
+		gint len;
+
+		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len))
+			errstr = g_strdup ("No errormsg!");
+
+		xmmsc_result_seterror (res, errstr);
+	}
+
+	xmmsc_result_run (res, msg);
+}

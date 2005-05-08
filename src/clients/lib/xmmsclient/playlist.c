@@ -42,6 +42,9 @@ xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
 }
 
+/**
+ * Synchronous variant of #xmmsc_playlist_current_pos
+ */
 unsigned int
 xmmscs_playlist_current_pos (xmmsc_connection_t *c)
 {
@@ -61,12 +64,9 @@ xmmscs_playlist_current_pos (xmmsc_connection_t *c)
 	return i;
 }
 
-
-
 /**
  * Shuffles the current playlist.
  */
-
 xmmsc_result_t *
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
@@ -76,7 +76,6 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 /**
  * Sorts the playlist according to the property
  */
-
 xmmsc_result_t *
 xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 {
@@ -94,7 +93,6 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
 /**
  * Clears the current playlist.
  */
-
 xmmsc_result_t *
 xmmsc_playlist_clear (xmmsc_connection_t *c)
 {
@@ -102,40 +100,19 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
 }
 
 /**
- * Saves the playlist to the specified filename. The
- * format of the playlist is detemined by checking the
- * extension of the filename.
- *
- * @param c The connection structure.
- * @param filename file on server-side to save the playlist
- * in.
- */
-
-xmmsc_result_t *
-xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-	
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SAVE);
-	xmms_ipc_msg_put_string (msg, filename);
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
-}
-
-/**
  * This will make the server list the current playlist.
  * The entries will be feed to the XMMS_SIGNAL_PLAYLIST_LIST
  * callback.
  */
-
 xmmsc_result_t *
 xmmsc_playlist_list (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
 }
 
+/**
+ * Synchronous variant of #xmmsc_playlist_list
+ */
 x_list_t *
 xmmscs_playlist_list (xmmsc_connection_t *c)
 {
@@ -167,7 +144,6 @@ xmmscs_playlist_list (xmmsc_connection_t *c)
  * @param id A medialib id.
  *
  */
-
 xmmsc_result_t *
 xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
 {
@@ -181,8 +157,6 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
 	return res;
 }
 
-
-
 /**
  * Add the url to the playlist. The url should be encoded with
  * xmmsc_encode_path and be absolute to the server-side. Note that
@@ -194,7 +168,6 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
  *
  * @sa xmmsc_encode_path
  */
-
 xmmsc_result_t *
 xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
 {
@@ -212,7 +185,6 @@ xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
  * Move a playlist entry relative to it's current postion.
  * eg move (id, -1) will move id one step *up* in the playlist.
  */
-
 xmmsc_result_t *
 xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
 {
@@ -231,38 +203,47 @@ xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
 /**
  * Remove an entry from the playlist.
  *
- * param id the id to remove from the playlist.
+ * @param pos The position that should be removed from the playlist.
  *
  * @sa xmmsc_playlist_list
  */
-
 xmmsc_result_t *
-xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int id)
+xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int pos)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 	
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REMOVE);
-	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_uint32 (msg, pos);
 	res = xmmsc_send_msg (c, msg);
 
 	return res;
 
 }
 
+/**
+ * Request the playlist changed broadcast from the server. Everytime someone
+ * manipulate the playlist this will be emitted.
+ */
 xmmsc_result_t *
 xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 {
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 }
 
-
+/**
+ * Request the playlist current pos broadcast. When the position
+ * in the playlist is changed this will be called.
+ */
 xmmsc_result_t *
 xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 {
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 }
 
+/**
+ * Set next entry in the playlist. Alter the position pointer.
+ */
 xmmsc_result_t *
 xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int pos)
 {
@@ -277,6 +258,10 @@ xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int pos)
 	return res;
 }
 
+/**
+ * Same as #xmmsc_playlist_set_next but relative to the current postion.
+ * -1 will back one and 1 will move to the next.
+ */
 xmmsc_result_t *
 xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
 {

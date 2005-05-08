@@ -46,12 +46,25 @@ do_methodcall (xmmsc_connection_t *conn, guint id, const gchar *arg)
 	return res;
 }
 
+/**
+ * Make a SQL query to the server medialib. The result will contain
+ * a #x_list_t with #x_hash_t's.
+ * @param conn The #xmmsc_connection_t
+ * @param query The SQL query.
+ */
 xmmsc_result_t *
 xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 {
 	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
 }
 
+/**
+ * Export a serverside playlist to a format that could be read
+ * from another mediaplayer.
+ * @param conn The #xmmsc_connection_t
+ * @param playlist Name of a serverside playlist
+ * @param mime Mimetype of the export format.
+ */
 xmmsc_result_t *
 xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime)
 {
@@ -67,6 +80,12 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 	return res;
 }
 
+/**
+ * Import a playlist from a playlist file.
+ * @param conn The #xmmsc_connection_t
+ * @param playlist The name of the new playlist.
+ * @param url URL to the playlist file.
+ */
 xmmsc_result_t *
 xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url)
 {
@@ -82,12 +101,21 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
 	return res;
 }
 
+/**
+ * Add a URL to the medialib. If you want to add mutiple files
+ * you should call #xmmsc_medialib_path_import
+ * @param conn The #xmmsc_connection_t
+ * @param url URL to add to the medialib.
+ */
 xmmsc_result_t *
 xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 {
 	return do_methodcall (conn, XMMS_IPC_CMD_ADD, url);
 }
 
+/**
+ * Save the current playlist to a serverside playlist
+ */
 xmmsc_result_t *
 xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
                                       const char *name)
@@ -95,6 +123,9 @@ xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT, name);
 }
 
+/**
+ * Load a playlist from the medialib to the current active playlist
+ */
 xmmsc_result_t *
 xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
                                       const char *name)
@@ -102,6 +133,12 @@ xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_LOAD, name);
 }
 
+/**
+ * Import a all files recursivly from the directory passed
+ * as argument.
+ * @param conn #xmmsc_connection_t
+ * @param path A directory to recursive search for mediafiles
+ */
 xmmsc_result_t *
 xmmsc_medialib_path_import (xmmsc_connection_t *conn,
 			    const char *path)
@@ -109,6 +146,12 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn,
 	return do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
 }
 
+/**
+ * Rehash the medialib, this will check data in the medialib
+ * still is the same as the data in files.
+ * @param id The id to rehash. Set it to 0 if you want to rehash
+ * the whole medialib.
+ */
 xmmsc_result_t *
 xmmsc_medialib_rehash (xmmsc_connection_t *conn,
 		       unsigned int id)
@@ -125,6 +168,9 @@ xmmsc_medialib_rehash (xmmsc_connection_t *conn,
 
 }
 
+/**
+ * Retrieve information about a entry from the medialib.
+ */
 xmmsc_result_t *
 xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 {
@@ -146,6 +192,10 @@ hash_insert (const void *key, const void *value, void *udata)
 	x_hash_insert (hash, strdup ((char *)key), strdup ((char *)value));
 }
 
+/**
+ * Synchronous variant of #xmmsc_medialib_get_info, synchronous should not
+ * be used in GUI clients
+ */
 x_hash_t *
 xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 {
@@ -175,6 +225,11 @@ xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	return ret;
 }
 
+/**
+ * Request the medialib_entry_changed broadcast. This will be called
+ * if a entry changes on the serverside. The argument will be an medialib
+ * id.
+ */
 xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 {
@@ -182,12 +237,14 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 }
 
 /**
+ * Queries the medialib for files and adds the matching ones to
+ * the current playlist. Remember to include a field called id
+ * in the query.
  *
  * @param c The connection structure.
  * @param query sql-query to medialib.
  *
  */
-
 xmmsc_result_t *
 xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
 {
@@ -203,5 +260,3 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
 }
 
 /** @} */
-
-
