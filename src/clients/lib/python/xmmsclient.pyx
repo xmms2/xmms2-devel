@@ -87,7 +87,6 @@ cdef extern from "xmmsclient/xmmsclient.h" :
 	xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *filename)
 	xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char *property) 
 	xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, int pos)
@@ -881,25 +880,6 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_clear (self.conn)
-		ret.more_init ()
-		
-		return ret
-
-	def playlist_save (self, filename, myClass = None) :
-		"""
-		Save the current playlist to file.
-		Requires a string 'fname' (filename to save to) as argument.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		if myClass :
-			ret = myClass ()
-		else :
-			ret = XMMSResult ()
-		
-		ret.res = xmmsc_playlist_save (self.conn, filename)
 		ret.more_init ()
 		
 		return ret
