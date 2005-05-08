@@ -24,24 +24,18 @@
 #include "rb_result.h"
 
 #define METHOD_ADD_HANDLER(name, unref) \
-	static VALUE c_##name (VALUE self) \
-	{ \
-		RbXmmsClient *xmms = NULL; \
-		xmmsc_result_t *res; \
-		VALUE o; \
+	RbXmmsClient *xmms = NULL; \
+	xmmsc_result_t *res; \
+	VALUE o; \
 \
-		Data_Get_Struct (self, RbXmmsClient, xmms); \
+	Data_Get_Struct (self, RbXmmsClient, xmms); \
 \
-		res = xmmsc_##name (xmms->real); \
+	res = xmmsc_##name (xmms->real); \
 \
-		o = TO_XMMS_CLIENT_RESULT (res, true, unref); \
-		rb_ary_push (xmms->results, o); \
+	o = TO_XMMS_CLIENT_RESULT (res, true, unref); \
+	rb_ary_push (xmms->results, o); \
 \
-		return o; \
-	}
-
-#define METHOD_ADD(mod, name, argc) \
-	rb_define_method ((mod), #name, c_##name, (argc));
+	return o; \
 
 void Init_Result (VALUE m, VALUE e);
 
@@ -125,21 +119,65 @@ static VALUE c_last_error_get (VALUE self)
 	return s ? rb_str_new2 (s) : Qnil;
 }
 
+static VALUE c_quit (VALUE self)
+{
+	METHOD_ADD_HANDLER (quit, true);
+}
 
-METHOD_ADD_HANDLER(quit, true);
+static VALUE c_playback_start (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_start, true);
+}
 
-METHOD_ADD_HANDLER(playback_start, true);
-METHOD_ADD_HANDLER(playback_pause, true);
-METHOD_ADD_HANDLER(playback_stop, true);
-METHOD_ADD_HANDLER(playback_tickle, true);
-METHOD_ADD_HANDLER(playback_status, false);
-METHOD_ADD_HANDLER(broadcast_playback_status, false);
-METHOD_ADD_HANDLER(playback_playtime, true);
-METHOD_ADD_HANDLER(signal_playback_playtime, true);
-METHOD_ADD_HANDLER(playback_current_id, true);
-METHOD_ADD_HANDLER(broadcast_playback_current_id, false);
+static VALUE c_playback_pause (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_pause, true);
+}
 
-METHOD_ADD_HANDLER(broadcast_configval_changed, false);
+static VALUE c_playback_stop (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_stop, true);
+}
+
+static VALUE c_playback_tickle (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_tickle, true);
+}
+
+static VALUE c_playback_status (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_status, false);
+}
+
+static VALUE c_broadcast_playback_status (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_playback_status, false);
+}
+
+static VALUE c_playback_playtime (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_playtime, true);
+}
+
+static VALUE c_signal_playback_playtime (VALUE self)
+{
+	METHOD_ADD_HANDLER (signal_playback_playtime, true);
+}
+
+static VALUE c_playback_current_id (VALUE self)
+{
+	METHOD_ADD_HANDLER (playback_current_id, true);
+}
+
+static VALUE c_broadcast_playback_current_id (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_playback_current_id, false);
+}
+
+static VALUE c_broadcast_configval_changed (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_configval_changed, false);
+}
 
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
@@ -177,13 +215,40 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 	return o;
 }
 
-METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
-METHOD_ADD_HANDLER(playlist_current_pos, true);
-METHOD_ADD_HANDLER(broadcast_playlist_current_pos, false);
-METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
-METHOD_ADD_HANDLER(playlist_shuffle, true);
-METHOD_ADD_HANDLER(playlist_list, true);
-METHOD_ADD_HANDLER(playlist_clear, true);
+static VALUE c_broadcast_playlist_changed (VALUE self)
+{
+	METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
+}
+
+static VALUE c_playlist_current_pos (VALUE self)
+{
+	METHOD_ADD_HANDLER(playlist_current_pos, true);
+}
+
+static VALUE c_broadcast_playlist_current_pos (VALUE self)
+{
+	METHOD_ADD_HANDLER(broadcast_playlist_current_pos, false);
+}
+
+static VALUE c_broadcast_medialib_entry_changed (VALUE self)
+{
+	METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
+}
+
+static VALUE c_playlist_shuffle (VALUE self)
+{
+	METHOD_ADD_HANDLER(playlist_shuffle, true);
+}
+
+static VALUE c_playlist_list (VALUE self)
+{
+	METHOD_ADD_HANDLER(playlist_list, true);
+}
+
+static VALUE c_playlist_clear (VALUE self)
+{
+	METHOD_ADD_HANDLER(playlist_clear, true);
+}
 
 static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 {
@@ -324,7 +389,10 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	return o;
 }
 
-METHOD_ADD_HANDLER(signal_visualisation_data, true);
+static VALUE c_signal_visualisation_data (VALUE self)
+{
+	METHOD_ADD_HANDLER(signal_visualisation_data, true);
+}
 
 void Init_XmmsClient (VALUE m)
 {
@@ -338,38 +406,50 @@ void Init_XmmsClient (VALUE m)
 	rb_define_method (c, "disconnect", c_disconnect, 0);
 	rb_define_method (c, "last_error", c_last_error_get, 0);
 
-	METHOD_ADD (c, quit, 0);
-	METHOD_ADD (c, playback_start, 0);
-	METHOD_ADD (c, playback_pause, 0);
-	METHOD_ADD (c, playback_stop, 0);
-	METHOD_ADD (c, playback_tickle, 0);
-	METHOD_ADD (c, broadcast_playback_status, 0);
-	METHOD_ADD (c, playback_status, 0);
-	METHOD_ADD (c, playback_playtime, 0);
-	METHOD_ADD (c, signal_playback_playtime, 0);
-	METHOD_ADD (c, playback_current_id, 0);
-	METHOD_ADD (c, broadcast_playback_current_id, 0);
-	METHOD_ADD (c, playback_seek_ms, 1);
-	METHOD_ADD (c, playback_seek_samples, 1);
+	rb_define_method (c, "quit", c_quit, 0);
+	rb_define_method (c, "playback_start", c_playback_start, 0);
+	rb_define_method (c, "playback_pause", c_playback_pause, 0);
+	rb_define_method (c, "playback_stop", c_playback_stop, 0);
+	rb_define_method (c, "playback_tickle", c_playback_tickle, 0);
+	rb_define_method (c, "broadcast_playback_status",
+	                  c_broadcast_playback_status, 0);
+	rb_define_method (c, "playback_status", c_playback_status, 0);
+	rb_define_method (c, "playback_playtime", c_playback_playtime, 0);
+	rb_define_method (c, "signal_playback_playtime",
+	                  c_signal_playback_playtime, 0);
+	rb_define_method (c, "playback_current_id",
+	                  c_playback_current_id, 0);
+	rb_define_method (c, "broadcast_playback_current_id",
+	                  c_broadcast_playback_current_id, 0);
+	rb_define_method (c, "playback_seek_ms", c_playback_seek_ms, 1);
+	rb_define_method (c, "playback_seek_samples",
+	                  c_playback_seek_samples, 1);
 
-	METHOD_ADD (c, broadcast_playlist_changed, 0);
-	METHOD_ADD (c, playlist_current_pos, 0);
-	METHOD_ADD (c, broadcast_playlist_current_pos, 0);
-	METHOD_ADD (c, broadcast_medialib_entry_changed, 0);
-	METHOD_ADD (c, playlist_shuffle, 0);
-	METHOD_ADD (c, playlist_list, 0);
-	METHOD_ADD (c, playlist_clear, 0);
-	METHOD_ADD (c, playlist_set_next, 1);
-	METHOD_ADD (c, playlist_set_next_rel, 1);
-	METHOD_ADD (c, playlist_add, 1);
-	METHOD_ADD (c, playlist_remove, 1);
-	METHOD_ADD (c, medialib_get_info, 1);
+	rb_define_method (c, "broadcast_playlist_changed",
+	                  c_broadcast_playlist_changed, 0);
+	rb_define_method (c, "playlist_current_pos",
+	                  c_playlist_current_pos, 0);
+	rb_define_method (c, "broadcast_playlist_current_pos",
+	                  c_broadcast_playlist_current_pos, 0);
+	rb_define_method (c, "broadcast_medialib_entry_changed",
+	                  c_broadcast_medialib_entry_changed, 0);
+	rb_define_method (c, "playlist_shuffle", c_playlist_shuffle, 0);
+	rb_define_method (c, "playlist_list", c_playlist_list, 0);
+	rb_define_method (c, "playlist_clear", c_playlist_clear, 0);
+	rb_define_method (c, "playlist_set_next", c_playlist_set_next, 1);
+	rb_define_method (c, "playlist_set_next_rel",
+	                  c_playlist_set_next_rel, 1);
+	rb_define_method (c, "playlist_add", c_playlist_add, 1);
+	rb_define_method (c, "playlist_remove", c_playlist_remove, 1);
+	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 
-	METHOD_ADD (c, signal_visualisation_data, 0);
+	rb_define_method (c, "signal_visualisation_data",
+	                  c_signal_visualisation_data, 0);
 
-	METHOD_ADD (c, configval_get, 1);
-	METHOD_ADD (c, configval_set, 2);
-	METHOD_ADD (c, broadcast_configval_changed, 0);
+	rb_define_method (c, "configval_get", c_configval_get, 1);
+	rb_define_method (c, "configval_set", c_configval_set, 2);
+	rb_define_method (c, "broadcast_configval_changed",
+	                  c_broadcast_configval_changed, 0);
 
 	rb_define_const (c, "PLAY",
 	                 INT2FIX (XMMS_OUTPUT_STATUS_PLAY));
