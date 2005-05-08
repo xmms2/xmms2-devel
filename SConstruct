@@ -111,6 +111,7 @@ class Target:
 		self.type = type
 		self.static = True
 		self.shared = True
+		self.systemlibrary = False
 		my_global = {}
 		f = file(target)
 		source = f.read()
@@ -124,6 +125,8 @@ class Target:
 				self.static = my_global["static"]
 			if my_global.has_key("shared"):
 				self.shared = my_global["shared"]
+			if my_global.has_key("systemlibrary"):
+				self.systemlibrary = my_global["systemlibrary"]
 		else:
 			raise RutimeError("Wrong file %s passed to Target!" % target)
 
@@ -159,7 +162,7 @@ for t in base_env.targets:
 		if t.type == "plugin":
 			env.add_plugin(t.target, t.source)
 		if t.type == "library":
-			env.add_library(t.target, t.source, t.static, t.shared)
+			env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary)
 		if t.type == "program":
 			env.add_program(t.target, t.source)
 

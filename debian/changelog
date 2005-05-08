@@ -1,3 +1,12 @@
+xmms2 (1.9.5+bk20050508-0) unstable; urgency=low
+
+  * More policy compliant packaged.
+  * Versioned and sonamed libraries.
+  * New includefile structure. Still putting them all in /usr/include/xmms2
+    though
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Sun, 08 May 2005 21:11:08 +0200
+ 
 xmms2 (1.9.5+bk20050506-1) unstable; urgency=low
 
   * Added speex decoder plugin package.
