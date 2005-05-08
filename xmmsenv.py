@@ -72,12 +72,16 @@ class XMMSEnvironment(Environment):
 
 		r = False
 
-		try:
-			buf = os.popen(cmd).read()
-			if not buf == '':
-				r = True
-		except:
-			pass
+		# Execute command and obtain returncode from process
+		# If ret is None the process exited with returncode 0
+		ret = os.popen(cmd).close()
+		if ret:
+			statuscode = ret >> 8
+		else:
+			statuscode = 0
+
+		if statuscode == 0:
+			r = True
 
 		self.config_cache[cmd] = r
 
