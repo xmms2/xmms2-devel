@@ -242,7 +242,7 @@ xmms_medialib_logging_start (xmms_medialib_entry_t entry)
 	g_mutex_unlock (medialib->mutex);
 
 	if (ret) {
-		snprintf (tmp, 16, "%u", (guint) starttime);
+		g_snprintf (tmp, 16, "%u", (guint) starttime);
 		xmms_medialib_entry_property_set (entry, "laststarted", tmp);
 	}
 }
