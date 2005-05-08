@@ -7,7 +7,6 @@ from stat import *
 
 def installFunc(dest, source, env):
 	"""Copy file, setting sane permissions"""
-	print "installFunc: " + dest + " " + source
 	
 	if os.path.islink(source):
 		os.symlink(os.readlink(source), dest)
