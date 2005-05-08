@@ -14,8 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmms/xmmsclient.h>
-#include <xmms/object.h>
+#include <xmmsclient/xmmsclient.h>
+#include <xmms/xmms_object.h>
+
+#include "xmmspriv/xmms_playlist.h"
 
 #include <ruby.h>
 #include <stdbool.h>

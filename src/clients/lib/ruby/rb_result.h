@@ -17,7 +17,7 @@
 #ifndef __RB_RESULT_H
 #define __RB_RESULT_H
 
-#include <xmms/xmmsclient.h>
+#include <xmmsclient/xmmsclient.h>
 #include <stdbool.h>
 
 VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,

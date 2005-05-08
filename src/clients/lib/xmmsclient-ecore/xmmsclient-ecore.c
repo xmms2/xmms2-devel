@@ -18,9 +18,7 @@
 
 #include <stdio.h>
 
-#include "internal/client_ipc.h"
-#include "xmms/xmmsclient.h"
-#include "internal/xmmsclient_int.h"
+#include "xmmsclientpriv/xmmsclient.h"
 
 static int
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)

@@ -14,8 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmms/xmmsclient.h>
-#include <xmms/xmmsclient-ecore.h>
+#include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-ecore.h>
 
 #include <ruby.h>
 #include <stdbool.h>
