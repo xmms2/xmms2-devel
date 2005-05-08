@@ -387,9 +387,9 @@ static VALUE c_value_get (VALUE self)
 	return ret;
 }
 
-void Init_Result (VALUE m, VALUE eXmmsClientError)
+void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
 {
-	cResult = rb_define_class_under (m, "Result", rb_cObject);
+	cResult = rb_define_class_under (mXmmsClient, "Result", rb_cObject);
 
 	/* ugh, we have to define the "new" method,
 	 * so we can remove it again :(
@@ -423,7 +423,8 @@ void Init_Result (VALUE m, VALUE eXmmsClientError)
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
 
-	eResultError = rb_define_class_under (m, "ResultError",
+	eResultError = rb_define_class_under (mXmmsClient, "ResultError",
 	                                      eXmmsClientError);
-	eValueError = rb_define_class_under (m, "ValueError", eResultError);
+	eValueError = rb_define_class_under (mXmmsClient, "ValueError",
+	                                     eResultError);
 }

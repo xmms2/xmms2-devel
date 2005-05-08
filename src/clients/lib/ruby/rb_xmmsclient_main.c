@@ -16,11 +16,11 @@
 
 #include <ruby.h>
 
-void Init_XmmsClient (VALUE m);
+void Init_XmmsClient ();
 
 void Init_xmmsclient (void)
 {
-	VALUE m = rb_define_module ("XmmsClient");
+	VALUE mXmmsClient = rb_define_module ("XmmsClient");
 
-	Init_XmmsClient (m); /* initializes Result, too */
+	Init_XmmsClient (mXmmsClient); /* initializes Result, too */
 }

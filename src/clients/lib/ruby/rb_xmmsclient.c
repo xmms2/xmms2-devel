@@ -61,6 +61,12 @@ static VALUE c_alloc (VALUE klass)
 	                         c_mark, c_free, xmms);
 }
 
+/*
+ * call-seq:
+ *  XmmsClient.XmmsClient.new(name) -> xc
+ *
+ * Creates an XmmsClient::XmmsClient object.
+ */
 static VALUE c_init (VALUE self, VALUE name)
 {
 	RbXmmsClient *xmms = NULL;
@@ -77,6 +83,13 @@ static VALUE c_init (VALUE self, VALUE name)
 	return self;
 }
 
+/*
+ * call-seq:
+ *  xc.connect([path]) -> self
+ *
+ * Connects to the XMMS2 daemon listening at _path_.
+ * If _path_ isn't given, the default path is used.
+ */
 static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 {
 	VALUE path;
@@ -96,6 +109,12 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
+/*
+ * call-seq:
+ *  xc.disconnect -> self
+ *
+ * Disconnects xc from the XMMS2 daemon.
+ */
 static VALUE c_disconnect (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
@@ -107,6 +126,13 @@ static VALUE c_disconnect (VALUE self)
 	return self;
 }
 
+/*
+ * call-seq:
+ *  xc.last_error -> string or nil
+ *
+ * Returns the last error that occured in xc or nil, if no error
+ * occured yet.
+ */
 static VALUE c_last_error_get (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
@@ -119,21 +145,45 @@ static VALUE c_last_error_get (VALUE self)
 	return s ? rb_str_new2 (s) : Qnil;
 }
 
+/*
+ * call-seq:
+ *  xc.quit -> result
+ *
+ * Shuts down the XMMS2 daemon.
+ */
 static VALUE c_quit (VALUE self)
 {
 	METHOD_ADD_HANDLER (quit, true);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_start -> result
+ *
+ * Starts playback.
+ */
 static VALUE c_playback_start (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_start, true);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_pause -> result
+ *
+ * Pauses playback.
+ */
 static VALUE c_playback_pause (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_pause, true);
 }
 
+/*
+ * call-seq:
+ *  xc.playback_stop -> result
+ *
+ * Stops playback.
+ */
 static VALUE c_playback_stop (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_stop, true);
@@ -394,11 +444,11 @@ static VALUE c_signal_visualisation_data (VALUE self)
 	METHOD_ADD_HANDLER(signal_visualisation_data, true);
 }
 
-void Init_XmmsClient (VALUE m)
+void Init_XmmsClient (VALUE mXmmsClient)
 {
 	VALUE c;
 
-	c = rb_define_class_under (m, "XmmsClient", rb_cObject);
+	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
 
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
@@ -458,8 +508,9 @@ void Init_XmmsClient (VALUE m)
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
 
-	eXmmsClientError = rb_define_class_under (m, "XmmsClientError",
+	eXmmsClientError = rb_define_class_under (mXmmsClient,
+	                                          "XmmsClientError",
 	                                          rb_eStandardError);
 
-	Init_Result (m, eXmmsClientError);
+	Init_Result (mXmmsClient, eXmmsClientError);
 }
