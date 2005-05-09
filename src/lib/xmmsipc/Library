@@ -1,6 +1,7 @@
 target = "xmmsipc"
 source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c"]
 shared = False
+install = False
 
 def config(env):
 	env.Append(CCFLAGS=["-fPIC"])

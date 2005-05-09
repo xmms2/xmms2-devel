@@ -211,11 +211,12 @@ class XMMSEnvironment(Environment):
 		self.SharedLibrary(target, source)
 		self.Install(self.pluginpath, os.path.join(self.dir, self.shlibname(target)))
 
-	def add_library(self, target, source, static=True, shared=True, system=False):
+	def add_library(self, target, source, static=True, shared=True, system=False, install=True):
 		self.libs.append(target)
 		if static:
 			self.Library(target, source)
-			self.Install(self.librarypath, os.path.join(self.dir, self.libname(target)))
+			if install:
+				self.Install(self.librarypath, os.path.join(self.dir, self.libname(target)))
 		if shared:
 			if (self.platform in ["linux"]) and system:
 				# Append the version string to the library and
@@ -227,13 +228,16 @@ class XMMSEnvironment(Environment):
 				shlibpath = os.path.join(self.dir, shlib)
 				self.Command(shlibpath_unversioned, shlibpath, 
 				             "ln -s %s %s" % (shlib, shlibpath_unversioned))
-				self.Install(self.librarypath, shlibpath_unversioned)
+				if install:
+					self.Install(self.librarypath, shlibpath_unversioned)
 			if system:
-				self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
+				if self.platform == 'linux' or self.platform == 'freebsd':
+					self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
 			self.SharedLibrary(target, source)
 			if self.platform == 'darwin':
 				self["SHLINKFLAGS"] += " -dynamiclib"
-			self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
+			if install:
+				self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
 
 	def add_program(self, target, source):

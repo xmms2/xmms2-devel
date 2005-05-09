@@ -111,6 +111,7 @@ class Target:
 		self.type = type
 		self.static = True
 		self.shared = True
+		self.install = True
 		self.systemlibrary = False
 		my_global = {}
 		f = file(target)
@@ -121,6 +122,8 @@ class Target:
 			self.source = [os.path.join(self.dir, s) for s in my_global["source"]]
 			self.target = os.path.join(self.dir, my_global["target"])
 			self.config = my_global["config"]
+			if my_global.has_key("install"):
+				self.install = my_global["install"]
 			if my_global.has_key("static"):
 				self.static = my_global["static"]
 			if my_global.has_key("shared"):
@@ -162,7 +165,7 @@ for t in base_env.targets:
 		if t.type == "plugin":
 			env.add_plugin(t.target, t.source)
 		if t.type == "library":
-			env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary)
+			env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary, t.install)
 		if t.type == "program":
 			env.add_program(t.target, t.source)
 
