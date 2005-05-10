@@ -1,2 +1,3 @@
 usr/include/xmms2/xmmsclient-ecore.h
 usr/lib/libxmmsclient-ecore.a
+usr/lib/libxmmsclient-ecore.so

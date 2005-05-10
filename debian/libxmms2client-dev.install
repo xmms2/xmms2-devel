@@ -1,4 +1,5 @@
 usr/lib/libxmmsclient.a
+usr/lib/libxmmsclient.so
 usr/include/xmms2/xmms.h
 usr/include/xmms2/xmms_config.h
 usr/include/xmms2/xmms_decoder.h
