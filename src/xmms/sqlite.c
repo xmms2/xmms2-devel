@@ -121,8 +121,8 @@ xmms_sqlite_open (guint *id, gboolean *c)
 		return FALSE; 
 	}
 
-	sqlite3_exec (sql, "PRAGMA synchronous = NORMAL", NULL, NULL, NULL);
-	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);
+	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+/*	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);*/
 
 	/* if the database already exists, check whether there have been
 	 * any incompatible changes. if so, we need to recreate the db.
