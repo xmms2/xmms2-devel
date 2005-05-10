@@ -41,6 +41,24 @@ Depends: debconf (>= 0.2.78), ${shlibs:Depends}
 Description: XMMS2 - ecore clientlibrary - private beta - DO NOT SPREAD!
  This package contains the clientlib.
 
+Package: libxmms2client-ecore-dev
+Architecture: any
+Depends: debconf (>= 0.2.78), libxmms2client-ecore
+Description: XMMS2 - ecore clientlibrary devel files - private beta - DO NOT SPREAD!
+ This package contains the headers for libxmms2client-ecore.
+
+Package: libxmms2client-glib
+Architecture: any
+Depends: debconf (>= 0.2.78), ${shlibs:Depends}
+Description: XMMS2 - glib clientlibrary - private beta - DO NOT SPREAD!
+ This package contains the clientlib.
+
+Package: libxmms2client-glib-dev
+Architecture: any
+Depends: debconf (>= 0.2.78), libxmms2client-glib
+Description: XMMS2 - glib clientlibrary devel files - private beta - DO NOT SPREAD!
+ This package contains the headers for libxmms2client-glib.
+
 Package: libxmms2client-ruby
 Architecture: all
 Depends: libxmms2client-ruby1.8, ruby
@@ -100,12 +118,6 @@ Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
 # This package contains Python bindings for the xmms2 clientlib.
 # .
 # It is packaged for the version 2.4 series of Python.
-
-Package: libxmms2client-ecore-dev
-Architecture: any
-Depends: debconf (>= 0.2.78), libxmms2client-ecore
-Description: XMMS2 - ecore clientlibrary devel files - private beta - DO NOT SPREAD!
- This package contains the headers for libxmms2client.
 
 Package: xmms2-client-cli
 Architecture: any
