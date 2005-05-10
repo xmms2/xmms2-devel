@@ -28,6 +28,7 @@ opts.Add('PREFIX', 'install prefix', '/usr/local')
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
+opts.Add('PKGCONFIGDIR', 'Where should we put our .pc files?', '$PREFIX/lib/pkgconfig')
 opts.Add(BoolOption('SHOWCACHE', 'show what flags that lives inside cache', 0))
 opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
 opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
@@ -103,7 +104,9 @@ base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":"1.9.9 DR1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
-	      "%SHAREDDIR%":base_env.sharepath}
+	      "%SHAREDDIR%":base_env.sharepath,
+	      "%PREFIX%":base_env.install_prefix}
+
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
 
 class Target:
@@ -152,17 +155,6 @@ def scan_dir(dir, dict):
 targets = {"plugin":[], "library":[], "program":[]}
 scan_dir("src", targets)
 
-def scan_headers(name):
-	dir = "src/include/" + name
-	for d in os.listdir(dir):
-		newf = dir+"/"+d
-		if os.path.isfile(newf) and newf.endswith('.h'):
-			base_env.add_header(name, newf)
-			
-scan_headers("xmmsc")
-scan_headers("xmms")
-scan_headers("xmmsclient")
-
 for t in targets["plugin"]:
 	base_env.targets.append(Target(t, "plugin"))
 for t in targets["library"]:
@@ -185,6 +177,33 @@ try:
 	dump(base_env.config_cache, open("config.cache", "wb+"))
 except IOError:
 	print "Could not dump config.cache!"
+
+#### INSTALL HEADERS!
+def scan_headers(name):
+	dir = "src/include/" + name
+	for d in os.listdir(dir):
+		newf = dir+"/"+d
+		if os.path.isfile(newf) and newf.endswith('.h'):
+			base_env.add_header(name, newf)
+			
+scan_headers("xmmsc")
+scan_headers("xmms")
+scan_headers("xmmsclient")
+
+#### Generate pc files.
+
+pc_files = [{"name": "xmms2-plugin", "lib":""}, 
+	    {"name":"xmms2-client", "lib":"-lxmmsclient"},
+	    {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
+	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"}]
+
+d = subst_dict.copy()
+for p in pc_files:
+	d["%NAME%"] = p["name"]
+	d["%LIB%"] = p["lib"]
+	pc = base_env.SubstInFile(p["name"]+".pc", "xmms2.pc.in", SUBST_DICT=d)
+	base_env.Install("$PKGCONFIGDIR", p["name"]+".pc")
+
 
 print "====================================="
 print " Configuration printout"
