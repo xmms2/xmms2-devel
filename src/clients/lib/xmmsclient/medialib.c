@@ -33,7 +33,7 @@
  */
 
 static xmmsc_result_t *
-do_methodcall (xmmsc_connection_t *conn, guint id, const gchar *arg)
+do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
