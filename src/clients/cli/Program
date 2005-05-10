@@ -3,5 +3,6 @@ source=["xmms2_client.c"]
 def config(env):
 	env["LIBS"].append("xmmsclient")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-	env.pkgconfig("glib-2.0")
+	env["LIBS"].append("xmmsclient-glib")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
 	return True

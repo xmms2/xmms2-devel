@@ -2,7 +2,6 @@ target="xmmsclient"
 systemlibrary=True
 
 source=["ipc.c", 
-	"ipc_glib.c", 
 	"medialib.c", 
 	"other.c", 
 	"playback.c", 
@@ -10,10 +9,10 @@ source=["ipc.c",
 	"result.c", 
 	"xhash.c", 
 	"xlist.c", 
+	"xqueue.c",
 	"xmmsclient.c"]
 
 def config(env):
 	env["LIBS"].append("xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
-	env.pkgconfig("glib-2.0")
 	return True

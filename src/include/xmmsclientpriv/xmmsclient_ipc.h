@@ -18,6 +18,8 @@
 #ifndef __XMMSC_IPC_H__
 #define __XMMSC_IPC_H__
 
+#include <stdint.h>
+#include <stdbool.h>
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsclient/xmmsclient.h"
 
@@ -33,19 +35,18 @@ typedef void (*xmmsc_ipc_wakeup_t) (xmmsc_ipc_t *);
 xmmsc_ipc_t *xmmsc_ipc_init (void);
 void xmmsc_ipc_lock_set (xmmsc_ipc_t *ipc, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (void *), void *);
-gboolean xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc);
-gboolean xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid);
+bool xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cid);
 void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc);
 void xmmsc_ipc_destroy (xmmsc_ipc_t *ipc);
-gboolean xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path);
-void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error);
+bool xmmsc_ipc_connect (xmmsc_ipc_t *ipc, char *path);
+void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error);
 const char *xmmsc_ipc_error_get (xmmsc_ipc_t *ipc);
-gint xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc);
+int xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc);
 
 void xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
-xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid);
+xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid);
 void xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
-void xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout);
+void xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout);
 
 int xmmsc_ipc_io_out (xmmsc_ipc_t *ipc);
 int xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc);

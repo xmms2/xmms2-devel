@@ -14,12 +14,12 @@
  *  Lesser General Public License for more details.
  */
 
-#include <glib.h>
-
 #include <sys/types.h>
 #include <sys/select.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "xmmsclient/xmmsclient.h"
 
@@ -28,15 +28,16 @@
 
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_util.h"
 
 
 struct xmmsc_ipc_St {
 	xmms_ipc_transport_t *transport;
 	xmms_ipc_msg_t *read_msg;
-	GQueue *out_msg;
-	gchar *error;
-	gboolean disconnect;
-	GHashTable *results_table;
+	x_queue_t *out_msg;
+	char *error;
+	bool disconnect;
+	x_hash_t *results_table;
 	void *lockdata;
 	void (*lockfunc)(void *lock);
 	void (*unlockfunc)(void *lock);
@@ -76,10 +77,10 @@ static void xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg);
 int
 xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 {
-	gboolean disco = FALSE;
+	bool disco = false;
 
-	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (!ipc->disconnect, FALSE);
+	x_return_val_if_fail (ipc, false);
+	x_return_val_if_fail (!ipc->disconnect, false);
 
 	while (!disco) {
 		if (!ipc->read_msg)
@@ -99,7 +100,7 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 	if (disco)
 		xmmsc_ipc_disconnect (ipc);
 
-	return TRUE;
+	return true;
 }
 
 /**
@@ -108,9 +109,9 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 int
 xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 {
-	g_return_val_if_fail (ipc, FALSE);
+	x_return_val_if_fail (ipc, false);
 
-	return !g_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
+	return !x_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
 }
 
 /**
@@ -119,15 +120,15 @@ xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 int
 xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 {
-	gboolean disco = FALSE;
+	bool disco = false;
 
-	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (!ipc->disconnect, FALSE);
+	x_return_val_if_fail (ipc, false);
+	x_return_val_if_fail (!ipc->disconnect, false);
 
-	while (!g_queue_is_empty (ipc->out_msg)) {
-		xmms_ipc_msg_t *msg = g_queue_peek_head (ipc->out_msg);
+	while (!x_queue_is_empty (ipc->out_msg)) {
+		xmms_ipc_msg_t *msg = x_queue_peek_head (ipc->out_msg);
 		if (xmms_ipc_msg_write_transport (msg, ipc->transport, &disco)) {
-			g_queue_pop_head (ipc->out_msg);
+			x_queue_pop_head (ipc->out_msg);
 			xmms_ipc_msg_destroy (msg);
 		} else {
 			break;
@@ -137,17 +138,17 @@ xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 	if (disco)
 		xmmsc_ipc_disconnect (ipc);
 
-	return TRUE;
+	return true;
 }
 
 /**
  * The underlaying filedescriptor can be extracted with
  * this function. It used to poll on.
  */
-gint
+int
 xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 {
-	g_return_val_if_fail (ipc, -1);
+	x_return_val_if_fail (ipc, -1);
 	return xmms_ipc_transport_fd_get (ipc->transport);
 }
 
@@ -160,7 +161,7 @@ xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 const char *
 xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
 {
-	g_return_val_if_fail (ipc, NULL);
+	x_return_val_if_fail (ipc, NULL);
 	return ipc->error;
 }
 
@@ -170,12 +171,12 @@ xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
 void
 xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 {
-	ipc->disconnect = TRUE;
+	ipc->disconnect = true;
 	if (ipc->read_msg) {
 		xmms_ipc_msg_destroy (ipc->read_msg);
 		ipc->read_msg = NULL;
 	}
-	xmmsc_ipc_error_set (ipc, g_strdup ("Disconnected"));
+	xmmsc_ipc_error_set (ipc, strdup ("Disconnected"));
 	if (ipc->disconnect_callback) {
 		ipc->disconnect_callback (ipc->disconnect_data);
 	}
@@ -187,10 +188,10 @@ xmmsc_ipc_t *
 xmmsc_ipc_init (void)
 {
 	xmmsc_ipc_t *ipc;
-	ipc = g_new0 (xmmsc_ipc_t, 1);
-	ipc->disconnect = FALSE;
-	ipc->results_table = g_hash_table_new (NULL, NULL);
-	ipc->out_msg = g_queue_new ();
+	ipc = x_new0 (xmmsc_ipc_t, 1);
+	ipc->disconnect = false;
+	ipc->results_table = x_hash_new (NULL, NULL);
+	ipc->out_msg = x_queue_new ();
 
 	return ipc;
 }
@@ -214,22 +215,22 @@ xmmsc_ipc_lock_set (xmmsc_ipc_t *ipc, void *lock, void (*lockfunc)(void *), void
 void
 xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 {
-	g_return_if_fail (ipc);
-	g_return_if_fail (res);
+	x_return_if_fail (ipc);
+	x_return_if_fail (res);
 
 	xmmsc_ipc_lock (ipc);
-	g_hash_table_insert (ipc->results_table, GUINT_TO_POINTER (xmmsc_result_cid (res)), res);
+	x_hash_insert (ipc->results_table, XUINT_TO_POINTER (xmmsc_result_cid (res)), res);
 	xmmsc_ipc_unlock (ipc);
 }
 
 xmmsc_result_t *
-xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid)
+xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid)
 {
 	xmmsc_result_t *res;
-	g_return_val_if_fail (ipc, NULL);
+	x_return_val_if_fail (ipc, NULL);
 
 	xmmsc_ipc_lock (ipc);
-	res = g_hash_table_lookup (ipc->results_table, GUINT_TO_POINTER (cid));
+	res = x_hash_lookup (ipc->results_table, XUINT_TO_POINTER (cid));
 	xmmsc_ipc_unlock (ipc);
 	return res;
 }
@@ -237,33 +238,33 @@ xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, guint cid)
 void
 xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 {
-	g_return_if_fail (ipc);
-	g_return_if_fail (res);
+	x_return_if_fail (ipc);
+	x_return_if_fail (res);
 
 	xmmsc_ipc_lock (ipc);
-	g_hash_table_remove (ipc->results_table, GUINT_TO_POINTER (xmmsc_result_cid (res)));
+	x_hash_remove (ipc->results_table, XUINT_TO_POINTER (xmmsc_result_cid (res)));
 	xmmsc_ipc_unlock (ipc);
 }
 
 
 
 void
-xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, gchar *error)
+xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error)
 {
-	g_return_if_fail (ipc);
+	x_return_if_fail (ipc);
 	ipc->error = error;
 }
 
 void
-xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
+xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout)
 {
 	fd_set rfdset;
 	fd_set wfdset;
 	struct timeval tmout;
 	int fd;
 
-	g_return_if_fail (ipc);
-	g_return_if_fail (!ipc->disconnect);
+	x_return_if_fail (ipc);
+	x_return_if_fail (!ipc->disconnect);
 
 	tmout.tv_sec = timeout;
 	tmout.tv_usec = 0;
@@ -287,13 +288,13 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, guint timeout)
 		xmmsc_ipc_io_out_callback (ipc);
 }
 
-gboolean
-xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, guint32 cid)
+bool
+xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cid)
 {
-	g_return_val_if_fail (ipc, FALSE);
+	x_return_val_if_fail (ipc, false);
 	xmms_ipc_msg_set_cid (msg, cid);
-	g_queue_push_tail (ipc->out_msg, msg);
-	return TRUE;
+	x_queue_push_tail (ipc->out_msg, msg);
+	return true;
 }
 
 
@@ -303,29 +304,29 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (!ipc)
 		return;
 
-	g_hash_table_destroy (ipc->results_table);
+	x_hash_destroy (ipc->results_table);
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
 	}
 	if (ipc->error) {
-		g_free (ipc->error);
+		free (ipc->error);
 	}
-	g_free (ipc);
+	free (ipc);
 }
 
-gboolean
-xmmsc_ipc_connect (xmmsc_ipc_t *ipc, gchar *path) 
+bool
+xmmsc_ipc_connect (xmmsc_ipc_t *ipc, char *path)
 {
-	g_return_val_if_fail (ipc, FALSE);
-	g_return_val_if_fail (path, FALSE);
+	x_return_val_if_fail (ipc, false);
+	x_return_val_if_fail (path, false);
 
 	ipc->transport = xmms_ipc_client_init (path);
 	if (!ipc->transport) {
-		ipc->error = g_strdup ("Could not init client!");
-		return FALSE;
+		ipc->error = strdup ("Could not init client!");
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static inline void
@@ -355,11 +356,11 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	}
 
 	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_ERROR) {
-		gchar *errstr;
-		gint len;
+		char *errstr;
+		int len;
 
 		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len))
-			errstr = g_strdup ("No errormsg!");
+			errstr = strdup ("No errormsg!");
 
 		xmmsc_result_seterror (res, errstr);
 	}

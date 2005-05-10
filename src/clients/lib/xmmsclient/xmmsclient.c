@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
@@ -148,14 +149,14 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	char path[256];
 
 	if (!c)
-		return FALSE;
+		return false;
 
 	if (!ipcpath) {
 		struct passwd *pwd;
 
 		pwd = getpwuid (getuid ());
 		if (!pwd || !pwd->pw_name)
-			return FALSE;
+			return false;
 
 		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", pwd->pw_name);
 	} else {
@@ -166,7 +167,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	
 	if (!xmmsc_ipc_connect (ipc, path)) {
 		c->error = "xmms2d is not running.";
-		return FALSE;
+		return false;
 	}
 
 	c->ipc = ipc;
@@ -473,7 +474,7 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
 		return NULL;
 
-	h = x_hash_new_full (x_str_hash, x_str_equal, g_free, g_free);
+	h = x_hash_new_full (x_str_hash, x_str_equal, free, free);
 
 	for (i = 1; i <= entries; i++) {
 		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
@@ -492,7 +493,7 @@ err:
 
 }
 
-void xmms_log_debug (const gchar *fmt, ...)
+void xmms_log_debug (const char *fmt, ...)
 {
 	char buff[1024];
 	va_list ap;

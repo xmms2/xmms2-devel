@@ -26,15 +26,14 @@
 
 #include "xmmsclient/xmmsclient_hash.h"
 #include "xmmsclient/xmmsclient_util.h"
+#include "xmmsc/xmmsc_util.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
-
-#define TRUE 1
-#define FALSE 0
 
 #define HASH_TABLE_MIN_SIZE 11
 #define HASH_TABLE_MAX_SIZE 13845163
@@ -287,9 +286,9 @@ x_hash_lookup_extended (x_hash_t *hash_table,
 			*orig_key = node->key;
 		if (value)
 			*value = node->value;
-		return TRUE;
+		return true;
 	} else
-		return FALSE;
+		return false;
 }
 
 /**
@@ -391,10 +390,10 @@ x_hash_remove (x_hash_t	*hash_table, const void *key)
 
 		X_HASH_TABLE_RESIZE (hash_table);
 
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 /**

@@ -33,7 +33,7 @@
  */
 
 static xmmsc_result_t *
-do_methodcall (xmmsc_connection_t *conn, guint id, const gchar *arg)
+do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -217,7 +217,7 @@ xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 		return NULL;
 	}
 
-	ret = x_hash_new_full (x_str_hash, x_str_equal, g_free, g_free);
+	ret = x_hash_new_full (x_str_hash, x_str_equal, free, free);
 
 	x_hash_foreach (hash, hash_insert, ret);
 

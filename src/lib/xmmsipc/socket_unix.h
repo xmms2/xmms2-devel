@@ -20,7 +20,7 @@
 
 #include "xmmsc/xmmsc_ipc_transport.h"
 
-xmms_ipc_transport_t *xmms_ipc_usocket_server_init (const gchar *path);
-xmms_ipc_transport_t *xmms_ipc_usocket_client_init (const gchar *path);
+xmms_ipc_transport_t *xmms_ipc_usocket_server_init (const char *path);
+xmms_ipc_transport_t *xmms_ipc_usocket_client_init (const char *path);
 
 #endif /* XMMS_SOCKET_UNIX_H */

@@ -407,7 +407,7 @@ xmms_ipc_client_thread (gpointer data)
 			while (!g_queue_is_empty (client->out_msg)) {
 				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
 
-				if (xmms_ipc_msg_write_transport (msg, client->transport, &disconnect)) {
+				if (xmms_ipc_msg_write_transport (msg, client->transport, (bool*)&disconnect)) {
 					g_queue_pop_head (client->out_msg);
 					xmms_ipc_msg_destroy (msg);
 				} else {
@@ -421,7 +421,7 @@ xmms_ipc_client_thread (gpointer data)
 				if (!client->read_msg)
 					client->read_msg = xmms_ipc_msg_alloc ();
 		
-				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
+				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, (bool*)&disconnect)) {
 					xmms_ipc_msg_t *msg = client->read_msg;
 					client->read_msg = NULL;
 					process_msg (client, client->ipc, msg);
