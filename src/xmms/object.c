@@ -224,16 +224,16 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			arg.retval.string = va_arg (ap, gchar *);
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHTABLE:
+		case XMMS_OBJECT_CMD_ARG_DICT:
 			arg.retval.hashtable = (GHashTable *) va_arg (ap, gpointer);
 			break;
-		case XMMS_OBJECT_CMD_ARG_UINTLIST:
+		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
 			arg.retval.uintlist = (GList*) va_arg (ap, gpointer);
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHLIST:
+		case XMMS_OBJECT_CMD_ARG_DICTLIST:
 			arg.retval.hashlist = (GList*) va_arg (ap, gpointer);
 			break;
-		case XMMS_OBJECT_CMD_ARG_INTLIST:
+		case XMMS_OBJECT_CMD_ARG_INT32LIST:
 			arg.retval.intlist = (GList*) va_arg (ap, gpointer);
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRINGLIST:

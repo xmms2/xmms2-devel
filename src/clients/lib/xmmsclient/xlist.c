@@ -26,8 +26,8 @@
 
 #include <assert.h>
 
-#include "xmmsclient/xmmsclient_list.h"
-#include "xmmsclient/xmmsclient_util.h"
+#include "xmmsclientpriv/xmmsclient_list.h"
+#include "xmmsclientpriv/xmmsclient_util.h"
 
 #include <stdlib.h>
 #include <unistd.h>

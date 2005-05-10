@@ -33,7 +33,7 @@
  */
 
 static xmmsc_result_t *
-do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
+do_methodcall (xmmsc_connection_t *conn, guint id, const gchar *arg)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -183,46 +183,6 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	res = xmmsc_send_msg (c, msg);
 
 	return res;
-}
-
-static void
-hash_insert (const void *key, const void *value, void *udata)
-{
-	x_hash_t *hash = udata;
-	x_hash_insert (hash, strdup ((char *)key), strdup ((char *)value));
-}
-
-/**
- * Synchronous variant of #xmmsc_medialib_get_info, synchronous should not
- * be used in GUI clients
- */
-x_hash_t *
-xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
-{
-	xmmsc_result_t *res;
-	x_hash_t *hash, *ret;
-
-	res = xmmsc_medialib_get_info (c, id);
-	if (!res)
-		return NULL;
-
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		return NULL;
-	}
-
-	if (!xmmsc_result_get_hashtable (res, &hash)) {
-		xmmsc_result_unref (res);
-		return NULL;
-	}
-
-	ret = x_hash_new_full (x_str_hash, x_str_equal, free, free);
-
-	x_hash_foreach (hash, hash_insert, ret);
-
-	xmmsc_result_unref (res);
-	return ret;
 }
 
 /**

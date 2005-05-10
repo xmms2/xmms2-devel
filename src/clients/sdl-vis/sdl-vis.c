@@ -23,6 +23,10 @@
  */
 
 
+/** @todo these should be pulled in from an include-file */
+#define FFT_BITS 10
+#define FFT_LEN (1<<FFT_BITS)
+
 #include <SDL/SDL.h>
 #include <SDL/SDL_ttf.h>
 #include <glib.h>
@@ -30,10 +34,6 @@
 #include <stdlib.h>
 
 #include "xmmsclient/xmmsclient-glib.h"
-
-/** @todo these should be pulled in from an include-file */
-#define FFT_BITS 10
-#define FFT_LEN (1<<FFT_BITS)
 
 static GMainLoop *mainloop;
 
@@ -185,11 +185,17 @@ render_vis (gpointer data)
 	return TRUE;
 }
 
+static int
+res_has_key (xmmsc_result_t *res, const char *key)
+{
+	char *val;
+	xmmsc_result_get_dict_entry (res, key, &val);
+	return !!val;
+}
+
 static void
 handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	x_hash_t *hash;
-	gchar *tmp;
 	guint id;
 	xmmsc_connection_t *c = userdata;
 
@@ -198,25 +204,21 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 		return;
 	}
 
-	hash = xmmscs_medialib_get_info (c, id);
+	res = xmmsc_medialib_get_info (c, id);
+	xmmsc_result_wait (res);
 
-	if (!hash) {
-		printf ("no mediainfo!\n");
+	if (res_has_key (res, "channel") && res_has_key (res, "title")) {
+		xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+				    "[stream] ${title}", res);
+	} else if (res_has_key (res, "channel")) {
+		xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+				    "${channel}", res);
 	} else {
-		tmp = x_hash_lookup (hash, "id");
-
-		if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
-			xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-					    "[stream] ${title}", hash);
-		} else if (x_hash_lookup (hash, "channel")) {
-			xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-					    "${channel}", hash);
-		} else {
-			xmmsc_entry_format (mediainfo, sizeof (mediainfo),
-					    "${artist} - ${title}", hash);
-		}
-		x_hash_destroy (hash);
+		xmmsc_entry_format (mediainfo, sizeof (mediainfo),
+				    "${artist} - ${title}", res);
 	}
+
+	xmmsc_result_unref (res);
 }
 
 
@@ -264,32 +266,30 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 	int i;
 	float *spec;
 	xmmsc_result_t *newres;
-	x_list_t *list, *n;
 
 	if (xmmsc_result_iserror (res)) {
 		return;
 	}
 
-	if (xmmsc_result_get_uintlist (res, &list)) {
-
-		if (free_buffers) {
-			spec = g_trash_stack_pop (&free_buffers);
-		} else {
-			spec = g_malloc(FFT_LEN/2*sizeof(float));
-		}
-		
-		n = list;
-		time = (guint) n->data;
-		n = x_list_next (n);
-		i = 0;
-		for (; n; n = x_list_next (n)) {
-			spec[i++] = ((gdouble)((guint32) n->data)) / ((gdouble)(INT_MAX));
-		}
-
-		/* @todo measure ipc-delay for real! */
-		enqueue (time-300, spec); 
+	if (free_buffers) {
+		spec = g_trash_stack_pop (&free_buffers);
+	} else {
+		spec = g_malloc(FFT_LEN/2*sizeof(float));
 	}
-
+	
+	xmmsc_result_get_uint (res, &time);
+	i = 0;
+	
+	xmmsc_result_list_next (res);
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		unsigned int val;
+		xmmsc_result_get_uint (res, &val);
+		spec[i++] = val / ((gdouble)(INT_MAX));
+	}
+		
+	/* @todo measure ipc-delay for real! */
+	enqueue (time-300, spec); 
+	
 	newres = xmmsc_result_restart (res);
 	xmmsc_result_unref (res);
 	xmmsc_result_unref (newres);
