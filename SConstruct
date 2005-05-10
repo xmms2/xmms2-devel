@@ -36,8 +36,9 @@ opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
 
 base_env = xmmsenv.XMMSEnvironment(options=opts)
 base_env.Append(CPPPATH=["#src/include"])
-base_env.pkgconfig("glib-2.0", fail=True)
 base_env.pkgconfig("sqlite3", fail=True, libs=False)
+base_env.pkgconfig("glib-2.0", fail=True, libs=False)
+base_env["LIBS"]=[]
 
 def do_subst_in_file(targetfile, sourcefile, dict):
 	"""Replace all instances of the keys of dict with their values.

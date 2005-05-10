@@ -15,8 +15,6 @@
  */
 
 
-#include <glib.h>
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -30,23 +28,23 @@
 #include <signal.h>
 #include <syslog.h>
 
-#include "xmms/xmms_log.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_util.h"
 
 void
 xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
 {
-	g_free (ipct->path);
+	free (ipct->path);
 	close (ipct->fd);
 }
 
-gint
-xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
+int
+xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
-	gint fd;
-	gint ret;
-	g_return_val_if_fail (ipct, -1);
-	g_return_val_if_fail (buffer, -1);
+	int fd;
+	int ret;
+	x_return_val_if_fail (ipct, -1);
+	x_return_val_if_fail (buffer, -1);
 
 	fd = ipct->fd;
 
@@ -55,12 +53,12 @@ xmms_ipc_usocket_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 	return ret;
 }
 
-gint
-xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
+int
+xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
-	gint fd;
-	g_return_val_if_fail (ipct, -1);
-	g_return_val_if_fail (buffer, -1);
+	int fd;
+	x_return_val_if_fail (ipct, -1);
+	x_return_val_if_fail (buffer, -1);
 	
 	fd = ipct->fd;
 
@@ -69,10 +67,10 @@ xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_client_init (const gchar *path)
+xmms_ipc_usocket_client_init (const char *path)
 {
-	gint fd;
-	gint flags;
+	int fd;
+	int flags;
 	xmms_ipc_transport_t *ipct;
 	struct sockaddr_un saddr;
 
@@ -105,9 +103,9 @@ xmms_ipc_usocket_client_init (const gchar *path)
 		return NULL;
 	}
 		
-	ipct = g_new0 (xmms_ipc_transport_t, 1);
+	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
-	ipct->path = g_strdup (path);
+	ipct->path = strdup (path);
 	ipct->read_func = xmms_ipc_usocket_read;
 	ipct->write_func = xmms_ipc_usocket_write;
 	ipct->destroy_func = xmms_ipc_usocket_destroy;
@@ -118,17 +116,17 @@ xmms_ipc_usocket_client_init (const gchar *path)
 xmms_ipc_transport_t *
 xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 {
-	gint fd;
+	int fd;
 	struct sockaddr_un sin;
 	socklen_t sin_len;
 
-	g_return_val_if_fail (transport, NULL);
+	x_return_val_if_fail (transport, NULL);
 
 	sin_len = sizeof (sin);
 
 	fd = accept (transport->fd, (struct sockaddr *)&sin, &sin_len);
 	if (fd >= 0) {
-		gint flags;
+		int flags;
 		xmms_ipc_transport_t *ret;
 
 		flags = fcntl (fd, F_GETFL, 0);
@@ -147,25 +145,23 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 		}
 
 
-		ret = g_new0 (xmms_ipc_transport_t, 1);
+		ret = x_new0 (xmms_ipc_transport_t, 1);
 		ret->fd = fd;
 		ret->read_func = xmms_ipc_usocket_read;
 		ret->write_func = xmms_ipc_usocket_write;
 		ret->destroy_func = xmms_ipc_usocket_destroy;
 
 		return ret;
-	} else {
-		XMMS_DBG ("Accept error %s (%d)", strerror (errno), errno);
 	}
 
 	return NULL;
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_server_init (const gchar *path)
+xmms_ipc_usocket_server_init (const char *path)
 {
-	gint fd;
-	gint flags;
+	int fd;
+	int flags;
 	xmms_ipc_transport_t *ipct;
 	struct sockaddr_un saddr;
 
@@ -178,7 +174,7 @@ xmms_ipc_usocket_server_init (const gchar *path)
 	saddr.sun_family = AF_UNIX;
 	strncpy (saddr.sun_path, path, 108);
 
-	if (g_file_test (path, G_FILE_TEST_EXISTS)) {
+	if (access (path, F_OK) == 0) {
 		unlink (path);
 	}
 
@@ -204,9 +200,9 @@ xmms_ipc_usocket_server_init (const gchar *path)
 		return NULL;
 	}
 		
-	ipct = g_new0 (xmms_ipc_transport_t, 1);
+	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
-	ipct->path = g_strdup (path);
+	ipct->path = strdup (path);
 	ipct->read_func = xmms_ipc_usocket_read;
 	ipct->write_func = xmms_ipc_usocket_write;
 	ipct->accept_func = xmms_ipc_usocket_accept;
