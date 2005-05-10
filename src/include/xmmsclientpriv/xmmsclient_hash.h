@@ -27,7 +27,7 @@
 #ifndef __X_HASH_H__
 #define __X_HASH_H__
 
-#include "xmmsclient/xmmsclient_util.h"
+#include "xmmsclientpriv/xmmsclient_util.h"
 
 #ifdef __cplusplus
 extern "C" {

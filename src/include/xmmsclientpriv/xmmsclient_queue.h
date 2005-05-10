@@ -3,7 +3,7 @@
 #define __X_QUEUE_H_
 
 #include <stdbool.h>
-#include "xmmsclient/xmmsclient_list.h"
+#include "xmmsclientpriv/xmmsclient_list.h"
 
 #ifdef __cplusplus
 extern "C" {

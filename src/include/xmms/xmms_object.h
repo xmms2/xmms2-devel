@@ -122,11 +122,11 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_ARG_INT32(a) ,arg->values[a].int32
 
 #define __XMMS_CMD_DO_RETVAL_NONE()
-#define __XMMS_CMD_DO_RETVAL_HASHTABLE() arg->retval.hashtable = 
-#define __XMMS_CMD_DO_RETVAL_HASHLIST() arg->retval.hashlist = 
+#define __XMMS_CMD_DO_RETVAL_DICT() arg->retval.hashtable = 
+#define __XMMS_CMD_DO_RETVAL_DICTLIST() arg->retval.hashlist = 
 #define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval.uint32 = 
-#define __XMMS_CMD_DO_RETVAL_UINTLIST() arg->retval.uintlist = 
-#define __XMMS_CMD_DO_RETVAL_INTLIST() arg->retval.intlist = 
+#define __XMMS_CMD_DO_RETVAL_UINT32LIST() arg->retval.uintlist = 
+#define __XMMS_CMD_DO_RETVAL_INT32LIST() arg->retval.intlist = 
 #define __XMMS_CMD_DO_RETVAL_STRINGLIST() arg->retval.stringlist = 
 #define __XMMS_CMD_DO_RETVAL_STRING() arg->retval.string = 
 #define __XMMS_CMD_DO_RETVAL_PLCH() arg->retval.plch = 

@@ -18,10 +18,6 @@
 #define __XMMS_CLIENT_H__
 
 #include <stdint.h>
-#include <stdbool.h>
-#include "xmmsclient/xmmsclient_hash.h"
-#include "xmmsclient/xmmsclient_list.h"
-#include "xmmsclient/xmmsclient_queue.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 
 #ifdef __cplusplus
@@ -39,7 +35,7 @@ void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata);
 
 char *xmmsc_get_last_error (xmmsc_connection_t *c);
-int xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table);
+int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res);
 
 xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 
@@ -68,12 +64,6 @@ xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c);
 
-/* Syncronous commands */
-unsigned int xmmscs_playlist_current_id (xmmsc_connection_t *c);
-void xmmsc_medialib_entry_free (x_hash_t *entry);
-x_list_t *xmmscs_playlist_list (xmmsc_connection_t *c);
-unsigned int xmmscs_playlist_current_pos (xmmsc_connection_t *c);
-
 
 /*
  * PLAYBACK ************************************************
@@ -97,10 +87,6 @@ xmmsc_result_t *xmmsc_broadcast_playback_current_id (xmmsc_connection_t *c);
 /* signals */
 xmmsc_result_t *xmmsc_signal_playback_playtime (xmmsc_connection_t *c);
 
-/* Syncronous commands */
-int xmmscs_playback_playtime (xmmsc_connection_t *c);
-unsigned int xmmscs_playback_current_id (xmmsc_connection_t *c);
-
 
 /*
  * OTHER **************************************************
@@ -117,10 +103,6 @@ xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c);
 
 
-/* Syncronous commands */
-x_list_t *xmmscs_configval_list (xmmsc_connection_t *c);
-char *xmmscs_configval_get (xmmsc_connection_t *c, char *key);
-
 /*
  * MEDIALIB ***********************************************
  */
@@ -136,9 +118,6 @@ xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const 
 xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime);
 xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, unsigned int id);
-
-/* Syncronous commands */
-x_hash_t *xmmscs_medialib_get_info (xmmsc_connection_t *c, unsigned int id);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
@@ -187,12 +166,17 @@ int xmmsc_result_cid (xmmsc_result_t *res);
 int xmmsc_result_get_int (xmmsc_result_t *res, int *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, char **r);
-int xmmsc_result_get_hashtable (xmmsc_result_t *res, x_hash_t **r);
-int xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r);
-int xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r);
-int xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r);
+
+typedef void (*xmmsc_foreach_func) (const void *key, const void *value, void *user_data);
+
+int xmmsc_result_get_dict_entry (xmmsc_result_t *res, const char *key, char **r);
+int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data);
+
+int xmmsc_result_list_next (xmmsc_result_t *res);
+int xmmsc_result_list_first (xmmsc_result_t *res);
+int xmmsc_result_list_valid (xmmsc_result_t *res);
+
 int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument);
-int xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r);
 void xmmsc_result_seterror (xmmsc_result_t *res, char *errstr);
 int xmmsc_result_get_type (xmmsc_result_t *res);
 
