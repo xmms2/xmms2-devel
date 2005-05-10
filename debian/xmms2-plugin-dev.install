@@ -14,4 +14,4 @@ usr/include/xmms2/xmms/xmms_plugin.h
 usr/include/xmms2/xmms/xmms_sample.h
 usr/include/xmms2/xmms/xmms_transport.h
 usr/include/xmms2/xmms/xmms_transportplugin.h
-
+usr/lib/pkgconfig/xmms2-plugin.pc
