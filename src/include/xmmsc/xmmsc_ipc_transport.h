@@ -18,27 +18,29 @@
 #ifndef XMMS_IPC_TRANSPORT_H
 #define XMMS_IPC_TRANSPORT_H
 
+#include <stdint.h>
+
 typedef struct xmms_ipc_transport_St xmms_ipc_transport_t;
 
-typedef gint (*xmms_ipc_read_func) (xmms_ipc_transport_t *, gchar *, gint);
-typedef gint (*xmms_ipc_write_func) (xmms_ipc_transport_t *, gchar *, gint);
+typedef int (*xmms_ipc_read_func) (xmms_ipc_transport_t *, char *, int);
+typedef int (*xmms_ipc_write_func) (xmms_ipc_transport_t *, char *, int);
 typedef xmms_ipc_transport_t *(*xmms_ipc_accept_func) (xmms_ipc_transport_t *);
 typedef void (*xmms_ipc_destroy_func) (xmms_ipc_transport_t *);
 
 void xmms_ipc_transport_destroy (xmms_ipc_transport_t *ipct);
-gint xmms_ipc_transport_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len);
-gint xmms_ipc_transport_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len);
-gint xmms_ipc_transport_fd_get (xmms_ipc_transport_t *ipct);
+int xmms_ipc_transport_read (xmms_ipc_transport_t *ipct, char *buffer, int len);
+int xmms_ipc_transport_write (xmms_ipc_transport_t *ipct, char *buffer, int len);
+int xmms_ipc_transport_fd_get (xmms_ipc_transport_t *ipct);
 xmms_ipc_transport_t * xmms_ipc_server_accept (xmms_ipc_transport_t *ipct);
-xmms_ipc_transport_t * xmms_ipc_client_init (const gchar *path);
-xmms_ipc_transport_t * xmms_ipc_server_init (const gchar *path);
+xmms_ipc_transport_t * xmms_ipc_client_init (const char *path);
+xmms_ipc_transport_t * xmms_ipc_server_init (const char *path);
 
 struct xmms_ipc_transport_St {
-	gchar *path;
-	gpointer data;
-	gint fd;
-	gint32 peer;
-	gint16 peer_port;
+	char *path;
+	void *data;
+	int fd;
+	int32_t peer;
+	int16_t peer_port;
 
 	xmms_ipc_accept_func accept_func;
 	xmms_ipc_write_func write_func;

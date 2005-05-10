@@ -25,8 +25,6 @@
 #include <pwd.h>
 #include <sys/types.h>
 
-#include <glib.h>
-
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
@@ -269,19 +267,19 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 	}
 }
 
-static gboolean
+static bool
 xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 {
-	gint type;
+	int type;
 	x_list_t *list = NULL;
 
 	if (xmmsc_result_iserror (res)) {
-		res->parsed = TRUE;
-		return TRUE;
+		res->parsed = true;
+		return true;
 	}
 
 	if (!xmms_ipc_msg_get_int32 (msg, &type))
-		return FALSE;
+		return false;
 
 	res->datatype = type;
 
@@ -290,13 +288,13 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 			{
 				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.uint))
-					return FALSE;
+					return false;
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_INT32 :
 			{
 				if (!xmms_ipc_msg_get_int32 (msg, &res->data.inte))
-					return FALSE;
+					return false;
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
@@ -304,7 +302,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 				int32_t len;
 
 				if (!xmms_ipc_msg_get_string_alloc (msg, &res->data.string, &len))
-					return FALSE;
+					return false;
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_HASHTABLE :
@@ -313,7 +311,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 
 				hash = xmmsc_deserialize_hashtable (msg);
 				if (!hash)
-					return FALSE;
+					return false;
 
 				res->data.hash = hash;
 
@@ -372,11 +370,11 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		case XMMS_OBJECT_CMD_ARG_PLCH :
 			{
 				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.type))
-					return FALSE;
+					return false;
 				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.id))
-					return FALSE;
+					return false;
 				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.arg))
-					return FALSE;
+					return false;
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_HASHLIST :
@@ -403,12 +401,12 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			break;
 
 		default :
-			return FALSE;
+			return false;
 	}
 
-	res->parsed = TRUE;
+	res->parsed = true;
 
-	return TRUE;
+	return true;
 }
 
 
@@ -481,7 +479,7 @@ xmmsc_result_wait (xmmsc_result_t *res)
 	}
 
 	if (err) {
-		xmmsc_result_seterror (res, g_strdup (err));
+		xmmsc_result_seterror (res, strdup (err));
 	}
 }
 				
@@ -805,7 +803,7 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
  */
 
 xmmsc_result_t *
-xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid)
+xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid)
 {
 	xmmsc_result_t *res;
 

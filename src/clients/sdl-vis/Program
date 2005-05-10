@@ -3,6 +3,8 @@ source=["sdl-vis.c"]
 def config(env):
 	env["LIBS"].append("xmmsclient")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env["LIBS"].append("xmmsclient-glib")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
 	if not env.configcmd("sdl-config --libs --cflags"): return False 
 	elif not env.checklibs("SDL_ttf", "TTF_Init"): return False
         return True

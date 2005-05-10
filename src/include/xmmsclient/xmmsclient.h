@@ -17,10 +17,11 @@
 #ifndef __XMMS_CLIENT_H__
 #define __XMMS_CLIENT_H__
 
-#include <glib.h>
-
+#include <stdint.h>
+#include <stdbool.h>
 #include "xmmsclient/xmmsclient_hash.h"
 #include "xmmsclient/xmmsclient_list.h"
+#include "xmmsclient/xmmsclient_queue.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 
 #ifdef __cplusplus
@@ -172,7 +173,7 @@ void xmmsc_result_restartable (xmmsc_result_t *res, unsigned int signalid);
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 
-xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, guint32 commandid);
+xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid);
 void xmmsc_result_ref (xmmsc_result_t *res);
 void xmmsc_result_unref (xmmsc_result_t *res);
 

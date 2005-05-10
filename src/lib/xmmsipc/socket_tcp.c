@@ -15,8 +15,6 @@
  */
 
 
-#include <glib.h>
-
 #include <stdio.h>
 #include <netdb.h>
 #include <sys/types.h>
@@ -36,23 +34,23 @@
 #include <netinet/tcp.h>
 
 
-#include "xmms/xmms_log.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_util.h"
 
 void
 xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)
 {
-	g_free (ipct->path);
+	free (ipct->path);
 	close (ipct->fd);
 }
 
-gint
-xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
+int
+xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
-	gint fd;
-	gint ret;
-	g_return_val_if_fail (ipct, -1);
-	g_return_val_if_fail (buffer, -1);
+	int fd;
+	int ret;
+	x_return_val_if_fail (ipct, -1);
+	x_return_val_if_fail (buffer, -1);
 
 	fd = ipct->fd;
 
@@ -61,12 +59,12 @@ xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 	return ret;
 }
 
-gint
-xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
+int
+xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
-	gint fd;
-	g_return_val_if_fail (ipct, -1);
-	g_return_val_if_fail (buffer, -1);
+	int fd;
+	x_return_val_if_fail (ipct, -1);
+	x_return_val_if_fail (buffer, -1);
 	
 	fd = ipct->fd;
 
@@ -75,31 +73,33 @@ xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, gchar *buffer, gint len)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_tcp_client_init (const gchar *path)
+xmms_ipc_tcp_client_init (const char *path)
 {
-	gint fd;
-	gint flags;
-	gchar **tokens;
+	int fd;
+	int flags;
+	char *host, *port;
 	xmms_ipc_transport_t *ipct;
 	struct sockaddr_in saddr;
 	struct hostent *hent;
 	struct servent *sent;
+
 
 	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd == -1) {
 		return NULL;
 	}
 
-	tokens = g_strsplit (path, ":", 0);
-	if (!tokens) {
-		close (fd);
-		return NULL;
+	host = strdup (path);
+	port = strchr (host, ':');
+	if (port) {
+		*port = '\0';
+		port++;
 	}
 
-	hent = gethostbyname (tokens[0]);
+	hent = gethostbyname (host);
 	if (!hent) {
 		close (fd);
-		g_strfreev (tokens);
+		free (host);
 		return NULL;
 	}
 
@@ -108,18 +108,18 @@ xmms_ipc_tcp_client_init (const gchar *path)
 
 	saddr.sin_family = AF_INET;
 
-	if (!tokens[1]) {
+	if (!port) {
 		saddr.sin_port = htons (5555);
 	} else {
-		sent = getservbyname (tokens[1], "tcp");
+		sent = getservbyname (port, "tcp");
 		if (!sent) {
-			saddr.sin_port = htons ((guint16) strtoul (tokens[1], NULL, 0));
+			saddr.sin_port = htons ((uint16_t) strtoul (port, NULL, 0));
 		} else {
-			saddr.sin_port = (guint16) sent->s_port;
+			saddr.sin_port = (uint16_t) sent->s_port;
 		}
 	}
 
-	g_strfreev (tokens);
+	free (host);
 
 	if (connect (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
@@ -141,9 +141,9 @@ xmms_ipc_tcp_client_init (const gchar *path)
 		return NULL;
 	}
 
-	ipct = g_new0 (xmms_ipc_transport_t, 1);
+	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
-	ipct->path = g_strdup (path);
+	ipct->path = strdup (path);
 	ipct->read_func = xmms_ipc_tcp_read;
 	ipct->write_func = xmms_ipc_tcp_write;
 	ipct->destroy_func = xmms_ipc_tcp_destroy;
@@ -154,17 +154,17 @@ xmms_ipc_tcp_client_init (const gchar *path)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 {
-	gint fd;
+	int fd;
 	struct sockaddr_in sin;
 	socklen_t sin_len;
 
-	g_return_val_if_fail (transport, NULL);
+	x_return_val_if_fail (transport, NULL);
 
 	sin_len = sizeof (sin);
 
 	fd = accept (transport->fd, (struct sockaddr *)&sin, &sin_len);
 	if (fd >= 0) {
-		gint flags;
+		int flags;
 		int one = 1;
 		xmms_ipc_transport_t *ret;
 
@@ -186,69 +186,68 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof (one));
 		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof (one));
 
-		ret = g_new0 (xmms_ipc_transport_t, 1);
+		ret = x_new0 (xmms_ipc_transport_t, 1);
 		ret->fd = fd;
 		ret->read_func = xmms_ipc_tcp_read;
 		ret->write_func = xmms_ipc_tcp_write;
 		ret->destroy_func = xmms_ipc_tcp_destroy;
 
 		return ret;
-	} else {
-		XMMS_DBG ("Accept error %s (%d)", strerror (errno), errno);
 	}
 
 	return NULL;
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_tcp_server_init (const gchar *path)
+xmms_ipc_tcp_server_init (const char *path)
 {
-	gint fd;
-	gint flags;
-	gchar **tokens;
+	int fd;
+	int flags;
+	char *host, *port;
 	xmms_ipc_transport_t *ipct;
 	struct sockaddr_in saddr;
 	struct hostent *hent;
 	struct servent *sent;
 	int off = 1;
 
+
 	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd == -1) {
 		return NULL;
 	}
 
-	tokens = g_strsplit (path, ":", 0);
-	if (!tokens) {
-		close (fd);
-		return NULL;
+	host = strdup (path);
+	port = strchr (host, ':');
+	if (port) {
+		*port = '\0';
+		port++;
 	}
 
-	hent = gethostbyname (tokens[0]);
+	hent = gethostbyname (host);
 	if (!hent) {
 		close (fd);
-		g_strfreev (tokens);
+		free (host);
 		return NULL;
 	}
 
 	memset (&saddr, '\0', sizeof (saddr));
 	memcpy (&saddr.sin_addr, *hent->h_addr_list, sizeof (struct in_addr));
-	XMMS_DBG ("Binding to IP: %s", inet_ntoa (saddr.sin_addr));
 
 	saddr.sin_family = AF_INET;
 
-	if (!tokens[1]) {
+	if (!port) {
 		saddr.sin_port = htons (5555);
 	} else {
-		sent = getservbyname (tokens[1], "tcp");
+		sent = getservbyname (port, "tcp");
 		if (!sent) {
-			saddr.sin_port = htons ((guint16) strtoul (tokens[1], NULL, 0));
+			saddr.sin_port = htons ((uint16_t) strtoul (port, NULL, 0));
 		} else {
-			saddr.sin_port = (guint16) sent->s_port;
+			saddr.sin_port = (uint16_t) sent->s_port;
 		}
 	}
 
-	XMMS_DBG ("Binding to port: %u", (unsigned) ntohs (saddr.sin_port));
-	g_strfreev (tokens);
+	free (host);
+
 	if (bind (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
 		return NULL;
@@ -276,9 +275,9 @@ xmms_ipc_tcp_server_init (const gchar *path)
 	/* Make sure that we can use this socket again... good thing */
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (char *) &off, sizeof (off));
 		
-	ipct = g_new0 (xmms_ipc_transport_t, 1);
+	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
-	ipct->path = g_strdup (path);
+	ipct->path = strdup (path);
 	ipct->read_func = xmms_ipc_tcp_read;
 	ipct->write_func = xmms_ipc_tcp_write;
 	ipct->accept_func = xmms_ipc_tcp_accept;

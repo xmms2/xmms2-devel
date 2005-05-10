@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
@@ -283,7 +284,7 @@ free_str (void * key, void * value, void * udata)
 
 	if (strcasecmp (k, "id") == 0) {
 		free (key);
-		return TRUE;
+		return true;
 	}
 
 	if (key)
@@ -291,7 +292,7 @@ free_str (void * key, void * value, void * udata)
 	if (value)
 		free (value);
 
-	return TRUE;
+	return true;
 }
 
 /**

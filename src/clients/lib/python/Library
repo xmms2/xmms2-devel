@@ -37,4 +37,5 @@ def config(env):
 	# just do it
 	env.Pyx (env.dir+"/xmmsclient.c", [env.dir+"/xmmsclient.pyx"])
 
+	env.pkgconfig("glib-2.0")
 	return True
