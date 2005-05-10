@@ -51,7 +51,7 @@ binary-arch: build
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -plibxmms2client -plibxmms2client-ecore
+	dh_makeshlibs -plibxmms2client -plibxmms2client-ecore -plibxmms2client-glib
 	dh_python
 	dh_installdeb
 	dh_shlibdeps
