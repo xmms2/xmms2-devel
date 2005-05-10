@@ -24,8 +24,8 @@
  * GLib at ftp://ftp.gtk.org/pub/gtk/.
  */
 
-#include "xmmsclient/xmmsclient_hash.h"
-#include "xmmsclient/xmmsclient_util.h"
+#include "xmmsclientpriv/xmmsclient_hash.h"
+#include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsc/xmmsc_util.h"
 
 #include <stdbool.h>

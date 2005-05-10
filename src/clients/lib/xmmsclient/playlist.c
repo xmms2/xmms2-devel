@@ -43,27 +43,6 @@ xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
 }
 
-/**
- * Synchronous variant of #xmmsc_playlist_current_pos
- */
-unsigned int
-xmmscs_playlist_current_pos (xmmsc_connection_t *c)
-{
-	unsigned int i = 0;
-	xmmsc_result_t *res;
-
-	res = xmmsc_playlist_current_pos (c);
-	if (!res)
-		return 0;
-
-	xmmsc_result_wait (res);
-
-	xmmsc_result_get_uint (res, &i);
-
-	xmmsc_result_unref (res);
-
-	return i;
-}
 
 /**
  * Shuffles the current playlist.
@@ -111,32 +90,6 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
 }
 
-/**
- * Synchronous variant of #xmmsc_playlist_list
- */
-x_list_t *
-xmmscs_playlist_list (xmmsc_connection_t *c)
-{
-	int i;
-	xmmsc_result_t *res;
-	x_list_t *list, *ret = NULL;
-
-	res = xmmsc_playlist_list (c);
-	if (!res)
-		return NULL;
-
-	xmmsc_result_wait (res);
-
-	i = xmmsc_result_get_uintlist (res, &list);
-
-	if (i) 
-		ret = x_list_copy (list);
-
-	xmmsc_result_unref (res);
-
-	if (ret) return ret;
-	return NULL;
-}
 
 /**
  * Add a medialib id to the playlist. 

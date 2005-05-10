@@ -180,17 +180,17 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 				xmms_ipc_msg_put_string (msg, n->data);
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_UINTLIST:
+		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
 			for (n = arg->retval.uintlist; n; n = g_list_next (n)) {
 				xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (n->data));
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_INTLIST:
+		case XMMS_OBJECT_CMD_ARG_INT32LIST:
 			for (n = arg->retval.intlist; n; n = g_list_next (n)) {
 				xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (n->data));
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHLIST:
+		case XMMS_OBJECT_CMD_ARG_DICTLIST:
 			for (n = arg->retval.hashlist; n; n = g_list_next (n)) {
 				xmms_ipc_do_hashtable (msg, (GHashTable *)n->data);
 			}
@@ -201,7 +201,7 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 				xmms_ipc_handle_playlist_chmsg (msg, chmsg);
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHTABLE: 
+		case XMMS_OBJECT_CMD_ARG_DICT:
 			xmms_ipc_do_hashtable (msg, arg->retval.hashtable);
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
@@ -234,13 +234,13 @@ xmms_ipc_free_arg_value (xmms_object_cmd_arg_t *arg)
 				g_list_free_1 (n);
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_UINTLIST:
+		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
 			g_list_free (arg->retval.uintlist);
 			break;
-		case XMMS_OBJECT_CMD_ARG_INTLIST:
+		case XMMS_OBJECT_CMD_ARG_INT32LIST:
 			g_list_free (arg->retval.intlist);
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHLIST:
+		case XMMS_OBJECT_CMD_ARG_DICTLIST:
 			for (n = arg->retval.hashlist; n; n = nxt) {
 				g_hash_table_destroy (n->data);
 				nxt = g_list_next (n);
@@ -250,7 +250,7 @@ xmms_ipc_free_arg_value (xmms_object_cmd_arg_t *arg)
 		case XMMS_OBJECT_CMD_ARG_PLCH:
 			g_free (arg->retval.plch);
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHTABLE: 
+		case XMMS_OBJECT_CMD_ARG_DICT: 
 			g_hash_table_destroy (arg->retval.hashtable);
 			break;
 	}
