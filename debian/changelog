@@ -1,3 +1,9 @@
+xmms2 (1.9.5+bk20050510-2) unstable; urgency=low
+
+  * New packages libxmms2client-glib and libxmms2client-glib-dev.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Tue, 10 May 2005 20:38:28 +0200
+ 
 xmms2 (1.9.5+bk20050510-1) unstable; urgency=low
 
   * Merge html and diskwrite into core.
