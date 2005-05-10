@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-void xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *connection);
+int xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *connection);
 
 #ifdef __cplusplus
 }
