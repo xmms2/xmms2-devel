@@ -194,7 +194,7 @@ static VALUE c_int_get (VALUE self)
 	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_int (res->real, &id)) {
-		rb_raise (eValueError, "xmmsc_result_get_int() failed");
+		rb_raise (eValueError, "cannot retrieve value");
 		return Qnil;
 	}
 
@@ -215,7 +215,7 @@ static VALUE c_uint_get (VALUE self)
 	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_uint (res->real, &id)) {
-		rb_raise (eValueError, "xmmsc_result_get_uint() failed");
+		rb_raise (eValueError, "cannot retrieve value");
 		return Qnil;
 	}
 
@@ -236,7 +236,7 @@ static VALUE c_string_get (VALUE self)
 	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_string (res->real, &s)) {
-		rb_raise (eValueError, "xmmsc_result_get_string() failed");
+		rb_raise (eValueError, "cannot retrieve value");
 		return Qnil;
 	}
 
@@ -266,15 +266,13 @@ static VALUE c_hashtable_get (VALUE self)
 {
 	VALUE rhash = rb_hash_new ();
 	RbResult *res = NULL;
-	x_hash_t *hash = NULL;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!xmmsc_result_get_hashtable (res->real, &hash))
-		rb_raise (eValueError,
-		          "xmmsc_result_get_hashtable() failed");
-
-	x_hash_foreach (hash, (XHFunc) xhash_to_rhash, &rhash);
+	if (!xmmsc_result_dict_foreach (res->real,
+	                                (xmmsc_foreach_func) xhash_to_rhash,
+	                                &rhash))
+		rb_raise (eValueError, "cannot retrieve value");
 
 	return rhash;
 }
@@ -289,19 +287,23 @@ static VALUE c_intlist_get (VALUE self)
 {
 	VALUE a;
 	RbResult *res = NULL;
-	x_list_t *list = NULL, *l;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!xmmsc_result_get_intlist (res->real, &list)) {
-		rb_raise (eValueError, "xmmsc_result_get_intlist() failed");
-		return Qnil;
-	}
-
 	a = rb_ary_new ();
 
-	for (l = list; l; l = l->next)
-		rb_ary_push (a, INT2FIX ((int) l->data));
+	while (xmmsc_result_list_valid (res->real)) {
+		int i = 0;
+
+		if (!xmmsc_result_get_int (res->real, &i)) {
+			rb_raise (eValueError, "cannot retrieve value");
+			return Qnil;
+		}
+
+		rb_ary_push (a, INT2FIX (i));
+
+		xmmsc_result_list_next (res->real);
+	}
 
 	return a;
 }
@@ -316,19 +318,23 @@ static VALUE c_uintlist_get (VALUE self)
 {
 	VALUE a;
 	RbResult *res = NULL;
-	x_list_t *list = NULL, *l;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!xmmsc_result_get_uintlist (res->real, &list)) {
-		rb_raise (eValueError, "xmmsc_result_get_uintlist() failed");
-		return Qnil;
-	}
-
 	a = rb_ary_new ();
 
-	for (l = list; l; l = l->next)
-		rb_ary_push (a, UINT2NUM ((unsigned int) l->data));
+	while (xmmsc_result_list_valid (res->real)) {
+		unsigned int i = 0;
+
+		if (!xmmsc_result_get_uint (res->real, &i)) {
+			rb_raise (eValueError, "cannot retrieve value");
+			return Qnil;
+		}
+
+		rb_ary_push (a, UINT2NUM (i));
+
+		xmmsc_result_list_next (res->real);
+	}
 
 	return a;
 }
@@ -343,19 +349,23 @@ static VALUE c_stringlist_get (VALUE self)
 {
 	VALUE a;
 	RbResult *res = NULL;
-	x_list_t *list = NULL, *l;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!xmmsc_result_get_stringlist (res->real, &list)) {
-		rb_raise (eValueError, "xmmsc_result_get_stringlist() failed");
-		return Qnil;
-	}
-
 	a = rb_ary_new ();
 
-	for (l = list; l; l = l->next)
-		rb_ary_push (a, rb_str_new2 (l->data));
+	while (xmmsc_result_list_valid (res->real)) {
+		char *s = NULL;
+
+		if (!xmmsc_result_get_string (res->real, &s)) {
+			rb_raise (eValueError, "cannot retrieve value");
+			return Qnil;
+		}
+
+		rb_ary_push (a, rb_str_new2 (s));
+
+		xmmsc_result_list_next (res->real);
+	}
 
 	return a;
 }
@@ -370,23 +380,22 @@ static VALUE c_hashlist_get (VALUE self)
 {
 	VALUE a;
 	RbResult *res = NULL;
-	x_list_t *list = NULL, *l;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!xmmsc_result_get_hashlist (res->real, &list)) {
-		rb_raise (eValueError, "xmmsc_result_get_hashlist() failed");
-		return Qnil;
-	}
-
 	a = rb_ary_new ();
 
-	for (l = list; l; l = l->next) {
+	while (xmmsc_result_list_valid (res->real)) {
 		VALUE rhash = rb_hash_new ();
 
-		x_hash_foreach (l->data, (XHFunc) xhash_to_rhash, &rhash);
+		if (!xmmsc_result_dict_foreach (res->real,
+		                                (xmmsc_foreach_func) xhash_to_rhash,
+		                                &rhash))
+			rb_raise (eValueError, "cannot retrieve value");
 
 		rb_ary_push (a, rhash);
+
+		xmmsc_result_list_next (res->real);
 	}
 
 	return a;
@@ -401,8 +410,7 @@ static VALUE c_playlist_change_get (VALUE self)
 
 	if (!(xmmsc_result_get_playlist_change (res->real, &type, &id,
 	                                        &arg))) {
-		rb_raise (eValueError,
-		          "xmmsc_result_get_playlist_change() failed");
+		rb_raise (eValueError, "cannot retrieve value");
 		return Qnil;
 	}
 
@@ -439,18 +447,18 @@ static VALUE c_value_get (VALUE self)
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			ret = c_string_get (self);
 			break;
-		case XMMS_OBJECT_CMD_ARG_UINTLIST:
+		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
 			ret = c_uintlist_get (self);
 			break;
-		case XMMS_OBJECT_CMD_ARG_INTLIST:
+		case XMMS_OBJECT_CMD_ARG_INT32LIST:
 			ret = c_intlist_get (self);
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
 			ret = c_stringlist_get (self);
-		case XMMS_OBJECT_CMD_ARG_HASHTABLE:
+		case XMMS_OBJECT_CMD_ARG_DICT:
 			ret = c_hashtable_get (self);
 			break;
-		case XMMS_OBJECT_CMD_ARG_HASHLIST:
+		case XMMS_OBJECT_CMD_ARG_DICTLIST:
 			ret = c_hashlist_get (self);
 			break;
 		case XMMS_OBJECT_CMD_ARG_PLCH:
