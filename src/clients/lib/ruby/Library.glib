@@ -32,5 +32,8 @@ def config(env):
 		env["LIBS"].append("xmmsclient")
 		env["SHLIBPREFIX"]=''
 
+		env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
+		env["LIBS"].append("xmmsclient-glib")
+
 		return True
 	return False
