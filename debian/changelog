@@ -1,7 +1,14 @@
+xmms2 (1.9.5+bk20050510-1) unstable; urgency=low
+
+  * Merge html and diskwrite into core.
+  * Provide dummy xmms2 package.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Tue, 10 May 2005 13:34:05 +0200
+ 
 xmms2 (1.9.5+bk20050510-0) unstable; urgency=low
 
   * The .so symlinks need to go into the -dev packages.
-  * Fix BuildDepends: libmad-dev -> libmad0-dev.
+  * Fix BuildDepends: libmad-dev -> libmad0-dev, add ruby1.8-dev
 
  -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Tue, 10 May 2005 11:06:36 +0200
  

@@ -5,4 +5,6 @@ usr/lib/xmms2/libxmms_m3u.so*
 usr/lib/xmms2/libxmms_pls.so*
 usr/lib/xmms2/libxmms_eq.so*
 usr/lib/xmms2/libxmms_replaygain.so*
+usr/lib/xmms2/libxmms_diskwrite.so*
+usr/lib/xmms2/libxmms_html.so*
 usr/share/xmms2/dismantled-the_swarm_clip.ogg
