@@ -152,6 +152,17 @@ def scan_dir(dir, dict):
 targets = {"plugin":[], "library":[], "program":[]}
 scan_dir("src", targets)
 
+def scan_headers(name):
+	dir = "src/include/" + name
+	for d in os.listdir(dir):
+		newf = dir+"/"+d
+		if os.path.isfile(newf) and newf.endswith('.h'):
+			base_env.add_header(name, newf)
+			
+scan_headers("xmmsc")
+scan_headers("xmms")
+scan_headers("xmmsclient")
+
 for t in targets["plugin"]:
 	base_env.targets.append(Target(t, "plugin"))
 for t in targets["library"]:
