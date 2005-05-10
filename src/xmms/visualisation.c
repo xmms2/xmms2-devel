@@ -126,7 +126,7 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 
 	xmms_object_emit_f (XMMS_OBJECT (vis),
 			    XMMS_IPC_SIGNAL_VISUALISATION_DATA,
-			    XMMS_OBJECT_CMD_ARG_UINTLIST,
+			    XMMS_OBJECT_CMD_ARG_UINT32LIST,
 			    vis->list);
 	
 }

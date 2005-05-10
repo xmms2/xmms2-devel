@@ -174,16 +174,15 @@ read_config ()
 
 
 static void
-format_pretty_list (xmmsc_connection_t *conn, x_list_t *list) {
+format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 	uint count = 0;
-	x_list_t *n;
-	x_hash_t *e = NULL;
+	GList *n;
 	char *mid;
 
 	printf ("-[Result]-----------------------------------------------------------------------\n");
 	printf ("Id   | Artist            | Album                     | Title\n");
 
-	for (n = list; n; n = x_list_next (n)) {
+	for (n = list; n; n = g_list_next (n)) {
 		char *artist, *album, *title;
 		xmmsc_result_t *res;
 		mid = n->data;
@@ -191,19 +190,17 @@ format_pretty_list (xmmsc_connection_t *conn, x_list_t *list) {
 		if (mid) {
 			res = xmmsc_medialib_get_info (conn, atoi (mid));
 			xmmsc_result_wait (res);
-			if (!xmmsc_result_get_hashtable (res, &e))
-				print_error ("broken result!");
 		} else {
 			print_error ("Empty result!");
 		}
 
-		title = x_hash_lookup (e, "title");
+		xmmsc_result_get_dict_entry (res, "title", &title);
 		if (title) {
-			artist = x_hash_lookup (e, "artist");
+			xmmsc_result_get_dict_entry (res, "artist", &artist);
 			if (!artist)
 				artist = "Unknown";
 
-			album = x_hash_lookup (e, "album");
+			xmmsc_result_get_dict_entry (res, "album", &album);
 			if (!album)
 				album = "Unknown";
 
@@ -211,7 +208,7 @@ format_pretty_list (xmmsc_connection_t *conn, x_list_t *list) {
 
 		} else {
 			char *url, *filename;
-			url = x_hash_lookup (e, "url");
+			xmmsc_result_get_dict_entry (res, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
@@ -282,10 +279,8 @@ add [url]";
 	} else if (g_strcasecmp (argv[2], "search") == 0) {
 		char query[1024];
 		char **s;
-		x_list_t *l;
 		xmmsc_result_t *res;
-		x_hash_t *e;
-		x_list_t *n = NULL;
+		GList *n = NULL;
 
 		if (argc < 4) {
 			print_error ("Supply a select statement");
@@ -302,24 +297,18 @@ add [url]";
 			print_error ("%s", xmmsc_result_get_error (res));
 		}
 
-		if (!xmmsc_result_get_hashlist (res, &l)) {
-			print_error ("Broken resultset...");
-		}
-
-		for (l = l; l; l = x_list_next (l)) {
+		for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 			char *id;
-			e = l->data;
 			
-			id = x_hash_lookup (e, "id");
+			xmmsc_result_get_dict_entry (res, "id", &id);
 			if (!id)
 				print_error ("broken resultset");
 
-			n = x_list_prepend (n, id);
-
+			n = g_list_prepend (n, id);
 		}
 
 		format_pretty_list (conn, n);
-		x_list_free (n);
+		g_list_free (n);
 
 	} else if (g_strcasecmp (argv[2], "query") == 0) {
 		xmmsc_result_t *res;
@@ -335,26 +324,14 @@ add [url]";
 			print_error ("%s", xmmsc_result_get_error (res));
 		}
 		
-		{
-			x_list_t *l, *n;
-			x_hash_t *e;
-
-			if (!xmmsc_result_get_hashlist (res, &l)) {
-				print_error ("Broken resultset...");
-			}
-
-			for (n = l; n; n = x_list_next (n)) {
-				e = n->data;
-				x_hash_foreach (e, print_hash, NULL);
-			}
-			
+		for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+			xmmsc_result_dict_foreach (res, print_hash, NULL);
 		}
 
 		xmmsc_result_unref (res);
 	} else if (g_strcasecmp (argv[2], "list_playlist") == 0) {
 		char query[1024];
-		x_list_t *l, *n = NULL;
-		x_hash_t *e;
+		GList *n = NULL;
 		char *id;
 		xmmsc_result_t *res;
 
@@ -367,44 +344,32 @@ add [url]";
 		res = xmmsc_medialib_select (conn, query);
 		xmmsc_result_wait (res);
 
-		if (!xmmsc_result_get_hashlist (res, &l))
-			print_error ("Broken resultset!");
-
-		e = l ? l->data : NULL;
-		if (!e) 
+		/* yes, result is a hashlist,
+		   but there should only be one entry */
+		xmmsc_result_get_dict_entry (res, "id", &id);
+		if (!id) 
 			print_error ("No such playlist!");
 
-		id = x_hash_lookup (e, "id");
-		if (!id)
-			print_error ("broken resultset!");
-		
 		g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %s", id);
 		xmmsc_result_unref (res);
 
 		res = xmmsc_medialib_select (conn, query);
 		xmmsc_result_wait (res);
 		
-		if (!xmmsc_result_get_hashlist (res, &l))
-			print_error ("Broken resultset!");
-
-		for (l = l; l; l = x_list_next (l)) {
+		for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 			gchar *entry;
-			e = l->data;
-			
-			entry = x_hash_lookup (e, "entry");
-			if (!entry)
-				print_error ("broken resultset");
-
+			xmmsc_result_get_dict_entry (res, "entry", &entry);
+			if (!entry) 
+				print_error ("No such playlist!");
 			if (g_strncasecmp (entry, "mlib", 4) == 0) {
 				char *p = entry+7;
-				n = x_list_prepend (n, p);
+				n = g_list_prepend (n, p);
 			}
-
 		}
 
-		n = x_list_reverse (n);
+		n = g_list_reverse (n);
 		format_pretty_list (conn, n);
-		x_list_free (n);
+		g_list_free (n);
 
 	} else if (g_strcasecmp (argv[2], "save_playlist") == 0 ||
 	           g_strcasecmp (argv[2], "load_playlist") == 0) {
@@ -434,7 +399,7 @@ add [url]";
 		if (argc < 5) {
 			print_error ("Supply a playlist name and url");
 		}
-	
+
 		url = format_url (argv[4]);
 
 		res = xmmsc_medialib_playlist_import (conn, argv[3], url);
@@ -680,7 +645,7 @@ print_entry (const void *key, const void *value, void *udata)
 static void
 cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	x_hash_t *entry;
+	xmmsc_result_t *res;
 	int id;
 
 	if (argc > 2) {
@@ -688,80 +653,97 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 
 		for (cnt = 2; cnt < argc; cnt++) {
 			id = strtoul (argv[cnt], (char**) NULL, 10);
-			entry = xmmscs_medialib_get_info (conn, id);
+			res = xmmsc_medialib_get_info (conn, id);
+			xmmsc_result_wait (res);
 
-			if (entry != NULL) {
-				x_hash_foreach (entry, print_entry, NULL);
-				x_hash_destroy (entry);
-			}
+			xmmsc_result_dict_foreach (res, print_entry, NULL);
+			xmmsc_result_unref (res);
 		}
 
 	} else {
-		id = xmmscs_playback_current_id (conn);
-		entry = xmmscs_medialib_get_info (conn, id);
-
-		if (entry) {
-			x_hash_foreach (entry, print_entry, NULL);
-			x_hash_destroy (entry);
-		}
+		res = xmmsc_playback_current_id (conn);
+		xmmsc_result_wait (res);
+		if (!xmmsc_result_get_uint (res, &id))
+			print_error ("Broken result");
+		xmmsc_result_unref (res);
+		
+		res = xmmsc_medialib_get_info (conn, id);
+		xmmsc_result_wait (res);
+		xmmsc_result_dict_foreach (res, print_entry, NULL);
+		xmmsc_result_unref (res);
 	}
 
+}
+
+static int
+res_has_key (xmmsc_result_t *res, const char *key)
+{
+	char *val;
+	xmmsc_result_get_dict_entry (res, key, &val);
+	return !!val;
 }
 
 static void
 cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	x_list_t *list;
-	x_list_t *l;
+	xmmsc_result_t *res;
 	GError *err = NULL;
 	gulong total_playtime = 0;
-	guint p;
+	guint p = 0;
 	guint pos = 0;
 	gsize r, w;
 
-	list = xmmscs_playlist_list (conn);
+	res = xmmsc_playlist_current_pos (conn);
+	xmmsc_result_wait (res);
+	xmmsc_result_get_uint (res, &p);
+	xmmsc_result_unref (res);
 
-	if (!list)
-		return;
+	res = xmmsc_playlist_list (conn);
+	xmmsc_result_wait (res);
 
-	p = xmmscs_playlist_current_pos (conn);
-
-	for (l = list; l; l = x_list_next (l)) {
-		x_hash_t *tab;
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		char line[80];
-		const char *playtime;
+		char *playtime;
 		gchar *conv;
-		unsigned int i = XPOINTER_TO_UINT (l->data);
+		unsigned int i;
+		xmmsc_result_t *res2;
+
+		if (!xmmsc_result_get_uint (res, &i))
+			print_error ("Broken result");
 
 		g_clear_error (&err);
 
-		tab = xmmscs_medialib_get_info (conn, i);
+		res2 = xmmsc_medialib_get_info (conn, i);
+		xmmsc_result_wait (res2);
 
-		playtime = x_hash_lookup (tab, "duration");
-		if (playtime) {
+		xmmsc_result_get_dict_entry (res2, "duration", &playtime);
+		if (playtime)
 			total_playtime += strtoul (playtime, NULL, 10);
-		}
-
-		if (x_hash_lookup (tab, "channel") && x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof (line), "[stream] ${title}", tab);
-		} else if (x_hash_lookup (tab, "channel") && !x_hash_lookup (tab, "title")) {
-			xmmsc_entry_format (line, sizeof (line), "${channel}", tab);
-		} else if (!x_hash_lookup (tab, "title")) {
+		
+		if (res_has_key (res2, "channel")) {
+			if (res_has_key (res2, "title")) {
+				xmmsc_entry_format (line, sizeof (line), "[stream] ${title}", res2);
+			} else {
+				xmmsc_entry_format (line, sizeof (line), "${channel}", res2);
+			}
+		} else if (!res_has_key (res2, "title")) {
 			char *url, *filename;
 		  	char dur[10];
 			
-			xmmsc_entry_format (dur, sizeof (dur), "(${minutes}:${seconds})", tab);
+			xmmsc_entry_format (dur, sizeof (dur), "(${minutes}:${seconds})", res2);
 			
-			url = x_hash_lookup (tab, "url");
+			xmmsc_result_get_dict_entry (res2, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
 					g_snprintf (line, sizeof (line), "%s %s", filename, dur);
 					g_free (filename);
+				} else {
+					g_snprintf (line, sizeof (line), "%s %s", url, dur);
 				}
 			}
 		} else {
-			xmmsc_entry_format (line, sizeof(line), listformat, tab);
+			xmmsc_entry_format (line, sizeof(line), listformat, res2);
 		}
 
 		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
@@ -779,15 +761,18 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		if (err) {
 			print_info ("convert error %s", err->message);
 		}
-		x_hash_destroy (tab);	
+
+		xmmsc_result_unref (res2);
+
 	}
+
+	xmmsc_result_unref (res);
 
 	print_info ("\nTotal playtime: %d:%02d:%02d",
 	            total_playtime / 3600000,
 	            (total_playtime / 60000) % 60,
 	            (total_playtime / 1000) % 60);
 
-	free (list);
 }
 	
 static void
@@ -853,7 +838,6 @@ cmd_next (xmmsc_connection_t *conn, int argc, char **argv)
 	do_reljump (conn, 1);
 }
 
-
 static void
 cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 {
@@ -863,57 +847,55 @@ cmd_prev (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	int id,seconds,duration,cur_playtime;
-	x_hash_t *lista;
 	xmmsc_result_t *res;
+	int id, pt = 0, ms, dur = 0;
+	char *tmp;
 
 	if (argc < 3) {
-		print_error ("You need to specify a number of seconds. Usage:\n"
-			     "xmms2 seek seconds  - will seek to seconds\n"
-			     "xmms2 seek +seconds - will add seconds\n"
-			     "xmms2 seek -seconds - will remove seconds");
-	}
-	
-	id = xmmscs_playback_current_id (conn);
-	lista = xmmscs_medialib_get_info (conn, id);
-	duration = atoi (x_hash_lookup (lista, "duration"));
-	cur_playtime = xmmscs_playback_playtime (conn);
-	x_hash_destroy (lista);
+                print_error ("You need to specify a number of seconds. Usage:\n"
+                             "xmms2 seek n  - seek to absolute position in song\n"
+                             "xmms2 seek +n - seek n seconds forward in song\n"
+                             "xmms2 seek -n - seek n seconds backwards");
+        }
 
-	if (!duration)
-		duration = 0;
-
-	if (argv[2][0] == '+') {
-		
-		seconds=(atoi (argv[2]+1) * 1000) + cur_playtime;
-
-		if (seconds >= duration) {
-			printf ("Trying to seek to a higher value then total_playtime, Skipping to next song\n");
-			do_reljump (conn, 1);
-		} else {
-			printf ("Adding %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
-		}
-		
-	} else if (argv[2][0] == '-') {
-		seconds = cur_playtime - atoi (argv[2]+1) * 1000;
-		
-		if (seconds < 0) {
-			printf ("Trying to seek to a non positive value, seeking to 0\n");
-			seconds=0;
-		} else {
-			printf ("Removing %s seconds to stream and jumping to %d\n",argv[2]+1, seconds/1000);
-		}
-		
-	} else {
-		seconds = atoi (argv[2]) * 1000;
-	}
-	
-	res = xmmsc_playback_seek_ms (conn, seconds);
+	res = xmmsc_playback_current_id (conn);
 	xmmsc_result_wait (res);
-	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't seek to that position: %s\n", xmmsc_result_get_error (res));
-	}
+	if (!xmmsc_result_get_uint (res, &id))
+		print_error ("Broken result");
 	xmmsc_result_unref (res);
+	
+	res = xmmsc_medialib_get_info (conn, id);
+	xmmsc_result_wait (res);
+	xmmsc_result_get_dict_entry (res, "duration", &tmp);
+	if (tmp)
+		dur = atoi (tmp);
+	xmmsc_result_unref (res);
+
+	if (argv[2][0] == '+' || argv[2][0] == '-') {
+		res = xmmsc_playback_playtime (conn);
+		xmmsc_result_wait (res);
+		if (!xmmsc_result_get_uint (res, &pt))
+			print_error ("Broken result");
+		xmmsc_result_unref (res);
+	}
+
+	ms = pt + 1000 * atoi (argv[2]);
+
+	if (dur && ms > dur) {
+		printf ("Skipping to next song\n");
+		do_reljump (conn, 1);
+		return;
+	}
+
+	if (ms < 0)
+		ms = 0;
+	
+	res = xmmsc_playback_seek_ms (conn, ms);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res))
+		fprintf (stderr, "Couldn't seek to %d ms: %s\n", ms, xmmsc_result_get_error (res));
+        xmmsc_result_unref (res);
+
 }
 
 static void
@@ -945,24 +927,27 @@ cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 cmd_config_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	x_list_t *l;
+	xmmsc_result_t *res;
 
-	l = xmmscs_configval_list (conn);
+	res = xmmsc_configval_list (conn);
+	xmmsc_result_wait (res);
 	
-	if (!l)
-		print_error ("Ooops :%s", xmmsc_get_last_error (conn));
-	
-	print_info ("Config Values:");
-	
-	while (l) {
-		char *val = xmmscs_configval_get (conn, l->data);
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		xmmsc_result_t *res2;
+		char *name, *value;
+		xmmsc_result_get_string (res, &name);
 
-		print_info ("%s = %s", l->data, val);
-		g_free (val);
-		l = x_list_next (l);
+		res2 = xmmsc_configval_get (conn, name);
+		xmmsc_result_wait (res2);
+		xmmsc_result_get_string (res2, &value);
+
+		print_info ("%s = %s", name, value);
+
+		xmmsc_result_unref (res2);
+
 	}
-	
-	x_list_free (l);
+
+	xmmsc_result_unref (res);
 }
 
 static void
@@ -1089,43 +1074,41 @@ handle_mediainfo_update (xmmsc_result_t *res, void *userdata)
 static void
 do_mediainfo (xmmsc_connection_t *c, guint id)
 {
-	x_hash_t *hash;
+	xmmsc_result_t *res;
 	gchar *tmp;
 
-	hash = xmmscs_medialib_get_info (c, id);
+	res = xmmsc_medialib_get_info (c, id);
+	xmmsc_result_wait (res);
 
-	if (!hash) {
-		printf ("no mediainfo!\n");
-	} else {
-		printf ("\n");
-		if (x_hash_lookup (hash, "channel") && x_hash_lookup (hash, "title")) {
-			xmmsc_entry_format (songname, sizeof (songname),
-					    "[stream] ${title}", hash);
-		} else if (x_hash_lookup (hash, "channel")) {
-			xmmsc_entry_format (songname, sizeof (songname),
-					    "${title}", hash);
-		} else if (!x_hash_lookup (hash, "title")) {
-			char *url, *filename;
-			url = x_hash_lookup (hash, "url");
-			if (url) {
-				filename = g_path_get_basename (url);
-				if (filename) {
-					g_snprintf (songname, sizeof (songname), "%s", filename);
-					g_free (filename);
-				}
+	printf ("\n");
+	if (res_has_key (res, "channel") && res_has_key (res, "title")) {
+		xmmsc_entry_format (songname, sizeof (songname),
+				    "[stream] ${title}", res);
+	} else if (res_has_key (res, "channel")) {
+		xmmsc_entry_format (songname, sizeof (songname),
+				    "${title}", res);
+	} else if (!res_has_key (res, "title")) {
+		char *url, *filename;
+		xmmsc_result_get_dict_entry (res, "url", &url);
+		if (url) {
+			filename = g_path_get_basename (url);
+			if (filename) {
+				g_snprintf (songname, sizeof (songname), "%s", filename);
+				g_free (filename);
 			}
-		} else {
-			xmmsc_entry_format (songname, sizeof (songname),
-					    statusformat, hash);
 		}
-		tmp = x_hash_lookup (hash, "duration");
-		if (tmp)
-			curr_dur = atoi (tmp);
-		else
-			curr_dur = 0;
-
-		x_hash_destroy (hash);
+	} else {
+		xmmsc_entry_format (songname, sizeof (songname),
+				    statusformat, res);
 	}
+
+	xmmsc_result_get_dict_entry (res, "duration", &tmp);
+	if (tmp)
+		curr_dur = atoi (tmp);
+	else
+		curr_dur = 0;
+
+	xmmsc_result_unref (res);
 }
 
 static void

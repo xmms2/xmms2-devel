@@ -31,8 +31,8 @@
 #include <pwd.h>
 #include <sys/types.h>
 
-#include "xmmsclient/xmmsclient_hash.h"
-#include "xmmsclient/xmmsclient_list.h"
+#include "xmmsclientpriv/xmmsclient_hash.h"
+#include "xmmsclientpriv/xmmsclient_list.h"
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
@@ -275,7 +275,7 @@ xmmsc_quit (xmmsc_connection_t *c)
  */
 
 int
-xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
+xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 {
 	const char *pos;
 
@@ -313,44 +313,40 @@ xmmsc_entry_format (char *target, int len, const char *fmt, x_hash_t *table)
 		strncpy (key, next_key + 2, keylen);
 
 		if (strcmp (key, "seconds") == 0) {
-			char seconds[10];
-			int d;
-			char *duration = x_hash_lookup (table, "duration");
+			char *duration;
+
+			xmmsc_result_get_dict_entry (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
-				goto cont;
+			} else {
+				char seconds[10];
+				int d;
+				d = atoi (duration);
+				snprintf (seconds, sizeof seconds, "%02d", (d/1000)%60);
+				strncat (target, seconds, len - strlen (target) - 1);
 			}
+		} else if (strcmp (key, "minutes") == 0) {
+			char *duration;
 
-			d = atoi (duration);
-			snprintf (seconds, sizeof seconds, "%02d", (d/1000)%60);
-			strncat (target, seconds, len - strlen (target) - 1);
-			goto cont;
-		}
-
-		if (strcmp (key, "minutes") == 0) {
-			char minutes[10];
-			int d;
-			char *duration = x_hash_lookup (table, "duration");
+			xmmsc_result_get_dict_entry (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
-				goto cont;
+			} else {
+				char minutes[10];
+				int d;
+				d = atoi (duration);
+				snprintf (minutes, sizeof minutes, "%02d", d/60000);
+				strncat (target, minutes, len - strlen (target) - 1);
 			}
-
-			d = atoi (duration);
-			snprintf (minutes, sizeof minutes, "%02d", d/60000);
-			strncat (target, minutes, len - strlen (target) - 1);
-			goto cont;
+		} else {
+			xmmsc_result_get_dict_entry (res, key, &result);
+			if (result) {
+				strncat (target, result, len - strlen (target) - 1);
+			}
 		}
 
-		result = x_hash_lookup (table, key);
-
-		if (result) {
-			strncat (target, result, len - strlen (target) - 1);
-		}
-
-cont:
 		free (key);
 		end = strchr (next_key, '}');
 

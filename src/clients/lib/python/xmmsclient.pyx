@@ -5,30 +5,17 @@ Python bindings for XMMS2.
 cdef extern from "string.h" :
 	int strcmp (signed char *s1, signed char *s2)
 
-cdef extern from "xmmsclient/xmmsclient_list.h" :
-	ctypedef struct x_list_t :
-		void *data
-		x_list_t *next
-		x_list_t *prev
-
-cdef extern from "xmmsclient/xmmsclient_hash.h" :
-	ctypedef struct x_hash_t
-
-	ctypedef object (*XHFunc) (signed char *key, signed char *value, object user_data)
-
-	void x_hash_foreach (x_hash_t *hash_table, XHFunc func, object user_data)
-
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	int XMMS_OBJECT_CMD_ARG_NONE
 	int XMMS_OBJECT_CMD_ARG_UINT32,
 	int XMMS_OBJECT_CMD_ARG_INT32,
 	int XMMS_OBJECT_CMD_ARG_STRING,
-	int XMMS_OBJECT_CMD_ARG_HASHTABLE,
-	int XMMS_OBJECT_CMD_ARG_UINTLIST,
-	int XMMS_OBJECT_CMD_ARG_INTLIST,
+	int XMMS_OBJECT_CMD_ARG_DICT,
+	int XMMS_OBJECT_CMD_ARG_UINT32LIST,
+	int XMMS_OBJECT_CMD_ARG_INT32LIST,
 	int XMMS_OBJECT_CMD_ARG_STRINGLIST,
 	int XMMS_OBJECT_CMD_ARG_PLCH,
-	int XMMS_OBJECT_CMD_ARG_HASHLIST,
+	int XMMS_OBJECT_CMD_ARG_DICTLIST,
 
 # Actually we don't want a GLib Mainloop here. but for the time beeing....
 cdef extern from "glib.h" :
@@ -69,12 +56,16 @@ cdef extern from "xmmsclient/xmmsclient.h" :
 	signed int xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 	signed int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
 	signed int xmmsc_result_get_string (xmmsc_result_t *res, signed char **r)
-	signed int xmmsc_result_get_hashtable (xmmsc_result_t *res, x_hash_t **r)
-	signed int xmmsc_result_get_stringlist (xmmsc_result_t *res, x_list_t **r)
-	signed int xmmsc_result_get_intlist (xmmsc_result_t *res, x_list_t **r)
-	signed int xmmsc_result_get_uintlist (xmmsc_result_t *res, x_list_t **r)
-	signed int xmmsc_result_get_hashlist (xmmsc_result_t *res, x_list_t **r)
 	signed int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
+
+	ctypedef void (*xmmsc_foreach_func) (void *key, void *value, void *user_data)
+
+	int xmmsc_result_get_dict_entry (xmmsc_result_t *res, char *key, char **r)
+	int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
+
+	int xmmsc_result_list_next (xmmsc_result_t *res)
+	int xmmsc_result_list_first (xmmsc_result_t *res)
+	int xmmsc_result_list_valid (xmmsc_result_t *res)
 
 	xmmsc_connection_t *xmmsc_init (char *clientname)
 	void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, object (*callback) (object), object userdata)
@@ -189,9 +180,9 @@ cdef class XMMSResult :
 			return self.get_int()
 		elif type == XMMS_OBJECT_CMD_ARG_STRING:
 			return self.get_string()
-		elif type == XMMS_OBJECT_CMD_ARG_UINTLIST:
+		elif type == XMMS_OBJECT_CMD_ARG_UINT32LIST:
 			return self.get_uintlist()
-		elif type == XMMS_OBJECT_CMD_ARG_INTLIST:
+		elif type == XMMS_OBJECT_CMD_ARG_INT32LIST:
 			return self.get_intlist()
 		elif type == XMMS_OBJECT_CMD_ARG_STRINGLIST:
 			return self.get_stringlist()
@@ -265,93 +256,73 @@ cdef class XMMSResult :
 		"""
 		@return: A hash table containing media info.
 		"""
-		cdef x_hash_t *hash
 		self._check ()
 
-		if xmmsc_result_get_hashtable (self.res, &hash) :
-			ret = {}
-			x_hash_foreach (hash, foreach_hash, ret)
-			return ret
-		else :
+		ret = {}
+		if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>ret):
 			raise ValueError ("Failed to retrieve value!")
+		return ret
 			
 	def get_intlist (self) :
 		"""
 		@return: A list of ints from the result structure.
 		"""
-		cdef x_list_t *l
-		cdef x_list_t *n
+		cdef int i
 
 		self._check ()
-		if xmmsc_result_get_intlist (self.res, &l) :
-			ret = []
-			n = l
-			while n :
-				ret.append (<signed int>n.data)
-				n = n.next
-
-			return ret
-		else :
-			raise ValueError ("Failed to retrieve value!")
+		ret = []
+		while xmmsc_result_list_valid(self.res):
+			if not xmmsc_result_get_int(self.res, &i):
+				raise ValueError ("Failed to retrieve value!")
+			ret.append(i)
+			xmmsc_result_list_next(self.res)
+		return ret
 
 	def get_uintlist (self) :
 		"""
 		@return: A list of unsigned ints from the result structure.
 		"""
-		cdef x_list_t *l
-		cdef x_list_t *n
+		cdef unsigned int i
 
 		self._check ()
-		if xmmsc_result_get_uintlist (self.res, &l) :
-			ret = []
-			n = l
-			while n :
-				ret.append (<unsigned int>n.data)
-				n = n.next
-
-			return ret
-		else :
-			raise ValueError ("Failed to retrieve value!")
+		ret = []
+		while xmmsc_result_list_valid(self.res):
+			if not xmmsc_result_get_uint(self.res, &i):
+				raise ValueError ("Failed to retrieve value!")
+			ret.append(i)
+			xmmsc_result_list_next(self.res)
+		return ret
 
 	def get_hashlist (self) :
 		"""
 		@return: A list of dicts from the result structure.
 		"""
-		cdef x_list_t *l
-		cdef x_list_t *n
-
 		self._check ()
-		if xmmsc_result_get_hashlist (self.res, &l) :
-			ret = []
-			n = l
-			while n :
-				hash = {}
-				x_hash_foreach (<x_hash_t *>n.data, foreach_hash, hash)
-				ret.append (hash)
-				n = n.next
-			return ret
-		else :
-			raise ValueError ("Failed to retrieve value!")
+		ret = []
+		while xmmsc_result_list_valid(self.res):
+			hash = {}
+			if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>ret):
+				raise ValueError ("Failed to retrieve value!")
+			ret.append(hash)
+			xmmsc_result_list_next(self.res)
+		return ret
 
 
 	def get_stringlist (self) :
 		"""
 		@return: A list of strings from the result structure.
 		"""
-		cdef x_list_t *l
-		cdef x_list_t *n
+		cdef char *buf
 
 		self._check ()
-		if xmmsc_result_get_stringlist (self.res, &l) :
-			ret = []
-			n = l
-			while n :
-				ret.append (<signed char *>n.data)
-				n = n.next
+		ret = []
+		while xmmsc_result_list_valid(self.res):
 
-			return ret
-		else :
-			raise ValueError ("Failed to retrieve value!")
+			if not xmmsc_result_get_string(self.res, &buf):
+				raise ValueError ("Failed to retrieve value!")
+			ret.append(buf)
+			xmmsc_result_list_next(self.res)
+		return ret
 
 	def get_playlistchange (self) :
 		"""

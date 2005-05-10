@@ -67,33 +67,6 @@ xmmsc_configval_get (xmmsc_connection_t *c, char *key)
 }
 
 /**
- * Synchronous variant #xmmsc_configval_get
- * @param c The #xmmsc_connection_t
- * @param key The configuration key to query.
- */
-char *
-xmmscs_configval_get (xmmsc_connection_t *c, char *key)
-{
-	xmmsc_result_t *res;
-	char *ret;
-	char *str;
-
-	res = xmmsc_configval_get (c, key);
-	if (!res)
-		return NULL;
-
-	xmmsc_result_wait (res);
-	if (!xmmsc_result_get_string (res, &str)) {
-		xmmsc_result_unref (res);
-		return NULL;
-	}
-	ret = strdup (str);
-	xmmsc_result_unref (res);
-
-	return ret;
-}
-
-/**
  * Lists all configuration values.
  */
 xmmsc_result_t *
@@ -102,33 +75,6 @@ xmmsc_configval_list (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_LISTVALUES);
 }
 
-/**
- * Synchronous variant of #xmmsc_configval_list
- */
-x_list_t *
-xmmscs_configval_list (xmmsc_connection_t *c)
-{
-	x_list_t *list, *l, *ret = NULL;
-	xmmsc_result_t *res;
-
-	res = xmmsc_configval_list (c);
-	if (!res)
-		return NULL;
-
-	xmmsc_result_wait (res);
-	if (!xmmsc_result_get_stringlist (res, &list)) {
-		xmmsc_result_unref (res);
-		return NULL;
-	}
-
-	for (l = list; l; l = x_list_next (l)) {
-		ret = x_list_append (ret, strdup ((char *)l->data));
-	}
-	
-	xmmsc_result_unref (res);
-
-	return ret;
-}
 
 /**
  * Requests the configval_changed broadcast. This will be called when a configvalue

@@ -161,32 +161,6 @@ xmmsc_playback_current_id (xmmsc_connection_t *c)
 }
 
 /**
- * Synchronous variant of #xmmsc_playback_current_id
- */
-unsigned int
-xmmscs_playback_current_id (xmmsc_connection_t *c)
-{
-	int ret = 0;
-	xmmsc_result_t *res;
-
-	res = xmmsc_playback_current_id (c);
-	if (!res)
-		return 0;
-
-	xmmsc_result_wait (res);
-
-	if (!xmmsc_result_get_uint (res, &ret)) {
-		xmmsc_result_unref (res);
-		return 0;
-	}
-
-	xmmsc_result_unref (res);
-
-	return ret;
-
-}
-
-/**
  * Request the playback_playtime signal. Will update the
  * time we have played the current entry.
  */
@@ -203,30 +177,6 @@ xmmsc_result_t *
 xmmsc_playback_playtime (xmmsc_connection_t *c)
 {
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_CPLAYTIME);
-}
-
-/**
- * Synchronous variant of #xmmsc_playback_playtime.
- */
-int
-xmmscs_playback_playtime (xmmsc_connection_t *c)
-{
-	xmmsc_result_t *res;
-	int ret;
-
-	res = xmmsc_playback_playtime (c);
-	if (!res)
-		return 0;
-
-	xmmsc_result_wait (res);
-	if (!xmmsc_result_get_uint (res, &ret)) {
-		xmmsc_result_unref (res);
-		return 0;
-	}
-
-	xmmsc_result_unref (res);
-
-	return ret;
 }
 
 /** @} */
