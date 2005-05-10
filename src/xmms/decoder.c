@@ -326,6 +326,9 @@ gboolean
 xmms_decoder_iseos (xmms_decoder_t *decoder)
 {
 	gboolean ret;
+
+	g_return_val_if_fail (decoder, FALSE);
+	
 	g_mutex_lock (decoder->mutex);
 	ret = decoder->thread ? FALSE : TRUE;
 	g_mutex_unlock (decoder->mutex);
