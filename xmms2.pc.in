@@ -1,0 +1,11 @@
+prefix=%PREFIX%
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include/xmms2
+
+Name: %NAME%
+Description: XMMS Generation 2
+Requires:
+Version: %VERSION%
+Libs: -L${libdir} %LIB%
+Cflags: -I${includedir}
