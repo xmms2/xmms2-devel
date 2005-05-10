@@ -8,7 +8,7 @@ Build-Depends: debmake, debhelper (>= 4.1.67), scons, python2.3 (>= 2.3-1), pyth
 Package: xmms2
 Architecture: all
 Depends: xmms2-core, xmms2-client-cli, xmms2-transport-curl
-Description: XMMS2 - core package - private beta - DO NOT SPREAD!
+Description: Client/server based media player system - private beta - DO NOT SPREAD!
  This package is a dummy package depending on various other XMMS2 packages.
  Installing this package enables XMMS2 playback of Ogg Vorbis and MP3 files
  from local and remote sources.
@@ -21,7 +21,8 @@ Conflicts: xmms2 (<< 1.9.5)
 Recommends: xmms2-decoder-mad, xmms2-decoder-vorbis, xmms2-ouput-alsa
 Suggests: xmms2-client
 Description: XMMS2 - core package - private beta - DO NOT SPREAD!
- This package just contains the daemon that loads plugins and allows clients to connect.
+ This package just contains the daemon that loads plugins and allows clients to
+ connect.
 
 Package: libxmms2client
 Architecture: any
@@ -122,14 +123,14 @@ Description: XMMS2 - Python bindings - private beta - DO NOT SPREAD!
 Package: xmms2-client-cli
 Architecture: any
 Provides: xmms2-client
-Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - cli client - private beta - DO NOT SPREAD!
  This package contains a simple text-ui for xmms2.
 
 Package: xmms2-client-sdlvis
 Architecture: any
 Provides: xmms2-client
-Depends: debconf (>= 0.2.78), xmms2-core, libxmms2client, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
 Description: XMMS2 - simple SDL visualization client - private beta - DO NOT SPREAD!
  This package contains a simple SDL visualization client for xmms2.
 
