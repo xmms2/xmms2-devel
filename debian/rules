@@ -40,9 +40,6 @@ binary-arch: build
 	dh_installdirs
 	
 	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/" install
-	install -d debian/tmp/usr/include/xmms2/
-	install src/include/xmms/*.h debian/tmp/usr/include/xmms2/
-	install src/include/xmmsclient/*.h debian/tmp/usr/include/xmms2/
 
 	# create copyright file
 	cp debian/copyright.header debian/copyright

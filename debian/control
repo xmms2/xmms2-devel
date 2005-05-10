@@ -13,6 +13,19 @@ Description: Client/server based media player system - private beta - DO NOT SPR
  Installing this package enables XMMS2 playback of Ogg Vorbis and MP3 files
  from local and remote sources.
 
+Package: xmms2-common-dev
+Architecture: all
+Depends: debconf (>= 0.2.78)
+Description: XMMS2 - common devel files - private beta - DO NOT SPREAD!
+ This package contains headers required for both developing XMMS2 clients and
+ plugins.
+
+Package: xmms2-plugin-dev
+Architecture: all
+Depends: debconf (>= 0.2.78), xmms2-common-dev
+Description: XMMS2 - plugin devel files - private beta - DO NOT SPREAD!
+ This package contains headers required for developing XMMS2 plugins.
+
 Package: xmms2-core
 Architecture: any
 Conflicts: xmms2-client-gtk2, xmms2-decoder-sid
@@ -32,9 +45,9 @@ Description: XMMS2 - clientlibrary - private beta - DO NOT SPREAD!
 
 Package: libxmms2client-dev
 Architecture: any
-Depends: debconf (>= 0.2.78), libxmms2client
+Depends: debconf (>= 0.2.78), libxmms2client, xmms2-common-dev
 Description: XMMS2 - clientlibrary devel files - private beta - DO NOT SPREAD!
- This package contains the headers for libxmms2client.
+ This package contains files for developing XMMS2 clients.
 
 Package: libxmms2client-ecore
 Architecture: any

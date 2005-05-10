@@ -1,0 +1,17 @@
+usr/include/xmms2/xmms/xmms_config.h
+usr/include/xmms2/xmms/xmms_decoder.h
+usr/include/xmms2/xmms/xmms_defs.h
+usr/include/xmms2/xmms/xmms_effect.h
+usr/include/xmms2/xmms/xmms_error.h
+usr/include/xmms2/xmms/xmms_ipc.h
+usr/include/xmms2/xmms/xmms_log.h
+usr/include/xmms2/xmms/xmms_magic.h
+usr/include/xmms2/xmms/xmms_medialib.h
+usr/include/xmms2/xmms/xmms_object.h
+usr/include/xmms2/xmms/xmms_output.h
+usr/include/xmms2/xmms/xmms_plsplugins.h
+usr/include/xmms2/xmms/xmms_plugin.h
+usr/include/xmms2/xmms/xmms_sample.h
+usr/include/xmms2/xmms/xmms_transport.h
+usr/include/xmms2/xmms/xmms_transportplugin.h
+
