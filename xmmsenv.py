@@ -52,6 +52,7 @@ class XMMSEnvironment(Environment):
 		self.binpath = os.path.join(self.install_prefix, "bin")
 		self.librarypath = os.path.join(self.install_prefix, "lib")
 		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
+		self.includepath = os.path.join(self.install_prefix, "include/xmms2")
 		self["SHLIBPREFIX"] = "lib"
 		self.shversion = "0"
 
@@ -247,4 +248,7 @@ class XMMSEnvironment(Environment):
 
 	def add_shared(self, source):
 		self.Install(self.sharepath, source)
+
+	def add_header(self, target, source):
+		self.Install(self.includepath+"/"+target, source)
 
