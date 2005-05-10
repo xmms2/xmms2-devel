@@ -14,7 +14,8 @@ SConsignFile()
 def SimpleListOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
 
-opts = Options(None, ARGUMENTS)
+
+opts = Options("options.cache")
 opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
 opts.Add('CC', 'C compiler to use', 'gcc')
 opts.Add('CXX', 'C++ compiler to use', 'g++')
@@ -36,10 +37,14 @@ opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
 # base CCPATH
 
 base_env = xmmsenv.XMMSEnvironment(options=opts)
+opts.Save("options.cache", base_env)
+
 base_env.Append(CPPPATH=["#src/include"])
 base_env.pkgconfig("sqlite3", fail=True, libs=False)
 base_env.pkgconfig("glib-2.0", fail=True, libs=False)
 base_env["LIBS"]=[]
+
+Help(opts.GenerateHelpText(base_env))
 
 def do_subst_in_file(targetfile, sourcefile, dict):
 	"""Replace all instances of the keys of dict with their values.
@@ -177,6 +182,7 @@ try:
 	dump(base_env.config_cache, open("config.cache", "wb+"))
 except IOError:
 	print "Could not dump config.cache!"
+
 
 #### INSTALL HEADERS!
 def scan_headers(name):
