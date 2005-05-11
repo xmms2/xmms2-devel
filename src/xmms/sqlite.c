@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 10
+#define DB_VERSION 11
 
 const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
@@ -44,7 +44,7 @@ const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
 
 const char create_views[] = "CREATE VIEW artists as select distinct m1.value as artist from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='artist' and m2.value is null order by artist collate nocase;"
 			    "CREATE VIEW albums as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='compilation' where m1.key='artist' and m3.value is null order by artist collate nocase, album collate nocase;"
-			    "CREATE VIEW songs as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album, ifnull(m3.value, m4.value) as title, ifnull(m5.value, -1) as tracknr from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='title' join Media m4 on m1.id = m4.id and m4.key='url' left join Media m5 on m1.id = m5.id and m5.key='tracknr' where m1.key='artist' order by artist collate nocase, album collate nocase, tracknr, title collate nocase;"
+			    "CREATE VIEW songs as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album, ifnull(m3.value, m4.value) as title, ifnull(m5.value, -1) as tracknr, m1.id as id from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='title' join Media m4 on m1.id = m4.id and m4.key='url' left join Media m5 on m1.id = m5.id and m5.key='tracknr' where m1.key='artist' order by artist collate nocase, album collate nocase, tracknr, title collate nocase;"
 			    "CREATE VIEW compilations as select distinct m1.value as compilation from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='album' and m2.value='1' order by compilation collate nocase;"
 			    "CREATE VIEW topsongs as select m.value as artist, m2.value as song, sum(l.value) as playsum, m.id as id, count(l.id) as times from Log l join Media m on l.id=m.id join Media m2 on m2.id = l.id  where m.key='artist' and m2.key='title' group by l.id order by playsum desc;";
 
