@@ -1,0 +1,5 @@
+usr/include/xmms2/xmmsc/xmmsc_errorcodes.h
+usr/include/xmms2/xmmsc/xmmsc_idnumbers.h
+usr/include/xmms2/xmmsc/xmmsc_ipc_msg.h
+usr/include/xmms2/xmmsc/xmmsc_ipc_transport.h
+usr/include/xmms2/xmmsc/xmmsc_util.h

@@ -1,0 +1,4 @@
+usr/lib/libxmmsclient-glib.a
+usr/lib/libxmmsclient-glib.so
+usr/include/xmms2/xmmsclient/xmmsclient-glib.h
+usr/lib/pkgconfig/xmms2-client-glib.pc

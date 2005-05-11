@@ -40,18 +40,20 @@ binary-arch: build
 	dh_installdirs
 	
 	scons $(SCONSFLAGS) INSTALLDIR="`pwd`/debian/tmp/" install
-	install -d debian/tmp/usr/include/xmms2/
-	install src/include/xmms/*.h debian/tmp/usr/include/xmms2/
-	install src/include/xmmsclient/*.h debian/tmp/usr/include/xmms2/
+
+	# create copyright file
+	cp debian/copyright.header debian/copyright
+	cat AUTHORS >> debian/copyright
+	cat debian/copyright.footer >> debian/copyright
 	
 	dh_install --sourcedir=debian/tmp --list-missing
-	dh_installdocs AUTHORS README TODO 
+	dh_installdocs README TODO 
 	dh_installchangelogs
 	dh_link
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_makeshlibs -plibxmms2client -plibxmms2client-ecore
+	dh_makeshlibs -plibxmms2client -plibxmms2client-ecore -plibxmms2client-glib
 	dh_python
 	dh_installdeb
 	dh_shlibdeps

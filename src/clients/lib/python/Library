@@ -26,10 +26,14 @@ def config(env):
 
 	# link with xmmsclient is nice.
 	env['LIBS'].append("xmmsclient")
+	env['LIBS'].append("xmmsclient-glib")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
 
 	# otherwise it will be called libxmmsclient.so
 	env['SHLIBPREFIX']=""
+	# need to be .so even on darwin (for example)
+	env['SHLIBSUFFIX']=".so"
 	
 	# make sure that we put it in the right directory
 	env.librarypath = distutils.sysconfig.get_python_lib()
