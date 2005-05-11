@@ -22,11 +22,12 @@ def installFunc(dest, source, env):
 class XMMSEnvironment(Environment):
 	targets=[]
 	def __init__(self, parent=None, options=None, **kw):
+		reconfigure = self.options_changed(options, ['INSTALLPATH'])
 		Environment.__init__(self, options=options)
 		apply(self.Replace, (), kw)
 		self.conf = SCons.SConf.SConf(self)
 
-		if os.path.isfile("config.cache") and self["CONFIG"] == 0:
+		if os.path.isfile("config.cache") and self["CONFIG"] == 0 and not reconfigure:
 			try:
 				self.config_cache=load(open("config.cache", 'rb+'))
 			except IOError:
@@ -251,4 +252,29 @@ class XMMSEnvironment(Environment):
 
 	def add_header(self, target, source):
 		self.Install(self.includepath+"/"+target, source)
+
+	def options_changed(self, options, exclude=[]):
+		"""NOTE: This method does not catch changed defaults."""
+		cached = {}
+		if options.files:
+			for filename in options.files:
+				if os.path.exists(filename):
+					execfile(filename, cached)
+		else:
+			return False
+	
+		for option in options.options:
+			if option.key in exclude: continue
+			if options.args.has_key(option.key):
+				if cached.has_key(option.key):
+					if options.args[option.key] != cached[option.key]:
+						# differnt value
+						return True
+				else:
+					# previously unspecified option
+					if options.args[option.key] != option.default:
+						# that is different from the default
+						return True
+
+		return False
 
