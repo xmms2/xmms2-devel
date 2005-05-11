@@ -296,7 +296,7 @@ cdef class XMMSResult :
 		ret = []
 		while xmmsc_result_list_valid(self.res):
 			hash = {}
-			if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>ret):
+			if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>hash):
 				raise ValueError ("Failed to retrieve value!")
 			ret.append(hash)
 			xmmsc_result_list_next(self.res)
