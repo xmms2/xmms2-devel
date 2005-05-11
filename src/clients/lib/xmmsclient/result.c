@@ -698,7 +698,7 @@ xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *u
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT && res->datatype != XMMS_OBJECT_CMD_ARG_DICTLIST)
 		return 0;
 
 	x_hash_foreach (res->data.hash, func, user_data);
