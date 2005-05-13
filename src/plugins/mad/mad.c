@@ -399,14 +399,16 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	return TRUE;
 }
 
-gint16
-clipping (mad_fixed_t v)
+static inline gint16
+scale_linear (mad_fixed_t v)
 {
-	if (v >= 1 << MAD_F_FRACBITS)
-		v = (1 << MAD_F_FRACBITS) - 1;
-
-	if (v <= -(1 << MAD_F_FRACBITS))
-		v = -((1 << MAD_F_FRACBITS) - 1);
+	/* make sure rounding is correct during clipping */
+	v += (1L << (MAD_F_FRACBITS - 16));
+	if (v >= MAD_F_ONE) {
+		v = MAD_F_ONE - 1;
+	} else if (v < -MAD_F_ONE) {
+		v = MAD_F_ONE;
+	}
 
 	return v >> (MAD_F_FRACBITS - 15);
 }
@@ -462,9 +464,9 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		ch2 = data->synth.pcm.samples[1];
 
 		for (i = 0; i < data->synth.pcm.length; i++) {
-			out[j++] = clipping (*(ch1++));
+			out[j++] = scale_linear (*(ch1++));
 			if (data->channels == 2)
-				out[j++] = clipping (*(ch2++));
+				out[j++] = scale_linear (*(ch2++));
 		}
 
 		ret = j * xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
