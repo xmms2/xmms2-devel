@@ -34,6 +34,13 @@ void xmmsc_unref (xmmsc_connection_t *c);
 void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata);
 
+void xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata);
+void xmmsc_io_disconnect (xmmsc_connection_t *c);
+int xmmsc_io_want_out (xmmsc_connection_t *c);
+int xmmsc_io_out_handle (xmmsc_connection_t *c);
+int xmmsc_io_in_handle (xmmsc_connection_t *c);
+int xmmsc_io_fd_get (xmmsc_connection_t *c);
+
 char *xmmsc_get_last_error (xmmsc_connection_t *c);
 int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res);
 

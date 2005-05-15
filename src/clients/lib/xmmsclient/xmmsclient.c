@@ -489,6 +489,67 @@ err:
 
 }
 
+void
+x_print_err (const char *func, const char *msg)
+{
+	fprintf (stderr, " ******\n");
+	fprintf (stderr, " * %s was called %s\n", func, msg);
+	fprintf (stderr, " * This is probably is an error in the application using libxmmsclient\n");
+	fprintf (stderr, " ******\n");
+}
+
+#define x_check_conn(c, retval) do { x_api_error_if (!c, "with a NULL connection", retval); x_api_error_if (!c->ipc, "with a connection that isn't connected", retval);} while (0)
+
+#define x_api_error_if(cond, msg, retval) do { if (cond) { x_print_err (__FUNCTION__, msg); return retval;} } while(0)
+
+void
+xmmsc_io_disconnect (xmmsc_connection_t *c)
+{
+	x_check_conn (c,);
+
+	xmmsc_ipc_disconnect (c->ipc);
+}
+
+int
+xmmsc_io_want_out (xmmsc_connection_t *c)
+{
+	x_check_conn (c, -1);
+
+	return xmmsc_ipc_io_out (c->ipc);
+}
+
+int
+xmmsc_io_out_handle (xmmsc_connection_t *c)
+{
+	x_check_conn (c, -1);
+	x_api_error_if (!xmmsc_ipc_io_out (c->ipc), "without pending output", -1);
+	
+	return xmmsc_ipc_io_out_callback (c->ipc);
+}
+
+int
+xmmsc_io_in_handle (xmmsc_connection_t *c)
+{
+	x_check_conn (c, -1);
+	
+	return xmmsc_ipc_io_in_callback (c->ipc);
+}
+
+int
+xmmsc_io_fd_get (xmmsc_connection_t *c)
+{
+	x_check_conn (c, -1);
+	return xmmsc_ipc_fd_get (c->ipc);
+}
+
+void
+xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata)
+{
+	x_check_conn (c,);
+	xmmsc_ipc_need_out_callback_set (c->ipc, callback, userdata);
+}
+
+
 void xmms_log_debug (const char *fmt, ...)
 {
 	char buff[1024];

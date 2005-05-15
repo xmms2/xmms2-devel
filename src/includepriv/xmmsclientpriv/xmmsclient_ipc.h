@@ -35,6 +35,7 @@ typedef void (*xmmsc_ipc_wakeup_t) (xmmsc_ipc_t *);
 xmmsc_ipc_t *xmmsc_ipc_init (void);
 void xmmsc_ipc_lock_set (xmmsc_ipc_t *ipc, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (void *), void *);
+void xmmsc_ipc_need_out_callback_set (xmmsc_ipc_t *ipc, void (*callback) (int, void *), void *userdata);
 bool xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cid);
 void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc);
 void xmmsc_ipc_destroy (xmmsc_ipc_t *ipc);

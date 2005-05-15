@@ -44,8 +44,12 @@ struct xmmsc_ipc_St {
 	void *lockdata;
 	void (*lockfunc)(void *lock);
 	void (*unlockfunc)(void *lock);
-	void (*disconnect_callback) (void *ipc);
+
+	void (*disconnect_callback) (void *data);
 	void *disconnect_data;
+
+	void (*need_out_callback) (int need_out, void *data);
+	void *need_out_data;
 };
 
 static inline void xmmsc_ipc_lock (xmmsc_ipc_t *ipc);
@@ -138,8 +142,13 @@ xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 		}
 	}
 
-	if (disco)
+	if (disco) {
 		xmmsc_ipc_disconnect (ipc);
+	} else {
+		if (ipc->need_out_callback)
+			ipc->need_out_callback (xmmsc_ipc_io_out (ipc),
+						ipc->need_out_data);
+	}
 
 	return true;
 }
@@ -205,6 +214,14 @@ xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (void *)
 	x_return_if_fail (ipc);
 	ipc->disconnect_callback = disconnect_callback;
 	ipc->disconnect_data = userdata;
+}
+
+void
+xmmsc_ipc_need_out_callback_set (xmmsc_ipc_t *ipc, void (*callback) (int, void *), void *userdata)
+{
+	x_return_if_fail (ipc);
+	ipc->need_out_callback = callback;
+	ipc->need_out_data = userdata;
 }
 
 void
@@ -297,6 +314,9 @@ xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cid)
 	x_return_val_if_fail (ipc, false);
 	xmms_ipc_msg_set_cid (msg, cid);
 	x_queue_push_tail (ipc->out_msg, msg);
+	if (ipc->need_out_callback)
+		ipc->need_out_callback (1, ipc->need_out_data);
+
 	return true;
 }
 

@@ -25,21 +25,9 @@ cdef extern from "glib.h" :
 	void g_main_loop_run (GMainLoop *loop)
 	GMainLoop *g_main_loop_new (GMainContext *context, signed int is_running)
 
-cdef extern from "xmmsclientpriv/xmmsclient_ipc.h" :
-	ctypedef struct xmmsc_ipc_t
-
-	int xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
-	int xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
-	int xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
-	int xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
-	void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
-	void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error)
-
-cdef extern from "xmmsclientpriv/xmmsclient.h" :
-	ctypedef struct xmmsc_connection_t :
-		xmmsc_ipc_t *ipc
-	
 cdef extern from "xmmsclient/xmmsclient.h" :
+	ctypedef struct xmmsc_connection_t :
+		pass
 	ctypedef struct xmmsc_result_t
 	ctypedef object (*xmmsc_result_notifier_t) (xmmsc_result_t *res, object user_data)
 
@@ -124,8 +112,16 @@ cdef extern from "xmmsclient/xmmsclient.h" :
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 
+	void xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata)
+	void xmmsc_io_disconnect (xmmsc_connection_t *c)
+	int xmmsc_io_want_out (xmmsc_connection_t *c)
+	int xmmsc_io_out_handle (xmmsc_connection_t *c)
+	int xmmsc_io_in_handle (xmmsc_connection_t *c)
+	int xmmsc_io_fd_get (xmmsc_connection_t *c)
+
+
 cdef extern from "xmmsclient/xmmsclient-glib.h" :
-	void xmmsc_ipc_setup_with_gmain (xmmsc_connection_t *connection)
+	void xmmsc_setup_with_gmain (xmmsc_connection_t *connection)
 
 #####################################################################
 
@@ -406,7 +402,7 @@ cdef class XMMS :
 		"""
 		cdef GMainLoop *ml
 		ml = g_main_loop_new (NULL, 0)
-		xmmsc_ipc_setup_with_gmain (self.conn)
+		xmmsc_setup_with_gmain (self.conn)
 
 		g_main_loop_run (ml)
 
@@ -415,7 +411,7 @@ cdef class XMMS :
 		Adds the IPC connection to a GMainLoop. pyGTK clients need to
 		call this after L{connect} and before gtk.main()
 		"""
-		xmmsc_ipc_setup_with_gmain (self.conn)
+		xmmsc_setup_with_gmain (self.conn)
 
 	def exit_python_loop (self) :
 		""" Exits from the L{python_loop} call """
@@ -428,7 +424,7 @@ cdef class XMMS :
 		client once everything has been set up. This function blocks
 		until L{exit_python_loop} is called.
 		"""
-		fd = xmmsc_ipc_fd_get (self.conn.ipc)
+		fd = xmmsc_io_fd_get (self.conn)
 		(r, w) = os.pipe ()
 
 		self.loop = True
@@ -444,12 +440,11 @@ cdef class XMMS :
 			(i, o, e) = select ([fd, r], w, [fd])
 
 			if i and i[0] == fd :
-				xmmsc_ipc_io_in_callback (self.conn.ipc)
+				xmmsc_io_in_handle (self.conn)
 			if o and o[0] == fd:
-				xmmsc_ipc_io_out_callback (self.conn.ipc)
+				xmmsc_io_out_handle (self.conn)
 			if e and e[0] == fd :
-				xmmsc_ipc_disconnect (self.conn.ipc)
-				self.loop = False
+				xmmsc_io_disconnect (self.conn)
 				self.loop = False
 
 	def ioin (self) :
@@ -458,7 +453,7 @@ cdef class XMMS :
 		level function that should only be used in certain
 		circumstances. e.g. a custom event loop
 		"""
-		xmmsc_ipc_io_in_callback (self.conn.ipc)
+		xmmsc_io_in_handle (self.conn)
 
 	def ioout(self):
 		"""
@@ -466,10 +461,10 @@ cdef class XMMS :
 		low level function that should only be used in certain
 		circumstances. e.g. a custom event loop
 		"""
-		xmmsc_ipc_io_out_callback (self.conn.ipc)
+		xmmsc_io_out_handle (self.conn)
 
 	def want_ioout(self):
-		return xmmsc_ipc_io_out (self.conn.ipc)
+		return xmmsc_io_want_out (self.conn)
 		
 	def get_fd (self) :
 		"""
@@ -480,7 +475,7 @@ cdef class XMMS :
 		@rtype: int
 		@return: IPC file descriptor
 		"""
-		return xmmsc_ipc_fd_get (self.conn.ipc)
+		return xmmsc_io_fd_get (self.conn)
 
 	def connect (self, path = None, disconnect_func = None) :
 		"""
