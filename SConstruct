@@ -149,7 +149,7 @@ def scan_dir(dir, dict):
 		newdir = dir+"/"+d
 		if os.path.isdir(newdir):
 			scan_dir(newdir, dict)
-		if os.path.isfile(newdir):
+		if os.path.isfile(newdir) and newdir[-1] != "~":
 			if d.startswith('Plugin'):
 				dict["plugin"].append(newdir)
 			if d.startswith('Library'):

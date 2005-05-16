@@ -14,5 +14,9 @@ def config(env):
 	This function should return True if this module
 	is to be built otherwise False
 	"""
-	return env.platform == 'linux'
 
+	# this should really be done checking
+	# for "soundcard.h" and OSS_GETVERSION
+	supported_platforms = ['linux', 'freebsd']
+
+	return env.platform in supported_platforms
