@@ -13,8 +13,7 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
-#import <Cocoa/Cocoa.h>
-#import "xmms/xmmsclient.h"
+#import <CoreFoundation/CoreFoundation.h>
+#import "xmmsclient/xmmsclient.h"
 
-gboolean xmmsc_ipc_setup_with_cocoa (xmmsc_connection_t *c);
-gboolean xmmsc_ipc_setup_with_cf (xmmsc_connection_t *c, CFRunLoopRef loop);
+unsigned int xmmsc_ipc_setup_with_cf (xmmsc_connection_t *c);
