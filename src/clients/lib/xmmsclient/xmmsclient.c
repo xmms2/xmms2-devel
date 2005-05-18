@@ -93,7 +93,7 @@ xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
 
-	x_return_val_if_fail (clientname, NULL);
+	x_api_error_if (!clientname, "with NULL clientname", NULL);
 
 	if (!(c = x_new0 (xmmsc_connection_t, 1))) {
 		return NULL;
@@ -148,8 +148,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 
 	char path[256];
 
-	if (!c)
-		return false;
+	x_api_error_if (!c, "with a NULL connection", false);
 
 	if (!ipcpath) {
 		struct passwd *pwd;
@@ -187,6 +186,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 void
 xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata)
 {
+	x_check_conn (c,);
 	xmmsc_ipc_disconnect_set (c->ipc, callback, userdata);
 }
 
@@ -196,6 +196,7 @@ xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), 
 char *
 xmmsc_get_last_error (xmmsc_connection_t *c)
 {
+	x_api_error_if (!c, "with a NULL connection", false);
 	return c->error;
 }
 
@@ -206,7 +207,7 @@ xmmsc_get_last_error (xmmsc_connection_t *c)
 void
 xmmsc_unref (xmmsc_connection_t *c)
 {
-	x_return_if_fail (c);
+	x_api_error_if (!c, "with a NULL connection",);
 
 	c->ref--;
 	if (c->ref == 0) {
@@ -220,7 +221,7 @@ xmmsc_unref (xmmsc_connection_t *c)
 void
 xmmsc_ref (xmmsc_connection_t *c)
 {
-	x_return_if_fail (c);
+	x_api_error_if (!c, "with a NULL connection",);
 
 	c->ref++;
 }
@@ -261,6 +262,7 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
 xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_QUIT);
 }
 
@@ -489,27 +491,29 @@ err:
 
 }
 
-void
-x_print_err (const char *func, const char *msg)
-{
-	fprintf (stderr, " ******\n");
-	fprintf (stderr, " * %s was called %s\n", func, msg);
-	fprintf (stderr, " * This is probably is an error in the application using libxmmsclient\n");
-	fprintf (stderr, " ******\n");
-}
 
-#define x_check_conn(c, retval) do { x_api_error_if (!c, "with a NULL connection", retval); x_api_error_if (!c->ipc, "with a connection that isn't connected", retval);} while (0)
+/**
+ * @defgroup IOFunctions IOFunctions
+ * @ingroup XMMSClient
+ *
+ * @brief Functions for integrating the xmms client library with an
+ * existing mainloop. Only to be used if there isn't already
+ * integration written (glib, corefoundation or ecore).
+ *
+ * @{
+ */
 
-#define x_api_error_if(cond, msg, retval) do { if (cond) { x_print_err (__FUNCTION__, msg); return retval;} } while(0)
-
-void
-xmmsc_io_disconnect (xmmsc_connection_t *c)
-{
-	x_check_conn (c,);
-
-	xmmsc_ipc_disconnect (c->ipc);
-}
-
+/**
+ * Check for pending output.
+ *
+ * Used to determine if there is any outgoing data enqueued and the
+ * mainloop should flag this socket for writing.
+ *
+ * @param c connection to check
+ * @return 1 output is requested, 0 otherwise
+ *
+ * @sa xmmsc_io_need_out_callback_set
+ */
 int
 xmmsc_io_want_out (xmmsc_connection_t *c)
 {
@@ -518,6 +522,14 @@ xmmsc_io_want_out (xmmsc_connection_t *c)
 	return xmmsc_ipc_io_out (c->ipc);
 }
 
+/**
+ * Write pending data.
+ *
+ * Should be called when the mainloop flags that writing is available
+ * on the socket.
+ * 
+ * @returns 1 if everything is well, 0 if the connection is broken.
+ */
 int
 xmmsc_io_out_handle (xmmsc_connection_t *c)
 {
@@ -527,6 +539,14 @@ xmmsc_io_out_handle (xmmsc_connection_t *c)
 	return xmmsc_ipc_io_out_callback (c->ipc);
 }
 
+/**
+ * Read available data
+ *
+ * Should be called when the mainloop flags that reading is available
+ * on the socket.
+ * 
+ * @returns 1 if everything is well, 0 if the connection is broken.
+ */
 int
 xmmsc_io_in_handle (xmmsc_connection_t *c)
 {
@@ -535,6 +555,16 @@ xmmsc_io_in_handle (xmmsc_connection_t *c)
 	return xmmsc_ipc_io_in_callback (c->ipc);
 }
 
+/**
+ * Retrieve filedescriptor for connection.
+ *
+ * Gets the underlaying filedescriptor for this connection, or -1 upon
+ * error. To be used in a mainloop to do poll/select on. Reading
+ * writing should *NOT* be done on this fd, #xmmsc_io_in_handle and
+ * #xmmsc_io_out_handle MUST be used to handle reading and writing.
+ *
+ * @returns underlaying filedescriptor, or -1 on error
+ */
 int
 xmmsc_io_fd_get (xmmsc_connection_t *c)
 {
@@ -542,6 +572,16 @@ xmmsc_io_fd_get (xmmsc_connection_t *c)
 	return xmmsc_ipc_fd_get (c->ipc);
 }
 
+/**
+ * Set callback for enabling/disabling writing.
+ *
+ * If the mainloop doesn't provide a mechanism to run code before each
+ * iteration this function allows registration of a callback to be
+ * called when output is needed or not needed any more. The arguments
+ * to the callback are flag and userdata; flag is 1 if output is
+ * wanted, 0 if not.
+ *
+ */
 void
 xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata)
 {
@@ -549,6 +589,26 @@ xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, vo
 	xmmsc_ipc_need_out_callback_set (c->ipc, callback, userdata);
 }
 
+/**
+ * Flag connection as disconnected.
+ *
+ * To be called when the mainloop signals disconnection of the
+ * connection. This is optional, any call to #xmmsc_io_out_handle or
+ * #xmmsc_io_in_handle will notice the disconnection and handle it
+ * accordingly.
+ * 
+ */
+void
+xmmsc_io_disconnect (xmmsc_connection_t *c)
+{
+	x_check_conn (c,);
+
+	xmmsc_ipc_disconnect (c->ipc);
+}
+
+/**
+ * @}
+ */
 
 void xmms_log_debug (const char *fmt, ...)
 {

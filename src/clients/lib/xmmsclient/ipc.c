@@ -57,30 +57,6 @@ static inline void xmmsc_ipc_unlock (xmmsc_ipc_t *ipc);
 static void xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg);
 
 
-/**
- * @defgroup ClientIPC ClientIPC
- * @ingroup XMMSClient
- * @brief IPC functions for integration in your mainloop.
- *
- * If you want to integrate xmmsclient in your mainloop you need to
- * retrive the fd by running #xmmsc_ipc_fd_get and and poll it for
- * incoming data. When you have incoming data you do #xmmsc_ipc_io_in_callback.
- * Before entering the poll loop you need to check if there is any
- * data to be written. Call #xmmsc_ipc_io_out, if it returns TRUE add
- * a write poll also. When the write poll is activated you call 
- * #xmmsc_ipc_io_out_callback. If a error occours you call the #xmmsc_ipc_disconnect
- * 
- * @{
- */
-
-/**
- * Should be called when we have data on the socket.
- * This will read data and call callbacks if we get a
- * whole message. The call is completely non-blocking.
- *
- * @returns FALSE if something went wrong. #xmmsc_ipc_disconnected
- * should be called if this happens.
- */
 int
 xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 {
@@ -107,12 +83,9 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 	if (disco)
 		xmmsc_ipc_disconnect (ipc);
 
-	return true;
+	return !disco;
 }
 
-/**
- * This function returns TRUE if there is something to be written.
- */
 int
 xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 {
@@ -121,9 +94,6 @@ xmmsc_ipc_io_out (xmmsc_ipc_t *ipc)
 	return !x_queue_is_empty (ipc->out_msg) && !ipc->disconnect;
 }
 
-/**
- * Call this to write messages to the server
- */
 int
 xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 {
@@ -150,13 +120,9 @@ xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 						ipc->need_out_data);
 	}
 
-	return true;
+	return !disco;
 }
 
-/**
- * The underlaying filedescriptor can be extracted with
- * this function. It used to poll on.
- */
 int
 xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 {
@@ -165,11 +131,6 @@ xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 }
 
 
-/**
- * Get the error from the ipc. Could be called from the callback
- * method in order to get a string describing the error causing
- * the disconnect.
- */
 const char *
 xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
 {
@@ -177,9 +138,6 @@ xmmsc_ipc_error_get (xmmsc_ipc_t *ipc)
 	return ipc->error;
 }
 
-/**
- * Disconnect the ipc.
- */
 void
 xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 {
@@ -193,8 +151,6 @@ xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 		ipc->disconnect_callback (ipc->disconnect_data);
 	}
 }
-
-/** @} */
 
 xmmsc_ipc_t *
 xmmsc_ipc_init (void)
