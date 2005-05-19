@@ -20,6 +20,7 @@
 typedef struct {
 	xmmsc_connection_t *real;
 	VALUE results;
+	VALUE disconnect_cb;
 } RbXmmsClient;
 
 #endif

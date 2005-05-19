@@ -44,6 +44,9 @@ static VALUE eXmmsClientError;
 static void c_mark (RbXmmsClient *xmms)
 {
 	rb_gc_mark (xmms->results);
+
+	if (!NIL_P (xmms->disconnect_cb))
+		rb_gc_mark (xmms->disconnect_cb);
 }
 
 static void c_free (RbXmmsClient *xmms)
@@ -79,6 +82,7 @@ static VALUE c_init (VALUE self, VALUE name)
 	}
 
 	xmms->results = rb_ary_new ();
+	xmms->disconnect_cb = Qnil;
 
 	return self;
 }
@@ -122,6 +126,40 @@ static VALUE c_disconnect (VALUE self)
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	xmmsc_disconnect (xmms->real);
+
+	return self;
+}
+
+static void on_disconnect (void *data)
+{
+	VALUE self = (VALUE) data;
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	rb_funcall (xmms->disconnect_cb, rb_intern ("call"), 0);
+}
+
+/*
+ * call-seq:
+ *  xc.on_disconnect { }
+ *
+ * Sets the block that's executed when _xc_ is disconnected from the
+ * XMMS2 daemon.
+ */
+static VALUE c_on_disconnect (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	if (!rb_block_given_p ())
+		return Qnil;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	xmms->disconnect_cb = rb_block_proc ();
+
+	xmmsc_disconnect_callback_set (xmms->real,
+	                               on_disconnect, (void *) self);
 
 	return self;
 }
@@ -514,6 +552,7 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
 	rb_define_method (c, "disconnect", c_disconnect, 0);
+	rb_define_method (c, "on_disconnect", c_on_disconnect, 0);
 	rb_define_method (c, "last_error", c_last_error_get, 0);
 
 	rb_define_method (c, "quit", c_quit, 0);
