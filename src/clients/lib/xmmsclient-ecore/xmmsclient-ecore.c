@@ -24,6 +24,7 @@ static int
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
 	xmmsc_connection_t *c = udata;
+	int ret;
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_ERROR)) {
 		xmmsc_io_disconnect (c);
@@ -31,12 +32,12 @@ on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 	}
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_READ))
-		xmmsc_io_in_handle (c);
+		ret = xmmsc_io_in_handle (c);
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_WRITE))
-		xmmsc_io_out_handle (c);
+		ret = xmmsc_io_out_handle (c);
 
-	return 1;
+	return ret;
 }
 
 void on_prepare (void *udata, Ecore_Fd_Handler *handler)
