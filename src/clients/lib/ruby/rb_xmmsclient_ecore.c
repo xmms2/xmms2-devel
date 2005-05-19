@@ -28,7 +28,7 @@ static VALUE c_add_to_ecore_mainloop (VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	xmmsc_ipc_setup_with_ecore (xmms->real);
+	xmmsc_setup_with_ecore (xmms->real);
 
 	return self;
 }

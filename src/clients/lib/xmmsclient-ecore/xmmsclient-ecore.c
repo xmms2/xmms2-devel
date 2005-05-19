@@ -52,7 +52,7 @@ void on_prepare (void *udata, Ecore_Fd_Handler *handler)
 }
 
 int
-xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *c)
+xmmsc_setup_with_ecore (xmmsc_connection_t *c)
 {
 	Ecore_Fd_Handler *fdh;
 	int flags = ECORE_FD_READ | ECORE_FD_ERROR;

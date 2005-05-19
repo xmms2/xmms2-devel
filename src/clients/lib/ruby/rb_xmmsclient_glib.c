@@ -15,7 +15,7 @@
  */
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient-glib.h>
+#include <xmmsclient/xmmsclient-glib.h> 
 
 #include <ruby.h>
 #include <stdbool.h>
@@ -28,7 +28,7 @@ static VALUE c_add_to_glib_mainloop (VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	xmmsc_ipc_setup_with_gmain (xmms->real);
+	xmmsc_setup_with_gmain (xmms->real);
 
 	return self;
 }
