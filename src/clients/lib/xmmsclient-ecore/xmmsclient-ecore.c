@@ -23,30 +23,28 @@
 static int
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
-	xmmsc_ipc_t *ipc = udata;
+	xmmsc_connection_t *c = udata;
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_ERROR)) {
-		xmmsc_ipc_error_set (ipc, "Remote host disconnected, or something!");
-		xmmsc_ipc_disconnect (ipc);
-
+		xmmsc_io_disconnect (c);
 		return 0;
 	}
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_READ))
-		xmmsc_ipc_io_in_callback (ipc);
+		xmmsc_io_in_handle (c);
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_WRITE))
-		xmmsc_ipc_io_out_callback (ipc);
+		xmmsc_io_out_handle (c);
 
 	return 1;
 }
 
 void on_prepare (void *udata, Ecore_Fd_Handler *handler)
 {
-	xmmsc_ipc_t *ipc = udata;
+	xmmsc_connection_t *c = udata;
 	int flags = ECORE_FD_READ | ECORE_FD_ERROR;
 
-	if (xmmsc_ipc_io_out (ipc))
+	if (xmmsc_io_want_out (c))
 		flags |= ECORE_FD_WRITE;
 
 	ecore_main_fd_handler_active_set (handler, flags);
@@ -58,12 +56,12 @@ xmmsc_ipc_setup_with_ecore (xmmsc_connection_t *c)
 	Ecore_Fd_Handler *fdh;
 	int flags = ECORE_FD_READ | ECORE_FD_ERROR;
 
-	if (xmmsc_ipc_io_out (c->ipc))
+	if (xmmsc_io_want_out (c))
 		flags |= ECORE_FD_WRITE;
 
-	fdh = ecore_main_fd_handler_add (xmmsc_ipc_fd_get (c->ipc), flags,
-	                                 on_fd_data, c->ipc, NULL, NULL);
-	ecore_main_fd_handler_prepare_callback_set (fdh, on_prepare, c->ipc);
+	fdh = ecore_main_fd_handler_add (xmmsc_io_fd_get (c), flags,
+	                                 on_fd_data, c, NULL, NULL);
+	ecore_main_fd_handler_prepare_callback_set (fdh, on_prepare, c);
 
 	return TRUE;
 }
