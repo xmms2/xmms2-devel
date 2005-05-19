@@ -37,15 +37,6 @@ typedef enum {
 	XMMS_PLAYLIST_PREPEND,
 } xmms_playlist_actions_t;
 
-typedef enum {
-	XMMS_PLAYLIST_CHANGED_ADD,
-	XMMS_PLAYLIST_CHANGED_SHUFFLE,
-	XMMS_PLAYLIST_CHANGED_REMOVE,
-	XMMS_PLAYLIST_CHANGED_CLEAR,
-	XMMS_PLAYLIST_CHANGED_MOVE,
-	XMMS_PLAYLIST_CHANGED_SORT
-} xmms_playlist_changed_actions_t;
-
 /*
  * Private defintions
  */
