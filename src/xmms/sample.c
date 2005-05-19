@@ -253,6 +253,21 @@ xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint bytes)
 	return xmms_sample_samples_to_ms (f, samples);
 }
 
+/**
+ * Calculate the number of bytes a number of samples before conversion
+ * needs after conversion.
+ */
+guint32
+xmms_sample_samples_to_converted_bytes (xmms_sample_converter_t *conv, guint32 samples)
+{
+	if (conv->resample) {
+		return samples / conv->decimator_ratio * conv->interpolator_ratio * xmms_sample_size_get (conv->to->format) * conv->to->channels;
+	} else {
+		return samples * xmms_sample_size_get (conv->to->format) * conv->to->channels;
+	}
+	
+}
+
 static void
 recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 {

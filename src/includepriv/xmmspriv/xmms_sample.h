@@ -27,6 +27,7 @@ void xmms_sample_audioformat_destroy (xmms_audio_format_t *fmt);
 guint xmms_sample_ms_to_samples (xmms_audio_format_t *f, guint milliseconds);
 guint xmms_sample_samples_to_ms (xmms_audio_format_t *f, guint samples);
 guint xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint samples);
+guint32 xmms_sample_samples_to_converted_bytes (xmms_sample_converter_t *conv, guint32 samples);
 
 /* internal? */
 void xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len, xmms_sample_t **out, guint *outlen);

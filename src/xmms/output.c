@@ -233,7 +233,9 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	if (ret > 0) {
 		guint buffersize = 0;
 
+		g_mutex_lock (output->playtime_mutex);
 		output->played += ret;
+		g_mutex_unlock (output->playtime_mutex);
 
 		buffersize_get_method = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET);
 		if (buffersize_get_method) {
@@ -311,13 +313,19 @@ xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
 	g_return_if_fail (output);
 	g_mutex_lock (output->decoder_mutex);
 	if (output->decoder) {
-		xmms_decoder_seek_ms (output->decoder, ms, error);
+		gint32 pos;
+
+		pos = xmms_decoder_seek_ms (output->decoder, ms, error);
+		if (pos != -1) {
+			g_mutex_lock (output->playtime_mutex);
+			output->played = pos;
+			g_mutex_unlock (output->playtime_mutex);
+		}
+			
 	} else {
 		/* Here we should set some data to the entry so it will start
 		   play from the offset */
 	}
-
-	/** @todo UPDATE output->played HERE */
 
 	g_mutex_unlock (output->decoder_mutex);
 }
@@ -328,10 +336,15 @@ xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *e
 	g_return_if_fail (output);
 	g_mutex_lock (output->decoder_mutex);
 	if (output->decoder) {
-		xmms_decoder_seek_samples (output->decoder, samples, error);
+		gint32 pos;
+		
+		pos = xmms_decoder_seek_samples (output->decoder, samples, error);
+		if (pos != -1) {
+			g_mutex_lock (output->playtime_mutex);
+			output->played = pos;
+			g_mutex_unlock (output->playtime_mutex);
+		}
 	}
-
-	/** @todo UPDATE output->played HERE */
 
 	g_mutex_unlock (output->decoder_mutex);
 

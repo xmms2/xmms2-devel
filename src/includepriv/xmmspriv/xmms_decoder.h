@@ -36,8 +36,8 @@ gboolean xmms_decoder_open (xmms_decoder_t *decoder,
 gboolean xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list, GList *effects);
 xmms_audio_format_t *xmms_decoder_audio_format_to_get (xmms_decoder_t *decoder);
 void xmms_decoder_start (xmms_decoder_t *decoder, xmms_output_t *output);
-gboolean xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err);
-gboolean xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err);
+gint32 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err);
+gint32 xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err);
 
 guint xmms_decoder_read (xmms_decoder_t *decoder, gchar *buf, guint len);
 gboolean xmms_decoder_iseos (xmms_decoder_t *decoder);

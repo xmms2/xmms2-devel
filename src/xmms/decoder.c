@@ -383,20 +383,19 @@ xmms_decoder_write (xmms_decoder_t *decoder, gchar *buf, guint len)
  */
 
 /**
- * Get a offset from the decoder on how long we should seek.
+ * Seek to specified (in ms) position in song.
  * 
  * @param decoder decoder pointer
- * @param milliseconds The number of milliseconds we want to seek.
+ * @param milliseconds The number of milliseconds to seek to.
  * @param err On failure this will be used.
- * @returns Number of bytes in the encoded data that represents the
- * number of #milliseconds that we passed to the function
+ *
+ * @returns the new position measured in _output_ samples, or -1 on error
  */
- 
-gboolean
+gint32
 xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t *err)
 {
 	guint samples;
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (decoder, -1);
 
 	samples = xmms_sample_ms_to_samples (xmms_sample_converter_get_from (decoder->converter), milliseconds);
 
@@ -405,16 +404,15 @@ xmms_decoder_seek_ms (xmms_decoder_t *decoder, guint milliseconds, xmms_error_t 
 }
 
 /**
- * Same as #xmms_decoder_seek_ms but in samples instead.
+ * Seek to specified (in samples) position in song.
  * 
  * @param decoder decoder pointer
- * @param samples The number of samples we want to seek.
+ * @param milliseconds The number of milliseconds to seek to.
  * @param err On failure this will be used.
- * @returns Number of bytes in the encoded data that represents the
- * number of #samples that we passed to the function
+ *
+ * @returns the new position measured in _output_ samples, or -1 on error
  */
-
-gboolean
+gint32
 xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t *err)
 {
 	xmms_decoder_seek_method_t meth;
@@ -432,10 +430,10 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 
 	if (!meth (decoder, samples)) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not seek there");
-		return FALSE;
+		return -1;
 	}
 
-	return TRUE;
+	return xmms_sample_samples_to_converted_bytes (decoder->converter, samples);
 }
 
 /**
