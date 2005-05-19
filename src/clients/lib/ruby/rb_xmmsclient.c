@@ -91,7 +91,7 @@ static VALUE c_init (VALUE self, VALUE name)
  * call-seq:
  *  xc.connect([path]) -> self
  *
- * Connects to the XMMS2 daemon listening at _path_.
+ * Connects _xc_ to the XMMS2 daemon listening at _path_.
  * If _path_ isn't given, the default path is used.
  */
 static VALUE c_connect (int argc, VALUE *argv, VALUE self)
@@ -117,7 +117,7 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
  * call-seq:
  *  xc.disconnect -> self
  *
- * Disconnects xc from the XMMS2 daemon.
+ * Disconnects _xc_ from the XMMS2 daemon.
  */
 static VALUE c_disconnect (VALUE self)
 {
@@ -168,7 +168,7 @@ static VALUE c_on_disconnect (VALUE self)
  * call-seq:
  *  xc.last_error -> string or nil
  *
- * Returns the last error that occured in xc or nil, if no error
+ * Returns the last error that occured in _xc_ or +nil+, if no error
  * occured yet.
  */
 static VALUE c_last_error_get (VALUE self)

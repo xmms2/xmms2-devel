@@ -95,7 +95,7 @@ static void on_signal (xmmsc_result_t *res2, void *data)
  * call-seq:
  *  res.notifier { |res2| }
  *
- * Sets the block that's executed when _res_' is handled.
+ * Sets the block that's executed when _res_ is handled.
  * Used by asyncronous results only.
  */
 static VALUE c_notifier_set (VALUE self)
@@ -135,8 +135,8 @@ static VALUE c_wait (VALUE self)
  * call-seq:
  *  res.restart -> res2 or nil
  *
- * Restarts _res_. If _res_ is not restartable, an ResultError is raised,
- * else a new Result object is returned.
+ * Restarts _res_. If _res_ is not restartable, a +ResultError+ is
+ * raised, else a new Result object is returned.
  */
 static VALUE c_restart (VALUE self)
 {
