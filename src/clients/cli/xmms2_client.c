@@ -627,10 +627,19 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	for (i = 2; argv[i]; i++) {
-		res = xmmsc_playlist_remove (conn, atoi (argv[i]));
+		int id;
+		char *endptr = NULL;
+
+		id = strtol (argv[i], &endptr, 10);
+		if (endptr == argv[i]) {
+			fprintf (stderr, "Skipping invalid id '%s'\n", argv[i]);
+			continue;
+		}
+
+		res = xmmsc_playlist_remove (conn, id);
 		xmmsc_result_wait (res);
 		if (xmmsc_result_iserror (res)) {
-			fprintf (stderr, "Couldn't remove %d (%s)\n", atoi (argv[i]), xmmsc_result_get_error (res));
+			fprintf (stderr, "Couldn't remove %d (%s)\n", id, xmmsc_result_get_error (res));
 		}
 		xmmsc_result_unref (res);
 	}

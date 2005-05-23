@@ -83,10 +83,10 @@ static gboolean xmms_alsa_format_set (xmms_output_t *output,
                                       xmms_audio_format_t *format);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
                                         xmms_audio_format_t *format);
-static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left, 
-									 gint right);
-static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left, 
-									 gint *right);
+static gboolean xmms_alsa_mixer_set (xmms_output_t *output, glong left, 
+									 glong right);
+static gboolean xmms_alsa_mixer_get (xmms_output_t *output, glong *left, 
+									 glong *right);
 static gboolean xmms_alsa_mixer_setup (xmms_output_t *output);
 static void xmms_alsa_probe_modes (xmms_output_t *output,
                                    xmms_alsa_data_t *data);
@@ -511,9 +511,9 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
 	gchar *dev, *name;
-	guint left, right;
+	glong left = 0, right = 0;
 	snd_mixer_selem_id_t *selem_id;
-	long alsa_min_vol, alsa_max_vol;
+	glong alsa_min_vol = 0, alsa_max_vol = 0;
 	gint err, index;
 	
 	g_return_val_if_fail (output, FALSE);
@@ -607,7 +607,8 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 								gpointer userdata)
 {
 	xmms_alsa_data_t *alsa_data;
-	guint left, right, res;
+	guint left = 0, right = 0;
+	gint res;
 	
 	g_return_if_fail (data);
 	g_return_if_fail (userdata);
@@ -617,7 +618,7 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 	if (alsa_data->have_mixer) {
 		res = sscanf (data, "%u/%u", &left, &right);
 
-		if (res == 0) {
+		if (res < 1) {
 			xmms_log_error ("Unable to change volume");
 			return;
 		}
@@ -675,7 +676,7 @@ xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right) 
+xmms_alsa_mixer_set (xmms_output_t *output, glong left, glong right) 
 {
 	xmms_alsa_data_t *data;
 
@@ -712,7 +713,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right) 
+xmms_alsa_mixer_get (xmms_output_t *output, glong *left, glong *right) 
 {
 	gint err;
 	xmms_alsa_data_t *data;
@@ -739,11 +740,11 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 
 	snd_mixer_selem_get_playback_volume (data->mixer_elem,
 										 SND_MIXER_SCHN_FRONT_LEFT,
-										 (long int *)left);
+										 left);
 
 	snd_mixer_selem_get_playback_volume (data->mixer_elem,
 										 SND_MIXER_SCHN_FRONT_RIGHT,
-										 (long int *)right);
+										 right);
 	return TRUE;
 }
 
