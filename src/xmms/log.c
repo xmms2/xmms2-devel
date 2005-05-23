@@ -109,8 +109,14 @@ xmms_log_init (const gchar *filename)
 		if (!tmpdir)
 			tmpdir = "/tmp";
 
-		xmms_log_filename = g_strdup_printf ("/tmp/%s.%d", filename, 
-											 (int)time (NULL));
+		char fnameTime[18];
+		time_t now = time(NULL);
+		if (strftime(fnameTime, 18, "%Y-%m-%d.%H%M%S", \
+		localtime(&now)) == 0) {
+			snprintf(fnameTime, 18, "%i", (int) now);
+		}
+		xmms_log_filename = g_strdup_printf ("/tmp/%s.%s", filename, \
+		fnameTime);
 		  
 		if (!xmms_log_open_logfile ()) {
 			return 0;
