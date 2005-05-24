@@ -203,8 +203,8 @@ pc_files = [{"name": "xmms2-plugin", "lib":""},
 	    {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
 	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"}]
 
-d = subst_dict.copy()
 for p in pc_files:
+	d = subst_dict.copy()
 	d["%NAME%"] = p["name"]
 	d["%LIB%"] = p["lib"]
 	pc = base_env.SubstInFile(p["name"]+".pc", "xmms2.pc.in", SUBST_DICT=d)
