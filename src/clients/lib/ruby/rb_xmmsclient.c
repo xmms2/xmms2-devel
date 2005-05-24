@@ -113,23 +113,6 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
-/*
- * call-seq:
- *  xc.disconnect -> self
- *
- * Disconnects _xc_ from the XMMS2 daemon.
- */
-static VALUE c_disconnect (VALUE self)
-{
-	RbXmmsClient *xmms = NULL;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	xmmsc_disconnect (xmms->real);
-
-	return self;
-}
-
 static void on_disconnect (void *data)
 {
 	VALUE self = (VALUE) data;
@@ -761,7 +744,6 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
-	rb_define_method (c, "disconnect", c_disconnect, 0);
 	rb_define_method (c, "on_disconnect", c_on_disconnect, 0);
 	rb_define_method (c, "last_error", c_last_error_get, 0);
 
