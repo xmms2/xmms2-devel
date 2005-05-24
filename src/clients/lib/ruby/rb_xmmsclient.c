@@ -113,23 +113,6 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
-/*
- * call-seq:
- *  xc.disconnect -> self
- *
- * Disconnects _xc_ from the XMMS2 daemon.
- */
-static VALUE c_disconnect (VALUE self)
-{
-	RbXmmsClient *xmms = NULL;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	xmmsc_disconnect (xmms->real);
-
-	return self;
-}
-
 static void on_disconnect (void *data)
 {
 	VALUE self = (VALUE) data;
@@ -481,6 +464,117 @@ static VALUE c_playlist_remove (VALUE self, VALUE pos)
 	return o;
 }
 
+static VALUE c_playlist_move (VALUE self, VALUE id, VALUE moves)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	Check_Type (id, T_FIXNUM);
+	Check_Type (moves, T_FIXNUM);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_playlist_move (xmms->real, NUM2UINT (id),
+	                           NUM2INT (moves));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_playlist_sort (VALUE self, VALUE property)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (property);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_playlist_sort (xmms->real, StringValuePtr (property));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_select (VALUE self, VALUE query)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (query);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_select (xmms->real, StringValuePtr (query));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (name);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_playlist_save_current (xmms->real,
+	                                            StringValuePtr (name));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (name);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_playlist_load (xmms->real,
+	                                    StringValuePtr (name));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_add_entry (VALUE self, VALUE url)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (url);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+	res = xmmsc_medialib_add_entry (xmms->real, StringValuePtr (url));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
 static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
 	VALUE o;
@@ -492,6 +586,105 @@ static VALUE c_medialib_get_info (VALUE self, VALUE id)
 	Check_Type (id, T_FIXNUM);
 
 	res = xmmsc_medialib_get_info (xmms->real, FIX2INT (id));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (query);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_add_to_playlist (xmms->real,
+	                                      StringValuePtr (query));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
+                                         VALUE url)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (playlist);
+	StringValue (url);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_playlist_import (xmms->real,
+	                                      StringValuePtr (playlist),
+	                                      StringValuePtr (url));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
+                                         VALUE mime)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (playlist);
+	StringValue (mime);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+	res = xmmsc_medialib_playlist_import (xmms->real,
+	                                      StringValuePtr (playlist),
+	                                      StringValuePtr (mime));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_path_import (VALUE self, VALUE path)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (path);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_path_import (xmms->real,
+	                                  StringValuePtr (path));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
+static VALUE c_medialib_rehash (VALUE self, VALUE id)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	Check_Type (id, T_FIXNUM);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	res = xmmsc_medialib_rehash (xmms->real, FIX2INT (id));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
 	rb_ary_push (xmms->results, o);
@@ -551,7 +744,6 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
-	rb_define_method (c, "disconnect", c_disconnect, 0);
 	rb_define_method (c, "on_disconnect", c_on_disconnect, 0);
 	rb_define_method (c, "last_error", c_last_error_get, 0);
 
@@ -582,6 +774,7 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	                  c_broadcast_playlist_current_pos, 0);
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
+
 	rb_define_method (c, "playlist_shuffle", c_playlist_shuffle, 0);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);
 	rb_define_method (c, "playlist_clear", c_playlist_clear, 0);
@@ -590,7 +783,24 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	                  c_playlist_set_next_rel, 1);
 	rb_define_method (c, "playlist_add", c_playlist_add, 1);
 	rb_define_method (c, "playlist_remove", c_playlist_remove, 1);
+	rb_define_method (c, "playlist_move", c_playlist_move, 2);
+	rb_define_method (c, "playlist_sort", c_playlist_sort, 1);
+
+	rb_define_method (c, "medialib_select", c_medialib_select, 1);
+	rb_define_method (c, "medialib_playlist_save_current",
+	                  c_medialib_playlist_save_current, 1);
+	rb_define_method (c, "medialib_playlist_load",
+	                  c_medialib_playlist_load, 1);
+	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
+	rb_define_method (c, "medialib_add_to_playlist",
+	                  c_medialib_add_to_playlist, 1);
+	rb_define_method (c, "medialib_playlist_import",
+	                  c_medialib_playlist_import, 2);
+	rb_define_method (c, "medialib_playlist_export",
+	                  c_medialib_playlist_export, 2);
+	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
+	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
 	rb_define_method (c, "signal_visualisation_data",
 	                  c_signal_visualisation_data, 0);
