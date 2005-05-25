@@ -1,3 +1,10 @@
+xmms2 (0.1DR1+git20050525-0) unstable; urgency=low
+
+  * First upload.
+  * Change versioning scheme.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Wed, 25 May 2005 21:18:59 +0200
+ 
 xmms2 (1.9.5+bk20050510-2) unstable; urgency=low
 
   * New packages libxmms2client-glib and libxmms2client-glib-dev.
