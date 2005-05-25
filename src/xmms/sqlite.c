@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 11
+#define DB_VERSION 12
 
 const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
@@ -42,10 +42,10 @@ const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
                               "create index log_id on Log (id);"
                               "create index playlist_idx on Playlist (name);";
 
-const char create_views[] = "CREATE VIEW artists as select distinct m1.value as artist from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='artist' and m2.value is null order by artist collate nocase;"
-			    "CREATE VIEW albums as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='compilation' where m1.key='artist' and m3.value is null order by artist collate nocase, album collate nocase;"
-			    "CREATE VIEW songs as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album, ifnull(m3.value, m4.value) as title, ifnull(m5.value, -1) as tracknr, m1.id as id from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='title' join Media m4 on m1.id = m4.id and m4.key='url' left join Media m5 on m1.id = m5.id and m5.key='tracknr' where m1.key='artist' order by artist collate nocase, album collate nocase, tracknr, title collate nocase;"
-			    "CREATE VIEW compilations as select distinct m1.value as compilation from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='album' and m2.value='1' order by compilation collate nocase;"
+const char create_views[] = "CREATE VIEW artists as select distinct m1.value as artist from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='artist' and m2.value is null;"
+			    "CREATE VIEW albums as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='compilation' where m1.key='artist' and m3.value is null;"
+			    "CREATE VIEW songs as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album, ifnull(m3.value, m4.value) as title, ifnull(m5.value, -1) as tracknr, m1.id as id from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='title' join Media m4 on m1.id = m4.id and m4.key='url' left join Media m5 on m1.id = m5.id and m5.key='tracknr' where m1.key='artist';"
+			    "CREATE VIEW compilations as select distinct m1.value as compilation from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='album' and m2.value='1';"
 			    "CREATE VIEW topsongs as select m.value as artist, m2.value as song, sum(l.value) as playsum, m.id as id, count(l.id) as times from Log l join Media m on l.id=m.id join Media m2 on m2.id = l.id  where m.key='artist' and m2.key='title' group by l.id order by playsum desc;";
 
 
@@ -95,6 +95,19 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 	return 1;
 }
 
+void
+upgrade_v11_to_v12 (sqlite3 *sql)
+{
+	XMMS_DBG ("Preforming upgrade v11 to v12");
+	sqlite3_exec (sql, "drop view songs", NULL, NULL, NULL);
+	sqlite3_exec (sql, "drop view artists", NULL, NULL, NULL);
+	sqlite3_exec (sql, "drop view albums", NULL, NULL, NULL);
+	sqlite3_exec (sql, "drop view compilations", NULL, NULL, NULL);
+	sqlite3_exec (sql, "drop view topsongs", NULL, NULL, NULL);
+	sqlite3_exec (sql, create_views, NULL, NULL, NULL);
+	XMMS_DBG ("done");
+}
+
 /**
  * Open a database or create a new one
  */
@@ -132,17 +145,22 @@ xmms_sqlite_open (guint *id, gboolean *c)
 			      xmms_sqlite_version_cb, &version, NULL);
 		if (version != DB_VERSION) {
 			gchar old[XMMS_PATH_MAX];
+			
+			if (version == 11) {
+				upgrade_v11_to_v12 (sql);
+			} else {
 
-			sqlite3_close (sql);
-			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", g_get_home_dir ());
-			rename (dbpath, old);
+				sqlite3_close (sql);
+				g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old", g_get_home_dir ());
+				rename (dbpath, old);
+	
+				if (sqlite3_open (dbpath, &sql)) {
+					xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg (sql));
+					return NULL;
+				}
 
-			if (sqlite3_open (dbpath, &sql)) {
-				xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg (sql));
-				return NULL;
+				create = TRUE;
 			}
-
-			create = TRUE;
 		}
 	}
 
