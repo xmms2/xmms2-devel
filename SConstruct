@@ -7,7 +7,7 @@ import re
 import string
 from marshal import dump
 
-EnsureSConsVersion(0, 94)
+EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
 SConsignFile()
 
