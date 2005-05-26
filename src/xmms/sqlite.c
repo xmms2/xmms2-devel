@@ -98,6 +98,8 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 void
 upgrade_v11_to_v12 (sqlite3 *sql)
 {
+	gchar buf[128];
+
 	XMMS_DBG ("Preforming upgrade v11 to v12");
 	sqlite3_exec (sql, "drop view songs", NULL, NULL, NULL);
 	sqlite3_exec (sql, "drop view artists", NULL, NULL, NULL);
@@ -105,6 +107,14 @@ upgrade_v11_to_v12 (sqlite3 *sql)
 	sqlite3_exec (sql, "drop view compilations", NULL, NULL, NULL);
 	sqlite3_exec (sql, "drop view topsongs", NULL, NULL, NULL);
 	sqlite3_exec (sql, create_views, NULL, NULL, NULL);
+	sqlite3_exec (sql, "delete from Control", NULL, NULL, NULL);
+
+	g_snprintf (buf, sizeof (buf),
+		    "insert into Control (version) VALUES (%i)",
+		    DB_VERSION);
+
+	sqlite3_exec (sql, buf, NULL, NULL, NULL);
+
 	XMMS_DBG ("done");
 }
 
