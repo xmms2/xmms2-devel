@@ -282,9 +282,8 @@ xmms_plugin_init (gchar *path)
 	if (!path)
 		path = PKGLIBDIR;
 
-	xmms_plugin_scan_directory (path);
+	return xmms_plugin_scan_directory (path);
 	
-	return TRUE;
 }
 
 void
@@ -326,7 +325,7 @@ xmms_plugin_shutdown ()
 	g_mutex_free (xmms_plugin_mtx);
 }
 
-void
+gboolean
 xmms_plugin_scan_directory (const gchar *dir)
 {
 	GDir *d;
@@ -337,14 +336,14 @@ xmms_plugin_scan_directory (const gchar *dir)
 	xmms_plugin_t *plugin;
 	gpointer sym;
 
-	g_return_if_fail (global_config);
+	g_return_val_if_fail (global_config, FALSE);
 
 	XMMS_DBG ("Scanning directory: %s", dir);
 	
 	d = g_dir_open (dir, 0, NULL);
 	if (!d) {
 		xmms_log_error ("Failed to open directory");
-		return;
+		return FALSE;
 	}
 
 	g_mutex_lock (xmms_plugin_mtx);
@@ -403,6 +402,8 @@ xmms_plugin_scan_directory (const gchar *dir)
 	}
 	g_mutex_unlock (xmms_plugin_mtx);
 	g_dir_close (d);
+
+	return TRUE;
 }
 
 GList *

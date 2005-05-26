@@ -28,7 +28,7 @@
 
 gboolean xmms_plugin_init (gchar *path);
 void xmms_plugin_shutdown ();
-void xmms_plugin_scan_directory (const gchar *dir);
+gboolean xmms_plugin_scan_directory (const gchar *dir);
 
 GList *xmms_plugin_list_get (xmms_plugin_type_t type);
 void xmms_plugin_list_destroy (GList *list);
