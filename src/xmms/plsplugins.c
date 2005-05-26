@@ -81,6 +81,10 @@ xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 		return FALSE;
 	}
 
+	xmms_transport_start (transport);
+
+	xmms_transport_buffering_start (transport);
+
 	mime = xmms_transport_mimetype_get_wait (transport);
 	if (!mime) {
 		xmms_object_unref (XMMS_OBJECT (transport));

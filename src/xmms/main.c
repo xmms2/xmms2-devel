@@ -322,7 +322,12 @@ main (int argc, char **argv)
 	parse_config ();
 	
 	xmms_log_init (doLog ? "xmmsd" : "null");
-	
+
+	xmms_config_value_register ("decoder.buffersize", 
+			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
+	xmms_config_value_register ("transport.buffersize", 
+			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
+
 	playlist = xmms_playlist_init ();
 
 	xmms_visualisation_init ();
@@ -331,13 +336,6 @@ main (int argc, char **argv)
 		return 1;
 
 	
-
-	xmms_config_value_register ("decoder.buffersize", 
-			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
-	xmms_config_value_register ("transport.buffersize", 
-			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
-
-
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
 	if (!outname) {

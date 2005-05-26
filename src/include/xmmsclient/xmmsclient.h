@@ -29,7 +29,6 @@ typedef struct xmmsc_result_St xmmsc_result_t;
 
 xmmsc_connection_t *xmmsc_init (char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
-void xmmsc_disconnect (xmmsc_connection_t *c);
 void xmmsc_unref (xmmsc_connection_t *c);
 void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata);

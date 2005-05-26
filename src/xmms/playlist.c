@@ -313,8 +313,10 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 	if (len > 1) {
 
 		/* put current at top and exclude from shuffling */
-		swap_entries (playlist->list, 0, playlist->currentpos);
-		playlist->currentpos = 0;
+		if (playlist->currentpos != -1) {
+			swap_entries (playlist->list, 0, playlist->currentpos);
+			playlist->currentpos = 0;
+		}
 
 		/* knuth <3 */
 		for (i = 1; i < len; i++) {
