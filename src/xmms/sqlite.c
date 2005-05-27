@@ -99,7 +99,7 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 void
 upgrade_v11_to_v12 (sqlite3 *sql)
 {
-	XMMS_DBG ("Preforming upgrade v11 to v12");
+	XMMS_DBG ("Performing upgrade v11 to v12");
 	sqlite3_exec (sql, "drop view songs", NULL, NULL, NULL);
 	sqlite3_exec (sql, "drop view artists", NULL, NULL, NULL);
 	sqlite3_exec (sql, "drop view albums", NULL, NULL, NULL);
@@ -114,7 +114,7 @@ upgrade_v11_to_v12 (sqlite3 *sql)
 static void
 upgrade_v12_to_v13 (sqlite3 *sql)
 {
-	XMMS_DBG ("Preforming upgrade v12 to v13");
+	XMMS_DBG ("Performing upgrade v12 to v13");
 
 	sqlite3_exec (sql, "drop table PlaylistEntries", NULL, NULL, NULL);
 	sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
