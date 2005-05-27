@@ -327,8 +327,8 @@ xmms_oss_new (xmms_output_t *output)
 	XMMS_DBG ("device = %s", dev);
 
 	fd = open (dev, O_WRONLY);
-	if (!fd)
-		goto err;
+	if (fd == -1)
+		return FALSE;
 
 	if (ioctl (fd, SNDCTL_DSP_GETFMTS, &fmts) == -1)
 		goto err;
