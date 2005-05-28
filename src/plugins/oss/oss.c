@@ -47,8 +47,6 @@ typedef struct xmms_oss_data_St {
 
 	xmms_config_value_t *mixer;
 
-	/* ugly lock to avoid problems in kernel api */
-	GMutex *mutex;
 } xmms_oss_data_t;
 
 static struct {
@@ -241,9 +239,7 @@ xmms_oss_flush (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	/* reset soundcard buffer */
-	g_mutex_lock (data->mutex);
 	ioctl (data->fd, SNDCTL_DSP_RESET, 0);
-	g_mutex_unlock (data->mutex);
 
 }
 
@@ -295,7 +291,6 @@ xmms_oss_new (xmms_output_t *output)
 	g_return_val_if_fail (output, FALSE);
 
 	data = g_new0 (xmms_oss_data_t, 1);
-	data->mutex = g_mutex_new ();
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
 	mixdev = xmms_config_value_string_get (val);
@@ -451,9 +446,5 @@ xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len)
 
 	data = xmms_output_private_data_get (output);
 
-	/* make sure that we don't flush buffers when we are writing */
-	g_mutex_lock (data->mutex);
 	write (data->fd, buffer, len);
-	g_mutex_unlock (data->mutex);
-
 }
