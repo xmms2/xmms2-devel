@@ -23,12 +23,18 @@
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
+#define CHECK_DELETED(xmms) \
+	if (xmms->deleted) \
+		rb_raise (eDisconnectedError, "client deleted");
+
 #define METHOD_ADD_HANDLER(name, unref) \
 	RbXmmsClient *xmms = NULL; \
 	xmmsc_result_t *res; \
 	VALUE o; \
 \
 	Data_Get_Struct (self, RbXmmsClient, xmms); \
+\
+	CHECK_DELETED (xmms); \
 \
 	res = xmmsc_##name (xmms->real); \
 \
@@ -39,7 +45,7 @@
 
 void Init_Result (VALUE m, VALUE e);
 
-static VALUE eXmmsClientError;
+static VALUE eXmmsClientError, eDisconnectedError;
 
 static void c_mark (RbXmmsClient *xmms)
 {
@@ -51,7 +57,8 @@ static void c_mark (RbXmmsClient *xmms)
 
 static void c_free (RbXmmsClient *xmms)
 {
-	xmmsc_unref (xmms->real);
+	if (!xmms->deleted)
+		xmmsc_unref (xmms->real);
 
 	free (xmms);
 }
@@ -102,6 +109,8 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	rb_scan_args (argc, argv, "01", &path);
 
 	if (!NIL_P (path))
@@ -111,6 +120,20 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 		rb_raise (eXmmsClientError, "cannot connect to daemon");
 
 	return self;
+}
+
+static VALUE c_delete (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	xmmsc_unref (xmms->real);
+	xmms->deleted = true;
+
+	return Qnil;
 }
 
 static void on_disconnect (void *data)
@@ -139,6 +162,8 @@ static VALUE c_on_disconnect (VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	xmms->disconnect_cb = rb_block_proc ();
 
 	xmmsc_disconnect_callback_set (xmms->real,
@@ -160,6 +185,8 @@ static VALUE c_last_error_get (VALUE self)
 	const char *s;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	s = xmmsc_get_last_error (xmms->real);
 
@@ -312,6 +339,8 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	Check_Type (ms, T_FIXNUM);
 
 	res = xmmsc_playback_seek_ms (xmms->real, NUM2UINT (ms));
@@ -335,6 +364,8 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 	xmmsc_result_t *res;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	Check_Type (samples, T_FIXNUM);
 
@@ -389,6 +420,8 @@ static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	Check_Type (pos, T_FIXNUM);
 
 	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (pos));
@@ -406,6 +439,8 @@ static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 	xmmsc_result_t *res;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	Check_Type (pos, T_FIXNUM);
 
@@ -435,6 +470,8 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	if (is_str)
 		res = xmmsc_playlist_add (xmms->real, StringValuePtr (arg));
 	else
@@ -456,6 +493,8 @@ static VALUE c_playlist_remove (VALUE self, VALUE pos)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_playlist_remove (xmms->real, NUM2UINT (pos));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -474,6 +513,8 @@ static VALUE c_playlist_move (VALUE self, VALUE id, VALUE moves)
 	Check_Type (moves, T_FIXNUM);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	res = xmmsc_playlist_move (xmms->real, NUM2UINT (id),
 	                           NUM2INT (moves));
@@ -494,6 +535,8 @@ static VALUE c_playlist_sort (VALUE self, VALUE property)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_playlist_sort (xmms->real, StringValuePtr (property));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -512,6 +555,8 @@ static VALUE c_medialib_select (VALUE self, VALUE query)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_select (xmms->real, StringValuePtr (query));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -529,6 +574,8 @@ static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
 	StringValue (name);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	res = xmmsc_medialib_playlist_save_current (xmms->real,
 	                                            StringValuePtr (name));
@@ -549,6 +596,8 @@ static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_playlist_load (xmms->real,
 	                                    StringValuePtr (name));
 
@@ -567,6 +616,9 @@ static VALUE c_medialib_add_entry (VALUE self, VALUE url)
 	StringValue (url);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_add_entry (xmms->real, StringValuePtr (url));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -585,6 +637,8 @@ static VALUE c_medialib_get_info (VALUE self, VALUE id)
 
 	Check_Type (id, T_FIXNUM);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_get_info (xmms->real, FIX2INT (id));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -602,6 +656,8 @@ static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
 	StringValue (query);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	res = xmmsc_medialib_add_to_playlist (xmms->real,
 	                                      StringValuePtr (query));
@@ -624,6 +680,8 @@ static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_playlist_import (xmms->real,
 	                                      StringValuePtr (playlist),
 	                                      StringValuePtr (url));
@@ -645,6 +703,9 @@ static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
 	StringValue (mime);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_playlist_import (xmms->real,
 	                                      StringValuePtr (playlist),
 	                                      StringValuePtr (mime));
@@ -665,6 +726,8 @@ static VALUE c_medialib_path_import (VALUE self, VALUE path)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_path_import (xmms->real,
 	                                  StringValuePtr (path));
 
@@ -684,6 +747,8 @@ static VALUE c_medialib_rehash (VALUE self, VALUE id)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_medialib_rehash (xmms->real, FIX2INT (id));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -702,6 +767,8 @@ static VALUE c_configval_get (VALUE self, VALUE key)
 
 	Check_Type (key, T_STRING);
 
+	CHECK_DELETED (xmms);
+
 	res = xmmsc_configval_get (xmms->real, StringValuePtr (key));
 
 	o = TO_XMMS_CLIENT_RESULT (res, true, true);
@@ -717,6 +784,8 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	xmmsc_result_t *res;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
 
 	Check_Type (key, T_STRING);
 	Check_Type (val, T_STRING);
@@ -744,6 +813,7 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
 	rb_define_method (c, "connect", c_connect, -1);
+	rb_define_method (c, "delete!", c_delete, 0);
 	rb_define_method (c, "on_disconnect", c_on_disconnect, 0);
 	rb_define_method (c, "last_error", c_last_error_get, 0);
 
@@ -820,6 +890,9 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	eXmmsClientError = rb_define_class_under (mXmmsClient,
 	                                          "XmmsClientError",
 	                                          rb_eStandardError);
+	eDisconnectedError = rb_define_class_under (mXmmsClient,
+	                                            "DisconnectedError",
+	                                            eXmmsClientError);
 
 	Init_Result (mXmmsClient, eXmmsClientError);
 }
