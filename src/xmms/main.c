@@ -328,12 +328,12 @@ main (int argc, char **argv)
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
+	if (!xmms_plugin_init (ppath))
+		return 1;
+
 	playlist = xmms_playlist_init ();
 
 	xmms_visualisation_init ();
-	
-	if (!xmms_plugin_init (ppath))
-		return 1;
 
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
