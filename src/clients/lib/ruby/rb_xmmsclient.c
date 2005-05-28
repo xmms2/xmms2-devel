@@ -763,9 +763,9 @@ static VALUE c_configval_get (VALUE self, VALUE key)
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	StringValue (key);
 
-	Check_Type (key, T_STRING);
+	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	CHECK_DELETED (xmms);
 
@@ -783,12 +783,12 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
+	StringValue (key);
+	StringValue (val);
+
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	CHECK_DELETED (xmms);
-
-	Check_Type (key, T_STRING);
-	Check_Type (val, T_STRING);
 
 	res = xmmsc_configval_set (xmms->real, StringValuePtr (key),
 	                           StringValuePtr (val));
