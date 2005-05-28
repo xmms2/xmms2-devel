@@ -326,6 +326,7 @@ xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
 		/* Here we should set some data to the entry so it will start
 		   play from the offset */
 	}
+	xmms_output_flush (output);
 
 	g_mutex_unlock (output->decoder_mutex);
 }
@@ -345,6 +346,8 @@ xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *e
 			g_mutex_unlock (output->playtime_mutex);
 		}
 	}
+
+	xmms_output_flush (output);
 
 	g_mutex_unlock (output->decoder_mutex);
 
@@ -730,7 +733,9 @@ xmms_output_flush (xmms_output_t *output)
 	flush = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FLUSH);
 	g_return_if_fail (flush);
 
+	g_mutex_lock (output->write_mutex);
 	flush (output);
+	g_mutex_unlock (output->write_mutex);
 
 }
 
@@ -919,11 +924,12 @@ xmms_output_write_thread (gpointer data)
 
 		ret = xmms_output_read (output, buffer, 4096);
 
+		g_mutex_lock (output->write_mutex);
+
 		if (ret > 0) {
 			write_method (output, buffer, ret);
 		}
 
-		g_mutex_lock (output->write_mutex);
 	}
 
 	g_mutex_unlock (output->write_mutex);

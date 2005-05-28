@@ -423,7 +423,6 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 
 	g_return_val_if_fail (meth, FALSE);
 
-	xmms_output_flush (decoder->output);
 	g_mutex_lock (decoder->mutex);
 	xmms_ringbuf_clear (decoder->buffer);
 	g_mutex_unlock (decoder->mutex);
