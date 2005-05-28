@@ -88,6 +88,7 @@ static VALUE c_init (VALUE self, VALUE name)
 		return Qnil;
 	}
 
+	xmms->deleted = false;
 	xmms->results = rb_ary_new ();
 	xmms->disconnect_cb = Qnil;
 
