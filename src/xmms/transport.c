@@ -739,6 +739,7 @@ xmms_transport_start (xmms_transport_t *transport)
 	g_return_if_fail (transport);
 
 	transport->running = TRUE;
+	xmms_object_ref (transport);
 	transport->thread = g_thread_create (xmms_transport_thread, transport, TRUE, NULL); 
 }
 
@@ -852,7 +853,6 @@ xmms_transport_thread (gpointer data)
 
 	xmms_error_reset (&error);
 
-	xmms_object_ref (transport);
 	g_mutex_lock (transport->mutex);
 	while (transport->running) {
 
