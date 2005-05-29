@@ -38,6 +38,7 @@
 
 static int get_playlist_entries_cb (void *pArg, int argc, char **argv, char **cName);
 static xmms_medialib_entry_t xmms_medialib_entry_new_unlocked (const char *url);
+static int xmms_medialib_int_cb (void *pArg, int argc, char **argv, char **columnName);
 
 static GHashTable *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err);
 static void xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
@@ -88,6 +89,9 @@ struct xmms_medialib_St {
 	GMutex *mutex;
 	/** Nextid in the mediatable */
 	guint32 nextid;
+
+	/** Statement to run when user is in "random mode" */
+	const gchar *random_sql;
 };
 
 
@@ -100,8 +104,6 @@ struct xmms_medialib_St {
   */
 
 static xmms_medialib_t *medialib;
-
-
 
 
 static void 
@@ -128,6 +130,17 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 	g_mutex_unlock (mlib->mutex);
 }
 
+static void
+xmms_medialib_random_sql_changed (xmms_object_t *object, gconstpointer data,
+				  gpointer userdata)
+{
+	xmms_medialib_t *mlib = userdata;
+
+	g_mutex_lock (mlib->mutex);
+	medialib->random_sql = (gchar*)data;
+	g_mutex_unlock (mlib->mutex);
+}
+
 /**
  * Initialize the medialib and open the database file.
  * 
@@ -140,6 +153,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar path[XMMS_PATH_MAX+1];
 	gboolean create;
+	xmms_config_value_t *cv;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->mutex = g_mutex_new ();
@@ -187,6 +201,10 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 				    "0",
 				    NULL, NULL);
 
+	cv = xmms_config_value_register ("medialib.random_sql_statement",
+					 "select id from Media where key='url' order by random() limit 1",
+					 xmms_medialib_random_sql_changed, medialib);
+	medialib->random_sql = xmms_config_value_string_get (cv);
 
 	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
 
@@ -204,6 +222,24 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 
 	
 	return TRUE;
+}
+
+/**
+ * Return a random entry from the medialib.
+ * The SQL statement used for retrival can be configured.
+ */
+
+guint32
+xmms_medialib_get_random_entry (void)
+{
+	guint32 ret = 0;
+
+	g_mutex_lock (medialib->mutex);
+	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &ret, 
+			   medialib->random_sql);
+	g_mutex_unlock (medialib->mutex);
+
+	return ret;
 }
 
 
@@ -447,7 +483,6 @@ xmms_medialib_addtopls_cb (void *pArg, int argc, char **argv, char **columnName)
 	
 	return 0;
 }
-
 
 static void
 xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)

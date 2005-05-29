@@ -829,11 +829,6 @@ do_reljump (xmmsc_connection_t *conn, int where)
 
 	res = xmmsc_playlist_set_next_rel (conn, where);
 	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
-		return;
-	}
 	xmmsc_result_unref (res);
 
 	res = xmmsc_playback_tickle (conn);
