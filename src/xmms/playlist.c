@@ -353,9 +353,9 @@ xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 	g_array_remove_index (playlist->list, pos);
 
 	/* decrease currentpos if removed entry was before or if it's
-	 * the current entry
+	 * the current entry, but only if currentpos is a valid entry.
 	 */
-	if (pos <= playlist->currentpos) {
+	if (playlist->currentpos != -1 && pos <= playlist->currentpos) {
 		playlist->currentpos--;
 	}
 
