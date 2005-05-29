@@ -90,6 +90,63 @@ typedef struct xmms_main_St xmms_main_t;
 
 static GMainLoop *mainloop;
 
+static void
+do_execute (gchar *program, gchar **env)
+{
+	GError *err;
+
+	gchar **argv = g_new0 (gchar *, 2);
+	argv[0] = program;
+	argv[2] = NULL;
+
+	XMMS_DBG ("executing %s", program);
+	
+	g_spawn_async (g_get_home_dir(), argv, env, 
+		      0,
+		      NULL, NULL, NULL, &err);
+
+	g_free (argv);
+
+}
+
+static void
+do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
+{
+	GError *err;
+	GDir *dir;
+	const gchar *f;
+	gchar *file;
+	gchar **env;
+
+	XMMS_DBG ("Running scripts in %s", scriptdir);
+	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
+		mkdir (scriptdir, 0755);
+	}
+
+	dir = g_dir_open (scriptdir, 0, &err);
+	if (!dir) {
+		XMMS_DBG ("Could not open %s error: %s", scriptdir, err->message);
+		return;
+	}
+
+	env = g_new0(gchar*, 3);
+	env[0] = g_strdup_printf ("XMMS_PATH=%s",ipcpath);
+	env[1] = g_strdup_printf ("HOME=%s", g_get_home_dir());
+
+	while ((f = g_dir_read_name (dir))) {
+		file = g_strdup_printf ("%s/%s", scriptdir, f);
+		if (g_file_test (file, G_FILE_TEST_IS_EXECUTABLE)) {
+			do_execute(file, env);
+		}
+		g_free (file);
+	}
+
+	g_strfreev (env);
+
+	g_dir_close (dir);
+
+}
+
 static gboolean
 parse_config ()
 {
@@ -139,7 +196,11 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_main_t *mainobj = (xmms_main_t *) object;
 	xmms_object_cmd_arg_t arg;
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
+	xmms_config_value_t *cv;
 
+	cv = xmms_config_lookup ("core.shutdownpath");
+	do_scriptdir (xmms_config_value_string_get (cv), NULL);
+	
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
 
@@ -247,6 +308,8 @@ main (int argc, char **argv)
 	gboolean doLog = TRUE;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
+	gchar *tmp;
+	const gchar *ipcpath;
 	pid_t ppid=0;
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
@@ -328,13 +391,13 @@ main (int argc, char **argv)
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
+
 	if (!xmms_plugin_init (ppath))
 		return 1;
 
 	playlist = xmms_playlist_init ();
 
 	xmms_visualisation_init ();
-
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
@@ -363,7 +426,8 @@ main (int argc, char **argv)
 	cv = xmms_config_value_register ("core.ipcsocket", default_path,
 	                                 NULL, NULL);
 
-	if (!xmms_ipc_setup_server (xmms_config_value_string_get (cv))) {
+	ipcpath = xmms_config_value_string_get (cv);
+	if (!xmms_ipc_setup_server (ipcpath)) {
 		xmms_log_fatal ("IPC failed to init!");
 	}
 
@@ -378,6 +442,20 @@ main (int argc, char **argv)
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);
 	}
+
+
+	tmp = g_strdup_printf ("%s/.xmms2/shutdown.d", g_get_home_dir());
+	cv = xmms_config_value_register ("core.shutdownpath",
+				    tmp, NULL, NULL);
+	g_free (tmp);
+
+	tmp = g_strdup_printf ("%s/.xmms2/startup.d", g_get_home_dir());
+	cv = xmms_config_value_register ("core.startuppath",
+				    tmp, NULL, NULL);
+	g_free (tmp);
+
+	/* Startup dir */
+	do_scriptdir (xmms_config_value_string_get (cv), ipcpath);
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 
