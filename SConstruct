@@ -7,6 +7,8 @@ import re
 import string
 from marshal import dump
 
+XMMS_VERSION = "0.1 DR2"
+
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
 SConsignFile()
@@ -107,7 +109,7 @@ b = Builder(action = 'python src/xmms/generate-converter.py > src/xmms/converter
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.SourceCode('src/xmms/converter.c', b)
 
-subst_dict = {"%VERSION%":"0.1 DR1.1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
+subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix}
