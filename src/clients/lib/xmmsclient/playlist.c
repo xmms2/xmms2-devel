@@ -90,6 +90,29 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
 }
 
+/**
+ * Insert entry at given position in playlist.
+ *
+ * @param c The connection structure.
+ * @param pos A postion in the playlist
+ * @param url The URL to insert
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, char *url)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT);
+	xmms_ipc_msg_put_uint32 (msg, pos);
+	xmms_ipc_msg_put_string (msg, url);
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+
 
 /**
  * Add a medialib id to the playlist. 

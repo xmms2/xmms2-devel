@@ -65,6 +65,7 @@ xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int);
 xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int);
 xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int, signed int);
 xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, char *url);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);

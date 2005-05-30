@@ -49,7 +49,9 @@ static gboolean xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint n
 static guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
 static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
 static guint xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error);
+static void xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *error);
 
+XMMS_CMD_DEFINE (insert, xmms_playlist_insert, xmms_playlist_t *, NONE, UINT32, STRING);
 XMMS_CMD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (move, xmms_playlist_move, xmms_playlist_t *, NONE, UINT32, INT32);
@@ -213,6 +215,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_SORT, 
 			     XMMS_CMD_FUNC (sort));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+			     XMMS_IPC_CMD_INSERT, 
+			     XMMS_CMD_FUNC (insert));
 
 	xmms_medialib_init (ret);
 
@@ -445,6 +451,31 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 	return TRUE;
 
 }
+
+/**
+ * Insert an entry into the playlist at given position.
+ */
+static
+void xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *err)
+{
+	xmms_medialib_entry_t entry = 0;
+	entry = xmms_medialib_entry_new (url);
+
+	if (!entry) {
+		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
+		return;
+	}
+
+	g_mutex_lock (playlist->mutex);
+	if (pos > (playlist->list->len-1) || pos < 0) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not insert entry outside of playlist!");
+		g_mutex_unlock (playlist->mutex);
+		return;
+	}
+	g_array_insert_val (playlist->list, pos, entry);
+	g_mutex_unlock (playlist->mutex);
+}
+
 /**
   * Convenient function for adding a URL to the playlist,
   * Creates a #xmms_medialib_entry for you and adds it

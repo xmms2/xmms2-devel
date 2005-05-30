@@ -547,6 +547,29 @@ add_directory_to_playlist (xmmsc_connection_t *conn, char *directory,
 }
 
 static void
+cmd_insert (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	int i;
+	xmmsc_result_t *res;
+	char *url;
+
+	if (argc < 4) {
+		print_error ("Need a position and a entry");
+	}
+
+	i = strtol (argv[2], NULL, 10);
+
+	url = format_url (argv[3]);
+	if (!url)
+		print_error ("URL format not valid!");
+
+	res = xmmsc_playlist_insert (conn, i, url);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+}
+
+static void
 cmd_addid (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -1175,6 +1198,7 @@ static void cmd_help (xmmsc_connection_t *conn, int argc, char **argv) {
 cmds commands[] = {
 	/* Playlist managment */
 	{ "add", "adds a URL to the playlist", cmd_add },
+	{ "insert", "inserts a URL in the playlist at a given position", cmd_insert },
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist and stops playback", cmd_clear },
