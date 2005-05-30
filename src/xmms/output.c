@@ -371,6 +371,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
 
+	xmms_output_flush (output);
 	xmms_output_status_set (output, XMMS_OUTPUT_STATUS_STOP);
 
 	g_mutex_lock (output->decoder_mutex);
@@ -925,6 +926,9 @@ xmms_output_write_thread (gpointer data)
 		ret = xmms_output_read (output, buffer, 4096);
 
 		g_mutex_lock (output->write_mutex);
+
+		if (!output->write_running)
+			break;
 
 		if (ret > 0) {
 			write_method (output, buffer, ret);

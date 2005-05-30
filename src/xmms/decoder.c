@@ -759,7 +759,6 @@ xmms_decoder_thread (gpointer data)
                                 NULL);
         } else {
                 xmms_ringbuf_clear (decoder->buffer);
-                xmms_output_flush (decoder->output);
         }
 
         g_mutex_unlock (decoder->mutex);
