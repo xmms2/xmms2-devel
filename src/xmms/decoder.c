@@ -423,14 +423,14 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 
 	g_return_val_if_fail (meth, FALSE);
 
-	g_mutex_lock (decoder->mutex);
-	xmms_ringbuf_clear (decoder->buffer);
-	g_mutex_unlock (decoder->mutex);
-
 	if (!meth (decoder, samples)) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not seek there");
 		return -1;
 	}
+
+	g_mutex_lock (decoder->mutex);
+	xmms_ringbuf_clear (decoder->buffer);
+	g_mutex_unlock (decoder->mutex);
 
 	return xmms_sample_samples_to_converted_bytes (decoder->converter, samples);
 }
