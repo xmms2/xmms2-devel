@@ -271,10 +271,13 @@ add [url]";
 		char query[1024];
 		char **s;
 		
+		if (!argv[3])
+			print_error ("expected key=value");
+
 		s = g_strsplit (argv[3], "=", 0);
 
-		if (!s[0] || !s[1])
-			print_error ("key=value");
+		if (!s || !s[0] || !s[1])
+			print_error ("expected key=value");
 
 		g_snprintf (query, 1023, "select id from Media where key='%s' and value like '%s'",s[0],s[1]);
 		print_info ("%s", query);
