@@ -384,6 +384,13 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 	XMMS_DBG ("Moving %d, to %d", pos, newpos);
 
 	g_mutex_lock (playlist->mutex);
+	
+	if (playlist->list->len == 0 || newpos > (playlist->list->len - 1)) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Cannot move entry outside playlist");
+		g_mutex_unlock (playlist->mutex);
+		return FALSE;
+	}
+	
 	id = g_array_index (playlist->list, guint32, pos);
 	if (!id) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");
