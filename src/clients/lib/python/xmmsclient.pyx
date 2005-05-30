@@ -63,6 +63,7 @@ cdef extern from "xmmsclient/xmmsclient.h" :
 
 	xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *)
+	xmmsc_result_t *xmmsc_playlist_insert (xmmsc_connection_t *, int pos, char *)
 	xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c)
@@ -770,6 +771,26 @@ cdef class XMMS :
 			ret = XMMSResult ()
 		
 		ret.res = xmmsc_playlist_shuffle (self.conn)
+		ret.more_init ()
+		
+		return ret
+
+	def playlist_insert (self, pos, url, myClass = None) :
+		"""
+		Insert a path or URL to a playable media item to the playlist.
+		Playable media items may be files or streams.
+		Requires a int 'pos' and a string 'url' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		if myClass :
+			ret = myClass ()
+		else :
+			ret = XMMSResult ()
+		
+		ret.res = xmmsc_playlist_insert (self.conn, pos, url)
 		ret.more_init ()
 		
 		return ret
