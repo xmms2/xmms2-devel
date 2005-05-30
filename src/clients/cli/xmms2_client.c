@@ -276,7 +276,7 @@ add [url]";
 		if (!s[0] || !s[1])
 			print_error ("key=value");
 
-		g_snprintf (query, 1023, "select id from Media where key='%s' and value='%s'",s[0],s[1]);
+		g_snprintf (query, 1023, "select id from Media where key='%s' and value like '%s'",s[0],s[1]);
 		print_info ("%s", query);
 		res = xmmsc_medialib_add_to_playlist (conn, query);
 		xmmsc_result_wait (res);
