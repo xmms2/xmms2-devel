@@ -261,6 +261,11 @@ add [url]";
 			printf ("Added %s to medialib\n", argv[i]);
 			xmmsc_result_unref (res);
 		}
+	} else if (g_strcasecmp (argv[2], "addall") == 0) {
+		xmmsc_result_t *res;
+		res = xmmsc_medialib_add_to_playlist (conn, "select id from Media where key='url'");
+		xmmsc_result_wait (res);
+		xmmsc_result_unref (res);
 	} else if (g_strcasecmp (argv[2], "searchadd") == 0) {
 		xmmsc_result_t *res;
 		char query[1024];
@@ -271,7 +276,7 @@ add [url]";
 		if (!s[0] || !s[1])
 			print_error ("key=value");
 
-		g_snprintf (query, 1023, "select id from Media where key='%s' and value='%s'",s[0],s[1]);
+		g_snprintf (query, 1023, "select id from Media where key='%s' and value like '%s'",s[0],s[1]);
 		print_info ("%s", query);
 		res = xmmsc_medialib_add_to_playlist (conn, query);
 		xmmsc_result_wait (res);
