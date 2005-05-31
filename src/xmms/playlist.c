@@ -352,8 +352,10 @@ xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 
 	g_array_remove_index (playlist->list, pos);
 
-	/* decrease currentpos if removed entry was before */
-	if (pos < playlist->currentpos) {
+	/* decrease currentpos if removed entry was before or if it's
+	 * the current entry, but only if currentpos is a valid entry.
+	 */
+	if (playlist->currentpos != -1 && pos <= playlist->currentpos) {
 		playlist->currentpos--;
 	}
 
@@ -382,6 +384,13 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 	XMMS_DBG ("Moving %d, to %d", pos, newpos);
 
 	g_mutex_lock (playlist->mutex);
+	
+	if (playlist->list->len == 0 || newpos > (playlist->list->len - 1)) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "Cannot move entry outside playlist");
+		g_mutex_unlock (playlist->mutex);
+		return FALSE;
+	}
+	
 	id = g_array_index (playlist->list, guint32, pos);
 	if (!id) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");

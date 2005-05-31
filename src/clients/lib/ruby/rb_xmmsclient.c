@@ -194,6 +194,67 @@ static VALUE c_last_error_get (VALUE self)
 	return s ? rb_str_new2 (s) : Qnil;
 }
 
+static VALUE c_io_fd (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	return INT2FIX (xmmsc_io_fd_get (xmms->real));
+}
+
+static VALUE c_io_want_out (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	return xmmsc_io_want_out (xmms->real) ? Qtrue : Qfalse;
+}
+
+static VALUE c_io_in_handle (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	xmmsc_io_in_handle (xmms->real);
+
+	return Qnil;
+}
+
+static VALUE c_io_out_handle (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	xmmsc_io_out_handle (xmms->real);
+
+	return Qnil;
+}
+
+static VALUE c_io_disconnect (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	xmmsc_io_disconnect (xmms->real);
+
+	return Qnil;
+}
+
 /*
  * call-seq:
  *  xc.quit -> result
@@ -817,6 +878,12 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "delete!", c_delete, 0);
 	rb_define_method (c, "on_disconnect", c_on_disconnect, 0);
 	rb_define_method (c, "last_error", c_last_error_get, 0);
+
+	rb_define_method (c, "io_fd", c_io_fd, 0);
+	rb_define_method (c, "io_want_out", c_io_want_out, 0);
+	rb_define_method (c, "io_in_handle", c_io_in_handle, 0);
+	rb_define_method (c, "io_out_handle", c_io_out_handle, 0);
+	rb_define_method (c, "io_disconnect", c_io_disconnect, 0);
 
 	rb_define_method (c, "quit", c_quit, 0);
 	rb_define_method (c, "playback_start", c_playback_start, 0);
