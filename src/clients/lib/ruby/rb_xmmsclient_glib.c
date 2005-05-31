@@ -39,7 +39,7 @@ void Init_xmmsclient_glib (void)
 	ID id;
 
 	rb_require ("xmmsclient");
-	rb_require ("glib");
+	rb_require ("glib2");
 
 	id = rb_intern ("XmmsClient");
 	c = rb_const_get (rb_const_get (rb_cModule, id), id);
