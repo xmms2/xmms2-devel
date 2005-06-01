@@ -57,7 +57,7 @@ static struct {
 
 static int rates[] = {
 	8000,
-	12025,
+	11025,
 	16000,
 	22050,
 	44100,
