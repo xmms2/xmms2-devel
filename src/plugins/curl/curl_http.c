@@ -344,6 +344,7 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 
 			}
 			len -= tlen;
+			ptr += tlen;
 		} else if (data->meta_offset && data->bytes_since_meta == data->meta_offset) {
 			data->metabufferleft = (*((guchar *)ptr)) * 16;
 			data->metabufferpos = 0;
