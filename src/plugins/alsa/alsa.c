@@ -150,7 +150,7 @@ xmms_plugin_get (void)
 	
 	xmms_plugin_config_value_register (plugin,
 									   "mixer_dev",
-									   "hw:0",
+									   "default",
 									   NULL,
 									   NULL);
 
