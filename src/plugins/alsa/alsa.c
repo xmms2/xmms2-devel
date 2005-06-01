@@ -57,7 +57,7 @@ static struct {
 
 static int rates[] = {
 	8000,
-	12025,
+	11025,
 	16000,
 	22050,
 	44100,
@@ -150,7 +150,7 @@ xmms_plugin_get (void)
 	
 	xmms_plugin_config_value_register (plugin,
 									   "mixer_dev",
-									   "hw:0",
+									   "default",
 									   NULL,
 									   NULL);
 
@@ -575,9 +575,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 	
 	snd_mixer_selem_get_playback_volume_range (data->mixer_elem, &alsa_min_vol,
-											   &alsa_max_vol);
-	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
-	
+	                                           &alsa_max_vol);
 	if (alsa_max_vol == 0) {
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
@@ -585,9 +583,8 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		return FALSE;
 	}
 
+	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
 	xmms_alsa_mixer_get (output, &left, &right);
-	xmms_alsa_mixer_set (output, left * 100 / alsa_max_vol, 
-						 right * 100 / alsa_max_vol);
 
 	return TRUE;
 }
@@ -781,6 +778,10 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 							snd_strerror (avail));
 			return 0;
 		}
+	}
+
+	if (avail < 0) {
+		return 0;
 	}
 	
 	bytes_in_buffer = snd_pcm_frames_to_bytes (data->pcm, data->buffer_size) - 

@@ -1098,7 +1098,7 @@ xmms_medialib_select (gchar *query, xmms_error_t *error)
 
 	g_mutex_lock (medialib->mutex);
 
-	ret = xmms_sqlite_query (medialib->sql, select_callback, (void *)&res, query);
+	ret = xmms_sqlite_query (medialib->sql, select_callback, (void *)&res, "%s", query);
 
 	g_mutex_unlock (medialib->mutex);
 
