@@ -575,9 +575,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 	
 	snd_mixer_selem_get_playback_volume_range (data->mixer_elem, &alsa_min_vol,
-											   &alsa_max_vol);
-	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
-	
+	                                           &alsa_max_vol);
 	if (alsa_max_vol == 0) {
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
@@ -585,9 +583,8 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		return FALSE;
 	}
 
+	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
 	xmms_alsa_mixer_get (output, &left, &right);
-	xmms_alsa_mixer_set (output, left * 100 / alsa_max_vol, 
-						 right * 100 / alsa_max_vol);
 
 	return TRUE;
 }
