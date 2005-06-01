@@ -1,0 +1,9 @@
+target="xmms2-mlib-updater"
+source=["main.c", "fam.c"]
+def config(env):
+	env["LIBS"].append("xmmsclient")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env["LIBS"].append("xmmsclient-glib")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
+	env.pkgconfig("glib-2.0")
+	return env.checklibs("fam", "FAMOpen")
