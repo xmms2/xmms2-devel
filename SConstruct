@@ -7,7 +7,7 @@ import re
 import string
 from marshal import dump
 
-XMMS_VERSION = "0.1 DR2"
+XMMS_VERSION = "0.1 DR1.1-WIP"
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
