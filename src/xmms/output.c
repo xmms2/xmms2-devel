@@ -88,6 +88,9 @@ struct xmms_output_St {
 
 	GList *effects;
 
+	/* Makes sure write and flush-calls doesn't happen on the same time */
+	GMutex *api_mutex;
+
 	/* */
 	GMutex *write_mutex;
 	GCond *write_cond;
@@ -469,10 +472,12 @@ xmms_output_open (xmms_output_t *output)
 
 	open_method = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
 
+	g_mutex_lock (output->api_mutex);
 	if (!open_method || !open_method (output)) {
 		xmms_log_error ("Couldn't open output device");
 		return FALSE;
 	}
+	g_mutex_unlock (output->api_mutex);
 
 	return TRUE;
 
@@ -492,7 +497,9 @@ xmms_output_close (xmms_output_t *output)
 	if (!close_method)
 		return;
 
+	g_mutex_lock (output->api_mutex);
 	close_method (output);
+	g_mutex_unlock (output->api_mutex);
 }
 
 static GList *
@@ -540,7 +547,9 @@ xmms_output_destroy (xmms_object_t *object)
 	dest = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
 
 	if (dest) {
+		g_mutex_lock (output->api_mutex);
 		dest (output);
+		g_mutex_unlock (output->api_mutex);
 	}
 
 	xmms_object_unref (output->plugin);
@@ -559,6 +568,7 @@ xmms_output_destroy (xmms_object_t *object)
 	g_mutex_free (output->status_mutex);
 	g_mutex_free (output->playtime_mutex);
 	g_mutex_free (output->write_mutex);
+	g_mutex_free (output->api_mutex);
 	g_cond_free (output->write_cond);
 
 	xmms_ipc_broadcast_unregister ( XMMS_IPC_SIGNAL_OUTPUT_MIXER_CHANGED);
@@ -630,6 +640,8 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
 	output->plugin = plugin;
+
+	output->api_mutex = g_mutex_new ();
 
 	output->write_mutex = g_mutex_new ();
 	output->write_cond = g_cond_new ();
@@ -733,9 +745,9 @@ xmms_output_flush (xmms_output_t *output)
 	flush = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FLUSH);
 	g_return_if_fail (flush);
 
-	g_mutex_lock (output->write_mutex);
+	g_mutex_lock (output->api_mutex);
 	flush (output);
-	g_mutex_unlock (output->write_mutex);
+	g_mutex_unlock (output->api_mutex);
 
 }
 
@@ -924,11 +936,13 @@ xmms_output_write_thread (gpointer data)
 
 		ret = xmms_output_read (output, buffer, 4096);
 
-		g_mutex_lock (output->write_mutex);
 
 		if (ret > 0) {
+			g_mutex_lock (output->api_mutex);
 			write_method (output, buffer, ret);
+			g_mutex_unlock (output->api_mutex);
 		}
+		g_mutex_lock (output->write_mutex);
 
 	}
 
