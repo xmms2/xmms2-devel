@@ -247,14 +247,16 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 
 	g_mutex_lock (playlist->mutex);
 
-	if (playlist->medialib_random_mode) {
-		ret = TRUE;
-	} else if (playlist->list->len == 0) {
+	if (playlist->list->len == 0) {
 		ret = FALSE;
 	} else if (!playlist->repeat_one) {
 		playlist->currentpos++;
 		playlist->currentpos %= playlist->list->len;
 		ret = (playlist->currentpos != 0) || playlist->repeat_all;
+		if (!ret && playlist->medialib_random_mode) {
+			playlist->currentpos = -1;
+			ret = TRUE;
+		}
 		xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 	}
 	g_mutex_unlock (playlist->mutex);
@@ -275,7 +277,11 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	
 	g_mutex_lock (playlist->mutex);
 
-	if (playlist->currentpos == -1 && (playlist->list->len > 0)) {
+	if (playlist->currentpos == -1 && playlist->medialib_random_mode) {
+		ent = xmms_medialib_get_random_entry ();
+		g_mutex_unlock (playlist->mutex);
+		return ent;
+	} else if (playlist->currentpos == -1 && (playlist->list->len > 0)) {
 		playlist->currentpos = 0;
 		xmms_object_emit_f (XMMS_OBJECT (playlist),
 				    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
@@ -284,9 +290,6 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 
 	if (playlist->currentpos < playlist->list->len) {
 		ent = g_array_index (playlist->list, guint32, playlist->currentpos);
-	} else if (playlist->medialib_random_mode && ent == 0) {
-		XMMS_DBG ("Playlist ended and we are in random mode!");
-		ent = xmms_medialib_get_random_entry ();
 	} else {
 		ent = 0;
 	}
