@@ -779,6 +779,10 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 			return 0;
 		}
 	}
+
+	if (avail < 0) {
+		return 0;
+	}
 	
 	bytes_in_buffer = snd_pcm_frames_to_bytes (data->pcm, data->buffer_size) - 
 					  snd_pcm_frames_to_bytes (data->pcm, avail);
