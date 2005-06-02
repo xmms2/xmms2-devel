@@ -1,5 +1,5 @@
 target="xmms2"
-source=["xmms2_client.c"]
+source=["xmms2_client.c", "cli_mlib.c"]
 def config(env):
 	env["LIBS"].append("xmmsclient")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
