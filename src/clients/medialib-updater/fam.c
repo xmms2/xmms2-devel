@@ -44,7 +44,7 @@ monitor_process (xmonitor_t *mon, xevent_t *event)
 				event->code = MON_DIR_MOVED;
 				break;
 			default:
-				DBG ("unhandled code %d", fe.code);
+				break;
 		}
 		return TRUE;
 	}
@@ -53,7 +53,7 @@ monitor_process (xmonitor_t *mon, xevent_t *event)
 }
 
 gboolean
-monitor_add_dir (xmonitor_t *mon, gchar *dir, gboolean recursive)
+monitor_add_dir (xmonitor_t *mon, gchar *dir)
 {
 	fam_data_t *fdata = mon->data;
 	FAMRequest fr;
