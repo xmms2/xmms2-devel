@@ -122,7 +122,7 @@ xmms_curl_can_handle (const gchar *url)
 {
 	g_return_val_if_fail (url, FALSE);
 
-	if ((g_strncasecmp (url, "http", 4) == 0) || (url[0] == '/')) {
+	if ((g_strncasecmp (url, "http", 4) == 0)) {
 		return TRUE;
 	}
 
