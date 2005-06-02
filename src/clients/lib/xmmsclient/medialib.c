@@ -102,6 +102,25 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
 }
 
 /**
+ * Remove a entry from the medialib
+ * @param conn The #xmmsc_connection_t
+ * @param entry The entry id you want to remove
+ */
+xmmsc_result_t *
+xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE);
+	xmms_ipc_msg_put_uint32 (msg, entry);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+/**
  * Add a URL to the medialib. If you want to add mutiple files
  * you should call #xmmsc_medialib_path_import
  * @param conn The #xmmsc_connection_t

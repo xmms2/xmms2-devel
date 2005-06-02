@@ -36,6 +36,7 @@
  */
 
 
+static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
 static int get_playlist_entries_cb (void *pArg, int argc, char **argv, char **cName);
 static xmms_medialib_entry_t xmms_medialib_entry_new_unlocked (const char *url);
 static int xmms_medialib_int_cb (void *pArg, int argc, char **argv, char **columnName);
@@ -57,6 +58,7 @@ static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_er
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, DICT, UINT32, NONE);
 XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, DICTLIST, STRING, NONE);
 XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
+XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (playlist_save_current, xmms_medialib_playlist_save_current, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (playlist_load, xmms_medialib_playlist_load, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (addtopls, xmms_medialib_select_and_add, xmms_medialib_t *, NONE, STRING, NONE);
@@ -171,6 +173,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
 			     XMMS_IPC_CMD_ADD, 
 			     XMMS_CMD_FUNC (mlib_add));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
+			     XMMS_IPC_CMD_REMOVE, 
+			     XMMS_CMD_FUNC (mlib_remove));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT,
 	                     XMMS_CMD_FUNC (playlist_save_current));
@@ -501,6 +506,12 @@ xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_erro
 
 	g_mutex_unlock (medialib->mutex);
 
+}
+
+static void
+xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error)
+{
+	xmms_medialib_entry_remove (entry);
 }
 
 /**
