@@ -3,7 +3,7 @@ xmms2 (0.1DR1+git20050603-0) unstable; urgency=low
   * New snapshot.
   * More BuildDepend: fixes.
   * Remove private copy notice.
-  * The the maintainer field to myself.
+  * Set the maintainer field to myself.
 
  -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Fri, 03 Jun 2005 13:10:42 +0200
  
