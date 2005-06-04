@@ -21,6 +21,7 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_ipc.h"
+#include "xmms/xmms_log.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -664,7 +665,7 @@ xmms_medialib_entry_new_unlocked (const char *url)
 static guint32
 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
 {
-	guint32 id;
+	guint32 id = 0;
 
 	g_mutex_lock (medialib->mutex);
 	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
@@ -673,7 +674,6 @@ xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t 
 	g_mutex_unlock (medialib->mutex);
 
 	return id;
-
 }
 
 /**
