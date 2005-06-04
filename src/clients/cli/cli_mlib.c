@@ -305,7 +305,7 @@ static void
 mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	char *rpath;
+	char rpath[PATH_MAX];
 	if (argc < 4) {
 		print_error ("Supply a path to add!");
 	}
