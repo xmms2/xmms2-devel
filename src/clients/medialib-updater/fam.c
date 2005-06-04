@@ -77,6 +77,8 @@ monitor_init (xmonitor_t *mon)
 		return -1;
 	}
 
+	FAMNoExists (&fdata->fc);
+
 	mon->data = (gpointer) fdata;
 
 	return fdata->fc.fd;

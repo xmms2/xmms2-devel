@@ -13,9 +13,6 @@
 
 #include "mlibupdater.h"
 
-#define MY_PATH "/mnt/forsaken/music/Tagged/Dismantled"
-
-
 static void
 quit (void *data)
 {
@@ -25,17 +22,103 @@ quit (void *data)
 }
 
 static void
-add_file_or_dir (xmonitor_t *mon, gchar *filename)
+handle_file_add (xmonitor_t *mon, gchar *filename)
 {
 	if (g_file_test (filename, G_FILE_TEST_IS_DIR)) {
 		monitor_add_dir (mon, filename);
-		DBG ("New directory, starting to watch!");
+		DBG ("New directory: %s", filename);
 	} else if (g_file_test (filename, G_FILE_TEST_IS_REGULAR)) {
-		gchar *tmp = g_strdup_printf ("file://%s", filename);
+		gchar tmp[MON_FILENAME_MAX];
+		g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
 		xmmsc_medialib_add_entry (mon->conn, tmp);
-		DBG ("Adding %s to medialib!", filename);
-		g_free (tmp);
+		DBG ("Adding %s to medialib!", tmp);
 	}
+}
+
+static void
+handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
+{
+	xmonitor_t *mon = userdata;
+	xmmsc_result_t *res2;
+	gchar *entry;
+
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		guint32 id;
+		if (!xmmsc_result_get_dict_entry (res, "id", &entry)) {
+			ERR ("Failed to get entry id from hash!");
+			continue;
+		}
+
+		if (!entry)
+			continue;
+
+		id = strtol (entry, NULL, 10);
+
+		if (id == 0) {
+			DBG ("Entry not in db!");
+			continue;
+		}
+
+		DBG ("Removing %d", id);
+
+		res2 = xmmsc_medialib_remove_entry (mon->conn, id);
+		xmmsc_result_unref (res2);
+	}
+	xmmsc_result_unref (res);
+}
+
+static void
+handle_file_del (xmonitor_t *mon, gchar *filename)
+{
+	xmmsc_result_t *res;
+	gchar tmp[MON_FILENAME_MAX];
+	gchar *query;
+
+	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
+
+	query = g_strdup_printf ("SELECT id FROM Media WHERE key='url' AND value LIKE '%s%%'", tmp);
+	DBG ("running %s", query);
+	res = xmmsc_medialib_select (mon->conn, query);
+	g_free (query);
+	xmmsc_result_notifier_set (res, handle_remove_from_mlib, mon);
+	xmmsc_result_unref (res);
+}
+
+static void
+handle_mlib_update (xmmsc_result_t *res, void *userdata)
+{
+	xmonitor_t *mon = userdata;
+	xmmsc_result_t *res2;
+	guint32 id;
+
+	if (!xmmsc_result_get_uint (res, &id)) {
+		ERR ("Failed to get id for entry!");
+		xmmsc_result_unref (res);
+		return;
+	}
+
+	if (id == 0) {
+		DBG ("Entry not in db!");
+		return;
+	}
+
+	res2 = xmmsc_medialib_rehash (mon->conn, id);
+	xmmsc_result_unref (res2);
+	xmmsc_result_unref (res);
+}
+
+static void
+handle_file_changed (xmonitor_t *mon, gchar *filename)
+{
+	xmmsc_result_t *res;
+	gchar tmp[MON_FILENAME_MAX];
+
+	g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
+
+	res = xmmsc_medialib_get_id (mon->conn, tmp);
+	xmmsc_result_notifier_set (res, handle_mlib_update, mon);
+	xmmsc_result_unref (res);
+	DBG ("update file in medialib");
 }
 
 gboolean
@@ -47,17 +130,14 @@ s_callback (GIOChannel *s, GIOCondition cond, gpointer data)
 	while (monitor_process (mon, &event)) {
 		switch (event.code) {
 			case MON_DIR_CHANGED:
-				DBG ("%s changed.. ", event.filename);
+				DBG ("got changed signal for %s", event.filename);
+				handle_file_changed (mon, event.filename);
 				break;
 			case MON_DIR_DELETED:
-				DBG ("%s deleted.. ", event.filename);
+				handle_file_del (mon, event.filename);
 				break;
 			case MON_DIR_CREATED:
-				DBG ("%s created.. ", event.filename);
-				add_file_or_dir (mon, event.filename);
-				break;
-			case MON_DIR_MOVED:
-				DBG ("%s moved.. ", event.filename);
+				handle_file_add (mon, event.filename);
 				break;
 			default:
 				break;
@@ -68,22 +148,20 @@ s_callback (GIOChannel *s, GIOCondition cond, gpointer data)
 }
 
 static void
-handle_addpath (xmmsc_result_t *res, void *data)
+process_dir (xmonitor_t *mon, gchar *dirpath)
 {
 	GDir *dir;
 	const gchar *tmp;
 	gchar *path;
 
-	xmonitor_t *mon = data;
-
-	dir = g_dir_open (MY_PATH, 0, NULL);
-	if (!monitor_add_dir (mon, MY_PATH)) {
-		ERR ("Couldn't watch directory!");
+	dir = g_dir_open (dirpath, 0, NULL);
+	if (!dir) {
+		ERR ("Error when opening %s", dirpath);
 		return;
 	}
 
 	while ((tmp = g_dir_read_name (dir))) {
-		path = g_strdup_printf ("%s/%s", MY_PATH, tmp);
+		path = g_strdup_printf ("%s/%s", dirpath, tmp);
 		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
 			if (!monitor_add_dir (mon, path)) {
 				ERR ("Couldn't watch directory: %s!", path);
@@ -91,11 +169,32 @@ handle_addpath (xmmsc_result_t *res, void *data)
 				continue;
 			}
 			DBG ("Now watching dir %s", path);
+			mon->dirs_watched++;
+			process_dir (mon, path);
 		}
 		g_free (path);
 	}
 
+	g_main_context_iteration (NULL, FALSE);
+	
 	g_dir_close (dir);
+}
+
+static void
+handle_addpath (xmmsc_result_t *res, void *data)
+{
+	xmonitor_t *mon = data;
+
+	if (!monitor_add_dir (mon, mon->watch_dir)) {
+		ERR ("Couldn't watch directory!");
+		return;
+	}
+
+	process_dir (mon, mon->watch_dir);
+
+	DBG ("Watching %d dirs", mon->dirs_watched);
+
+	xmmsc_result_unref (res);
 }
 
 int 
@@ -108,6 +207,11 @@ main (int argc, char **argv)
 	xmmsc_result_t *res;
 	xmonitor_t *mon;
 	gint fd;
+
+	if (argc < 2) {
+		fprintf (stderr, "Usage: %s DIRECTORY\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
 	conn = xmmsc_init ("XMMS MLib Updater " VERSION);
 	path = getenv ("XMMS_PATH");
@@ -123,19 +227,20 @@ main (int argc, char **argv)
 	mon = g_new0 (xmonitor_t, 1);
 	fd = monitor_init (mon);
 	mon->conn = conn;
+	mon->watch_dir = g_strdup (argv[1]);
 
 	if (fd == -1) {
 		ERR ("Couldn't initalize monitor");
 		return EXIT_FAILURE;
 	}
 
-
 	gio = g_io_channel_unix_new (fd);
 	g_io_add_watch (gio, G_IO_IN, s_callback, mon);
 
 	/* Make sure that nothing changed while we where away! */
-	res = xmmsc_medialib_path_import (conn, MY_PATH);
+	res = xmmsc_medialib_path_import (conn, mon->watch_dir);
 	xmmsc_result_notifier_set (res, handle_addpath, mon);
+	xmmsc_result_unref (res);
 
 	g_main_loop_run (ml);
 

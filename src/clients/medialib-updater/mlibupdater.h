@@ -11,6 +11,8 @@
 typedef struct xmontior_St {
 	gpointer data;
 	xmmsc_connection_t *conn;
+	gint32 dirs_watched;
+	gchar *watch_dir;
 } xmonitor_t;
 
 typedef enum {
@@ -20,7 +22,7 @@ typedef enum {
 	MON_DIR_MOVED
 } mon_event_code_t;
 
-#define MON_FILENAME_MAX 1024
+#define MON_FILENAME_MAX PATH_MAX
 
 typedef struct xevent_St {
 	gchar filename[MON_FILENAME_MAX];
