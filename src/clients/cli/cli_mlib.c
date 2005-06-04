@@ -251,6 +251,7 @@ mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	url = format_url (argv[4]);
+	if (!url) return;
 
 	res = xmmsc_medialib_playlist_import (conn, argv[3], url);
 
@@ -304,10 +305,17 @@ static void
 mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
+	char *rpath;
 	if (argc < 4) {
 		print_error ("Supply a path to add!");
 	}
-	res = xmmsc_medialib_path_import (conn, argv[3]);
+	
+	if (!realpath (argv[3], rpath)) 
+		return;
+	if (!g_file_test (rpath, G_FILE_TEST_IS_DIR))
+		return;
+
+	res = xmmsc_medialib_path_import (conn, rpath);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
