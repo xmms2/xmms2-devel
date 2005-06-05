@@ -11,8 +11,8 @@
 typedef struct xmontior_St {
 	gpointer data;
 	xmmsc_connection_t *conn;
-	gint32 dirs_watched;
 	gchar *watch_dir;
+	GList *dir_list;
 } xmonitor_t;
 
 typedef enum {
@@ -32,5 +32,6 @@ typedef struct xevent_St {
 gint monitor_init (xmonitor_t *mon);
 gboolean monitor_add_dir (xmonitor_t *mon, gchar *dir);
 gboolean monitor_process (xmonitor_t *mon, xevent_t *event);
+gboolean monitor_del_dir (xmonitor_t *mon, gchar *dir);
 
 #endif

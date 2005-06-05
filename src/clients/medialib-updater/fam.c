@@ -15,6 +15,7 @@
 
 typedef struct fam_data_St {
 	FAMConnection fc;
+	GHashTable *hash;
 } fam_data_t;
 
 gboolean
@@ -53,15 +54,41 @@ monitor_process (xmonitor_t *mon, xevent_t *event)
 }
 
 gboolean
+monitor_del_dir (xmonitor_t *mon, gchar *dir)
+{
+	fam_data_t *fdata = mon->data;
+	FAMRequest *fr;
+
+	fr = g_hash_table_lookup (fdata->hash, dir);
+	if (!fr) {
+		ERR ("Can't find %s in hash", dir);
+		return FALSE;
+	}
+
+	if (FAMCancelMonitor (&fdata->fc, fr) < 0) {
+		ERR ("Couldn't  remove watch for dir %s", dir);
+		return FALSE;
+	}
+
+	g_hash_table_remove (fdata->hash, dir);
+
+	return TRUE;
+}
+
+gboolean
 monitor_add_dir (xmonitor_t *mon, gchar *dir)
 {
 	fam_data_t *fdata = mon->data;
-	FAMRequest fr;
+	FAMRequest *fr;
 
-	if (FAMMonitorDirectory (&fdata->fc, dir, &fr, g_strdup (dir)) < 0) {
+	fr = g_new0 (FAMRequest, 1);
+
+	if (FAMMonitorDirectory (&fdata->fc, dir, fr, g_strdup (dir)) < 0) {
 		ERR ("Couldn't watch dir %s", dir);
 		return FALSE;
 	}
+
+	g_hash_table_insert (fdata->hash, dir, fr);
 
 	return TRUE;
 }
@@ -76,11 +103,12 @@ monitor_init (xmonitor_t *mon)
 		ERR ("Couldn't initalize FAM");
 		return -1;
 	}
+	fdata->hash = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
 
 	FAMNoExists (&fdata->fc);
 
 	mon->data = (gpointer) fdata;
-
+	
 	return fdata->fc.fd;
 }
 

@@ -26,6 +26,7 @@ handle_file_add (xmonitor_t *mon, gchar *filename)
 {
 	if (g_file_test (filename, G_FILE_TEST_IS_DIR)) {
 		monitor_add_dir (mon, filename);
+		mon->dir_list = g_list_append (mon->dir_list, filename);
 		DBG ("New directory: %s", filename);
 	} else if (g_file_test (filename, G_FILE_TEST_IS_REGULAR)) {
 		gchar tmp[MON_FILENAME_MAX];
@@ -169,10 +170,9 @@ process_dir (xmonitor_t *mon, gchar *dirpath)
 				continue;
 			}
 			DBG ("Now watching dir %s", path);
-			mon->dirs_watched++;
+			mon->dir_list = g_list_append (mon->dir_list, path);
 			process_dir (mon, path);
 		}
-		g_free (path);
 	}
 
 	g_main_context_iteration (NULL, FALSE);
@@ -189,11 +189,105 @@ handle_addpath (xmmsc_result_t *res, void *data)
 		ERR ("Couldn't watch directory!");
 		return;
 	}
+	mon->dir_list = g_list_append (mon->dir_list, mon->watch_dir);
 
 	process_dir (mon, mon->watch_dir);
 
-	DBG ("Watching %d dirs", mon->dirs_watched);
+	DBG ("Watching %d dirs", g_list_length (mon->dir_list));
 
+	xmmsc_result_unref (res);
+}
+
+static void
+do_watch_dir (xmonitor_t *mon, gchar *dirs)
+{
+	xmmsc_result_t *res;
+	GList *n;
+
+	DBG ("We are going to watch '%s'", dirs);
+
+	for (n = mon->dir_list; n; n = g_list_next (n)) {
+		monitor_del_dir (mon, n->data);
+		g_free (n->data);
+	}
+
+	if (mon->dir_list) {
+		g_list_free (mon->dir_list);
+		mon->dir_list = NULL;
+	}
+
+	if (strlen (dirs) < 1) {
+		mon->watch_dir = NULL;
+		return;
+	} else {
+		mon->watch_dir = g_strdup (dirs);
+	}
+
+	/* Make sure that nothing changed while we where away! */
+	res = xmmsc_medialib_path_import (mon->conn, mon->watch_dir);
+	xmmsc_result_notifier_set (res, handle_addpath, mon);
+	xmmsc_result_unref (res);
+}
+
+static void
+handle_config_changed (xmmsc_result_t *res, void *data)
+{
+	xmonitor_t *mon = data;
+	gchar *key;
+	gchar *val;
+
+	
+	if (!xmmsc_result_get_string (res, &key)) {
+		ERR ("Config changed has invalid result!");
+		return;
+	}
+
+	xmmsc_result_list_next (res);
+
+	if (!xmmsc_result_get_string (res, &val)) {
+		ERR ("Config changed has invalid result!");
+		return;
+	}
+
+	if (g_strcasecmp (key, "clients.mlibupdater.watch_dirs") == 0) {
+		do_watch_dir (mon, val);
+	}
+
+}
+
+static void
+handle_watch_dirs (xmmsc_result_t *res, void *data)
+{
+	xmonitor_t *mon = data;
+	gchar *dirs;
+	gchar **d;
+
+	if (!xmmsc_result_get_string (res, &dirs)) {
+		ERR ("Couldn't get configvalue from server!");
+		return;
+	}
+
+	do_watch_dir (mon, dirs);
+
+	xmmsc_result_unref (res);
+
+}
+
+static void
+handle_configval (xmmsc_result_t *res, void *data)
+{
+	xmmsc_result_t *res2;
+	xmonitor_t *mon = data;
+	gchar *val;
+
+	if (!xmmsc_result_get_string (res, &val)) {
+		ERR ("Couldn't register value in server!");
+		return;
+	}
+
+	res2 = xmmsc_configval_get (mon->conn, val);
+	xmmsc_result_notifier_set (res2, handle_watch_dirs, mon);
+	xmmsc_result_unref (res2);
 	xmmsc_result_unref (res);
 }
 
@@ -207,11 +301,6 @@ main (int argc, char **argv)
 	xmmsc_result_t *res;
 	xmonitor_t *mon;
 	gint fd;
-
-	if (argc < 2) {
-		fprintf (stderr, "Usage: %s DIRECTORY\n", argv[0]);
-		return EXIT_FAILURE;
-	}
 
 	conn = xmmsc_init ("XMMS MLib Updater " VERSION);
 	path = getenv ("XMMS_PATH");
@@ -227,7 +316,6 @@ main (int argc, char **argv)
 	mon = g_new0 (xmonitor_t, 1);
 	fd = monitor_init (mon);
 	mon->conn = conn;
-	mon->watch_dir = g_strdup (argv[1]);
 
 	if (fd == -1) {
 		ERR ("Couldn't initalize monitor");
@@ -237,9 +325,12 @@ main (int argc, char **argv)
 	gio = g_io_channel_unix_new (fd);
 	g_io_add_watch (gio, G_IO_IN, s_callback, mon);
 
-	/* Make sure that nothing changed while we where away! */
-	res = xmmsc_medialib_path_import (conn, mon->watch_dir);
-	xmmsc_result_notifier_set (res, handle_addpath, mon);
+	res = xmmsc_configval_register (conn, "mlibupdater.watch_dirs", "");
+	xmmsc_result_notifier_set (res, handle_configval, mon);
+	xmmsc_result_unref (res);
+
+	res = xmmsc_broadcast_configval_changed (conn);
+	xmmsc_result_notifier_set (res, handle_config_changed, mon);
 	xmmsc_result_unref (res);
 
 	g_main_loop_run (ml);
