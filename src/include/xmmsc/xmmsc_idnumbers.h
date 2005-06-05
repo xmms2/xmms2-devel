@@ -86,6 +86,7 @@ typedef enum {
 	/* Config */
 	XMMS_IPC_CMD_GETVALUE,
 	XMMS_IPC_CMD_SETVALUE,
+	XMMS_IPC_CMD_REGVALUE,
 	XMMS_IPC_CMD_LISTVALUES,
 
 	/* output */
