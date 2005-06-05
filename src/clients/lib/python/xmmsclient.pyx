@@ -182,9 +182,7 @@ cdef class XMMSResult :
 			return self.get_intlist()
 		elif type == XMMS_OBJECT_CMD_ARG_STRINGLIST:
 			return self.get_stringlist()
-		elif type == XMMS_OBJECT_CMD_ARG_HASHTABLE:
-			return self.get_hashtable()
-		elif type == XMMS_OBJECT_CMD_ARG_HASHLIST:
+		elif type == XMMS_OBJECT_CMD_ARG_DICTLIST:
 			return self.get_hashlist()
 		elif type == XMMS_OBJECT_CMD_ARG_PLCH:
 			return self.get_playlistchange()
