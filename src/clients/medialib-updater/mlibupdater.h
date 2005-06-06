@@ -4,8 +4,8 @@
 #include <glib.h>
 #include <xmmsclient/xmmsclient.h>
 
-#define DBG(fmt, args...) fprintf(stderr, __FILE__ ": " fmt "\n", ## args)
-#define ERR(fmt, args...) fprintf(stderr, "ERROR in " __FILE__ ": " fmt "\n", ## args)
+#define DBG(fmt, args...) g_message(fmt, ## args)
+#define ERR(fmt, args...) g_warning(fmt, ## args)
 #define VERSION "0.1-WIP"
 
 typedef struct xmontior_St {

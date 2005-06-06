@@ -17,7 +17,7 @@ static void
 quit (void *data)
 {
 	GMainLoop *ml = data;
-	DBG ("xmms2d disconnected us");
+	ERR ("xmms2d disconnected us");
 	g_main_loop_quit (ml);
 }
 
@@ -291,12 +291,20 @@ handle_configval (xmmsc_result_t *res, void *data)
 	xmmsc_result_unref (res);
 }
 
+static void
+message_handler (const gchar *log_domain, GLogLevelFlags log_level,
+		 const gchar *message, gpointer user_data)
+{
+
+}
+
 int 
 main (int argc, char **argv)
 {
 	GIOChannel *gio;
 	GMainLoop *ml;
 	gchar *path;
+	gchar *tmp;
 	xmmsc_connection_t *conn;
 	xmmsc_result_t *res;
 	xmonitor_t *mon;
@@ -320,6 +328,13 @@ main (int argc, char **argv)
 	if (fd == -1) {
 		ERR ("Couldn't initalize monitor");
 		return EXIT_FAILURE;
+	}
+
+
+	tmp = getenv("XMMS_DEBUG");
+	if (!tmp) {
+		g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE | G_LOG_FLAG_RECURSION, 
+				   message_handler, NULL);
 	}
 
 	gio = g_io_channel_unix_new (fd);
