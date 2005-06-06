@@ -21,14 +21,6 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	int XMMS_OBJECT_CMD_ARG_PLCH,
 	int XMMS_OBJECT_CMD_ARG_DICTLIST,
 
-# Actually we don't want a GLib Mainloop here. but for the time beeing....
-cdef extern from "glib.h":
-	ctypedef struct GMainContext
-	ctypedef struct GMainLoop
-
-	void g_main_loop_run(GMainLoop *loop)
-	GMainLoop *g_main_loop_new(GMainContext *context, signed int is_running)
-
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef struct xmmsc_connection_t:
 		pass
@@ -123,10 +115,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_io_out_handle(xmmsc_connection_t *c)
 	int xmmsc_io_in_handle(xmmsc_connection_t *c)
 	int xmmsc_io_fd_get(xmmsc_connection_t *c)
-
-
-cdef extern from "xmmsclient/xmmsclient-glib.h":
-	void xmmsc_setup_with_gmain(xmmsc_connection_t *connection)
 
 #####################################################################
 
@@ -406,28 +394,6 @@ cdef class XMMS:
 	def _disconnect_cb(self):
 		if self.disconnect_fun is not None:
 			self.disconnect_fun(self)
-
-	def glib_loop(self):
-		"""
-		Main client loop for clients using GLib. Call this to run the
-		client once everything has been set up. Note: This should not
-		be used for pyGTK clients, which require a call to gtk.main()
-		pyGTK clients should use L{setup_with_gmain} This function
-		blocks in a g_main_loop_run call - see appropriate GLib
-		documentation for details.
-		"""
-		cdef GMainLoop *ml
-		ml = g_main_loop_new(NULL, 0)
-		xmmsc_setup_with_gmain(self.conn)
-
-		g_main_loop_run(ml)
-
-	def setup_with_gmain(self):
-		"""
-		Adds the IPC connection to a GMainLoop. pyGTK clients need to
-		call this after L{connect} and before gtk.main()
-		"""
-		xmmsc_setup_with_gmain(self.conn)
 
 	def exit_python_loop(self):
 		""" Exits from the L{python_loop} call """
