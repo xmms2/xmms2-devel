@@ -1,3 +1,10 @@
+xmms2 (0.1DR1.1+git20050606-0) unstable; urgency=low
+
+  * New snapshot.
+  * Improved control file.
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Mon, 06 Jun 2005 17:43:03 +0200
+ 
 xmms2 (0.1DR1.1+git20050603-0) unstable; urgency=low
 
   * Correct version.
