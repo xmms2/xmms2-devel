@@ -16,6 +16,8 @@
 
 #include "xmms2_client.h"
 
+#include <locale.h>
+
 /**
  * Utils
  */
@@ -489,7 +491,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			xmmsc_entry_format (line, sizeof(line), listformat, res2);
 		}
 
-		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
+		conv = g_locale_from_utf8 (line, -1, &r, &w, &err);
 
 		if (p == pos) {
 			print_info ("->[%d/%d] %s", pos, i, conv);
@@ -775,7 +777,7 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 
 	last_dur = dur;
 
-	conv =  g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
+	conv =  g_locale_from_utf8 (songname, -1, &r, &w, &err);
 	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", conv,
 	        dur / 60000, (dur / 1000) % 60, curr_dur / 60000,
 	        (curr_dur / 1000) % 60);
@@ -947,6 +949,8 @@ main (int argc, char **argv)
 	GHashTable *config;
 	char *path;
 	int i;
+
+	setlocale (LC_ALL, "");
 
 	config = read_config ();
 
