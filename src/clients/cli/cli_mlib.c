@@ -33,7 +33,7 @@ cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", mlib_add },
 	{ "loadall", "Load everything from the mlib to the playlist", mlib_loadall },
 	{ "searchadd", "[artist=Dismantled] - Search for, and add songs to playlist", mlib_searchadd },
-	{ "search", "[artist=Dismantled] - Search for songs matching criteria", mlib_search },
+	{ "search", "[artist=Dismantled] ... - Search for songs matching criteria", mlib_search },
 	{ "query", "[\"raw sql statement\"] - Send a raw SQL statement to the mlib", mlib_query },
 	{ "list_playlist", "[playlistname] - List 'playlistname' stored in medialib", mlib_playlist_list },
 	{ "save_playlist", "[playlistname] - Save current playlist to 'playlistname'", mlib_playlist_save },
@@ -97,21 +97,43 @@ mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	char query[1024];
+	gchar *query;
 	char **s;
+	guint i;
 	xmmsc_result_t *res;
 	GList *n = NULL;
+	xmmsc_query_attribute_t *query_spec;
 
 	if (argc < 4) {
-		print_error ("Supply a select statement");
-	}
+		print_error ("Supply a query");
+	}		
 
-	s = g_strsplit (argv[3], "=", 0);
+	query_spec = (xmmsc_query_attribute_t*) malloc((argc-3)*sizeof(xmmsc_query_attribute_t));
+
+	for (i=3; i < argc; i++) {
+		s = g_strsplit (argv[i], "=", 0);
+		query_spec[i-3].key = malloc(strlen(s[0])+1);
+		query_spec[i-3].value = malloc(strlen(s[1])+1);
+		if (query_spec[i-3].key == NULL || query_spec[i-3].value == NULL) {
+			free(query_spec[i-3].key);
+			free(query_spec[i-3].value);
+			free(query_spec);
+		}
+		strcpy(query_spec[i-3].key, s[0]);
+		strcpy(query_spec[i-3].value, s[1]);
+		g_strfreev(s);
+	}	
 		
-	g_snprintf (query, sizeof (query), "SELECT id FROM Media WHERE LOWER(key)=LOWER('%s') and LOWER(value)=LOWER('%s')", s[0], s[1]);
+	query = xmmsc_querygen_and(query_spec, argc-3);	
+		
+
+	free(query_spec);
 	
+
 	res = xmmsc_medialib_select (conn, query);
 	xmmsc_result_wait (res);
+
+	free(query);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
@@ -251,6 +273,7 @@ mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	url = format_url (argv[4]);
+	if (!url) return;
 
 	res = xmmsc_medialib_playlist_import (conn, argv[3], url);
 
@@ -304,10 +327,17 @@ static void
 mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
+	char rpath[PATH_MAX];
 	if (argc < 4) {
 		print_error ("Supply a path to add!");
 	}
-	res = xmmsc_medialib_path_import (conn, argv[3]);
+	
+	if (!realpath (argv[3], rpath)) 
+		return;
+	if (!g_file_test (rpath, G_FILE_TEST_IS_DIR))
+		return;
+
+	res = xmmsc_medialib_path_import (conn, rpath);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));

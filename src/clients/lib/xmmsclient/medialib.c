@@ -24,6 +24,13 @@
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
+static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER('%s')",
+											  "LOWER(m%d.value) LIKE LOWER('%s')",
+											  "m%d.id = m%d.id",
+											  "Media AS m%d"};
+
+typedef enum templ_type_e {templ_key, templ_value, templ_id, templ_table} templ_type;
+
 /**
  * @defgroup MedialibControl MedialibControl
  * @ingroup XMMSClient
@@ -56,6 +63,252 @@ xmmsc_result_t *
 xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 {
 	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
+}
+
+/**
+ * Search for a entry (URL) in the medialib db and return its ID number
+ * @param conn The #xmmsc_connection_t
+ * @param url The URL to search for
+ */
+xmmsc_result_t *
+xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
+}
+
+/**
+ * @internal
+ *
+ */
+
+char *
+xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attributes, unsigned i)
+{
+	int res_size = 0;
+	char *res = NULL;
+	char *tbuf = (char*) malloc(sizeof(char));
+	if (tbuf == NULL) {
+		return NULL;
+	}
+
+	switch (idx) {
+	case templ_key:
+		res_size = snprintf(tbuf, 1, constraint_templates[templ_key], i, attributes[i].key);
+		break;
+	case templ_value:
+		res_size = snprintf(tbuf, 1, constraint_templates[templ_value], i, attributes[i].value);
+		break;
+	case templ_id:
+		res_size = snprintf(tbuf, 1, constraint_templates[templ_id], i-1, i);
+		break;
+	case templ_table:
+		res_size = snprintf(tbuf, 1, constraint_templates[templ_table], i);
+		break;
+	}
+	free(tbuf);
+	
+	res_size += 1;
+	
+	res = malloc(res_size);
+	if (res == NULL) {
+		return NULL;
+	}
+
+
+	switch(idx) {
+	case templ_key:
+		snprintf(res, res_size, constraint_templates[templ_key], i, attributes[i].key);
+		break;
+	case templ_value:
+		snprintf(res, res_size, constraint_templates[templ_value], i, attributes[i].value);
+		break;
+	case templ_id:
+		snprintf(res, res_size, constraint_templates[templ_id], i-1, i);
+		break;
+	case templ_table:		
+		snprintf(res, res_size, constraint_templates[templ_table], i);
+		break;
+	}
+	return res;
+
+}
+
+/**
+ * @internal
+ * Construct constraints of the query string from query attribute vector
+ */
+
+int 
+xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *attributes, unsigned n) {
+	int success = 1, tmp_size;
+	char *oconstraints = NULL;
+	char *constraints = NULL;
+	char *initconstraints = " WHERE ";
+	char *tmp = NULL;
+	unsigned i;
+	templ_type template;
+	unsigned size = 0;	
+	
+	constraints = (char*) malloc(strlen(initconstraints+1));
+
+	if (constraints == NULL) {
+		success = 0;
+	} else {
+		strcpy(constraints, initconstraints);
+		size = strlen(constraints)+1;
+	}
+	
+	if (success) {
+		for (i = 0; i < n; i++) {
+			for (template = templ_key; template <= templ_id; template++) {				
+				if (i == 0 && template == templ_id) {
+					break; /* Can't do id matching on the first attribute */
+				}
+				
+				tmp = xmmsc_querygen_fill_template(template, attributes, i);
+				if (tmp == NULL) {				
+					success = 0;
+				}						
+		
+				tmp_size = strlen(tmp);
+
+				size += tmp_size + (i == 0 && template == templ_key ? 0 : 5);
+				oconstraints = constraints;
+				constraints = (char*) realloc(constraints, size);
+				if (constraints == NULL) {
+					success = 0;
+					free(oconstraints);				
+					break;
+				}
+
+				if ( !(i == 0 && template == templ_key) ) {
+					strcat(constraints, " AND "); /* Don't need AND for first constraint */
+				}			
+
+				strcat(constraints, tmp);		
+
+				free(tmp);
+			}
+		}
+	}
+
+	(*pconstraints) = constraints;
+	return success;
+}
+
+/**
+ * @internal
+ * Construct tables of the query string from query attribute vector
+ */
+
+int
+xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes, unsigned n) {
+	int success = 1;
+	char *otables = NULL;
+	char *tables = NULL;
+	char *tmp = NULL;
+	unsigned i;
+	unsigned size = 1; // make space for the terminating null byte
+	unsigned tmp_size = 0;
+
+
+	tables = malloc(1);
+	if (tables == NULL) {
+		success = 0;
+	} else {
+		tables[0] = '\0';
+	}
+	
+	if (success) {
+		for (i = 0; i < n; i++) {
+
+			tmp = xmmsc_querygen_fill_template(templ_table, attributes, i);
+			if (tmp == NULL) {
+				success = 0;
+				break;
+			}
+			
+			tmp_size = strlen(tmp);
+
+			size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
+			otables = tables;
+			tables = (char*) realloc(tables, size);
+
+			if (tables == NULL) {
+				success = 0;
+				free(otables);
+				break;
+			}
+
+			if (i != 0) {
+				strcat(tables, ", ");
+			}
+			strcat(tables, tmp);
+			free(tmp);
+		}	
+	}
+		
+	(*ptables) = tables;
+	return success;
+
+}
+
+/**
+ * Construct a query to match songs with all the given attrbutes.
+ *
+ * @param GHashTable containing name -> value mapping of attributes required 
+ * @returns string with the query to match those attributes. Caller is responsible
+ * of freeing both the table and the string.
+ *
+ * The hash table should be gchar* -> gchar*
+ *
+ */
+
+char *
+xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
+{	
+	char **tables;
+	char **constraints;
+	int success = 1, fullsize;
+	char *query;
+
+	const char *initquery = "SELECT DISTINCT m0.id FROM ";
+
+	if (success) {
+		tables = (char**) malloc(sizeof(char**));
+		constraints = (char**) malloc(sizeof(char**));
+		if (tables == NULL || constraints == NULL) {
+			free(tables);
+			free(constraints);
+			success = 0;
+		}
+	}
+
+	if (success) {
+		success = xmmsc_querygen_parse_tables(tables, attributes, n);
+		success = xmmsc_querygen_parse_constraints(constraints, attributes, n);
+	}
+
+	if (success) {
+		fullsize = strlen(initquery) + strlen(*tables) + strlen(*constraints) + 1;
+		query = (char*) malloc(fullsize);
+		if (query == NULL) {
+			success = 0;
+		}
+	}
+	if (success) {
+		query[0] = '\0';
+		strcat(query, initquery);
+		strcat(query, *tables);
+		strcat(query, *constraints);	
+	}
+
+	free(tables[0]);
+	free(constraints[0]);
+	free(tables);
+	free(constraints);
+
+	return query;		
 }
 
 /**

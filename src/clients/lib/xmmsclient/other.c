@@ -33,6 +33,25 @@
  */
 
 /**
+ * Registers a configvalue in the server.
+ * @param valuename should be <clientname>.myval like cli.path or something like that.
+ * @param defaultvalue The default value of this config value.
+ */
+xmmsc_result_t *
+xmmsc_configval_register (xmmsc_connection_t *c, char *valuename, char *defaultvalue)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_REGVALUE);
+	xmms_ipc_msg_put_string (msg, valuename);
+	xmms_ipc_msg_put_string (msg, defaultvalue);
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/**
  * Sets a configvalue in the server.
  */
 xmmsc_result_t *

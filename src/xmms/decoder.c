@@ -475,13 +475,14 @@ static void
 xmms_decoder_destroy (xmms_object_t *object) 
 {
 	xmms_decoder_t *decoder = (xmms_decoder_t *)object;
-	xmms_decoder_destroy_method_t destroy_method;
+	xmms_decoder_destroy_method_t destroy_method = NULL;
 	GList *n;
 
 	xmms_ringbuf_set_eos (decoder->buffer, TRUE);
 
-	destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-
+	if (decoder->plugin) {
+		destroy_method = xmms_plugin_method_get (decoder->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+	}
 	if (destroy_method)
 		destroy_method (decoder);
 
@@ -494,9 +495,12 @@ xmms_decoder_destroy (xmms_object_t *object)
 
 	xmms_ringbuf_destroy (decoder->buffer);
 	g_mutex_free (decoder->mutex);
-	xmms_transport_stop (decoder->transport);
-	xmms_object_unref (decoder->transport);
-	xmms_object_unref (decoder->plugin);
+	if (decoder->transport) {
+		xmms_transport_stop (decoder->transport);
+		xmms_object_unref (decoder->transport);
+	}
+	if (decoder->plugin) 
+		xmms_object_unref (decoder->plugin);
 	xmms_object_unref (decoder->converter);
 	xmms_object_unref (decoder->vis);
 }
@@ -547,8 +551,10 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	XMMS_DBG ("Trying to create decoder for mime-type %s", mimetype);
 	
 	plugin = xmms_decoder_find_plugin (mimetype);
-	if (!plugin)
+	if (!plugin) {
+		XMMS_DBG ("Plugin for %s was *NOT* found!", mimetype);
 		return FALSE;
+	}
 	
 	xmms_object_ref (transport);
 

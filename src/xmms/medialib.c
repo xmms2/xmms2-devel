@@ -21,6 +21,7 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_ipc.h"
+#include "xmms/xmms_log.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +55,7 @@ static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *p
 					     gchar *mime, xmms_error_t *error);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
+static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, DICT, UINT32, NONE);
 XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, DICTLIST, STRING, NONE);
@@ -66,6 +68,7 @@ XMMS_CMD_DEFINE (playlist_import, xmms_medialib_playlist_import, xmms_medialib_t
 XMMS_CMD_DEFINE (playlist_export, xmms_medialib_playlist_export, xmms_medialib_t *, STRING, STRING, STRING);
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (get_id, xmms_medialib_entry_get_id, xmms_medialib_t *, UINT32, STRING, NONE);
 
 /**
  *
@@ -197,6 +200,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_REHASH,
 	                     XMMS_CMD_FUNC (rehash));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_GET_ID,
+	                     XMMS_CMD_FUNC (get_id));
 
 	xmms_config_value_register ("medialib.dologging",
 				    "1",
@@ -656,6 +662,19 @@ xmms_medialib_entry_new_unlocked (const char *url)
 
 }
 
+static guint32
+xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
+{
+	guint32 id = 0;
+
+	g_mutex_lock (medialib->mutex);
+	xmms_sqlite_query (medialib->sql, xmms_medialib_int_cb, &id, 
+			   "select id from Media where key='%s' and value=%Q", 
+			   XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url);
+	g_mutex_unlock (medialib->mutex);
+
+	return id;
+}
 
 /**
  * Welcome to a function that should be called something else.

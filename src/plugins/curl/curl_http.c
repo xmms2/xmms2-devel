@@ -257,6 +257,8 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 
 		/* done */
 		if (handles == 0) {
+			if (!data->know_mime)
+				xmms_transport_mimetype_set (transport, NULL);
 			return 0;
 		}
 
@@ -375,14 +377,18 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 	gchar *header;
 
 	g_return_val_if_fail (transport, -1);
+	g_return_val_if_fail (ptr, -1);
 
 	header = g_strndup ((gchar*)ptr, size * nmemb);
 
 	func = header_handler_find (header);
 	if (func != NULL) {
-		gchar *val = header + strcspn (header, ":") + 1;
-
-		g_strstrip (val);
+		gchar *val = strchr (header, ':');
+		if (val) {
+			g_strstrip (++val);
+		} else {
+			val = header;
+		}
 		func (transport, val);
 	}
 

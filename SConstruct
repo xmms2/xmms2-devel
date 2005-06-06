@@ -7,7 +7,13 @@ import re
 import string
 from marshal import dump
 
-XMMS_VERSION = "0.1 DR1.1-WIP"
+try:
+	head = " (git-commit: "+file(".git/HEAD").read().strip()+")"
+except:
+	head = ""
+	pass
+
+XMMS_VERSION = "0.1 DR1.1-WIP" + head
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)

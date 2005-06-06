@@ -51,10 +51,12 @@ static void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value,
 static GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
 static xmms_config_value_t *xmms_config_value_new (const gchar *name);
 static gchar *xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
+static gchar *xmms_config_value_client_register (xmms_config_t *config, const gchar *value, const gchar *def_value, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
 XMMS_CMD_DEFINE (getvalue, xmms_config_value_client_lookup, xmms_config_t *, STRING, STRING, NONE);
+XMMS_CMD_DEFINE (regvalue, xmms_config_value_client_register, xmms_config_t *, STRING, STRING, STRING);
 
 /**
   * @defgroup Config Config
@@ -431,6 +433,7 @@ xmms_config_init (const gchar *filename)
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES, XMMS_CMD_FUNC (listvalues));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE, XMMS_CMD_FUNC (regvalue));
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
 	xmms_ipc_broadcast_register (XMMS_OBJECT (config),
 	                             XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
@@ -751,6 +754,18 @@ xmms_config_value_callback_remove (xmms_config_value_t *val,
 
 	xmms_object_disconnect (XMMS_OBJECT (val),
 	                        XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, cb);
+}
+
+static gchar *
+xmms_config_value_client_register (xmms_config_t *config,
+				   const gchar *value,
+				   const gchar *def_value,
+				   xmms_error_t *error)
+{
+	gchar *tmp;
+	tmp = g_strdup_printf ("clients.%s", value);
+	xmms_config_value_register (tmp, def_value, NULL, NULL);
+	return tmp;
 }
 
 /**
