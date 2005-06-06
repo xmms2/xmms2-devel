@@ -384,7 +384,13 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 print_entry (const void *key, const void *value, void *udata)
 {
-	printf ("%s = %s\n", (char *)key, (char *)value);
+	gchar *conv;
+	gint r, w;
+	GError *err;
+
+	conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
+	printf ("%s = %s\n", (char *)key, conv);
+	g_free (conv);
 }
 
 static void
