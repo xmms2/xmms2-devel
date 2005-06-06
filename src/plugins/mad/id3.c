@@ -75,7 +75,7 @@
  */
 
 static void
-add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
+add_to_entry (xmms_id3v2_header_t *head, xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
 {
 	gchar *nval;
 	gsize readsize,writsize;
@@ -83,10 +83,29 @@ add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
 
 	g_return_if_fail (len>0);
 
-	if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
-		nval = g_convert (val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
-	} else {
-		nval = g_convert (val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+	if (head->ver == 4) {
+		if (val[0] == 0x00) {
+			/* ISO-8859-1 */
+			nval = g_convert (val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+		} else if (len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
+			/* UTF-16 with BOM */
+			nval = g_convert (val+1, len-1, "UTF-8", "UTF-16", &readsize, &writsize, &err);
+		} else if (val[0] == 0x02) {
+			/* UTF-16 without BOM */
+			nval = g_convert (val+1, len-1, "UTF-8", "UTF-16BE", &readsize, &writsize, &err);
+		} else if (val[0] == 0x03) {
+			/* UTF-8 */
+			nval = g_strndup (val+1, len-1);
+		} else {
+			XMMS_DBG ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
+			return;
+		}
+	} else if (head->ver == 2 || head->ver == 3) {
+		if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
+			nval = g_convert (val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
+		} else {
+			nval = g_convert (val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+		}
 	}
 
 	if (err) {
@@ -99,7 +118,7 @@ add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
 }
 
 static void
-xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
+xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, gchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
 {
 
 	if (len < 1) {
@@ -119,60 +138,75 @@ xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmm
 	switch (type) {
 	case quad2long('T','Y','E',0):
 	case quad2long('T','Y','E','R'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, buf, len);
+		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, buf, len);
 		break;
 	}
 	case quad2long('T','A','L',0):
 	case quad2long('T','A','L','B'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, buf, len);
+		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, buf, len);
 		break;
 	}
 	case quad2long('T','T','2',0):
 	case quad2long('T','I','T','2'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, buf, len);
+		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, buf, len);
 		break;
 	}
 	case quad2long('T','P','1',0):
 	case quad2long('T','P','E','1'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, buf, len);
+		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, buf, len);
 		break;
 	}
 	case quad2long('T','R','K',0):
 	case quad2long('T','R','C','K'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, buf, len);
+		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, buf, len);
 		break;
 	}
 	case quad2long('T','C','O','N'): {
 		/* @todo we could resolve numeric types here */
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
+		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
 		break;
 	}
 	case quad2long('T','X','X','X'): {
 		/* User defined, lets search for musicbrainz */
-		guint32 l2 = strlen (buf);
+		guint32 l2;
+		gchar *val;
+
+		if (head->ver == 4) {
+			buf++;
+		}
+
+		l2 = strlen (buf);
+		
+		val = g_strndup (buf+l2+1, len-l2-1);
+		
 		if ((len - l2 -1) < 1)
 			break;
 		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
-			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, buf+l2+1, len-l2-1);
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
 		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
-			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, buf+l2+1, len-l2-1);
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
 		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
 			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
 		}
 
+		g_free (val);
+
 		break;
 
 	}
 	case quad2long('U','F','I','D'): {
+		gchar *val;
 		guint32 l2 = strlen (buf);
+		val = g_strndup (buf+l2+1, len-l2-1);
 		if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
-			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, buf+l2+1, len-l2-1);
+			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
+		g_free (val);
 		break;
 	}
 	case quad2long('T','B','P',0):
 	case quad2long('T','B','P','M'): {
-		add_to_entry(entry, "bpm", buf, len);
+		add_to_entry(head, entry, "bpm", buf, len);
 		break;
 	}
 	}
@@ -185,7 +219,7 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 		header->ver = buf[3];
 		header->rev = buf[4];
 		
-		if (header->ver == 3 || header->ver == 2) {
+		if (header->ver == 4 || header->ver == 3 || header->ver == 2) {
 			gint32 len;
 			
 			header->flags = buf[5];
@@ -202,7 +236,6 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 
 			return TRUE;
 		}
-		XMMS_DBG ("Unsupported id3v2 version (%d)", header->ver);
 	}
 	return FALSE;
 }
@@ -226,7 +259,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 		guint32 type;
 
 
-		if (head->ver == 3) {
+		if (head->ver == 3 || head->ver == 4) {
 			if ( len < 10) {
 				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
 				return FALSE;
@@ -244,7 +277,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 			flags = buf[8] | buf[9];
 
 			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_mad_handle_id3v2_text (type, buf + 10, flags, size, entry);
+				xmms_mad_handle_id3v2_text (head, type, buf + 10, flags, size, entry);
 			}
 			
 			if (buf[0] == 0) { /* padding */
@@ -268,7 +301,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 			}
 
 			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_mad_handle_id3v2_text (type, buf + 6, 0, size, entry);
+				xmms_mad_handle_id3v2_text (head, type, buf + 6, 0, size, entry);
 			}
 			
 			if (buf[0] == 0) { /* padding */
