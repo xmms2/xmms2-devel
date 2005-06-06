@@ -24,8 +24,8 @@
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
-static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER('%s')",
-											  "LOWER(m%d.value) LIKE LOWER('%s')",
+static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER(%s)",
+											  "LOWER(m%d.value) LIKE LOWER(%s)",
 											  "m%d.id = m%d.id",
 											  "Media AS m%d"};
 
@@ -66,15 +66,50 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 }
 
 /**
- * Search for a entry (URL) in the medialib db and return its ID number
- * @param conn The #xmmsc_connection_t
- * @param url The URL to search for
+ * Escape a string so that it can be used in sqlite queries.
+ *
+ * @param Input string, is not freed by this function!
+ * @returns string enclosed in single quotes, with all single quotes in the string 
+ * replaced with double single quotes
+ *
+ * Example:
+ * Ain't -> 'Ain''t'
  */
-xmmsc_result_t *
-xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
-{
-	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
+
+char *
+xmmsc_sqlite_prepare_string (char *input) {
+	char *output;
+	int outsize, nquotes=0;
+	int i, o;
+
+	for (i = 0; input[i] != '\0'; i++) {
+		if (input[i] == '\'') {
+			nquotes++;
+		}
+	}
+	
+	outsize = strlen(input) + nquotes + 2 + 1; /* 2 quotes to terminate the string , and one \0 in the end */
+	output = (char*) malloc(outsize);
+
+	if (output == NULL) {
+		return NULL;
+	}
+	
+	i = o = 0;
+	output[o++] = '\'';
+	while (input[i] != '\0') {
+		output[o++] = input[i];
+		if (input[i++] == '\'') {
+			output[o++] = '\'';
+		}
+	}
+	output[o++] = '\'';
+	output[o] = '\0';
+
+	return output;
+	
 }
+
 
 /**
  * @internal
@@ -256,11 +291,11 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 /**
  * Construct a query to match songs with all the given attrbutes.
  *
- * @param GHashTable containing name -> value mapping of attributes required 
- * @returns string with the query to match those attributes. Caller is responsible
+ * @param A vector of attribute pointers
+ * @param The length of the vector
+ * @returns string with the query to match given attributes. Caller is responsible
  * of freeing both the table and the string.
  *
- * The hash table should be gchar* -> gchar*
  *
  */
 

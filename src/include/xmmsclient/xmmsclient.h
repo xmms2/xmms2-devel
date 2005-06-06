@@ -56,6 +56,10 @@ char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
 
 
 
+char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
+char *xmmsc_sqlite_prepare_string (char *input);
+
+
 /*
  * PLAYLIST ************************************************
  */
