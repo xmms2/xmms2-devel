@@ -147,8 +147,6 @@ xmmsc_result_free (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
 
-	xmmsc_unref (res->c);
-
 	if (res->error_str)
 		free (res->error_str);
 
@@ -156,6 +154,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	xmmsc_result_cleanup_data (res);
 	xmmsc_ipc_result_unregister (res->ipc, res);
+
+	xmmsc_unref (res->c);
+
 	x_list_free (res->func_list);
 	x_list_free (res->udata_list);
 	
