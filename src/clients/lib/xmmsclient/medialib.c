@@ -347,6 +347,17 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 }
 
 /**
+ * Search for a entry (URL) in the medialib db and return its ID number
+ * @param conn The #xmmsc_connection_t
+ * @param url The URL to search for
+ */
+xmmsc_result_t *
+xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
+}
+
+/**
  * Export a serverside playlist to a format that could be read
  * from another mediaplayer.
  * @param conn The #xmmsc_connection_t
