@@ -87,6 +87,9 @@ mlib_query_from_args (int argc, char **argv) {
 
 	for (i=3; i < argc; i++) {
 		s = g_strsplit (argv[i], "=", 0);
+		if (!s[0] || !s[1]) {
+			return NULL;
+		}
 		query_spec[i-3].key = xmmsc_sqlite_prepare_string(s[0]);
 		query_spec[i-3].value = xmmsc_sqlite_prepare_string(s[1]);
 
