@@ -109,7 +109,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data(xmmsc_connection_t *c)
 
-	void xmmsc_io_need_out_callback_set(xmmsc_connection_t *c, void(*callback)(int, void*), void *userdata)
+	void xmmsc_io_need_out_callback_set(xmmsc_connection_t *c, object(*callback)(int, object), object userdata)
 	void xmmsc_io_disconnect(xmmsc_connection_t *c)
 	int xmmsc_io_want_out(xmmsc_connection_t *c)
 	int xmmsc_io_out_handle(xmmsc_connection_t *c)
@@ -365,6 +365,9 @@ cdef class XMMSResult:
 		if self.res:
 			xmmsc_result_unref(self.res)
 
+cdef python_need_out_fun(int i, obj):
+	obj._needout_cb(i)
+
 cdef python_disconnect_fun(obj):
 	obj._disconnect_cb()
 
@@ -377,6 +380,7 @@ cdef class XMMS:
 	cdef object loop
 	cdef object wakeup
 	cdef object disconnect_fun
+	cdef object needout_fun
 
 	def __new__(self, clientname = "Python XMMSClient"):
 		"""
@@ -390,6 +394,10 @@ cdef class XMMS:
 		""" destroys it all! """
 
 		xmmsc_unref(self.conn)
+
+	def _needout_cb(self, i):
+		if self.needout_fun is not None:
+			self.needout_fun(i)
 
 	def _disconnect_cb(self):
 		if self.disconnect_fun is not None:
@@ -447,6 +455,10 @@ cdef class XMMS:
 
 	def want_ioout(self):
 		return xmmsc_io_want_out(self.conn)
+
+	def set_need_out_fun(self, fun):
+		xmmsc_io_need_out_callback_set(self.conn, python_need_out_fun, self)
+		self.needout_fun = fun
 		
 	def get_fd(self):
 		"""
