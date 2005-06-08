@@ -21,6 +21,7 @@ static void mlib_loadall (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_search (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_query (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_save (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv);
@@ -35,6 +36,7 @@ cmds mlib_commands[] = {
 	{ "searchadd", "[artist=Dismantled] ... - Search for, and add songs to playlist", mlib_searchadd },
 	{ "search", "[artist=Dismantled] ... - Search for songs matching criteria", mlib_search },
 	{ "query", "[\"raw sql statement\"] - Send a raw SQL statement to the mlib", mlib_query },
+	{ "queryadd", "[\"raw sql statement\"] - Send a raw SQL statement to the mlib and add all entries to playlist", mlib_queryadd },
 	{ "list_playlist", "[playlistname] - List 'playlistname' stored in medialib", mlib_playlist_list },
 	{ "save_playlist", "[playlistname] - Save current playlist to 'playlistname'", mlib_playlist_save },
 	{ "load_playlist", "[playlistname] - Load 'playlistname' stored in medialib", mlib_playlist_load },
@@ -114,6 +116,25 @@ mlib_query_from_args (int argc, char **argv) {
 
 	return query;
 	
+}
+
+static void
+mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Supply a query");
+	}
+
+	res = xmmsc_medialib_add_to_playlist (conn, argv[3]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
 }
 
 static void
