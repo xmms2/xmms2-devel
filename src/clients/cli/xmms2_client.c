@@ -662,15 +662,29 @@ static void
 cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
+	char *key, *value;
 
 	if (argc < 4) {
 		print_error ("You need to specify a configkey and a value");
 	}
 
-	res = xmmsc_configval_set (conn, argv[2], argv[3]);
+	key = argv[2];
+
+	if (strcmp (argv[3], "=") == 0)
+		value = argv[4];
+	else
+		value = argv[3];
+
+	if(value == NULL) {
+		print_error ("You need to specify a configkey and a value");
+	}
+
+	res = xmmsc_configval_set (conn, key, value);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Couldn't set config value: %s\n", xmmsc_result_get_error (res));
+	} else {
+		print_info ("Config value %s set to %s", key, value);
 	}
 	xmmsc_result_unref (res);
 }
