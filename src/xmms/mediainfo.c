@@ -156,6 +156,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			if (!xmms_transport_open (transport, entry)) {
 				xmms_medialib_entry_remove (entry);
+				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_object_unref (transport);
 				continue;
 			}
@@ -179,6 +180,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			if (!mime) {
 				xmms_medialib_entry_remove (entry);
+				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				continue;
@@ -188,6 +190,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
 				xmms_medialib_entry_remove (entry);
+				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);

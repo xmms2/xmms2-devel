@@ -370,17 +370,11 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 	g_mutex_unlock (playlist->mutex);
 }
 
-
-/**
- * Remove an entry from playlist.
- *
- */
-gboolean 
-xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
+static gboolean
+xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 {
 	g_return_val_if_fail (playlist, FALSE);
 
-	g_mutex_lock (playlist->mutex);
 	if (pos >= playlist->list->len) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Entry was not in list!");
 		g_mutex_unlock (playlist->mutex);
@@ -400,11 +394,49 @@ xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
 	
 	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_INT32, playlist->currentpos);
 
+	return TRUE;
+}
+
+
+/**
+ * Remove all additions of #entry in the playlist
+ * @sa xmms_playlist_remove
+ */
+gboolean
+xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t entry)
+{
+	guint32 i;
+	g_return_val_if_fail (playlist, FALSE);
+
+	g_mutex_lock (playlist->mutex);
+
+	for (i = 0; i < playlist->list->len; i++) {
+		if (g_array_index (playlist->list, guint32, i) == entry) {
+			XMMS_DBG ("removing entry on pos %d", i);
+			xmms_playlist_remove_unlocked (playlist, i, NULL);
+		}
+	}
+
 	g_mutex_unlock (playlist->mutex);
 
 	return TRUE;
 }
 
+/**
+ * Remove an entry from playlist.
+ *
+ */
+gboolean 
+xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err)
+{
+	gboolean ret;
+	g_return_val_if_fail (playlist, FALSE);
+
+	g_mutex_lock (playlist->mutex);
+	ret = xmms_playlist_remove_unlocked (playlist, pos, err);
+	g_mutex_unlock (playlist->mutex);
+	return ret;
+}
 
 
 /**
