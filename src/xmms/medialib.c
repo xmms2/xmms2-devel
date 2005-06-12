@@ -504,7 +504,7 @@ xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_erro
 	g_mutex_lock (medialib->mutex);
 
 	if (!xmms_sqlite_query (medialib->sql, xmms_medialib_addtopls_cb, medialib->playlist,
-				query)) {
+				"%s", query)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Query failed!");
 		g_mutex_unlock (medialib->mutex);
 		return;

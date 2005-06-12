@@ -21,6 +21,7 @@ static void mlib_loadall (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_search (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_query (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_save (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv);
@@ -32,9 +33,10 @@ static void mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv);
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", mlib_add },
 	{ "loadall", "Load everything from the mlib to the playlist", mlib_loadall },
-	{ "searchadd", "[artist=Dismantled] - Search for, and add songs to playlist", mlib_searchadd },
+	{ "searchadd", "[artist=Dismantled] ... - Search for, and add songs to playlist", mlib_searchadd },
 	{ "search", "[artist=Dismantled] ... - Search for songs matching criteria", mlib_search },
 	{ "query", "[\"raw sql statement\"] - Send a raw SQL statement to the mlib", mlib_query },
+	{ "queryadd", "[\"raw sql statement\"] - Send a raw SQL statement to the mlib and add all entries to playlist", mlib_queryadd },
 	{ "list_playlist", "[playlistname] - List 'playlistname' stored in medialib", mlib_playlist_list },
 	{ "save_playlist", "[playlistname] - Save current playlist to 'playlistname'", mlib_playlist_save },
 	{ "load_playlist", "[playlistname] - Load 'playlistname' stored in medialib", mlib_playlist_load },
@@ -72,36 +74,11 @@ mlib_loadall (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
-static void
-mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
-{
-	xmmsc_result_t *res;
-	char query[1024];
-	char **s;
-		
-	if (!argv[3])
-		print_error ("expected key=value");
-
-	s = g_strsplit (argv[3], "=", 0);
-
-	if (!s || !s[0] || !s[1])
-		print_error ("expected key=value");
-
-	g_snprintf (query, 1023, "select id from Media where LOWER(key)=LOWER('%s') and LOWER(value) like LOWER('%s')",s[0],s[1]);
-	print_info ("%s", query);
-	res = xmmsc_medialib_add_to_playlist (conn, query);
-	xmmsc_result_wait (res);
-	xmmsc_result_unref (res);
-}
-
-static void
-mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
-{
+char *
+mlib_query_from_args (int argc, char **argv) {
 	gchar *query;
 	char **s;
 	guint i;
-	xmmsc_result_t *res;
-	GList *n = NULL;
 	xmmsc_query_attribute_t *query_spec;
 
 	if (argc < 4) {
@@ -112,23 +89,90 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (i=3; i < argc; i++) {
 		s = g_strsplit (argv[i], "=", 0);
-		query_spec[i-3].key = malloc(strlen(s[0])+1);
-		query_spec[i-3].value = malloc(strlen(s[1])+1);
+		if (!s[0] || !s[1]) {
+			return NULL;
+		}
+		query_spec[i-3].key = xmmsc_sqlite_prepare_string(s[0]);
+		query_spec[i-3].value = xmmsc_sqlite_prepare_string(s[1]);
+
 		if (query_spec[i-3].key == NULL || query_spec[i-3].value == NULL) {
 			free(query_spec[i-3].key);
 			free(query_spec[i-3].value);
+			while (i-3 > 0) {
+				i--;
+				free(query_spec[i-3].key);
+				free(query_spec[i-3].value);
+			}
 			free(query_spec);
+			return NULL;
 		}
-		strcpy(query_spec[i-3].key, s[0]);
-		strcpy(query_spec[i-3].value, s[1]);
+
 		g_strfreev(s);
 	}	
 		
 	query = xmmsc_querygen_and(query_spec, argc-3);	
 		
-
 	free(query_spec);
+
+	return query;
 	
+}
+
+static void
+mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Supply a query");
+	}
+
+	res = xmmsc_medialib_add_to_playlist (conn, argv[3]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
+}
+
+static void
+mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	char *query;
+		
+	query = mlib_query_from_args(argc, argv);
+	if (query == NULL) {
+		print_info("Unable to generate query");
+		return;
+	}
+
+	print_info("%s", query);
+
+	res = xmmsc_medialib_add_to_playlist (conn, query);
+	free(query);
+
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+}
+
+
+static void
+mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	GList *n = NULL;
+	char *query;
+
+	query = mlib_query_from_args(argc, argv);
+	if (query == NULL) {
+		print_info("Unable to generate query");
+		return;
+	}
+	
+	print_info ("%s", query);
 
 	res = xmmsc_medialib_select (conn, query);
 	xmmsc_result_wait (res);

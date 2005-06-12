@@ -177,16 +177,16 @@ xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, gchar *buf,
 
 		l2 = strlen (buf);
 		
-		val = g_strndup (buf+l2+1, len-l2-1);
+		val = g_strndup (buf+l2+1, len-l2-2);
 		
-		if ((len - l2 -1) < 1)
+		if ((len - l2 - 2) < 1)
 			break;
 		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
 		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
 		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
-			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-2) == 0)) {
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
 		}
 
