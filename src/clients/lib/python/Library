@@ -26,9 +26,7 @@ def config(env):
 
 	# link with xmmsclient is nice.
 	env['LIBS'].append("xmmsclient")
-	env['LIBS'].append("xmmsclient-glib")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
 
 	# otherwise it will be called libxmmsclient.so
 	env['SHLIBPREFIX']=""
@@ -41,5 +39,4 @@ def config(env):
 	# just do it
 	env.Pyx (env.dir+"/xmmsclient.c", [env.dir+"/xmmsclient.pyx"])
 
-	env.pkgconfig("glib-2.0")
 	return True
