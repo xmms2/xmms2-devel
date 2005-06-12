@@ -75,7 +75,11 @@
  */
 
 static void
-add_to_entry (xmms_id3v2_header_t *head, xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
+add_to_entry (xmms_id3v2_header_t *head, 
+	      xmms_medialib_entry_t entry, 
+	      gchar *key, 
+	      guchar *val, 
+	      gint len)
 {
 	gchar *nval;
 	gsize readsize,writsize;
@@ -118,8 +122,91 @@ add_to_entry (xmms_id3v2_header_t *head, xmms_medialib_entry_t entry, gchar *key
 }
 
 static void
+xmms_mad_handle_id3v2_txxx (xmms_id3v2_header_t *head, 
+			    xmms_medialib_entry_t entry, 
+			    gchar *key, 
+			    guchar *buf, 
+			    gint len)
+{
+
+	guint32 l2;
+	gchar *val;
+
+	if (head->ver == 4) {
+		buf++;
+		len -= 1; /* total len of buffer */
+	}
+
+	l2 = strlen (buf);
+
+	val = g_strndup (buf+l2+1, len-l2-1);
+
+	if ((len - l2 - 1) < 1) {
+		g_free (val);
+		return;
+	}
+
+	if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
+	else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
+	else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
+		 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+	}
+
+	g_free (val);
+}
+
+static void
+xmms_mad_handle_id3v2_ufid (xmms_id3v2_header_t *head, 
+			    xmms_medialib_entry_t entry, 
+			    gchar *key, 
+			    guchar *buf, 
+			    gint len)
+{
+	gchar *val;
+	guint32 l2 = strlen (buf);
+	val = g_strndup (buf+l2+1, len-l2-1);
+	if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
+	g_free (val);
+}
+
+struct id3tags_t {
+	guint32 type;
+	gchar *prop;
+	void (*fun)(xmms_id3v2_header_t *head, 
+		    xmms_medialib_entry_t entry, 
+		    gchar *key, 
+		    guchar *val, 
+		    gint len); /* Instead of add_to_entry */
+};
+
+static struct id3tags_t tags[] = {
+	{ quad2long('T','Y','E',0), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long('T','Y','E','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long('T','A','L',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
+	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
+	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long('T','C','O','N'), XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, NULL },
+	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
+	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
+	{ quad2long('T','X','X','X'), NULL, xmms_mad_handle_id3v2_txxx },
+	{ quad2long('U','F','I','D'), NULL, xmms_mad_handle_id3v2_ufid },
+	{ 0, NULL, NULL }
+};
+
+
+static void
 xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, gchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
 {
+	gint i = 0;
 
 	if (len < 1) {
 		XMMS_DBG ("Skipping short id3v2 text-frame");
@@ -135,82 +222,21 @@ xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, gchar *buf,
 		}
 	}
 
-	switch (type) {
-	case quad2long('T','Y','E',0):
-	case quad2long('T','Y','E','R'): {
-		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, buf, len);
-		break;
-	}
-	case quad2long('T','A','L',0):
-	case quad2long('T','A','L','B'): {
-		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, buf, len);
-		break;
-	}
-	case quad2long('T','T','2',0):
-	case quad2long('T','I','T','2'): {
-		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, buf, len);
-		break;
-	}
-	case quad2long('T','P','1',0):
-	case quad2long('T','P','E','1'): {
-		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, buf, len);
-		break;
-	}
-	case quad2long('T','R','K',0):
-	case quad2long('T','R','C','K'): {
-		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, buf, len);
-		break;
-	}
-	case quad2long('T','C','O','N'): {
-		/* @todo we could resolve numeric types here */
-		add_to_entry(head, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
-		break;
-	}
-	case quad2long('T','X','X','X'): {
-		/* User defined, lets search for musicbrainz */
-		guint32 l2;
-		gchar *val;
-
-		if (head->ver == 4) {
-			buf++;
-		}
-
-		l2 = strlen (buf);
-		
-		val = g_strndup (buf+l2+1, len-l2-2);
-		
-		if ((len - l2 - 2) < 1)
+	while (tags[i].type != 0) {
+		if (tags[i].type == type) {
+			if (tags[i].fun) {
+				tags[i].fun (head, entry, tags[i].prop, buf, len);
+			} else {
+				add_to_entry (head, entry, tags[i].prop, buf, len);
+			}
+			return;
 			break;
-		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
-		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
-		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
-			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-2) == 0)) {
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
 		}
-
-		g_free (val);
-
-		break;
-
+		i++;
 	}
-	case quad2long('U','F','I','D'): {
-		gchar *val;
-		guint32 l2 = strlen (buf);
-		val = g_strndup (buf+l2+1, len-l2-1);
-		if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
-		g_free (val);
-		break;
-	}
-	case quad2long('T','B','P',0):
-	case quad2long('T','B','P','M'): {
-		add_to_entry(head, entry, "bpm", buf, len);
-		break;
-	}
-	}
+	XMMS_DBG ("Unhandled tag %c%c%c%c", (type >> 24) & 0xff, (type >> 16) & 0xff, (type >> 8) & 0xff, (type) & 0xff);
 }
+
 
 gboolean
 xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
