@@ -769,6 +769,7 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 
 /* STATUS FUNCTIONS */
 
+static gboolean has_songname;
 static gchar songname[60];
 static gint curr_dur;
 static guint last_dur = 0;
@@ -791,6 +792,9 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 		print_error ("korv");
 		goto cont;
 	}
+
+	if(!has_songname)
+		goto cont;
 
 	if (((dur / 1000) % 60) == ((last_dur / 1000) % 60))
 		goto cont;
@@ -849,9 +853,11 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 	if (res_has_key (res, "channel") && res_has_key (res, "title")) {
 		xmmsc_entry_format (songname, sizeof (songname),
 				    "[stream] ${title}", res);
+		has_songname = TRUE;
 	} else if (res_has_key (res, "channel")) {
 		xmmsc_entry_format (songname, sizeof (songname),
 				    "${title}", res);
+		has_songname = TRUE;
 	} else if (!res_has_key (res, "title")) {
 		char *url, *filename;
 		xmmsc_result_get_dict_entry (res, "url", &url);
@@ -860,11 +866,13 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 			if (filename) {
 				g_snprintf (songname, sizeof (songname), "%s", filename);
 				g_free (filename);
+				has_songname = TRUE;
 			}
 		}
 	} else {
 		xmmsc_entry_format (songname, sizeof (songname),
 				    statusformat, res);
+		has_songname = TRUE;
 	}
 
 	xmmsc_result_get_dict_entry (res, "duration", &tmp);
@@ -890,12 +898,13 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
+	has_songname = FALSE;
+
 	/* Setup onchange signal for mediainfo */
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
-
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_setup_with_gmain (conn);
 
