@@ -10,16 +10,42 @@ cdef extern from "string.h":
 	int strcmp(signed char *s1, signed char *s2)
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
-	int XMMS_OBJECT_CMD_ARG_NONE
-	int XMMS_OBJECT_CMD_ARG_UINT32,
-	int XMMS_OBJECT_CMD_ARG_INT32,
-	int XMMS_OBJECT_CMD_ARG_STRING,
-	int XMMS_OBJECT_CMD_ARG_DICT,
-	int XMMS_OBJECT_CMD_ARG_UINT32LIST,
-	int XMMS_OBJECT_CMD_ARG_INT32LIST,
-	int XMMS_OBJECT_CMD_ARG_STRINGLIST,
-	int XMMS_OBJECT_CMD_ARG_PLCH,
-	int XMMS_OBJECT_CMD_ARG_DICTLIST,
+	ctypedef enum xmms_object_cmd_arg_type_t:
+		XMMS_OBJECT_CMD_ARG_NONE,
+		XMMS_OBJECT_CMD_ARG_UINT32,
+		XMMS_OBJECT_CMD_ARG_INT32,
+		XMMS_OBJECT_CMD_ARG_STRING,
+		XMMS_OBJECT_CMD_ARG_DICT,
+		XMMS_OBJECT_CMD_ARG_UINT32LIST,
+		XMMS_OBJECT_CMD_ARG_INT32LIST,
+		XMMS_OBJECT_CMD_ARG_STRINGLIST,
+		XMMS_OBJECT_CMD_ARG_DICTLIST,
+		XMMS_OBJECT_CMD_ARG_PLCH
+
+# The following constants are meant for interpreting the return value of
+# XMMSResult.get_type ()
+OBJECT_CMD_ARG_NONE = XMMS_OBJECT_CMD_ARG_NONE
+OBJECT_CMD_ARG_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32
+OBJECT_CMD_ARG_INT32 = XMMS_OBJECT_CMD_ARG_INT32
+OBJECT_CMD_ARG_STRING = XMMS_OBJECT_CMD_ARG_STRING
+OBJECT_CMD_ARG_DICT = XMMS_OBJECT_CMD_ARG_DICT
+OBJECT_CMD_ARG_UINT32LIST = XMMS_OBJECT_CMD_ARG_UINT32LIST
+OBJECT_CMD_ARG_INT32LIST = XMMS_OBJECT_CMD_ARG_INT32LIST
+OBJECT_CMD_ARG_STRINGLIST = XMMS_OBJECT_CMD_ARG_STRINGLIST
+OBJECT_CMD_ARG_DICTLIST = XMMS_OBJECT_CMD_ARG_DICTLIST
+OBJECT_CMD_ARG_PLCH = XMMS_OBJECT_CMD_ARG_PLCH
+
+cdef extern from "xmms/xmms_output.h":
+	ctypedef enum xmms_output_status_t:
+		XMMS_OUTPUT_STATUS_STOP,
+		XMMS_OUTPUT_STATUS_PLAY,
+		XMMS_OUTPUT_STATUS_PAUSE
+
+# The following constants are meant for interpreting the return value of
+# XMMS.playback_status ()
+OUTPUT_STATUS_STOP = XMMS_OUTPUT_STATUS_STOP
+OUTPUT_STATUS_PLAY = XMMS_OUTPUT_STATUS_PLAY
+OUTPUT_STATUS_PAUSE = XMMS_OUTPUT_STATUS_PAUSE
 
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef struct xmmsc_connection_t:
@@ -163,6 +189,15 @@ cdef class XMMSResult:
 		xmmsc_result_notifier_set(self.res, ResultNotifier, self)
 		ObjectRef[self.cid] = self
 
+	def get_type (self):
+		"""
+		Return the type of data contained in this result.
+		The return value is one of the OBJECT_CMD_ARG_* constants.
+		"""
+		self._check ()
+	
+		return xmmsc_result_get_type(self.res)
+
 	def value(self):
 		"""
 		Return value of appropriate data type contained in this result.
@@ -249,10 +284,15 @@ cdef class XMMSResult:
 		else:
 			raise ValueError("Failed to retrieve value!")
 
-
-	def get_hashtable(self):
+	def get_hashtable (self) : # alias for backward compatibility
 		"""
-		@return: A hash table containing media info.
+		@return: A dictionary containing media info.
+		"""
+		self.get_dict ()
+
+	def get_dict (self) :
+		"""
+		@return: A dictionary containing media info.
 		"""
 		self._check()
 
@@ -291,7 +331,13 @@ cdef class XMMSResult:
 			xmmsc_result_list_next(self.res)
 		return ret
 
-	def get_hashlist(self):
+	def get_hashlist (self) : # alias for backward compatibility
+		"""
+		@return: A list of dicts from the result structure.
+		"""
+		self.get_dictlist ()
+
+	def get_dictlist (self) :
 		"""
 		@return: A list of dicts from the result structure.
 		"""
@@ -1329,3 +1375,57 @@ cdef class XMMS:
 		ret.more_init()
 		return ret
 
+
+
+class XMMSSync:
+	"""
+	A wrapper for the xmmsclient.XMMS class which simplifies synchronous
+	communication with the XMMS2 daemon.
+	
+	Instances of this class may be used just like regular xmmsclient.XMMS
+	objects, except that instead of returning an XMMSResult instance, the
+	value associated with the result is returned.  If the XMMSResult
+	indicates an error, an XMMSError is raised instead of returning the
+	value.
+	"""
+	# This implementation avoids using nested function definitions, as they
+	# are not supported by Pyrex.
+	def __init__(self, xmms):
+		"""
+		This constructor takes a single argument which specifies the
+		XMMS object to wrap.
+		"""
+		self.__xmms = xmms
+
+	def __getattr__(self, name):
+		attr = getattr(self.__xmms, name)
+		if callable(attr):
+			return XMMSSyncMethod(attr)
+		else:
+			return attr
+
+
+class XMMSSyncMethod:
+	"""
+	A factory which uses a bound XMMS object method to create a callable
+	object that wraps the XMMS method for more convenient synchronous use.
+	This is meant for use by the XMMSSync class.
+	"""
+	def __init__(self, method):
+		self.method = method
+
+	def __call__(self, *args):
+		ret = self.method(*args)
+		if isinstance(ret, XMMSResult):
+			ret.wait()
+			if ret.iserror():
+				raise XMMSError(ret.get_error())
+			return ret.value()
+		return ret
+
+
+class XMMSError(Exception):
+	"""
+	Thrown when a synchronous method call on an XMMS client object fails.
+	"""
+	pass
