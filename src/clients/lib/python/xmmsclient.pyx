@@ -288,7 +288,7 @@ cdef class XMMSResult:
 		"""
 		@return: A dictionary containing media info.
 		"""
-		self.get_dict ()
+		return self.get_dict ()
 
 	def get_dict (self) :
 		"""
@@ -335,7 +335,7 @@ cdef class XMMSResult:
 		"""
 		@return: A list of dicts from the result structure.
 		"""
-		self.get_dictlist ()
+		return self.get_dictlist ()
 
 	def get_dictlist (self) :
 		"""
