@@ -612,19 +612,39 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, x
 	return mid;
 }
 
-#if 0
-static gint
-xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
-{
-	gchar *prop = data;
-	const gchar *tmpa=NULL, *tmpb=NULL;
-	
-	tmpa = xmms_medialib_entry_property_get (GPOINTER_TO_UINT (a), prop);
-	tmpb = xmms_medialib_entry_property_get (GPOINTER_TO_UINT (b), prop);
+typedef struct {
+	guint id;
+	gchar *val;
+} sortdata_t;
 
-	return g_strcasecmp (tmpa, tmpb);
+
+/**
+ * Sort helper function.
+ * Performs a case insesitive comparation between two entries.
+ */
+static gint
+xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
+{
+	sortdata_t *data1 = (sortdata_t *) a;
+	sortdata_t *data2 = (sortdata_t *) b;
+
+	return g_utf8_collate (data1->val, data2->val);
 }
-#endif
+
+/**
+ * Unwind helper function.
+ * Fills the playlist with the new sorted data.
+ */
+static void
+xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
+{
+	sortdata_t *sorted = (sortdata_t *) data;
+	GArray *playlist = (GArray *)userdata;
+	g_array_append_val (playlist, sorted->id);
+
+	g_free (sorted->val);
+	g_free (sorted);
+}
 
 /** Sorts the playlist by properties.
  *
@@ -639,10 +659,39 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer data)
 static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
-
 	g_return_if_fail (playlist);
+	g_return_if_fail (property);
 	XMMS_DBG ("Sorting on %s", property);
 	g_mutex_lock (playlist->mutex);
+
+	if (playlist->list->len > 1) {
+		GList *tmp = NULL;
+		guint i;
+
+		for (i = 0; i < playlist->list->len; i++) {
+			sortdata_t *data = g_new (sortdata_t, 1);
+
+			xmms_medialib_entry_t entry = g_array_index (playlist->list, xmms_medialib_entry_t, i);
+
+			gchar *val = xmms_medialib_entry_property_get (entry, property); 
+
+			if (!val)
+				val = g_strdup ("");
+
+			data->val = g_utf8_casefold (val, strlen (val));
+			data->id = entry;
+			g_free (val);
+
+			tmp = g_list_prepend (tmp, data);
+		}
+
+		tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
+
+		g_array_set_size (playlist->list, 0);
+		g_list_foreach (tmp, xmms_playlist_sorted_unwind, playlist->list);
+
+		g_list_free (tmp);
+	}
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0, 0);
 
