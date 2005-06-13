@@ -353,6 +353,19 @@ cmd_shuffle (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_sort (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	
+	if (argc != 3)
+		print_error ("Sort needs a property to sort on, %d", argc);
+	
+	res = xmmsc_playlist_sort (conn, argv[2]);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -944,6 +957,7 @@ cmds commands[] = {
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist and stops playback", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
+	{ "sort", "sort the playlist", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
 	{ "list", "lists the playlist", cmd_list },
 	
