@@ -31,6 +31,18 @@ OBJECT_CMD_ARG_STRINGLIST = XMMS_OBJECT_CMD_ARG_STRINGLIST
 OBJECT_CMD_ARG_DICTLIST = XMMS_OBJECT_CMD_ARG_DICTLIST
 OBJECT_CMD_ARG_PLCH = XMMS_OBJECT_CMD_ARG_PLCH
 
+cdef extern from "xmms/xmms_output.h":
+	ctypedef enum xmms_output_status_t:
+		XMMS_OUTPUT_STATUS_STOP,
+		XMMS_OUTPUT_STATUS_PLAY,
+		XMMS_OUTPUT_STATUS_PAUSE
+
+# The following constants are meant for interpreting the return value of
+# XMMS.playback_status ()
+OUTPUT_STATUS_STOP = XMMS_OUTPUT_STATUS_STOP
+OUTPUT_STATUS_PLAY = XMMS_OUTPUT_STATUS_PLAY
+OUTPUT_STATUS_PAUSE = XMMS_OUTPUT_STATUS_PAUSE
+
 # Actually we don't want a GLib Mainloop here. but for the time beeing....
 cdef extern from "glib.h" :
 	ctypedef struct GMainContext
