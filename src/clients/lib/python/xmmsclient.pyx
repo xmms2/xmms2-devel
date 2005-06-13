@@ -6,16 +6,30 @@ cdef extern from "string.h" :
 	int strcmp (signed char *s1, signed char *s2)
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
-	int XMMS_OBJECT_CMD_ARG_NONE
-	int XMMS_OBJECT_CMD_ARG_UINT32,
-	int XMMS_OBJECT_CMD_ARG_INT32,
-	int XMMS_OBJECT_CMD_ARG_STRING,
-	int XMMS_OBJECT_CMD_ARG_DICT,
-	int XMMS_OBJECT_CMD_ARG_UINT32LIST,
-	int XMMS_OBJECT_CMD_ARG_INT32LIST,
-	int XMMS_OBJECT_CMD_ARG_STRINGLIST,
-	int XMMS_OBJECT_CMD_ARG_PLCH,
-	int XMMS_OBJECT_CMD_ARG_DICTLIST,
+	ctypedef enum xmms_object_cmd_arg_type_t:
+		XMMS_OBJECT_CMD_ARG_NONE,
+		XMMS_OBJECT_CMD_ARG_UINT32,
+		XMMS_OBJECT_CMD_ARG_INT32,
+		XMMS_OBJECT_CMD_ARG_STRING,
+		XMMS_OBJECT_CMD_ARG_DICT,
+		XMMS_OBJECT_CMD_ARG_UINT32LIST,
+		XMMS_OBJECT_CMD_ARG_INT32LIST,
+		XMMS_OBJECT_CMD_ARG_STRINGLIST,
+		XMMS_OBJECT_CMD_ARG_DICTLIST,
+		XMMS_OBJECT_CMD_ARG_PLCH
+
+# The following constants are meant for interpreting the return value of
+# XMMSResult.get_type ()
+OBJECT_CMD_ARG_NONE = XMMS_OBJECT_CMD_ARG_NONE
+OBJECT_CMD_ARG_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32
+OBJECT_CMD_ARG_INT32 = XMMS_OBJECT_CMD_ARG_INT32
+OBJECT_CMD_ARG_STRING = XMMS_OBJECT_CMD_ARG_STRING
+OBJECT_CMD_ARG_DICT = XMMS_OBJECT_CMD_ARG_DICT
+OBJECT_CMD_ARG_UINT32LIST = XMMS_OBJECT_CMD_ARG_UINT32LIST
+OBJECT_CMD_ARG_INT32LIST = XMMS_OBJECT_CMD_ARG_INT32LIST
+OBJECT_CMD_ARG_STRINGLIST = XMMS_OBJECT_CMD_ARG_STRINGLIST
+OBJECT_CMD_ARG_DICTLIST = XMMS_OBJECT_CMD_ARG_DICTLIST
+OBJECT_CMD_ARG_PLCH = XMMS_OBJECT_CMD_ARG_PLCH
 
 # Actually we don't want a GLib Mainloop here. but for the time beeing....
 cdef extern from "glib.h" :
@@ -159,6 +173,15 @@ cdef class XMMSResult :
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set (self.res, ResultNotifier, self)
 		ObjectRef[self.cid] = self
+
+	def get_type (self):
+		"""
+		Return the type of data contained in this result.
+		The return value is one of the OBJECT_CMD_ARG_* constants.
+		"""
+		self._check ()
+	
+		return xmmsc_result_get_type(self.res)
 
 	def value(self):
 		"""
