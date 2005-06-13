@@ -270,9 +270,15 @@ cdef class XMMSResult :
 			raise ValueError ("Failed to retrieve value!")
 
 
-	def get_hashtable (self) :
+	def get_hashtable (self) : # alias for backward compatibility
 		"""
-		@return: A hash table containing media info.
+		@return: A dictionary containing media info.
+		"""
+		self.get_dict ()
+
+	def get_dict (self) :
+		"""
+		@return: A dictionary containing media info.
 		"""
 		self._check ()
 
@@ -311,7 +317,13 @@ cdef class XMMSResult :
 			xmmsc_result_list_next(self.res)
 		return ret
 
-	def get_hashlist (self) :
+	def get_hashlist (self) : # alias for backward compatibility
+		"""
+		@return: A list of dicts from the result structure.
+		"""
+		self.get_dictlist ()
+
+	def get_dictlist (self) :
 		"""
 		@return: A list of dicts from the result structure.
 		"""
