@@ -50,7 +50,7 @@ typedef struct xmms_ca_data_St {
  * Function prototypes
  */
 
-static void xmms_ca_status (xmms_output_t *output, xmms_output_status_t status);
+static void xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
 static gboolean xmms_ca_open (xmms_output_t *output);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
@@ -97,7 +97,7 @@ xmms_plugin_get (void)
  */
 
 static void
-xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
+xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 {
 	xmms_ca_data_t *data;
 
@@ -106,7 +106,7 @@ xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
 	g_return_if_fail (data);
 
 	XMMS_DBG ("changed status! %d", status);
-	if (status == XMMS_OUTPUT_STATUS_PLAY) {
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		if (!data->running) {
 			AudioOutputUnitStart (data->au);
 			data->running = TRUE;
