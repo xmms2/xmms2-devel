@@ -15,6 +15,8 @@
 #define XINT_TO_POINTER(i)      ((void *)  (i))
 #define XUINT_TO_POINTER(u)     ((void *)  (u))
 
+#ifndef MIN
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+#endif
 
 #endif /* __XMMS_UTILS_H__ */

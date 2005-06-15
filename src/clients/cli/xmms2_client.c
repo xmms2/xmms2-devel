@@ -385,7 +385,7 @@ static void
 print_entry (const void *key, const void *value, void *udata)
 {
 	gchar *conv;
-	gint r, w;
+	gsize r, w;
 	GError *err;
 
 	conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
@@ -397,7 +397,7 @@ static void
 cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	int id;
+	guint id;
 
 	if (argc > 2) {
 		int cnt;
@@ -599,7 +599,8 @@ static void
 cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	int id, pt = 0, ms, dur = 0;
+	guint id;
+	guint pt = 0, ms, dur = 0;
 	char *tmp;
 
 	if (argc < 3) {

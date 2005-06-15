@@ -298,7 +298,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			{
-				int32_t len;
+				uint32_t len;
 
 				if (!xmms_ipc_msg_get_string_alloc (msg, &res->data.string, &len))
 					return false;
@@ -360,7 +360,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 		case XMMS_OBJECT_CMD_ARG_STRINGLIST :
 			{
 				char *tmp;
-				int len;
+				uint32_t len;
 
 				while (42) {
 					if (!xmms_ipc_msg_get_string_alloc (msg, &tmp, &len))

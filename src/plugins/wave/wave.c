@@ -58,7 +58,7 @@ typedef struct xmms_wave_data_St {
 	val = GUINT32_TO_LE (val);
 
 #define GET_STR(buf, str, len) \
-	strncpy (str, buf, len); \
+	g_strlcpy ((gchar *)str, (gchar *)buf, len); \
 	str[len] = '\0'; \
 	buf += len;
 
@@ -197,7 +197,7 @@ xmms_wave_init (xmms_decoder_t *decoder)
 	g_return_val_if_fail (transport, FALSE);
 
 	while (read < sizeof (hdr)) {
-		gint ret = xmms_transport_read (transport, hdr + read,
+		gint ret = xmms_transport_read (transport, (gchar *)hdr + read,
 		                                sizeof (hdr) - read, &error);
 
 		if (ret <= 0) {

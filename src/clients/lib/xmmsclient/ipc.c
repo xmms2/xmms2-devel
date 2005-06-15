@@ -336,7 +336,7 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 	if (xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_ERROR) {
 		char *errstr;
-		int len;
+		uint32_t len;
 
 		if (!xmms_ipc_msg_get_string_alloc (msg, &errstr, &len))
 			errstr = strdup ("No errormsg!");

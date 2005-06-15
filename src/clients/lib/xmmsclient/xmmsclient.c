@@ -144,7 +144,8 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 {
 	xmmsc_ipc_t *ipc;
 	xmmsc_result_t *result;
-	int i, ret;
+	uint32_t i;
+	int ret;
 
 	char path[256];
 

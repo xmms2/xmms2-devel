@@ -195,7 +195,7 @@ xmms_ca_new (xmms_output_t *output)
 	ComponentDescription desc;
 	AURenderCallbackStruct input;
 	Component comp;
-	AudioDeviceID device = NULL;
+	AudioDeviceID device = 0;
 	UInt32 size = sizeof(device);
 
 	
@@ -276,7 +276,7 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 	
-	if (device != NULL) {
+	if (device != 0) {
 		AudioTimeStamp ts;
 		ts.mFlags = 0;
 		UInt32 bufferSize = 4096;
