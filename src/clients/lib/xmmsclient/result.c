@@ -31,14 +31,7 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"
 
-typedef struct xmmsc_playlist_change_St {
-	int32_t type;
-	uint32_t id;
-	uint32_t arg;
-} xmmsc_playlist_change_t;
-
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
-
 
 struct xmmsc_result_St {
 	xmmsc_connection_t *c;
@@ -68,7 +61,6 @@ struct xmmsc_result_St {
 		int32_t inte;
 		char *string;
 		x_hash_t *hash;
-		xmmsc_playlist_change_t plch;
 	} data;
 
 	x_list_t *list;
@@ -386,16 +378,6 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 					res->data.generic = NULL;
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH :
-			{
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.type))
-					return false;
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.id))
-					return false;
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.arg))
-					return false;
-			}
-			break;
 		case XMMS_OBJECT_CMD_ARG_DICTLIST :
 			{
 				x_hash_t *e;
@@ -547,41 +529,6 @@ xmmsc_result_get_error (xmmsc_result_t *res)
 	x_return_null_if_fail (res);
 
 	return res->error_str;
-}
-
-/**
- * Retrieves a playlist change. This could be called on a
- * result from #xmmsc_playlist_change
- *
- * @param res a #xmmsc_result_t containing a playlist change.
- * @param change the type of change that occoured, possible changes are listed above
- * @param id the id in the playlist that where affected (if applicable)
- * @param argument optional argument to the change
- * @return 1 if there was a playlist change in this #xmmsc_result_t
- */
-
-int
-xmmsc_result_get_playlist_change (xmmsc_result_t *res, 
-				  unsigned int *change, 
-				  unsigned int *id, 
-				  unsigned int *argument)
-{
-
-	x_return_val_if_fail (res, 0);
-
-	if (!res || res->error != XMMS_ERROR_NONE) {
-		return 0;
-	}
-
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_PLCH)
-		return 0;
-
-	*change = res->data.plch.type;
-	*id = res->data.plch.id;
-	*argument = res->data.plch.arg;
-
-
-	return 1;
 }
 
 /**

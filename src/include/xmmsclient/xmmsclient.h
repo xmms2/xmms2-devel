@@ -198,7 +198,6 @@ int xmmsc_result_list_next (xmmsc_result_t *res);
 int xmmsc_result_list_first (xmmsc_result_t *res);
 int xmmsc_result_list_valid (xmmsc_result_t *res);
 
-int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument);
 void xmmsc_result_seterror (xmmsc_result_t *res, char *errstr);
 int xmmsc_result_get_type (xmmsc_result_t *res);
 
