@@ -3,7 +3,6 @@ source=["xmmsclient.c"]
 static=False
 
 def config(env):
-	return False
 	try:
 		import distutils
 		import distutils.sysconfig
