@@ -129,7 +129,7 @@ xmmsc_playback_seek_samples (xmmsc_connection_t *c, unsigned int samples)
 xmmsc_result_t *
 xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
 {
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_OUTPUT_STATUS);
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYBACK_STATUS);
 }
 
 /**

@@ -15,7 +15,7 @@
  */
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmms/xmms_output.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 
 #include <ruby.h>
 #include <stdbool.h>
@@ -949,11 +949,11 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	                  c_broadcast_configval_changed, 0);
 
 	rb_define_const (c, "PLAY",
-	                 INT2FIX (XMMS_OUTPUT_STATUS_PLAY));
+	                 INT2FIX (XMMS_PLAYBACK_STATUS_PLAY));
 	rb_define_const (c, "STOP",
-	                 INT2FIX (XMMS_OUTPUT_STATUS_STOP));
+	                 INT2FIX (XMMS_PLAYBACK_STATUS_STOP));
 	rb_define_const (c, "PAUSE",
-	                 INT2FIX (XMMS_OUTPUT_STATUS_PAUSE));
+	                 INT2FIX (XMMS_PLAYBACK_STATUS_PAUSE));
 
 	eXmmsClientError = rb_define_class_under (mXmmsClient,
 	                                          "XmmsClientError",

@@ -41,7 +41,7 @@ typedef struct xmms_mad_data_St {
 	struct mad_frame frame;
 	struct mad_synth synth;
 
-	gchar buffer[4096];
+	guchar buffer[4096];
 	guint buffer_length;
 	guint channels;
 	guint bitrate;
@@ -162,7 +162,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
   */
 
 static void
-xmms_mad_calc_duration (xmms_decoder_t *decoder, gchar *buf, gint len, gint filesize, xmms_medialib_entry_t entry)
+xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint filesize, xmms_medialib_entry_t entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
@@ -268,7 +268,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
 	xmms_error_t error;
-	gchar buf[8192];
+	guchar buf[8192];
 	gboolean id3handled = FALSE;
 	gint ret;
 
@@ -281,7 +281,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
-	ret = xmms_transport_read (transport, buf, 8192, &error);
+	ret = xmms_transport_read (transport, (gchar *)buf, 8192, &error);
 	if (ret <= 0) {
 		return;
 	}
@@ -289,7 +289,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (xmms_transport_islocal (transport) && 
 			ret >= 10 && 
 			xmms_mad_id3v2_header (buf, &head)) {
-		gchar *id3v2buf;
+		guchar *id3v2buf;
 		gint pos;
 
 		/** @todo sanitycheck head.len */
@@ -305,7 +305,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 			
 			while (pos < head.len) {
 				ret = xmms_transport_read (transport,
-							   id3v2buf + pos,
+							   (gchar *)id3v2buf + pos,
 							   MIN(4096,head.len - pos), &error);
 				if (ret <= 0) {
 					xmms_log_error ("error reading data for id3v2-tag");
@@ -313,11 +313,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 				}
 				pos += ret;
 			}
-			ret = xmms_transport_read (transport, buf, 8192, &error);
+			ret = xmms_transport_read (transport,(gchar *) buf, 8192, &error);
 		} else {
 			/* just make sure buf is full */
 			memmove (buf, buf + head.len + 10, 8192 - (head.len+10));
-			ret += xmms_transport_read (transport, buf + 8192 - (head.len+10), head.len + 10, &error) - head.len - 10;
+			ret += xmms_transport_read (transport, (gchar *)buf + 8192 - (head.len+10), head.len + 10, &error) - head.len - 10;
 		}
 		
 		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
@@ -328,7 +328,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 
 	if (xmms_transport_islocal (transport) && !id3handled) {
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
-		ret = xmms_transport_read (transport, buf, 128, &error);
+		ret = xmms_transport_read (transport, (gchar *)buf, 128, &error);
 		if (ret == 128) {
 			xmms_mad_id3_parse (buf, entry);
 		}
@@ -429,14 +429,14 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	g_return_val_if_fail (transport, FALSE);
 
 	if (data->stream.next_frame) {
-		gchar *buffer = data->buffer;
-		const gchar *nf = data->stream.next_frame;
+		guchar *buffer = data->buffer;
+		const guchar *nf = data->stream.next_frame;
 		memmove (data->buffer, data->stream.next_frame,
 				 data->buffer_length = (&buffer[data->buffer_length] - nf));
 	} 
 	
 	ret = xmms_transport_read (transport, 
-				   data->buffer + data->buffer_length,
+				   (gchar *)data->buffer + data->buffer_length,
 				   4096 - data->buffer_length,
 				   &error);
 	

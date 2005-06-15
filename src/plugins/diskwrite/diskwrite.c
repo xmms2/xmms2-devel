@@ -50,7 +50,7 @@
 
 #define PUT_STR(buf, str) do { \
 	size_t len = strlen (str); \
-	strncpy (buf, str, len); \
+	g_strlcpy ((gchar *)buf, str, len); \
 	buf += len; \
 } while (0)
 
@@ -301,7 +301,8 @@ finalize_wave (xmms_diskwrite_data_t *data)
 	guint16 channels = 2, bits_per_sample = 16;
 	guint16 bytes_per_sample = (channels * bits_per_sample) / 8;
 	guint32 samplerate = 44100;
-	guint8 hdr[WAVE_HEADER_SIZE], *ptr = hdr;
+	gint8 hdr[WAVE_HEADER_SIZE];
+	gint8 *ptr = hdr;
 
 	g_return_if_fail (data->fp);
 

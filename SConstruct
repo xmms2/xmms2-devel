@@ -39,13 +39,14 @@ opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
 opts.Add('PKGCONFIGDIR', 'Where should we put our .pc files?', '$PREFIX/lib/pkgconfig')
 opts.Add(BoolOption('SHOWCACHE', 'show what flags that lives inside cache', 0))
-opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
 opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
+opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
 
 # base CCPATH
-
 base_env = xmmsenv.XMMSEnvironment(options=opts)
+base_env["CONFIG"] = 0
 opts.Save("options.cache", base_env)
+
 
 base_env.Append(CPPPATH=["#src/include"])
 base_env.pkgconfig("sqlite3", fail=True, libs=False)

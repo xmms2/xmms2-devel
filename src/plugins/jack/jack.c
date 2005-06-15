@@ -790,7 +790,7 @@ xmms_jack_buffersize_get(xmms_output_t *output)
  * @param requested status
  */
 static void
-xmms_jack_status (xmms_output_t *output, xmms_output_status_t status)
+xmms_jack_status (xmms_output_t *output, xmms_playback_status_t status)
 {
 	xmms_jack_data_t *data;
 
@@ -798,8 +798,8 @@ xmms_jack_status (xmms_output_t *output, xmms_output_status_t status)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	XMMS_DBG ("changed status! '%s'", (status == XMMS_OUTPUT_STATUS_PLAY) ? "PLAYING" : "STOPPED");
-	if(status == XMMS_OUTPUT_STATUS_PLAY)
+	XMMS_DBG ("changed status! '%s'", (status == XMMS_PLAYBACK_STATUS_PLAY) ? "PLAYING" : "STOPPED");
+	if(status == XMMS_PLAYBACK_STATUS_PLAY)
 		data->state = PLAYING;
 	else
 		data->state = STOPPED;

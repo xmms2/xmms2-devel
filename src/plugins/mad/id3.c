@@ -90,25 +90,25 @@ add_to_entry (xmms_id3v2_header_t *head,
 	if (head->ver == 4) {
 		if (val[0] == 0x00) {
 			/* ISO-8859-1 */
-			nval = g_convert (val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		} else if (len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
 			/* UTF-16 with BOM */
-			nval = g_convert (val+1, len-1, "UTF-8", "UTF-16", &readsize, &writsize, &err);
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16", &readsize, &writsize, &err);
 		} else if (val[0] == 0x02) {
 			/* UTF-16 without BOM */
-			nval = g_convert (val+1, len-1, "UTF-8", "UTF-16BE", &readsize, &writsize, &err);
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16BE", &readsize, &writsize, &err);
 		} else if (val[0] == 0x03) {
 			/* UTF-8 */
-			nval = g_strndup (val+1, len-1);
+			nval = g_strndup ((gchar *)val+1, len-1);
 		} else {
 			XMMS_DBG ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
 			return;
 		}
 	} else if (head->ver == 2 || head->ver == 3) {
 		if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
-			nval = g_convert (val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
+			nval = g_convert ((gchar *)val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
 		} else {
-			nval = g_convert (val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+			nval = g_convert ((gchar *)val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		}
 	}
 
@@ -137,21 +137,21 @@ xmms_mad_handle_id3v2_txxx (xmms_id3v2_header_t *head,
 		len -= 1; /* total len of buffer */
 	}
 
-	l2 = strlen (buf);
+	l2 = strlen ((gchar *)buf);
 
-	val = g_strndup (buf+l2+1, len-l2-1);
+	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
 
 	if ((len - l2 - 1) < 1) {
 		g_free (val);
 		return;
 	}
 
-	if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
+	if (g_strcasecmp ((gchar *)buf, "MusicBrainz Album Id") == 0)
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
-	else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
+	else if (g_strcasecmp ((gchar *)buf, "MusicBrainz Artist Id") == 0)
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
-	else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
-		 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+	else if ((g_strcasecmp ((gchar *)buf, "MusicBrainz Album Artist Id") == 0) &&
+		 (g_strncasecmp ((gchar *)(buf+l2+1), MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
 	}
 
@@ -166,9 +166,9 @@ xmms_mad_handle_id3v2_ufid (xmms_id3v2_header_t *head,
 			    gint len)
 {
 	gchar *val;
-	guint32 l2 = strlen (buf);
-	val = g_strndup (buf+l2+1, len-l2-1);
-	if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
+	guint32 l2 = strlen ((gchar *)buf);
+	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
+	if (g_strcasecmp ((gchar *)buf, "http://musicbrainz.org") == 0)
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
 	g_free (val);
 }
@@ -204,7 +204,7 @@ static struct id3tags_t tags[] = {
 
 
 static void
-xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, gchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
+xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, guchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
 {
 	gint i = 0;
 
@@ -313,7 +313,7 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 			buf += size+10;
 			len -= size+10;
 		} else if (head->ver == 2) {
-			if ( len < 6) {
+			if (len < 6) {
 				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
 				return FALSE;
 			}
@@ -476,7 +476,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_free (tmp);
 	}
 	
-	if (atoi (&tag->u.v1_1.track_number) > 0) {
+	if (atoi ((char *)(&tag->u.v1_1.track_number)) > 0) {
 		/* V1.1 */
 		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);

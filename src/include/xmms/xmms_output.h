@@ -30,18 +30,13 @@ typedef struct xmms_output_St xmms_output_t;
 
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_sample.h"
-
-typedef enum {
-	XMMS_OUTPUT_STATUS_STOP,
-	XMMS_OUTPUT_STATUS_PLAY,
-	XMMS_OUTPUT_STATUS_PAUSE,
-} xmms_output_status_t; /** @todo RENAME */
+#include "xmmsc/xmmsc_idnumbers.h"
 
 /*
  * Output plugin methods
  */
 
-typedef void (*xmms_output_status_method_t) (xmms_output_t *output, xmms_output_status_t status);
+typedef void (*xmms_output_status_method_t) (xmms_output_t *output, xmms_playback_status_t status);
 typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer, gint len);
 typedef void (*xmms_output_destroy_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
