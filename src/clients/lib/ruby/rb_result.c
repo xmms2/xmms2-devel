@@ -399,23 +399,6 @@ static VALUE c_hashlist_get (VALUE self)
 	return a;
 }
 
-static VALUE c_playlist_change_get (VALUE self)
-{
-	RbResult *res = NULL;
-	unsigned int type = 0, id = 0, arg = 0;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	if (!(xmmsc_result_get_playlist_change (res->real, &type, &id,
-	                                        &arg))) {
-		rb_raise (eValueError, "cannot retrieve value");
-		return Qnil;
-	}
-
-	return rb_ary_new3 (3, UINT2NUM (type), UINT2NUM (id),
-	                    UINT2NUM (arg));
-}
-
 /*
  * call-seq:
  *  res.value -> int or string or hash or array
@@ -459,9 +442,6 @@ static VALUE c_value_get (VALUE self)
 		case XMMS_OBJECT_CMD_ARG_DICTLIST:
 			ret = c_hashlist_get (self);
 			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH:
-			ret = c_playlist_change_get (self);
-			break;
 		default:
 			break;
 	}
@@ -494,8 +474,6 @@ void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
 	rb_define_method (cResult, "uintlist", c_uintlist_get, 0);
 	rb_define_method (cResult, "stringlist", c_stringlist_get, 0);
 	rb_define_method (cResult, "hashlist", c_hashlist_get, 0);
-	rb_define_method (cResult, "playlist_change",
-	                  c_playlist_change_get, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
