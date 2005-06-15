@@ -154,16 +154,6 @@ xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
 	xmmsc_result_unref (res);\
 }
 	
-typedef enum {
-	XMMSC_PLAYLIST_ADD,
-	XMMSC_PLAYLIST_SET_POS,
-	XMMSC_PLAYLIST_SHUFFLE,
-	XMMSC_PLAYLIST_REMOVE,
-	XMMSC_PLAYLIST_CLEAR,
-	XMMSC_PLAYLIST_MOVE,
-	XMMSC_PLAYLIST_SORT
-} xmmsc_playlist_changed_actions_t;
-
 /*
  * RESULTS
  */
