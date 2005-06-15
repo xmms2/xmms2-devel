@@ -50,10 +50,6 @@ struct xmms_object_St {
 
 typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
 
-
-struct xmms_playlist_changed_msg_St;
-typedef struct xmms_playlist_changed_msg_St xmms_playlist_changed_msg_t;
-
 #define XMMS_OBJECT_CMD_MAX_ARGS 2
 typedef struct {
 	xmms_object_cmd_arg_type_t types[XMMS_OBJECT_CMD_MAX_ARGS];
@@ -72,7 +68,6 @@ typedef struct {
 		GList *intlist;
 		GList *stringlist; /* GList of const gchar * */
 		GList *hashlist;
-		xmms_playlist_changed_msg_t *plch;
 	} retval;
 	xmms_error_t error;
 } xmms_object_cmd_arg_t;
@@ -129,7 +124,6 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_RETVAL_INT32LIST() arg->retval.intlist = 
 #define __XMMS_CMD_DO_RETVAL_STRINGLIST() arg->retval.stringlist = 
 #define __XMMS_CMD_DO_RETVAL_STRING() arg->retval.string = 
-#define __XMMS_CMD_DO_RETVAL_PLCH() arg->retval.plch = 
 
 #define XMMS_CMD_DEFINE(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2) static void \
 __int_xmms_cmd_##cmdid (xmms_object_t *object, xmms_object_cmd_arg_t *arg) \

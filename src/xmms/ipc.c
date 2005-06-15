@@ -140,14 +140,6 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
 }
 
 static void
-xmms_ipc_handle_playlist_chmsg (xmms_ipc_msg_t *msg, xmms_playlist_changed_msg_t *chpl)
-{
-	xmms_ipc_msg_put_uint32 (msg, chpl->type);
-	xmms_ipc_msg_put_uint32 (msg, chpl->id);
-	xmms_ipc_msg_put_uint32 (msg, chpl->arg);
-}
-
-static void
 xmms_ipc_do_hashtable (xmms_ipc_msg_t *msg, GHashTable *table)
 {
 	gint i = 0;
@@ -195,12 +187,6 @@ xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
 				xmms_ipc_do_hashtable (msg, (GHashTable *)n->data);
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH:
-			{
-				xmms_playlist_changed_msg_t *chmsg = arg->retval.plch;
-				xmms_ipc_handle_playlist_chmsg (msg, chmsg);
-			}
-			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			xmms_ipc_do_hashtable (msg, arg->retval.hashtable);
 			break;
@@ -246,9 +232,6 @@ xmms_ipc_free_arg_value (xmms_object_cmd_arg_t *arg)
 				nxt = g_list_next (n);
 				g_list_free_1 (n);
 			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH:
-			g_free (arg->retval.plch);
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT: 
 			g_hash_table_destroy (arg->retval.hashtable);

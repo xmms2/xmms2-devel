@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #ifndef __SIGNAL_XMMS_H__
 #define __SIGNAL_XMMS_H__
 
@@ -30,7 +27,6 @@ typedef enum {
 	XMMS_OBJECT_CMD_ARG_INT32LIST,
 	XMMS_OBJECT_CMD_ARG_STRINGLIST,
 	XMMS_OBJECT_CMD_ARG_DICTLIST,
-	XMMS_OBJECT_CMD_ARG_PLCH,
 } xmms_object_cmd_arg_type_t;
 
 typedef enum {

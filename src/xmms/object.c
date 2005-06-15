@@ -239,9 +239,6 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
 			arg.retval.stringlist = (GList*) va_arg (ap, gpointer);
 			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH:
-			arg.retval.plch = (xmms_playlist_changed_msg_t *) va_arg (ap, gpointer);
-			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
 	}
