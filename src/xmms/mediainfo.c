@@ -124,9 +124,9 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 {
 	xmms_mediainfo_reader_t *mir = userdata;
 	const xmms_object_cmd_arg_t *oarg = arg;
-	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
+	GHashTable *chmsg = oarg->retval.hashtable;
 
-	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
+	if (atoi (g_hash_table_lookup (chmsg, "type")) == XMMS_PLAYLIST_CHANGED_ADD) {
 		xmms_mediainfo_reader_wakeup (mir);
 	}
 }

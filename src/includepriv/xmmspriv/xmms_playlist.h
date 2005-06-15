@@ -48,12 +48,6 @@ typedef enum {
 struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
-struct xmms_playlist_changed_msg_St {
-	gint type;
-	guint id;
-	guint arg;
-};
-
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_medialib.h"
 #include "xmmspriv/xmms_mediainfo.h"
