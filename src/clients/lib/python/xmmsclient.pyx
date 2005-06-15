@@ -20,7 +20,6 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_OBJECT_CMD_ARG_INT32LIST,
 		XMMS_OBJECT_CMD_ARG_STRINGLIST,
 		XMMS_OBJECT_CMD_ARG_DICTLIST,
-		XMMS_OBJECT_CMD_ARG_PLCH
 
 # The following constants are meant for interpreting the return value of
 # XMMSResult.get_type ()
@@ -33,7 +32,6 @@ OBJECT_CMD_ARG_UINT32LIST = XMMS_OBJECT_CMD_ARG_UINT32LIST
 OBJECT_CMD_ARG_INT32LIST = XMMS_OBJECT_CMD_ARG_INT32LIST
 OBJECT_CMD_ARG_STRINGLIST = XMMS_OBJECT_CMD_ARG_STRINGLIST
 OBJECT_CMD_ARG_DICTLIST = XMMS_OBJECT_CMD_ARG_DICTLIST
-OBJECT_CMD_ARG_PLCH = XMMS_OBJECT_CMD_ARG_PLCH
 
 cdef extern from "xmms/xmms_output.h":
 	ctypedef enum xmms_output_status_t:
@@ -223,8 +221,6 @@ cdef class XMMSResult:
 			return self.get_stringlist()
 		elif type == XMMS_OBJECT_CMD_ARG_DICTLIST:
 			return self.get_hashlist()
-		elif type == XMMS_OBJECT_CMD_ARG_PLCH:
-			return self.get_playlistchange()
 
 	def get_broadcast(self):
 		return self.broadcast
@@ -367,21 +363,6 @@ cdef class XMMSResult:
 			ret.append(to_unicode(buf))
 			xmmsc_result_list_next(self.res)
 		return ret
-
-	def get_playlistchange(self):
-		"""
-		@return: a tuple with(changeid, id, argument)
-		"""
-		cdef unsigned int change
-		cdef unsigned int id
-		cdef unsigned int arg
-
-		self._check()
-		if xmmsc_result_get_playlist_change(self.res, &change, &id, &arg):
-			return(change, id, arg)
-		else:
-			raise ValueError("Failed to retrieve value!")
-
 
 	def restart(self):
 		self.res = xmmsc_result_restart(self.res)
