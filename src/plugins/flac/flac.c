@@ -321,6 +321,27 @@ xmms_flac_init (xmms_decoder_t *decoder)
 	return TRUE;
 }
 
+typedef struct {
+	gchar *vname;
+	gchar *xname;
+} props;
+
+#define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
+
+/** These are the properties that we extract from the comments */
+static props properties[] = {
+	{ "title", XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE },
+	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST },
+	{ "album", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM },
+	{ "tracknumber", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR },
+	{ "date", XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR },
+	{ "genre", XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE },
+	{ "musicbrainz_albumid", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID },
+	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID },
+	{ "musicbrainz_trackid", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID },
+	{ NULL, 0 }
+};
+
 static void
 xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 {
@@ -338,22 +359,28 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 		xmms_flac_init (decoder);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
-
+	
 	if (data->vorbiscomment != NULL) {
 		num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
 
 		for (current = 0; current < num_comments; current++) {
 			gchar **s, *val;
 			guint length;
+			gint i = 0;
 
 			s = g_strsplit (data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
 			length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
-
 			val = g_strndup (s[1], length);
-			xmms_medialib_entry_property_set (entry, s[0], val);
-			XMMS_DBG ("Setting %s to %s", s[0], val);
+			while (properties[i].vname) {
+				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
+				    (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
+					xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
+					xmms_medialib_entry_property_set (entry, properties[i].xname, val);
+				}
+				i++;
+			}
 			g_free (val);
-
 			g_strfreev (s);
 		}
 	}
