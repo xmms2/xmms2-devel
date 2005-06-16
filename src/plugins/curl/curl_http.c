@@ -180,6 +180,8 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
 	curl_easy_setopt (data->curl_easy, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_VERBOSE, verbose);
+	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYPEER, 0);
+	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYHOST, 0);
 
 	if (metaint == 1)
 		curl_easy_setopt (data->curl_easy, CURLOPT_HTTPHEADER, data->http_headers);
