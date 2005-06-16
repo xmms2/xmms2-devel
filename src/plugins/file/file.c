@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
@@ -113,10 +110,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 
 	XMMS_DBG ("xmms_file_init (%p, %s)", transport, url);
 
-	if (g_strncasecmp (url, "file:", 5) == 0)
-		urlptr = strchr (url, '/');
-	else
-		urlptr = url;
+	urlptr = strchr (url, '/');
 
 	if (!urlptr) {
 		return FALSE;
@@ -131,7 +125,7 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	}
 
 	XMMS_DBG ("Opening %s", urlptr);
-	fd = open (urlptr, O_RDONLY | O_NONBLOCK);
+	fd = open (urlptr, O_RDONLY);
 	if (fd == -1) {
 		return FALSE;
 	}
@@ -176,9 +170,7 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
-	do {
-		ret = read (data->fd, buffer, len);
-	} while (ret == -1 && errno == EAGAIN);
+	ret = read (data->fd, buffer, len);
 
 	if (ret == 0)
 		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");
