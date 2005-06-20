@@ -517,15 +517,21 @@ get_effect_list (xmms_output_t *output)
 		g_snprintf (key, sizeof (key), "effect.order.%i", i++);
 
 		cfg = xmms_config_lookup (key);
-		if (!cfg)
+		if (!cfg) {
+			/* this is just a ugly hack to have a configvalue
+			   to set */
+			xmms_config_value_register (key, "", NULL, NULL);
 			break;
+		}
 
 		name = xmms_config_value_string_get (cfg);
 
+		if (!name[0])
+			break;
+
 		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_EFFECT, name);
 		if (plugin) {
-			list = g_list_prepend (list,
-			                       xmms_effect_new (plugin, output));
+			list = g_list_prepend (list, xmms_effect_new (plugin));
 
 			/* xmms_plugin_find() increases the refcount and
 			 * xmms_effect_new() does, too, so release one reference
