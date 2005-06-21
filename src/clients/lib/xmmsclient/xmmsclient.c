@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <limits.h>
 
 #include <pwd.h>
