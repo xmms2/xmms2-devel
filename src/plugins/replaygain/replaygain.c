@@ -30,7 +30,6 @@
 #include <glib.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 /**
  * Replaygain modes.
@@ -187,62 +186,62 @@ xmms_replaygain_process (xmms_effect_t *effect,
 	switch (data->sample_format) {
 		case XMMS_SAMPLE_FORMAT_S8:
 			for (i = 0; i < len; i++) {
-				xmms_samples8_t *samples = (gint8 *) buf;
+				xmms_samples8_t *samples = (xmms_samples8_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, INT8_MIN, INT8_MAX);
+				samples[i] = CLAMP (sample, XMMS_SAMPLES8_MIN, XMMS_SAMPLES8_MAX);
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_U8:
 			for (i = 0; i < len; i++) {
-				xmms_sampleu8_t *samples = (guint8 *) buf;
+				xmms_sampleu8_t *samples = (xmms_sampleu8_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, 0, UINT8_MAX);
+				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU8_MAX);
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_S16:
 			for (i = 0; i < len; i++) {
-				xmms_samples16_t *samples = (gint16 *) buf;
+				xmms_samples16_t *samples = (xmms_samples16_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, INT16_MIN, INT16_MAX);
+				samples[i] = CLAMP (sample, XMMS_SAMPLES16_MIN, XMMS_SAMPLES16_MAX);
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_U16:
 			for (i = 0; i < len; i++) {
-				xmms_sampleu16_t *samples = (guint16 *) buf;
+				xmms_sampleu16_t *samples = (xmms_sampleu16_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, 0, UINT16_MAX);
+				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU16_MAX);
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_S32:
 			for (i = 0; i < len; i++) {
-				xmms_samples32_t *samples = (gint32 *) buf;
+				xmms_samples32_t *samples = (xmms_samples32_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, INT32_MIN, INT32_MAX);
+				samples[i] = CLAMP (sample, XMMS_SAMPLES32_MIN, XMMS_SAMPLES32_MAX);
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_U32:
 			for (i = 0; i < len; i++) {
-				xmms_sampleu32_t *samples = (guint32 *) buf;
+				xmms_sampleu32_t *samples = (xmms_sampleu32_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, 0, UINT32_MAX);
+				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU32_MAX);
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_FLOAT:
 			for (i = 0; i < len; i++) {
-				xmms_samplefloat_t *samples = (gfloat *) buf;
+				xmms_samplefloat_t *samples = (xmms_samplefloat_t *) buf;
 				samples[i] *= data->gain;
 			}
 
 			break;
 		case XMMS_SAMPLE_FORMAT_DOUBLE:
 			for (i = 0; i < len; i++) {
-				xmms_sampledouble_t *samples = (gdouble *) buf;
+				xmms_sampledouble_t *samples = (xmms_sampledouble_t *) buf;
 				samples[i] *= data->gain;
 			}
 		default:
