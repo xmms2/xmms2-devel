@@ -20,6 +20,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <sys/time.h>
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsclient/xmmsclient.h"
 
