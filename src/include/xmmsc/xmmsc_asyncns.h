@@ -28,9 +28,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-/** \mainpage
+/** 
  *
- * \section moo Method of operation
+ * @defgroup asyncns
+ * @{
  *
  * To use libasyncns allocate an asyncns_t object with
  * asyncns_new(). This will spawn a number of worker threads (or processes, depending on what is available) which
@@ -42,9 +43,6 @@
  * Since libasyncns may fork off new processes you have to make sure that
  * your program is not irritated by spurious SIGCHLD signals.
  */
-
-/** \example asyncns-test.c
- * An example program */
 
 #ifdef  __cplusplus
 extern "C" {
@@ -135,3 +133,6 @@ void* asyncns_getuserdata(asyncns_t *asyncns, asyncns_query_t *q);
 #endif
     
 #endif
+
+/* @}
+ */
