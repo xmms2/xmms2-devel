@@ -23,6 +23,7 @@
 #define ID3v2_HEADER_FLAGS_UNSYNC 0x80
 #define ID3v2_HEADER_FLAGS_EXTENDED 0x40
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
+#define ID3v2_HEADER_FLAGS_FOOTER 0x10
 
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -280,6 +281,11 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 	
 	header->len = id3head->size[0] << 21 | id3head->size[1] << 14 |
 		      id3head->size[2] << 7 | id3head->size[3];
+
+	if (id3head->flags & ID3v2_HEADER_FLAGS_FOOTER) {
+		/* footer is copy of header */
+		header->len += sizeof(id3head_t);
+	}
 
 	return TRUE;
 }
