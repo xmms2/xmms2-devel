@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <pwd.h>
 #include <sys/types.h>

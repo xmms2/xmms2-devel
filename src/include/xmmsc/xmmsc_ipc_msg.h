@@ -17,7 +17,7 @@
 #ifndef __XMMS_IPC_MSG_H__
 #define __XMMS_IPC_MSG_H__
 
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"

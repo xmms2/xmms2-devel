@@ -39,7 +39,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <math.h>
 
 /*
@@ -277,6 +276,7 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 			decoder->effects = g_list_delete_link (decoder->effects, l);
 			l = n;
 		} else {
+			xmms_effect_entry_set (l->data, decoder->entry);
 			l = g_list_next (l);
 		}
 	}

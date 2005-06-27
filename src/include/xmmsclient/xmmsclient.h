@@ -17,7 +17,7 @@
 #ifndef __XMMS_CLIENT_H__
 #define __XMMS_CLIENT_H__
 
-#include <stdint.h>
+#include <inttypes.h>
 #include "xmmsc/xmmsc_ipc_msg.h"
 
 #ifdef __cplusplus

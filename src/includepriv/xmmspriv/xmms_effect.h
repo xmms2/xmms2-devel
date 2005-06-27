@@ -31,7 +31,7 @@
  */
 
 
-xmms_effect_t *xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output);
+xmms_effect_t *xmms_effect_new (xmms_plugin_t *plugin);
 void xmms_effect_free (xmms_effect_t *effect);
 gboolean xmms_effect_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
 void xmms_effect_run (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
