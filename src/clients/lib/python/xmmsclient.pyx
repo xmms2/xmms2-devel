@@ -419,7 +419,7 @@ cdef class XMMS:
 	this class may be used to control and interact with XMMS2.
 	"""
 	cdef xmmsc_connection_t *conn
-	cdef object loop
+	cdef object do_loop
 	cdef object wakeup
 	cdef object disconnect_fun
 	cdef object needout_fun
@@ -445,24 +445,24 @@ cdef class XMMS:
 		if self.disconnect_fun is not None:
 			self.disconnect_fun(self)
 
-	def exit_python_loop(self):
-		""" Exits from the L{python_loop} call """
-		self.loop = False
+	def exit_loop(self):
+		""" Exits from the L{loop} call """
+		self.do_loop = False
 		write(self.wakeup, "42")
 
-	def python_loop(self):
+	def loop(self):
 		"""
 		Main client loop for most python clients. Call this to run the
 		client once everything has been set up. This function blocks
-		until L{exit_python_loop} is called.
+		until L{exit_loop} is called.
 		"""
 		fd = xmmsc_io_fd_get(self.conn)
 		(r, w) = os.pipe()
 
-		self.loop = True
+		self.do_loop = True
 		self.wakeup = w
 
-		while self.loop:
+		while self.do_loop:
 
 			if self.want_ioout():
 				w = [fd]
@@ -477,7 +477,7 @@ cdef class XMMS:
 				xmmsc_io_out_handle(self.conn)
 			if e and e[0] == fd:
 				xmmsc_io_disconnect(self.conn)
-				self.loop = False
+				self.do_loop = False
 
 	def ioin(self):
 		"""
@@ -1386,12 +1386,15 @@ class XMMSSync:
 	"""
 	# This implementation avoids using nested function definitions, as they
 	# are not supported by Pyrex.
-	def __init__(self, xmms):
+	def __init__(self, clientname=None, xmms=None):
 		"""
 		This constructor takes a single argument which specifies the
 		XMMS object to wrap.
 		"""
-		self.__xmms = xmms
+		if not xmms:
+			self.__xmms = XMMS(clientname)
+		else:
+			self.__xmms = xmms
 
 	def __getattr__(self, name):
 		attr = getattr(self.__xmms, name)
