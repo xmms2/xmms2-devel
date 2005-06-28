@@ -23,6 +23,7 @@
 #define ID3v2_HEADER_FLAGS_UNSYNC 0x80
 #define ID3v2_HEADER_FLAGS_EXTENDED 0x40
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
+#define ID3v2_HEADER_FLAGS_FOOTER 0x10
 
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -241,30 +242,55 @@ xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, guchar *buf
 gboolean
 xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 {
-	if (buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') {
-		header->ver = buf[3];
-		header->rev = buf[4];
+	typedef struct {
+		/* All members are defined in terms of chars so padding does not
+		 * occur. Is there a cleaner way to keep the compiler from
+		 * padding? */
 		
-		if (header->ver == 4 || header->ver == 3 || header->ver == 2) {
-			gint32 len;
-			
-			header->flags = buf[5];
-			
-			len = (buf[6] << 21) | (buf[7] << 14) |
-				(buf[8] << 7) | buf[9];
+		guchar     id[3];
+		guchar     ver;
+		guchar     rev;
+		guchar     flags;
+		guchar     size[4];
+	} id3head_t;
+	
+	id3head_t *id3head;
 
-			if ((buf[6] | buf[7] | buf[8] | buf[9]) & 0x80) {
-				XMMS_DBG ("WARNING: id3v2 tag having lenpath with msb set! Probably broken tag/tag-writer. %02x %02x %02x %02x",
-					  buf[6], buf[7], buf[8], buf[9]);
-			}
-			
-			header->len = len;
+	id3head = (id3head_t *) buf;
+	
+	if (strncmp(id3head->id, "ID3", 3)) return FALSE;
 
-			return TRUE;
-		}
+	if (id3head->ver > 4 || id3head->ver < 2) {
+		XMMS_DBG ("Unsupported id3v2 version (%d)", id3head->ver);
+		return FALSE;
 	}
-	return FALSE;
+	
+	if ((id3head->size[0] | id3head->size[1] | id3head->size[2] |
+				id3head->size[3]) & 0x80) {
+		xmms_log("WARNING: id3v2 tag having lenpath with msb set \
+			  (%02x %02x %02x %02x)!  Probably broken \
+			  tag/tag-writer. Skipping Tag.",
+			  id3head->size[0], id3head->size[1],
+			  id3head->size[2], id3head->size[3]);
+		return FALSE;
+	}
+	
+	header->ver = id3head->ver;
+	header->rev = id3head->rev;
+	header->flags = id3head->flags;
+	
+	header->len = id3head->size[0] << 21 | id3head->size[1] << 14 |
+		      id3head->size[2] << 7 | id3head->size[3];
+
+	if (id3head->flags & ID3v2_HEADER_FLAGS_FOOTER) {
+		/* footer is copy of header */
+		header->len += sizeof(id3head_t);
+	}
+
+	return TRUE;
 }
+
+
 /**
  * 
  */
