@@ -27,6 +27,8 @@ class XMMSEnvironment(Environment):
 		apply(self.Replace, (), kw)
 		self.conf = SCons.SConf.SConf(self)
 
+		self["ENV"] = os.environ
+
 		if os.path.isfile("config.cache") and self["CONFIG"] == 0 and not reconfigure:
 			try:
 				self.config_cache=load(open("config.cache", 'rb+'))
