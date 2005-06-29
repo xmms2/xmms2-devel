@@ -50,7 +50,7 @@ typedef gint16 xmms_samples16_t;
 typedef guint16 xmms_sampleu16_t;
 #define XMMS_SAMPLEU16_MAX 65535
 typedef gint32 xmms_samples32_t;
-#define XMMS_SAMPLES32_MIN -2147483648L
+#define XMMS_SAMPLES32_MIN (-2147483647L-1)
 #define XMMS_SAMPLES32_MAX 2147483647L
 typedef guint32 xmms_sampleu32_t;
 #define XMMS_SAMPLEU32_MAX 4294967295UL
