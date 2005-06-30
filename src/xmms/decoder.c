@@ -609,6 +609,10 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
 	ret = init_meth && init_meth (decoder);
 	if (!ret) {
 		decoder->output_format_list = NULL;
+	} else if (!decoder->converter) {
+		xmms_log_error ("buggy plugin: "
+		                "init method didn't set sample format");
+		ret = FALSE;
 	}
 
 	return ret;
