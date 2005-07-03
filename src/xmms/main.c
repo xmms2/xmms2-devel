@@ -386,7 +386,10 @@ main (int argc, char **argv)
 
 	parse_config ();
 	
-	xmms_log_init (doLog ? "xmmsd" : "null");
+	if (!xmms_log_init (doLog ? "xmmsd" : "null")) {
+		fprintf (stderr, "Couldn't open logfile!!\n");
+		return 1;
+	}
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);

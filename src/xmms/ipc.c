@@ -760,8 +760,6 @@ xmms_ipc_init (void)
 	
 	ipc = g_new0 (xmms_ipc_t, 1);
 
-	XMMS_DBG ("IPC Initialized with %d CMDs!", XMMS_IPC_CMD_END);
-
 	global_ipc_lock = g_mutex_new ();
 	global_ipc = ipc;
 
