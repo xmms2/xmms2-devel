@@ -433,6 +433,7 @@ main (int argc, char **argv)
 
 	ipcpath = xmms_config_value_string_get (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
+		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
 	}
 
