@@ -210,11 +210,12 @@ xmms_ipc_tcp_server_init (const char *path)
 	struct servent *sent;
 	int off = 1;
 
-
 	fd = socket (AF_INET, SOCK_STREAM, 0);
 	if (fd == -1) {
 		return NULL;
 	}
+
+	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (char *) &off, sizeof (off));
 
 	host = strdup (path);
 	port = strchr (host, ':');
@@ -272,8 +273,6 @@ xmms_ipc_tcp_server_init (const char *path)
 		
 	setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, (char *) &off, sizeof (off));
 
-	/* Make sure that we can use this socket again... good thing */
-	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, (char *) &off, sizeof (off));
 		
 	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
