@@ -50,6 +50,8 @@
 # define XMMS_OUTPUT_DEFAULT "alsa"
 #elif XMMS_OS_OPENBSD
 # define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_NETBSD
+# define XMMS_OUTPUT_DEFAULT "oss"
 #elif XMMS_OS_SOLARIS
 # define XMMS_OUTPUT_DEFAULT "sun"
 #elif XMMS_OS_DARWIN
@@ -384,7 +386,10 @@ main (int argc, char **argv)
 
 	parse_config ();
 	
-	xmms_log_init (doLog ? "xmmsd" : "null");
+	if (!xmms_log_init (doLog ? "xmmsd" : "null")) {
+		fprintf (stderr, "Couldn't open logfile!!\n");
+		return 1;
+	}
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
@@ -428,6 +433,7 @@ main (int argc, char **argv)
 
 	ipcpath = xmms_config_value_string_get (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
+		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
 	}
 

@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <errno.h>
 
 #include "xmmsc/xmmsc_idnumbers.h"
@@ -758,8 +759,6 @@ xmms_ipc_init (void)
 	xmms_ipc_t *ipc;
 	
 	ipc = g_new0 (xmms_ipc_t, 1);
-
-	XMMS_DBG ("IPC Initialized with %d CMDs!", XMMS_IPC_CMD_END);
 
 	global_ipc_lock = g_mutex_new ();
 	global_ipc = ipc;

@@ -65,6 +65,8 @@ class XMMSEnvironment(Environment):
 			self.platform = 'freebsd'
 		elif sys.platform.startswith("openbsd"):
 			self.platform = 'openbsd'
+		elif sys.platform.startswith("netbsd"):
+			self.platform = 'netbsd'
 		else:
 			self.platform = sys.platform
 			

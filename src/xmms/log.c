@@ -115,8 +115,7 @@ xmms_log_init (const gchar *filename)
 		localtime(&now)) == 0) {
 			snprintf(fnameTime, 18, "%i", (int) now);
 		}
-		xmms_log_filename = g_strdup_printf ("/tmp/%s.%s", filename, \
-		fnameTime);
+		xmms_log_filename = g_strdup_printf ("%s/%s.%s", tmpdir, filename, fnameTime);
 		  
 		if (!xmms_log_open_logfile ()) {
 			return 0;

@@ -17,6 +17,9 @@ def config(env):
 
 	# this should really be done checking
 	# for "soundcard.h" and OSS_GETVERSION
-	supported_platforms = ['linux', 'freebsd']
+	supported_platforms = ['linux', 'freebsd', 'netbsd']
+
+	if env.platform == 'netbsd':
+		env["LIBS"].append("ossaudio")
 
 	return env.platform in supported_platforms

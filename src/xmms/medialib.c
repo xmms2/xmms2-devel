@@ -53,6 +53,7 @@ static void xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *pla
 					   gchar *url, xmms_error_t *error);
 static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname, 
 					     gchar *mime, xmms_error_t *error);
+static void xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, xmms_error_t *);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
 static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
@@ -66,6 +67,7 @@ XMMS_CMD_DEFINE (playlist_load, xmms_medialib_playlist_load, xmms_medialib_t *, 
 XMMS_CMD_DEFINE (addtopls, xmms_medialib_select_and_add, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (playlist_import, xmms_medialib_playlist_import, xmms_medialib_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (playlist_export, xmms_medialib_playlist_export, xmms_medialib_t *, STRING, STRING, STRING);
+XMMS_CMD_DEFINE (playlist_remove, xmms_medialib_playlist_remove, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (get_id, xmms_medialib_entry_get_id, xmms_medialib_t *, UINT32, STRING, NONE);
@@ -194,6 +196,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PLAYLIST_EXPORT,
 	                     XMMS_CMD_FUNC (playlist_export));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+			     XMMS_IPC_CMD_PLAYLIST_REMOVE,
+			     XMMS_CMD_FUNC (playlist_remove));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PATH_IMPORT,
 	                     XMMS_CMD_FUNC (path_import));
@@ -941,6 +946,26 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 	}
 
 	return str->str;
+}
+
+static void
+xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, xmms_error_t *error)
+{
+        gint playlist_id;
+
+	g_mutex_lock (medialib->mutex);
+
+	playlist_id = get_playlist_id (playlistname);
+	if (!playlist_id) {
+		xmms_error_set (error, XMMS_ERROR_NOENT, "No such playlist!");
+		g_mutex_unlock (medialib->mutex);
+		return;
+	}
+
+	xmms_sqlite_query (medialib->sql, NULL, NULL, "delete from PlaylistEntries where playlist_id=%d", playlist_id);
+	xmms_sqlite_query (medialib->sql, NULL, NULL, "delete from Playlist where id=%d", playlist_id);
+
+	g_mutex_unlock (medialib->mutex);
 }
 
 static void
