@@ -112,7 +112,9 @@ def subst_emitter(target, source, env):
 subst_action = Action (subst_in_file, subst_in_file_string)
 base_env['BUILDERS']['SubstInFile'] = Builder(action=subst_action, emitter=subst_emitter)
 
-b = Builder(action = 'python src/xmms/generate-converter.py > src/xmms/converter.c')
+python_executable = sys.executable
+
+b = Builder(action = python_executable + ' src/xmms/generate-converter.py > src/xmms/converter.c')
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.SourceCode('src/xmms/converter.c', b)
 
