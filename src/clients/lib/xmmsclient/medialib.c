@@ -452,6 +452,17 @@ xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
 }
 
 /**
+ * Remove a playlist from the medialib, keeping the songs of course.
+ * @param conn #xmmsc_connection_t
+ * @param playlist The playlist to remove
+ */
+xmmsc_result_t *
+xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist)
+{
+	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_REMOVE, playlist);
+}
+
+/**
  * Import a all files recursivly from the directory passed
  * as argument.
  * @param conn #xmmsc_connection_t

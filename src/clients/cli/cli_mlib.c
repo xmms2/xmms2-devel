@@ -27,6 +27,7 @@ static void mlib_playlist_save (xmmsc_connection_t *conn, int argc, char **argv)
 static void mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv);
 
@@ -42,6 +43,7 @@ cmds mlib_commands[] = {
 	{ "load_playlist", "[playlistname] - Load 'playlistname' stored in medialib", mlib_playlist_load },
 	{ "import_playlist", "[name] [filename] - Import playlist from file", mlib_playlist_import },
 	{ "export_playlist", "[playlistname] [mimetype] - Export playlist", mlib_playlist_export },
+	{ "remove_playlist", "[playlistname] - Remove a playlist", mlib_playlist_remove },
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", mlib_rehash },
 
@@ -328,6 +330,25 @@ mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	xmmsc_result_unref (res);
+}
+
+static void
+mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Supply a playlist name");
+	}
+
+	res = xmmsc_medialib_playlist_remove (conn, argv[3]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	} else {
+		print_info ("Playlist removed");
+	}
 }
 
 static void
