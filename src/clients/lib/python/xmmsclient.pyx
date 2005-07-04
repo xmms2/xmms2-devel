@@ -131,6 +131,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_configval_set(xmmsc_connection_t *c, char *key, char *val)
 	xmmsc_result_t *xmmsc_configval_list(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_configval_get(xmmsc_connection_t *c, char *key)
+	xmmsc_result_t *xmmsc_configval_register(xmmsc_connection_t *c, char *valuename, char *defaultvalue)
 
 	xmmsc_result_t *xmmsc_broadcast_configval_changed(xmmsc_connection_t *c)
 
@@ -1088,6 +1089,26 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_configval_list(self.conn)
+		ret.more_init()
+		return ret
+
+	def configval_register(self, valuename, defaultvalue, cb = None):
+		"""
+		Register a new configvalue.
+		This should be called in the initcode as XMMS2 won't allow set/get on
+		values that hasn't been registered.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+
+		c1 = from_unicode(valuename)
+		c2 = from_unicode(defaultvalue)
+		
+		ret.res = xmmsc_configval_register(self.conn, c1, c2)
 		ret.more_init()
 		return ret
 
