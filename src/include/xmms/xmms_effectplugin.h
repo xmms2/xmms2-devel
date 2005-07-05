@@ -30,5 +30,11 @@ typedef gboolean (*xmms_effect_format_set_method_t) (xmms_effect_t *, xmms_audio
 typedef void (*xmms_effect_current_mlib_entry_method_t) (xmms_effect_t *, xmms_medialib_entry_t);
 typedef void (*xmms_effect_process_method_t) (xmms_effect_t *, xmms_sample_t *, guint);
 
+#define XMMS_PLUGIN_METHOD_NEW_TYPE xmms_effect_new_method_t
+#define XMMS_PLUGIN_METHOD_DESTROY_TYPE xmms_effect_destroy_method_t
+#define XMMS_PLUGIN_METHOD_FORMAT_SET_TYPE xmms_effect_format_set_method_t
+#define XMMS_PLUGIN_METHOD_CURRENT_MEDIALIB_ENTRY_TYPE xmms_effect_current_mlib_entry_method_t
+#define XMMS_PLUGIN_METHOD_PROCESS_TYPE xmms_effect_process_method_t
+
 
 #endif

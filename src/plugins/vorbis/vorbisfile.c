@@ -24,10 +24,8 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_transport.h"
+#include "xmms/xmms_decoderplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_decoder.h"
 
 #include <math.h>
 #include <vorbis/codec.h>

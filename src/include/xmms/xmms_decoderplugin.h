@@ -34,6 +34,15 @@ typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder)
 typedef gboolean (*xmms_decoder_seek_method_t) (xmms_decoder_t *decoder, guint samples);
 typedef void (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
 
+#define XMMS_PLUGIN_METHOD_CAN_HANDLE_TYPE xmms_decoder_can_handle_method_t
+#define XMMS_PLUGIN_METHOD_INIT_TYPE xmms_decoder_init_method_t
+#define XMMS_PLUGIN_METHOD_NEW_TYPE xmms_decoder_new_method_t
+#define XMMS_PLUGIN_METHOD_DESTROY_TYPE xmms_decoder_destroy_method_t
+#define XMMS_PLUGIN_METHOD_DECODE_BLOCK_TYPE xmms_decoder_decode_block_method_t
+#define XMMS_PLUGIN_METHOD_SEEK_TYPE xmms_decoder_seek_method_t
+#define XMMS_PLUGIN_METHOD_GET_MEDIAINFO_TYPE xmms_decoder_get_mediainfo_method_t
+
+
 /*
  * Public function prototypes
  */
