@@ -32,7 +32,6 @@
 #include "xmmspriv/xmms_sample.h"
 #include "xmmspriv/xmms_plugin.h"
 #include "xmms/xmms_object.h"
-#include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmms/xmms_log.h"
@@ -76,11 +75,6 @@ struct xmms_decoder_St {
 
 	GList *effects; /* list of xmms_effect_t */
 
-
-	xmms_output_t *output; /**< output associated with decoder.
-	                         *   The decoded data will be written
-	                         *   to this output.
-	                         */
 	xmms_visualisation_t *vis;
 
 	guint decoded_frames; /**< Number of frames decoded so far */
@@ -433,23 +427,6 @@ xmms_decoder_seek_samples (xmms_decoder_t *decoder, guint samples, xmms_error_t 
 }
 
 /**
- * Get the output associated with the decoder.
- */
-xmms_output_t *
-xmms_decoder_output_get (xmms_decoder_t *decoder)
-{
-	xmms_output_t *ret;
-
-	g_return_val_if_fail (decoder, NULL);
-
-	g_mutex_lock (decoder->mutex);
-	ret = decoder->output;
-	g_mutex_unlock (decoder->mutex);
-
-	return ret;
-}
-
-/**
  * Get the plugin used to instanciate this decoder.
  */
 xmms_plugin_t *
@@ -627,21 +604,17 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
 /**
  * Dispatch execution of the decoder.
  *
- * Associates the decoder with a transport and output.
  * Blesses it with a life of its own (a new thread is created)
  *
  * @param decoder
- * @param output
  *
  */
 void
-xmms_decoder_start (xmms_decoder_t *decoder, xmms_output_t *output)
+xmms_decoder_start (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
-	g_return_if_fail (output);
 
 	decoder->running = TRUE;
-	decoder->output = output;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder,
 	                                   FALSE, NULL);
 }
@@ -757,7 +730,6 @@ xmms_decoder_thread (gpointer data)
 	xmms_object_ref (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
-	/*xmms_medialib_logging_start (entry);*/
 
 	g_mutex_lock (decoder->mutex);
 
@@ -774,8 +746,6 @@ xmms_decoder_thread (gpointer data)
 	}
 
 	decoder->thread = NULL;
-	xmms_medialib_logging_stop (decoder->entry,
-	                            xmms_output_playtime (decoder->output, NULL));
 
 	if (decoder->running) {
 		/* This means that we eofed... */
