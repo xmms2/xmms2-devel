@@ -27,6 +27,7 @@
 #include "xmmspriv/xmms_sample.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_medialib.h"
+#include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_object.h"

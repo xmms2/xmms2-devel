@@ -48,6 +48,7 @@ typedef gint (*xmms_transport_seek_method_t) (xmms_transport_t *transport,
 typedef gint (*xmms_transport_size_method_t) (xmms_transport_t *transport);
 typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
 
+
 /*
  * Public function prototypes
  */
@@ -57,6 +58,5 @@ gpointer xmms_transport_private_data_get (xmms_transport_t *transport);
 void xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data);
 void xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype);
 xmms_plugin_t *xmms_transport_plugin_get (const xmms_transport_t *transport);
-xmms_medialib_entry_t xmms_transport_medialib_entry_get (const xmms_transport_t *const transport);
 
 #endif

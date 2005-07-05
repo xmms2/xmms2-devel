@@ -17,23 +17,18 @@
 
 
 
-#ifndef _XMMS_OUTPUT_H_
-#define _XMMS_OUTPUT_H_
+#ifndef _XMMS_EFFECTPLUGIN_H_
+#define _XMMS_EFFECTPLUGIN_H_
 
-#include <glib.h>
-
-/*
- * Type definitions
- */
-
-typedef struct xmms_output_St xmms_output_t;
-
-#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_effect.h"
 #include "xmms/xmms_sample.h"
-#include "xmmsc/xmmsc_idnumbers.h"
-/*
- * Public function prototypes
- */
+#include "xmms/xmms_medialib.h"
+
+typedef void (*xmms_effect_new_method_t) (xmms_effect_t *);
+typedef void (*xmms_effect_destroy_method_t) (xmms_effect_t *);
+typedef gboolean (*xmms_effect_format_set_method_t) (xmms_effect_t *, xmms_audio_format_t *);
+typedef void (*xmms_effect_current_mlib_entry_method_t) (xmms_effect_t *, xmms_medialib_entry_t);
+typedef void (*xmms_effect_process_method_t) (xmms_effect_t *, xmms_sample_t *, guint);
 
 
 #endif

@@ -34,6 +34,7 @@
 #include "xmms/xmms_object.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_medialib.h"
+#include "xmms/xmms_decoderplugin.h"
 #include "xmms/xmms_log.h"
 
 #include <string.h>
