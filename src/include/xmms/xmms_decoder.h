@@ -28,6 +28,8 @@ typedef struct xmms_decoder_St xmms_decoder_t;
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_plugin.h"
 
+#define XMMS_DECODER_INIT_MEDIAINFO (1 << 0)
+#define XMMS_DECODER_INIT_DECODING (1 << 1)
 
 gpointer xmms_decoder_private_data_get (xmms_decoder_t *decoder);
 void xmms_decoder_private_data_set (xmms_decoder_t *decoder, gpointer data);

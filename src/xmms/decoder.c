@@ -95,6 +95,7 @@ struct xmms_decoder_St {
 
 static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
 static gpointer xmms_decoder_thread (gpointer data);
+static gboolean xmms_decoder_init (xmms_decoder_t *decoder, gint mode);
 
 /*
  * Public functions
@@ -568,11 +569,10 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
  * @param effects A list of effect plugins to apply
  */
 gboolean
-xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
+xmms_decoder_init_for_decoding (xmms_decoder_t *decoder, GList *output_format_list,
                    GList *effects)
 {
 	gboolean ret;
-	xmms_decoder_init_method_t init_meth;
 
 	g_return_val_if_fail (decoder, FALSE);
 
@@ -587,20 +587,38 @@ xmms_decoder_init (xmms_decoder_t *decoder, GList *output_format_list,
 	decoder->output_format_list = output_format_list;
 	decoder->effects = g_list_copy (effects);
 
-	init_meth = xmms_plugin_method_get (decoder->plugin,
-	                                    XMMS_PLUGIN_METHOD_INIT);
-
-	ret = init_meth && init_meth (decoder);
-	if (!ret) {
-		decoder->output_format_list = NULL;
-	} else if (!decoder->converter) {
+	ret = xmms_decoder_init (decoder, XMMS_DECODER_INIT_DECODING);
+	if (ret && !decoder->converter) {
 		xmms_log_error ("buggy plugin: "
 		                "init method didn't set sample format");
 		ret = FALSE;
 	}
-
 	return ret;
 }
+gboolean
+xmms_decoder_init_for_mediainfo (xmms_decoder_t *decoder)
+{
+       g_return_val_if_fail (decoder, FALSE);
+
+       return xmms_decoder_init(decoder, XMMS_DECODER_INIT_MEDIAINFO);
+}
+
+static gboolean
+xmms_decoder_init (xmms_decoder_t *decoder, gint mode)
+{
+	gboolean ret;
+	xmms_decoder_init_method_t init_meth;
+	
+	init_meth = xmms_plugin_method_get (decoder->plugin,
+	                                    XMMS_PLUGIN_METHOD_INIT);
+
+	ret = init_meth && init_meth (decoder, mode);
+        if (!ret) {
+                decoder->output_format_list = NULL;
+	}
+	return ret;
+}
+
 
 /**
  * Dispatch execution of the decoder.

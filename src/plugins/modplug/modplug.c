@@ -11,7 +11,6 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_decoderplugin.h"
 #include "xmms/xmms_log.h"
-
 #include <modplug.h>
 
 #include <glib.h>
@@ -40,7 +39,7 @@ static gboolean xmms_modplug_new (xmms_decoder_t *decoder, const gchar *mimetype
 static gboolean xmms_modplug_decode_block (xmms_decoder_t *decoder);
 static void xmms_modplug_get_media_info (xmms_decoder_t *decoder);
 static void xmms_modplug_destroy (xmms_decoder_t *decoder);
-static gboolean xmms_modplug_init (xmms_decoder_t *decoder);
+static gboolean xmms_modplug_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_modplug_seek (xmms_decoder_t *decoder, guint samples);
 
 /*
@@ -103,9 +102,6 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 	gchar tmp[256];
 
 	g_return_if_fail (decoder);
-
-	if (!xmms_modplug_init (decoder))
-		return;
 
 	data = xmms_decoder_private_data_get (decoder);
 
@@ -178,7 +174,7 @@ xmms_modplug_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
-xmms_modplug_init (xmms_decoder_t *decoder)
+xmms_modplug_init (xmms_decoder_t *decoder, gint mode)
 {
 	xmms_transport_t *transport;
 	xmms_modplug_data_t *data;
@@ -193,26 +189,26 @@ xmms_modplug_init (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (decoder, FALSE);
 
-
-	/* 
-	   ModPlug always decodes sound at 44100kHz, 32 bit, stereo
-	   and then down-mixes to the selected settings.  So there is
-	   no need exporting any other formats, it's better to let
-	   xmms2 do the conversion
-	*/
-
-	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
-	if (xmms_decoder_format_finish (decoder) == NULL) {
-		return FALSE;
+	if (mode & XMMS_DECODER_INIT_DECODING) {
+		/* 
+		   ModPlug always decodes sound at 44100kHz, 32 bit, stereo
+		   and then down-mixes to the selected settings.  So there is
+		   no need exporting any other formats, it's better to let
+		   xmms2 do the conversion
+		*/
+		
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
+		if (xmms_decoder_format_finish (decoder) == NULL) {
+			return FALSE;
+		}
+		
+		data->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR;
+		data->settings.mChannels = 2;
+		data->settings.mBits = 16;
+		data->settings.mFrequency = 44100;
+		/* more? */
+		ModPlug_SetSettings(&data->settings);
 	}
-
-	data->settings.mResamplingMode = MODPLUG_RESAMPLE_FIR;
-	data->settings.mChannels = 2;
-	data->settings.mBits = 16;
-	data->settings.mFrequency = 44100;
-	/* more? */
-	ModPlug_SetSettings(&data->settings);
-
 
 	data->buffer_length = xmms_transport_size (transport);
 	data->buffer = g_malloc (data->buffer_length);

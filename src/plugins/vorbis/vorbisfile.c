@@ -42,7 +42,6 @@ typedef struct xmms_vorbis_data_St {
 	ov_callbacks callbacks;
 	gint current;
 	xmms_audio_format_t *format;
-	gboolean inited;
 } xmms_vorbis_data_t;
 
 typedef struct {
@@ -75,7 +74,7 @@ static gboolean xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 static gboolean xmms_vorbis_decode_block (xmms_decoder_t *decoder);
 static void xmms_vorbis_get_media_info (xmms_decoder_t *decoder);
 static void xmms_vorbis_destroy (xmms_decoder_t *decoder);
-static gboolean xmms_vorbis_init (xmms_decoder_t *decoder);
+static gboolean xmms_vorbis_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples);
 
 /*
@@ -289,8 +288,6 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
-	xmms_vorbis_init (decoder);
-
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	XMMS_DBG ("Running get_media_info()");
@@ -338,23 +335,25 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 }
 
 static gboolean
-xmms_vorbis_init (xmms_decoder_t *decoder)
+xmms_vorbis_init (xmms_decoder_t *decoder, gint mode)
 {
 	xmms_vorbis_data_t *data;
+	gint ret;
 
 	g_return_val_if_fail (decoder, FALSE);
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->inited) {
+	ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
+	if (ret != 0) {
+		return FALSE;
+	}
+
+	if (mode & XMMS_DECODER_INIT_DECODING) {
 		vorbis_info *vi;
-		gint ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
-		if (ret != 0) {
-			return FALSE;
-		}
+
 		vi = ov_info (&data->vorbisfile, -1);
-		data->inited = TRUE;
 
 		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, vi->channels, vi->rate);
 		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U16, vi->channels, vi->rate);
@@ -367,7 +366,6 @@ xmms_vorbis_init (xmms_decoder_t *decoder)
 
 		XMMS_DBG ("Vorbis inited!!!!");
 	}
-
 
 	return TRUE;
 }

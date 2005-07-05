@@ -853,8 +853,8 @@ xmms_output_decoder_start (xmms_output_t *output)
 			break;
 	}
 
-	if (!xmms_decoder_init (decoder, output->format_list,
-	                        output->effects)) {
+	if (!xmms_decoder_init_for_decoding (decoder, output->format_list,
+	                                     output->effects)) {
 		xmms_log_error ("Couldn't initialize decoder");
 
 		xmms_object_unref (decoder);

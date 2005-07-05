@@ -27,7 +27,7 @@
  */
 
 typedef gboolean (*xmms_decoder_can_handle_method_t) (const gchar *mimetype);
-typedef gboolean (*xmms_decoder_init_method_t) (xmms_decoder_t *decoder);
+typedef gboolean (*xmms_decoder_init_method_t) (xmms_decoder_t *decoder, gint mode);
 typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder, const gchar *mimetype);
 typedef void (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
 typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);

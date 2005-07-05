@@ -49,6 +49,7 @@ typedef struct xmms_mad_data_St {
 	xmms_xing_t *xing;
 } xmms_mad_data_t;
 
+
 /*
  * Function prototypes
  */
@@ -58,7 +59,7 @@ static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
-static gboolean xmms_mad_init (xmms_decoder_t *decoder);
+static gboolean xmms_mad_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_mad_seek (xmms_decoder_t *decoder, guint samples);
 
 /*
@@ -371,7 +372,7 @@ xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
-xmms_mad_init (xmms_decoder_t *decoder)
+xmms_mad_init (xmms_decoder_t *decoder, gint mode)
 {
 	xmms_transport_t *transport;
 	xmms_mad_data_t *data;
@@ -385,13 +386,17 @@ xmms_mad_init (xmms_decoder_t *decoder)
 	g_return_val_if_fail (decoder, FALSE);
 	
 	data->buffer_length = 0;
-	xmms_mad_get_media_info (decoder);
 
-	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, data->channels, data->samplerate);
-	/* we don't have to care about the return value other than NULL,
-	   as there is only one format (to rule them all) */
-	if (xmms_decoder_format_finish (decoder) == NULL) {
-		return FALSE;
+	if (mode & XMMS_DECODER_INIT_DECODING) {
+		xmms_mad_get_media_info (decoder);
+		
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, data->channels, data->samplerate);
+		/* we don't have to care about the return value
+		   other than NULL,
+		   as there is only one format (to rule them all) */
+		if (xmms_decoder_format_finish (decoder) == NULL) {
+			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -430,7 +435,7 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 		guchar *buffer = data->buffer;
 		const guchar *nf = data->stream.next_frame;
 		memmove (data->buffer, data->stream.next_frame,
-				 data->buffer_length = (&buffer[data->buffer_length] - nf));
+		         data->buffer_length = (&buffer[data->buffer_length] - nf));
 	} 
 	
 	ret = xmms_transport_read (transport, 
