@@ -13,15 +13,15 @@
  *
  */
 
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_outputplugin.h"
+#include "xmms/xmms_log.h"
+
 #include <glib.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <jack/jack.h>
 #include <sys/time.h>
-#include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_output.h"
-#include "xmms/xmms_log.h"
 
 #define min(a,b)   (((a) < (b)) ? (a) : (b))
 

@@ -20,11 +20,9 @@
  */
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_effect.h"
+#include "xmms/xmms_effectplugin.h"
 #include "xmms/xmms_config.h"
-#include "xmms/xmms_sample.h"
-#include "xmms/xmms_medialib.h"
+#include "xmms/xmms_log.h"
 
 #include <math.h>
 #include <glib.h>

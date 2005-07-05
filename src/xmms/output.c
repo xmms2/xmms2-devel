@@ -27,6 +27,7 @@
 #include "xmmspriv/xmms_sample.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_medialib.h"
+#include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_object.h"
@@ -35,6 +36,7 @@
 
 static gpointer xmms_output_write_thread (gpointer data);
 static gboolean xmms_output_decoder_start (xmms_output_t *output);
+static void xmms_output_decoder_stop (xmms_output_t *output, xmms_decoder_t *decoder);
 static void xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt);
 
 static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
@@ -261,7 +263,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		g_mutex_unlock (output->playtime_mutex);
 
 	} else if (xmms_decoder_iseos (output->decoder)) {
-		xmms_decoder_stop (output->decoder);
+		xmms_output_decoder_stop (output, output->decoder);
 		xmms_object_unref (output->decoder);
 		output->decoder = NULL;
 		return 0;
@@ -281,6 +283,20 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 /*
  * Private functions
  */
+
+static void
+xmms_output_decoder_stop (xmms_output_t *output, xmms_decoder_t *decoder)
+{
+	xmms_medialib_entry_t entry;
+	guint32 playtime;
+
+	entry = xmms_decoder_medialib_entry_get (decoder);
+	playtime = xmms_output_playtime (output, NULL);
+
+	xmms_medialib_logging_stop (entry, playtime);
+
+	xmms_decoder_stop (decoder);
+}
 
 /** @addtogroup Output
  * @{
@@ -305,7 +321,7 @@ xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
 	g_mutex_unlock (output->decoder_mutex);
 
 	if (dec) {
-		xmms_decoder_stop (dec);
+		xmms_output_decoder_stop (output, dec);
 		xmms_object_unref (dec);
 	}
 }
@@ -379,7 +395,7 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 	g_mutex_lock (output->decoder_mutex);
 
 	if (output->decoder) {
-		xmms_decoder_stop (output->decoder);
+		xmms_output_decoder_stop (output, output->decoder);
 		xmms_object_unref (output->decoder);
 		output->decoder = NULL;
 	}
@@ -837,8 +853,8 @@ xmms_output_decoder_start (xmms_output_t *output)
 			break;
 	}
 
-	if (!xmms_decoder_init (decoder, output->format_list,
-	                        output->effects)) {
+	if (!xmms_decoder_init_for_decoding (decoder, output->format_list,
+	                                     output->effects)) {
 		xmms_log_error ("Couldn't initialize decoder");
 
 		xmms_object_unref (decoder);
@@ -848,7 +864,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
 			     decoder_ended, output);
 
-	xmms_decoder_start (decoder, output);
+	xmms_decoder_start (decoder);
 
 	g_queue_push_tail (output->decoder_list, decoder);
 

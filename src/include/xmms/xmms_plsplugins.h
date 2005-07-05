@@ -27,4 +27,8 @@ typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_transport_t *transp
 typedef gboolean (*xmms_playlist_plugin_can_handle_method_t) (const gchar *mimetype);
 typedef GString *(*xmms_playlist_plugin_write_method_t) (guint32 *list);
 
+#define XMMS_PLUGIN_METHOD_CAN_HANDLE_TYPE xmms_playlist_plugin_can_handle_method_t
+#define XMMS_PLUGIN_METHOD_READ_PLAYLIST_TYPE xmms_playlist_plugin_read_method_t
+#define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST_TYPE xmms_playlist_plugin_write_method_t
+
 #endif
