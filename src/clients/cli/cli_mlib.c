@@ -188,7 +188,7 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		char *id;
 			
-		xmmsc_result_get_dict_entry (res, "id", &id);
+		xmmsc_result_get_dict_entry_str (res, "id", &id);
 		if (!id)
 			print_error ("broken resultset");
 
@@ -242,7 +242,7 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 	/* yes, result is a hashlist,
 	   but there should only be one entry */
-	xmmsc_result_get_dict_entry (res, "id", &id);
+	xmmsc_result_get_dict_entry_str (res, "id", &id);
 	if (!id) 
 		print_error ("No such playlist!");
 
@@ -254,7 +254,7 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		gchar *entry;
-		xmmsc_result_get_dict_entry (res, "entry", &entry);
+		xmmsc_result_get_dict_entry_str (res, "entry", &entry);
 		if (!entry) 
 			print_error ("No such playlist!");
 		if (g_strncasecmp (entry, "mlib", 4) == 0) {

@@ -54,7 +54,7 @@ static gchar *xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, 
 static gchar *xmms_config_value_client_register (xmms_config_t *config, const gchar *value, const gchar *def_value, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, STRINGLIST, NONE, NONE);
+XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, LIST, NONE, NONE);
 XMMS_CMD_DEFINE (getvalue, xmms_config_value_client_lookup, xmms_config_t *, STRING, STRING, NONE);
 XMMS_CMD_DEFINE (regvalue, xmms_config_value_client_register, xmms_config_t *, STRING, STRING, STRING);
 
@@ -116,9 +116,12 @@ xmms_config_t *global_config;
 static void
 add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
 {
+	xmms_object_cmd_value_t *val;
 	GList **list = udata;
 
-	*list = g_list_prepend (*list, g_strdup ((gchar*) key));
+	val = xmms_object_cmd_value_str_new (g_strdup ((gchar *)key));
+
+	*list = g_list_prepend (*list, val);
 }
 
 static xmms_config_state_t
@@ -668,7 +671,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
-	                    XMMS_OBJECT_CMD_ARG_STRINGLIST,
+	                    XMMS_OBJECT_CMD_ARG_LIST,
 	                    list);
 
 	g_list_free (list);

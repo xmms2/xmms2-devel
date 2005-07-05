@@ -59,7 +59,7 @@ static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_er
 static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, DICT, UINT32, NONE);
-XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, DICTLIST, STRING, NONE);
+XMMS_CMD_DEFINE (select, xmms_medialib_select_method, xmms_medialib_t *, LIST, STRING, NONE);
 XMMS_CMD_DEFINE (mlib_add, xmms_medialib_add_entry, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (playlist_save_current, xmms_medialib_playlist_save_current, xmms_medialib_t *, NONE, STRING, NONE);
@@ -710,8 +710,11 @@ static int
 xmms_medialib_hashtable_cb (void *pArg, int argc, char **argv, char **columnName) 
 {
 	GHashTable *hash = pArg;
+	xmms_object_cmd_value_t *val;
 
-	g_hash_table_insert (hash, g_strdup (argv[1]), g_strdup (argv[2]));
+	val = xmms_object_cmd_value_str_new (argv[2]);
+
+	g_hash_table_insert (hash, g_strdup (argv[1]), val);
 
 	return 0;
 }
@@ -731,14 +734,14 @@ xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry)
 {
 	GHashTable *ret;
 	
-	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	ret = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_free, xmms_object_cmd_value_free);
 
 	g_mutex_lock (medialib->mutex);
 
 	xmms_sqlite_query (medialib->sql, xmms_medialib_hashtable_cb, ret, 
 			   "select * from Media where id=%d", entry);
 
-	g_hash_table_insert (ret, g_strdup ("id"), g_strdup_printf ("%u", entry));
+	g_hash_table_insert (ret, g_strdup ("id"), xmms_object_cmd_value_int_new (entry));
 
 	g_mutex_unlock (medialib->mutex);
 
@@ -764,16 +767,18 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 	GList **l = (GList **) pArg;
 	GHashTable *table;
 
-	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	table = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_free, xmms_object_cmd_value_free);
 
 	for (i = 0; i < argc; i++) {
 		if (argv[i] && cName[i]) {
-			g_hash_table_insert (table, g_strdup (cName[i]), g_strdup (argv[i]));
+			xmms_object_cmd_value_t *val;
+			val = xmms_object_cmd_value_str_new (argv[i]);
+			g_hash_table_insert (table, g_strdup (cName[i]), val);
 
 		}
 	}
 
-	*l = g_list_prepend (*l, table);
+	*l = g_list_prepend (*l, xmms_object_cmd_value_dict_new (table));
 
 	return 0;
 }
@@ -1032,7 +1037,8 @@ xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
 	entries = xmms_playlist_list (medialib->playlist, NULL);
 
 	for (l = entries; l; l = g_list_next (l)) {
-		xmms_medialib_entry_t entry = (xmms_medialib_entry_t) l->data;
+		xmms_object_cmd_value_t *val = l->data;
+		xmms_medialib_entry_t entry = (xmms_medialib_entry_t) val->value.uint32;
 
 		if (!entry) {
 			return;
