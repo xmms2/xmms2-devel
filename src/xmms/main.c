@@ -16,7 +16,7 @@
 
 
 /** @file 
- * This file controls XMMS2 mainloop.
+ * This file controls the XMMS2 main loop.
  */
 
 #include <glib.h>
@@ -68,8 +68,8 @@ XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
 
 /** @defgroup XMMSServer XMMSServer
   * @brief look at this if you want to code inside the server.
-  * The XMMS2 project is splitted in to a server part and a Clientpart.
-  * This documents the server part of the project.
+  * The XMMS2 project is split into a server and a multiple clients.
+  * This documents the server part.
   */
 
 /**
@@ -92,6 +92,12 @@ typedef struct xmms_main_St xmms_main_t;
 
 static GMainLoop *mainloop;
 
+/**
+ * @if internal
+ * @internal Execute a program or script
+ * @param[in] program Absolute path to executable program or script
+ * @param[in] env Array of environment variables and values to pass to program
+ */
 static void
 do_execute (gchar *program, gchar **env)
 {
@@ -111,6 +117,13 @@ do_execute (gchar *program, gchar **env)
 
 }
 
+/**
+ * @internal Execute all programs or scripts in a directory. Used when starting
+ * up and shutting down the daemon.
+ * @param[in] scriptdir Directory to search for executable programs/scripts.
+ * @param[in] ipcpath The xmms2 daemon ipc path to pass on to programs/scripts
+ * started.
+ */
 static void
 do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
 {
@@ -149,6 +162,9 @@ do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
 
 }
 
+/**
+ * @internal Parse the xmms2d configuration file
+ */
 static gboolean
 parse_config ()
 {
@@ -176,7 +192,12 @@ parse_config ()
 	return FALSE;
 }
 
-
+/**
+ * @internal Switch to using another output plugin
+ * @param object An object
+ * @param data The name of the output plugin to switch to
+ * @param userdata The #xmms_main_t object
+ */
 static void
 change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
@@ -192,6 +213,10 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	xmms_output_plugin_switch (mainobj->output, plugin);
 }
 
+/**
+ * @internal Destroy the main object
+ * @param[in] object The object to destroy
+ */
 static void
 xmms_main_destroy (xmms_object_t *object)
 {
@@ -225,6 +250,9 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_log_shutdown ();
 }
 
+/**
+ * @internal Function to respond to the 'hello' sent from clients on connect
+ */
 static guint
 hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error)
 {
@@ -232,6 +260,9 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 	return 1;
 }
 
+/**
+ * @internal Function to respond to the 'quit' command sent from a client
+ */
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
@@ -241,7 +272,10 @@ quit (xmms_object_t *object, xmms_error_t *error)
 }
 
 
-
+/**
+ * @internal Callback function executed whenever the output volume is changed.
+ * Simply sets the configuration value as needed.
+ */
 static void
 on_output_volume_changed (xmms_object_t *object, gconstpointer data,
                           gpointer userdata)
@@ -252,6 +286,13 @@ on_output_volume_changed (xmms_object_t *object, gconstpointer data,
 	xmms_config_value_data_set (cfg, (gchar *) data);
 }
 
+/**
+ * @internal Initialise volume proxy setting. Using a proxy configuration value
+ * to modify volume level means that the client does not need to know which
+ * output plugin the daemon is currently using - it simply modifies the proxy
+ * value and the daemon takes care of the rest.
+ * @param[in] output The name of the current output plugin.
+ */
 static void
 init_volume_config_proxy (const gchar *output)
 {
@@ -275,6 +316,9 @@ init_volume_config_proxy (const gchar *output)
 	xmms_config_value_data_set (cfg, (gchar *) vol);
 }
 
+/**
+ * @internal Print a simple message detailing command line options for xmms2d
+ */
 static void usage (void)
 {
 	static char *usageText = "XMMS2 Daemon\n\
@@ -289,10 +333,11 @@ Options:\n\
        printf(usageText);
 }
 
-/**
- * Entry point function
- */
+/* @endif */
 
+/**
+ * The xmms2 daemon main initialisation function
+ */
 int
 main (int argc, char **argv)
 {

@@ -1,0 +1,38 @@
+XMMS2 documentation tools
+
+Hi and welcome to the new doc/tools directory. Here you will find Doxyfiles for
+extracting internal documentation from the XMMS2 source code, as well as scripts
+to work with this extracted data. Things to know:
+
+- You probably won't find anything useful in the internal documentation, unless:
+  1) You're crazy
+  2) You're a documentation lawyer/nut/whacko
+  3) You're a software engineer who's feeling curious
+  4) You're seriously working on the internals of the XMMS2 daemon
+  5) You're somehow expecting to learn something from/about XMMS2
+- You shouldn't use internal documentation to pull off evil hacks (well, you
+can, but don't expect us to be ecstatic about it) - use the APIs provided. If
+you have suggestions, you're welcome to make them.
+- Anything in this directory is entirely optional - you do NOT need anything
+here to simply run XMMS2 and enjoy your music.
+
+== The tools ==
+
+Doxyfile-internal:
+A doxygen configuration file that's mostly the same as the default Doxyfile,
+except that it allows Doxygen to extract internal documentation sections,
+documentation about 'static' functions, and produce XML output.
+
+Doxyfile-graph:
+This one's just about exactly the same as the default Doxyfile, except that
+it enables doxygen to generate class diagrams and function call graphs using
+graphviz's dot. You should only use this if you want to see pretty graphs
+on your doxygen html pages, and are prepared to wait while the graphs are
+generated.
+
+Doxyfile-internal-graph:
+This one opens the whole can o' worms: it extracts internal documentation, AND
+generates pretty graphs. Use if truly insane, I guess. :P
+
+
+-- Sham Chukoury <eleusis@eleusis.f2o.org>

@@ -76,17 +76,16 @@ static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
 
 /**
  * @defgroup XMMSPlugin XMMSPlugin
- * @brief All functions relevant to a plugin.
+ * @brief Functions used when working with XMMS2 plugins in general.
  *
- * Every plugin has a initfunction. That should be defined like following:
+ * Every plugin has an init function that should be defined as follows:
  * @code
  * xmms_plugin_t *xmms_plugin_get (void)
  * @endcode
  * 
- * This function must call xmms_plugin_new() with the appropiate
- * arguments. 
- * This function can also call xmms_plugin_info_add(), xmms_plugin_method_add(),
- * xmms_plugin_properties_add()
+ * This function must call #xmms_plugin_new with the appropiate arguments. 
+ * This function can also call #xmms_plugin_info_add, #xmms_plugin_method_add,
+ * #xmms_plugin_properties_add
  *
  * A example plugin here is:
  * @code
@@ -103,17 +102,18 @@ static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
  * }
  * @endcode
  *
+ * @if api_plugin
  * @{
  */
 
 /**
- * The following function creates a new plugin.
+ * Create a new plugin instance.
  *
- * @param type The type of plugin. Each type is
- * explained in the chapters about that plugintype.
- * @param shortname The short version of pluginname. Eg. "oss"
- * @param name The fullname of the plugin. Eg. "Open Sound System"
- * @param description A descriptive text about the plugin.
+ * @param[in] type The type of plugin. All plugin types are enumerated in
+ * #xmms_plugin_type_t.
+ * @param[in] shortname The short version of plugin name. Eg. "oss"
+ * @param name[in] The full name of the plugin. Eg. "Open Sound System"
+ * @param[in] description Text describing plugin.
  *
  * @return a new plugin of the given type.
  */
@@ -142,16 +142,14 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
 }
 
 /**
- * Adds a method to this plugin. Each diffrent type must define
- * diffrent type of methods.
+ * Add a method to this plugin. Different types of plugins may add different
+ * types of methods.
  *
- * @param plugin A new plugin created from xmms_plugin_new()
- * @param name The name of the name that method to add. The names are
- * defined and should not just be a string. Se each plugintype for
- * documentation.
- * @param method The function pointer to the method.
+ * @param[in] plugin A new plugin created from #xmms_plugin_new
+ * @param[in] name The name of the method to add. Allowable method names
+ * are defined in xmms_plugin.h and have the prefix 'XMMS_PLUGIN_METHOD_'.
+ * @param[in] method The function pointer to the method.
  */
-
 void
 __xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 			xmms_plugin_method_t method)
@@ -167,10 +165,10 @@ __xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 
 /**
  * Set a property for this plugin.
- * The diffrent properties are defined under each
- * plugintypes documentation.
+ * The different properties are defined under each plugin type's documentation.
+ * @param[in] plugin The plugin
+ * @param[in] property The property to add
  */
-
 void
 xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property)
 {
@@ -182,9 +180,10 @@ xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property)
 }
 
 /**
- * Remove property for this plugin.
+ * Remove a property from this plugin.
+ * @param[in] plugin The plugin
+ * @param[in] The property to remove
  */
-
 void
 xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property)
 {
@@ -204,7 +203,6 @@ xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property)
  * @param key This can be any given string.
  * @param value Value of this key.
  */
-
 void
 xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 {
@@ -218,8 +216,86 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 	plugin->info_list = g_list_append (plugin->info_list, info);
 }
 
-/* @} */
+/**
+ * Lookup the value of a plugin's config property, given the property key.
+ * @param[in] plugin The plugin
+ * @param[in] value The property key (config path)
+ * @return A config value
+ * @todo config value <-> property fixup
+ */
+xmms_config_value_t *
+xmms_plugin_config_lookup (xmms_plugin_t *plugin,
+			   const gchar *value)
+{
+	gchar *ppath;
+	xmms_config_value_t *val;
 
+	g_return_val_if_fail (plugin, NULL);
+	g_return_val_if_fail (value, NULL);
+	
+	ppath = plugin_config_path (plugin, value);
+	val = xmms_config_lookup (ppath);
+
+	g_free (ppath);
+
+	return val;
+}
+
+/**
+ * Register a config property for a plugin.
+ * @param[in] plugin The plugin
+ * @param[in] value The property name
+ * @param[in] default_value The default value for the property
+ * @param[in] cb A callback function to be executed when the property value
+ * changes
+ * @param[in] userdata Pointer to data to be passed to the callback
+ * @todo config value <-> property fixup
+ */
+xmms_config_value_t *
+xmms_plugin_config_value_register (xmms_plugin_t *plugin,
+				   const gchar *value,
+				   const gchar *default_value,
+				   xmms_object_handler_t cb,
+				   gpointer userdata)
+{
+	gchar *fullpath;
+	xmms_config_value_t *val;
+
+	g_return_val_if_fail (plugin, NULL);
+	g_return_val_if_fail (value, NULL);
+	g_return_val_if_fail (default_value, NULL);
+
+	fullpath = plugin_config_path (plugin, value);
+
+	val = xmms_config_value_register (fullpath, 
+					  default_value, 
+					  cb, userdata);
+
+	/* xmms_config_value_register() copies the given path,
+	 * so we have to free our copy here
+	 */
+	g_free (fullpath);
+
+	return val;
+}
+
+/**
+ * @}
+ * -- end of plugin API section --
+ * @endif
+ * 
+ * @if internal
+ * -- internal documentation section --
+ * @addtogroup XMMSPlugin
+ * @{
+ */
+
+/**
+ * @internal Check whether plugin has a property
+ * @param[in] plugin The plugin
+ * @param[in] property The property to check for
+ * @return TRUE if plugin has property
+ */
 gboolean
 xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property)
 {
@@ -230,6 +306,11 @@ xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property)
 
 }
 
+/**
+ * @internal Get the type of this plugin
+ * @param[in] plugin The plugin
+ * @return The plugin type (#xmms_plugin_type_t)
+ */
 xmms_plugin_type_t
 xmms_plugin_type_get (const xmms_plugin_t *plugin)
 {
@@ -238,6 +319,11 @@ xmms_plugin_type_get (const xmms_plugin_t *plugin)
 	return plugin->type;
 }
 
+/**
+ * @internal Get the plugin's name. This is just an accessor method.
+ * @param[in] plugin The plugin
+ * @return A string containing the plugin's name
+ */
 const char *
 xmms_plugin_name_get (const xmms_plugin_t *plugin)
 {
@@ -246,6 +332,11 @@ xmms_plugin_name_get (const xmms_plugin_t *plugin)
 	return plugin->name;
 }
 
+/**
+ * @internal Get the plugin's short name. This is just an accessor method.
+ * @param[in] plugin The plugin
+ * @return A string containing the plugin's short name
+ */
 const gchar *
 xmms_plugin_shortname_get (const xmms_plugin_t *plugin)
 {
@@ -254,6 +345,11 @@ xmms_plugin_shortname_get (const xmms_plugin_t *plugin)
 	return plugin->shortname;
 }
 
+/**
+ * @internal Get the plugin's description. This is just an accessor method.
+ * @param[in] plugin The plugin
+ * @return A string containing the plugin's description
+ */
 const char *
 xmms_plugin_description_get (const xmms_plugin_t *plugin)
 {
@@ -262,6 +358,11 @@ xmms_plugin_description_get (const xmms_plugin_t *plugin)
 	return plugin->description;
 }
 
+/**
+ * @internal Get info from the plugin.
+ * @param[in] plugin The plugin
+ * @return a GList of info from the plugin
+ */
 const GList*
 xmms_plugin_info_get (const xmms_plugin_t *plugin)
 {
@@ -274,6 +375,11 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
  * Private functions
  */
 
+/**
+ * @internal Initialise the plugin system
+ * @param[in] path Absolute path to the plugins directory.
+ * @return Whether the initialisation was successful or not.
+ */
 gboolean
 xmms_plugin_init (gchar *path)
 {
@@ -286,6 +392,10 @@ xmms_plugin_init (gchar *path)
 	
 }
 
+/**
+ * @internal Shut down the plugin system. This function unrefs all the plugins
+ * loaded.
+ */
 void
 xmms_plugin_shutdown ()
 {
@@ -325,6 +435,11 @@ xmms_plugin_shutdown ()
 	g_mutex_free (xmms_plugin_mtx);
 }
 
+/**
+ * @internal Scan a particular directory for plugins to load
+ * @param[in] dir Absolute path to plugins directory
+ * @return TRUE if directory successfully scanned for plugins
+ */
 gboolean
 xmms_plugin_scan_directory (const gchar *dir)
 {
@@ -406,6 +521,11 @@ xmms_plugin_scan_directory (const gchar *dir)
 	return TRUE;
 }
 
+/**
+ * @internal Look for loaded plugins matching a particular type
+ * @param[in] type The plugin type to look for. (#xmms_plugin_type_t)
+ * @return List of loaded plugins matching type
+ */
 GList *
 xmms_plugin_list_get (xmms_plugin_type_t type)
 {
@@ -427,6 +547,11 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 	return list;
 }
 
+/**
+ * @internal Destroy a list of plugins. Note: this is not used to destroy the
+ * global plugin list.
+ * @param[in] list The plugin list to destroy
+ */
 void
 xmms_plugin_list_destroy (GList *list)
 {
@@ -436,6 +561,12 @@ xmms_plugin_list_destroy (GList *list)
 	}
 }
 
+/**
+ * @internal Find a plugin that's been loaded, by a particular type and name
+ * @param[in] type The type of plugin to look for
+ * @param[in] name The name of the plugin to look for
+ * @return The plugin instance, if found. NULL otherwise.
+ */
 xmms_plugin_t *
 xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
 {
@@ -463,6 +594,12 @@ xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
 	return ret;
 }
 
+/**
+ * @internal Get a pointer to a particularly named method in the plugin
+ * @param[in] plugin The plugin
+ * @param[in] method The method name to look for
+ * @return Pointer to plugin method
+ */
 xmms_plugin_method_t
 xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 {
@@ -478,56 +615,14 @@ xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	return ret;
 }
 
-xmms_config_value_t *
-xmms_plugin_config_lookup (xmms_plugin_t *plugin,
-			   const gchar *value)
-{
-	gchar *ppath;
-	xmms_config_value_t *val;
-
-	g_return_val_if_fail (plugin, NULL);
-	g_return_val_if_fail (value, NULL);
-	
-	ppath = plugin_config_path (plugin, value);
-	val = xmms_config_lookup (ppath);
-
-	g_free (ppath);
-
-	return val;
-}
-
-xmms_config_value_t *
-xmms_plugin_config_value_register (xmms_plugin_t *plugin,
-				   const gchar *value,
-				   const gchar *default_value,
-				   xmms_object_handler_t cb,
-				   gpointer userdata)
-{
-	gchar *fullpath;
-	xmms_config_value_t *val;
-
-	g_return_val_if_fail (plugin, NULL);
-	g_return_val_if_fail (value, NULL);
-	g_return_val_if_fail (default_value, NULL);
-
-	fullpath = plugin_config_path (plugin, value);
-
-	val = xmms_config_value_register (fullpath, 
-					  default_value, 
-					  cb, userdata);
-
-	/* xmms_config_value_register() copies the given path,
-	 * so we have to free our copy here
-	 */
-	g_free (fullpath);
-
-	return val;
-}
-
 /*
  * Static functions
  */
 
+/**
+ * @internal Destroy a particular instance of a plugin.
+ * @param[in] object The plugin (object) to destroy.
+ */
 static void
 xmms_plugin_destroy (xmms_object_t *object)
 {
@@ -556,6 +651,14 @@ xmms_plugin_destroy (xmms_object_t *object)
 	g_mutex_unlock (xmms_plugin_mtx);
 }
 
+/**
+ * @internal Build 'absolute' config path to a plugin's config property,
+ * given the plugin and the property name.
+ * @param[in] plugin The plugin
+ * @param[in] value The property name
+ * @return Config path (property key) as string
+ * @todo config value <-> property fixup
+ */
 static gchar *
 plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 {
@@ -591,3 +694,8 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 	return ret;
 }
 
+/**
+/* @}
+ * @endif
+ */
+ 
