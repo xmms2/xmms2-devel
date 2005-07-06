@@ -380,6 +380,22 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 }
 
 /**
+ * Returns a list of all available playlists
+ */
+xmmsc_result_t *
+xmmsc_medialib_playlists_list (xmmsc_connection_t *conn)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLISTS_LIST);
+	
+	res = xmmsc_send_msg (conn, msg);
+	
+	return res;
+}
+
+/**
  * Import a playlist from a playlist file.
  * @param conn The #xmmsc_connection_t
  * @param playlist The name of the new playlist.
