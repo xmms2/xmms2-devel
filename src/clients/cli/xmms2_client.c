@@ -78,10 +78,15 @@ print_info (const char *fmt, ...)
 
 	printf ("%s\n", buf);
 }
+
 void
-print_hash (const void *key, const void *value, void *udata)
+print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
 {
-	printf ("%s = %s\n", (char *)key, (char *)value);
+	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		printf ("%s = %s\n", (char *)key, (char *)value);
+	} else {
+		printf ("%s = %d\n", (char *)key, (int)value);
+	}
 }
 
 static GHashTable *
@@ -179,13 +184,13 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 			print_error ("Empty result!");
 		}
 
-		xmmsc_result_get_dict_entry (res, "title", &title);
+		xmmsc_result_get_dict_entry_str (res, "title", &title);
 		if (title) {
-			xmmsc_result_get_dict_entry (res, "artist", &artist);
+			xmmsc_result_get_dict_entry_str (res, "artist", &artist);
 			if (!artist)
 				artist = "Unknown";
 
-			xmmsc_result_get_dict_entry (res, "album", &album);
+			xmmsc_result_get_dict_entry_str (res, "album", &album);
 			if (!album)
 				album = "Unknown";
 
@@ -193,7 +198,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 
 		} else {
 			char *url, *filename;
-			xmmsc_result_get_dict_entry (res, "url", &url);
+			xmmsc_result_get_dict_entry_str (res, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
@@ -395,15 +400,20 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-print_entry (const void *key, const void *value, void *udata)
+print_entry (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
 {
 	gchar *conv;
 	gsize r, w;
 	GError *err;
 
-	conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
-	printf ("%s = %s\n", (char *)key, conv);
-	g_free (conv);
+	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
+		printf ("%s = %s\n", (char *)key, conv);
+		g_free (conv);
+	} else {
+		printf ("%s = %d\n", (char *)key, (int) value);
+	}
+
 }
 
 static void
@@ -443,8 +453,7 @@ static int
 res_has_key (xmmsc_result_t *res, const char *key)
 {
 	char *val;
-	xmmsc_result_get_dict_entry (res, key, &val);
-	return !!val;
+	return xmmsc_result_get_dict_entry_str (res, key, &val);
 }
 
 static void
@@ -480,7 +489,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		res2 = xmmsc_medialib_get_info (conn, i);
 		xmmsc_result_wait (res2);
 
-		xmmsc_result_get_dict_entry (res2, "duration", &playtime);
+		xmmsc_result_get_dict_entry_str (res2, "duration", &playtime);
 		if (playtime)
 			total_playtime += strtoul (playtime, NULL, 10);
 		
@@ -496,7 +505,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			
 			xmmsc_entry_format (dur, sizeof (dur), "(${minutes}:${seconds})", res2);
 			
-			xmmsc_result_get_dict_entry (res2, "url", &url);
+			xmmsc_result_get_dict_entry_str (res2, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
@@ -631,7 +640,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	
 	res = xmmsc_medialib_get_info (conn, id);
 	xmmsc_result_wait (res);
-	xmmsc_result_get_dict_entry (res, "duration", &tmp);
+	xmmsc_result_get_dict_entry_str (res, "duration", &tmp);
 	if (tmp)
 		dur = atoi (tmp);
 	xmmsc_result_unref (res);
@@ -874,7 +883,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 		has_songname = TRUE;
 	} else if (!res_has_key (res, "title")) {
 		char *url, *filename;
-		xmmsc_result_get_dict_entry (res, "url", &url);
+		xmmsc_result_get_dict_entry_str (res, "url", &url);
 		if (url) {
 			filename = g_path_get_basename (url);
 			if (filename) {
@@ -889,7 +898,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 		has_songname = TRUE;
 	}
 
-	xmmsc_result_get_dict_entry (res, "duration", &tmp);
+	xmmsc_result_get_dict_entry_str (res, "duration", &tmp);
 	if (tmp)
 		curr_dur = atoi (tmp);
 	else

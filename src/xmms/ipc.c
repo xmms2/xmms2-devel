@@ -82,6 +82,7 @@ static xmms_ipc_t *global_ipc;
 
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
+static void xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val);
 
 typedef gboolean (*xmms_ipc_client_callback_t) (GSource *, xmms_ipc_client_t *);
 typedef gboolean (*xmms_ipc_server_callback_t) (GSource *, xmms_ipc_t *);
@@ -93,21 +94,21 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 
 	switch (type) {
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
-			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].uint32))
+			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].value.uint32))
 				return FALSE;
-			arg->types[i] = type;
+			arg->values[i].type = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_INT32 :
-			if (!xmms_ipc_msg_get_int32 (msg, &arg->values[i].int32))
+			if (!xmms_ipc_msg_get_int32 (msg, &arg->values[i].value.int32))
 				return FALSE;
-			arg->types[i] = type;
+			arg->values[i].type = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
-			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].string, &len)) {
-				g_free (arg->values[i].string);
+			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
+				g_free (arg->values[i].value.string);
 				return FALSE;
 			}
-			arg->types[i] = type;
+			arg->values[i].type = type;
 			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");
@@ -131,18 +132,18 @@ static void
 hash_to_dict (gpointer key, gpointer value, gpointer udata)
 {
         gchar *k = key;
-        gchar *v = value;
+        xmms_object_cmd_value_t *v = value;
 	xmms_ipc_msg_t *msg = udata;
 
 	if (k && v) {
 		xmms_ipc_msg_put_string (msg, k);
-		xmms_ipc_msg_put_string (msg, v);
+		xmms_ipc_handle_cmd_value (msg, v);
 	}
 	
 }
 
 static void
-xmms_ipc_do_hashtable (xmms_ipc_msg_t *msg, GHashTable *table)
+xmms_ipc_do_dict (xmms_ipc_msg_t *msg, GHashTable *table)
 {
 	gint i = 0;
 
@@ -153,90 +154,37 @@ xmms_ipc_do_hashtable (xmms_ipc_msg_t *msg, GHashTable *table)
 }
 
 static void
-xmms_ipc_handle_arg_value (xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg)
+xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 {
 	GList *n;
 
-	xmms_ipc_msg_put_int32 (msg, arg->rettype);
+	xmms_ipc_msg_put_int32 (msg, val->type);
 
-	switch (arg->rettype) {
+	switch (val->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
-			xmms_ipc_msg_put_string (msg, arg->retval.string);
+			xmms_ipc_msg_put_string (msg, val->value.string);
 			break;
 		case XMMS_OBJECT_CMD_ARG_UINT32:
-			xmms_ipc_msg_put_uint32 (msg, arg->retval.uint32);
+			xmms_ipc_msg_put_uint32 (msg, val->value.uint32);
 			break;
 		case XMMS_OBJECT_CMD_ARG_INT32:
-			xmms_ipc_msg_put_int32 (msg, arg->retval.int32);
+			xmms_ipc_msg_put_int32 (msg, val->value.int32);
 			break;
-		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
-			for (n = arg->retval.stringlist; n; n = g_list_next (n)) {
-				xmms_ipc_msg_put_string (msg, n->data);
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
-			for (n = arg->retval.uintlist; n; n = g_list_next (n)) {
-				xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (n->data));
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32LIST:
-			for (n = arg->retval.intlist; n; n = g_list_next (n)) {
-				xmms_ipc_msg_put_uint32 (msg, GPOINTER_TO_UINT (n->data));
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICTLIST:
-			for (n = arg->retval.hashlist; n; n = g_list_next (n)) {
-				xmms_ipc_do_hashtable (msg, (GHashTable *)n->data);
+		case XMMS_OBJECT_CMD_ARG_LIST:
+			xmms_ipc_msg_put_uint32 (msg, g_list_length (val->value.list));
+
+			for (n = val->value.list; n; n = g_list_next (n)) {
+				xmms_object_cmd_value_t *lval = n->data;
+				xmms_ipc_handle_cmd_value (msg, lval);
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			xmms_ipc_do_hashtable (msg, arg->retval.hashtable);
+			xmms_ipc_do_dict (msg, val->value.dict);
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
 		default:
-			xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", arg->rettype);
-			break;
-	}
-}
-
-
-static void
-xmms_ipc_free_arg_value (xmms_object_cmd_arg_t *arg)
-{
-	GList *n, *nxt;
-
-	switch (arg->rettype) {
-		case XMMS_OBJECT_CMD_ARG_STRING:
-			g_free (arg->retval.string);
-			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32:
-		case XMMS_OBJECT_CMD_ARG_INT32:
-		case XMMS_OBJECT_CMD_ARG_NONE:
-			/* nop */
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
-			for (n = arg->retval.stringlist; n; n = nxt) {
-				g_free (n->data);
-				nxt = g_list_next (n);
-				g_list_free_1 (n);
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
-			g_list_free (arg->retval.uintlist);
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32LIST:
-			g_list_free (arg->retval.intlist);
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICTLIST:
-			for (n = arg->retval.hashlist; n; n = nxt) {
-				g_hash_table_destroy (n->data);
-				nxt = g_list_next (n);
-				g_list_free_1 (n);
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICT: 
-			g_hash_table_destroy (arg->retval.hashtable);
+			xmms_log_error ("Unknown returnvalue: %d, couldn't serialize message", val->type);
 			break;
 	}
 }
@@ -312,17 +260,17 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmms_object_cmd_call (object, xmms_ipc_msg_get_cmd (msg), &arg);
 	if (xmms_error_isok (&arg.error)) {
 		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_REPLY);
-		xmms_ipc_handle_arg_value (retmsg, &arg);
-		xmms_ipc_free_arg_value (&arg);
+		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
+		xmms_object_cmd_value_free (arg.retval);
 	} else {
 		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
 	}
 
 	if (cmd->arg1 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[0].string);
+		g_free (arg.values[0].value.string);
 	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[1].string);
+		g_free (arg.values[1].value.string);
 
 	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
 	xmms_ipc_client_msg_write (client, retmsg);
@@ -620,7 +568,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 			
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 			xmms_ipc_msg_set_cid (msg, cli->pendingsignals[signalid]);
-			xmms_ipc_handle_arg_value (msg, (xmms_object_cmd_arg_t*)arg);
+			xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
 			xmms_ipc_client_msg_write (cli, msg);
 			cli->pendingsignals[signalid] = 0;
 		}
@@ -647,7 +595,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 
 			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
 			xmms_ipc_msg_set_cid (msg, GPOINTER_TO_UINT (l->data));
-			xmms_ipc_handle_arg_value (msg, (xmms_object_cmd_arg_t*)arg);
+			xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
 			xmms_ipc_client_msg_write (cli, msg);
 		}
 	}

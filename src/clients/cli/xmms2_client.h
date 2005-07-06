@@ -36,7 +36,7 @@ typedef struct {
 void print_info (const char *fmt, ...);
 char *format_url (char *item);
 void print_error (const char *fmt, ...);
-void print_hash (const void *key, const void *value, void *udata);
+void print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata);
 void format_pretty_list (xmmsc_connection_t *conn, GList *list);
 
 void cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv);

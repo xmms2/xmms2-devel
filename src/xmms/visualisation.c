@@ -110,23 +110,24 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 	GList *node = vis->list;
 	int i;
 
-	node->data = GUINT_TO_POINTER (xmms_sample_samples_to_ms (vis->format, pos));
+	node->data = xmms_object_cmd_value_uint_new (xmms_sample_samples_to_ms (vis->format, 
+										pos));
 	node = g_list_next (node);
 
 	for (i = 0; i < FFT_LEN / 2; i++) {
 		gfloat tmp = vis->spec[i];
 		if (tmp >= 1.0)
-			node->data = GUINT_TO_POINTER (INT_MAX);
+			node->data = xmms_object_cmd_value_uint_new (INT_MAX);
 		else if (tmp < 0.0)
-			node->data = GUINT_TO_POINTER (0);
+			node->data = xmms_object_cmd_value_uint_new (0);
 		else
-			node->data = GUINT_TO_POINTER ((guint)(tmp * INT_MAX));
+			node->data = xmms_object_cmd_value_uint_new ((guint)(tmp * INT_MAX));
 		node = g_list_next (node);
 	}
 
 	xmms_object_emit_f (XMMS_OBJECT (vis),
 			    XMMS_IPC_SIGNAL_VISUALISATION_DATA,
-			    XMMS_OBJECT_CMD_ARG_UINT32LIST,
+			    XMMS_OBJECT_CMD_ARG_LIST,
 			    vis->list);
 	
 }

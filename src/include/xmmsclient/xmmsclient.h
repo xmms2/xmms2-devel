@@ -19,6 +19,7 @@
 
 #include <inttypes.h>
 #include "xmmsc/xmmsc_ipc_msg.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -181,9 +182,19 @@ int xmmsc_result_get_int (xmmsc_result_t *res, int *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, char **r);
 
-typedef void (*xmmsc_foreach_func) (const void *key, const void *value, void *user_data);
+typedef enum {
+	XMMSC_RESULT_VALUE_TYPE_NONE = XMMS_OBJECT_CMD_ARG_NONE,
+	XMMSC_RESULT_VALUE_TYPE_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32,
+	XMMSC_RESULT_VALUE_TYPE_INT32 = XMMS_OBJECT_CMD_ARG_INT32,
+	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING
+} xmmsc_result_value_type_t;
 
-int xmmsc_result_get_dict_entry (xmmsc_result_t *res, const char *key, char **r);
+typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data);
+
+xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key);
+int xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r);
+int xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r);
+int xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data);
 
 int xmmsc_result_list_next (xmmsc_result_t *res);

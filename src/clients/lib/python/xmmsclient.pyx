@@ -16,10 +16,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_OBJECT_CMD_ARG_INT32,
 		XMMS_OBJECT_CMD_ARG_STRING,
 		XMMS_OBJECT_CMD_ARG_DICT,
-		XMMS_OBJECT_CMD_ARG_UINT32LIST,
-		XMMS_OBJECT_CMD_ARG_INT32LIST,
-		XMMS_OBJECT_CMD_ARG_STRINGLIST,
-		XMMS_OBJECT_CMD_ARG_DICTLIST,
+		XMMS_OBJECT_CMD_ARG_LIST
 
 # The following constants are meant for interpreting the return value of
 # XMMSResult.get_type ()
@@ -28,10 +25,7 @@ OBJECT_CMD_ARG_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32
 OBJECT_CMD_ARG_INT32 = XMMS_OBJECT_CMD_ARG_INT32
 OBJECT_CMD_ARG_STRING = XMMS_OBJECT_CMD_ARG_STRING
 OBJECT_CMD_ARG_DICT = XMMS_OBJECT_CMD_ARG_DICT
-OBJECT_CMD_ARG_UINT32LIST = XMMS_OBJECT_CMD_ARG_UINT32LIST
-OBJECT_CMD_ARG_INT32LIST = XMMS_OBJECT_CMD_ARG_INT32LIST
-OBJECT_CMD_ARG_STRINGLIST = XMMS_OBJECT_CMD_ARG_STRINGLIST
-OBJECT_CMD_ARG_DICTLIST = XMMS_OBJECT_CMD_ARG_DICTLIST
+OBJECT_CMD_ARG_LIST = XMMS_OBJECT_CMD_ARG_LIST
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmms_playback_status_t:
@@ -61,6 +55,12 @@ PLAYLIST_CHANGED_MOVE = XMMS_PLAYLIST_CHANGED_MOVE
 PLAYLIST_CHANGED_SORT = XMMS_PLAYLIST_CHANGED_SORT
 
 cdef extern from "xmmsclient/xmmsclient.h":
+	ctypedef enum xmmsc_result_value_type_t:
+		XMMSC_RESULT_VALUE_TYPE_NONE,
+		XMMSC_RESULT_VALUE_TYPE_UINT32,
+		XMMSC_RESULT_VALUE_TYPE_INT32,
+		XMMSC_RESULT_VALUE_TYPE_STRING
+
 	ctypedef struct xmmsc_connection_t:
 		pass
 	ctypedef struct xmmsc_result_t
@@ -81,7 +81,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	signed int xmmsc_result_get_string(xmmsc_result_t *res, signed char **r)
 	signed int xmmsc_result_get_playlist_change(xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
 
-	ctypedef void(*xmmsc_foreach_func)(void *key, void *value, void *user_data)
+	ctypedef void(*xmmsc_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, void *user_data)
 
 	int xmmsc_result_get_dict_entry(xmmsc_result_t *res, char *key, char **r)
 	int xmmsc_result_dict_foreach(xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
@@ -156,6 +156,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_io_in_handle(xmmsc_connection_t *c)
 	int xmmsc_io_fd_get(xmmsc_connection_t *c)
 
+
 #####################################################################
 
 from select import select
@@ -172,8 +173,13 @@ cdef from_unicode(object o):
 	else:
 		return o
 
-cdef foreach_hash(signed char *key, signed char *value, udata):
-	udata[key] = to_unicode(value)
+cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, udata):
+	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
+		udata[key] = to_unicode(<char *>value)
+	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
+		udata[key] = <unsigned int>value
+	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
+		udata[key] = <int>value
 
 ObjectRef = {}
 
@@ -219,31 +225,30 @@ cdef class XMMSResult:
 	
 		return xmmsc_result_get_type(self.res)
 
+	def _value(self):
+		type = xmmsc_result_get_type(self.res)
+
+		if type == XMMS_OBJECT_CMD_ARG_UINT32:
+			return self.get_uint()
+		elif type == XMMS_OBJECT_CMD_ARG_DICT:
+			return self.get_dict()
+		elif type == XMMS_OBJECT_CMD_ARG_INT32:
+			return self.get_int()
+		elif type == XMMS_OBJECT_CMD_ARG_STRING:
+			return self.get_string()
+
 	def value(self):
 		"""
 		Return value of appropriate data type contained in this result.
 		This can be used instead of most get_* functions in this class.
 		"""
 		self._check()
+		
+		if xmmsc_result_list_valid(self.res):
+			return self.get_list()
+		else:
+			return self._value()
 	
-		type = xmmsc_result_get_type(self.res)
-
-		if type == XMMS_OBJECT_CMD_ARG_UINT32:
-			return self.get_uint()
-		elif type == XMMS_OBJECT_CMD_ARG_DICT:
-			return self.get_hashtable()
-		elif type == XMMS_OBJECT_CMD_ARG_INT32:
-			return self.get_int()
-		elif type == XMMS_OBJECT_CMD_ARG_STRING:
-			return self.get_string()
-		elif type == XMMS_OBJECT_CMD_ARG_UINT32LIST:
-			return self.get_uintlist()
-		elif type == XMMS_OBJECT_CMD_ARG_INT32LIST:
-			return self.get_intlist()
-		elif type == XMMS_OBJECT_CMD_ARG_STRINGLIST:
-			return self.get_stringlist()
-		elif type == XMMS_OBJECT_CMD_ARG_DICTLIST:
-			return self.get_hashlist()
 
 	def get_broadcast(self):
 		return self.broadcast
@@ -299,12 +304,6 @@ cdef class XMMSResult:
 		else:
 			raise ValueError("Failed to retrieve value!")
 
-	def get_hashtable (self) : # alias for backward compatibility
-		"""
-		@return: A dictionary containing media info.
-		"""
-		return self.get_dict ()
-
 	def get_dict (self) :
 		"""
 		@return: A dictionary containing media info.
@@ -316,70 +315,14 @@ cdef class XMMSResult:
 			raise ValueError("Failed to retrieve value!")
 		return ret
 			
-	def get_intlist(self):
-		"""
-		@return: A list of ints from the result structure.
-		"""
-		cdef int i
-
-		self._check()
-		ret = []
-		while xmmsc_result_list_valid(self.res):
-			if not xmmsc_result_get_int(self.res, &i):
-				raise ValueError("Failed to retrieve value!")
-			ret.append(i)
-			xmmsc_result_list_next(self.res)
-		return ret
-
-	def get_uintlist(self):
-		"""
-		@return: A list of unsigned ints from the result structure.
-		"""
-		cdef unsigned int i
-
-		self._check()
-		ret = []
-		while xmmsc_result_list_valid(self.res):
-			if not xmmsc_result_get_uint(self.res, &i):
-				raise ValueError("Failed to retrieve value!")
-			ret.append(i)
-			xmmsc_result_list_next(self.res)
-		return ret
-
-	def get_hashlist (self) : # alias for backward compatibility
-		"""
-		@return: A list of dicts from the result structure.
-		"""
-		return self.get_dictlist ()
-
-	def get_dictlist (self) :
+	def get_list (self) :
 		"""
 		@return: A list of dicts from the result structure.
 		"""
 		self._check()
 		ret = []
 		while xmmsc_result_list_valid(self.res):
-			hash = {}
-			if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>hash):
-				raise ValueError("Failed to retrieve value!")
-			ret.append(hash)
-			xmmsc_result_list_next(self.res)
-		return ret
-
-
-	def get_stringlist(self):
-		"""
-		@return: A list of strings from the result structure.
-		"""
-		cdef char *buf
-
-		self._check()
-		ret = []
-		while xmmsc_result_list_valid(self.res):
-
-			if not xmmsc_result_get_string(self.res, &buf):
-				raise ValueError("Failed to retrieve value!")
-			ret.append(to_unicode(buf))
+			ret.append(self._value())
 			xmmsc_result_list_next(self.res)
 		return ret
 
