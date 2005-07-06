@@ -22,6 +22,7 @@
 
 #include <glib.h>
 #include "xmms/xmms_error.h"
+#include "xmms/xmms_medialib.h"
 
 typedef struct xmms_transport_St xmms_transport_t;
 
@@ -32,6 +33,7 @@ typedef struct xmms_transport_St xmms_transport_t;
 gint xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 gint xmms_transport_size (xmms_transport_t *transport);
 const gchar *xmms_transport_url_get (const xmms_transport_t *const transport);
+xmms_medialib_entry_t xmms_transport_medialib_entry_get (const xmms_transport_t *const transport);
 void xmms_transport_buffering_start (xmms_transport_t *transport);
 
 #define XMMS_TRANSPORT_MAX_LINE_SIZE 1024

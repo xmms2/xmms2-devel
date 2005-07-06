@@ -197,7 +197,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 				continue;
 			}
 
-			xmms_decoder_mediainfo_get (decoder, transport);
+			if (xmms_decoder_init_for_mediainfo (decoder)) {
+				xmms_decoder_mediainfo_get (decoder, transport);
+			}
 
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, "1");
 

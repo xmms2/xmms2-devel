@@ -151,7 +151,7 @@ xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
  * @param[in] method The function pointer to the method.
  */
 void
-xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
+__xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 			xmms_plugin_method_t method)
 {
 	g_return_if_fail (plugin);

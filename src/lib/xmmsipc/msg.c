@@ -356,6 +356,12 @@ xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *buf, unsigned int maxlen)
 	}
 	if (!xmms_ipc_msg_get_uint32 (msg, &len))
 		return false;
+
+	if(len == 0) {
+		buf[0] = '\0';
+		return true;
+	}
+
 	if (!xmms_ipc_msg_get_data (msg, buf, MIN (maxlen, len)))
 		return false;
 	if (maxlen < len) {

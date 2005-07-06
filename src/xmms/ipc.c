@@ -89,6 +89,8 @@ typedef gboolean (*xmms_ipc_server_callback_t) (GSource *, xmms_ipc_t *);
 static gboolean
 type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
 {
+	guint len;
+
 	switch (type) {
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].uint32))
@@ -101,8 +103,7 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			arg->types[i] = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
-			arg->values[i].string = g_new (gchar, 1024);
-			if (!xmms_ipc_msg_get_string (msg, arg->values[i].string, 1024)) {
+			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].string, &len)) {
 				g_free (arg->values[i].string);
 				return FALSE;
 			}

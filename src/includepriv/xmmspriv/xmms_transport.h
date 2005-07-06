@@ -20,7 +20,6 @@
 #ifndef __XMMS_PRIV_TRANSPORT_H__
 #define __XMMS_PRIV_TRANSPORT_H__
 
-#include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_transport.h"
 #include "xmms/xmms_medialib.h"
 
