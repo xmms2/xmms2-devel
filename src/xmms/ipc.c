@@ -261,11 +261,13 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	if (xmms_error_isok (&arg.error)) {
 		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
-		xmms_object_cmd_value_free (arg.retval);
 	} else {
 		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
 	}
+
+	if (arg.retval)
+		xmms_object_cmd_value_free (arg.retval);
 
 	if (cmd->arg1 == XMMS_OBJECT_CMD_ARG_STRING)
 		g_free (arg.values[0].value.string);
