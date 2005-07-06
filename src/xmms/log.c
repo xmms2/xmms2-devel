@@ -44,12 +44,13 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#include <regex.h>
-
+/** @addtogroup Log
+ * @{ */
 #define XMMS_LOG_DEBUG 1
 #define XMMS_LOG_INFORMATION 2
 #define XMMS_LOG_FATAL 3 
 #define XMMS_LOG_THOMAS 3
+/** @} */
 
 #ifndef BUFSIZE
 #define BUFSIZE 8192
@@ -64,33 +65,22 @@ char *xmms_log_filename = NULL;
 static FILE *xmms_log_stream = NULL;
 static int xmms_log_daemonized = 0;
 
-xmms_config_value_t *regex_cv = NULL;
-regex_t re;
-
-static void
-xmms_log_config_regex_changed (xmms_object_t *object, gconstpointer data,
-							   gpointer userdata)
-{
-	int err;
-	
-	xmms_log_debug ("XMMS_LOG_CONFIG_REGEX_CHANGED");
-	g_return_if_fail (data);
-
-	regfree (&re);
-
-	err = regcomp (&re, data, REG_EXTENDED);
-	if (err != 0) {
-		xmms_log_error ("Unable to compile regular expression");
-	}
-}
+static gboolean xmms_log_inited = FALSE;
 
 /** @defgroup Log Log
   * @ingroup XMMSServer
-  * @brief Loging facility.
+  * @brief XMMS2 daemon logging facility.
+  * These functions are used to record important events as they occur in the
+  * daemon. They are all internal functions.
+  * @if internal
   * @{
   */
 
-/** Initialize the log module, creates log file */
+/**
+ * @internal Initialize the log module, create log file
+ * @param[in] filename The filename or filename prefix to use for the log file
+ * @return TRUE if logging successfully initialised
+ */
 gint
 xmms_log_init (const gchar *filename)
 {
@@ -122,18 +112,14 @@ xmms_log_init (const gchar *filename)
 		}
 	}
 
-	regex_cv = xmms_config_value_register ("log.regexp", ".*",
-	                                       xmms_log_config_regex_changed,
-	                                       NULL);
-	
-	xmms_log_config_regex_changed ((xmms_object_t *)regex_cv, 
-					(gconstpointer *)xmms_config_value_string_get (regex_cv), 
-					NULL);
+	xmms_log_inited = TRUE;
 	
 	return 1;
 }
 
-/** Shutdown the log module, close the logfile */
+/**
+ * @internal Shutdown the log module, close the logfile
+ */
 void
 xmms_log_shutdown (void)
 {
@@ -141,11 +127,10 @@ xmms_log_shutdown (void)
 
 	if (xmms_log_filename)
 		g_free (xmms_log_filename);
-
-	regfree (&re);
 }
 
-/** Close everything, start up with clean slate when 
+/**
+ * @internal Close standard I/O streams, start up with clean slate when 
  * run as a daemon */
 void
 xmms_log_daemonize (void)
@@ -163,7 +148,11 @@ xmms_log_daemonize (void)
 #endif
 }
 
-/** Log only if verbose mode is set. Prepend output with DEBUG:  */
+/**
+ * @internal Log debug messages. Prepend output with DEBUG:
+ * @param[in] fmt Log message format
+ * @param[in] ... Variable arguments
+ */
 void
 xmms_log_debug (const gchar *fmt, ...)
 {
@@ -178,10 +167,16 @@ xmms_log_debug (const gchar *fmt, ...)
 #endif
 	va_end (ap);
 
+	g_assert (xmms_log_inited);
+
 	xmms_log_string_with_time (XMMS_LOG_DEBUG, "DEBUG: %s\n", buff);
 }
 
-/** Log to console and file */
+/**
+ * @internal Log to console and file
+ * @param[in] fmt Log message format
+ * @param[in] ... Variable arguments
+ */
 void
 xmms_log (const char *fmt, ...)
 {
@@ -192,10 +187,15 @@ xmms_log (const char *fmt, ...)
 	g_vsnprintf (buff, BUFSIZE, fmt, ap);
 	va_end (ap);
 
+	g_assert (xmms_log_inited);
 	xmms_log_string_with_time (XMMS_LOG_INFORMATION, "%s\n", buff);
 }
 
-/** Fatal log message. Terminate server */
+/**
+ * @internal Fatal log message. Log, then terminate server
+ * @param[in] fmt Log message format
+ * @param[in] ... Variable arguments
+ */
 void
 xmms_log_fatal (const gchar *fmt, ...)
 {
@@ -206,12 +206,23 @@ xmms_log_fatal (const gchar *fmt, ...)
 	g_vsnprintf (buff, BUFSIZE, fmt, ap);
 	va_end (ap);
 
+	g_assert (xmms_log_inited);
 	xmms_log_string_with_time (XMMS_LOG_FATAL, "%s\n", buff);
 	xmms_log_string_with_time (XMMS_LOG_FATAL, "%s\n", "Shutting down...");
 	
 	exit (0);
 }
 
+/**
+ * @internal Write a string to log file, preceded by time stamp. Does the real
+ * logging work.
+ * @param[in] loglevel The log level to use - i.e. type of log message. Should
+ * be one of the XMMS_LOG_* defined numbers
+ * @param[in] format The format of the line to be written to the log file
+ * @param[in] string String representing the log message to be written. This
+ * is typically a string built from variable arguments, before calling this
+ * function.
+ */
 static void
 xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *string)
 {
@@ -221,13 +232,6 @@ xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *stri
 #endif
 	time_t now;
 	gchar timestring[20];
-	
-	int err = REG_NOMATCH;
-	regmatch_t pm;
-	
-	err = regexec (&re, string, 0, &pm, 0);
-	if (err == REG_NOMATCH)
-		return;
 	
 	/* send the information to core */
 	/*msg = g_strdup_printf (format, string);
@@ -277,6 +281,10 @@ xmms_log_string_with_time (gint loglevel, const gchar *format, const gchar *stri
 	}
 }
 
+/**
+ * @internal Open a log file
+ * @return 1 if successful, 0 otherwise
+ */
 static int
 xmms_log_open_logfile ()
 {
@@ -298,6 +306,10 @@ xmms_log_open_logfile ()
 	return 1;
 }
 
+/**
+ * @internal Close a log file
+ * @return 1
+ */
 static int
 xmms_log_close_logfile ()
 {
@@ -308,4 +320,7 @@ xmms_log_close_logfile ()
 	return 1;
 }
 
-/** @} */
+/**
+ * @}
+ * @endif
+ */

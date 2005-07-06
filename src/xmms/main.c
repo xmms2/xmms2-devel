@@ -163,7 +163,9 @@ do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
 }
 
 /**
- * @internal Parse the xmms2d configuration file
+ * @internal Parse the xmms2d configuration file. Creates the config directory
+ * if needed.
+ * @return TRUE if successful.
  */
 static gboolean
 parse_config ()
@@ -427,14 +429,14 @@ main (int argc, char **argv)
 
 	g_random_set_seed (time (NULL));
 
-	ipc = xmms_ipc_init ();
-
-	parse_config ();
-	
 	if (!xmms_log_init (doLog ? "xmmsd" : "null")) {
 		fprintf (stderr, "Couldn't open logfile!!\n");
 		return 1;
 	}
+
+	ipc = xmms_ipc_init ();
+	
+	parse_config ();
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
