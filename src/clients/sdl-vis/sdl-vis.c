@@ -189,7 +189,7 @@ static int
 res_has_key (xmmsc_result_t *res, const char *key)
 {
 	char *val;
-	xmmsc_result_get_dict_entry (res, key, &val);
+	xmmsc_result_get_dict_entry_str (res, key, &val);
 	return !!val;
 }
 

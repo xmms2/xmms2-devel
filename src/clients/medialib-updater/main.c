@@ -41,19 +41,13 @@ handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
 {
 	xmonitor_t *mon = userdata;
 	xmmsc_result_t *res2;
-	gchar *entry;
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		guint32 id;
-		if (!xmmsc_result_get_dict_entry (res, "id", &entry)) {
+		if (!xmmsc_result_get_dict_entry_uint32 (res, "id", &id)) {
 			ERR ("Failed to get entry id from hash!");
 			continue;
 		}
-
-		if (!entry)
-			continue;
-
-		id = strtol (entry, NULL, 10);
 
 		if (id == 0) {
 			DBG ("Entry not in db!");
@@ -260,7 +254,6 @@ handle_watch_dirs (xmmsc_result_t *res, void *data)
 {
 	xmonitor_t *mon = data;
 	gchar *dirs;
-	gchar **d;
 
 	if (!xmmsc_result_get_string (res, &dirs)) {
 		ERR ("Couldn't get configvalue from server!");
