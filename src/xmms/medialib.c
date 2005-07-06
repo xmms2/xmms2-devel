@@ -193,8 +193,8 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	                     XMMS_IPC_CMD_ADD_TO_PLAYLIST,
 	                     XMMS_CMD_FUNC (addtopls));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-						 XMMS_IPC_CMD_PLAYLISTS_LIST,
-						 XMMS_CMD_FUNC (playlists_list));
+			     XMMS_IPC_CMD_PLAYLISTS_LIST,
+			     XMMS_CMD_FUNC (playlists_list));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PLAYLIST_IMPORT,
 	                     XMMS_CMD_FUNC (playlist_import));
