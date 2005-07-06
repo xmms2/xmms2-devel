@@ -695,7 +695,6 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 }
 
 /**
-/* @}
+ * @}
  * @endif
  */
- 
