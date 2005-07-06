@@ -311,9 +311,14 @@ mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 void
-playlist_list_cb (const void *key, const void *value, void *data)
+playlist_list_cb (const void *key, xmmsc_result_value_type_t type, const void *value, void *data)
 {
-	printf("%s:%s\n", (char *)key, (char *)value);
+	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		printf("%s:%s\n", (char *)key, (char *)value);
+	} else {
+		printf("%s:%d\n", (char *)key, (int32_t)value);
+	}
+
 }
 
 static void

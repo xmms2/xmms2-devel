@@ -983,7 +983,7 @@ xmms_medialib_playlist_list_cb (void *pArg, int argc, char **argv, char **col)
 {
 	GHashTable *hash = pArg;
 
-	g_hash_table_insert (hash, g_strdup (argv[0]), g_strdup (argv[1]));
+	g_hash_table_insert (hash, g_strdup (argv[0]), xmms_object_cmd_value_str_new (g_strdup (argv[1])));
 
 	return 0;
 }
