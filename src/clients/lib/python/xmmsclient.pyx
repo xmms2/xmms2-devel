@@ -141,9 +141,13 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_add_entry(xmmsc_connection_t *conn, char *url)
 	xmmsc_result_t *xmmsc_medialib_get_info(xmmsc_connection_t *, unsigned int id)
 	xmmsc_result_t *xmmsc_medialib_add_to_playlist(xmmsc_connection_t *c, char *query)
+	xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_medialib_playlist_import(xmmsc_connection_t *c, char *name, char *url)
 	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
+	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
+	xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
+	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
 	
@@ -1157,6 +1161,22 @@ cdef class XMMS:
 		
 		return ret
 
+	def medialib_playlists_list(self, cb = None):
+		"""
+		Returns a list of all available playlists
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+
+		ret.res = xmmsc_medialib_playlists_list(self.conn)
+		ret.more_init()
+		
+		return ret
+
 	def medialib_playlist_import(self, name, url, cb = None):
 		"""
 		Import a playlist to the medialib
@@ -1192,6 +1212,22 @@ cdef class XMMS:
 		
 		return ret
 
+	def medialib_get_id(self, url, cb = None):
+		"""
+        Search for a entry (URL) in the medialib db and return its ID number
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+		
+		ret.res = xmmsc_medialib_get_id(self.conn, url)
+		ret.more_init()
+		
+		return ret
+
 
 	def medialib_playlist_export(self, name, mime, cb = None):
 		"""
@@ -1208,6 +1244,42 @@ cdef class XMMS:
 		c2 = from_unicode(mime)
 		
 		ret.res = xmmsc_medialib_playlist_export(self.conn, c, c2)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_playlist_remove(self, name, cb = None):
+		"""
+		Remove a playlist from the medialib, keeping the songs of course.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+
+		c = from_unicode(name)
+		
+		ret.res = xmmsc_medialib_playlist_remove(self.conn, c)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_path_import(self, path, cb = None):
+		"""
+		Import all files recursively from the directory passed as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+
+		c = from_unicode(path)
+		
+		ret.res = xmmsc_medialib_path_import(self.conn, c)
 		ret.more_init()
 		
 		return ret
