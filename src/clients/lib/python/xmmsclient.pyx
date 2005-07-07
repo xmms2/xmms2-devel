@@ -144,6 +144,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_medialib_playlist_import(xmmsc_connection_t *c, char *name, char *url)
 	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
+	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
@@ -1225,6 +1226,24 @@ cdef class XMMS:
 		c2 = from_unicode(mime)
 		
 		ret.res = xmmsc_medialib_playlist_export(self.conn, c, c2)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_playlist_remove(self, name, cb = None):
+		"""
+		Remove a playlist from the medialib, keeping the songs of course.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+
+		c = from_unicode(name)
+		
+		ret.res = xmmsc_medialib_playlist_remove(self.conn, c)
 		ret.more_init()
 		
 		return ret
