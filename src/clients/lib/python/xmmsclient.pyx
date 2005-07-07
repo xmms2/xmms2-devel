@@ -146,6 +146,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
 	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
+	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
 	
@@ -1206,6 +1207,22 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_medialib_rehash(self.conn, id)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_get_id(self, url, cb = None):
+		"""
+        Search for a entry (URL) in the medialib db and return its ID number
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+		
+		ret.res = xmmsc_medialib_get_id(self.conn, url)
 		ret.more_init()
 		
 		return ret
