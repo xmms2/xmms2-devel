@@ -145,6 +145,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_playlist_import(xmmsc_connection_t *c, char *name, char *url)
 	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
 	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
+	xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
 	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
 
@@ -1261,6 +1262,24 @@ cdef class XMMS:
 		c = from_unicode(name)
 		
 		ret.res = xmmsc_medialib_playlist_remove(self.conn, c)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_path_import(self, path, cb = None):
+		"""
+		Import all files recursively from the directory passed as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+
+		c = from_unicode(path)
+		
+		ret.res = xmmsc_medialib_path_import(self.conn, c)
 		ret.more_init()
 		
 		return ret
