@@ -651,7 +651,7 @@ xmms_config_value_name_get (const xmms_config_value_t *value)
 void
 xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 {
-	GList *list = NULL;
+	GHashTable *dict;
 	gchar file[XMMS_PATH_MAX];
 
 	g_return_if_fail (val);
@@ -666,15 +666,16 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 
-	list = g_list_prepend (list, val->data);
-	list = g_list_prepend (list, (gpointer) val->name);
-
+	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+	g_hash_table_insert (dict, "name", xmms_object_cmd_value_str_new (g_strdup (val->name)));
+	g_hash_table_insert (dict, "value", xmms_object_cmd_value_str_new (g_strdup (val->data)));
+	
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
-	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
-	                    XMMS_OBJECT_CMD_ARG_LIST,
-	                    list);
+			    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	                    XMMS_OBJECT_CMD_ARG_DICT,
+	                    dict);
 
-	g_list_free (list);
+	g_hash_table_destroy (dict);
 
 	/* save the database to disk, so we don't loose any data
 	 * if the daemon crashes
