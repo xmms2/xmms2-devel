@@ -69,8 +69,8 @@ xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type, guint32 id)
 {
 	GHashTable *dict;
 	xmms_object_cmd_value_t *val;
-	dict = g_hash_table_new_full (g_direct_hash, 
-				      g_direct_equal, 
+	dict = g_hash_table_new_full (g_str_hash, 
+				      g_str_equal, 
 				      NULL,
 				      xmms_object_cmd_value_free);
 	val = xmms_object_cmd_value_int_new (type);

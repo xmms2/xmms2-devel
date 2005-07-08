@@ -739,7 +739,7 @@ xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry)
 {
 	GHashTable *ret;
 	
-	ret = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_free, xmms_object_cmd_value_free);
+	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, xmms_object_cmd_value_free);
 
 	g_mutex_lock (medialib->mutex);
 
@@ -772,7 +772,7 @@ select_callback (void *pArg, int argc, char **argv, char **cName)
 	GList **l = (GList **) pArg;
 	GHashTable *table;
 
-	table = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_free, xmms_object_cmd_value_free);
+	table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, xmms_object_cmd_value_free);
 
 	for (i = 0; i < argc; i++) {
 		if (argv[i] && cName[i]) {
