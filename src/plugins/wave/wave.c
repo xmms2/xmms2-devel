@@ -55,7 +55,7 @@ typedef struct xmms_wave_data_St {
 	val = GUINT32_TO_LE (val);
 
 #define GET_STR(buf, str, len) \
-	g_strlcpy ((gchar *)str, (gchar *)buf, len); \
+	strncpy ((gchar *) str, (gchar *)buf, len); \
 	str[len] = '\0'; \
 	buf += len;
 
