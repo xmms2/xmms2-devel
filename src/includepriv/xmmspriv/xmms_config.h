@@ -30,6 +30,4 @@ void xmms_config_shutdown (void);
 
 gboolean xmms_config_save (const gchar *file);
 
-void xmms_config_value_data_set (xmms_config_value_t *val, gchar *data);
-
 #endif
