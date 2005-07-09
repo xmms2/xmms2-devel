@@ -329,8 +329,10 @@ xmms_alsa_open (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
+	xmms_config_value_t *volume;
 	const gchar *dev;
-	gint err = 0;
+	gchar buf[8];
+	gint err = 0, left = 0, right = 0;
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -354,6 +356,15 @@ xmms_alsa_open (xmms_output_t *output)
 	}
 
 	data->have_mixer = xmms_alsa_mixer_setup (output);
+
+	if (data->have_mixer) {
+		/* get the current volume and set the config value */
+		xmms_alsa_mixer_get (output, &left, &right);
+		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
+		                                    "volume");
+		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
+		xmms_config_value_data_set (volume, buf);
+	}
 
 	return TRUE;
 }
@@ -512,7 +523,6 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
 	gchar *dev, *name;
-	gint left = 0, right = 0;
 	snd_mixer_selem_id_t *selem_id;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
 	gint err, index;
@@ -585,7 +595,6 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 
 	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
-	xmms_alsa_mixer_get (output, &left, &right);
 
 	return TRUE;
 }
