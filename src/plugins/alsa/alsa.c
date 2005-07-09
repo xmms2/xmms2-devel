@@ -82,10 +82,10 @@ static gboolean xmms_alsa_format_set (xmms_output_t *output,
                                       xmms_audio_format_t *format);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
                                         xmms_audio_format_t *format);
-static gboolean xmms_alsa_mixer_set (xmms_output_t *output, glong left,
-									 glong right);
-static gboolean xmms_alsa_mixer_get (xmms_output_t *output, glong *left,
-									 glong *right);
+static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left,
+                                     gint right);
+static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left,
+                                     gint *right);
 static gboolean xmms_alsa_mixer_setup (xmms_output_t *output);
 static void xmms_alsa_probe_modes (xmms_output_t *output,
                                    xmms_alsa_data_t *data);
@@ -512,7 +512,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
 	gchar *dev, *name;
-	glong left = 0, right = 0;
+	gint left = 0, right = 0;
 	snd_mixer_selem_id_t *selem_id;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
 	gint err, index;
@@ -676,7 +676,7 @@ xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_set (xmms_output_t *output, glong left, glong right)
+xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 {
 	xmms_alsa_data_t *data;
 
@@ -713,9 +713,10 @@ xmms_alsa_mixer_set (xmms_output_t *output, glong left, glong right)
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_get (xmms_output_t *output, glong *left, glong *right)
+xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 {
 	gint err;
+	glong lleft = 0, lright = 0;
 	xmms_alsa_data_t *data;
 
 	g_return_val_if_fail (output, FALSE);
@@ -740,11 +741,16 @@ xmms_alsa_mixer_get (xmms_output_t *output, glong *left, glong *right)
 
 	snd_mixer_selem_get_playback_volume (data->mixer_elem,
 										 SND_MIXER_SCHN_FRONT_LEFT,
-										 left);
+										 &lleft);
 
 	snd_mixer_selem_get_playback_volume (data->mixer_elem,
 										 SND_MIXER_SCHN_FRONT_RIGHT,
-										 right);
+										 &lright);
+
+	/* this is safe, cause we set the volume range to 0..100 */
+	*left = lleft;
+	*right = lright;
+
 	return TRUE;
 }
 
