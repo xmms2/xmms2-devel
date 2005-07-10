@@ -1,8 +1,8 @@
 /** @file alsa.c
  *  Output plugin for the Advanced Linux Sound Architechture.
- * 
+ *
  *  Copyright (C) 2003-2005 Daniel Svensson, <daniel@nittionio.nu>
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
@@ -36,7 +36,7 @@ typedef struct xmms_alsa_data_St {
 	snd_mixer_t *mixer;
 	snd_mixer_elem_t *mixer_elem;
 	snd_pcm_hw_params_t *hwparams;
- 	snd_pcm_uframes_t  buffer_size;
+	snd_pcm_uframes_t  buffer_size;
 	gboolean have_mixer;
 } xmms_alsa_data_t;
 
@@ -71,8 +71,8 @@ static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output, gint err);
-static void xmms_alsa_mixer_config_changed (xmms_object_t *object, 
-											gconstpointer data, 
+static void xmms_alsa_mixer_config_changed (xmms_object_t *object,
+											gconstpointer data,
 											gpointer userdata);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
@@ -82,10 +82,10 @@ static gboolean xmms_alsa_format_set (xmms_output_t *output,
                                       xmms_audio_format_t *format);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
                                         xmms_audio_format_t *format);
-static gboolean xmms_alsa_mixer_set (xmms_output_t *output, glong left, 
-									 glong right);
-static gboolean xmms_alsa_mixer_get (xmms_output_t *output, glong *left, 
-									 glong *right);
+static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left,
+                                     gint right);
+static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left,
+                                     gint *right);
 static gboolean xmms_alsa_mixer_setup (xmms_output_t *output);
 static void xmms_alsa_probe_modes (xmms_output_t *output,
                                    xmms_alsa_data_t *data);
@@ -113,17 +113,17 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "E-Mail", "daniel@nittionino.nu");
 
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, 
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
 							xmms_alsa_write);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, 
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN,
 							xmms_alsa_open);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
 							xmms_alsa_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
 	                        xmms_alsa_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE,
 							xmms_alsa_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
 							xmms_alsa_flush);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
 							xmms_alsa_buffer_bytes_get);
@@ -146,7 +146,7 @@ xmms_plugin_get (void)
 									   "PCM",
 									   NULL,
 									   NULL);
-	
+
 	xmms_plugin_config_value_register (plugin,
 									   "mixer_dev",
 									   "default",
@@ -179,12 +179,12 @@ xmms_plugin_get (void)
  * @return TRUE on success, FALSE on error
  */
 static gboolean
-xmms_alsa_new (xmms_output_t *output) 
+xmms_alsa_new (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
 	xmms_config_value_t *volume;
-	
+
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_alsa_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
@@ -202,12 +202,12 @@ xmms_alsa_new (xmms_output_t *output)
 	xmms_config_value_callback_set (volume,
 									xmms_alsa_mixer_config_changed,
 									(gpointer) output);
-	
-	xmms_output_private_data_set (output, data); 
+
+	xmms_output_private_data_set (output, data);
 
 	xmms_alsa_probe_modes (output, data);
 
-	return TRUE; 
+	return TRUE;
 }
 
 static void
@@ -265,20 +265,22 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 	err = snd_pcm_hw_params_set_access (pcm, params,
 	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
-		xmms_log_error ("Access type not available for playback: %s", 
+		xmms_log_error ("Access type not available for playback: %s",
 						snd_strerror (err));
 		return;
 	}
 
 	err = snd_pcm_hw_params_set_format (pcm, params, alsa_fmt);
 	if (err < 0) {
-		xmms_log_error ("Sample format (%i) not available for playback.", alsa_fmt);
+		xmms_log_error ("Sample format (%i) not available for playback.",
+		                alsa_fmt);
 		return;
 	}
 
 	err = snd_pcm_hw_params_set_channels (pcm, params, channels);
 	if (err < 0) {
-		xmms_log_error ("Channels count (%i) not available for playbacks.", channels);
+		xmms_log_error ("Channels count (%i) not available for playbacks.",
+		                channels);
 		return;
 	}
 
@@ -316,10 +318,10 @@ xmms_alsa_destroy (xmms_output_t *output)
 	g_free (data);
 }
 
-/** 
+/**
  * Open audio device.
  *
- * @param output The output structure filled with alsa data.  
+ * @param output The output structure filled with alsa data.
  * @return TRUE on success, FALSE on error
  */
 static gboolean
@@ -327,16 +329,18 @@ xmms_alsa_open (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
+	xmms_config_value_t *volume;
 	const gchar *dev;
-	gint err = 0;
-	
+	gchar buf[8];
+	gint err = 0, left = 0, right = 0;
+
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
 	dev = xmms_config_value_string_get (cv);
-	
+
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
 		dev = "default";
@@ -352,14 +356,23 @@ xmms_alsa_open (xmms_output_t *output)
 	}
 
 	data->have_mixer = xmms_alsa_mixer_setup (output);
-	
+
+	if (data->have_mixer) {
+		/* get the current volume and set the config value */
+		xmms_alsa_mixer_get (output, &left, &right);
+		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
+		                                    "volume");
+		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
+		xmms_config_value_data_set (volume, buf);
+	}
+
 	return TRUE;
 }
 
 /**
  * Close audio device.
  *
- * @param output The output structure filled with alsa data.  
+ * @param output The output structure filled with alsa data.
  */
 static void
 xmms_alsa_close (xmms_output_t *output)
@@ -370,11 +383,11 @@ xmms_alsa_close (xmms_output_t *output)
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
-	
+
 	if (data->mixer) {
 		err = snd_mixer_close (data->mixer);
 		if (err != 0) {
-			xmms_log_error ("Unable to release mixer device: %s", 
+			xmms_log_error ("Unable to release mixer device: %s",
 							snd_strerror (err));
 		} else {
 			XMMS_DBG ("mixer device closed.");
@@ -383,7 +396,7 @@ xmms_alsa_close (xmms_output_t *output)
 
 	/* Close device */
 	err = snd_pcm_close (data->pcm);
-	if (err != 0) { 
+	if (err != 0) {
 		xmms_log_error ("Audio device could not be released: %s",
 						snd_strerror (err));
 	} else {
@@ -398,7 +411,7 @@ xmms_alsa_close (xmms_output_t *output)
  *
  * @return TRUE on success, FALSE on error
  */
-static gboolean 
+static gboolean
 xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 {
 	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
@@ -416,7 +429,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	}
 
 	g_return_val_if_fail (alsa_format != SND_PCM_FORMAT_UNKNOWN, FALSE);
-	
+
 	/* Setup all parameters to configuration space */
 	err = snd_pcm_hw_params_any (data->pcm, data->hwparams);
 	if (err < 0) {
@@ -426,10 +439,10 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	}
 
 	/* Set the interleaved read/write format */
-	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams, 
+	err = snd_pcm_hw_params_set_access (data->pcm, data->hwparams,
 	                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 	if (err < 0) {
-		xmms_log_error ("Access type not available for playback: %s", 
+		xmms_log_error ("Access type not available for playback: %s",
 						snd_strerror (err));
 		return FALSE;
 	}
@@ -438,20 +451,20 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_set_format (data->pcm, data->hwparams,
 	                                    alsa_format);
 	if (err < 0) {
-		xmms_log_error ("Sample format not available for playback: %s", 
+		xmms_log_error ("Sample format not available for playback: %s",
 						snd_strerror (err));
 		return FALSE;
 	}
 
 	/* Set the count of channels */
-	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, 
+	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams,
 	                                      format->channels);
 	if (err < 0) {
-		xmms_log_error ("Channels count (%i) not available for playbacks: %s", 
+		xmms_log_error ("Channels count (%i) not available for playbacks: %s",
 						format->channels, snd_strerror (err));
 		return FALSE;
 	}
-	
+
 	/* Set the sample rate.
 	 * Note: don't use snd_pcm_hw_params_set_rate_near(), we want to fail here
 	 *       if the core passed an unsupported samplerate to us!
@@ -459,17 +472,17 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_set_rate (data->pcm, data->hwparams,
 	                                  format->samplerate, 0);
 	if (err < 0) {
-		xmms_log_error ("Rate %iHz not available for playback: %s", 
+		xmms_log_error ("Rate %iHz not available for playback: %s",
 						format->samplerate, snd_strerror (err));
 		return FALSE;
 	}
-	
+
 	tmp = requested_buffer_time;
 	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
-	                                              &requested_buffer_time, 
+	                                              &requested_buffer_time,
 	                                              NULL);
 	if (err < 0) {
-		xmms_log_error ("Unable to set buffer time %i for playback: %s", 
+		xmms_log_error ("Unable to set buffer time %i for playback: %s",
 						tmp, snd_strerror (err));
 		return FALSE;
 	}
@@ -480,11 +493,11 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
 	                                         &data->buffer_size);
 	if (err != 0) {
-		xmms_log_error ("Unable to get buffer size for playback: %s", 
+		xmms_log_error ("Unable to get buffer size for playback: %s",
 						snd_strerror (err));
 		return FALSE;
 	}
-	
+
 	/* Put the hardware parameters into good use */
 	err = snd_pcm_hw_params (data->pcm, data->hwparams);
 	if (err < 0) {
@@ -501,28 +514,27 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 /**
  * Setup mixer
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  * @return TRUE on success, else FALSE
  */
-static gboolean 
+static gboolean
 xmms_alsa_mixer_setup (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	const xmms_config_value_t *cv;
 	gchar *dev, *name;
-	glong left = 0, right = 0;
 	snd_mixer_selem_id_t *selem_id;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
 	gint err, index;
-	
+
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
-	
-	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), 
+
+	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 									"mixer_dev");
 	dev = (gchar *)xmms_config_value_string_get (cv);
-	
+
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
 		xmms_log_error ("Failed to open empty mixer: %s", snd_strerror (err));
@@ -532,12 +544,12 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 
 	err = snd_mixer_attach (data->mixer, dev);
 	if (err < 0) {
-		xmms_log_error ("Attaching to mixer %s failed: %s", dev, 
+		xmms_log_error ("Attaching to mixer %s failed: %s", dev,
 						snd_strerror(err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		return FALSE;
-	}   
+	}
 
 	err = snd_mixer_selem_register (data->mixer, NULL, NULL);
 	if (err < 0) {
@@ -553,7 +565,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		return FALSE;
-	}       
+	}
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
 	name = (gchar *)xmms_config_value_string_get (cv);
@@ -561,10 +573,10 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	index = 0;
 
 	snd_mixer_selem_id_alloca (&selem_id);
-	
+
 	snd_mixer_selem_id_set_index (selem_id, index);
 	snd_mixer_selem_id_set_name (selem_id, name);
-	
+
 	data->mixer_elem = snd_mixer_find_selem (data->mixer, selem_id);
 	if (data->mixer_elem == NULL) {
 		xmms_log_error ("Failed to find mixer element");
@@ -572,7 +584,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		data->mixer = NULL;
 		return FALSE;
 	}
-	
+
 	snd_mixer_selem_get_playback_volume_range (data->mixer_elem, &alsa_min_vol,
 	                                           &alsa_max_vol);
 	if (alsa_max_vol == 0) {
@@ -583,7 +595,6 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 
 	snd_mixer_selem_set_playback_volume_range (data->mixer_elem, 0, 100);
-	xmms_alsa_mixer_get (output, &left, &right);
 
 	return TRUE;
 }
@@ -594,18 +605,18 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
  * Handle new mixer settings.
  * Extract left and right data and apply changes to the mixer.
  *
- * @param object An xmms object. 
+ * @param object An xmms object.
  * @param data The new volume values.
- * @param userdata The output struct containing alsa data. 
+ * @param userdata The output struct containing alsa data.
  */
-static void 
-xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data, 
+static void
+xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 								gpointer userdata)
 {
 	xmms_alsa_data_t *alsa_data;
 	guint left = 0, right = 0;
 	gint res;
-	
+
 	g_return_if_fail (data);
 	g_return_if_fail (userdata);
 	alsa_data = xmms_output_private_data_get (userdata);
@@ -618,9 +629,11 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 			xmms_log_error ("Unable to change volume");
 			return;
 		}
+
 		if (res == 1) {
-			right = left; 
+			right = left;
 		}
+
 		xmms_alsa_mixer_set (userdata, left, right);
 	}
 }
@@ -631,7 +644,7 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
  * Set audio format.
  * Drain the buffer if non-empty and then try to change audio format.
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  * @param format The new audio format.
  *
  * @return Success/failure
@@ -668,18 +681,18 @@ xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 /**
  * Change mixer settings.
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_set (xmms_output_t *output, glong left, glong right) 
+xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 {
 	xmms_alsa_data_t *data;
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
-	
+
 	if (!data->have_mixer) {
 		return FALSE;
 	}
@@ -690,13 +703,13 @@ xmms_alsa_mixer_set (xmms_output_t *output, glong left, glong right)
 	}
 
 	snd_mixer_selem_set_playback_volume (data->mixer_elem,
-										 SND_MIXER_SCHN_FRONT_LEFT, 
+										 SND_MIXER_SCHN_FRONT_LEFT,
 										 left);
-	
+
 	snd_mixer_selem_set_playback_volume (data->mixer_elem,
-										 SND_MIXER_SCHN_FRONT_RIGHT, 
+										 SND_MIXER_SCHN_FRONT_RIGHT,
 										 right);
-	
+
 	return TRUE;
 }
 
@@ -705,13 +718,14 @@ xmms_alsa_mixer_set (xmms_output_t *output, glong left, glong right)
 /**
  * Get mixer settings.
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_get (xmms_output_t *output, glong *left, glong *right) 
+xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 {
 	gint err;
+	glong lleft = 0, lright = 0;
 	xmms_alsa_data_t *data;
 
 	g_return_val_if_fail (output, FALSE);
@@ -736,11 +750,16 @@ xmms_alsa_mixer_get (xmms_output_t *output, glong *left, glong *right)
 
 	snd_mixer_selem_get_playback_volume (data->mixer_elem,
 										 SND_MIXER_SCHN_FRONT_LEFT,
-										 left);
+										 &lleft);
 
 	snd_mixer_selem_get_playback_volume (data->mixer_elem,
 										 SND_MIXER_SCHN_FRONT_RIGHT,
-										 right);
+										 &lright);
+
+	/* this is safe, cause we set the volume range to 0..100 */
+	*left = lleft;
+	*right = lright;
+
 	return TRUE;
 }
 
@@ -748,20 +767,20 @@ xmms_alsa_mixer_get (xmms_output_t *output, glong *left, glong *right)
 
 /**
  * Get bytes in buffer.
- * Calculates bytes in buffer by subtract buffer size with available frames 
- * in buffer and then convert it to bytes. This is needed for the visualization 
+ * Calculates bytes in buffer by subtract buffer size with available frames
+ * in buffer and then convert it to bytes. This is needed for the visualization
  * to perform correct synchronization between audio and graphics.
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  * @return The current buffer size or 0 on failure.
  */
 static guint
-xmms_alsa_buffer_bytes_get (xmms_output_t *output) 
+xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 {
 	gint bytes_in_buffer;
 	xmms_alsa_data_t *data;
 	snd_pcm_sframes_t avail;
-	
+
 	g_return_val_if_fail (output, 0);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);
@@ -773,7 +792,7 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 		xmms_alsa_xrun_recover (data, avail);
 		avail = snd_pcm_avail_update (data->pcm);
 		if (avail == -EPIPE) {
-			xmms_log_error ("Unable to get available frames in buffer: %s", 
+			xmms_log_error ("Unable to get available frames in buffer: %s",
 							snd_strerror (avail));
 			return 0;
 		}
@@ -782,8 +801,8 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
 	if (avail < 0) {
 		return 0;
 	}
-	
-	bytes_in_buffer = snd_pcm_frames_to_bytes (data->pcm, data->buffer_size) - 
+
+	bytes_in_buffer = snd_pcm_frames_to_bytes (data->pcm, data->buffer_size) -
 					  snd_pcm_frames_to_bytes (data->pcm, avail);
 
 	return bytes_in_buffer;
@@ -795,18 +814,18 @@ xmms_alsa_buffer_bytes_get (xmms_output_t *output)
  * Flush buffer.
  * Resets the PCM position so that no data is left behind.
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  */
 static void
-xmms_alsa_flush (xmms_output_t *output) 
+xmms_alsa_flush (xmms_output_t *output)
 {
 	gint err;
-	xmms_alsa_data_t *data;	
+	xmms_alsa_data_t *data;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
-	
+
 	err = snd_pcm_drop (data->pcm);
 	if (err >= 0) {
 		err = snd_pcm_prepare (data->pcm);
@@ -821,10 +840,10 @@ xmms_alsa_flush (xmms_output_t *output)
 
 /**
  * XRUN recovery.
- * Checks if any buffer underrun has happened and performes the 
+ * Checks if any buffer underrun has happened and performes the
  * necessary 'repairs'. Straight from alsa pcm.c example.
  *
- * @param data The private plugin data. 
+ * @param data The private plugin data.
  */
 static void
 xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
@@ -837,11 +856,12 @@ xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
 			xmms_log_error ("Unable to recover from underrun, prepare failed: "
 							"%s", snd_strerror (err));
 		}
-	} 
+	}
 	else if (err == -ESTRPIPE) {
 		while ((err = snd_pcm_resume (data->pcm)) == -EAGAIN) {
-			sleep (1);       /* wait until the suspend flag is released */
+			sleep (1); /* wait until the suspend flag is released */
 		}
+
 		if (err < 0) {
 			err = snd_pcm_prepare (data->pcm);
 			if (err < 0) {
@@ -857,7 +877,7 @@ xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
 /**
  * Write buffer to the audio device.
  *
- * @param output The output struct containing alsa data. 
+ * @param output The output struct containing alsa data.
  * @param buffer Audio data to be written to audio device.
  * @param len The length of audio data.
  */
@@ -877,6 +897,7 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 
 	while (frames > 0) {
 		written = snd_pcm_writei (data->pcm, buffer, frames);
+
 		if (written > 0) {
 			frames -= written;
 			buffer += snd_pcm_frames_to_bytes (data->pcm, written);
