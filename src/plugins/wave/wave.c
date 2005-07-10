@@ -161,7 +161,7 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 	                                  tmp);
 
 	bitrate = data->bits_per_sample * data->samplerate / data->channels;
-	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate / 1000);
+	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate);
 	xmms_medialib_entry_property_set (entry,
 	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                                  tmp);
