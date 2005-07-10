@@ -448,12 +448,15 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 
 		if (ret != -1) {
 			transport->current_position += ret;
+			transport->total_bytes += ret;
 		}
 
 		if (transport->running && !transport->buffering && transport->numread++ > 1) {
 			XMMS_DBG ("Let's start buffering");
 			transport->buffering = TRUE;
 			g_cond_signal (transport->cond);
+			xmms_ringbuf_clear (transport->buffer);
+			xmms_ringbuf_set_eos (transport->buffer, FALSE);
 		}
 
 
