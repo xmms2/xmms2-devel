@@ -666,7 +666,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
 	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 
-	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, xmms_object_cmd_value_free);
 	g_hash_table_insert (dict, "name", xmms_object_cmd_value_str_new (g_strdup (val->name)));
 	g_hash_table_insert (dict, "value", xmms_object_cmd_value_str_new (g_strdup (val->data)));
 	
