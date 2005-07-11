@@ -1,5 +1,5 @@
 target = "xmmsipc"
-source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c"]
+source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c", "url.c"]
 shared = False
 install = False
 
