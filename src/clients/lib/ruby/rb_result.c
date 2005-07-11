@@ -15,6 +15,7 @@
  */
 
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsc/xmmsc_idnumbers.h>
 #include <xmms/xmms_object.h>
 
 #include <ruby.h>
@@ -178,18 +179,9 @@ static VALUE c_disconnect_signal (VALUE self)
 	return self;
 }
 
-/*
- * call-seq:
- *  res.int -> integer
- *
- * Returns the integer from _res_.
- */
-static VALUE c_int_get (VALUE self)
+static VALUE int_get (RbResult *res)
 {
-	RbResult *res = NULL;
 	int id = 0;
-
-	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_int (res->real, &id)) {
 		rb_raise (eValueError, "cannot retrieve value");
@@ -199,18 +191,9 @@ static VALUE c_int_get (VALUE self)
 	return INT2FIX (id);
 }
 
-/*
- * call-seq:
- *  res.uint -> integer
- *
- * Returns the unsigned integer from _res_.
- */
-static VALUE c_uint_get (VALUE self)
+static VALUE uint_get (RbResult *res)
 {
-	RbResult *res = NULL;
 	unsigned int id = 0;
-
-	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_uint (res->real, &id)) {
 		rb_raise (eValueError, "cannot retrieve value");
@@ -220,52 +203,44 @@ static VALUE c_uint_get (VALUE self)
 	return UINT2NUM (id);
 }
 
-/*
- * call-seq:
- *  res.string -> string
- *
- * Returns the string from _res_.
- */
-static VALUE c_string_get (VALUE self)
+static VALUE string_get (RbResult *res)
 {
-	RbResult *res = NULL;
 	char *s = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_get_string (res->real, &s)) {
 		rb_raise (eValueError, "cannot retrieve value");
 		return Qnil;
 	}
 
-	return rb_str_new2 (s);
+	return rb_str_new2 (s ? s : "");
 }
 
-static void xhash_to_rhash (const void *key, const void *value,
-                            VALUE *hash)
+static void xhash_to_rhash (const void *key,
+                            xmmsc_result_value_type_t type,
+                            const void *value, VALUE *hash)
 {
 	VALUE val;
 
-	if (!strcmp (key, "id"))
-		val = rb_uint_new (strtoul (value, NULL, 10));
-	else
-		val = rb_str_new2 ((char *) value);
+	switch (type) {
+		case XMMSC_RESULT_VALUE_TYPE_STRING:
+			val = rb_str_new2 (value ? value : "");
+			break;
+		case XMMSC_RESULT_VALUE_TYPE_INT32:
+			val = INT2NUM ((int32_t) value);
+			break;
+		case XMMSC_RESULT_VALUE_TYPE_UINT32:
+			val = UINT2NUM ((uint32_t) value);
+			break;
+		default:
+			break;
+	}
 
 	rb_hash_aset (*hash, ID2SYM (rb_intern (key)), val);
 }
 
-/*
- * call-seq:
- *  res.hashtable -> hash
- *
- * Returns the hashtable from _res_.
- */
-static VALUE c_hashtable_get (VALUE self)
+static VALUE hashtable_get (RbResult *res)
 {
 	VALUE rhash = rb_hash_new ();
-	RbResult *res = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
 
 	if (!xmmsc_result_dict_foreach (res->real,
 	                                (xmmsc_foreach_func) xhash_to_rhash,
@@ -275,145 +250,45 @@ static VALUE c_hashtable_get (VALUE self)
 	return rhash;
 }
 
-/*
- * call-seq:
- *  res.intlist -> array
- *
- * Returns the intlist from _res_.
- */
-static VALUE c_intlist_get (VALUE self)
+static VALUE value_get (RbResult *res)
 {
-	VALUE a;
-	RbResult *res = NULL;
+	VALUE ret;
 
-	Data_Get_Struct (self, RbResult, res);
+	switch (xmmsc_result_get_type (res->real)) {
+		case XMMS_OBJECT_CMD_ARG_UINT32:
+			ret = uint_get (res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_INT32:
+			ret = int_get (res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_STRING:
+			ret = string_get (res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_DICT:
+			ret = hashtable_get (res);
+			break;
+		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
+		default:
+			ret = Qnil;
+			break;
+	}
 
-	a = rb_ary_new ();
+	return ret;
+}
+
+static VALUE list_get (RbResult *res)
+{
+	VALUE ret;
+
+	ret = rb_ary_new ();
 
 	while (xmmsc_result_list_valid (res->real)) {
-		int i = 0;
-
-		if (!xmmsc_result_get_int (res->real, &i)) {
-			rb_raise (eValueError, "cannot retrieve value");
-			return Qnil;
-		}
-
-		rb_ary_push (a, INT2FIX (i));
+		rb_ary_push (ret, value_get (res));
 
 		xmmsc_result_list_next (res->real);
 	}
 
-	return a;
-}
-
-/*
- * call-seq:
- *  res.uintlist -> array
- *
- * Returns the uintlist from _res_.
- */
-static VALUE c_uintlist_get (VALUE self)
-{
-	VALUE a;
-	RbResult *res = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	a = rb_ary_new ();
-
-	while (xmmsc_result_list_valid (res->real)) {
-		unsigned int i = 0;
-
-		if (!xmmsc_result_get_uint (res->real, &i)) {
-			rb_raise (eValueError, "cannot retrieve value");
-			return Qnil;
-		}
-
-		rb_ary_push (a, UINT2NUM (i));
-
-		xmmsc_result_list_next (res->real);
-	}
-
-	return a;
-}
-
-/*
- * call-seq:
- *  res.stringlist -> array
- *
- * Returns the stringlist from _res_.
- */
-static VALUE c_stringlist_get (VALUE self)
-{
-	VALUE a;
-	RbResult *res = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	a = rb_ary_new ();
-
-	while (xmmsc_result_list_valid (res->real)) {
-		char *s = NULL;
-
-		if (!xmmsc_result_get_string (res->real, &s)) {
-			rb_raise (eValueError, "cannot retrieve value");
-			return Qnil;
-		}
-
-		rb_ary_push (a, rb_str_new2 (s));
-
-		xmmsc_result_list_next (res->real);
-	}
-
-	return a;
-}
-
-/*
- * call-seq:
- *  res.hashlist -> array
- *
- * Returns the hashlist from _res_.
- */
-static VALUE c_hashlist_get (VALUE self)
-{
-	VALUE a;
-	RbResult *res = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	a = rb_ary_new ();
-
-	while (xmmsc_result_list_valid (res->real)) {
-		VALUE rhash = rb_hash_new ();
-
-		if (!xmmsc_result_dict_foreach (res->real,
-		                                (xmmsc_foreach_func) xhash_to_rhash,
-		                                &rhash))
-			rb_raise (eValueError, "cannot retrieve value");
-
-		rb_ary_push (a, rhash);
-
-		xmmsc_result_list_next (res->real);
-	}
-
-	return a;
-}
-
-static VALUE c_playlist_change_get (VALUE self)
-{
-	RbResult *res = NULL;
-	unsigned int type = 0, id = 0, arg = 0;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	if (!(xmmsc_result_get_playlist_change (res->real, &type, &id,
-	                                        &arg))) {
-		rb_raise (eValueError, "cannot retrieve value");
-		return Qnil;
-	}
-
-	return rb_ary_new3 (3, UINT2NUM (type), UINT2NUM (id),
-	                    UINT2NUM (arg));
+	return ret;
 }
 
 /*
@@ -424,7 +299,6 @@ static VALUE c_playlist_change_get (VALUE self)
  */
 static VALUE c_value_get (VALUE self)
 {
-	VALUE ret = Qnil;
 	RbResult *res;
 
 	Data_Get_Struct (self, RbResult, res);
@@ -435,38 +309,10 @@ static VALUE c_value_get (VALUE self)
 		return Qnil;
 	}
 
-	switch (xmmsc_result_get_type (res->real)) {
-		case XMMS_OBJECT_CMD_ARG_UINT32:
-			ret = c_uint_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32:
-			ret = c_int_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRING:
-			ret = c_string_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
-			ret = c_uintlist_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32LIST:
-			ret = c_intlist_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
-			ret = c_stringlist_get (self);
-		case XMMS_OBJECT_CMD_ARG_DICT:
-			ret = c_hashtable_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICTLIST:
-			ret = c_hashlist_get (self);
-			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH:
-			ret = c_playlist_change_get (self);
-			break;
-		default:
-			break;
-	}
-
-	return ret;
+	if (xmmsc_result_list_valid (res->real))
+		return list_get (res);
+	else
+		return value_get (res);
 }
 
 void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
@@ -486,16 +332,6 @@ void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
 	                  c_disconnect_broadcast, 0);
 	rb_define_method (cResult, "disconnect_signal",
 	                  c_disconnect_signal, 0);
-	rb_define_method (cResult, "int", c_int_get, 0);
-	rb_define_method (cResult, "uint", c_uint_get, 0);
-	rb_define_method (cResult, "string", c_string_get, 0);
-	rb_define_method (cResult, "hashtable", c_hashtable_get, 0);
-	rb_define_method (cResult, "intlist", c_intlist_get, 0);
-	rb_define_method (cResult, "uintlist", c_uintlist_get, 0);
-	rb_define_method (cResult, "stringlist", c_stringlist_get, 0);
-	rb_define_method (cResult, "hashlist", c_hashlist_get, 0);
-	rb_define_method (cResult, "playlist_change",
-	                  c_playlist_change_get, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);

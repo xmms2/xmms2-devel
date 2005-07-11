@@ -59,8 +59,10 @@ xmmsc_glib_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
 	if (watch->pollfd.revents & G_IO_OUT)
 		xmmsc_io_out_handle (watch->conn);
 
-	if (watch->pollfd.revents & (G_IO_HUP | G_IO_ERR))
+	if (watch->pollfd.revents & (G_IO_HUP | G_IO_ERR)) {
 		xmmsc_io_disconnect (watch->conn);
+		return FALSE;
+	}
 
 	return TRUE;
 }

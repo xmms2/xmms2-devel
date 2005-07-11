@@ -18,7 +18,7 @@
 #ifndef XMMS_IPC_TRANSPORT_H
 #define XMMS_IPC_TRANSPORT_H
 
-#include <stdint.h>
+#include <inttypes.h>
 
 typedef struct xmms_ipc_transport_St xmms_ipc_transport_t;
 

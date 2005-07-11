@@ -24,10 +24,8 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_transport.h"
+#include "xmms/xmms_decoderplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_decoder.h"
 
 #include <glib.h>
 #include <string.h>
@@ -37,7 +35,6 @@ typedef struct xmms_wave_data_St {
 	guint32 samplerate;
 	guint16 bits_per_sample;
 	guint bytes_total;
-	gboolean inited;
 } xmms_wave_data_t;
 
 /*
@@ -58,7 +55,7 @@ typedef struct xmms_wave_data_St {
 	val = GUINT32_TO_LE (val);
 
 #define GET_STR(buf, str, len) \
-	strncpy (str, buf, len); \
+	strncpy ((gchar *) str, (gchar *)buf, len); \
 	str[len] = '\0'; \
 	buf += len;
 
@@ -71,7 +68,7 @@ static gboolean xmms_wave_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_wave_decode_block (xmms_decoder_t *decoder);
 static void xmms_wave_get_media_info (xmms_decoder_t *decoder);
 static void xmms_wave_destroy (xmms_decoder_t *decoder);
-static gboolean xmms_wave_init (xmms_decoder_t *decoder);
+static gboolean xmms_wave_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_wave_seek (xmms_decoder_t *decoder, guint samples);
 
 static gboolean read_wave_header (xmms_wave_data_t *data, guint8 *buf);
@@ -153,8 +150,6 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
-	xmms_wave_init (decoder);
-
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	samples_total = data->bytes_total / (data->bits_per_sample / 8);
@@ -166,7 +161,7 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 	                                  tmp);
 
 	bitrate = data->bits_per_sample * data->samplerate / data->channels;
-	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate / 1000);
+	g_snprintf (tmp, sizeof (tmp), "%i", (gint) bitrate);
 	xmms_medialib_entry_property_set (entry,
 	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                                  tmp);
@@ -175,7 +170,7 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 }
 
 static gboolean
-xmms_wave_init (xmms_decoder_t *decoder)
+xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 {
 	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
@@ -189,15 +184,11 @@ xmms_wave_init (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
-	if (data->inited) {
-		return TRUE;
-	}
-
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
 	while (read < sizeof (hdr)) {
-		gint ret = xmms_transport_read (transport, hdr + read,
+		gint ret = xmms_transport_read (transport, (gchar *)hdr + read,
 		                                sizeof (hdr) - read, &error);
 
 		if (ret <= 0) {
@@ -214,9 +205,9 @@ xmms_wave_init (xmms_decoder_t *decoder)
 		return FALSE;
 	}
 
-	data->inited = TRUE;
-
-	xmms_wave_get_media_info (decoder);
+	if (!(mode & XMMS_DECODER_INIT_DECODING)) {
+		return TRUE;
+	}
 
 	sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_S8
 	                                         : XMMS_SAMPLE_FORMAT_S16);

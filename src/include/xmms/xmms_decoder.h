@@ -28,21 +28,8 @@ typedef struct xmms_decoder_St xmms_decoder_t;
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_plugin.h"
 
-/*
- * Decoder plugin methods
- */
-
-typedef gboolean (*xmms_decoder_can_handle_method_t) (const gchar *mimetype);
-typedef gboolean (*xmms_decoder_init_method_t) (xmms_decoder_t *decoder);
-typedef gboolean (*xmms_decoder_new_method_t) (xmms_decoder_t *decoder, const gchar *mimetype);
-typedef gboolean (*xmms_decoder_destroy_method_t) (xmms_decoder_t *decoder);
-typedef gboolean (*xmms_decoder_decode_block_method_t) (xmms_decoder_t *decoder);
-typedef gboolean (*xmms_decoder_seek_method_t) (xmms_decoder_t *decoder, guint samples);
-typedef void (*xmms_decoder_get_mediainfo_method_t) (xmms_decoder_t *decoder);
-
-/*
- * Public function prototypes
- */
+#define XMMS_DECODER_INIT_MEDIAINFO (1 << 0)
+#define XMMS_DECODER_INIT_DECODING (1 << 1)
 
 gpointer xmms_decoder_private_data_get (xmms_decoder_t *decoder);
 void xmms_decoder_private_data_set (xmms_decoder_t *decoder, gpointer data);

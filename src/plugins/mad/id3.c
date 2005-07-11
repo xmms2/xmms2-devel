@@ -18,11 +18,13 @@
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 #define ID3v2_HEADER_FLAGS_UNSYNC 0x80
 #define ID3v2_HEADER_FLAGS_EXTENDED 0x40
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
+#define ID3v2_HEADER_FLAGS_FOOTER 0x10
 
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -74,220 +76,6 @@
  * TXXX User defined text information frame
  */
 
-static void
-add_to_entry (xmms_medialib_entry_t entry, gchar *key, guchar *val, gint len)
-{
-	gchar *nval;
-	gsize readsize,writsize;
-	GError *err = NULL;
-
-	g_return_if_fail (len>0);
-
-	if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
-		nval = g_convert (val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
-	} else {
-		nval = g_convert (val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	}
-
-	if (err) {
-		xmms_log_error ("Couldn't convert: %s", err->message);
-		g_error_free (err);
-		return;
-	}
-	xmms_medialib_entry_property_set (entry, key, nval);	
-	g_free (nval);
-}
-
-static void
-xmms_mad_handle_id3v2_text (guint32 type, gchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
-{
-
-	if (len < 1) {
-		XMMS_DBG ("Skipping short id3v2 text-frame");
-		return;
-	}
-	
-	if (!buf[0]){ /** Is this really correct? */
-		buf++;
-		len--;
-		if (len < 1) {
-			XMMS_DBG ("Skipping empty text-frame");
-			return;
-		}
-	}
-
-	switch (type) {
-	case quad2long('T','Y','E',0):
-	case quad2long('T','Y','E','R'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, buf, len);
-		break;
-	}
-	case quad2long('T','A','L',0):
-	case quad2long('T','A','L','B'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, buf, len);
-		break;
-	}
-	case quad2long('T','T','2',0):
-	case quad2long('T','I','T','2'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, buf, len);
-		break;
-	}
-	case quad2long('T','P','1',0):
-	case quad2long('T','P','E','1'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, buf, len);
-		break;
-	}
-	case quad2long('T','R','K',0):
-	case quad2long('T','R','C','K'): {
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, buf, len);
-		break;
-	}
-	case quad2long('T','C','O','N'): {
-		/* @todo we could resolve numeric types here */
-		add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, buf, len);
-		break;
-	}
-	case quad2long('T','X','X','X'): {
-		/* User defined, lets search for musicbrainz */
-		guint32 l2 = strlen (buf);
-		if ((len - l2 -1) < 1)
-			break;
-		if (g_strcasecmp (buf, "MusicBrainz Album Id") == 0)
-			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, buf+l2+1, len-l2-1);
-		else if (g_strcasecmp (buf, "MusicBrainz Artist Id") == 0)
-			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, buf+l2+1, len-l2-1);
-		else if ((g_strcasecmp (buf, "MusicBrainz Album Artist Id") == 0) &&
-			 (g_strncasecmp (buf+l2+1, MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
-		}
-
-		break;
-
-	}
-	case quad2long('U','F','I','D'): {
-		guint32 l2 = strlen (buf);
-		if (g_strcasecmp (buf, "http://musicbrainz.org") == 0)
-			add_to_entry(entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, buf+l2+1, len-l2-1);
-		break;
-	}
-	case quad2long('T','B','P',0):
-	case quad2long('T','B','P','M'): {
-		add_to_entry(entry, "bpm", buf, len);
-		break;
-	}
-	}
-}
-
-gboolean
-xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
-{
-	if (buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') {
-		header->ver = buf[3];
-		header->rev = buf[4];
-		
-		if (header->ver == 3 || header->ver == 2) {
-			gint32 len;
-			
-			header->flags = buf[5];
-			
-			len = (buf[6] << 21) | (buf[7] << 14) |
-				(buf[8] << 7) | buf[9];
-
-			if ((buf[6] | buf[7] | buf[8] | buf[9]) & 0x80) {
-				XMMS_DBG ("WARNING: id3v2 tag having lenpath with msb set! Probably broken tag/tag-writer. %02x %02x %02x %02x",
-					  buf[6], buf[7], buf[8], buf[9]);
-			}
-			
-			header->len = len;
-
-			return TRUE;
-		}
-		XMMS_DBG ("Unsupported id3v2 version (%d)", header->ver);
-	}
-	return FALSE;
-}
-/**
- * 
- */
-gboolean
-xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entry_t entry)
-{
-	gint len=head->len;
-
-	if (head->flags != 0) {
-		/** @todo must handle unsync-flag */
-		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
-		return FALSE;
-	}
-
-	while (len>0) {
-		guint size;
-		guint flags;
-		guint32 type;
-
-
-		if (head->ver == 3) {
-			if ( len < 10) {
-				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
-				return FALSE;
-			}
-			
-			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | (buf[3]);
-			
-			size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
-			
-			if (size+10 > len) {
-				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
-				return FALSE;
-			}
-			
-			flags = buf[8] | buf[9];
-
-			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_mad_handle_id3v2_text (type, buf + 10, flags, size, entry);
-			}
-			
-			if (buf[0] == 0) { /* padding */
-				return TRUE;
-			}
-			
-			buf += size+10;
-			len -= size+10;
-		} else if (head->ver == 2) {
-			if ( len < 6) {
-				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
-				return FALSE;
-			}
-			
-			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8);
-			size = (buf[3]<<16) | (buf[4]<<8) | buf[5];
-
-			if (size+6 > len) {
-				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
-				return FALSE;
-			}
-
-			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_mad_handle_id3v2_text (type, buf + 6, 0, size, entry);
-			}
-			
-			if (buf[0] == 0) { /* padding */
-				return TRUE;
-			}
-			
-			buf += size+6;
-			len -= size+6;
-		}
-
-	}
-
-	return TRUE;
-}
-
-/**
- *  ID3 
- */
-
 #define GENRE_MAX 0x94
 
 const gchar *id3_genres[GENRE_MAX] =
@@ -336,6 +124,332 @@ const gchar *id3_genres[GENRE_MAX] =
         "Merengue", "Salsa", "Thrash Metal",
         "Anime", "JPop", "Synthpop"
 };
+
+static void
+add_to_entry (xmms_id3v2_header_t *head, 
+	      xmms_medialib_entry_t entry, 
+	      gchar *key, 
+	      guchar *val, 
+	      gint len)
+{
+	gchar *nval;
+	gsize readsize,writsize;
+	GError *err = NULL;
+
+	g_return_if_fail (len>0);
+
+	if (head->ver == 4) {
+		if (val[0] == 0x00) {
+			/* ISO-8859-1 */
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+		} else if (len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
+			/* UTF-16 with BOM */
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16", &readsize, &writsize, &err);
+		} else if (val[0] == 0x02) {
+			/* UTF-16 without BOM */
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16BE", &readsize, &writsize, &err);
+		} else if (val[0] == 0x03) {
+			/* UTF-8 */
+			nval = g_strndup ((gchar *)val+1, len-1);
+		} else {
+			XMMS_DBG ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
+			return;
+		}
+	} else if (head->ver == 2 || head->ver == 3) {
+		if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
+			nval = g_convert ((gchar *)val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
+		} else {
+			nval = g_convert ((gchar *)val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+		}
+	}
+
+	if (err) {
+		xmms_log_error ("Couldn't convert: %s", err->message);
+		g_error_free (err);
+		return;
+	}
+	xmms_medialib_entry_property_set (entry, key, nval);	
+	g_free (nval);
+}
+
+static void
+xmms_mad_handle_id3v2_tcon (xmms_id3v2_header_t *head, 
+			    xmms_medialib_entry_t entry, 
+			    gchar *key, 
+			    guchar *buf, 
+			    gint len)
+{
+	gint res;
+	guint genre_id;
+	gchar *val;
+
+	if (head->ver == 4) {
+		buf++;
+		len -= 1; /* total len of buffer */
+	}
+
+	val = g_strndup ((gchar *)buf, len);
+	res = sscanf (val, "(%u)", &genre_id);
+
+	if (res > 0 && genre_id < GENRE_MAX) {
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, (gchar *)id3_genres[genre_id]);
+	} else {
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, val);
+	}
+
+	g_free (val);
+}
+
+static void
+xmms_mad_handle_id3v2_txxx (xmms_id3v2_header_t *head, 
+			    xmms_medialib_entry_t entry, 
+			    gchar *key, 
+			    guchar *buf, 
+			    gint len)
+{
+
+	guint32 l2;
+	gchar *val;
+
+	if (head->ver == 4) {
+		buf++;
+		len -= 1; /* total len of buffer */
+	}
+
+	l2 = strlen ((gchar *)buf);
+
+	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
+
+	if ((len - l2 - 1) < 1) {
+		g_free (val);
+		return;
+	}
+
+	if (g_strcasecmp ((gchar *)buf, "MusicBrainz Album Id") == 0)
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
+	else if (g_strcasecmp ((gchar *)buf, "MusicBrainz Artist Id") == 0)
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
+	else if ((g_strcasecmp ((gchar *)buf, "MusicBrainz Album Artist Id") == 0) &&
+		 (g_strncasecmp ((gchar *)(buf+l2+1), MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+	}
+
+	g_free (val);
+}
+
+static void
+xmms_mad_handle_id3v2_ufid (xmms_id3v2_header_t *head, 
+			    xmms_medialib_entry_t entry, 
+			    gchar *key, 
+			    guchar *buf, 
+			    gint len)
+{
+	gchar *val;
+	guint32 l2 = strlen ((gchar *)buf);
+	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
+	if (g_strcasecmp ((gchar *)buf, "http://musicbrainz.org") == 0)
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
+	g_free (val);
+}
+
+struct id3tags_t {
+	guint32 type;
+	gchar *prop;
+	void (*fun)(xmms_id3v2_header_t *head, 
+		    xmms_medialib_entry_t entry, 
+		    gchar *key, 
+		    guchar *val, 
+		    gint len); /* Instead of add_to_entry */
+};
+
+static struct id3tags_t tags[] = {
+	{ quad2long('T','Y','E',0), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long('T','Y','E','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long('T','A','L',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
+	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
+	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long('T','C','O','N'), NULL, xmms_mad_handle_id3v2_tcon },
+	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
+	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
+	{ quad2long('T','X','X','X'), NULL, xmms_mad_handle_id3v2_txxx },
+	{ quad2long('U','F','I','D'), NULL, xmms_mad_handle_id3v2_ufid },
+	{ 0, NULL, NULL }
+};
+
+
+static void
+xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, guchar *buf, guint flags, gint len, xmms_medialib_entry_t entry)
+{
+	gint i = 0;
+
+	if (len < 1) {
+		XMMS_DBG ("Skipping short id3v2 text-frame");
+		return;
+	}
+	
+	if (!buf[0]){ /** Is this really correct? */
+		buf++;
+		len--;
+		if (len < 1) {
+			XMMS_DBG ("Skipping empty text-frame");
+			return;
+		}
+	}
+
+	while (tags[i].type != 0) {
+		if (tags[i].type == type) {
+			if (tags[i].fun) {
+				tags[i].fun (head, entry, tags[i].prop, buf, len);
+			} else {
+				add_to_entry (head, entry, tags[i].prop, buf, len);
+			}
+			return;
+			break;
+		}
+		i++;
+	}
+	XMMS_DBG ("Unhandled tag %c%c%c%c", (type >> 24) & 0xff, (type >> 16) & 0xff, (type >> 8) & 0xff, (type) & 0xff);
+}
+
+
+gboolean
+xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
+{
+	typedef struct {
+		/* All members are defined in terms of chars so padding does not
+		 * occur. Is there a cleaner way to keep the compiler from
+		 * padding? */
+		
+		guchar     id[3];
+		guchar     ver;
+		guchar     rev;
+		guchar     flags;
+		guchar     size[4];
+	} id3head_t;
+	
+	id3head_t *id3head;
+
+	id3head = (id3head_t *) buf;
+	
+	if (strncmp((gchar *)id3head->id, "ID3", 3)) return FALSE;
+
+	if (id3head->ver > 4 || id3head->ver < 2) {
+		XMMS_DBG ("Unsupported id3v2 version (%d)", id3head->ver);
+		return FALSE;
+	}
+	
+	if ((id3head->size[0] | id3head->size[1] | id3head->size[2] |
+				id3head->size[3]) & 0x80) {
+		xmms_log("WARNING: id3v2 tag having lenpath with msb set \
+			  (%02x %02x %02x %02x)!  Probably broken \
+			  tag/tag-writer. Skipping Tag.",
+			  id3head->size[0], id3head->size[1],
+			  id3head->size[2], id3head->size[3]);
+		return FALSE;
+	}
+	
+	header->ver = id3head->ver;
+	header->rev = id3head->rev;
+	header->flags = id3head->flags;
+	
+	header->len = id3head->size[0] << 21 | id3head->size[1] << 14 |
+		      id3head->size[2] << 7 | id3head->size[3];
+
+	if (id3head->flags & ID3v2_HEADER_FLAGS_FOOTER) {
+		/* footer is copy of header */
+		header->len += sizeof(id3head_t);
+	}
+
+	return TRUE;
+}
+
+
+/**
+ * 
+ */
+gboolean
+xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entry_t entry)
+{
+	gint len=head->len;
+
+	if (head->flags != 0) {
+		/** @todo must handle unsync-flag */
+		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
+		return FALSE;
+	}
+
+	while (len>0) {
+		guint size;
+		guint flags;
+		guint32 type;
+
+
+		if (head->ver == 3 || head->ver == 4) {
+			if ( len < 10) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
+				return FALSE;
+			}
+			
+			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | (buf[3]);
+			
+			size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
+			
+			if (size+10 > len) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
+				return FALSE;
+			}
+			
+			flags = buf[8] | buf[9];
+
+			if (buf[0] == 'T' || buf[0] == 'U') {
+				xmms_mad_handle_id3v2_text (head, type, buf + 10, flags, size, entry);
+			}
+			
+			if (buf[0] == 0) { /* padding */
+				return TRUE;
+			}
+			
+			buf += size+10;
+			len -= size+10;
+		} else if (head->ver == 2) {
+			if (len < 6) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
+				return FALSE;
+			}
+			
+			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8);
+			size = (buf[3]<<16) | (buf[4]<<8) | buf[5];
+
+			if (size+6 > len) {
+				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
+				return FALSE;
+			}
+
+			if (buf[0] == 'T' || buf[0] == 'U') {
+				xmms_mad_handle_id3v2_text (head, type, buf + 6, 0, size, entry);
+			}
+			
+			if (buf[0] == 0) { /* padding */
+				return TRUE;
+			}
+			
+			buf += size+6;
+			len -= size+6;
+		}
+
+	}
+
+	return TRUE;
+}
+
+/**
+ *  ID3 
+ */
 
 typedef struct id3v1tag_St {
         char tag[3]; /* always "TAG": defines ID3v1 tag 128 bytes before EOF */
@@ -417,7 +531,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_free (tmp);
 	}
 	
-	if (atoi (&tag->u.v1_1.track_number) > 0) {
+	if (atoi ((char *)(&tag->u.v1_1.track_number)) > 0) {
 		/* V1.1 */
 		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);

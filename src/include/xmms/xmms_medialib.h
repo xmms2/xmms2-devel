@@ -49,6 +49,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID "artist_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID "track_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED "added"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_BPM "bpm"
 
 
 typedef guint32 xmms_medialib_entry_t;
@@ -60,5 +61,6 @@ gchar *xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gcha
 guint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
 gboolean xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
+guint32 xmms_medialib_get_random_entry (void);
 
 #endif /* __XMMS_MEDIALIB_H__ */

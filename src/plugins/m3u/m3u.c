@@ -164,7 +164,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 
 		if (extm3u && line[0] == '#') {
 			gchar *p;
-			int read, write;
+			gsize read, write;
 
 			p = strchr (line, ',');
 			if (p) {

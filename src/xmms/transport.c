@@ -448,12 +448,15 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 
 		if (ret != -1) {
 			transport->current_position += ret;
+			transport->total_bytes += ret;
 		}
 
 		if (transport->running && !transport->buffering && transport->numread++ > 1) {
 			XMMS_DBG ("Let's start buffering");
 			transport->buffering = TRUE;
 			g_cond_signal (transport->cond);
+			xmms_ringbuf_clear (transport->buffer);
+			xmms_ringbuf_set_eos (transport->buffer, FALSE);
 		}
 
 
@@ -866,6 +869,9 @@ xmms_transport_thread (gpointer data)
 		g_mutex_unlock (transport->mutex);
 		ret = read_method (transport, buffer, sizeof(buffer), &error);
 		g_mutex_lock (transport->mutex);
+
+		if (!transport->running)
+			break;
 
 		if (ret > 0) {
 			xmms_ringbuf_write_wait (transport->buffer, buffer, ret, transport->mutex);

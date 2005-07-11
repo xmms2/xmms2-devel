@@ -124,9 +124,14 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 {
 	xmms_mediainfo_reader_t *mir = userdata;
 	const xmms_object_cmd_arg_t *oarg = arg;
-	xmms_playlist_changed_msg_t *chmsg = oarg->retval.plch;
+	GHashTable *chmsg = oarg->retval->value.dict;
 
-	if (chmsg->type == XMMS_PLAYLIST_CHANGED_ADD) {
+	xmms_object_cmd_value_t *val = g_hash_table_lookup (chmsg, "type");
+
+	if (!val)
+		return;
+
+	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD) {
 		xmms_mediainfo_reader_wakeup (mir);
 	}
 }
@@ -156,6 +161,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			if (!xmms_transport_open (transport, entry)) {
 				xmms_medialib_entry_remove (entry);
+				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_object_unref (transport);
 				continue;
 			}
@@ -179,6 +185,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			if (!mime) {
 				xmms_medialib_entry_remove (entry);
+				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				continue;
@@ -188,13 +195,16 @@ xmms_mediainfo_reader_thread (gpointer data)
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
 				xmms_medialib_entry_remove (entry);
+				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
 				continue;
 			}
 
-			xmms_decoder_mediainfo_get (decoder, transport);
+			if (xmms_decoder_init_for_mediainfo (decoder)) {
+				xmms_decoder_mediainfo_get (decoder, transport);
+			}
 
 			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, "1");
 

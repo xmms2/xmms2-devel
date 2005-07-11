@@ -33,8 +33,6 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_medialib.h"
 
-static void on_enabled_changed (xmms_object_t *object, gconstpointer value, gpointer udata);
-
 /** @defgroup Effect Effect
   * @ingroup XMMSServer
   * @brief Manipulates decoded data.
@@ -59,9 +57,9 @@ struct xmms_effect_St {
 };
 
 static void
-on_currentid_changed (xmms_object_t *object,
-                      const xmms_object_cmd_arg_t *arg,
-                      xmms_effect_t *effect);
+on_enabled_changed (xmms_object_t *object, gconstpointer value,
+                    gpointer udata);
+
 
 /**
  * Run the current effect on the the data you feed it.
@@ -70,7 +68,6 @@ on_currentid_changed (xmms_object_t *object,
  * @param buf the buffer with unencoded data read from a decoder
  * @param len the length of #buf
  */
-
 void
 xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)
 {
@@ -82,12 +79,23 @@ xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)
 /**
  * Set the current stream format for the effect plugin
  */
-
 gboolean
 xmms_effect_format_set (xmms_effect_t *e, xmms_audio_format_t *fmt)
 {
-	return e->format_set (e, fmt);
+	if (e->format_set) {
+		return e->format_set (e, fmt);
+	} else {
+		return TRUE;
+	}
 }
+
+void
+xmms_effect_entry_set (xmms_effect_t *effect, xmms_medialib_entry_t entry)
+{
+	if (effect->current_mlib_entry)
+		effect->current_mlib_entry (effect, entry);
+}
+
 
 
 /**
@@ -137,9 +145,9 @@ xmms_effect_plugin_get (xmms_effect_t *effect)
  */
 
 xmms_effect_t *
-xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
+xmms_effect_new (xmms_plugin_t *plugin)
 {
-	void (*newfunc) (xmms_effect_t *, xmms_output_t *);
+	void (*newfunc) (xmms_effect_t *);
 	xmms_effect_t *effect;
 
 	g_return_val_if_fail (plugin, NULL);
@@ -159,7 +167,7 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 		return NULL;
 	}
 
-	newfunc (effect, output);
+	newfunc (effect);
 
 	effect->format_set = xmms_plugin_method_get (plugin,
 	                                             XMMS_PLUGIN_METHOD_FORMAT_SET);
@@ -179,11 +187,6 @@ xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output)
 		xmms_plugin_config_value_register (plugin, "enabled", "0",
 		                                   on_enabled_changed, effect);
 	effect->enabled = !!xmms_config_value_int_get (effect->cfg_enabled);
-
-	xmms_object_connect (XMMS_OBJECT (output),
-	                     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
-	                     (xmms_object_handler_t ) on_currentid_changed,
-	                     effect);
 
 	return effect;
 }
@@ -209,15 +212,6 @@ xmms_effect_free (xmms_effect_t *effect)
 	                                   on_enabled_changed);
 
 	g_free (effect);
-}
-
-static void
-on_currentid_changed (xmms_object_t *object,
-                      const xmms_object_cmd_arg_t *arg,
-                      xmms_effect_t *effect)
-{
-	effect->current_mlib_entry (effect,
-		(xmms_medialib_entry_t) arg->retval.uint32);
 }
 
 /** @} */

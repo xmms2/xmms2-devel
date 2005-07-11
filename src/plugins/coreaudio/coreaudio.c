@@ -19,8 +19,7 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_output.h"
+#include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 
 #undef DEBUG
@@ -50,7 +49,7 @@ typedef struct xmms_ca_data_St {
  * Function prototypes
  */
 
-static void xmms_ca_status (xmms_output_t *output, xmms_output_status_t status);
+static void xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
 static gboolean xmms_ca_open (xmms_output_t *output);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
@@ -97,7 +96,7 @@ xmms_plugin_get (void)
  */
 
 static void
-xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
+xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 {
 	xmms_ca_data_t *data;
 
@@ -106,7 +105,7 @@ xmms_ca_status (xmms_output_t *output, xmms_output_status_t status)
 	g_return_if_fail (data);
 
 	XMMS_DBG ("changed status! %d", status);
-	if (status == XMMS_OUTPUT_STATUS_PLAY) {
+	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		if (!data->running) {
 			AudioOutputUnitStart (data->au);
 			data->running = TRUE;
@@ -195,7 +194,7 @@ xmms_ca_new (xmms_output_t *output)
 	ComponentDescription desc;
 	AURenderCallbackStruct input;
 	Component comp;
-	AudioDeviceID device = NULL;
+	AudioDeviceID device = 0;
 	UInt32 size = sizeof(device);
 
 	
@@ -276,7 +275,7 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 	
-	if (device != NULL) {
+	if (device != 0) {
 		AudioTimeStamp ts;
 		ts.mFlags = 0;
 		UInt32 bufferSize = 4096;

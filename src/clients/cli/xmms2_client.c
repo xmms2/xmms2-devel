@@ -14,24 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-#include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient-glib.h>
+#include "xmms2_client.h"
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#include <glib.h>
-
-typedef struct {
-	char *name;
-	char *help;
-	void (*func) (xmmsc_connection_t *conn, int argc, char **argv);
-} cmds;
+#include <locale.h>
 
 /**
  * Utils
@@ -42,7 +27,7 @@ static gchar *listformat;
 
 static gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\n";
 
-static char *
+char *
 format_url (char *item)
 {
 	char *url, rpath[PATH_MAX], *p;
@@ -93,10 +78,15 @@ print_info (const char *fmt, ...)
 
 	printf ("%s\n", buf);
 }
-static void
-print_hash (const void *key, const void *value, void *udata)
+
+void
+print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
 {
-	printf ("%s = %s\n", (char *)key, (char *)value);
+	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		printf ("%s = %s\n", (char *)key, (char *)value);
+	} else {
+		printf ("%s = %d\n", (char *)key, (int)value);
+	}
 }
 
 static GHashTable *
@@ -173,7 +163,7 @@ read_config ()
 }
 
 
-static void
+void
 format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 	uint count = 0;
 	GList *n;
@@ -194,13 +184,13 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 			print_error ("Empty result!");
 		}
 
-		xmmsc_result_get_dict_entry (res, "title", &title);
+		xmmsc_result_get_dict_entry_str (res, "title", &title);
 		if (title) {
-			xmmsc_result_get_dict_entry (res, "artist", &artist);
+			xmmsc_result_get_dict_entry_str (res, "artist", &artist);
 			if (!artist)
 				artist = "Unknown";
 
-			xmmsc_result_get_dict_entry (res, "album", &album);
+			xmmsc_result_get_dict_entry_str (res, "album", &album);
 			if (!album)
 				album = "Unknown";
 
@@ -208,7 +198,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 
 		} else {
 			char *url, *filename;
-			xmmsc_result_get_dict_entry (res, "url", &url);
+			xmmsc_result_get_dict_entry_str (res, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
@@ -227,263 +217,6 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 /**
  * here comes all the cmd callbacks
  */
-
-
-
-static void
-cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
-{
-
-	static char *mlibHelp = "Available medialib commands:\n\
-search [artist=Dismantled]\n\
-searchadd [artist=Dismantled]\n\
-query [\"raw sql statment\"]\n\
-save_playlist [playlistname]\n\
-load_playlist [playlistname]\n\
-list_playlist [playlistname]\n\
-add [url]";
-
-	if (argc < 3) {
-		print_info (mlibHelp);
-		return;
-	}
-
-	if (g_strcasecmp (argv[2], "add") == 0) {
-		xmmsc_result_t *res;
-		gint i;
-
-		for (i = 3; argv[i]; i++) {
-			char *url = format_url (argv[i]);
-			if (!url) return;
-			res = xmmsc_medialib_add_entry (conn, url);
-			free (url);
-			xmmsc_result_wait (res);
-			printf ("Added %s to medialib\n", argv[i]);
-			xmmsc_result_unref (res);
-		}
-	} else if (g_strcasecmp (argv[2], "addall") == 0) {
-		xmmsc_result_t *res;
-		res = xmmsc_medialib_add_to_playlist (conn, "select id from Media where key='url'");
-		xmmsc_result_wait (res);
-		xmmsc_result_unref (res);
-	} else if (g_strcasecmp (argv[2], "searchadd") == 0) {
-		xmmsc_result_t *res;
-		char query[1024];
-		char **s;
-		
-		if (!argv[3])
-			print_error ("expected key=value");
-
-		s = g_strsplit (argv[3], "=", 0);
-
-		if (!s || !s[0] || !s[1])
-			print_error ("expected key=value");
-
-		g_snprintf (query, 1023, "select id from Media where LOWER(key)=LOWER('%s') and LOWER(value) like LOWER('%s')",s[0],s[1]);
-		print_info ("%s", query);
-		res = xmmsc_medialib_add_to_playlist (conn, query);
-		xmmsc_result_wait (res);
-		xmmsc_result_unref (res);
-	} else if (g_strcasecmp (argv[2], "search") == 0) {
-		char query[1024];
-		char **s;
-		xmmsc_result_t *res;
-		GList *n = NULL;
-
-		if (argc < 4) {
-			print_error ("Supply a select statement");
-		}
-
-		s = g_strsplit (argv[3], "=", 0);
-		
-		g_snprintf (query, sizeof (query), "SELECT id FROM Media WHERE LOWER(key)=LOWER('%s') and LOWER(value)=LOWER('%s')", s[0], s[1]);
-	
-		res = xmmsc_medialib_select (conn, query);
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-
-		for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-			char *id;
-			
-			xmmsc_result_get_dict_entry (res, "id", &id);
-			if (!id)
-				print_error ("broken resultset");
-
-			n = g_list_prepend (n, id);
-		}
-
-		format_pretty_list (conn, n);
-		g_list_free (n);
-
-	} else if (g_strcasecmp (argv[2], "query") == 0) {
-		xmmsc_result_t *res;
-
-		if (argc < 4) {
-			print_error ("Supply a query");
-		}
-		
-		res = xmmsc_medialib_select (conn, argv[3]);
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-		
-		for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-			xmmsc_result_dict_foreach (res, print_hash, NULL);
-		}
-
-		xmmsc_result_unref (res);
-	} else if (g_strcasecmp (argv[2], "list_playlist") == 0) {
-		char query[1024];
-		GList *n = NULL;
-		char *id;
-		xmmsc_result_t *res;
-
-		if (argc < 4) {
-			print_error ("Supply a playlist name");
-		}
-
-		g_snprintf (query, sizeof (query), "SELECT id FROM Playlist WHERE name='%s'", argv[3]);
-
-		res = xmmsc_medialib_select (conn, query);
-		xmmsc_result_wait (res);
-
-		/* yes, result is a hashlist,
-		   but there should only be one entry */
-		xmmsc_result_get_dict_entry (res, "id", &id);
-		if (!id) 
-			print_error ("No such playlist!");
-
-		g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %s", id);
-		xmmsc_result_unref (res);
-
-		res = xmmsc_medialib_select (conn, query);
-		xmmsc_result_wait (res);
-		
-		for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-			gchar *entry;
-			xmmsc_result_get_dict_entry (res, "entry", &entry);
-			if (!entry) 
-				print_error ("No such playlist!");
-			if (g_strncasecmp (entry, "mlib", 4) == 0) {
-				char *p = entry+7;
-				n = g_list_prepend (n, p);
-			}
-		}
-
-		n = g_list_reverse (n);
-		format_pretty_list (conn, n);
-		g_list_free (n);
-
-	} else if (g_strcasecmp (argv[2], "save_playlist") == 0 ||
-	           g_strcasecmp (argv[2], "load_playlist") == 0) {
-		xmmsc_result_t *res;
-
-		if (argc < 4) {
-			print_error ("Supply a playlist name");
-		}
-
-		if (g_strcasecmp (argv[2], "save_playlist") == 0) {
-			res = xmmsc_medialib_playlist_save_current (conn, argv[3]);
-		} else if (g_strcasecmp (argv[2], "load_playlist") == 0) {
-			res = xmmsc_medialib_playlist_load (conn, argv[3]);
-		}
-
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-
-		xmmsc_result_unref (res);
-	} else if (g_strcasecmp (argv[2], "import_playlist") == 0) {
-		xmmsc_result_t *res;
-		char *url;
-
-		if (argc < 5) {
-			print_error ("Supply a playlist name and url");
-		}
-
-		url = format_url (argv[4]);
-
-		res = xmmsc_medialib_playlist_import (conn, argv[3], url);
-
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-
-		xmmsc_result_unref (res);
-	} else if (g_strcasecmp (argv[2], "export_playlist") == 0) {
-		xmmsc_result_t *res;
-		char *file;
-		char *mime;
-
-		if (argc < 5) {
-			print_error ("Supply a playlist name and a mimetype");
-		}
-
-		if (strcasecmp (argv[4], "m3u") == 0) {
-			mime = "audio/mpegurl";
-		} else if (strcasecmp (argv[4], "pls") == 0) {
-			mime = "audio/x-scpls";
-		} else if (strcasecmp (argv[4], "html") == 0) {
-			mime = "text/html";
-		} else {
-			mime = argv[4];
-		}
-
-		res = xmmsc_medialib_playlist_export (conn, argv[3], mime);
-
-		xmmsc_result_wait (res);
-		
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-
-		if (!xmmsc_result_get_string (res, &file))
-			print_error ("broken resultset!");
-
-		fwrite (file, strlen (file), 1, stdout);
-
-		xmmsc_result_unref (res);
-	
-	} else if (g_strcasecmp (argv[2], "addpath") == 0) {
-		xmmsc_result_t *res;
-		if (argc < 4) {
-			print_error ("Supply a path to add!");
-		}
-		res = xmmsc_medialib_path_import (conn, argv[3]);
-		xmmsc_result_wait (res);
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-		xmmsc_result_unref (res);
-
-	} else if (g_strcasecmp (argv[2], "rehash") == 0) {
-		xmmsc_result_t *res;
-		unsigned int id = 0;
-		if (argc < 4) {
-			print_info ("Rehashing whole medialib!");
-		} else {
-			id = atoi (argv[3]);
-		}
-		res = xmmsc_medialib_rehash (conn, id);
-		xmmsc_result_wait (res);
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-		xmmsc_result_unref (res);
-	} else {
-		print_info (mlibHelp);
-		print_error ("Unrecognised mlib command: %s\n", argv[2]);
-	}
-}
 
 static void
 add_item_to_playlist (xmmsc_connection_t *conn, char *item)
@@ -625,6 +358,19 @@ cmd_shuffle (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_sort (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	
+	if (argc != 3)
+		print_error ("Sort needs a property to sort on, %d", argc);
+	
+	res = xmmsc_playlist_sort (conn, argv[2]);
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -654,16 +400,27 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-print_entry (const void *key, const void *value, void *udata)
+print_entry (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
 {
-	printf ("%s = %s\n", (char *)key, (char *)value);
+	gchar *conv;
+	gsize r, w;
+	GError *err;
+
+	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
+		printf ("%s = %s\n", (char *)key, conv);
+		g_free (conv);
+	} else {
+		printf ("%s = %d\n", (char *)key, (int) value);
+	}
+
 }
 
 static void
 cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	int id;
+	guint id;
 
 	if (argc > 2) {
 		int cnt;
@@ -696,8 +453,7 @@ static int
 res_has_key (xmmsc_result_t *res, const char *key)
 {
 	char *val;
-	xmmsc_result_get_dict_entry (res, key, &val);
-	return !!val;
+	return xmmsc_result_get_dict_entry_str (res, key, &val);
 }
 
 static void
@@ -733,7 +489,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		res2 = xmmsc_medialib_get_info (conn, i);
 		xmmsc_result_wait (res2);
 
-		xmmsc_result_get_dict_entry (res2, "duration", &playtime);
+		xmmsc_result_get_dict_entry_str (res2, "duration", &playtime);
 		if (playtime)
 			total_playtime += strtoul (playtime, NULL, 10);
 		
@@ -749,7 +505,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			
 			xmmsc_entry_format (dur, sizeof (dur), "(${minutes}:${seconds})", res2);
 			
-			xmmsc_result_get_dict_entry (res2, "url", &url);
+			xmmsc_result_get_dict_entry_str (res2, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
@@ -763,7 +519,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 			xmmsc_entry_format (line, sizeof(line), listformat, res2);
 		}
 
-		conv = g_convert (line, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
+		conv = g_locale_from_utf8 (line, -1, &r, &w, &err);
 
 		if (p == pos) {
 			print_info ("->[%d/%d] %s", pos, i, conv);
@@ -865,7 +621,8 @@ static void
 cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	int id, pt = 0, ms, dur = 0;
+	guint id;
+	guint pt = 0, ms, dur = 0;
 	char *tmp;
 
 	if (argc < 3) {
@@ -883,7 +640,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	
 	res = xmmsc_medialib_get_info (conn, id);
 	xmmsc_result_wait (res);
-	xmmsc_result_get_dict_entry (res, "duration", &tmp);
+	xmmsc_result_get_dict_entry_str (res, "duration", &tmp);
 	if (tmp)
 		dur = atoi (tmp);
 	xmmsc_result_unref (res);
@@ -928,15 +685,29 @@ static void
 cmd_config (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
+	char *key, *value;
 
 	if (argc < 4) {
 		print_error ("You need to specify a configkey and a value");
 	}
 
-	res = xmmsc_configval_set (conn, argv[2], argv[3]);
+	key = argv[2];
+
+	if (strcmp (argv[3], "=") == 0)
+		value = argv[4];
+	else
+		value = argv[3];
+
+	if(value == NULL) {
+		print_error ("You need to specify a configkey and a value");
+	}
+
+	res = xmmsc_configval_set (conn, key, value);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Couldn't set config value: %s\n", xmmsc_result_get_error (res));
+	} else {
+		print_info ("Config value %s set to %s", key, value);
 	}
 	xmmsc_result_unref (res);
 }
@@ -1021,6 +792,7 @@ cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
 
 /* STATUS FUNCTIONS */
 
+static gboolean has_songname;
 static gchar songname[60];
 static gint curr_dur;
 static guint last_dur = 0;
@@ -1044,12 +816,15 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 		goto cont;
 	}
 
+	if(!has_songname)
+		goto cont;
+
 	if (((dur / 1000) % 60) == ((last_dur / 1000) % 60))
 		goto cont;
 
 	last_dur = dur;
 
-	conv =  g_convert (songname, -1, "ISO-8859-1", "UTF-8", &r, &w, &err);
+	conv =  g_locale_from_utf8 (songname, -1, &r, &w, &err);
 	printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", conv,
 	        dur / 60000, (dur / 1000) % 60, curr_dur / 60000,
 	        (curr_dur / 1000) % 60);
@@ -1101,25 +876,29 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 	if (res_has_key (res, "channel") && res_has_key (res, "title")) {
 		xmmsc_entry_format (songname, sizeof (songname),
 				    "[stream] ${title}", res);
+		has_songname = TRUE;
 	} else if (res_has_key (res, "channel")) {
 		xmmsc_entry_format (songname, sizeof (songname),
 				    "${title}", res);
+		has_songname = TRUE;
 	} else if (!res_has_key (res, "title")) {
 		char *url, *filename;
-		xmmsc_result_get_dict_entry (res, "url", &url);
+		xmmsc_result_get_dict_entry_str (res, "url", &url);
 		if (url) {
 			filename = g_path_get_basename (url);
 			if (filename) {
 				g_snprintf (songname, sizeof (songname), "%s", filename);
 				g_free (filename);
+				has_songname = TRUE;
 			}
 		}
 	} else {
 		xmmsc_entry_format (songname, sizeof (songname),
 				    statusformat, res);
+		has_songname = TRUE;
 	}
 
-	xmmsc_result_get_dict_entry (res, "duration", &tmp);
+	xmmsc_result_get_dict_entry_str (res, "duration", &tmp);
 	if (tmp)
 		curr_dur = atoi (tmp);
 	else
@@ -1142,12 +921,13 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	
 	ml = g_main_loop_new (NULL, FALSE);
 
+	has_songname = FALSE;
+
 	/* Setup onchange signal for mediainfo */
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_signal_playback_playtime, handle_playtime, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
-
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_setup_with_gmain (conn);
 
@@ -1187,6 +967,7 @@ cmds commands[] = {
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist and stops playback", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
+	{ "sort", "sort the playlist", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
 	{ "list", "lists the playlist", cmd_list },
 	
@@ -1200,7 +981,7 @@ cmds commands[] = {
 	{ "jump", "take a leap in the playlist", cmd_jump },
 	{ "move", "move a entry in the playlist", cmd_move },
 
-	{ "mlib", "medialib manipulation", cmd_mlib },
+	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
@@ -1221,6 +1002,8 @@ main (int argc, char **argv)
 	GHashTable *config;
 	char *path;
 	int i;
+
+	setlocale (LC_ALL, "");
 
 	config = read_config ();
 

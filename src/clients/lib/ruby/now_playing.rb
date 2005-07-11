@@ -22,7 +22,7 @@ xc.add_to_ecore_mainloop if $MODE == "ECORE"
 xc.add_to_glib_mainloop if $MODE == "GLIB"
 
 xc.broadcast_playback_current_id.notifier do |r|
-	puts "now playing: #{r.uint}"
+	puts "now playing: #{r.value}"
 end
 
 Ecore::main_loop_begin if $MODE == "ECORE"

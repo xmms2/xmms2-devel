@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #ifdef XMMS_OS_DARWIN
 #include <CoreFoundation/CoreFoundation.h>
@@ -62,10 +62,8 @@ void xmmsc_ref (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
 xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_msg_flush (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
-x_hash_t * xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg);
-x_hash_t * xmmsc_deserialize_mediainfo (xmms_ipc_msg_t *msg);
-xmmsc_result_t * xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid);
-xmmsc_result_t * xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
+xmmsc_result_t *xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid);
+xmmsc_result_t *xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
 
 #endif
 

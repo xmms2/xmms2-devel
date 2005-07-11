@@ -17,8 +17,9 @@
 #ifndef __XMMS_CLIENT_H__
 #define __XMMS_CLIENT_H__
 
-#include <stdint.h>
+#include <inttypes.h>
 #include "xmmsc/xmmsc_ipc_msg.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +27,11 @@ extern "C" {
 
 typedef struct xmmsc_connection_St xmmsc_connection_t;
 typedef struct xmmsc_result_St xmmsc_result_t;
+
+typedef struct xmmsc_query_attribute_St {
+	char *key;
+	char *value;
+} xmmsc_query_attribute_t;
 
 xmmsc_connection_t *xmmsc_init (char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
@@ -47,6 +53,13 @@ xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 
 void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
 void xmmsc_signal_disconnect (xmmsc_result_t *res);
+char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
+
+
+
+char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
+char *xmmsc_sqlite_prepare_string (char *input);
+
 
 /*
  * PLAYLIST ************************************************
@@ -55,7 +68,7 @@ void xmmsc_signal_disconnect (xmmsc_result_t *res);
 /* commands */
 xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *);
-xmmsc_result_t * xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id);
+xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *);
@@ -65,6 +78,7 @@ xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int);
 xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int);
 xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int, signed int);
 xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, char *url);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);
@@ -102,6 +116,7 @@ xmmsc_result_t *xmmsc_signal_playback_playtime (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val);
 xmmsc_result_t *xmmsc_configval_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_configval_get (xmmsc_connection_t *c, char *key);
+xmmsc_result_t *xmmsc_configval_register (xmmsc_connection_t *c, char *valuename, char *defaultvalue);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c);
@@ -120,10 +135,14 @@ xmmsc_result_t *xmmsc_medialib_playlist_load (xmmsc_connection_t *conn, const ch
 xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query);
+xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime);
+xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist);
 xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, unsigned int id);
+xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
+xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
@@ -138,16 +157,6 @@ xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
 	xmmsc_result_unref (res);\
 }
 	
-typedef enum {
-	XMMSC_PLAYLIST_ADD,
-	XMMSC_PLAYLIST_SET_POS,
-	XMMSC_PLAYLIST_SHUFFLE,
-	XMMSC_PLAYLIST_REMOVE,
-	XMMSC_PLAYLIST_CLEAR,
-	XMMSC_PLAYLIST_MOVE,
-	XMMSC_PLAYLIST_SORT
-} xmmsc_playlist_changed_actions_t;
-
 /*
  * RESULTS
  */
@@ -173,16 +182,25 @@ int xmmsc_result_get_int (xmmsc_result_t *res, int *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, char **r);
 
-typedef void (*xmmsc_foreach_func) (const void *key, const void *value, void *user_data);
+typedef enum {
+	XMMSC_RESULT_VALUE_TYPE_NONE = XMMS_OBJECT_CMD_ARG_NONE,
+	XMMSC_RESULT_VALUE_TYPE_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32,
+	XMMSC_RESULT_VALUE_TYPE_INT32 = XMMS_OBJECT_CMD_ARG_INT32,
+	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING
+} xmmsc_result_value_type_t;
 
-int xmmsc_result_get_dict_entry (xmmsc_result_t *res, const char *key, char **r);
+typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data);
+
+xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key);
+int xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r);
+int xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r);
+int xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data);
 
 int xmmsc_result_list_next (xmmsc_result_t *res);
 int xmmsc_result_list_first (xmmsc_result_t *res);
 int xmmsc_result_list_valid (xmmsc_result_t *res);
 
-int xmmsc_result_get_playlist_change (xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument);
 void xmmsc_result_seterror (xmmsc_result_t *res, char *errstr);
 int xmmsc_result_get_type (xmmsc_result_t *res);
 

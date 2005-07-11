@@ -18,8 +18,7 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_output.h"
+#include "xmms/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 
 #include <sys/types.h>
@@ -144,11 +143,19 @@ xmms_plugin_get (void)
 	                                   NULL,
 	                                   NULL);
 	
+#ifndef XMMS_OS_NETBSD
 	xmms_plugin_config_value_register (plugin,
 	                                   "device",
 	                                   "/dev/dsp",
 	                                   NULL,
 	                                   NULL);
+# else
+        xmms_plugin_config_value_register (plugin,
+                                           "device", 
+                                           "/dev/audio",
+                                           NULL,
+                                           NULL);
+#endif
 
 	xmms_plugin_config_value_register (plugin,
 	                                   "volume",

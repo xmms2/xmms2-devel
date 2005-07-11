@@ -27,6 +27,8 @@ class XMMSEnvironment(Environment):
 		apply(self.Replace, (), kw)
 		self.conf = SCons.SConf.SConf(self)
 
+		self["ENV"] = os.environ
+
 		if os.path.isfile("config.cache") and self["CONFIG"] == 0 and not reconfigure:
 			try:
 				self.config_cache=load(open("config.cache", 'rb+'))
@@ -61,6 +63,10 @@ class XMMSEnvironment(Environment):
 			self.platform = 'linux'
 		elif sys.platform.startswith("freebsd"):
 			self.platform = 'freebsd'
+		elif sys.platform.startswith("openbsd"):
+			self.platform = 'openbsd'
+		elif sys.platform.startswith("netbsd"):
+			self.platform = 'netbsd'
 		else:
 			self.platform = sys.platform
 			

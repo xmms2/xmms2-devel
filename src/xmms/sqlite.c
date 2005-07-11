@@ -236,7 +236,7 @@ xmms_sqlite_open (guint *id, gboolean *c)
  * Execute a query to the database.
  */
 gboolean
-xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, char *query, ...)
+xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, const char *query, ...)
 {
 	gchar *err;
 	gchar *q;

@@ -7,6 +7,14 @@ import re
 import string
 from marshal import dump
 
+try:
+	head = " (git-commit: "+file(".git/HEAD").read().strip()+")"
+except:
+	head = ""
+	pass
+
+XMMS_VERSION = "0.1 DR1.1-WIP" + head
+
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
 SConsignFile()
@@ -31,13 +39,14 @@ opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
 opts.Add('PKGCONFIGDIR', 'Where should we put our .pc files?', '$PREFIX/lib/pkgconfig')
 opts.Add(BoolOption('SHOWCACHE', 'show what flags that lives inside cache', 0))
-opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
 opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
+opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
 
 # base CCPATH
-
 base_env = xmmsenv.XMMSEnvironment(options=opts)
+base_env["CONFIG"] = 0
 opts.Save("options.cache", base_env)
+
 
 base_env.Append(CPPPATH=["#src/include"])
 base_env.pkgconfig("sqlite3", fail=True, libs=False)
@@ -103,11 +112,13 @@ def subst_emitter(target, source, env):
 subst_action = Action (subst_in_file, subst_in_file_string)
 base_env['BUILDERS']['SubstInFile'] = Builder(action=subst_action, emitter=subst_emitter)
 
-b = Builder(action = 'python src/xmms/generate-converter.py > src/xmms/converter.c')
+python_executable = sys.executable
+
+b = Builder(action = python_executable + ' src/xmms/generate-converter.py > src/xmms/converter.c')
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.SourceCode('src/xmms/converter.c', b)
 
-subst_dict = {"%VERSION%":"0.1 DR1.1", "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
+subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix}

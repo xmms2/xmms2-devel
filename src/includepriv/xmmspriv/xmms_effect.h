@@ -25,15 +25,17 @@
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_output.h"
+#include "xmms/xmms_medialib.h"
 
 /*
  * Type definitions
  */
 
 
-xmms_effect_t *xmms_effect_new (xmms_plugin_t *plugin, xmms_output_t *output);
+xmms_effect_t *xmms_effect_new (xmms_plugin_t *plugin);
 void xmms_effect_free (xmms_effect_t *effect);
 gboolean xmms_effect_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
+void xmms_effect_entry_set (xmms_effect_t *effect, xmms_medialib_entry_t entry);
 void xmms_effect_run (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
 
 

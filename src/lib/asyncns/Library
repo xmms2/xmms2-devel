@@ -1,0 +1,9 @@
+target = "asyncns"
+source = ["asyncns.c"]
+shared = False
+install = False
+
+def config(env):
+	env.Append(CCFLAGS=["-fPIC"])
+	return True
+

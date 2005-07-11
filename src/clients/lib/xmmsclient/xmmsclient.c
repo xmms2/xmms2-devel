@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <limits.h>
 
 #include <pwd.h>
@@ -144,7 +144,8 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 {
 	xmmsc_ipc_t *ipc;
 	xmmsc_result_t *result;
-	int i, ret;
+	uint32_t i;
+	int ret;
 
 	char path[256];
 
@@ -318,7 +319,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 		if (strcmp (key, "seconds") == 0) {
 			char *duration;
 
-			xmmsc_result_get_dict_entry (res, "duration", &duration);
+			xmmsc_result_get_dict_entry_str (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
@@ -332,7 +333,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 		} else if (strcmp (key, "minutes") == 0) {
 			char *duration;
 
-			xmmsc_result_get_dict_entry (res, "duration", &duration);
+			xmmsc_result_get_dict_entry_str (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
@@ -344,10 +345,25 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
 		} else {
-			xmmsc_result_get_dict_entry (res, key, &result);
-			if (result) {
-				strncat (target, result, len - strlen (target) - 1);
+			char tmp[12];
+
+			xmmsc_result_value_type_t type = xmmsc_result_get_dict_entry_type (res, key);
+			if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+				xmmsc_result_get_dict_entry_str (res, key, &result);
+			} else if (type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
+				uint32_t ui;
+				xmmsc_result_get_dict_entry_uint32 (res, key, &ui);
+				snprintf (tmp, 12, "%u", ui);
+				result = tmp;
+			} else if (type == XMMSC_RESULT_VALUE_TYPE_INT32) {
+				int32_t i;
+				xmmsc_result_get_dict_entry_int32 (res, key, &i);
+				snprintf (tmp, 12, "%d", i);
+				result = tmp;
 			}
+				
+			if (result)
+				strncat (target, result, len - strlen (target) - 1);
 		}
 
 		free (key);
@@ -458,37 +474,6 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
 	return xmmsc_result_new (c, cid);
-}
-
-x_hash_t *
-xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
-{
-	unsigned int entries;
-	unsigned int i;
-	unsigned int len;
-	x_hash_t *h;
-	char *key, *val;
-
-	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
-		return NULL;
-
-	h = x_hash_new_full (x_str_hash, x_str_equal, free, free);
-
-	for (i = 1; i <= entries; i++) {
-		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
-			goto err;
-		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len))
-			goto err;
-
-		x_hash_insert (h, key, val);
-	}
-
-	return h;
-
-err:
-	x_hash_destroy (h);
-	return NULL;
-
 }
 
 

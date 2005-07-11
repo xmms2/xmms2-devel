@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #include <pwd.h>
 #include <sys/types.h>
@@ -31,14 +31,21 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"
 
-typedef struct xmmsc_playlist_change_St {
-	int32_t type;
-	uint32_t id;
-	uint32_t arg;
-} xmmsc_playlist_change_t;
-
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
+static x_hash_t *xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg);
 
+typedef struct xmmsc_result_value_St {
+	union {
+		void *generic;
+		uint32_t uint32;
+		int32_t int32;
+		char *string;
+		x_hash_t *dict;
+	} value;
+	xmmsc_result_value_type_t type;
+} xmmsc_result_value_t;
+
+static xmmsc_result_value_t *xmmsc_result_parse_value (xmms_ipc_msg_t *msg);
 
 struct xmmsc_result_St {
 	xmmsc_connection_t *c;
@@ -52,6 +59,8 @@ struct xmmsc_result_St {
 
 	int error;
 	char *error_str;
+
+	int islist;
 
 	uint32_t cid;
 	uint32_t restart_signal;
@@ -68,18 +77,11 @@ struct xmmsc_result_St {
 		int32_t inte;
 		char *string;
 		x_hash_t *hash;
-		xmmsc_playlist_change_t plch;
 	} data;
 
 	x_list_t *list;
 	x_list_t *current;
 };
-
-#define is_list_type(t)	((t) == XMMS_OBJECT_CMD_ARG_UINT32LIST ||   \
-                         (t) == XMMS_OBJECT_CMD_ARG_INT32LIST ||    \
-                         (t) == XMMS_OBJECT_CMD_ARG_STRINGLIST || \
-                         (t) == XMMS_OBJECT_CMD_ARG_DICTLIST)     \
-
 
 /**
  * @defgroup Result Result
@@ -147,8 +149,6 @@ xmmsc_result_free (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
 
-	xmmsc_unref (res->c);
-
 	if (res->error_str)
 		free (res->error_str);
 
@@ -156,6 +156,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	xmmsc_result_cleanup_data (res);
 	xmmsc_ipc_result_unregister (res->ipc, res);
+
+	xmmsc_unref (res->c);
+
 	x_list_free (res->func_list);
 	x_list_free (res->udata_list);
 	
@@ -234,6 +237,22 @@ xmmsc_result_get_type (xmmsc_result_t *res)
 }
 
 static void
+xmmsc_result_value_free (void *v)
+{
+	xmmsc_result_value_t *val = v;
+
+	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_STRING:
+			free (val->value.string);
+			break;
+		default:
+			break;
+	}
+
+	free (val);
+}
+
+static void
 xmmsc_result_cleanup_data (xmmsc_result_t *res)
 {
 	x_list_t *l;
@@ -249,26 +268,14 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			free (res->data.string);
 			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32LIST:
-			x_list_free (res->list);
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32LIST:
-			x_list_free (res->list);
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
+		case XMMS_OBJECT_CMD_ARG_LIST:
 			for (l = res->list; l; l = x_list_next (l)) {
-				free (l->data);
+				xmmsc_result_value_free (l->data);
 			}
 			x_list_free (res->list);
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			x_hash_destroy (res->data.hash);
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICTLIST:
-			for (l = res->list; l; l = x_list_next (l)) {
-				x_hash_destroy (l->data);
-			}
-			x_list_free (res->list);
 			break;
 	}
 }
@@ -305,7 +312,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			{
-				int32_t len;
+				uint32_t len;
 
 				if (!xmms_ipc_msg_get_string_alloc (msg, &res->data.string, &len))
 					return false;
@@ -323,98 +330,33 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 
 			}
 			break;
-		case XMMS_OBJECT_CMD_ARG_UINT32LIST :
+		case XMMS_OBJECT_CMD_ARG_LIST :
 			{
-				uint32_t tmp;
+				uint32_t len, i;
 
-				while (42) {
-					if (!xmms_ipc_msg_get_uint32 (msg, &tmp))
-						break;
-					list = x_list_prepend (list, XUINT_TO_POINTER (tmp));
+				if (!xmms_ipc_msg_get_uint32 (msg, &len))
+					return false;
+
+				for (i = 0; i < len; i ++) {
+					xmmsc_result_value_t *val;
+					val = xmmsc_result_parse_value (msg);
+					list = x_list_prepend (list, val);
 				}
 
 				if (list)
 					list = x_list_reverse (list);
 
 				res->current = res->list = list;
-				if (res->current)
-					res->data.generic = res->current->data;
-				else
-					res->data.generic = NULL;
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_INT32LIST :
-			{
-				int32_t tmp;
+				res->islist = 1;
 
-				while (42) {
-					if (!xmms_ipc_msg_get_int32 (msg, &tmp))
-						break;
-					list = x_list_prepend (list, XINT_TO_POINTER (tmp));
+				if (res->current) {
+					xmmsc_result_value_t *val = res->current->data;
+					res->data.generic = val->value.generic;
+					res->datatype = val->type;
+				} else {
+					res->data.generic = NULL;
+					res->datatype = XMMS_OBJECT_CMD_ARG_NONE;
 				}
-
-				if (list)
-					list = x_list_reverse (list);
-
-				res->current = res->list = list;
-				if (res->current)
-					res->data.generic = res->current->data;
-				else
-					res->data.generic = NULL;
-
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_STRINGLIST :
-			{
-				char *tmp;
-				int len;
-
-				while (42) {
-					if (!xmms_ipc_msg_get_string_alloc (msg, &tmp, &len))
-						break;
-					list = x_list_prepend (list, tmp);
-				}
-
-				if (list)
-					list = x_list_reverse (list);
-
-				res->current = res->list = list;
-				if (res->current)
-					res->data.generic = res->current->data;
-				else
-					res->data.generic = NULL;
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_PLCH :
-			{
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.type))
-					return false;
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.id))
-					return false;
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.plch.arg))
-					return false;
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICTLIST :
-			{
-				x_hash_t *e;
-
-				while (42) {
-					e = xmmsc_deserialize_hashtable (msg);
-					if (e) 
-						list = x_list_prepend (list, e);
-					else
-						break;
-				}
-
-				if (list) 
-					list = x_list_reverse (list);
-
-				res->current = res->list = list;
-				if (res->current)
-					res->data.generic = res->current->data;
-				else
-					res->data.generic = NULL;
 			}
 			break;
 
@@ -549,41 +491,6 @@ xmmsc_result_get_error (xmmsc_result_t *res)
 }
 
 /**
- * Retrieves a playlist change. This could be called on a
- * result from #xmmsc_playlist_change
- *
- * @param res a #xmmsc_result_t containing a playlist change.
- * @param change the type of change that occoured, possible changes are listed above
- * @param id the id in the playlist that where affected (if applicable)
- * @param argument optional argument to the change
- * @return 1 if there was a playlist change in this #xmmsc_result_t
- */
-
-int
-xmmsc_result_get_playlist_change (xmmsc_result_t *res, 
-				  unsigned int *change, 
-				  unsigned int *id, 
-				  unsigned int *argument)
-{
-
-	x_return_val_if_fail (res, 0);
-
-	if (!res || res->error != XMMS_ERROR_NONE) {
-		return 0;
-	}
-
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_PLCH)
-		return 0;
-
-	*change = res->data.plch.type;
-	*id = res->data.plch.id;
-	*argument = res->data.plch.arg;
-
-
-	return 1;
-}
-
-/**
  * Retrives a signed integer from the resultset.
  * @param res a #xmmsc_result_t containing a integer.
  * @param r the return integer.
@@ -597,7 +504,7 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_INT32 && res->datatype != XMMS_OBJECT_CMD_ARG_INT32LIST)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_INT32)
 		return 0;
 
 	*r = res->data.inte;
@@ -619,7 +526,7 @@ xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_UINT32 && res->datatype != XMMS_OBJECT_CMD_ARG_UINT32LIST)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_UINT32)
 		return 0;
 
 	*r = res->data.uint;
@@ -640,11 +547,83 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_STRING && res->datatype != XMMS_OBJECT_CMD_ARG_STRINGLIST)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_STRING)
 		return 0;
 
 	*r = res->data.string;
 
+	return 1;
+}
+
+/**
+ * Retrieve integer associated for specified key in the resultset.
+ *
+ * If the key doesn't exist in the result the returned integer is
+ * undefined. 
+ *
+ * @param res a #xmmsc_result_t containing a hashtable.
+ * @param r the return int
+ * @return 1 upon success otherwise 0
+ *
+ */
+int
+xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r)
+{
+	xmmsc_result_value_t *val;
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		*r = -1;
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT) {
+		*r = -1;
+		return 0;
+	}
+
+	val = x_hash_lookup (res->data.hash, key);
+	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_INT32) {
+		*r = val->value.int32;
+	} else {
+		*r = -1;
+		return 0;
+	}
+	
+	return 1;
+}
+
+/**
+ * Retrieve unsigned integer associated for specified key in the resultset.
+ *
+ * If the key doesn't exist in the result the returned integer is
+ * undefined. 
+ *
+ * @param res a #xmmsc_result_t containing a hashtable.
+ * @param r the return uint
+ * @return 1 upon success otherwise 0
+ *
+ */
+int
+xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r)
+{
+	xmmsc_result_value_t *val;
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		*r = -1;
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT) {
+		*r = -1;
+		return 0;
+	}
+
+	val = x_hash_lookup (res->data.hash, key);
+	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
+		*r = val->value.uint32;
+	} else {
+		*r = -1;
+		return 0;
+	}
+	
 	return 1;
 }
 
@@ -661,22 +640,74 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
  *
  */
 int
-xmmsc_result_get_dict_entry (xmmsc_result_t *res, const char *key, char **r)
+xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r)
 {
+	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		*r = NULL;
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT && res->datatype != XMMS_OBJECT_CMD_ARG_DICTLIST) {
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT) {
 		*r = NULL;
 		return 0;
 	}
 
-	*r = x_hash_lookup (res->data.hash, key);
+	val = x_hash_lookup (res->data.hash, key);
+	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		*r = val->value.string;
+	} else {
+		*r = NULL;
+		return 0;
+	}
 	
 	return 1;
 }
+
+/**
+ * Retrieve type associated for specified key in the resultset.
+ *
+ * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
+ * @return type of #key
+ *
+ */
+xmmsc_result_value_type_t
+xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
+{
+	xmmsc_result_value_t *val;
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		return XMMSC_RESULT_VALUE_TYPE_NONE;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT) {
+		return XMMSC_RESULT_VALUE_TYPE_NONE;
+	}
+
+	val = x_hash_lookup (res->data.hash, key);
+	if (!val) {
+		return XMMSC_RESULT_VALUE_TYPE_NONE;
+	}
+	
+	return val->type;
+}
+
+
+
+typedef struct {
+	xmmsc_foreach_func func;
+	void *userdata;
+} xmmsc_foreach_t;
+
+static void
+xmmsc_result_dict_foreach_cb (const void *key, const void *value, void *udata)
+{
+	xmmsc_foreach_t *foreach = udata;
+	const xmmsc_result_value_t *val = value;
+
+	foreach->func (key, val->type, (void *)val->value.string, foreach->userdata);
+}
+
 
 /**
  * Iterate over all key/value-pair in the resultset.
@@ -694,26 +725,25 @@ xmmsc_result_get_dict_entry (xmmsc_result_t *res, const char *key, char **r)
 int
 xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
 {
+	xmmsc_foreach_t *fc;
+
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT && res->datatype != XMMS_OBJECT_CMD_ARG_DICTLIST)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT)
 		return 0;
 
-	x_hash_foreach (res->data.hash, func, user_data);
+	fc = x_new0 (xmmsc_foreach_t, 1);
+	fc->func = func;
+	fc->userdata = user_data;
+
+	x_hash_foreach (res->data.hash, xmmsc_result_dict_foreach_cb, fc);
+	
+	free (fc);
 	
 	return 1;
 }
-
-/**
-	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-		if (!xmmsc_result_get_uint (res, &i))
-			print_error ("Broken result");
-
-
- */
-
 
 /**
  * Check if current listnode is inside list boundary.
@@ -731,7 +761,7 @@ xmmsc_result_list_valid (xmmsc_result_t *res)
 		return 0;
 	}
 
-	if (!is_list_type (res->datatype))
+	if (!res->islist)
 		return 0;
 
 	return !!res->current;
@@ -750,22 +780,28 @@ xmmsc_result_list_valid (xmmsc_result_t *res)
 int
 xmmsc_result_list_next (xmmsc_result_t *res)
 {
+	xmmsc_result_value_t *val;
+
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
 	}
 
-	if (!is_list_type (res->datatype))
+	if (!res->islist)
 		return 0;
 
 	if (!res->current)
 		return 0;
 
 	res->current = res->current->next;
-
-	if (res->current)
-		res->data.generic = res->current->data;
-	else
+	
+	if (res->current) {
+		val = res->current->data;
+		res->data.generic = val->value.generic;
+		res->datatype = val->type;
+	} else {
 		res->data.generic = NULL;
+		res->datatype = XMMS_OBJECT_CMD_ARG_NONE;
+	}
 
 	return 1;
 }
@@ -782,9 +818,6 @@ xmmsc_result_list_first (xmmsc_result_t *res)
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
 	}
-
-	if (!is_list_type (res->datatype))
-		return 0;
 
 	res->current = res->list;
 
@@ -883,3 +916,84 @@ xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid)
 	return res;
 }
 
+static xmmsc_result_value_t *
+xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
+{
+	xmmsc_result_value_t *val;
+	uint32_t len;
+
+	val = x_new0 (xmmsc_result_value_t, 1);
+
+	if (!xmms_ipc_msg_get_int32 (msg, (int32_t *)&val->type))
+		goto err;
+
+	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_STRING:
+			if (!xmms_ipc_msg_get_string_alloc (msg, &val->value.string, &len)) {
+				goto err;
+			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_UINT32:
+			if (!xmms_ipc_msg_get_uint32 (msg, &val->value.uint32)) {
+				goto err;
+			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_INT32:
+			if (!xmms_ipc_msg_get_int32 (msg, &val->value.int32)) {
+				goto err;
+			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_DICT:
+			val->value.dict = xmmsc_deserialize_hashtable (msg);
+			if (!val->value.dict)
+				goto err;
+			break;
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			break;
+		default:
+			goto err;
+			break;
+	}
+
+	return val;
+
+err:
+	x_internal_error ("Message from server did not parse correctly!");
+	free (val);
+	return NULL;
+
+}
+
+static x_hash_t *
+xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
+{
+	unsigned int entries;
+	unsigned int i;
+	unsigned int len;
+	x_hash_t *h;
+	char *key;
+
+	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
+		return NULL;
+
+	h = x_hash_new_full (x_str_hash, x_str_equal, free, xmmsc_result_value_free);
+
+	for (i = 1; i <= entries; i++) {
+		xmmsc_result_value_t *val;
+
+		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
+			goto err;
+
+		val = xmmsc_result_parse_value (msg);
+		if (!val) goto err;
+
+		x_hash_insert (h, key, val);
+	}
+
+	return h;
+
+err:
+	x_internal_error ("Message from server did not parse correctly!");
+	x_hash_destroy (h);
+	return NULL;
+}

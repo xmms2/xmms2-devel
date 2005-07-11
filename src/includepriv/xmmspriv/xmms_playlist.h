@@ -48,12 +48,6 @@ typedef enum {
 struct xmms_playlist_St;
 typedef struct xmms_playlist_St xmms_playlist_t;
 
-struct xmms_playlist_changed_msg_St {
-	gint type;
-	guint id;
-	guint arg;
-};
-
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_medialib.h"
 #include "xmmspriv/xmms_mediainfo.h"
@@ -69,6 +63,7 @@ gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
 gboolean xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err);
 GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
+gboolean xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t entry);
 
 
 xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);

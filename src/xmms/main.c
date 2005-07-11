@@ -16,7 +16,7 @@
 
 
 /** @file 
- * This file controls XMMS2 mainloop.
+ * This file controls the XMMS2 main loop.
  */
 
 #include <glib.h>
@@ -50,6 +50,8 @@
 # define XMMS_OUTPUT_DEFAULT "alsa"
 #elif XMMS_OS_OPENBSD
 # define XMMS_OUTPUT_DEFAULT "sun"
+#elif XMMS_OS_NETBSD
+# define XMMS_OUTPUT_DEFAULT "oss"
 #elif XMMS_OS_SOLARIS
 # define XMMS_OUTPUT_DEFAULT "sun"
 #elif XMMS_OS_DARWIN
@@ -66,8 +68,8 @@ XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
 
 /** @defgroup XMMSServer XMMSServer
   * @brief look at this if you want to code inside the server.
-  * The XMMS2 project is splitted in to a server part and a Clientpart.
-  * This documents the server part of the project.
+  * The XMMS2 project is split into a server and a multiple clients.
+  * This documents the server part.
   */
 
 /**
@@ -90,6 +92,81 @@ typedef struct xmms_main_St xmms_main_t;
 
 static GMainLoop *mainloop;
 
+/**
+ * @if internal
+ * @internal Execute a program or script
+ * @param[in] program Absolute path to executable program or script
+ * @param[in] env Array of environment variables and values to pass to program
+ */
+static void
+do_execute (gchar *program, gchar **env)
+{
+	GError *err;
+
+	gchar **argv = g_new0 (gchar *, 2);
+	argv[0] = program;
+	argv[2] = NULL;
+
+	XMMS_DBG ("executing %s", program);
+	
+	g_spawn_async (g_get_home_dir(), argv, env, 
+		      0,
+		      NULL, NULL, NULL, &err);
+
+	g_free (argv);
+
+}
+
+/**
+ * @internal Execute all programs or scripts in a directory. Used when starting
+ * up and shutting down the daemon.
+ * @param[in] scriptdir Directory to search for executable programs/scripts.
+ * @param[in] ipcpath The xmms2 daemon ipc path to pass on to programs/scripts
+ * started.
+ */
+static void
+do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
+{
+	GError *err;
+	GDir *dir;
+	const gchar *f;
+	gchar *file;
+	gchar **env;
+
+	XMMS_DBG ("Running scripts in %s", scriptdir);
+	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
+		mkdir (scriptdir, 0755);
+	}
+
+	dir = g_dir_open (scriptdir, 0, &err);
+	if (!dir) {
+		XMMS_DBG ("Could not open %s error: %s", scriptdir, err->message);
+		return;
+	}
+
+	env = g_new0(gchar*, 3);
+	env[0] = g_strdup_printf ("XMMS_PATH=%s",ipcpath);
+	env[1] = g_strdup_printf ("HOME=%s", g_get_home_dir());
+
+	while ((f = g_dir_read_name (dir))) {
+		file = g_strdup_printf ("%s/%s", scriptdir, f);
+		if (g_file_test (file, G_FILE_TEST_IS_EXECUTABLE)) {
+			do_execute(file, env);
+		}
+		g_free (file);
+	}
+
+	g_strfreev (env);
+
+	g_dir_close (dir);
+
+}
+
+/**
+ * @internal Parse the xmms2d configuration file. Creates the config directory
+ * if needed.
+ * @return TRUE if successful.
+ */
 static gboolean
 parse_config ()
 {
@@ -117,7 +194,12 @@ parse_config ()
 	return FALSE;
 }
 
-
+/**
+ * @internal Switch to using another output plugin
+ * @param object An object
+ * @param data The name of the output plugin to switch to
+ * @param userdata The #xmms_main_t object
+ */
 static void
 change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
@@ -133,13 +215,21 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	xmms_output_plugin_switch (mainobj->output, plugin);
 }
 
+/**
+ * @internal Destroy the main object
+ * @param[in] object The object to destroy
+ */
 static void
 xmms_main_destroy (xmms_object_t *object)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
 	xmms_object_cmd_arg_t arg;
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
+	xmms_config_value_t *cv;
 
+	cv = xmms_config_lookup ("core.shutdownpath");
+	do_scriptdir (xmms_config_value_string_get (cv), NULL);
+	
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
 
@@ -162,6 +252,9 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_log_shutdown ();
 }
 
+/**
+ * @internal Function to respond to the 'hello' sent from clients on connect
+ */
 static guint
 hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error)
 {
@@ -169,6 +262,9 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 	return 1;
 }
 
+/**
+ * @internal Function to respond to the 'quit' command sent from a client
+ */
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
@@ -178,7 +274,10 @@ quit (xmms_object_t *object, xmms_error_t *error)
 }
 
 
-
+/**
+ * @internal Callback function executed whenever the output volume is changed.
+ * Simply sets the configuration value as needed.
+ */
 static void
 on_output_volume_changed (xmms_object_t *object, gconstpointer data,
                           gpointer userdata)
@@ -189,6 +288,13 @@ on_output_volume_changed (xmms_object_t *object, gconstpointer data,
 	xmms_config_value_data_set (cfg, (gchar *) data);
 }
 
+/**
+ * @internal Initialise volume proxy setting. Using a proxy configuration value
+ * to modify volume level means that the client does not need to know which
+ * output plugin the daemon is currently using - it simply modifies the proxy
+ * value and the daemon takes care of the rest.
+ * @param[in] output The name of the current output plugin.
+ */
 static void
 init_volume_config_proxy (const gchar *output)
 {
@@ -212,6 +318,9 @@ init_volume_config_proxy (const gchar *output)
 	xmms_config_value_data_set (cfg, (gchar *) vol);
 }
 
+/**
+ * @internal Print a simple message detailing command line options for xmms2d
+ */
 static void usage (void)
 {
 	static char *usageText = "XMMS2 Daemon\n\
@@ -226,10 +335,11 @@ Options:\n\
        printf(usageText);
 }
 
-/**
- * Entry point function
- */
+/* @endif */
 
+/**
+ * The xmms2 daemon main initialisation function
+ */
 int
 main (int argc, char **argv)
 {
@@ -247,6 +357,8 @@ main (int argc, char **argv)
 	gboolean doLog = TRUE;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
+	gchar *tmp;
+	const gchar *ipcpath;
 	pid_t ppid=0;
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
@@ -317,16 +429,20 @@ main (int argc, char **argv)
 
 	g_random_set_seed (time (NULL));
 
-	ipc = xmms_ipc_init ();
+	if (!xmms_log_init (doLog ? "xmmsd" : "null")) {
+		fprintf (stderr, "Couldn't open logfile!!\n");
+		return 1;
+	}
 
-	parse_config ();
+	ipc = xmms_ipc_init ();
 	
-	xmms_log_init (doLog ? "xmmsd" : "null");
+	parse_config ();
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
 	xmms_config_value_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
+
 
 	if (!xmms_plugin_init (ppath))
 		return 1;
@@ -334,7 +450,6 @@ main (int argc, char **argv)
 	playlist = xmms_playlist_init ();
 
 	xmms_visualisation_init ();
-
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
@@ -363,7 +478,9 @@ main (int argc, char **argv)
 	cv = xmms_config_value_register ("core.ipcsocket", default_path,
 	                                 NULL, NULL);
 
-	if (!xmms_ipc_setup_server (xmms_config_value_string_get (cv))) {
+	ipcpath = xmms_config_value_string_get (cv);
+	if (!xmms_ipc_setup_server (ipcpath)) {
+		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
 	}
 
@@ -378,6 +495,20 @@ main (int argc, char **argv)
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);
 	}
+
+
+	tmp = g_strdup_printf ("%s/.xmms2/shutdown.d", g_get_home_dir());
+	cv = xmms_config_value_register ("core.shutdownpath",
+				    tmp, NULL, NULL);
+	g_free (tmp);
+
+	tmp = g_strdup_printf ("%s/.xmms2/startup.d", g_get_home_dir());
+	cv = xmms_config_value_register ("core.startuppath",
+				    tmp, NULL, NULL);
+	g_free (tmp);
+
+	/* Startup dir */
+	do_scriptdir (xmms_config_value_string_get (cv), ipcpath);
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 

@@ -50,30 +50,29 @@ struct xmms_object_St {
 
 typedef void (*xmms_object_handler_t) (xmms_object_t *object, gconstpointer data, gpointer userdata);
 
+typedef struct {
+	union {
+		gint32 int32;
+		guint32 uint32;
+		gchar *string;
+		GHashTable *dict;
+		GList *list;
+	} value;
+	xmms_object_cmd_arg_type_t type;
+} xmms_object_cmd_value_t;
 
-struct xmms_playlist_changed_msg_St;
-typedef struct xmms_playlist_changed_msg_St xmms_playlist_changed_msg_t;
+xmms_object_cmd_value_t *xmms_object_cmd_value_str_new (gchar *string);
+xmms_object_cmd_value_t *xmms_object_cmd_value_uint_new (guint32 uint);
+xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
+xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GHashTable *dict);
+xmms_object_cmd_value_t *xmms_object_cmd_value_list_new (GList *list);
+xmms_object_cmd_value_t *xmms_object_cmd_value_none_new (void);
+void xmms_object_cmd_value_free (gpointer val);
 
 #define XMMS_OBJECT_CMD_MAX_ARGS 2
 typedef struct {
-	xmms_object_cmd_arg_type_t types[XMMS_OBJECT_CMD_MAX_ARGS];
-	union {
-		gint32 int32;
-		guint uint32;
-		char *string;
-	} values[XMMS_OBJECT_CMD_MAX_ARGS];
-	xmms_object_cmd_arg_type_t rettype;
-	union {
-		guint32 uint32;
-		gint32 int32;
-		char *string;
-		GHashTable *hashtable;
-		GList *uintlist;
-		GList *intlist;
-		GList *stringlist; /* GList of const gchar * */
-		GList *hashlist;
-		xmms_playlist_changed_msg_t *plch;
-	} retval;
+	xmms_object_cmd_value_t values[XMMS_OBJECT_CMD_MAX_ARGS];
+	xmms_object_cmd_value_t *retval;
 	xmms_error_t error;
 } xmms_object_cmd_arg_t;
 
@@ -85,8 +84,6 @@ struct xmms_object_cmd_desc_St {
 	xmms_object_cmd_arg_type_t arg2;
 	xmms_object_cmd_arg_type_t retval;
 };
-
-
 
 #define XMMS_OBJECT(p) ((xmms_object_t *)p)
 #define XMMS_IS_OBJECT(p) (XMMS_OBJECT (p)->id == XMMS_OBJECT_MID)
@@ -117,28 +114,24 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
  * are the only ones to be used directly */
 
 #define __XMMS_CMD_DO_ARG_NONE(a)
-#define __XMMS_CMD_DO_ARG_STRING(a) ,arg->values[a].string
-#define __XMMS_CMD_DO_ARG_UINT32(a) ,arg->values[a].uint32
-#define __XMMS_CMD_DO_ARG_INT32(a) ,arg->values[a].int32
+#define __XMMS_CMD_DO_ARG_STRING(a) ,arg->values[a].value.string
+#define __XMMS_CMD_DO_ARG_UINT32(a) ,arg->values[a].value.uint32
+#define __XMMS_CMD_DO_ARG_INT32(a) ,arg->values[a].value.int32
 
-#define __XMMS_CMD_DO_RETVAL_NONE()
-#define __XMMS_CMD_DO_RETVAL_DICT() arg->retval.hashtable = 
-#define __XMMS_CMD_DO_RETVAL_DICTLIST() arg->retval.hashlist = 
-#define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval.uint32 = 
-#define __XMMS_CMD_DO_RETVAL_UINT32LIST() arg->retval.uintlist = 
-#define __XMMS_CMD_DO_RETVAL_INT32LIST() arg->retval.intlist = 
-#define __XMMS_CMD_DO_RETVAL_STRINGLIST() arg->retval.stringlist = 
-#define __XMMS_CMD_DO_RETVAL_STRING() arg->retval.string = 
-#define __XMMS_CMD_DO_RETVAL_PLCH() arg->retval.plch = 
+#define __XMMS_CMD_DO_RETVAL_NONE() arg->retval = xmms_object_cmd_value_none_new();
+#define __XMMS_CMD_DO_RETVAL_DICT() arg->retval = xmms_object_cmd_value_dict_new
+#define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval = xmms_object_cmd_value_uint_new
+#define __XMMS_CMD_DO_RETVAL_INT32() arg->retval = xmms_object_cmd_value_int_new
+#define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_object_cmd_value_list_new
+#define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmms_object_cmd_value_str_new
 
 #define XMMS_CMD_DEFINE(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2) static void \
 __int_xmms_cmd_##cmdid (xmms_object_t *object, xmms_object_cmd_arg_t *arg) \
 { \
 g_return_if_fail (XMMS_IS_OBJECT (object)); \
-g_return_if_fail (arg->types[0] == XMMS_OBJECT_CMD_ARG_##argtype1); \
-g_return_if_fail (arg->types[1] == XMMS_OBJECT_CMD_ARG_##argtype2); \
-__XMMS_CMD_DO_RETVAL_##_rettype() realfunc ((argtype0)object __XMMS_CMD_DO_ARG_##argtype1(0) __XMMS_CMD_DO_ARG_##argtype2(1), &arg->error); \
-arg->rettype = XMMS_OBJECT_CMD_ARG_##_rettype; \
+g_return_if_fail (arg->values[0].type == XMMS_OBJECT_CMD_ARG_##argtype1); \
+g_return_if_fail (arg->values[1].type == XMMS_OBJECT_CMD_ARG_##argtype2); \
+__XMMS_CMD_DO_RETVAL_##_rettype() (realfunc ((argtype0)object __XMMS_CMD_DO_ARG_##argtype1(0) __XMMS_CMD_DO_ARG_##argtype2(1), &arg->error)); \
 } \
 xmms_object_cmd_desc_t __int_xmms_cmd_desc_##cmdid = { __int_xmms_cmd_##cmdid, XMMS_OBJECT_CMD_ARG_##argtype1, XMMS_OBJECT_CMD_ARG_##argtype2, XMMS_OBJECT_CMD_ARG_##_rettype }
 

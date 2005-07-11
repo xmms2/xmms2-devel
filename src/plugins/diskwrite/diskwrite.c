@@ -17,10 +17,9 @@
 
 
 
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_output.h"
-#include "xmms/xmms_log.h"
 #include "xmms/xmms_defs.h"
+#include "xmms/xmms_outputplugin.h"
+#include "xmms/xmms_log.h"
 
 #include <glib.h>
 #include <sys/types.h>
@@ -50,7 +49,7 @@
 
 #define PUT_STR(buf, str) do { \
 	size_t len = strlen (str); \
-	strncpy (buf, str, len); \
+	g_strlcpy ((gchar *)buf, str, len); \
 	buf += len; \
 } while (0)
 
@@ -273,7 +272,7 @@ on_playlist_entry_changed (xmms_object_t *object,
                            const xmms_object_cmd_arg_t *arg,
                            xmms_diskwrite_data_t *data)
 {
-	guint id = arg->retval.uint32;
+	guint id = arg->retval->value.uint32;
 	gchar dest[XMMS_PATH_MAX];
 
 	/* assemble path */
@@ -301,7 +300,8 @@ finalize_wave (xmms_diskwrite_data_t *data)
 	guint16 channels = 2, bits_per_sample = 16;
 	guint16 bytes_per_sample = (channels * bits_per_sample) / 8;
 	guint32 samplerate = 44100;
-	guint8 hdr[WAVE_HEADER_SIZE], *ptr = hdr;
+	gint8 hdr[WAVE_HEADER_SIZE];
+	gint8 *ptr = hdr;
 
 	g_return_if_fail (data->fp);
 

@@ -230,7 +230,7 @@ xmms_html_write_playlist (guint32 *list)
 
 	i = 0;
 	while (list[i]) {
-		gchar buf[256], *artist, *title;
+		gchar buf[256], *artist, *title, *url;
 		xmms_medialib_entry_t entry;
 		guint len;
 
@@ -242,13 +242,25 @@ xmms_html_write_playlist (guint32 *list)
 			XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE));
 		len = xmms_medialib_entry_property_get_int (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		url = escape_html (xmms_medialib_entry_property_get (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_URL));
 
-		g_snprintf (buf, sizeof (buf), "%s - %s (%02i:%02i)",
-		            artist, title,
-		            len / 60000, (len / 1000) % 60);
+		if (!artist && !title) {
+			g_snprintf (buf, sizeof (buf), "%s (%02i:%02i)", 
+			            url, len / 60000, (len / 1000) % 60);
+		} else {
+			g_snprintf (buf, sizeof (buf), "%s - %s (%02i:%02i)",
+			            artist ? artist : "Unknown artist",
+			            title ? title : "Unknown title",
+			            len / 60000, (len / 1000) % 60);
+		}
 
-		g_free (artist);
-		g_free (title);
+		if (artist)
+			g_free (artist);
+		if (title)
+			g_free (title);
+		if (url)
+			g_free (url);
 
 		g_string_append_printf (ret, is_even ? html_entry_even : html_entry_odd, buf);
 		is_even = !is_even;
@@ -268,6 +280,9 @@ escape_html (const gchar *in)
 	const gchar *inptr;
 	gsize len = 0;
 	gboolean need_escape = FALSE;
+
+	if (!in)
+		return NULL;
 
 	/* check whether we need to escape this string at all,
 	 * and if we do, get the required length of the new buffer.

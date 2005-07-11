@@ -40,11 +40,20 @@ typedef struct xmms_sample_converter_St xmms_sample_converter_t;
 
 
 typedef gint8 xmms_samples8_t;
+#define XMMS_SAMPLES8_MIN -128
+#define XMMS_SAMPLES8_MAX 127
 typedef guint8 xmms_sampleu8_t;
+#define XMMS_SAMPLEU8_MAX 255
 typedef gint16 xmms_samples16_t;
+#define XMMS_SAMPLES16_MIN -32768
+#define XMMS_SAMPLES16_MAX 32767
 typedef guint16 xmms_sampleu16_t;
+#define XMMS_SAMPLEU16_MAX 65535
 typedef gint32 xmms_samples32_t;
+#define XMMS_SAMPLES32_MIN (-2147483647L-1)
+#define XMMS_SAMPLES32_MAX 2147483647L
 typedef guint32 xmms_sampleu32_t;
+#define XMMS_SAMPLEU32_MAX 4294967295UL
 typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;

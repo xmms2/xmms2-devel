@@ -161,7 +161,7 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 	x_return_val_if_fail (len > msg->xfered, true);
 	
 	ret = xmms_ipc_transport_write (transport, 
-					msg->data->rawdata + msg->xfered,
+					(char *)(msg->data->rawdata + msg->xfered),
 					len - msg->xfered);
 	if (ret == -1) {
 		if (errno == EAGAIN || errno == EINTR)
@@ -205,7 +205,7 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpor
 		x_return_val_if_fail (msg->xfered < len, false);
 
 		ret = xmms_ipc_transport_read (transport, 
-					       msg->data->rawdata + msg->xfered,
+					       (char *)(msg->data->rawdata + msg->xfered),
 					       len - msg->xfered);
 		
 		if (ret == -1) {
@@ -356,6 +356,12 @@ xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *buf, unsigned int maxlen)
 	}
 	if (!xmms_ipc_msg_get_uint32 (msg, &len))
 		return false;
+
+	if(len == 0) {
+		buf[0] = '\0';
+		return true;
+	}
+
 	if (!xmms_ipc_msg_get_data (msg, buf, MIN (maxlen, len)))
 		return false;
 	if (maxlen < len) {
