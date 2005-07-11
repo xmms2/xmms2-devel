@@ -870,6 +870,9 @@ xmms_transport_thread (gpointer data)
 		ret = read_method (transport, buffer, sizeof(buffer), &error);
 		g_mutex_lock (transport->mutex);
 
+		if (!transport->running)
+			break;
+
 		if (ret > 0) {
 			xmms_ringbuf_write_wait (transport->buffer, buffer, ret, transport->mutex);
 		} else {
