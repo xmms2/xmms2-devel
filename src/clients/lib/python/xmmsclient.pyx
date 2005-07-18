@@ -86,6 +86,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_result_get_dict_entry(xmmsc_result_t *res, char *key, char **r)
 	int xmmsc_result_dict_foreach(xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
 
+	int xmmsc_result_is_list(xmmsc_result_t *res)
 	int xmmsc_result_list_next(xmmsc_result_t *res)
 	int xmmsc_result_list_first(xmmsc_result_t *res)
 	int xmmsc_result_list_valid(xmmsc_result_t *res)
@@ -248,7 +249,7 @@ cdef class XMMSResult:
 		"""
 		self._check()
 		
-		if xmmsc_result_list_valid(self.res):
+		if xmmsc_result_is_list(self.res):
 			return self.get_list()
 		else:
 			return self._value()

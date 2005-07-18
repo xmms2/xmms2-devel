@@ -309,7 +309,7 @@ static VALUE c_value_get (VALUE self)
 		return Qnil;
 	}
 
-	if (xmmsc_result_list_valid (res->real))
+	if (xmmsc_result_is_list (res->real))
 		return list_get (res);
 	else
 		return value_get (res);
