@@ -453,12 +453,11 @@ main (int argc, char **argv)
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
-	if (!outname) {
-		cv = xmms_config_value_register ("output.plugin",
-		                                 XMMS_OUTPUT_DEFAULT,
-		                                 change_output, mainobj);
-		outname = xmms_config_value_string_get (cv);
-	}
+	if (!outname)
+		outname = XMMS_OUTPUT_DEFAULT;
+	cv = xmms_config_value_register ("output.plugin",
+	                                 outname,
+	                                 change_output, mainobj);
 
 	XMMS_DBG ("output = %s", outname);
 
