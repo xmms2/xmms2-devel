@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 13
+#define DB_VERSION 14
 
 const char create_Control_stm[] = "create table Control (version)";
 const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
@@ -199,6 +199,8 @@ xmms_sqlite_open (guint *id, gboolean *c)
 				                sqlite3_errmsg (sql));
 				return NULL;
 			}
+			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+			create = TRUE;
 		}
 	}
 
@@ -232,14 +234,36 @@ xmms_sqlite_open (guint *id, gboolean *c)
 	return sql;
 }
 
+static xmms_object_cmd_value_t *
+xmms_sqlite_column_to_val (sqlite3_stmt *stm, gint column)
+{
+	xmms_object_cmd_value_t *val = NULL;
+
+	switch (sqlite3_column_type (stm, column)) {
+		case SQLITE_INTEGER:
+		case SQLITE_FLOAT:
+			val = xmms_object_cmd_value_int_new (sqlite3_column_int (stm, column));
+			break;
+		case SQLITE_TEXT:
+		case SQLITE_BLOB:
+			val = xmms_object_cmd_value_str_new ((gchar *)sqlite3_column_text (stm, column));
+			break;
+		default:
+			XMMS_DBG ("Unhandled SQLite type!");
+			break;
+	}
+
+	return val;
+
+}
+
 /**
- * Execute a query to the database.
+ * A query that can't retrieve results
  */
 gboolean
-xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata, const char *query, ...)
+xmms_sqlite_exec (sqlite3 *sql, const char *query, ...)
 {
-	gchar *err;
-	gchar *q;
+	gchar *q, *err;
 	va_list ap;
 	gint ret;
 
@@ -250,7 +274,7 @@ xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata,
 
 	q = sqlite3_vmprintf (query, ap);
 
-	ret = sqlite3_exec (sql, q, method, udata, &err);
+	ret = sqlite3_exec (sql, q, NULL, NULL, &err);
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! (%d) - %s", ret, err);
 		sqlite3_free (q);
@@ -260,6 +284,120 @@ xmms_sqlite_query (sqlite3 *sql, xmms_medialib_row_method_t method, void *udata,
 
 	sqlite3_free (q);
 	va_end (ap);
+
+	return TRUE;
+}
+
+/**
+ * Execute a query to the database.
+ */
+gboolean
+xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, gpointer udata, const gchar *query, ...)
+{
+	gchar *q;
+	va_list ap;
+	gint ret;
+	sqlite3_stmt *stm;
+
+	g_return_val_if_fail (query, FALSE);
+	g_return_val_if_fail (sql, FALSE);
+
+	va_start (ap, query);
+
+	q = sqlite3_vmprintf (query, ap);
+
+	ret = sqlite3_prepare (sql, q, 0, &stm, NULL);
+
+
+	if (ret != SQLITE_OK) {
+		xmms_log_error ("Error in query! (%d) - %s", ret, q);
+	}
+	
+	sqlite3_free (q);
+	va_end (ap);
+
+	while (sqlite3_step (stm) == SQLITE_ROW) {
+		gint i;
+		xmms_object_cmd_value_t *val;
+		GHashTable *ret = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+							 g_free, xmms_object_cmd_value_free);
+		gint num = sqlite3_data_count (stm);
+
+		for (i = 0; i < num; i++) {
+			val = xmms_sqlite_column_to_val (stm, i);
+			g_hash_table_insert (ret, g_strdup (sqlite3_column_name (stm, i)), val);
+		}
+
+		if (!method (ret, udata)) {
+			/*g_hash_table_destroy (ret);*/
+			break;
+		}
+
+		/*
+		g_hash_table_destroy (ret);
+		*/
+	}
+
+	sqlite3_finalize (stm);
+
+	return TRUE;
+	
+}
+
+/**
+ * Execute a query to the database.
+ */
+gboolean
+xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, gpointer udata, const gchar *query, ...)
+{
+	gchar *q;
+	va_list ap;
+	gint ret;
+	sqlite3_stmt *stm;
+	gboolean retval;
+
+	g_return_val_if_fail (query, FALSE);
+	g_return_val_if_fail (sql, FALSE);
+
+	va_start (ap, query);
+
+	q = sqlite3_vmprintf (query, ap);
+
+	ret = sqlite3_prepare (sql, q, 0, &stm, NULL);
+
+	if (ret != SQLITE_OK) {
+		xmms_log_error ("Error in query! (%d) - %s", ret, q);
+	}
+	
+	sqlite3_free (q);
+	va_end (ap);
+
+	while (sqlite3_step (stm) == SQLITE_ROW) {
+		gint i;
+		xmms_object_cmd_value_t **row;
+		gint num = sqlite3_data_count (stm);
+
+		row = g_new0 (xmms_object_cmd_value_t*, num+1);
+
+		for (i = 0; i < num; i++) {
+			row[i] = xmms_sqlite_column_to_val (stm, i);
+		}
+
+		retval = method (row, udata);
+
+		/*
+		for (i = 0; i < num; i++) {
+			xmms_object_cmd_value_free (row[i]);
+		}
+
+		g_free (row);
+		*/
+		
+		if (!retval)
+			break;
+	}
+
+	sqlite3_finalize (stm);
 
 	return TRUE;
 	

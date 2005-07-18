@@ -454,7 +454,7 @@ header_handler_icy_name (xmms_transport_t *transport, gchar *header)
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, header);
+	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, header);
 	xmms_medialib_entry_send_update (entry);
 }
 
@@ -464,7 +464,7 @@ header_handler_icy_br (xmms_transport_t *transport, gchar *header)
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header);
+	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header);
 	xmms_medialib_entry_send_update (entry);
 }
 
@@ -484,7 +484,7 @@ header_handler_icy_genre (xmms_transport_t *transport, gchar *header)
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, header);
+	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, header);
 	xmms_medialib_entry_send_update (entry);
 }
 
@@ -524,7 +524,7 @@ handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 			raw = tags[i] + 13;
 			raw[strlen (raw) - 1] = '\0';
 
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, raw);
+			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, raw);
 			xmms_medialib_entry_send_update (entry);
 		}
 

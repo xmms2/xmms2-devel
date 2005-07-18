@@ -272,7 +272,6 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_medialib_entry_t entry;
 	xmms_speex_data_t *data;
-	gchar tmp[20];
 
 	g_return_if_fail (decoder);
 
@@ -284,15 +283,13 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 
 	entry = xmms_medialib_entry_new (NULL);
 
-	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->speexheader->rate);
-	xmms_medialib_entry_property_set (entry,
-	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                                  tmp);
+	xmms_medialib_entry_property_set_int (entry,
+					      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+					      data->speexheader->rate);
 
-	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->speexheader->bitrate);
-	xmms_medialib_entry_property_set (entry,
-	                                  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                                  tmp);
+	xmms_medialib_entry_property_set_int (entry,
+					      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+					      data->speexheader->bitrate);
 
 	xmms_medialib_entry_send_update (entry);
 }

@@ -289,13 +289,14 @@ compute_replaygain (xmms_replaygain_data_t *data)
 		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 	}
 
-	tmp = xmms_medialib_entry_property_get (data->current_mlib_entry,
-	                                        key_s);
+	/** @todo should this be ints instead? */
+	tmp = xmms_medialib_entry_property_get_str (data->current_mlib_entry,
+						    key_s);
 	s = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
 
-	tmp = xmms_medialib_entry_property_get (data->current_mlib_entry,
-	                                        key_p);
+	tmp = xmms_medialib_entry_property_get_str (data->current_mlib_entry,
+						    key_p);
 	p = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
 
