@@ -197,6 +197,7 @@ int xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int
 int xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data);
 
+int xmmsc_result_is_list (xmmsc_result_t *res);
 int xmmsc_result_list_next (xmmsc_result_t *res);
 int xmmsc_result_list_first (xmmsc_result_t *res);
 int xmmsc_result_list_valid (xmmsc_result_t *res);

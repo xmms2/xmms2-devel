@@ -746,6 +746,22 @@ xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *u
 }
 
 /**
+ * Check if the result stores a list.
+ *
+ * @param res a #xmmsc_result_t
+ * @return 1 if result stores a list, 0 otherwise.
+ */
+int
+xmmsc_result_is_list (xmmsc_result_t *res)
+{
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		return 0;
+	}
+
+	return res->islist;
+}
+
+/**
  * Check if current listnode is inside list boundary.
  *
  * When xmmsc_result_list_valid returns 1, there is a list entry
