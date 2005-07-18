@@ -346,7 +346,6 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 	xmms_flac_data_t *data;
 	xmms_medialib_entry_t entry;
 	gint current, num_comments;
-	gchar tmp[20];
 
 	g_return_if_fail (decoder);
 
@@ -372,9 +371,9 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 			while (properties[i].vname) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set (entry, properties[i].xname, val);
+					xmms_medialib_entry_property_set_str (entry, properties[i].xname, val);
 				}
 				i++;
 			}
@@ -383,14 +382,14 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 		}
 	}
 
-	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->bits_per_sample * data->sample_rate);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
+	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+					      (gint) data->bits_per_sample * data->sample_rate);
 
-	g_snprintf (tmp, sizeof (tmp), "%d", (gint) data->total_samples / data->sample_rate * 1000);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
+	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+					      (gint) data->total_samples / data->sample_rate * 1000);
 
-	g_snprintf (tmp, sizeof (tmp), "%d", data->sample_rate);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, tmp);
+	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
+					      data->sample_rate);
 
 	xmms_medialib_entry_send_update (entry);
 }

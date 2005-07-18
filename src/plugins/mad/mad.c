@@ -169,7 +169,6 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	xmms_xing_t *xing;
 	guint fsize=0;
 	guint bitrate=0;
-	gchar *tmp;
 
 	data = xmms_decoder_private_data_get (decoder);
 
@@ -190,7 +189,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
 	if (filesize == -1) {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, "0");
+		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 0);
 		return;
 	}
 
@@ -213,17 +212,14 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 		if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
-			gchar *tmp;
 
 			timer = frame.header.duration;
 			mad_timer_multiply (&timer, xmms_xing_get_frames (xing));
 			duration = mad_timer_count (timer, MAD_UNITS_MILLISECONDS);
 
 			XMMS_DBG ("XING duration %d", duration);
-			tmp = g_strdup_printf ("%d", duration);
 
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
-			g_free (tmp);
+			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, duration);
 		}
 
 		/** @todo fix avg. bitrate in xing */
@@ -245,17 +241,13 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, "-1");
+		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, -1);
 	} else {
-		tmp = g_strdup_printf ("%d", (gint) (filesize*(gdouble)8000.0/bitrate));
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, tmp);
-		XMMS_DBG ("duration = %s", tmp);
-		g_free (tmp);
+		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+						      (gint) (filesize*(gdouble)8000.0/bitrate));
 	}
 		
-	tmp = g_strdup_printf ("%d", bitrate);
-	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
-	g_free (tmp);
+	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, bitrate);
 
 }
 

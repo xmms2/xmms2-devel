@@ -160,7 +160,8 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 
 	do {
 		xmms_medialib_entry_t entry;
-		gchar *title = NULL, *duration = NULL;
+		gchar *title = NULL;
+		gint duration = 0;
 
 		if (extm3u && line[0] == '#') {
 			gchar *p;
@@ -181,7 +182,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 			 */
 			title = g_convert (p, strlen (p), "UTF-8", "ISO-8859-1",
 			                   &read, &write, NULL);
-			duration = g_strdup (line + 8);
+			duration = strtol (line + 8, NULL, 10);
 
 
 
@@ -194,13 +195,12 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 				    xmms_transport_url_get (transport));
 
 		if (title) {
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
+			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
 			g_free (title);
 		}
 		if (duration) {
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                                  duration);
-			g_free (duration);
+			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+							      duration);
 		}
 
 		xmms_medialib_playlist_add (playlist_id, entry);
@@ -232,10 +232,10 @@ xmms_m3u_write_playlist (guint32 *list)
 		duration = xmms_medialib_entry_property_get_int (entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
-		artist = xmms_medialib_entry_property_get (entry,
+		artist = xmms_medialib_entry_property_get_str (entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST);
 
-		title = xmms_medialib_entry_property_get (entry,
+		title = xmms_medialib_entry_property_get_str (entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
 
 		if (title && artist && duration) {
@@ -245,7 +245,7 @@ xmms_m3u_write_playlist (guint32 *list)
 			g_free (title);
 		}
 
-		url = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+		url = xmms_medialib_entry_property_get_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 		g_assert (url);
 
 		if (g_strncasecmp (url, "file://", 7) == 0) {

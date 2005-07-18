@@ -236,13 +236,13 @@ xmms_html_write_playlist (guint32 *list)
 
 		entry = list[i];
 
-		artist = escape_html (xmms_medialib_entry_property_get (entry,
+		artist = escape_html (xmms_medialib_entry_property_get_str (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST));
-		title = escape_html (xmms_medialib_entry_property_get (entry,
+		title = escape_html (xmms_medialib_entry_property_get_str (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE));
 		len = xmms_medialib_entry_property_get_int (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
-		url = escape_html (xmms_medialib_entry_property_get (entry,
+		url = escape_html (xmms_medialib_entry_property_get_str (entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_URL));
 
 		if (!artist && !title) {

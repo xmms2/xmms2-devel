@@ -107,10 +107,11 @@ xmms_pls_add_entry (const gchar *plspath, guint playlist_id, xmms_pls_entry_t *e
 		g_free (url);
 		
 		if (e->title)
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, e->title);
+			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, e->title);
 
 		if (e->length && atoi (e->length) > 0)
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, e->length);
+			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+							      atoi (e->length));
 
 		xmms_medialib_playlist_add (playlist_id, entry);
 
@@ -206,12 +207,13 @@ xmms_pls_write_playlist (guint32 *list)
 	current = 1;
 	while (list[i]) {
 		xmms_medialib_entry_t entry = list[i];
-		const gchar *title, *duration;
+		gint duration;
+		const gchar *title;
 		gchar *url;
 
-		duration = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
-		title = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
-		url = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+		duration = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		title = xmms_medialib_entry_property_get_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
+		url = xmms_medialib_entry_property_get_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
 		if (g_strncasecmp (url, "file://", 7) == 0) {
 			g_string_append_printf (ret, "File%u=%s\n", current, url+7);
@@ -222,7 +224,7 @@ xmms_pls_write_playlist (guint32 *list)
 		if (!duration) {
 			g_string_append_printf (ret, "Length%u=%s\n", current, "-1");
 		} else {
-			g_string_append_printf (ret, "Length%u=%s\n", current, duration);
+			g_string_append_printf (ret, "Length%u=%d\n", current, duration);
 		}
 
 		g_free (url);

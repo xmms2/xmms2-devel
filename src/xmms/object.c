@@ -15,6 +15,7 @@
  */
 
 #include "xmms/xmms_object.h"
+#include "xmms/xmms_log.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
 #include <stdarg.h>
@@ -238,6 +239,31 @@ xmms_object_cmd_value_none_new (void)
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->type = XMMS_OBJECT_CMD_ARG_NONE;
 	return val;
+}
+
+xmms_object_cmd_value_t *
+xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
+{
+	xmms_object_cmd_value_t *ret = NULL;
+	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_STRING:
+			ret = xmms_object_cmd_value_str_new (val->value.string);
+			break;
+		case XMMS_OBJECT_CMD_ARG_UINT32:
+			ret = xmms_object_cmd_value_uint_new (val->value.uint32);
+			break;
+		case XMMS_OBJECT_CMD_ARG_INT32:
+			ret = xmms_object_cmd_value_int_new (val->value.int32);
+			break;
+		case XMMS_OBJECT_CMD_ARG_DICT:
+		case XMMS_OBJECT_CMD_ARG_LIST:
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			/** Unsupported for now */
+			XMMS_DBG ("Unsupported value passed to value_copy()");
+			break;
+	}
+
+	return ret;
 }
 
 void

@@ -208,7 +208,8 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 	g_return_val_if_fail (transport, NULL);
 
 	g_mutex_lock (transport->mutex);
-	ret =  xmms_medialib_entry_property_get (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	ret =  xmms_medialib_entry_property_get_str (transport->entry, 
+						     XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	g_mutex_unlock (transport->mutex);
 
 	return ret;
@@ -329,7 +330,8 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
-	tmp = xmms_medialib_entry_property_get (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	tmp = xmms_medialib_entry_property_get_str (entry, 
+						    XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	
 	transport->plugin = xmms_transport_plugin_find (tmp);
 	g_free (tmp);
@@ -705,7 +707,8 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t e
 
 	xmms_transport_private_data_set (transport, data);
 
-	url = xmms_medialib_entry_property_get (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	url = xmms_medialib_entry_property_get_str (transport->entry, 
+						    XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
 	if (!init_method (transport, url)) {
 		g_free (url);
@@ -716,11 +719,8 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t e
 
 	if (lmod_method) {
 		guint lmod;
-		gchar *lmod_str;
 		lmod = lmod_method (transport);
-		lmod_str = g_strdup_printf ("%d", lmod);
-		xmms_medialib_entry_property_set (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod_str);
-		g_free (lmod_str);
+		xmms_medialib_entry_property_set_int (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod);
 	}
 
 
