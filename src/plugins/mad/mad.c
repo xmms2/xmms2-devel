@@ -253,7 +253,7 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 		g_free (tmp);
 	}
 		
-	tmp = g_strdup_printf ("%d", bitrate / 1000);
+	tmp = g_strdup_printf ("%d", bitrate);
 	xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
 	g_free (tmp);
 

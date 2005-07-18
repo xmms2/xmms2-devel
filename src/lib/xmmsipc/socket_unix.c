@@ -30,6 +30,7 @@
 
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_util.h"
+#include "url.h"
 
 void
 xmms_ipc_usocket_destroy (xmms_ipc_transport_t *ipct)
@@ -67,7 +68,7 @@ xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_client_init (const char *path)
+xmms_ipc_usocket_client_init (const xmms_url_t *url)
 {
 	int fd;
 	int flags;
@@ -81,7 +82,7 @@ xmms_ipc_usocket_client_init (const char *path)
 	}
 
 	saddr.sun_family = AF_UNIX;
-	strncpy (saddr.sun_path, path, 108);
+	snprintf (saddr.sun_path, 108, "/%s", url->path);
 
 	if (connect (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
 		close (fd);
@@ -105,7 +106,7 @@ xmms_ipc_usocket_client_init (const char *path)
 		
 	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
-	ipct->path = strdup (path);
+	ipct->path = strdup (url->path);
 	ipct->read_func = xmms_ipc_usocket_read;
 	ipct->write_func = xmms_ipc_usocket_write;
 	ipct->destroy_func = xmms_ipc_usocket_destroy;
@@ -158,7 +159,7 @@ xmms_ipc_usocket_accept (xmms_ipc_transport_t *transport)
 }
 
 xmms_ipc_transport_t *
-xmms_ipc_usocket_server_init (const char *path)
+xmms_ipc_usocket_server_init (const xmms_url_t *url)
 {
 	int fd;
 	int flags;
@@ -172,10 +173,10 @@ xmms_ipc_usocket_server_init (const char *path)
 	}
 
 	saddr.sun_family = AF_UNIX;
-	strncpy (saddr.sun_path, path, 108);
+	snprintf (saddr.sun_path, 108, "/%s", url->path);
 
-	if (access (path, F_OK) == 0) {
-		unlink (path);
+	if (access (saddr.sun_path, F_OK) == 0) {
+		unlink (saddr.sun_path);
 	}
 
 	if (bind (fd, (struct sockaddr *) &saddr, sizeof (saddr)) == -1) {
@@ -202,7 +203,7 @@ xmms_ipc_usocket_server_init (const char *path)
 		
 	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
-	ipct->path = strdup (path);
+	ipct->path = strdup (url->path);
 	ipct->read_func = xmms_ipc_usocket_read;
 	ipct->write_func = xmms_ipc_usocket_write;
 	ipct->accept_func = xmms_ipc_usocket_accept;

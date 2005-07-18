@@ -301,7 +301,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	}
 
 	if (vi && vi->bitrate_nominal) {
-		g_snprintf (tmp, 12, "%d", (gint) vi->bitrate_nominal/1000);
+		g_snprintf (tmp, 12, "%d", (gint) vi->bitrate_nominal);
 		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
 	}
 

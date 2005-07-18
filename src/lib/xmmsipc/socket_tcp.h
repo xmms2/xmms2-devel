@@ -19,8 +19,9 @@
 #define XMMS_SOCKET_TCP_H
 
 #include "xmmsc/xmmsc_ipc_transport.h"
+#include "url.h"
 
-xmms_ipc_transport_t *xmms_ipc_tcp_server_init (const char *path);
-xmms_ipc_transport_t *xmms_ipc_tcp_client_init (const char *path);
+xmms_ipc_transport_t *xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6);
+xmms_ipc_transport_t *xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6);
 
 #endif /* XMMS_SOCKET_TCP_H */

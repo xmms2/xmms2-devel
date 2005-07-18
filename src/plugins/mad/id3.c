@@ -18,6 +18,7 @@
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 #define ID3v2_HEADER_FLAGS_UNSYNC 0x80
@@ -75,6 +76,55 @@
  * TXXX User defined text information frame
  */
 
+#define GENRE_MAX 0x94
+
+const gchar *id3_genres[GENRE_MAX] =
+{
+        "Blues", "Classic Rock", "Country", "Dance",
+        "Disco", "Funk", "Grunge", "Hip-Hop",
+        "Jazz", "Metal", "New Age", "Oldies",
+        "Other", "Pop", "R&B", "Rap", "Reggae",
+        "Rock", "Techno", "Industrial", "Alternative",
+        "Ska", "Death Metal", "Pranks", "Soundtrack",
+        "Euro-Techno", "Ambient", "Trip-Hop", "Vocal",
+        "Jazz+Funk", "Fusion", "Trance", "Classical",
+        "Instrumental", "Acid", "House", "Game",
+        "Sound Clip", "Gospel", "Noise", "Alt",
+        "Bass", "Soul", "Punk", "Space",
+        "Meditative", "Instrumental Pop",
+        "Instrumental Rock", "Ethnic", "Gothic",
+        "Darkwave", "Techno-Industrial", "Electronic",
+        "Pop-Folk", "Eurodance", "Dream",
+        "Southern Rock", "Comedy", "Cult",
+        "Gangsta Rap", "Top 40", "Christian Rap",
+        "Pop/Funk", "Jungle", "Native American",
+        "Cabaret", "New Wave", "Psychedelic", "Rave",
+        "Showtunes", "Trailer", "Lo-Fi", "Tribal",
+        "Acid Punk", "Acid Jazz", "Polka", "Retro",
+        "Musical", "Rock & Roll", "Hard Rock", "Folk",
+        "Folk/Rock", "National Folk", "Swing",
+        "Fast-Fusion", "Bebob", "Latin", "Revival",
+        "Celtic", "Bluegrass", "Avantgarde",
+        "Gothic Rock", "Progressive Rock",
+        "Psychedelic Rock", "Symphonic Rock", "Slow Rock",
+        "Big Band", "Chorus", "Easy Listening",
+        "Acoustic", "Humour", "Speech", "Chanson",
+        "Opera", "Chamber Music", "Sonata", "Symphony",
+        "Booty Bass", "Primus", "Porn Groove",
+        "Satire", "Slow Jam", "Club", "Tango",
+        "Samba", "Folklore", "Ballad", "Power Ballad",
+        "Rhythmic Soul", "Freestyle", "Duet",
+        "Punk Rock", "Drum Solo", "A Cappella",
+        "Euro-House", "Dance Hall", "Goa",
+        "Drum & Bass", "Club-House", "Hardcore",
+        "Terror", "Indie", "BritPop", "Negerpunk",
+        "Polsk Punk", "Beat", "Christian Gangsta Rap",
+        "Heavy Metal", "Black Metal", "Crossover",
+        "Contemporary Christian", "Christian Rock",
+        "Merengue", "Salsa", "Thrash Metal",
+        "Anime", "JPop", "Synthpop"
+};
+
 static void
 add_to_entry (xmms_id3v2_header_t *head, 
 	      xmms_medialib_entry_t entry, 
@@ -120,6 +170,34 @@ add_to_entry (xmms_id3v2_header_t *head,
 	}
 	xmms_medialib_entry_property_set (entry, key, nval);	
 	g_free (nval);
+}
+
+static void
+xmms_mad_handle_id3v2_tcon (xmms_id3v2_header_t *head, 
+			    xmms_medialib_entry_t entry, 
+			    gchar *key, 
+			    guchar *buf, 
+			    gint len)
+{
+	gint res;
+	guint genre_id;
+	gchar *val;
+
+	if (head->ver == 4) {
+		buf++;
+		len -= 1; /* total len of buffer */
+	}
+
+	val = g_strndup ((gchar *)buf, len);
+	res = sscanf (val, "(%u)", &genre_id);
+
+	if (res > 0 && genre_id < GENRE_MAX) {
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, (gchar *)id3_genres[genre_id]);
+	} else {
+		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, val);
+	}
+
+	g_free (val);
 }
 
 static void
@@ -195,7 +273,7 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
 	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
-	{ quad2long('T','C','O','N'), XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, NULL },
+	{ quad2long('T','C','O','N'), NULL, xmms_mad_handle_id3v2_tcon },
 	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
 	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
 	{ quad2long('T','X','X','X'), NULL, xmms_mad_handle_id3v2_txxx },
@@ -258,7 +336,7 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 
 	id3head = (id3head_t *) buf;
 	
-	if (strncmp(id3head->id, "ID3", 3)) return FALSE;
+	if (strncmp((gchar *)id3head->id, "ID3", 3)) return FALSE;
 
 	if (id3head->ver > 4 || id3head->ver < 2) {
 		XMMS_DBG ("Unsupported id3v2 version (%d)", id3head->ver);
@@ -372,55 +450,6 @@ xmms_mad_id3v2_parse (guchar *buf, xmms_id3v2_header_t *head, xmms_medialib_entr
 /**
  *  ID3 
  */
-
-#define GENRE_MAX 0x94
-
-const gchar *id3_genres[GENRE_MAX] =
-{
-        "Blues", "Classic Rock", "Country", "Dance",
-        "Disco", "Funk", "Grunge", "Hip-Hop",
-        "Jazz", "Metal", "New Age", "Oldies",
-        "Other", "Pop", "R&B", "Rap", "Reggae",
-        "Rock", "Techno", "Industrial", "Alternative",
-        "Ska", "Death Metal", "Pranks", "Soundtrack",
-        "Euro-Techno", "Ambient", "Trip-Hop", "Vocal",
-        "Jazz+Funk", "Fusion", "Trance", "Classical",
-        "Instrumental", "Acid", "House", "Game",
-        "Sound Clip", "Gospel", "Noise", "Alt",
-        "Bass", "Soul", "Punk", "Space",
-        "Meditative", "Instrumental Pop",
-        "Instrumental Rock", "Ethnic", "Gothic",
-        "Darkwave", "Techno-Industrial", "Electronic",
-        "Pop-Folk", "Eurodance", "Dream",
-        "Southern Rock", "Comedy", "Cult",
-        "Gangsta Rap", "Top 40", "Christian Rap",
-        "Pop/Funk", "Jungle", "Native American",
-        "Cabaret", "New Wave", "Psychedelic", "Rave",
-        "Showtunes", "Trailer", "Lo-Fi", "Tribal",
-        "Acid Punk", "Acid Jazz", "Polka", "Retro",
-        "Musical", "Rock & Roll", "Hard Rock", "Folk",
-        "Folk/Rock", "National Folk", "Swing",
-        "Fast-Fusion", "Bebob", "Latin", "Revival",
-        "Celtic", "Bluegrass", "Avantgarde",
-        "Gothic Rock", "Progressive Rock",
-        "Psychedelic Rock", "Symphonic Rock", "Slow Rock",
-        "Big Band", "Chorus", "Easy Listening",
-        "Acoustic", "Humour", "Speech", "Chanson",
-        "Opera", "Chamber Music", "Sonata", "Symphony",
-        "Booty Bass", "Primus", "Porn Groove",
-        "Satire", "Slow Jam", "Club", "Tango",
-        "Samba", "Folklore", "Ballad", "Power Ballad",
-        "Rhythmic Soul", "Freestyle", "Duet",
-        "Punk Rock", "Drum Solo", "A Cappella",
-        "Euro-House", "Dance Hall", "Goa",
-        "Drum & Bass", "Club-House", "Hardcore",
-        "Terror", "Indie", "BritPop", "Negerpunk",
-        "Polsk Punk", "Beat", "Christian Gangsta Rap",
-        "Heavy Metal", "Black Metal", "Crossover",
-        "Contemporary Christian", "Christian Rock",
-        "Merengue", "Salsa", "Thrash Metal",
-        "Anime", "JPop", "Synthpop"
-};
 
 typedef struct id3v1tag_St {
         char tag[3]; /* always "TAG": defines ID3v1 tag 128 bytes before EOF */
