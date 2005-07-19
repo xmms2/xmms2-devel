@@ -804,7 +804,7 @@ select_callback (GHashTable *row, gpointer udata)
 
 	*l = g_list_prepend (*l, xmms_object_cmd_value_dict_new (row));
 
-	return 0;
+	return TRUE;
 }
 
 static GList *
