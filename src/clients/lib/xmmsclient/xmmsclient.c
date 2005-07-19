@@ -317,31 +317,27 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 		strncpy (key, next_key + 2, keylen);
 
 		if (strcmp (key, "seconds") == 0) {
-			char *duration;
+			int duration;
 
-			xmmsc_result_get_dict_entry_str (res, "duration", &duration);
+			xmmsc_result_get_dict_entry_int32 (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char seconds[10];
-				int d;
-				d = atoi (duration);
-				snprintf (seconds, sizeof seconds, "%02d", (d/1000)%60);
+				snprintf (seconds, sizeof seconds, "%02d", (duration/1000)%60);
 				strncat (target, seconds, len - strlen (target) - 1);
 			}
 		} else if (strcmp (key, "minutes") == 0) {
-			char *duration;
+			int duration;
 
-			xmmsc_result_get_dict_entry_str (res, "duration", &duration);
+			xmmsc_result_get_dict_entry_int32 (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char minutes[10];
-				int d;
-				d = atoi (duration);
-				snprintf (minutes, sizeof minutes, "%02d", d/60000);
+				snprintf (minutes, sizeof minutes, "%02d", duration/60000);
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
 		} else {
