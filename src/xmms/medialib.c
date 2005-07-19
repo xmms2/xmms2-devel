@@ -803,8 +803,7 @@ select_callback (GHashTable *row, gpointer udata)
 	GList **l = (GList **) udata;
 
 	*l = g_list_prepend (*l, xmms_object_cmd_value_dict_new (row));
-
-	return 0;
+	return TRUE;
 }
 
 static GList *
@@ -997,7 +996,7 @@ xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, x
 	g_mutex_unlock (medialib->mutex);
 }
 
-static int
+static gboolean
 xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	GHashTable *hash = udata;
@@ -1007,7 +1006,7 @@ xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 
 	destroy_array (row);
 
-	return 0;
+	return TRUE;
 }
 
 static GHashTable *
