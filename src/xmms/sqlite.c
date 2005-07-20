@@ -248,6 +248,9 @@ xmms_sqlite_column_to_val (sqlite3_stmt *stm, gint column)
 		case SQLITE_BLOB:
 			val = xmms_object_cmd_value_str_new ((gchar *)sqlite3_column_text (stm, column));
 			break;
+		case SQLITE_NULL:
+			val = xmms_object_cmd_value_none_new ();
+			break;
 		default:
 			XMMS_DBG ("Unhandled SQLite type!");
 			break;
