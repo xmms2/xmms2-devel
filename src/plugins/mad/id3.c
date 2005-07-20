@@ -125,18 +125,16 @@ const gchar *id3_genres[GENRE_MAX] =
         "Anime", "JPop", "Synthpop"
 };
 
-static void
-add_to_entry (xmms_id3v2_header_t *head, 
-	      xmms_medialib_entry_t entry, 
-	      gchar *key, 
-	      guchar *val, 
-	      gint len)
+static gchar *
+convert_id3_text (xmms_id3v2_header_t *head, 
+		  guchar *val, 
+		  gint len)
 {
 	gchar *nval;
 	gsize readsize,writsize;
 	GError *err = NULL;
 
-	g_return_if_fail (len>0);
+	g_return_val_if_fail (len>0, NULL);
 
 	if (head->ver == 4) {
 		if (val[0] == 0x00) {
@@ -153,7 +151,7 @@ add_to_entry (xmms_id3v2_header_t *head,
 			nval = g_strndup ((gchar *)val+1, len-1);
 		} else {
 			XMMS_DBG ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
-			return;
+			return NULL;
 		}
 	} else if (head->ver == 2 || head->ver == 3) {
 		if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
@@ -166,10 +164,27 @@ add_to_entry (xmms_id3v2_header_t *head,
 	if (err) {
 		xmms_log_error ("Couldn't convert: %s", err->message);
 		g_error_free (err);
-		return;
+		return NULL;
 	}
-	xmms_medialib_entry_property_set (entry, key, nval);	
-	g_free (nval);
+
+	return nval;
+}
+
+
+static void
+add_to_entry (xmms_id3v2_header_t *head, 
+	      xmms_medialib_entry_t entry, 
+	      gchar *key, 
+	      guchar *val, 
+	      gint len)
+{
+	gchar *nval;
+
+	nval = convert_id3_text (head, val, len);
+	if (nval) {
+		xmms_medialib_entry_property_set_str (entry, key, nval);	
+		g_free (nval);
+	}
 }
 
 static void
@@ -192,9 +207,9 @@ xmms_mad_handle_id3v2_tcon (xmms_id3v2_header_t *head,
 	res = sscanf (val, "(%u)", &genre_id);
 
 	if (res > 0 && genre_id < GENRE_MAX) {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, (gchar *)id3_genres[genre_id]);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, (gchar *)id3_genres[genre_id]);
 	} else {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, val);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, val);
 	}
 
 	g_free (val);
@@ -226,15 +241,35 @@ xmms_mad_handle_id3v2_txxx (xmms_id3v2_header_t *head,
 	}
 
 	if (g_strcasecmp ((gchar *)buf, "MusicBrainz Album Id") == 0)
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID, val);
 	else if (g_strcasecmp ((gchar *)buf, "MusicBrainz Artist Id") == 0)
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, val);
 	else if ((g_strcasecmp ((gchar *)buf, "MusicBrainz Album Artist Id") == 0) &&
 		 (g_strncasecmp ((gchar *)(buf+l2+1), MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, "1");
+		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 	}
 
 	g_free (val);
+}
+
+static void
+xmms_mad_handle_int_field (xmms_id3v2_header_t *head, 
+			   xmms_medialib_entry_t entry, 
+			   gchar *key, 
+			   guchar *buf, 
+			   gint len)
+{
+
+	gchar *nval;
+	gint i;
+
+	nval = convert_id3_text (head, buf, len);
+	if (nval) {
+		i = strtol (nval, NULL, 10);
+		xmms_medialib_entry_property_set_int (entry, key, i);
+		g_free (nval);
+	}
+
 }
 
 static void
@@ -248,7 +283,7 @@ xmms_mad_handle_id3v2_ufid (xmms_id3v2_header_t *head,
 	guint32 l2 = strlen ((gchar *)buf);
 	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
 	if (g_strcasecmp ((gchar *)buf, "http://musicbrainz.org") == 0)
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
 	g_free (val);
 }
 
@@ -269,13 +304,13 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
 	{ quad2long('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
 	{ quad2long('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
-	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, NULL },
+	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, xmms_mad_handle_int_field },
+	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, xmms_mad_handle_int_field },
 	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long('T','C','O','N'), NULL, xmms_mad_handle_id3v2_tcon },
-	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
-	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, NULL },
+	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, xmms_mad_handle_int_field },
+	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, xmms_mad_handle_int_field },
 	{ quad2long('T','X','X','X'), NULL, xmms_mad_handle_id3v2_txxx },
 	{ quad2long('U','F','I','D'), NULL, xmms_mad_handle_id3v2_ufid },
 	{ 0, NULL, NULL }
@@ -492,7 +527,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, tmp);
 		g_free (tmp);
 	}
 	
@@ -501,7 +536,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, tmp);
 		g_free (tmp);
 	}
 	
@@ -510,7 +545,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp);
 		g_free (tmp);
 	}
 	
@@ -519,15 +554,15 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_clear_error (&err);
 	} else {
 		g_strstrip (tmp);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tmp);
 		g_free (tmp);
 	}
 
 	if (tag->genre > GENRE_MAX) {
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, "Unknown");
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {
 		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
 		g_free (tmp);
 	}
 	
@@ -535,16 +570,15 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		/* V1.1 */
 		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 		
-		tmp = g_strdup_printf ("%d", (gint) tag->u.v1_1.track_number);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, tmp);
-		g_free (tmp);
+		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, 
+						      tag->u.v1_1.track_number);
 	} else {
 		tmp = g_convert (tag->u.v1_1.comment, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		g_strstrip (tmp);
-		xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
+		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
 		g_free (tmp);
 	}
 

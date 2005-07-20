@@ -404,6 +404,7 @@ xmms_oss_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 
 	/* we must first drain the buffer.. */
 	ioctl (data->fd, SNDCTL_DSP_SYNC, 0);
+        ioctl (data->fd, SNDCTL_DSP_RESET, 0);
 
 	param = -1;
 	for (i = 0; i < G_N_ELEMENTS(formats); i++) {

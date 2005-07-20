@@ -740,7 +740,8 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 
 			xmms_medialib_entry_t entry = g_array_index (playlist->list, xmms_medialib_entry_t, i);
 
-			gchar *val = xmms_medialib_entry_property_get (entry, property); 
+			/** @todo this WILL fail if there is a int in the db */
+			gchar *val = xmms_medialib_entry_property_get_str (entry, property); 
 
 			if (!val)
 				val = g_strdup ("");

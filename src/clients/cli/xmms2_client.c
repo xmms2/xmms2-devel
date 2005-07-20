@@ -167,18 +167,18 @@ void
 format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 	uint count = 0;
 	GList *n;
-	char *mid;
-
+	gint mid;
+	
 	printf ("-[Result]-----------------------------------------------------------------------\n");
 	printf ("Id   | Artist            | Album                     | Title\n");
 
 	for (n = list; n; n = g_list_next (n)) {
 		char *artist, *album, *title;
 		xmmsc_result_t *res;
-		mid = n->data;
+		mid = XPOINTER_TO_INT (n->data);
 
 		if (mid) {
-			res = xmmsc_medialib_get_info (conn, atoi (mid));
+			res = xmmsc_medialib_get_info (conn, mid);
 			xmmsc_result_wait (res);
 		} else {
 			print_error ("Empty result!");
@@ -194,7 +194,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 			if (!album)
 				album = "Unknown";
 
-			printf ("%-5.5s| %-17.17s | %-25.25s | %-25.25s\n", mid, artist, album, title);
+			printf ("%-5.5d| %-17.17s | %-25.25s | %-25.25s\n", mid, artist, album, title);
 
 		} else {
 			char *url, *filename;
@@ -202,7 +202,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
-					printf ("%-5.5s| %s\n", mid, filename);
+					printf ("%-5.5d| %s\n", mid, filename);
 					g_free (filename);
 				}
 			}
@@ -452,8 +452,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 static int
 res_has_key (xmmsc_result_t *res, const char *key)
 {
-	char *val;
-	return xmmsc_result_get_dict_entry_str (res, key, &val);
+	return xmmsc_result_get_dict_entry_type (res, key) != XMMSC_RESULT_VALUE_TYPE_NONE;
 }
 
 static void
@@ -476,24 +475,23 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		char line[80];
-		char *playtime;
+		int playtime;
 		gchar *conv;
-		unsigned int i;
+		unsigned int ui;
 		xmmsc_result_t *res2;
 
-		if (!xmmsc_result_get_uint (res, &i))
+		if (!xmmsc_result_get_uint (res, &ui))
 			print_error ("Broken result");
 
 		g_clear_error (&err);
 
-		res2 = xmmsc_medialib_get_info (conn, i);
+		res2 = xmmsc_medialib_get_info (conn, ui);
 		xmmsc_result_wait (res2);
 
-		xmmsc_result_get_dict_entry_str (res2, "duration", &playtime);
-		if (playtime)
-			total_playtime += strtoul (playtime, NULL, 10);
+		xmmsc_result_get_dict_entry_int32 (res2, "duration", &playtime);
+		total_playtime += playtime;
 		
-		if (res_has_key (res2, "channel")) {
+		if (res_has_key (res2, "eeeeeee")) {
 			if (res_has_key (res2, "title")) {
 				xmmsc_entry_format (line, sizeof (line), "[stream] ${title}", res2);
 			} else {
@@ -522,9 +520,9 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		conv = g_locale_from_utf8 (line, -1, &r, &w, &err);
 
 		if (p == pos) {
-			print_info ("->[%d/%d] %s", pos, i, conv);
+			print_info ("->[%d/%d] %s", pos, ui, conv);
 		} else {
-			print_info ("  [%d/%d] %s", pos, i, conv);
+			print_info ("  [%d/%d] %s", pos, ui, conv);
 		}
 
 		pos ++ ;
@@ -622,8 +620,8 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
 	guint id;
-	guint pt = 0, ms, dur = 0;
-	char *tmp;
+	guint pt = 0, ms;
+	gint dur = 0;
 
 	if (argc < 3) {
                 print_error ("You need to specify a number of seconds. Usage:\n"
@@ -640,9 +638,7 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	
 	res = xmmsc_medialib_get_info (conn, id);
 	xmmsc_result_wait (res);
-	xmmsc_result_get_dict_entry_str (res, "duration", &tmp);
-	if (tmp)
-		dur = atoi (tmp);
+	xmmsc_result_get_dict_entry_int32 (res, "duration", &dur);
 	xmmsc_result_unref (res);
 
 	if (argv[2][0] == '+' || argv[2][0] == '-') {
@@ -867,7 +863,6 @@ static void
 do_mediainfo (xmmsc_connection_t *c, guint id)
 {
 	xmmsc_result_t *res;
-	gchar *tmp;
 
 	res = xmmsc_medialib_get_info (c, id);
 	xmmsc_result_wait (res);
@@ -898,11 +893,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 		has_songname = TRUE;
 	}
 
-	xmmsc_result_get_dict_entry_str (res, "duration", &tmp);
-	if (tmp)
-		curr_dur = atoi (tmp);
-	else
-		curr_dur = 0;
+	xmmsc_result_get_dict_entry_int32 (res, "duration", &curr_dur);
 
 	xmmsc_result_unref (res);
 }

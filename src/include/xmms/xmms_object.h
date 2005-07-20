@@ -67,6 +67,7 @@ xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
 xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GHashTable *dict);
 xmms_object_cmd_value_t *xmms_object_cmd_value_list_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_none_new (void);
+xmms_object_cmd_value_t *xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val);
 void xmms_object_cmd_value_free (gpointer val);
 
 #define XMMS_OBJECT_CMD_MAX_ARGS 2

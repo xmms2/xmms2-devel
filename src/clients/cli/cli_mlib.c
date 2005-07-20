@@ -188,13 +188,13 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-		char *id;
+		gint id;
 			
-		xmmsc_result_get_dict_entry_str (res, "id", &id);
+		xmmsc_result_get_dict_entry_int32 (res, "id", &id);
 		if (!id)
 			print_error ("broken resultset");
 
-		n = g_list_prepend (n, id);
+		n = g_list_prepend (n, XINT_TO_POINTER (id));
 	}
 
 	format_pretty_list (conn, n);
@@ -230,8 +230,8 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	char query[1024];
 	GList *n = NULL;
-	char *id;
 	xmmsc_result_t *res;
+	gint id;
 
 	if (argc < 4) {
 		print_error ("Supply a playlist name");
@@ -244,11 +244,11 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 
 	/* yes, result is a hashlist,
 	   but there should only be one entry */
-	xmmsc_result_get_dict_entry_str (res, "id", &id);
+	xmmsc_result_get_dict_entry_int32 (res, "id", &id);
 	if (!id) 
 		print_error ("No such playlist!");
 
-	g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %s", id);
+	g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %d", id);
 	xmmsc_result_unref (res);
 
 	res = xmmsc_medialib_select (conn, query);
@@ -261,7 +261,7 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 			print_error ("No such playlist!");
 		if (g_strncasecmp (entry, "mlib", 4) == 0) {
 			char *p = entry+7;
-			n = g_list_prepend (n, p);
+			n = g_list_prepend (n, XINT_TO_POINTER (atoi(p)));
 		}
 	}
 

@@ -57,9 +57,10 @@ typedef guint32 xmms_medialib_entry_t;
 xmms_medialib_entry_t xmms_medialib_entry_new (const char *url);
 gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry);
 
-gchar *xmms_medialib_entry_property_get (xmms_medialib_entry_t entry, const gchar *property);
+gchar *xmms_medialib_entry_property_get_str (xmms_medialib_entry_t entry, const gchar *property);
 guint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
-gboolean xmms_medialib_entry_property_set (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
+gboolean xmms_medialib_entry_property_set_str (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
+gboolean xmms_medialib_entry_property_set_int (xmms_medialib_entry_t entry, const gchar *property, gint value);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
 guint32 xmms_medialib_get_random_entry (void);
 
