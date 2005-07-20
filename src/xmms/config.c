@@ -47,7 +47,6 @@ typedef enum {
 	XMMS_CONFIG_STATE_VALUE
 } xmms_config_state_t;
 
-static void xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err);
 static GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
 static xmms_config_value_t *xmms_config_value_new (const gchar *name);
 static gchar *xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
@@ -277,8 +276,8 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
  * Sets a key to a new value
  */
 
-static void
-xmms_config_setvalue (xmms_config_t *conf, gchar *key, gchar *value, xmms_error_t *err)
+void
+xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value, xmms_error_t *err)
 {
 	xmms_config_value_t *val;
 
@@ -649,7 +648,7 @@ xmms_config_value_name_get (const xmms_config_value_t *value)
   */
 
 void
-xmms_config_value_data_set (xmms_config_value_t *val, gchar *data)
+xmms_config_value_data_set (xmms_config_value_t *val, const gchar *data)
 {
 	GHashTable *dict;
 	gchar file[XMMS_PATH_MAX];
