@@ -100,7 +100,7 @@ Description: XMMS2 - ecore client library Ruby bindings
 
 Package: libxmms2client-ecore-ruby1.8
 Architecture: any
-Depends: ruby1.8, libxmms2client-ruby1.8, ${shlibs:Depends}
+Depends: ruby1.8, libxmms2client-ruby1.8 (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - ecore client library Ruby bindings
  This package contains Ruby bindings for the xmms2 ecore client library.
  .
@@ -135,83 +135,83 @@ Description: XMMS2 - Python bindings
 Package: xmms2-client-cli
 Architecture: any
 Provides: xmms2-client
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - cli client
  This package contains a simple text-ui for xmms2.
 
 Package: xmms2-client-sdlvis
 Architecture: any
 Provides: xmms2-client
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - simple SDL visualization client
  This package contains a simple SDL visualization client for xmms2.
 
 Package: xmms2-transport-curl
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - curl transport for HTTP
  This package contains a HTTP transport for xmms2.
 
 Package: xmms2-transport-samba
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - Samba transport
  This package contains a Samba transport for xmms2.
 
 #Package: xmms2-cd
 #Architecture: any
-#Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+#Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 #Description: XMMS2 - CD transport and decoder
 # This package enables direct reading of CDs for xmms2.
 
 Package: xmms2-decoder-vorbis
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - vorbis decoder
  This package enables ogg-vorbis decoding for xmms2.
 
 Package: xmms2-decoder-flac
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - flac decoder
  This package enables flac decoding for xmms2.
 
 Package: xmms2-decoder-modplug
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - flac decoder
  This package enables modplug decoding for xmms2.
 
 Package: xmms2-decoder-mad
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - libmad based mp3 decoder
  This package enables mp3 decoding for xmms2.
 
 Package: xmms2-decoder-speex
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - speex decoder
  This package enables speex decoding for xmms2.
 
 Package: xmms2-output-oss
 Architecture: any
 Provides: xmms2-output
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - OSS output
  This package enables OSS output for xmms2.
 
 Package: xmms2-output-alsa
 Architecture: any
 Provides: xmms2-output
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - ALSA output
  This package enables ALSA output for xmms2.
 
 Package: xmms2-output-jack
 Architecture: any
 Provides: xmms2-output
-Depends: debconf (>= 0.2.78), xmms2-core, ${shlibs:Depends}
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
 Description: XMMS2 - JACK output
  This package enables JACK output for xmms2.
 
