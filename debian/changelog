@@ -1,3 +1,9 @@
+xmms2 (0.1DR1.1+git20050720-0) unstable; urgency=low
+
+  * New git snapshot (8678d03579abeb3dc11cd8ae91014e51c2ee26c9).
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Wed, 20 Jul 2005 18:21:45 +0200
+
 xmms2 (0.1DR1.1+git20050719-0) unstable; urgency=low
 
   * New git snapshot (c10e76d04a9ec882ad0d92d235b7b5890439ef52).
