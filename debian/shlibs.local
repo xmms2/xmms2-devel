@@ -1,1 +1,3 @@
 libxmmsclient 0 libxmms2client (= ${Source-Version})
+libxmmsclient-glib 0 libxmms2client (= ${Source-Version})
+libxmmsclient-ecore 0 libxmms2client (= ${Source-Version})
