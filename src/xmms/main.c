@@ -206,6 +206,9 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	xmms_plugin_t *plugin;
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;
 
+	if (!mainobj->output)
+		return;
+
 	gchar *outname = (gchar *)data;
 
 	XMMS_DBG ("Want to use %s as output instead", outname);
@@ -453,11 +456,14 @@ main (int argc, char **argv)
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
-	if (!outname)
-		outname = XMMS_OUTPUT_DEFAULT;
 	cv = xmms_config_value_register ("output.plugin",
-	                                 outname,
+	                                 XMMS_OUTPUT_DEFAULT,
 	                                 change_output, mainobj);
+
+	if (outname)
+		xmms_config_setvalue (NULL, "output.plugin", outname, NULL);
+
+	outname = xmms_config_value_string_get (cv);
 
 	XMMS_DBG ("output = %s", outname);
 
