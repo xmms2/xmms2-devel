@@ -54,7 +54,6 @@ typedef guint (*xmms_output_buffersize_get_method_t) (xmms_output_t *output);
 #define XMMS_PLUGIN_METHOD_MIXER_SET_TYPE xmms_output_mixer_set_method_t
 #define XMMS_PLUGIN_METHOD_STATUS_TYPE xmms_output_status_method_t
 
-
 xmms_plugin_t *xmms_output_plugin_get (xmms_output_t *output);
 gpointer xmms_output_private_data_get (xmms_output_t *output);
 void xmms_output_private_data_set (xmms_output_t *output, gpointer data);

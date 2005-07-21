@@ -60,7 +60,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, "replaygain",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, 
+				  XMMS_EFFECT_PLUGIN_API_VERSION,
+				  "replaygain",
 	                          "Replaygain effect " XMMS_VERSION,
 	                          "Replaygain effect");
 

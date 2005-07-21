@@ -44,9 +44,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "speex",
-			"Speex decoder " XMMS_VERSION,
-			"Speex decoder");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+				  XMMS_DECODER_PLUGIN_API_VERSION,
+				  "speex",
+				  "Speex decoder " XMMS_VERSION,
+				  "Speex decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.speex.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");

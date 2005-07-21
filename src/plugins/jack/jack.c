@@ -813,7 +813,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "jack",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
+				  XMMS_OUTPUT_PLUGIN_API_VERSION,
+				  "jack",
 				  "jack Output" XMMS_VERSION,
 				  "Jack audio server output plugin");
 

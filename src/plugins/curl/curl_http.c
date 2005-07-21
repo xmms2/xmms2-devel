@@ -91,7 +91,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "curl_http",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
+				  XMMS_TRANSPORT_PLUGIN_API_VERSION,
+				  "curl_http",
 	                          "Curl transport for HTTP " XMMS_VERSION,
 	                          "HTTP transport using CURL");
 
