@@ -469,6 +469,11 @@ xmms_medialib_entry_property_set_str (xmms_medialib_entry_t entry, const gchar *
 	gboolean ret;
 	g_return_val_if_fail (property, FALSE);
 
+	if (!g_utf8_validate (value, -1, NULL)) {
+		XMMS_DBG ("OOOOOPS! Trying to set property %s to a NON UTF-8 string (%s) I will deny that!", property, value);
+		return FALSE;
+	}
+
 	g_mutex_lock (medialib->mutex);
 	ret = xmms_sqlite_exec (medialib->sql,
 				"insert or replace into Media (id, value, key) values (%d, %Q, LOWER(%Q))", 
