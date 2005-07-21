@@ -154,7 +154,7 @@ xmms_plugin_new (xmms_plugin_type_t type,
 	}
 
 	if (api_mismatch) {
-		xmms_log_error ("API VERISON MISMATCH FOR PLUGIN %s!", name);
+		xmms_log_error ("API VERSION MISMATCH FOR PLUGIN %s!", name);
 		return NULL;
 	}
 
