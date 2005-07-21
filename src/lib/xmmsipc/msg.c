@@ -166,6 +166,9 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 	if (ret == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			return false;
+		if (disconnected)
+			*disconnected = true;
+		return false;
 	} else if (ret == 0) {
 		if (disconnected)
 			*disconnected = true;
@@ -211,6 +214,9 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpor
 		if (ret == -1) {
 			if (errno == EAGAIN || errno == EINTR)
 				return false;
+			if (disconnected)
+				*disconnected = true;
+			return false;
 		} else if (ret == 0) {
 			if (disconnected)
 				*disconnected = true;

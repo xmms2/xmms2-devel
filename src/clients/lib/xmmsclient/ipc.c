@@ -259,7 +259,8 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout)
 	}
 
 	if (FD_ISSET(fd, &rfdset))
-		xmmsc_ipc_io_in_callback (ipc);
+		if (!xmmsc_ipc_io_in_callback (ipc))
+			return;
 	if (FD_ISSET(fd, &wfdset))
 		xmmsc_ipc_io_out_callback (ipc);
 }
