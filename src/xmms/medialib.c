@@ -413,7 +413,7 @@ xmms_medialib_entry_property_get_str (xmms_medialib_entry_t entry, const gchar *
 guint
 xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property)
 {
-	guint ret;
+	guint ret = 0;
 
 	g_return_val_if_fail (property, 0);
 
