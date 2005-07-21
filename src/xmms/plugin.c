@@ -706,9 +706,6 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 		case XMMS_PLUGIN_TYPE_OUTPUT:
 			pl = "output";
 			break;
-		case XMMS_PLUGIN_TYPE_MEDIALIB:
-			pl = "medialib";
-			break;
 		case XMMS_PLUGIN_TYPE_PLAYLIST:
 			pl = "playlist";
 			break;
