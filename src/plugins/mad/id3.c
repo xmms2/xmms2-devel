@@ -76,9 +76,7 @@
  * TXXX User defined text information frame
  */
 
-#define GENRE_MAX 0x94
-
-const gchar *id3_genres[GENRE_MAX] =
+const gchar *id3_genres[] =
 {
         "Blues", "Classic Rock", "Country", "Dance",
         "Disco", "Funk", "Grunge", "Hip-Hop",
@@ -122,7 +120,7 @@ const gchar *id3_genres[GENRE_MAX] =
         "Heavy Metal", "Black Metal", "Crossover",
         "Contemporary Christian", "Christian Rock",
         "Merengue", "Salsa", "Thrash Metal",
-        "Anime", "JPop", "Synthpop"
+        "Anime", "JPop", "Synthpop", NULL
 };
 
 static gchar *
@@ -206,7 +204,7 @@ xmms_mad_handle_id3v2_tcon (xmms_id3v2_header_t *head,
 	val = g_strndup ((gchar *)buf, len);
 	res = sscanf (val, "(%u)", &genre_id);
 
-	if (res > 0 && genre_id < GENRE_MAX) {
+	if (res > 0 && genre_id < G_N_ELEMENTS(id3_genres)) {
 		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, (gchar *)id3_genres[genre_id]);
 	} else {
 		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, val);
@@ -558,7 +556,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_free (tmp);
 	}
 
-	if (tag->genre > GENRE_MAX) {
+	if (tag->genre > G_N_ELEMENTS (id3_genres)) {
 		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {
 		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
