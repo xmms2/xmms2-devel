@@ -49,7 +49,7 @@
 #ifdef XMMS_OS_LINUX 
 # define XMMS_OUTPUT_DEFAULT "alsa"
 #elif XMMS_OS_OPENBSD
-# define XMMS_OUTPUT_DEFAULT "sun"
+# define XMMS_OUTPUT_DEFAULT "oss"
 #elif XMMS_OS_NETBSD
 # define XMMS_OUTPUT_DEFAULT "oss"
 #elif XMMS_OS_SOLARIS
