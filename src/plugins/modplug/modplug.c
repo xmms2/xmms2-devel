@@ -51,9 +51,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "modplug",
-			"MODPLUG decoder " XMMS_VERSION,
-			"modplug");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+				  XMMS_DECODER_PLUGIN_API_VERSION,
+				  "modplug",
+				  "MODPLUG decoder " XMMS_VERSION,
+				  "modplug");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");

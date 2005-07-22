@@ -427,7 +427,6 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, guint pos, xmms_error_
 	return TRUE;
 }
 
-
 /**
  * Remove all additions of #entry in the playlist
  * @sa xmms_playlist_remove
@@ -726,10 +725,16 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
+	guint32 id, i;
+
 	g_return_if_fail (playlist);
 	g_return_if_fail (property);
 	XMMS_DBG ("Sorting on %s", property);
+
 	g_mutex_lock (playlist->mutex);
+
+	/** Lets save the ID number so that we can update playlist position later */
+	id = g_array_index (playlist->list, guint32, playlist->currentpos);
 
 	if (playlist->list->len > 1) {
 		GList *tmp = NULL;
@@ -739,7 +744,6 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 			sortdata_t *data = g_new (sortdata_t, 1);
 
 			xmms_medialib_entry_t entry = g_array_index (playlist->list, xmms_medialib_entry_t, i);
-
 			/** @todo this WILL fail if there is a int in the db */
 			gchar *val = xmms_medialib_entry_property_get_str (entry, property); 
 
@@ -761,7 +765,14 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 		g_list_free (tmp);
 	}
 
-	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0);
+	for (i = 0; i < playlist->list->len; i++) {
+		if (g_array_index (playlist->list, guint32, i) == id) {
+			playlist->currentpos = i;
+			break;
+		}
+	}
+
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 
 	g_mutex_unlock (playlist->mutex);
 

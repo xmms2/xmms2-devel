@@ -182,7 +182,7 @@ JACK_callback (jack_nframes_t nframes, void *arg)
 
 		XMMS_CALLBACK_DBG("trying to read %ld bytes\n", jackFramesAvailable * sizeof(float) * this->num_input_channels);
 
-		inputFramesAvailable = xmms_output_read(output, this->sound_buffer, jackFramesAvailable * sizeof(float) * this->num_input_channels);
+		inputFramesAvailable = xmms_output_read(output, (gchar *)this->sound_buffer, jackFramesAvailable * sizeof(float) * this->num_input_channels);
 		if(inputFramesAvailable == -1) inputFramesAvailable = 0;
 
 		inputFramesAvailable = inputFramesAvailable / (sizeof(float) * this->num_input_channels);
@@ -689,7 +689,7 @@ static gboolean
 xmms_jack_new(xmms_output_t *output)
 {
 	xmms_jack_data_t *data;
-	long outputFrequency = 0;
+	unsigned long outputFrequency = 0;
 	int bytes_per_sample = 2;
 	int channels = 2;     /** @todo stop hardcoding 2 channels here */
 	int retval;
@@ -813,7 +813,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "jack",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
+				  XMMS_OUTPUT_PLUGIN_API_VERSION,
+				  "jack",
 				  "jack Output" XMMS_VERSION,
 				  "Jack audio server output plugin");
 

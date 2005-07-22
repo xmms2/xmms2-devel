@@ -99,9 +99,11 @@ xmms_plugin_get (void)
 	gchar buf[16];
 	gint i;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, "equalizer",
-					    "Equalizer effect " XMMS_VERSION,
-					    "Equalizer effect");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, 
+				  XMMS_EFFECT_PLUGIN_API_VERSION,
+				  "equalizer",
+				  "Equalizer effect " XMMS_VERSION,
+				  "Equalizer effect");
 
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");

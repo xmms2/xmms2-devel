@@ -28,7 +28,7 @@ typedef struct xmms_speex_data_St {
  */
 
 static gboolean xmms_speex_new (xmms_decoder_t *decoder, const gchar *mimetype);
-static gboolean xmms_speex_init (xmms_decoder_t *decoder);
+static gboolean xmms_speex_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_speex_seek (xmms_decoder_t *decoder, guint samples);
 static gboolean xmms_speex_can_handle (const gchar *mimetype);
 static gboolean xmms_speex_decode_block (xmms_decoder_t *decoder);
@@ -44,9 +44,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "speex",
-			"Speex decoder " XMMS_VERSION,
-			"Speex decoder");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+				  XMMS_DECODER_PLUGIN_API_VERSION,
+				  "speex",
+				  "Speex decoder " XMMS_VERSION,
+				  "Speex decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.speex.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
@@ -83,7 +85,7 @@ xmms_speex_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
-xmms_speex_init (xmms_decoder_t *decoder)
+xmms_speex_init (xmms_decoder_t *decoder, gint mode)
 {
 	gint pe;
 
@@ -275,7 +277,7 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	if (!xmms_speex_init (decoder))
+	if (!xmms_speex_init (decoder, 0))
 		return;
 
 	data = xmms_decoder_private_data_get (decoder);

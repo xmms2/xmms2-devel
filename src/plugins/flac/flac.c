@@ -41,7 +41,7 @@ typedef struct xmms_flac_data_St {
  */
 
 static gboolean xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype);
-static gboolean xmms_flac_init (xmms_decoder_t *decoder);
+static gboolean xmms_flac_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_flac_seek (xmms_decoder_t *decoder, guint samples);
 static gboolean xmms_flac_can_handle (const gchar *mimetype);
 static gboolean xmms_flac_decode_block (xmms_decoder_t *decoder);
@@ -57,9 +57,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "flac",
-			"FLAC decoder " XMMS_VERSION,
-			"Free Lossless Audio Codec decoder");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+				  XMMS_DECODER_PLUGIN_API_VERSION,
+				  "flac",
+				  "FLAC decoder " XMMS_VERSION,
+				  "Free Lossless Audio Codec decoder");
 
 	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -106,7 +108,7 @@ flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__byte b
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
 
-	ret = xmms_transport_read (transport, buffer, *bytes, &error);
+	ret = xmms_transport_read (transport, (gchar *)buffer, *bytes, &error);
 	*bytes = ret;
 
 	if (ret <= 0) {
@@ -275,7 +277,7 @@ xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static gboolean
-xmms_flac_init (xmms_decoder_t *decoder)
+xmms_flac_init (xmms_decoder_t *decoder, gint mode)
 {
 	xmms_flac_data_t *data;
 	xmms_sample_format_t sample_fmt;
@@ -353,7 +355,7 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 	g_return_if_fail (data);
 
 	if (!data->inited)
-		xmms_flac_init (decoder);
+		xmms_flac_init (decoder, 0);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 	
@@ -365,7 +367,7 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 			guint length;
 			gint i = 0;
 
-			s = g_strsplit (data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
+			s = g_strsplit ((gchar *)data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
 			length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
 			val = g_strndup (s[1], length);
 			while (properties[i].vname) {

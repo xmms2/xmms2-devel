@@ -176,6 +176,9 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	xmmsc_result_wait (result);
 	ret = xmmsc_result_get_uint (result, &i);
 	xmmsc_result_unref (result);
+	if (!ret) {
+		c->error = strdup (xmmsc_ipc_error_get (ipc));
+	}
 
 	return ret;
 }

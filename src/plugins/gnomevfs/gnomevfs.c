@@ -48,13 +48,13 @@ typedef struct {
 
 static gboolean xmms_gnomevfs_can_handle (const gchar *url);
 static gboolean xmms_gnomevfs_init (xmms_transport_t *transport, 
-									const gchar *url);
+				    const gchar *url);
 static void xmms_gnomevfs_close (xmms_transport_t *transport);
 static gint xmms_gnomevfs_read (xmms_transport_t *transport, gchar *buffer, 
-								guint len, xmms_error_t *error);
+				guint len, xmms_error_t *error);
 static gint xmms_gnomevfs_size (xmms_transport_t *transport);
 static gint xmms_gnomevfs_seek (xmms_transport_t *transport, gint offset, 
-								gint whence);
+				gint whence);
 static guint xmms_gnomevfs_lmod (xmms_transport_t *transport);
 
 /*
@@ -66,33 +66,35 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "gnomevfs",
-			"GNOME VFS transport plugin" XMMS_VERSION,
-		 	"A transport that itself supports a wide range of transports,"
-			"http, webdav, tar, ssh and more.");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
+				  XMMS_TRANSPORT_PLUGIN_API_VERSION,
+				  "gnomevfs",
+				  "GNOME VFS transport plugin" XMMS_VERSION,
+				  "A transport that itself supports a wide range of transports,"
+				  "http, webdav, tar, ssh and more.");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.gnome.org/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
 	xmms_plugin_info_add (plugin, "E-Mail", "daniel@nittionio.nu");
-	
+
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, 
-							xmms_gnomevfs_can_handle);
+				xmms_gnomevfs_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, 
-							xmms_gnomevfs_init);
+				xmms_gnomevfs_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
-							xmms_gnomevfs_close);
+				xmms_gnomevfs_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, 
-							xmms_gnomevfs_read);
+				xmms_gnomevfs_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, 
-							xmms_gnomevfs_size);
+				xmms_gnomevfs_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, 
-							xmms_gnomevfs_seek);
+				xmms_gnomevfs_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LMOD, 
-							xmms_gnomevfs_lmod);
+				xmms_gnomevfs_lmod);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
-	
+
 	return plugin;
 }
 
@@ -103,12 +105,12 @@ static gboolean
 xmms_gnomevfs_can_handle (const gchar *url)
 {
 	gboolean retval = FALSE;
-	
+
 	g_return_val_if_fail (url, FALSE);
 
 	if ((g_strncasecmp (url, "ssh:", 4) == 0))
 		retval = TRUE;
-	
+
 	return retval;
 }
 
@@ -126,7 +128,7 @@ xmms_gnomevfs_init (xmms_transport_t *transport, const gchar *url)
 
 	if (!gnome_vfs_init ())
 		return FALSE;
-	
+
 	info = gnome_vfs_file_info_new ();
 	result = gnome_vfs_get_file_info (url, info, 
 					  GNOME_VFS_FILE_INFO_DEFAULT);
@@ -139,7 +141,7 @@ xmms_gnomevfs_init (xmms_transport_t *transport, const gchar *url)
 	result = gnome_vfs_open (&handle, url, 
 				 GNOME_VFS_OPEN_READ | 
 				 GNOME_VFS_OPEN_RANDOM);
-	
+
 	if (result != GNOME_VFS_OK) {
 		return FALSE;
 	}
@@ -155,7 +157,7 @@ xmms_gnomevfs_init (xmms_transport_t *transport, const gchar *url)
 		return FALSE;
 	}
 	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
-	
+
 	return TRUE;
 }
 
@@ -165,15 +167,15 @@ xmms_gnomevfs_close (xmms_transport_t *transport)
 {
 	XMMS_DBG("XMMS_GNOMEVFS_CLOSE");
 	xmms_gnomevfs_data_t *data;
-	
+
 	g_return_if_fail (transport);
 
 	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
-	
+
 	gnome_vfs_close (data->handle);
 	gnome_vfs_shutdown ();
-	
+
 	g_free (data->urlptr);
 
 	g_free (data);
@@ -182,7 +184,7 @@ xmms_gnomevfs_close (xmms_transport_t *transport)
 
 static gint
 xmms_gnomevfs_read (xmms_transport_t *transport, gchar *buffer, guint len, 
-					xmms_error_t *error)
+		    xmms_error_t *error)
 {
 	xmms_gnomevfs_data_t *data;
 	GnomeVFSFileSize bytes_read;
@@ -191,7 +193,7 @@ xmms_gnomevfs_read (xmms_transport_t *transport, gchar *buffer, guint len,
 	g_return_val_if_fail (transport, -1);
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (error, -1);
-	
+
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
@@ -210,7 +212,7 @@ xmms_gnomevfs_read (xmms_transport_t *transport, gchar *buffer, guint len,
 	if (result != GNOME_VFS_OK) {
 		xmms_log_error ("GnomeVFS failed to read.");
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "GnomeVFS hickup, failure" 
-						"to read the file");
+				"to read the file");
 	}
 
 	return bytes_read;
@@ -226,7 +228,7 @@ xmms_gnomevfs_seek (xmms_transport_t *transport, gint offset, gint whence)
 	GnomeVFSFileSize offset_return = -1;
 
 	g_return_val_if_fail (transport, -1);
-	
+
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
@@ -268,15 +270,15 @@ xmms_gnomevfs_lmod (xmms_transport_t *transport)
 	guint lmod = 0;
 
 	g_return_val_if_fail (transport, 0);
-	
+
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
 	info = gnome_vfs_file_info_new ();
 
 	result = gnome_vfs_get_file_info_from_handle (data->handle, info, 
-												  GNOME_VFS_FILE_INFO_DEFAULT);
-	
+						      GNOME_VFS_FILE_INFO_DEFAULT);
+
 	if (result == GNOME_VFS_OK && info != NULL)
 		lmod = info->mtime;
 
@@ -296,15 +298,15 @@ xmms_gnomevfs_size (xmms_transport_t *transport)
 	guint size = -1;
 
 	g_return_val_if_fail (transport, -1);
-	
+
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
 
 	info = gnome_vfs_file_info_new ();
 
 	result = gnome_vfs_get_file_info_from_handle (data->handle, info, 
-												  GNOME_VFS_FILE_INFO_DEFAULT);
-	
+						      GNOME_VFS_FILE_INFO_DEFAULT);
+
 	if (result == GNOME_VFS_OK && info != NULL)
 		size = info->size;
 

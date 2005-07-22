@@ -53,7 +53,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, "pls",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
+				  XMMS_PLAYLIST_PLUGIN_API_VERSION,
+				  "pls",
 	                          "PLS Playlist " XMMS_VERSION,
 	                          "PLS Playlist reader / writer");
 

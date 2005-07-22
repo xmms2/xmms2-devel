@@ -103,7 +103,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "alsa",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
+				  XMMS_OUTPUT_PLUGIN_API_VERSION,
+				  "alsa",
 				  "ALSA Output" XMMS_VERSION,
 				  "Advanced Linux Sound Architecture \
 				  output plugin");
@@ -249,7 +251,8 @@ xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
 		      gint channels, gint rate)
 {
 	snd_pcm_hw_params_t *params;
-	int err, tmp;
+	gint err;
+	guint tmp;
 
 	snd_pcm_hw_params_alloca (&params);
 
@@ -416,7 +419,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 {
 	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
 	gint err, tmp, i;
-	gint requested_buffer_time = BUFFER_TIME;
+	guint requested_buffer_time = BUFFER_TIME;
 
 	g_return_val_if_fail (data, FALSE);
 

@@ -413,7 +413,7 @@ xmms_medialib_entry_property_get_str (xmms_medialib_entry_t entry, const gchar *
 guint
 xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property)
 {
-	guint ret;
+	guint ret = 0;
 
 	g_return_val_if_fail (property, 0);
 
@@ -468,6 +468,11 @@ xmms_medialib_entry_property_set_str (xmms_medialib_entry_t entry, const gchar *
 {
 	gboolean ret;
 	g_return_val_if_fail (property, FALSE);
+
+	if (value && !g_utf8_validate (value, -1, NULL)) {
+		XMMS_DBG ("OOOOOPS! Trying to set property %s to a NON UTF-8 string (%s) I will deny that!", property, value);
+		return FALSE;
+	}
 
 	g_mutex_lock (medialib->mutex);
 	ret = xmms_sqlite_exec (medialib->sql,
@@ -952,7 +957,7 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 
 	entries = g_list_reverse (entries);
 
-	list = g_malloc0 (sizeof (guint) * g_list_length (entries));
+	list = g_malloc0 (sizeof (guint) * g_list_length (entries) + 1);
 	i = 0;
 	while (entries) {
 		gchar *e = entries->data;
@@ -1051,6 +1056,8 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *playlistname,
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not import playlist!");
 		return;
 	}
+
+	xmms_mediainfo_reader_wakeup (xmms_playlist_mediainfo_reader_get (medialib->playlist));
 
 	cv = xmms_config_lookup ("medialib.playlist_load_on_import");
 
