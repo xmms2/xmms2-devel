@@ -220,10 +220,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 				    "1",
 				    NULL, NULL);
 
-	xmms_config_value_register ("medialib.playlist_load_on_import",
-				    "0",
-				    NULL, NULL);
-
 	cv = xmms_config_value_register ("medialib.random_sql_statement",
 					 "select id as value from Media where key='url' order by random() limit 1",
 					 xmms_medialib_random_sql_changed, medialib);
@@ -1058,13 +1054,6 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *playlistname,
 	}
 
 	xmms_mediainfo_reader_wakeup (xmms_playlist_mediainfo_reader_get (medialib->playlist));
-
-	cv = xmms_config_lookup ("medialib.playlist_load_on_import");
-
-	b = xmms_config_value_int_get (cv);
-	if (b) {
-		xmms_medialib_playlist_load (medialib, playlistname, NULL);
-	}
 
 }
 
