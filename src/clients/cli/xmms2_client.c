@@ -491,7 +491,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 		xmmsc_result_get_dict_entry_int32 (res2, "duration", &playtime);
 		total_playtime += playtime;
 		
-		if (res_has_key (res2, "eeeeeee")) {
+		if (res_has_key (res2, "channel")) {
 			if (res_has_key (res2, "title")) {
 				xmmsc_entry_format (line, sizeof (line), "[stream] ${title}", res2);
 			} else {
