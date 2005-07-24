@@ -91,7 +91,7 @@ struct xmms_main_St {
 typedef struct xmms_main_St xmms_main_t;
 
 static GMainLoop *mainloop;
-static gchar *confFile = NULL;
+static gchar *conffile = NULL;
 
 /**
  * @if internal
@@ -164,44 +164,42 @@ do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
 }
 
 /**
- * @internal Parse the xmms2d configuration file. Creates the config directory
+ * @internal Load the xmms2d configuration file. Creates the config directory
  * if needed.
  * @return TRUE if successful.
  */
 static gboolean
-parse_config ()
+load_config ()
 {
-	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
-	gboolean defaultConf = FALSE;
+	gboolean defaultconf = FALSE;
 
-	if (confFile == NULL) {
-		g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
-		g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
-		confFile = g_strdup (filename);
-		defaultConf = TRUE;
-	} else {
-		g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s", confFile) ;
+	if (!conffile) {
+		conffile = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
+		defaultconf = TRUE;
 	}
 
-	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
-		if (!xmms_config_init (filename)) {
-			xmms_log_error ("XMMS was unable to parse configfile %s", filename);
+	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
+
+	g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
+	if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
+		mkdir (configdir, 0755);
+	}
+
+	if (g_file_test (conffile, G_FILE_TEST_EXISTS)) {
+		if (!xmms_config_init (conffile)) {
+			xmms_log_error ("XMMS was unable to parse config file %s", conffile);
 			exit (EXIT_FAILURE);
 		}
 		return TRUE;
-	} else if (defaultConf) {
-		if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
-			mkdir (configdir, 0755);
-		}
-
+	} else if (defaultconf) {
 		xmms_config_init (NULL);
-
 		return TRUE;
 	} else {
-		xmms_log_error ("Cannot parse non-existent file: %s", filename);
+		xmms_log_error ("Cannot parse non-existent file: %s", conffile);
 		exit (EXIT_FAILURE);
 	}
+
 	return FALSE;
 }
 
@@ -252,8 +250,8 @@ xmms_main_destroy (xmms_object_t *object)
 	sleep(1); /* wait for the output thread to end */
 	xmms_object_unref (mainobj->output);
 
-	g_assert (confFile != NULL);
-	xmms_config_save (confFile);
+	g_assert (conffile != NULL);
+	xmms_config_save (conffile);
 
 	xmms_visualisation_shutdown ();
 	xmms_config_shutdown ();
@@ -377,7 +375,7 @@ main (int argc, char **argv)
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
 		{"help", 0, NULL, 'h'},
-		{"conf", 1, NULL, 'c'}
+		{"conf", 1, NULL, 'c'},
 	};
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -422,7 +420,7 @@ main (int argc, char **argv)
 				exit(0);
 				break;
 			case 'c':
-				confFile = g_strdup (optarg);
+				conffile = g_strdup (optarg);
 				break;
 		}
 	}
@@ -454,7 +452,7 @@ main (int argc, char **argv)
 
 	ipc = xmms_ipc_init ();
 	
-	parse_config ();
+	load_config ();
 
 	xmms_config_value_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
