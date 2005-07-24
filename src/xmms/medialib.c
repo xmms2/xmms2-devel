@@ -1001,8 +1001,9 @@ static gboolean
 xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	GHashTable *hash = udata;
+	gchar *key = g_strdup_printf ("%u", row[0]->value.int32);
 
-	g_hash_table_insert (hash, g_strdup (row[0]->value.string), 
+	g_hash_table_insert (hash, key,
 			     xmms_object_cmd_value_copy (row[1]));
 
 	destroy_array (row);
