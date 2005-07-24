@@ -105,10 +105,11 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 
 		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof (reuseaddr));
 
-		if (connect (fd, addrinfo->ai_addr, addrinfo->ai_addrlen) == -1) {
-			close (fd);
-			return NULL;
+		if (connect (fd, addrinfo->ai_addr, addrinfo->ai_addrlen) == 0) {
+			break;
 		}
+
+		close (fd);
 	}
 
 	freeaddrinfo (addrinfos);
