@@ -49,7 +49,7 @@
 #ifdef XMMS_OS_LINUX 
 # define XMMS_OUTPUT_DEFAULT "alsa"
 #elif XMMS_OS_OPENBSD
-# define XMMS_OUTPUT_DEFAULT "sun"
+# define XMMS_OUTPUT_DEFAULT "oss"
 #elif XMMS_OS_NETBSD
 # define XMMS_OUTPUT_DEFAULT "oss"
 #elif XMMS_OS_SOLARIS
@@ -91,6 +91,7 @@ struct xmms_main_St {
 typedef struct xmms_main_St xmms_main_t;
 
 static GMainLoop *mainloop;
+static gchar *confFile = NULL;
 
 /**
  * @if internal
@@ -172,9 +173,16 @@ parse_config ()
 {
 	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
+	gboolean defaultConf = FALSE;
 
-	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
-	g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
+	if (confFile == NULL) {
+		g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
+		g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
+		confFile = g_strdup (filename);
+		defaultConf = TRUE;
+	} else {
+		g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s", confFile) ;
+	}
 
 	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
 		if (!xmms_config_init (filename)) {
@@ -182,7 +190,7 @@ parse_config ()
 			exit (EXIT_FAILURE);
 		}
 		return TRUE;
-	} else {
+	} else if (defaultConf) {
 		if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
 			mkdir (configdir, 0755);
 		}
@@ -190,6 +198,9 @@ parse_config ()
 		xmms_config_init (NULL);
 
 		return TRUE;
+	} else {
+		xmms_log_error ("Cannot parse non-existent file: %s", filename);
+		exit (EXIT_FAILURE);
 	}
 	return FALSE;
 }
@@ -205,6 +216,9 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	xmms_plugin_t *plugin;
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;
+
+	if (!mainobj->output)
+		return;
 
 	gchar *outname = (gchar *)data;
 
@@ -224,7 +238,6 @@ xmms_main_destroy (xmms_object_t *object)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
 	xmms_object_cmd_arg_t arg;
-	gchar filename[XMMS_MAX_CONFIGFILE_LEN];
 	xmms_config_value_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
@@ -239,8 +252,8 @@ xmms_main_destroy (xmms_object_t *object)
 	sleep(1); /* wait for the output thread to end */
 	xmms_object_unref (mainobj->output);
 
-	g_snprintf (filename, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/xmms2.conf", g_get_home_dir ());
-	xmms_config_save (filename);
+	g_assert (confFile != NULL);
+	xmms_config_save (confFile);
 
 	xmms_visualisation_shutdown ();
 	xmms_config_shutdown ();
@@ -331,7 +344,8 @@ Options:\n\
 	-o <x>		Use 'x' as output plugin\n\
 	-d		Daemonise\n\
 	-p <foo>	Search for plugins in directory 'foo'\n\
-	-h|--help	Print this help\n";
+	-h|--help	Print this help\n\
+	-c|--conf=<file> Specify alternate configuration file\n";
        printf(usageText);
 }
 
@@ -362,7 +376,8 @@ main (int argc, char **argv)
 	pid_t ppid=0;
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
-		{"help", 0, NULL, 'h'}
+		{"help", 0, NULL, 'h'},
+		{"conf", 1, NULL, 'c'}
 	};
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -373,7 +388,7 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	while (42) {
-		opt = getopt_long (argc, argv, "dvVno:p:h", long_opts, NULL);
+		opt = getopt_long (argc, argv, "dvVno:p:hc:", long_opts, NULL);
 
 		if (opt == -1)
 			break;
@@ -405,6 +420,9 @@ main (int argc, char **argv)
 			case 'h':
 				usage();
 				exit(0);
+				break;
+			case 'c':
+				confFile = g_strdup (optarg);
 				break;
 		}
 	}
@@ -453,11 +471,14 @@ main (int argc, char **argv)
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
-	if (!outname)
-		outname = XMMS_OUTPUT_DEFAULT;
 	cv = xmms_config_value_register ("output.plugin",
-	                                 outname,
+	                                 XMMS_OUTPUT_DEFAULT,
 	                                 change_output, mainobj);
+
+	if (outname)
+		xmms_config_setvalue (NULL, "output.plugin", outname, NULL);
+
+	outname = xmms_config_value_string_get (cv);
 
 	XMMS_DBG ("output = %s", outname);
 

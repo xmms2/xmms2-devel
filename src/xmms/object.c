@@ -245,6 +245,9 @@ xmms_object_cmd_value_t *
 xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
 {
 	xmms_object_cmd_value_t *ret = NULL;
+
+	g_return_val_if_fail (val, NULL);
+
 	switch (val->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			ret = xmms_object_cmd_value_str_new (val->value.string);
@@ -255,9 +258,11 @@ xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
 		case XMMS_OBJECT_CMD_ARG_INT32:
 			ret = xmms_object_cmd_value_int_new (val->value.int32);
 			break;
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			ret = xmms_object_cmd_value_none_new ();
+			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_NONE:
 			/** Unsupported for now */
 			XMMS_DBG ("Unsupported value passed to value_copy()");
 			break;

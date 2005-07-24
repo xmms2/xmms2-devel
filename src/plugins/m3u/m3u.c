@@ -50,9 +50,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, "m3u",
-			"M3U Playlist " XMMS_VERSION,
-			"M3U Playlist reader / writer");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
+				  XMMS_PLAYLIST_PLUGIN_API_VERSION,
+				  "m3u",
+				  "M3U Playlist " XMMS_VERSION,
+				  "M3U Playlist reader / writer");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
@@ -160,32 +162,9 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 
 	do {
 		xmms_medialib_entry_t entry;
-		gchar *title = NULL;
-		gint duration = 0;
 
 		if (extm3u && line[0] == '#') {
-			gchar *p;
-			gsize read, write;
-
-			p = strchr (line, ',');
-			if (p) {
-				*p = '\0';
-				*p++;
-			} else {
-				xmms_log_error ("Malformated m3u");
-				return FALSE;
-			}
-
-			/** @todo 
-			 *  check whether the data we read is actually
-			 *  ISO-8859-1, might be anything else as well.
-			 */
-			title = g_convert (p, strlen (p), "UTF-8", "ISO-8859-1",
-			                   &read, &write, NULL);
-			duration = strtol (line + 8, NULL, 10);
-
-
-
+			/** Skip this */
 			if (!xmms_transport_read_line (transport, line, &err)) {
 				return FALSE;
 			}
@@ -193,15 +172,6 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 
 		entry = parse_line (line,
 				    xmms_transport_url_get (transport));
-
-		if (title) {
-			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-			g_free (title);
-		}
-		if (duration) {
-			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-							      duration);
-		}
 
 		xmms_medialib_playlist_add (playlist_id, entry);
 

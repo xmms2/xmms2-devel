@@ -78,7 +78,7 @@ static gboolean xmms_curl_can_handle (const gchar *url);
 static gboolean xmms_curl_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_curl_close (xmms_transport_t *transport);
 static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
-static gint xmms_curl_size (xmms_transport_t *transport);
+static guint64 xmms_curl_size (xmms_transport_t *transport);
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
 
@@ -91,7 +91,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "curl_http",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
+				  XMMS_TRANSPORT_PLUGIN_API_VERSION,
+				  "curl_http",
 	                          "Curl transport for HTTP " XMMS_VERSION,
 	                          "HTTP transport using CURL");
 
@@ -272,7 +274,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	return -1;
 }
 
-static gint
+static guint64
 xmms_curl_size (xmms_transport_t *transport)
 {
 	xmms_curl_data_t *data;

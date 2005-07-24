@@ -118,15 +118,46 @@ static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
  * @return a new plugin of the given type.
  */
 xmms_plugin_t *
-xmms_plugin_new (xmms_plugin_type_t type, const gchar *shortname,
-				const gchar *name,
-				const gchar *description)
+xmms_plugin_new (xmms_plugin_type_t type, 
+		 gint api_version,
+		 const gchar *shortname,
+		 const gchar *name,
+		 const gchar *description)
 {
 	xmms_plugin_t *plugin;
+	gboolean api_mismatch = FALSE;
 
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (description, NULL);
-	
+
+	switch (type) {
+		case XMMS_PLUGIN_TYPE_TRANSPORT:
+			if (api_version != XMMS_TRANSPORT_PLUGIN_API_VERSION)
+				api_mismatch = TRUE;
+			break;
+		case XMMS_PLUGIN_TYPE_DECODER:
+			if (api_version != XMMS_DECODER_PLUGIN_API_VERSION)
+				api_mismatch = TRUE;
+			break;
+		case XMMS_PLUGIN_TYPE_OUTPUT:
+			if (api_version != XMMS_OUTPUT_PLUGIN_API_VERSION)
+				api_mismatch = TRUE;
+			break;
+		case XMMS_PLUGIN_TYPE_PLAYLIST:
+			if (api_version != XMMS_PLAYLIST_PLUGIN_API_VERSION)
+				api_mismatch = TRUE;
+			break;
+		case XMMS_PLUGIN_TYPE_EFFECT:
+			if (api_version != XMMS_EFFECT_PLUGIN_API_VERSION)
+				api_mismatch = TRUE;
+			break;
+	}
+
+	if (api_mismatch) {
+		xmms_log_error ("API VERSION MISMATCH FOR PLUGIN %s!", name);
+		return NULL;
+	}
+
 	plugin = xmms_object_new (xmms_plugin_t, xmms_plugin_destroy);
 
 	plugin->mutex = g_mutex_new ();
@@ -674,9 +705,6 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 			break;
 		case XMMS_PLUGIN_TYPE_OUTPUT:
 			pl = "output";
-			break;
-		case XMMS_PLUGIN_TYPE_MEDIALIB:
-			pl = "medialib";
 			break;
 		case XMMS_PLUGIN_TYPE_PLAYLIST:
 			pl = "playlist";

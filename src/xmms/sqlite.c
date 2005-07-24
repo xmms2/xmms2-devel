@@ -248,6 +248,9 @@ xmms_sqlite_column_to_val (sqlite3_stmt *stm, gint column)
 		case SQLITE_BLOB:
 			val = xmms_object_cmd_value_str_new ((gchar *)sqlite3_column_text (stm, column));
 			break;
+		case SQLITE_NULL:
+			val = xmms_object_cmd_value_none_new ();
+			break;
 		default:
 			XMMS_DBG ("Unhandled SQLite type!");
 			break;
@@ -319,7 +322,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 	while (sqlite3_step (stm) == SQLITE_ROW) {
 		gint i;
 		xmms_object_cmd_value_t *val;
-		GHashTable *ret = g_hash_table_new_full (g_direct_hash, g_direct_equal,
+		GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
 							 g_free, xmms_object_cmd_value_free);
 		gint num = sqlite3_data_count (stm);
 

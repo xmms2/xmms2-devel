@@ -621,7 +621,7 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
  * 
  * @returns current position in bytes.
  */
-gint
+guint64
 xmms_transport_tell (xmms_transport_t *transport)
 {
 	g_return_val_if_fail (transport, -1); 
@@ -657,7 +657,7 @@ xmms_transport_iseos (xmms_transport_t *transport)
  * Get the total size in bytes of the transports source.
  * @returns size of the media, or -1 if it can't be determined.
  */
-gint
+guint64
 xmms_transport_size (xmms_transport_t *transport)
 {
 	xmms_transport_size_method_t size;

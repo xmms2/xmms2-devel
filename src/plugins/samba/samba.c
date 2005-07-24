@@ -49,13 +49,13 @@ typedef struct {
 
 static gboolean xmms_samba_can_handle (const gchar *url);
 static gboolean xmms_samba_init (xmms_transport_t *transport, 
-								 const gchar *url);
+				 const gchar *url);
 static void xmms_samba_close (xmms_transport_t *transport);
 static gint xmms_samba_read (xmms_transport_t *transport, 
-							 gchar *buffer, guint len, xmms_error_t *error);
-static gint xmms_samba_size (xmms_transport_t *transport);
+			     gchar *buffer, guint len, xmms_error_t *error);
+static guint64 xmms_samba_size (xmms_transport_t *transport);
 static gint xmms_samba_seek (xmms_transport_t *transport, 
-							 gint offset, gint whence);
+			     guint64 offset, gint whence);
 static guint xmms_samba_lmod (xmms_transport_t *transport);
 
 /*
@@ -67,9 +67,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "smb",
-							  "SMB/CIFS transport " XMMS_VERSION,
-							  "Access SMB/CIFS fileshares over a network.");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
+				  XMMS_TRANSPORT_PLUGIN_API_VERSION,
+				  "smb",
+				  "SMB/CIFS transport " XMMS_VERSION,
+				  "Access SMB/CIFS fileshares over a network.");
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.se/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
@@ -77,22 +79,22 @@ xmms_plugin_get (void)
 
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, 
-							xmms_samba_can_handle);
+				xmms_samba_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, 
-							xmms_samba_init);
+				xmms_samba_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
-							xmms_samba_close);
+				xmms_samba_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, 
-							xmms_samba_read);
+				xmms_samba_read);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, 
-							xmms_samba_size);
+				xmms_samba_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, 
-							xmms_samba_seek);
+				xmms_samba_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LMOD, 
-							xmms_samba_lmod);
+				xmms_samba_lmod);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
-	
+
 	return plugin;
 }
 
@@ -108,17 +110,17 @@ xmms_samba_can_handle (const gchar *url)
 	if (g_strncasecmp (url, "smb://", 6) == 0) {
 		return TRUE;
 	}
-	
+
 	return FALSE;
 }
 
 
 static void 
 xmms_samba_auth_fn(const char *server,
-				   const char *share,
-				   char *workgroup, int wgmaxlen, 
-				   char *username, int unmaxlen,
-				   char *password, int pwmaxlen)
+		   const char *share,
+		   char *workgroup, int wgmaxlen, 
+		   char *username, int unmaxlen,
+		   char *password, int pwmaxlen)
 {
 	return;
 }
@@ -151,7 +153,7 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 		xmms_log_error ("errno (%d) %s", errno, strerror (errno));
 		return FALSE;
 	}
-	
+
 	if (!S_ISREG (st.st_mode)) {
 		xmms_log_error ("%s is not a regular file.", url);
 		return FALSE;
@@ -175,7 +177,7 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 		return FALSE;
 	}
 	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
-	
+
 	return TRUE;
 }
 
@@ -190,7 +192,7 @@ xmms_samba_close (xmms_transport_t *transport)
 	data = xmms_transport_private_data_get (transport);
 	if (!data)
 		return;
-	
+
 	if (data->fd != -1) {
 		err = smbc_close (data->fd);
 		if (err < 0) {
@@ -231,7 +233,7 @@ xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_err
 
 
 static gint
-xmms_samba_seek (xmms_transport_t *transport, gint offset, gint whence)
+xmms_samba_seek (xmms_transport_t *transport, guint64 offset, gint whence)
 {
 	gint w = 0;
 	xmms_samba_data_t *data;
@@ -262,7 +264,7 @@ xmms_samba_lmod (xmms_transport_t *transport)
 	gint err;
 	struct stat st;
 	xmms_samba_data_t *data;
-	
+
 	g_return_val_if_fail (transport, 0);
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
@@ -277,7 +279,7 @@ xmms_samba_lmod (xmms_transport_t *transport)
 }
 
 
-static gint
+static guint64
 xmms_samba_size (xmms_transport_t *transport)
 {
 	gint err;
@@ -287,7 +289,7 @@ xmms_samba_size (xmms_transport_t *transport)
 	g_return_val_if_fail (transport, -1);
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
-	
+
 	err = smbc_fstat (data->fd, &st);
 	if (err < 0) {
 		xmms_log_error ("errno (%d) %s", errno, strerror (errno));
