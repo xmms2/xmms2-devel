@@ -40,10 +40,14 @@ void xmms_log_fatal (const gchar *fmt, ...);
 
 #define DEBUG
 
+#ifndef _MSC_VER
 #ifdef DEBUG
-#define XMMS_DBG(fmt, args...) xmms_log_debug (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## args)
+#define XMMS_DBG(fmt, ...) xmms_log_debug (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
 #else
-#define XMMS_DBG(fmt,...)
+#define XMMS_DBG(fmt, ...)
+#endif
 #endif
 
 #endif
+
+
