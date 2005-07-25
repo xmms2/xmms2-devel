@@ -304,6 +304,42 @@ cmd_addid (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_addpls (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	gint i;
+
+	if (argc < 3) {
+		print_error ("Need a playlist url to add");
+	}
+
+	for (i = 2; argv[i]; i++) {
+		gchar *url;
+		xmmsc_result_t *res;
+
+		url = format_url (argv[i]);
+		res = xmmsc_medialib_playlist_import (conn, "_xmms2cli", url);
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
+		res = xmmsc_medialib_playlist_load (conn, "_xmms2cli");
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+		print_info ("Added playlist %s", url);
+		g_free (url);
+	}
+
+
+
+}
+
+static void
 cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -957,6 +993,7 @@ cmds commands[] = {
 	/* Playlist managment */
 	{ "add", "adds a URL to the playlist", cmd_add },
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
+	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist and stops playback", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },

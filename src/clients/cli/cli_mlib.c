@@ -313,7 +313,13 @@ mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv)
 void
 playlist_list_cb (const void *key, xmmsc_result_value_type_t type, const void *value, void *data)
 {
+	const gchar *str = value;
+
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		/* Hide all lists that start with _ */
+		if (str[0] == '_')
+			return;
+
 		printf("%s:%s\n", (char *)key, (char *)value);
 	} else {
 		printf("%s:%d\n", (char *)key, (int32_t)value);
