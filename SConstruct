@@ -152,6 +152,8 @@ class Target:
 				self.systemlibrary = my_global["systemlibrary"]
 			if my_global.has_key("supported_platforms"):
 				self.supportedplatforms = my_global["supported_platforms"]
+			else:
+				self.supportedplatforms = None
 		else:
 			raise RutimeError("Wrong file %s passed to Target!" % target)
 
@@ -181,7 +183,7 @@ for t in targets["program"]:
 	base_env.targets.append(Target(t, "program"))
 
 for t in base_env.targets:
-	if t.supported_platforms and base_env.platform not in t.supported_platforms:
+	if t.supportedplatforms and base_env.platform not in t.supportedplatforms:
 		continue
 
 	env = base_env.Copy()
