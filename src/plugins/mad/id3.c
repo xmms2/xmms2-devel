@@ -120,7 +120,7 @@ const gchar *id3_genres[] =
         "Heavy Metal", "Black Metal", "Crossover",
         "Contemporary Christian", "Christian Rock",
         "Merengue", "Salsa", "Thrash Metal",
-        "Anime", "JPop", "Synthpop", NULL
+        "Anime", "JPop", "Synthpop"
 };
 
 static gchar *
@@ -556,7 +556,7 @@ xmms_mad_id3_parse (guchar *buf, xmms_medialib_entry_t entry)
 		g_free (tmp);
 	}
 
-	if (tag->genre > G_N_ELEMENTS (id3_genres)) {
+	if (tag->genre >= G_N_ELEMENTS (id3_genres)) {
 		xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, "Unknown");
 	} else {
 		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
