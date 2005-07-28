@@ -1,6 +1,6 @@
 target="xmmsclient-ecore"
 systemlibrary=True
-
+supported_platforms = ['freebsd','linux','netbsd','openbsd']
 source=["xmmsclient-ecore.c"]
 
 def lib2sed(lib):

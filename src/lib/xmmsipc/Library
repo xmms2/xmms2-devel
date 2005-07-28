@@ -1,9 +1,17 @@
 target = "xmmsipc"
-source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c", "url.c"]
+supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd','win32']
+
+if platform == 'win32':
+	source = ["msg.c", "socket_tcp.c", "transport.c", "transport_win.c", "url.c"]
+else:
+	source = ["msg.c", "socket_tcp.c", "socket_unix.c", "transport.c", "transport_unix.c", "url.c"]
 shared = False
 install = False
 
 def config(env):
-	env.Append(CCFLAGS=["-fPIC"])
+	env["LIBS"].append("xmmssocket")
+	env.Prepend(LIBPATH="src/lib/xmmssocket")	
+	if env.platform != 'win32':
+		env.Append(CCFLAGS=["-fPIC"])
 	return True
 
