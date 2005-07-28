@@ -17,7 +17,7 @@ static int strpchrsplit(const char *, const char *, const char, char **, char **
 xmms_url_t *parse_url(const char *url)
 {
 	char *tmp1, *tmp2, *tmp3, *tmp4;
-
+	char *end;
 	char *protocol;
 	char *username, *password;
 	char *host, *port;
@@ -54,7 +54,7 @@ xmms_url_t *parse_url(const char *url)
 	if (tmp4[0] == '[') {
 		result->ipv6_host = 1;
 
-	 	char *end = strchr (tmp4 + 1, ']');
+	 	end = strchr(tmp4 + 1, ']');
 		if (end) {
 			if (strpchrsplit (tmp4, end, ':', &host, &port)) {
 				host = strdup (tmp4);
