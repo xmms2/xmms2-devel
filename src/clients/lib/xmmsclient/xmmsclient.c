@@ -41,8 +41,6 @@
 
 #define XMMS_MAX_URI_LEN 1024
 
-#define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
-
 static void xmmsc_deinit (xmmsc_connection_t *c);
 
 static uint32_t cmd_id;
