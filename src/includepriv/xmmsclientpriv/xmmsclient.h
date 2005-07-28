@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <inttypes.h>
 
 #ifdef XMMS_OS_DARWIN
 #include <CoreFoundation/CoreFoundation.h>
@@ -35,6 +34,7 @@
 #include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
+#include "xmmsc/xmmsc_stdint.h"
 
 /**
  * @typedef xmmsc_connection_t

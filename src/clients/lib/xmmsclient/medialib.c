@@ -23,11 +23,12 @@
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_stringport.h"
 
 static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER(%s)",
-											  "LOWER(m%d.value) LIKE LOWER(%s)",
-											  "m%d.id = m%d.id",
-											  "Media AS m%d"};
+					      "LOWER(m%d.value) LIKE LOWER(%s)",
+					      "m%d.id = m%d.id",
+					      "Media AS m%d"};
 
 typedef enum templ_type_e {templ_key, templ_value, templ_id, templ_table} templ_type;
 

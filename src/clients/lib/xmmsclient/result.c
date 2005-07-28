@@ -16,13 +16,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <inttypes.h>
 
-#include <pwd.h>
 #include <sys/types.h>
 
 #include "xmmsclient/xmmsclient.h"
@@ -30,6 +27,7 @@
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_errorcodes.h"
+#include "xmmsc/xmmsc_stdint.h"
 
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static x_hash_t *xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg);
@@ -865,10 +863,10 @@ xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
 void
 xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 {
-	x_return_if_fail (res);
-	x_return_if_fail (msg);
 	x_list_t *n, *l;
 	int cmd;
+	x_return_if_fail (res);
+	x_return_if_fail (msg);
 
 	if (!xmmsc_result_parse_msg (res, msg)) {
 		xmms_ipc_msg_destroy (msg);

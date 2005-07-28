@@ -22,15 +22,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <inttypes.h>
 #include <limits.h>
 
-#include <pwd.h>
 #include <sys/types.h>
+#include <pwd.h>
 
 #include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
@@ -38,6 +36,8 @@
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_stringport.h"
 
 #define XMMS_MAX_URI_LEN 1024
 
@@ -170,15 +170,18 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	ipc = xmmsc_ipc_init ();
 	
 	if (!xmmsc_ipc_connect (ipc, path)) {
-		c->error = "xmms2d is not running.";
+		c->error = "xmms2d is not running.";		
 		return false;
 	}
 
 	c->ipc = ipc;
-
+	printf("Next: sending hello\n");
 	result = xmmsc_send_hello (c);
+	printf("Next: waiting for result\n");
 	xmmsc_result_wait (result);
+	printf("Next: getting result\n");
 	ret = xmmsc_result_get_uint (result, &i);
+	printf("Next: releasing result\n");
 	xmmsc_result_unref (result);
 	if (!ret) {
 		c->error = strdup (xmmsc_ipc_error_get (ipc));
