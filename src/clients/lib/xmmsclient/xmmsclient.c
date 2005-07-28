@@ -100,7 +100,7 @@ xmmsc_init (char *clientname)
 	}
 
 	if (!(c->clientname = strdup (clientname))) {
-		x_free(c);
+		free (c);
 		return NULL;
 	}
 
