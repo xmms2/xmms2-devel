@@ -881,19 +881,20 @@ static void
 xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt)
 {
 	xmms_output_format_set_method_t fmt_set;
-        g_return_if_fail (output);
-        g_return_if_fail (fmt);
+
+	g_return_if_fail (output);
+	g_return_if_fail (fmt);
 
 	if (output->format == fmt) {
 		XMMS_DBG ("audio formats are equal, not updating");
 		return;
 	}
-	
+
 	fmt_set = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FORMAT_SET);
 	if (fmt_set)
 		fmt_set (output, fmt);
 
-        output->format = fmt;
+	output->format = fmt;
 }
 
 
