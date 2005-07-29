@@ -44,8 +44,8 @@ typedef void (*xmms_transport_close_method_t) (xmms_transport_t *transport);
 typedef gint (*xmms_transport_read_method_t) (xmms_transport_t *transport,
 					      gchar *buffer, guint length, xmms_error_t *error);
 typedef gint (*xmms_transport_seek_method_t) (xmms_transport_t *transport, 
-					      gint offset, gint whence);
-typedef gint (*xmms_transport_size_method_t) (xmms_transport_t *transport);
+					      guint64 offset, gint whence);
+typedef guint64 (*xmms_transport_size_method_t) (xmms_transport_t *transport);
 typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
 
 #define XMMS_PLUGIN_METHOD_CAN_HANDLE_TYPE xmms_transport_can_handle_method_t

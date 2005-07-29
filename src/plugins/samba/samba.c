@@ -53,9 +53,9 @@ static gboolean xmms_samba_init (xmms_transport_t *transport,
 static void xmms_samba_close (xmms_transport_t *transport);
 static gint xmms_samba_read (xmms_transport_t *transport, 
 			     gchar *buffer, guint len, xmms_error_t *error);
-static gint xmms_samba_size (xmms_transport_t *transport);
+static guint64 xmms_samba_size (xmms_transport_t *transport);
 static gint xmms_samba_seek (xmms_transport_t *transport, 
-			     gint offset, gint whence);
+			     guint64 offset, gint whence);
 static guint xmms_samba_lmod (xmms_transport_t *transport);
 
 /*
@@ -233,7 +233,7 @@ xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_err
 
 
 static gint
-xmms_samba_seek (xmms_transport_t *transport, gint offset, gint whence)
+xmms_samba_seek (xmms_transport_t *transport, guint64 offset, gint whence)
 {
 	gint w = 0;
 	xmms_samba_data_t *data;
@@ -279,7 +279,7 @@ xmms_samba_lmod (xmms_transport_t *transport)
 }
 
 
-static gint
+static guint64
 xmms_samba_size (xmms_transport_t *transport)
 {
 	gint err;

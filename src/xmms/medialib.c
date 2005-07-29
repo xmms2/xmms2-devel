@@ -220,10 +220,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 				    "1",
 				    NULL, NULL);
 
-	xmms_config_value_register ("medialib.playlist_load_on_import",
-				    "0",
-				    NULL, NULL);
-
 	cv = xmms_config_value_register ("medialib.random_sql_statement",
 					 "select id as value from Media where key='url' order by random() limit 1",
 					 xmms_medialib_random_sql_changed, medialib);
@@ -1005,8 +1001,9 @@ static gboolean
 xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	GHashTable *hash = udata;
+	gchar *key = g_strdup_printf ("%u", row[0]->value.int32);
 
-	g_hash_table_insert (hash, g_strdup (row[0]->value.string), 
+	g_hash_table_insert (hash, key,
 			     xmms_object_cmd_value_copy (row[1]));
 
 	destroy_array (row);
@@ -1037,8 +1034,6 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *playlistname,
 {
 	gint playlist_id;
 	xmms_medialib_entry_t entry = xmms_medialib_entry_new (url);
-	xmms_config_value_t *cv;
-	gint b;
 
 	g_mutex_lock (medialib->mutex);
 	playlist_id = get_playlist_id (playlistname);
@@ -1058,13 +1053,6 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *playlistname,
 	}
 
 	xmms_mediainfo_reader_wakeup (xmms_playlist_mediainfo_reader_get (medialib->playlist));
-
-	cv = xmms_config_lookup ("medialib.playlist_load_on_import");
-
-	b = xmms_config_value_int_get (cv);
-	if (b) {
-		xmms_medialib_playlist_load (medialib, playlistname, NULL);
-	}
 
 }
 

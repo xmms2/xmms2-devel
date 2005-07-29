@@ -290,6 +290,12 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value, xmms_
 
 }
 
+static gint
+cb_sort_config_list (const xmms_object_cmd_value_t *v1,
+                     const xmms_object_cmd_value_t *v2)
+{
+	return g_strcasecmp (v1->value.string, v2->value.string);
+}
 
 /**
   * List all keys and values in the list.
@@ -306,7 +312,7 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 
 	g_mutex_unlock (conf->mutex);
 
-	ret = g_list_sort (ret, (GCompareFunc) g_strcasecmp);
+	ret = g_list_sort (ret, (GCompareFunc) cb_sort_config_list);
 
 	return ret;
 }

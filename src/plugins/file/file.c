@@ -46,8 +46,8 @@ static gboolean xmms_file_can_handle (const gchar *url);
 static gboolean xmms_file_init (xmms_transport_t *transport, const gchar *url);
 static void xmms_file_close (xmms_transport_t *transport);
 static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
-static gint xmms_file_size (xmms_transport_t *transport);
-static gint xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence);
+static guint64 xmms_file_size (xmms_transport_t *transport);
+static gint xmms_file_seek (xmms_transport_t *transport, guint64 offset, gint whence);
 static guint xmms_file_lmod (xmms_transport_t *transport);
 
 /*
@@ -186,7 +186,7 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 }
 
 static gint
-xmms_file_seek (xmms_transport_t *transport, gint offset, gint whence)
+xmms_file_seek (xmms_transport_t *transport, guint64 offset, gint whence)
 {
 	xmms_file_data_t *data;
 	gint w = 0;
@@ -227,7 +227,7 @@ xmms_file_lmod (xmms_transport_t *transport)
 	return st.st_mtime;
 }
 
-static gint
+static guint64
 xmms_file_size (xmms_transport_t *transport)
 {
 	struct stat st;

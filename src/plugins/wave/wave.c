@@ -82,9 +82,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
-				  XMMS_DECODER_PLUGIN_API_VERSION,
-				  "wave",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
+	                          XMMS_DECODER_PLUGIN_API_VERSION,
+	                          "wave",
 	                          "Wave decoder " XMMS_VERSION,
 	                          "Wave decoder");
 
@@ -208,7 +208,7 @@ xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 		return TRUE;
 	}
 
-	sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_S8
+	sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_U8
 	                                         : XMMS_SAMPLE_FORMAT_S16);
 	xmms_decoder_format_add (decoder, sample_fmt, data->channels,
 	                         data->samplerate);
