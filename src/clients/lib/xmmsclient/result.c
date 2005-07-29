@@ -297,15 +297,13 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	switch (type) {
 
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
-			{
-				if (!xmms_ipc_msg_get_uint32 (msg, &res->data.uint))
-					return false;
+			if (!xmms_ipc_msg_get_uint32 (msg, &res->data.uint)) {
+				return false;
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_INT32 :
-			{
-				if (!xmms_ipc_msg_get_int32 (msg, &res->data.inte))
-					return false;
+			if (!xmms_ipc_msg_get_int32 (msg, &res->data.inte)) {
+				return false;
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
@@ -377,8 +375,9 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 int
 xmmsc_result_cid (xmmsc_result_t *res)
 {
-	if (!res)
+	if (!res) {
 		return 0;
+	}
 
 	return res->cid;
 }
@@ -432,10 +431,10 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 void
 xmmsc_result_wait (xmmsc_result_t *res)
 {
-	const char *err;
+	const char *err = NULL;
 	x_return_if_fail (res);
 
-	while (!res->parsed && !(err =xmmsc_ipc_error_get (res->ipc))) {
+	while (!res->parsed && !(err = xmmsc_ipc_error_get (res->ipc))) {
 		xmmsc_ipc_wait_for_event (res->ipc, 5);
 	}
 
@@ -502,8 +501,9 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_INT32)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_INT32) {
 		return 0;
+	}
 
 	*r = res->data.inte;
 	
@@ -545,8 +545,9 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_STRING)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_STRING) {
 		return 0;
+	}
 
 	*r = res->data.string;
 
@@ -723,23 +724,22 @@ xmmsc_result_dict_foreach_cb (const void *key, const void *value, void *udata)
 int
 xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
 {
-	xmmsc_foreach_t *fc;
+	xmmsc_foreach_t fc;
 
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT)
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT) {
 		return 0;
+	}
 
-	fc = x_new0 (xmmsc_foreach_t, 1);
-	fc->func = func;
-	fc->userdata = user_data;
+	memset(&fc, 0, sizeof(fc));
+	fc.func = func;
+	fc.userdata = user_data;
 
-	x_hash_foreach (res->data.hash, xmmsc_result_dict_foreach_cb, fc);
-	
-	free (fc);
-	
+	x_hash_foreach (res->data.hash, xmmsc_result_dict_foreach_cb, &fc);
+
 	return 1;
 }
 
@@ -775,8 +775,9 @@ xmmsc_result_list_valid (xmmsc_result_t *res)
 		return 0;
 	}
 
-	if (!res->islist)
+	if (!res->islist) {
 		return 0;
+	}
 
 	return !!res->current;
 }
@@ -794,22 +795,22 @@ xmmsc_result_list_valid (xmmsc_result_t *res)
 int
 xmmsc_result_list_next (xmmsc_result_t *res)
 {
-	xmmsc_result_value_t *val;
-
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
 	}
 
-	if (!res->islist)
+	if (!res->islist) {
 		return 0;
+	}
 
-	if (!res->current)
+	if (!res->current) {
 		return 0;
+	}
 
 	res->current = res->current->next;
 	
 	if (res->current) {
-		val = res->current->data;
+		xmmsc_result_value_t *val = res->current->data;
 		res->data.generic = val->value.generic;
 		res->datatype = val->type;
 	} else {
@@ -835,10 +836,11 @@ xmmsc_result_list_first (xmmsc_result_t *res)
 
 	res->current = res->list;
 
-	if (res->current)
+	if (res->current) {
 		res->data.generic = res->current->data;
-	else
+	} else {
 		res->data.generic = NULL;
+	}
 
 	return 1;
 }
@@ -911,7 +913,10 @@ xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid)
 {
 	xmmsc_result_t *res;
 
-	res = x_new0 (xmmsc_result_t, 1);
+	if (!(res = x_new0 (xmmsc_result_t, 1))) {
+		x_oom();
+		return NULL;
+	}
 
 	res->c = c;
 	xmmsc_ref (c);
@@ -936,10 +941,14 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 	xmmsc_result_value_t *val;
 	uint32_t len;
 
-	val = x_new0 (xmmsc_result_value_t, 1);
+	if (!(val = x_new0 (xmmsc_result_value_t, 1))) {
+		x_oom();
+		return NULL;
+	}
 
-	if (!xmms_ipc_msg_get_int32 (msg, (int32_t *)&val->type))
+	if (!xmms_ipc_msg_get_int32 (msg, (int32_t *)&val->type)) {
 		goto err;
+	}
 
 	switch (val->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
@@ -959,8 +968,9 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			val->value.dict = xmmsc_deserialize_hashtable (msg);
-			if (!val->value.dict)
+			if (!val->value.dict) {
 				goto err;
+			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
@@ -987,19 +997,23 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 	x_hash_t *h;
 	char *key;
 
-	if (!xmms_ipc_msg_get_uint32 (msg, &entries))
+	if (!xmms_ipc_msg_get_uint32 (msg, &entries)) {
 		return NULL;
+	}
 
 	h = x_hash_new_full (x_str_hash, x_str_equal, free, xmmsc_result_value_free);
 
 	for (i = 1; i <= entries; i++) {
 		xmmsc_result_value_t *val;
 
-		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len))
+		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len)) {
 			goto err;
+		}
 
 		val = xmmsc_result_parse_value (msg);
-		if (!val) goto err;
+		if (!val) {
+			goto err;
+		}
 
 		x_hash_insert (h, key, val);
 	}

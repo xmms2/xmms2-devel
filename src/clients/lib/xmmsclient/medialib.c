@@ -80,7 +80,7 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 char *
 xmmsc_sqlite_prepare_string (char *input) {
 	char *output;
-	int outsize, nquotes=0;
+	int outsize, nquotes = 0;
 	int i, o;
 
 	for (i = 0; input[i] != '\0'; i++) {
@@ -88,11 +88,12 @@ xmmsc_sqlite_prepare_string (char *input) {
 			nquotes++;
 		}
 	}
-	
+
 	outsize = strlen(input) + nquotes + 2 + 1; /* 2 quotes to terminate the string , and one \0 in the end */
-	output = (char*) malloc(outsize);
+	output = malloc(outsize);
 
 	if (output == NULL) {
+		x_oom();
 		return NULL;
 	}
 	
@@ -121,37 +122,37 @@ char *
 xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attributes, unsigned i)
 {
 	int res_size = 0;
-	char *res = NULL;
-	char *tbuf = (char*) malloc(sizeof(char));
-	if (tbuf == NULL) {
-		return NULL;
-	}
+	char *res;
+	char t;
 
 	switch (idx) {
 	case templ_key:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_key], i, attributes[i].key);
+		res_size = snprintf(&t, 1, constraint_templates[templ_key], i, attributes[i].key);
 		break;
 	case templ_value:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_value], i, attributes[i].value);
+		res_size = snprintf(&t, 1, constraint_templates[templ_value], i, attributes[i].value);
 		break;
 	case templ_id:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_id], i-1, i);
+		res_size = snprintf(&t, 1, constraint_templates[templ_id], i-1, i);
 		break;
 	case templ_table:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_table], i);
+		res_size = snprintf(&t, 1, constraint_templates[templ_table], i);
+		break;
+	default:
+		/* do we need a default error case? */
 		break;
 	}
-	free(tbuf);
-	
+
 	res_size += 1;
-	
+
 	res = malloc(res_size);
 	if (res == NULL) {
+		x_oom();
 		return NULL;
 	}
 
 
-	switch(idx) {
+	switch (idx) {
 	case templ_key:
 		snprintf(res, res_size, constraint_templates[templ_key], i, attributes[i].key);
 		break;
@@ -178,22 +179,21 @@ int
 xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *attributes, unsigned n) {
 	int success = 1, tmp_size;
 	char *oconstraints = NULL;
-	char *constraints = NULL;
-	char *initconstraints = " WHERE ";
+	char *constraints;
 	char *tmp = NULL;
 	unsigned i;
 	templ_type template;
 	unsigned size = 0;	
-	
-	constraints = (char*) malloc(strlen(initconstraints+1));
+
+	constraints = strdup(" WHERE ");
 
 	if (constraints == NULL) {
+		x_oom();
 		success = 0;
 	} else {
-		strcpy(constraints, initconstraints);
-		size = strlen(constraints)+1;
+		size = strlen(constraints) + 1;
 	}
-	
+
 	if (success) {
 		for (i = 0; i < n; i++) {
 			for (template = templ_key; template <= templ_id; template++) {				
@@ -240,8 +240,7 @@ xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *
 int
 xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes, unsigned n) {
 	int success = 1;
-	char *otables = NULL;
-	char *tables = NULL;
+	char *tables;
 	char *tmp = NULL;
 	unsigned i;
 	unsigned size = 1; // make space for the terminating null byte
@@ -250,6 +249,7 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 
 	tables = malloc(1);
 	if (tables == NULL) {
+		x_oom();
 		success = 0;
 	} else {
 		tables[0] = '\0';
@@ -257,6 +257,7 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 	
 	if (success) {
 		for (i = 0; i < n; i++) {
+			char *otables;
 
 			tmp = xmmsc_querygen_fill_template(templ_table, attributes, i);
 			if (tmp == NULL) {
@@ -268,9 +269,10 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 
 			size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
 			otables = tables;
-			tables = (char*) realloc(tables, size);
+			tables = realloc(tables, size);
 
 			if (tables == NULL) {
+				x_oom();
 				success = 0;
 				free(otables);
 				break;
@@ -303,17 +305,18 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 char *
 xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 {	
-	char **tables;
-	char **constraints;
+	char **tables = NULL;
+	char **constraints = NULL;
 	int success = 1, fullsize;
 	char *query;
 
 	const char *initquery = "SELECT DISTINCT m0.id FROM ";
 
 	if (success) {
-		tables = (char**) malloc(sizeof(char**));
-		constraints = (char**) malloc(sizeof(char**));
+		tables =  malloc(sizeof(char **));
+		constraints = malloc(sizeof(char **));
 		if (tables == NULL || constraints == NULL) {
+			x_oom();
 			free(tables);
 			free(constraints);
 			success = 0;
@@ -327,8 +330,9 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 
 	if (success) {
 		fullsize = strlen(initquery) + strlen(*tables) + strlen(*constraints) + 1;
-		query = (char*) malloc(fullsize);
+		query = malloc(fullsize);
 		if (query == NULL) {
+			x_oom();
 			success = 0;
 		}
 	}
