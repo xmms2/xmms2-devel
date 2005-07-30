@@ -27,6 +27,8 @@ static gchar *listformat;
 
 static gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\n";
 
+static GHashTable *config;
+
 char *
 format_url (char *item)
 {
@@ -92,7 +94,7 @@ print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, 
 static GHashTable *
 read_config ()
 {
-	gchar *file;
+	gchar file[PATH_MAX];
 	gchar *buffer;
 	gchar **split;
 	gint read_bytes;
@@ -101,7 +103,8 @@ read_config ()
 	GHashTable *config;
 	int i = 0;
 
-	file = g_strdup_printf ("%s/.xmms2/clients/cli.conf", g_get_home_dir ());
+	g_snprintf (file, sizeof (file), "%s/.xmms2/clients/cli.conf",
+	            g_get_home_dir ());
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
 		gchar *dir = g_strdup_printf ("%s/.xmms2/clients", g_get_home_dir ());
@@ -138,28 +141,40 @@ read_config ()
 		g_assert (read_bytes >= 0);
 	}
 
-	config = g_hash_table_new (g_str_hash, g_str_equal);
+	config = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                g_free, g_free);
 
 	split = g_strsplit (buffer, "\n", 0);
-	while (split[i]) {
+
+	while (split && split[i]) {
+		gchar **s;
+
 		if (!split[i])
 			break;
 
-		gchar **s = g_strsplit (split[i], "=", 2);
-		if (!s || !s[0] || !s[1])
+		s = g_strsplit (split[i], "=", 2);
+		if (!s)
 			break;
-		if (g_strcasecmp (s[1], "NULL") == 0) {
-			g_hash_table_insert (config, s[0], NULL);
-		} else {
-			g_hash_table_insert (config, s[0], s[1]);
+
+		if (!s[0] || !s[1]) {
+			g_strfreev (s);
+			break;
 		}
 
+		if (g_strcasecmp (s[1], "NULL") == 0) {
+			g_hash_table_insert (config, g_strdup (s[0]), NULL);
+		} else {
+			g_hash_table_insert (config, g_strdup (s[0]), g_strdup (s[1]));
+		}
+
+		g_strfreev (s);
 		i++;
 	}
 
+	g_strfreev (split);
 	g_free (buffer);
+
 	return config;
-	
 }
 
 
@@ -1025,17 +1040,24 @@ cmds commands[] = {
 	{ NULL, NULL, NULL },
 };
 
+static void
+free_config ()
+{
+	if (config)
+		g_hash_table_destroy (config);
+}
+
 int
 main (int argc, char **argv)
 {
 	xmmsc_connection_t *connection;
-	GHashTable *config;
 	char *path;
 	int i;
 
 	setlocale (LC_ALL, "");
 
 	config = read_config ();
+	atexit (free_config);
 
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
