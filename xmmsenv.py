@@ -5,6 +5,12 @@ import shutil
 from marshal import load
 from stat import *
 
+class ConfigError:
+	def __init__(self, value):
+		self.value = value
+	def __str__(self):
+		return repr(self.value)
+
 def installFunc(dest, source, env):
 	"""Copy file, setting sane permissions"""
 	
@@ -134,27 +140,32 @@ class XMMSEnvironment(Environment):
 			if fail:
 				print "Could not find needed group %s!!! Aborting!" % cmd
 				sys.exit(-1)
-			return False
+			raise ConfigError("Command '%s' failed" % cmd)
 		ret = ret.strip()
 		self.parse_config_string(ret)
 
-		return True
-
-	def checklibs(self, lib, func, fail=False):
-		if self.config_cache.has_key((lib,func)):
-			ret = self.config_cache[(lib,func)]
-		else:
-			ret = self.conf.CheckLib(lib, func, 0)
-			self.config_cache[(lib,func)] = ret
-			
-		if not ret:
+	def checkheader(self, header, fail=False):
+		key = ("HEADER", header)
+		if not self.config_cache.has_key(key):
+			self.config_cache[key] = self.conf.CheckCHeader(header)
+		if not self.config_cache[key]:
 			if fail:
-				print "Could not find \'%s\'!!! Aborting!" % (func)
-				sys.exit(-1)
-			return False
+				print "Aborting!"
+				sys.exit(1)
+			raise ConfigError("Headerfile '%s' not found" % header)
+
+	def checklib(self, lib, func, fail=False):
+		key = (lib, func)
+		if not self.config_cache.has_key(key):
+			self.config_cache[key] = self.conf.CheckLib(lib, func, 0)
+
+		if not self.config_cache[key]:
+			if fail:
+				print "Aborting!"
+				sys.exit(1)
+			raise ConfigError("Symbol '%s' in library '%s' not found" % (func, lib))
 
 		self.parse_config_string("-l"+lib)
-		return True
 
 	def parse_config_string(self, flags):
 		"""We want our own ParseConfig, that supports some more
@@ -220,6 +231,7 @@ class XMMSEnvironment(Environment):
 		self.Install(self.pluginpath, os.path.join(self.dir, self.shlibname(target)))
 
 	def add_library(self, target, source, static=True, shared=True, system=False, install=True):
+
 		self.libs.append(target)
 		if static:
 			self.Library(target, source)

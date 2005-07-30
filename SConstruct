@@ -143,34 +143,30 @@ class Target:
 	def __init__(self, target, type):
 		self.dir = os.path.dirname(target)
 		self.type = type
-		self.static = True
-		self.shared = True
-		self.install = True
-		self.systemlibrary = False		
-		my_global = {}
-		my_global['platform'] = base_env.platform
-		f = file(target)
-		source = f.read()
-		c = compile(source, target, "exec")
-		eval(c, my_global)
-		if my_global["target"] and my_global["source"] and my_global["config"]:
-			self.source = [os.path.join(self.dir, s) for s in my_global["source"]]
-			self.target = os.path.join(self.dir, my_global["target"])
-			self.config = my_global["config"]
-			if my_global.has_key("install"):
-				self.install = my_global["install"]
-			if my_global.has_key("static"):
-				self.static = my_global["static"]
-			if my_global.has_key("shared"):
-				self.shared = my_global["shared"]
-			if my_global.has_key("systemlibrary"):
-				self.systemlibrary = my_global["systemlibrary"]
-			if my_global.has_key("supported_platforms"):
-				self.supported_platforms = my_global["supported_platforms"]
-			else:
-				self.supported_platforms = None
-		else:
-			raise RutimeError("Wrong file %s passed to Target!" % target)
+
+		globs = {}
+		globs['platform'] = base_env.platform
+		globs['ConfigError'] = xmmsenv.ConfigError
+
+		c = compile(file(target).read(), target, "exec")
+		eval(c, globs)
+
+		if not isinstance(globs.get("target"), str):
+			raise RutimeError("Target file '%s' does not specify target, or target is not a string" % target)
+		if not isinstance(globs.get("source"), list):
+			raise RutimeError("Target file '%s' does not specify 'source', or 'source' is not a list" % target)
+
+
+		self.source = [os.path.join(self.dir, s) for s in globs["source"]]
+		self.target = os.path.join(self.dir, globs["target"])
+		self.config = globs.get("config")
+
+		self.install = globs.get("install", True)
+		self.static = globs.get("static", True)
+		self.shared = globs.get("shared", True)
+		self.systemlibrary = globs.get("systemlibrary", False)
+		if globs.has_key("supported_platforms"):
+			raise RuntimeError("%s uses useless supported_platforms" % target)
 
 def scan_dir(dir, dict):
 	for d in os.listdir(dir):
@@ -198,18 +194,22 @@ for t in targets["program"]:
 	base_env.targets.append(Target(t, "program"))
 
 for t in base_env.targets:
-	if t.supported_platforms and base_env.platform not in t.supported_platforms:
-		continue
 	env = base_env.Copy()
 	env.dir = t.dir
 
-	if t.config(env):
-		if t.type == "plugin":
-			env.add_plugin(t.target, t.source)
-		if t.type == "library":
-			env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary, t.install)
-		if t.type == "program":
-			env.add_program(t.target, t.source)
+	try:
+		if t.config:
+			r = t.config(env)
+			if not r is None:
+				raise RuntimeError("%s's config returned something!" % t.dir)
+	except xmmsenv.ConfigError:
+		continue
+	if t.type == "plugin":
+		env.add_plugin(t.target, t.source)
+	if t.type == "library":
+		env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary, t.install)
+	if t.type == "program":
+		env.add_program(t.target, t.source)
 
 try:
 	dump(base_env.config_cache, open("config.cache", "wb+"))

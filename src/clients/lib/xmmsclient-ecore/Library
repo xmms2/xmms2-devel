@@ -1,6 +1,5 @@
 target="xmmsclient-ecore"
 systemlibrary=True
-supported_platforms = ['freebsd','linux','netbsd','openbsd']
 source=["xmmsclient-ecore.c"]
 
 def lib2sed(lib):
@@ -15,6 +14,5 @@ def config(env):
 	rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb', 'config', 'file']
 	rem_misc_libs = ['eet', 'jpeg', 'z']
 	sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])
-	return env.configcmd("ecore-config --libs --cflags | " + sed_call)
-
+	env.configcmd("ecore-config --libs --cflags | " + sed_call)
 

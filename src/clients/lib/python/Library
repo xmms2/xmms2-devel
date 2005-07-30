@@ -2,19 +2,16 @@ target="xmmsclient"
 source=["xmmsclient.c"]
 static=False
 
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd','win32']
-
 def config(env):
 	try:
 		import distutils
 		import distutils.sysconfig
 		env["CPPPATH"].append(distutils.sysconfig.get_python_inc())
 	except:
-		print "Python distutils not installed try again!"
-		return False
+		raise ConfigError("Python distutils not installed try again!")
 	
 	if not env.tryaction("pyrexc --version"):
-		return False
+		raise ConfigError("Pyrexc not found")
 
 	# we need a custom builder to generate xmmsclient.c
 	from os import environ
@@ -50,4 +47,3 @@ def config(env):
 	# just do it
 	env.Pyx (env.dir+"/xmmsclient.c", [env.dir+"/xmmsclient.pyx"])
 
-	return True

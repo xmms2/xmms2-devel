@@ -1,10 +1,10 @@
 target="xmms2-mlib-updater"
 source=["main.c", "fam.c"]
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+
 def config(env):
 	env["LIBS"].append("xmmsclient")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	env["LIBS"].append("xmmsclient-glib")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
 	env.pkgconfig("glib-2.0")
-	return env.pkgconfig("gamin")
+	env.pkgconfig("gamin")

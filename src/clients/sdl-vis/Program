@@ -1,6 +1,6 @@
 target="sdl-vis"
 source=["sdl-vis.c"]
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+
 def config(env):
 	env["LIBS"].append("xmmsclient")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")

@@ -1,5 +1,5 @@
 source = ['socket_common.c']
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbs','win32']
+
 if platform == 'win32':
 	source.append('socket_win32.c')
 else:
@@ -7,11 +7,9 @@ else:
 
 target = "xmmssocket"
 shared = False
+static = True
 install = False
-
 
 def config(env):
 	if env.platform != 'win32':
 		env.Append(CCFLAGS=["-fPIC"])
-	return True
-

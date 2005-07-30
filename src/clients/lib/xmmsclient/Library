@@ -4,8 +4,6 @@ else:
 	target="xmmsclient"
 systemlibrary=True
 
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd','win32']
-
 source=["ipc.c", 
 	"medialib.c", 
 	"other.c", 
@@ -27,4 +25,3 @@ def config(env):
 	env["CPPPATH"].append("#src/includepriv")
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmssocket")
-	return True

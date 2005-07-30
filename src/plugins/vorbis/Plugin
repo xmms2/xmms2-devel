@@ -1,19 +1,6 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="vorbisfile"
-# then we tell scons where our sources are
 source=["vorbisfile.c"]
 
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
-
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
-	return env.checklibs("vorbisfile", "ov_open_callbacks")
-		
+	env.checklib("vorbisfile", "ov_open_callbacks")
 

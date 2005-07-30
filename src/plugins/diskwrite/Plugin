@@ -1,13 +1,3 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="diskwrite"
-# then we tell scons where our sources are
 source=["diskwrite.c"]
 
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
-
-def config(env):
-	return True
