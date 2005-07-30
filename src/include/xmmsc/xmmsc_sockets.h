@@ -29,12 +29,6 @@ typedef int socklen_t;
 typedef int xmms_socket_t;
 #endif
 
-/**
- * Tries to set socket to non-blocking mode.
- * @param socket Socket to make non-blocking.
- * On success, returns 1.
- * On failure, closes socket and returns 0.
- */
 int xmms_sockets_initialize();
 int xmms_socket_set_nonblock(xmms_socket_t socket);
 int xmms_socket_valid(xmms_socket_t socket);

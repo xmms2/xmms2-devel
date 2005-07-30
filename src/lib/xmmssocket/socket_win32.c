@@ -9,6 +9,12 @@ int xmms_sockets_initialize() {
 	return 1;
 }
 
+/**
+ * Tries to set socket to non-blocking mode.
+ * @param socket Socket to make non-blocking.
+ * On success, returns 1.
+ * On failure, closes socket and returns 0.
+ */
 int xmms_socket_set_nonblock(xmms_socket_t socket) {	
 	unsigned long yes = 1;
 	int err = ioctlsocket(socket, FIONBIO, &yes);
