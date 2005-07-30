@@ -164,9 +164,9 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 					(char *)(msg->data->rawdata + msg->xfered),
 					len - msg->xfered);
 	if (ret == SOCKET_ERROR) {
-		if (xmms_socket_errno() == XMMS_EAGAIN || 
-		    xmms_socket_errno() == XMMS_EINTR)
+		if (xmms_socket_error_recoverable()) {
 			return false;
+		}
 		if (disconnected)
 			*disconnected = true;
 		return false;
@@ -213,8 +213,7 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpor
 					       len - msg->xfered);
 		
 		if (ret == SOCKET_ERROR) {
-			if (xmms_socket_errno() == XMMS_EAGAIN || 
-			    xmms_socket_errno() == XMMS_EINTR) {
+			if (xmms_socket_error_recoverable ()) {
 				return false;
 			}
 			if (disconnected)

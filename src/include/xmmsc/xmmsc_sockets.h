@@ -1,6 +1,8 @@
 #ifndef XMMSC_SOCKETS_H
 #define XMMSC_SOCKETS_H
 
+#include <xmmsc/xmmsc_stdbool.h>
+
 /* Windows */
 
 #ifdef _MSC_VER
@@ -34,6 +36,6 @@ int xmms_socket_set_nonblock(xmms_socket_t socket);
 int xmms_socket_valid(xmms_socket_t socket);
 void xmms_socket_close(xmms_socket_t socket);
 int xmms_socket_errno();
-
+bool xmms_socket_error_recoverable();
 
 #endif
