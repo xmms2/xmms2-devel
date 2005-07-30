@@ -170,7 +170,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	ipc = xmmsc_ipc_init ();
 	
 	if (!xmmsc_ipc_connect (ipc, path)) {
-		c->error = "xmms2d is not running.";		
+		c->error = strdup ("xmms2d is not running.");
 		return false;
 	}
 
@@ -242,6 +242,7 @@ xmmsc_deinit (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_destroy (c->ipc);
 
+	free (c->error);
 	free (c->clientname);
 	free (c);
 }
