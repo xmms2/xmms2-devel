@@ -45,8 +45,6 @@
 
 static void xmmsc_deinit (xmmsc_connection_t *c);
 
-static uint32_t cmd_id;
-
 /*
  * Public methods
  */
@@ -105,7 +103,6 @@ xmmsc_init (char *clientname)
 	}
 
 	xmmsc_ref (c);
-	cmd_id = 0;
 
 	return c;
 }
@@ -416,9 +413,9 @@ xmmsc_signal_disconnect (xmmsc_result_t *res)
  */
 
 static uint32_t
-xmmsc_next_id (void)
+xmmsc_next_id (xmmsc_connection_t *c)
 {
-	return cmd_id++;
+	return c->cmd_id++;
 }
 
 xmmsc_result_t *
@@ -462,7 +459,7 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 
 	msg = xmms_ipc_msg_new (object, method);
 
-	cid = xmmsc_next_id ();
+	cid = xmmsc_next_id (c);
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
 	return xmmsc_result_new (c, cid);
@@ -472,7 +469,7 @@ xmmsc_result_t *
 xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 {
 	uint32_t cid;
-	cid = xmmsc_next_id ();
+	cid = xmmsc_next_id (c);
 
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
