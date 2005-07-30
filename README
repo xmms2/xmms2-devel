@@ -6,58 +6,62 @@ http://wiki.xmms2.xmms.se/index.php/Read_me_first%21
 
 == Why XMMS2? ==
 
-This is one of the fundamental questions concerning the XMMS2 project
-as whole. Why bother working on a next generation XMMS while there are
-various existing and more advanced projects already in progress, some
-ready for production use?
+Why bother working on a next generation XMMS while there are various existing
+and more advanced projects already in progress, some ready for production use?
+Because XMMS is just too damn popular to be allowed to die, of course! But
+seriously, while the field of 'audio playback' in general is something of an
+old beaten path, there is still much room for improvement.
 
-The question is inherently complicated and so is the answer. XMMS2 as
-a project had been cooking for a long, long time before GStreamer
-(http://gstreamer.freedesktop.org/), MusicPD (http://musicpd.org) or
-similar projects started. The need for an XMMS1 replacement had been
-evident for years - the codebase and the framework weren't exactly
-well-designed from the beginning. Lately XMMS1 hasn't been actively
-developed further, which can be attributed to the lack of active
-developers, but also to a broken codebase. Adding new features is
-bulky - some of the most wanted ones would be near impossible to
-add. Some parts of XMMS1 are beyond patching, so a re-write of the
-framework is needed.
+Constant progress is happening in the field of digital audio playback,
+including: new compression/encoding schemes, better and more flexible
+encapsulation and container formats, more efficient encoders and decoders,
+better ways of managing collections of music files, new ways of letting users
+interact with their music and so on. XMMS2 jumps into the mix with the goal of
+trying to provide an improved music listening experience for users. 
 
-As the years went by, GStreamer was born - a generic multimedia
-framework with lots of flexible modularity and extensible
-plugin-architecture. GStreamer is an interesting concept, but XMMS,
-despite the name, was never meant to be a generic multimedia
-player. XMMS has always essentially been an audio player - the video
-plugins were just ugly glue for technical experimentation. GStreamer's
-goal is to be a generic multimedia framework; implementing everything
-in a very generic way tends to waste resources and GStreamer
-developers haven't exactly been sparing them in other ways
-either. XMMS2 does not need the video-related crud that GStreamer
-has. Also, XMMS2 aims for platform independence, which is not
-GStreamer's goal in a strict sense.
+The XMMS2 project started in late 2002 as an idea to make a "kick-ass music
+player", and has eventually evolved into the next generation XMMS. The need for
+an XMMS replacement had been evident for years: the XMMS codebase and framework
+weren't exactly well-designed from the beginning. Lately, active development of
+XMMS has mostly stopped, this can be attributed to the lack of active
+developers, and a broken codebase. Adding new features to XMMS is difficult.
+Some of the most-wanted features would be nearly impossible to add. Some parts
+of XMMS are beyond patching, a re-design of the framework is needed.
+
+Developers of another fork of XMMS, BMP, the "Beep media player", comment on
+XMMS:
+"The XMMS code we inherited is old and messy. In more specific terms, it is
+poorly structured, poorly documented and littered with duplications. It is
+difficult to modify or extend one component of XMMS without breaking another.
+We spent most of our time fixing problems that were introduced after seemingly
+innocent modifications."
+
+The XMMS2 team is committed to producing a better music player, while diligently
+maintaining a robust and flexible design. The goal is to make the system easy
+for developers to maintain and integrate with. In terms of the listening
+experience, XMMS2 makes it possible for anyone to easily manage their music
+collection and to interact with it in a flexible manner.
 
 == What is XMMS2? How is it different? ==
 
-Being namely the descendant of XMMS and especially marked second
-generation, people will have all kinds of expectations what XMMS2 will
-and will not be. I'll first list the whats and whatnots shortly and
-explain the reasons more thoroughly afterwards.
+Being namely the descendant of XMMS and especially marked second generation,
+people will have all kinds of expectations what XMMS2 will and will not be.
+I'll first list the whats and whatnots shortly and explain the reasons more
+thoroughly afterwards.
 
-    * XMMS2 is a music player, it plays audio.
-    * XMMS2 is not a video player.
-    * XMMS2 does have a GUI, but it is not integrated. Instead we talk
-      about clients, and there can be many clients connected to the daemon.
-    * There will be one "official" GUI client and one "official"
-      commandline client.
+* XMMS2 is a music player, it plays audio.
+* XMMS2 is not a video player.
+* XMMS2 does have a GUI, but it is not integrated. Instead, we talk about
+clients, and there can be many clients connected to the daemon.
+* There will be one "official" GUI client and one "official" commandline client.
 
-So, XMMS2 is definitely an audio player. But it is not a multimedia
-player - it will not play videos. It has a modular framework and
-plugin architecture for audio processing, visualisation and output,
-but this framework has not been designed to support video. Also the
-daemon/client-type design of XMMS2 (and the daemon being independent
-of any graphics output) practically prevents video output being
-implemented. Reasons for this have been stated in the section above
-(Why XMMS2?)
+So, XMMS2 is definitely an audio player. But it is ''not'' a multimedia player -
+it will not play videos. It has a modular framework and plugin architecture for
+audio processing, visualisation and output, but this framework has not been
+designed to support video. Also the daemon/client-type design of XMMS2 (and the
+daemon being independent of any graphics output) practically prevents video
+output being implemented. Reasons for this have been stated in the section
+above (Why XMMS2?)
 
 
 == General Questions ==
@@ -92,8 +96,8 @@ implemented. Reasons for this have been stated in the section above
 
     * Q: Why just a musicplayer?
     * A: A lot of people ask us about video. But video will not be
-         included nor supported in XMMS2, in fact video-support is
-         even less possible than in XMMS1. This choice has numerous
+         included, nor will it be supported in XMMS2, in fact video-support
+	 is even less possible than in XMMS1. This choice has numerous
          reasons. Music and video are very separate things, despite
          what many people like to think. The architecture of XMMS2 is
          designed such that it handles audio wonderfully well -
@@ -126,6 +130,5 @@ implemented. Reasons for this have been stated in the section above
     * A: Our code should run on Windows without any problems, being ANSI-C. 
 
     * Q: How do I get in contact with you guys?
-    * A: E-Mail: tru at xmms dot org and andersg at xmms dot org 
-         IRC: irc.freenode.net:6667 #xmms2
+    * A: Drop by #xmms2 on Freenode, or see http://wiki.xmms2.xmms.se/index.php/About#Contact_info for more details.
 
