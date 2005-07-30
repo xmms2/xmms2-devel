@@ -24,31 +24,33 @@ def SimpleListOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
 
 
-opts = Options("options.cache")
 if sys.platform == 'win32':
-	opts.Add('PYREX', 'PyREX compiler', 'pyrexc.py')
-	opts.Add('CC', 'C compiler to use', 'cl')
-	opts.Add('CXX', 'C++ compiler to use', 'cl')
-	opts.Add('LD', 'Linker to use', 'link')
-	opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
-	opts.Add(SimpleListOption('LIBPATH', 'Path to libs', []))
-	opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['/Zi', '/TP']))
-	opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['/Zi', '/TC']))
-	opts.Add(SimpleListOption('CPPPATH', 'path to include files', ['z:\\xmms2\\winlibs\\include']))
-	opts.Add('PREFIX', 'install prefix', 'c:\\xmms2')
+	default_pyrex = 'pyrexc.py'
+	default_prefix = 'c:\\xmms2'
+	default_cxxflags = ['/Zi', '/TC']
+	default_cflags = ['/Zi', '/TC']
+	default_cpppath = ['z:\\xmms2\\winlibs\\include']
 else:
-	opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
-	opts.Add('CC', 'C compiler to use', 'gcc')
-	opts.Add('CXX', 'C++ compiler to use', 'g++')
-	opts.Add('LD', 'Linker to use', 'ld')
-	opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
-	opts.Add(SimpleListOption('LIBPATH', 'Path to libs', ['/sw/lib']))
-	opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
-	opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
-	opts.Add(SimpleListOption('CPPPATH', 'path to include files', []))
-	opts.Add('PREFIX', 'install prefix', '/usr/local')
+	default_pyrex = 'pyrexc'
+	default_prefix = '/usr/local/'
+	default_cxxflags = ['-g', '-Wall', '-O0']
+	default_cflags = ['-g', '-Wall', '-O0']
+	if sys.platform == 'darwin':
+		default_cpppath = ['/sw/lib']
+	else:
+		default_cpppath = []
 
-	
+opts = Options("options.cache")
+opts.Add('PYREX', 'PyREX compiler', default_pyrex)
+opts.Add('CC', 'C compiler to use')
+opts.Add('CXX', 'C++ compiler to use')
+opts.Add('LD', 'Linker to use')
+opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
+opts.Add(SimpleListOption('LIBPATH', 'Path to libs', []))
+opts.Add(SimpleListOption('CPPPATH', 'path to include files', default_cpppath))
+opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', default_cxxflags))
+opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', default_cflags))
+opts.Add('PREFIX', 'install prefix', default_prefix)
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
@@ -64,11 +66,9 @@ opts.Save("options.cache", base_env)
 
 
 base_env.Append(CPPPATH=["#src/include"])
-if sys.platform != 'win32':
-	base_env.pkgconfig("sqlite3", fail=True, libs=False)
-	base_env.pkgconfig("glib-2.0", fail=True, libs=False)
-base_env["LIBS"]=[]
+
 Help(opts.GenerateHelpText(base_env))
+
 def do_subst_in_file(targetfile, sourcefile, dict):
 	"""Replace all instances of the keys of dict with their values.
 	For example, if dict is {'%VERSION%': '1.2345', '%BASE%': 'MyProg'},
@@ -198,12 +198,16 @@ for t in base_env.targets:
 	env.dir = t.dir
 
 	try:
+		#plugins get glib automagically..
+		if t.type == "plugin":
+			env.pkgconfig("glib-2.0", libs=False)
 		if t.config:
 			r = t.config(env)
 			if not r is None:
 				raise RuntimeError("%s's config returned something!" % t.dir)
 	except xmmsenv.ConfigError:
 		continue
+
 	if t.type == "plugin":
 		env.add_plugin(t.target, t.source)
 	if t.type == "library":

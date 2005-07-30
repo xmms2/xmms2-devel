@@ -13,7 +13,7 @@ static = True
 install = False
 
 def config(env):
-	env["LIBS"].append("xmmssocket")
+	env.Append(LIBS=["xmmssocket"])
 	env.Prepend(LIBPATH="src/lib/xmmssocket")	
 	if env.platform != 'win32':
 		env.Append(CCFLAGS=["-fPIC"])

@@ -6,7 +6,7 @@ def config(env):
 	try:
 		import distutils
 		import distutils.sysconfig
-		env["CPPPATH"].append(distutils.sysconfig.get_python_inc())
+		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
 	except:
 		raise ConfigError("Python distutils not installed try again!")
 	
@@ -21,14 +21,13 @@ def config(env):
 
 	# we need to get rid of some warnings.
 	if env.platform != "win32":
-		env['CCFLAGS'].append("-Wno-unused-function")
-		env['CCFLAGS'].append("-Wno-unused-label")
+		env.Append(CCFLAGS=["-Wno-unused-function","-Wno-unused-label"])
 
 	# link with xmmsclient is nice.
 	if env.platform == 'win32':		
-		env['LIBS'].append("libxmmsclient")
+		env.Append(LIBS=["libxmmsclient"])
 	else:
-		env['LIBS'].append("xmmsclient")
+		env.Append(LIBS=["xmmsclient"])
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	if env.platform == 'win32':
 		env.Prepend(LIBPATH=distutils.sysconfig.PREFIX +"\\libs")

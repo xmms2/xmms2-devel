@@ -29,7 +29,7 @@ def config(env):
 			env.librarypath = os.popen(cmd).read().strip()
 
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-		env["LIBS"].append("xmmsclient")
+		env.Append(LIBS=["xmmsclient"])
 		env["SHLIBPREFIX"]=''
 
 		return

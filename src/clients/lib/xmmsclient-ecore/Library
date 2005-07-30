@@ -9,7 +9,7 @@ def ecorelib2sed(lib):
 	return " -e 's/ -lecore_" + lib + " / /'"
 
 def config(env):
-	env["LIBS"].append("xmmsclient")
+	env.Append(LIBS=["xmmsclient"])
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	rem_ecore_libs = ['job', 'x', 'evas', 'con', 'ipc', 'txt', 'fb', 'config', 'file']
 	rem_misc_libs = ['eet', 'jpeg', 'z']
