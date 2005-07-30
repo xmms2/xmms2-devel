@@ -11,7 +11,7 @@ You will need the following things to build XMMS2.
     * Scons (http://www.scons.org/) (>= 0.96.90)
     * GLib (http://www.gtk.org/) (>= 2.2.0)
     * MAD (http://www.underbit.com/products/mad/)
-    * SQLite (http://www.sqlite.org SQLite) (3.2.x)
+    * SQLite (http://www.sqlite.org) (3.2.x)
 
 These libraries are not needed for building xmms2d itself, but may be needed
 for plugins.
