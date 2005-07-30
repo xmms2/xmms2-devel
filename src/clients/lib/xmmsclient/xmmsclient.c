@@ -175,13 +175,9 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	}
 
 	c->ipc = ipc;
-	printf("Next: sending hello\n");
 	result = xmmsc_send_hello (c);
-	printf("Next: waiting for result\n");
 	xmmsc_result_wait (result);
-	printf("Next: getting result\n");
 	ret = xmmsc_result_get_uint (result, &i);
-	printf("Next: releasing result\n");
 	xmmsc_result_unref (result);
 	if (!ret) {
 		c->error = strdup (xmmsc_ipc_error_get (ipc));
