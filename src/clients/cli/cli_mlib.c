@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -87,7 +87,7 @@ mlib_query_from_args (int argc, char **argv) {
 
 	if (argc < 4) {
 		print_error ("Supply a query");
-	}		
+	}
 
 	query_spec = (xmmsc_query_attribute_t*) malloc((argc-3)*sizeof(xmmsc_query_attribute_t));
 
@@ -112,14 +112,14 @@ mlib_query_from_args (int argc, char **argv) {
 		}
 
 		g_strfreev(s);
-	}	
-		
-	query = xmmsc_querygen_and(query_spec, argc-3);	
-		
+	}
+
+	query = xmmsc_querygen_and(query_spec, argc-3);
+
 	free(query_spec);
 
 	return query;
-	
+
 }
 
 static void
@@ -146,7 +146,7 @@ mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
 	char *query;
-		
+
 	query = mlib_query_from_args(argc, argv);
 	if (query == NULL) {
 		print_info("Unable to generate query");
@@ -175,7 +175,7 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 		print_info("Unable to generate query");
 		return;
 	}
-	
+
 	print_info ("%s", query);
 
 	res = xmmsc_medialib_select (conn, query);
@@ -189,7 +189,7 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		gint id;
-			
+
 		xmmsc_result_get_dict_entry_int32 (res, "id", &id);
 		if (!id)
 			print_error ("broken resultset");
@@ -245,7 +245,7 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 	/* yes, result is a hashlist,
 	   but there should only be one entry */
 	xmmsc_result_get_dict_entry_int32 (res, "id", &id);
-	if (!id) 
+	if (!id)
 		print_error ("No such playlist!");
 
 	g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %d", id);
@@ -257,7 +257,7 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		gchar *entry;
 		xmmsc_result_get_dict_entry_str (res, "entry", &entry);
-		if (!entry) 
+		if (!entry)
 			print_error ("No such playlist!");
 		if (g_strncasecmp (entry, "mlib", 4) == 0) {
 			char *p = entry+7;
@@ -331,14 +331,14 @@ static void
 mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	
+
 	res = xmmsc_medialib_playlists_list (conn);
 	xmmsc_result_wait (res);
-	
+
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
-	
+
 	g_print("id:name\n");
 	xmmsc_result_dict_foreach (res, playlist_list_cb, NULL);
 }
@@ -410,7 +410,7 @@ mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **argv)
 	res = xmmsc_medialib_playlist_export (conn, argv[3], mime);
 
 	xmmsc_result_wait (res);
-	
+
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
@@ -431,8 +431,8 @@ mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv)
 	if (argc < 4) {
 		print_error ("Supply a path to add!");
 	}
-	
-	if (!realpath (argv[3], rpath)) 
+
+	if (!realpath (argv[3], rpath))
 		return;
 	if (!g_file_test (rpath, G_FILE_TEST_IS_DIR))
 		return;
