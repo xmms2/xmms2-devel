@@ -174,60 +174,60 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
  */
 
 int
-xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *attributes, unsigned n) {
+xmmsc_querygen_parse_constraints (char **pconstraints,
+                                  xmmsc_query_attribute_t *attributes,
+                                  unsigned int n)
+{
 	int success = 1, tmp_size;
-	char *oconstraints = NULL;
-	char *constraints = NULL;
-	char *initconstraints = " WHERE ";
-	char *tmp = NULL;
-	unsigned i;
+	char *oconstraints = NULL, *constraints;
+	char *initconstraints = " WHERE ", *tmp = NULL;
+	unsigned int i, size = 0;
 	templ_type template;
-	unsigned size = 0;
 
-	constraints = (char*) malloc(strlen(initconstraints+1));
+	constraints = malloc (strlen (initconstraints) + 1);
+	if (!constraints) {
+		*pconstraints = NULL;
 
-	if (constraints == NULL) {
-		success = 0;
-	} else {
-		strcpy(constraints, initconstraints);
-		size = strlen(constraints)+1;
+		return 0;
 	}
 
-	if (success) {
-		for (i = 0; i < n; i++) {
-			for (template = templ_key; template <= templ_id; template++) {
-				if (i == 0 && template == templ_id) {
-					break; /* Can't do id matching on the first attribute */
-				}
+	strcpy (constraints, initconstraints);
+	size = strlen (constraints) + 1;
 
-				tmp = xmmsc_querygen_fill_template(template, attributes, i);
-				if (tmp == NULL) {
-					success = 0;
-				}
-
-				tmp_size = strlen(tmp);
-
-				size += tmp_size + (i == 0 && template == templ_key ? 0 : 5);
-				oconstraints = constraints;
-				constraints = (char*) realloc(constraints, size);
-				if (constraints == NULL) {
-					success = 0;
-					free(oconstraints);
-					break;
-				}
-
-				if ( !(i == 0 && template == templ_key) ) {
-					strcat(constraints, " AND "); /* Don't need AND for first constraint */
-				}
-
-				strcat(constraints, tmp);
-
-				free(tmp);
+	for (i = 0; i < n; i++) {
+		for (template = templ_key; template <= templ_id; template++) {
+			if (!i && template == templ_id) {
+				break; /* Can't do id matching on the first attribute */
 			}
+
+			tmp = xmmsc_querygen_fill_template(template, attributes, i);
+			if (!tmp) {
+				success = 0;
+			}
+
+			tmp_size = strlen (tmp);
+
+			size += tmp_size + (!i && template == templ_key ? 0 : 5);
+			oconstraints = constraints;
+			constraints = realloc(constraints, size);
+			if (!constraints) {
+				success = 0;
+				free (oconstraints);
+				break;
+			}
+
+			if (!(!i && template == templ_key) ) {
+				/* Don't need AND for first constraint */
+				strcat (constraints, " AND ");
+			}
+
+			strcat (constraints, tmp);
+			free (tmp);
 		}
 	}
 
-	(*pconstraints) = constraints;
+	*pconstraints = constraints;
+
 	return success;
 }
 
@@ -237,55 +237,53 @@ xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *
  */
 
 int
-xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes, unsigned n) {
+xmmsc_querygen_parse_tables (char **ptables,
+                             xmmsc_query_attribute_t *attributes,
+                             unsigned int n)
+{
 	int success = 1;
-	char *otables = NULL;
-	char *tables = NULL;
-	char *tmp = NULL;
-	unsigned i;
-	unsigned size = 1; // make space for the terminating null byte
-	unsigned tmp_size = 0;
+	char *otables = NULL, *tables, *tmp = NULL;
+	unsigned int i, size = 1; /* make space for the terminating null byte */
+	unsigned int tmp_size = 0;
 
-
-	tables = malloc(1);
-	if (tables == NULL) {
-		success = 0;
-	} else {
-		tables[0] = '\0';
+	tables = malloc (1);
+	if (!tables) {
+		*ptables = NULL;
+		return 0;
 	}
 
-	if (success) {
-		for (i = 0; i < n; i++) {
+	tables[0] = '\0';
 
-			tmp = xmmsc_querygen_fill_template(templ_table, attributes, i);
-			if (tmp == NULL) {
-				success = 0;
-				break;
-			}
-
-			tmp_size = strlen(tmp);
-
-			size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
-			otables = tables;
-			tables = (char*) realloc(tables, size);
-
-			if (tables == NULL) {
-				success = 0;
-				free(otables);
-				break;
-			}
-
-			if (i != 0) {
-				strcat(tables, ", ");
-			}
-			strcat(tables, tmp);
-			free(tmp);
+	for (i = 0; i < n; i++) {
+		tmp = xmmsc_querygen_fill_template (templ_table, attributes, i);
+		if (!tmp) {
+			success = 0;
+			break;
 		}
+
+		tmp_size = strlen (tmp);
+
+		size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
+		otables = tables;
+		tables = realloc (tables, size);
+
+		if (!tables) {
+			success = 0;
+			free (otables);
+			break;
+		}
+
+		if (i) {
+			strcat (tables, ", ");
+		}
+
+		strcat(tables, tmp);
+		free(tmp);
 	}
 
 	(*ptables) = tables;
-	return success;
 
+	return success;
 }
 
 /**
@@ -302,46 +300,36 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 char *
 xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 {
-	char **tables;
-	char **constraints;
-	int success = 1, fullsize;
-	char *query;
+	char *tables = NULL, *constraints = NULL, *query = NULL;
+	int success, fullsize;
 
 	const char *initquery = "SELECT DISTINCT m0.id FROM ";
 
+	success = xmmsc_querygen_parse_tables (&tables, attributes, n);
+
 	if (success) {
-		tables = (char**) malloc(sizeof(char**));
-		constraints = (char**) malloc(sizeof(char**));
-		if (tables == NULL || constraints == NULL) {
-			free(tables);
-			free(constraints);
-			success = 0;
-		}
+		success = xmmsc_querygen_parse_constraints (&constraints,
+		                                            attributes, n);
 	}
 
 	if (success) {
-		success = xmmsc_querygen_parse_tables(tables, attributes, n);
-		success = xmmsc_querygen_parse_constraints(constraints, attributes, n);
+		fullsize = strlen (initquery);
+		fullsize += strlen (tables);
+		fullsize += strlen (constraints);
+
+		query = malloc (fullsize + 1);
+		success = !!query;
 	}
 
-	if (success) {
-		fullsize = strlen(initquery) + strlen(*tables) + strlen(*constraints) + 1;
-		query = (char*) malloc(fullsize);
-		if (query == NULL) {
-			success = 0;
-		}
-	}
 	if (success) {
 		query[0] = '\0';
-		strcat(query, initquery);
-		strcat(query, *tables);
-		strcat(query, *constraints);
+		strcat (query, initquery);
+		strcat (query, tables);
+		strcat (query, constraints);
 	}
 
-	free(tables[0]);
-	free(constraints[0]);
-	free(tables);
-	free(constraints);
+	free (tables);
+	free (constraints);
 
 	return query;
 }
