@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -44,7 +44,7 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, id);
 	xmms_ipc_msg_put_string (msg, arg);
 
@@ -69,7 +69,7 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
  * Escape a string so that it can be used in sqlite queries.
  *
  * @param Input string, is not freed by this function!
- * @returns string enclosed in single quotes, with all single quotes in the string 
+ * @returns string enclosed in single quotes, with all single quotes in the string
  * replaced with double single quotes
  *
  * Example:
@@ -87,14 +87,14 @@ xmmsc_sqlite_prepare_string (char *input) {
 			nquotes++;
 		}
 	}
-	
+
 	outsize = strlen(input) + nquotes + 2 + 1; /* 2 quotes to terminate the string , and one \0 in the end */
 	output = (char*) malloc(outsize);
 
 	if (output == NULL) {
 		return NULL;
 	}
-	
+
 	i = o = 0;
 	output[o++] = '\'';
 	while (input[i] != '\0') {
@@ -107,7 +107,7 @@ xmmsc_sqlite_prepare_string (char *input) {
 	output[o] = '\0';
 
 	return output;
-	
+
 }
 
 
@@ -141,9 +141,9 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
 		break;
 	}
 	free(tbuf);
-	
+
 	res_size += 1;
-	
+
 	res = malloc(res_size);
 	if (res == NULL) {
 		return NULL;
@@ -160,7 +160,7 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
 	case templ_id:
 		snprintf(res, res_size, constraint_templates[templ_id], i-1, i);
 		break;
-	case templ_table:		
+	case templ_table:
 		snprintf(res, res_size, constraint_templates[templ_table], i);
 		break;
 	}
@@ -173,7 +173,7 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
  * Construct constraints of the query string from query attribute vector
  */
 
-int 
+int
 xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *attributes, unsigned n) {
 	int success = 1, tmp_size;
 	char *oconstraints = NULL;
@@ -182,8 +182,8 @@ xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *
 	char *tmp = NULL;
 	unsigned i;
 	templ_type template;
-	unsigned size = 0;	
-	
+	unsigned size = 0;
+
 	constraints = (char*) malloc(strlen(initconstraints+1));
 
 	if (constraints == NULL) {
@@ -192,19 +192,19 @@ xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *
 		strcpy(constraints, initconstraints);
 		size = strlen(constraints)+1;
 	}
-	
+
 	if (success) {
 		for (i = 0; i < n; i++) {
-			for (template = templ_key; template <= templ_id; template++) {				
+			for (template = templ_key; template <= templ_id; template++) {
 				if (i == 0 && template == templ_id) {
 					break; /* Can't do id matching on the first attribute */
 				}
-				
+
 				tmp = xmmsc_querygen_fill_template(template, attributes, i);
-				if (tmp == NULL) {				
+				if (tmp == NULL) {
 					success = 0;
-				}						
-		
+				}
+
 				tmp_size = strlen(tmp);
 
 				size += tmp_size + (i == 0 && template == templ_key ? 0 : 5);
@@ -212,15 +212,15 @@ xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *
 				constraints = (char*) realloc(constraints, size);
 				if (constraints == NULL) {
 					success = 0;
-					free(oconstraints);				
+					free(oconstraints);
 					break;
 				}
 
 				if ( !(i == 0 && template == templ_key) ) {
 					strcat(constraints, " AND "); /* Don't need AND for first constraint */
-				}			
+				}
 
-				strcat(constraints, tmp);		
+				strcat(constraints, tmp);
 
 				free(tmp);
 			}
@@ -253,7 +253,7 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 	} else {
 		tables[0] = '\0';
 	}
-	
+
 	if (success) {
 		for (i = 0; i < n; i++) {
 
@@ -262,7 +262,7 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 				success = 0;
 				break;
 			}
-			
+
 			tmp_size = strlen(tmp);
 
 			size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
@@ -280,9 +280,9 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 			}
 			strcat(tables, tmp);
 			free(tmp);
-		}	
+		}
 	}
-		
+
 	(*ptables) = tables;
 	return success;
 
@@ -301,7 +301,7 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 
 char *
 xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
-{	
+{
 	char **tables;
 	char **constraints;
 	int success = 1, fullsize;
@@ -335,7 +335,7 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 		query[0] = '\0';
 		strcat(query, initquery);
 		strcat(query, *tables);
-		strcat(query, *constraints);	
+		strcat(query, *constraints);
 	}
 
 	free(tables[0]);
@@ -343,7 +343,7 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 	free(tables);
 	free(constraints);
 
-	return query;		
+	return query;
 }
 
 /**
@@ -369,7 +369,7 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, mime);
@@ -387,11 +387,11 @@ xmmsc_medialib_playlists_list (xmmsc_connection_t *conn)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLISTS_LIST);
-	
+
 	res = xmmsc_send_msg (conn, msg);
-	
+
 	return res;
 }
 
@@ -406,7 +406,7 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_IMPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, url);
@@ -555,7 +555,7 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_ADD_TO_PLAYLIST);
 	xmms_ipc_msg_put_string (msg, query);
 	res = xmmsc_send_msg (c, msg);
