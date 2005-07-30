@@ -939,7 +939,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 static void
 quit (void *data)
 {
-	printf ("bye crule world!\n");
+	printf ("\nbye cruel world!\n");
 	exit (0);
 }
 
