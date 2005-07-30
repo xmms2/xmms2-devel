@@ -482,8 +482,8 @@ cdef class XMMS:
 		You can provide a disconnect callback function to be activated
 		when the daemon disconnects.(e.g. daemon quit) This function
 		typically has to exit the main loop used by your application.
-		For example, if using L{python_loop}, your callback should call
-		L{exit_python_loop} at some point.
+		For example, if using L{loop}, your callback should call
+		L{exit_loop} at some point.
 		"""
 		if path:
 			ret = xmmsc_connect(self.conn, path) 
@@ -628,7 +628,9 @@ cdef class XMMS:
 	def playback_status(self, cb = None):
 		"""Get current playback status from XMMS2 daemon. This is
 		essentially the more direct version of
-		L{broadcast_playback_status}.
+		L{broadcast_playback_status}. Possible return values are:
+		L{PLAYBACK_STATUS_STOP}, L{PLAYBACK_STATUS_PLAY},
+		L{PLAYBACK_STATUS_PAUSE}
 		@rtype: L{XMMSResult}(UInt)
 		@return: Current playback status(UInt)
 		"""
@@ -641,13 +643,9 @@ cdef class XMMS:
 
 	def broadcast_playback_status(self, cb = None):
 		"""
-		Set a class to handle the playback status broadcast from the
-		XMMS2 daemon. Note: the handler class is usually a child of the
-		XMMSResult class. Updated data is sent when playback status
-		changes.
+		Set a method to handle the playback status broadcast from the
+		XMMS2 daemon.
 		@rtype: L{XMMSResult}(UInt)
-		@return: An XMMSResult object that is constantly updated with
-		the appropriate info.
 		"""
 		cdef XMMSResult ret
 		
@@ -661,13 +659,9 @@ cdef class XMMS:
 
 	def broadcast_playback_current_id(self, cb = None):
 		"""
-		Set a class to handle the playback id broadcast from the
-		XMMS2 daemon. Note: the handler class is usually a child of the
-		XMMSResult class. Updated data is sent when the mlib id of the
-		current item changes.
+		Set a method to handle the playback id broadcast from the
+		XMMS2 daemon.
 		@rtype: L{XMMSResult}(UInt)
-		@return: An XMMSResult object that is constantly updated with
-		the appropriate info.
 		"""
 		cdef XMMSResult ret
 		
@@ -698,12 +692,9 @@ cdef class XMMS:
 
 	def signal_playback_playtime(self, cb = None):
 		"""
-		Set a class to handle the playback playtime signal from the
-		XMMS2 daemon. This can be used to keep track of the amount of
-		time played on the current file/stream. Note: the handler
-		class is usually a child of the XMMSResult class.
+		Set a method to handle the playback playtime signal from the
+		XMMS2 daemon.
 		@rtype: L{XMMSResult}(UInt)
-		@return: The result of the operation.(playtime in milliseconds)
 		"""
 		cdef XMMSResult ret
 		
@@ -735,7 +726,7 @@ cdef class XMMS:
 		"""
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
-		Requires a int 'pos' and a string 'url' as argument.
+		Requires an int 'pos' and a string 'url' as argument.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -860,9 +851,10 @@ cdef class XMMS:
 
 	def playlist_set_next_rel(self, position, cb = None):
 		"""
-		Sets the position in the playlist. Same as set_next but
-		does it relative. You can do set_next_rel(-1) to move backwards
-		for example
+		Sets the position in the playlist. Same as L{playlist_set_next}
+		but sets the next position relative to the current position.
+		You can do set_next_rel(-1) to move backwards for example.
+		@rtype: L{XMMSResult}
 		"""
 		cdef XMMSResult ret
 		
@@ -879,6 +871,7 @@ cdef class XMMS:
 		"""
 		Sets the position to move to, next, in the playlist. Calling
 		L{playback_tickle} will perform the jump to that position.
+		@rtype: L{XMMSResult}
 		"""
 		cdef XMMSResult ret
 		
@@ -892,7 +885,7 @@ cdef class XMMS:
 
 	def playlist_move(self, id, movement, cb = None):
 		"""
-		Move a playlist entry relative to it's current position in
+		Move a playlist entry relative to its current position in
 		the playlist. The movement should be a postive value when
 		moving down in the playlist and a negative value when moving
 		up in the playlist.
@@ -914,6 +907,7 @@ cdef class XMMS:
 		Returns the current position in the playlist. This value will
 		always be equal to, or larger than 0. The first entry in the
 		list is 0.
+		@rtype: L{XMMSResult}
 		"""
 		cdef XMMSResult ret
 
@@ -927,15 +921,11 @@ cdef class XMMS:
 
 	def broadcast_playlist_current_pos(self, cb = None):
 		"""
-		Set a class to handle the playlist current position updates 
-		from the XMMS2 daemon. Note: the handler class is usually a
-		child of the XMMSResult class. Updated data is sent when the
-		current item changes position.(e.g. finish playing song 1,
-		switch to song 2 & start playing) This is NOT when moving a
-		playlist item from one position to another.
+		Set a method to handle the playlist current position updates 
+		from the XMMS2 daemon. This is triggered whenever the daemon
+		jumps from one playlist position to another. (not when moving
+		a playlist item from one position to another)
 		@rtype: L{XMMSResult}
-		@return: An XMMSResult object that is updated with the
-		appropriate info.
 		"""
 		cdef XMMSResult ret
 		
@@ -949,13 +939,10 @@ cdef class XMMS:
 
 	def broadcast_playlist_changed(self, cb = None):
 		"""
-		Set a class to handle the playlist changed broadcast from the
-		XMMS2 daemon.(i.e. the player's playlist has changed) Note:
-		the handler class is usually a child of the XMMSResult class.
-		Updated data is sent whenever the playlist is modified.
+		Set a method to handle the playlist changed broadcast from the
+		XMMS2 daemon. Updated data is sent whenever the daemon's
+		playlist changes.
 		@rtype: L{XMMSResult}
-		@return: An XMMSResult object that is updated with the
-		appropriate info.
 		"""
 		cdef XMMSResult ret
 		
@@ -969,14 +956,11 @@ cdef class XMMS:
 
 	def broadcast_configval_changed(self, cb = None):
 		"""
-		Set a class to handle the config value changed broadcast
+		Set a method to handle the config value changed broadcast
 		from the XMMS2 daemon.(i.e. some configuration value has
-		been modified) Note: the handler class is usually a child of
-		the XMMSResult class. Updated data is sent whenever a config
+		been modified) Updated data is sent whenever a config
 		value is modified.
-		@rtype: L{XMMSResult}
-		@return: An XMMSResult object that is updated with the
-		appropriate info.(the modified config key and its value)
+		@rtype: L{XMMSResult} (the modified config key and its value)
 		"""
 		cdef XMMSResult ret
 		
@@ -1043,8 +1027,8 @@ cdef class XMMS:
 	def configval_register(self, valuename, defaultvalue, cb = None):
 		"""
 		Register a new configvalue.
-		This should be called in the initcode as XMMS2 won't allow set/get on
-		values that hasn't been registered.
+		This should be called in the initcode as XMMS2 won't allow
+		set/get on values that haven't been registered.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1131,8 +1115,8 @@ cdef class XMMS:
 	def medialib_get_info(self, id, cb = None):
 		"""
 		@rtype: L{XMMSResult}(HashTable)
-		@return: Information about the medialib entry
-		position specified.
+		@return: Information about the medialib entry position
+		specified.
 		"""
 		cdef XMMSResult ret
 		
@@ -1146,7 +1130,7 @@ cdef class XMMS:
 
 	def medialib_add_to_playlist(self, query, cb = None):
 		"""
-		Add items in the playlist by querying the MediaLib.
+		Add items in the playlist by querying the medialib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1164,7 +1148,7 @@ cdef class XMMS:
 
 	def medialib_playlists_list(self, cb = None):
 		"""
-		Returns a list of all available playlists
+		Returns a list of all available playlists in the medialib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1180,7 +1164,7 @@ cdef class XMMS:
 
 	def medialib_playlist_import(self, name, url, cb = None):
 		"""
-		Import a playlist to the medialib
+		Import a playlist into the medialib.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1199,7 +1183,8 @@ cdef class XMMS:
 
 	def medialib_rehash(self, id = 0, cb = None):
 		"""
-		Force metadata info update on medialib
+		Force the medialib to check that metadata stored is up to
+		date.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1215,7 +1200,8 @@ cdef class XMMS:
 
 	def medialib_get_id(self, url, cb = None):
 		"""
-        Search for a entry (URL) in the medialib db and return its ID number
+		Search for an entry (URL) in the medialib and return its ID
+		number.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1232,7 +1218,7 @@ cdef class XMMS:
 
 	def medialib_playlist_export(self, name, mime, cb = None):
 		"""
-		Export a playlist from medialib to another format
+		Export a playlist from the medialib to another format.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1251,7 +1237,8 @@ cdef class XMMS:
 
 	def medialib_playlist_remove(self, name, cb = None):
 		"""
-		Remove a playlist from the medialib, keeping the songs of course.
+		Remove a playlist from the medialib. This does not affect the
+		songs listed in the playlist itself.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1269,7 +1256,8 @@ cdef class XMMS:
 
 	def medialib_path_import(self, path, cb = None):
 		"""
-		Import all files recursively from the directory passed as argument.
+		Import metadata from all files recursively from the directory
+		passed as argument.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1287,14 +1275,11 @@ cdef class XMMS:
 
 	def broadcast_medialib_entry_changed(self, cb = None):
 		"""
-		Set a class to handle the medialib entry changed broadcast
+		Set a method to handle the medialib entry changed broadcast
 		from the XMMS2 daemon.(i.e. the current entry in the playlist
-		has changed) Note: the handler class is usually a child of the
-		XMMSResult class. Updated data is sent when the metadata for
+		has changed)  Updated data is sent when the metadata for
 		a song is updated in the medialib.
 		@rtype: L{XMMSResult}
-		@return: An XMMSResult object that is updated with the
-		appropriate info.
 		"""
 		cdef XMMSResult ret
 		
@@ -1310,8 +1295,8 @@ cdef class XMMS:
 
 	def signal_visualisation_data(self, cb = None):
 		"""
-		Tell server to send you VisData updates.
-		For drawing peek analyzer.
+		Tell daemon to send you visualisation data updates for drawing
+		peak analyzer.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
