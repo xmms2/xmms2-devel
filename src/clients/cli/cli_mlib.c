@@ -78,48 +78,66 @@ mlib_loadall (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
-char *
-mlib_query_from_args (int argc, char **argv) {
+static void
+free_query_spec (xmmsc_query_attribute_t *specs, gint num_attribs)
+{
+	gint i;
+
+	if (!specs) {
+		g_assert (!num_attribs);
+		return;
+	}
+
+	for (i = 0; i < num_attribs; i++) {
+		free (specs[i].key);
+		free (specs[i].value);
+	}
+
+	g_free (specs);
+}
+
+static char *
+mlib_query_from_args (int argc, char **argv)
+{
 	gchar *query;
-	char **s;
-	guint i;
+	gchar **s;
+	guint i, num_attribs;
 	xmmsc_query_attribute_t *query_spec;
 
 	if (argc < 4) {
 		print_error ("Supply a query");
 	}
 
-	query_spec = (xmmsc_query_attribute_t*) malloc((argc-3)*sizeof(xmmsc_query_attribute_t));
+	num_attribs = argc - 3;
+	query_spec = g_new0 (xmmsc_query_attribute_t, num_attribs);
 
-	for (i=3; i < argc; i++) {
-		s = g_strsplit (argv[i], "=", 0);
+	for (i = 0; i < num_attribs; i++) {
+		s = g_strsplit (argv[i + 3], "=", 0);
+		g_assert (s);
+
 		if (!s[0] || !s[1]) {
-			return NULL;
-		}
-		query_spec[i-3].key = xmmsc_sqlite_prepare_string(s[0]);
-		query_spec[i-3].value = xmmsc_sqlite_prepare_string(s[1]);
+			g_strfreev (s);
+			free_query_spec (query_spec, num_attribs);
 
-		if (query_spec[i-3].key == NULL || query_spec[i-3].value == NULL) {
-			free(query_spec[i-3].key);
-			free(query_spec[i-3].value);
-			while (i-3 > 0) {
-				i--;
-				free(query_spec[i-3].key);
-				free(query_spec[i-3].value);
-			}
-			free(query_spec);
 			return NULL;
 		}
 
-		g_strfreev(s);
+		query_spec[i].key = xmmsc_sqlite_prepare_string (s[0]);
+		query_spec[i].value = xmmsc_sqlite_prepare_string (s[1]);
+		g_strfreev (s);
+
+		if (!query_spec[i].key || !query_spec[i].value) {
+			free_query_spec (query_spec, num_attribs);
+
+			return NULL;
+		}
 	}
 
-	query = xmmsc_querygen_and(query_spec, argc-3);
+	query = xmmsc_querygen_and (query_spec, num_attribs);
 
-	free(query_spec);
+	free_query_spec (query_spec, num_attribs);
 
 	return query;
-
 }
 
 static void
