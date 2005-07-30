@@ -550,6 +550,7 @@ cmd_list (xmmsc_connection_t *conn, int argc, char **argv)
 				}
 			}
 		} else {
+			listformat = "${title} (${minutes}:${seconds})";
 			xmmsc_entry_format (line, sizeof(line), listformat, res2);
 		}
 
@@ -924,6 +925,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 			}
 		}
 	} else {
+		statusformat = "${title}";
 		xmmsc_entry_format (songname, sizeof (songname),
 				    statusformat, res);
 		has_songname = TRUE;
