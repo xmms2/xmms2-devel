@@ -295,6 +295,11 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
 	}
+
+	if (ipc->out_msg) {
+		x_queue_free (ipc->out_msg);
+	}
+
 	if (ipc->error) {
 		free (ipc->error);
 	}
