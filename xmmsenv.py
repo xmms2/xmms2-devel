@@ -4,12 +4,12 @@ import sys, os
 import shutil
 from marshal import load
 from stat import *
+import operator
 
-class ConfigError:
-	def __init__(self, value):
-		self.value = value
-	def __str__(self):
-		return repr(self.value)
+class ConfigError(Exception):
+	pass
+
+any = lambda x: reduce(operator.or_, x)
 
 def installFunc(dest, source, env):
 	"""Copy file, setting sane permissions"""
@@ -25,20 +25,63 @@ def installFunc(dest, source, env):
 		os.chmod(dest, mode)
 	return 0
 
+
+
+class Target:
+	def __init__(self, target, env):
+		self.dir = os.path.dirname(target)
+
+		self.globs = {}
+		self.globs['platform'] = env.platform
+		self.globs['ConfigError'] = ConfigError
+
+		c = compile(file(target).read(), target, "exec")
+		eval(c, self.globs)
+
+		if not isinstance(self.globs.get("target"), str):
+			raise RuntimeError("Target file '%s' does not specify target, or target is not a string" % target)
+		if not isinstance(self.globs.get("source"), list):
+			raise RuntimeError("Target file '%s' does not specify 'source', or 'source' is not a list" % target)
+
+
+		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
+		self.target = os.path.join(self.dir, self.globs["target"])
+
+	def config(self, env):
+		self.globs.get("config", lambda x: None)(env)
+
+class LibraryTarget(Target):
+	def add(self, env):
+		install = self.globs.get("install", True)
+		static = self.globs.get("static", True)
+		shared = self.globs.get("shared", True)
+		systemlibrary = self.globs.get("systemlibrary", False)
+
+		env.add_library(self.target, self.source, static, shared, systemlibrary, install)
+
+class ProgramTarget(Target):
+	def add(self, env):
+		env.add_program(self.target, self.source)
+
+class PluginTarget(Target):
+	def config(self, env):
+		env.pkgconfig("glib-2.0", fail=False, libs=False)
+		Target.config(self, env)
+	def add(self, env):
+		env.add_plugin(self.target, self.source)
+
 class XMMSEnvironment(Environment):
 	targets=[]
 	def __init__(self, parent=None, options=None, **kw):
 		reconfigure = self.options_changed(options, ['INSTALLPATH'])
-		Environment.__init__(self, options=options)
+		Environment.__init__(self, options=options, ENV=os.environ)
 		apply(self.Replace, (), kw)
 		self.conf = SCons.SConf.SConf(self)
-
-		self["ENV"] = os.environ
 
 		if os.path.isfile("config.cache") and self["CONFIG"] == 0 and not reconfigure:
 			try:
 				self.config_cache=load(open("config.cache", 'rb+'))
-			except IOError:
+			except:
 				print "Could not load config.cache!"
 				self.config_cache={}
 		else:
@@ -78,6 +121,10 @@ class XMMSEnvironment(Environment):
 			
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] = "$LINKFLAGS -multiply_defined suppress -flat_namespace -undefined suppress"
+
+		self.potential_targets = []
+		self.scan_dir("src")
+
 	
 	def Install(self, target, source):
 		target = os.path.normpath(self.installdir + target)
@@ -109,8 +156,6 @@ class XMMSEnvironment(Environment):
 		if self.config_cache.has_key(cmd):
 			return self.config_cache[cmd]
 
-		print "Running", cmd
-
 		try:
 			r = os.popen(cmd).read()
 		except:
@@ -126,13 +171,13 @@ class XMMSEnvironment(Environment):
 		if libs:
 			cmd += " --libs" 
 		cmd += " " + module
-		return self.configcmd(cmd, fail)
+		self.configcmd(cmd, fail)
+		
 
 	def configcmd(self, cmd, fail=False):
 		if self.config_cache.has_key(cmd):
 			ret = self.config_cache[cmd]
 		else:
-			print "Running %s" % cmd
 			ret = os.popen(cmd).read()
 			self.config_cache[cmd] = ret
 
@@ -269,7 +314,7 @@ class XMMSEnvironment(Environment):
 		self.Install(self.sharepath, source)
 
 	def add_header(self, target, source):
-		self.Install(self.includepath+"/"+target, source)
+		self.Install(os.path.join(self.includepath,target), source)
 
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""
@@ -296,3 +341,30 @@ class XMMSEnvironment(Environment):
 
 		return False
 
+	def scan_dir(self, dir):
+		for d in os.listdir(dir):
+			if d in self['EXCLUDE']:
+				continue
+			if any([d.endswith(end) for end in ["~",".rej",".orig"]]):
+				continue
+			newdir = os.path.join(dir,d)
+			if os.path.isdir(newdir):
+				self.scan_dir(newdir)
+			elif d[0].isupper():
+				self.potential_targets.append((d, newdir))
+
+
+
+	def handle_targets(self, targettype):
+		cls = eval(targettype+"Target")
+		targets = [cls(a[1], self) for a in self.potential_targets if a[0].startswith(targettype)]
+
+		for t in targets:
+			env = self.Copy()
+			env.dir = t.dir
+
+			try:
+				t.config(env)
+				t.add(env)
+			except ConfigError:
+				continue

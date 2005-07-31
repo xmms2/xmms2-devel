@@ -23,6 +23,7 @@ source = ["main.c",
 	]
 
 def config(env):
+	pluginenv = env.Copy()
 	env.Prepend(LIBPATH=["src/lib/xmmsipc"])
 	env.Prepend(LIBPATH=["src/lib/xmmssocket"])
 	env.Append(LIBS=['xmmsipc'])
@@ -34,3 +35,5 @@ def config(env):
 	env.pkgconfig("sqlite3", fail=True)
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
+	# we have a xmms2d - we might want plugins!
+	pluginenv.handle_targets("Plugin")

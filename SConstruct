@@ -119,7 +119,6 @@ def subst_emitter(target, source, env):
             elif SCons.Util.is_String(v):
                 d[k]=env.subst(v)
         Depends(target, SCons.Node.Python.Value(d))
-        # Depends(target, source) # this doesn't help the install-sapphire-linux.sh problem
         return target, source
  
 subst_action = Action (subst_in_file, subst_in_file_string)
@@ -138,81 +137,10 @@ subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platf
 
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
 
-class Target:
-	def __init__(self, target, type):
-		self.dir = os.path.dirname(target)
-		self.type = type
 
-		globs = {}
-		globs['platform'] = base_env.platform
-		globs['ConfigError'] = xmmsenv.ConfigError
+base_env.handle_targets("Library")
+base_env.handle_targets("Program")
 
-		c = compile(file(target).read(), target, "exec")
-		eval(c, globs)
-
-		if not isinstance(globs.get("target"), str):
-			raise RutimeError("Target file '%s' does not specify target, or target is not a string" % target)
-		if not isinstance(globs.get("source"), list):
-			raise RutimeError("Target file '%s' does not specify 'source', or 'source' is not a list" % target)
-
-
-		self.source = [os.path.join(self.dir, s) for s in globs["source"]]
-		self.target = os.path.join(self.dir, globs["target"])
-		self.config = globs.get("config")
-
-		self.install = globs.get("install", True)
-		self.static = globs.get("static", True)
-		self.shared = globs.get("shared", True)
-		self.systemlibrary = globs.get("systemlibrary", False)
-		if globs.has_key("supported_platforms"):
-			raise RuntimeError("%s uses useless supported_platforms" % target)
-
-def scan_dir(dir, dict):
-	for d in os.listdir(dir):
-		if d in base_env['EXCLUDE']:
-			continue
-		newdir = dir+"/"+d
-		if os.path.isdir(newdir):
-			scan_dir(newdir, dict)
-		if os.path.isfile(newdir) and newdir[-1] != "~":
-			if d.startswith('Plugin') and not d.endswith("~"):
-				dict["plugin"].append(newdir)
-			if d.startswith('Library') and not d.endswith("~"):
-				dict["library"].append(newdir)
-			if d.startswith('Program') and not d.endswith("~"):
-				dict["program"].append(newdir)
-
-targets = {"plugin":[], "library":[], "program":[]}
-scan_dir("src", targets)
-
-for t in targets["plugin"]:
-	base_env.targets.append(Target(t, "plugin"))
-for t in targets["library"]:
-	base_env.targets.append(Target(t, "library"))
-for t in targets["program"]:
-	base_env.targets.append(Target(t, "program"))
-
-for t in base_env.targets:
-	env = base_env.Copy()
-	env.dir = t.dir
-
-	try:
-		#plugins get glib automagically..
-		if t.type == "plugin":
-			env.pkgconfig("glib-2.0", libs=False)
-		if t.config:
-			r = t.config(env)
-			if not r is None:
-				raise RuntimeError("%s's config returned something!" % t.dir)
-	except xmmsenv.ConfigError:
-		continue
-
-	if t.type == "plugin":
-		env.add_plugin(t.target, t.source)
-	if t.type == "library":
-		env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary, t.install)
-	if t.type == "program":
-		env.add_program(t.target, t.source)
 
 try:
 	dump(base_env.config_cache, open("config.cache", "wb+"))
