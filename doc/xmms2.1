@@ -1,0 +1,430 @@
+.\" 
+.\" xmms2 - A cli client for xmms2d
+.\"
+.\" xmms2.1 - xmms2 manpage 
+.\"
+.\" Copyright 2005, Alexander Botero-Lowry
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer
+.\"    in this position and unchanged.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.\" $Id: xmms2.1,v 1.2 2005/07/29 07:24:59 alex Exp $
+.\"
+.TH XMMS2 1 
+.SH NAME
+.I xmms2
+offers a simple command-line interface to the 
+.B XMMS2
+daemon.
+.SH SYNOPSIS
+.I xmms2
+[
+.B add
+url
+] [
+.B addid
+medialib_id
+] [
+.B addpls
+url
+] [
+.B radd
+directory
+] [
+.B clear
+] [
+.B shuffle
+] [
+.B sort
+property
+] [ 
+.B remove
+playlist_position
+] [
+.B list
+] [
+.B play
+] [
+.B stop
+] [
+.B pause
+] [
+.B next
+] [
+.B prev
+] [
+.B seek
+[+ / -] seconds
+] [
+.B jump
+playlist_position
+] [
+.B move
+playlist_position movement
+] [
+.B status
+] [
+.B info
+] [
+.B config
+config_key value
+] [
+.B configlist
+] [
+.B quit
+] [
+.B help
+]
+.P
+.I xmms2
+.B mlib
+[
+.B add
+url
+] [
+.B loadall
+] [
+.B searchadd
+key=value
+] [
+.B search
+key=value
+] [
+.B query
+sql_query
+] [
+.B queryadd
+sql_query
+] [ 
+.B list_playlist
+playlist_name
+] [
+.B save_playlist
+playlist_name
+] [
+.B load_playlist
+playlist_name
+] [
+.B playlists_list
+] [
+.B import_playlist
+playlist_name filename
+] [
+.B export_playlist
+playlist_name mimetype
+] [
+.B remove_playlist
+playlist_name
+] [
+.B addpath
+path
+] [
+.B rehash
+]
+.B 
+.SH DESCRIPTION
+.B XMMS2 
+is a redesign of the XMMS (http://www.xmms.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organize your music.
+.PP
+.I xmms2
+is the official command-line interface client for
+.B XMMS2
+and acts as a reference implementation for the development of new clients. 
+.I xmms2
+is able to issue commands to control the current playlist and playback as well as commands to control the media library. 
+.PP
+The following commands effect the current
+.B XMMS2
+playlist.
+.PP
+.PP
+.I xmms2
+includes many commands that allow the user to execute actions on
+.I xmms2d.
+.TP
+.BR
+These commands are currently recognized: 
+.TP
+.I add url
+Adds a URL to the playlist.
+.TP
+.I addid medialib_id
+Adds a song to the playlist using its medialib ID
+.TP
+.I addpls url
+Adds a .m3u or .pls playlist to the 
+.B XMMS2
+playlist
+.TP
+.I radd
+Adds a directory of songs recursively to the playlist
+.TP
+.I clear
+Clears all entries from the playlist
+.TP
+.I shuffle
+Places the songs in the playlist in a random order
+.TP
+.I sort property
+Sort the playlist based on metadata from the Media Library. The metadata which is used for the sorting is based on what was given for 
+.I property.
+An overview of the media library, and the potential properties, can be found in the 
+.B MEDIA LIBRARY
+section of this manual page.
+.TP
+.I remove playlist_position
+Removes a song from the playlist at the position given by 
+.I playlist_position.
+.TP
+.I list
+Lists the contents of the playlist. An explanation of how to change the output format can be found in the
+.B FILES
+section of this manual page. 
+.TP
+.I play
+Starts playback of the playlist
+.TP 
+.I stop
+Stops playback of the playlist
+.TP
+.I pause
+Pauses playback of the playlist
+.TP
+.I next
+Skips to the next song in the playlist
+.TP
+.I prev
+Skips to the previous song in the playlist
+.TP
+.I seek [+ / -] seconds
+Seeks to a specific position in the currently playing song. The way in which 
+.I seek
+moves in the file is based on the arguments passed to it. If + is used 
+.I xmms2
+will seek 
+.I seconds
+forward in the song. If - is used
+.I xmms2
+will seek
+.I seconds
+backwards in the song. If merely a number of seconds is given 
+.I xmms2
+will seek to that absolute position in the song.
+.TP
+.I jump playlist_position
+Jumps to 
+.I playlist_position
+in the playlist
+.TP
+.I move playlist_position movement
+Moves the song at
+.I playlist position
+to the position denoted by
+.I movement.
+.TP 
+.I mlib
+Allows for the manipulation of the Media Library. The significance of the sub-commands of 
+.I mlib
+can be found in the 
+.B MEDIA LIBRARY
+section of this manual page
+.TP
+.I status
+Gives a live status of the currently playing song
+.TP
+.I info
+Gives the metadata archieved by the Media Library for the currently playing song
+.TP
+.I config config_key value
+Sets
+.I config_key
+to
+.I value
+on 
+.I xmms2d(8).
+.TP
+.I configlist
+Lists all the configuration values of 
+.B XMMS2
+.TP
+.I quit
+Makes 
+.I xmms2d(8)
+quit
+.TP
+.I help
+Prints a concise overview of all commands offered by
+.I xmms2
+.SH "MEDIA LIBRARY"
+.B XMMS2
+stores metadata about every song in the Media Library.
+One can retrieve data from the Media Library using the 
+.I mlib 
+command of 
+.I xmms2.
+The Media Library is an SQL database which is created and accessed by use of the sqlite library. The fact that the Media Library is SQL allows for clients to execute complex queries of the database. 
+.I xmms2 mlib
+includes many commands for manipulating and retreiving data from the Media Library.
+.TP
+.BR
+The following 
+.I mlib 
+commands are currently recognized:
+.TP 
+.I add url
+Adds a URL to the Media Library but not to the current playlist. The Media Library also fetches associated metadata for the added song.
+.TP 
+.I loadall
+Load all songs in the Media Library into the current playlist.
+.TP
+.I searchadd key=value
+Searches the Media Library for songs that match the 
+.I key=value 
+criteria and adds them to the currne playlist.
+.TP
+.I search key=value
+Searches and returns a list of songs in the Media Library that match the 
+.I key=value 
+criteria.
+.IP 
+For example one could execute:
+.IP
+.I xmms2 mlib search artist=Dismantled
+.IP
+The reuslt of which would be that all songs by Dismantled in the Media Library would be listed.
+.TP
+.I query sql statement
+Queries the Media Library with the given SQL statement
+.TP
+.I queryadd sql statement
+Queries the Media Library with the given SQL statement and adds the returned songs to the current playlist.
+.TP 
+.I list_playlist playlist
+Shows the songs in 
+.I playlist.
+.TP
+.I save_playlist playlist
+Saves the songs in the current playlist into a Media Library playlist named
+.I playlist.
+.TP
+.I load_playlist playlist
+Loads the playlist
+.I playlist
+from the Media Library into the current playlist.
+.TP
+.I playlists_list
+Lists all playlists stored in the Media Library
+.TP 
+.I import_playlist name filename
+Imports the
+.I filename
+playlist into the Media Library with the name
+.I name. The playlist may be in either the .m3u or .pls format.
+.TP
+.I export_playlist playlist mimetype
+Exports the playlist to
+.I stdout.
+.I playlist
+to a file with the mimetype
+.I mimetype.
+.TP
+.I remove_playlist playlist
+Removes the playlist
+.I playlist
+from the Media Library
+.TP
+.I addpath path
+Adds all songs in directory
+.I path
+into the Media Library
+.TP
+.I rehash
+Force the Media Library to check whether its data is up to date.  
+.PP
+The Media Library allows for any variety of keys (sometimes called properties) to be stored within. There is no set list of avaliable keys but rather the Media Library can store any variety of different values. For this reason it is difficult to give a complete list of avaliable keys but some examples are:
+.TP
+.I url
+The path to the song in url
+.TP
+.I added
+The time in seconds since UTC 00:00:00, 1 Jan 1970 that the song was added to the Media Library
+.TP
+.I mime
+The MIME type of the song in the Media Library
+.TP
+.I lmod
+The last time in seconds since UTC 00:00:00, 1 Jan 1970 that the song was modified
+.TP 
+.I laststarted
+The last time the song was played
+.TP
+.I duration
+The length of the song in seconds
+.TP
+.I bitrate
+The bitrate of the song in bps
+.TP
+.I album
+The name of the album the song is on
+.TP
+.I artist
+The name of the artist that produced the song
+.TP
+.I title
+The title of the song
+.TP
+.I tracknr
+The track number of the song
+.TP
+.I {album, artist, track}_id
+MusicBrainz ID numbers for the song
+
+.SH FILES
+.TP
+.I $HOME/.xmms2/clients/cli.conf
+A configuration file containing basic configuration values for 
+.I xmms2,
+including the output format used by the
+.I list
+and
+.I status
+commands.
+.SH ENVIRONMENTAL VARIABLES
+.TP
+.I XMMS_PATH
+The URL path to 
+.I xmms2d.
+See
+.B IPC SOCKET
+in  
+.I xmms2d(8)
+for details of possible values for this variable
+
+.SH SEE ALSO
+xmms2d(8), http://xmms2.sourceforge.net
+.SH HISTORY
+The
+.B XMMS2
+Project was started by Tobias Rundström and Anders Gustafsson. It is developed with their lead by a small group of contributers from all over the world.
+.SH AUTHOR
+This manual page was written by Alexander Botero-Lowry <drax@stampede.org>

@@ -27,12 +27,11 @@
 #include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmmsc/xmmsc_stdbool.h"
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <assert.h>
 
 #define HASH_TABLE_MIN_SIZE 11

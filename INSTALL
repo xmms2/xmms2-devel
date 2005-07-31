@@ -8,53 +8,64 @@ http://wiki.xmms2.xmms.se/index.php/Install_instructions
 You will need the following things to build XMMS2.
 
     * Python (http://www.python.org/) (>=2.2.1)
-    * SCons (http://www.scons.org/). (>= 0.94)
+    * Scons (http://www.scons.org/) (>= 0.96.90)
     * GLib (http://www.gtk.org/) (>= 2.2.0)
     * MAD (http://www.underbit.com/products/mad/)
-    * SQLite (http://www.sqlite.org) (3.2.x) 
+    * SQLite (http://www.sqlite.org) (3.2.x)
 
-These libraries are not needed but probably a good idea.
+These libraries are not needed for building xmms2d itself, but may be needed
+for plugins.
 
     * Curl (http://curl.haxx.se) (>= 7.11.2)
     * Vorbisfile (http://www.xiph.org)
     * ALSA (http://www.alsa-project.org)
     * SIDplay2 (http://sidplay2.sourceforge.net/)
     * reSID (http://www.geocities.com/SiliconValley/Lakes/5147/resid/)
-    * Pyrex (http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/) - For python bindings.
-    * Ruby (http://www.ruby-lang.org/) (>= 1.8) - For Ruby bindings. 
+    * Pyrex (http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/) (>=0.9.3) -
+    For python bindings, NOTE that pyrex generates code that gcc4 does NOT
+    compile, you need an older gcc.
+    * Ruby (http://www.ruby-lang.org/) (>= 1.8) - For Ruby bindings.
+
+== Platform-specific notes ==
+Some supported platforms may have variations on build requirements:
+    * FreeBSD - see http://wiki.xmms2.xmms.se/index.php/FreeBSD
+    * OS X - see http://wiki.xmms2.xmms.se/index.php/OS_X
+    * Windows - see http://wiki.xmms2.xmms.se/index.php/Windows
 
 == Configuring ==
-
-Run scons to first run the configuration. Tweak the options, running
-scons CONFIG=1 each time till satisfied.
+Run 'scons' to first run the configuration. Tweak the options, running 
+'scons CONFIG=1' each time till satisfied. You can exclude certain optional
+modules by running 'scons EXCLUDE="module1 module2 module3"' where module names
+are configuration groups listed in 'xmmsconf.py'. (Sorry, there is currently no
+user-friendly way of listing the modules )
 
 == Compiling ==
-
-Simply run scons to compile, or scons PREFIX=/some/custom/path if you
-plan on installing XMMS2 in /some/custom/path.
+Simply run 'scons' to compile, or 'scons PREFIX=/some/custom/path' if you plan
+on installing XMMS2 in '/some/custom/path'.
 
 == Installing ==
 
-Run scons install to install packages to their default path. You can
-also install it to a non standard path by adding the PREFIX option to
-scons. Like this:
+Run 'scons install' to install packages to their default path. You can also
+install it to a non standard path by adding the PREFIX option to scons. Like
+this:
 
-scons PREFIX=/usr/local/xmms
-scons PREFIX=/usr/local/xmms install
+ scons PREFIX=/usr/local/xmms
+ scons PREFIX=/usr/local/xmms install
 
-To only change the path the manual pages are installed in provide the
-MANDIR option (it defaults to $PREFIX/man).
+To only change the path the manual pages are installed in provide the MANDIR
+option (it defaults to $PREFIX/man).
 
-The INSTALLDIR option provides a way to prepend a path to all install
-pathes for package builders. When this option is set xmms2 still
-expects the files to be in the location without INSTALLDIR prepended.
+The INSTALLDIR option provides a way to prepend a path to all install pathes
+for package builders. When this option is set xmms2 still expects the files to
+be in the location without INSTALLDIR prepended.
 
 == Cleaning up ==
 
-scons -c will clean the objects and binaries.
+'scons -c' will clean the objects and binaries.
 
 == Uninstalling ==
-
-scons -c /path/ will uninstall any files installed under /path For
-example, if you installed xmms2 under /usr/local (default), run scons
--c /usr/local
+'scons -c install' will uninstall any files installed by 'scons install'.
+Alternatively, 'scons -c /path/' will uninstall any files installed under
+'/path/'
+For example, if you installed xmms2 under /usr/local (default), run
+'scons -c /usr/local'

@@ -2,7 +2,7 @@
 #ifndef __X_QUEUE_H_
 #define __X_QUEUE_H_
 
-#include <stdbool.h>
+#include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
 
 #ifdef __cplusplus

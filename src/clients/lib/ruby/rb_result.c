@@ -19,7 +19,7 @@
 #include <xmms/xmms_object.h>
 
 #include <ruby.h>
-#include <stdbool.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 #include "rb_xmmsclient.h"
 #include "rb_result.h"

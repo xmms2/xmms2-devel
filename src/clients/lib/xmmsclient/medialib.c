@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -23,11 +23,12 @@
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_stringport.h"
 
 static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER(%s)",
-											  "LOWER(m%d.value) LIKE LOWER(%s)",
-											  "m%d.id = m%d.id",
-											  "Media AS m%d"};
+					      "LOWER(m%d.value) LIKE LOWER(%s)",
+					      "m%d.id = m%d.id",
+					      "Media AS m%d"};
 
 typedef enum templ_type_e {templ_key, templ_value, templ_id, templ_table} templ_type;
 
@@ -44,7 +45,7 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, id);
 	xmms_ipc_msg_put_string (msg, arg);
 
@@ -69,7 +70,7 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
  * Escape a string so that it can be used in sqlite queries.
  *
  * @param Input string, is not freed by this function!
- * @returns string enclosed in single quotes, with all single quotes in the string 
+ * @returns string enclosed in single quotes, with all single quotes in the string
  * replaced with double single quotes
  *
  * Example:
@@ -79,7 +80,7 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 char *
 xmmsc_sqlite_prepare_string (char *input) {
 	char *output;
-	int outsize, nquotes=0;
+	int outsize, nquotes = 0;
 	int i, o;
 
 	for (i = 0; input[i] != '\0'; i++) {
@@ -87,14 +88,15 @@ xmmsc_sqlite_prepare_string (char *input) {
 			nquotes++;
 		}
 	}
-	
+
 	outsize = strlen(input) + nquotes + 2 + 1; /* 2 quotes to terminate the string , and one \0 in the end */
-	output = (char*) malloc(outsize);
+	output = malloc(outsize);
 
 	if (output == NULL) {
+		x_oom();
 		return NULL;
 	}
-	
+
 	i = o = 0;
 	output[o++] = '\'';
 	while (input[i] != '\0') {
@@ -107,7 +109,7 @@ xmmsc_sqlite_prepare_string (char *input) {
 	output[o] = '\0';
 
 	return output;
-	
+
 }
 
 
@@ -120,37 +122,37 @@ char *
 xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attributes, unsigned i)
 {
 	int res_size = 0;
-	char *res = NULL;
-	char *tbuf = (char*) malloc(sizeof(char));
-	if (tbuf == NULL) {
-		return NULL;
-	}
+	char *res;
+	char t;
 
 	switch (idx) {
 	case templ_key:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_key], i, attributes[i].key);
+		res_size = snprintf(&t, 1, constraint_templates[templ_key], i, attributes[i].key);
 		break;
 	case templ_value:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_value], i, attributes[i].value);
+		res_size = snprintf(&t, 1, constraint_templates[templ_value], i, attributes[i].value);
 		break;
 	case templ_id:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_id], i-1, i);
+		res_size = snprintf(&t, 1, constraint_templates[templ_id], i-1, i);
 		break;
 	case templ_table:
-		res_size = snprintf(tbuf, 1, constraint_templates[templ_table], i);
+		res_size = snprintf(&t, 1, constraint_templates[templ_table], i);
+		break;
+	default:
+		/* do we need a default error case? */
 		break;
 	}
-	free(tbuf);
-	
+
 	res_size += 1;
-	
+
 	res = malloc(res_size);
 	if (res == NULL) {
+		x_oom();
 		return NULL;
 	}
 
 
-	switch(idx) {
+	switch (idx) {
 	case templ_key:
 		snprintf(res, res_size, constraint_templates[templ_key], i, attributes[i].key);
 		break;
@@ -160,7 +162,7 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
 	case templ_id:
 		snprintf(res, res_size, constraint_templates[templ_id], i-1, i);
 		break;
-	case templ_table:		
+	case templ_table:
 		snprintf(res, res_size, constraint_templates[templ_table], i);
 		break;
 	}
@@ -173,61 +175,60 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
  * Construct constraints of the query string from query attribute vector
  */
 
-int 
-xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *attributes, unsigned n) {
+int
+xmmsc_querygen_parse_constraints (char **pconstraints,
+                                  xmmsc_query_attribute_t *attributes,
+                                  unsigned int n)
+{
 	int success = 1, tmp_size;
-	char *oconstraints = NULL;
-	char *constraints = NULL;
-	char *initconstraints = " WHERE ";
-	char *tmp = NULL;
-	unsigned i;
+	char *oconstraints = NULL, *constraints, *tmp = NULL;
+	unsigned int i, size = 0;
 	templ_type template;
-	unsigned size = 0;	
-	
-	constraints = (char*) malloc(strlen(initconstraints+1));
+
+	constraints = strdup (" WHERE ");
 
 	if (constraints == NULL) {
-		success = 0;
+		x_oom ();
+		*pconstraints = NULL;
+		return 0;
 	} else {
-		strcpy(constraints, initconstraints);
-		size = strlen(constraints)+1;
+		size = strlen (constraints) + 1;
 	}
-	
-	if (success) {
-		for (i = 0; i < n; i++) {
-			for (template = templ_key; template <= templ_id; template++) {				
-				if (i == 0 && template == templ_id) {
-					break; /* Can't do id matching on the first attribute */
-				}
-				
-				tmp = xmmsc_querygen_fill_template(template, attributes, i);
-				if (tmp == NULL) {				
-					success = 0;
-				}						
-		
-				tmp_size = strlen(tmp);
 
-				size += tmp_size + (i == 0 && template == templ_key ? 0 : 5);
-				oconstraints = constraints;
-				constraints = (char*) realloc(constraints, size);
-				if (constraints == NULL) {
-					success = 0;
-					free(oconstraints);				
-					break;
-				}
-
-				if ( !(i == 0 && template == templ_key) ) {
-					strcat(constraints, " AND "); /* Don't need AND for first constraint */
-				}			
-
-				strcat(constraints, tmp);		
-
-				free(tmp);
+	for (i = 0; i < n; i++) {
+		for (template = templ_key; template <= templ_id; template++) {
+			if (!i && template == templ_id) {
+				break; /* Can't do id matching on the first attribute */
 			}
+
+			tmp = xmmsc_querygen_fill_template(template, attributes, i);
+			if (!tmp) {
+				success = 0;
+			}
+
+			tmp_size = strlen (tmp);
+
+			size += tmp_size + (!i && template == templ_key ? 0 : 5);
+			oconstraints = constraints;
+			constraints = realloc(constraints, size);
+			if (!constraints) {
+				success = 0;
+				free (oconstraints);
+				break;
+			}
+
+			if (!(!i && template == templ_key) ) {
+				/* Don't need AND for first constraint */
+				strcat (constraints, " AND ");
+			}
+
+			strcat (constraints, tmp);
+			free (tmp);
 		}
 	}
 
-	(*pconstraints) = constraints;
+	*pconstraints = constraints;
+
 	return success;
 }
 
@@ -237,55 +238,55 @@ xmmsc_querygen_parse_constraints (char **pconstraints, xmmsc_query_attribute_t *
  */
 
 int
-xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes, unsigned n) {
+xmmsc_querygen_parse_tables (char **ptables,
+                             xmmsc_query_attribute_t *attributes,
+                             unsigned int n)
+{
 	int success = 1;
-	char *otables = NULL;
-	char *tables = NULL;
-	char *tmp = NULL;
-	unsigned i;
-	unsigned size = 1; // make space for the terminating null byte
-	unsigned tmp_size = 0;
+	char *otables = NULL, *tables, *tmp = NULL;
+	unsigned int i, size = 1; /* make space for the terminating null byte */
+	unsigned int tmp_size = 0;
 
-
-	tables = malloc(1);
+	tables = malloc (1);
 	if (tables == NULL) {
-		success = 0;
-	} else {
-		tables[0] = '\0';
+		x_oom ();
+		*ptables = NULL;
+		return 0;
 	}
-	
-	if (success) {
-		for (i = 0; i < n; i++) {
 
-			tmp = xmmsc_querygen_fill_template(templ_table, attributes, i);
-			if (tmp == NULL) {
-				success = 0;
-				break;
-			}
-			
-			tmp_size = strlen(tmp);
+	tables[0] = '\0';
 
-			size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
-			otables = tables;
-			tables = (char*) realloc(tables, size);
+	for (i = 0; i < n; i++) {
+		tmp = xmmsc_querygen_fill_template (templ_table, attributes, i);
+		if (!tmp) {
+			success = 0;
+			break;
+		}
 
-			if (tables == NULL) {
-				success = 0;
-				free(otables);
-				break;
-			}
+		tmp_size = strlen (tmp);
 
-			if (i != 0) {
-				strcat(tables, ", ");
-			}
-			strcat(tables, tmp);
-			free(tmp);
-		}	
+		size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
+		otables = tables;
+		tables = realloc (tables, size);
+
+		if (tables == NULL) {
+			x_oom ();
+			success = 0;
+			free (otables);
+			break;
+		}
+
+		if (i) {
+			strcat (tables, ", ");
+		}
+
+		strcat (tables, tmp);
+		free (tmp);
 	}
-		
+
 	(*ptables) = tables;
-	return success;
 
+	return success;
 }
 
 /**
@@ -301,49 +302,40 @@ xmmsc_querygen_parse_tables (char **ptables, xmmsc_query_attribute_t *attributes
 
 char *
 xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
-{	
-	char **tables;
-	char **constraints;
-	int success = 1, fullsize;
-	char *query;
+{
+	char *tables = NULL, *constraints = NULL, *query = NULL;
+	int success, fullsize;
 
 	const char *initquery = "SELECT DISTINCT m0.id FROM ";
 
+	success = xmmsc_querygen_parse_tables (&tables, attributes, n);
+
 	if (success) {
-		tables = (char**) malloc(sizeof(char**));
-		constraints = (char**) malloc(sizeof(char**));
-		if (tables == NULL || constraints == NULL) {
-			free(tables);
-			free(constraints);
-			success = 0;
-		}
+		success = xmmsc_querygen_parse_constraints (&constraints,
+		                                            attributes, n);
 	}
 
 	if (success) {
-		success = xmmsc_querygen_parse_tables(tables, attributes, n);
-		success = xmmsc_querygen_parse_constraints(constraints, attributes, n);
+		fullsize = strlen (initquery);
+		fullsize += strlen (tables);
+		fullsize += strlen (constraints);
+
+		query = malloc (fullsize + 1);
+		success = !!query;
 	}
 
-	if (success) {
-		fullsize = strlen(initquery) + strlen(*tables) + strlen(*constraints) + 1;
-		query = (char*) malloc(fullsize);
-		if (query == NULL) {
-			success = 0;
-		}
-	}
 	if (success) {
 		query[0] = '\0';
-		strcat(query, initquery);
-		strcat(query, *tables);
-		strcat(query, *constraints);	
+		strcat (query, initquery);
+		strcat (query, tables);
+		strcat (query, constraints);
 	}
 
-	free(tables[0]);
-	free(constraints[0]);
-	free(tables);
-	free(constraints);
+	if (tables) 
+		free (tables);
+	free (constraints);
 
-	return query;		
+	return query;
 }
 
 /**
@@ -369,7 +361,7 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, mime);
@@ -387,11 +379,11 @@ xmmsc_medialib_playlists_list (xmmsc_connection_t *conn)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLISTS_LIST);
-	
+
 	res = xmmsc_send_msg (conn, msg);
-	
+
 	return res;
 }
 
@@ -406,7 +398,7 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_IMPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, url);
@@ -555,7 +547,7 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_ADD_TO_PLAYLIST);
 	xmms_ipc_msg_put_string (msg, query);
 	res = xmmsc_send_msg (c, msg);

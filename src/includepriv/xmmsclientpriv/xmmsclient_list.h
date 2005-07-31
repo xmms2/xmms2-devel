@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-typedef struct _x_list_t		x_list_t;
+typedef struct _x_list_t x_list_t;
 
 struct _x_list_t
 {

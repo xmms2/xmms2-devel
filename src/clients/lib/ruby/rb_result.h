@@ -18,7 +18,7 @@
 #define __RB_RESULT_H
 
 #include <xmmsclient/xmmsclient.h>
-#include <stdbool.h>
+#include <xmmsc/xmmsc_stdbool.h>
 
 VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
                              bool unref, bool unref_children);

@@ -7,10 +7,13 @@ target="sid"
 # then we tell scons where our sources are
 source=["sid.cpp"]
 
+supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+
 def config(env):
 	""" 
 	This function should return True if this module
 	is to be built otherwise False
 	"""
+
 	return False
 

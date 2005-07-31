@@ -7,6 +7,8 @@ target="ices"
 # then we tell scons where our sources are
 source=["ices.c", "encode.c"]
 
+supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+
 def config(env):
 	""" 
 	This function should return True if this module

@@ -7,10 +7,15 @@ target="curl_http"
 # then we tell scons where our sources are
 source=["curl_http.c"]
 
+supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+
 def config(env):
 	""" 
 	This function should return True if this module
 	is to be built otherwise False
 	"""
-	return env.configcmd("curl-config --libs --cflags")
+	
+	if env.configcmd("curl-config --libs --cflags"):		
+		return True
+
 

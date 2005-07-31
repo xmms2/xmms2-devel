@@ -18,7 +18,8 @@
 #ifndef XMMS_IPC_TRANSPORT_H
 #define XMMS_IPC_TRANSPORT_H
 
-#include <inttypes.h>
+#include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_sockets.h"
 
 typedef struct xmms_ipc_transport_St xmms_ipc_transport_t;
 
@@ -38,7 +39,7 @@ xmms_ipc_transport_t * xmms_ipc_server_init (const char *path);
 struct xmms_ipc_transport_St {
 	char *path;
 	void *data;
-	int fd;
+	xmms_socket_t fd;
 	int32_t peer;
 	int16_t peer_port;
 

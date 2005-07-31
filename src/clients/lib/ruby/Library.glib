@@ -1,5 +1,6 @@
 import os
 
+supported_platforms = ['darwin', 'freebsd', 'linux', 'netbsd', 'openbsd']
 target="xmmsclient_glib"
 source=["rb_xmmsclient_glib.c"]
 static=False
@@ -10,7 +11,7 @@ def config(env):
 		print "Checking for Ruby 1.8 or greater... ",
 
 		version = env.run("ruby -e 'puts VERSION'").strip()
-		if [int(a) for a in version.split(".")] < [1, 8] :
+		if not version or [int(a) for a in version.split(".")] < [1, 8] :
 			print "no"
 			return False
 

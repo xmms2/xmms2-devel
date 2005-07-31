@@ -1,10 +1,13 @@
 target="xmmsclient-glib"
 systemlibrary=True
 
+supported_platforms = ['darwin', 'freebsd', 'linux', 'netbsd', 'openbsd']
+
 source=["xmmsclient-glib.c"]
 
 def config(env):
-#	env["LIBS"].append("xmmsclient")
-#	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	#env["LIBS"].append("xmmsclient")
+	#env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	env.pkgconfig("glib-2.0")
+	
 	return True

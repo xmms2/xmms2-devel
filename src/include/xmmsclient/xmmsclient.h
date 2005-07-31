@@ -17,7 +17,7 @@
 #ifndef __XMMS_CLIENT_H__
 #define __XMMS_CLIENT_H__
 
-#include <inttypes.h>
+#include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
@@ -53,9 +53,6 @@ xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 
 void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
 void xmmsc_signal_disconnect (xmmsc_result_t *res);
-char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
-
-
 
 char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
 char *xmmsc_sqlite_prepare_string (char *input);

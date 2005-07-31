@@ -5,6 +5,7 @@ import sys
 import SCons
 import re
 import string
+import new
 from marshal import dump
 
 try:
@@ -24,16 +25,30 @@ def SimpleListOption(key, help, default=[]):
 
 
 opts = Options("options.cache")
-opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
-opts.Add('CC', 'C compiler to use', 'gcc')
-opts.Add('CXX', 'C++ compiler to use', 'g++')
-opts.Add('LD', 'Linker to use', 'ld')
-opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
-opts.Add(SimpleListOption('LIBPATH', 'Path to libs', ['/sw/lib']))
-opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
-opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
-opts.Add(SimpleListOption('CPPPATH', 'path to include files', []))
-opts.Add('PREFIX', 'install prefix', '/usr/local')
+if sys.platform == 'win32':
+	opts.Add('PYREX', 'PyREX compiler', 'pyrexc.py')
+	opts.Add('CC', 'C compiler to use', 'cl')
+	opts.Add('CXX', 'C++ compiler to use', 'cl')
+	opts.Add('LD', 'Linker to use', 'link')
+	opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
+	opts.Add(SimpleListOption('LIBPATH', 'Path to libs', []))
+	opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['/Zi', '/TP']))
+	opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['/Zi', '/TC']))
+	opts.Add(SimpleListOption('CPPPATH', 'path to include files', ['z:\\xmms2\\winlibs\\include']))
+	opts.Add('PREFIX', 'install prefix', 'c:\\xmms2')
+else:
+	opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
+	opts.Add('CC', 'C compiler to use', 'gcc')
+	opts.Add('CXX', 'C++ compiler to use', 'g++')
+	opts.Add('LD', 'Linker to use', 'ld')
+	opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
+	opts.Add(SimpleListOption('LIBPATH', 'Path to libs', ['/sw/lib']))
+	opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
+	opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
+	opts.Add(SimpleListOption('CPPPATH', 'path to include files', []))
+	opts.Add('PREFIX', 'install prefix', '/usr/local')
+
+	
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
@@ -49,12 +64,11 @@ opts.Save("options.cache", base_env)
 
 
 base_env.Append(CPPPATH=["#src/include"])
-base_env.pkgconfig("sqlite3", fail=True, libs=False)
-base_env.pkgconfig("glib-2.0", fail=True, libs=False)
+if sys.platform != 'win32':
+	base_env.pkgconfig("sqlite3", fail=True, libs=False)
+	base_env.pkgconfig("glib-2.0", fail=True, libs=False)
 base_env["LIBS"]=[]
-
 Help(opts.GenerateHelpText(base_env))
-
 def do_subst_in_file(targetfile, sourcefile, dict):
 	"""Replace all instances of the keys of dict with their values.
 	For example, if dict is {'%VERSION%': '1.2345', '%BASE%': 'MyProg'},
@@ -132,8 +146,9 @@ class Target:
 		self.static = True
 		self.shared = True
 		self.install = True
-		self.systemlibrary = False
+		self.systemlibrary = False		
 		my_global = {}
+		my_global['platform'] = base_env.platform
 		f = file(target)
 		source = f.read()
 		c = compile(source, target, "exec")
@@ -151,9 +166,9 @@ class Target:
 			if my_global.has_key("systemlibrary"):
 				self.systemlibrary = my_global["systemlibrary"]
 			if my_global.has_key("supported_platforms"):
-				self.supportedplatforms = my_global["supported_platforms"]
+				self.supported_platforms = my_global["supported_platforms"]
 			else:
-				self.supportedplatforms = None
+				self.supported_platforms = None
 		else:
 			raise RutimeError("Wrong file %s passed to Target!" % target)
 
@@ -165,11 +180,11 @@ def scan_dir(dir, dict):
 		if os.path.isdir(newdir):
 			scan_dir(newdir, dict)
 		if os.path.isfile(newdir) and newdir[-1] != "~":
-			if d.startswith('Plugin'):
+			if d.startswith('Plugin') and not d.endswith("~"):
 				dict["plugin"].append(newdir)
-			if d.startswith('Library'):
+			if d.startswith('Library') and not d.endswith("~"):
 				dict["library"].append(newdir)
-			if d.startswith('Program'):
+			if d.startswith('Program') and not d.endswith("~"):
 				dict["program"].append(newdir)
 
 targets = {"plugin":[], "library":[], "program":[]}
@@ -183,9 +198,8 @@ for t in targets["program"]:
 	base_env.targets.append(Target(t, "program"))
 
 for t in base_env.targets:
-	if t.supportedplatforms and base_env.platform not in t.supportedplatforms:
+	if t.supported_platforms and base_env.platform not in t.supported_platforms:
 		continue
-
 	env = base_env.Copy()
 	env.dir = t.dir
 

@@ -15,7 +15,6 @@
  */
 
 #include <stdlib.h>
-#include <strings.h>
 
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
@@ -45,7 +44,7 @@ xmms_ipc_transport_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 	return ipct->write_func (ipct, buffer, len);
 }
 
-int
+xmms_socket_t
 xmms_ipc_transport_fd_get (xmms_ipc_transport_t *ipct)
 {
 	x_return_val_if_fail (ipct, -1);
@@ -63,44 +62,4 @@ xmms_ipc_server_accept (xmms_ipc_transport_t *ipct)
 	return ipct->accept_func (ipct);
 }
 
-xmms_ipc_transport_t *
-xmms_ipc_client_init (const char *path)
-{
-	xmms_ipc_transport_t *transport = NULL;
-	xmms_url_t *url;
 
-	x_return_val_if_fail (path, NULL);
-
-	url = parse_url (path);
-	x_return_val_if_fail (url, NULL);
-
-	if (!strcasecmp (url->protocol, "") || !strcasecmp (url->protocol, "unix")) {
-		transport = xmms_ipc_usocket_client_init (url);
-	} else if (!strcasecmp (url->protocol, "tcp")) {
-		transport = xmms_ipc_tcp_client_init (url, url->ipv6_host);
-	}
-
-	free_url (url);
-	return transport;
-}
-
-xmms_ipc_transport_t *
-xmms_ipc_server_init (const char *path)
-{
-	xmms_ipc_transport_t *transport = NULL;
-	xmms_url_t *url;
-
-	x_return_val_if_fail (path, NULL);
-
-	url = parse_url (path);
-	x_return_val_if_fail (url, NULL);
-
-	if (!strcasecmp (url->protocol, "") || !strcasecmp (url->protocol, "unix")) {
-		transport = xmms_ipc_usocket_server_init (url);
-	} else if (!strcasecmp (url->protocol, "tcp")) {
-		transport = xmms_ipc_tcp_server_init (url, url->ipv6_host);
-	}
-
-	free_url (url);
-	return transport;
-}

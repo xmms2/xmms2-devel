@@ -9,11 +9,13 @@ target="coreaudio"
 # then we tell scons where our sources are
 source=["coreaudio.c"]
 
+supported_platforms = ['darwin']
+
 def config(env):
 	""" 
 	This function should return True if this module
 	is to be built otherwise False
 	"""
-	env["LINKFLAGS"] = "$LINKFLAGS -framework CoreAudio -framework AudioUnit"
-	return env.platform == 'darwin'
+	env["LINKFLAGS"] = "$LINKFLAGS -framework CoreAudio -framework AudioUnit"	
+	return True
 
