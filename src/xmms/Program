@@ -19,19 +19,21 @@ source = ["main.c",
 	  "log.c",
 	  "plugin.c",
 	  "magic.c",
-	  "ringbuf.c"]
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+	  "ringbuf.c",
+	]
 
 def config(env):
-	env["LIBS"].append("xmmsipc")
-	env["LIBS"].append("xmmssocket")
-	env.Prepend(LIBPATH="src/lib/xmmsipc")
-	env.Prepend(LIBPATH="src/lib/xmmssocket")
-	env["CPPPATH"].append("#src/includepriv")
+	pluginenv = env.Copy()
+	env.Prepend(LIBPATH=["src/lib/xmmsipc"])
+	env.Prepend(LIBPATH=["src/lib/xmmssocket"])
+	env.Append(LIBS=['xmmsipc'])
+	env.Append(LIBS=["xmmssocket"])
+	env.Append(CPPPATH=["#src/includepriv"])
 	env.pkgconfig("glib-2.0", fail=True)
 	env.pkgconfig("gmodule-2.0", fail=True)
 	env.pkgconfig("gthread-2.0", fail=True)
 	env.pkgconfig("sqlite3", fail=True)
 	if env.platform != 'win32':
-		env.checklibs("m", "sin", fail=True)
-	return True
+		env.checklib("m", "sin", fail=True)
+	# we have a xmms2d - we might want plugins!
+	pluginenv.handle_targets("Plugin")

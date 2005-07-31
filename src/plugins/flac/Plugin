@@ -1,18 +1,8 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="flac"
-# then we tell scons where our sources are
 source=["flac.c"]
 
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
-
-def config(env):    
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""	
-	return env.checklibs("FLAC", "FLAC__seekable_stream_decoder_get_state")
+def config(env):
+	env.checkheader("FLAC/all.h")
+	env.Append(LIBS=['m'])
+	env.checklib("FLAC", "FLAC__seekable_stream_decoder_get_state")
 
