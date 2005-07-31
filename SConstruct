@@ -41,7 +41,6 @@ else:
 		default_cpppath = []
 
 opts = Options("options.cache")
-opts.Add('PYREX', 'PyREX compiler', default_pyrex)
 opts.Add('CC', 'C compiler to use')
 opts.Add('CXX', 'C++ compiler to use')
 opts.Add('LD', 'Linker to use')
