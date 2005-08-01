@@ -24,31 +24,32 @@ def SimpleListOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
 
 
-opts = Options("options.cache")
 if sys.platform == 'win32':
-	opts.Add('PYREX', 'PyREX compiler', 'pyrexc.py')
-	opts.Add('CC', 'C compiler to use', 'cl')
-	opts.Add('CXX', 'C++ compiler to use', 'cl')
-	opts.Add('LD', 'Linker to use', 'link')
-	opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
-	opts.Add(SimpleListOption('LIBPATH', 'Path to libs', []))
-	opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['/Zi', '/TP']))
-	opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['/Zi', '/TC']))
-	opts.Add(SimpleListOption('CPPPATH', 'path to include files', ['z:\\xmms2\\winlibs\\include']))
-	opts.Add('PREFIX', 'install prefix', 'c:\\xmms2')
+	default_pyrex = 'pyrexc.py'
+	default_prefix = 'c:\\xmms2'
+	default_cxxflags = ['/Zi', '/TC']
+	default_cflags = ['/Zi', '/TC']
+	default_cpppath = ['z:\\xmms2\\winlibs\\include']
 else:
-	opts.Add('PYREX', 'PyREX compiler', 'pyrexc')
-	opts.Add('CC', 'C compiler to use', 'gcc')
-	opts.Add('CXX', 'C++ compiler to use', 'g++')
-	opts.Add('LD', 'Linker to use', 'ld')
-	opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
-	opts.Add(SimpleListOption('LIBPATH', 'Path to libs', ['/sw/lib']))
-	opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', ['-g', '-Wall', '-O0']))
-	opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', ['-g', '-Wall', '-O0']))
-	opts.Add(SimpleListOption('CPPPATH', 'path to include files', []))
-	opts.Add('PREFIX', 'install prefix', '/usr/local')
+	default_pyrex = 'pyrexc'
+	default_prefix = '/usr/local/'
+	default_cxxflags = ['-g', '-Wall', '-O0']
+	default_cflags = ['-g', '-Wall', '-O0']
+	if sys.platform == 'darwin':
+		default_cpppath = ['/sw/lib']
+	else:
+		default_cpppath = []
 
-	
+opts = Options("options.cache")
+opts.Add('CC', 'C compiler to use')
+opts.Add('CXX', 'C++ compiler to use')
+opts.Add('LD', 'Linker to use')
+opts.Add(SimpleListOption('LINKFLAGS', 'Linker flags', []))
+opts.Add(SimpleListOption('LIBPATH', 'Path to libs', []))
+opts.Add(SimpleListOption('CPPPATH', 'path to include files', default_cpppath))
+opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', default_cxxflags))
+opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', default_cflags))
+opts.Add('PREFIX', 'install prefix', default_prefix)
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
@@ -64,11 +65,9 @@ opts.Save("options.cache", base_env)
 
 
 base_env.Append(CPPPATH=["#src/include"])
-if sys.platform != 'win32':
-	base_env.pkgconfig("sqlite3", fail=True, libs=False)
-	base_env.pkgconfig("glib-2.0", fail=True, libs=False)
-base_env["LIBS"]=[]
+
 Help(opts.GenerateHelpText(base_env))
+
 def do_subst_in_file(targetfile, sourcefile, dict):
 	"""Replace all instances of the keys of dict with their values.
 	For example, if dict is {'%VERSION%': '1.2345', '%BASE%': 'MyProg'},
@@ -120,7 +119,6 @@ def subst_emitter(target, source, env):
             elif SCons.Util.is_String(v):
                 d[k]=env.subst(v)
         Depends(target, SCons.Node.Python.Value(d))
-        # Depends(target, source) # this doesn't help the install-sapphire-linux.sh problem
         return target, source
  
 subst_action = Action (subst_in_file, subst_in_file_string)
@@ -139,77 +137,10 @@ subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platf
 
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
 
-class Target:
-	def __init__(self, target, type):
-		self.dir = os.path.dirname(target)
-		self.type = type
-		self.static = True
-		self.shared = True
-		self.install = True
-		self.systemlibrary = False		
-		my_global = {}
-		my_global['platform'] = base_env.platform
-		f = file(target)
-		source = f.read()
-		c = compile(source, target, "exec")
-		eval(c, my_global)
-		if my_global["target"] and my_global["source"] and my_global["config"]:
-			self.source = [os.path.join(self.dir, s) for s in my_global["source"]]
-			self.target = os.path.join(self.dir, my_global["target"])
-			self.config = my_global["config"]
-			if my_global.has_key("install"):
-				self.install = my_global["install"]
-			if my_global.has_key("static"):
-				self.static = my_global["static"]
-			if my_global.has_key("shared"):
-				self.shared = my_global["shared"]
-			if my_global.has_key("systemlibrary"):
-				self.systemlibrary = my_global["systemlibrary"]
-			if my_global.has_key("supported_platforms"):
-				self.supported_platforms = my_global["supported_platforms"]
-			else:
-				self.supported_platforms = None
-		else:
-			raise RutimeError("Wrong file %s passed to Target!" % target)
 
-def scan_dir(dir, dict):
-	for d in os.listdir(dir):
-		if d in base_env['EXCLUDE']:
-			continue
-		newdir = dir+"/"+d
-		if os.path.isdir(newdir):
-			scan_dir(newdir, dict)
-		if os.path.isfile(newdir) and newdir[-1] != "~":
-			if d.startswith('Plugin') and not d.endswith("~"):
-				dict["plugin"].append(newdir)
-			if d.startswith('Library') and not d.endswith("~"):
-				dict["library"].append(newdir)
-			if d.startswith('Program') and not d.endswith("~"):
-				dict["program"].append(newdir)
+base_env.handle_targets("Library")
+base_env.handle_targets("Program")
 
-targets = {"plugin":[], "library":[], "program":[]}
-scan_dir("src", targets)
-
-for t in targets["plugin"]:
-	base_env.targets.append(Target(t, "plugin"))
-for t in targets["library"]:
-	base_env.targets.append(Target(t, "library"))
-for t in targets["program"]:
-	base_env.targets.append(Target(t, "program"))
-
-for t in base_env.targets:
-	if t.supported_platforms and base_env.platform not in t.supported_platforms:
-		continue
-	env = base_env.Copy()
-	env.dir = t.dir
-
-	if t.config(env):
-		if t.type == "plugin":
-			env.add_plugin(t.target, t.source)
-		if t.type == "library":
-			env.add_library(t.target, t.source, t.static, t.shared, t.systemlibrary, t.install)
-		if t.type == "program":
-			env.add_program(t.target, t.source)
 
 try:
 	dump(base_env.config_cache, open("config.cache", "wb+"))

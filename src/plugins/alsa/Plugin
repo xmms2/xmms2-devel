@@ -1,18 +1,6 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="alsa"
-# then we tell scons where our sources are
 source=["alsa.c"]
 
-supported_platforms = ['linux']
-
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""	
 	return env.pkgconfig("alsa")
 

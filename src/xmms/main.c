@@ -93,46 +93,21 @@ typedef struct xmms_main_St xmms_main_t;
 static GMainLoop *mainloop;
 static gchar *conffile = NULL;
 
-/**
- * @if internal
- * @internal Execute a program or script
- * @param[in] program Absolute path to executable program or script
- * @param[in] env Array of environment variables and values to pass to program
- */
-static void
-do_execute (gchar *program, gchar **env)
-{
-	GError *err;
-
-	gchar **argv = g_new0 (gchar *, 2);
-	argv[0] = program;
-	argv[2] = NULL;
-
-	XMMS_DBG ("executing %s", program);
-	
-	g_spawn_async (g_get_home_dir(), argv, env, 
-		      0,
-		      NULL, NULL, NULL, &err);
-
-	g_free (argv);
-
-}
 
 /**
  * @internal Execute all programs or scripts in a directory. Used when starting
  * up and shutting down the daemon.
+ *
  * @param[in] scriptdir Directory to search for executable programs/scripts.
- * @param[in] ipcpath The xmms2 daemon ipc path to pass on to programs/scripts
  * started.
  */
 static void
-do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
+do_scriptdir (const gchar *scriptdir)
 {
 	GError *err;
 	GDir *dir;
 	const gchar *f;
-	gchar *file;
-	gchar **env;
+	gchar *argv[2] = {NULL, NULL};
 
 	XMMS_DBG ("Running scripts in %s", scriptdir);
 	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
@@ -145,19 +120,15 @@ do_scriptdir (const gchar *scriptdir, const gchar *ipcpath)
 		return;
 	}
 
-	env = g_new0(gchar*, 3);
-	env[0] = g_strdup_printf ("XMMS_PATH=%s",ipcpath);
-	env[1] = g_strdup_printf ("HOME=%s", g_get_home_dir());
-
 	while ((f = g_dir_read_name (dir))) {
-		file = g_strdup_printf ("%s/%s", scriptdir, f);
-		if (g_file_test (file, G_FILE_TEST_IS_EXECUTABLE)) {
-			do_execute(file, env);
+		argv[0] = g_strdup_printf ("%s/%s", scriptdir, f);
+		if (g_file_test (argv[0], G_FILE_TEST_IS_EXECUTABLE)) {
+			g_spawn_async (g_get_home_dir(), argv, NULL,
+				       0,
+				       NULL, NULL, NULL, &err);
 		}
-		g_free (file);
+		g_free (argv[0]);
 	}
-
-	g_strfreev (env);
 
 	g_dir_close (dir);
 
@@ -239,7 +210,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_config_value_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
-	do_scriptdir (xmms_config_value_string_get (cv), NULL);
+	do_scriptdir (xmms_config_value_string_get (cv));
 	
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
@@ -515,6 +486,8 @@ main (int argc, char **argv)
 	}
 
 
+	putenv (g_strdup_printf ("XMMS_PATH=%s", ipcpath));
+
 	tmp = g_strdup_printf ("%s/.xmms2/shutdown.d", g_get_home_dir());
 	cv = xmms_config_value_register ("core.shutdownpath",
 				    tmp, NULL, NULL);
@@ -526,7 +499,7 @@ main (int argc, char **argv)
 	g_free (tmp);
 
 	/* Startup dir */
-	do_scriptdir (xmms_config_value_string_get (cv), ipcpath);
+	do_scriptdir (xmms_config_value_string_get (cv));
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 
