@@ -151,6 +151,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded(xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data(xmmsc_connection_t *c)
 
@@ -1291,6 +1292,22 @@ cdef class XMMS:
 		
 		return ret
 
+	def broadcast_medialib_playlist_loaded(self, cb = None):
+		"""
+		Set a method to handle the medialib playlist loaded broadcast
+		from the XMMS2 daemon.(i.e. a playlist is loaded from 
+	        medialib). 		
+		@rtype: L{XMMSResult}
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult()
+		ret.callback = cb
+		
+		ret.res = xmmsc_broadcast_medialib_playlist_loaded(self.conn)
+		ret.more_init(1)
+		
+		return ret
 
 
 	def signal_visualisation_data(self, cb = None):
