@@ -28,8 +28,7 @@ def config(env):
 			cmd = "ruby -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'"
 			env.librarypath = os.popen(cmd).read().strip()
 
-		if not env.pkgconfig("glib-2.0"):
-			raise ConfigError("glib not found!")
+		env.pkgconfig("glib-2.0")
 
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 		env.Append(LIBS=["xmmsclient"])
