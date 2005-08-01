@@ -8,4 +8,4 @@ def config(env):
 	env.Append(LIBS=["xmmsclient-glib"])
 	env.pkgconfig("glib-2.0")
 	env.configcmd("sdl-config --libs --cflags")
-	env.checklibs("SDL_ttf", "TTF_Init")
+	env.checklib("SDL_ttf", "TTF_Init")
