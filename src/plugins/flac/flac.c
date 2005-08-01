@@ -33,7 +33,6 @@ typedef struct xmms_flac_data_St {
 	guint sample_rate;
 	guint bits_per_sample;
 	guint64 total_samples;
-	gboolean inited;
 } xmms_flac_data_t;
 
 /*
@@ -303,8 +302,6 @@ xmms_flac_init (xmms_decoder_t *decoder, gint mode)
 	if (retval == false)
 		return FALSE;
 
-	data->inited = TRUE;
-
 	if (data->bits_per_sample != 8 && data->bits_per_sample != 16)
 		return FALSE;
 
@@ -313,9 +310,11 @@ xmms_flac_init (xmms_decoder_t *decoder, gint mode)
 	else
 		sample_fmt = XMMS_SAMPLE_FORMAT_S16;
 
-	xmms_decoder_format_add (decoder, sample_fmt, data->channels, data->sample_rate);
-	if (xmms_decoder_format_finish (decoder) == NULL) {
-		return FALSE;
+	if (mode & XMMS_DECODER_INIT_DECODING) {
+		xmms_decoder_format_add (decoder, sample_fmt, data->channels, data->sample_rate);
+		if (xmms_decoder_format_finish (decoder) == NULL) {
+			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -353,9 +352,6 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
-
-	if (!data->inited)
-		xmms_flac_init (decoder, 0);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 	
