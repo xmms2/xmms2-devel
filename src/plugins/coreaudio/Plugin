@@ -3,5 +3,5 @@ source=["coreaudio.c"]
 
 def config(env):
 	env.checkheader("AudioUnit/AudioUnit.h")
-	env.Append(LINKFLAGS="-framework CoreAudio -framework AudioUnit")
+	env.Append(LINKFLAGS=['-framework', 'CoreAudio', '-framework', 'AudioUnit'])
 

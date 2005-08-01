@@ -28,12 +28,14 @@ def config(env):
 			cmd = "ruby -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'"
 			env.librarypath = os.popen(cmd).read().strip()
 
+		env.pkgconfig("glib-2.0")
+
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-		env["LIBS"].append("xmmsclient")
+		env.Append(LIBS=["xmmsclient"])
 		env["SHLIBPREFIX"]=''
 
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
-		env["LIBS"].append("xmmsclient-glib")
+		env.Append(LIBS=["xmmsclient-glib"])
 
 		return
 	raise ConfigError("bad")
