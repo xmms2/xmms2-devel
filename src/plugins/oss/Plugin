@@ -4,7 +4,7 @@ source=["oss.c"]
 def config(env):
 	env.checkheader("sys/soundcard.h")
 	try:
-		env.checklib("ossaudio", "some_symbol_I_dont_know")
+		env.checklib("ossaudio", "_oss_ioctl")
 	except ConfigError:
 		pass #only some platforms need it...
 
