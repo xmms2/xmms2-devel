@@ -53,6 +53,7 @@ struct xmmsc_connection_St {
 	char *error;
 	int timeout;
 	void *data;
+	uint32_t cmd_id;
 
 	char *clientname;
 };

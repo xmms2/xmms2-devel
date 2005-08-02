@@ -25,8 +25,7 @@ x_queue_free (x_queue_t *queue)
 
 	x_list_free (queue->head);
 
-	queue->head = NULL;
-	queue->tail = NULL;
+	free (queue);
 }
 
 void
