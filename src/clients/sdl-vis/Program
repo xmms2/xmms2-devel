@@ -1,12 +1,11 @@
 target="sdl-vis"
 source=["sdl-vis.c"]
-supported_platforms = ['darwin','freebsd','linux','netbsd','openbsd']
+
 def config(env):
-	env["LIBS"].append("xmmsclient")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-	env["LIBS"].append("xmmsclient-glib")
+	env.Append(LIBS=["xmmsclient"])
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
+	env.Append(LIBS=["xmmsclient-glib"])
 	env.pkgconfig("glib-2.0")
-	if not env.configcmd("sdl-config --libs --cflags"): return False 
-	elif not env.checklibs("SDL_ttf", "TTF_Init"): return False
-        return True
+	env.configcmd("sdl-config --libs --cflags")
+	env.checklib("SDL_ttf", "TTF_Init")
