@@ -143,6 +143,7 @@ xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t e
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c);
 
 /*
  * MACROS 

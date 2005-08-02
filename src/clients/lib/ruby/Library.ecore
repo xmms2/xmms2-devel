@@ -35,7 +35,7 @@ def config(env):
 			env.librarypath = os.popen(cmd).read().strip()
 
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-		env["LIBS"].append("xmmsclient")
+		env.Append(LIBS=["xmmsclient"])
 		env["SHLIBPREFIX"]=''
 
 		# duplicated ecore check from xmmsclient-ecore.
@@ -45,6 +45,6 @@ def config(env):
 		sed_call = 'sed ' + str.join(" ", [ecorelib2sed(a) for a in rem_ecore_libs]) + str.join(" ", [lib2sed(a) for a in rem_misc_libs])
 		if env.configcmd("ecore-config --libs --cflags | " + sed_call):
 			env.Prepend(LIBPATH="src/clients/lib/xmmsclient-ecore")
-			env["LIBS"].append("xmmsclient-ecore")
+			env.Append(LIBS=["xmmsclient-ecore"])
 			return
 	raise ConfigError("")

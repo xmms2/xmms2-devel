@@ -176,6 +176,12 @@ xmms_ipc_usocket_server_init (const xmms_url_t *url)
 	snprintf (saddr.sun_path, 108, "/%s", url->path);
 
 	if (access (saddr.sun_path, F_OK) == 0) {
+		if (connect (fd, (struct sockaddr *) &saddr, sizeof (saddr)) != -1) {
+			/* active socket already exists! */
+			close (fd);
+			return NULL;
+		}
+		/* remove stale socket */
 		unlink (saddr.sun_path);
 	}
 
