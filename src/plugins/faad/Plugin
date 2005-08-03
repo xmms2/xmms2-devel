@@ -14,7 +14,7 @@ def config(env):
 	"""
 	env.Append (CCFLAGS = '-DUSE_TAGGING')
 	if not env.checklib("faad", "faacDecInit2"):
-		return False
+		raise ConfigError("Could not find libfaad")
 
 	# to use iTunes DRM change this to true
 	if False:
@@ -23,5 +23,4 @@ def config(env):
 		env.Append (CCFLAGS = '-DHAVE_ERRNO_H')
 		env.Append (CCFLAGS = '-DHAVE_LIMITS_H')
 		env.Append (CCFLAGS = '-DHAVE_STRING_H')
-	return True
 
