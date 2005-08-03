@@ -1,0 +1,27 @@
+"""
+This is a plugin build file for XMMS2
+"""
+
+# first we tell scons what our targets are
+target="faad"
+# then we tell scons where our sources are
+source=['faad.c', 'mp4ff/drms.c', 'mp4ff/mp4atom.c', 'mp4ff/mp4ff.c', 'mp4ff/mp4meta.c', 'mp4ff/mp4sample.c', 'mp4ff/mp4tagupdate.c', 'mp4ff/mp4util.c']
+
+def config(env):
+	""" 
+	This function should return True if this module
+	is to be built otherwise False
+	"""
+	env.Append (CCFLAGS = '-DUSE_TAGGING')
+	if not env.checklib("faad", "faacDecInit2"):
+		return False
+
+	# to use iTunes DRM change this to true
+	if False:
+		env.Append (CCFLAGS = '-DITUNES_DRM')
+		env.Append (CCFLAGS = '-DHAVE_SYS_STAT_H')
+		env.Append (CCFLAGS = '-DHAVE_ERRNO_H')
+		env.Append (CCFLAGS = '-DHAVE_LIMITS_H')
+		env.Append (CCFLAGS = '-DHAVE_STRING_H')
+	return True
+
