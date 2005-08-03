@@ -41,7 +41,9 @@ typedef struct xmms_flac_data_St {
 
 static gboolean xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype);
 static gboolean xmms_flac_init (xmms_decoder_t *decoder, gint mode);
+/*
 static gboolean xmms_flac_seek (xmms_decoder_t *decoder, guint samples);
+*/
 static gboolean xmms_flac_can_handle (const gchar *mimetype);
 static gboolean xmms_flac_decode_block (xmms_decoder_t *decoder);
 static void xmms_flac_destroy (xmms_decoder_t *decoder);
@@ -68,14 +70,16 @@ xmms_plugin_get (void)
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_flac_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);
+/*	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);*/
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_flac_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_flac_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_flac_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_flac_get_mediainfo);
 
+	/*
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+	*/
 
 	return plugin;
 }
@@ -411,6 +415,7 @@ xmms_flac_decode_block (xmms_decoder_t *decoder)
 	return ret;
 }
 
+/*
 static gboolean
 xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 {
@@ -426,6 +431,7 @@ xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 
 	return res;
 }
+*/
 
 void
 xmms_flac_destroy (xmms_decoder_t *decoder)
