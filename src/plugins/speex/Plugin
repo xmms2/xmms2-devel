@@ -2,5 +2,6 @@ target="speex"
 source=["speex.c"]
 
 def config(env):
+	raise ConfigError("Disabled")
 	env.checklib("speex", "speex_bits_init")
 	env.pkgconfig("ogg")

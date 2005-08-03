@@ -87,9 +87,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
-				  XMMS_PLAYLIST_PLUGIN_API_VERSION,
-				  "html",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST,
+	                          XMMS_PLAYLIST_PLUGIN_API_VERSION,
+	                          "html",
 	                          "HTML Playlist " XMMS_VERSION,
 	                          "HTML Playlist reader");
 
@@ -151,16 +151,17 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 		xmms_error_t error;
 		gint ret;
 
-		ret = xmms_transport_read (transport, buffer + readlen, buflen - readlen, &error);
+		ret = xmms_transport_read (transport, buffer + readlen,
+		                           buflen - readlen, &error);
 
 		XMMS_DBG ("Got %d bytes", ret);
 		if (ret <= 0) {
-
 			if (readlen > 0) {
 				break;
 			}
 
 			g_free (buffer);
+
 			return FALSE;
 		}
 
@@ -231,6 +232,7 @@ xmms_html_write_playlist (guint32 *list)
 				(total_len / 1000) % 60);
 
 	i = 0;
+
 	while (list[i]) {
 		gchar buf[256], *artist, *title, *url;
 		xmms_medialib_entry_t entry;
@@ -248,7 +250,7 @@ xmms_html_write_playlist (guint32 *list)
 			XMMS_MEDIALIB_ENTRY_PROPERTY_URL));
 
 		if (!artist && !title) {
-			g_snprintf (buf, sizeof (buf), "%s (%02i:%02i)", 
+			g_snprintf (buf, sizeof (buf), "%s (%02i:%02i)",
 			            url, len / 60000, (len / 1000) % 60);
 		} else {
 			g_snprintf (buf, sizeof (buf), "%s - %s (%02i:%02i)",
@@ -264,10 +266,11 @@ xmms_html_write_playlist (guint32 *list)
 		if (url)
 			g_free (url);
 
-		g_string_append_printf (ret, is_even ? html_entry_even : html_entry_odd, buf);
+		g_string_append_printf (ret, is_even ? html_entry_even
+		                                     : html_entry_odd, buf);
 		is_even = !is_even;
 
-		i ++;
+		i++;
 	}
 
 	g_string_append (ret, html_footer);
@@ -360,7 +363,8 @@ valid_suffix (gchar **suffix, gchar *path)
 }
 
 static gchar *
-build_url (const gchar *plspath, const gchar *file) {
+build_url (const gchar *plspath, const gchar *file)
+{
 	gchar *url;
 	gchar *path;
 
@@ -372,11 +376,11 @@ build_url (const gchar *plspath, const gchar *file) {
 	}
 
 	if (file[0] == '/') {
-
 		path = path_get_body (plspath);
 		url = g_build_filename (path, file, NULL);
 
 		g_free (path);
+
 		return url;
 	}
 
@@ -384,6 +388,7 @@ build_url (const gchar *plspath, const gchar *file) {
 	url = g_build_filename (path, file, NULL);
 
 	g_free (path);
+
 	return url;
 }
 
@@ -444,4 +449,3 @@ parse_tag (const gchar *tag, const gchar *plspath)
 
 	return url;
 }
-

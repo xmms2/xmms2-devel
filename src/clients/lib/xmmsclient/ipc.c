@@ -300,6 +300,10 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 		x_queue_free (ipc->out_msg);
 	}
 
+	if (ipc->read_msg) {
+		xmms_ipc_msg_destroy (ipc->read_msg);
+	}
+
 	if (ipc->error) {
 		free (ipc->error);
 	}
