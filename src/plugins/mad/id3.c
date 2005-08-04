@@ -152,10 +152,19 @@ convert_id3_text (xmms_id3v2_header_t *head,
 			return NULL;
 		}
 	} else if (head->ver == 2 || head->ver == 3) {
-		if (len > 2 && ((val[0]==0xFF && val[1]==0xFE) || (val[0]==0xFE && val[1]==0xFF))) {
-			nval = g_convert ((gchar *)val, len, "UTF-8", "USC-2", &readsize, &writsize, &err);
+		if (len > 1 && val[0] == 0x00) {
+			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+		} else if (len > 1 && val[0] == 0x01) {
+			if (len > 2 && val[1] == 0xFF && val[2] == 0xFE) {
+				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2LE", &readsize, &writsize, &err);
+			} else if (len > 2 && val[1] == 0xFE && val[2] == 0xFF) {
+				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2BE", &readsize, &writsize, &err);
+			} else {
+				XMMS_DBG ("Missing/bad boom in id3v2 tag!");
+			}
 		} else {
-			nval = g_convert ((gchar *)val, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+			XMMS_DBG ("UNKNOWN id3v2.2/2.3 encoding (%02x)!", val[0]);
+			return NULL;
 		}
 	}
 
@@ -201,7 +210,9 @@ xmms_mad_handle_id3v2_tcon (xmms_id3v2_header_t *head,
 		len -= 1; /* total len of buffer */
 	}
 
-	val = g_strndup ((gchar *)buf, len);
+	val = convert_id3_text (head, buf, len);
+	if (!val)
+		return;
 	res = sscanf (val, "(%u)", &genre_id);
 
 	if (res > 0 && genre_id < G_N_ELEMENTS(id3_genres)) {
@@ -397,6 +408,9 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 		/* footer is copy of header */
 		header->len += sizeof(id3head_t);
 	}
+
+	XMMS_DBG ("Found id3v2 header (version=%d, rev=%d, len=%d, flags=%x)",
+		  header->ver, header->rev, header->len, header->flags);
 
 	return TRUE;
 }
