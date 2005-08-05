@@ -1,26 +1,5 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="mad"
-# then we tell scons where our sources are
 source=["mad.c", "id3.c", "xing.c"]
 
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
-	ret = env.checklibs("mad", "mad_synth_init")
-
-	""" Big fat warning for cluless users :-) """
-	if not ret:
-		print ""
-		print "!!!! MAD LIBRARY NOT FOUND! MP3 PLAYBACK WON'T BE POSSIBLE !!!!"
-		print ""
-		print ""
-		print ""
-
-	return ret
-
+	env.checklib("mad", "mad_synth_init")

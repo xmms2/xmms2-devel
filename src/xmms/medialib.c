@@ -172,6 +172,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIALIB, XMMS_OBJECT (medialib));
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED);
 
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
 			     XMMS_IPC_CMD_INFO, 
@@ -1189,6 +1190,11 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 		g_free (entry);
 		entries = g_list_delete_link (entries, entries);
 	}
+
+	xmms_object_emit_f (XMMS_OBJECT (medialib), 
+			    XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED, 
+			    XMMS_OBJECT_CMD_ARG_STRING,
+			    name);
 
 	g_mutex_unlock (medialib->mutex);
 }

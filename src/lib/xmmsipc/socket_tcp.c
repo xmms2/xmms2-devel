@@ -16,26 +16,14 @@
 
 
 #include <stdio.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <sys/un.h>
-#include <errno.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <syslog.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-
 
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmmsc/xmmsc_sockets.h"
+#include "xmmsc/xmmsc_unistd.h"
 #include "url.h"
 
 void
@@ -48,7 +36,7 @@ xmms_ipc_tcp_destroy (xmms_ipc_transport_t *ipct)
 int
 xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
-	int fd;
+	xmms_socket_t fd;
 	int ret;
 	x_return_val_if_fail (ipct, -1);
 	x_return_val_if_fail (buffer, -1);
@@ -63,7 +51,7 @@ xmms_ipc_tcp_read (xmms_ipc_transport_t *ipct, char *buffer, int len)
 int
 xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 {
-	int fd;
+	xmms_socket_t fd;
 	x_return_val_if_fail (ipct, -1);
 	x_return_val_if_fail (buffer, -1);
 	
@@ -76,14 +64,16 @@ xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 {
-	int fd;
-	int flags;
+	xmms_socket_t fd;
 	xmms_ipc_transport_t *ipct;
 	struct addrinfo hints;
 	struct addrinfo *addrinfo;
 	struct addrinfo *addrinfos;
 	int gai_errno;
 
+	if (!xmms_sockets_initialize()) {
+		return NULL;
+	}
 
 	memset (&hints, 0, sizeof (hints));
 	hints.ai_flags = 0;
@@ -96,14 +86,15 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 	}
 
 	for (addrinfo = addrinfos; addrinfo; addrinfo = addrinfo->ai_next) {
-		int reuseaddr = 1;
+		int _reuseaddr = 1;
+		const char* reuseaddr = (const char*)&_reuseaddr;
 
 		fd = socket (addrinfo->ai_family, addrinfo->ai_socktype, addrinfo->ai_protocol);
-		if (fd == -1) {
+		if (!xmms_socket_valid(fd)) {
 			return NULL;
 		}
 
-		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof (reuseaddr));
+		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, reuseaddr, sizeof (_reuseaddr));
 
 		if (connect (fd, addrinfo->ai_addr, addrinfo->ai_addrlen) == 0) {
 			break;
@@ -118,15 +109,7 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 		return NULL;
 	}
 
-	flags = fcntl (fd, F_GETFL, 0);
-	if (flags == -1) {
-		close (fd);
-		return NULL;
-	}
-
-	flags |= O_NONBLOCK;
-	flags = fcntl (fd, F_SETFL, flags);
-	if (flags == -1) {
+	if (!xmms_socket_set_nonblock(fd)) {
 		close (fd);
 		return NULL;
 	}
@@ -144,7 +127,7 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 {
-	int fd;
+	xmms_socket_t fd;
 	struct sockaddr sockaddr;
 	socklen_t socklen;
 
@@ -153,29 +136,20 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 	socklen = sizeof (sockaddr);
 
 	fd = accept (transport->fd, &sockaddr, &socklen);
-	if (fd >= 0) {
-		int flags;
-		int reuseaddr = 1;
-		int nodelay = 1;
+	if (xmms_socket_valid(fd)) {
+		int _reuseaddr = 1;
+		int _nodelay = 1;
+		const char* reuseaddr = (const char*)&_reuseaddr;
+		const char* nodelay = (const char*)&_nodelay;
 		xmms_ipc_transport_t *ret;
 
-		flags = fcntl (fd, F_GETFL, 0);
-
-		if (flags == -1) {
-			close (fd);
+		if (!xmms_socket_set_nonblock(fd)) {
+			close(fd);
 			return NULL;
 		}
 
-		flags |= O_NONBLOCK;
-
-		flags = fcntl (fd, F_SETFL, flags);
-		if (flags == -1) {
-			close (fd);
-			return NULL;
-		}
-
-		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof (reuseaddr));
-		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof (nodelay));
+		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, reuseaddr, sizeof (_reuseaddr));
+		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, nodelay, sizeof (_nodelay));
 
 		ret = x_new0 (xmms_ipc_transport_t, 1);
 		ret->fd = fd;
@@ -192,13 +166,16 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 {
-	int fd;
-	int flags;
+	xmms_socket_t fd;
 	xmms_ipc_transport_t *ipct;
 	struct addrinfo hints;
 	struct addrinfo *addrinfo;
 	struct addrinfo *addrinfos;
 	int gai_errno;
+
+	if (!xmms_sockets_initialize()) {
+		return NULL;
+	}
 
 	memset (&hints, 0, sizeof (hints));
 	hints.ai_flags = AI_PASSIVE;
@@ -211,21 +188,23 @@ xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 	}
 
 	for (addrinfo = addrinfos; addrinfo; addrinfo = addrinfo->ai_next) {
-		int reuseaddr = 1;
-		int nodelay = 1;
+		int _reuseaddr = 1;
+		int _nodelay = 1;
+		const char* reuseaddr = (const char*)&_reuseaddr;
+		const char* nodelay = (const char*)&_nodelay;
 
 		fd = socket (addrinfo->ai_family, addrinfo->ai_socktype, addrinfo->ai_protocol);
-		if (fd == -1) {
+		if (!xmms_socket_valid(fd)) {
 			return NULL;
 		}
 
-		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof (reuseaddr));
-		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof (nodelay));
+		setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, reuseaddr, sizeof (_reuseaddr));
+		setsockopt (fd, IPPROTO_TCP, TCP_NODELAY, nodelay, sizeof (_nodelay));
 
-		if (bind(fd, addrinfo->ai_addr, addrinfo->ai_addrlen) != -1
-			&& listen(fd, SOMAXCONN) != -1)
+		if (bind(fd, addrinfo->ai_addr, addrinfo->ai_addrlen) != SOCKET_ERROR
+		    && listen(fd, SOMAXCONN) != SOCKET_ERROR) {
 			break;
-
+		}
 		close (fd);
 	}
 
@@ -235,15 +214,7 @@ xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 		return NULL;
 	}
 
-	flags = fcntl (fd, F_GETFL, 0);
-	if (flags == -1) {
-		close (fd);
-		return NULL;
-	}
-
-	flags |= O_NONBLOCK;
-	flags = fcntl (fd, F_SETFL, flags);
-	if (flags == -1) {
+	if (!xmms_socket_set_nonblock(fd)) {
 		close (fd);
 		return NULL;
 	}

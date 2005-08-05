@@ -1,25 +1,10 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-import sys
-
-# first we tell scons what our targets are
 target="oss"
-# then we tell scons where our sources are
 source=["oss.c"]
 
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
+	env.checkheader("sys/soundcard.h")
+	try:
+		env.checklib("ossaudio", "_oss_ioctl")
+	except ConfigError:
+		pass #only some platforms need it...
 
-	# this should really be done checking
-	# for "soundcard.h" and OSS_GETVERSION
-	supported_platforms = ['linux', 'freebsd', 'netbsd', 'openbsd']
-
-	if env.platform == 'netbsd' or env.platform == 'openbsd':
-		env["LIBS"].append("ossaudio")
-
-	return env.platform in supported_platforms

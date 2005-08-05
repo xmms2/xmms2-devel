@@ -30,7 +30,6 @@
 #include "xmmsclientpriv/xmmsclient_util.h"
 
 #include <stdlib.h>
-#include <unistd.h>
 
 #define _x_list_alloc x_list_alloc
 x_list_t*

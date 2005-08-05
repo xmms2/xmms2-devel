@@ -1,16 +1,6 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="gnomevfs"
-# then we tell scons where our sources are
 source=["gnomevfs.c"]
 
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
-	return env.pkgconfig("gnome-vfs-2.0")
+	env.pkgconfig("gnome-vfs-2.0")
 

@@ -1,15 +1,7 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="speex"
-# then we tell scons where our sources are
 source=["speex.c"]
 
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
-	return env.checklibs("speex", "speex_bits_init") and env.pkgconfig("ogg")
+	raise ConfigError("Disabled")
+	env.checklib("speex", "speex_bits_init")
+	env.pkgconfig("ogg")

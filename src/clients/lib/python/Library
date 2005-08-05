@@ -6,37 +6,54 @@ def config(env):
 	try:
 		import distutils
 		import distutils.sysconfig
-		env["CPPPATH"].append(distutils.sysconfig.get_python_inc())
+		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
 	except:
-		print "Python distutils not installed try again!"
-		return False
-	
-	if not env.tryaction("pyrexc --version"):
-		return False
+		raise ConfigError("Python distutils not installed try again!")
 
 	# we need a custom builder to generate xmmsclient.c
-	from os import environ
-	env['ENV']['PATH'] = environ['PATH']
-	pyx = env.Builder(action = 'pyrexc %s -o %s' % (env.dir+"/xmmsclient.pyx", env.dir+"/xmmsclient.c"))
-	env.Append(BUILDERS = {'Pyx' : pyx})
+	try:
+		import Pyrex.Compiler.Main
+	except:
+		raise ConfigError("pyrex not correctly installed...")
+
+	def pyrex_compile(target, source, env):
+		res = Pyrex.Compiler.Main.compile(str(source[0]))
+		if res.num_errors == 0:
+			return 0
+		return 1
+	def pyrex_str(target, source, env):
+		return "Generating '%s' from '%s'" % (target[0], source[0])
+
+	pyxact = env.Action(pyrex_compile, strfunction=pyrex_str)
+	pyxbldr = env.Builder(action = pyxact,
+			      src_suffix = ".pyx",
+			      suffix = ".c",
+			      single_source = 1)
+	env.Append(BUILDERS = {'Pyx': pyxbldr})
+
 
 	# we need to get rid of some warnings.
-	env['CCFLAGS'].append("-Wno-unused-function")
-	env['CCFLAGS'].append("-Wno-unused-label")
+	if env.platform != "win32":
+		env.Append(CCFLAGS=["-Wno-unused-function","-Wno-unused-label"])
 
 	# link with xmmsclient is nice.
-	env['LIBS'].append("xmmsclient")
+	if env.platform == 'win32':		
+		env.Append(LIBS=["libxmmsclient"])
+	else:
+		env.Append(LIBS=["xmmsclient"])
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	if env.platform == 'win32':
+		env.Prepend(LIBPATH=distutils.sysconfig.PREFIX +"\\libs")
 
-	# otherwise it will be called libxmmsclient.so
-	env['SHLIBPREFIX']=""
 	# need to be .so even on darwin (for example)
-	env['SHLIBSUFFIX']=".so"
-	
+	env['SHLIBPREFIX']=''
+	if env.platform == "win32":		
+		env['SHLIBSUFFIX']=".dll"
+	else:
+		env['SHLIBSUFFIX']=".so"
+		
 	# make sure that we put it in the right directory
 	env.librarypath = distutils.sysconfig.get_python_lib()
 
-	# just do it
-	env.Pyx (env.dir+"/xmmsclient.c", [env.dir+"/xmmsclient.pyx"])
-
-	return True
+	#Make sure the .c-file is built from the .pyx
+	env.Pyx(source=env.dir+"/xmmsclient")

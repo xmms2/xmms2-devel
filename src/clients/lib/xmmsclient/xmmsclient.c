@@ -22,15 +22,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
-#include <inttypes.h>
 #include <limits.h>
 
-#include <pwd.h>
 #include <sys/types.h>
+#include <pwd.h>
 
 #include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
@@ -38,14 +36,12 @@
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_stringport.h"
 
 #define XMMS_MAX_URI_LEN 1024
 
-#define _REGULARCHAR(a) ((a>=65 && a<=90) || (a>=97 && a<=122)) || (isdigit (a))
-
 static void xmmsc_deinit (xmmsc_connection_t *c);
-
-static uint32_t cmd_id;
 
 /*
  * Public methods
@@ -99,9 +95,12 @@ xmmsc_init (char *clientname)
 		return NULL;
 	}
 
+	if (!(c->clientname = strdup (clientname))) {
+		free (c);
+		return NULL;
+	}
+
 	xmmsc_ref (c);
-	c->clientname = strdup (clientname);
-	cmd_id = 0;
 
 	return c;
 }
@@ -147,7 +146,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	uint32_t i;
 	int ret;
 
-	char path[256];
+	char path[PATH_MAX];
 
 	x_api_error_if (!c, "with a NULL connection", false);
 
@@ -158,20 +157,19 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 		if (!pwd || !pwd->pw_name)
 			return false;
 
-		snprintf (path, 256, "unix:///tmp/xmms-ipc-%s", pwd->pw_name);
+		snprintf (path, sizeof(path), "unix:///tmp/xmms-ipc-%s", pwd->pw_name);
 	} else {
-		snprintf (path, 256, "%s", ipcpath);
+		snprintf (path, sizeof(path), "%s", ipcpath);
 	}
 
 	ipc = xmmsc_ipc_init ();
 	
 	if (!xmmsc_ipc_connect (ipc, path)) {
-		c->error = "xmms2d is not running.";
+		c->error = strdup ("xmms2d is not running.");
 		return false;
 	}
 
 	c->ipc = ipc;
-
 	result = xmmsc_send_hello (c);
 	xmmsc_result_wait (result);
 	ret = xmmsc_result_get_uint (result, &i);
@@ -239,8 +237,9 @@ xmmsc_deinit (xmmsc_connection_t *c)
 {
 	xmmsc_ipc_destroy (c->ipc);
 
+	free (c->error);
 	free (c->clientname);
-	free(c);
+	free (c);
 }
 
 /**
@@ -294,7 +293,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 		return 0;
 	}
 
-	memset (target, '\0', len);
+	memset (target, 0, len);
 
 	pos = fmt;
 	while (strlen (target) + 1 < len) {
@@ -316,7 +315,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 			break;
 		}
 
-		memset (key, '\0', keylen + 1);
+		memset (key, 0, keylen + 1);
 		strncpy (key, next_key + 2, keylen);
 
 		if (strcmp (key, "seconds") == 0) {
@@ -328,7 +327,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char seconds[10];
-				snprintf (seconds, sizeof seconds, "%02d", (duration/1000)%60);
+				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
 				strncat (target, seconds, len - strlen (target) - 1);
 			}
 		} else if (strcmp (key, "minutes") == 0) {
@@ -340,7 +339,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char minutes[10];
-				snprintf (minutes, sizeof minutes, "%02d", duration/60000);
+				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
 		} else {
@@ -412,9 +411,9 @@ xmmsc_signal_disconnect (xmmsc_result_t *res)
  */
 
 static uint32_t
-xmmsc_next_id (void)
+xmmsc_next_id (xmmsc_connection_t *c)
 {
-	return cmd_id++;
+	return c->cmd_id++;
 }
 
 xmmsc_result_t *
@@ -458,7 +457,7 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 
 	msg = xmms_ipc_msg_new (object, method);
 
-	cid = xmmsc_next_id ();
+	cid = xmmsc_next_id (c);
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
 	return xmmsc_result_new (c, cid);
@@ -468,7 +467,7 @@ xmmsc_result_t *
 xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 {
 	uint32_t cid;
-	cid = xmmsc_next_id ();
+	cid = xmmsc_next_id (c);
 
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 

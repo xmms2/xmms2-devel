@@ -17,17 +17,17 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <sys/select.h>
+
 #include <errno.h>
 #include <time.h>
-#include <netinet/in.h>
+
 
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 #include "xmmsc/xmmsc_util.h"
-
+#include "xmmsc/xmmsc_sockets.h"
+#include "xmmsc/xmmsc_stdint.h"
 typedef union {
 	struct {
 		uint32_t object;
@@ -163,9 +163,10 @@ xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpo
 	ret = xmms_ipc_transport_write (transport, 
 					(char *)(msg->data->rawdata + msg->xfered),
 					len - msg->xfered);
-	if (ret == -1) {
-		if (errno == EAGAIN || errno == EINTR)
+	if (ret == SOCKET_ERROR) {
+		if (xmms_socket_error_recoverable()) {
 			return false;
+		}
 		if (disconnected)
 			*disconnected = true;
 		return false;
@@ -211,12 +212,14 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transpor
 					       (char *)(msg->data->rawdata + msg->xfered),
 					       len - msg->xfered);
 		
-		if (ret == -1) {
-			if (errno == EAGAIN || errno == EINTR)
+		if (ret == SOCKET_ERROR) {
+			if (xmms_socket_error_recoverable ()) {
 				return false;
+			}
 			if (disconnected)
 				*disconnected = true;
 			return false;
+
 		} else if (ret == 0) {
 			if (disconnected)
 				*disconnected = true;

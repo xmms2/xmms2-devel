@@ -1,16 +1,6 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="curl_http"
-# then we tell scons where our sources are
 source=["curl_http.c"]
 
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
-	return env.configcmd("curl-config --libs --cflags")
+	env.configcmd("curl-config --libs --cflags")
 

@@ -10,15 +10,15 @@ def config(env):
 		print "Checking for Ruby 1.8 or greater... ",
 
 		version = env.run("ruby -e 'puts VERSION'").strip()
-		if [int(a) for a in version.split(".")] < [1, 8] :
+		if not version or [int(a) for a in version.split(".")] < [1, 8] :
 			print "no"
-			return False
+			raise ConfigError("Need ruby 1.8")
 
 		print version
 
 		got_ruby_h = env.run("ruby -rrbconfig -e 'puts File.exist?(Config::CONFIG[\"archdir\"] + \"/ruby.h\")'").strip()
 		if got_ruby_h != "true" :
-			return False
+			raise ConfigError("bad")
 
 		cmd = "ruby -rrbconfig -e 'puts \"-I%s -L%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'"
 		env.configcmd(cmd)
@@ -29,8 +29,9 @@ def config(env):
 			env.librarypath = os.popen(cmd).read().strip()
 
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
-		env["LIBS"].append("xmmsclient")
+		env.Append(LIBS=["xmmsclient"])
 		env["SHLIBPREFIX"]=''
 
-		return True
-	return False
+		return
+	raise ConfigError("Ruby baaad - money goood")
+

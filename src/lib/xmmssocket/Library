@@ -1,0 +1,15 @@
+source = ['socket_common.c']
+
+if platform == 'win32':
+	source.append('socket_win32.c')
+else:
+	source.append('socket_unix.c')
+
+target = "xmmssocket"
+shared = False
+static = True
+install = False
+
+def config(env):
+	if env.platform != 'win32':
+		env.Append(CCFLAGS=["-fPIC"])

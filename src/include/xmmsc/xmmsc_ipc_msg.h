@@ -17,10 +17,11 @@
 #ifndef __XMMS_IPC_MSG_H__
 #define __XMMS_IPC_MSG_H__
 
-#include <inttypes.h>
-#include <stdbool.h>
+#include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_inline.h"
 
 #define XMMS_IPC_MSG_DEFAULT_SIZE 32768
 #define XMMS_IPC_MSG_MAX_SIZE 327680

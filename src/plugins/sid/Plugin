@@ -1,16 +1,5 @@
-"""
-This is a plugin build file for XMMS2
-"""
-
-# first we tell scons what our targets are
 target="sid"
-# then we tell scons where our sources are
-source=["sid.cpp"]
+source=["sid.c", "sidplay_wrapper.cpp"]
 
 def config(env):
-	""" 
-	This function should return True if this module
-	is to be built otherwise False
-	"""
-	return False
-
+	raise ConfigError("Plugin disabled")

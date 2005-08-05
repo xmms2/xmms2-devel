@@ -14,11 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-#include <sys/types.h>
-#include <sys/select.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
 #include <stdlib.h>
 
 #include "xmmsclient/xmmsclient.h"
@@ -32,6 +29,8 @@
 #include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_sockets.h"
 
 
 struct xmmsc_ipc_St {
@@ -68,14 +67,18 @@ xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
 	while (!disco) {
 		if (!ipc->read_msg)
 			ipc->read_msg = xmms_ipc_msg_alloc ();
-		
+
 		if (xmms_ipc_msg_read_transport (ipc->read_msg, ipc->transport, &disco)) {
 			xmms_ipc_msg_t *msg = ipc->read_msg;
+
 			/* must unset read_msg here,
 			   because exec_msg can cause reentrancy */
 			ipc->read_msg = NULL;
+
 			xmmsc_ipc_exec_msg (ipc, msg);
+
 		} else {
+
 			break;
 		}
 	}
@@ -123,7 +126,7 @@ xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 	return !disco;
 }
 
-int
+xmms_socket_t
 xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc)
 {
 	x_return_val_if_fail (ipc, -1);
@@ -237,7 +240,7 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout)
 	fd_set rfdset;
 	fd_set wfdset;
 	struct timeval tmout;
-	int fd;
+	xmms_socket_t fd;
 
 	x_return_if_fail (ipc);
 	x_return_if_fail (!ipc->disconnect);
@@ -251,18 +254,22 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout)
 	FD_SET (fd, &rfdset);
 
 	FD_ZERO (&wfdset);
-	if (xmmsc_ipc_io_out (ipc))
+	if (xmmsc_ipc_io_out (ipc)) {
 		FD_SET (fd, &wfdset);
+	}
 
-	if (select (fd + 1, &rfdset, &wfdset, NULL, &tmout) == -1) {
+	if (select(fd + 1, &rfdset, &wfdset, NULL, &tmout) == SOCKET_ERROR) {
 		return;
 	}
 
-	if (FD_ISSET(fd, &rfdset))
-		if (!xmmsc_ipc_io_in_callback (ipc))
+	if (FD_ISSET(fd, &rfdset)) {
+		if (!xmmsc_ipc_io_in_callback (ipc)) {
 			return;
-	if (FD_ISSET(fd, &wfdset))
+		}
+	}
+	if (FD_ISSET(fd, &wfdset)) {
 		xmmsc_ipc_io_out_callback (ipc);
+	}
 }
 
 bool
@@ -288,6 +295,15 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
 	}
+
+	if (ipc->out_msg) {
+		x_queue_free (ipc->out_msg);
+	}
+
+	if (ipc->read_msg) {
+		xmms_ipc_msg_destroy (ipc->read_msg);
+	}
+
 	if (ipc->error) {
 		free (ipc->error);
 	}
@@ -305,7 +321,6 @@ xmmsc_ipc_connect (xmmsc_ipc_t *ipc, char *path)
 		ipc->error = strdup ("Could not init client!");
 		return false;
 	}
-
 	return true;
 }
 

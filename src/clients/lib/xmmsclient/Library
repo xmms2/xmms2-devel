@@ -1,4 +1,7 @@
-target="xmmsclient"
+if platform == "win32":
+	target="libxmmsclient"
+else:
+	target="xmmsclient"
 systemlibrary=True
 
 source=["ipc.c", 
@@ -13,7 +16,12 @@ source=["ipc.c",
 	"xmmsclient.c"]
 
 def config(env):
-	env["LIBS"].append("xmmsipc")
-	env["CPPPATH"].append("#src/includepriv")
+	env.Append(LIBS=["xmmsipc"])
+	env.Append(LIBS=["xmmssocket"])
+	if env.platform == 'win32':
+		env["SHLIBPREFIX"] = ""
+		env.Append(LIBS=["ws2_32"])
+		env.Append(LINKFLAGS=["/DEF:src/clients/lib/xmmsclient/xmmsclient.def"])
+	env.Append(CPPPATH=["#src/includepriv"])
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
-	return True
+	env.Prepend(LIBPATH="src/lib/xmmssocket")

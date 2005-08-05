@@ -1,5 +1,4 @@
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -7,6 +6,7 @@
 #include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsclientpriv/xmmsclient_queue.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmmsc/xmmsc_stdbool.h"
 
 x_queue_t *
 x_queue_new (void)
@@ -25,8 +25,7 @@ x_queue_free (x_queue_t *queue)
 
 	x_list_free (queue->head);
 
-	queue->head = NULL;
-	queue->tail = NULL;
+	free (queue);
 }
 
 void

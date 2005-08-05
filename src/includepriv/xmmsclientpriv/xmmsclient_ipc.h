@@ -18,10 +18,11 @@
 #ifndef __XMMSC_IPC_H__
 #define __XMMSC_IPC_H__
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include <sys/time.h>
+#include "xmmsc/xmmsc_stdbool.h"
+//#include <sys/time.h> Should this be in or out?
 #include "xmmsc/xmmsc_ipc_msg.h"
+#include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_sockets.h"
 #include "xmmsclient/xmmsclient.h"
 
 #ifdef __cplusplus
@@ -43,7 +44,7 @@ void xmmsc_ipc_destroy (xmmsc_ipc_t *ipc);
 bool xmmsc_ipc_connect (xmmsc_ipc_t *ipc, char *path);
 void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error);
 const char *xmmsc_ipc_error_get (xmmsc_ipc_t *ipc);
-int xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc);
+xmms_socket_t xmmsc_ipc_fd_get (xmmsc_ipc_t *ipc);
 
 void xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res);
 xmmsc_result_t *xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid);

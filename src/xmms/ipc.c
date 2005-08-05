@@ -741,7 +741,7 @@ xmms_ipc_setup_server (const gchar *path)
 	
 	transport = xmms_ipc_server_init (path);
 	if (!transport) {
-		xmms_log_error ("THE FAIL!");
+		xmms_log_error ("Couldn't initialize IPC socket on '%s'!", path);
 		return FALSE;
 	}
 	global_ipc->transport = transport;

@@ -36,6 +36,8 @@
 #include "xmmspriv/xmms_medialib.h"
 #include "xmms/xmms_decoderplugin.h"
 #include "xmms/xmms_log.h"
+#include "xmmsc/xmmsc_stdint.h"
+
 
 #include <string.h>
 #include <stdlib.h>
