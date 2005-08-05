@@ -188,11 +188,11 @@ Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends
 Description: XMMS2 - libmad based mp3 decoder
  This package enables mp3 decoding for xmms2.
 
-Package: xmms2-decoder-speex
-Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
-Description: XMMS2 - speex decoder
- This package enables speex decoding for xmms2.
+#Package: xmms2-decoder-speex
+#Architecture: any
+#Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
+#Description: XMMS2 - speex decoder
+# This package enables speex decoding for xmms2.
 
 Package: xmms2-output-oss
 Architecture: any
