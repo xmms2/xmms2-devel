@@ -335,15 +335,6 @@ xmms_mad_handle_id3v2_text (xmms_id3v2_header_t *head, guint32 type, guchar *buf
 		XMMS_DBG ("Skipping short id3v2 text-frame");
 		return;
 	}
-	
-	if (!buf[0]){ /** Is this really correct? */
-		buf++;
-		len--;
-		if (len < 1) {
-			XMMS_DBG ("Skipping empty text-frame");
-			return;
-		}
-	}
 
 	while (tags[i].type != 0) {
 		if (tags[i].type == type) {
