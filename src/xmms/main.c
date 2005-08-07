@@ -65,6 +65,7 @@ static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmm
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
+XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, NONE, NONE);
 
 /** @defgroup XMMSServer XMMSServer
   * @brief look at this if you want to code inside the server.
@@ -480,6 +481,7 @@ main (int argc, char **argv)
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_MAIN, XMMS_OBJECT (mainobj));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_QUIT, XMMS_CMD_FUNC (quit));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
+	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
 
 	if (ppid) { /* signal that we are inited */
 		kill (ppid, SIGUSR1);
