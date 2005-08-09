@@ -366,5 +366,6 @@ class XMMSEnvironment(Environment):
 			try:
 				t.config(env)
 				t.add(env)
-			except ConfigError:
+			except ConfigError, m:
+				self.conf.logstream.write("xmmsscons: File %s reported error '%s' and was disabled.\n" % (t.target, m))
 				continue
