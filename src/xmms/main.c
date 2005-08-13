@@ -311,6 +311,7 @@ Options:\n\
 	-V|--version	Print version\n\
 	-n		Disable logging\n\
 	-o <x>		Use 'x' as output plugin\n\
+	-i <url>	Listen to socket 'url'\n\
 	-d		Daemonise\n\
 	-p <foo>	Search for plugins in directory 'foo'\n\
 	-h|--help	Print this help\n\
@@ -341,7 +342,7 @@ main (int argc, char **argv)
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	gchar *tmp;
-	const gchar *ipcpath;
+	const gchar *ipcpath = NULL;
 	pid_t ppid=0;
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
@@ -357,7 +358,7 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	while (42) {
-		opt = getopt_long (argc, argv, "dvVno:p:hc:", long_opts, NULL);
+		opt = getopt_long (argc, argv, "dvVnoi:p:hc:", long_opts, NULL);
 
 		if (opt == -1)
 			break;
@@ -393,6 +394,10 @@ main (int argc, char **argv)
 			case 'c':
 				conffile = g_strdup (optarg);
 				break;
+			case 'i':
+				ipcpath = g_strdup (optarg);
+				break;
+
 		}
 	}
 
@@ -467,7 +472,8 @@ main (int argc, char **argv)
 	cv = xmms_config_value_register ("core.ipcsocket", default_path,
 	                                 NULL, NULL);
 
-	ipcpath = xmms_config_value_string_get (cv);
+	if (!ipcpath)
+		ipcpath = xmms_config_value_string_get (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
 		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
