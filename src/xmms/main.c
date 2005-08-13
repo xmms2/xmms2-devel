@@ -358,7 +358,7 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	while (42) {
-		opt = getopt_long (argc, argv, "dvVnoi:p:hc:", long_opts, NULL);
+		opt = getopt_long (argc, argv, "dvVno:i:p:hc:", long_opts, NULL);
 
 		if (opt == -1)
 			break;
