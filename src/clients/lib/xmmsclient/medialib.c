@@ -372,6 +372,23 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 }
 
 /**
+ * This will make the server list the given playlist. 
+ */
+xmmsc_result_t *
+xmmsc_medialib_playlist_list (xmmsc_connection_t *conn, const char *playlist)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_LIST);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+/**
  * Returns a list of all available playlists
  */
 xmmsc_result_t *
