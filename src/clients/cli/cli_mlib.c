@@ -328,23 +328,6 @@ mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
-void
-playlist_list_cb (const void *key, xmmsc_result_value_type_t type, const void *value, void *data)
-{
-	const gchar *str = value;
-
-	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
-		/* Hide all lists that start with _ */
-		if (str[0] == '_')
-			return;
-
-		printf("%s:%s\n", (char *)key, (char *)value);
-	} else {
-		printf("%s:%d\n", (char *)key, (int32_t)value);
-	}
-
-}
-
 static void
 mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
@@ -357,8 +340,14 @@ mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 
-	g_print("id:name\n");
-	xmmsc_result_dict_foreach (res, playlist_list_cb, NULL);
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next(res)) {
+		char *name;
+		xmmsc_result_get_string(res, &name);
+		/* Hide all lists that start with _ */
+		if (name[0] != '_')
+			printf("%s\n", name);
+	}
+	xmmsc_result_unref (res);
 }
 
 static void
