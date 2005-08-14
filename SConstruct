@@ -160,6 +160,11 @@ scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
 
+### INSTALL MANUAL PAGES!
+
+base_env.add_manpage(1, 'doc/xmms2.1')
+base_env.add_manpage(8, 'doc/xmms2d.8')
+
 #### Generate pc files.
 
 pc_files = [{"name": "xmms2-plugin", "lib":""}, 
