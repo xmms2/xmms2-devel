@@ -455,7 +455,7 @@ print_entry (const void *key, xmmsc_result_value_type_t type, const void *value,
 {
 	gchar *conv;
 	gsize r, w;
-	GError *err;
+	GError *err = NULL;
 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
