@@ -33,7 +33,6 @@ gint xmms_ringbuf_size (xmms_ringbuf_t *ringbuf);
 
 guint xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length);
 guint xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx);
-guint xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length);
 void xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (gpointer), gpointer arg);
 guint xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length);
 guint xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length, GMutex *mtx);

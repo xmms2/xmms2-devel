@@ -139,21 +139,6 @@ xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 }
 
 /**
- * Back-up the buffer with #length bytes.
- */
-guint
-xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
-{
-	gint cnt;
-
-	g_return_val_if_fail (ringbuf, 0);
-
-	cnt = MIN (length, xmms_ringbuf_bytes_free (ringbuf));
-	ringbuf->rd_index = (ringbuf->buffer_size + ((ringbuf->rd_index - cnt) % ringbuf->buffer_size)) % ringbuf->buffer_size;
-	return cnt;
-}
-
-/**
  * Reads data from the ringbuffer. This is a non-blocking call and can
  * return less data than you wanted. Use #xmms_ringbuf_wait_used to
  * ensure that you get as much data as you want.
