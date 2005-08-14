@@ -194,8 +194,13 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	XMMS_DBG ("Want to use %s as output instead", outname);
 
 	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
-
-	xmms_output_plugin_switch (mainobj->output, plugin);
+	if (!plugin) {
+		xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something usefull");
+	} else {
+		if (!xmms_output_plugin_switch (mainobj->output, plugin)) {
+			xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something usefull");
+		}
+	}
 }
 
 /**
@@ -288,16 +293,18 @@ init_volume_config_proxy (const gchar *output)
 	g_snprintf (source, sizeof (source), "output.%s.volume", output);
 
 	cfg = xmms_config_lookup (source);
-	vol = xmms_config_value_string_get (cfg);
+	if (cfg) {
+		vol = xmms_config_value_string_get (cfg);
 
-	xmms_config_value_callback_set (cfg, on_output_volume_changed,
-	                                "output.volume");
+		xmms_config_value_callback_set (cfg, on_output_volume_changed,
+						  				"output.volume");
 
-	/* create the proxy value and assign the value */
-	cfg = xmms_config_value_register ("output.volume", vol,
-	                                  on_output_volume_changed,
-	                                  source);
-	xmms_config_value_data_set (cfg, (gchar *) vol);
+		/* create the proxy value and assign the value */
+		cfg = xmms_config_value_register ("output.volume", vol,
+										on_output_volume_changed,
+									  	source);
+		xmms_config_value_data_set (cfg, (gchar *) vol);
+	}
 }
 
 /**
@@ -440,6 +447,7 @@ main (int argc, char **argv)
 	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
+	/* find output plugin. */
 	cv = xmms_config_value_register ("output.plugin",
 	                                 XMMS_OUTPUT_DEFAULT,
 	                                 change_output, mainobj);
@@ -452,16 +460,17 @@ main (int argc, char **argv)
 	XMMS_DBG ("output = %s", outname);
 
 	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
-	mainobj->output = xmms_output_new (o_plugin, playlist);
 
+	if (!o_plugin) {
+		xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something usefull");
+	}
+
+	mainobj->output = xmms_output_new (o_plugin, playlist);
+	if (!mainobj->output) {
+		xmms_log_fatal ("Failed to create output object!");
+	}
 	init_volume_config_proxy (outname);
 
-	/*
-	xmms_medialib_init ();
-	xmms_medialib_output_register (mainobj->output);
-	xmms_medialib_playlist_set (playlist);
-	*/
-		
 	g_snprintf (default_path, sizeof (default_path),
 	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());
 	cv = xmms_config_value_register ("core.ipcsocket", default_path,
