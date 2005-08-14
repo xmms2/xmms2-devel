@@ -49,7 +49,7 @@ static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_erro
 GList *xmms_medialib_select (gchar *query, xmms_error_t *error);
 static void xmms_medialib_playlist_save_current (xmms_medialib_t *, gchar *, xmms_error_t *);
 static void xmms_medialib_playlist_load (xmms_medialib_t *, gchar *, xmms_error_t *);
-static GHashTable *xmms_medialib_playlists_list (xmms_medialib_t *, xmms_error_t *);
+static GList *xmms_medialib_playlists_list (xmms_medialib_t *, xmms_error_t *);
 static void xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *playlistname, 
 					   gchar *url, xmms_error_t *error);
 static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname, 
@@ -66,7 +66,7 @@ XMMS_CMD_DEFINE (mlib_remove, xmms_medialib_entry_remove_method, xmms_medialib_t
 XMMS_CMD_DEFINE (playlist_save_current, xmms_medialib_playlist_save_current, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (playlist_load, xmms_medialib_playlist_load, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (addtopls, xmms_medialib_select_and_add, xmms_medialib_t *, NONE, STRING, NONE);
-XMMS_CMD_DEFINE (playlists_list, xmms_medialib_playlists_list, xmms_medialib_t *, DICT, NONE, NONE);
+XMMS_CMD_DEFINE (playlists_list, xmms_medialib_playlists_list, xmms_medialib_t *, LIST, NONE, NONE);
 XMMS_CMD_DEFINE (playlist_import, xmms_medialib_playlist_import, xmms_medialib_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (playlist_export, xmms_medialib_playlist_export, xmms_medialib_t *, STRING, STRING, STRING);
 XMMS_CMD_DEFINE (playlist_remove, xmms_medialib_playlist_remove, xmms_medialib_t *, NONE, STRING, NONE);
@@ -1001,29 +1001,25 @@ xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, x
 static gboolean
 xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
-	GHashTable *hash = udata;
-	gchar *key = g_strdup_printf ("%u", row[0]->value.int32);
-
-	g_hash_table_insert (hash, key,
-			     xmms_object_cmd_value_copy (row[1]));
+	GList **n = udata;
+	*n = g_list_prepend (*n, xmms_object_cmd_value_str_new(row[0]->value.string));
 
 	destroy_array (row);
 
 	return TRUE;
 }
 
-static GHashTable *
+static GList *
 xmms_medialib_playlists_list (xmms_medialib_t *medialib, xmms_error_t *error)
 {
-	GHashTable *ret;
-	
-	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	GList *ret = NULL;
 	
 	g_mutex_lock(medialib->mutex);
 	
 	/* order by (smth)? */
-	xmms_sqlite_query_array (medialib->sql, xmms_medialib_playlist_list_cb, ret, "select * from Playlist");
+	xmms_sqlite_query_array (medialib->sql, xmms_medialib_playlist_list_cb, &ret, "select name from Playlist");
 	
+	ret = g_list_reverse (ret);
 	g_mutex_unlock(medialib->mutex);
 		
 	return ret;
