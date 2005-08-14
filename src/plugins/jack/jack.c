@@ -403,6 +403,7 @@ _JACK_OpenDevice(xmms_output_t *output)
 	jack_set_error_function(JACK_Error);
 
 	/* try to become a client of the JACK server */
+	srand (time (NULL));
 	g_snprintf(client_name, sizeof(client_name), "xmms_jack_%d_%d", 0, rand());
 	XMMS_DBG("client name '%s'", client_name);
 	if ((data->client = jack_client_new(client_name)) == 0)
