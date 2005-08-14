@@ -128,6 +128,7 @@ python_executable = sys.executable
 
 b = Builder(action = python_executable + ' src/xmms/generate-converter.py > src/xmms/converter.c')
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
+base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
 base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
