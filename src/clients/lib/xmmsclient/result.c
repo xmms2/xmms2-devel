@@ -713,7 +713,7 @@ xmmsc_result_dict_foreach_cb (const void *key, const void *value, void *udata)
  *
  * Calls specified function for each key/value-pair in the dictionary.
  * 
- * void function (const void *key, const void *value, void *user_data);
+ * void function (const void *key, #xmmsc_result_value_type_t type, const void *value, void *user_data);
  *
  * @param res a #xmmsc_result_t containing a dict.
  * @param func function that is called for each key/value-pair
