@@ -118,7 +118,7 @@ xmmsc_sqlite_prepare_string (char *input) {
  *
  */
 
-char *
+static char *
 xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attributes, unsigned i)
 {
 	int res_size = 0;
@@ -175,7 +175,7 @@ xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attribute
  * Construct constraints of the query string from query attribute vector
  */
 
-int
+static int
 xmmsc_querygen_parse_constraints (char **pconstraints,
                                   xmmsc_query_attribute_t *attributes,
                                   unsigned int n)
@@ -237,7 +237,7 @@ xmmsc_querygen_parse_constraints (char **pconstraints,
  * Construct tables of the query string from query attribute vector
  */
 
-int
+static int
 xmmsc_querygen_parse_tables (char **ptables,
                              xmmsc_query_attribute_t *attributes,
                              unsigned int n)

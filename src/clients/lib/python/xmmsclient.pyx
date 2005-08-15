@@ -187,13 +187,11 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
 		udata[key] = <int>value
 
-ObjectRef = {}
-
 cdef ResultNotifier(xmmsc_result_t *res, obj):
 	obj._cb()
 	if not obj.get_broadcast():
 		xmmsc_result_unref(res)
-		del ObjectRef[obj.get_cid()]
+		obj._del_ref()
 		
 	
 cdef class XMMSResult:
@@ -206,15 +204,20 @@ cdef class XMMSResult:
 	cdef int cid
 	cdef int broadcast
 	cdef object callback
+	cdef object c
 
-	def __new__(self):
+	def __new__(self, c):
 		self.cid = 0
+		self.c = c
 
 	def more_init(self, broadcast = 0):
 		self.cid = xmmsc_result_cid(self.res)
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set(self.res, ResultNotifier, self)
-		ObjectRef[self.cid] = self
+		self.c._add_ref(self)
+
+	def _del_ref(self):
+		self.c._del_ref(self)
 
 	def _cb(self):
 		self._check()
@@ -335,7 +338,7 @@ cdef class XMMSResult:
 	def restart(self):
 		self.res = xmmsc_result_restart(self.res)
 		self.cid = xmmsc_result_cid(self.res)
-		ObjectRef[self.cid] = self
+		self.c._add_ref(self)
 		xmmsc_result_unref(self.res)
 
 	def iserror(self):
@@ -376,6 +379,7 @@ cdef class XMMS:
 	cdef object wakeup
 	cdef object disconnect_fun
 	cdef object needout_fun
+	cdef object ObjectRef
 
 	def __new__(self, clientname = "Python XMMSClient"):
 		"""
@@ -384,6 +388,13 @@ cdef class XMMS:
 		"""
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
+		self.ObjectRef = {}
+
+	def _add_ref(self, res):
+		self.ObjectRef[res.get_cid()] = res
+	
+	def _del_ref(self, res):
+		del self.ObjectRef[res.get_cid()]
 
 	def __dealloc__(self):
 		""" destroys it all! """
@@ -506,7 +517,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		ret.res = xmmsc_quit(self.conn)
@@ -523,7 +534,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_playback_start(self.conn)
 		ret.more_init()
@@ -539,7 +550,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_playback_stop(self.conn)
 		ret.more_init()
@@ -554,7 +565,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_playback_tickle(self.conn)
 		ret.more_init()
@@ -569,7 +580,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playback_pause(self.conn)
@@ -584,7 +595,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playback_current_id(self.conn)
@@ -601,7 +612,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playback_seek_ms(self.conn, ms)
@@ -618,7 +629,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playback_seek_samples(self.conn, samples)
@@ -636,7 +647,7 @@ cdef class XMMS:
 		@return: Current playback status(UInt)
 		"""
 		cdef XMMSResult ret
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_playback_status(self.conn)
 		ret.more_init()
@@ -650,7 +661,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_status(self.conn)
@@ -666,7 +677,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_current_id(self.conn)
@@ -683,7 +694,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playback_playtime(self.conn)
@@ -699,7 +710,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_signal_playback_playtime(self.conn)
@@ -715,7 +726,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_shuffle(self.conn)
@@ -733,7 +744,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(url)
@@ -753,7 +764,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(url)
@@ -771,7 +782,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_add_id(self.conn, id)
@@ -789,7 +800,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_remove(self.conn, id)
@@ -805,7 +816,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_clear(self.conn)
@@ -823,7 +834,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_list(self.conn)
@@ -840,7 +851,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(prop)
@@ -859,7 +870,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_set_next_rel(self.conn, position)
@@ -876,7 +887,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_set_next(self.conn, position)
@@ -895,7 +906,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_move(self.conn, id, movement)
@@ -912,7 +923,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_playlist_current_pos(self.conn)
@@ -930,7 +941,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playlist_current_pos(self.conn)
@@ -947,7 +958,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playlist_changed(self.conn)
@@ -965,7 +976,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		ret.res = xmmsc_broadcast_configval_changed(self.conn)
@@ -981,7 +992,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c1 = from_unicode(key)
@@ -999,7 +1010,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(key)
@@ -1018,7 +1029,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_configval_list(self.conn)
@@ -1035,7 +1046,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c1 = from_unicode(valuename)
@@ -1053,7 +1064,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(query)
@@ -1070,7 +1081,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(file)
@@ -1087,7 +1098,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(playlistname)
@@ -1104,7 +1115,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(playlistname)
@@ -1121,7 +1132,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_medialib_get_info(self.conn, id)
@@ -1137,7 +1148,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(query)
@@ -1155,7 +1166,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		ret.res = xmmsc_medialib_playlists_list(self.conn)
@@ -1171,7 +1182,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(name)
@@ -1191,7 +1202,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_medialib_rehash(self.conn, id)
@@ -1208,7 +1219,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_medialib_get_id(self.conn, url)
@@ -1225,7 +1236,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(name)
@@ -1245,7 +1256,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(name)
@@ -1264,7 +1275,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 
 		c = from_unicode(path)
@@ -1284,7 +1295,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_medialib_entry_changed(self.conn)
@@ -1301,7 +1312,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_medialib_playlist_loaded(self.conn)
@@ -1319,7 +1330,7 @@ cdef class XMMS:
 		"""
 		cdef XMMSResult ret
 		
-		ret = XMMSResult()
+		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_signal_visualisation_data(self.conn)
 		ret.more_init()

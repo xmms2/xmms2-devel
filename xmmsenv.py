@@ -2,6 +2,7 @@ from SCons.Environment import Environment
 import SCons
 import sys, os
 import shutil
+import gzip
 from marshal import load
 from stat import *
 import operator
@@ -99,7 +100,7 @@ class XMMSEnvironment(Environment):
 		self["INSTALL"] = installFunc
 
 		self.install_prefix = self["PREFIX"]
-		self["MANDIR"] = self["MANDIR"].replace("$PREFIX", self.install_prefix)
+		self.manpath = self["MANDIR"].replace("$PREFIX", self.install_prefix)
 		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
 		self.binpath = os.path.join(self.install_prefix, "bin")
 		self.librarypath = os.path.join(self.install_prefix, "lib")
@@ -315,6 +316,10 @@ class XMMSEnvironment(Environment):
 
 	def add_header(self, target, source):
 		self.Install(os.path.join(self.includepath,target), source)
+
+        def add_manpage(self, section, source):
+                gzip.GzipFile(source+".gz", 'wb',9).write(file(source).read())
+                self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
 
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""
