@@ -719,6 +719,30 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 
 }
 
+
+static void
+cmd_plugin_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_plugin_list (conn);
+	xmmsc_result_wait (res);
+
+	while (xmmsc_result_list_valid (res)) {
+		gchar *name, *shortname, *desc;
+		xmmsc_result_get_dict_entry_str (res, "name", &name);
+		xmmsc_result_get_dict_entry_str (res, "shortname", &shortname);
+		xmmsc_result_get_dict_entry_str (res, "description", &desc);
+
+		printf ("%s - %s\n", shortname, desc);
+		
+		xmmsc_result_list_next (res);
+	}
+
+	xmmsc_result_unref (res);
+
+}
+
 static void
 cmd_quit (xmmsc_connection_t *conn, int argc, char **argv)
 {
@@ -1030,6 +1054,7 @@ cmds commands[] = {
 	{ "info", "information about current entry", cmd_info },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
+	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
 	/*{ "statistics", "get statistics from server", cmd_stats },
 	 */
 	{ "quit", "make the server quit", cmd_quit },

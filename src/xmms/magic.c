@@ -43,6 +43,10 @@ const xmms_mimemap_t mimemap[] = {
 	{ "html", "text/html" },
 	{ "htm", "text/html" },
 	{ "pls", "audio/x-scpls" },
+	{ "aac", "audio/aac" },
+	{ "m4a", "audio/x-mp4" },
+	{ "mp4", "audio/x-mp4" },
+	{ "m4p", "audio/x-m4p" },
 	{ NULL, NULL }
 };
 

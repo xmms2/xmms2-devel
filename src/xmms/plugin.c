@@ -552,6 +552,39 @@ xmms_plugin_scan_directory (const gchar *dir)
 	return TRUE;
 }
 
+GList *
+xmms_plugin_client_list (xmms_object_t *main, xmms_error_t *err)
+{
+	GList *list = NULL, *node;
+
+	g_mutex_lock (xmms_plugin_mtx);
+
+	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
+		GHashTable *hash;
+		const GList *p;
+		xmms_plugin_t *plugin = node->data;
+
+		hash = g_hash_table_new (g_str_hash, g_str_equal);
+		g_hash_table_insert (hash, "name", 
+							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_name_get (plugin)));
+		g_hash_table_insert (hash, "shortname", 
+							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_shortname_get (plugin)));
+		g_hash_table_insert (hash, "description", 
+							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_description_get (plugin)));
+		for (p = xmms_plugin_info_get (plugin); p; p = g_list_next (p)) {
+			xmms_plugin_info_t *info = p->data;
+			g_hash_table_insert (hash, info->key, xmms_object_cmd_value_str_new (info->value));
+		}
+
+		list = g_list_prepend (list, xmms_object_cmd_value_dict_new (hash));
+
+	}
+
+	g_mutex_unlock (xmms_plugin_mtx);
+
+	return list;
+}
+
 /**
  * @internal Look for loaded plugins matching a particular type
  * @param[in] type The plugin type to look for. (#xmms_plugin_type_t)
