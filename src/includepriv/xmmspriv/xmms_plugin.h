@@ -46,6 +46,7 @@ const char *xmms_plugin_description_get (const xmms_plugin_t *plugin);
 gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property);
 
 const GList *xmms_plugin_info_get (const xmms_plugin_t *plugin);
+const GList *xmms_plugin_magic_get (const xmms_plugin_t *plugin);
 
 
 #endif

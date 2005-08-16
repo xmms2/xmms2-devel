@@ -32,7 +32,6 @@
 
 typedef struct {
 	faacDecHandle decoder;
-	const gchar *mimetype;
 	gint filetype;
 
 	mp4ff_t *mp4ff;
@@ -50,8 +49,7 @@ typedef struct {
 	guint samplerate;
 } xmms_faad_data_t;
 
-static gboolean xmms_faad_can_handle (const gchar *mimetype);
-static gboolean xmms_faad_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_faad_new (xmms_decoder_t *decoder);
 static void xmms_faad_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_faad_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_faad_decode_block (xmms_decoder_t *decoder);
@@ -93,41 +91,21 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
 							xmms_faad_get_mediainfo);
 
+	xmms_plugin_magic_add (plugin, "aac in mp4", "audio/aac",
+	                       "4 string ftyp", ">8 string M4A ", NULL);
+	/* @todo Add magic checks for raw AAC */
+
 	return plugin;
 }
 
-
 static gboolean
-xmms_faad_can_handle (const gchar * mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-
-	if (g_strcasecmp (mimetype, "audio/aac") == 0) {
-		return TRUE;
-	}
-
-	if (g_strcasecmp (mimetype, "audio/x-mp4") == 0) {
-		return TRUE;
-	}
-#ifdef ITUNES_DRM
-	if (g_strcasecmp (mimetype, "audio/x-m4p") == 0) {
-		return TRUE;
-	}
-#endif
-
-	return FALSE;
-}
-
-static gboolean
-xmms_faad_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_faad_new (xmms_decoder_t *decoder)
 {
 	xmms_faad_data_t *data;
 
 	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (mimetype, FALSE);
 
 	data = g_new0 (xmms_faad_data_t, 1);
-	data->mimetype = mimetype;
 	data->buffer_size = FAAD_BUFFER_SIZE;
 
 	xmms_decoder_private_data_set (decoder, data);
@@ -194,10 +172,10 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 		return FALSE;
 	}
 
-	if (data->buffer[4] == 'f' && data->buffer[5] == 't' &&
-		data->buffer[6] == 'y' && data->buffer[7] == 'p') {
+	/* are we dealing with a raw AAC file or with a MP4 file? */
+	if (!strncmp (&data->buffer[4], "ftyp", 4)) {
 		data->filetype = FAAD_TYPE_MP4;
-	} else if (!g_strcasecmp (data->mimetype, "audio/x-aac")) {
+	} else {
 		data->filetype = FAAD_TYPE_AAC;
 	}
 
@@ -252,9 +230,6 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 		}
 		data->samplerate = samplerate;
 		data->channels = channels;
-	} else {
-		XMMS_DBG ("Unknown file type!");
-		return FALSE;
 	}
 
 	if (mode & XMMS_DECODER_INIT_DECODING) {

@@ -32,8 +32,7 @@
  * Function prototypes
  */
 
-static gboolean xmms_cdae_can_handle (const gchar *mimetype);
-static gboolean xmms_cdae_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_cdae_new (xmms_decoder_t *decoder);
 static gboolean xmms_cdae_init (xmms_decoder_t *decoder);
 static gboolean xmms_cdae_decode_block (xmms_decoder_t *decoder);
 static void xmms_cdae_get_media_info (xmms_decoder_t *decoder);
@@ -57,7 +56,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xiph.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_cdae_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_cdae_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_cdae_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_cdae_new);
@@ -72,17 +70,6 @@ xmms_plugin_get (void)
 	xmms_plugin_config_value_register (plugin, "usecddb", "1", NULL, NULL);
 
 	return plugin;
-}
-
-static gboolean
-xmms_cdae_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/pcm-data") == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 static void
@@ -131,7 +118,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 }
 
 static gboolean
-xmms_cdae_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_cdae_new (xmms_decoder_t *decoder)
 {
 	g_return_val_if_fail (decoder, FALSE);
 

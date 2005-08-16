@@ -37,7 +37,6 @@
  */
 
 
-static gboolean xmms_pls_can_handle (const gchar *mimetype);
 static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);
 static GString *xmms_pls_write_playlist (guint32 *list);
 
@@ -62,9 +61,11 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_pls_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_pls_read_playlist);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_pls_write_playlist);
+
+	xmms_plugin_magic_add (plugin, "pls header", "audio/x-scpls",
+	                       "0 string [playlist]", NULL);
 
 	return plugin;
 }
@@ -72,23 +73,6 @@ xmms_plugin_get (void)
 /*
  * Member functions
  */
-
-static gboolean
-xmms_pls_can_handle (const gchar *mime)
-{
-	g_return_val_if_fail (mime, FALSE);
-
-	XMMS_DBG ("xmms_pls_can_handle (%s)", mime);
-
-	if ((g_strncasecmp (mime, "audio/x-scpls", 13) == 0))
-		return TRUE;
-
-	if ((g_strncasecmp (mime, "audio/scpls", 11) == 0))
-		return TRUE;
-
-	return FALSE;
-}
-
 
 typedef struct {
 	gint num;
@@ -151,7 +135,10 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		XMMS_DBG ("Error reading pls-file");
 		return FALSE;
 	}
-	
+
+	/* for completeness' sake, check for the pls header here again, too
+	 * (it's already done in the magic check)
+	 */
 	if (g_ascii_strncasecmp (buffer, "[playlist]", 10) != 0) {
 		XMMS_DBG ("Not a PLS file");
 		return FALSE;

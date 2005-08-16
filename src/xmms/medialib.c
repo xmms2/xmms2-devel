@@ -1074,9 +1074,11 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *playlistname,
 			       gchar *url, xmms_error_t *error)
 {
 	gint playlist_id;
-	xmms_medialib_entry_t entry = xmms_medialib_entry_new (url);
+	xmms_medialib_entry_t entry;
 
 	g_mutex_lock (medialib->mutex);
+
+	entry = xmms_medialib_entry_new_unlocked (url);
 	playlist_id = get_playlist_id (playlistname);
 
 	if (!(playlist_id = prepare_playlist (playlist_id, playlistname))) {

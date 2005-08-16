@@ -116,6 +116,8 @@ void xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
 
+gboolean xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc, const gchar *mime, ...);
+
 /* config methods */
 xmms_config_value_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *value);
 xmms_config_value_t *xmms_plugin_config_value_register (xmms_plugin_t *plugin, const gchar *value, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);

@@ -17,7 +17,6 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_magic.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -137,8 +136,6 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	data->urlptr = g_strdup (urlptr);
 	xmms_transport_private_data_set (transport, data);
 
-	xmms_transport_mimetype_set (transport, xmms_magic_mime_from_file (data->urlptr));
-	
 	return TRUE;
 }
 

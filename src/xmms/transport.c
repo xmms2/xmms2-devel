@@ -54,8 +54,7 @@ static gpointer xmms_transport_thread (gpointer data);
  *
  * The transport is responsible for reading encoded data from 
  * a source. The data will be put in ringbuffer that the decoder 
- * reads from. Transports are also responsible to tell what kind
- * of mimetype the source data is.
+ * reads from.
  *
  * @{
  */
@@ -75,11 +74,8 @@ struct xmms_transport_St {
 
 	GMutex *mutex;
 	GCond *cond;
-	/**
-	 * Signal on this cond when the mimetype is extracted.
-	 */
-	GCond *mime_cond;
 	GThread *thread;
+
 	/** This is true if we are currently buffering. */
 	gboolean running;
 
@@ -87,8 +83,7 @@ struct xmms_transport_St {
 	 * Put the source data in this buffer
 	 */
 	xmms_ringbuf_t *buffer;
-	/** String containing current mimetype */
-	gchar *mimetype;
+
 	/** Private plugin data */
 	gpointer plugin_data;
 
@@ -103,8 +98,6 @@ struct xmms_transport_St {
 	gint numread; 	
 	gboolean buffering;
 
-	gboolean have_mimetype;
-
 	/** Number of bytes read from the transport */
 	guint64 total_bytes;
 
@@ -114,7 +107,15 @@ struct xmms_transport_St {
 	/** Error status for when we're buffering */
 	xmms_error_t status;
 
+	/** Current position in the stream. Only incremented on reads, not
+	 * on peek calls.
+	 */
 	guint64 current_position; 	
+
+	/** Current position in the stream, stores the real position
+	 * (ie it's also increment on peek calls)
+	 */
+	guint64 current_position_total;
 
 	/** Used for linereading */
 	struct {
@@ -161,41 +162,6 @@ xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 	g_mutex_lock (transport->mutex);
 	transport->plugin_data = data;
 	g_mutex_unlock (transport->mutex);
-}
-
-/**
- * Set transport mimetype.
- * This should be called from the plugin to propagate the mimetype
- *
- * @param transport The transport on which to set the mimetype.
- * @param mimetype A zero-terminated string with the mimetype of the
- * source. It will be duplicated into the transport and free'd when
- * the transport is destroyed.
- */
-void
-xmms_transport_mimetype_set (xmms_transport_t *transport, const gchar *mimetype)
-{
-	g_return_if_fail (transport);
-
-	g_mutex_lock (transport->mutex);
-	
-	if (transport->mimetype)
-		g_free (transport->mimetype);
-
-	if (mimetype) {
-		transport->mimetype = g_strdup (mimetype);
-	} else {
-		transport->mimetype = NULL;
-	}
-
-	transport->have_mimetype = TRUE;
-
-	g_mutex_unlock (transport->mutex);
-	
-	if (transport->running)
-		xmms_object_emit (XMMS_OBJECT (transport), XMMS_IPC_SIGNAL_TRANSPORT_MIMETYPE, mimetype);
-
-	g_cond_signal (transport->mime_cond);
 }
 
 /** 
@@ -301,15 +267,34 @@ xmms_transport_new ()
 	transport = xmms_object_new (xmms_transport_t, xmms_transport_destroy);
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
-	transport->mime_cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
 	transport->buffering = FALSE; /* maybe should be true? */
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
+	transport->current_position_total = 0;
 	transport->lr.bufend = &transport->lr.buf[0];
 	
 	return transport;
+}
+
+/**
+ * Determines the size of the ring buffer used by the transport.
+ *
+ * @returns the size of the ring buffer used by the transport.
+ */
+guint
+xmms_transport_buffersize (xmms_transport_t *transport)
+{
+	guint ret;
+
+	g_return_val_if_fail (transport, FALSE);
+
+	g_mutex_lock (transport->mutex);
+	ret = xmms_ringbuf_size (transport->buffer);
+	g_mutex_unlock (transport->mutex);
+
+	return ret;
 }
 
 /**
@@ -344,51 +329,6 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 
 	return xmms_transport_plugin_open (transport, entry, NULL);
 }
-
-
-
-/**
- * Query the #xmms_transport_t for the current mimetype.
- *
- * @returns a zero-terminated string with the current mimetype.
- */
-const gchar *
-xmms_transport_mimetype_get (xmms_transport_t *transport)
-{
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
-
-	g_mutex_lock (transport->mutex);
-	ret =  transport->mimetype;
-	g_mutex_unlock (transport->mutex);
-
-	return ret;
-}
-
-/**
- * Like #xmms_transport_mimetype_get but blocks if
- * transport plugin has not yet called mimetype_set
- * This must be called on plugins that is remote. It might
- * take them a while to get the mimetype.
- *
- * @returns a zero-terminated string with the current mimetype.
- */
-const gchar *
-xmms_transport_mimetype_get_wait (xmms_transport_t *transport)
-{
-	const gchar *ret;
-	g_return_val_if_fail (transport, NULL);
-
-	g_mutex_lock (transport->mutex);
-	if (!transport->have_mimetype) {
-		g_cond_wait (transport->mime_cond, transport->mutex);
-	}
-	ret = transport->mimetype;
-	g_mutex_unlock (transport->mutex);
-
-	return ret;
-}
-
 
 /**
  * Tell the transport to start buffer, this is normaly done
@@ -450,6 +390,7 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 
 		if (ret != -1) {
 			transport->current_position += ret;
+			transport->current_position_total += ret;
 			transport->total_bytes += ret;
 		}
 
@@ -498,6 +439,56 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 	return ret;
 }
 
+gint
+xmms_transport_peek (xmms_transport_t *transport, gchar *buffer,
+                     guint len, xmms_error_t *error)
+{
+	gint ret;
+
+	g_return_val_if_fail (transport, -1);
+	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (len > 0, -1);
+	g_return_val_if_fail (error, -1);
+
+	g_mutex_lock (transport->mutex);
+
+	if (len > xmms_ringbuf_size (transport->buffer)) {
+		xmms_error_set (error, XMMS_ERROR_INVAL,
+		                "transport buffer too small");
+		g_mutex_unlock (transport->mutex);
+
+		return -1;
+	}
+
+	if (xmms_ringbuf_iseos (transport->buffer)) {
+		xmms_error_set (error, transport->status.code,
+		                transport->status.message);
+		ret = (transport->status.code == XMMS_ERROR_EOS) ? 0 : -1;
+
+		g_mutex_unlock (transport->mutex);
+
+		return ret;
+	}
+
+	/* make sure we are buffering */
+	if (!transport->buffering) {
+		transport->buffering = TRUE;
+		g_cond_signal (transport->cond);
+		xmms_ringbuf_clear (transport->buffer);
+		xmms_ringbuf_set_eos (transport->buffer, FALSE);
+	}
+
+	ret = xmms_ringbuf_peek_wait (transport->buffer, buffer, len,
+	                              transport->mutex);
+
+	if (ret < len) {
+		transport->buffer_underruns++;
+	}
+
+	g_mutex_unlock (transport->mutex);
+
+	return ret;
+}
 
 /**
  * Read line.
@@ -603,13 +594,15 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	if (whence == XMMS_TRANSPORT_SEEK_CUR) {
 		whence = XMMS_TRANSPORT_SEEK_SET;
-		offset = transport->current_position + offset;
+		offset = transport->current_position_total + offset;
 	}
 
 	ret = seek_method (transport, offset, whence);
 
-	if (ret != -1)
+	if (ret != -1) {
 		transport->current_position = ret; 
+		transport->current_position_total = ret;
+	}
 
 	g_mutex_unlock (transport->mutex);
 
@@ -793,12 +786,8 @@ xmms_transport_destroy (xmms_object_t *object)
 	xmms_object_unref (transport->plugin);
 
 	xmms_ringbuf_destroy (transport->buffer);
-	g_cond_free (transport->mime_cond);
 	g_cond_free (transport->cond);
 	g_mutex_free (transport->mutex);
-	
-	if (transport->mimetype)
-		g_free (transport->mimetype);
 }
 
 /**
@@ -869,6 +858,10 @@ xmms_transport_thread (gpointer data)
 		g_mutex_unlock (transport->mutex);
 		ret = read_method (transport, buffer, sizeof(buffer), &error);
 		g_mutex_lock (transport->mutex);
+
+		if (ret > 0) {
+			transport->current_position_total += ret;
+		}
 
 		if (!transport->running)
 			break;

@@ -102,6 +102,19 @@ xmms_plugin_get (void)
 
 	xmms_plugin_config_value_register (plugin, "suffixes", "mp3,ogg,flac,wav,spx,sid", NULL, NULL);
 
+	xmms_plugin_magic_add (plugin, "html w/ doctype", "text/html",
+	                       "0 string <!DOCTYPE html ", NULL);
+
+	/* we accept broken HTML, too */
+	xmms_plugin_magic_add (plugin, "html tag", "text/html",
+	                       "0 string <html ", NULL);
+	xmms_plugin_magic_add (plugin, "html header tag", "text/html",
+	                       "0 string <head ", NULL);
+
+	/* XHTML */
+	xmms_plugin_magic_add (plugin, "xml tag", "text/html",
+	                       "0 string <?xml ", NULL);
+
 	return plugin;
 }
 

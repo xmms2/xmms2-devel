@@ -69,8 +69,7 @@ static props properties[] = {
  * Function prototypes
  */
 
-static gboolean xmms_vorbis_can_handle (const gchar *mimetype);
-static gboolean xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_vorbis_new (xmms_decoder_t *decoder);
 static gboolean xmms_vorbis_decode_block (xmms_decoder_t *decoder);
 static void xmms_vorbis_get_media_info (xmms_decoder_t *decoder);
 static void xmms_vorbis_destroy (xmms_decoder_t *decoder);
@@ -96,7 +95,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xiph.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_vorbis_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_vorbis_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_vorbis_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_vorbis_destroy);
@@ -107,21 +105,12 @@ xmms_plugin_get (void)
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 
+	xmms_plugin_magic_add (plugin, "ogg/vorbis header",
+	                       "application/ogg",
+	                       "0 string OggS", ">4 byte 0",
+	                       ">>28 string \x01vorbis", NULL);
+
 	return plugin;
-}
-
-static gboolean
-xmms_vorbis_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "application/ogg") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "application/x-ogg") == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 static size_t 
@@ -205,7 +194,7 @@ vorbis_callback_tell (void *datasource)
 }
 
 static gboolean 
-xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_vorbis_new (xmms_decoder_t *decoder)
 {
 	xmms_vorbis_data_t *data;
 

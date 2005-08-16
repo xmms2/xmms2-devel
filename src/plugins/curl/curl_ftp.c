@@ -58,7 +58,6 @@ typedef struct {
 	gint data_in_buf;
 
 	gboolean stream;
-	const gchar *mime;
 	gchar *name;
 	gchar *genre;
 
@@ -265,7 +264,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->curlm = curl_multi_init ();
 	data->stream = FALSE;
 	data->url = xmms_util_decode_path (url);
-	data->mime = xmms_magic_mime_from_file (data->url);
 	
 	xmms_transport_private_data_set (transport, data);
 	
@@ -280,8 +278,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 		data->again = TRUE;
 	}
 	
-	xmms_transport_mimetype_set (transport, data->mime);
-
 	FD_ZERO (&data->fdread);
 	FD_ZERO (&data->fdwrite);
 	FD_ZERO (&data->fdexcep);

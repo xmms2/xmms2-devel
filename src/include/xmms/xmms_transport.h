@@ -31,7 +31,9 @@ typedef struct xmms_transport_St xmms_transport_t;
 #define XMMS_TRANSPORT_SEEK_CUR 2
 
 gint xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
+gint xmms_transport_peek (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 guint64 xmms_transport_size (xmms_transport_t *transport);
+guint xmms_transport_buffersize (xmms_transport_t *transport);
 const gchar *xmms_transport_url_get (const xmms_transport_t *const transport);
 xmms_medialib_entry_t xmms_transport_medialib_entry_get (const xmms_transport_t *const transport);
 void xmms_transport_buffering_start (xmms_transport_t *transport);
