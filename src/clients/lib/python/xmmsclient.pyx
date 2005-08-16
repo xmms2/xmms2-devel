@@ -170,7 +170,10 @@ from os import write
 import os
 
 cdef to_unicode(char *s):
-	ns = PyUnicode_DecodeUTF8(s, len(s), NULL)
+	try:
+		ns = PyUnicode_DecodeUTF8(s, len(s), NULL)
+	except:
+		ns = s
 	return ns
 
 cdef from_unicode(object o):
