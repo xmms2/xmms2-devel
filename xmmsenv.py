@@ -224,6 +224,8 @@ class XMMSEnvironment(Environment):
 				self.config_cache[key] += "-l"+lib
 				self.parse_config_string("-l"+lib)
 				return
+			else:
+				self.config_cache[key] = None
 
 		if not self.config_cache[key]:
 			if fail:
@@ -281,7 +283,10 @@ class XMMSEnvironment(Environment):
 				pass
 			elif arg[-3:] == '.la':
 				la = self.parse_libtool(arg)
-				lib = la["dlname"][3:-5] # UGLY!
+				lib = la["dlname"]
+				if lib[:3] == 'lib':
+					lib = lib[3:]
+				lib = lib[:lib.index(".")]
 				self.parse_config_string(la["dependency_libs"])
 				self.parse_config_string("-l"+lib)
 
