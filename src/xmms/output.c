@@ -566,15 +566,17 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_output_t *output = (xmms_output_t *)object;
 	xmms_output_destroy_method_t dest;
 
-	dest = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+	if (output->plugin) {
+		dest = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
 
-	if (dest) {
-		g_mutex_lock (output->api_mutex);
-		dest (output);
-		g_mutex_unlock (output->api_mutex);
+		if (dest) {
+			g_mutex_lock (output->api_mutex);
+			dest (output);
+			g_mutex_unlock (output->api_mutex);
+		}
+
+		xmms_object_unref (output->plugin);
 	}
-
-	xmms_object_unref (output->plugin);
 
 	while (output->effects) {
 		xmms_effect_free (output->effects->data);
@@ -623,8 +625,9 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 
 	if (output->plugin) {
 		dest = xmms_output_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-		if (dest)
+		if (dest) {
 			dest (output);
+		}
 		xmms_object_unref (output->plugin);
 	}
 
@@ -638,12 +641,14 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 		} else {
 			output->plugin = NULL;
 		}
-	} 
+	} else {
+		output->plugin = NULL;
+	}
 	
 
 	g_mutex_unlock (output->status_mutex);
 
-	return TRUE;
+	return output->plugin ? TRUE : FALSE;
 
 }
 
@@ -657,6 +662,8 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	xmms_output_new_method_t new;
 	xmms_output_write_method_t wr;
 	xmms_output_status_method_t st;
+
+	g_return_val_if_fail (playlist, NULL);
 	
 	XMMS_DBG ("Trying to open output");
 
@@ -676,9 +683,11 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	output->status_mutex = g_mutex_new ();
 	output->playtime_mutex = g_mutex_new ();
 
-	new = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
-	if (new) {
-		new (output);
+	if (plugin) {
+		new = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+		if (new) {
+			new (output);
+		}
 	}
 	
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_OUTPUT, XMMS_OBJECT (output));
@@ -728,12 +737,17 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 
 	output->status = XMMS_PLAYBACK_STATUS_STOP;
 
-	wr = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
-	st = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
+	if (plugin) {
+		wr = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
+		st = xmms_output_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
 
-	g_return_val_if_fail ((!wr ^ !st), NULL);
+		g_return_val_if_fail ((!wr ^ !st), NULL);
 
-	output->status_method = st ? st : status_changed;
+		output->status_method = st ? st : status_changed;
+	} else {
+		xmms_log_error ("initalized output without a plugin, please fix!");
+	}
+
 
 	
 	return output;
@@ -747,11 +761,8 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 static xmms_plugin_method_t
 xmms_output_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 {
-	if (plugin) {
-		return xmms_plugin_method_get (plugin, method);
-	} else {
-		return NULL;
-	}
+	g_return_val_if_fail (plugin, NULL);
+	return xmms_plugin_method_get (plugin, method);
 }
 
 /**

@@ -128,6 +128,7 @@ python_executable = sys.executable
 
 b = Builder(action = python_executable + ' src/xmms/generate-converter.py > src/xmms/converter.c')
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
+base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
 base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
@@ -159,6 +160,11 @@ def scan_headers(name):
 scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
+
+### INSTALL MANUAL PAGES!
+
+base_env.add_manpage(1, 'doc/xmms2.1')
+base_env.add_manpage(8, 'doc/xmms2d.8')
 
 #### Generate pc files.
 

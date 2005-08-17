@@ -500,6 +500,33 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 
 }
 
+static void
+cmd_current (xmmsc_connection_t *conn, int argc, char **argv)
+{ 
+	xmmsc_result_t *res;
+	gchar print_text[256];
+	guint id;
+
+	res = xmmsc_playback_current_id (conn);
+	xmmsc_result_wait (res);
+	if (!xmmsc_result_get_uint (res, &id))
+		print_error ("Broken result");
+	xmmsc_result_unref (res);
+
+	res = xmmsc_medialib_get_info (conn, id);
+	xmmsc_result_wait (res);
+
+	if (argc > 2) {
+	  xmmsc_entry_format (print_text, sizeof(print_text), argv[2], res);	
+	} else {
+	  xmmsc_entry_format (print_text, sizeof(print_text), 
+		              "${artist} - ${title}", res);
+	}
+
+	printf("%s\n", print_text);
+	xmmsc_result_unref (res);
+}
+
 static int
 res_has_key (xmmsc_result_t *res, const char *key)
 {
@@ -1052,6 +1079,7 @@ cmds commands[] = {
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
+	{ "current", "formatted information about the current entry", cmd_current },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },

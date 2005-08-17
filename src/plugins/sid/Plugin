@@ -2,4 +2,5 @@ target="sid"
 source=["sid.c", "sidplay_wrapper.cpp"]
 
 def config(env):
-	raise ConfigError("Plugin disabled")
+	env.checklib("sidplay2", "")
+	env.checklib("resid-builder", "")

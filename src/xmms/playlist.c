@@ -119,7 +119,6 @@ struct xmms_playlist_St {
 
 	gboolean repeat_one;
 	gboolean repeat_all;
-	gboolean medialib_random_mode;
 
 	GMutex *mutex;
 
@@ -152,18 +151,6 @@ on_playlist_r_one_changed (xmms_object_t *object, gconstpointer data,
 	g_mutex_unlock (playlist->mutex);
 }
 
-static void
-on_playlist_medialib_random_changed (xmms_object_t *object, gconstpointer data,
-			    gpointer udata)
-{
-	xmms_playlist_t *playlist = udata;
-
-	g_mutex_lock (playlist->mutex);
-	if (data)
-		playlist->medialib_random_mode = atoi ((gchar *)data);
-	g_mutex_unlock (playlist->mutex);
-}
-
 /**
  * Initializes a new xmms_playlist_t.
  */
@@ -189,8 +176,6 @@ xmms_playlist_init (void)
 	val = xmms_config_value_register ("playlist.repeat_all", "0", on_playlist_r_all_changed, ret);
 	ret->repeat_all = xmms_config_value_int_get (val);
 
-	val = xmms_config_value_register ("playlist.medialib_random_mode", "0", on_playlist_medialib_random_changed, ret);
-	ret->medialib_random_mode = xmms_config_value_int_get (val);
 
 
 
@@ -279,10 +264,6 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 		playlist->currentpos++;
 		playlist->currentpos %= playlist->list->len;
 		ret = (playlist->currentpos != 0) || playlist->repeat_all;
-		if (!ret && playlist->medialib_random_mode) {
-			playlist->currentpos = -1;
-			ret = TRUE;
-		}
 		xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 	}
 	g_mutex_unlock (playlist->mutex);
@@ -303,11 +284,7 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	
 	g_mutex_lock (playlist->mutex);
 
-	if (playlist->currentpos == -1 && playlist->medialib_random_mode) {
-		ent = xmms_medialib_get_random_entry ();
-		g_mutex_unlock (playlist->mutex);
-		return ent;
-	} else if (playlist->currentpos == -1 && (playlist->list->len > 0)) {
+	if (playlist->currentpos == -1 && (playlist->list->len > 0)) {
 		playlist->currentpos = 0;
 		xmms_object_emit_f (XMMS_OBJECT (playlist),
 				    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
