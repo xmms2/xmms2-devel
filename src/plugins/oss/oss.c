@@ -145,7 +145,7 @@ xmms_plugin_get (void)
 	                                   NULL,
 	                                   NULL);
 	
-#if !defined(XMMS_OS_NETBSD) || !defined(XMMS_OS_OPENBSD) 
+#if !defined(XMMS_OS_NETBSD) && !defined(XMMS_OS_OPENBSD) 
 	xmms_plugin_config_value_register (plugin,
 	                                   "device",
 	                                   "/dev/dsp",
