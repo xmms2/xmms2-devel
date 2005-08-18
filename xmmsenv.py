@@ -207,18 +207,18 @@ class XMMSEnvironment(Environment):
 		key = (lib, func)
 
 		if not self.config_cache.has_key(key):
-			libtool_flags = None
+			#libtool_flags = None
 
 			self.config_cache[key] = ""
 
-			for d in global_libpaths+self["LIBPATH"]:
-				la = "%s/lib%s.la" % (d, lib)
-				if os.path.isfile(la):
-					print "found a libtoolfile", la
-					libtool_flags = self.parse_libtool(la)
-					self.parse_config_string(libtool_flags["dependency_libs"])
-					self.config_cache[key] = libtool_flags["dependency_libs"]+" "
-					break
+			#for d in global_libpaths+self["LIBPATH"]:
+			#	la = "%s/lib%s.la" % (d, lib)
+			#	if os.path.isfile(la):
+			#		print "found a libtoolfile", la
+			#		libtool_flags = self.parse_libtool(la)
+			#		self.parse_config_string(libtool_flags["dependency_libs"])
+			#		self.config_cache[key] = libtool_flags["dependency_libs"]+" "
+			#		break
 
 			if self.conf.CheckLib(lib, func, 0):
 				self.config_cache[key] += "-l"+lib
