@@ -8,3 +8,5 @@ usr/lib/xmms2/libxmms_replaygain.so*
 usr/lib/xmms2/libxmms_diskwrite.so*
 usr/lib/xmms2/libxmms_html.so*
 usr/share/xmms2/dismantled-the_swarm_clip.ogg
+usr/share/man/man8/xmms2d.8.gz
+usr/share/man/man1/xmms2.1.gz
