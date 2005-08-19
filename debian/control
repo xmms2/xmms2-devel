@@ -139,12 +139,12 @@ Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends
 Description: XMMS2 - cli client
  This package contains a simple text-ui for xmms2.
 
-Package: xmms2-client-sdlvis
-Architecture: any
-Provides: xmms2-client
-Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
-Description: XMMS2 - simple SDL visualization client
- This package contains a simple SDL visualization client for xmms2.
+#Package: xmms2-client-sdlvis
+#Architecture: any
+#Provides: xmms2-client
+#Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version}), ${shlibs:Depends}
+#Description: XMMS2 - simple SDL visualization client
+# This package contains a simple SDL visualization client for xmms2.
 
 Package: xmms2-transport-curl
 Architecture: any
