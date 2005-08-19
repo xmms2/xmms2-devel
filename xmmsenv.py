@@ -2,9 +2,12 @@ from SCons.Environment import Environment
 import SCons
 import sys, os
 import shutil
+import gzip
 from marshal import load
 from stat import *
 import operator
+
+global_libpaths = ["/lib", "/usr/lib"]
 
 class ConfigError(Exception):
 	pass
@@ -99,7 +102,7 @@ class XMMSEnvironment(Environment):
 		self["INSTALL"] = installFunc
 
 		self.install_prefix = self["PREFIX"]
-		self["MANDIR"] = self["MANDIR"].replace("$PREFIX", self.install_prefix)
+		self.manpath = self["MANDIR"].replace("$PREFIX", self.install_prefix)
 		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
 		self.binpath = os.path.join(self.install_prefix, "bin")
 		self.librarypath = os.path.join(self.install_prefix, "lib")
@@ -187,6 +190,7 @@ class XMMSEnvironment(Environment):
 				sys.exit(-1)
 			raise ConfigError("Command '%s' failed" % cmd)
 		ret = ret.strip()
+
 		self.parse_config_string(ret)
 
 	def checkheader(self, header, fail=False):
@@ -201,8 +205,27 @@ class XMMSEnvironment(Environment):
 
 	def checklib(self, lib, func, fail=False):
 		key = (lib, func)
+
 		if not self.config_cache.has_key(key):
-			self.config_cache[key] = self.conf.CheckLib(lib, func, 0)
+			#libtool_flags = None
+
+			self.config_cache[key] = ""
+
+			#for d in global_libpaths+self["LIBPATH"]:
+			#	la = "%s/lib%s.la" % (d, lib)
+			#	if os.path.isfile(la):
+			#		print "found a libtoolfile", la
+			#		libtool_flags = self.parse_libtool(la)
+			#		self.parse_config_string(libtool_flags["dependency_libs"])
+			#		self.config_cache[key] = libtool_flags["dependency_libs"]+" "
+			#		break
+
+			if self.conf.CheckLib(lib, func, 0):
+				self.config_cache[key] += "-l"+lib
+				self.parse_config_string("-l"+lib)
+				return
+			else:
+				self.config_cache[key] = None
 
 		if not self.config_cache[key]:
 			if fail:
@@ -210,7 +233,7 @@ class XMMSEnvironment(Environment):
 				sys.exit(1)
 			raise ConfigError("Symbol '%s' in library '%s' not found" % (func, lib))
 
-		self.parse_config_string("-l"+lib)
+		self.parse_config_string(self.config_cache[key])
 
 	def parse_config_string(self, flags):
 		"""We want our own ParseConfig, that supports some more
@@ -258,6 +281,14 @@ class XMMSEnvironment(Environment):
 			elif arg[:3] == 'yes' :
 				i = i + 3
 				pass
+			elif arg[-3:] == '.la':
+				la = self.parse_libtool(arg)
+				lib = la["dlname"]
+				if lib[:3] == 'lib':
+					lib = lib[3:]
+				lib = lib[:lib.index(".")]
+				self.parse_config_string(la["dependency_libs"])
+				self.parse_config_string("-l"+lib)
 
 			i = i + 1
 
@@ -316,6 +347,10 @@ class XMMSEnvironment(Environment):
 	def add_header(self, target, source):
 		self.Install(os.path.join(self.includepath,target), source)
 
+        def add_manpage(self, section, source):
+                gzip.GzipFile(source+".gz", 'wb',9).write(file(source).read())
+                self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
+
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""
 		cached = {}
@@ -354,6 +389,22 @@ class XMMSEnvironment(Environment):
 				self.potential_targets.append((d, newdir))
 
 
+	def parse_libtool(self, libtoolfile):
+		""" 
+		This will open the libtool file and read the lines
+		that we need.
+		"""
+		f = file(libtoolfile)
+		line = f.readline()
+		ret = {}
+		while line:
+			if '=' in line:
+				s = line.split("=")
+				if len(s) == 2:
+					ret[s[0]] = s[1].replace("'", "").strip()
+			line = f.readline()
+
+		return ret
 
 	def handle_targets(self, targettype):
 		cls = eval(targettype+"Target")
@@ -366,5 +417,6 @@ class XMMSEnvironment(Environment):
 			try:
 				t.config(env)
 				t.add(env)
-			except ConfigError:
+			except ConfigError, m:
+				self.conf.logstream.write("xmmsscons: File %s reported error '%s' and was disabled.\n" % (t.target, m))
 				continue

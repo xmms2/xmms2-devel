@@ -42,7 +42,6 @@ resample_INCHANNELS_INTYPE_to_OUTCHANNELS_OUTTYPE (xmms_sample_converter_t *conv
 	if (pos < 1) {
 		prevbuf = (xmms_sampleINTYPE_t *)conv->state;
 	} else {
-		g_assert(0);
 		prevbuf = &buf[INCHANNELS * (((gint)pos)-1)];
 	}
 
