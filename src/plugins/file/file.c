@@ -26,8 +26,6 @@
 
 #include <string.h>
 
-extern int errno;
-
 /*
  * Type definitions
  */
