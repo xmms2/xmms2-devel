@@ -151,6 +151,8 @@ xmms_plugin_new (xmms_plugin_type_t type,
 			if (api_version != XMMS_EFFECT_PLUGIN_API_VERSION)
 				api_mismatch = TRUE;
 			break;
+		case XMMS_PLUGIN_TYPE_ALL:
+			break;
 	}
 
 	if (api_mismatch) {
@@ -553,13 +555,15 @@ xmms_plugin_scan_directory (const gchar *dir)
 }
 
 GList *
-xmms_plugin_client_list (xmms_object_t *main, xmms_error_t *err)
+xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 {
-	GList *list = NULL, *node;
+	GList *list = NULL, *node, *l;
+
+	l = xmms_plugin_list_get (type);
 
 	g_mutex_lock (xmms_plugin_mtx);
 
-	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
+	for (node = l; node; node = g_list_next (node)) {
 		GHashTable *hash;
 		const GList *p;
 		xmms_plugin_t *plugin = node->data;
@@ -571,6 +575,9 @@ xmms_plugin_client_list (xmms_object_t *main, xmms_error_t *err)
 							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_shortname_get (plugin)));
 		g_hash_table_insert (hash, "description", 
 							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_description_get (plugin)));
+		g_hash_table_insert (hash, "type", 
+							 xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
+
 		for (p = xmms_plugin_info_get (plugin); p; p = g_list_next (p)) {
 			xmms_plugin_info_t *info = p->data;
 			g_hash_table_insert (hash, info->key, xmms_object_cmd_value_str_new (info->value));
@@ -581,6 +588,8 @@ xmms_plugin_client_list (xmms_object_t *main, xmms_error_t *err)
 	}
 
 	g_mutex_unlock (xmms_plugin_mtx);
+
+	xmms_plugin_list_destroy (l);
 
 	return list;
 }
@@ -600,7 +609,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
 		xmms_plugin_t *plugin = node->data;
 
-		if (plugin->type == type) {
+		if (plugin->type == type || type == XMMS_PLUGIN_TYPE_ALL) {
 			xmms_object_ref (plugin);
 			list = g_list_prepend (list, plugin);
 		}

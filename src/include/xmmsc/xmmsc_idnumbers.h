@@ -133,4 +133,13 @@ typedef enum {
 	XMMS_PLAYBACK_STATUS_PAUSE,
 } xmms_playback_status_t; 
 
+typedef enum {
+	XMMS_PLUGIN_TYPE_ALL,
+	XMMS_PLUGIN_TYPE_TRANSPORT,
+	XMMS_PLUGIN_TYPE_DECODER,
+	XMMS_PLUGIN_TYPE_OUTPUT,
+	XMMS_PLUGIN_TYPE_PLAYLIST,
+	XMMS_PLUGIN_TYPE_EFFECT
+} xmms_plugin_type_t;
+
 #endif /* __SIGNAL_XMMS_H__ */

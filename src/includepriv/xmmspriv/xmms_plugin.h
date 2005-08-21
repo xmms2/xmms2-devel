@@ -31,7 +31,7 @@ void xmms_plugin_shutdown ();
 gboolean xmms_plugin_scan_directory (const gchar *dir);
 
 GList *xmms_plugin_list_get (xmms_plugin_type_t type);
-GList *xmms_plugin_client_list (xmms_object_t *, xmms_error_t *err);
+GList *xmms_plugin_client_list (xmms_object_t *, guint32 type, xmms_error_t *err);
 void xmms_plugin_list_destroy (GList *list);
 
 xmms_plugin_t *xmms_plugin_find (xmms_plugin_type_t type, const gchar *name);

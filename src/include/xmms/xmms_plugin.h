@@ -26,13 +26,14 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_config.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 /* API VERSIONS */
-#define XMMS_TRANSPORT_PLUGIN_API_VERSION 1
-#define XMMS_DECODER_PLUGIN_API_VERSION 1
-#define XMMS_EFFECT_PLUGIN_API_VERSION 1
-#define XMMS_PLAYLIST_PLUGIN_API_VERSION 1
-#define XMMS_OUTPUT_PLUGIN_API_VERSION 1
+#define XMMS_TRANSPORT_PLUGIN_API_VERSION 2
+#define XMMS_DECODER_PLUGIN_API_VERSION 2
+#define XMMS_EFFECT_PLUGIN_API_VERSION 2
+#define XMMS_PLAYLIST_PLUGIN_API_VERSION 2
+#define XMMS_OUTPUT_PLUGIN_API_VERSION 2
 
 
 /* 
@@ -86,14 +87,6 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 /*
  * Type declarations
  */
-
-typedef enum {
-	XMMS_PLUGIN_TYPE_TRANSPORT,
-	XMMS_PLUGIN_TYPE_DECODER,
-	XMMS_PLUGIN_TYPE_OUTPUT,
-	XMMS_PLUGIN_TYPE_PLAYLIST,
-	XMMS_PLUGIN_TYPE_EFFECT
-} xmms_plugin_type_t;
 
 typedef void *xmms_plugin_method_t;
 

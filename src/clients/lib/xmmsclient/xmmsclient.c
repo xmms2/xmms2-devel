@@ -261,10 +261,18 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
  * Get a list of loaded plugins from the server
  */
 xmmsc_result_t *
-xmmsc_plugin_list (xmmsc_connection_t *c)
+xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type)
 {
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
 	x_check_conn (c, NULL);
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
+	xmms_ipc_msg_put_uint32 (msg, type);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
 }
 
 /**
