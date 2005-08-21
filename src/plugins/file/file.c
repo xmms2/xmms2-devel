@@ -89,11 +89,7 @@ xmms_file_can_handle (const gchar *url)
 {
 	g_return_val_if_fail (url, FALSE);
 
-	if ((g_strncasecmp (url, "file:", 5) == 0)) {
-		return TRUE;
-	}
-
-	return FALSE;
+	return !g_strncasecmp (url, "file://", 7);
 }
 
 static gboolean
