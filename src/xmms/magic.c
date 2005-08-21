@@ -133,7 +133,6 @@ parse_oper (gchar **s)
 		gchar c;
 		xmms_magic_entry_operator_t o;
 	} *o, opers[] = {
-		{'&', XMMS_MAGIC_ENTRY_OPERATOR_AND},
 		{'=', XMMS_MAGIC_ENTRY_OPERATOR_EQUAL},
 		{'<', XMMS_MAGIC_ENTRY_OPERATOR_LESS_THAN},
 		{'>', XMMS_MAGIC_ENTRY_OPERATOR_GREATER_THAN},
