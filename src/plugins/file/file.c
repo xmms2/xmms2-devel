@@ -105,11 +105,9 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 
 	XMMS_DBG ("xmms_file_init (%p, %s)", transport, url);
 
-	urlptr = strchr (url, '/');
-
-	if (!urlptr) {
-		return FALSE;
-	}
+	/* just in case our can_handle method isn't called correctly... */
+	g_assert (strlen (url) >= 7);
+	urlptr = &url[7];
 
 	if (stat (urlptr, &st) == -1) {
 		return FALSE;
