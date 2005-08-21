@@ -88,6 +88,10 @@ xmms_plugin_get (void)
 	                          "Wave decoder " XMMS_VERSION,
 	                          "Wave decoder");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://msdn.microsoft.com/"
 	                                     "library/en-us/dnnetcomp/html/"

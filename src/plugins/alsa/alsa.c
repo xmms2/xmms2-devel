@@ -107,8 +107,11 @@ xmms_plugin_get (void)
 				  XMMS_OUTPUT_PLUGIN_API_VERSION,
 				  "alsa",
 				  "ALSA Output" XMMS_VERSION,
-				  "Advanced Linux Sound Architecture \
-				  output plugin");
+				  "Advanced Linux Sound Architecture output plugin");
+
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.alsa-project.org");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");

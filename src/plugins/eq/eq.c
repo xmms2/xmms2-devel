@@ -105,6 +105,9 @@ xmms_plugin_get (void)
 				  "Equalizer effect " XMMS_VERSION,
 				  "Equalizer effect");
 
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");

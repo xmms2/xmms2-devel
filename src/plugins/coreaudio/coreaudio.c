@@ -74,6 +74,10 @@ xmms_plugin_get (void)
 				  "coreaudio",
 				  "CoreAudio Output " XMMS_VERSION,
 				  "Darwin CoreAudio Output Support");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://www.apple.com/");

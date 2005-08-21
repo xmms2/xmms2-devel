@@ -72,6 +72,10 @@ xmms_plugin_get (void)
 				  "GNOME VFS transport plugin" XMMS_VERSION,
 				  "A transport that itself supports a wide range of transports,"
 				  "http, webdav, tar, ssh and more.");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.gnome.org/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");

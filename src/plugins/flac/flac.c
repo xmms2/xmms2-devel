@@ -63,6 +63,10 @@ xmms_plugin_get (void)
 				  "flac",
 				  "FLAC decoder " XMMS_VERSION,
 				  "Free Lossless Audio Codec decoder");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");

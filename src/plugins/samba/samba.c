@@ -73,6 +73,10 @@ xmms_plugin_get (void)
 				  "SMB/CIFS transport " XMMS_VERSION,
 				  "Access SMB/CIFS fileshares over a network.");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.se/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
 	xmms_plugin_info_add (plugin, "E-Mail", "nano@nittionino.nu");

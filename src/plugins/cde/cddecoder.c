@@ -52,6 +52,10 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "cddecoder",
 			"CDAE decoder " XMMS_VERSION,
 			"CDAE decoder");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xiph.org/");
