@@ -384,11 +384,13 @@ cdef class XMMS:
 	cdef object needout_fun
 	cdef object ObjectRef
 
-	def __new__(self, clientname = "Python XMMSClient"):
+	def __new__(self, clientname = None):
 		"""
 		Initiates a connection to the XMMS2 daemon. All operations
 		involving the daemon are done via this connection.
 		"""
+		if not clientname:
+			clientname = "Unnamed Python Client"
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
 		self.ObjectRef = {}
