@@ -22,6 +22,7 @@
 
 
 #include <glib.h>
+#include <xmms/xmms_object.h>
 
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_MIME "mime"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ID "id"
@@ -57,6 +58,7 @@ typedef guint32 xmms_medialib_entry_t;
 xmms_medialib_entry_t xmms_medialib_entry_new (const char *url);
 gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry);
 
+xmms_object_cmd_value_t *xmms_medialib_entry_property_get_cmd_value (xmms_medialib_entry_t entry, const gchar *property);
 gchar *xmms_medialib_entry_property_get_str (xmms_medialib_entry_t entry, const gchar *property);
 guint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
 gboolean xmms_medialib_entry_property_set_str (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);

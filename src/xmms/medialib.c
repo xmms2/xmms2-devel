@@ -375,6 +375,39 @@ xmms_medialib_string_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	return 0;
 }
 
+static int
+xmms_medialib_cmd_value_cb (xmms_object_cmd_value_t **row, gpointer udata)
+{
+	xmms_object_cmd_value_t **ret = udata;
+
+	*ret = xmms_object_cmd_value_copy (row[0]);
+
+	destroy_array (row);
+
+	return 0;
+}
+
+/**
+ * Retrieve a property from an entry
+ *
+ * @see xmms_medialib_entry_property_get_str
+ */
+
+xmms_object_cmd_value_t *
+xmms_medialib_entry_property_get_cmd_value (xmms_medialib_entry_t entry, const gchar *property)
+{
+	xmms_object_cmd_value_t *ret = NULL;
+
+	g_return_val_if_fail (property, NULL);
+
+	g_mutex_lock (medialib->mutex);
+	xmms_sqlite_query_array (medialib->sql, xmms_medialib_cmd_value_cb, 
+		&ret, "select value from Media where key=%Q and id=%d", 
+		property, entry);
+	g_mutex_unlock (medialib->mutex);
+
+	return ret;
+}
 
 /**
  * Retrieve a property from an entry.
