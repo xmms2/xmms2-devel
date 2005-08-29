@@ -362,7 +362,8 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	 * is in the struct also. This should be owned by the
 	 * parent 
 	 */
-	g_free (arg.retval);
+	if (type != XMMS_OBJECT_CMD_ARG_NONE)
+		g_free (arg.retval);
 
 }
 
