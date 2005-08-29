@@ -837,9 +837,12 @@ xmmsc_result_list_first (xmmsc_result_t *res)
 	res->current = res->list;
 
 	if (res->current) {
-		res->data.generic = res->current->data;
+		xmmsc_result_value_t *val = res->current->data;
+		res->data.generic = val->value.generic;
+		res->datatype = val->type;
 	} else {
 		res->data.generic = NULL;
+		res->datatype = XMMS_OBJECT_CMD_ARG_NONE;
 	}
 
 	return 1;
