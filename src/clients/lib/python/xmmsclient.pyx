@@ -1356,8 +1356,10 @@ class XMMSSync:
 	# are not supported by Pyrex.
 	def __init__(self, clientname=None, xmms=None):
 		"""
-		This constructor takes a single argument which specifies the
-		XMMS object to wrap.
+		This constructor takes two optional arguments. If xmms is omitted
+		it will create a new underlying XMMS class otherwise it will use
+		the one supplied. Clientname is the name of the client and will
+		default to "Unnamed Python Client"
 		"""
 		if not xmms:
 			self.__xmms = XMMS(clientname)
