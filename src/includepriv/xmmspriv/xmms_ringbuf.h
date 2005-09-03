@@ -29,7 +29,7 @@ void xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf);
 void xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf);
 guint xmms_ringbuf_bytes_free (const xmms_ringbuf_t *ringbuf);
 guint xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf);
-gint xmms_ringbuf_size (xmms_ringbuf_t *ringbuf);
+guint xmms_ringbuf_size (xmms_ringbuf_t *ringbuf);
 
 guint xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length);
 guint xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx);

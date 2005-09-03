@@ -33,12 +33,12 @@ struct xmms_ringbuf_St {
 	/** The actual bufferdata */
 	guint8 *buffer;
 	/** Number of bytes in #buffer */
-	gint buffer_size;
+	guint buffer_size;
 	/** Read and write index */
-	gint rd_index, wr_index;
+	guint rd_index, wr_index;
 	gboolean eos;
 
-	gint hotspot_pos;
+	guint hotspot_pos;
 	void (*hotspot_callback) (void *);
 	void *hotspot_arg;
 
@@ -49,7 +49,7 @@ struct xmms_ringbuf_St {
 /**
  * The total size of the ringbuffer.
  */
-gint
+guint
 xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
@@ -141,8 +141,7 @@ xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 static guint
 read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint length)
 {
-	guint to_read, r = 0, cnt;
-	gint tmp;
+	guint to_read, r = 0, cnt, tmp;
 
 	to_read = MIN (length, xmms_ringbuf_bytes_used (ringbuf));
 
