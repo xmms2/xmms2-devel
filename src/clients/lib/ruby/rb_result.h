@@ -20,7 +20,13 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsc/xmmsc_stdbool.h>
 
-VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
-                             bool unref, bool unref_children);
+typedef enum {
+	RESULT_TYPE_DEFAULT,
+	RESULT_TYPE_SIGNAL,
+	RESULT_TYPE_BROADCAST
+} ResultType;
+
+VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res,
+                             ResultType type);
 
 #endif
