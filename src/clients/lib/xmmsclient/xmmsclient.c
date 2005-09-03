@@ -210,6 +210,7 @@ void
 xmmsc_unref (xmmsc_connection_t *c)
 {
 	x_api_error_if (!c, "with a NULL connection",);
+	x_api_error_if (c->ref < 1, "with a freed connection",);
 
 	c->ref--;
 	if (c->ref == 0) {
