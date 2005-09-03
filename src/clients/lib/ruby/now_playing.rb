@@ -29,4 +29,4 @@ end
 Ecore::main_loop_begin if $MODE == "ECORE"
 Gtk.main if $MODE == "GLIB"
 
-bc.disconnect_broadcast
+bc.disconnect
