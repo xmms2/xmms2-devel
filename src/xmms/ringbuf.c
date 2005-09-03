@@ -70,7 +70,7 @@ xmms_ringbuf_new (guint size)
 
 	g_return_val_if_fail (size > 0, NULL);
 
-	ringbuf->buffer_size = size + 1;
+	ringbuf->buffer_size = size;
 	ringbuf->buffer = g_malloc0 (ringbuf->buffer_size);
 
 	ringbuf->free_cond = g_cond_new ();
