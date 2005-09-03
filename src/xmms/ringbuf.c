@@ -138,23 +138,11 @@ xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 	return ringbuf->buffer_size - (ringbuf->rd_index - ringbuf->wr_index);     
 }
 
-/**
- * Reads data from the ringbuffer. This is a non-blocking call and can
- * return less data than you wanted. Use #xmms_ringbuf_wait_used to
- * ensure that you get as much data as you want.
- *
- * @param ringbuf Buffer to read from
- * @param data Allocated buffer where the readed data will end up
- * @param length number of bytes to read
- * @returns number of bytes that acutally was read.
- */
-guint
-xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
+static guint
+read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint length)
 {
 	guint to_read, r = 0, cnt;
-	guint8 *data_ptr = data;
-
-	g_return_val_if_fail (ringbuf, 0);
+	gint tmp;
 
 	to_read = MIN (length, xmms_ringbuf_bytes_used (ringbuf));
 
@@ -170,14 +158,41 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 		}
 	}
 
+	tmp = ringbuf->rd_index;
+
 	while (to_read > 0) {
-		cnt = MIN (to_read, ringbuf->buffer_size - ringbuf->rd_index);
-		memcpy (data_ptr, ringbuf->buffer + ringbuf->rd_index, cnt);
-		ringbuf->rd_index = (ringbuf->rd_index + cnt) % ringbuf->buffer_size;
+		cnt = MIN (to_read, ringbuf->buffer_size - tmp);
+		memcpy (data, ringbuf->buffer + tmp, cnt);
+		tmp = (tmp + cnt) % ringbuf->buffer_size;
 		to_read -= cnt;
 		r += cnt;
-		data_ptr += cnt;
+		data += cnt;
 	}
+
+	return r;
+}
+
+/**
+ * Reads data from the ringbuffer. This is a non-blocking call and can
+ * return less data than you wanted. Use #xmms_ringbuf_wait_used to
+ * ensure that you get as much data as you want.
+ *
+ * @param ringbuf Buffer to read from
+ * @param data Allocated buffer where the readed data will end up
+ * @param length number of bytes to read
+ * @returns number of bytes that acutally was read.
+ */
+guint
+xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
+{
+	guint r;
+
+	g_return_val_if_fail (ringbuf, 0);
+
+	r = read_bytes (ringbuf, (guint8 *) data, length);
+
+	ringbuf->rd_index += r;
+	ringbuf->rd_index %= ringbuf->buffer_size;
 
 	g_cond_broadcast (ringbuf->free_cond);
 
@@ -193,15 +208,9 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 guint
 xmms_ringbuf_peek (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 {
-	guint ret, tmp;
-
 	g_return_val_if_fail (ringbuf, 0);
 
-	tmp = ringbuf->rd_index;
-	ret = xmms_ringbuf_read (ringbuf, data, length);
-	ringbuf->rd_index = tmp;
-
-	return ret;
+	return read_bytes (ringbuf, (guint8 *) data, length);
 }
 
 /**
