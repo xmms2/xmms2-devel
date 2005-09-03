@@ -97,6 +97,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsc_unref(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
 
+	void xmmsc_signal_disconnect(xmmsc_result_t *res) 
+	void xmmsc_broadcast_disconnect(xmmsc_result_t *res)
+
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add(xmmsc_connection_t *, char *)
 	xmmsc_result_t *xmmsc_playlist_insert(xmmsc_connection_t *, int pos, char *)
@@ -191,10 +194,11 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 		udata[key] = <int>value
 
 cdef ResultNotifier(xmmsc_result_t *res, obj):
+	if not obj.get_broadcast():
+		obj._del_ref()
 	obj._cb()
 	if not obj.get_broadcast():
 		xmmsc_result_unref(res)
-		obj._del_ref()
 		
 	
 cdef class XMMSResult:
@@ -202,6 +206,7 @@ cdef class XMMSResult:
 	Class containing the results of some operation
 	"""
 	cdef xmmsc_result_t *res
+	cdef xmmsc_result_t *orig
 	cdef object notifier
 	cdef object user_data
 	cdef int cid
@@ -214,6 +219,7 @@ cdef class XMMSResult:
 		self.c = c
 
 	def more_init(self, broadcast = 0):
+		self.orig = self.res
 		self.cid = xmmsc_result_cid(self.res)
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set(self.res, ResultNotifier, self)
@@ -278,6 +284,19 @@ cdef class XMMSResult:
 		"""
 		self._check()
 		xmmsc_result_wait(self.res)
+
+	def disconnect_signal(self):
+		""" @todo Fail if this result isn't a signal """
+		xmmsc_signal_disconnect(self.orig)
+
+	def disconnect_broadcast(self):
+		"""
+		@todo Fail if this result isn't a broadcast
+		Note: it doesn't matter atm whether we pass self.orig or self.res,
+		      but if the internal broadcast logic ever changes, it's more likely
+			  self.orig is the correct one
+		"""
+		xmmsc_broadcast_disconnect(self.orig)
 
 	def get_int(self):
 		"""

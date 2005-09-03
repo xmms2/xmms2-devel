@@ -393,6 +393,7 @@ void
 xmmsc_result_unref (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
+	x_api_error_if (res->ref < 1, "with a freed result",);
 
 	res->ref--;
 	if (res->ref == 0) {
