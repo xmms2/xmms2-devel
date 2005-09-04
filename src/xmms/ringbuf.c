@@ -91,10 +91,8 @@ xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf)
 	g_cond_free (ringbuf->eos_cond);
 	g_cond_free (ringbuf->used_cond);
 	g_cond_free (ringbuf->free_cond);
-	
-	if (ringbuf->buffer)
-		g_free (ringbuf->buffer);
 
+	g_free (ringbuf->buffer);
 	g_free (ringbuf);
 }
 
