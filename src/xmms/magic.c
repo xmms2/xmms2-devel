@@ -300,7 +300,7 @@ static gboolean
 node_match (xmms_magic_checker_t *c, GNode *node)
 {
 	xmms_magic_entry_t *entry = node->data;
-	guint needed = entry->offset + entry->len;
+	guint needed = c->offset + entry->offset + entry->len;
 	guint16 i16;
 	guint32 i32;
 	gint tmp;
@@ -323,7 +323,7 @@ node_match (xmms_magic_checker_t *c, GNode *node)
 		}
 	}
 
-	ptr = &c->buf[entry->offset];
+	ptr = &c->buf[c->offset + entry->offset];
 
 	switch (entry->type) {
 		case XMMS_MAGIC_ENTRY_TYPE_BYTE:
@@ -364,7 +364,7 @@ tree_match (xmms_magic_checker_t *c, GNode *tree)
 }
 
 guint
-tree_bytes_max_needed (GNode *tree)
+tree_bytes_max_needed (xmms_magic_checker_t *c, GNode *tree)
 {
 	GNode *n;
 	guint ret = 0;
@@ -372,8 +372,8 @@ tree_bytes_max_needed (GNode *tree)
 	for (n = tree->children; n; n = n->next) {
 		xmms_magic_entry_t *entry = n->data;
 
-		ret = MAX (ret, entry->offset + entry->len);
-		ret = MAX (ret, tree_bytes_max_needed (n));
+		ret = MAX (ret, c->offset + entry->offset + entry->len);
+		ret = MAX (ret, tree_bytes_max_needed (c, n));
 	}
 
 	return ret;
@@ -398,7 +398,7 @@ xmms_magic_match (xmms_magic_checker_t *c, const GList *magic)
 		/* will we be able to read enough data to do all of the checks
 		 * specified in this tree?
 		 */
-		needed = tree_bytes_max_needed (tree);
+		needed = tree_bytes_max_needed (c, tree);
 		if (needed > xmms_transport_buffersize (c->transport)) {
 			xmms_log ("magic check requires a minimum transport "
 			          "buffer size of %i bytes", needed);

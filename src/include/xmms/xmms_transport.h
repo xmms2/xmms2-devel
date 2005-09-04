@@ -46,6 +46,7 @@ gboolean xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whe
 
 gboolean xmms_transport_can_seek (xmms_transport_t *transport);
 gboolean xmms_transport_islocal (xmms_transport_t *transport);
+gboolean xmms_transport_isstream (xmms_transport_t *transport);
 gboolean xmms_transport_iseos (xmms_transport_t *transport);
 
 guint64 xmms_transport_tell (xmms_transport_t *transport); 

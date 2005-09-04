@@ -24,6 +24,7 @@ typedef struct xmms_magic_checker_St {
 	gchar *buf;
 	guint alloc;
 	guint read;
+	guint offset;
 } xmms_magic_checker_t;
 
 void xmms_magic_tree_free (GNode *tree);

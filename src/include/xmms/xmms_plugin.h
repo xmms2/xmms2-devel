@@ -75,11 +75,12 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_PROPERTY_SEEK (1 << 0)
 #define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 1)
 #define XMMS_PLUGIN_PROPERTY_LIST (1 << 2)
+#define XMMS_PLUGIN_PROPERTY_STREAM (1 << 3)
 
 /* For decoders */
-#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 3)
-#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 4)
-#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 5)
+#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 4)
+#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 5)
+#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 6)
 
 /* For output */
 

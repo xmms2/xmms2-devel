@@ -704,11 +704,92 @@ cb_sort_plugin_list (xmms_plugin_t *a, xmms_plugin_t *b)
 }
 
 static xmms_plugin_t *
+find_plugin_plain (xmms_magic_checker_t *c, GList *list,
+                   GNode **matched_tree)
+{
+	GList *node;
+
+	c->read = c->offset = 0;
+	c->alloc = 128; /* start with a 128 bytes buffer */
+	c->buf = g_malloc (c->alloc);
+
+	for (node = list; node; node = g_list_next (node)) {
+		GNode *tree;
+		xmms_plugin_t *plugin = node->data;
+		const GList *magic = xmms_plugin_magic_get (plugin);
+
+		XMMS_DBG ("performing magic check for %s",
+		          xmms_plugin_shortname_get (plugin));
+		if (!magic) { /* no magic? matches anything */
+			return plugin;
+		}
+
+		tree = xmms_magic_match (c, magic);
+		if (tree) {
+			*matched_tree = tree;
+
+			return plugin;
+		}
+	}
+
+	return NULL;
+}
+
+static xmms_plugin_t *
+find_plugin_stream (xmms_magic_checker_t *c, GList *list,
+                    GNode **matched_tree)
+{
+	GList *node;
+	guint offset = 0;
+
+	while (offset < 512) {
+		c->read = 0;
+		c->offset = offset++;
+		c->alloc = 128; /* start with a 128 bytes buffer */
+		g_free (c->buf); /* it's initialized to NULL, so this is safe */
+		c->buf = g_malloc (c->alloc);
+
+		for (node = list; node; node = g_list_next (node)) {
+			GNode *tree;
+			xmms_plugin_t *plugin = node->data;
+			const GList *magic = xmms_plugin_magic_get (plugin);
+
+			XMMS_DBG ("performing magic check for %s",
+					xmms_plugin_shortname_get (plugin));
+			tree = xmms_magic_match (c, magic);
+			if (tree) {
+				*matched_tree = tree;
+
+				return plugin;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+static void
+set_mime (xmms_transport_t *transport, GNode *tree)
+{
+	gpointer *data = tree->data;
+	xmms_medialib_entry_t entry;
+
+	/* set the mime type of the entry to the one from the
+	 * magic set that matched
+	 */
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set_str (entry,
+		XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, data[1]);
+	xmms_medialib_entry_send_update (entry);
+}
+
+static xmms_plugin_t *
 xmms_decoder_find_plugin (xmms_decoder_t *decoder,
                           xmms_transport_t *transport)
 {
-	GList *list, *node;
-	xmms_plugin_t *plugin = NULL;
+	GList *list;
+	GNode *tree = NULL;
+	xmms_plugin_t *ret = NULL;
 	xmms_magic_checker_t c;
 
 	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_DECODER);
@@ -722,47 +803,27 @@ xmms_decoder_find_plugin (xmms_decoder_t *decoder,
 	list = g_list_sort (list, (GCompareFunc) cb_sort_plugin_list);
 
 	c.transport = transport;
-	c.read = 0;
-	c.alloc = 128; /* start with a 128 bytes buffer */
-	c.buf = g_malloc (c.alloc);
+	c.buf = NULL;
 
-	for (node = list; node; node = g_list_next (node)) {
-		const GList *magic;
-		GNode *tree;
+	if (xmms_transport_is_stream (transport)) {
+		ret = find_plugin_stream (&c, list, &tree);
+	} else {
+		ret = find_plugin_plain (&c, list, &tree);
+	}
 
-		plugin = node->data;
-		magic = xmms_plugin_magic_get (plugin);
-
-		XMMS_DBG ("performing magic check for %s",
-		          xmms_plugin_shortname_get (plugin));
-		if (!magic) { /* no magic? matches anything */
-			xmms_object_ref (plugin);
-			break;
-		}
-
-		tree = xmms_magic_match (&c, magic);
-		if (tree) {
-			gpointer *data = tree->data;
-			xmms_medialib_entry_t entry;
-
-			/* set the mime type of the entry to the one from the
-			 * magic set that matched
-			 */
-			entry = xmms_transport_medialib_entry_get (transport);
-			xmms_medialib_entry_property_set_str (entry,
-					XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, data[1]);
-			xmms_medialib_entry_send_update (entry);
-
-			xmms_object_ref (plugin);
-			break;
-		}
+	if (tree) {
+		set_mime (transport, tree);
 	}
 
 	g_free (c.buf);
 
+	if (ret) {
+		xmms_object_ref (ret);
+	}
+
 	xmms_plugin_list_destroy (list);
 
-	return node ? plugin : NULL;
+	return ret;
 }
 
 static gpointer

@@ -245,6 +245,14 @@ xmms_transport_can_seek (xmms_transport_t *transport)
 	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 }
 
+gboolean
+xmms_transport_isstream (xmms_transport_t *transport)
+{
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_plugin_properties_check (transport->plugin,
+	                                     XMMS_PLUGIN_PROPERTY_STREAM);
+}
 
 /**
  * Initialize a new #xmms_transport_t structure. This structure has to

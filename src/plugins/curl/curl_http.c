@@ -111,6 +111,8 @@ xmms_plugin_get (void)
 	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
 
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
+
 	return plugin;
 }
 
