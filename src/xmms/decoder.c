@@ -805,7 +805,7 @@ xmms_decoder_find_plugin (xmms_decoder_t *decoder,
 	c.transport = transport;
 	c.buf = NULL;
 
-	if (xmms_transport_is_stream (transport)) {
+	if (xmms_transport_isstream (transport)) {
 		ret = find_plugin_stream (&c, list, &tree);
 	} else {
 		ret = find_plugin_plain (&c, list, &tree);
