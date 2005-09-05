@@ -754,6 +754,10 @@ find_plugin_stream (xmms_magic_checker_t *c, GList *list,
 			xmms_plugin_t *plugin = node->data;
 			const GList *magic = xmms_plugin_magic_get (plugin);
 
+			if (!magic) {
+				continue;
+			}
+
 			XMMS_DBG ("performing magic check for %s",
 					xmms_plugin_shortname_get (plugin));
 			tree = xmms_magic_match (c, magic);
