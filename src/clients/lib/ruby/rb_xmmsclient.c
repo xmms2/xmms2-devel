@@ -39,8 +39,6 @@
 \
 	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_##type);
 
-void Init_Result (VALUE m, VALUE e);
-
 static VALUE eXmmsClientError, eDisconnectedError;
 
 static void c_mark (RbXmmsClient *xmms)
@@ -871,12 +869,10 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_PAUSE));
 
-	eXmmsClientError = rb_define_class_under (mXmmsClient,
-	                                          "XmmsClientError",
+	eXmmsClientError = rb_define_class_under (c, "XmmsClientError",
 	                                          rb_eStandardError);
-	eDisconnectedError = rb_define_class_under (mXmmsClient,
-	                                            "DisconnectedError",
+	eDisconnectedError = rb_define_class_under (c, "DisconnectedError",
 	                                            eXmmsClientError);
 
-	Init_Result (mXmmsClient, eXmmsClientError);
+	Init_Result (mXmmsClient);
 }
