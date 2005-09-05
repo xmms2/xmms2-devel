@@ -339,7 +339,7 @@ static VALUE c_value_get (VALUE self)
 		return value_get (res);
 }
 
-void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
+void Init_Result (VALUE mXmmsClient)
 {
 	cResult = rb_define_class_under (mXmmsClient, "Result", rb_cObject);
 
@@ -370,8 +370,8 @@ void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
 	rb_define_method (cSignalResult, "restart", c_sig_restart, 0);
 	rb_define_method (cSignalResult, "disconnect", c_sig_disconnect, 0);
 
-	eResultError = rb_define_class_under (mXmmsClient, "ResultError",
-	                                      eXmmsClientError);
-	eValueError = rb_define_class_under (mXmmsClient, "ValueError",
+	eResultError = rb_define_class_under (cResult, "ResultError",
+	                                      rb_eStandardError);
+	eValueError = rb_define_class_under (cResult, "ValueError",
 	                                     eResultError);
 }

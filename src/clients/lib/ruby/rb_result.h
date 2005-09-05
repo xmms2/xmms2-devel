@@ -26,6 +26,8 @@ typedef enum {
 	RESULT_TYPE_BROADCAST
 } ResultType;
 
+void Init_Result (VALUE mXmmsClient);
+
 VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res,
                              ResultType type);
 

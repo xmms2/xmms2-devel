@@ -259,6 +259,10 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 	if (!res->parsed)
 		return;
 
+	if (res->islist) {
+		res->datatype = XMMS_OBJECT_CMD_ARG_LIST;
+	}
+
 	switch (res->datatype) {
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 		case XMMS_OBJECT_CMD_ARG_INT32 :
