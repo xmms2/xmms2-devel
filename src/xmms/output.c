@@ -289,11 +289,13 @@ xmms_output_decoder_stop (xmms_output_t *output, xmms_decoder_t *decoder)
 {
 	xmms_medialib_entry_t entry;
 	guint32 playtime;
+	xmms_medialib_session_t *session = xmms_medialib_begin();
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 	playtime = xmms_output_playtime (output, NULL);
 
-	xmms_medialib_logging_stop (entry, playtime);
+	xmms_medialib_logging_stop (session, entry, playtime);
+	xmms_medialib_end (session);
 
 	xmms_decoder_stop (decoder);
 }
@@ -801,6 +803,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 {
 	xmms_medialib_entry_t entry;
 	xmms_decoder_t *decoder = NULL;
+	xmms_medialib_session_t *session;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -879,7 +882,9 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	g_queue_push_tail (output->decoder_list, decoder);
 
-	xmms_medialib_logging_start (xmms_decoder_medialib_entry_get (decoder));
+	session = xmms_medialib_begin ();
+	xmms_medialib_logging_start (session, xmms_decoder_medialib_entry_get (decoder));
+	xmms_medialib_end (session);
 
 	return TRUE;
 }

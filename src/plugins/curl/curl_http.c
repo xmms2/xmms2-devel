@@ -3,6 +3,7 @@
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_magic.h"
+#include "xmms/xmms_medialib.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,16 +41,16 @@ typedef struct {
 	xmms_error_t status;
 } xmms_curl_data_t;
 
-typedef void (*handler_func_t) (xmms_transport_t *transport, gchar *header);
+typedef void (*handler_func_t) (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
 
-static void header_handler_contenttype (xmms_transport_t *transport, gchar *header);
-static void header_handler_contentlength (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_metaint (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_name (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_genre (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_br (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_ok (xmms_transport_t *transport, gchar *header);
-static void header_handler_last (xmms_transport_t *transport, gchar *header);
+static void header_handler_contenttype (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
+static void header_handler_contentlength (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_metaint (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_name (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_genre (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_br (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
+static void header_handler_icy_ok (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
+static void header_handler_last (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
 static void handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata);
 
@@ -380,6 +381,7 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 static size_t
 xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 {
+	xmms_medialib_session_t *session;
 	xmms_transport_t *transport = (xmms_transport_t *) stream;
 	handler_func_t func;
 	gchar *header;
@@ -397,7 +399,9 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		} else {
 			val = header;
 		}
-		func (transport, val);
+		session = xmms_medialib_begin ();
+		func (transport, session, val);
+		xmms_medialib_end (session);
 	}
 
 	g_free (header);
@@ -423,7 +427,9 @@ header_handler_find (gchar *header)
 }
 
 static void
-header_handler_contenttype (xmms_transport_t *transport, gchar *header)
+header_handler_contenttype (xmms_transport_t *transport, 
+							xmms_medialib_session_t *session, 
+							gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -435,7 +441,9 @@ header_handler_contenttype (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_contentlength (xmms_transport_t *transport, gchar *header)
+header_handler_contentlength (xmms_transport_t *transport, 
+							  xmms_medialib_session_t *session,
+							  gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -445,7 +453,9 @@ header_handler_contentlength (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_icy_metaint (xmms_transport_t *transport, gchar *header)
+header_handler_icy_metaint (xmms_transport_t *transport,
+							xmms_medialib_session_t *session,
+							gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -455,27 +465,37 @@ header_handler_icy_metaint (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_icy_name (xmms_transport_t *transport, gchar *header)
+header_handler_icy_name (xmms_transport_t *transport,
+						 xmms_medialib_session_t *session,
+						 gchar *header)
 {
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, header);
+	xmms_medialib_entry_property_set_str (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, 
+										  header);
 	xmms_medialib_entry_send_update (entry);
 }
 
 static void
-header_handler_icy_br (xmms_transport_t *transport, gchar *header)
+header_handler_icy_br (xmms_transport_t *transport,
+					   xmms_medialib_session_t *session,
+					   gchar *header)
 {
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header);
+	xmms_medialib_entry_property_set_str (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+										  header);
 	xmms_medialib_entry_send_update (entry);
 }
 
 static void
-header_handler_icy_ok (xmms_transport_t *transport, gchar *header)
+header_handler_icy_ok (xmms_transport_t *transport, 
+					   xmms_medialib_session_t *session, 
+					   gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -485,17 +505,23 @@ header_handler_icy_ok (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_icy_genre (xmms_transport_t *transport, gchar *header)
+header_handler_icy_genre (xmms_transport_t *transport, 
+						  xmms_medialib_session_t *session,
+						  gchar *header)
 {
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, header);
+	xmms_medialib_entry_property_set_str (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, 
+										  header);
 	xmms_medialib_entry_send_update (entry);
 }
 
 static void
-header_handler_last (xmms_transport_t *transport, gchar *header)
+header_handler_last (xmms_transport_t *transport, 
+					 xmms_medialib_session_t *session, 
+					 gchar *header)
 {
 	xmms_curl_data_t *data;
 	gchar *mime = NULL;
@@ -515,12 +541,15 @@ static void
 handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 {
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 	xmms_curl_data_t *data;
 	gchar **tags;
 	guint i = 0;
 
 	data = xmms_transport_private_data_get (transport);
 	entry = xmms_transport_medialib_entry_get (transport);
+
+	session = xmms_medialib_begin ();
 
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
@@ -530,12 +559,16 @@ handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 			raw = tags[i] + 13;
 			raw[strlen (raw) - 1] = '\0';
 
-			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, raw);
+			xmms_medialib_entry_property_set_str (session, entry, 
+												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, 
+												  raw);
 			xmms_medialib_entry_send_update (entry);
 		}
 
 		i++;
 	}
+
+	xmms_medialib_end (session);
 	g_strfreev (tags);
 }
 

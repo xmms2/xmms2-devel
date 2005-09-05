@@ -97,7 +97,8 @@ xmms_m3u_can_handle (const gchar *mime)
 }
 
 static xmms_medialib_entry_t
-parse_line (const gchar *line, const gchar *m3u_path)
+parse_line (xmms_medialib_session_t *session, 
+			const gchar *line, const gchar *m3u_path)
 {
 	xmms_medialib_entry_t entry;
 	gchar newp[1024], *p;
@@ -136,7 +137,7 @@ parse_line (const gchar *line, const gchar *m3u_path)
 	/* in all code paths, newp should have been written */
 	g_assert (newp[0]);
 
-	entry = xmms_medialib_entry_new (newp);
+	entry = xmms_medialib_entry_new (session, newp);
 
 	return entry;
 }
@@ -147,6 +148,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 	gchar line[XMMS_TRANSPORT_MAX_LINE_SIZE];
 	xmms_error_t err;
 	gboolean extm3u = FALSE;
+	xmms_medialib_session_t *session;
 
 	g_return_val_if_fail (transport, FALSE);
 
@@ -164,22 +166,27 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		}
 	}
 
+	session = xmms_medialib_begin ();
+
 	do {
 		xmms_medialib_entry_t entry;
 
 		if (extm3u && line[0] == '#') {
 			/** Skip this */
 			if (!xmms_transport_read_line (transport, line, &err)) {
+				xmms_medialib_end (session);
 				return FALSE;
 			}
 		}
 
-		entry = parse_line (line,
+		entry = parse_line (session, line,
 				    xmms_transport_url_get (transport));
 
-		xmms_medialib_playlist_add (playlist_id, entry);
+		xmms_medialib_playlist_add (session, playlist_id, entry);
 
 	} while (xmms_transport_read_line (transport, line, &err));
+
+	xmms_medialib_end (session);
 
 	return TRUE;
 }
@@ -190,10 +197,13 @@ xmms_m3u_write_playlist (guint32 *list)
 	xmms_error_t err;
 	gint i = 0;
 	GString *ret;
+	xmms_medialib_session_t *session;
 
 	g_return_val_if_fail (list, FALSE);
 
 	xmms_error_reset (&err);
+
+	session = xmms_medialib_begin ();
 
 	ret = g_string_new ("#EXTM3U\n");
 
@@ -203,13 +213,13 @@ xmms_m3u_write_playlist (guint32 *list)
 		gchar *artist, *title;
 		gint duration = 0;
 
-		duration = xmms_medialib_entry_property_get_int (entry,
+		duration = xmms_medialib_entry_property_get_int (session, entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
-		artist = xmms_medialib_entry_property_get_str (entry,
+		artist = xmms_medialib_entry_property_get_str (session, entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST);
 
-		title = xmms_medialib_entry_property_get_str (entry,
+		title = xmms_medialib_entry_property_get_str (session, entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
 
 		if (title && artist && duration) {
@@ -219,7 +229,7 @@ xmms_m3u_write_playlist (guint32 *list)
 			g_free (title);
 		}
 
-		url = xmms_medialib_entry_property_get_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+		url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 		g_assert (url);
 
 		if (g_strncasecmp (url, "file://", 7) == 0) {
@@ -231,6 +241,8 @@ xmms_m3u_write_playlist (guint32 *list)
 
 		i++;
 	}
+
+	xmms_medialib_end (session);
 
 	return ret;
 }

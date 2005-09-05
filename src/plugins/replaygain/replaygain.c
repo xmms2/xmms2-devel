@@ -286,6 +286,7 @@ compute_replaygain (xmms_replaygain_data_t *data)
 	gfloat s, p;
 	gchar *key_s, *key_p;
 	gchar *tmp;
+	xmms_medialib_session_t *session;
 
 	if (data->mode == XMMS_REPLAYGAIN_MODE_TRACK) {
 		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
@@ -295,16 +296,22 @@ compute_replaygain (xmms_replaygain_data_t *data)
 		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 	}
 
+	session = xmms_medialib_begin ();
+
 	/** @todo should this be ints instead? */
-	tmp = xmms_medialib_entry_property_get_str (data->current_mlib_entry,
-						    key_s);
+	tmp = xmms_medialib_entry_property_get_str (session,
+												data->current_mlib_entry,
+												key_s);
 	s = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
 
-	tmp = xmms_medialib_entry_property_get_str (data->current_mlib_entry,
-						    key_p);
+	tmp = xmms_medialib_entry_property_get_str (session, 
+												data->current_mlib_entry,
+												key_p);
 	p = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
+
+	xmms_medialib_end (session);
 
 	s *= 2; /* 6db pre-amp */
 

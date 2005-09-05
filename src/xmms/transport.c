@@ -205,12 +205,18 @@ const gchar *
 xmms_transport_url_get (const xmms_transport_t *const transport)
 {
 	const gchar *ret;
+	xmms_medialib_session_t *session;
+
 	g_return_val_if_fail (transport, NULL);
 
+	session = xmms_medialib_begin ();
+
 	g_mutex_lock (transport->mutex);
-	ret =  xmms_medialib_entry_property_get_str (transport->entry, 
-						     XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	ret =  xmms_medialib_entry_property_get_str (session, transport->entry, 
+												 XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	g_mutex_unlock (transport->mutex);
+
+	xmms_medialib_end (session);
 
 	return ret;
 }
@@ -327,11 +333,16 @@ gboolean
 xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 {
 	gchar *tmp;
+	xmms_medialib_session_t *session;
 	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
-	tmp = xmms_medialib_entry_property_get_str (entry, 
-						    XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	session = xmms_medialib_begin ();
+
+	tmp = xmms_medialib_entry_property_get_str (session, entry, 
+												XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+
+	xmms_medialib_end (session);
 	
 	transport->plugin = xmms_transport_plugin_find (tmp);
 	g_free (tmp);
@@ -688,12 +699,14 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
  */
 gboolean
 xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t entry, 
-		gpointer data)
+							gpointer data)
 {
+	xmms_medialib_session_t *session;
 	xmms_transport_open_method_t init_method;
 	xmms_transport_lmod_method_t lmod_method;
 	xmms_plugin_t *plugin;
 	gchar *url;
+
 	
 	plugin = transport->plugin;
 	
@@ -706,9 +719,13 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t e
 	}
 
 	xmms_transport_private_data_set (transport, data);
+	
+	session = xmms_medialib_begin ();
 
-	url = xmms_medialib_entry_property_get_str (transport->entry, 
-						    XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	url = xmms_medialib_entry_property_get_str (session, transport->entry, 
+												XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+
+	xmms_medialib_end (session);
 
 	if (!init_method (transport, url)) {
 		g_free (url);
@@ -720,9 +737,11 @@ xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t e
 	if (lmod_method) {
 		guint lmod;
 		lmod = lmod_method (transport);
-		xmms_medialib_entry_property_set_int (transport->entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod);
+		session = xmms_medialib_begin ();
+		xmms_medialib_entry_property_set_int (session, transport->entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod);
+		xmms_medialib_end (session);
 	}
-
 
 	return TRUE;
 }

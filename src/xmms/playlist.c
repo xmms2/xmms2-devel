@@ -504,7 +504,10 @@ static
 void xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *err)
 {
 	xmms_medialib_entry_t entry = 0;
-	entry = xmms_medialib_entry_new (url);
+	xmms_medialib_session_t *session = xmms_medialib_begin();
+
+	entry = xmms_medialib_entry_new (session, url);
+	xmms_medialib_end (session);
 
 	if (!entry) {
 		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
@@ -536,8 +539,10 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 {
 	gboolean res;
 	xmms_medialib_entry_t entry = 0;
+	xmms_medialib_session_t *session = xmms_medialib_begin();
 	
-	entry = xmms_medialib_entry_new (nurl);
+	entry = xmms_medialib_entry_new (session, nurl);
+	xmms_medialib_end (session);
 
 	if (!entry) {
 		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
@@ -732,6 +737,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	GList *tmp = NULL;
 	sortdata_t *data;
 	gchar *str;
+	xmms_medialib_session_t *session;
 
 	g_return_if_fail (playlist);
 	g_return_if_fail (property);
@@ -742,12 +748,14 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	/** Lets save the ID number so that we can update playlist position later */
 	id = g_array_index (playlist->list, guint32, playlist->currentpos);
 
+	session = xmms_medialib_begin ();
+
 	if (playlist->list->len > 1) {
 		for (i = 0; i < playlist->list->len; i++) {
 			data = g_new (sortdata_t, 1);
 
 			data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
-			data->val = xmms_medialib_entry_property_get_cmd_value(data->id, property);
+			data->val = xmms_medialib_entry_property_get_cmd_value (session, data->id, property);
 
 			if (data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
 				str = data->val->value.string;
@@ -772,6 +780,8 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 			break;
 		}
 	}
+
+	xmms_medialib_end (session);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0);
 

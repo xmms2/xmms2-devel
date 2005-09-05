@@ -18,8 +18,8 @@ typedef struct xmms_id3v2_header_St {
 } xmms_id3v2_header_t;
 
 gboolean xmms_mad_id3v2_header (guchar *, xmms_id3v2_header_t *);
-gboolean xmms_mad_id3v2_parse (guchar *, xmms_id3v2_header_t *, xmms_medialib_entry_t);
+gboolean xmms_mad_id3v2_parse (xmms_medialib_session_t *session, guchar *, xmms_id3v2_header_t *, xmms_medialib_entry_t);
 
-gboolean xmms_mad_id3_parse (guchar *, xmms_medialib_entry_t);
+gboolean xmms_mad_id3_parse (xmms_medialib_session_t *session, guchar *, xmms_medialib_entry_t);
 
 #endif

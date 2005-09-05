@@ -167,7 +167,11 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
   */
 
 static void
-xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint filesize, xmms_medialib_entry_t entry)
+xmms_mad_calc_duration (xmms_medialib_session_t *session,
+						xmms_decoder_t *decoder, 
+						guchar *buf, gint len, 
+						gint filesize, 
+						xmms_medialib_entry_t entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
@@ -195,7 +199,10 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
 	if (filesize == -1) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 0);
+		xmms_medialib_entry_property_set_int (session,
+											  entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+											  0);
 		return;
 	}
 
@@ -225,7 +232,9 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 
 			XMMS_DBG ("XING duration %d", duration);
 
-			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, duration);
+			xmms_medialib_entry_property_set_int (session, entry, 
+												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+												  duration);
 		}
 
 		/** @todo fix avg. bitrate in xing */
@@ -247,13 +256,18 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, -1);
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+											  -1);
 	} else {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-						      (gint) (filesize*(gdouble)8000.0/bitrate));
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+											  (gint) (filesize*(gdouble)8000.0/bitrate));
 	}
 		
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, bitrate);
+	xmms_medialib_entry_property_set_int (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+										  bitrate);
 
 }
 
@@ -261,6 +275,7 @@ static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
+	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry;
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
@@ -282,6 +297,8 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (ret <= 0) {
 		return;
 	}
+
+	session = xmms_medialib_begin ();
 
 	if (xmms_transport_islocal (transport) && 
 			ret >= 10 && 
@@ -306,6 +323,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   MIN(4096,head.len - pos), &error);
 				if (ret <= 0) {
 					xmms_log_error ("error reading data for id3v2-tag");
+					xmms_medialib_end (session);
 					return;
 				}
 				pos += ret;
@@ -317,22 +335,23 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 			ret += xmms_transport_read (transport, (gchar *)buf + 8192 - (head.len+10), head.len + 10, &error) - head.len - 10;
 		}
 		
-		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
+		id3handled = xmms_mad_id3v2_parse (session, id3v2buf, &head, entry);
 		g_free (id3v2buf);
 	}
 	
-	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
+	xmms_mad_calc_duration (session, decoder, buf, ret, xmms_transport_size (transport), entry);
 
 	if (xmms_transport_islocal (transport) && !id3handled) {
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 		ret = xmms_transport_read (transport, (gchar *)buf, 128, &error);
 		if (ret == 128) {
-			xmms_mad_id3_parse (buf, entry);
+			xmms_mad_id3_parse (session, buf, entry);
 		}
 	}
 
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
+	xmms_medialib_end (session);
 	xmms_medialib_entry_send_update (entry);
 
 	return;

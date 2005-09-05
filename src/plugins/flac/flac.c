@@ -354,9 +354,12 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 	gint current, num_comments;
 
 	g_return_if_fail (decoder);
+
+	session = xmms_medialib_begin ();
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
@@ -377,9 +380,9 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 			while (properties[i].vname) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+					xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set_str (entry, properties[i].xname, val);
+					xmms_medialib_entry_property_set_str (session, entry, properties[i].xname, val);
 				}
 				i++;
 			}
@@ -388,14 +391,16 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 		}
 	}
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-					      (gint) data->bits_per_sample * data->sample_rate);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+										  (gint) data->bits_per_sample * data->sample_rate);
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-					      (gint) data->total_samples / data->sample_rate * 1000);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+										  (gint) data->total_samples / data->sample_rate * 1000);
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
-					      data->sample_rate);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
+										  data->sample_rate);
+
+	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
 }

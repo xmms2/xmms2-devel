@@ -228,7 +228,8 @@ xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 }
 
 static void
-get_replaygain (xmms_medialib_entry_t entry,
+get_replaygain (xmms_medialib_session_t *session,
+				xmms_medialib_entry_t entry,
                 vorbis_comment *vc)
 {
 	const char *tmp = NULL;
@@ -243,9 +244,9 @@ get_replaygain (xmms_medialib_entry_t entry,
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, g_strtod (tmp, NULL) / 20));
 		/** @todo this should probably be a int instead? */
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
-						      buf);
+		xmms_medialib_entry_property_set_str (session, entry,
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
+											  buf);
 	}
 
 	/* album gain */
@@ -257,9 +258,9 @@ get_replaygain (xmms_medialib_entry_t entry,
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, g_strtod (tmp, NULL) / 20));
 		/** @todo this should probably be a int instead? */
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
-						      buf);
+		xmms_medialib_entry_property_set_str (session, entry,
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+											  buf);
 	}
 
 	/* track peak */
@@ -268,16 +269,16 @@ get_replaygain (xmms_medialib_entry_t entry,
 	}
 
 	if (tmp) {
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-						      (gchar *) tmp);
+		xmms_medialib_entry_property_set_str (session, entry,
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+											  (gchar *) tmp);
 	}
 
 	/* album peak */
 	if ((tmp = vorbis_comment_query (vc, "replaygain_album_peak", 0))) {
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
-						      (gchar *) tmp);
+		xmms_medialib_entry_property_set_str (session, entry,
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
+											  (gchar *) tmp);
 	}
 }
 
@@ -289,6 +290,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	vorbis_info *vi;
 	double playtime;
 	vorbis_comment *ptr;
+	xmms_medialib_session_t *session;
 
 	g_return_if_fail (decoder);
 
@@ -301,13 +303,19 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 	vi = ov_info (&data->vorbisfile, -1);
 
+	session = xmms_medialib_begin ();
+
 	playtime = ov_time_total (&data->vorbisfile, -1);
 	if (playtime != OV_EINVAL) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, playtime * 1000);
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+											  playtime * 1000);
 	}
 
 	if (vi && vi->bitrate_nominal) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, (gint)vi->bitrate_nominal);
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+											  (gint)vi->bitrate_nominal);
 	}
 
 	ptr = ov_comment (&data->vorbisfile, -1);
@@ -323,18 +331,22 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 			while (properties[i].vname) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+					xmms_medialib_entry_property_set_int (session, entry, 
+														  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 
+														  1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set_str (entry, properties[i].xname, s[1]);
+					xmms_medialib_entry_property_set_str (session, entry, 
+														  properties[i].xname, s[1]);
 				}
 				i++;
 			}
 			g_strfreev (s); 
 		}
 
-		get_replaygain (entry, ptr);
+		get_replaygain (session, entry, ptr);
 	}
 		
+	xmms_medialib_end (session);
 	xmms_medialib_entry_send_update (entry);
 
 }

@@ -105,6 +105,7 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_medialib_entry_t entry;
 	xmms_modplug_data_t *data;
+	xmms_medialib_session_t *session;
 	gchar tmp[25];
 
 	g_return_if_fail (decoder);
@@ -114,12 +115,13 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	/* */
-	xmms_medialib_entry_property_set_int (entry,
+	session = xmms_medialib_begin ();
+	xmms_medialib_entry_property_set_int (session, entry,
 					      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 					      ModPlug_GetLength (data->mod));
 
 	g_snprintf (tmp, sizeof (tmp), "%s", ModPlug_GetName (data->mod));
-	xmms_medialib_entry_property_set_str (entry,
+	xmms_medialib_entry_property_set_str (session, entry,
 					      XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 					      tmp);
 	return;
