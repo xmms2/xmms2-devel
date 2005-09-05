@@ -773,13 +773,15 @@ set_mime (xmms_transport_t *transport, GNode *tree)
 {
 	gpointer *data = tree->data;
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session = xmms_medialib_begin ();
 
 	/* set the mime type of the entry to the one from the
 	 * magic set that matched
 	 */
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry,
+	xmms_medialib_entry_property_set_str (session, entry,
 		XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, data[1]);
+	xmms_medialib_end (session);
 	xmms_medialib_entry_send_update (entry);
 }
 

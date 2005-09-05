@@ -104,7 +104,7 @@ struct xmms_medialib_St {
 struct xmms_medialib_session_St {
 	sqlite3 *sql;
 	xmms_medialib_t *medialib;
-	char *file;
+	const char *file;
 	int line;
 };
 

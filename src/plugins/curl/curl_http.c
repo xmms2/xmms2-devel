@@ -2,7 +2,6 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_magic.h"
 #include "xmms/xmms_medialib.h"
 
 #include <sys/types.h>
@@ -270,9 +269,11 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 		/* done */
 		if (handles == 0) {
 			if (!data->know_mime) {
+				xmms_medialib_session_t *session = xmms_medialib_begin ();
 				entry = xmms_transport_medialib_entry_get (transport);
-				xmms_medialib_entry_property_set_str (entry,
+				xmms_medialib_entry_property_set_str (session, entry,
 						XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
+				xmms_medialib_end (session);
 				xmms_medialib_entry_send_update (entry);
 			}
 
@@ -282,9 +283,11 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	}
 
 	if (!data->know_mime) {
+		xmms_medialib_session_t *session = xmms_medialib_begin ();
 		entry = xmms_transport_medialib_entry_get (transport);
-		xmms_medialib_entry_property_set_str (entry,
+		xmms_medialib_entry_property_set_str (session, entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
+		xmms_medialib_end (session);
 		xmms_medialib_entry_send_update (entry);
 	}
 
@@ -451,7 +454,7 @@ header_handler_contenttype (xmms_transport_t *transport,
 	data->know_mime = TRUE;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry,
+	xmms_medialib_entry_property_set_str (session, entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, header);
 	xmms_medialib_entry_send_update (entry);
 }
@@ -550,7 +553,7 @@ header_handler_last (xmms_transport_t *transport,
 
 	if (!data->know_mime) {
 		entry = xmms_transport_medialib_entry_get (transport);
-		xmms_medialib_entry_property_set_str (entry,
+		xmms_medialib_entry_property_set_str (session, entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
 		xmms_medialib_entry_send_update (entry);
 	}
