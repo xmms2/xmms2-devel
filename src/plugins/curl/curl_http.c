@@ -95,6 +95,10 @@ xmms_plugin_get (void)
 				  "curl_http",
 	                          "Curl transport for HTTP " XMMS_VERSION,
 	                          "HTTP transport using CURL");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl");

@@ -56,6 +56,10 @@ xmms_plugin_get (void)
 				  "MODPLUG decoder " XMMS_VERSION,
 				  "modplug");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	xmms_plugin_info_add (plugin, "License", "GPL");

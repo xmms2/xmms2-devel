@@ -75,6 +75,10 @@ xmms_plugin_get (void)
 	                          "Icecast2 Shoutplugin " XMMS_VERSION,
 	                          "Icecast2 Shoutplugin");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://www.icecast.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");

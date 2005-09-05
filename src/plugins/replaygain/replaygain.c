@@ -66,6 +66,10 @@ xmms_plugin_get (void)
 	                          "Replaygain effect " XMMS_VERSION,
 	                          "Replaygain effect");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

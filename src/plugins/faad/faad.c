@@ -75,6 +75,10 @@ xmms_plugin_get (void)
 						 XMMS_DECODER_PLUGIN_API_VERSION, "faad",
 						 "AAC decoder " XMMS_VERSION, "AAC decoder");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.audiocoding.com/");
 	xmms_plugin_info_add (plugin, "Author", "juhovh");
 	xmms_plugin_info_add (plugin, "License", "GPL");

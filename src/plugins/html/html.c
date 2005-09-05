@@ -93,6 +93,10 @@ xmms_plugin_get (void)
 	                          "HTML Playlist " XMMS_VERSION,
 	                          "HTML Playlist reader");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

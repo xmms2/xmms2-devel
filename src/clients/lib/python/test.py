@@ -1,5 +1,6 @@
 import xmmsclient
 import sys
+import signal
 
 def pt_callback(self) :
 	msec = self.get_uint()
@@ -7,10 +8,23 @@ def pt_callback(self) :
 	sys.stdout.flush()
 	self.restart()
 
+def sigint_callback(signal, frame) :
+	xc.exit_loop()
+
+signal.signal(signal.SIGINT, sigint_callback)
+
 xc = xmmsclient.XMMS ()
 xc.connect()
 	
-xc.signal_playback_playtime(pt_callback)
+res = xc.signal_playback_playtime(pt_callback)
 
-xc.loop()
+try :
+	xc.loop()
+except :
+	pass
 
+res.disconnect_signal()
+
+# force cleanup
+res = None
+xc = None

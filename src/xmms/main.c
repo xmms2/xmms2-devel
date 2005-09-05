@@ -65,7 +65,7 @@ static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmm
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
-XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, NONE, NONE);
+XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UINT32, NONE);
 
 /** @defgroup XMMSServer XMMSServer
   * @brief look at this if you want to code inside the server.

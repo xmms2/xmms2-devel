@@ -56,8 +56,10 @@ xmms_plugin_get (void)
 				  "M3U Playlist " XMMS_VERSION,
 				  "M3U Playlist reader / writer");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE,
-				xmms_m3u_can_handle);
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

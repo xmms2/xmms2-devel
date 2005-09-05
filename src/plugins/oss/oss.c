@@ -105,6 +105,10 @@ xmms_plugin_get (void)
 				  "oss",
 	                          "OSS Output " XMMS_VERSION,
 	                          "OpenSoundSystem output plugin");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
@@ -145,7 +149,7 @@ xmms_plugin_get (void)
 	                                   NULL,
 	                                   NULL);
 	
-#if !defined(XMMS_OS_NETBSD) || !defined(XMMS_OS_OPENBSD) 
+#if !defined(XMMS_OS_NETBSD) && !defined(XMMS_OS_OPENBSD) 
 	xmms_plugin_config_value_register (plugin,
 	                                   "device",
 	                                   "/dev/dsp",

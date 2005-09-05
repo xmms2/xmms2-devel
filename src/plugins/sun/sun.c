@@ -109,6 +109,10 @@ xmms_plugin_get (void)
 			"SUN Output" XMMS_VERSION,
 			"OpenBSD SUN architecture output plugin");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.nittionio.nu/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
 	xmms_plugin_info_add (plugin, "E-Mail", "nano@nittionino.nu");

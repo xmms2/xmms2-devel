@@ -820,6 +820,10 @@ xmms_plugin_get (void)
 				  "jack Output" XMMS_VERSION,
 				  "Jack audio server output plugin");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://xmms-jack.sf.net");
 	xmms_plugin_info_add (plugin, "Author", "Chris Morgan");
 	xmms_plugin_info_add (plugin, "E-Mail", "cmorgan@alum.wpi.edu");

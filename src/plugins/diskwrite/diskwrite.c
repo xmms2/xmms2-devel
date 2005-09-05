@@ -95,6 +95,10 @@ xmms_plugin_get (void)
 	                          "Diskwriter output " XMMS_VERSION,
 	                          "Dumps audio data to disk");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

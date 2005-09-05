@@ -657,7 +657,7 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, x
 
 typedef struct {
 	guint id;
-	gchar *val;
+	xmms_object_cmd_value_t *val;
 } sortdata_t;
 
 
@@ -671,7 +671,33 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 	sortdata_t *data1 = (sortdata_t *) a;
 	sortdata_t *data2 = (sortdata_t *) b;
 
-	return g_utf8_collate (data1->val, data2->val);
+	int s1, s2;
+
+	if (data1->val->type == XMMS_OBJECT_CMD_ARG_STRING &&
+	    data2->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
+		return g_utf8_collate (data1->val->value.string, data2->val->value.string);
+	}
+
+	if ((data1->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+	     data1->val->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
+	    (data2->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+	     data2->val->type == XMMS_OBJECT_CMD_ARG_UINT32))
+	{
+		s1 = (data1->val->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+		      data1->val->value.int32 : data1->val->value.uint32;
+		s2 = (data2->val->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+		      data2->val->value.int32 : data2->val->value.uint32;
+
+		if (s1 < s2)
+			return -1;
+		else if (s1 > s2)
+			return 1;
+		else
+			return 0;
+	}
+
+	XMMS_DBG("Types in compare function differ to much");
+	return 0;
 }
 
 /**
@@ -685,7 +711,7 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 	GArray *playlist = (GArray *)userdata;
 	g_array_append_val (playlist, sorted->id);
 
-	g_free (sorted->val);
+	xmms_object_cmd_value_free (sorted->val);
 	g_free (sorted);
 }
 
@@ -703,6 +729,9 @@ static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
 	guint32 id, i;
+	GList *tmp = NULL;
+	sortdata_t *data;
+	gchar *str;
 
 	g_return_if_fail (playlist);
 	g_return_if_fail (property);
@@ -714,22 +743,17 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	id = g_array_index (playlist->list, guint32, playlist->currentpos);
 
 	if (playlist->list->len > 1) {
-		GList *tmp = NULL;
-		guint i;
-
 		for (i = 0; i < playlist->list->len; i++) {
-			sortdata_t *data = g_new (sortdata_t, 1);
+			data = g_new (sortdata_t, 1);
 
-			xmms_medialib_entry_t entry = g_array_index (playlist->list, xmms_medialib_entry_t, i);
-			/** @todo this WILL fail if there is a int in the db */
-			gchar *val = xmms_medialib_entry_property_get_str (entry, property); 
+			data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
+			data->val = xmms_medialib_entry_property_get_cmd_value(data->id, property);
 
-			if (!val)
-				val = g_strdup ("");
-
-			data->val = g_utf8_casefold (val, strlen (val));
-			data->id = entry;
-			g_free (val);
+			if (data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
+				str = data->val->value.string;
+				data->val->value.string = g_utf8_casefold (str, strlen(str));
+				g_free (str);
+			}
 
 			tmp = g_list_prepend (tmp, data);
 		}

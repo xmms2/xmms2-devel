@@ -55,8 +55,12 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
 				  XMMS_PLAYLIST_PLUGIN_API_VERSION,
 				  "pls",
-	                          "PLS Playlist " XMMS_VERSION,
-	                          "PLS Playlist reader / writer");
+				  "PLS Playlist " XMMS_VERSION,
+				  "PLS Playlist reader / writer");
+
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");

@@ -49,6 +49,10 @@ xmms_plugin_get (void)
 				  "Speex decoder " XMMS_VERSION,
 				  "Speex decoder");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.speex.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 

@@ -91,6 +91,10 @@ xmms_plugin_get (void)
 				  "Vorbis decoder " XMMS_VERSION,
 				  "Xiph's Ogg/Vorbis decoder");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xiph.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
