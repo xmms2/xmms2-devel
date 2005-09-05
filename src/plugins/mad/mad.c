@@ -54,8 +54,7 @@ typedef struct xmms_mad_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_mad_can_handle (const gchar *mimetype);
-static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_mad_new (xmms_decoder_t *decoder);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
@@ -85,7 +84,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_mad_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_mad_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_mad_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_mad_destroy);
@@ -95,6 +93,12 @@ xmms_plugin_get (void)
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+
+	xmms_plugin_magic_add (plugin, "id3 header", "audio/mpeg",
+	                       "0 string ID3", ">3 byte <0xff",
+	                       ">4 byte <0xff", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg header", "audio/mpeg",
+	                       "0 beshort &0xffe0", NULL);
 
 	return plugin;
 }
@@ -358,24 +362,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 }
 
 static gboolean
-xmms_mad_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/mpeg") == 0))
-		return TRUE;
-
-	return FALSE;
-
-}
-
-static gboolean
-xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_mad_new (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
 
 	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (mimetype, FALSE);
 
 	data = g_new0 (xmms_mad_data_t, 1);
 

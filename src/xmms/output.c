@@ -812,7 +812,6 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	while (TRUE) {
 		xmms_transport_t *t;
-		const gchar *mime;
 
 		entry = xmms_playlist_current_entry (output->playlist);
 
@@ -831,21 +830,6 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 		xmms_transport_start (t);
 
-		/*
-		 * Waiting for the mimetype forever
-		 * All transports MUST set a mimetype,
-		 * NULL on error
-		 */
-		XMMS_DBG ("Waiting for mimetype");
-		mime = xmms_transport_mimetype_get_wait (t);
-		if (!mime) {
-			xmms_transport_stop (t);
-			xmms_object_unref (t);
-			return FALSE;
-		}
-
-		XMMS_DBG ("mime-type: %s", mime);
-		
 		decoder = xmms_decoder_new ();
 		
 		if (!decoder) {

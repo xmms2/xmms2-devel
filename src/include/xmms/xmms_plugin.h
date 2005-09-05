@@ -76,11 +76,12 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_PROPERTY_SEEK (1 << 0)
 #define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 1)
 #define XMMS_PLUGIN_PROPERTY_LIST (1 << 2)
+#define XMMS_PLUGIN_PROPERTY_STREAM (1 << 3)
 
 /* For decoders */
-#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 3)
-#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 4)
-#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 5)
+#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 4)
+#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 5)
+#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 6)
 
 /* For output */
 
@@ -108,6 +109,8 @@ void __xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
 void xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
+
+gboolean xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc, const gchar *mime, ...);
 
 /* config methods */
 xmms_config_value_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *value);

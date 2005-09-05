@@ -57,8 +57,7 @@ typedef struct xmms_sid_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_sid_can_handle (const gchar *mimetype);
-static gboolean xmms_sid_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_sid_new (xmms_decoder_t *decoder);
 static gboolean xmms_sid_decode_block (xmms_decoder_t *decoder);
 static gboolean xmms_sid_init (xmms_decoder_t *decoder, gint mode);
 static void xmms_sid_get_media_info (xmms_decoder_t *decoder);
@@ -88,8 +87,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.geocities.com/SiliconValley/Lakes/5147/resid/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, 
-	                        xmms_sid_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
 	                        xmms_sid_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, 
@@ -103,18 +100,14 @@ xmms_plugin_get (void)
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES);
 
+	xmms_plugin_magic_add (plugin, "sidplay infofile", "audio/prs.sid",
+	                       "0 string SIDPLAY INFOFILE", NULL);
+	xmms_plugin_magic_add (plugin, "psid header", "audio/prs.sid",
+	                       "0 string PSID", NULL);
+	xmms_plugin_magic_add (plugin, "rsid header", "audio/prs.sid",
+	                       "0 string RSID", NULL);
+
 	return plugin;
-}
-
-static gboolean
-xmms_sid_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/prs.sid") == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 static gboolean
@@ -146,8 +139,9 @@ xmms_sid_init (xmms_decoder_t *decoder, gint mode)
 
 	return TRUE;
 }
+
 static gboolean
-xmms_sid_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_sid_new (xmms_decoder_t *decoder)
 {
 	xmms_sid_data_t *data;
 

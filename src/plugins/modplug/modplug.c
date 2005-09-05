@@ -34,8 +34,7 @@ typedef struct xmms_modplug_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_modplug_can_handle (const gchar *mimetype);
-static gboolean xmms_modplug_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_modplug_new (xmms_decoder_t *decoder);
 static gboolean xmms_modplug_decode_block (xmms_decoder_t *decoder);
 static void xmms_modplug_get_media_info (xmms_decoder_t *decoder);
 static void xmms_modplug_destroy (xmms_decoder_t *decoder);
@@ -65,7 +64,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_modplug_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_modplug_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_modplug_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_modplug_destroy);
@@ -75,6 +73,25 @@ xmms_plugin_get (void)
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+
+#if 0
+	if ((g_strcasecmp (mimetype, "audio/xm") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/s3m") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/it") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/mod") == 0))
+		return TRUE;
+
+	if ((g_strcasecmp (mimetype, "audio/med") == 0))
+		return TRUE;
+#endif
+
+	/* @todo implement magic stuff */
 
 	return plugin;
 }
@@ -144,36 +161,11 @@ xmms_modplug_seek (xmms_decoder_t *decoder, guint samples)
 }
 
 static gboolean
-xmms_modplug_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/xm") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "audio/s3m") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "audio/it") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "audio/mod") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "audio/med") == 0))
-		return TRUE;
-
-	return FALSE;
-
-}
-
-static gboolean
-xmms_modplug_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_modplug_new (xmms_decoder_t *decoder)
 {
 	xmms_modplug_data_t *data;
 
 	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (mimetype, FALSE);
 
 	data = g_new0 (xmms_modplug_data_t, 1);
 

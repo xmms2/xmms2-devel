@@ -153,7 +153,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
-			const gchar *mime;
 			guint lmod = 0;
 
 			xmms_error_reset (&err);
@@ -193,24 +192,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 				XMMS_DBG ("Modified on disk!");
 
 			}
-
-			mime = xmms_transport_mimetype_get_wait (transport);
-
-			if (!mime) {
-				session = xmms_medialib_begin ();
-				xmms_medialib_entry_remove (session, entry);
-				xmms_medialib_end (session);
-
-				xmms_playlist_remove_by_entry (mrt->playlist, entry);
-				xmms_transport_stop (transport);
-				xmms_object_unref (transport);
-
-				goto next;
-			}
-
-			session = xmms_medialib_begin ();
-			xmms_medialib_entry_property_set_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
-			xmms_medialib_end (session);
 
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {

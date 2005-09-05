@@ -117,6 +117,8 @@ xmms_plugin_get (void)
 	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
 
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
+
 	return plugin;
 }
 
@@ -208,6 +210,7 @@ static gint
 xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_curl_data_t *data;
+	xmms_medialib_entry_t entry;
 	gint code, handles;
 
 	g_return_val_if_fail (transport, -1);
@@ -266,15 +269,24 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 
 		/* done */
 		if (handles == 0) {
-			if (!data->know_mime)
-				xmms_transport_mimetype_set (transport, NULL);
+			if (!data->know_mime) {
+				entry = xmms_transport_medialib_entry_get (transport);
+				xmms_medialib_entry_property_set_str (entry,
+						XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
+				xmms_medialib_entry_send_update (entry);
+			}
+
 			return 0;
 		}
 
 	}
 
-	if (!data->know_mime)
-		xmms_transport_mimetype_set (transport, NULL);
+	if (!data->know_mime) {
+		entry = xmms_transport_medialib_entry_get (transport);
+		xmms_medialib_entry_property_set_str (entry,
+				XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
+		xmms_medialib_entry_send_update (entry);
+	}
 
 	return -1;
 }
@@ -432,12 +444,16 @@ header_handler_contenttype (xmms_transport_t *transport,
 							gchar *header)
 {
 	xmms_curl_data_t *data;
+	xmms_medialib_entry_t entry;
 
 	data = xmms_transport_private_data_get (transport);
 
 	data->know_mime = TRUE;
 
-	xmms_transport_mimetype_set (transport, header);
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set_str (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, header);
+	xmms_medialib_entry_send_update (entry);
 }
 
 static void
@@ -524,6 +540,7 @@ header_handler_last (xmms_transport_t *transport,
 					 gchar *header)
 {
 	xmms_curl_data_t *data;
+	xmms_medialib_entry_t entry;
 	gchar *mime = NULL;
 
 	data = xmms_transport_private_data_get (transport);
@@ -531,8 +548,12 @@ header_handler_last (xmms_transport_t *transport,
 	if (data->shoutcast)
 		mime = "audio/mpeg";
 
-	if (!data->know_mime)
-		xmms_transport_mimetype_set (transport, mime);
+	if (!data->know_mime) {
+		entry = xmms_transport_medialib_entry_get (transport);
+		xmms_medialib_entry_property_set_str (entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
+		xmms_medialib_entry_send_update (entry);
+	}
 
 	data->know_mime = TRUE;
 }
@@ -571,4 +592,3 @@ handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 	xmms_medialib_end (session);
 	g_strfreev (tags);
 }
-

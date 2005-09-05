@@ -63,12 +63,16 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE,
-				xmms_m3u_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST,
 				xmms_m3u_read_playlist);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST,
 				xmms_m3u_write_playlist);
+
+	/* no magic here. we could add a check for #EXTM3U at the beginning,
+	 * but then only extended m3u files would be accepted.
+	 * so we rather not specify any magic at all and have the plugin
+	 * accept any data
+	 */
 
 	return plugin;
 }

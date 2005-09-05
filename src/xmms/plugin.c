@@ -19,9 +19,11 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
+#include "xmmspriv/xmms_magic.h"
 
 #include <gmodule.h>
 #include <string.h>
+#include <stdarg.h>
 
 #ifdef HAVE_VALGRIND
 # include <memcheck.h>
@@ -54,6 +56,9 @@ struct xmms_plugin_St {
 
 	guint users;
 	GHashTable *method_table;
+
+	/* decoder/playlist plugin specific stuff */
+	GList *magic;
 };
 
 /*
@@ -249,6 +254,68 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 	plugin->info_list = g_list_append (plugin->info_list, info);
 }
 
+gboolean
+xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc,
+                       const gchar *mime, ...)
+{
+	GNode *tree, *node = NULL;
+	va_list ap;
+	gchar *s;
+	gpointer *root_props;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (plugin, FALSE);
+	g_return_val_if_fail (plugin->type == XMMS_PLUGIN_TYPE_DECODER ||
+	                      plugin->type == XMMS_PLUGIN_TYPE_PLAYLIST,
+	                      FALSE);
+	g_return_val_if_fail (desc, FALSE);
+	g_return_val_if_fail (mime, FALSE);
+
+	/* now process the magic specs in the argument list */
+	va_start (ap, mime);
+
+	s = va_arg (ap, gchar *);
+	if (!s) { /* no magic specs passed -> failure */
+		va_end (ap);
+		return FALSE;
+	}
+
+	/* root node stores the description and the mimetype */
+	root_props = g_new0 (gpointer, 2);
+	root_props[0] = g_strdup (desc);
+	root_props[1] = g_strdup (mime);
+	tree = g_node_new (root_props);
+
+	do {
+		if (!strlen (s)) {
+			ret = FALSE;
+			xmms_log_error ("invalid magic spec: '%s'", s);
+			break;
+		}
+
+		s = g_strdup (s); /* we need our own copy */
+		node = xmms_magic_add (tree, s, node);
+		g_free (s);
+
+		if (!node) {
+			xmms_log_error ("invalid magic spec: '%s'", s);
+			ret = FALSE;
+			break;
+		}
+	} while ((s = va_arg (ap, gchar *)));
+
+	va_end (ap);
+
+	/* only add this tree to the list if all spec chunks are valid */
+	if (ret) {
+		plugin->magic = g_list_append (plugin->magic, tree);
+	} else {
+		xmms_magic_tree_free (tree);
+	}
+
+	return ret;
+}
+
 /**
  * Lookup the value of a plugin's config property, given the property key.
  * @param[in] plugin The plugin
@@ -404,6 +471,19 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 	return plugin->info_list;
 }
 
+/**
+ * @internal Get magic specs from the plugin.
+ * @param[in] plugin The plugin
+ * @return a GList of magic specs from the plugin
+ */
+const GList *
+xmms_plugin_magic_get (const xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, NULL);
+
+	return plugin->magic;
+}
+
 /*
  * Private functions
  */
@@ -540,6 +620,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 					XMMS_DBG ("INFO: %s = %s", i->key,i->value);
 				info = g_list_next (info);
 			}
+
 			plugin->module = module;
 			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
 		} else {
@@ -716,6 +797,11 @@ xmms_plugin_destroy (xmms_object_t *object)
 		g_free (info);
 
 		p->info_list = g_list_delete_link (p->info_list, p->info_list);
+	}
+
+	while (p->magic) {
+		xmms_magic_tree_free (p->magic->data);
+		p->magic = g_list_delete_link (p->magic, p->magic);
 	}
 
 	/* remove this plugin from the global plugin list */

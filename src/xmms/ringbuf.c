@@ -33,12 +33,12 @@ struct xmms_ringbuf_St {
 	/** The actual bufferdata */
 	guint8 *buffer;
 	/** Number of bytes in #buffer */
-	gint buffer_size;
+	guint buffer_size;
 	/** Read and write index */
-	gint rd_index, wr_index;
+	guint rd_index, wr_index;
 	gboolean eos;
 
-	gint hotspot_pos;
+	guint hotspot_pos;
 	void (*hotspot_callback) (void *);
 	void *hotspot_arg;
 
@@ -49,7 +49,7 @@ struct xmms_ringbuf_St {
 /**
  * The total size of the ringbuffer.
  */
-gint
+guint
 xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
@@ -70,7 +70,7 @@ xmms_ringbuf_new (guint size)
 
 	g_return_val_if_fail (size > 0, NULL);
 
-	ringbuf->buffer_size = size + 1;
+	ringbuf->buffer_size = size;
 	ringbuf->buffer = g_malloc0 (ringbuf->buffer_size);
 
 	ringbuf->free_cond = g_cond_new ();
@@ -91,10 +91,8 @@ xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf)
 	g_cond_free (ringbuf->eos_cond);
 	g_cond_free (ringbuf->used_cond);
 	g_cond_free (ringbuf->free_cond);
-	
-	if (ringbuf->buffer)
-		g_free (ringbuf->buffer);
 
+	g_free (ringbuf->buffer);
 	g_free (ringbuf);
 }
 
@@ -138,19 +136,37 @@ xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 	return ringbuf->buffer_size - (ringbuf->rd_index - ringbuf->wr_index);     
 }
 
-/**
- * Back-up the buffer with #length bytes.
- */
-guint
-xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
+static guint
+read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint length)
 {
-	gint cnt;
+	guint to_read, r = 0, cnt, tmp;
 
-	g_return_val_if_fail (ringbuf, 0);
+	to_read = MIN (length, xmms_ringbuf_bytes_used (ringbuf));
 
-	cnt = MIN (length, xmms_ringbuf_bytes_free (ringbuf));
-	ringbuf->rd_index = (ringbuf->buffer_size + ((ringbuf->rd_index - cnt) % ringbuf->buffer_size)) % ringbuf->buffer_size;
-	return cnt;
+	if (ringbuf->hotspot_callback) {
+		if (ringbuf->hotspot_pos != ringbuf->rd_index) {
+			/* make sure we don't cross a hotspot */
+			to_read = MIN (to_read,
+			               (ringbuf->hotspot_pos - ringbuf->rd_index)
+			               % ringbuf->buffer_size);
+		} else {
+			ringbuf->hotspot_callback (ringbuf->hotspot_arg);
+			ringbuf->hotspot_callback = NULL;
+		}
+	}
+
+	tmp = ringbuf->rd_index;
+
+	while (to_read > 0) {
+		cnt = MIN (to_read, ringbuf->buffer_size - tmp);
+		memcpy (data, ringbuf->buffer + tmp, cnt);
+		tmp = (tmp + cnt) % ringbuf->buffer_size;
+		to_read -= cnt;
+		r += cnt;
+		data += cnt;
+	}
+
+	return r;
 }
 
 /**
@@ -166,34 +182,32 @@ xmms_ringbuf_unread (xmms_ringbuf_t *ringbuf, guint length)
 guint
 xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 {
-	guint to_read, r = 0, cnt;
-	guint8 *data_ptr = data;
+	guint r;
 
 	g_return_val_if_fail (ringbuf, 0);
-	
-	to_read = MIN (length, xmms_ringbuf_bytes_used (ringbuf));
- 	if (ringbuf->hotspot_callback) {
- 		if (ringbuf->hotspot_pos != ringbuf->rd_index) {
- 			/* make sure we don't cross a hotspot */
- 			to_read = MIN (to_read,
- 				       (ringbuf->hotspot_pos - ringbuf->rd_index) % ringbuf->buffer_size);
- 		} else {
- 			ringbuf->hotspot_callback (ringbuf->hotspot_arg);
- 			ringbuf->hotspot_callback = NULL;
- 		}
- 	} 
-	while (to_read > 0) {
-		cnt = MIN (to_read, ringbuf->buffer_size - ringbuf->rd_index);
-		memcpy (data_ptr, ringbuf->buffer + ringbuf->rd_index, cnt);
-		ringbuf->rd_index = (ringbuf->rd_index + cnt) % ringbuf->buffer_size;
-		to_read -= cnt;
-		r += cnt;
-		data_ptr += cnt;
-	}
-	
+
+	r = read_bytes (ringbuf, (guint8 *) data, length);
+
+	ringbuf->rd_index += r;
+	ringbuf->rd_index %= ringbuf->buffer_size;
+
 	g_cond_broadcast (ringbuf->free_cond);
-	
+
 	return r;
+}
+
+/**
+ * Same as #xmms_ringbuf_read but does not advance in the buffer after
+ * the data has been read.
+ *
+ * @sa xmms_ringbuf_read
+ */
+guint
+xmms_ringbuf_peek (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
+{
+	g_return_val_if_fail (ringbuf, 0);
+
+	return read_bytes (ringbuf, (guint8 *) data, length);
 }
 
 /**
@@ -202,29 +216,37 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
  * @sa xmms_ringbuf_read
  */
 guint
-xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx)
+xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data,
+                        guint length, GMutex *mtx)
 {
-	guint read_bytes = 0;
-	guint8 *dst = data;
-
 	g_return_val_if_fail (ringbuf, 0);
 	g_return_val_if_fail (length > 0, 0);
 	g_return_val_if_fail (length <= ringbuf->buffer_size, 0);
 	g_return_val_if_fail (mtx, 0);
 
-	while (read_bytes < length) {
-		read_bytes += xmms_ringbuf_read (ringbuf, dst + read_bytes, length - read_bytes);
+	xmms_ringbuf_wait_used (ringbuf, length, mtx);
 
-		if (read_bytes == length || ringbuf->eos) {
-			break;
-		}
-
-		g_cond_wait (ringbuf->used_cond, mtx);
-	}
-
-	return read_bytes;
+	return xmms_ringbuf_read (ringbuf, data, length);
 }
 
+/**
+ * Same as #xmms_ringbuf_peek but blocks until you have all the data you want.
+ *
+ * @sa xmms_ringbuf_peek
+ */
+guint
+xmms_ringbuf_peek_wait (xmms_ringbuf_t *ringbuf, gpointer data,
+                        guint length, GMutex *mtx)
+{
+	g_return_val_if_fail (ringbuf, 0);
+	g_return_val_if_fail (length > 0, 0);
+	g_return_val_if_fail (length <= ringbuf->buffer_size, 0);
+	g_return_val_if_fail (mtx, 0);
+
+	xmms_ringbuf_wait_used (ringbuf, length, mtx);
+
+	return xmms_ringbuf_peek (ringbuf, data, length);
+}
 
 /**
  * Write data to the ringbuffer. If not all data can be written 

@@ -63,8 +63,7 @@ typedef struct xmms_wave_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_wave_can_handle (const gchar *mimetype);
-static gboolean xmms_wave_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_wave_new (xmms_decoder_t *decoder);
 static gboolean xmms_wave_decode_block (xmms_decoder_t *decoder);
 static void xmms_wave_get_media_info (xmms_decoder_t *decoder);
 static void xmms_wave_destroy (xmms_decoder_t *decoder);
@@ -99,7 +98,6 @@ xmms_plugin_get (void)
 	                                     "#waveinout_topic_003");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_wave_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_wave_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_wave_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_wave_destroy);
@@ -110,27 +108,16 @@ xmms_plugin_get (void)
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 
+	xmms_plugin_magic_add (plugin, "wave header", "audio/x-wav",
+	                       "0 string RIFF", ">8 string WAVE",
+	                       ">>12 string fmt ", NULL);
+
+
 	return plugin;
 }
 
 static gboolean
-xmms_wave_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-
-	if (!g_strcasecmp (mimetype, "audio/x-wav")) {
-		return TRUE;
-	}
-
-	if (!g_strcasecmp (mimetype, "audio/wave")) {
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-static gboolean
-xmms_wave_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_wave_new (xmms_decoder_t *decoder)
 {
 	xmms_wave_data_t *data;
 
