@@ -80,7 +80,6 @@ class XMMSEnvironment(Environment):
 		Environment.__init__(self, options=options, ENV=os.environ)
 		apply(self.Replace, (), kw)
 		self.conf = SCons.SConf.SConf(self)
-		SCons.SConf.SetCacheMode("force")
 
 		if os.path.isfile("config.cache") and self["CONFIG"] == 0 and not reconfigure:
 			try:
