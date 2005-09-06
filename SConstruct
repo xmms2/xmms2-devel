@@ -14,7 +14,7 @@ except:
 	head = ""
 	pass
 
-XMMS_VERSION = "0.1 DR2.1-WIP" + head
+XMMS_VERSION = "0.1 DR2.2-WIP" + head
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
