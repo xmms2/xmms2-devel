@@ -35,7 +35,6 @@ def config(env):
 	env.pkgconfig("sqlite3", fail=True)
 	print "checking for sqlite version < 3.2.4...",
 	e = env.conf.TryRun("#include <sqlite3.h>\n int main() { if (SQLITE_VERSION_NUMBER > 3002004) { return 1; } else { return 0; } }", ".c")
-	print e
 	if e[0] == 1:
 		print "ok!"
 	else:
