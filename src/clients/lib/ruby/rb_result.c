@@ -29,17 +29,17 @@
 
 typedef struct {
 	xmmsc_result_t *real;
-	VALUE children;
+	xmmsc_result_t *orig;
+	VALUE xmms;
 	VALUE callback;
-	bool unref;
-	bool unref_children;
 } RbResult;
 
-static VALUE cResult, eResultError, eValueError;
+static VALUE cResult, cBroadcastResult, cSignalResult,
+             eResultError, eValueError;
 
 static void c_mark (RbResult *res)
 {
-	rb_gc_mark (res->children);
+	rb_gc_mark (res->xmms);
 
 	if (!NIL_P (res->callback))
 		rb_gc_mark (res->callback);
@@ -47,28 +47,37 @@ static void c_mark (RbResult *res)
 
 static void c_free (RbResult *res)
 {
-	if (res->real && res->unref)
-		xmmsc_result_unref (res->real);
+	xmmsc_result_unref (res->real);
 
 	free (res);
 }
 
-VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
-                             bool unref, bool unref_children)
+VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res,
+                             ResultType type)
 {
-	VALUE self;
+	VALUE self, klass;
 	RbResult *rbres = NULL;
 
 	if (!res)
 		return Qnil;
 
-	self = Data_Make_Struct (cResult, RbResult, c_mark, c_free, rbres);
+	switch (type) {
+		case RESULT_TYPE_SIGNAL:
+			klass = cSignalResult;
+			break;
+		case RESULT_TYPE_BROADCAST:
+			klass = cBroadcastResult;
+			break;
+		default:
+			klass = cResult;
+			break;
+	}
 
-	rbres->real = res;
-	rbres->children = rb_ary_new ();
+	self = Data_Make_Struct (klass, RbResult, c_mark, c_free, rbres);
+
+	rbres->real = rbres->orig = res;
+	rbres->xmms = xmms;
 	rbres->callback = Qnil;
-	rbres->unref = unref;
-	rbres->unref_children = unref_children;
 
 	rb_obj_call_init (self, 0, NULL);
 
@@ -77,21 +86,30 @@ VALUE TO_XMMS_CLIENT_RESULT (xmmsc_result_t *res,
 
 static void on_signal (xmmsc_result_t *res2, void *data)
 {
-	VALUE o, self = (VALUE) data;
+	VALUE self = (VALUE) data;
 	RbResult *res = NULL;
+	RbXmmsClient *xmms = NULL;
+	bool is_bc = (CLASS_OF (self) == cBroadcastResult);
 
 	Data_Get_Struct (self, RbResult, res);
 
-	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
-	                           res->unref_children);
-	rb_ary_push (res->children, o);
+	/* if this result isn't restarted automatically, delete the
+	 * reference. see c_sig_restart
+	 */
+	if (!is_bc) {
+		Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
+		rb_ary_delete (xmms->results, self);
+	}
 
-	rb_funcall (res->callback, rb_intern ("call"), 1, o);
+	rb_funcall (res->callback, rb_intern ("call"), 1, self);
+
+	if (!is_bc)
+		xmmsc_result_unref (res2);
 }
 
 /*
  * call-seq:
- *  res.notifier { |res2| }
+ *  res.notifier { |res| }
  *
  * Sets the block that's executed when _res_ is handled.
  * Used by asyncronous results only.
@@ -99,6 +117,7 @@ static void on_signal (xmmsc_result_t *res2, void *data)
 static VALUE c_notifier_set (VALUE self)
 {
 	RbResult *res = NULL;
+	RbXmmsClient *xmms = NULL;
 
 	Data_Get_Struct (self, RbResult, res);
 
@@ -106,6 +125,9 @@ static VALUE c_notifier_set (VALUE self)
 		return Qnil;
 
 	res->callback = rb_block_proc ();
+
+	Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
+	rb_ary_push (xmms->results, self);
 
 	xmmsc_result_notifier_set (res->real, on_signal, (void *) self);
 
@@ -131,16 +153,16 @@ static VALUE c_wait (VALUE self)
 
 /*
  * call-seq:
- *  res.restart -> res2 or nil
+ *  res.restart -> self
  *
  * Restarts _res_. If _res_ is not restartable, a +ResultError+ is
- * raised, else a new Result object is returned.
+ * raised.
  */
-static VALUE c_restart (VALUE self)
+static VALUE c_sig_restart (VALUE self)
 {
-	VALUE o;
 	xmmsc_result_t *res2;
 	RbResult *res = NULL;
+	RbXmmsClient *xmms = NULL;
 
 	Data_Get_Struct (self, RbResult, res);
 
@@ -149,31 +171,34 @@ static VALUE c_restart (VALUE self)
 		return Qnil;
 	}
 
-	o = TO_XMMS_CLIENT_RESULT (res2, res->unref_children,
-	                           res->unref_children);
-	rb_ary_push (res->children, o);
+	res->real = res2;
 
-	return o;
-}
+	Data_Get_Struct (res->xmms, RbXmmsClient, xmms);
+	rb_ary_push (xmms->results, self);
 
-static VALUE c_disconnect_broadcast (VALUE self)
-{
-	RbResult *res = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	xmmsc_broadcast_disconnect (res->real);
+	xmmsc_result_unref (res->real);
 
 	return self;
 }
 
-static VALUE c_disconnect_signal (VALUE self)
+static VALUE c_bc_disconnect (VALUE self)
 {
 	RbResult *res = NULL;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	xmmsc_signal_disconnect (res->real);
+	xmmsc_broadcast_disconnect (res->orig);
+
+	return self;
+}
+
+static VALUE c_sig_disconnect (VALUE self)
+{
+	RbResult *res = NULL;
+
+	Data_Get_Struct (self, RbResult, res);
+
+	xmmsc_signal_disconnect (res->orig);
 
 	return self;
 }
@@ -314,7 +339,7 @@ static VALUE c_value_get (VALUE self)
 		return value_get (res);
 }
 
-void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
+void Init_Result (VALUE mXmmsClient)
 {
 	cResult = rb_define_class_under (mXmmsClient, "Result", rb_cObject);
 
@@ -326,11 +351,6 @@ void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
 
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
-	rb_define_method (cResult, "restart", c_restart, 0);
-	rb_define_method (cResult, "disconnect_broadcast",
-	                  c_disconnect_broadcast, 0);
-	rb_define_method (cResult, "disconnect_signal",
-	                  c_disconnect_signal, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
@@ -340,8 +360,18 @@ void Init_Result (VALUE mXmmsClient, VALUE eXmmsClientError)
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
 
-	eResultError = rb_define_class_under (mXmmsClient, "ResultError",
-	                                      eXmmsClientError);
-	eValueError = rb_define_class_under (mXmmsClient, "ValueError",
+	cBroadcastResult = rb_define_class_under (mXmmsClient,
+	                                          "BroadcastResult",
+	                                          cResult);
+	rb_define_method (cBroadcastResult, "disconnect", c_bc_disconnect, 0);
+
+	cSignalResult = rb_define_class_under (mXmmsClient, "SignalResult",
+	                                       cResult);
+	rb_define_method (cSignalResult, "restart", c_sig_restart, 0);
+	rb_define_method (cSignalResult, "disconnect", c_sig_disconnect, 0);
+
+	eResultError = rb_define_class_under (cResult, "ResultError",
+	                                      rb_eStandardError);
+	eValueError = rb_define_class_under (cResult, "ValueError",
 	                                     eResultError);
 }

@@ -27,10 +27,9 @@
 	if (xmms->deleted) \
 		rb_raise (eDisconnectedError, "client deleted");
 
-#define METHOD_ADD_HANDLER(name, unref) \
+#define METHOD_ADD_HANDLER(name, type) \
 	RbXmmsClient *xmms = NULL; \
 	xmmsc_result_t *res; \
-	VALUE o; \
 \
 	Data_Get_Struct (self, RbXmmsClient, xmms); \
 \
@@ -38,12 +37,7 @@
 \
 	res = xmmsc_##name (xmms->real); \
 \
-	o = TO_XMMS_CLIENT_RESULT (res, true, unref); \
-	rb_ary_push (xmms->results, o); \
-\
-	return o; \
-
-void Init_Result (VALUE m, VALUE e);
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_##type);
 
 static VALUE eXmmsClientError, eDisconnectedError;
 
@@ -263,7 +257,7 @@ static VALUE c_io_disconnect (VALUE self)
  */
 static VALUE c_quit (VALUE self)
 {
-	METHOD_ADD_HANDLER (quit, true);
+	METHOD_ADD_HANDLER (quit, DEFAULT);
 }
 
 /*
@@ -274,7 +268,7 @@ static VALUE c_quit (VALUE self)
  */
 static VALUE c_playback_start (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_start, true);
+	METHOD_ADD_HANDLER (playback_start, DEFAULT);
 }
 
 /*
@@ -285,7 +279,7 @@ static VALUE c_playback_start (VALUE self)
  */
 static VALUE c_playback_pause (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_pause, true);
+	METHOD_ADD_HANDLER (playback_pause, DEFAULT);
 }
 
 /*
@@ -296,7 +290,7 @@ static VALUE c_playback_pause (VALUE self)
  */
 static VALUE c_playback_stop (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_stop, true);
+	METHOD_ADD_HANDLER (playback_stop, DEFAULT);
 }
 
 /*
@@ -307,7 +301,7 @@ static VALUE c_playback_stop (VALUE self)
  */
 static VALUE c_playback_tickle (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_tickle, true);
+	METHOD_ADD_HANDLER (playback_tickle, DEFAULT);
 }
 
 /*
@@ -318,7 +312,7 @@ static VALUE c_playback_tickle (VALUE self)
  */
 static VALUE c_playback_status (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_status, false);
+	METHOD_ADD_HANDLER (playback_status, DEFAULT);
 }
 
 /*
@@ -329,7 +323,7 @@ static VALUE c_playback_status (VALUE self)
  */
 static VALUE c_broadcast_playback_status (VALUE self)
 {
-	METHOD_ADD_HANDLER (broadcast_playback_status, false);
+	METHOD_ADD_HANDLER (broadcast_playback_status, BROADCAST);
 }
 
 /*
@@ -340,7 +334,7 @@ static VALUE c_broadcast_playback_status (VALUE self)
  */
 static VALUE c_playback_playtime (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_playtime, true);
+	METHOD_ADD_HANDLER (playback_playtime, DEFAULT);
 }
 
 /*
@@ -351,7 +345,7 @@ static VALUE c_playback_playtime (VALUE self)
  */
 static VALUE c_signal_playback_playtime (VALUE self)
 {
-	METHOD_ADD_HANDLER (signal_playback_playtime, true);
+	METHOD_ADD_HANDLER (signal_playback_playtime, SIGNAL);
 }
 
 /*
@@ -362,7 +356,7 @@ static VALUE c_signal_playback_playtime (VALUE self)
  */
 static VALUE c_playback_current_id (VALUE self)
 {
-	METHOD_ADD_HANDLER (playback_current_id, true);
+	METHOD_ADD_HANDLER (playback_current_id, DEFAULT);
 }
 
 /*
@@ -373,7 +367,7 @@ static VALUE c_playback_current_id (VALUE self)
  */
 static VALUE c_broadcast_playback_current_id (VALUE self)
 {
-	METHOD_ADD_HANDLER (broadcast_playback_current_id, false);
+	METHOD_ADD_HANDLER (broadcast_playback_current_id, BROADCAST);
 }
 
 /*
@@ -384,7 +378,7 @@ static VALUE c_broadcast_playback_current_id (VALUE self)
  */
 static VALUE c_broadcast_configval_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER (broadcast_configval_changed, false);
+	METHOD_ADD_HANDLER (broadcast_configval_changed, BROADCAST);
 }
 
 /*
@@ -395,7 +389,6 @@ static VALUE c_broadcast_configval_changed (VALUE self)
  */
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -407,10 +400,7 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 
 	res = xmmsc_playback_seek_ms (xmms->real, NUM2UINT (ms));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 /*
@@ -421,7 +411,6 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
  */
 static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -433,50 +422,46 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 
 	res = xmmsc_playback_seek_samples (xmms->real, NUM2UINT (samples));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_broadcast_playlist_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_playlist_changed, false);
+	METHOD_ADD_HANDLER(broadcast_playlist_changed, BROADCAST);
 }
 
 static VALUE c_playlist_current_pos (VALUE self)
 {
-	METHOD_ADD_HANDLER(playlist_current_pos, true);
+	METHOD_ADD_HANDLER(playlist_current_pos, DEFAULT);
 }
 
 static VALUE c_broadcast_playlist_current_pos (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_playlist_current_pos, false);
+	METHOD_ADD_HANDLER(broadcast_playlist_current_pos, BROADCAST);
 }
 
 static VALUE c_broadcast_medialib_entry_changed (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, false);
+	METHOD_ADD_HANDLER(broadcast_medialib_entry_changed, BROADCAST);
 }
 
 static VALUE c_playlist_shuffle (VALUE self)
 {
-	METHOD_ADD_HANDLER(playlist_shuffle, true);
+	METHOD_ADD_HANDLER(playlist_shuffle, DEFAULT);
 }
 
 static VALUE c_playlist_list (VALUE self)
 {
-	METHOD_ADD_HANDLER(playlist_list, true);
+	METHOD_ADD_HANDLER(playlist_list, DEFAULT);
 }
 
 static VALUE c_playlist_clear (VALUE self)
 {
-	METHOD_ADD_HANDLER(playlist_clear, true);
+	METHOD_ADD_HANDLER(playlist_clear, DEFAULT);
 }
 
 static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -488,15 +473,11 @@ static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 
 	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (pos));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -508,15 +489,11 @@ static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 
 	res = xmmsc_playlist_set_next_rel (xmms->real, FIX2INT (pos));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_playlist_add (VALUE self, VALUE arg)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 	bool is_str;
@@ -539,15 +516,11 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 	else
 		res = xmmsc_playlist_add_id (xmms->real, NUM2UINT (arg));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_playlist_remove (VALUE self, VALUE pos)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -559,15 +532,11 @@ static VALUE c_playlist_remove (VALUE self, VALUE pos)
 
 	res = xmmsc_playlist_remove (xmms->real, NUM2UINT (pos));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_playlist_move (VALUE self, VALUE id, VALUE moves)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -581,15 +550,11 @@ static VALUE c_playlist_move (VALUE self, VALUE id, VALUE moves)
 	res = xmmsc_playlist_move (xmms->real, NUM2UINT (id),
 	                           NUM2INT (moves));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_playlist_sort (VALUE self, VALUE property)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -601,15 +566,11 @@ static VALUE c_playlist_sort (VALUE self, VALUE property)
 
 	res = xmmsc_playlist_sort (xmms->real, StringValuePtr (property));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_select (VALUE self, VALUE query)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -621,15 +582,11 @@ static VALUE c_medialib_select (VALUE self, VALUE query)
 
 	res = xmmsc_medialib_select (xmms->real, StringValuePtr (query));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -642,15 +599,11 @@ static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
 	res = xmmsc_medialib_playlist_save_current (xmms->real,
 	                                            StringValuePtr (name));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -663,15 +616,11 @@ static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
 	res = xmmsc_medialib_playlist_load (xmms->real,
 	                                    StringValuePtr (name));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_add_entry (VALUE self, VALUE url)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -683,15 +632,11 @@ static VALUE c_medialib_add_entry (VALUE self, VALUE url)
 
 	res = xmmsc_medialib_add_entry (xmms->real, StringValuePtr (url));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -703,15 +648,11 @@ static VALUE c_medialib_get_info (VALUE self, VALUE id)
 
 	res = xmmsc_medialib_get_info (xmms->real, FIX2INT (id));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -724,16 +665,12 @@ static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
 	res = xmmsc_medialib_add_to_playlist (xmms->real,
 	                                      StringValuePtr (query));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
                                          VALUE url)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -748,16 +685,12 @@ static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
 	                                      StringValuePtr (playlist),
 	                                      StringValuePtr (url));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
                                          VALUE mime)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -772,15 +705,11 @@ static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
 	                                      StringValuePtr (playlist),
 	                                      StringValuePtr (mime));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_path_import (VALUE self, VALUE path)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -793,15 +722,11 @@ static VALUE c_medialib_path_import (VALUE self, VALUE path)
 	res = xmmsc_medialib_path_import (xmms->real,
 	                                  StringValuePtr (path));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_medialib_rehash (VALUE self, VALUE id)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -813,15 +738,11 @@ static VALUE c_medialib_rehash (VALUE self, VALUE id)
 
 	res = xmmsc_medialib_rehash (xmms->real, FIX2INT (id));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_configval_get (VALUE self, VALUE key)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -833,15 +754,11 @@ static VALUE c_configval_get (VALUE self, VALUE key)
 
 	res = xmmsc_configval_get (xmms->real, StringValuePtr (key));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
@@ -855,15 +772,12 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 	res = xmmsc_configval_set (xmms->real, StringValuePtr (key),
 	                           StringValuePtr (val));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_signal_visualisation_data (VALUE self)
 {
-	METHOD_ADD_HANDLER(signal_visualisation_data, true);
+	METHOD_ADD_HANDLER(signal_visualisation_data, SIGNAL);
 }
 
 void Init_XmmsClient (VALUE mXmmsClient)
@@ -955,12 +869,10 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_PAUSE));
 
-	eXmmsClientError = rb_define_class_under (mXmmsClient,
-	                                          "XmmsClientError",
+	eXmmsClientError = rb_define_class_under (c, "XmmsClientError",
 	                                          rb_eStandardError);
-	eDisconnectedError = rb_define_class_under (mXmmsClient,
-	                                            "DisconnectedError",
+	eDisconnectedError = rb_define_class_under (c, "DisconnectedError",
 	                                            eXmmsClientError);
 
-	Init_Result (mXmmsClient, eXmmsClientError);
+	Init_Result (mXmmsClient);
 }
