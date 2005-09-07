@@ -617,7 +617,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_e
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_ADD, file);
-	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (playlist->list->len));
+	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (playlist->list->len-1));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
 	g_mutex_unlock (playlist->mutex);
