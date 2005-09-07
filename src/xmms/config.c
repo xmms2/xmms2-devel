@@ -118,7 +118,7 @@ add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
 	xmms_object_cmd_value_t *val;
 	GList **list = udata;
 
-	val = xmms_object_cmd_value_str_new (g_strdup ((gchar *)key));
+	val = xmms_object_cmd_value_str_new ((gchar *) key);
 
 	*list = g_list_prepend (*list, val);
 }
@@ -672,8 +672,10 @@ xmms_config_value_data_set (xmms_config_value_t *val, const gchar *data)
 			  (gpointer) data);
 
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, xmms_object_cmd_value_free);
-	g_hash_table_insert (dict, "name", xmms_object_cmd_value_str_new (g_strdup (val->name)));
-	g_hash_table_insert (dict, "value", xmms_object_cmd_value_str_new (g_strdup (val->data)));
+	g_hash_table_insert (dict, "name",
+		xmms_object_cmd_value_str_new ((gchar *) val->name));
+	g_hash_table_insert (dict, "value",
+		xmms_object_cmd_value_str_new ((gchar *) val->data));
 	
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 			    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
