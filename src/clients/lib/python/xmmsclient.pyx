@@ -289,15 +289,15 @@ cdef class XMMSResult:
 		xmmsc_result_wait(self.res)
 
 	def disconnect_signal(self):
-		""" @todo Fail if this result isn't a signal """
+		""" @todo: Fail if this result isn't a signal """
 		xmmsc_signal_disconnect(self.orig)
 
 	def disconnect_broadcast(self):
 		"""
-		@todo Fail if this result isn't a broadcast
-		Note: it doesn't matter atm whether we pass self.orig or self.res,
-		      but if the internal broadcast logic ever changes, it's more likely
-			  self.orig is the correct one
+		@todo: Fail if this result isn't a broadcast
+		Note: it doesn't matter atm whether we pass self.orig or
+		self.res, but if the internal broadcast logic ever changes,
+		it's more likely self.orig is the correct one
 		"""
 		xmmsc_broadcast_disconnect(self.orig)
 
