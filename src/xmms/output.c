@@ -814,8 +814,8 @@ xmms_output_decoder_start (xmms_output_t *output)
 		xmms_transport_t *t;
 
 		entry = xmms_playlist_current_entry (output->playlist);
-
-		g_return_val_if_fail (entry, FALSE);
+		if (!entry)
+		  return FALSE;
 
 		t = xmms_transport_new ();
 		if (!t)
