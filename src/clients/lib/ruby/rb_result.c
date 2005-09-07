@@ -354,6 +354,7 @@ void Init_Result (VALUE mXmmsClient)
 	rb_define_method (cResult, "value", c_value_get, 0);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_INSERT);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SHUFFLE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_REMOVE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_CLEAR);

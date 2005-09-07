@@ -131,7 +131,8 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	if (!val)
 		return;
 
-	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD) {
+	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD
+		|| val->value.uint32 == XMMS_PLAYLIST_CHANGED_INSERT) {
 		xmms_mediainfo_reader_wakeup (mir);
 	}
 }

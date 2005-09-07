@@ -35,6 +35,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 
 	ctypedef enum xmms_playlist_changed_actions_t:
 		XMMS_PLAYLIST_CHANGED_ADD,
+		XMMS_PLAYLIST_CHANGED_INSERT,
 		XMMS_PLAYLIST_CHANGED_SHUFFLE,
 		XMMS_PLAYLIST_CHANGED_REMOVE,
 		XMMS_PLAYLIST_CHANGED_CLEAR,
@@ -48,6 +49,7 @@ PLAYBACK_STATUS_PLAY = XMMS_PLAYBACK_STATUS_PLAY
 PLAYBACK_STATUS_PAUSE = XMMS_PLAYBACK_STATUS_PAUSE
 
 PLAYLIST_CHANGED_ADD = XMMS_PLAYLIST_CHANGED_ADD
+PLAYLIST_CHANGED_INSERT = XMMS_PLAYLIST_CHANGED_INSERT
 PLAYLIST_CHANGED_SHUFFLE = XMMS_PLAYLIST_CHANGED_SHUFFLE
 PLAYLIST_CHANGED_REMOVE = XMMS_PLAYLIST_CHANGED_REMOVE
 PLAYLIST_CHANGED_CLEAR = XMMS_PLAYLIST_CHANGED_CLEAR
@@ -104,6 +106,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_add(xmmsc_connection_t *, char *)
 	xmmsc_result_t *xmmsc_playlist_insert(xmmsc_connection_t *, int pos, char *)
 	xmmsc_result_t *xmmsc_playlist_add_id(xmmsc_connection_t *, unsigned int)
+	xmmsc_result_t *xmmsc_playlist_insert_id(xmmsc_connection_t *, int pos, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_remove(xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_list(xmmsc_connection_t *c)
@@ -774,6 +777,23 @@ cdef class XMMS:
 		c = from_unicode(url)
 		
 		ret.res = xmmsc_playlist_insert(self.conn, pos, c)
+		ret.more_init()
+		
+		return ret
+
+	def playlist_insert_id(self, pos, id, cb = None):
+		"""
+		Insert a medialib to the playlist.
+		Requires an int 'pos' and an int 'id' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_playlist_insert_id(self.conn, pos, id)
 		ret.more_init()
 		
 		return ret
