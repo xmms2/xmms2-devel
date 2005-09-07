@@ -191,7 +191,9 @@ xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length)
 	ringbuf->rd_index += r;
 	ringbuf->rd_index %= ringbuf->buffer_size;
 
-	g_cond_broadcast (ringbuf->free_cond);
+	if (r) {
+		g_cond_broadcast (ringbuf->free_cond);
+	}
 
 	return r;
 }
@@ -276,7 +278,9 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 		w += cnt;
 	}
 
-	g_cond_broadcast (ringbuf->used_cond);
+	if (w) {
+		g_cond_broadcast (ringbuf->used_cond);
+	}
 	
 	return w;
 }
