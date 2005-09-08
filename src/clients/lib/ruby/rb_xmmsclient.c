@@ -519,6 +519,39 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
+static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
+{
+	VALUE o;
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+	bool is_str;
+
+	if (!NIL_P (rb_check_string_type (arg)))
+		is_str = true;
+	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
+		is_str = false;
+	else {
+		rb_raise (eXmmsClientError, "unsupported argument");
+		return Qnil;
+	}
+
+	Check_Type (pos, T_FIXNUM);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	if (is_str)
+		res = xmmsc_playlist_insert (xmms->real, NUM2UINT (pos), StringValuePtr (arg));
+	else
+		res = xmmsc_playlist_insert_id (xmms->real, NUM2UINT (pos), NUM2UINT (arg));
+
+	o = TO_XMMS_CLIENT_RESULT (res, true, true);
+	rb_ary_push (xmms->results, o);
+
+	return o;
+}
+
 static VALUE c_playlist_remove (VALUE self, VALUE pos)
 {
 	RbXmmsClient *xmms = NULL;
@@ -834,6 +867,7 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "playlist_set_next_rel",
 	                  c_playlist_set_next_rel, 1);
 	rb_define_method (c, "playlist_add", c_playlist_add, 1);
+	rb_define_method (c, "playlist_insert", c_playlist_insert, 2);
 	rb_define_method (c, "playlist_remove", c_playlist_remove, 1);
 	rb_define_method (c, "playlist_move", c_playlist_move, 2);
 	rb_define_method (c, "playlist_sort", c_playlist_sort, 1);

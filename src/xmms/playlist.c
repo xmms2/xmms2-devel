@@ -49,9 +49,12 @@ static gboolean xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint n
 static guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
 static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
 static guint xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error);
-static void xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *error);
 
-XMMS_CMD_DEFINE (insert, xmms_playlist_insert, xmms_playlist_t *, NONE, UINT32, STRING);
+static gboolean xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *error);
+static gboolean xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
+
+XMMS_CMD_DEFINE (insert, xmms_playlist_inserturl, xmms_playlist_t *, NONE, UINT32, STRING);
+XMMS_CMD_DEFINE (insertid, xmms_playlist_insert, xmms_playlist_t *, NONE, UINT32, UINT32);
 XMMS_CMD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (move, xmms_playlist_move, xmms_playlist_t *, NONE, UINT32, INT32);
@@ -230,6 +233,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_INSERT, 
 			     XMMS_CMD_FUNC (insert));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+			     XMMS_IPC_CMD_INSERT_ID, 
+			     XMMS_CMD_FUNC (insertid));
 
 	xmms_medialib_init (ret);
 
@@ -499,9 +506,18 @@ xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_erro
 
 /**
  * Insert an entry into the playlist at given position.
+ * Creates a #xmms_medialib_entry for you and insert it
+ * in the list.
+ *
+ * @param playlist the playlist to add it URL to.
+ * @param pos the position where the entry is inserted.
+ * @param url the URL to add.
+ * @param err an #xmms_error_t that should be defined upon error.
+ * @return TRUE on success and FALSE otherwise.
+ *
  */
-static
-void xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *err)
+static gboolean
+xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *err)
 {
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin();
@@ -511,17 +527,42 @@ void xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, gchar *url, x
 
 	if (!entry) {
 		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
-		return;
+		return FALSE;
 	}
+
+	return xmms_playlist_insert (playlist, pos, entry, err);
+}
+
+/**
+ * Insert an xmms_medialib_entry to the playlist at given position.
+ *
+ * @param playlist the playlist to add the entry to.
+ * @param pos the position where the entry is inserted.
+ * @param file the #xmms_medialib_entry to add.
+ * @param error Upon error this will be set.
+ * @returns TRUE on success and FALSE otherwise.
+ */
+static gboolean
+xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err)
+{
+	GHashTable *dict;
+	g_return_val_if_fail (file, FALSE);
 
 	g_mutex_lock (playlist->mutex);
 	if (pos > (playlist->list->len-1) || pos < 0) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not insert entry outside of playlist!");
 		g_mutex_unlock (playlist->mutex);
-		return;
+		return FALSE;
 	}
-	g_array_insert_val (playlist->list, pos, entry);
+	g_array_insert_val (playlist->list, pos, file);
+
+	/** propagate the MID ! */
+	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_INSERT, file);
+	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (pos));
+	xmms_playlist_changed_msg_send (playlist, dict);
+	
 	g_mutex_unlock (playlist->mutex);
+	return TRUE;
 }
 
 /**
@@ -576,7 +617,7 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_e
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_ADD, file);
-	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (playlist->list->len));
+	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (playlist->list->len-1));
 	xmms_playlist_changed_msg_send (playlist, dict);
 
 	g_mutex_unlock (playlist->mutex);

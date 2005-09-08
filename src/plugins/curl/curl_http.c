@@ -503,11 +503,13 @@ header_handler_icy_br (xmms_transport_t *transport,
 					   gchar *header)
 {
 	xmms_medialib_entry_t entry;
+	gint bitrate = 0;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (session, entry, 
+	bitrate = strtol (header, NULL, 10);
+	xmms_medialib_entry_property_set_int (session, entry, 
 										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-										  header);
+										  bitrate);
 	xmms_medialib_entry_send_update (entry);
 }
 
