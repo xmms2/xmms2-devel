@@ -23,7 +23,6 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_magic.h"
 
 #include <errno.h>
 #include <string.h>
