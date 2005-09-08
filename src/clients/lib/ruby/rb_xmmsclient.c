@@ -521,7 +521,6 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 
 static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 {
-	VALUE o;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 	bool is_str;
@@ -546,10 +545,7 @@ static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 	else
 		res = xmmsc_playlist_insert_id (xmms->real, NUM2UINT (pos), NUM2UINT (arg));
 
-	o = TO_XMMS_CLIENT_RESULT (res, true, true);
-	rb_ary_push (xmms->results, o);
-
-	return o;
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
 static VALUE c_playlist_remove (VALUE self, VALUE pos)
