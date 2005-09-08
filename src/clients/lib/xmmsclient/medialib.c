@@ -25,7 +25,7 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_stringport.h"
 
-static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER(%s)",
+static const char* constraint_templates[4] = {"m%d.key = LOWER(%s)",
 					      "LOWER(m%d.value) LIKE LOWER(%s)",
 					      "m%d.id = m%d.id",
 					      "Media AS m%d"};
