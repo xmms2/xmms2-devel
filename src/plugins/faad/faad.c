@@ -83,8 +83,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "juhovh");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE,
-							xmms_faad_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_faad_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
 							xmms_faad_destroy);
