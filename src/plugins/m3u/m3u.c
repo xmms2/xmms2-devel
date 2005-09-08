@@ -36,7 +36,6 @@
  * Function prototypes
  */
 
-static gboolean xmms_m3u_can_handle (const gchar *mimetype);
 static gboolean xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id);
 /* hahahaha ... g string */
 static GString *xmms_m3u_write_playlist (guint32 *list);
@@ -80,25 +79,6 @@ xmms_plugin_get (void)
 /*
  * Member functions
  */
-
-static gboolean
-xmms_m3u_can_handle (const gchar *mime)
-{
-	g_return_val_if_fail (mime, FALSE);
-
-	XMMS_DBG ("xmms_m3u_can_handle (%s)", mime);
-
-	if ((g_strncasecmp (mime, "audio/mpegurl", 13) == 0))
-		return TRUE;
-
-	if ((g_strncasecmp (mime, "audio/x-mpegurl", 15) == 0))
-		return TRUE;
-
-	if ((g_strncasecmp (mime, "audio/m3u", 9) == 0))
-		return TRUE;
-
-	return FALSE;
-}
 
 static xmms_medialib_entry_t
 parse_line (xmms_medialib_session_t *session, 
