@@ -12,7 +12,6 @@ def config(env):
 	This function should return True if this module
 	is to be built otherwise False
 	"""
-	raise ConfigError("disabled - Awaiting updates")
 	env.Append (CCFLAGS = '-DUSE_TAGGING')
 	env.checklib("faad", "faacDecInit2")
 
