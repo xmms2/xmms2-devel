@@ -362,6 +362,9 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 		gchar *metabuf;
 
 		temp = mp4ff_get_sample_rate (data->mp4ff, data->track);
+		xmms_medialib_entry_property_set_int (entry,
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+											  temp);
 		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track) / temp) >= 0)
 			xmms_medialib_entry_property_set_int (entry,
 												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,

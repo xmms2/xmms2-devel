@@ -141,6 +141,10 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 	xmms_medialib_entry_property_set_str (session, entry,
 					      XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 					      tmp);
+	
+	xmms_medialib_entry_property_set_int (session, entry,
+					      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+					      44100);
 
 	xmms_medialib_end (session);
 	return;

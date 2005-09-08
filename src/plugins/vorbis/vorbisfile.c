@@ -303,6 +303,13 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 											  (gint)vi->bitrate_nominal);
 	}
 
+	if (vi && vi->rate) {
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
+											  (gint)vi->rate);
+	}
+
+
 	ptr = ov_comment (&data->vorbisfile, -1);
 
 	if (ptr) {

@@ -158,6 +158,9 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 	xmms_medialib_entry_property_set_int (session, entry,
 										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 										  bitrate);
+	xmms_medialib_entry_property_set_int (session, entry,
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+										  data->samplerate);
 
 	xmms_medialib_end (session);
 	

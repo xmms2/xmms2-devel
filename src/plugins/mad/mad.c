@@ -353,6 +353,11 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		}
 	}
 
+	xmms_medialib_entry_property_set_int (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+										  data->samplerate);
+
+
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
 	xmms_medialib_end (session);
