@@ -73,26 +73,44 @@ xmms_plugin_get (void)
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+	
+	
+	xmms_plugin_magic_add (plugin, "Fasttracker II module", "audio/xm",
+						   "0 string Extended Module:", NULL);
 
-#if 0
-	if ((g_strcasecmp (mimetype, "audio/xm") == 0))
-		return TRUE;
+	xmms_plugin_magic_add (plugin, "ScreamTracker III module", "audio/s3m",
+						   "44 string SCRM", NULL);
 
-	if ((g_strcasecmp (mimetype, "audio/s3m") == 0))
-		return TRUE;
+	xmms_plugin_magic_add (plugin, "Impulse Tracker module", "audio/it",
+						   "0 string IMPM", NULL);
 
-	if ((g_strcasecmp (mimetype, "audio/it") == 0))
-		return TRUE;
+	xmms_plugin_magic_add (plugin, "MED module", "audio/med",
+						   "0 string MMD", NULL);
 
-	if ((g_strcasecmp (mimetype, "audio/mod") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "audio/med") == 0))
-		return TRUE;
-#endif
-
-	/* @todo implement magic stuff */
-
+	/* these are for all (not all but should be most) various types of .mod files */
+	xmms_plugin_magic_add (plugin, "4-channel Protracker module", "audio/mod",
+						   "1080 string M.K.", NULL);
+	xmms_plugin_magic_add (plugin, "4-channel Protracker module", "audio/mod",
+						   "1080 string M!K!", NULL);
+	xmms_plugin_magic_add (plugin, "4-channel Startracker module", "audio/mod",
+						   "1080 string FLT4", NULL);
+	xmms_plugin_magic_add (plugin, "8-channel Startracker module", "audio/mod",
+						   "1080 string FLT8", NULL);
+	xmms_plugin_magic_add (plugin, "4-channel Fasttracker module", "audio/mod",
+						   "1080 string 4CHN", NULL);
+	xmms_plugin_magic_add (plugin, "6-channel Fasttracker module", "audio/mod",
+						   "1080 string 6CHN", NULL);
+	xmms_plugin_magic_add (plugin, "8-channel Fasttracker module", "audio/mod",
+						   "1080 string 8CHN", NULL);
+	xmms_plugin_magic_add (plugin, "8-channel Octalyzer module", "audio/mod",
+						   "1080 string CD81", NULL);
+	xmms_plugin_magic_add (plugin, "8-channel Octalyzer module", "audio/mod",
+						   "1080 string OKTA", NULL);
+	xmms_plugin_magic_add (plugin, "16-channel Taketracker module", "audio/mod",
+						   "1080 string 16CN", NULL);
+	xmms_plugin_magic_add (plugin, "32-channel Taketracker module", "audio/mod",
+						   "1080 string 32CN", NULL);
+	
 	return plugin;
 }
 
