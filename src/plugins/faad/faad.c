@@ -347,6 +347,7 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_faad_data_t *data;
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 
 	g_return_if_fail (decoder);
 
@@ -354,38 +355,40 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 	g_return_if_fail (data);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
+	session = xmms_medialib_begin ();
 
 	if (data->filetype == FAAD_TYPE_MP4) {
 		glong temp;
 		gchar *metabuf;
 
 		temp = mp4ff_get_sample_rate (data->mp4ff, data->track);
-		xmms_medialib_entry_property_set_int (entry,
+		xmms_medialib_entry_property_set_int (session, entry,
 											  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
 											  temp);
 		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track) / temp) >= 0)
-			xmms_medialib_entry_property_set_int (entry,
+			xmms_medialib_entry_property_set_int (session, entry,
 												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 												  temp * 1000);
 		if ((temp = mp4ff_get_avg_bitrate (data->mp4ff, data->track)) >= 0)
-			xmms_medialib_entry_property_set_int (entry,
+			xmms_medialib_entry_property_set_int (session, entry,
 												  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 												  temp);
 		if (mp4ff_meta_get_artist (data->mp4ff, &metabuf))
-			xmms_medialib_entry_property_set_str (entry,
+			xmms_medialib_entry_property_set_str (session, entry,
 												  XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
 												  metabuf);
 		if (mp4ff_meta_get_title (data->mp4ff, &metabuf))
-			xmms_medialib_entry_property_set_str (entry,
+			xmms_medialib_entry_property_set_str (session, entry,
 												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 												  metabuf);
 		if (mp4ff_meta_get_album (data->mp4ff, &metabuf))
-			xmms_medialib_entry_property_set_str (entry,
+			xmms_medialib_entry_property_set_str (session, entry,
 												  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
 												  metabuf);
 	} else if (data->filetype == FAAD_TYPE_AAC) {
 	}
 
+	xmms_medialib_end (session);
 	xmms_medialib_entry_send_update (entry);
 }
 
