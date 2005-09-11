@@ -238,7 +238,8 @@ xmms_modplug_init (xmms_decoder_t *decoder, gint mode)
 		
 	while (len < data->buffer_length) {
 		gint ret = xmms_transport_read (transport, data->buffer + len,
-		                                data->buffer_length, &error);
+		                                data->buffer_length - len,
+		                                &error);
 		
 		if ( ret <= 0 ) {
 			g_free (data->buffer);
