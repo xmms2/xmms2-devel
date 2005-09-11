@@ -316,7 +316,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 
 	pos = fmt;
 	while (strlen (target) + 1 < len) {
-		char *next_key, *key, *result, *end;
+		char *next_key, *key, *result = NULL, *end;
 		int keylen;
 
 		next_key = strstr (pos, "${");
