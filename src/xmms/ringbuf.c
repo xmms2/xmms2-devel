@@ -34,6 +34,8 @@ struct xmms_ringbuf_St {
 	guint8 *buffer;
 	/** Number of bytes in #buffer */
 	guint buffer_size;
+	/** Actually usable number of bytes */
+	guint buffer_size_usable;
 	/** Read and write index */
 	guint rd_index, wr_index;
 	gboolean eos;
@@ -47,14 +49,14 @@ struct xmms_ringbuf_St {
 
 
 /**
- * The total size of the ringbuffer.
+ * The usable size of the ringbuffer.
  */
 guint
 xmms_ringbuf_size (xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
 
-	return ringbuf->buffer_size;
+	return ringbuf->buffer_size_usable;
 }
 
 /**
@@ -69,8 +71,16 @@ xmms_ringbuf_new (guint size)
 	xmms_ringbuf_t *ringbuf = g_new0 (xmms_ringbuf_t, 1);
 
 	g_return_val_if_fail (size > 0, NULL);
+	g_return_val_if_fail (size < G_MAXUINT, NULL);
 
-	ringbuf->buffer_size = size;
+	/* we need to allocate one byte more than requested, cause the
+	 * final byte cannot be used.
+	 * if we used it, it might lead to the situation where
+	 * read_index == write_index, which is used for the "empty"
+	 * condition.
+	 */
+	ringbuf->buffer_size_usable = size;
+	ringbuf->buffer_size = size + 1;
 	ringbuf->buffer = g_malloc0 (ringbuf->buffer_size);
 
 	ringbuf->free_cond = g_cond_new ();
@@ -118,9 +128,8 @@ xmms_ringbuf_bytes_free (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
 
-	if (ringbuf->rd_index > ringbuf->wr_index)
-		return (ringbuf->rd_index - ringbuf->wr_index) - 1;
-	return (ringbuf->buffer_size - (ringbuf->wr_index - ringbuf->rd_index)) - 1;
+	return ringbuf->buffer_size_usable -
+	       xmms_ringbuf_bytes_used (ringbuf);
 }
 
 /**
