@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -26,7 +26,7 @@
   * @{
   */
 
-/** 
+/**
  * A ringbuffer
  */
 struct xmms_ringbuf_St {
@@ -139,10 +139,12 @@ guint
 xmms_ringbuf_bytes_used (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, 0);
-     
-	if (ringbuf->wr_index >= ringbuf->rd_index)
+
+	if (ringbuf->wr_index >= ringbuf->rd_index) {
 		return ringbuf->wr_index - ringbuf->rd_index;
-	return ringbuf->buffer_size - (ringbuf->rd_index - ringbuf->wr_index);     
+	}
+
+	return ringbuf->buffer_size - (ringbuf->rd_index - ringbuf->wr_index);
 }
 
 static guint
@@ -267,11 +269,11 @@ xmms_ringbuf_peek_wait (xmms_ringbuf_t *ringbuf, gpointer data,
 }
 
 /**
- * Write data to the ringbuffer. If not all data can be written 
+ * Write data to the ringbuffer. If not all data can be written
  * to the buffer the function will not block.
  *
  * @sa xmms_ringbuf_write_wait
- * 
+ *
  * @param ringbuf Ringbuffer to put data in.
  * @param data Data to put in ringbuffer
  * @param length Length of #data
@@ -287,7 +289,7 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 	g_return_val_if_fail (data, 0);
 	g_return_val_if_fail (length > 0, 0);
 
-	to_write = MIN (length, xmms_ringbuf_bytes_free(ringbuf));
+	to_write = MIN (length, xmms_ringbuf_bytes_free (ringbuf));
 	while (to_write > 0) {
 		cnt = MIN (to_write, ringbuf->buffer_size - ringbuf->wr_index);
 		memcpy (&ringbuf->buffer[ringbuf->wr_index], &data_ptr[w], cnt);
@@ -299,7 +301,7 @@ xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length)
 	if (w) {
 		g_cond_broadcast (ringbuf->used_cond);
 	}
-	
+
 	return w;
 }
 
@@ -319,7 +321,8 @@ xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint leng
 	g_return_val_if_fail (mtx, 0);
 
 	while (written < length) {
-		written += xmms_ringbuf_write (ringbuf, src + written, length - written);
+		written += xmms_ringbuf_write (ringbuf, src + written,
+		                               length - written);
 
 		if (written == length || ringbuf->eos) {
 			break;
@@ -341,9 +344,10 @@ xmms_ringbuf_wait_free (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (len > 0);
 	g_return_if_fail (len <= ringbuf->buffer_size_usable);
 	g_return_if_fail (mtx);
-	
-	while ((xmms_ringbuf_bytes_free (ringbuf) < len) && !ringbuf->eos)
+
+	while ((xmms_ringbuf_bytes_free (ringbuf) < len) && !ringbuf->eos) {
 		g_cond_wait (ringbuf->free_cond, mtx);
+	}
 }
 
 /**
@@ -358,8 +362,9 @@ xmms_ringbuf_wait_used (const xmms_ringbuf_t *ringbuf, guint len, GMutex *mtx)
 	g_return_if_fail (len <= ringbuf->buffer_size_usable);
 	g_return_if_fail (mtx);
 
-	while ((xmms_ringbuf_bytes_used (ringbuf) < len) && !ringbuf->eos)
+	while ((xmms_ringbuf_bytes_used (ringbuf) < len) && !ringbuf->eos) {
 		g_cond_wait (ringbuf->used_cond, mtx);
+	}
 }
 
 /**
@@ -373,10 +378,7 @@ xmms_ringbuf_iseos (const xmms_ringbuf_t *ringbuf)
 {
 	g_return_val_if_fail (ringbuf, TRUE);
 
-	if (xmms_ringbuf_bytes_used (ringbuf) > 0)
-		return FALSE;
-	
-	return ringbuf->eos;
+	return !xmms_ringbuf_bytes_used (ringbuf) && ringbuf->eos;
 }
 
 /**
@@ -388,6 +390,7 @@ xmms_ringbuf_set_eos (xmms_ringbuf_t *ringbuf, gboolean eos)
 	g_return_if_fail (ringbuf);
 
 	ringbuf->eos = eos;
+
 	if (eos) {
 		g_cond_broadcast (ringbuf->eos_cond);
 		g_cond_broadcast (ringbuf->used_cond);
@@ -405,14 +408,15 @@ xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
 	g_return_if_fail (ringbuf);
 	g_return_if_fail (mtx);
 
-	while (!xmms_ringbuf_iseos (ringbuf))
+	while (!xmms_ringbuf_iseos (ringbuf)) {
 		g_cond_wait (ringbuf->eos_cond, mtx);
+	}
 
 }
 /** @} */
 
 /**
- * @internal 
+ * @internal
  * Unused
  */
 void
