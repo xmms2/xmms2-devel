@@ -175,7 +175,7 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 	}
 
 	/* are we dealing with a raw AAC file or with a MP4 file? */
-	if (!strncmp (&data->buffer[4], "ftyp", 4)) {
+	if (!strncmp ((char *)&data->buffer[4], "ftyp", 4)) {
 		data->filetype = FAAD_TYPE_MP4;
 	} else {
 		data->filetype = FAAD_TYPE_AAC;
