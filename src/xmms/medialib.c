@@ -254,7 +254,6 @@ _xmms_medialib_begin (const char *file, int line)
 	xmms_object_ref (XMMS_OBJECT (medialib));
 
 	session->sql = xmms_sqlite_open (&create);
-	XMMS_DBG ("starting db session at %s:%d!", file, line);
 	/*
 	if (!xmms_sqlite_exec (session->sql, "BEGIN")) {
 		XMMS_DBG ("could not start new session!");
@@ -308,7 +307,6 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 	*/
 	xmms_sqlite_close (session->sql);
 	xmms_object_unref (XMMS_OBJECT (session->medialib));
-	XMMS_DBG ("Session commited and ended! %s:%d", session->file, session->line);
 	g_free (session);
 }
 

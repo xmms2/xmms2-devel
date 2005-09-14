@@ -157,8 +157,6 @@ xmms_sqlite_open (gboolean *c)
 		create = FALSE;
 	}
 
-	XMMS_DBG ("opening database: %s", dbpath);
-
 	if (sqlite3_open (dbpath, &sql)) {
 		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg(sql));
 		return FALSE; 
