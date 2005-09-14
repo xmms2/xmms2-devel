@@ -643,9 +643,15 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 guint64
 xmms_transport_tell (xmms_transport_t *transport)
 {
+	guint64 ret;
+
 	g_return_val_if_fail (transport, -1); 
 
-	return transport->current_position; 
+	g_mutex_lock (transport->mutex);
+	ret = transport->current_position;
+	g_mutex_unlock (transport->mutex);
+
+	return ret;
 }
 
 /**
