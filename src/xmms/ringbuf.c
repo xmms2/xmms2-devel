@@ -237,15 +237,24 @@ guint
 xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data,
                         guint len, GMutex *mtx)
 {
+	guint r = 0;
+	guint8 *dest = data;
+
 	g_return_val_if_fail (ringbuf, 0);
 	g_return_val_if_fail (data, 0);
 	g_return_val_if_fail (len > 0, 0);
-	g_return_val_if_fail (len <= ringbuf->buffer_size_usable, 0);
 	g_return_val_if_fail (mtx, 0);
 
-	xmms_ringbuf_wait_used (ringbuf, len, mtx);
+	while (r < len) {
+		r += xmms_ringbuf_read (ringbuf, dest + r, len - r);
+		if (r == len) {
+			break;
+		}
 
-	return xmms_ringbuf_read (ringbuf, data, len);
+		g_cond_wait (ringbuf->used_cond, mtx);
+	}
+
+	return r;
 }
 
 /**
