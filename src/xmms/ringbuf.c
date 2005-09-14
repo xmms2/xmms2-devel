@@ -247,7 +247,7 @@ xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data,
 
 	while (r < len) {
 		r += xmms_ringbuf_read (ringbuf, dest + r, len - r);
-		if (r == len) {
+		if (r == len || ringbuf->eos) {
 			break;
 		}
 
