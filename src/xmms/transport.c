@@ -607,11 +607,11 @@ xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 
 	if (whence == XMMS_TRANSPORT_SEEK_CUR) {
 		whence = XMMS_TRANSPORT_SEEK_SET;
-		offset += transport->current_position_total;
+		offset += transport->current_position;
 	}
 
 	if (whence == XMMS_TRANSPORT_SEEK_SET &&
-	    offset == transport->current_position_total) {
+	    offset == transport->current_position) {
 		g_mutex_unlock (transport->mutex);
 
 		return offset;
