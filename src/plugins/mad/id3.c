@@ -135,7 +135,10 @@ convert_id3_text (xmms_id3v2_header_t *head,
 	g_return_val_if_fail (len>0, NULL);
 
 	if (head->ver == 4) {
-		if (val[0] == 0x00) {
+		if (len <= 1) {
+			/* we don't want to handle this at all, probably an empty tag */
+			return NULL;
+		} else if (val[0] == 0x00) {
 			/* ISO-8859-1 */
 			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
 		} else if (len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
@@ -152,9 +155,12 @@ convert_id3_text (xmms_id3v2_header_t *head,
 			return NULL;
 		}
 	} else if (head->ver == 2 || head->ver == 3) {
-		if (len > 1 && val[0] == 0x00) {
+		if (len <= 1) {
+			/* we don't want to handle this at all, probably an empty tag */
+			return NULL;
+		} else if (val[0] == 0x00) {
 			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		} else if (len > 1 && val[0] == 0x01) {
+		} else if (val[0] == 0x01) {
 			if (len > 2 && val[1] == 0xFF && val[2] == 0xFE) {
 				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2LE", &readsize, &writsize, &err);
 			} else if (len > 2 && val[1] == 0xFE && val[2] == 0xFF) {
