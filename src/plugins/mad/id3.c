@@ -167,6 +167,7 @@ convert_id3_text (xmms_id3v2_header_t *head,
 				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2BE", &readsize, &writsize, &err);
 			} else {
 				XMMS_DBG ("Missing/bad boom in id3v2 tag!");
+				return NULL;
 			}
 		} else {
 			XMMS_DBG ("UNKNOWN id3v2.2/2.3 encoding (%02x)!", val[0]);
