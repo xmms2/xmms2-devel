@@ -1076,7 +1076,7 @@ cmds commands[] = {
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
 	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
-	{ "clear", "clears the playlist and stops playback", cmd_clear },
+	{ "clear", "clears the playlist", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
 	{ "sort", "sort the playlist", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
