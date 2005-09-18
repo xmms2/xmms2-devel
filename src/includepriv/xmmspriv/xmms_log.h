@@ -22,7 +22,7 @@
 
 #include "xmms/xmms_log.h"
 
-gint xmms_log_init (const char *filename);
+void xmms_log_init (gint verbosity);
 void xmms_log_shutdown (void);
 void xmms_log_daemonize (void);
 

@@ -22,18 +22,11 @@
 
 #include <glib.h>
 
-/* FIXME */
-#define xmms_log_error xmms_log
 
-#ifdef __GNUC__
-void xmms_log_debug (const gchar *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void xmms_log (const gchar *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void xmms_log_fatal (const gchar *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-#else
-void xmms_log_debug (const gchar *fmt, ...);
-void xmms_log (const gchar *fmt, ...);
-void xmms_log_fatal (const gchar *fmt, ...);
-#endif
+#define xmms_log_fatal g_error
+#define xmms_log_error g_warning
+#define xmms_log_info g_message
+#define xmms_log_debug g_debug
 
 #define XMMS_STRINGIFY_NOEXPAND(x) #x
 #define XMMS_STRINGIFY(x) XMMS_STRINGIFY_NOEXPAND(x)

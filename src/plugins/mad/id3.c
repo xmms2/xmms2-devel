@@ -404,12 +404,12 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 	}
 	
 	if ((id3head->size[0] | id3head->size[1] | id3head->size[2] |
-				id3head->size[3]) & 0x80) {
-		xmms_log("WARNING: id3v2 tag having lenpath with msb set \
-			  (%02x %02x %02x %02x)!  Probably broken \
-			  tag/tag-writer. Skipping Tag.",
-			  id3head->size[0], id3head->size[1],
-			  id3head->size[2], id3head->size[3]);
+	     id3head->size[3]) & 0x80) {
+		xmms_log_error ("id3v2 tag having lenpath with msb set "
+		                "(%02x %02x %02x %02x)!  Probably broken "
+		                "tag/tag-writer. Skipping Tag.",
+		                id3head->size[0], id3head->size[1],
+		                id3head->size[2], id3head->size[3]);
 		return FALSE;
 	}
 	
@@ -418,7 +418,7 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 	header->flags = id3head->flags;
 	
 	header->len = id3head->size[0] << 21 | id3head->size[1] << 14 |
-		      id3head->size[2] << 7 | id3head->size[3];
+	              id3head->size[2] << 7 | id3head->size[3];
 
 	if (id3head->flags & ID3v2_HEADER_FLAGS_FOOTER) {
 		/* footer is copy of header */
@@ -426,7 +426,7 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
 	}
 
 	XMMS_DBG ("Found id3v2 header (version=%d, rev=%d, len=%d, flags=%x)",
-		  header->ver, header->rev, header->len, header->flags);
+	          header->ver, header->rev, header->len, header->flags);
 
 	return TRUE;
 }

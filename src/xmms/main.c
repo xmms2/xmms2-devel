@@ -346,7 +346,6 @@ main (int argc, char **argv)
 	xmms_playlist_t *playlist;
 	const gchar *outname = NULL;
 	gboolean daemonize = FALSE;
-	gboolean doLog = TRUE;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	gchar *tmp;
@@ -375,16 +374,10 @@ main (int argc, char **argv)
 			case 'v':
 				verbose++;
 				break;
-
 			case 'V':
 				printf ("XMMS version %s\n", XMMS_VERSION);
 				exit (0);
 				break;
-
-			case 'n':
-				doLog = FALSE;
-				break;
-
 			case 'o':
 				outname = g_strdup (optarg);
 				break;
@@ -422,17 +415,13 @@ main (int argc, char **argv)
 		}
 		setsid();
 		if (fork ()) exit(0);
-		xmms_log_daemonize ();
 	}
 
 	g_thread_init (NULL);
 
 	g_random_set_seed (time (NULL));
 
-	if (!xmms_log_init (doLog ? "xmmsd" : "null")) {
-		fprintf (stderr, "Couldn't open logfile!!\n");
-		return 1;
-	}
+	xmms_log_init (verbose);
 
 	ipc = xmms_ipc_init ();
 	

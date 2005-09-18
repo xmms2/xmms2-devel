@@ -400,8 +400,9 @@ xmms_magic_match (xmms_magic_checker_t *c, const GList *magic)
 		 */
 		needed = tree_bytes_max_needed (c, tree);
 		if (needed > xmms_transport_buffersize (c->transport)) {
-			xmms_log ("magic check requires a minimum transport "
-			          "buffer size of %i bytes", needed);
+			xmms_log_info ("magic check requires a minimum"
+				       "transport buffer size of %i bytes",
+				       needed);
 		} else if (tree_match (c, tree)) {
 			return tree;
 		}
