@@ -33,6 +33,13 @@ def config(env):
 	env.pkgconfig("gmodule-2.0", fail=True)
 	env.pkgconfig("gthread-2.0", fail=True)
 	env.pkgconfig("sqlite3", fail=True)
+	print "checking SQLite version...",
+	e = env.conf.TryRun("#include <sqlite3.h>\n int main() { if (SQLITE_VERSION_NUMBER > 3002004) { return 1; } else { return 0; } }", ".c")
+	if e[0] == 1:
+		print "Old SQLite version, enabling thread mutex."
+		env.Append(CCFLAGS=["-DOLD_SQLITE_VERSION"])
+	else:
+		print "good news everyone! Newer SQLite version!"
 	
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)

@@ -37,6 +37,7 @@
  */
 
 
+
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
 static gboolean get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata);
 static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
@@ -118,6 +119,8 @@ struct xmms_medialib_session_St {
   */
 
 static xmms_medialib_t *medialib;
+static xmms_medialib_session_t *global_medialib_session;
+static GMutex *global_medialib_session_mutex;
 
 #define destroy_array(a) { gint i = 0; while (a[i]) { xmms_object_cmd_value_free (a[i]); i++; }; g_free (a); }
 
@@ -125,6 +128,11 @@ static xmms_medialib_t *medialib;
 static void 
 xmms_medialib_destroy (xmms_object_t *object)
 {
+	if (global_medialib_session) {
+		xmms_sqlite_close (global_medialib_session->sql);
+		g_free (global_medialib_session);
+	}
+	g_mutex_free (global_medialib_session_mutex);
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
 }
@@ -161,6 +169,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	gchar path[XMMS_PATH_MAX+1];
 	xmms_medialib_session_t *session;
 	xmms_config_value_t *cv;
+	gint c = 0;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->playlist = playlist;
@@ -230,6 +239,18 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 				    path,
 				    xmms_medialib_path_changed, medialib);
 
+	global_medialib_session = NULL;
+
+#ifdef OLD_SQLITE_VERSION
+	global_medialib_session = g_new0 (xmms_medialib_session_t, 1);
+	global_medialib_session->medialib = medialib;
+	global_medialib_session->file = "global";
+	global_medialib_session->line = 0;
+	global_medialib_session->sql = xmms_sqlite_open (&c);
+#endif
+
+	global_medialib_session_mutex = g_mutex_new ();
+
 	session = xmms_medialib_begin ();
 	xmms_medialib_end (session);
 	/*
@@ -246,6 +267,11 @@ _xmms_medialib_begin (const char *file, int line)
 {
 	gboolean create;
 	xmms_medialib_session_t *session;
+
+	if (global_medialib_session) {
+		g_mutex_lock (global_medialib_session_mutex);
+		return global_medialib_session;
+	}
 
 	session = g_new0 (xmms_medialib_session_t, 1);
 	session->medialib = medialib;
@@ -302,9 +328,11 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 {
 	g_return_if_fail (session);
 
-	/*
-	xmms_sqlite_exec (session->sql, "COMMIT");
-	*/
+	if (session == global_medialib_session) {
+		g_mutex_unlock (global_medialib_session_mutex);
+		return;
+	}
+
 	xmms_sqlite_close (session->sql);
 	xmms_object_unref (XMMS_OBJECT (session->medialib));
 	g_free (session);
