@@ -117,9 +117,16 @@ struct xmms_medialib_session_St {
   * right now. This could be changed by removing this global one
   * and altering the function callers...
   */
-
 static xmms_medialib_t *medialib;
+
+/** 
+  * This is only used if OLD_SQLITE_VERSION is set,
+  * The reason for this is that we must have a global session, due to some
+  * strange limitiations in older sqlite libraries.
+  */
 static xmms_medialib_session_t *global_medialib_session;
+
+/** This protects the above global session */
 static GMutex *global_medialib_session_mutex;
 
 #define destroy_array(a) { gint i = 0; while (a[i]) { xmms_object_cmd_value_free (a[i]); i++; }; g_free (a); }
@@ -242,6 +249,8 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	global_medialib_session = NULL;
 
 #ifdef OLD_SQLITE_VERSION
+	/** Create a global session, this is only used when the sqlite version
+	  * doesn't support concurrent sessions */
 	global_medialib_session = g_new0 (xmms_medialib_session_t, 1);
 	global_medialib_session->medialib = medialib;
 	global_medialib_session->file = "global";
@@ -253,9 +262,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 
 	session = xmms_medialib_begin ();
 	xmms_medialib_end (session);
-	/*
-	medialib->sql = xmms_sqlite_open (&medialib->nextid, &create);
-	*/
 	
 	return TRUE;
 }
@@ -269,6 +275,7 @@ _xmms_medialib_begin (const char *file, int line)
 	xmms_medialib_session_t *session;
 
 	if (global_medialib_session) {
+		/** This will only happen when OLD_SQLITE_VERSION is set. */
 		g_mutex_lock (global_medialib_session_mutex);
 		return global_medialib_session;
 	}
@@ -280,11 +287,6 @@ _xmms_medialib_begin (const char *file, int line)
 	xmms_object_ref (XMMS_OBJECT (medialib));
 
 	session->sql = xmms_sqlite_open (&create);
-	/*
-	if (!xmms_sqlite_exec (session->sql, "BEGIN")) {
-		XMMS_DBG ("could not start new session!");
-	}
-	*/
 
 	if (create) {
 		xmms_medialib_entry_t entry;
@@ -294,34 +296,6 @@ _xmms_medialib_begin (const char *file, int line)
 
 	return session;
 }
-
-void
-xmms_medialib_commit (xmms_medialib_session_t *session)
-{
-	g_return_if_fail (session);
-	XMMS_DBG ("Commiting and begining session %s:%d", session->file, session->line);
-	/*
-	if (!xmms_sqlite_exec (session->sql, "COMMIT")) {
-		XMMS_DBG ("error when commiting this session!");
-	}
-	if (!xmms_sqlite_exec (session->sql, "BEGIN")) {
-		XMMS_DBG ("error when beginning a new session!");
-	}
-	*/
-
-}
-
-void
-xmms_medialib_rollback (xmms_medialib_session_t *session)
-{
-	g_return_if_fail (session);
-	XMMS_DBG ("Rolling back session %s:%d", session->file, session->line);
-	/*
-	xmms_sqlite_exec (session->sql, "ROLLBACK");
-	xmms_sqlite_exec (session->sql, "BEGIN");
-	*/
-}
-
 
 void
 xmms_medialib_end (xmms_medialib_session_t *session)
@@ -796,12 +770,7 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 
 	*p = '\0';
 
-	if (process_dir (session, path, error)) {
-		xmms_medialib_commit (session);
-	} else {
-		xmms_medialib_rollback (session);
-	}
-
+	process_dir (session, path, error);
 	xmms_medialib_end (session);
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
