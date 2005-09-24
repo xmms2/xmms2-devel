@@ -120,7 +120,7 @@ struct xmms_medialib_session_St {
 static xmms_medialib_t *medialib;
 
 /** 
-  * This is only used if OLD_SQLITE_VERSION is set,
+  * This is only used if we are using a older version of sqlite.
   * The reason for this is that we must have a global session, due to some
   * strange limitiations in older sqlite libraries.
   */
@@ -248,15 +248,16 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 
 	global_medialib_session = NULL;
 
-#ifdef OLD_SQLITE_VERSION
-	/** Create a global session, this is only used when the sqlite version
-	  * doesn't support concurrent sessions */
-	global_medialib_session = g_new0 (xmms_medialib_session_t, 1);
-	global_medialib_session->medialib = medialib;
-	global_medialib_session->file = "global";
-	global_medialib_session->line = 0;
-	global_medialib_session->sql = xmms_sqlite_open (&c);
-#endif
+	if (sqlite3_libversion_number() < 3002004) {
+		XMMS_DBG ("Using thread hack to compensate for old sqlite version!");
+		/** Create a global session, this is only used when the sqlite version
+		* doesn't support concurrent sessions */
+		global_medialib_session = g_new0 (xmms_medialib_session_t, 1);
+		global_medialib_session->medialib = medialib;
+		global_medialib_session->file = "global";
+		global_medialib_session->line = 0;
+		global_medialib_session->sql = xmms_sqlite_open (&c);
+	}
 
 	global_medialib_session_mutex = g_mutex_new ();
 
