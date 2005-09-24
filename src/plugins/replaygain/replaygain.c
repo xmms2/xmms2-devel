@@ -264,7 +264,7 @@ xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
 	data = xmms_effect_private_data_get (effect);
 	g_return_if_fail (data);
 
-	name = xmms_config_value_name_get ((xmms_config_value_t *) obj);
+	name = xmms_config_value_get_name ((xmms_config_value_t *) obj);
 
 	if (!g_ascii_strcasecmp (name, "effect.replaygain.mode")) {
 		if (!g_ascii_strcasecmp (value, "album")) {

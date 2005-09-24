@@ -222,7 +222,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	cv = xmms_config_value_register ("medialib.random_sql_statement",
 					 "select id as value from Media where key='url' order by random() limit 1",
 					 xmms_medialib_random_sql_changed, medialib);
-	medialib->random_sql = xmms_config_value_string_get (cv);
+	medialib->random_sql = xmms_config_value_get_string (cv);
 
 	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
 
@@ -351,7 +351,7 @@ xmms_medialib_logging_start (xmms_medialib_session_t *session,
 	cv = xmms_config_lookup ("medialib.dologging");
 	g_return_if_fail (cv);
 	
-	ret = xmms_config_value_int_get (cv);
+	ret = xmms_config_value_get_int (cv);
 	if (!ret)
 		return;
 
@@ -388,7 +388,7 @@ xmms_medialib_logging_stop (xmms_medialib_session_t *session,
 	cv = xmms_config_lookup ("medialib.dologging");
 	g_return_if_fail (cv);
 
-	ret = xmms_config_value_int_get (cv);
+	ret = xmms_config_value_get_int (cv);
 	if (!ret)
 		return;
 

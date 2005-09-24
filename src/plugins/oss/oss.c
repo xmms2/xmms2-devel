@@ -271,7 +271,7 @@ xmms_oss_open (xmms_output_t *output)
 	XMMS_DBG ("xmms_oss_open (%p)", output);
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (val);
+	dev = xmms_config_value_get_string (val);
 
 	data->fd = open (dev, O_WRONLY);
 	if (data->fd == -1)
@@ -306,7 +306,7 @@ xmms_oss_new (xmms_output_t *output)
 	data = g_new0 (xmms_oss_data_t, 1);
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
-	mixdev = xmms_config_value_string_get (val);
+	mixdev = xmms_config_value_get_string (val);
 
 	/* Open mixer here. I am not sure this is entirely correct. */
 	data->mixer_fd = open (mixdev, O_RDONLY);
@@ -330,7 +330,7 @@ xmms_oss_new (xmms_output_t *output)
 	xmms_output_private_data_set (output, data);
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (val);
+	dev = xmms_config_value_get_string (val);
 
 	XMMS_DBG ("device = %s", dev);
 

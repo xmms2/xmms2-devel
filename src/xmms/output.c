@@ -542,7 +542,7 @@ get_effect_list (xmms_output_t *output)
 			break;
 		}
 
-		name = xmms_config_value_string_get (cfg);
+		name = xmms_config_value_get_string (cfg);
 
 		if (!name[0])
 			break;

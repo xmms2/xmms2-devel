@@ -224,7 +224,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 					"device");
-	dev = xmms_config_value_string_get (cv);
+	dev = xmms_config_value_get_string (cv);
 
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -345,7 +345,7 @@ xmms_alsa_open (xmms_output_t *output)
 	g_return_val_if_fail (data, FALSE);
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (cv);
+	dev = xmms_config_value_get_string (cv);
 
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -539,7 +539,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 					"mixer_dev");
-	dev = (gchar *)xmms_config_value_string_get (cv);
+	dev = (gchar *)xmms_config_value_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
@@ -574,7 +574,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
-	name = (gchar *)xmms_config_value_string_get (cv);
+	name = (gchar *)xmms_config_value_get_string (cv);
 
 	index = 0;
 
