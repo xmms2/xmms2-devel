@@ -122,7 +122,7 @@ xmms_config_t *global_config;
 /**
  * Lookup config key and return its associated value as a string.
  * This is a convenient function to make it easier to get a configuration value
- * rather than having to call #xmms_config_value_string_get separately.
+ * rather than having to call #xmms_config_value_get_string separately.
  *
  * @param conf Global config
  * @param key Configuration value to lookup
@@ -131,7 +131,7 @@ xmms_config_t *global_config;
  * @return A string with the value. If the value is an int it will return NULL
  */
 const gchar *
-xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error_t *err)
+xmms_config_value_lookup_get_string (xmms_config_t *conf, gchar *key, xmms_error_t *err)
 {
 	xmms_config_value_t *val;
 
@@ -141,7 +141,7 @@ xmms_config_value_lookup_string_get (xmms_config_t *conf, gchar *key, xmms_error
 		return NULL;
 	}
 
-	return xmms_config_value_string_get (val);
+	return xmms_config_value_get_string (val);
 }
 
 /**
@@ -169,7 +169,7 @@ xmms_config_lookup (const gchar *path)
  * @return Name of config value.
  */
 const gchar *
-xmms_config_value_name_get (const xmms_config_value_t *value)
+xmms_config_value_get_name (const xmms_config_value_t *value)
 {
 	g_return_val_if_fail (value, NULL);
 
@@ -182,7 +182,7 @@ xmms_config_value_name_get (const xmms_config_value_t *value)
  * @param data The value to set
  */
 void
-xmms_config_value_data_set (xmms_config_value_t *val, const gchar *data)
+xmms_config_value_set_data (xmms_config_value_t *val, const gchar *data)
 {
 	GHashTable *dict;
 	gchar file[XMMS_PATH_MAX];
@@ -227,7 +227,7 @@ xmms_config_value_data_set (xmms_config_value_t *val, const gchar *data)
  * @return value as string
  */
 const gchar *
-xmms_config_value_string_get (const xmms_config_value_t *val)
+xmms_config_value_get_string (const xmms_config_value_t *val)
 {
 	g_return_val_if_fail (val, NULL);
 	return val->data;
@@ -239,7 +239,7 @@ xmms_config_value_string_get (const xmms_config_value_t *val)
  * @return value as int
  */
 gint
-xmms_config_value_int_get (const xmms_config_value_t *val)
+xmms_config_value_get_int (const xmms_config_value_t *val)
 {
 	g_return_val_if_fail (val, 0);
 	if (val->data)
@@ -254,7 +254,7 @@ xmms_config_value_int_get (const xmms_config_value_t *val)
  * @return value as float
  */
 gfloat
-xmms_config_value_float_get (const xmms_config_value_t *val)
+xmms_config_value_get_float (const xmms_config_value_t *val)
 {
 	g_return_val_if_fail (val, 0.0);
 	if (val->data)
@@ -338,7 +338,7 @@ xmms_config_value_register (const gchar *path,
 		else
 			val = xmms_config_value_new (name+1);
 
-		xmms_config_value_data_set (val, (gchar *) default_value);
+		xmms_config_value_set_data (val, (gchar *) default_value);
 		g_hash_table_insert (global_config->values, (gchar *) path, val);
 	}
 
@@ -542,7 +542,7 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 	g_strlcat (key, config->value_name, siz);
 
 	val = xmms_config_value_new (g_strdup (key));
-	xmms_config_value_data_set (val, (gchar *) text);
+	xmms_config_value_set_data (val, (gchar *) text);
 
 	g_hash_table_insert (config->values, (gchar *) val->name, val);
 }
@@ -561,7 +561,7 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value, xmms_
 
 	val = xmms_config_lookup (key);
 	if (val) {
-		xmms_config_value_data_set (val, value);
+		xmms_config_value_set_data (val, value);
 	} else {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to set nonexistant configvalue");
 	}
@@ -631,7 +631,7 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 static gchar *
 xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err)
 {
-	return g_strdup (xmms_config_value_lookup_string_get (conf, key, err));
+	return g_strdup (xmms_config_value_lookup_get_string (conf, key, err));
 }
 
 /**
@@ -810,7 +810,7 @@ add_to_tree_foreach (gpointer key, gpointer value, gpointer udata)
 	}
 
 	/* only the last node gets a value */
-	data[1] = g_strdup (xmms_config_value_string_get (value));
+	data[1] = g_strdup (xmms_config_value_get_string (value));
 
 	g_strfreev (subkey);
 }
