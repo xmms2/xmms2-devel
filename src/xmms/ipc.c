@@ -87,28 +87,100 @@ static void xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_valu
 typedef gboolean (*xmms_ipc_client_callback_t) (GSource *, xmms_ipc_client_t *);
 typedef gboolean (*xmms_ipc_server_callback_t) (GSource *, xmms_ipc_t *);
 
+static GHashTable *
+xmms_ipc_deserialize_hashtable (xmms_ipc_msg_t *msg)
+{
+	guint entries;
+	guint i;
+	guint len;
+	GHashTable *h;
+	gchar *key;
+
+	if (!xmms_ipc_msg_get_uint32 (msg, &entries)) {
+		return NULL;
+	}
+
+	h = g_hash_table_new_full (g_str_hash, g_str_equal, free, xmms_object_cmd_value_free);
+
+	for (i = 1; i <= entries; i++) {
+		xmms_object_cmd_value_t *val;
+		gchar *str;
+
+		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len)) {
+			goto err;
+		}
+
+		/** @todo refactor */
+		if (!xmms_ipc_msg_get_string_alloc (msg, &str, &len)) {
+			goto err;
+		}
+
+		val = xmms_object_cmd_value_str_new (str);
+		if (!val) {
+			goto err;
+		}
+
+		g_hash_table_insert (h, key, val);
+	}
+
+	return h;
+
+err:
+	g_hash_table_destroy (h);
+	return NULL;
+}
+
 static gboolean
 type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
 {
 	guint len;
 
+	arg->values[i].type = type;
 	switch (type) {
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].value.uint32))
 				return FALSE;
-			arg->values[i].type = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_INT32 :
 			if (!xmms_ipc_msg_get_int32 (msg, &arg->values[i].value.int32))
 				return FALSE;
-			arg->values[i].type = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
 				g_free (arg->values[i].value.string);
 				return FALSE;
 			}
-			arg->values[i].type = type;
+			break;
+		case XMMS_OBJECT_CMD_ARG_DICT:
+			arg->values[i].value.dict = xmms_ipc_deserialize_hashtable (msg);
+			if (!arg->values[i].value.dict)
+				return FALSE;
+			break;
+		case XMMS_OBJECT_CMD_ARG_LIST:
+			{
+				guint32 len;
+				guint j;
+				GList *n = NULL;
+
+				if (!xmms_ipc_msg_get_uint32 (msg, &len))
+					return FALSE;
+
+				for (j = 0; j < len; j ++) {
+					xmms_object_cmd_value_t *val;
+					guint len;
+					gchar *str;
+
+					if (!xmms_ipc_msg_get_string_alloc (msg, &str, &len)) {
+						return FALSE;
+					}
+					
+					val = xmms_object_cmd_value_str_new (str);
+					n = g_list_prepend (n, val);
+				}
+
+				n = g_list_reverse (n);
+				arg->values[i].value.list = n;
+			}
 			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");
