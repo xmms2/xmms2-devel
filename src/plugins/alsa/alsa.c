@@ -369,7 +369,7 @@ xmms_alsa_open (xmms_output_t *output)
 		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 						    "volume");
 		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
-		xmms_config_value_data_set (volume, buf);
+		xmms_config_value_set_data (volume, buf);
 	}
 
 	return TRUE;

@@ -182,7 +182,7 @@ xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 		gchar buf[20];
 		g_snprintf (buf, sizeof (buf), "%g", gain);
 
-		xmms_config_value_data_set (val, buf);
+		xmms_config_value_set_data (val, buf);
 	}
 	priv->gains[i] = gain;
 
