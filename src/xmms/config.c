@@ -663,6 +663,7 @@ xmms_config_init (const gchar *filename)
 	GMarkupParseContext *ctx;
 	xmms_config_t *config;
 	int ret, fd = -1;
+	gboolean retval = TRUE, parserr = FALSE, eof = FALSE;
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
@@ -672,14 +673,20 @@ xmms_config_init (const gchar *filename)
 	                                        (GDestroyNotify) __int_xmms_object_unref);
 	global_config = config;
 
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
+	xmms_ipc_broadcast_register (XMMS_OBJECT (config),
+	                             XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
+
 	memset (&pars, 0, sizeof (pars));
 
 	pars.start_element = xmms_config_parse_start;
 	pars.end_element = xmms_config_parse_end;
 	pars.text = xmms_config_parse_text;
 
-	if (filename)
+	if (filename) {
 		fd = open (filename, O_RDONLY);
+		retval = FALSE;
+	}
 
 	if (fd > -1) {
 		config->is_parsing = TRUE;
@@ -687,7 +694,7 @@ xmms_config_init (const gchar *filename)
 		config->sections = g_queue_new ();
 		ctx = g_markup_parse_context_new (&pars, 0, config, NULL);
 
-		while (42) {
+		while ((!eof) && (!parserr)) {
 			GError *error = NULL;
 			gchar buffer[1024];
 
@@ -698,9 +705,9 @@ xmms_config_init (const gchar *filename)
 					xmms_log_error ("Cannot parse config file: %s",
 					                error->message);
 					g_error_free (error);
+					parserr = TRUE;
 				}
-
-				break;
+				eof = TRUE;
 			}
 
 			g_markup_parse_context_parse (ctx, buffer, ret, &error);
@@ -708,6 +715,7 @@ xmms_config_init (const gchar *filename)
 				xmms_log_error ("Cannot parse config file: %s",
 				                error->message);
 				g_error_free (error);
+				parserr = TRUE;
 			}
 		}
 
@@ -722,17 +730,20 @@ xmms_config_init (const gchar *filename)
 		g_queue_free (config->sections);
 
 		config->is_parsing = FALSE;
+
+		if ((eof) && (!parserr)) {
+			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
+			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
+			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES, XMMS_CMD_FUNC (listvalues));
+			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE, XMMS_CMD_FUNC (regvalue));
+			retval = TRUE;
+		}
+		else {
+			xmms_object_unref(config);
+		}
 	}
 
-	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
-	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
-	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES, XMMS_CMD_FUNC (listvalues));
-	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE, XMMS_CMD_FUNC (regvalue));
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
-	xmms_ipc_broadcast_register (XMMS_OBJECT (config),
-	                             XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
-
-	return TRUE;
+	return retval;
 }
 
 /**
