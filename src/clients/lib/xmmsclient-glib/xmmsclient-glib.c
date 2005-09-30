@@ -73,8 +73,8 @@ GSourceFuncs xmmsc_glib_funcs = {
 	.dispatch = xmmsc_glib_dispatch,
 };
 
-gboolean
-xmmsc_setup_with_gmain (xmmsc_connection_t *c)
+void *
+xmmsc_mainloop_gmain_init (xmmsc_connection_t *c)
 {
 	xmmsc_glib_watch_t *src;
 
@@ -87,5 +87,11 @@ xmmsc_setup_with_gmain (xmmsc_connection_t *c)
 
 	g_source_attach ((GSource *)src, NULL);
 
-	return TRUE;
+	return src;
+}
+
+void
+xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *c, void *udata)
+{
+	g_source_destroy (udata);
 }

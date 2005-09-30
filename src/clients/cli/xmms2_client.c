@@ -1039,7 +1039,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
-	xmmsc_setup_with_gmain (conn);
+	xmmsc_mainloop_gmain_init (conn);
 
 	g_main_loop_run (ml);
 }

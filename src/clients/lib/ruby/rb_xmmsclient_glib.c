@@ -28,7 +28,18 @@ static VALUE c_add_to_glib_mainloop (VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	xmmsc_setup_with_gmain (xmms->real);
+	xmms->gmain_handle = xmmsc_mainloop_gmain_init (xmms->real);
+
+	return self;
+}
+
+static VALUE c_remove_from_glib_mainloop (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	xmmsc_mainloop_gmain_shutdown (xmms->real, xmms->gmain_handle);
 
 	return self;
 }
@@ -46,4 +57,6 @@ void Init_xmmsclient_glib (void)
 
 	rb_define_method (c, "add_to_glib_mainloop",
 	                  c_add_to_glib_mainloop, 0);
+	rb_define_method (c, "remove_from_glib_mainloop",
+	                  c_remove_from_glib_mainloop, 0);
 }
