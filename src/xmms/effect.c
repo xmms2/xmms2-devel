@@ -186,7 +186,7 @@ xmms_effect_new (xmms_plugin_t *plugin)
 	effect->cfg_enabled =
 		xmms_plugin_config_value_register (plugin, "enabled", "0",
 		                                   on_enabled_changed, effect);
-	effect->enabled = !!xmms_config_value_int_get (effect->cfg_enabled);
+	effect->enabled = !!xmms_config_value_get_int (effect->cfg_enabled);
 
 	return effect;
 }

@@ -148,7 +148,7 @@ xmms_diskwrite_new (xmms_output_t *output)
 	                                (xmms_object_handler_t) on_dest_directory_changed,
 	                                data);
 
-	if ((tmp = xmms_config_value_string_get (val))) {
+	if ((tmp = xmms_config_value_get_string (val))) {
 		g_snprintf (data->destdir, sizeof (data->destdir), "%s", tmp);
 	}
 

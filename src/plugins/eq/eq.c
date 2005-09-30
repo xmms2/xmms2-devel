@@ -161,10 +161,10 @@ xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 
 	g_return_if_fail (priv);
 
-	name = xmms_config_value_name_get (val);
+	name = xmms_config_value_get_name (val);
 
 	XMMS_DBG ("configval changed! %s => %f", name,
-			  xmms_config_value_float_get (val));
+			  xmms_config_value_get_float (val));
 
 	/* we are passed the full config key, not just the last token,
 	 * which makes this code kinda ugly.
@@ -175,14 +175,14 @@ xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 
 	XMMS_DBG ("changing filter #%d", i);
 
-	gain = xmms_config_value_float_get (val);
+	gain = xmms_config_value_get_float (val);
 	if (gain <= 0.0) {
 		gain = G_MINDOUBLE;
 
 		gchar buf[20];
 		g_snprintf (buf, sizeof (buf), "%g", gain);
 
-		xmms_config_value_data_set (val, buf);
+		xmms_config_value_set_data (val, buf);
 	}
 	priv->gains[i] = gain;
 
@@ -213,7 +213,7 @@ xmms_eq_new (xmms_effect_t *effect) {
 						xmms_eq_configval_changed, 
 						(gpointer) effect);
 
-		priv->gains[i] = xmms_config_value_float_get (priv->configvals[i]);
+		priv->gains[i] = xmms_config_value_get_float (priv->configvals[i]);
 
 		xmms_eq_calc_filter (&priv->filters[i], priv->gains[i], freqs[i]);
 	}

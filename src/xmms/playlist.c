@@ -174,10 +174,10 @@ xmms_playlist_init (void)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 
 	val = xmms_config_value_register ("playlist.repeat_one", "0", on_playlist_r_one_changed, ret);
-	ret->repeat_one = xmms_config_value_int_get (val);
+	ret->repeat_one = xmms_config_value_get_int (val);
 	
 	val = xmms_config_value_register ("playlist.repeat_all", "0", on_playlist_r_all_changed, ret);
-	ret->repeat_all = xmms_config_value_int_get (val);
+	ret->repeat_all = xmms_config_value_get_int (val);
 
 
 
@@ -242,7 +242,7 @@ xmms_playlist_init (void)
 
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 
-	if (xmms_config_value_int_get (load_autosaved)) {
+	if (xmms_config_value_get_int (load_autosaved)) {
 		xmms_medialib_playlist_load_autosaved ();
 	}
 

@@ -281,7 +281,7 @@ xmms_transport_new ()
 	transport = xmms_object_new (xmms_transport_t, xmms_transport_destroy);
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
-	transport->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
+	transport->buffer = xmms_ringbuf_new (xmms_config_value_get_int (val));
 	transport->buffering = FALSE; /* maybe should be true? */
 	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;

@@ -122,7 +122,7 @@ xmms_cdae_init (xmms_transport_t *transport, const gchar *url)
 
 	plugin = xmms_transport_plugin_get (transport);
 
-	dev = xmms_config_value_string_get (xmms_plugin_config_lookup (plugin, "device"));
+	dev = xmms_config_value_get_string (xmms_plugin_config_lookup (plugin, "device"));
 
 	data = g_new0 (xmms_cdae_data_t, 1);
 

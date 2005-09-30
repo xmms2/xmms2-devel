@@ -501,7 +501,7 @@ xmms_decoder_new ()
 	decoder->vis = xmms_visualisation_new ();
 
 	val = xmms_config_lookup ("decoder.buffersize");
-	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
+	decoder->buffer = xmms_ringbuf_new (xmms_config_value_get_int (val));
 
 	return decoder;
 }

@@ -188,7 +188,7 @@ xmms_sun_new (xmms_output_t *output)
 
 	val = xmms_plugin_config_lookup (
 			xmms_output_plugin_get (output), "mixer");
-	dev = xmms_config_value_string_get (val);
+	dev = xmms_config_value_get_string (val);
 	
 	data->mixerfd = open (dev, O_WRONLY);
 	if (!data->mixerfd == -1)
@@ -255,7 +255,7 @@ xmms_sun_open (xmms_output_t *output)
 	
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
 	
-	if ((dev = xmms_config_value_string_get (val)) == NULL) {
+	if ((dev = xmms_config_value_get_string (val)) == NULL) {
 		XMMS_DBG ("Device not found in config, using default");
 		dev = "/dev/audio";
 	}
