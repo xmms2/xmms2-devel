@@ -305,7 +305,6 @@ node_match (xmms_magic_checker_t *c, GNode *node)
 	guint32 i32;
 	gint tmp;
 	gchar *ptr;
-	gboolean ret;
 
 	/* do we have enough data ready for this check?
 	 * if not, read some more
@@ -337,8 +336,7 @@ node_match (xmms_magic_checker_t *c, GNode *node)
 			SWAP32 (i32, entry->endian);
 			CMP (i32, entry->oper, entry->value.i32); /* returns */
 		case XMMS_MAGIC_ENTRY_TYPE_STRING:
-			ret = !strncmp (ptr, entry->value.s, entry->len);
-			return ret;
+			return !strncmp (ptr, entry->value.s, entry->len);
 		default:
 			return FALSE;
 	}
