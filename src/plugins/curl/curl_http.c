@@ -150,16 +150,16 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data = g_new0 (xmms_curl_data_t, 1);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
-	bufsize = xmms_config_value_int_get (val);
+	bufsize = xmms_config_value_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "connecttimeout");
-	connecttimeout = xmms_config_value_int_get (val);
+	connecttimeout = xmms_config_value_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
-	metaint = xmms_config_value_int_get (val);
+	metaint = xmms_config_value_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
-	verbose = xmms_config_value_int_get (val);
+	verbose = xmms_config_value_get_int (val);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
 	data->metabuffer = g_malloc (256 * 16);

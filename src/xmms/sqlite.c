@@ -151,7 +151,7 @@ xmms_sqlite_open (gboolean *c)
 	xmms_config_value_t *cv;
 
 	cv = xmms_config_lookup ("medialib.path");
-	dbpath = xmms_config_value_string_get (cv);
+	dbpath = xmms_config_value_get_string (cv);
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;

@@ -216,7 +216,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_config_value_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
-	do_scriptdir (xmms_config_value_string_get (cv));
+	do_scriptdir (xmms_config_value_get_string (cv));
 	
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
@@ -273,7 +273,7 @@ on_output_volume_changed (xmms_object_t *object, gconstpointer data,
 	xmms_config_value_t *cfg;
 
 	cfg = xmms_config_lookup (userdata);
-	xmms_config_value_data_set (cfg, (gchar *) data);
+	xmms_config_value_set_data (cfg, (gchar *) data);
 }
 
 /**
@@ -295,7 +295,7 @@ init_volume_config_proxy (const gchar *output)
 
 	cfg = xmms_config_lookup (source);
 	if (cfg) {
-		vol = xmms_config_value_string_get (cfg);
+		vol = xmms_config_value_get_string (cfg);
 
 		xmms_config_value_callback_set (cfg, on_output_volume_changed,
 						  				"output.volume");
@@ -304,7 +304,7 @@ init_volume_config_proxy (const gchar *output)
 		cfg = xmms_config_value_register ("output.volume", vol,
 										on_output_volume_changed,
 									  	source);
-		xmms_config_value_data_set (cfg, (gchar *) vol);
+		xmms_config_value_set_data (cfg, (gchar *) vol);
 	}
 }
 
@@ -450,7 +450,7 @@ main (int argc, char **argv)
 	if (outname)
 		xmms_config_setvalue (NULL, "output.plugin", outname, NULL);
 
-	outname = xmms_config_value_string_get (cv);
+	outname = xmms_config_value_get_string (cv);
 
 	XMMS_DBG ("output = %s", outname);
 
@@ -472,7 +472,7 @@ main (int argc, char **argv)
 	                                 NULL, NULL);
 
 	if (!ipcpath)
-		ipcpath = xmms_config_value_string_get (cv);
+		ipcpath = xmms_config_value_get_string (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
 		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
@@ -505,7 +505,7 @@ main (int argc, char **argv)
 	g_free (tmp);
 
 	/* Startup dir */
-	do_scriptdir (xmms_config_value_string_get (cv));
+	do_scriptdir (xmms_config_value_get_string (cv));
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 
