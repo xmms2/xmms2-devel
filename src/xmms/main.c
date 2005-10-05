@@ -320,7 +320,6 @@ Options:\n\
 	-n		Disable logging\n\
 	-o <x>		Use 'x' as output plugin\n\
 	-i <url>	Listen to socket 'url'\n\
-	-d		Daemonise\n\
 	-p <foo>	Search for plugins in directory 'foo'\n\
 	-h|--help	Print this help\n\
 	-c|--conf=<file> Specify alternate configuration file\n";
@@ -345,12 +344,10 @@ main (int argc, char **argv)
 	sigset_t signals;
 	xmms_playlist_t *playlist;
 	const gchar *outname = NULL;
-	gboolean daemonize = FALSE;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	gchar *tmp;
 	const gchar *ipcpath = NULL;
-	pid_t ppid=0;
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
 		{"help", 0, NULL, 'h'},
@@ -381,10 +378,6 @@ main (int argc, char **argv)
 			case 'o':
 				outname = g_strdup (optarg);
 				break;
-
-			case 'd':
-				daemonize = TRUE;
-				break;
 			case 'p':
 				ppath = g_strdup (optarg);
 				break;
@@ -400,21 +393,6 @@ main (int argc, char **argv)
 				break;
 
 		}
-	}
-
-	if (daemonize) {
-		ppid = getpid ();
-		if (fork ()) {
-			sigset_t signals;
-			int caught;
-			memset (&signals, 0, sizeof (sigset_t));
-			sigaddset (&signals, SIGUSR1);
-			sigaddset (&signals, SIGCHLD);
-			sigwait (&signals, &caught);
-			exit (caught != SIGUSR1);
-		}
-		setsid();
-		if (fork ()) exit(0);
 	}
 
 	g_thread_init (NULL);
@@ -474,7 +452,6 @@ main (int argc, char **argv)
 	if (!ipcpath)
 		ipcpath = xmms_config_value_get_string (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
-		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
 	}
 
@@ -486,10 +463,6 @@ main (int argc, char **argv)
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_QUIT, XMMS_CMD_FUNC (quit));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
-
-	if (ppid) { /* signal that we are inited */
-		kill (ppid, SIGUSR1);
-	}
 
 
 	putenv (g_strdup_printf ("XMMS_PATH=%s", ipcpath));
