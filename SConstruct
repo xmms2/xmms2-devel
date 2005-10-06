@@ -136,6 +136,7 @@ base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
+	      "%BINDIR%":base_env["PREFIX"]+"/bin",
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix}
 

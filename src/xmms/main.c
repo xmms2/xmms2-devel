@@ -322,7 +322,8 @@ Options:\n\
 	-i <url>	Listen to socket 'url'\n\
 	-p <foo>	Search for plugins in directory 'foo'\n\
 	-h|--help	Print this help\n\
-	-c|--conf=<file> Specify alternate configuration file\n";
+	-c|--conf=<file> Specify alternate configuration file\n\
+	-s|--status-fd=fd Specify a filedescriptor to write to when started\n";
        printf(usageText);
 }
 
@@ -338,7 +339,7 @@ main (int argc, char **argv)
 	xmms_config_value_t *cv;
 	xmms_main_t *mainobj;
 	xmms_ipc_t *ipc;
-
+	int status_fd = -1;
 	int opt;
 	int verbose = 0;
 	sigset_t signals;
@@ -352,6 +353,7 @@ main (int argc, char **argv)
 		{"version", 0, NULL, 'V'},
 		{"help", 0, NULL, 'h'},
 		{"conf", 1, NULL, 'c'},
+		{"status-fd", 1, NULL, 's'},
 		{NULL,}
 	};
 
@@ -363,7 +365,7 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	while (42) {
-		opt = getopt_long (argc, argv, "dvVno:i:p:hc:", long_opts, NULL);
+		opt = getopt_long (argc, argv, "vVno:i:p:hc:s:", long_opts, NULL);
 
 		if (opt == -1)
 			break;
@@ -391,6 +393,9 @@ main (int argc, char **argv)
 				break;
 			case 'i':
 				ipcpath = g_strdup (optarg);
+				break;
+			case 's':
+				status_fd = atoi (optarg);
 				break;
 
 		}
@@ -454,6 +459,10 @@ main (int argc, char **argv)
 		ipcpath = xmms_config_value_get_string (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
 		xmms_log_fatal ("IPC failed to init!");
+	}
+
+	if (status_fd != -1) {
+		write (status_fd, "+", 1);
 	}
 
 	xmms_ipc_setup_with_gmain (ipc);
