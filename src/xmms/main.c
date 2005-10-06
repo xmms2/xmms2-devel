@@ -352,6 +352,7 @@ main (int argc, char **argv)
 		{"version", 0, NULL, 'V'},
 		{"help", 0, NULL, 'h'},
 		{"conf", 1, NULL, 'c'},
+		{NULL,}
 	};
 
 	memset (&signals, 0, sizeof (sigset_t));
