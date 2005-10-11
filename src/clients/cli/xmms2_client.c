@@ -87,7 +87,7 @@ print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		printf ("%s = %s\n", (char *)key, (char *)value);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int)value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 }
 
@@ -462,7 +462,7 @@ print_entry (const void *key, xmmsc_result_value_type_t type, const void *value,
 		printf ("%s = %s\n", (char *)key, conv);
 		g_free (conv);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int) value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 
 }
