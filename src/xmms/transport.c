@@ -42,6 +42,7 @@
 static void xmms_transport_destroy (xmms_object_t *object);
 static xmms_plugin_t *xmms_transport_plugin_find (const gchar *url);
 static gpointer xmms_transport_thread (gpointer data);
+static gint xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
 
 /*
  * Type definitions
@@ -130,14 +131,15 @@ struct xmms_transport_St {
  * @defgroup TransportPlugin TransportPlugin
  * @ingroup XMMSPlugin
  * @{
+ *
+ * These functions can be used from a transport plugin.
  */
 
 /**
-  * Get a transport's private data.
-  *
-  * @returns Pointer to private data.
-  */
-
+ * Get a transport's private data.
+ *
+ * @returns Pointer to private data.
+ */
 gpointer
 xmms_transport_private_data_get (xmms_transport_t *transport)
 {
@@ -155,13 +157,10 @@ xmms_transport_private_data_get (xmms_transport_t *transport)
  * @param transport the transport to store the pointer in.
  * @param data pointer to private data.
  */
-
 void
 xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 {
-	g_mutex_lock (transport->mutex);
 	transport->plugin_data = data;
-	g_mutex_unlock (transport->mutex);
 }
 
 /** 
@@ -177,10 +176,8 @@ xmms_transport_url_get (const xmms_transport_t *const transport)
 
 	session = xmms_medialib_begin ();
 
-	g_mutex_lock (transport->mutex);
-	ret =  xmms_medialib_entry_property_get_str (session, transport->entry, 
-												 XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-	g_mutex_unlock (transport->mutex);
+	ret =  xmms_medialib_entry_property_get_str (session, transport->entry,
+	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
 	xmms_medialib_end (session);
 
@@ -325,28 +322,52 @@ xmms_transport_buffersize (xmms_transport_t *transport)
 gboolean
 xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 {
-	gchar *tmp;
+	xmms_transport_open_method_t init_method;
+	xmms_transport_lmod_method_t lmod_method;
 	xmms_medialib_session_t *session;
+	xmms_plugin_t *plugin;
+	gboolean res = FALSE;
+	gchar *url = NULL;
+
 	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
 	session = xmms_medialib_begin ();
 
-	tmp = xmms_medialib_entry_property_get_str (session, entry, 
-												XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+	url = xmms_medialib_entry_property_get_str (session, entry,
+	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
-	xmms_medialib_end (session);
-	
-	transport->plugin = xmms_transport_plugin_find (tmp);
-	g_free (tmp);
-	if (!transport->plugin)
-		return FALSE;
+	plugin = xmms_transport_plugin_find (url);
+	if (!plugin)
+		goto out;
 
+	transport->plugin = plugin;
 	transport->entry = entry;
-	
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (transport->plugin));
 
-	return xmms_transport_plugin_open (transport, entry, NULL);
+	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
+	lmod_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LMOD);
+
+	if (!init_method) {
+		xmms_log_error ("Transport has no init method!");
+		goto out;
+	}
+
+	if (!init_method (transport, url))
+		goto out;
+
+	if (lmod_method) {
+		guint lmod;
+		lmod = lmod_method (transport);
+		xmms_medialib_entry_property_set_int (session, transport->entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod);
+	}
+
+	res = TRUE;
+ out:
+	xmms_medialib_end (session);
+	if (url)
+		g_free (url);
+	return res;
 }
 
 /**
@@ -387,72 +408,34 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 	g_return_val_if_fail (error, -1);
 
 	g_mutex_lock (transport->mutex);
-
-	/* Unbuffered read */
-
-	if (!transport->buffering) {
-		xmms_transport_read_method_t read_method;
-
-		read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
-		if (!read_method) {
-			g_mutex_unlock (transport->mutex);
-			return -1;
-		}
-
-		g_mutex_unlock (transport->mutex);
-		ret = read_method (transport, buffer, len, error);
-		g_mutex_lock (transport->mutex);
-
-		if (ret <= 0) {
-			xmms_error_set (&transport->status, error->code, error->message);
-		}
-
-		if (ret != -1) {
-			transport->current_position += ret;
-			transport->current_position_total += ret;
-			transport->total_bytes += ret;
-		}
-
-		if (transport->running && !transport->buffering && transport->numread++ > 1) {
+	if (!transport->buffering) { /* Unbuffered read */
+		ret = xmms_transport_read_direct (transport, buffer, len, error);
+		if (transport->running && transport->numread++ > 1) {
 			XMMS_DBG ("Let's start buffering");
 			transport->buffering = TRUE;
 			g_cond_signal (transport->cond);
 			xmms_ringbuf_clear (transport->buffer);
 			xmms_ringbuf_set_eos (transport->buffer, FALSE);
 		}
+	} else { /* Buffered read */
+		len = CLAMP (len, 1, xmms_ringbuf_size (transport->buffer));
 
-
-		g_mutex_unlock (transport->mutex);
-		return ret;
-	}
-
-	/* Buffered read */
-
-	if (len > xmms_ringbuf_size (transport->buffer)) {
-		len = xmms_ringbuf_size (transport->buffer);;
-	}
-
-	if (xmms_ringbuf_iseos (transport->buffer)) {
-		gint val = -1;
-
-		xmms_error_set (error, transport->status.code, transport->status.message);
-		if (transport->status.code == XMMS_ERROR_EOS) {
-			val = 0;
+		ret = xmms_ringbuf_read_wait (transport->buffer, buffer, len, transport->mutex);
+		
+		if (ret < len) {
+			transport->buffer_underruns ++;
 		}
 
-		g_mutex_unlock (transport->mutex);
-		return val;
+		if (ret == 0 && xmms_ringbuf_iseos (transport->buffer)) {
+			xmms_error_set (error,
+			                transport->status.code,
+			                transport->status.message);
+			ret = transport->status.code == XMMS_ERROR_EOS ? 0 : -1;
+		}
+
+		transport->total_bytes += ret;
+		transport->current_position += ret; 
 	}
-
-	ret = xmms_ringbuf_read_wait (transport->buffer, buffer, len, transport->mutex);
-
-	if (ret < len) {
-		transport->buffer_underruns ++;
-	}
-
-	transport->total_bytes += ret;
-	transport->current_position += ret; 
-
 	g_mutex_unlock (transport->mutex);
 
 	return ret;
@@ -705,61 +688,6 @@ xmms_transport_get_plugin (const xmms_transport_t *transport)
 	return transport->plugin;
 }
 
-/**
- * Open the transport plugin. This is called by #xmms_transport_plugin_find
- * which is called by #xmms_transport_open.
- *
- * @return TRUE if the operation was a success.
- */
-gboolean
-xmms_transport_plugin_open (xmms_transport_t *transport, xmms_medialib_entry_t entry, 
-							gpointer data)
-{
-	xmms_medialib_session_t *session;
-	xmms_transport_open_method_t init_method;
-	xmms_transport_lmod_method_t lmod_method;
-	xmms_plugin_t *plugin;
-	gchar *url;
-
-	
-	plugin = transport->plugin;
-	
-	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
-	lmod_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LMOD);
-
-	if (!init_method) {
-		xmms_log_error ("Transport has no init method!");
-		return FALSE;
-	}
-
-	xmms_transport_private_data_set (transport, data);
-	
-	session = xmms_medialib_begin ();
-
-	url = xmms_medialib_entry_property_get_str (session, transport->entry, 
-												XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-
-	xmms_medialib_end (session);
-
-	if (!init_method (transport, url)) {
-		g_free (url);
-		return FALSE;
-	}
-
-	g_free (url);
-
-	if (lmod_method) {
-		guint lmod;
-		lmod = lmod_method (transport);
-		session = xmms_medialib_begin ();
-		xmms_medialib_entry_property_set_int (session, transport->entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod);
-		xmms_medialib_end (session);
-	}
-
-	return TRUE;
-}
-
 /** @} */
 
 /**
@@ -874,15 +802,10 @@ xmms_transport_thread (gpointer data)
 	xmms_transport_t *transport = data;
 	gchar buffer[4096];
 	xmms_error_t error;
-	xmms_transport_read_method_t read_method;
 	gint ret;
 
 	g_return_val_if_fail (transport, NULL);
 	
-	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
-	if (!read_method)
-		return NULL;
-
 	xmms_error_reset (&error);
 
 	g_mutex_lock (transport->mutex);
@@ -890,18 +813,11 @@ xmms_transport_thread (gpointer data)
 
 		if (!transport->buffering) {
 			g_cond_wait (transport->cond, transport->mutex);
-		}
-
-		if (!transport->buffering)
 			continue;
-
-		g_mutex_unlock (transport->mutex);
-		ret = read_method (transport, buffer, sizeof(buffer), &error);
-		g_mutex_lock (transport->mutex);
-
-		if (ret > 0) {
-			transport->current_position_total += ret;
 		}
+
+		ret = xmms_transport_read_direct (transport, buffer,
+		                                  sizeof(buffer), &error);
 
 		if (!transport->running)
 			break;
@@ -921,4 +837,31 @@ xmms_transport_thread (gpointer data)
 	xmms_object_unref (transport);
 	
 	return NULL;
+}
+
+static gint
+xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
+{
+	xmms_transport_read_method_t read_method;
+	gint ret;
+
+	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
+	if (!read_method) {
+		g_mutex_unlock (transport->mutex);
+		return -1;
+	}
+	
+	g_mutex_unlock (transport->mutex);
+	ret = read_method (transport, buffer, len, error);
+	g_mutex_lock (transport->mutex);
+	
+	if (ret > 0) {
+		transport->current_position += ret;
+		transport->current_position_total += ret;
+		transport->total_bytes += ret;
+	} else {
+		xmms_error_set (&transport->status, error->code, error->message);
+	}
+
+	return ret;
 }
