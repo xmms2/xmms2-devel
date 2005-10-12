@@ -316,6 +316,7 @@ static void usage (void)
 	static char *usageText = "XMMS2 Daemon\n\
 Options:\n\
 	-v		Increase verbosity\n\
+	-q		Decrease verbosity\n\
 	-V|--version	Print version\n\
 	-n		Disable logging\n\
 	-o <x>		Use 'x' as output plugin\n\
@@ -341,7 +342,7 @@ main (int argc, char **argv)
 	xmms_ipc_t *ipc;
 	int status_fd = -1;
 	int opt;
-	int verbose = 0;
+	int verbose = 1;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
 	const gchar *outname = NULL;
@@ -365,7 +366,7 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	while (42) {
-		opt = getopt_long (argc, argv, "vVno:i:p:hc:s:", long_opts, NULL);
+		opt = getopt_long (argc, argv, "vqVno:i:p:hc:s:", long_opts, NULL);
 
 		if (opt == -1)
 			break;
@@ -373,6 +374,9 @@ main (int argc, char **argv)
 		switch (opt) {
 			case 'v':
 				verbose++;
+				break;
+			case 'q':
+				verbose--;
 				break;
 			case 'V':
 				printf ("XMMS version %s\n", XMMS_VERSION);
