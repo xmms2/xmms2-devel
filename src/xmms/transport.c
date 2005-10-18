@@ -99,8 +99,7 @@ struct xmms_transport_St {
 	gint numread; 	
 	gboolean buffering;
 
-	/** Number of bytes read from the transport */
-	guint64 total_bytes;
+	guint64 seek_to;
 
 	/** Number of buffer underruns */
 	guint32 buffer_underruns;
@@ -112,11 +111,6 @@ struct xmms_transport_St {
 	 * on peek calls.
 	 */
 	guint64 current_position; 	
-
-	/** Current position in the stream, stores the real position
-	 * (ie it's also increment on peek calls)
-	 */
-	guint64 current_position_total;
 
 	/** Used for linereading */
 	struct {
@@ -280,10 +274,8 @@ xmms_transport_new ()
 	transport->cond = g_cond_new ();
 	transport->buffer = xmms_ringbuf_new (xmms_config_value_get_int (val));
 	transport->buffering = FALSE; /* maybe should be true? */
-	transport->total_bytes = 0;
 	transport->buffer_underruns = 0;
 	transport->current_position = 0; 
-	transport->current_position_total = 0;
 	transport->lr.bufend = &transport->lr.buf[0];
 	
 	return transport;
@@ -432,10 +424,11 @@ xmms_transport_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms
 			                transport->status.message);
 			ret = transport->status.code == XMMS_ERROR_EOS ? 0 : -1;
 		}
-
-		transport->total_bytes += ret;
-		transport->current_position += ret; 
 	}
+
+	if (ret > 0)
+		transport->current_position += ret;
+
 	g_mutex_unlock (transport->mutex);
 
 	return ret;
@@ -569,53 +562,43 @@ xmms_transport_read_line (xmms_transport_t *transport, gchar *line, xmms_error_t
 gint
 xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence)
 {
-	xmms_transport_seek_method_t seek_method;
-	gboolean ret;
+	guint64 seek_to, size;
 
-	g_return_val_if_fail (transport, FALSE);
+	g_return_val_if_fail (transport, -1);
+
+	if (!xmms_transport_can_seek (transport))
+		return -1;
 
 	g_mutex_lock (transport->mutex);
 
-	if (!xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK)) {
-		g_mutex_unlock (transport->mutex);
-		return -1;
-	}
-	
-	seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-	if (!seek_method) {
-		xmms_log_error ("This plugin has XMMS_PLUGIN_PROPERTY_SEEK but no seek method, that's stupid");
-		g_mutex_unlock (transport->mutex);
-		return -1;
-	}
-
-	if (whence == XMMS_TRANSPORT_SEEK_CUR) {
-		whence = XMMS_TRANSPORT_SEEK_SET;
-		offset += transport->current_position;
-	}
-
-	if (whence == XMMS_TRANSPORT_SEEK_SET &&
-	    offset == transport->current_position) {
-		g_mutex_unlock (transport->mutex);
-
-		return offset;
+	switch (whence) {
+	case XMMS_TRANSPORT_SEEK_CUR:
+		seek_to = transport->current_position + offset;
+		break;
+	case XMMS_TRANSPORT_SEEK_END:
+		size = xmms_transport_size (transport);
+		if (size == -1) {
+			g_mutex_unlock (transport->mutex);
+			return -1;
+		}
+		seek_to = size + offset;
+		break;
+	case XMMS_TRANSPORT_SEEK_SET:
+		seek_to = offset;
+		break;
 	}
 
-	/* reset the buffer */
+	transport->seek_to = seek_to;
+	transport->current_position = seek_to;
+
 	transport->buffering = FALSE;
 	transport->numread = 0;
 	xmms_ringbuf_clear (transport->buffer);
 	xmms_ringbuf_set_eos (transport->buffer, FALSE);
 
-	ret = seek_method (transport, offset, whence);
-
-	if (ret != -1) {
-		transport->current_position = ret; 
-		transport->current_position_total = ret;
-	}
-
 	g_mutex_unlock (transport->mutex);
 
-	return ret;
+	return seek_to;
 }
 
 /**
@@ -822,6 +805,10 @@ xmms_transport_thread (gpointer data)
 		if (!transport->running)
 			break;
 
+		/* if someone sought while we were reading discard this */
+		if (transport->seek_to != -1)
+			continue;
+
 		if (ret > 0) {
 			xmms_ringbuf_write_wait (transport->buffer, buffer, ret, transport->mutex);
 		} else {
@@ -843,25 +830,35 @@ static gint
 xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_transport_read_method_t read_method;
+	xmms_transport_seek_method_t seek_method;
 	gint ret;
+
+
+	if (transport->seek_to != -1) {
+		seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
+		if (!seek_method) {
+			xmms_log_error ("This plugin has XMMS_PLUGIN_PROPERTY_SEEK but no seek method, that's stupid");
+		} else {
+			ret = seek_method (transport, transport->seek_to, XMMS_TRANSPORT_SEEK_SET);
+			if (ret != transport->seek_to) {
+				XMMS_DBG ("Seeking failed, hell will break loose!");
+			}
+			transport->seek_to = -1;
+		}
+	}
+
 
 	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
 	if (!read_method) {
-		g_mutex_unlock (transport->mutex);
 		return -1;
 	}
 	
 	g_mutex_unlock (transport->mutex);
 	ret = read_method (transport, buffer, len, error);
 	g_mutex_lock (transport->mutex);
-	
-	if (ret > 0) {
-		transport->current_position += ret;
-		transport->current_position_total += ret;
-		transport->total_bytes += ret;
-	} else {
+
+	if (ret == -1)
 		xmms_error_set (&transport->status, error->code, error->message);
-	}
 
 	return ret;
 }
