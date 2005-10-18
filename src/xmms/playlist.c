@@ -719,6 +719,13 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 
 	int s1, s2;
 
+	if (!data1->val) {
+		return -(data2->val != NULL);
+	}
+	if (!data2->val) {
+		return 1;
+	}
+
 	if (data1->val->type == XMMS_OBJECT_CMD_ARG_STRING &&
 	    data2->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
 		return g_utf8_collate (data1->val->value.string, data2->val->value.string);
@@ -757,7 +764,8 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 	GArray *playlist = (GArray *)userdata;
 	g_array_append_val (playlist, sorted->id);
 
-	xmms_object_cmd_value_free (sorted->val);
+	if (sorted->val)
+		xmms_object_cmd_value_free (sorted->val);
 	g_free (sorted);
 }
 
@@ -798,7 +806,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 			data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
 			data->val = xmms_medialib_entry_property_get_cmd_value (session, data->id, property);
 
-			if (data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
+			if (data->val && data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
 				str = data->val->value.string;
 				data->val->value.string = g_utf8_casefold (str, strlen(str));
 				g_free (str);
