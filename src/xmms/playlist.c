@@ -815,6 +815,8 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 			tmp = g_list_prepend (tmp, data);
 		}
 
+		tmp = g_list_reverse (tmp);
+
 		tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
 
 		g_array_set_size (playlist->list, 0);
