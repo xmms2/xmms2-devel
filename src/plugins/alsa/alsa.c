@@ -907,12 +907,12 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 		if (written > 0) {
 			frames -= written;
 			buffer += snd_pcm_frames_to_bytes (data->pcm, written);
-		} else if (written == -EAGAIN) {
+		} else if (written == -EAGAIN || written == -EINTR) {
 			snd_pcm_wait (data->pcm, 100);
 		} else if (written == -EPIPE || written == -ESTRPIPE) {
 			xmms_alsa_xrun_recover (data, written);
 		} else {
-			xmms_log_fatal ("ALSA's doing some funky shit.. please report.");
+			xmms_log_fatal ("ALSA's doing some funky shit.. please report (%s)", snd_strerror (written));
 		}
 	}
 }
