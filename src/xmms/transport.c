@@ -230,8 +230,8 @@ xmms_transport_islocal (xmms_transport_t *transport)
 
 /**
  * This method can be called to check if the current plugin supports
- * seeking. It will check that the plugin has XMMS_PLUGIN_PROPERTY_SEEK
- * is set or not.
+ * seeking. It will check that the plugin implements
+ * XMMS_PLUGIN_METHOD_SEEK.
  *
  * @returns a gboolean wheter this plugin can do seeking or not.
  */
@@ -240,7 +240,8 @@ xmms_transport_can_seek (xmms_transport_t *transport)
 {
 	g_return_val_if_fail (transport, FALSE);
 
-	return xmms_plugin_properties_check (transport->plugin, XMMS_PLUGIN_PROPERTY_SEEK);
+	return !!xmms_plugin_method_get (transport->plugin,
+	                                 XMMS_PLUGIN_METHOD_SEEK);
 }
 
 gboolean
@@ -841,15 +842,15 @@ xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint le
 	if (transport->seek_to != -1) {
 		xmms_transport_seek_method_t seek_method;
 		seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-		if (!seek_method) {
-			xmms_log_error ("This plugin has XMMS_PLUGIN_PROPERTY_SEEK but no seek method, that's stupid");
-		} else {
-			ret = seek_method (transport, transport->seek_to, XMMS_TRANSPORT_SEEK_SET);
-			if (ret != transport->seek_to) {
-				XMMS_DBG ("Seeking failed, hell will break loose!");
-			}
-			transport->seek_to = -1;
+
+		/* seek_to is -1 if there's no seek method */
+		g_assert (seek_method);
+
+		ret = seek_method (transport, transport->seek_to, XMMS_TRANSPORT_SEEK_SET);
+		if (ret != transport->seek_to) {
+			XMMS_DBG ("Seeking failed, hell will break loose!");
 		}
+		transport->seek_to = -1;
 	}
 
 	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);

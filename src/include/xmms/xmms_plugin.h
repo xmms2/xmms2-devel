@@ -29,7 +29,7 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #include "xmmsc/xmmsc_idnumbers.h"
 
 /* API VERSIONS */
-#define XMMS_TRANSPORT_PLUGIN_API_VERSION 2
+#define XMMS_TRANSPORT_PLUGIN_API_VERSION 3
 #define XMMS_DECODER_PLUGIN_API_VERSION 2
 #define XMMS_EFFECT_PLUGIN_API_VERSION 2
 #define XMMS_PLAYLIST_PLUGIN_API_VERSION 2
@@ -73,10 +73,9 @@ typedef struct xmms_plugin_St xmms_plugin_t;
  */
 
 /* For transports */
-#define XMMS_PLUGIN_PROPERTY_SEEK (1 << 0)
-#define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 1)
-#define XMMS_PLUGIN_PROPERTY_LIST (1 << 2)
-#define XMMS_PLUGIN_PROPERTY_STREAM (1 << 3)
+#define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 0)
+#define XMMS_PLUGIN_PROPERTY_LIST (1 << 1)
+#define XMMS_PLUGIN_PROPERTY_STREAM (1 << 2)
 
 /* For decoders */
 #define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 4)

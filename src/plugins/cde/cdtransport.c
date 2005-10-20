@@ -70,7 +70,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_cdae_seek);
 //	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_cdae_list);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
 //	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
