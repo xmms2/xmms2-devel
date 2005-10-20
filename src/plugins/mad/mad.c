@@ -207,6 +207,13 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 											  entry, 
 											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
 											  0);
+
+		/* frame.header.bitrate might be wrong, but we cannot do it any
+		 * better for streams
+		 */
+		xmms_medialib_entry_property_set_int (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+			frame.header.bitrate);
 		return;
 	}
 

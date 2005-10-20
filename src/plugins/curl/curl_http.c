@@ -47,7 +47,6 @@ static void header_handler_contentlength (xmms_transport_t *transport, xmms_medi
 static void header_handler_icy_metaint (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
 static void header_handler_icy_name (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
 static void header_handler_icy_genre (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
-static void header_handler_icy_br (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
 static void header_handler_icy_ok (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
 static void header_handler_last (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
@@ -65,7 +64,6 @@ handler_t handlers[] = {
 	{ "icy-name", header_handler_icy_name },
 	{ "icy-genre", header_handler_icy_genre },
 	{ "ICY 200 OK", header_handler_icy_ok },
-	{ "icy-br", header_handler_icy_br },
 	{ "\r\n", header_handler_last },
 	{ NULL, NULL }
 };
@@ -494,22 +492,6 @@ header_handler_icy_name (xmms_transport_t *transport,
 	xmms_medialib_entry_property_set_str (session, entry, 
 										  XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, 
 										  header);
-	xmms_medialib_entry_send_update (entry);
-}
-
-static void
-header_handler_icy_br (xmms_transport_t *transport,
-					   xmms_medialib_session_t *session,
-					   gchar *header)
-{
-	xmms_medialib_entry_t entry;
-	gint bitrate = 0;
-
-	entry = xmms_transport_medialib_entry_get (transport);
-	bitrate = strtol (header, NULL, 10);
-	xmms_medialib_entry_property_set_int (session, entry, 
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-										  bitrate);
 	xmms_medialib_entry_send_update (entry);
 }
 
