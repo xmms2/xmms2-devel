@@ -131,6 +131,7 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb,
 	xmms_decoder_t *decoder = datasource;
 	xmms_transport_t *transport;
 	xmms_error_t error;
+	size_t ret;
 
 	g_return_val_if_fail (decoder, 0);
 
@@ -140,7 +141,9 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb,
 	g_return_val_if_fail (data, 0);
 	g_return_val_if_fail (transport, 0);
 
-	return xmms_transport_read (transport, ptr, size*nmemb, &error);
+	ret = xmms_transport_read (transport, ptr, size * nmemb, &error);
+
+	return ret / size;
 }
 
 /** @todo
@@ -175,13 +178,13 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 
 	ret = xmms_transport_seek (transport, (gint) offset, whence);
 
-	return (ret == -1) ? -1 : 1;
+	return (ret == -1) ? -1 : 0;
 }
 
 static int
 vorbis_callback_close (void *datasource)
 {
-	return 1;
+	return 0;
 }
 
 static long
