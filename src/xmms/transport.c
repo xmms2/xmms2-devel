@@ -833,24 +833,39 @@ xmms_transport_thread (gpointer data)
 	return NULL;
 }
 
+static void
+xmms_transport_seek_exec (xmms_transport_t *transport)
+{
+	xmms_transport_seek_method_t seek_method;
+	gint ret;
+
+	seek_method = xmms_plugin_method_get (transport->plugin,
+	                                      XMMS_PLUGIN_METHOD_SEEK);
+
+	/* this function must not be called if xmms_transport_can_seek()
+	 * returns FALSE
+	 */
+	g_assert (seek_method);
+	g_assert (transport->seek_to != -1);
+
+	ret = seek_method (transport, transport->seek_to,
+	                   XMMS_TRANSPORT_SEEK_SET);
+	if (ret != transport->seek_to) {
+		XMMS_DBG ("Seeking failed, hell will break loose!");
+	}
+
+	transport->seek_to = -1;
+}
+
 static gint
 xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_transport_read_method_t read_method;
 	gint ret;
 
+	/* has a seek been queued? */
 	if (transport->seek_to != -1) {
-		xmms_transport_seek_method_t seek_method;
-		seek_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_SEEK);
-
-		/* seek_to is -1 if there's no seek method */
-		g_assert (seek_method);
-
-		ret = seek_method (transport, transport->seek_to, XMMS_TRANSPORT_SEEK_SET);
-		if (ret != transport->seek_to) {
-			XMMS_DBG ("Seeking failed, hell will break loose!");
-		}
-		transport->seek_to = -1;
+		xmms_transport_seek_exec (transport);
 	}
 
 	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
