@@ -34,6 +34,7 @@
 #include <string.h>
 
 static void xmms_eq_new (xmms_effect_t *effect);
+static void xmms_eq_destroy (xmms_effect_t *effect);
 static gboolean xmms_eq_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
 static void xmms_eq_process (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
 
@@ -135,6 +136,7 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_eq_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_eq_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_eq_format_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_eq_process);
 
@@ -218,6 +220,14 @@ xmms_eq_new (xmms_effect_t *effect) {
 		xmms_eq_calc_filter (&priv->filters[i], priv->gains[i], freqs[i]);
 	}
 
+}
+
+static void
+xmms_eq_destroy (xmms_effect_t *effect)
+{
+	g_return_if_fail (effect);
+
+	g_free (xmms_effect_private_data_get (effect));
 }
 
 static gboolean
