@@ -50,10 +50,8 @@ typedef struct xmms_ca_data_St {
  */
 
 static void xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
-static gboolean xmms_ca_open (xmms_output_t *output);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
-static void xmms_ca_close (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
 static void xmms_ca_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpointer userdata);
@@ -84,10 +82,8 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS, xmms_ca_status);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, xmms_ca_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_ca_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ca_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_ca_close);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_ca_format_set);
@@ -135,23 +131,6 @@ static void
 xmms_ca_flush (xmms_output_t *output)
 {
 	XMMS_DBG ("Xmms wants us to flush!");
-}
-
-
-static gboolean
-xmms_ca_open (xmms_output_t *output)
-{
-	xmms_ca_data_t *data;
-
-	g_return_val_if_fail (output, FALSE);
-
-	data = xmms_output_private_data_get (output);
-
-	//AudioDeviceStart (data->outputdevice, xmms_ca_write_cb);
-	
-	XMMS_DBG ("xmms_ca_open (%p)", output);
-
-	return TRUE;
 }
 
 OSStatus
@@ -372,18 +351,6 @@ void xmms_ca_mixer_set (xmms_output_t *output, guint left,
 						  kHALOutputParam_Volume, 
 						  kAudioUnitScope_Global, 
 						  0, volume, 0);
-}
-
-static void
-xmms_ca_close (xmms_output_t *output)
-{
-	xmms_ca_data_t *data;
-
-	g_return_if_fail (output);
-	data = xmms_output_private_data_get (output);
-	g_return_if_fail (data);
-
-	AudioUnitReset (data->au, kAudioUnitScope_Input, 0);
 }
 
 static gboolean

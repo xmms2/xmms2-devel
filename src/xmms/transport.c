@@ -337,16 +337,12 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	transport->entry = entry;
 
 	init_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_INIT);
-	lmod_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LMOD);
-
-	if (!init_method) {
-		xmms_log_error ("Transport has no init method!");
-		goto out;
-	}
+	g_assert (init_method);
 
 	if (!init_method (transport, url))
 		goto out;
 
+	lmod_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_LMOD);
 	if (lmod_method) {
 		guint lmod;
 		lmod = lmod_method (transport);
@@ -715,6 +711,17 @@ xmms_transport_stop (xmms_transport_t *transport)
 	}
 }
 
+gboolean
+xmms_transport_plugin_verify (xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, FALSE);
+
+	return xmms_plugin_has_methods (plugin,
+	                                XMMS_PLUGIN_METHOD_INIT,
+	                                XMMS_PLUGIN_METHOD_READ,
+	                                NULL);
+}
+
 /*
  * Static functions
  */
@@ -869,9 +876,7 @@ xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint le
 	}
 
 	read_method = xmms_plugin_method_get (transport->plugin, XMMS_PLUGIN_METHOD_READ);
-	if (!read_method) {
-		return -1;
-	}
+	g_assert (read_method);
 	
 	ret = read_method (transport, buffer, len, error);
 

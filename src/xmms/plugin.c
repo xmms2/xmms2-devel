@@ -20,6 +20,12 @@
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_magic.h"
+#include "xmmspriv/xmms_decoder.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_effect.h"
+#include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_output.h"
+#include "xmmspriv/xmms_plsplugins.h"
 
 #include <gmodule.h>
 #include <string.h>
@@ -74,6 +80,7 @@ static GList *xmms_plugin_list;
 
 static void xmms_plugin_destroy (xmms_object_t *object);
 static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
+static gboolean plugin_verify (xmms_plugin_t *plugin);
 
 /*
  * Public functions
@@ -574,7 +581,6 @@ xmms_plugin_scan_directory (const gchar *dir)
 		return FALSE;
 	}
 
-	g_mutex_lock (xmms_plugin_mtx);
 	while ((name = g_dir_read_name (d))) {
 		if (strncmp (name, "lib", 3) != 0)
 			continue;
@@ -608,7 +614,15 @@ xmms_plugin_scan_directory (const gchar *dir)
 		plugin_init = sym;
 
 		plugin = plugin_init ();
-		if (plugin) {
+
+		if (!plugin) {
+			g_module_close (module);
+		} else if (!plugin_verify (plugin)) {
+			xmms_log_error ("Invalid plugin: %s", plugin->name);
+
+			plugin->module = module;
+			xmms_object_unref (plugin);
+		} else if (plugin) {
 			const GList *info;
 			const xmms_plugin_info_t *i;
 
@@ -623,13 +637,10 @@ xmms_plugin_scan_directory (const gchar *dir)
 
 			plugin->module = module;
 			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
-		} else {
-			g_module_close (module);
 		}
 
 		g_free (path);
 	}
-	g_mutex_unlock (xmms_plugin_mtx);
 	g_dir_close (d);
 
 	return TRUE;
@@ -769,6 +780,38 @@ xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	return ret;
 }
 
+gboolean xmms_plugin_has_methods (xmms_plugin_t *plugin, ...)
+{
+	va_list ap;
+	xmms_plugin_method_t m;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (plugin, FALSE);
+
+	g_mutex_lock (plugin->mutex);
+
+	va_start (ap, plugin);
+
+	m = va_arg (ap, xmms_plugin_method_t);
+	if (!m) { /* no methods passed -> failure */
+		goto out;
+	}
+
+	do {
+		if (!g_hash_table_lookup (plugin->method_table, m)) {
+			goto out;
+		}
+	} while ((m = va_arg (ap, xmms_plugin_method_t)));
+
+	ret = TRUE;
+
+out:
+	va_end (ap);
+	g_mutex_unlock (plugin->mutex);
+
+	return ret;
+}
+
 /*
  * Static functions
  */
@@ -783,7 +826,11 @@ xmms_plugin_destroy (xmms_object_t *object)
 	xmms_plugin_t *p = (xmms_plugin_t *) object;
 
 	g_mutex_free (p->mutex);
-	g_module_close (p->module);
+
+	if (p->module) {
+		g_module_close (p->module);
+	}
+
 	g_free (p->name);
 	g_free (p->shortname);
 	g_free (p->description);
@@ -848,6 +895,36 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 	ret = g_strdup_printf ("%s.%s.%s", pl, xmms_plugin_shortname_get (plugin), value);
 
 	return ret;
+}
+
+static gboolean
+plugin_verify (xmms_plugin_t *plugin)
+{
+	gboolean (*f)(xmms_plugin_t *) = NULL;
+
+	g_assert (plugin);
+
+	switch (xmms_plugin_type_get (plugin)) {
+		case XMMS_PLUGIN_TYPE_TRANSPORT:
+			f = xmms_transport_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_DECODER:
+			f = xmms_decoder_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_OUTPUT:
+			f = xmms_output_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_PLAYLIST:
+			f = xmms_playlist_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_EFFECT:
+			f = xmms_effect_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_ALL:
+			g_assert_not_reached ();
+	}
+
+	return f ? f (plugin) : TRUE;
 }
 
 /**

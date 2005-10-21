@@ -278,6 +278,37 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	return ret;
 }
 
+gboolean
+xmms_output_plugin_verify (xmms_plugin_t *plugin)
+{
+	gboolean w, s, o, c;
+
+	g_return_val_if_fail (plugin, FALSE);
+
+	if (!xmms_plugin_has_methods (plugin,
+	                              XMMS_PLUGIN_METHOD_NEW,
+	                              XMMS_PLUGIN_METHOD_DESTROY,
+	                              XMMS_PLUGIN_METHOD_FLUSH,
+	                              NULL)) {
+		return FALSE;
+	}
+
+	w = !!xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
+	s = !!xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
+
+	if (!(!w ^ !s)) {
+		return FALSE;
+	}
+
+	o = !!xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_OPEN);
+	c = !!xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CLOSE);
+
+	/* 'write' plugins need these two methods, 'status' plugins may
+	 * have neither of them
+	 */
+	return (w && o && c) || (s && !o && !c);
+}
+
 /** @} */
 
 /*
@@ -489,9 +520,10 @@ xmms_output_open (xmms_output_t *output)
 	g_return_val_if_fail (output, FALSE);
 
 	open_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_OPEN);
+	g_assert (open_method);
 
 	g_mutex_lock (output->api_mutex);
-	if (!open_method || !open_method (output)) {
+	if (!open_method (output)) {
 		xmms_log_error ("Couldn't open output device");
 		return FALSE;
 	}
@@ -511,9 +543,7 @@ xmms_output_close (xmms_output_t *output)
 	output->format = NULL;
 
 	close_method = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_CLOSE);
-
-	if (!close_method)
-		return;
+	g_assert (close_method);
 
 	g_mutex_lock (output->api_mutex);
 	close_method (output);
@@ -741,7 +771,7 @@ xmms_output_flush (xmms_output_t *output)
 	g_return_if_fail (output);
 	
 	flush = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_FLUSH);
-	g_return_if_fail (flush);
+	g_assert (flush);
 
 	g_mutex_lock (output->api_mutex);
 	flush (output);
@@ -901,7 +931,6 @@ set_plugin (xmms_output_t *output, xmms_plugin_t *plugin)
 {
 	xmms_output_destroy_method_t dest;
 	xmms_output_new_method_t new;
-	xmms_output_write_method_t wr;
 	xmms_output_status_method_t st;
 	gboolean ret;
 
@@ -912,24 +941,16 @@ set_plugin (xmms_output_t *output, xmms_plugin_t *plugin)
 	if (output->plugin) {
 		dest = xmms_plugin_method_get (output->plugin,
 		                               XMMS_PLUGIN_METHOD_DESTROY);
-		g_assert (dest); /* see below */
+		g_assert (dest);
 
 		dest (output);
 		output->plugin = NULL;
 		output->status_method = NULL;
 	}
 
-	/* every plugin needs both 'new' and 'destroy' methods */
+	/* every plugin needs a 'new' method */
 	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
-	g_return_val_if_fail (new, FALSE);
-
-	dest = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_DESTROY);
-	g_return_val_if_fail (dest, FALSE);
-
-	/* we need either a 'write' or a 'status' method */
-	wr = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
-	st = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
-	g_return_val_if_fail (!wr ^ !st, FALSE);
+	g_assert (new);
 
 	/* output->plugin needs to be set before we can call the
 	 * NEW method
@@ -938,6 +959,8 @@ set_plugin (xmms_output_t *output, xmms_plugin_t *plugin)
 	ret = new (output);
 
 	if (ret) {
+		/* determine what kind of output plugin this is */
+		st = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
 		output->status_method = st ? st : status_changed;
 	} else {
 		output->plugin = NULL;

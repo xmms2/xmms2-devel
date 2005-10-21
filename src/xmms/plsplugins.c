@@ -107,6 +107,27 @@ xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 	return ret;
 }
 
+gboolean
+xmms_playlist_plugin_verify (xmms_plugin_t *plugin)
+{
+	gboolean r, w;
+
+	g_return_val_if_fail (plugin, FALSE);
+
+	/* methods needed for read support */
+	r = xmms_plugin_has_methods (plugin,
+	                             XMMS_PLUGIN_METHOD_READ_PLAYLIST,
+	                             NULL);
+
+	/* methods needed for write support */
+	w = xmms_plugin_has_methods (plugin,
+	                             XMMS_PLUGIN_METHOD_CAN_HANDLE,
+	                             XMMS_PLUGIN_METHOD_WRITE_PLAYLIST,
+	                             NULL);
+
+	return r || w;
+}
+
 /*
  * Static members
  */

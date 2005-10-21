@@ -456,6 +456,7 @@ xmms_decoder_destroy (xmms_object_t *object)
 	if (decoder->plugin) {
 		destroy_method = xmms_plugin_method_get (decoder->plugin,
 		                                         XMMS_PLUGIN_METHOD_DESTROY);
+		g_assert (destroy_method);
 	}
 
 	if (destroy_method) {
@@ -541,8 +542,9 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	decoder->plugin = plugin;
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+	g_assert (new_method);
 
-	if (!new_method || !new_method (decoder)) {
+	if (!new_method (decoder)) {
 		xmms_log_error ("open failed");
 		xmms_object_unref (transport);
 		return FALSE;
@@ -680,6 +682,19 @@ xmms_decoder_medialib_entry_get (xmms_decoder_t *decoder)
 	g_return_val_if_fail (decoder, 0);
 
 	return decoder->entry;
+}
+
+gboolean
+xmms_decoder_plugin_verify (xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, FALSE);
+
+	return xmms_plugin_has_methods (plugin,
+	                                XMMS_PLUGIN_METHOD_NEW,
+	                                XMMS_PLUGIN_METHOD_DESTROY,
+	                                XMMS_PLUGIN_METHOD_DECODE_BLOCK,
+	                                XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
+	                                NULL);
 }
 
 /*
@@ -843,9 +858,7 @@ xmms_decoder_thread (gpointer data)
 
 	decode_block = xmms_plugin_method_get (decoder->plugin,
 	                                       XMMS_PLUGIN_METHOD_DECODE_BLOCK);
-	if (!decode_block) {
-		return NULL;
-	}
+	g_assert (decode_block);
 
 	xmms_object_ref (decoder);
 
