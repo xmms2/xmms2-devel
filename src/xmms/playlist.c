@@ -704,6 +704,7 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, x
 typedef struct {
 	guint id;
 	xmms_object_cmd_value_t *val;
+	gboolean current;
 } sortdata_t;
 
 
@@ -761,11 +762,14 @@ static void
 xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 {
 	sortdata_t *sorted = (sortdata_t *) data;
-	GArray *playlist = (GArray *)userdata;
-	g_array_append_val (playlist, sorted->id);
+	xmms_playlist_t *playlist = (xmms_playlist_t *)userdata;
+	g_array_append_val (playlist->list, sorted->id);
 
 	if (sorted->val)
 		xmms_object_cmd_value_free (sorted->val);
+
+	if (sorted->current)
+		playlist->currentpos = playlist->list->len - 1;
 	g_free (sorted);
 }
 
@@ -782,7 +786,7 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
-	guint32 id, i;
+	guint32 i;
 	GList *tmp = NULL;
 	sortdata_t *data;
 	gchar *str;
@@ -793,9 +797,6 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	XMMS_DBG ("Sorting on %s", property);
 
 	g_mutex_lock (playlist->mutex);
-
-	/** Lets save the ID number so that we can update playlist position later */
-	id = g_array_index (playlist->list, guint32, playlist->currentpos);
 
 	session = xmms_medialib_begin ();
 
@@ -812,6 +813,8 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 				g_free (str);
 			}
 
+			data->current = (playlist->currentpos == i);
+
 			tmp = g_list_prepend (tmp, data);
 		}
 
@@ -820,16 +823,9 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 		tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
 
 		g_array_set_size (playlist->list, 0);
-		g_list_foreach (tmp, xmms_playlist_sorted_unwind, playlist->list);
+		g_list_foreach (tmp, xmms_playlist_sorted_unwind, playlist);
 
 		g_list_free (tmp);
-	}
-
-	for (i = 0; i < playlist->list->len; i++) {
-		if (g_array_index (playlist->list, guint32, i) == id) {
-			playlist->currentpos = i;
-			break;
-		}
 	}
 
 	xmms_medialib_end (session);
