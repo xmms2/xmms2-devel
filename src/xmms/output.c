@@ -49,6 +49,7 @@ static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
 static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
 static void xmms_output_status_set (xmms_output_t *output, gint status);
+static gboolean set_plugin (xmms_output_t *output, xmms_plugin_t *plugin);
 static void status_changed (xmms_output_t *output, xmms_playback_status_t status);
 
 XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
@@ -569,12 +570,11 @@ xmms_output_destroy (xmms_object_t *object)
 
 	if (output->plugin) {
 		dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
+		g_assert (dest);
 
-		if (dest) {
-			g_mutex_lock (output->api_mutex);
-			dest (output);
-			g_mutex_unlock (output->api_mutex);
-		}
+		g_mutex_lock (output->api_mutex);
+		dest (output);
+		g_mutex_unlock (output->api_mutex);
 
 		xmms_object_unref (output->plugin);
 	}
@@ -612,10 +612,8 @@ xmms_output_destroy (xmms_object_t *object)
 gboolean
 xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 {
-	xmms_output_destroy_method_t dest;
-	xmms_output_new_method_t new;
-	xmms_output_write_method_t wr;
-	xmms_output_status_method_t st;
+	xmms_plugin_t *old_plugin;
+	gboolean ret;
 
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (new_plugin, FALSE);
@@ -624,33 +622,20 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 
 	g_mutex_lock (output->status_mutex);
 
-	if (output->plugin) {
-		dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
-		if (dest) {
-			dest (output);
-		}
-		xmms_object_unref (output->plugin);
-	}
+	old_plugin = output->plugin;
 
-	output->plugin = new_plugin;
-	new = xmms_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_NEW);
-	if (new) {
-		if (new (output)) {
-			wr = xmms_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_WRITE);
-			st = xmms_plugin_method_get (new_plugin, XMMS_PLUGIN_METHOD_STATUS);
-			output->status_method = st ? st : status_changed;
-		} else {
-			output->plugin = NULL;
-		}
-	} else {
-		output->plugin = NULL;
+	ret = set_plugin (output, new_plugin);
+
+	/* if the switch succeeded, release the reference to the old plugin
+	 * now.
+	 */
+	if (ret) {
+		xmms_object_unref (old_plugin);
 	}
-	
 
 	g_mutex_unlock (output->status_mutex);
 
-	return output->plugin ? TRUE : FALSE;
-
+	return ret;
 }
 
 /**
@@ -660,16 +645,12 @@ xmms_output_t *
 xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 {
 	xmms_output_t *output;
-	xmms_output_new_method_t new;
-	xmms_output_write_method_t wr;
-	xmms_output_status_method_t st;
 
 	g_return_val_if_fail (playlist, NULL);
 	
 	XMMS_DBG ("Trying to open output");
 
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
-	output->plugin = plugin;
 
 	output->api_mutex = g_mutex_new ();
 
@@ -684,13 +665,6 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	output->status_mutex = g_mutex_new ();
 	output->playtime_mutex = g_mutex_new ();
 
-	if (plugin) {
-		new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
-		if (new) {
-			new (output);
-		}
-	}
-	
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_OUTPUT, XMMS_OBJECT (output));
 
 	/* Broadcasts are always transmitted to the client if he
@@ -739,12 +713,9 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	output->status = XMMS_PLAYBACK_STATUS_STOP;
 
 	if (plugin) {
-		wr = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
-		st = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
-
-		g_return_val_if_fail ((!wr ^ !st), NULL);
-
-		output->status_method = st ? st : status_changed;
+		if (!set_plugin (output, plugin)) {
+			xmms_log_error ("couldn't initialize output plugin");
+		}
 	} else {
 		xmms_log_error ("initalized output without a plugin, please fix!");
 	}
@@ -918,6 +889,56 @@ status_changed (xmms_output_t *output, xmms_playback_status_t status)
 	}
 
 	g_mutex_unlock (output->write_mutex);
+}
+
+static gboolean
+set_plugin (xmms_output_t *output, xmms_plugin_t *plugin)
+{
+	xmms_output_destroy_method_t dest;
+	xmms_output_new_method_t new;
+	xmms_output_write_method_t wr;
+	xmms_output_status_method_t st;
+	gboolean ret;
+
+	g_assert (output);
+	g_assert (plugin);
+
+	/* first, shut down the current plugin if present */
+	if (output->plugin) {
+		dest = xmms_plugin_method_get (output->plugin,
+		                               XMMS_PLUGIN_METHOD_DESTROY);
+		g_assert (dest); /* see below */
+
+		dest (output);
+		output->plugin = NULL;
+		output->status_method = NULL;
+	}
+
+	/* every plugin needs both 'new' and 'destroy' methods */
+	new = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+	g_return_val_if_fail (new, FALSE);
+
+	dest = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_DESTROY);
+	g_return_val_if_fail (dest, FALSE);
+
+	/* we need either a 'write' or a 'status' method */
+	wr = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_WRITE);
+	st = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_STATUS);
+	g_return_val_if_fail (!wr ^ !st, FALSE);
+
+	/* output->plugin needs to be set before we can call the
+	 * NEW method
+	 */
+	output->plugin = plugin;
+	ret = new (output);
+
+	if (ret) {
+		output->status_method = st ? st : status_changed;
+	} else {
+		output->plugin = NULL;
+	}
+
+	return ret;
 }
 
 static gpointer
