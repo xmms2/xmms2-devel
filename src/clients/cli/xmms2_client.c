@@ -378,7 +378,7 @@ cmd_radd (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (i = 2; argv[i]; i++) {
 		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			printf ("not a directoy: %s\n", argv[i]);
+			printf ("not a directory: %s\n", argv[i]);
 			continue;
 		}
 
