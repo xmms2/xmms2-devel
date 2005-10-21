@@ -82,7 +82,6 @@ XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NON
 struct xmms_output_St {
 	xmms_object_t object;
 	xmms_plugin_t *plugin;
-	xmms_plugin_t *switch_plugin;
 
 	GMutex *decoder_mutex;
 	GQueue *decoder_list;
