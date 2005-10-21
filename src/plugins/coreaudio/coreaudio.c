@@ -56,7 +56,6 @@ static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
 static void xmms_ca_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpointer userdata);
 void xmms_ca_mixer_set (xmms_output_t *output, guint left, guint right);
-static gboolean xmms_ca_format_set (xmms_output_t *output, xmms_audio_format_t *format);
 
 /*
  * Plugin header
@@ -86,7 +85,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ca_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_ca_format_set);
 	
 	xmms_plugin_config_value_register (plugin, "volume", "70/70", NULL, NULL);
 
@@ -351,10 +349,4 @@ void xmms_ca_mixer_set (xmms_output_t *output, guint left,
 						  kHALOutputParam_Volume, 
 						  kAudioUnitScope_Global, 
 						  0, volume, 0);
-}
-
-static gboolean
-xmms_ca_format_set (xmms_output_t *output, xmms_audio_format_t *format)
-{
-	return TRUE;
 }
