@@ -628,9 +628,14 @@ xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin)
 
 	/* if the switch succeeded, release the reference to the old plugin
 	 * now.
+	 * if we couldn't switch to the new plugin, but we had a working
+	 * plugin before, switch back to the old plugin.
 	 */
 	if (ret) {
 		xmms_object_unref (old_plugin);
+	} else if (old_plugin) {
+		XMMS_DBG ("cannot switch plugin, going back to old one");
+		set_plugin (output, old_plugin);
 	}
 
 	g_mutex_unlock (output->status_mutex);
