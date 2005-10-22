@@ -924,6 +924,7 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
 	GList *ret;
 	xmms_medialib_session_t *session = xmms_medialib_begin ();
 	ret = xmms_medialib_select (session, query, error);
+	xmms_medialib_end (session);
 	return ret;
 }
 
