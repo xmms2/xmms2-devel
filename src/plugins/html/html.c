@@ -35,7 +35,6 @@
  * Function prototypes
  */
 
-static gboolean xmms_html_can_handle (const gchar *mime);
 static gboolean xmms_html_read_playlist (xmms_transport_t *transport, guint playlist_id);
 static GString *xmms_html_write_playlist (guint32 *list);
 
@@ -100,7 +99,6 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_html_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_html_read_playlist);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_html_write_playlist);
 
@@ -120,19 +118,6 @@ xmms_plugin_get (void)
 	                       "0 string <?xml ", NULL);
 
 	return plugin;
-}
-
-static gboolean
-xmms_html_can_handle (const gchar *mime)
-{
-	g_return_val_if_fail (mime, FALSE);
-
-	XMMS_DBG ("xmms_html_can_handle (%s)", mime);
-
-	if ((g_strncasecmp (mime, "text/html", 9) == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 static gboolean
