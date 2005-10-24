@@ -113,6 +113,11 @@ xmms_plugin_get (void)
 	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
 	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "useproxy", "0", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "proxyaddress", "127.0.0.1:8080", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "authproxy", "0", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "proxyuser", "user", NULL, NULL);
+	xmms_plugin_config_value_register (plugin, "proxypass", "password", NULL, NULL); 
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
 
@@ -140,7 +145,9 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
 	xmms_config_value_t *val;
-	gint bufsize, metaint, verbose, connecttimeout;
+	gint bufsize, metaint, verbose, connecttimeout, useproxy, authproxy;
+	const gchar *proxyaddress, *proxyuser, *proxypass;
+	gchar proxyuserpass[90]; 
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -158,6 +165,23 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
 	verbose = xmms_config_value_get_int (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "useproxy");
+	useproxy = xmms_config_value_get_int (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "authproxy");
+	authproxy = xmms_config_value_get_int (val);
+	
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyaddress");
+	proxyaddress = xmms_config_value_get_string (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyuser");
+	proxyuser = xmms_config_value_get_string (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxypass");
+	proxypass = xmms_config_value_get_string (val);
+
+	g_snprintf (proxyuserpass, sizeof (proxyuserpass), "%s:%s", proxyuser, proxypass);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
 	data->metabuffer = g_malloc (256 * 16);
@@ -184,6 +208,15 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION, xmms_curl_callback_write);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION, xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
+
+	if (useproxy == 1) {
+		curl_easy_setopt (data->curl_easy, CURLOPT_PROXY, proxyaddress);
+		if (authproxy == 1) {
+			curl_easy_setopt (data->curl_easy, CURLOPT_PROXYUSERPWD,
+		                          proxyuserpass);
+		}
+	}
+
 	curl_easy_setopt (data->curl_easy, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_VERBOSE, verbose);
 	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYPEER, 0);
