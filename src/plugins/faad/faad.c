@@ -93,9 +93,17 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
 							xmms_faad_get_mediainfo);
 
-	xmms_plugin_magic_add (plugin, "aac in mp4", "audio/aac",
+	xmms_plugin_magic_add (plugin, "mpeg-4 header", "video/mp4",
+	                       "4 string ftyp", ">8 string isom", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg-4 v1 header", "video/mp4",
+	                       "4 string ftyp", ">8 string mp41", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg-4 v2 header", "video/mp4",
+	                       "4 string ftyp", ">8 string mp42", NULL);
+	xmms_plugin_magic_add (plugin, "iTunes mpeg-4 header", "audio/mp4",
 	                       "4 string ftyp", ">8 string M4A ", NULL);
-	/* @todo Add magic checks for raw AAC */
+
+	xmms_plugin_magic_add (plugin, "mpeg aac header", "audio/aac",
+	                       "0 beshort&0xfff6 0xfff0", NULL);
 
 	return plugin;
 }
