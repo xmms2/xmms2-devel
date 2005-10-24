@@ -107,8 +107,7 @@ xmms_plugin_get (void)
 	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
 	                          "alsa",
 	                          "ALSA Output" XMMS_VERSION,
-	                          "Advanced Linux Sound Architecture \
-	                          output plugin");
+	                          "Advanced Linux Sound Architecture output plugin");
 
 	g_return_val_if_fail (plugin, NULL);
 
