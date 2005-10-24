@@ -27,10 +27,9 @@ typedef struct xmms_speex_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_speex_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_speex_new (xmms_decoder_t *decoder);
 static gboolean xmms_speex_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_speex_seek (xmms_decoder_t *decoder, guint samples);
-static gboolean xmms_speex_can_handle (const gchar *mimetype);
 static gboolean xmms_speex_decode_block (xmms_decoder_t *decoder);
 static void xmms_speex_destroy (xmms_decoder_t *decoder);
 static void xmms_speex_get_mediainfo (xmms_decoder_t *decoder);
@@ -50,6 +49,10 @@ xmms_plugin_get (void)
 				  "Speex decoder " XMMS_VERSION,
 				  "Speex decoder");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.speex.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
@@ -57,7 +60,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_speex_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_speex_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_speex_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_speex_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_speex_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_speex_get_mediainfo);
 
@@ -66,16 +68,19 @@ xmms_plugin_get (void)
 
 	xmms_plugin_config_value_register (plugin, "perceptual_enhancer", "1", NULL, NULL);
 
+	xmms_plugin_magic_add (plugin, "ogg/speex header", "audio/x-speex",
+	                       "0 string OggS", ">4 byte 0",
+	                       ">>28 string Speex   ", NULL);
+
 	return plugin;
 }
 
 static gboolean
-xmms_speex_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_speex_new (xmms_decoder_t *decoder)
 {
 	xmms_speex_data_t *data;
 
 	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (mimetype, FALSE);
 
 	data = g_new0 (xmms_speex_data_t, 1);
 
@@ -139,7 +144,7 @@ xmms_speex_init (xmms_decoder_t *decoder, gint mode)
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder),
 	                                 "perceptual_enhancer");
-	pe = xmms_config_value_int_get (val);
+	pe = xmms_config_value_get_int (val);
 	speex_decoder_ctl(data->speex_state, SPEEX_SET_ENH, &pe);
 
 	ogg_sync_pageout (&data->sync_state, &data->ogg_page);
@@ -164,22 +169,6 @@ xmms_speex_seek (xmms_decoder_t *decoder, guint samples)
 	g_return_val_if_fail (decoder, FALSE);
 
 	return FALSE;		/* Seeking not supported right now */
-}
-
-static gboolean
-xmms_speex_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-
-	if (g_strcasecmp (mimetype, "audio/x-speex") == 0) {
-		return TRUE;
-	}
-
-	if (g_strcasecmp (mimetype, "audio/speex") == 0) {
-		return TRUE;
-	}
-
-	return FALSE;
 }
 
 static gboolean

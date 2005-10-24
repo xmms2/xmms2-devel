@@ -35,6 +35,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 
 	ctypedef enum xmms_playlist_changed_actions_t:
 		XMMS_PLAYLIST_CHANGED_ADD,
+		XMMS_PLAYLIST_CHANGED_INSERT,
 		XMMS_PLAYLIST_CHANGED_SHUFFLE,
 		XMMS_PLAYLIST_CHANGED_REMOVE,
 		XMMS_PLAYLIST_CHANGED_CLEAR,
@@ -48,6 +49,7 @@ PLAYBACK_STATUS_PLAY = XMMS_PLAYBACK_STATUS_PLAY
 PLAYBACK_STATUS_PAUSE = XMMS_PLAYBACK_STATUS_PAUSE
 
 PLAYLIST_CHANGED_ADD = XMMS_PLAYLIST_CHANGED_ADD
+PLAYLIST_CHANGED_INSERT = XMMS_PLAYLIST_CHANGED_INSERT
 PLAYLIST_CHANGED_SHUFFLE = XMMS_PLAYLIST_CHANGED_SHUFFLE
 PLAYLIST_CHANGED_REMOVE = XMMS_PLAYLIST_CHANGED_REMOVE
 PLAYLIST_CHANGED_CLEAR = XMMS_PLAYLIST_CHANGED_CLEAR
@@ -97,10 +99,14 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsc_unref(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
 
+	void xmmsc_signal_disconnect(xmmsc_result_t *res) 
+	void xmmsc_broadcast_disconnect(xmmsc_result_t *res)
+
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add(xmmsc_connection_t *, char *)
 	xmmsc_result_t *xmmsc_playlist_insert(xmmsc_connection_t *, int pos, char *)
 	xmmsc_result_t *xmmsc_playlist_add_id(xmmsc_connection_t *, unsigned int)
+	xmmsc_result_t *xmmsc_playlist_insert_id(xmmsc_connection_t *, int pos, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_remove(xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_list(xmmsc_connection_t *c)
@@ -191,10 +197,11 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 		udata[key] = <int>value
 
 cdef ResultNotifier(xmmsc_result_t *res, obj):
+	if not obj.get_broadcast():
+		obj._del_ref()
 	obj._cb()
 	if not obj.get_broadcast():
 		xmmsc_result_unref(res)
-		obj._del_ref()
 		
 	
 cdef class XMMSResult:
@@ -202,6 +209,7 @@ cdef class XMMSResult:
 	Class containing the results of some operation
 	"""
 	cdef xmmsc_result_t *res
+	cdef xmmsc_result_t *orig
 	cdef object notifier
 	cdef object user_data
 	cdef int cid
@@ -214,6 +222,7 @@ cdef class XMMSResult:
 		self.c = c
 
 	def more_init(self, broadcast = 0):
+		self.orig = self.res
 		self.cid = xmmsc_result_cid(self.res)
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set(self.res, ResultNotifier, self)
@@ -278,6 +287,19 @@ cdef class XMMSResult:
 		"""
 		self._check()
 		xmmsc_result_wait(self.res)
+
+	def disconnect_signal(self):
+		""" @todo: Fail if this result isn't a signal """
+		xmmsc_signal_disconnect(self.orig)
+
+	def disconnect_broadcast(self):
+		"""
+		@todo: Fail if this result isn't a broadcast
+		Note: it doesn't matter atm whether we pass self.orig or
+		self.res, but if the internal broadcast logic ever changes,
+		it's more likely self.orig is the correct one
+		"""
+		xmmsc_broadcast_disconnect(self.orig)
 
 	def get_int(self):
 		"""
@@ -384,11 +406,13 @@ cdef class XMMS:
 	cdef object needout_fun
 	cdef object ObjectRef
 
-	def __new__(self, clientname = "Python XMMSClient"):
+	def __new__(self, clientname = None):
 		"""
 		Initiates a connection to the XMMS2 daemon. All operations
 		involving the daemon are done via this connection.
 		"""
+		if not clientname:
+			clientname = "Unnamed Python Client"
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
 		self.ObjectRef = {}
@@ -753,6 +777,23 @@ cdef class XMMS:
 		c = from_unicode(url)
 		
 		ret.res = xmmsc_playlist_insert(self.conn, pos, c)
+		ret.more_init()
+		
+		return ret
+
+	def playlist_insert_id(self, pos, id, cb = None):
+		"""
+		Insert a medialib to the playlist.
+		Requires an int 'pos' and an int 'id' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_playlist_insert_id(self.conn, pos, id)
 		ret.more_init()
 		
 		return ret
@@ -1356,8 +1397,10 @@ class XMMSSync:
 	# are not supported by Pyrex.
 	def __init__(self, clientname=None, xmms=None):
 		"""
-		This constructor takes a single argument which specifies the
-		XMMS object to wrap.
+		This constructor takes two optional arguments. If xmms is omitted
+		it will create a new underlying XMMS class otherwise it will use
+		the one supplied. Clientname is the name of the client and will
+		default to "Unnamed Python Client"
 		"""
 		if not xmms:
 			self.__xmms = XMMS(clientname)

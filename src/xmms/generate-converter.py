@@ -12,13 +12,13 @@ readwriters = """
 #define READs8(a)  ((a+128) << 8)
 #define READu16(a)  (a)
 #define READs16(a) ((a)+32768)
-#define READfloat(a) ((a)*65536)
+#define READfloat(a) (((a) + 1.0)*32768.0)
 
 #define WRITEu8(a)  ((a) >> 8)
 #define WRITEs8(a)  (((a) - 32768) >> 8)
 #define WRITEu16(a) (a)
 #define WRITEs16(a) ((a) - 32768)
-#define WRITEfloat(a) ((a)/65536.0)
+#define WRITEfloat(a) ((a)/32768.0 - 1.0)
 
 
 

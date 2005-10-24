@@ -87,7 +87,7 @@ print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		printf ("%s = %s\n", (char *)key, (char *)value);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int)value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 }
 
@@ -378,7 +378,7 @@ cmd_radd (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (i = 2; argv[i]; i++) {
 		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			printf ("not a directoy: %s\n", argv[i]);
+			printf ("not a directory: %s\n", argv[i]);
 			continue;
 		}
 
@@ -462,7 +462,7 @@ print_entry (const void *key, xmmsc_result_value_type_t type, const void *value,
 		printf ("%s = %s\n", (char *)key, conv);
 		g_free (conv);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int) value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 
 }
@@ -498,6 +498,33 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 		xmmsc_result_unref (res);
 	}
 
+}
+
+static void
+cmd_current (xmmsc_connection_t *conn, int argc, char **argv)
+{ 
+	xmmsc_result_t *res;
+	gchar print_text[256];
+	guint id;
+
+	res = xmmsc_playback_current_id (conn);
+	xmmsc_result_wait (res);
+	if (!xmmsc_result_get_uint (res, &id))
+		print_error ("Broken result");
+	xmmsc_result_unref (res);
+
+	res = xmmsc_medialib_get_info (conn, id);
+	xmmsc_result_wait (res);
+
+	if (argc > 2) {
+	  xmmsc_entry_format (print_text, sizeof(print_text), argv[2], res);	
+	} else {
+	  xmmsc_entry_format (print_text, sizeof(print_text), 
+		              "${artist} - ${title}", res);
+	}
+
+	printf("%s\n", print_text);
+	xmmsc_result_unref (res);
 }
 
 static int
@@ -716,6 +743,47 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	if (xmmsc_result_iserror (res))
 		fprintf (stderr, "Couldn't seek to %d ms: %s\n", ms, xmmsc_result_get_error (res));
         xmmsc_result_unref (res);
+
+}
+
+
+static void
+cmd_plugin_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	guint type;
+
+	if (argc < 3) {
+		type = XMMS_PLUGIN_TYPE_ALL;
+	} else if (g_strcasecmp (argv[2], "output") == 0) {
+		type = XMMS_PLUGIN_TYPE_OUTPUT;
+	} else if (g_strcasecmp (argv[2], "transport") == 0) {
+		type = XMMS_PLUGIN_TYPE_TRANSPORT;
+	} else if (g_strcasecmp (argv[2], "decoder") == 0) {
+		type = XMMS_PLUGIN_TYPE_DECODER;
+	} else if (g_strcasecmp (argv[2], "effect") == 0) {
+		type = XMMS_PLUGIN_TYPE_EFFECT;
+	} else if (g_strcasecmp (argv[2], "playlist") == 0) {
+		type = XMMS_PLUGIN_TYPE_PLAYLIST;
+	} else {
+		print_error ("no such plugin type!");
+	}
+
+	res = xmmsc_plugin_list (conn, type);
+	xmmsc_result_wait (res);
+
+	while (xmmsc_result_list_valid (res)) {
+		gchar *name, *shortname, *desc;
+		xmmsc_result_get_dict_entry_str (res, "name", &name);
+		xmmsc_result_get_dict_entry_str (res, "shortname", &shortname);
+		xmmsc_result_get_dict_entry_str (res, "description", &desc);
+
+		printf ("%s - %s\n", shortname, desc);
+		
+		xmmsc_result_list_next (res);
+	}
+
+	xmmsc_result_unref (res);
 
 }
 
@@ -971,7 +1039,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
-	xmmsc_setup_with_gmain (conn);
+	xmmsc_mainloop_gmain_init (conn);
 
 	g_main_loop_run (ml);
 }
@@ -1008,7 +1076,7 @@ cmds commands[] = {
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
 	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
-	{ "clear", "clears the playlist and stops playback", cmd_clear },
+	{ "clear", "clears the playlist", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
 	{ "sort", "sort the playlist", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
@@ -1028,8 +1096,10 @@ cmds commands[] = {
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
+	{ "current", "formatted information about the current entry", cmd_current },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
+	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
 	/*{ "statistics", "get statistics from server", cmd_stats },
 	 */
 	{ "quit", "make the server quit", cmd_quit },

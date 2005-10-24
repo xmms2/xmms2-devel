@@ -54,6 +54,10 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "cdae",
 			"CDAE transport " XMMS_VERSION,
 		 	"CD Audio Transport");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
@@ -66,7 +70,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_cdae_seek);
 //	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_cdae_list);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
 //	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
@@ -118,7 +121,7 @@ xmms_cdae_init (xmms_transport_t *transport, const gchar *url)
 
 	plugin = xmms_transport_plugin_get (transport);
 
-	dev = xmms_config_value_string_get (xmms_plugin_config_lookup (plugin, "device"));
+	dev = xmms_config_value_get_string (xmms_plugin_config_lookup (plugin, "device"));
 
 	data = g_new0 (xmms_cdae_data_t, 1);
 

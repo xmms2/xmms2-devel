@@ -594,34 +594,6 @@ xmms_jack_mixer_set(xmms_output_t *output, gint l, gint r)
 	return TRUE;
 }
 
-
-/**
- * Set audio format.
- *
- * @param output The output struct containing alsa data. 
- * @param format The new audio format.
- *
- * @return Success/failure
- */
-static gboolean
-xmms_jack_format_set (xmms_output_t *output, xmms_audio_format_t *format)
-{
-	xmms_jack_data_t *data;
-
-	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, FALSE);
-
-	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels,
-	          format->samplerate);
-
-	if(format->format != XMMS_SAMPLE_FORMAT_FLOAT)
-		return FALSE;
-
-	return TRUE;
-}
-
-
 /**
  * Flush the audio output, doesn't apply as we don't buffer any
  * audio data
@@ -820,6 +792,10 @@ xmms_plugin_get (void)
 				  "jack Output" XMMS_VERSION,
 				  "Jack audio server output plugin");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://xmms-jack.sf.net");
 	xmms_plugin_info_add (plugin, "Author", "Chris Morgan");
 	xmms_plugin_info_add (plugin, "E-Mail", "cmorgan@alum.wpi.edu");
@@ -835,8 +811,6 @@ xmms_plugin_get (void)
 				xmms_jack_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS,
 				xmms_jack_status); 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
-				xmms_jack_format_set);
 
 	xmms_plugin_config_value_register (plugin,
 					   "volume",

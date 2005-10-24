@@ -22,10 +22,11 @@
 
 #include "xmms/xmms_plsplugins.h"
 #include "xmms/xmms_medialib.h"
+#include "xmmspriv/xmms_plugin.h"
 
 gboolean xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry);
 GString *xmms_playlist_plugin_save (gchar *mime, guint32 *list);
 
-
+gboolean xmms_playlist_plugin_verify (xmms_plugin_t *plugin);
 
 #endif

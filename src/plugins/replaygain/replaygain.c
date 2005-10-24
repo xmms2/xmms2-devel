@@ -66,6 +66,10 @@ xmms_plugin_get (void)
 	                          "Replaygain effect " XMMS_VERSION,
 	                          "Replaygain effect");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
@@ -260,7 +264,7 @@ xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
 	data = xmms_effect_private_data_get (effect);
 	g_return_if_fail (data);
 
-	name = xmms_config_value_name_get ((xmms_config_value_t *) obj);
+	name = xmms_config_value_get_name ((xmms_config_value_t *) obj);
 
 	if (!g_ascii_strcasecmp (name, "effect.replaygain.mode")) {
 		if (!g_ascii_strcasecmp (value, "album")) {
@@ -282,6 +286,7 @@ compute_replaygain (xmms_replaygain_data_t *data)
 	gfloat s, p;
 	gchar *key_s, *key_p;
 	gchar *tmp;
+	xmms_medialib_session_t *session;
 
 	if (data->mode == XMMS_REPLAYGAIN_MODE_TRACK) {
 		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
@@ -291,16 +296,22 @@ compute_replaygain (xmms_replaygain_data_t *data)
 		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 	}
 
+	session = xmms_medialib_begin ();
+
 	/** @todo should this be ints instead? */
-	tmp = xmms_medialib_entry_property_get_str (data->current_mlib_entry,
-						    key_s);
+	tmp = xmms_medialib_entry_property_get_str (session,
+												data->current_mlib_entry,
+												key_s);
 	s = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
 
-	tmp = xmms_medialib_entry_property_get_str (data->current_mlib_entry,
-						    key_p);
+	tmp = xmms_medialib_entry_property_get_str (session, 
+												data->current_mlib_entry,
+												key_p);
 	p = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
+
+	xmms_medialib_end (session);
 
 	s *= 2; /* 6db pre-amp */
 

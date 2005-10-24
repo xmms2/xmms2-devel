@@ -37,7 +37,6 @@
  */
 
 
-static gboolean xmms_pls_can_handle (const gchar *mimetype);
 static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);
 static GString *xmms_pls_write_playlist (guint32 *list);
 
@@ -56,15 +55,21 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
 				  XMMS_PLAYLIST_PLUGIN_API_VERSION,
 				  "pls",
-	                          "PLS Playlist " XMMS_VERSION,
-	                          "PLS Playlist reader / writer");
+				  "PLS Playlist " XMMS_VERSION,
+				  "PLS Playlist reader / writer");
+
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_pls_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_pls_read_playlist);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_pls_write_playlist);
+
+	xmms_plugin_magic_add (plugin, "pls header", "audio/x-scpls",
+	                       "0 string [playlist]", NULL);
 
 	return plugin;
 }
@@ -72,23 +77,6 @@ xmms_plugin_get (void)
 /*
  * Member functions
  */
-
-static gboolean
-xmms_pls_can_handle (const gchar *mime)
-{
-	g_return_val_if_fail (mime, FALSE);
-
-	XMMS_DBG ("xmms_pls_can_handle (%s)", mime);
-
-	if ((g_strncasecmp (mime, "audio/x-scpls", 13) == 0))
-		return TRUE;
-
-	if ((g_strncasecmp (mime, "audio/scpls", 11) == 0))
-		return TRUE;
-
-	return FALSE;
-}
-
 
 typedef struct {
 	gint num;
@@ -98,24 +86,30 @@ typedef struct {
 } xmms_pls_entry_t;
 
 static void
-xmms_pls_add_entry (const gchar *plspath, guint playlist_id, xmms_pls_entry_t *e)
+xmms_pls_add_entry (xmms_medialib_session_t *session, 
+					const gchar *plspath, 
+					guint playlist_id, 
+					xmms_pls_entry_t *e)
 {
 	if (e->file) {
 		xmms_medialib_entry_t entry;
 		gchar *url;
 
 		url = build_encoded_url (plspath, e->file);
-		entry = xmms_medialib_entry_new (url);
+		entry = xmms_medialib_entry_new (session, url);
 		g_free (url);
 		
 		if (e->title)
-			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, e->title);
+			xmms_medialib_entry_property_set_str (session, entry, 
+												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, 
+												  e->title);
 
 		if (e->length && atoi (e->length) > 0)
-			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-							      atoi (e->length));
+			xmms_medialib_entry_property_set_int (session, entry, 
+												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+												  atoi (e->length));
 
-		xmms_medialib_playlist_add (playlist_id, entry);
+		xmms_medialib_playlist_add (session, playlist_id, entry);
 
 		g_free (e->file);
 		e->file = NULL;
@@ -139,6 +133,7 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 	const gchar *plspath;
 	xmms_pls_entry_t entry;
 	xmms_error_t err;
+	xmms_medialib_session_t *session;
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (playlist_id,  FALSE);
@@ -151,7 +146,10 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		XMMS_DBG ("Error reading pls-file");
 		return FALSE;
 	}
-	
+
+	/* for completeness' sake, check for the pls header here again, too
+	 * (it's already done in the magic check)
+	 */
 	if (g_ascii_strncasecmp (buffer, "[playlist]", 10) != 0) {
 		XMMS_DBG ("Not a PLS file");
 		return FALSE;
@@ -159,6 +157,8 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 
 	memset (&entry, 0, sizeof (entry));
 	entry.num=-1;
+
+	session = xmms_medialib_begin ();
 
 	while (xmms_transport_read_line (transport, buffer, &err)) {
 		gchar *np, *ep;
@@ -183,14 +183,16 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		}
 
 		if (entry.num != num && entry.num != -1) {
-			xmms_pls_add_entry (plspath, playlist_id, &entry);
+			xmms_pls_add_entry (session, plspath, playlist_id, &entry);
 		}
 
 		*val = g_strdup (ep + 1);
 		entry.num = num;
 	}
 
-	xmms_pls_add_entry (plspath, playlist_id, &entry);
+	xmms_pls_add_entry (session, plspath, playlist_id, &entry);
+
+	xmms_medialib_end (session);
 
 	return TRUE;
 }
@@ -201,10 +203,13 @@ xmms_pls_write_playlist (guint32 *list)
 	gint current;
 	GString *ret;
 	gint i = 0;
+	xmms_medialib_session_t *session;
 
 	g_return_val_if_fail (list, FALSE);
 
 	ret = g_string_new ("[playlist]\n");
+
+	session = xmms_medialib_begin ();
 
 	current = 1;
 	while (list[i]) {
@@ -213,9 +218,12 @@ xmms_pls_write_playlist (guint32 *list)
 		const gchar *title;
 		gchar *url;
 
-		duration = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
-		title = xmms_medialib_entry_property_get_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
-		url = xmms_medialib_entry_property_get_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+		duration = xmms_medialib_entry_property_get_int (session, entry, 
+														 XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		title = xmms_medialib_entry_property_get_str (session, entry, 
+													  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
+		url = xmms_medialib_entry_property_get_str (session, entry, 
+													XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
 		if (g_strncasecmp (url, "file://", 7) == 0) {
 			g_string_append_printf (ret, "File%u=%s\n", current, url+7);
@@ -233,6 +241,8 @@ xmms_pls_write_playlist (guint32 *list)
 		current++;
 		i++;
 	}
+
+	xmms_medialib_end (session);
 
 	g_string_append_printf (ret, "NumberOfEntries=%u\n", current - 1);
 	g_string_append (ret, "Version=2\n");

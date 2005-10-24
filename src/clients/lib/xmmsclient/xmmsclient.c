@@ -210,6 +210,7 @@ void
 xmmsc_unref (xmmsc_connection_t *c)
 {
 	x_api_error_if (!c, "with a NULL connection",);
+	x_api_error_if (c->ref < 1, "with a freed connection",);
 
 	c->ref--;
 	if (c->ref == 0) {
@@ -258,6 +259,24 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
 }
 
 /**
+ * Get a list of loaded plugins from the server
+ */
+xmmsc_result_t *
+xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	x_check_conn (c, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
+	xmms_ipc_msg_put_uint32 (msg, type);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/**
  * Tell the server to quit. This will terminate the server.
  * If you only want to disconnect, use #xmmsc_unref()
  */
@@ -297,7 +316,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 
 	pos = fmt;
 	while (strlen (target) + 1 < len) {
-		char *next_key, *key, *result, *end;
+		char *next_key, *key, *result = NULL, *end;
 		int keylen;
 
 		next_key = strstr (pos, "${");

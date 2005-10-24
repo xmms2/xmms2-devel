@@ -25,7 +25,7 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_stringport.h"
 
-static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER(%s)",
+static const char* constraint_templates[4] = {"m%d.key = LOWER(%s)",
 					      "LOWER(m%d.value) LIKE LOWER(%s)",
 					      "m%d.id = m%d.id",
 					      "Media AS m%d"};
@@ -365,6 +365,23 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, mime);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+/**
+ * This will make the server list the given playlist. 
+ */
+xmmsc_result_t *
+xmmsc_medialib_playlist_list (xmmsc_connection_t *conn, const char *playlist)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_LIST);
+	xmms_ipc_msg_put_string (msg, playlist);
 
 	res = xmmsc_send_msg (conn, msg);
 

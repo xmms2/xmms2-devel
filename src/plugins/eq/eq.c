@@ -34,6 +34,7 @@
 #include <string.h>
 
 static void xmms_eq_new (xmms_effect_t *effect);
+static void xmms_eq_destroy (xmms_effect_t *effect);
 static gboolean xmms_eq_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
 static void xmms_eq_process (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
 
@@ -52,6 +53,7 @@ typedef struct xmms_eq_priv_St {
 	gdouble gains[XMMS_EQ_BANDS];
 	xmms_config_value_t *configvals[XMMS_EQ_BANDS];
 	guint channels;
+	xmms_sample_format_t format;
 } xmms_eq_priv_t;
 
 static gdouble freqs[XMMS_EQ_BANDS] = { 0.0007142857,
@@ -91,6 +93,27 @@ xmms_eq_calc_filter (xmms_eq_filter_t *filter, gdouble gain, gdouble relfreq)
 
 }
 
+static gdouble
+xmms_eq_apply_filter (gdouble val, xmms_eq_filter_t * filters, gint chan)
+{
+	gint j;
+	gdouble tmp;
+
+	for (j = 0; j < XMMS_EQ_BANDS; j++) {
+		tmp = (filters[j].b[0] * val) +
+			(filters[j].b[1] * filters[j].input[chan][0]) +
+			(filters[j].b[2] * filters[j].input[chan][1]) -
+			(filters[j].a[1] * filters[j].output[chan][0]) -
+			(filters[j].a[2] * filters[j].output[chan][1]);
+		filters[j].output[chan][1] = filters[j].output[chan][0];
+		filters[j].output[chan][0] = tmp;
+		filters[j].input[chan][1] = filters[j].input[chan][0];
+		filters[j].input[chan][0] = val;
+		val = tmp;
+	}
+
+	return CLAMP (val, -1.0, 1.0);
+}
 
 xmms_plugin_t *
 xmms_plugin_get (void)
@@ -105,11 +128,15 @@ xmms_plugin_get (void)
 				  "Equalizer effect " XMMS_VERSION,
 				  "Equalizer effect");
 
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_eq_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_eq_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_eq_format_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_eq_process);
 
@@ -122,22 +149,24 @@ xmms_plugin_get (void)
 }
 
 static void
-xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
+xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
+						   gpointer userdata)
 {
-	xmms_config_value_t *val = (xmms_config_value_t *)object;
+	xmms_config_value_t *val = (xmms_config_value_t *) object;
 	xmms_effect_t *effect = userdata;
 	xmms_eq_priv_t *priv;
 	const gchar *name, *ptr;
 	gint i;
+	gdouble gain;
 
 	priv = xmms_effect_private_data_get (effect);
 
 	g_return_if_fail (priv);
 
-	name = xmms_config_value_name_get (val);
+	name = xmms_config_value_get_name (val);
 
 	XMMS_DBG ("configval changed! %s => %f", name,
-		  xmms_config_value_float_get (val));
+			  xmms_config_value_get_float (val));
 
 	/* we are passed the full config key, not just the last token,
 	 * which makes this code kinda ugly.
@@ -148,10 +177,18 @@ xmms_eq_configval_changed (xmms_object_t *object, gconstpointer data, gpointer u
 
 	XMMS_DBG ("changing filter #%d", i);
 
-	priv->gains[i] = xmms_config_value_float_get (val);
+	gain = xmms_config_value_get_float (val);
+	if (gain <= 0.0) {
+		gain = G_MINDOUBLE;
 
-	xmms_eq_calc_filter (&priv->filters[i], 
-			     priv->gains[i], freqs[i]);
+		gchar buf[20];
+		g_snprintf (buf, sizeof (buf), "%g", gain);
+
+		xmms_config_value_set_data (val, buf);
+	}
+	priv->gains[i] = gain;
+
+	xmms_eq_calc_filter (&priv->filters[i], priv->gains[i], freqs[i]);
 
 }
 
@@ -178,59 +215,155 @@ xmms_eq_new (xmms_effect_t *effect) {
 						xmms_eq_configval_changed, 
 						(gpointer) effect);
 
-		priv->gains[i] = xmms_config_value_float_get (priv->configvals[i]);
+		priv->gains[i] = xmms_config_value_get_float (priv->configvals[i]);
 
 		xmms_eq_calc_filter (&priv->filters[i], priv->gains[i], freqs[i]);
 	}
 
 }
 
+static void
+xmms_eq_destroy (xmms_effect_t *effect)
+{
+	g_return_if_fail (effect);
+
+	g_free (xmms_effect_private_data_get (effect));
+}
+
 static gboolean
-xmms_eq_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt)
+xmms_eq_format_set (xmms_effect_t * effect, xmms_audio_format_t * fmt)
 {
 	xmms_eq_priv_t *priv = xmms_effect_private_data_get (effect);
 
 	g_return_val_if_fail (priv, FALSE);
 
 	priv->channels = fmt->channels;
+	priv->format = fmt->format;
 
-	/* only support XMMS_SAMPLE_FORMAT_S16 atm */
-	return fmt->format == XMMS_SAMPLE_FORMAT_S16 && fmt->channels <= MAX_CHANNELS;
+	if (fmt->channels <= MAX_CHANNELS) {
+		switch (fmt->format) {
+		case XMMS_SAMPLE_FORMAT_S8:
+		case XMMS_SAMPLE_FORMAT_U8:
+		case XMMS_SAMPLE_FORMAT_S16:
+		case XMMS_SAMPLE_FORMAT_U16:
+		case XMMS_SAMPLE_FORMAT_S32:
+		case XMMS_SAMPLE_FORMAT_U32:
+		case XMMS_SAMPLE_FORMAT_FLOAT:
+		case XMMS_SAMPLE_FORMAT_DOUBLE:
+			return TRUE;
+		case XMMS_SAMPLE_FORMAT_UNKNOWN:
+			return FALSE;
+		}
+	}
+	return FALSE;
 }
 
 static void
-xmms_eq_process (xmms_effect_t *effect, xmms_sample_t *buf, guint len)
+xmms_eq_process (xmms_effect_t * effect, xmms_sample_t * buf, guint len)
 {
-	gint i, j;
+	gint i, chan;
+	gdouble val;
 	xmms_eq_priv_t *priv = xmms_effect_private_data_get (effect);
 
 	g_return_if_fail (priv);
 
-	len /= xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
-	for (i = 0; i < len; i++) {
-		xmms_samples16_t *samples = (gint16 *)buf;
-		gdouble val,tmp;
-		gint chan;
-		
-		chan = i % priv->channels;
+	len /= xmms_sample_size_get (priv->format);
 
-		val = ((gdouble)samples[i]) / ((1<<15) - 1);
-		
-		for (j=0; j<XMMS_EQ_BANDS; j++) {
-			tmp = (priv->filters[j].b[0] * val) + 
-				(priv->filters[j].b[1] * priv->filters[j].input[chan][0]) +
-				(priv->filters[j].b[2] * priv->filters[j].input[chan][1]) -
-				(priv->filters[j].a[1] * priv->filters[j].output[chan][0])-
-				(priv->filters[j].a[2] * priv->filters[j].output[chan][1]);
-			priv->filters[j].output[chan][1] = priv->filters[j].output[chan][0];
-			priv->filters[j].output[chan][0] = tmp;
-			priv->filters[j].input[chan][1] = priv->filters[j].input[chan][0];
-			priv->filters[j].input[chan][0] = val;
-			val = tmp;
+	switch (priv->format) {
+	case XMMS_SAMPLE_FORMAT_S8:
+		{
+			xmms_samples8_t *sample_s8 = (gint8 *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val = (gdouble) sample_s8[i] / XMMS_SAMPLES8_MAX;
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_s8[i] = (gint8) (val * XMMS_SAMPLES8_MAX);
+			}
+			break;
 		}
-
-		val = CLAMP (val, -1.0, 1.0);
-
-		samples[i] = val * ((1<<15) - 1);
+	case XMMS_SAMPLE_FORMAT_U8:
+		{
+			xmms_sampleu8_t *sample_u8 = (guint8 *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val = ((gdouble) sample_u8[i] / XMMS_SAMPLEU8_MAX) * 2.0 - 1.0;
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_u8[i] =
+					(guint8) (((val + 1.0) * XMMS_SAMPLEU8_MAX) / 2.0);
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_S16:
+		{
+			xmms_samples16_t *sample_s16 = (gint16 *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val = (gdouble) sample_s16[i] / XMMS_SAMPLES16_MAX;
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_s16[i] = (gint16) (val * XMMS_SAMPLES16_MAX);
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_U16:
+		{
+			xmms_sampleu16_t *sample_u16 = (guint16 *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val =
+					((gdouble) sample_u16[i] / XMMS_SAMPLEU16_MAX) * 2.0 - 1.0;
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_u16[i] =
+					(guint16) (((val + 1.0) * XMMS_SAMPLEU16_MAX) / 2.0);
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_S32:
+		{
+			xmms_samples32_t *sample_s32 = (gint32 *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val = (gdouble) sample_s32[i] / XMMS_SAMPLES32_MAX;
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_s32[i] = (gint32) (val * XMMS_SAMPLES32_MAX);
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_U32:
+		{
+			xmms_sampleu32_t *sample_u32 = (guint32 *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val =
+					((gdouble) sample_u32[i] / XMMS_SAMPLEU32_MAX) * 2.0 - 1.0;
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_u32[i] =
+					(guint32) (((val + 1.0) * XMMS_SAMPLEU32_MAX) / 2.0);
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_FLOAT:
+		{
+			xmms_samplefloat_t *sample_float = (gfloat *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val = (gdouble) sample_float[i];
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_float[i] = (gfloat) val;
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_DOUBLE:
+		{
+			xmms_sampledouble_t *sample_double = (gdouble *) buf;
+			for (i = 0; i < len; i++) {
+				chan = i % priv->channels;
+				val = sample_double[i];
+				val = xmms_eq_apply_filter (val, priv->filters, chan);
+				sample_double[i] = val;
+			}
+			break;
+		}
+	case XMMS_SAMPLE_FORMAT_UNKNOWN:
+		break;
 	}
 }

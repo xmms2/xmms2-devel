@@ -58,7 +58,6 @@ typedef struct {
 	gint data_in_buf;
 
 	gboolean stream;
-	const gchar *mime;
 	gchar *name;
 	gchar *genre;
 
@@ -90,6 +89,10 @@ xmms_plugin_get (void)
 			"Curl transport for FTP " XMMS_VERSION,
 		 	"FTP transport using CURL");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
@@ -102,7 +105,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_curl_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_curl_list);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
 	return plugin;
@@ -265,7 +267,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->curlm = curl_multi_init ();
 	data->stream = FALSE;
 	data->url = xmms_util_decode_path (url);
-	data->mime = xmms_magic_mime_from_file (data->url);
 	
 	xmms_transport_private_data_set (transport, data);
 	
@@ -280,8 +281,6 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 		data->again = TRUE;
 	}
 	
-	xmms_transport_mimetype_set (transport, data->mime);
-
 	FD_ZERO (&data->fdread);
 	FD_ZERO (&data->fdwrite);
 	FD_ZERO (&data->fdexcep);

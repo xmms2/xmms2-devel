@@ -35,7 +35,6 @@
  * Function prototypes
  */
 
-static gboolean xmms_html_can_handle (const gchar *mime);
 static gboolean xmms_html_read_playlist (xmms_transport_t *transport, guint playlist_id);
 static GString *xmms_html_write_playlist (guint32 *list);
 
@@ -93,40 +92,44 @@ xmms_plugin_get (void)
 	                          "HTML Playlist " XMMS_VERSION,
 	                          "HTML Playlist reader");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_html_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_html_read_playlist);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_html_write_playlist);
 
 	xmms_plugin_config_value_register (plugin, "suffixes", "mp3,ogg,flac,wav,spx,sid", NULL, NULL);
 
+	xmms_plugin_magic_add (plugin, "html w/ doctype", "text/html",
+	                       "0 string <!DOCTYPE html ", NULL);
+
+	/* we accept broken HTML, too */
+	xmms_plugin_magic_add (plugin, "html tag", "text/html",
+	                       "0 string <html ", NULL);
+	xmms_plugin_magic_add (plugin, "html header tag", "text/html",
+	                       "0 string <head ", NULL);
+
+	/* XHTML */
+	xmms_plugin_magic_add (plugin, "xml tag", "text/html",
+	                       "0 string <?xml ", NULL);
+
 	return plugin;
 }
 
 static gboolean
-xmms_html_can_handle (const gchar *mime)
-{
-	g_return_val_if_fail (mime, FALSE);
-
-	XMMS_DBG ("xmms_html_can_handle (%s)", mime);
-
-	if ((g_strncasecmp (mime, "text/html", 9) == 0))
-		return TRUE;
-
-	return FALSE;
-}
-
-static gboolean
 xmms_html_read_playlist (xmms_transport_t *transport,
-			 guint32 playlist_id)
+						 guint32 playlist_id)
 {
 	gchar *buffer;
 	const gchar *plsurl;
 	gchar **tags;
 	gchar **suffix;
 	xmms_config_value_t *val;
+	xmms_medialib_session_t *session;
 
 	gint cnt, readlen, buflen;
 
@@ -173,9 +176,11 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 	g_free (buffer);
 
 	val = xmms_config_lookup ("playlist.html.suffixes");
-	suffix = g_strsplit (xmms_config_value_string_get (val), ",", 0);
+	suffix = g_strsplit (xmms_config_value_get_string (val), ",", 0);
 
 	plsurl = xmms_transport_url_get (transport);
+
+	session = xmms_medialib_begin ();
 
 	for (cnt = 0; tags[cnt] != NULL; cnt++) {
 		gchar *url, *full;
@@ -193,8 +198,8 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 
 		full = build_url (plsurl, url);
 
-		entry = xmms_medialib_entry_new (full);
-		xmms_medialib_playlist_add (playlist_id, entry);
+		entry = xmms_medialib_entry_new (session, full);
+		xmms_medialib_playlist_add (session, playlist_id, entry);
 
 		g_free (url);
 		g_free (full);
@@ -203,6 +208,8 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 	g_strfreev (suffix);
 	g_strfreev (tags);
 
+	xmms_medialib_end (session);
+
 	return TRUE;
 }
 
@@ -210,18 +217,21 @@ static GString *
 xmms_html_write_playlist (guint32 *list)
 {
 	GString *ret;
+	xmms_medialib_session_t *session;
 	gboolean is_even = TRUE;
 	guint num_entries = 0, total_len = 0;
 	guint i;
 
 	g_return_val_if_fail (list, FALSE);
 
+	session = xmms_medialib_begin ();
+
 	/* get the playlists total playtime */
 	while (list[num_entries]) {
 		xmms_medialib_entry_t entry = list[num_entries];
 
-		total_len += xmms_medialib_entry_property_get_int (entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		total_len += xmms_medialib_entry_property_get_int (session, entry,
+														   XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
 		num_entries++;
 	}
@@ -240,13 +250,13 @@ xmms_html_write_playlist (guint32 *list)
 
 		entry = list[i];
 
-		artist = escape_html (xmms_medialib_entry_property_get_str (entry,
+		artist = escape_html (xmms_medialib_entry_property_get_str (session, entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST));
-		title = escape_html (xmms_medialib_entry_property_get_str (entry,
+		title = escape_html (xmms_medialib_entry_property_get_str (session, entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE));
-		len = xmms_medialib_entry_property_get_int (entry,
+		len = xmms_medialib_entry_property_get_int (session, entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
-		url = escape_html (xmms_medialib_entry_property_get_str (entry,
+		url = escape_html (xmms_medialib_entry_property_get_str (session, entry,
 			XMMS_MEDIALIB_ENTRY_PROPERTY_URL));
 
 		if (!artist && !title) {
@@ -273,6 +283,7 @@ xmms_html_write_playlist (guint32 *list)
 		i++;
 	}
 
+	xmms_medialib_end (session);
 	g_string_append (ret, html_footer);
 
 	return ret;

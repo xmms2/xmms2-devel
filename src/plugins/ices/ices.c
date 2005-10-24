@@ -75,6 +75,10 @@ xmms_plugin_get (void)
 	                          "Icecast2 Shoutplugin " XMMS_VERSION,
 	                          "Icecast2 Shoutplugin");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://www.icecast.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
@@ -197,40 +201,40 @@ xmms_ices_new (xmms_effect_t *effect, xmms_output_t *output)
 	shout_set_protocol (data->shout, SHOUT_PROTOCOL_HTTP);
 
 	val = xmms_plugin_config_lookup (plugin, "host");
-	shout_set_host (data->shout, xmms_config_value_string_get (val));
+	shout_set_host (data->shout, xmms_config_value_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "port");
-	shout_set_port (data->shout, xmms_config_value_int_get (val));
+	shout_set_port (data->shout, xmms_config_value_get_int (val));
 
 	val = xmms_plugin_config_lookup (plugin, "password");
-	shout_set_password (data->shout, xmms_config_value_string_get (val));
+	shout_set_password (data->shout, xmms_config_value_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "user");
-	shout_set_user (data->shout, xmms_config_value_string_get (val));
+	shout_set_user (data->shout, xmms_config_value_get_string (val));
 
 	shout_set_agent (data->shout, "XMMS/" XMMS_VERSION);
 
 	val = xmms_plugin_config_lookup (plugin, "mount");
-	shout_set_mount (data->shout, xmms_config_value_string_get (val));
+	shout_set_mount (data->shout, xmms_config_value_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "public");
-	shout_set_public (data->shout, xmms_config_value_int_get (val));
+	shout_set_public (data->shout, xmms_config_value_get_int (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamname");
-	shout_set_name (data->shout, xmms_config_value_string_get (val));
+	shout_set_name (data->shout, xmms_config_value_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamdescription");
-	shout_set_description (data->shout, xmms_config_value_string_get (val));
+	shout_set_description (data->shout, xmms_config_value_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamgenre");
-	shout_set_genre (data->shout, xmms_config_value_string_get (val));
+	shout_set_genre (data->shout, xmms_config_value_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamurl");
-	shout_set_url (data->shout, xmms_config_value_string_get (val));
+	shout_set_url (data->shout, xmms_config_value_get_string (val));
 
 	data->write_buf = FALSE;
 	val = xmms_plugin_config_lookup (plugin, "buffersize");
-	data->buf_size = xmms_config_value_int_get (val);
+	data->buf_size = xmms_config_value_get_int (val);
 	data->buf = xmms_ringbuf_new (data->buf_size);
 
 	data->serial = 1;
@@ -290,7 +294,7 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 	g_return_if_fail (data);
 
 	val = xmms_plugin_config_lookup (xmms_effect_plugin_get (effect), "encodingnombr");
-	nombr = xmms_config_value_int_get (val);
+	nombr = xmms_config_value_get_int (val);
 	XMMS_DBG ("Inited a encoder with rate %d nombr %d", rate, nombr);
 
 	vorbis_comment_clear (&data->vc);

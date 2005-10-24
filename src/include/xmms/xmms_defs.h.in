@@ -22,6 +22,7 @@
 #define SYSCONFDIR "%SYSCONFDIR%"
 #define PKGLIBDIR "%PKGLIBDIR%"
 #define SHAREDDIR "%SHAREDDIR%"
+#define BINDIR "%BINDIR%"
 
 #define XMMS_PATH_MAX 255
 

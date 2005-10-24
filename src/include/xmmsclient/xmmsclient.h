@@ -50,6 +50,7 @@ char *xmmsc_get_last_error (xmmsc_connection_t *c);
 int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res);
 
 xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type);
 
 void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
 void xmmsc_signal_disconnect (xmmsc_result_t *res);
@@ -76,6 +77,7 @@ xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int);
 xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int, signed int);
 xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, char *url);
+xmmsc_result_t *xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);
@@ -133,6 +135,7 @@ xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *
 xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query);
 xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *);
+xmmsc_result_t *xmmsc_medialib_playlist_list (xmmsc_connection_t *, const char *playlist);
 xmmsc_result_t *xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime);
 xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist);

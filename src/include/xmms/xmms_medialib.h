@@ -22,6 +22,7 @@
 
 
 #include <glib.h>
+#include <xmms/xmms_object.h>
 
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_MIME "mime"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ID "id"
@@ -53,15 +54,22 @@
 
 
 typedef guint32 xmms_medialib_entry_t;
+typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
-xmms_medialib_entry_t xmms_medialib_entry_new (const char *url);
-gboolean xmms_medialib_playlist_add (gint playlist_id, xmms_medialib_entry_t entry);
+xmms_medialib_entry_t xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url);
+gboolean xmms_medialib_playlist_add (xmms_medialib_session_t *session, gint playlist_id, xmms_medialib_entry_t entry);
 
-gchar *xmms_medialib_entry_property_get_str (xmms_medialib_entry_t entry, const gchar *property);
-guint xmms_medialib_entry_property_get_int (xmms_medialib_entry_t entry, const gchar *property);
-gboolean xmms_medialib_entry_property_set_str (xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
-gboolean xmms_medialib_entry_property_set_int (xmms_medialib_entry_t entry, const gchar *property, gint value);
+xmms_object_cmd_value_t *xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
+gchar *xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
+guint xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
+gboolean xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
+gboolean xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
-guint32 xmms_medialib_get_random_entry (void);
+guint32 xmms_medialib_get_random_entry (xmms_medialib_session_t *session);
+
+
+#define xmms_medialib_begin() _xmms_medialib_begin(__FILE__, __LINE__)
+xmms_medialib_session_t * _xmms_medialib_begin (const char *file, int line);
+void xmms_medialib_end (xmms_medialib_session_t *session);
 
 #endif /* __XMMS_MEDIALIB_H__ */

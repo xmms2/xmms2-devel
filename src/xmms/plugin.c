@@ -19,9 +19,17 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
+#include "xmmspriv/xmms_magic.h"
+#include "xmmspriv/xmms_decoder.h"
+#include "xmmspriv/xmms_transport.h"
+#include "xmmspriv/xmms_effect.h"
+#include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_output.h"
+#include "xmmspriv/xmms_plsplugins.h"
 
 #include <gmodule.h>
 #include <string.h>
+#include <stdarg.h>
 
 #ifdef HAVE_VALGRIND
 # include <memcheck.h>
@@ -54,6 +62,9 @@ struct xmms_plugin_St {
 
 	guint users;
 	GHashTable *method_table;
+
+	/* decoder/playlist plugin specific stuff */
+	GList *magic;
 };
 
 /*
@@ -69,6 +80,7 @@ static GList *xmms_plugin_list;
 
 static void xmms_plugin_destroy (xmms_object_t *object);
 static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
+static gboolean plugin_verify (xmms_plugin_t *plugin);
 
 /*
  * Public functions
@@ -150,6 +162,8 @@ xmms_plugin_new (xmms_plugin_type_t type,
 		case XMMS_PLUGIN_TYPE_EFFECT:
 			if (api_version != XMMS_EFFECT_PLUGIN_API_VERSION)
 				api_mismatch = TRUE;
+			break;
+		case XMMS_PLUGIN_TYPE_ALL:
 			break;
 	}
 
@@ -245,6 +259,68 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 	info->value = g_strdup (value);
 
 	plugin->info_list = g_list_append (plugin->info_list, info);
+}
+
+gboolean
+xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc,
+                       const gchar *mime, ...)
+{
+	GNode *tree, *node = NULL;
+	va_list ap;
+	gchar *s;
+	gpointer *root_props;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (plugin, FALSE);
+	g_return_val_if_fail (plugin->type == XMMS_PLUGIN_TYPE_DECODER ||
+	                      plugin->type == XMMS_PLUGIN_TYPE_PLAYLIST,
+	                      FALSE);
+	g_return_val_if_fail (desc, FALSE);
+	g_return_val_if_fail (mime, FALSE);
+
+	/* now process the magic specs in the argument list */
+	va_start (ap, mime);
+
+	s = va_arg (ap, gchar *);
+	if (!s) { /* no magic specs passed -> failure */
+		va_end (ap);
+		return FALSE;
+	}
+
+	/* root node stores the description and the mimetype */
+	root_props = g_new0 (gpointer, 2);
+	root_props[0] = g_strdup (desc);
+	root_props[1] = g_strdup (mime);
+	tree = g_node_new (root_props);
+
+	do {
+		if (!strlen (s)) {
+			ret = FALSE;
+			xmms_log_error ("invalid magic spec: '%s'", s);
+			break;
+		}
+
+		s = g_strdup (s); /* we need our own copy */
+		node = xmms_magic_add (tree, s, node);
+		g_free (s);
+
+		if (!node) {
+			xmms_log_error ("invalid magic spec: '%s'", s);
+			ret = FALSE;
+			break;
+		}
+	} while ((s = va_arg (ap, gchar *)));
+
+	va_end (ap);
+
+	/* only add this tree to the list if all spec chunks are valid */
+	if (ret) {
+		plugin->magic = g_list_append (plugin->magic, tree);
+	} else {
+		xmms_magic_tree_free (tree);
+	}
+
+	return ret;
 }
 
 /**
@@ -402,6 +478,19 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 	return plugin->info_list;
 }
 
+/**
+ * @internal Get magic specs from the plugin.
+ * @param[in] plugin The plugin
+ * @return a GList of magic specs from the plugin
+ */
+const GList *
+xmms_plugin_magic_get (const xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, NULL);
+
+	return plugin->magic;
+}
+
 /*
  * Private functions
  */
@@ -492,7 +581,6 @@ xmms_plugin_scan_directory (const gchar *dir)
 		return FALSE;
 	}
 
-	g_mutex_lock (xmms_plugin_mtx);
 	while ((name = g_dir_read_name (d))) {
 		if (strncmp (name, "lib", 3) != 0)
 			continue;
@@ -526,7 +614,15 @@ xmms_plugin_scan_directory (const gchar *dir)
 		plugin_init = sym;
 
 		plugin = plugin_init ();
-		if (plugin) {
+
+		if (!plugin) {
+			g_module_close (module);
+		} else if (!plugin_verify (plugin)) {
+			xmms_log_error ("Invalid plugin: %s", plugin->name);
+
+			plugin->module = module;
+			xmms_object_unref (plugin);
+		} else if (plugin) {
 			const GList *info;
 			const xmms_plugin_info_t *i;
 
@@ -538,18 +634,56 @@ xmms_plugin_scan_directory (const gchar *dir)
 					XMMS_DBG ("INFO: %s = %s", i->key,i->value);
 				info = g_list_next (info);
 			}
+
 			plugin->module = module;
 			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
-		} else {
-			g_module_close (module);
 		}
 
 		g_free (path);
 	}
-	g_mutex_unlock (xmms_plugin_mtx);
 	g_dir_close (d);
 
 	return TRUE;
+}
+
+GList *
+xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
+{
+	GList *list = NULL, *node, *l;
+
+	l = xmms_plugin_list_get (type);
+
+	g_mutex_lock (xmms_plugin_mtx);
+
+	for (node = l; node; node = g_list_next (node)) {
+		GHashTable *hash;
+		const GList *p;
+		xmms_plugin_t *plugin = node->data;
+
+		hash = g_hash_table_new (g_str_hash, g_str_equal);
+		g_hash_table_insert (hash, "name", 
+							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_name_get (plugin)));
+		g_hash_table_insert (hash, "shortname", 
+							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_shortname_get (plugin)));
+		g_hash_table_insert (hash, "description", 
+							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_description_get (plugin)));
+		g_hash_table_insert (hash, "type", 
+							 xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
+
+		for (p = xmms_plugin_info_get (plugin); p; p = g_list_next (p)) {
+			xmms_plugin_info_t *info = p->data;
+			g_hash_table_insert (hash, info->key, xmms_object_cmd_value_str_new (info->value));
+		}
+
+		list = g_list_prepend (list, xmms_object_cmd_value_dict_new (hash));
+
+	}
+
+	g_mutex_unlock (xmms_plugin_mtx);
+
+	xmms_plugin_list_destroy (l);
+
+	return list;
 }
 
 /**
@@ -567,7 +701,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
 		xmms_plugin_t *plugin = node->data;
 
-		if (plugin->type == type) {
+		if (plugin->type == type || type == XMMS_PLUGIN_TYPE_ALL) {
 			xmms_object_ref (plugin);
 			list = g_list_prepend (list, plugin);
 		}
@@ -646,6 +780,38 @@ xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
 	return ret;
 }
 
+gboolean xmms_plugin_has_methods (xmms_plugin_t *plugin, ...)
+{
+	va_list ap;
+	xmms_plugin_method_t m;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (plugin, FALSE);
+
+	g_mutex_lock (plugin->mutex);
+
+	va_start (ap, plugin);
+
+	m = va_arg (ap, xmms_plugin_method_t);
+	if (!m) { /* no methods passed -> failure */
+		goto out;
+	}
+
+	do {
+		if (!g_hash_table_lookup (plugin->method_table, m)) {
+			goto out;
+		}
+	} while ((m = va_arg (ap, xmms_plugin_method_t)));
+
+	ret = TRUE;
+
+out:
+	va_end (ap);
+	g_mutex_unlock (plugin->mutex);
+
+	return ret;
+}
+
 /*
  * Static functions
  */
@@ -660,7 +826,11 @@ xmms_plugin_destroy (xmms_object_t *object)
 	xmms_plugin_t *p = (xmms_plugin_t *) object;
 
 	g_mutex_free (p->mutex);
-	g_module_close (p->module);
+
+	if (p->module) {
+		g_module_close (p->module);
+	}
+
 	g_free (p->name);
 	g_free (p->shortname);
 	g_free (p->description);
@@ -674,6 +844,11 @@ xmms_plugin_destroy (xmms_object_t *object)
 		g_free (info);
 
 		p->info_list = g_list_delete_link (p->info_list, p->info_list);
+	}
+
+	while (p->magic) {
+		xmms_magic_tree_free (p->magic->data);
+		p->magic = g_list_delete_link (p->magic, p->magic);
 	}
 
 	/* remove this plugin from the global plugin list */
@@ -720,6 +895,36 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 	ret = g_strdup_printf ("%s.%s.%s", pl, xmms_plugin_shortname_get (plugin), value);
 
 	return ret;
+}
+
+static gboolean
+plugin_verify (xmms_plugin_t *plugin)
+{
+	gboolean (*f)(xmms_plugin_t *) = NULL;
+
+	g_assert (plugin);
+
+	switch (xmms_plugin_type_get (plugin)) {
+		case XMMS_PLUGIN_TYPE_TRANSPORT:
+			f = xmms_transport_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_DECODER:
+			f = xmms_decoder_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_OUTPUT:
+			f = xmms_output_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_PLAYLIST:
+			f = xmms_playlist_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_EFFECT:
+			f = xmms_effect_plugin_verify;
+			break;
+		case XMMS_PLUGIN_TYPE_ALL:
+			g_assert_not_reached ();
+	}
+
+	return f ? f (plugin) : TRUE;
 }
 
 /**

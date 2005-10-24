@@ -131,7 +131,8 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	if (!val)
 		return;
 
-	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD) {
+	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD
+		|| val->value.uint32 == XMMS_PLAYLIST_CHANGED_INSERT) {
 		xmms_mediainfo_reader_wakeup (mir);
 	}
 }
@@ -143,75 +144,86 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 	while (mrt->running) {
 		xmms_medialib_entry_t entry;
+		xmms_medialib_session_t *session;
 
-		while ((entry = xmms_medialib_entry_not_resolved_get())) {
+		session = xmms_medialib_begin ();
+		entry = xmms_medialib_entry_not_resolved_get (session);
+		xmms_medialib_end (session);
+
+		while (entry) {
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
-			const gchar *mime;
 			guint lmod = 0;
 
 			xmms_error_reset (&err);
-			lmod = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+			session = xmms_medialib_begin ();
+			lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+			xmms_medialib_end (session);
 
 			transport = xmms_transport_new ();
 			if (!transport) {
-				continue;
+				goto next;
 			}
 
 			if (!xmms_transport_open (transport, entry)) {
-				xmms_medialib_entry_remove (entry);
+				session = xmms_medialib_begin ();
+				xmms_medialib_entry_remove (session, entry);
+				xmms_medialib_end (session);
+
 				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_object_unref (transport);
-				continue;
+				goto next;
 			}
 
 			xmms_transport_start (transport);
 
 			if (lmod) {
 				guint tmp;
-				tmp = xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+				session = xmms_medialib_begin ();
+				tmp = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 				if (lmod >= tmp) {
-					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+					xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+					xmms_medialib_end (session);
 					xmms_transport_stop (transport);
 					xmms_object_unref (transport);
-					continue;
+					goto next;
 				}
+				xmms_medialib_end (session);
 				XMMS_DBG ("Modified on disk!");
 
 			}
 
-			mime = xmms_transport_mimetype_get_wait (transport);
-
-			if (!mime) {
-				xmms_medialib_entry_remove (entry);
-				xmms_playlist_remove_by_entry (mrt->playlist, entry);
-				xmms_transport_stop (transport);
-				xmms_object_unref (transport);
-				continue;
-			}
-
-			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
-				xmms_medialib_entry_remove (entry);
+				session = xmms_medialib_begin ();
+				xmms_medialib_entry_remove (session, entry);
+				xmms_medialib_end (session);
+
 				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
 				xmms_object_unref (decoder);
-				continue;
+
+				goto next;
 			}
 
 			if (xmms_decoder_init_for_mediainfo (decoder)) {
 				xmms_decoder_mediainfo_get (decoder, transport);
 			}
 
-			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+			session = xmms_medialib_begin ();
+			xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+			xmms_medialib_end (session);
 
 			xmms_transport_stop (transport);
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 
+next:
+			session = xmms_medialib_begin ();
+			entry = xmms_medialib_entry_not_resolved_get (session);
+			xmms_medialib_end (session);
 		}
 
 		g_mutex_lock (mrt->mutex);

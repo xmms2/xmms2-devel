@@ -28,17 +28,17 @@ typedef struct xmms_medialib_St xmms_medialib_t;
 
 gboolean xmms_medialib_init (xmms_playlist_t *playlist);
 
-xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (void);
-void xmms_medialib_entry_remove (xmms_medialib_entry_t entry);
+xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session);
+void xmms_medialib_entry_remove (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 
-GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_entry_t entry);
-guint xmms_medialib_entry_id_get (xmms_medialib_entry_t entry);
-gboolean xmms_medialib_entry_is_resolved (xmms_medialib_entry_t entry);
+GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
+guint xmms_medialib_entry_id_get (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
+gboolean xmms_medialib_entry_is_resolved (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 void xmms_medialib_playlist_save_autosaved ();
 void xmms_medialib_playlist_load_autosaved ();
 
-void xmms_medialib_logging_start (xmms_medialib_entry_t entry);
-void xmms_medialib_logging_stop (xmms_medialib_entry_t entry, guint playtime);
+void xmms_medialib_logging_start (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
+void xmms_medialib_logging_stop (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, guint playtime);
 
 
 #endif

@@ -54,8 +54,7 @@ typedef struct xmms_mad_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_mad_can_handle (const gchar *mimetype);
-static gboolean xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_mad_new (xmms_decoder_t *decoder);
 static gboolean xmms_mad_decode_block (xmms_decoder_t *decoder);
 static void xmms_mad_get_media_info (xmms_decoder_t *decoder);
 static void xmms_mad_destroy (xmms_decoder_t *decoder);
@@ -76,12 +75,15 @@ xmms_plugin_get (void)
 				  "mad",
 				  "MAD decoder " XMMS_VERSION,
 				  "MPEG Layer 1/2/3 decoder");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	xmms_plugin_info_add (plugin, "License", "GPL");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_mad_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_mad_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_mad_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_mad_destroy);
@@ -91,6 +93,12 @@ xmms_plugin_get (void)
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
+
+	xmms_plugin_magic_add (plugin, "id3 header", "audio/mpeg",
+	                       "0 string ID3", ">3 byte <0xff",
+	                       ">4 byte <0xff", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg header", "audio/mpeg",
+	                       "0 beshort &0xffe0", NULL);
 
 	return plugin;
 }
@@ -163,7 +171,11 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
   */
 
 static void
-xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint filesize, xmms_medialib_entry_t entry)
+xmms_mad_calc_duration (xmms_medialib_session_t *session,
+						xmms_decoder_t *decoder, 
+						guchar *buf, gint len, 
+						gint filesize, 
+						xmms_medialib_entry_t entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
@@ -191,7 +203,17 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
 	if (filesize == -1) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 0);
+		xmms_medialib_entry_property_set_int (session,
+											  entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+											  0);
+
+		/* frame.header.bitrate might be wrong, but we cannot do it any
+		 * better for streams
+		 */
+		xmms_medialib_entry_property_set_int (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+			frame.header.bitrate);
 		return;
 	}
 
@@ -221,7 +243,9 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 
 			XMMS_DBG ("XING duration %d", duration);
 
-			xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, duration);
+			xmms_medialib_entry_property_set_int (session, entry, 
+												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+												  duration);
 		}
 
 		/** @todo fix avg. bitrate in xing */
@@ -243,13 +267,18 @@ xmms_mad_calc_duration (xmms_decoder_t *decoder, guchar *buf, gint len, gint fil
 	mad_stream_finish (&stream);
 
 	if (!fsize) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, -1);
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+											  -1);
 	} else {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-						      (gint) (filesize*(gdouble)8000.0/bitrate));
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+											  (gint) (filesize*(gdouble)8000.0/bitrate));
 	}
 		
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, bitrate);
+	xmms_medialib_entry_property_set_int (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+										  bitrate);
 
 }
 
@@ -257,6 +286,7 @@ static void
 xmms_mad_get_media_info (xmms_decoder_t *decoder)
 {
 	xmms_transport_t *transport;
+	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry;
 	xmms_mad_data_t *data;
 	xmms_id3v2_header_t head;
@@ -278,6 +308,8 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 	if (ret <= 0) {
 		return;
 	}
+
+	session = xmms_medialib_begin ();
 
 	if (xmms_transport_islocal (transport) && 
 			ret >= 10 && 
@@ -302,6 +334,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 							   MIN(4096,head.len - pos), &error);
 				if (ret <= 0) {
 					xmms_log_error ("error reading data for id3v2-tag");
+					xmms_medialib_end (session);
 					return;
 				}
 				pos += ret;
@@ -313,46 +346,39 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 			ret += xmms_transport_read (transport, (gchar *)buf + 8192 - (head.len+10), head.len + 10, &error) - head.len - 10;
 		}
 		
-		id3handled = xmms_mad_id3v2_parse (id3v2buf, &head, entry);
+		id3handled = xmms_mad_id3v2_parse (session, id3v2buf, &head, entry);
 		g_free (id3v2buf);
 	}
 	
-	xmms_mad_calc_duration (decoder, buf, ret, xmms_transport_size (transport), entry);
+	xmms_mad_calc_duration (session, decoder, buf, ret, xmms_transport_size (transport), entry);
 
 	if (xmms_transport_islocal (transport) && !id3handled) {
 		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
 		ret = xmms_transport_read (transport, (gchar *)buf, 128, &error);
 		if (ret == 128) {
-			xmms_mad_id3_parse (buf, entry);
+			xmms_mad_id3_parse (session, buf, entry);
 		}
 	}
 
+	xmms_medialib_entry_property_set_int (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+										  data->samplerate);
+
+
 	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
 
+	xmms_medialib_end (session);
 	xmms_medialib_entry_send_update (entry);
 
 	return;
 }
 
 static gboolean
-xmms_mad_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/mpeg") == 0))
-		return TRUE;
-
-	return FALSE;
-
-}
-
-static gboolean
-xmms_mad_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_mad_new (xmms_decoder_t *decoder)
 {
 	xmms_mad_data_t *data;
 
 	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (mimetype, FALSE);
 
 	data = g_new0 (xmms_mad_data_t, 1);
 

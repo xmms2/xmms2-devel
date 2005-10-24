@@ -110,10 +110,11 @@ xmms_plugin_get (void)
 	                          "Advanced Linux Sound Architecture \
 	                          output plugin");
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.alsa-project.org");
-	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
-	xmms_plugin_info_add (plugin, "E-Mail", "daniel@nittionino.nu");
+	g_return_val_if_fail (plugin, NULL);
 
+	xmms_plugin_info_add (plugin, "URL", "http://www.alsa-project.org");
+	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
+	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
 	                        xmms_alsa_write);
@@ -208,7 +209,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 	int i, j, k;
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (cv);
+	dev = xmms_config_value_get_string (cv);
 
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -328,7 +329,7 @@ xmms_alsa_open (xmms_output_t *output)
 	g_return_val_if_fail (data, FALSE);
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (cv);
+	dev = xmms_config_value_get_string (cv);
 
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -352,7 +353,7 @@ xmms_alsa_open (xmms_output_t *output)
 		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 		                                    "volume");
 		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
-		xmms_config_value_data_set (volume, buf);
+		xmms_config_value_set_data (volume, buf);
 	}
 
 	return TRUE;
@@ -520,7 +521,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 	                                "mixer_dev");
-	dev = (gchar *) xmms_config_value_string_get (cv);
+	dev = (gchar *) xmms_config_value_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
@@ -555,7 +556,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
-	name = (gchar *) xmms_config_value_string_get (cv);
+	name = (gchar *) xmms_config_value_get_string (cv);
 
 	index = 0;
 
@@ -888,12 +889,12 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 		if (written > 0) {
 			frames -= written;
 			buffer += snd_pcm_frames_to_bytes (data->pcm, written);
-		} else if (written == -EAGAIN) {
+		} else if (written == -EAGAIN || written == -EINTR) {
 			snd_pcm_wait (data->pcm, 100);
 		} else if (written == -EPIPE || written == -ESTRPIPE) {
 			xmms_alsa_xrun_recover (data, written);
 		} else {
-			xmms_log_fatal ("ALSA's doing some funky shit.. please report.");
+			xmms_log_fatal ("ALSA's doing some funky shit.. please report (%s)", snd_strerror (written));
 		}
 	}
 }

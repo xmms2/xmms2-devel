@@ -30,15 +30,15 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 14
+#define DB_VERSION 15
 
 const char create_Control_stm[] = "create table Control (version)";
-const char create_Media_stm[] = "create table Media (id integer primary_key, key, value)";
+const char create_Media_stm[] = "create table Media (id integer, key, value)";
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos int)";
 const char create_idx_stm[] = "create unique index key_idx on Media (id, key);"
-			      "create index prop_idx on Media (key,value);"
+						      "create index prop_idx on Media (key,value);"
                               "create index log_id on Log (id);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
@@ -56,20 +56,6 @@ const char create_views[] = "CREATE VIEW artists as select distinct m1.value as 
  * @brief The SQLite backend of medialib
  * @{
  */
-
-static int
-xmms_sqlite_id_cb (void *pArg, int argc, char **argv, char **columnName) 
-{
-	guint *id = pArg;
-
-	if (argv[0]) {
-		*id = atoi (argv[0]) + 1;
-	} else {
-		*id = 1;
-	}
-
-	return 0;
-}
 
 static int
 xmms_sqlite_version_cb (void *pArg, int argc, char **argv, char **columnName)
@@ -156,7 +142,7 @@ try_upgrade (sqlite3 *sql, gint version)
  * Open a database or create a new one
  */
 sqlite3 *
-xmms_sqlite_open (guint *id, gboolean *c)
+xmms_sqlite_open (gboolean *c)
 {
 	sqlite3 *sql;
 	gboolean create = TRUE;
@@ -165,18 +151,18 @@ xmms_sqlite_open (guint *id, gboolean *c)
 	xmms_config_value_t *cv;
 
 	cv = xmms_config_lookup ("medialib.path");
-	dbpath = xmms_config_value_string_get (cv);
+	dbpath = xmms_config_value_get_string (cv);
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;
 	}
 
-	XMMS_DBG ("opening database: %s", dbpath);
-
 	if (sqlite3_open (dbpath, &sql)) {
 		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg(sql));
 		return FALSE; 
 	}
+	
+	sqlite3_busy_timeout (sql, 1000);
 
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 /*	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);*/
@@ -220,12 +206,8 @@ xmms_sqlite_open (guint *id, gboolean *c)
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_views, NULL, NULL, NULL);
-		*id = 1;
 
-	} else {
-		sqlite3_exec (sql, "select MAX (id) from Media", xmms_sqlite_id_cb, id, NULL);
-	}
-
+	} 
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
 

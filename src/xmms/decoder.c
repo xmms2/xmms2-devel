@@ -37,6 +37,7 @@
 #include "xmms/xmms_decoderplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmmsc/xmmsc_stdint.h"
+#include "xmmspriv/xmms_magic.h"
 
 
 #include <string.h>
@@ -95,7 +96,7 @@ struct xmms_decoder_St {
  * Static function prototypes
  */
 
-static xmms_plugin_t *xmms_decoder_find_plugin (const gchar *mimetype);
+static xmms_plugin_t *xmms_decoder_find_plugin (xmms_decoder_t *decoder, xmms_transport_t *transport);
 static gpointer xmms_decoder_thread (gpointer data);
 static gboolean xmms_decoder_init (xmms_decoder_t *decoder, gint mode);
 
@@ -115,10 +116,10 @@ static gboolean xmms_decoder_init (xmms_decoder_t *decoder, gint mode);
  * unpacks/transforms it to stereo PCM 16bit data. A decoder
  * plugin needs to define the following methods to be valid:
  *
- * #XMMS_PLUGIN_METHOD_NEW allocates a new decoder. This will be
- * called if can_handle returns TRUE. The prototype is:
+ * #XMMS_PLUGIN_METHOD_NEW allocates a new decoder.
+ * The prototype is:
  * @code
- * gboolean new (xmms_decoder_t *decoder, const gchar *mimetype);
+ * gboolean new (xmms_decoder_t *decoder);
  * @endcode
  * This method need to set the private data with xmms_decoder_data_set()
  *
@@ -137,14 +138,6 @@ static gboolean xmms_decoder_init (xmms_decoder_t *decoder, gint mode);
  * void destroy (xmms_decoder_t *decoder);
  * @endcode
  * Free all private data in the decoder struct here.
- *
- * #XMMS_PLUGIN_METHOD_CAN_HANDLE this method will be called
- * when XMMS has a new source of data to check if this plugin will
- * take care of this. The prototype is:
- * @code
- * gboolean can_handle (const gchar *mimetype);
- * @endcode
- * This method should return TRUE if we want to handle this mimetype.
  *
  * #XMMS_PLUGIN_METHOD_DECODE_BLOCK unpacks or transforms a
  * block of data from the transporter. The method calls
@@ -463,6 +456,7 @@ xmms_decoder_destroy (xmms_object_t *object)
 	if (decoder->plugin) {
 		destroy_method = xmms_plugin_method_get (decoder->plugin,
 		                                         XMMS_PLUGIN_METHOD_DESTROY);
+		g_assert (destroy_method);
 	}
 
 	if (destroy_method) {
@@ -508,7 +502,7 @@ xmms_decoder_new ()
 	decoder->vis = xmms_visualisation_new ();
 
 	val = xmms_config_lookup ("decoder.buffersize");
-	decoder->buffer = xmms_ringbuf_new (xmms_config_value_int_get (val));
+	decoder->buffer = xmms_ringbuf_new (xmms_config_value_get_int (val));
 
 	return decoder;
 }
@@ -527,19 +521,16 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 {
 	xmms_plugin_t *plugin;
 	xmms_decoder_new_method_t new_method;
-	const gchar *mimetype;
 
 	g_return_val_if_fail (decoder, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
-	mimetype = xmms_transport_mimetype_get (transport);
 	decoder->entry = xmms_transport_medialib_entry_get (transport);
 
-	XMMS_DBG ("Trying to create decoder for mime-type %s", mimetype);
-
-	plugin = xmms_decoder_find_plugin (mimetype);
+	plugin = xmms_decoder_find_plugin (decoder, transport);
 	if (!plugin) {
-		XMMS_DBG ("Plugin for %s was *NOT* found!", mimetype);
+		XMMS_DBG ("Cannot find plugin for %s",
+		          xmms_transport_url_get (transport));
 		return FALSE;
 	}
 
@@ -551,8 +542,9 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	decoder->plugin = plugin;
 
 	new_method = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_NEW);
+	g_assert (new_method);
 
-	if (!new_method || !new_method (decoder, mimetype)) {
+	if (!new_method (decoder)) {
 		xmms_log_error ("open failed");
 		xmms_object_unref (transport);
 		return FALSE;
@@ -692,45 +684,167 @@ xmms_decoder_medialib_entry_get (xmms_decoder_t *decoder)
 	return decoder->entry;
 }
 
+gboolean
+xmms_decoder_plugin_verify (xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, FALSE);
+
+	return xmms_plugin_has_methods (plugin,
+	                                XMMS_PLUGIN_METHOD_NEW,
+	                                XMMS_PLUGIN_METHOD_DESTROY,
+	                                XMMS_PLUGIN_METHOD_DECODE_BLOCK,
+	                                XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
+	                                NULL);
+}
+
 /*
  * Static functions
  */
 
-static xmms_plugin_t *
-xmms_decoder_find_plugin (const gchar *mimetype)
+static gint
+cb_sort_plugin_list (xmms_plugin_t *a, xmms_plugin_t *b)
 {
-	GList *list, *node;
-	xmms_plugin_t *plugin = NULL;
-	xmms_decoder_can_handle_method_t can_handle;
+	guint n1, n2;
 
-	g_return_val_if_fail (mimetype, NULL);
+	n1 = xmms_magic_complexity (xmms_plugin_magic_get (a));
+	n2 = xmms_magic_complexity (xmms_plugin_magic_get (b));
 
-	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_DECODER);
+	if (n1 > n2) {
+		return -1;
+	} else if (n1 < n2) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+static xmms_plugin_t *
+find_plugin_plain (xmms_magic_checker_t *c, GList *list,
+                   GNode **matched_tree)
+{
+	GList *node;
+
+	c->read = c->offset = 0;
+	c->alloc = 128; /* start with a 128 bytes buffer */
+	c->buf = g_malloc (c->alloc);
 
 	for (node = list; node; node = g_list_next (node)) {
-		plugin = node->data;
+		GNode *tree;
+		xmms_plugin_t *plugin = node->data;
+		const GList *magic = xmms_plugin_magic_get (plugin);
 
-		XMMS_DBG ("Trying plugin: %s", xmms_plugin_shortname_get (plugin));
-		can_handle = xmms_plugin_method_get (plugin,
-		                                     XMMS_PLUGIN_METHOD_CAN_HANDLE);
-
-		if (!can_handle) {
-			continue;
+		XMMS_DBG ("performing magic check for %s",
+		          xmms_plugin_shortname_get (plugin));
+		if (!magic) { /* no magic? matches anything */
+			return plugin;
 		}
 
-		if (can_handle (mimetype)) {
-			xmms_object_ref (plugin);
-			break;
+		tree = xmms_magic_match (c, magic);
+		if (tree) {
+			*matched_tree = tree;
+
+			return plugin;
 		}
 	}
 
-	if (!node)
-		plugin = NULL;
+	return NULL;
+}
 
-	if (list)
-		xmms_plugin_list_destroy (list);
+static xmms_plugin_t *
+find_plugin_stream (xmms_magic_checker_t *c, GList *list,
+                    GNode **matched_tree)
+{
+	GList *node;
+	guint offset = 0;
 
-	return plugin;
+	while (offset < 512) {
+		c->read = 0;
+		c->offset = offset++;
+		c->alloc = 128; /* start with a 128 bytes buffer */
+		g_free (c->buf); /* it's initialized to NULL, so this is safe */
+		c->buf = g_malloc (c->alloc);
+
+		for (node = list; node; node = g_list_next (node)) {
+			GNode *tree;
+			xmms_plugin_t *plugin = node->data;
+			const GList *magic = xmms_plugin_magic_get (plugin);
+
+			if (!magic) {
+				continue;
+			}
+
+			XMMS_DBG ("performing magic check for %s",
+					xmms_plugin_shortname_get (plugin));
+			tree = xmms_magic_match (c, magic);
+			if (tree) {
+				*matched_tree = tree;
+
+				return plugin;
+			}
+		}
+	}
+
+	return NULL;
+}
+
+static void
+set_mime (xmms_transport_t *transport, GNode *tree)
+{
+	gpointer *data = tree->data;
+	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session = xmms_medialib_begin ();
+
+	/* set the mime type of the entry to the one from the
+	 * magic set that matched
+	 */
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set_str (session, entry,
+		XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, data[1]);
+	xmms_medialib_end (session);
+	xmms_medialib_entry_send_update (entry);
+}
+
+static xmms_plugin_t *
+xmms_decoder_find_plugin (xmms_decoder_t *decoder,
+                          xmms_transport_t *transport)
+{
+	GList *list;
+	GNode *tree = NULL;
+	xmms_plugin_t *ret = NULL;
+	xmms_magic_checker_t c;
+
+	list = xmms_plugin_list_get (XMMS_PLUGIN_TYPE_DECODER);
+	if (!list) {
+		return NULL;
+	}
+
+	/* sort by complexity of the magic trees, so plugins that accept
+	 * any data are checked last
+	 */
+	list = g_list_sort (list, (GCompareFunc) cb_sort_plugin_list);
+
+	c.transport = transport;
+	c.buf = NULL;
+
+	if (xmms_transport_isstream (transport)) {
+		ret = find_plugin_stream (&c, list, &tree);
+	} else {
+		ret = find_plugin_plain (&c, list, &tree);
+	}
+
+	if (tree) {
+		set_mime (transport, tree);
+	}
+
+	g_free (c.buf);
+
+	if (ret) {
+		xmms_object_ref (ret);
+	}
+
+	xmms_plugin_list_destroy (list);
+
+	return ret;
 }
 
 static gpointer
@@ -744,9 +858,7 @@ xmms_decoder_thread (gpointer data)
 
 	decode_block = xmms_plugin_method_get (decoder->plugin,
 	                                       XMMS_PLUGIN_METHOD_DECODE_BLOCK);
-	if (!decode_block) {
-		return NULL;
-	}
+	g_assert (decode_block);
 
 	xmms_object_ref (decoder);
 

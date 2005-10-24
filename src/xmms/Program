@@ -33,7 +33,9 @@ def config(env):
 	env.pkgconfig("gmodule-2.0", fail=True)
 	env.pkgconfig("gthread-2.0", fail=True)
 	env.pkgconfig("sqlite3", fail=True)
+	
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
 	# we have a xmms2d - we might want plugins!
 	pluginenv.handle_targets("Plugin")
+

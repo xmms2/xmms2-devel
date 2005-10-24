@@ -1,0 +1,10 @@
+Branched from faad2 CVS tree on 2005-07-22.
+
+Changes:
+ * Change references to config.h to be conditional since we don't use config.h
+ * Fix small memory leak in mp4atom.c related to GetHomeDir() function
+ * Add newlines to end of files that don't have it
+ * Uncomment the break in parse_atoms so we can stream (atom parsing stopped on mdat block)
+ * Change static functions that are used from other files to non-static
+ * Harmonize the use of data blocks and convert from int8_t to uint8_t to get rid of
+   signedness warnings compiling on gcc 4.0

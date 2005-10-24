@@ -39,12 +39,11 @@ typedef struct xmms_flac_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_flac_new (xmms_decoder_t *decoder);
 static gboolean xmms_flac_init (xmms_decoder_t *decoder, gint mode);
 /*
 static gboolean xmms_flac_seek (xmms_decoder_t *decoder, guint samples);
 */
-static gboolean xmms_flac_can_handle (const gchar *mimetype);
 static gboolean xmms_flac_decode_block (xmms_decoder_t *decoder);
 static void xmms_flac_destroy (xmms_decoder_t *decoder);
 static void xmms_flac_get_mediainfo (xmms_decoder_t *decoder);
@@ -63,6 +62,10 @@ xmms_plugin_get (void)
 				  "flac",
 				  "FLAC decoder " XMMS_VERSION,
 				  "Free Lossless Audio Codec decoder");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -72,7 +75,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
 /*	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);*/
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_flac_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_flac_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_flac_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_flac_get_mediainfo);
 
@@ -81,21 +83,10 @@ xmms_plugin_get (void)
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 	*/
 
+	xmms_plugin_magic_add (plugin, "flac header", "audio/x-flac",
+	                       "0 string fLaC", NULL);
+
 	return plugin;
-}
-
-static gboolean
-xmms_flac_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-
-	if ((g_strcasecmp (mimetype, "audio/x-flac") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "application/x-flac") == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 FLAC__SeekableStreamDecoderReadStatus
@@ -256,7 +247,7 @@ flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__Strea
 }
 
 static gboolean
-xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_flac_new (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
 
@@ -350,9 +341,12 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 	gint current, num_comments;
 
 	g_return_if_fail (decoder);
+
+	session = xmms_medialib_begin ();
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
@@ -373,9 +367,9 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 			while (properties[i].vname) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+					xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set_str (entry, properties[i].xname, val);
+					xmms_medialib_entry_property_set_str (session, entry, properties[i].xname, val);
 				}
 				i++;
 			}
@@ -384,14 +378,16 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 		}
 	}
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-					      (gint) data->bits_per_sample * data->sample_rate);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+										  (gint) data->bits_per_sample * data->sample_rate);
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-					      (gint) data->total_samples / data->sample_rate * 1000);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+										  (gint) data->total_samples / data->sample_rate * 1000);
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
-					      data->sample_rate);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
+										  data->sample_rate);
+
+	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
 }

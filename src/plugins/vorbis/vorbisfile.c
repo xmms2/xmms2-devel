@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -69,8 +69,7 @@ static props properties[] = {
  * Function prototypes
  */
 
-static gboolean xmms_vorbis_can_handle (const gchar *mimetype);
-static gboolean xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_vorbis_new (xmms_decoder_t *decoder);
 static gboolean xmms_vorbis_decode_block (xmms_decoder_t *decoder);
 static void xmms_vorbis_get_media_info (xmms_decoder_t *decoder);
 static void xmms_vorbis_destroy (xmms_decoder_t *decoder);
@@ -86,46 +85,47 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
 				  XMMS_DECODER_PLUGIN_API_VERSION,
 				  "vorbis",
 				  "Vorbis decoder " XMMS_VERSION,
 				  "Xiph's Ogg/Vorbis decoder");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xiph.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_vorbis_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_vorbis_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_vorbis_decode_block);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_vorbis_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_vorbis_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_vorbis_seek);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_vorbis_get_media_info);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
+	                        xmms_vorbis_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK,
+	                        xmms_vorbis_decode_block);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
+	                        xmms_vorbis_destroy);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT,
+	                        xmms_vorbis_init);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK,
+	                        xmms_vorbis_seek);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
+	                        xmms_vorbis_get_media_info);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 
+	xmms_plugin_magic_add (plugin, "ogg/vorbis header",
+	                       "application/ogg",
+	                       "0 string OggS", ">4 byte 0",
+	                       ">>28 string \x01vorbis", NULL);
+
 	return plugin;
 }
 
-static gboolean
-xmms_vorbis_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "application/ogg") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "application/x-ogg") == 0))
-		return TRUE;
-
-	return FALSE;
-}
-
-static size_t 
-vorbis_callback_read (void *ptr, size_t size, size_t nmemb, void *datasource)
+static size_t
+vorbis_callback_read (void *ptr, size_t size, size_t nmemb,
+                      void *datasource)
 {
 	xmms_vorbis_data_t *data;
 	xmms_decoder_t *decoder = datasource;
@@ -141,22 +141,18 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb, void *datasource)
 	g_return_val_if_fail (data, 0);
 	g_return_val_if_fail (transport, 0);
 
-	ret = xmms_transport_read (transport, ptr, size*nmemb, &error);
+	ret = xmms_transport_read (transport, ptr, size * nmemb, &error);
 
-	return ret;
+	return ret / size;
 }
 
-
-/** @todo
- *  Remove fulhack here. Maybe should transport support tell?
- */
 static int
 vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 {
 	xmms_vorbis_data_t *data;
 	xmms_decoder_t *decoder = datasource;
 	xmms_transport_t *transport;
-	
+	gint ret;
 
 	g_return_val_if_fail (decoder, 0);
 
@@ -177,35 +173,30 @@ vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 		whence = XMMS_TRANSPORT_SEEK_END;
 	}
 
-	if (whence == XMMS_TRANSPORT_SEEK_CUR &&
-		offset == 0)
-		return 1;
+	ret = xmms_transport_seek (transport, (gint) offset, whence);
 
-	if (xmms_transport_seek (transport, (gint) offset, whence) == -1)
-		return -1;
-
-	return 1;
+	return (ret == -1) ? -1 : 0;
 }
 
 static int
 vorbis_callback_close (void *datasource)
 {
-	return 1;
+	return 0;
 }
 
 static long
 vorbis_callback_tell (void *datasource)
 {
 	xmms_decoder_t *decoder = datasource;
-	xmms_transport_t *transport; 
+	xmms_transport_t *transport;
 
-	transport = xmms_decoder_transport_get (decoder);  
+	transport = xmms_decoder_transport_get (decoder);
 
-	return xmms_transport_tell (transport); 
+	return xmms_transport_tell (transport);
 }
 
-static gboolean 
-xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
+static gboolean
+xmms_vorbis_new (xmms_decoder_t *decoder)
 {
 	xmms_vorbis_data_t *data;
 
@@ -219,12 +210,12 @@ xmms_vorbis_new (xmms_decoder_t *decoder, const gchar *mimetype)
 
 	xmms_decoder_private_data_set (decoder, data);
 
-
 	return TRUE;
 }
 
 static void
-get_replaygain (xmms_medialib_entry_t entry,
+get_replaygain (xmms_medialib_session_t *session,
+				xmms_medialib_entry_t entry,
                 vorbis_comment *vc)
 {
 	const char *tmp = NULL;
@@ -239,9 +230,8 @@ get_replaygain (xmms_medialib_entry_t entry,
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, g_strtod (tmp, NULL) / 20));
 		/** @todo this should probably be a int instead? */
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
-						      buf);
+		xmms_medialib_entry_property_set_str (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK, buf);
 	}
 
 	/* album gain */
@@ -253,9 +243,9 @@ get_replaygain (xmms_medialib_entry_t entry,
 		g_snprintf (buf, sizeof (buf), "%f",
 		            pow (10.0, g_strtod (tmp, NULL) / 20));
 		/** @todo this should probably be a int instead? */
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
-						      buf);
+		xmms_medialib_entry_property_set_str (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+			buf);
 	}
 
 	/* track peak */
@@ -264,16 +254,16 @@ get_replaygain (xmms_medialib_entry_t entry,
 	}
 
 	if (tmp) {
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-						      (gchar *) tmp);
+		xmms_medialib_entry_property_set_str (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+			(gchar *) tmp);
 	}
 
 	/* album peak */
 	if ((tmp = vorbis_comment_query (vc, "replaygain_album_peak", 0))) {
-		xmms_medialib_entry_property_set_str (entry,
-						      XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
-						      (gchar *) tmp);
+		xmms_medialib_entry_property_set_str (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
+			(gchar *) tmp);
 	}
 }
 
@@ -285,6 +275,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 	vorbis_info *vi;
 	double playtime;
 	vorbis_comment *ptr;
+	xmms_medialib_session_t *session;
 
 	g_return_if_fail (decoder);
 
@@ -297,13 +288,25 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 	vi = ov_info (&data->vorbisfile, -1);
 
+	session = xmms_medialib_begin ();
+
 	playtime = ov_time_total (&data->vorbisfile, -1);
 	if (playtime != OV_EINVAL) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, playtime * 1000);
+		xmms_medialib_entry_property_set_int (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+			playtime * 1000);
 	}
 
 	if (vi && vi->bitrate_nominal) {
-		xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, (gint)vi->bitrate_nominal);
+		xmms_medialib_entry_property_set_int (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+			(gint) vi->bitrate_nominal);
+	}
+
+	if (vi && vi->rate) {
+		xmms_medialib_entry_property_set_int (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+			(gint) vi->rate);
 	}
 
 	ptr = ov_comment (&data->vorbisfile, -1);
@@ -312,27 +315,32 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 		gint temp;
 
 		for (temp = 0; temp < ptr->comments; temp++) {
-			gchar **s; 
+			gchar **s;
 			gint i = 0;
 
-			s = g_strsplit (ptr->user_comments[temp], "=", 2); 
+			s = g_strsplit (ptr->user_comments[temp], "=", 2);
 			while (properties[i].vname) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+					xmms_medialib_entry_property_set_int (session, entry,
+														  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
+														  1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set_str (entry, properties[i].xname, s[1]);
+					xmms_medialib_entry_property_set_str (session, entry,
+														  properties[i].xname, s[1]);
 				}
+
 				i++;
 			}
-			g_strfreev (s); 
+
+			g_strfreev (s);
 		}
 
-		get_replaygain (entry, ptr);
+		get_replaygain (session, entry, ptr);
 	}
-		
-	xmms_medialib_entry_send_update (entry);
 
+	xmms_medialib_end (session);
+	xmms_medialib_entry_send_update (entry);
 }
 
 static gboolean
@@ -346,8 +354,9 @@ xmms_vorbis_init (xmms_decoder_t *decoder, gint mode)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
-	ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0, data->callbacks);
-	if (ret != 0) {
+	ret = ov_open_callbacks (decoder, &data->vorbisfile, NULL, 0,
+	                         data->callbacks);
+	if (ret) {
 		return FALSE;
 	}
 
@@ -356,12 +365,17 @@ xmms_vorbis_init (xmms_decoder_t *decoder, gint mode)
 
 		vi = ov_info (&data->vorbisfile, -1);
 
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, vi->channels, vi->rate);
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U16, vi->channels, vi->rate);
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S8, vi->channels, vi->rate);
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U8, vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16,
+		                         vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U16,
+		                         vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S8,
+		                         vi->channels, vi->rate);
+		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U8,
+		                         vi->channels, vi->rate);
+
 		data->format = xmms_decoder_format_finish (decoder);
-		if (data->format == NULL) {
+		if (!data->format) {
 			return FALSE;
 		}
 
@@ -380,17 +394,17 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	guint16 buffer[2048];
 
 	g_return_val_if_fail (decoder, FALSE);
-	
+
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
-	ret = ov_read (&data->vorbisfile, (gchar *)buffer, sizeof (buffer),
-		       G_BYTE_ORDER == G_BIG_ENDIAN,
-		       xmms_sample_size_get (data->format->format),
-		       xmms_sample_signed_get (data->format->format),
-		       &c);
+	ret = ov_read (&data->vorbisfile, (gchar *) buffer, sizeof (buffer),
+	               G_BYTE_ORDER == G_BIG_ENDIAN,
+	               xmms_sample_size_get (data->format->format),
+	               xmms_sample_signed_get (data->format->format),
+				   &c);
 
-	if (ret == 0) {
+	if (!ret) {
 		return FALSE;
 	} else if (ret < 0) {
 		return TRUE;
@@ -406,8 +420,7 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	return TRUE;
 }
 
-
-static gboolean 
+static gboolean
 xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 {
 	xmms_vorbis_data_t *data;
@@ -415,19 +428,18 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 	g_return_val_if_fail (decoder, FALSE);
 
 	data = xmms_decoder_private_data_get (decoder);
-
 	g_return_val_if_fail (data, FALSE);
 
 	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
-		xmms_log_error ("Trying to seek past end of stream"); 
-		return FALSE; 
+		xmms_log_error ("Trying to seek past end of stream");
+		return FALSE;
 	}
 
 	ov_pcm_seek (&data->vorbisfile, samples);
+
 	return TRUE;
 }
 
-	
 static void
 xmms_vorbis_destroy (xmms_decoder_t *decoder)
 {
@@ -436,11 +448,9 @@ xmms_vorbis_destroy (xmms_decoder_t *decoder)
 	g_return_if_fail (decoder);
 
 	data = xmms_decoder_private_data_get (decoder);
-
 	g_return_if_fail (data);
 
 	ov_clear (&data->vorbisfile);
 
 	g_free (data);
 }
-

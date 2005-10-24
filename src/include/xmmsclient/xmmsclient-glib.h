@@ -27,7 +27,8 @@
 extern "C" {
 #endif
 
-void xmmsc_setup_with_gmain (xmmsc_connection_t *connection);
+void *xmmsc_mainloop_gmain_init (xmmsc_connection_t *connection);
+void xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *connection, void *udata);
 
 #ifdef __cplusplus
 }

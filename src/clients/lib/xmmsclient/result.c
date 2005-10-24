@@ -259,6 +259,10 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 	if (!res->parsed)
 		return;
 
+	if (res->islist) {
+		res->datatype = XMMS_OBJECT_CMD_ARG_LIST;
+	}
+
 	switch (res->datatype) {
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 		case XMMS_OBJECT_CMD_ARG_INT32 :
@@ -393,6 +397,7 @@ void
 xmmsc_result_unref (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
+	x_api_error_if (res->ref < 1, "with a freed result",);
 
 	res->ref--;
 	if (res->ref == 0) {
@@ -837,9 +842,12 @@ xmmsc_result_list_first (xmmsc_result_t *res)
 	res->current = res->list;
 
 	if (res->current) {
-		res->data.generic = res->current->data;
+		xmmsc_result_value_t *val = res->current->data;
+		res->data.generic = val->value.generic;
+		res->datatype = val->type;
 	} else {
 		res->data.generic = NULL;
+		res->datatype = XMMS_OBJECT_CMD_ARG_NONE;
 	}
 
 	return 1;

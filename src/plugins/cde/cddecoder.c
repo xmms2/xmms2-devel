@@ -32,8 +32,7 @@
  * Function prototypes
  */
 
-static gboolean xmms_cdae_can_handle (const gchar *mimetype);
-static gboolean xmms_cdae_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_cdae_new (xmms_decoder_t *decoder);
 static gboolean xmms_cdae_init (xmms_decoder_t *decoder);
 static gboolean xmms_cdae_decode_block (xmms_decoder_t *decoder);
 static void xmms_cdae_get_media_info (xmms_decoder_t *decoder);
@@ -52,12 +51,15 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "cddecoder",
 			"CDAE decoder " XMMS_VERSION,
 			"CDAE decoder");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xiph.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_cdae_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_cdae_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_cdae_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_cdae_new);
@@ -72,17 +74,6 @@ xmms_plugin_get (void)
 	xmms_plugin_config_value_register (plugin, "usecddb", "1", NULL, NULL);
 
 	return plugin;
-}
-
-static gboolean
-xmms_cdae_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/pcm-data") == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 static void
@@ -121,9 +112,9 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 	xmms_medialib_entry_send_update (entry);
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "usecddb");
-	if (xmms_config_value_int_get (val) == 1) {
+	if (xmms_config_value_get_int (val) == 1) {
 		val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "cddbserver");
-		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_value_string_get (val), data->track);
+		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_value_get_string (val), data->track);
 	}
 
 	xmms_medialib_entry_send_update (entry);
@@ -131,7 +122,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 }
 
 static gboolean
-xmms_cdae_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_cdae_new (xmms_decoder_t *decoder)
 {
 	g_return_val_if_fail (decoder, FALSE);
 
