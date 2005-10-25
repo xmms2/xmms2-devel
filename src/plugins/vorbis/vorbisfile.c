@@ -44,25 +44,26 @@ typedef struct xmms_vorbis_data_St {
 	xmms_audio_format_t *format;
 } xmms_vorbis_data_t;
 
+typedef enum { STRING, INTEGER } ptype;
 typedef struct {
 	gchar *vname;
 	gchar *xname;
+	ptype type;
 } props;
 
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
 /** These are the properties that we extract from the comments */
 static props properties[] = {
-	{ "title", XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE },
-	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST },
-	{ "album", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM },
-	{ "tracknumber", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR },
-	{ "date", XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR },
-	{ "genre", XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE },
-	{ "musicbrainz_albumid", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID },
-	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID },
-	{ "musicbrainz_trackid", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID },
-	{ NULL, 0 }
+	{ "title",                XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,     STRING  },
+	{ "artist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,    STRING  },
+	{ "album",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,     STRING  },
+	{ "tracknumber",          XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
+	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
+	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
+	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
+	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
+	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
 };
 
 /*
@@ -319,18 +320,21 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 			gint i = 0;
 
 			s = g_strsplit (ptr->user_comments[temp], "=", 2);
-			while (properties[i].vname) {
+			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
 					xmms_medialib_entry_property_set_int (session, entry,
-														  XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
-														  1);
-				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set_str (session, entry,
-														  properties[i].xname, s[1]);
+					                                      XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+				} else if (g_strcasecmp (s[0], properties[i].vname) == 0) {
+					if (properties[i].type == INTEGER) {
+						gint tmp = strtol (s[1], NULL, 10);
+						xmms_medialib_entry_property_set_int (session, entry,
+						                                      properties[i].xname, tmp);
+					} else {
+						xmms_medialib_entry_property_set_str (session, entry,
+						                                      properties[i].xname, s[1]);
+					}
 				}
-
-				i++;
 			}
 
 			g_strfreev (s);

@@ -41,7 +41,7 @@ enum status_enum { PLAYING, PAUSED, STOPPED, CLOSED, RESET };
 typedef struct xmms_jack_data_St {
 	guint               rate;
 	gboolean            have_mixer;
-	xmms_config_value_t *mixer_conf;
+	xmms_config_property_t *mixer_conf;
 
 	unsigned char*      sound_buffer;                  /* temporary buffer used to process data before sending to jack */
 
@@ -675,7 +675,7 @@ xmms_jack_new(xmms_output_t *output)
 	data->mixer_conf = xmms_plugin_config_lookup (
 						      xmms_output_plugin_get (output), "volume");
 
-	xmms_config_value_callback_set (data->mixer_conf,
+	xmms_config_property_callback_set (data->mixer_conf,
 					xmms_jack_mixer_config_changed,
 					(gpointer) output);
 
@@ -725,7 +725,7 @@ xmms_jack_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	xmms_config_value_callback_remove (data->mixer_conf,
+	xmms_config_property_callback_remove (data->mixer_conf,
 	                                   xmms_jack_mixer_config_changed);
 
 	/* if playing, stop and close the device */

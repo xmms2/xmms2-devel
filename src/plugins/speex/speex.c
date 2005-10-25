@@ -94,7 +94,7 @@ xmms_speex_init (xmms_decoder_t *decoder, gint mode)
 {
 	gint pe;
 
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	xmms_speex_data_t *data;
 	xmms_error_t error;
 	xmms_transport_t *transport;
@@ -144,7 +144,7 @@ xmms_speex_init (xmms_decoder_t *decoder, gint mode)
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder),
 	                                 "perceptual_enhancer");
-	pe = xmms_config_value_get_int (val);
+	pe = xmms_config_property_get_int (val);
 	speex_decoder_ctl(data->speex_state, SPEEX_SET_ENH, &pe);
 
 	ogg_sync_pageout (&data->sync_state, &data->ogg_page);

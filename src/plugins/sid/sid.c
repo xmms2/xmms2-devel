@@ -78,9 +78,7 @@ xmms_plugin_get (void)
 	                          "SID decoder " XMMS_VERSION,
 	                          "libsidplay2 based SID decoder");
 
-	if (!plugin) {
-		return NULL;
-	}
+	g_return_val_if_fail (plugin, NULL);
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://sidplay2.sourceforge.net/");  

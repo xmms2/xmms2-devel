@@ -82,7 +82,7 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 	xmms_cdae_data_t *data;
 	xmms_medialib_entry_t entry;
 	xmms_transport_t *transport;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	gint duration;
 	gchar *tmp;
 
@@ -112,9 +112,9 @@ xmms_cdae_get_media_info (xmms_decoder_t *decoder)
 	xmms_medialib_entry_send_update (entry);
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "usecddb");
-	if (xmms_config_value_get_int (val) == 1) {
+	if (xmms_config_property_get_int (val) == 1) {
 		val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder), "cddbserver");
-		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_value_get_string (val), data->track);
+		entry = xmms_cdae_cddb_query (data->toc, (gchar *)xmms_config_property_get_string (val), data->track);
 	}
 
 	xmms_medialib_entry_send_update (entry);

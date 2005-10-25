@@ -170,7 +170,7 @@ xmms_ca_new (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *volume;
+	xmms_config_property_t *volume;
 	
 
 	OSStatus res;
@@ -278,7 +278,7 @@ xmms_ca_new (xmms_output_t *output)
 	
 	plugin = xmms_output_plugin_get (output);
 	volume = xmms_plugin_config_lookup (plugin, "volume");
-	xmms_config_value_callback_set (volume,
+	xmms_config_property_callback_set (volume,
 									xmms_ca_mixer_config_changed,
 									(gpointer) output);
 
@@ -295,7 +295,7 @@ xmms_ca_destroy (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *volume;
+	xmms_config_property_t *volume;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
@@ -303,7 +303,7 @@ xmms_ca_destroy (xmms_output_t *output)
 
 	plugin = xmms_output_plugin_get (output);
 	volume = xmms_plugin_config_lookup (plugin, "volume");
-	xmms_config_value_callback_remove (volume,
+	xmms_config_property_callback_remove (volume,
 	                                   xmms_ca_mixer_config_changed);
 
 
