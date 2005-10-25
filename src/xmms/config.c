@@ -85,6 +85,7 @@ struct xmms_config_St {
 	GQueue *states;
 	GQueue *sections;
 	gchar *value_name;
+	double version;
 };
 
 /**
@@ -107,6 +108,11 @@ struct xmms_config_property_St {
  */
 
 xmms_config_t *global_config;
+
+/**
+ * Config file version
+ */
+#define XMMS_CONFIG_VERSION 0.02
 
 /**
  * @}
@@ -445,7 +451,11 @@ xmms_config_parse_start (GMarkupParseContext *ctx,
 			                      "Unknown element '%s'", name);
 			return;
 		case XMMS_CONFIG_STATE_START:
-			/* nothing to be done here */
+			/* check config version here */
+			attr = lookup_attribute(attr_name, attr_data, "version");
+			if (attr) {
+				config->version = atof(attr);
+			}
 			return;
 		default:
 			break;
@@ -678,6 +688,7 @@ xmms_config_init (const gchar *filename)
 	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free,
 	                                  (GDestroyNotify) __int_xmms_object_unref);
+	config->version = -1;
 	global_config = config;
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
@@ -723,6 +734,20 @@ xmms_config_init (const gchar *filename)
 				                error->message);
 				g_error_free (error);
 				parserr = TRUE;
+			}
+			/* check config file version, assumes that g_markup_context_parse
+			 * above managed to parse the <xmms> element during the first
+			 * iteration of this loop */
+			if (XMMS_CONFIG_VERSION > config->version) {
+				g_hash_table_destroy(config->properties);
+				config->properties = g_hash_table_new_full (g_str_hash,
+				                                            g_str_equal,
+				                                            g_free,
+	                                  (GDestroyNotify) __int_xmms_object_unref);
+				config->version = XMMS_CONFIG_VERSION;
+				g_free(config->value_name);
+				config->value_name = NULL;
+				break;
 			}
 		}
 
@@ -852,8 +877,8 @@ dump_node (GNode *node, FILE *fp)
 		         indent, data[0], data[1]);
 	} else {
 		if (is_root) {
-			fprintf (fp, "<?xml version=\"1.0\"?>\n<%s>\n",
-			         (gchar *) node->data);
+			fprintf (fp, "<?xml version=\"1.0\"?>\n<%s version=\"%.2f\">\n",
+			         (gchar *) node->data, XMMS_CONFIG_VERSION);
 		} else {
 			fprintf (fp, "%s<section name=\"%s\">\n",
 			         indent, data[0]);
