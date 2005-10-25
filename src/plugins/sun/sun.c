@@ -140,19 +140,19 @@ xmms_plugin_get (void)
 							xmms_sun_mixer_set);
 
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 			"device",
 			"/dev/audio",
 			NULL,
 			NULL);
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 			"mixer",
 			"/dev/mixer",
 			NULL,
 			NULL);                                                                                                                                                  
 	       
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 			"volume",
 			"70/70",
 			NULL,

@@ -109,15 +109,20 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_curl_close);
 
-	xmms_plugin_config_value_register (plugin, "shoutcastinfo", "1", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "useproxy", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "proxyaddress", "127.0.0.1:8080", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "authproxy", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "proxyuser", "user", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "proxypass", "password", NULL, NULL); 
+	xmms_plugin_config_property_register (plugin, "shoutcastinfo", "1",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "buffersize", "131072",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "verbose", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "connecttimeout", "15",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "useproxy", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxyaddress", "127.0.0.1:8080",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "authproxy", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxyuser", "user", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxypass", "password",
+	                                   NULL, NULL); 
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
 

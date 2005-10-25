@@ -137,16 +137,16 @@ xmms_plugin_get (void)
 	                        xmms_alsa_format_set);
 
 
-	xmms_plugin_config_value_register (plugin, "device", "default",
+	xmms_plugin_config_property_register (plugin, "device", "default",
 	                                   NULL, NULL);
 
-	xmms_plugin_config_value_register (plugin, "mixer", "PCM",
+	xmms_plugin_config_property_register (plugin, "mixer", "PCM",
 	                                   NULL, NULL);
 
-	xmms_plugin_config_value_register (plugin, "mixer_dev", "default",
+	xmms_plugin_config_property_register (plugin, "mixer_dev", "default",
 	                                   NULL,NULL);
 
-	xmms_plugin_config_value_register (plugin, "volume", "70/70",
+	xmms_plugin_config_property_register (plugin, "volume", "70/70",
 	                                   NULL, NULL);
 
 	return plugin;

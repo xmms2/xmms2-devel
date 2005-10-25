@@ -102,7 +102,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_html_read_playlist);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_html_write_playlist);
 
-	xmms_plugin_config_value_register (plugin, "suffixes", "mp3,ogg,flac,wav,spx,sid", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "suffixes",
+	                                      "mp3,ogg,flac,wav,spx,sid",
+	                                      NULL, NULL);
 
 	xmms_plugin_magic_add (plugin, "html w/ doctype", "text/html",
 	                       "0 string <!DOCTYPE html ", NULL);

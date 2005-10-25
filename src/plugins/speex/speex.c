@@ -66,7 +66,8 @@ xmms_plugin_get (void)
 	//xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	//xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 
-	xmms_plugin_config_value_register (plugin, "perceptual_enhancer", "1", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "perceptual_enhancer", "1",
+	                                      NULL, NULL);
 
 	xmms_plugin_magic_add (plugin, "ogg/speex header", "audio/x-speex",
 	                       "0 string OggS", ">4 byte 0",

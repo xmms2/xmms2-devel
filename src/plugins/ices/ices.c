@@ -89,18 +89,25 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ices_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_ices_process);
 
-	xmms_plugin_config_value_register (plugin, "encodingnombr", "64000", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "host", "localhost", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "port", "8000", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "password", "hackme", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "user", "source", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "mount", "/stream.ogg", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "public", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamname", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamdescription", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamgenre", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamurl", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "buffersize", "65536", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "encodingnombr", "64000",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "host", "localhost",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "port", "8000", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "password", "hackme",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "user", "source", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "mount", "/stream.ogg",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "public", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamname", "", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamdescription", "",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamgenre", "",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamurl", "", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "buffersize", "65536",
+	                                      NULL, NULL);
 
 	return plugin;
 }

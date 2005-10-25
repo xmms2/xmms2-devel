@@ -812,7 +812,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS,
 				xmms_jack_status); 
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 					   "volume",
 					   "70/70",
 					   NULL,

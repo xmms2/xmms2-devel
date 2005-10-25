@@ -115,7 +115,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
 	                        xmms_diskwrite_flush);
 
-	xmms_plugin_config_value_register (plugin, "destination_directory",
+	xmms_plugin_config_property_register (plugin, "destination_directory",
 	                                   "/tmp", NULL, NULL);
 
 	return plugin;

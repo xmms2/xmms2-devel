@@ -84,9 +84,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
 	                        xmms_replaygain_destroy);
 
-	xmms_plugin_config_value_register (plugin, "mode", "track",
+	xmms_plugin_config_property_register (plugin, "mode", "track",
 	                                   NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "use_anticlip", "1",
+	xmms_plugin_config_property_register (plugin, "use_anticlip", "1",
 	                                   NULL, NULL);
 	return plugin;
 }

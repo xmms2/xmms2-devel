@@ -143,27 +143,27 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, 
 	                        xmms_oss_mixer_set);
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 	                                   "mixer",
 	                                   "/dev/mixer",
 	                                   NULL,
 	                                   NULL);
 	
 #if !defined(XMMS_OS_NETBSD) && !defined(XMMS_OS_OPENBSD) 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 	                                   "device",
 	                                   "/dev/dsp",
 	                                   NULL,
 	                                   NULL);
 # else
-        xmms_plugin_config_value_register (plugin,
+        xmms_plugin_config_property_register (plugin,
                                            "device", 
                                            "/dev/audio",
                                            NULL,
                                            NULL);
 #endif
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 	                                   "volume",
 	                                   "70/70",
 	                                   NULL,

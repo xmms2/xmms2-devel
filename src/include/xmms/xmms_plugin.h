@@ -113,6 +113,6 @@ gboolean xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc, const 
 
 /* config methods */
 xmms_config_property_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *value);
-xmms_config_property_t *xmms_plugin_config_value_register (xmms_plugin_t *plugin, const gchar *value, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
+xmms_config_property_t *xmms_plugin_config_property_register (xmms_plugin_t *plugin, const gchar *value, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 
 #endif /* __XMMS_PLUGIN_H__ */

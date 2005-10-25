@@ -359,11 +359,11 @@ xmms_plugin_config_lookup (xmms_plugin_t *plugin,
  * @todo config value <-> property fixup
  */
 xmms_config_property_t *
-xmms_plugin_config_value_register (xmms_plugin_t *plugin,
-				   const gchar *name,
-				   const gchar *default_value,
-				   xmms_object_handler_t cb,
-				   gpointer userdata)
+xmms_plugin_config_property_register (xmms_plugin_t *plugin,
+                                      const gchar *name,
+                                      const gchar *default_value,
+                                      xmms_object_handler_t cb,
+                                      gpointer userdata)
 {
 	gchar *fullpath;
 	xmms_config_property_t *prop;

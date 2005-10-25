@@ -86,7 +86,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
 	
-	xmms_plugin_config_value_register (plugin, "volume", "70/70", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "volume", "70/70", NULL, NULL);
 
 	return plugin;
 }

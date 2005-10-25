@@ -74,7 +74,8 @@ xmms_plugin_get (void)
 //	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
 
-	xmms_plugin_config_value_register (plugin, "device", "/dev/cdrom", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "device", "/dev/cdrom", NULL,
+	                                      NULL);
 
 	
 	return plugin;

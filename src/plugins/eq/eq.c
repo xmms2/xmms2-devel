@@ -142,7 +142,7 @@ xmms_plugin_get (void)
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
 		g_snprintf (buf, sizeof (buf), "gain%d", i);
-		xmms_plugin_config_value_register (plugin, buf, "1.0", NULL, NULL);
+		xmms_plugin_config_property_register (plugin, buf, "1.0", NULL, NULL);
 	}
 
 	return plugin;
