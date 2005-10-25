@@ -762,17 +762,21 @@ xmms_config_init (const gchar *filename)
 		g_queue_free (config->sections);
 
 		config->is_parsing = FALSE;
+	}
 
-		if ((eof) && (!parserr)) {
-			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE, XMMS_CMD_FUNC (setvalue));
-			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE, XMMS_CMD_FUNC (getvalue));
-			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES, XMMS_CMD_FUNC (listvalues));
-			xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE, XMMS_CMD_FUNC (regvalue));
-			retval = TRUE;
-		}
-		else {
-			xmms_object_unref(config);
-		}
+	if (!parserr) {
+		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE,
+		                     XMMS_CMD_FUNC (setvalue));
+		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE,
+		                     XMMS_CMD_FUNC (getvalue));
+		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES,
+		                     XMMS_CMD_FUNC (listvalues));
+		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE,
+		                     XMMS_CMD_FUNC (regvalue));
+		retval = TRUE;
+	}
+	else {
+		xmms_object_unref(config);
 	}
 
 	return retval;
