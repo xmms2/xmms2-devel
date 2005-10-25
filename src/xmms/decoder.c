@@ -495,14 +495,14 @@ xmms_decoder_t *
 xmms_decoder_new ()
 {
 	xmms_decoder_t *decoder;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 
 	decoder = xmms_object_new (xmms_decoder_t, xmms_decoder_destroy);
 	decoder->mutex = g_mutex_new ();
 	decoder->vis = xmms_visualisation_new ();
 
 	val = xmms_config_lookup ("decoder.buffersize");
-	decoder->buffer = xmms_ringbuf_new (xmms_config_value_get_int (val));
+	decoder->buffer = xmms_ringbuf_new (xmms_config_property_get_int (val));
 
 	return decoder;
 }

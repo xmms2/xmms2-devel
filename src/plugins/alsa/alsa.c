@@ -188,7 +188,7 @@ xmms_alsa_new (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *volume;
+	xmms_config_property_t *volume;
 
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_alsa_data_t, 1);
@@ -204,9 +204,9 @@ xmms_alsa_new (xmms_output_t *output)
 	plugin = xmms_output_plugin_get (output);
 	volume = xmms_plugin_config_lookup (plugin, "volume");
 
-	xmms_config_value_callback_set (volume,
-					xmms_alsa_mixer_config_changed,
-					(gpointer) output);
+	xmms_config_property_callback_set (volume,
+	                                   xmms_alsa_mixer_config_changed,
+	                                   (gpointer) output);
 
 	xmms_output_private_data_set (output, data);
 
@@ -218,13 +218,13 @@ xmms_alsa_new (xmms_output_t *output)
 static void
 xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 {
-	const xmms_config_value_t *cv;
+	const xmms_config_property_t *cv;
 	const gchar *dev;
 	int i, j, k;
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 					"device");
-	dev = xmms_config_value_get_string (cv);
+	dev = xmms_config_property_get_string (cv);
 
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -308,7 +308,7 @@ xmms_alsa_destroy (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *volume;
+	xmms_config_property_t *volume;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
@@ -317,8 +317,8 @@ xmms_alsa_destroy (xmms_output_t *output)
 	plugin = xmms_output_plugin_get (output);
 	volume = xmms_plugin_config_lookup (plugin, "volume");
 
-	xmms_config_value_callback_remove (volume,
-					   xmms_alsa_mixer_config_changed);
+	xmms_config_property_callback_remove (volume,
+	                                      xmms_alsa_mixer_config_changed);
 
 	snd_pcm_hw_params_free (data->hwparams);
 	g_free (data);
@@ -334,8 +334,8 @@ static gboolean
 xmms_alsa_open (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
-	const xmms_config_value_t *cv;
-	xmms_config_value_t *volume;
+	const xmms_config_property_t *cv;
+	xmms_config_property_t *volume;
 	const gchar *dev;
 	gchar buf[8];
 	gint err = 0, left = 0, right = 0;
@@ -345,7 +345,7 @@ xmms_alsa_open (xmms_output_t *output)
 	g_return_val_if_fail (data, FALSE);
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_get_string (cv);
+	dev = xmms_config_property_get_string (cv);
 
 	if (!dev) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -369,7 +369,7 @@ xmms_alsa_open (xmms_output_t *output)
 		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 						    "volume");
 		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
-		xmms_config_value_set_data (volume, buf);
+		xmms_config_property_set_data (volume, buf);
 	}
 
 	return TRUE;
@@ -527,7 +527,7 @@ static gboolean
 xmms_alsa_mixer_setup (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
-	const xmms_config_value_t *cv;
+	const xmms_config_property_t *cv;
 	gchar *dev, *name;
 	snd_mixer_selem_id_t *selem_id;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
@@ -539,7 +539,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 					"mixer_dev");
-	dev = (gchar *)xmms_config_value_get_string (cv);
+	dev = (gchar *)xmms_config_property_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
@@ -574,7 +574,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 	}
 
 	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
-	name = (gchar *)xmms_config_value_get_string (cv);
+	name = (gchar *)xmms_config_property_get_string (cv);
 
 	index = 0;
 

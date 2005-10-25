@@ -326,64 +326,63 @@ xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc,
 /**
  * Lookup the value of a plugin's config property, given the property key.
  * @param[in] plugin The plugin
- * @param[in] value The property key (config path)
+ * @param[in] key The property key (config path)
  * @return A config value
  * @todo config value <-> property fixup
  */
-xmms_config_value_t *
+xmms_config_property_t *
 xmms_plugin_config_lookup (xmms_plugin_t *plugin,
-			   const gchar *value)
+                           const gchar *key)
 {
 	gchar *ppath;
-	xmms_config_value_t *val;
+	xmms_config_property_t *prop;
 
 	g_return_val_if_fail (plugin, NULL);
-	g_return_val_if_fail (value, NULL);
+	g_return_val_if_fail (key, NULL);
 	
-	ppath = plugin_config_path (plugin, value);
-	val = xmms_config_lookup (ppath);
+	ppath = plugin_config_path (plugin, key);
+	prop = xmms_config_lookup (ppath);
 
 	g_free (ppath);
 
-	return val;
+	return prop;
 }
 
 /**
  * Register a config property for a plugin.
  * @param[in] plugin The plugin
- * @param[in] value The property name
+ * @param[in] name The property name
  * @param[in] default_value The default value for the property
  * @param[in] cb A callback function to be executed when the property value
  * changes
  * @param[in] userdata Pointer to data to be passed to the callback
  * @todo config value <-> property fixup
  */
-xmms_config_value_t *
+xmms_config_property_t *
 xmms_plugin_config_value_register (xmms_plugin_t *plugin,
-				   const gchar *value,
+				   const gchar *name,
 				   const gchar *default_value,
 				   xmms_object_handler_t cb,
 				   gpointer userdata)
 {
 	gchar *fullpath;
-	xmms_config_value_t *val;
+	xmms_config_property_t *prop;
 
 	g_return_val_if_fail (plugin, NULL);
-	g_return_val_if_fail (value, NULL);
+	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (default_value, NULL);
 
-	fullpath = plugin_config_path (plugin, value);
+	fullpath = plugin_config_path (plugin, name);
 
-	val = xmms_config_value_register (fullpath, 
-					  default_value, 
-					  cb, userdata);
+	prop = xmms_config_property_register (fullpath, default_value, cb,
+	                                      userdata);
 
-	/* xmms_config_value_register() copies the given path,
+	/* xmms_config_property_register() copies the given path,
 	 * so we have to free our copy here
 	 */
 	g_free (fullpath);
 
-	return val;
+	return prop;
 }
 
 /**

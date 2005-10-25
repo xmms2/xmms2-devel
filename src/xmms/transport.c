@@ -267,14 +267,14 @@ xmms_transport_t *
 xmms_transport_new ()
 {
 	xmms_transport_t *transport;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 
 	val = xmms_config_lookup ("transport.buffersize");
 
 	transport = xmms_object_new (xmms_transport_t, xmms_transport_destroy);
 	transport->mutex = g_mutex_new ();
 	transport->cond = g_cond_new ();
-	transport->buffer = xmms_ringbuf_new (xmms_config_value_get_int (val));
+	transport->buffer = xmms_ringbuf_new (xmms_config_property_get_int (val));
 	transport->seek_to = -1;
 	transport->lr.bufend = &transport->lr.buf[0];
 	

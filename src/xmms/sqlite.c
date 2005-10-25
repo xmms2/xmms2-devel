@@ -148,10 +148,10 @@ xmms_sqlite_open (gboolean *c)
 	gboolean create = TRUE;
 	const gchar *dbpath;
 	gint version = 0;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 
 	cv = xmms_config_lookup ("medialib.path");
-	dbpath = xmms_config_value_get_string (cv);
+	dbpath = xmms_config_property_get_string (cv);
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;

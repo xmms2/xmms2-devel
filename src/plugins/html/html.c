@@ -128,7 +128,7 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 	const gchar *plsurl;
 	gchar **tags;
 	gchar **suffix;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	xmms_medialib_session_t *session;
 
 	gint cnt, readlen, buflen;
@@ -176,7 +176,7 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 	g_free (buffer);
 
 	val = xmms_config_lookup ("playlist.html.suffixes");
-	suffix = g_strsplit (xmms_config_value_get_string (val), ",", 0);
+	suffix = g_strsplit (xmms_config_property_get_string (val), ",", 0);
 
 	plsurl = xmms_transport_url_get (transport);
 

@@ -44,18 +44,18 @@ typedef enum {
 	XMMS_CONFIG_STATE_INVALID,
 	XMMS_CONFIG_STATE_START,
 	XMMS_CONFIG_STATE_SECTION,
-	XMMS_CONFIG_STATE_VALUE
+	XMMS_CONFIG_STATE_PROPERTY
 } xmms_configparser_state_t;
 
 static GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
-static xmms_config_value_t *xmms_config_value_new (const gchar *name);
-static gchar *xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
-static gchar *xmms_config_value_client_register (xmms_config_t *config, const gchar *value, const gchar *def_value, xmms_error_t *error);
+static xmms_config_property_t *xmms_config_property_new (const gchar *name);
+static gchar *xmms_config_property_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
+static gchar *xmms_config_property_client_register (xmms_config_t *config, const gchar *name, const gchar *def_value, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, LIST, NONE, NONE);
-XMMS_CMD_DEFINE (getvalue, xmms_config_value_client_lookup, xmms_config_t *, STRING, STRING, NONE);
-XMMS_CMD_DEFINE (regvalue, xmms_config_value_client_register, xmms_config_t *, STRING, STRING, STRING);
+XMMS_CMD_DEFINE (getvalue, xmms_config_property_client_lookup, xmms_config_t *, STRING, STRING, NONE);
+XMMS_CMD_DEFINE (regvalue, xmms_config_property_client_register, xmms_config_t *, STRING, STRING, STRING);
 
 /**
  * @defgroup Config Config
@@ -75,7 +75,7 @@ XMMS_CMD_DEFINE (regvalue, xmms_config_value_client_register, xmms_config_t *, S
 struct xmms_config_St {
 	xmms_object_t obj;
 
-	GHashTable *values;
+	GHashTable *properties;
 
 	/* Lock on globals are great! */
 	GMutex *mutex;
@@ -88,15 +88,15 @@ struct xmms_config_St {
 };
 
 /**
- * A value in the configuration file
+ * A config property in the configuration file
  */
-struct xmms_config_value_St {
+struct xmms_config_property_St {
 	xmms_object_t obj;
 
 	/** Name of the config directive */
 	const gchar *name;
 	/** The data */
-	gchar *data;
+	gchar *value;
 };
 
 
@@ -122,91 +122,94 @@ xmms_config_t *global_config;
 /**
  * Lookup config key and return its associated value as a string.
  * This is a convenient function to make it easier to get a configuration value
- * rather than having to call #xmms_config_value_get_string separately.
+ * rather than having to call #xmms_config_property_get_string separately.
  *
  * @param conf Global config
- * @param key Configuration value to lookup
+ * @param key Configuration property to lookup
  * @param err if error occurs this will be filled in
  *
  * @return A string with the value. If the value is an int it will return NULL
  */
 const gchar *
-xmms_config_value_lookup_get_string (xmms_config_t *conf, gchar *key, xmms_error_t *err)
+xmms_config_property_lookup_get_string (xmms_config_t *conf, gchar *key,
+                                        xmms_error_t *err)
 {
-	xmms_config_value_t *val;
+	xmms_config_property_t *prop;
 
-	val = xmms_config_lookup (key);
-	if (!val) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to get nonexistant configvalue");
+	prop = xmms_config_lookup (key);
+	if (!prop) {
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+		                "Trying to get non-existent property");
 		return NULL;
 	}
 
-	return xmms_config_value_get_string (val);
+	return xmms_config_property_get_string (prop);
 }
 
 /**
  * Look up a config key from the global config
  * @param path A configuration path. Could be core.myconfig or
  * effect.foo.myconfig
- * @return A newly allocated #xmms_config_value_t
+ * @return An #xmms_config_property_t
  */
-xmms_config_value_t *
+xmms_config_property_t *
 xmms_config_lookup (const gchar *path)
 {
-	xmms_config_value_t *value;
+	xmms_config_property_t *prop;
 	g_return_val_if_fail (global_config, NULL);
 	
 	g_mutex_lock (global_config->mutex);
-	value = g_hash_table_lookup (global_config->values, path);
+	prop = g_hash_table_lookup (global_config->properties, path);
 	g_mutex_unlock (global_config->mutex);
 
-	return value;
+	return prop;
 }
 
 /**
- * Get the name of a config value.
- * @param val The config value
- * @return Name of config value.
+ * Get the name of a config property.
+ * @param prop The config property
+ * @return Name of config property
  */
 const gchar *
-xmms_config_value_get_name (const xmms_config_value_t *value)
+xmms_config_property_get_name (const xmms_config_property_t *prop)
 {
-	g_return_val_if_fail (value, NULL);
+	g_return_val_if_fail (prop, NULL);
 
-	return value->name;
+	return prop->name;
 }
 
 /**
- * Set the data of the config value to a new value
- * @param val The config value
+ * Set the data of the config property to a new value
+ * @param prop The config property
  * @param data The value to set
  */
 void
-xmms_config_value_set_data (xmms_config_value_t *val, const gchar *data)
+xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 {
 	GHashTable *dict;
 	gchar file[XMMS_PATH_MAX];
 
-	g_return_if_fail (val);
+	g_return_if_fail (prop);
 	g_return_if_fail (data);
 
 	/* check whether the value changed at all */
-	if (val->data && !strcmp (val->data, data))
+	if (prop->value && !strcmp (prop->value, data))
 		return;
 
-	g_free (val->data);
-	val->data = g_strdup (data);
-	xmms_object_emit (XMMS_OBJECT (val), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	g_free (prop->value);
+	prop->value = g_strdup (data);
+	xmms_object_emit (XMMS_OBJECT (prop), XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 			  (gpointer) data);
 
-	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, xmms_object_cmd_value_free);
+	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
+	                              xmms_object_cmd_value_free);
 	g_hash_table_insert (dict, "name",
-		xmms_object_cmd_value_str_new ((gchar *) val->name));
+	                     xmms_object_cmd_value_str_new ((gchar *) prop->name));
 	g_hash_table_insert (dict, "value",
-		xmms_object_cmd_value_str_new ((gchar *) val->data));
-	
+	                     xmms_object_cmd_value_str_new ((gchar *) prop->value));
+
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
-			    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
+	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
 	                    XMMS_OBJECT_CMD_ARG_DICT,
 	                    dict);
 
@@ -222,132 +225,133 @@ xmms_config_value_set_data (xmms_config_value_t *val, const gchar *data)
 }
 
 /**
- * Return the value of a config value as a string
- * @param val The config value
+ * Return the value of a config property as a string
+ * @param prop The config property
  * @return value as string
  */
 const gchar *
-xmms_config_value_get_string (const xmms_config_value_t *val)
+xmms_config_property_get_string (const xmms_config_property_t *prop)
 {
-	g_return_val_if_fail (val, NULL);
-	return val->data;
+	g_return_val_if_fail (prop, NULL);
+	return prop->value;
 }
 
 /**
- * Return the value of a config value as an int
- * @param val The config value
+ * Return the value of a config property as an int
+ * @param prop The config property
  * @return value as int
  */
 gint
-xmms_config_value_get_int (const xmms_config_value_t *val)
+xmms_config_property_get_int (const xmms_config_property_t *prop)
 {
-	g_return_val_if_fail (val, 0);
-	if (val->data)
-		return atoi (val->data);
+	g_return_val_if_fail (prop, 0);
+	if (prop->value)
+		return atoi (prop->value);
 
 	return 0;
 }
 
 /**
- * Return the value of a config value as a float
- * @param val The config value
+ * Return the value of a config property as a float
+ * @param prop The config property
  * @return value as float
  */
 gfloat
-xmms_config_value_get_float (const xmms_config_value_t *val)
+xmms_config_property_get_float (const xmms_config_property_t *prop)
 {
-	g_return_val_if_fail (val, 0.0);
-	if (val->data)
-		return atof (val->data);
+	g_return_val_if_fail (prop, 0.0);
+	if (prop->value)
+		return atof (prop->value);
 
 	return 0.0;
 }
 
 /**
- * Set a callback function for the value.
- * This will be called each time the value changes.
- * @param val The config value
+ * Set a callback function for a config property.
+ * This will be called each time the property's value changes.
+ * @param prop The config property
  * @param cb The callback to set
  * @param userdata Data to pass on to the callback
  */
 void
-xmms_config_value_callback_set (xmms_config_value_t *val,
-				xmms_object_handler_t cb,
-				gpointer userdata)
+xmms_config_property_callback_set (xmms_config_property_t *prop,
+                                   xmms_object_handler_t cb,
+                                   gpointer userdata)
 {
-	g_return_if_fail (val);
+	g_return_if_fail (prop);
 
 	if (!cb)
 		return;
 
-	xmms_object_connect (XMMS_OBJECT (val), 
-			     XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, 
-			     (xmms_object_handler_t) cb, userdata);
+	xmms_object_connect (XMMS_OBJECT (prop), 
+	                     XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, 
+	                     (xmms_object_handler_t) cb, userdata);
 }
 
 /**
- * Remove a callback from the value 
- * @param val The config value
+ * Remove a callback from a config property
+ * @param prop The config property
  * @param cb The callback to remove
  */
 void
-xmms_config_value_callback_remove (xmms_config_value_t *val,
-                                   xmms_object_handler_t cb)
+xmms_config_property_callback_remove (xmms_config_property_t *prop,
+                                      xmms_object_handler_t cb)
 {
-	g_return_if_fail (val);
+	g_return_if_fail (prop);
 
 	if (!cb)
 		return;
 
-	xmms_object_disconnect (XMMS_OBJECT (val),
+	xmms_object_disconnect (XMMS_OBJECT (prop),
 	                        XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED, cb);
 }
 
 /**
- * Register a new configvalue. This should be called in the initcode
- * as XMMS2 won't allow set/get on values that haven't been registered.
+ * Register a new config property. This should be called from the init code
+ * as XMMS2 won't allow set/get on properties that haven't been registered.
  *
  * @param path The path in the config tree.
- * @param default_value If the value was not found in the configfile,what
+ * @param default_value If the value was not found in the configfile, what
  * should we use?
  * @param cb A callback function that will be called if the value is changed by
  * the client. Can be set to NULL.
  * @param userdata Data to pass to the callback function.
- * @return A newly allocated #xmms_config_value_t for the registered value.
+ * @return A newly allocated #xmms_config_property_t for the registered
+ * property.
  */
-xmms_config_value_t *
-xmms_config_value_register (const gchar *path, 
-			    const gchar *default_value,
-			    xmms_object_handler_t cb,
-			    gpointer userdata)
+xmms_config_property_t *
+xmms_config_property_register (const gchar *path, 
+                               const gchar *default_value,
+                               xmms_object_handler_t cb,
+                               gpointer userdata)
 {
 
-	xmms_config_value_t *val;
+	xmms_config_property_t *prop;
 
 	g_mutex_lock (global_config->mutex);
 
-	val = g_hash_table_lookup (global_config->values, path);
-	if (!val) {
+	prop = g_hash_table_lookup (global_config->properties, path);
+	if (!prop) {
 		gchar *name = strrchr (path, '.');
 
 		/* get our own copy of the string */
 		path = g_strdup (path);
 
 		if (!name) 
-			val = xmms_config_value_new (path);
+			prop = xmms_config_property_new (path);
 		else
-			val = xmms_config_value_new (name+1);
+			prop = xmms_config_property_new (name+1);
 
-		xmms_config_value_set_data (val, (gchar *) default_value);
-		g_hash_table_insert (global_config->values, (gchar *) path, val);
+		xmms_config_property_set_data (prop, (gchar *) default_value);
+		g_hash_table_insert (global_config->properties, (gchar *) path, prop);
 	}
 
 	if (cb) 
-		xmms_config_value_callback_set (val, cb, userdata);
+		xmms_config_property_callback_set (prop, cb, userdata);
 
 	g_mutex_unlock (global_config->mutex);
 
-	return val;
+	return prop;
 }
 
 /**
@@ -373,7 +377,7 @@ get_current_state (const gchar *name)
 	} *ptr, lookup[] = {
 		{"xmms", XMMS_CONFIG_STATE_START},
 		{"section", XMMS_CONFIG_STATE_SECTION},
-		{"value", XMMS_CONFIG_STATE_VALUE},
+		{"property", XMMS_CONFIG_STATE_PROPERTY},
 		{NULL, XMMS_CONFIG_STATE_INVALID}
 	};
 
@@ -460,7 +464,7 @@ xmms_config_parse_start (GMarkupParseContext *ctx,
 			g_queue_push_head (config->sections, g_strdup (attr));
 
 			break;
-		case XMMS_CONFIG_STATE_VALUE:
+		case XMMS_CONFIG_STATE_PROPERTY:
 			g_free (config->value_name);
 			config->value_name = g_strdup (attr);
 
@@ -494,7 +498,7 @@ xmms_config_parse_end (GMarkupParseContext *ctx,
 			g_free (g_queue_pop_head (config->sections));
 
 			break;
-		case XMMS_CONFIG_STATE_VALUE:
+		case XMMS_CONFIG_STATE_PROPERTY:
 			g_free (config->value_name);
 			config->value_name = NULL;
 
@@ -523,14 +527,14 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 {
 	xmms_config_t *config = userdata;
 	xmms_configparser_state_t state;
-	xmms_config_value_t *val;
+	xmms_config_property_t *prop;
 	GList *l;
 	gchar key[256] = "";
 	gsize siz = sizeof (key);
 
 	state = GPOINTER_TO_INT (g_queue_peek_head (config->states));
 
-	if (state != XMMS_CONFIG_STATE_VALUE)
+	if (state != XMMS_CONFIG_STATE_PROPERTY)
 		return;
 
 	/* assemble the config key, based on the traversed sections */
@@ -541,10 +545,10 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
 
 	g_strlcat (key, config->value_name, siz);
 
-	val = xmms_config_value_new (g_strdup (key));
-	xmms_config_value_set_data (val, (gchar *) text);
+	prop = xmms_config_property_new (g_strdup (key));
+	xmms_config_property_set_data (prop, (gchar *) text);
 
-	g_hash_table_insert (config->values, (gchar *) val->name, val);
+	g_hash_table_insert (config->properties, (gchar *) prop->name, prop);
 }
 
 /**
@@ -555,15 +559,17 @@ xmms_config_parse_text (GMarkupParseContext *ctx,
  * @param err To be filled in if an error occurs
  */
 void
-xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value, xmms_error_t *err)
+xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value,
+                      xmms_error_t *err)
 {
-	xmms_config_value_t *val;
+	xmms_config_property_t *prop;
 
-	val = xmms_config_lookup (key);
-	if (val) {
-		xmms_config_value_set_data (val, value);
+	prop = xmms_config_lookup (key);
+	if (prop) {
+		xmms_config_property_set_data (prop, value);
 	} else {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "Trying to set nonexistant configvalue");
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+		                "Trying to set non-existent config property");
 	}
 
 }
@@ -612,7 +618,7 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 
 	g_mutex_lock (conf->mutex);
 	
-	g_hash_table_foreach (conf->values, add_to_list_foreach, &ret);
+	g_hash_table_foreach (conf->properties, add_to_list_foreach, &ret);
 
 	g_mutex_unlock (conf->mutex);
 
@@ -629,9 +635,10 @@ xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
  * @return The value of the key, or NULL if not found
  */
 static gchar *
-xmms_config_value_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err)
+xmms_config_property_client_lookup (xmms_config_t *conf, gchar *key,
+                                 xmms_error_t *err)
 {
-	return g_strdup (xmms_config_value_lookup_get_string (conf, key, err));
+	return g_strdup (xmms_config_property_lookup_get_string (conf, key, err));
 }
 
 /**
@@ -645,7 +652,7 @@ xmms_config_destroy (xmms_object_t *object)
 
 	g_mutex_free (config->mutex);
 
-	g_hash_table_destroy (config->values);
+	g_hash_table_destroy (config->properties);
 
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_CONFIG);
@@ -668,9 +675,9 @@ xmms_config_init (const gchar *filename)
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
 
-	config->values = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                        g_free,
-	                                        (GDestroyNotify) __int_xmms_object_unref);
+	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                            g_free,
+	                                  (GDestroyNotify) __int_xmms_object_unref);
 	global_config = config;
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
@@ -779,7 +786,7 @@ add_node (GNode *parent, gpointer new_data[2])
 		if (!i) {
 			/* the node we want already exists, so we don't need
 			 * new_data anymore.
-			 * note that this never happens for "value" nodes, so
+			 * note that this never happens for "property" nodes, so
 			 * data[1] = ... below is safe.
 			 */
 			g_free (new_data[0]);
@@ -800,11 +807,11 @@ add_node (GNode *parent, gpointer new_data[2])
 /**
  * @internal Function to help build a tree representing config data to be saved.
  * @param key The key to add to the tree
- * @param value The value associated to key
+ * @param prop The property associated to key
  * @param udata User data - in this case, the GNode tree we're modifying
  */
 static void
-add_to_tree_foreach (gpointer key, gpointer value, gpointer udata)
+add_to_tree_foreach (gpointer key, gpointer prop, gpointer udata)
 {
 	GNode *node = udata;
 	gchar **subkey, **ptr;
@@ -821,7 +828,7 @@ add_to_tree_foreach (gpointer key, gpointer value, gpointer udata)
 	}
 
 	/* only the last node gets a value */
-	data[1] = g_strdup (xmms_config_value_get_string (value));
+	data[1] = g_strdup (xmms_config_property_get_string (prop));
 
 	g_strfreev (subkey);
 }
@@ -841,7 +848,7 @@ dump_node (GNode *node, FILE *fp)
 	gsize len;
 
 	if (G_NODE_IS_LEAF (node) && !is_root) {
-		fprintf (fp, "%s<value name=\"%s\">%s</value>\n",
+		fprintf (fp, "%s<property name=\"%s\">%s</property>\n",
 		         indent, data[0], data[1]);
 	} else {
 		if (is_root) {
@@ -895,7 +902,7 @@ xmms_config_save (const gchar *file)
 	}
 
 	tree = g_node_new ("xmms");
-	g_hash_table_foreach (global_config->values, add_to_tree_foreach, tree);
+	g_hash_table_foreach (global_config->properties, add_to_tree_foreach, tree);
 
 	dump_node (tree, fp);
 
@@ -914,26 +921,26 @@ xmms_config_save (const gchar *file)
  * @param object The object to destroy
  */
 static void
-xmms_config_value_destroy (xmms_object_t *object)
+xmms_config_property_destroy (xmms_object_t *object)
 {
-	xmms_config_value_t *val = (xmms_config_value_t *) object;
+	xmms_config_property_t *prop = (xmms_config_property_t *) object;
 
 	/* don't free val->name here, it's taken care of in
 	 * xmms_config_destroy()
 	 */
-	g_free (val->data);
+	g_free (prop->value);
 }
 
 /**
  * @internal Create a new config value
  * @param name The name of the new config value
  */
-static xmms_config_value_t *
-xmms_config_value_new (const gchar *name)
+static xmms_config_property_t *
+xmms_config_property_new (const gchar *name)
 {
-	xmms_config_value_t *ret;
+	xmms_config_property_t *ret;
 
-	ret = xmms_object_new (xmms_config_value_t, xmms_config_value_destroy);
+	ret = xmms_object_new (xmms_config_property_t, xmms_config_property_destroy);
 	ret->name = name;
 
 	return ret;
@@ -942,20 +949,20 @@ xmms_config_value_new (const gchar *name)
 /**
  * @internal Register a client config value
  * @param config The config
- * @param value The name of the config value
+ * @param name The name of the config value
  * @param def_value The default value to use
  * @param error To be filled in if an error occurs
  * @return The full path to the config value registered
  */
 static gchar *
-xmms_config_value_client_register (xmms_config_t *config,
-				   const gchar *value,
+xmms_config_property_client_register (xmms_config_t *config,
+				   const gchar *name,
 				   const gchar *def_value,
 				   xmms_error_t *error)
 {
 	gchar *tmp;
-	tmp = g_strdup_printf ("clients.%s", value);
-	xmms_config_value_register (tmp, def_value, NULL, NULL);
+	tmp = g_strdup_printf ("clients.%s", name);
+	xmms_config_property_register (tmp, def_value, NULL, NULL);
 	return tmp;
 }
 

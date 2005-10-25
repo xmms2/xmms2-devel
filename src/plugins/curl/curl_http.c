@@ -139,7 +139,7 @@ static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	gint bufsize, metaint, verbose, connecttimeout;
 
 	g_return_val_if_fail (transport, FALSE);
@@ -148,16 +148,16 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data = g_new0 (xmms_curl_data_t, 1);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
-	bufsize = xmms_config_value_get_int (val);
+	bufsize = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "connecttimeout");
-	connecttimeout = xmms_config_value_get_int (val);
+	connecttimeout = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
-	metaint = xmms_config_value_get_int (val);
+	metaint = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
-	verbose = xmms_config_value_get_int (val);
+	verbose = xmms_config_property_get_int (val);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
 	data->metabuffer = g_malloc (256 * 16);

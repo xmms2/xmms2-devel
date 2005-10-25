@@ -161,7 +161,7 @@ xmms_playlist_t *
 xmms_playlist_init (void)
 {
 	xmms_playlist_t *ret;
-	xmms_config_value_t *val, *load_autosaved;
+	xmms_config_property_t *val, *load_autosaved;
 
 	ret = xmms_object_new (xmms_playlist_t, xmms_playlist_destroy);
 	ret->mutex = g_mutex_new ();
@@ -170,20 +170,24 @@ xmms_playlist_init (void)
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_PLAYLIST, XMMS_OBJECT (ret));
 
-	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
-	xmms_ipc_broadcast_register (XMMS_OBJECT (ret), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (ret),
+	                             XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
+	xmms_ipc_broadcast_register (XMMS_OBJECT (ret),
+	                             XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 
-	val = xmms_config_value_register ("playlist.repeat_one", "0", on_playlist_r_one_changed, ret);
-	ret->repeat_one = xmms_config_value_get_int (val);
+	val = xmms_config_property_register ("playlist.repeat_one", "0",
+	                                     on_playlist_r_one_changed, ret);
+	ret->repeat_one = xmms_config_property_get_int (val);
 	
-	val = xmms_config_value_register ("playlist.repeat_all", "0", on_playlist_r_all_changed, ret);
-	ret->repeat_all = xmms_config_value_get_int (val);
+	val = xmms_config_property_register ("playlist.repeat_all", "0",
+	                                  on_playlist_r_all_changed, ret);
+	ret->repeat_all = xmms_config_property_get_int (val);
 
 
 
 
 	load_autosaved =
-		xmms_config_value_register ("playlist.load_autosaved", "1",
+		xmms_config_property_register ("playlist.load_autosaved", "1",
 		                            NULL, NULL);
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
@@ -242,7 +246,7 @@ xmms_playlist_init (void)
 
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 
-	if (xmms_config_value_get_int (load_autosaved)) {
+	if (xmms_config_property_get_int (load_autosaved)) {
 		xmms_medialib_playlist_load_autosaved ();
 	}
 
@@ -885,7 +889,7 @@ xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist)
 static void
 xmms_playlist_destroy (xmms_object_t *object)
 {
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	xmms_playlist_t *playlist = (xmms_playlist_t *)object;
 
 	g_return_if_fail (playlist);
@@ -903,9 +907,9 @@ xmms_playlist_destroy (xmms_object_t *object)
 	g_mutex_free (playlist->mutex);
 
 	val = xmms_config_lookup ("playlist.repeat_one");
-	xmms_config_value_callback_remove (val, on_playlist_r_one_changed);
+	xmms_config_property_callback_remove (val, on_playlist_r_one_changed);
 	val = xmms_config_lookup ("playlist.repeat_all");
-	xmms_config_value_callback_remove (val, on_playlist_r_all_changed);
+	xmms_config_property_callback_remove (val, on_playlist_r_all_changed);
 
 	xmms_mediainfo_reader_stop (playlist->mediainfordr);
 

@@ -556,7 +556,7 @@ get_effect_list (xmms_output_t *output)
 	gint i = 0;
 
 	while (42) {
-		xmms_config_value_t *cfg;
+		xmms_config_property_t *cfg;
 		xmms_plugin_t *plugin;
 		gchar key[64];
 		const gchar *name;
@@ -567,11 +567,11 @@ get_effect_list (xmms_output_t *output)
 		if (!cfg) {
 			/* this is just a ugly hack to have a configvalue
 			   to set */
-			xmms_config_value_register (key, "", NULL, NULL);
+			xmms_config_property_register (key, "", NULL, NULL);
 			break;
 		}
 
-		name = xmms_config_value_get_string (cfg);
+		name = xmms_config_property_get_string (cfg);
 
 		if (!name[0])
 			break;

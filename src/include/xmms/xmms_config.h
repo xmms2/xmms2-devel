@@ -21,22 +21,22 @@
 #define __XMMS_CONFIG_H__
 
 typedef struct xmms_config_St xmms_config_t;
-typedef struct xmms_config_value_St xmms_config_value_t;
+typedef struct xmms_config_property_St xmms_config_property_t;
 
 #include "xmms/xmms_object.h"
 
-xmms_config_value_t *xmms_config_lookup (const gchar *path);
+xmms_config_property_t *xmms_config_lookup (const gchar *path);
 
-const gchar *xmms_config_value_get_string (const xmms_config_value_t *val);
-gint xmms_config_value_get_int (const xmms_config_value_t *val);
-gfloat xmms_config_value_get_float (const xmms_config_value_t *val);
-const gchar *xmms_config_value_get_name (const xmms_config_value_t *value);
+const gchar *xmms_config_property_get_string (const xmms_config_property_t *prop);
+gint xmms_config_property_get_int (const xmms_config_property_t *prop);
+gfloat xmms_config_property_get_float (const xmms_config_property_t *prop);
+const gchar *xmms_config_property_get_name (const xmms_config_property_t *prop);
 
-xmms_config_value_t *xmms_config_value_register (const gchar *path, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
+xmms_config_property_t *xmms_config_property_register (const gchar *path, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 
-void xmms_config_value_set_data (xmms_config_value_t *val, const gchar *data);
+void xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data);
 
-void xmms_config_value_callback_set (xmms_config_value_t *val, xmms_object_handler_t cb, gpointer userdata);
-void xmms_config_value_callback_remove (xmms_config_value_t *val, xmms_object_handler_t cb);
+void xmms_config_property_callback_set (xmms_config_property_t *prop, xmms_object_handler_t cb, gpointer userdata);
+void xmms_config_property_callback_remove (xmms_config_property_t *prop, xmms_object_handler_t cb);
 
 #endif
