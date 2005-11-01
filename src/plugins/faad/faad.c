@@ -94,11 +94,12 @@ xmms_plugin_get (void)
 							xmms_faad_get_mediainfo);
 
 	xmms_plugin_magic_add (plugin, "mpeg-4 header", "video/mp4",
-	                       "4 string ftyp", ">8 string isom", NULL);
-	xmms_plugin_magic_add (plugin, "mpeg-4 v1 header", "video/mp4",
-	                       "4 string ftyp", ">8 string mp41", NULL);
-	xmms_plugin_magic_add (plugin, "mpeg-4 v2 header", "video/mp4",
-	                       "4 string ftyp", ">8 string mp42", NULL);
+	                       "4 string ftyp",
+	                       ">8 string isom",
+	                       ">8 string mp41",
+	                       ">8 string mp42",
+	                       NULL);
+
 	xmms_plugin_magic_add (plugin, "iTunes mpeg-4 header", "audio/mp4",
 	                       "4 string ftyp", ">8 string M4A ", NULL);
 
