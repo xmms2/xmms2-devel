@@ -63,5 +63,6 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 			return;
 	}
 
-	printf("%s: %s\n", level, message);
+	printf ("%s: %s\n", level, message);
+	fflush (stdout);
 }
