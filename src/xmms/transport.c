@@ -32,6 +32,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <sys/stat.h>
 
@@ -43,6 +44,7 @@ static void xmms_transport_destroy (xmms_object_t *object);
 static xmms_plugin_t *xmms_transport_plugin_find (const gchar *url);
 static gpointer xmms_transport_thread (gpointer data);
 static gint xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
+static gboolean xmms_transport_decode_url (char *url);
 
 /*
  * Type definitions
@@ -328,6 +330,11 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 
 	url = xmms_medialib_entry_property_get_str (session, entry,
 	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
+
+	if (!xmms_transport_decode_url (url)) {
+		xmms_log_error ("Illegal encoding in url");
+		goto out;
+	}
 
 	plugin = xmms_transport_plugin_find (url);
 	if (!plugin)
@@ -884,4 +891,40 @@ xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint le
 		xmms_error_set (&transport->status, error->code, error->message);
 
 	return ret;
+}
+
+static gboolean
+xmms_transport_decode_url (char *url)
+{
+	static char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0;
+
+	while (url[i]) {
+		unsigned char chr = url[i++];
+
+		if (chr == '+') {
+			url[j++] = ' ';
+		} else if (chr == '%') {
+			char ts[3];
+			char *t;
+
+			ts[0] = url[i++];
+			if (!ts[0])
+				return FALSE;
+			ts[1] = url[i++];
+			if (!ts[1])
+				return FALSE;
+			ts[2] = '\0';
+
+			url[j++] = strtoul (ts, &t, 16);
+			if (t != &ts[2])
+				return FALSE;
+		} else {
+			url[j++] = chr;
+		}
+	}
+
+	url[j] = '\0';
+
+	return TRUE;
 }

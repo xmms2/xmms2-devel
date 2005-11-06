@@ -26,6 +26,8 @@
 #include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_stringport.h"
 
+static char *xmmsc_playlist_encode_url (const char *url);
+
 /**
  * @defgroup PlaylistControl PlaylistControl
  * @ingroup XMMSClient
@@ -165,17 +167,23 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
  * @param c The connection structure.
  * @param url an encoded path.
  *
- * @sa xmmsc_encode_path
  */
 xmmsc_result_t *
-xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
+xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+	char *enc_url;
+
+	enc_url = xmmsc_playlist_encode_url (url);
+	if (!enc_url)
+		return NULL;
 	
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
-	xmms_ipc_msg_put_string (msg, url);
+	xmms_ipc_msg_put_string (msg, enc_url);
 	res = xmmsc_send_msg (c, msg);
+
+	free (enc_url);
 
 	return res;
 }
@@ -306,3 +314,41 @@ xmmsc_playlist_entry_free (x_hash_t *entry)
 }
 
 /** @} */
+
+#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
+                     (((a) >= 'A') && ((a) <= 'Z')) || \
+                     (((a) >= '0') && ((a) <= '9')) || \
+                     ((a) == ':') || \
+                     ((a) == '/') || \
+                     ((a) == '-') || \
+                     ((a) == '.') || \
+                     ((a) == '_'))
+
+static char *
+xmmsc_playlist_encode_url (const char *url)
+{
+	static char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0;
+	char *res;
+
+	res = malloc (strlen(url) * 3 + 1);
+	if (!res)
+		return NULL;
+
+	while (url[i]) {
+		unsigned char chr = url[i++];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	res[j] = '\0';
+
+	return res;
+}
