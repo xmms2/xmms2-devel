@@ -32,7 +32,7 @@
 /* increment this whenever there are incompatible db structure changes */
 #define DB_VERSION 16
 
-const char create_Control_stm[] = "create table Control (version)";
+const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value)";
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name)";
@@ -82,46 +82,13 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 	return 1;
 }
 
-void
-upgrade_v11_to_v12 (sqlite3 *sql)
-{
-	XMMS_DBG ("Performing upgrade v11 to v12");
-	sqlite3_exec (sql, "drop view songs", NULL, NULL, NULL);
-	sqlite3_exec (sql, "drop view artists", NULL, NULL, NULL);
-	sqlite3_exec (sql, "drop view albums", NULL, NULL, NULL);
-	sqlite3_exec (sql, "drop view compilations", NULL, NULL, NULL);
-	sqlite3_exec (sql, "drop view topsongs", NULL, NULL, NULL);
-	sqlite3_exec (sql, create_views, NULL, NULL, NULL);
-	sqlite3_exec (sql, "delete from Control", NULL, NULL, NULL);
-
-	XMMS_DBG ("done");
-}
-
-static void
-upgrade_v12_to_v13 (sqlite3 *sql)
-{
-	XMMS_DBG ("Performing upgrade v12 to v13");
-
-	sqlite3_exec (sql, "drop table PlaylistEntries", NULL, NULL, NULL);
-	sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
-
-	XMMS_DBG ("done");
-}
-
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
-	gchar buf[128];
 	gboolean can_upgrade = TRUE;
 
 	switch (version) {
-		case 11:
-			upgrade_v11_to_v12 (sql);
-			upgrade_v12_to_v13 (sql);
-			break;
-		case 12:
-			upgrade_v12_to_v13 (sql);
-			break;
+		/* no available upgrades atm */
 		default:
 			can_upgrade = FALSE;
 			break;
@@ -129,10 +96,7 @@ try_upgrade (sqlite3 *sql, gint version)
 
 	if (can_upgrade) {
 		/* store the new version in the database */
-		g_snprintf (buf, sizeof (buf),
-		            "insert into Control (version) VALUES (%i)",
-		            DB_VERSION);
-		sqlite3_exec (sql, buf, NULL, NULL, NULL);
+		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 	}
 
 	return can_upgrade;
@@ -171,8 +135,11 @@ xmms_sqlite_open (gboolean *c)
 	 * any incompatible changes. if so, we need to recreate the db.
 	 */
 	if (!create) {
-		sqlite3_exec (sql, "select version from Control",
-			      xmms_sqlite_version_cb, &version, NULL);
+		sqlite3_exec (sql, "PRAGMA user_version",
+		              xmms_sqlite_version_cb, &version, NULL);
+
+		XMMS_DBG ("Existing database is version %d", version);
+
 		if (version != DB_VERSION && !try_upgrade (sql, version)) {
 			gchar old[XMMS_PATH_MAX];
 
@@ -191,22 +158,14 @@ xmms_sqlite_open (gboolean *c)
 	}
 
 	if (create) {
-		gchar buf[128];
-
-		g_snprintf (buf, sizeof (buf),
-		            "insert into Control (version) VALUES (%i)",
-		            DB_VERSION);
-
 		XMMS_DBG ("Creating the database...");
-		sqlite3_exec (sql, create_Control_stm, NULL, NULL, NULL);
-		sqlite3_exec (sql, buf, NULL, NULL, NULL);
+		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Log_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_views, NULL, NULL, NULL);
-
 	} 
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
