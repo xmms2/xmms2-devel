@@ -30,7 +30,6 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
 
 #include "xmmsclient/xmmsclient.h"
