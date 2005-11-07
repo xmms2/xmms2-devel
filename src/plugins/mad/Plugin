@@ -2,4 +2,5 @@ target="mad"
 source=["mad.c", "id3.c", "xing.c"]
 
 def config(env):
+	env.checkheader("mad.h")
 	env.checklib("mad", "mad_synth_init")

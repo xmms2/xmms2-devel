@@ -115,7 +115,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
 	                        xmms_diskwrite_flush);
 
-	xmms_plugin_config_value_register (plugin, "destination_directory",
+	xmms_plugin_config_property_register (plugin, "destination_directory",
 	                                   "/tmp", NULL, NULL);
 
 	return plugin;
@@ -130,7 +130,7 @@ xmms_diskwrite_new (xmms_output_t *output)
 {
 	xmms_diskwrite_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	const gchar *tmp;
 
 	g_return_val_if_fail (output, FALSE);
@@ -144,11 +144,11 @@ xmms_diskwrite_new (xmms_output_t *output)
 
 	plugin = xmms_output_plugin_get (output);
 	val = xmms_plugin_config_lookup (plugin, "destination_directory");
-	xmms_config_value_callback_set (val,
+	xmms_config_property_callback_set (val,
 	                                (xmms_object_handler_t) on_dest_directory_changed,
 	                                data);
 
-	if ((tmp = xmms_config_value_string_get (val))) {
+	if ((tmp = xmms_config_property_get_string (val))) {
 		g_snprintf (data->destdir, sizeof (data->destdir), "%s", tmp);
 	}
 
@@ -164,14 +164,14 @@ static void
 xmms_diskwrite_destroy (xmms_output_t *output)
 {
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 
 	g_return_if_fail (output);
 
 	plugin = xmms_output_plugin_get (output);
 
 	val = xmms_plugin_config_lookup (plugin, "destination_directory");
-	xmms_config_value_callback_remove (val,
+	xmms_config_property_callback_remove (val,
 		(xmms_object_handler_t) on_dest_directory_changed);
 
 	g_free (xmms_output_private_data_get (output));

@@ -41,7 +41,7 @@ enum status_enum { PLAYING, PAUSED, STOPPED, CLOSED, RESET };
 typedef struct xmms_jack_data_St {
 	guint               rate;
 	gboolean            have_mixer;
-	xmms_config_value_t *mixer_conf;
+	xmms_config_property_t *mixer_conf;
 
 	unsigned char*      sound_buffer;                  /* temporary buffer used to process data before sending to jack */
 
@@ -594,34 +594,6 @@ xmms_jack_mixer_set(xmms_output_t *output, gint l, gint r)
 	return TRUE;
 }
 
-
-/**
- * Set audio format.
- *
- * @param output The output struct containing alsa data. 
- * @param format The new audio format.
- *
- * @return Success/failure
- */
-static gboolean
-xmms_jack_format_set (xmms_output_t *output, xmms_audio_format_t *format)
-{
-	xmms_jack_data_t *data;
-
-	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, FALSE);
-
-	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels,
-	          format->samplerate);
-
-	if(format->format != XMMS_SAMPLE_FORMAT_FLOAT)
-		return FALSE;
-
-	return TRUE;
-}
-
-
 /**
  * Flush the audio output, doesn't apply as we don't buffer any
  * audio data
@@ -703,7 +675,7 @@ xmms_jack_new(xmms_output_t *output)
 	data->mixer_conf = xmms_plugin_config_lookup (
 						      xmms_output_plugin_get (output), "volume");
 
-	xmms_config_value_callback_set (data->mixer_conf,
+	xmms_config_property_callback_set (data->mixer_conf,
 					xmms_jack_mixer_config_changed,
 					(gpointer) output);
 
@@ -753,7 +725,7 @@ xmms_jack_destroy (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	xmms_config_value_callback_remove (data->mixer_conf,
+	xmms_config_property_callback_remove (data->mixer_conf,
 	                                   xmms_jack_mixer_config_changed);
 
 	/* if playing, stop and close the device */
@@ -839,10 +811,8 @@ xmms_plugin_get (void)
 				xmms_jack_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS,
 				xmms_jack_status); 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
-				xmms_jack_format_set);
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 					   "volume",
 					   "70/70",
 					   NULL,

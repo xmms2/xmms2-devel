@@ -97,8 +97,12 @@ xmms_plugin_get (void)
 	xmms_plugin_magic_add (plugin, "id3 header", "audio/mpeg",
 	                       "0 string ID3", ">3 byte <0xff",
 	                       ">4 byte <0xff", NULL);
-	xmms_plugin_magic_add (plugin, "mpeg header", "audio/mpeg",
-	                       "0 beshort &0xffe0", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg layer I header", "audio/mpeg",
+	                       "0 beshort&0xfff6 0xfff6", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg layer II header", "audio/mpeg",
+	                       "0 beshort&0xfff6 0xfff4", NULL);
+	xmms_plugin_magic_add (plugin, "mpeg layer III header", "audio/mpeg",
+	                       "0 beshort&0xffe6 0xffe2", NULL);
 
 	return plugin;
 }
@@ -207,6 +211,13 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 											  entry, 
 											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
 											  0);
+
+		/* frame.header.bitrate might be wrong, but we cannot do it any
+		 * better for streams
+		 */
+		xmms_medialib_entry_property_set_int (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+			frame.header.bitrate);
 		return;
 	}
 

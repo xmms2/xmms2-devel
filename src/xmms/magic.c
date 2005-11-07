@@ -37,8 +37,12 @@
 		v = GUINT32_TO_BE (v); \
 	}
 
-#define CMP(v1, op, v2) \
-	switch (op) { \
+#define CMP(v1, entry, v2) \
+	if (entry->pre_test_and_op) { \
+		v1 &= entry->pre_test_and_op; \
+	} \
+\
+	switch (entry->oper) { \
 		case XMMS_MAGIC_ENTRY_OPERATOR_EQUAL: \
 			return v1 == v2; \
 		case XMMS_MAGIC_ENTRY_OPERATOR_LESS_THAN: \
@@ -72,6 +76,7 @@ typedef struct xmms_magic_entry_St {
 	xmms_magic_entry_type_t type;
 	gint endian;
 	guint len;
+	guint pre_test_and_op;
 	xmms_magic_entry_operator_t oper;
 
 	union {
@@ -91,7 +96,6 @@ xmms_magic_entry_free (xmms_magic_entry_t *e)
 static xmms_magic_entry_type_t
 parse_type (gchar **s, gint *endian)
 {
-	gchar *p;
 	struct {
 		const gchar *string;
 		xmms_magic_entry_type_t type;
@@ -108,13 +112,11 @@ parse_type (gchar **s, gint *endian)
 		{NULL, XMMS_MAGIC_ENTRY_TYPE_UNKNOWN, G_BYTE_ORDER}
 	};
 
-	p = strchr (*s, ' ');
-	g_assert (p);
-	*p = '\0';
-
 	for (t = types; t; t++) {
-		if (!t->string || !strcmp (*s, t->string)) {
-			*s = ++p;
+		int l = t->string ? strlen (t->string) : 0;
+
+		if (!l || !strncmp (*s, t->string, l)) {
+			*s += l;
 			*endian = t->endian;
 
 			return t->type;
@@ -154,6 +156,32 @@ parse_oper (gchar **s)
 	g_assert_not_reached ();
 }
 
+static gboolean
+parse_pre_test_and_op (xmms_magic_entry_t *entry, gchar **end)
+{
+	gboolean ret = FALSE;
+
+	if (**end == ' ') {
+		(*end)++;
+		return TRUE;
+	}
+
+	switch (entry->type) {
+		case XMMS_MAGIC_ENTRY_TYPE_BYTE:
+		case XMMS_MAGIC_ENTRY_TYPE_INT16:
+		case XMMS_MAGIC_ENTRY_TYPE_INT32:
+			if (**end == '&') {
+				(*end)++;
+				entry->pre_test_and_op = strtoul (*end, end, 0);
+				ret = TRUE;
+			}
+		default:
+			break;
+	}
+
+	return ret;
+}
+
 static xmms_magic_entry_t *
 parse_entry (const gchar *s)
 {
@@ -169,6 +197,11 @@ parse_entry (const gchar *s)
 
 	entry->type = parse_type (&end, &entry->endian);
 	if (entry->type == XMMS_MAGIC_ENTRY_TYPE_UNKNOWN) {
+		g_free (entry);
+		return NULL;
+	}
+
+	if (!parse_pre_test_and_op (entry, &end)) {
 		g_free (entry);
 		return NULL;
 	}
@@ -301,11 +334,11 @@ node_match (xmms_magic_checker_t *c, GNode *node)
 {
 	xmms_magic_entry_t *entry = node->data;
 	guint needed = c->offset + entry->offset + entry->len;
+	guint8 i8;
 	guint16 i16;
 	guint32 i32;
 	gint tmp;
 	gchar *ptr;
-	gboolean ret;
 
 	/* do we have enough data ready for this check?
 	 * if not, read some more
@@ -327,18 +360,18 @@ node_match (xmms_magic_checker_t *c, GNode *node)
 
 	switch (entry->type) {
 		case XMMS_MAGIC_ENTRY_TYPE_BYTE:
-			CMP (*ptr, entry->oper, entry->value.i8); /* returns */
+			memcpy (&i8, ptr, sizeof (i8));
+			CMP (i8, entry, entry->value.i8); /* returns */
 		case XMMS_MAGIC_ENTRY_TYPE_INT16:
 			memcpy (&i16, ptr, sizeof (i16));
 			SWAP16 (i16, entry->endian);
-			CMP (i16, entry->oper, entry->value.i16); /* returns */
+			CMP (i16, entry, entry->value.i16); /* returns */
 		case XMMS_MAGIC_ENTRY_TYPE_INT32:
 			memcpy (&i32, ptr, sizeof (i32));
 			SWAP32 (i32, entry->endian);
-			CMP (i32, entry->oper, entry->value.i32); /* returns */
+			CMP (i32, entry, entry->value.i32); /* returns */
 		case XMMS_MAGIC_ENTRY_TYPE_STRING:
-			ret = !strncmp (ptr, entry->value.s, entry->len);
-			return ret;
+			return !strncmp (ptr, entry->value.s, entry->len);
 		default:
 			return FALSE;
 	}
@@ -400,8 +433,9 @@ xmms_magic_match (xmms_magic_checker_t *c, const GList *magic)
 		 */
 		needed = tree_bytes_max_needed (c, tree);
 		if (needed > xmms_transport_buffersize (c->transport)) {
-			xmms_log ("magic check requires a minimum transport "
-			          "buffer size of %i bytes", needed);
+			xmms_log_info ("magic check requires a minimum"
+				       "transport buffer size of %i bytes",
+				       needed);
 		} else if (tree_match (c, tree)) {
 			return tree;
 		}

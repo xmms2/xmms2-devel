@@ -34,6 +34,7 @@
 #include <string.h>
 
 static void xmms_eq_new (xmms_effect_t *effect);
+static void xmms_eq_destroy (xmms_effect_t *effect);
 static gboolean xmms_eq_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
 static void xmms_eq_process (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
 
@@ -50,7 +51,7 @@ typedef struct xmms_eq_filter_St {
 typedef struct xmms_eq_priv_St {
 	xmms_eq_filter_t filters[XMMS_EQ_BANDS];
 	gdouble gains[XMMS_EQ_BANDS];
-	xmms_config_value_t *configvals[XMMS_EQ_BANDS];
+	xmms_config_property_t *configvals[XMMS_EQ_BANDS];
 	guint channels;
 	xmms_sample_format_t format;
 } xmms_eq_priv_t;
@@ -135,12 +136,13 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_eq_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_eq_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET, xmms_eq_format_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_eq_process);
 
 	for (i = 0; i < XMMS_EQ_BANDS; i++) {
 		g_snprintf (buf, sizeof (buf), "gain%d", i);
-		xmms_plugin_config_value_register (plugin, buf, "1.0", NULL, NULL);
+		xmms_plugin_config_property_register (plugin, buf, "1.0", NULL, NULL);
 	}
 
 	return plugin;
@@ -150,7 +152,7 @@ static void
 xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 						   gpointer userdata)
 {
-	xmms_config_value_t *val = (xmms_config_value_t *) object;
+	xmms_config_property_t *val = (xmms_config_property_t *) object;
 	xmms_effect_t *effect = userdata;
 	xmms_eq_priv_t *priv;
 	const gchar *name, *ptr;
@@ -161,10 +163,10 @@ xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 
 	g_return_if_fail (priv);
 
-	name = xmms_config_value_name_get (val);
+	name = xmms_config_property_get_name (val);
 
 	XMMS_DBG ("configval changed! %s => %f", name,
-			  xmms_config_value_float_get (val));
+			  xmms_config_property_get_float (val));
 
 	/* we are passed the full config key, not just the last token,
 	 * which makes this code kinda ugly.
@@ -175,14 +177,14 @@ xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 
 	XMMS_DBG ("changing filter #%d", i);
 
-	gain = xmms_config_value_float_get (val);
+	gain = xmms_config_property_get_float (val);
 	if (gain <= 0.0) {
 		gain = G_MINDOUBLE;
 
 		gchar buf[20];
 		g_snprintf (buf, sizeof (buf), "%g", gain);
 
-		xmms_config_value_data_set (val, buf);
+		xmms_config_property_set_data (val, buf);
 	}
 	priv->gains[i] = gain;
 
@@ -209,15 +211,23 @@ xmms_eq_new (xmms_effect_t *effect) {
 		priv->configvals[i] =  xmms_plugin_config_lookup (xmms_effect_plugin_get (effect), buf);
 		g_return_if_fail (priv->configvals[i]);
 
-		xmms_config_value_callback_set (priv->configvals[i], 
+		xmms_config_property_callback_set (priv->configvals[i], 
 						xmms_eq_configval_changed, 
 						(gpointer) effect);
 
-		priv->gains[i] = xmms_config_value_float_get (priv->configvals[i]);
+		priv->gains[i] = xmms_config_property_get_float (priv->configvals[i]);
 
 		xmms_eq_calc_filter (&priv->filters[i], priv->gains[i], freqs[i]);
 	}
 
+}
+
+static void
+xmms_eq_destroy (xmms_effect_t *effect)
+{
+	g_return_if_fail (effect);
+
+	g_free (xmms_effect_private_data_get (effect));
 }
 
 static gboolean

@@ -89,18 +89,25 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, xmms_ices_samplerate_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS, xmms_ices_process);
 
-	xmms_plugin_config_value_register (plugin, "encodingnombr", "64000", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "host", "localhost", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "port", "8000", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "password", "hackme", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "user", "source", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "mount", "/stream.ogg", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "public", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamname", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamdescription", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamgenre", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "streamurl", "", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "buffersize", "65536", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "encodingnombr", "64000",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "host", "localhost",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "port", "8000", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "password", "hackme",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "user", "source", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "mount", "/stream.ogg",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "public", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamname", "", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamdescription", "",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamgenre", "",
+	                                      NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "streamurl", "", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "buffersize", "65536",
+	                                      NULL, NULL);
 
 	return plugin;
 }
@@ -189,7 +196,7 @@ xmms_ices_new (xmms_effect_t *effect, xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
 	xmms_plugin_t *plugin = xmms_effect_plugin_get (effect);
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	xmms_error_t error;
 
 	shout_init ();
@@ -201,40 +208,40 @@ xmms_ices_new (xmms_effect_t *effect, xmms_output_t *output)
 	shout_set_protocol (data->shout, SHOUT_PROTOCOL_HTTP);
 
 	val = xmms_plugin_config_lookup (plugin, "host");
-	shout_set_host (data->shout, xmms_config_value_string_get (val));
+	shout_set_host (data->shout, xmms_config_property_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "port");
-	shout_set_port (data->shout, xmms_config_value_int_get (val));
+	shout_set_port (data->shout, xmms_config_property_get_int (val));
 
 	val = xmms_plugin_config_lookup (plugin, "password");
-	shout_set_password (data->shout, xmms_config_value_string_get (val));
+	shout_set_password (data->shout, xmms_config_property_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "user");
-	shout_set_user (data->shout, xmms_config_value_string_get (val));
+	shout_set_user (data->shout, xmms_config_property_get_string (val));
 
 	shout_set_agent (data->shout, "XMMS/" XMMS_VERSION);
 
 	val = xmms_plugin_config_lookup (plugin, "mount");
-	shout_set_mount (data->shout, xmms_config_value_string_get (val));
+	shout_set_mount (data->shout, xmms_config_property_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "public");
-	shout_set_public (data->shout, xmms_config_value_int_get (val));
+	shout_set_public (data->shout, xmms_config_property_get_int (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamname");
-	shout_set_name (data->shout, xmms_config_value_string_get (val));
+	shout_set_name (data->shout, xmms_config_property_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamdescription");
-	shout_set_description (data->shout, xmms_config_value_string_get (val));
+	shout_set_description (data->shout, xmms_config_property_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamgenre");
-	shout_set_genre (data->shout, xmms_config_value_string_get (val));
+	shout_set_genre (data->shout, xmms_config_property_get_string (val));
 
 	val = xmms_plugin_config_lookup (plugin, "streamurl");
-	shout_set_url (data->shout, xmms_config_value_string_get (val));
+	shout_set_url (data->shout, xmms_config_property_get_string (val));
 
 	data->write_buf = FALSE;
 	val = xmms_plugin_config_lookup (plugin, "buffersize");
-	data->buf_size = xmms_config_value_int_get (val);
+	data->buf_size = xmms_config_property_get_int (val);
 	data->buf = xmms_ringbuf_new (data->buf_size);
 
 	data->serial = 1;
@@ -276,7 +283,7 @@ static void
 xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 {
 	xmms_ices_data_t *data;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	gint nombr;
 	static struct {
 		gchar *prop;
@@ -294,7 +301,7 @@ xmms_ices_samplerate_set (xmms_effect_t *effect, guint rate)
 	g_return_if_fail (data);
 
 	val = xmms_plugin_config_lookup (xmms_effect_plugin_get (effect), "encodingnombr");
-	nombr = xmms_config_value_int_get (val);
+	nombr = xmms_config_property_get_int (val);
 	XMMS_DBG ("Inited a encoder with rate %d nombr %d", rate, nombr);
 
 	vorbis_comment_clear (&data->vc);

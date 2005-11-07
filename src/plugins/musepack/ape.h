@@ -1,33 +1,28 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2005 Daniel Svensson, <daniel@nittionio.nu> 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
 
-#ifndef __XMMSCLIENT_ECORE_H__
-#define __XMMSCLIENT_ECORE_H__
+#ifndef __APE_H__
+#define __APE_H__
 
-#include "xmmsclient/xmmsclient.h"
+#include "xmms/xmms_decoderplugin.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define XMMS_APE_HEADER_SIZE 32
 
-void *xmmsc_mainloop_ecore_init (xmmsc_connection_t *connection);
-void xmmsc_mainloop_ecore_shutdown (xmmsc_connection_t *connection, void *udata);
+gint xmms_ape_get_size (gchar *buff);
+gchar *xmms_ape_get_text (gchar *key, gchar *buff, gint len);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif

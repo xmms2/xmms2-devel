@@ -42,6 +42,14 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_PLAYLIST_CHANGED_MOVE,
 		XMMS_PLAYLIST_CHANGED_SORT
 
+	ctypedef enum xmms_plugin_type_t:
+		XMMS_PLUGIN_TYPE_ALL,
+		XMMS_PLUGIN_TYPE_TRANSPORT,
+		XMMS_PLUGIN_TYPE_DECODER,
+		XMMS_PLUGIN_TYPE_OUTPUT,
+		XMMS_PLUGIN_TYPE_PLAYLIST,
+		XMMS_PLUGIN_TYPE_EFFECT
+
 # The following constants are meant for interpreting the return value of
 # XMMS.playback_status ()
 PLAYBACK_STATUS_STOP = XMMS_PLAYBACK_STATUS_STOP
@@ -56,6 +64,13 @@ PLAYLIST_CHANGED_CLEAR = XMMS_PLAYLIST_CHANGED_CLEAR
 PLAYLIST_CHANGED_MOVE = XMMS_PLAYLIST_CHANGED_MOVE
 PLAYLIST_CHANGED_SORT = XMMS_PLAYLIST_CHANGED_SORT
 
+PLUGIN_TYPE_ALL = XMMS_PLUGIN_TYPE_ALL
+PLUGIN_TYPE_TRANSPORT = XMMS_PLUGIN_TYPE_TRANSPORT
+PLUGIN_TYPE_DECODER = XMMS_PLUGIN_TYPE_DECODER
+PLUGIN_TYPE_OUTPUT = XMMS_PLUGIN_TYPE_OUTPUT
+PLUGIN_TYPE_PLAYLIST = XMMS_PLUGIN_TYPE_PLAYLIST
+PLUGIN_TYPE_EFFECT = XMMS_PLUGIN_TYPE_EFFECT
+                                                               
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef enum xmmsc_result_value_type_t:
 		XMMSC_RESULT_VALUE_TYPE_NONE,
@@ -98,6 +113,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	signed int xmmsc_connect(xmmsc_connection_t *c, signed char *p)
 	void xmmsc_unref(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
+	xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, unsigned int type)
 
 	void xmmsc_signal_disconnect(xmmsc_result_t *res) 
 	void xmmsc_broadcast_disconnect(xmmsc_result_t *res)
@@ -550,6 +566,21 @@ cdef class XMMS:
 		ret.res = xmmsc_quit(self.conn)
 		ret.more_init()
 
+		return ret
+
+	def plugin_list(self, type, cb = None):
+		"""
+		Get a list of loaded plugins from the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_plugin_list(self.conn, type)
+		ret.more_init()
 		return ret
 
 	def playback_start(self, cb = None):

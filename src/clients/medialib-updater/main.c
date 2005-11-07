@@ -311,7 +311,7 @@ main (int argc, char **argv)
 	}
 
 	ml = g_main_loop_new (NULL, FALSE);
-	xmmsc_setup_with_gmain (conn);
+	xmmsc_mainloop_gmain_init (conn);
 	xmmsc_disconnect_callback_set (conn, quit, ml);
 
 	mon = g_new0 (xmonitor_t, 1);

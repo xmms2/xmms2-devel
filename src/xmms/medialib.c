@@ -175,7 +175,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar path[XMMS_PATH_MAX+1];
 	xmms_medialib_session_t *session;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 	gint c = 0;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
@@ -231,18 +231,18 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	                     XMMS_IPC_CMD_GET_ID,
 	                     XMMS_CMD_FUNC (get_id));
 
-	xmms_config_value_register ("medialib.dologging",
+	xmms_config_property_register ("medialib.dologging",
 				    "1",
 				    NULL, NULL);
 
-	cv = xmms_config_value_register ("medialib.random_sql_statement",
+	cv = xmms_config_property_register ("medialib.random_sql_statement",
 					 "select id as value from Media where key='url' order by random() limit 1",
 					 xmms_medialib_random_sql_changed, medialib);
-	medialib->random_sql = xmms_config_value_string_get (cv);
+	medialib->random_sql = xmms_config_property_get_string (cv);
 
 	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
 
-	xmms_config_value_register ("medialib.path",
+	xmms_config_property_register ("medialib.path",
 				    path,
 				    xmms_medialib_path_changed, medialib);
 
@@ -346,7 +346,7 @@ xmms_medialib_logging_start (xmms_medialib_session_t *session,
 {
 	time_t starttime;
 	gboolean ret;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 
 	g_return_if_fail (entry);
 	g_return_if_fail (session);
@@ -354,7 +354,7 @@ xmms_medialib_logging_start (xmms_medialib_session_t *session,
 	cv = xmms_config_lookup ("medialib.dologging");
 	g_return_if_fail (cv);
 	
-	ret = xmms_config_value_int_get (cv);
+	ret = xmms_config_property_get_int (cv);
 	if (!ret)
 		return;
 
@@ -384,14 +384,14 @@ xmms_medialib_logging_stop (xmms_medialib_session_t *session,
 	gint sek;
 	gint value = 0.0;
 	gboolean ret;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 
 	g_return_if_fail (session);
 
 	cv = xmms_config_lookup ("medialib.dologging");
 	g_return_if_fail (cv);
 
-	ret = xmms_config_value_int_get (cv);
+	ret = xmms_config_property_get_int (cv);
 	if (!ret)
 		return;
 
@@ -924,6 +924,7 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
 	GList *ret;
 	xmms_medialib_session_t *session = xmms_medialib_begin ();
 	ret = xmms_medialib_select (session, query, error);
+	xmms_medialib_end (session);
 	return ret;
 }
 

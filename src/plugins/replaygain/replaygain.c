@@ -84,9 +84,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
 	                        xmms_replaygain_destroy);
 
-	xmms_plugin_config_value_register (plugin, "mode", "track",
+	xmms_plugin_config_property_register (plugin, "mode", "track",
 	                                   NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "use_anticlip", "1",
+	xmms_plugin_config_property_register (plugin, "use_anticlip", "1",
 	                                   NULL, NULL);
 	return plugin;
 }
@@ -96,7 +96,7 @@ xmms_replaygain_new (xmms_effect_t *effect)
 {
 	xmms_replaygain_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *cfgv;
+	xmms_config_property_t *cfgv;
 
 	g_return_if_fail (effect);
 
@@ -108,11 +108,11 @@ xmms_replaygain_new (xmms_effect_t *effect)
 	plugin = xmms_effect_plugin_get (effect);
 
 	cfgv = xmms_plugin_config_lookup (plugin, "mode");
-	xmms_config_value_callback_set (cfgv,
+	xmms_config_property_callback_set (cfgv,
 	                                xmms_replaygain_config_changed,
 	                                effect);
 	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
-	xmms_config_value_callback_set (cfgv,
+	xmms_config_property_callback_set (cfgv,
 	                                xmms_replaygain_config_changed,
 	                                effect);
 }
@@ -121,7 +121,7 @@ static void
 xmms_replaygain_destroy (xmms_effect_t *effect)
 {
 	xmms_plugin_t *plugin;
-	xmms_config_value_t *cfgv;
+	xmms_config_property_t *cfgv;
 
 	g_return_if_fail (effect);
 
@@ -130,10 +130,10 @@ xmms_replaygain_destroy (xmms_effect_t *effect)
 	plugin = xmms_effect_plugin_get (effect);
 
 	cfgv = xmms_plugin_config_lookup (plugin, "mode");
-	xmms_config_value_callback_remove (cfgv,
+	xmms_config_property_callback_remove (cfgv,
 	                                   xmms_replaygain_config_changed);
 	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
-	xmms_config_value_callback_remove (cfgv,
+	xmms_config_property_callback_remove (cfgv,
 	                                   xmms_replaygain_config_changed);
 }
 
@@ -264,7 +264,7 @@ xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
 	data = xmms_effect_private_data_get (effect);
 	g_return_if_fail (data);
 
-	name = xmms_config_value_name_get ((xmms_config_value_t *) obj);
+	name = xmms_config_property_get_name ((xmms_config_property_t *) obj);
 
 	if (!g_ascii_strcasecmp (name, "effect.replaygain.mode")) {
 		if (!g_ascii_strcasecmp (value, "album")) {

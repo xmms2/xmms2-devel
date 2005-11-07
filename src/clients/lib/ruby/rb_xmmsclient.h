@@ -22,6 +22,9 @@ typedef struct {
 	bool deleted;
 	VALUE results;
 	VALUE disconnect_cb;
+
+	void *ecore_handle;
+	void *gmain_handle;
 } RbXmmsClient;
 
 #endif

@@ -186,11 +186,10 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	xmms_plugin_t *plugin;
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;
+	gchar *outname = (gchar *) data;
 
 	if (!mainobj->output)
 		return;
-
-	gchar *outname = (gchar *)data;
 
 	XMMS_DBG ("Want to use %s as output instead", outname);
 
@@ -213,10 +212,10 @@ xmms_main_destroy (xmms_object_t *object)
 {
 	xmms_main_t *mainobj = (xmms_main_t *) object;
 	xmms_object_cmd_arg_t arg;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 
 	cv = xmms_config_lookup ("core.shutdownpath");
-	do_scriptdir (xmms_config_value_string_get (cv));
+	do_scriptdir (xmms_config_property_get_string (cv));
 	
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
@@ -270,10 +269,10 @@ static void
 on_output_volume_changed (xmms_object_t *object, gconstpointer data,
                           gpointer userdata)
 {
-	xmms_config_value_t *cfg;
+	xmms_config_property_t *cfg;
 
 	cfg = xmms_config_lookup (userdata);
-	xmms_config_value_data_set (cfg, (gchar *) data);
+	xmms_config_property_set_data (cfg, (gchar *) data);
 }
 
 /**
@@ -286,7 +285,7 @@ on_output_volume_changed (xmms_object_t *object, gconstpointer data,
 static void
 init_volume_config_proxy (const gchar *output)
 {
-	xmms_config_value_t *cfg;
+	xmms_config_property_t *cfg;
 	static gchar source[64];
 	const gchar *vol;
 
@@ -295,16 +294,16 @@ init_volume_config_proxy (const gchar *output)
 
 	cfg = xmms_config_lookup (source);
 	if (cfg) {
-		vol = xmms_config_value_string_get (cfg);
+		vol = xmms_config_property_get_string (cfg);
 
-		xmms_config_value_callback_set (cfg, on_output_volume_changed,
+		xmms_config_property_callback_set (cfg, on_output_volume_changed,
 						  				"output.volume");
 
 		/* create the proxy value and assign the value */
-		cfg = xmms_config_value_register ("output.volume", vol,
+		cfg = xmms_config_property_register ("output.volume", vol,
 										on_output_volume_changed,
 									  	source);
-		xmms_config_value_data_set (cfg, (gchar *) vol);
+		xmms_config_property_set_data (cfg, (gchar *) vol);
 	}
 }
 
@@ -316,14 +315,15 @@ static void usage (void)
 	static char *usageText = "XMMS2 Daemon\n\
 Options:\n\
 	-v		Increase verbosity\n\
+	-q		Decrease verbosity\n\
 	-V|--version	Print version\n\
 	-n		Disable logging\n\
 	-o <x>		Use 'x' as output plugin\n\
 	-i <url>	Listen to socket 'url'\n\
-	-d		Daemonise\n\
 	-p <foo>	Search for plugins in directory 'foo'\n\
 	-h|--help	Print this help\n\
-	-c|--conf=<file> Specify alternate configuration file\n";
+	-c|--conf=<file> Specify alternate configuration file\n\
+	-s|--status-fd=fd Specify a filedescriptor to write to when started\n";
        printf(usageText);
 }
 
@@ -336,26 +336,25 @@ int
 main (int argc, char **argv)
 {
 	xmms_plugin_t *o_plugin;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
 	xmms_ipc_t *ipc;
-
+	int status_fd = -1;
 	int opt;
-	int verbose = 0;
+	int verbose = 1;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
 	const gchar *outname = NULL;
-	gboolean daemonize = FALSE;
-	gboolean doLog = TRUE;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *ppath = NULL;
 	gchar *tmp;
 	const gchar *ipcpath = NULL;
-	pid_t ppid=0;
 	static struct option long_opts[] = {
 		{"version", 0, NULL, 'V'},
 		{"help", 0, NULL, 'h'},
 		{"conf", 1, NULL, 'c'},
+		{"status-fd", 1, NULL, 's'},
+		{NULL,}
 	};
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -366,7 +365,7 @@ main (int argc, char **argv)
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
 	while (42) {
-		opt = getopt_long (argc, argv, "dvVno:i:p:hc:", long_opts, NULL);
+		opt = getopt_long (argc, argv, "vqVno:i:p:hc:s:", long_opts, NULL);
 
 		if (opt == -1)
 			break;
@@ -375,22 +374,15 @@ main (int argc, char **argv)
 			case 'v':
 				verbose++;
 				break;
-
+			case 'q':
+				verbose--;
+				break;
 			case 'V':
 				printf ("XMMS version %s\n", XMMS_VERSION);
 				exit (0);
 				break;
-
-			case 'n':
-				doLog = FALSE;
-				break;
-
 			case 'o':
 				outname = g_strdup (optarg);
-				break;
-
-			case 'd':
-				daemonize = TRUE;
 				break;
 			case 'p':
 				ppath = g_strdup (optarg);
@@ -405,42 +397,26 @@ main (int argc, char **argv)
 			case 'i':
 				ipcpath = g_strdup (optarg);
 				break;
+			case 's':
+				status_fd = atoi (optarg);
+				break;
 
 		}
-	}
-
-	if (daemonize) {
-		ppid = getpid ();
-		if (fork ()) {
-			sigset_t signals;
-			int caught;
-			memset (&signals, 0, sizeof (sigset_t));
-			sigaddset (&signals, SIGUSR1);
-			sigaddset (&signals, SIGCHLD);
-			sigwait (&signals, &caught);
-			exit (caught != SIGUSR1);
-		}
-		setsid();
-		if (fork ()) exit(0);
-		xmms_log_daemonize ();
 	}
 
 	g_thread_init (NULL);
 
 	g_random_set_seed (time (NULL));
 
-	if (!xmms_log_init (doLog ? "xmmsd" : "null")) {
-		fprintf (stderr, "Couldn't open logfile!!\n");
-		return 1;
-	}
+	xmms_log_init (verbose);
 
 	ipc = xmms_ipc_init ();
 	
 	load_config ();
 
-	xmms_config_value_register ("decoder.buffersize", 
+	xmms_config_property_register ("decoder.buffersize", 
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
-	xmms_config_value_register ("transport.buffersize", 
+	xmms_config_property_register ("transport.buffersize", 
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
 
@@ -454,14 +430,14 @@ main (int argc, char **argv)
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
 	/* find output plugin. */
-	cv = xmms_config_value_register ("output.plugin",
+	cv = xmms_config_property_register ("output.plugin",
 	                                 XMMS_OUTPUT_DEFAULT,
 	                                 change_output, mainobj);
 
 	if (outname)
 		xmms_config_setvalue (NULL, "output.plugin", outname, NULL);
 
-	outname = xmms_config_value_string_get (cv);
+	outname = xmms_config_property_get_string (cv);
 
 	XMMS_DBG ("output = %s", outname);
 
@@ -479,14 +455,17 @@ main (int argc, char **argv)
 
 	g_snprintf (default_path, sizeof (default_path),
 	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());
-	cv = xmms_config_value_register ("core.ipcsocket", default_path,
+	cv = xmms_config_property_register ("core.ipcsocket", default_path,
 	                                 NULL, NULL);
 
 	if (!ipcpath)
-		ipcpath = xmms_config_value_string_get (cv);
+		ipcpath = xmms_config_property_get_string (cv);
 	if (!xmms_ipc_setup_server (ipcpath)) {
-		kill (ppid, SIGUSR1);
 		xmms_log_fatal ("IPC failed to init!");
+	}
+
+	if (status_fd != -1) {
+		write (status_fd, "+", 1);
 	}
 
 	xmms_ipc_setup_with_gmain (ipc);
@@ -498,25 +477,21 @@ main (int argc, char **argv)
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
 
-	if (ppid) { /* signal that we are inited */
-		kill (ppid, SIGUSR1);
-	}
-
 
 	putenv (g_strdup_printf ("XMMS_PATH=%s", ipcpath));
 
 	tmp = g_strdup_printf ("%s/.xmms2/shutdown.d", g_get_home_dir());
-	cv = xmms_config_value_register ("core.shutdownpath",
+	cv = xmms_config_property_register ("core.shutdownpath",
 				    tmp, NULL, NULL);
 	g_free (tmp);
 
 	tmp = g_strdup_printf ("%s/.xmms2/startup.d", g_get_home_dir());
-	cv = xmms_config_value_register ("core.startuppath",
+	cv = xmms_config_property_register ("core.startuppath",
 				    tmp, NULL, NULL);
 	g_free (tmp);
 
 	/* Startup dir */
-	do_scriptdir (xmms_config_value_string_get (cv));
+	do_scriptdir (xmms_config_property_get_string (cv));
 
 	mainloop = g_main_loop_new (NULL, FALSE);
 

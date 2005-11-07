@@ -107,6 +107,26 @@ xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 	return ret;
 }
 
+gboolean
+xmms_playlist_plugin_verify (xmms_plugin_t *plugin)
+{
+	gboolean r, w;
+
+	g_return_val_if_fail (plugin, FALSE);
+
+	/* methods needed for read support */
+	r = xmms_plugin_has_methods (plugin,
+	                             XMMS_PLUGIN_METHOD_READ_PLAYLIST,
+	                             NULL);
+
+	/* methods needed for write support */
+	w = xmms_plugin_has_methods (plugin,
+	                             XMMS_PLUGIN_METHOD_WRITE_PLAYLIST,
+	                             NULL);
+
+	return r || w;
+}
+
 /*
  * Static members
  */
@@ -177,7 +197,6 @@ xmms_playlist_plugin_find_by_mime (const gchar *mimetype)
 {
 	GList *list, *node;
 	xmms_plugin_t *plugin = NULL;
-	xmms_playlist_plugin_can_handle_method_t can_handle;
 
 	g_return_val_if_fail (mimetype, NULL);
 
@@ -187,20 +206,25 @@ xmms_playlist_plugin_find_by_mime (const gchar *mimetype)
 	}
 
 	for (node = list; node; node = g_list_next (node)) {
+		const GList *magic, *node2;
+
 		plugin = node->data;
+		magic = xmms_plugin_magic_get (plugin);
 
 		XMMS_DBG ("Trying plugin: %s", xmms_plugin_name_get (plugin));
-		can_handle = xmms_plugin_method_get (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE);
-		if (!can_handle)
-			continue;
 
-		if (can_handle (mimetype)) {
-			xmms_object_ref (plugin);
-			break;
+		for (node2 = magic; node2; node2 = g_list_next (node2)) {
+			GNode *tree = node2->data;
+			gpointer *data = tree->data;
+
+			if (!g_strcasecmp ((gchar *) data[1], mimetype)) {
+				xmms_object_ref (plugin);
+				goto out;
+			}
 		}
-
 	}
 
+out:
 	xmms_plugin_list_destroy (list);
 
 	return node ? plugin : NULL;

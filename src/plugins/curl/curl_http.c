@@ -47,7 +47,6 @@ static void header_handler_contentlength (xmms_transport_t *transport, xmms_medi
 static void header_handler_icy_metaint (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
 static void header_handler_icy_name (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
 static void header_handler_icy_genre (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
-static void header_handler_icy_br (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
 static void header_handler_icy_ok (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
 static void header_handler_last (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
@@ -65,7 +64,6 @@ handler_t handlers[] = {
 	{ "icy-name", header_handler_icy_name },
 	{ "icy-genre", header_handler_icy_genre },
 	{ "ICY 200 OK", header_handler_icy_ok },
-	{ "icy-br", header_handler_icy_br },
 	{ "\r\n", header_handler_last },
 	{ NULL, NULL }
 };
@@ -111,10 +109,20 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_curl_close);
 
-	xmms_plugin_config_value_register (plugin, "shoutcastinfo", "1", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "shoutcastinfo", "1",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "buffersize", "131072",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "verbose", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "connecttimeout", "15",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "useproxy", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxyaddress", "127.0.0.1:8080",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "authproxy", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxyuser", "user", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxypass", "password",
+	                                   NULL, NULL); 
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
 
@@ -141,8 +149,10 @@ static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
-	xmms_config_value_t *val;
-	gint bufsize, metaint, verbose, connecttimeout;
+	xmms_config_property_t *val;
+	gint bufsize, metaint, verbose, connecttimeout, useproxy, authproxy;
+	const gchar *proxyaddress, *proxyuser, *proxypass;
+	gchar proxyuserpass[90]; 
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -150,16 +160,33 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data = g_new0 (xmms_curl_data_t, 1);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
-	bufsize = xmms_config_value_int_get (val);
+	bufsize = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "connecttimeout");
-	connecttimeout = xmms_config_value_int_get (val);
+	connecttimeout = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
-	metaint = xmms_config_value_int_get (val);
+	metaint = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
-	verbose = xmms_config_value_int_get (val);
+	verbose = xmms_config_property_get_int (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "useproxy");
+	useproxy = xmms_config_property_get_int (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "authproxy");
+	authproxy = xmms_config_property_get_int (val);
+	
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyaddress");
+	proxyaddress = xmms_config_property_get_string (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyuser");
+	proxyuser = xmms_config_property_get_string (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxypass");
+	proxypass = xmms_config_property_get_string (val);
+
+	g_snprintf (proxyuserpass, sizeof (proxyuserpass), "%s:%s", proxyuser, proxypass);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
 	data->metabuffer = g_malloc (256 * 16);
@@ -186,6 +213,15 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION, xmms_curl_callback_write);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION, xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
+
+	if (useproxy == 1) {
+		curl_easy_setopt (data->curl_easy, CURLOPT_PROXY, proxyaddress);
+		if (authproxy == 1) {
+			curl_easy_setopt (data->curl_easy, CURLOPT_PROXYUSERPWD,
+		                          proxyuserpass);
+		}
+	}
+
 	curl_easy_setopt (data->curl_easy, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_VERBOSE, verbose);
 	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYPEER, 0);
@@ -494,22 +530,6 @@ header_handler_icy_name (xmms_transport_t *transport,
 	xmms_medialib_entry_property_set_str (session, entry, 
 										  XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, 
 										  header);
-	xmms_medialib_entry_send_update (entry);
-}
-
-static void
-header_handler_icy_br (xmms_transport_t *transport,
-					   xmms_medialib_session_t *session,
-					   gchar *header)
-{
-	xmms_medialib_entry_t entry;
-	gint bitrate = 0;
-
-	entry = xmms_transport_medialib_entry_get (transport);
-	bitrate = strtol (header, NULL, 10);
-	xmms_medialib_entry_property_set_int (session, entry, 
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-										  bitrate);
 	xmms_medialib_entry_send_update (entry);
 }
 

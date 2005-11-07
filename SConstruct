@@ -6,15 +6,18 @@ import SCons
 import re
 import string
 import new
+import gittools
 from marshal import dump
 
-try:
-	head = " (git-commit: "+file(".git/HEAD").read().strip()+")"
-except:
-	head = ""
-	pass
 
-XMMS_VERSION = "0.1 DR2.2-WIP" + head
+commithash, changed = gittools.get_info()
+
+if changed:
+	changed = " + local changes"
+else:
+	changed = ""
+
+XMMS_VERSION = "0.1 DR2.2+WIP (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
@@ -133,6 +136,7 @@ base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
+	      "%BINDIR%":base_env["PREFIX"]+"/bin",
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix}
 

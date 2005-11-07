@@ -87,7 +87,7 @@ print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		printf ("%s = %s\n", (char *)key, (char *)value);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int)value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 }
 
@@ -378,7 +378,7 @@ cmd_radd (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (i = 2; argv[i]; i++) {
 		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			printf ("not a directoy: %s\n", argv[i]);
+			printf ("not a directory: %s\n", argv[i]);
 			continue;
 		}
 
@@ -462,7 +462,7 @@ print_entry (const void *key, xmmsc_result_value_type_t type, const void *value,
 		printf ("%s = %s\n", (char *)key, conv);
 		g_free (conv);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int) value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 
 }
@@ -1039,7 +1039,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
-	xmmsc_setup_with_gmain (conn);
+	xmmsc_mainloop_gmain_init (conn);
 
 	g_main_loop_run (ml);
 }

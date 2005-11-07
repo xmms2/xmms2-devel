@@ -37,6 +37,7 @@ void xmms_plugin_list_destroy (GList *list);
 xmms_plugin_t *xmms_plugin_find (xmms_plugin_type_t type, const gchar *name);
 
 xmms_plugin_method_t xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *member);
+gboolean xmms_plugin_has_methods (xmms_plugin_t *plugin, ...);
 
 xmms_plugin_type_t xmms_plugin_type_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_name_get (const xmms_plugin_t *plugin);

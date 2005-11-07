@@ -47,7 +47,7 @@ const char create_views[] = "CREATE VIEW artists as select distinct m1.value as 
 			    "CREATE VIEW albums as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='compilation' where m1.key='artist' and m3.value is null;"
 			    "CREATE VIEW songs as select distinct m1.value as artist, ifnull(m2.value,'[unknown]') as album, ifnull(m3.value, m4.value) as title, ifnull(m5.value, -1) as tracknr, m1.id as id from Media m1 left join Media m2 on m1.id = m2.id and m2.key='album' left join Media m3 on m1.id = m3.id and m3.key='title' join Media m4 on m1.id = m4.id and m4.key='url' left join Media m5 on m1.id = m5.id and m5.key='tracknr' where m1.key='artist';"
 			    "CREATE VIEW compilations as select distinct m1.value as compilation from Media m1 left join Media m2 on m1.id = m2.id and m2.key='compilation' where m1.key='album' and m2.value='1';"
-			    "CREATE VIEW topsongs as select m.value as artist, m2.value as song, sum(l.value) as playsum, m.id as id, count(l.id) as times from Log l join Media m on l.id=m.id join Media m2 on m2.id = l.id  where m.key='artist' and m2.key='title' group by l.id order by playsum desc;";
+			    "CREATE VIEW topsongs as select m.value as artist, m2.value as song, sum(l.value) as playsum, m.id as id, count(l.id) as times from Log l left join Media m on l.id=m.id and m.key='artist' left join Media m2 on m2.id = l.id and m2.key='title' group by l.id order by playsum desc;";
 
 
 /**
@@ -148,10 +148,10 @@ xmms_sqlite_open (gboolean *c)
 	gboolean create = TRUE;
 	const gchar *dbpath;
 	gint version = 0;
-	xmms_config_value_t *cv;
+	xmms_config_property_t *cv;
 
 	cv = xmms_config_lookup ("medialib.path");
-	dbpath = xmms_config_value_string_get (cv);
+	dbpath = xmms_config_property_get_string (cv);
 
 	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		create = FALSE;

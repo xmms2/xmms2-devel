@@ -51,8 +51,8 @@ void on_prepare (void *udata, Ecore_Fd_Handler *handler)
 	ecore_main_fd_handler_active_set (handler, flags);
 }
 
-int
-xmmsc_setup_with_ecore (xmmsc_connection_t *c)
+void *
+xmmsc_mainloop_ecore_init (xmmsc_connection_t *c)
 {
 	Ecore_Fd_Handler *fdh;
 	int flags = ECORE_FD_READ | ECORE_FD_ERROR;
@@ -64,6 +64,11 @@ xmmsc_setup_with_ecore (xmmsc_connection_t *c)
 	                                 on_fd_data, c, NULL, NULL);
 	ecore_main_fd_handler_prepare_callback_set (fdh, on_prepare, c);
 
-	return TRUE;
+	return fdh;
 }
 
+void
+xmmsc_mainloop_ecore_shutdown (xmmsc_connection_t *c, void *udata)
+{
+	ecore_main_fd_handler_del (udata);
+}

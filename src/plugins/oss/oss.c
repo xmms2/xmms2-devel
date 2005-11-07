@@ -44,7 +44,7 @@ typedef struct xmms_oss_data_St {
 	gint mixer_fd;
 	gboolean have_mixer;
 
-	xmms_config_value_t *mixer;
+	xmms_config_property_t *mixer;
 
 } xmms_oss_data_t;
 
@@ -143,27 +143,27 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, 
 	                        xmms_oss_mixer_set);
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 	                                   "mixer",
 	                                   "/dev/mixer",
 	                                   NULL,
 	                                   NULL);
 	
 #if !defined(XMMS_OS_NETBSD) && !defined(XMMS_OS_OPENBSD) 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 	                                   "device",
 	                                   "/dev/dsp",
 	                                   NULL,
 	                                   NULL);
 # else
-        xmms_plugin_config_value_register (plugin,
+        xmms_plugin_config_property_register (plugin,
                                            "device", 
                                            "/dev/audio",
                                            NULL,
                                            NULL);
 #endif
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 	                                   "volume",
 	                                   "70/70",
 	                                   NULL,
@@ -260,7 +260,7 @@ static gboolean
 xmms_oss_open (xmms_output_t *output)
 {
 	xmms_oss_data_t *data;
-	const xmms_config_value_t *val;
+	const xmms_config_property_t *val;
 	const gchar *dev;
 	guint param;
 
@@ -271,7 +271,7 @@ xmms_oss_open (xmms_output_t *output)
 	XMMS_DBG ("xmms_oss_open (%p)", output);
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (val);
+	dev = xmms_config_property_get_string (val);
 
 	data->fd = open (dev, O_WRONLY);
 	if (data->fd == -1)
@@ -296,7 +296,7 @@ static gboolean
 xmms_oss_new (xmms_output_t *output)
 {
 	xmms_oss_data_t *data;
-	xmms_config_value_t *val;
+	xmms_config_property_t *val;
 	const gchar *dev;
 	const gchar *mixdev;
 	int i,j,k, param, fmts, fd;
@@ -306,7 +306,7 @@ xmms_oss_new (xmms_output_t *output)
 	data = g_new0 (xmms_oss_data_t, 1);
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
-	mixdev = xmms_config_value_string_get (val);
+	mixdev = xmms_config_property_get_string (val);
 
 	/* Open mixer here. I am not sure this is entirely correct. */
 	data->mixer_fd = open (mixdev, O_RDONLY);
@@ -323,14 +323,14 @@ xmms_oss_new (xmms_output_t *output)
 
 	/* since we don't have this data when we are register the configvalue
 	   we need to set the callback here */
-	xmms_config_value_callback_set (data->mixer, 
+	xmms_config_property_callback_set (data->mixer, 
 									NULL,
 									(gpointer) output);
 
 	xmms_output_private_data_set (output, data);
 
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
-	dev = xmms_config_value_string_get (val);
+	dev = xmms_config_property_get_string (val);
 
 	XMMS_DBG ("device = %s", dev);
 
