@@ -65,7 +65,7 @@ char *xmmsc_sqlite_prepare_string (char *input);
 
 /* commands */
 xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *);
-xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, char *);
+xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, const char *);
 xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c);
