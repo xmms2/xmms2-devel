@@ -388,12 +388,12 @@ tree_match (xmms_magic_checker_t *c, GNode *tree)
 	}
 
 	for (n = tree->children; n; n = n->next) {
-		if (!node_match (c, n) || !tree_match (c, n)) {
-			return FALSE;
+		if (node_match (c, n) && tree_match (c, n)) {
+			return TRUE;
 		}
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 guint
