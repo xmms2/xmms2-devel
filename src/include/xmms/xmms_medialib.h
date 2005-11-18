@@ -69,7 +69,9 @@ guint32 xmms_medialib_get_random_entry (xmms_medialib_session_t *session);
 
 
 #define xmms_medialib_begin() _xmms_medialib_begin(__FILE__, __LINE__)
+
 xmms_medialib_session_t * _xmms_medialib_begin (const char *file, int line);
 void xmms_medialib_end (xmms_medialib_session_t *session);
+void xmms_medialib_session_source_set (xmms_medialib_session_t *session, gchar *source);
 
 #endif /* __XMMS_MEDIALIB_H__ */

@@ -31,6 +31,7 @@ static void mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **arg
 static void mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_set (xmmsc_connection_t *conn, int argc, char **argv);
 
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", mlib_add },
@@ -48,9 +49,37 @@ cmds mlib_commands[] = {
 	{ "remove_playlist", "[playlistname] - Remove a playlist", mlib_playlist_remove },
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", mlib_rehash },
-
+	{ "set", "[id, key, value, (source)] Set a property together with a medialib entry.", mlib_set },
 	{ NULL, NULL, NULL },
 };
+
+static void
+mlib_set (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 6) {
+		print_error ("usage: set [id] [key] [value] ([source])");
+	}
+
+	if (argc == 7) {
+		res = xmmsc_medialib_entry_property_set_with_source (conn,
+															 atoi (argv[3]),
+															 argv[6],
+															 argv[4],
+															 argv[5]);
+															 
+	} else {
+		res = xmmsc_medialib_entry_property_set (conn,
+												 atoi (argv[3]),
+												 argv[4],
+												 argv[5]);
+	}
+
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+}
 
 static void
 mlib_add (xmmsc_connection_t *conn, int argc, char **argv)

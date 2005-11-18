@@ -82,7 +82,8 @@ print_info (const char *fmt, ...)
 }
 
 void
-print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
+print_hash (const void *key, xmmsc_result_value_type_t type, 
+			const void *value, const char *source, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		printf ("%s = %s\n", (char *)key, (char *)value);
@@ -451,7 +452,8 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-print_entry (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
+print_entry (const void *key, xmmsc_result_value_type_t type, 
+			 const void *value, const char *source, void *udata)
 {
 	gchar *conv;
 	gsize r, w;
@@ -459,10 +461,10 @@ print_entry (const void *key, xmmsc_result_value_type_t type, const void *value,
 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
-		printf ("%s = %s\n", (char *)key, conv);
+		printf ("[%s] %s = %s\n", source, (char *)key, conv);
 		g_free (conv);
 	} else {
-		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
+		printf ("[%s] %s = %d\n", source, (char *)key, XPOINTER_TO_INT (value));
 	}
 
 }
@@ -1130,10 +1132,10 @@ main (int argc, char **argv)
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
 
-	connection = xmmsc_init ("XMMS2 CLI");
+	connection = xmmsc_init ("xmms2-cli");
 
 	if (!connection) {
-		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
+		print_error ("Could not init xmmsc_connection!");
 	}
 
 	path = getenv ("XMMS_PATH");

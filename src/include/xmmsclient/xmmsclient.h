@@ -143,6 +143,8 @@ xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, unsigned int id);
 xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry);
+xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id, char *key, char *value);
+xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, uint32_t id, char *source, char *key, char *value);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
@@ -190,7 +192,7 @@ typedef enum {
 	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING
 } xmmsc_result_value_type_t;
 
-typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data);
+typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);
 
 xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key);
 int xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r);

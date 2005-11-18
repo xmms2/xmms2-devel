@@ -158,6 +158,7 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 				return FALSE;
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
+		case XMMS_OBJECT_CMD_ARG_PROPLIST:
 			{
 				guint32 len;
 				guint j;
@@ -244,6 +245,7 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 			xmms_ipc_msg_put_int32 (msg, val->value.int32);
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
+		case XMMS_OBJECT_CMD_ARG_PROPLIST:
 			xmms_ipc_msg_put_uint32 (msg, g_list_length (val->value.list));
 
 			for (n = val->value.list; n; n = g_list_next (n)) {

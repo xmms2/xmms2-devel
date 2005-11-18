@@ -83,15 +83,30 @@ static void xmmsc_deinit (xmmsc_connection_t *c);
  * @sa xmmsc_unref
  */
 
+/* 14:47 <irlanders> isalnum(c) || c == '_' || c == '-'
+ */
+
 xmmsc_connection_t *
 xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
+	int i = 0;
+	char j;
 
 	x_api_error_if (!clientname, "with NULL clientname", NULL);
 
 	if (!(c = x_new0 (xmmsc_connection_t, 1))) {
 		return NULL;
+	}
+
+	while (clientname[i]) {
+		j = clientname[i];
+		if (!isalnum(j) && j != '_' && j != '-') {
+			/* snyggt! */
+			free (c);
+			x_api_error_if (true, "clientname contains invalid chars, just alphanumeric chars are allowed!", NULL);
+		}
+		i++;
 	}
 
 	if (!(c->clientname = strdup (clientname))) {
@@ -500,7 +515,6 @@ xmmsc_msg_list_put (xmms_ipc_msg_t *msg, x_list_t *list)
 {
 	x_list_t *n;
 
-	xmms_ipc_msg_put_int32 (msg, XMMS_OBJECT_CMD_ARG_LIST);
 	xmms_ipc_msg_put_uint32 (msg, x_list_length (list));
 
 	for (n = list; n; n = x_list_next (n)) {

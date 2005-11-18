@@ -33,7 +33,8 @@
 #define DB_VERSION 16
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
-const char create_Media_stm[] = "create table Media (id integer, key, value)";
+const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
+const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos int)";
@@ -138,8 +139,6 @@ xmms_sqlite_open (gboolean *c)
 		sqlite3_exec (sql, "PRAGMA user_version",
 		              xmms_sqlite_version_cb, &version, NULL);
 
-		XMMS_DBG ("Existing database is version %d", version);
-
 		if (version != DB_VERSION && !try_upgrade (sql, version)) {
 			gchar old[XMMS_PATH_MAX];
 
@@ -161,6 +160,8 @@ xmms_sqlite_open (gboolean *c)
 		XMMS_DBG ("Creating the database...");
 		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_Sources_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Log_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
