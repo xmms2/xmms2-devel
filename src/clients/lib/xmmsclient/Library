@@ -10,7 +10,6 @@ source=["ipc.c",
 	"playback.c", 
 	"playlist.c", 
 	"result.c", 
-	"xhash.c", 
 	"xlist.c", 
 	"xqueue.c",
 	"xmmsclient.c"]

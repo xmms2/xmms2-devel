@@ -283,36 +283,6 @@ xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
 	return res;
 }
 
-static int
-free_str (void * key, void * value, void * udata)
-{
-	char *k = (char *)key;
-
-	if (strcasecmp (k, "id") == 0) {
-		free (key);
-		return true;
-	}
-
-	if (key)
-		free (key);
-	if (value)
-		free (value);
-
-	return true;
-}
-
-/**
- * Free all strings in a x_hash_t.
- */
-void
-xmmsc_playlist_entry_free (x_hash_t *entry)
-{
-	if (entry) {
-		x_hash_foreach_remove (entry, free_str, NULL);
-		x_hash_destroy (entry);
-	}
-}
-
 /** @} */
 
 #define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \

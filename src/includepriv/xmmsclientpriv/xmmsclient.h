@@ -31,7 +31,6 @@
 
 #include "xmmsc/xmmsc_ipc_msg.h"
 
-#include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_stdint.h"
@@ -48,8 +47,8 @@ struct xmmsc_connection_St {
 	
 	xmmsc_ipc_t *ipc;
 
-	x_hash_t *callbacks;
-	x_hash_t *replies;
+	x_list_t *callbacks;
+	x_list_t *replies;
 	char *error;
 	int timeout;
 	void *data;
@@ -65,6 +64,7 @@ xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_msg_flush (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
 xmmsc_result_t *xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid);
 xmmsc_result_t *xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid);
+bool xmmsc_msg_list_put (xmms_ipc_msg_t *msg, x_list_t *list);
 
 #endif
 

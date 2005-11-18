@@ -30,7 +30,6 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
 
 #include "xmmsclient/xmmsclient.h"
@@ -491,6 +490,24 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
 	return xmmsc_result_new (c, cid);
+}
+
+/**
+ * Adds a list to the msg.
+ */
+bool
+xmmsc_msg_list_put (xmms_ipc_msg_t *msg, x_list_t *list)
+{
+	x_list_t *n;
+
+	xmms_ipc_msg_put_int32 (msg, XMMS_OBJECT_CMD_ARG_LIST);
+	xmms_ipc_msg_put_uint32 (msg, x_list_length (list));
+
+	for (n = list; n; n = x_list_next (n)) {
+		xmms_ipc_msg_put_string (msg, (char *)n->data);
+	}
+
+	return true;
 }
 
 

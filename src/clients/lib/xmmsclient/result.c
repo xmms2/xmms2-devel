@@ -30,7 +30,7 @@
 #include "xmmsc/xmmsc_stdint.h"
 
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
-static x_hash_t *xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg);
+static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
 
 typedef struct xmmsc_result_value_St {
 	union {
@@ -38,7 +38,7 @@ typedef struct xmmsc_result_value_St {
 		uint32_t uint32;
 		int32_t int32;
 		char *string;
-		x_hash_t *dict;
+		x_list_t *dict;
 	} value;
 	xmmsc_result_value_type_t type;
 } xmmsc_result_value_t;
@@ -74,7 +74,7 @@ struct xmmsc_result_St {
 		uint32_t uint;
 		int32_t inte;
 		char *string;
-		x_hash_t *hash;
+		x_list_t *dict;
 	} data;
 
 	x_list_t *list;
@@ -277,7 +277,7 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 			x_list_free (res->list);
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			x_hash_destroy (res->data.hash);
+			x_list_free (res->data.dict);
 			break;
 	}
 }
@@ -320,13 +320,13 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			{
-				x_hash_t *hash;
+				x_list_t *dict;
 
-				hash = xmmsc_deserialize_hashtable (msg);
-				if (!hash)
+				dict = xmmsc_deserialize_dict (msg);
+				if (!dict)
 					return false;
 
-				res->data.hash = hash;
+				res->data.dict = dict;
 
 			}
 			break;
@@ -559,13 +559,32 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 	return 1;
 }
 
+static xmmsc_result_value_t *
+xmmsc_result_dict_lookup (x_list_t *dict, const char *key)
+{
+	x_list_t *n;
+
+	for (n = dict; n; n = x_list_next (n)) {
+		const char *k = n->data;
+		if (strcasecmp (k, key) == 0 && n->next) {
+			/* found right key, return value */
+			return (xmmsc_result_value_t*) n->next->data;
+		} else {
+			/* skip data part of this entry */
+			n = x_list_next (n);
+		}
+	}
+
+	return NULL;
+}
+
 /**
  * Retrieve integer associated for specified key in the resultset.
  *
  * If the key doesn't exist in the result the returned integer is
  * undefined. 
  *
- * @param res a #xmmsc_result_t containing a hashtable.
+ * @param res a #xmmsc_result_t containing dict list.
  * @param r the return int
  * @return 1 upon success otherwise 0
  *
@@ -584,7 +603,7 @@ xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t
 		return 0;
 	}
 
-	val = x_hash_lookup (res->data.hash, key);
+	val = xmmsc_result_dict_lookup (res->data.dict, key);
 	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_INT32) {
 		*r = val->value.int32;
 	} else {
@@ -620,7 +639,7 @@ xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32
 		return 0;
 	}
 
-	val = x_hash_lookup (res->data.hash, key);
+	val = xmmsc_result_dict_lookup (res->data.dict, key);
 	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
 		*r = val->value.uint32;
 	} else {
@@ -657,7 +676,7 @@ xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r)
 		return 0;
 	}
 
-	val = x_hash_lookup (res->data.hash, key);
+	val = xmmsc_result_dict_lookup (res->data.dict, key);
 	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		*r = val->value.string;
 	} else {
@@ -688,7 +707,7 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 		return XMMSC_RESULT_VALUE_TYPE_NONE;
 	}
 
-	val = x_hash_lookup (res->data.hash, key);
+	val = xmmsc_result_dict_lookup (res->data.dict, key);
 	if (!val) {
 		return XMMSC_RESULT_VALUE_TYPE_NONE;
 	}
@@ -702,16 +721,6 @@ typedef struct {
 	xmmsc_foreach_func func;
 	void *userdata;
 } xmmsc_foreach_t;
-
-static void
-xmmsc_result_dict_foreach_cb (const void *key, const void *value, void *udata)
-{
-	xmmsc_foreach_t *foreach = udata;
-	const xmmsc_result_value_t *val = value;
-
-	foreach->func (key, val->type, (void *)val->value.string, foreach->userdata);
-}
-
 
 /**
  * Iterate over all key/value-pair in the resultset.
@@ -730,6 +739,7 @@ int
 xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
 {
 	xmmsc_foreach_t fc;
+	x_list_t *n;
 
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
@@ -743,7 +753,14 @@ xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *u
 	fc.func = func;
 	fc.userdata = user_data;
 
-	x_hash_foreach (res->data.hash, xmmsc_result_dict_foreach_cb, &fc);
+	for (n = res->data.dict; n; n = x_list_next (n)) {
+		xmmsc_result_value_t *val = NULL;
+		if (n->next) {
+			val = n->next->data;
+		}
+		func ((const void *)n->data, val->type, (void *)val->value.string, user_data);
+		n = x_list_next (n); /* skip value part */
+	}
 
 	return 1;
 }
@@ -975,7 +992,7 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			val->value.dict = xmmsc_deserialize_hashtable (msg);
+			val->value.dict = xmmsc_deserialize_dict (msg);
 			if (!val->value.dict) {
 				goto err;
 			}
@@ -996,20 +1013,18 @@ err:
 
 }
 
-static x_hash_t *
-xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
+static x_list_t *
+xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 {
 	unsigned int entries;
 	unsigned int i;
 	unsigned int len;
-	x_hash_t *h;
+	x_list_t *n = NULL;
 	char *key;
 
 	if (!xmms_ipc_msg_get_uint32 (msg, &entries)) {
 		return NULL;
 	}
-
-	h = x_hash_new_full (x_str_hash, x_str_equal, free, xmmsc_result_value_free);
 
 	for (i = 1; i <= entries; i++) {
 		xmmsc_result_value_t *val;
@@ -1023,13 +1038,15 @@ xmmsc_deserialize_hashtable (xmms_ipc_msg_t *msg)
 			goto err;
 		}
 
-		x_hash_insert (h, key, val);
+		n = x_list_append (n, key);
+		n = x_list_append (n, val);
 	}
 
-	return h;
+	return n;
 
 err:
 	x_internal_error ("Message from server did not parse correctly!");
-	x_hash_destroy (h);
+	/* free vals here? */
+	x_list_free (n);
 	return NULL;
 }
