@@ -233,7 +233,7 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	xmmsc_ipc_lock (ipc);
 	for (n = ipc->results_list; n; n = x_list_next (n)) {
 		if (xmmsc_result_cid (res) == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
-			ipc->results_list = x_list_remove (ipc->results_list, n);
+			ipc->results_list = x_list_remove (ipc->results_list, n->data);
 			break;
 		}
 	}
