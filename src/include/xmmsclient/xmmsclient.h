@@ -194,6 +194,7 @@ typedef enum {
 
 typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);
 
+void xmmsc_result_source_preference_set (xmmsc_result_t *res, x_list_t *preference);
 xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key);
 int xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r);
 int xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r);
