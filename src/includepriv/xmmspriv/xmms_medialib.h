@@ -39,6 +39,7 @@ void xmms_medialib_playlist_load_autosaved ();
 
 void xmms_medialib_logging_start (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 void xmms_medialib_logging_stop (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, guint playtime);
+void xmms_medialib_entry_cleanup (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 
 
 #endif

@@ -423,7 +423,9 @@ xmms_medialib_logging_start (xmms_medialib_session_t *session,
 							entry, (guint) starttime);
 
 	if (ret) {
-		xmms_medialib_entry_property_set_int (session, entry, "laststarted", starttime);
+		xmms_medialib_entry_property_set_int (session, entry,
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED, 
+											  starttime);
 	}
 }
 
@@ -460,7 +462,8 @@ xmms_medialib_logging_stop (xmms_medialib_session_t *session,
 												XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 	value = (gint) (100.0 * playtime / (gdouble)sek);
 		
-	sek = xmms_medialib_entry_property_get_int (session, entry, "laststarted");
+	sek = xmms_medialib_entry_property_get_int (session, entry,
+												XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
 	g_return_if_fail (sek);
 
 	ret = xmms_sqlite_exec (session->sql, 
@@ -791,6 +794,19 @@ process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *
 	return TRUE;
 }
 
+void
+xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
+							 xmms_medialib_entry_t entry)
+{
+	xmms_sqlite_exec (session->sql, "delete from Media where id=%d and source=%d and key not in (%Q, %Q, %Q, %Q)", 
+					  entry,
+					  XMMS_MEDIALIB_SOURCE_SERVER_ID,
+					  XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
+					  XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
+					  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+					  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
+}
+
 static void 
 xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error)
 {
@@ -802,6 +818,8 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 	if (id) {
 		xmms_sqlite_exec (session->sql, "update Media set value = 0 where key='%s' and id=%d", 
 						  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, id);
+
+		
 	} else {
 		xmms_sqlite_exec (session->sql, "update Media set value = 0 where key='%s'", 
 						  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);

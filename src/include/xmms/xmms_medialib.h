@@ -51,6 +51,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID "track_id"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED "added"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_BPM "bpm"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED "laststarted"
 
 
 typedef guint32 xmms_medialib_entry_t;

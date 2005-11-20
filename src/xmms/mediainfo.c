@@ -209,6 +209,10 @@ xmms_mediainfo_reader_thread (gpointer data)
 			}
 
 			if (xmms_decoder_init_for_mediainfo (decoder)) {
+				session = xmms_medialib_begin ();
+				xmms_medialib_entry_cleanup (session, entry);
+				xmms_medialib_end (session);
+
 				xmms_decoder_mediainfo_get (decoder, transport);
 			}
 
