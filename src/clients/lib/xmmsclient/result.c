@@ -461,9 +461,10 @@ xmmsc_result_wait (xmmsc_result_t *res)
  * Set source to used when fetching stuff from a DICT
  */
 void
-xmmsc_result_source_preference_set (xmmsc_result_t *res, x_list_t *preference)
+xmmsc_result_source_preference_set (xmmsc_result_t *res, char **preference)
 {
 	x_list_t *n;
+	int i = 0;
 	x_return_if_fail (res);
 	x_return_if_fail (preference);
 
@@ -472,8 +473,11 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, x_list_t *preference)
 	}
 
 	x_list_free (res->source_pref);
-
-	res->source_pref = preference;
+	res->source_pref = NULL;
+	
+	for (i = 0; preference[i]; i++) {
+		res->source_pref = x_list_append (res->source_pref, strdup (preference[i])); 
+	}
 }
 
 /**
