@@ -2,7 +2,6 @@ target="modplug"
 source=["modplug.c"]
 
 def config(env):
-	raise ConfigError("Disabled")
 	try:
 		env.pkgconfig("modplug")
 	except ConfigError:
