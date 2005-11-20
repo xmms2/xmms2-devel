@@ -2,6 +2,9 @@
 Python bindings for XMMS2.
 """
 
+cdef extern from "stdlib.h":
+	void *malloc(int size)
+
 cdef extern from "Python.h":
 	object PyUnicode_DecodeUTF8(char *unicode, int size, char *errors)
 	object PyUnicode_AsUTF8String(object o)
@@ -206,11 +209,16 @@ cdef from_unicode(object o):
 
 cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, char *source, udata):
 	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
-		udata[key] = to_unicode(<char *>value)
+		v = to_unicode(<char *>value)
 	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
-		udata[key] = <unsigned int>value
+		v = <unsigned int>value
 	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
-		udata[key] = <int>value
+		v = <int>value
+
+	if not udata.has_key(source):
+		udata[source]={}
+
+	udata[source][key]=v
 
 cdef ResultNotifier(xmmsc_result_t *res, obj):
 	if not obj.get_broadcast():
