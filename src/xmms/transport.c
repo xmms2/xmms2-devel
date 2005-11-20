@@ -896,7 +896,6 @@ xmms_transport_read_direct (xmms_transport_t *transport, gchar *buffer, guint le
 static gboolean
 xmms_transport_decode_url (char *url)
 {
-	static char hex[16] = "0123456789abcdef";
 	int i = 0, j = 0;
 
 	while (url[i]) {
