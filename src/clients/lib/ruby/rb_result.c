@@ -241,7 +241,8 @@ static VALUE string_get (RbResult *res)
 
 static void xhash_to_rhash (const void *key,
                             xmmsc_result_value_type_t type,
-                            const void *value, VALUE *hash)
+                            const void *value, const char *source,
+							VALUE *hash)
 {
 	VALUE val;
 
