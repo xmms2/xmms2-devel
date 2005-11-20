@@ -174,6 +174,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
 	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded(xmmsc_connection_t *c)
@@ -1366,6 +1368,29 @@ cdef class XMMS:
 		ret.res = xmmsc_medialib_path_import(self.conn, c)
 		ret.more_init()
 		
+		return ret
+
+	def medialib_property_set(self, id, key, value, source=None, cb=None):
+		"""
+		Associate a value with a medialib entry. Source is optional.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		k = from_unicode(key)
+		v = from_unicode(value)
+	
+		if source:
+			s = from_unicode(source)
+			ret.res = xmmsc_medialib_entry_property_set_with_source(self.conn,id,s,k,v)
+		else:
+			ret.res = xmmsc_medialib_entry_property_set(self.conn,id,k,v)
+
+		ret.more_init()
 		return ret
 
 	def broadcast_medialib_entry_changed(self, cb = None):
