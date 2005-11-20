@@ -98,7 +98,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	signed int xmmsc_result_get_string(xmmsc_result_t *res, signed char **r)
 	signed int xmmsc_result_get_playlist_change(xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
 
-	ctypedef void(*xmmsc_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, void *user_data)
+	ctypedef void(*xmmsc_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, char *source, void *user_data)
 
 	int xmmsc_result_get_dict_entry(xmmsc_result_t *res, char *key, char **r)
 	int xmmsc_result_dict_foreach(xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
@@ -204,7 +204,7 @@ cdef from_unicode(object o):
 	else:
 		return o
 
-cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, udata):
+cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, char *source, udata):
 	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
 		udata[key] = to_unicode(<char *>value)
 	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
