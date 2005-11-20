@@ -148,7 +148,6 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		session = xmms_medialib_begin ();
 		entry = xmms_medialib_entry_not_resolved_get (session);
-		xmms_medialib_end (session);
 
 		while (entry) {
 			xmms_transport_t *transport;
@@ -157,9 +156,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			guint lmod = 0;
 
 			xmms_error_reset (&err);
-			session = xmms_medialib_begin ();
 			lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
-			xmms_medialib_end (session);
 
 			transport = xmms_transport_new ();
 			if (!transport) {
@@ -167,9 +164,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			}
 
 			if (!xmms_transport_open (transport, entry)) {
-				session = xmms_medialib_begin ();
 				xmms_medialib_entry_remove (session, entry);
-				xmms_medialib_end (session);
 
 				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_object_unref (transport);
@@ -180,25 +175,20 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 			if (lmod) {
 				guint tmp;
-				session = xmms_medialib_begin ();
 				tmp = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 				if (lmod >= tmp) {
 					xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
-					xmms_medialib_end (session);
 					xmms_transport_stop (transport);
 					xmms_object_unref (transport);
 					goto next;
 				}
-				xmms_medialib_end (session);
 				XMMS_DBG ("Modified on disk!");
 
 			}
 
 			decoder = xmms_decoder_new ();
 			if (!xmms_decoder_open (decoder, transport)) {
-				session = xmms_medialib_begin ();
 				xmms_medialib_entry_remove (session, entry);
-				xmms_medialib_end (session);
 
 				xmms_playlist_remove_by_entry (mrt->playlist, entry);
 				xmms_transport_stop (transport);
@@ -209,26 +199,22 @@ xmms_mediainfo_reader_thread (gpointer data)
 			}
 
 			if (xmms_decoder_init_for_mediainfo (decoder)) {
-				session = xmms_medialib_begin ();
 				xmms_medialib_entry_cleanup (session, entry);
-				xmms_medialib_end (session);
 
 				xmms_decoder_mediainfo_get (decoder, transport);
 			}
 
-			session = xmms_medialib_begin ();
 			xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
-			xmms_medialib_end (session);
 
 			xmms_transport_stop (transport);
 			xmms_object_unref (transport);
 			xmms_object_unref (decoder);
 
 next:
-			session = xmms_medialib_begin ();
 			entry = xmms_medialib_entry_not_resolved_get (session);
-			xmms_medialib_end (session);
 		}
+
+		xmms_medialib_end (session);
 
 		g_mutex_lock (mrt->mutex);
 		g_cond_wait (mrt->cond, mrt->mutex);
