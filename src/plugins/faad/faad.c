@@ -27,8 +27,11 @@
 #include "mp4ff/mp4ff.h"
 
 #define FAAD_BUFFER_SIZE 4096
-#define FAAD_TYPE_AAC 1
-#define FAAD_TYPE_MP4 2
+
+#define FAAD_TYPE_UNKNOWN 0
+#define FAAD_TYPE_MP4 1
+#define FAAD_TYPE_ADIF 2
+#define FAAD_TYPE_ADTS 3
 
 typedef struct {
 	faacDecHandle decoder;
@@ -72,8 +75,8 @@ xmms_plugin_get (void)
 
 	plugin =
 		xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
-						 XMMS_DECODER_PLUGIN_API_VERSION, "faad",
-						 "AAC decoder " XMMS_VERSION, "AAC decoder");
+	                         XMMS_DECODER_PLUGIN_API_VERSION, "faad",
+	                         "AAC decoder " XMMS_VERSION, "AAC decoder");
 
 	if (!plugin) {
 		return NULL;
@@ -85,13 +88,13 @@ xmms_plugin_get (void)
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_faad_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
-							xmms_faad_destroy);
+	                        xmms_faad_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_faad_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK,
-							xmms_faad_decode_block);
+	                        xmms_faad_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_faad_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
-							xmms_faad_get_mediainfo);
+	                        xmms_faad_get_mediainfo);
 
 	xmms_plugin_magic_add (plugin, "mpeg-4 header", "video/mp4",
 	                       "4 string ftyp",
@@ -105,6 +108,9 @@ xmms_plugin_get (void)
 
 	xmms_plugin_magic_add (plugin, "mpeg aac header", "audio/aac",
 	                       "0 beshort&0xfff6 0xfff0", NULL);
+
+	xmms_plugin_magic_add (plugin, "adif header", "audio/aac",
+	                       "0 string ADIF", NULL);
 
 	return plugin;
 }
@@ -135,8 +141,9 @@ xmms_faad_destroy (xmms_decoder_t *decoder)
 	g_return_if_fail (data);
 
 	faacDecClose (data->decoder);
-	if (data->mp4ff)
+	if (data->mp4ff) {
 		mp4ff_close (data->mp4ff);
+	}
 	g_free (data->mp4ff_cb);
 
 	g_free (data);
@@ -166,15 +173,16 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 	data->decoder = faacDecOpen ();
 	config = faacDecGetCurrentConfiguration (data->decoder);
 	config->defObjectType = LC;
+	config->defSampleRate = 44100;
 	config->outputFormat = FAAD_FMT_16BIT;
 	config->downMatrix = 0;
-	config->dontUpSampleImplicitSBR = 1;
+	config->dontUpSampleImplicitSBR = 0;
 	faacDecSetConfiguration (data->decoder, config);
 
 	bytes_read = xmms_transport_read (transport,
-									  (gchar *) data->buffer + data->buffer_length,
-									  data->buffer_size - data->buffer_length,
-									  &error);
+	                                  (gchar *) data->buffer + data->buffer_length,
+	                                  data->buffer_size - data->buffer_length,
+	                                  &error);
 
 	data->buffer_length += bytes_read;
 
@@ -183,11 +191,25 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 		return FALSE;
 	}
 
-	/* are we dealing with a raw AAC file or with a MP4 file? */
+	/* which type of file are we dealing with? */
+	data->filetype = FAAD_TYPE_UNKNOWN;
 	if (!strncmp ((char *)&data->buffer[4], "ftyp", 4)) {
 		data->filetype = FAAD_TYPE_MP4;
+	} else if (!strncmp ((char *)data->buffer, "ADIF", 4)) {
+		data->filetype = FAAD_TYPE_ADIF;
 	} else {
-		data->filetype = FAAD_TYPE_AAC;
+		int i;
+
+		/* ADTS mpeg file can be a stream and start in the middle of a
+		 * frame so we need to have extra loop check here */
+		for (i=0; i<data->buffer_length-1; i++) {
+			if (data->buffer[i] == 0xff && (data->buffer[i+1]&0xf6) == 0xf0) {
+				data->filetype = FAAD_TYPE_ADTS;
+				g_memmove (data->buffer, data->buffer+i, data->buffer_length-i);
+				data->buffer_length -= i;
+				break;
+			}
+		}
 	}
 
 	if (data->filetype == FAAD_TYPE_MP4) {
@@ -223,7 +245,7 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 								  &tmpbuflen);
 
 		if (faacDecInit2 (data->decoder, tmpbuf, tmpbuflen,
-						  &samplerate, &channels) < 0) {
+		                  &samplerate, &channels) < 0) {
 			XMMS_DBG ("Error initializing decoder library.");
 			g_free (tmpbuf);
 			return FALSE;
@@ -232,24 +254,35 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 
 		data->samplerate = samplerate;
 		data->channels = channels;
-	} else if (data->filetype == FAAD_TYPE_AAC) {
+	} else if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
 		if ((bytes_read =
-			 faacDecInit (data->decoder, data->buffer, data->buffer_length,
-						  &samplerate, &channels)) < 0) {
+		     faacDecInit (data->decoder, data->buffer, data->buffer_length,
+		                  &samplerate, &channels)) < 0) {
 			XMMS_DBG ("Error initializing decoder library.");
 			return FALSE;
 		}
+
+		/* If we are not checking mediainfo, skip the possible header */
+		if (mode ^ XMMS_DECODER_INIT_MEDIAINFO) {
+			g_memmove (data->buffer, data->buffer + bytes_read,
+			           data->buffer_length - bytes_read);
+			data->buffer_length -= bytes_read;
+		}
+
 		data->samplerate = samplerate;
 		data->channels = channels;
 	}
 
 	if (mode & XMMS_DECODER_INIT_DECODING) {
+		/* samplerate is constant because of the internal
+		 * upsampling done in libfaad */
 		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16,
-								 data->channels, data->samplerate);
+		                         data->channels, 44100);
 		if (xmms_decoder_format_finish (decoder) == NULL) {
 			XMMS_DBG ("Decoder format finish failed!");
 			return FALSE;
 		}
+		XMMS_DBG ("AAC decoder inited successfully!");
 	}
 
 	return TRUE;
@@ -274,9 +307,9 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 
 	if (data->buffer_length < FAAD_BUFFER_SIZE) {
 		bytes_read = xmms_transport_read (transport,
-										  (gchar *) data->buffer + data->buffer_length,
-										  data->buffer_size - data->buffer_length,
-										  &error);
+		                                  (gchar *) data->buffer + data->buffer_length,
+		                                  data->buffer_size - data->buffer_length,
+		                                  &error);
 
 		if (bytes_read <= 0 && data->buffer_length == 0) {
 			XMMS_DBG ("EOF");
@@ -291,8 +324,8 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 		guint tmpbuflen;
 
 		bytes_read = mp4ff_read_sample (data->mp4ff, data->track, 
-										data->sampleid, &tmpbuf, 
-										&tmpbuflen);
+		                                data->sampleid, &tmpbuf, 
+		                                &tmpbuflen);
 		data->sampleid++;
 
 		if (bytes_read == 0) {
@@ -301,23 +334,27 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 		}
 
 		sample_buffer = faacDecDecode (data->decoder, &frameInfo, 
-									   tmpbuf, tmpbuflen);
-		bytes_read = frameInfo.samples * 2;
+		                               tmpbuf, tmpbuflen);
+		bytes_read = frameInfo.samples * frameInfo.channels;
 		g_free (tmpbuf);
-	} else {
+	} else if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
 		sample_buffer =
 			faacDecDecode (data->decoder, &frameInfo, data->buffer,
-						   data->buffer_length);
+			               data->buffer_length);
 
 		g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
-				   data->buffer_length - frameInfo.bytesconsumed);
+		           data->buffer_length - frameInfo.bytesconsumed);
 		data->buffer_length -= frameInfo.bytesconsumed;
-		bytes_read = frameInfo.samples * 2;
+		bytes_read = frameInfo.samples * frameInfo.channels;
+	} else {
+		XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage(frameInfo.error));
+		return FALSE;
 	}
 
-	if (bytes_read > 0)
+	if (bytes_read > 0) {
 		xmms_decoder_write (decoder, sample_buffer + data->toskip,
-							bytes_read - data->toskip);
+		                    bytes_read - data->toskip);
+	}
 	data->toskip = 0;
 
 	return TRUE;
@@ -341,20 +378,22 @@ xmms_faad_seek (xmms_decoder_t *decoder, guint samples)
 		int32_t toskip;
 
 		data->sampleid = mp4ff_find_sample (data->mp4ff, data->track, 
-											samples, &toskip);
+		                                    samples, &toskip);
 		data->toskip = toskip;
 		data->buffer_length = 0;
 
 		return TRUE;
 	}
 
-	return FALSE;		/* Seeking not supported on AAC right now */
+	/* Seeking not supported on non-MP4 AAC right now */
+	return FALSE;
 }
 
 static void
 xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_faad_data_t *data;
+	xmms_transport_t *transport;
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
 
@@ -362,6 +401,9 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_if_fail (transport);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 	session = xmms_medialib_begin ();
@@ -372,29 +414,61 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 
 		temp = mp4ff_get_sample_rate (data->mp4ff, data->track);
 		xmms_medialib_entry_property_set_int (session, entry,
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-											  temp);
-		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track) / temp) >= 0)
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+		                                      temp);
+		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track) / temp) >= 0) {
 			xmms_medialib_entry_property_set_int (session, entry,
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-												  temp * 1000);
-		if ((temp = mp4ff_get_avg_bitrate (data->mp4ff, data->track)) >= 0)
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+			                                      temp * 1000);
+		}
+		if ((temp = mp4ff_get_avg_bitrate (data->mp4ff, data->track)) >= 0) {
 			xmms_medialib_entry_property_set_int (session, entry,
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-												  temp);
-		if (mp4ff_meta_get_artist (data->mp4ff, &metabuf))
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+			                                      temp);
+		}
+		if (mp4ff_meta_get_artist (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
-												  metabuf);
-		if (mp4ff_meta_get_title (data->mp4ff, &metabuf))
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
+			                                      metabuf);
+		}
+		if (mp4ff_meta_get_title (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-												  metabuf);
-		if (mp4ff_meta_get_album (data->mp4ff, &metabuf))
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
+			                                      metabuf);
+		}
+		if (mp4ff_meta_get_album (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
-												  metabuf);
-	} else if (data->filetype == FAAD_TYPE_AAC) {
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
+			                                      metabuf);
+		}
+	} else if (data->filetype == FAAD_TYPE_ADIF) {
+		guint skip_size, bitrate;
+		guint64 duration;
+
+		xmms_medialib_entry_property_set_int (session, entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+		                                      data->samplerate);
+
+		skip_size = (data->buffer[4] & 0x80) ? 9 : 0;
+		bitrate = ((guint) (data->buffer[4 + skip_size] & 0x0F) << 19) |
+		          ((guint) data->buffer[5 + skip_size] << 11) |
+		          ((guint) data->buffer[6 + skip_size] << 3) |
+		          ((guint) data->buffer[7 + skip_size] & 0xE0);
+		xmms_medialib_entry_property_set_int (session, entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+		                                      bitrate);
+
+		duration = xmms_transport_size (transport);
+		if (duration != 0) {
+			duration = ((float) duration * 8000.f)/((float) bitrate) + 0.5f;
+			xmms_medialib_entry_property_set_int (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+			                                      duration);
+		}
+	} else if (data->filetype == FAAD_TYPE_ADTS) {
+		xmms_medialib_entry_property_set_int (session, entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+		                                      data->samplerate);
 	}
 
 	xmms_medialib_end (session);
@@ -424,7 +498,7 @@ xmms_faad_read_callback (void *user_data, void *buffer, uint32_t length)
 		guint bytes_read;
 
 		bytes_read = xmms_transport_read (transport, (gchar *) data->buffer, 
-										  data->buffer_size, &error);
+		                                  data->buffer_size, &error);
 
 		if (bytes_read <= 0 && data->buffer_length == 0) {
 			XMMS_DBG ("EOF");
@@ -462,7 +536,7 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 
 	if (xmms_transport_can_seek (transport)) {
 		ret = xmms_transport_seek (transport, position,
-								   XMMS_TRANSPORT_SEEK_SET);
+		                           XMMS_TRANSPORT_SEEK_SET);
 		data->buffer_length = 0;
 	}
 	/*
@@ -489,7 +563,7 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 			while (relative > 0) {
 				gint readb = MIN (relative, data->buffer_size);
 				relative -= xmms_transport_read (transport, (gchar *)data->buffer,
-												 readb, &error);
+				                                 readb, &error);
 			}
 		}
 	}
