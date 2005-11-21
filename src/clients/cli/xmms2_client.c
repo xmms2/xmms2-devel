@@ -422,26 +422,44 @@ cmd_sort (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
+int
+cmp (const void *av, const void *bv)
+{
+	int result;
+	int a = *(int *)av;
+	int b = *(int *)bv;
+
+	result = (a > b ? -1 : 1);
+
+	if (a == b) 
+		result = 0;
+
+	return result;
+}
+
 static void
 cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	int i;
+	int i, j, size;
 	xmmsc_result_t *res;
+	int *sort = g_malloc (sizeof (int) * argc);
 
 	if (argc < 3) {
 		print_error ("Remove needs a ID to be removed");
 	}
 
-	for (i = 2; argv[i]; i++) {
-		int id;
+	i = 0;
+	for (j = 2; j < argc; j++) {
 		char *endptr = NULL;
+		sort[i] = strtol (argv[j], &endptr, 10);
+		if (endptr != argv[j]) i++;
+	}
+	size = i;
 
-		id = strtol (argv[i], &endptr, 10);
-		if (endptr == argv[i]) {
-			fprintf (stderr, "Skipping invalid id '%s'\n", argv[i]);
-			continue;
-		}
+	qsort(sort, size, sizeof (int), &cmp);
 
+	for (i = 0; i < size; i++) {
+		int id = sort[i];
 		res = xmmsc_playlist_remove (conn, id);
 		xmmsc_result_wait (res);
 		if (xmmsc_result_iserror (res)) {
@@ -449,6 +467,8 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 		xmmsc_result_unref (res);
 	}
+	
+	g_free (sort);
 }
 
 static void
