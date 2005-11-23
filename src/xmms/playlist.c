@@ -431,6 +431,7 @@ xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t 
 		if (g_array_index (playlist->list, guint32, i) == entry) {
 			XMMS_DBG ("removing entry on pos %d", i);
 			xmms_playlist_remove_unlocked (playlist, i, NULL);
+			i--; /* reset it */
 		}
 	}
 
