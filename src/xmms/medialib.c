@@ -798,12 +798,13 @@ void
 xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 							 xmms_medialib_entry_t entry)
 {
-	xmms_sqlite_exec (session->sql, "delete from Media where id=%d and source=%d and key not in (%Q, %Q, %Q, %Q)", 
+	xmms_sqlite_exec (session->sql, "delete from Media where id=%d and source=%d and key not in (%Q, %Q, %Q, %Q, %Q)", 
 					  entry,
 					  XMMS_MEDIALIB_SOURCE_SERVER_ID,
 					  XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
 					  XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
 					  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+					  XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,
 					  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
 }
 
