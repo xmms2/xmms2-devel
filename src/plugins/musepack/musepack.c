@@ -324,18 +324,22 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 
 	/* seek to the APEv2 footer */
 	ret = xmms_transport_seek (transport, -XMMS_APE_HEADER_SIZE, XMMS_TRANSPORT_SEEK_END);
-	g_return_if_fail ((ret >= 0));
+	if (ret <= 0)
+		return;
 
 	ret = xmms_transport_read (transport, header, XMMS_APE_HEADER_SIZE, &error);
-	g_return_if_fail ((ret >= 0));
+	if (ret <= 0)
+		return;
 
 	/* query footer for tag length */
 	len = xmms_ape_get_size (header);
-	g_return_if_fail ((len >= 0));
+	if (len <= 0)
+		return;
 
 	/* seek to first apetag item */
 	ret = xmms_transport_seek (transport, -len, XMMS_TRANSPORT_SEEK_END);
-	g_return_if_fail ((ret >= 0));
+	if (ret <= 0)
+		return;
 
 	/* max length? */
 	buff = (gchar *) malloc (len * sizeof (gchar *));
