@@ -265,8 +265,6 @@ xmmsc_result_value_free (void *v)
 static void
 xmmsc_result_cleanup_data (xmmsc_result_t *res)
 {
-	x_list_t *l;
-
 	x_return_if_fail (res);
 	if (!res->parsed)
 		return;
