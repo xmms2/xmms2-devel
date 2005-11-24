@@ -136,7 +136,15 @@ xmms_mpc_callback_tell (void *data)
 
 static mpc_bool_t 
 xmms_mpc_callback_canseek (void *data) {
-	return TRUE;
+	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
+	xmms_transport_t *transport;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_transport_can_seek (transport);
 }
 
 
