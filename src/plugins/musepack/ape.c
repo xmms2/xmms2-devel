@@ -24,79 +24,45 @@
 #include "musepack.h"
 #include "ape.h"
 
-typedef struct {
-	gchar name[8];
-	gint32 ver;
-	gint32 size;
-	gint32 count;
-	gint32 flags;
-	gchar zero[8];
-} xmms_ape_tag_t;
-
 static gboolean xmms_ape_tag_is_header (gint32 flags);
 static gboolean xmms_ape_tag_is_text (gint32 flags);
-static gboolean xmms_ape_tag_is_valid (xmms_ape_tag_t *tag);
-/* Future preparation
-static gboolean xmms_ape_tag_is_footer (gint32 flags);
-static gboolean xmms_ape_tag_is_binary (gint32 flags);
-static gboolean xmms_ape_tag_is_external (gint32 flags);
-static gboolean xmms_ape_tag_is_read_only (gint32 flags);
-*/
+
+#define get_int32(b,pos) ((b[pos]<<24)|(b[pos+1]<<16)|(b[pos+2]<<8)|(b[pos+3])) 
+
+#define APE_HEADER       ~0x7F
+#define APE_FLAGS_TYPE    0x06
+
 
 static gboolean
 xmms_ape_tag_is_header (gint32 flags)
 {
-	return (flags & GINT32_FROM_LE (0x80000000)) ? TRUE : FALSE;
+	return (flags & APE_HEADER) ? TRUE : FALSE;
 }
 
-/*
-static gboolean
-xmms_ape_tag_is_footer (gint32 flags)
-{
-	return (flags & GINT32_FROM_LE (0x40000000)) ? TRUE : FALSE;
-}
-*/
 
 static gboolean
 xmms_ape_tag_is_text (gint32 flags)
 {
-	return ((flags & GINT32_FROM_LE (6)) == 0) ? TRUE : FALSE;
+	return ((flags & APE_FLAGS_TYPE) == 0) ? TRUE : FALSE;
 }
 
-/*
-static gboolean
-xmms_ape_tag_is_binary (gint32 flags)
+
+gboolean
+xmms_ape_tag_is_valid (gchar *buff, gint len)
 {
-	return ((flags & GINT32_FROM_LE (6)) == 1) ? TRUE : FALSE;
-}
-*/
+	guint32 flags;
+	gboolean ret = FALSE;
 
-/*
-static gboolean
-xmms_ape_tag_is_external (gint32 flags)
-{
-	return ((flags & GINT32_FROM_LE (6)) == 2) ? TRUE : FALSE;
-}
-*/
+	g_return_val_if_fail (buff, ret);
 
-/*
-static gboolean
-xmms_ape_tag_is_read_only (gint32 flags)
-{
-	return ((flags & GINT32_FROM_LE(1)) == 1) ? TRUE : FALSE;
-}
-*/
-
-
-static gboolean
-xmms_ape_tag_is_valid (xmms_ape_tag_t *tag)
-{
-	g_return_val_if_fail (tag, FALSE);
-
-	if (g_strncasecmp (tag->name, "APETAGEX", 8) == 0) {
-		return xmms_ape_tag_is_header (tag->flags);
+	if (len == XMMS_APE_HEADER_SIZE) {
+		if (g_strncasecmp (buff, "APETAGEX", 8) == 0) {
+			flags = GINT32_FROM_BE (get_int32 (buff, 20));
+			ret = xmms_ape_tag_is_header (flags);
+		}
 	}
-	return FALSE;
+
+	return ret;
 }
 
 
@@ -106,14 +72,18 @@ xmms_ape_tag_is_valid (xmms_ape_tag_t *tag)
  * @param buff a buffer to check for APEv2 tag.
  * @return the size of the tag or -1 on failure.
  */
-gint
-xmms_ape_get_size (gchar *buff)
+gint32
+xmms_ape_get_size (gchar *buff, gint len)
 {
 	gint ret = -1;
-	xmms_ape_tag_t *tag = (xmms_ape_tag_t *) buff;
+	guint32 size;
 
-	if (xmms_ape_tag_is_valid (tag))
-		ret = GINT32_FROM_LE (tag->size);
+	g_return_val_if_fail (buff, ret);
+
+	if (len == XMMS_APE_HEADER_SIZE) {
+		size = get_int32 (buff, 12);
+		ret = GUINT32_SWAP_LE_BE (size);
+	}
 
 	return ret;
 }
@@ -132,21 +102,23 @@ xmms_ape_get_text (gchar *key, gchar *buff, gint size)
 {
 	gint pos = 0;
 	gchar *item_val = NULL;
+	gchar *item_key = NULL;
+	gint32 len, flags;
 
 	g_return_val_if_fail (key, NULL);
 	g_return_val_if_fail (buff, NULL);
 
-	while (pos < size) {
-		gint32 len = buff[pos];
+	while ((pos + 2 * sizeof (gint32)) < size) {
+		len = GUINT32_SWAP_LE_BE (get_int32 (buff, pos));
 		/* step over 'length' */
 		pos += sizeof (gint32); 
 
-		gint32 flags = buff[pos];
+		flags = GUINT32_SWAP_LE_BE (get_int32 (buff, pos));
 		/* step over 'item flags' */
 		pos += sizeof (gint32); 
 
-		if (xmms_ape_tag_is_text(flags)) {
-			gchar *item_key = &buff[pos];
+		if (xmms_ape_tag_is_text (flags)) {
+			item_key = &buff[pos];
 
 			/* step over 'item key' and 'terminator' */
 			pos += strlen (item_key) + 1; 
@@ -154,8 +126,7 @@ xmms_ape_get_text (gchar *key, gchar *buff, gint size)
 			if (g_strncasecmp (item_key, key, strlen (key)) == 0) {
 				item_val = (gchar *) g_new0 (gchar, len + 1);
 
-				strncpy (item_val, &buff[pos], len);
-				item_val[len] = '\0';
+				g_strlcpy (item_val, &buff[pos], len + 1);
 
 				/* we've got our match! */
 				break; 

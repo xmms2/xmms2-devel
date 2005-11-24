@@ -311,7 +311,8 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 	xmms_error_t error;
 	gchar header[XMMS_APE_HEADER_SIZE];
 	gchar *buff, *val;
-	gint ret, len, i, tmp;
+	gint ret, i, tmp;
+	gint len = 0;
 
 
 	g_return_if_fail (decoder);
@@ -332,7 +333,8 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 		return;
 
 	/* query footer for tag length */
-	len = xmms_ape_get_size (header);
+	if (xmms_ape_tag_is_valid (header, ret))
+		len = xmms_ape_get_size (header, ret);
 	if (len <= 0)
 		return;
 
@@ -342,7 +344,7 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 		return;
 
 	/* max length? */
-	buff = (gchar *) malloc (len * sizeof (gchar *));
+	buff = (gchar *) g_new (gchar, len);
 	ret = xmms_transport_read (transport, buff, len, &error);
 	if (ret != len) {
 		g_free (buff);
