@@ -17,12 +17,11 @@
 #ifndef __APE_H__
 #define __APE_H__
 
-#include "xmms/xmms_decoderplugin.h"
-
 #define XMMS_APE_HEADER_SIZE 32
 
-gint xmms_ape_get_size (gchar *buff);
+gint xmms_ape_get_size (gchar *buff, gint len);
 gchar *xmms_ape_get_text (gchar *key, gchar *buff, gint len);
+gboolean xmms_ape_tag_is_valid (gchar *buff, gint len);
 
 
 #endif

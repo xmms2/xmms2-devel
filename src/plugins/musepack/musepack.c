@@ -136,7 +136,15 @@ xmms_mpc_callback_tell (void *data)
 
 static mpc_bool_t 
 xmms_mpc_callback_canseek (void *data) {
-	return TRUE;
+	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
+	xmms_transport_t *transport;
+
+	g_return_val_if_fail (decoder, FALSE);
+
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+
+	return xmms_transport_can_seek (transport);
 }
 
 
@@ -303,7 +311,8 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 	xmms_error_t error;
 	gchar header[XMMS_APE_HEADER_SIZE];
 	gchar *buff, *val;
-	gint ret, len, i, tmp;
+	gint ret, i, tmp;
+	gint len = 0;
 
 
 	g_return_if_fail (decoder);
@@ -316,21 +325,26 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 
 	/* seek to the APEv2 footer */
 	ret = xmms_transport_seek (transport, -XMMS_APE_HEADER_SIZE, XMMS_TRANSPORT_SEEK_END);
-	g_return_if_fail ((ret >= 0));
+	if (ret <= 0)
+		return;
 
 	ret = xmms_transport_read (transport, header, XMMS_APE_HEADER_SIZE, &error);
-	g_return_if_fail ((ret >= 0));
+	if (ret <= 0)
+		return;
 
 	/* query footer for tag length */
-	len = xmms_ape_get_size (header);
-	g_return_if_fail ((len >= 0));
+	if (xmms_ape_tag_is_valid (header, ret))
+		len = xmms_ape_get_size (header, ret);
+	if (len <= 0)
+		return;
 
 	/* seek to first apetag item */
 	ret = xmms_transport_seek (transport, -len, XMMS_TRANSPORT_SEEK_END);
-	g_return_if_fail ((ret >= 0));
+	if (ret <= 0)
+		return;
 
 	/* max length? */
-	buff = (gchar *) malloc (len * sizeof (gchar *));
+	buff = (gchar *) g_new (gchar, len);
 	ret = xmms_transport_read (transport, buff, len, &error);
 	if (ret != len) {
 		g_free (buff);
