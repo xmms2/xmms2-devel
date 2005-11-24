@@ -165,6 +165,18 @@ scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
 
+### INSTALL SCRIPTS
+def scan_scripts(name):
+	dir = "scripts/" + name
+	if os.path.isdir(dir):
+		for d in os.listdir(dir):
+			newf = dir+"/"+d
+			if os.path.isfile(newf):
+				base_env.add_script(name, newf)
+
+scan_scripts("startup.d")
+scan_scripts("shutdown.d")
+
 ### INSTALL MANUAL PAGES!
 
 base_env.add_manpage(1, 'doc/xmms2.1')

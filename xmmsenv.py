@@ -108,6 +108,7 @@ class XMMSEnvironment(Environment):
 		self.librarypath = os.path.join(self.install_prefix, "lib")
 		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
 		self.includepath = os.path.join(self.install_prefix, "include/xmms2")
+		self.scriptpath = os.path.join(self.sharepath, "scripts")
 		self["SHLIBPREFIX"] = "lib"
 		self.shversion = "0"
 
@@ -350,6 +351,9 @@ class XMMSEnvironment(Environment):
         def add_manpage(self, section, source):
                 gzip.GzipFile(source+".gz", 'wb',9).write(file(source).read())
                 self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
+
+	def add_script(self, target, source):
+		self.Install(os.path.join(self.scriptpath,target), source)
 
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""

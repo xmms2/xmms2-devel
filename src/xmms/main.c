@@ -43,6 +43,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 
 #include <pthread.h>
 
@@ -62,6 +63,7 @@
 
 static void quit (xmms_object_t *object, xmms_error_t *error);
 static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
+static void install_scripts (const gchar *into_dir);
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
@@ -113,6 +115,7 @@ do_scriptdir (const gchar *scriptdir)
 	XMMS_DBG ("Running scripts in %s", scriptdir);
 	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
 		mkdir (scriptdir, 0755);
+		install_scripts (scriptdir);
 	}
 
 	dir = g_dir_open (scriptdir, 0, &err);
@@ -305,6 +308,88 @@ init_volume_config_proxy (const gchar *output)
 									  	source);
 		xmms_config_property_set_data (cfg, (gchar *) vol);
 	}
+}
+
+static gboolean
+copy_file (gchar *source, gchar *dest)
+{
+	gint s, d;
+	gint ret, ret2;
+	gchar buf[4096];
+
+	g_return_val_if_fail (source, FALSE);
+	g_return_val_if_fail (dest, FALSE);
+
+	s = open (source, O_RDONLY);
+	if (s == -1) {
+		XMMS_DBG ("Couldn't open %s", source);
+		return FALSE;
+	}
+
+	d = open (dest, O_WRONLY | O_CREAT, 00744);
+	if (d == -1) {
+		XMMS_DBG ("Couldn't open %s", dest);
+		return FALSE;
+	}
+	
+	while (TRUE) {
+		ret = read (s, buf, 4096);
+		if (ret == -1) {
+			XMMS_DBG ("Failed to read from source file!");
+			goto error;
+		} else if (ret == 0) {
+			close (s);
+			close (d);
+			return TRUE;
+		}
+		ret2 = write (d, buf, ret);
+		if (ret2 == -1) {
+			XMMS_DBG ("Failed to write!");
+			goto error;
+		}
+	}
+
+error:
+	close (s);
+	close (d);
+	unlink (dest);
+	return FALSE;
+}
+
+static void
+install_scripts (const gchar *into_dir)
+{
+	GDir *dir;
+	GError *err;
+	gchar path[PATH_MAX];
+	const gchar *f;
+	gchar *s;
+
+	s = strrchr (into_dir, '/');
+	if (!s)
+		return;
+
+	s++;
+
+	g_snprintf (path, PATH_MAX, "%s/scripts/%s", SHAREDDIR, s);
+	XMMS_DBG ("installing scripts into %s", path);
+	dir = g_dir_open (path, 0, &err);
+	if (!dir) {
+		XMMS_DBG ("global script directory not found");
+		return;
+	}
+
+	while ((f = g_dir_read_name (dir))) {
+		gchar *source = g_strdup_printf ("%s/%s", path, f);
+		gchar *dest = g_strdup_printf ("%s/%s", into_dir, f);
+		if (!copy_file (source, dest)) {
+			break;
+		}
+		g_free (source);
+		g_free (dest);
+	}
+
+	g_dir_close (dir);
 }
 
 /**
