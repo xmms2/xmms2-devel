@@ -147,6 +147,8 @@ xmmsc_result_ref (xmmsc_result_t *res)
 static void
 xmmsc_result_free (xmmsc_result_t *res)
 {
+	x_list_t *n;
+
 	x_return_if_fail (res);
 
 	if (res->error_str)
@@ -161,6 +163,10 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	x_list_free (res->func_list);
 	x_list_free (res->udata_list);
+	for (n = res->source_pref; n; n = x_list_next (n)) {
+		free (n->data);
+	}
+	x_list_free (res->source_pref);
 	
 	free (res);
 }
