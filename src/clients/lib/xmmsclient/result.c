@@ -1116,6 +1116,7 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 
 		val = xmmsc_result_parse_value (msg);
 		if (!val) {
+			free (key);
 			goto err;
 		}
 
