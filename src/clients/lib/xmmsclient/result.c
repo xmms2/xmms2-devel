@@ -281,16 +281,19 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			free (res->data.string);
+			res->data.string = NULL;
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPLIST:
-			for (l = res->list; l; l = x_list_next (l)) {
-				xmmsc_result_value_free (l->data);
+			while (res->list) {
+				xmmsc_result_value_free (res->list->data);
+				res->list = x_list_delete_link (res->list, res->list);
 			}
-			x_list_free (res->list);
+
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			free_dict_list (res->data.dict);
+			res->data.dict = NULL;
 			break;
 	}
 }
