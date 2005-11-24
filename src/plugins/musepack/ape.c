@@ -33,13 +33,18 @@ static gboolean xmms_ape_tag_is_text (gint32 flags);
 #define APE_FLAGS_TYPE    0x06
 
 
+/**
+ * Checks if the Header bit is set.
+ */
 static gboolean
 xmms_ape_tag_is_header (gint32 flags)
 {
 	return (flags & APE_HEADER) ? TRUE : FALSE;
 }
 
-
+/**
+ * Checks if the Text bit is set (no bits set in type flags)
+ */
 static gboolean
 xmms_ape_tag_is_text (gint32 flags)
 {
@@ -47,6 +52,12 @@ xmms_ape_tag_is_text (gint32 flags)
 }
 
 
+/**
+ * Checks if the tag is valid.
+ * @param buff a buffer to check for an APEv2 tag.
+ * @param size the size of the buffer
+ * @return true if the tag is valid, else false
+ */
 gboolean
 xmms_ape_tag_is_valid (gchar *buff, gint len)
 {
@@ -68,8 +79,8 @@ xmms_ape_tag_is_valid (gchar *buff, gint len)
 
 /**
  * Get the size of an APEv2 tag. 
- * Checks if the tag is valid and then returs the size.
- * @param buff a buffer to check for APEv2 tag.
+ * @param buff a buffer with an APEv2 tag.
+ * @param size the size of the buffer
  * @return the size of the tag or -1 on failure.
  */
 gint32
@@ -90,7 +101,7 @@ xmms_ape_get_size (gchar *buff, gint len)
 
 
 /**
- * Extract the value of an APEv2 tag key.
+ * Extract the text value matching an APEv2 tag key.
  *
  * @param key the key to search the tag for.
  * @param buff a buffer with the APEv2 tag.
