@@ -589,17 +589,16 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
  * source which is client/<clientname>
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set (xmmsc_connection_t *c,
-								   uint32_t id, char *key,
-								   char *value)
+xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
+                                   char *key, char *value)
 {
 	xmmsc_result_t *res;
 	char tmp[256];
 
 	snprintf (tmp, 256, "client/%s", c->clientname);
 	res = xmmsc_medialib_entry_property_set_with_source (c, id,
-														 tmp, key,
-														 value);
+                                                             tmp, key,
+                                                             value);
 	return res;
 }
 
@@ -611,25 +610,22 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, 
-											   uint32_t id,
-											   char *source, char *key, 
-											   char *value)
+                                               uint32_t id,
+                                               char *source, char *key, 
+                                               char *value)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	x_list_t *arg = NULL;
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PROPERTY_SET);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
+	                        XMMS_IPC_CMD_PROPERTY_SET);
 	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_string (msg, source);
+	xmms_ipc_msg_put_string (msg, key);
+	xmms_ipc_msg_put_string (msg, value);
 
-	arg = x_list_append (arg, source);
-	arg = x_list_append (arg, key);
-	arg = x_list_append (arg, value);
-	xmmsc_msg_list_put (msg, arg);
-	
 	res = xmmsc_send_msg (c, msg);
 
-	x_list_free (arg);
 	return res;
 }
 

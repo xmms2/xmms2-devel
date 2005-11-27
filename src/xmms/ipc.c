@@ -138,6 +138,8 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 
 	arg->values[i].type = type;
 	switch (type) {
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			break;
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].value.uint32))
 				return FALSE;
@@ -150,38 +152,6 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
 				g_free (arg->values[i].value.string);
 				return FALSE;
-			}
-			break;
-		case XMMS_OBJECT_CMD_ARG_DICT:
-			arg->values[i].value.dict = xmms_ipc_deserialize_hashtable (msg);
-			if (!arg->values[i].value.dict)
-				return FALSE;
-			break;
-		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_PROPLIST:
-			{
-				guint32 len;
-				guint j;
-				GList *n = NULL;
-
-				if (!xmms_ipc_msg_get_uint32 (msg, &len))
-					return FALSE;
-
-				for (j = 0; j < len; j ++) {
-					xmms_object_cmd_value_t *val;
-					guint len;
-					gchar *str;
-
-					if (!xmms_ipc_msg_get_string_alloc (msg, &str, &len)) {
-						return FALSE;
-					}
-					
-					val = xmms_object_cmd_value_str_new (str);
-					n = g_list_prepend (n, val);
-				}
-
-				n = g_list_reverse (n);
-				arg->values[i].value.list = n;
 			}
 			break;
 		default:
@@ -271,6 +241,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmms_object_cmd_desc_t *cmd;
 	xmms_object_cmd_arg_t arg;
 	xmms_ipc_msg_t *retmsg;
+	gint i;
 
 	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
@@ -324,12 +295,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 	xmms_object_cmd_arg_init (&arg);
 
-	if (cmd->arg1) {
-		type_and_msg_to_arg (cmd->arg1, msg, &arg, 0);
-	}
-
-	if (cmd->arg2) {
-		type_and_msg_to_arg (cmd->arg2, msg, &arg, 1);
+	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
+		type_and_msg_to_arg (cmd->args[i], msg, &arg, i);
 	}
 
 	xmms_object_cmd_call (object, xmms_ipc_msg_get_cmd (msg), &arg);
@@ -344,11 +311,10 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	if (arg.retval)
 		xmms_object_cmd_value_free (arg.retval);
 
-	if (cmd->arg1 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[0].value.string);
-	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[1].value.string);
-
+	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
+		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
+			g_free (arg.values[i].value.string);
+	}
 	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
 	xmms_ipc_client_msg_write (client, retmsg);
 }
