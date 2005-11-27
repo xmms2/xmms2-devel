@@ -255,6 +255,9 @@ xmmsc_result_value_free (void *v)
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			free (val->value.string);
 			break;
+		case XMMS_OBJECT_CMD_ARG_DICT:
+			free_dict_list (val->value.dict);
+			break;
 		default:
 			break;
 	}
