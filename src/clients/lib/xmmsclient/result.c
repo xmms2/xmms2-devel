@@ -21,6 +21,7 @@
 #include <ctype.h>
 
 #include <sys/types.h>
+#include <assert.h>
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
@@ -30,6 +31,7 @@
 #include "xmmsc/xmmsc_stdint.h"
 
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
+static void free_dict_list (x_list_t *list);
 static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
 
 typedef struct xmmsc_result_value_St {
@@ -253,6 +255,9 @@ xmmsc_result_value_free (void *v)
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			free (val->value.string);
 			break;
+		case XMMS_OBJECT_CMD_ARG_DICT:
+			free_dict_list (val->value.dict);
+			break;
 		default:
 			break;
 	}
@@ -263,8 +268,6 @@ xmmsc_result_value_free (void *v)
 static void
 xmmsc_result_cleanup_data (xmmsc_result_t *res)
 {
-	x_list_t *l;
-
 	x_return_if_fail (res);
 	if (!res->parsed)
 		return;
@@ -279,16 +282,19 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			free (res->data.string);
+			res->data.string = NULL;
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPLIST:
-			for (l = res->list; l; l = x_list_next (l)) {
-				xmmsc_result_value_free (l->data);
+			while (res->list) {
+				xmmsc_result_value_free (res->list->data);
+				res->list = x_list_delete_link (res->list, res->list);
 			}
-			x_list_free (res->list);
+
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			x_list_free (res->data.dict);
+			free_dict_list (res->data.dict);
+			res->data.dict = NULL;
 			break;
 	}
 }
@@ -1114,6 +1120,7 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 
 		val = xmmsc_result_parse_value (msg);
 		if (!val) {
+			free (key);
 			goto err;
 		}
 
@@ -1125,7 +1132,25 @@ xmmsc_deserialize_dict (xmms_ipc_msg_t *msg)
 
 err:
 	x_internal_error ("Message from server did not parse correctly!");
-	/* free vals here? */
-	x_list_free (n);
+
+	free_dict_list (n);
+
 	return NULL;
+}
+
+static void
+free_dict_list (x_list_t *list)
+{
+	while (list) {
+		free (list->data); /* key */
+		list = x_list_delete_link (list, list);
+
+		/* xmmsc_deserialize_dict guarantees that the list is
+		 * well-formed
+		 */
+		assert (list);
+
+		xmmsc_result_value_free (list->data); /* value */
+		list = x_list_delete_link (list, list);
+	}
 }
