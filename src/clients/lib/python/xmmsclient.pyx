@@ -217,10 +217,7 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
 		v = <int>value
 
-	if not udata.has_key(source):
-		udata[source]={}
-
-	udata[source][key]=v
+	udata[(source,key)]=v
 
 cdef ResultNotifier(xmmsc_result_t *res, obj):
 	if not obj.get_broadcast():
@@ -228,7 +225,29 @@ cdef ResultNotifier(xmmsc_result_t *res, obj):
 	obj._cb()
 	if not obj.get_broadcast():
 		xmmsc_result_unref(res)
-		
+
+class SourcedDict(dict):
+	def __init__(self, srcs):
+		dict.__init__(self)
+		self._sources = srcs
+
+	def set_source_preference(self, sources):
+		"""Change list of source preference"""
+		self._sources = sources
+
+	def __getitem__(self, item):
+		if isinstance(item, str):
+			for src in self._sources:
+				if src == '*':
+					for k,v in self.iteritems():
+						if k[1] == item:
+							return v
+				try:
+					return dict.__getitem__(self, (src, item))
+				except KeyError:
+					pass
+			raise KeyError, item
+		return dict.__getitem__(self, item)
 	
 cdef class XMMSResult:
 	"""
@@ -370,7 +389,7 @@ cdef class XMMSResult:
 		"""
 		self._check()
 
-		ret = {}
+		ret = SourcedDict(self.c.get_source_preference())
 		if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>ret):
 			raise ValueError("Failed to retrieve value!")
 		return ret
@@ -431,17 +450,24 @@ cdef class XMMS:
 	cdef object disconnect_fun
 	cdef object needout_fun
 	cdef object ObjectRef
+	cdef object sources
 
 	def __new__(self, clientname = None):
 		"""
 		Initiates a connection to the XMMS2 daemon. All operations
 		involving the daemon are done via this connection.
 		"""
-		if not clientname:
-			clientname = "Unnamed Python Client"
+		if clientname is None:
+			clientname = "UnnamedPythonClient"
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
 		self.ObjectRef = {}
+		self.sources = ["client/" + clientname, "server", "*"]
+
+	def get_source_preference(self):
+		return self.sources
+	def set_source_preference(self, sources):
+		self.sources = sources
 
 	def _add_ref(self, res):
 		self.ObjectRef[res.get_cid()] = res
