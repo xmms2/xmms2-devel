@@ -132,8 +132,8 @@ count_hash (gpointer key, gpointer value, gpointer udata)
 static void
 hash_to_dict (gpointer key, gpointer value, gpointer udata)
 {
-        gchar *k = key;
-        xmms_object_cmd_value_t *v = value;
+	gchar *k = key;
+	xmms_object_cmd_value_t *v = value;
 	xmms_ipc_msg_t *msg = udata;
 
 	if (k && v) {
@@ -739,7 +739,15 @@ xmms_ipc_init (void)
 void
 xmms_ipc_shutdown (void)
 {
+	g_mutex_lock (global_ipc_lock);
+	g_source_remove_poll (global_ipc->source, global_ipc->pollfd);
+	g_free (global_ipc->pollfd);
+	g_source_destroy (global_ipc->source);
+
 	xmms_ipc_transport_destroy (global_ipc->transport);
+
+	g_mutex_unlock (global_ipc_lock);
+
 	g_free (global_ipc);
 	g_mutex_free (global_ipc_lock);
 }
