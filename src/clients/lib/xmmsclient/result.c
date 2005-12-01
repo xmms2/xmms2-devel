@@ -241,8 +241,6 @@ xmmsc_result_get_type (xmmsc_result_t *res)
 {
 	if (!res) return -1;
 	if (!res->parsed) return -1;
-	if (res->datatype == XMMS_OBJECT_CMD_ARG_PROPLIST)
-		return XMMS_OBJECT_CMD_ARG_DICT;
 	return res->datatype;
 }
 
@@ -793,6 +791,39 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 	return val->type;
 }
 
+int
+xmmsc_result_sourcedict_foreach (xmmsc_result_t *res, 
+								 xmmsc_foreach_source_func func, 
+								 void *user_data)
+{
+	x_list_t *n;
+
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
+		x_print_err ("xmms_result_sourcedict_foreach", "on a normal dict!");
+		return 0;
+	}
+
+	for (n = res->list; n; n = x_list_next (n)) {
+		xmmsc_result_value_t *source = NULL;
+		xmmsc_result_value_t *key = NULL;
+		xmmsc_result_value_t *val = NULL;
+		if (n->next && n->next->next) {
+			source = n->data;
+			key = n->next->data;
+			val = n->next->next->data;
+		}
+		func ((const void *)key->value.string, val->type, (void *)val->value.string, source->value.string, user_data);
+		n = x_list_next (n); /* skip key part */
+		n = x_list_next (n); /* skip value part */
+	}
+
+	return 1;
+}
+
 /**
  * Iterate over all key/value-pair in the resultset.
  *
@@ -815,8 +846,8 @@ xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *u
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT) {
+		x_print_err ("xmms_result_dict_foreach", "on a source dict!");
 		return 0;
 	}
 
@@ -826,25 +857,10 @@ xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *u
 			if (n->next) {
 				val = n->next->data;
 			}
-			func ((const void *)n->data, val->type, (void *)val->value.string, NULL, user_data);
-			n = x_list_next (n); /* skip value part */
-		}
-	} else if (res->datatype == XMMS_OBJECT_CMD_ARG_PROPLIST) {
-		for (n = res->list; n; n = x_list_next (n)) {
-			xmmsc_result_value_t *source = NULL;
-			xmmsc_result_value_t *key = NULL;
-			xmmsc_result_value_t *val = NULL;
-			if (n->next && n->next->next) {
-				source = n->data;
-				key = n->next->data;
-				val = n->next->next->data;
-			}
-			func ((const void *)key->value.string, val->type, (void *)val->value.string, source->value.string, user_data);
-			n = x_list_next (n); /* skip key part */
+			func ((const void *)n->data, val->type, (void *)val->value.string, user_data);
 			n = x_list_next (n); /* skip value part */
 		}
 	}
-
 
 	return 1;
 }

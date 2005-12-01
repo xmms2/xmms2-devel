@@ -83,7 +83,7 @@ print_info (const char *fmt, ...)
 
 void
 print_hash (const void *key, xmmsc_result_value_type_t type, 
-			const void *value, const char *source, void *udata)
+			const void *value, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		printf ("%s = %s\n", (char *)key, (char *)value);
@@ -503,7 +503,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 			res = xmmsc_medialib_get_info (conn, id);
 			xmmsc_result_wait (res);
 
-			xmmsc_result_dict_foreach (res, print_entry, NULL);
+			xmmsc_result_sourcedict_foreach (res, print_entry, NULL);
 			xmmsc_result_unref (res);
 		}
 
@@ -516,7 +516,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 		
 		res = xmmsc_medialib_get_info (conn, id);
 		xmmsc_result_wait (res);
-		xmmsc_result_dict_foreach (res, print_entry, NULL);
+		xmmsc_result_sourcedict_foreach (res, print_entry, NULL);
 		xmmsc_result_unref (res);
 	}
 

@@ -192,13 +192,15 @@ typedef enum {
 	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING
 } xmmsc_result_value_type_t;
 
-typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);
+typedef void (*xmmsc_foreach_source_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);
+typedef void (*xmmsc_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data);
 
 xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key);
 int xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r);
 int xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r);
 int xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data);
+int xmmsc_result_sourcedict_foreach (xmmsc_result_t *res, xmmsc_foreach_source_func func, void *user_data);
 void xmmsc_result_source_preference_set (xmmsc_result_t *res, char **preference);
 
 int xmmsc_result_is_list (xmmsc_result_t *res);
