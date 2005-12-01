@@ -311,49 +311,16 @@ init_volume_config_proxy (const gchar *output)
 }
 
 static gboolean
-copy_file (gchar *source, gchar *dest)
+symlink_file (gchar *source, gchar *dest)
 {
-	gint s, d;
-	gint ret, ret2;
-	gchar buf[4096];
+	gint r;
 
 	g_return_val_if_fail (source, FALSE);
 	g_return_val_if_fail (dest, FALSE);
 
-	s = open (source, O_RDONLY);
-	if (s == -1) {
-		XMMS_DBG ("Couldn't open %s", source);
-		return FALSE;
-	}
+	r = symlink (source, dest);
 
-	d = open (dest, O_WRONLY | O_CREAT, 00744);
-	if (d == -1) {
-		XMMS_DBG ("Couldn't open %s", dest);
-		return FALSE;
-	}
-	
-	while (TRUE) {
-		ret = read (s, buf, 4096);
-		if (ret == -1) {
-			XMMS_DBG ("Failed to read from source file!");
-			goto error;
-		} else if (ret == 0) {
-			close (s);
-			close (d);
-			return TRUE;
-		}
-		ret2 = write (d, buf, ret);
-		if (ret2 == -1) {
-			XMMS_DBG ("Failed to write!");
-			goto error;
-		}
-	}
-
-error:
-	close (s);
-	close (d);
-	unlink (dest);
-	return FALSE;
+	return r != -1;
 }
 
 static void
@@ -382,7 +349,7 @@ install_scripts (const gchar *into_dir)
 	while ((f = g_dir_read_name (dir))) {
 		gchar *source = g_strdup_printf ("%s/%s", path, f);
 		gchar *dest = g_strdup_printf ("%s/%s", into_dir, f);
-		if (!copy_file (source, dest)) {
+		if (!symlink_file (source, dest)) {
 			break;
 		}
 		g_free (source);
