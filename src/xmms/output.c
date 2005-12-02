@@ -59,7 +59,7 @@ XMMS_CMD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, 
 XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
-XMMS_CMD_DEFINE (status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
 
 /*
@@ -738,8 +738,8 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 				XMMS_IPC_CMD_SEEKSAMPLES, 
 				XMMS_CMD_FUNC (seeksamples));
 	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_STATUS, 
-				XMMS_CMD_FUNC (status));
+				XMMS_IPC_CMD_OUTPUT_STATUS, 
+				XMMS_CMD_FUNC (output_status));
 	xmms_object_cmd_add (XMMS_OBJECT (output), 
 				XMMS_IPC_CMD_CURRENTID, 
 				XMMS_CMD_FUNC (currentid));

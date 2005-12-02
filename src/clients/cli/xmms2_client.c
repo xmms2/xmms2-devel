@@ -356,6 +356,18 @@ cmd_addpls (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_main_status (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res = xmmsc_main_status (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Woooops");
+	}
+	xmmsc_result_dict_foreach (res, print_hash, NULL);
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -1122,6 +1134,7 @@ cmds commands[] = {
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
 	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
+	{ "mainstats", "get status msg from serevr", cmd_main_status },
 	/*{ "statistics", "get statistics from server", cmd_stats },
 	 */
 	{ "quit", "make the server quit", cmd_quit },

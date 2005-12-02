@@ -291,6 +291,18 @@ xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type)
 }
 
 /**
+ * Get a list of loaded plugins from the server
+ */
+xmmsc_result_t *
+xmmsc_main_status (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_STATUS);
+}
+
+
+/**
  * Tell the server to quit. This will terminate the server.
  * If you only want to disconnect, use #xmmsc_unref()
  */

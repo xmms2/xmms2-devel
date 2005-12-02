@@ -51,6 +51,7 @@ int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *
 
 xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type);
+xmmsc_result_t *xmmsc_main_status (xmmsc_connection_t *c);
 
 void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
 void xmmsc_signal_disconnect (xmmsc_result_t *res);

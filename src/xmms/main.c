@@ -62,11 +62,13 @@
 #endif
 
 static void quit (xmms_object_t *object, xmms_error_t *error);
+static GHashTable *status (xmms_object_t *object, xmms_error_t *error);
 static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
+XMMS_CMD_DEFINE (status, status, xmms_object_t *, DICT, NONE, NONE);
 XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UINT32, NONE);
 
 /** @defgroup XMMSServer XMMSServer
@@ -89,6 +91,7 @@ XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UI
 struct xmms_main_St {
 	xmms_object_t object;
 	xmms_output_t *output;
+	time_t starttime;
 };
 
 typedef struct xmms_main_St xmms_main_t;
@@ -96,6 +99,22 @@ typedef struct xmms_main_St xmms_main_t;
 static GMainLoop *mainloop;
 static gchar *conffile = NULL;
 
+static GHashTable *
+status (xmms_object_t *object, xmms_error_t *error)
+{
+	gint starttime;
+	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
+											 g_free, xmms_object_cmd_value_free);
+
+	starttime = ((xmms_main_t*)object)->starttime;
+
+	g_hash_table_insert (ret, g_strdup ("version"),
+						 xmms_object_cmd_value_str_new (XMMS_VERSION));
+	g_hash_table_insert (ret, g_strdup ("uptime"),
+						 xmms_object_cmd_value_int_new (time(NULL)-starttime));
+
+	return ret;
+}
 
 /**
  * @internal Execute all programs or scripts in a directory. Used when starting
@@ -528,6 +547,8 @@ main (int argc, char **argv)
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_QUIT, XMMS_CMD_FUNC (quit));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
+	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_STATUS, XMMS_CMD_FUNC (status));
+	mainobj->starttime = time (NULL);
 
 
 	putenv (g_strdup_printf ("XMMS_PATH=%s", ipcpath));
