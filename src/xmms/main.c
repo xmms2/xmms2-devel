@@ -160,17 +160,14 @@ do_scriptdir (const gchar *scriptdir)
 /**
  * @internal Load the xmms2d configuration file. Creates the config directory
  * if needed.
- * @return TRUE if successful.
  */
-static gboolean
+static void
 load_config ()
 {
 	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
-	gboolean defaultconf = FALSE;
 
 	if (!conffile) {
 		conffile = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
-		defaultconf = TRUE;
 	}
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
@@ -180,21 +177,7 @@ load_config ()
 		mkdir (configdir, 0755);
 	}
 
-	if (g_file_test (conffile, G_FILE_TEST_EXISTS)) {
-		if (!xmms_config_init (conffile)) {
-			xmms_log_error ("XMMS was unable to parse config file %s", conffile);
-			exit (EXIT_FAILURE);
-		}
-		return TRUE;
-	} else if (defaultconf) {
-		xmms_config_init (NULL);
-		return TRUE;
-	} else {
-		xmms_log_error ("Cannot parse non-existent file: %s", conffile);
-		exit (EXIT_FAILURE);
-	}
-
-	return FALSE;
+	xmms_config_init(conffile);
 }
 
 /**
