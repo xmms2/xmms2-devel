@@ -503,7 +503,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 			res = xmmsc_medialib_get_info (conn, id);
 			xmmsc_result_wait (res);
 
-			xmmsc_result_sourcedict_foreach (res, print_entry, NULL);
+			xmmsc_result_propdict_foreach (res, print_entry, NULL);
 			xmmsc_result_unref (res);
 		}
 
@@ -516,7 +516,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 		
 		res = xmmsc_medialib_get_info (conn, id);
 		xmmsc_result_wait (res);
-		xmmsc_result_sourcedict_foreach (res, print_entry, NULL);
+		xmmsc_result_propdict_foreach (res, print_entry, NULL);
 		xmmsc_result_unref (res);
 	}
 

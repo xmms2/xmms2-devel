@@ -283,7 +283,7 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 			res->data.string = NULL;
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_PROPLIST:
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			while (res->list) {
 				xmmsc_result_value_free (res->list->data);
 				res->list = x_list_delete_link (res->list, res->list);
@@ -346,7 +346,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST :
-		case XMMS_OBJECT_CMD_ARG_PROPLIST :
+		case XMMS_OBJECT_CMD_ARG_PROPDICT :
 			{
 				uint32_t len, i;
 
@@ -616,7 +616,7 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
 				n = x_list_next (n);
 			}
 		}
-	} else if (res->datatype == XMMS_OBJECT_CMD_ARG_PROPLIST) {
+	} else if (res->datatype == XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		x_list_t *s;
 
 		for (s = res->source_pref; s; s = x_list_next (s)) {
@@ -671,7 +671,7 @@ xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
+		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*r = -1;
 		return 0;
 	}
@@ -708,7 +708,7 @@ xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
+		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*r = -1;
 		return 0;
 	}
@@ -746,7 +746,7 @@ xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r)
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
+		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*r = NULL;
 		return 0;
 	}
@@ -779,7 +779,7 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
+		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		return XMMSC_RESULT_VALUE_TYPE_NONE;
 	}
 
@@ -792,9 +792,9 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 }
 
 int
-xmmsc_result_sourcedict_foreach (xmmsc_result_t *res, 
-								 xmmsc_foreach_source_func func, 
-								 void *user_data)
+xmmsc_result_propdict_foreach (xmmsc_result_t *res, 
+							   xmmsc_propdict_foreach_func func, 
+							   void *user_data)
 {
 	x_list_t *n;
 
@@ -802,8 +802,8 @@ xmmsc_result_sourcedict_foreach (xmmsc_result_t *res,
 		return 0;
 	}
 
-	if (res->datatype != XMMS_OBJECT_CMD_ARG_PROPLIST) {
-		x_print_err ("xmms_result_sourcedict_foreach", "on a normal dict!");
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+		x_print_err ("xmms_result_propdict_foreach", "on a normal dict!");
 		return 0;
 	}
 
@@ -838,7 +838,7 @@ xmmsc_result_sourcedict_foreach (xmmsc_result_t *res,
  *
  */
 int
-xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
+xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data)
 {
 	x_list_t *n;
 

@@ -66,7 +66,7 @@ xmms_object_cmd_value_t *xmms_object_cmd_value_uint_new (guint32 uint);
 xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
 xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GHashTable *dict);
 xmms_object_cmd_value_t *xmms_object_cmd_value_list_new (GList *list);
-xmms_object_cmd_value_t *xmms_object_cmd_value_proplist_new (GList *list);
+xmms_object_cmd_value_t *xmms_object_cmd_value_propdict_new (GList *list);
 xmms_object_cmd_value_t *xmms_object_cmd_value_none_new (void);
 xmms_object_cmd_value_t *xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val);
 void xmms_object_cmd_value_free (gpointer val);
@@ -126,7 +126,7 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval = xmms_object_cmd_value_uint_new
 #define __XMMS_CMD_DO_RETVAL_INT32() arg->retval = xmms_object_cmd_value_int_new
 #define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_object_cmd_value_list_new
-#define __XMMS_CMD_DO_RETVAL_PROPLIST() arg->retval = xmms_object_cmd_value_proplist_new
+#define __XMMS_CMD_DO_RETVAL_PROPDICT() arg->retval = xmms_object_cmd_value_propdict_new
 #define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmms_object_cmd_value_str_new
 
 #define XMMS_CMD_DEFINE4(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4) static void \
