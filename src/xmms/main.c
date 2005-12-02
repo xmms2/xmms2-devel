@@ -62,11 +62,13 @@
 #endif
 
 static void quit (xmms_object_t *object, xmms_error_t *error);
+static GHashTable *status (xmms_object_t *object, xmms_error_t *error);
 static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
+XMMS_CMD_DEFINE (status, status, xmms_object_t *, DICT, NONE, NONE);
 XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UINT32, NONE);
 
 /** @defgroup XMMSServer XMMSServer
@@ -89,6 +91,7 @@ XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UI
 struct xmms_main_St {
 	xmms_object_t object;
 	xmms_output_t *output;
+	time_t starttime;
 };
 
 typedef struct xmms_main_St xmms_main_t;
@@ -96,6 +99,22 @@ typedef struct xmms_main_St xmms_main_t;
 static GMainLoop *mainloop;
 static gchar *conffile = NULL;
 
+static GHashTable *
+status (xmms_object_t *object, xmms_error_t *error)
+{
+	gint starttime;
+	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
+											 g_free, xmms_object_cmd_value_free);
+
+	starttime = ((xmms_main_t*)object)->starttime;
+
+	g_hash_table_insert (ret, g_strdup ("version"),
+						 xmms_object_cmd_value_str_new (XMMS_VERSION));
+	g_hash_table_insert (ret, g_strdup ("uptime"),
+						 xmms_object_cmd_value_int_new (time(NULL)-starttime));
+
+	return ret;
+}
 
 /**
  * @internal Execute all programs or scripts in a directory. Used when starting
@@ -141,17 +160,14 @@ do_scriptdir (const gchar *scriptdir)
 /**
  * @internal Load the xmms2d configuration file. Creates the config directory
  * if needed.
- * @return TRUE if successful.
  */
-static gboolean
+static void
 load_config ()
 {
 	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
-	gboolean defaultconf = FALSE;
 
 	if (!conffile) {
 		conffile = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
-		defaultconf = TRUE;
 	}
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
@@ -161,21 +177,7 @@ load_config ()
 		mkdir (configdir, 0755);
 	}
 
-	if (g_file_test (conffile, G_FILE_TEST_EXISTS)) {
-		if (!xmms_config_init (conffile)) {
-			xmms_log_error ("XMMS was unable to parse config file %s", conffile);
-			exit (EXIT_FAILURE);
-		}
-		return TRUE;
-	} else if (defaultconf) {
-		xmms_config_init (NULL);
-		return TRUE;
-	} else {
-		xmms_log_error ("Cannot parse non-existent file: %s", conffile);
-		exit (EXIT_FAILURE);
-	}
-
-	return FALSE;
+	xmms_config_init(conffile);
 }
 
 /**
@@ -311,49 +313,16 @@ init_volume_config_proxy (const gchar *output)
 }
 
 static gboolean
-copy_file (gchar *source, gchar *dest)
+symlink_file (gchar *source, gchar *dest)
 {
-	gint s, d;
-	gint ret, ret2;
-	gchar buf[4096];
+	gint r;
 
 	g_return_val_if_fail (source, FALSE);
 	g_return_val_if_fail (dest, FALSE);
 
-	s = open (source, O_RDONLY);
-	if (s == -1) {
-		XMMS_DBG ("Couldn't open %s", source);
-		return FALSE;
-	}
+	r = symlink (source, dest);
 
-	d = open (dest, O_WRONLY | O_CREAT, 00744);
-	if (d == -1) {
-		XMMS_DBG ("Couldn't open %s", dest);
-		return FALSE;
-	}
-	
-	while (TRUE) {
-		ret = read (s, buf, 4096);
-		if (ret == -1) {
-			XMMS_DBG ("Failed to read from source file!");
-			goto error;
-		} else if (ret == 0) {
-			close (s);
-			close (d);
-			return TRUE;
-		}
-		ret2 = write (d, buf, ret);
-		if (ret2 == -1) {
-			XMMS_DBG ("Failed to write!");
-			goto error;
-		}
-	}
-
-error:
-	close (s);
-	close (d);
-	unlink (dest);
-	return FALSE;
+	return r != -1;
 }
 
 static void
@@ -382,7 +351,7 @@ install_scripts (const gchar *into_dir)
 	while ((f = g_dir_read_name (dir))) {
 		gchar *source = g_strdup_printf ("%s/%s", path, f);
 		gchar *dest = g_strdup_printf ("%s/%s", into_dir, f);
-		if (!copy_file (source, dest)) {
+		if (!symlink_file (source, dest)) {
 			break;
 		}
 		g_free (source);
@@ -561,6 +530,8 @@ main (int argc, char **argv)
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_QUIT, XMMS_CMD_FUNC (quit));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
+	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_STATUS, XMMS_CMD_FUNC (status));
+	mainobj->starttime = time (NULL);
 
 
 	putenv (g_strdup_printf ("XMMS_PATH=%s", ipcpath));

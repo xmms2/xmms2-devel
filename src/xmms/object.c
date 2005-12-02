@@ -223,12 +223,12 @@ xmms_object_cmd_value_dict_new (GHashTable *dict)
 }
 
 xmms_object_cmd_value_t *
-xmms_object_cmd_value_proplist_new (GList *list)
+xmms_object_cmd_value_propdict_new (GList *list)
 {
 	xmms_object_cmd_value_t *val;
 	val = g_new0 (xmms_object_cmd_value_t, 1);
 	val->value.list = list;
-	val->type = XMMS_OBJECT_CMD_ARG_PROPLIST;
+	val->type = XMMS_OBJECT_CMD_ARG_PROPDICT;
 	return val;
 }
 
@@ -273,7 +273,7 @@ xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_PROPLIST:
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			/** Unsupported for now */
 			XMMS_DBG ("Unsupported value passed to value_copy()");
 			break;
@@ -293,7 +293,7 @@ xmms_object_cmd_value_free (gpointer val)
 			g_free (v->value.string);
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_PROPLIST:
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			{
 				GList *n, *nxt;
 				for (n = v->value.list; n; n = nxt) {
@@ -360,7 +360,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			arg.retval = xmms_object_cmd_value_dict_new ((GHashTable *) va_arg (ap, gpointer));
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
-		case XMMS_OBJECT_CMD_ARG_PROPLIST:
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			arg.retval = xmms_object_cmd_value_list_new ((GList *) va_arg (ap, gpointer));
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:

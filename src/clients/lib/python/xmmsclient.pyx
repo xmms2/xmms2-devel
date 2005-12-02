@@ -19,7 +19,8 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_OBJECT_CMD_ARG_INT32,
 		XMMS_OBJECT_CMD_ARG_STRING,
 		XMMS_OBJECT_CMD_ARG_DICT,
-		XMMS_OBJECT_CMD_ARG_LIST
+		XMMS_OBJECT_CMD_ARG_LIST,
+		XMMS_OBJECT_CMD_ARG_PROPDICT
 
 # The following constants are meant for interpreting the return value of
 # XMMSResult.get_type ()
@@ -101,10 +102,12 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	signed int xmmsc_result_get_string(xmmsc_result_t *res, signed char **r)
 	signed int xmmsc_result_get_playlist_change(xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
 
-	ctypedef void(*xmmsc_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, char *source, void *user_data)
+	ctypedef void(*xmmsc_dict_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, void *user_data)
+	ctypedef void(*xmmsc_propdict_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, char *source, void *user_data)
 
 	int xmmsc_result_get_dict_entry(xmmsc_result_t *res, char *key, char **r)
-	int xmmsc_result_dict_foreach(xmmsc_result_t *res, xmmsc_foreach_func func, void *user_data)
+	int xmmsc_result_dict_foreach(xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data)
+	int xmmsc_result_propdict_foreach(xmmsc_result_t *res, xmmsc_propdict_foreach_func func, void *user_data)
 
 	int xmmsc_result_is_list(xmmsc_result_t *res)
 	int xmmsc_result_list_next(xmmsc_result_t *res)
@@ -209,7 +212,7 @@ cdef from_unicode(object o):
 	else:
 		return o
 
-cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, char *source, udata):
+cdef foreach_source_hash(signed char *key, xmmsc_result_value_type_t type, void *value, char *source, udata):
 	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
 		v = to_unicode(<char *>value)
 	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
@@ -219,6 +222,17 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 
 	udata[(source,key)]=v
 
+cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value, udata):
+	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
+		v = to_unicode(<char *>value)
+	elif type == XMMSC_RESULT_VALUE_TYPE_UINT32:
+		v = <unsigned int>value
+	elif type == XMMSC_RESULT_VALUE_TYPE_INT32:
+		v = <int>value
+
+	udata[key]=v
+
+
 cdef ResultNotifier(xmmsc_result_t *res, obj):
 	if not obj.get_broadcast():
 		obj._del_ref()
@@ -226,7 +240,7 @@ cdef ResultNotifier(xmmsc_result_t *res, obj):
 	if not obj.get_broadcast():
 		xmmsc_result_unref(res)
 
-class SourcedDict(dict):
+class PropDict(dict):
 	def __init__(self, srcs):
 		dict.__init__(self)
 		self._sources = srcs
@@ -298,6 +312,8 @@ cdef class XMMSResult:
 			return self.get_uint()
 		elif type == XMMS_OBJECT_CMD_ARG_DICT:
 			return self.get_dict()
+		elif type == XMMS_OBJECT_CMD_ARG_PROPDICT:
+			return self.get_propdict()
 		elif type == XMMS_OBJECT_CMD_ARG_INT32:
 			return self.get_int()
 		elif type == XMMS_OBJECT_CMD_ARG_STRING:
@@ -388,9 +404,19 @@ cdef class XMMSResult:
 		@return: A dictionary containing media info.
 		"""
 		self._check()
+		
+		ret = {}
+		if not xmmsc_result_dict_foreach(self.res, <xmmsc_dict_foreach_func> foreach_hash, <void *>ret):
+			raise ValueError("Failed to retrieve value!")
+		return ret
 
-		ret = SourcedDict(self.c.get_source_preference())
-		if not xmmsc_result_dict_foreach(self.res, <xmmsc_foreach_func> foreach_hash, <void *>ret):
+	def get_propdict(self):
+		"""
+		@return: A source dict.
+		"""
+		self._check()
+		ret = PropDict(self.c.get_source_preference())
+		if not xmmsc_result_propdict_foreach(self.res, <xmmsc_propdict_foreach_func> foreach_source_hash, <void *>ret):
 			raise ValueError("Failed to retrieve value!")
 		return ret
 			

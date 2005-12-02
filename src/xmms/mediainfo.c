@@ -150,7 +150,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 		entry = xmms_medialib_entry_not_resolved_get (session);
 		xmms_medialib_end (session);
 
-		if (entry) {
+		while (entry) {
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
 			xmms_error_t err;
