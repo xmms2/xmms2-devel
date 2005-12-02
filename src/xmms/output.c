@@ -804,6 +804,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	while (TRUE) {
 		xmms_transport_t *t;
+		xmms_plugin_t *plugin;
 
 		entry = xmms_playlist_current_entry (output->playlist);
 		if (!entry)
@@ -837,6 +838,17 @@ xmms_output_decoder_start (xmms_output_t *output)
 			return FALSE;
 		}
 		
+		session = xmms_medialib_begin ();
+		plugin = xmms_decoder_plugin_get (decoder);
+		xmms_medialib_entry_property_set_str (session, entry,
+						      XMMS_MEDIALIB_ENTRY_PROPERTY_DECODER,
+						      xmms_plugin_shortname_get (plugin));
+		plugin = xmms_transport_plugin_get (t);
+		xmms_medialib_entry_property_set_str (session, entry,
+						      XMMS_MEDIALIB_ENTRY_PROPERTY_TRANSPORT,
+						      xmms_plugin_shortname_get (plugin));
+		xmms_medialib_end (session);
+
 		xmms_object_unref (t);
 
 		if (decoder)

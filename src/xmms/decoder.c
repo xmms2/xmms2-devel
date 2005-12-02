@@ -251,6 +251,7 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 		return NULL;
 
 	decoder->converter = converter;
+	xmms_sample_converter_to_medialib (converter, decoder->entry);
 
 	fmt = xmms_sample_converter_get_from (converter);
 
@@ -537,6 +538,7 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 	xmms_object_ref (transport);
 
 	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+
 
 	decoder->transport = transport;
 	decoder->plugin = plugin;
