@@ -669,25 +669,40 @@ xmms_config_destroy (xmms_object_t *object)
 }
 
 /**
- * @internal Initialize and parse the config file.
- * @param[in] filename The absolute path to a config file as a string.
- * @return TRUE if config file is found and correctly parsed.
+ * @internal Clear data in a config object
+ * @param config The config object to clear
  */
-gboolean
+static void
+clear_config (xmms_config_t *config) {
+	g_hash_table_destroy(config->properties);
+	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                            g_free,
+	                                  (GDestroyNotify) __int_xmms_object_unref);
+	config->version = XMMS_CONFIG_VERSION;
+	g_free(config->value_name);
+	config->value_name = NULL;
+}
+
+/**
+ * @internal Initialize and parse the config file. Resets to default config
+ * on parse error.
+ * @param[in] filename The absolute path to a config file as a string.
+ */
+void
 xmms_config_init (const gchar *filename)
 {
 	GMarkupParser pars;
 	GMarkupParseContext *ctx;
 	xmms_config_t *config;
 	int ret, fd = -1;
-	gboolean retval = TRUE, parserr = FALSE, eof = FALSE;
+	gboolean parserr = FALSE, eof = FALSE;
 
 	config = xmms_object_new (xmms_config_t, xmms_config_destroy);
 	config->mutex = g_mutex_new ();
 
 	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free,
-	                                  (GDestroyNotify) __int_xmms_object_unref);
+	                                            (GDestroyNotify) __int_xmms_object_unref);
 	config->version = -1;
 	global_config = config;
 
@@ -701,9 +716,8 @@ xmms_config_init (const gchar *filename)
 	pars.end_element = xmms_config_parse_end;
 	pars.text = xmms_config_parse_text;
 
-	if (filename) {
+	if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
 		fd = open (filename, O_RDONLY);
-		retval = FALSE;
 	}
 
 	if (fd > -1) {
@@ -739,14 +753,7 @@ xmms_config_init (const gchar *filename)
 			 * above managed to parse the <xmms> element during the first
 			 * iteration of this loop */
 			if (XMMS_CONFIG_VERSION > config->version) {
-				g_hash_table_destroy(config->properties);
-				config->properties = g_hash_table_new_full (g_str_hash,
-				                                            g_str_equal,
-				                                            g_free,
-	                                  (GDestroyNotify) __int_xmms_object_unref);
-				config->version = XMMS_CONFIG_VERSION;
-				g_free(config->value_name);
-				config->value_name = NULL;
+				clear_config (config);
 				break;
 			}
 		}
@@ -763,23 +770,23 @@ xmms_config_init (const gchar *filename)
 
 		config->is_parsing = FALSE;
 	}
-
-	if (!parserr) {
-		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE,
-		                     XMMS_CMD_FUNC (setvalue));
-		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE,
-		                     XMMS_CMD_FUNC (getvalue));
-		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES,
-		                     XMMS_CMD_FUNC (listvalues));
-		xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE,
-		                     XMMS_CMD_FUNC (regvalue));
-		retval = TRUE;
-	}
 	else {
-		xmms_object_unref(config);
+		xmms_log_info ("No configfile specified, using default values.");
 	}
 
-	return retval;
+	if (parserr) {
+		xmms_log_info ("The config file could not be parsed, reverting to default configuration..");
+		clear_config (config);
+	}
+
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE,
+						 XMMS_CMD_FUNC (setvalue));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE,
+						 XMMS_CMD_FUNC (getvalue));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES,
+						 XMMS_CMD_FUNC (listvalues));
+	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE,
+						 XMMS_CMD_FUNC (regvalue));
 }
 
 /**

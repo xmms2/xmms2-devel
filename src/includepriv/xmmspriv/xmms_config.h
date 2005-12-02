@@ -25,7 +25,7 @@
 #define XMMS_MAX_CONFIGFILE_LEN 255
 #define XMMS_CONFIG_SYSTEMWIDE SYSCONFDIR "/xmms2.conf"
 
-gboolean xmms_config_init (const gchar *filename);
+void xmms_config_init (const gchar *filename);
 void xmms_config_shutdown (void);
 
 gboolean xmms_config_save (const gchar *file);
