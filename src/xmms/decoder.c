@@ -627,9 +627,12 @@ xmms_decoder_start (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
 
+	xmms_object_ref (decoder);
 	decoder->running = TRUE;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder,
 	                                   FALSE, NULL);
+
+	g_return_if_fail (decoder->thread);
 }
 
 /**
@@ -859,8 +862,6 @@ xmms_decoder_thread (gpointer data)
 	decode_block = xmms_plugin_method_get (decoder->plugin,
 	                                       XMMS_PLUGIN_METHOD_DECODE_BLOCK);
 	g_assert (decode_block);
-
-	xmms_object_ref (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
 
