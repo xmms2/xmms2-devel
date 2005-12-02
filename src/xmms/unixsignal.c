@@ -51,7 +51,7 @@ sigwaiter (gpointer data)
 
 		switch (caught){
 			case SIGINT:
-				XMMS_DBG ("Got SIGINT!");
+				xmms_log_info ("Got SIGINT!");
 
 				xmms_object_cmd_arg_init (&arg);
 				memset (&arg, 0, sizeof (arg));
@@ -59,7 +59,7 @@ sigwaiter (gpointer data)
 				xmms_object_cmd_call (obj, XMMS_IPC_CMD_QUIT, &arg);
 				break;
 			case SIGTERM:
-				XMMS_DBG ("Got SIGTERM! Bye!");
+				xmms_log_info ("Got SIGTERM! Bye!");
 				exit (0);
 				break;
 		}

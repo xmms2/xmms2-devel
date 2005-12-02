@@ -246,12 +246,12 @@ xmms_sample_audioformats_coerce (GList *declist, GList *outlist)
 		return NULL;
 
 
-	XMMS_DBG ("Selected conversion from %s-%d-%d to %s-%d-%d of %d+%d formats",
-	          xmms_sample_name_get (bestdf->format),
-	          bestdf->channels, bestdf->samplerate,
-	          xmms_sample_name_get (bestof->format),
-	          bestof->channels, bestof->samplerate,
-	          g_list_length (declist), g_list_length (outlist));
+	xmms_log_info ("Selected conversion from %s-%d-%d to %s-%d-%d of %d+%d formats",
+	               xmms_sample_name_get (bestdf->format),
+	               bestdf->channels, bestdf->samplerate,
+	               xmms_sample_name_get (bestof->format),
+	               bestof->channels, bestof->samplerate,
+	               g_list_length (declist), g_list_length (outlist));
 	
 	return xmms_sample_converter_init (bestdf, bestof);
 

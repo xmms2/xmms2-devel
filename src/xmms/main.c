@@ -196,7 +196,7 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 	if (!mainobj->output)
 		return;
 
-	XMMS_DBG ("Want to use %s as output instead", outname);
+	xmms_log_info ("Switching to output %s", outname);
 
 	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 	if (!plugin) {
@@ -341,7 +341,7 @@ install_scripts (const gchar *into_dir)
 	s++;
 
 	g_snprintf (path, PATH_MAX, "%s/scripts/%s", SHAREDDIR, s);
-	XMMS_DBG ("installing scripts into %s", path);
+	xmms_log_info ("installing scripts into %s", path);
 	dir = g_dir_open (path, 0, &err);
 	if (!dir) {
 		XMMS_DBG ("global script directory not found");
@@ -493,7 +493,7 @@ main (int argc, char **argv)
 
 	outname = xmms_config_property_get_string (cv);
 
-	XMMS_DBG ("output = %s", outname);
+	xmms_log_info ("Using output: %s", outname);
 
 	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 

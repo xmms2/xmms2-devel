@@ -331,6 +331,8 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	url = xmms_medialib_entry_property_get_str (session, entry,
 	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
+	xmms_log_info ("Opening url '%s'", url);
+
 	if (!xmms_transport_decode_url (url)) {
 		xmms_log_error ("Illegal encoding in url");
 		goto out;
@@ -339,6 +341,8 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	plugin = xmms_transport_plugin_find (url);
 	if (!plugin)
 		goto out;
+
+	xmms_log_info ("Using plugin: %s", xmms_plugin_name_get (plugin));
 
 	transport->plugin = plugin;
 	transport->entry = entry;

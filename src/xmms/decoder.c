@@ -261,7 +261,7 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 		if (!xmms_effect_format_set (l->data, fmt)) {
 			GList *n;
 
-			XMMS_DBG ("Rockstar ate my effect (didn't support format)");
+			xmms_log_info ("Rockstar ate my effect (didn't support format)");
 			n = l->next;
 			decoder->effects = g_list_delete_link (decoder->effects, l);
 			l = n;
@@ -530,15 +530,14 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 
 	plugin = xmms_decoder_find_plugin (decoder, transport);
 	if (!plugin) {
-		XMMS_DBG ("Cannot find plugin for %s",
-		          xmms_transport_url_get (transport));
+		xmms_log_error ("Cannot find plugin for %s",
+		                xmms_transport_url_get (transport));
 		return FALSE;
 	}
 
 	xmms_object_ref (transport);
 
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
-
+	xmms_log_info ("Using plugin: %s", xmms_plugin_name_get (plugin));
 
 	decoder->transport = transport;
 	decoder->plugin = plugin;
@@ -779,7 +778,7 @@ find_plugin_stream (xmms_magic_checker_t *c, GList *list,
 			}
 
 			XMMS_DBG ("performing magic check for %s",
-					xmms_plugin_shortname_get (plugin));
+			          xmms_plugin_shortname_get (plugin));
 			tree = xmms_magic_match (c, magic);
 			if (tree) {
 				*matched_tree = tree;
