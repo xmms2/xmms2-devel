@@ -239,10 +239,8 @@ static VALUE string_get (RbResult *res)
 	return rb_str_new2 (s ? s : "");
 }
 
-static void xhash_to_rhash (const void *key,
-                            xmmsc_result_value_type_t type,
-                            const void *value, const char *source,
-                            VALUE *hash)
+static VALUE cast_result_value (xmmsc_result_value_type_t type,
+                                const void *value)
 {
 	VALUE val;
 
@@ -257,22 +255,61 @@ static void xhash_to_rhash (const void *key,
 			val = UINT2NUM ((uint32_t) value);
 			break;
 		default:
+			val = Qnil;
 			break;
 	}
 
-	rb_hash_aset (*hash, ID2SYM (rb_intern (key)), val);
+	return val;
+}
+
+static void dict_to_hash (const void *key,
+                          xmmsc_result_value_type_t type,
+                          const void *value, void *udata)
+{
+	VALUE *h = udata;
+
+	rb_hash_aset (*h, ID2SYM (rb_intern (key)),
+	              cast_result_value (type, value));
+}
+
+static void propdict_to_hash (const void *key,
+                              xmmsc_result_value_type_t type,
+                              const void *value, const char *src,
+                              void *udata)
+{
+	VALUE *h = udata, h2, rbsrc;
+
+	rbsrc = rb_str_new2 (src);
+
+	if (rb_funcall (*h, rb_intern ("has_key?"), 1, rbsrc) == Qfalse) {
+		h2 = rb_hash_new ();
+		rb_hash_aset (*h, rbsrc, h2);
+	}
+
+	rb_hash_aset (h2, ID2SYM (rb_intern (key)),
+	              cast_result_value (type, value));
 }
 
 static VALUE hashtable_get (RbResult *res)
 {
-	VALUE rhash = rb_hash_new ();
+	VALUE hash = rb_hash_new ();
 
 	if (!xmmsc_result_dict_foreach (res->real,
-	                                (xmmsc_foreach_func) xhash_to_rhash,
-	                                &rhash))
+	                                dict_to_hash, &hash))
 		rb_raise (eValueError, "cannot retrieve value");
 
-	return rhash;
+	return hash;
+}
+
+static VALUE propdict_get (RbResult *res)
+{
+	VALUE hash = rb_hash_new ();
+
+	if (!xmmsc_result_propdict_foreach (res->real,
+	                                    propdict_to_hash, &hash))
+		rb_raise (eValueError, "cannot retrieve value");
+
+	return hash;
 }
 
 static VALUE value_get (RbResult *res)
@@ -291,6 +328,9 @@ static VALUE value_get (RbResult *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			ret = hashtable_get (res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
+			ret = propdict_get (res);
 			break;
 		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
 		default:
