@@ -722,19 +722,20 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 {
 	sortdata_t *data1 = (sortdata_t *) a;
 	sortdata_t *data2 = (sortdata_t *) b;
-
 	int s1, s2;
 
 	if (!data1->val) {
 		return -(data2->val != NULL);
 	}
+
 	if (!data2->val) {
 		return 1;
 	}
 
 	if (data1->val->type == XMMS_OBJECT_CMD_ARG_STRING &&
 	    data2->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		return g_utf8_collate (data1->val->value.string, data2->val->value.string);
+		return g_utf8_collate (data1->val->value.string,
+		                       data2->val->value.string);
 	}
 
 	if ((data1->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
@@ -756,6 +757,7 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 	}
 
 	XMMS_DBG("Types in compare function differ to much");
+
 	return 0;
 }
 
@@ -768,13 +770,17 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 {
 	sortdata_t *sorted = (sortdata_t *) data;
 	xmms_playlist_t *playlist = (xmms_playlist_t *)userdata;
+
 	g_array_append_val (playlist->list, sorted->id);
 
-	if (sorted->val)
+	if (sorted->val) {
 		xmms_object_cmd_value_free (sorted->val);
+	}
 
-	if (sorted->current)
+	if (sorted->current) {
 		playlist->currentpos = playlist->list->len - 1;
+	}
+
 	g_free (sorted);
 }
 
@@ -816,11 +822,14 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 		data = g_new (sortdata_t, 1);
 
 		data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
-		data->val = xmms_medialib_entry_property_get_cmd_value (session, data->id, property);
+		data->val =
+			xmms_medialib_entry_property_get_cmd_value (session,
+			                                            data->id,
+			                                            property);
 
 		if (data->val && data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
 			str = data->val->value.string;
-			data->val->value.string = g_utf8_casefold (str, strlen(str));
+			data->val->value.string = g_utf8_casefold (str, strlen (str));
 			g_free (str);
 		}
 
@@ -856,10 +865,12 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0);
 
-	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
+	xmms_object_emit_f (XMMS_OBJECT (playlist),
+	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+	                    XMMS_OBJECT_CMD_ARG_UINT32,
+	                    playlist->currentpos);
 
 	g_mutex_unlock (playlist->mutex);
-
 }
 
 /** Lists the current playlist.
@@ -896,6 +907,7 @@ xmms_mediainfo_reader_t *
 xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist)
 {
 	g_return_val_if_fail (playlist, NULL);
+
 	return playlist->mediainfordr;
 }
 
