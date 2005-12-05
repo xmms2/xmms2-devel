@@ -792,10 +792,11 @@ static void
 xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
 {
 	guint32 i;
-	GList *tmp = NULL;
+	GList *tmp = NULL, *sorted, *l, *l2;
 	sortdata_t *data;
 	gchar *str;
 	xmms_medialib_session_t *session;
+	gboolean list_changed = FALSE;
 
 	g_return_if_fail (playlist);
 	g_return_if_fail (property);
@@ -828,16 +829,30 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 		tmp = g_list_prepend (tmp, data);
 	}
 
-	tmp = g_list_reverse (tmp);
+	xmms_medialib_end (session);
 
-	tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
+	tmp = g_list_reverse (tmp);
+	sorted = g_list_sort (tmp, xmms_playlist_entry_compare);
+
+	/* check whether there was any change */
+	for (l = sorted, l2 = tmp; l;
+	     l = g_list_next (l), l2 = g_list_next (l2)) {
+		if (!l2 || l->data != l2->data) {
+			list_changed = TRUE;
+			break;
+		}
+	}
+
+	if (!list_changed) {
+		g_list_free (tmp);
+		g_mutex_unlock (playlist->mutex);
+		return;
+	}
 
 	g_array_set_size (playlist->list, 0);
-	g_list_foreach (tmp, xmms_playlist_sorted_unwind, playlist);
+	g_list_foreach (sorted, xmms_playlist_sorted_unwind, playlist);
 
-	g_list_free (tmp);
-
-	xmms_medialib_end (session);
+	g_list_free (sorted);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0);
 
