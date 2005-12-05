@@ -138,7 +138,8 @@ xmmsc_broadcast_playback_status (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playback_status (xmmsc_connection_t *c)
 {
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_STATUS);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT,
+								  XMMS_IPC_CMD_OUTPUT_STATUS);
 }
 
 /**
