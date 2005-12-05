@@ -1132,11 +1132,8 @@ xmms_medialib_playlist_add (xmms_medialib_session_t *session,
 
 	ret = xmms_sqlite_exec (session->sql,
 							"insert into PlaylistEntries"
-							"(playlist_id, entry, pos) "
-							"values (%u, %Q, "
-
-							/* @todo use a real autoincrement column */
-							"ifnull((select MAX(ifnull(pos, 0)) from PlaylistEntries) + 1, 1))",
+							"(playlist_id, entry) "
+							"values (%u, %Q)",
 							playlist_id, mid);
 	if (!ret) {
 		return FALSE;
