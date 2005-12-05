@@ -803,35 +803,39 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 
 	g_mutex_lock (playlist->mutex);
 
+	/* check whether we need to do any sorting at all */
+	if (playlist->list->len < 2) {
+		g_mutex_unlock (playlist->mutex);
+		return;
+	}
+
 	session = xmms_medialib_begin ();
 
-	if (playlist->list->len > 1) {
-		for (i = 0; i < playlist->list->len; i++) {
-			data = g_new (sortdata_t, 1);
+	for (i = 0; i < playlist->list->len; i++) {
+		data = g_new (sortdata_t, 1);
 
-			data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
-			data->val = xmms_medialib_entry_property_get_cmd_value (session, data->id, property);
+		data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
+		data->val = xmms_medialib_entry_property_get_cmd_value (session, data->id, property);
 
-			if (data->val && data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-				str = data->val->value.string;
-				data->val->value.string = g_utf8_casefold (str, strlen(str));
-				g_free (str);
-			}
-
-			data->current = (playlist->currentpos == i);
-
-			tmp = g_list_prepend (tmp, data);
+		if (data->val && data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
+			str = data->val->value.string;
+			data->val->value.string = g_utf8_casefold (str, strlen(str));
+			g_free (str);
 		}
 
-		tmp = g_list_reverse (tmp);
+		data->current = (playlist->currentpos == i);
 
-		tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
-
-		g_array_set_size (playlist->list, 0);
-		g_list_foreach (tmp, xmms_playlist_sorted_unwind, playlist);
-
-		g_list_free (tmp);
+		tmp = g_list_prepend (tmp, data);
 	}
+
+	tmp = g_list_reverse (tmp);
+
+	tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
+
+	g_array_set_size (playlist->list, 0);
+	g_list_foreach (tmp, xmms_playlist_sorted_unwind, playlist);
+
+	g_list_free (tmp);
 
 	xmms_medialib_end (session);
 
