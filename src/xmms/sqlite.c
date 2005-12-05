@@ -299,7 +299,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	va_list ap;
 	gint ret;
 	sqlite3_stmt *stm;
-	gboolean retval;
+	gboolean retval = FALSE;
 
 	g_return_val_if_fail (query, FALSE);
 	g_return_val_if_fail (sql, FALSE);
@@ -344,7 +344,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 	sqlite3_finalize (stm);
 
-	return TRUE;
+	return retval;
 	
 }
 

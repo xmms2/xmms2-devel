@@ -972,12 +972,20 @@ GList *
 xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_entry_t entry)
 {
 	GList *ret = NULL;
+	gboolean s;
 
 	g_return_val_if_fail (session, NULL);
 	
-	xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb, &ret, 
-							 "select s.source, m.key, m.value from Media m left join Sources s on m.source = s.id where m.id=%d",
-							 entry);
+	s = xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb,
+	                             &ret,
+	                             "select s.source, m.key, "
+	                             "m.value from Media m left join "
+	                             "Sources s on m.source = s.id "
+	                             "where m.id=%d",
+	                             entry);
+	if (!s) {
+		return NULL;
+	}
 
 	ret = g_list_append (ret, xmms_object_cmd_value_str_new ("server"));
 	ret = g_list_append (ret, xmms_object_cmd_value_str_new ("id"));
@@ -998,9 +1006,10 @@ xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err)
 	xmms_medialib_end (session);
 
 	if (!ret) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "Could not retrive info for that entry!");
-		return NULL;
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+		                "Could not retrive info for that entry!");
 	}
+
 	return ret;
 }
 
