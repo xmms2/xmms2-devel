@@ -70,7 +70,6 @@ xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, const char *);
 xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, unsigned int);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c);
-xmmsc_result_t *xmmsc_playlist_save (xmmsc_connection_t *c, char *);
 xmmsc_result_t *xmmsc_playlist_list (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_sort (xmmsc_connection_t *c, char*);
 xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int);

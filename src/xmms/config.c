@@ -673,16 +673,13 @@ xmms_config_destroy (xmms_object_t *object)
  * @param config The config object to clear
  */
 static void
-clear_config (xmms_config_t *config)
-{
-	g_hash_table_destroy (config->properties);
+clear_config (xmms_config_t *config) {
+	g_hash_table_destroy(config->properties);
 	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free,
-	                                            (GDestroyNotify) __int_xmms_object_unref);
-
+	                                  (GDestroyNotify) __int_xmms_object_unref);
 	config->version = XMMS_CONFIG_VERSION;
-
-	g_free (config->value_name);
+	g_free(config->value_name);
 	config->value_name = NULL;
 }
 
@@ -783,13 +780,13 @@ xmms_config_init (const gchar *filename)
 	}
 
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_SETVALUE,
-	                     XMMS_CMD_FUNC (setvalue));
+						 XMMS_CMD_FUNC (setvalue));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_GETVALUE,
-	                     XMMS_CMD_FUNC (getvalue));
+						 XMMS_CMD_FUNC (getvalue));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_LISTVALUES,
-	                     XMMS_CMD_FUNC (listvalues));
+						 XMMS_CMD_FUNC (listvalues));
 	xmms_object_cmd_add (XMMS_OBJECT (config), XMMS_IPC_CMD_REGVALUE,
-	                     XMMS_CMD_FUNC (regvalue));
+						 XMMS_CMD_FUNC (regvalue));
 }
 
 /**

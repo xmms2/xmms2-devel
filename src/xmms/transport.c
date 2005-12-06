@@ -837,6 +837,7 @@ xmms_transport_thread (gpointer data)
 		if (ret > 0) {
 			xmms_ringbuf_write_wait (transport->buffer, buffer, ret, transport->mutex);
 		} else {
+			transport->is_buffering = FALSE;
 			xmms_ringbuf_set_eos (transport->buffer, TRUE);
 			xmms_error_set (&transport->status, error.code, error.message);
 			g_cond_wait (transport->cond, transport->mutex);

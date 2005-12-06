@@ -34,29 +34,33 @@ typedef struct xmms_wave_data_St {
 	guint16 channels;
 	guint32 samplerate;
 	guint16 bits_per_sample;
+	guint header_size;
 	guint bytes_total;
 } xmms_wave_data_t;
 
 /*
  * Defines
  */
-#define WAVE_HEADER_SIZE 44
+#define WAVE_HEADER_MIN_SIZE 44
 
 #define GET_16(buf, val) \
 	g_assert (sizeof (val) == 2); \
 	memcpy (&val, buf, 2); \
 	buf += 2; \
+	bytes_left -= 2; \
 	val = GUINT16_TO_LE (val);
 
 #define GET_32(buf, val) \
 	g_assert (sizeof (val) == 4); \
 	memcpy (&val, buf, 4); \
 	buf += 4; \
+	bytes_left -= 4; \
 	val = GUINT32_TO_LE (val);
 
 #define GET_STR(buf, str, len) \
 	strncpy ((gchar *) str, (gchar *)buf, len); \
 	str[len] = '\0'; \
+	bytes_left -= len; \
 	buf += len;
 
 /*
@@ -70,7 +74,7 @@ static void xmms_wave_destroy (xmms_decoder_t *decoder);
 static gboolean xmms_wave_init (xmms_decoder_t *decoder, gint mode);
 static gboolean xmms_wave_seek (xmms_decoder_t *decoder, guint samples);
 
-static gboolean read_wave_header (xmms_wave_data_t *data, guint8 *buf);
+static gboolean read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read);
 
 /*
  * Plugin header
@@ -174,8 +178,8 @@ xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 	xmms_wave_data_t *data;
 	xmms_error_t error;
 	xmms_sample_format_t sample_fmt;
-	guint8 hdr[WAVE_HEADER_SIZE];
-	gint read = 0;
+	guint8 buf[1024];
+	gint read;
 
 	g_return_val_if_fail (decoder, FALSE);
 
@@ -185,23 +189,24 @@ xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
-	while (read < sizeof (hdr)) {
-		gint ret = xmms_transport_read (transport, (gchar *)hdr + read,
-		                                sizeof (hdr) - read, &error);
+	read = xmms_transport_peek (transport, (gchar *) buf, sizeof (buf),
+	                            &error);
 
-		if (ret <= 0) {
-			XMMS_DBG ("Could not read wave header");
-			return FALSE;
-		}
-
-		read += ret;
-		g_assert (read >= 0);
+	if (read < WAVE_HEADER_MIN_SIZE) {
+		XMMS_DBG ("Could not read wave header");
+		return FALSE;
 	}
 
-	if (!read_wave_header (data, hdr)) {
+	if (!read_wave_header (data, buf, read)) {
 		XMMS_DBG ("Not a valid Wave stream");
 		return FALSE;
 	}
+
+	/* skip over the header */
+	g_assert (read >= data->header_size);
+
+	xmms_transport_read (transport, (gchar *) buf, data->header_size,
+	                     &error);
 
 	if (!(mode & XMMS_DECODER_INIT_DECODING)) {
 		return TRUE;
@@ -258,7 +263,7 @@ xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 {
 	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
-	guint offset = WAVE_HEADER_SIZE;
+	guint offset;
 	gint ret;
 
 	g_return_val_if_fail (decoder, FALSE);
@@ -269,7 +274,9 @@ xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
+	offset = data->header_size;
 	offset += samples * (data->bits_per_sample / 8) * data->channels;
+
 	if (offset > data->bytes_total) {
 		XMMS_DBG ("Trying to seek past end of stream");
 
@@ -291,11 +298,14 @@ xmms_wave_destroy (xmms_decoder_t *decoder)
 }
 
 static gboolean
-read_wave_header (xmms_wave_data_t *data, guint8 *buf)
+read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 {
 	gchar stmp[5];
 	guint32 tmp32, data_size;
 	guint16 tmp16;
+	gint bytes_left = bytes_read;
+
+	g_assert (bytes_left >= WAVE_HEADER_MIN_SIZE);
 
 	GET_STR (buf, stmp, 4);
 	if (strcmp (stmp, "RIFF")) {
@@ -354,13 +364,26 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf)
 	}
 
 	GET_STR (buf, stmp, 4);
-	if (strcmp (stmp, "data")) {
-		XMMS_DBG ("Data chunk missing");
-		return FALSE;
+
+	while (strcmp (stmp, "data")) {
+		GET_32 (buf, tmp32);
+
+		if (bytes_left < (tmp32 + 8)) {
+			XMMS_DBG ("Data chunk missing");
+			return FALSE;
+		}
+
+		buf += tmp32;
+		bytes_left -= tmp32;
+
+		GET_STR (buf, stmp, 4);
 	}
 
 	GET_32 (buf, data->bytes_total);
-	if (data->bytes_total + WAVE_HEADER_SIZE != data_size) {
+
+	data->header_size = bytes_read - bytes_left;
+
+	if (data->bytes_total + data->header_size != data_size) {
 		XMMS_DBG ("Data chunk size doesn't match RIFF chunk size");
 		/* don't return FALSE here, we try to read it anyway */
 	}

@@ -959,7 +959,9 @@ set_plugin (xmms_output_t *output, xmms_plugin_t *plugin)
 		                               XMMS_PLUGIN_METHOD_DESTROY);
 		g_assert (dest);
 
+		g_mutex_lock (output->api_mutex);
 		dest (output);
+		g_mutex_unlock (output->api_mutex);
 		output->plugin = NULL;
 		output->status_method = NULL;
 	}
