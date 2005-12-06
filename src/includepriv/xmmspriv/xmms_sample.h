@@ -18,6 +18,7 @@
 #define __XMMS_PRIV_SAMPLE_H__
 
 #include "xmms/xmms_sample.h"
+#include "xmms/xmms_medialib.h"
 
 typedef guint (*xmms_sample_conv_func_t) (xmms_sample_converter_t *, xmms_sample_t *, guint , xmms_sample_t *);
 
@@ -34,5 +35,6 @@ void xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guin
 xmms_sample_converter_t *xmms_sample_audioformats_coerce (GList *declist, GList *outlist);
 xmms_audio_format_t *xmms_sample_converter_get_from (xmms_sample_converter_t *conv);
 xmms_audio_format_t *xmms_sample_converter_get_to (xmms_sample_converter_t *conv);
+void xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_entry_t entry);
 
 #endif

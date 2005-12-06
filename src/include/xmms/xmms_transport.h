@@ -21,6 +21,7 @@
 #define __XMMS_TRANSPORT_H__
 
 #include <glib.h>
+#include "xmms/xmms_plugin.h"
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_medialib.h"
 
@@ -41,6 +42,7 @@ void xmms_transport_buffering_start (xmms_transport_t *transport);
 #define XMMS_TRANSPORT_MAX_LINE_SIZE 1024
 gchar *xmms_transport_read_line (xmms_transport_t *transport, gchar *line, xmms_error_t *err);
 
+xmms_plugin_t *xmms_transport_plugin_get (const xmms_transport_t *transport);
 
 gboolean xmms_transport_seek (xmms_transport_t *transport, gint offset, gint whence);
 

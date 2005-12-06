@@ -251,6 +251,7 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 		return NULL;
 
 	decoder->converter = converter;
+	xmms_sample_converter_to_medialib (converter, decoder->entry);
 
 	fmt = xmms_sample_converter_get_from (converter);
 
@@ -260,7 +261,7 @@ xmms_decoder_format_finish (xmms_decoder_t *decoder)
 		if (!xmms_effect_format_set (l->data, fmt)) {
 			GList *n;
 
-			XMMS_DBG ("Rockstar ate my effect (didn't support format)");
+			xmms_log_info ("Rockstar ate my effect (didn't support format)");
 			n = l->next;
 			decoder->effects = g_list_delete_link (decoder->effects, l);
 			l = n;
@@ -529,14 +530,14 @@ xmms_decoder_open (xmms_decoder_t *decoder, xmms_transport_t *transport)
 
 	plugin = xmms_decoder_find_plugin (decoder, transport);
 	if (!plugin) {
-		XMMS_DBG ("Cannot find plugin for %s",
-		          xmms_transport_url_get (transport));
+		xmms_log_error ("Cannot find plugin for %s",
+		                xmms_transport_url_get (transport));
 		return FALSE;
 	}
 
 	xmms_object_ref (transport);
 
-	XMMS_DBG ("Found plugin: %s", xmms_plugin_name_get (plugin));
+	xmms_log_info ("Using plugin: %s", xmms_plugin_name_get (plugin));
 
 	decoder->transport = transport;
 	decoder->plugin = plugin;
@@ -627,9 +628,12 @@ xmms_decoder_start (xmms_decoder_t *decoder)
 {
 	g_return_if_fail (decoder);
 
+	xmms_object_ref (decoder);
 	decoder->running = TRUE;
 	decoder->thread = g_thread_create (xmms_decoder_thread, decoder,
 	                                   FALSE, NULL);
+
+	g_return_if_fail (decoder->thread);
 }
 
 /**
@@ -774,7 +778,7 @@ find_plugin_stream (xmms_magic_checker_t *c, GList *list,
 			}
 
 			XMMS_DBG ("performing magic check for %s",
-					xmms_plugin_shortname_get (plugin));
+			          xmms_plugin_shortname_get (plugin));
 			tree = xmms_magic_match (c, magic);
 			if (tree) {
 				*matched_tree = tree;
@@ -859,8 +863,6 @@ xmms_decoder_thread (gpointer data)
 	decode_block = xmms_plugin_method_get (decoder->plugin,
 	                                       XMMS_PLUGIN_METHOD_DECODE_BLOCK);
 	g_assert (decode_block);
-
-	xmms_object_ref (decoder);
 
 	transport = xmms_decoder_transport_get (decoder);
 

@@ -804,6 +804,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 	while (TRUE) {
 		xmms_transport_t *t;
+		xmms_plugin_t *plugin;
 
 		entry = xmms_playlist_current_entry (output->playlist);
 		if (!entry)
@@ -837,6 +838,17 @@ xmms_output_decoder_start (xmms_output_t *output)
 			return FALSE;
 		}
 		
+		session = xmms_medialib_begin ();
+		plugin = xmms_decoder_plugin_get (decoder);
+		xmms_medialib_entry_property_set_str (session, entry,
+						      XMMS_MEDIALIB_ENTRY_PROPERTY_DECODER,
+						      xmms_plugin_shortname_get (plugin));
+		plugin = xmms_transport_plugin_get (t);
+		xmms_medialib_entry_property_set_str (session, entry,
+						      XMMS_MEDIALIB_ENTRY_PROPERTY_TRANSPORT,
+						      xmms_plugin_shortname_get (plugin));
+		xmms_medialib_end (session);
+
 		xmms_object_unref (t);
 
 		if (decoder)
@@ -907,8 +919,9 @@ status_changed (xmms_output_t *output, xmms_playback_status_t status)
 			g_return_if_fail (!output->write_running);
 			output->write_running = TRUE;
 
-			output->write_thread = g_thread_create (xmms_output_write_thread, output, FALSE, NULL);
+			output->write_thread = g_thread_create (xmms_output_write_thread, output, TRUE, NULL);
 		}
+		g_mutex_unlock (output->write_mutex);
 	} else if (status == XMMS_PLAYBACK_STATUS_STOP) {
 		XMMS_DBG ("Stopping playback!");
 
@@ -916,13 +929,17 @@ status_changed (xmms_output_t *output, xmms_playback_status_t status)
 		output->write_paused = FALSE;
 		g_cond_signal (output->write_cond);
 
+		g_mutex_unlock (output->write_mutex);
+
+		g_thread_join (output->write_thread);
+
 		output->write_thread = NULL;
 	} else if (status == XMMS_PLAYBACK_STATUS_PAUSE) {
 		XMMS_DBG ("Pausing playback!");
 		output->write_paused = TRUE;
+		g_mutex_unlock (output->write_mutex);
 	}
 
-	g_mutex_unlock (output->write_mutex);
 }
 
 static gboolean

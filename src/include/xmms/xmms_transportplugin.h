@@ -64,6 +64,5 @@ typedef GList *(*xmms_transport_list_method_t) (const gchar *path);
 void xmms_transport_ringbuf_resize (xmms_transport_t *transport, gint size);
 gpointer xmms_transport_private_data_get (xmms_transport_t *transport);
 void xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data);
-xmms_plugin_t *xmms_transport_plugin_get (const xmms_transport_t *transport);
 
 #endif
