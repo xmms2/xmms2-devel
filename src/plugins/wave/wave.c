@@ -197,7 +197,7 @@ xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 		return FALSE;
 	}
 
-	if (!read_wave_header (data, transport, buf, read)) {
+	if (!read_wave_header (data, buf, read)) {
 		XMMS_DBG ("Not a valid Wave stream");
 		return FALSE;
 	}
