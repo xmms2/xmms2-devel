@@ -33,6 +33,10 @@
 #define FAAD_TYPE_ADIF 2
 #define FAAD_TYPE_ADTS 3
 
+static int faad_mpeg_samplerates[] = { 96000, 88200, 64000, 48000, 44100, 
+                                       32000, 24000, 22050, 16000, 12000, 
+                                       11025, 8000, 7350, 0, 0, 0 };
+
 typedef struct {
 	faacDecHandle decoder;
 	gint filetype;
@@ -50,6 +54,7 @@ typedef struct {
 	guint channels;
 	guint bitrate;
 	guint samplerate;
+	xmms_sample_format_t sampleformat;
 } xmms_faad_data_t;
 
 static gboolean xmms_faad_new (xmms_decoder_t *decoder);
@@ -60,7 +65,7 @@ static gboolean xmms_faad_seek (xmms_decoder_t *decoder, guint samples);
 static void xmms_faad_get_mediainfo (xmms_decoder_t *decoder);
 
 uint32_t xmms_faad_read_callback (void *user_data, void *buffer,
-								  uint32_t length);
+				  uint32_t length);
 uint32_t xmms_faad_seek_callback (void *user_data, uint64_t position);
 int xmms_faad_get_aac_track (mp4ff_t * infile);
 
@@ -169,7 +174,7 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
 
-	data->sampleid = 2;
+	data->sampleid = 0;
 	data->decoder = faacDecOpen ();
 	config = faacDecGetCurrentConfiguration (data->decoder);
 	config->defObjectType = LC;
@@ -178,6 +183,25 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 	config->downMatrix = 0;
 	config->dontUpSampleImplicitSBR = 0;
 	faacDecSetConfiguration (data->decoder, config);
+
+	switch (config->outputFormat) {
+	case FAAD_FMT_16BIT:
+		data->sampleformat = XMMS_SAMPLE_FORMAT_S16;
+		break;
+	case FAAD_FMT_24BIT:
+		/* we don't have 24-bit format to use in xmms2 */
+		data->sampleformat = XMMS_SAMPLE_FORMAT_S32;
+		break;
+	case FAAD_FMT_32BIT:
+		data->sampleformat = XMMS_SAMPLE_FORMAT_S32;
+		break;
+	case FAAD_FMT_FLOAT:
+		data->sampleformat = XMMS_SAMPLE_FORMAT_FLOAT;
+		break;
+	case FAAD_FMT_DOUBLE:
+		data->sampleformat = XMMS_SAMPLE_FORMAT_DOUBLE;
+		break;
+	}
 
 	bytes_read = xmms_transport_read (transport,
 	                                  (gchar *) data->buffer + data->buffer_length,
@@ -242,7 +266,7 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 			return FALSE;
 		}
 		mp4ff_get_decoder_config (data->mp4ff, data->track, &tmpbuf,
-								  &tmpbuflen);
+					  &tmpbuflen);
 
 		if (faacDecInit2 (data->decoder, tmpbuf, tmpbuflen,
 		                  &samplerate, &channels) < 0) {
@@ -274,10 +298,8 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 	}
 
 	if (mode & XMMS_DECODER_INIT_DECODING) {
-		/* samplerate is constant because of the internal
-		 * upsampling done in libfaad */
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16,
-		                         data->channels, 44100);
+		xmms_decoder_format_add (decoder, data->sampleformat,
+		                         data->channels, data->samplerate);
 		if (xmms_decoder_format_finish (decoder) == NULL) {
 			XMMS_DBG ("Decoder format finish failed!");
 			return FALSE;
@@ -335,17 +357,16 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 
 		sample_buffer = faacDecDecode (data->decoder, &frameInfo, 
 		                               tmpbuf, tmpbuflen);
-		bytes_read = frameInfo.samples * frameInfo.channels;
+		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 		g_free (tmpbuf);
 	} else if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
-		sample_buffer =
-			faacDecDecode (data->decoder, &frameInfo, data->buffer,
-			               data->buffer_length);
+		sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
+		                               data->buffer_length);
 
 		g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
 		           data->buffer_length - frameInfo.bytesconsumed);
 		data->buffer_length -= frameInfo.bytesconsumed;
-		bytes_read = frameInfo.samples * frameInfo.channels;
+		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 	} else {
 		XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage(frameInfo.error));
 		return FALSE;
@@ -445,10 +466,6 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 		guint skip_size, bitrate;
 		guint64 duration;
 
-		xmms_medialib_entry_property_set_int (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                                      data->samplerate);
-
 		skip_size = (data->buffer[4] & 0x80) ? 9 : 0;
 		bitrate = ((guint) (data->buffer[4 + skip_size] & 0x0F) << 19) |
 		          ((guint) data->buffer[5 + skip_size] << 11) |
@@ -460,7 +477,7 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 
 		duration = xmms_transport_size (transport);
 		if (duration != 0) {
-			duration = ((float) duration * 8000.f)/((float) bitrate) + 0.5f;
+			duration = ((float) duration * 8000.f) / ((float) bitrate) + 0.5f;
 			xmms_medialib_entry_property_set_int (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                                      duration);
@@ -468,7 +485,7 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 	} else if (data->filetype == FAAD_TYPE_ADTS) {
 		xmms_medialib_entry_property_set_int (session, entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                                      data->samplerate);
+		                                      faad_mpeg_samplerates[(data->buffer[2]&0x3c)>>2]);
 	}
 
 	xmms_medialib_end (session);
@@ -554,7 +571,7 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 
 		if (relative < data->buffer_length) {
 			g_memmove (data->buffer, data->buffer + (gint) relative,
-					   data->buffer_length - (gint) relative);
+				   data->buffer_length - (gint) relative);
 			data->buffer_length -= (gint) relative;
 		} else if (relative >= 0) {
 			relative -= data->buffer_length;
@@ -574,7 +591,7 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 int
 xmms_faad_get_aac_track (mp4ff_t *infile)
 {
-	/* find AAC track */
+	/* find first AAC audio track */
 	int i, rc;
 	int numTracks = mp4ff_total_tracks (infile);
 
@@ -589,8 +606,9 @@ xmms_faad_get_aac_track (mp4ff_t *infile)
 			rc = AudioSpecificConfig (buff, buff_size, &mp4ASC);
 			g_free (buff);
 
-			if (rc < 0)
+			if (rc < 0) {
 				continue;
+			}
 			return i;
 		}
 	}
