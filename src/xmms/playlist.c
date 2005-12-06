@@ -46,9 +46,7 @@ static void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms
 static void xmms_playlist_destroy (xmms_object_t *object);
 gboolean xmms_playlist_remove (xmms_playlist_t *playlist, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_move (xmms_playlist_t *playlist, guint pos, gint newpos, xmms_error_t *err);
-static guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
 static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
-static guint xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error);
 
 static gboolean xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *error);
 static gboolean xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
@@ -318,7 +316,7 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
  * Retrieve the position of the currently active xmms_medialib_entry_t
  *
  */
-static guint32
+guint32
 xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *error)
 {
 	guint32 pos;
@@ -677,7 +675,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos, x
 	return mid;
 }
 
-static guint
+guint
 xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error)
 {
 	guint mid;
