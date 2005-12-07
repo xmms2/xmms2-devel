@@ -54,6 +54,7 @@ static void xmms_replaygain_process (xmms_effect_t *effect, xmms_sample_t *buf, 
 static void xmms_replaygain_destroy (xmms_effect_t *effect);
 static void xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value, gpointer udata);
 static void compute_replaygain (xmms_replaygain_data_t *data);
+static xmms_replaygain_mode_t parse_mode (const char *s);
 
 xmms_plugin_t *
 xmms_plugin_get (void)
@@ -113,10 +114,14 @@ xmms_replaygain_new (xmms_effect_t *effect)
 	                                   xmms_replaygain_config_changed,
 	                                   effect);
 
+	data->mode = parse_mode (xmms_config_property_get_string (cfgv));
+
 	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
 	xmms_config_property_callback_set (cfgv,
 	                                   xmms_replaygain_config_changed,
 	                                   effect);
+
+	data->use_anticlip = !!xmms_config_property_get_int (cfgv);
 }
 
 static void
@@ -279,11 +284,7 @@ xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
 	name = xmms_config_property_get_name ((xmms_config_property_t *) obj);
 
 	if (!g_ascii_strcasecmp (name, "effect.replaygain.mode")) {
-		if (!g_ascii_strcasecmp (value, "album")) {
-			data->mode = XMMS_REPLAYGAIN_MODE_ALBUM;
-		} else {
-			data->mode = XMMS_REPLAYGAIN_MODE_TRACK;
-		}
+		data->mode = parse_mode (value);
 	} else if (!g_ascii_strcasecmp (name,
 	                                "effect.replaygain.use_anticlip")) {
 		data->use_anticlip = !!atoi (value);
@@ -339,4 +340,14 @@ compute_replaygain (xmms_replaygain_data_t *data)
 	 * forever.
 	 */
 	data->has_replaygain = (fabs (data->gain - 1.0) > 0.001);
+}
+
+static xmms_replaygain_mode_t
+parse_mode (const char *s)
+{
+	if (s && !g_ascii_strcasecmp (s, "album")) {
+		return XMMS_REPLAYGAIN_MODE_ALBUM;
+	} else {
+		return XMMS_REPLAYGAIN_MODE_TRACK;
+	}
 }
