@@ -83,6 +83,9 @@ struct xmmsc_result_St {
 	x_list_t *current;
 
 	x_list_t *source_pref;
+
+	/* things we want to free when the result is freed*/
+	x_list_t *extra_free;
 };
 
 /**
@@ -169,6 +172,11 @@ xmmsc_result_free (xmmsc_result_t *res)
 		free (n->data);
 	}
 	x_list_free (res->source_pref);
+
+	for (n = res->extra_free; n; n = x_list_next (n)) {
+		free (n->data);
+	}
+	x_list_free (res->extra_free);
 	
 	free (res);
 }
@@ -970,6 +978,82 @@ xmmsc_result_list_first (xmmsc_result_t *res)
 	return 1;
 }
 
+/**
+ * Decode an URL-encoded string.
+ *
+ * Some strings (currently only the url of media) has no known
+ * encoding, and must be encoded in an UTF-8 clean way. This is done
+ * similar to the url encoding web browsers do. This functions decodes
+ * a string encoded in that way. OBSERVE that the decoded string HAS
+ * NO KNOWN ENCODING and you cannot display it on screen in a 100%
+ * guaranteed correct way (a good heuristic is to try to validate the
+ * decoded string as UTF-8, and if it validates assume that it is an
+ * UTF-8 encoded string, and otherwise fall back to some other
+ * encoding).
+ *
+ * Do not use this function if you don't understand the
+ * implications. The best thing is not to try to display the url at
+ * all.
+ *
+ * Note that the fact that the string has NO KNOWN ENCODING and CAN
+ * NOT BE DISPLAYED does not stop you from open the file if it is a
+ * local file (if it starts with "file://").
+ *
+ * The string returned string will be owned by the result and
+ * freed when the result is freed.
+ *
+ * @param res the #xmmsc_result_t that the string comes from
+ * @param string the url encoded string
+ * @return decoded string, owned by the #xmmsc_result_t
+ *
+ */
+const char *
+xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
+{
+	int i = 0, j = 0;
+	char *url;
+
+	url = strdup (string);
+	if (!url) {
+		x_oom();
+		return NULL;
+	}
+
+	while (url[i]) {
+		unsigned char chr = url[i++];
+
+		if (chr == '+') {
+			chr = ' ';
+		} else if (chr == '%') {
+			char ts[3];
+			char *t;
+
+			ts[0] = url[i++];
+			if (!ts[0])
+				goto err;
+			ts[1] = url[i++];
+			if (!ts[1])
+				goto err;
+			ts[2] = '\0';
+
+			chr = strtoul (ts, &t, 16);
+			printf("chr: %d (%s)\n", chr, ts);
+			if (t != &ts[2])
+				goto err;
+		}
+		
+		url[j++] = chr;
+	}
+
+	url[j] = '\0';
+
+	res->extra_free = x_list_prepend (res->extra_free, url);
+	return url;
+
+ err:
+	free (url);
+	return NULL;
+}
 
 /** @} */
 

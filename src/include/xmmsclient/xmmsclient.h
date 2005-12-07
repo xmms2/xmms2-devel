@@ -211,6 +211,8 @@ int xmmsc_result_list_valid (xmmsc_result_t *res);
 void xmmsc_result_seterror (xmmsc_result_t *res, char *errstr);
 int xmmsc_result_get_type (xmmsc_result_t *res);
 
+const char *xmmsc_result_decode_url (xmmsc_result_t *res, const char *string);
+
 #ifdef __cplusplus
 }
 #endif
