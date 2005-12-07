@@ -60,9 +60,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, 
-				  XMMS_EFFECT_PLUGIN_API_VERSION,
-				  "replaygain",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT,
+	                          XMMS_EFFECT_PLUGIN_API_VERSION,
+	                          "replaygain",
 	                          "Replaygain effect " XMMS_VERSION,
 	                          "Replaygain effect");
 
@@ -85,9 +85,10 @@ xmms_plugin_get (void)
 	                        xmms_replaygain_destroy);
 
 	xmms_plugin_config_property_register (plugin, "mode", "track",
-	                                   NULL, NULL);
+	                                      NULL, NULL);
 	xmms_plugin_config_property_register (plugin, "use_anticlip", "1",
-	                                   NULL, NULL);
+	                                      NULL, NULL);
+
 	return plugin;
 }
 
@@ -109,12 +110,13 @@ xmms_replaygain_new (xmms_effect_t *effect)
 
 	cfgv = xmms_plugin_config_lookup (plugin, "mode");
 	xmms_config_property_callback_set (cfgv,
-	                                xmms_replaygain_config_changed,
-	                                effect);
+	                                   xmms_replaygain_config_changed,
+	                                   effect);
+
 	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
 	xmms_config_property_callback_set (cfgv,
-	                                xmms_replaygain_config_changed,
-	                                effect);
+	                                   xmms_replaygain_config_changed,
+	                                   effect);
 }
 
 static void
@@ -131,10 +133,11 @@ xmms_replaygain_destroy (xmms_effect_t *effect)
 
 	cfgv = xmms_plugin_config_lookup (plugin, "mode");
 	xmms_config_property_callback_remove (cfgv,
-	                                   xmms_replaygain_config_changed);
+	                                      xmms_replaygain_config_changed);
+
 	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
 	xmms_config_property_callback_remove (cfgv,
-	                                   xmms_replaygain_config_changed);
+	                                      xmms_replaygain_config_changed);
 }
 
 static gboolean
@@ -192,7 +195,9 @@ xmms_replaygain_process (xmms_effect_t *effect,
 			for (i = 0; i < len; i++) {
 				xmms_samples8_t *samples = (xmms_samples8_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, XMMS_SAMPLES8_MIN, XMMS_SAMPLES8_MAX);
+
+				samples[i] = CLAMP (sample, XMMS_SAMPLES8_MIN,
+				                    XMMS_SAMPLES8_MAX);
 			}
 
 			break;
@@ -200,6 +205,7 @@ xmms_replaygain_process (xmms_effect_t *effect,
 			for (i = 0; i < len; i++) {
 				xmms_sampleu8_t *samples = (xmms_sampleu8_t *) buf;
 				gfloat sample = samples[i] * data->gain;
+
 				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU8_MAX);
 			}
 
@@ -208,7 +214,9 @@ xmms_replaygain_process (xmms_effect_t *effect,
 			for (i = 0; i < len; i++) {
 				xmms_samples16_t *samples = (xmms_samples16_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, XMMS_SAMPLES16_MIN, XMMS_SAMPLES16_MAX);
+
+				samples[i] = CLAMP (sample, XMMS_SAMPLES16_MIN,
+				                    XMMS_SAMPLES16_MAX);
 			}
 
 			break;
@@ -216,6 +224,7 @@ xmms_replaygain_process (xmms_effect_t *effect,
 			for (i = 0; i < len; i++) {
 				xmms_sampleu16_t *samples = (xmms_sampleu16_t *) buf;
 				gfloat sample = samples[i] * data->gain;
+
 				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU16_MAX);
 			}
 
@@ -224,7 +233,9 @@ xmms_replaygain_process (xmms_effect_t *effect,
 			for (i = 0; i < len; i++) {
 				xmms_samples32_t *samples = (xmms_samples32_t *) buf;
 				gfloat sample = samples[i] * data->gain;
-				samples[i] = CLAMP (sample, XMMS_SAMPLES32_MIN, XMMS_SAMPLES32_MAX);
+
+				samples[i] = CLAMP (sample, XMMS_SAMPLES32_MIN,
+				                    XMMS_SAMPLES32_MAX);
 			}
 
 			break;
@@ -232,6 +243,7 @@ xmms_replaygain_process (xmms_effect_t *effect,
 			for (i = 0; i < len; i++) {
 				xmms_sampleu32_t *samples = (xmms_sampleu32_t *) buf;
 				gfloat sample = samples[i] * data->gain;
+
 				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU32_MAX);
 			}
 
