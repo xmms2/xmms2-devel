@@ -312,14 +312,14 @@ compute_replaygain (xmms_replaygain_data_t *data)
 
 	/** @todo should this be ints instead? */
 	tmp = xmms_medialib_entry_property_get_str (session,
-												data->current_mlib_entry,
-												key_s);
+	                                            data->current_mlib_entry,
+	                                            key_s);
 	s = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
 
-	tmp = xmms_medialib_entry_property_get_str (session, 
-												data->current_mlib_entry,
-												key_p);
+	tmp = xmms_medialib_entry_property_get_str (session,
+	                                            data->current_mlib_entry,
+	                                            key_p);
 	p = tmp ? atof (tmp) : 1.0;
 	g_free (tmp);
 
