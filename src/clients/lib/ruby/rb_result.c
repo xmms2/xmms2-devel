@@ -281,7 +281,8 @@ static void propdict_to_hash (const void *key,
 
 	rbsrc = rb_str_new2 (src);
 
-	if (rb_funcall (*h, rb_intern ("has_key?"), 1, rbsrc) == Qfalse) {
+	h2 = rb_hash_aref (*h, rbsrc);
+	if (NIL_P (h2)) {
 		h2 = rb_hash_new ();
 		rb_hash_aset (*h, rbsrc, h2);
 	}
