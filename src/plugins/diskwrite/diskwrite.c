@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -73,11 +73,8 @@ static void xmms_diskwrite_close (xmms_output_t *output);
 static void xmms_diskwrite_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_diskwrite_flush (xmms_output_t *output);
 
-static void on_playlist_entry_changed (xmms_object_t *object,
-                                       const xmms_object_cmd_arg_t *arg,
-                                       xmms_diskwrite_data_t *data);
-static void on_dest_directory_changed (xmms_object_t *object, gconstpointer value,
-                                       xmms_diskwrite_data_t *data);
+static void on_playlist_entry_changed (xmms_object_t *object, const xmms_object_cmd_arg_t *arg, xmms_diskwrite_data_t *data);
+static void on_dest_directory_changed (xmms_object_t *object, gconstpointer value, xmms_diskwrite_data_t *data);
 static void finalize_wave (xmms_diskwrite_data_t *data);
 
 /*
@@ -89,9 +86,9 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
-				  XMMS_OUTPUT_PLUGIN_API_VERSION,
-				  "diskwrite",
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT,
+	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
+	                          "diskwrite",
 	                          "Diskwriter output " XMMS_VERSION,
 	                          "Dumps audio data to disk");
 
@@ -115,8 +112,9 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
 	                        xmms_diskwrite_flush);
 
-	xmms_plugin_config_property_register (plugin, "destination_directory",
-	                                   "/tmp", NULL, NULL);
+	xmms_plugin_config_property_register (plugin,
+	                                      "destination_directory",
+	                                      "/tmp", NULL, NULL);
 
 	return plugin;
 }
@@ -145,8 +143,7 @@ xmms_diskwrite_new (xmms_output_t *output)
 	plugin = xmms_output_plugin_get (output);
 	val = xmms_plugin_config_lookup (plugin, "destination_directory");
 	xmms_config_property_callback_set (val,
-	                                (xmms_object_handler_t) on_dest_directory_changed,
-	                                data);
+		(xmms_object_handler_t) on_dest_directory_changed, data);
 
 	if ((tmp = xmms_config_property_get_string (val))) {
 		g_snprintf (data->destdir, sizeof (data->destdir), "%s", tmp);
@@ -172,7 +169,7 @@ xmms_diskwrite_destroy (xmms_output_t *output)
 
 	val = xmms_plugin_config_lookup (plugin, "destination_directory");
 	xmms_config_property_callback_remove (val,
-	                                      (xmms_object_handler_t) on_dest_directory_changed);
+		(xmms_object_handler_t) on_dest_directory_changed);
 
 	xmms_object_disconnect (XMMS_OBJECT (output),
 	                        XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
@@ -240,7 +237,7 @@ xmms_diskwrite_write (xmms_output_t *output, gchar *buffer, gint len)
 	g_return_if_fail (data);
 	g_return_if_fail (data->fp);
 
-#if G_BYTE_ORDER == G_BIG_ENDIAN 
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 	for (i = 0; i < (len / 2); i++) {
 		s[i] = GINT16_TO_LE (s[i]);
 	}
