@@ -218,6 +218,9 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		if (!output->decoder) {
 			xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
 			g_mutex_unlock (output->decoder_mutex);
+			g_mutex_lock (output->playtime_mutex);
+			output->played_time = 0;
+			g_mutex_unlock (output->playtime_mutex);
 			return -1;
 		}
 
