@@ -306,13 +306,23 @@ xmmsc_main_status (xmmsc_connection_t *c)
  * Tell the server to quit. This will terminate the server.
  * If you only want to disconnect, use #xmmsc_unref()
  */
-
 xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_QUIT);
 }
+
+/**
+ * Request the quit broadcast.
+ * Will be called when the server is terminating.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_quit (xmmsc_connection_t *c)
+{
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_QUIT);
+}
+
 
 /**
  * This function will make a pretty string about the information in
