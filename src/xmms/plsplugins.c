@@ -167,7 +167,7 @@ xmms_playlist_plugin_find_by_contents (xmms_transport_t *transport)
 	list = g_list_sort (list, (GCompareFunc) cb_sort_plugin_list);
 
 	c.transport = transport;
-	c.read = 0;
+	c.read = c.offset = 0;
 	c.alloc = 128; /* start with a 128 bytes buffer */
 	c.buf = g_malloc (c.alloc);
 
