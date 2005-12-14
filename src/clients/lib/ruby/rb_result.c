@@ -381,6 +381,24 @@ static VALUE c_value_get (VALUE self)
 		return value_get (res);
 }
 
+static VALUE decode_url (VALUE self, VALUE str)
+{
+	RbResult *res;
+	const char *cstr, *tmp;
+
+	Data_Get_Struct (self, RbResult, res);
+
+	cstr = StringValuePtr (str);
+
+	tmp = xmmsc_result_decode_url (res->real, cstr);
+	if (!tmp) {
+		rb_raise (eResultError, "cannot decode URL - %s", cstr);
+		return Qnil;
+	}
+
+	return rb_str_new2 (tmp);
+}
+
 void Init_Result (VALUE mXmmsClient)
 {
 	cResult = rb_define_class_under (mXmmsClient, "Result", rb_cObject);
@@ -394,6 +412,7 @@ void Init_Result (VALUE mXmmsClient)
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
+	rb_define_method (cResult, "decode_url", decode_url, 1);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_INSERT);
