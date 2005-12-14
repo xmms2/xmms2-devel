@@ -279,7 +279,7 @@ static void propdict_to_hash (const void *key,
 {
 	VALUE *h = udata, h2, rbsrc;
 
-	rbsrc = rb_str_new2 (src);
+	rbsrc = ID2SYM (rb_intern (src));
 
 	h2 = rb_hash_aref (*h, rbsrc);
 	if (NIL_P (h2)) {
