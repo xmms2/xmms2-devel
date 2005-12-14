@@ -73,9 +73,14 @@ send_msg (const gchar *status, GString *data)
 static void
 disconnected (void *data)
 {
-
 	send_msg ("Unclean shutdown", NULL);
 	exit (0);
+}
+
+static void
+handle_quit (xmmsc_result_t *res, void *data)
+{
+	g_main_loop_quit ((GMainLoop *) data);
 }
 
 static void
@@ -224,6 +229,8 @@ main (int argc, char **argv)
 
 	send_socket = socket(PF_INET, SOCK_DGRAM, 0);
 
+	ml = g_main_loop_new (NULL, FALSE);
+
 	memset (&dest_addr, 0, sizeof (dest_addr));
 	dest_addr.sin_family = AF_INET;
 	dest_addr.sin_port = htons (DEST_PORT);
@@ -234,6 +241,7 @@ main (int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_main_status, handle_status, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_configval_changed, handle_config, NULL);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_quit, handle_quit, ml);
 
 	{
 		xmmsc_result_t *res;
@@ -244,14 +252,13 @@ main (int argc, char **argv)
 
 	xmmsc_disconnect_callback_set (conn, disconnected, NULL);
 
-	ml = g_main_loop_new (NULL, FALSE);
-
 	xmmsc_mainloop_gmain_init (conn);
 
 	g_main_loop_run (ml);
 
 	xmmsc_unref (conn);
 
+	printf ("XMMS2-ET shutting down...\n");
 	send_msg ("Clean shutdown", NULL);
 
 	return 0;

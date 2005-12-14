@@ -260,6 +260,11 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 static void
 quit (xmms_object_t *object, xmms_error_t *error)
 {
+	xmms_object_emit_f (XMMS_OBJECT (object),
+	                    XMMS_IPC_SIGNAL_QUIT,
+	                    XMMS_OBJECT_CMD_ARG_UINT32,
+	                    time(NULL)-((xmms_main_t*)object)->starttime);
+
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
@@ -531,6 +536,7 @@ main (int argc, char **argv)
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_STATUS, XMMS_CMD_FUNC (status));
+	xmms_ipc_broadcast_register (XMMS_OBJECT (mainobj), XMMS_IPC_SIGNAL_QUIT);
 	mainobj->starttime = time (NULL);
 
 
