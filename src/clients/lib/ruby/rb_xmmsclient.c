@@ -262,6 +262,17 @@ static VALUE c_quit (VALUE self)
 
 /*
  * call-seq:
+ *  xc.broadcast_quit -> result
+ *
+ * Will be called when the server is terminating.
+ */
+static VALUE c_broadcast_quit (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_quit, BROADCAST);
+}
+
+/*
+ * call-seq:
  *  xc.playback_start -> result
  *
  * Starts playback.
@@ -862,6 +873,8 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "io_disconnect", c_io_disconnect, 0);
 
 	rb_define_method (c, "quit", c_quit, 0);
+	rb_define_method (c, "broadcast_quit", c_broadcast_quit, 0);
+
 	rb_define_method (c, "playback_start", c_playback_start, 0);
 	rb_define_method (c, "playback_pause", c_playback_pause, 0);
 	rb_define_method (c, "playback_stop", c_playback_stop, 0);
