@@ -67,11 +67,13 @@ xmms_visualisation_init ()
 	vis = xmms_object_new (xmms_visualisation_t, xmms_visualisation_destroy);
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_VISUALISATION, XMMS_OBJECT (vis));
 	xmms_ipc_signal_register (XMMS_OBJECT (vis),
-				  XMMS_IPC_SIGNAL_VISUALISATION_DATA);
+	                          XMMS_IPC_SIGNAL_VISUALISATION_DATA);
 
 	/* prealloc list */
 	for (i = 0; i < FFT_LEN/2 + 1; i++) {
-		vis->list = g_list_prepend (vis->list, NULL);
+		xmms_object_cmd_value_t *data;
+		data = xmms_object_cmd_value_uint_new (INT_MAX);
+		vis->list = g_list_prepend (vis->list, data);
 	}
 
 	/* calculate Hann window used to reduce spectral leakage */
@@ -107,29 +109,33 @@ xmms_visualisation_new ()
 
 static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 {
+	xmms_object_cmd_value_t *data;
 	GList *node = vis->list;
 	int i;
 
-	node->data = xmms_object_cmd_value_uint_new (xmms_sample_samples_to_ms (vis->format, 
-										pos));
-	node = g_list_next (node);
+	data = (xmms_object_cmd_value_t *)node->data;
+	data->value.uint32 = xmms_sample_samples_to_ms (vis->format, pos);
 
+	node = g_list_next (node);
 	for (i = 0; i < FFT_LEN / 2; i++) {
+		data = (xmms_object_cmd_value_t *)node->data;
 		gfloat tmp = vis->spec[i];
+		
 		if (tmp >= 1.0)
-			node->data = xmms_object_cmd_value_uint_new (INT_MAX);
+			data->value.uint32 = INT_MAX;
 		else if (tmp < 0.0)
-			node->data = xmms_object_cmd_value_uint_new (0);
+			data->value.uint32 = 0;
 		else
-			node->data = xmms_object_cmd_value_uint_new ((guint)(tmp * INT_MAX));
+			data->value.uint32 = (guint)(tmp * INT_MAX);
+
 		node = g_list_next (node);
 	}
 
 	xmms_object_emit_f (XMMS_OBJECT (vis),
-			    XMMS_IPC_SIGNAL_VISUALISATION_DATA,
-			    XMMS_OBJECT_CMD_ARG_LIST,
-			    vis->list);
-	
+	                    XMMS_IPC_SIGNAL_VISUALISATION_DATA,
+	                    XMMS_OBJECT_CMD_ARG_LIST,
+	                    vis->list);
+
 }
 
 /**

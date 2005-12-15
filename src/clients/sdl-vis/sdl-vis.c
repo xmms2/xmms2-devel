@@ -309,7 +309,7 @@ main(int argc, char **argv)
 	SDL_Surface *screen;
 	gchar *path;
 
-	connection = xmmsc_init ("XMMS2 SDL VIS");
+	connection = xmmsc_init ("XMMS2-SDL-VIS");
 
 	if(!connection){
 		printf ("bad\n");
