@@ -8,23 +8,26 @@ http://wiki.xmms2.xmms.se/index.php/Install_instructions
 You will need the following things to build XMMS2.
 
     * Python (http://www.python.org/) (>=2.2.1)
-    * Scons (http://www.scons.org/) (>= 0.96.90)
+    * SCons (http://www.scons.org/) (>= 0.96.90)
     * GLib (http://www.gtk.org/) (>= 2.2.0)
-    * MAD (http://www.underbit.com/products/mad/)
-    * SQLite (http://www.sqlite.org) (3.2.x)
+    * SQLite (http://www.sqlite.org) (>= 3.2.6)
 
 These libraries are not needed for building xmms2d itself, but may be needed
 for plugins.
 
-    * Curl (http://curl.haxx.se) (>= 7.11.2)
-    * Vorbisfile (http://www.xiph.org)
-    * ALSA (http://www.alsa-project.org)
-    * SIDplay2 (http://sidplay2.sourceforge.net/)
-    * reSID (http://www.geocities.com/SiliconValley/Lakes/5147/resid/)
+    * MP3 support: MAD (http://www.underbit.com/products/mad/)
+    * HTTP Streaming support: Curl (http://curl.haxx.se) (>= 7.11.2)
+    * OGG/Vorbis support: Vorbisfile (http://www.xiph.org)
+    * ALSA support: ALSA (http://www.alsa-project.org)
+    * SID support: SIDplay2 (http://sidplay2.sourceforge.net/)
+     * and reSID (http://www.geocities.com/SiliconValley/Lakes/5147/resid/)
+	* AAC support: FAAD (http://www.audiocoding.com/) (>= 2.0)
+	* MusePacket support: libmpcdec (http://www.musepack.net/)
+	* Fasttrack support: libmodplug (http://www.modplug.com/)
+    * Ruby (http://www.ruby-lang.org/) (>= 1.8) - For Ruby bindings.
     * Pyrex (http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/) (>=0.9.3) -
     For python bindings, NOTE that pyrex generates code that gcc4 does NOT
     compile, you need an older gcc.
-    * Ruby (http://www.ruby-lang.org/) (>= 1.8) - For Ruby bindings.
 
 == Platform-specific notes ==
 Some supported platforms may have variations on build requirements:
