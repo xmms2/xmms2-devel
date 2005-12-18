@@ -74,7 +74,7 @@ xmms_plugin_get (void)
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_flac_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
-/*	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);*/
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_flac_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_flac_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_flac_get_mediainfo);
