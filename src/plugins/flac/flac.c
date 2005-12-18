@@ -42,9 +42,7 @@ typedef struct xmms_flac_data_St {
 
 static gboolean xmms_flac_new (xmms_decoder_t *decoder);
 static gboolean xmms_flac_init (xmms_decoder_t *decoder, gint mode);
-/*
 static gboolean xmms_flac_seek (xmms_decoder_t *decoder, guint samples);
-*/
 static gboolean xmms_flac_decode_block (xmms_decoder_t *decoder);
 static void xmms_flac_destroy (xmms_decoder_t *decoder);
 static void xmms_flac_get_mediainfo (xmms_decoder_t *decoder);
@@ -422,7 +420,6 @@ xmms_flac_decode_block (xmms_decoder_t *decoder)
 	return ret;
 }
 
-/*
 static gboolean
 xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 {
@@ -440,7 +437,6 @@ xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 
 	return res;
 }
-*/
 
 void
 xmms_flac_destroy (xmms_decoder_t *decoder)
