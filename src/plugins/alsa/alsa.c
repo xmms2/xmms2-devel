@@ -514,12 +514,13 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 	gint err;
 
 	cv = xmms_plugin_config_lookup (plugin, "mixer_dev");
-	dev = (gchar *)xmms_config_property_get_string (cv);
+	dev = (gchar *) xmms_config_property_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
 		xmms_log_error ("Failed to open empty mixer: %s", snd_strerror (err));
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
@@ -529,6 +530,7 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 		                snd_strerror(err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
@@ -537,6 +539,7 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 		xmms_log_error ("Failed to register mixer: %s", snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
@@ -545,26 +548,30 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 		xmms_log_error ("Failed to load mixer: %s", snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
 	cv = xmms_plugin_config_lookup (plugin, "mixer");
-	name = (gchar *)xmms_config_property_get_string (cv);
+	name = (gchar *) xmms_config_property_get_string (cv);
 
 	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, name);
 	if (!data->mixer_elem) {
 		xmms_log_error ("Failed to find mixer element");
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
-	snd_mixer_selem_get_playback_volume_range (data->mixer_elem, &alsa_min_vol,
+	snd_mixer_selem_get_playback_volume_range (data->mixer_elem,
+	                                           &alsa_min_vol,
 	                                           &alsa_max_vol);
-	if (alsa_max_vol == 0) {
+	if (!alsa_max_vol) {
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		data->mixer_elem = NULL;
+
 		return FALSE;
 	}
 
