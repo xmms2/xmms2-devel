@@ -92,6 +92,7 @@ static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
                                   snd_pcm_format_t alsa_fmt,
                                   xmms_sample_format_t xmms_fmt,
                                   gint channels, gint rate);
+static snd_mixer_elem_t *xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name);
 
 /*
  * Plugin header
@@ -509,9 +510,8 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 {
 	const xmms_config_property_t *cv;
 	gchar *dev, *name;
-	snd_mixer_selem_id_t *selem_id;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
-	gint err, index;
+	gint err;
 
 	cv = xmms_plugin_config_lookup (plugin, "mixer_dev");
 	dev = (gchar *)xmms_config_property_get_string (cv);
@@ -551,15 +551,8 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 	cv = xmms_plugin_config_lookup (plugin, "mixer");
 	name = (gchar *)xmms_config_property_get_string (cv);
 
-	index = 0;
-
-	snd_mixer_selem_id_alloca (&selem_id);
-
-	snd_mixer_selem_id_set_index (selem_id, index);
-	snd_mixer_selem_id_set_name (selem_id, name);
-
-	data->mixer_elem = snd_mixer_find_selem (data->mixer, selem_id);
-	if (data->mixer_elem == NULL) {
+	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, name);
+	if (!data->mixer_elem) {
 		xmms_log_error ("Failed to find mixer element");
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
@@ -676,12 +669,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->mixer) {
-		return FALSE;
-	}
-
-	if (!data->mixer_elem) {
-		xmms_log_error ("Mixer element not set!");
+	if (!data->mixer || !data->mixer_elem) {
 		return FALSE;
 	}
 
@@ -715,12 +703,7 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->mixer) {
-		return FALSE;
-	}
-
-	if (!data->mixer_elem) {
-		xmms_log_error ("Mixer element not set!");
+	if (!data->mixer || !data->mixer_elem) {
 		return FALSE;
 	}
 
@@ -892,4 +875,17 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 			xmms_log_fatal ("ALSA's doing some funky shit.. please report (%s)", snd_strerror (written));
 		}
 	}
+}
+
+static snd_mixer_elem_t *
+xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name)
+{
+	snd_mixer_selem_id_t *selem_id = NULL;
+
+	snd_mixer_selem_id_alloca (&selem_id);
+
+	snd_mixer_selem_id_set_index (selem_id, 0);
+	snd_mixer_selem_id_set_name (selem_id, name);
+
+	return snd_mixer_find_selem (mixer, selem_id);
 }
