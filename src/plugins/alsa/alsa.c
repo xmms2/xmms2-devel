@@ -37,7 +37,6 @@ typedef struct xmms_alsa_data_St {
 	snd_mixer_elem_t *mixer_elem;
 	snd_pcm_hw_params_t *hwparams;
 	snd_pcm_uframes_t  buffer_size;
-	gboolean have_mixer;
 } xmms_alsa_data_t;
 
 static struct {
@@ -346,9 +345,7 @@ xmms_alsa_open (xmms_output_t *output)
 		return FALSE;
 	}
 
-	data->have_mixer = xmms_alsa_mixer_setup (output);
-
-	if (data->have_mixer) {
+	if (xmms_alsa_mixer_setup (output)) {
 		/* get the current volume and set the config value */
 		xmms_alsa_mixer_get (output, &left, &right);
 		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
@@ -611,20 +608,22 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 	alsa_data = xmms_output_private_data_get (userdata);
 	g_return_if_fail (alsa_data);
 
-	if (alsa_data->have_mixer) {
-		res = sscanf (data, "%u/%u", &left, &right);
-
-		if (res < 1) {
-			xmms_log_error ("Unable to change volume");
-			return;
-		}
-
-		if (res == 1) {
-			right = left;
-		}
-
-		xmms_alsa_mixer_set (userdata, left, right);
+	if (!alsa_data->mixer) {
+		return;
 	}
+
+	res = sscanf (data, "%u/%u", &left, &right);
+
+	if (res < 1) {
+		xmms_log_error ("Unable to change volume");
+		return;
+	}
+
+	if (res == 1) {
+		right = left;
+	}
+
+	xmms_alsa_mixer_set (userdata, left, right);
 }
 
 
@@ -682,7 +681,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->have_mixer) {
+	if (!data->mixer) {
 		return FALSE;
 	}
 
@@ -721,7 +720,7 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->have_mixer) {
+	if (!data->mixer) {
 		return FALSE;
 	}
 
