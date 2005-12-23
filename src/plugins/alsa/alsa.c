@@ -37,7 +37,6 @@ typedef struct xmms_alsa_data_St {
 	snd_mixer_elem_t *mixer_elem;
 	snd_pcm_hw_params_t *hwparams;
 	snd_pcm_uframes_t  buffer_size;
-	gboolean have_mixer;
 } xmms_alsa_data_t;
 
 static struct {
@@ -86,13 +85,14 @@ static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left,
                                      gint right);
 static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left,
                                      gint *right);
-static gboolean xmms_alsa_mixer_setup (xmms_output_t *output);
+static gboolean xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data);
 static void xmms_alsa_probe_modes (xmms_output_t *output,
                                    xmms_alsa_data_t *data);
 static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
                                   snd_pcm_format_t alsa_fmt,
                                   xmms_sample_format_t xmms_fmt,
                                   gint channels, gint rate);
+static snd_mixer_elem_t *xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name);
 
 /*
  * Plugin header
@@ -174,6 +174,8 @@ xmms_alsa_new (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
 	xmms_config_property_t *volume;
+	gchar buf[8];
+	gint left = 0, right = 0;
 
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_alsa_data_t, 1);
@@ -186,6 +188,8 @@ xmms_alsa_new (xmms_output_t *output)
 
 	g_return_val_if_fail (data->hwparams, FALSE);
 
+	xmms_output_private_data_set (output, data);
+
 	plugin = xmms_output_plugin_get (output);
 	volume = xmms_plugin_config_lookup (plugin, "volume");
 
@@ -193,7 +197,13 @@ xmms_alsa_new (xmms_output_t *output)
 	                                   xmms_alsa_mixer_config_changed,
 	                                   (gpointer) output);
 
-	xmms_output_private_data_set (output, data);
+	if (xmms_alsa_mixer_setup (plugin, data)) {
+		/* get the current volume and set the config value */
+		xmms_alsa_mixer_get (output, &left, &right);
+
+		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
+		xmms_config_property_set_data (volume, buf);
+	}
 
 	xmms_alsa_probe_modes (output, data);
 
@@ -294,6 +304,7 @@ xmms_alsa_destroy (xmms_output_t *output)
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
 	xmms_config_property_t *volume;
+	gint err;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
@@ -304,6 +315,16 @@ xmms_alsa_destroy (xmms_output_t *output)
 
 	xmms_config_property_callback_remove (volume,
 	                                      xmms_alsa_mixer_config_changed);
+
+	if (data->mixer) {
+		err = snd_mixer_close (data->mixer);
+		if (err != 0) {
+			xmms_log_error ("Unable to release mixer device: %s",
+			                snd_strerror (err));
+		} else {
+			XMMS_DBG ("mixer device closed.");
+		}
+	}
 
 	snd_pcm_hw_params_free (data->hwparams);
 	g_free (data);
@@ -320,10 +341,8 @@ xmms_alsa_open (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	const xmms_config_property_t *cv;
-	xmms_config_property_t *volume;
 	const gchar *dev;
-	gchar buf[8];
-	gint err = 0, left = 0, right = 0;
+	gint err = 0;
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -346,17 +365,6 @@ xmms_alsa_open (xmms_output_t *output)
 		return FALSE;
 	}
 
-	data->have_mixer = xmms_alsa_mixer_setup (output);
-
-	if (data->have_mixer) {
-		/* get the current volume and set the config value */
-		xmms_alsa_mixer_get (output, &left, &right);
-		volume = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
-		                                    "volume");
-		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
-		xmms_config_property_set_data (volume, buf);
-	}
-
 	return TRUE;
 }
 
@@ -374,16 +382,6 @@ xmms_alsa_close (xmms_output_t *output)
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
-
-	if (data->mixer) {
-		err = snd_mixer_close (data->mixer);
-		if (err != 0) {
-			xmms_log_error ("Unable to release mixer device: %s",
-			                snd_strerror (err));
-		} else {
-			XMMS_DBG ("mixer device closed.");
-		}
-	}
 
 	/* Close device */
 	err = snd_pcm_close (data->pcm);
@@ -503,31 +501,26 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
 /**
  * Setup mixer
  *
- * @param output The output struct containing alsa data.
+ * @param plugin The output plugin
+ * @param data The private plugin data.
  * @return TRUE on success, else FALSE
  */
 static gboolean
-xmms_alsa_mixer_setup (xmms_output_t *output)
+xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 {
-	xmms_alsa_data_t *data;
 	const xmms_config_property_t *cv;
-	gchar *dev, *name;
-	snd_mixer_selem_id_t *selem_id;
+	const gchar *dev, *name;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
-	gint err, index;
+	gint err;
 
-	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, FALSE);
-
-	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
-	                                "mixer_dev");
-	dev = (gchar *)xmms_config_property_get_string (cv);
+	cv = xmms_plugin_config_lookup (plugin, "mixer_dev");
+	dev = xmms_config_property_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
 		xmms_log_error ("Failed to open empty mixer: %s", snd_strerror (err));
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
@@ -537,6 +530,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		                snd_strerror(err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
@@ -545,6 +539,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		xmms_log_error ("Failed to register mixer: %s", snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
@@ -553,33 +548,30 @@ xmms_alsa_mixer_setup (xmms_output_t *output)
 		xmms_log_error ("Failed to load mixer: %s", snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
-	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "mixer");
-	name = (gchar *)xmms_config_property_get_string (cv);
+	cv = xmms_plugin_config_lookup (plugin, "mixer");
+	name = xmms_config_property_get_string (cv);
 
-	index = 0;
-
-	snd_mixer_selem_id_alloca (&selem_id);
-
-	snd_mixer_selem_id_set_index (selem_id, index);
-	snd_mixer_selem_id_set_name (selem_id, name);
-
-	data->mixer_elem = snd_mixer_find_selem (data->mixer, selem_id);
-	if (data->mixer_elem == NULL) {
+	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, name);
+	if (!data->mixer_elem) {
 		xmms_log_error ("Failed to find mixer element");
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
+
 		return FALSE;
 	}
 
-	snd_mixer_selem_get_playback_volume_range (data->mixer_elem, &alsa_min_vol,
+	snd_mixer_selem_get_playback_volume_range (data->mixer_elem,
+	                                           &alsa_min_vol,
 	                                           &alsa_max_vol);
-	if (alsa_max_vol == 0) {
+	if (!alsa_max_vol) {
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 		data->mixer_elem = NULL;
+
 		return FALSE;
 	}
 
@@ -611,20 +603,22 @@ xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
 	alsa_data = xmms_output_private_data_get (userdata);
 	g_return_if_fail (alsa_data);
 
-	if (alsa_data->have_mixer) {
-		res = sscanf (data, "%u/%u", &left, &right);
-
-		if (res < 1) {
-			xmms_log_error ("Unable to change volume");
-			return;
-		}
-
-		if (res == 1) {
-			right = left;
-		}
-
-		xmms_alsa_mixer_set (userdata, left, right);
+	if (!alsa_data->mixer) {
+		return;
 	}
+
+	res = sscanf (data, "%u/%u", &left, &right);
+
+	if (res < 1) {
+		xmms_log_error ("Unable to change volume");
+		return;
+	}
+
+	if (res == 1) {
+		right = left;
+	}
+
+	xmms_alsa_mixer_set (userdata, left, right);
 }
 
 
@@ -682,12 +676,7 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->have_mixer) {
-		return FALSE;
-	}
-
-	if (!data->mixer_elem) {
-		xmms_log_error ("Mixer element not set!");
+	if (!data->mixer || !data->mixer_elem) {
 		return FALSE;
 	}
 
@@ -721,12 +710,7 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	if (!data->have_mixer) {
-		return FALSE;
-	}
-
-	if (!data->mixer_elem) {
-		xmms_log_error ("Mixer element not set!");
+	if (!data->mixer || !data->mixer_elem) {
 		return FALSE;
 	}
 
@@ -898,4 +882,17 @@ xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
 			xmms_log_fatal ("ALSA's doing some funky shit.. please report (%s)", snd_strerror (written));
 		}
 	}
+}
+
+static snd_mixer_elem_t *
+xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name)
+{
+	snd_mixer_selem_id_t *selem_id = NULL;
+
+	snd_mixer_selem_id_alloca (&selem_id);
+
+	snd_mixer_selem_id_set_index (selem_id, 0);
+	snd_mixer_selem_id_set_name (selem_id, name);
+
+	return snd_mixer_find_selem (mixer, selem_id);
 }
