@@ -509,12 +509,12 @@ static gboolean
 xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 {
 	const xmms_config_property_t *cv;
-	gchar *dev, *name;
+	const gchar *dev, *name;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
 	gint err;
 
 	cv = xmms_plugin_config_lookup (plugin, "mixer_dev");
-	dev = (gchar *) xmms_config_property_get_string (cv);
+	dev = xmms_config_property_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
 	if (err < 0) {
@@ -553,7 +553,7 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 	}
 
 	cv = xmms_plugin_config_lookup (plugin, "mixer");
-	name = (gchar *) xmms_config_property_get_string (cv);
+	name = xmms_config_property_get_string (cv);
 
 	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, name);
 	if (!data->mixer_elem) {
