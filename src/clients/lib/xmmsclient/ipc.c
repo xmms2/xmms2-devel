@@ -227,9 +227,15 @@ xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	cid = xmmsc_result_cid (res);
 
 	xmmsc_ipc_lock (ipc);
+
 	n = x_list_find_custom (ipc->results_list, XINT_TO_POINTER (cid),
 	                        (XCompareFunc) result_find_cb);
-	ipc->results_list = x_list_delete_link (ipc->results_list, n);
+	if (!n) {
+		x_internal_error ("cannot find result");
+	} else {
+		ipc->results_list = x_list_delete_link (ipc->results_list, n);
+	}
+
 	xmmsc_ipc_unlock (ipc);
 }
 
@@ -299,7 +305,11 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (!ipc)
 		return;
 
-	x_list_free (ipc->results_list);
+	if (ipc->results_list) {
+		x_internal_error ("result list not empty");
+		x_list_free (ipc->results_list);
+	}
+
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
 	}
