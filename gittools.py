@@ -11,10 +11,10 @@ def gitsha(path):
 def git_info():
     commithash = file('.git/HEAD').read().strip()
     if os.getuid() == os.stat(".git/index").st_uid:
-        os.system('git-update-cache --refresh >/dev/null')
+        os.system('git-update-index --refresh >/dev/null')
     else:
         print "NOT updating git cache, local changes might not be detected"
-    changed = bool(os.popen('git-diff-cache -r HEAD').read())
+    changed = bool(os.popen('git-diff-index -r HEAD').read())
     return commithash, changed
 
 def snapshot_info():

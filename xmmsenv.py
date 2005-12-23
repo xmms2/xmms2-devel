@@ -199,7 +199,12 @@ class XMMSEnvironment(Environment):
 		self.parse_config_string(ret)
 
 	def checkheader(self, header, fail=False):
-		key = ("HEADER", header)
+        
+		if isinstance(header, list):
+			key = ("HEADER", tuple(header))
+		else:
+			key = ("HEADER", header)
+
 		if not self.config_cache.has_key(key):
 			self.config_cache[key] = self.conf.CheckCHeader(header)
 		if not self.config_cache[key]:
