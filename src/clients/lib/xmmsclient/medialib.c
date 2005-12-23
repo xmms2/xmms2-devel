@@ -78,7 +78,7 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
  */
 
 char *
-xmmsc_sqlite_prepare_string (char *input) {
+xmmsc_sqlite_prepare_string (const char *input) {
 	char *output;
 	int outsize, nquotes = 0;
 	int i, o;

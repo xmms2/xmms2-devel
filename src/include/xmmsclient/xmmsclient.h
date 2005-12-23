@@ -60,7 +60,7 @@ void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
 void xmmsc_signal_disconnect (xmmsc_result_t *res);
 
 char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
-char *xmmsc_sqlite_prepare_string (char *input);
+char *xmmsc_sqlite_prepare_string (const char *input);
 
 
 /*
