@@ -462,8 +462,11 @@ xmms_mad_id3v2_parse (xmms_medialib_session_t *session,
 			}
 			
 			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | (buf[3]);
-			
-			size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
+			if (head->ver == 3) {
+				size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
+			} else {
+				size = (buf[4]<<21) | (buf[5]<<14) | (buf[6]<<7) | (buf[7]);
+			}
 			
 			if (size+10 > len) {
 				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
