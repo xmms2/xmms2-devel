@@ -1,12 +1,8 @@
-xmms2 (0.2+git20051226-1) sarge; urgency=low
-
-  * New git snapshot (dfeb13c8dca6f2c15b945cea1919528f4a3d53d9).
-
- -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Mon, 26 Dec 2005 22:21:04 +0100
-
 xmms2 (0.2+git20051226-0) sarge; urgency=low
 
-  * New git snapshot (dfeb13c8dca6f2c15b945cea1919528f4a3d53d9).
+  * Version 0.2 (Dr. Alban) (dfeb13c8dca6f2c15b945cea1919528f4a3d53d9).
+  * New package: xmms2-et
+  * faad and mpcdec support will only be available for Debian sid packages.
 
  -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Mon, 26 Dec 2005 22:20:13 +0100
 
