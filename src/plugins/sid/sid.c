@@ -26,8 +26,11 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_decoderplugin.h"
+#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_transport.h"
 #include "xmms/xmms_log.h"
+#include "xmms/xmms_decoderplugin.h"
+
 
 #include "sidplay_wrapper.h"
 
@@ -36,7 +39,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#warning "CONVERT TO SAMPLE_T"
 
 /*
  * Type definitions
@@ -47,15 +49,17 @@ typedef struct xmms_sid_data_St {
 	gchar *buffer;
 	guint buffer_length;
 	guint subtune;
+	guint channels;
+	guint samplerate;
 } xmms_sid_data_t;
 
 /*
  * Function prototypes
  */
 
-static gboolean xmms_sid_can_handle (const gchar *mimetype);
-static gboolean xmms_sid_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_sid_new (xmms_decoder_t *decoder);
 static gboolean xmms_sid_decode_block (xmms_decoder_t *decoder);
+static gboolean xmms_sid_init (xmms_decoder_t *decoder, gint mode);
 static void xmms_sid_get_media_info (xmms_decoder_t *decoder);
 static void xmms_sid_destroy (xmms_decoder_t *decoder);
 
@@ -68,40 +72,78 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, "sid",
-							  "SID decoder " XMMS_VERSION,
-							  "libsidplay2 based SID decoder");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+	                          XMMS_DECODER_PLUGIN_API_VERSION,
+	                          "sid",
+	                          "SID decoder " XMMS_VERSION,
+	                          "libsidplay2 based SID decoder");
+
+	g_return_val_if_fail (plugin, NULL);
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "URL", "http://sidplay2.sourceforge.net/");  
-	xmms_plugin_info_add (plugin, "URL", 
-					"http://www.geocities.com/SiliconValley/Lakes/5147/resid/");
+	xmms_plugin_info_add (plugin, "URL", "http://www.geocities.com/SiliconValley/Lakes/5147/resid/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 
-
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, 
-							xmms_sid_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
-							xmms_sid_new);
+	                        xmms_sid_new);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, 
+	                        xmms_sid_init); 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, 
-							xmms_sid_decode_block);
+	                        xmms_sid_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, 
-							xmms_sid_destroy);
+	                        xmms_sid_destroy);
 
 	/* Can only fastforward SIDs, not rewind */
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SUBTUNES);
 
+	xmms_plugin_magic_add (plugin, "sidplay infofile", "audio/prs.sid",
+	                       "0 string SIDPLAY INFOFILE", NULL);
+	xmms_plugin_magic_add (plugin, "psid header", "audio/prs.sid",
+	                       "0 string PSID", NULL);
+	xmms_plugin_magic_add (plugin, "rsid header", "audio/prs.sid",
+	                       "0 string RSID", NULL);
+
 	return plugin;
 }
 
 static gboolean
-xmms_sid_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_sid_init (xmms_decoder_t *decoder, gint mode)
+{
+	xmms_transport_t *transport;
+	xmms_sid_data_t *data;
+
+	g_return_val_if_fail (decoder, FALSE);
+	
+	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (transport, FALSE);
+	
+	data = xmms_decoder_private_data_get (decoder);
+	g_return_val_if_fail (decoder, FALSE);
+	
+	data->buffer_length = 0;
+	data->samplerate = 44100;
+	data->channels = 2;
+
+	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16, data->channels, 
+	                         data->samplerate);
+	
+	/* we don't have to care about the return value other than NULL,
+	   as there is only one format (to rule them all) */
+	if (xmms_decoder_format_finish (decoder) == NULL) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+xmms_sid_new (xmms_decoder_t *decoder)
 {
 	xmms_sid_data_t *data;
 
 	g_return_val_if_fail (decoder, FALSE);
-	g_return_val_if_fail (mimetype, FALSE);
 
 	data = g_new0 (xmms_sid_data_t, 1);
 
@@ -141,32 +183,21 @@ xmms_sid_get_media_info (xmms_decoder_t *decoder)
 	char artist[32];
 	char title[32];
 	gint err;
-	xmms_medialib_entry *entry;
-	
-	entry = xmms_playlist_entry_new (NULL);
+	xmms_medialib_entry_t entry;
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
 
+	entry = xmms_decoder_medialib_entry_get (decoder);
+
 	err = sidplay_wrapper_songinfo (data->wrapper, artist, title);
 	if (err > 0) {
-		xmms_medialib_entry_property_set (entry, 
-				XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
-		xmms_medialib_entry_property_set (entry, 
-				XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, artist);
-		xmms_decoder_entry_mediainfo_set (decoder,entry);
-	}
-}
-
-static gboolean
-xmms_sid_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-	
-	if ((g_strcasecmp (mimetype, "audio/prs.sid") == 0))
-		return TRUE;
-
-	return FALSE;
+		xmms_medialib_entry_property_set_str (entry, 
+		         XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, title);
+		xmms_medialib_entry_property_set_str (entry, 
+		         XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, artist);
+		xmms_medialib_entry_send_update (entry);
+	} 
 }
 
 static gboolean
@@ -206,7 +237,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		
 		while (len<data->buffer_length) {
 			ret = xmms_transport_read (transport, data->buffer + len,
-									   data->buffer_length, &error);
+			                           data->buffer_length, &error);
 			
 			if ( ret <= 0 ) {
 				g_free (data->buffer);
@@ -218,7 +249,7 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		}
 		
 		ret = sidplay_wrapper_load (data->wrapper, data->buffer, 
-									data->buffer_length);
+		                            data->buffer_length);
 		
 		if (ret < 0) {
 			xmms_log_error ("Load failed: %d", ret);
@@ -226,20 +257,17 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 		}
 
 		numsubtunes = sidplay_wrapper_subtunes (data->wrapper);
-		XMMS_DBG ("subtunes: %d", numsubtunes);
+		XMMS_DBG ("subtunes: %d (disabled, only plays first tune)", 
+		          numsubtunes);
 		if (data->subtune > numsubtunes || data->subtune < 0) {
 			xmms_log_error ("Requested subtune %d not found, using default", 
-					  data->subtune);
+			                data->subtune);
 			data->subtune = 0;
 		}
 
 		sidplay_wrapper_set_subtune (data->wrapper, data->subtune);
 
 		xmms_sid_get_media_info (decoder);
-
-		/** @todo don't you just love hardcoded values? */
-		xmms_decoder_samplerate_set (decoder, 44100); 
-
 
 	}
 
@@ -252,4 +280,3 @@ xmms_sid_decode_block (xmms_decoder_t *decoder)
 	}
 	return TRUE;
 }
-

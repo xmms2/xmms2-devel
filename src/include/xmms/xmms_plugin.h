@@ -26,13 +26,14 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_config.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 /* API VERSIONS */
-#define XMMS_TRANSPORT_PLUGIN_API_VERSION 1
-#define XMMS_DECODER_PLUGIN_API_VERSION 1
-#define XMMS_EFFECT_PLUGIN_API_VERSION 1
-#define XMMS_PLAYLIST_PLUGIN_API_VERSION 1
-#define XMMS_OUTPUT_PLUGIN_API_VERSION 1
+#define XMMS_TRANSPORT_PLUGIN_API_VERSION 3
+#define XMMS_DECODER_PLUGIN_API_VERSION 2
+#define XMMS_EFFECT_PLUGIN_API_VERSION 2
+#define XMMS_PLAYLIST_PLUGIN_API_VERSION 2
+#define XMMS_OUTPUT_PLUGIN_API_VERSION 2
 
 
 /* 
@@ -72,28 +73,20 @@ typedef struct xmms_plugin_St xmms_plugin_t;
  */
 
 /* For transports */
-#define XMMS_PLUGIN_PROPERTY_SEEK (1 << 0)
-#define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 1)
-#define XMMS_PLUGIN_PROPERTY_LIST (1 << 2)
+#define XMMS_PLUGIN_PROPERTY_LOCAL (1 << 0)
+#define XMMS_PLUGIN_PROPERTY_LIST (1 << 1)
+#define XMMS_PLUGIN_PROPERTY_STREAM (1 << 2)
 
 /* For decoders */
-#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 3)
-#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 4)
-#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 5)
+#define XMMS_PLUGIN_PROPERTY_FAST_FWD (1 << 4)
+#define XMMS_PLUGIN_PROPERTY_REWIND (1 << 5)
+#define XMMS_PLUGIN_PROPERTY_SUBTUNES (1 << 6)
 
 /* For output */
 
 /*
  * Type declarations
  */
-
-typedef enum {
-	XMMS_PLUGIN_TYPE_TRANSPORT,
-	XMMS_PLUGIN_TYPE_DECODER,
-	XMMS_PLUGIN_TYPE_OUTPUT,
-	XMMS_PLUGIN_TYPE_PLAYLIST,
-	XMMS_PLUGIN_TYPE_EFFECT
-} xmms_plugin_type_t;
 
 typedef void *xmms_plugin_method_t;
 
@@ -116,8 +109,10 @@ void xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property);
 void xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value);
 
+gboolean xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc, const gchar *mime, ...);
+
 /* config methods */
-xmms_config_value_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *value);
-xmms_config_value_t *xmms_plugin_config_value_register (xmms_plugin_t *plugin, const gchar *value, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
+xmms_config_property_t *xmms_plugin_config_lookup (xmms_plugin_t *plugin, const gchar *value);
+xmms_config_property_t *xmms_plugin_config_property_register (xmms_plugin_t *plugin, const gchar *value, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 
 #endif /* __XMMS_PLUGIN_H__ */

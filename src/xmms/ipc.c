@@ -71,6 +71,7 @@ typedef struct xmms_ipc_client_St {
 
 	gboolean run;
 
+	gint wakeup_out;
 	gint wakeup_in;
 
 	guint pendingsignals[XMMS_IPC_SIGNAL_END];
@@ -92,23 +93,23 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 {
 	guint len;
 
+	arg->values[i].type = type;
 	switch (type) {
+		case XMMS_OBJECT_CMD_ARG_NONE:
+			break;
 		case XMMS_OBJECT_CMD_ARG_UINT32 :
 			if (!xmms_ipc_msg_get_uint32 (msg, &arg->values[i].value.uint32))
 				return FALSE;
-			arg->values[i].type = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_INT32 :
 			if (!xmms_ipc_msg_get_int32 (msg, &arg->values[i].value.int32))
 				return FALSE;
-			arg->values[i].type = type;
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
 				g_free (arg->values[i].value.string);
 				return FALSE;
 			}
-			arg->values[i].type = type;
 			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");
@@ -131,8 +132,8 @@ count_hash (gpointer key, gpointer value, gpointer udata)
 static void
 hash_to_dict (gpointer key, gpointer value, gpointer udata)
 {
-        gchar *k = key;
-        xmms_object_cmd_value_t *v = value;
+	gchar *k = key;
+	xmms_object_cmd_value_t *v = value;
 	xmms_ipc_msg_t *msg = udata;
 
 	if (k && v) {
@@ -171,6 +172,7 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 			xmms_ipc_msg_put_int32 (msg, val->value.int32);
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			xmms_ipc_msg_put_uint32 (msg, g_list_length (val->value.list));
 
 			for (n = val->value.list; n; n = g_list_next (n)) {
@@ -196,6 +198,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmms_object_cmd_desc_t *cmd;
 	xmms_object_cmd_arg_t arg;
 	xmms_ipc_msg_t *retmsg;
+	gint i;
 
 	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
@@ -249,12 +252,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 
 	xmms_object_cmd_arg_init (&arg);
 
-	if (cmd->arg1) {
-		type_and_msg_to_arg (cmd->arg1, msg, &arg, 0);
-	}
-
-	if (cmd->arg2) {
-		type_and_msg_to_arg (cmd->arg2, msg, &arg, 1);
+	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
+		type_and_msg_to_arg (cmd->args[i], msg, &arg, i);
 	}
 
 	xmms_object_cmd_call (object, xmms_ipc_msg_get_cmd (msg), &arg);
@@ -269,11 +268,10 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	if (arg.retval)
 		xmms_object_cmd_value_free (arg.retval);
 
-	if (cmd->arg1 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[0].value.string);
-	if (cmd->arg2 == XMMS_OBJECT_CMD_ARG_STRING)
-		g_free (arg.values[1].value.string);
-
+	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
+		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
+			g_free (arg.values[i].value.string);
+	}
 	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
 	xmms_ipc_client_msg_write (client, retmsg);
 }
@@ -286,18 +284,11 @@ xmms_ipc_client_thread (gpointer data)
 	fd_set rfdset;
 	fd_set wfdset;
 	gint fd;
-	gint wakeup[2];
 	xmms_ipc_client_t *client = data;
 	struct timeval tmout;
 
 	g_return_val_if_fail (client, NULL);
 
-	if (pipe (wakeup) == -1) {
-		xmms_log_fatal ("Could not create a pipe! we are dead!");
-		return NULL;
-	}
-
-	client->wakeup_in = wakeup[1];
 	fd = xmms_ipc_transport_fd_get (client->transport);
 
 	while (client->run) {
@@ -308,7 +299,7 @@ xmms_ipc_client_thread (gpointer data)
 		FD_ZERO (&wfdset);
 
 		FD_SET (fd, &rfdset);
-		FD_SET (wakeup[0], &rfdset);
+		FD_SET (client->wakeup_out, &rfdset);
 	
 		if (!g_queue_is_empty (client->out_msg))
 			FD_SET (fd, &wfdset);
@@ -316,7 +307,7 @@ xmms_ipc_client_thread (gpointer data)
 		tmout.tv_usec = 0;
 		tmout.tv_sec = 5;
 
-		ret = select (MAX (fd, wakeup[0]) + 1, &rfdset, &wfdset, NULL, &tmout);
+		ret = select (MAX (fd, client->wakeup_out) + 1, &rfdset, &wfdset, NULL, &tmout);
 		if (ret == -1) {
 			/* Woot client destroyed? */
 			xmms_log_error ("Error from select, maybe the client died?");
@@ -325,17 +316,17 @@ xmms_ipc_client_thread (gpointer data)
 			continue;
 		}
 
-		if (FD_ISSET (wakeup[0], &rfdset)) {
+		if (FD_ISSET (client->wakeup_out, &rfdset)) {
 			/**
 			 * This means that client_msg_write sent a notification
 			 * to the thread to wakeup! This means that we will set
 			 * fd in wfdset on next iteration...
 			 */
 
-			gchar buf[2];
+			gchar buf;
 			gint ret;
 
-			ret = read (wakeup[0], buf, 2);
+			ret = read (client->wakeup_out, &buf, 1);
 		}
 
 		if (FD_ISSET (fd, &wfdset)) {
@@ -381,9 +372,6 @@ xmms_ipc_client_thread (gpointer data)
 
 	xmms_ipc_client_destroy (client);
 
-	close (wakeup[0]);
-	close (wakeup[1]);
-
 	return NULL;
 
 }
@@ -392,10 +380,31 @@ static xmms_ipc_client_t *
 xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 {
 	xmms_ipc_client_t *client;
+	gint wakeup[2];
+	gint flags;
 
 	g_return_val_if_fail (transport, NULL);
 
+	if (pipe (wakeup) == -1) {
+		xmms_log_error ("Could not create a pipe for client, too low rlimit or fdleak?");
+		return NULL;
+	}
+
+	flags = fcntl (wakeup[0], F_GETFL, 0);
+	if (flags != -1) {
+		flags |= O_NONBLOCK;
+		fcntl (wakeup[0], F_SETFL, flags);
+	}
+
+	flags = fcntl (wakeup[1], F_GETFL, 0);
+	if (flags != -1) {
+		flags |= O_NONBLOCK;
+		fcntl (wakeup[1], F_SETFL, flags);
+	}
+
 	client = g_new0 (xmms_ipc_client_t, 1);
+	client->wakeup_out = wakeup[0];
+	client->wakeup_in = wakeup[1];
 	client->transport = transport;
 	client->ipc = ipc;
 	client->run = TRUE;
@@ -418,6 +427,9 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	client->run = FALSE;
 
 	xmms_ipc_transport_destroy (client->transport);
+
+	close (client->wakeup_in);
+	close (client->wakeup_out);
 
 	while (!g_queue_is_empty (client->out_msg)) {
 		xmms_ipc_msg_t *msg = g_queue_pop_head (client->out_msg);
@@ -452,7 +464,7 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	*/
 	g_queue_push_tail (client->out_msg, msg);
 	/* Wake the client thread! */
-	write (client->wakeup_in, "42", 2);
+	write (client->wakeup_in, "\x42", 1);
 
 	return TRUE;
 }
@@ -496,6 +508,10 @@ xmms_ipc_source_accept (GSource *source, xmms_ipc_t *ipc)
 	}
 
 	client = xmms_ipc_client_new (ipc, transport);
+	if (!client) {
+		xmms_ipc_transport_destroy (transport);
+		return FALSE;
+	}
 
 	g_mutex_lock (global_ipc_lock);
 	ipc->clients = g_list_append (ipc->clients, client);
@@ -723,7 +739,15 @@ xmms_ipc_init (void)
 void
 xmms_ipc_shutdown (void)
 {
+	g_mutex_lock (global_ipc_lock);
+	g_source_remove_poll (global_ipc->source, global_ipc->pollfd);
+	g_free (global_ipc->pollfd);
+	g_source_destroy (global_ipc->source);
+
 	xmms_ipc_transport_destroy (global_ipc->transport);
+
+	g_mutex_unlock (global_ipc_lock);
+
 	g_free (global_ipc);
 	g_mutex_free (global_ipc_lock);
 }

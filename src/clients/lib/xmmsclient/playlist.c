@@ -26,6 +26,8 @@
 #include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_stringport.h"
 
+static char *xmmsc_playlist_encode_url (const char *url);
+
 /**
  * @defgroup PlaylistControl PlaylistControl
  * @ingroup XMMSClient
@@ -91,10 +93,32 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 }
 
 /**
+ * Insert a medialib id at given position in playlist. 
+ *
+ * @param c The connection structure.
+ * @param pos A position in the playlist
+ * @param id A medialib id.
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_ID);
+	xmms_ipc_msg_put_uint32 (msg, pos);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/**
  * Insert entry at given position in playlist.
  *
  * @param c The connection structure.
- * @param pos A postion in the playlist
+ * @param pos A position in the playlist
  * @param url The URL to insert
  *
  */
@@ -143,17 +167,23 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
  * @param c The connection structure.
  * @param url an encoded path.
  *
- * @sa xmmsc_encode_path
  */
 xmmsc_result_t *
-xmmsc_playlist_add (xmmsc_connection_t *c, char *url)
+xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+	char *enc_url;
+
+	enc_url = xmmsc_playlist_encode_url (url);
+	if (!enc_url)
+		return NULL;
 	
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
-	xmms_ipc_msg_put_string (msg, url);
+	xmms_ipc_msg_put_string (msg, enc_url);
 	res = xmmsc_send_msg (c, msg);
+
+	free (enc_url);
 
 	return res;
 }
@@ -253,34 +283,42 @@ xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
 	return res;
 }
 
-static int
-free_str (void * key, void * value, void * udata)
-{
-	char *k = (char *)key;
-
-	if (strcasecmp (k, "id") == 0) {
-		free (key);
-		return true;
-	}
-
-	if (key)
-		free (key);
-	if (value)
-		free (value);
-
-	return true;
-}
-
-/**
- * Free all strings in a x_hash_t.
- */
-void
-xmmsc_playlist_entry_free (x_hash_t *entry)
-{
-	if (entry) {
-		x_hash_foreach_remove (entry, free_str, NULL);
-		x_hash_destroy (entry);
-	}
-}
-
 /** @} */
+
+#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
+                     (((a) >= 'A') && ((a) <= 'Z')) || \
+                     (((a) >= '0') && ((a) <= '9')) || \
+                     ((a) == ':') || \
+                     ((a) == '/') || \
+                     ((a) == '-') || \
+                     ((a) == '.') || \
+                     ((a) == '_'))
+
+static char *
+xmmsc_playlist_encode_url (const char *url)
+{
+	static char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0;
+	char *res;
+
+	res = malloc (strlen(url) * 3 + 1);
+	if (!res)
+		return NULL;
+
+	while (url[i]) {
+		unsigned char chr = url[i++];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	res[j] = '\0';
+
+	return res;
+}

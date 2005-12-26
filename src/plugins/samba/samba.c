@@ -23,7 +23,6 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_magic.h"
 
 #include <errno.h>
 #include <string.h>
@@ -40,7 +39,6 @@ extern int errno;
 typedef struct {
 	gint fd;
 	gchar *urlptr;
-	const gchar *mime;
 } xmms_samba_data_t;
 
 /*
@@ -73,6 +71,10 @@ xmms_plugin_get (void)
 				  "SMB/CIFS transport " XMMS_VERSION,
 				  "Access SMB/CIFS fileshares over a network.");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.se/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
 	xmms_plugin_info_add (plugin, "E-Mail", "nano@nittionino.nu");
@@ -92,8 +94,6 @@ xmms_plugin_get (void)
 				xmms_samba_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LMOD, 
 				xmms_samba_lmod);
-
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 
 	return plugin;
 }
@@ -166,17 +166,7 @@ xmms_samba_init (xmms_transport_t *transport, const gchar *url)
 
 	data = g_new0 (xmms_samba_data_t, 1);
 	data->fd = fd;
-	data->mime = NULL;
-	data->urlptr = g_strdup (url);
 	xmms_transport_private_data_set (transport, data);
-
-	data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
-	if (!data->mime) {
-		g_free (data->urlptr);
-		g_free (data);
-		return FALSE;
-	}
-	xmms_transport_mimetype_set (transport, (const gchar*)data->mime);
 
 	return TRUE;
 }
@@ -215,12 +205,6 @@ xmms_samba_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_err
 	g_return_val_if_fail (buffer, -1);
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, -1);
-
-	if (data->mime) {
-		data->mime = xmms_magic_mime_from_file ((const gchar*)data->urlptr);
-		xmms_transport_mimetype_set (transport, (const gchar*)data->mime); 
-		data->mime = NULL;
-	}
 
 	ret = smbc_read (data->fd, buffer, len); 
 	if (ret < 0) {

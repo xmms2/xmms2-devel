@@ -23,7 +23,8 @@
 extern "C" {
 #endif
 
-int xmmsc_setup_with_ecore (xmmsc_connection_t *connection);
+void *xmmsc_mainloop_ecore_init (xmmsc_connection_t *connection);
+void xmmsc_mainloop_ecore_shutdown (xmmsc_connection_t *connection, void *udata);
 
 #ifdef __cplusplus
 }

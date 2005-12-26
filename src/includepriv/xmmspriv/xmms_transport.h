@@ -22,6 +22,7 @@
 
 #include "xmms/xmms_transport.h"
 #include "xmms/xmms_medialib.h"
+#include "xmms/xmms_plugin.h"
 
 #ifdef XMMS_OS_DARWIN 
 # define XMMS_TRANSPORT_DEFAULT_BUFFERSIZE "131072"
@@ -32,13 +33,13 @@
 xmms_transport_t * xmms_transport_new ();
 gboolean xmms_transport_open (xmms_transport_t *transport, 
 			      xmms_medialib_entry_t entry);
-const gchar *xmms_transport_mimetype_get (xmms_transport_t *transport);
-const gchar *xmms_transport_mimetype_get_wait (xmms_transport_t *transport);
 void xmms_transport_start (xmms_transport_t *transport);
 void xmms_transport_stop (xmms_transport_t *transport);
 gboolean xmms_transport_plugin_open (xmms_transport_t *transport, 
 				     xmms_medialib_entry_t entry, gpointer data);
 
 void xmms_transport_buffering_start (xmms_transport_t *transport);
+
+gboolean xmms_transport_plugin_verify (xmms_plugin_t *plugin);
 
 #endif

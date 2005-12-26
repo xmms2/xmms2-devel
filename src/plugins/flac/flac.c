@@ -33,18 +33,16 @@ typedef struct xmms_flac_data_St {
 	guint sample_rate;
 	guint bits_per_sample;
 	guint64 total_samples;
+	gboolean is_seeking;
 } xmms_flac_data_t;
 
 /*
  * Function prototypes
  */
 
-static gboolean xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype);
+static gboolean xmms_flac_new (xmms_decoder_t *decoder);
 static gboolean xmms_flac_init (xmms_decoder_t *decoder, gint mode);
-/*
 static gboolean xmms_flac_seek (xmms_decoder_t *decoder, guint samples);
-*/
-static gboolean xmms_flac_can_handle (const gchar *mimetype);
 static gboolean xmms_flac_decode_block (xmms_decoder_t *decoder);
 static void xmms_flac_destroy (xmms_decoder_t *decoder);
 static void xmms_flac_get_mediainfo (xmms_decoder_t *decoder);
@@ -63,6 +61,10 @@ xmms_plugin_get (void)
 				  "flac",
 				  "FLAC decoder " XMMS_VERSION,
 				  "Free Lossless Audio Codec decoder");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
@@ -70,9 +72,8 @@ xmms_plugin_get (void)
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_flac_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
-/*	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);*/
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_flac_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_flac_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_flac_decode_block);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_flac_get_mediainfo);
 
@@ -81,21 +82,10 @@ xmms_plugin_get (void)
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 	*/
 
+	xmms_plugin_magic_add (plugin, "flac header", "audio/x-flac",
+	                       "0 string fLaC", NULL);
+
 	return plugin;
-}
-
-static gboolean
-xmms_flac_can_handle (const gchar *mimetype)
-{
-	g_return_val_if_fail (mimetype, FALSE);
-
-	if ((g_strcasecmp (mimetype, "audio/x-flac") == 0))
-		return TRUE;
-
-	if ((g_strcasecmp (mimetype, "application/x-flac") == 0))
-		return TRUE;
-
-	return FALSE;
 }
 
 FLAC__SeekableStreamDecoderReadStatus
@@ -132,6 +122,9 @@ flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder, const FLAC_
 	guint16 *packed16 = (guint16*)packed;
 
 	data = xmms_decoder_private_data_get (decoder);
+
+	if (data->is_seeking)
+		return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 
 	for (sample = 0; sample < frame->header.blocksize; sample++) {
 		for (channel = 0; channel < frame->header.channels; channel++) {
@@ -256,7 +249,7 @@ flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__Strea
 }
 
 static gboolean
-xmms_flac_new (xmms_decoder_t *decoder, const gchar *mimetype)
+xmms_flac_new (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
 
@@ -324,25 +317,26 @@ xmms_flac_init (xmms_decoder_t *decoder, gint mode)
 	return TRUE;
 }
 
+typedef enum { STRING, INTEGER } ptype;
 typedef struct {
 	gchar *vname;
 	gchar *xname;
+	ptype type;
 } props;
 
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
 /** These are the properties that we extract from the comments */
 static props properties[] = {
-	{ "title", XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE },
-	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST },
-	{ "album", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM },
-	{ "tracknumber", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR },
-	{ "date", XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR },
-	{ "genre", XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE },
-	{ "musicbrainz_albumid", XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID },
-	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID },
-	{ "musicbrainz_trackid", XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID },
-	{ NULL, 0 }
+	{ "title",                XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,     STRING  },
+	{ "artist",               XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,    STRING  },
+	{ "album",                XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,     STRING  },
+	{ "tracknumber",          XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
+	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
+	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
+	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
+	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
+	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
 };
 
 static void
@@ -350,9 +344,12 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 {
 	xmms_flac_data_t *data;
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 	gint current, num_comments;
 
 	g_return_if_fail (decoder);
+
+	session = xmms_medialib_begin ();
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);
@@ -370,28 +367,36 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 			s = g_strsplit ((gchar *)data->vorbiscomment->data.vorbis_comment.comments[current].entry, "=", 2);
 			length = data->vorbiscomment->data.vorbis_comment.comments[current].length - strlen (s[0]) - 1;
 			val = g_strndup (s[1], length);
-			while (properties[i].vname) {
+			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+					xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
-					xmms_medialib_entry_property_set_str (entry, properties[i].xname, val);
+					if (properties[i].type == INTEGER) {
+						gint tmp = strtol (val, NULL, 10);
+						xmms_medialib_entry_property_set_int (session, entry,
+						                                      properties[i].xname, tmp);
+					} else {
+						xmms_medialib_entry_property_set_str (session, entry,
+						                                      properties[i].xname, val);
+					}
 				}
-				i++;
 			}
 			g_free (val);
 			g_strfreev (s);
 		}
 	}
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-					      (gint) data->bits_per_sample * data->sample_rate);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+										  (gint) data->bits_per_sample * data->sample_rate);
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-					      (gint) data->total_samples / data->sample_rate * 1000);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+										  (gint) data->total_samples / data->sample_rate * 1000);
 
-	xmms_medialib_entry_property_set_int (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
-					      data->sample_rate);
+	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
+										  data->sample_rate);
+
+	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
 }
@@ -415,7 +420,6 @@ xmms_flac_decode_block (xmms_decoder_t *decoder)
 	return ret;
 }
 
-/*
 static gboolean
 xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 {
@@ -427,11 +431,12 @@ xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
+	data->is_seeking = TRUE;
 	res = FLAC__seekable_stream_decoder_seek_absolute (data->flacdecoder, (FLAC__uint64) samples);
+	data->is_seeking = FALSE;
 
 	return res;
 }
-*/
 
 void
 xmms_flac_destroy (xmms_decoder_t *decoder)

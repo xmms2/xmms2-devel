@@ -309,7 +309,7 @@ main(int argc, char **argv)
 	SDL_Surface *screen;
 	gchar *path;
 
-	connection = xmmsc_init ("XMMS2 SDL VIS");
+	connection = xmmsc_init ("XMMS2-SDL-VIS");
 
 	if(!connection){
 		printf ("bad\n");
@@ -327,7 +327,7 @@ main(int argc, char **argv)
 
 	timer = g_timer_new ();
 
-	xmmsc_setup_with_gmain (connection);
+	xmmsc_mainloop_gmain_init (connection);
 
         if (SDL_Init(SDL_INIT_VIDEO) > 0) {
                 fprintf(stderr, "Unable to init SDL: %s \n", SDL_GetError());

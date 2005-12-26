@@ -30,7 +30,6 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsclientpriv/xmmsclient_list.h"
 
 #include "xmmsclient/xmmsclient.h"
@@ -84,15 +83,30 @@ static void xmmsc_deinit (xmmsc_connection_t *c);
  * @sa xmmsc_unref
  */
 
+/* 14:47 <irlanders> isalnum(c) || c == '_' || c == '-'
+ */
+
 xmmsc_connection_t *
 xmmsc_init (char *clientname)
 {
 	xmmsc_connection_t *c;
+	int i = 0;
+	char j;
 
 	x_api_error_if (!clientname, "with NULL clientname", NULL);
 
 	if (!(c = x_new0 (xmmsc_connection_t, 1))) {
 		return NULL;
+	}
+
+	while (clientname[i]) {
+		j = clientname[i];
+		if (!isalnum(j) && j != '_' && j != '-') {
+			/* snyggt! */
+			free (c);
+			x_api_error_if (true, "clientname contains invalid chars, just alphanumeric chars are allowed!", NULL);
+		}
+		i++;
 	}
 
 	if (!(c->clientname = strdup (clientname))) {
@@ -259,16 +273,56 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
 }
 
 /**
+ * Get a list of loaded plugins from the server
+ */
+xmmsc_result_t *
+xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+	x_check_conn (c, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
+	xmms_ipc_msg_put_uint32 (msg, type);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/**
+ * Get a list of loaded plugins from the server
+ */
+xmmsc_result_t *
+xmmsc_main_status (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_STATUS);
+}
+
+
+/**
  * Tell the server to quit. This will terminate the server.
  * If you only want to disconnect, use #xmmsc_unref()
  */
-
 xmmsc_result_t *
 xmmsc_quit (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_QUIT);
 }
+
+/**
+ * Request the quit broadcast.
+ * Will be called when the server is terminating.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_quit (xmmsc_connection_t *c)
+{
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_QUIT);
+}
+
 
 /**
  * This function will make a pretty string about the information in
@@ -298,7 +352,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 
 	pos = fmt;
 	while (strlen (target) + 1 < len) {
-		char *next_key, *key, *result, *end;
+		char *next_key, *key, *result = NULL, *end;
 		int keylen;
 
 		next_key = strstr (pos, "${");
@@ -474,7 +528,6 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 
 	return xmmsc_result_new (c, cid);
 }
-
 
 /**
  * @defgroup IOFunctions IOFunctions

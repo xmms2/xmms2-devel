@@ -46,5 +46,6 @@ gboolean xmms_decoder_iseos (xmms_decoder_t *decoder);
 void xmms_decoder_stop (xmms_decoder_t *decoder);
 
 void xmms_decoder_mediainfo_get (xmms_decoder_t *decoder, xmms_transport_t *transport);
+gboolean xmms_decoder_plugin_verify (xmms_plugin_t *plugin);
 
 #endif

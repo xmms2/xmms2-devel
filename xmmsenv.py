@@ -108,6 +108,7 @@ class XMMSEnvironment(Environment):
 		self.librarypath = os.path.join(self.install_prefix, "lib")
 		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
 		self.includepath = os.path.join(self.install_prefix, "include/xmms2")
+		self.scriptpath = os.path.join(self.sharepath, "scripts")
 		self["SHLIBPREFIX"] = "lib"
 		self.shversion = "0"
 
@@ -121,7 +122,11 @@ class XMMSEnvironment(Environment):
 			self.platform = 'netbsd'
 		else:
 			self.platform = sys.platform
-			
+
+		def gzipper(target, source, env):
+			gzip.GzipFile(target[0].path, 'wb',9).write(file(source[0].path).read())
+		self['BUILDERS']['GZipper'] = SCons.Builder.Builder(action=SCons.Action.Action(gzipper))
+		
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] = "$LINKFLAGS -multiply_defined suppress -flat_namespace -undefined suppress"
 
@@ -348,8 +353,11 @@ class XMMSEnvironment(Environment):
 		self.Install(os.path.join(self.includepath,target), source)
 
         def add_manpage(self, section, source):
-                gzip.GzipFile(source+".gz", 'wb',9).write(file(source).read())
-                self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
+		self.GZipper(source + '.gz', source)
+		self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
+
+	def add_script(self, target, source):
+		self.Install(os.path.join(self.scriptpath,target), source)
 
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""

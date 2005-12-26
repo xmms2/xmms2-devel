@@ -18,6 +18,7 @@
 #include <glib.h>
 #include <math.h>
 #include "xmmspriv/xmms_sample.h"
+#include "xmms/xmms_medialib.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
 
@@ -147,6 +148,37 @@ xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 }
 
 /**
+ */
+void
+xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_entry_t entry)
+{
+	xmms_medialib_session_t *session;
+
+	session = xmms_medialib_begin ();
+	xmms_medialib_entry_property_set_str (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLEFMT_IN,
+	                                      xmms_sample_name_get (conv->from->format));
+	xmms_medialib_entry_property_set_int (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLERATE_IN,
+	                                      conv->from->samplerate);
+	xmms_medialib_entry_property_set_int (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_IN,
+	                                      conv->from->channels);
+
+	xmms_medialib_entry_property_set_str (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLEFMT_OUT,
+	                                      xmms_sample_name_get (conv->to->format));
+	xmms_medialib_entry_property_set_int (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLERATE_OUT,
+	                                      conv->to->samplerate);
+	xmms_medialib_entry_property_set_int (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_OUT,
+	                                      conv->to->channels);
+
+	xmms_medialib_end (session);
+}
+
+/**
  * Find the best pair of formats
  */
 xmms_sample_converter_t *
@@ -214,12 +246,12 @@ xmms_sample_audioformats_coerce (GList *declist, GList *outlist)
 		return NULL;
 
 
-	XMMS_DBG ("Selected conversion from %s-%d-%d to %s-%d-%d of %d+%d formats",
-	          xmms_sample_name_get (bestdf->format),
-	          bestdf->channels, bestdf->samplerate,
-	          xmms_sample_name_get (bestof->format),
-	          bestof->channels, bestof->samplerate,
-	          g_list_length (declist), g_list_length (outlist));
+	xmms_log_info ("Selected conversion from %s-%d-%d to %s-%d-%d of %d+%d formats",
+	               xmms_sample_name_get (bestdf->format),
+	               bestdf->channels, bestdf->samplerate,
+	               xmms_sample_name_get (bestof->format),
+	               bestof->channels, bestof->samplerate,
+	               g_list_length (declist), g_list_length (outlist));
 	
 	return xmms_sample_converter_init (bestdf, bestof);
 

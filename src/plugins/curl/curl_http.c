@@ -2,7 +2,7 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_magic.h"
+#include "xmms/xmms_medialib.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,16 +40,15 @@ typedef struct {
 	xmms_error_t status;
 } xmms_curl_data_t;
 
-typedef void (*handler_func_t) (xmms_transport_t *transport, gchar *header);
+typedef void (*handler_func_t) (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
 
-static void header_handler_contenttype (xmms_transport_t *transport, gchar *header);
-static void header_handler_contentlength (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_metaint (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_name (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_genre (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_br (xmms_transport_t *transport, gchar *header);
-static void header_handler_icy_ok (xmms_transport_t *transport, gchar *header);
-static void header_handler_last (xmms_transport_t *transport, gchar *header);
+static void header_handler_contenttype (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
+static void header_handler_contentlength (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_metaint (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_name (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_genre (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
+static void header_handler_icy_ok (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
+static void header_handler_last (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
 static void handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata);
 
@@ -65,7 +64,6 @@ handler_t handlers[] = {
 	{ "icy-name", header_handler_icy_name },
 	{ "icy-genre", header_handler_icy_genre },
 	{ "ICY 200 OK", header_handler_icy_ok },
-	{ "icy-br", header_handler_icy_br },
 	{ "\r\n", header_handler_last },
 	{ NULL, NULL }
 };
@@ -96,6 +94,10 @@ xmms_plugin_get (void)
 				  "curl_http",
 	                          "Curl transport for HTTP " XMMS_VERSION,
 	                          "HTTP transport using CURL");
+	
+	if (!plugin) {
+		return NULL;
+	}
 
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl");
@@ -107,10 +109,22 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_curl_close);
 
-	xmms_plugin_config_value_register (plugin, "shoutcastinfo", "1", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "buffersize", "131072", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "verbose", "0", NULL, NULL);
-	xmms_plugin_config_value_register (plugin, "connecttimeout", "15", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "shoutcastinfo", "1",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "buffersize", "131072",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "verbose", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "connecttimeout", "15",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "useproxy", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxyaddress", "127.0.0.1:8080",
+	                                   NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "authproxy", "0", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxyuser", "user", NULL, NULL);
+	xmms_plugin_config_property_register (plugin, "proxypass", "password",
+	                                   NULL, NULL); 
+
+	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
 
 	return plugin;
 }
@@ -135,8 +149,10 @@ static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
-	xmms_config_value_t *val;
-	gint bufsize, metaint, verbose, connecttimeout;
+	xmms_config_property_t *val;
+	gint bufsize, metaint, verbose, connecttimeout, useproxy, authproxy;
+	const gchar *proxyaddress, *proxyuser, *proxypass;
+	gchar proxyuserpass[90]; 
 
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
@@ -144,16 +160,33 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data = g_new0 (xmms_curl_data_t, 1);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
-	bufsize = xmms_config_value_int_get (val);
+	bufsize = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "connecttimeout");
-	connecttimeout = xmms_config_value_int_get (val);
+	connecttimeout = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
-	metaint = xmms_config_value_int_get (val);
+	metaint = xmms_config_property_get_int (val);
 
 	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
-	verbose = xmms_config_value_int_get (val);
+	verbose = xmms_config_property_get_int (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "useproxy");
+	useproxy = xmms_config_property_get_int (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "authproxy");
+	authproxy = xmms_config_property_get_int (val);
+	
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyaddress");
+	proxyaddress = xmms_config_property_get_string (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyuser");
+	proxyuser = xmms_config_property_get_string (val);
+
+	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxypass");
+	proxypass = xmms_config_property_get_string (val);
+
+	g_snprintf (proxyuserpass, sizeof (proxyuserpass), "%s:%s", proxyuser, proxypass);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
 	data->metabuffer = g_malloc (256 * 16);
@@ -180,6 +213,15 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION, xmms_curl_callback_write);
 	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION, xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
+
+	if (useproxy == 1) {
+		curl_easy_setopt (data->curl_easy, CURLOPT_PROXY, proxyaddress);
+		if (authproxy == 1) {
+			curl_easy_setopt (data->curl_easy, CURLOPT_PROXYUSERPWD,
+		                          proxyuserpass);
+		}
+	}
+
 	curl_easy_setopt (data->curl_easy, CURLOPT_NOSIGNAL, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_VERBOSE, verbose);
 	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYPEER, 0);
@@ -203,6 +245,7 @@ static gint
 xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
 {
 	xmms_curl_data_t *data;
+	xmms_medialib_entry_t entry;
 	gint code, handles;
 
 	g_return_val_if_fail (transport, -1);
@@ -261,15 +304,28 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 
 		/* done */
 		if (handles == 0) {
-			if (!data->know_mime)
-				xmms_transport_mimetype_set (transport, NULL);
+			if (!data->know_mime) {
+				xmms_medialib_session_t *session = xmms_medialib_begin ();
+				entry = xmms_transport_medialib_entry_get (transport);
+				xmms_medialib_entry_property_set_str (session, entry,
+						XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
+				xmms_medialib_end (session);
+				xmms_medialib_entry_send_update (entry);
+			}
+
 			return 0;
 		}
 
 	}
 
-	if (!data->know_mime)
-		xmms_transport_mimetype_set (transport, NULL);
+	if (!data->know_mime) {
+		xmms_medialib_session_t *session = xmms_medialib_begin ();
+		entry = xmms_transport_medialib_entry_get (transport);
+		xmms_medialib_entry_property_set_str (session, entry,
+				XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
+		xmms_medialib_end (session);
+		xmms_medialib_entry_send_update (entry);
+	}
 
 	return -1;
 }
@@ -376,6 +432,7 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 static size_t
 xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 {
+	xmms_medialib_session_t *session;
 	xmms_transport_t *transport = (xmms_transport_t *) stream;
 	handler_func_t func;
 	gchar *header;
@@ -393,7 +450,9 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		} else {
 			val = header;
 		}
-		func (transport, val);
+		session = xmms_medialib_begin ();
+		func (transport, session, val);
+		xmms_medialib_end (session);
 	}
 
 	g_free (header);
@@ -419,19 +478,27 @@ header_handler_find (gchar *header)
 }
 
 static void
-header_handler_contenttype (xmms_transport_t *transport, gchar *header)
+header_handler_contenttype (xmms_transport_t *transport, 
+							xmms_medialib_session_t *session, 
+							gchar *header)
 {
 	xmms_curl_data_t *data;
+	xmms_medialib_entry_t entry;
 
 	data = xmms_transport_private_data_get (transport);
 
 	data->know_mime = TRUE;
 
-	xmms_transport_mimetype_set (transport, header);
+	entry = xmms_transport_medialib_entry_get (transport);
+	xmms_medialib_entry_property_set_str (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, header);
+	xmms_medialib_entry_send_update (entry);
 }
 
 static void
-header_handler_contentlength (xmms_transport_t *transport, gchar *header)
+header_handler_contentlength (xmms_transport_t *transport, 
+							  xmms_medialib_session_t *session,
+							  gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -441,7 +508,9 @@ header_handler_contentlength (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_icy_metaint (xmms_transport_t *transport, gchar *header)
+header_handler_icy_metaint (xmms_transport_t *transport,
+							xmms_medialib_session_t *session,
+							gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -451,27 +520,23 @@ header_handler_icy_metaint (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_icy_name (xmms_transport_t *transport, gchar *header)
+header_handler_icy_name (xmms_transport_t *transport,
+						 xmms_medialib_session_t *session,
+						 gchar *header)
 {
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, header);
+	xmms_medialib_entry_property_set_str (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, 
+										  header);
 	xmms_medialib_entry_send_update (entry);
 }
 
 static void
-header_handler_icy_br (xmms_transport_t *transport, gchar *header)
-{
-	xmms_medialib_entry_t entry;
-
-	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, header);
-	xmms_medialib_entry_send_update (entry);
-}
-
-static void
-header_handler_icy_ok (xmms_transport_t *transport, gchar *header)
+header_handler_icy_ok (xmms_transport_t *transport, 
+					   xmms_medialib_session_t *session, 
+					   gchar *header)
 {
 	xmms_curl_data_t *data;
 
@@ -481,19 +546,26 @@ header_handler_icy_ok (xmms_transport_t *transport, gchar *header)
 }
 
 static void
-header_handler_icy_genre (xmms_transport_t *transport, gchar *header)
+header_handler_icy_genre (xmms_transport_t *transport, 
+						  xmms_medialib_session_t *session,
+						  gchar *header)
 {
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, header);
+	xmms_medialib_entry_property_set_str (session, entry, 
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, 
+										  header);
 	xmms_medialib_entry_send_update (entry);
 }
 
 static void
-header_handler_last (xmms_transport_t *transport, gchar *header)
+header_handler_last (xmms_transport_t *transport, 
+					 xmms_medialib_session_t *session, 
+					 gchar *header)
 {
 	xmms_curl_data_t *data;
+	xmms_medialib_entry_t entry;
 	gchar *mime = NULL;
 
 	data = xmms_transport_private_data_get (transport);
@@ -501,8 +573,12 @@ header_handler_last (xmms_transport_t *transport, gchar *header)
 	if (data->shoutcast)
 		mime = "audio/mpeg";
 
-	if (!data->know_mime)
-		xmms_transport_mimetype_set (transport, mime);
+	if (!data->know_mime) {
+		entry = xmms_transport_medialib_entry_get (transport);
+		xmms_medialib_entry_property_set_str (session, entry,
+			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
+		xmms_medialib_entry_send_update (entry);
+	}
 
 	data->know_mime = TRUE;
 }
@@ -511,12 +587,15 @@ static void
 handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 {
 	xmms_medialib_entry_t entry;
+	xmms_medialib_session_t *session;
 	xmms_curl_data_t *data;
 	gchar **tags;
 	guint i = 0;
 
 	data = xmms_transport_private_data_get (transport);
 	entry = xmms_transport_medialib_entry_get (transport);
+
+	session = xmms_medialib_begin ();
 
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
@@ -526,12 +605,15 @@ handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 			raw = tags[i] + 13;
 			raw[strlen (raw) - 1] = '\0';
 
-			xmms_medialib_entry_property_set_str (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, raw);
+			xmms_medialib_entry_property_set_str (session, entry, 
+												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, 
+												  raw);
 			xmms_medialib_entry_send_update (entry);
 		}
 
 		i++;
 	}
+
+	xmms_medialib_end (session);
 	g_strfreev (tags);
 }
-

@@ -18,9 +18,9 @@ typedef int socklen_t;
 #define SOCKET_ERROR (-1)
 #define XMMS_EINTR EINTR
 #define XMMS_EAGAIN EWOULDBLOCK
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
-#include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>

@@ -17,7 +17,6 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_transportplugin.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_magic.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -26,8 +25,6 @@
 #include <errno.h>
 
 #include <string.h>
-
-extern int errno;
 
 /*
  * Type definitions
@@ -65,6 +62,10 @@ xmms_plugin_get (void)
 				  "File transport " XMMS_VERSION,
 				  "Plain file transport");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	
@@ -76,7 +77,6 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_file_seek);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LMOD, xmms_file_lmod);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_SEEK);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
 	
@@ -92,11 +92,7 @@ xmms_file_can_handle (const gchar *url)
 {
 	g_return_val_if_fail (url, FALSE);
 
-	if ((g_strncasecmp (url, "file:", 5) == 0)) {
-		return TRUE;
-	}
-
-	return FALSE;
+	return !g_strncasecmp (url, "file://", 7);
 }
 
 static gboolean
@@ -112,11 +108,9 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 
 	XMMS_DBG ("xmms_file_init (%p, %s)", transport, url);
 
-	urlptr = strchr (url, '/');
-
-	if (!urlptr) {
-		return FALSE;
-	}
+	/* just in case our can_handle method isn't called correctly... */
+	g_assert (strlen (url) >= 7);
+	urlptr = &url[7];
 
 	if (stat (urlptr, &st) == -1) {
 		return FALSE;
@@ -137,8 +131,6 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 	data->urlptr = g_strdup (urlptr);
 	xmms_transport_private_data_set (transport, data);
 
-	xmms_transport_mimetype_set (transport, xmms_magic_mime_from_file (data->urlptr));
-	
 	return TRUE;
 }
 

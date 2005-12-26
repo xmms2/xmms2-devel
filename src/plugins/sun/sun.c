@@ -72,7 +72,7 @@ typedef struct xmms_sun_data_St {
 	gint req_buffer_size;
 
 	guint rate;
-	xmms_config_value_t *mixer_conf;
+	xmms_config_property_t *mixer_conf;
 	gchar *mixer_voldev;
 } xmms_sun_data_t;
 
@@ -109,6 +109,10 @@ xmms_plugin_get (void)
 			"SUN Output" XMMS_VERSION,
 			"OpenBSD SUN architecture output plugin");
 
+	if (!plugin) {
+		return NULL;
+	}
+
 	xmms_plugin_info_add (plugin, "URL", "http://www.nittionio.nu/");
 	xmms_plugin_info_add (plugin, "Author", "Daniel Svensson");
 	xmms_plugin_info_add (plugin, "E-Mail", "nano@nittionino.nu");
@@ -136,19 +140,19 @@ xmms_plugin_get (void)
 							xmms_sun_mixer_set);
 
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 			"device",
 			"/dev/audio",
 			NULL,
 			NULL);
 
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 			"mixer",
 			"/dev/mixer",
 			NULL,
 			NULL);                                                                                                                                                  
 	       
-	xmms_plugin_config_value_register (plugin,
+	xmms_plugin_config_property_register (plugin,
 			"volume",
 			"70/70",
 			NULL,
@@ -174,7 +178,7 @@ static gboolean
 xmms_sun_new (xmms_output_t *output) 
 {
 	xmms_sun_data_t *data;
-	const xmms_config_value_t *val;
+	const xmms_config_property_t *val;
 	const gchar *dev;
 	
 	XMMS_DBG ("XMMS_SUN_NEW"); 
@@ -184,7 +188,7 @@ xmms_sun_new (xmms_output_t *output)
 
 	val = xmms_plugin_config_lookup (
 			xmms_output_plugin_get (output), "mixer");
-	dev = xmms_config_value_string_get (val);
+	dev = xmms_config_property_get_string (val);
 	
 	data->mixerfd = open (dev, O_WRONLY);
 	if (!data->mixerfd == -1)
@@ -196,7 +200,7 @@ xmms_sun_new (xmms_output_t *output)
 	data->mixer_conf = xmms_plugin_config_lookup (
 			xmms_output_plugin_get (output), "volume");
 
-	xmms_config_value_callback_set (data->mixer_conf,
+	xmms_config_property_callback_set (data->mixer_conf,
 			xmms_sun_mixer_config_changed,
 			(gpointer) output);
 	
@@ -221,8 +225,8 @@ xmms_sun_destroy (xmms_output_t *output)
 		close (data->mixerfd);
 	}
 
-	xmms_config_value_callback_remove (data->mixer_conf,
-	                                   xmms_sun_mixer_config_changed);
+	xmms_config_property_callback_remove (data->mixer_conf,
+	                                      xmms_sun_mixer_config_changed);
 	g_free (data);
 }
 
@@ -240,7 +244,7 @@ xmms_sun_open (xmms_output_t *output)
 	xmms_sun_data_t *data;
 	audio_info_t info;
 	audio_encoding_t enc;
-	const xmms_config_value_t *val;
+	const xmms_config_property_t *val;
 	const gchar *dev;
 	
 	XMMS_DBG ("XMMS_SUN_OPEN");	
@@ -251,7 +255,7 @@ xmms_sun_open (xmms_output_t *output)
 	
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
 	
-	if ((dev = xmms_config_value_string_get (val)) == NULL) {
+	if ((dev = xmms_config_property_get_string (val)) == NULL) {
 		XMMS_DBG ("Device not found in config, using default");
 		dev = "/dev/audio";
 	}

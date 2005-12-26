@@ -82,12 +82,13 @@ print_info (const char *fmt, ...)
 }
 
 void
-print_hash (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
+print_hash (const void *key, xmmsc_result_value_type_t type, 
+			const void *value, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		printf ("%s = %s\n", (char *)key, (char *)value);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int)value);
+		printf ("%s = %d\n", (char *)key, XPOINTER_TO_INT (value));
 	}
 }
 
@@ -355,6 +356,18 @@ cmd_addpls (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
+cmd_main_status (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res = xmmsc_main_status (conn);
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Woooops");
+	}
+	xmmsc_result_dict_foreach (res, print_hash, NULL);
+	xmmsc_result_unref (res);
+}
+
+static void
 cmd_add (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	int i;
@@ -378,7 +391,7 @@ cmd_radd (xmmsc_connection_t *conn, int argc, char **argv)
 
 	for (i = 2; argv[i]; i++) {
 		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			printf ("not a directoy: %s\n", argv[i]);
+			printf ("not a directory: %s\n", argv[i]);
 			continue;
 		}
 
@@ -421,26 +434,44 @@ cmd_sort (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
+int
+cmp (const void *av, const void *bv)
+{
+	int result;
+	int a = *(int *)av;
+	int b = *(int *)bv;
+
+	result = (a > b ? -1 : 1);
+
+	if (a == b) 
+		result = 0;
+
+	return result;
+}
+
 static void
 cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	int i;
+	int i, j, size;
 	xmmsc_result_t *res;
+	int *sort = g_malloc (sizeof (int) * argc);
 
 	if (argc < 3) {
 		print_error ("Remove needs a ID to be removed");
 	}
 
-	for (i = 2; argv[i]; i++) {
-		int id;
+	i = 0;
+	for (j = 2; j < argc; j++) {
 		char *endptr = NULL;
+		sort[i] = strtol (argv[j], &endptr, 10);
+		if (endptr != argv[j]) i++;
+	}
+	size = i;
 
-		id = strtol (argv[i], &endptr, 10);
-		if (endptr == argv[i]) {
-			fprintf (stderr, "Skipping invalid id '%s'\n", argv[i]);
-			continue;
-		}
+	qsort(sort, size, sizeof (int), &cmp);
 
+	for (i = 0; i < size; i++) {
+		int id = sort[i];
 		res = xmmsc_playlist_remove (conn, id);
 		xmmsc_result_wait (res);
 		if (xmmsc_result_iserror (res)) {
@@ -448,10 +479,13 @@ cmd_remove (xmmsc_connection_t *conn, int argc, char **argv)
 		}
 		xmmsc_result_unref (res);
 	}
+	
+	g_free (sort);
 }
 
 static void
-print_entry (const void *key, xmmsc_result_value_type_t type, const void *value, void *udata)
+print_entry (const void *key, xmmsc_result_value_type_t type, 
+			 const void *value, const char *source, void *udata)
 {
 	gchar *conv;
 	gsize r, w;
@@ -459,10 +493,10 @@ print_entry (const void *key, xmmsc_result_value_type_t type, const void *value,
 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
-		printf ("%s = %s\n", (char *)key, conv);
+		printf ("[%s] %s = %s\n", source, (char *)key, conv);
 		g_free (conv);
 	} else {
-		printf ("%s = %d\n", (char *)key, (int) value);
+		printf ("[%s] %s = %d\n", source, (char *)key, XPOINTER_TO_INT (value));
 	}
 
 }
@@ -481,7 +515,7 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 			res = xmmsc_medialib_get_info (conn, id);
 			xmmsc_result_wait (res);
 
-			xmmsc_result_dict_foreach (res, print_entry, NULL);
+			xmmsc_result_propdict_foreach (res, print_entry, NULL);
 			xmmsc_result_unref (res);
 		}
 
@@ -494,10 +528,37 @@ cmd_info (xmmsc_connection_t *conn, int argc, char **argv)
 		
 		res = xmmsc_medialib_get_info (conn, id);
 		xmmsc_result_wait (res);
-		xmmsc_result_dict_foreach (res, print_entry, NULL);
+		xmmsc_result_propdict_foreach (res, print_entry, NULL);
 		xmmsc_result_unref (res);
 	}
 
+}
+
+static void
+cmd_current (xmmsc_connection_t *conn, int argc, char **argv)
+{ 
+	xmmsc_result_t *res;
+	gchar print_text[256];
+	guint id;
+
+	res = xmmsc_playback_current_id (conn);
+	xmmsc_result_wait (res);
+	if (!xmmsc_result_get_uint (res, &id))
+		print_error ("Broken result");
+	xmmsc_result_unref (res);
+
+	res = xmmsc_medialib_get_info (conn, id);
+	xmmsc_result_wait (res);
+
+	if (argc > 2) {
+	  xmmsc_entry_format (print_text, sizeof(print_text), argv[2], res);	
+	} else {
+	  xmmsc_entry_format (print_text, sizeof(print_text), 
+		              "${artist} - ${title}", res);
+	}
+
+	printf("%s\n", print_text);
+	xmmsc_result_unref (res);
 }
 
 static int
@@ -716,6 +777,47 @@ cmd_seek (xmmsc_connection_t *conn, int argc, char **argv)
 	if (xmmsc_result_iserror (res))
 		fprintf (stderr, "Couldn't seek to %d ms: %s\n", ms, xmmsc_result_get_error (res));
         xmmsc_result_unref (res);
+
+}
+
+
+static void
+cmd_plugin_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	guint type;
+
+	if (argc < 3) {
+		type = XMMS_PLUGIN_TYPE_ALL;
+	} else if (g_strcasecmp (argv[2], "output") == 0) {
+		type = XMMS_PLUGIN_TYPE_OUTPUT;
+	} else if (g_strcasecmp (argv[2], "transport") == 0) {
+		type = XMMS_PLUGIN_TYPE_TRANSPORT;
+	} else if (g_strcasecmp (argv[2], "decoder") == 0) {
+		type = XMMS_PLUGIN_TYPE_DECODER;
+	} else if (g_strcasecmp (argv[2], "effect") == 0) {
+		type = XMMS_PLUGIN_TYPE_EFFECT;
+	} else if (g_strcasecmp (argv[2], "playlist") == 0) {
+		type = XMMS_PLUGIN_TYPE_PLAYLIST;
+	} else {
+		print_error ("no such plugin type!");
+	}
+
+	res = xmmsc_plugin_list (conn, type);
+	xmmsc_result_wait (res);
+
+	while (xmmsc_result_list_valid (res)) {
+		gchar *name, *shortname, *desc;
+		xmmsc_result_get_dict_entry_str (res, "name", &name);
+		xmmsc_result_get_dict_entry_str (res, "shortname", &shortname);
+		xmmsc_result_get_dict_entry_str (res, "description", &desc);
+
+		printf ("%s - %s\n", shortname, desc);
+		
+		xmmsc_result_list_next (res);
+	}
+
+	xmmsc_result_unref (res);
 
 }
 
@@ -971,7 +1073,7 @@ cmd_status (xmmsc_connection_t *conn, int argc, char **argv)
 	XMMS_CALLBACK_SET (conn, xmmsc_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed, handle_mediainfo_update, conn);
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
-	xmmsc_setup_with_gmain (conn);
+	xmmsc_mainloop_gmain_init (conn);
 
 	g_main_loop_run (ml);
 }
@@ -1008,7 +1110,7 @@ cmds commands[] = {
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
 	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
-	{ "clear", "clears the playlist and stops playback", cmd_clear },
+	{ "clear", "clears the playlist", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
 	{ "sort", "sort the playlist", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
@@ -1028,8 +1130,11 @@ cmds commands[] = {
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
+	{ "current", "formatted information about the current entry", cmd_current },
 	{ "config", "set a config value", cmd_config },
 	{ "configlist", "list all config values", cmd_config_list },
+	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
+	{ "mainstats", "get status msg from serevr", cmd_main_status },
 	/*{ "statistics", "get statistics from server", cmd_stats },
 	 */
 	{ "quit", "make the server quit", cmd_quit },
@@ -1060,10 +1165,10 @@ main (int argc, char **argv)
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
 
-	connection = xmmsc_init ("XMMS2 CLI");
+	connection = xmmsc_init ("xmms2-cli");
 
 	if (!connection) {
-		print_error ("Could not init xmmsc_connection, this is a memory problem, fix your os!");
+		print_error ("Could not init xmmsc_connection!");
 	}
 
 	path = getenv ("XMMS_PATH");

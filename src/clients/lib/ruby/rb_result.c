@@ -239,9 +239,8 @@ static VALUE string_get (RbResult *res)
 	return rb_str_new2 (s ? s : "");
 }
 
-static void xhash_to_rhash (const void *key,
-                            xmmsc_result_value_type_t type,
-                            const void *value, VALUE *hash)
+static VALUE cast_result_value (xmmsc_result_value_type_t type,
+                                const void *value)
 {
 	VALUE val;
 
@@ -256,22 +255,62 @@ static void xhash_to_rhash (const void *key,
 			val = UINT2NUM ((uint32_t) value);
 			break;
 		default:
+			val = Qnil;
 			break;
 	}
 
-	rb_hash_aset (*hash, ID2SYM (rb_intern (key)), val);
+	return val;
+}
+
+static void dict_to_hash (const void *key,
+                          xmmsc_result_value_type_t type,
+                          const void *value, void *udata)
+{
+	VALUE *h = udata;
+
+	rb_hash_aset (*h, ID2SYM (rb_intern (key)),
+	              cast_result_value (type, value));
+}
+
+static void propdict_to_hash (const void *key,
+                              xmmsc_result_value_type_t type,
+                              const void *value, const char *src,
+                              void *udata)
+{
+	VALUE *h = udata, h2, rbsrc;
+
+	rbsrc = ID2SYM (rb_intern (src));
+
+	h2 = rb_hash_aref (*h, rbsrc);
+	if (NIL_P (h2)) {
+		h2 = rb_hash_new ();
+		rb_hash_aset (*h, rbsrc, h2);
+	}
+
+	rb_hash_aset (h2, ID2SYM (rb_intern (key)),
+	              cast_result_value (type, value));
 }
 
 static VALUE hashtable_get (RbResult *res)
 {
-	VALUE rhash = rb_hash_new ();
+	VALUE hash = rb_hash_new ();
 
 	if (!xmmsc_result_dict_foreach (res->real,
-	                                (xmmsc_foreach_func) xhash_to_rhash,
-	                                &rhash))
+	                                dict_to_hash, &hash))
 		rb_raise (eValueError, "cannot retrieve value");
 
-	return rhash;
+	return hash;
+}
+
+static VALUE propdict_get (RbResult *res)
+{
+	VALUE hash = rb_hash_new ();
+
+	if (!xmmsc_result_propdict_foreach (res->real,
+	                                    propdict_to_hash, &hash))
+		rb_raise (eValueError, "cannot retrieve value");
+
+	return hash;
 }
 
 static VALUE value_get (RbResult *res)
@@ -290,6 +329,9 @@ static VALUE value_get (RbResult *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			ret = hashtable_get (res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_PROPDICT:
+			ret = propdict_get (res);
 			break;
 		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
 		default:
@@ -339,6 +381,24 @@ static VALUE c_value_get (VALUE self)
 		return value_get (res);
 }
 
+static VALUE decode_url (VALUE self, VALUE str)
+{
+	RbResult *res;
+	const char *cstr, *tmp;
+
+	Data_Get_Struct (self, RbResult, res);
+
+	cstr = StringValuePtr (str);
+
+	tmp = xmmsc_result_decode_url (res->real, cstr);
+	if (!tmp) {
+		rb_raise (eResultError, "cannot decode URL - %s", cstr);
+		return Qnil;
+	}
+
+	return rb_str_new2 (tmp);
+}
+
 void Init_Result (VALUE mXmmsClient)
 {
 	cResult = rb_define_class_under (mXmmsClient, "Result", rb_cObject);
@@ -352,8 +412,10 @@ void Init_Result (VALUE mXmmsClient)
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
+	rb_define_method (cResult, "decode_url", decode_url, 1);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
+	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_INSERT);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SHUFFLE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_REMOVE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_CLEAR);

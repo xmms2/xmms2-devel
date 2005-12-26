@@ -26,7 +26,6 @@
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsclientpriv/xmmsclient_queue.h"
-#include "xmmsclientpriv/xmmsclient_hash.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_stdint.h"
@@ -36,10 +35,10 @@
 struct xmmsc_ipc_St {
 	xmms_ipc_transport_t *transport;
 	xmms_ipc_msg_t *read_msg;
+	x_list_t *results_list;
 	x_queue_t *out_msg;
 	char *error;
 	bool disconnect;
-	x_hash_t *results_table;
 	void *lockdata;
 	void (*lockfunc)(void *lock);
 	void (*unlockfunc)(void *lock);
@@ -161,7 +160,7 @@ xmmsc_ipc_init (void)
 	xmmsc_ipc_t *ipc;
 	ipc = x_new0 (xmmsc_ipc_t, 1);
 	ipc->disconnect = false;
-	ipc->results_table = x_hash_new (NULL, NULL);
+	ipc->results_list = NULL;
 	ipc->out_msg = x_queue_new ();
 
 	return ipc;
@@ -198,7 +197,7 @@ xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 	x_return_if_fail (res);
 
 	xmmsc_ipc_lock (ipc);
-	x_hash_insert (ipc->results_table, XUINT_TO_POINTER (xmmsc_result_cid (res)), res);
+	ipc->results_list = x_list_prepend (ipc->results_list, res);
 	xmmsc_ipc_unlock (ipc);
 }
 
@@ -206,22 +205,38 @@ xmmsc_result_t *
 xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid)
 {
 	xmmsc_result_t *res;
+	x_list_t *n;
 	x_return_val_if_fail (ipc, NULL);
 
+	res = NULL;
+
 	xmmsc_ipc_lock (ipc);
-	res = x_hash_lookup (ipc->results_table, XUINT_TO_POINTER (cid));
+	for (n = ipc->results_list; n; n = x_list_next (n)) {
+		if (cid == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
+			res = (xmmsc_result_t *)n->data;
+			ipc->results_list = x_list_remove (ipc->results_list, n);
+			break;
+		}
+	}
 	xmmsc_ipc_unlock (ipc);
+
 	return res;
 }
 
 void
 xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 {
+	x_list_t *n;
 	x_return_if_fail (ipc);
 	x_return_if_fail (res);
 
 	xmmsc_ipc_lock (ipc);
-	x_hash_remove (ipc->results_table, XUINT_TO_POINTER (xmmsc_result_cid (res)));
+	for (n = ipc->results_list; n; n = x_list_next (n)) {
+		if (xmmsc_result_cid (res) == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
+			ipc->results_list = x_list_remove (ipc->results_list, n->data);
+			break;
+		}
+	}
 	xmmsc_ipc_unlock (ipc);
 }
 
@@ -291,7 +306,7 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (!ipc)
 		return;
 
-	x_hash_destroy (ipc->results_table);
+	x_list_free (ipc->results_list);
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
 	}

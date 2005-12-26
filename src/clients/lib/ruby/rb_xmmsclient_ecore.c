@@ -28,7 +28,18 @@ static VALUE c_add_to_ecore_mainloop (VALUE self)
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	xmmsc_setup_with_ecore (xmms->real);
+	xmms->ecore_handle = xmmsc_mainloop_ecore_init (xmms->real);
+
+	return self;
+}
+
+static VALUE c_remove_from_ecore_mainloop (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	xmmsc_mainloop_ecore_shutdown (xmms->real, xmms->ecore_handle);
 
 	return self;
 }
@@ -46,4 +57,6 @@ void Init_xmmsclient_ecore (void)
 
 	rb_define_method (c, "add_to_ecore_mainloop",
 	                  c_add_to_ecore_mainloop, 0);
+	rb_define_method (c, "remove_from_ecore_mainloop",
+	                  c_remove_from_ecore_mainloop, 0);
 }

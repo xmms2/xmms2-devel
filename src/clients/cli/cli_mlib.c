@@ -31,6 +31,7 @@ static void mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **arg
 static void mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_set (xmmsc_connection_t *conn, int argc, char **argv);
 
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", mlib_add },
@@ -48,9 +49,37 @@ cmds mlib_commands[] = {
 	{ "remove_playlist", "[playlistname] - Remove a playlist", mlib_playlist_remove },
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", mlib_rehash },
-
+	{ "set", "[id, key, value, (source)] Set a property together with a medialib entry.", mlib_set },
 	{ NULL, NULL, NULL },
 };
+
+static void
+mlib_set (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 6) {
+		print_error ("usage: set [id] [key] [value] ([source])");
+	}
+
+	if (argc == 7) {
+		res = xmmsc_medialib_entry_property_set_with_source (conn,
+															 atoi (argv[3]),
+															 argv[6],
+															 argv[4],
+															 argv[5]);
+															 
+	} else {
+		res = xmmsc_medialib_entry_property_set (conn,
+												 atoi (argv[3]),
+												 argv[4],
+												 argv[5]);
+	}
+
+	xmmsc_result_wait (res);
+	xmmsc_result_unref (res);
+
+}
 
 static void
 mlib_add (xmmsc_connection_t *conn, int argc, char **argv)
@@ -246,48 +275,29 @@ mlib_query (xmmsc_connection_t *conn, int argc, char **argv)
 static void
 mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
-	char query[1024];
 	GList *n = NULL;
 	xmmsc_result_t *res;
-	gint id;
 
 	if (argc < 4) {
 		print_error ("Supply a playlist name");
 	}
-
-	g_snprintf (query, sizeof (query), "SELECT id FROM Playlist WHERE name='%s'", argv[3]);
-
-	res = xmmsc_medialib_select (conn, query);
+	
+	res = xmmsc_medialib_playlist_list (conn, argv[3]);
 	xmmsc_result_wait (res);
 
-	/* yes, result is a hashlist,
-	   but there should only be one entry */
-	xmmsc_result_get_dict_entry_int32 (res, "id", &id);
-	if (!id)
-		print_error ("No such playlist!");
-
-	g_snprintf (query, sizeof (query), "SELECT entry FROM Playlistentries WHERE playlist_id = %d", id);
-	xmmsc_result_unref (res);
-
-	res = xmmsc_medialib_select (conn, query);
-	xmmsc_result_wait (res);
-
-	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-		gchar *entry;
-		xmmsc_result_get_dict_entry_str (res, "entry", &entry);
-		if (!entry)
-			print_error ("No such playlist!");
-		if (g_strncasecmp (entry, "mlib", 4) == 0) {
-			char *p = entry+7;
-			n = g_list_prepend (n, XINT_TO_POINTER (atoi(p)));
-		}
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
 	}
 
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		guint id;
+		xmmsc_result_get_uint(res, &id);
+		n = g_list_prepend (n, XINT_TO_POINTER(id));
+	}
 	n = g_list_reverse (n);
 	format_pretty_list (conn, n);
 	g_list_free (n);
 	xmmsc_result_unref (res);
-
 }
 
 static void
@@ -328,23 +338,6 @@ mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv)
 	xmmsc_result_unref (res);
 }
 
-void
-playlist_list_cb (const void *key, xmmsc_result_value_type_t type, const void *value, void *data)
-{
-	const gchar *str = value;
-
-	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
-		/* Hide all lists that start with _ */
-		if (str[0] == '_')
-			return;
-
-		printf("%s:%s\n", (char *)key, (char *)value);
-	} else {
-		printf("%s:%d\n", (char *)key, (int32_t)value);
-	}
-
-}
-
 static void
 mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
 {
@@ -357,8 +350,14 @@ mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 
-	g_print("id:name\n");
-	xmmsc_result_dict_foreach (res, playlist_list_cb, NULL);
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		char *name;
+		xmmsc_result_get_string(res, &name);
+		/* Hide all lists that start with _ */
+		if (name[0] != '_')
+			printf("%s\n", name);
+	}
+	xmmsc_result_unref (res);
 }
 
 static void

@@ -6,15 +6,18 @@ import SCons
 import re
 import string
 import new
+import gittools
 from marshal import dump
 
-try:
-	head = " (git-commit: "+file(".git/HEAD").read().strip()+")"
-except:
-	head = ""
-	pass
 
-XMMS_VERSION = "0.1 DR2.2" + head
+commithash, changed = gittools.get_info()
+
+if changed:
+	changed = " + local changes"
+else:
+	changed = ""
+
+XMMS_VERSION = "0.2 DrAlban (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
@@ -133,6 +136,7 @@ base_env.SourceCode('src/xmms/converter.c', b)
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
+	      "%BINDIR%":base_env["PREFIX"]+"/bin",
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix}
 
@@ -160,6 +164,18 @@ def scan_headers(name):
 scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
+
+### INSTALL SCRIPTS
+def scan_scripts(name):
+	dir = "scripts/" + name
+	if os.path.isdir(dir):
+		for d in os.listdir(dir):
+			newf = dir+"/"+d
+			if os.path.isfile(newf):
+				base_env.add_script(name, newf)
+
+scan_scripts("startup.d")
+scan_scripts("shutdown.d")
 
 ### INSTALL MANUAL PAGES!
 

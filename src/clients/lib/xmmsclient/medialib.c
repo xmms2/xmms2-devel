@@ -25,7 +25,7 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_stringport.h"
 
-static const char* constraint_templates[4] = {"LOWER(m%d.key) = LOWER(%s)",
+static const char* constraint_templates[4] = {"m%d.key = LOWER(%s)",
 					      "LOWER(m%d.value) LIKE LOWER(%s)",
 					      "m%d.id = m%d.id",
 					      "Media AS m%d"};
@@ -372,6 +372,23 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 }
 
 /**
+ * This will make the server list the given playlist. 
+ */
+xmmsc_result_t *
+xmmsc_medialib_playlist_list (xmmsc_connection_t *conn, const char *playlist)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_LIST);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
+/**
  * Returns a list of all available playlists
  */
 xmmsc_result_t *
@@ -565,6 +582,51 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
 
 	return res;
 
+}
+
+/**
+ * Associate a value with a medialib entry. Uses default
+ * source which is client/<clientname>
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
+                                   char *key, char *value)
+{
+	xmmsc_result_t *res;
+	char tmp[256];
+
+	snprintf (tmp, 256, "client/%s", c->clientname);
+	res = xmmsc_medialib_entry_property_set_with_source (c, id,
+                                                             tmp, key,
+                                                             value);
+	return res;
+}
+
+
+/**
+ * Set a custom field in the medialib associated with a entry,
+ * the same as #xmmsc_result_entry_property_set but with specifing
+ * your own source.
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, 
+                                               uint32_t id,
+                                               char *source, char *key, 
+                                               char *value)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
+	                        XMMS_IPC_CMD_PROPERTY_SET);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_string (msg, source);
+	xmms_ipc_msg_put_string (msg, key);
+	xmms_ipc_msg_put_string (msg, value);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
 }
 
 /** @} */

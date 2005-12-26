@@ -33,18 +33,7 @@ def config(env):
 	env.pkgconfig("gmodule-2.0", fail=True)
 	env.pkgconfig("gthread-2.0", fail=True)
 	env.pkgconfig("sqlite3", fail=True)
-	print "checking for sqlite version < 3.2.4...",
-	e = env.conf.TryRun("#include <sqlite3.h>\n int main() { if (SQLITE_VERSION_NUMBER > 3002004) { return 1; } else { return 0; } }", ".c")
-	if e[0] == 1:
-		print "ok!"
-	else:
-		print "no!"
-		print "*"*78
-		print "There is a KNOWN error with this version of SQLite and XMMS2."
-		print "PLEASE downgrade SQLite or UPGRADE XMMS2 to latest devel branch"
-		print "*"*78
-		raise RuntimeError("Abort!")
-		
+	
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
 	# we have a xmms2d - we might want plugins!

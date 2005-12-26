@@ -26,7 +26,7 @@
 typedef gboolean (*xmms_medialib_row_array_method_t) (xmms_object_cmd_value_t **row, gpointer udata);
 typedef gboolean (*xmms_medialib_row_table_method_t) (GHashTable *row, gpointer udata);
 
-sqlite3 *xmms_sqlite_open (guint *nextid, gboolean *c);
+sqlite3 *xmms_sqlite_open (gboolean *c);
 gboolean xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, gpointer udata, const gchar *query, ...);
 gboolean xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, gpointer udata, const gchar *query, ...);
 gboolean xmms_sqlite_exec (sqlite3 *sql, const char *query, ...);
