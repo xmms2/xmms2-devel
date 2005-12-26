@@ -10,6 +10,5 @@ usr/lib/xmms2/libxmms_diskwrite.so*
 usr/lib/xmms2/libxmms_html.so*
 usr/lib/xmms2/libxmms_null.so*
 usr/share/xmms2/dismantled-the_swarm_clip.ogg
-usr/share/xmms2/scripts/startup.d/xmms2-et-launcher.sh
 usr/share/man/man8/xmms2d.8.gz
 usr/share/man/man1/xmms2.1.gz

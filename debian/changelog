@@ -1,3 +1,11 @@
+xmms2 (0.2+git20051227-0) sarge; urgency=low
+
+  * Fix: add libsidplay2-dev to the build-depends.
+  * Fix: remove /usr/share/xmms2/scripts/startup.d/xmms2-et-launcher.sh from
+    xmms2core.deb
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Tue, 27 Dec 2005 00:27:58 +0100
+
 xmms2 (0.2+git20051226-0) sarge; urgency=low
 
   * Version 0.2 (Dr. Alban) (dfeb13c8dca6f2c15b945cea1919528f4a3d53d9).
