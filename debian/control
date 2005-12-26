@@ -38,7 +38,7 @@ Description: XMMS2 - core package
 
 Package: xmms2-et
 Architecture: any
-Depends: debconf (>= 0.2.78), xmms2-core
+Depends: debconf (>= 0.2.78), xmms2-core (= ${Source-Version})
 Description: XMMS2 - phone home package
  This package contains a small program that (anonymously) reports back
  information on your computer and xmms2 configuration to the xmms2 developers.
