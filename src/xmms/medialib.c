@@ -894,7 +894,7 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
 		ret = id;
 	} else {
 		if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-									  "select MAX (id) from Media")) {
+									  "select ifnull(MAX (id),0) from Media")) {
 			return 0;
 		}
 
