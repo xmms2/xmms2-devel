@@ -249,6 +249,13 @@ class PropDict(dict):
 		"""Change list of source preference"""
 		self._sources = sources
 
+	def has_key(self, item):
+		try:
+			self.__getitem__(item)
+			return True
+		except KeyError:
+			return False
+
 	def __getitem__(self, item):
 		if isinstance(item, str):
 			for src in self._sources:
