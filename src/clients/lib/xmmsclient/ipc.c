@@ -53,7 +53,7 @@ struct xmmsc_ipc_St {
 static inline void xmmsc_ipc_lock (xmmsc_ipc_t *ipc);
 static inline void xmmsc_ipc_unlock (xmmsc_ipc_t *ipc);
 static void xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg);
-
+static int result_find_cb (xmmsc_result_t *res, const void *udata);
 
 int
 xmmsc_ipc_io_in_callback (xmmsc_ipc_t *ipc)
@@ -204,38 +204,38 @@ xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 xmmsc_result_t *
 xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid)
 {
-	xmmsc_result_t *res;
 	x_list_t *n;
 	x_return_val_if_fail (ipc, NULL);
 
-	res = NULL;
-
 	xmmsc_ipc_lock (ipc);
-	for (n = ipc->results_list; n; n = x_list_next (n)) {
-		if (cid == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
-			res = (xmmsc_result_t *)n->data;
-			break;
-		}
-	}
+	n = x_list_find_custom (ipc->results_list, XINT_TO_POINTER (cid),
+	                        (XCompareFunc) result_find_cb);
 	xmmsc_ipc_unlock (ipc);
 
-	return res;
+	return n ? (xmmsc_result_t *) n->data : NULL;
 }
 
 void
 xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 {
 	x_list_t *n;
+	unsigned int cid;
+
 	x_return_if_fail (ipc);
 	x_return_if_fail (res);
 
+	cid = xmmsc_result_cid (res);
+
 	xmmsc_ipc_lock (ipc);
-	for (n = ipc->results_list; n; n = x_list_next (n)) {
-		if (xmmsc_result_cid (res) == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
-			ipc->results_list = x_list_remove (ipc->results_list, n->data);
-			break;
-		}
+
+	n = x_list_find_custom (ipc->results_list, XINT_TO_POINTER (cid),
+	                        (XCompareFunc) result_find_cb);
+	if (!n) {
+		x_internal_error ("cannot find result");
+	} else {
+		ipc->results_list = x_list_delete_link (ipc->results_list, n);
 	}
+
 	xmmsc_ipc_unlock (ipc);
 }
 
@@ -305,7 +305,11 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (!ipc)
 		return;
 
-	x_list_free (ipc->results_list);
+	if (ipc->results_list) {
+		x_internal_error ("result list not empty");
+		x_list_free (ipc->results_list);
+	}
+
 	if (ipc->transport) {
 		xmms_ipc_transport_destroy (ipc->transport);
 	}
@@ -375,4 +379,10 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	}
 
 	xmmsc_result_run (res, msg);
+}
+
+static int
+result_find_cb (xmmsc_result_t *res, const void *udata)
+{
+	return XPOINTER_TO_UINT (udata) != xmmsc_result_cid (res);
 }
