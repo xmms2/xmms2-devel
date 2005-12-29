@@ -549,10 +549,15 @@ static gboolean
 xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *err)
 {
 	GHashTable *dict;
+	gint len;
 	g_return_val_if_fail (file, FALSE);
 
 	g_mutex_lock (playlist->mutex);
-	if (pos > (playlist->list->len-1) || pos < 0) {
+	len = playlist->list->len;
+	if (len != 0)
+		len --;
+
+	if (pos > len || pos < 0) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not insert entry outside of playlist!");
 		g_mutex_unlock (playlist->mutex);
 		return FALSE;
