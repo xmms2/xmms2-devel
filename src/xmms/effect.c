@@ -179,9 +179,11 @@ xmms_effect_new (xmms_plugin_t *plugin)
 	g_assert (effect->destroy);
 
 	/* check whether this plugin is enabled. */
-	effect->cfg_enabled =
-		xmms_plugin_config_property_register (plugin, "enabled", "0",
-		                                   on_enabled_changed, effect);
+	effect->cfg_enabled = xmms_plugin_config_lookup (plugin, "enabled");
+	g_assert (effect->cfg_enabled);
+
+	xmms_config_property_callback_set (effect->cfg_enabled,
+	                                   on_enabled_changed, effect);
 	effect->enabled = !!xmms_config_property_get_int (effect->cfg_enabled);
 
 	return effect;
@@ -218,6 +220,16 @@ xmms_effect_plugin_verify (xmms_plugin_t *plugin)
 	                                XMMS_PLUGIN_METHOD_DESTROY,
 	                                XMMS_PLUGIN_METHOD_PROCESS,
 	                                NULL);
+}
+
+gboolean
+xmms_effect_plugin_register (xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, FALSE);
+
+	return !!xmms_plugin_config_property_register (plugin,
+	                                               "enabled", "0",
+	                                               NULL, NULL);
 }
 
 /** @} */
