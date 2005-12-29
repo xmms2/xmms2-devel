@@ -192,8 +192,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 }
 
 /**
- * Move a playlist entry relative to it's current postion.
- * eg move (id, -1) will move id one step *up* in the playlist.
+ * Move a playlist entry to a new position in the playlist. 
  */
 xmmsc_result_t *
 xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)

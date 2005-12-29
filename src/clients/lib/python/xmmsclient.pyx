@@ -1041,10 +1041,8 @@ cdef class XMMS:
 
 	def playlist_move(self, id, movement, cb = None):
 		"""
-		Move a playlist entry relative to its current position in
-		the playlist. The movement should be a postive value when
-		moving down in the playlist and a negative value when moving
-		up in the playlist.
+		Move a playlist entry to an absolute position in 
+		the playlist.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
