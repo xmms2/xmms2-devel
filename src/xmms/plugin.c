@@ -949,17 +949,12 @@ plugin_register_specific (xmms_plugin_t *plugin)
 static gboolean
 plugin_register_common (xmms_plugin_t *plugin)
 {
-	const GList *info;
-	const xmms_plugin_info_t *i;
+	const GList *l;
 
-	info = xmms_plugin_info_get (plugin);
-	while (info) {
-		i = info->data;
-		if (i) {
-			XMMS_DBG ("INFO: %s = %s", i->key, i->value);
-		}
+	for (l = xmms_plugin_info_get (plugin); l; l = g_list_next (l)) {
+		const xmms_plugin_info_t *i = l->data;
 
-		info = g_list_next (info);
+		XMMS_DBG ("INFO: %s = %s", i->key, i->value);
 	}
 
 	xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
