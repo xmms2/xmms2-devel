@@ -167,8 +167,9 @@ xmms_plugin_new (xmms_plugin_type_t type,
 			if (api_version != XMMS_EFFECT_PLUGIN_API_VERSION)
 				api_mismatch = TRUE;
 			break;
-		case XMMS_PLUGIN_TYPE_ALL:
-			break;
+		default:
+			xmms_log_error ("Invalid plugin type for plugin %s!", name);
+			return NULL;
 	}
 
 	if (api_mismatch) {
