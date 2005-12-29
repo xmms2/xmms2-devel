@@ -142,6 +142,7 @@ xmms_plugin_new (xmms_plugin_type_t type,
 	xmms_plugin_t *plugin;
 	gboolean api_mismatch = FALSE;
 
+	g_return_val_if_fail (shortname, NULL);
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (description, NULL);
 
