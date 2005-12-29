@@ -255,7 +255,10 @@ void
 xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 {
 	xmms_plugin_info_t *info;
+
 	g_return_if_fail (plugin);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
 
 	info = g_new0 (xmms_plugin_info_t, 1);
 	info->key = g_strdup (key);
