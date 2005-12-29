@@ -81,6 +81,9 @@ static GList *xmms_plugin_list;
 static void xmms_plugin_destroy (xmms_object_t *object);
 static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
 static gboolean plugin_verify (xmms_plugin_t *plugin);
+static gboolean plugin_register (xmms_plugin_t *plugin);
+static gboolean plugin_register_specific (xmms_plugin_t *plugin);
+static gboolean plugin_register_common (xmms_plugin_t *plugin);
 
 /*
  * Public functions
@@ -610,36 +613,28 @@ xmms_plugin_scan_directory (const gchar *dir)
 			continue;
 		}
 
+		g_free (path);
+
 		plugin_init = sym;
 
 		plugin = plugin_init ();
 
 		if (!plugin) {
 			g_module_close (module);
-		} else if (!plugin_verify (plugin)) {
-			xmms_log_error ("Invalid plugin: %s", plugin->name);
-
-			plugin->module = module;
-			xmms_object_unref (plugin);
-		} else if (plugin) {
-			const GList *info;
-			const xmms_plugin_info_t *i;
-
-			XMMS_DBG ("Adding plugin: %s", plugin->name);
-			info = xmms_plugin_info_get (plugin);
-			while (info) {
-				i = info->data;
-				if (i)
-					XMMS_DBG ("INFO: %s = %s", i->key,i->value);
-				info = g_list_next (info);
-			}
-
-			plugin->module = module;
-			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
+			continue;
 		}
 
-		g_free (path);
+		plugin->module = module;
+
+		if (!plugin_verify (plugin)) {
+			xmms_log_error ("Invalid plugin: %s", plugin->name);
+			xmms_object_unref (plugin);
+		} else if (!plugin_register (plugin)) {
+			xmms_log_error ("Couldn't register plugin: %s", plugin->name);
+			xmms_object_unref (plugin);
+		}
 	}
+
 	g_dir_close (d);
 
 	return TRUE;
@@ -924,6 +919,52 @@ plugin_verify (xmms_plugin_t *plugin)
 	}
 
 	return f ? f (plugin) : TRUE;
+}
+
+static gboolean
+plugin_register (xmms_plugin_t *plugin)
+{
+	XMMS_DBG ("Registering plugin: %s", plugin->name);
+
+	return plugin_register_specific (plugin) &&
+	       plugin_register_common (plugin);
+}
+
+static gboolean
+plugin_register_specific (xmms_plugin_t *plugin)
+{
+	gboolean (*f)(xmms_plugin_t *) = NULL;
+
+	switch (xmms_plugin_type_get (plugin)) {
+		case XMMS_PLUGIN_TYPE_EFFECT:
+			f = xmms_effect_plugin_register;
+			break;
+		default:
+			break;
+	}
+
+	return f ? f (plugin) : TRUE;
+}
+
+static gboolean
+plugin_register_common (xmms_plugin_t *plugin)
+{
+	const GList *info;
+	const xmms_plugin_info_t *i;
+
+	info = xmms_plugin_info_get (plugin);
+	while (info) {
+		i = info->data;
+		if (i) {
+			XMMS_DBG ("INFO: %s = %s", i->key, i->value);
+		}
+
+		info = g_list_next (info);
+	}
+
+	xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
+
+	return TRUE;
 }
 
 /**
