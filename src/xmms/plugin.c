@@ -134,40 +134,37 @@ static gboolean plugin_register_common (xmms_plugin_t *plugin);
  */
 xmms_plugin_t *
 xmms_plugin_new (xmms_plugin_type_t type, 
-		 gint api_version,
+		 gint api_ver,
 		 const gchar *shortname,
 		 const gchar *name,
 		 const gchar *description)
 {
 	xmms_plugin_t *plugin;
-	gboolean api_mismatch = FALSE;
+	gboolean api_mismatch;
 
+	g_return_val_if_fail (shortname, NULL);
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (description, NULL);
 
 	switch (type) {
 		case XMMS_PLUGIN_TYPE_TRANSPORT:
-			if (api_version != XMMS_TRANSPORT_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_TRANSPORT_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_DECODER:
-			if (api_version != XMMS_DECODER_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_DECODER_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_OUTPUT:
-			if (api_version != XMMS_OUTPUT_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_OUTPUT_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_PLAYLIST:
-			if (api_version != XMMS_PLAYLIST_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_PLAYLIST_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_EFFECT:
-			if (api_version != XMMS_EFFECT_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_EFFECT_PLUGIN_API_VERSION);
 			break;
-		case XMMS_PLUGIN_TYPE_ALL:
-			break;
+		default:
+			xmms_log_error ("Invalid plugin type for plugin %s!", name);
+			return NULL;
 	}
 
 	if (api_mismatch) {
