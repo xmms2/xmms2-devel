@@ -37,6 +37,7 @@ static const gchar *typenames[XMMS_ERROR_COUNT] = {
 	[XMMS_ERROR_PERMISSION] = "org.xmms.Error.PermissionProblem",
 	[XMMS_ERROR_NOENT] = "org.xmms.Error.NoSuchEntry",
 	[XMMS_ERROR_INVAL] = "org.xmms.Error.InvalidParameters",
+	[XMMS_ERROR_EOS] = "org.xmms.Error.EndOfStream",
 	[XMMS_ERROR_NO_SAUSAGE] = "org.xmms.Error.NoSausage",
 };
 
