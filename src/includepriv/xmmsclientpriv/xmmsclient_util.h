@@ -18,7 +18,7 @@ x_print_err (const char *func, const char *msg)
 {
 	fprintf (stderr, " ******\n");
 	fprintf (stderr, " * %s was called %s\n", func, msg);
-	fprintf (stderr, " * This probably is an error in the application using libxmmsclient\n");
+	fprintf (stderr, " * This is probably is an error in the application using libxmmsclient\n");
 	fprintf (stderr, " ******\n");
 }
 
@@ -27,7 +27,7 @@ x_print_internal_err (const char *func, const char *msg)
 {
 	fprintf (stderr, " ******\n");
 	fprintf (stderr, " * %s raised a fatal error: %s\n", func, msg);
-	fprintf (stderr, " * This probably is an bug in XMMS2\n");
+	fprintf (stderr, " * This is probably is an bug in XMMS2\n");
 	fprintf (stderr, " ******\n");
 }
 
