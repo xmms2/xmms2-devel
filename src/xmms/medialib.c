@@ -212,7 +212,7 @@ xmms_medialib_session_new (const char *file, int line)
 
 	if (create) {
 		xmms_medialib_entry_t entry;
-		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/dismantled-the_swarm_clip.ogg");
+		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg");
 		xmms_playlist_add (medialib->playlist, entry, NULL);
 	}
 	return session;

@@ -205,6 +205,6 @@ foo = []
 map(lambda x: foo.append(x[x.rindex("/")+1:]), base_env.plugins)
 print ", ".join(foo)
 
-base_env.add_shared("dismantled-the_swarm_clip.ogg")
+base_env.add_shared("mind.in.a.box-lament_snipplet.ogg")
 base_env.Alias('install', base_env.install_targets)
 
