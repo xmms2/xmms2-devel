@@ -294,17 +294,18 @@ xmms_object_cmd_value_free (gpointer val)
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
-			{
-				GList *n, *nxt;
-				for (n = v->value.list; n; n = nxt) {
-					xmms_object_cmd_value_free (n->data);
-					nxt = g_list_next (n);
-					g_list_free_1 (n);
-				}
+			while (v->value.list) {
+				xmms_object_cmd_value_free (v->value.list->data);
+				v->value.list = g_list_delete_link (v->value.list,
+				                                    v->value.list);
 			}
+
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			g_hash_table_destroy (v->value.dict);
+			if (v->value.dict) {
+				g_hash_table_destroy (v->value.dict);
+			}
+
 			break;
 		default:
 			break;
