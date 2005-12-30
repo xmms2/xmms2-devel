@@ -302,7 +302,10 @@ xmms_object_cmd_value_free (gpointer val)
 
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
-			g_hash_table_destroy (v->value.dict);
+			if (v->value.dict) {
+				g_hash_table_destroy (v->value.dict);
+			}
+
 			break;
 		default:
 			break;
