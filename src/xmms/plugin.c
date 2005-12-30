@@ -81,6 +81,9 @@ static GList *xmms_plugin_list;
 static void xmms_plugin_destroy (xmms_object_t *object);
 static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
 static gboolean plugin_verify (xmms_plugin_t *plugin);
+static gboolean plugin_register (xmms_plugin_t *plugin);
+static gboolean plugin_register_specific (xmms_plugin_t *plugin);
+static gboolean plugin_register_common (xmms_plugin_t *plugin);
 
 /*
  * Public functions
@@ -131,40 +134,37 @@ static gboolean plugin_verify (xmms_plugin_t *plugin);
  */
 xmms_plugin_t *
 xmms_plugin_new (xmms_plugin_type_t type, 
-		 gint api_version,
+		 gint api_ver,
 		 const gchar *shortname,
 		 const gchar *name,
 		 const gchar *description)
 {
 	xmms_plugin_t *plugin;
-	gboolean api_mismatch = FALSE;
+	gboolean api_mismatch;
 
+	g_return_val_if_fail (shortname, NULL);
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (description, NULL);
 
 	switch (type) {
 		case XMMS_PLUGIN_TYPE_TRANSPORT:
-			if (api_version != XMMS_TRANSPORT_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_TRANSPORT_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_DECODER:
-			if (api_version != XMMS_DECODER_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_DECODER_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_OUTPUT:
-			if (api_version != XMMS_OUTPUT_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_OUTPUT_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_PLAYLIST:
-			if (api_version != XMMS_PLAYLIST_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_PLAYLIST_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_EFFECT:
-			if (api_version != XMMS_EFFECT_PLUGIN_API_VERSION)
-				api_mismatch = TRUE;
+			api_mismatch = (api_ver != XMMS_EFFECT_PLUGIN_API_VERSION);
 			break;
-		case XMMS_PLUGIN_TYPE_ALL:
-			break;
+		default:
+			xmms_log_error ("Invalid plugin type for plugin %s!", name);
+			return NULL;
 	}
 
 	if (api_mismatch) {
@@ -252,7 +252,10 @@ void
 xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 {
 	xmms_plugin_info_t *info;
+
 	g_return_if_fail (plugin);
+	g_return_if_fail (key);
+	g_return_if_fail (value);
 
 	info = g_new0 (xmms_plugin_info_t, 1);
 	info->key = g_strdup (key);
@@ -610,36 +613,28 @@ xmms_plugin_scan_directory (const gchar *dir)
 			continue;
 		}
 
+		g_free (path);
+
 		plugin_init = sym;
 
 		plugin = plugin_init ();
 
 		if (!plugin) {
 			g_module_close (module);
-		} else if (!plugin_verify (plugin)) {
-			xmms_log_error ("Invalid plugin: %s", plugin->name);
-
-			plugin->module = module;
-			xmms_object_unref (plugin);
-		} else if (plugin) {
-			const GList *info;
-			const xmms_plugin_info_t *i;
-
-			XMMS_DBG ("Adding plugin: %s", plugin->name);
-			info = xmms_plugin_info_get (plugin);
-			while (info) {
-				i = info->data;
-				if (i)
-					XMMS_DBG ("INFO: %s = %s", i->key,i->value);
-				info = g_list_next (info);
-			}
-
-			plugin->module = module;
-			xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
+			continue;
 		}
 
-		g_free (path);
+		plugin->module = module;
+
+		if (!plugin_verify (plugin)) {
+			xmms_log_error ("Invalid plugin: %s", plugin->name);
+			xmms_object_unref (plugin);
+		} else if (!plugin_register (plugin)) {
+			xmms_log_error ("Couldn't register plugin: %s", plugin->name);
+			xmms_object_unref (plugin);
+		}
 	}
+
 	g_dir_close (d);
 
 	return TRUE;
@@ -924,6 +919,47 @@ plugin_verify (xmms_plugin_t *plugin)
 	}
 
 	return f ? f (plugin) : TRUE;
+}
+
+static gboolean
+plugin_register (xmms_plugin_t *plugin)
+{
+	XMMS_DBG ("Registering plugin: %s", plugin->name);
+
+	return plugin_register_specific (plugin) &&
+	       plugin_register_common (plugin);
+}
+
+static gboolean
+plugin_register_specific (xmms_plugin_t *plugin)
+{
+	gboolean (*f)(xmms_plugin_t *) = NULL;
+
+	switch (xmms_plugin_type_get (plugin)) {
+		case XMMS_PLUGIN_TYPE_EFFECT:
+			f = xmms_effect_plugin_register;
+			break;
+		default:
+			break;
+	}
+
+	return f ? f (plugin) : TRUE;
+}
+
+static gboolean
+plugin_register_common (xmms_plugin_t *plugin)
+{
+	const GList *l;
+
+	for (l = xmms_plugin_info_get (plugin); l; l = g_list_next (l)) {
+		const xmms_plugin_info_t *i = l->data;
+
+		XMMS_DBG ("INFO: %s = %s", i->key, i->value);
+	}
+
+	xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
+
+	return TRUE;
 }
 
 /**

@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 20
+#define DB_VERSION 21
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";

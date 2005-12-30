@@ -525,7 +525,7 @@ xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmm
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin();
 
-	entry = xmms_medialib_entry_new (session, url);
+	entry = xmms_medialib_entry_new_encoded (session, url);
 	xmms_medialib_end (session);
 
 	if (!entry) {
@@ -590,7 +590,7 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin();
 	
-	entry = xmms_medialib_entry_new (session, nurl);
+	entry = xmms_medialib_entry_new_encoded (session, nurl);
 	xmms_medialib_end (session);
 
 	if (!entry) {

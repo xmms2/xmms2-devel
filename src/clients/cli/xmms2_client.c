@@ -895,7 +895,7 @@ cmd_move (xmmsc_connection_t *conn, int argc, char **argv)
 	signed int movement;
 
 	if (argc < 4) {
-		print_error ("You'll need to specifiy id and movement");
+		print_error ("You'll need to specifiy id and new position");
 	}
 
 	id = atoi (argv[2]);

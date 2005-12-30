@@ -38,5 +38,6 @@ gboolean xmms_effect_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt
 void xmms_effect_entry_set (xmms_effect_t *effect, xmms_medialib_entry_t entry);
 void xmms_effect_run (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
 gboolean xmms_effect_plugin_verify (xmms_plugin_t *plugin);
+gboolean xmms_effect_plugin_register (xmms_plugin_t *plugin);
 
 #endif

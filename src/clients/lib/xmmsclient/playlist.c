@@ -26,8 +26,6 @@
 #include "xmmsc/xmmsc_stdbool.h"
 #include "xmmsc/xmmsc_stringport.h"
 
-static char *xmmsc_playlist_encode_url (const char *url);
-
 /**
  * @defgroup PlaylistControl PlaylistControl
  * @ingroup XMMSClient
@@ -127,6 +125,11 @@ xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, char *url)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+	char *enc_url;
+
+	enc_url = xmmsc_medialib_encode_url (url);
+	if (!enc_url)
+		return NULL;
 	
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT);
 	xmms_ipc_msg_put_uint32 (msg, pos);
@@ -175,7 +178,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 	xmms_ipc_msg_t *msg;
 	char *enc_url;
 
-	enc_url = xmmsc_playlist_encode_url (url);
+	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
 		return NULL;
 	
@@ -189,8 +192,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 }
 
 /**
- * Move a playlist entry relative to it's current postion.
- * eg move (id, -1) will move id one step *up* in the playlist.
+ * Move a playlist entry to a new position in the playlist. 
  */
 xmmsc_result_t *
 xmmsc_playlist_move (xmmsc_connection_t *c, unsigned int id, signed int moves)
@@ -284,41 +286,3 @@ xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
 }
 
 /** @} */
-
-#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
-                     (((a) >= 'A') && ((a) <= 'Z')) || \
-                     (((a) >= '0') && ((a) <= '9')) || \
-                     ((a) == ':') || \
-                     ((a) == '/') || \
-                     ((a) == '-') || \
-                     ((a) == '.') || \
-                     ((a) == '_'))
-
-static char *
-xmmsc_playlist_encode_url (const char *url)
-{
-	static char hex[16] = "0123456789abcdef";
-	int i = 0, j = 0;
-	char *res;
-
-	res = malloc (strlen(url) * 3 + 1);
-	if (!res)
-		return NULL;
-
-	while (url[i]) {
-		unsigned char chr = url[i++];
-		if (GOODCHAR (chr)) {
-			res[j++] = chr;
-		} else if (chr == ' ') {
-			res[j++] = '+';
-		} else {
-			res[j++] = '%';
-			res[j++] = hex[((chr & 0xf0) >> 4)];
-			res[j++] = hex[(chr & 0x0f)];
-		}
-	}
-
-	res[j] = '\0';
-
-	return res;
-}

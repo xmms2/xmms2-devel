@@ -453,7 +453,18 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry)
 xmmsc_result_t *
 xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 {
-	return do_methodcall (conn, XMMS_IPC_CMD_ADD, url);
+	char *enc_url;
+	xmmsc_result_t *res;
+
+	enc_url = xmmsc_medialib_encode_url (url);
+	if (!enc_url)
+		return NULL;
+
+	res = do_methodcall (conn, XMMS_IPC_CMD_ADD, enc_url);
+
+	free (enc_url);
+
+	return res;
 }
 
 /**
@@ -497,7 +508,18 @@ xmmsc_result_t *
 xmmsc_medialib_path_import (xmmsc_connection_t *conn,
 			    const char *path)
 {
-	return do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
+	xmmsc_result_t *res;
+	char *enc_path;
+
+	enc_path = xmmsc_medialib_encode_url (path);
+	if (!enc_path)
+		return NULL;
+
+	res = do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, enc_path);
+
+	free (enc_path);
+
+	return res;
 }
 
 /**
@@ -630,3 +652,42 @@ xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c,
 }
 
 /** @} */
+
+#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
+                     (((a) >= 'A') && ((a) <= 'Z')) || \
+                     (((a) >= '0') && ((a) <= '9')) || \
+                     ((a) == ':') || \
+                     ((a) == '/') || \
+                     ((a) == '-') || \
+                     ((a) == '.') || \
+                     ((a) == '_'))
+
+
+char *
+xmmsc_medialib_encode_url (const char *url)
+{
+	static char hex[16] = "0123456789abcdef";
+	int i = 0, j = 0;
+	char *res;
+
+	res = malloc (strlen(url) * 3 + 1);
+	if (!res)
+		return NULL;
+
+	while (url[i]) {
+		unsigned char chr = url[i++];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	res[j] = '\0';
+
+	return res;
+}
