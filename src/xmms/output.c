@@ -426,6 +426,8 @@ xmms_output_stop (xmms_output_t *output, xmms_error_t *err)
 
 	xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
 
+	xmms_output_flush (output);
+
 	g_mutex_lock (output->decoder_mutex);
 
 	if (output->decoder) {
