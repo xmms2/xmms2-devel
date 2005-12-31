@@ -1039,10 +1039,9 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_move(self, id, movement, cb = None):
+	def playlist_move(self, cur_pos, new_pos, cb = None):
 		"""
-		Move a playlist entry to an absolute position in 
-		the playlist.
+		Moves a playlist entry to a new position.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1051,7 +1050,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_move(self.conn, id, movement)
+		ret.res = xmmsc_playlist_move(self.conn, cur_pos, new_pos)
 		ret.more_init()
 		
 		return ret

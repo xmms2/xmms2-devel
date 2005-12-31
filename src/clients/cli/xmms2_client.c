@@ -891,24 +891,23 @@ static void
 cmd_move (xmmsc_connection_t *conn, int argc, char **argv)
 {
 	xmmsc_result_t *res;
-	unsigned int id;
-	signed int movement;
+	unsigned int cur_pos, new_pos;
 
 	if (argc < 4) {
-		print_error ("You'll need to specifiy id and new position");
+		print_error ("You'll need to specifiy current and new position");
 	}
 
-	id = atoi (argv[2]);
-	movement = atoi (argv[3]);
+	cur_pos = atoi (argv[2]);
+	new_pos = atoi (argv[3]);
 
-	res = xmmsc_playlist_move (conn, id, movement);
+	res = xmmsc_playlist_move (conn, cur_pos, new_pos);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
 		fprintf (stderr, "Unable to move playlist entry: %s\n", xmmsc_result_get_error (res));
 		exit (-1);
 	}
 
-	print_info ("Moved %u, %d steps", id, movement);
+	print_info ("Moved %u to %u", cur_pos, new_pos);
 	
 }
 
