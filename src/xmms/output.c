@@ -701,6 +701,7 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 	output->status_mutex = g_mutex_new ();
 	output->playtime_mutex = g_mutex_new ();
 
+	xmms_config_property_register ("output.flush_on_pause", "1", NULL, NULL);
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_OUTPUT, XMMS_OBJECT (output));
 
 	/* Broadcasts are always transmitted to the client if he
@@ -1001,6 +1002,11 @@ xmms_output_write_thread (gpointer data)
 		gint ret;
 
 		if (output->write_paused) {
+			xmms_config_property_t *p;
+			p = xmms_config_lookup ("output.flush_on_pause");
+			if (xmms_config_property_get_int (p)) {
+				xmms_output_flush (output);
+			}
 			g_cond_wait (output->write_cond, output->write_mutex);
 			continue;
 		}
