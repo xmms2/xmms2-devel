@@ -361,6 +361,10 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, lmod);
 	}
 
+	xmms_medialib_entry_property_set_int (session, transport->entry,
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
+										  xmms_transport_size (transport));
+
 	res = TRUE;
  out:
 	xmms_medialib_end (session);
