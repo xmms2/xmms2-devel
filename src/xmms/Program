@@ -29,7 +29,7 @@ def config(env):
 	env.Append(LIBS=['xmmsipc'])
 	env.Append(LIBS=["xmmssocket"])
 	env.Append(CPPPATH=["#src/includepriv"])
-	env.pkgconfig("glib-2.0", fail=True)
+	env.pkgconfig("glib-2.0 >= 2.6.0", fail=True)
 	env.pkgconfig("gmodule-2.0", fail=True)
 	env.pkgconfig("gthread-2.0", fail=True)
 	env.pkgconfig("sqlite3", fail=True)

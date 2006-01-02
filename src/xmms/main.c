@@ -21,6 +21,11 @@
 
 #include <glib.h>
 
+/* scons takes care of this too, this is just an extra check */
+#if !GLIB_CHECK_VERSION(2,6,0)
+# error You need atleast glib 2.6.0
+#endif
+
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_decoder.h"
@@ -380,6 +385,7 @@ main (int argc, char **argv)
 	xmms_playlist_t *playlist;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *tmp;
+	const gchar *vererr;
 
 	gboolean verbose = FALSE;
 	gboolean quiet = FALSE;
@@ -404,6 +410,13 @@ main (int argc, char **argv)
 		{"status-fd", 's', 0, G_OPTION_ARG_INT, &status_fd, "Specify a filedescriptor to write to when started", "fd"},
 		{NULL}
 	};
+
+
+	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+	if (vererr) {
+		g_print ("Bad glib version: %s\n", vererr);
+		exit (1);
+	}
 
 	memset (&signals, 0, sizeof (sigset_t));
 	sigaddset (&signals, SIGHUP);
