@@ -309,7 +309,10 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	global_medialib_session = NULL;
 
 	if (sqlite3_libversion_number() < 3002004) {
-		XMMS_DBG ("Using thread hack to compensate for old sqlite version!");
+		xmms_log_info ("**************************************************************");
+		xmms_log_info ("* Using thread hack to compensate for old sqlite version!");
+		xmms_log_info ("* This can be a huge performance penalty - consider upgrading");
+		xmms_log_info ("**************************************************************");
 		/** Create a global session, this is only used when the sqlite version
 		* doesn't support concurrent sessions */
 	 	global_medialib_session = xmms_medialib_session_new ("global", 0);
