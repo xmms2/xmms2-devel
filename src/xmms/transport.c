@@ -331,6 +331,11 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	url = xmms_medialib_entry_property_get_str (session, entry,
 	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 
+	if (!url) {
+		XMMS_DBG ("Medialib entry disappeared.");
+		goto out;
+	}
+
 	xmms_log_info ("Opening url '%s'", url);
 
 	if (!xmms_medialib_decode_url (url)) {

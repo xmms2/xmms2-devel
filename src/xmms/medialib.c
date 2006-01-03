@@ -1609,6 +1609,8 @@ xmms_medialib_decode_url (char *url)
 {
 	int i = 0, j = 0;
 
+	g_return_val_if_fail (url, TRUE);
+
 	while (url[i]) {
 		unsigned char chr = url[i++];
 
