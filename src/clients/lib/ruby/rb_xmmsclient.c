@@ -575,20 +575,20 @@ static VALUE c_playlist_remove (VALUE self, VALUE pos)
 	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
-static VALUE c_playlist_move (VALUE self, VALUE id, VALUE moves)
+static VALUE c_playlist_move (VALUE self, VALUE cur_pos, VALUE new_pos)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
 
-	Check_Type (id, T_FIXNUM);
-	Check_Type (moves, T_FIXNUM);
+	Check_Type (cur_pos, T_FIXNUM);
+	Check_Type (new_pos, T_FIXNUM);
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
 	CHECK_DELETED (xmms);
 
-	res = xmmsc_playlist_move (xmms->real, NUM2UINT (id),
-	                           NUM2INT (moves));
+	res = xmmsc_playlist_move (xmms->real, NUM2UINT (cur_pos),
+	                           NUM2UINT (new_pos));
 
 	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }

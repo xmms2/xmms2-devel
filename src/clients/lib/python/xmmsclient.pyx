@@ -249,6 +249,13 @@ class PropDict(dict):
 		"""Change list of source preference"""
 		self._sources = sources
 
+	def has_key(self, item):
+		try:
+			self.__getitem__(item)
+			return True
+		except KeyError:
+			return False
+
 	def __getitem__(self, item):
 		if isinstance(item, str):
 			for src in self._sources:
@@ -1032,12 +1039,9 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_move(self, id, movement, cb = None):
+	def playlist_move(self, cur_pos, new_pos, cb = None):
 		"""
-		Move a playlist entry relative to its current position in
-		the playlist. The movement should be a postive value when
-		moving down in the playlist and a negative value when moving
-		up in the playlist.
+		Moves a playlist entry to a new position.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1046,7 +1050,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_move(self.conn, id, movement)
+		ret.res = xmmsc_playlist_move(self.conn, cur_pos, new_pos)
 		ret.more_init()
 		
 		return ret

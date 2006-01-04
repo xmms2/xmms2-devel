@@ -60,6 +60,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLERATE_IN "samplerate:in"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_OUT "channels:out"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_IN "channels:in"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE "size"
 
 
 typedef guint32 xmms_medialib_entry_t;

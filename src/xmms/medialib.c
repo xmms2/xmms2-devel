@@ -41,10 +41,11 @@
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
 static gboolean get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata);
 static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
+static gchar *xmms_medialib_url_encode (const gchar *path);
 
 static GList *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err);
 static void xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
-void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
+static void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
 static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
 GList *xmms_medialib_select (xmms_medialib_session_t *, gchar *query, xmms_error_t *error);
 static void xmms_medialib_playlist_save_current (xmms_medialib_t *, gchar *, xmms_error_t *);
@@ -212,7 +213,7 @@ xmms_medialib_session_new (const char *file, int line)
 
 	if (create) {
 		xmms_medialib_entry_t entry;
-		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/dismantled-the_swarm_clip.ogg");
+		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg");
 		xmms_playlist_add (medialib->playlist, entry, NULL);
 	}
 	return session;
@@ -308,7 +309,10 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	global_medialib_session = NULL;
 
 	if (sqlite3_libversion_number() < 3002004) {
-		XMMS_DBG ("Using thread hack to compensate for old sqlite version!");
+		xmms_log_info ("**************************************************************");
+		xmms_log_info ("* Using thread hack to compensate for old sqlite version!");
+		xmms_log_info ("* This can be a huge performance penalty - consider upgrading");
+		xmms_log_info ("**************************************************************");
 		/** Create a global session, this is only used when the sqlite version
 		* doesn't support concurrent sessions */
 	 	global_medialib_session = xmms_medialib_session_new ("global", 0);
@@ -779,8 +783,9 @@ process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *
 	}
 
 	while ((file = g_dir_read_name (dir))) {
-		gchar realfile[XMMS_PATH_MAX+1];
-		g_snprintf (realfile, XMMS_PATH_MAX, "%s/%s", path, file);
+		gchar *realfile;
+		realfile = g_build_filename (path, file, NULL);
+
 		if (g_file_test (realfile, G_FILE_TEST_IS_DIR)) {
 			if (!process_dir (session, realfile, error))
 				return FALSE;
@@ -789,6 +794,7 @@ process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *
 			xmms_medialib_entry_new (session, f);
 			g_free (f);
 		}
+		g_free (realfile);
 	}
 	g_dir_close (dir);
 	return TRUE;
@@ -838,21 +844,17 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 {
 	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
-	gchar *p;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
 
 	session = xmms_medialib_begin ();
 
-	p = path+strlen(path);
-
-	while (*(p-1) == '/')
-		*p--;
-
-	*p = '\0';
-
-	process_dir (session, path, error);
+	if (!xmms_medialib_decode_url (path)) {
+		xmms_log_error ("Bad encoding in path");
+	} else {
+		process_dir (session, path, error);
+	}
 	xmms_medialib_end (session);
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
@@ -861,20 +863,10 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 }
 
 /**
- * Welcome to a function that should be called something else.
- * Returns a entry for a URL, if the URL is already in the medialib
- * the current entry will be returned otherwise a new one will be
- * created and returned.
- *
- * @todo rename to something better?
- *
- * @param url URL to add/retrieve from the medialib
- * 
- * @returns Entry mapped to the URL
+ * @internal
  */
-
 xmms_medialib_entry_t
-xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
+xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url)
 {
 	guint id = 0;
 	guint ret = 0;
@@ -894,7 +886,7 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
 		ret = id;
 	} else {
 		if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-									  "select MAX (id) from Media")) {
+									  "select ifnull(MAX (id),0) from Media")) {
 			return 0;
 		}
 
@@ -924,6 +916,35 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
 
 	return ret;
 
+}
+
+/**
+ * Welcome to a function that should be called something else.
+ * Returns a entry for a URL, if the URL is already in the medialib
+ * the current entry will be returned otherwise a new one will be
+ * created and returned.
+ *
+ * @todo rename to something better?
+ *
+ * @param url URL to add/retrieve from the medialib
+ * 
+ * @returns Entry mapped to the URL
+ */
+xmms_medialib_entry_t
+xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
+{
+	gchar *enc_url;
+	xmms_medialib_entry_t res;
+
+	enc_url = xmms_medialib_url_encode (url);
+	if (!enc_url)
+		return 0;
+
+	res = xmms_medialib_entry_new_encoded (session, enc_url);
+
+	g_free (enc_url);
+
+	return res;
 }
 
 static guint32
@@ -1041,7 +1062,7 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
  * @param error In case of error this will be filled.
  */
 
-void
+static void
 xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error)
 {
 	xmms_medialib_entry_t entry;
@@ -1053,7 +1074,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 
 	session = xmms_medialib_begin ();
 
-	entry = xmms_medialib_entry_new (session, url);
+	entry = xmms_medialib_entry_new_encoded (session, url);
 
 	xmms_medialib_end (session);
 
@@ -1584,4 +1605,81 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 				 session->source);
 
 	return ret;
+}
+
+gboolean
+xmms_medialib_decode_url (char *url)
+{
+	int i = 0, j = 0;
+
+	g_return_val_if_fail (url, TRUE);
+
+	while (url[i]) {
+		unsigned char chr = url[i++];
+
+		if (chr == '+') {
+			url[j++] = ' ';
+		} else if (chr == '%') {
+			char ts[3];
+			char *t;
+
+			ts[0] = url[i++];
+			if (!ts[0])
+				return FALSE;
+			ts[1] = url[i++];
+			if (!ts[1])
+				return FALSE;
+			ts[2] = '\0';
+
+			url[j++] = strtoul (ts, &t, 16);
+			if (t != &ts[2])
+				return FALSE;
+		} else {
+			url[j++] = chr;
+		}
+	}
+
+	url[j] = '\0';
+
+	return TRUE;
+}
+
+
+#define GOODCHAR(a) ((((a) >= 'a') && ((a) <= 'z')) || \
+                     (((a) >= 'A') && ((a) <= 'Z')) || \
+                     (((a) >= '0') && ((a) <= '9')) || \
+                     ((a) == ':') || \
+                     ((a) == '/') || \
+                     ((a) == '-') || \
+                     ((a) == '.') || \
+                     ((a) == '_'))
+
+/* we don't share code here with medialib because we want to use g_malloc :( */
+static gchar *
+xmms_medialib_url_encode (const gchar *path)
+{
+	static gchar hex[16] = "0123456789abcdef";
+	gchar *res;
+	int i = 0, j = 0;
+
+	res = g_malloc (strlen(path) * 3 + 1);
+	if (!res)
+		return NULL;
+
+	while (path[i]) {
+		guchar chr = path[i++];
+		if (GOODCHAR (chr)) {
+			res[j++] = chr;
+		} else if (chr == ' ') {
+			res[j++] = '+';
+		} else {
+			res[j++] = '%';
+			res[j++] = hex[((chr & 0xf0) >> 4)];
+			res[j++] = hex[(chr & 0x0f)];
+		}
+	}
+
+	res[j] = '\0';
+
+	return res;
 }

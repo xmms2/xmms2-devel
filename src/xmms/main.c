@@ -21,6 +21,11 @@
 
 #include <glib.h>
 
+/* scons takes care of this too, this is just an extra check */
+#if !GLIB_CHECK_VERSION(2,6,0)
+# error You need atleast glib 2.6.0
+#endif
+
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_decoder.h"
@@ -37,7 +42,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -367,28 +371,6 @@ install_scripts (const gchar *into_dir)
 }
 
 /**
- * @internal Print a simple message detailing command line options for xmms2d
- */
-static void usage (void)
-{
-	static char *usageText = "XMMS2 Daemon\n\
-Options:\n\
-	-v		Increase verbosity\n\
-	-q		Decrease verbosity\n\
-	-V|--version	Print version\n\
-	-n		Disable logging\n\
-	-o <x>		Use 'x' as output plugin\n\
-	-i <url>	Listen to socket 'url'\n\
-	-p <foo>	Search for plugins in directory 'foo'\n\
-	-h|--help	Print this help\n\
-	-c|--conf=<file> Specify alternate configuration file\n\
-	-s|--status-fd=fd Specify a filedescriptor to write to when started\n";
-       printf(usageText);
-}
-
-/* @endif */
-
-/**
  * The xmms2 daemon main initialisation function
  */
 int
@@ -398,23 +380,43 @@ main (int argc, char **argv)
 	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
 	xmms_ipc_t *ipc;
-	int status_fd = -1;
-	int opt;
-	int verbose = 1;
+	int loglevel = 1;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
-	const gchar *outname = NULL;
 	gchar default_path[XMMS_PATH_MAX + 16];
-	gchar *ppath = NULL;
 	gchar *tmp;
+	const gchar *vererr;
+
+	gboolean verbose = FALSE;
+	gboolean quiet = FALSE;
+	gboolean version = FALSE;
+	gboolean nologging = FALSE;
+	const gchar *outname = NULL;
 	const gchar *ipcpath = NULL;
-	static struct option long_opts[] = {
-		{"version", 0, NULL, 'V'},
-		{"help", 0, NULL, 'h'},
-		{"conf", 1, NULL, 'c'},
-		{"status-fd", 1, NULL, 's'},
-		{NULL,}
+	gchar *ppath = NULL;
+	int status_fd = -1;
+	GOptionContext *context = NULL;
+	GError *error = NULL;
+
+	GOptionEntry opts[] = {
+		{"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Increase verbosity", NULL},
+		{"quiet", 'q', 0, G_OPTION_ARG_NONE, &quiet, "Decrease verbosity", NULL},
+		{"version", 'V', 0, G_OPTION_ARG_NONE, &version, "Print version", NULL},
+		{"no-logging", 'n', 0, G_OPTION_ARG_NONE, &nologging, "Disable logging", NULL},
+		{"output", 'o', 0, G_OPTION_ARG_STRING, &outname, "Use 'x' as output plugin", "<x>"},
+		{"ipc-socket", 'i', 0, G_OPTION_ARG_FILENAME, &ipcpath, "Listen to socket 'url'", "<url>"},
+		{"plugindir", 'p', 0, G_OPTION_ARG_FILENAME, &ppath, "Search for plugins in directory 'foo'", "<foo>"},
+		{"conf", 'c', 0, G_OPTION_ARG_FILENAME, &conffile, "Specify alternate configuration file", "<file>"},
+		{"status-fd", 's', 0, G_OPTION_ARG_INT, &status_fd, "Specify a filedescriptor to write to when started", "fd"},
+		{NULL}
 	};
+
+
+	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+	if (vererr) {
+		g_print ("Bad glib version: %s\n", vererr);
+		exit (1);
+	}
 
 	memset (&signals, 0, sizeof (sigset_t));
 	sigaddset (&signals, SIGHUP);
@@ -423,51 +425,30 @@ main (int argc, char **argv)
 	sigaddset (&signals, SIGPIPE);
 	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 
-	while (42) {
-		opt = getopt_long (argc, argv, "vqVno:i:p:hc:s:", long_opts, NULL);
+	context = g_option_context_new ("- XMMS2 Daemon");
+	g_option_context_add_main_entries (context, opts, NULL);
+	if (!g_option_context_parse (context, &argc, &argv, &error)) {
+		g_print ("xmms2d: %s\n", error->message);
+		g_clear_error (&error);
+	}
+	g_option_context_free (context);
 
-		if (opt == -1)
-			break;
+	if (verbose) {
+		loglevel++;
+	} else if (quiet) {
+		loglevel--;
+	}
 
-		switch (opt) {
-			case 'v':
-				verbose++;
-				break;
-			case 'q':
-				verbose--;
-				break;
-			case 'V':
-				printf ("XMMS version %s\n", XMMS_VERSION);
-				exit (0);
-				break;
-			case 'o':
-				outname = g_strdup (optarg);
-				break;
-			case 'p':
-				ppath = g_strdup (optarg);
-				break;
-			case 'h':
-				usage();
-				exit(0);
-				break;
-			case 'c':
-				conffile = g_strdup (optarg);
-				break;
-			case 'i':
-				ipcpath = g_strdup (optarg);
-				break;
-			case 's':
-				status_fd = atoi (optarg);
-				break;
-
-		}
+	if (version) {
+		printf ("XMMS version %s\n", XMMS_VERSION);
+		exit (0);
 	}
 
 	g_thread_init (NULL);
 
 	g_random_set_seed (time (NULL));
 
-	xmms_log_init (verbose);
+	xmms_log_init (loglevel);
 
 	ipc = xmms_ipc_init ();
 	

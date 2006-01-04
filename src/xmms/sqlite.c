@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 20
+#define DB_VERSION 21
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -313,11 +313,8 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! (%d) - %s", ret, q);
 	}
-	
-	sqlite3_free (q);
-	va_end (ap);
 
-	while (sqlite3_step (stm) == SQLITE_ROW) {
+	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {		
 		gint i;
 		xmms_object_cmd_value_t **row;
 		gint num = sqlite3_data_count (stm);
@@ -330,19 +327,22 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 		retval = method (row, udata);
 
-		/*
-		for (i = 0; i < num; i++) {
-			xmms_object_cmd_value_free (row[i]);
-		}
-
-		g_free (row);
-		*/
-		
 		if (!retval)
 			break;
 	}
 
+	if (ret == SQLITE_DONE) {
+		retval = TRUE;
+	} else if (ret == SQLITE_ERROR || 
+			   ret == SQLITE_MISUSE || 
+			   ret == SQLITE_BUSY) {
+		xmms_log_error ("SQLite Error code %d on query '%s'", ret, q);
+		retval = FALSE;
+	}
+
 	sqlite3_finalize (stm);
+	sqlite3_free (q);
+	va_end (ap);
 
 	return retval;
 	

@@ -214,7 +214,6 @@ xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid)
 	for (n = ipc->results_list; n; n = x_list_next (n)) {
 		if (cid == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
 			res = (xmmsc_result_t *)n->data;
-			ipc->results_list = x_list_remove (ipc->results_list, n);
 			break;
 		}
 	}

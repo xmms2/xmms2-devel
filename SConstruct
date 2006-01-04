@@ -17,7 +17,7 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrAlban (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrAlban+WIP (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
@@ -205,6 +205,6 @@ foo = []
 map(lambda x: foo.append(x[x.rindex("/")+1:]), base_env.plugins)
 print ", ".join(foo)
 
-base_env.add_shared("dismantled-the_swarm_clip.ogg")
+base_env.add_shared("mind.in.a.box-lament_snipplet.ogg")
 base_env.Alias('install', base_env.install_targets)
 
