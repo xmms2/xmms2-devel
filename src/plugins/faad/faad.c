@@ -462,6 +462,26 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
 			                                      metabuf);
 		}
+		if (mp4ff_meta_get_date (data->mp4ff, &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
+			                                      metabuf);
+		}
+		if (mp4ff_meta_get_genre (data->mp4ff, &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
+			                                      metabuf);
+		}
+		if (mp4ff_meta_get_comment (data->mp4ff, &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
+			                                      metabuf);
+		}
+		if (mp4ff_meta_get_track (data->mp4ff, &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
+			                                      metabuf);
+		}
 	} else if (data->filetype == FAAD_TYPE_ADIF) {
 		guint skip_size, bitrate;
 		guint64 duration;
