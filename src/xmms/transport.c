@@ -530,7 +530,7 @@ xmms_transport_read_line (xmms_transport_t *transport, gchar *line, xmms_error_t
 			}
 			transport->lr.bufend += r;
 		}
-		if (transport->lr.bufend == transport->lr.buf)
+		if (transport->lr.bufend <= transport->lr.buf)
 			return NULL;
 
 		*(transport->lr.bufend) = '\0';
