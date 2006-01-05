@@ -350,7 +350,7 @@ install_scripts (const gchar *into_dir)
 	s++;
 
 	g_snprintf (path, PATH_MAX, "%s/scripts/%s", SHAREDDIR, s);
-	xmms_log_info ("installing scripts into %s", path);
+	xmms_log_info ("installing scripts from %s", path);
 	dir = g_dir_open (path, 0, &err);
 	if (!dir) {
 		XMMS_DBG ("global script directory not found");
