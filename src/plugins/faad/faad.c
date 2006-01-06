@@ -20,6 +20,7 @@
 #include "xmms/xmms_log.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <faad.h>
 #include <glib.h>
@@ -478,9 +479,15 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 			                                      metabuf);
 		}
 		if (mp4ff_meta_get_track (data->mp4ff, &metabuf)) {
-			xmms_medialib_entry_property_set_str (session, entry,
-			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
-			                                      metabuf);
+			gint tracknr;
+			gchar *end;
+
+			tracknr = strtol(metabuf, &end, 10);
+			if (end && *end == '\0') {
+				xmms_medialib_entry_property_set_int (session, entry,
+				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
+				                                      tracknr);
+			}
 		}
 	} else if (data->filetype == FAAD_TYPE_ADIF) {
 		guint skip_size, bitrate;
