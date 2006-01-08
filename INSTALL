@@ -9,7 +9,7 @@ You will need the following things to build XMMS2.
 
     * Python (http://www.python.org/) (>=2.2.1)
     * SCons (http://www.scons.org/) (>= 0.96.90)
-    * GLib (http://www.gtk.org/) (>= 2.2.0)
+    * GLib (http://www.gtk.org/) (>= 2.6.0)
     * SQLite (http://www.sqlite.org) (>= 3.2.6)
 
 These libraries are not needed for building xmms2d itself, but may be needed
@@ -21,13 +21,11 @@ for plugins.
     * ALSA support: ALSA (http://www.alsa-project.org)
     * SID support: SIDplay2 (http://sidplay2.sourceforge.net/)
      * and reSID (http://www.geocities.com/SiliconValley/Lakes/5147/resid/)
-	* AAC support: FAAD (http://www.audiocoding.com/) (>= 2.0)
-	* MusePacket support: libmpcdec (http://www.musepack.net/)
-	* Fasttrack support: libmodplug (http://www.modplug.com/)
+    * AAC support: FAAD (http://www.audiocoding.com/) (>= 2.0)
+    * MusePacket support: libmpcdec (http://www.musepack.net/)
+    * Fasttrack support: libmodplug (http://www.modplug.com/)
     * Ruby (http://www.ruby-lang.org/) (>= 1.8) - For Ruby bindings.
-    * Pyrex (http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/) (>=0.9.3) -
-    For python bindings, NOTE that pyrex generates code that gcc4 does NOT
-    compile, you need an older gcc.
+    * Pyrex (http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/) (>=0.9.3.1)
 
 == Platform-specific notes ==
 Some supported platforms may have variations on build requirements:

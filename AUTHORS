@@ -1,43 +1,120 @@
-XMMS2 Hall of Fame!
+##
+## This should be a somewhat complete list of people that have
+## contributed to the XMMS2 project. The format is copied from the
+## CREDITS-file in the Linux kernel source tree. The fields are: name
+## (N), email (E), web-address (W), PGP key ID and fingerprint (P),
+## description (D).
+##
+## This list is sorted alphabetically.
+##
 
-Core:
-Anders Gustafsson <andersg@xmms.org>
-Tobias Rundstrˆm <tru@xmms.org>
+N: Peter Alm
+E: peter@xmms.org
+D: Initial design and code. XMMS1 :)
 
-Frequent contributors:
-Sham Chukoury <eleusis@xmms.org>
-Tilman Sauerbeck <tilman@code-monkey.de>
+N: Kristian Benoit
+E: softchill@blacky.sympatico.ca
+D: Various fixes.
 
-Contributors:
-Peter Alm <peter@xmms.org>
-Kristian Benoit <softchill@blacky.sympatico.ca>
-Magnus Bjernstad <bjernstad@gmail.com>
-Alexander Botero-Lowry <drax@stampede.org>
-Sebastien Cevey <seb@cine7.net>
-Daniel Chokola <dan@chokola.com>
-Olle H‰lln‰s <olle@xmms.org>
-Tuure Laurinolli <tuure@laurinolli.net>
-Michael Lindgren <lindgren@debian.as>
-Chris Morgan <cmorgan@alum.wpi.edu>
-Thomas Nilsson <thomas@xmms.org>
-Vegard Nossum <vegard@peltkore.net>
-Daniel Pearson <daniel@nanoo.org>
-Alexander Rigbo <alex@rigbo.se>
-Christopher Rosell <chrippa@evangelion.se>
-Daniel Svensson <daniel@nittionio.nu>
-Jens Taprogge <jlt_xmms2@shamrock.dyndns.org>
-Juho V‰h‰-Herttua <juhovh@iki.fi>
-Ma Xuan <supermmx@163.com>
+N: Magnus Bjernstad
+E: bjernstad@gmail.com
+D: PythonAPI fixes.
 
-Special Thanks to:
-Mind.In.A.Box / Stefan Poiss and Markus Hadwiger
-	Supplied us with a great "intro" clip:
-	Lament for Lost Dreams clip by mind.in.a.box
-	Copyright (c) by Stefan Poiss and Markus Hadwiger
-	http://www.mindinabox.com/
+N: Alexander Botero-Lowry
+E: drax@stampede.org
+D: *BSD support. Various fixes.
 
-Dismantled / Gary Zon <core@dismantled.com>
-	Supplied us with a great "intro" clip:
-	Taken from the "Breed To Death" EP. Dismantled appears courtesy of
-	Metropolis Records in the US and Dependent Records in Europe.
+N: Sebastien Cevey
+E: seb@cine7.net
+D: Various fixes.
 
+N: Daniel Chokola
+E: dan@chokola.com
+D: Various fixes.
+
+N: Sham Chukoury
+E: eleusis@xmms.org
+W: http://eleusis.f2o.org/
+D: Truckloads of documentation. Various fixes.
+
+N: Dismantled / Gary Zon
+E: core@dismantled.com
+D: Supplied us with a great "intro" clip:
+D: Taken from the "Breed To Death" EP. Dismantled appears courtesy of
+D: Metropolis Records in the US and Dependent Records in Europe.
+
+N: Anders Gustafsson
+E: andersg@xmms.org
+P: 1024D/5D46D966 4186 4775 154B 9E4F 8CE7  A3F8 E165 5471 5D46 D966
+D: Stuff all over the place. Master bitch.
+
+N: Olle H√§lln√§s
+E: olle@xmms.org
+D: Better seeking in cli.
+
+N: Tuure Laurinolli
+E: tuure@laurinolli.net
+D: Windows portability.
+
+N: Michael Lindgren
+E: lindgren@debian.as
+D: Curl. HTML pls plugin. Various fixes.
+
+N: Mind.In.A.Box / Stefan Poiss and Markus Hadwiger
+W: http://www.mindinabox.com/
+D: Supplied us with a great "intro" clip.
+D: Lament for Lost Dreams clip by mind.in.a.box
+D: Copyright (c) by Stefan Poiss and Markus Hadwiger
+
+
+
+N: Chris Morgan
+E: cmorgan@alum.wpi.edu
+D: Jack output plugin.
+
+N: Thomas Nilsson
+E: thomas@xmms.org
+D: Bugfixes. XMMS1 expertise.
+
+N: Vegard Nossum
+E: vegard@peltkore.net
+D: IPv6 support. Various fixes.
+
+N: Daniel Pearson
+E: daniel@nanoo.org
+D: Python XMMSSync-proxy. PythonAPI fixes.
+
+N: Alexander Rigbo
+E: alex@rigbo.se
+D: Various fixes. Sorting on integers.
+
+N: Christopher Rosell
+E: chrippa@evangelion.se
+D: FreeBSD support in cdae plugin.
+
+N: Tobias Rundstr√∂m
+E: tru@xmms.org
+W: http://tobi.nu/
+P: 1024D/EA0C5340 E203 6001 264C 71CE DBFD  7A95 102A 11D0 EA0C 5340
+D: Stuff all over the map. Release manager.
+
+N: Tilman Sauerbeck
+E: tilman@code-monkey.de
+W: http://www.code-monkey.de/
+D: Ruby bindings. Many other things all over the place.
+
+N: Daniel Svensson
+E: daniel@nittionio.nu
+D: Musepack. CoreFoundation. Alsa. Gnomevfs. Various fixes.
+
+N: Jens Taprogge
+E: jlt_xmms2@shamrock.dyndns.org
+D: Debian packages. Various fixes.
+
+N: Juho V√§h√§-Herttua
+E: juhovh@iki.fi
+D: Faad. Various fixes.
+
+N: Ma Xuan
+E: supermmx@163.com
+D: Various fixes.
