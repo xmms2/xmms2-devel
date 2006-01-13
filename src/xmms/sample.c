@@ -369,7 +369,7 @@ xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len
 	outusiz = xmms_sample_size_get (conv->to->format) * conv->to->channels;
 
 	if (conv->resample) {
-		olen = (len * outusiz * conv->interpolator_ratio + outusiz) / conv->decimator_ratio;
+		olen = (len * conv->interpolator_ratio / conv->decimator_ratio) * outusiz + outusiz;
 	} else {
 		olen = len * outusiz;
 	}
@@ -378,6 +378,7 @@ xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len
 		t = g_realloc (conv->buf, olen);
 		g_assert (t); /* XXX */
 		conv->buf = t;
+		conv->bufsiz = olen;
 	}
 
 	res = conv->func (conv, in, len, conv->buf);
