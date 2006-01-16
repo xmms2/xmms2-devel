@@ -178,7 +178,7 @@ class XMMSEnvironment(Environment):
 			cmd += " --cflags"
 		if libs:
 			cmd += " --libs" 
-		cmd += " '%s'" % module
+		cmd += " \"%s\"" % module
 		self.configcmd(cmd, fail)
 		
 
