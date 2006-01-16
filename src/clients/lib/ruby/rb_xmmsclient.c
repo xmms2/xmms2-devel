@@ -436,6 +436,45 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
 
+static VALUE c_playback_volume_set (VALUE self, VALUE channel,
+                                    VALUE volume)
+{
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	StringValue (channel);
+	Check_Type (volume, T_FIXNUM);
+
+	res = xmmsc_playback_volume_set (xmms->real,
+	                                 StringValuePtr (channel),
+	                                 NUM2UINT (volume));
+
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
+}
+
+static VALUE c_playback_volume_get (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	res = xmmsc_playback_volume_get (xmms->real);
+
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
+}
+
+static VALUE c_broadcast_playback_volume_changed (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_playback_volume_changed, BROADCAST);
+}
+
 static VALUE c_broadcast_playlist_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER(broadcast_playlist_changed, BROADCAST);
@@ -892,6 +931,12 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "playback_seek_ms", c_playback_seek_ms, 1);
 	rb_define_method (c, "playback_seek_samples",
 	                  c_playback_seek_samples, 1);
+	rb_define_method (c, "playback_volume_set",
+	                  c_playback_volume_set, 2);
+	rb_define_method (c, "playback_volume_get",
+	                  c_playback_volume_get, 0);
+	rb_define_method (c, "broadcast_playback_volume_changed",
+	                  c_broadcast_playback_volume_changed, 0);
 
 	rb_define_method (c, "broadcast_playlist_changed",
 	                  c_broadcast_playlist_changed, 0);

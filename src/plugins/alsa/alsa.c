@@ -63,6 +63,14 @@ static int rates[] = {
 	96000
 };
 
+static struct {
+	snd_mixer_selem_channel_id_t id;
+	gchar *name;
+} channel_map[] = {
+	{SND_MIXER_SCHN_FRONT_LEFT, "left"},
+	{SND_MIXER_SCHN_FRONT_RIGHT, "right"}
+};
+
 /*
  * Function prototypes
  */
@@ -70,9 +78,6 @@ static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
 static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output, gint err);
-static void xmms_alsa_mixer_config_changed (xmms_object_t *object,
-                                            gconstpointer data,
-                                            gpointer userdata);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
@@ -81,10 +86,12 @@ static gboolean xmms_alsa_format_set (xmms_output_t *output,
                                       xmms_audio_format_t *format);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
                                         xmms_audio_format_t *format);
-static gboolean xmms_alsa_mixer_set (xmms_output_t *output, gint left,
-                                     gint right);
-static gboolean xmms_alsa_mixer_get (xmms_output_t *output, gint *left,
-                                     gint *right);
+static gboolean xmms_alsa_volume_set (xmms_output_t *output,
+                                      const gchar *channel,
+                                      guint volume);
+static gboolean xmms_alsa_volume_get (xmms_output_t *output,
+                                      const gchar **names, guint *values,
+                                      guint *num_channels);
 static gboolean xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data);
 static void xmms_alsa_probe_modes (xmms_output_t *output,
                                    xmms_alsa_data_t *data);
@@ -93,6 +100,8 @@ static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
                                   xmms_sample_format_t xmms_fmt,
                                   gint channels, gint rate);
 static snd_mixer_elem_t *xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name);
+
+static snd_mixer_selem_channel_id_t lookup_channel (const gchar *name);
 
 /*
  * Plugin header
@@ -129,10 +138,10 @@ xmms_plugin_get (void)
 	                        xmms_alsa_flush);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
 	                        xmms_alsa_buffer_bytes_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET,
-	                        xmms_alsa_mixer_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET,
-	                        xmms_alsa_mixer_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_GET,
+	                        xmms_alsa_volume_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_SET,
+	                        xmms_alsa_volume_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
 	                        xmms_alsa_format_set);
 
@@ -145,9 +154,6 @@ xmms_plugin_get (void)
 
 	xmms_plugin_config_property_register (plugin, "mixer_dev", "default",
 	                                   NULL,NULL);
-
-	xmms_plugin_config_property_register (plugin, "volume", "70/70",
-	                                   NULL, NULL);
 
 	return plugin;
 }
@@ -173,11 +179,9 @@ xmms_alsa_new (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_property_t *volume;
-	gchar buf[8];
-	gint left = 0, right = 0;
 
 	g_return_val_if_fail (output, FALSE);
+
 	data = g_new0 (xmms_alsa_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
@@ -191,19 +195,7 @@ xmms_alsa_new (xmms_output_t *output)
 	xmms_output_private_data_set (output, data);
 
 	plugin = xmms_output_plugin_get (output);
-	volume = xmms_plugin_config_lookup (plugin, "volume");
-
-	xmms_config_property_callback_set (volume,
-	                                   xmms_alsa_mixer_config_changed,
-	                                   (gpointer) output);
-
-	if (xmms_alsa_mixer_setup (plugin, data)) {
-		/* get the current volume and set the config value */
-		xmms_alsa_mixer_get (output, &left, &right);
-
-		g_snprintf (buf, sizeof (buf), "%i/%i", left, right);
-		xmms_config_property_set_data (volume, buf);
-	}
+	xmms_alsa_mixer_setup (plugin, data);
 
 	xmms_alsa_probe_modes (output, data);
 
@@ -303,7 +295,6 @@ xmms_alsa_destroy (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
 	xmms_plugin_t *plugin;
-	xmms_config_property_t *volume;
 	gint err;
 
 	g_return_if_fail (output);
@@ -311,10 +302,6 @@ xmms_alsa_destroy (xmms_output_t *output)
 	g_return_if_fail (data);
 
 	plugin = xmms_output_plugin_get (output);
-	volume = xmms_plugin_config_lookup (plugin, "volume");
-
-	xmms_config_property_callback_remove (volume,
-	                                      xmms_alsa_mixer_config_changed);
 
 	if (data->mixer) {
 		err = snd_mixer_close (data->mixer);
@@ -580,49 +567,6 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 	return TRUE;
 }
 
-
-
-/**
- * Handle new mixer settings.
- * Extract left and right data and apply changes to the mixer.
- *
- * @param object An xmms object.
- * @param data The new volume values.
- * @param userdata The output struct containing alsa data.
- */
-static void
-xmms_alsa_mixer_config_changed (xmms_object_t *object, gconstpointer data,
-                                gpointer userdata)
-{
-	xmms_alsa_data_t *alsa_data;
-	guint left = 0, right = 0;
-	gint res;
-
-	g_return_if_fail (data);
-	g_return_if_fail (userdata);
-	alsa_data = xmms_output_private_data_get (userdata);
-	g_return_if_fail (alsa_data);
-
-	if (!alsa_data->mixer) {
-		return;
-	}
-
-	res = sscanf (data, "%u/%u", &left, &right);
-
-	if (res < 1) {
-		xmms_log_error ("Unable to change volume");
-		return;
-	}
-
-	if (res == 1) {
-		right = left;
-	}
-
-	xmms_alsa_mixer_set (userdata, left, right);
-}
-
-
-
 /**
  * Set audio format.
  * Drain the buffer if non-empty and then try to change audio format.
@@ -665,33 +609,39 @@ xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
  * Change mixer settings.
  *
  * @param output The output struct containing alsa data.
+ * @param channel_name The name of the channel to set (e.g. "left").
+ * @param volume The volume to set the channel to.
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
+xmms_alsa_volume_set (xmms_output_t *output,
+                      const gchar *channel_name, guint volume)
 {
 	xmms_alsa_data_t *data;
+	gint channel, err;
 
 	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (channel_name, FALSE);
+
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
+
+	g_return_val_if_fail (volume <= 100, FALSE);
 
 	if (!data->mixer || !data->mixer_elem) {
 		return FALSE;
 	}
 
-	snd_mixer_selem_set_playback_volume (data->mixer_elem,
-	                                     SND_MIXER_SCHN_FRONT_LEFT,
-	                                     left);
+	channel = lookup_channel (channel_name);
+	if (channel == SND_MIXER_SCHN_UNKNOWN) {
+		return FALSE;
+	}
 
-	snd_mixer_selem_set_playback_volume (data->mixer_elem,
-	                                     SND_MIXER_SCHN_FRONT_RIGHT,
-	                                     right);
+	err = snd_mixer_selem_set_playback_volume (data->mixer_elem,
+	                                           channel, volume);
 
-	return TRUE;
+	return (err >= 0);
 }
-
-
 
 /**
  * Get mixer settings.
@@ -700,19 +650,31 @@ xmms_alsa_mixer_set (xmms_output_t *output, gint left, gint right)
  * @return TRUE on success, FALSE on error.
  */
 static gboolean
-xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
+xmms_alsa_volume_get (xmms_output_t *output, const gchar **names,
+                      guint *values, guint *num_channels)
 {
-	gint err;
-	glong lleft = 0, lright = 0;
 	xmms_alsa_data_t *data;
+	gint i, err;
 
 	g_return_val_if_fail (output, FALSE);
+
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
+
+	g_return_val_if_fail (num_channels, FALSE);
 
 	if (!data->mixer || !data->mixer_elem) {
 		return FALSE;
 	}
+
+	if (!*num_channels) {
+		*num_channels = G_N_ELEMENTS (channel_map);
+		return TRUE;
+	}
+
+	g_return_val_if_fail (*num_channels == G_N_ELEMENTS (channel_map), FALSE);
+	g_return_val_if_fail (names, FALSE);
+	g_return_val_if_fail (values, FALSE);
 
 	err = snd_mixer_handle_events (data->mixer);
 	if (err != 0) {
@@ -721,22 +683,23 @@ xmms_alsa_mixer_get (xmms_output_t *output, gint *left, gint *right)
 		return FALSE;
 	}
 
-	snd_mixer_selem_get_playback_volume (data->mixer_elem,
-	                                     SND_MIXER_SCHN_FRONT_LEFT,
-	                                     &lleft);
+	for (i = 0; i < *num_channels; i++) {
+		glong tmp = 0;
 
-	snd_mixer_selem_get_playback_volume (data->mixer_elem,
-	                                     SND_MIXER_SCHN_FRONT_RIGHT,
-	                                     &lright);
+		err = snd_mixer_selem_get_playback_volume (data->mixer_elem,
+		                                           channel_map[i].id,
+		                                           &tmp);
+		if (err < 0) {
+			continue;
+		}
 
-	/* this is safe, cause we set the volume range to 0..100 */
-	*left = lleft;
-	*right = lright;
+		/* safe, because we set the volume range to 0..100 */
+		values[i] = tmp;
+		names[i] = channel_map[i].name;
+	}
 
 	return TRUE;
 }
-
-
 
 /**
  * Get bytes in buffer.
@@ -895,4 +858,19 @@ xmms_alsa_find_mixer_elem (snd_mixer_t *mixer, const char *name)
 	snd_mixer_selem_id_set_name (selem_id, name);
 
 	return snd_mixer_find_selem (mixer, selem_id);
+}
+
+static snd_mixer_selem_channel_id_t
+lookup_channel (const gchar *name)
+{
+	gint i;
+
+	for (i = 0; i < G_N_ELEMENTS (channel_map); i++) {
+		if (!strcmp (channel_map[i].name, name)) {
+			return channel_map[i].id;
+		}
+
+	}
+
+	return SND_MIXER_SCHN_UNKNOWN;
 }
