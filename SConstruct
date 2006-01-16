@@ -202,7 +202,7 @@ print " Configuration printout"
 print "====================================="
 print "Enabled plugins:",
 foo = []
-map(lambda x: foo.append(x[x.rindex("/")+1:]), base_env.plugins)
+map(lambda x: foo.append(x[x.rindex(os.sep)+1:]), base_env.plugins)
 print ", ".join(foo)
 
 base_env.add_shared("mind.in.a.box-lament_snipplet.ogg")
