@@ -66,7 +66,7 @@
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
 
-xmms_medialib_entry_t xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url);
+xmms_medialib_entry_t xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url, xmms_error_t *error);
 gboolean xmms_medialib_playlist_add (xmms_medialib_session_t *session, gint playlist_id, xmms_medialib_entry_t entry);
 
 xmms_object_cmd_value_t *xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);

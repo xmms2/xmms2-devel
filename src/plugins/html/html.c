@@ -132,6 +132,7 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 	gchar **suffix;
 	xmms_config_property_t *val;
 	xmms_medialib_session_t *session;
+	xmms_error_t error;
 
 	gint cnt, readlen, buflen;
 
@@ -153,7 +154,6 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 
 	readlen = 0;
 	while (readlen < buflen) {
-		xmms_error_t error;
 		gint ret;
 
 		ret = xmms_transport_read (transport, buffer + readlen,
@@ -200,8 +200,9 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 
 		full = build_url (plsurl, url);
 
-		entry = xmms_medialib_entry_new (session, full);
-		xmms_medialib_playlist_add (session, playlist_id, entry);
+		entry = xmms_medialib_entry_new (session, full, &error);
+		if (entry)
+			xmms_medialib_playlist_add (session, playlist_id, entry);
 
 		g_free (url);
 		g_free (full);

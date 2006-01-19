@@ -86,6 +86,7 @@ parse_line (xmms_medialib_session_t *session,
 {
 	xmms_medialib_entry_t entry;
 	gchar newp[1024], *p;
+	xmms_error_t error;
 
 	g_assert (line);
 
@@ -121,7 +122,7 @@ parse_line (xmms_medialib_session_t *session,
 	/* in all code paths, newp should have been written */
 	g_assert (newp[0]);
 
-	entry = xmms_medialib_entry_new (session, newp);
+	entry = xmms_medialib_entry_new (session, newp, &error);
 
 	return entry;
 }
