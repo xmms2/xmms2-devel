@@ -213,7 +213,8 @@ xmms_medialib_session_new (const char *file, int line)
 
 	if (create) {
 		xmms_medialib_entry_t entry;
-		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg");
+		xmms_error_t error;
+		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg", &error);
 		xmms_playlist_add (medialib->playlist, entry, NULL);
 	}
 	return session;
@@ -783,6 +784,7 @@ process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *
 	}
 
 	while ((file = g_dir_read_name (dir))) {
+		xmms_error_t error2;
 		gchar *realfile;
 		realfile = g_build_filename (path, file, NULL);
 
@@ -791,7 +793,7 @@ process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *
 				return FALSE;
 		} else if (g_file_test (realfile, G_FILE_TEST_EXISTS)) {
 			gchar *f = g_strdup_printf ("file://%s", realfile);
-			xmms_medialib_entry_new (session, f);
+			xmms_medialib_entry_new (session, f, &error2);
 			g_free (f);
 		}
 		g_free (realfile);
@@ -866,7 +868,7 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
  * @internal
  */
 xmms_medialib_entry_t
-xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url)
+xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url, xmms_error_t *error)
 {
 	guint id = 0;
 	guint ret = 0;
@@ -886,29 +888,32 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *u
 		ret = id;
 	} else {
 		if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-									  "select ifnull(MAX (id),0) from Media")) {
+		                              "select ifnull(MAX (id),0) from Media")) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
 			return 0;
 		}
 
 		ret++; /* next id */
 		
 		if (!xmms_sqlite_exec (session->sql,
-							   "insert into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
-							   ret, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
-							   source)) {
+		                       "insert into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
+		                       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
+		                       source)) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting url");
 			return 0;
 		}
 		if (!xmms_sqlite_exec (session->sql,
-							   "insert or replace into Media (id, key, value, source) values (%d, '%s', 0, %d)",
-							   ret, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
-							   source)) {
+		                       "insert or replace into Media (id, key, value, source) values (%d, '%s', 0, %d)",
+		                       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+		                       source)) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting resolved");
 			return 0;
 		}
 		if (!xmms_sqlite_exec (session->sql,
-							   "insert or replace into Media (id, key, value, source) values (%d, '%s', %d, %d)",
-							   ret, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
-							   time(NULL), source)) {
-
+		                       "insert or replace into Media (id, key, value, source) values (%d, '%s', %d, %d)",
+		                       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
+		                       time(NULL), source)) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting added");
 			return 0;
 		}
 
@@ -931,7 +936,7 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *u
  * @returns Entry mapped to the URL
  */
 xmms_medialib_entry_t
-xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
+xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url, xmms_error_t *error)
 {
 	gchar *enc_url;
 	xmms_medialib_entry_t res;
@@ -940,7 +945,7 @@ xmms_medialib_entry_new (xmms_medialib_session_t *session, const char *url)
 	if (!enc_url)
 		return 0;
 
-	res = xmms_medialib_entry_new_encoded (session, enc_url);
+	res = xmms_medialib_entry_new_encoded (session, enc_url, error);
 
 	g_free (enc_url);
 
@@ -1074,7 +1079,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 
 	session = xmms_medialib_begin ();
 
-	entry = xmms_medialib_entry_new_encoded (session, url);
+	entry = xmms_medialib_entry_new_encoded (session, url, error);
 
 	xmms_medialib_end (session);
 
@@ -1350,7 +1355,11 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *name,
 	xmms_medialib_session_t *session;
 
 	session = xmms_medialib_begin ();
-	entry = xmms_medialib_entry_new (session, url);
+	entry = xmms_medialib_entry_new (session, url, error);
+	if (!entry) {
+		xmms_medialib_end (session);
+		return;
+	}
 
 	playlist_id = get_playlist_id (session, name);
 

@@ -248,11 +248,10 @@ add_item_to_playlist (xmmsc_connection_t *conn, char *item)
 
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		printf ("something went wrong when adding it to the playlist\n");
-		exit (-1);
+		print_error ("Couldn't add %s to playlist: %s\n", item, xmmsc_result_get_error (res));
+	} else {
+		print_info ("Added %s", item);
 	}
-
-	print_info ("Adding %s", item);
 	xmmsc_result_unref (res);
 }
 
