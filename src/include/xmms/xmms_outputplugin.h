@@ -35,8 +35,8 @@ typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer
 typedef void (*xmms_output_destroy_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_new_method_t) (xmms_output_t *output);
-typedef gboolean (*xmms_output_mixer_get_method_t) (xmms_output_t *output, gint *left, gint *right);
-typedef gboolean (*xmms_output_mixer_set_method_t) (xmms_output_t *output, gint left, gint right);
+typedef gboolean (*xmms_output_volume_get_method_t) (xmms_output_t *output, const gchar **names, guint *values, guint *num_channels);
+typedef gboolean (*xmms_output_volume_set_method_t) (xmms_output_t *output, const gchar *channel, guint volume);
 typedef void (*xmms_output_flush_method_t) (xmms_output_t *output);
 typedef void (*xmms_output_close_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_format_set_method_t) (xmms_output_t *output, xmms_audio_format_t *fmt);
@@ -50,8 +50,8 @@ typedef guint (*xmms_output_buffersize_get_method_t) (xmms_output_t *output);
 #define XMMS_PLUGIN_METHOD_FLUSH_TYPE xmms_output_flush_method_t
 #define XMMS_PLUGIN_METHOD_BUFFERSIZE_GET_TYPE xmms_output_buffersize_get_method_t
 #define XMMS_PLUGIN_METHOD_FORMAT_SET_TYPE xmms_output_format_set_method_t
-#define XMMS_PLUGIN_METHOD_MIXER_GET_TYPE xmms_output_mixer_get_method_t
-#define XMMS_PLUGIN_METHOD_MIXER_SET_TYPE xmms_output_mixer_set_method_t
+#define XMMS_PLUGIN_METHOD_VOLUME_GET_TYPE xmms_output_volume_get_method_t
+#define XMMS_PLUGIN_METHOD_VOLUME_SET_TYPE xmms_output_volume_set_method_t
 #define XMMS_PLUGIN_METHOD_STATUS_TYPE xmms_output_status_method_t
 
 xmms_plugin_t *xmms_output_plugin_get (xmms_output_t *output);

@@ -180,5 +180,33 @@ xmmsc_playback_playtime (xmmsc_connection_t *c)
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT, XMMS_IPC_CMD_CPLAYTIME);
 }
 
+xmmsc_result_t *
+xmmsc_playback_volume_set (xmmsc_connection_t *c,
+                           const char *channel, unsigned int volume)
+{
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_OUTPUT,
+	                        XMMS_IPC_CMD_VOLUME_SET);
+	xmms_ipc_msg_put_string (msg, channel);
+	xmms_ipc_msg_put_uint32 (msg, volume);
+
+	return xmmsc_send_msg (c, msg);
+}
+
+xmmsc_result_t *
+xmmsc_playback_volume_get (xmmsc_connection_t *c)
+{
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT,
+	                              XMMS_IPC_CMD_VOLUME_GET);
+}
+
+xmmsc_result_t *
+xmmsc_broadcast_playback_volume_changed (xmmsc_connection_t *c)
+{
+	return xmmsc_send_broadcast_msg (c,
+		XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED);
+}
+
 /** @} */
 

@@ -43,9 +43,6 @@ typedef struct xmms_oss_data_St {
 	gint fd;
 	gint mixer_fd;
 	gboolean have_mixer;
-
-	xmms_config_property_t *mixer;
-
 } xmms_oss_data_t;
 
 static struct {
@@ -86,10 +83,10 @@ static void xmms_oss_flush (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gchar *buffer, gint len);
 static guint xmms_oss_buffersize_get (xmms_output_t *output);
 static gboolean xmms_oss_format_set (xmms_output_t *output, xmms_audio_format_t *format);
-static gboolean xmms_oss_mixer_set (xmms_output_t *output, gint left, 
-									gint right);
-static gboolean xmms_oss_mixer_get (xmms_output_t *output, gint *left, 
-									gint *right);
+static gboolean xmms_oss_volume_set (xmms_output_t *output, const gchar *channel, guint volume);
+static gboolean xmms_oss_volume_get (xmms_output_t *output,
+                                     gchar const **names, guint *values,
+                                     guint *num_channels);
 
 /*
  * Plugin header
@@ -137,11 +134,11 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
 	                        xmms_oss_flush);
 	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET, 
-	                        xmms_oss_mixer_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_GET, 
+	                        xmms_oss_volume_get);
 	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET, 
-	                        xmms_oss_mixer_set);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_SET, 
+	                        xmms_oss_volume_set);
 
 	xmms_plugin_config_property_register (plugin,
 	                                   "mixer",
@@ -163,26 +160,21 @@ xmms_plugin_get (void)
                                            NULL);
 #endif
 
-	xmms_plugin_config_property_register (plugin,
-	                                   "volume",
-	                                   "70/70",
-	                                   NULL,
-	                                   NULL);
-	
 	return plugin;
 }
 
 /*
  * Member functions
  */
-
 static gboolean
-xmms_oss_mixer_set (xmms_output_t *output, gint left, gint right)
+xmms_oss_volume_set (xmms_output_t *output,
+                     const gchar *channel, guint volume)
 {
 	xmms_oss_data_t *data;
-	gint volume;
+	gint left, right, tmp = 0;
 
 	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (channel, FALSE);
 	
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
@@ -190,21 +182,42 @@ xmms_oss_mixer_set (xmms_output_t *output, gint left, gint right)
 	if (!data->have_mixer)
 		return FALSE;
 
-	XMMS_DBG ("Setting mixer to %d/%d", left, right);
+	/* get current volume */
+	if (ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &tmp) == -1) {
+		return FALSE;
+	}
 
+	right = (tmp & 0xFF00) >> 8;
+	left = (tmp & 0x00FF);
+
+	/* update the channel volumes */
+	if (!strcmp (channel, "right")) {
+		right = volume;
+	} else if (!strcmp (channel, "left")) {
+		left = volume;
+	} else
+		return FALSE;
+
+	/* and write it back again */
 	volume = (right << 8) | left;
 
-	ioctl (data->mixer_fd, SOUND_MIXER_WRITE_PCM, &volume);
-
-	return TRUE;
+	return (ioctl (data->mixer_fd, SOUND_MIXER_WRITE_PCM, &tmp) != -1);
 }
 
 /** @todo support PCM/MASTER?*/
 static gboolean
-xmms_oss_mixer_get (xmms_output_t *output, gint *left, gint *right)
+xmms_oss_volume_get (xmms_output_t *output, gchar const **names, guint *values,
+                     guint *num_channels)
 {
 	xmms_oss_data_t *data;
-	gint volume;
+	gint tmp = 0, i;
+	struct {
+		const gchar *name;
+		gint value;
+	} channel_map[] = {
+		{"right", 0},
+		{"left", 0}
+	};
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -214,12 +227,25 @@ xmms_oss_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	if (!data->have_mixer)
 		return FALSE;
 
-	ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &volume);
+	if (!*num_channels) {
+		*num_channels = 2;
+		return TRUE;
+	}
 
-	*right = (volume & 0xFF00) >> 8;
-	*left = (volume & 0x00FF);
+	if (ioctl (data->mixer_fd, SOUND_MIXER_READ_PCM, &tmp) == -1) {
+		return FALSE;
+	}
+
+	channel_map[0].value = (tmp & 0xFF00) >> 8;
+	channel_map[1].value = (tmp & 0x00FF);
+
+	for (i = 0; i < 2; i++) {
+		names[i] = channel_map[i].name;
+		values[i] = channel_map[i].value;
+	}
 
 	return TRUE;
+
 }
 
 static guint
@@ -316,16 +342,6 @@ xmms_oss_new (xmms_output_t *output)
 		data->have_mixer = TRUE;
 
 	XMMS_DBG ("Have mixer = %d", data->have_mixer);
-
-	/* retrive keys for mixer settings. but ignore current values */
-	data->mixer = xmms_plugin_config_lookup (
-									xmms_output_plugin_get (output), "volume");
-
-	/* since we don't have this data when we are register the configvalue
-	   we need to set the callback here */
-	xmms_config_property_callback_set (data->mixer, 
-									NULL,
-									(gpointer) output);
 
 	xmms_output_private_data_set (output, data);
 
