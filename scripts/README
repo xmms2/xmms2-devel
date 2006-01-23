@@ -1,2 +1,0 @@
-Files in startup.d and shutdown.d is installed to [sharedir]/scripts/X and
-installed to users homedir first time.
