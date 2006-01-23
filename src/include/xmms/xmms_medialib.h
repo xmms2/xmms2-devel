@@ -75,8 +75,6 @@ guint xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session, xm
 gboolean xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
 gboolean xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
-guint32 xmms_medialib_get_random_entry (xmms_medialib_session_t *session);
-
 
 #define xmms_medialib_begin() _xmms_medialib_begin(__FILE__, __LINE__)
 

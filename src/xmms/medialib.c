@@ -97,9 +97,6 @@ struct xmms_medialib_St {
 	xmms_object_t object;
 	/** The current playlist */
 	xmms_playlist_t *playlist;
-
-	/** Statement to run when user is in "random mode" */
-	const gchar *random_sql;
 };
 
 /**
@@ -167,12 +164,6 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 	g_mutex_unlock (mlib->mutex);*/
 }
 
-static void
-xmms_medialib_random_sql_changed (xmms_object_t *object, gconstpointer data,
-								  gpointer userdata)
-{
-	medialib->random_sql = (gchar*)data;
-}
 
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
 #define XMMS_MEDIALIB_SOURCE_SERVER_ID xmms_medialib_source_to_id (session, XMMS_MEDIALIB_SOURCE_SERVER)
@@ -234,7 +225,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar path[XMMS_PATH_MAX+1];
 	xmms_medialib_session_t *session;
-	xmms_config_property_t *cv;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
 	medialib->playlist = playlist;
@@ -295,11 +285,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_config_property_register ("medialib.dologging",
 				    "1",
 				    NULL, NULL);
-
-	cv = xmms_config_property_register ("medialib.random_sql_statement",
-					 "select id as value from Media where key='url' order by random() limit 1",
-					 xmms_medialib_random_sql_changed, medialib);
-	medialib->random_sql = xmms_config_property_get_string (cv);
 
 	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
 
@@ -376,22 +361,6 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 	xmms_sqlite_close (session->sql);
 	xmms_object_unref (XMMS_OBJECT (session->medialib));
 	g_free (session);
-}
-
-/**
- * Return a random entry from the medialib.
- * The SQL statement used for retrival can be configured.
- */
-
-guint32
-xmms_medialib_get_random_entry (xmms_medialib_session_t *session)
-{
-	guint32 ret = 0;
-
-	g_return_val_if_fail (session, 0);
-	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret, 
-							 medialib->random_sql);
-	return ret;
 }
 
 
