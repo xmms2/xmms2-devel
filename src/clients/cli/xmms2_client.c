@@ -95,7 +95,7 @@ print_hash (const void *key, xmmsc_result_value_type_t type,
 static GHashTable *
 read_config ()
 {
-	gchar file[PATH_MAX];
+	gchar *file;
 	gchar *buffer;
 	gchar **split;
 	gint read_bytes;
@@ -104,11 +104,12 @@ read_config ()
 	GHashTable *config;
 	int i = 0;
 
-	g_snprintf (file, sizeof (file), "%s/.xmms2/clients/cli.conf",
-	            g_get_home_dir ());
+	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (), 
+	                     ".xmms2", "clients", "cli.conf", NULL);
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
-		gchar *dir = g_strdup_printf ("%s/.xmms2/clients", g_get_home_dir ());
+		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
+		                           ".xmms2", "clients", NULL);
 		mkdir (dir, 0755);
 		g_free (dir);
 		fp = fopen (file, "w+");
@@ -122,6 +123,8 @@ read_config ()
 	if (!(fp = fopen (file, "r"))) {
 		print_error ("Could not open configfile %s", file);
 	}
+
+	g_free (file);
 
 	if (fstat (fileno (fp), &st) == -1) {
 		perror ("fstat");
@@ -263,7 +266,7 @@ add_directory_to_playlist (xmmsc_connection_t *conn, char *directory,
 	GDir *dir;
 	GSList *entries = NULL;
 	const char *entry;
-	char buf[PATH_MAX];
+	char *buf;
 
 	if (!(dir = g_dir_open (directory, 0, NULL))) {
 		printf ("cannot open directory: %s\n", directory);
@@ -282,8 +285,8 @@ add_directory_to_playlist (xmmsc_connection_t *conn, char *directory,
 	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
 
 	while (entries) {
-		g_snprintf (buf, sizeof (buf), "%s/%s", directory,
-		          (char *) entries->data);
+		buf = g_build_path (G_DIR_SEPARATOR_S, directory, 
+		                    entries->data, NULL);
 
 		if (g_file_test (buf, G_FILE_TEST_IS_DIR)) {
 			if (recursive) {
@@ -293,6 +296,7 @@ add_directory_to_playlist (xmmsc_connection_t *conn, char *directory,
 			add_item_to_playlist (conn, buf);
 		}
 
+		g_free (buf);
 		g_free (entries->data);
 		entries = g_slist_delete_link (entries, entries);
 	}
