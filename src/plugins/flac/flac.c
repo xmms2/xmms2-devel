@@ -31,6 +31,7 @@ typedef struct xmms_flac_data_St {
 	FLAC__StreamMetadata *vorbiscomment;
 	guint channels;
 	guint sample_rate;
+	guint bit_rate;
 	guint bits_per_sample;
 	guint64 total_samples;
 	gboolean is_seeking;
@@ -200,7 +201,12 @@ void
 flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, const FLAC__StreamMetadata *metadata, void *client_data)
 {
 	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
+	xmms_transport_t *transport = xmms_decoder_transport_get (decoder);
+	/* xmms_transport_size checks that transport exists internally */
+	guint64 filesize = xmms_transport_size (transport);
 	xmms_flac_data_t *data;
+
+	g_return_if_fail (transport);
 
 	data = xmms_decoder_private_data_get (decoder);
 
@@ -210,6 +216,11 @@ flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, const FL
 			data->sample_rate = metadata->data.stream_info.sample_rate;
 			data->channels = metadata->data.stream_info.channels;
 			data->total_samples = metadata->data.stream_info.total_samples;
+			if (filesize > 0 && data->total_samples) {
+				data->bit_rate = (guint) (filesize * 8 *
+								 (guint64) data->sample_rate /
+								 (guint64) data->total_samples);
+			}
 			XMMS_DBG ("STREAMINFO: BPS %d. Samplerate: %d. Channels: %d.",
 					data->bits_per_sample,
 					data->sample_rate,
@@ -388,7 +399,7 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 	}
 
 	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-										  (gint) data->bits_per_sample * data->sample_rate);
+										  (gint) data->bit_rate);
 
 	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
 										  (gint) data->total_samples / data->sample_rate * 1000);

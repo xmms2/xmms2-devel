@@ -30,65 +30,45 @@ static guint
 resample_INCHANNELS_INTYPE_to_OUTCHANNELS_OUTTYPE (xmms_sample_converter_t *conv, xmms_sample_t *tbuf, guint len, xmms_sample_t *tout)
 {
 	xmms_sampleINTYPE_t *buf = (xmms_sampleINTYPE_t *) tbuf;
-	xmms_sampleOUTTYPE_t *out = (xmms_sampleOUTTYPE_t *) tout;
-	xmms_sampleINTYPE_t *prevbuf;
-	gfloat incr, pos;
-       	gfloat npos;
+	xmms_sampleOUTTYPE_t *outbuf = (xmms_sampleOUTTYPE_t *) tout;
+	xmms_sampleOUTTYPE_t *out;
+	guint pos, ipos;
 	gint i, n=0;
 
-	incr = conv->incr;
-	
 	pos = conv->offset;
-	if (pos < 1) {
-		prevbuf = (xmms_sampleINTYPE_t *)conv->state;
-	} else {
-		prevbuf = &buf[INCHANNELS * (((gint)pos)-1)];
-	}
 
-	g_assert(pos >= 0);
-
-	buf = &buf[INCHANNELS * (((gint)pos))];
-
-	for (;;) {
+	while (pos < len * conv->interpolator_ratio) {
 		gint32 temp[INCHANNELS];
-		gfloat bfrac = pos - floor(pos);
+		xmms_sampleINTYPE_t *buf1, *buf2;
+		gfloat bfrac = ((gfloat) (pos % (conv->interpolator_ratio))) / (conv->interpolator_ratio);
 		gfloat afrac = 1.0 - bfrac;
+
+		ipos = pos / conv->interpolator_ratio;
+
+		if (ipos < 1) {
+			buf1 = (xmms_sampleINTYPE_t *)conv->state;
+		} else {
+			buf1 = &buf[INCHANNELS * (ipos - 1)];
+		}
+		buf2 = &buf[INCHANNELS * ipos];
 
 		/* resample */
 		for (i = 0; i < INCHANNELS; i++) {
-			temp[i] = afrac * READINTYPE (prevbuf[i]) + bfrac * READINTYPE (buf[i]);
+			temp[i] = afrac * READINTYPE (buf1[i]) + bfrac * READINTYPE (buf2[i]);
 		}
 
+		out = &outbuf[OUTCHANNELS * n];
 		/* convert #channels into out[] */
 CONVERTER
 
-		n++;	
-		npos = pos + incr;
-		
-		if (npos > len)
-			break;
-
-		out = &out[OUTCHANNELS];
-
-		if (floor (npos) != floor (pos)) {
-			gint idiff = (gint) (floor (npos) - floor (pos));
-			
-			if (idiff == 1) {
-				prevbuf = buf;
-				buf = &buf[INCHANNELS];
-			} else {
-				prevbuf = &buf[INCHANNELS * (idiff - 1)];
-				buf = &buf[INCHANNELS * idiff];
-			}
-		}
-
-		pos = npos;
+		n++;
+		pos += conv->decimator_ratio;
 	}
 
-	conv->offset = npos - len;
+	conv->offset = pos - len * conv->interpolator_ratio;
 
 	for (i = 0; i < INCHANNELS; i++) {
-		((xmms_sampleINTYPE_t *)conv->state)[i] = buf[i];
+		((xmms_sampleINTYPE_t *)conv->state)[i] = buf[INCHANNELS*(len-1) + i];
 	}
 	return n;
 }

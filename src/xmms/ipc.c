@@ -66,6 +66,11 @@ typedef struct xmms_ipc_client_St {
 	xmms_ipc_msg_t *read_msg;
 	xmms_ipc_t *ipc;
 
+	/* this lock protects out_msg, pendingsignals and broadcasts,
+	   which can be accessed from other threads than the
+	   client-thread */
+	GMutex *lock;
+
 	/** Messages waiting to be written */
 	GQueue *out_msg;
 
@@ -212,9 +217,9 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			return;
 		}
 
-		g_mutex_lock (global_ipc_lock);
+		g_mutex_lock (client->lock);
 		client->pendingsignals[signalid] = xmms_ipc_msg_get_cid (msg);
-		g_mutex_unlock (global_ipc_lock);
+		g_mutex_unlock (client->lock);
 		return;
 	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
 		   xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
@@ -224,13 +229,13 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			xmms_log_error ("No broadcastid in this msg?!");
 			return;
 		}
-		g_mutex_lock (global_ipc_lock);
 
+		g_mutex_lock (client->lock);
 		client->broadcasts[broadcastid] =
 			g_list_append (client->broadcasts[broadcastid],
 			               GUINT_TO_POINTER (xmms_ipc_msg_get_cid (msg)));
 
-		g_mutex_unlock (global_ipc_lock);
+		g_mutex_unlock (client->lock);
 		return;
 	}
 
@@ -273,7 +278,9 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			g_free (arg.values[i].value.string);
 	}
 	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
+	g_mutex_lock (client->lock);
 	xmms_ipc_client_msg_write (client, retmsg);
+	g_mutex_unlock (client->lock);
 }
 
 
@@ -300,9 +307,11 @@ xmms_ipc_client_thread (gpointer data)
 
 		FD_SET (fd, &rfdset);
 		FD_SET (client->wakeup_out, &rfdset);
-	
+
+		g_mutex_lock (client->lock);
 		if (!g_queue_is_empty (client->out_msg))
 			FD_SET (fd, &wfdset);
+		g_mutex_unlock (client->lock);
 
 		tmout.tv_usec = 0;
 		tmout.tv_sec = 5;
@@ -330,16 +339,22 @@ xmms_ipc_client_thread (gpointer data)
 		}
 
 		if (FD_ISSET (fd, &wfdset)) {
+			g_mutex_lock (client->lock);
 			while (!g_queue_is_empty (client->out_msg)) {
 				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
 
+				g_mutex_unlock (client->lock);
 				if (xmms_ipc_msg_write_transport (msg, client->transport, (bool*)&disconnect)) {
+					g_mutex_lock (client->lock);
 					g_queue_pop_head (client->out_msg);
+					g_mutex_unlock (client->lock);
 					xmms_ipc_msg_destroy (msg);
 				} else {
 					break;
 				}
+				g_mutex_lock (client->lock);
 			}
+			g_mutex_unlock (client->lock);
 		}
 
 		if (FD_ISSET (fd, &rfdset)) {
@@ -409,6 +424,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->ipc = ipc;
 	client->run = TRUE;
 	client->out_msg = g_queue_new ();
+	client->lock = g_mutex_new ();
 	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
 	
 	return client;
@@ -423,6 +439,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 
 	g_mutex_lock (global_ipc_lock);
 	client->ipc->clients = g_list_remove (client->ipc->clients, client);
+	g_mutex_unlock (global_ipc_lock);
 
 	client->run = FALSE;
 
@@ -431,6 +448,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	close (client->wakeup_in);
 	close (client->wakeup_out);
 
+	g_mutex_lock (client->lock);
 	while (!g_queue_is_empty (client->out_msg)) {
 		xmms_ipc_msg_t *msg = g_queue_pop_head (client->out_msg);
 		xmms_ipc_msg_destroy (msg);
@@ -442,12 +460,13 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 		g_list_free (client->broadcasts[i]);
 	}
 
+	g_mutex_unlock (client->lock);
 	g_free (client);
-	g_mutex_unlock (global_ipc_lock);
 }
 
 /**
  * Put a message in the queue awaiting to be sent to the client.
+ * Should hold client->lock.
  */
 static gboolean
 xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
@@ -462,7 +481,9 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 		return FALSE;	
 	}
 	*/
+
 	g_queue_push_tail (client->out_msg, msg);
+
 	/* Wake the client thread! */
 	write (client->wakeup_in, "\x42", 1);
 
@@ -561,10 +582,13 @@ xmms_ipc_has_pending (guint signalid)
 
 	for (c = global_ipc->clients; c; c = g_list_next (c)) {
 		xmms_ipc_client_t *cli = c->data;
+		g_mutex_lock (cli->lock);
 		if (cli->pendingsignals[signalid]) {
+			g_mutex_unlock (cli->lock);
 			g_mutex_unlock (global_ipc_lock);
 			return TRUE;
 		}
+		g_mutex_unlock (cli->lock);
 	}
 
 	g_mutex_unlock (global_ipc_lock);
@@ -581,6 +605,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 
 	for (c = global_ipc->clients; c; c = g_list_next (c)) {
 		xmms_ipc_client_t *cli = c->data;
+		g_mutex_lock (cli->lock);
 		if (cli->pendingsignals[signalid]) {
 			xmms_ipc_msg_t *msg;
 			
@@ -590,6 +615,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 			xmms_ipc_client_msg_write (cli, msg);
 			cli->pendingsignals[signalid] = 0;
 		}
+		g_mutex_unlock (cli->lock);
 	}
 
 	g_mutex_unlock (global_ipc_lock);
@@ -608,6 +634,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 		GList *l;
 		xmms_ipc_client_t *cli = c->data;
 
+		g_mutex_lock (cli->lock);
 		for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
 			xmms_ipc_msg_t *msg;
 
@@ -616,6 +643,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 			xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
 			xmms_ipc_client_msg_write (cli, msg);
 		}
+		g_mutex_unlock (cli->lock);
 	}
 
 	g_mutex_unlock (global_ipc_lock);

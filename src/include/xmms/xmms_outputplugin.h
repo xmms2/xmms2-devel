@@ -30,7 +30,7 @@
  * Output plugin methods
  */
 
-typedef void (*xmms_output_status_method_t) (xmms_output_t *output, xmms_playback_status_t status);
+typedef gboolean (*xmms_output_status_method_t) (xmms_output_t *output, xmms_playback_status_t status);
 typedef void (*xmms_output_write_method_t) (xmms_output_t *output, gchar *buffer, gint len);
 typedef void (*xmms_output_destroy_method_t) (xmms_output_t *output);
 typedef gboolean (*xmms_output_open_method_t) (xmms_output_t *output);

@@ -94,9 +94,10 @@ xmms_pls_add_entry (xmms_medialib_session_t *session,
 	if (e->file) {
 		xmms_medialib_entry_t entry;
 		gchar *url;
+		xmms_error_t error;
 
 		url = build_encoded_url (plspath, e->file);
-		entry = xmms_medialib_entry_new (session, url);
+		entry = xmms_medialib_entry_new (session, url, &error);
 		g_free (url);
 		
 		if (e->title)

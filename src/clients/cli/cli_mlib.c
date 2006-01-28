@@ -32,6 +32,7 @@ static void mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **arg
 static void mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv);
 static void mlib_set (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_topsongs (xmmsc_connection_t *conn, int argc, char **argv);
 
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", mlib_add },
@@ -50,8 +51,40 @@ cmds mlib_commands[] = {
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", mlib_rehash },
 	{ "set", "[id, key, value, (source)] Set a property together with a medialib entry.", mlib_set },
+	{ "topsongs", "list the most played songs", mlib_topsongs },
 	{ NULL, NULL, NULL },
 };
+
+
+static void
+mlib_topsongs (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	GList *n = NULL;
+
+	res = xmmsc_medialib_select (conn, "select m.id as id, sum(l.value) as playsum from Log l left join Media m on l.id=m.id where m.key='url' group by l.id order by playsum desc limit 20");
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		gint id;
+
+		xmmsc_result_get_dict_entry_int32 (res, "id", &id);
+		if (!id)
+			print_error ("broken resultset");
+
+		n = g_list_prepend (n, XINT_TO_POINTER (id));
+	}
+
+	n = g_list_reverse (n);
+
+	format_pretty_list (conn, n);
+	g_list_free (n);
+	xmmsc_result_unref (res);
+}
 
 static void
 mlib_set (xmmsc_connection_t *conn, int argc, char **argv)
