@@ -61,7 +61,7 @@ static void fill_volume_hash (GHashTable *hash, const gchar **names,
 
 static gboolean xmms_output_status_set (xmms_output_t *output, gint status);
 static gboolean set_plugin (xmms_output_t *output, xmms_plugin_t *plugin);
-static void status_changed (xmms_output_t *output, xmms_playback_status_t status);
+static gboolean status_changed (xmms_output_t *output, xmms_playback_status_t status);
 
 XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
@@ -151,7 +151,7 @@ struct xmms_output_St {
 typedef struct xmms_volume_map_St {
 	const gchar **names;
 	guint *values;
-	gint num_channels;
+	guint num_channels;
 	gboolean status;
 } xmms_volume_map_t;
 
@@ -560,7 +560,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	g_return_val_if_fail (num_channels <= VOLUME_MAX_CHANNELS, NULL);
 
 	names = g_new (const gchar *, num_channels);
-	values = g_new (gint, num_channels);
+	values = g_new (guint, num_channels);
 
 	ret = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                             NULL, xmms_object_cmd_value_free);
@@ -1043,7 +1043,7 @@ xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt)
 
 /* Used when we have to drive the output... */
 
-static void 
+static gboolean 
 status_changed (xmms_output_t *output, xmms_playback_status_t status)
 {
 	g_mutex_lock (output->write_mutex);
@@ -1055,7 +1055,7 @@ status_changed (xmms_output_t *output, xmms_playback_status_t status)
 			g_cond_signal (output->write_cond);
 			output->write_paused = FALSE;
 		} else {
-			g_return_if_fail (!output->write_running);
+			g_return_val_if_fail (!output->write_running, FALSE);
 			output->write_running = TRUE;
 
 			output->write_thread = g_thread_create (xmms_output_write_thread, output, FALSE, NULL);
@@ -1074,6 +1074,8 @@ status_changed (xmms_output_t *output, xmms_playback_status_t status)
 	}
 
 	g_mutex_unlock (output->write_mutex);
+
+	return TRUE;
 }
 
 static gboolean
