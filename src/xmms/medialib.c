@@ -1546,6 +1546,33 @@ xmms_medialib_select (xmms_medialib_session_t *session,
  * @internal
  */
 
+gboolean
+xmms_medialib_check_id (xmms_medialib_entry_t entry)
+{
+	xmms_medialib_session_t *session;
+	gint c = 0;
+
+	session = xmms_medialib_begin ();
+	if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &c, 
+								  "select count(id) from Media where id=%d",
+								  entry)) {
+		xmms_medialib_end (session);
+		return FALSE;
+	}
+
+	if (c>0) {
+		return TRUE;
+	}
+
+	return FALSE;
+
+}
+
+
+/**
+ * @internal
+ */
+
 void
 xmms_medialib_playlist_save_autosaved ()
 {

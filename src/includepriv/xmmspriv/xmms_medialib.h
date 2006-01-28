@@ -42,6 +42,7 @@ void xmms_medialib_logging_stop (xmms_medialib_session_t *session, xmms_medialib
 void xmms_medialib_entry_cleanup (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 xmms_medialib_entry_t xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url, xmms_error_t *error);
 gboolean xmms_medialib_decode_url (char *url);
+gboolean xmms_medialib_check_id (xmms_medialib_entry_t entry);
 
 
 #endif
