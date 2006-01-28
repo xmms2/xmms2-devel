@@ -199,7 +199,7 @@ xmms_oss_volume_set (xmms_output_t *output,
 		return FALSE;
 
 	/* and write it back again */
-	volume = (right << 8) | left;
+	tmp = (right << 8) | left;
 
 	return (ioctl (data->mixer_fd, SOUND_MIXER_WRITE_PCM, &tmp) != -1);
 }
