@@ -125,8 +125,11 @@ xmmsc_result_t *xmmsc_configval_register (xmmsc_connection_t *c, char *valuename
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_configval_changed (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c);
 
+/* signals */
 xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c);
 
 
 /*

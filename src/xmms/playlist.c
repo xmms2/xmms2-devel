@@ -953,7 +953,7 @@ xmms_playlist_destroy (xmms_object_t *object)
 	val = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_property_callback_remove (val, on_playlist_r_all_changed);
 
-	xmms_mediainfo_reader_stop (playlist->mediainfordr);
+	xmms_object_unref (playlist->mediainfordr);
 
 	g_array_free (playlist->list, TRUE);
 

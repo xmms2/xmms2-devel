@@ -1612,6 +1612,21 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 	return ret;
 }
 
+guint
+xmms_medialib_num_not_resolved (xmms_medialib_session_t *session)
+{
+	guint ret;
+	g_return_val_if_fail (session, 0);
+
+	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
+							 "select count(id) as value from Media where "
+							 "key='%s' and value=0 and source=%d", 
+							 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+							 session->source);
+
+	return ret;
+}
+
 gboolean
 xmms_medialib_decode_url (char *url)
 {

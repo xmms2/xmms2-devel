@@ -29,6 +29,7 @@ typedef struct xmms_medialib_St xmms_medialib_t;
 gboolean xmms_medialib_init (xmms_playlist_t *playlist);
 
 xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session);
+guint xmms_medialib_num_not_resolved (xmms_medialib_session_t *session);
 void xmms_medialib_entry_remove (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 
 GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
