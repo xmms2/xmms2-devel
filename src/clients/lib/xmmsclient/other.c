@@ -115,7 +115,7 @@ xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 }
 
 /**
- * Request status for the medianinfo reader. It can be idle or working
+ * Request status for the mediainfo reader. It can be idle or working
  */
 xmmsc_result_t *
 xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
@@ -124,7 +124,7 @@ xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 }
 
 /**
- * Request number of unidexed entries in medialib.
+ * Request number of unindexed entries in medialib.
  */
 xmmsc_result_t *
 xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
