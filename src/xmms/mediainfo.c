@@ -116,7 +116,6 @@ xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
 
 	g_cond_free (mir->cond);
 	g_mutex_free (mir->mutex);
-	g_free (mir);
 }
 
 /**
