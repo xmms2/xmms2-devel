@@ -619,8 +619,11 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_e
 	g_return_val_if_fail (file, FALSE);
 
 	if (!xmms_medialib_check_id (file)) {
-		xmms_error_set (error, XMMS_ERROR_NOENT, 
-						"That is not a valid medialib id!");
+		if (error) {
+			/* we can be called internaly also! */
+			xmms_error_set (error, XMMS_ERROR_NOENT, 
+							"That is not a valid medialib id!");
+		}
 		return FALSE;
 	}
 
