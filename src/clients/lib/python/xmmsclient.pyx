@@ -156,6 +156,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	xmmsc_result_t *xmmsc_signal_playback_playtime(xmmsc_connection_t *c)
 
+	xmmsc_result_t *xmmsc_playback_volume_set (xmmsc_connection_t *c, char *channel, unsigned int volume)
+	xmmsc_result_t *xmmsc_playback_volume_get (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_playback_volume_changed (xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_configval_set(xmmsc_connection_t *c, char *key, char *val)
 	xmmsc_result_t *xmmsc_configval_list(xmmsc_connection_t *c)
@@ -843,6 +846,51 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_signal_playback_playtime(self.conn)
+		ret.more_init()
+		
+		return ret
+
+	def playback_volume_set(self, channel, volume, cb = None):
+		"""
+		Set the playback volume for specified channel
+		@rtype: L{XMMSResult}(UInt)
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_playback_volume_set(self.conn, channel, volume)
+		ret.more_init()
+		
+		return ret
+
+	def playback_volume_get(self, cb = None):
+		"""
+		Get the playback for all channels
+		@rtype: L{XMMSResult}(UInt)
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_playback_volume_get(self.conn)
+		ret.more_init()
+		
+		return ret
+
+	def broadcast_playback_volume_changed(self, cb = None):
+		"""
+		Set a broadcast callback for volume updates
+		@rtype: L{XMMSResult}(UInt)
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_broadcast_playback_volume_changed(self.conn)
 		ret.more_init()
 		
 		return ret
