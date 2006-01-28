@@ -184,6 +184,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded(xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_signal_visualisation_data(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 
 	void xmmsc_io_need_out_callback_set(xmmsc_connection_t *c, object(*callback)(int, object), object userdata)
 	void xmmsc_io_disconnect(xmmsc_connection_t *c)
@@ -1497,6 +1499,34 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_signal_visualisation_data(self.conn)
+		ret.more_init()
+		return ret
+
+	def signal_mediainfo_reader_unindexed(self, cb = None):
+		"""
+		Tell daemon to send you the number of unindexed files in the mlib
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_signal_mediainfo_reader_unindexed(self.conn)
+		ret.more_init()
+		return ret
+
+	def broadcast_mediainfo_reader_status(self, cb = None):
+		"""
+		Tell daemon to send you the status of the mediainfo reader
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_broadcast_mediainfo_reader_status(self.conn)
 		ret.more_init()
 		return ret
 
