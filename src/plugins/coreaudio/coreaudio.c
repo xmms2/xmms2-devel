@@ -49,7 +49,7 @@ typedef struct xmms_ca_data_St {
  * Function prototypes
  */
 
-static void xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
+static gboolean xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
@@ -95,14 +95,14 @@ xmms_plugin_get (void)
  * Member functions
  */
 
-static void
+static gboolean
 xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 {
 	xmms_ca_data_t *data;
 
-	g_return_if_fail (output);
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_if_fail (data);
+	g_return_val_if_fail (output, FALSE);
 
 	XMMS_DBG ("changed status! %d", status);
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
@@ -117,6 +117,8 @@ xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 		}
 
 	}
+
+	return TRUE;
 }
 
 static guint
