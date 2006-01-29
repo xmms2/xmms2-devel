@@ -970,6 +970,7 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 	gboolean s;
 
 	g_return_val_if_fail (session, NULL);
+	g_return_val_if_fail (entry, NULL);
 	
 	s = xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb,
 	                             &ret,
