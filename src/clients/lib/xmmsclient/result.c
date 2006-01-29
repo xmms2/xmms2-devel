@@ -1037,7 +1037,7 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 			ts[2] = '\0';
 
 			chr = strtoul (ts, &t, 16);
-			printf("chr: %d (%s)\n", chr, ts);
+
 			if (t != &ts[2])
 				goto err;
 		}

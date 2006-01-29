@@ -106,7 +106,6 @@ try_upgrade (sqlite3 *sql, gint version)
 		case 21:
 			upgrade_v21_to_v22 (sql);
 			break;
-		/* no available upgrades atm */
 		default:
 			can_upgrade = FALSE;
 			break;
