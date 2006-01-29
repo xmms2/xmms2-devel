@@ -1578,7 +1578,7 @@ xmms_medialib_playlist_save_autosaved ()
 {
 	xmms_error_t err;
 
-	xmms_medialib_playlist_save_current (medialib, "autosaved", &err);
+	xmms_medialib_playlist_save_current (medialib, "_autosaved", &err);
 }
 
 /**
@@ -1589,7 +1589,7 @@ void
 xmms_medialib_playlist_load_autosaved ()
 {
 	xmms_error_t err;
-	xmms_medialib_playlist_load (medialib, "autosaved", &err);
+	xmms_medialib_playlist_load (medialib, "_autosaved", &err);
 }
 
 /**
