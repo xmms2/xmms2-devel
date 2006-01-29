@@ -228,6 +228,19 @@ xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint c
         output->format_list = g_list_append (output->format_list, f);
 }
 
+void
+xmms_output_set_error (xmms_output_t *output, xmms_error_t *error)
+{
+	g_return_if_fail (output);
+
+	xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
+
+	if (error) {
+		xmms_log_error ("plugin reported error, '%s'", 
+						xmms_error_message_get (error));
+	}
+}
+
 gint
 xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 {

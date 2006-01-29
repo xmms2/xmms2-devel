@@ -61,5 +61,6 @@ void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
 void xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint channels, guint rate);
 
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
+void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
 
 #endif
