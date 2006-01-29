@@ -306,6 +306,7 @@ JACK_shutdown(void* arg)
 {
 	xmms_jack_data_t *this;
 	xmms_output_t *output = (xmms_output_t*)arg;
+	xmms_error_t error;
 
 	this = xmms_output_private_data_get (output);
 	g_return_if_fail (this);
@@ -317,7 +318,9 @@ JACK_shutdown(void* arg)
 	/* lets see if we can't reestablish the connection */
 	if(_JACK_OpenDevice(output) != ERR_SUCCESS)
 	{
-		xmms_log_fatal("unable to reconnect with jack...");
+		xmms_log_error("unable to reconnect with jack...");
+		xmms_error_set(&error, XMMS_ERROR_GENERIC, "Jack shutdown, unable to reconnect...");
+		xmms_output_set_error(output, &error);
 	}
 }
 
@@ -412,7 +415,7 @@ _JACK_OpenDevice(xmms_output_t *output)
 		/* wait a short while and try once more before we give up */
 		if ((data->client = jack_client_new(client_name)) == 0)
 		{
-			xmms_log_fatal("jack server not running?");
+			XMMS_DBG("unable to jack_client_new(), jack server not running?");
 			return ERR_OPENING_JACK;
 		}
 	}
@@ -662,10 +665,6 @@ static gboolean
 xmms_jack_new(xmms_output_t *output)
 {
 	xmms_jack_data_t *data;
-	unsigned long outputFrequency = 0;
-	int bytes_per_sample = 2;
-	int channels = 2;     /** @todo stop hardcoding 2 channels here */
-	int retval;
 
 	XMMS_DBG ("xmms_jack_new"); 
 
@@ -681,40 +680,15 @@ xmms_jack_new(xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data); 
 
-	retval = _JACK_Open(output, bytes_per_sample, &outputFrequency, channels);
-	if(retval == ERR_RATE_MISMATCH)
-	{
-		XMMS_DBG("we want a rate of '%ld', opening at jack rate", outputFrequency);
-
-		/* open the jack device with true jack's rate, return 0 upon failure */
-		if((retval = _JACK_Open(output, bytes_per_sample, &outputFrequency, channels)))
-		{
-			XMMS_DBG("failed to open jack with _JACK_Open(), error %d", retval);
-			return FALSE;
-		}
-		XMMS_DBG("success!!");
-	} else if(retval != ERR_SUCCESS)
-	{
-		XMMS_DBG("failed to open jack with _JACK_Open(), error %d", retval);
-		return FALSE;
-	}
-
-	data->rate = outputFrequency;
 	data->volume[0] = .80; /* set volume to 80% */
 	data->volume[1] = .80;
-	data->state = STOPPED;
-
-	xmms_output_format_add(output,
-                           XMMS_SAMPLE_FORMAT_FLOAT,
-                           channels, outputFrequency);
-
-	XMMS_DBG("jack initialized!!");
 
 	return TRUE; 
 }
 
 /**
  * Frees the plugin data allocated in xmms_jack_new()
+ * and closes the connection to jack
  */
 static void
 xmms_jack_destroy (xmms_output_t *output)
@@ -757,25 +731,84 @@ xmms_jack_buffersize_get(xmms_output_t *output)
 	return data->buffer_size;
 }
 
+static gboolean
+xmms_jack_start(xmms_output_t *output)
+{
+	xmms_jack_data_t *data;
+	unsigned long outputFrequency = 0;
+	int bytes_per_sample = 2;
+	int channels = 2;     /** @todo stop hardcoding 2 channels here */
+	unsigned int retval;
+
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, 0);
+
+	XMMS_DBG ("xmms_jack_start");
+
+	/* if we are already open, just return true */
+	if(data->client)
+		return TRUE;
+
+	retval = _JACK_Open(output, bytes_per_sample, &outputFrequency, channels);
+	if(retval == ERR_RATE_MISMATCH)
+	{
+		XMMS_DBG("we want a rate of '%ld', opening at jack rate", outputFrequency);
+
+		/* open the jack device with true jack's rate, return 0 upon failure */
+		if((retval = _JACK_Open(output, bytes_per_sample, &outputFrequency, channels)))
+		{
+			XMMS_DBG("failed to open jack with _JACK_Open(), error %d", retval);
+			return FALSE;
+		}
+		XMMS_DBG("success!!");
+	} else if(retval != ERR_SUCCESS)
+	{
+		XMMS_DBG("failed to open jack with _JACK_Open(), error %d", retval);
+		return FALSE;
+	}
+
+	data->rate = outputFrequency;
+
+	xmms_output_format_add(output,
+                           XMMS_SAMPLE_FORMAT_FLOAT,
+                           channels, outputFrequency);
+
+	XMMS_DBG("jack started!!");
+
+	return TRUE;
+}
+
 /**
  * Callback from xmms whenever the playback state of the plugin changes
  * @param output xmms object
  * @param requested status
  */
-static void
+static gboolean
 xmms_jack_status (xmms_output_t *output, xmms_playback_status_t status)
 {
 	xmms_jack_data_t *data;
 
-	g_return_if_fail (output);
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_if_fail (data);
+	g_return_val_if_fail (data, FALSE);
 
 	XMMS_DBG ("changed status! '%s'", (status == XMMS_PLAYBACK_STATUS_PLAY) ? "PLAYING" : "STOPPED");
 	if(status == XMMS_PLAYBACK_STATUS_PLAY)
+	{
+		if(!xmms_jack_start(output))
+		{
+			xmms_log_error("unable to start jack with jack_start(), is jack server running?");
+			return FALSE;
+		}
 		data->state = PLAYING;
+	}
 	else
+	{
 		data->state = STOPPED;
+	}
+
+	return TRUE;
 }
 
 /**
@@ -820,4 +853,3 @@ xmms_plugin_get (void)
 
 	return (plugin);
 }
-
