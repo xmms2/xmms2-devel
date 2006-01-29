@@ -57,6 +57,7 @@ struct xmms_mediainfo_reader_St {
 	xmms_playlist_t *playlist;
 };
 
+static void xmms_mediainfo_reader_stop (xmms_object_t *o);
 static gpointer xmms_mediainfo_reader_thread (gpointer data);
 static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata);
 
@@ -97,9 +98,10 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
   * Kill the mediainfo reader thread
   */
 
-void
-xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
+static void
+xmms_mediainfo_reader_stop (xmms_object_t *o)
 {
+	xmms_mediainfo_reader_t *mir = 0;
 
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
 	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
