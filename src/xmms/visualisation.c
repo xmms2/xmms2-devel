@@ -118,8 +118,8 @@ static void output_spectrum (xmms_visualisation_t *vis, guint32 pos)
 
 	node = g_list_next (node);
 	for (i = 0; i < FFT_LEN / 2; i++) {
-		data = (xmms_object_cmd_value_t *)node->data;
 		gfloat tmp = vis->spec[i];
+		data = (xmms_object_cmd_value_t *)node->data;
 		
 		if (tmp >= 1.0)
 			data->value.uint32 = INT_MAX;
