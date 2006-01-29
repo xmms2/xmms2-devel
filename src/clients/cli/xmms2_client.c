@@ -1135,7 +1135,7 @@ cmds commands[] = {
 	{ "info", "information about current entry", cmd_info },
 	{ "current", "formatted information about the current entry", cmd_current },
 	{ "config", "set a config value", cmd_config },
-	{ "configlist", "list all config values", cmd_config_list },
+	{ "config_list", "list all config values", cmd_config_list },
 	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
 	{ "mainstats", "get status msg from serevr", cmd_main_status },
 	/*{ "statistics", "get statistics from server", cmd_stats },
