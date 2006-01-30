@@ -1561,6 +1561,8 @@ xmms_medialib_check_id (xmms_medialib_entry_t entry)
 		return FALSE;
 	}
 
+	xmms_medialib_end (session);
+
 	if (c>0) {
 		return TRUE;
 	}
