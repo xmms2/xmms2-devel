@@ -915,6 +915,47 @@ cmd_move (xmmsc_connection_t *conn, int argc, char **argv)
 	
 }
 
+static void
+cmd_volume (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+	gchar *end = NULL;
+	guint vol;
+
+	if (argc < 4) {
+		print_error ("You must specify a channel and a volume level.");
+	}
+
+	vol = strtoul (argv[3], &end, 0);
+	if (end == argv[3]) {
+		print_error ("Please specify a channel and a number from 0-100.");
+	}
+
+	res = xmmsc_playback_volume_set (conn, argv[2], vol);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Failed to set volume.");
+	}
+
+	xmmsc_result_unref (res);
+}
+
+static void
+cmd_volume_list (xmmsc_connection_t *conn, int argc, char **argv)
+{
+	xmmsc_result_t *res;
+
+	res = xmmsc_playback_volume_get (conn);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Failed to get volume.");
+	}
+
+	xmmsc_result_dict_foreach (res, print_hash, NULL);
+	xmmsc_result_unref (res);
+}
 
 static void
 cmd_jump (xmmsc_connection_t *conn, int argc, char **argv)
@@ -1128,6 +1169,8 @@ cmds commands[] = {
 	{ "seek", "seek to a specific place in current song", cmd_seek },
 	{ "jump", "take a leap in the playlist", cmd_jump },
 	{ "move", "move a entry in the playlist", cmd_move },
+	{ "volume", "set volume for a channel", cmd_volume },
+	{ "volume_list", "list volume levels for each channel", cmd_volume_list },
 
 	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
 
