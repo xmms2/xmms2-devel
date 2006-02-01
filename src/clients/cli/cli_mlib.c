@@ -93,7 +93,7 @@ mlib_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		res = xmmsc_medialib_add_entry (conn, url);
 		g_free (url);
 		xmmsc_result_wait (res);
-		printf ("Added %s to medialib\n", argv[i]);
+		print_info ("Added %s to medialib", argv[i]);
 		xmmsc_result_unref (res);
 	}
 }
@@ -355,7 +355,7 @@ mlib_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_get_string(res, &name);
 		/* Hide all lists that start with _ */
 		if (name[0] != '_')
-			printf("%s\n", name);
+			print_info ("%s", name);
 	}
 	xmmsc_result_unref (res);
 }

@@ -86,9 +86,9 @@ print_hash (const void *key, xmmsc_result_value_type_t type,
 			const void *value, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
-		printf ("%s = %s\n", (gchar *)key, (gchar *)value);
+		print_info ("%s = %s", key, value);
 	} else {
-		printf ("%s = %d\n", (gchar *)key, XPOINTER_TO_INT (value));
+		print_info ("%s = %d", key, XPOINTER_TO_INT (value));
 	}
 }
 
@@ -188,8 +188,8 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 	GList *n;
 	gint mid;
 	
-	printf ("-[Result]-----------------------------------------------------------------------\n");
-	printf ("Id   | Artist            | Album                     | Title\n");
+	print_info ("-[Result]-----------------------------------------------------------------------");
+	print_info ("Id   | Artist            | Album                     | Title");
 
 	for (n = list; n; n = g_list_next (n)) {
 		gchar *artist, *album, *title;
@@ -213,7 +213,8 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 			if (!album)
 				album = "Unknown";
 
-			printf ("%-5.5d| %-17.17s | %-25.25s | %-25.25s\n", mid, artist, album, title);
+			print_info ("%-5.5d| %-17.17s | %-25.25s | %-25.25s",
+			            mid, artist, album, title);
 
 		} else {
 			gchar *url, *filename;
@@ -221,7 +222,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
-					printf ("%-5.5d| %s\n", mid, filename);
+					print_info ("%-5.5d| %s", mid, filename);
 					g_free (filename);
 				}
 			}
@@ -229,7 +230,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list) {
 		count++;
 		xmmsc_result_unref (res);
 	}
-	printf ("-------------------------------------------------------------[Count:%6.d]-----\n", count);
+	print_info ("-------------------------------------------------------------[Count:%6.d]-----", count);
 }
 
 
@@ -251,7 +252,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		printf ("something went wrong when adding it to the playlist\n");
+		print_info ("something went wrong when adding it to the playlist");
 		exit (-1);
 	}
 
@@ -269,7 +270,7 @@ add_directory_to_playlist (xmmsc_connection_t *conn, gchar *directory,
 	gchar *buf;
 
 	if (!(dir = g_dir_open (directory, 0, NULL))) {
-		printf ("cannot open directory: %s\n", directory);
+		print_info ("cannot open directory: %s", directory);
 		return;
 	}
 
@@ -395,7 +396,7 @@ cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	for (i = 2; argv[i]; i++) {
 		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			printf ("not a directory: %s\n", argv[i]);
+			print_info ("not a directory: %s", argv[i]);
 			continue;
 		}
 
@@ -479,7 +480,8 @@ cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		res = xmmsc_playlist_remove (conn, id);
 		xmmsc_result_wait (res);
 		if (xmmsc_result_iserror (res)) {
-			fprintf (stderr, "Couldn't remove %d (%s)\n", id, xmmsc_result_get_error (res));
+			print_error ("Couldn't remove %d (%s)", id,
+			             xmmsc_result_get_error (res));
 		}
 		xmmsc_result_unref (res);
 	}
@@ -497,10 +499,10 @@ print_entry (const void *key, xmmsc_result_value_type_t type,
 
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
 		conv = g_locale_from_utf8 (value, -1, &r, &w, &err);
-		printf ("[%s] %s = %s\n", source, (char *)key, conv);
+		print_info ("[%s] %s = %s", source, key, conv);
 		g_free (conv);
 	} else {
-		printf ("[%s] %s = %d\n", source, (char *)key, XPOINTER_TO_INT (value));
+		print_info ("[%s] %s = %d", source, key, XPOINTER_TO_INT (value));
 	}
 
 }
@@ -561,7 +563,7 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		              "${artist} - ${title}", res);
 	}
 
-	printf("%s\n", print_text);
+	print_info ("%s", print_text);
 	xmmsc_result_unref (res);
 }
 
@@ -669,7 +671,8 @@ cmd_play (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playback_start (conn);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't start playback: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't start playback: %s",
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
 }
@@ -681,7 +684,8 @@ cmd_stop (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playback_stop (conn);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't stop playback: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't stop playback: %s",
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
 
@@ -694,7 +698,8 @@ cmd_pause (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playback_pause (conn);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't pause playback: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't pause playback: %s",
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
 
@@ -709,7 +714,8 @@ do_reljump (xmmsc_connection_t *conn, gint where)
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't advance in playlist: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't advance in playlist: %s",
+		             xmmsc_result_get_error (res));
 		return;
 	}
 	xmmsc_result_unref (res);
@@ -768,7 +774,7 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	ms = pt + 1000 * atoi (argv[2]);
 
 	if (dur && ms > dur) {
-		printf ("Skipping to next song\n");
+		print_info ("Skipping to next song");
 		do_reljump (conn, 1);
 		return;
 	}
@@ -779,7 +785,8 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playback_seek_ms (conn, ms);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res))
-		fprintf (stderr, "Couldn't seek to %d ms: %s\n", ms, xmmsc_result_get_error (res));
+		print_error ("Couldn't seek to %d ms: %s", ms,
+		             xmmsc_result_get_error (res));
         xmmsc_result_unref (res);
 
 }
@@ -816,7 +823,7 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_get_dict_entry_str (res, "shortname", &shortname);
 		xmmsc_result_get_dict_entry_str (res, "description", &desc);
 
-		printf ("%s - %s\n", shortname, desc);
+		print_info ("%s - %s", shortname, desc);
 		
 		xmmsc_result_list_next (res);
 	}
@@ -858,7 +865,7 @@ cmd_config (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_configval_set (conn, key, value);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't set config value: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't set config value: %s", xmmsc_result_get_error (res));
 	} else {
 		print_info ("Config value %s set to %s", key, value);
 	}
@@ -907,7 +914,8 @@ cmd_move (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playlist_move (conn, cur_pos, new_pos);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Unable to move playlist entry: %s\n", xmmsc_result_get_error (res));
+		print_error ("Unable to move playlist entry: %s",
+		             xmmsc_result_get_error (res));
 		exit (-1);
 	}
 
@@ -928,7 +936,8 @@ cmd_jump (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playlist_set_next (conn,  atoi (argv[2]));
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't jump to that song: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't jump to that song: %s",
+		             xmmsc_result_get_error (res));
 		xmmsc_result_unref (res);
 		return;
 	}
@@ -937,7 +946,8 @@ cmd_jump (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playback_tickle (conn);
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		fprintf (stderr, "Couldn't go to next song: %s\n", xmmsc_result_get_error (res));
+		print_error ("Couldn't go to next song: %s",
+		             xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
 }
@@ -1057,7 +1067,7 @@ do_mediainfo (xmmsc_connection_t *c, guint id)
 static void
 quit (void *data)
 {
-	printf ("\nbye cruel world!\n");
+	print_info ("\nbye cruel world!");
 	exit (0);
 }
 
