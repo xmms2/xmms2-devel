@@ -48,8 +48,7 @@ struct xmms_sample_converter_St {
 	guint interpolator_ratio;
 	guint decimator_ratio;
 
-	gfloat incr;
-	gfloat offset;
+	guint offset;
 
 	xmms_sample_t *state;
 
@@ -325,8 +324,6 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 
 	conv->interpolator_ratio = to/a;
 	conv->decimator_ratio = from/a;
-
-	conv->incr = (gfloat)conv->decimator_ratio / (gfloat)conv->interpolator_ratio;
 
 	conv->state = g_malloc0 (xmms_sample_size_get (conv->from->format) * conv->from->channels);
 

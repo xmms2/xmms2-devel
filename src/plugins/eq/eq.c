@@ -179,9 +179,10 @@ xmms_eq_configval_changed (xmms_object_t * object, gconstpointer data,
 
 	gain = xmms_config_property_get_float (val);
 	if (gain <= 0.0) {
+		gchar buf[20];
+
 		gain = G_MINDOUBLE;
 
-		gchar buf[20];
 		g_snprintf (buf, sizeof (buf), "%g", gain);
 
 		xmms_config_property_set_data (val, buf);

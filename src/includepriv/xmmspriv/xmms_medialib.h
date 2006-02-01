@@ -29,6 +29,7 @@ typedef struct xmms_medialib_St xmms_medialib_t;
 gboolean xmms_medialib_init (xmms_playlist_t *playlist);
 
 xmms_medialib_entry_t xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session);
+guint xmms_medialib_num_not_resolved (xmms_medialib_session_t *session);
 void xmms_medialib_entry_remove (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 
 GHashTable *xmms_medialib_entry_to_hashtable (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
@@ -40,8 +41,9 @@ void xmms_medialib_playlist_load_autosaved ();
 void xmms_medialib_logging_start (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
 void xmms_medialib_logging_stop (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, guint playtime);
 void xmms_medialib_entry_cleanup (xmms_medialib_session_t *session, xmms_medialib_entry_t entry);
-xmms_medialib_entry_t xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url);
+xmms_medialib_entry_t xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url, xmms_error_t *error);
 gboolean xmms_medialib_decode_url (char *url);
+gboolean xmms_medialib_check_id (xmms_medialib_entry_t entry);
 
 
 #endif

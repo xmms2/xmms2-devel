@@ -1,3 +1,9 @@
+xmms2 (0.2+git20060113-0) sarge; urgency=low
+
+  * New git snapshot: 0.2 DrBombay (0bbf8e15b820db93ee287aad82db6044b0761f30).
+
+ -- Jens L. Taprogge <jens.taprogge@post.rwth-aachen.de>  Fri, 13 Jan 2006 16:07:12 +0100
+
 xmms2 (0.2+git20051227-0) sarge; urgency=low
 
   * Fix: add libsidplay2-dev to the build-depends.

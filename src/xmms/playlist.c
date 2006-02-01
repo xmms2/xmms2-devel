@@ -525,11 +525,10 @@ xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmm
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin();
 
-	entry = xmms_medialib_entry_new_encoded (session, url);
+	entry = xmms_medialib_entry_new_encoded (session, url, err);
 	xmms_medialib_end (session);
 
 	if (!entry) {
-		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
 		return FALSE;
 	}
 
@@ -590,11 +589,10 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin();
 	
-	entry = xmms_medialib_entry_new_encoded (session, nurl);
+	entry = xmms_medialib_entry_new_encoded (session, nurl, err);
 	xmms_medialib_end (session);
 
 	if (!entry) {
-		xmms_error_set (err, XMMS_ERROR_OOM, "Could not allocate memory for entry");
 		return FALSE;
 	}
 
@@ -619,6 +617,15 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_e
 {
 	GHashTable *dict;
 	g_return_val_if_fail (file, FALSE);
+
+	if (!xmms_medialib_check_id (file)) {
+		if (error) {
+			/* we can be called internaly also! */
+			xmms_error_set (error, XMMS_ERROR_NOENT, 
+							"That is not a valid medialib id!");
+		}
+		return FALSE;
+	}
 
 	g_mutex_lock (playlist->mutex);
 	g_array_append_val (playlist->list, file);
@@ -946,7 +953,7 @@ xmms_playlist_destroy (xmms_object_t *object)
 	val = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_property_callback_remove (val, on_playlist_r_all_changed);
 
-	xmms_mediainfo_reader_stop (playlist->mediainfordr);
+	xmms_object_unref (playlist->mediainfordr);
 
 	g_array_free (playlist->list, TRUE);
 

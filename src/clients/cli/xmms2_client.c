@@ -252,11 +252,11 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 
 	xmmsc_result_wait (res);
 	if (xmmsc_result_iserror (res)) {
-		print_info ("something went wrong when adding it to the playlist");
-		exit (-1);
+		print_error ("Couldn't add %s to playlist: %s\n", item,
+		             xmmsc_result_get_error (res));
+	} else {
+		print_info ("Added %s", item);
 	}
-
-	print_info ("Adding %s", item);
 	xmmsc_result_unref (res);
 }
 
@@ -318,7 +318,12 @@ cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		if (id) {
 			res = xmmsc_playlist_add_id (conn, id);
 			xmmsc_result_wait (res);
-			print_info ("Added medialib id %d to playlist", atoi(argv[i]));
+			if (xmmsc_result_iserror (res)) {
+				print_error ("Couldn't add %d to playlist: %s", id, 
+							 xmmsc_result_get_error (res));
+			} else {
+				print_info ("Added medialib id %d to playlist", id);
+			}
 			xmmsc_result_unref (res);
 		}
 	}
@@ -1145,7 +1150,7 @@ cmds commands[] = {
 	{ "info", "information about current entry", cmd_info },
 	{ "current", "formatted information about the current entry", cmd_current },
 	{ "config", "set a config value", cmd_config },
-	{ "configlist", "list all config values", cmd_config_list },
+	{ "config_list", "list all config values", cmd_config_list },
 	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
 	{ "mainstats", "get status msg from serevr", cmd_main_status },
 	/*{ "statistics", "get statistics from server", cmd_stats },

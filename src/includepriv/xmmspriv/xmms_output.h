@@ -32,8 +32,6 @@ xmms_output_t *xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist
 
 xmms_medialib_entry_t xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *err);
 
-gboolean xmms_output_volume_get (xmms_output_t *output, gint *left, gint *right);
-
 void xmms_output_flush (xmms_output_t *output);
 guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err); 
 gboolean xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin);

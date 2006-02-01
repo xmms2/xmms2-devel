@@ -114,6 +114,24 @@ xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_VISUALISATION_DATA);
 }
 
+/**
+ * Request status for the mediainfo reader. It can be idle or working
+ */
+xmmsc_result_t *
+xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
+{
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
+}
+
+/**
+ * Request number of unindexed entries in medialib.
+ */
+xmmsc_result_t *
+xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
+{
+	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
+}
+
 /** @} */
 
 

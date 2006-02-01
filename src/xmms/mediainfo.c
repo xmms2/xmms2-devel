@@ -26,6 +26,7 @@
 
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_log.h"
+#include "xmms/xmms_ipc.h"
 #include "xmmspriv/xmms_mediainfo.h"
 #include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_decoder.h"
@@ -46,6 +47,8 @@
   */
 
 struct xmms_mediainfo_reader_St {
+	xmms_object_t object;
+
 	GThread *thread;
 	GMutex *mutex;
 	GCond *cond;
@@ -54,6 +57,7 @@ struct xmms_mediainfo_reader_St {
 	xmms_playlist_t *playlist;
 };
 
+static void xmms_mediainfo_reader_stop (xmms_object_t *o);
 static gpointer xmms_mediainfo_reader_thread (gpointer data);
 static void xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata);
 
@@ -69,7 +73,15 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 
 	g_return_val_if_fail (playlist, NULL);
 
-	mrt = g_new0 (xmms_mediainfo_reader_t, 1);
+	mrt = xmms_object_new (xmms_mediainfo_reader_t, xmms_mediainfo_reader_stop);
+
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIAINFO_READER, 
+							  XMMS_OBJECT (mrt));
+
+	xmms_ipc_broadcast_register (XMMS_OBJECT (mrt),
+	                             XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
+	xmms_ipc_signal_register (XMMS_OBJECT (mrt),
+							  XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
 
 	mrt->mutex = g_mutex_new ();
 	mrt->cond = g_cond_new ();
@@ -86,9 +98,15 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
   * Kill the mediainfo reader thread
   */
 
-void
-xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
+static void
+xmms_mediainfo_reader_stop (xmms_object_t *o)
 {
+	xmms_mediainfo_reader_t *mir = 0;
+
+	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
+	xmms_ipc_signal_unregister (XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
+	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_MEDIAINFO_READER);
+	
 	g_mutex_lock (mir->mutex);
 
 	mir->running = FALSE;
@@ -100,7 +118,6 @@ xmms_mediainfo_reader_stop (xmms_mediainfo_reader_t *mir)
 
 	g_cond_free (mir->cond);
 	g_mutex_free (mir->mutex);
-	g_free (mir);
 }
 
 /**
@@ -150,6 +167,14 @@ xmms_mediainfo_reader_thread (gpointer data)
 		entry = xmms_medialib_entry_not_resolved_get (session);
 		xmms_medialib_end (session);
 
+		if (entry) {
+			/* working */
+			xmms_object_emit_f (XMMS_OBJECT (mrt),
+								XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
+								XMMS_OBJECT_CMD_ARG_INT32,
+								XMMS_MEDIAINFO_READER_STATUS_RUNNING);
+		}
+
 		while (entry) {
 			xmms_transport_t *transport;
 			xmms_decoder_t *decoder;
@@ -159,6 +184,10 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_error_reset (&err);
 			session = xmms_medialib_begin ();
 			lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+			xmms_object_emit_f (XMMS_OBJECT (mrt),
+								XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
+								XMMS_OBJECT_CMD_ARG_UINT32,
+								xmms_medialib_num_not_resolved (session));
 			xmms_medialib_end (session);
 
 			transport = xmms_transport_new ();
@@ -230,6 +259,11 @@ next:
 			xmms_medialib_end (session);
 		}
 
+		/* Idle */
+		xmms_object_emit_f (XMMS_OBJECT (mrt),
+							XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
+							XMMS_OBJECT_CMD_ARG_INT32,
+							XMMS_MEDIAINFO_READER_STATUS_IDLE);
 		g_mutex_lock (mrt->mutex);
 		g_cond_wait (mrt->cond, mrt->mutex);
 		g_mutex_unlock (mrt->mutex);

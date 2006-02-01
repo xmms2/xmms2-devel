@@ -39,7 +39,7 @@ daemon which handles the playback of music and storage of music metadata.
 .SH SYNOPSIS
 .I xmms2d
 [
-.B -vnd
+.B -vqn
 ] [
 .B -h / --help
 ] [
@@ -53,6 +53,9 @@ output_plugin
 ] [
 .B -c / --conf
 path_to_config_file
+] [
+.B -s / --status-fd
+fd
 ]
 .SH DESCRIPTION
 .B XMMS2 
@@ -78,6 +81,10 @@ These options are currently recognised:
 Increases the vebosity of
 .I xmms2d
 .TP
+.I -q
+Decrease the verbosity of
+.I xmms2d
+.TP
 .I -V | --version 
 Returns the 
 .B XMMS2
@@ -93,15 +100,14 @@ Disables logging
 .I -o output_plugin 
 Specifies a different output plugin to use in place of the default
 .TP
-.I -d
-Daemonize 
-.I xmms2d
-.TP
 .I -p plugin_path 
 Specifies a different plugin directory path than the default
 .TP
-.I -c | --conf path_to_config_file
+.I -c path_to_config_file | --conf=path_to_config_file
 Specifies a path to an alternative configuration file
+.TP
+.I -s fd | --status-fd=fd
+Specifies a file descriptor to write to when started
 .SH "IPC SOCKET"
 .B XMMS2
 clients uses IPC sockets to communicate with
@@ -149,7 +155,7 @@ is shutdown correctly
 The typical location for the UNIX IPC Socket. USER is the username of the user that executed 
 .I xmms2d.
 .SH SEE ALSO
-xmms2(1), http://xmms2.sourceforge.net
+xmms2(1), xmms2-launcher(8), http://xmms2.sourceforge.net
 .SH HISTORY
 The
 .B XMMS2

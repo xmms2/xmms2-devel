@@ -274,53 +274,6 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	exit (EXIT_SUCCESS);
 }
 
-
-/**
- * @internal Callback function executed whenever the output volume is changed.
- * Simply sets the configuration value as needed.
- */
-static void
-on_output_volume_changed (xmms_object_t *object, gconstpointer data,
-                          gpointer userdata)
-{
-	xmms_config_property_t *cfg;
-
-	cfg = xmms_config_lookup (userdata);
-	xmms_config_property_set_data (cfg, (gchar *) data);
-}
-
-/**
- * @internal Initialise volume proxy setting. Using a proxy configuration value
- * to modify volume level means that the client does not need to know which
- * output plugin the daemon is currently using - it simply modifies the proxy
- * value and the daemon takes care of the rest.
- * @param[in] output The name of the current output plugin.
- */
-static void
-init_volume_config_proxy (const gchar *output)
-{
-	xmms_config_property_t *cfg;
-	static gchar source[64];
-	const gchar *vol;
-
-	/* read the real volume value */
-	g_snprintf (source, sizeof (source), "output.%s.volume", output);
-
-	cfg = xmms_config_lookup (source);
-	if (cfg) {
-		vol = xmms_config_property_get_string (cfg);
-
-		xmms_config_property_callback_set (cfg, on_output_volume_changed,
-						  				"output.volume");
-
-		/* create the proxy value and assign the value */
-		cfg = xmms_config_property_register ("output.volume", vol,
-										on_output_volume_changed,
-									  	source);
-		xmms_config_property_set_data (cfg, (gchar *) vol);
-	}
-}
-
 static gboolean
 symlink_file (gchar *source, gchar *dest)
 {
@@ -491,7 +444,6 @@ main (int argc, char **argv)
 	if (!mainobj->output) {
 		xmms_log_fatal ("Failed to create output object!");
 	}
-	init_volume_config_proxy (outname);
 
 	g_snprintf (default_path, sizeof (default_path),
 	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());

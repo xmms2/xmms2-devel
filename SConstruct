@@ -17,7 +17,7 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrBombay (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrBombay+WIP (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
