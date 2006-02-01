@@ -16,23 +16,23 @@
 
 #include "xmms2_client.h"
 
-static void mlib_add (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_loadall (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_search (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_query (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlist_save (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_set (xmmsc_connection_t *conn, int argc, char **argv);
-static void mlib_topsongs (xmmsc_connection_t *conn, int argc, char **argv);
+static void mlib_add (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_loadall (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_query (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlist_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlist_save (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlist_export (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_addpath (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_rehash (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_set (xmmsc_connection_t *conn, gint argc, gchar **argv);
+static void mlib_topsongs (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", mlib_add },
@@ -57,7 +57,7 @@ cmds mlib_commands[] = {
 
 
 static void
-mlib_topsongs (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_topsongs (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	GList *n = NULL;
@@ -87,7 +87,7 @@ mlib_topsongs (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_set (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_set (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -115,24 +115,24 @@ mlib_set (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_add (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	gint i;
 
 	for (i = 3; argv[i]; i++) {
-		char *url = format_url (argv[i]);
+		gchar *url = format_url (argv[i]);
 		if (!url) return;
 		res = xmmsc_medialib_add_entry (conn, url);
-		free (url);
+		g_free (url);
 		xmmsc_result_wait (res);
-		printf ("Added %s to medialib\n", argv[i]);
+		print_info ("Added %s to medialib", argv[i]);
 		xmmsc_result_unref (res);
 	}
 }
 
 static void
-mlib_loadall (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_loadall (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	res = xmmsc_medialib_add_to_playlist (conn, "select id from Media where key='url'");
@@ -151,15 +151,15 @@ free_query_spec (xmmsc_query_attribute_t *specs, gint num_attribs)
 	}
 
 	for (i = 0; i < num_attribs; i++) {
-		free (specs[i].key);
-		free (specs[i].value);
+		g_free (specs[i].key);
+		g_free (specs[i].value);
 	}
 
 	g_free (specs);
 }
 
-static char *
-mlib_query_from_args (int argc, char **argv)
+static gchar *
+mlib_query_from_args (gint argc, gchar **argv)
 {
 	gchar *query;
 	gchar **s;
@@ -203,7 +203,7 @@ mlib_query_from_args (int argc, char **argv)
 }
 
 static void
-mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -222,10 +222,10 @@ mlib_queryadd (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	char *query;
+	gchar *query;
 
 	query = mlib_query_from_args(argc, argv);
 	if (query == NULL) {
@@ -236,7 +236,7 @@ mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
 	print_info("%s", query);
 
 	res = xmmsc_medialib_add_to_playlist (conn, query);
-	free(query);
+	g_free(query);
 
 	xmmsc_result_wait (res);
 	xmmsc_result_unref (res);
@@ -244,11 +244,11 @@ mlib_searchadd (xmmsc_connection_t *conn, int argc, char **argv)
 
 
 static void
-mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	GList *n = NULL;
-	char *query;
+	gchar *query;
 
 	query = mlib_query_from_args(argc, argv);
 	if (query == NULL) {
@@ -261,7 +261,7 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 	res = xmmsc_medialib_select (conn, query);
 	xmmsc_result_wait (res);
 
-	free(query);
+	g_free (query);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
@@ -283,7 +283,7 @@ mlib_search (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_query (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -306,7 +306,7 @@ mlib_query (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlist_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	GList *n = NULL;
 	xmmsc_result_t *res;
@@ -334,7 +334,7 @@ mlib_playlist_list (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_playlist_save (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlist_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -353,7 +353,7 @@ mlib_playlist_save (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -372,7 +372,7 @@ mlib_playlist_load (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -384,20 +384,20 @@ mlib_playlists_list (xmmsc_connection_t *conn, int argc, char **argv)
 	}
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
-		char *name;
+		gchar *name;
 		xmmsc_result_get_string(res, &name);
 		/* Hide all lists that start with _ */
 		if (name[0] != '_')
-			printf("%s\n", name);
+			print_info ("%s", name);
 	}
 	xmmsc_result_unref (res);
 }
 
 static void
-mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	char *url;
+	gchar *url;
 
 	if (argc < 5) {
 		print_error ("Supply a playlist name and url");
@@ -418,7 +418,7 @@ mlib_playlist_import (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
@@ -437,11 +437,11 @@ mlib_playlist_remove (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_playlist_export (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	char *file;
-	char *mime;
+	gchar *file;
+	gchar *mime;
 
 	if (argc < 5) {
 		print_error ("Supply a playlist name and a mimetype");
@@ -474,10 +474,10 @@ mlib_playlist_export (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_addpath (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	char rpath[PATH_MAX];
+	gchar rpath[PATH_MAX];
 	if (argc < 4) {
 		print_error ("Supply a path to add!");
 	}
@@ -496,10 +496,10 @@ mlib_addpath (xmmsc_connection_t *conn, int argc, char **argv)
 }
 
 static void
-mlib_rehash (xmmsc_connection_t *conn, int argc, char **argv)
+mlib_rehash (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	unsigned int id = 0;
+	guint id = 0;
 	if (argc < 4) {
 		print_info ("Rehashing whole medialib!");
 	} else {
@@ -525,7 +525,7 @@ mlib_help (void) {
 }
 
 void
-cmd_mlib (xmmsc_connection_t *conn, int argc, char **argv)
+cmd_mlib (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gint i;
 	if (argc < 3) {
