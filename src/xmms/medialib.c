@@ -352,7 +352,7 @@ void
 xmms_medialib_end (xmms_medialib_session_t *session)
 {
 	g_return_if_fail (session);
-
+	
 	if (session == global_medialib_session) {
 		g_mutex_unlock (global_medialib_session_mutex);
 		return;
@@ -1476,6 +1476,8 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 		return;
 	}
 
+	xmms_medialib_end (session);
+
 	/* we use g_list_prepend() in get_playlist_entries_cb(), so
 	 * we need to reverse the list now
 	 */
@@ -1489,8 +1491,10 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 			e = atoi (entry+7);
 			xmms_playlist_add (medialib->playlist, e, NULL);
 		} else if (!strncmp (entry, "sql://", 6)) {
+			session = xmms_medialib_begin ();
 			xmms_sqlite_query_array (session->sql, playlist_load_sql_query_cb,
 						 medialib, "select url from Media where %q", entry);
+			xmms_medialib_end (session);
 		}
 
 		g_free (entry);
@@ -1502,16 +1506,18 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 						XMMS_OBJECT_CMD_ARG_STRING,
 						name);
 
+	session = xmms_medialib_begin ();
 	ret = xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb,
 	                               &pos,
 	                               "select pos as value from Playlist "
 	                               "where id = %u", playlist_id);
+	xmms_medialib_end (session);
+
 	if (ret && pos != -1) {
 		xmms_playlist_set_current_position (medialib->playlist, pos,
 		                                    error);
 	}
 
-	xmms_medialib_end (session);
 }
 
 /**
