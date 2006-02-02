@@ -49,7 +49,9 @@ static void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
 static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
+static void xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error);
 static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
+static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
 static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
 static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
@@ -69,7 +71,9 @@ XMMS_CMD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (seekms_rel, xmms_output_seekms_rel, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (seeksamples_rel, xmms_output_seeksamples_rel, xmms_output_t *, NONE, INT32, NONE);
 XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (volume_set, xmms_output_volume_set, xmms_output_t *, NONE, STRING, UINT32);
@@ -428,6 +432,19 @@ xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
 }
 
 static void
+xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error)
+{
+	g_mutex_lock (output->playtime_mutex);
+	ms += output->played_time;
+	if(ms < 0) {
+		ms = 0;
+	}
+	g_mutex_unlock (output->playtime_mutex);
+
+	xmms_output_seekms(output, ms, error);
+}
+
+static void
 xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error)
 {
 	g_return_if_fail (output);
@@ -446,7 +463,19 @@ xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *e
 	xmms_output_flush (output);
 
 	g_mutex_unlock (output->decoder_mutex);
+}
 
+static void
+xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error)
+{
+	g_mutex_lock (output->playtime_mutex);
+	samples += output->played;
+	if(samples < 0) {
+		samples = 0;
+	}
+	g_mutex_unlock (output->playtime_mutex);
+
+	xmms_output_seeksamples(output, samples, error);
 }
 
 static void
@@ -881,8 +910,14 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 				XMMS_IPC_CMD_SEEKMS, 
 				XMMS_CMD_FUNC (seekms));
 	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_SEEKMS_REL, 
+				XMMS_CMD_FUNC (seekms_rel));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
 				XMMS_IPC_CMD_SEEKSAMPLES, 
 				XMMS_CMD_FUNC (seeksamples));
+	xmms_object_cmd_add (XMMS_OBJECT (output), 
+				XMMS_IPC_CMD_SEEKSAMPLES_REL, 
+				XMMS_CMD_FUNC (seeksamples_rel));
 	xmms_object_cmd_add (XMMS_OBJECT (output), 
 				XMMS_IPC_CMD_OUTPUT_STATUS, 
 				XMMS_CMD_FUNC (output_status));

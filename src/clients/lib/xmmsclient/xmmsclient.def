@@ -112,7 +112,9 @@ xmmsc_playback_current_id
 xmmsc_playback_pause
 xmmsc_playback_playtime
 xmmsc_playback_seek_ms
+xmmsc_playback_seek_ms_rel
 xmmsc_playback_seek_samples
+xmmsc_playback_seek_samples_rel
 xmmsc_playback_start
 xmmsc_playback_status
 xmmsc_playback_stop

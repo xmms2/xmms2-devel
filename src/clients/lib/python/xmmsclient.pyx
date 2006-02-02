@@ -147,7 +147,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playback_pause(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_current_id(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_seek_ms(xmmsc_connection_t *c, unsigned int milliseconds)
+	xmmsc_result_t *xmmsc_playback_seek_ms_rel(xmmsc_connection_t *c, int milliseconds)
 	xmmsc_result_t *xmmsc_playback_seek_samples(xmmsc_connection_t *c, unsigned int samples)
+	xmmsc_result_t *xmmsc_playback_seek_samples_rel(xmmsc_connection_t *c, int samples)
 	xmmsc_result_t *xmmsc_playback_playtime(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_status(xmmsc_connection_t *c)
 
@@ -752,6 +754,23 @@ cdef class XMMS:
 		
 		return ret
 
+	def playback_seek_ms_rel(self, ms, cb = None):
+		"""
+		Seek to a time position by the given offset in the current file or
+		stream in playback.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_playback_seek_ms_rel(self.conn, ms)
+		ret.more_init()
+		
+		return ret
+
 	def playback_seek_samples(self, samples, cb = None):
 		"""
 		Seek to an absolute number of samples in the current file or
@@ -765,6 +784,23 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_playback_seek_samples(self.conn, samples)
+		ret.more_init()
+		
+		return ret
+
+	def playback_seek_samples_rel(self, samples, cb = None):
+		"""
+		Seek to a number of samples by the given offset in the
+		current file or stream in playback.
+                @rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_playback_seek_samples_rel(self.conn, samples)
 		ret.more_init()
 		
 		return ret
