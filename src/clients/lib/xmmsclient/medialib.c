@@ -593,7 +593,7 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
  *
  */
 xmmsc_result_t *
-xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, char *query)
+xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
