@@ -305,14 +305,12 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	res = xmmsc_playlist_current_pos (conn);
 	xmmsc_result_wait (res);
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
+	if (!xmmsc_result_iserror (res)) {
+		if (!xmmsc_result_get_uint (res, &p)) {
+			print_error ("Broken resultset");
+		}
+		xmmsc_result_unref (res);
 	}
-
-	if (!xmmsc_result_get_uint (res, &p)) {
-		print_error ("Broken resultset");
-	}
-	xmmsc_result_unref (res);
 
 	res = xmmsc_playlist_list (conn);
 	xmmsc_result_wait (res);
