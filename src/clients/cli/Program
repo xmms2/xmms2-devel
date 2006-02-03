@@ -1,5 +1,13 @@
 target="xmms2"
-source=["xmms2_client.c", "cli_mlib.c"]
+source=[
+	"main.c",
+	"cmd_mlib.c",
+	"cmd_pls.c",
+	"cmd_playback.c",
+	"cmd_config.c",
+	"cmd_status.c",
+	"cmd_other.c",
+	"common.c"]
 
 def config(env):
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
