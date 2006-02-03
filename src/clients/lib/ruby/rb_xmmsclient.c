@@ -450,6 +450,28 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 
 /*
  * call-seq:
+ *  xc.playback_seek_ms_rel(ms) -> result
+ *
+ * Seek in the song by the offset given in ms.
+ */
+static VALUE c_playback_seek_ms_rel (VALUE self, VALUE ms)
+{
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	Check_Type (ms, T_FIXNUM);
+
+	res = xmmsc_playback_seek_ms_rel (xmms->real, NUM2INT (ms));
+
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
+}
+
+/*
+ * call-seq:
  *  xc.playback_seek_samples(samples) -> result
  *
  * Seek to the song position given in _samples_.
@@ -469,6 +491,28 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 
 	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
 }
+
+ /*
+  * call-seq:
+  *  xc.playback_seek_samples_rel(samples) -> result
+  *
+  * Seek in the song position by the offset given in samples.
+  */
+ static VALUE c_playback_seek_samples_rel (VALUE self, VALUE samples)
+ {
+	 RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+ 
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+ 
+	CHECK_DELETED (xmms);
+ 
+	Check_Type (samples, T_FIXNUM);
+ 
+	res = xmmsc_playback_seek_samples_rel (xmms->real, NUM2INT (samples));
+ 
+	return TO_XMMS_CLIENT_RESULT (self, res, RESULT_TYPE_DEFAULT);
+ }
 
 /*
  * call-seq:
@@ -1181,8 +1225,11 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "broadcast_playback_current_id",
 	                  c_broadcast_playback_current_id, 0);
 	rb_define_method (c, "playback_seek_ms", c_playback_seek_ms, 1);
+	rb_define_method (c, "playback_seek_ms_rel", c_playback_seek_ms_rel, 1);
 	rb_define_method (c, "playback_seek_samples",
 	                  c_playback_seek_samples, 1);
+	rb_define_method (c, "playback_seek_samples_rel",
+	                  c_playback_seek_samples_rel, 1);
 	rb_define_method (c, "playback_volume_set",
 	                  c_playback_volume_set, 2);
 	rb_define_method (c, "playback_volume_get",
