@@ -15,6 +15,7 @@
  */
 
 #include "xmms/xmms_defs.h"
+#include "xmms/xmms_log.h"
 #include "xmms/xmms_decoderplugin.h"
 
 #include <string.h>
@@ -301,6 +302,45 @@ static props properties[] = {
 };
 
 
+static gint
+xmms_mpc_find_apetag (xmms_transport_t *transport, gint whence, gint pos)
+{
+	gchar header[APE_HEADER_SIZE];
+	xmms_error_t error;
+	gint ret, len = 0;
+
+	/* seek to header/footer */
+	ret = xmms_transport_seek (transport, pos, whence);
+	if (ret <= 0) {
+		return 0;
+	}
+
+	/* read header/footer */
+	ret = xmms_transport_read (transport, header, APE_HEADER_SIZE, &error);
+	if (ret <= 0) {
+		return 0;
+	}
+
+	if (xmms_ape_tag_is_valid (header, ret)) {
+		len = xmms_ape_get_size (header, ret);
+
+		if (whence == XMMS_TRANSPORT_SEEK_SET) {
+			pos = APE_HEADER_SIZE;
+		} else {
+			pos = -len;
+		}
+		
+		/* seek to first item */
+		ret = xmms_transport_seek (transport, pos, XMMS_TRANSPORT_SEEK_CUR);
+		if (ret <= 0) {
+			return 0;
+		}
+	}
+
+	return len;
+}
+
+
 static void
 xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 {
@@ -309,10 +349,8 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 	xmms_transport_t *transport;
 	xmms_mpc_data_t *data;
 	xmms_error_t error;
-	gchar header[XMMS_APE_HEADER_SIZE];
 	gchar *buff, *val;
-	gint ret, i, tmp;
-	gint len = 0;
+	gint ret, i, tmp, len = 0;
 
 
 	g_return_if_fail (decoder);
@@ -323,25 +361,21 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_if_fail (transport);
 
-	/* seek to the APEv2 footer */
-	ret = xmms_transport_seek (transport, -XMMS_APE_HEADER_SIZE, XMMS_TRANSPORT_SEEK_END);
-	if (ret <= 0)
-		return;
+	if (data->info.tag_offset < data->info.total_file_length) {
+		len = xmms_mpc_find_apetag (transport, XMMS_TRANSPORT_SEEK_SET,
+		                            data->info.tag_offset);
+	} else {
+		len = xmms_mpc_find_apetag (transport, XMMS_TRANSPORT_SEEK_END,
+		                            -APE_HEADER_SIZE);
+		if (!len) {
+			len = xmms_mpc_find_apetag (transport, XMMS_TRANSPORT_SEEK_END,
+			                            -APE_HEADER_SIZE * 5);
+		}
+	}
 
-	ret = xmms_transport_read (transport, header, XMMS_APE_HEADER_SIZE, &error);
-	if (ret <= 0)
+	if (len <= 0) {
 		return;
-
-	/* query footer for tag length */
-	if (xmms_ape_tag_is_valid (header, ret))
-		len = xmms_ape_get_size (header, ret);
-	if (len <= 0)
-		return;
-
-	/* seek to first apetag item */
-	ret = xmms_transport_seek (transport, -len, XMMS_TRANSPORT_SEEK_END);
-	if (ret <= 0)
-		return;
+	}
 
 	/* max length? */
 	buff = (gchar *) g_new (gchar, len);

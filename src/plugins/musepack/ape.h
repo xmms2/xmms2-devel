@@ -17,7 +17,7 @@
 #ifndef __APE_H__
 #define __APE_H__
 
-#define XMMS_APE_HEADER_SIZE 32
+#define APE_HEADER_SIZE 32
 
 gint xmms_ape_get_size (gchar *buff, gint len);
 gchar *xmms_ape_get_text (gchar *key, gchar *buff, gint len);
