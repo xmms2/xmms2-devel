@@ -299,6 +299,7 @@ static props properties[] = {
 	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,  STRING  },
 	{ "track",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, INTEGER },
 	{ "genre",  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,   STRING  },
+	{ "year",   XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,    STRING  },
 };
 
 
