@@ -46,6 +46,7 @@ typedef struct {
 	mp4ff_callback_t *mp4ff_cb;
 	gint track;
 	glong sampleid;
+	glong numsamples;
 	gint toskip;
 
 	guchar buffer[FAAD_BUFFER_SIZE];
@@ -176,6 +177,7 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 	g_return_val_if_fail (transport, FALSE);
 
 	data->sampleid = 0;
+	data->numsamples = 0;
 	data->decoder = faacDecOpen ();
 	config = faacDecGetCurrentConfiguration (data->decoder);
 	config->defObjectType = LC;
@@ -266,6 +268,7 @@ xmms_faad_init (xmms_decoder_t *decoder, gint mode)
 			XMMS_DBG ("Can't find AAC audio track from MP4 file\n");
 			return FALSE;
 		}
+		data->numsamples = mp4ff_num_samples(data->mp4ff, data->track);
 		mp4ff_get_decoder_config (data->mp4ff, data->track, &tmpbuf,
 					  &tmpbuflen);
 
@@ -319,28 +322,14 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 	xmms_error_t error;
 
 	faacDecFrameInfo frameInfo;
-	guint bytes_read;
 	gpointer sample_buffer;
+	guint bytes_read = 0;
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, FALSE);
-
-	if (data->buffer_length < FAAD_BUFFER_SIZE) {
-		bytes_read = xmms_transport_read (transport,
-		                                  (gchar *) data->buffer + data->buffer_length,
-		                                  data->buffer_size - data->buffer_length,
-		                                  &error);
-
-		if (bytes_read <= 0 && data->buffer_length == 0) {
-			XMMS_DBG ("EOF");
-			return FALSE;
-		}
-
-		data->buffer_length += bytes_read;
-	}
 
 	if (data->filetype == FAAD_TYPE_MP4) {
 		guchar *tmpbuf;
@@ -351,7 +340,7 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 		                                &tmpbuflen);
 		data->sampleid++;
 
-		if (bytes_read == 0) {
+		if (bytes_read <= 0 || data->sampleid >= data->numsamples) {
 			XMMS_DBG ("MP4 EOF");
 			return FALSE;
 		}
@@ -361,6 +350,20 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 		g_free (tmpbuf);
 	} else if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
+		if (data->buffer_length < FAAD_BUFFER_SIZE) {
+			bytes_read = xmms_transport_read (transport,
+							  (gchar *) data->buffer + data->buffer_length,
+							  data->buffer_size - data->buffer_length,
+							  &error);
+
+			if (bytes_read <= 0 && data->buffer_length == 0) {
+				XMMS_DBG ("EOF");
+				return FALSE;
+			}
+
+			data->buffer_length += bytes_read;
+		}
+
 		sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
 		                               data->buffer_length);
 
@@ -368,16 +371,16 @@ xmms_faad_decode_block (xmms_decoder_t *decoder)
 		           data->buffer_length - frameInfo.bytesconsumed);
 		data->buffer_length -= frameInfo.bytesconsumed;
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
-	} else {
+	}
+
+	if (bytes_read > 0 && frameInfo.error == 0) {
+		xmms_decoder_write (decoder, sample_buffer + data->toskip,
+		                    bytes_read - data->toskip);
+		data->toskip = 0;
+	} else if (frameInfo.error > 0) {
 		XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage(frameInfo.error));
 		return FALSE;
 	}
-
-	if (bytes_read > 0) {
-		xmms_decoder_write (decoder, sample_buffer + data->toskip,
-		                    bytes_read - data->toskip);
-	}
-	data->toskip = 0;
 
 	return TRUE;
 }
@@ -401,7 +404,7 @@ xmms_faad_seek (xmms_decoder_t *decoder, guint samples)
 
 		data->sampleid = mp4ff_find_sample (data->mp4ff, data->track, 
 		                                    samples, &toskip);
-		data->toskip = toskip;
+		data->toskip = toskip * data->channels * xmms_sample_size_get (data->sampleformat);
 		data->buffer_length = 0;
 
 		return TRUE;
@@ -452,31 +455,37 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 			xmms_medialib_entry_property_set_str (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
 			                                      metabuf);
+			g_free (metabuf);
 		}
 		if (mp4ff_meta_get_title (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 			                                      metabuf);
+			g_free (metabuf);
 		}
 		if (mp4ff_meta_get_album (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
 			                                      metabuf);
+			g_free (metabuf);
 		}
 		if (mp4ff_meta_get_date (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
 			                                      metabuf);
+			g_free (metabuf);
 		}
 		if (mp4ff_meta_get_genre (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
 			                                      metabuf);
+			g_free (metabuf);
 		}
 		if (mp4ff_meta_get_comment (data->mp4ff, &metabuf)) {
 			xmms_medialib_entry_property_set_str (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
 			                                      metabuf);
+			g_free (metabuf);
 		}
 		if (mp4ff_meta_get_track (data->mp4ff, &metabuf)) {
 			gint tracknr;
@@ -488,6 +497,27 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
 				                                      tracknr);
 			}
+			g_free (metabuf);
+		}
+
+		/* MusicBrainz tag support */
+		if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Track Id", &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
+							      metabuf);
+			g_free (metabuf);
+		}
+		if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Album Id", &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
+							      metabuf);
+			g_free (metabuf);
+		}
+		if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Artist Id", &metabuf)) {
+			xmms_medialib_entry_property_set_str (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
+							      metabuf);
+			g_free (metabuf);
 		}
 	} else if (data->filetype == FAAD_TYPE_ADIF) {
 		guint skip_size, bitrate;
@@ -545,8 +575,7 @@ xmms_faad_read_callback (void *user_data, void *buffer, uint32_t length)
 		                                  data->buffer_size, &error);
 
 		if (bytes_read <= 0 && data->buffer_length == 0) {
-			XMMS_DBG ("EOF");
-			return 0;
+			return bytes_read;
 		}
 
 		data->buffer_length += bytes_read;
@@ -566,7 +595,6 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 	xmms_decoder_t *decoder;
 	xmms_faad_data_t *data;
 	xmms_transport_t *transport;
-	xmms_error_t error;
 	gint ret = 0;
 
 	g_return_val_if_fail (user_data, -1);
@@ -578,39 +606,13 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 	transport = xmms_decoder_transport_get (decoder);
 	g_return_val_if_fail (transport, -1);
 
-	if (xmms_transport_can_seek (transport)) {
-		ret = xmms_transport_seek (transport, position,
-		                           XMMS_TRANSPORT_SEEK_SET);
-		data->buffer_length = 0;
+	if (!xmms_transport_can_seek (transport)) {
+		return -1;
 	}
-	/*
-	 * if seeking is not supported and we seek forward, then we can read
-	 * the needed bytes (a hack needed if we want mp4 on non-seeking transport)
-	 */
-	else {
-		guint64 relative, current;
 
-		current = xmms_transport_tell (transport);
-		relative = position - current + ((guint64) data->buffer_length);
-
-		if (relative < 0)
-			return -1;
-
-		if (relative < data->buffer_length) {
-			g_memmove (data->buffer, data->buffer + (gint) relative,
-				   data->buffer_length - (gint) relative);
-			data->buffer_length -= (gint) relative;
-		} else if (relative >= 0) {
-			relative -= data->buffer_length;
-			data->buffer_length = 0;
-
-			while (relative > 0) {
-				gint readb = MIN (relative, data->buffer_size);
-				relative -= xmms_transport_read (transport, (gchar *)data->buffer,
-				                                 readb, &error);
-			}
-		}
-	}
+	ret = xmms_transport_seek (transport, position,
+	                           XMMS_TRANSPORT_SEEK_SET);
+	data->buffer_length = 0;
 
 	return ret;
 }
