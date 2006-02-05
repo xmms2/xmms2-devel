@@ -24,7 +24,6 @@
 #include "musepack.h"
 #include "ape.h"
 
-static gboolean xmms_ape_tag_is_header (gint32 flags);
 static gboolean xmms_ape_tag_is_text (gint32 flags);
 
 #define get_int32(b,pos) ((b[pos]<<24)|(b[pos+1]<<16)|(b[pos+2]<<8)|(b[pos+3])) 
@@ -32,15 +31,6 @@ static gboolean xmms_ape_tag_is_text (gint32 flags);
 #define APE_HEADER       ~0x7F
 #define APE_FLAGS_TYPE    0x06
 
-
-/**
- * Checks if the Header bit is set.
- */
-static gboolean
-xmms_ape_tag_is_header (gint32 flags)
-{
-	return (flags & APE_HEADER) ? TRUE : FALSE;
-}
 
 /**
  * Checks if the Text bit is set (no bits set in type flags)
@@ -61,16 +51,12 @@ xmms_ape_tag_is_text (gint32 flags)
 gboolean
 xmms_ape_tag_is_valid (gchar *buff, gint len)
 {
-	guint32 flags;
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail (buff, ret);
 
-	if (len == XMMS_APE_HEADER_SIZE) {
-		if (g_strncasecmp (buff, "APETAGEX", 8) == 0) {
-			flags = GINT32_FROM_BE (get_int32 (buff, 20));
-			ret = xmms_ape_tag_is_header (flags);
-		}
+	if (len == APE_HEADER_SIZE && g_strncasecmp (buff, "APETAGEX", 8) == 0) {
+		ret = TRUE;
 	}
 
 	return ret;
@@ -91,7 +77,7 @@ xmms_ape_get_size (gchar *buff, gint len)
 
 	g_return_val_if_fail (buff, ret);
 
-	if (len == XMMS_APE_HEADER_SIZE) {
+	if (len == APE_HEADER_SIZE) {
 		size = get_int32 (buff, 12);
 		ret = GUINT32_SWAP_LE_BE (size);
 	}
