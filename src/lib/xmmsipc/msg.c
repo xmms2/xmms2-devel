@@ -346,8 +346,10 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *le
 	if (!*buf)
 		return false;
 
-	if (!xmms_ipc_msg_get_data (msg, *buf, *len))
+	if (!xmms_ipc_msg_get_data (msg, *buf, *len)) {
+		free (*buf);
 		return false;
+	}
 
 	(*buf)[*len] = '\0';
 
