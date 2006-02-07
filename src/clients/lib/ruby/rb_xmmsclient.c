@@ -1133,6 +1133,28 @@ static VALUE c_medialib_rehash (VALUE self, VALUE id)
 
 /*
  * call-seq:
+ *  xc.broadcast_mediainfo_reader_status -> result
+ *
+ * Requests the status of the mediainfo reader.
+ */
+static VALUE c_broadcast_mediainfo_reader_status (VALUE self)
+{
+	METHOD_ADD_HANDLER (broadcast_mediainfo_reader_status, BROADCAST);
+}
+
+/*
+ * call-seq:
+ *  xc.signal_mediainfo_reader_unindexed -> result
+ *
+ * Requests the number of unindexed entries in the medialib.
+ */
+static VALUE c_signal_mediainfo_reader_unindexed (VALUE self)
+{
+	METHOD_ADD_HANDLER (signal_mediainfo_reader_unindexed, SIGNAL);
+}
+
+/*
+ * call-seq:
  *  xc.configval_get(key) -> result
  *
  * Retrieves the value of the configuration property at _key_.
@@ -1278,6 +1300,11 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
+	rb_define_method (c, "broadcast_mediainfo_reader_status",
+	                  c_broadcast_mediainfo_reader_status, 0);
+	rb_define_method (c, "signal_mediainfo_reader_unindexed",
+	                  c_signal_mediainfo_reader_unindexed, 0);
+
 	rb_define_method (c, "signal_visualisation_data",
 	                  c_signal_visualisation_data, 0);
 
@@ -1292,6 +1319,11 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_STOP));
 	rb_define_const (c, "PAUSE",
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_PAUSE));
+
+	rb_define_const (c, "IDLE",
+	                 INT2FIX (XMMS_MEDIAINFO_READER_STATUS_IDLE));
+	rb_define_const (c, "RUNNING",
+	                 INT2FIX (XMMS_MEDIAINFO_READER_STATUS_RUNNING));
 
 	eXmmsClientError = rb_define_class_under (c, "XmmsClientError",
 	                                          rb_eStandardError);
