@@ -320,7 +320,7 @@ xmms_decoder_iseos (xmms_decoder_t *decoder)
 	g_return_val_if_fail (decoder, FALSE);
 
 	g_mutex_lock (decoder->mutex);
-	ret = decoder->thread ? FALSE : TRUE;
+	ret = xmms_ringbuf_iseos (decoder->buffer);
 	g_mutex_unlock (decoder->mutex);
 
 	return ret;
