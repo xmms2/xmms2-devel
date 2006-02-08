@@ -267,7 +267,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 
 	q = sqlite3_vmprintf (query, ap);
 
-	ret = sqlite3_prepare (sql, q, 0, &stm, NULL);
+	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
 
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! (%d) - %s", ret, q);
@@ -323,7 +323,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 	q = sqlite3_vmprintf (query, ap);
 
-	ret = sqlite3_prepare (sql, q, 0, &stm, NULL);
+	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
 
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! (%d) - %s", ret, q);
