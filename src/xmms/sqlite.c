@@ -348,11 +348,12 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 	if (ret == SQLITE_DONE) {
 		retval = TRUE;
-	} else if (ret == SQLITE_ERROR || 
-			   ret == SQLITE_MISUSE || 
-			   ret == SQLITE_BUSY) {
-		xmms_log_error ("SQLite Error code %d on query '%s'", ret, q);
-		retval = FALSE;
+	} else if (ret == SQLITE_ERROR) {
+		xmms_log_error ("SQLite Error code %d (%s) on query '%s'", ret, sqlite3_errmsg (sql), q);
+	} else if (ret == SQLITE_MISUSE) {
+		xmms_log_error ("SQLite api misuse on query '%s'", q);
+	} else if (ret == SQLITE_BUSY) {
+		xmms_log_error ("SQLite busy on query '%s'", q);
 	}
 
 	sqlite3_finalize (stm);
