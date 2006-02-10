@@ -44,7 +44,7 @@ typedef struct xmms_mad_data_St {
 	guint channels;
 	guint bitrate;
 	guint samplerate;
-	guint fsize;
+	guint64 fsize;
 	
 	xmms_xing_t *xing;
 } xmms_mad_data_t;
@@ -71,10 +71,10 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
-				  XMMS_DECODER_PLUGIN_API_VERSION,
-				  "mad",
-				  "MAD decoder " XMMS_VERSION,
-				  "MPEG Layer 1/2/3 decoder");
+	                          XMMS_DECODER_PLUGIN_API_VERSION,
+	                          "mad",
+	                          "MAD decoder " XMMS_VERSION,
+	                          "MPEG Layer 1/2/3 decoder");
 	
 	if (!plugin) {
 		return NULL;
@@ -169,22 +169,20 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
   * xing.c, then calculate the duration of the next frame
   * and multiply it with the number of frames in the XING
   * header.
-  * 
+  *
   * Better than to stream the whole file I guess.
   */
 
 static void
 xmms_mad_calc_duration (xmms_medialib_session_t *session,
-						xmms_decoder_t *decoder, 
-						guchar *buf, gint len, 
-						gint filesize, 
-						xmms_medialib_entry_t entry)
+                        xmms_decoder_t *decoder,
+                        guchar *buf, gint len,
+                        gint filesize,
+                        xmms_medialib_entry_t entry)
 {
 	struct mad_frame frame;
 	struct mad_stream stream;
 	xmms_mad_data_t *data;
-	xmms_xing_t *xing;
-	guint fsize=0;
 	guint bitrate=0;
 
 	data = xmms_decoder_private_data_get (decoder);
@@ -196,35 +194,33 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 
 	while (mad_frame_decode (&frame, &stream) == -1) {
 		if (!MAD_RECOVERABLE (stream.error)) {
-			
 			XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
 			return;
 		}
 	}
 
 	data->samplerate = frame.header.samplerate;
-	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
+	data->channels = MAD_NCHANNELS (&frame.header);
 
 	if (filesize == -1) {
 		xmms_medialib_entry_property_set_int (session,
-											  entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-											  0);
+		                                      entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                                      -1);
 
 		/* frame.header.bitrate might be wrong, but we cannot do it any
 		 * better for streams
 		 */
 		xmms_medialib_entry_property_set_int (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-			frame.header.bitrate);
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+		                                      frame.header.bitrate);
 		return;
 	}
 
-	fsize = filesize * 8;
 	data->fsize = filesize;
 
-	if ((xing = xmms_xing_parse (stream.anc_ptr))) {
-		
+	data->xing = xmms_xing_parse (stream.anc_ptr);
+	if (data->xing) {
 		/* @todo Hmm? This is SO strange. */
 		while (42) {
 			if (mad_frame_decode (&frame, &stream) == -1) {
@@ -234,21 +230,19 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 			}
 		}
 
-		data->xing = xing;
-
-		if (xmms_xing_has_flag (xing, XMMS_XING_FRAMES)) {
+		if (xmms_xing_has_flag (data->xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
 
 			timer = frame.header.duration;
-			mad_timer_multiply (&timer, xmms_xing_get_frames (xing));
+			mad_timer_multiply (&timer, xmms_xing_get_frames (data->xing));
 			duration = mad_timer_count (timer, MAD_UNITS_MILLISECONDS);
 
 			XMMS_DBG ("XING duration %d", duration);
 
-			xmms_medialib_entry_property_set_int (session, entry, 
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-												  duration);
+			xmms_medialib_entry_property_set_int (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+			                                      duration);
 		}
 
 		/** @todo fix avg. bitrate in xing */
@@ -269,19 +263,19 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 	mad_frame_finish (&frame);
 	mad_stream_finish (&stream);
 
-	if (!fsize) {
-		xmms_medialib_entry_property_set_int (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-											  -1);
+	if (filesize == -1) {
+		xmms_medialib_entry_property_set_int (session, entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                                      -1);
 	} else {
-		xmms_medialib_entry_property_set_int (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-											  (gint) (filesize*(gdouble)8000.0/bitrate));
+		xmms_medialib_entry_property_set_int (session, entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                                      (gint) (filesize*(gdouble)8000.0/bitrate));
 	}
-		
-	xmms_medialib_entry_property_set_int (session, entry, 
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-										  bitrate);
+
+	xmms_medialib_entry_property_set_int (session, entry,
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+	                                      bitrate);
 
 }
 
@@ -503,4 +497,3 @@ xmms_mad_decode_block (xmms_decoder_t *decoder)
 	
 	return TRUE;
 }
-
