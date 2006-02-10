@@ -101,7 +101,7 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 static void
 xmms_mediainfo_reader_stop (xmms_object_t *o)
 {
-	xmms_mediainfo_reader_t *mir = o;
+	xmms_mediainfo_reader_t *mir = (xmms_mediainfo_reader_t *) o;
 		
 	g_mutex_lock (mir->mutex);
 	mir->running = FALSE;

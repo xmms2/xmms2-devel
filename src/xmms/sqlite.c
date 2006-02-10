@@ -264,19 +264,19 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 	g_return_val_if_fail (sql, FALSE);
 
 	va_start (ap, query);
-
 	q = sqlite3_vmprintf (query, ap);
-
-	ret = sqlite3_prepare (sql, q, 0, &stm, NULL);
-
-	if (ret != SQLITE_OK) {
-		xmms_log_error ("Error in query! (%d) - %s", ret, q);
-	}
-	
-	sqlite3_free (q);
 	va_end (ap);
 
-	while (sqlite3_step (stm) == SQLITE_ROW) {
+	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
+
+	if (ret != SQLITE_OK) {
+		xmms_log_error ("Error %d (%s) in query '%s'", ret, sqlite3_errmsg (sql), q);
+		sqlite3_free (q);
+		return FALSE;
+	}
+	sqlite3_free (q);
+	
+	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
 		gint i;
 		xmms_object_cmd_value_t *val;
 		GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
@@ -298,10 +298,17 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		*/
 	}
 
+	if (ret == SQLITE_ERROR) {
+		xmms_log_error ("SQLite Error code %d (%s) on query '%s'", ret, sqlite3_errmsg (sql), q);
+	} else if (ret == SQLITE_MISUSE) {
+		xmms_log_error ("SQLite api misuse on query '%s'", q);
+	} else if (ret == SQLITE_BUSY) {
+		xmms_log_error ("SQLite busy on query '%s'", q);
+	}
+
 	sqlite3_finalize (stm);
 
-	return TRUE;
-	
+	return (ret == SQLITE_DONE);
 }
 
 /**
@@ -313,21 +320,24 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	gchar *q;
 	va_list ap;
 	gint ret;
-	sqlite3_stmt *stm;
-	gboolean retval = FALSE;
+	sqlite3_stmt *stm = NULL;
 
 	g_return_val_if_fail (query, FALSE);
 	g_return_val_if_fail (sql, FALSE);
 
 	va_start (ap, query);
-
 	q = sqlite3_vmprintf (query, ap);
+	va_end (ap);
 
-	ret = sqlite3_prepare (sql, q, 0, &stm, NULL);
+	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
 
 	if (ret != SQLITE_OK) {
-		xmms_log_error ("Error in query! (%d) - %s", ret, q);
+		xmms_log_error ("Error %d (%s) in query '%s'", ret, sqlite3_errmsg (sql), q);
+		sqlite3_free (q);
+		return FALSE;
 	}
+
+	sqlite3_free (q);
 
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {		
 		gint i;
@@ -340,27 +350,21 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 			row[i] = xmms_sqlite_column_to_val (stm, i);
 		}
 
-		retval = method (row, udata);
-
-		if (!retval)
+		if (!method (row, udata))
 			break;
 	}
 
-	if (ret == SQLITE_DONE) {
-		retval = TRUE;
-	} else if (ret == SQLITE_ERROR || 
-			   ret == SQLITE_MISUSE || 
-			   ret == SQLITE_BUSY) {
-		xmms_log_error ("SQLite Error code %d on query '%s'", ret, q);
-		retval = FALSE;
+	if (ret == SQLITE_ERROR) {
+		xmms_log_error ("SQLite Error code %d (%s) on query '%s'", ret, sqlite3_errmsg (sql), q);
+	} else if (ret == SQLITE_MISUSE) {
+		xmms_log_error ("SQLite api misuse on query '%s'", q);
+	} else if (ret == SQLITE_BUSY) {
+		xmms_log_error ("SQLite busy on query '%s'", q);
 	}
 
 	sqlite3_finalize (stm);
-	sqlite3_free (q);
-	va_end (ap);
 
-	return retval;
-	
+	return (ret == SQLITE_DONE);
 }
 
 /**

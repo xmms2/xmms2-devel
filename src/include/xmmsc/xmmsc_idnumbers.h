@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -34,8 +34,8 @@ typedef enum {
 	XMMS_IPC_OBJECT_OUTPUT,
 	XMMS_IPC_OBJECT_MEDIALIB,
 	XMMS_IPC_OBJECT_SIGNAL,
- 	XMMS_IPC_OBJECT_VISUALISATION,
- 	XMMS_IPC_OBJECT_MEDIAINFO_READER,
+	XMMS_IPC_OBJECT_VISUALISATION,
+	XMMS_IPC_OBJECT_MEDIAINFO_READER,
 	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
@@ -144,12 +144,12 @@ typedef enum {
 	XMMS_PLAYBACK_STATUS_STOP,
 	XMMS_PLAYBACK_STATUS_PLAY,
 	XMMS_PLAYBACK_STATUS_PAUSE,
-} xmms_playback_status_t; 
+} xmms_playback_status_t;
 
 typedef enum {
 	XMMS_MEDIAINFO_READER_STATUS_IDLE,
 	XMMS_MEDIAINFO_READER_STATUS_RUNNING,
-} xmms_mediainfo_reader_status_t; 
+} xmms_mediainfo_reader_status_t;
 
 typedef enum {
 	XMMS_PLUGIN_TYPE_ALL,
