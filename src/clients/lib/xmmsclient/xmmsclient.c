@@ -87,7 +87,7 @@ static void xmmsc_deinit (xmmsc_connection_t *c);
  */
 
 xmmsc_connection_t *
-xmmsc_init (char *clientname)
+xmmsc_init (const char *clientname)
 {
 	xmmsc_connection_t *c;
 	int i = 0;

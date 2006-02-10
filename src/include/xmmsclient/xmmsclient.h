@@ -33,7 +33,7 @@ typedef struct xmmsc_query_attribute_St {
 	char *value;
 } xmmsc_query_attribute_t;
 
-xmmsc_connection_t *xmmsc_init (char *clientname);
+xmmsc_connection_t *xmmsc_init (const char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_unref (xmmsc_connection_t *c);
 void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
