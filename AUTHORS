@@ -56,6 +56,10 @@ N: Tuure Laurinolli
 E: tuure@laurinolli.net
 D: Windows portability.
 
+N: Bernhard Leiner
+E: bleiner@gmail.com
+D: Sun output updates.
+
 N: Michael Lindgren
 E: lindgren@debian.as
 D: Curl. HTML pls plugin. Various fixes.
