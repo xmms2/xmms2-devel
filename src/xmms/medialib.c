@@ -304,6 +304,10 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	 	global_medialib_session = xmms_medialib_session_new ("global", 0);
 	}
 
+	xmms_log_info ("Using sqlite version %d (compiled against "
+	               XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")",
+	               sqlite3_libversion_number());
+
 	global_medialib_session_mutex = g_mutex_new ();
 
 	/** 
