@@ -15,16 +15,11 @@
  *
  *  @todo Proper error handling and less buskis code for mixer.
  *  @todo Handle config stuff nice.
- *  @todo ungay xmms_sun_buffersize_get
  */
 
-#include "xmms/plugin.h"
-#include "xmms/output.h"
-#include "xmms/util.h"
-#include "xmms/xmms.h"
-#include "xmms/object.h"
-#include "xmms/ringbuf.h"
-#include "xmms/signal_xmms.h"
+#include "xmms/xmms_defs.h"
+#include "xmms/xmms_outputplugin.h"
+#include "xmms/xmms_log.h"
 
 #include <glib.h>
 
@@ -37,32 +32,27 @@
 #include <unistd.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 
 
-#warning "CONVERT TO SAMPLE_T"
-
-
 /*
- *  Defines
+ *  Defines - not used at all, remove?
  */
-#define SUN_DEFAULT_BLOCKSIZE 		8800
-#define SUN_DEFAULT_BUFFER_SIZE 	8800
-#define SUN_MIN_BUFFER_SIZE 		14336
-#define SUN_DEFAULT_PREBUFFER_SIZE 	25
-#define SUN_VERSION 				"0.6"
+#define SUN_DEFAULT_BLOCKSIZE           8800
+#define SUN_DEFAULT_BUFFER_SIZE         8800
+#define SUN_MIN_BUFFER_SIZE             14336
+#define SUN_DEFAULT_PREBUFFER_SIZE      25
+#define SUN_VERSION                     "0.6"
 
 /*
  * Type definitions
  */
 
 typedef struct xmms_sun_data_St {
-	gchar *devaudio;
-	gchar *devaudioctl;
-
 	gint fd;
 	gint mixerfd;
 
@@ -71,11 +61,47 @@ typedef struct xmms_sun_data_St {
 	gint req_pre_buffer_size;
 	gint req_buffer_size;
 
-	guint rate;
+	guint samplerate;
+	guint channels;
+	guint precision;
+	guint encoding;
+
 	xmms_config_property_t *mixer_conf;
 	gchar *mixer_voldev;
 } xmms_sun_data_t;
 
+static struct {
+	xmms_sample_format_t xmms_fmt;
+	guint sun_encoding;
+	guint sun_precision;
+} formats[] = {
+	{XMMS_SAMPLE_FORMAT_U8, AUDIO_ENCODING_ULAW, 8},
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	{XMMS_SAMPLE_FORMAT_S16, AUDIO_ENCODING_SLINEAR_LE, 16}, 
+	{XMMS_SAMPLE_FORMAT_U16, AUDIO_ENCODING_ULINEAR_LE, 16},
+#else	
+	{XMMS_SAMPLE_FORMAT_S16, AUDIO_ENCODING_SLINEAR_BE, 16}, 
+	{XMMS_SAMPLE_FORMAT_U16, AUDIO_ENCODING_ULINEAR_BE, 16},
+#endif
+};
+
+
+#ifdef XMMS_OS_SOLARIS
+guint enqued_bytes = 0;
+#endif
+
+/* 
+ * possible rates 
+ */
+static int rates[] = {
+	8000,
+	11025,
+	16000,
+	22050,
+	44100,
+	48000,
+	96000
+};
 
 /*
  * Function prototypes
@@ -84,17 +110,18 @@ static void xmms_sun_flush (xmms_output_t *output);
 static void xmms_sun_close (xmms_output_t *output);
 static void xmms_sun_write (xmms_output_t *output, gchar *buffer, gint len);
 static void xmms_sun_mixer_config_changed (xmms_object_t *object, 
-										   gconstpointer data, 
-										   gpointer userdata);
-static guint xmms_sun_samplerate_set (xmms_output_t *output, guint rate);
+                                           gconstpointer data, 
+                                           gpointer userdata);
 static guint xmms_sun_buffersize_get (xmms_output_t *output);
+static guint xmms_sun_format_set (xmms_output_t *output, 
+                                  xmms_audio_format_t *format);
 static gboolean xmms_sun_open (xmms_output_t *output);
 static gboolean xmms_sun_new (xmms_output_t *output);
 static void xmms_sun_destroy (xmms_output_t *output);
 static gboolean xmms_sun_mixer_set (xmms_output_t *output, gint left, 
-									gint right);
+                                    gint right);
 static gboolean xmms_sun_mixer_get (xmms_output_t *output, gint *left, 
-									gint *right);
+                                    gint *right);
 
 /*
  * Plugin header
@@ -105,9 +132,10 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, "sun",
-			"SUN Output" XMMS_VERSION,
-			"OpenBSD SUN architecture output plugin");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
+	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
+	                          "sun", "SUN Output" XMMS_VERSION,
+	                          "OpenBSD SUN architecture output plugin");
 
 	if (!plugin) {
 		return NULL;
@@ -119,45 +147,43 @@ xmms_plugin_get (void)
 
 
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE, 
-							xmms_sun_write);
+	                        xmms_sun_write);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN, 
-							xmms_sun_open);
+	                        xmms_sun_open);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
-							xmms_sun_new);
+	                        xmms_sun_new);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
 	                        xmms_sun_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, 
-							xmms_sun_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
-							xmms_sun_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SAMPLERATE_SET, 
-							xmms_sun_samplerate_set);
+	                        xmms_sun_close);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
+	                        xmms_sun_format_set);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
-							xmms_sun_buffersize_get);
+	                        xmms_sun_buffersize_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
+	                        xmms_sun_flush);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_GET,
-							xmms_sun_mixer_get);
+	                        xmms_sun_mixer_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_MIXER_SET,
-							xmms_sun_mixer_set);
-
-
-	xmms_plugin_config_property_register (plugin,
-			"device",
-			"/dev/audio",
-			NULL,
-			NULL);
+	                        xmms_sun_mixer_set);
 
 	xmms_plugin_config_property_register (plugin,
-			"mixer",
-			"/dev/mixer",
-			NULL,
-			NULL);                                                                                                                                                  
+	                                      "device",
+	                                      "/dev/audio",
+	                                      NULL,
+	                                      NULL);
+
+	xmms_plugin_config_property_register (plugin,
+	                                      "mixer",
+	                                      "/dev/mixer",
+	                                      NULL,
+	                                      NULL);
 	       
 	xmms_plugin_config_property_register (plugin,
-			"volume",
-			"70/70",
-			NULL,
-			NULL);                                                                                                                                                  
-		    
+	                                      "volume",
+	                                      "70/70",
+	                                      NULL,
+	                                      NULL);
 
 	return (plugin);
 }
@@ -178,19 +204,24 @@ static gboolean
 xmms_sun_new (xmms_output_t *output) 
 {
 	xmms_sun_data_t *data;
+	audio_info_t info;
+	audio_encoding_t enc;
 	const xmms_config_property_t *val;
+	const gchar *mixdev;
 	const gchar *dev;
+	gint tmp_audio_fd;
+	gint i, j, k; 
+	gint support = 0;
 	
 	XMMS_DBG ("XMMS_SUN_NEW"); 
 	
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_sun_data_t, 1);
 
-	val = xmms_plugin_config_lookup (
-			xmms_output_plugin_get (output), "mixer");
-	dev = xmms_config_property_get_string (val);
+	val = xmms_plugin_config_lookup ( xmms_output_plugin_get (output), "mixer");
+	mixdev = xmms_config_property_get_string (val);
 	
-	data->mixerfd = open (dev, O_WRONLY);
+	data->mixerfd = open (mixdev, O_WRONLY);
 	if (!data->mixerfd == -1)
 		data->have_mixer = FALSE;
 	else
@@ -198,14 +229,60 @@ xmms_sun_new (xmms_output_t *output)
 	
 	XMMS_DBG ("mixer: %d", data->have_mixer);
 	data->mixer_conf = xmms_plugin_config_lookup (
-			xmms_output_plugin_get (output), "volume");
+	                           xmms_output_plugin_get (output),
+	                           "volume");
 
 	xmms_config_property_callback_set (data->mixer_conf,
-			xmms_sun_mixer_config_changed,
-			(gpointer) output);
+	                                   xmms_sun_mixer_config_changed,
+	                                   (gpointer) output);
 	
 	xmms_output_private_data_set (output, data); 
 	
+	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
+	dev = xmms_config_property_get_string (val);
+
+	/* report all suported formats */
+	if ((tmp_audio_fd = open (dev, O_WRONLY)) < 0) {
+		return FALSE;
+	}
+	
+	AUDIO_INITINFO(&info);
+
+	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+		
+		support = 0;
+		enc.index = 0;
+		while (ioctl (tmp_audio_fd, AUDIO_GETENC, &enc) == 0) {
+			if (enc.encoding == formats[i].sun_encoding &&
+			    enc.precision == formats[i].sun_precision) {
+				support = 1;
+				break;
+			}
+			enc.index++;
+		}
+		if (support) {
+			info.play.encoding = enc.encoding;
+			info.play.precision = enc.precision;
+		} else {
+			continue;
+		}
+
+		for (j = 0; j < G_N_ELEMENTS(rates); j++) {
+			for (k = 1; k <= 2; k++) { 			/* 1 or 2 channels */
+
+				info.play.sample_rate = rates[j];
+				info.play.channels = k;
+
+				if (ioctl (tmp_audio_fd, AUDIO_SETINFO, &info) == 0) {
+					xmms_output_format_add(output, formats[i].xmms_fmt,
+					                       info.play.channels, 
+					                       info.play.sample_rate);
+				}
+			}
+		}
+	}
+	close(tmp_audio_fd);
+
 	return TRUE; 
 }
 
@@ -227,6 +304,7 @@ xmms_sun_destroy (xmms_output_t *output)
 
 	xmms_config_property_callback_remove (data->mixer_conf,
 	                                      xmms_sun_mixer_config_changed);
+	close (data->fd);
 	g_free (data);
 }
 
@@ -253,7 +331,8 @@ xmms_sun_open (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 	
-	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
+	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
+	                                 "device");
 	
 	if ((dev = xmms_config_property_get_string (val)) == NULL) {
 		XMMS_DBG ("Device not found in config, using default");
@@ -267,43 +346,31 @@ xmms_sun_open (xmms_output_t *output)
 	if ((data->fd = open (dev,O_WRONLY)) < 0) {
 		xmms_log_error ("%s: %s", dev, (gchar *)strerror (errno));
 		return FALSE;
-
-	}
-	info.mode = AUMODE_PLAY;
-	if (ioctl (data->fd, AUDIO_SETINFO, &info) != 0) {
-		xmms_log_error ("%s: %s", dev, (gchar *)strerror (errno));
-		return FALSE;
 	}
 
 	enc.index = 0;
 	while (ioctl (data->fd, AUDIO_GETENC, &enc) == 0 && 
-		   enc.encoding != AUDIO_ENCODING_SLINEAR_LE) {
-	    enc.index++;
+	       enc.encoding != AUDIO_ENCODING_SLINEAR_LE) {
+		enc.index++;
 	}
 
+	/* set defaults */
 	info.play.encoding = enc.encoding;
 	info.play.precision = enc.precision;
-	if (ioctl (data->fd, AUDIO_SETINFO, &info) != 0) {
-		xmms_log_error ("%s: %s", dev, strerror (errno));
-		return FALSE;
-	}
-	
 	info.play.channels = 2;
+	info.play.sample_rate = 44100;
+	info.mode = AUMODE_PLAY;
 	if (ioctl (data->fd, AUDIO_SETINFO, &info) < 0) {
 		xmms_log_error ("%s: %s", dev, strerror (errno));
 		return FALSE;
 	}
 
-	info.play.sample_rate = 44100;
-	if (ioctl (data->fd, AUDIO_SETINFO, &info) < 0) {
-		xmms_log_error ("%s: %s", dev, strerror (errno));
-		return FALSE;
-	}
+#ifdef XMMS_OS_SOLARIS
+	enqued_bytes = 0;
+#endif
 
 	return TRUE;
 }
-
-
 
 /**
  * Close audio device.
@@ -324,10 +391,7 @@ xmms_sun_close (xmms_output_t *output)
 	if (close (data->fd) < 0) {
 		xmms_log_error ("Unable to close device (%s)", strerror(errno));
 	}
-	data->rate = 0;
 }
-
-
 
 /**
  * Handles config change requests.
@@ -339,7 +403,7 @@ static void
 xmms_sun_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
 	xmms_sun_data_t *sun_data;
-	guint left, right, err;
+	guint left, right;
 	xmms_output_t *output;
 	const gchar *newval;
 	
@@ -353,58 +417,71 @@ xmms_sun_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpoint
 	g_return_if_fail (sun_data);
 
 	if (sun_data->have_mixer) {
-		res = sscanf (data, "%u/%u", &left, &right);
-	
+		gint res = sscanf (data, "%u/%u", &left, &right);
+
 		if (res == 0) {
 			xmms_log_error ("Unable to change volume");
-			return;                                                             
-						        
+			return;
+		}
+
 		if (res == 1) {
 			right = left;
 		}
-		
+
 		xmms_sun_mixer_set (output, left, right);
 	}
 }
 
 
-
 /**
- * Set sample rate.
+ * Set format
  *
  * @param output The output structure.
- * @param rate The to-be-set sample rate.
+ * @param format The to-be-set audio format (samplerate and -format, channels)
  *
- * @return the new sample rate or 0 on error
+ * @return TRUE or FALSE on error
  */
 static guint
-xmms_sun_samplerate_set (xmms_output_t *output, guint rate)
+xmms_sun_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 {
 	xmms_sun_data_t *data;
 	audio_info_t info;
+	gint i;
 	
-	XMMS_DBG ("XMMS_SUN_SAMPLERATE_SET");
+	XMMS_DBG ("XMMS_SUN_FORMAT_SET %d %d %d", format->format,
+	          format->channels, format->samplerate);
 	
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);	
 
 	AUDIO_INITINFO(&info);
-	/* Do we need to change our current rate? */
-	if (data->rate != rate) {
-		
-		info.play.sample_rate = rate;
-		if (ioctl (data->fd, AUDIO_SETINFO, &info) < 0) {	
-			XMMS_DBG ("unable to change samplerate");
-			return FALSE;
-		} else {
-			data->rate = rate;
-			xmms_output_private_data_set (output, data);
+	
+	/* translate the sample format */
+	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+		if (formats[i].xmms_fmt == format->format) {
+			info.play.encoding = formats[i].sun_encoding;
+			info.play.precision = formats[i].sun_precision;
 		}
 	}
-	return data->rate;
-}
 
+	info.play.sample_rate = format->samplerate;
+	info.play.channels = format->channels;
+
+	if (ioctl (data->fd, AUDIO_SETINFO, &info) < 0) {	
+		XMMS_DBG ("unable to change the format");
+		return FALSE;
+	} else {
+		/* update the private data struct */
+		data->samplerate = info.play.sample_rate;
+		data->channels = info.play.channels;
+		data->precision = info.play.precision;
+		data->encoding = info.play.encoding;
+		xmms_output_private_data_set (output, data);
+	}
+
+	return TRUE;
+}
 
 
 /**
@@ -429,12 +506,11 @@ xmms_sun_mixer_set (xmms_output_t *output, gint left, gint right)
 	if (!data->have_mixer) {
 		return FALSE;
 	}
-
 	
 	AUDIO_INITINFO(&info);
 	
 	for (info.index = 0; ioctl (data->mixerfd, 
-		 AUDIO_MIXER_DEVINFO, &info) >= 0; info.index++) {
+	     AUDIO_MIXER_DEVINFO, &info) >= 0; info.index++) {
 		if (!strcmp ("dac", info.label.name)) {
 			mixer.dev = info.index;
 			break;
@@ -481,7 +557,7 @@ xmms_sun_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	}
 
 	for (info.index = 0; ioctl (data->mixerfd, 
-		 AUDIO_MIXER_DEVINFO, &info) >= 0; info.index++) {
+	     AUDIO_MIXER_DEVINFO, &info) >= 0; info.index++) {
 		if (!strcmp (data->mixer_voldev, info.label.name)) {
 			mixer.dev = info.index;
 		}
@@ -498,7 +574,6 @@ xmms_sun_mixer_get (xmms_output_t *output, gint *left, gint *right)
 	*right = (mixer.un.value.level[AUDIO_MIXER_LEVEL_LEFT] * 100) / 255;
 
 	return TRUE;
-	
 }
 
 
@@ -506,18 +581,17 @@ xmms_sun_mixer_get (xmms_output_t *output, gint *left, gint *right)
 /**
  * Get buffersize.
  *
- * @todo This is fucked up, please help me.
- *
  * @param output The output structure.
  * 
- * @return the current buffer size or 0 on failure.
+ * @return the current buffer size (bytes available in buffer) 
+ * or 0 on failure.
  */
 static guint
 xmms_sun_buffersize_get (xmms_output_t *output) 
 {
 	xmms_sun_data_t *data;
-	audio_offset_t offset;
 	audio_info_t info;
+	guint pending_bytes;
 	
 	g_return_val_if_fail (output, 0);
 	data = xmms_output_private_data_get (output);
@@ -525,17 +599,15 @@ xmms_sun_buffersize_get (xmms_output_t *output)
 
 	AUDIO_INITINFO (&info);
 	if (ioctl (data->fd, AUDIO_GETINFO, &info) < 0) {
-		xmms_log_error ("unable to get audio info.");
+		xmms_log_error ("AUDIO_GETINFO: %s", strerror (errno));
 		return FALSE;
 	}	
-
-	if (ioctl (data->fd, AUDIO_GETOOFFS, &offset) < 0) {
-		xmms_log_error ("unable to get buffer offset.");
-		return FALSE; 
-	} 
-
-	//XMMS_DBG ("offset: %d", offset.offset);
-	return 0;
+#if defined(XMMS_OS_OPENBSD) || defined(XMMS_OS_NETBSD)
+	pending_bytes = info.play.seek * (info.play.precision / 8);
+#else  // XMMS_OS_SOLARIS
+	pending_bytes = enqued_bytes - (info.play.samples * info.play.precision / 8);
+#endif
+	return pending_bytes;
 }
 
 
@@ -558,8 +630,11 @@ xmms_sun_flush (xmms_output_t *output)
 	if (ioctl (data->fd, AUDIO_FLUSH, NULL) < 0) {
 		xmms_log_error ("unable to flush buffer");
 	}
-}
 
+#ifdef XMMS_OS_SOLARIS
+	enqued_bytes = 0;
+#endif
+}
 
 
 /**
@@ -574,25 +649,31 @@ xmms_sun_write (xmms_output_t *output, gchar *buffer, gint len)
 {
 	xmms_sun_data_t *data;
 	static ssize_t done;
-    static ssize_t n;
+	static ssize_t n;
 
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
 	g_return_if_fail (len);
-	
+
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
 
-    for (done = 0; len > done; ) {
+	for (done = 0; len > done; ) {
 
-        n = write (data->fd, buffer, len - done);
-        if (n == -1) {
-            if (errno == EINTR)
-                continue;
-            else
-                break;
-        }
-        done += n;
-    }
+		n = write (data->fd, buffer, len - done);
+		if (n == -1) {
+			if (errno == EINTR)
+				continue;
+			else
+				break;
+		}
+		done += n;
+#ifdef XMMS_OS_SOLARIS
+		/* keep track of everything ever written/played. Needed for the
+		 * xmms_sun_buffersize_get function 
+		 */
+		enqued_bytes += n;
+#endif
+	}
 }

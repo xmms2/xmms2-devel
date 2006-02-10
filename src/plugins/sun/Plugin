@@ -2,4 +2,4 @@ target="sun"
 source=["sun.c"]
 
 def config(env):
-	raise ConfigError("plugin disabled")
+	env.checkheader(["sys/types.h", "sys/audioio.h"])
