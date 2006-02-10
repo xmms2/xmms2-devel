@@ -150,7 +150,7 @@ xmms_mad_seek (xmms_decoder_t *decoder, guint samples)
 	XMMS_DBG ("Try seek %d bytes", bytes);
 
 	if (bytes > data->fsize) {
-		xmms_log_error ("To big value %d is filesize", data->fsize);
+		xmms_log_error ("To big value %llu is filesize", data->fsize);
 		return FALSE;
 	}
 
@@ -230,6 +230,11 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 			}
 		}
 
+		xmms_medialib_entry_property_set_int (session,
+		                                      entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR,
+		                                      1);
+
 		if (xmms_xing_has_flag (data->xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
@@ -243,17 +248,18 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 			xmms_medialib_entry_property_set_int (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                                      duration);
+
+			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES)) {
+				guint tmp;
+
+				tmp = xmms_xing_get_bytes (data->xing) * 8 / duration;
+				XMMS_DBG ("XING bitrate %d", tmp);
+				xmms_medialib_entry_property_set_int (session,
+				                                      entry,
+				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+				                                      tmp);
+			}
 		}
-
-		/** @todo fix avg. bitrate in xing */
-/*		if (xmms_xing_has_flag (xing, XMMS_XING_BYTES)) {
-			gchar *tmp;
-
-			tmp = g_strdup_printf ("%u", (gint)((xmms_xing_get_bytes (xing) * 8 / fsize);
-			XMMS_DBG ("XING bitrate %d", tmp);
-			xmms_medialib_entry_property_set (entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, tmp);
-			g_free (tmp);
-		}*/
 
 		return;
 	}
