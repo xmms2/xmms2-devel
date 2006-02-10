@@ -120,6 +120,8 @@ class XMMSEnvironment(Environment):
 			self.platform = 'openbsd'
 		elif sys.platform.startswith("netbsd"):
 			self.platform = 'netbsd'
+		elif sys.platform.startswith("dragonfly"):
+			self.platform = 'dragonfly'
 		else:
 			self.platform = sys.platform
 

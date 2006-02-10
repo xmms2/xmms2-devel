@@ -63,6 +63,8 @@
 # define XMMS_OUTPUT_DEFAULT "coreaudio"
 #elif XMMS_OS_FREEBSD
 # define XMMS_OUTPUT_DEFAULT "oss"
+#elif XMMS_OS_DRAGONFLY
+# define XMMS_OUTPUT_DEFAULT "oss"
 #endif
 
 static void quit (xmms_object_t *object, xmms_error_t *error);
