@@ -45,5 +45,7 @@ xmms_medialib_entry_t xmms_medialib_entry_new_encoded (xmms_medialib_session_t *
 gboolean xmms_medialib_decode_url (char *url);
 gboolean xmms_medialib_check_id (xmms_medialib_entry_t entry);
 
+gboolean xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value, guint32 source);
+gboolean xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value, guint32 source);
 
 #endif
