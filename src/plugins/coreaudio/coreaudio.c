@@ -54,9 +54,13 @@ static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
 static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
-static void xmms_ca_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpointer userdata);
 void xmms_ca_mixer_set (xmms_output_t *output, guint left, guint right);
+static gboolean xmms_ca_volume_set (xmms_output_t *output, const gchar
+									*channel, guint volume);
 
+static gboolean xmms_ca_volume_get (xmms_output_t *output, const gchar
+									**names, guint *values, guint
+									*num_channels);
 /*
  * Plugin header
  */
@@ -85,8 +89,8 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ca_destroy);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
-	
-	xmms_plugin_config_property_register (plugin, "volume", "70/70", NULL, NULL);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_GET, xmms_ca_volume_get);
+	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_SET, xmms_ca_volume_set);
 
 	return plugin;
 }
@@ -171,9 +175,6 @@ static gboolean
 xmms_ca_new (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
-	xmms_plugin_t *plugin;
-	xmms_config_property_t *volume;
-	
 
 	OSStatus res;
 	ComponentDescription desc;
@@ -181,7 +182,6 @@ xmms_ca_new (xmms_output_t *output)
 	Component comp;
 	AudioDeviceID device = 0;
 	UInt32 size = sizeof(device);
-
 	
 	g_return_val_if_fail (output, FALSE);
 
@@ -278,12 +278,6 @@ xmms_ca_new (xmms_output_t *output)
 		}
 	}
 	
-	plugin = xmms_output_plugin_get (output);
-	volume = xmms_plugin_config_lookup (plugin, "volume");
-	xmms_config_property_callback_set (volume,
-									xmms_ca_mixer_config_changed,
-									(gpointer) output);
-
 	XMMS_DBG ("CoreAudio initialized!");
 
 	data->running = FALSE;
@@ -296,18 +290,10 @@ static void
 xmms_ca_destroy (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
-	xmms_plugin_t *plugin;
-	xmms_config_property_t *volume;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
-
-	plugin = xmms_output_plugin_get (output);
-	volume = xmms_plugin_config_lookup (plugin, "volume");
-	xmms_config_property_callback_remove (volume,
-	                                   xmms_ca_mixer_config_changed);
-
 
 	AudioUnitUninitialize (data->au);
 	CloseComponent (data->au);
@@ -315,40 +301,62 @@ xmms_ca_destroy (xmms_output_t *output)
 	g_free (data);
 }
 
-static void xmms_ca_mixer_config_changed (xmms_object_t *object, 
-										  gconstpointer data,
-										  gpointer userdata)
+
+static gboolean 
+xmms_ca_volume_set (xmms_output_t *output,
+					const gchar *channel,
+					guint volume)
 {
-  	xmms_ca_data_t *ca_data;
-  	guint res, left, right;
-	
-	g_return_if_fail (data);
-	g_return_if_fail (userdata);
-	ca_data = xmms_output_private_data_get (userdata);
-	g_return_if_fail (ca_data);
-
-	res = sscanf (data, "%u/%u", &left, &right);
-
-	if (res == 0) {
-	  	xmms_log_error ("Unable to change volume");
-	}
-	else {
-		xmms_ca_mixer_set (userdata, left, right);
-	}
-}
-
-void xmms_ca_mixer_set (xmms_output_t *output, guint left, 
-						guint right)
-{
-  	Float32 volume;
+  	Float32 v;
   	xmms_ca_data_t *data;
- 	g_return_if_fail (output);
+
+ 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_if_fail (data);
+	g_return_val_if_fail (data, FALSE);
+
+	if (!g_strcasecmp (channel, "master") == 0) {
+		return FALSE;
+	}
+
+	v = (Float32)(volume/100.0);
 	
-	volume = (Float32)(left/255.0);
 	AudioUnitSetParameter(data->au, 
 						  kHALOutputParam_Volume, 
 						  kAudioUnitScope_Global, 
-						  0, volume, 0);
+						  0, v, 0);
+	return TRUE;
+}
+
+
+static gboolean 
+xmms_ca_volume_get (xmms_output_t *output,
+					const gchar **names, guint *values,
+					guint *num_channels)
+{
+  	Float32 v;
+  	xmms_ca_data_t *data;
+
+ 	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
+
+	if (!*num_channels) {
+		*num_channels = 1;
+		return TRUE;
+	}
+
+	g_return_val_if_fail (*num_channels == 1, FALSE);
+	g_return_val_if_fail (names, FALSE);
+	g_return_val_if_fail (values, FALSE);
+
+	AudioUnitGetParameter(data->au, 
+						  kHALOutputParam_Volume, 
+						  kAudioUnitScope_Global, 
+						  0, &v);
+
+	values[0] = (guint)(v * 100);
+	names[0] = "master";
+
+	return TRUE;
+
 }
