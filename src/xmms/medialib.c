@@ -342,17 +342,6 @@ _xmms_medialib_begin (const char *file, int line)
 }
 
 void
-xmms_medialib_session_source_set (xmms_medialib_session_t *session,
-								  gchar *source)
-{
-	g_return_if_fail (session);
-	g_return_if_fail (source);
-
-	session->source = xmms_medialib_source_to_id (session, source);
-
-}
-
-void
 xmms_medialib_end (xmms_medialib_session_t *session)
 {
 	g_return_if_fail (session);
@@ -582,11 +571,22 @@ xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
  *
  * @returns TRUE on success and FALSE on failure.
  */
-
 gboolean
 xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session,
-									  xmms_medialib_entry_t entry, 
-									  const gchar *property, gint value)
+                                      xmms_medialib_entry_t entry,
+                                      const gchar *property, gint value)
+{
+	return xmms_medialib_entry_property_set_int_source (session, entry,
+	                                                    property, value,
+	                                                    session->source);
+}
+
+
+gboolean
+xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
+                                             xmms_medialib_entry_t entry, 
+                                             const gchar *property, gint value,
+                                             guint32 source)
 {
 	gboolean ret;
 
@@ -594,8 +594,8 @@ xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session,
 	g_return_val_if_fail (session, FALSE);
 
 	ret = xmms_sqlite_exec (session->sql,
-							"insert or replace into Media (id, value, key, source) values (%d, %d, LOWER(%Q), %d)", 
-							entry, value, property, session->source);
+	                        "insert or replace into Media (id, value, key, source) values (%d, %d, LOWER(%Q), %d)", 
+	                        entry, value, property, source);
 
 	return ret;
 
@@ -611,11 +611,22 @@ xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session,
  *
  * @returns TRUE on success and FALSE on failure.
  */
-
 gboolean
 xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session,
-									  xmms_medialib_entry_t entry, 
-									  const gchar *property, const gchar *value)
+                                      xmms_medialib_entry_t entry,
+                                      const gchar *property, const gchar *value)
+{
+	return xmms_medialib_entry_property_set_str_source (session, entry,
+	                                                    property, value,
+	                                                    session->source);
+}
+
+
+gboolean
+xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
+                                             xmms_medialib_entry_t entry, 
+                                             const gchar *property, const gchar *value,
+                                             guint32 source)
 {
 	gboolean ret;
 
@@ -628,8 +639,8 @@ xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session,
 	}
 
 	ret = xmms_sqlite_exec (session->sql,
-							"insert or replace into Media (id, value, key, source) values (%d, %Q, LOWER(%Q), %d)", 
-							entry, value, property, session->source);
+	                        "insert or replace into Media (id, value, key, source) values (%d, %Q, LOWER(%Q), %d)", 
+	                        entry, value, property, source);
 
 	return ret;
 
@@ -1300,22 +1311,20 @@ xmms_medialib_playlists_list (xmms_medialib_t *medialib, xmms_error_t *error)
 }
 
 static void
-/*xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
-  GList *list, xmms_error_t *error)*/
-
 xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
                                    gchar *source, gchar *key,
                                    gchar *value, xmms_error_t *error)
 {
 	xmms_medialib_session_t *session = xmms_medialib_begin ();
+	guint32 sourceid;
 
 	if (g_strcasecmp (source, "server") == 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
 		return;
 	}
 
-	xmms_medialib_session_source_set (session, source);
-	xmms_medialib_entry_property_set_str (session, entry, key, value);
+	sourceid = xmms_medialib_source_to_id (session, source);
+	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
 
 	xmms_medialib_end (session);
 }

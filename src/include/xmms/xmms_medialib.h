@@ -81,6 +81,5 @@ void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
 
 xmms_medialib_session_t * _xmms_medialib_begin (const char *file, int line);
 void xmms_medialib_end (xmms_medialib_session_t *session);
-void xmms_medialib_session_source_set (xmms_medialib_session_t *session, gchar *source);
 
 #endif /* __XMMS_MEDIALIB_H__ */
