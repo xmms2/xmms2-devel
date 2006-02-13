@@ -23,7 +23,7 @@
 static void handle_current_id (xmmsc_result_t *res, void *userdata);
 static void handle_playtime (xmmsc_result_t *res, void *userdata);
 static void handle_mediainfo_update (xmmsc_result_t *res, void *userdata);
-static void do_mediainfo (xmmsc_connection_t *c, guint id);
+static void do_mediainfo (xmmsc_result_t *res, void *userdata);
 static void quit (void *data);
 
 
@@ -109,6 +109,8 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 static void
 handle_current_id (xmmsc_result_t *res, void *userdata)
 {
+	xmmsc_connection_t *conn = userdata;
+
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
@@ -117,7 +119,9 @@ handle_current_id (xmmsc_result_t *res, void *userdata)
 		print_error ("Broken resultset");
 	}
 
-	do_mediainfo ((xmmsc_connection_t *)userdata, current_id);
+	res = xmmsc_medialib_get_info (conn, current_id);
+	xmmsc_result_notifier_set (res, do_mediainfo, NULL);
+	xmmsc_result_unref (res);
 }
 
 
@@ -161,6 +165,7 @@ static void
 handle_mediainfo_update (xmmsc_result_t *res, void *userdata)
 {
 	guint id;
+	xmmsc_connection_t *conn = userdata;
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
@@ -169,21 +174,19 @@ handle_mediainfo_update (xmmsc_result_t *res, void *userdata)
 	if (!xmmsc_result_get_uint (res, &id)) {
 		print_error ("Broken resultset");
 	}
+	xmmsc_result_unref (res);
 
 	if (id == current_id) {
-		do_mediainfo ((xmmsc_connection_t *) userdata, current_id);
+		res = xmmsc_medialib_get_info (conn, current_id);
+		xmmsc_result_notifier_set (res, do_mediainfo, NULL);
+		xmmsc_result_unref (res);
 	}
 }
 
 
 static void
-do_mediainfo (xmmsc_connection_t *c, guint id)
+do_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	xmmsc_result_t *res;
-
-	res = xmmsc_medialib_get_info (c, id);
-	xmmsc_result_wait (res);
-
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
