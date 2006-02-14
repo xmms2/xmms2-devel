@@ -31,6 +31,7 @@ gboolean xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t
 gboolean xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, gpointer udata, const gchar *query, ...);
 gboolean xmms_sqlite_exec (sqlite3 *sql, const char *query, ...);
 void xmms_sqlite_close (sqlite3 *sql);
+void xmms_sqlite_print_version (void);
 
 
 #endif

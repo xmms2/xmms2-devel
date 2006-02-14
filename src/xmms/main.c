@@ -38,6 +38,7 @@
 #include "xmmspriv/xmms_visualisation.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_log.h"
+#include "xmmspriv/xmms_sqlite.h"
 #include "xmms/xmms_defs.h"
 
 #include <stdio.h>
@@ -395,7 +396,20 @@ main (int argc, char **argv)
 	}
 
 	if (version) {
-		printf ("XMMS version %s\n", XMMS_VERSION);
+		printf ("XMMS version " XMMS_VERSION "\n");
+		printf ("Copyright (C) 2003-2006 XMMS Team\n");
+		printf ("This is free software; see the source for copying conditions.\n");
+		printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
+		printf ("PARTICULAR PURPOSE.\n");
+		printf (" Using glib version %d.%d.%d (compiled against "
+			G_STRINGIFY (GLIB_MAJOR_VERSION) "." 
+			G_STRINGIFY (GLIB_MINOR_VERSION) "."
+			G_STRINGIFY (GLIB_MICRO_VERSION) ")\n",
+			glib_major_version,
+			glib_minor_version,
+			glib_micro_version);
+		xmms_sqlite_print_version ();
+
 		exit (0);
 	}
 
