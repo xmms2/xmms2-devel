@@ -37,6 +37,8 @@
 
 #ifdef XMMS_OS_DARWIN
 # define XMMS_LIBSUFFIX ".dylib"
+#elif XMMS_OS_HPUX11 && !defined(__LP64__)
+# define XMMS_LIBSUFFIX ".sl"
 #else
 # define XMMS_LIBSUFFIX ".so"
 #endif

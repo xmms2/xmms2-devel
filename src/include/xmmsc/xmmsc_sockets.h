@@ -17,7 +17,12 @@ typedef int socklen_t;
 #else
 #define SOCKET_ERROR (-1)
 #define XMMS_EINTR EINTR
+#ifdef __hpux
+/* on HP-UX EAGAIN != EWOULDBLOCK */
+#define XMMS_EAGAIN EAGAIN
+#else
 #define XMMS_EAGAIN EWOULDBLOCK
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
