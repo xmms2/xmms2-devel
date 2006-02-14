@@ -252,7 +252,7 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES)) {
 				guint tmp;
 
-				tmp = xmms_xing_get_bytes (data->xing) * 8 / duration;
+				tmp = xmms_xing_get_bytes (data->xing) * 8 / duration * 1000;
 				XMMS_DBG ("XING bitrate %d", tmp);
 				xmms_medialib_entry_property_set_int (session,
 				                                      entry,
