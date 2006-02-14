@@ -326,7 +326,7 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	g_return_val_if_fail (entry, FALSE);
 	g_return_val_if_fail (transport, FALSE);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	url = xmms_medialib_entry_property_get_str (session, entry,
 	                                            XMMS_MEDIALIB_ENTRY_PROPERTY_URL);

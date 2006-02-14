@@ -182,7 +182,7 @@ xmms_html_read_playlist (xmms_transport_t *transport,
 
 	plsurl = xmms_transport_url_get (transport);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	for (cnt = 0; tags[cnt] != NULL; cnt++) {
 		gchar *url, *full;

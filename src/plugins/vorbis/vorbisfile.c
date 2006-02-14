@@ -289,7 +289,7 @@ xmms_vorbis_get_media_info (xmms_decoder_t *decoder)
 
 	vi = ov_info (&data->vorbisfile, -1);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	playtime = ov_time_total (&data->vorbisfile, -1);
 	if (playtime != OV_EINVAL) {

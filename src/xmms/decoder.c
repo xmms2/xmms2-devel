@@ -796,7 +796,7 @@ set_mime (xmms_transport_t *transport, GNode *tree)
 {
 	gpointer *data = tree->data;
 	xmms_medialib_entry_t entry;
-	xmms_medialib_session_t *session = xmms_medialib_begin ();
+	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 
 	/* set the mime type of the entry to the one from the
 	 * magic set that matched

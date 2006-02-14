@@ -151,7 +151,7 @@ xmms_m3u_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		}
 	}
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	do {
 		xmms_medialib_entry_t entry;

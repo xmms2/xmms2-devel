@@ -150,7 +150,7 @@ xmms_modplug_get_media_info (xmms_decoder_t *decoder)
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	/* */
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 	xmms_medialib_entry_property_set_int (session, entry,
 					      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 					      ModPlug_GetLength (data->mod));

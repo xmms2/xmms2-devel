@@ -312,7 +312,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 		return;
 	}
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	if (xmms_transport_islocal (transport) && 
 			ret >= 10 && 

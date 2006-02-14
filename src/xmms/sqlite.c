@@ -143,10 +143,12 @@ xmms_sqlite_open (gboolean *c)
 		return FALSE; 
 	}
 	
-	sqlite3_busy_timeout (sql, 1000);
 
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 /*	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);*/
+
+	/* One minute */
+	sqlite3_busy_timeout (sql, 60000);
 
 	/* if the database already exists, check whether there have been
 	 * any incompatible changes. if so, we need to recreate the db.
@@ -236,6 +238,10 @@ xmms_sqlite_exec (sqlite3 *sql, const char *query, ...)
 	q = sqlite3_vmprintf (query, ap);
 
 	ret = sqlite3_exec (sql, q, NULL, NULL, &err);
+	if (ret == SQLITE_BUSY) {
+		xmms_log_fatal ("BUSY EVENT!");
+		g_assert_not_reached();
+	}
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! \"%s\" (%d) - %s", q, ret, err);
 		sqlite3_free (q);
@@ -268,6 +274,10 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 	va_end (ap);
 
 	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
+
+	if (ret == SQLITE_BUSY) {
+		xmms_log_fatal ("BUSY EVENT!");
+	}
 
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error %d (%s) in query '%s'", ret, sqlite3_errmsg (sql), q);
@@ -330,6 +340,11 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 	va_end (ap);
 
 	ret = sqlite3_prepare (sql, q, -1, &stm, NULL);
+
+	if (ret == SQLITE_BUSY) {
+		xmms_log_fatal ("BUSY EVENT!");
+		g_assert_not_reached();
+	}
 
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error %d (%s) in query '%s'", ret, sqlite3_errmsg (sql), q);

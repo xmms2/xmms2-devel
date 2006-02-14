@@ -159,7 +159,7 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 	memset (&entry, 0, sizeof (entry));
 	entry.num=-1;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	while (xmms_transport_read_line (transport, buffer, &err)) {
 		gchar *np, *ep;
