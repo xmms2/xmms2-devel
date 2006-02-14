@@ -392,4 +392,12 @@ xmms_sqlite_close (sqlite3 *sql)
 	sqlite3_close (sql);
 }
 
+void
+xmms_sqlite_print_version (void)
+{
+	printf (" Using sqlite version %d (compiled against "
+		XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
+		sqlite3_libversion_number());
+}
+
 /** @} */

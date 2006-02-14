@@ -9,6 +9,8 @@ import operator
 
 global_libpaths = ["/lib", "/usr/lib"]
 
+default_output = (-1, "unknown")
+
 class ConfigError(Exception):
 	pass
 
@@ -70,6 +72,12 @@ class PluginTarget(Target):
 	def config(self, env):
 		env.pkgconfig("glib-2.0", fail=False, libs=False)
 		Target.config(self, env)
+		if isinstance(self.globs.get("output_priority"), int):
+			global default_output
+			t = (self.globs['output_priority'], self.globs['target'])
+			if t > default_output:
+				default_output = t
+		
 	def add(self, env):
 		env.add_plugin(self.target, self.source)
 

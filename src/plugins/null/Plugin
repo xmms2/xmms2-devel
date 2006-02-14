@@ -1,2 +1,4 @@
 target="null"
 source=["null.c"]
+
+output_priority = 1

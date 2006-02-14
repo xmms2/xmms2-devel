@@ -134,17 +134,19 @@ base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
 base_env.SourceCode('src/xmms/converter.c', b)
 
-subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper(), 
+base_env.handle_targets("Library")
+base_env.handle_targets("Program")
+
+subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper().replace("-", ""), 
 	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
 	      "%BINDIR%":base_env["PREFIX"]+"/bin",
 	      "%SHAREDDIR%":base_env.sharepath,
-	      "%PREFIX%":base_env.install_prefix}
+	      "%PREFIX%":base_env.install_prefix,
+	      "%DEFAULT_OUTPUT%":xmmsenv.default_output[1],
+}
 
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
 
-
-base_env.handle_targets("Library")
-base_env.handle_targets("Program")
 
 
 try:
@@ -204,6 +206,7 @@ print "Enabled plugins:",
 foo = []
 map(lambda x: foo.append(x[x.rindex(os.sep)+1:]), base_env.plugins)
 print ", ".join(foo)
+print "Default output:", xmmsenv.default_output[1]
 
 base_env.add_shared("mind.in.a.box-lament_snipplet.ogg")
 base_env.Alias('install', base_env.install_targets)
