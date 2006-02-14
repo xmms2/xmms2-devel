@@ -23,7 +23,7 @@
 #define PKGLIBDIR "%PKGLIBDIR%"
 #define SHAREDDIR "%SHAREDDIR%"
 #define BINDIR "%BINDIR%"
-
+#define XMMS_OUTPUT_DEFAULT "%DEFAULT_OUTPUT%"
 #define XMMS_PATH_MAX 255
 
 #endif

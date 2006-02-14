@@ -146,19 +146,11 @@ xmms_plugin_get (void)
 	                                   NULL,
 	                                   NULL);
 	
-#if !defined(XMMS_OS_NETBSD) && !defined(XMMS_OS_OPENBSD) 
 	xmms_plugin_config_property_register (plugin,
 	                                   "device",
-	                                   "/dev/dsp",
+	                                   DEFAULT_DEVICE,
 	                                   NULL,
 	                                   NULL);
-# else
-        xmms_plugin_config_property_register (plugin,
-                                           "device", 
-                                           "/dev/audio",
-                                           NULL,
-                                           NULL);
-#endif
 
 	return plugin;
 }
