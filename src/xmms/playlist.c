@@ -585,20 +585,18 @@ xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entr
 gboolean
 xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 {
-	gboolean res;
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin();
 	
 	entry = xmms_medialib_entry_new_encoded (session, nurl, err);
-	xmms_medialib_end (session);
 
-	if (!entry) {
-		return FALSE;
+	if (entry) {
+		xmms_playlist_add_entry (playlist, entry);
 	}
 
-	res = xmms_playlist_add (playlist, entry, err);
+	xmms_medialib_end (session);
 
-	return res;
+	return !!entry;
 }
 
 /** Adds a xmms_medialib_entry to the playlist.
@@ -615,17 +613,31 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 gboolean
 xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error)
 {
-	GHashTable *dict;
 	g_return_val_if_fail (file, FALSE);
 
 	if (!xmms_medialib_check_id (file)) {
 		if (error) {
 			/* we can be called internaly also! */
 			xmms_error_set (error, XMMS_ERROR_NOENT, 
-							"That is not a valid medialib id!");
+			                "That is not a valid medialib id!");
 		}
 		return FALSE;
 	}
+
+	xmms_playlist_add_entry (playlist, file);
+
+	return TRUE;
+}
+
+/**
+ * Add an entry to the playlist without validating it.
+ *
+ * @internal
+ */
+void
+xmms_playlist_add_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t file)
+{
+	GHashTable *dict;
 
 	g_mutex_lock (playlist->mutex);
 	g_array_append_val (playlist->list, file);
@@ -636,8 +648,6 @@ xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_e
 	xmms_playlist_changed_msg_send (playlist, dict);
 
 	g_mutex_unlock (playlist->mutex);
-
-	return TRUE;
 
 }
 

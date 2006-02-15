@@ -206,7 +206,7 @@ xmms_medialib_session_new (const char *file, int line)
 		xmms_medialib_entry_t entry;
 		xmms_error_t error;
 		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg", &error);
-		xmms_playlist_add (medialib->playlist, entry, NULL);
+		xmms_playlist_add_entry (medialib->playlist, entry);
 	}
 	return session;
 }
@@ -695,7 +695,7 @@ xmms_medialib_addtopls_cb (GHashTable *row, gpointer udata)
 
 	val = g_hash_table_lookup (row, "id");
 	if (val && val->type == XMMS_OBJECT_CMD_ARG_INT32) {
-		xmms_playlist_add (playlist, val->value.int32, NULL);
+		xmms_playlist_add_entry (playlist, val->value.int32);
 	}
 
 	g_hash_table_destroy (row);
