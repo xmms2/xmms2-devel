@@ -49,7 +49,9 @@ xmms_log_handler (const gchar *log_domain, GLogLevelFlags log_level, const gchar
 	const char *level = "??";
 	gint verbosity = GPOINTER_TO_INT (user_data);
 
-	if (log_level & G_LOG_LEVEL_ERROR) {
+	if (log_level & G_LOG_LEVEL_CRITICAL) {
+		level = " FAIL";
+	} else if (log_level & G_LOG_LEVEL_ERROR) {
 		level = "FATAL";
 	} else if (log_level & G_LOG_LEVEL_WARNING) {
 		level = "ERROR";
