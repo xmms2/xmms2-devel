@@ -257,7 +257,7 @@ xmms_sqlite_exec (sqlite3 *sql, const char *query, ...)
  * Execute a query to the database.
  */
 gboolean
-xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, gpointer udata, const gchar *query, ...)
+xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, gpointer udata, xmms_error_t *error, const gchar *query, ...)
 {
 	gchar *q;
 	va_list ap;
@@ -278,6 +278,10 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 	}
 
 	if (ret != SQLITE_OK) {
+		gchar err[256];
+		g_snprintf (err, sizeof (err),
+		            "Error in query: %s", sqlite3_errmsg (sql));
+		xmms_error_set (error, XMMS_ERROR_GENERIC, err);
 		xmms_log_error ("Error %d (%s) in query '%s'", ret, sqlite3_errmsg (sql), q);
 		sqlite3_free (q);
 		return FALSE;

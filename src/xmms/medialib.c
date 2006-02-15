@@ -728,8 +728,8 @@ xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_erro
 	session = xmms_medialib_begin_write ();
 
 	if (!xmms_sqlite_query_table (session->sql, xmms_medialib_addtopls_cb, 
-								  session->medialib->playlist,
-								  "%s", query)) {
+	                              session->medialib->playlist,
+	                              error, "%s", query)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Query failed!");
 		xmms_medialib_end (session);
 		return;
@@ -1562,7 +1562,8 @@ xmms_medialib_select (xmms_medialib_session_t *session,
 	g_return_val_if_fail (query, 0);
 	g_return_val_if_fail (session, 0);
 
-	ret = xmms_sqlite_query_table (session->sql, select_callback, (void *)&res, "%s", query);
+	ret = xmms_sqlite_query_table (session->sql, select_callback,
+	                               (void *)&res, error, "%s", query);
 
 	if (!ret)
 		return NULL;
