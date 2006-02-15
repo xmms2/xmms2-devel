@@ -1111,8 +1111,8 @@ prepare_playlist (xmms_medialib_session_t *session,
 	 */
 	if (id) {
 		ret = xmms_sqlite_exec (session->sql,
-								"delete from PlaylistEntries "
-								"where playlist_id = %u", id);
+		                        "delete from PlaylistEntries "
+		                        "where playlist_id = %u", id);
 		if (!ret) {
 			return 0;
 		}
@@ -1125,7 +1125,7 @@ prepare_playlist (xmms_medialib_session_t *session,
 
 	/* supplied id is zero, so we need to add a new playlist first */
 	ret = xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
-								   "select MAX (id) as value from Playlist");
+	                               "select IFNULL(MAX (id), 0) as value from Playlist");
 	if (!ret) {
 		return 0;
 	}
@@ -1133,8 +1133,8 @@ prepare_playlist (xmms_medialib_session_t *session,
 	id++; /* we want MAX + 1 */
 
 	ret = xmms_sqlite_exec (session->sql,
-							"insert into Playlist (id, name, pos) "
-							"values (%u, '%s', %u)", id, name, pos);
+	                        "insert into Playlist (id, name, pos) "
+	                        "values (%u, '%s', %u)", id, name, pos);
 	return ret ? id : 0;
 }
 
