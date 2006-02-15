@@ -123,10 +123,9 @@ try_upgrade (sqlite3 *sql, gint version)
  * Open a database or create a new one
  */
 sqlite3 *
-xmms_sqlite_open (gboolean *c)
+xmms_sqlite_open (gboolean *create)
 {
 	sqlite3 *sql;
-	gboolean create = TRUE;
 	const gchar *dbpath;
 	gint version = 0;
 	xmms_config_property_t *cv;
@@ -134,13 +133,14 @@ xmms_sqlite_open (gboolean *c)
 	cv = xmms_config_lookup ("medialib.path");
 	dbpath = xmms_config_property_get_string (cv);
 
-	if (g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
-		create = FALSE;
+	*create = FALSE;
+	if (!g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
+		*create = TRUE;
 	}
 
 	if (sqlite3_open (dbpath, &sql)) {
 		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg(sql));
-		return FALSE; 
+		return NULL;
 	}
 	
 
@@ -153,7 +153,7 @@ xmms_sqlite_open (gboolean *c)
 	/* if the database already exists, check whether there have been
 	 * any incompatible changes. if so, we need to recreate the db.
 	 */
-	if (!create) {
+	if (!*create) {
 		sqlite3_exec (sql, "PRAGMA user_version",
 		              xmms_sqlite_version_cb, &version, NULL);
 
@@ -170,13 +170,12 @@ xmms_sqlite_open (gboolean *c)
 				return NULL;
 			}
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-			create = TRUE;
+			*create = TRUE;
 		}
 	}
 
-	if (create) {
+	if (*create) {
 		XMMS_DBG ("Creating the database...");
-		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Sources_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
@@ -185,11 +184,10 @@ xmms_sqlite_open (gboolean *c)
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_views, NULL, NULL, NULL);
+		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 	} 
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
-
-	*c = create;
 
 	return sql;
 }
