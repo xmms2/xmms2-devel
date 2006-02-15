@@ -115,6 +115,9 @@ struct xmms_medialib_session_St {
 	const char *file;
 	/** debug line number */
 	int line;
+
+	/* Write or read lock, true if write */
+	gboolean write;
 };
 
 
@@ -309,7 +312,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	/** 
 	 * this dummy just wants to put the default song in the playlist
 	 */
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 	xmms_medialib_end (session);
 	
 	return TRUE;
@@ -318,7 +321,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 /** Session handling */
 
 xmms_medialib_session_t *
-_xmms_medialib_begin (const char *file, int line)
+_xmms_medialib_begin (gboolean write, const char *file, int line)
 {
 	xmms_medialib_session_t *session;
 
@@ -333,6 +336,14 @@ _xmms_medialib_begin (const char *file, int line)
 
 	session = xmms_medialib_session_new (file, line);
 	xmms_object_ref (XMMS_OBJECT (medialib));
+	session->write = write;
+
+	if (write) {
+		/* Start a exclusive transaction */
+		if (!xmms_sqlite_exec (session->sql, "BEGIN EXCLUSIVE TRANSACTION")) {
+			xmms_log_error ("transaction failed!");
+		}
+	}
 
 	return session;
 }
@@ -341,6 +352,10 @@ void
 xmms_medialib_end (xmms_medialib_session_t *session)
 {
 	g_return_if_fail (session);
+	
+	if (session->write) {
+		xmms_sqlite_exec (session->sql, "COMMIT");
+	}
 	
 	if (session == global_medialib_session) {
 		g_mutex_unlock (global_medialib_session_mutex);
@@ -710,7 +725,7 @@ xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_erro
 	g_return_if_fail (medialib);
 	g_return_if_fail (query);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	if (!xmms_sqlite_query_table (session->sql, xmms_medialib_addtopls_cb, 
 								  session->medialib->playlist,
@@ -728,7 +743,7 @@ static void
 xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error)
 {
 	xmms_medialib_session_t *session;
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 	xmms_medialib_entry_remove (session, entry);
 	xmms_medialib_end (session);
 }
@@ -802,7 +817,7 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	if (id) {
 		xmms_sqlite_exec (session->sql, "update Media set value = 0 where key='%s' and id=%d", 
@@ -830,7 +845,7 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	if (!xmms_medialib_decode_url (path)) {
 		xmms_log_error ("Bad encoding in path");
@@ -1058,7 +1073,7 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	g_return_if_fail (medialib);
 	g_return_if_fail (url);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	entry = xmms_medialib_entry_new_encoded (session, url, error);
 
@@ -1222,7 +1237,7 @@ xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, x
 	gint playlist_id;
 	xmms_medialib_session_t *session;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	playlist_id = get_playlist_id (session, playlistname);
 	if (!playlist_id) {
@@ -1311,7 +1326,6 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
                                    gchar *source, gchar *key,
                                    gchar *value, xmms_error_t *error)
 {
-	xmms_medialib_session_t *session = xmms_medialib_begin ();
 	guint32 sourceid;
 
 	if (g_strcasecmp (source, "server") == 0) {
@@ -1319,6 +1333,7 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
 		return;
 	}
 
+	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
 	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
 
@@ -1333,7 +1348,7 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *name,
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 	entry = xmms_medialib_entry_new (session, url, error);
 	if (!entry) {
 		xmms_medialib_end (session);
@@ -1376,7 +1391,7 @@ xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
 	g_return_if_fail (medialib);
 	g_return_if_fail (name);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	playlist_id = get_playlist_id (session, name);
 

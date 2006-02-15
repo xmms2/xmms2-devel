@@ -431,7 +431,7 @@ xmms_faad_get_mediainfo (xmms_decoder_t *decoder)
 	g_return_if_fail (transport);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	if (data->filetype == FAAD_TYPE_MP4) {
 		glong temp;

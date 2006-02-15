@@ -153,7 +153,7 @@ xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_
 {
 	xmms_medialib_session_t *session;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 	xmms_medialib_entry_property_set_str (session, entry,
 	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLEFMT_IN,
 	                                      xmms_sample_name_get (conv->from->format));

@@ -152,7 +152,7 @@ xmms_wave_get_media_info (xmms_decoder_t *decoder)
 	samples_total = data->bytes_total / (data->bits_per_sample / 8);
 	playtime = (gdouble) samples_total / data->samplerate / data->channels;
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	xmms_medialib_entry_property_set_int (session, entry,
 										  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,

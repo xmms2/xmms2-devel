@@ -234,7 +234,7 @@ xmms_mpc_cache_streaminfo (xmms_decoder_t *decoder)
 	g_return_if_fail (data);
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	bitrate = (data->info.bitrate) ? data->info.bitrate :
 	                                 data->info.average_bitrate;
@@ -388,7 +388,7 @@ xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
 
 	entry = xmms_decoder_medialib_entry_get (decoder);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 		val = xmms_ape_get_text (properties[i].vname, buff, len);

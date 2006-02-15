@@ -360,7 +360,7 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 
 	g_return_if_fail (decoder);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_if_fail (data);

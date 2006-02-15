@@ -305,7 +305,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 		/* done */
 		if (handles == 0) {
 			if (!data->know_mime) {
-				xmms_medialib_session_t *session = xmms_medialib_begin ();
+				xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 				entry = xmms_transport_medialib_entry_get (transport);
 				xmms_medialib_entry_property_set_str (session, entry,
 						XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
@@ -319,7 +319,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	}
 
 	if (!data->know_mime) {
-		xmms_medialib_session_t *session = xmms_medialib_begin ();
+		xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 		entry = xmms_transport_medialib_entry_get (transport);
 		xmms_medialib_entry_property_set_str (session, entry,
 				XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
@@ -450,7 +450,7 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		} else {
 			val = header;
 		}
-		session = xmms_medialib_begin ();
+		session = xmms_medialib_begin_write ();
 		func (transport, session, val);
 		xmms_medialib_end (session);
 	}
@@ -595,7 +595,7 @@ handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
 	data = xmms_transport_private_data_get (transport);
 	entry = xmms_transport_medialib_entry_get (transport);
 
-	session = xmms_medialib_begin ();
+	session = xmms_medialib_begin_write ();
 
 	tags = g_strsplit (metadata, ";", 0);
 	while (tags[i] != NULL) {
