@@ -10,6 +10,8 @@ def gitsha(path):
 
 def git_info():
     commithash = file('.git/HEAD').read().strip()
+    if commithash.startswith("ref: "):
+        commithash = file(commithash[5:]).read().strip()
     if os.getuid() == os.stat(".git/index").st_uid:
         os.system('git-update-index --refresh >/dev/null')
     else:
