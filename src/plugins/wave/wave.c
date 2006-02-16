@@ -193,12 +193,12 @@ xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 	                            &error);
 
 	if (read < WAVE_HEADER_MIN_SIZE) {
-		XMMS_DBG ("Could not read wave header");
+		xmms_log_error ("Could not read wave header");
 		return FALSE;
 	}
 
 	if (!read_wave_header (data, buf, read)) {
-		XMMS_DBG ("Not a valid Wave stream");
+		xmms_log_error ("Not a valid Wave stream");
 		return FALSE;
 	}
 
@@ -278,7 +278,7 @@ xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 	offset += samples * (data->bits_per_sample / 8) * data->channels;
 
 	if (offset > data->bytes_total) {
-		XMMS_DBG ("Trying to seek past end of stream");
+		xmms_log_error ("Trying to seek past end of stream");
 
 		return FALSE;
 	}
@@ -309,7 +309,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 
 	GET_STR (buf, stmp, 4);
 	if (strcmp (stmp, "RIFF")) {
-		XMMS_DBG ("No RIFF data");
+		xmms_log_error ("No RIFF data");
 		return FALSE;
 	}
 
@@ -318,38 +318,38 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 
 	GET_STR (buf, stmp, 4);
 	if (strcmp (stmp, "WAVE")) {
-		XMMS_DBG ("No Wave data");
+		xmms_log_error ("No Wave data");
 		return FALSE;
 	}
 
 	GET_STR (buf, stmp, 4);
 	if (strcmp (stmp, "fmt ")) {
-		XMMS_DBG ("Format chunk missing");
+		xmms_log_error ("Format chunk missing");
 		return FALSE;
 	}
 
 	GET_32 (buf, tmp32);
 	if (tmp32 != 16) {
-		XMMS_DBG ("Invalid format chunk length");
+		xmms_log_error ("Invalid format chunk length");
 		return FALSE;
 	}
 
 	GET_16 (buf, tmp16); /* format tag */
 	if (tmp16 != 1) {
-		XMMS_DBG ("Unhandled format tag: %i", tmp16);
+		xmms_log_error ("Unhandled format tag: %i", tmp16);
 		return FALSE;
 	}
 
 	GET_16 (buf, data->channels);
 	if (data->channels < 1 || data->channels > 2) {
-		XMMS_DBG ("Unhandled number of channels: %i", data->channels);
+		xmms_log_error ("Unhandled number of channels: %i", data->channels);
 		return FALSE;
 	}
 
 	GET_32 (buf, data->samplerate);
 	if (data->samplerate != 8000 && data->samplerate != 11025 &&
 	    data->samplerate != 22050 && data->samplerate != 44100) {
-		XMMS_DBG ("Invalid samplerate: %i", data->samplerate);
+		xmms_log_error ("Invalid samplerate: %i", data->samplerate);
 		return FALSE;
 	}
 
@@ -358,7 +358,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 
 	GET_16 (buf, data->bits_per_sample);
 	if (data->bits_per_sample != 8 && data->bits_per_sample != 16) {
-		XMMS_DBG ("Unhandled bits per sample: %i",
+		xmms_log_error ("Unhandled bits per sample: %i",
 		          data->bits_per_sample);
 		return FALSE;
 	}
@@ -369,7 +369,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 		GET_32 (buf, tmp32);
 
 		if (bytes_left < (tmp32 + 8)) {
-			XMMS_DBG ("Data chunk missing");
+			xmms_log_error ("Data chunk missing");
 			return FALSE;
 		}
 
@@ -384,7 +384,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 	data->header_size = bytes_read - bytes_left;
 
 	if (data->bytes_total + data->header_size != data_size) {
-		XMMS_DBG ("Data chunk size doesn't match RIFF chunk size");
+		xmms_log_error ("Data chunk size doesn't match RIFF chunk size");
 		/* don't return FALSE here, we try to read it anyway */
 	}
 
