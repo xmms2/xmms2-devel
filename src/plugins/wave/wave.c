@@ -384,7 +384,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 	data->header_size = bytes_read - bytes_left;
 
 	if (data->bytes_total + data->header_size != data_size) {
-		xmms_log_error ("Data chunk size doesn't match RIFF chunk size");
+		xmms_log_info ("Data chunk size doesn't match RIFF chunk size");
 		/* don't return FALSE here, we try to read it anyway */
 	}
 
