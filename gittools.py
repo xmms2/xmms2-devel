@@ -9,9 +9,7 @@ def gitsha(path):
     return h.hexdigest()
 
 def git_info():
-    commithash = file('.git/HEAD').read().strip()
-    if commithash.startswith("ref: "):
-        commithash = file(commithash[5:]).read().strip()
+    commithash = os.popen('git-rev-parse --verify HEAD').read().strip()
     if os.getuid() == os.stat(".git/index").st_uid:
         os.system('git-update-index --refresh >/dev/null')
     else:
