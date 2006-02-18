@@ -136,6 +136,7 @@ base_env.SourceCode('src/xmms/converter.c', b)
 
 b = Builder(action = python_executable + ' src/clients/lib/xmmsclient++/generate_methods.py > src/include/xmmsclient/xmmsclient++_methods.h')
 base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/clients/lib/xmmsclient++/generate_methods.py')
+base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/include/xmmsclient/xmmsclient.h')
 base_env.Depends('#src/clients/lib/xmmsclient++/xmmsclient.cpp', 'src/include/xmmsclient/xmmsclient++_methods.h')
 base_env.SourceCode('src/include/xmmsclient/xmmsclient++_methods.h', b)
 
