@@ -134,6 +134,11 @@ base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
 base_env.SourceCode('src/xmms/converter.c', b)
 
+b = Builder(action = python_executable + ' src/clients/lib/xmmsclient++/generate_methods.py > src/include/xmmsclient/xmmsclient++_methods.h')
+base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/clients/lib/xmmsclient++/generate_methods.py')
+base_env.Depends('#src/clients/lib/xmmsclient++/xmmsclient.cpp', 'src/include/xmmsclient/xmmsclient++_methods.h')
+base_env.SourceCode('src/include/xmmsclient/xmmsclient++_methods.h', b)
+
 base_env.handle_targets("Library")
 base_env.handle_targets("Program")
 
@@ -189,7 +194,8 @@ base_env.add_manpage(8, 'doc/xmms2d.8')
 pc_files = [{"name": "xmms2-plugin", "lib":""}, 
 	    {"name":"xmms2-client", "lib":"-lxmmsclient"},
 	    {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
-	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"}]
+	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"},
+	    {"name":"xmms2-client-cpp", "lib":"-lxmmsclient++"}]
 
 for p in pc_files:
 	d = subst_dict.copy()
