@@ -1,15 +1,21 @@
 #ifndef __XMMSCLIENTPP_H
 #define __XMMSCLIENTPP_H
 
+#include <sigc++/sigc++.h>
 #include <iostream>
 #include <xmmsclient/xmmsclient.h>
-#include <sigc++/signal.h>
 
 
 class XMMSResult
 {
 	public:
 		XMMSResult (xmmsc_result_t*);
+		XMMSResult (const XMMSResult &src) 
+		{
+			m_res = src.m_res;
+			m_inited = src.m_inited;
+			m_signal = src.m_signal;
+		}
 		~XMMSResult ();
 
 		void restart (void);
@@ -38,6 +44,8 @@ class XMMSResult
 		std::list<const char*> *getPropDictList ();
 		std::list<const char*> *getDictList ();
 		uint getDictValueType (const char *key) { return xmmsc_result_get_dict_entry_type (m_res, key); }
+
+		int entryFormat (char *target, int len, const char *format) { return xmmsc_entry_format (target, len, format, m_res); }
 
 		/* List manipulation */
 		bool listValid (void) { return xmmsc_result_list_valid (m_res); }

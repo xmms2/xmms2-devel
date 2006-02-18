@@ -25,7 +25,7 @@ while (l):
 			i = i.strip()
 			if "*" in i:
 				i = i[:i.rindex("*")+1]
-			else:
+			elif " " in i:
 				i = i[:i.rindex(" ")]
 			a.append("%s %s" % (i, trams[len(a)]))
 			
@@ -36,7 +36,7 @@ while (l):
 			args = "void"
 			args2 = "m_xmmsc"
 
-		print "XMMSResult %s (%s) { return XMMSResult (xmmsc_%s (%s)); }" %(name, args, name, args2)
+		print "XMMSResult *%s (%s) { return new XMMSResult (xmmsc_%s (%s)); }" %(name, args, name, args2)
 
 	l = f.readline()
 	

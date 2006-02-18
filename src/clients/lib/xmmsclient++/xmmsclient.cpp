@@ -1,6 +1,6 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++.h>
-#include <sigc++/signal.h>
+#include <sigc++/sigc++.h>
 
 using namespace std;
 
@@ -8,6 +8,11 @@ static void
 generic_handler (xmmsc_result_t *res, void *userdata) 
 {
 	XMMSResult *r = static_cast<XMMSResult*>(userdata);
+	if (!r) {
+		cout << "********* FATAL ERROR ***********" << endl;
+		cout << "The generic handler was called without a result!" << endl;
+		return;
+	}
 	r->emit ();
 }
 
@@ -36,6 +41,8 @@ XMMSResult::XMMSResult (xmmsc_result_t *res)
 	m_res = res;
 	m_inited = false;
 	m_signal = new sigc::signal1<void, XMMSResult*>;
+
+	cout << "result created" << endl;
 }
 
 void
@@ -107,6 +114,8 @@ XMMSResult::getPropDictList (void)
 
 XMMSResult::~XMMSResult ()
 {
+
+	cout << "result destroy" << endl;
 	delete m_signal;
 	xmmsc_result_unref (m_res);
 }
