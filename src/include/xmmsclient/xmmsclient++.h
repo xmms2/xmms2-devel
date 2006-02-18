@@ -5,8 +5,6 @@
 #include <xmmsclient/xmmsclient.h>
 #include <sigc++/signal.h>
 
-using namespace std;
-using namespace sigc;
 
 class XMMSResult
 {
@@ -37,8 +35,8 @@ class XMMSResult
 			return xmmsc_result_get_dict_entry_str (m_res, key, s); 
 		}
 
-		list<const char*> *getPropDictList ();
-		list<const char*> *getDictList ();
+		std::list<const char*> *getPropDictList ();
+		std::list<const char*> *getDictList ();
 		uint getDictValueType (const char *key) { return xmmsc_result_get_dict_entry_type (m_res, key); }
 
 		/* List manipulation */
@@ -52,7 +50,7 @@ class XMMSResult
 		const char *getError (void) { return xmmsc_result_get_error (m_res); }
 
 		/* connect to signal */
-		void connect (const slot<void, XMMSResult*>& slot_);
+		void connect (const sigc::slot<void, XMMSResult*>& slot_);
 
 		/* wait for this resultset */
 		void wait (void) const { xmmsc_result_wait (m_res); }
@@ -63,7 +61,7 @@ class XMMSResult
 	private:
 		bool m_inited;
 		xmmsc_result_t *m_res;
-		signal1<void, XMMSResult*> *m_signal;
+		sigc::signal1<void, XMMSResult*> *m_signal;
 
 		xmmsc_result_t *getRes (void) { return m_res; }
 };

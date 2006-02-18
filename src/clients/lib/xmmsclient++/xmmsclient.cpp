@@ -2,6 +2,8 @@
 #include <xmmsclient/xmmsclient++.h>
 #include <sigc++/signal.h>
 
+using namespace std;
+
 static void 
 generic_handler (xmmsc_result_t *res, void *userdata) 
 {
@@ -53,7 +55,7 @@ XMMSResult::emit (void)
 }
 
 void
-XMMSResult::connect (const slot<void, XMMSResult*>& slot_)
+XMMSResult::connect (const sigc::slot<void, XMMSResult*>& slot_)
 {
 	if (!m_inited) {
 		xmmsc_result_notifier_set (m_res, generic_handler, this);
