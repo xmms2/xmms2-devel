@@ -75,6 +75,8 @@ struct xmms_transport_St {
 	 */
 	xmms_medialib_entry_t entry;
 
+	gchar *url;
+
 	GMutex *mutex;
 	GCond *cond;
 	GThread *thread;
@@ -166,19 +168,9 @@ xmms_transport_private_data_set (xmms_transport_t *transport, gpointer data)
 const gchar *
 xmms_transport_url_get (const xmms_transport_t *const transport)
 {
-	const gchar *ret;
-	xmms_medialib_session_t *session;
-
 	g_return_val_if_fail (transport, NULL);
 
-	session = xmms_medialib_begin ();
-
-	ret =  xmms_medialib_entry_property_get_str (session, transport->entry,
-	                                             XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-
-	xmms_medialib_end (session);
-
-	return ret;
+	return transport->url;
 }
 
 /** 
@@ -336,6 +328,8 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 		goto out;
 	}
 
+	transport->url = url;
+
 	xmms_log_info ("Opening url '%s'", url);
 
 	if (!xmms_medialib_decode_url (url)) {
@@ -367,14 +361,12 @@ xmms_transport_open (xmms_transport_t *transport, xmms_medialib_entry_t entry)
 	}
 
 	xmms_medialib_entry_property_set_int (session, transport->entry,
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
-										  xmms_transport_size (transport));
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
+	                                      xmms_transport_size (transport));
 
 	res = TRUE;
  out:
 	xmms_medialib_end (session);
-	if (url)
-		g_free (url);
 	return res;
 }
 
@@ -763,6 +755,9 @@ xmms_transport_destroy (xmms_object_t *object)
 		close_method (transport);
 
 	xmms_object_unref (transport->plugin);
+
+	if (transport->url)
+		g_free (transport->url);
 
 	xmms_ringbuf_destroy (transport->buffer);
 	g_cond_free (transport->cond);
