@@ -41,6 +41,8 @@ static time_t start_time;
 static gchar *server_version = "unknown";
 static gchar *output_plugin = "unknown";
 static gchar *system_name = "unknown";
+static gint playlist_loads = 0;
+static gint mlib_resolves = 0;
 
 static int send_socket;
 static struct sockaddr_in dest_addr;
@@ -61,6 +63,11 @@ send_msg (const gchar *status, GString *data)
 	g_string_append_printf (str, "output=%s\n", output_plugin);
 	g_string_append_printf (str, "starttime=%ld\n", start_time);
 	g_string_append_printf (str, "uptime=%ld\n", now - start_time);
+	g_string_append_printf (str, "playlistloads=%d\n", playlist_loads);
+	g_string_append_printf (str, "mlibresolves=%d\n", mlib_resolves);
+
+	playlist_loads = 0;
+	mlib_resolves = 0;
 
 	if (data)
 		g_string_append (str, data->str);
@@ -81,6 +88,32 @@ static void
 handle_quit (xmmsc_result_t *res, void *data)
 {
 	g_main_loop_quit ((GMainLoop *) data);
+}
+
+static void
+handle_playlist_load (xmmsc_result_t *res, void *userdata)
+{
+	playlist_loads ++;
+}
+
+static void
+handle_mediainfo_reader (xmmsc_result_t *res, void *userdata)
+{
+	static guint last_unindexed;
+	xmmsc_result_t *newres;
+	guint unindexed;
+
+	if (!xmmsc_result_get_uint (res, &unindexed))
+		return;
+
+	if (unindexed < last_unindexed) {
+		mlib_resolves += last_unindexed - unindexed;
+	}
+	last_unindexed = unindexed;
+
+	newres = xmmsc_result_restart (res);
+	xmmsc_result_unref (res);
+	xmmsc_result_unref (newres);
 }
 
 static void
@@ -239,9 +272,12 @@ main (int argc, char **argv)
 	start_time = time (NULL);
 
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_playlist_loaded, handle_playlist_load, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_main_status, handle_status, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_configval_changed, handle_config, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_quit, handle_quit, ml);
+
+	XMMS_CALLBACK_SET (conn, xmmsc_signal_mediainfo_reader_unindexed, handle_mediainfo_reader, NULL);
 
 	{
 		xmmsc_result_t *res;
