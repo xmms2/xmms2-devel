@@ -183,7 +183,7 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 }
 
 xmms_object_cmd_value_t *
-xmms_object_cmd_value_str_new (gchar *string)
+xmms_object_cmd_value_str_new (const gchar *string)
 {
 	xmms_object_cmd_value_t *val;
 	val = g_new0 (xmms_object_cmd_value_t, 1);
