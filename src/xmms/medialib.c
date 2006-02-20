@@ -140,6 +140,9 @@ static xmms_medialib_session_t *global_medialib_session;
 /** This protects the above global session */
 static GMutex *global_medialib_session_mutex;
 
+static GMutex *xmms_medialib_debug_mutex;
+static GHashTable *xmms_medialib_debug_hash;
+
 #define destroy_array(a) { gint i = 0; while (a[i]) { xmms_object_cmd_value_free (a[i]); i++; }; g_free (a); }
 
 
@@ -295,6 +298,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 				    path,
 				    xmms_medialib_path_changed, medialib);
 
+
+	xmms_medialib_debug_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+	xmms_medialib_debug_mutex = g_mutex_new ();
 	global_medialib_session = NULL;
 
 	if (sqlite3_libversion_number() < 3002004) {
@@ -325,6 +331,19 @@ _xmms_medialib_begin (gboolean write, const char *file, int line)
 {
 	xmms_medialib_session_t *session;
 
+	{
+		gchar *r;
+		void *me = g_thread_self ();
+		g_mutex_lock (xmms_medialib_debug_mutex);
+		r = g_hash_table_lookup (xmms_medialib_debug_hash, me);
+		if (r) {
+			xmms_log_fatal ("Medialib session begun recursivly at %s:%d, after %s", file, line, r);
+		} else {
+			g_hash_table_insert (xmms_medialib_debug_hash, me,
+					     g_strdup_printf ("%s:%d", file, line));
+		}
+		g_mutex_unlock (xmms_medialib_debug_mutex);
+	}
 	if (global_medialib_session) {
 		/** This will only happen when OLD_SQLITE_VERSION is set. */
 		g_mutex_lock (global_medialib_session_mutex);
@@ -352,6 +371,13 @@ void
 xmms_medialib_end (xmms_medialib_session_t *session)
 {
 	g_return_if_fail (session);
+
+	{
+		void *me = g_thread_self ();
+		g_mutex_lock (xmms_medialib_debug_mutex);
+		g_hash_table_remove (xmms_medialib_debug_hash, me);
+		g_mutex_unlock (xmms_medialib_debug_mutex);
+	}
 	
 	if (session->write) {
 		xmms_sqlite_exec (session->sql, "COMMIT");
