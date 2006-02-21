@@ -61,7 +61,7 @@ typedef struct {
 	xmms_object_cmd_arg_type_t type;
 } xmms_object_cmd_value_t;
 
-xmms_object_cmd_value_t *xmms_object_cmd_value_str_new (gchar *string);
+xmms_object_cmd_value_t *xmms_object_cmd_value_str_new (const gchar *string);
 xmms_object_cmd_value_t *xmms_object_cmd_value_uint_new (guint32 uint);
 xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
 xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GHashTable *dict);
