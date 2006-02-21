@@ -65,8 +65,8 @@ class XMMSResultDict : public XMMSResult
 		XMMSResultDict (const XMMSResultDict &src) : XMMSResult(src) { }
 		~XMMSResultDict () { }
 	
-		std::list<const char*> *getPropDictList ();
-		std::list<const char*> *getDictList ();
+		std::list<const char*> getPropDictKeys ();
+		std::list<const char*> getDictKeys ();
 
 		uint getDictValueType (const char *key) {
 			return xmmsc_result_get_dict_entry_type (m_res, key);

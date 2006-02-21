@@ -84,16 +84,16 @@ dict_foreach (const void *key,
 			  const void *value, 
 			  void *udata)
 {
-	list<const char *> *i = static_cast<list<const char*>*>(udata);
+	list<const char *> *i (static_cast<list<const char*>*>(udata));
 	i->push_front (static_cast<const char*>(key));
 }
 
-list<const char *> *
-XMMSResultDict::getDictList (void)
+list<const char *>
+XMMSResultDict::getDictKeys (void)
 {
-	list<const char *> *i = new list<const char*>();
+	list<const char *> i;
 
-	xmmsc_result_dict_foreach (m_res, dict_foreach, static_cast<void*>(i));
+	xmmsc_result_dict_foreach (m_res, dict_foreach, static_cast<void*>(&i));
 
 	return i;
 }
@@ -105,23 +105,22 @@ propdict_foreach (const void *key,
 			  const char *source,
 			  void *udata)
 {
-	list<const char *> *i = static_cast<list<const char*>*>(udata);
+	list<const char *> *i (static_cast<list<const char*>*>(udata));
 	i->push_front (static_cast<const char*>(key));
 }
 
-list<const char *> *
-XMMSResultDict::getPropDictList (void)
+list<const char *>
+XMMSResultDict::getPropDictKeys (void)
 {
-	list<const char *> *i = new list<const char*>();
+	list<const char *> i;
 
-	xmmsc_result_propdict_foreach (m_res, propdict_foreach, static_cast<void*>(i));
+	xmmsc_result_propdict_foreach (m_res, propdict_foreach, static_cast<void*>(&i));
 
 	return i;
 }
 
 XMMSResult::~XMMSResult ()
 {
-
 	cout << "result destroy" << endl;
 	xmmsc_result_unref (m_res);
 }
