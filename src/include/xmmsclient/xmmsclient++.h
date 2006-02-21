@@ -14,18 +14,17 @@ class XMMSResult
 		~XMMSResult ();
 
 		uint getType (void) { return xmmsc_result_get_type (m_res); }
-
 		void restart (void);
 		
 		/* error */
 		bool isError (void) { return xmmsc_result_iserror (m_res); }
 		const char *getError (void) { return xmmsc_result_get_error (m_res); }
 
-		/* connect to signal */
-		void connect (const sigc::slot<void, XMMSResult*>& slot_);
-
 		/* wait for this resultset */
 		void wait (void) const { xmmsc_result_wait (m_res); }
+
+		/* connect to signal */
+		void connect (const sigc::slot<void, XMMSResult*>& slot_);
 
 		/* don't use me */
 		void emit (void);
@@ -35,13 +34,13 @@ class XMMSResult
 
 	private:
 		bool m_inited;
-		sigc::signal1<void, XMMSResult*> m_signal;
+		sigc::signal1<void, XMMSResult*> m_signal; // FIXME: Oops, dynamic type here?
 
 		xmmsc_result_t *getRes (void) { return m_res; }
 };
 
 
-class XMMSResultList : public XMMSResult {
+class XMMSResultList : virtual public XMMSResult {
 	public:
 		XMMSResultList (xmmsc_result_t* res) : XMMSResult(res) { }
 		XMMSResultList (const XMMSResultList &src) : XMMSResult(src) { }
@@ -55,11 +54,11 @@ class XMMSResultList : public XMMSResult {
 };
 
 
-class XMMSDict : public XMMSResult {
+class XMMSResultDict : virtual public XMMSResult {
 	public:
-		XMMSDict (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSDict (const XMMSDict &src) : XMMSResult(src) { }
-		~XMMSDict () { }
+		XMMSResultDict (xmmsc_result_t* res) : XMMSResult(res) { }
+		XMMSResultDict (const XMMSResultDict &src) : XMMSResult(src) { }
+		~XMMSResultDict () { }
 	
 		std::list<const char*> *getPropDictList ();
 		std::list<const char*> *getDictList ();
@@ -72,12 +71,21 @@ class XMMSDict : public XMMSResult {
 			return xmmsc_entry_format (target, len, format, m_res);
 		}
 
+		bool getValue (const char* key, int *var) {
+			return xmmsc_result_get_dict_entry_int32 (m_res, key, var); 
+		}
+		bool getValue (const char* key, uint *var) {
+			return xmmsc_result_get_dict_entry_uint32 (m_res, key, var); 
+		}
+		bool getValue (const char* key, char **var) {
+			return xmmsc_result_get_dict_entry_str (m_res, key, var); 
+		}
 };
 
 
 
 template <class T>
-class XMMSResultValue : public XMMSResult
+class XMMSResultValue : virtual public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -88,7 +96,7 @@ class XMMSResultValue : public XMMSResult
 };
 
 template <>
-class XMMSResultValue<int> : public XMMSResult
+class XMMSResultValue<int> : virtual public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -99,7 +107,7 @@ class XMMSResultValue<int> : public XMMSResult
 };
 
 template <>
-class XMMSResultValue<uint> : public XMMSResult
+class XMMSResultValue<uint> : virtual public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -110,7 +118,7 @@ class XMMSResultValue<uint> : public XMMSResult
 };
 
 template <>
-class XMMSResultValue<char*> : public XMMSResult
+class XMMSResultValue<char*> : virtual public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -123,57 +131,6 @@ class XMMSResultValue<char*> : public XMMSResult
 
 
 template <class T>
-class XMMSResultDict : public XMMSDict
-{
-	public:
-		XMMSResultDict (xmmsc_result_t* res) : XMMSDict(res) { }
-		XMMSResultDict (const XMMSResultDict<T> &src) : XMMSDict(src) { }
-		~XMMSResultDict () { }
-
-		bool getValue (const char* key, T *var) = 0;
-};
-
-template <>
-class XMMSResultDict<int> : public XMMSDict
-{
-	public:
-		XMMSResultDict (xmmsc_result_t* res) : XMMSDict(res) { }
-		XMMSResultDict (const XMMSResultDict<int> &src) : XMMSDict(src) { }
-		~XMMSResultDict () { }
-	
-		bool getValue (const char* key, int *var) {
-			return xmmsc_result_get_dict_entry_int32 (m_res, key, var); 
-		}
-};
-
-template <>
-class XMMSResultDict<uint> : public XMMSDict
-{
-	public:
-		XMMSResultDict (xmmsc_result_t* res) : XMMSDict(res) { }
-		XMMSResultDict (const XMMSResultDict<uint> &src) : XMMSDict(src) { }
-		~XMMSResultDict () { }
-	
-		bool getValue (const char* key, uint *var) {
-			return xmmsc_result_get_dict_entry_uint32 (m_res, key, var); 
-		}
-};
-
-template <>
-class XMMSResultDict<char*> : public XMMSDict
-{
-	public:
-		XMMSResultDict (xmmsc_result_t* res) : XMMSDict(res) { }
-		XMMSResultDict (const XMMSResultDict<char*> &src) : XMMSDict(src) { }
-		~XMMSResultDict () { }
-	
-		bool getValue (const char* key, char **var) {
-			return xmmsc_result_get_dict_entry_str (m_res, key, var); 
-		}
-};
-
-
-template <class T>
 class XMMSResultValueList : public XMMSResultList, public XMMSResultValue<T>
 {
 	public:
@@ -182,12 +139,12 @@ class XMMSResultValueList : public XMMSResultList, public XMMSResultValue<T>
 		~XMMSResultValueList() { }
 };
 
-template <class T>
-class XMMSResultDictList : public XMMSResultList, public XMMSResultDict<T>
+class XMMSResultDictList : public XMMSResultList, public XMMSResultDict
 {
 	public:
-		XMMSResultDictList (xmmsc_result_t* res) : XMMSResultDict<T>(res) { }
-		XMMSResultDictList (const XMMSResultDictList<T> &src) : XMMSResultDict<T>(src) { }
+		// FIXME: Is this actually working, or do we mess with signals?
+		XMMSResultDictList (xmmsc_result_t* res) : XMMSResult(res), XMMSResultList(res), XMMSResultDict(res) { }
+		XMMSResultDictList (const XMMSResultDictList &src) : XMMSResult(src), XMMSResultList(src), XMMSResultDict(src) { }
 		~XMMSResultDictList() { }
 };
 

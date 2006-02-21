@@ -89,7 +89,7 @@ dict_foreach (const void *key,
 }
 
 list<const char *> *
-XMMSDict::getDictList (void)
+XMMSResultDict::getDictList (void)
 {
 	list<const char *> *i = new list<const char*>();
 
@@ -110,7 +110,7 @@ propdict_foreach (const void *key,
 }
 
 list<const char *> *
-XMMSDict::getPropDictList (void)
+XMMSResultDict::getPropDictList (void)
 {
 	list<const char *> *i = new list<const char*>();
 
