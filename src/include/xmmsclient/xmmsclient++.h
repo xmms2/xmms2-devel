@@ -40,21 +40,26 @@ class XMMSResult
 };
 
 
-class XMMSResultList : virtual public XMMSResult {
+class XMMSResultList
+{
 	public:
-		XMMSResultList (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSResultList (const XMMSResultList &src) : XMMSResult(src) { }
-		~XMMSResultList ();
+		XMMSResultList (xmmsc_result_t* res) : m_list_res(res) { }
+		XMMSResultList (const XMMSResultList &src) : m_list_res(src.m_list_res) { }
+		~XMMSResultList () { }
 
-		bool listValid (void) { return xmmsc_result_list_valid (m_res); }
-		bool listNext (void) { return xmmsc_result_list_next (m_res); }
-		bool listFirst (void) { return xmmsc_result_list_first (m_res); }
+		bool listValid (void) { return xmmsc_result_list_valid (m_list_res); }
+		bool listNext (void)  { return xmmsc_result_list_next (m_list_res); }
+		bool listFirst (void) { return xmmsc_result_list_first (m_list_res); }
 
-		bool isList (void) { return xmmsc_result_is_list (m_res); }
+		bool isList (void) { return xmmsc_result_is_list (m_list_res); }
+
+	protected:
+		xmmsc_result_t *m_list_res;
 };
 
 
-class XMMSResultDict : virtual public XMMSResult {
+class XMMSResultDict : public XMMSResult
+{
 	public:
 		XMMSResultDict (xmmsc_result_t* res) : XMMSResult(res) { }
 		XMMSResultDict (const XMMSResultDict &src) : XMMSResult(src) { }
@@ -85,7 +90,7 @@ class XMMSResultDict : virtual public XMMSResult {
 
 
 template <class T>
-class XMMSResultValue : virtual public XMMSResult
+class XMMSResultValue : public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -96,7 +101,7 @@ class XMMSResultValue : virtual public XMMSResult
 };
 
 template <>
-class XMMSResultValue<int> : virtual public XMMSResult
+class XMMSResultValue<int> : public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -107,7 +112,7 @@ class XMMSResultValue<int> : virtual public XMMSResult
 };
 
 template <>
-class XMMSResultValue<uint> : virtual public XMMSResult
+class XMMSResultValue<uint> : public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -118,7 +123,7 @@ class XMMSResultValue<uint> : virtual public XMMSResult
 };
 
 template <>
-class XMMSResultValue<char*> : virtual public XMMSResult
+class XMMSResultValue<char*> : public XMMSResult
 {
 	public:
 		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
@@ -142,9 +147,8 @@ class XMMSResultValueList : public XMMSResultList, public XMMSResultValue<T>
 class XMMSResultDictList : public XMMSResultList, public XMMSResultDict
 {
 	public:
-		// FIXME: Is this actually working, or do we mess with signals?
-		XMMSResultDictList (xmmsc_result_t* res) : XMMSResult(res), XMMSResultList(res), XMMSResultDict(res) { }
-		XMMSResultDictList (const XMMSResultDictList &src) : XMMSResult(src), XMMSResultList(src), XMMSResultDict(src) { }
+		XMMSResultDictList (xmmsc_result_t* res) : XMMSResultList(res), XMMSResultDict(res) { }
+		XMMSResultDictList (const XMMSResultDictList &src) : XMMSResultList(src), XMMSResultDict(src) { }
 		~XMMSResultDictList() { }
 };
 
