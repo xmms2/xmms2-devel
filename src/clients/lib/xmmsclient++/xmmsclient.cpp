@@ -37,10 +37,10 @@ XMMSClient::~XMMSClient ()
 }
 
 XMMSResult::XMMSResult (xmmsc_result_t *res)
+  : m_signal()
 {
 	m_res = res;
 	m_inited = false;
-	m_signal = new sigc::signal1<void, XMMSResult*>;
 
 	cout << "result created" << endl;
 }
@@ -58,7 +58,7 @@ XMMSResult::restart (void)
 void
 XMMSResult::emit (void)
 {
-	m_signal->emit (this);
+	m_signal.emit (this);
 }
 
 void
@@ -68,7 +68,7 @@ XMMSResult::connect (const sigc::slot<void, XMMSResult*>& slot_)
 		xmmsc_result_notifier_set (m_res, generic_handler, this);
 		m_inited = true;
 	}
-	m_signal->connect (slot_);
+	m_signal.connect (slot_);
 }
 
 static void
@@ -116,7 +116,6 @@ XMMSResult::~XMMSResult ()
 {
 
 	cout << "result destroy" << endl;
-	delete m_signal;
 	xmmsc_result_unref (m_res);
 }
 

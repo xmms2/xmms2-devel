@@ -69,7 +69,7 @@ class XMMSResult
 	private:
 		bool m_inited;
 		xmmsc_result_t *m_res;
-		sigc::signal1<void, XMMSResult*> *m_signal;
+		sigc::signal1<void, XMMSResult*> m_signal;
 
 		xmmsc_result_t *getRes (void) { return m_res; }
 };
