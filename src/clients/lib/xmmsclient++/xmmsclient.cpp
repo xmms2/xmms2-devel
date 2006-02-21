@@ -45,6 +45,13 @@ XMMSResult::XMMSResult (xmmsc_result_t *res)
 	cout << "result created" << endl;
 }
 
+XMMSResult::XMMSResult (const XMMSResult &src)
+{
+	m_res = src.m_res;
+	m_inited = src.m_inited;
+	m_signal = src.m_signal;
+}
+
 void
 XMMSResult::restart (void)
 {
@@ -82,7 +89,7 @@ dict_foreach (const void *key,
 }
 
 list<const char *> *
-XMMSResult::getDictList (void)
+XMMSDict::getDictList (void)
 {
 	list<const char *> *i = new list<const char*>();
 
@@ -103,7 +110,7 @@ propdict_foreach (const void *key,
 }
 
 list<const char *> *
-XMMSResult::getPropDictList (void)
+XMMSDict::getPropDictList (void)
 {
 	list<const char *> *i = new list<const char*>();
 
