@@ -108,15 +108,89 @@ print_entry (const void *key, xmmsc_result_value_type_t type,
 	}
 }
 
+gint
+find_terminal_width() {
+	gint columns = 0;
+	struct winsize ws;
+	char *colstr, *endptr;
+
+	if (!ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)) {
+		columns = ws.ws_col;
+	} 
+	else {
+		colstr = getenv("COLUMNS");
+		if(colstr != NULL) {
+			columns = strtol(colstr, &endptr, 10);
+		}
+	}
+
+	/* Default to 80 columns */
+	if(columns <= 0) {
+		columns = 80;
+	}
+
+	return columns;
+}
+
+void
+print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar *fmt, ...)
+{
+	gchar buf[1024];
+	gchar *padstring;
+
+	va_list ap;
+	
+	va_start (ap, fmt);
+	g_vsnprintf (buf, 1024, fmt, ap);
+	va_end (ap);
+
+	padstring = g_strnfill (columns - g_utf8_strlen(buf, -1), padchar);
+
+	if (padright) {
+		print_info ("%s%s", buf, padstring);
+	}
+	else {
+		print_info ("%s%s", padstring, buf);
+	}
+
+	g_free(padstring);
+}
+
+gchar*
+make_justified_columns_format (gint columns, const char type_first)
+{
+	int wd_id, wd_artist, wd_album, wd_title;
+	gchar *buf = g_new (gchar, 128);
+
+	/* count separators */
+	columns -= 8;
+
+	wd_id     = 5;
+	wd_artist = (columns - wd_id) / 4;
+	wd_album  = (columns - wd_id - wd_artist) / 2;
+	wd_title  = (columns - wd_id - wd_artist - wd_album);
+
+	g_snprintf (buf, 128, "%%-%d.%d%c| %%-%d.%ds | %%-%d.%ds | %%-%d.%ds",
+	            wd_id, wd_id, type_first,
+	            wd_artist, wd_artist, wd_album, wd_album, wd_title, wd_title);
+
+	return buf;
+}
 
 void
 format_pretty_list (xmmsc_connection_t *conn, GList *list)
 {
 	guint count = 0;
 	GList *n;
-	
-	print_info ("-[Result]-----------------------------------------------------------------------");
-	print_info ("Id   | Artist            | Album                     | Title");
+	gint columns;
+	gchar *format_header, *format_rows;
+
+	columns = find_terminal_width ();
+	format_header = make_justified_columns_format (columns, 's');
+	format_rows   = make_justified_columns_format (columns, 'd');
+
+	print_padded_string (columns, '-', TRUE, "-[Result]-");
+	print_info (format_header, "Id", "Artist", "Album", "Title");
 
 	for (n = list; n; n = g_list_next (n)) {
 		gchar *title;
@@ -140,8 +214,7 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 				album = "Unknown";
 			}
 
-			print_info ("%-5.5d| %-17.17s | %-25.25s | %-25.25s",
-			            mid, artist, album, title);
+			print_info (format_rows, mid, artist, album, title);
 		} else {
 			gchar *url, *filename;
 			xmmsc_result_get_dict_entry_str (res, "url", &url);
@@ -156,5 +229,9 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 		count++;
 		xmmsc_result_unref (res);
 	}
-	print_info ("-------------------------------------------------------------[Count:%6.d]-----", count);
+
+	print_padded_string (columns, '-', FALSE, "-[Count:%6.d]-----", count);
+
+	g_free (format_header);
+	g_free (format_rows);
 }
