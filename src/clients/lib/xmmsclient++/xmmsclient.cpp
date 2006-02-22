@@ -4,7 +4,7 @@
 
 using namespace std;
 
-static void 
+void 
 generic_handler (xmmsc_result_t *res, void *userdata) 
 {
 	XMMSResult *r = static_cast<XMMSResult*>(userdata);
@@ -36,46 +36,25 @@ XMMSClient::~XMMSClient ()
 	xmmsc_unref (m_xmmsc);
 }
 
-XMMSResult::XMMSResult (xmmsc_result_t *res)
-  : m_signal()
+_XMMSResult::_XMMSResult (xmmsc_result_t *res)
+  : m_res(res)
 {
-	m_res = res;
-	m_inited = false;
-
 	cout << "result created" << endl;
 }
 
-XMMSResult::XMMSResult (const XMMSResult &src)
+_XMMSResult::_XMMSResult (const _XMMSResult &src)
+  : m_res(src.m_res)
 {
-	m_res = src.m_res;
-	m_inited = src.m_inited;
-	m_signal = src.m_signal;
 }
 
 void
-XMMSResult::restart (void)
+_XMMSResult::restart (void)
 {
 	xmmsc_result_t *nres;
 	nres = xmmsc_result_restart (m_res);
 	xmmsc_result_unref (m_res);
 	xmmsc_result_unref (nres);
 	m_res = nres;
-}
-
-void
-XMMSResult::emit (void)
-{
-	m_signal.emit (this);
-}
-
-void
-XMMSResult::connect (const sigc::slot<void, XMMSResult*>& slot_)
-{
-	if (!m_inited) {
-		xmmsc_result_notifier_set (m_res, generic_handler, this);
-		m_inited = true;
-	}
-	m_signal.connect (slot_);
 }
 
 static void
@@ -89,7 +68,7 @@ dict_foreach (const void *key,
 }
 
 list<const char *>
-XMMSResultDict::getDictKeys (void)
+_XMMSResultDict::getDictKeys (void)
 {
 	list<const char *> i;
 
@@ -110,7 +89,7 @@ propdict_foreach (const void *key,
 }
 
 list<const char *>
-XMMSResultDict::getPropDictKeys (void)
+_XMMSResultDict::getPropDictKeys (void)
 {
 	list<const char *> i;
 
@@ -119,9 +98,8 @@ XMMSResultDict::getPropDictKeys (void)
 	return i;
 }
 
-XMMSResult::~XMMSResult ()
+_XMMSResult::~_XMMSResult ()
 {
 	cout << "result destroy" << endl;
 	xmmsc_result_unref (m_res);
 }
-
