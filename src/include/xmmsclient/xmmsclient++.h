@@ -77,62 +77,67 @@ class _XMMSResultDict : public _XMMSResult
 };
 
 
-
-template <class T>
-class _XMMSResultValue : public _XMMSResult
+class _XMMSResultValueInt : public _XMMSResult
 {
 	public:
-		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValue (const _XMMSResultValue<T> &src) : _XMMSResult(src) { }
-		~_XMMSResultValue () { }
-	
-		bool getValue (T *var) = 0;
-};
-
-template <>
-class _XMMSResultValue<int> : public _XMMSResult
-{
-	public:
-		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValue (const _XMMSResultValue<int> &src) : _XMMSResult(src) { }
-		~_XMMSResultValue () { }
+		_XMMSResultValueInt (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValueInt (const _XMMSResultValueInt &src) : _XMMSResult(src) { }
+		~_XMMSResultValueInt () { }
 	
 		bool getValue (int *var) { return xmmsc_result_get_int (m_res, var); }
 };
 
-template <>
-class _XMMSResultValue<uint> : public _XMMSResult
+class _XMMSResultValueUint : public _XMMSResult
 {
 	public:
-		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValue (const _XMMSResultValue<uint> &src) : _XMMSResult(src) { }
-		~_XMMSResultValue () { }
+		_XMMSResultValueUint (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValueUint (const _XMMSResultValueUint &src) : _XMMSResult(src) { }
+		~_XMMSResultValueUint () { }
 	
 		bool getValue (uint *var) { return xmmsc_result_get_uint (m_res, var); }
 };
 
-template <>
-class _XMMSResultValue<char*> : public _XMMSResult
+class _XMMSResultValueString : public _XMMSResult
 {
 	public:
-		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValue (const _XMMSResultValue<char*> &src) : _XMMSResult(src) { }
-		~_XMMSResultValue () { }
+		_XMMSResultValueString (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValueString (const _XMMSResultValueString &src) : _XMMSResult(src) { }
+		~_XMMSResultValueString () { }
 	
 		bool getValue (char **var) { return xmmsc_result_get_string (m_res, var); }
 };
 
 
-
-template <class T>
-class _XMMSResultValueList : public XMMSResultList, public _XMMSResultValue<T>
+class _XMMSResultValueListInt : public XMMSResultList, public _XMMSResultValueInt
 {
 	public:
-		_XMMSResultValueList (xmmsc_result_t* res) : _XMMSResultValue<T>(res) { }
-		_XMMSResultValueList (const _XMMSResultValueList<T> &src)
-		  : _XMMSResultValue<T>(src) { }
-		~_XMMSResultValueList() { }
+		_XMMSResultValueListInt (xmmsc_result_t* res)
+		  : XMMSResultList(res), _XMMSResultValueInt(res) { }
+		_XMMSResultValueListInt (const _XMMSResultValueListInt &src)
+		  : XMMSResultList(src), _XMMSResultValueInt(src) { }
+		~_XMMSResultValueListInt() { }
 };
+
+class _XMMSResultValueListUint : public XMMSResultList, public _XMMSResultValueUint
+{
+	public:
+		_XMMSResultValueListUint (xmmsc_result_t* res)
+		  : XMMSResultList(res), _XMMSResultValueUint(res) { }
+		_XMMSResultValueListUint (const _XMMSResultValueListUint &src)
+		  : XMMSResultList(src), _XMMSResultValueUint(src) { }
+		~_XMMSResultValueListUint() { }
+};
+
+class _XMMSResultValueListString : public XMMSResultList, public _XMMSResultValueString
+{
+	public:
+		_XMMSResultValueListString (xmmsc_result_t* res)
+		  : XMMSResultList(res), _XMMSResultValueString(res) { }
+		_XMMSResultValueListString (const _XMMSResultValueListString &src)
+		  : XMMSResultList(src), _XMMSResultValueString(src) { }
+		~_XMMSResultValueListString() { }
+};
+
 
 class _XMMSResultDictList : public XMMSResultList, public _XMMSResultDict
 {
@@ -159,7 +164,7 @@ class XMMSSigRes : public T
 		  : T(src), m_inited(src.m_inited), m_signal(src.m_signal) { }
 		~XMMSSigRes () { }
 
-		void connect (const sigc::slot<void, T>& slot_)
+		void connect (const sigc::slot<void, XMMSSigRes<T>*>& slot_)
 		{
 			if (!m_inited) {
 				xmmsc_result_notifier_set (T::m_res, generic_handler, this);
@@ -172,7 +177,7 @@ class XMMSSigRes : public T
 
 	private:
 		bool m_inited;
-		sigc::signal<void, T*> m_signal;
+		sigc::signal<void, XMMSSigRes<T>*> m_signal;
 
 };
 
@@ -180,31 +185,13 @@ typedef XMMSSigRes<_XMMSResult> XMMSResult;
 typedef XMMSSigRes<_XMMSResultDict> XMMSResultDict;
 typedef XMMSSigRes<_XMMSResultDictList> XMMSResultDictList;
 
-// FIXME: Can we do that with templates though? :-/
-//typedef XMMSSigRes<_XMMSResultValue<T> > XMMSResultValue<T>;
-//typedef XMMSSigRes<_XMMSResultValueList<T> > XMMSResultValueList<T>;
+typedef XMMSSigRes<_XMMSResultValueInt> XMMSResultValueInt;
+typedef XMMSSigRes<_XMMSResultValueUint> XMMSResultValueUint;
+typedef XMMSSigRes<_XMMSResultValueString> XMMSResultValueString;
 
-template <class T>
-class XMMSResultValue : public XMMSSigRes<_XMMSResultValue<T> >
-{
-	public:
-		XMMSResultValue (xmmsc_result_t* res)
-		  : XMMSSigRes<_XMMSResultValue<T> >(res) { }
-		XMMSResultValue (const XMMSResultValue<T> &src)
-		  : XMMSSigRes<_XMMSResultValue<T> >(src) { }
-		~XMMSResultValue () { }
-};
-
-template <class T>
-class XMMSResultValueList : public XMMSSigRes<_XMMSResultValueList<T> >
-{
-	public:
-		XMMSResultValueList (xmmsc_result_t* res)
-		  : XMMSSigRes<_XMMSResultValueList<T> >(res) { }
-		XMMSResultValueList (const XMMSResultValueList<T> &src)
-		  : XMMSSigRes<_XMMSResultValueList<T> >(src) { }
-		~XMMSResultValueList () { }
-};
+typedef XMMSSigRes<_XMMSResultValueListInt> XMMSResultValueListInt;
+typedef XMMSSigRes<_XMMSResultValueListUint> XMMSResultValueListUint;
+typedef XMMSSigRes<_XMMSResultValueListString> XMMSResultValueListString;
 
 
 
