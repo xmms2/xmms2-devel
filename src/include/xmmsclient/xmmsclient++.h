@@ -34,7 +34,7 @@ class XMMSResult
 
 	private:
 		bool m_inited;
-		sigc::signal1<void, XMMSResult*> m_signal; // FIXME: Oops, dynamic type here?
+		sigc::signal<void, XMMSResult*> m_signal; // FIXME: Oops, dynamic type here?
 
 		xmmsc_result_t *getRes (void) { return m_res; }
 };
