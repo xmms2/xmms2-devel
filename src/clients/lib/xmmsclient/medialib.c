@@ -572,6 +572,16 @@ xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED);
 }
 
+/** 
+ * Request the medialib_entry_added broadcast. This will be called
+ * if a new entry is added to the medialib serverside.
+ */
+xmmsc_result_t * 
+xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
+{
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED);
+}
+
 /**
  * Request the medialib_entry_changed broadcast. This will be called
  * if a entry changes on the serverside. The argument will be an medialib

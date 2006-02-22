@@ -621,6 +621,17 @@ static VALUE c_broadcast_medialib_entry_changed (VALUE self)
 
 /*
  * call-seq:
+ *  xc.broadcast_medialib_entry_added -> result
+ * 
+ * Retrieves the id of an added medialib entry as a broadcast.
+ */
+static VALUE c_broadcast_entry_added (VALUE self)
+{
+	METHOD_ADD_HANDLER(broadcast_medialib_entry_added, BROADCAST);
+}
+
+/*
+ * call-seq:
  *  xc.playlist_shuffle -> result
  *
  * Shuffles the playlist.

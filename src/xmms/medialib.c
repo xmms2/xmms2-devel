@@ -236,6 +236,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	medialib->playlist = playlist;
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIALIB, XMMS_OBJECT (medialib));
+	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED);
 
@@ -728,6 +729,19 @@ xmms_medialib_entry_send_update (xmms_medialib_entry_t entry)
 						XMMS_OBJECT_CMD_ARG_UINT32, entry);
 }
 
+/**
+ * Trigger an added siginal to the client. This should be 
+ * called when a new entry has been added to the medialib
+ *
+ * @param entry Entry to siginal an add for.
+ */
+void
+xmms_medialib_entry_send_added (xmms_medialib_entry_t entry)
+{
+	xmms_object_emit_f (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED, XMMS_OBJECT_CMD_ARG_UINT32, entry);
+}
+
+
 static gboolean
 xmms_medialib_addtopls_cb (GHashTable *row, gpointer udata)
 {
@@ -940,6 +954,7 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *u
 
 	}
 
+	xmms_medialib_entry_send_added (ret);
 	return ret;
 
 }

@@ -185,6 +185,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
 	xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
 
+	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded(xmmsc_connection_t *c)
 	
@@ -1533,6 +1534,22 @@ cdef class XMMS:
 			ret.res = xmmsc_medialib_entry_property_set(self.conn,id,k,v)
 
 		ret.more_init()
+		return ret
+
+	def broadcast_medialib_entry_added(self, cb = None):
+		"""
+		Set a method to handle the medialib entry added broadcast
+		from the XMMS2 daemon. (i.e. a new entry has been added)
+		@rtype: L{XMMSResult}
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_broadcast_medialib_entry_added(self.conn)
+		ret.more_init(1)
+	
 		return ret
 
 	def broadcast_medialib_entry_changed(self, cb = None):
