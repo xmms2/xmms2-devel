@@ -6,12 +6,13 @@
 #include <xmmsclient/xmmsclient.h>
 
 
-class XMMSResult
+
+class _XMMSResult
 {
 	public:
-		XMMSResult (xmmsc_result_t*);
-		XMMSResult (const XMMSResult &);
-		~XMMSResult ();
+		_XMMSResult (xmmsc_result_t*);
+		_XMMSResult (const _XMMSResult &);
+		~_XMMSResult ();
 
 		uint getType (void) { return xmmsc_result_get_type (m_res); }
 		void restart (void);
@@ -23,20 +24,8 @@ class XMMSResult
 		/* wait for this resultset */
 		void wait (void) const { xmmsc_result_wait (m_res); }
 
-		/* connect to signal */
-		void connect (const sigc::slot<void, XMMSResult*>& slot_);
-
-		/* don't use me */
-		void emit (void);
-
 	protected:
 		xmmsc_result_t *m_res;
-
-	private:
-		bool m_inited;
-		sigc::signal<void, XMMSResult*> m_signal; // FIXME: Oops, dynamic type here?
-
-		xmmsc_result_t *getRes (void) { return m_res; }
 };
 
 
@@ -53,17 +42,17 @@ class XMMSResultList
 
 		bool isList (void) { return xmmsc_result_is_list (m_list_res); }
 
-	protected:
+	private:
 		xmmsc_result_t *m_list_res;
 };
 
 
-class XMMSResultDict : public XMMSResult
+class _XMMSResultDict : public _XMMSResult
 {
 	public:
-		XMMSResultDict (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSResultDict (const XMMSResultDict &src) : XMMSResult(src) { }
-		~XMMSResultDict () { }
+		_XMMSResultDict (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultDict (const _XMMSResultDict &src) : _XMMSResult(src) { }
+		~_XMMSResultDict () { }
 	
 		std::list<const char*> getPropDictKeys ();
 		std::list<const char*> getDictKeys ();
@@ -90,45 +79,45 @@ class XMMSResultDict : public XMMSResult
 
 
 template <class T>
-class XMMSResultValue : public XMMSResult
+class _XMMSResultValue : public _XMMSResult
 {
 	public:
-		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSResultValue (const XMMSResultValue<T> &src) : XMMSResult(src) { }
-		~XMMSResultValue () { }
+		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValue (const _XMMSResultValue<T> &src) : _XMMSResult(src) { }
+		~_XMMSResultValue () { }
 	
 		bool getValue (T *var) = 0;
 };
 
 template <>
-class XMMSResultValue<int> : public XMMSResult
+class _XMMSResultValue<int> : public _XMMSResult
 {
 	public:
-		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSResultValue (const XMMSResultValue<int> &src) : XMMSResult(src) { }
-		~XMMSResultValue () { }
+		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValue (const _XMMSResultValue<int> &src) : _XMMSResult(src) { }
+		~_XMMSResultValue () { }
 	
 		bool getValue (int *var) { return xmmsc_result_get_int (m_res, var); }
 };
 
 template <>
-class XMMSResultValue<uint> : public XMMSResult
+class _XMMSResultValue<uint> : public _XMMSResult
 {
 	public:
-		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSResultValue (const XMMSResultValue<uint> &src) : XMMSResult(src) { }
-		~XMMSResultValue () { }
+		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValue (const _XMMSResultValue<uint> &src) : _XMMSResult(src) { }
+		~_XMMSResultValue () { }
 	
 		bool getValue (uint *var) { return xmmsc_result_get_uint (m_res, var); }
 };
 
 template <>
-class XMMSResultValue<char*> : public XMMSResult
+class _XMMSResultValue<char*> : public _XMMSResult
 {
 	public:
-		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
-		XMMSResultValue (const XMMSResultValue<char*> &src) : XMMSResult(src) { }
-		~XMMSResultValue () { }
+		_XMMSResultValue (xmmsc_result_t* res) : _XMMSResult(res) { }
+		_XMMSResultValue (const _XMMSResultValue<char*> &src) : _XMMSResult(src) { }
+		~_XMMSResultValue () { }
 	
 		bool getValue (char **var) { return xmmsc_result_get_string (m_res, var); }
 };
@@ -136,21 +125,65 @@ class XMMSResultValue<char*> : public XMMSResult
 
 
 template <class T>
-class XMMSResultValueList : public XMMSResultList, public XMMSResultValue<T>
+class _XMMSResultValueList : public XMMSResultList, public _XMMSResultValue<T>
 {
 	public:
-		XMMSResultValueList (xmmsc_result_t* res) : XMMSResultValue<T>(res) { }
-		XMMSResultValueList (const XMMSResultValueList<T> &src) : XMMSResultValue<T>(src) { }
-		~XMMSResultValueList() { }
+		_XMMSResultValueList (xmmsc_result_t* res) : _XMMSResultValue<T>(res) { }
+		_XMMSResultValueList (const _XMMSResultValueList<T> &src)
+		  : _XMMSResultValue<T>(src) { }
+		~_XMMSResultValueList() { }
 };
 
-class XMMSResultDictList : public XMMSResultList, public XMMSResultDict
+class _XMMSResultDictList : public XMMSResultList, public _XMMSResultDict
 {
 	public:
-		XMMSResultDictList (xmmsc_result_t* res) : XMMSResultList(res), XMMSResultDict(res) { }
-		XMMSResultDictList (const XMMSResultDictList &src) : XMMSResultList(src), XMMSResultDict(src) { }
-		~XMMSResultDictList() { }
+		_XMMSResultDictList (xmmsc_result_t* res)
+		  : XMMSResultList(res), _XMMSResultDict(res) { }
+		_XMMSResultDictList (const _XMMSResultDictList &src)
+		  : XMMSResultList(src), _XMMSResultDict(src) { }
+		~_XMMSResultDictList() { }
 };
+
+
+
+/* Now come the real result classes, "enriched" with an associated signal. */
+
+void  generic_handler (xmmsc_result_t *res, void *userdata);
+
+template <class T>
+class XMMSSigRes : public T
+{
+	public:
+		XMMSSigRes (xmmsc_result_t* res) : T(res), m_inited(false), m_signal() { }
+		XMMSSigRes (const XMMSSigRes<T> &src)
+		  : T(src), m_inited(src.m_inited), m_signal(src.m_signal) { }
+		~XMMSSigRes () { }
+
+		void connect (const sigc::slot<void, T>& slot_)
+		{
+			if (!m_inited) {
+				xmmsc_result_notifier_set (T::m_res, generic_handler, this);
+				m_inited = true;
+			}
+			m_signal.connect (slot_);
+		}
+
+		void emit (void) { m_signal.emit(this); }
+
+	private:
+		bool m_inited;
+		sigc::signal<void, T*> m_signal;
+
+};
+
+typedef XMMSSigRes<_XMMSResult> XMMSResult;
+typedef XMMSSigRes<_XMMSResultDict> XMMSResultDict;
+typedef XMMSSigRes<_XMMSResultDictList> XMMSResultDictList;
+
+// FIXME: Can we do that with templates though? :-/
+//typedef XMMSSigRes<_XMMSResultValue<T> > XMMSResultValue<T>;
+//typedef XMMSSigRes<_XMMSResultValueList<T> > XMMSResultValueList<T>;
+
 
 
 class XMMSClient
