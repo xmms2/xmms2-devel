@@ -184,6 +184,28 @@ typedef XMMSSigRes<_XMMSResultDictList> XMMSResultDictList;
 //typedef XMMSSigRes<_XMMSResultValue<T> > XMMSResultValue<T>;
 //typedef XMMSSigRes<_XMMSResultValueList<T> > XMMSResultValueList<T>;
 
+template <class T>
+class XMMSResultValue : public XMMSSigRes<_XMMSResultValue<T> >
+{
+	public:
+		XMMSResultValue (xmmsc_result_t* res)
+		  : XMMSSigRes<_XMMSResultValue<T> >(res) { }
+		XMMSResultValue (const XMMSResultValue<T> &src)
+		  : XMMSSigRes<_XMMSResultValue<T> >(src) { }
+		~XMMSResultValue () { }
+};
+
+template <class T>
+class XMMSResultValueList : public XMMSSigRes<_XMMSResultValueList<T> >
+{
+	public:
+		XMMSResultValueList (xmmsc_result_t* res)
+		  : XMMSSigRes<_XMMSResultValueList<T> >(res) { }
+		XMMSResultValueList (const XMMSResultValueList<T> &src)
+		  : XMMSSigRes<_XMMSResultValueList<T> >(src) { }
+		~XMMSResultValueList () { }
+};
+
 
 
 class XMMSClient
