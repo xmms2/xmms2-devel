@@ -52,8 +52,7 @@ static void c_free (RbResult *res)
 	free (res);
 }
 
-VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res,
-                             ResultType type)
+VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 {
 	VALUE self, klass;
 	RbResult *rbres = NULL;
@@ -61,11 +60,11 @@ VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res,
 	if (!res)
 		return Qnil;
 
-	switch (type) {
-		case RESULT_TYPE_SIGNAL:
+	switch (xmmsc_result_type_get (res)) {
+		case XMMSC_RESULT_TYPE_SIGNAL:
 			klass = cSignalResult;
 			break;
-		case RESULT_TYPE_BROADCAST:
+		case XMMSC_RESULT_TYPE_BROADCAST:
 			klass = cBroadcastResult;
 			break;
 		default:
@@ -181,24 +180,13 @@ static VALUE c_sig_restart (VALUE self)
 	return self;
 }
 
-static VALUE c_bc_disconnect (VALUE self)
+static VALUE c_disconnect (VALUE self)
 {
 	RbResult *res = NULL;
 
 	Data_Get_Struct (self, RbResult, res);
 
-	xmmsc_broadcast_disconnect (res->orig);
-
-	return self;
-}
-
-static VALUE c_sig_disconnect (VALUE self)
-{
-	RbResult *res = NULL;
-
-	Data_Get_Struct (self, RbResult, res);
-
-	xmmsc_signal_disconnect (res->orig);
+	xmmsc_result_disconnect (res->orig);
 
 	return self;
 }
@@ -425,12 +413,12 @@ void Init_Result (VALUE mXmmsClient)
 	cBroadcastResult = rb_define_class_under (mXmmsClient,
 	                                          "BroadcastResult",
 	                                          cResult);
-	rb_define_method (cBroadcastResult, "disconnect", c_bc_disconnect, 0);
+	rb_define_method (cBroadcastResult, "disconnect", c_disconnect, 0);
 
 	cSignalResult = rb_define_class_under (mXmmsClient, "SignalResult",
 	                                       cResult);
 	rb_define_method (cSignalResult, "restart", c_sig_restart, 0);
-	rb_define_method (cSignalResult, "disconnect", c_sig_disconnect, 0);
+	rb_define_method (cSignalResult, "disconnect", c_disconnect, 0);
 
 	eResultError = rb_define_class_under (cResult, "ResultError",
 	                                      rb_eStandardError);

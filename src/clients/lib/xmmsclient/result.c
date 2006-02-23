@@ -53,6 +53,8 @@ struct xmmsc_result_St {
 	/** refcounting */
 	int ref;
 
+	xmmsc_result_type_t type;
+
 	/** notifiers */
 	x_list_t *func_list;
 	x_list_t *udata_list;
@@ -181,6 +183,29 @@ xmmsc_result_free (xmmsc_result_t *res)
 	free (res);
 }
 
+xmmsc_result_type_t
+xmmsc_result_type_get (xmmsc_result_t *res)
+{
+	x_return_val_if_fail (res, XMMSC_RESULT_TYPE_DEFAULT);
+
+	return res->type;
+}
+
+void
+xmmsc_result_disconnect (xmmsc_result_t *res)
+{
+	x_return_if_fail (res);
+
+	switch (res->type) {
+		case XMMSC_RESULT_TYPE_SIGNAL:
+		case XMMSC_RESULT_TYPE_BROADCAST:
+			xmmsc_result_unref (res);
+			break;
+		default:
+			x_api_error_if (1, "invalid result type",);
+	}
+}
+
 /**
  * A lot of signals you would like to get notified about
  * when they change, instead of polling the server all the time.
@@ -222,6 +247,9 @@ xmmsc_result_restart (xmmsc_result_t *res)
 
 	x_return_null_if_fail (res);
 	x_return_null_if_fail (res->c);
+
+	x_api_error_if (res->type != XMMSC_RESULT_TYPE_SIGNAL,
+	                "result is not restartable", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 	xmms_ipc_msg_put_uint32 (msg, res->restart_signal);
@@ -1118,7 +1146,8 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
  */
 
 xmmsc_result_t *
-xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid)
+xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
+                  uint32_t commandid)
 {
 	xmmsc_result_t *res;
 
@@ -1130,6 +1159,7 @@ xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid)
 	res->c = c;
 	xmmsc_ref (c);
 
+	res->type = type;
 	res->cid = commandid;
 	res->source_pref = x_list_append (NULL, strdup("server"));
 
