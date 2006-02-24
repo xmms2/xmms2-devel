@@ -498,21 +498,21 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
   *
   * Seek in the song position by the offset given in samples.
   */
- static VALUE c_playback_seek_samples_rel (VALUE self, VALUE samples)
- {
-	 RbXmmsClient *xmms = NULL;
+static VALUE c_playback_seek_samples_rel (VALUE self, VALUE samples)
+{
+	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
- 
+
 	Data_Get_Struct (self, RbXmmsClient, xmms);
- 
+
 	CHECK_DELETED (xmms);
- 
+
 	Check_Type (samples, T_FIXNUM);
- 
+
 	res = xmmsc_playback_seek_samples_rel (xmms->real, NUM2INT (samples));
- 
+
 	return TO_XMMS_CLIENT_RESULT (self, res);
- }
+}
 
 /*
  * call-seq:
