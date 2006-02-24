@@ -121,8 +121,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
 	xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, unsigned int type)
 
-	void xmmsc_signal_disconnect(xmmsc_result_t *res) 
-	void xmmsc_broadcast_disconnect(xmmsc_result_t *res)
+	void xmmsc_result_disconnect(xmmsc_result_t *res) 
 
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add(xmmsc_connection_t *, char *)
@@ -364,18 +363,9 @@ cdef class XMMSResult:
 		self._check()
 		xmmsc_result_wait(self.res)
 
-	def disconnect_signal(self):
-		""" @todo: Fail if this result isn't a signal """
-		xmmsc_signal_disconnect(self.orig)
-
-	def disconnect_broadcast(self):
-		"""
-		@todo: Fail if this result isn't a broadcast
-		Note: it doesn't matter atm whether we pass self.orig or
-		self.res, but if the internal broadcast logic ever changes,
-		it's more likely self.orig is the correct one
-		"""
-		xmmsc_broadcast_disconnect(self.orig)
+	def disconnect(self):
+		""" @todo: Fail if this result isn't a signal or a broadcast """
+		xmmsc_result_disconnect(self.orig)
 
 	def get_int(self):
 		"""

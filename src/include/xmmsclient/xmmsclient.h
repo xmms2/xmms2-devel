@@ -28,6 +28,12 @@ extern "C" {
 typedef struct xmmsc_connection_St xmmsc_connection_t;
 typedef struct xmmsc_result_St xmmsc_result_t;
 
+typedef enum {
+	XMMSC_RESULT_TYPE_DEFAULT,
+	XMMSC_RESULT_TYPE_SIGNAL,
+	XMMSC_RESULT_TYPE_BROADCAST
+} xmmsc_result_type_t;
+
 typedef struct xmmsc_query_attribute_St {
 	char *key;
 	char *value;
@@ -55,9 +61,6 @@ xmmsc_result_t *xmmsc_main_status (xmmsc_connection_t *c);
 
 xmmsc_result_t *xmmsc_broadcast_quit (xmmsc_connection_t *c);
 
-
-void xmmsc_broadcast_disconnect (xmmsc_result_t *res);
-void xmmsc_signal_disconnect (xmmsc_result_t *res);
 
 char *xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n);
 char *xmmsc_sqlite_prepare_string (const char *input);
@@ -181,8 +184,9 @@ typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 void xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid);
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
+xmmsc_result_type_t xmmsc_result_type_get (xmmsc_result_t *res);
+void xmmsc_result_disconnect (xmmsc_result_t *res);
 
-xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, uint32_t commandid);
 void xmmsc_result_ref (xmmsc_result_t *res);
 void xmmsc_result_unref (xmmsc_result_t *res);
 

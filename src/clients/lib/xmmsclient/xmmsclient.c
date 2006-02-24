@@ -432,33 +432,6 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 	return strlen (target);
 }
 
-/**
- * Disconnect from a broadcast. This will cause the server
- * to not send the broadcasts anymore.
- */
-void
-xmmsc_broadcast_disconnect (xmmsc_result_t *res)
-{
-	x_return_if_fail (res);
-
-	/** @todo tell the server that we're not interested in the signal
-	 *        any more.
-	 */
-	xmmsc_result_unref (res);
-}
-
-/**
- * Disconnect from a signal. This will cause the server
- * to stop sending the signals.
- */
-void
-xmmsc_signal_disconnect (xmmsc_result_t *res)
-{
-	x_return_if_fail (res);
-
-	xmmsc_result_unref (res);
-}
-
 /** @} */
 
 /**
@@ -515,18 +488,32 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 	cid = xmmsc_next_id (c);
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
-	return xmmsc_result_new (c, cid);
+	return xmmsc_result_new (c, XMMSC_RESULT_TYPE_DEFAULT, cid);
 }
 
 xmmsc_result_t *
 xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 {
 	uint32_t cid;
+	xmmsc_result_type_t type;
+
 	cid = xmmsc_next_id (c);
 
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
-	return xmmsc_result_new (c, cid);
+	switch (xmms_ipc_msg_get_cmd (msg)) {
+		case XMMS_IPC_CMD_SIGNAL:
+			type = XMMSC_RESULT_TYPE_SIGNAL;
+			break;
+		case XMMS_IPC_CMD_BROADCAST:
+			type = XMMSC_RESULT_TYPE_BROADCAST;
+			break;
+		default:
+			type = XMMSC_RESULT_TYPE_DEFAULT;
+			break;
+	}
+
+	return xmmsc_result_new (c, type, cid);
 }
 
 /**
