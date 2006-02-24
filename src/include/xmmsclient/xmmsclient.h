@@ -29,9 +29,9 @@ typedef struct xmmsc_connection_St xmmsc_connection_t;
 typedef struct xmmsc_result_St xmmsc_result_t;
 
 typedef enum {
-	XMMSC_RESULT_TYPE_DEFAULT,
-	XMMSC_RESULT_TYPE_SIGNAL,
-	XMMSC_RESULT_TYPE_BROADCAST
+	XMMSC_RESULT_CLASS_DEFAULT,
+	XMMSC_RESULT_CLASS_SIGNAL,
+	XMMSC_RESULT_CLASS_BROADCAST
 } xmmsc_result_type_t;
 
 typedef struct xmmsc_query_attribute_St {
@@ -184,7 +184,7 @@ typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 void xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid);
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
-xmmsc_result_type_t xmmsc_result_type_get (xmmsc_result_t *res);
+xmmsc_result_type_t xmmsc_result_get_class (xmmsc_result_t *res);
 void xmmsc_result_disconnect (xmmsc_result_t *res);
 
 void xmmsc_result_ref (xmmsc_result_t *res);

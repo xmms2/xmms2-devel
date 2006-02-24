@@ -60,11 +60,11 @@ VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 	if (!res)
 		return Qnil;
 
-	switch (xmmsc_result_type_get (res)) {
-		case XMMSC_RESULT_TYPE_SIGNAL:
+	switch (xmmsc_result_get_class (res)) {
+		case XMMSC_RESULT_CLASS_SIGNAL:
 			klass = cSignalResult;
 			break;
-		case XMMSC_RESULT_TYPE_BROADCAST:
+		case XMMSC_RESULT_CLASS_BROADCAST:
 			klass = cBroadcastResult;
 			break;
 		default:

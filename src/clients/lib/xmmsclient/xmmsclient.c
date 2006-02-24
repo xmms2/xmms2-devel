@@ -488,7 +488,7 @@ xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int method)
 	cid = xmmsc_next_id (c);
 	xmmsc_ipc_msg_write (c->ipc, msg, cid);
 
-	return xmmsc_result_new (c, XMMSC_RESULT_TYPE_DEFAULT, cid);
+	return xmmsc_result_new (c, XMMSC_RESULT_CLASS_DEFAULT, cid);
 }
 
 xmmsc_result_t *
@@ -503,13 +503,13 @@ xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg)
 
 	switch (xmms_ipc_msg_get_cmd (msg)) {
 		case XMMS_IPC_CMD_SIGNAL:
-			type = XMMSC_RESULT_TYPE_SIGNAL;
+			type = XMMSC_RESULT_CLASS_SIGNAL;
 			break;
 		case XMMS_IPC_CMD_BROADCAST:
-			type = XMMSC_RESULT_TYPE_BROADCAST;
+			type = XMMSC_RESULT_CLASS_BROADCAST;
 			break;
 		default:
-			type = XMMSC_RESULT_TYPE_DEFAULT;
+			type = XMMSC_RESULT_CLASS_DEFAULT;
 			break;
 	}
 

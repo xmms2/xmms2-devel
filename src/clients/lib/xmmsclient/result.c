@@ -184,9 +184,9 @@ xmmsc_result_free (xmmsc_result_t *res)
 }
 
 xmmsc_result_type_t
-xmmsc_result_type_get (xmmsc_result_t *res)
+xmmsc_result_get_class (xmmsc_result_t *res)
 {
-	x_return_val_if_fail (res, XMMSC_RESULT_TYPE_DEFAULT);
+	x_return_val_if_fail (res, XMMSC_RESULT_CLASS_DEFAULT);
 
 	return res->type;
 }
@@ -197,8 +197,8 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
 	x_return_if_fail (res);
 
 	switch (res->type) {
-		case XMMSC_RESULT_TYPE_SIGNAL:
-		case XMMSC_RESULT_TYPE_BROADCAST:
+		case XMMSC_RESULT_CLASS_SIGNAL:
+		case XMMSC_RESULT_CLASS_BROADCAST:
 			xmmsc_result_unref (res);
 			break;
 		default:
@@ -248,7 +248,7 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	x_return_null_if_fail (res);
 	x_return_null_if_fail (res->c);
 
-	x_api_error_if (res->type != XMMSC_RESULT_TYPE_SIGNAL,
+	x_api_error_if (res->type != XMMSC_RESULT_CLASS_SIGNAL,
 	                "result is not restartable", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
