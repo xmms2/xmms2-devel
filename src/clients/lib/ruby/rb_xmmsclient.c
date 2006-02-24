@@ -622,12 +622,12 @@ static VALUE c_broadcast_medialib_entry_changed (VALUE self)
 /*
  * call-seq:
  *  xc.broadcast_medialib_entry_added -> result
- * 
+ *
  * Retrieves the id of an added medialib entry as a broadcast.
  */
-static VALUE c_broadcast_entry_added (VALUE self)
+static VALUE c_broadcast_medialib_entry_added (VALUE self)
 {
-	METHOD_ADD_HANDLER(broadcast_medialib_entry_added, BROADCAST);
+	METHOD_ADD_HANDLER (broadcast_medialib_entry_added);
 }
 
 /*
@@ -1278,6 +1278,8 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	                  c_broadcast_playlist_current_pos, 0);
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
+	rb_define_method (c, "broadcast_medialib_entry_added",
+	                  c_broadcast_medialib_entry_added, 0);
 
 	rb_define_method (c, "playlist_shuffle", c_playlist_shuffle, 0);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);
