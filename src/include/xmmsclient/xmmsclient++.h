@@ -14,6 +14,7 @@ class _XMMSResult
 		_XMMSResult (const _XMMSResult &);
 		~_XMMSResult ();
 
+		uint getClass (void) { return xmmsc_result_get_class (m_res); }
 		uint getType (void) { return xmmsc_result_get_type (m_res); }
 		void restart (void);
 		
