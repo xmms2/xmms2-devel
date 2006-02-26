@@ -37,7 +37,6 @@ XMMSClient::~XMMSClient ()
 XMMSResult::XMMSResult (xmmsc_result_t *res)
   : m_res(res), m_inited(false), m_signal()
 {
-	cout << "result created" << endl;
 }
 
 XMMSResult::XMMSResult (const XMMSResult &src)
@@ -108,6 +107,5 @@ XMMSResultDict::getPropDictKeys (void)
 
 XMMSResult::~XMMSResult ()
 {
-	cout << "result destroy" << endl;
 	xmmsc_result_unref (m_res);
 }
