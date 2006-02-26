@@ -8,12 +8,12 @@
 using namespace std;
 
 
-class _XMMSResult
+class XMMSResult
 {
 	public:
-		_XMMSResult (xmmsc_result_t*);
-		_XMMSResult (const _XMMSResult &);
-		~_XMMSResult ();
+		XMMSResult (xmmsc_result_t*);
+		XMMSResult (const XMMSResult &);
+		virtual ~XMMSResult ();
 
 		uint getClass (void) { return xmmsc_result_get_class (m_res); }
 		uint getType (void) { return xmmsc_result_get_type (m_res); }
@@ -26,8 +26,14 @@ class _XMMSResult
 		/* wait for this resultset */
 		void wait (void) const { xmmsc_result_wait (m_res); }
 
+		void connect (const sigc::slot<void, XMMSResult*>& slot_);
+		void emit (void) { m_signal.emit(this); }
+
 	protected:
 		xmmsc_result_t *m_res;
+
+		bool m_inited;
+		sigc::signal<void, XMMSResult*> m_signal;
 };
 
 
@@ -36,7 +42,7 @@ class XMMSResultList
 	public:
 		XMMSResultList (xmmsc_result_t* res) : m_list_res(res) { }
 		XMMSResultList (const XMMSResultList &src) : m_list_res(src.m_list_res) { }
-		~XMMSResultList () { }
+		virtual ~XMMSResultList () { }
 
 		bool listValid (void) { return xmmsc_result_list_valid (m_list_res); }
 		bool listNext (void)  { return xmmsc_result_list_next (m_list_res); }
@@ -49,13 +55,17 @@ class XMMSResultList
 };
 
 
-class _XMMSResultDict : public _XMMSResult
+class XMMSResultDict : public XMMSResult
 {
 	public:
-		_XMMSResultDict (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultDict (const _XMMSResultDict &src) : _XMMSResult(src) { }
-		~_XMMSResultDict () { }
+		XMMSResultDict (xmmsc_result_t* res) : XMMSResult(res) { }
+		XMMSResultDict (const XMMSResultDict &src) : XMMSResult(src) { }
+		virtual ~XMMSResultDict () { }
 	
+		void connect (const sigc::slot<void, XMMSResultDict*>& slot_) {
+			XMMSResult::connect(sigc::retype(slot_));
+		}
+
 		std::list<const char*> getPropDictKeys ();
 		std::list<const char*> getDictKeys ();
 
@@ -79,131 +89,93 @@ class _XMMSResultDict : public _XMMSResult
 };
 
 
-class _XMMSResultValueInt : public _XMMSResult
+template <class T>
+class XMMSResultValue : public XMMSResult
 {
 	public:
-		_XMMSResultValueInt (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValueInt (const _XMMSResultValueInt &src) : _XMMSResult(src) { }
-		~_XMMSResultValueInt () { }
-	
+		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
+		XMMSResultValue (const XMMSResultValue<T> &src) : XMMSResult(src) { }
+		virtual ~XMMSResultValue () { }
+
+		void connect (const sigc::slot<void, XMMSResultValue<T>*>& slot_) = 0;
+		bool getValue (T *var) = 0;
+};
+
+template <>
+class XMMSResultValue<int> : public XMMSResult
+{
+	public:
+		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
+		XMMSResultValue (const XMMSResultValue<int> &src) : XMMSResult(src) { }
+		virtual ~XMMSResultValue () { }
+
+		void connect (const sigc::slot<void, XMMSResultValue<int>*>& slot_) {
+			XMMSResult::connect(sigc::retype(slot_));
+		}
+
 		bool getValue (int *var) { return xmmsc_result_get_int (m_res, var); }
 };
 
-class _XMMSResultValueUint : public _XMMSResult
+template <>
+class XMMSResultValue<uint> : public XMMSResult
 {
 	public:
-		_XMMSResultValueUint (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValueUint (const _XMMSResultValueUint &src) : _XMMSResult(src) { }
-		~_XMMSResultValueUint () { }
-	
+		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
+		XMMSResultValue (const XMMSResultValue<uint> &src) : XMMSResult(src) { }
+		virtual ~XMMSResultValue () { }
+
+		void connect (const sigc::slot<void, XMMSResultValue<uint>*>& slot_) {
+			XMMSResult::connect(sigc::retype(slot_));
+		}
+
 		bool getValue (uint *var) { return xmmsc_result_get_uint (m_res, var); }
 };
 
-class _XMMSResultValueString : public _XMMSResult
+template <>
+class XMMSResultValue<char*> : public XMMSResult
 {
 	public:
-		_XMMSResultValueString (xmmsc_result_t* res) : _XMMSResult(res) { }
-		_XMMSResultValueString (const _XMMSResultValueString &src) : _XMMSResult(src) { }
-		~_XMMSResultValueString () { }
-	
+		XMMSResultValue (xmmsc_result_t* res) : XMMSResult(res) { }
+		XMMSResultValue (const XMMSResultValue<char*> &src) : XMMSResult(src) { }
+		virtual ~XMMSResultValue () { }
+
+		void connect (const sigc::slot<void, XMMSResultValue<char*>*>& slot_) {
+			XMMSResult::connect(sigc::retype(slot_));
+		}
+
 		bool getValue (char **var) { return xmmsc_result_get_string (m_res, var); }
 };
 
 
-class _XMMSResultValueListInt : public XMMSResultList, public _XMMSResultValueInt
-{
-	public:
-		_XMMSResultValueListInt (xmmsc_result_t* res)
-		  : XMMSResultList(res), _XMMSResultValueInt(res) { }
-		_XMMSResultValueListInt (const _XMMSResultValueListInt &src)
-		  : XMMSResultList(src), _XMMSResultValueInt(src) { }
-		~_XMMSResultValueListInt() { }
-};
-
-class _XMMSResultValueListUint : public XMMSResultList, public _XMMSResultValueUint
-{
-	public:
-		_XMMSResultValueListUint (xmmsc_result_t* res)
-		  : XMMSResultList(res), _XMMSResultValueUint(res) { }
-		_XMMSResultValueListUint (const _XMMSResultValueListUint &src)
-		  : XMMSResultList(src), _XMMSResultValueUint(src) { }
-		~_XMMSResultValueListUint() { }
-};
-
-class _XMMSResultValueListString : public XMMSResultList, public _XMMSResultValueString
-{
-	public:
-		_XMMSResultValueListString (xmmsc_result_t* res)
-		  : XMMSResultList(res), _XMMSResultValueString(res) { }
-		_XMMSResultValueListString (const _XMMSResultValueListString &src)
-		  : XMMSResultList(src), _XMMSResultValueString(src) { }
-		~_XMMSResultValueListString() { }
-};
-
-
-class _XMMSResultDictList : public XMMSResultList, public _XMMSResultDict
-{
-	public:
-		_XMMSResultDictList (xmmsc_result_t* res)
-		  : XMMSResultList(res), _XMMSResultDict(res) { }
-		_XMMSResultDictList (const _XMMSResultDictList &src)
-		  : XMMSResultList(src), _XMMSResultDict(src) { }
-		~_XMMSResultDictList() { }
-};
-
-
-
-/* Now come the real result classes, "enriched" with an associated signal. */
-
 template <class T>
-void  generic_handler (xmmsc_result_t *res, void *userdata)
-{
-	T r = static_cast<T>(userdata);
-	if (!r) {
-		cout << "********* FATAL ERROR ***********" << endl;
-		cout << "The generic handler was called without a result!" << endl;
-		return;
-	}
-	r->emit ();
-}
-
-template <class T>
-class XMMSSigRes : public T
+class XMMSResultValueList : public XMMSResultList, public XMMSResultValue<T>
 {
 	public:
-		XMMSSigRes (xmmsc_result_t* res) : T(res), m_inited(false), m_signal() { }
-		XMMSSigRes (const XMMSSigRes<T> &src)
-		  : T(src), m_inited(src.m_inited), m_signal(src.m_signal) { }
-		~XMMSSigRes () { }
+		XMMSResultValueList (xmmsc_result_t* res)
+		  : XMMSResultList(res), XMMSResultValue<T>(res) { }
+		XMMSResultValueList (const XMMSResultValueList<T> &src)
+		  : XMMSResultList(src), XMMSResultValue<T>(src) { }
+		virtual ~XMMSResultValueList() { }
 
-		void connect (const sigc::slot<void, XMMSSigRes<T>*>& slot_)
-		{
-			if (!m_inited) {
-				xmmsc_result_notifier_set (T::m_res, &generic_handler<XMMSSigRes<T>*>, this);
-				m_inited = true;
-			}
-			m_signal.connect (slot_);
+		void connect (const sigc::slot<void, XMMSResultValueList<T>*>& slot_) {
+			XMMSResult::connect(sigc::retype(slot_));
 		}
-
-		void emit (void) { m_signal.emit(this); }
-
-	private:
-		bool m_inited;
-		sigc::signal<void, XMMSSigRes<T>*> m_signal;
-
 };
 
-typedef XMMSSigRes<_XMMSResult> XMMSResult;
-typedef XMMSSigRes<_XMMSResultDict> XMMSResultDict;
-typedef XMMSSigRes<_XMMSResultDictList> XMMSResultDictList;
 
-typedef XMMSSigRes<_XMMSResultValueInt> XMMSResultValueInt;
-typedef XMMSSigRes<_XMMSResultValueUint> XMMSResultValueUint;
-typedef XMMSSigRes<_XMMSResultValueString> XMMSResultValueString;
+class XMMSResultDictList : public XMMSResultList, public XMMSResultDict
+{
+	public:
+		XMMSResultDictList (xmmsc_result_t* res)
+		  : XMMSResultList(res), XMMSResultDict(res) { }
+		XMMSResultDictList (const XMMSResultDictList &src)
+		  : XMMSResultList(src), XMMSResultDict(src) { }
+		virtual ~XMMSResultDictList() { }
 
-typedef XMMSSigRes<_XMMSResultValueListInt> XMMSResultValueListInt;
-typedef XMMSSigRes<_XMMSResultValueListUint> XMMSResultValueListUint;
-typedef XMMSSigRes<_XMMSResultValueListString> XMMSResultValueListString;
+		void connect (const sigc::slot<void, XMMSResultDictList*>& slot_) {
+			XMMSResult::connect(sigc::retype(slot_));
+		}
+};
 
 
 

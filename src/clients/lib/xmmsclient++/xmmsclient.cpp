@@ -2,6 +2,17 @@
 #include <xmmsclient/xmmsclient++.h>
 #include <sigc++/sigc++.h>
 
+static
+void generic_handler (xmmsc_result_t *res, void *userdata)
+{
+	XMMSResult* r = static_cast<XMMSResult*>(userdata);
+	if (!r) {
+		cout << "********* FATAL ERROR ***********" << endl;
+		cout << "The generic handler was called without a result!" << endl;
+		return;
+	}
+	r->emit ();
+}
 
 XMMSClient::XMMSClient (const char *name)
 {
@@ -23,25 +34,35 @@ XMMSClient::~XMMSClient ()
 	xmmsc_unref (m_xmmsc);
 }
 
-_XMMSResult::_XMMSResult (xmmsc_result_t *res)
-  : m_res(res)
+XMMSResult::XMMSResult (xmmsc_result_t *res)
+  : m_res(res), m_inited(false), m_signal()
 {
 	cout << "result created" << endl;
 }
 
-_XMMSResult::_XMMSResult (const _XMMSResult &src)
+XMMSResult::XMMSResult (const XMMSResult &src)
   : m_res(src.m_res)
 {
 }
 
 void
-_XMMSResult::restart (void)
+XMMSResult::restart (void)
 {
 	xmmsc_result_t *nres;
 	nres = xmmsc_result_restart (m_res);
 	xmmsc_result_unref (m_res);
 	xmmsc_result_unref (nres);
 	m_res = nres;
+}
+
+void
+XMMSResult::connect (const sigc::slot<void, XMMSResult*>& slot_)
+{
+	if (!m_inited) {
+		xmmsc_result_notifier_set (m_res, &generic_handler, this);
+		m_inited = true;
+	}
+	m_signal.connect (slot_);
 }
 
 static void
@@ -55,7 +76,7 @@ dict_foreach (const void *key,
 }
 
 list<const char *>
-_XMMSResultDict::getDictKeys (void)
+XMMSResultDict::getDictKeys (void)
 {
 	list<const char *> i;
 
@@ -76,7 +97,7 @@ propdict_foreach (const void *key,
 }
 
 list<const char *>
-_XMMSResultDict::getPropDictKeys (void)
+XMMSResultDict::getPropDictKeys (void)
 {
 	list<const char *> i;
 
@@ -85,7 +106,7 @@ _XMMSResultDict::getPropDictKeys (void)
 	return i;
 }
 
-_XMMSResult::~_XMMSResult ()
+XMMSResult::~XMMSResult ()
 {
 	cout << "result destroy" << endl;
 	xmmsc_result_unref (m_res);
