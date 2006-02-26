@@ -5,6 +5,7 @@
 #include <iostream>
 #include <xmmsclient/xmmsclient.h>
 
+using namespace std;
 
 
 class _XMMSResult
@@ -154,7 +155,17 @@ class _XMMSResultDictList : public XMMSResultList, public _XMMSResultDict
 
 /* Now come the real result classes, "enriched" with an associated signal. */
 
-void  generic_handler (xmmsc_result_t *res, void *userdata);
+template <class T>
+void  generic_handler (xmmsc_result_t *res, void *userdata)
+{
+	T r = static_cast<T>(userdata);
+	if (!r) {
+		cout << "********* FATAL ERROR ***********" << endl;
+		cout << "The generic handler was called without a result!" << endl;
+		return;
+	}
+	r->emit ();
+}
 
 template <class T>
 class XMMSSigRes : public T
@@ -168,7 +179,7 @@ class XMMSSigRes : public T
 		void connect (const sigc::slot<void, XMMSSigRes<T>*>& slot_)
 		{
 			if (!m_inited) {
-				xmmsc_result_notifier_set (T::m_res, generic_handler, this);
+				xmmsc_result_notifier_set (T::m_res, &generic_handler<XMMSSigRes<T>*>, this);
 				m_inited = true;
 			}
 			m_signal.connect (slot_);
