@@ -634,7 +634,6 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
 	return res;
 }
 
-
 /**
  * Set a custom field in the medialib associated with a entry,
  * the same as #xmmsc_result_entry_property_set but with specifing
@@ -655,6 +654,47 @@ xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c,
 	xmms_ipc_msg_put_string (msg, source);
 	xmms_ipc_msg_put_string (msg, key);
 	xmms_ipc_msg_put_string (msg, value);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/** 
+ * Remove a custom field in the medialib associated with an entry.
+ * Uses default source which is client/<clientname>
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
+                                      char *key)
+{
+	xmmsc_result_t *res;
+	char tmp[256];
+
+	snprintf(tmp, 256, "client/%s", c->clientname);
+	res = xmmsc_medialib_entry_property_remove_with_source (c, id, 
+	                                                        tmp, key);
+	return res;
+}
+
+/**
+ * Remove a custom field in the medialib associated with an entry.
+ * Identical to #xmmsc_result_entry_property_remove except with specifying
+ * your own source.
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
+                                                  uint32_t id, char *source,
+                                                  char *key)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
+	                        XMMS_IPC_CMD_PROPERTY_REMOVE);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_string (msg, source);
+	xmms_ipc_msg_put_string (msg, key);
 
 	res = xmmsc_send_msg (c, msg);
 

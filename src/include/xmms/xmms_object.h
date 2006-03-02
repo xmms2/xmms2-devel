@@ -142,6 +142,7 @@ __XMMS_CMD_DO_RETVAL_##_rettype() (realfunc ((argtype0)object __XMMS_CMD_DO_ARG_
 xmms_object_cmd_desc_t __int_xmms_cmd_desc_##cmdid = { __int_xmms_cmd_##cmdid, XMMS_OBJECT_CMD_ARG_##_rettype, {XMMS_OBJECT_CMD_ARG_##argtype1, XMMS_OBJECT_CMD_ARG_##argtype2, XMMS_OBJECT_CMD_ARG_##argtype3, XMMS_OBJECT_CMD_ARG_##argtype4} }
 
 #define XMMS_CMD_DEFINE(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2) XMMS_CMD_DEFINE4(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, NONE, NONE)
+#define XMMS_CMD_DEFINE3(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3) XMMS_CMD_DEFINE4(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, NONE)
 
 #define XMMS_CMD_FUNC(cmdid) &__int_xmms_cmd_desc_##cmdid
 

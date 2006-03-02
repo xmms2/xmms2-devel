@@ -60,6 +60,7 @@ static void xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *pla
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
 static void xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gchar *value, xmms_error_t *error);
+static void xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, xmms_error_t *error);
 static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (info, xmms_medialib_info, xmms_medialib_t *, PROPDICT, UINT32, NONE);
@@ -78,6 +79,7 @@ XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE
 XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (get_id, xmms_medialib_entry_get_id, xmms_medialib_t *, UINT32, STRING, NONE);
 XMMS_CMD_DEFINE4 (set_property, xmms_medialib_property_set_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING, STRING);
+XMMS_CMD_DEFINE3 (remove_property, xmms_medialib_property_remove_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING); 
 
 /**
  *
@@ -288,6 +290,9 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PROPERTY_SET,
 	                     XMMS_CMD_FUNC (set_property));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_PROPERTY_REMOVE,
+	                     XMMS_CMD_FUNC (remove_property));
 
 	xmms_config_property_register ("medialib.dologging",
 				    "1",
@@ -1379,6 +1384,32 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
 	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
 
 	xmms_medialib_end (session);
+}
+
+void
+xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
+                               gchar *source, gchar *key,
+                               xmms_error_t *error)
+{
+	guint32 sourceid;
+
+	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
+	sourceid = xmms_medialib_source_to_id (session, source);
+	xmms_sqlite_exec (session->sql, "delete from Media where source=%d and key='%s' and id=%d", sourceid, key, entry);
+	xmms_medialib_end(session);
+}
+
+static void
+xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry,
+                                      gchar *source, gchar *key,
+                                      xmms_error_t *error)
+{
+	if (g_strcasecmp (source, "server") == 0) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't remove properties set by the server!");
+		return;
+	}
+
+	return xmms_medialib_property_remove (medialib, entry, source, key, error);
 }
 
 static void

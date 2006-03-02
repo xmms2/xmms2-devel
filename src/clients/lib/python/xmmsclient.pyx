@@ -183,6 +183,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
 	xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
 	xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, unsigned int id, char *key)
+	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
@@ -1522,6 +1524,28 @@ cdef class XMMS:
 			ret.res = xmmsc_medialib_entry_property_set_with_source(self.conn,id,s,k,v)
 		else:
 			ret.res = xmmsc_medialib_entry_property_set(self.conn,id,k,v)
+
+		ret.more_init()
+		return ret
+
+	def medialib_property_remove(self, id, key, source=None, cb=None):
+		"""
+		Remove a value from a medialib entry. Source is optional.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		k = from_unicode(key)
+
+		if source:
+			s = from_unicode(source)
+			ret.res = xmmsc_medialib_entry_property_remove_with_source(self.conn,id,s,k)
+		else:
+			ret.res = xmmsc_medialib_entry_property_remove(self.conn,id,k)
 
 		ret.more_init()
 		return ret
