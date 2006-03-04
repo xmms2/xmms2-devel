@@ -17,7 +17,7 @@ XMMSResult *playlist_move (uint32_t x,uint32_t y) { return new XMMSResult (xmmsc
 XMMSResult *playlist_current_pos (void) { return new XMMSResult (xmmsc_playlist_current_pos (m_xmmsc)); }
 XMMSResult *playlist_insert (int x,char * y) { return new XMMSResult (xmmsc_playlist_insert (m_xmmsc, x, y)); }
 XMMSResult *playlist_insert_id (int x,uint32_t y) { return new XMMSResult (xmmsc_playlist_insert_id (m_xmmsc, x, y)); }
-XMMSResult *broadcast_playlist_changed (void) { return new XMMSResult (xmmsc_broadcast_playlist_changed (m_xmmsc)); }
+XMMSResultDict *broadcast_playlist_changed (void) { return new XMMSResultDict (xmmsc_broadcast_playlist_changed (m_xmmsc)); }
 XMMSResult *broadcast_playlist_current_pos (void) { return new XMMSResult (xmmsc_broadcast_playlist_current_pos (m_xmmsc)); }
 XMMSResult *playback_stop (void) { return new XMMSResult (xmmsc_playback_stop (m_xmmsc)); }
 XMMSResult *playback_tickle (void) { return new XMMSResult (xmmsc_playback_tickle (m_xmmsc)); }
@@ -29,7 +29,7 @@ XMMSResult *playback_seek_ms_rel (int x) { return new XMMSResult (xmmsc_playback
 XMMSResult *playback_seek_samples (uint32_t x) { return new XMMSResult (xmmsc_playback_seek_samples (m_xmmsc, x)); }
 XMMSResult *playback_seek_samples_rel (int x) { return new XMMSResult (xmmsc_playback_seek_samples_rel (m_xmmsc, x)); }
 XMMSResult *playback_playtime (void) { return new XMMSResult (xmmsc_playback_playtime (m_xmmsc)); }
-XMMSResult *playback_status (void) { return new XMMSResult (xmmsc_playback_status (m_xmmsc)); }
+XMMSResultValue<uint> *playback_status (void) { return new XMMSResultValue<uint> (xmmsc_playback_status (m_xmmsc)); }
 XMMSResult *playback_volume_set (const char * x,uint32_t y) { return new XMMSResult (xmmsc_playback_volume_set (m_xmmsc, x, y)); }
 XMMSResult *playback_volume_get (void) { return new XMMSResult (xmmsc_playback_volume_get (m_xmmsc)); }
 XMMSResult *broadcast_playback_volume_changed (void) { return new XMMSResult (xmmsc_broadcast_playback_volume_changed (m_xmmsc)); }
@@ -44,7 +44,7 @@ XMMSResult *broadcast_configval_changed (void) { return new XMMSResult (xmmsc_br
 XMMSResult *broadcast_mediainfo_reader_status (void) { return new XMMSResult (xmmsc_broadcast_mediainfo_reader_status (m_xmmsc)); }
 XMMSResult *signal_visualisation_data (void) { return new XMMSResult (xmmsc_signal_visualisation_data (m_xmmsc)); }
 XMMSResult *signal_mediainfo_reader_unindexed (void) { return new XMMSResult (xmmsc_signal_mediainfo_reader_unindexed (m_xmmsc)); }
-XMMSResult *medialib_select (const char * x) { return new XMMSResult (xmmsc_medialib_select (m_xmmsc, x)); }
+XMMSResultDictList *medialib_select (const char * x) { return new XMMSResultDictList (xmmsc_medialib_select (m_xmmsc, x)); }
 XMMSResult *medialib_playlist_save_current (const char * x) { return new XMMSResult (xmmsc_medialib_playlist_save_current (m_xmmsc, x)); }
 XMMSResult *medialib_playlist_load (const char * x) { return new XMMSResult (xmmsc_medialib_playlist_load (m_xmmsc, x)); }
 XMMSResult *medialib_add_entry (const char * x) { return new XMMSResult (xmmsc_medialib_add_entry (m_xmmsc, x)); }
@@ -61,6 +61,6 @@ XMMSResult *medialib_get_id (const char * x) { return new XMMSResult (xmmsc_medi
 XMMSResult *medialib_remove_entry (int32_t x) { return new XMMSResult (xmmsc_medialib_remove_entry (m_xmmsc, x)); }
 XMMSResult *medialib_entry_property_set (uint32_t x,char * y,char * z) { return new XMMSResult (xmmsc_medialib_entry_property_set (m_xmmsc, x, y, z)); }
 XMMSResult *medialib_entry_property_set_with_source (uint32_t x,char * y,char * z,char * w) { return new XMMSResult (xmmsc_medialib_entry_property_set_with_source (m_xmmsc, x, y, z, w)); }
-XMMSResult *broadcast_medialib_entry_changed (void) { return new XMMSResult (xmmsc_broadcast_medialib_entry_changed (m_xmmsc)); }
+XMMSResultValue<uint> *broadcast_medialib_entry_changed (void) { return new XMMSResultValue<uint> (xmmsc_broadcast_medialib_entry_changed (m_xmmsc)); }
 XMMSResult *broadcast_medialib_playlist_loaded (void) { return new XMMSResult (xmmsc_broadcast_medialib_playlist_loaded (m_xmmsc)); }
 #endif
