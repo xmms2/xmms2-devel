@@ -17,6 +17,7 @@ class XMMSResult
 
 		uint getClass (void) { return xmmsc_result_get_class (m_res); }
 		uint getType (void) { return xmmsc_result_get_type (m_res); }
+		uint getCID (void) { return xmmsc_result_cid (m_res); }
 		void restart (void);
 		
 		/* error */

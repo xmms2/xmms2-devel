@@ -44,7 +44,7 @@ XMMSResult *broadcast_configval_changed (void) { return new XMMSResult (xmmsc_br
 XMMSResult *broadcast_mediainfo_reader_status (void) { return new XMMSResult (xmmsc_broadcast_mediainfo_reader_status (m_xmmsc)); }
 XMMSResult *signal_visualisation_data (void) { return new XMMSResult (xmmsc_signal_visualisation_data (m_xmmsc)); }
 XMMSResult *signal_mediainfo_reader_unindexed (void) { return new XMMSResult (xmmsc_signal_mediainfo_reader_unindexed (m_xmmsc)); }
-XMMSResult *medialib_select (const char * x) { return new XMMSResult (xmmsc_medialib_select (m_xmmsc, x)); }
+XMMSResultDictList *medialib_select (const char * x) { return new XMMSResultDictList (xmmsc_medialib_select (m_xmmsc, x)); }
 XMMSResult *medialib_playlist_save_current (const char * x) { return new XMMSResult (xmmsc_medialib_playlist_save_current (m_xmmsc, x)); }
 XMMSResult *medialib_playlist_load (const char * x) { return new XMMSResult (xmmsc_medialib_playlist_load (m_xmmsc, x)); }
 XMMSResult *medialib_add_entry (const char * x) { return new XMMSResult (xmmsc_medialib_add_entry (m_xmmsc, x)); }
