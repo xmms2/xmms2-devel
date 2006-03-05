@@ -169,6 +169,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_broadcast_configval_changed(xmmsc_connection_t *c)
 
 	xmmsc_result_t *xmmsc_medialib_select(xmmsc_connection_t *conn, char *query)
+	char *xmmsc_sqlite_prepare_string(char *query)
 	xmmsc_result_t *xmmsc_medialib_playlist_save_current(xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_playlist_load(xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_add_entry(xmmsc_connection_t *conn, char *url)
@@ -1290,6 +1291,14 @@ cdef class XMMS:
 		ret.res = xmmsc_medialib_select(self.conn, c)
 		ret.more_init()
 		return ret
+
+	def prepare_string(self, value):
+		"""
+		Prepare a string for SQL queries.
+		@rtype: string
+		@return: The escaped string enclosed by quotations.
+		"""
+		return xmmsc_sqlite_prepare_string(value)
 
 	def medialib_add_entry(self, file, cb = None):
 		"""
