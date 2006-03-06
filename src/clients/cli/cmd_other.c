@@ -17,11 +17,11 @@
 #include "common.h"
 
 void
-cmd_main_status (xmmsc_connection_t *conn, gint argc, gchar **argv)
+cmd_stats (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	
-	res = xmmsc_main_status (conn);
+	res = xmmsc_main_stats (conn);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -53,13 +53,13 @@
 #include <pthread.h>
 
 static void quit (xmms_object_t *object, xmms_error_t *error);
-static GHashTable *status (xmms_object_t *object, xmms_error_t *error);
+static GHashTable *stats (xmms_object_t *object, xmms_error_t *error);
 static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE); 
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
-XMMS_CMD_DEFINE (status, status, xmms_object_t *, DICT, NONE, NONE);
+XMMS_CMD_DEFINE (stats, stats, xmms_object_t *, DICT, NONE, NONE);
 XMMS_CMD_DEFINE (plugin_list, xmms_plugin_client_list, xmms_object_t *, LIST, UINT32, NONE);
 
 /** @defgroup XMMSServer XMMSServer
@@ -91,7 +91,7 @@ static GMainLoop *mainloop;
 static gchar *conffile = NULL;
 
 static GHashTable *
-status (xmms_object_t *object, xmms_error_t *error)
+stats (xmms_object_t *object, xmms_error_t *error)
 {
 	gint starttime;
 	GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
@@ -468,7 +468,7 @@ main (int argc, char **argv)
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_QUIT, XMMS_CMD_FUNC (quit));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_HELLO, XMMS_CMD_FUNC (hello));
 	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_PLUGIN_LIST, XMMS_CMD_FUNC (plugin_list));
-	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_STATUS, XMMS_CMD_FUNC (status));
+	xmms_object_cmd_add (XMMS_OBJECT (mainobj), XMMS_IPC_CMD_STATS, XMMS_CMD_FUNC (stats));
 	xmms_ipc_broadcast_register (XMMS_OBJECT (mainobj), XMMS_IPC_SIGNAL_QUIT);
 	mainobj->starttime = time (NULL);
 

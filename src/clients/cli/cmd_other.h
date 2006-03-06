@@ -23,7 +23,7 @@
 
 void cmd_quit (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
-void cmd_main_status (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_stats (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 
 

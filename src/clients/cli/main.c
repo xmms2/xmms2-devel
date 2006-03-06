@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -77,9 +77,7 @@ cmds commands[] = {
 	{ "config", "set a config value", cmd_config },
 	{ "config_list", "list all config values", cmd_config_list },
 	{ "plugin_list", "list all plugins loaded in the server", cmd_plugin_list },
-	{ "mainstats", "get status msg from serevr", cmd_main_status },
-	/*{ "statistics", "get statistics from server", cmd_stats },
-	 */
+	{ "stats", "get statistics from server", cmd_stats },
 	{ "quit", "make the server quit", cmd_quit },
 	{ "help", "print help about a command", cmd_help},
 

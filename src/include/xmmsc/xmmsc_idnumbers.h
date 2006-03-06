@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -68,7 +68,7 @@ typedef enum {
 	XMMS_IPC_CMD_REPLY,
 	XMMS_IPC_CMD_ERROR,
 	XMMS_IPC_CMD_PLUGIN_LIST,
-	XMMS_IPC_CMD_STATUS,
+	XMMS_IPC_CMD_STATS,
 
 	/* Playlist */
 	XMMS_IPC_CMD_SHUFFLE,

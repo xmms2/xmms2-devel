@@ -2,7 +2,7 @@
 #define XMMSCLIENTPP_METHODS_H
 XMMSResult *quit (void) { return new XMMSResult (xmmsc_quit (m_xmmsc)); }
 XMMSResult *plugin_list (uint32_t x) { return new XMMSResult (xmmsc_plugin_list (m_xmmsc, x)); }
-XMMSResult *main_status (void) { return new XMMSResult (xmmsc_main_status (m_xmmsc)); }
+XMMSResult *main_stats (void) { return new XMMSResult (xmmsc_main_stats (m_xmmsc)); }
 XMMSResult *broadcast_quit (void) { return new XMMSResult (xmmsc_broadcast_quit (m_xmmsc)); }
 XMMSResult *playlist_shuffle (void) { return new XMMSResult (xmmsc_playlist_shuffle (m_xmmsc)); }
 XMMSResult *playlist_add (const char * x) { return new XMMSResult (xmmsc_playlist_add (m_xmmsc, x)); }

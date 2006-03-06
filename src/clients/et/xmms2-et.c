@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -209,7 +209,7 @@ handle_config_val (xmmsc_result_t *res, void *userdata)
 }
 
 static void
-handle_status (xmmsc_result_t *res, void *userdata)
+handle_stats (xmmsc_result_t *res, void *userdata)
 {
 	gchar *tstr;
 
@@ -273,7 +273,7 @@ main (int argc, char **argv)
 
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_playlist_loaded, handle_playlist_load, NULL);
-	XMMS_CALLBACK_SET (conn, xmmsc_main_status, handle_status, NULL);
+	XMMS_CALLBACK_SET (conn, xmmsc_main_stats, handle_stats, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_configval_changed, handle_config, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_quit, handle_quit, ml);
 

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003	Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -57,7 +57,7 @@ int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *
 
 xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *);
 xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type);
-xmmsc_result_t *xmmsc_main_status (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_main_stats (xmmsc_connection_t *c);
 
 xmmsc_result_t *xmmsc_broadcast_quit (xmmsc_connection_t *c);
 
