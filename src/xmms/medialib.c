@@ -1373,13 +1373,14 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
                                    gchar *value, xmms_error_t *error)
 {
 	guint32 sourceid;
+	xmms_medialib_session_t *session;
 
 	if (g_strcasecmp (source, "server") == 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
 		return;
 	}
 
-	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
+	session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
 	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
 
