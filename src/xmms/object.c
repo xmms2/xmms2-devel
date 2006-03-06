@@ -365,6 +365,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			arg.retval = xmms_object_cmd_value_list_new ((GList *) va_arg (ap, gpointer));
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
+			arg.retval = xmms_object_cmd_value_none_new ();
 			break;
 	}
 	va_end(ap);

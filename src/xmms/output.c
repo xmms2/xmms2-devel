@@ -1369,7 +1369,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 			g_mutex_lock (output->object_mutex);
 			xmms_object_emit_f (XMMS_OBJECT (output),
 			                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
-			                    XMMS_OBJECT_CMD_ARG_NONE, NULL);
+			                    XMMS_OBJECT_CMD_ARG_NONE);
 			g_mutex_unlock (output->object_mutex);
 		}
 
