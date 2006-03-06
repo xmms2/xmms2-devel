@@ -261,7 +261,7 @@ cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gint *sort;
 
 	if (argc < 3) {
-		print_error ("Remove needs a ID to be removed");
+		print_error ("Remove needs a position to be removed");
 	}
 
 	sort = g_malloc (sizeof (gint) * argc);
@@ -277,13 +277,13 @@ cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	qsort (sort, size, sizeof (gint), &cmp);
 
 	for (i = 0; i < size; i++) {
-		gint id = sort[i];
+		gint pos = sort[i];
 
-		xmmsc_result_t *res = xmmsc_playlist_remove (conn, id);
+		xmmsc_result_t *res = xmmsc_playlist_remove (conn, pos);
 		xmmsc_result_wait (res);
 
 		if (xmmsc_result_iserror (res)) {
-			print_error ("Couldn't remove %d (%s)", id,
+			print_error ("Couldn't remove %d (%s)", pos,
 			             xmmsc_result_get_error (res));
 		}
 		xmmsc_result_unref (res);
