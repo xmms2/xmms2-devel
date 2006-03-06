@@ -33,6 +33,7 @@
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static void free_dict_list (x_list_t *list);
 static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
+static int source_match_pattern (char* source, char* pattern);
 
 typedef struct xmmsc_result_value_St {
 	union {
@@ -660,9 +661,8 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
 
 			for (n = res->list; n; n = x_list_next (n)) {
 				xmmsc_result_value_t *k = n->data;
-				
-				if ((strcasecmp (k->value.string, source) == 0 ||
-					 strcasecmp ("*", source) == 0) && 
+
+				if (source_match_pattern (k->value.string, source) && 
 					n->next && n->next->next) {
 
 					n = x_list_next (n);
@@ -1283,4 +1283,21 @@ free_dict_list (x_list_t *list)
 		xmmsc_result_value_free (list->data); /* value */
 		list = x_list_delete_link (list, list);
 	}
+}
+
+static int
+source_match_pattern (char* source, char* pattern)
+{
+	int match = 0;
+	int lpos = strlen (pattern) - 1;
+
+	if (strcasecmp (pattern, source) == 0) {
+		match = 1;
+	}
+	else if(lpos >= 0 && pattern[lpos] == '*' &&
+	        (lpos == 0 || strncasecmp (source, pattern, lpos) == 0)) {
+		match = 1;
+	}
+
+	return match;
 }
