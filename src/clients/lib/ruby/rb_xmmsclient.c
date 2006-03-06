@@ -1166,6 +1166,26 @@ static VALUE c_signal_mediainfo_reader_unindexed (VALUE self)
 
 /*
  * call-seq:
+ *  xc.plugin_list -> result
+ *
+ * Retrieves an array containing a hash of information for each plugin.
+ */
+static VALUE c_plugin_list (VALUE self, xmms_plugin_type_t type)
+{
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	res = xmmsc_plugin_list (xmms->real, FIX2INT (type));
+
+	return TO_XMMS_CLIENT_RESULT (self, res);
+}
+
+/*
+ * call-seq:
  *  xc.configval_get(key) -> result
  *
  * Retrieves the value of the configuration property at _key_.
@@ -1318,6 +1338,8 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_method (c, "signal_mediainfo_reader_unindexed",
 	                  c_signal_mediainfo_reader_unindexed, 0);
 
+	rb_define_method (c, "plugin_list", c_plugin_list, 1);
+
 	rb_define_method (c, "signal_visualisation_data",
 	                  c_signal_visualisation_data, 0);
 
@@ -1337,6 +1359,13 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	                 INT2FIX (XMMS_MEDIAINFO_READER_STATUS_IDLE));
 	rb_define_const (c, "RUNNING",
 	                 INT2FIX (XMMS_MEDIAINFO_READER_STATUS_RUNNING));
+
+	rb_define_const (c, "ALL_PLUGINS", INT2FIX (XMMS_PLUGIN_TYPE_ALL));
+	rb_define_const (c, "TRANSPORT", INT2FIX (XMMS_PLUGIN_TYPE_TRANSPORT));
+	rb_define_const (c, "DECODER", INT2FIX (XMMS_PLUGIN_TYPE_DECODER));
+	rb_define_const (c, "OUTPUT", INT2FIX (XMMS_PLUGIN_TYPE_OUTPUT));
+	rb_define_const (c, "PLAYLIST", INT2FIX (XMMS_PLUGIN_TYPE_PLAYLIST));
+	rb_define_const (c, "EFFECT", INT2FIX (XMMS_PLUGIN_TYPE_EFFECT));
 
 	eXmmsClientError = rb_define_class_under (c, "XmmsClientError",
 	                                          rb_eStandardError);
