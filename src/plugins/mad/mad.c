@@ -338,6 +338,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 				if (ret <= 0) {
 					xmms_log_error ("error reading data for id3v2-tag");
 					xmms_medialib_end (session);
+					g_free (id3v2buf);
 					return;
 				}
 				pos += ret;
