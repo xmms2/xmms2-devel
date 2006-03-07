@@ -915,12 +915,17 @@ xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
 	source = XMMS_MEDIALIB_SOURCE_SERVER_ID;
 
 	if (!xmms_sqlite_exec (session->sql,
-						   "insert or replace into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
+						   "insert into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
 						   id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
 						   source)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting url");
 		return 0;
 	}
+
+	xmms_medialib_entry_property_set_int_source (session, id, 
+												 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+												 0, XMMS_MEDIALIB_SOURCE_SERVER_ID);
+
 	return 1;
 
 }
@@ -1714,11 +1719,9 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 	g_return_val_if_fail (session, 0);
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-				 "select m1.id as value, ifnull(m2.value, 0) as res from Media m1 left join Media m2 on m1.id = m2.id and m2.key = '%s' and m2.source=%d where m1.key='%s' and res=0 and m1.source=%d limit 1", 
-				 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
-				 session->source,
-				 XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
-				 session->source);
+							 "select id from Media where key='%s' and source=%d and value=0 limit 1", 
+							 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+							 session->source);
 
 	return ret;
 }
