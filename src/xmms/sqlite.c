@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 23
+#define DB_VERSION 24
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -38,8 +38,10 @@ const char create_Sources_stm[] = "create table Sources (id integer primary key 
 const char create_Log_stm[] = "create table Log (id, starttime, value)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
-const char create_idx_stm[] = "create unique index key_idx on Media (id, key, source);"
+const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
+							  "create index source_idx on Media (key,source);"
+							  "create index key_source_val_idx on Media (key,source,value);"
                               "create index log_id on Log (id);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
