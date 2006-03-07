@@ -30,7 +30,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 22
+#define DB_VERSION 23
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -145,7 +145,9 @@ xmms_sqlite_open (gboolean *create)
 	
 
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
-/*	sqlite3_exec (sql, "PRAGMA cache_size = 4000", NULL, NULL, NULL);*/
+	sqlite3_exec (sql, "PRAGMA auto_vacuum = 1", NULL, NULL, NULL);
+	sqlite3_exec (sql, "PRAGMA cache_size = 8000", NULL, NULL, NULL);
+	sqlite3_exec (sql, "PRAGMA temp_store = MEMORY", NULL, NULL, NULL);
 
 	/* One minute */
 	sqlite3_busy_timeout (sql, 60000);

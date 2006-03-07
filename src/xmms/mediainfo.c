@@ -218,9 +218,11 @@ xmms_mediainfo_reader_thread (gpointer data)
 		if (lmod) {
 			guint tmp;
 			session = xmms_medialib_begin_write ();
-			tmp = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
+			tmp = xmms_medialib_entry_property_get_int (session, entry, 
+														XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 			if (lmod >= tmp) {
-				xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+				xmms_medialib_entry_property_set_int (session, entry, 
+													  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
 				xmms_medialib_end (session);
 				xmms_transport_stop (transport);
 				xmms_object_unref (transport);
@@ -229,7 +231,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_medialib_end (session);
 			XMMS_DBG ("Modified on disk!");
 		}
-		
+
 		decoder = xmms_decoder_new ();
 		if (!xmms_decoder_open (decoder, transport)) {
 			session = xmms_medialib_begin_write ();
@@ -245,15 +247,20 @@ xmms_mediainfo_reader_thread (gpointer data)
 		}
 		
 		if (xmms_decoder_init_for_mediainfo (decoder)) {
-			session = xmms_medialib_begin_write ();
-			xmms_medialib_entry_cleanup (session, entry);
-			xmms_medialib_end (session);
+			if (lmod) {
+				session = xmms_medialib_begin_write ();
+				xmms_medialib_entry_cleanup (session, entry);
+				xmms_medialib_end (session);
+			}
 			
 			xmms_decoder_mediainfo_get (decoder, transport);
 		}
-		
+	
 		session = xmms_medialib_begin_write ();
-		xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+		xmms_medialib_entry_property_set_int (session, entry, 
+											  XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED, time(NULL));
 		xmms_medialib_end (session);
 		
 		xmms_transport_stop (transport);

@@ -174,7 +174,7 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 
 
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
-#define XMMS_MEDIALIB_SOURCE_SERVER_ID xmms_medialib_source_to_id (session, XMMS_MEDIALIB_SOURCE_SERVER)
+#define XMMS_MEDIALIB_SOURCE_SERVER_ID 1
 
 static guint32
 xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
@@ -637,7 +637,7 @@ xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
 	g_return_val_if_fail (session, FALSE);
 
 	ret = xmms_sqlite_exec (session->sql,
-	                        "insert or replace into Media (id, value, key, source) values (%d, %d, LOWER(%Q), %d)", 
+	                        "insert or replace into Media (id, value, key, source) values (%d, %d, %Q, %d)", 
 	                        entry, value, property, source);
 
 	return ret;
@@ -682,7 +682,7 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 	}
 
 	ret = xmms_sqlite_exec (session->sql,
-	                        "insert or replace into Media (id, value, key, source) values (%d, %Q, LOWER(%Q), %d)", 
+	                        "insert or replace into Media (id, value, key, source) values (%d, %Q, %Q, %d)", 
 	                        entry, value, property, source);
 
 	return ret;
@@ -904,11 +904,33 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 	
 }
 
+static xmms_medialib_entry_t
+xmms_medialib_entry_new_insert (xmms_medialib_session_t *session,
+								guint32 id, 
+								const char *url, 
+								xmms_error_t *error)
+{
+	guint source;
+
+	source = XMMS_MEDIALIB_SOURCE_SERVER_ID;
+
+	if (!xmms_sqlite_exec (session->sql,
+						   "insert or replace into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
+						   id, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
+						   source)) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting url");
+		return 0;
+	}
+	return 1;
+
+}
+
 /**
  * @internal
  */
 xmms_medialib_entry_t
-xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *url, xmms_error_t *error)
+xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, 
+								 const char *url, xmms_error_t *error)
 {
 	guint id = 0;
 	guint ret = 0;
@@ -935,28 +957,8 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session, const char *u
 
 		ret++; /* next id */
 		
-		if (!xmms_sqlite_exec (session->sql,
-		                       "insert into Media (id, key, value, source) values (%d, '%s', %Q, %d)",
-		                       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_URL, url,
-		                       source)) {
-			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting url");
+		if (!xmms_medialib_entry_new_insert (session, ret, url, error))
 			return 0;
-		}
-		if (!xmms_sqlite_exec (session->sql,
-		                       "insert or replace into Media (id, key, value, source) values (%d, '%s', 0, %d)",
-		                       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
-		                       source)) {
-			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting resolved");
-			return 0;
-		}
-		if (!xmms_sqlite_exec (session->sql,
-		                       "insert or replace into Media (id, key, value, source) values (%d, '%s', %d, %d)",
-		                       ret, XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
-		                       time(NULL), source)) {
-			xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption inserting added");
-			return 0;
-		}
-
 	}
 
 	xmms_medialib_entry_send_added (ret);
@@ -1712,8 +1714,9 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 	g_return_val_if_fail (session, 0);
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-				 "select id as value from Media where key='%s' and value=0 and source=%d limit 1", 
+				 "select m1.id as value, ifnull(m2.value, 0) as res from Media m1 left join Media m2 on m1.id = m2.id and m2.key = '%s' where m1.key='%s' and res=0 and m1.source=%d limit 1", 
 				 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
+				 XMMS_MEDIALIB_ENTRY_PROPERTY_URL,
 				 session->source);
 
 	return ret;
