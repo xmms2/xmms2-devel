@@ -256,6 +256,7 @@ main (int argc, char **argv)
 
 	if (!xmmsc_connect (conn, path)) {
 		printf ("Could not connect to xmms2d: %s\n", xmmsc_get_last_error (conn));
+		exit (1);
 	}
 
 	get_systemname ();
