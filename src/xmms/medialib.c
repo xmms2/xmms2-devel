@@ -809,8 +809,13 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 	/** @todo remove from playlists too? or should we do refcounting on this? */
 }
 
+static xmms_medialib_entry_t xmms_medialib_entry_new_insert (xmms_medialib_session_t *session, guint32 id, const char *url, xmms_error_t *error);
+
 static gboolean
-process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *error)
+process_dir (xmms_medialib_session_t *session, 
+			 const gchar *path, 
+			 guint32 *id,
+			 xmms_error_t *error)
 {
 	GDir *dir;
 	const gchar *file;
@@ -829,12 +834,31 @@ process_dir (xmms_medialib_session_t *session, const gchar *path, xmms_error_t *
 		realfile = g_build_filename (path, file, NULL);
 
 		if (g_file_test (realfile, G_FILE_TEST_IS_DIR)) {
-			if (!process_dir (session, realfile, error))
+			if (!process_dir (session, realfile, id, error))
 				return FALSE;
 		} else if (g_file_test (realfile, G_FILE_TEST_EXISTS)) {
+			gchar *enc_url;
 			gchar *f = g_strdup_printf ("file://%s", realfile);
-			xmms_medialib_entry_new (session, f, &error2);
+			guint32 ret = 0;
+
+			enc_url = xmms_medialib_url_encode (f);
 			g_free (f);
+
+			if (!enc_url) {
+				xmms_log_error ("enc_url failed!");
+				return FALSE;
+			}
+
+			xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret, 
+									 "select id as value from Media where key='%s' and value=%Q and source=%d", 
+									 XMMS_MEDIALIB_ENTRY_PROPERTY_URL, enc_url,
+									 XMMS_MEDIALIB_SOURCE_SERVER_ID);
+
+			if (!ret){
+				*id = *id + 1; /* increment id */
+				xmms_medialib_entry_new_insert (session, *id, enc_url, &error2);
+			}
+			g_free (enc_url);
 		}
 		g_free (realfile);
 	}
@@ -886,16 +910,23 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 {
 	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
+	guint32 id;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
 
 	session = xmms_medialib_begin_write ();
 
+	if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
+								  "select ifnull(MAX (id),0) from Media")) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
+		return;
+	}
+
 	if (!xmms_medialib_decode_url (path)) {
 		xmms_log_error ("Bad encoding in path");
 	} else {
-		process_dir (session, path, error);
+		process_dir (session, path, &id, error);
 	}
 	xmms_medialib_end (session);
 
