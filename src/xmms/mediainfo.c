@@ -155,6 +155,8 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 static gpointer
 xmms_mediainfo_reader_thread (gpointer data)
 {
+	guint num = 0;
+
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
 
 	xmms_object_emit_f (XMMS_OBJECT (mrt),
@@ -183,6 +185,8 @@ xmms_mediainfo_reader_thread (gpointer data)
 			g_mutex_lock (mrt->mutex);
 			g_cond_wait (mrt->cond, mrt->mutex);
 			g_mutex_unlock (mrt->mutex);
+
+			num = 0;
 			
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 					    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
@@ -192,10 +196,17 @@ xmms_mediainfo_reader_thread (gpointer data)
 		}
 		
 		lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
-		xmms_object_emit_f (XMMS_OBJECT (mrt),
-		                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
-		                    XMMS_OBJECT_CMD_ARG_UINT32,
-		                    xmms_medialib_num_not_resolved (session));
+
+		if (num == 0) {
+			xmms_object_emit_f (XMMS_OBJECT (mrt),
+								XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
+								XMMS_OBJECT_CMD_ARG_UINT32,
+								xmms_medialib_num_not_resolved (session));
+			num = 50;
+		} else {
+			num--;
+		}
+
 		xmms_medialib_end (session);
 		
 		transport = xmms_transport_new ();
