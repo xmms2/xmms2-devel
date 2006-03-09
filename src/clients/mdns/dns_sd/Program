@@ -9,4 +9,4 @@ def config(env):
 	env.pkgconfig("glib-2.0")
 	env.checkheader("dns_sd.h")
 	# on macosx it's in libc? 
-	env.checklib("dns_sd", "DNSServiceRegister")
+	#env.checklib("dns_sd", "DNSServiceRegister")
