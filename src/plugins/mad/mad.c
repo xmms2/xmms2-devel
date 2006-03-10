@@ -220,7 +220,7 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 	data->fsize = filesize;
 
 	if (frame.header.flags & MAD_FLAG_PROTECTION) {
-		XMMS_DBG ("this frame hase protection enabled!");
+		XMMS_DBG ("this frame has protection enabled!");
 		if (stream.anc_ptr.byte > stream.buffer + 2) {
 			stream.anc_ptr.byte = stream.anc_ptr.byte - 2;
 		}
