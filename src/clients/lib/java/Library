@@ -3,7 +3,6 @@ source=["xmmsclient.i", "misc.c", "callbacks.c"]
 static=False
 mydir="src/clients/lib/java"
 
-import distutils.sysconfig
 import os
 import sys
 
@@ -54,8 +53,8 @@ def config(env):
 				raise ConfigError("No javac found")
 			# assuming the compiler found is in some directory like
 			# /usr/jdkX.X/bin/javac, java's home directory is /usr/jdkX.X
-			java_base = os.path.join(jcdir, "..")
-			print "found."			
+			java_base = os.path.realpath(os.path.join(jcdir, ".."))
+			print "found in %s" % java_base
 			
 	if sys.platform == 'cygwin':
   		# Cygwin and Sun Java have different ideas of how path names
@@ -75,15 +74,12 @@ def config(env):
 		# Sun's windows and linux JDKs keep system-specific header
 		# files in a sub-directory of include
 	if java_base == '/usr' or java_base == '/usr/local':
-		# too many possible subdirectories. Just use defaults
-		java_headers.append(os.path.join(java_headers[0], 'win32'))
-		java_headers.append(os.path.join(java_headers[0], 'linux'))
-		java_headers.append(os.path.join(java_headers[0], 'solaris'))
+		# standard location, probably we don't have to add anything
+		pass
 	else:
 		# add all subdirs of 'include'. The system specific headers
 		# should be in there somewhere
-		# java_headers = walkDirs(java_headers[0])
-		pass
+		java_headers = walkDirs(java_headers[0])
  
 	# add Java's include and lib directory to the environment
 	env.Append(CPPPATH = java_headers)
@@ -111,3 +107,9 @@ def config(env):
 	env.Java(target = mydir, source = [mydir + '/src'])
 	env.Jar(target=mydir + '/xmms2java.jar', source=mydir + '/org')
 	env.Install(env['PREFIX'] + 'share/xmms2/java', mydir + '/xmms2java.jar')
+	def mkdir(target, source, env):
+		try:
+			os.mkdir(mydir + "/src/org/xmms2/xmms2bindings")
+		except:
+			pass
+	env.Execute(mkdir, lambda target, source, env: None)
