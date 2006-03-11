@@ -20,7 +20,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsc/xmmsc_stdbool.h>
 
-void Init_Result (VALUE mXmmsClient);
+void Init_Result (VALUE mXmms);
 
 VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res);
 

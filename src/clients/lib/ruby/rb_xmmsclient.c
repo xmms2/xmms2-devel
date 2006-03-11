@@ -39,7 +39,7 @@
 \
 	return TO_XMMS_CLIENT_RESULT (self, res);
 
-static VALUE eXmmsClientError, eDisconnectedError;
+static VALUE eClientError, eDisconnectedError;
 
 static void c_mark (RbXmmsClient *xmms)
 {
@@ -112,7 +112,7 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 		p = StringValuePtr (path);
 
 	if (!xmmsc_connect (xmms->real, p))
-		rb_raise (eXmmsClientError, "cannot connect to daemon");
+		rb_raise (eClientError, "cannot connect to daemon");
 
 	return self;
 }
@@ -725,7 +725,7 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
 		is_str = false;
 	else {
-		rb_raise (eXmmsClientError, "unsupported argument");
+		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
 
@@ -759,7 +759,7 @@ static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
 		is_str = false;
 	else {
-		rb_raise (eXmmsClientError, "unsupported argument");
+		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
 
@@ -1241,11 +1241,11 @@ static VALUE c_signal_visualisation_data (VALUE self)
 	METHOD_ADD_HANDLER(signal_visualisation_data);
 }
 
-void Init_XmmsClient (VALUE mXmmsClient)
+void Init_Client (VALUE mXmms)
 {
 	VALUE c;
 
-	c = rb_define_class_under (mXmmsClient, "XmmsClient", rb_cObject);
+	c = rb_define_class_under (mXmms, "Client", rb_cObject);
 
 	rb_define_alloc_func (c, c_alloc);
 	rb_define_method (c, "initialize", c_init, 1);
@@ -1367,10 +1367,10 @@ void Init_XmmsClient (VALUE mXmmsClient)
 	rb_define_const (c, "PLAYLIST", INT2FIX (XMMS_PLUGIN_TYPE_PLAYLIST));
 	rb_define_const (c, "EFFECT", INT2FIX (XMMS_PLUGIN_TYPE_EFFECT));
 
-	eXmmsClientError = rb_define_class_under (c, "XmmsClientError",
-	                                          rb_eStandardError);
+	eClientError = rb_define_class_under (c, "ClientError",
+	                                      rb_eStandardError);
 	eDisconnectedError = rb_define_class_under (c, "DisconnectedError",
-	                                            eXmmsClientError);
+	                                            eClientError);
 
-	Init_Result (mXmmsClient);
+	Init_Result (mXmms);
 }

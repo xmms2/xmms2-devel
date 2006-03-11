@@ -387,9 +387,9 @@ static VALUE decode_url (VALUE self, VALUE str)
 	return rb_str_new2 (tmp);
 }
 
-void Init_Result (VALUE mXmmsClient)
+void Init_Result (VALUE mXmms)
 {
-	cResult = rb_define_class_under (mXmmsClient, "Result", rb_cObject);
+	cResult = rb_define_class_under (mXmms, "Result", rb_cObject);
 
 	/* ugh, we have to define the "new" method,
 	 * so we can remove it again :(
@@ -410,12 +410,12 @@ void Init_Result (VALUE mXmmsClient)
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
 
-	cBroadcastResult = rb_define_class_under (mXmmsClient,
+	cBroadcastResult = rb_define_class_under (mXmms,
 	                                          "BroadcastResult",
 	                                          cResult);
 	rb_define_method (cBroadcastResult, "disconnect", c_disconnect, 0);
 
-	cSignalResult = rb_define_class_under (mXmmsClient, "SignalResult",
+	cSignalResult = rb_define_class_under (mXmms, "SignalResult",
 	                                       cResult);
 	rb_define_method (cSignalResult, "restart", c_sig_restart, 0);
 	rb_define_method (cSignalResult, "disconnect", c_disconnect, 0);

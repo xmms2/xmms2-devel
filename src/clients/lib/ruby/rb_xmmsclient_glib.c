@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003, 2004 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003, 2004 Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -46,14 +46,13 @@ static VALUE c_remove_from_glib_mainloop (VALUE self)
 
 void Init_xmmsclient_glib (void)
 {
-	VALUE c;
-	ID id;
+	VALUE m, c;
 
 	rb_require ("xmmsclient");
 	rb_require ("glib2");
 
-	id = rb_intern ("XmmsClient");
-	c = rb_const_get (rb_const_get (rb_cModule, id), id);
+	m = rb_const_get (rb_cModule, rb_intern ("Xmms"));
+	c = rb_const_get (m, rb_intern ("Client"));
 
 	rb_define_method (c, "add_to_glib_mainloop",
 	                  c_add_to_glib_mainloop, 0);
