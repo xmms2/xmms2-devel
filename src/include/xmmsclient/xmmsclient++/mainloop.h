@@ -23,15 +23,16 @@ namespace Xmms
 			virtual ~MainLoop();
 
 			// Configuration
-			void addListener( const Listener& l );
-			void removeListener( const Listener& l );
+			void addListener( Listener* l );
+			void removeListener( Listener* l );
 
 			// Usage
 			void run();
 
 		private:
 
-			list< ListenerInterface > listeners;
+			// FIXME: Can't we avoid pointers somehow? :-(
+			list< ListenerInterface* > listeners;
 
 			void waitForData();
 

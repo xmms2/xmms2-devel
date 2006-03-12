@@ -1,4 +1,4 @@
-#include "mainloop.h"
+#include <xmmsclient/xmmsclient++/mainloop.h>
 
 namespace Xmms
 {
@@ -20,16 +20,20 @@ namespace Xmms
 
 	MainLoop::~MainLoop()
 	{
+		list< ListenerInterface* >::iterator lit;
+		for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
+			delete (*lit);
+		}
 	}
 
 	void
-	MainLoop::addListener( const Listener& l )
+	MainLoop::addListener( Listener* l )
 	{
 		listeners.push_back( l );
 	}
 
 	void
-	MainLoop::removeListener( const Listener& l )
+	MainLoop::removeListener( Listener* l )
 	{
 		listeners.remove( l );
 	}
@@ -46,26 +50,37 @@ namespace Xmms
 	MainLoop::waitForData()
 	{
 		fd_set rfds, wfds;
-		int modfds;
+		int modfds( 0 );
+		int maxfds( -1 );
 
-		list< ListenerInterface >::iterator lit;
+		list< ListenerInterface* >::iterator lit;
 
 		// Setup fds
 		FD_ZERO(&rfds);
 		FD_ZERO(&wfds);
 
 		for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
-			if( (*lit).listenIn() ) {
-				FD_SET( (*lit).getFileDescriptor(), &rfds);
+			if( (*lit)->listenIn() ) {
+				FD_SET( (*lit)->getFileDescriptor(), &rfds);
+
+				if( (*lit)->getFileDescriptor() > maxfds ) {
+					maxfds = (*lit)->getFileDescriptor();
+				}
 			}
 
-			if( (*lit).listenOut() ) {
-				FD_SET( (*lit).getFileDescriptor(), &wfds);
+			if( (*lit)->listenOut() ) {
+				FD_SET( (*lit)->getFileDescriptor(), &wfds);
+
+				if( (*lit)->getFileDescriptor() > maxfds ) {
+					maxfds = (*lit)->getFileDescriptor();
+				}
 			}
 		}
 
 		// Select on the fds
-		modfds = select(xmmsIpc + 1, &rfds, &wfds, NULL, NULL);
+		if( maxfds >= 0 ) {
+			modfds = select(maxfds + 1, &rfds, &wfds, NULL, NULL);
+		}
 
 		if(modfds < 0) {
 			// FIXME: Error
@@ -73,14 +88,14 @@ namespace Xmms
 		// Handle the data
 		else if(modfds > 0) {
 			for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
-				if( (*lit).listenOut()
-					&& FD_ISSET((*lit).getFileDescriptor(), &rfds) ) {
-					(*lit).handleIn();
+				if( (*lit)->listenOut()
+					&& FD_ISSET((*lit)->getFileDescriptor(), &rfds) ) {
+					(*lit)->handleIn();
 				}
 
-				if( (*lit).listenOut()
-					&& FD_ISSET((*lit).getFileDescriptor(), &rfds) ) {
-					(*lit).handleOut();
+				if( (*lit)->listenOut()
+					&& FD_ISSET((*lit)->getFileDescriptor(), &rfds) ) {
+					(*lit)->handleOut();
 				}
 			}
 		}

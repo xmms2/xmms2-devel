@@ -45,7 +45,7 @@ namespace Xmms
 			// Control
 			void quit();
 
-			// status/info
+			// stats/info
 
 			// We can't return a reference to a const HashMap because
 			// after the function goes out scope the reference wouldn't
@@ -53,10 +53,10 @@ namespace Xmms
 			// take a preconstructed ( Xmms::HashMap result; )
 			// as function parameter and save the data in it.
 			//
-			// Optionally: void status( HashMap& result ) const;
+			// Optionally: void stats( HashMap& result ) const;
 			//
 			// TODO: Decide what to do about this...
-			const DictPtr status() const;
+			const DictPtr stats() const;
 
 			// Same deal here as above...
 			const DictListPtr pluginList() const;

@@ -12,22 +12,23 @@ namespace Xmms
 	{
 
 		public:
+
 			bool operator==( const ListenerInterface& rhs ) const;
 
 		    // Return the file descriptor to listen to
-			virtual int32_t getFileDescriptor() const;
+			virtual int32_t getFileDescriptor() const = 0;
 
 		    // Whether to check for data available for reading
-			virtual bool listenIn() const;
+			virtual bool listenIn() const = 0;
 
 		    // Whether to check for space available for writing
-			virtual bool listenOut() const;
+			virtual bool listenOut() const = 0;
 
 		    // Method run if data available for reading
-			virtual void handleIn();
+			virtual void handleIn() = 0;
 
 		    // Method run if space available for writing
-			virtual void handleOut();
+			virtual void handleOut() = 0;
 
 	};
 
@@ -36,6 +37,9 @@ namespace Xmms
 	{
 
 		public:
+			Listener( const Listener& src );
+			Listener operator=( const Listener& src ) const;
+			virtual ~Listener();
 
 			virtual int32_t getFileDescriptor() const;
 			virtual bool listenIn() const;

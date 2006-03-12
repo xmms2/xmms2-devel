@@ -43,13 +43,13 @@ namespace Xmms
 		}
 	}
 
-	const DictPtr Client::status() const
+	const DictPtr Client::stats() const
 	{
 		if( !connected_ ) {
 			throw connection_error( "Not connected" );
 		}
 
-		xmmsc_result_t* res = xmmsc_main_status( conn_ );
+		xmmsc_result_t* res = xmmsc_main_stats( conn_ );
 		xmmsc_result_wait( res );
 
 		if( xmmsc_result_iserror( res ) ) {
