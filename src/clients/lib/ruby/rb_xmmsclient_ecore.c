@@ -46,14 +46,13 @@ static VALUE c_remove_from_ecore_mainloop (VALUE self)
 
 void Init_xmmsclient_ecore (void)
 {
-	VALUE c;
-	ID id;
+	VALUE m, c;
 
 	rb_require ("xmmsclient");
 	rb_require ("ecore");
 
-	id = rb_intern ("XmmsClient");
-	c = rb_const_get (rb_const_get (rb_cModule, id), id);
+	m = rb_const_get (rb_cModule, rb_intern ("Xmms"));
+	c = rb_const_get (m, rb_intern ("Client"));
 
 	rb_define_method (c, "add_to_ecore_mainloop",
 	                  c_add_to_ecore_mainloop, 0);
