@@ -14,7 +14,7 @@ end
 
 Gtk.init if $MODE == "GLIB"
 
-xc = XmmsClient::XmmsClient.new("Ruby")
+xc = Xmms::Client.new("Ruby")
 
 xc.connect
 
