@@ -1105,15 +1105,19 @@ static GList *
 xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err)
 {
 	xmms_medialib_session_t *session;
-	GList *ret;
+	GList *ret = NULL;
 
-	session = xmms_medialib_begin ();
-	ret = xmms_medialib_entry_to_list (session, id);
-	xmms_medialib_end (session);
+	if (!id) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry, 0");
+	} else {
+		session = xmms_medialib_begin ();
+		ret = xmms_medialib_entry_to_list (session, id);
+		xmms_medialib_end (session);
 
-	if (!ret) {
-		xmms_error_set (err, XMMS_ERROR_NOENT,
-		                "Could not retrive info for that entry!");
+		if (!ret) {
+			xmms_error_set (err, XMMS_ERROR_NOENT,
+			                "Could not retrive info for that entry!");
+		}
 	}
 
 	return ret;
