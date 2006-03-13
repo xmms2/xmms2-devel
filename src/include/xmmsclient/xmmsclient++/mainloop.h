@@ -1,5 +1,5 @@
-#ifndef MAINLOOP_H
-#define MAINLOOP_H
+#ifndef XMMSCLIENTPP_MAINLOOP_H
+#define XMMSCLIENTPP_MAINLOOP_H
 
 #include <xmmsclient/xmmsclient++/listener.h>
 
@@ -9,6 +9,9 @@ using std::list;
 
 namespace Xmms 
 {
+
+	// FIXME: Why isn't the header inclusion working?
+	class ListenerInterface;
 
 	class MainLoop
 	{
@@ -23,8 +26,8 @@ namespace Xmms
 			virtual ~MainLoop();
 
 			// Configuration
-			void addListener( Listener* l );
-			void removeListener( Listener* l );
+			void addListener( ListenerInterface* l );
+			void removeListener( ListenerInterface* l );
 
 			// Usage
 			void run();
@@ -40,4 +43,4 @@ namespace Xmms
 
 }
 
-#endif // MAINLOOP_H
+#endif // XMMSCLIENTPP_MAINLOOP_H

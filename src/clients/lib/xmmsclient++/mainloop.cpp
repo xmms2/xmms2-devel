@@ -27,13 +27,13 @@ namespace Xmms
 	}
 
 	void
-	MainLoop::addListener( Listener* l )
+	MainLoop::addListener( ListenerInterface* l )
 	{
 		listeners.push_back( l );
 	}
 
 	void
-	MainLoop::removeListener( Listener* l )
+	MainLoop::removeListener( ListenerInterface* l )
 	{
 		listeners.remove( l );
 	}
@@ -88,13 +88,13 @@ namespace Xmms
 		// Handle the data
 		else if(modfds > 0) {
 			for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
-				if( (*lit)->listenOut()
+				if( (*lit)->listenIn()
 					&& FD_ISSET((*lit)->getFileDescriptor(), &rfds) ) {
 					(*lit)->handleIn();
 				}
 
 				if( (*lit)->listenOut()
-					&& FD_ISSET((*lit)->getFileDescriptor(), &rfds) ) {
+					&& FD_ISSET((*lit)->getFileDescriptor(), &wfds) ) {
 					(*lit)->handleOut();
 				}
 			}

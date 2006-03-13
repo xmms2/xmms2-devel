@@ -1,11 +1,13 @@
-#ifndef LISTENER_H
-#define LISTENER_H
+#ifndef XMMSCLIENTPP_LISTENER_H
+#define XMMSCLIENTPP_LISTENER_H
 
-#include <xmmsclient/xmmsclient++/client.h>
+#include <xmmsclient/xmmsclient.h>
 
 
 namespace Xmms 
 {
+
+	class Client;
 
 	// Interface to define MainLoop listeners.
 	class ListenerInterface
@@ -59,4 +61,4 @@ namespace Xmms
 
 }
 
-#endif // LISTENER_H
+#endif // XMMSCLIENTPP_LISTENER_H
