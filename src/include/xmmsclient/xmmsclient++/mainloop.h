@@ -4,23 +4,17 @@
 #include <xmmsclient/xmmsclient++/listener.h>
 
 #include <list>
-using std::list;
 
 
 namespace Xmms 
 {
-
-	// FIXME: Why isn't the header inclusion working?
-	class ListenerInterface;
 
 	class MainLoop
 	{
 
 		public:
 
-			MainLoop();
 			MainLoop( const MainLoop& src );
-			MainLoop operator=( const MainLoop& src ) const;
 
 			// Destructor
 			virtual ~MainLoop();
@@ -34,8 +28,12 @@ namespace Xmms
 
 		private:
 
-			// FIXME: Can't we avoid pointers somehow? :-(
-			list< ListenerInterface* > listeners;
+			// Constructor, only to be called by Xmms::Client
+			friend class Client;
+			MainLoop();
+			MainLoop operator=( const MainLoop& src ) const;
+
+			std::list< ListenerInterface* > listeners;
 
 			void waitForData();
 

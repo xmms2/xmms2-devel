@@ -15,8 +15,6 @@
 
 namespace Xmms 
 {
-	// FIXME: Why isn't the header inclusion working?
-	class MainLoop;
 
 	class Client 
 	{
@@ -92,6 +90,7 @@ namespace Xmms
 			//
 			// I'm not sure if this should be implemented the same way or not
 			// const IO& getIO() const;
+
 			MainLoop mainloop;
 			inline xmmsc_connection_t* getConnection() { return conn_; }
 

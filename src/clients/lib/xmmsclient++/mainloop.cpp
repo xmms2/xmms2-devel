@@ -1,5 +1,9 @@
 #include <xmmsclient/xmmsclient++/mainloop.h>
 
+#include <list>
+using std::list;
+
+
 namespace Xmms
 {
 
