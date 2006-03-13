@@ -79,21 +79,13 @@ namespace Xmms
 	}
 
 	// TODO: ERROR CHECKING!
-	const DictListPtr Client::pluginList() const
+	const DictListPtr Client::pluginList(Plugins::Type type) const
 	{
 		if( !connected_ ) {
 			throw connection_error( "Not connected" );
 		}
 
-		// TODO: Have this function to take an argument to control which
-		// type of plugins to return, meanwhile, return them all.
-		// Need to figure out similar naming system as Playback Status has;
-		// Would require perhaps a separate class/struct (Xmms::Plugins::Type)
-		// or just typedefs in namespace Xmms;
-		// typedef Xmms::PLUGIN_TYPE_ALL ... erf, not good
-		// Xmms::Plugin::ALL ?
-		xmmsc_result_t* res = xmmsc_plugin_list( conn_, 
-		                                         XMMS_PLUGIN_TYPE_ALL ); 	
+		xmmsc_result_t* res = xmmsc_plugin_list( conn_, type ); 	
 
 		xmmsc_result_wait( res );
 
