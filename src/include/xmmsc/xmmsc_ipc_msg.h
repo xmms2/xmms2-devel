@@ -57,7 +57,7 @@ typedef enum {
 	XMMS_IPC_MSG_ARG_TYPE_INT32,
 	XMMS_IPC_MSG_ARG_TYPE_FLOAT,
 	XMMS_IPC_MSG_ARG_TYPE_STRING,
-	XMMS_IPC_MSG_ARG_TYPE_DATA,
+	XMMS_IPC_MSG_ARG_TYPE_DATA
 } xmms_ipc_msg_arg_type_t;
 
 #define __XMMS_IPC_MSG_DO_IDENTITY_FUNC(type) static inline type *__xmms_ipc_msg_arg_##type (type *arg) {return arg;}
