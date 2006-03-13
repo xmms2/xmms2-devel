@@ -496,7 +496,7 @@ xmmsc_result_wait (xmmsc_result_t *res)
 	}
 
 	if (err) {
-		xmmsc_result_seterror (res, strdup (err));
+		xmmsc_result_seterror (res, err);
 	}
 }
 
@@ -1092,7 +1092,7 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 void
 xmmsc_result_seterror (xmmsc_result_t *res, const char *errstr)
 {
-	res->error_str = errstr;
+	res->error_str = strdup (errstr);
 	res->error = 1;
 }
 
