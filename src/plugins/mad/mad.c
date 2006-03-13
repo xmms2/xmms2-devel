@@ -219,7 +219,15 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 
 	data->fsize = filesize;
 
+	if (frame.header.flags & MAD_FLAG_PROTECTION) {
+		XMMS_DBG ("this frame has protection enabled!");
+		if (stream.anc_ptr.byte > stream.buffer + 2) {
+			stream.anc_ptr.byte = stream.anc_ptr.byte - 2;
+		}
+	}
+
 	data->xing = xmms_xing_parse (stream.anc_ptr);
+
 	if (data->xing) {
 		/* @todo Hmm? This is SO strange. */
 		while (42) {
@@ -338,6 +346,7 @@ xmms_mad_get_media_info (xmms_decoder_t *decoder)
 				if (ret <= 0) {
 					xmms_log_error ("error reading data for id3v2-tag");
 					xmms_medialib_end (session);
+					g_free (id3v2buf);
 					return;
 				}
 				pos += ret;

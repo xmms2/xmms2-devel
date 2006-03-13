@@ -1,0 +1,12 @@
+target="xmms2-mdns-dnssd"
+source=["mdns-dnssd.c"]
+
+def config(env):
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env.Append(LIBS=["xmmsclient"])
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
+	env.Append(LIBS=["xmmsclient-glib"])
+	env.pkgconfig("glib-2.0")
+	env.checkheader("dns_sd.h")
+	# on macosx it's in libc? 
+	#env.checklib("dns_sd", "DNSServiceRegister")

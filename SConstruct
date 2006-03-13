@@ -173,18 +173,6 @@ scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
 
-### INSTALL SCRIPTS
-def scan_scripts(name):
-	dir = "scripts/" + name
-	if os.path.isdir(dir):
-		for d in os.listdir(dir):
-			newf = dir+"/"+d
-			if os.path.isfile(newf):
-				base_env.add_script(name, newf)
-
-scan_scripts("startup.d")
-scan_scripts("shutdown.d")
-
 ### INSTALL MANUAL PAGES!
 
 base_env.add_manpage(1, 'doc/xmms2.1')
@@ -215,6 +203,7 @@ map(lambda x: foo.append(x[x.rindex(os.sep)+1:]), base_env.plugins)
 print ", ".join(foo)
 print "Default output:", xmmsenv.default_output[1]
 
+base_env.add_script("startup.d", "src/clients/mdns/xmms2-mdns-launcher.sh")
 base_env.add_shared("mind.in.a.box-lament_snipplet.ogg")
 base_env.Alias('install', base_env.install_targets)
 

@@ -43,6 +43,10 @@ D: Supplied us with a great "intro" clip:
 D: Taken from the "Breed To Death" EP. Dismantled appears courtesy of
 D: Metropolis Records in the US and Dependent Records in Europe.
 
+N: Franz Endstrasser
+E: franz.endstrasser@gmail.com
+D: Java bindings
+
 N: Anders Gustafsson
 E: andersg@xmms.org
 P: 1024D/5D46D966 4186 4775 154B 9E4F 8CE7  A3F8 E165 5471 5D46 D966
@@ -109,6 +113,10 @@ E: tilman@code-monkey.de
 W: http://www.code-monkey.de/
 P: 1024D/CAD6DB0F 8606 96BC ABE4 FD1B 8A7A  959B DBBB 8B8A CAD6 DB0F
 D: Ruby bindings. Many other things all over the place.
+
+N: Georg Schild
+E: dangertools@gmail.com
+D: Java bindings
 
 N: Daniel Svensson
 E: daniel@nittionio.nu
