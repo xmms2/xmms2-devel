@@ -184,6 +184,10 @@ xmmsc_result_free (xmmsc_result_t *res)
 	free (res);
 }
 
+/**
+ * Get the class of the result (default, signal, broadcast).
+ * @returns The class of the result of type #xmmsc_result_type_t
+ */
 xmmsc_result_type_t
 xmmsc_result_get_class (xmmsc_result_t *res)
 {
@@ -192,6 +196,10 @@ xmmsc_result_get_class (xmmsc_result_t *res)
 	return res->type;
 }
 
+/**
+ * Disconnect a signal or a broadcast.
+ * @param res The result to disconnect, must be of class signal or broadcast.
+ */
 void
 xmmsc_result_disconnect (xmmsc_result_t *res)
 {
@@ -267,18 +275,6 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	xmmsc_result_restartable (newres, res->restart_signal);
 	
 	return newres;
-}
-
-/**
- * Get the type of the result.
- * @returns The data type in the result or -1 on error.
- */
-int
-xmmsc_result_get_type (xmmsc_result_t *res)
-{
-	if (!res) return -1;
-	if (!res->parsed) return -1;
-	return res->datatype;
 }
 
 static void
@@ -534,11 +530,16 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, char **preference)
  * @{
  */
 
-void
-xmmsc_result_seterror (xmmsc_result_t *res, char *errstr)
+/**
+ * Get the type of the result.
+ * @returns The #xmms_object_cmd_arg_type_t data type in the result or -1 on error.
+ */
+int
+xmmsc_result_get_type (xmmsc_result_t *res)
 {
-	res->error_str = errstr;
-	res->error = 1;
+	if (!res) return -1;
+	if (!res->parsed) return -1;
+	return res->datatype;
 }
 
 /**
@@ -1088,6 +1089,13 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 /** @} */
 
 /** @internal */
+void
+xmmsc_result_seterror (xmmsc_result_t *res, char *errstr)
+{
+	res->error_str = errstr;
+	res->error = 1;
+}
+
 void
 xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid)
 {
