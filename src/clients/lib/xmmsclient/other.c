@@ -38,7 +38,7 @@
  * @param defaultvalue The default value of this config value.
  */
 xmmsc_result_t *
-xmmsc_configval_register (xmmsc_connection_t *c, char *valuename, char *defaultvalue)
+xmmsc_configval_register (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -55,7 +55,7 @@ xmmsc_configval_register (xmmsc_connection_t *c, char *valuename, char *defaultv
  * Sets a configvalue in the server.
  */
 xmmsc_result_t *
-xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val)
+xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -73,7 +73,7 @@ xmmsc_configval_set (xmmsc_connection_t *c, char *key, char *val)
  */
 
 xmmsc_result_t *
-xmmsc_configval_get (xmmsc_connection_t *c, char *key)
+xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;

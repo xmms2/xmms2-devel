@@ -1090,7 +1090,7 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 
 /** @internal */
 void
-xmmsc_result_seterror (xmmsc_result_t *res, char *errstr)
+xmmsc_result_seterror (xmmsc_result_t *res, const char *errstr)
 {
 	res->error_str = errstr;
 	res->error = 1;
