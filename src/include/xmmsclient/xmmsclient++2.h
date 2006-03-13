@@ -7,5 +7,6 @@
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
+#include <xmmsclient/xmmsclient++/list.h>
 
 #endif // XMMSCLIENTPP_H

@@ -14,6 +14,27 @@ namespace Xmms
 
 	};
 
+	class not_list_error : public std::runtime_error
+	{
+		public:
+			explicit not_list_error( const std::string& what_arg );
+
+	};
+
+	class result_error : public std::runtime_error
+	{
+		public:
+			explicit result_error( const std::string& what_arg );
+
+	};
+
+	class no_result_type_error : public std::runtime_error
+	{
+		public:
+			explicit no_result_type_error( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H
