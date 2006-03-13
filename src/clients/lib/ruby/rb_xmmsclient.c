@@ -916,6 +916,29 @@ static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
 
 /*
  * call-seq:
+ *  xc.medialib_playlist_remove(name) -> result
+ *
+ * Removes the playlist _name_ from the medialib.
+ */
+static VALUE c_medialib_playlist_remove (VALUE self, VALUE name)
+{
+	RbXmmsClient *xmms = NULL;
+	xmmsc_result_t *res;
+
+	StringValue (name);
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	res = xmmsc_medialib_playlist_remove (xmms->real,
+	                                      StringValuePtr (name));
+
+	return TO_XMMS_CLIENT_RESULT (self, res);
+}
+
+/*
+ * call-seq:
  *  xc.medialib_add_entry(url) -> result
  *
  * Adds _url_ to the medialib.
@@ -1329,6 +1352,8 @@ void Init_Client (VALUE mXmms)
 	                  c_medialib_playlist_save_current, 1);
 	rb_define_method (c, "medialib_playlist_load",
 	                  c_medialib_playlist_load, 1);
+	rb_define_method (c, "medialib_playlist_remove",
+	                  c_medialib_playlist_remove, 1);
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 	rb_define_method (c, "medialib_entry_property_set",
