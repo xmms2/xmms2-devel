@@ -1186,6 +1186,17 @@ static VALUE c_plugin_list (VALUE self, xmms_plugin_type_t type)
 
 /*
  * call-seq:
+ *  xc.configval_list -> result
+ *
+ * Retrieves a list of all config values.
+ */
+static VALUE c_configval_list (VALUE self)
+{
+	METHOD_ADD_HANDLER (configval_list);
+}
+
+/*
+ * call-seq:
  *  xc.configval_get(key) -> result
  *
  * Retrieves the value of the configuration property at _key_.
@@ -1343,6 +1354,7 @@ void Init_Client (VALUE mXmms)
 	rb_define_method (c, "signal_visualisation_data",
 	                  c_signal_visualisation_data, 0);
 
+	rb_define_method (c, "configval_list", c_configval_list, 0);
 	rb_define_method (c, "configval_get", c_configval_get, 1);
 	rb_define_method (c, "configval_set", c_configval_set, 2);
 	rb_define_method (c, "broadcast_configval_changed",
