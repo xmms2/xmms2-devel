@@ -91,8 +91,11 @@ namespace Xmms
 			// I'm not sure if this should be implemented the same way or not
 			// const IO& getIO() const;
 
-			MainLoop mainloop;
-			inline xmmsc_connection_t* getConnection() { return conn_; }
+			// Get an object to create an async main loop
+			MainLoop getMainLoop() const;
+
+			// Return the internal connection pointer
+			inline xmmsc_connection_t* getConnection() const { return conn_; }
 
 		private:
 			// Copy-constructor / operator=
@@ -103,8 +106,6 @@ namespace Xmms
 			std::string name_;
 
 			xmmsc_connection_t* conn_;
-
-			//Playback playback_;
 
 			bool connected_;
 

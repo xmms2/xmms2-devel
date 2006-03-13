@@ -53,9 +53,9 @@ namespace Xmms
 
 			// Constructor, only to be called by Xmms::Client
 			friend class Client;
-			Listener( xmmsc_connection_t** conn );
+			Listener( xmmsc_connection_t* const* conn );
 
-			xmmsc_connection_t** conn_;
+			xmmsc_connection_t* const* conn_;
 
 	};
 

@@ -10,10 +10,9 @@ namespace Xmms
 {
 
 	Client::Client( const string& name ) 
-		: playback( &conn_ ), mainloop(), name_( name ), conn_(0), connected_( false )
+		: playback( &conn_ ), name_( name ), conn_(0), connected_( false )
 	{
 		conn_ = xmmsc_init( name.c_str() );
-		mainloop.addListener(new Listener( &conn_ ));
 	}
 
 	Client::~Client() 
@@ -141,4 +140,9 @@ namespace Xmms
 
 	}
 
+	MainLoop Client::getMainLoop() const {
+		MainLoop ml;
+		ml.addListener( new Listener( &conn_ ) );
+		return ml;
+	}
 }

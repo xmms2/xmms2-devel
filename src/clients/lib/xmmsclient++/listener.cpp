@@ -55,7 +55,7 @@ namespace Xmms
 		xmmsc_io_out_handle( *conn_ );
 	}
 
-	Listener::Listener( xmmsc_connection_t** conn ) :
+	Listener::Listener( xmmsc_connection_t* const* conn ) :
 		conn_( conn )
 	{
 	}
