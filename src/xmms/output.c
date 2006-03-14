@@ -995,7 +995,7 @@ xmms_output_decoder_start (xmms_output_t *output)
 
 		entry = xmms_playlist_current_entry (output->playlist);
 		if (!entry)
-			return FALSE;
+		  return FALSE;
 
 		t = xmms_transport_new ();
 		if (!t)
@@ -1022,37 +1022,36 @@ xmms_output_decoder_start (xmms_output_t *output)
 			xmms_transport_stop (t);
 			xmms_object_unref (t);
 			xmms_object_unref (decoder);
-			continue;
+			return FALSE;
 		}
 		
 		session = xmms_medialib_begin_write ();
 		plugin = xmms_decoder_plugin_get (decoder);
 		xmms_medialib_entry_property_set_str (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DECODER,
-		                                      xmms_plugin_shortname_get (plugin));
+						      XMMS_MEDIALIB_ENTRY_PROPERTY_DECODER,
+						      xmms_plugin_shortname_get (plugin));
 		plugin = xmms_transport_plugin_get (t);
 		xmms_medialib_entry_property_set_str (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_TRANSPORT,
-		                                      xmms_plugin_shortname_get (plugin));
+						      XMMS_MEDIALIB_ENTRY_PROPERTY_TRANSPORT,
+						      xmms_plugin_shortname_get (plugin));
 		xmms_medialib_end (session);
 
 		xmms_object_unref (t);
 
-		if (!xmms_decoder_init_for_decoding (decoder, output->format_list,
-			                                 output->effects)) {
-			xmms_log_error ("Couldn't initialize decoder");
-			xmms_object_unref (decoder);
-
-			continue;
-		} else {
+		if (decoder)
 			break;
-		}
-
 	}
 
-	xmms_object_connect (XMMS_OBJECT (decoder), 
-	                     XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
-	                     decoder_ended, output);
+	if (!xmms_decoder_init_for_decoding (decoder, output->format_list,
+	                                     output->effects)) {
+		xmms_log_error ("Couldn't initialize decoder");
+
+		xmms_object_unref (decoder);
+		return FALSE;
+	}
+
+	xmms_object_connect (XMMS_OBJECT (decoder), XMMS_IPC_SIGNAL_DECODER_THREAD_EXIT,
+			     decoder_ended, output);
 
 	xmms_decoder_start (decoder);
 
