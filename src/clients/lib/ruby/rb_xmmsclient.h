@@ -22,6 +22,7 @@ typedef struct {
 	bool deleted;
 	VALUE results;
 	VALUE disconnect_cb;
+	VALUE io_need_out_cb;
 
 	void *ecore_handle;
 	void *gmain_handle;

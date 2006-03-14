@@ -73,6 +73,9 @@ static void c_mark (RbXmmsClient *xmms)
 
 	if (!NIL_P (xmms->disconnect_cb))
 		rb_gc_mark (xmms->disconnect_cb);
+
+	if (!NIL_P (xmms->io_need_out_cb))
+		rb_gc_mark (xmms->io_need_out_cb);
 }
 
 static void c_free (RbXmmsClient *xmms)
@@ -111,6 +114,7 @@ static VALUE c_init (VALUE self, VALUE name)
 	xmms->deleted = false;
 	xmms->results = rb_ary_new ();
 	xmms->disconnect_cb = Qnil;
+	xmms->io_need_out_cb = Qnil;
 
 	return self;
 }
@@ -247,6 +251,41 @@ static VALUE c_io_want_out (VALUE self)
 	CHECK_DELETED (xmms);
 
 	return xmmsc_io_want_out (xmms->real) ? Qtrue : Qfalse;
+}
+
+static void on_io_need_out (int flag, void *data)
+{
+	VALUE self = (VALUE) data;
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	rb_funcall (xmms->io_need_out_cb, rb_intern ("call"), 1, INT2FIX (flag));
+}
+
+/*
+ * call-seq:
+ *  xc.io_need_out { |flag| }
+ *
+ * Sets the block that's called when the output socket state changes.
+ */
+static VALUE c_io_on_need_out (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	if (!rb_block_given_p ())
+		return Qnil;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	xmms->io_need_out_cb = rb_block_proc ();
+
+	xmmsc_io_need_out_callback_set (xmms->real,
+	                                on_io_need_out, (void *) self);
+
+	return Qnil;
 }
 
 /*
@@ -1104,6 +1143,7 @@ void Init_Client (VALUE mXmms)
 
 	rb_define_method (c, "io_fd", c_io_fd, 0);
 	rb_define_method (c, "io_want_out", c_io_want_out, 0);
+	rb_define_method (c, "io_on_need_out", c_io_on_need_out, 0);
 	rb_define_method (c, "io_in_handle", c_io_in_handle, 0);
 	rb_define_method (c, "io_out_handle", c_io_out_handle, 0);
 	rb_define_method (c, "io_disconnect", c_io_disconnect, 0);
