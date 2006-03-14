@@ -245,12 +245,8 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 	return 1;
 }
 
-/**
- * @internal Function to respond to the 'quit' command sent from a client
- */
-static void
-quit (xmms_object_t *object, xmms_error_t *error)
-{
+static gboolean
+kill_server (gpointer object) {
 	xmms_object_emit_f (XMMS_OBJECT (object),
 	                    XMMS_IPC_SIGNAL_QUIT,
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
@@ -259,6 +255,21 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
+}
+
+
+/**
+ * @internal Function to respond to the 'quit' command sent from a client
+ */
+static void
+quit (xmms_object_t *object, xmms_error_t *error)
+{
+	/* 
+	 * to be able to return from this method
+	 * we add a timeout that will kill the server
+	 * very "ugly" :-)
+	 */
+	g_timeout_add (1, kill_server, object);
 }
 
 static gboolean
