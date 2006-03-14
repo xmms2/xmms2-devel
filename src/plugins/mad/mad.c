@@ -257,7 +257,7 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                                      duration);
 
-			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES)) {
+			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES) && duration) {
 				guint tmp;
 
 				tmp = xmms_xing_get_bytes (data->xing) * ((guint64)8000) / duration;
