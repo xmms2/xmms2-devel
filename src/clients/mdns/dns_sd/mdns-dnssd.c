@@ -137,6 +137,7 @@ main (int argc, char **argv)
 	gchar *gp = NULL;
 	gchar **s;
 	gchar **ipcsplit;
+	guint port;
 	int i;
 
 	printf ("Starting XMMS2 mDNS Agent...\n");
