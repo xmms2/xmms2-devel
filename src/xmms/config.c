@@ -210,7 +210,7 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
 	                              xmms_object_cmd_value_free);
 	g_hash_table_insert (dict, (gchar *) prop->name,
-	                     xmms_object_cmd_value_str_new ((gchar *) prop->value));
+	                     xmms_object_cmd_value_str_new (prop->value));
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
@@ -593,7 +593,7 @@ xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
                           GHashTable *dict)
 {
 	g_hash_table_insert (dict, g_strdup (prop->name),
-	                     xmms_object_cmd_value_str_new ((gchar *) prop->value));
+	                     xmms_object_cmd_value_str_new (prop->value));
 }
 
 /**

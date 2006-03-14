@@ -658,11 +658,11 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 
 		hash = g_hash_table_new (g_str_hash, g_str_equal);
 		g_hash_table_insert (hash, "name", 
-							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_name_get (plugin)));
+							 xmms_object_cmd_value_str_new (xmms_plugin_name_get (plugin)));
 		g_hash_table_insert (hash, "shortname", 
-							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_shortname_get (plugin)));
+							 xmms_object_cmd_value_str_new (xmms_plugin_shortname_get (plugin)));
 		g_hash_table_insert (hash, "description", 
-							 xmms_object_cmd_value_str_new ((gchar *)xmms_plugin_description_get (plugin)));
+							 xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
 		g_hash_table_insert (hash, "type", 
 							 xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
 
