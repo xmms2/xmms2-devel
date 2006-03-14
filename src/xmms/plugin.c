@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -60,6 +60,7 @@ struct xmms_plugin_St {
 	gchar *name;
 	gchar *shortname;
 	gchar *description;
+	gchar *version;
 	gint properties;
 
 	guint users;
@@ -111,8 +112,9 @@ static gboolean plugin_register_common (xmms_plugin_t *plugin);
  * 	xmms_plugin_t *plugin;
  *	
  *	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EXAMPLE, "test",
- *				  "Test plugin" XMMS_VERSION,
- *				  "A very simple plugin");
+ *	                          "Test Plugin",
+ *	                          XMMS_VERSION,
+ *	                          "A very simple plugin");
  *	xmms_plugin_info_add (plugin, "Author", "Karsten Brinkmann");
  *	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_TEST, xmms_test);
  *	return plugin;
@@ -139,6 +141,7 @@ xmms_plugin_new (xmms_plugin_type_t type,
 		 gint api_ver,
 		 const gchar *shortname,
 		 const gchar *name,
+		 const gchar *version,
 		 const gchar *description)
 {
 	xmms_plugin_t *plugin;
@@ -180,6 +183,7 @@ xmms_plugin_new (xmms_plugin_type_t type,
 	plugin->type = type;
 	plugin->name = g_strdup (name);
 	plugin->shortname = g_strdup (shortname);
+	plugin->version = g_strdup (version);
 	plugin->description = g_strdup (description);
 	plugin->method_table = g_hash_table_new_full (g_str_hash,
 	                                              g_str_equal,
@@ -457,6 +461,19 @@ xmms_plugin_shortname_get (const xmms_plugin_t *plugin)
 }
 
 /**
+ * @internal Get the plugin's version. This is just an accessor method.
+ * @param[in] plugin The plugin
+ * @return A string containing the plugin's version
+ */
+const gchar *
+xmms_plugin_version_get (const xmms_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, NULL);
+
+	return plugin->version;
+}
+
+/**
  * @internal Get the plugin's description. This is just an accessor method.
  * @param[in] plugin The plugin
  * @return A string containing the plugin's description
@@ -657,14 +674,16 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 		xmms_plugin_t *plugin = node->data;
 
 		hash = g_hash_table_new (g_str_hash, g_str_equal);
-		g_hash_table_insert (hash, "name", 
-							 xmms_object_cmd_value_str_new (xmms_plugin_name_get (plugin)));
-		g_hash_table_insert (hash, "shortname", 
-							 xmms_object_cmd_value_str_new (xmms_plugin_shortname_get (plugin)));
-		g_hash_table_insert (hash, "description", 
-							 xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
-		g_hash_table_insert (hash, "type", 
-							 xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
+		g_hash_table_insert (hash, "name",
+		                     xmms_object_cmd_value_str_new (xmms_plugin_name_get (plugin)));
+		g_hash_table_insert (hash, "shortname",
+		                     xmms_object_cmd_value_str_new (xmms_plugin_shortname_get (plugin)));
+		g_hash_table_insert (hash, "version",
+		                     xmms_object_cmd_value_str_new (xmms_plugin_version_get (plugin)));
+		g_hash_table_insert (hash, "description",
+		                     xmms_object_cmd_value_str_new (xmms_plugin_description_get (plugin)));
+		g_hash_table_insert (hash, "type",
+		                     xmms_object_cmd_value_uint_new (xmms_plugin_type_get (plugin)));
 
 		for (p = xmms_plugin_info_get (plugin); p; p = g_list_next (p)) {
 			xmms_plugin_info_t *info = p->data;

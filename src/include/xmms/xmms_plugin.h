@@ -98,6 +98,7 @@ xmms_plugin_t *xmms_plugin_new (xmms_plugin_type_t type,
 				gint api_version,
 				const gchar *shortname,
 				const gchar *name,
+				const gchar *version,
 				const gchar *description);
 
 #define xmms_plugin_method_add(p, n, m) do { n##_TYPE mtd = (m); __xmms_plugin_method_add(p, n, (xmms_plugin_method_t)mtd); } while(0)

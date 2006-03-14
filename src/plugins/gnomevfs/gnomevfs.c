@@ -66,12 +66,13 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
-				  XMMS_TRANSPORT_PLUGIN_API_VERSION,
-				  "gnomevfs",
-				  "GNOME VFS transport plugin" XMMS_VERSION,
-				  "A transport that itself supports a wide range of transports,"
-				  "http, webdav, tar, ssh and more.");
-	
+	                          XMMS_TRANSPORT_PLUGIN_API_VERSION,
+	                          "gnomevfs",
+	                          "GNOME VFS Transport",
+	                          XMMS_VERSION,
+	                          "A transport that itself supports a wide range of"
+	                          " transports, http, webdav, tar, ssh and more.");
+
 	if (!plugin) {
 		return NULL;
 	}

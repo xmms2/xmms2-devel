@@ -85,9 +85,11 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, "curl_ftp",
-			"Curl transport for FTP " XMMS_VERSION,
-		 	"FTP transport using CURL");
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT,
+	                          "curl_ftp",
+	                          "Curl Transport for FTP",
+	                          XMMS_VERSION,
+	                          "FTP transport using CURL");
 
 	if (!plugin) {
 		return NULL;

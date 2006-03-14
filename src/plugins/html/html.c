@@ -89,7 +89,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST,
 	                          XMMS_PLAYLIST_PLUGIN_API_VERSION,
 	                          "html",
-	                          "HTML Playlist " XMMS_VERSION,
+	                          "HTML Playlist",
+	                          XMMS_VERSION,
 	                          "HTML Playlist reader");
 
 	if (!plugin) {

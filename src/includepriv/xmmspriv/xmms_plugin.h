@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstrï¿½m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -42,6 +42,7 @@ gboolean xmms_plugin_has_methods (xmms_plugin_t *plugin, ...);
 xmms_plugin_type_t xmms_plugin_type_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_name_get (const xmms_plugin_t *plugin);
 const gchar *xmms_plugin_shortname_get (const xmms_plugin_t *plugin);
+const gchar *xmms_plugin_version_get (const xmms_plugin_t *plugin);
 const char *xmms_plugin_description_get (const xmms_plugin_t *plugin);
 
 gboolean xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property);

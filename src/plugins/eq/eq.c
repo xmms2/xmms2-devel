@@ -123,10 +123,11 @@ xmms_plugin_get (void)
 	gint i;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT, 
-				  XMMS_EFFECT_PLUGIN_API_VERSION,
-				  "equalizer",
-				  "Equalizer effect " XMMS_VERSION,
-				  "Equalizer effect");
+	                          XMMS_EFFECT_PLUGIN_API_VERSION,
+	                          "equalizer",
+	                          "Equalizer Effect",
+	                          XMMS_VERSION,
+	                          "Equalizer effect");
 
 	if (!plugin) {
 		return NULL;

@@ -51,10 +51,11 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
-				  XMMS_DECODER_PLUGIN_API_VERSION,
-				  "modplug",
-				  "MODPLUG decoder " XMMS_VERSION,
-				  "modplug");
+	                          XMMS_DECODER_PLUGIN_API_VERSION,
+	                          "modplug",
+	                          "MODPLUG Decoder",
+	                          XMMS_VERSION,
+	                          "modplug");
 
 	if (!plugin) {
 		return NULL;

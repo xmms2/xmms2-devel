@@ -89,7 +89,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT,
 	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
 	                          "diskwrite",
-	                          "Diskwriter output " XMMS_VERSION,
+	                          "Diskwriter Output",
+	                          XMMS_VERSION,
 	                          "Dumps audio data to disk");
 
 	if (!plugin) {

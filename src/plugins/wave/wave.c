@@ -88,7 +88,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "wave",
-	                          "Wave decoder " XMMS_VERSION,
+	                          "Wave Decoder",
+	                          XMMS_VERSION,
 	                          "Wave decoder");
 
 	if (!plugin) {

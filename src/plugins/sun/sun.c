@@ -134,7 +134,7 @@ xmms_plugin_get (void)
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
 	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "sun", "SUN Output" XMMS_VERSION,
+	                          "sun", "SUN Output", XMMS_VERSION,
 	                          "OpenBSD SUN architecture output plugin");
 
 	if (!plugin) {

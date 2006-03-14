@@ -73,7 +73,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "mad",
-	                          "MAD decoder " XMMS_VERSION,
+	                          "MAD Decoder",
+	                          XMMS_VERSION,
 	                          "MPEG Layer 1/2/3 decoder");
 	
 	if (!plugin) {

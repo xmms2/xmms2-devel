@@ -53,7 +53,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "mpc",
-	                          "Musepack decoder " XMMS_VERSION,
+	                          "Musepack Decoder",
+	                          XMMS_VERSION,
 	                          "Musepack Living Audio Compression");
 
 	g_return_val_if_fail (plugin, NULL);
