@@ -1089,7 +1089,7 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 	                             "Sources s on m.source = s.id "
 	                             "where m.id=%d",
 	                             entry);
-	if (!s) {
+	if (!s || !ret) {
 		return NULL;
 	}
 
