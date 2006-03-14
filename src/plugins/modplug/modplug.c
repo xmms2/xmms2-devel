@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  */

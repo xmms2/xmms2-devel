@@ -1,7 +1,7 @@
 /** @file sun.c 
  *  Output plugin for the OpenBSD SUN architecture. 
  * 
- *  Copyright (C) 2003  Daniel Svensson, <nano@nittioonio.nu>
+ *  Copyright (C) 2003-2006  Daniel Svensson, <nano@nittioonio.nu>
  * 
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public

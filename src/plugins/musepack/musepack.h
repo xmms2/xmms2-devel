@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2005 Daniel Svensson, <daniel@nittionio.nu> 
+ *  Copyright (C) 2005-2006 Daniel Svensson, <daniel@nittionio.nu> 
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
