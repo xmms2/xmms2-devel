@@ -192,6 +192,8 @@ class XMMSEnvironment(Environment):
 		if libs:
 			cmd += " --libs" 
 		cmd += " \"%s\"" % module
+		if not self.config_cache.has_key(cmd):
+			print "Checking for '%s'" % module,
 		self.configcmd(cmd, fail)
 		
 
@@ -200,6 +202,11 @@ class XMMSEnvironment(Environment):
 			ret = self.config_cache[cmd]
 		else:
 			ret = os.popen(cmd).read()
+			if cmd.startswith("pkg-config"):
+				if ret == '':
+					print " ... no"
+				else:
+					print " ... yes"
 			self.config_cache[cmd] = ret
 
 		if ret == '':
