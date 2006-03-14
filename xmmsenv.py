@@ -319,10 +319,7 @@ class XMMSEnvironment(Environment):
 		return self["LIBPREFIX"] + os.path.basename(target) + self["LIBSUFFIX"]
 	
 	def shlibname(self, target):
-		if self.loadable:
-			return self["LDMODULEPREFIX"] + os.path.basename(target) + self["LDMODULESUFFIX"]
-		else:
-			return self["SHLIBPREFIX"] + os.path.basename(target) + self["SHLIBSUFFIX"]
+		return self["SHLIBPREFIX"] + os.path.basename(target) + self["SHLIBSUFFIX"]
 
 	def add_plugin(self, target, source):
 		self.plugins.append(target)
@@ -361,13 +358,14 @@ class XMMSEnvironment(Environment):
 				self.LoadableModule(target, source)
 				if self.platform == 'darwin':
 					self.Append(LINKFLAGS = ['-undefined','suppress', '-flat_namespace'])
+				self.Install(self.librarypath, target + self["LDMODULESUFFIX"])
 			else:
 				self.SharedLibrary(target, source)
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] += " -dynamiclib"
+				if install:
+					self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
-			if install:
-				self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
 
 	def add_program(self, target, source):

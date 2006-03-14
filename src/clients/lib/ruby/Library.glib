@@ -2,6 +2,7 @@ import os
 
 target="xmmsclient_glib"
 source=["rb_xmmsclient_glib.c"]
+loadable=True
 static=False
 
 def config(env):
