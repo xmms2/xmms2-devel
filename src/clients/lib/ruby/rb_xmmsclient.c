@@ -1057,18 +1057,9 @@ static VALUE c_signal_mediainfo_reader_unindexed (VALUE self)
  *
  * Retrieves an array containing a hash of information for each plugin.
  */
-static VALUE c_plugin_list (VALUE self, xmms_plugin_type_t type)
+static VALUE c_plugin_list (VALUE self, VALUE type)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_plugin_list (xmms->real, FIX2INT (type));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (plugin_list, type);
 }
 
 /*
