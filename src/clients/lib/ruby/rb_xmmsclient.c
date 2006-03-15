@@ -1071,6 +1071,17 @@ static VALUE c_plugin_list (int argc, VALUE *argv, VALUE self)
 
 /*
  * call-seq:
+ *	xc.main_stats -> result
+ *
+ * Retrieves a hash containing statistics about the daemon.
+ */
+static VALUE c_main_stats (VALUE self)
+{
+	METHOD_ADD_HANDLER (main_stats);
+}
+
+/*
+ * call-seq:
  *  xc.configval_list -> result
  *
  * Retrieves a list of all config values.
@@ -1227,6 +1238,7 @@ void Init_Client (VALUE mXmms)
 	                  c_signal_mediainfo_reader_unindexed, 0);
 
 	rb_define_method (c, "plugin_list", c_plugin_list, -1);
+	rb_define_method (c, "main_stats", c_main_stats, 0);
 
 	rb_define_method (c, "signal_visualisation_data",
 	                  c_signal_visualisation_data, 0);
