@@ -880,6 +880,17 @@ static VALUE c_medialib_add_entry (VALUE self, VALUE url)
 
 /*
  * call-seq:
+ *	xc.medialib_get_id(url) -> result
+ *
+ * Retrieves the id corresponding to _url_.
+ */
+static VALUE c_medialib_get_id (VALUE self, VALUE url)
+{
+	METHOD_ADD_HANDLER_STR (medialib_get_id, url);
+}
+
+/*
+ * call-seq:
  *  xc.medialib_get_info(id) -> result
  *
  * Retrieves medialib info for _id_.
@@ -1218,6 +1229,7 @@ void Init_Client (VALUE mXmms)
 	rb_define_method (c, "medialib_playlist_remove",
 	                  c_medialib_playlist_remove, 1);
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
+	rb_define_method (c, "medialib_get_id", c_medialib_get_id, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 	rb_define_method (c, "medialib_entry_property_set",
 	                  c_medialib_entry_property_set, -1);
