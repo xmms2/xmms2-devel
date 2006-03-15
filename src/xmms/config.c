@@ -592,7 +592,7 @@ static void
 xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
                           GHashTable *dict)
 {
-	g_hash_table_insert (dict, g_strdup (prop->name),
+	g_hash_table_insert (dict, g_strdup (key),
 	                     xmms_object_cmd_value_str_new (prop->value));
 }
 
