@@ -6,12 +6,16 @@
 #include <string>
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
+#include <xmmsclient/xmmsclient++/list.h>
 
 namespace Xmms 
 {
 
+	template< typename T >
+	class List;
+
 	typedef std::map< std::string, boost::any > Dict;
-	typedef std::vector< Dict > DictList;
+	typedef List< Dict > DictList;
 
 	typedef boost::shared_ptr< Dict > DictPtr;
 	typedef boost::shared_ptr< DictList > DictListPtr;

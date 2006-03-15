@@ -1,3 +1,5 @@
+#include <xmmsclient/xmmsclient.h>
+
 #include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
@@ -89,6 +91,8 @@ namespace Xmms
 
 		xmmsc_result_wait( res );
 
+		return DictListPtr( new List< Dict >( res ) );
+/*
 		if( xmmsc_result_iserror( res ) ) {
 			// handle
 		}
@@ -129,6 +133,7 @@ namespace Xmms
 		xmmsc_result_unref( res );
 
 		return result;
+		*/
 
 	}
 

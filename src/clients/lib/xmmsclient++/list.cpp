@@ -6,118 +6,89 @@
 #include <boost/any.hpp>
 
 #include <string>
+#include <iostream>
 
 namespace Xmms
 {
 
-	List::List( xmmsc_result_t* result )
+	Detail::SuperList::SuperList( xmmsc_result_t* result )
 		: result_( result ), constructed_( false )
 	{
 
-		if( xmmsc_result_iserror( result_ ) == 1 ) {
+		if( xmmsc_result_iserror( result_ ) ) {
 			throw result_error( xmmsc_result_get_error( result_ ) );
 		}
-		if( xmmsc_result_is_list( result_ ) == 0 ) {
+		if( !xmmsc_result_is_list( result_ ) ) {
 			throw not_list_error( "Provided result is not a list" );
 		}
 
 	}
 
-	List::~List()
+	Detail::SuperList::~SuperList()
 	{
 		xmmsc_result_unref( result_ );
 	}
 
-	void List::first()
+	void Detail::SuperList::first()
 	{
 
-		if( xmmsc_result_list_first( result_ ) == 0 ) {
+		if( !xmmsc_result_list_first( result_ ) ) {
 			// throw something...
 		}
 		constructed_ = false;
 
 	}
 
-	const boost::any& List::operator*()
+	void Detail::SuperList::operator++()
 	{
-		constructContents();
-		return contents_;
-	}
-
-	const boost::any& List::operator->()
-	{
-		constructContents();
-		return contents_;
-	}
-
-	void List::operator++()
-	{
-		if( xmmsc_result_list_next( result_ ) == 0 ) {
+		if( !xmmsc_result_list_next( result_ ) ) {
 			// throw
 		}
 		constructed_ = false;
 	}
 
-	bool List::isValid()
+	bool Detail::SuperList::isValid() const
+	{
+		return xmmsc_result_list_valid( result_ );
+	}
+
+	void Detail::dict_foreach( const void* key,
+	                           xmmsc_result_value_type_t type,
+							   const void* value,
+							   void* udata )
 	{
 
-		if( xmmsc_result_list_valid( result_ ) == 0 ) {
-			return false;
+		Dict* dict( static_cast< Dict* >( udata ) );
+		boost::any temp;
+		switch( type ) {
+			case XMMSC_RESULT_VALUE_TYPE_STRING: {
+				temp = std::string( static_cast< const char* >( value ) );
+				break;
+			}
+			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
+				temp = reinterpret_cast< const uint32_t >( value );
+				break;
+			}
+			case XMMSC_RESULT_VALUE_TYPE_INT32: {
+				temp = reinterpret_cast< const int32_t >( value );
+				break;
+			}
+			case XMMSC_RESULT_VALUE_TYPE_NONE: {
+				// FIXME: probably not the right thing to do
+				return;
+			}
 		}
-		return true;
+
+		(*dict)[ static_cast< const char* >( key ) ] = temp;
 
 	}
 
-	void List::constructContents()
+	void Detail::propdict_foreach( const void* key,
+	                               xmmsc_result_value_type_t type,
+								   const void* value,
+								   const char* source,
+								   void* udata )
 	{
-		if( constructed_ ) {
-			return;
-		}
-		switch( xmmsc_result_get_type( result_ ) )
-		{
-			case XMMS_OBJECT_CMD_ARG_UINT32: {
-				unsigned int temp = 0;
-				if( xmmsc_result_get_uint( result_, &temp ) == 0 ) {
-					// throw something
-				}
-				contents_ = temp;
-				break;
-			}
-			case XMMS_OBJECT_CMD_ARG_INT32: {
-				int temp = 0;
-				if( xmmsc_result_get_int( result_, &temp ) == 0 ) {
-					// throw something
-				}
-				contents_ = temp;
-				break;
-			}
-			case XMMS_OBJECT_CMD_ARG_STRING: {
-				char* temp = 0;
-				if( xmmsc_result_get_string( result_, &temp ) == 0 ) {
-					// throw something
-				}
-				contents_ = std::string( temp );
-				break;
-			}
-			case XMMS_OBJECT_CMD_ARG_DICT: {
-				// TODO: implement dict foreach function
-				break;
-			}
-			case XMMS_OBJECT_CMD_ARG_PROPDICT: {
-				// TODO: implement propdict foreach function
-				break;
-			}
-			case XMMS_OBJECT_CMD_ARG_LIST: {
-				contents_ = List( result_ );
-				break;
-			}
-			default: {
-				throw no_result_type_error( "Result is of no type" );
-			}
-
-		}
-
-		constructed_ = true;
 	}
 
 }
