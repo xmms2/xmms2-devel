@@ -129,10 +129,11 @@ base_env['BUILDERS']['SubstInFile'] = Builder(action=subst_action, emitter=subst
 
 python_executable = sys.executable
 
-b = Builder(action = python_executable + ' src/xmms/generate-converter.py > src/xmms/converter.c')
+base_env['BUILDERS']['Converter'] = Builder(action = python_executable + ' $SOURCE > $TARGET')
 base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
-base_env.SourceCode('src/xmms/converter.c', b)
+
+base_env.Converter("src/xmms/converter.c", "src/xmms/generate-converter.py")
 
 #b = Builder(action = python_executable + ' src/clients/lib/xmmsclient++/generate_methods.py > src/include/xmmsclient/xmmsclient++_methods.h')
 #base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/clients/lib/xmmsclient++/generate_methods.py')
