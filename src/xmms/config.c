@@ -336,10 +336,11 @@ xmms_config_property_register (const gchar *path,
 
 	prop = g_hash_table_lookup (global_config->properties, path);
 	if (!prop) {
-		gchar *name = strrchr (path, '.');
+		gchar *name;
 
 		/* get our own copy of the string */
 		path = g_strdup (path);
+		name = strrchr (path, '.');
 
 		if (!name) 
 			prop = xmms_config_property_new (path);
