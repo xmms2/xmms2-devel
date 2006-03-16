@@ -108,8 +108,6 @@ struct xmms_output_St {
 	xmms_object_t object;
 	xmms_plugin_t *plugin;
 
-	GMutex *object_mutex;
-
 	GMutex *decoder_mutex;
 	GQueue *decoder_list;
 	xmms_decoder_t *decoder;
@@ -271,12 +269,10 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 		xmms_output_format_set (output, xmms_decoder_audio_format_to_get (output->decoder));
 		output->played = 0;
 
-		g_mutex_lock (output->object_mutex);
 		xmms_object_emit_f (XMMS_OBJECT (output),
 		                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
 		                    XMMS_OBJECT_CMD_ARG_UINT32,
 		                    xmms_decoder_medialib_entry_get (output->decoder));
-		g_mutex_unlock (output->object_mutex);
 	}
 	g_mutex_unlock (output->decoder_mutex);
 	
@@ -302,12 +298,10 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 		output->played_time = xmms_sample_bytes_to_ms (output->format, output->played - buffersize);
 
-		g_mutex_lock (output->object_mutex);
 		xmms_object_emit_f (XMMS_OBJECT (output),
 				    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
 				    XMMS_OBJECT_CMD_ARG_UINT32,
 				    output->played_time);
-		g_mutex_unlock (output->object_mutex);
 
 		g_mutex_unlock (output->playtime_mutex);
 
@@ -662,12 +656,10 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 				ret = FALSE;
 			}
 
-			g_mutex_lock (output->object_mutex);
 			xmms_object_emit_f (XMMS_OBJECT (output),
 								XMMS_IPC_SIGNAL_PLAYBACK_STATUS,
 								XMMS_OBJECT_CMD_ARG_UINT32,
 								output->status);
-			g_mutex_unlock (output->object_mutex);
 		}
 	}
 
@@ -786,7 +778,6 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_object_unref (output->playlist);
 
 	g_queue_free (output->decoder_list);
-	g_mutex_free (output->object_mutex);
 	g_mutex_free (output->decoder_mutex);
 	g_mutex_free (output->status_mutex);
 	g_mutex_free (output->playtime_mutex);
@@ -859,8 +850,6 @@ xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist)
 
 	output->write_mutex = g_mutex_new ();
 	output->write_cond = g_cond_new ();
-
-	output->object_mutex = g_mutex_new ();
 
 	output->decoder_mutex = g_mutex_new ();
 	output->decoder_list = g_queue_new ();
@@ -1372,8 +1361,6 @@ xmms_output_monitor_volume_thread (gpointer data)
 		    (cur.status && old.status &&
 			 !xmms_volume_map_equal (&old, &cur))) {
 			/* emit the broadcast */
-			g_mutex_lock (output->object_mutex);
-
 			if (cur.status) {
 				hash = xmms_volume_map_to_hash (&cur);
 				xmms_object_emit_f (XMMS_OBJECT (output),
@@ -1386,8 +1373,6 @@ xmms_output_monitor_volume_thread (gpointer data)
 				                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
 				                    XMMS_OBJECT_CMD_ARG_NONE);
 			}
-
-			g_mutex_unlock (output->object_mutex);
 		}
 
 		xmms_volume_map_copy (&cur, &old);
