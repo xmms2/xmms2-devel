@@ -678,7 +678,7 @@ xmms_alsa_volume_get (xmms_output_t *output, const gchar **names,
 	g_return_val_if_fail (values, FALSE);
 
 	err = snd_mixer_handle_events (data->mixer);
-	if (err != 0) {
+	if (err < 0) {
 		xmms_log_error ("Handling of pending mixer events failed: %s",
 		                snd_strerror (err));
 		return FALSE;
