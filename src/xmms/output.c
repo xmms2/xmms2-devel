@@ -38,6 +38,13 @@
 
 #define VOLUME_MAX_CHANNELS 128
 
+typedef struct xmms_volume_map_St {
+	const gchar **names;
+	guint *values;
+	guint num_channels;
+	gboolean status;
+} xmms_volume_map_t;
+
 static gpointer xmms_output_write_thread (gpointer data);
 static gpointer xmms_output_monitor_volume_thread (gpointer data);
 static gboolean xmms_output_decoder_start (xmms_output_t *output);
@@ -58,8 +65,10 @@ static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 static void xmms_output_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
 static GHashTable *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
 
-static void fill_volume_hash (GHashTable *hash, const gchar **names,
-                              guint *values, guint num_channels);
+static void xmms_volume_map_init (xmms_volume_map_t *vl);
+static void xmms_volume_map_free (xmms_volume_map_t *vl);
+static void xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst);
+static GHashTable *xmms_volume_map_to_hash (xmms_volume_map_t *vl);
 
 static gboolean xmms_output_status_set (xmms_output_t *output, gint status);
 static gboolean set_plugin (xmms_output_t *output, xmms_plugin_t *plugin);
@@ -151,13 +160,6 @@ struct xmms_output_St {
 	GThread *monitor_volume_thread;
 	gboolean monitor_volume_running;
 };
-
-typedef struct xmms_volume_map_St {
-	const gchar **names;
-	guint *values;
-	guint num_channels;
-	gboolean status;
-} xmms_volume_map_t;
 
 /** @} */
 
@@ -575,9 +577,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 {
 	GHashTable *ret;
 	xmms_output_volume_get_method_t m;
-	gboolean success;
-	const gchar **names;
-	guint *values, num_channels = 0;
+	xmms_volume_map_t map;
 
 	g_assert (output->plugin);
 
@@ -592,30 +592,27 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_error_set (error, XMMS_ERROR_GENERIC,
 	                "couldn't get volume");
 
+	xmms_volume_map_init (&map);
+
 	/* ask the plugin how much channels it would like to set */
-	if (!m (output, NULL, NULL, &num_channels)) {
+	if (!m (output, NULL, NULL, &map.num_channels)) {
 		return NULL;
 	}
 
 	/* check for sane values */
-	g_return_val_if_fail (num_channels > 0, NULL);
-	g_return_val_if_fail (num_channels <= VOLUME_MAX_CHANNELS, NULL);
+	g_return_val_if_fail (map.num_channels > 0, NULL);
+	g_return_val_if_fail (map.num_channels <= VOLUME_MAX_CHANNELS, NULL);
 
-	names = g_new (const gchar *, num_channels);
-	values = g_new (guint, num_channels);
+	map.names = g_new (const gchar *, map.num_channels);
+	map.values = g_new (guint, map.num_channels);
 
-	ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                             NULL, xmms_object_cmd_value_free);
-	if (!ret) {
-		return NULL;
+	map.status = m (output, map.names, map.values, &map.num_channels);
+
+	if (!map.status || !map.num_channels) {
+		return NULL; /* error is set (-> no leak) */
 	}
 
-	success = m (output, names, values, &num_channels);
-	if (!success || !num_channels) {
-		return ret; /* error is set (-> no leak) */
-	}
-
-	fill_volume_hash (ret, names, values, num_channels);
+	ret = xmms_volume_map_to_hash (&map);
 
 	/* success! */
 	xmms_error_reset (error);
@@ -1265,20 +1262,6 @@ xmms_volume_map_equal (xmms_volume_map_t *a, xmms_volume_map_t *b)
 }
 
 static void
-fill_volume_hash (GHashTable *hash, const gchar **names, guint *values,
-                  guint num_channels)
-{
-	gint i;
-
-	for (i = 0; i < num_channels; i++) {
-		xmms_object_cmd_value_t *val;
-
-		val = xmms_object_cmd_value_uint_new (values[i]);
-		g_hash_table_insert (hash, (gpointer) names[i], val);
-	}
-}
-
-static void
 xmms_volume_map_init (xmms_volume_map_t *vl)
 {
 	vl->status = FALSE;
@@ -1319,9 +1302,32 @@ xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst)
 	memcpy (dst->values, src->values, src->num_channels * sizeof (guint));
 }
 
+static GHashTable *
+xmms_volume_map_to_hash (xmms_volume_map_t *vl)
+{
+	GHashTable *ret;
+	gint i;
+
+	ret = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                             NULL, xmms_object_cmd_value_free);
+	if (!ret) {
+		return NULL;
+	}
+
+	for (i = 0; i < vl->num_channels; i++) {
+		xmms_object_cmd_value_t *val;
+
+		val = xmms_object_cmd_value_uint_new (vl->values[i]);
+		g_hash_table_insert (ret, (gpointer) vl->names[i], val);
+	}
+
+	return ret;
+}
+
 static gpointer
 xmms_output_monitor_volume_thread (gpointer data)
 {
+	GHashTable *hash;
 	xmms_output_t *output = data;
 	xmms_output_volume_get_method_t m;
 	xmms_volume_map_t old, cur;
@@ -1367,9 +1373,20 @@ xmms_output_monitor_volume_thread (gpointer data)
 			 !xmms_volume_map_equal (&old, &cur))) {
 			/* emit the broadcast */
 			g_mutex_lock (output->object_mutex);
-			xmms_object_emit_f (XMMS_OBJECT (output),
-			                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
-			                    XMMS_OBJECT_CMD_ARG_NONE);
+
+			if (cur.status) {
+				hash = xmms_volume_map_to_hash (&cur);
+				xmms_object_emit_f (XMMS_OBJECT (output),
+				                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
+				                    XMMS_OBJECT_CMD_ARG_DICT, hash);
+				g_hash_table_destroy (hash);
+			} else {
+				/** @todo When bug 691 is solved, emit an error here */
+				xmms_object_emit_f (XMMS_OBJECT (output),
+				                    XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED,
+				                    XMMS_OBJECT_CMD_ARG_NONE);
+			}
+
 			g_mutex_unlock (output->object_mutex);
 		}
 
