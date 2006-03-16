@@ -345,6 +345,8 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 	va_list ap;
 	xmms_object_cmd_arg_t arg;
 
+	xmms_object_cmd_arg_init (&arg);
+
 	va_start(ap, type);
 
 	switch (type) {
