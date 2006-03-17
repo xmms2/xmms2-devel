@@ -38,56 +38,6 @@
 
 #define VOLUME_MAX_CHANNELS 128
 
-typedef struct xmms_volume_map_St {
-	const gchar **names;
-	guint *values;
-	guint num_channels;
-	gboolean status;
-} xmms_volume_map_t;
-
-static gpointer xmms_output_write_thread (gpointer data);
-static gpointer xmms_output_monitor_volume_thread (gpointer data);
-static gboolean xmms_output_decoder_start (xmms_output_t *output);
-static void xmms_output_decoder_stop (xmms_output_t *output, xmms_decoder_t *decoder);
-static void xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt);
-
-static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
-static void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
-static void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
-static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
-static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
-static void xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error);
-static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
-static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
-static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
-static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
-
-static void xmms_output_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
-static GHashTable *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
-
-static void xmms_volume_map_init (xmms_volume_map_t *vl);
-static void xmms_volume_map_free (xmms_volume_map_t *vl);
-static void xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst);
-static GHashTable *xmms_volume_map_to_hash (xmms_volume_map_t *vl);
-
-static gboolean xmms_output_status_set (xmms_output_t *output, gint status);
-static gboolean set_plugin (xmms_output_t *output, xmms_plugin_t *plugin);
-static gboolean status_changed (xmms_output_t *output, xmms_playback_status_t status);
-
-XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
-XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
-XMMS_CMD_DEFINE (seekms_rel, xmms_output_seekms_rel, xmms_output_t *, NONE, INT32, NONE);
-XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
-XMMS_CMD_DEFINE (seeksamples_rel, xmms_output_seeksamples_rel, xmms_output_t *, NONE, INT32, NONE);
-XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
-XMMS_CMD_DEFINE (volume_set, xmms_output_volume_set, xmms_output_t *, NONE, STRING, UINT32);
-XMMS_CMD_DEFINE (volume_get, xmms_output_volume_get, xmms_output_t *, DICT, NONE, NONE);
-
 /*
  * Type definitions
  */
@@ -160,6 +110,56 @@ struct xmms_output_St {
 };
 
 /** @} */
+
+typedef struct xmms_volume_map_St {
+	const gchar **names;
+	guint *values;
+	guint num_channels;
+	gboolean status;
+} xmms_volume_map_t;
+
+static gpointer xmms_output_write_thread (gpointer data);
+static gpointer xmms_output_monitor_volume_thread (gpointer data);
+static gboolean xmms_output_decoder_start (xmms_output_t *output);
+static void xmms_output_decoder_stop (xmms_output_t *output, xmms_decoder_t *decoder);
+static void xmms_output_format_set (xmms_output_t *output, xmms_audio_format_t *fmt);
+
+static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
+static void xmms_output_stop (xmms_output_t *output, xmms_error_t *err);
+static void xmms_output_pause (xmms_output_t *output, xmms_error_t *err);
+static void xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *err);
+static void xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error);
+static void xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error);
+static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
+static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
+static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
+static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
+
+static void xmms_output_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
+static GHashTable *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
+
+static void xmms_volume_map_init (xmms_volume_map_t *vl);
+static void xmms_volume_map_free (xmms_volume_map_t *vl);
+static void xmms_volume_map_copy (xmms_volume_map_t *src, xmms_volume_map_t *dst);
+static GHashTable *xmms_volume_map_to_hash (xmms_volume_map_t *vl);
+
+static gboolean xmms_output_status_set (xmms_output_t *output, gint status);
+static gboolean set_plugin (xmms_output_t *output, xmms_plugin_t *plugin);
+static gboolean status_changed (xmms_output_t *output, xmms_playback_status_t status);
+
+XMMS_CMD_DEFINE (start, xmms_output_start, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (stop, xmms_output_stop, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (pause, xmms_output_pause, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (decoder_kill, xmms_output_decoder_kill, xmms_output_t *, NONE, NONE, NONE);
+XMMS_CMD_DEFINE (playtime, xmms_output_playtime, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (seekms, xmms_output_seekms, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (seekms_rel, xmms_output_seekms_rel, xmms_output_t *, NONE, INT32, NONE);
+XMMS_CMD_DEFINE (seeksamples, xmms_output_seeksamples, xmms_output_t *, NONE, UINT32, NONE);
+XMMS_CMD_DEFINE (seeksamples_rel, xmms_output_seeksamples_rel, xmms_output_t *, NONE, INT32, NONE);
+XMMS_CMD_DEFINE (output_status, xmms_output_status, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (currentid, xmms_output_current_id, xmms_output_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (volume_set, xmms_output_volume_set, xmms_output_t *, NONE, STRING, UINT32);
+XMMS_CMD_DEFINE (volume_get, xmms_output_volume_get, xmms_output_t *, DICT, NONE, NONE);
 
 /*
  * Public functions
