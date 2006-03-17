@@ -166,6 +166,8 @@ process_dir (xmonitor_t *mon, gchar *dirpath)
 			DBG ("Now watching dir %s", path);
 			mon->dir_list = g_list_append (mon->dir_list, path);
 			process_dir (mon, path);
+		} else {
+			g_free (path);
 		}
 	}
 
@@ -231,14 +233,12 @@ handle_config_changed (xmmsc_result_t *res, void *data)
 	gchar *val;
 
 	
-	if (!xmmsc_result_get_string (res, &key)) {
+	if (!xmmsc_result_get_dict_entry_str (res, "name", &key)) {
 		ERR ("Config changed has invalid result!");
 		return;
 	}
 
-	xmmsc_result_list_next (res);
-
-	if (!xmmsc_result_get_string (res, &val)) {
+	if (!xmmsc_result_get_dict_entry_str (res, "value", &val)) {
 		ERR ("Config changed has invalid result!");
 		return;
 	}
@@ -303,7 +303,7 @@ main (int argc, char **argv)
 	xmonitor_t *mon;
 	gint fd;
 
-	conn = xmmsc_init ("XMMS MLib Updater " VERSION);
+	conn = xmmsc_init ("xmms-medialib-updater");
 	path = getenv ("XMMS_PATH");
 	if (!xmmsc_connect (conn, path)) {
 		ERR ("Could not connect to xmms2d %s", xmmsc_get_last_error (conn));
