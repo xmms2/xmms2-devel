@@ -166,6 +166,8 @@ process_dir (xmonitor_t *mon, gchar *dirpath)
 			DBG ("Now watching dir %s", path);
 			mon->dir_list = g_list_append (mon->dir_list, path);
 			process_dir (mon, path);
+		} else {
+			g_free (path);
 		}
 	}
 
