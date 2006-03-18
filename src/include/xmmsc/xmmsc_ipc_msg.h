@@ -80,6 +80,5 @@ bool xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v);
 bool xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, float *v);
 bool xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *str, unsigned int maxlen);
 bool xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
-bool xmms_ipc_msg_get (xmms_ipc_msg_t *msg, ...);
 
 #endif 
