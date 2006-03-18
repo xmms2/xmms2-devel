@@ -1,2 +1,5 @@
 target="wave"
 source=["wave.c"]
+
+def config(env):
+	raise ConfigError("disabled")

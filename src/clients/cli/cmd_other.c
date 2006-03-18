@@ -43,10 +43,12 @@ cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		type = XMMS_PLUGIN_TYPE_ALL;
 	} else if (g_strcasecmp (argv[2], "output") == 0) {
 		type = XMMS_PLUGIN_TYPE_OUTPUT;
+/*
 	} else if (g_strcasecmp (argv[2], "transport") == 0) {
 		type = XMMS_PLUGIN_TYPE_TRANSPORT;
 	} else if (g_strcasecmp (argv[2], "decoder") == 0) {
 		type = XMMS_PLUGIN_TYPE_DECODER;
+*/
 	} else if (g_strcasecmp (argv[2], "effect") == 0) {
 		type = XMMS_PLUGIN_TYPE_EFFECT;
 	} else if (g_strcasecmp (argv[2], "playlist") == 0) {

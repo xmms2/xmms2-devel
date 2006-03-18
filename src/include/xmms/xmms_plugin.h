@@ -35,6 +35,9 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLAYLIST_PLUGIN_API_VERSION 2
 #define XMMS_OUTPUT_PLUGIN_API_VERSION 2
 
+typedef guint32 xmms_plugin_api_version_t;
+
+#define XMMS_XFORM_PLUGIN_API_VERSION 1
 
 /* 
  * Plugin methods
@@ -43,6 +46,7 @@ typedef struct xmms_plugin_St xmms_plugin_t;
 #define XMMS_PLUGIN_METHOD_CAN_HANDLE "can_handle"
 #define XMMS_PLUGIN_METHOD_OPEN "open"
 #define XMMS_PLUGIN_METHOD_CLOSE "close"
+#define XMMS_PLUGIN_METHOD_XFORM "xform"
 #define XMMS_PLUGIN_METHOD_READ "read"
 #define XMMS_PLUGIN_METHOD_SIZE "size"
 #define XMMS_PLUGIN_METHOD_SEEK "seek"

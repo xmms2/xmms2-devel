@@ -19,13 +19,11 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_magic.h"
-#include "xmmspriv/xmms_decoder.h"
-#include "xmmspriv/xmms_transport.h"
 #include "xmmspriv/xmms_effect.h"
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_plsplugins.h"
+#include "xmmspriv/xmms_xform.h"
 
 #include <gmodule.h>
 #include <string.h>
@@ -65,9 +63,6 @@ struct xmms_plugin_St {
 
 	guint users;
 	GHashTable *method_table;
-
-	/* decoder/playlist plugin specific stuff */
-	GList *magic;
 };
 
 /*
@@ -152,11 +147,8 @@ xmms_plugin_new (xmms_plugin_type_t type,
 	g_return_val_if_fail (description, NULL);
 
 	switch (type) {
-		case XMMS_PLUGIN_TYPE_TRANSPORT:
-			api_mismatch = (api_ver != XMMS_TRANSPORT_PLUGIN_API_VERSION);
-			break;
-		case XMMS_PLUGIN_TYPE_DECODER:
-			api_mismatch = (api_ver != XMMS_DECODER_PLUGIN_API_VERSION);
+		case XMMS_PLUGIN_TYPE_XFORM:
+			api_mismatch = (api_ver != XMMS_XFORM_PLUGIN_API_VERSION);
 			break;
 		case XMMS_PLUGIN_TYPE_OUTPUT:
 			api_mismatch = (api_ver != XMMS_OUTPUT_PLUGIN_API_VERSION);
@@ -268,68 +260,6 @@ xmms_plugin_info_add (xmms_plugin_t *plugin, gchar *key, gchar *value)
 	info->value = g_strdup (value);
 
 	plugin->info_list = g_list_append (plugin->info_list, info);
-}
-
-gboolean
-xmms_plugin_magic_add (xmms_plugin_t *plugin, const gchar *desc,
-                       const gchar *mime, ...)
-{
-	GNode *tree, *node = NULL;
-	va_list ap;
-	gchar *s;
-	gpointer *root_props;
-	gboolean ret = TRUE;
-
-	g_return_val_if_fail (plugin, FALSE);
-	g_return_val_if_fail (plugin->type == XMMS_PLUGIN_TYPE_DECODER ||
-	                      plugin->type == XMMS_PLUGIN_TYPE_PLAYLIST,
-	                      FALSE);
-	g_return_val_if_fail (desc, FALSE);
-	g_return_val_if_fail (mime, FALSE);
-
-	/* now process the magic specs in the argument list */
-	va_start (ap, mime);
-
-	s = va_arg (ap, gchar *);
-	if (!s) { /* no magic specs passed -> failure */
-		va_end (ap);
-		return FALSE;
-	}
-
-	/* root node stores the description and the mimetype */
-	root_props = g_new0 (gpointer, 2);
-	root_props[0] = g_strdup (desc);
-	root_props[1] = g_strdup (mime);
-	tree = g_node_new (root_props);
-
-	do {
-		if (!strlen (s)) {
-			ret = FALSE;
-			xmms_log_error ("invalid magic spec: '%s'", s);
-			break;
-		}
-
-		s = g_strdup (s); /* we need our own copy */
-		node = xmms_magic_add (tree, s, node);
-		g_free (s);
-
-		if (!node) {
-			xmms_log_error ("invalid magic spec: '%s'", s);
-			ret = FALSE;
-			break;
-		}
-	} while ((s = va_arg (ap, gchar *)));
-
-	va_end (ap);
-
-	/* only add this tree to the list if all spec chunks are valid */
-	if (ret) {
-		plugin->magic = g_list_append (plugin->magic, tree);
-	} else {
-		xmms_magic_tree_free (tree);
-	}
-
-	return ret;
 }
 
 /**
@@ -499,22 +429,29 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 	return plugin->info_list;
 }
 
-/**
- * @internal Get magic specs from the plugin.
- * @param[in] plugin The plugin
- * @return a GList of magic specs from the plugin
- */
-const GList *
-xmms_plugin_magic_get (const xmms_plugin_t *plugin)
-{
-	g_return_val_if_fail (plugin, NULL);
-
-	return plugin->magic;
-}
-
 /*
  * Private functions
  */
+
+
+static void
+xmms_plugin_add_builtin_plugins (void)
+{
+	xmms_xform_plugin_t *xp;
+
+	xp = xmms_xform_plugin_new ();
+	xmms_magic_plugin_add (xp);
+	xmms_object_unref (xp);
+
+	xp = xmms_xform_plugin_new ();
+	xmms_ringbuf_plugin_add (xp);
+	xmms_object_unref (xp);
+
+	xp = xmms_xform_plugin_new ();
+	xmms_converter_plugin_add (xp);
+	xmms_object_unref (xp);
+}
+
 
 /**
  * @internal Initialise the plugin system
@@ -529,8 +466,10 @@ xmms_plugin_init (gchar *path)
 	if (!path)
 		path = PKGLIBDIR;
 
-	return xmms_plugin_scan_directory (path);
-	
+	xmms_plugin_scan_directory (path);
+
+	xmms_plugin_add_builtin_plugins ();
+	return TRUE;
 }
 
 /**
@@ -574,6 +513,52 @@ xmms_plugin_shutdown ()
 	}
 
 	g_mutex_free (xmms_plugin_mtx);
+}
+
+
+static gboolean
+newstyle_init (GModule *module)
+{
+	xmms_xform_plugin_t *xp;
+	gpointer sym;
+	xmms_plugin_api_version_t *ver;
+	xmms_plugin_type_t *type;
+	gboolean (*init) (xmms_xform_plugin_t *);
+
+	if (!g_module_symbol (module, "XMMS_PLUGIN_TYPE", &sym)) {
+		return FALSE;
+	}
+
+	type = (xmms_plugin_type_t *)sym;
+	if (*type != XMMS_PLUGIN_TYPE_XFORM) {
+		XMMS_DBG ("Unknown plugin type %d", *type);
+		return FALSE;
+	}
+
+	if (!g_module_symbol (module, "XMMS_PLUGIN_API_VERSION", &sym)) {
+		return FALSE;
+	}
+
+	ver = (xmms_plugin_api_version_t *)sym;
+	if (*ver != XMMS_XFORM_API_VERSION) {
+		XMMS_DBG ("Bad api version");
+		return FALSE;
+	}
+
+	if (!g_module_symbol (module, "xmms_xform_plugin_get", &sym)) {
+		XMMS_DBG ("Plugin without xmms_xform_plugin_get");
+		return FALSE;
+	}
+	
+	init = sym;
+
+	xp = xmms_xform_plugin_new ();
+
+	init (xp);
+	
+	xmms_object_unref (xp);
+
+	return TRUE;
 }
 
 /**
@@ -627,7 +612,10 @@ xmms_plugin_scan_directory (const gchar *dir)
 		if (!g_module_symbol (module, "xmms_plugin_get", &sym)) {
 			xmms_log_error ("Failed to open plugin %s: "
 			                "initialization function missing", path);
-			g_module_close (module);
+
+			if (!newstyle_init (module)) {
+				g_module_close (module);
+			}
 			g_free (path);
 			continue;
 		}
@@ -861,11 +849,6 @@ xmms_plugin_destroy (xmms_object_t *object)
 		p->info_list = g_list_delete_link (p->info_list, p->info_list);
 	}
 
-	while (p->magic) {
-		xmms_magic_tree_free (p->magic->data);
-		p->magic = g_list_delete_link (p->magic, p->magic);
-	}
-
 	/* remove this plugin from the global plugin list */
 	g_mutex_lock (xmms_plugin_mtx);
 	xmms_plugin_list = g_list_remove (xmms_plugin_list, p);
@@ -887,11 +870,8 @@ plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
 	gchar *pl;
 
 	switch (xmms_plugin_type_get (plugin)) {
-		case XMMS_PLUGIN_TYPE_TRANSPORT:
-			pl = "transport";
-			break;
-		case XMMS_PLUGIN_TYPE_DECODER:
-			pl = "decoder";
+		case XMMS_PLUGIN_TYPE_XFORM:
+			pl = "xform";
 			break;
 		case XMMS_PLUGIN_TYPE_OUTPUT:
 			pl = "output";
@@ -920,17 +900,16 @@ plugin_verify (xmms_plugin_t *plugin)
 	g_assert (plugin);
 
 	switch (xmms_plugin_type_get (plugin)) {
-		case XMMS_PLUGIN_TYPE_TRANSPORT:
-			f = xmms_transport_plugin_verify;
-			break;
-		case XMMS_PLUGIN_TYPE_DECODER:
-			f = xmms_decoder_plugin_verify;
-			break;
+		case XMMS_PLUGIN_TYPE_XFORM:
+/*			f = xmms_xform_plugin_verify;
+			break;*/
+			return TRUE;
 		case XMMS_PLUGIN_TYPE_OUTPUT:
 			f = xmms_output_plugin_verify;
 			break;
 		case XMMS_PLUGIN_TYPE_PLAYLIST:
-			f = xmms_playlist_plugin_verify;
+			/*f = xmms_playlist_plugin_verify;*/
+			return FALSE;
 			break;
 		case XMMS_PLUGIN_TYPE_EFFECT:
 			f = xmms_effect_plugin_verify;

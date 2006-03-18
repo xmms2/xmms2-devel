@@ -1,5 +1,5 @@
 target="mad"
-source=["mad.c", "id3.c", "xing.c"]
+source=["mad.c", "xing.c"]
 
 def config(env):
 	env.checkheader("mad.h")
