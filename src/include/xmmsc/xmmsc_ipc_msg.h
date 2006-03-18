@@ -23,7 +23,7 @@
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_inline.h"
 
-#define XMMS_IPC_MSG_DEFAULT_SIZE 32768
+#define XMMS_IPC_MSG_DEFAULT_SIZE 128 /*32768*/
 #define XMMS_IPC_MSG_MAX_SIZE 327680
 #define XMMS_IPC_MSG_HEAD_LEN 16 /* all but data */
 
