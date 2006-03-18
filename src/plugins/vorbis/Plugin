@@ -2,6 +2,6 @@ target="vorbisfile"
 source=["vorbisfile.c"]
 
 def config(env):
-	raise ConfigError("disabled")
+	env.checkheader("vorbis/vorbisfile.h")
 	env.checklib("vorbisfile", "ov_open_callbacks")
 
