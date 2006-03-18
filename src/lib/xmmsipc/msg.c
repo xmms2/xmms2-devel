@@ -31,7 +31,7 @@ typedef union {
 	struct {
 		uint32_t object;
 		uint32_t cmd;
-		uint32_t cid;
+		uint32_t cookie;
 		uint32_t length;
 		uint8_t data[0];
 	} header;
@@ -128,17 +128,17 @@ xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, uint32_t cmd)
 }
 
 void
-xmms_ipc_msg_set_cid (xmms_ipc_msg_t *msg, uint32_t cid)
+xmms_ipc_msg_set_cookie (xmms_ipc_msg_t *msg, uint32_t cookie)
 {
-	msg->data->header.cid = htonl (cid);
+	msg->data->header.cookie = htonl (cookie);
 }
 
 uint32_t
-xmms_ipc_msg_get_cid (const xmms_ipc_msg_t *msg)
+xmms_ipc_msg_get_cookie (const xmms_ipc_msg_t *msg)
 {
 	x_return_val_if_fail (msg, 0);
 
-	return ntohl (msg->data->header.cid);
+	return ntohl (msg->data->header.cookie);
 }
 
 /**

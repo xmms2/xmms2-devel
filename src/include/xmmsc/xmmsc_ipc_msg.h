@@ -32,9 +32,9 @@ typedef struct xmms_ipc_msg_St xmms_ipc_msg_t;
 uint32_t xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg);
 uint32_t xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg);
 uint32_t xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg);
-uint32_t xmms_ipc_msg_get_cid (const xmms_ipc_msg_t *msg);
+uint32_t xmms_ipc_msg_get_cookie (const xmms_ipc_msg_t *msg);
 void xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, uint32_t len);
-void xmms_ipc_msg_set_cid (xmms_ipc_msg_t *msg, uint32_t cid);
+void xmms_ipc_msg_set_cookie (xmms_ipc_msg_t *msg, uint32_t cookie);
 void xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, uint32_t cmd);
 void xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, uint32_t object);
 
