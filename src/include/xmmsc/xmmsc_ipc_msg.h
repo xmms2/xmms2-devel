@@ -74,7 +74,6 @@ __XMMS_IPC_MSG_DO_IDENTITY_FUNC(char)
 
 #define XMMS_IPC_MSG_END XMMS_IPC_MSG_ARG_TYPE_END
 
-void xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg);
 bool xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v);
 bool xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v);
 bool xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, float *v);

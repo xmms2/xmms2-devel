@@ -314,12 +314,6 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
 }
 
-void
-xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg)
-{
-	msg->get_pos = 0;
-}
-
 static bool
 xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, void *buf, unsigned int len)
 {
