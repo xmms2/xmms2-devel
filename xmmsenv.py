@@ -192,7 +192,7 @@ class XMMSEnvironment(Environment):
 			cmd += " --libs" 
 		cmd += " \"%s\"" % module
 		if not self.config_cache.has_key(cmd):
-			print "Checking for '%s'" % module,
+			print "Checking for %s" % module,
 		self.configcmd(cmd, fail)
 		
 
@@ -460,3 +460,4 @@ class XMMSEnvironment(Environment):
 			except ConfigError, m:
 				self.conf.logstream.write("xmmsscons: File %s reported error '%s' and was disabled.\n" % (t.target, m))
 				continue
+
