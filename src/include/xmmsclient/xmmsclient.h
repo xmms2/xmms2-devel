@@ -197,7 +197,6 @@ void xmmsc_result_wait (xmmsc_result_t *res);
 
 int xmmsc_result_iserror (xmmsc_result_t *res);
 const char * xmmsc_result_get_error (xmmsc_result_t *res);
-int xmmsc_result_cid (xmmsc_result_t *res);
 
 int xmmsc_result_get_int (xmmsc_result_t *res, int *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r);

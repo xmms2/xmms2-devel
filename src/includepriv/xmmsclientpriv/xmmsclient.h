@@ -52,13 +52,15 @@ struct xmmsc_connection_St {
 	char *error;
 	int timeout;
 	void *data;
-	uint32_t cmd_id;
+	uint32_t cookie;
 
 	char *clientname;
 };
 
-xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type, uint32_t commandid);
+xmmsc_result_t *xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type, uint32_t cookie);
 void xmmsc_ref (xmmsc_connection_t *c);
+
+uint32_t xmmsc_result_cookie_get (xmmsc_result_t *result);
 
 xmmsc_result_t *xmmsc_send_msg_no_arg (xmmsc_connection_t *c, int object, int cmd);
 xmmsc_result_t *xmmsc_send_msg (xmmsc_connection_t *c, xmms_ipc_msg_t *msg);
