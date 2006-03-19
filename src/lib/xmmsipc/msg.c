@@ -51,7 +51,8 @@ xmms_ipc_msg_alloc (void)
 	xmms_ipc_msg_t *msg;
 
 	msg = x_new0 (xmms_ipc_msg_t, 1);
-	msg->data = x_malloc0 (XMMS_IPC_MSG_DEFAULT_SIZE);
+	msg->data = malloc (XMMS_IPC_MSG_DEFAULT_SIZE);
+	memset (msg->data, 0, XMMS_IPC_MSG_HEAD_LEN);
 	msg->size = XMMS_IPC_MSG_DEFAULT_SIZE;
 
 	return msg;

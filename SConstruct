@@ -19,7 +19,7 @@ else:
 
 XMMS_VERSION = "0.2 DrCox-WIP (git commit: %s%s)" % (commithash, changed)
 
-EnsureSConsVersion(0, 96, 90)
+EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
 SConsignFile()
 

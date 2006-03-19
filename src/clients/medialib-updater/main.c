@@ -31,7 +31,7 @@ handle_file_add (xmonitor_t *mon, gchar *filename)
 	} else if (g_file_test (filename, G_FILE_TEST_IS_REGULAR)) {
 		gchar tmp[MON_FILENAME_MAX];
 		g_snprintf (tmp, MON_FILENAME_MAX, "file://%s", filename);
-		xmmsc_medialib_add_entry (mon->conn, tmp);
+		xmmsc_result_unref (xmmsc_medialib_add_entry (mon->conn, tmp));
 		DBG ("Adding %s to medialib!", tmp);
 	}
 }
