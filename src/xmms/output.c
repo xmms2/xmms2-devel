@@ -672,6 +672,7 @@ static gboolean
 xmms_output_open (xmms_output_t *output)
 {
 	xmms_output_open_method_t open_method;
+	gboolean ret;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -679,13 +680,14 @@ xmms_output_open (xmms_output_t *output)
 	g_assert (open_method);
 
 	g_mutex_lock (output->api_mutex);
-	if (!open_method (output)) {
-		xmms_log_error ("Couldn't open output device");
-		return FALSE;
-	}
+	ret = open_method (output);
 	g_mutex_unlock (output->api_mutex);
 
-	return TRUE;
+	if (!ret) {
+		xmms_log_error ("Couldn't open output device");
+	}
+
+	return ret;
 
 }
 
