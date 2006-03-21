@@ -1,7 +1,7 @@
-/** @file alsa.c
- *  Output plugin for the Advanced Linux Sound Architechture.
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  *
- *  Copyright (C) 2003-2005 Daniel Svensson, <daniel@nittionio.nu>
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public

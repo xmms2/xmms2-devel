@@ -92,7 +92,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsc_result_wait(xmmsc_result_t *res)
 	signed int xmmsc_result_iserror(xmmsc_result_t *res)
 	signed char *xmmsc_result_get_error(xmmsc_result_t *res)
-	int xmmsc_result_cid(xmmsc_result_t *res)
 	int xmmsc_result_get_type(xmmsc_result_t *res)
 
 	signed int xmmsc_result_get_int(xmmsc_result_t *res, int *r)
@@ -286,18 +285,15 @@ cdef class XMMSResult:
 	cdef xmmsc_result_t *orig
 	cdef object notifier
 	cdef object user_data
-	cdef int cid
 	cdef int broadcast
 	cdef object callback
 	cdef object c
 
 	def __new__(self, c):
-		self.cid = 0
 		self.c = c
 
 	def more_init(self, broadcast = 0):
 		self.orig = self.res
-		self.cid = xmmsc_result_cid(self.res)
 		self.broadcast = broadcast
 		xmmsc_result_notifier_set(self.res, ResultNotifier, self)
 		self.c._add_ref(self)
@@ -349,9 +345,6 @@ cdef class XMMSResult:
 
 	def get_broadcast(self):
 		return self.broadcast
-
-	def get_cid(self):
-		return self.cid
 
 	def _check(self):
 		if not self.res:
@@ -439,7 +432,6 @@ cdef class XMMSResult:
 
 	def restart(self):
 		self.res = xmmsc_result_restart(self.res)
-		self.cid = xmmsc_result_cid(self.res)
 		self.c._add_ref(self)
 		xmmsc_result_unref(self.res)
 
@@ -493,7 +485,7 @@ cdef class XMMS:
 			clientname = "UnnamedPythonClient"
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
-		self.ObjectRef = {}
+		self.ObjectRef = []
 		self.sources = ["client/" + clientname, "server", "*"]
 
 	def get_source_preference(self):
@@ -502,10 +494,10 @@ cdef class XMMS:
 		self.sources = sources
 
 	def _add_ref(self, res):
-		self.ObjectRef[res.get_cid()] = res
+		self.ObjectRef.append(res)
 	
 	def _del_ref(self, res):
-		del self.ObjectRef[res.get_cid()]
+		self.ObjectRef.remove(res)
 
 	def __dealloc__(self):
 		""" destroys it all! """
