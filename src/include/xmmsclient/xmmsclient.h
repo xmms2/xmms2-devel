@@ -183,7 +183,6 @@ xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 
 typedef void (*xmmsc_result_notifier_t) (xmmsc_result_t *res, void *user_data);
 
-void xmmsc_result_restartable (xmmsc_result_t *res, uint32_t signalid);
 xmmsc_result_t *xmmsc_result_restart (xmmsc_result_t *res);
 void xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg);
 xmmsc_result_type_t xmmsc_result_get_class (xmmsc_result_t *res);
@@ -225,7 +224,6 @@ int xmmsc_result_list_next (xmmsc_result_t *res);
 int xmmsc_result_list_first (xmmsc_result_t *res);
 int xmmsc_result_list_valid (xmmsc_result_t *res);
 
-void xmmsc_result_seterror (xmmsc_result_t *res, const char *errstr);
 int xmmsc_result_get_type (xmmsc_result_t *res);
 
 const char *xmmsc_result_decode_url (xmmsc_result_t *res, const char *string);
