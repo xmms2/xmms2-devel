@@ -6,6 +6,7 @@ import gzip
 from marshal import load
 from stat import *
 import operator
+from popen2 import popen3
 
 global_libpaths = ["/lib", "/usr/lib"]
 
@@ -200,7 +201,9 @@ class XMMSEnvironment(Environment):
 		if self.config_cache.has_key(cmd):
 			ret = self.config_cache[cmd]
 		else:
-			ret = os.popen(cmd).read()
+			r, w, e = popen3(cmd)
+			ret = r.read()
+
 			if cmd.startswith("pkg-config"):
 				if ret == '':
 					print " ... no"
