@@ -93,8 +93,8 @@ static gboolean xmms_alsa_volume_get (xmms_output_t *output,
                                       const gchar **names, guint *values,
                                       guint *num_channels);
 static gboolean xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data);
-static void xmms_alsa_probe_modes (xmms_output_t *output,
-                                   xmms_alsa_data_t *data);
+static gboolean xmms_alsa_probe_modes (xmms_output_t *output,
+                                       xmms_alsa_data_t *data);
 static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
                                   snd_pcm_format_t alsa_fmt,
                                   xmms_sample_format_t xmms_fmt,
@@ -193,17 +193,22 @@ xmms_alsa_new (xmms_output_t *output)
 
 	g_return_val_if_fail (data->hwparams, FALSE);
 
-	xmms_output_private_data_set (output, data);
-
 	plugin = xmms_output_plugin_get (output);
+
+	if (!xmms_alsa_probe_modes (output, data)) {
+		g_free (data->hwparams);
+		g_free (data);
+		return FALSE;
+	}
+
 	xmms_alsa_mixer_setup (plugin, data);
 
-	xmms_alsa_probe_modes (output, data);
+	xmms_output_private_data_set (output, data);
 
 	return TRUE;
 }
 
-static void
+static gboolean
 xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 {
 	const xmms_config_property_t *cv;
@@ -220,7 +225,10 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 	}
 
 	XMMS_DBG ("Probing device: %s", dev);
-	snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0);
+	if (snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+		xmms_log_error ("Couldn't open device: %s", dev);
+		return FALSE;
+	}
 
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		for (j = 1; j < 3; j++) {
@@ -231,6 +239,8 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 			}
 		}
 	}
+
+	return TRUE;
 
 	snd_pcm_close (data->pcm);
 }
