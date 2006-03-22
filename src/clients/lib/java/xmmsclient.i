@@ -23,7 +23,8 @@
 %apply int *INOUT { int* };
 %apply int *INOUT { void* };
 %apply unsigned int *INOUT { unsigned int* };
-%apply char **STRING_OUT { char** };
+%apply char **STRING_OUT { char **r };
+%apply char **STRING_ARRAY { char **preference };
 
 typedef int int32_t;
 typedef int uint32_t;
