@@ -129,7 +129,6 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
-				g_free (arg->values[i].value.string);
 				return FALSE;
 			}
 			break;

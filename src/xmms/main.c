@@ -27,8 +27,6 @@
 #endif
 
 #include "xmmspriv/xmms_plugin.h"
-#include "xmmspriv/xmms_transport.h"
-#include "xmmspriv/xmms_decoder.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_unixsignal.h"
@@ -427,12 +425,6 @@ main (int argc, char **argv)
 		xmms_ipc_shutdown();
 		xmms_log_fatal ("IPC failed to init!");
 	}
-
-	xmms_config_property_register ("decoder.buffersize",
-			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
-	xmms_config_property_register ("transport.buffersize",
-			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
-
 
 	if (!xmms_plugin_init (ppath))
 		return 1;

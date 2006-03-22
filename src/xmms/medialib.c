@@ -176,7 +176,7 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
 #define XMMS_MEDIALIB_SOURCE_SERVER_ID 1
 
-static guint32
+guint32
 xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
 {
 	guint32 ret = 0;
@@ -1309,8 +1309,10 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 		entries = g_list_delete_link (entries, entries);
 	}
 
+	/*
 	str = xmms_playlist_plugin_save (mime, list);
-
+	*/
+	str = NULL;
 	if (!str) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Failed to generate playlist!");
 		return NULL;
@@ -1483,7 +1485,8 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *name,
 
 	xmms_medialib_end (session);
 
-	if (!xmms_playlist_plugin_import (playlist_id, entry)) {
+/*	if (!xmms_playlist_plugin_import (playlist_id, entry)) {*/
+	if (FALSE) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not import playlist!");
 		return;
 	}

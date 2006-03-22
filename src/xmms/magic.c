@@ -20,8 +20,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "xmms/xmms_defs.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_magic.h"
+
+static GList *magic_list;
 
 #define SWAP16(v, endian) \
 	if (endian == G_LITTLE_ENDIAN) { \
@@ -259,8 +262,8 @@ xmms_magic_tree_free (GNode *tree)
 	                 (GNodeTraverseFunc) free_node, NULL);
 }
 
-GNode *
-xmms_magic_add (GNode *tree, const gchar *s, GNode *prev_node)
+static GNode *
+xmms_magic_add_node (GNode *tree, const gchar *s, GNode *prev_node)
 {
 	xmms_magic_entry_t *entry;
 	gpointer *data = tree->data;
@@ -326,7 +329,7 @@ read_data (xmms_magic_checker_t *c, guint needed)
 
 	xmms_error_reset (&e);
 
-	return xmms_transport_peek (c->transport, c->buf, needed, &e);
+	return xmms_xform_peek (c->xform, c->buf, needed, &e);
 }
 
 static gboolean
@@ -413,30 +416,20 @@ tree_bytes_max_needed (xmms_magic_checker_t *c, GNode *tree)
 }
 
 GNode *
-xmms_magic_match (xmms_magic_checker_t *c, const GList *magic)
+xmms_magic_match (xmms_magic_checker_t *c)
 {
 	const GList *l;
 
 	g_return_val_if_fail (c, NULL);
-	g_return_val_if_fail (magic, NULL);
 
 	/* only one of the contained sets has to match */
-	for (l = magic; l; l = g_list_next (l)) {
+	for (l = magic_list; l; l = g_list_next (l)) {
 		GNode *tree = l->data;
 		gpointer *data = tree->data;
-		guint needed;
 
 		XMMS_DBG ("matching tree '%s'", (gchar *) data[0]);
 
-		/* will we be able to read enough data to do all of the checks
-		 * specified in this tree?
-		 */
-		needed = tree_bytes_max_needed (c, tree);
-		if (needed > xmms_transport_buffersize (c->transport)) {
-			xmms_log_info ("magic check requires a minimum"
-				       "transport buffer size of %i bytes",
-				       needed);
-		} else if (tree_match (c, tree)) {
+		if (tree_match (c, tree)) {
 			return tree;
 		}
 	}
@@ -456,3 +449,131 @@ xmms_magic_complexity (const GList *magic)
 
 	return ret;
 }
+
+gboolean
+xmms_magic_add (const gchar *desc, const gchar *mime, ...)
+{
+	GNode *tree, *node = NULL;
+	va_list ap;
+	gchar *s;
+	gpointer *root_props;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (desc, FALSE);
+	g_return_val_if_fail (mime, FALSE);
+
+	/* now process the magic specs in the argument list */
+	va_start (ap, mime);
+
+	s = va_arg (ap, gchar *);
+	if (!s) { /* no magic specs passed -> failure */
+		va_end (ap);
+		return FALSE;
+	}
+
+	/* root node stores the description and the mimetype */
+	root_props = g_new0 (gpointer, 2);
+	root_props[0] = g_strdup (desc);
+	root_props[1] = g_strdup (mime);
+	tree = g_node_new (root_props);
+
+	do {
+		if (!strlen (s)) {
+			ret = FALSE;
+			xmms_log_error ("invalid magic spec: '%s'", s);
+			break;
+		}
+
+		s = g_strdup (s); /* we need our own copy */
+		node = xmms_magic_add_node (tree, s, node);
+		g_free (s);
+
+		if (!node) {
+			xmms_log_error ("invalid magic spec: '%s'", s);
+			ret = FALSE;
+			break;
+		}
+	} while ((s = va_arg (ap, gchar *)));
+
+	va_end (ap);
+
+	/* only add this tree to the list if all spec chunks are valid */
+	if (ret) {
+		magic_list = g_list_append (magic_list, tree);
+	} else {
+		xmms_magic_tree_free (tree);
+	}
+
+	return ret;
+}
+
+static gboolean
+xmms_magic_plugin_init (xmms_xform_t *xform)
+{
+	gpointer *data;
+	xmms_magic_checker_t c;
+	GNode *res;
+
+	c.xform = xform;
+	c.read = c.offset = 0;
+	c.alloc = 128; /* start with a 128 bytes buffer */
+	c.buf = g_malloc (c.alloc);
+
+	res = xmms_magic_match (&c);
+	if (res) {
+		data = res->data;
+		XMMS_DBG ("magic plugin detected '%s' (%s)", (char *)data[1], (char *)data[0]);
+
+
+		xmms_xform_outdata_type_add (xform,
+					     XMMS_STREAM_TYPE_MIMETYPE,
+					     data[1],
+					     XMMS_STREAM_TYPE_END);
+	}
+
+	g_free (c.buf);
+
+	return !!res;
+}
+
+static void
+xmms_magic_plugin_destroy (xmms_xform_t *xform)
+{
+
+}
+static gint
+xmms_magic_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error)
+{
+	return xmms_xform_read (xform, buffer, len, error);
+}
+
+
+
+gboolean
+xmms_magic_plugin_add (xmms_xform_plugin_t *xform_plugin)
+{
+	xmms_xform_methods_t methods;
+
+	XMMS_XFORM_METHODS_INIT(methods);
+	methods.init = xmms_magic_plugin_init;
+	methods.destroy = xmms_magic_plugin_destroy;
+	methods.read = xmms_magic_plugin_read;
+	/*
+	  methods.seek
+	  methods.get_mediainfo
+	*/
+
+	xmms_xform_plugin_setup (xform_plugin,
+				 "magic",
+				 "Magic plugin " XMMS_VERSION,
+				 "Stream magic resolving plugin",
+				 &methods);
+
+	xmms_xform_plugin_indata_add (xform_plugin,
+				      XMMS_STREAM_TYPE_MIMETYPE,
+				      "application/octet-stream",
+				      XMMS_STREAM_TYPE_END);
+
+	return TRUE;
+}
+
