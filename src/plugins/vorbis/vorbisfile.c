@@ -42,6 +42,7 @@ typedef struct xmms_vorbis_data_St {
 	ov_callbacks callbacks;
 	gint current;
 	xmms_audio_format_t *format;
+	GMutex *lock;
 } xmms_vorbis_data_t;
 
 typedef enum { STRING, INTEGER } ptype;
@@ -208,7 +209,7 @@ xmms_vorbis_new (xmms_decoder_t *decoder)
 	data->callbacks.close_func = vorbis_callback_close;
 	data->callbacks.tell_func = vorbis_callback_tell;
 	data->current = -1;
-
+	data->lock = g_mutex_new ();
 	xmms_decoder_private_data_set (decoder, data);
 
 	return TRUE;
@@ -402,11 +403,15 @@ xmms_vorbis_decode_block (xmms_decoder_t *decoder)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
+	g_mutex_lock (data->lock);
+
 	ret = ov_read (&data->vorbisfile, (gchar *) buffer, sizeof (buffer),
 	               G_BYTE_ORDER == G_BIG_ENDIAN,
 	               xmms_sample_size_get (data->format->format),
 	               xmms_sample_signed_get (data->format->format),
 				   &c);
+
+	g_mutex_unlock (data->lock);
 
 	if (!ret) {
 		return FALSE;
@@ -434,12 +439,17 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 	data = xmms_decoder_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
+	g_mutex_lock (data->lock);
+
 	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
 		xmms_log_error ("Trying to seek past end of stream");
+		g_mutex_unlock (data->lock);
 		return FALSE;
 	}
 
 	ov_pcm_seek (&data->vorbisfile, samples);
+
+	g_mutex_unlock (data->lock);
 
 	return TRUE;
 }
@@ -455,6 +465,8 @@ xmms_vorbis_destroy (xmms_decoder_t *decoder)
 	g_return_if_fail (data);
 
 	ov_clear (&data->vorbisfile);
+
+	g_mutex_free (data->lock);
 
 	g_free (data);
 }
