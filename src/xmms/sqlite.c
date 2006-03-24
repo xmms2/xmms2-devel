@@ -30,12 +30,12 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 25
+#define DB_VERSION 26
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
-const char create_Log_stm[] = "create table Log (id, starttime, value)";
+const char create_Log_stm[] = "create table Log (id, starttime, percent)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
 
