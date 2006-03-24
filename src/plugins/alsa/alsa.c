@@ -240,9 +240,9 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 		}
 	}
 
-	return TRUE;
-
 	snd_pcm_close (data->pcm);
+
+	return TRUE;
 }
 
 static void
