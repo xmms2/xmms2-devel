@@ -713,6 +713,10 @@ xmms_jack_volume_get (xmms_output_t *output,
 	g_return_val_if_fail (names, FALSE);
 	g_return_val_if_fail (values, FALSE);
 
+	if (!data->volume) {
+		return FALSE;
+	}
+
 	for(x = 0; x < data->num_output_channels; x++)
 	{
 		values[x] = (guint)(data->volume[x] * 100);
