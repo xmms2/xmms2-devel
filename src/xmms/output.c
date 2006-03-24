@@ -391,6 +391,9 @@ xmms_output_decoder_kill (xmms_output_t *output, xmms_error_t *error)
 		/* unpause */
 		if (xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY)) {
 			xmms_output_decoder_start (output);
+		} else {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not start playback");
+			return;
 		}
 	}
 	dec = output->decoder;
@@ -484,6 +487,8 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		if (!output->decoder && output->decoder_list->length == 0)
 			xmms_output_decoder_start (output);
 		g_mutex_unlock (output->decoder_mutex);
+	} else {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not start playback");
 	}
 }
 
@@ -643,6 +648,10 @@ static gboolean
 xmms_output_status_set (xmms_output_t *output, gint status)
 {
 	gboolean ret = TRUE;
+
+	if (!output->plugin) {
+		return FALSE;
+	}
 
 	g_mutex_lock (output->status_mutex);
 
