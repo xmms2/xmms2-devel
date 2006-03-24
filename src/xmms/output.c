@@ -770,7 +770,8 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_output_destroy_method_t dest;
 
 	output->monitor_volume_running = FALSE;
-	g_thread_join (output->monitor_volume_thread);
+	if (output->monitor_volume_thread)
+		g_thread_join (output->monitor_volume_thread);
 
 	if (output->plugin) {
 		dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);
