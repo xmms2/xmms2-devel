@@ -573,7 +573,11 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_output_volume_get_method_t m;
 	xmms_volume_map_t map;
 
-	g_assert (output->plugin);
+	if (!output->plugin) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "couldn't get volume, output plugin not loaded");
+		return NULL;
+	}
 
 	m = xmms_plugin_method_get (output->plugin,
 	                            XMMS_PLUGIN_METHOD_VOLUME_GET);
