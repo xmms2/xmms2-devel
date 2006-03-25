@@ -30,18 +30,28 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 24
+#define DB_VERSION 26
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
-const char create_Log_stm[] = "create table Log (id, starttime, value)";
+const char create_Log_stm[] = "create table Log (id, starttime, percent)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
+
+/** 
+ * This magic numbers are taken from ANALYZE on a big database, if we change the db
+ * layout drasticly we need to redo them!
+ */
+const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '199568 14 1 1');"
+                          "INSERT INTO sqlite_stat1 VALUES('Media', 'prop_idx', '199568 6653 3');"
+                          "INSERT INTO sqlite_stat1 VALUES('Log', 'log_id', '12 2');"
+                          "INSERT INTO sqlite_stat1 VALUES('PlaylistEntries', 'playlistentries_idx', '12784 12784 1');"
+                          "INSERT INTO sqlite_stat1 VALUES('Playlist', 'playlist_idx', '2 1');"
+                          "INSERT INTO sqlite_stat1 VALUES('Playlist', 'sqlite_autoindex_Playlist_1', '2 1');";
+
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
-							  "create index source_idx on Media (key,source);"
-							  "create index key_source_val_idx on Media (key,source,value);"
                               "create index log_id on Log (id);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
@@ -181,6 +191,19 @@ xmms_sqlite_open (gboolean *create)
 
 	if (*create) {
 		XMMS_DBG ("Creating the database...");
+		/**
+		 * This will create the sqlite_stats1 table which we
+		 * fill out with good information about our indexes.
+		 * Thanks to drh for these pointers!
+		 */
+		sqlite3_exec (sql, "ANALYZE", NULL, NULL, NULL);
+		/**
+		 * Fill out sqlite_stats1
+		 */
+		sqlite3_exec (sql, fill_stats, NULL, NULL, NULL);
+		/**
+		 * Create the rest of our tables
+		 */
 		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Sources_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);

@@ -378,7 +378,11 @@ xmms_output_xform_kill (xmms_output_t *output, xmms_error_t *error)
 
 	g_mutex_lock (output->chain_mutex);
 	if (xmms_output_status (output, NULL) != XMMS_PLAYBACK_STATUS_STOP) {
-		xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY);
+		/* unpause */
+		if (!xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY)) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not start playback");
+			return;
+		}
 	}
 	xform = output->chain;
 	output->chain = NULL;
@@ -479,7 +483,9 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		xmms_output_chain_start (output);
 	g_mutex_unlock (output->chain_mutex);
 
-	xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY);
+	if (!xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY)) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not start playback");
+	}
 }
 
 static void
@@ -567,7 +573,11 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_output_volume_get_method_t m;
 	xmms_volume_map_t map;
 
-	g_assert (output->plugin);
+	if (!output->plugin) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "couldn't get volume, output plugin not loaded");
+		return NULL;
+	}
 
 	m = xmms_plugin_method_get (output->plugin,
 	                            XMMS_PLUGIN_METHOD_VOLUME_GET);
@@ -633,6 +643,10 @@ static gboolean
 xmms_output_status_set (xmms_output_t *output, gint status)
 {
 	gboolean ret = TRUE;
+
+	if (!output->plugin) {
+		return FALSE;
+	}
 
 	g_mutex_lock (output->status_mutex);
 
@@ -757,7 +771,8 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_output_destroy_method_t dest;
 
 	output->monitor_volume_running = FALSE;
-	g_thread_join (output->monitor_volume_thread);
+	if (output->monitor_volume_thread)
+		g_thread_join (output->monitor_volume_thread);
 
 	if (output->plugin) {
 		dest = xmms_plugin_method_get (output->plugin, XMMS_PLUGIN_METHOD_DESTROY);

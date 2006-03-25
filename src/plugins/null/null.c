@@ -18,8 +18,6 @@
 #include "xmms/xmms_outputplugin.h"
 
 #include <glib.h>
-#include <time.h>
-#include <errno.h>
 
 /*
  * Type definitions
@@ -218,8 +216,6 @@ static void
 xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
 {
 	xmms_null_data_t *data;
-	guint ms;
-	struct timespec req, rem;
 
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
@@ -227,12 +223,5 @@ xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	ms = xmms_sample_bytes_to_ms (data->format, len);
-
-	req.tv_sec = ms / 1000;
-	req.tv_nsec = (ms % 1000) * 1000 * 1000;
-
-	while (nanosleep (&req, &rem) == -1 && errno == EINTR) {
-		req = rem;
-	}
+	g_usleep (1000 * xmms_sample_bytes_to_ms (data->format, len));
 }
