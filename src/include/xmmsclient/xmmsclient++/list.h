@@ -5,6 +5,7 @@
 #include <boost/any.hpp>
 
 #include <xmmsclient/xmmsclient++/detail/superlist.h>
+#include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <string>
 
@@ -185,14 +186,13 @@ namespace Xmms
 
 	};
 
-	typedef std::map< std::string, boost::any > Dict;
 	template<>
 	class List< Dict > : public Detail::SuperList
 	{
 
 		public:
 			List( xmmsc_result_t* result ) :
-				Detail::SuperList( result ), contents_() 
+				Detail::SuperList( result ), contents_( result_ ) 
 			{
 			}
 
@@ -221,11 +221,10 @@ namespace Xmms
 					return;
 				}
 
-				xmmsc_result_dict_foreach( result_, Detail::dict_foreach,
-				                           static_cast< void* >(&contents_) );
+				contents_ = Dict( result_ );
 
 				constructed_ = true;
-												
+
 			}
 
 	};

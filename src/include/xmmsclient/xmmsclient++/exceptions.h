@@ -35,6 +35,20 @@ namespace Xmms
 
 	};
 
+	class not_dict_error : public std::runtime_error
+	{
+		public:
+			explicit not_dict_error( const std::string& what_arg );
+
+	};
+
+	class no_such_key_error : public std::runtime_error
+	{
+		public:
+			explicit no_such_key_error( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H

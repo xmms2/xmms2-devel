@@ -29,4 +29,14 @@ namespace Xmms
 	{
 	}
 
+	not_dict_error::not_dict_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
+	no_such_key_error::no_such_key_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 }

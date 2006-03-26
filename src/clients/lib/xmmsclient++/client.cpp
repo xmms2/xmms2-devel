@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
+#include <xmmsclient/xmmsclient++/dict.h>
 
 #include <string>
 using std::string;
@@ -58,22 +59,7 @@ namespace Xmms
 			// handle
 		}
 
-		char* ver = 0;
-		if( !xmmsc_result_get_dict_entry_str( res, "version", &ver ) ) {
-			// handle
-		}
-
-		int up = 0;
-		if( !xmmsc_result_get_dict_entry_int32( res, "uptime", &up ) ) {
-			// handle
-		}
-
-		DictPtr resultMap( new Dict() );
-		boost::any version = string( ver );
-		boost::any uptime = up;
-
-		resultMap->operator[]("version") = version;
-		resultMap->operator[]("uptime") = uptime;
+		DictPtr resultMap( new Dict( res ) );
 
 		xmmsc_result_unref( res );
 		return resultMap;
