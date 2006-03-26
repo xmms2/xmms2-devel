@@ -28,9 +28,9 @@ public class SpecialJNI {
 	 * You have to call this function <b><u>before</u></b> you can use the callbacks,
 	 * or better before the callbacks can call your implemented functions
 	 * 
-	 * @param objectName		An object which implements the Callback interface
+	 * @param objectName		An object which implements the CallbacksListener interface
 	 */
-	public final static native void setENV(Callbacks objectName);
+	public final static native void setENV(CallbacksListener objectName);
 	
 	/**
 	 * This function is called by the mainloop, should therefor not be called by the user
