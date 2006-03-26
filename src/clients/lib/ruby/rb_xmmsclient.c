@@ -975,6 +975,17 @@ static VALUE c_medialib_playlists_list (VALUE self)
 
 /*
  * call-seq:
+ *  xc.medialib_playlist_list(name) -> result
+ *
+ * Retrieves the contents of the playlist _name_.
+ */
+static VALUE c_medialib_playlist_list (VALUE self, VALUE name)
+{
+	METHOD_ADD_HANDLER_STR (medialib_playlist_list, name);
+}
+
+/*
+ * call-seq:
  *  xc.medialib_playlist_import(playlist, url) -> result
  *
  * Imports a new playlist from _url_ to the medialib.
@@ -1203,6 +1214,8 @@ void Init_Client (VALUE mXmms)
 	                  c_medialib_add_to_playlist, 1);
 	rb_define_method (c, "medialib_playlists_list",
 	                  c_medialib_playlists_list, 0);
+	rb_define_method (c, "medialib_playlist_list",
+	                  c_medialib_playlist_list, 1);
 	rb_define_method (c, "medialib_playlist_import",
 	                  c_medialib_playlist_import, 2);
 	rb_define_method (c, "medialib_playlist_export",
