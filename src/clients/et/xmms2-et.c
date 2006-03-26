@@ -239,10 +239,6 @@ main (int argc, char **argv)
 	printf ("Starting XMMS2 phone home agent...\n");
 
 	path = getenv ("XMMS_PATH");
-	if (!path) {
-		printf ("Sorry you need XMMS_PATH set\n");
-		exit (1);
-	}
 
 	conn = xmmsc_init ("xmms2-et");
 
