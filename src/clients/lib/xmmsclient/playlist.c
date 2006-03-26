@@ -203,7 +203,7 @@ xmmsc_playlist_move (xmmsc_connection_t *c,
 	
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MOVE);
 	xmms_ipc_msg_put_uint32 (msg, cur_pos);
-	xmms_ipc_msg_put_int32 (msg, new_pos);
+	xmms_ipc_msg_put_uint32 (msg, new_pos);
 	res = xmmsc_send_msg (c, msg);
 
 	return res;
