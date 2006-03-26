@@ -477,7 +477,7 @@ xmms_medialib_logging_stop (xmms_medialib_session_t *session,
 	g_return_if_fail (sek);
 
 	ret = xmms_sqlite_exec (session->sql, 
-							"UPDATE Log SET value=%d WHERE id=%u AND starttime=%d", 
+							"UPDATE Log SET percent=%d WHERE id=%u AND starttime=%d", 
 							value, entry, sek);
 }
 
