@@ -13,7 +13,8 @@ namespace Xmms
 {
 
 	Client::Client( const string& name ) 
-		: playback( &conn_ ), name_( name ), conn_(0), connected_( false )
+		: playback( &conn_ ), name_( name ), conn_(0), connected_( false ),
+		  mainloop_( 0 )
 	{
 		conn_ = xmmsc_init( name.c_str() );
 	}
@@ -43,31 +44,41 @@ namespace Xmms
 		if( connected_ ) {
 			xmmsc_result_t* res = xmmsc_quit( conn_ );
 			xmmsc_result_unref( res );
+			connected_ = false;
 		}
 	}
 
-	const DictPtr Client::stats() const
+	const Dict Client::stats() const
 	{
 		if( !connected_ ) {
 			throw connection_error( "Not connected" );
+		}
+		if( mainloop_ && mainloop_->isRunning() ) {
+			// FIXME: throw something, this function can't be called
+			// when the mainloop is running...
 		}
 
 		xmmsc_result_t* res = xmmsc_main_stats( conn_ );
 		xmmsc_result_wait( res );
 
-		if( xmmsc_result_iserror( res ) ) {
-			// handle
+		try {
+
+			Dict resultMap( res );
+
+			xmmsc_result_unref( res );
+			return resultMap;
+
 		}
+		catch( ... ) {
 
-		DictPtr resultMap( new Dict( res ) );
+			xmmsc_result_unref( res );
+			throw;
 
-		xmmsc_result_unref( res );
-		return resultMap;
+		}
 
 	}
 
-	// TODO: ERROR CHECKING!
-	const DictListPtr Client::pluginList(Plugins::Type type) const
+	const DictList Client::pluginList(Plugins::Type type) const
 	{
 		if( !connected_ ) {
 			throw connection_error( "Not connected" );
@@ -77,55 +88,31 @@ namespace Xmms
 
 		xmmsc_result_wait( res );
 
-		return DictListPtr( new List< Dict >( res ) );
-/*
-		if( xmmsc_result_iserror( res ) ) {
-			// handle
-		}
+		try {
 
-		DictListPtr result( new DictList() );
+			List< Dict > resultList( res );
 
-		xmmsc_result_list_first( res );
-		while( xmmsc_result_list_valid( res ) ) {
-			
-			char* cname = 0;			
-			xmmsc_result_get_dict_entry_str( res, "name", &cname );
-
-			char* cshortname = 0;
-			xmmsc_result_get_dict_entry_str( res, "shortname", &cshortname );
-
-			char* cdescription = 0;
-			xmmsc_result_get_dict_entry_str( res, "description", 
-			                                 &cdescription );
-
-			unsigned int ctype = 0;
-			xmmsc_result_get_dict_entry_uint32( res, "type", &ctype );
-
-			boost::any name = string( cname );
-			boost::any shortname = string( cshortname );
-			boost::any description = string( cdescription );
-			boost::any type = ctype;
-
-			result->push_back( Dict() );
-			result->back()["name"] = name;
-			result->back()["shortname"] = shortname;
-			result->back()["description"] = description;
-			result->back()["type"] = type;
-
-			xmmsc_result_list_next( res );
+			xmmsc_result_unref( res );
+			return resultList;
 
 		}
+		catch( ... ) {
 
-		xmmsc_result_unref( res );
+			xmmsc_result_unref( res );
+			throw;
 
-		return result;
-		*/
+		}
 
 	}
 
-	MainLoop Client::getMainLoop() const {
-		MainLoop ml;
-		ml.addListener( new Listener( &conn_ ) );
-		return ml;
+	MainLoop& Client::getMainLoop() 
+	{
+
+		if( !mainloop_ ) {
+			mainloop_ = new MainLoop();
+			mainloop_->addListener( new Listener( &conn_ ) );
+		}
+		return *mainloop_;
+
 	}
 }

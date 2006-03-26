@@ -70,10 +70,10 @@ namespace Xmms
 			// Optionally: void stats( HashMap& result ) const;
 			//
 			// TODO: Decide what to do about this...
-			const DictPtr stats() const;
+			const Dict stats() const;
 
 			// Same deal here as above...
-			const DictListPtr pluginList(Plugins::Type type = Plugins::ALL) const;
+			const DictList pluginList(Plugins::Type type = Plugins::ALL) const;
 
 			// Subsystems
 
@@ -104,7 +104,7 @@ namespace Xmms
 			// const IO& getIO() const;
 
 			// Get an object to create an async main loop
-			MainLoop getMainLoop() const;
+			MainLoop& getMainLoop();
 
 			// Return the internal connection pointer
 			inline xmmsc_connection_t* getConnection() const { return conn_; }
@@ -120,6 +120,8 @@ namespace Xmms
 			xmmsc_connection_t* conn_;
 
 			bool connected_;
+
+			MainLoop* mainloop_;
 
 	};
 

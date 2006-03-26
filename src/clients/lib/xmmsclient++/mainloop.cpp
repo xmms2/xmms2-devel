@@ -8,18 +8,8 @@ namespace Xmms
 {
 
 	MainLoop::MainLoop()
-		: listeners()
+		: listeners(), running_( false )
 	{
-	}
-
-	MainLoop::MainLoop( const MainLoop& src )
-		: listeners( src.listeners )
-	{
-	}
-
-	MainLoop MainLoop::operator=( const MainLoop& src ) const
-	{
-		return MainLoop( src );
 	}
 
 	MainLoop::~MainLoop()
@@ -45,6 +35,7 @@ namespace Xmms
 	void
 	MainLoop::run()
 	{
+		running_ = true;
 		while(true) {
 			waitForData();
 		}
@@ -103,6 +94,12 @@ namespace Xmms
 				}
 			}
 		}
+	}
+
+	bool
+	MainLoop::isRunning() const
+	{
+		return running_;
 	}
 
 }

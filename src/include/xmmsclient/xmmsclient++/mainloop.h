@@ -26,6 +26,8 @@ namespace Xmms
 			// Usage
 			void run();
 
+			bool isRunning() const;
+
 		private:
 
 			// Constructor, only to be called by Xmms::Client
@@ -36,6 +38,8 @@ namespace Xmms
 			std::list< ListenerInterface* > listeners;
 
 			void waitForData();
+
+			bool running_;
 
 	};
 

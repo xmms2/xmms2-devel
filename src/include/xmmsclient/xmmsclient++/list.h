@@ -22,6 +22,18 @@ namespace Xmms
 			{
 			}
 
+			List( const List<T>& list ) :
+				Detail::SuperList( list ), contents_( list.contents_ )
+			{
+			}
+
+			List<T>& operator=( const List<T>& list )
+			{
+				Detail::SuperList::operator=( list );
+				contents_ = list.contents_;
+				return *this;
+			}
+
 			virtual ~List()
 			{
 			}
@@ -53,6 +65,18 @@ namespace Xmms
 			List( xmmsc_result_t* result ) :
 				Detail::SuperList( result ), contents_( 0 )
 			{
+			}
+
+			List( const List<int>& list ) :
+				Detail::SuperList( list ), contents_( list.contents_ )
+			{
+			}
+
+			List<int>& operator=( const List<int>& list )
+			{   
+				Detail::SuperList::operator=( list );
+				contents_ = list.contents_;
+				return *this;
 			}
 
 			virtual ~List()
@@ -102,6 +126,18 @@ namespace Xmms
 			{
 			}
 
+			List( const List<unsigned int>& list ) :
+				Detail::SuperList( list ), contents_( list.contents_ )
+			{
+			}
+
+			List<unsigned int>& operator=( const List<unsigned int>& list )
+			{
+				Detail::SuperList::operator=( list );
+				contents_ = list.contents_;
+				return *this;
+			}
+
 			virtual ~List()
 			{
 			}
@@ -149,6 +185,18 @@ namespace Xmms
 			{
 			}
 
+			List( const List<std::string>& list ) :
+				Detail::SuperList( list ), contents_( list.contents_ )
+			{
+			}
+
+			List<std::string>& operator=( const List<std::string>& list )
+			{
+				Detail::SuperList::operator=( list );
+				contents_ = list.contents_;
+				return *this;
+			}
+
 			virtual ~List()
 			{
 			}
@@ -194,6 +242,18 @@ namespace Xmms
 			List( xmmsc_result_t* result ) :
 				Detail::SuperList( result ), contents_( result_ ) 
 			{
+			}
+
+			List( const List<Dict>& list ) :
+				Detail::SuperList( list ), contents_( list.contents_ )
+			{
+			}
+
+			List<Dict>& operator=( const List<Dict>& list )
+			{
+				Detail::SuperList::operator=( list );
+				contents_ = list.contents_;
+				return *this;
 			}
 
 			virtual ~List()

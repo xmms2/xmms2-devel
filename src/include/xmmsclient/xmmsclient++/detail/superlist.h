@@ -13,6 +13,8 @@ namespace Xmms
 
 			public:
 				SuperList( xmmsc_result_t* result );
+				SuperList( const SuperList& list );
+				virtual SuperList& operator=( const SuperList& list );
 				virtual ~SuperList();
 
 				virtual void first();

@@ -15,6 +15,7 @@ namespace Xmms
 
 		public:
 
+			virtual ~ListenerInterface() {}
 			bool operator==( const ListenerInterface& rhs ) const;
 
 		    // Return the file descriptor to listen to

@@ -6,22 +6,38 @@
 #include <boost/any.hpp>
 
 #include <string>
-#include <iostream>
 
 namespace Xmms
 {
 
 	Detail::SuperList::SuperList( xmmsc_result_t* result )
-		: result_( result ), constructed_( false )
+		: result_( 0 ), constructed_( false )
 	{
 
-		if( xmmsc_result_iserror( result_ ) ) {
-			throw result_error( xmmsc_result_get_error( result_ ) );
+		if( xmmsc_result_iserror( result ) ) {
+			throw result_error( xmmsc_result_get_error( result ) );
 		}
-		if( !xmmsc_result_is_list( result_ ) ) {
+		if( !xmmsc_result_is_list( result ) ) {
 			throw not_list_error( "Provided result is not a list" );
 		}
 
+		result_ = result;
+		xmmsc_result_ref( result_ );
+
+	}
+
+	Detail::SuperList::SuperList( const SuperList& list )
+		: result_( list.result_ ), constructed_( list.constructed_ )
+	{
+		xmmsc_result_ref( result_ );
+	}
+
+	Detail::SuperList& Detail::SuperList::operator=( const SuperList& list )
+	{
+		result_ = list.result_;
+		constructed_ = list.constructed_;
+		xmmsc_result_ref( result_ );
+		return *this;
 	}
 
 	Detail::SuperList::~SuperList()
