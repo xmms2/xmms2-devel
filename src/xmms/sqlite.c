@@ -154,7 +154,8 @@ xmms_sqlite_open (gboolean *create)
 		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg(sql));
 		return NULL;
 	}
-	
+
+	g_return_val_if_fail (sql, NULL);
 
 	sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 	sqlite3_exec (sql, "PRAGMA auto_vacuum = 1", NULL, NULL, NULL);

@@ -20,10 +20,9 @@
 #ifndef __XMMS_PLAYLIST_PLUGIN_H__
 #define __XMMS_PLAYLIST_PLUGIN_H__
 
+#include "xmms/xmms_xformplugin.h"
 
-#include "xmms/xmms_transport.h"
-
-typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_transport_t *transport, guint playlist_id);
+typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_xform_t *transport, guint playlist_id);
 typedef gboolean (*xmms_playlist_plugin_can_handle_method_t) (const gchar *mimetype);
 typedef GString *(*xmms_playlist_plugin_write_method_t) (guint32 *list);
 

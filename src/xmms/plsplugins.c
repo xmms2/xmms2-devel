@@ -68,6 +68,7 @@ xmms_playlist_plugin_save (gchar *mime,
 gboolean
 xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 {
+#if 0
 	gboolean ret;
 	xmms_transport_t *transport;
 	xmms_playlist_plugin_read_method_t read_method;
@@ -105,6 +106,8 @@ xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry)
 	xmms_object_unref (plugin);
 
 	return ret;
+#endif
+	return FALSE;
 }
 
 gboolean

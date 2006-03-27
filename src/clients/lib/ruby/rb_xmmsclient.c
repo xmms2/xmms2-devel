@@ -1253,8 +1253,10 @@ void Init_Client (VALUE mXmms)
 	                 INT2FIX (XMMS_MEDIAINFO_READER_STATUS_RUNNING));
 
 	rb_define_const (c, "ALL_PLUGINS", INT2FIX (XMMS_PLUGIN_TYPE_ALL));
+/*
 	rb_define_const (c, "TRANSPORT", INT2FIX (XMMS_PLUGIN_TYPE_TRANSPORT));
 	rb_define_const (c, "DECODER", INT2FIX (XMMS_PLUGIN_TYPE_DECODER));
+*/
 	rb_define_const (c, "OUTPUT", INT2FIX (XMMS_PLUGIN_TYPE_OUTPUT));
 	rb_define_const (c, "PLAYLIST", INT2FIX (XMMS_PLUGIN_TYPE_PLAYLIST));
 	rb_define_const (c, "EFFECT", INT2FIX (XMMS_PLUGIN_TYPE_EFFECT));

@@ -47,5 +47,6 @@ gboolean xmms_medialib_check_id (xmms_medialib_entry_t entry);
 
 gboolean xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value, guint32 source);
 gboolean xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value, guint32 source);
+guint32 xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source);
 
 #endif
