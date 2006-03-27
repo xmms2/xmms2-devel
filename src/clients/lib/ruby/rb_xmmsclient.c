@@ -49,6 +49,13 @@
 	res = xmmsc_##name (xmms->real, StringValuePtr (arg1)); \
 	METHOD_HANDLER_FOOTER
 
+#define METHOD_ADD_HANDLER_STR_STR(name, arg1, arg2) \
+	METHOD_HANDLER_HEADER \
+\
+	res = xmmsc_##name (xmms->real, \
+	                    StringValuePtr (arg1), StringValuePtr (arg2)); \
+	METHOD_HANDLER_FOOTER
+
 #define METHOD_ADD_HANDLER_UINT(name, arg1) \
 	METHOD_HANDLER_HEADER \
 \
@@ -968,6 +975,17 @@ static VALUE c_medialib_playlists_list (VALUE self)
 
 /*
  * call-seq:
+ *  xc.medialib_playlist_list(name) -> result
+ *
+ * Retrieves the contents of the playlist _name_.
+ */
+static VALUE c_medialib_playlist_list (VALUE self, VALUE name)
+{
+	METHOD_ADD_HANDLER_STR (medialib_playlist_list, name);
+}
+
+/*
+ * call-seq:
  *  xc.medialib_playlist_import(playlist, url) -> result
  *
  * Imports a new playlist from _url_ to the medialib.
@@ -975,21 +993,7 @@ static VALUE c_medialib_playlists_list (VALUE self)
 static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
                                          VALUE url)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (playlist);
-	StringValue (url);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_playlist_import (xmms->real,
-	                                      StringValuePtr (playlist),
-	                                      StringValuePtr (url));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_import, playlist, url);
 }
 
 /*
@@ -1001,21 +1005,7 @@ static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
 static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
                                          VALUE mime)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (playlist);
-	StringValue (mime);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_playlist_import (xmms->real,
-	                                      StringValuePtr (playlist),
-	                                      StringValuePtr (mime));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_export, playlist, mime);
 }
 
 /*
@@ -1121,20 +1111,7 @@ static VALUE c_configval_get (VALUE self, VALUE key)
  */
 static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (key);
-	StringValue (val);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_configval_set (xmms->real, StringValuePtr (key),
-	                           StringValuePtr (val));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR_STR (configval_set, key, val);
 }
 
 /*
@@ -1237,6 +1214,8 @@ void Init_Client (VALUE mXmms)
 	                  c_medialib_add_to_playlist, 1);
 	rb_define_method (c, "medialib_playlists_list",
 	                  c_medialib_playlists_list, 0);
+	rb_define_method (c, "medialib_playlist_list",
+	                  c_medialib_playlist_list, 1);
 	rb_define_method (c, "medialib_playlist_import",
 	                  c_medialib_playlist_import, 2);
 	rb_define_method (c, "medialib_playlist_export",

@@ -19,10 +19,10 @@ package org.xmms2;
 /**
  * Extend this class if you don't want to have a huge bulk of empty methods in your 
  * Callbacks-class.
- * For descriptions to the methods have a look at org.xmms2.Callbacks
+ * For descriptions to the methods have a look at org.xmms2.CallbacksListener
  */
 
-public abstract class CallbacksAdapter implements Callbacks {
+public abstract class CallbacksAdapter implements CallbacksListener {
 	public void callbackConfigvalChanged(long res, int user_data) {}
 	public void callbackPlaybackStatus(long res, int user_data) {}
 	public void callbackPlaybackVolumeChanged(long res, int user_data) {}
@@ -38,7 +38,8 @@ public abstract class CallbacksAdapter implements Callbacks {
 	public void unlockFunction(int user_data) {}
 	public void callbackIOWantOut(int val, int user_data) {}
 	public void callbackDictForeachFunction(String key, int type, String value, int user_data) {}
-	public void callbackPropdictForeachFunction(String key, int type, String value, String source, int user_data) {}
+	public void callbackPropdictForeachFunction(String key, int type,
+			String value, String source, int user_data) {}
 	public void signalPlaybackPlaytime(long res, int user_data) {}
 	public void signalVisualizationData(long res, int user_data) {}
 	public void signalMediareaderUnindexed(long res, int user_data) {}
