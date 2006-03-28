@@ -9,8 +9,6 @@
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 
-#include <boost/shared_ptr.hpp>
-
 #include <string>
 
 namespace Xmms 
