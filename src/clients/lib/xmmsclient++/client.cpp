@@ -21,6 +21,9 @@ namespace Xmms
 
 	Client::~Client() 
 	{
+		if( mainloop_ ) {
+			delete mainloop_;
+		}
 		xmmsc_unref( conn_ );
 	}
 
