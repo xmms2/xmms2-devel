@@ -282,19 +282,6 @@ xmms_plugin_add_builtin_plugins (void)
 	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
 	xmms_plugin_load (&xmms_builtin_magic, NULL);
 	xmms_plugin_load (&xmms_builtin_converter, NULL);
-/*
-	xp = xmms_xform_plugin_new ();
-	xmms_magic_plugin_add (xp);
-	xmms_object_unref (xp);
-
-	xp = xmms_xform_plugin_new ();
-	xmms_ringbuf_plugin_add (xp);
-	xmms_object_unref (xp);
-
-	xp = xmms_xform_plugin_new ();
-	xmms_converter_plugin_add (xp);
-	xmms_object_unref (xp);
-*/
 }
 
 

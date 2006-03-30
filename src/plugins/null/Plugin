@@ -2,3 +2,6 @@ target="null"
 source=["null.c"]
 
 output_priority = 1
+
+def config(env):
+	raise ConfigError("Disabled")

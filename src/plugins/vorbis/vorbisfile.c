@@ -73,6 +73,7 @@ static props properties[] = {
  * Function prototypes
  */
 
+static gboolean xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_vorbis_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static gboolean xmms_vorbis_init (xmms_xform_t *decoder);
 static void xmms_vorbis_destroy (xmms_xform_t *decoder);
@@ -84,11 +85,13 @@ static gboolean xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples);
  * Plugin header
  */
 
-xmms_plugin_api_version_t XMMS_PLUGIN_API_VERSION = XMMS_XFORM_API_VERSION;
-xmms_plugin_type_t XMMS_PLUGIN_TYPE = XMMS_PLUGIN_TYPE_XFORM;
+XMMS_XFORM_PLUGIN("vorbis",
+                  "Vorbis Decoder", XMMS_VERSION,
+                  "Xiph's Ogg/Vorbis decoder",
+                  xmms_vorbis_plugin_setup);
 
-gboolean
-xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
+static gboolean
+xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -97,11 +100,7 @@ xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
 	methods.destroy = xmms_vorbis_destroy;
 	methods.read = xmms_vorbis_read;
 
-	xmms_xform_plugin_setup (xform_plugin,
-	                         "vorbis",
-	                         "Vorbis Decoder " XMMS_VERSION,
-	                         "Xiph's Ogg/Vorbis decoder",
-	                         &methods);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,

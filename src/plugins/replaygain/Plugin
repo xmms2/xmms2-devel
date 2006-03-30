@@ -1,2 +1,5 @@
 target="replaygain"
 source=["replaygain.c"]
+
+def config(env):
+	raise ConfigError("Disabled")

@@ -1,2 +1,5 @@
 target="eq"
 source=["eq.c"]
+
+def config(env):
+    raise ConfigError("Disabled")

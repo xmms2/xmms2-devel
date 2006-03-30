@@ -32,6 +32,7 @@ typedef struct xmms_modplug_data_St {
  * Function prototypes
  */
 
+static gboolean xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_modplug_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_modplug_destroy (xmms_xform_t *xform);
 static gboolean xmms_modplug_init (xmms_xform_t *xform);
@@ -40,11 +41,14 @@ static gboolean xmms_modplug_init (xmms_xform_t *xform);
 /*
  * Plugin header
  */
-xmms_plugin_api_version_t XMMS_PLUGIN_API_VERSION = XMMS_XFORM_API_VERSION;
-xmms_plugin_type_t XMMS_PLUGIN_TYPE = XMMS_PLUGIN_TYPE_XFORM;
+XMMS_XFORM_PLUGIN("modplug",
+		  "MODPLUG decoder ",
+		  XMMS_VERSION,
+		  "Module file decoder",
+                  xmms_modplug_plugin_setup);
 
-gboolean
-xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
+static gboolean
+xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -56,11 +60,7 @@ xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
 	  methods.seek
 	*/
 
-	xmms_xform_plugin_setup (xform_plugin,
-	                         "modplug",
-	                         "MODPLUG decoder " XMMS_VERSION,
-	                         "Module file decoder",
-	                         &methods);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
