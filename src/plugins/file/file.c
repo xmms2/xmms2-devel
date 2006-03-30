@@ -41,7 +41,7 @@ typedef struct {
 static gboolean xmms_file_init (xmms_xform_t *xform);
 static void xmms_file_destroy (xmms_xform_t *xform);
 static gint xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
-/*static gint xmms_file_seek (xmms_xform_t *xform, guint64 offset, gint whence);*/
+static gint64 xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);
 static gboolean xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 
 /*
@@ -62,7 +62,7 @@ xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_file_init;
 	methods.destroy = xmms_file_destroy;
 	methods.read = xmms_file_read;
-	/*methods.seek = xmms_file_seek;*/
+	methods.seek = xmms_file_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -166,29 +166,33 @@ xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 	return ret;
 }
 
-#if 0
-static gint
-xmms_file_seek (xmms_xform_t *xform, guint64 offset, gint whence)
+static gint64
+xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
 	xmms_file_data_t *data;
 	gint w = 0;
+	off_t res;
 
 	g_return_val_if_fail (xform, -1);
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
 	switch (whence) {
-		case XMMS_TRANSPORT_SEEK_SET:
+		case XMMS_XFORM_SEEK_SET:
 			w = SEEK_SET;
 			break;
-		case XMMS_TRANSPORT_SEEK_END:
+		case XMMS_XFORM_SEEK_END:
 			w = SEEK_END;
 			break;
-		case XMMS_TRANSPORT_SEEK_CUR:
+		case XMMS_XFORM_SEEK_CUR:
 			w = SEEK_CUR;
 			break;
 	}
 
-	return lseek (data->fd, offset, w);
+	res = lseek (data->fd, offset, w);
+	if (res == (off_t)-1) {
+		xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");
+		return -1;
+	}
+	return res;
 }
-#endif

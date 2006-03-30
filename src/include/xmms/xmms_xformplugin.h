@@ -61,11 +61,17 @@ typedef struct xmms_xform_plugin_St xmms_xform_plugin_t;
 struct xmms_xform_St;
 typedef struct xmms_xform_St xmms_xform_t;
 
+typedef enum xmms_xform_seek_mode_E {
+	XMMS_XFORM_SEEK_CUR = 1,
+	XMMS_XFORM_SEEK_SET = 2,
+	XMMS_XFORM_SEEK_END = 3
+} xmms_xform_seek_mode_t;
 
 typedef struct xmms_xform_methods_St {
 	gboolean (*init)(xmms_xform_t *);
 	void (*destroy)(xmms_xform_t *);
 	gint (*read)(xmms_xform_t *, gpointer, gint, xmms_error_t *);
+	gint64 (*seek)(xmms_xform_t *, gint64, xmms_xform_seek_mode_t, xmms_error_t *);
 } xmms_xform_methods_t;
 
 #define XMMS_XFORM_METHODS_INIT(m) memset (&m, 0, sizeof (xmms_xform_methods_t))
@@ -96,6 +102,7 @@ gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 
 int xmms_xform_peek (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err);
 int xmms_xform_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err);
+gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...);
 

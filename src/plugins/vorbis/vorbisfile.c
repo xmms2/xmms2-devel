@@ -154,36 +154,25 @@ vorbis_callback_read (void *ptr, size_t size, size_t nmemb,
 static int
 vorbis_callback_seek (void *datasource, ogg_int64_t offset, int whence)
 {
-	return -1;
-/*
-	xmms_vorbis_data_t *data;
-	xmms_decoder_t *decoder = datasource;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = datasource;
+	xmms_error_t err;
 	gint ret;
 
-	g_return_val_if_fail (decoder, 0);
+	g_return_val_if_fail (xform, -1);
 
-	data = xmms_decoder_private_data_get (decoder);
-	transport = xmms_decoder_transport_get (decoder);
-
-	if (!xmms_transport_can_seek (transport))
-		return -1;
-
-	g_return_val_if_fail (transport, 0);
-	g_return_val_if_fail (data, 0);
+	xmms_error_reset (&err);
 
 	if (whence == SEEK_CUR) {
-		whence = XMMS_TRANSPORT_SEEK_CUR;
+		whence = XMMS_XFORM_SEEK_CUR;
 	} else if (whence == SEEK_SET) {
-		whence = XMMS_TRANSPORT_SEEK_SET;
+		whence = XMMS_XFORM_SEEK_SET;
 	} else if (whence == SEEK_END) {
-		whence = XMMS_TRANSPORT_SEEK_END;
+		whence = XMMS_XFORM_SEEK_END;
 	}
 
-	ret = xmms_transport_seek (transport, (gint) offset, whence);
+	ret = xmms_xform_seek (xform, (gint64) offset, whence, &err);
 
 	return (ret == -1) ? -1 : 0;
-*/
 }
 
 static int
@@ -195,15 +184,14 @@ vorbis_callback_close (void *datasource)
 static long
 vorbis_callback_tell (void *datasource)
 {
-	return -1;
-/*
-	xmms_decoder_t *decoder = datasource;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = datasource;
+	xmms_error_t err;
 
-	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (xform, -1);
 
-	return xmms_transport_tell (transport);
-*/
+	xmms_error_reset (&err);
+
+	return xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &err);
 }
 
 static void

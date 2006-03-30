@@ -383,6 +383,36 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *
 	return read;
 }
 
+gint64
+xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	gint64 res;
+
+	if (xform->error) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Seek on errored xform");
+		return -1;
+	}
+
+	if (!xform->plugin->methods.seek) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Seek not implemented");
+		return -1;
+	}
+
+	if (xform->buffered) {
+		if (whence == XMMS_XFORM_SEEK_CUR) {
+			offset -= xform->buffered;
+		}
+		xform->buffered = 0;
+	}
+
+	res = xform->plugin->methods.seek (xform, offset, whence, err);
+	if (res != -1) {
+		xform->eos = FALSE;
+	}
+
+	return res;
+}
+
 int
 xmms_xform_peek (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err)
 {
@@ -395,6 +425,13 @@ xmms_xform_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err)
 {
 	g_return_val_if_fail (xform->prev, -1);
 	return xmms_xform_this_read (xform->prev, buf, siz, err);
+}
+
+gint64
+xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	g_return_val_if_fail (xform->prev, -1);
+	return xmms_xform_this_seek (xform->prev, offset, whence, err);
 }
 
 

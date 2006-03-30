@@ -548,6 +548,12 @@ xmms_magic_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_
 	return xmms_xform_read (xform, buffer, len, error);
 }
 
+static gint64
+xmms_magic_plugin_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	return xmms_xform_seek (xform, offset, whence, err);
+}
+
 
 
 static gboolean
@@ -559,10 +565,7 @@ xmms_magic_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_magic_plugin_init;
 	methods.destroy = xmms_magic_plugin_destroy;
 	methods.read = xmms_magic_plugin_read;
-	/*
-	  methods.seek
-	  methods.get_mediainfo
-	*/
+	methods.seek = xmms_magic_plugin_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
