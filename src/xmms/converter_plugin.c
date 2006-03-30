@@ -122,9 +122,9 @@ xmms_converter_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	 * Well, we don't really..
 	 */
 	xmms_xform_plugin_indata_add (xform_plugin,
-				      XMMS_STREAM_TYPE_MIMETYPE,
-				      "audio/pcm",
-				      XMMS_STREAM_TYPE_END);
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/pcm",
+	                              XMMS_STREAM_TYPE_END);
 
 	converter_plugin = xform_plugin;
 	return TRUE;
@@ -143,7 +143,7 @@ xmms_converter_new (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *gt)
 */
 
 XMMS_XFORM_BUILTIN(converter,
-		   "Sample format converter",
-		   XMMS_VERSION,
-		   "Sample format converter",
-		   xmms_converter_plugin_setup);
+                   "Sample format converter",
+                   XMMS_VERSION,
+                   "Sample format converter",
+                   xmms_converter_plugin_setup);

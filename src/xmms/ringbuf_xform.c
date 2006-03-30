@@ -5,7 +5,7 @@
 #include "xmmspriv/xmms_ringbuf.h"
 #include "xmmspriv/xmms_xform.h"
 
-/* 
+/*
    - producer:
      want_buffer -> buffering
      want_seek -> seeked
@@ -187,7 +187,7 @@ xmms_ringbuf_xform_thread (gpointer data)
 }
 
 XMMS_XFORM_BUILTIN(ringbuf,
-		   "Ringbuffer",
-		   XMMS_VERSION,
-		   "Buffer",
-		   xmms_ringbuf_plugin_setup);
+                   "Ringbuffer",
+                   XMMS_VERSION,
+                   "Buffer",
+                   xmms_ringbuf_plugin_setup);

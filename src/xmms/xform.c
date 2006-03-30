@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003-2006 XMMS2 Team
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -127,7 +127,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 	return xform;
 }
 
-xmms_medialib_entry_t 
+xmms_medialib_entry_t
 xmms_xform_entry_get (xmms_xform_t *xform)
 {
 	return xform->entry;
@@ -566,8 +566,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	                             XMMS_STREAM_TYPE_MIMETYPE,
 	                             "application/x-url",
 	                             XMMS_STREAM_TYPE_URL,
-				     url,
-				     XMMS_STREAM_TYPE_END);
+	                             url,
+	                             XMMS_STREAM_TYPE_END);
 
 	last = xform;
 

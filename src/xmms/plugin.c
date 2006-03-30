@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003-2006 XMMS2 Team
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -71,8 +71,8 @@ static gboolean xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module);
  * @code
  * xmms_plugin_t *xmms_plugin_get (void)
  * @endcode
- * 
- * This function must call #xmms_plugin_new with the appropiate arguments. 
+ *
+ * This function must call #xmms_plugin_new with the appropiate arguments.
  * This function can also call #xmms_plugin_info_add, #xmms_plugin_method_add,
  * #xmms_plugin_properties_add
  *
@@ -139,7 +139,7 @@ xmms_plugin_config_lookup (xmms_plugin_t *plugin,
 	g_return_val_if_fail (key, NULL);
 	
 	g_snprintf (path, sizeof (path), "%s.%s",
-		    xmms_plugin_shortname_get (plugin), key);
+	            xmms_plugin_shortname_get (plugin), key);
 	prop = xmms_config_lookup (path);
 
 	return prop;
@@ -170,7 +170,7 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
 	g_return_val_if_fail (default_value, NULL);
 
 	g_snprintf (fullpath, sizeof (fullpath), "%s.%s",
-		    xmms_plugin_shortname_get (plugin), name);
+	            xmms_plugin_shortname_get (plugin), name);
 
 	prop = xmms_config_property_register (fullpath, default_value, cb,
 	                                      userdata);
@@ -182,7 +182,7 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
  * @}
  * -- end of plugin API section --
  * @endif
- * 
+ *
  * @if internal
  * -- internal documentation section --
  * @addtogroup XMMSPlugin
