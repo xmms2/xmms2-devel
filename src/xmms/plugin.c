@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstr�m, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -309,6 +309,7 @@ xmms_plugin_init (gchar *path)
 void
 xmms_plugin_shutdown ()
 {
+	GList *n;
 #ifdef HAVE_VALGRIND
 	/* print out a leak summary at this point, because the final leak
 	 * summary won't include proper backtraces of leaks found in
@@ -318,15 +319,11 @@ xmms_plugin_shutdown ()
 	 * in valgrind
 	 */
 	VALGRIND_DO_LEAK_CHECK
+		;
 #endif
-
-	/* at this point, there's only one thread left,
-	 * so we don't need to take care of the mutex here.
-	 * xmms_plugin_destroy() will try to lock it, though, so
-	 * don't free the mutex yet.
-	 */
-	while (xmms_plugin_list) {
-		xmms_plugin_t *p = xmms_plugin_list->data;
+	
+	for (n = xmms_plugin_list; n; n = g_list_next (n)) {
+		xmms_plugin_t *p = n->data;
 
 		/* if this plugin's refcount is > 1, then there's a bug
 		 * in one of the other subsystems
@@ -336,9 +333,6 @@ xmms_plugin_shutdown ()
 			          p->name, p->object.ref);
 		}
 
-		/* xmms_plugin_destroy() will remove the plugin from
-		 * xmms_plugin_list, so we must not do that here
-		 */
 		xmms_object_unref (p);
 	}
 }
@@ -402,6 +396,8 @@ xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module)
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
+
+	plugin->module = module;
 
 	xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
 	return TRUE;
@@ -604,5 +600,8 @@ xmms_plugin_setup (xmms_plugin_t *plugin, xmms_plugin_desc_t *desc)
 void
 xmms_plugin_destroy (xmms_plugin_t *plugin)
 {
-	
+	g_list_free (plugin->info_list);
+	if (plugin->module)
+		g_module_close (plugin->module);
+	xmms_object_unref (plugin);
 }
