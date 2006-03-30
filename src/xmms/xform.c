@@ -591,7 +591,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 {
 	xmms_medialib_session_t *session;
 	xmms_xform_t *xform, *last;
-	const gchar *url, *mime;
+	const gchar *url;
+	gchar *durl;
 	
 	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
 
@@ -599,12 +600,17 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	xmms_medialib_end (session);
 
+	durl = g_strdup (url);
+	xmms_medialib_decode_url (durl);
+
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
 	                             "application/x-url",
 	                             XMMS_STREAM_TYPE_URL,
-	                             url,
+	                             durl,
 	                             XMMS_STREAM_TYPE_END);
+
+	g_free (durl);
 
 	last = xform;
 
@@ -615,7 +621,6 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 			xmms_object_unref (last);
 			return NULL;
 		}
-		mime = xmms_xform_outtype_get_str (xform, XMMS_STREAM_TYPE_MIMETYPE);
 		xmms_object_unref (last);
 		last = xform;
 	} while (!has_goalformat (xform, goal_formats));
