@@ -146,7 +146,6 @@ class XMMSEnvironment(Environment):
 		
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] = "$LINKFLAGS -multiply_defined suppress -flat_namespace -undefined suppress"
-			self["LDMODULESUFFIX"] = ".bundle"
 
 		self.potential_targets = []
 		self.scan_dir("src")
@@ -198,7 +197,7 @@ class XMMSEnvironment(Environment):
 			cmd += " --libs" 
 		cmd += " \"%s\"" % module
 		if not self.config_cache.has_key(cmd):
-			print "Checking for '%s'" % module,
+			print "Checking for %s" % module,
 		self.configcmd(cmd, fail)
 		
 
@@ -366,19 +365,18 @@ class XMMSEnvironment(Environment):
 				if self.platform == 'linux' or self.platform == 'freebsd':
 					self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
 
+			self.SharedLibrary(target, source)
+
 			if loadable:
-				self.LoadableModule(target, source)
 				if self.platform == 'darwin':
-					self.Append(LINKFLAGS = ['-undefined','suppress', '-flat_namespace'])
-				self.Install(self.librarypath, target + self["LDMODULESUFFIX"])
+					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
+					self["SHLIBSUFFIX"] = ".bundle"
+				self.Install(self.librarypath, target + self["SHLIBSUFFIX"])
 			else:
-				self.SharedLibrary(target, source)
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] += " -dynamiclib"
 				if install:
 					self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
-
-
 
 	def add_program(self, target, source):
 		self.programs.append(target)
@@ -467,3 +465,4 @@ class XMMSEnvironment(Environment):
 			except ConfigError, m:
 				self.conf.logstream.write("xmmsscons: File %s reported error '%s' and was disabled.\n" % (t.target, m))
 				continue
+

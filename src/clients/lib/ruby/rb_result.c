@@ -369,7 +369,7 @@ static VALUE c_value_get (VALUE self)
 		return value_get (res);
 }
 
-static VALUE decode_url (VALUE self, VALUE str)
+static VALUE c_decode_url (VALUE self, VALUE str)
 {
 	RbResult *res;
 	const char *cstr, *tmp;
@@ -400,7 +400,7 @@ void Init_Result (VALUE mXmms)
 	rb_define_method (cResult, "notifier", c_notifier_set, 0);
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
-	rb_define_method (cResult, "decode_url", decode_url, 1);
+	rb_define_method (cResult, "decode_url", c_decode_url, 1);
 
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
 	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_INSERT);

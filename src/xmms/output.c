@@ -430,7 +430,11 @@ xmms_output_xform_kill (xmms_output_t *output, xmms_error_t *error)
 
 	g_mutex_lock (output->chain_mutex);
 	if (xmms_output_status (output, NULL) != XMMS_PLAYBACK_STATUS_STOP) {
-		xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY);
+		/* unpause */
+		if (!xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY)) {
+			xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not start playback");
+			return;
+		}
 	}
 	xform = output->chain;
 	output->chain = NULL;
@@ -531,7 +535,9 @@ xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 		xmms_output_chain_start (output);
 	g_mutex_unlock (output->chain_mutex);
 
-	xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY);
+	if (!xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY)) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not start playback");
+	}
 }
 
 static void
@@ -614,7 +620,11 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	GHashTable *ret;
 	xmms_volume_map_t map;
 
-	g_assert (output->plugin);
+	if (!output->plugin) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "couldn't get volume, output plugin not loaded");
+		return NULL;
+	}
 
 	if (!output->plugin->methods.volume_get) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
@@ -679,6 +689,10 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 {
 	gboolean ret = TRUE;
 
+	if (!output->plugin) {
+		return FALSE;
+	}
+
 	g_mutex_lock (output->status_mutex);
 
 	if (output->status != status) {
@@ -714,18 +728,20 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 static gboolean
 xmms_output_open (xmms_output_t *output)
 {
+	gboolean ret = TRUE;
 	g_return_val_if_fail (output, FALSE);
 
 	g_mutex_lock (output->api_mutex);
-	if (!output->plugin->methods.open (output)) {
+	if (output->plugin->methods.open (output)) {
+		if (output->plugin->methods.format_set)
+			output->plugin->methods.format_set (output, &output->format);
+	} else {
+		ret = FALSE;
 		xmms_log_error ("Couldn't open output device");
-		return FALSE;
 	}
-	if (output->plugin->methods.format_set)
-		output->plugin->methods.format_set (output, &output->format);
 	g_mutex_unlock (output->api_mutex);
 
-	return TRUE;
+	return ret;
 
 }
 
@@ -791,7 +807,8 @@ xmms_output_destroy (xmms_object_t *object)
 	xmms_output_t *output = (xmms_output_t *)object;
 
 	output->monitor_volume_running = FALSE;
-	g_thread_join (output->monitor_volume_thread);
+	if (output->monitor_volume_thread)
+		g_thread_join (output->monitor_volume_thread);
 
 	if (output->plugin) {
 		g_mutex_lock (output->api_mutex);

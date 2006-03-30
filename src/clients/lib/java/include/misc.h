@@ -17,5 +17,8 @@
 #include <xmmsclient/xmmsclient.h>
 #include <jni.h>
 
-extern xmmsc_result_t* getResultFromPointer(jlong val);
-extern jlong getPointerToConnection(xmmsc_connection_t *c);
+/*
+ * swig should wrap that two functions to make them java-usable
+ */
+extern xmmsc_result_t* getResultFromPointer (jlong val);
+extern jlong getPointerToConnection (xmmsc_connection_t *c);

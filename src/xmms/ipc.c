@@ -234,7 +234,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		}
 
 		g_mutex_lock (client->lock);
-		client->pendingsignals[signalid] = xmms_ipc_msg_get_cid (msg);
+		client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
 		g_mutex_unlock (client->lock);
 		return;
 	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
@@ -249,7 +249,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		g_mutex_lock (client->lock);
 		client->broadcasts[broadcastid] =
 			g_list_append (client->broadcasts[broadcastid],
-			               GUINT_TO_POINTER (xmms_ipc_msg_get_cid (msg)));
+			               GUINT_TO_POINTER (xmms_ipc_msg_get_cookie (msg)));
 
 		g_mutex_unlock (client->lock);
 		return;
@@ -291,7 +291,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
 			g_free (arg.values[i].value.string);
 	}
-	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
+	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);
 	xmms_ipc_client_msg_write (client, retmsg);
 	g_mutex_unlock (client->lock);
@@ -643,7 +643,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 			g_mutex_lock (cli->lock);
 			if (cli->pendingsignals[signalid]) {
 				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-				xmms_ipc_msg_set_cid (msg, cli->pendingsignals[signalid]);
+				xmms_ipc_msg_set_cookie (msg, cli->pendingsignals[signalid]);
 				xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
 				xmms_ipc_client_msg_write (cli, msg);
 				cli->pendingsignals[signalid] = 0;
@@ -678,7 +678,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 			g_mutex_lock (cli->lock);
 			for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
 				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
-				xmms_ipc_msg_set_cid (msg, GPOINTER_TO_UINT (l->data));
+				xmms_ipc_msg_set_cookie (msg, GPOINTER_TO_UINT (l->data));
 				xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
 				xmms_ipc_client_msg_write (cli, msg);
 			}
