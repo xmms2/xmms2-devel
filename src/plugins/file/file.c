@@ -42,16 +42,19 @@ static gboolean xmms_file_init (xmms_xform_t *xform);
 static void xmms_file_destroy (xmms_xform_t *xform);
 static gint xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
 /*static gint xmms_file_seek (xmms_xform_t *xform, guint64 offset, gint whence);*/
+static gboolean xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 
 /*
  * Plugin header
  */
+XMMS_XFORM_PLUGIN("file",
+                  "File transport",
+                  XMMS_VERSION,
+                  "Plain local file transport",
+                  xmms_file_plugin_setup);
 
-xmms_plugin_api_version_t XMMS_PLUGIN_API_VERSION = XMMS_XFORM_API_VERSION;
-xmms_plugin_type_t XMMS_PLUGIN_TYPE = XMMS_PLUGIN_TYPE_XFORM;
-
-gboolean
-xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
+static gboolean
+xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -61,11 +64,7 @@ xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
 	methods.read = xmms_file_read;
 	/*methods.seek = xmms_file_seek;*/
 
-	xmms_xform_plugin_setup (xform_plugin,
-				 "file",
-				 "File transport " XMMS_VERSION,
-				 "Plain file transport",
-				 &methods);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 				      XMMS_STREAM_TYPE_MIMETYPE,

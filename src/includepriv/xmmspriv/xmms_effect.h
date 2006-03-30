@@ -24,7 +24,6 @@
 #include "xmms/xmms_effect.h"
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_sample.h"
-#include "xmms/xmms_output.h"
 #include "xmms/xmms_medialib.h"
 
 /*

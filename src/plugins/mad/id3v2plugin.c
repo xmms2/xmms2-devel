@@ -36,6 +36,7 @@ typedef struct xmms_id3v2_data_St {
  * Function prototypes
  */
 
+gboolean xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_id3v2_destroy (xmms_xform_t *decoder);
 static gboolean xmms_id3v2_init (xmms_xform_t *decoder);
@@ -45,11 +46,14 @@ static gboolean xmms_id3v2_init (xmms_xform_t *decoder);
  * Plugin header
  */
 
-xmms_plugin_api_version_t XMMS_PLUGIN_API_VERSION = XMMS_XFORM_API_VERSION;
-xmms_plugin_type_t XMMS_PLUGIN_TYPE = XMMS_PLUGIN_TYPE_XFORM;
+XMMS_XFORM_PLUGIN("id3v2",
+                  "ID3v2 parser",
+                  XMMS_VERSION,
+                  "ID3v2 tag container handler",
+                  xmms_id3v2_plugin_setup);
 
 gboolean
-xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
+xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -61,19 +65,12 @@ xmms_xform_plugin_get (xmms_xform_plugin_t *xform_plugin)
 	  methods.seek
 	*/
 
-	xmms_xform_plugin_setup (xform_plugin,
-	                         "id3v2",
-	                         "ID3v2 handler " XMMS_VERSION,
-	                         "ID3v2 parser",
-	                         &methods);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
 	  xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	  xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	  xmms_plugin_info_add (plugin, "License", "GPL");
-	  
-	  xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
-	  xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
 	*/
 
 	/* xmms_xform_indata_constraint_add */

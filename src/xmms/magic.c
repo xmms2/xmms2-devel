@@ -23,6 +23,7 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_magic.h"
+#include "xmmspriv/xmms_xform.h"
 
 static GList *magic_list;
 
@@ -549,8 +550,8 @@ xmms_magic_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_
 
 
 
-gboolean
-xmms_magic_plugin_add (xmms_xform_plugin_t *xform_plugin)
+static gboolean
+xmms_magic_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -563,11 +564,7 @@ xmms_magic_plugin_add (xmms_xform_plugin_t *xform_plugin)
 	  methods.get_mediainfo
 	*/
 
-	xmms_xform_plugin_setup (xform_plugin,
-				 "magic",
-				 "Magic plugin " XMMS_VERSION,
-				 "Stream magic resolving plugin",
-				 &methods);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
 				      XMMS_STREAM_TYPE_MIMETYPE,
@@ -577,3 +574,8 @@ xmms_magic_plugin_add (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
+XMMS_XFORM_BUILTIN(magic,
+		   "Magic file identifier",
+		   XMMS_VERSION,
+		   "Magic file identifier",
+		   xmms_magic_plugin_setup);

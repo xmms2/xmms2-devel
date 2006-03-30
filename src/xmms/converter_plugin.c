@@ -20,6 +20,7 @@
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_sample.h"
+#include "xmmspriv/xmms_xform.h"
 #include "xmms/xmms_medialib.h"
 
 #include <string.h>
@@ -37,8 +38,8 @@ xmms_converter_plugin_init (xmms_xform_t *xform)
 {
 	xmms_conv_xform_data_t *data;
 	xmms_sample_converter_t *conv;
-	const xmms_stream_type_t *intype;
-	const xmms_stream_type_t *to;
+	xmms_stream_type_t *intype;
+	xmms_stream_type_t *to;
 	const GList *goal_hints;
 
 	intype = xmms_xform_intype_get (xform);
@@ -100,9 +101,8 @@ xmms_converter_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_er
 	return len;
 }
 
-
-gboolean
-xmms_converter_plugin_add (xmms_xform_plugin_t *xform_plugin)
+static gboolean
+xmms_converter_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -115,12 +115,7 @@ xmms_converter_plugin_add (xmms_xform_plugin_t *xform_plugin)
 	  methods.get_mediainfo
 	*/
 
-	xmms_xform_plugin_setup (xform_plugin,
-				 "converter",
-				 "Converter " XMMS_VERSION,
-				 "Sample format converter",
-				 &methods);
-
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
 	 * Handle any pcm data...
@@ -146,3 +141,9 @@ xmms_converter_new (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *gt)
 	return xform;
 }
 */
+
+XMMS_XFORM_BUILTIN(converter,
+		   "Sample format converter",
+		   XMMS_VERSION,
+		   "Sample format converter",
+		   xmms_converter_plugin_setup);

@@ -178,7 +178,7 @@ load_config ()
 static void
 change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 {
-	xmms_plugin_t *plugin;
+	xmms_output_plugin_t *plugin;
 	xmms_main_t *mainobj = (xmms_main_t*)userdata;
 	gchar *outname = (gchar *) data;
 
@@ -187,7 +187,7 @@ change_output (xmms_object_t *object, gconstpointer data, gpointer userdata)
 
 	xmms_log_info ("Switching to output %s", outname);
 
-	plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
+	plugin = (xmms_output_plugin_t *)xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 	if (!plugin) {
 		xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something usefull");
 	} else {
@@ -325,7 +325,7 @@ install_scripts (const gchar *into_dir)
 int
 main (int argc, char **argv)
 {
-	xmms_plugin_t *o_plugin;
+	xmms_output_plugin_t *o_plugin;
 	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
 	int loglevel = 1;
@@ -447,7 +447,7 @@ main (int argc, char **argv)
 
 	xmms_log_info ("Using output: %s", outname);
 
-	o_plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
+	o_plugin = (xmms_output_plugin_t *)xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 
 	if (!o_plugin) {
 		xmms_log_error ("Baaaaad output plugin, try to change the output.plugin config variable to something usefull");

@@ -48,40 +48,16 @@ typedef struct {
 
 extern xmms_config_t *global_config;
 
-struct xmms_plugin_St {
-	xmms_object_t object;
-	GMutex *mutex;
-	GModule *module;
-	GList *info_list;
-
-	xmms_plugin_type_t type;
-	gchar *name;
-	gchar *shortname;
-	gchar *description;
-	gchar *version;
-	gint properties;
-
-	guint users;
-	GHashTable *method_table;
-};
-
 /*
  * Global variables
  */
-
-static GMutex *xmms_plugin_mtx;
 static GList *xmms_plugin_list;
 
 /*
  * Function prototypes
  */
-
-static void xmms_plugin_destroy (xmms_object_t *object);
-static gchar *plugin_config_path (xmms_plugin_t *plugin, const gchar *value);
-static gboolean plugin_verify (xmms_plugin_t *plugin);
-static gboolean plugin_register (xmms_plugin_t *plugin);
-static gboolean plugin_register_specific (xmms_plugin_t *plugin);
-static gboolean plugin_register_common (xmms_plugin_t *plugin);
+static gboolean xmms_plugin_setup (xmms_plugin_t *plugin, xmms_plugin_desc_t *desc);
+static gboolean xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module);
 
 /*
  * Public functions
@@ -121,123 +97,6 @@ static gboolean plugin_register_common (xmms_plugin_t *plugin);
  */
 
 /**
- * Create a new plugin instance.
- *
- * @param[in] type The type of plugin. All plugin types are enumerated in
- * #xmms_plugin_type_t.
- * @param[in] shortname The short version of plugin name. Eg. "oss"
- * @param name[in] The full name of the plugin. Eg. "Open Sound System"
- * @param[in] description Text describing plugin.
- *
- * @return a new plugin of the given type.
- */
-xmms_plugin_t *
-xmms_plugin_new (xmms_plugin_type_t type, 
-		 gint api_ver,
-		 const gchar *shortname,
-		 const gchar *name,
-		 const gchar *version,
-		 const gchar *description)
-{
-	xmms_plugin_t *plugin;
-	gboolean api_mismatch;
-
-	g_return_val_if_fail (shortname, NULL);
-	g_return_val_if_fail (name, NULL);
-	g_return_val_if_fail (description, NULL);
-
-	switch (type) {
-		case XMMS_PLUGIN_TYPE_XFORM:
-			api_mismatch = (api_ver != XMMS_XFORM_PLUGIN_API_VERSION);
-			break;
-		case XMMS_PLUGIN_TYPE_OUTPUT:
-			api_mismatch = (api_ver != XMMS_OUTPUT_PLUGIN_API_VERSION);
-			break;
-		case XMMS_PLUGIN_TYPE_PLAYLIST:
-			api_mismatch = (api_ver != XMMS_PLAYLIST_PLUGIN_API_VERSION);
-			break;
-		case XMMS_PLUGIN_TYPE_EFFECT:
-			api_mismatch = (api_ver != XMMS_EFFECT_PLUGIN_API_VERSION);
-			break;
-		default:
-			xmms_log_error ("Invalid plugin type for plugin %s!", name);
-			return NULL;
-	}
-
-	if (api_mismatch) {
-		xmms_log_error ("API VERSION MISMATCH FOR PLUGIN %s!", name);
-		return NULL;
-	}
-
-	plugin = xmms_object_new (xmms_plugin_t, xmms_plugin_destroy);
-
-	plugin->mutex = g_mutex_new ();
-	plugin->type = type;
-	plugin->name = g_strdup (name);
-	plugin->shortname = g_strdup (shortname);
-	plugin->version = g_strdup (version);
-	plugin->description = g_strdup (description);
-	plugin->method_table = g_hash_table_new_full (g_str_hash,
-	                                              g_str_equal,
-	                                              g_free, NULL);
-
-	return plugin;
-}
-
-/**
- * Add a method to this plugin. Different types of plugins may add different
- * types of methods.
- *
- * @param[in] plugin A new plugin created from #xmms_plugin_new
- * @param[in] name The name of the method to add. Allowable method names
- * are defined in xmms_plugin.h and have the prefix 'XMMS_PLUGIN_METHOD_'.
- * @param[in] method The function pointer to the method.
- */
-void
-__xmms_plugin_method_add (xmms_plugin_t *plugin, const gchar *name,
-			xmms_plugin_method_t method)
-{
-	g_return_if_fail (plugin);
-	g_return_if_fail (name);
-	g_return_if_fail (method);
-
-	g_mutex_lock (plugin->mutex);
-	g_hash_table_insert (plugin->method_table, g_strdup (name), method);
-	g_mutex_unlock (plugin->mutex);
-}
-
-/**
- * Set a property for this plugin.
- * The different properties are defined under each plugin type's documentation.
- * @param[in] plugin The plugin
- * @param[in] property The property to add
- */
-void
-xmms_plugin_properties_add (xmms_plugin_t* const plugin, gint property)
-{
-	g_return_if_fail (plugin);
-	g_return_if_fail (property);
-
-	plugin->properties |= property;
-
-}
-
-/**
- * Remove a property from this plugin.
- * @param[in] plugin The plugin
- * @param[in] The property to remove
- */
-void
-xmms_plugin_properties_remove (xmms_plugin_t* const plugin, gint property)
-{
-	g_return_if_fail (plugin);
-	g_return_if_fail (property);
-
-	plugin->properties &= ~property;
-
-}
-
-/**
  * Add information to the plugin. This information can be
  * viewed in a client. The information can be for example
  * the name of the author or the webpage of the plugin.
@@ -273,16 +132,15 @@ xmms_config_property_t *
 xmms_plugin_config_lookup (xmms_plugin_t *plugin,
                            const gchar *key)
 {
-	gchar *ppath;
+	gchar path[256];
 	xmms_config_property_t *prop;
 
 	g_return_val_if_fail (plugin, NULL);
 	g_return_val_if_fail (key, NULL);
 	
-	ppath = plugin_config_path (plugin, key);
-	prop = xmms_config_lookup (ppath);
-
-	g_free (ppath);
+	g_snprintf (path, sizeof (path), "%s.%s",
+		    xmms_plugin_shortname_get (plugin), key);
+	prop = xmms_config_lookup (path);
 
 	return prop;
 }
@@ -304,22 +162,18 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
                                       xmms_object_handler_t cb,
                                       gpointer userdata)
 {
-	gchar *fullpath;
+	gchar fullpath[256];
 	xmms_config_property_t *prop;
 
 	g_return_val_if_fail (plugin, NULL);
 	g_return_val_if_fail (name, NULL);
 	g_return_val_if_fail (default_value, NULL);
 
-	fullpath = plugin_config_path (plugin, name);
+	g_snprintf (fullpath, sizeof (fullpath), "%s.%s",
+		    xmms_plugin_shortname_get (plugin), name);
 
 	prop = xmms_config_property_register (fullpath, default_value, cb,
 	                                      userdata);
-
-	/* xmms_config_property_register() copies the given path,
-	 * so we have to free our copy here
-	 */
-	g_free (fullpath);
 
 	return prop;
 }
@@ -334,22 +188,6 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
  * @addtogroup XMMSPlugin
  * @{
  */
-
-/**
- * @internal Check whether plugin has a property
- * @param[in] plugin The plugin
- * @param[in] property The property to check for
- * @return TRUE if plugin has property
- */
-gboolean
-xmms_plugin_properties_check (const xmms_plugin_t *plugin, gint property)
-{
-	g_return_val_if_fail (plugin, FALSE);
-	g_return_val_if_fail (property, FALSE);
-
-	return plugin->properties & property;
-
-}
 
 /**
  * @internal Get the type of this plugin
@@ -437,8 +275,14 @@ xmms_plugin_info_get (const xmms_plugin_t *plugin)
 static void
 xmms_plugin_add_builtin_plugins (void)
 {
-	xmms_xform_plugin_t *xp;
+	extern xmms_plugin_desc_t xmms_builtin_ringbuf;
+	extern xmms_plugin_desc_t xmms_builtin_magic;
+	extern xmms_plugin_desc_t xmms_builtin_converter;
 
+	xmms_plugin_load (&xmms_builtin_ringbuf, NULL);
+	xmms_plugin_load (&xmms_builtin_magic, NULL);
+	xmms_plugin_load (&xmms_builtin_converter, NULL);
+/*
 	xp = xmms_xform_plugin_new ();
 	xmms_magic_plugin_add (xp);
 	xmms_object_unref (xp);
@@ -450,6 +294,7 @@ xmms_plugin_add_builtin_plugins (void)
 	xp = xmms_xform_plugin_new ();
 	xmms_converter_plugin_add (xp);
 	xmms_object_unref (xp);
+*/
 }
 
 
@@ -461,8 +306,6 @@ xmms_plugin_add_builtin_plugins (void)
 gboolean
 xmms_plugin_init (gchar *path)
 {
-	xmms_plugin_mtx = g_mutex_new ();
-
 	if (!path)
 		path = PKGLIBDIR;
 
@@ -511,53 +354,69 @@ xmms_plugin_shutdown ()
 		 */
 		xmms_object_unref (p);
 	}
-
-	g_mutex_free (xmms_plugin_mtx);
 }
 
 
 static gboolean
-newstyle_init (GModule *module)
+xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module)
 {
-	xmms_xform_plugin_t *xp;
-	gpointer sym;
-	xmms_plugin_api_version_t *ver;
-	xmms_plugin_type_t *type;
-	gboolean (*init) (xmms_xform_plugin_t *);
+	xmms_plugin_t *plugin;
+	xmms_plugin_t *(*allocer) ();
+	gboolean (*verifier) (xmms_plugin_t *);
+	gint expected_ver;
 
-	if (!g_module_symbol (module, "XMMS_PLUGIN_TYPE", &sym)) {
+	switch (desc->type) {
+	case XMMS_PLUGIN_TYPE_OUTPUT:
+		expected_ver = XMMS_OUTPUT_API_VERSION;
+		allocer = xmms_output_plugin_new;
+		verifier = xmms_output_plugin_verify;
+		break;
+/*
+	case XMMS_PLUGIN_TYPE_PLAYLIST:
+		expected_ver = XMMS_PLAYLIST_API_VERSION;
+		initer = xmms_playlist_plugin_init;
+		break;
+*/
+	case XMMS_PLUGIN_TYPE_XFORM:
+		expected_ver = XMMS_XFORM_API_VERSION;
+		allocer = xmms_xform_plugin_new;
+		verifier = xmms_xform_plugin_verify;
+		break;
+	default:
+		XMMS_DBG ("Unknown plugin type!");
 		return FALSE;
 	}
 
-	type = (xmms_plugin_type_t *)sym;
-	if (*type != XMMS_PLUGIN_TYPE_XFORM) {
-		XMMS_DBG ("Unknown plugin type %d", *type);
+	if (desc->api_version != expected_ver) {
+		XMMS_DBG ("Bad api version!");
 		return FALSE;
 	}
 
-	if (!g_module_symbol (module, "XMMS_PLUGIN_API_VERSION", &sym)) {
+	plugin = allocer ();
+	if (!plugin) {
+		XMMS_DBG ("Alloc failed!");
 		return FALSE;
 	}
 
-	ver = (xmms_plugin_api_version_t *)sym;
-	if (*ver != XMMS_XFORM_API_VERSION) {
-		XMMS_DBG ("Bad api version");
+	if (!xmms_plugin_setup (plugin, desc)) {
+		XMMS_DBG ("Setup failed!");
+		xmms_object_unref (plugin);
 		return FALSE;
 	}
 
-	if (!g_module_symbol (module, "xmms_xform_plugin_get", &sym)) {
-		XMMS_DBG ("Plugin without xmms_xform_plugin_get");
+	if (!desc->setup_func (plugin)) {
+		XMMS_DBG ("Plugin setup failed!");
+		xmms_object_unref (plugin);
 		return FALSE;
 	}
-	
-	init = sym;
 
-	xp = xmms_xform_plugin_new ();
+	if (!verifier (plugin)) {
+		XMMS_DBG ("Verify failed!");
+		xmms_object_unref (plugin);
+		return FALSE;
+	}
 
-	init (xp);
-	
-	xmms_object_unref (xp);
-
+	xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
 	return TRUE;
 }
 
@@ -573,8 +432,6 @@ xmms_plugin_scan_directory (const gchar *dir)
 	const char *name;
 	gchar *path;
 	GModule *module;
-	xmms_plugin_t *(*plugin_init) (void);
-	xmms_plugin_t *plugin;
 	gpointer sym;
 
 	g_return_val_if_fail (global_config, FALSE);
@@ -609,36 +466,15 @@ xmms_plugin_scan_directory (const gchar *dir)
 			continue;
 		}
 
-		if (!g_module_symbol (module, "xmms_plugin_get", &sym)) {
-			xmms_log_error ("Failed to open plugin %s: "
-			                "initialization function missing", path);
-
-			if (!newstyle_init (module)) {
-				g_module_close (module);
-			}
-			g_free (path);
-			continue;
-		}
-
 		g_free (path);
 
-		plugin_init = sym;
-
-		plugin = plugin_init ();
-
-		if (!plugin) {
+		if (!g_module_symbol (module, "XMMS_PLUGIN_DESC", &sym)) {
 			g_module_close (module);
 			continue;
 		}
 
-		plugin->module = module;
-
-		if (!plugin_verify (plugin)) {
-			xmms_log_error ("Invalid plugin: %s", plugin->name);
-			xmms_object_unref (plugin);
-		} else if (!plugin_register (plugin)) {
-			xmms_log_error ("Couldn't register plugin: %s", plugin->name);
-			xmms_object_unref (plugin);
+		if (!xmms_plugin_load ((xmms_plugin_desc_t *)sym, module)) {
+			g_module_close (module);
 		}
 	}
 
@@ -653,8 +489,6 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 	GList *list = NULL, *node, *l;
 
 	l = xmms_plugin_list_get (type);
-
-	g_mutex_lock (xmms_plugin_mtx);
 
 	for (node = l; node; node = g_list_next (node)) {
 		GHashTable *hash;
@@ -682,11 +516,24 @@ xmms_plugin_client_list (xmms_object_t *main, guint32 type, xmms_error_t *err)
 
 	}
 
-	g_mutex_unlock (xmms_plugin_mtx);
-
 	xmms_plugin_list_destroy (l);
 
 	return list;
+}
+
+void
+xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, gpointer user_data)
+{
+	GList *node;
+	
+	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
+		xmms_plugin_t *plugin = node->data;
+		
+		if (plugin->type == type || type == XMMS_PLUGIN_TYPE_ALL) {
+			if (!func (plugin, user_data))
+				break;
+		}
+	}	
 }
 
 /**
@@ -699,8 +546,6 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 {
 	GList *list = NULL, *node;
 
-	g_mutex_lock (xmms_plugin_mtx);
-
 	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
 		xmms_plugin_t *plugin = node->data;
 
@@ -709,8 +554,6 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 			list = g_list_prepend (list, plugin);
 		}
 	}
-	
-	g_mutex_unlock (xmms_plugin_mtx);
 	
 	return list;
 }
@@ -743,8 +586,6 @@ xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
 
 	g_return_val_if_fail (name, NULL);
 
-	g_mutex_lock (xmms_plugin_mtx);
-
 	for (l = xmms_plugin_list; l; l = l->next) {
 		xmms_plugin_t *plugin = l->data;
 
@@ -757,212 +598,24 @@ xmms_plugin_find (xmms_plugin_type_t type, const gchar *name)
 		}
 	}
 
-	g_mutex_unlock (xmms_plugin_mtx);
-
 	return ret;
 }
 
-/**
- * @internal Get a pointer to a particularly named method in the plugin
- * @param[in] plugin The plugin
- * @param[in] method The method name to look for
- * @return Pointer to plugin method
- */
-xmms_plugin_method_t
-xmms_plugin_method_get (xmms_plugin_t *plugin, const gchar *method)
-{
-	xmms_plugin_method_t ret;
-
-	g_return_val_if_fail (plugin, NULL);
-	g_return_val_if_fail (method, NULL);
-
-	g_mutex_lock (plugin->mutex);
-	ret = g_hash_table_lookup (plugin->method_table, method);
-	g_mutex_unlock (plugin->mutex);
-
-	return ret;
-}
-
-gboolean xmms_plugin_has_methods (xmms_plugin_t *plugin, ...)
-{
-	va_list ap;
-	xmms_plugin_method_t m;
-	gboolean ret = FALSE;
-
-	g_return_val_if_fail (plugin, FALSE);
-
-	g_mutex_lock (plugin->mutex);
-
-	va_start (ap, plugin);
-
-	m = va_arg (ap, xmms_plugin_method_t);
-	if (!m) { /* no methods passed -> failure */
-		goto out;
-	}
-
-	do {
-		if (!g_hash_table_lookup (plugin->method_table, m)) {
-			goto out;
-		}
-	} while ((m = va_arg (ap, xmms_plugin_method_t)));
-
-	ret = TRUE;
-
-out:
-	va_end (ap);
-	g_mutex_unlock (plugin->mutex);
-
-	return ret;
-}
-
-/*
- * Static functions
- */
-
-/**
- * @internal Destroy a particular instance of a plugin.
- * @param[in] object The plugin (object) to destroy.
- */
-static void
-xmms_plugin_destroy (xmms_object_t *object)
-{
-	xmms_plugin_t *p = (xmms_plugin_t *) object;
-
-	g_mutex_free (p->mutex);
-
-	if (p->module) {
-		g_module_close (p->module);
-	}
-
-	g_free (p->name);
-	g_free (p->shortname);
-	g_free (p->description);
-	g_hash_table_destroy (p->method_table);
-
-	while (p->info_list) {
-		xmms_plugin_info_t *info = p->info_list->data;
-
-		g_free (info->key);
-		g_free (info->value);
-		g_free (info);
-
-		p->info_list = g_list_delete_link (p->info_list, p->info_list);
-	}
-
-	/* remove this plugin from the global plugin list */
-	g_mutex_lock (xmms_plugin_mtx);
-	xmms_plugin_list = g_list_remove (xmms_plugin_list, p);
-	g_mutex_unlock (xmms_plugin_mtx);
-}
-
-/**
- * @internal Build 'absolute' config path to a plugin's config property,
- * given the plugin and the property name.
- * @param[in] plugin The plugin
- * @param[in] value The property name
- * @return Config path (property key) as string
- * @todo config value <-> property fixup
- */
-static gchar *
-plugin_config_path (xmms_plugin_t *plugin, const gchar *value)
-{
-	gchar *ret;
-	gchar *pl;
-
-	switch (xmms_plugin_type_get (plugin)) {
-		case XMMS_PLUGIN_TYPE_XFORM:
-			pl = "xform";
-			break;
-		case XMMS_PLUGIN_TYPE_OUTPUT:
-			pl = "output";
-			break;
-		case XMMS_PLUGIN_TYPE_PLAYLIST:
-			pl = "playlist";
-			break;
-		case XMMS_PLUGIN_TYPE_EFFECT:
-			pl = "effect";
-			break;
-		default:
-			pl = "noname";
-			break;
-	}
-
-	ret = g_strdup_printf ("%s.%s.%s", pl, xmms_plugin_shortname_get (plugin), value);
-
-	return ret;
-}
 
 static gboolean
-plugin_verify (xmms_plugin_t *plugin)
+xmms_plugin_setup (xmms_plugin_t *plugin, xmms_plugin_desc_t *desc)
 {
-	gboolean (*f)(xmms_plugin_t *) = NULL;
-
-	g_assert (plugin);
-
-	switch (xmms_plugin_type_get (plugin)) {
-		case XMMS_PLUGIN_TYPE_XFORM:
-/*			f = xmms_xform_plugin_verify;
-			break;*/
-			return TRUE;
-		case XMMS_PLUGIN_TYPE_OUTPUT:
-			f = xmms_output_plugin_verify;
-			break;
-		case XMMS_PLUGIN_TYPE_PLAYLIST:
-			/*f = xmms_playlist_plugin_verify;*/
-			return FALSE;
-			break;
-		case XMMS_PLUGIN_TYPE_EFFECT:
-			f = xmms_effect_plugin_verify;
-			break;
-		case XMMS_PLUGIN_TYPE_ALL:
-			g_assert_not_reached ();
-	}
-
-	return f ? f (plugin) : TRUE;
-}
-
-static gboolean
-plugin_register (xmms_plugin_t *plugin)
-{
-	XMMS_DBG ("Registering plugin: %s", plugin->name);
-
-	return plugin_register_specific (plugin) &&
-	       plugin_register_common (plugin);
-}
-
-static gboolean
-plugin_register_specific (xmms_plugin_t *plugin)
-{
-	gboolean (*f)(xmms_plugin_t *) = NULL;
-
-	switch (xmms_plugin_type_get (plugin)) {
-		case XMMS_PLUGIN_TYPE_EFFECT:
-			f = xmms_effect_plugin_register;
-			break;
-		default:
-			break;
-	}
-
-	return f ? f (plugin) : TRUE;
-}
-
-static gboolean
-plugin_register_common (xmms_plugin_t *plugin)
-{
-	const GList *l;
-
-	for (l = xmms_plugin_info_get (plugin); l; l = g_list_next (l)) {
-		const xmms_plugin_info_t *i = l->data;
-
-		XMMS_DBG ("INFO: %s = %s", i->key, i->value);
-	}
-
-	xmms_plugin_list = g_list_prepend (xmms_plugin_list, plugin);
+	plugin->type = desc->type;
+	plugin->shortname = desc->shortname;
+	plugin->name = desc->name;
+	plugin->version = desc->version;
+	plugin->description = desc->description;
 
 	return TRUE;
 }
 
-/**
- * @}
- * @endif
- */
+void
+xmms_plugin_destroy (xmms_plugin_t *plugin)
+{
+	
+}

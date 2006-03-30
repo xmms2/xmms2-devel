@@ -33,9 +33,9 @@ guint32 xmms_sample_samples_to_converted_bytes (xmms_sample_converter_t *conv, g
 
 /* internal? */
 void xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len, xmms_sample_t **out, guint *outlen);
-xmms_sample_converter_t *xmms_sample_audioformats_coerce (const xmms_stream_type_t *in, const GList *goal_types);
-const xmms_stream_type_t *xmms_sample_converter_get_from (xmms_sample_converter_t *conv);
-const xmms_stream_type_t *xmms_sample_converter_get_to (xmms_sample_converter_t *conv);
+xmms_sample_converter_t *xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types);
+xmms_stream_type_t *xmms_sample_converter_get_from (xmms_sample_converter_t *conv);
+xmms_stream_type_t *xmms_sample_converter_get_to (xmms_sample_converter_t *conv);
 void xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_entry_t entry);
 
 #endif

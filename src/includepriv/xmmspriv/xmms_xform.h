@@ -20,15 +20,16 @@
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_medialib.h"
 #include "xmmspriv/xmms_streamtype.h"
+#include "xmmspriv/xmms_plugin.h"
 
 xmms_xform_t *xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hints);
-
 const gchar *xmms_xform_outtype_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 gint xmms_xform_outtype_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);
 
 xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
 
-xmms_xform_plugin_t *xmms_xform_plugin_new (void);
+xmms_plugin_t *xmms_xform_plugin_new (void);
+gboolean xmms_xform_plugin_verify (xmms_plugin_t *plugin);
 
 xmms_xform_t *xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats);
 
@@ -36,6 +37,10 @@ int xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error
 gboolean xmms_xform_iseos (xmms_xform_t *xform);
 
 const GList *xmms_xform_goal_hints_get (xmms_xform_t *xform);
-const xmms_stream_type_t *xmms_xform_intype_get (xmms_xform_t *xform);
+xmms_stream_type_t *xmms_xform_intype_get (xmms_xform_t *xform);
+
+void xmms_xform_outdata_type_set (xmms_xform_t *xform, xmms_stream_type_t *type);
+
+#define XMMS_XFORM_BUILTIN(shname, name, ver, desc, setupfunc) XMMS_BUILTIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 #endif

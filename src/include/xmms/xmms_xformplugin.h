@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -49,11 +49,10 @@ typedef enum xmms_stream_type_key_E {
 } xmms_stream_type_key_t;
 
 
-
-
 struct xmms_xform_plugin_St;
 typedef struct xmms_xform_plugin_St xmms_xform_plugin_t;
 
+#define XMMS_XFORM_PLUGIN(shname, name, ver, desc, setupfunc) XMMS_PLUGIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 /* */
 #define XMMS_XFORM_DATA_SIZE "size"
@@ -72,7 +71,8 @@ typedef struct xmms_xform_methods_St {
 #define XMMS_XFORM_METHODS_INIT(m) memset (&m, 0, sizeof (xmms_xform_methods_t))
 
 
-void xmms_xform_plugin_setup (xmms_xform_plugin_t *xform, const char *shortname, const char *name, const char *desc, xmms_xform_methods_t *methods);
+
+void xmms_xform_plugin_methods_set (xmms_xform_plugin_t *plugin, xmms_xform_methods_t *methods);
 void xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...);
 
 void xmms_xform_ringbuf_resize (xmms_xform_t *xform, gint size);

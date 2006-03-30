@@ -20,22 +20,24 @@
 #ifndef _XMMS_OUTPUT_INT_H_
 #define _XMMS_OUTPUT_INT_H_
 
-#include "xmms/xmms_output.h"
-#include "xmms/xmms_plugin.h"
+#include "xmms/xmms_outputplugin.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_plugin.h"
 
 /*
  * Private function prototypes -- do NOT use in plugins.
  */
 
-xmms_output_t *xmms_output_new (xmms_plugin_t *plugin, xmms_playlist_t *playlist);
+
+xmms_output_t *xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist);
 
 xmms_medialib_entry_t xmms_output_playing_entry_get (xmms_output_t *output, xmms_error_t *err);
 
 void xmms_output_flush (xmms_output_t *output);
 guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err); 
-gboolean xmms_output_plugin_switch (xmms_output_t *output, xmms_plugin_t *new_plugin);
-gboolean xmms_output_plugin_verify (xmms_plugin_t *plugin);
+gboolean xmms_output_plugin_switch (xmms_output_t *output, xmms_output_plugin_t *new_plugin);
 
+xmms_plugin_t *xmms_output_plugin_new (void);
+gboolean xmms_output_plugin_verify (xmms_plugin_t *plugin);
 
 #endif

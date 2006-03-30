@@ -94,9 +94,8 @@ xmms_ringbuf_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_erro
 }
 
 
-
-gboolean
-xmms_ringbuf_plugin_add (xmms_xform_plugin_t *xform_plugin)
+static gboolean
+xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
@@ -106,14 +105,9 @@ xmms_ringbuf_plugin_add (xmms_xform_plugin_t *xform_plugin)
 	methods.read = xmms_ringbuf_plugin_read;
 	/*
 	  methods.seek
-	  methods.get_mediainfo
 	*/
 
-	xmms_xform_plugin_setup (xform_plugin,
-				 "ringbuf",
-				 "Ringbuf plugin " XMMS_VERSION,
-				 "Buffer",
-				 &methods);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	/*
 	xmms_xform_plugin_indata_add (xform_plugin,
@@ -191,3 +185,9 @@ xmms_ringbuf_xform_thread (gpointer data)
 
 	return NULL;
 }
+
+XMMS_XFORM_BUILTIN(ringbuf,
+		   "Ringbuffer",
+		   XMMS_VERSION,
+		   "Buffer",
+		   xmms_ringbuf_plugin_setup);

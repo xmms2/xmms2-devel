@@ -3,3 +3,4 @@ source=["html.c"]
 
 def config(env):
     raise ConfigError("Disabled")
+

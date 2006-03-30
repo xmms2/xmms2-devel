@@ -35,8 +35,8 @@
 struct xmms_sample_converter_St {
 	xmms_object_t obj;
 
-	const xmms_stream_type_t *from;
-	const xmms_stream_type_t *to;
+	xmms_stream_type_t *from;
+	xmms_stream_type_t *to;
 
 	gboolean same;
 	gboolean resample;
@@ -99,7 +99,7 @@ xmms_sample_converter_destroy (xmms_object_t *obj)
 }
 
 static xmms_sample_converter_t *
-xmms_sample_converter_init (const xmms_stream_type_t *from, const xmms_stream_type_t *to)
+xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 {
 	xmms_sample_converter_t *conv = xmms_object_new (xmms_sample_converter_t, xmms_sample_converter_destroy);
 	gint fformat, fsamplerate, fchannels;
@@ -130,7 +130,7 @@ xmms_sample_converter_init (const xmms_stream_type_t *from, const xmms_stream_ty
 /**
  * Return the audio format used by the converter as source
  */
-const xmms_stream_type_t *
+xmms_stream_type_t *
 xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 {
 	g_return_val_if_fail (conv, NULL);
@@ -141,7 +141,7 @@ xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 /**
  * Return the audio format used by the converter as target
  */
-const xmms_stream_type_t *
+xmms_stream_type_t *
 xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 {
 	g_return_val_if_fail (conv, NULL);
@@ -186,9 +186,9 @@ xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_
  * Find the best pair of formats
  */
 xmms_sample_converter_t *
-xmms_sample_audioformats_coerce (const xmms_stream_type_t *in, const GList *goal_types)
+xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types)
 {
-	const xmms_stream_type_t *best = NULL;
+	xmms_stream_type_t *best = NULL;
 	const GList *on;
 /*	gint bestscore = GINT_MAX;*/
 	gint bestscore = 100000;
@@ -205,7 +205,7 @@ xmms_sample_audioformats_coerce (const xmms_stream_type_t *in, const GList *goal
 	}
 
 	for (on = goal_types ; on; on = g_list_next (on)) {
-		const xmms_stream_type_t *goal = on->data;
+		xmms_stream_type_t *goal = on->data;
 		const gchar *mime;
 		gint score = 0;
 

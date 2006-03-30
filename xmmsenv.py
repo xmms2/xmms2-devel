@@ -40,7 +40,12 @@ class Target:
 		self.globs['platform'] = env.platform
 		self.globs['ConfigError'] = ConfigError
 
-		c = compile(file(target).read(), target, "exec")
+		x = file(target).read()
+		if x[-1] != '\n':
+			print "Missing linebreak in %s" % target
+			x += '\n'
+
+		c = compile(x, target, "exec")
 		eval(c, self.globs)
 
 		if not isinstance(self.globs.get("target"), str):
