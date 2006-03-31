@@ -24,8 +24,9 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_decoderplugin.h"
+#include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
+#include "xmms/xmms_medialib.h"
 
 #include <glib.h>
 #include <string.h>
@@ -67,12 +68,15 @@ typedef struct xmms_wave_data_St {
  * Function prototypes
  */
 
-static gboolean xmms_wave_new (xmms_decoder_t *decoder);
-static gboolean xmms_wave_decode_block (xmms_decoder_t *decoder);
-static void xmms_wave_get_media_info (xmms_decoder_t *decoder);
-static void xmms_wave_destroy (xmms_decoder_t *decoder);
-static gboolean xmms_wave_init (xmms_decoder_t *decoder, gint mode);
-static gboolean xmms_wave_seek (xmms_decoder_t *decoder, guint samples);
+static gboolean xmms_wave_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gint xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                            xmms_error_t *error);
+static void xmms_wave_get_media_info (xmms_xform_t *xform);
+static void xmms_wave_destroy (xmms_xform_t *xform);
+static gboolean xmms_wave_init (xmms_xform_t *xform);
+#if 0
+static gboolean xmms_wave_seek (xmms_xform_t *xform, guint samples);
+#endif
 
 static gboolean read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read);
 
@@ -80,118 +84,81 @@ static gboolean read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint byte
  * Plugin header
  */
 
-xmms_plugin_t *
-xmms_plugin_get (void)
-{
-	xmms_plugin_t *plugin;
-
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
-	                          XMMS_DECODER_PLUGIN_API_VERSION,
-	                          "wave",
-	                          "Wave Decoder",
-	                          XMMS_VERSION,
-	                          "Wave decoder");
-
-	if (!plugin) {
-		return NULL;
-	}
-
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "URL", "http://msdn.microsoft.com/"
-	                                     "library/en-us/dnnetcomp/html/"
-	                                     "WaveInOut.asp?frame=true"
-	                                     "#waveinout_topic_003");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
-
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_wave_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_wave_decode_block);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_wave_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_wave_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_wave_seek);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_wave_get_media_info);
-
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
-
-	xmms_plugin_magic_add (plugin, "wave header", "audio/x-wav",
-	                       "0 string RIFF", ">8 string WAVE",
-	                       ">>12 string fmt ", NULL);
-
-
-	return plugin;
-}
+XMMS_XFORM_PLUGIN ("wave",
+                   "Wave Decoder", XMMS_VERSION,
+                   "Wave decoder",
+                   xmms_wave_plugin_setup);
 
 static gboolean
-xmms_wave_new (xmms_decoder_t *decoder)
+xmms_wave_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_wave_data_t *data;
+	xmms_xform_methods_t methods;
 
-	data = g_new0 (xmms_wave_data_t, 1);
-	g_return_val_if_fail (data, FALSE);
+	XMMS_XFORM_METHODS_INIT (methods);
 
-	xmms_decoder_private_data_set (decoder, data);
+	methods.init = xmms_wave_init;
+	methods.destroy = xmms_wave_destroy;
+	methods.read = xmms_wave_read;
+
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-wav",
+	                              NULL);
+
+	xmms_magic_add ("wave header", "audio/x-wav",
+	                "0 string RIFF", ">8 string WAVE",
+	                ">>12 string fmt ", NULL);
 
 	return TRUE;
 }
 
 static void
-xmms_wave_get_media_info (xmms_decoder_t *decoder)
+xmms_wave_get_media_info (xmms_xform_t *xform)
 {
 	xmms_wave_data_t *data;
-	xmms_medialib_entry_t entry;
 	gdouble playtime;
 	guint samples_total, bitrate;
-	xmms_medialib_session_t *session;
 
-	g_return_if_fail (decoder);
+	g_return_if_fail (xform);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
-
-	entry = xmms_decoder_medialib_entry_get (decoder);
 
 	samples_total = data->bytes_total / (data->bits_per_sample / 8);
 	playtime = (gdouble) samples_total / data->samplerate / data->channels;
 
-	session = xmms_medialib_begin_write ();
-
-	xmms_medialib_entry_property_set_int (session, entry,
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-										  playtime * 1000);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+	                             playtime * 1000);
 
 	bitrate = data->bits_per_sample * data->samplerate / data->channels;
-	xmms_medialib_entry_property_set_int (session, entry,
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-										  bitrate);
-	xmms_medialib_entry_property_set_int (session, entry,
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-										  data->samplerate);
-
-	xmms_medialib_end (session);
-	
-	xmms_medialib_entry_send_update (entry);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+	                             bitrate);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->samplerate);
 }
 
 static gboolean
-xmms_wave_init (xmms_decoder_t *decoder, gint mode)
+xmms_wave_init (xmms_xform_t *xform)
 {
-	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
 	xmms_error_t error;
 	xmms_sample_format_t sample_fmt;
 	guint8 buf[1024];
 	gint read;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = g_new0 (xmms_wave_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
+	xmms_xform_private_data_set (xform, data);
 
-	read = xmms_transport_peek (transport, (gchar *) buf, sizeof (buf),
-	                            &error);
+	read = xmms_xform_peek (xform, (gchar *) buf, sizeof (buf), &error);
 
 	if (read < WAVE_HEADER_MIN_SIZE) {
 		xmms_log_error ("Could not read wave header");
@@ -203,44 +170,44 @@ xmms_wave_init (xmms_decoder_t *decoder, gint mode)
 		return FALSE;
 	}
 
+	xmms_wave_get_media_info (xform);
+
 	/* skip over the header */
 	g_assert (read >= data->header_size);
 
-	xmms_transport_read (transport, (gchar *) buf, data->header_size,
-	                     &error);
-
-	if (!(mode & XMMS_DECODER_INIT_DECODING)) {
-		return TRUE;
-	}
+	xmms_xform_read (xform, (gchar *) buf, data->header_size, &error);
 
 	sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_U8
 	                                         : XMMS_SAMPLE_FORMAT_S16);
-	xmms_decoder_format_add (decoder, sample_fmt, data->channels,
-	                         data->samplerate);
 
-	return !!xmms_decoder_format_finish (decoder);
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT,
+	                             sample_fmt,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+	                             data->channels,
+	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+	                             data->samplerate,
+	                             XMMS_STREAM_TYPE_END);
+
+	return TRUE;
 }
 
-static gboolean
-xmms_wave_decode_block (xmms_decoder_t *decoder)
+static gint xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                            xmms_error_t *error)
 {
-	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
-	xmms_error_t error;
-	gchar buf[4096];
 	gint ret;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
-
-	ret = xmms_transport_read (transport, buf, sizeof (buf), &error);
+	ret = xmms_xform_read (xform, (gchar *) buf, len, &error);
 	if (ret <= 0) {
-		return FALSE;
+		return ret;
 	}
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -254,11 +221,10 @@ xmms_wave_decode_block (xmms_decoder_t *decoder)
 	}
 #endif
 
-	xmms_decoder_write (decoder, buf, ret);
-
-	return TRUE;
+	return ret;
 }
 
+#if 0
 static gboolean
 xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 {
@@ -269,7 +235,7 @@ xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 
 	g_return_val_if_fail (decoder, FALSE);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (decoder);
 	g_return_val_if_fail (data, FALSE);
 
 	transport = xmms_decoder_transport_get (decoder);
@@ -289,13 +255,14 @@ xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
 
 	return ret != -1;
 }
+#endif
 
 static void
-xmms_wave_destroy (xmms_decoder_t *decoder)
+xmms_wave_destroy (xmms_xform_t *xform)
 {
-	g_return_if_fail (decoder);
+	g_return_if_fail (xform);
 
-	g_free (xmms_decoder_private_data_get (decoder));
+	g_free (xmms_xform_private_data_get (xform));
 }
 
 static gboolean
