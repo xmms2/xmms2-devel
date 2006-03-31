@@ -74,25 +74,28 @@ static struct {
 /*
  * Function prototypes
  */
+static gboolean xmms_alsa_plugin_setup (xmms_output_plugin_t *plugin);
 static void xmms_alsa_flush (xmms_output_t *output);
 static void xmms_alsa_close (xmms_output_t *output);
-static void xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len);
+static void xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
+                             xmms_error_t *err);
 static void xmms_alsa_xrun_recover (xmms_alsa_data_t *output, gint err);
 static guint xmms_alsa_buffer_bytes_get (xmms_output_t *output);
 static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
 static void xmms_alsa_destroy (xmms_output_t *output);
 static gboolean xmms_alsa_format_set (xmms_output_t *output,
-                                      xmms_audio_format_t *format);
+                                      const xmms_audio_format_t *format);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
-                                        xmms_audio_format_t *format);
+                                        const xmms_audio_format_t *format);
 static gboolean xmms_alsa_volume_set (xmms_output_t *output,
                                       const gchar *channel,
                                       guint volume);
 static gboolean xmms_alsa_volume_get (xmms_output_t *output,
                                       const gchar **names, guint *values,
                                       guint *num_channels);
-static gboolean xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data);
+static gboolean xmms_alsa_mixer_setup (xmms_output_t *plugin,
+                                       xmms_alsa_data_t *data);
 static gboolean xmms_alsa_probe_modes (xmms_output_t *output,
                                        xmms_alsa_data_t *data);
 static void xmms_alsa_probe_mode (xmms_output_t *output, snd_pcm_t *pcm,
@@ -106,57 +109,45 @@ static snd_mixer_selem_channel_id_t lookup_channel (const gchar *name);
 /*
  * Plugin header
  */
+XMMS_OUTPUT_PLUGIN ("alsa", "ALSA Output", XMMS_VERSION,
+                    "Advanced Linux Sound Architecture output plugin",
+                    xmms_alsa_plugin_setup);
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+static gboolean
+xmms_alsa_plugin_setup (xmms_output_plugin_t *plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_output_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
-	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "alsa",
-	                          "ALSA Output",
-	                          XMMS_VERSION,
-	                          "Advanced Linux Sound Architecture output plugin");
+	XMMS_OUTPUT_METHODS_INIT(methods);
 
-	g_return_val_if_fail (plugin, NULL);
+	methods.new = xmms_alsa_new;
+	methods.destroy = xmms_alsa_destroy;
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.alsa-project.org");
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	methods.open = xmms_alsa_open;
+	methods.close = xmms_alsa_close;
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
-	                        xmms_alsa_write);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN,
-	                        xmms_alsa_open);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
-	                        xmms_alsa_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
-	                        xmms_alsa_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE,
-	                        xmms_alsa_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
-	                        xmms_alsa_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
-	                        xmms_alsa_buffer_bytes_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_GET,
-	                        xmms_alsa_volume_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_SET,
-	                        xmms_alsa_volume_set);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
-	                        xmms_alsa_format_set);
+	methods.flush = xmms_alsa_flush;
+	methods.format_set = xmms_alsa_format_set;
 
+	methods.volume_get = xmms_alsa_volume_get;
+	methods.volume_set = xmms_alsa_volume_set;
 
-	xmms_plugin_config_property_register (plugin, "device", "default",
-	                                   NULL, NULL);
+	methods.write = xmms_alsa_write;
 
-	xmms_plugin_config_property_register (plugin, "mixer", "PCM",
-	                                   NULL, NULL);
+	methods.latency_get = xmms_alsa_buffer_bytes_get;
 
-	xmms_plugin_config_property_register (plugin, "mixer_dev", "default",
-	                                   NULL,NULL);
+	xmms_output_plugin_methods_set (plugin, &methods);
 
-	return plugin;
+	xmms_output_plugin_config_property_register (plugin, "device", "default",
+	                                             NULL, NULL);
+
+	xmms_output_plugin_config_property_register (plugin, "mixer", "PCM",
+	                                             NULL, NULL);
+
+	xmms_output_plugin_config_property_register (plugin, "mixer_dev", "default",
+	                                             NULL,NULL);
+
+	return TRUE;
 }
 
 
@@ -179,7 +170,6 @@ static gboolean
 xmms_alsa_new (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
-	xmms_plugin_t *plugin;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -193,15 +183,13 @@ xmms_alsa_new (xmms_output_t *output)
 
 	g_return_val_if_fail (data->hwparams, FALSE);
 
-	plugin = xmms_output_plugin_get (output);
-
 	if (!xmms_alsa_probe_modes (output, data)) {
 		g_free (data->hwparams);
 		g_free (data);
 		return FALSE;
 	}
 
-	xmms_alsa_mixer_setup (plugin, data);
+	xmms_alsa_mixer_setup (output, data);
 
 	xmms_output_private_data_set (output, data);
 
@@ -215,8 +203,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 	const gchar *dev;
 	int i, j, k;
 
-	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
-					"device");
+	cv = xmms_output_config_lookup (output, "device");
 	dev = xmms_config_property_get_string (cv);
 
 	if (!dev) {
@@ -305,14 +292,11 @@ static void
 xmms_alsa_destroy (xmms_output_t *output)
 {
 	xmms_alsa_data_t *data;
-	xmms_plugin_t *plugin;
 	gint err;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
-
-	plugin = xmms_output_plugin_get (output);
 
 	if (data->mixer) {
 		err = snd_mixer_close (data->mixer);
@@ -346,7 +330,7 @@ xmms_alsa_open (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	cv = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
+	cv = xmms_output_config_lookup (output, "device");
 	dev = xmms_config_property_get_string (cv);
 
 	if (!dev) {
@@ -399,7 +383,8 @@ xmms_alsa_close (xmms_output_t *output)
  * @return TRUE on success, FALSE on error
  */
 static gboolean
-xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
+xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
+                        const xmms_audio_format_t *format)
 {
 	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
 	gint err, tmp, i;
@@ -504,14 +489,14 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data, xmms_audio_format_t *format)
  * @return TRUE on success, else FALSE
  */
 static gboolean
-xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
+xmms_alsa_mixer_setup (xmms_output_t *output, xmms_alsa_data_t *data)
 {
 	const xmms_config_property_t *cv;
 	const gchar *dev, *name;
 	glong alsa_min_vol = 0, alsa_max_vol = 0;
 	gint err;
 
-	cv = xmms_plugin_config_lookup (plugin, "mixer_dev");
+	cv = xmms_output_config_lookup (output, "mixer_dev");
 	dev = xmms_config_property_get_string (cv);
 
 	err = snd_mixer_open (&data->mixer, 0);
@@ -550,7 +535,7 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
 		return FALSE;
 	}
 
-	cv = xmms_plugin_config_lookup (plugin, "mixer");
+	cv = xmms_output_config_lookup (output, "mixer");
 	name = xmms_config_property_get_string (cv);
 
 	data->mixer_elem = xmms_alsa_find_mixer_elem (data->mixer, name);
@@ -588,7 +573,7 @@ xmms_alsa_mixer_setup (xmms_plugin_t *plugin, xmms_alsa_data_t *data)
  * @return Success/failure
  */
 static gboolean
-xmms_alsa_format_set (xmms_output_t *output, xmms_audio_format_t *format)
+xmms_alsa_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
 {
 	gint err;
 	xmms_alsa_data_t *data;
@@ -829,7 +814,8 @@ xmms_alsa_xrun_recover (xmms_alsa_data_t *data, gint err)
  * @param len The length of audio data.
  */
 static void
-xmms_alsa_write (xmms_output_t *output, gchar *buffer, gint len)
+xmms_alsa_write (xmms_output_t *output, gpointer buffer, gint len,
+                 xmms_error_t *err)
 {
 	gint written;
 	gint frames;
