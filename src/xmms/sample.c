@@ -267,7 +267,7 @@ xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types
  * convert from milliseconds to samples for this format.
  */
 guint
-xmms_sample_ms_to_samples (xmms_audio_format_t *f, guint milliseconds)
+xmms_sample_ms_to_samples (const xmms_audio_format_t *f, guint milliseconds)
 {
 	return (guint)(((gdouble) f->samplerate) * milliseconds / 1000);
 }
@@ -276,7 +276,7 @@ xmms_sample_ms_to_samples (xmms_audio_format_t *f, guint milliseconds)
  * Convert from samples to milliseconds for this format
  */
 guint
-xmms_sample_samples_to_ms (xmms_audio_format_t *f, guint samples)
+xmms_sample_samples_to_ms (const xmms_audio_format_t *f, guint samples)
 {
 	return (guint) (((gdouble)samples) * 1000.0 / f->samplerate);
 }
@@ -285,7 +285,7 @@ xmms_sample_samples_to_ms (xmms_audio_format_t *f, guint samples)
  * Convert from bytes to milliseconds for this format
  */
 guint
-xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint bytes)
+xmms_sample_bytes_to_ms (const xmms_audio_format_t *f, guint bytes)
 {
 	guint samples = bytes / xmms_sample_size_get (f->format) / f->channels;
 	return xmms_sample_samples_to_ms (f, samples);

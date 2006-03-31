@@ -23,61 +23,53 @@
  * Type definitions
  */
 typedef struct xmms_null_data_St {
-	xmms_audio_format_t *format;
+	const xmms_audio_format_t *format;
 } xmms_null_data_t;
 
 /*
  * Function prototypes
  */
+static gboolean xmms_null_plugin_setup (xmms_output_plugin_t *plugin);
 static void xmms_null_flush (xmms_output_t *output);
-static void xmms_null_write (xmms_output_t *output, gchar *buffer, gint len);
+static void xmms_null_write (xmms_output_t *output, gpointer buffer, gint len,
+                             xmms_error_t *error);
 static gboolean xmms_null_open (xmms_output_t *output);
 static void xmms_null_close (xmms_output_t *output);
 static gboolean xmms_null_new (xmms_output_t *output);
 static void xmms_null_destroy (xmms_output_t *output);
-static gboolean xmms_null_format_set (xmms_output_t *output, xmms_audio_format_t *format);
+static gboolean xmms_null_format_set (xmms_output_t *output,
+                                      const xmms_audio_format_t *format);
 
 /*
  * Plugin header
  */
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+XMMS_OUTPUT_PLUGIN ("null", "Null Output", XMMS_VERSION,
+                    "null output plugin",
+                    xmms_null_plugin_setup);
+
+static gboolean
+xmms_null_plugin_setup (xmms_output_plugin_t *plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_output_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT,
-	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "null",
-	                          "Null Output",
-	                          XMMS_VERSION,
-	                          "Null output plugin");
+	XMMS_OUTPUT_METHODS_INIT (methods);
 
-	if (!plugin) {
-		return NULL;
-	}
+	methods.new = xmms_null_new;
+	methods.destroy = xmms_null_destroy;
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	methods.open = xmms_null_open;
+	methods.close = xmms_null_close;
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
-	                        xmms_null_write);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN,
-	                        xmms_null_open);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE,
-	                        xmms_null_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
-	                        xmms_null_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
-	                        xmms_null_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
-	                        xmms_null_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
-	                        xmms_null_format_set);
+	methods.flush = xmms_null_flush;
+	methods.format_set = xmms_null_format_set;
 
-	return plugin;
+	methods.write = xmms_null_write;
+
+	xmms_output_plugin_methods_set (plugin, &methods);
+
+	return TRUE;
 }
-
 
 /*
  * Member functions
@@ -179,7 +171,7 @@ xmms_null_close (xmms_output_t *output)
  * @return Success/failure
  */
 static gboolean
-xmms_null_format_set (xmms_output_t *output, xmms_audio_format_t *format)
+xmms_null_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
 {
 	xmms_null_data_t *data;
 
@@ -213,7 +205,8 @@ xmms_null_flush (xmms_output_t *output)
  * @param len The length of audio data.
  */
 static void
-xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
+xmms_null_write (xmms_output_t *output, gpointer buffer, gint len,
+                 xmms_error_t *error)
 {
 	xmms_null_data_t *data;
 

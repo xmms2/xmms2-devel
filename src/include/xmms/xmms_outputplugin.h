@@ -21,6 +21,7 @@
 #define _XMMS_OUTPUTPLUGIN_H_
 
 #include <glib.h>
+#include <string.h> /* for memset() */
 
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmms/xmms_sample.h"

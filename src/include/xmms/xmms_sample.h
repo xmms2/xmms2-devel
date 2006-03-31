@@ -58,7 +58,7 @@ typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
-guint xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint bytes);
+guint xmms_sample_bytes_to_ms (const xmms_audio_format_t *f, guint bytes);
 
 static inline gint
 xmms_sample_size_get (xmms_sample_format_t fmt)
