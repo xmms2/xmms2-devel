@@ -733,8 +733,16 @@ xmms_output_open (xmms_output_t *output)
 
 	g_mutex_lock (output->api_mutex);
 	if (output->plugin->methods.open (output)) {
-		if (output->plugin->methods.format_set)
-			output->plugin->methods.format_set (output, &output->format);
+		xmms_audio_format_t fmt;
+
+		fmt.format = xmms_xform_outtype_get_int (output->chain,
+		                                         XMMS_STREAM_TYPE_FMT_FORMAT);
+		fmt.samplerate = xmms_xform_outtype_get_int (output->chain,
+		                                             XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+		fmt.channels = xmms_xform_outtype_get_int (output->chain,
+		                                           XMMS_STREAM_TYPE_FMT_CHANNELS);
+	
+		xmms_output_format_set (output, &fmt);
 	} else {
 		ret = FALSE;
 		xmms_log_error ("Couldn't open output device");
@@ -990,7 +998,6 @@ xmms_output_chain_start (xmms_output_t *output)
 {
 	xmms_medialib_entry_t entry;
 	xmms_medialib_session_t *session;
-	xmms_audio_format_t fmt;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -1017,11 +1024,7 @@ xmms_output_chain_start (xmms_output_t *output)
 		output->chain = t;
 	}
 
-	fmt.format = xmms_xform_outtype_get_int (output->chain, XMMS_STREAM_TYPE_FMT_FORMAT);
-	fmt.samplerate = xmms_xform_outtype_get_int (output->chain, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-	fmt.channels = xmms_xform_outtype_get_int (output->chain, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	xmms_output_format_set (output, &fmt);
-	
+
 	xmms_object_emit_f (XMMS_OBJECT (output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
