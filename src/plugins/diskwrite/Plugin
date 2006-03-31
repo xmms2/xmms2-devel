@@ -1,5 +1,2 @@
 target="diskwrite"
 source=["diskwrite.c"]
-
-def config(env):
-    raise ConfigError("Disabled")
