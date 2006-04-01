@@ -310,8 +310,8 @@ xmms_xform_shortname (xmms_xform_t *xform)
 	return xmms_plugin_shortname_get ((xmms_plugin_t *)xform->plugin);
 }
 
-int
-xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err)
+gint
+xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 {
 
 	while (xform->buffered < siz) {
@@ -340,10 +340,10 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *
 	return siz;
 }
 
-int
-xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err)
+gint
+xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 {
-	int read = 0;
+	gint read = 0;
 
 	if (xform->error) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Read on errored xform");
@@ -366,7 +366,7 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *
 	}
 
 	while (read < siz) {
-		int res;
+		gint res;
 
 		res = xform->plugin->methods.read (xform, buf + read, siz - read, err);
 		if (res == 0) {
@@ -413,15 +413,15 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t
 	return res;
 }
 
-int
-xmms_xform_peek (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err)
+gint
+xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 {
 	g_return_val_if_fail (xform->prev, -1);
 	return xmms_xform_this_peek (xform->prev, buf, siz, err);
 }
 
-int
-xmms_xform_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err)
+gint
+xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 {
 	g_return_val_if_fail (xform->prev, -1);
 	return xmms_xform_this_read (xform->prev, buf, siz, err);
