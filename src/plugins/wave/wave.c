@@ -227,7 +227,7 @@ xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	ret = xmms_xform_read (xform, (gchar *) buf, len, &error);
+	ret = xmms_xform_read (xform, (gchar *) buf, len, error);
 	if (ret <= 0) {
 		return ret;
 	}
