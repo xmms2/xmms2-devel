@@ -55,6 +55,8 @@ static void cmd_mlib_addpath (xmmsc_connection_t *conn,
                               gint argc, gchar **argv);
 static void cmd_mlib_rehash (xmmsc_connection_t *conn,
                              gint argc, gchar **argv);
+static void cmd_mlib_remove (xmmsc_connection_t *conn,
+                             gint argc, gchar **argv);
 
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", cmd_mlib_add },
@@ -72,6 +74,7 @@ cmds mlib_commands[] = {
 	{ "remove_playlist", "[playlistname] - Remove a playlist", cmd_mlib_playlist_remove },
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", cmd_mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", cmd_mlib_rehash },
+	{ "remove", "Remove an entry from medialib", cmd_mlib_remove },
 	{ "set", "[id, key, value, (source)] Set a property together with a medialib entry.", cmd_mlib_set },
 	{ "topsongs", "list the most played songs", cmd_mlib_topsongs },
 	{ NULL, NULL, NULL },
@@ -361,7 +364,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	query = mlib_query_from_args (argc, argv);
 	if (query == NULL) {
 		print_error ("Unable to generate query");
-	} 
+	}
 	
 	res = xmmsc_medialib_add_to_playlist (conn, query);
 	xmmsc_result_wait (res);
@@ -653,6 +656,28 @@ cmd_mlib_addpath (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
+static void
+cmd_mlib_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	int i;
+	int32_t entryid;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Supply an id to remove!");
+	}
+
+	for (i = 3; i < argc; i++) {
+		entryid = atoi (argv[i]);
+		print_info("Removing entry %i", entryid);
+		res = xmmsc_medialib_remove_entry (conn, entryid);
+		xmmsc_result_wait (res);
+		if (xmmsc_result_iserror (res)) {
+			print_error ("%s", xmmsc_result_get_error (res));
+		}
+		xmmsc_result_unref (res);
+	}
+}
 
 static void
 cmd_mlib_rehash (xmmsc_connection_t *conn, gint argc, gchar **argv)

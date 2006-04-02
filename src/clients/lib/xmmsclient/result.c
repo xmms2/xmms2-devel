@@ -1168,6 +1168,7 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 	res->type = type;
 	res->cookie = cookie;
 	res->source_pref = x_list_prepend (NULL, strdup("*"));
+	res->source_pref = x_list_prepend (res->source_pref, strdup("plugins/*"));
 	res->source_pref = x_list_prepend (res->source_pref, strdup("server"));
 
 	/* user must give this back */

@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -27,8 +27,8 @@
 #define FFT_BITS 10
 #define FFT_LEN (1<<FFT_BITS)
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_ttf.h>
+#include <SDL.h>
+#include <SDL_ttf.h>
 #include <glib.h>
 #include <math.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ static xmmsc_connection_t *connection;
 
 
 /*
- * 
+ *
  */
 
 static void
@@ -288,7 +288,7 @@ handle_vis (xmmsc_result_t *res, void *userdata)
 	}
 		
 	/* @todo measure ipc-delay for real! */
-	enqueue (time-300, spec); 
+	enqueue (time-300, spec);
 	
 	newres = xmmsc_result_restart (res);
 	xmmsc_result_unref (res);
