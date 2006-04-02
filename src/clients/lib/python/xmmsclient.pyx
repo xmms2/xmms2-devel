@@ -173,6 +173,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_get_info(xmmsc_connection_t *, unsigned int id)
 	xmmsc_result_t *xmmsc_medialib_add_to_playlist(xmmsc_connection_t *c, char *query)
 	xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *)
+	xmmsc_result_t *xmmsc_medialib_playlist_list (xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_medialib_playlist_import(xmmsc_connection_t *c, char *name, char *url)
 	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
 	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
@@ -1389,6 +1390,25 @@ cdef class XMMS:
 		ret.callback = cb
 
 		ret.res = xmmsc_medialib_playlists_list(self.conn)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_playlist_list(self, name, cb = None):
+		"""
+		Get the specified playlist from medialib.
+		This function returns a list of IDs the files/streams
+		currently in the playlist. Use L{medialib_get_info} to
+		retrieve more specific information.
+		@rtype:	L{XMMSResult}(UIntList)
+		@return: The playlist with the given name.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_medialib_playlist_list(self.conn, name)
 		ret.more_init()
 		
 		return ret
