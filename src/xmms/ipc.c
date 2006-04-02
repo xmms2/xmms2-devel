@@ -794,8 +794,8 @@ void
 xmms_ipc_shutdown_server(xmms_ipc_t *ipc) 
 {
 	GList *c;
-	if(!ipc) return;
 	xmms_ipc_client_t *co;
+	if(!ipc) return;
 	
 	g_mutex_lock (ipc->mutex_lock);
 	g_source_remove_poll (ipc->source, ipc->pollfd);
