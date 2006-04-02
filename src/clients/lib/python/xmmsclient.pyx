@@ -266,9 +266,9 @@ class PropDict(dict):
 	def __getitem__(self, item):
 		if isinstance(item, str):
 			for src in self._sources:
-				if src == '*':
+				if src.endswith('*'):
 					for k,v in self.iteritems():
-						if k[1] == item:
+						if k[0].startswith(src[:-1]) and k[1] == item:
 							return v
 				try:
 					return dict.__getitem__(self, (src, item))
@@ -486,7 +486,7 @@ cdef class XMMS:
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
 		self.ObjectRef = []
-		self.sources = ["client/" + clientname, "server", "*"]
+		self.sources = ["client/" + clientname, "server", "plugins/*", "client/*", "*"]
 
 	def get_source_preference(self):
 		return self.sources
