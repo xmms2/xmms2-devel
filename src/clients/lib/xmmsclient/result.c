@@ -155,8 +155,6 @@ xmmsc_result_ref (xmmsc_result_t *res)
 static void
 xmmsc_result_free (xmmsc_result_t *res)
 {
-	x_list_t *n;
-
 	x_return_if_fail (res);
 
 	if (res->error_str)
@@ -171,16 +169,19 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	x_list_free (res->func_list);
 	x_list_free (res->udata_list);
-	for (n = res->source_pref; n; n = x_list_next (n)) {
-		free (n->data);
-	}
-	x_list_free (res->source_pref);
 
-	for (n = res->extra_free; n; n = x_list_next (n)) {
-		free (n->data);
+	while (res->source_pref) {
+		free (res->source_pref->data);
+		res->source_pref = x_list_delete_link (res->source_pref,
+		                                       res->source_pref);
 	}
-	x_list_free (res->extra_free);
-	
+
+	while (res->extra_free) {
+		free (res->extra_free->data);
+		res->extra_free = x_list_delete_link (res->extra_free,
+		                                      res->extra_free);
+	}
+
 	free (res);
 }
 
@@ -504,18 +505,16 @@ xmmsc_result_wait (xmmsc_result_t *res)
 void
 xmmsc_result_source_preference_set (xmmsc_result_t *res, char **preference)
 {
-	x_list_t *n;
 	int i = 0;
 	x_return_if_fail (res);
 	x_return_if_fail (preference);
 
-	for (n = res->source_pref; n; n = x_list_next (n)) {
-		free (n->data);
+	while (res->source_pref) {
+		free (res->source_pref->data);
+		res->source_pref = x_list_delete_link (res->source_pref,
+		                                       res->source_pref);
 	}
 
-	x_list_free (res->source_pref);
-	res->source_pref = NULL;
-	
 	for (i = 0; preference[i]; i++) {
 		res->source_pref = x_list_append (res->source_pref, strdup (preference[i])); 
 	}
