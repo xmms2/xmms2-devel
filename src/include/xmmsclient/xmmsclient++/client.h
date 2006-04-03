@@ -5,6 +5,7 @@
 
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/playback.h>
+#include <xmmsclient/xmmsclient++/playlist.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
@@ -91,6 +92,8 @@ namespace Xmms
 			// client.getPlayback().start();
 			// const Playback& getPlayback() const;
 
+			const Playlist playlist;
+
 			// Same thing for all of these:
 			// TODO: write the headers for these and implement them
 			//
@@ -103,6 +106,8 @@ namespace Xmms
 
 			// Get an object to create an async main loop
 			MainLoop& getMainLoop();
+
+			bool isConnected() const;
 
 			// Return the internal connection pointer
 			inline xmmsc_connection_t* getConnection() const { return conn_; }

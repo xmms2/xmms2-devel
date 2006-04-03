@@ -9,5 +9,6 @@
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/list.h>
+#include <xmmsclient/xmmsclient++/playlist.h>
 
 #endif // XMMSCLIENTPP_H

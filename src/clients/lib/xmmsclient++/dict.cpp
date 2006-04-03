@@ -26,6 +26,9 @@ namespace Xmms
 
 	Dict& Dict::operator=( const Dict& dict )
 	{
+		if( result_ ) {
+			xmmsc_result_unref( result_ );
+		}
 		result_ = dict.result_;
 		xmmsc_result_ref( result_ );
 		return *this;

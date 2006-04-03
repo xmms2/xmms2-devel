@@ -49,6 +49,13 @@ namespace Xmms
 
 	};
 
+	class mainloop_running_error : public std::logic_error
+	{
+		public:
+			explicit mainloop_running_error( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H

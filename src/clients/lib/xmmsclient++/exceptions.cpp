@@ -39,4 +39,9 @@ namespace Xmms
 	{
 	}
 
+	mainloop_running_error::mainloop_running_error( const string& what_arg ) :
+		logic_error( what_arg )
+	{
+	}
+
 }

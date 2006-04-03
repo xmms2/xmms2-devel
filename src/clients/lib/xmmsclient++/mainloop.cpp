@@ -1,4 +1,6 @@
 #include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/listener.h>
+#include <xmmsclient/xmmsclient.h>
 
 #include <list>
 using std::list;

@@ -5,6 +5,7 @@
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 
 #include <string>
 using std::string;
@@ -13,7 +14,9 @@ namespace Xmms
 {
 
 	Client::Client( const string& name ) 
-		: playback( &conn_ ), name_( name ), conn_(0), connected_( false ),
+		: playback( conn_, connected_, mainloop_ ), 
+	      playlist( conn_, connected_, mainloop_ ), 
+		  name_( name ), conn_(0), connected_( false ),
 		  mainloop_( 0 )
 	{
 		conn_ = xmmsc_init( name.c_str() );
@@ -53,13 +56,8 @@ namespace Xmms
 
 	const Dict Client::stats() const
 	{
-		if( !connected_ ) {
-			throw connection_error( "Not connected" );
-		}
-		if( mainloop_ && mainloop_->isRunning() ) {
-			// FIXME: throw something, this function can't be called
-			// when the mainloop is running...
-		}
+		Assert( connected_ );
+		Assert( mainloop_ );
 
 		xmmsc_result_t* res = xmmsc_main_stats( conn_ );
 		xmmsc_result_wait( res );
@@ -83,9 +81,8 @@ namespace Xmms
 
 	const DictList Client::pluginList(Plugins::Type type) const
 	{
-		if( !connected_ ) {
-			throw connection_error( "Not connected" );
-		}
+		Assert( connected_ );
+		Assert( mainloop_ );
 
 		xmmsc_result_t* res = xmmsc_plugin_list( conn_, type ); 	
 
@@ -113,9 +110,14 @@ namespace Xmms
 
 		if( !mainloop_ ) {
 			mainloop_ = new MainLoop();
-			mainloop_->addListener( new Listener( &conn_ ) );
+			mainloop_->addListener( new Listener( conn_ ) );
 		}
 		return *mainloop_;
 
+	}
+
+	bool Client::isConnected() const
+	{
+		return connected_;
 	}
 }

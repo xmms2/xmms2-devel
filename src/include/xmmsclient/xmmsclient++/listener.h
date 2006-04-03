@@ -41,7 +41,7 @@ namespace Xmms
 
 		public:
 			Listener( const Listener& src );
-			Listener operator=( const Listener& src ) const;
+			Listener& operator=( const Listener& src );
 			virtual ~Listener();
 
 			virtual int32_t getFileDescriptor() const;
@@ -54,9 +54,9 @@ namespace Xmms
 
 			// Constructor, only to be called by Xmms::Client
 			friend class Client;
-			Listener( xmmsc_connection_t* const* conn );
+			Listener( xmmsc_connection_t*& conn );
 
-			xmmsc_connection_t* const* conn_;
+			xmmsc_connection_t*& conn_;
 
 	};
 
