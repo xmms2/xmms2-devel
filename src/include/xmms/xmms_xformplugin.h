@@ -35,18 +35,7 @@
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_sample.h"
-
-
-/* MOVE ! */
-
-typedef enum xmms_stream_type_key_E {
-	XMMS_STREAM_TYPE_END,
-	XMMS_STREAM_TYPE_MIMETYPE,
-	XMMS_STREAM_TYPE_URL,
-	XMMS_STREAM_TYPE_FMT_FORMAT,
-	XMMS_STREAM_TYPE_FMT_CHANNELS,
-	XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-} xmms_stream_type_key_t;
+#include "xmms/xmms_streamtype.h"
 
 
 struct xmms_xform_plugin_St;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -44,7 +44,7 @@ typedef struct xmms_volume_map_St {
 } xmms_volume_map_t;
 
 static gpointer xmms_output_write_thread (gpointer data);
-static void xmms_output_format_set (xmms_output_t *output, const xmms_audio_format_t *fmt);
+static void xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt);
 static gpointer xmms_output_monitor_volume_thread (gpointer data);
 
 static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
@@ -142,7 +142,7 @@ struct xmms_output_St {
 	/** Supported formats */
 	GList *format_list;
 	/** Active format */
-	xmms_audio_format_t format; /* convert to streamtype! */
+	xmms_stream_type_t *format;
 
 	/** 
 	 * Number of bytes totaly written to output driver,
@@ -218,27 +218,14 @@ xmms_output_plugin_get (xmms_output_t *output)
  * 
  */
 void
-xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint channels, guint rate)
+xmms_output_stream_type_add (xmms_output_t *output, ...)
 {
         xmms_stream_type_t *f;
-	
-        g_return_if_fail (output);
-        g_return_if_fail (fmt);
-        g_return_if_fail (channels);
-        g_return_if_fail (rate);
-	
+	va_list ap;
 
-	f = _xmms_stream_type_new (NULL,
-	                           XMMS_STREAM_TYPE_MIMETYPE,
-	                           "audio/pcm",
-	                           XMMS_STREAM_TYPE_FMT_FORMAT,
-	                           fmt,
-	                           XMMS_STREAM_TYPE_FMT_CHANNELS,
-	                           channels,
-	                           XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	                           rate,
-	                           XMMS_STREAM_TYPE_END);
-
+	va_start (ap, output);
+	f = xmms_stream_type_parse (ap);
+	va_end (ap);
 
         g_return_if_fail (f);
 	
@@ -264,7 +251,7 @@ update_playtime (xmms_output_t *output, int ret)
 
 	g_mutex_lock (output->playtime_mutex);
 	
-	output->played_time = xmms_sample_bytes_to_ms (&output->format, output->played - buffersize);
+	output->played_time = xmms_sample_bytes_to_ms (output->format, output->played - buffersize);
 	
 	xmms_object_emit_f (XMMS_OBJECT (output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
@@ -733,16 +720,7 @@ xmms_output_open (xmms_output_t *output)
 
 	g_mutex_lock (output->api_mutex);
 	if (output->plugin->methods.open (output)) {
-		xmms_audio_format_t fmt;
-
-		fmt.format = xmms_xform_outtype_get_int (output->chain,
-		                                         XMMS_STREAM_TYPE_FMT_FORMAT);
-		fmt.samplerate = xmms_xform_outtype_get_int (output->chain,
-		                                             XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-		fmt.channels = xmms_xform_outtype_get_int (output->chain,
-		                                           XMMS_STREAM_TYPE_FMT_CHANNELS);
-	
-		xmms_output_format_set (output, &fmt);
+		xmms_output_format_set (output, xmms_xform_outtype_get (output->chain));
 	} else {
 		ret = FALSE;
 		xmms_log_error ("Couldn't open output device");
@@ -762,7 +740,8 @@ xmms_output_close (xmms_output_t *output)
 	output->plugin->methods.close (output);
 	g_mutex_unlock (output->api_mutex);
 
-	memset (&output->format, 0, sizeof (xmms_audio_format_t));
+	xmms_object_unref (output->format);
+	output->format = NULL;
 }
 
 #if 0
@@ -1044,24 +1023,24 @@ xmms_output_chain_start (xmms_output_t *output)
  * @internal
  */
 static void
-xmms_output_format_set (xmms_output_t *output, const xmms_audio_format_t *fmt)
+xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 {
 	g_return_if_fail (output);
 	g_return_if_fail (fmt);
 
 	XMMS_DBG ("Setting format!");
 
-	if (output->format.format == fmt->format &&
-	    output->format.samplerate == fmt->samplerate &&
-	    output->format.channels == fmt->channels) {
+	if (output->format && xmms_stream_type_match (output->format, fmt)) {
 		XMMS_DBG ("audio formats are equal, not updating");
 		return;
 	}
 
-	memcpy (&output->format, fmt, sizeof (xmms_audio_format_t));
+	xmms_object_unref (output->format);
+	xmms_object_ref (fmt);
+	output->format = fmt;
 
 	if (output->plugin->methods.format_set)
-		output->plugin->methods.format_set (output, &output->format);
+		output->plugin->methods.format_set (output, output->format);
 
 }
 

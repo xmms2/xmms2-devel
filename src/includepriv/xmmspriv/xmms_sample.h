@@ -23,12 +23,11 @@
 
 typedef guint (*xmms_sample_conv_func_t) (xmms_sample_converter_t *, xmms_sample_t *, guint , xmms_sample_t *);
 
-xmms_audio_format_t *xmms_sample_audioformat_new (xmms_sample_format_t fmt, guint channels, guint rate);
-void xmms_sample_audioformat_destroy (xmms_audio_format_t *fmt);
 
-guint xmms_sample_ms_to_samples (const xmms_audio_format_t *f, guint ms);
-guint xmms_sample_samples_to_ms (const xmms_audio_format_t *f, guint samples);
-guint xmms_sample_bytes_to_ms (const xmms_audio_format_t *f, guint samples);
+gint xmms_sample_frame_size_get (const xmms_stream_type_t *st);
+guint xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint ms);
+guint xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples);
+
 guint32 xmms_sample_samples_to_converted_bytes (xmms_sample_converter_t *conv, guint32 samples);
 
 /* internal? */
