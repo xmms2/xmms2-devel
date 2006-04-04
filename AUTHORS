@@ -47,10 +47,18 @@ N: Franz Endstrasser
 E: franz.endstrasser@gmail.com
 D: Java bindings
 
+N: G. Gallino
+E: ggallino@gmail.com
+D: Equaliser fixes
+
 N: Anders Gustafsson
 E: andersg@xmms.org
 P: 1024D/5D46D966 4186 4775 154B 9E4F 8CE7  A3F8 E165 5471 5D46 D966
 D: Stuff all over the place. Master bitch.
+
+N: Johannes Heimansberg
+E: wejpilot@gmail.com
+D: Fix remove command in cli.
 
 N: Olle Hällnäs
 E: olle@xmms.org
@@ -98,6 +106,10 @@ N: Tobias Nygren
 E: tnn@nygren.pp.se
 D: HP-UX portability
 
+N: Heikki Orsila
+E: heikki.orsila@iki.fi
+D: Cleanups.
+
 N: Daniel Pearson
 E: daniel@nanoo.org
 D: Python XMMSSync-proxy. PythonAPI fixes.
@@ -134,9 +146,21 @@ N: Jens Taprogge
 E: jlt_xmms2@shamrock.dyndns.org
 D: Debian packages. Various fixes.
 
+N: Rémi Vanicat
+E: remi.vanicat@gmail.com
+D: SQLite optimizations.
+
+N: Pauli Virtanen
+E: pauli.virtanen@iki.fi
+D: xmmsc_medialib_playlist_list in Python bindings
+
 N: Juho Vähä-Herttua
 E: juhovh@iki.fi
 D: Faad. Various fixes.
+
+N: Michael Walle
+E: michael@walle.cc
+D: playlists_list stuff
 
 N: Ma Xuan
 E: supermmx@163.com
