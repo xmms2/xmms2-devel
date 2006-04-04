@@ -1,8 +1,8 @@
 /** @file gnomevfs.c
  *  Transport plugin for the GNOME VFS 2.0.
- * 
+ *
  *  Copyright (C) 2005 Daniel Svensson, <daniel@nittionio.nu>
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either

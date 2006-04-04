@@ -1,6 +1,6 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  */
 
@@ -531,7 +531,7 @@ typedef struct id3v1tag_St {
 } id3v1tag_t;
 
 /**
- * Samma, på svenska.
+ * Samma, pï¿½ svenska.
  */
 gboolean
 xmms_mad_id3_parse (xmms_medialib_session_t *session,
