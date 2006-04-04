@@ -387,8 +387,8 @@ main (int argc, char **argv)
 	}
 
 	if (version) {
-		printf ("XMMS version " XMMS_VERSION "\n");
-		printf ("Copyright (C) 2003-2006 XMMS Team\n");
+		printf ("XMMS2 version " XMMS_VERSION "\n");
+		printf ("Copyright (C) 2003-2006 XMMS2 Team\n");
 		printf ("This is free software; see the source for copying conditions.\n");
 		printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 		printf ("PARTICULAR PURPOSE.\n");
