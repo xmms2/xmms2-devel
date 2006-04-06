@@ -7,6 +7,8 @@
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
 
+#include <boost/bind.hpp>
+
 #include <string>
 using std::string;
 
@@ -56,52 +58,29 @@ namespace Xmms
 
 	const Dict Client::stats() const
 	{
-		Assert( connected_ );
-		Assert( mainloop_ );
 
-		xmmsc_result_t* res = xmmsc_main_stats( conn_ );
-		xmmsc_result_wait( res );
+		xmmsc_result_t* res = 
+		    call( connected_, mainloop_,
+		          boost::bind( xmmsc_main_stats, conn_ ) );
 
-		try {
+		Dict resultMap( res );
 
-			Dict resultMap( res );
-
-			xmmsc_result_unref( res );
-			return resultMap;
-
-		}
-		catch( ... ) {
-
-			xmmsc_result_unref( res );
-			throw;
-
-		}
+		xmmsc_result_unref( res );
+		return resultMap;
 
 	}
 
 	const DictList Client::pluginList(Plugins::Type type) const
 	{
-		Assert( connected_ );
-		Assert( mainloop_ );
 
-		xmmsc_result_t* res = xmmsc_plugin_list( conn_, type ); 	
+		xmmsc_result_t* res = 
+		    call( connected_, mainloop_,
+		          boost::bind( xmmsc_plugin_list, conn_, type ) ); 	
+		
+		List< Dict > resultList( res );
 
-		xmmsc_result_wait( res );
-
-		try {
-
-			List< Dict > resultList( res );
-
-			xmmsc_result_unref( res );
-			return resultList;
-
-		}
-		catch( ... ) {
-
-			xmmsc_result_unref( res );
-			throw;
-
-		}
+		xmmsc_result_unref( res );
+		return resultList;
 
 	}
 
