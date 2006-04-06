@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -18,8 +18,6 @@
 #include "xmms/xmms_outputplugin.h"
 
 #include <glib.h>
-#include <time.h>
-#include <errno.h>
 
 /*
  * Type definitions
@@ -49,10 +47,11 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT,
-				  XMMS_OUTPUT_PLUGIN_API_VERSION,
-				  "null",
-				  "Null Output" XMMS_VERSION,
-				  "Null output plugin");
+	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
+	                          "null",
+	                          "Null Output",
+	                          XMMS_VERSION,
+	                          "Null output plugin");
 
 	if (!plugin) {
 		return NULL;
@@ -217,8 +216,6 @@ static void
 xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
 {
 	xmms_null_data_t *data;
-	guint ms;
-	struct timespec req, rem;
 
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
@@ -226,12 +223,5 @@ xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	ms = xmms_sample_bytes_to_ms (data->format, len);
-
-	req.tv_sec = ms / 1000;
-	req.tv_nsec = (ms % 1000) * 1000 * 1000;
-
-	while (nanosleep (&req, &rem) == -1 && errno == EINTR) {
-		req = rem;
-	}
+	g_usleep (1000 * xmms_sample_bytes_to_ms (data->format, len));
 }

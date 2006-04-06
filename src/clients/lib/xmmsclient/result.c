@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -65,7 +65,7 @@ struct xmmsc_result_St {
 
 	int islist;
 
-	uint32_t cid;
+	uint32_t cookie;
 	uint32_t restart_signal;
 
 	xmmsc_ipc_t *ipc;
@@ -426,16 +426,14 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 
 
 /**
- * return the command id of a resultset.
+ * return the cookie of a resultset.
  */
-int
-xmmsc_result_cid (xmmsc_result_t *res)
+uint32_t
+xmmsc_result_cookie_get (xmmsc_result_t *res)
 {
-	if (!res) {
-		return 0;
-	}
+	x_return_val_if_fail (res, 0);
 
-	return res->cid;
+	return res->cookie;
 }
 
 /**
@@ -496,7 +494,7 @@ xmmsc_result_wait (xmmsc_result_t *res)
 	}
 
 	if (err) {
-		xmmsc_result_seterror (res, strdup (err));
+		xmmsc_result_seterror (res, err);
 	}
 }
 
@@ -1090,9 +1088,9 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 
 /** @internal */
 void
-xmmsc_result_seterror (xmmsc_result_t *res, char *errstr)
+xmmsc_result_seterror (xmmsc_result_t *res, const char *errstr)
 {
-	res->error_str = errstr;
+	res->error_str = strdup (errstr);
 	res->error = 1;
 }
 
@@ -1155,7 +1153,7 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 
 xmmsc_result_t *
 xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
-                  uint32_t commandid)
+                  uint32_t cookie)
 {
 	xmmsc_result_t *res;
 
@@ -1168,7 +1166,7 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 	xmmsc_ref (c);
 
 	res->type = type;
-	res->cid = commandid;
+	res->cookie = cookie;
 	res->source_pref = x_list_append (NULL, strdup("server"));
 
 	/* user must give this back */

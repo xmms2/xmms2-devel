@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -119,9 +119,11 @@ handle_current_id (xmmsc_result_t *res, void *userdata)
 		print_error ("Broken resultset");
 	}
 
-	res = xmmsc_medialib_get_info (conn, current_id);
-	xmmsc_result_notifier_set (res, do_mediainfo, NULL);
-	xmmsc_result_unref (res);
+	if (current_id) {
+		res = xmmsc_medialib_get_info (conn, current_id);
+		xmmsc_result_notifier_set (res, do_mediainfo, NULL);
+		xmmsc_result_unref (res);
+	}
 }
 
 

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -65,30 +65,7 @@ cmd_config_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 
-	while (xmmsc_result_list_valid (res)) {
-		xmmsc_result_t *val_res;
-		gchar *name, *value = NULL;
-
-		if (!xmmsc_result_get_string (res, &name)) {
-			print_error ("Broken resultset");
-		}
-
-		val_res = xmmsc_configval_get (conn, name);
-		xmmsc_result_wait (val_res);
-
-		if (xmmsc_result_iserror (val_res)) {
-			print_error ("%s", xmmsc_result_get_error (val_res));
-		}
-
-		if (!xmmsc_result_get_string (val_res, &value)) {
-			print_error ("Broken resultset");
-		}
-
-		print_info ("%s = %s", name, value);
-		xmmsc_result_unref (val_res);
-
-		xmmsc_result_list_next (res);
-	}
+	xmmsc_result_dict_foreach (res, print_hash, NULL);
 	xmmsc_result_unref (res);
 }
 

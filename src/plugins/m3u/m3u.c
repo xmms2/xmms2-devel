@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -50,10 +50,11 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
-				  XMMS_PLAYLIST_PLUGIN_API_VERSION,
-				  "m3u",
-				  "M3U Playlist " XMMS_VERSION,
-				  "M3U Playlist reader / writer");
+	                          XMMS_PLAYLIST_PLUGIN_API_VERSION,
+	                          "m3u",
+	                          "M3U Playlist",
+	                          XMMS_VERSION,
+	                          "M3U Playlist reader / writer");
 
 	if (!plugin) {
 		return NULL;

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -32,6 +32,8 @@
 #include "xmmspriv/xmms_ringbuf.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_config.h"
+
 
 /**
   * @defgroup IPC IPC
@@ -39,6 +41,17 @@
   * @brief IPC functions for XMMS2 Daemon
   * @{ 
   */
+
+
+
+/**
+ * The IPC object list
+ */
+typedef struct xmms_ipc_object_pool_t {
+	xmms_object_t *objects[XMMS_IPC_OBJECT_END];
+	xmms_object_t *signals[XMMS_IPC_SIGNAL_END];
+	xmms_object_t *broadcasts[XMMS_IPC_SIGNAL_END];
+} xmms_ipc_object_pool_t;
 
 
 /**
@@ -49,12 +62,12 @@ struct xmms_ipc_St {
 	GList *clients;
 	GSource *source;
 	GPollFD *pollfd;
-
-	xmms_object_t *objects[XMMS_IPC_OBJECT_END];
-
-	xmms_object_t *signals[XMMS_IPC_SIGNAL_END];
-	xmms_object_t *broadcasts[XMMS_IPC_SIGNAL_END];
+	GMutex *mutex_lock;
+	xmms_object_t **objects;
+	xmms_object_t **signals;
+	xmms_object_t **broadcasts;
 };
+
 
 /**
  * A IPC client representation.
@@ -83,15 +96,19 @@ typedef struct xmms_ipc_client_St {
 	GList *broadcasts[XMMS_IPC_SIGNAL_END];
 } xmms_ipc_client_t;
 
-static GMutex *global_ipc_lock;
-static xmms_ipc_t *global_ipc;
+static GMutex *ipc_servers_lock;
+static GList *ipc_servers = NULL;
+
+static GMutex *ipc_object_pool_lock;
+static struct xmms_ipc_object_pool_t *ipc_object_pool = NULL;
 
 static void xmms_ipc_client_destroy (xmms_ipc_client_t *client);
+
 static gboolean xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg);
 static void xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val);
 
 typedef gboolean (*xmms_ipc_client_callback_t) (GSource *, xmms_ipc_client_t *);
-typedef gboolean (*xmms_ipc_server_callback_t) (GSource *, xmms_ipc_t *);
+typedef gboolean (*xmms_ipc_servers_callback_t) (GSource *, xmms_ipc_t *);
 
 static gboolean
 type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
@@ -218,11 +235,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		}
 
 		g_mutex_lock (client->lock);
-		client->pendingsignals[signalid] = xmms_ipc_msg_get_cid (msg);
+		client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
 		g_mutex_unlock (client->lock);
 		return;
 	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
-		   xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
+	           xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
 		guint broadcastid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &broadcastid)) {
@@ -233,27 +250,25 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		g_mutex_lock (client->lock);
 		client->broadcasts[broadcastid] =
 			g_list_append (client->broadcasts[broadcastid],
-			               GUINT_TO_POINTER (xmms_ipc_msg_get_cid (msg)));
+			               GUINT_TO_POINTER (xmms_ipc_msg_get_cookie (msg)));
 
 		g_mutex_unlock (client->lock);
 		return;
 	}
 
-	g_mutex_lock (global_ipc_lock);
-	object = ipc->objects[xmms_ipc_msg_get_object (msg)];
+	g_mutex_lock (ipc_object_pool_lock);
+	object = ipc_object_pool->objects[xmms_ipc_msg_get_object (msg)];
+	g_mutex_unlock (ipc_object_pool_lock);
 	if (!object) {
 		xmms_log_error ("Object %d was not found!", xmms_ipc_msg_get_object (msg));
-		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
 
 	cmd = object->cmds[xmms_ipc_msg_get_cmd (msg)];
 	if (!cmd) {
 		xmms_log_error ("No such cmd %d on object %d", xmms_ipc_msg_get_cmd (msg), xmms_ipc_msg_get_object (msg));
-		g_mutex_unlock (global_ipc_lock);
 		return;
 	}
-	g_mutex_unlock (global_ipc_lock);
 
 	xmms_object_cmd_arg_init (&arg);
 
@@ -277,7 +292,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
 			g_free (arg.values[i].value.string);
 	}
-	xmms_ipc_msg_set_cid (retmsg, xmms_ipc_msg_get_cid (msg));
+	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);
 	xmms_ipc_client_msg_write (client, retmsg);
 	g_mutex_unlock (client->lock);
@@ -437,10 +452,12 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 
 	XMMS_DBG ("Destroying client!");
 
-	g_mutex_lock (global_ipc_lock);
-	client->ipc->clients = g_list_remove (client->ipc->clients, client);
-	g_mutex_unlock (global_ipc_lock);
-
+	if(client->ipc) {
+		g_mutex_lock (client->ipc->mutex_lock);
+		client->ipc->clients = g_list_remove (client->ipc->clients, client);
+		g_mutex_unlock (client->ipc->mutex_lock);
+	}
+		
 	client->run = FALSE;
 
 	xmms_ipc_transport_destroy (client->transport);
@@ -465,6 +482,17 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 }
 
 /**
+ * Gets called when the config property "core.ipcsocket" has changed.
+ */
+void
+on_config_ipcsocket_change (xmms_object_t *object, gconstpointer data, gpointer udata)
+{
+	xmms_ipc_shutdown();
+	XMMS_DBG("Shuttind down ipc server threads through config property \"core.ipcsocket\" change.");
+	xmms_ipc_setup_server((gchar *)data);
+}
+
+/**
  * Put a message in the queue awaiting to be sent to the client.
  * Should hold client->lock.
  */
@@ -474,14 +502,6 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 	g_return_val_if_fail (client, FALSE);
 	g_return_val_if_fail (msg, FALSE);
 
-	/*
-	if (client->out_msg->length > 10) {
-		xmms_ipc_msg_destroy (msg);
-		g_mutex_unlock (global_ipc_lock);
-		return FALSE;	
-	}
-	*/
-
 	g_queue_push_tail (client->out_msg, msg);
 
 	/* Wake the client thread! */
@@ -489,6 +509,8 @@ xmms_ipc_client_msg_write (xmms_ipc_client_t *client, xmms_ipc_msg_t *msg)
 
 	return TRUE;
 }
+
+
 
 static gboolean
 xmms_ipc_source_prepare (GSource *source, gint *timeout_)
@@ -517,6 +539,7 @@ xmms_ipc_source_accept (GSource *source, xmms_ipc_t *ipc)
 	xmms_ipc_transport_t *transport;
 	xmms_ipc_client_t *client;
 
+	
 	if (!(ipc->pollfd->revents & G_IO_IN)) {
 		return FALSE;
 	}
@@ -534,14 +557,14 @@ xmms_ipc_source_accept (GSource *source, xmms_ipc_t *ipc)
 		return FALSE;
 	}
 
-	g_mutex_lock (global_ipc_lock);
+	g_mutex_lock (ipc->mutex_lock);
 	ipc->clients = g_list_append (ipc->clients, client);
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc->mutex_lock);
 
 	return TRUE;
 }
 
-static GSourceFuncs xmms_ipc_server_funcs = {
+static GSourceFuncs xmms_ipc_servers_funcs = {
 	xmms_ipc_source_prepare,
 	xmms_ipc_source_check,
 	xmms_ipc_source_dispatch,
@@ -552,21 +575,20 @@ static GSourceFuncs xmms_ipc_server_funcs = {
  * Enable IPC
  */
 gboolean
-xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
+xmms_ipc_setup_server_internaly (xmms_ipc_t *ipc)
 {
 	GSource *source;
-
+	g_mutex_lock (ipc->mutex_lock);
 	ipc->pollfd = g_new0 (GPollFD, 1);
 	ipc->pollfd->fd = xmms_ipc_transport_fd_get (ipc->transport);
 	ipc->pollfd->events = G_IO_IN | G_IO_HUP | G_IO_ERR;
-
-	source = g_source_new (&xmms_ipc_server_funcs, sizeof (GSource));
+	source = g_source_new (&xmms_ipc_servers_funcs, sizeof (GSource));
 	ipc->source = source;
 
 	g_source_set_callback (source, (GSourceFunc)xmms_ipc_source_accept, (gpointer) ipc, NULL);
 	g_source_add_poll (source, ipc->pollfd);
 	g_source_attach (source, NULL);
-
+	g_mutex_unlock (ipc->mutex_lock);
 	return TRUE;
 }
 
@@ -576,77 +598,96 @@ xmms_ipc_setup_with_gmain (xmms_ipc_t *ipc)
 gboolean
 xmms_ipc_has_pending (guint signalid)
 {
-	GList *c;
+	GList *c, *s;
+	xmms_ipc_t *ipc;
 
-	g_mutex_lock (global_ipc_lock);
+	g_mutex_lock (ipc_servers_lock);
 
-	for (c = global_ipc->clients; c; c = g_list_next (c)) {
-		xmms_ipc_client_t *cli = c->data;
-		g_mutex_lock (cli->lock);
-		if (cli->pendingsignals[signalid]) {
+	for(s = ipc_servers; s; s = g_list_next (s))
+	{
+		ipc = s->data;
+		g_mutex_lock (ipc->mutex_lock);
+		for (c = ipc->clients; c; c = g_list_next (c)) {
+			xmms_ipc_client_t *cli = c->data;
+			g_mutex_lock (cli->lock);
+			if (cli->pendingsignals[signalid]) {
+				g_mutex_unlock (cli->lock);
+				g_mutex_unlock (ipc->mutex_lock);
+				g_mutex_unlock (ipc_servers_lock);
+				return TRUE;
+			}
 			g_mutex_unlock (cli->lock);
-			g_mutex_unlock (global_ipc_lock);
-			return TRUE;
 		}
-		g_mutex_unlock (cli->lock);
+		g_mutex_unlock (ipc->mutex_lock);
 	}
 
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_servers_lock);
 	return FALSE;
 }
 
 static void
 xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 {
-	GList *c;
+	GList *c, *s;
 	guint signalid = GPOINTER_TO_UINT (userdata);
+	xmms_ipc_t *ipc;
+	xmms_ipc_msg_t *msg;
 
-	g_mutex_lock (global_ipc_lock);
+	g_mutex_lock (ipc_servers_lock);
 
-	for (c = global_ipc->clients; c; c = g_list_next (c)) {
-		xmms_ipc_client_t *cli = c->data;
-		g_mutex_lock (cli->lock);
-		if (cli->pendingsignals[signalid]) {
-			xmms_ipc_msg_t *msg;
-			
-			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
-			xmms_ipc_msg_set_cid (msg, cli->pendingsignals[signalid]);
-			xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
-			xmms_ipc_client_msg_write (cli, msg);
-			cli->pendingsignals[signalid] = 0;
+	for(s = ipc_servers; s && s->data; s = g_list_next (s))
+	{
+		ipc = s->data;
+		g_mutex_lock (ipc->mutex_lock);
+		for (c = ipc->clients; c; c = g_list_next (c)) {
+			xmms_ipc_client_t *cli = c->data;
+			g_mutex_lock (cli->lock);
+			if (cli->pendingsignals[signalid]) {
+				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
+				xmms_ipc_msg_set_cookie (msg, cli->pendingsignals[signalid]);
+				xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
+				xmms_ipc_client_msg_write (cli, msg);
+				cli->pendingsignals[signalid] = 0;
+			}
+			g_mutex_unlock (cli->lock);
 		}
-		g_mutex_unlock (cli->lock);
+		g_mutex_unlock (ipc->mutex_lock);
 	}
 
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_servers_lock);
 
 }
 
 static void
 xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 {
-	GList *c;
+	GList *c, *s;
 	guint broadcastid = GPOINTER_TO_UINT (userdata);
+	xmms_ipc_t *ipc;
+	xmms_ipc_msg_t *msg = NULL;
+	GList *l;
 
-	g_mutex_lock (global_ipc_lock);
+	g_mutex_lock (ipc_servers_lock);
 
-	for (c = global_ipc->clients; c; c = g_list_next (c)) {
-		GList *l;
-		xmms_ipc_client_t *cli = c->data;
+	for(s = ipc_servers; s && s->data; s = g_list_next (s))
+	{
+		ipc = s->data;
+		g_mutex_lock (ipc->mutex_lock);
+		for (c = ipc->clients; c; c = g_list_next (c)) {
+			xmms_ipc_client_t *cli = c->data;
 
-		g_mutex_lock (cli->lock);
-		for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
-			xmms_ipc_msg_t *msg;
-
-			msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
-			xmms_ipc_msg_set_cid (msg, GPOINTER_TO_UINT (l->data));
-			xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
-			xmms_ipc_client_msg_write (cli, msg);
+			g_mutex_lock (cli->lock);
+			for (l = cli->broadcasts[broadcastid]; l; l = g_list_next (l)) {
+				msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
+				xmms_ipc_msg_set_cookie (msg, GPOINTER_TO_UINT (l->data));
+				xmms_ipc_handle_cmd_value (msg, ((xmms_object_cmd_arg_t*)arg)->retval);
+				xmms_ipc_client_msg_write (cli, msg);
+			}
+			g_mutex_unlock (cli->lock);
 		}
-		g_mutex_unlock (cli->lock);
+		g_mutex_unlock (ipc->mutex_lock);
 	}
-
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_servers_lock);
 }
 
 /**
@@ -656,14 +697,12 @@ void
 xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
 	g_return_if_fail (object);
-
-	g_mutex_lock (global_ipc_lock);
-
-	global_ipc->broadcasts[signalid] = object;
-
+	g_mutex_lock (ipc_object_pool_lock);
+	
+	ipc_object_pool->broadcasts[signalid] = object;
 	xmms_object_connect (object, signalid, xmms_ipc_broadcast_cb, GUINT_TO_POINTER (signalid));
 
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_object_pool_lock);
 }
 
 /**
@@ -674,15 +713,13 @@ xmms_ipc_broadcast_unregister (xmms_ipc_signals_t signalid)
 {
 	xmms_object_t *obj;
 
-	g_mutex_lock (global_ipc_lock);
-
-	obj = global_ipc->broadcasts[signalid];
+	g_mutex_lock (ipc_object_pool_lock);
+	obj = ipc_object_pool->broadcasts[signalid];
 	if (obj) {
 		xmms_object_disconnect (obj, signalid, xmms_ipc_broadcast_cb);
-		global_ipc->broadcasts[signalid] = NULL;
+		ipc_object_pool->broadcasts[signalid] = NULL;
 	}
-
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_object_pool_lock);
 }
 
 /**
@@ -693,13 +730,10 @@ xmms_ipc_signal_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
 	g_return_if_fail (object);
 
-	g_mutex_lock (global_ipc_lock);
-
-	global_ipc->signals[signalid] = object;
-
+	g_mutex_lock (ipc_object_pool_lock);
+	ipc_object_pool->signals[signalid] = object;
 	xmms_object_connect (object, signalid, xmms_ipc_signal_cb, GUINT_TO_POINTER (signalid));
-
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_object_pool_lock);
 }
 
 /**
@@ -710,15 +744,13 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 {
 	xmms_object_t *obj;
 
-	g_mutex_lock (global_ipc_lock);
-
-	obj = global_ipc->signals[signalid];
+	g_mutex_lock (ipc_object_pool_lock);
+	obj = ipc_object_pool->signals[signalid];
 	if (obj) {
 		xmms_object_disconnect (obj, signalid, xmms_ipc_signal_cb);
-		global_ipc->signals[signalid] = NULL;
+		ipc_object_pool->signals[signalid] = NULL;
 	}
-
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_unlock (ipc_object_pool_lock);
 }
 
 /**
@@ -728,10 +760,9 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 void
 xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 {
-	g_mutex_lock (global_ipc_lock);
-	global_ipc->objects[objectid] = object;
-	g_mutex_unlock (global_ipc_lock);
-
+	g_mutex_lock (ipc_object_pool_lock);
+	ipc_object_pool->objects[objectid] = object;
+	g_mutex_unlock (ipc_object_pool_lock);
 }
 
 /**
@@ -740,9 +771,9 @@ xmms_ipc_object_register (xmms_ipc_objects_t objectid, xmms_object_t *object)
 void
 xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
 {
-	g_mutex_lock (global_ipc_lock);
-	global_ipc->objects[objectid] = NULL;
-	g_mutex_unlock (global_ipc_lock);
+	g_mutex_lock (ipc_object_pool_lock);
+	ipc_object_pool->objects[objectid] = NULL;
+	g_mutex_unlock (ipc_object_pool_lock);
 }
 
 /**
@@ -751,15 +782,42 @@ xmms_ipc_object_unregister (xmms_ipc_objects_t objectid)
 xmms_ipc_t *
 xmms_ipc_init (void)
 {
-	xmms_ipc_t *ipc;
-	
-	ipc = g_new0 (xmms_ipc_t, 1);
-
-	global_ipc_lock = g_mutex_new ();
-	global_ipc = ipc;
-
-	return ipc;
+	ipc_servers_lock = g_mutex_new ();
+	ipc_object_pool_lock = g_mutex_new ();
+	ipc_object_pool = g_new0 (xmms_ipc_object_pool_t, 1);
+	return NULL;
 }
+
+/**
+ * Shutdown a IPC Server
+ */
+void
+xmms_ipc_shutdown_server(xmms_ipc_t *ipc) 
+{
+	GList *c;
+	if(!ipc) return;
+	xmms_ipc_client_t *co;
+	
+	g_mutex_lock (ipc->mutex_lock);
+	g_source_remove_poll (ipc->source, ipc->pollfd);
+	g_free (ipc->pollfd);
+	g_source_destroy (ipc->source);
+	xmms_ipc_transport_destroy (ipc->transport);
+	
+	for(c = ipc->clients; c; c = g_list_next(c)) {
+		co = c->data;
+		if(!co) continue;
+		co->ipc = NULL;
+	}
+	
+	g_list_free(ipc->clients);
+	g_mutex_unlock (ipc->mutex_lock);
+	g_mutex_free(ipc->mutex_lock);
+	
+	g_free(ipc);
+
+}
+
 
 /**
  * Disable IPC
@@ -767,17 +825,19 @@ xmms_ipc_init (void)
 void
 xmms_ipc_shutdown (void)
 {
-	g_mutex_lock (global_ipc_lock);
-	g_source_remove_poll (global_ipc->source, global_ipc->pollfd);
-	g_free (global_ipc->pollfd);
-	g_source_destroy (global_ipc->source);
-
-	xmms_ipc_transport_destroy (global_ipc->transport);
-
-	g_mutex_unlock (global_ipc_lock);
-
-	g_free (global_ipc);
-	g_mutex_free (global_ipc_lock);
+	GList *s = ipc_servers;
+	xmms_ipc_t *ipc;
+	
+	g_mutex_lock (ipc_servers_lock);
+	while(s)
+	{
+		ipc = s->data;
+		s = g_list_next(s);
+		ipc_servers = g_list_remove(ipc_servers, ipc);
+		xmms_ipc_shutdown_server (ipc);
+	}
+	g_mutex_unlock (ipc_servers_lock);
+	
 }
 
 /**
@@ -786,20 +846,54 @@ xmms_ipc_shutdown (void)
 gboolean
 xmms_ipc_setup_server (const gchar *path)
 {
-	xmms_ipc_transport_t *transport; 
-
+	xmms_ipc_transport_t *transport;
+	xmms_ipc_t *ipc;
+	gchar **split;
+	gint i = 0, num_init = 0;
 	g_return_val_if_fail (path, FALSE);
-	g_return_val_if_fail (global_ipc, FALSE);
+
+	split = g_strsplit (path, ";", 0);
 	
-	transport = xmms_ipc_server_init (path);
-	if (!transport) {
-		xmms_log_error ("Couldn't initialize IPC socket on '%s'!", path);
-		return FALSE;
+	for(i = 0; split && split[i]; i++) {
+		ipc = g_new0 (xmms_ipc_t, 1);
+		if(!ipc) {
+			XMMS_DBG("No IPC server initialized.");
+			continue;
+		}
+
+		transport = xmms_ipc_server_init (split[i]);
+		if (!transport) {
+			if (ipc)
+				g_free (ipc);
+
+			XMMS_DBG("No transport for IPC server.");
+			continue;
+		}
+
+
+		ipc->mutex_lock = g_mutex_new ();
+		ipc->transport = transport;
+		ipc->signals = ipc_object_pool->signals;
+		ipc->broadcasts = ipc_object_pool->broadcasts;
+		ipc->objects = ipc_object_pool->objects;
+
+		xmms_ipc_setup_server_internaly (ipc);
+
+		g_mutex_lock (ipc_servers_lock);
+		ipc_servers = g_list_prepend (ipc_servers, ipc);
+		g_mutex_unlock (ipc_servers_lock);
+
+		num_init++;
 	}
-	global_ipc->transport = transport;
 
-	XMMS_DBG ("Starting ipc thread!");
+	g_strfreev (split);
 
+
+	/* If there is less than one socket, there is sth. wrong. */
+	if (num_init < 1)
+		return FALSE;
+
+	XMMS_DBG ("Starting ipc threads!");
 	return TRUE;
 }
 

@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundstr�m, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstr�m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -180,22 +180,32 @@ main (int argc, char **argv)
 {
 	xmmsc_connection_t *conn;
 	gchar *path;
+	gchar *gp = NULL;
 	gchar **s;
+	gchar **ipcsplit;
+	int i;
 
 	printf ("Starting XMMS2 mDNS Agent...\n");
 
-	path = getenv ("XMMS_PATH");
+	path = getenv ("XMMS_PATH_FULL");
 	if (!path) {
-		printf ("Sorry you need XMMS_PATH set\n");
+		printf ("Sorry you need XMMS_PATH_FULL set\n");
 		exit (1);
 	}
 
-	if (g_ascii_strncasecmp (path, "tcp://", 6)) {
-		printf ("Since we don't listen to TCP, I won't register anything!\n");
+	ipcsplit = g_strsplit (path, ";", 0);
+	for (i = 0; ipcsplit[i]; i++) {
+		if (g_ascii_strncasecmp (ipcsplit[i], "tcp://", 6) == 0) {
+			gp = ipcsplit[i];
+		}
+	}
+	
+	if (!gp) {
+		printf ("Need to have a socket listening to TCP before we can do that!");
 		exit (1);
 	}
 
-	s = g_strsplit (path, ":", 0);
+	s = g_strsplit (gp, ":", 0);
 	if (s && s[2]) {
 		port = strtol (s[2], NULL, 10);
 	} else {
@@ -209,7 +219,7 @@ main (int argc, char **argv)
 		exit (1);
 	}
 
-	if (!xmmsc_connect (conn, path)) {
+	if (!xmmsc_connect (conn, gp)) {
 		printf ("Could not connect to xmms2d: %s\n", xmmsc_get_last_error (conn));
 		exit (1);
 	}

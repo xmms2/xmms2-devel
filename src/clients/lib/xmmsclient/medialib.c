@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -622,7 +622,7 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
-                                   char *key, char *value)
+                                   const char *key, const char *value)
 {
 	xmmsc_result_t *res;
 	char tmp[256];
@@ -642,8 +642,9 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, 
                                                uint32_t id,
-                                               char *source, char *key, 
-                                               char *value)
+                                               const char *source, 
+                                               const char *key, 
+                                               const char *value)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -666,7 +667,7 @@ xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
-                                      char *key)
+                                      const char *key)
 {
 	xmmsc_result_t *res;
 	char tmp[256];
@@ -684,8 +685,9 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
-                                                  uint32_t id, char *source,
-                                                  char *key)
+                                                  uint32_t id, 
+                                                  const char *source,
+                                                  const char *key)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;

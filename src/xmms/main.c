@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundstr�m, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstr�m, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -245,12 +245,8 @@ hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *er
 	return 1;
 }
 
-/**
- * @internal Function to respond to the 'quit' command sent from a client
- */
-static void
-quit (xmms_object_t *object, xmms_error_t *error)
-{
+static gboolean
+kill_server (gpointer object) {
 	xmms_object_emit_f (XMMS_OBJECT (object),
 	                    XMMS_IPC_SIGNAL_QUIT,
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
@@ -259,6 +255,21 @@ quit (xmms_object_t *object, xmms_error_t *error)
 	xmms_object_unref (object);
 
 	exit (EXIT_SUCCESS);
+}
+
+
+/**
+ * @internal Function to respond to the 'quit' command sent from a client
+ */
+static void
+quit (xmms_object_t *object, xmms_error_t *error)
+{
+	/* 
+	 * to be able to return from this method
+	 * we add a timeout that will kill the server
+	 * very "ugly" :-)
+	 */
+	g_timeout_add (1, kill_server, object);
 }
 
 static gboolean
@@ -319,12 +330,12 @@ main (int argc, char **argv)
 	xmms_plugin_t *o_plugin;
 	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
-	xmms_ipc_t *ipc;
 	int loglevel = 1;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *tmp;
+
 	const gchar *vererr;
 
 	gboolean verbose = FALSE;
@@ -333,6 +344,7 @@ main (int argc, char **argv)
 	gboolean nologging = FALSE;
 	const gchar *outname = NULL;
 	const gchar *ipcpath = NULL;
+	gchar **ipcpath_split = NULL;
 	gchar *ppath = NULL;
 	int status_fd = -1;
 	GOptionContext *context = NULL;
@@ -402,14 +414,23 @@ main (int argc, char **argv)
 	g_random_set_seed (time (NULL));
 
 	xmms_log_init (loglevel);
+	xmms_ipc_init ();
 
-	ipc = xmms_ipc_init ();
-	
 	load_config ();
+ 
+	g_snprintf (default_path, sizeof(default_path), "unix:///tmp/xmms-ipc-%s", g_get_user_name ());
+	cv = xmms_config_property_register ("core.ipcsocket", default_path, on_config_ipcsocket_change, NULL);
 
-	xmms_config_property_register ("decoder.buffersize", 
+	if (!ipcpath)
+		ipcpath = xmms_config_property_get_string (cv);
+	if (!xmms_ipc_setup_server (ipcpath)) {
+		xmms_ipc_shutdown();
+		xmms_log_fatal ("IPC failed to init!");
+	}
+
+	xmms_config_property_register ("decoder.buffersize",
 			XMMS_DECODER_DEFAULT_BUFFERSIZE, NULL, NULL);
-	xmms_config_property_register ("transport.buffersize", 
+	xmms_config_property_register ("transport.buffersize",
 			XMMS_TRANSPORT_DEFAULT_BUFFERSIZE, NULL, NULL);
 
 
@@ -445,22 +466,9 @@ main (int argc, char **argv)
 		xmms_log_fatal ("Failed to create output object!");
 	}
 
-	g_snprintf (default_path, sizeof (default_path),
-	            "unix:///tmp/xmms-ipc-%s", g_get_user_name ());
-	cv = xmms_config_property_register ("core.ipcsocket", default_path,
-	                                 NULL, NULL);
-
-	if (!ipcpath)
-		ipcpath = xmms_config_property_get_string (cv);
-	if (!xmms_ipc_setup_server (ipcpath)) {
-		xmms_log_fatal ("IPC failed to init!");
-	}
-
 	if (status_fd != -1) {
 		write (status_fd, "+", 1);
 	}
-
-	xmms_ipc_setup_with_gmain (ipc);
 
 	xmms_signal_init (XMMS_OBJECT (mainobj));
 
@@ -472,8 +480,17 @@ main (int argc, char **argv)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (mainobj), XMMS_IPC_SIGNAL_QUIT);
 	mainobj->starttime = time (NULL);
 
+	/* Dirty hack to tell XMMS_PATH a valid path */
+	ipcpath_split = g_strsplit(ipcpath, ";", 2);
+	if(ipcpath_split && ipcpath_split[0]) {
+		g_snprintf (default_path, sizeof (default_path), "%s", ipcpath_split[0]);
+	}
+	g_strfreev(ipcpath_split);
 
-	putenv (g_strdup_printf ("XMMS_PATH=%s", ipcpath));
+	putenv (g_strdup_printf ("XMMS_PATH=%s", default_path));
+
+	/* Also put the full path for clients that understands */
+	putenv (g_strdup_printf ("XMMS_PATH_FULL=%s", ipcpath));
 
 	tmp = g_strdup_printf ("%s/.xmms2/shutdown.d", g_get_home_dir());
 	cv = xmms_config_property_register ("core.shutdownpath",

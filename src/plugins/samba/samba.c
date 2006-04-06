@@ -66,10 +66,11 @@ xmms_plugin_get (void)
 	xmms_plugin_t *plugin;
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
-				  XMMS_TRANSPORT_PLUGIN_API_VERSION,
-				  "smb",
-				  "SMB/CIFS transport " XMMS_VERSION,
-				  "Access SMB/CIFS fileshares over a network.");
+	                          XMMS_TRANSPORT_PLUGIN_API_VERSION,
+	                          "smb",
+	                          "SMB/CIFS Transport",
+	                          XMMS_VERSION,
+	                          "Access SMB/CIFS fileshares over a network.");
 
 	if (!plugin) {
 		return NULL;

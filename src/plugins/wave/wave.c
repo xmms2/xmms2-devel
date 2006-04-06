@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -88,7 +88,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "wave",
-	                          "Wave decoder " XMMS_VERSION,
+	                          "Wave Decoder",
+	                          XMMS_VERSION,
 	                          "Wave decoder");
 
 	if (!plugin) {

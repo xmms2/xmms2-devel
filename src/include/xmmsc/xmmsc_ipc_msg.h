@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -23,7 +23,7 @@
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_inline.h"
 
-#define XMMS_IPC_MSG_DEFAULT_SIZE 32768
+#define XMMS_IPC_MSG_DEFAULT_SIZE 128 /*32768*/
 #define XMMS_IPC_MSG_MAX_SIZE 327680
 #define XMMS_IPC_MSG_HEAD_LEN 16 /* all but data */
 
@@ -32,9 +32,9 @@ typedef struct xmms_ipc_msg_St xmms_ipc_msg_t;
 uint32_t xmms_ipc_msg_get_length (const xmms_ipc_msg_t *msg);
 uint32_t xmms_ipc_msg_get_object (const xmms_ipc_msg_t *msg);
 uint32_t xmms_ipc_msg_get_cmd (const xmms_ipc_msg_t *msg);
-uint32_t xmms_ipc_msg_get_cid (const xmms_ipc_msg_t *msg);
+uint32_t xmms_ipc_msg_get_cookie (const xmms_ipc_msg_t *msg);
 void xmms_ipc_msg_set_length (xmms_ipc_msg_t *msg, uint32_t len);
-void xmms_ipc_msg_set_cid (xmms_ipc_msg_t *msg, uint32_t cid);
+void xmms_ipc_msg_set_cookie (xmms_ipc_msg_t *msg, uint32_t cookie);
 void xmms_ipc_msg_set_cmd (xmms_ipc_msg_t *msg, uint32_t cmd);
 void xmms_ipc_msg_set_object (xmms_ipc_msg_t *msg, uint32_t object);
 
@@ -57,7 +57,7 @@ typedef enum {
 	XMMS_IPC_MSG_ARG_TYPE_INT32,
 	XMMS_IPC_MSG_ARG_TYPE_FLOAT,
 	XMMS_IPC_MSG_ARG_TYPE_STRING,
-	XMMS_IPC_MSG_ARG_TYPE_DATA,
+	XMMS_IPC_MSG_ARG_TYPE_DATA
 } xmms_ipc_msg_arg_type_t;
 
 #define __XMMS_IPC_MSG_DO_IDENTITY_FUNC(type) static inline type *__xmms_ipc_msg_arg_##type (type *arg) {return arg;}
@@ -74,12 +74,10 @@ __XMMS_IPC_MSG_DO_IDENTITY_FUNC(char)
 
 #define XMMS_IPC_MSG_END XMMS_IPC_MSG_ARG_TYPE_END
 
-void xmms_ipc_msg_get_reset (xmms_ipc_msg_t *msg);
 bool xmms_ipc_msg_get_uint32 (xmms_ipc_msg_t *msg, uint32_t *v);
 bool xmms_ipc_msg_get_int32 (xmms_ipc_msg_t *msg, int32_t *v);
 bool xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, float *v);
 bool xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *str, unsigned int maxlen);
 bool xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
-bool xmms_ipc_msg_get (xmms_ipc_msg_t *msg, ...);
 
 #endif 

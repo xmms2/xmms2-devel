@@ -56,6 +56,10 @@ N: Olle Hällnäs
 E: olle@xmms.org
 D: Better seeking in cli.
 
+N: Karsten Krispin
+E: karsten@krispin.de
+D: Multiple socket support
+
 N: Tuure Laurinolli
 E: tuure@laurinolli.net
 D: Windows portability.

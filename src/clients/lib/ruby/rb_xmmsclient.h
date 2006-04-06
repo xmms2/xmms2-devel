@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003, 2004 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -22,6 +22,7 @@ typedef struct {
 	bool deleted;
 	VALUE results;
 	VALUE disconnect_cb;
+	VALUE io_need_out_cb;
 
 	void *ecore_handle;
 	void *gmain_handle;

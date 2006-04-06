@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -57,7 +57,7 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c)
  * Sorts the playlist according to the property
  */
 xmmsc_result_t *
-xmmsc_playlist_sort (xmmsc_connection_t *c, char *property)
+xmmsc_playlist_sort (xmmsc_connection_t *c, const char *property)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
@@ -121,7 +121,7 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, char *url)
+xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;

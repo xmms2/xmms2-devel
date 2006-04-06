@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -477,7 +477,7 @@ xmms_medialib_logging_stop (xmms_medialib_session_t *session,
 	g_return_if_fail (sek);
 
 	ret = xmms_sqlite_exec (session->sql, 
-							"UPDATE Log SET value=%d WHERE id=%u AND starttime=%d", 
+							"UPDATE Log SET percent=%d WHERE id=%u AND starttime=%d", 
 							value, entry, sek);
 }
 
@@ -1089,7 +1089,7 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 	                             "Sources s on m.source = s.id "
 	                             "where m.id=%d",
 	                             entry);
-	if (!s) {
+	if (!s || !ret) {
 		return NULL;
 	}
 
@@ -1105,15 +1105,19 @@ static GList *
 xmms_medialib_info (xmms_medialib_t *medialib, guint32 id, xmms_error_t *err)
 {
 	xmms_medialib_session_t *session;
-	GList *ret;
+	GList *ret = NULL;
 
-	session = xmms_medialib_begin ();
-	ret = xmms_medialib_entry_to_list (session, id);
-	xmms_medialib_end (session);
+	if (!id) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "No such entry, 0");
+	} else {
+		session = xmms_medialib_begin ();
+		ret = xmms_medialib_entry_to_list (session, id);
+		xmms_medialib_end (session);
 
-	if (!ret) {
-		xmms_error_set (err, XMMS_ERROR_NOENT,
-		                "Could not retrive info for that entry!");
+		if (!ret) {
+			xmms_error_set (err, XMMS_ERROR_NOENT,
+			                "Could not retrive info for that entry!");
+		}
 	}
 
 	return ret;

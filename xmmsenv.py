@@ -60,9 +60,10 @@ class LibraryTarget(Target):
 		install = self.globs.get("install", True)
 		static = self.globs.get("static", True)
 		shared = self.globs.get("shared", True)
+		loadable = self.globs.get("loadable", False)
 		systemlibrary = self.globs.get("systemlibrary", False)
 
-		env.add_library(self.target, self.source, static, shared, systemlibrary, install)
+		env.add_library(self.target, self.source, static, shared, systemlibrary, install, loadable)
 
 class ProgramTarget(Target):
 	def add(self, env):
@@ -109,6 +110,7 @@ class XMMSEnvironment(Environment):
 			self.installdir = ""
 		self["INSTALL"] = installFunc
 
+		self.loadable = False
 		self.install_prefix = self["PREFIX"]
 		self.manpath = self["MANDIR"].replace("$PREFIX", self.install_prefix)
 		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
@@ -189,6 +191,8 @@ class XMMSEnvironment(Environment):
 		if libs:
 			cmd += " --libs" 
 		cmd += " \"%s\"" % module
+		if not self.config_cache.has_key(cmd):
+			print "Checking for %s" % module,
 		self.configcmd(cmd, fail)
 		
 
@@ -197,6 +201,11 @@ class XMMSEnvironment(Environment):
 			ret = self.config_cache[cmd]
 		else:
 			ret = os.popen(cmd).read()
+			if cmd.startswith("pkg-config"):
+				if ret == '':
+					print " ... no"
+				else:
+					print " ... yes"
 			self.config_cache[cmd] = ret
 
 		if ret == '':
@@ -326,8 +335,9 @@ class XMMSEnvironment(Environment):
 		self.SharedLibrary(target, source)
 		self.Install(self.pluginpath, os.path.join(self.dir, self.shlibname(target)))
 
-	def add_library(self, target, source, static=True, shared=True, system=False, install=True):
+	def add_library(self, target, source, static=True, shared=True, system=False, install=True, loadable=False):
 
+		self.loadable = loadable
 		self.libs.append(target)
 		if static:
 			self.Library(target, source)
@@ -349,12 +359,19 @@ class XMMSEnvironment(Environment):
 			if system:
 				if self.platform == 'linux' or self.platform == 'freebsd':
 					self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
-			self.SharedLibrary(target, source)
-			if self.platform == 'darwin':
-				self["SHLINKFLAGS"] += " -dynamiclib"
-			if install:
-				self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
+			self.SharedLibrary(target, source)
+
+			if loadable:
+				if self.platform == 'darwin':
+					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
+					self["SHLIBSUFFIX"] = ".bundle"
+				self.Install(self.librarypath, target + self["SHLIBSUFFIX"])
+			else:
+				if self.platform == 'darwin':
+					self["SHLINKFLAGS"] += " -dynamiclib"
+				if install:
+					self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 
 	def add_program(self, target, source):
 		self.programs.append(target)
@@ -443,3 +460,4 @@ class XMMSEnvironment(Environment):
 			except ConfigError, m:
 				self.conf.logstream.write("xmmsscons: File %s reported error '%s' and was disabled.\n" % (t.target, m))
 				continue
+

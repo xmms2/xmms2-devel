@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundstr�m, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstr�m, Anders Gustafsson
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -58,7 +58,7 @@ typedef enum {
 	XMMS_IPC_SIGNAL_QUIT,
 	XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 	XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
-	XMMS_IPC_SIGNAL_END,
+	XMMS_IPC_SIGNAL_END
 } xmms_ipc_signals_t;
 
 typedef enum {
@@ -145,12 +145,12 @@ typedef enum {
 typedef enum {
 	XMMS_PLAYBACK_STATUS_STOP,
 	XMMS_PLAYBACK_STATUS_PLAY,
-	XMMS_PLAYBACK_STATUS_PAUSE,
+	XMMS_PLAYBACK_STATUS_PAUSE
 } xmms_playback_status_t;
 
 typedef enum {
 	XMMS_MEDIAINFO_READER_STATUS_IDLE,
-	XMMS_MEDIAINFO_READER_STATUS_RUNNING,
+	XMMS_MEDIAINFO_READER_STATUS_RUNNING
 } xmms_mediainfo_reader_status_t;
 
 typedef enum {

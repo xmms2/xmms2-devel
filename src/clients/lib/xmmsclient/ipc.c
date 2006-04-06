@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -23,6 +23,7 @@
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
 
+#include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsclientpriv/xmmsclient_queue.h"
@@ -202,21 +203,24 @@ xmmsc_ipc_result_register (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 }
 
 xmmsc_result_t *
-xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, unsigned int cid)
+xmmsc_ipc_result_lookup (xmmsc_ipc_t *ipc, uint32_t cookie)
 {
-	xmmsc_result_t *res;
+	xmmsc_result_t *res = NULL;
 	x_list_t *n;
+
 	x_return_val_if_fail (ipc, NULL);
 
-	res = NULL;
-
 	xmmsc_ipc_lock (ipc);
+
 	for (n = ipc->results_list; n; n = x_list_next (n)) {
-		if (cid == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
-			res = (xmmsc_result_t *)n->data;
+		xmmsc_result_t *tmp = n->data;
+
+		if (cookie == xmmsc_result_cookie_get (tmp)) {
+			res = tmp;
 			break;
 		}
 	}
+
 	xmmsc_ipc_unlock (ipc);
 
 	return res;
@@ -226,20 +230,23 @@ void
 xmmsc_ipc_result_unregister (xmmsc_ipc_t *ipc, xmmsc_result_t *res)
 {
 	x_list_t *n;
+
 	x_return_if_fail (ipc);
 	x_return_if_fail (res);
 
 	xmmsc_ipc_lock (ipc);
+
 	for (n = ipc->results_list; n; n = x_list_next (n)) {
-		if (xmmsc_result_cid (res) == xmmsc_result_cid ((xmmsc_result_t *)n->data)) {
-			ipc->results_list = x_list_remove (ipc->results_list, n->data);
+		xmmsc_result_t *tmp = n->data;
+
+		if (xmmsc_result_cookie_get (res) == xmmsc_result_cookie_get (tmp)) {
+			ipc->results_list = x_list_remove (ipc->results_list, tmp);
 			break;
 		}
 	}
+
 	xmmsc_ipc_unlock (ipc);
 }
-
-
 
 void
 xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error)
@@ -287,13 +294,16 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout)
 }
 
 bool
-xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cid)
+xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cookie)
 {
 	x_return_val_if_fail (ipc, false);
-	xmms_ipc_msg_set_cid (msg, cid);
+
+	xmms_ipc_msg_set_cookie (msg, cookie);
 	x_queue_push_tail (ipc->out_msg, msg);
-	if (ipc->need_out_callback)
+
+	if (ipc->need_out_callback) {
 		ipc->need_out_callback (1, ipc->need_out_data);
+	}
 
 	return true;
 }
@@ -357,7 +367,7 @@ xmmsc_ipc_exec_msg (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg)
 {
 	xmmsc_result_t *res;
 
-	res = xmmsc_ipc_result_lookup (ipc, xmms_ipc_msg_get_cid (msg));
+	res = xmmsc_ipc_result_lookup (ipc, xmms_ipc_msg_get_cookie (msg));
 
 	if (!res) {
 		xmms_ipc_msg_destroy (msg);

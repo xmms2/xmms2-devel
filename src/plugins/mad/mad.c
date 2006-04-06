@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  */
@@ -73,7 +73,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "mad",
-	                          "MAD decoder " XMMS_VERSION,
+	                          "MAD Decoder",
+	                          XMMS_VERSION,
 	                          "MPEG Layer 1/2/3 decoder");
 	
 	if (!plugin) {
@@ -257,7 +258,7 @@ xmms_mad_calc_duration (xmms_medialib_session_t *session,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                                      duration);
 
-			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES)) {
+			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES) && duration) {
 				guint tmp;
 
 				tmp = xmms_xing_get_bytes (data->xing) * ((guint64)8000) / duration;

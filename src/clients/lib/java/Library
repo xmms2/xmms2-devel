@@ -45,6 +45,7 @@ def config(env):
 			# Apple's OS X has its own special java base directory
 			java_base = '/System/Library/Frameworks/JavaVM.framework'
 		else:
+			raise ConfigError("You need to define JAVA_HOME to install the Java bindings.")
 			# Search for the java compiler
 			print "JAVA_HOME environment variable is not set. Searching for java... ",
 			jcdir = os.path.dirname(env.WhereIs('javac'))

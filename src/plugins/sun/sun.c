@@ -1,7 +1,7 @@
 /** @file sun.c 
  *  Output plugin for the OpenBSD SUN architecture. 
  * 
- *  Copyright (C) 2003  Daniel Svensson, <nano@nittioonio.nu>
+ *  Copyright (C) 2003-2006  Daniel Svensson, <nano@nittioonio.nu>
  * 
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -134,7 +134,7 @@ xmms_plugin_get (void)
 
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
 	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "sun", "SUN Output" XMMS_VERSION,
+	                          "sun", "SUN Output", XMMS_VERSION,
 	                          "OpenBSD SUN architecture output plugin");
 
 	if (!plugin) {

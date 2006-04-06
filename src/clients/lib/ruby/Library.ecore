@@ -3,6 +3,7 @@ import os
 target="xmmsclient_ecore"
 source=["rb_xmmsclient_ecore.c"]
 static=False
+loadable=True
 
 def lib2sed(lib):
 	return " -e 's/ -l" + lib + " / /'"

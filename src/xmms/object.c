@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -344,6 +344,8 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 {
 	va_list ap;
 	xmms_object_cmd_arg_t arg;
+
+	xmms_object_cmd_arg_init (&arg);
 
 	va_start(ap, type);
 

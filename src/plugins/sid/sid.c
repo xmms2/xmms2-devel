@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -75,7 +75,8 @@ xmms_plugin_get (void)
 	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "sid",
-	                          "SID decoder " XMMS_VERSION,
+	                          "SID Decoder",
+	                          XMMS_VERSION,
 	                          "libsidplay2 based SID decoder");
 
 	g_return_val_if_fail (plugin, NULL);

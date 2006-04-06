@@ -27,17 +27,43 @@
 	if (xmms->deleted) \
 		rb_raise (eDisconnectedError, "client deleted");
 
-#define METHOD_ADD_HANDLER(name) \
+#define METHOD_HANDLER_HEADER \
 	RbXmmsClient *xmms = NULL; \
 	xmmsc_result_t *res; \
 \
 	Data_Get_Struct (self, RbXmmsClient, xmms); \
-\
-	CHECK_DELETED (xmms); \
+	CHECK_DELETED (xmms);
+
+#define METHOD_HANDLER_FOOTER \
+	return TO_XMMS_CLIENT_RESULT (self, res);
+
+#define METHOD_ADD_HANDLER(name) \
+	METHOD_HANDLER_HEADER \
 \
 	res = xmmsc_##name (xmms->real); \
+	METHOD_HANDLER_FOOTER
+
+#define METHOD_ADD_HANDLER_STR(name, arg1) \
+	METHOD_HANDLER_HEADER \
 \
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	res = xmmsc_##name (xmms->real, StringValuePtr (arg1)); \
+	METHOD_HANDLER_FOOTER
+
+#define METHOD_ADD_HANDLER_UINT(name, arg1) \
+	METHOD_HANDLER_HEADER \
+\
+	Check_Type (arg1, T_FIXNUM); \
+\
+	res = xmmsc_##name (xmms->real, NUM2UINT (arg1)); \
+	METHOD_HANDLER_FOOTER
+
+#define METHOD_ADD_HANDLER_INT(name, arg1) \
+	METHOD_HANDLER_HEADER \
+\
+	Check_Type (arg1, T_FIXNUM); \
+\
+	res = xmmsc_##name (xmms->real, NUM2INT (arg1)); \
+	METHOD_HANDLER_FOOTER
 
 static VALUE eClientError, eDisconnectedError;
 
@@ -47,6 +73,9 @@ static void c_mark (RbXmmsClient *xmms)
 
 	if (!NIL_P (xmms->disconnect_cb))
 		rb_gc_mark (xmms->disconnect_cb);
+
+	if (!NIL_P (xmms->io_need_out_cb))
+		rb_gc_mark (xmms->io_need_out_cb);
 }
 
 static void c_free (RbXmmsClient *xmms)
@@ -85,6 +114,7 @@ static VALUE c_init (VALUE self, VALUE name)
 	xmms->deleted = false;
 	xmms->results = rb_ary_new ();
 	xmms->disconnect_cb = Qnil;
+	xmms->io_need_out_cb = Qnil;
 
 	return self;
 }
@@ -221,6 +251,41 @@ static VALUE c_io_want_out (VALUE self)
 	CHECK_DELETED (xmms);
 
 	return xmmsc_io_want_out (xmms->real) ? Qtrue : Qfalse;
+}
+
+static void on_io_need_out (int flag, void *data)
+{
+	VALUE self = (VALUE) data;
+	RbXmmsClient *xmms = NULL;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	rb_funcall (xmms->io_need_out_cb, rb_intern ("call"), 1, INT2FIX (flag));
+}
+
+/*
+ * call-seq:
+ *  xc.io_need_out { |flag| }
+ *
+ * Sets the block that's called when the output socket state changes.
+ */
+static VALUE c_io_on_need_out (VALUE self)
+{
+	RbXmmsClient *xmms = NULL;
+
+	if (!rb_block_given_p ())
+		return Qnil;
+
+	Data_Get_Struct (self, RbXmmsClient, xmms);
+
+	CHECK_DELETED (xmms);
+
+	xmms->io_need_out_cb = rb_block_proc ();
+
+	xmmsc_io_need_out_callback_set (xmms->real,
+	                                on_io_need_out, (void *) self);
+
+	return Qnil;
 }
 
 /*
@@ -434,18 +499,7 @@ static VALUE c_broadcast_configval_changed (VALUE self)
  */
 static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	Check_Type (ms, T_FIXNUM);
-
-	res = xmmsc_playback_seek_ms (xmms->real, NUM2UINT (ms));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (playback_seek_ms, ms);
 }
 
 /*
@@ -456,18 +510,7 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
  */
 static VALUE c_playback_seek_ms_rel (VALUE self, VALUE ms)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	Check_Type (ms, T_FIXNUM);
-
-	res = xmmsc_playback_seek_ms_rel (xmms->real, NUM2INT (ms));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_INT (playback_seek_ms_rel, ms);
 }
 
 /*
@@ -478,18 +521,7 @@ static VALUE c_playback_seek_ms_rel (VALUE self, VALUE ms)
  */
 static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	Check_Type (samples, T_FIXNUM);
-
-	res = xmmsc_playback_seek_samples (xmms->real, NUM2UINT (samples));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (playback_seek_samples, samples);
 }
 
  /*
@@ -500,18 +532,7 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
   */
 static VALUE c_playback_seek_samples_rel (VALUE self, VALUE samples)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	Check_Type (samples, T_FIXNUM);
-
-	res = xmmsc_playback_seek_samples_rel (xmms->real, NUM2INT (samples));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_INT (playback_seek_samples_rel, samples);
 }
 
 /*
@@ -671,18 +692,7 @@ static VALUE c_playlist_clear (VALUE self)
  */
 static VALUE c_playlist_set_next (VALUE self, VALUE pos)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	Check_Type (pos, T_FIXNUM);
-
-	res = xmmsc_playlist_set_next (xmms->real, FIX2INT (pos));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (playlist_set_next, pos);
 }
 
 /*
@@ -694,18 +704,7 @@ static VALUE c_playlist_set_next (VALUE self, VALUE pos)
  */
 static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	Check_Type (pos, T_FIXNUM);
-
-	res = xmmsc_playlist_set_next_rel (xmms->real, FIX2INT (pos));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_INT (playlist_set_next_rel, pos);
 }
 
 /*
@@ -785,18 +784,7 @@ static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
  */
 static VALUE c_playlist_remove (VALUE self, VALUE pos)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Check_Type (pos, T_FIXNUM);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_playlist_remove (xmms->real, NUM2UINT (pos));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (playlist_remove, pos);
 }
 
 /*
@@ -832,18 +820,7 @@ static VALUE c_playlist_move (VALUE self, VALUE cur_pos, VALUE new_pos)
  */
 static VALUE c_playlist_sort (VALUE self, VALUE property)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (property);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_playlist_sort (xmms->real, StringValuePtr (property));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR (playlist_sort, property);
 }
 
 /*
@@ -854,18 +831,7 @@ static VALUE c_playlist_sort (VALUE self, VALUE property)
  */
 static VALUE c_medialib_select (VALUE self, VALUE query)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (query);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_select (xmms->real, StringValuePtr (query));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR (medialib_select, query);
 }
 
 /*
@@ -876,19 +842,7 @@ static VALUE c_medialib_select (VALUE self, VALUE query)
  */
 static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (name);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_playlist_save_current (xmms->real,
-	                                            StringValuePtr (name));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR (medialib_playlist_save_current, name);
 }
 
 /*
@@ -899,19 +853,18 @@ static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
  */
 static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
+	METHOD_ADD_HANDLER_STR (medialib_playlist_load, name);
+}
 
-	StringValue (name);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_playlist_load (xmms->real,
-	                                    StringValuePtr (name));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+/*
+ * call-seq:
+ *  xc.medialib_playlist_remove(name) -> result
+ *
+ * Removes the playlist _name_ from the medialib.
+ */
+static VALUE c_medialib_playlist_remove (VALUE self, VALUE name)
+{
+	METHOD_ADD_HANDLER_STR (medialib_playlist_remove, name);
 }
 
 /*
@@ -922,18 +875,18 @@ static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
  */
 static VALUE c_medialib_add_entry (VALUE self, VALUE url)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
+	METHOD_ADD_HANDLER_STR (medialib_add_entry, url);
+}
 
-	StringValue (url);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_add_entry (xmms->real, StringValuePtr (url));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+/*
+ * call-seq:
+ *	xc.medialib_get_id(url) -> result
+ *
+ * Retrieves the id corresponding to _url_.
+ */
+static VALUE c_medialib_get_id (VALUE self, VALUE url)
+{
+	METHOD_ADD_HANDLER_STR (medialib_get_id, url);
 }
 
 /*
@@ -944,18 +897,7 @@ static VALUE c_medialib_add_entry (VALUE self, VALUE url)
  */
 static VALUE c_medialib_get_info (VALUE self, VALUE id)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	Check_Type (id, T_FIXNUM);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_get_info (xmms->real, FIX2INT (id));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (medialib_get_info, id);
 }
 
 /*
@@ -1008,19 +950,7 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
  */
 static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (query);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_add_to_playlist (xmms->real,
-	                                      StringValuePtr (query));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR (medialib_add_to_playlist, query);
 }
 
 /*
@@ -1033,16 +963,7 @@ static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
  */
 static VALUE c_medialib_playlists_list (VALUE self)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_playlists_list (xmms->real);
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER (medialib_playlists_list);
 }
 
 /*
@@ -1105,19 +1026,7 @@ static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
  */
 static VALUE c_medialib_path_import (VALUE self, VALUE path)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (path);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_path_import (xmms->real,
-	                                  StringValuePtr (path));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR (medialib_path_import, path);
 }
 
 /*
@@ -1128,18 +1037,7 @@ static VALUE c_medialib_path_import (VALUE self, VALUE path)
  */
 static VALUE c_medialib_rehash (VALUE self, VALUE id)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Check_Type (id, T_FIXNUM);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_medialib_rehash (xmms->real, FIX2INT (id));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_UINT (medialib_rehash, id);
 }
 
 /*
@@ -1170,18 +1068,38 @@ static VALUE c_signal_mediainfo_reader_unindexed (VALUE self)
  *
  * Retrieves an array containing a hash of information for each plugin.
  */
-static VALUE c_plugin_list (VALUE self, xmms_plugin_type_t type)
+static VALUE c_plugin_list (int argc, VALUE *argv, VALUE self)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
+	VALUE type = Qnil;
 
-	Data_Get_Struct (self, RbXmmsClient, xmms);
+	rb_scan_args (argc, argv, "01", &type);
 
-	CHECK_DELETED (xmms);
+	if (NIL_P (type))
+		type = INT2FIX (XMMS_PLUGIN_TYPE_ALL);
 
-	res = xmmsc_plugin_list (xmms->real, FIX2INT (type));
+	METHOD_ADD_HANDLER_UINT (plugin_list, type);
+}
 
-	return TO_XMMS_CLIENT_RESULT (self, res);
+/*
+ * call-seq:
+ *	xc.main_stats -> result
+ *
+ * Retrieves a hash containing statistics about the daemon.
+ */
+static VALUE c_main_stats (VALUE self)
+{
+	METHOD_ADD_HANDLER (main_stats);
+}
+
+/*
+ * call-seq:
+ *  xc.configval_list -> result
+ *
+ * Retrieves a list of all config values.
+ */
+static VALUE c_configval_list (VALUE self)
+{
+	METHOD_ADD_HANDLER (configval_list);
 }
 
 /*
@@ -1192,18 +1110,7 @@ static VALUE c_plugin_list (VALUE self, xmms_plugin_type_t type)
  */
 static VALUE c_configval_get (VALUE self, VALUE key)
 {
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	StringValue (key);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_configval_get (xmms->real, StringValuePtr (key));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
+	METHOD_ADD_HANDLER_STR (configval_get, key);
 }
 
 /*
@@ -1256,6 +1163,7 @@ void Init_Client (VALUE mXmms)
 
 	rb_define_method (c, "io_fd", c_io_fd, 0);
 	rb_define_method (c, "io_want_out", c_io_want_out, 0);
+	rb_define_method (c, "io_on_need_out", c_io_on_need_out, 0);
 	rb_define_method (c, "io_in_handle", c_io_in_handle, 0);
 	rb_define_method (c, "io_out_handle", c_io_out_handle, 0);
 	rb_define_method (c, "io_disconnect", c_io_disconnect, 0);
@@ -1318,7 +1226,10 @@ void Init_Client (VALUE mXmms)
 	                  c_medialib_playlist_save_current, 1);
 	rb_define_method (c, "medialib_playlist_load",
 	                  c_medialib_playlist_load, 1);
+	rb_define_method (c, "medialib_playlist_remove",
+	                  c_medialib_playlist_remove, 1);
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
+	rb_define_method (c, "medialib_get_id", c_medialib_get_id, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 	rb_define_method (c, "medialib_entry_property_set",
 	                  c_medialib_entry_property_set, -1);
@@ -1338,11 +1249,13 @@ void Init_Client (VALUE mXmms)
 	rb_define_method (c, "signal_mediainfo_reader_unindexed",
 	                  c_signal_mediainfo_reader_unindexed, 0);
 
-	rb_define_method (c, "plugin_list", c_plugin_list, 1);
+	rb_define_method (c, "plugin_list", c_plugin_list, -1);
+	rb_define_method (c, "main_stats", c_main_stats, 0);
 
 	rb_define_method (c, "signal_visualisation_data",
 	                  c_signal_visualisation_data, 0);
 
+	rb_define_method (c, "configval_list", c_configval_list, 0);
 	rb_define_method (c, "configval_get", c_configval_get, 1);
 	rb_define_method (c, "configval_set", c_configval_set, 2);
 	rb_define_method (c, "broadcast_configval_changed",

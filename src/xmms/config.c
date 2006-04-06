@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003	Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
  * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  * 
@@ -47,13 +47,13 @@ typedef enum {
 	XMMS_CONFIG_STATE_PROPERTY
 } xmms_configparser_state_t;
 
-static GList *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
+static GHashTable *xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err);
 static xmms_config_property_t *xmms_config_property_new (const gchar *name);
 static gchar *xmms_config_property_client_lookup (xmms_config_t *conf, gchar *key, xmms_error_t *err);
 static gchar *xmms_config_property_client_register (xmms_config_t *config, const gchar *name, const gchar *def_value, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (setvalue, xmms_config_setvalue, xmms_config_t *, NONE, STRING, STRING);
-XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, LIST, NONE, NONE);
+XMMS_CMD_DEFINE (listvalues, xmms_config_listvalues, xmms_config_t *, DICT, NONE, NONE);
 XMMS_CMD_DEFINE (getvalue, xmms_config_property_client_lookup, xmms_config_t *, STRING, STRING, NONE);
 XMMS_CMD_DEFINE (regvalue, xmms_config_property_client_register, xmms_config_t *, STRING, STRING, STRING);
 
@@ -209,10 +209,8 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 
 	dict = g_hash_table_new_full (g_str_hash, g_str_equal, NULL,
 	                              xmms_object_cmd_value_free);
-	g_hash_table_insert (dict, "name",
-	                     xmms_object_cmd_value_str_new ((gchar *) prop->name));
-	g_hash_table_insert (dict, "value",
-	                     xmms_object_cmd_value_str_new ((gchar *) prop->value));
+	g_hash_table_insert (dict, (gchar *) prop->name,
+	                     xmms_object_cmd_value_str_new (prop->value));
 
 	xmms_object_emit_f (XMMS_OBJECT (global_config),
 	                    XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED,
@@ -338,10 +336,11 @@ xmms_config_property_register (const gchar *path,
 
 	prop = g_hash_table_lookup (global_config->properties, path);
 	if (!prop) {
-		gchar *name = strrchr (path, '.');
+		gchar *name;
 
 		/* get our own copy of the string */
 		path = g_strdup (path);
+		name = strrchr (path, '.');
 
 		if (!name) 
 			prop = xmms_config_property_new (path);
@@ -585,54 +584,38 @@ xmms_config_setvalue (xmms_config_t *conf, gchar *key, const gchar *value,
 }
 
 /**
- * @internal Create a string object from a hashtable key and add it to a given 
- * list. Used by #xmms_config_listvalues
- * @param key A hashtable key
- * @param value A hashtable value
- * @param udata User data - in this case, the list being modified
+ * @internal Convert global config properties dict to a normal dict
+ * @param key The dict key
+ * @param property An xmms_config_property_t
+ * @param udata The dict to store configvals
  */
 static void
-add_to_list_foreach (gpointer key, gpointer value, gpointer udata)
+xmms_config_foreach_dict (gpointer key, xmms_config_property_t *prop,
+                          GHashTable *dict)
 {
-	xmms_object_cmd_value_t *val;
-	GList **list = udata;
-
-	val = xmms_object_cmd_value_str_new ((gchar *) key);
-
-	*list = g_list_prepend (*list, val);
-}
-
-/**
- * @internal Compare two string objects - used by #xmms_config_listvalues
- * @param v1 The first variable to compare
- * @param v2 The second variable to compare
- * @return 0 if the two strings match
- */
-static gint
-cb_sort_config_list (const xmms_object_cmd_value_t *v1,
-                     const xmms_object_cmd_value_t *v2)
-{
-	return g_strcasecmp (v1->value.string, v2->value.string);
+	g_hash_table_insert (dict, g_strdup (key),
+	                     xmms_object_cmd_value_str_new (prop->value));
 }
 
 /**
  * @internal List all keys and values in the config.
  * @param conf The config
  * @param err To be filled in if an error occurs
- * @return a GList with strings with format "key=value"
+ * @return a dict with config properties and values
  */
-static GList *
+static GHashTable *
 xmms_config_listvalues (xmms_config_t *conf, xmms_error_t *err)
 {
-	GList *ret = NULL;
+	GHashTable *ret;
+
+	ret = g_hash_table_new_full (g_str_hash, g_str_equal, g_free,
+	                             xmms_object_cmd_value_free);
 
 	g_mutex_lock (conf->mutex);
-	
-	g_hash_table_foreach (conf->properties, add_to_list_foreach, &ret);
-
+	g_hash_table_foreach (conf->properties,
+	                      (GHFunc) xmms_config_foreach_dict,
+	                      (gpointer) ret);
 	g_mutex_unlock (conf->mutex);
-
-	ret = g_list_sort (ret, (GCompareFunc) cb_sort_config_list);
 
 	return ret;
 }
