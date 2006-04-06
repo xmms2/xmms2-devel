@@ -156,7 +156,7 @@ xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const 
 xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, uint32_t id);
 xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
-xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry);
+xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry);
 xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id, const char *key, const char *value);
 xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key, const char *value);
 xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id, const char *key);

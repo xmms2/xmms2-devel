@@ -431,7 +431,7 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
  * @param entry The entry id you want to remove
  */
 xmmsc_result_t *
-xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry)
+xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
