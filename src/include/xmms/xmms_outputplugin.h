@@ -46,7 +46,7 @@ typedef struct xmms_output_methods_St {
 
 	void (*flush)(xmms_output_t *);
 	gboolean (*format_set)(xmms_output_t *, const xmms_stream_type_t *);
-	gboolean (*status)(xmms_output_t *, int);
+	gboolean (*status)(xmms_output_t *, xmms_playback_status_t);
 
 	gboolean (*volume_set)(xmms_output_t *, const gchar *, guint);
 	gboolean (*volume_get)(xmms_output_t *, const gchar **, guint *, guint *);
