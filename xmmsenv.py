@@ -368,8 +368,6 @@ class XMMSEnvironment(Environment):
 				if self.platform == 'linux' or self.platform == 'freebsd':
 					self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
 
-			self.SharedLibrary(target, source)
-
 			if loadable:
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
@@ -380,6 +378,11 @@ class XMMSEnvironment(Environment):
 					self["SHLINKFLAGS"] += " -dynamiclib"
 				if install:
 					self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
+					if self.platform == 'darwin':
+						self["SHLINKFLAGS"] += " -install_name %s/%s" % (self.librarypath, self.shlibname(target))
+			
+			self.SharedLibrary(target, source)
+
 
 	def add_program(self, target, source):
 		self.programs.append(target)
