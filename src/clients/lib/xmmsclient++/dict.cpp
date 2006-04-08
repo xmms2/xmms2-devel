@@ -3,6 +3,7 @@
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/any.hpp>
 #include <string>
+#include <list>
 #include <iostream>
 
 namespace Xmms
@@ -12,7 +13,8 @@ namespace Xmms
 		if( xmmsc_result_iserror( res ) ) {
 			throw result_error( xmmsc_result_get_error( res ) );
 		}
-		else if( xmmsc_result_get_type( res ) != XMMS_OBJECT_CMD_ARG_DICT ) {
+		else if( xmmsc_result_get_type( res ) != XMMS_OBJECT_CMD_ARG_DICT &&
+		         xmmsc_result_get_type( res ) != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 			throw not_dict_error( "Result is not a dict" );
 		}
 		result_ = res;
@@ -93,5 +95,44 @@ namespace Xmms
 
 	}
 
+
+	PropDict::PropDict( xmmsc_result_t* res ) : Dict( res )
+	{
+	}
+
+	PropDict::PropDict( const PropDict& dict ) : Dict( dict )
+	{
+	}
+
+	PropDict& PropDict::operator=( const PropDict& dict )
+	{
+		Dict::operator=( dict );
+		return *this;
+	}
+
+	PropDict::~PropDict()
+	{
+	}
+
+	void PropDict::setSource( const std::string& src ) const
+	{
+		std::list< std::string > sources;
+		sources.push_back( src );
+		setSource( sources );
+	}
+
+	void PropDict::setSource( const std::list< std::string >& src ) const
+	{
+		char *prefs[ src.size() + 1 ];
+
+		std::list< std::string >::const_iterator it;
+		int n;
+		for(it = src.begin(), n = 0; it != src.end(); ++it, ++n) {
+			prefs[n] = const_cast<char*>(it->c_str());
+		}
+		prefs[n] = 0;
+
+		xmmsc_result_source_preference_set( result_, prefs );
+	}
 }
 

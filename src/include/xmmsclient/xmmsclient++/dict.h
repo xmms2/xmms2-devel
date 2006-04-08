@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <boost/any.hpp>
 #include <string>
+#include <list>
 
 namespace Xmms
 {
@@ -34,7 +35,7 @@ namespace Xmms
 			 */
 			Dict( const Dict& dict );
 
-			/** Assings an existing Dict to this Dict.
+			/** Assigns an existing Dict to this Dict.
 			 *  Adds to the reference counter.
 			 *  
 			 *  @param dict source Dict to be assigned to this Dict
@@ -65,6 +66,58 @@ namespace Xmms
 		protected:
 			xmmsc_result_t* result_;
 		/** @endcond */
+
+	};
+
+	
+	/** @class PropDict dict.h "xmmsclient/xmmsclient++/dict.h"
+	 * @brief This class acts as a wrapper for propdict type results.
+	 */
+	class PropDict : public Dict
+	{
+
+		public:
+
+			/** Constructs PropDict and references the result.
+			 *  User must unref the result, the class does not take care of
+			 *  it
+			 *
+			 * @param res Result to wrap around
+			 *
+			 * @throw not_dict_error Occurs if the result is not PropDict
+			 * @throw result_error Occurs if the result is in error state
+			 */
+			PropDict( xmmsc_result_t* res );
+
+			/** Constructs a copy of an existing PropDict.
+			 *  Adds to the reference counter.
+			 *
+			 * @param dict PropDict to be copied
+			 */
+			PropDict( const PropDict& dict );
+
+			/** Assigns an existing PropDict to this PropDict.
+			 *  Adds to the reference counter.
+			 *  
+			 *  @param dict source PropDict to be assigned to this PropDict
+			 */
+			PropDict& operator=( const PropDict& dict );
+
+			/** Destructs this PropDict and unrefs the result.
+			 */
+			virtual ~PropDict();
+
+			/** Set the source to use when retrieving data from the PropDict.
+			 *
+			 * @param src Name of the source to use
+			 */
+			virtual void setSource( const std::string& src ) const;
+
+			/** Set the sources to use when retrieving data from the PropDict.
+			 *
+			 * @param src List of sources to use
+			 */
+			virtual void setSource( const std::list< std::string >& src ) const;
 
 	};
 
