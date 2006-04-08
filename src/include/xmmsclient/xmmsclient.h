@@ -156,7 +156,7 @@ xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const 
 xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path);
 xmmsc_result_t *xmmsc_medialib_rehash (xmmsc_connection_t *conn, uint32_t id);
 xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url);
-xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, int32_t entry);
+xmmsc_result_t *xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry);
 xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id, const char *key, const char *value);
 xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key, const char *value);
 xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id, const char *key);
@@ -217,7 +217,7 @@ int xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int
 int xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data);
 int xmmsc_result_propdict_foreach (xmmsc_result_t *res, xmmsc_propdict_foreach_func func, void *user_data);
-void xmmsc_result_source_preference_set (xmmsc_result_t *res, char **preference);
+void xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference);
 
 int xmmsc_result_is_list (xmmsc_result_t *res);
 int xmmsc_result_list_next (xmmsc_result_t *res);

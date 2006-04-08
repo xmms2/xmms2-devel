@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <assert.h>
 
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_util.h"
@@ -64,7 +65,7 @@ xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 {
-	xmms_socket_t fd;
+	xmms_socket_t fd = 0;
 	xmms_ipc_transport_t *ipct;
 	struct addrinfo hints;
 	struct addrinfo *addrinfo;
@@ -108,6 +109,8 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 	if (!addrinfo) {
 		return NULL;
 	}
+
+	assert (fd);
 
 	if (!xmms_socket_set_nonblock(fd)) {
 		close (fd);
@@ -166,7 +169,7 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 {
-	xmms_socket_t fd;
+	xmms_socket_t fd = 0;
 	xmms_ipc_transport_t *ipct;
 	struct addrinfo hints;
 	struct addrinfo *addrinfo;
@@ -213,6 +216,8 @@ xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 	if (!addrinfo) {
 		return NULL;
 	}
+
+	assert (fd);
 
 	if (!xmms_socket_set_nonblock(fd)) {
 		close (fd);
