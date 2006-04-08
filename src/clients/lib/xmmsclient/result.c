@@ -502,7 +502,7 @@ xmmsc_result_wait (xmmsc_result_t *res)
  * Set source to used when fetching stuff from a DICT
  */
 void
-xmmsc_result_source_preference_set (xmmsc_result_t *res, char **preference)
+xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference)
 {
 	x_list_t *n;
 	int i = 0;

@@ -128,7 +128,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 				 "channels:in",
 				 "channels:out",
 				 NULL};
-	static gchar *pref[] = {"server", NULL};
+	static const gchar *pref[] = {"server", NULL};
 	GString *str;
 	gchar *tstr;
 	gint tint, i;
