@@ -129,7 +129,7 @@ convert_id3_text (xmms_id3v2_header_t *head,
 		  guchar *val, 
 		  gint len)
 {
-	gchar *nval;
+	gchar *nval = NULL;
 	gsize readsize,writsize;
 	GError *err = NULL;
 
@@ -181,6 +181,8 @@ convert_id3_text (xmms_id3v2_header_t *head,
 		g_error_free (err);
 		return NULL;
 	}
+
+	g_assert (nval);
 
 	return nval;
 }
