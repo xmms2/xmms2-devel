@@ -144,11 +144,11 @@ struct xmms_output_St {
 	/** Active format */
 	xmms_stream_type_t *format;
 
-	/** 
+	/**
 	 * Number of bytes totaly written to output driver,
 	 * this is only for statistics...
 	 */
-	guint64 bytes_written; 
+	guint64 bytes_written;
 
 	/**
 	 * How many times didn't we have enough data in the buffer?
@@ -165,7 +165,7 @@ struct xmms_output_St {
  * Public functions
  */
 
-/** 
+/**
  * @defgroup OutputPlugin OutputPlugin
  * @ingroup XMMSPlugin
  * @{
@@ -203,7 +203,7 @@ xmms_output_private_data_set (xmms_output_t *output, gpointer data)
  * format. Any call to the format_set method will be with one of these
  * formats.
  *
- * 
+ *
  */
 void
 xmms_output_stream_type_add (xmms_output_t *output, ...)
@@ -258,7 +258,7 @@ xmms_output_set_error (xmms_output_t *output, xmms_error_t *error)
 	xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
 
 	if (error) {
-		xmms_log_error ("plugin reported error, '%s'", 
+		xmms_log_error ("plugin reported error, '%s'",
 		                xmms_error_message_get (error));
 	}
 }
@@ -713,7 +713,7 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 	g_mutex_lock (output->status_mutex);
 
 	if (output->status != status) {
-		if (status == XMMS_PLAYBACK_STATUS_PAUSE && 
+		if (status == XMMS_PLAYBACK_STATUS_PAUSE &&
 		    output->status != XMMS_PLAYBACK_STATUS_PLAY) {
 			XMMS_DBG ("Can only pause from play.");
 			ret = FALSE;
@@ -891,51 +891,51 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	/* Broadcasts are always transmitted to the client if he
 	 * listens to them. */
 	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
-				     XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED);
+	                             XMMS_IPC_SIGNAL_OUTPUT_VOLUME_CHANGED);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
-				     XMMS_IPC_SIGNAL_PLAYBACK_STATUS);
+	                             XMMS_IPC_SIGNAL_PLAYBACK_STATUS);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
-				     XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
+	                             XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
 	
 	/* Signals are only emitted if the client has a pending question to it
 	 * after the client recivies a signal, he must ask for it again */
 	xmms_ipc_signal_register (XMMS_OBJECT (output),
-				  XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME);
+	                          XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME);
 
 
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_START, 
-				XMMS_CMD_FUNC (start));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_STOP, 
-				XMMS_CMD_FUNC (stop));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_PAUSE, 
-				XMMS_CMD_FUNC (pause));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_DECODER_KILL, 
-				XMMS_CMD_FUNC (xform_kill));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_CPLAYTIME, 
-				XMMS_CMD_FUNC (playtime));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_SEEKMS, 
-				XMMS_CMD_FUNC (seekms));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_SEEKMS_REL, 
-				XMMS_CMD_FUNC (seekms_rel));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_SEEKSAMPLES, 
-				XMMS_CMD_FUNC (seeksamples));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_SEEKSAMPLES_REL, 
-				XMMS_CMD_FUNC (seeksamples_rel));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_OUTPUT_STATUS, 
-				XMMS_CMD_FUNC (output_status));
-	xmms_object_cmd_add (XMMS_OBJECT (output), 
-				XMMS_IPC_CMD_CURRENTID, 
-				XMMS_CMD_FUNC (currentid));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_START,
+	                     XMMS_CMD_FUNC (start));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_STOP,
+	                     XMMS_CMD_FUNC (stop));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_PAUSE,
+	                     XMMS_CMD_FUNC (pause));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_DECODER_KILL,
+	                     XMMS_CMD_FUNC (xform_kill));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_CPLAYTIME,
+	                     XMMS_CMD_FUNC (playtime));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_SEEKMS,
+	                     XMMS_CMD_FUNC (seekms));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_SEEKMS_REL,
+	                     XMMS_CMD_FUNC (seekms_rel));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_SEEKSAMPLES,
+	                     XMMS_CMD_FUNC (seeksamples));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_SEEKSAMPLES_REL,
+	                     XMMS_CMD_FUNC (seeksamples_rel));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_OUTPUT_STATUS,
+	                     XMMS_CMD_FUNC (output_status));
+	xmms_object_cmd_add (XMMS_OBJECT (output),
+	                     XMMS_IPC_CMD_CURRENTID,
+	                     XMMS_CMD_FUNC (currentid));
 	xmms_object_cmd_add (XMMS_OBJECT (output),
 	                     XMMS_IPC_CMD_VOLUME_SET,
 	                     XMMS_CMD_FUNC (volume_set));
@@ -1166,7 +1166,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 		 */
 		if ((cur.status ^ old.status) ||
 		    (cur.status && old.status &&
-			 !xmms_volume_map_equal (&old, &cur))) {
+		     !xmms_volume_map_equal (&old, &cur))) {
 			/* emit the broadcast */
 			if (cur.status) {
 				hash = xmms_volume_map_to_hash (&cur);

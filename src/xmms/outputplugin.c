@@ -270,7 +270,7 @@ xmms_output_plugin_method_volume_get (xmms_output_plugin_t *plugin, xmms_output_
 
 /* Used when we have to drive the output... */
 
-static gboolean 
+static gboolean
 xmms_output_plugin_writer_status (xmms_output_plugin_t *plugin, xmms_output_t *output, xmms_playback_status_t status)
 {
 	g_mutex_lock (plugin->write_mutex);
