@@ -118,9 +118,6 @@ struct xmms_output_St {
 	xmms_output_plugin_t *plugin;
 	gpointer plugin_data;
 
-	/* Make calls to write and flush mutually exclusive */
-	GMutex *api_mutex;
-
 	/* */
 	GMutex *write_mutex;
 	GCond *write_cond;
@@ -755,12 +752,10 @@ xmms_output_open (xmms_output_t *output)
 	gboolean ret = TRUE;
 	g_return_val_if_fail (output, FALSE);
 
-	g_mutex_lock (output->api_mutex);
 	if (!xmms_output_plugin_method_open (output->plugin, output)) {
 		ret = FALSE;
 		xmms_log_error ("Couldn't open output device");
 	}
-	g_mutex_unlock (output->api_mutex);
 
 	return ret;
 
@@ -771,9 +766,7 @@ xmms_output_close (xmms_output_t *output)
 {
 	g_return_if_fail (output);
 
-	g_mutex_lock (output->api_mutex);
 	xmms_output_plugin_method_close (output->plugin, output);
-	g_mutex_unlock (output->api_mutex);
 
 	xmms_object_unref (output->format);
 	output->format = NULL;
@@ -836,9 +829,7 @@ xmms_output_destroy (xmms_object_t *object)
 	g_thread_join (output->filler_thread);
 
 	if (output->plugin) {
-		g_mutex_lock (output->api_mutex);
 		xmms_output_plugin_method_destroy (output->plugin, output);
-		g_mutex_unlock (output->api_mutex);
 		xmms_object_unref (output->plugin);
 	}
 
@@ -847,7 +838,6 @@ xmms_output_destroy (xmms_object_t *object)
 	g_mutex_free (output->status_mutex);
 	g_mutex_free (output->playtime_mutex);
 	g_mutex_free (output->write_mutex);
-	g_mutex_free (output->api_mutex);
 	g_cond_free (output->write_cond);
 	g_mutex_free (output->filler_state_mutex);
 	g_cond_free (output->filler_state_cond);
@@ -914,8 +904,6 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	XMMS_DBG ("Trying to open output");
 
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
-
-	output->api_mutex = g_mutex_new ();
 
 	output->write_mutex = g_mutex_new ();
 	output->write_cond = g_cond_new ();
@@ -1013,10 +1001,7 @@ xmms_output_flush (xmms_output_t *output)
 {
 	g_return_if_fail (output);
 	
-	g_mutex_lock (output->api_mutex);
 	xmms_output_plugin_method_flush (output->plugin, output);
-	g_mutex_unlock (output->api_mutex);
-
 }
 
 /**
@@ -1039,10 +1024,7 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 	xmms_object_ref (fmt);
 	output->format = fmt;
 
-	g_mutex_lock (output->api_mutex);
 	xmms_output_plugin_method_format_set (output->plugin, output, output->format);
-	g_mutex_unlock (output->api_mutex);
-
 }
 
 
@@ -1093,9 +1075,7 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 
 	/* first, shut down the current plugin if present */
 	if (output->plugin) {
-		g_mutex_lock (output->api_mutex);
 		xmms_output_plugin_method_destroy (output->plugin, output);
-		g_mutex_unlock (output->api_mutex);
 		output->plugin = NULL;
 	}
 
@@ -1147,9 +1127,7 @@ xmms_output_write_thread (gpointer data)
 		if (ret > 0) {
 			xmms_error_t err;
 			xmms_error_reset (&err);
-			g_mutex_lock (output->api_mutex);
 			xmms_output_plugin_method_write (output->plugin, output, buffer, ret, &err);
-			g_mutex_unlock (output->api_mutex);
 		}
 		g_mutex_lock (output->write_mutex);
 
@@ -1281,10 +1259,8 @@ xmms_output_monitor_volume_thread (gpointer data)
 	xmms_volume_map_init (&cur);
 
 	while (output->monitor_volume_running) {
-		g_mutex_lock (output->api_mutex);
 		cur.num_channels = 0;
 		cur.status = xmms_output_plugin_method_volume_get (output->plugin, output, NULL, NULL, &cur.num_channels);
-		g_mutex_unlock (output->api_mutex);
 
 		if (cur.status) {
 			/* check for sane values */
@@ -1299,9 +1275,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 		}
 
 		if (cur.status) {
-			g_mutex_lock (output->api_mutex);
 			cur.status = xmms_output_plugin_method_volume_get (output->plugin, output, cur.names, cur.values, &cur.num_channels);
-			g_mutex_unlock (output->api_mutex);
 		}
 
 		/* we failed at getting volume for one of the two maps or
