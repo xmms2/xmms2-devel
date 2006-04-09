@@ -22,6 +22,4 @@ typedef struct xmms_id3v2_header_St {
 gboolean xmms_mad_id3v2_header (guchar *, xmms_id3v2_header_t *);
 gboolean xmms_mad_id3v2_parse (xmms_xform_t *xform, guchar *buf, xmms_id3v2_header_t *head);
 
-gboolean xmms_mad_id3_parse (xmms_medialib_session_t *session, guchar *, xmms_medialib_entry_t);
-
 #endif

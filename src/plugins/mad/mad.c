@@ -21,7 +21,7 @@
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
-#include "id3.h"
+#include "id3v1.h"
 #include "xing.h"
 #include <mad.h>
 
@@ -389,6 +389,35 @@ xmms_mad_get_media_info (xmms_xform_t *xform)
 }
 #endif
 
+static void
+xmms_mad_get_id3v1 (xmms_xform_t *xform)
+{
+	xmms_error_t err;
+	gint64 res;
+	guchar buf[128];
+
+	xmms_error_reset (&err);
+
+	res = xmms_xform_seek (xform, -128, XMMS_XFORM_SEEK_END, &err);
+
+	if (res == -1) {
+		XMMS_DBG ("Couldn't seek - not getting id3v1 tag");
+		return;
+	}
+
+	if (xmms_xform_read (xform, buf, 128, &err) == 128) {
+		xmms_mad_id3v1_parse (xform, buf);
+	} else {
+		XMMS_DBG ("Read of 128 bytes failed?!");
+		xmms_error_reset (&err);
+	}
+
+	res = xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_SET, &err);
+	if (res == -1) {
+		XMMS_DBG ("Couldn't seek after getting id3 tag?!? very bad");
+	}
+}
+
 
 static gboolean
 xmms_mad_init (xmms_xform_t *xform)
@@ -480,6 +509,8 @@ xmms_mad_init (xmms_xform_t *xform)
 			                             (gint) (filesize*(gdouble)8000.0/frame.header.bitrate));
 		}
 	}
+
+	xmms_mad_get_id3v1 (xform);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
