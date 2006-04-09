@@ -22,10 +22,6 @@
 
 #include <glib.h>
 
-
-#define xmms_log_fatal g_error
-#define xmms_log_error g_warning
-#define xmms_log_info g_message
 #define xmms_log_debug g_debug
 
 #define XMMS_STRINGIFY_NOEXPAND(x) #x
@@ -36,8 +32,14 @@
 #ifndef _MSC_VER
 #ifdef DEBUG
 #define XMMS_DBG(fmt, ...) xmms_log_debug (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
+#define xmms_log_fatal(fmt, ...) g_error (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
+#define xmms_log_info(fmt, ...) g_message (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
+#define xmms_log_error(fmt, ...) g_warning (__FILE__ ":" XMMS_STRINGIFY(__LINE__) ": " fmt, ## __VA_ARGS__)
 #else
 #define XMMS_DBG(fmt, ...)
+#define xmms_log_fatal g_error
+#define xmms_log_error g_warning
+#define xmms_log_info g_message
 #endif
 #endif
 
