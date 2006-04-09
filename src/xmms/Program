@@ -24,6 +24,7 @@ source = ["main.c",
 	  "streamtype.c",
 	  "converter_plugin.c",
 	  "ringbuf_xform.c",
+	  "outputplugin.c"
 	]
 
 def config(env):

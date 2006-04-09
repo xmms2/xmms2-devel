@@ -28,7 +28,7 @@
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_sample.h"
 #include "xmmspriv/xmms_medialib.h"
-#include "xmms/xmms_outputplugin.h"
+#include "xmmspriv/xmms_outputplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_object.h"
@@ -104,12 +104,6 @@ XMMS_CMD_DEFINE (volume_get, xmms_output_volume_get, xmms_output_t *, DICT, NONE
  *                playtime_mutex is leaflock.
  */
 
-struct xmms_output_plugin_St {
-	xmms_plugin_t plugin;
-
-	xmms_output_methods_t methods;
-};
-
 typedef enum xmms_output_filler_state_E {
 	FILLER_STOP,
 	FILLER_RUN,
@@ -120,7 +114,9 @@ typedef enum xmms_output_filler_state_E {
 
 struct xmms_output_St {
 	xmms_object_t object;
+
 	xmms_output_plugin_t *plugin;
+	gpointer plugin_data;
 
 	/* Make calls to write and flush mutually exclusive */
 	GMutex *api_mutex;
@@ -152,8 +148,6 @@ struct xmms_output_St {
 	    output really is in */
 	GMutex *status_mutex;
 	guint status;
-
-	gpointer plugin_data;
 
 	xmms_playlist_t *playlist;
 
@@ -196,12 +190,10 @@ struct xmms_output_St {
 gpointer
 xmms_output_private_data_get (xmms_output_t *output)
 {
-	gpointer ret;
 	g_return_val_if_fail (output, NULL);
+	g_return_val_if_fail (output->plugin, NULL);
 
-	ret = output->plugin_data;
-
-	return ret;
+	return output->plugin_data;
 }
 
 /**
@@ -211,21 +203,11 @@ xmms_output_private_data_get (xmms_output_t *output)
 void
 xmms_output_private_data_set (xmms_output_t *output, gpointer data)
 {
+	g_return_if_fail (output);
+	g_return_if_fail (output->plugin);
+
 	output->plugin_data = data;
 }
-
-/**
- * Get the #xmms_plugin_t for this object.
- */
-/*
-xmms_plugin_t *
-xmms_output_plugin_get (xmms_output_t *output)
-{
-	g_return_val_if_fail (output, NULL);
-	
-	return output->plugin;
-}
-*/
 
 /**
  * Add format to list of supported formats.
@@ -259,12 +241,10 @@ update_playtime (xmms_output_t *output, int ret)
 	output->played += ret;
 	g_mutex_unlock (output->playtime_mutex);
 
-	if (output->plugin && output->plugin->methods.latency_get) {
-		buffersize = output->plugin->methods.latency_get (output);
+	buffersize = xmms_output_plugin_method_latency_get (output->plugin, output);
 		
-		if (output->played < buffersize) {
-			buffersize = output->played;
-		}
+	if (output->played < buffersize) {
+		buffersize = output->played;
 	}
 
 	g_mutex_lock (output->playtime_mutex);
@@ -475,73 +455,6 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	return ret;
 }
 
-static void
-xmms_output_plugin_destroy (xmms_object_t *obj)
-{
-	/*xmms_output_plugin_t *plugin = (xmms_output_plugin_t *)obj;*/
-
-	xmms_plugin_destroy ((xmms_plugin_t *)obj);
-}
-
-xmms_plugin_t *
-xmms_output_plugin_new (void)
-{
-	xmms_output_plugin_t *res;
-
-	res = xmms_object_new (xmms_output_plugin_t, xmms_output_plugin_destroy);
-
-	return (xmms_plugin_t *)res;
-}
-
-void
-xmms_output_plugin_methods_set (xmms_output_plugin_t *plugin, xmms_output_methods_t *methods)
-{
-	g_return_if_fail (plugin);
-	g_return_if_fail (plugin->plugin.type == XMMS_PLUGIN_TYPE_OUTPUT);
-
-	XMMS_DBG ("Registering output '%s'", xmms_plugin_shortname_get ((xmms_plugin_t *)plugin));
-
-	memcpy (&plugin->methods, methods, sizeof (xmms_output_methods_t));
-}
-
-gboolean
-xmms_output_plugin_verify (xmms_plugin_t *_plugin)
-{
-	xmms_output_plugin_t *plugin = (xmms_output_plugin_t *)_plugin;
-	gboolean w, s, o, c;
-
-	g_return_val_if_fail (plugin, FALSE);
-	g_return_val_if_fail (_plugin->type == XMMS_PLUGIN_TYPE_OUTPUT, FALSE);
-
-	if (!(plugin->methods.new &&
-	      plugin->methods.destroy &&
-	      plugin->methods.flush)) {
-		return FALSE;
-	}
-
-	w = !!plugin->methods.write;
-	s = !!plugin->methods.status;
-
-	if (!(!w ^ !s)) {
-		return FALSE;
-	}
-
-	o = !!plugin->methods.open;
-	c = !!plugin->methods.close;
-
-	/* 'write' plugins need these two methods, 'status' plugins may
-	 * have neither of them
-	 */
-	return (w && o && c) || (s && !o && !c);
-}
-
-xmms_config_property_t *
-xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata)
-{
-	return xmms_plugin_config_property_register ((xmms_plugin_t *)plugin, name, default_value, cb, userdata);
-
-}
-
 xmms_config_property_t *
 xmms_output_config_property_register (xmms_output_t *output, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata)
 {
@@ -701,9 +614,14 @@ static void
 xmms_output_volume_set (xmms_output_t *output, const gchar *channel,
                         guint volume, xmms_error_t *error)
 {
-	g_assert (output->plugin);
 
-	if (!output->plugin->methods.volume_set) {
+	if (!output->plugin) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "couldn't set volume, output plugin not loaded");
+		return;
+	}
+	
+	if (!xmms_output_plugin_method_volume_set_available (output->plugin)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "operation not supported");
 		return;
@@ -714,7 +632,7 @@ xmms_output_volume_set (xmms_output_t *output, const gchar *channel,
 		return;
 	}
 
-	if (!output->plugin->methods.volume_set (output, channel, volume)) {
+	if (xmms_output_plugin_methods_volume_set (output->plugin, output, channel, volume)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "couldn't set volume");
 	}
@@ -732,7 +650,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 		return NULL;
 	}
 
-	if (!output->plugin->methods.volume_get) {
+	if (!xmms_output_plugin_method_volume_get_available (output->plugin)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "operation not supported");
 		return NULL;
@@ -744,7 +662,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_volume_map_init (&map);
 
 	/* ask the plugin how much channels it would like to set */
-	if (!output->plugin->methods.volume_get (output, NULL, NULL, &map.num_channels)) {
+	if (xmms_output_plugin_method_volume_get (output->plugin, output, NULL, NULL, &map.num_channels)) {
 		return NULL;
 	}
 
@@ -755,7 +673,7 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	map.names = g_new (const gchar *, map.num_channels);
 	map.values = g_new (guint, map.num_channels);
 
-	map.status = output->plugin->methods.volume_get (output, map.names, map.values, &map.num_channels);
+	map.status = xmms_output_plugin_method_volume_get (output->plugin, output, map.names, map.values, &map.num_channels);
 
 	if (!map.status || !map.num_channels) {
 		return NULL; /* error is set (-> no leak) */
@@ -809,10 +727,10 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 		} else {
 			output->status = status;
 
-			if (!output->plugin->methods.status) {
+			if (!xmms_output_plugin_method_status_available (output->plugin)) {
 				status_changed (output, status);
 			} else {
-				if (!output->plugin->methods.status (output, status)) {
+				if (!xmms_output_plugin_method_status (output->plugin, output, status)) {
 					xmms_log_error ("Status method returned an error!");
 					output->status = XMMS_PLAYBACK_STATUS_STOP;
 					ret = FALSE;
@@ -838,7 +756,7 @@ xmms_output_open (xmms_output_t *output)
 	g_return_val_if_fail (output, FALSE);
 
 	g_mutex_lock (output->api_mutex);
-	if (!output->plugin->methods.open (output)) {
+	if (!xmms_output_plugin_method_open (output->plugin, output)) {
 		ret = FALSE;
 		xmms_log_error ("Couldn't open output device");
 	}
@@ -854,7 +772,7 @@ xmms_output_close (xmms_output_t *output)
 	g_return_if_fail (output);
 
 	g_mutex_lock (output->api_mutex);
-	output->plugin->methods.close (output);
+	xmms_output_plugin_method_close (output->plugin, output);
 	g_mutex_unlock (output->api_mutex);
 
 	xmms_object_unref (output->format);
@@ -919,7 +837,7 @@ xmms_output_destroy (xmms_object_t *object)
 
 	if (output->plugin) {
 		g_mutex_lock (output->api_mutex);
-		output->plugin->methods.destroy (output);
+		xmms_output_plugin_method_destroy (output->plugin, output);
 		g_mutex_unlock (output->api_mutex);
 		xmms_object_unref (output->plugin);
 	}
@@ -1096,7 +1014,7 @@ xmms_output_flush (xmms_output_t *output)
 	g_return_if_fail (output);
 	
 	g_mutex_lock (output->api_mutex);
-	output->plugin->methods.flush (output);
+	xmms_output_plugin_method_flush (output->plugin, output);
 	g_mutex_unlock (output->api_mutex);
 
 }
@@ -1122,8 +1040,7 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 	output->format = fmt;
 
 	g_mutex_lock (output->api_mutex);
-	if (output->plugin->methods.format_set)
-		output->plugin->methods.format_set (output, output->format);
+	xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 	g_mutex_unlock (output->api_mutex);
 
 }
@@ -1177,7 +1094,7 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 	/* first, shut down the current plugin if present */
 	if (output->plugin) {
 		g_mutex_lock (output->api_mutex);
-		output->plugin->methods.destroy (output);
+		xmms_output_plugin_method_destroy (output->plugin, output);
 		g_mutex_unlock (output->api_mutex);
 		output->plugin = NULL;
 	}
@@ -1186,7 +1103,7 @@ set_plugin (xmms_output_t *output, xmms_output_plugin_t *plugin)
 	 * NEW method
 	 */
 	output->plugin = plugin;
-	ret = output->plugin->methods.new (output);
+	ret = xmms_output_plugin_method_new (output->plugin, output);
 
 	if (!ret) {
 		output->plugin = NULL;
@@ -1231,7 +1148,7 @@ xmms_output_write_thread (gpointer data)
 			xmms_error_t err;
 			xmms_error_reset (&err);
 			g_mutex_lock (output->api_mutex);
-			output->plugin->methods.write (output, buffer, ret, &err);
+			xmms_output_plugin_method_write (output->plugin, output, buffer, ret, &err);
 			g_mutex_unlock (output->api_mutex);
 		}
 		g_mutex_lock (output->write_mutex);
@@ -1356,7 +1273,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 	xmms_output_t *output = data;
 	xmms_volume_map_t old, cur;
 
-	if (!output->plugin->methods.volume_get) {
+	if (!xmms_output_plugin_method_volume_get_available (output->plugin)) {
 		return NULL;
 	}
 
@@ -1366,7 +1283,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 	while (output->monitor_volume_running) {
 		g_mutex_lock (output->api_mutex);
 		cur.num_channels = 0;
-		cur.status = output->plugin->methods.volume_get (output, NULL, NULL, &cur.num_channels);
+		cur.status = xmms_output_plugin_method_volume_get (output->plugin, output, NULL, NULL, &cur.num_channels);
 		g_mutex_unlock (output->api_mutex);
 
 		if (cur.status) {
@@ -1383,7 +1300,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 
 		if (cur.status) {
 			g_mutex_lock (output->api_mutex);
-			cur.status = output->plugin->methods.volume_get (output, cur.names, cur.values, &cur.num_channels);
+			cur.status = xmms_output_plugin_method_volume_get (output->plugin, output, cur.names, cur.values, &cur.num_channels);
 			g_mutex_unlock (output->api_mutex);
 		}
 

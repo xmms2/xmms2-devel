@@ -20,7 +20,7 @@
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_output.h"
+#include "xmmspriv/xmms_outputplugin.h"
 #include "xmmspriv/xmms_plsplugins.h"
 #include "xmmspriv/xmms_xform.h"
 
