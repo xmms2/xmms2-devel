@@ -104,7 +104,7 @@ xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 
 	if (w) {
 		/* 'write' type. */
-		if (!o && !c) {
+		if (!(o && c)) {
 			XMMS_DBG ("Write type misses open or close.");
 			return FALSE;
 		}
