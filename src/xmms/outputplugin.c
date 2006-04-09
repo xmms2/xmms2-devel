@@ -87,6 +87,7 @@ xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 	if (!(plugin->methods.new &&
 	      plugin->methods.destroy &&
 	      plugin->methods.flush)) {
+		XMMS_DBG ("Missing: new, destroy or flush!");
 		return FALSE;
 	}
 
@@ -94,19 +95,23 @@ xmms_output_plugin_verify (xmms_plugin_t *_plugin)
 	s = !!plugin->methods.status;
 
 	if (!(!w ^ !s)) {
+		XMMS_DBG ("Neither write or status based.");
 		return FALSE;
 	}
 
+	o = !!plugin->methods.open;
+	c = !!plugin->methods.close;
+
 	if (w) {
 		/* 'write' type. */
-		o = !!plugin->methods.open;
-		c = !!plugin->methods.close;
 		if (!o && !c) {
+			XMMS_DBG ("Write type misses open or close.");
 			return FALSE;
 		}
 	} else {
 		/* 'self driving' type */
 		if (o || c) {
+			XMMS_DBG ("Status type has open or close.");
 			return FALSE;
 		}
 	}
