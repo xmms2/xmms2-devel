@@ -37,7 +37,4 @@ void xmms_output_flush (xmms_output_t *output);
 guint32 xmms_output_playtime (xmms_output_t *output, xmms_error_t *err); 
 gboolean xmms_output_plugin_switch (xmms_output_t *output, xmms_output_plugin_t *new_plugin);
 
-xmms_plugin_t *xmms_output_plugin_new (void);
-gboolean xmms_output_plugin_verify (xmms_plugin_t *plugin);
-
 #endif
