@@ -379,19 +379,19 @@ xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module)
 	}
 
 	if (!xmms_plugin_setup (plugin, desc)) {
-		XMMS_DBG ("Setup failed!");
+		xmms_log_error ("Setup failed!");
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
 
 	if (!desc->setup_func (plugin)) {
-		XMMS_DBG ("Plugin setup failed!");
+		xmms_log_error ("Setup function returned error!");
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
 
 	if (!verifier (plugin)) {
-		XMMS_DBG ("Verify failed!");
+		xmms_log_error ("Verify failed for plugin!");
 		xmms_object_unref (plugin);
 		return FALSE;
 	}
