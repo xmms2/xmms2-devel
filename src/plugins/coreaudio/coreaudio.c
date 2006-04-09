@@ -41,7 +41,6 @@
 
 typedef struct xmms_ca_data_St {
 	AudioUnit au;
-	AudioStreamBasicDescription sF;
 	gboolean running;
 } xmms_ca_data_t;
 
@@ -49,6 +48,7 @@ typedef struct xmms_ca_data_St {
  * Function prototypes
  */
 
+static gboolean xmms_ca_plugin_setup (xmms_output_plugin_t *plugin);
 static gboolean xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status);
 static gboolean xmms_ca_new (xmms_output_t *output);
 static void xmms_ca_destroy (xmms_output_t *output);
@@ -56,44 +56,45 @@ static void xmms_ca_flush (xmms_output_t *output);
 static guint xmms_ca_buffersize_get (xmms_output_t *output);
 void xmms_ca_mixer_set (xmms_output_t *output, guint left, guint right);
 static gboolean xmms_ca_volume_set (xmms_output_t *output, const gchar
-									*channel, guint volume);
+                                    *channel, guint volume);
 
 static gboolean xmms_ca_volume_get (xmms_output_t *output, const gchar
-									**names, guint *values, guint
-									*num_channels);
+                                    **names, guint *values, guint
+                                    *num_channels);
+static gboolean xmms_ca_format_set (xmms_output_t *output, 
+                                    const xmms_stream_type_t *stype);
 /*
  * Plugin header
  */
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+
+XMMS_OUTPUT_PLUGIN ("coreaudio", "CoreAudio Output", XMMS_VERSION,
+                    "MacOSX CoreAudio output plugin",
+                    xmms_ca_plugin_setup);
+
+
+static gboolean
+xmms_ca_plugin_setup (xmms_output_plugin_t *plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_output_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
-	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "coreaudio",
-	                          "CoreAudio Output",
-	                          XMMS_VERSION,
-	                          "Darwin CoreAudio Output Support");
+	XMMS_OUTPUT_METHODS_INIT(methods);
+	methods.new = xmms_ca_new;
+	methods.destroy = xmms_ca_destroy;
 
-	if (!plugin) {
-		return NULL;
-	}
+	methods.flush = xmms_ca_flush;
+	methods.format_set = xmms_ca_format_set;
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "INFO", "http://www.apple.com/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
-	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS, xmms_ca_status);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_ca_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_ca_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET, xmms_ca_buffersize_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, xmms_ca_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_GET, xmms_ca_volume_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_SET, xmms_ca_volume_set);
+	methods.volume_get = xmms_ca_volume_get;
+	methods.volume_set = xmms_ca_volume_set;
 
-	return plugin;
+	methods.status = xmms_ca_status;
+
+	methods.latency_get = xmms_ca_buffersize_get;
+
+	xmms_output_plugin_methods_set (plugin, &methods);
+
+	return TRUE;
 }
 
 /*
@@ -112,11 +113,13 @@ xmms_ca_status (xmms_output_t *output, xmms_playback_status_t status)
 	XMMS_DBG ("changed status! %d", status);
 	if (status == XMMS_PLAYBACK_STATUS_PLAY) {
 		if (!data->running) {
+			XMMS_DBG ("start polling!");
 			AudioOutputUnitStart (data->au);
 			data->running = TRUE;
 		}
 	} else {
 		if (data->running) {
+			XMMS_DBG ("stop polling!");
 			AudioOutputUnitStop (data->au);
 			data->running = FALSE;
 		}
@@ -140,11 +143,11 @@ xmms_ca_flush (xmms_output_t *output)
 
 OSStatus
 xmms_ca_render_cb (void *inRefCon,
-		   AudioUnitRenderActionFlags *ioActionFlags,
-		   const AudioTimeStamp *inTimeStamp,
-		   UInt32 inBusNumber,
-		   UInt32 inNumberFrames,
-		   AudioBufferList *ioData)
+                   AudioUnitRenderActionFlags *ioActionFlags,
+                   const AudioTimeStamp *inTimeStamp,
+                   UInt32 inBusNumber,
+                   UInt32 inNumberFrames,
+                   AudioBufferList *ioData)
 {
 	xmms_ca_data_t *data;
 	gint b;
@@ -173,6 +176,55 @@ xmms_ca_render_cb (void *inRefCon,
 }
 
 static gboolean
+xmms_ca_format_set (xmms_output_t *output,
+                    const xmms_stream_type_t *stype)
+{
+	OSStatus res;
+	guint32 fmt;
+	xmms_ca_data_t *data;
+	AudioStreamBasicDescription format;
+	xmms_sample_format_t form;
+	gboolean do_start = FALSE;
+
+	g_return_val_if_fail (stype, FALSE);
+
+	g_return_val_if_fail (output, FALSE);
+	data = xmms_output_private_data_get (output);
+	g_return_val_if_fail (data, FALSE);
+
+	format.mSampleRate = xmms_stream_type_get_int (stype, 
+	                                               XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+
+	form = xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_FORMAT);
+
+	fmt = xmms_sample_signed_get (form) ? kAudioFormatFlagIsSignedInteger : 0;
+	
+	format.mFormatID = kAudioFormatLinearPCM;
+	format.mFormatFlags = fmt | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
+	format.mBytesPerPacket = 4;
+	format.mFramesPerPacket = 1;
+	format.mBytesPerFrame = 4;
+	format.mChannelsPerFrame = xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	format.mBitsPerChannel = xmms_sample_size_get (form) * 8;
+
+	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
+	                            kAudioUnitScope_Input, 0, &format,
+	                            sizeof(AudioStreamBasicDescription));
+	if (res) {
+		xmms_log_error ("Failed to set %d %d %d", xmms_sample_size_get (form) * 8, 
+		                xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS),
+		                xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_SAMPLERATE));
+		return FALSE;
+	}
+		
+	XMMS_DBG ("Set format: %d %d %d", xmms_sample_size_get (form) * 8, 
+	          xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS),
+	          xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_SAMPLERATE));
+
+	return TRUE;
+}
+
+static gboolean
 xmms_ca_new (xmms_output_t *output)
 {
 	xmms_ca_data_t *data;
@@ -194,6 +246,7 @@ xmms_ca_new (xmms_output_t *output)
 
 	comp = FindNextComponent (NULL, &desc);
 	if (!comp) {
+		xmms_log_error ("Couldn't find that component in my list!");
 		return FALSE;
 	}
 
@@ -201,62 +254,44 @@ xmms_ca_new (xmms_output_t *output)
 
 	res = OpenAComponent (comp, &data->au);
 	if (comp == NULL) {
+		xmms_log_error ("Opening component failed!");
 		g_free (data);
 		return FALSE;
 	}
-
 
 	input.inputProc = xmms_ca_render_cb;
 	input.inputProcRefCon = (void*)output;
 
 	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_SetRenderCallback,
-				    kAudioUnitScope_Input, 0,
-				    &input, sizeof (input));
+	                            kAudioUnitScope_Input, 0,
+	                            &input, sizeof (input));
 
 	if (res) {
-		XMMS_DBG ("Set Callback failed!");
+		xmms_log_error ("Set Callback failed!");
 		g_free (data);
 		return FALSE;
 	}
 
-
-	data->sF.mSampleRate = 44100.0;
-	data->sF.mFormatID = kAudioFormatLinearPCM;
-	data->sF.mFormatFlags = 0;
-	data->sF.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
-	data->sF.mBytesPerPacket = 4;
-	data->sF.mFramesPerPacket = 1;
-	data->sF.mBytesPerFrame = 4;
-	data->sF.mChannelsPerFrame = 2;
-	data->sF.mBitsPerChannel = 16;
-
-	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
-				    kAudioUnitScope_Input, 0, &data->sF,
-				    sizeof(AudioStreamBasicDescription));
-
-	if (res) {
-		g_free (data);
-		return FALSE;
-	}
-
-	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100.0);
+	xmms_output_stream_type_add (output, XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             NULL);
+	XMMS_DBG ("CoreAudio initialized!");
 
 	res = AudioUnitInitialize (data->au);
 	if (res) {
+		xmms_log_error ("Audio Unit wouldn't initialize!");
 		g_free (data);
 		return FALSE;
 	}
 
-
-	res = AudioUnitGetProperty( data->au,
-				    kAudioOutputUnitProperty_CurrentDevice,
-				    kAudioUnitScope_Global,
-				    0,
-				    &device,
-				    &size);
+	res = AudioUnitGetProperty(data->au,
+	                           kAudioOutputUnitProperty_CurrentDevice,
+	                           kAudioUnitScope_Global,
+	                           0,
+	                           &device,
+	                           &size);
 
 	if (res) {
-		XMMS_DBG ("getprop failed!");
+		xmms_log_error ("getprop failed!");
 		g_free (data);
 		return FALSE;
 	}
@@ -265,21 +300,20 @@ xmms_ca_new (xmms_output_t *output)
 		AudioTimeStamp ts;
 		ts.mFlags = 0;
 		UInt32 bufferSize = 4096;
-		res = AudioDeviceSetProperty( device,
-					      &ts, 
-					      0,
-					      0,
-					      kAudioDevicePropertyBufferFrameSize,
-					      sizeof(UInt32),
-					      &bufferSize);
+		res = AudioDeviceSetProperty(device,
+		                             &ts, 
+		                             0,
+		                             0,
+		                             kAudioDevicePropertyBufferFrameSize,
+		                             sizeof(UInt32),
+		                             &bufferSize);
 		if (res) {
-			XMMS_DBG ("Set prop failed!");
+			xmms_log_error ("Set prop failed!");
 			g_free (data);
 			return FALSE;
 		}
 	}
-	
-	XMMS_DBG ("CoreAudio initialized!");
+
 
 	data->running = FALSE;
 	xmms_output_private_data_set (output, data);
