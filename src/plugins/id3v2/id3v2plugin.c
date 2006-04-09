@@ -166,10 +166,10 @@ xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence
 {
 	xmms_id3v2_data_t *data;
 
-	g_return_if_fail (xform);
+	g_return_val_if_fail (xform, 0);
 
 	data = xmms_xform_private_data_get (xform);
-	g_return_if_fail (data);
+	g_return_val_if_fail (data, 0);
 
 	if (whence == XMMS_XFORM_SEEK_SET) {
 		bytes += data->len;
