@@ -9,6 +9,7 @@
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
+#include <xmmsclient/xmmsclient++/medialib.h>
 
 #include <string>
 
@@ -93,12 +94,11 @@ namespace Xmms
 			// const Playback& getPlayback() const;
 
 			const Playlist playlist;
+			const Medialib medialib;
 
 			// Same thing for all of these:
 			// TODO: write the headers for these and implement them
 			//
-			// const Medialib& getMedialib() const;
-			// const Playlist& getPlaylist() const;
 			// const Config& getConfig() const;
 			//
 			// I'm not sure if this should be implemented the same way or not

@@ -2,6 +2,8 @@
 
 #include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/playback.h>
+#include <xmmsclient/xmmsclient++/playlist.h>
+#include <xmmsclient/xmmsclient++/medialib.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
@@ -18,6 +20,7 @@ namespace Xmms
 	Client::Client( const string& name ) 
 		: playback( conn_, connected_, mainloop_ ), 
 	      playlist( conn_, connected_, mainloop_ ), 
+		  medialib( conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
 		  mainloop_( 0 )
 	{
