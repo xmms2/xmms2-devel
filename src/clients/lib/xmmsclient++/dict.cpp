@@ -1,7 +1,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
-#include <boost/any.hpp>
+#include <boost/variant.hpp>
 #include <string>
 #include <list>
 #include <iostream>
@@ -41,9 +41,9 @@ namespace Xmms
 		xmmsc_result_unref( result_ );
 	}
 
-	boost::any Dict::operator[]( const std::string& key ) const
+	Dict::Variant Dict::operator[]( const std::string& key ) const
 	{
-		boost::any value;
+		Dict::Variant value;
 		switch( xmmsc_result_get_dict_entry_type( result_, key.c_str() ) )
 		{
 			case XMMSC_RESULT_VALUE_TYPE_UINT32: {

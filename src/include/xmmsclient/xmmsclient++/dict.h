@@ -2,7 +2,7 @@
 #define XMMSCLIENTPP_DICT_H
 
 #include <xmmsclient/xmmsclient.h>
-#include <boost/any.hpp>
+#include <boost/variant.hpp>
 #include <string>
 #include <list>
 
@@ -50,9 +50,8 @@ namespace Xmms
 			 *
 			 * @param key Key to look for
 			 *
-			 * @return boost::any containing the value.
-			 *         Use boost::any_cast or .type() member function 
-			 *         to figure out the actual type of the returned value.
+			 * @return Xmms::Dict::Variant containing the value.
+			 *         Use boost::get to figure out the actual type of the returned value.
 			 *         @n The return value can be of types:
 			 *         - @c std::string
 			 *         - @c unsigned int
@@ -60,7 +59,8 @@ namespace Xmms
 			 *
 			 * @throws no_such_key_error Occurs when key can't be found.
 			 */
-			virtual boost::any operator[]( const std::string& key ) const;
+			typedef boost::variant< int, unsigned int, std::string > Variant;
+			virtual Variant operator[]( const std::string& key ) const;
 			
 		/** @cond */
 		protected:
