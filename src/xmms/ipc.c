@@ -314,7 +314,7 @@ xmms_ipc_client_thread (gpointer data)
 
 	while (client->run) {
 		gint ret;
-		gboolean disconnect = FALSE;
+		bool disconnect = false;
 
 		FD_ZERO (&rfdset);
 		FD_ZERO (&wfdset);
@@ -358,7 +358,7 @@ xmms_ipc_client_thread (gpointer data)
 				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
 
 				g_mutex_unlock (client->lock);
-				if (xmms_ipc_msg_write_transport (msg, client->transport, (bool*)&disconnect)) {
+				if (xmms_ipc_msg_write_transport (msg, client->transport, &disconnect)) {
 					g_mutex_lock (client->lock);
 					g_queue_pop_head (client->out_msg);
 					g_mutex_unlock (client->lock);
@@ -376,7 +376,7 @@ xmms_ipc_client_thread (gpointer data)
 				if (!client->read_msg)
 					client->read_msg = xmms_ipc_msg_alloc ();
 		
-				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, (bool*)&disconnect)) {
+				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
 					xmms_ipc_msg_t *msg = client->read_msg;
 					client->read_msg = NULL;
 					process_msg (client, client->ipc, msg);

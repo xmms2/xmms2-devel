@@ -18,15 +18,10 @@
 #define __XMMS_PRIV_STREAMTYPE_H__
 
 #include <stdarg.h>
-#include "xmms/xmms_xformplugin.h"
-
-struct xmms_stream_type_St;
-typedef struct xmms_stream_type_St xmms_stream_type_t;
+#include "xmms/xmms_streamtype.h"
 
 xmms_stream_type_t *xmms_stream_type_parse (va_list ap);
 gboolean xmms_stream_type_match (const xmms_stream_type_t *in_type, const xmms_stream_type_t *out_type);
-const char *xmms_stream_type_get_str (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
-gint xmms_stream_type_get_int (const xmms_stream_type_t *st, xmms_stream_type_key_t key);
 xmms_stream_type_t *_xmms_stream_type_new (void *dumb, ...);
 
 

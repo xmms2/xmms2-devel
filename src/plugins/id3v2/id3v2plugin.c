@@ -40,7 +40,7 @@ gboolean xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_id3v2_destroy (xmms_xform_t *decoder);
 static gboolean xmms_id3v2_init (xmms_xform_t *decoder);
-/*static gboolean xmms_id3v2_seek (xmms_xform_t *decoder, guint bytes, gint whence);*/
+static gint64 xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
@@ -61,9 +61,7 @@ xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_id3v2_init;
 	methods.destroy = xmms_id3v2_destroy;
 	methods.read = xmms_id3v2_read;
-	/*
-	  methods.seek
-	*/
+	methods.seek = xmms_id3v2_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -109,6 +107,7 @@ xmms_id3v2_init (xmms_xform_t *xform)
 	xmms_id3v2_header_t head;
 	xmms_error_t err;
 	guchar hbuf[20];
+	gint filesize;
 	guchar *buf;
 	gint res;
 
@@ -128,6 +127,14 @@ xmms_id3v2_init (xmms_xform_t *xform)
 	}
 
 	data->len = head.len;
+
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_XFORM_DATA_SIZE);
+	if (filesize != -1) {
+		xmms_xform_metadata_set_int (xform,
+		                             XMMS_XFORM_DATA_SIZE,
+		                             filesize - head.len);
+	}
+
 
 	buf = g_malloc (head.len);
 
@@ -154,15 +161,18 @@ xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t
 	return xmms_xform_read (xform, buf, len, err);
 }
 
-#if 0
-static gboolean
-xmms_id3v2_seek (xmms_xform_t *xform, guint bytes, gint whence)
+static gint64
+xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
-	/*
-	  if (whence == set) {
-	    bytes += data->len;
-	  }
-	 */
-	return FALSE;
+	xmms_id3v2_data_t *data;
+
+	g_return_val_if_fail (xform, 0);
+
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, 0);
+
+	if (whence == XMMS_XFORM_SEEK_SET) {
+		bytes += data->len;
+	}
+	return xmms_xform_seek (xform, bytes, whence, err);
 }
-#endif

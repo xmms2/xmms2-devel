@@ -8,7 +8,7 @@
 
 
 /**
- * id3 and id3v2
+ * id3v2
  */
 
 #include "xmms/xmms_medialib.h"
@@ -129,7 +129,7 @@ convert_id3_text (xmms_id3v2_header_t *head,
 		  guchar *val, 
 		  gint len)
 {
-	gchar *nval;
+	gchar *nval = NULL;
 	gsize readsize,writsize;
 	GError *err = NULL;
 
@@ -181,6 +181,8 @@ convert_id3_text (xmms_id3v2_header_t *head,
 		g_error_free (err);
 		return NULL;
 	}
+
+	g_assert (nval);
 
 	return nval;
 }
@@ -507,115 +509,3 @@ xmms_mad_id3v2_parse (xmms_xform_t *xform,
 	return TRUE;
 }
 
-/**
- *  ID3 
- */
-
-typedef struct id3v1tag_St {
-        char tag[3]; /* always "TAG": defines ID3v1 tag 128 bytes before EOF */
-        char title[30];
-        char artist[30];
-        char album[30];
-        char year[4];
-        union {
-                struct {
-                        char comment[30];
-                } v1_0;
-                struct {
-                        char comment[28];
-                        char __zero;
-                        unsigned char track_number;
-                } v1_1;
-        } u;
-        unsigned char genre;
-} id3v1tag_t;
-
-/**
- * Samma, p� svenska.
- */
-gboolean
-xmms_mad_id3_parse (xmms_medialib_session_t *session,
-					guchar *buf, xmms_medialib_entry_t entry)
-{
-	id3v1tag_t *tag = (id3v1tag_t *) buf;
-	gsize readsize,writsize;
-	GError *err = NULL;
-	gchar *tmp;
-
-	if (strncmp (tag->tag, "TAG", 3) != 0) {
-		return FALSE;
-	}
-
-	XMMS_DBG ("Found ID3v1 TAG!");
-
-	tmp = g_convert (tag->artist, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	if (!tmp) {
-		g_clear_error (&err);
-	} else {
-		g_strstrip (tmp);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, tmp);
-		g_free (tmp);
-	}
-	
-	tmp = g_convert (tag->album, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	if (!tmp) {
-		g_clear_error (&err);
-	} else {
-		g_strstrip (tmp);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, tmp);
-		g_free (tmp);
-	}
-	
-	tmp = g_convert (tag->title, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	if (!tmp) {
-		g_clear_error (&err);
-	} else {
-		g_strstrip (tmp);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tmp);
-		g_free (tmp);
-	}
-	
-	tmp = g_convert (tag->year, 4, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-	if (!tmp) {
-		g_clear_error (&err);
-	} else {
-		g_strstrip (tmp);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tmp);
-		g_free (tmp);
-	}
-
-	if (tag->genre >= G_N_ELEMENTS (id3_genres)) {
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, "Unknown");
-	} else {
-		tmp = g_strdup ((gchar *)id3_genres[tag->genre]);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, tmp);
-		g_free (tmp);
-	}
-	
-	if (atoi ((char *)(&tag->u.v1_1.track_number)) > 0) {
-		/* V1.1 */
-		tmp = g_convert (tag->u.v1_1.comment, 28, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		g_strstrip (tmp);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
-		g_free (tmp);
-		
-		xmms_medialib_entry_property_set_int (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, 
-											  tag->u.v1_1.track_number);
-	} else {
-		tmp = g_convert (tag->u.v1_1.comment, 30, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		g_strstrip (tmp);
-		xmms_medialib_entry_property_set_str (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tmp);
-		g_free (tmp);
-	}
-
-	return TRUE;
-}

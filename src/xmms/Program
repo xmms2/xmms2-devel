@@ -4,18 +4,13 @@ source = ["main.c",
           "config.c",
           "mediainfo.c",
           "sqlite.c",
-          # "decoder.c",
           "medialib.c", 
-          # "effect.c",
           "object.c",
-          # "transport.c",
           "error.c",
           "output.c",
           "unixsignal.c",
           "playlist.c",
-          "visualisation.c",
           "ipc.c",
-          # "plsplugins.c",
           "log.c",
           "plugin.c",
           "magic.c",
@@ -23,7 +18,8 @@ source = ["main.c",
           "xform.c",
           "streamtype.c",
           "converter_plugin.c",
-          "ringbuf_xform.c"]
+          "ringbuf_xform.c",
+          "outputplugin.c"]
 
 def config(env):
 	pluginenv = env.Copy()
@@ -39,5 +35,6 @@ def config(env):
 
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
+
 	# we have an xmms2d - we might want plugins!
 	pluginenv.handle_targets("Plugin")

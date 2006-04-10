@@ -28,10 +28,11 @@
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_config.h"
+#include "xmms/xmms_streamtype.h"
 
 typedef struct xmms_output_St xmms_output_t;
 
-#define XMMS_OUTPUT_API_VERSION 1
+#define XMMS_OUTPUT_API_VERSION 2
 
 struct xmms_output_plugin_St;
 typedef struct xmms_output_plugin_St xmms_output_plugin_t;
@@ -44,8 +45,8 @@ typedef struct xmms_output_methods_St {
 	void (*close)(xmms_output_t *);
 
 	void (*flush)(xmms_output_t *);
-	gboolean (*format_set)(xmms_output_t *, const xmms_audio_format_t *);
-	gboolean (*status)(xmms_output_t *, int);
+	gboolean (*format_set)(xmms_output_t *, const xmms_stream_type_t *);
+	gboolean (*status)(xmms_output_t *, xmms_playback_status_t);
 
 	gboolean (*volume_set)(xmms_output_t *, const gchar *, guint);
 	gboolean (*volume_get)(xmms_output_t *, const gchar **, guint *, guint *);
@@ -64,7 +65,20 @@ void xmms_output_plugin_methods_set (xmms_output_plugin_t *output, xmms_output_m
 gpointer xmms_output_private_data_get (xmms_output_t *output);
 void xmms_output_private_data_set (xmms_output_t *output, gpointer data);
 
-void xmms_output_format_add (xmms_output_t *output, xmms_sample_format_t fmt, guint channels, guint rate);
+#define xmms_output_format_add(output, fmt, ch, rate)			\
+        xmms_output_stream_type_add (output,                            \
+                                     XMMS_STREAM_TYPE_MIMETYPE,         \
+                                     "audio/pcm",                       \
+                                     XMMS_STREAM_TYPE_FMT_FORMAT,       \
+                                     fmt,                               \
+                                     XMMS_STREAM_TYPE_FMT_CHANNELS,     \
+                                     ch,                                \
+                                     XMMS_STREAM_TYPE_FMT_SAMPLERATE,   \
+                                     rate,                              \
+                                     XMMS_STREAM_TYPE_END)
+
+
+void xmms_output_stream_type_add (xmms_output_t *output, ...);
 
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);

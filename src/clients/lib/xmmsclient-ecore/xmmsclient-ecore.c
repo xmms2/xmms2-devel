@@ -24,11 +24,11 @@ static int
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
 	xmmsc_connection_t *c = udata;
-	int ret;
+	int ret = 0;
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_ERROR)) {
 		xmmsc_io_disconnect (c);
-		return 0;
+		return ret;
 	}
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_READ))

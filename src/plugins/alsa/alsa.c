@@ -85,9 +85,9 @@ static gboolean xmms_alsa_open (xmms_output_t *output);
 static gboolean xmms_alsa_new (xmms_output_t *output);
 static void xmms_alsa_destroy (xmms_output_t *output);
 static gboolean xmms_alsa_format_set (xmms_output_t *output,
-                                      const xmms_audio_format_t *format);
+                                      const xmms_stream_type_t *format);
 static gboolean xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
-                                        const xmms_audio_format_t *format);
+                                        const xmms_stream_type_t *format);
 static gboolean xmms_alsa_volume_set (xmms_output_t *output,
                                       const gchar *channel,
                                       guint volume);
@@ -384,17 +384,18 @@ xmms_alsa_close (xmms_output_t *output)
  */
 static gboolean
 xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
-                        const xmms_audio_format_t *format)
+                        const xmms_stream_type_t *format)
 {
 	snd_pcm_format_t alsa_format = SND_PCM_FORMAT_UNKNOWN;
-	gint err, tmp, i;
+	gint err, tmp, i, fmt;
 	guint requested_buffer_time = BUFFER_TIME;
 
 	g_return_val_if_fail (data, FALSE);
 
 	/* what alsa format does this format correspond to? */
+	fmt = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
-		if (formats[i].xmms_fmt == format->format) {
+		if (formats[i].xmms_fmt == fmt) {
 			alsa_format = formats[i].alsa_fmt;
 			break;
 		}
@@ -428,11 +429,11 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	}
 
 	/* Set the count of channels */
-	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams,
-	                                      format->channels);
+	tmp = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	err = snd_pcm_hw_params_set_channels (data->pcm, data->hwparams, tmp);
 	if (err < 0) {
 		xmms_log_error ("Channels count (%i) not available for playbacks: %s",
-		                format->channels, snd_strerror (err));
+		                tmp, snd_strerror (err));
 		return FALSE;
 	}
 
@@ -440,11 +441,11 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	 * Note: don't use snd_pcm_hw_params_set_rate_near(), we want to fail here
 	 *       if the core passed an unsupported samplerate to us!
 	 */
-	err = snd_pcm_hw_params_set_rate (data->pcm, data->hwparams,
-	                                  format->samplerate, 0);
+	tmp = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	err = snd_pcm_hw_params_set_rate (data->pcm, data->hwparams, tmp, 0);
 	if (err < 0) {
 		xmms_log_error ("Rate %iHz not available for playback: %s",
-		                format->samplerate, snd_strerror (err));
+		                tmp, snd_strerror (err));
 		return FALSE;
 	}
 
@@ -573,7 +574,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output, xmms_alsa_data_t *data)
  * @return Success/failure
  */
 static gboolean
-xmms_alsa_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
+xmms_alsa_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 {
 	gint err;
 	xmms_alsa_data_t *data;
@@ -581,9 +582,6 @@ xmms_alsa_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
-
-	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels,
-	          format->samplerate);
 
 	/* Get rid of old cow if any */
 	if (snd_pcm_state (data->pcm) == SND_PCM_STATE_RUNNING) {

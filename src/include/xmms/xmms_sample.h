@@ -17,6 +17,8 @@
 #ifndef __SAMPLE_H__
 #define __SAMPLE_H__
 
+#include "xmms/xmms_streamtype.h"
+
 typedef enum {
 	XMMS_SAMPLE_FORMAT_UNKNOWN,
 	XMMS_SAMPLE_FORMAT_S8,
@@ -29,12 +31,6 @@ typedef enum {
 	XMMS_SAMPLE_FORMAT_DOUBLE,
 	/* DO NOT CHANGE ORDER! Just add to the end! */
 } xmms_sample_format_t;
-
-typedef struct { /* internal? */
-	xmms_sample_format_t format;
-	guint samplerate;
-	guint channels;
-} xmms_audio_format_t;
 
 typedef struct xmms_sample_converter_St xmms_sample_converter_t;
 
@@ -58,7 +54,7 @@ typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
-guint xmms_sample_bytes_to_ms (const xmms_audio_format_t *f, guint bytes);
+guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples);
 
 static inline gint
 xmms_sample_size_get (xmms_sample_format_t fmt)

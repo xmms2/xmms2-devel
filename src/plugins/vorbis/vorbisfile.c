@@ -43,7 +43,6 @@ typedef struct xmms_vorbis_data_St {
 	OggVorbis_File vorbisfile;
 	ov_callbacks callbacks;
 	gint current;
-	xmms_audio_format_t *format;
 	GMutex *lock;
 } xmms_vorbis_data_t;
 

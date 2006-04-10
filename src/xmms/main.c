@@ -32,8 +32,6 @@
 #include "xmmspriv/xmms_unixsignal.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"
-#include "xmmspriv/xmms_effect.h"
-#include "xmmspriv/xmms_visualisation.h"
 #include "xmmspriv/xmms_ipc.h"
 #include "xmmspriv/xmms_log.h"
 #include "xmmspriv/xmms_sqlite.h"
@@ -223,7 +221,6 @@ xmms_main_destroy (xmms_object_t *object)
 	g_assert (conffile != NULL);
 	xmms_config_save (conffile);
 
-	xmms_visualisation_shutdown ();
 	xmms_config_shutdown ();
 	xmms_plugin_shutdown ();
 
@@ -390,8 +387,8 @@ main (int argc, char **argv)
 	}
 
 	if (version) {
-		printf ("XMMS version " XMMS_VERSION "\n");
-		printf ("Copyright (C) 2003-2006 XMMS Team\n");
+		printf ("XMMS2 version " XMMS_VERSION "\n");
+		printf ("Copyright (C) 2003-2006 XMMS2 Team\n");
 		printf ("This is free software; see the source for copying conditions.\n");
 		printf ("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\n");
 		printf ("PARTICULAR PURPOSE.\n");
@@ -431,8 +428,6 @@ main (int argc, char **argv)
 
 	playlist = xmms_playlist_init ();
 
-	xmms_visualisation_init ();
-	
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 
 	/* find output plugin. */

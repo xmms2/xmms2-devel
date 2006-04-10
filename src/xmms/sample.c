@@ -63,31 +63,6 @@ xmms_sample_conv_get (guint inchannels, xmms_sample_format_t intype,
                       gboolean resample);
 
 
-/**
- * return a new audioformat.
- */
-xmms_audio_format_t *
-xmms_sample_audioformat_new (xmms_sample_format_t fmt, guint channels, guint rate)
-{
-	xmms_audio_format_t *res = g_new0 (xmms_audio_format_t, 1);
-
-	g_return_val_if_fail (res, NULL);
-
-	res->format = fmt;
-	res->samplerate = rate;
-	res->channels = channels;
-
-	return res;
-}
-
-/**
- * Free all resources used by a #xmms_audio_format_t
- */
-void
-xmms_sample_audioformat_destroy (xmms_audio_format_t *fmt)
-{
-	g_free (fmt);
-}
 
 static void
 xmms_sample_converter_destroy (xmms_object_t *obj)
@@ -267,28 +242,32 @@ xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types
  * convert from milliseconds to samples for this format.
  */
 guint
-xmms_sample_ms_to_samples (const xmms_audio_format_t *f, guint milliseconds)
+xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint milliseconds)
 {
-	return (guint)(((gdouble) f->samplerate) * milliseconds / 1000);
+	gint rate;
+	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	return (guint)(((gdouble) rate) * milliseconds / 1000);
 }
 
 /**
  * Convert from samples to milliseconds for this format
  */
 guint
-xmms_sample_samples_to_ms (const xmms_audio_format_t *f, guint samples)
+xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples)
 {
-	return (guint) (((gdouble)samples) * 1000.0 / f->samplerate);
+	gint rate;
+	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	return (guint) (((gdouble)samples) * 1000.0 / rate);
 }
 
 /**
  * Convert from bytes to milliseconds for this format
  */
 guint
-xmms_sample_bytes_to_ms (const xmms_audio_format_t *f, guint bytes)
+xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint bytes)
 {
-	guint samples = bytes / xmms_sample_size_get (f->format) / f->channels;
-	return xmms_sample_samples_to_ms (f, samples);
+	guint samples = bytes / xmms_sample_frame_size_get (st);
+	return xmms_sample_samples_to_ms (st, samples);
 }
 
 gint

@@ -83,7 +83,7 @@ static void xmms_oss_close (xmms_output_t *output);
 static void xmms_oss_flush (xmms_output_t *output);
 static void xmms_oss_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *err);
 static guint xmms_oss_buffersize_get (xmms_output_t *output);
-static gboolean xmms_oss_format_set (xmms_output_t *output, const xmms_audio_format_t *format);
+static gboolean xmms_oss_format_set (xmms_output_t *output, const xmms_stream_type_t *format);
 static gboolean xmms_oss_volume_set (xmms_output_t *output, const gchar *channel, guint volume);
 static gboolean xmms_oss_volume_get (xmms_output_t *output,
                                      gchar const **names, guint *values,
@@ -391,13 +391,11 @@ xmms_oss_destroy (xmms_output_t *output)
 }
 
 static gboolean
-xmms_oss_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
+xmms_oss_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 {
 	guint param;
-	int i;
+	int i, fmt;
 	xmms_oss_data_t *data;
-
-	XMMS_DBG ("Setting format %d %d %d", format->format, format->channels, format->samplerate);
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -407,9 +405,10 @@ xmms_oss_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
 	ioctl (data->fd, SNDCTL_DSP_SYNC, 0);
         ioctl (data->fd, SNDCTL_DSP_RESET, 0);
 
+	fmt = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
 	param = -1;
 	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
-		if (formats[i].xmms_fmt == format->format) {
+		if (formats[i].xmms_fmt == fmt) {
 			param = formats[i].oss_fmt;
 			break;
 		}
@@ -419,11 +418,11 @@ xmms_oss_format_set (xmms_output_t *output, const xmms_audio_format_t *format)
 	if (ioctl (data->fd, SNDCTL_DSP_SETFMT, &param) == -1)
 		goto error;
 
-	param = (format->channels == 2);
+	param = (xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_CHANNELS) == 2);
 	if (ioctl (data->fd, SNDCTL_DSP_STEREO, &param) == -1)
 		goto error;
 
-	param = format->samplerate;
+	param = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
 	if (ioctl (data->fd, SNDCTL_DSP_SPEED, &param) == -1)
 		goto error;
 
