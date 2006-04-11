@@ -7,6 +7,7 @@
 #include <xmmsclient/xmmsclient++/detail/superlist.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
+#include <xmmsclient/xmmsclient++/exceptions.h>
 #include <string>
 
 namespace Xmms
@@ -65,6 +66,14 @@ namespace Xmms
 			List( xmmsc_result_t* result ) :
 				Detail::SuperList( result ), contents_( 0 )
 			{
+
+				if( xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_INT32 ) {
+					// SuperList constructor refs the result so we'll unref
+					xmmsc_result_unref( result );
+					throw wrong_type_error( "Expected list of ints" );
+				}
+
 			}
 
 			List( const List<int>& list ) :
@@ -124,6 +133,14 @@ namespace Xmms
 			List( xmmsc_result_t* result ) :
 				Detail::SuperList( result ), contents_( 0 )
 			{
+
+				if( xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_UINT32 ) {
+					// SuperList constructor refs the result so we'll unref
+					xmmsc_result_unref( result );
+					throw wrong_type_error( "Expected list of unsigned ints" );
+				}
+
 			}
 
 			List( const List<unsigned int>& list ) :
@@ -183,6 +200,14 @@ namespace Xmms
 			List( xmmsc_result_t* result ) :
 				Detail::SuperList( result ), contents_() 
 			{
+
+				if( xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_STRING ) {
+					// SuperList constructor refs the result so we'll unref
+					xmmsc_result_unref( result );
+					throw wrong_type_error( "Expected list of strings" );
+				}
+
 			}
 
 			List( const List<std::string>& list ) :
@@ -239,9 +264,17 @@ namespace Xmms
 	{
 
 		public:
-			List( xmmsc_result_t* result ) :
+			List( xmmsc_result_t* result ) try :
 				Detail::SuperList( result ), contents_( result_ ) 
 			{
+				// checking the type here is a bit useless since
+				// Dict constructor checks it but we must catch it and
+				// unref the result which SuperList refs or we leak.
+			}
+			catch(...)
+			{
+				xmmsc_result_unref( result );
+				throw;
 			}
 
 			List( const List<Dict>& list ) :

@@ -56,6 +56,13 @@ namespace Xmms
 
 	};
 
+	class wrong_type_error : public std::logic_error
+	{
+		public:
+			explicit wrong_type_error( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H

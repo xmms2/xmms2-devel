@@ -44,4 +44,9 @@ namespace Xmms
 	{
 	}
 
+	wrong_type_error::wrong_type_error( const std::string& what_arg ) :
+		logic_error( what_arg )
+	{
+	}
+
 }
