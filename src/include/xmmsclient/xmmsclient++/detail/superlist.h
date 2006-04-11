@@ -30,17 +30,6 @@ namespace Xmms
 
 		};
 
-		void dict_foreach( const void* key,
-		                   xmmsc_result_value_type_t type,
-						   const void* value,
-						   void* udata );
-
-		void propdict_foreach( const void* key,
-		                       xmmsc_result_value_type_t type,
-							   const void* value,
-							   const char* source,
-							   void* udata );
-
 	}
 
 }
