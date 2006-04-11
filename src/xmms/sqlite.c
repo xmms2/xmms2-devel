@@ -314,8 +314,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		sqlite3_free (q);
 		return FALSE;
 	}
-	sqlite3_free (q);
-	
+
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
 		gint i;
 		xmms_object_cmd_value_t *val;
@@ -329,13 +328,9 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		}
 
 		if (!method (ret, udata)) {
-			/*g_hash_table_destroy (ret);*/
 			break;
 		}
 
-		/*
-		g_hash_table_destroy (ret);
-		*/
 	}
 
 	if (ret == SQLITE_ERROR) {
@@ -346,8 +341,9 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		xmms_log_error ("SQLite busy on query '%s'", q);
 	}
 
+	sqlite3_free (q);
 	sqlite3_finalize (stm);
-
+	
 	return (ret == SQLITE_DONE);
 }
 
@@ -382,8 +378,6 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		return FALSE;
 	}
 
-	sqlite3_free (q);
-
 	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {		
 		gint i;
 		xmms_object_cmd_value_t **row;
@@ -407,6 +401,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		xmms_log_error ("SQLite busy on query '%s'", q);
 	}
 
+	sqlite3_free (q);
 	sqlite3_finalize (stm);
 
 	return (ret == SQLITE_DONE);
