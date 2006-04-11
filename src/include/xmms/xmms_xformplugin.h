@@ -92,6 +92,7 @@ gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err);
 gint xmms_xform_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err);
 gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
+gboolean xmms_xform_iseos (xmms_xform_t *xform);
 
 gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...);
 
