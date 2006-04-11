@@ -17,8 +17,10 @@
 
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_decoderplugin.h"
+#include "xmms/xmms_xformplugin.h"
+#include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
+#include "xmms/xmms_medialib.h"
 
 #include <string.h>
 #include <math.h>
@@ -35,75 +37,70 @@ typedef struct xmms_flac_data_St {
 	guint bits_per_sample;
 	guint64 total_samples;
 	gboolean is_seeking;
+
+	GString *buffer;
 } xmms_flac_data_t;
 
 /*
  * Function prototypes
  */
 
-static gboolean xmms_flac_new (xmms_decoder_t *decoder);
-static gboolean xmms_flac_init (xmms_decoder_t *decoder, gint mode);
-static gboolean xmms_flac_seek (xmms_decoder_t *decoder, guint samples);
-static gboolean xmms_flac_decode_block (xmms_decoder_t *decoder);
-static void xmms_flac_destroy (xmms_decoder_t *decoder);
-static void xmms_flac_get_mediainfo (xmms_decoder_t *decoder);
+static gboolean xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gint xmms_flac_read (xmms_xform_t *xform,
+                            xmms_sample_t *buf,
+                            gint len,
+                            xmms_error_t *err);
+static gboolean xmms_flac_init (xmms_xform_t *decoder);
+static void xmms_flac_destroy (xmms_xform_t *decoder);
+/*
+static gboolean xmms_flac_seek (xmms_xform_t *decoder, guint samples);
+*/
 
 /*
  * Plugin header
  */
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+XMMS_XFORM_PLUGIN("flac",
+                  "FLAC Decoder", XMMS_VERSION,
+                  "Free Lossless Audio Codec decoder",
+                  xmms_flac_plugin_setup);
+
+static gboolean
+xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_xform_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
-	                          XMMS_DECODER_PLUGIN_API_VERSION,
-	                          "flac",
-	                          "FLAC Decoder",
-	                          XMMS_VERSION,
-	                          "Free Lossless Audio Codec decoder");
-	
-	if (!plugin) {
-		return NULL;
-	}
+	XMMS_XFORM_METHODS_INIT (methods);
+	methods.init = xmms_flac_init;
+	methods.destroy = xmms_flac_destroy;
+	methods.read = xmms_flac_read;
 
-	xmms_plugin_info_add (plugin, "URL", "http://flac.sourceforge.net/");
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, xmms_flac_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_flac_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_flac_seek);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, xmms_flac_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK, xmms_flac_decode_block);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO, xmms_flac_get_mediainfo);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-flac",
+	                              NULL);
 
-	/*
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_FAST_FWD);
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_REWIND);
-	*/
+	xmms_magic_add ("flac header", "audio/x-flac",
+	                "0 string fLaC", NULL);
 
-	xmms_plugin_magic_add (plugin, "flac header", "audio/x-flac",
-	                       "0 string fLaC", NULL);
-
-	return plugin;
+	return TRUE;
 }
 
 FLAC__SeekableStreamDecoderReadStatus
-flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__byte buffer[], guint *bytes, void *client_data)
+flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                    FLAC__byte buffer[], 
+                    guint *bytes, 
+                    void *client_data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 	xmms_error_t error;
 	gint ret;
 
-	g_return_val_if_fail (decoder, FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
+	g_return_val_if_fail (xform, FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
-
-	ret = xmms_transport_read (transport, (gchar *)buffer, *bytes, &error);
+	ret = xmms_xform_read (xform, (gchar *)buffer, *bytes, &error);
 	*bytes = ret;
 
 	if (ret <= 0) {
@@ -114,16 +111,19 @@ flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__byte b
 }
 
 FLAC__StreamDecoderWriteStatus
-flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder, const FLAC__Frame *frame, const FLAC__int32 * const buffer[], void *client_data)
+flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                     const FLAC__Frame *frame, 
+                     const FLAC__int32 * const buffer[], 
+                     void *client_data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *)client_data;
+	xmms_xform_t *xform = (xmms_xform_t *)client_data;
 	xmms_flac_data_t *data;
 	guint length = frame->header.blocksize * frame->header.channels * frame->header.bits_per_sample / 8;
 	guint sample, channel, pos = 0;
 	guint8 packed[length];
-	guint16 *packed16 = (guint16*)packed;
+	guint16 *packed16 = (guint16 *) packed;
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 
 	if (data->is_seeking)
 		return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
@@ -142,37 +142,39 @@ flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder, const FLAC_
 		}
 	}
 
-	xmms_decoder_write (decoder, (gchar *)packed, length);
+	g_string_append_len (data->buffer, (gchar *) packed, length);
 
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
 FLAC__SeekableStreamDecoderTellStatus
-flac_callback_tell (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__uint64 *offset, void *client_data)
+flac_callback_tell (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                    FLAC__uint64 *offset, void *client_data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
-	xmms_transport_t *transport;
+	xmms_error_t err;
+	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 
-	transport = xmms_decoder_transport_get (decoder);
+	g_return_val_if_fail (xform, FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR);
 
-	*offset = xmms_transport_tell (transport);
+	xmms_error_reset (&err);
+
+	*offset = xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &err);
 
 	return FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_OK;
 }
 
 FLAC__SeekableStreamDecoderSeekStatus
-flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__uint64 offset, void *client_data)
+flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                    FLAC__uint64 offset, void *client_data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
-	xmms_transport_t *transport;
+	xmms_error_t err;
+	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 	gint retval;
 
-	transport = xmms_decoder_transport_get (decoder);
+	xmms_error_reset (&err);
 
-	if (xmms_transport_can_seek (transport) == FALSE)
-		return FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR;
-
-	retval = xmms_transport_seek (transport, offset, XMMS_TRANSPORT_SEEK_SET);
+	retval = xmms_xform_seek (xform, (gint64) offset, 
+	                          XMMS_XFORM_SEEK_SET, &err);
 
 	if (retval == -1)
 		return FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR;
@@ -181,15 +183,14 @@ flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__uint64
 }
 
 FLAC__SeekableStreamDecoderLengthStatus
-flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__uint64 *stream_length, void *client_data)
+flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                      FLAC__uint64 *stream_length, void *client_data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 	gint retval;
 
-	transport = xmms_decoder_transport_get (decoder);
-
-	retval = xmms_transport_size (transport);
+	retval = xmms_xform_metadata_get_int (xform,
+										  XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 	*stream_length = retval;
 
 	if (retval == -1)
@@ -199,17 +200,18 @@ flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__uint
 }
 
 void
-flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, const FLAC__StreamMetadata *metadata, void *client_data)
+flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                        const FLAC__StreamMetadata *metadata, 
+                        void *client_data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) client_data;
-	xmms_transport_t *transport = xmms_decoder_transport_get (decoder);
-	/* xmms_transport_size checks that transport exists internally */
-	guint64 filesize = xmms_transport_size (transport);
 	xmms_flac_data_t *data;
+	xmms_xform_t *xform = (xmms_xform_t *) client_data;
+	guint64 filesize = xmms_xform_metadata_get_int (xform,
+	                                                XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 
-	g_return_if_fail (transport);
+	g_return_if_fail (xform);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 
 	switch (metadata->type) {
 		case FLAC__METADATA_TYPE_STREAMINFO:	/* FLAC__metadata_object_clone ()? */
@@ -235,98 +237,28 @@ flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, const FL
 }
 
 FLAC__bool
-flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder, void *client_data)
+flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                   void *client_data)
 {
-	xmms_decoder_t *data = (xmms_decoder_t *) client_data;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 
 	g_return_val_if_fail (flacdecoder, TRUE);
-	g_return_val_if_fail (data, TRUE);
+	g_return_val_if_fail (xform, TRUE);
 
-	transport = xmms_decoder_transport_get (data);
-	g_return_val_if_fail (transport, TRUE);
-
-	return xmms_transport_iseos (transport);
+	return xmms_xform_iseos (xform);
 }
 
 void
-flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder, FLAC__StreamDecoderErrorStatus status, void *client_data)
+flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder, 
+                     FLAC__StreamDecoderErrorStatus status, 
+                     void *client_data)
 {
-	xmms_decoder_t *data = (xmms_decoder_t *) client_data;
+	xmms_xform_t *data = (xmms_xform_t *) client_data;
 
 	g_return_if_fail (flacdecoder);
 	g_return_if_fail (data);
 
 	XMMS_DBG ("%s", FLAC__StreamDecoderErrorStatusString[status]);
-}
-
-static gboolean
-xmms_flac_new (xmms_decoder_t *decoder)
-{
-	xmms_flac_data_t *data;
-
-	data = g_new0 (xmms_flac_data_t, 1);
-
-	data->flacdecoder = FLAC__seekable_stream_decoder_new ();
-	FLAC__seekable_stream_decoder_set_eof_callback (data->flacdecoder, flac_callback_eof);
-	FLAC__seekable_stream_decoder_set_read_callback (data->flacdecoder, flac_callback_read);
-	FLAC__seekable_stream_decoder_set_seek_callback (data->flacdecoder, flac_callback_seek);
-	FLAC__seekable_stream_decoder_set_tell_callback (data->flacdecoder, flac_callback_tell);
-	FLAC__seekable_stream_decoder_set_write_callback (data->flacdecoder, flac_callback_write);
-	FLAC__seekable_stream_decoder_set_error_callback (data->flacdecoder, flac_callback_error);
-	FLAC__seekable_stream_decoder_set_length_callback (data->flacdecoder, flac_callback_length);
-	FLAC__seekable_stream_decoder_set_metadata_callback (data->flacdecoder, flac_callback_metadata);
-
-	FLAC__seekable_stream_decoder_set_client_data (data->flacdecoder, decoder);
-
-	xmms_decoder_private_data_set (decoder, data);
-
-	return TRUE;
-}
-
-static gboolean
-xmms_flac_init (xmms_decoder_t *decoder, gint mode)
-{
-	xmms_flac_data_t *data;
-	xmms_sample_format_t sample_fmt;
-	FLAC__bool retval;
-	FLAC__SeekableStreamDecoderState init_status;
-
-	g_return_val_if_fail (decoder, FALSE);
-
-	data = xmms_decoder_private_data_get (decoder);
-	g_return_val_if_fail (data, FALSE);
-
-	FLAC__seekable_stream_decoder_set_metadata_respond_all (data->flacdecoder);
-
-	init_status = FLAC__seekable_stream_decoder_init (data->flacdecoder);
-
-	if (init_status != FLAC__SEEKABLE_STREAM_DECODER_OK) {
-		const gchar *errmsg = FLAC__seekable_stream_decoder_get_resolved_state_string (data->flacdecoder);
-		XMMS_DBG ("FLAC init failed: %s", errmsg);
-		return FALSE;
-	}
-
-	retval = FLAC__seekable_stream_decoder_process_until_end_of_metadata (data->flacdecoder);
-	if (retval == false)
-		return FALSE;
-
-	if (data->bits_per_sample != 8 && data->bits_per_sample != 16)
-		return FALSE;
-
-	if (data->bits_per_sample == 8)
-		sample_fmt = XMMS_SAMPLE_FORMAT_S8;
-	else
-		sample_fmt = XMMS_SAMPLE_FORMAT_S16;
-
-	if (mode & XMMS_DECODER_INIT_DECODING) {
-		xmms_decoder_format_add (decoder, sample_fmt, data->channels, data->sample_rate);
-		if (xmms_decoder_format_finish (decoder) == NULL) {
-			return FALSE;
-		}
-	}
-
-	return TRUE;
 }
 
 typedef enum { STRING, INTEGER } ptype;
@@ -351,23 +283,53 @@ static props properties[] = {
 	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
 };
 
-static void
-xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
+static gboolean
+xmms_flac_init (xmms_xform_t *xform)
 {
 	xmms_flac_data_t *data;
-	xmms_medialib_entry_t entry;
-	xmms_medialib_session_t *session;
+	xmms_sample_format_t sample_fmt;
+	FLAC__bool retval;
+	FLAC__SeekableStreamDecoderState init_status;
 	gint current, num_comments;
 
-	g_return_if_fail (decoder);
+	g_return_val_if_fail (xform, FALSE);
 
-	session = xmms_medialib_begin_write ();
+	data = g_new0 (xmms_flac_data_t, 1);
 
-	data = xmms_decoder_private_data_get (decoder);
-	g_return_if_fail (data);
+	data->flacdecoder = FLAC__seekable_stream_decoder_new ();
+	FLAC__seekable_stream_decoder_set_eof_callback (data->flacdecoder, 
+	                                                flac_callback_eof);
+	FLAC__seekable_stream_decoder_set_read_callback (data->flacdecoder, 
+	                                                 flac_callback_read);
+	FLAC__seekable_stream_decoder_set_seek_callback (data->flacdecoder, 
+	                                                 flac_callback_seek);
+	FLAC__seekable_stream_decoder_set_tell_callback (data->flacdecoder, 
+	                                                 flac_callback_tell);
+	FLAC__seekable_stream_decoder_set_write_callback (data->flacdecoder, 
+	                                                  flac_callback_write);
+	FLAC__seekable_stream_decoder_set_error_callback (data->flacdecoder, 
+	                                                  flac_callback_error);
+	FLAC__seekable_stream_decoder_set_length_callback (data->flacdecoder, 
+	                                                   flac_callback_length);
+	FLAC__seekable_stream_decoder_set_metadata_callback (data->flacdecoder, 
+	                                                     flac_callback_metadata);
 
-	entry = xmms_decoder_medialib_entry_get (decoder);
-	
+	FLAC__seekable_stream_decoder_set_client_data (data->flacdecoder, xform);
+
+	xmms_xform_private_data_set (xform, data);
+
+	init_status = FLAC__seekable_stream_decoder_init (data->flacdecoder);
+
+	if (init_status != FLAC__SEEKABLE_STREAM_DECODER_OK) {
+		const gchar *errmsg = FLAC__seekable_stream_decoder_get_resolved_state_string (data->flacdecoder);
+		XMMS_DBG ("FLAC init failed: %s", errmsg);
+		goto err;
+	}
+
+	retval = FLAC__seekable_stream_decoder_process_until_end_of_metadata (data->flacdecoder);
+	if (retval == false)
+		goto err;
+
 	if (data->vorbiscomment != NULL) {
 		num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
 
@@ -382,15 +344,15 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
+					xmms_xform_metadata_set_int (xform,
+					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
+					                             1);
 				} else if (g_strcasecmp (properties[i].vname, s[0]) == 0) {
 					if (properties[i].type == INTEGER) {
 						gint tmp = strtol (val, NULL, 10);
-						xmms_medialib_entry_property_set_int (session, entry,
-						                                      properties[i].xname, tmp);
+						xmms_xform_metadata_set_int (xform, properties[i].xname, tmp);
 					} else {
-						xmms_medialib_entry_property_set_str (session, entry,
-						                                      properties[i].xname, val);
+						xmms_xform_metadata_set_str (xform, properties[i].xname, val);
 					}
 				}
 			}
@@ -399,48 +361,91 @@ xmms_flac_get_mediainfo (xmms_decoder_t *decoder)
 		}
 	}
 
-	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
-										  (gint) data->bit_rate);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE, 
+	                             (gint) data->bit_rate);
 
-	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-										  (gint) data->total_samples / data->sample_rate * 1000);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
+	                             (gint) data->total_samples / data->sample_rate * 1000);
 
-	xmms_medialib_entry_property_set_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
-										  data->sample_rate);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE, 
+	                             data->sample_rate);
 
-	xmms_medialib_end (session);
+	if (data->bits_per_sample != 8 && data->bits_per_sample != 16) {
+		goto err;
+	}
 
-	xmms_medialib_entry_send_update (entry);
+	if (data->bits_per_sample == 8)
+		sample_fmt = XMMS_SAMPLE_FORMAT_S8;
+	else
+		sample_fmt = XMMS_SAMPLE_FORMAT_S16;
+
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "audio/pcm",
+	                             XMMS_STREAM_TYPE_FMT_FORMAT,
+	                             sample_fmt,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+	                             data->channels,
+	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+	                             data->sample_rate,
+	                             XMMS_STREAM_TYPE_END);
+
+	data->buffer = g_string_new (NULL);
+
+	return TRUE;
+
+err:
+
+	FLAC__seekable_stream_decoder_finish (data->flacdecoder);
+	FLAC__seekable_stream_decoder_delete (data->flacdecoder);
+	g_free (data);
+	return FALSE;
+
 }
 
-static gboolean
-xmms_flac_decode_block (xmms_decoder_t *decoder)
+static gint 
+xmms_flac_read (xmms_xform_t *xform,
+                xmms_sample_t *buf,
+                gint len,
+                xmms_error_t *err)
 {
 	xmms_flac_data_t *data;
 	gboolean ret;
+	guint32 size;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	ret = FLAC__seekable_stream_decoder_process_single (data->flacdecoder);
+	size = MIN (data->buffer->len, len);
+
+	if (size <= 0) {
+		ret = FLAC__seekable_stream_decoder_process_single (data->flacdecoder);
+	}
 
 	if (FLAC__seekable_stream_decoder_get_state (data->flacdecoder) == FLAC__SEEKABLE_STREAM_DECODER_END_OF_STREAM)
-		return FALSE;
+		return 0;
 
-	return ret;
+	size = MIN (data->buffer->len, len);
+
+	memcpy (buf, data->buffer->str, size);
+	g_string_erase (data->buffer, 0, size);
+	return size;
 }
 
 static gboolean
-xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
+xmms_flac_seek (xmms_xform_t *xform, guint samples)
 {
 	xmms_flac_data_t *data;
 	FLAC__bool res;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
 	data->is_seeking = TRUE;
@@ -451,17 +456,19 @@ xmms_flac_seek (xmms_decoder_t *decoder, guint samples)
 }
 
 void
-xmms_flac_destroy (xmms_decoder_t *decoder)
+xmms_flac_destroy (xmms_xform_t *decoder)
 {
 	xmms_flac_data_t *data;
 
 	g_return_if_fail (decoder);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (decoder);
 	g_return_if_fail (data);
 
 	if (data->vorbiscomment)
 		FLAC__metadata_object_delete (data->vorbiscomment);
+
+	g_string_free (data->buffer, TRUE);
 
 	FLAC__seekable_stream_decoder_finish (data->flacdecoder);
 	FLAC__seekable_stream_decoder_delete (data->flacdecoder);

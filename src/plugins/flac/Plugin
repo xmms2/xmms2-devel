@@ -2,7 +2,6 @@ target="flac"
 source=["flac.c"]
 
 def config(env):
-	raise ConfigError("disabled")    
 	env.checkheader("FLAC/all.h")
 	env.checklib("FLAC", "FLAC__seekable_stream_decoder_get_state")
 
