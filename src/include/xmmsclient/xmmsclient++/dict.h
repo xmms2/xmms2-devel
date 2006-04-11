@@ -2,6 +2,7 @@
 #define XMMSCLIENTPP_DICT_H
 
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/variant.hpp>
 #include <string>
 #include <list>
@@ -16,6 +17,8 @@ namespace Xmms
 	{
 
 		public:
+
+			typedef boost::variant< int, unsigned int, std::string > Variant;
 
 			/** Constructs Dict and references the result.
 			 *  User must unref the result, the class does not take care of
@@ -47,11 +50,35 @@ namespace Xmms
 			virtual ~Dict();
 
 			/** Gets the corresponding value of the key.
+			 *  This is basically the same as 
+			 *  @link operator[]() operator[]@endlink but it does the 
+			 *  conversion before returning.
+			 *
+			 *  @param key Key to look for
+			 *
+			 *  @return Value requested
+			 *
+			 *  @throw wrong_type_error If supplied type is of wrong type.
+			 *  @throw no_such_key_error Occurs when key can't be found.
+			 */
+			template< typename T >
+			T get( const std::string& key ) const
+			{
+				try {
+					return boost::get< T >( this->operator[]( key ) );
+				}
+				catch( boost::bad_get& e ) {
+					throw wrong_type_error( "Failed to get value." );
+				}
+			}
+
+			/** Gets the corresponding value of the key.
 			 *
 			 * @param key Key to look for
 			 *
 			 * @return Xmms::Dict::Variant containing the value.
-			 *         Use boost::get to figure out the actual type of the returned value.
+			 *         Use boost::get or type() member function 
+			 *         to figure out the actual type of the returned value.
 			 *         @n The return value can be of types:
 			 *         - @c std::string
 			 *         - @c unsigned int
@@ -59,7 +86,6 @@ namespace Xmms
 			 *
 			 * @throws no_such_key_error Occurs when key can't be found.
 			 */
-			typedef boost::variant< int, unsigned int, std::string > Variant;
 			virtual Variant operator[]( const std::string& key ) const;
 			
 		/** @cond */
