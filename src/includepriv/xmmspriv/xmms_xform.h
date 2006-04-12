@@ -34,6 +34,7 @@ gboolean xmms_xform_plugin_verify (xmms_plugin_t *plugin);
 
 xmms_xform_t *xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats);
 
+gint64 xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 int xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err);
 gboolean xmms_xform_iseos (xmms_xform_t *xform);
 
