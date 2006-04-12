@@ -17,7 +17,7 @@
 package org.xmms2;
 
 /**
- * Interface Callbacks must be implemented by the class which should handle the needed callbacks.
+ * Interface CallbacksListener must be implemented by the class which should handle the needed callbacks.
  * This <b>doesn't</b> set the Callbacks already, you have to set the callbacks in a way like this:
  * 
  * <br/><br/><i>org.xmms2.xmms2bindings.xmmsc_result_St result = 
@@ -28,11 +28,11 @@ package org.xmms2;
  * You can get a result object out from the long parameter using 
  * org.xmms2.xmms2bindings.Xmmsclient.get_result_from_pointer(). 
  * Don't unref the gotten result unless you know what you are doing! 
- * You have to run org.xmms2.SpecialJNI.setENV(Callbackobject) first.
+ * You have to run org.xmms2.SpecialJNI.setENV(CallbacksListener) first.
  * Otherwise the callbacks won't work.
  */
 
-public interface Callbacks {
+public interface CallbacksListener {
 	/**
 	 * Callback which gets called when a configval changes. You can get the changed configval
 	 * with dict-entries name and value
