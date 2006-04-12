@@ -57,6 +57,7 @@ const char create_idx_stm[] = "create unique index key_idx on Media (id,key,sour
                               "create index playlist_idx on Playlist (name);";
 
 static void upgrade_v21_to_v22 (sqlite3 *sql);
+static void upgrade_v26_to_v27 (sqlite3 *sql);
 
 /**
  * @defgroup SQLite SQLite
@@ -103,6 +104,20 @@ upgrade_v21_to_v22 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+upgrade_v26_to_v27 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v26->v27");
+	sqlite3_exec (sql,
+	              "drop view albums;"
+	              "drop view artists;"
+	              "drop view compilations;"
+	              "drop view songs;",
+	              NULL, NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
@@ -111,6 +126,9 @@ try_upgrade (sqlite3 *sql, gint version)
 	switch (version) {
 		case 21:
 			upgrade_v21_to_v22 (sql);
+			break;
+		case 26:
+			upgrade_v26_to_v27 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
