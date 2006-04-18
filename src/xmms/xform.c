@@ -296,7 +296,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start)
 
 	xmms_medialib_entry_cleanup (info.session, info.entry);
 
-	for (xform = start; xform; xform = xform->prev) {
+	for (xform = start; xform->prev; xform = xform->prev) {
 		XMMS_DBG ("Collecting medadata from %s", xmms_xform_shortname (xform));
 		src = g_strdup_printf ("plugins/%s", xmms_xform_shortname (xform));
 		info.source = xmms_medialib_source_to_id (info.session, src);
