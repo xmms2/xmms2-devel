@@ -1,0 +1,3 @@
+target="nulstripper"
+source=["nulstripper.c"]
+
