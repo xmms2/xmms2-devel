@@ -23,7 +23,7 @@ typedef struct xmms_nulstripper_data_St {
  * Function prototypes
  */
 
-gboolean xmms_nulstripper_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gboolean xmms_nulstripper_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_nulstripper_read (xmms_xform_t *xform, xmms_sample_t *buf,
                                    gint len, xmms_error_t *err);
 static void xmms_nulstripper_destroy (xmms_xform_t *decoder);
@@ -44,7 +44,7 @@ XMMS_XFORM_PLUGIN ("nulstripper",
                    "Strips leading NUL bytes",
                    xmms_nulstripper_plugin_setup);
 
-gboolean
+static gboolean
 xmms_nulstripper_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;

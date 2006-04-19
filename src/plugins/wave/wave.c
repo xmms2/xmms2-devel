@@ -222,10 +222,10 @@ xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	xmms_wave_data_t *data;
 	gint ret;
 
-	g_return_val_if_fail (xform, FALSE);
+	g_return_val_if_fail (xform, -1);
 
 	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, FALSE);
+	g_return_val_if_fail (data, -1);
 
 	ret = xmms_xform_read (xform, (gchar *) buf, len, error);
 	if (ret <= 0) {
