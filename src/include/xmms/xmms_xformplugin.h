@@ -36,6 +36,8 @@
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_streamtype.h"
+#include "xmms/xmms_config.h"
+#include "xmms/xmms_medialib.h"
 
 
 struct xmms_xform_plugin_St;
@@ -96,5 +98,16 @@ gboolean xmms_xform_iseos (xmms_xform_t *xform);
 
 gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...);
 
+xmms_config_property_t *xmms_xform_plugin_config_property_register (
+	xmms_xform_plugin_t *xform_plugin,
+	const gchar *name,
+	const gchar *default_value,
+	xmms_object_handler_t cb,
+	gpointer userdata
+);
+xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
+                                                  const gchar *path);
+
+xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
 
 #endif

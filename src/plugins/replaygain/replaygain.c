@@ -20,7 +20,7 @@
  */
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_effectplugin.h"
+#include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
 
@@ -39,164 +39,157 @@ typedef enum {
 } xmms_replaygain_mode_t;
 
 typedef struct xmms_replaygain_data_St {
-	xmms_sample_format_t sample_format;
 	xmms_replaygain_mode_t mode;
 	gboolean use_anticlip;
 	gfloat gain;
 	gboolean has_replaygain;
 	guint current_mlib_entry;
+	gboolean enabled;
 } xmms_replaygain_data_t;
 
-static void xmms_replaygain_new (xmms_effect_t *effect);
-static gboolean xmms_replaygain_format_set (xmms_effect_t *effect, xmms_audio_format_t *fmt);
-static void xmms_replaygain_current_mlib_entry (xmms_effect_t *effect, xmms_medialib_entry_t entry);
-static void xmms_replaygain_process (xmms_effect_t *effect, xmms_sample_t *buf, guint len);
-static void xmms_replaygain_destroy (xmms_effect_t *effect);
-static void xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value, gpointer udata);
-static void compute_replaygain (xmms_replaygain_data_t *data);
+static gboolean xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gboolean xmms_replaygain_init (xmms_xform_t *xform);
+static void xmms_replaygain_destroy (xmms_xform_t *xform);
+static gint xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                                  xmms_error_t *error);
+static void xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
+                                            gpointer udata);
+
+static void compute_gain (xmms_xform_t *xform, xmms_replaygain_data_t *data);
 static xmms_replaygain_mode_t parse_mode (const char *s);
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+/*
+ * Plugin header
+ */
+
+XMMS_XFORM_PLUGIN ("replaygain",
+                   "Replaygain effect",
+                   XMMS_VERSION,
+                   "Replaygain effect",
+                   xmms_replaygain_plugin_setup);
+
+static gboolean
+xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_xform_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_EFFECT,
-	                          XMMS_EFFECT_PLUGIN_API_VERSION,
-	                          "replaygain",
-	                          "Replaygain Effect",
-	                          XMMS_VERSION,
-	                          "Replaygain effect");
+	XMMS_XFORM_METHODS_INIT (methods);
 
-	if (!plugin) {
-		return NULL;
-	}
+	methods.init = xmms_replaygain_init;
+	methods.destroy = xmms_replaygain_destroy;
+	methods.read = xmms_replaygain_read;
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
-	                        xmms_replaygain_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
-	                        xmms_replaygain_format_set);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CURRENT_MEDIALIB_ENTRY,
-	                        xmms_replaygain_current_mlib_entry);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_PROCESS,
-	                        xmms_replaygain_process);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
-	                        xmms_replaygain_destroy);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/pcm",
+	                              NULL);
 
-	xmms_plugin_config_property_register (plugin, "mode", "track",
-	                                      NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "use_anticlip", "1",
-	                                      NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin,
+	                                            "mode", "track",
+	                                            NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin,
+	                                            "use_anticlip", "1",
+	                                            NULL, NULL);
 
-	return plugin;
-}
-
-static void
-xmms_replaygain_new (xmms_effect_t *effect)
-{
-	xmms_replaygain_data_t *data;
-	xmms_plugin_t *plugin;
-	xmms_config_property_t *cfgv;
-
-	g_return_if_fail (effect);
-
-	data = g_new0 (xmms_replaygain_data_t, 1);
-	g_return_if_fail (data);
-
-	xmms_effect_private_data_set (effect, data);
-
-	plugin = xmms_effect_plugin_get (effect);
-
-	cfgv = xmms_plugin_config_lookup (plugin, "mode");
-	xmms_config_property_callback_set (cfgv,
-	                                   xmms_replaygain_config_changed,
-	                                   effect);
-
-	data->mode = parse_mode (xmms_config_property_get_string (cfgv));
-
-	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
-	xmms_config_property_callback_set (cfgv,
-	                                   xmms_replaygain_config_changed,
-	                                   effect);
-
-	data->use_anticlip = !!xmms_config_property_get_int (cfgv);
-}
-
-static void
-xmms_replaygain_destroy (xmms_effect_t *effect)
-{
-	xmms_plugin_t *plugin;
-	xmms_config_property_t *cfgv;
-
-	g_return_if_fail (effect);
-
-	g_free (xmms_effect_private_data_get (effect));
-
-	plugin = xmms_effect_plugin_get (effect);
-
-	cfgv = xmms_plugin_config_lookup (plugin, "mode");
-	xmms_config_property_callback_remove (cfgv,
-	                                      xmms_replaygain_config_changed);
-
-	cfgv = xmms_plugin_config_lookup (plugin, "use_anticlip");
-	xmms_config_property_callback_remove (cfgv,
-	                                      xmms_replaygain_config_changed);
+	return TRUE;
 }
 
 static gboolean
-xmms_replaygain_format_set (xmms_effect_t *effect,
-                            xmms_audio_format_t *fmt)
+xmms_replaygain_init (xmms_xform_t *xform)
 {
 	xmms_replaygain_data_t *data;
+	xmms_config_property_t *cfgv;
 
-	g_return_val_if_fail (effect, FALSE);
-	g_return_val_if_fail (fmt, FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	data = xmms_effect_private_data_get (effect);
+	data = g_new0 (xmms_replaygain_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
-	data->sample_format = fmt->format;
+	xmms_xform_private_data_set (xform, data);
+
+	cfgv = xmms_xform_config_lookup (xform, "mode");
+	xmms_config_property_callback_set (cfgv,
+	                                   xmms_replaygain_config_changed,
+	                                   xform);
+
+	data->mode = parse_mode (xmms_config_property_get_string (cfgv));
+
+	cfgv = xmms_xform_config_lookup (xform, "use_anticlip");
+	xmms_config_property_callback_set (cfgv,
+	                                   xmms_replaygain_config_changed,
+	                                   xform);
+
+	data->use_anticlip = !!xmms_config_property_get_int (cfgv);
+
+	cfgv = xmms_xform_config_lookup (xform, "enabled");
+	xmms_config_property_callback_set (cfgv,
+	                                   xmms_replaygain_config_changed,
+	                                   xform);
+
+	data->enabled = !!xmms_config_property_get_int (cfgv);
+
+	xmms_xform_outdata_type_copy (xform);
 
 	return TRUE;
 }
 
 static void
-xmms_replaygain_current_mlib_entry (xmms_effect_t *effect,
-                                    xmms_medialib_entry_t entry)
+xmms_replaygain_destroy (xmms_xform_t *xform)
 {
-	xmms_replaygain_data_t *data;
-	g_return_if_fail (effect);
+	xmms_config_property_t *cfgv;
 
-	data = xmms_effect_private_data_get (effect);
-	g_return_if_fail (data);
+	g_return_if_fail (xform);
 
-	data->current_mlib_entry = entry;
+	g_free (xmms_xform_private_data_get (xform));
 
-	compute_replaygain (data);
+	cfgv = xmms_xform_config_lookup (xform, "mode");
+	xmms_config_property_callback_remove (cfgv,
+	                                      xmms_replaygain_config_changed);
+
+	cfgv = xmms_xform_config_lookup (xform, "use_anticlip");
+	xmms_config_property_callback_remove (cfgv,
+	                                      xmms_replaygain_config_changed);
+
+	cfgv = xmms_xform_config_lookup (xform, "enabled");
+	xmms_config_property_callback_remove (cfgv,
+	                                      xmms_replaygain_config_changed);
 }
 
-static void
-xmms_replaygain_process (xmms_effect_t *effect,
-                         xmms_sample_t *buf, guint len)
+static gint
+xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                      xmms_error_t *error)
 {
 	xmms_replaygain_data_t *data;
+	xmms_medialib_entry_t entry;
+	xmms_sample_format_t fmt;
+	gint read;
 	guint i;
 
-	g_return_if_fail (effect);
+	g_return_val_if_fail (xform, -1);
 
-	data = xmms_effect_private_data_get (effect);
-	g_return_if_fail (data);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
 
-	if (!data->has_replaygain) {
-		return;
+	/* check whether we need to update the gain value */
+	entry = xmms_xform_entry_get (xform);
+
+	if (entry != data->current_mlib_entry) {
+		data->current_mlib_entry = entry;
+		compute_gain (xform, data);
 	}
 
-	len /= xmms_sample_size_get (data->sample_format);
+	read = xmms_xform_read (xform, buf, len, error);
 
-	switch (data->sample_format) {
+	if (!data->has_replaygain || !data->enabled) {
+		return read;
+	}
+
+	fmt = xmms_xform_indata_get_int (xform, XMMS_SAMPLE_FORMAT_S16);
+	len /= xmms_sample_size_get (fmt);
+
+	switch (fmt) {
 		case XMMS_SAMPLE_FORMAT_S8:
 			for (i = 0; i < len; i++) {
 				xmms_samples8_t *samples = (xmms_samples8_t *) buf;
@@ -269,6 +262,8 @@ xmms_replaygain_process (xmms_effect_t *effect,
 		default:
 			break;
 	}
+
+	return read;
 }
 
 static void
@@ -276,31 +271,36 @@ xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
                                 gpointer udata)
 {
 	const gchar *name;
-	xmms_effect_t *effect = udata;
+	xmms_xform_t *xform = udata;
 	xmms_replaygain_data_t *data;
+	gboolean dirty = FALSE;
 
-	data = xmms_effect_private_data_get (effect);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
 	name = xmms_config_property_get_name ((xmms_config_property_t *) obj);
 
-	if (!g_ascii_strcasecmp (name, "effect.replaygain.mode")) {
+	if (!g_ascii_strcasecmp (name, "replaygain.mode")) {
 		data->mode = parse_mode (value);
+		dirty = TRUE;
 	} else if (!g_ascii_strcasecmp (name,
-	                                "effect.replaygain.use_anticlip")) {
+	                                "replaygain.use_anticlip")) {
 		data->use_anticlip = !!atoi (value);
+		dirty = TRUE;
+	} else if (!g_ascii_strcasecmp (name, "replaygain.enabled")) {
+		data->enabled = !!atoi (value);
 	}
 
-	compute_replaygain (data);
+	if (dirty) {
+		compute_gain (xform, data);
+	}
 }
 
 static void
-compute_replaygain (xmms_replaygain_data_t *data)
+compute_gain (xmms_xform_t *xform, xmms_replaygain_data_t *data)
 {
 	gfloat s, p;
-	gchar *key_s, *key_p;
-	gchar *tmp;
-	xmms_medialib_session_t *session;
+	const gchar *key_s, *key_p, *tmp;
 
 	if (data->mode == XMMS_REPLAYGAIN_MODE_TRACK) {
 		key_s = XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK;
@@ -310,22 +310,12 @@ compute_replaygain (xmms_replaygain_data_t *data)
 		key_p = XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM;
 	}
 
-	session = xmms_medialib_begin ();
-
 	/** @todo should this be ints instead? */
-	tmp = xmms_medialib_entry_property_get_str (session,
-	                                            data->current_mlib_entry,
-	                                            key_s);
+	tmp = xmms_xform_metadata_get_str (xform, key_s);
 	s = tmp ? atof (tmp) : 1.0;
-	g_free (tmp);
 
-	tmp = xmms_medialib_entry_property_get_str (session,
-	                                            data->current_mlib_entry,
-	                                            key_p);
+	tmp = xmms_xform_metadata_get_str (xform, key_p);
 	p = tmp ? atof (tmp) : 1.0;
-	g_free (tmp);
-
-	xmms_medialib_end (session);
 
 	s *= 2; /* 6db pre-amp */
 

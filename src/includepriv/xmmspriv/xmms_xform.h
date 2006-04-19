@@ -27,8 +27,6 @@ const gchar *xmms_xform_outtype_get_str (xmms_xform_t *xform, xmms_stream_type_k
 gint xmms_xform_outtype_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);
 xmms_stream_type_t *xmms_xform_outtype_get (xmms_xform_t *xform);
 
-xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
-
 xmms_plugin_t *xmms_xform_plugin_new (void);
 gboolean xmms_xform_plugin_verify (xmms_plugin_t *plugin);
 

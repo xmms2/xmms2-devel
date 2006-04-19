@@ -746,50 +746,6 @@ xmms_output_status_set (xmms_output_t *output, gint status)
 	return ret;
 }
 
-#if 0
-static GList *
-get_effect_list (xmms_output_t *output)
-{
-	GList *list = NULL;
-	gint i = 0;
-
-	while (42) {
-		xmms_config_property_t *cfg;
-		xmms_plugin_t *plugin;
-		gchar key[64];
-		const gchar *name;
-
-		g_snprintf (key, sizeof (key), "effect.order.%i", i++);
-
-		cfg = xmms_config_lookup (key);
-		if (!cfg) {
-			/* this is just a ugly hack to have a configvalue
-			   to set */
-			xmms_config_property_register (key, "", NULL, NULL);
-			break;
-		}
-
-		name = xmms_config_property_get_string (cfg);
-
-		if (!name[0])
-			break;
-
-		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_EFFECT, name);
-		if (plugin) {
-			list = g_list_prepend (list, xmms_effect_new (plugin));
-
-			/* xmms_plugin_find() increases the refcount and
-			 * xmms_effect_new() does, too, so release one reference
-			 * again here
-			 */
-			xmms_object_unref (plugin);
-		}
-	}
-
-	return g_list_reverse (list);
-}
-#endif
-
 static void
 xmms_output_destroy (xmms_object_t *object)
 {

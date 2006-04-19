@@ -17,6 +17,7 @@
 #include "xmms/xmms_defs.h"
 #include "xmmspriv/xmms_plugin.h"
 #include "xmms/xmms_config.h"
+#include "xmmspriv/xmms_config.h"
 #include "xmms/xmms_object.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_playlist.h"

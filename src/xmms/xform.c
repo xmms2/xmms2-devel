@@ -67,6 +67,9 @@ struct xmms_xform_plugin_St {
 
 const char *xmms_xform_shortname (xmms_xform_t *xform);
 
+static xmms_xform_t *add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry,
+                                  GList *goal_formats);
+
 static void
 xmms_xform_destroy (xmms_object_t *object)
 {
@@ -634,11 +637,75 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 
 	xmms_object_unref (xform);
 */
-	/* add effect-xforms here */
+
+	last = add_effects (last, entry, goal_formats);
 
 	xmms_xform_metadata_collect (last);
 
 	XMMS_DBG ("Goaltype found!! \\o/");
+
+	return last;
+}
+
+xmms_config_property_t *
+xmms_xform_plugin_config_property_register (xmms_xform_plugin_t *xform_plugin,
+                                            const gchar *name,
+                                            const gchar *default_value,
+                                            xmms_object_handler_t cb,
+                                            gpointer userdata)
+{
+	return xmms_plugin_config_property_register ((xmms_plugin_t *) xform_plugin,
+	                                             name, default_value, cb, userdata);
+}
+
+xmms_config_property_t *
+xmms_xform_config_lookup (xmms_xform_t *xform, const gchar *path)
+{
+	g_return_val_if_fail (xform->plugin, NULL);
+
+	return xmms_plugin_config_lookup ((xmms_plugin_t *) xform->plugin, path);
+}
+
+static xmms_xform_t *
+add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry, GList *goal_formats)
+{
+	xmms_xform_t *xform;
+	gint effect_no = 0;
+
+	while (42) {
+		xmms_config_property_t *cfg;
+		xmms_plugin_t *plugin;
+		gchar key[64];
+		const gchar *name;
+
+		g_snprintf (key, sizeof (key), "effect.order.%i", effect_no++);
+
+		cfg = xmms_config_lookup (key);
+		if (!cfg) {
+			/* this is just a ugly hack to have a configvalue
+			   to set */
+			xmms_config_property_register (key, "", NULL, NULL);
+			break;
+		}
+
+		name = xmms_config_property_get_string (cfg);
+
+		if (!name[0])
+			break;
+
+		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+		if (plugin) {
+			xform = xmms_xform_new ((xmms_xform_plugin_t *) plugin,
+			                        last, entry, goal_formats);
+
+			xmms_object_unref (plugin);
+			xmms_object_unref (last);
+			last = xform;
+
+			xmms_plugin_config_property_register (plugin, "enabled", "0",
+			                                      NULL, NULL);
+		}
+	}
 
 	return last;
 }
