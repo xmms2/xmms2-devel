@@ -36,7 +36,6 @@ public abstract class CallbacksAdapter implements CallbacksListener {
 	public void callbackDisconnect(int error) {}
 	public void lockFunction(int user_data) {}
 	public void unlockFunction(int user_data) {}
-	public void callbackIOWantOut(int val, int user_data) {}
 	public void callbackDictForeachFunction(String key, int type, String value, int user_data) {}
 	public void callbackPropdictForeachFunction(String key, int type,
 			String value, String source, int user_data) {}

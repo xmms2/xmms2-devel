@@ -27,20 +27,21 @@ import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
 
 /**
  * Java way of using a mainloop. Just create a new Object and give a Callbacks-object, 
- * the mainloop does the rest :)
+ * the mainloop does the rest :). Don't use this class if you are using org.xmms2.Xmms2
+ * and don't use org.xmms2.SpecialJNI if you are using org.xmms2.JMain
  */
 
-public final class MainloopJava extends Thread{
+public final class JMain extends Thread{
 	private SWIGTYPE_p_xmmsc_connection_St myConnection;
 	private boolean running = false;
 
 	/**
 	 * constructor to set up the main loop and all needed callbacks
 	 * 
-	 * @param cb		Callbacks-object to call when something arrives
+	 * @param cb		CallbacksInterface-object to call when something arrives
 	 * @param conn		connection to listen on
 	 */
-	public MainloopJava(Callbacks cb, SWIGTYPE_p_xmmsc_connection_St conn){
+	public JMain(CallbacksListener cb, SWIGTYPE_p_xmmsc_connection_St conn){
 		myConnection = conn;
 		SpecialJNI.setENV(cb);
 		running = true;
@@ -69,12 +70,14 @@ public final class MainloopJava extends Thread{
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} catch (IOException io){
-			io.printStackTrace();
+			System.err.println("my fd went to nowhere - should be ok if you just shut down");
+		}catch (Exception e){
+			e.printStackTrace();
 		}finally {
 			try {
-				in.close();
-				Xmmsclient.xmmsc_io_disconnect(myConnection);
-			} catch (Exception e){Xmmsclient.xmmsc_io_disconnect(myConnection);}
+				if (in != null)
+					in.close();
+			} catch (Exception e){e.printStackTrace();}
 		}
 	}
 	
@@ -84,83 +87,84 @@ public final class MainloopJava extends Thread{
 	 */
 	public void spinDown(){
 		running = false;
+		Xmmsclient.xmmsc_io_disconnect(myConnection);
 	}
 	
 	public void setConfigvalChangedCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_configval_changed(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setPlaylistCurrentPositionCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_playlist_current_pos(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYLIST_CURRENT_POSITION, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYLIST_CURRENT_POSITION, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setPlaybackCurrentIDCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_playback_current_id(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYBACK_ID, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYBACK_ID, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setPlaybackVolumeChangedCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_playback_volume_changed(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYBACK_VOLUME_CHANGED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYBACK_VOLUME_CHANGED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setPlaybackStatusCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_playback_status(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYBACK_STATUS, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYBACK_STATUS, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setPlaylistChangedCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_playlist_changed(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setMedialibEntryChangedCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_medialib_entry_changed(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_CHANGED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_CHANGED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setMedialibEntryAddedCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_medialib_entry_added(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_ADDED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_ADDED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setMedialibPlaylistLoadedCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_medialib_playlist_loaded(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIALIB_PLAYLIST_LOADED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIALIB_PLAYLIST_LOADED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 
 	public void setMediainfoReaderStatusCallback(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_broadcast_mediainfo_reader_status(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIAINFO_READER_STATUS, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.CALLBACK_MEDIAINFO_READER_STATUS, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 
 	public void setPlaybackPlaytimeSignal(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_signal_playback_playtime(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.SIGNAL_PLAYBACK_PLAYTIME, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.SIGNAL_PLAYBACK_PLAYTIME, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
 	public void setVisualizationDataSignal(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_signal_visualisation_data(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.SIGNAL_VISUALIZATION_DATA, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.SIGNAL_VISUALIZATION_DATA, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	
-	public void setMediareaderUnindexed(int user_data){
+	public void setMediareaderUnindexedSignal(int user_data){
 		SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_signal_mediainfo_reader_unindexed(myConnection);
-		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.SIGNAL_MEDIAREADER_UNINDEXED, new int[]{user_data});
+		Xmmsclient.xmmsc_result_notifier_set(result, XmmsclientConstants.SIGNAL_MEDIAREADER_UNINDEXED, user_data);
 		Xmmsclient.xmmsc_result_unref(result);
 	}
 	

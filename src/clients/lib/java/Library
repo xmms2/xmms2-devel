@@ -107,7 +107,7 @@ def config(env):
 	
 	env.Java(target = mydir, source = [mydir + '/src'])
 	env.Jar(target=mydir + '/xmms2java.jar', source=mydir + '/org')
-	env.Install(env['PREFIX'] + 'share/xmms2/java', mydir + '/xmms2java.jar')
+	env.Install(env['PREFIX'] + '/share/xmms2/java', mydir + '/xmms2java.jar')
 	def mkdir(target, source, env):
 		try:
 			os.mkdir(mydir + "/src/org/xmms2/xmms2bindings")
