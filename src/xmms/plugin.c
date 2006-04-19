@@ -32,14 +32,6 @@
 # include <memcheck.h>
 #endif
 
-#ifdef XMMS_OS_DARWIN
-# define XMMS_LIBSUFFIX ".dylib"
-#elif XMMS_OS_HPUX11 && !defined(__LP64__)
-# define XMMS_LIBSUFFIX ".sl"
-#else
-# define XMMS_LIBSUFFIX ".so"
-#endif
-
 typedef struct {
 	gchar *key;
 	gchar *value;
@@ -413,12 +405,20 @@ xmms_plugin_scan_directory (const gchar *dir)
 	GDir *d;
 	const char *name;
 	gchar *path;
+	gchar *temp;
+	gchar *pattern;
 	GModule *module;
 	gpointer sym;
 
 	g_return_val_if_fail (global_config, FALSE);
 
-	XMMS_DBG ("Scanning directory: %s", dir);
+	temp = g_module_build_path (dir, "*");
+
+	XMMS_DBG ("Scanning directory for plugins (%s)", temp);
+
+	pattern = g_path_get_basename (temp);
+
+	g_free (temp);
 	
 	d = g_dir_open (dir, 0, NULL);
 	if (!d) {
@@ -427,10 +427,8 @@ xmms_plugin_scan_directory (const gchar *dir)
 	}
 
 	while ((name = g_dir_read_name (d))) {
-		if (strncmp (name, "lib", 3) != 0)
-			continue;
 
-		if (!strstr (name, XMMS_LIBSUFFIX))
+		if (!g_pattern_match_simple (pattern, name))
 			continue;
 
 		path = g_build_filename (dir, name, NULL);
@@ -461,6 +459,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 	}
 
 	g_dir_close (d);
+	g_free (pattern);
 
 	return TRUE;
 }

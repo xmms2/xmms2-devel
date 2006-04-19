@@ -107,7 +107,7 @@ typedef enum xmms_output_filler_state_E {
 	FILLER_RUN,
 	FILLER_QUIT,
 	FILLER_KILL,
-	/* seek... */
+	FILLER_SEEK,
 } xmms_output_filler_state_t;
 
 struct xmms_output_St {
@@ -131,6 +131,7 @@ struct xmms_output_St {
 
 	GMutex *filler_buffer_mutex;
 	xmms_ringbuf_t *filler_buffer;
+	guint32 filler_seek;
 
 	/** Internal status, tells which state the
 	    output really is in */
@@ -304,16 +305,36 @@ song_changed (void *data)
 }
 
 static void
+seek_done (void *data)
+{
+	xmms_output_t *output = (xmms_output_t *)data;
+
+	g_mutex_lock (output->playtime_mutex);
+	output->played = output->filler_seek * xmms_sample_frame_size_get (output->format);
+	g_mutex_unlock (output->playtime_mutex);
+}
+
+static void
 xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state)
 {
 	g_mutex_lock (output->filler_state_mutex);
 	output->filler_state = state;
 	g_cond_signal (output->filler_state_cond);
-	if (state == FILLER_QUIT || state == FILLER_KILL || state == FILLER_STOP) {
+	if (state == FILLER_QUIT || state == FILLER_KILL || state == FILLER_STOP || FILLER_SEEK) {
 		g_mutex_lock (output->filler_buffer_mutex);
 		xmms_ringbuf_clear (output->filler_buffer);
 		g_mutex_unlock (output->filler_buffer_mutex);
 	}
+	g_mutex_unlock (output->filler_state_mutex);
+}
+
+static void
+xmms_output_filler_seek_state (xmms_output_t *output, guint32 samples)
+{
+	g_mutex_lock (output->filler_state_mutex);
+	output->filler_state = FILLER_SEEK;
+	output->filler_seek = samples;
+	g_cond_signal (output->filler_state_cond);
 	g_mutex_unlock (output->filler_state_mutex);
 }
 
@@ -342,6 +363,25 @@ xmms_output_filler (void *arg)
 				output->filler_state = FILLER_RUN;
 			}
 			continue;
+		}
+		if (output->filler_state == FILLER_SEEK) {
+			if (!chain) {
+				XMMS_DBG ("Seek without chain, ignoring..");
+				output->filler_state = FILLER_STOP;
+				continue;
+			}
+
+			ret = xmms_xform_this_seek (chain, output->filler_seek, XMMS_XFORM_SEEK_SET, &err);
+			if (ret == -1) {
+				XMMS_DBG ("Seeking failed: %s", xmms_error_message_get (&err));
+			} else {
+				XMMS_DBG ("Seek ok! %d", ret);
+			}
+			output->filler_state = FILLER_RUN;
+			g_mutex_lock (output->filler_buffer_mutex);
+			xmms_ringbuf_clear (output->filler_buffer);
+			xmms_ringbuf_hotspot_set (output->filler_buffer, seek_done, NULL, output);
+			g_mutex_unlock (output->filler_buffer_mutex);
 		}
 		g_mutex_unlock (output->filler_state_mutex);
 
@@ -477,28 +517,10 @@ xmms_output_xform_kill (xmms_output_t *output, xmms_error_t *error)
 static void
 xmms_output_seekms (xmms_output_t *output, guint32 ms, xmms_error_t *error)
 {
-	/* "just" tell filler */
-#if 0
 	g_return_if_fail (output);
-	g_mutex_lock (output->chain_mutex);
-	if (output->decoder) {
-		gint32 pos;
-
-		pos = xmms_decoder_seek_ms (output->decoder, ms, error);
-		if (pos != -1) {
-			g_mutex_lock (output->playtime_mutex);
-			output->played = pos;
-			g_mutex_unlock (output->playtime_mutex);
-		}
-			
-	} else {
-		/* Here we should set some data to the entry so it will start
-		   play from the offset */
+	if (output->format) {
+		xmms_output_seeksamples (output, xmms_sample_ms_to_samples (output->format, ms), error);
 	}
-	xmms_output_flush (output);
-
-	g_mutex_unlock (output->chain_mutex);
-#endif
 }
 
 static void
@@ -517,30 +539,13 @@ xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error)
 static void
 xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error)
 {
-#if 0
-	g_return_if_fail (output);
-	g_mutex_lock (output->chain_mutex);
-	if (output->decoder) {
-		gint32 pos;
-		
-		pos = xmms_decoder_seek_samples (output->decoder, samples, error);
-		if (pos != -1) {
-			g_mutex_lock (output->playtime_mutex);
-			output->played = pos;
-			g_mutex_unlock (output->playtime_mutex);
-		}
-	}
-
-	xmms_output_flush (output);
-
-	g_mutex_unlock (output->chain_mutex);
-#endif
+	/* "just" tell filler */
+	xmms_output_filler_seek_state (output, samples);
 }
 
 static void
 xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error)
 {
-#if 0
 	g_mutex_lock (output->playtime_mutex);
 	samples += output->played;
 	if(samples < 0) {
@@ -549,7 +554,6 @@ xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t
 	g_mutex_unlock (output->playtime_mutex);
 
 	xmms_output_seeksamples(output, samples, error);
-#endif
 }
 
 static void

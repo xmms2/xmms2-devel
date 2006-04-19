@@ -128,7 +128,8 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 	while (!g_queue_is_empty (ringbuf->hotspots)) {
 		xmms_ringbuf_hotspot_t *hs;
 		hs = g_queue_pop_head (ringbuf->hotspots);
-		hs->destroy (hs->arg);
+		if (hs->destroy)
+			hs->destroy (hs->arg);
 		g_free (hs);
 	}
 	g_cond_signal (ringbuf->free_cond);
@@ -178,7 +179,8 @@ read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint len)
 		} else {
 			hs->callback (hs->arg);
 			(void) g_queue_pop_head (ringbuf->hotspots);
-			hs->destroy (hs->arg);
+			if (hs->destroy)
+				hs->destroy (hs->arg);
 			g_free (hs);
 		}
 	}

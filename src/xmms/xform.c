@@ -396,6 +396,7 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t
 	}
 
 	if (!xform->plugin->methods.seek) {
+		XMMS_DBG ("Seek not implemented in '%s'", xmms_xform_shortname (xform));
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Seek not implemented");
 		return -1;
 	}

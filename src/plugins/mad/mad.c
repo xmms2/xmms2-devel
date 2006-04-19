@@ -61,7 +61,7 @@ static gboolean xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_mad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_mad_destroy (xmms_xform_t *decoder);
 static gboolean xmms_mad_init (xmms_xform_t *decoder);
-/*static gboolean xmms_mad_seek (xmms_xform_t *decoder, guint samples);*/
+static gint64 xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
@@ -82,9 +82,7 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_mad_init;
 	methods.destroy = xmms_mad_destroy;
 	methods.read = xmms_mad_read;
-	/*
-	  methods.seek
-	*/
+	methods.seek = xmms_mad_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -127,14 +125,15 @@ xmms_mad_destroy (xmms_xform_t *xform)
 
 }
 
-#if 0
-static gboolean
-xmms_mad_seek (xmms_xform_t *xform, guint samples)
+static gint64
+xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_mad_data_t *data;
 	guint bytes;
+	gint64 res;
 
-	g_return_val_if_fail (xform, FALSE);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+	g_return_val_if_fail (xform, -1);
 
 	data = xmms_xform_private_data_get (xform);
 
@@ -151,18 +150,16 @@ xmms_mad_seek (xmms_xform_t *xform, guint samples)
 		bytes = (guint)(((gdouble)samples) * data->bitrate / data->samplerate) / 8;
 	}
 
-	XMMS_DBG ("Try seek %d bytes", bytes);
+	XMMS_DBG ("Try seek %lld samples -> %d bytes", samples, bytes);
 
-	if (bytes > data->fsize) {
-		xmms_log_error ("To big value %llu is filesize", data->fsize);
-		return FALSE;
+	res = xmms_xform_seek (xform, bytes, XMMS_XFORM_SEEK_SET, err);
+	if (res == -1) {
+		return -1;
 	}
-
-	xmms_xform_seek (xform, bytes, XMMS_TRANSPORT_SEEK_SET);
-
-	return TRUE;
+	return bytes;
 }
 
+#if 0
 /** This function will calculate the duration in seconds.
   *
   * This is very easy, until someone thougth that VBR was
@@ -509,6 +506,9 @@ xmms_mad_init (xmms_xform_t *xform)
 			                             (gint) (filesize*(gdouble)8000.0/frame.header.bitrate));
 		}
 	}
+
+	/* seeking needs bitrate */
+	data->bitrate = frame.header.bitrate;
 
 	xmms_mad_get_id3v1 (xform);
 
