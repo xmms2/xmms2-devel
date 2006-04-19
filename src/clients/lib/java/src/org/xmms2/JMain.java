@@ -71,10 +71,13 @@ public final class JMain extends Thread{
 			e.printStackTrace();
 		} catch (IOException io){
 			System.err.println("my fd went to nowhere - should be ok if you just shut down");
+		}catch (Exception e){
+			e.printStackTrace();
 		}finally {
 			try {
-				in.close();
-			} catch (Exception e){}
+				if (in != null)
+					in.close();
+			} catch (Exception e){e.printStackTrace();}
 		}
 	}
 	
@@ -84,6 +87,7 @@ public final class JMain extends Thread{
 	 */
 	public void spinDown(){
 		running = false;
+		Xmmsclient.xmmsc_io_disconnect(myConnection);
 	}
 	
 	public void setConfigvalChangedCallback(int user_data){
