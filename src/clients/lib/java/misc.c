@@ -47,13 +47,14 @@ Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlo
 JNIEXPORT void JNICALL 
 Java_org_xmms2_SpecialJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
 {
+	jclass clazz;
 	globalObj = (*jenv)->NewGlobalRef (jenv, myobject);
 	if (jvm == NULL)
 	{
 		(*jenv)->GetJavaVM (jenv,&jvm);
 	}
 
-	jclass clazz = 
+	clazz = 
 	        (*jenv)->GetObjectClass (jenv, myobject);
 	disconnect_mid = 
 	        get_method_id ("callbackDisconnect", "(I)V", jenv, clazz);
@@ -121,6 +122,7 @@ JNIEXPORT void JNICALL
 Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobject, jlong jarg1)
 {
 	xmmsc_connection_t *conn_ptr = (xmmsc_connection_t *) 0;
+	jclass clazz;
 	conn_ptr = *(xmmsc_connection_t **)(void *)&jarg1;
 	globalMainloopObj = (*jenv)->NewGlobalRef (jenv, myobject);
 	
@@ -128,7 +130,7 @@ Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobj
 		(*jenv)->GetJavaVM(jenv,&jvm);
 	}
 
-	jclass clazz = (*jenv)->GetObjectClass(jenv, myobject);
+	clazz = (*jenv)->GetObjectClass(jenv, myobject);
 	io_want_out_mid = get_method_id ("callbackIOWantOut", "(II)V", jenv, clazz);
 	
 	//xmmsc_io_need_out_callback_set (conn_ptr, io_want_out_callback, 0);

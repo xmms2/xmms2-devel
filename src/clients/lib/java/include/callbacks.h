@@ -13,6 +13,12 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
+#ifndef __CALLBACKS_H__
+#define __CALLBACKS_H__
+
+#ifdef __cplusplus
+{
+#endif
 
 #include <xmmsclient/xmmsclient.h>
 #include <jni.h>
@@ -82,4 +88,8 @@ extern void callback_propdict_foreach_function (const void *key,
                                                const void *value,
                                                const char *source, 
                                                void *user_data);
+#ifdef __cplusplus
+}
+#endif
 
+#endif
