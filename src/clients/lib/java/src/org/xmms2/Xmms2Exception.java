@@ -17,17 +17,17 @@
 package org.xmms2;
 
 public class Xmms2Exception extends Exception {
-	private String message = "Xmms2 exception occured";
-	
-	public Xmms2Exception(String message){
-		this.message = message;
-	}
-	
-	public String getMessage(){
-		return message;
-	}
-	
-	public String getLocalizedMessage(){
-		return message;
-	}
+    private String message = "Xmms2 exception occured";
+
+    public Xmms2Exception(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getLocalizedMessage() {
+        return message;
+    }
 }

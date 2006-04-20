@@ -17,24 +17,27 @@
 package org.xmms2;
 
 /**
- * Events are moved to the Xmms2Listeners. possible types are listed in Xmms2Listener
+ * Events are moved to the Xmms2Listeners. possible types are listed in
+ * Xmms2Listener
  */
 
 public class Xmms2Event {
-	public long tid = 0;
-	public String type = Xmms2Listener.VOID_TYPE;
-	public Object value = null;
-	
-	protected Xmms2Event(long tid, String type, Object value){
-		this.tid = tid;
-		this.type = type;
-		this.value = value;
-		
-		if (type.equals(Xmms2Listener.ERROR_TYPE))
-			System.err.println(value);
-	}
-	
-	public String toString(){
-		return "" + value;
-	}
+    public long tid = 0;
+
+    public String type = Xmms2Listener.VOID_TYPE;
+
+    public Object value = null;
+
+    protected Xmms2Event(long tid, String type, Object value) {
+        this.tid = tid;
+        this.type = type;
+        this.value = value;
+
+        if (type.equals(Xmms2Listener.ERROR_TYPE))
+            System.err.println(value);
+    }
+
+    public String toString() {
+        return "" + value;
+    }
 }
