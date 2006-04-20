@@ -1,0 +1,17 @@
+target="xmmsclient++"
+systemlibrary=True
+
+source=["client.cpp",
+	"dict.cpp",
+	"exceptions.cpp",
+	"list.cpp",
+	"listener.cpp",
+	"mainloop.cpp",
+	"medialib.cpp",
+	"playback.cpp",
+	"playlist.cpp"]
+
+def config(env):
+	env.Append(LIBS=["xmmsclient"])
+	env.Append(LIBS=["boost_signals"])
+	env.Append(CPPFLAGS="-W -ansi -pedantic")
