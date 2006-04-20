@@ -8,9 +8,11 @@
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
+#include <xmmsclient/xmmsclient++/signal.h>
 
 #include <boost/bind.hpp>
 
+#include <list>
 #include <string>
 using std::string;
 
@@ -85,6 +87,58 @@ namespace Xmms
 		xmmsc_result_unref( res );
 		return resultList;
 
+	}
+
+	void Client::stats(const Signal<Dict>::signal_t::slot_type& slot,
+	                   const error_sig::slot_type& error ) const
+	{
+
+		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ), 
+		             slot, error );
+	}
+
+	void
+	Client::stats(const std::list< Signal<Dict>::signal_t::slot_type >& slots,
+	              const error_sig::slot_type& error ) const
+	{
+		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ),
+		             slots, error );
+	}
+
+	void 
+	Client::pluginList(const Signal<DictList>::signal_t::slot_type& slot,
+	                   const error_sig::slot_type& error ) const
+	{
+		pluginList( Plugins::ALL, slot, error );
+	}
+
+	void
+	Client::pluginList(Plugins::Type type,
+	                   const Signal<DictList>::signal_t::slot_type& slot,
+	                   const error_sig::slot_type& error ) const
+	{
+		aCall<DictList>( connected_, 
+		                 boost::bind( xmmsc_plugin_list, conn_, type ),
+		                 slot, error );
+	}
+
+	void
+	Client::pluginList(const std::list<
+	                         Signal<DictList>::signal_t::slot_type >& slots,
+	                   const error_sig::slot_type& error ) const
+	{
+		pluginList( Plugins::ALL, slots, error );
+	}
+
+	void
+	Client::pluginList(Plugins::Type type,
+	                   const std::list<
+	                         Signal<DictList>::signal_t::slot_type >& slots,
+	                   const error_sig::slot_type& error ) const
+	{
+		aCall<DictList>( connected_,
+		                 boost::bind( xmmsc_plugin_list, conn_, type ),
+		                 slots, error );
 	}
 
 	MainLoop& Client::getMainLoop() 

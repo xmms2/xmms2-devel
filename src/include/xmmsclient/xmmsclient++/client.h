@@ -10,7 +10,10 @@
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
+#include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 
+#include <list>
 #include <string>
 
 namespace Xmms 
@@ -43,66 +46,56 @@ namespace Xmms
 
 			// Connection
 
-			// This could be (optionally, decided with `bool connect` in 
-			// constructor) called from constructor
 			void connect( const std::string& ipcpath = "" );
-
-			// Destructor also disconnects if neccessary,
-			// this could be used to switch to another xmms2d on the fly
-			// 
-			// disabled for now at least, destructor disconnects anyway
-			// and connecting to another ipcpath is easier to implement in
-			// connect()
-			//
-			// void disconnect();
 
 			// Control
 			void quit();
 
 			// stats/info
 
-			// We can't return a reference to a const HashMap because
-			// after the function goes out scope the reference wouldn't
-			// be valid anymore so we would have to use a pointer or
-			// take a preconstructed ( Xmms::HashMap result; )
-			// as function parameter and save the data in it.
-			//
-			// Optionally: void stats( HashMap& result ) const;
-			//
-			// TODO: Decide what to do about this...
 			const Dict stats() const;
 
-			// Same deal here as above...
 			const DictList pluginList(Plugins::Type type = Plugins::ALL) const;
 
+			void stats(const Signal<Dict>::signal_t::slot_type& slot,
+			           const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
+
+			void
+			stats(const std::list< Signal<Dict>::signal_t::slot_type >& slots,
+			      const error_sig::slot_type& error = &Xmms::dummy_error
+			     ) const;
+
+			void pluginList(const Signal<DictList>::signal_t::slot_type& slot,
+			                const error_sig::slot_type& error 
+			                = &Xmms::dummy_error ) const;
+
+			void pluginList(Plugins::Type type,
+			                const Signal<DictList>::signal_t::slot_type& slot,
+			                const error_sig::slot_type& error
+			                = &Xmms::dummy_error ) const;
+
+			void
+			pluginList(const std::list< 
+			                 Signal<DictList>::signal_t::slot_type >& slots,
+			           const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
+
+			void
+			pluginList(Plugins::Type type,
+			           const std::list<
+			                 Signal<DictList>::signal_t::slot_type >& slots,
+			           const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
 			// Subsystems
 
-			// Other way to do this could be just have the Playback
-			// variable as public here, like:
-			//
 			const Playback playback;
-			//
-			// User could use it a bit easier (I think)
-			//
-			// Client client( "myclient" );
-			// client.connect();
-			// client.playback.start();
-			//
-			// instead of
-			//
-			// client.getPlayback().start();
-			// const Playback& getPlayback() const;
-
 			const Playlist playlist;
 			const Medialib medialib;
 
-			// Same thing for all of these:
 			// TODO: write the headers for these and implement them
 			//
 			// const Config& getConfig() const;
-			//
-			// I'm not sure if this should be implemented the same way or not
-			// const IO& getIO() const;
 
 			// Get an object to create an async main loop
 			MainLoop& getMainLoop();

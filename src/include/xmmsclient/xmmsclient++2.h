@@ -1,6 +1,7 @@
 #ifndef XMMSCLIENTPP_H
 #define XMMSCLIENTPP_H
 
+#include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
