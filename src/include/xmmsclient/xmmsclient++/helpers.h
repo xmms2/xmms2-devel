@@ -4,10 +4,16 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/dict.h>
 
 #include <boost/function.hpp>
+#include <boost/signal.hpp>
+#include <boost/lambda/algorithm.hpp>
 
 #include <string>
+#include <algorithm>
+#include <list>
 
 namespace Xmms
 {
@@ -81,6 +87,59 @@ namespace Xmms
                        const boost::function< xmmsc_result_t*() >& func )
 	{
 		xmmsc_result_unref( call( connected, ml, func ) );
+	}
+
+	static bool dummy_error( const std::string& )
+	{
+		return false;
+	}
+
+	typedef boost::signal< bool( const std::string& ) > error_sig;
+
+	template< typename T >
+	inline void aCall( bool connected, 
+	                   const boost::function< xmmsc_result_t*() >& func,
+	                   const typename Signal<T>::signal_t::slot_type& slot,
+	                   const error_sig::slot_type& error )
+	{
+
+		check( connected );
+
+		Xmms::Signal< T >* sig = new Xmms::Signal< T >;
+		sig->signal.connect( slot );
+		sig->error_signal.connect( error );
+		xmmsc_result_t* res = func();
+		xmmsc_result_notifier_set( res, Xmms::generic_callback< T >,
+		                           static_cast< void* >( sig ) );
+		xmmsc_result_unref( res );
+
+	}
+
+	template< typename T >
+	inline void 
+	aCall( bool connected,
+	       const boost::function< xmmsc_result_t*() >& func,
+	       const std::list< typename Signal<T>::signal_t::slot_type >& slots,
+		   const error_sig::slot_type& error )
+	{
+
+		check( connected );
+
+		Xmms::Signal< T >* sig = new Xmms::Signal< T >;
+
+		typename std::list< 
+			typename Signal<T>::signal_t::slot_type >::const_iterator i;
+		for( i = slots.begin(); i != slots.end(); ++i )
+		{
+			sig->signal.connect( *i );
+		}
+		sig->error_signal.connect( error );
+
+		xmmsc_result_t* res = func();
+		xmmsc_result_notifier_set( res, Xmms::generic_callback< T >,
+		                           static_cast< void* >( sig ) );
+		xmmsc_result_unref( res );
+
 	}
 
 }
