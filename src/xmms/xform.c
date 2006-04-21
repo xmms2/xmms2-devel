@@ -312,7 +312,9 @@ xmms_xform_metadata_collect (xmms_xform_t *start)
 const char *
 xmms_xform_shortname (xmms_xform_t *xform)
 {
-	return xmms_plugin_shortname_get ((xmms_plugin_t *)xform->plugin);
+	return (xform->plugin)
+	       ? xmms_plugin_shortname_get ((xmms_plugin_t *) xform->plugin)
+	       : "unknown";
 }
 
 gint
