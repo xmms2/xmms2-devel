@@ -178,7 +178,7 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		return read;
 	}
 
-	fmt = xmms_xform_indata_get_int (xform, XMMS_SAMPLE_FORMAT_S16);
+	fmt = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_FORMAT);
 	len /= xmms_sample_size_get (fmt);
 
 	switch (fmt) {

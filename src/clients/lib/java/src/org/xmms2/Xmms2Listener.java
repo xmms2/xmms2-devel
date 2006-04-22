@@ -17,37 +17,58 @@
 package org.xmms2;
 
 public interface Xmms2Listener {
-	public static final String LIST_TYPE = "LIST";
-	public static final String MAP_TYPE = "MAP";
-	public static final String LONG_TYPE = "INT";
-	public static final String TITLE_TYPE = "TITLE";
-	public static final String DOUBLE_TYPE = "DOUBLE";
-	public static final String STRING_TYPE = "STRING";
-	public static final String VOID_TYPE = "VOID";
-	public static final String ERROR_TYPE = "ERROR";
-	public static final String BOOL_TYPE = "BOOLEAN";
-	
-	
-	public void xmms2ConnectionEstablished(Xmms2Event ev);
-	public void xmms2ErrorOccured(Xmms2Event ev);
-	
-	public void xmms2MedialibSelect(Xmms2Event ev);
-	public void xmms2ConfigvalChanged(Xmms2Event ev);
-	public void xmms2PlaybackStatusChanged(Xmms2Event ev);
-	public void xmms2PlaybackVolumeChanged(Xmms2Event ev);
-	public void xmms2PlaylistChanged(Xmms2Event ev);
-	public void xmms2PlaylistCurrentPositionChanged(Xmms2Event ev);
-	public void xmms2TitleChanged(Xmms2Event ev);
-	public void xmms2MediareaderStatusChanged(Xmms2Event ev);
-	public void xmms2MedialibEntryChanged(Xmms2Event ev);
-	public void xmms2MedialibEntryAdded(Xmms2Event ev);
-	public void xmms2MedialibCurrentID(Xmms2Event ev);
-	public void xmms2MedialibPlaylistLoaded(Xmms2Event ev);
-	public void xmms2PluginList(Xmms2Event ev);
-	
-	public void xmms2PlaytimeSignal(Xmms2Event ev);
-	public void xmms2VisualisationdataSignal(Xmms2Event ev);
-	public void xmms2MediareaderSignal(Xmms2Event ev);
-	
-	
+    public static final String LIST_TYPE = "LIST";
+
+    public static final String MAP_TYPE = "MAP";
+
+    public static final String LONG_TYPE = "INT";
+
+    public static final String TITLE_TYPE = "TITLE";
+
+    public static final String DOUBLE_TYPE = "DOUBLE";
+
+    public static final String STRING_TYPE = "STRING";
+
+    public static final String VOID_TYPE = "VOID";
+
+    public static final String ERROR_TYPE = "ERROR";
+
+    public static final String BOOL_TYPE = "BOOLEAN";
+
+    public void xmms2ConnectionEstablished(Xmms2Event ev);
+
+    public void xmms2ErrorOccured(Xmms2Event ev);
+
+    public void xmms2MedialibSelect(Xmms2Event ev);
+
+    public void xmms2ConfigvalChanged(Xmms2Event ev);
+
+    public void xmms2PlaybackStatusChanged(Xmms2Event ev);
+
+    public void xmms2PlaybackVolumeChanged(Xmms2Event ev);
+
+    public void xmms2PlaylistChanged(Xmms2Event ev);
+
+    public void xmms2PlaylistCurrentPositionChanged(Xmms2Event ev);
+
+    public void xmms2TitleChanged(Xmms2Event ev);
+
+    public void xmms2MediareaderStatusChanged(Xmms2Event ev);
+
+    public void xmms2MedialibEntryChanged(Xmms2Event ev);
+
+    public void xmms2MedialibEntryAdded(Xmms2Event ev);
+
+    public void xmms2MedialibCurrentID(Xmms2Event ev);
+
+    public void xmms2MedialibPlaylistLoaded(Xmms2Event ev);
+
+    public void xmms2PluginList(Xmms2Event ev);
+
+    public void xmms2PlaytimeSignal(Xmms2Event ev);
+
+    public void xmms2VisualisationdataSignal(Xmms2Event ev);
+
+    public void xmms2MediareaderSignal(Xmms2Event ev);
+
 }
