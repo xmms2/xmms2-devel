@@ -57,6 +57,17 @@ namespace Xmms
 		return new std::string( temp );
 	}
 
+	template<>
+	inline xmms_playback_status_t*
+	extract_value( xmmsc_result_t* res )
+	{
+		unsigned int temp = 0;
+		xmmsc_result_get_uint( res, &temp );
+		xmms_playback_status_t* result = new xmms_playback_status_t;
+		*result = static_cast< xmms_playback_status_t >( temp );
+		return result;
+	}
+
 	template< typename T >
 	inline bool
 	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )
