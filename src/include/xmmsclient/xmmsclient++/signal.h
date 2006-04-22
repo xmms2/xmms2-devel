@@ -16,6 +16,14 @@ namespace Xmms
 		signal_t signal;
 	};
 
+	template<>
+	struct Signal< void >
+	{
+		typedef boost::signal< bool() > signal_t;
+		boost::signal< bool( const std::string& ) > error_signal;
+		signal_t signal;
+	};
+
 	template< typename T >
 	inline T* extract_value( xmmsc_result_t* res )
 	{
@@ -50,6 +58,25 @@ namespace Xmms
 	}
 
 	template< typename T >
+	static bool
+	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )
+	{
+
+		T* value = extract_value< T >( res );
+		bool ret = sig->signal( *value );
+		delete value;
+		return ret;
+
+	}
+
+	template<>
+	static bool
+	callSignal( const Signal< void >* sig, xmmsc_result_t*& /* res */)
+	{
+		return sig->signal();
+	}
+
+	template< typename T >
 	inline void generic_callback( xmmsc_result_t* res, void* userdata )
 	{
 
@@ -64,9 +91,7 @@ namespace Xmms
 		}
 		else {
 
-			T* value = extract_value< T >( res );
-			ret = data->signal( *value );
-			delete value;
+			ret = callSignal( data, res );
 
 		}
 
