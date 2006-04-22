@@ -276,7 +276,7 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
  * Get a list of loaded plugins from the server
  */
 xmmsc_result_t *
-xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type)
+xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;

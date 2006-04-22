@@ -55,12 +55,13 @@ unlock_function (void *v)
 void 
 io_want_out_callback (int val, void *error)
 {
+	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();  
 	if (environment == NULL) {
 		return;
 	}
 	
-	jobject callbackObject = (*environment)->
+	callbackObject = (*environment)->
 	                         NewLocalRef (environment, globalMainloopObj);
 	
 	if (io_want_out_mid == 0) {
@@ -211,6 +212,7 @@ callback_dict_foreach_function (const void *key,
 {
 	jint jres_val = 0;
 	jstring jkey, jvalue;
+	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
 	
 	if (key == NULL || value == NULL) {
@@ -221,7 +223,7 @@ callback_dict_foreach_function (const void *key,
 		return;
 	}
 	
-	jobject callbackObject = (*environment)->
+	callbackObject = (*environment)->
 	                         NewLocalRef (environment, globalObj);
 	if (dict_foreach_mid == 0) {
 	        return;
@@ -249,6 +251,7 @@ callback_propdict_foreach_function (const void *key,
 {
 	jint jres_val = 0;
 	jstring jkey, jvalue, jsource;
+	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
 	
 	if (environment == NULL) {
@@ -259,7 +262,7 @@ callback_propdict_foreach_function (const void *key,
 		return;
 	}
 	
-	jobject callbackObject = (*environment)->
+	callbackObject = (*environment)->
 	                         NewLocalRef (environment, globalObj);
 	
 	if (propdict_foreach_mid == 0) {
@@ -311,13 +314,14 @@ void
 run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_data)
 {
 	jlong jresult = 0;
+	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
     
 	if (environment == NULL) {
 		return;
 	}
 		
-	jobject callbackObject = (*environment)->
+	callbackObject = (*environment)->
 	        NewLocalRef(environment, globalObj);
 	
 	if (mid == 0) {
@@ -337,13 +341,14 @@ run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_da
 void 
 run_java_callback_void (void *v, jmethodID mid)
 {
+	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
 	
 	if (environment == NULL) {
 		return;
 	}
 	
-	jobject callbackObject = (*environment)->
+	callbackObject = (*environment)->
 	        NewLocalRef (environment, globalObj);   
 	if (mid == 0) {
         	return;
