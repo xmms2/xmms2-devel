@@ -1,10 +1,13 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/playback.h>
+#include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 
 #include <boost/bind.hpp>
+
+#include <list>
 
 namespace Xmms
 {
@@ -58,6 +61,81 @@ namespace Xmms
 
 		return static_cast< Playback::Status >(status);
 
+	}
+
+	void Playback::tickle( const Signal<void>::signal_t::slot_type& slot,
+	                       const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_tickle, conn_ ),
+		             slot, error );
+	}
+
+	void Playback::tickle( const std::list<
+	                             Signal<void>::signal_t::slot_type> slots,
+	                       const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_tickle, conn_ ),
+		             slots, error );
+	}
+
+	void Playback::stop( const Signal<void>::signal_t::slot_type& slot,
+	                     const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_stop, conn_ ),
+		             slot, error );
+	}
+
+	void Playback::stop( const std::list<
+	                           Signal<void>::signal_t::slot_type> slots,
+	                     const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_stop, conn_ ),
+		             slots, error );
+	}
+
+	void Playback::pause( const Signal<void>::signal_t::slot_type& slot,
+	                      const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_pause, conn_ ),
+		             slot, error );
+	}
+
+	void Playback::pause( const std::list<
+	                            Signal<void>::signal_t::slot_type> slots,
+	                      const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_pause, conn_ ),
+		             slots, error );
+	}
+
+	void Playback::start( const Signal<void>::signal_t::slot_type& slot,
+	                      const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_start, conn_ ),
+		             slot, error );
+	}
+
+	void Playback::start( const std::list<
+	                            Signal<void>::signal_t::slot_type> slots,
+	                      const error_sig::slot_type& error ) const
+	{
+		aCall<void>( connected_, boost::bind( xmmsc_playback_start, conn_ ),
+		             slots, error );
+	}
+
+	void Playback::getStatus( const Signal<Status>::signal_t::slot_type& slot,
+	                          const error_sig::slot_type& error ) const
+	{
+		aCall<Status>( connected_, boost::bind( xmmsc_playback_status, conn_ ),
+		               slot, error );
+	}
+
+	void Playback::getStatus( const std::list<
+	                                Signal<Status>::signal_t::slot_type> slots,
+	                          const error_sig::slot_type& error ) const
+	{
+		aCall<Status>( connected_, boost::bind( xmmsc_playback_status, conn_ ),
+		               slots, error );
 	}
 
 	Playback::Playback( xmmsc_connection_t*& conn, bool& connected,

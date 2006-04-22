@@ -3,6 +3,10 @@
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
+
+#include <list>
 
 namespace Xmms 
 {
@@ -34,6 +38,53 @@ namespace Xmms
 			// Compare returned value with 
 			// Xmms::Playback::[STOPPED|PLAYING|PAUSED]
 			Status getStatus() const;
+ 
+			void tickle( const Signal<void>::signal_t::slot_type& slot,
+			             const error_sig::slot_type& error = &Xmms::dummy_error
+			           ) const;
+
+			void tickle( const std::list<
+			                   Signal<void>::signal_t::slot_type> slots,
+			             const error_sig::slot_type& error = &Xmms::dummy_error
+			           ) const;
+
+			void stop( const Signal<void>::signal_t::slot_type& slot,
+			           const error_sig::slot_type& error = &Xmms::dummy_error
+			         ) const;
+
+			void stop( const std::list<
+			                 Signal<void>::signal_t::slot_type> slots,
+			           const error_sig::slot_type& error = &Xmms::dummy_error
+			         ) const;
+
+			void pause( const Signal<void>::signal_t::slot_type& slot,
+			            const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
+
+			void pause( const std::list<
+			                  Signal<void>::signal_t::slot_type> slots,
+			            const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
+
+			void start( const Signal<void>::signal_t::slot_type& slot,
+			            const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
+
+			void start( const std::list<
+			                  Signal<void>::signal_t::slot_type> slots,
+			            const error_sig::slot_type& error = &Xmms::dummy_error
+			          ) const;
+ 
+			void getStatus( const Signal<Status>::signal_t::slot_type& slot,
+			                const error_sig::slot_type& error
+							= &Xmms::dummy_error
+			              ) const;
+
+			void getStatus( const std::list<
+			                      Signal<Status>::signal_t::slot_type> slots,
+			                const error_sig::slot_type& error
+							= &Xmms::dummy_error
+			              ) const;
 
 		private:
 
