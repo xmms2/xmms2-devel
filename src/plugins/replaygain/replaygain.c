@@ -43,7 +43,6 @@ typedef struct xmms_replaygain_data_St {
 	gboolean use_anticlip;
 	gfloat gain;
 	gboolean has_replaygain;
-	guint current_mlib_entry;
 	gboolean enabled;
 } xmms_replaygain_data_t;
 
@@ -132,6 +131,8 @@ xmms_replaygain_init (xmms_xform_t *xform)
 
 	xmms_xform_outdata_type_copy (xform);
 
+	compute_gain (xform, data);
+
 	return TRUE;
 }
 
@@ -162,7 +163,6 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                       xmms_error_t *error)
 {
 	xmms_replaygain_data_t *data;
-	xmms_medialib_entry_t entry;
 	xmms_sample_format_t fmt;
 	gint read;
 	guint i;
@@ -171,14 +171,6 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
-
-	/* check whether we need to update the gain value */
-	entry = xmms_xform_entry_get (xform);
-
-	if (entry != data->current_mlib_entry) {
-		data->current_mlib_entry = entry;
-		compute_gain (xform, data);
-	}
 
 	read = xmms_xform_read (xform, buf, len, error);
 
