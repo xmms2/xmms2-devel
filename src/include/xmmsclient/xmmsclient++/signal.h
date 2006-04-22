@@ -58,7 +58,7 @@ namespace Xmms
 	}
 
 	template< typename T >
-	static bool
+	inline bool
 	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )
 	{
 
@@ -70,7 +70,7 @@ namespace Xmms
 	}
 
 	template<>
-	static bool
+	inline bool
 	callSignal( const Signal< void >* sig, xmmsc_result_t*& /* res */)
 	{
 		return sig->signal();
