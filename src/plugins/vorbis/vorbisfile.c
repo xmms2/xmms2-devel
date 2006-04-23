@@ -76,9 +76,7 @@ static gboolean xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_vorbis_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static gboolean xmms_vorbis_init (xmms_xform_t *decoder);
 static void xmms_vorbis_destroy (xmms_xform_t *decoder);
-/*
-static gboolean xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples);
-*/
+static gint64 xmms_vorbis_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
@@ -98,6 +96,7 @@ xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_vorbis_init;
 	methods.destroy = xmms_vorbis_destroy;
 	methods.read = xmms_vorbis_read;
+	methods.seek = xmms_vorbis_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -403,15 +402,15 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len, xmms_error_t *err
 	return ret;
 }
 
-/*
-static gboolean
-xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
+static gint64
+xmms_vorbis_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_vorbis_data_t *data;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+	g_return_val_if_fail (xform, -1);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
 	g_mutex_lock (data->lock);
@@ -419,14 +418,12 @@ xmms_vorbis_seek (xmms_decoder_t *decoder, guint samples)
 	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
 		xmms_log_error ("Trying to seek past end of stream");
 		g_mutex_unlock (data->lock);
-		return FALSE;
+		return -1;
 	}
 
 	ov_pcm_seek (&data->vorbisfile, samples);
 
 	g_mutex_unlock (data->lock);
 
-	return TRUE;
+	return samples;
 }
-*/
-
