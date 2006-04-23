@@ -6,10 +6,10 @@
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/typedefs.h>
 
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
-#include <boost/lambda/algorithm.hpp>
 
 #include <string>
 #include <algorithm>
@@ -93,8 +93,6 @@ namespace Xmms
 	{
 		return false;
 	}
-
-	typedef boost::signal< bool( const std::string& ) > error_sig;
 
 	template< typename T >
 	inline void aCall( bool connected, 

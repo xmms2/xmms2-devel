@@ -6,8 +6,10 @@
 #include <string>
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/signal.hpp>
 #include <xmmsclient/xmmsclient++/list.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/signal.h>
 
 namespace Xmms 
 {
@@ -19,6 +21,25 @@ namespace Xmms
 
 	typedef boost::shared_ptr< Dict > DictPtr;
 	typedef boost::shared_ptr< DictList > DictListPtr;
+
+	typedef boost::signal< bool( const std::string& ) > error_sig;
+
+	typedef Signal< void >::signal_t::slot_type VoidSlot;
+	typedef Signal< int >::signal_t::slot_type IntSlot;
+	typedef Signal< unsigned int >::signal_t::slot_type UintSlot;
+	typedef Signal< std::string >::signal_t::slot_type StringSlot;
+
+	typedef Signal< Dict >::signal_t::slot_type DictSlot;
+	typedef Signal< PropDict >::signal_t::slot_type PropDictSlot;
+
+	typedef Signal< List< int > >::signal_t::slot_type IntListSlot;
+	typedef Signal< List< unsigned int > >::signal_t::slot_type UintListSlot;
+	typedef Signal< List< std::string > >::signal_t::slot_type StringListSlot;
+	typedef Signal< List< Dict > >::signal_t::slot_type DictListSlot;
+
+	typedef error_sig::slot_type ErrorSlot;
+
+
 
 }
 
