@@ -37,9 +37,7 @@ namespace Xmms
 	typedef Signal< List< std::string > >::signal_t::slot_type StringListSlot;
 	typedef Signal< List< Dict > >::signal_t::slot_type DictListSlot;
 
-	typedef error_sig::slot_type ErrorSlot;
-
-
+	typedef Xmms::error_sig::slot_type ErrorSlot;
 
 }
 

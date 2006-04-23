@@ -12,7 +12,6 @@
 #include <boost/signal.hpp>
 
 #include <string>
-#include <algorithm>
 #include <list>
 
 namespace Xmms
@@ -106,6 +105,7 @@ namespace Xmms
 		Xmms::Signal< T >* sig = new Xmms::Signal< T >;
 		sig->signal.connect( slot );
 		sig->error_signal.connect( error );
+		SignalHolder::getInstance().addSignal( sig );
 		xmmsc_result_t* res = func();
 		xmmsc_result_notifier_set( res, Xmms::generic_callback< T >,
 		                           static_cast< void* >( sig ) );
@@ -132,6 +132,7 @@ namespace Xmms
 			sig->signal.connect( *i );
 		}
 		sig->error_signal.connect( error );
+		SignalHolder::getInstance().addSignal( sig );
 
 		xmmsc_result_t* res = func();
 		xmmsc_result_notifier_set( res, Xmms::generic_callback< T >,

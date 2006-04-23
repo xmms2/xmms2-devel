@@ -4,28 +4,63 @@
 #include <xmmsclient/xmmsclient.h>
 #include <boost/signal.hpp>
 #include <string>
-
-#include <xmmsclient/xmmsclient++/typedefs.h>
+#include <list>
 
 namespace Xmms
 {
 
 	typedef boost::signal< bool( const std::string& ) > error_sig;
 
+	struct SignalInterface
+	{
+
+		public:
+			SignalInterface() {}
+			virtual ~SignalInterface() {}
+
+	};
+
 	template< typename T >
-	struct Signal
+	struct Signal : public SignalInterface
 	{
 		typedef boost::signal< bool( const T& ) > signal_t;
+
 		error_sig error_signal;
 		signal_t signal;
+
 	};
 
 	template<>
-	struct Signal< void >
+	struct Signal< void > : public SignalInterface
 	{
 		typedef boost::signal< bool() > signal_t;
+
 		error_sig error_signal;
 		signal_t signal;
+
+	};
+
+	class SignalHolder
+	{
+
+		public:
+			static SignalHolder& getInstance();
+
+			void addSignal( SignalInterface* sig );
+
+			void removeSignal( SignalInterface* sig );
+
+			~SignalHolder();
+
+		private:
+			SignalHolder()
+			{
+			}
+			SignalHolder( SignalHolder& src );
+			SignalHolder& operator=( SignalHolder& src );
+
+			std::list< SignalInterface* > signals_;
+
 	};
 
 	template< typename T >
@@ -126,7 +161,7 @@ namespace Xmms
 
 			}
 
-			delete data;
+			SignalHolder::getInstance().removeSignal( data ); data = 0;
 
 		}
 

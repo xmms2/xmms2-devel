@@ -9,6 +9,7 @@ source=["client.cpp",
 	"mainloop.cpp",
 	"medialib.cpp",
 	"playback.cpp",
+	"signal.cpp",
 	"playlist.cpp"]
 
 def config(env):
