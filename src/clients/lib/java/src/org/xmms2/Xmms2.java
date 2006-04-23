@@ -28,6 +28,7 @@ import java.util.Map;
 import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
 import org.xmms2.xmms2bindings.Xmmsclient;
 import org.xmms2.xmms2bindings.XmmsclientConstants;
+import org.xmms2.xmms2bindings.xmms_plugin_type_t;
 
 /**
  * Use this class to work with Xmms2 in Java. call getInstance(), connect() and
@@ -487,7 +488,7 @@ public final class Xmms2 {
         Xmmsclient.xmmsc_result_unref(result);
     }
 
-    public void pluginsListAsync(int type) {
+    public void pluginsListAsync(xmms_plugin_type_t type) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
                 xbo.connectionOne, type);
         Xmmsclient.xmmsc_result_notifier_set(result,
@@ -697,7 +698,7 @@ public final class Xmms2 {
         return id[0];
     }
 
-    public Map pluginsListSync(int type) throws Xmms2Exception {
+    public Map pluginsListSync(xmms_plugin_type_t type) throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
                 xbo.connectionTwo, type);
         Xmmsclient.xmmsc_result_wait(result);

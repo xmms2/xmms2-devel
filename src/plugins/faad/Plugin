@@ -2,7 +2,6 @@ target="faad"
 source=['faad.c', 'mp4ff/drms.c', 'mp4ff/mp4atom.c', 'mp4ff/mp4ff.c', 'mp4ff/mp4meta.c', 'mp4ff/mp4sample.c', 'mp4ff/mp4tagupdate.c', 'mp4ff/mp4util.c']
 
 def config(env):
-	raise ConfigError("disabled")
 	try:
 		env.checklib("faad", "faacDecInit2")
 	except ConfigError:
