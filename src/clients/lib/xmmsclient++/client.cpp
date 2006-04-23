@@ -89,8 +89,8 @@ namespace Xmms
 
 	}
 
-	void Client::stats(const Signal<Dict>::signal_t::slot_type& slot,
-	                   const error_sig::slot_type& error ) const
+	void Client::stats(const DictSlot& slot,
+	                   const ErrorSlot& error ) const
 	{
 
 		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ), 
@@ -98,24 +98,24 @@ namespace Xmms
 	}
 
 	void
-	Client::stats(const std::list< Signal<Dict>::signal_t::slot_type >& slots,
-	              const error_sig::slot_type& error ) const
+	Client::stats(const std::list< DictSlot >& slots,
+	              const ErrorSlot& error ) const
 	{
 		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ),
 		             slots, error );
 	}
 
 	void 
-	Client::pluginList(const Signal<DictList>::signal_t::slot_type& slot,
-	                   const error_sig::slot_type& error ) const
+	Client::pluginList(const DictListSlot& slot,
+	                   const ErrorSlot& error ) const
 	{
 		pluginList( Plugins::ALL, slot, error );
 	}
 
 	void
 	Client::pluginList(Plugins::Type type,
-	                   const Signal<DictList>::signal_t::slot_type& slot,
-	                   const error_sig::slot_type& error ) const
+	                   const DictListSlot& slot,
+	                   const ErrorSlot& error ) const
 	{
 		aCall<DictList>( connected_, 
 		                 boost::bind( xmmsc_plugin_list, conn_, type ),
@@ -123,18 +123,16 @@ namespace Xmms
 	}
 
 	void
-	Client::pluginList(const std::list<
-	                         Signal<DictList>::signal_t::slot_type >& slots,
-	                   const error_sig::slot_type& error ) const
+	Client::pluginList(const std::list< DictListSlot >& slots,
+	                   const ErrorSlot& error ) const
 	{
 		pluginList( Plugins::ALL, slots, error );
 	}
 
 	void
 	Client::pluginList(Plugins::Type type,
-	                   const std::list<
-	                         Signal<DictList>::signal_t::slot_type >& slots,
-	                   const error_sig::slot_type& error ) const
+	                   const std::list< DictListSlot >& slots,
+	                   const ErrorSlot& error ) const
 	{
 		aCall<DictList>( connected_,
 		                 boost::bind( xmmsc_plugin_list, conn_, type ),

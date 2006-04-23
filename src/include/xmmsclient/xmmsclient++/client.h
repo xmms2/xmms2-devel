@@ -57,36 +57,28 @@ namespace Xmms
 
 			const DictList pluginList(Plugins::Type type = Plugins::ALL) const;
 
-			void stats(const Signal<Dict>::signal_t::slot_type& slot,
-			           const error_sig::slot_type& error = &Xmms::dummy_error
-			          ) const;
+			void stats(const DictSlot& slot,
+			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			stats(const std::list< Signal<Dict>::signal_t::slot_type >& slots,
-			      const error_sig::slot_type& error = &Xmms::dummy_error
-			     ) const;
+			stats(const std::list< DictSlot >& slots,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			void pluginList(const Signal<DictList>::signal_t::slot_type& slot,
-			                const error_sig::slot_type& error 
-			                = &Xmms::dummy_error ) const;
+			void pluginList(const DictListSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void pluginList(Plugins::Type type,
-			                const Signal<DictList>::signal_t::slot_type& slot,
-			                const error_sig::slot_type& error
-			                = &Xmms::dummy_error ) const;
+			                const DictListSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			pluginList(const std::list< 
-			                 Signal<DictList>::signal_t::slot_type >& slots,
-			           const error_sig::slot_type& error = &Xmms::dummy_error
-			          ) const;
+			pluginList(const std::list< DictListSlot >& slots,
+			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
 			pluginList(Plugins::Type type,
-			           const std::list<
-			                 Signal<DictList>::signal_t::slot_type >& slots,
-			           const error_sig::slot_type& error = &Xmms::dummy_error
-			          ) const;
+			           const std::list< DictListSlot >& slots,
+			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 			// Subsystems
 
 			const Playback playback;

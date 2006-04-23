@@ -5,14 +5,18 @@
 #include <boost/signal.hpp>
 #include <string>
 
+#include <xmmsclient/xmmsclient++/typedefs.h>
+
 namespace Xmms
 {
+
+	typedef boost::signal< bool( const std::string& ) > error_sig;
 
 	template< typename T >
 	struct Signal
 	{
 		typedef boost::signal< bool( const T& ) > signal_t;
-		boost::signal< bool( const std::string& ) > error_signal;
+		error_sig error_signal;
 		signal_t signal;
 	};
 
@@ -20,7 +24,7 @@ namespace Xmms
 	struct Signal< void >
 	{
 		typedef boost::signal< bool() > signal_t;
-		boost::signal< bool( const std::string& ) > error_signal;
+		error_sig error_signal;
 		signal_t signal;
 	};
 

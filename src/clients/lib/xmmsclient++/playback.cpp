@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/typedefs.h>
 
 #include <boost/bind.hpp>
 
@@ -63,76 +64,71 @@ namespace Xmms
 
 	}
 
-	void Playback::tickle( const Signal<void>::signal_t::slot_type& slot,
-	                       const error_sig::slot_type& error ) const
+	void Playback::tickle( const VoidSlot& slot,
+	                       const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_tickle, conn_ ),
 		             slot, error );
 	}
 
-	void Playback::tickle( const std::list<
-	                             Signal<void>::signal_t::slot_type> slots,
-	                       const error_sig::slot_type& error ) const
+	void Playback::tickle( const std::list< VoidSlot >& slots,
+	                       const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_tickle, conn_ ),
 		             slots, error );
 	}
 
-	void Playback::stop( const Signal<void>::signal_t::slot_type& slot,
-	                     const error_sig::slot_type& error ) const
+	void Playback::stop( const VoidSlot& slot,
+	                     const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_stop, conn_ ),
 		             slot, error );
 	}
 
-	void Playback::stop( const std::list<
-	                           Signal<void>::signal_t::slot_type> slots,
-	                     const error_sig::slot_type& error ) const
+	void Playback::stop( const std::list< VoidSlot >& slots,
+	                     const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_stop, conn_ ),
 		             slots, error );
 	}
 
-	void Playback::pause( const Signal<void>::signal_t::slot_type& slot,
-	                      const error_sig::slot_type& error ) const
+	void Playback::pause( const VoidSlot& slot,
+	                      const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_pause, conn_ ),
 		             slot, error );
 	}
 
-	void Playback::pause( const std::list<
-	                            Signal<void>::signal_t::slot_type> slots,
-	                      const error_sig::slot_type& error ) const
+	void Playback::pause( const std::list< VoidSlot >& slots,
+	                      const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_pause, conn_ ),
 		             slots, error );
 	}
 
-	void Playback::start( const Signal<void>::signal_t::slot_type& slot,
-	                      const error_sig::slot_type& error ) const
+	void Playback::start( const VoidSlot& slot,
+	                      const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_start, conn_ ),
 		             slot, error );
 	}
 
-	void Playback::start( const std::list<
-	                            Signal<void>::signal_t::slot_type> slots,
-	                      const error_sig::slot_type& error ) const
+	void Playback::start( const std::list< VoidSlot >& slots,
+	                      const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_start, conn_ ),
 		             slots, error );
 	}
 
-	void Playback::getStatus( const Signal<Status>::signal_t::slot_type& slot,
-	                          const error_sig::slot_type& error ) const
+	void Playback::getStatus( const StatusSlot& slot,
+	                          const ErrorSlot& error ) const
 	{
 		aCall<Status>( connected_, boost::bind( xmmsc_playback_status, conn_ ),
 		               slot, error );
 	}
 
-	void Playback::getStatus( const std::list<
-	                                Signal<Status>::signal_t::slot_type> slots,
-	                          const error_sig::slot_type& error ) const
+	void Playback::getStatus( const std::list< StatusSlot >& slots,
+	                          const ErrorSlot& error ) const
 	{
 		aCall<Status>( connected_, boost::bind( xmmsc_playback_status, conn_ ),
 		               slots, error );
