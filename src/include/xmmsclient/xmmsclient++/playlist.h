@@ -4,6 +4,8 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/list.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 #include <string>
 
 namespace Xmms
@@ -189,6 +191,148 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 */
 			void sort( const std::string& property ) const;
+
+			void
+			add( const std::string& url,
+			     const VoidSlot& slot,
+			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			add( const std::string& url,
+			     const std::list<VoidSlot>& slots,
+			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			add( const unsigned int id,
+			     const VoidSlot& slot,
+			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			add( const unsigned int id,
+			     const std::list<VoidSlot>& slots,
+			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void 
+			clear( const VoidSlot& slot,
+			       const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			clear( const std::list<VoidSlot>& slots,
+			       const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			currentPos( const UintSlot& slot,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			currentPos( const std::list<UintSlot>& slots,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			insert( int pos, const std::string& url,
+			        const VoidSlot& slot,
+					const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			insert( int pos, const std::string& url,
+			        const std::list< VoidSlot >& slots,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			insert( int pos, unsigned int id,
+			        const VoidSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			insert( int pos, unsigned int id,
+			        const std::list< VoidSlot >& slots,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			list( const UintListSlot& slot,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			list( const std::list< UintListSlot >& slots,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			move( unsigned int curpos, unsigned int newpos,
+			      const VoidSlot& slot,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			move( unsigned int curpos, unsigned int newpos,
+			      const std::list< VoidSlot >& slots,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			remove( unsigned int pos,
+			        const VoidSlot& slot,
+					const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			remove( unsigned int pops,
+			        const std::list< VoidSlot >& slots,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			setNext( unsigned int pos,
+			         const UintSlot& slot,
+					 const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			setNext( unsigned int pos,
+			         const std::list< UintSlot >& slots,
+			         const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			setNextRel( signed int pos,
+			            const UintSlot& slot,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			setNextRel( signed int pos,
+			            const std::list< UintSlot >& slots,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			shuffle( const VoidSlot& slot,
+			         const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			shuffle( const std::list< VoidSlot >& slots,
+			         const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			sort( const std::string& property,
+			      const VoidSlot& slot,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			sort( const std::string& property,
+			      const std::list< VoidSlot >& slots,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			broadcastChanged( const DictSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const; 
+
+			void
+			broadcastChanged( const std::list< DictSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void
+			broadcastCurrentPos( const UintSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+
+			void
+			broadcastCurrentPos( const std::list< UintSlot >& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
 
 		/** @cond */
 		private:
