@@ -49,6 +49,19 @@ namespace Xmms
 
 	}
 
+	unsigned int Playback::currentID() const
+	{
+
+		xmmsc_result_t* res = 
+		    call( connected_, ml_,
+		          boost::bind( xmmsc_playback_current_id, conn_ ) );
+		unsigned int id = 0;
+		xmmsc_result_get_uint( res, &id );
+		xmmsc_result_unref( res );
+
+		return id;
+
+	}
 	Playback::Status Playback::getStatus() const
 	{
 
@@ -118,6 +131,22 @@ namespace Xmms
 	{
 		aCall<void>( connected_, boost::bind( xmmsc_playback_start, conn_ ),
 		             slots, error );
+	}
+
+	void Playback::currentID( const UintSlot& slot,
+	                          const ErrorSlot& error ) const
+	{
+		aCall<unsigned int>( connected_, 
+		                     boost::bind( xmmsc_playback_current_id, conn_ ),
+		                     slot, error );
+	}
+
+	void Playback::currentID( const std::list< UintSlot >& slots,
+	                          const ErrorSlot& error ) const
+	{
+		aCall<unsigned int>( connected_, 
+		                     boost::bind( xmmsc_playback_current_id, conn_ ),
+		                     slots, error );
 	}
 
 	void Playback::getStatus( const StatusSlot& slot,

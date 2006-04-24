@@ -35,6 +35,8 @@ namespace Xmms
 			void pause() const;
 			void start() const;
 
+			unsigned int currentID() const;
+
 			// Status
 			// Compare returned value with 
 			// Xmms::Playback::[STOPPED|PLAYING|PAUSED]
@@ -63,6 +65,12 @@ namespace Xmms
 
 			void start( const std::list< VoidSlot >& slots,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void currentID( const UintSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void currentID( const std::list< UintSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
  
 			void getStatus( const StatusSlot& slot,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
