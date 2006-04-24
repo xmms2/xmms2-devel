@@ -40,6 +40,7 @@ namespace Xmms
 
 	};
 
+	class Client;
 	class SignalHolder
 	{
 
@@ -53,11 +54,13 @@ namespace Xmms
 			~SignalHolder();
 
 		private:
+			friend class Client;
 			SignalHolder()
 			{
 			}
 			SignalHolder( SignalHolder& src );
 			SignalHolder& operator=( SignalHolder& src );
+			void deleteAll();
 
 			std::list< SignalInterface* > signals_;
 
@@ -152,7 +155,8 @@ namespace Xmms
 			xmmsc_result_unref( newres );
 
 		}
-		else {
+		else if( !ret || 
+		         xmmsc_result_get_class( res ) == XMMSC_RESULT_CLASS_DEFAULT) {
 
 			if( xmmsc_result_get_class( res ) == 
 			    XMMSC_RESULT_CLASS_BROADCAST ) {

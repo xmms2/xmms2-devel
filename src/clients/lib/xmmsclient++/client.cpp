@@ -24,7 +24,7 @@ namespace Xmms
 	      playlist( conn_, connected_, mainloop_ ), 
 		  medialib( conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
-		  mainloop_( 0 )
+		  mainloop_( 0 ), quitSignal_( 0 )
 	{
 		conn_ = xmmsc_init( name.c_str() );
 	}
@@ -33,6 +33,9 @@ namespace Xmms
 	{
 		if( mainloop_ ) {
 			delete mainloop_;
+		}
+		if( quitSignal_ ) {
+			delete quitSignal_;
 		}
 		xmmsc_unref( conn_ );
 	}
@@ -139,11 +142,30 @@ namespace Xmms
 		                 slots, error );
 	}
 
+	void
+	Client::broadcastQuit( const UintSlot& slot, const ErrorSlot& error )
+	{
+
+		check( connected_ );
+		if( !quitSignal_ ) {
+			quitSignal_ = new Signal<unsigned int>;
+			xmmsc_result_t* res = xmmsc_broadcast_quit( conn_ );
+			xmmsc_result_notifier_set( res, 
+			                           Xmms::generic_callback<unsigned int>,
+			                           static_cast< void* >( quitSignal_ ) );
+			xmmsc_result_unref( res );
+		}
+		quitSignal_->signal.connect( slot );
+		quitSignal_->error_signal.connect( error );
+
+	}
+
 	MainLoop& Client::getMainLoop() 
 	{
 
 		if( !mainloop_ ) {
 			mainloop_ = new MainLoop();
+			broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
 			mainloop_->addListener( new Listener( conn_ ) );
 		}
 		return *mainloop_;
@@ -154,4 +176,12 @@ namespace Xmms
 	{
 		return connected_;
 	}
+
+	bool Client::quitHandler( const unsigned int& /*time*/ )
+	{
+		connected_ = false;
+		SignalHolder::getInstance().deleteAll();
+		return true;
+	}
+
 }

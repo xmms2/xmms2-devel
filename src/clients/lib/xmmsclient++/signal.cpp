@@ -22,11 +22,18 @@ namespace Xmms
 
 	SignalHolder::~SignalHolder()
 	{
+		deleteAll();
+	}
+
+	void SignalHolder::deleteAll()
+	{
 		std::list< SignalInterface* >::iterator i;
 		for( i = signals_.begin(); i != signals_.end(); ++i )
 		{
 			delete *i; *i = 0;
 		}
+		signals_.clear();
 	}
+
 
 }

@@ -79,6 +79,10 @@ namespace Xmms
 			pluginList(Plugins::Type type,
 			           const std::list< DictListSlot >& slots,
 			           const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			broadcastQuit( const UintSlot& slot,
+			               const ErrorSlot& error = &Xmms::dummy_error );
 			// Subsystems
 
 			const Playback playback;
@@ -103,6 +107,8 @@ namespace Xmms
 			Client( const Client& );
 			const Client operator=( const Client& ) const;
 
+			bool quitHandler( const unsigned int& time );
+
 			std::string name_;
 
 			xmmsc_connection_t* conn_;
@@ -110,6 +116,8 @@ namespace Xmms
 			bool connected_;
 
 			MainLoop* mainloop_;
+
+			Signal<unsigned int>* quitSignal_;
 
 	};
 
