@@ -5,6 +5,8 @@
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/list.h>
+#include <xmmsclient/xmmsclient++/typedefs.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 
 #include <string>
 
@@ -288,6 +290,243 @@ namespace Xmms
 			 *  @return List of @link Dict Dicts@endlink
 			 */
 			List< Dict > select( const std::string& query ) const;
+
+			void
+			addEntry( const std::string& url,
+			          const VoidSlot& slot,
+			          const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			addEntry( const std::string& url,
+			          const std::list< VoidSlot >& slots,
+			          const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			addToPlaylist( const std::string& query,
+			               const VoidSlot& slot,
+			               const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			addToPlaylist( const std::string& query,
+			               const std::list< VoidSlot >& slots,
+			               const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			entryPropertyRemove( unsigned int id, const std::string& key,
+			                     const VoidSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+
+			void
+			entryPropertyRemove( unsigned int id, const std::string& key,
+			                     const std::list< VoidSlot >& slots,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+			
+			void
+			entryPropertyRemove( unsigned int id, const std::string& key,
+			                     const std::string& source,
+			                     const VoidSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+			
+			void
+			entryPropertyRemove( unsigned int id, const std::string& key,
+			                     const std::string& source,
+			                     const std::list< VoidSlot >& slots,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+			
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  const std::string& value, const VoidSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+			
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  const std::string& value,
+			                  const std::list< VoidSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  const std::string& value,
+			                  const std::string& source,
+			                  const VoidSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  const std::string& value,
+			                  const std::string& source,
+			                  const std::list< VoidSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void
+			getID( const std::string& url, const UintSlot& slot,
+			       const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			getID( const std::string& url, const std::list< UintSlot >& slots,
+			       const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			getInfo( unsigned int id, const PropDictSlot& slot,
+			         const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			getInfo( unsigned int id, const std::list< PropDictSlot >& slots,
+			         const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			pathImport( const std::string& path, const VoidSlot& slot,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			pathImport( const std::string& path,
+			            const std::list< VoidSlot >& slots,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistExport( const std::string& playlist,
+			                const std::string& mime,
+			                const StringSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistExport( const std::string& playlist,
+			                const std::string& mime,
+			                const std::list< StringSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistImport( const std::string& playlist,
+			                const std::string& url,
+			                const VoidSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistImport( const std::string& playlist,
+			                const std::string& url,
+			                const std::list< VoidSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistList( const std::string& playlist,
+			              const UintListSlot& slot,
+			              const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistList( const std::string& playlist,
+			              const std::list< UintListSlot >& slots,
+			              const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistLoad( const std::string& name,
+			              const VoidSlot& slot,
+			              const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistLoad( const std::string& name,
+			              const std::list< VoidSlot >& slots,
+			              const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistRemove( const std::string& playlist,
+			                const VoidSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistRemove( const std::string& playlist,
+			                const std::list< VoidSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistSaveCurrent( const std::string& name,
+			                     const VoidSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+
+			void
+			playlistSaveCurrent( const std::string& name,
+			                     const std::list< VoidSlot >& slots,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+
+			void
+			playlistsList( const StringListSlot& slot,
+			               const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			playlistsList( const std::list< StringListSlot >& slots,
+			               const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			rehash( const VoidSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			rehash( const std::list< VoidSlot >& slots,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			rehash( unsigned int id, const VoidSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			rehash( unsigned int id, const std::list< VoidSlot >& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			removeEntry( unsigned int id, const VoidSlot& slot,
+			             const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			removeEntry( unsigned int id, const std::list< VoidSlot >& slots,
+			             const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			select( const std::string& query, const DictListSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			select( const std::string& query,
+			        const std::list< DictListSlot >& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			broadcastEntryAdded( const UintSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+
+			void
+			broadcastEntryAdded( const std::list< UintSlot >& slots,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                   ) const;
+
+			void
+			broadcastEntryChanged( const UintSlot& slot,
+			                       const ErrorSlot& error = &Xmms::dummy_error
+			                     ) const;
+
+			void
+			broadcastEntryChanged( const std::list< UintSlot >& slot,
+			                       const ErrorSlot& error = &Xmms::dummy_error
+			                     ) const;
+
+			void
+			broadcastPlaylistLoaded( const StringSlot& slot,
+			                         const ErrorSlot& error
+			                         = &Xmms::dummy_error ) const;
+
+			void
+			broadcastPlaylistLoaded( const std::list< StringSlot >& slots,
+			                         const ErrorSlot& error
+			                         = &Xmms::dummy_error ) const;
 
 		/** @cond */
 		private:
