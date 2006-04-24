@@ -70,6 +70,44 @@ namespace Xmms
 			void getStatus( const std::list< StatusSlot >& slots,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
+			void
+			broadcastCurrentID( const UintSlot& slot,
+			                    const ErrorSlot& error = &Xmms::dummy_error
+			                  ) const;
+
+			void
+			broadcastCurrentID( const std::list< UintSlot >& slots,
+			                    const ErrorSlot& error = &Xmms::dummy_error
+			                  ) const;
+
+			void
+			broadcastStatus( const UintSlot& slot,
+			                 const ErrorSlot& error = &Xmms::dummy_error
+			               ) const;
+
+			void
+			broadcastStatus( const std::list< UintSlot >& slots,
+			                 const ErrorSlot& error = &Xmms::dummy_error
+			               ) const;
+
+			void
+			broadcastVolumeChanged( const DictSlot& slot,
+			                        const ErrorSlot& error = &Xmms::dummy_error
+			                      ) const;
+
+			void
+			broadcastVolumeChanged( const std::list< DictSlot >& slots,
+			                        const ErrorSlot& error = &Xmms::dummy_error
+			                      ) const;
+
+			void
+			signalPlaytime( const UintSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			signalPlaytime( const std::list< UintSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
 		private:
 
 			// Constructor, only to be called by Xmms::Client

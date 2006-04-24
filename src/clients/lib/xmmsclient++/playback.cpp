@@ -134,6 +134,102 @@ namespace Xmms
 		               slots, error );
 	}
 
+	void
+	Playback::broadcastCurrentID( const UintSlot& slot,
+	                              const ErrorSlot& error ) const
+	{
+
+		aCall<unsigned int>( connected_,
+		                     boost::bind( xmmsc_broadcast_playback_current_id,
+		                                  conn_ ),
+		                     slot, error );
+
+	}
+
+	void
+	Playback::broadcastCurrentID( const std::list< UintSlot >& slots,
+	                              const ErrorSlot& error ) const
+	{
+
+		aCall<unsigned int>( connected_,
+		                     boost::bind( xmmsc_broadcast_playback_current_id,
+		                                  conn_ ),
+		                     slots, error );
+
+	}
+
+	void
+	Playback::broadcastStatus( const UintSlot& slot,
+	                           const ErrorSlot& error ) const
+	{
+
+		aCall<unsigned int>( connected_,
+		                     boost::bind( xmmsc_broadcast_playback_status,
+		                                  conn_ ),
+		                     slot, error );
+
+	}
+
+	void
+	Playback::broadcastStatus( const std::list< UintSlot >& slots,
+	                           const ErrorSlot& error ) const
+	{
+
+		aCall<unsigned int>( connected_,
+		                     boost::bind( xmmsc_broadcast_playback_status,
+		                                  conn_ ),
+		                     slots, error );
+
+	}
+
+	void
+	Playback::broadcastVolumeChanged( const DictSlot& slot,
+	                                  const ErrorSlot& error ) const
+	{
+
+		aCall<Dict>( connected_,
+		             boost::bind( xmmsc_broadcast_playback_volume_changed,
+		                          conn_ ),
+		             slot, error );
+
+	}
+
+	void
+	Playback::broadcastVolumeChanged( const std::list< DictSlot >& slots,
+	                                  const ErrorSlot& error ) const
+	{
+
+		aCall<Dict>( connected_,
+		             boost::bind( xmmsc_broadcast_playback_volume_changed,
+		                          conn_ ),
+		             slots, error );
+
+	}
+
+	void
+	Playback::signalPlaytime( const UintSlot& slot,
+	                          const ErrorSlot& error ) const
+	{
+
+		aCall<unsigned int>( connected_,
+		                     boost::bind( xmmsc_signal_playback_playtime,
+		                                  conn_ ),
+		                     slot, error );
+
+	}
+
+	void
+	Playback::signalPlaytime( const std::list< UintSlot >& slots,
+	                          const ErrorSlot& error ) const
+	{
+
+		aCall<unsigned int>( connected_,
+		                     boost::bind( xmmsc_signal_playback_playtime,
+		                                  conn_ ),
+		                     slots, error );
+
+	}
+
 	Playback::Playback( xmmsc_connection_t*& conn, bool& connected,
 	                    MainLoop*& ml ) :
 		conn_( conn ), connected_( connected ), ml_( ml )
