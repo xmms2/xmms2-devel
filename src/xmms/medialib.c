@@ -1427,8 +1427,9 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
 	session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
 	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
-
 	xmms_medialib_end (session);
+
+	xmms_medialib_entry_send_update (entry);
 }
 
 void
