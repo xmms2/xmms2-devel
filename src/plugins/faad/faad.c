@@ -91,9 +91,7 @@ xmms_faad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_faad_init;
 	methods.destroy = xmms_faad_destroy;
 	methods.read = xmms_faad_read;
-/*
 	methods.seek = xmms_faad_seek;
-*/
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -159,7 +157,7 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	faacDecConfigurationPtr config;
 	gint bytes_read;
-	guint samplerate;
+	gulong samplerate;
 	guchar channels;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -412,8 +410,7 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 		data->toskip = toskip * data->channels * xmms_sample_size_get (data->sampleformat);
 		data->buffer_length = 0;
 
-		/* FIXME: what should we actually return here? */
-		return 0;
+		return samples;
 	}
 
 	/* Seeking not supported on non-MP4 AAC right now */
