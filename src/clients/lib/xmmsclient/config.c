@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 XMMS2 Team
- *
+ *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ * 
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- *
+ * 
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *
+ *                   
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -25,9 +25,9 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 
 /**
- * @defgroup OtherControl OtherControl
+ * @defgroup ConfigControl ConfigControl
  * @ingroup XMMSClient
- * @brief This controls various other functions of the XMMS server.
+ * @brief This controls configuration values on the XMMS server.
  *
  * @{
  */
@@ -105,33 +105,4 @@ xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
 }
 
-/**
- * Request the visualisation data signal. This will be called with vis data
- */
-xmmsc_result_t *
-xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
-{
-	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_VISUALISATION_DATA);
-}
-
-/**
- * Request status for the mediainfo reader. It can be idle or working
- */
-xmmsc_result_t *
-xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
-{
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
-}
-
-/**
- * Request number of unindexed entries in medialib.
- */
-xmmsc_result_t *
-xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
-{
-	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
-}
-
 /** @} */
-
-

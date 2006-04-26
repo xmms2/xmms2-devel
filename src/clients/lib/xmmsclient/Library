@@ -6,7 +6,8 @@ systemlibrary=True
 
 source=["ipc.c", 
 	"medialib.c", 
-	"other.c", 
+	"config.c", 
+	"stats.c", 
 	"playback.c", 
 	"playlist.c", 
 	"result.c", 

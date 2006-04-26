@@ -198,6 +198,35 @@ xmmsc_result_get_class (xmmsc_result_t *res)
 }
 
 /**
+ * Check the #xmmsc_result_t for error.
+ * @return 1 if error was encountered, else 0
+ */
+
+int
+xmmsc_result_iserror (xmmsc_result_t *res)
+{
+	x_return_val_if_fail (res, 1);
+
+	if (res->error > 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * Get an error string describing the error that occoured
+ */ 
+
+const char *
+xmmsc_result_get_error (xmmsc_result_t *res)
+{
+	x_return_null_if_fail (res);
+
+	return res->error_str;
+}
+
+/**
  * Disconnect a signal or a broadcast.
  * @param res The result to disconnect, must be of class signal or broadcast.
  */
@@ -537,35 +566,6 @@ xmmsc_result_get_type (xmmsc_result_t *res)
 	if (!res) return -1;
 	if (!res->parsed) return -1;
 	return res->datatype;
-}
-
-/**
- * Check the #xmmsc_result_t for error.
- * @return 1 if error was encountered, else 0
- */
-
-int
-xmmsc_result_iserror (xmmsc_result_t *res)
-{
-	x_return_val_if_fail (res, 1);
-
-	if (res->error > 0) {
-		return 1;
-	}
-
-	return 0;
-}
-
-/**
- * Get an error string describing the error that occoured
- */ 
-
-const char *
-xmmsc_result_get_error (xmmsc_result_t *res)
-{
-	x_return_null_if_fail (res);
-
-	return res->error_str;
 }
 
 /**
