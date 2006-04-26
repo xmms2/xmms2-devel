@@ -116,6 +116,7 @@ namespace Xmms
 			bool connected_;
 
 			MainLoop* mainloop_;
+			Listener* listener_;
 
 			Signal<unsigned int>* quitSignal_;
 

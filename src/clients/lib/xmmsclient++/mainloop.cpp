@@ -38,7 +38,7 @@ namespace Xmms
 	MainLoop::run()
 	{
 		running_ = true;
-		while(true) {
+		while(listeners.size() > 0) {
 			waitForData();
 		}
 	}

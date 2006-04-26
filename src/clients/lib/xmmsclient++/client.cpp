@@ -24,7 +24,7 @@ namespace Xmms
 	      playlist( conn_, connected_, mainloop_ ), 
 		  medialib( conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
-		  mainloop_( 0 ), quitSignal_( 0 )
+		  mainloop_( 0 ), listener_( 0 ), quitSignal_( 0 )
 	{
 		conn_ = xmmsc_init( name.c_str() );
 	}
@@ -32,6 +32,7 @@ namespace Xmms
 	Client::~Client() 
 	{
 		if( mainloop_ ) {
+			// Also deletes listener_
 			delete mainloop_;
 		}
 		if( quitSignal_ ) {
@@ -165,8 +166,9 @@ namespace Xmms
 
 		if( !mainloop_ ) {
 			mainloop_ = new MainLoop();
+			listener_ = new Listener( conn_ );
 			broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
-			mainloop_->addListener( new Listener( conn_ ) );
+			mainloop_->addListener( listener_ );
 		}
 		return *mainloop_;
 
@@ -180,6 +182,10 @@ namespace Xmms
 	bool Client::quitHandler( const unsigned int& /*time*/ )
 	{
 		connected_ = false;
+		if( mainloop_ ) {
+			mainloop_->removeListener( listener_ );
+		}
+
 		SignalHolder::getInstance().deleteAll();
 		return true;
 	}
