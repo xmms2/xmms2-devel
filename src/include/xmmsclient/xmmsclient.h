@@ -73,7 +73,7 @@ char *xmmsc_sqlite_prepare_string (const char *input);
 
 /* commands */
 xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *);
-xmmsc_result_t *xmmsc_playlist_add (xmmsc_connection_t *, const char *);
+xmmsc_result_t *xmmsc_playlist_add_url (xmmsc_connection_t *c, const char *url);
 xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *c, uint32_t id);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *, uint32_t);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c);
@@ -83,7 +83,7 @@ xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, uint32_t);
 xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, int32_t);
 xmmsc_result_t *xmmsc_playlist_move (xmmsc_connection_t *c, uint32_t, uint32_t);
 xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
-xmmsc_result_t *xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url);
+xmmsc_result_t *xmmsc_playlist_insert_url (xmmsc_connection_t *c, int pos, const char *url);
 xmmsc_result_t *xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, uint32_t id);
 
 /* broadcasts */

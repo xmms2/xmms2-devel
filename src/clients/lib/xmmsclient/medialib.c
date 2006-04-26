@@ -460,7 +460,7 @@ xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 	if (!enc_url)
 		return NULL;
 
-	res = do_methodcall (conn, XMMS_IPC_CMD_ADD, enc_url);
+	res = do_methodcall (conn, XMMS_IPC_CMD_ADD_URL, enc_url);
 
 	free (enc_url);
 

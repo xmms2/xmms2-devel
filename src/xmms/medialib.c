@@ -249,7 +249,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 			     XMMS_IPC_CMD_SELECT, 
 			     XMMS_CMD_FUNC (select));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-			     XMMS_IPC_CMD_ADD, 
+			     XMMS_IPC_CMD_ADD_URL, 
 			     XMMS_CMD_FUNC (mlib_add));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
 			     XMMS_IPC_CMD_REMOVE, 
@@ -1579,7 +1579,7 @@ playlist_load_sql_query_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	xmms_medialib_t *medialib = udata;
 
-	xmms_playlist_addurl (medialib->playlist, row[0]->value.string, NULL);
+	xmms_playlist_add_url (medialib->playlist, row[0]->value.string, NULL);
 
 	destroy_array (row);
 
@@ -1632,7 +1632,7 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 		if (!strncmp (entry, "mlib://", 7)) {
 			xmms_medialib_entry_t e;
 			e = atoi (entry+7);
-			xmms_playlist_add (medialib->playlist, e, NULL);
+			xmms_playlist_add_id (medialib->playlist, e, NULL);
 		} else if (!strncmp (entry, "sql://", 6)) {
 			session = xmms_medialib_begin ();
 			xmms_sqlite_query_array (session->sql, playlist_load_sql_query_cb,

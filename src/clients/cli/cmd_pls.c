@@ -29,7 +29,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 		print_error ("Invalid url");
 	}
 
-	res = xmmsc_playlist_add (conn, url);
+	res = xmmsc_playlist_add_url (conn, url);
 	xmmsc_result_wait (res);
 	g_free (url);
 
