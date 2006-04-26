@@ -104,7 +104,7 @@ struct xmmsc_result_St {
  * is a sync example:
  * @code
  * xmmsc_result_t *res;
- * unsigned int id;
+ * uint32_t id;
  * res = xmmsc_playback_get_current_id (connection);
  * xmmsc_result_wait (res);
  * if (xmmsc_result_iserror) {
@@ -118,7 +118,7 @@ struct xmmsc_result_St {
  * an async example is a bit more complex...
  * @code
  * static void handler (xmmsc_result_t *res, void *userdata) {
- *   unsigned int id;
+ *   uint32_t id;
  *   if (xmmsc_result_iserror) {
  *      printf ("error: %s", xmmsc_result_get_error (res);
  *   }
@@ -223,7 +223,7 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
  * Here is an example on how you use a restartable signal.
  * @code
  * static void handler (xmmsc_result_t *res, void *userdata) {
- *   unsigned int id;
+ *   uint32_t id;
  *   xmmsc_result_t *newres;
  *
  *   if (xmmsc_result_iserror) {
@@ -576,7 +576,7 @@ xmmsc_result_get_error (xmmsc_result_t *res)
  */
 
 int
-xmmsc_result_get_int (xmmsc_result_t *res, int *r)
+xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r)
 {
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
@@ -599,7 +599,7 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
  */
 
 int
-xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
+xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r)
 {
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
@@ -696,7 +696,7 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
  *
  */
 int
-xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r)
+xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {
@@ -733,7 +733,7 @@ xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t
  *
  */
 int
-xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r)
+xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t *r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {
@@ -771,7 +771,7 @@ xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32
  *
  */
 int
-xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r)
+xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char **r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {

@@ -182,7 +182,7 @@ cmd_mlib_topsongs (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	while (xmmsc_result_list_valid (res)) {
 		gint id;
 
-		if (!xmmsc_result_get_dict_entry_int32 (res, "id", &id)) {
+		if (!xmmsc_result_get_dict_entry_int (res, "id", &id)) {
 			print_error ("Broken resultset");
 		}
 
@@ -400,7 +400,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	while (xmmsc_result_list_valid (res)) {
 		gint id;
 
-		if (!xmmsc_result_get_dict_entry_int32 (res, "id", &id)) {
+		if (!xmmsc_result_get_dict_entry_int (res, "id", &id)) {
 			print_error ("Broken resultset");
 		}
 

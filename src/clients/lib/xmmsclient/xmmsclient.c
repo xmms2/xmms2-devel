@@ -376,7 +376,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 		if (strcmp (key, "seconds") == 0) {
 			int duration;
 
-			xmmsc_result_get_dict_entry_int32 (res, "duration", &duration);
+			xmmsc_result_get_dict_entry_int (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
@@ -388,7 +388,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 		} else if (strcmp (key, "minutes") == 0) {
 			int duration;
 
-			xmmsc_result_get_dict_entry_int32 (res, "duration", &duration);
+			xmmsc_result_get_dict_entry_int (res, "duration", &duration);
 
 			if (!duration) {
 				strncat (target, "00", len - strlen (target) - 1);
@@ -402,15 +402,15 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 
 			xmmsc_result_value_type_t type = xmmsc_result_get_dict_entry_type (res, key);
 			if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
-				xmmsc_result_get_dict_entry_str (res, key, &result);
+				xmmsc_result_get_dict_entry_string (res, key, &result);
 			} else if (type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
 				uint32_t ui;
-				xmmsc_result_get_dict_entry_uint32 (res, key, &ui);
+				xmmsc_result_get_dict_entry_uint (res, key, &ui);
 				snprintf (tmp, 12, "%u", ui);
 				result = tmp;
 			} else if (type == XMMSC_RESULT_VALUE_TYPE_INT32) {
 				int32_t i;
-				xmmsc_result_get_dict_entry_int32 (res, key, &i);
+				xmmsc_result_get_dict_entry_int (res, key, &i);
 				snprintf (tmp, 12, "%d", i);
 				result = tmp;
 			}

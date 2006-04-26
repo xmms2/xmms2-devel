@@ -141,17 +141,17 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 	for (i = 0; props[i]; i++) {
 		switch (xmmsc_result_get_dict_entry_type (res, props[i])) {
 		case XMMSC_RESULT_VALUE_TYPE_STRING:
-			if (xmmsc_result_get_dict_entry_str (res, props[i], &tstr)) {
+			if (xmmsc_result_get_dict_entry_string (res, props[i], &tstr)) {
 				g_string_append_printf (str, "%s=%s\n", props[i], tstr);
 			}
 			break;
 		case XMMSC_RESULT_VALUE_TYPE_UINT32:
-			if (xmmsc_result_get_dict_entry_uint32 (res, props[i], &tuint)) {
+			if (xmmsc_result_get_dict_entry_uint (res, props[i], &tuint)) {
 				g_string_append_printf (str, "%s=%u\n", props[i], tuint);
 			}
 			break;
 		case XMMSC_RESULT_VALUE_TYPE_INT32:
-			if (xmmsc_result_get_dict_entry_int32 (res, props[i], &tint)) {
+			if (xmmsc_result_get_dict_entry_int (res, props[i], &tint)) {
 				g_string_append_printf (str, "%s=%d\n", props[i], tint);
 			}
 			break;
@@ -186,7 +186,7 @@ handle_config (xmmsc_result_t *res, void *userdata)
 {
 	char *value;
 
-	if (!xmmsc_result_get_dict_entry_str (res, "output.plugin", &value))
+	if (!xmmsc_result_get_dict_entry_string (res, "output.plugin", &value))
 		return;
 
 	g_free (output_plugin);
@@ -210,7 +210,7 @@ handle_stats (xmmsc_result_t *res, void *userdata)
 {
 	gchar *tstr;
 
-	if (xmmsc_result_get_dict_entry_str (res, "version", &tstr)) {
+	if (xmmsc_result_get_dict_entry_string (res, "version", &tstr)) {
 		server_version = g_strdup (tstr);
 	}
 }

@@ -203,7 +203,7 @@ static VALUE c_disconnect (VALUE self)
 
 static VALUE int_get (RbResult *res)
 {
-	int id = 0;
+	int32_t id = 0;
 
 	if (!xmmsc_result_get_int (res->real, &id)) {
 		rb_raise (eValueError, "cannot retrieve value");
@@ -215,7 +215,7 @@ static VALUE int_get (RbResult *res)
 
 static VALUE uint_get (RbResult *res)
 {
-	unsigned int id = 0;
+	uint32_t id = 0;
 
 	if (!xmmsc_result_get_uint (res->real, &id)) {
 		rb_raise (eValueError, "cannot retrieve value");

@@ -204,20 +204,20 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 			print_error ("Empty result!");
 		}
 
-		if (xmmsc_result_get_dict_entry_str (res, "title", &title)) {
+		if (xmmsc_result_get_dict_entry_string (res, "title", &title)) {
 			gchar *artist, *album;
-			if (!xmmsc_result_get_dict_entry_str (res, "artist", &artist)) {
+			if (!xmmsc_result_get_dict_entry_string (res, "artist", &artist)) {
 				artist = "Unknown";
 			}
 
-			if (!xmmsc_result_get_dict_entry_str (res, "album", &album)) {
+			if (!xmmsc_result_get_dict_entry_string (res, "album", &album)) {
 				album = "Unknown";
 			}
 
 			print_info (format_rows, mid, artist, album, title);
 		} else {
 			gchar *url, *filename;
-			xmmsc_result_get_dict_entry_str (res, "url", &url);
+			xmmsc_result_get_dict_entry_string (res, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
