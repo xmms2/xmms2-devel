@@ -57,16 +57,16 @@ namespace Xmms
 		FD_ZERO(&wfds);
 
 		for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
-			if( (*lit)->listenIn() ) {
-				FD_SET( (*lit)->getFileDescriptor(), &rfds);
+			if( (*lit)->listenOut() ) {
+				FD_SET( (*lit)->getFileDescriptor(), &wfds);
 
 				if( (*lit)->getFileDescriptor() > maxfds ) {
 					maxfds = (*lit)->getFileDescriptor();
 				}
 			}
 
-			if( (*lit)->listenOut() ) {
-				FD_SET( (*lit)->getFileDescriptor(), &wfds);
+			if( (*lit)->listenIn() ) {
+				FD_SET( (*lit)->getFileDescriptor(), &rfds);
 
 				if( (*lit)->getFileDescriptor() > maxfds ) {
 					maxfds = (*lit)->getFileDescriptor();
@@ -84,16 +84,20 @@ namespace Xmms
 		}
 		// Handle the data
 		else if(modfds > 0) {
-			for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
-				if( (*lit)->listenIn()
-					&& FD_ISSET((*lit)->getFileDescriptor(), &rfds) ) {
-					(*lit)->handleIn();
-				}
+			for(lit = listeners.begin();
+			    lit != listeners.end() && listeners.size() != 0;
+			    ++lit) {
 
 				if( (*lit)->listenOut()
 					&& FD_ISSET((*lit)->getFileDescriptor(), &wfds) ) {
 					(*lit)->handleOut();
 				}
+
+				if( (*lit)->listenIn()
+					&& FD_ISSET((*lit)->getFileDescriptor(), &rfds) ) {
+					(*lit)->handleIn();
+				}
+
 			}
 		}
 	}

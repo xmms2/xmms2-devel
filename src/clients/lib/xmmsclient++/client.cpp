@@ -184,6 +184,7 @@ namespace Xmms
 		connected_ = false;
 		if( mainloop_ ) {
 			mainloop_->removeListener( listener_ );
+			delete listener_; listener_ = 0;
 		}
 
 		SignalHolder::getInstance().deleteAll();
