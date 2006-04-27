@@ -173,6 +173,8 @@ def scan_headers(name):
 scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
+scan_headers("xmmsclient/xmmsclient++")
+scan_headers("xmmsclient/xmmsclient++/detail")
 
 ### INSTALL MANUAL PAGES!
 
