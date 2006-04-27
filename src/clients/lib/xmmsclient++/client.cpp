@@ -54,6 +54,11 @@ namespace Xmms
 			connected_ = true;
 		}
 
+		if( mainloop_ && !listener_ ) {
+			listener_ = new Listener( conn_ );
+			mainloop_->addListener( listener_ );
+		}
+
 	}
 
 	void Client::quit()
