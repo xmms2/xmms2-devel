@@ -31,6 +31,8 @@ namespace Xmms
 	typedef Signal< Dict >::signal_t::slot_type DictSlot;
 	typedef Signal< PropDict >::signal_t::slot_type PropDictSlot;
 	typedef Signal< xmms_playback_status_t >::signal_t::slot_type StatusSlot;
+	typedef Signal< xmms_mediainfo_reader_status_t >::signal_t::slot_type
+	                                                        ReaderStatusSlot;
 
 	typedef Signal< List< int > >::signal_t::slot_type IntListSlot;
 	typedef Signal< List< unsigned int > >::signal_t::slot_type UintListSlot;

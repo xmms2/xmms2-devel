@@ -8,6 +8,8 @@ source=["client.cpp",
 	"listener.cpp",
 	"mainloop.cpp",
 	"medialib.cpp",
+	"config.cpp",
+	"stats.cpp",
 	"playback.cpp",
 	"signal.cpp",
 	"playlist.cpp"]

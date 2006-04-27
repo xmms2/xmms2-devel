@@ -39,7 +39,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void add( const std::string& url ) const;
+			void addUrl( const std::string& url ) const;
 			
 			/** Add a medialib id to the playlist.
 			 *
@@ -52,7 +52,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void add( const unsigned int id ) const;
+			void addId( const unsigned int id ) const;
 
 			/** Clears the current playlist.
 			 *
@@ -90,7 +90,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void insert( int pos, const std::string& url ) const;
+			void insertUrl( int pos, const std::string& url ) const;
 
 			/** Insert a medialib ID at given position in playlist.
 			 *
@@ -104,7 +104,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void insert( int pos, unsigned int id ) const;
+			void insertId( int pos, unsigned int id ) const;
 
 			/** Retrieve the current playlist.
 			 *
@@ -193,24 +193,24 @@ namespace Xmms
 			void sort( const std::string& property ) const;
 
 			void
-			add( const std::string& url,
-			     const VoidSlot& slot,
-			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+			addUrl( const std::string& url,
+			        const VoidSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			add( const std::string& url,
-			     const std::list<VoidSlot>& slots,
-			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+			addUrl( const std::string& url,
+			        const std::list<VoidSlot>& slots,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			add( const unsigned int id,
-			     const VoidSlot& slot,
-			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+			addId( const unsigned int id,
+			       const VoidSlot& slot,
+			       const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			add( const unsigned int id,
-			     const std::list<VoidSlot>& slots,
-			     const ErrorSlot& error = &Xmms::dummy_error ) const;
+			addId( const unsigned int id,
+			       const std::list<VoidSlot>& slots,
+			       const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void 
 			clear( const VoidSlot& slot,
@@ -229,24 +229,24 @@ namespace Xmms
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			insert( int pos, const std::string& url,
-			        const VoidSlot& slot,
-					const ErrorSlot& error = &Xmms::dummy_error ) const;
+			insertUrl( int pos, const std::string& url,
+			           const VoidSlot& slot,
+					   const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			insert( int pos, const std::string& url,
-			        const std::list< VoidSlot >& slots,
-			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+			insertUrl( int pos, const std::string& url,
+			           const std::list< VoidSlot >& slots,
+			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			insert( int pos, unsigned int id,
-			        const VoidSlot& slot,
-			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+			insertId( int pos, unsigned int id,
+			          const VoidSlot& slot,
+			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
-			insert( int pos, unsigned int id,
-			        const std::list< VoidSlot >& slots,
-			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+			insertId( int pos, unsigned int id,
+			          const std::list< VoidSlot >& slots,
+			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			void
 			list( const UintListSlot& slot,

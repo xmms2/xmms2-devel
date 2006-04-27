@@ -4,6 +4,8 @@
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
+#include <xmmsclient/xmmsclient++/config.h>
+#include <xmmsclient/xmmsclient++/stats.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
@@ -23,6 +25,8 @@ namespace Xmms
 		: playback( conn_, connected_, mainloop_ ), 
 	      playlist( conn_, connected_, mainloop_ ), 
 		  medialib( conn_, connected_, mainloop_ ),
+		  config(   conn_, connected_, mainloop_ ),
+		  stats(    conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
 		  mainloop_( 0 ), listener_( 0 ), quitSignal_( 0 )
 	{
@@ -70,84 +74,6 @@ namespace Xmms
 		}
 	}
 
-	const Dict Client::stats() const
-	{
-
-		xmmsc_result_t* res = 
-		    call( connected_, mainloop_,
-		          boost::bind( xmmsc_main_stats, conn_ ) );
-
-		Dict resultMap( res );
-
-		xmmsc_result_unref( res );
-		return resultMap;
-
-	}
-
-	const DictList Client::pluginList(Plugins::Type type) const
-	{
-
-		xmmsc_result_t* res = 
-		    call( connected_, mainloop_,
-		          boost::bind( xmmsc_plugin_list, conn_, type ) ); 	
-		
-		List< Dict > resultList( res );
-
-		xmmsc_result_unref( res );
-		return resultList;
-
-	}
-
-	void Client::stats(const DictSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-
-		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ), 
-		             slot, error );
-	}
-
-	void
-	Client::stats(const std::list< DictSlot >& slots,
-	              const ErrorSlot& error ) const
-	{
-		aCall<Dict>( connected_, boost::bind( xmmsc_main_stats, conn_ ),
-		             slots, error );
-	}
-
-	void 
-	Client::pluginList(const DictListSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-		pluginList( Plugins::ALL, slot, error );
-	}
-
-	void
-	Client::pluginList(Plugins::Type type,
-	                   const DictListSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-		aCall<DictList>( connected_, 
-		                 boost::bind( xmmsc_plugin_list, conn_, type ),
-		                 slot, error );
-	}
-
-	void
-	Client::pluginList(const std::list< DictListSlot >& slots,
-	                   const ErrorSlot& error ) const
-	{
-		pluginList( Plugins::ALL, slots, error );
-	}
-
-	void
-	Client::pluginList(Plugins::Type type,
-	                   const std::list< DictListSlot >& slots,
-	                   const ErrorSlot& error ) const
-	{
-		aCall<DictList>( connected_,
-		                 boost::bind( xmmsc_plugin_list, conn_, type ),
-		                 slots, error );
-	}
-
 	void
 	Client::broadcastQuit( const UintSlot& slot, const ErrorSlot& error )
 	{
@@ -182,6 +108,11 @@ namespace Xmms
 	bool Client::isConnected() const
 	{
 		return connected_;
+	}
+
+	string Client::getLastError() const
+	{
+		return string( xmmsc_get_last_error( conn_ ) );
 	}
 
 	bool Client::quitHandler( const unsigned int& /*time*/ )

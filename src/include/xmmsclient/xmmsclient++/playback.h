@@ -8,6 +8,7 @@
 #include <xmmsclient/xmmsclient++/typedefs.h>
 
 #include <list>
+#include <string>
 
 namespace Xmms 
 {
@@ -35,13 +36,25 @@ namespace Xmms
 			void pause() const;
 			void start() const;
 
+			void seekMs(unsigned int milliseconds) const;
+			void seekMsRel(int milliseconds) const;
+
+			void seekSamples(unsigned int samples) const;
+			void seekSamplesRel(int samples) const;
+
 			unsigned int currentID() const;
 
 			// Status
 			// Compare returned value with 
 			// Xmms::Playback::[STOPPED|PLAYING|PAUSED]
 			Status getStatus() const;
- 
+			unsigned int getPlaytime() const;
+
+			void volumeSet(const std::string& channel,
+			               unsigned int volume) const;
+			unsigned int volumeGet() const;
+
+
 			void tickle( const VoidSlot& slot,
 			             const ErrorSlot& error = &Xmms::dummy_error ) const;
 
@@ -66,6 +79,42 @@ namespace Xmms
 			void start( const std::list< VoidSlot >& slots,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
+			void seekMs( unsigned int milliseconds,
+			             const VoidSlot& slot,
+			             const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void seekMs( unsigned int milliseconds,
+			             const std::list< VoidSlot >& slots,
+			             const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void seekMsRel( int milliseconds,
+			                const VoidSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void seekMsRel( int milliseconds,
+			                const std::list< VoidSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void seekSamples( unsigned int samples,
+			                  const VoidSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void seekSamples( unsigned int samples,
+			                  const std::list< VoidSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void seekSamplesRel( int samples,
+			                     const VoidSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                     ) const;
+
+			void seekSamplesRel( int samples,
+			                     const std::list< VoidSlot >& slots,
+			                     const ErrorSlot& error = &Xmms::dummy_error
+			                     ) const;
+
 			void currentID( const UintSlot& slot,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
@@ -77,6 +126,33 @@ namespace Xmms
 
 			void getStatus( const std::list< StatusSlot >& slots,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void getPlaytime( const UintSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void getPlaytime( const std::list< UintSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			void volumeSet( const std::string& channel, unsigned int volume,
+			                const VoidSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error
+			              ) const;
+
+			void volumeSet( const std::string& channel, unsigned int volume,
+			                const std::list< VoidSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error
+			              ) const;
+
+			void volumeGet( const UintSlot& slot,
+			                const ErrorSlot& error = &Xmms::dummy_error
+			              ) const;
+
+			void volumeGet( const std::list< UintSlot >& slots,
+			                const ErrorSlot& error = &Xmms::dummy_error
+			              ) const;
+
 
 			void
 			broadcastCurrentID( const UintSlot& slot,

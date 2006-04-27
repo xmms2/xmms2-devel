@@ -110,6 +110,18 @@ namespace Xmms
 		return result;
 	}
 
+	template<>
+	inline xmms_mediainfo_reader_status_t*
+	extract_value( xmmsc_result_t* res )
+	{
+		unsigned int temp = 0;
+		xmmsc_result_get_uint( res, &temp );
+		xmms_mediainfo_reader_status_t* result
+			= new xmms_mediainfo_reader_status_t;
+		*result = static_cast< xmms_mediainfo_reader_status_t >( temp );
+		return result;
+	}
+
 	template< typename T >
 	inline bool
 	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )

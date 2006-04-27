@@ -6,6 +6,8 @@
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/config.h>
+#include <xmmsclient/xmmsclient++/stats.h>
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <xmmsclient/xmmsclient++/dict.h>

@@ -17,7 +17,7 @@ namespace Xmms
 	{
 	}
 
-	void Playlist::add( const std::string& url ) const
+	void Playlist::addUrl( const std::string& url ) const
 	{
 
 		vCall( connected_, ml_, 
@@ -25,7 +25,7 @@ namespace Xmms
 
 	}
 
-	void Playlist::add( unsigned int id ) const
+	void Playlist::addId( unsigned int id ) const
 	{
 
 		vCall( connected_, ml_, 
@@ -57,7 +57,7 @@ namespace Xmms
 
 	}
 
-	void Playlist::insert( int pos, const std::string& url ) const
+	void Playlist::insertUrl( int pos, const std::string& url ) const
 	{
 
 		vCall( connected_, ml_,
@@ -65,7 +65,7 @@ namespace Xmms
 
 	}
 
-	void Playlist::insert( int pos, unsigned int id ) const
+	void Playlist::insertId( int pos, unsigned int id ) const
 	{
 
 		vCall( connected_, ml_,
@@ -153,9 +153,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::add( const std::string& url,
-	               const VoidSlot& slot,
-	               const ErrorSlot& error ) const
+	Playlist::addUrl( const std::string& url,
+	                  const VoidSlot& slot,
+	                  const ErrorSlot& error ) const
 	{
 		
 		aCall<void>( connected_, 
@@ -165,9 +165,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::add( const std::string& url,
-	               const std::list< VoidSlot >& slots,
-	               const ErrorSlot& error ) const
+	Playlist::addUrl( const std::string& url,
+	                  const std::list< VoidSlot >& slots,
+	                  const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
@@ -177,9 +177,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::add( const unsigned int id,
-	               const VoidSlot& slot,
-	               const ErrorSlot& error ) const
+	Playlist::addId( const unsigned int id,
+	                 const VoidSlot& slot,
+	                 const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
@@ -189,9 +189,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::add( const unsigned int id,
-	               const std::list< VoidSlot >& slots,
-	               const ErrorSlot& error ) const
+	Playlist::addId( const unsigned int id,
+	                 const std::list< VoidSlot >& slots,
+	                 const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
@@ -243,9 +243,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::insert( int pos, const std::string& url,
-	                  const VoidSlot& slot,
-					  const ErrorSlot& error ) const
+	Playlist::insertUrl( int pos, const std::string& url,
+	                     const VoidSlot& slot,
+					     const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
@@ -256,7 +256,7 @@ namespace Xmms
 	}
 
 	void
-	Playlist::insert( int pos, const std::string& url,
+	Playlist::insertUrl( int pos, const std::string& url,
 	                  const std::list< VoidSlot >& slots,
 					  const ErrorSlot& error ) const
 	{
@@ -269,9 +269,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::insert( int pos, unsigned int id,
-	                  const VoidSlot& slot,
-	                  const ErrorSlot& error ) const
+	Playlist::insertId( int pos, unsigned int id,
+	                    const VoidSlot& slot,
+	                    const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
@@ -281,9 +281,9 @@ namespace Xmms
 	}
 
 	void
-	Playlist::insert( int pos, unsigned int id,
-	                  const std::list< VoidSlot >& slots,
-	                  const ErrorSlot& error ) const
+	Playlist::insertId( int pos, unsigned int id,
+	                    const std::list< VoidSlot >& slots,
+	                    const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
