@@ -9,8 +9,8 @@ using std::list;
 namespace Xmms
 {
 
-	MainLoop::MainLoop()
-		: listeners(), running_( false )
+	MainLoop::MainLoop( xmmsc_connection_t*& conn )
+		: MainloopInterface( conn ), listeners()
 	{
 	}
 

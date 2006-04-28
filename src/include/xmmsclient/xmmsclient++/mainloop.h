@@ -9,7 +9,28 @@
 namespace Xmms 
 {
 
-	class MainLoop
+	class MainloopInterface
+	{
+
+		public:
+
+			MainloopInterface( xmmsc_connection_t* conn ) :
+				running_( false ), conn_( conn ) { }
+			virtual ~MainloopInterface() { }
+
+			virtual void run() = 0;
+
+			bool isRunning() const {
+				return running_;
+			}
+
+		protected:
+			bool running_;
+			xmmsc_connection_t*& conn_;
+
+	};
+
+	class MainLoop : public MainloopInterface
 	{
 
 		public:
@@ -24,22 +45,18 @@ namespace Xmms
 			void removeListener( ListenerInterface* l );
 
 			// Usage
-			void run();
-
-			bool isRunning() const;
+			virtual void run();
 
 		private:
 
 			// Constructor, only to be called by Xmms::Client
 			friend class Client;
-			MainLoop();
-			MainLoop operator=( const MainLoop& src ) const;
+			MainLoop( xmmsc_connection_t*& conn );
+			MainLoop& operator=( const MainLoop& src ) const;
 
 			std::list< ListenerInterface* > listeners;
 
 			void waitForData();
-
-			bool running_;
 
 	};
 

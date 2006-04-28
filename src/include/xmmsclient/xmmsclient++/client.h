@@ -53,7 +53,8 @@ namespace Xmms
 			const Stats    stats;
 
 			// Get an object to create an async main loop
-			MainLoop& getMainLoop();
+			MainloopInterface& getMainLoop();
+			void setMainloop( MainloopInterface* ml );
 
 			bool isConnected() const;
 
@@ -76,7 +77,7 @@ namespace Xmms
 
 			bool connected_;
 
-			MainLoop* mainloop_;
+			MainloopInterface* mainloop_;
 			Listener* listener_;
 
 			Signal<unsigned int>* quitSignal_;

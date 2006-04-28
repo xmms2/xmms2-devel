@@ -532,14 +532,14 @@ namespace Xmms
 		private:
 			friend class Client;
 			Medialib( xmmsc_connection_t*& conn, bool& connected,
-			          MainLoop*& ml );
+			          MainloopInterface*& ml );
 
 			Medialib( const Medialib& src );
 			Medialib& operator=( const Medialib& src );
 
 			xmmsc_connection_t*& conn_;
 			bool& connected_;
-			MainLoop*& ml_;
+			MainloopInterface*& ml_;
 		/** @endcond */
 
 	};

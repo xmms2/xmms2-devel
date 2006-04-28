@@ -421,7 +421,7 @@ namespace Xmms
 	}
 
 	Playback::Playback( xmmsc_connection_t*& conn, bool& connected,
-	                    MainLoop*& ml ) :
+	                    MainloopInterface*& ml ) :
 		conn_( conn ), connected_( connected ), ml_( ml )
 	{
 	}

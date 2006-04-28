@@ -40,7 +40,7 @@ namespace Xmms
 	 *
 	 *  @throw mainloop_running_error If the mainloop is up and running.
 	 */
-	inline void check( const MainLoop* const & ml )
+	inline void check( const MainloopInterface* const & ml )
 	{
 		if( ml && ml->isRunning() ) {
 			throw mainloop_running_error( "Cannot perform synchronized "
@@ -67,7 +67,7 @@ namespace Xmms
 	}
 
 	inline xmmsc_result_t*
-	call( bool connected, const MainLoop* const & ml, 
+	call( bool connected, const MainloopInterface* const & ml, 
 	      const boost::function< xmmsc_result_t*() >& func )
 	{
 
@@ -82,7 +82,7 @@ namespace Xmms
 
 	}
 
-	inline void vCall( bool connected, const MainLoop* const & ml,
+	inline void vCall( bool connected, const MainloopInterface* const & ml,
                        const boost::function< xmmsc_result_t*() >& func )
 	{
 		xmmsc_result_unref( call( connected, ml, func ) );

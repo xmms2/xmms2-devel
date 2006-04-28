@@ -58,9 +58,9 @@ namespace Xmms
 			connected_ = true;
 		}
 
-		if( mainloop_ && !listener_ ) {
+		if( mainloop_ && !listener_ && typeid(mainloop_) == typeid(MainLoop) ) {
 			listener_ = new Listener( conn_ );
-			mainloop_->addListener( listener_ );
+			dynamic_cast<MainLoop*>(mainloop_)->addListener( listener_ );
 		}
 
 	}
@@ -92,16 +92,23 @@ namespace Xmms
 
 	}
 
-	MainLoop& Client::getMainLoop() 
+	MainloopInterface& Client::getMainLoop() 
 	{
 
 		if( !mainloop_ ) {
-			mainloop_ = new MainLoop();
+			mainloop_ = new MainLoop( conn_ );
 			listener_ = new Listener( conn_ );
 			broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
-			mainloop_->addListener( listener_ );
+			dynamic_cast<MainLoop*>(mainloop_)->addListener( listener_ );
 		}
 		return *mainloop_;
+
+	}
+
+	void Client::setMainloop( MainloopInterface* ml )
+	{
+
+		mainloop_ = ml;
 
 	}
 
@@ -119,7 +126,7 @@ namespace Xmms
 	{
 		connected_ = false;
 		if( mainloop_ ) {
-			mainloop_->removeListener( listener_ );
+			dynamic_cast<MainLoop*>(mainloop_)->removeListener( listener_ );
 			delete listener_; listener_ = 0;
 		}
 

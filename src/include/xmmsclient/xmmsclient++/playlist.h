@@ -338,14 +338,14 @@ namespace Xmms
 		private:
 			friend class Client;
 			Playlist( xmmsc_connection_t*& conn, bool& connected,
-			          MainLoop*& ml );
+			          MainloopInterface*& ml );
 
 			Playlist( const Playlist& src );
 			Playlist& operator=( const Playlist& src );
 
 			xmmsc_connection_t*& conn_;
 			bool& connected_;
-			MainLoop*& ml_;
+			MainloopInterface*& ml_;
 		/** @endcond */
 
 	};
