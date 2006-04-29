@@ -26,6 +26,13 @@ namespace Xmms
 			/** Destructor. */
 			~Medialib();
 
+			/** Escape a string so that it can be used in sqlite queries. 
+			 *
+			 *  @param input The input string to prepare.
+			 *
+			 *  @return The prepared version of the input string.
+			 */
+			std::string sqlitePrepareString( const std::string& input ) const;
 
 			/** Add a URL to the medialib.
 			 *  If you want to add multiple files you should call pathImport.

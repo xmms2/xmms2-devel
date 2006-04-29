@@ -18,6 +18,15 @@ namespace Xmms
 	{
 	}
 
+	std::string Medialib::sqlitePrepareString( const std::string& input ) const
+	{
+		char* tmp = xmmsc_sqlite_prepare_string( input.c_str() );
+		std::string prepstr( tmp );
+		free(tmp);
+
+		return prepstr;
+	}
+
 	void Medialib::addEntry( const std::string& url ) const
 	{
 
