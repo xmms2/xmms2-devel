@@ -10,7 +10,7 @@
 namespace Xmms
 {
 
-	Detail::SuperList::SuperList( xmmsc_result_t* result )
+	SuperList::SuperList( xmmsc_result_t* result )
 		: result_( 0 ), constructed_( false )
 	{
 
@@ -26,13 +26,13 @@ namespace Xmms
 
 	}
 
-	Detail::SuperList::SuperList( const SuperList& list )
+	SuperList::SuperList( const SuperList& list )
 		: result_( list.result_ ), constructed_( list.constructed_ )
 	{
 		xmmsc_result_ref( result_ );
 	}
 
-	Detail::SuperList& Detail::SuperList::operator=( const SuperList& list )
+	SuperList& SuperList::operator=( const SuperList& list )
 	{
 		result_ = list.result_;
 		constructed_ = list.constructed_;
@@ -40,12 +40,12 @@ namespace Xmms
 		return *this;
 	}
 
-	Detail::SuperList::~SuperList()
+	SuperList::~SuperList()
 	{
 		xmmsc_result_unref( result_ );
 	}
 
-	void Detail::SuperList::first()
+	void SuperList::first()
 	{
 
 		if( !xmmsc_result_list_first( result_ ) ) {
@@ -55,7 +55,7 @@ namespace Xmms
 
 	}
 
-	void Detail::SuperList::operator++()
+	void SuperList::operator++()
 	{
 		if( !xmmsc_result_list_next( result_ ) ) {
 			// throw
@@ -63,7 +63,7 @@ namespace Xmms
 		constructed_ = false;
 	}
 
-	bool Detail::SuperList::isValid() const
+	bool SuperList::isValid() const
 	{
 		return xmmsc_result_list_valid( result_ );
 	}

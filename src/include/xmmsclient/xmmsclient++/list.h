@@ -4,7 +4,6 @@
 #include <xmmsclient/xmmsclient.h>
 #include <boost/any.hpp>
 
-#include <xmmsclient/xmmsclient++/detail/superlist.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
@@ -13,24 +12,47 @@
 namespace Xmms
 {
 
+	class SuperList
+	{
+
+		public:
+			SuperList( xmmsc_result_t* result );
+			SuperList( const SuperList& list );
+			virtual SuperList& operator=( const SuperList& list );
+			virtual ~SuperList();
+
+			virtual void first();
+			virtual void operator++();
+
+			virtual bool isValid() const;
+
+		protected:
+			xmmsc_result_t* result_;
+			bool constructed_;
+
+			virtual void constructContents() = 0;
+
+	};
+
+
 	template< typename T >
-	class List : public Detail::SuperList
+	class List : public SuperList
 	{
 
 		public:
 			List( xmmsc_result_t* result ) :
-				Detail::SuperList( result ), contents_()
+				SuperList( result ), contents_()
 			{
 			}
 
 			List( const List<T>& list ) :
-				Detail::SuperList( list ), contents_( list.contents_ )
+				SuperList( list ), contents_( list.contents_ )
 			{
 			}
 
 			List<T>& operator=( const List<T>& list )
 			{
-				Detail::SuperList::operator=( list );
+				SuperList::operator=( list );
 				contents_ = list.contents_;
 				return *this;
 			}
@@ -59,12 +81,12 @@ namespace Xmms
 	};
 
 	template<>
-	class List< int > : public Detail::SuperList
+	class List< int > : public SuperList
 	{
 
 		public:
 			List( xmmsc_result_t* result ) :
-				Detail::SuperList( result ), contents_( 0 )
+				SuperList( result ), contents_( 0 )
 			{
 
 				if( xmmsc_result_get_type( result ) !=
@@ -77,13 +99,13 @@ namespace Xmms
 			}
 
 			List( const List<int>& list ) :
-				Detail::SuperList( list ), contents_( list.contents_ )
+				SuperList( list ), contents_( list.contents_ )
 			{
 			}
 
 			List<int>& operator=( const List<int>& list )
 			{   
-				Detail::SuperList::operator=( list );
+				SuperList::operator=( list );
 				contents_ = list.contents_;
 				return *this;
 			}
@@ -126,12 +148,12 @@ namespace Xmms
 	};
 
 	template<>
-	class List< unsigned int > : public Detail::SuperList
+	class List< unsigned int > : public SuperList
 	{
 
 		public:
 			List( xmmsc_result_t* result ) :
-				Detail::SuperList( result ), contents_( 0 )
+				SuperList( result ), contents_( 0 )
 			{
 
 				if( xmmsc_result_get_type( result ) !=
@@ -144,13 +166,13 @@ namespace Xmms
 			}
 
 			List( const List<unsigned int>& list ) :
-				Detail::SuperList( list ), contents_( list.contents_ )
+				SuperList( list ), contents_( list.contents_ )
 			{
 			}
 
 			List<unsigned int>& operator=( const List<unsigned int>& list )
 			{
-				Detail::SuperList::operator=( list );
+				SuperList::operator=( list );
 				contents_ = list.contents_;
 				return *this;
 			}
@@ -193,12 +215,12 @@ namespace Xmms
 	};
 
 	template<>
-	class List< std::string > : public Detail::SuperList
+	class List< std::string > : public SuperList
 	{
 
 		public:
 			List( xmmsc_result_t* result ) :
-				Detail::SuperList( result ), contents_() 
+				SuperList( result ), contents_() 
 			{
 
 				if( xmmsc_result_get_type( result ) !=
@@ -211,13 +233,13 @@ namespace Xmms
 			}
 
 			List( const List<std::string>& list ) :
-				Detail::SuperList( list ), contents_( list.contents_ )
+				SuperList( list ), contents_( list.contents_ )
 			{
 			}
 
 			List<std::string>& operator=( const List<std::string>& list )
 			{
-				Detail::SuperList::operator=( list );
+				SuperList::operator=( list );
 				contents_ = list.contents_;
 				return *this;
 			}
@@ -260,12 +282,12 @@ namespace Xmms
 	};
 
 	template<>
-	class List< Dict > : public Detail::SuperList
+	class List< Dict > : public SuperList
 	{
 
 		public:
 			List( xmmsc_result_t* result ) try :
-				Detail::SuperList( result ), contents_( result_ ) 
+				SuperList( result ), contents_( result_ ) 
 			{
 				// checking the type here is a bit useless since
 				// Dict constructor checks it but we must catch it and
@@ -278,13 +300,13 @@ namespace Xmms
 			}
 
 			List( const List<Dict>& list ) :
-				Detail::SuperList( list ), contents_( list.contents_ )
+				SuperList( list ), contents_( list.contents_ )
 			{
 			}
 
 			List<Dict>& operator=( const List<Dict>& list )
 			{
-				Detail::SuperList::operator=( list );
+				SuperList::operator=( list );
 				contents_ = list.contents_;
 				return *this;
 			}
