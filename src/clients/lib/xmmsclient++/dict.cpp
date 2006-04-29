@@ -95,6 +95,62 @@ namespace Xmms
 
 	}
 
+	static void
+	getValue( Dict::Variant& val, xmmsc_result_value_type_t type,
+	          const void* value )
+	{
+		switch( type ) {
+			
+			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
+
+				val = reinterpret_cast< unsigned int >( value );
+				break;
+
+			}
+			case XMMSC_RESULT_VALUE_TYPE_INT32: {
+
+				val = reinterpret_cast< int >( value );
+				break;
+
+			}
+			case XMMSC_RESULT_VALUE_TYPE_STRING: {
+
+				std::string temp( static_cast< const char* >( value ) );
+				val = temp;
+				break;
+
+			}
+			case XMMSC_RESULT_VALUE_TYPE_NONE: {
+				break;
+			}
+			default: {
+			}
+
+		}
+	}
+
+	static void
+	dict_foreach( const void* key, xmmsc_result_value_type_t type,
+	              const void* value, void* userdata )
+	{
+		Xmms::Dict::ForEachFunc* func =
+			static_cast< Xmms::Dict::ForEachFunc* >( userdata );
+		Xmms::Dict::Variant val;
+		std::string keystring( static_cast< const char* >( key ) );
+		getValue( val, type, value );
+		(*func)( keystring, val );
+
+	}
+
+	void Dict::foreach( const ForEachFunc& func ) const
+	{
+
+		ForEachFunc* f = new ForEachFunc( func );
+		xmmsc_result_dict_foreach( result_, &dict_foreach,
+		                           static_cast< void* >( f ) );
+		delete f;
+
+	}
 
 	PropDict::PropDict( xmmsc_result_t* res ) : Dict( res )
 	{
@@ -136,5 +192,35 @@ namespace Xmms
 
 		delete [] prefs;
 	}
+
+	static void
+	propdict_foreach( const void* key, xmmsc_result_value_type_t type,
+	                  const void* value, const char* source,
+	                  void* userdata )
+	{
+
+		Xmms::PropDict::ForEachFunc* func =
+			static_cast< Xmms::PropDict::ForEachFunc* >( userdata );
+
+		Dict::Variant val;
+		getValue( val, type, value );
+
+		std::string keystring( static_cast< const char* >( key ) );
+		std::string sourcestring( source );
+
+		(*func)( keystring, val, sourcestring );
+
+	}
+
+	void PropDict::foreach( const PropDict::ForEachFunc& func ) const
+	{
+
+		PropDict::ForEachFunc* f = new PropDict::ForEachFunc( func );
+		xmmsc_result_propdict_foreach( result_, &propdict_foreach,
+		                               static_cast< void* >( f ) );
+		delete f;
+
+	}
+
 }
 

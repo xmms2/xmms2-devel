@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/variant.hpp>
+#include <boost/function.hpp>
 #include <string>
 #include <list>
 
@@ -87,6 +88,11 @@ namespace Xmms
 			 * @throws no_such_key_error Occurs when key can't be found.
 			 */
 			virtual Variant operator[]( const std::string& key ) const;
+
+			typedef boost::function< void( const std::string&,
+			                               const Variant& ) > ForEachFunc;
+
+			virtual void foreach( const ForEachFunc& func ) const;
 			
 		/** @cond */
 		protected:
@@ -144,6 +150,12 @@ namespace Xmms
 			 * @param src List of sources to use
 			 */
 			virtual void setSource( const std::list< std::string >& src ) const;
+
+			typedef boost::function< void( const std::string&,
+			                               const Dict::Variant&,
+			                               const std::string& ) > ForEachFunc;
+
+			virtual void foreach( const ForEachFunc& func ) const;
 
 	};
 
