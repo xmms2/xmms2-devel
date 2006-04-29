@@ -8,8 +8,10 @@
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 
+#include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/signal.hpp>
+#include <boost/type_traits/remove_pointer.hpp>
 
 #include <string>
 #include <list>
@@ -139,6 +141,68 @@ namespace Xmms
 		                           static_cast< void* >( sig ) );
 		xmmsc_result_unref( res );
 
+	}
+
+	template<typename Function> struct function_traits;
+
+	template< typename R, typename C >
+	struct function_traits< R (C::*)(void) >
+	{
+		typedef R result_type;
+		typedef void arg1_type;
+	};
+
+	template< typename R, typename C, typename T1 >
+	struct function_traits< R (C::*)(T1) >
+	{
+		typedef R result_type;
+		typedef T1 arg1_type;
+	};
+
+	template< typename R, typename C, typename T1, typename T2 >
+	struct function_traits< R (C::*)(T1, T2) >
+	{
+		typedef R result_type;
+		typedef T1 arg1_type;
+		typedef T2 arg2_type;
+	};
+
+	template< typename R, typename C, typename T1, typename T2, typename T3 >
+	struct function_traits< R (C::*)(T1, T2, T3) >
+	{
+		typedef R result_type;
+		typedef T1 arg1_type;
+		typedef T2 arg2_type;
+		typedef T3 arg3_type;
+	};
+
+	// TODO: think of some wise way to put this in 80 character lines...
+	template< typename A1, typename A2 >
+	inline boost::function< bool( typename function_traits< typename boost::remove_pointer< A1 >::type >::arg1_type ) >
+	bind( A1 a1, A2 a2 )
+	{
+		return boost::bind( a1, a2, _1 );
+	}
+
+	template< typename A2 >
+	inline boost::function< void( const std::string&, const Dict::Variant& ) >
+	bind( void(boost::remove_pointer< A2 >::type::*a1)( const std::string&, const Dict::Variant& ), A2 a2 )
+	{
+		return boost::bind( a1, a2, _1, _2 );
+	} 
+
+	template< typename A2 >
+	inline boost::function< void( const std::string&, const Dict::Variant&, const std::string& ) >
+	bind( void(boost::remove_pointer< A2 >::type::*a1)( const std::string&, const Dict::Variant&, const std::string& ), A2 a2 )
+	{
+		return boost::bind( a1, a2, _1, _2, _3 );
+	}
+
+	template< typename A2 >
+	inline boost::function< bool( void ) >
+	bind( bool(boost::remove_pointer< A2 >::type::*a1)(), A2 a2 )
+	{
+		return boost::bind( a1, a2 );
 	}
 
 }
