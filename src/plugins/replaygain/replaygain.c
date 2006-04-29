@@ -49,9 +49,13 @@ typedef struct xmms_replaygain_data_St {
 static gboolean xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_replaygain_init (xmms_xform_t *xform);
 static void xmms_replaygain_destroy (xmms_xform_t *xform);
-static gint xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
-                                  xmms_error_t *error);
-static void xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
+static gint xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf,
+                                  gint len, xmms_error_t *error);
+static gint64 xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
+                                    xmms_xform_seek_mode_t whence,
+                                    xmms_error_t *error);
+static void xmms_replaygain_config_changed (xmms_object_t *obj,
+                                            gconstpointer value,
                                             gpointer udata);
 
 static void compute_gain (xmms_xform_t *xform, xmms_replaygain_data_t *data);
@@ -77,6 +81,7 @@ xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_replaygain_init;
 	methods.destroy = xmms_replaygain_destroy;
 	methods.read = xmms_replaygain_read;
+	methods.seek = xmms_replaygain_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -256,6 +261,13 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	}
 
 	return read;
+}
+
+static gint64
+xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
+                      xmms_xform_seek_mode_t whence, xmms_error_t *error)
+{
+	return xmms_xform_seek (xform, samples, whence, error);
 }
 
 static void
