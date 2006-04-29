@@ -102,10 +102,4 @@ namespace Xmms
 		}
 	}
 
-	bool
-	MainLoop::isRunning() const
-	{
-		return running_;
-	}
-
 }

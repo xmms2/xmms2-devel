@@ -96,7 +96,7 @@ namespace Xmms
 			// Constructor, only to be called by Xmms::Client
 			friend class Client;
 			Config( xmmsc_connection_t*& conn, bool& connected,
-				    MainLoop*& ml );
+				    MainloopInterface*& ml );
 
 			// Copy-constructor / operator=
 			Config( const Config& src );
@@ -104,7 +104,7 @@ namespace Xmms
 
 			xmmsc_connection_t*& conn_;
 			bool& connected_;
-			MainLoop*& ml_;
+			MainloopInterface*& ml_;
 
 	};
 

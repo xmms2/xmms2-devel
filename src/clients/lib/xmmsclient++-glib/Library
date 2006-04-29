@@ -4,6 +4,6 @@ systemlibrary=True
 source=["xmmsclient++-glib.cpp"]
 
 def config(env):
-	env.pkgconfig("xmms2-client-glib")
+#	env.pkgconfig("xmms2-client-glib")
 	env.pkgconfig("glib-2.0")
 
