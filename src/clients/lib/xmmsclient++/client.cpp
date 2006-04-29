@@ -16,12 +16,11 @@
 
 #include <list>
 #include <string>
-using std::string;
 
 namespace Xmms 
 {
 
-	Client::Client( const string& name ) 
+	Client::Client( const std::string& name ) 
 		: playback( conn_, connected_, mainloop_ ), 
 	      playlist( conn_, connected_, mainloop_ ), 
 		  medialib( conn_, connected_, mainloop_ ),
@@ -45,7 +44,7 @@ namespace Xmms
 		xmmsc_unref( conn_ );
 	}
 
-	void Client::connect( const string& ipcpath )
+	void Client::connect( const std::string& ipcpath )
 	{
 
 		if( !connected_ ) {
@@ -117,9 +116,9 @@ namespace Xmms
 		return connected_;
 	}
 
-	string Client::getLastError() const
+	std::string Client::getLastError() const
 	{
-		return string( xmmsc_get_last_error( conn_ ) );
+		return std::string( xmmsc_get_last_error( conn_ ) );
 	}
 
 	bool Client::quitHandler( const unsigned int& /*time*/ )

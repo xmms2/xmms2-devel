@@ -21,25 +21,66 @@
 namespace Xmms 
 {
 
+	/** @class Client client.h "xmmsclient/xmmsclient++/client.h"
+	 *  @brief This class is used to control everything through various
+	 *         Subsystems.
+	 *  
+	 *  You can access the subsystems directly from the public data fields
+	 *  described above.
+	 */
 	class Client 
 	{
 
 		public:
 
-			// Constructors
+			/** Constructor.
+			 *  Constructs client object.
+			 *
+			 *  @param name Name of the client. Accepts only characters
+			 *              in range [a-zA-Z0-9].
+			 *
+			 *  @todo Should throw std::bad_alloc maybe on error.
+			 *
+			 */              
 			Client( const std::string& name );
 
-			// Destructor
+			/** Destructor.
+			 *  Cleans up everything.
+			 */
 			virtual ~Client();
 
-			// Connection
-
+			/** Connects to the XMMS2 server.
+			 *  if ipcpath is omitted or empty (""), it will try to open
+			 *  the default path.
+			 *
+			 *  @param ipcpath The IPC path. It's broken down like this:
+			 *                 <protocol>://<path>[:<port>]. Default is
+			 *                 "unix:///tmp/xmms-ipc-<username>".
+			 *                 - Protocol could be "tcp" or "unix".
+			 *                 - Path is either the UNIX socket,
+			 *                   or the ipnumber of the server.
+			 *                 - Port is only used when the protocol tcp.
+			 *  @throw connection_error If connection fails.
+			 */
 			void connect( const std::string& ipcpath = "" );
 
-			// Control
+			/** Tell the server to quit.
+			 *  This will terminate the server. Destruct this object if you
+			 *  just want to disconnect.
+			 */
 			void quit();
 
-
+			/** Request the quit broadcast.
+			 *  The callback will be called when the server is terminating.
+			 *
+			 *  @param slot Function pointer to the callback function.
+			 *              Function signature must be
+			 *              bool( const unsigned int& ).
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
 			void
 			broadcastQuit( const UintSlot& slot,
 			               const ErrorSlot& error = &Xmms::dummy_error );
@@ -52,17 +93,35 @@ namespace Xmms
 			const Config   config;
 			const Stats    stats;
 
-			// Get an object to create an async main loop
+			/** Get the current mainloop.
+			 *  If no mainloop is set, it will create a default MainLoop.
+			 *  
+			 *  @return Reference to the current mainloop object.
+			 */
 			MainloopInterface& getMainLoop();
+
+			/** Set the mainloop which is to be used.
+			 *  
+			 *  @param ml A mainloop class derived from MainloopInterface.
+			 *
+			 *  @note The parameter @b must be created with <i>new</i>,
+			 *        and it must @b not be destructed at any point.
+			 *        The Client class will take care of its destruction.
+			 */
 			void setMainloop( MainloopInterface* ml );
 
+			/** Return the connection status.
+			 */
 			bool isConnected() const;
 
+			/** Returns a string that describes the last error.
+			 */
 			std::string getLastError() const;
 
 			// Return the internal connection pointer
 			inline xmmsc_connection_t* getConnection() const { return conn_; }
 
+		/** @cond */
 		private:
 			// Copy-constructor / operator=
 			// prevent copying
@@ -81,6 +140,7 @@ namespace Xmms
 			Listener* listener_;
 
 			Signal<unsigned int>* quitSignal_;
+		/** @endcond */
 
 	};
 
