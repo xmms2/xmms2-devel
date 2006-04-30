@@ -9,8 +9,13 @@
 namespace Xmms
 {
 
+	/** @cond INTERNAL */
 	typedef boost::signal< bool( const std::string& ) > error_sig;
 
+	/** @class SignalInterface
+	 *  This is here only to unify all Signal classes so that they can be
+	 *  put in one list.
+	 */
 	struct SignalInterface
 	{
 
@@ -20,6 +25,9 @@ namespace Xmms
 
 	};
 
+	/** @class Signal
+	 *  Holds error signal and normal signal
+	 */
 	template< typename T >
 	struct Signal : public SignalInterface
 	{
@@ -30,6 +38,9 @@ namespace Xmms
 
 	};
 
+	/** @class Signal
+	 *  Specialized Signal for void signals.
+	 */
 	template<>
 	struct Signal< void > : public SignalInterface
 	{
@@ -40,19 +51,38 @@ namespace Xmms
 
 	};
 
+	/** @class SignalHolder
+	 *  @brief Holds a list of Signal classes and deletes them when requested
+	 *         or when the program quits and there still are some in the list.
+	 *  @note A singleton.
+	 */
 	class Client;
 	class SignalHolder
 	{
 
 		public:
+			/** Get the instance of this class.
+			 *  @return a SignalHolder instance.
+			 */
 			static SignalHolder& getInstance();
 
+			/** Add a signal to the list.
+			 *  @param sig A pointer to signal to add.
+			 *  @note You must @b not delete the signal afterwards.
+			 */
 			void addSignal( SignalInterface* sig );
 
+			/** Remove a signal from the list.
+			 *  @param sig A pointer to signal to remove.
+			 *  @note This will delete the signal too.
+			 */
 			void removeSignal( SignalInterface* sig );
 
+			/** Cleans up existing signals
+			 */
 			~SignalHolder();
 
+		/** @cond */
 		private:
 			friend class Client;
 			SignalHolder()
@@ -63,9 +93,14 @@ namespace Xmms
 			void deleteAll();
 
 			std::list< SignalInterface* > signals_;
+		/** @endcond */
 
 	};
 
+	/** Templated functions for extracting the correct value from
+	 *  xmmsc_result_t.
+	 *  @note return value must be deleted
+	 */
 	template< typename T >
 	inline T* extract_value( xmmsc_result_t* res )
 	{
@@ -122,6 +157,9 @@ namespace Xmms
 		return result;
 	}
 
+	/** Templated function to handle the value extraction, signal calling
+	 *  and deletion of the extracted value.
+	 */
 	template< typename T >
 	inline bool
 	callSignal( const Signal< T >* sig, xmmsc_result_t*& res )
@@ -134,6 +172,8 @@ namespace Xmms
 
 	}
 
+	/** Specialized version of the templated callSignal.
+	 */
 	template<>
 	inline bool
 	callSignal( const Signal< void >* sig, xmmsc_result_t*& /* res */)
@@ -141,6 +181,9 @@ namespace Xmms
 		return sig->signal();
 	}
 
+	/** Generic callback function to handle signal calling, error checking,
+	 *  signal renewing, broadcast disconnection and Signal deletion.
+	 */
 	template< typename T >
 	inline void generic_callback( xmmsc_result_t* res, void* userdata )
 	{
@@ -184,6 +227,7 @@ namespace Xmms
 		xmmsc_result_unref( res );
 
 	}
+	/** @endcond INTERNAL */
 
 }
 
