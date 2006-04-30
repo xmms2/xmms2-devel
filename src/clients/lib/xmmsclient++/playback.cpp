@@ -5,6 +5,7 @@
 #include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
+#include <xmmsclient/xmmsclient++/dict.h>
 
 #include <boost/bind.hpp>
 
@@ -103,20 +104,20 @@ namespace Xmms
 		return playtime;
 	}
 
-	void Playback::volumeSet(const std::string& channel, unsigned int volume) const
+	void Playback::volumeSet(const std::string& channel,
+	                         unsigned int volume) const
 	{
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_playback_volume_set, conn_,
 		                    channel.c_str(), volume ) );
 	}
 
-	unsigned int Playback::volumeGet() const
+	Dict Playback::volumeGet() const
 	{
 		xmmsc_result_t* res = 
 		    call( connected_, ml_,
 		          boost::bind( xmmsc_playback_volume_get, conn_ ) );
-		unsigned int volume = 0;
-		xmmsc_result_get_uint( res, &volume );
+		Dict volume( res );
 		xmmsc_result_unref( res );
 
 		return volume;
@@ -324,20 +325,20 @@ namespace Xmms
 		             slots, error );
 	}
 
-	void Playback::volumeGet( const UintSlot& slot,
+	void Playback::volumeGet( const DictSlot& slot,
 	                          const ErrorSlot& error ) const
 	{
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_playback_volume_get, conn_ ),
-		                     slot, error );
+		aCall<Dict>( connected_,
+		             boost::bind( xmmsc_playback_volume_get, conn_ ),
+		             slot, error );
 	}
 
-	void Playback::volumeGet( const std::list< UintSlot >& slots,
+	void Playback::volumeGet( const std::list< DictSlot >& slots,
 	                          const ErrorSlot& error ) const
 	{
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_playback_volume_get, conn_ ),
-		                     slots, error );
+		aCall<Dict>( connected_,
+		             boost::bind( xmmsc_playback_volume_get, conn_ ),
+		             slots, error );
 	}
 
 	void
