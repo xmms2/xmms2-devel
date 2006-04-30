@@ -114,11 +114,12 @@ namespace Xmms
 			 */
 			bool isConnected() const;
 
-			/** Returns a string that describes the last error.
+			/** Return a string that describes the last error.
 			 */
 			std::string getLastError() const;
 
-			// Return the internal connection pointer
+			/** Return the internal connection pointer.
+			 */
 			inline xmmsc_connection_t* getConnection() const { return conn_; }
 
 		/** @cond */
