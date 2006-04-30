@@ -54,8 +54,8 @@ namespace Xmms
 			 *  the default path.
 			 *
 			 *  @param ipcpath The IPC path. It's broken down like this:
-			 *                 <protocol>://<path>[:<port>]. Default is
-			 *                 "unix:///tmp/xmms-ipc-<username>".
+			 *                 @<protocol@>://@<path@>[:@<port@>]. Default is
+			 *                 "unix:///tmp/xmms-ipc-@<username@>".
 			 *                 - Protocol could be "tcp" or "unix".
 			 *                 - Path is either the UNIX socket,
 			 *                   or the ipnumber of the server.
