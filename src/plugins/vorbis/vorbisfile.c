@@ -366,7 +366,8 @@ xmms_vorbis_init (xmms_xform_t *xform)
 }
 
 static gint
-xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len, xmms_error_t *err)
+xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
+                  xmms_error_t *err)
 {
 	gint ret = 0;
 	gint c;
@@ -403,7 +404,8 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len, xmms_error_t *err
 }
 
 static gint64
-xmms_vorbis_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_vorbis_seek (xmms_xform_t *xform, gint64 samples,
+                  xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_vorbis_data_t *data;
 
