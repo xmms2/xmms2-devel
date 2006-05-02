@@ -93,7 +93,7 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void
-            mainStats(const DictSlot& slot,
+			mainStats(const DictSlot& slot,
 			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/**
@@ -123,7 +123,7 @@ namespace Xmms
 			 *  @note This defaults the type to Plugins::ALL
 			 */
 			void
-            pluginList(const DictListSlot& slot,
+			pluginList(const DictListSlot& slot,
 			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** @overload
@@ -152,7 +152,7 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void
-            signalVisualisationData( const UintListSlot& slot,
+			signalVisualisationData( const UintListSlot& slot,
 			                         const ErrorSlot& error = &Xmms::dummy_error
 			                       ) const;
 
