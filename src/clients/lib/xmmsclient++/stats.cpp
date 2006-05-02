@@ -62,13 +62,6 @@ namespace Xmms
 		             slots, error );
 	}
 
-	void 
-	Stats::pluginList( const DictListSlot& slot,
-	                   const ErrorSlot& error ) const
-	{
-		pluginList( Plugins::ALL, slot, error );
-	}
-
 	void
 	Stats::pluginList(Plugins::Type type,
 	                   const DictListSlot& slot,
@@ -79,11 +72,11 @@ namespace Xmms
 		                 slot, error );
 	}
 
-	void
-	Stats::pluginList( const std::list< DictListSlot >& slots,
+	void 
+	Stats::pluginList( const DictListSlot& slot,
 	                   const ErrorSlot& error ) const
 	{
-		pluginList( Plugins::ALL, slots, error );
+		pluginList( Plugins::ALL, slot, error );
 	}
 
 	void
@@ -94,6 +87,13 @@ namespace Xmms
 		aCall<DictList>( connected_,
 		                 boost::bind( xmmsc_plugin_list, conn_, type ),
 		                 slots, error );
+	}
+
+	void
+	Stats::pluginList( const std::list< DictListSlot >& slots,
+	                   const ErrorSlot& error ) const
+	{
+		pluginList( Plugins::ALL, slots, error );
 	}
 
 	void
