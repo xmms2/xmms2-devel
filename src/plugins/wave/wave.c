@@ -84,9 +84,9 @@ static gint xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 static void xmms_wave_get_media_info (xmms_xform_t *xform);
 static void xmms_wave_destroy (xmms_xform_t *xform);
 static gboolean xmms_wave_init (xmms_xform_t *xform);
-#if 0
-static gboolean xmms_wave_seek (xmms_xform_t *xform, guint samples);
-#endif
+static gint64 xmms_wave_seek (xmms_xform_t *xform, gint64 samples,
+                              xmms_xform_seek_mode_t whence,
+                              xmms_error_t *error);
 
 static xmms_wave_format_t read_wave_header (xmms_wave_data_t *data,
                                             guint8 *buf, gint bytes_read);
@@ -110,6 +110,7 @@ xmms_wave_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_wave_init;
 	methods.destroy = xmms_wave_destroy;
 	methods.read = xmms_wave_read;
+	methods.seek = xmms_wave_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -246,38 +247,31 @@ xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	return ret;
 }
 
-#if 0
-static gboolean
-xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
+static gint64
+xmms_wave_seek (xmms_xform_t *xform, gint64 samples,
+                xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
-	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
-	guint offset;
-	gint ret;
+	gint64 offset;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (samples >= 0, -1);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 
-	data = xmms_xform_private_data_get (decoder);
-	g_return_val_if_fail (data, FALSE);
-
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
 
 	offset = data->header_size;
 	offset += samples * (data->bits_per_sample / 8) * data->channels;
 
 	if (offset > data->bytes_total) {
-		xmms_log_error ("Trying to seek past end of stream");
-
-		return FALSE;
+		xmms_error_set (error, XMMS_ERROR_INVAL,
+		                "Trying to seek past end of stream");
+		return -1;
 	}
 
-	ret = xmms_transport_seek (transport, offset,
-	                           XMMS_TRANSPORT_SEEK_SET);
-
-	return ret != -1;
+	return xmms_xform_seek(xform, offset, whence, error);
 }
-#endif
 
 static void
 xmms_wave_destroy (xmms_xform_t *xform)
