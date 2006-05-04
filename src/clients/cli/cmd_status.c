@@ -221,6 +221,9 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 
 	xmmsc_result_get_dict_entry_int32 (res, "duration", &curr_dur);
 
+	/* rounding */
+	curr_dur += 500;
+
 	xmmsc_result_unref (res);
 }
 

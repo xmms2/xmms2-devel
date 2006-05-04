@@ -382,6 +382,8 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char seconds[10];
+				/* rounding */
+				duration += 500;
 				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
 				strncat (target, seconds, len - strlen (target) - 1);
 			}
@@ -394,6 +396,8 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char minutes[10];
+				/* rounding */
+				duration += 500;
 				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
