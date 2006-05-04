@@ -406,16 +406,14 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t
 		return -1;
 	}
 
-	if (xform->buffered) {
-		if (whence == XMMS_XFORM_SEEK_CUR) {
-			offset -= xform->buffered;
-		}
-		xform->buffered = 0;
+	if (xform->buffered && whence == XMMS_XFORM_SEEK_CUR) {
+		offset -= xform->buffered;
 	}
 
 	res = xform->plugin->methods.seek (xform, offset, whence, err);
 	if (res != -1) {
 		xform->eos = FALSE;
+		xform->buffered = 0;
 	}
 
 	return res;
