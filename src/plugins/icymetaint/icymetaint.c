@@ -172,7 +172,7 @@ xmms_icymetaint_read (xmms_xform_t *xform, void *orig_ptr, gint orig_len, xmms_e
 				ptr += tlen;
 
 			} else if (data->meta_offset &&
-                       data->bytes_since_meta == data->meta_offset) {
+			           data->bytes_since_meta == data->meta_offset) {
 
 				data->metabufferleft = (*((guchar *)ptr)) * 16;
 				data->metabufferpos = 0;

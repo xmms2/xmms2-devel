@@ -246,7 +246,7 @@ xmms_curl_init (xmms_xform_t *xform)
 		curl_easy_setopt (data->curl_easy, CURLOPT_PROXY, proxyaddress);
 		if (authproxy == 1) {
 			curl_easy_setopt (data->curl_easy, CURLOPT_PROXYUSERPWD,
-		                          proxyuserpass);
+			                  proxyuserpass);
 		}
 	}
 
@@ -332,7 +332,7 @@ fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 		data->curl_code = curl_multi_perform (data->curl_multi, &handles);
 
 		if (data->curl_code != CURLM_CALL_MULTI_PERFORM &&
-			data->curl_code != CURLM_OK) {
+		    data->curl_code != CURLM_OK) {
 
 			xmms_error_set (error, XMMS_ERROR_GENERIC,
 			                curl_multi_strerror (data->curl_code));
