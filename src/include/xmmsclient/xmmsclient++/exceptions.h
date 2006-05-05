@@ -7,6 +7,14 @@
 namespace Xmms
 {
 
+	// These should probably be inherited from something like Xmms::error
+	// to provide more methods like getFunction(), getLine() or something.
+
+	// Someone kick doxygen for me please!, this line just can't be cut
+	/** @class connection_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *  @brief Thrown on connection error when connecting or when calling a
+	 *         function and not connected.
+	 */
 	class connection_error : public std::runtime_error
 	{
 		public:
@@ -14,13 +22,21 @@ namespace Xmms
 
 	};
 
-	class not_list_error : public std::runtime_error
+	/** @class not_list_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *  @brief Thrown when trying to create a list from non-list resultset.
+	 *  @note Logic error, should <b>not</b> be caught, fix the code instead.
+	 */
+	class not_list_error : public std::logic_error
 	{
 		public:
 			explicit not_list_error( const std::string& what_arg );
 
 	};
 
+	/** @class result_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if the returned resultset was in error state.
+	 */
 	class result_error : public std::runtime_error
 	{
 		public:
@@ -28,20 +44,20 @@ namespace Xmms
 
 	};
 
-	class no_result_type_error : public std::runtime_error
-	{
-		public:
-			explicit no_result_type_error( const std::string& what_arg );
-
-	};
-
-	class not_dict_error : public std::runtime_error
+	/** @class not_dict_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *  @brief Thrown when trying to create a dict from non-dict resultset.
+	 *  @note Logic error, should <b>not</b> be caught, fix the code instead.
+	 */
+	class not_dict_error : public std::logic_error
 	{
 		public:
 			explicit not_dict_error( const std::string& what_arg );
 
 	};
 
+	/** @class no_such_key_error exceptions.h "xmmsclient/xmmsclient/exceptions.h"
+	 *  @brief Thrown if trying to access a non-existant key in a Dict.
+	 */
 	class no_such_key_error : public std::runtime_error
 	{
 		public:
@@ -49,6 +65,11 @@ namespace Xmms
 
 	};
 
+	/** @class mainloop_running_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *  @brief Thrown when calling a synchronous function and the mainloop is
+	 *         running.
+	 *  @note Logic error, should <b>not</b> be caught, fix the code instead.
+	 */
 	class mainloop_running_error : public std::logic_error
 	{
 		public:
@@ -56,6 +77,10 @@ namespace Xmms
 
 	};
 
+	/** @class wrong_type_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *  @brief Thrown from Dict::get if the type provided was wrong.
+	 *  @note Logic error, should <b>not</b> be caught, fix the code instead.
+	 */
 	class wrong_type_error : public std::logic_error
 	{
 		public:

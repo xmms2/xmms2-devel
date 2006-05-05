@@ -15,7 +15,7 @@ namespace Xmms
 	}
 
 	not_list_error::not_list_error( const string& what_arg ) :
-		runtime_error( what_arg )
+		logic_error( what_arg )
 	{
 	}
 
@@ -24,13 +24,8 @@ namespace Xmms
 	{
 	}
 
-	no_result_type_error::no_result_type_error( const string& what_arg ) :
-		runtime_error( what_arg )
-	{
-	}
-
 	not_dict_error::not_dict_error( const string& what_arg ) :
-		runtime_error( what_arg )
+		logic_error( what_arg )
 	{
 	}
 
