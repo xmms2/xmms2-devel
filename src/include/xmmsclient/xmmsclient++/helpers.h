@@ -213,7 +213,7 @@ namespace Xmms
 	};
 	/** @endcond */
 
-	/** Wrapper function for boost::bind to remove the repetition of _1.
+	/** Wrapper function for %boost::%bind to remove the repetition of _1.
 	 *  
 	 *  @param a1 Member function pointer. The function must have signature
 	 *            bool( const T& ), where T is unsigned int, int, std::string,
@@ -231,7 +231,7 @@ namespace Xmms
 		return boost::bind( a1, a2, _1 );
 	}
 
-	/** Wrapper function for boost::bind.
+	/** Wrapper function for %boost::%bind.
 	 *  This is to be used with Dict::foreach when the foreach function is
 	 *  a member function of some class.
 	 *
@@ -251,7 +251,7 @@ namespace Xmms
 		return boost::bind( a1, a2, _1, _2 );
 	} 
 
-	/** Wrapper function for boost::bind.
+	/** Wrapper function for %boost::%bind.
 	 *  This is to be used with PropDict::foreach when the foreach function is
 	 *  a member function of some class.
 	 *
@@ -275,7 +275,7 @@ namespace Xmms
 		return boost::bind( a1, a2, _1, _2, _3 );
 	}
 
-	/** Wrapper function for boost::bind.
+	/** Wrapper function for %boost::%bind.
 	 *  Trivial case.
 	 *
 	 *  @param a1 Member function pointer. The function must have signature
