@@ -305,32 +305,6 @@ namespace Xmms
 
 	void
 	Medialib::entryPropertyRemove( unsigned int id, const std::string& key,
-	                               const VoidSlot& slot,
-	                               const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_remove, conn_,
-		                          id, key.c_str() ),
-		             slot, error );
-
-	}
-
-	void
-	Medialib::entryPropertyRemove( unsigned int id, const std::string& key,
-	                               const std::list< VoidSlot >& slots,
-	                               const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_remove, conn_,
-		                          id, key.c_str() ),
-		             slots, error );
-
-	}
-
-	void
-	Medialib::entryPropertyRemove( unsigned int id, const std::string& key,
 	                               const std::string& source,
 	                               const VoidSlot& slot,
 	                               const ErrorSlot& error ) const
@@ -360,29 +334,27 @@ namespace Xmms
 	}
 
 	void
-	Medialib::entryPropertySet( unsigned int id, const std::string& key,
-	                            const std::string& value,
-	                            const VoidSlot& slot,
-	                            const ErrorSlot& error ) const
+	Medialib::entryPropertyRemove( unsigned int id, const std::string& key,
+	                               const VoidSlot& slot,
+	                               const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_set, conn_,
-		                          id, key.c_str(), value.c_str() ),
+		             boost::bind( xmmsc_medialib_entry_property_remove, conn_,
+		                          id, key.c_str() ),
 		             slot, error );
 
 	}
 
 	void
-	Medialib::entryPropertySet( unsigned int id, const std::string& key,
-	                            const std::string& value,
-	                            const std::list< VoidSlot >& slots,
-	                            const ErrorSlot& error ) const
+	Medialib::entryPropertyRemove( unsigned int id, const std::string& key,
+	                               const std::list< VoidSlot >& slots,
+	                               const ErrorSlot& error ) const
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_set, conn_,
-		                          id, key.c_str(), value.c_str() ),
+		             boost::bind( xmmsc_medialib_entry_property_remove, conn_,
+		                          id, key.c_str() ),
 		             slots, error );
 
 	}
@@ -415,6 +387,34 @@ namespace Xmms
 		             boost::bind( xmmsc_medialib_entry_property_set_with_source,
 		                          conn_, id, source.c_str(), key.c_str(),
 		                          value.c_str() ),
+		             slots, error );
+
+	}
+
+	void
+	Medialib::entryPropertySet( unsigned int id, const std::string& key,
+	                            const std::string& value,
+	                            const VoidSlot& slot,
+	                            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_entry_property_set, conn_,
+		                          id, key.c_str(), value.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Medialib::entryPropertySet( unsigned int id, const std::string& key,
+	                            const std::string& value,
+	                            const std::list< VoidSlot >& slots,
+	                            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_entry_property_set, conn_,
+		                          id, key.c_str(), value.c_str() ),
 		             slots, error );
 
 	}
@@ -674,23 +674,6 @@ namespace Xmms
 	}
 
 	void
-	Medialib::rehash( const VoidSlot& slot, const ErrorSlot& error ) const
-	{
-
-		rehash( 0, slot, error );
-
-	}
-
-	void
-	Medialib::rehash( const std::list< VoidSlot >& slots,
-	                  const ErrorSlot& error ) const
-	{
-
-		rehash( 0, slots, error );
-
-	}
-
-	void
 	Medialib::rehash( unsigned int id, const VoidSlot& slot,
 	                  const ErrorSlot& error ) const
 	{
@@ -709,6 +692,23 @@ namespace Xmms
 		aCall<void>( connected_,
 		             boost::bind( xmmsc_medialib_rehash, conn_, id ),
 		             slots, error );
+
+	}
+
+	void
+	Medialib::rehash( const VoidSlot& slot, const ErrorSlot& error ) const
+	{
+
+		rehash( 0, slot, error );
+
+	}
+
+	void
+	Medialib::rehash( const std::list< VoidSlot >& slots,
+	                  const ErrorSlot& error ) const
+	{
+
+		rehash( 0, slots, error );
 
 	}
 

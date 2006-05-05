@@ -270,7 +270,8 @@ namespace Xmms
 
 			/** Retrieve the current position in the playlist.
 			 * 
-			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param slot Function pointer to a function taking a
+			 *              const unsigned int& and returning a bool.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *
@@ -401,7 +402,7 @@ namespace Xmms
 			 * @note It takes a list of slots instead of just one slot.
 			 */
 			void
-			remove( unsigned int pops,
+			remove( unsigned int pos,
 			        const std::list< VoidSlot >& slots,
 			        const ErrorSlot& error = &Xmms::dummy_error ) const;
 
@@ -502,7 +503,8 @@ namespace Xmms
 			 *
 			 *  Everytime someone manipulates the playlist this will be emitted.
 			 *
-			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param slot Function pointer to a function taking a
+			 *              const Dict& and returning a bool.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *
@@ -527,7 +529,8 @@ namespace Xmms
 			 *  When the position in the playlist is
 			 *  changed this will be called.
 			 *
-			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param slot Function pointer to a function taking a
+			 *              const unsigned int& and returning a bool.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *
