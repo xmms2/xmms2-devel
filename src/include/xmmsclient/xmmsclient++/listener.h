@@ -9,39 +9,61 @@ namespace Xmms
 
 	class Client;
 
-	// Interface to define MainLoop listeners.
+	/** @class ListenerInterface listener.h "xmmsclient/xmmsclient++/listener.h"
+	 *  @brief Interface to define MainLoop listeners.
+	 */
 	class ListenerInterface
 	{
 
 		public:
 
+			/** Destructor.
+			 */
 			virtual ~ListenerInterface() {}
+
+			/** Comparison operator, compares the file descriptors.
+			 */
 			bool operator==( const ListenerInterface& rhs ) const;
 
-		    // Return the file descriptor to listen to
+			/** Return the file descriptor of the listener.
+			 */
 			virtual int32_t getFileDescriptor() const = 0;
 
-		    // Whether to check for data available for reading
+			/** Returns whether to check if data is available for reading.
+			 */
 			virtual bool listenIn() const = 0;
 
-		    // Whether to check for space available for writing
+			/** Returns whether to check if space is available for writing.
+			 */
 			virtual bool listenOut() const = 0;
 
-		    // Method run if data available for reading
+			/** Method run if data is available for reading.
+			 */
 			virtual void handleIn() = 0;
 
-		    // Method run if space available for writing
+			/** Method run if data is available for writing.
+			 */
 			virtual void handleOut() = 0;
 
 	};
 
-	// XMMS2 listener
+	/** @class Listener listener.h "xmmsclient/xmmsclient++/listener.h"
+	 *  @brief XMMS2 Listener for MainLoop.
+	 */
 	class Listener : public ListenerInterface
 	{
 
 		public:
+			/** Copy-constructor.
+			 */
 			Listener( const Listener& src );
+
+			/** Copy assignment operator.
+			 */
 			Listener& operator=( const Listener& src );
+
+			/** Destructor.
+			 */
 			virtual ~Listener();
 
 			virtual int32_t getFileDescriptor() const;
@@ -54,6 +76,12 @@ namespace Xmms
 
 			// Constructor, only to be called by Xmms::Client
 			friend class Client;
+
+			/** Constructor, only callable by Client.
+			 *
+			 *  @param conn xmmsc_connection_t* of the connection used
+			 *              by the listener.
+			 */
 			Listener( xmmsc_connection_t*& conn );
 
 			xmmsc_connection_t*& conn_;

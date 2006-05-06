@@ -20,6 +20,7 @@ namespace Xmms
 		for(lit = listeners.begin(); lit != listeners.end(); ++lit) {
 			delete (*lit);
 		}
+		listeners.clear();
 	}
 
 	void
