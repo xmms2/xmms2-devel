@@ -88,6 +88,19 @@ namespace Xmms
 
 	};
 
+	/** @class out_of_range exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if accessing a List which is at the end or over.
+	 *  @note It's better to check for List validity
+	 *        than have this caught/thrown.
+	 */
+	class out_of_range : public std::out_of_range
+	{
+		public:
+			explicit out_of_range( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H

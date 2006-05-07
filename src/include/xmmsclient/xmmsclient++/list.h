@@ -164,10 +164,14 @@ namespace Xmms
 			{
 
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_INT32 ) {
+				    XMMS_OBJECT_CMD_ARG_INT32 &&
+				    xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_NONE ) {
+
 					// SuperList constructor refs the result so we'll unref
 					xmmsc_result_unref( result );
 					throw wrong_type_error( "Expected list of ints" );
+
 				}
 
 			}
@@ -209,6 +213,9 @@ namespace Xmms
 				if( constructed_ ) {
 					return;
 				}
+				if( !isValid() ) {
+					throw out_of_range( "List out of range or empty list" );
+				}
 
 				int temp = 0;
 				if( !xmmsc_result_get_int( result_, &temp ) ) {
@@ -231,7 +238,10 @@ namespace Xmms
 			{
 
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_UINT32 ) {
+				    XMMS_OBJECT_CMD_ARG_UINT32 &&
+				    xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_NONE ) {
+
 					// SuperList constructor refs the result so we'll unref
 					xmmsc_result_unref( result );
 					throw wrong_type_error( "Expected list of unsigned ints" );
@@ -276,6 +286,9 @@ namespace Xmms
 				if( constructed_ ) {
 					return;
 				}
+				if( !isValid() ) {
+					throw out_of_range( "List out of range or empty list" );
+				}
 
 				unsigned int temp = 0;
 				if( !xmmsc_result_get_uint( result_, &temp ) ) {
@@ -298,7 +311,9 @@ namespace Xmms
 			{
 
 				if( xmmsc_result_get_type( result ) !=
-				    XMMS_OBJECT_CMD_ARG_STRING ) {
+				    XMMS_OBJECT_CMD_ARG_STRING &&
+				    xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_NONE ) {
 					// SuperList constructor refs the result so we'll unref
 					xmmsc_result_unref( result );
 					throw wrong_type_error( "Expected list of strings" );
@@ -343,6 +358,9 @@ namespace Xmms
 				if( constructed_ ) {
 					return;
 				}
+				if( !isValid() ) {
+					throw out_of_range( "List out of range or empty list" );
+				}
 
 				char* temp = 0;
 				if( !xmmsc_result_get_string( result_, &temp ) ) {
@@ -367,10 +385,15 @@ namespace Xmms
 				// Dict constructor checks it but we must catch it and
 				// unref the result which SuperList refs or we leak.
 			}
-			catch(...)
+			catch( Xmms::not_dict_error& e )
 			{
-				xmmsc_result_unref( result );
-				throw;
+				if( xmmsc_result_get_type( result ) !=
+				    XMMS_OBJECT_CMD_ARG_NONE ) {
+
+					xmmsc_result_unref( result );
+					throw;
+
+				}
 			}
 
 			List( const List<Dict>& list ) :
@@ -408,6 +431,9 @@ namespace Xmms
 			{
 				if( constructed_ ) {
 					return;
+				}
+				if( !isValid() ) {
+					throw out_of_range( "List out of range or empty list" );
 				}
 
 				contents_ = Dict( result_ );

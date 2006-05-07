@@ -44,4 +44,9 @@ namespace Xmms
 	{
 	}
 
+	out_of_range::out_of_range( const std::string& what_arg ) :
+		std::out_of_range( what_arg )
+	{
+	}
+
 }
