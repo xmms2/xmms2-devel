@@ -18,3 +18,4 @@ def config(env):
 	env.Append(LIBS=["xmmsclient"])
 	env.Append(LIBS=["boost_signals"])
 	env.Append(CPPFLAGS="-W -ansi -pedantic")
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")

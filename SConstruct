@@ -186,7 +186,8 @@ pc_files = [{"name": "xmms2-plugin", "lib":""},
 	    {"name":"xmms2-client", "lib":"-lxmmsclient"},
 	    {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
 	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"},
-	    {"name":"xmms2-client-cpp", "lib":"-lxmmsclient++"}]
+	    {"name":"xmms2-client-cpp", "lib":"-lxmmsclient -lxmmsclient++"},
+	    {"name":"xmms2-client-cpp-glib", "lib":"-lxmmsclient-glib -lxmmsclient++-glib"}]
 
 for p in pc_files:
 	d = subst_dict.copy()
