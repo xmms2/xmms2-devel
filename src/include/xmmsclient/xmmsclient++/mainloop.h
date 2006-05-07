@@ -87,6 +87,7 @@ namespace Xmms
 			 */
 			virtual void run();
 
+		/** @cond */
 		private:
 
 			// Constructor, only to be called by Xmms::Client
@@ -112,6 +113,7 @@ namespace Xmms
 			 */
 			void waitForData();
 
+		/** @endcond */
 	};
 
 }

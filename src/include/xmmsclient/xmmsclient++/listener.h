@@ -72,6 +72,7 @@ namespace Xmms
 			virtual void handleIn();
 			virtual void handleOut();
 
+		/** @cond */
 		private:
 
 			// Constructor, only to be called by Xmms::Client
@@ -86,6 +87,7 @@ namespace Xmms
 
 			xmmsc_connection_t*& conn_;
 
+		/** @endcond */
 	};
 
 }
