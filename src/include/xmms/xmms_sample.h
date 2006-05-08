@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006	Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -16,6 +16,8 @@
 
 #ifndef __SAMPLE_H__
 #define __SAMPLE_H__
+
+#include "xmms/xmms_streamtype.h"
 
 typedef enum {
 	XMMS_SAMPLE_FORMAT_UNKNOWN,
@@ -29,12 +31,6 @@ typedef enum {
 	XMMS_SAMPLE_FORMAT_DOUBLE,
 	/* DO NOT CHANGE ORDER! Just add to the end! */
 } xmms_sample_format_t;
-
-typedef struct { /* internal? */
-	xmms_sample_format_t format;
-	guint samplerate;
-	guint channels;
-} xmms_audio_format_t;
 
 typedef struct xmms_sample_converter_St xmms_sample_converter_t;
 
@@ -58,7 +54,7 @@ typedef gfloat xmms_samplefloat_t;
 typedef gdouble xmms_sampledouble_t;
 typedef void xmms_sample_t;
 
-guint xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint bytes);
+guint xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint samples);
 
 static inline gint
 xmms_sample_size_get (xmms_sample_format_t fmt)

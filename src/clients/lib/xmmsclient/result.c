@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -155,8 +155,6 @@ xmmsc_result_ref (xmmsc_result_t *res)
 static void
 xmmsc_result_free (xmmsc_result_t *res)
 {
-	x_list_t *n;
-
 	x_return_if_fail (res);
 
 	if (res->error_str)
@@ -171,16 +169,19 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	x_list_free (res->func_list);
 	x_list_free (res->udata_list);
-	for (n = res->source_pref; n; n = x_list_next (n)) {
-		free (n->data);
-	}
-	x_list_free (res->source_pref);
 
-	for (n = res->extra_free; n; n = x_list_next (n)) {
-		free (n->data);
+	while (res->source_pref) {
+		free (res->source_pref->data);
+		res->source_pref = x_list_delete_link (res->source_pref,
+		                                       res->source_pref);
 	}
-	x_list_free (res->extra_free);
-	
+
+	while (res->extra_free) {
+		free (res->extra_free->data);
+		res->extra_free = x_list_delete_link (res->extra_free,
+		                                      res->extra_free);
+	}
+
 	free (res);
 }
 
@@ -504,18 +505,16 @@ xmmsc_result_wait (xmmsc_result_t *res)
 void
 xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference)
 {
-	x_list_t *n;
 	int i = 0;
 	x_return_if_fail (res);
 	x_return_if_fail (preference);
 
-	for (n = res->source_pref; n; n = x_list_next (n)) {
-		free (n->data);
+	while (res->source_pref) {
+		free (res->source_pref->data);
+		res->source_pref = x_list_delete_link (res->source_pref,
+		                                       res->source_pref);
 	}
 
-	x_list_free (res->source_pref);
-	res->source_pref = NULL;
-	
 	for (i = 0; preference[i]; i++) {
 		res->source_pref = x_list_append (res->source_pref, strdup (preference[i])); 
 	}
@@ -1167,7 +1166,9 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 
 	res->type = type;
 	res->cookie = cookie;
-	res->source_pref = x_list_append (NULL, strdup("server"));
+	res->source_pref = x_list_prepend (NULL, strdup("*"));
+	res->source_pref = x_list_prepend (res->source_pref, strdup("plugins/*"));
+	res->source_pref = x_list_prepend (res->source_pref, strdup("server"));
 
 	/* user must give this back */
 	xmmsc_result_ref (res);

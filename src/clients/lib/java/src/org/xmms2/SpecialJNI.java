@@ -23,28 +23,36 @@ import java.io.FileDescriptor;
  */
 
 public class SpecialJNI {
-	
-	/**
-	 * You have to call this function <b><u>before</u></b> you can use the callbacks,
-	 * or better before the callbacks can call your implemented functions
-	 * 
-	 * @param objectName		An object which implements the Callback interface
-	 */
-	public final static native void setENV(Callbacks objectName);
-	
-	/**
-	 * This function is called by the mainloop, should therefor not be called by the user
-	 * 
-	 * @param objectName		An object which implements the Callback interface
-	 */
-	protected final static native void setupMainloop(Object mainloop, long connection);
-	
-	/**
-	 * This method "converts" a filedescriptor gotten from xmmsc_io_fd_get() to a 
-	 * java FileDescriptor object
-	 * 
-	 * @param fd	FileDescriptor object
-	 * @param c		pointer to xmmsc_connection_St (use org.xmms2.xmms2bindings.Xmmsclient.getPointerToConnection())
-	 */
-	public final static native void getFD(FileDescriptor fd, long c);
+
+    /**
+     * You have to call this function <b><u>before</u></b> you can use the
+     * callbacks, or better before the callbacks can call your implemented
+     * functions
+     * 
+     * @param objectName
+     *            An object which implements the CallbacksListener interface
+     */
+    public final static native void setENV(CallbacksListener objectName);
+
+    /**
+     * This function is called by the mainloop, should therefor not be called by
+     * the user
+     * 
+     * @param objectName
+     *            An object which implements the Callback interface
+     */
+    protected final static native void setupMainloop(Object mainloop,
+            long connection);
+
+    /**
+     * This method "converts" a filedescriptor gotten from xmmsc_io_fd_get() to
+     * a java FileDescriptor object
+     * 
+     * @param fd
+     *            FileDescriptor object
+     * @param c
+     *            pointer to xmmsc_connection_St (use
+     *            org.xmms2.xmms2bindings.Xmmsclient.getPointerToConnection())
+     */
+    public final static native void getFD(FileDescriptor fd, long c);
 }

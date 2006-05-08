@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -176,7 +176,7 @@ xmms_medialib_path_changed (xmms_object_t *object, gconstpointer data,
 #define XMMS_MEDIALIB_SOURCE_SERVER "server"
 #define XMMS_MEDIALIB_SOURCE_SERVER_ID 1
 
-static guint32
+guint32
 xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
 {
 	guint32 ret = 0;
@@ -1309,8 +1309,10 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 		entries = g_list_delete_link (entries, entries);
 	}
 
+	/*
 	str = xmms_playlist_plugin_save (mime, list);
-
+	*/
+	str = NULL;
 	if (!str) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Failed to generate playlist!");
 		return NULL;
@@ -1425,8 +1427,9 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
 	session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
 	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
-
 	xmms_medialib_end (session);
+
+	xmms_medialib_entry_send_update (entry);
 }
 
 void
@@ -1483,7 +1486,8 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *name,
 
 	xmms_medialib_end (session);
 
-	if (!xmms_playlist_plugin_import (playlist_id, entry)) {
+/*	if (!xmms_playlist_plugin_import (playlist_id, entry)) {*/
+	if (FALSE) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not import playlist!");
 		return;
 	}

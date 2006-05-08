@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -35,8 +35,8 @@
 struct xmms_sample_converter_St {
 	xmms_object_t obj;
 
-	xmms_audio_format_t *from;
-	xmms_audio_format_t *to;
+	xmms_stream_type_t *from;
+	xmms_stream_type_t *to;
 
 	gboolean same;
 	gboolean resample;
@@ -63,31 +63,6 @@ xmms_sample_conv_get (guint inchannels, xmms_sample_format_t intype,
                       gboolean resample);
 
 
-/**
- * return a new audioformat.
- */
-xmms_audio_format_t *
-xmms_sample_audioformat_new (xmms_sample_format_t fmt, guint channels, guint rate)
-{
-	xmms_audio_format_t *res = g_new0 (xmms_audio_format_t, 1);
-
-	g_return_val_if_fail (res, NULL);
-
-	res->format = fmt;
-	res->samplerate = rate;
-	res->channels = channels;
-
-	return res;
-}
-
-/**
- * Free all resources used by a #xmms_audio_format_t
- */
-void
-xmms_sample_audioformat_destroy (xmms_audio_format_t *fmt)
-{
-	g_free (fmt);
-}
 
 static void
 xmms_sample_converter_destroy (xmms_object_t *obj)
@@ -99,27 +74,30 @@ xmms_sample_converter_destroy (xmms_object_t *obj)
 }
 
 static xmms_sample_converter_t *
-xmms_sample_converter_init (xmms_audio_format_t *from, xmms_audio_format_t *to)
+xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 {
 	xmms_sample_converter_t *conv = xmms_object_new (xmms_sample_converter_t, xmms_sample_converter_destroy);
+	gint fformat, fsamplerate, fchannels;
+	gint tformat, tsamplerate, tchannels;
+
+	fformat = xmms_stream_type_get_int (from, XMMS_STREAM_TYPE_FMT_FORMAT);
+	fsamplerate = xmms_stream_type_get_int (from, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	fchannels = xmms_stream_type_get_int (from, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	tformat = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_FORMAT);
+	tsamplerate = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	tchannels = xmms_stream_type_get_int (to, XMMS_STREAM_TYPE_FMT_CHANNELS);
 
 	conv->from = from;
 	conv->to = to;
 
-	conv->resample = from->samplerate != to->samplerate;
+	conv->resample = fsamplerate != tsamplerate;
 	
-	conv->func = xmms_sample_conv_get (from->channels, from->format,
-					   to->channels, to->format,
+	conv->func = xmms_sample_conv_get (fchannels, fformat,
+					   tchannels, tformat,
 					   conv->resample);
 
 	if (conv->resample)
-		recalculate_resampler (conv, from->samplerate, to->samplerate);
-
-	if (from->channels == to->channels &&
-	    from->format == to->format &&
-	    from->samplerate == to->samplerate) {
-		conv->same = TRUE;
-	}
+		recalculate_resampler (conv, fsamplerate, tsamplerate);
 
 	return conv;
 }
@@ -127,7 +105,7 @@ xmms_sample_converter_init (xmms_audio_format_t *from, xmms_audio_format_t *to)
 /**
  * Return the audio format used by the converter as source
  */
-xmms_audio_format_t *
+xmms_stream_type_t *
 xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 {
 	g_return_val_if_fail (conv, NULL);
@@ -138,7 +116,7 @@ xmms_sample_converter_get_from (xmms_sample_converter_t *conv)
 /**
  * Return the audio format used by the converter as target
  */
-xmms_audio_format_t *
+xmms_stream_type_t *
 xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 {
 	g_return_val_if_fail (conv, NULL);
@@ -151,6 +129,7 @@ xmms_sample_converter_get_to (xmms_sample_converter_t *conv)
 void
 xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_entry_t entry)
 {
+#if 0
 	xmms_medialib_session_t *session;
 
 	session = xmms_medialib_begin_write ();
@@ -175,84 +154,87 @@ xmms_sample_converter_to_medialib (xmms_sample_converter_t *conv, xmms_medialib_
 	                                      conv->to->channels);
 
 	xmms_medialib_end (session);
+#endif
 }
 
 /**
  * Find the best pair of formats
  */
 xmms_sample_converter_t *
-xmms_sample_audioformats_coerce (GList *declist, GList *outlist)
+xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types)
 {
-	xmms_audio_format_t *bestdf = NULL, *bestof = NULL;
-	GList *dn, *on;
+	xmms_stream_type_t *best = NULL;
+	const GList *on;
 /*	gint bestscore = GINT_MAX;*/
 	gint bestscore = 100000;
+	gint format, samplerate, channels;
+	gint gformat, gsamplerate, gchannels;
 
-	for (dn = declist; dn; dn = g_list_next (dn)) {
-		for (on = outlist ; on; on = g_list_next (on)) {
-			xmms_audio_format_t *df, *of;
-			gint score = 0;
+	format = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_FORMAT);
+	samplerate = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	channels = xmms_stream_type_get_int (in, XMMS_STREAM_TYPE_FMT_CHANNELS);
 
-			df = dn->data;
-			of = on->data;
-
-			if (of->channels > df->channels) {
-				/* we loose no quality, just cputime */
-				score += of->channels - df->channels;
-			} else if (of->channels < df->channels) {
-				/* quality loss! */
-				score += 10 * (df->channels - of->channels);
-			}
-
-
-			/* the format enum should be ordered in
-			   quality order */
-			if (of->format > df->format) {
-				/* we loose no quality, just cputime */
-				score += of->format - df->format;
-			} else if (of->format < df->format) {
-				/* quality loss! */
-				score += 10 * (df->format - of->format);
-			}
-
-
-			if (of->samplerate > df->samplerate) {
-				/* we loose no quality, just cputime */
-				score += 2 * of->samplerate / df->samplerate;
-			} else if (of->samplerate < df->samplerate) {
-				/* quality loss! */
-				score += 20 * df->samplerate / of->samplerate;
-			}
-
-			/*
-			XMMS_DBG ("Conversion from %s-%d-%d to %s-%d-%d score %d",
-				  xmms_sample_name_get (df->format),
-				  df->channels, df->samplerate,
-				  xmms_sample_name_get (of->format),
-				  of->channels, of->samplerate,
-				  score);
-			*/
-
-			if (score < bestscore) {
-				bestof = of;
-				bestdf = df;
-				bestscore = score;
-			}
-		}
+	if (format == -1 || samplerate == -1 || channels == -1) {
+		xmms_log_info ("In-type lacks format, samplerate or channels");
+		return NULL;
 	}
 
-	if (!bestof)
-		return NULL;
+	for (on = goal_types ; on; on = g_list_next (on)) {
+		xmms_stream_type_t *goal = on->data;
+		const gchar *mime;
+		gint score = 0;
+
+		mime = xmms_stream_type_get_str (goal, XMMS_STREAM_TYPE_MIMETYPE);
+		if (strcmp (mime, "audio/pcm") != 0) {
+			continue;
+		}
+
+		gformat = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_FORMAT);
+		gsamplerate = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+		gchannels = xmms_stream_type_get_int (goal, XMMS_STREAM_TYPE_FMT_CHANNELS);
+		if (gformat == -1 || gsamplerate == -1 || gchannels == -1) {
+			continue;
+		}
 
 
-	xmms_log_info ("Selected conversion from %s-%d-%d to %s-%d-%d of %d+%d formats",
-	               xmms_sample_name_get (bestdf->format),
-	               bestdf->channels, bestdf->samplerate,
-	               xmms_sample_name_get (bestof->format),
-	               bestof->channels, bestof->samplerate,
-	               g_list_length (declist), g_list_length (outlist));
+		if (gchannels > channels) {
+			/* we loose no quality, just cputime */
+			score += gchannels - channels;
+		} else if (gchannels < gchannels) {
+			/* quality loss! */
+			score += 10 * (channels - gchannels);
+		}
+
+		/* the format enum should be ordered in
+		   quality order */
+		if (gformat > format) {
+			/* we loose no quality, just cputime */
+			score += gformat - format;
+		} else if (gformat < format) {
+			/* quality loss! */
+			score += 10 * (format - gformat);
+		}
+
+
+		if (gsamplerate > samplerate) {
+			/* we loose no quality, just cputime */
+			score += 2 * gsamplerate / samplerate;
+		} else if (gsamplerate < samplerate) {
+			/* quality loss! */
+			score += 20 * samplerate / gsamplerate;
+		}
+
+		if (score < bestscore) {
+			best = goal;
+			bestscore = score;
+		}
+	}
 	
-	return xmms_sample_converter_init (bestdf, bestof);
+	if (!best) {
+		return NULL;
+	}
+
+	return xmms_sample_converter_init (in, best);
 
 }
 
@@ -260,28 +242,41 @@ xmms_sample_audioformats_coerce (GList *declist, GList *outlist)
  * convert from milliseconds to samples for this format.
  */
 guint
-xmms_sample_ms_to_samples (xmms_audio_format_t *f, guint milliseconds)
+xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint milliseconds)
 {
-	return (guint)(((gdouble) f->samplerate) * milliseconds / 1000);
+	gint rate;
+	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	return (guint)(((gdouble) rate) * milliseconds / 1000);
 }
 
 /**
  * Convert from samples to milliseconds for this format
  */
 guint
-xmms_sample_samples_to_ms (xmms_audio_format_t *f, guint samples)
+xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples)
 {
-	return (guint) (((gdouble)samples) * 1000.0 / f->samplerate);
+	gint rate;
+	rate = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	return (guint) (((gdouble)samples) * 1000.0 / rate);
 }
 
 /**
  * Convert from bytes to milliseconds for this format
  */
 guint
-xmms_sample_bytes_to_ms (xmms_audio_format_t *f, guint bytes)
+xmms_sample_bytes_to_ms (const xmms_stream_type_t *st, guint bytes)
 {
-	guint samples = bytes / xmms_sample_size_get (f->format) / f->channels;
-	return xmms_sample_samples_to_ms (f, samples);
+	guint samples = bytes / xmms_sample_frame_size_get (st);
+	return xmms_sample_samples_to_ms (st, samples);
+}
+
+gint
+xmms_sample_frame_size_get (const xmms_stream_type_t *st)
+{
+	gint format, channels;
+	format = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_FORMAT);
+	channels = xmms_stream_type_get_int (st, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	return xmms_sample_size_get (format) * channels;
 }
 
 /**
@@ -292,9 +287,9 @@ guint32
 xmms_sample_samples_to_converted_bytes (xmms_sample_converter_t *conv, guint32 samples)
 {
 	if (conv->resample) {
-		return samples / conv->decimator_ratio * conv->interpolator_ratio * xmms_sample_size_get (conv->to->format) * conv->to->channels;
+		return samples / conv->decimator_ratio * conv->interpolator_ratio * xmms_sample_frame_size_get (conv->from);
 	} else {
-		return samples * xmms_sample_size_get (conv->to->format) * conv->to->channels;
+		return samples * xmms_sample_frame_size_get (conv->from);
 	}
 	
 }
@@ -325,7 +320,7 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 	conv->interpolator_ratio = to/a;
 	conv->decimator_ratio = from/a;
 
-	conv->state = g_malloc0 (xmms_sample_size_get (conv->from->format) * conv->from->channels);
+	conv->state = g_malloc0 (xmms_sample_frame_size_get (conv->from));
 
 	/*
 	 * calculate filter here
@@ -335,6 +330,7 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 	 */
 
 }
+
 
 /**
  * do the actual converstion between two audio formats.
@@ -346,14 +342,9 @@ xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len
 	int olen;
 	guint res;
 
-	inusiz = xmms_sample_size_get (conv->from->format) * conv->from->channels;
+	inusiz = xmms_sample_frame_size_get (conv->from);
 
-	if (len % inusiz != 0) {
-		XMMS_DBG ("%d %d (%d * %d) ((%d))<------", len, inusiz,
-			  xmms_sample_size_get (conv->from->format), conv->from->channels, 
-			  conv->from->format);
-		g_return_if_fail (len % inusiz == 0);
-	}
+	g_return_if_fail (len % inusiz == 0);
 
 	if (conv->same) {
 		*outlen = len;
@@ -363,7 +354,7 @@ xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len
 
 	len /= inusiz;
 
-	outusiz = xmms_sample_size_get (conv->to->format) * conv->to->channels;
+	outusiz = xmms_sample_frame_size_get (conv->to);
 
 	if (conv->resample) {
 		olen = (len * conv->interpolator_ratio / conv->decimator_ratio) * outusiz + outusiz;

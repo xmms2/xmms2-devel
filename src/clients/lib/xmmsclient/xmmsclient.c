@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -276,7 +276,7 @@ xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), 
  * Get a list of loaded plugins from the server
  */
 xmmsc_result_t *
-xmmsc_plugin_list (xmmsc_connection_t *c, uint32_t type)
+xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -382,6 +382,8 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char seconds[10];
+				/* rounding */
+				duration += 500;
 				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
 				strncat (target, seconds, len - strlen (target) - 1);
 			}
@@ -394,6 +396,8 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				strncat (target, "00", len - strlen (target) - 1);
 			} else {
 				char minutes[10];
+				/* rounding */
+				duration += 500;
 				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
 				strncat (target, minutes, len - strlen (target) - 1);
 			}

@@ -13,14 +13,26 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
+#ifndef __CALLBACKS_H__
+#define __CALLBACKS_H__
+
+#ifdef __cplusplus
+{
+#endif
 
 #include <xmmsclient/xmmsclient.h>
 #include <jni.h>
 
+/*
+ * we need these 3 objects, no way otherwise
+ */
 JavaVM *jvm;
 jobject globalObj;
 jobject globalMainloopObj;
 
+/*
+ * all mids used by globalMainloopObj and globalObj (callbackfunctions)
+ */
 jmethodID disconnect_mid;
 jmethodID lock_mid;
 jmethodID unlock_mid;
@@ -44,26 +56,40 @@ jmethodID user_defined_1_mid;
 jmethodID user_defined_2_mid;
 jmethodID user_defined_3_mid;
 
-extern void disconnect_callback(void *error);
-extern void lock_function(void *v);
-extern void unlock_function(void *v);
-extern void io_want_out_callback(int val, void *error);
-extern void callback_configval_changed(xmmsc_result_t *res, void *user_data);
-extern void callback_playlist_changed(xmmsc_result_t *res, void *user_data);
-extern void callback_playlist_current_position(xmmsc_result_t *res, void *user_data);
-extern void callback_playback_id(xmmsc_result_t *res, void *user_data);
-extern void callback_playback_status(xmmsc_result_t *res, void *user_data);
-extern void callback_playback_volume_changed(xmmsc_result_t *res, void *user_data);
-extern void callback_medialib_entry_changed(xmmsc_result_t *res, void *user_data);
-extern void callback_medialib_entry_added(xmmsc_result_t *res, void *user_data);
-extern void callback_medialib_playlist_loaded(xmmsc_result_t *res, void *user_data);
-extern void callback_mediainfo_reader_status(xmmsc_result_t *res, void *user_data);
-extern void signal_playback_playtime(xmmsc_result_t *res, void *user_data);
-extern void signal_visualization_data(xmmsc_result_t *res, void *user_data);
-extern void signal_mediareader_unindexed(xmmsc_result_t *res, void *user_data);
-extern void user_defined_callback_1(xmmsc_result_t *res, void *user_data);
-extern void user_defined_callback_2(xmmsc_result_t *res, void *user_data);
-extern void user_defined_callback_3(xmmsc_result_t *res, void *user_data);
-extern void callback_dict_foreach_function(const void *key, xmmsc_result_value_type_t type, const void *value, void *user_data);
-extern void callback_propdict_foreach_function(const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);
+/**
+ * all callbackfunctions that can be used somehow within java
+ */
+extern void disconnect_callback (void *error);
+extern void lock_function (void *v);
+extern void unlock_function (void *v);
+extern void io_want_out_callback (int val, void *error);
+extern void callback_configval_changed (xmmsc_result_t *res, void *user_data);
+extern void callback_playlist_changed (xmmsc_result_t *res, void *user_data);
+extern void callback_playlist_current_position (xmmsc_result_t *res, void *user_data);
+extern void callback_playback_id (xmmsc_result_t *res, void *user_data);
+extern void callback_playback_status (xmmsc_result_t *res, void *user_data);
+extern void callback_playback_volume_changed (xmmsc_result_t *res, void *user_data);
+extern void callback_medialib_entry_changed (xmmsc_result_t *res, void *user_data);
+extern void callback_medialib_entry_added (xmmsc_result_t *res, void *user_data);
+extern void callback_medialib_playlist_loaded (xmmsc_result_t *res, void *user_data);
+extern void callback_mediainfo_reader_status (xmmsc_result_t *res, void *user_data);
+extern void signal_playback_playtime (xmmsc_result_t *res, void *user_data);
+extern void signal_visualization_data (xmmsc_result_t *res, void *user_data);
+extern void signal_mediareader_unindexed (xmmsc_result_t *res, void *user_data);
+extern void user_defined_callback_1 (xmmsc_result_t *res, void *user_data);
+extern void user_defined_callback_2 (xmmsc_result_t *res, void *user_data);
+extern void user_defined_callback_3 (xmmsc_result_t *res, void *user_data);
+extern void callback_dict_foreach_function (const void *key, 
+                                           xmmsc_result_value_type_t type,
+                                           const void *value,
+                                           void *user_data);
+extern void callback_propdict_foreach_function (const void *key, 
+                                               xmmsc_result_value_type_t type,
+                                               const void *value,
+                                               const char *source, 
+                                               void *user_data);
+#ifdef __cplusplus
+}
+#endif
 
+#endif

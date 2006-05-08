@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstr�m, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -39,7 +39,7 @@
 
 static time_t start_time;
 static gchar *server_version = "unknown";
-static gchar *output_plugin = "unknown";
+static gchar *output_plugin;
 static gchar *system_name = "unknown";
 static gint playlist_loads = 0;
 static gint mlib_resolves = 0;
@@ -184,17 +184,13 @@ handle_current_id (xmmsc_result_t *res, void *userdata)
 static void
 handle_config (xmmsc_result_t *res, void *userdata)
 {
-	char *key, *value;
+	char *value;
 
-	if (!xmmsc_result_get_dict_entry_str (res, "name", &key))
+	if (!xmmsc_result_get_dict_entry_str (res, "output.plugin", &value))
 		return;
 
-	if (!xmmsc_result_get_dict_entry_str (res, "value", &value))
-		return;
-
-	if (strcmp (key, "output.plugin") == 0) {
-		output_plugin = g_strdup (value);
-	}
+	g_free (output_plugin);
+	output_plugin = g_strdup (value);
 }
 
 static void
@@ -205,6 +201,7 @@ handle_config_val (xmmsc_result_t *res, void *userdata)
 	if (!xmmsc_result_get_string (res, &value))
 		return;
 
+	g_free (output_plugin);
 	output_plugin = g_strdup (value);
 }
 
@@ -242,10 +239,6 @@ main (int argc, char **argv)
 	printf ("Starting XMMS2 phone home agent...\n");
 
 	path = getenv ("XMMS_PATH");
-	if (!path) {
-		printf ("Sorry you need XMMS_PATH set\n");
-		exit (1);
-	}
 
 	conn = xmmsc_init ("xmms2-et");
 
@@ -258,6 +251,8 @@ main (int argc, char **argv)
 		printf ("Could not connect to xmms2d: %s\n", xmmsc_get_last_error (conn));
 		exit (1);
 	}
+
+	output_plugin = g_strdup ("unknown");
 
 	get_systemname ();
 

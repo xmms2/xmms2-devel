@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -47,5 +47,6 @@ gboolean xmms_medialib_check_id (xmms_medialib_entry_t entry);
 
 gboolean xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value, guint32 source);
 gboolean xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value, guint32 source);
+guint32 xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source);
 
 #endif

@@ -6,6 +6,7 @@ import gzip
 from marshal import load
 from stat import *
 import operator
+from popen2 import popen3
 
 global_libpaths = ["/lib", "/usr/lib"]
 
@@ -40,7 +41,12 @@ class Target:
 		self.globs['platform'] = env.platform
 		self.globs['ConfigError'] = ConfigError
 
-		c = compile(file(target).read(), target, "exec")
+		x = file(target).read()
+		if x[-1] != '\n':
+			print "Missing linebreak in %s" % target
+			x += '\n'
+
+		c = compile(x, target, "exec")
 		eval(c, self.globs)
 
 		if not isinstance(self.globs.get("target"), str):
@@ -200,7 +206,9 @@ class XMMSEnvironment(Environment):
 		if self.config_cache.has_key(cmd):
 			ret = self.config_cache[cmd]
 		else:
-			ret = os.popen(cmd).read()
+			r, w, e = popen3(cmd)
+			ret = r.read()
+
 			if cmd.startswith("pkg-config"):
 				if ret == '':
 					print " ... no"
@@ -360,8 +368,6 @@ class XMMSEnvironment(Environment):
 				if self.platform == 'linux' or self.platform == 'freebsd':
 					self["SHLINKFLAGS"] += " -Wl,-soname," + self.shlibname(target)
 
-			self.SharedLibrary(target, source)
-
 			if loadable:
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
@@ -372,6 +378,11 @@ class XMMSEnvironment(Environment):
 					self["SHLINKFLAGS"] += " -dynamiclib"
 				if install:
 					self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
+					if self.platform == 'darwin':
+						self["SHLINKFLAGS"] += " -install_name %s/%s" % (self.librarypath, self.shlibname(target))
+			
+			self.SharedLibrary(target, source)
+
 
 	def add_program(self, target, source):
 		self.programs.append(target)

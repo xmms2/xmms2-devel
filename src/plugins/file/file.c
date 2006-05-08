@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -15,7 +15,7 @@
  */
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_transportplugin.h"
+#include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 
 #include <sys/types.h>
@@ -32,88 +32,71 @@
 
 typedef struct {
 	gint fd;
-	gchar *urlptr;
 } xmms_file_data_t;
 
 /*
  * Function prototypes
  */
 
-static gboolean xmms_file_can_handle (const gchar *url);
-static gboolean xmms_file_init (xmms_transport_t *transport, const gchar *url);
-static void xmms_file_close (xmms_transport_t *transport);
-static gint xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
-static guint64 xmms_file_size (xmms_transport_t *transport);
-static gint xmms_file_seek (xmms_transport_t *transport, guint64 offset, gint whence);
-static guint xmms_file_lmod (xmms_transport_t *transport);
+static gboolean xmms_file_init (xmms_xform_t *xform);
+static void xmms_file_destroy (xmms_xform_t *xform);
+static gint xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
+static gint64 xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);
+static gboolean xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 
 /*
  * Plugin header
  */
+XMMS_XFORM_PLUGIN("file",
+                  "File transport",
+                  XMMS_VERSION,
+                  "Plain local file transport",
+                  xmms_file_plugin_setup);
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+static gboolean
+xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_xform_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
-	                          XMMS_TRANSPORT_PLUGIN_API_VERSION,
-	                          "file",
-	                          "File Transport",
-	                          XMMS_VERSION,
-	                          "Plain file transport");
+	XMMS_XFORM_METHODS_INIT(methods);
+	methods.init = xmms_file_init;
+	methods.destroy = xmms_file_destroy;
+	methods.read = xmms_file_read;
+	methods.seek = xmms_file_seek;
 
-	if (!plugin) {
-		return NULL;
-	}
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
-	
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_file_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_file_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_file_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_file_read);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_file_size);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK, xmms_file_seek);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LMOD, xmms_file_lmod);
+	xmms_xform_plugin_indata_add (xform_plugin,
+				      XMMS_STREAM_TYPE_MIMETYPE,
+				      "application/x-url",
+				      XMMS_STREAM_TYPE_URL,
+				      "file://*",
+				      XMMS_STREAM_TYPE_END);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LOCAL);
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
-	
-	return plugin;
+	return TRUE;
 }
 
 /*
  * Member functions
  */
-
 static gboolean
-xmms_file_can_handle (const gchar *url)
-{
-	g_return_val_if_fail (url, FALSE);
-
-	return !g_strncasecmp (url, "file://", 7);
-}
-
-static gboolean
-xmms_file_init (xmms_transport_t *transport, const gchar *url)
+xmms_file_init (xmms_xform_t *xform)
 {
 	gint fd;
 	xmms_file_data_t *data;
-	const gchar *urlptr;
+	const gchar *url;
 	struct stat st;
 
-	g_return_val_if_fail (transport, FALSE);
+	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
+
+	g_return_val_if_fail (xform, FALSE);
 	g_return_val_if_fail (url, FALSE);
 
-	XMMS_DBG ("xmms_file_init (%p, %s)", transport, url);
+	/* strip file:// */
+	url += 7;
 
-	/* just in case our can_handle method isn't called correctly... */
-	g_assert (strlen (url) >= 7);
-	urlptr = &url[7];
-
-	if (stat (urlptr, &st) == -1) {
+	if (stat (url, &st) == -1) {
+		XMMS_DBG ("Couldn't stat file '%s': %s", url, strerror (errno));
 		return FALSE;
 	}
 
@@ -121,56 +104,61 @@ xmms_file_init (xmms_transport_t *transport, const gchar *url)
 		return FALSE;
 	}
 
-	XMMS_DBG ("Opening %s", urlptr);
-	fd = open (urlptr, O_RDONLY);
+	XMMS_DBG ("Opening %s", url);
+	fd = open (url, O_RDONLY);
 	if (fd == -1) {
 		return FALSE;
 	}
 
 	data = g_new0 (xmms_file_data_t, 1);
 	data->fd = fd;
-	data->urlptr = g_strdup (urlptr);
-	xmms_transport_private_data_set (transport, data);
+	xmms_xform_private_data_set (xform, data);
+
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/octet-stream",
+				     XMMS_STREAM_TYPE_END);
+
+	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_SIZE, st.st_size);
+	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_LMOD, st.st_mtime);
 
 	return TRUE;
 }
 
 static void
-xmms_file_close (xmms_transport_t *transport)
+xmms_file_destroy (xmms_xform_t *xform)
 {
 	xmms_file_data_t *data;
-	g_return_if_fail (transport);
+	g_return_if_fail (xform);
 
-	data = xmms_transport_private_data_get (transport);
+	data = xmms_xform_private_data_get (xform);
 	if (!data)
 		return;
 	
 	if (data->fd != -1)
 		close (data->fd);
 
-	g_free (data->urlptr);
-
 	g_free (data);
 }
 
 static gint
-xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
+xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error)
 {
 	xmms_file_data_t *data;
 	gint ret;
 
-	g_return_val_if_fail (transport, -1);
+	g_return_val_if_fail (xform, -1);
 	g_return_val_if_fail (buffer, -1);
 	g_return_val_if_fail (error, -1);
-	data = xmms_transport_private_data_get (transport);
+
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
 	ret = read (data->fd, buffer, len);
 
-	if (ret == 0)
+	if (ret == 0) {
 		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");
-
-	if (ret == -1) {
+	} else if (ret == -1) {
 		xmms_log_error ("errno(%d) %s", errno, strerror (errno));
 		xmms_error_set (error, XMMS_ERROR_GENERIC, strerror (errno));
 	}
@@ -178,62 +166,33 @@ xmms_file_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_erro
 	return ret;
 }
 
-static gint
-xmms_file_seek (xmms_transport_t *transport, guint64 offset, gint whence)
+static gint64
+xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
 	xmms_file_data_t *data;
 	gint w = 0;
+	off_t res;
 
-	g_return_val_if_fail (transport, -1);
-	data = xmms_transport_private_data_get (transport);
+	g_return_val_if_fail (xform, -1);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
 	switch (whence) {
-		case XMMS_TRANSPORT_SEEK_SET:
+		case XMMS_XFORM_SEEK_SET:
 			w = SEEK_SET;
 			break;
-		case XMMS_TRANSPORT_SEEK_END:
+		case XMMS_XFORM_SEEK_END:
 			w = SEEK_END;
 			break;
-		case XMMS_TRANSPORT_SEEK_CUR:
+		case XMMS_XFORM_SEEK_CUR:
 			w = SEEK_CUR;
 			break;
 	}
 
-	return lseek (data->fd, offset, w);
-}
-
-static guint
-xmms_file_lmod (xmms_transport_t *transport)
-{
-	struct stat st;
-	xmms_file_data_t *data;
-
-	g_return_val_if_fail (transport, 0);
-	data = xmms_transport_private_data_get (transport);
-	g_return_val_if_fail (data, 0);
-
-	if (fstat (data->fd, &st) == -1) {
-		return 0;
-	}
-
-	return st.st_mtime;
-}
-
-static guint64
-xmms_file_size (xmms_transport_t *transport)
-{
-	struct stat st;
-	xmms_file_data_t *data;
-
-	g_return_val_if_fail (transport, -1);
-	data = xmms_transport_private_data_get (transport);
-	g_return_val_if_fail (data, -1);
-	
-	if (fstat (data->fd, &st) == -1) {
+	res = lseek (data->fd, offset, w);
+	if (res == (off_t)-1) {
+		xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");
 		return -1;
 	}
-
-	return st.st_size;
+	return res;
 }
-

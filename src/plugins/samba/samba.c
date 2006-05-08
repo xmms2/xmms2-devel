@@ -1,8 +1,8 @@
 /** @file samba.c 
  *  SMB/CIFS transport plugin
- *  
- *  Copyright (C) 2004  Daniel Svensson, <nano@nittionio.nu>
- * 
+ *
+ *  Copyright (C) 2004-2006 XMMS2 Team
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
@@ -15,7 +15,7 @@
  *
  *  Valid url:
  *  smb://user:password@host/share/path/file
- *  
+ *
  *  - host can be IP, hostname or netbios name
  *  - username and password is optional
  */

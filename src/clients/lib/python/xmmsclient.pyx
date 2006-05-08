@@ -48,8 +48,7 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 
 	ctypedef enum xmms_plugin_type_t:
 		XMMS_PLUGIN_TYPE_ALL,
-		XMMS_PLUGIN_TYPE_TRANSPORT,
-		XMMS_PLUGIN_TYPE_DECODER,
+		XMMS_PLUGIN_TYPE_XFORM,
 		XMMS_PLUGIN_TYPE_OUTPUT,
 		XMMS_PLUGIN_TYPE_PLAYLIST,
 		XMMS_PLUGIN_TYPE_EFFECT
@@ -69,8 +68,7 @@ PLAYLIST_CHANGED_MOVE = XMMS_PLAYLIST_CHANGED_MOVE
 PLAYLIST_CHANGED_SORT = XMMS_PLAYLIST_CHANGED_SORT
 
 PLUGIN_TYPE_ALL = XMMS_PLUGIN_TYPE_ALL
-PLUGIN_TYPE_TRANSPORT = XMMS_PLUGIN_TYPE_TRANSPORT
-PLUGIN_TYPE_DECODER = XMMS_PLUGIN_TYPE_DECODER
+PLUGIN_TYPE_XFORM = XMMS_PLUGIN_TYPE_XFORM
 PLUGIN_TYPE_OUTPUT = XMMS_PLUGIN_TYPE_OUTPUT
 PLUGIN_TYPE_PLAYLIST = XMMS_PLUGIN_TYPE_PLAYLIST
 PLUGIN_TYPE_EFFECT = XMMS_PLUGIN_TYPE_EFFECT
@@ -175,6 +173,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_get_info(xmmsc_connection_t *, unsigned int id)
 	xmmsc_result_t *xmmsc_medialib_add_to_playlist(xmmsc_connection_t *c, char *query)
 	xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *)
+	xmmsc_result_t *xmmsc_medialib_playlist_list (xmmsc_connection_t *, char *playlist)
 	xmmsc_result_t *xmmsc_medialib_playlist_import(xmmsc_connection_t *c, char *name, char *url)
 	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
 	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
@@ -268,9 +267,9 @@ class PropDict(dict):
 	def __getitem__(self, item):
 		if isinstance(item, str):
 			for src in self._sources:
-				if src == '*':
+				if src.endswith('*'):
 					for k,v in self.iteritems():
-						if k[1] == item:
+						if k[0].startswith(src[:-1]) and k[1] == item:
 							return v
 				try:
 					return dict.__getitem__(self, (src, item))
@@ -488,7 +487,7 @@ cdef class XMMS:
 		c = from_unicode(clientname)
 		self.conn = xmmsc_init(c)
 		self.ObjectRef = []
-		self.sources = ["client/" + clientname, "server", "*"]
+		self.sources = ["client/" + clientname, "server", "plugins/*", "client/*", "*"]
 
 	def get_source_preference(self):
 		return self.sources
@@ -1391,6 +1390,25 @@ cdef class XMMS:
 		ret.callback = cb
 
 		ret.res = xmmsc_medialib_playlists_list(self.conn)
+		ret.more_init()
+		
+		return ret
+
+	def medialib_playlist_list(self, name, cb = None):
+		"""
+		Get the specified playlist from medialib.
+		This function returns a list of IDs the files/streams
+		currently in the playlist. Use L{medialib_get_info} to
+		retrieve more specific information.
+		@rtype:	L{XMMSResult}(UIntList)
+		@return: The playlist with the given name.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_medialib_playlist_list(self.conn, name)
 		ret.more_init()
 		
 		return ret

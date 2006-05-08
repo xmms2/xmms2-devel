@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -28,10 +28,9 @@
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_ipc.h"
 #include "xmmspriv/xmms_mediainfo.h"
-#include "xmmspriv/xmms_transport.h"
-#include "xmmspriv/xmms_decoder.h"
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_medialib.h"
+#include "xmmspriv/xmms_xform.h"
 
 
 #include <glib.h>
@@ -155,6 +154,8 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 static gpointer
 xmms_mediainfo_reader_thread (gpointer data)
 {
+	GList *goal_format;
+        xmms_stream_type_t *f;
 	guint num = 0;
 
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
@@ -163,13 +164,19 @@ xmms_mediainfo_reader_thread (gpointer data)
 	                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 	                    XMMS_OBJECT_CMD_ARG_INT32,
 	                    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
+
+
+	f = _xmms_stream_type_new (NULL,
+				   XMMS_STREAM_TYPE_MIMETYPE,
+				   "audio/pcm",
+				   XMMS_STREAM_TYPE_END);
+	goal_format = g_list_prepend (NULL, f);
 	
 	while (mrt->running) {
-		xmms_transport_t *transport;
-		xmms_decoder_t *decoder;
+		xmms_medialib_session_t *session;
 		guint lmod = 0;
 		xmms_medialib_entry_t entry;
-		xmms_medialib_session_t *session;
+		xmms_xform_t *xform;
 		
 		session = xmms_medialib_begin ();
 		entry = xmms_medialib_entry_not_resolved_get (session);
@@ -208,75 +215,27 @@ xmms_mediainfo_reader_thread (gpointer data)
 		}
 
 		xmms_medialib_end (session);
-		
-		transport = xmms_transport_new ();
-		if (!transport) {
-			continue;
-		}
-		
-		if (!xmms_transport_open (transport, entry)) {
-			session = xmms_medialib_begin_write ();
-			xmms_medialib_entry_remove (session, entry);
-			xmms_medialib_end (session);
-			
-			xmms_playlist_remove_by_entry (mrt->playlist, entry);
-			xmms_object_unref (transport);
-			continue;
-		}
-		
-		xmms_transport_start (transport);
-		
-		if (lmod) {
-			guint tmp;
-			session = xmms_medialib_begin_write ();
-			tmp = xmms_medialib_entry_property_get_int (session, entry, 
-														XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
-			if (lmod >= tmp) {
-				xmms_medialib_entry_property_set_int (session, entry, 
-													  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
-				xmms_medialib_end (session);
-				xmms_transport_stop (transport);
-				xmms_object_unref (transport);
-				continue;
-			}
-			xmms_medialib_end (session);
-			XMMS_DBG ("Modified on disk!");
-		}
 
-		decoder = xmms_decoder_new ();
-		if (!xmms_decoder_open (decoder, transport)) {
+
+		xform = xmms_xform_chain_setup (entry, goal_format);
+
+		if (!xform) {
 			session = xmms_medialib_begin_write ();
 			xmms_medialib_entry_remove (session, entry);
 			xmms_medialib_end (session);
 			
 			xmms_playlist_remove_by_entry (mrt->playlist, entry);
-			xmms_transport_stop (transport);
-			xmms_object_unref (transport);
-			xmms_object_unref (decoder);
-			
 			continue;
 		}
 		
-		if (xmms_decoder_init_for_mediainfo (decoder)) {
-			if (lmod) {
-				session = xmms_medialib_begin_write ();
-				xmms_medialib_entry_cleanup (session, entry);
-				xmms_medialib_end (session);
-			}
-			
-			xmms_decoder_mediainfo_get (decoder, transport);
-		}
-	
+		xmms_object_unref (xform);
+
 		session = xmms_medialib_begin_write ();
 		xmms_medialib_entry_property_set_int (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
 		xmms_medialib_entry_property_set_int (session, entry, 
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED, time(NULL));
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED, time(NULL));
 		xmms_medialib_end (session);
-		
-		xmms_transport_stop (transport);
-		xmms_object_unref (transport);
-		xmms_object_unref (decoder);
 		
 	}
 	

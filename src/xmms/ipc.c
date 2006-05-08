@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -129,7 +129,6 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
-				g_free (arg->values[i].value.string);
 				return FALSE;
 			}
 			break;
@@ -315,7 +314,7 @@ xmms_ipc_client_thread (gpointer data)
 
 	while (client->run) {
 		gint ret;
-		gboolean disconnect = FALSE;
+		bool disconnect = false;
 
 		FD_ZERO (&rfdset);
 		FD_ZERO (&wfdset);
@@ -359,7 +358,7 @@ xmms_ipc_client_thread (gpointer data)
 				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
 
 				g_mutex_unlock (client->lock);
-				if (xmms_ipc_msg_write_transport (msg, client->transport, (bool*)&disconnect)) {
+				if (xmms_ipc_msg_write_transport (msg, client->transport, &disconnect)) {
 					g_mutex_lock (client->lock);
 					g_queue_pop_head (client->out_msg);
 					g_mutex_unlock (client->lock);
@@ -377,7 +376,7 @@ xmms_ipc_client_thread (gpointer data)
 				if (!client->read_msg)
 					client->read_msg = xmms_ipc_msg_alloc ();
 		
-				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, (bool*)&disconnect)) {
+				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
 					xmms_ipc_msg_t *msg = client->read_msg;
 					client->read_msg = NULL;
 					process_msg (client, client->ipc, msg);
@@ -795,8 +794,8 @@ void
 xmms_ipc_shutdown_server(xmms_ipc_t *ipc) 
 {
 	GList *c;
-	if(!ipc) return;
 	xmms_ipc_client_t *co;
+	if(!ipc) return;
 	
 	g_mutex_lock (ipc->mutex_lock);
 	g_source_remove_poll (ipc->source, ipc->pollfd);

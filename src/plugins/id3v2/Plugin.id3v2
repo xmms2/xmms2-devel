@@ -1,0 +1,3 @@
+target="id3v2"
+source=["id3v2plugin.c", "id3.c"]
+

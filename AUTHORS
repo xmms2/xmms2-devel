@@ -16,13 +16,18 @@ N: Kristian Benoit
 E: softchill@blacky.sympatico.ca
 D: Various fixes.
 
+N: Jonas Berlin
+E: xkr47@outerspace.dyndns.org
+W: http://xkr47.outerspace.dyndns.org/
+D: curl_http updated to xforms, icymetaint plugin (extracted from curl)
+
 N: Magnus Bjernstad
 E: bjernstad@gmail.com
 D: PythonAPI fixes.
 
 N: Alexander Botero-Lowry
 E: drax@stampede.org
-D: *BSD support. Various fixes.
+D: *BSD support. Manpages. Various fixes.
 
 N: Sébastien Cevey
 E: seb@cine7.net
@@ -49,14 +54,26 @@ N: Franz Endstrasser
 E: franz.endstrasser@gmail.com
 D: Java bindings
 
+N: G. Gallino
+E: ggallino@gmail.com
+D: Equaliser fixes
+
 N: Anders Gustafsson
 E: andersg@xmms.org
 P: 1024D/5D46D966 4186 4775 154B 9E4F 8CE7  A3F8 E165 5471 5D46 D966
 D: Stuff all over the place. Master bitch.
 
+N: Johannes Heimansberg
+E: wejpilot@gmail.com
+D: Fix remove command in cli.
+
 N: Olle Hällnäs
 E: olle@xmms.org
 D: Better seeking in cli.
+
+N: Daniel Kamiñski
+E: maniel.rulez@gmail.com
+D: mlib remove command in cli.
 
 N: Karsten Krispin
 E: karsten@krispin.de
@@ -100,6 +117,10 @@ N: Tobias Nygren
 E: tnn@nygren.pp.se
 D: HP-UX portability
 
+N: Heikki Orsila
+E: heikki.orsila@iki.fi
+D: Cleanups.
+
 N: Daniel Pearson
 E: daniel@nanoo.org
 D: Python XMMSSync-proxy. PythonAPI fixes.
@@ -130,15 +151,27 @@ D: Java bindings
 
 N: Daniel Svensson
 E: daniel@nittionio.nu
-D: Musepack. CoreFoundation. Alsa. Gnomevfs. Various fixes.
+D: Musepack. CoreFoundation. Alsa. Gnomevfs. Samba. Sun. Various fixes.
 
 N: Jens Taprogge
 E: jlt_xmms2@shamrock.dyndns.org
 D: Debian packages. Various fixes.
 
+N: Rémi Vanicat
+E: remi.vanicat@gmail.com
+D: SQLite optimizations.
+
+N: Pauli Virtanen
+E: pauli.virtanen@iki.fi
+D: xmmsc_medialib_playlist_list in Python bindings
+
 N: Juho Vähä-Herttua
 E: juhovh@iki.fi
 D: Faad. Various fixes.
+
+N: Michael Walle
+E: michael@walle.cc
+D: playlists_list stuff
 
 N: Ma Xuan
 E: supermmx@163.com

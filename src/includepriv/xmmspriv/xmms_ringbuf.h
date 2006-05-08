@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -35,7 +35,7 @@ guint xmms_ringbuf_read (xmms_ringbuf_t *ringbuf, gpointer data, guint length);
 guint xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx);
 guint xmms_ringbuf_peek (xmms_ringbuf_t *ringbuf, gpointer data, guint length);
 guint xmms_ringbuf_peek_wait (xmms_ringbuf_t *ringbuf, gpointer data, guint length, GMutex *mtx);
-void xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (gpointer), gpointer arg);
+void xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void (*destroy) (void *), void *arg);
 guint xmms_ringbuf_write (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length);
 guint xmms_ringbuf_write_wait (xmms_ringbuf_t *ringbuf, gconstpointer data, guint length, GMutex *mtx);
 

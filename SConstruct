@@ -17,7 +17,7 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrDolittle (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrDolittle+WIP (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
@@ -134,12 +134,6 @@ base_env.Depends('#src/xmms/converter.c', 'src/xmms/generate-converter.py')
 base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
 
 base_env.Converter("src/xmms/converter.c", "src/xmms/generate-converter.py")
-
-#b = Builder(action = python_executable + ' src/clients/lib/xmmsclient++/generate_methods.py > src/include/xmmsclient/xmmsclient++_methods.h')
-#base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/clients/lib/xmmsclient++/generate_methods.py')
-#base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/include/xmmsclient/xmmsclient.h')
-#base_env.Depends('#src/clients/lib/xmmsclient++/xmmsclient.cpp', 'src/include/xmmsclient/xmmsclient++_methods.h')
-#base_env.SourceCode('src/include/xmmsclient/xmmsclient++_methods.h', b)
 
 base_env.handle_targets("Library")
 base_env.handle_targets("Program")

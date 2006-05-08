@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -23,61 +23,53 @@
  * Type definitions
  */
 typedef struct xmms_null_data_St {
-	xmms_audio_format_t *format;
+	gint us_per_byte;
 } xmms_null_data_t;
 
 /*
  * Function prototypes
  */
+static gboolean xmms_null_plugin_setup (xmms_output_plugin_t *plugin);
 static void xmms_null_flush (xmms_output_t *output);
-static void xmms_null_write (xmms_output_t *output, gchar *buffer, gint len);
+static void xmms_null_write (xmms_output_t *output, gpointer buffer, gint len,
+                             xmms_error_t *error);
 static gboolean xmms_null_open (xmms_output_t *output);
 static void xmms_null_close (xmms_output_t *output);
 static gboolean xmms_null_new (xmms_output_t *output);
 static void xmms_null_destroy (xmms_output_t *output);
-static gboolean xmms_null_format_set (xmms_output_t *output, xmms_audio_format_t *format);
+static gboolean xmms_null_format_set (xmms_output_t *output,
+                                      const xmms_stream_type_t *format);
 
 /*
  * Plugin header
  */
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+XMMS_OUTPUT_PLUGIN ("null", "Null Output", XMMS_VERSION,
+                    "null output plugin",
+                    xmms_null_plugin_setup);
+
+static gboolean
+xmms_null_plugin_setup (xmms_output_plugin_t *plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_output_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT,
-	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "null",
-	                          "Null Output",
-	                          XMMS_VERSION,
-	                          "Null output plugin");
+	XMMS_OUTPUT_METHODS_INIT (methods);
 
-	if (!plugin) {
-		return NULL;
-	}
+	methods.new = xmms_null_new;
+	methods.destroy = xmms_null_destroy;
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	methods.open = xmms_null_open;
+	methods.close = xmms_null_close;
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE,
-	                        xmms_null_write);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_OPEN,
-	                        xmms_null_open);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE,
-	                        xmms_null_close);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
-	                        xmms_null_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
-	                        xmms_null_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH,
-	                        xmms_null_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FORMAT_SET,
-	                        xmms_null_format_set);
+	methods.flush = xmms_null_flush;
+	methods.format_set = xmms_null_format_set;
 
-	return plugin;
+	methods.write = xmms_null_write;
+
+	xmms_output_plugin_methods_set (plugin, &methods);
+
+	return TRUE;
 }
-
 
 /*
  * Member functions
@@ -96,27 +88,6 @@ xmms_null_new (xmms_output_t *output)
 {
 	xmms_null_data_t *data;
 
-	xmms_sample_format_t formats[] = {
-		XMMS_SAMPLE_FORMAT_U8,
-		XMMS_SAMPLE_FORMAT_S8,
-		XMMS_SAMPLE_FORMAT_S16,
-		XMMS_SAMPLE_FORMAT_U16,
-		XMMS_SAMPLE_FORMAT_S32,
-		XMMS_SAMPLE_FORMAT_U32,
-		XMMS_SAMPLE_FORMAT_FLOAT,
-		XMMS_SAMPLE_FORMAT_DOUBLE
-	};
-	int rates[] = {
-		8000,
-		11025,
-		16000,
-		22050,
-		44100,
-		48000,
-		96000
-	};
-	gint i, j;
-
 	g_return_val_if_fail (output, FALSE);
 
 	data = g_new0 (xmms_null_data_t, 1);
@@ -124,12 +95,7 @@ xmms_null_new (xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data);
 
-	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
-		for (j = 0; j < G_N_ELEMENTS (rates); j++) {
-			xmms_output_format_add (output, formats[i], 1, rates[j]);
-			xmms_output_format_add (output, formats[i], 2, rates[j]);
-		}
-	}
+	xmms_output_stream_type_add (output, XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm");
 
 	return TRUE;
 }
@@ -179,9 +145,10 @@ xmms_null_close (xmms_output_t *output)
  * @return Success/failure
  */
 static gboolean
-xmms_null_format_set (xmms_output_t *output, xmms_audio_format_t *format)
+xmms_null_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 {
 	xmms_null_data_t *data;
+	gint fmt, ch, rate;
 
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (format, FALSE);
@@ -189,7 +156,15 @@ xmms_null_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
-	data->format = format;
+	fmt = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
+	ch = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	rate = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_SAMPLERATE);
+	if (fmt == -1 || ch == -1 || rate == -1) {
+		return FALSE;
+	}
+
+	/* There will be some quite big rounding errors here.. */
+	data->us_per_byte = 1000000/(xmms_sample_size_get (fmt) * ch * rate);
 
 	return TRUE;
 }
@@ -213,7 +188,8 @@ xmms_null_flush (xmms_output_t *output)
  * @param len The length of audio data.
  */
 static void
-xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
+xmms_null_write (xmms_output_t *output, gpointer buffer, gint len,
+                 xmms_error_t *error)
 {
 	xmms_null_data_t *data;
 
@@ -223,5 +199,5 @@ xmms_null_write (xmms_output_t *output, gchar *buffer, gint len)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	g_usleep (1000 * xmms_sample_bytes_to_ms (data->format, len));
+	g_usleep (len * data->us_per_byte);
 }

@@ -21,13 +21,13 @@
 %include "arrays_java.i"
 
 %apply int *INOUT { int* };
-%apply int *INOUT { void* };
+%apply int *INPUT { void* };
 %apply unsigned int *INOUT { unsigned int* };
-%apply char **STRING_OUT { char **r };
+%apply char **STRING_OUT { char ** };
 %apply char **STRING_ARRAY { char **preference };
 
 typedef int int32_t;
-typedef int uint32_t;
+typedef unsigned int uint32_t;
 
 %{
 #include <xmmsclient/xmmsclient.h>
@@ -40,6 +40,7 @@ typedef int uint32_t;
 %} 
 
 %include "src/include/xmmsclient/xmmsclient.h"
+%include "src/include/xmmsc/xmmsc_idnumbers.h"
 %include "include/misc.h"
 
 %constant void (*DISCONNECT_CALLBACK)(void*) = disconnect_callback;

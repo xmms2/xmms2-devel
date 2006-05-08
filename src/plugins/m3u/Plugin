@@ -1,2 +1,5 @@
 target="m3u"
 source=["m3u.c"]
+
+def config(env):
+    raise ConfigError("Disabled")

@@ -1,5 +1,2 @@
 target="xmms2-launcher"
 source=["xmms2-launcher.c"]
-
-#def config(env):
-#	raise ConfigError("disabled")

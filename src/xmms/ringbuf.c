@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -40,12 +40,17 @@ struct xmms_ringbuf_St {
 	guint rd_index, wr_index;
 	gboolean eos;
 
-	guint hotspot_pos;
-	void (*hotspot_callback) (void *);
-	void *hotspot_arg;
+	GQueue *hotspots;
 
 	GCond *free_cond, *used_cond, *eos_cond;
 };
+
+typedef struct xmms_ringbuf_hotspot_St {
+	guint pos;
+	void (*callback) (void *);
+	void (*destroy) (void *);
+	void *arg;
+} xmms_ringbuf_hotspot_t;
 
 
 /**
@@ -87,6 +92,8 @@ xmms_ringbuf_new (guint size)
 	ringbuf->used_cond = g_cond_new ();
 	ringbuf->eos_cond = g_cond_new ();
 
+	ringbuf->hotspots = g_queue_new ();
+	
 	return ringbuf;
 }
 
@@ -102,6 +109,7 @@ xmms_ringbuf_destroy (xmms_ringbuf_t *ringbuf)
 	g_cond_free (ringbuf->used_cond);
 	g_cond_free (ringbuf->free_cond);
 
+	g_queue_free (ringbuf->hotspots);
 	g_free (ringbuf->buffer);
 	g_free (ringbuf);
 }
@@ -117,6 +125,13 @@ xmms_ringbuf_clear (xmms_ringbuf_t *ringbuf)
 	ringbuf->rd_index = 0;
 	ringbuf->wr_index = 0;
 
+	while (!g_queue_is_empty (ringbuf->hotspots)) {
+		xmms_ringbuf_hotspot_t *hs;
+		hs = g_queue_pop_head (ringbuf->hotspots);
+		if (hs->destroy)
+			hs->destroy (hs->arg);
+		g_free (hs);
+	}
 	g_cond_signal (ringbuf->free_cond);
 }
 
@@ -154,15 +169,19 @@ read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint len)
 
 	to_read = MIN (len, xmms_ringbuf_bytes_used (ringbuf));
 
-	if (ringbuf->hotspot_callback) {
-		if (ringbuf->hotspot_pos != ringbuf->rd_index) {
+	if (!g_queue_is_empty (ringbuf->hotspots)) {
+		xmms_ringbuf_hotspot_t *hs = g_queue_peek_head (ringbuf->hotspots);
+		if (hs->pos != ringbuf->rd_index) {
 			/* make sure we don't cross a hotspot */
 			to_read = MIN (to_read,
-			               (ringbuf->hotspot_pos - ringbuf->rd_index)
+			               (hs->pos - ringbuf->rd_index + ringbuf->buffer_size)
 			               % ringbuf->buffer_size);
 		} else {
-			ringbuf->hotspot_callback (ringbuf->hotspot_arg);
-			ringbuf->hotspot_callback = NULL;
+			hs->callback (hs->arg);
+			(void) g_queue_pop_head (ringbuf->hotspots);
+			if (hs->destroy)
+				hs->destroy (hs->arg);
+			g_free (hs);
 		}
 	}
 
@@ -237,7 +256,7 @@ guint
 xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data,
                         guint len, GMutex *mtx)
 {
-	guint r = 0;
+	guint r = 0, res;
 	guint8 *dest = data;
 
 	g_return_val_if_fail (ringbuf, 0);
@@ -246,12 +265,13 @@ xmms_ringbuf_read_wait (xmms_ringbuf_t *ringbuf, gpointer data,
 	g_return_val_if_fail (mtx, 0);
 
 	while (r < len) {
-		r += xmms_ringbuf_read (ringbuf, dest + r, len - r);
+		res = xmms_ringbuf_read (ringbuf, dest + r, len - r);
+		r += res;
 		if (r == len || ringbuf->eos) {
 			break;
 		}
-
-		g_cond_wait (ringbuf->used_cond, mtx);
+		if (!res)
+			g_cond_wait (ringbuf->used_cond, mtx);
 	}
 
 	return r;
@@ -430,16 +450,18 @@ xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
  * Unused
  */
 void
-xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void *arg)
+xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void (*destroy) (void *), void *arg)
 {
+	xmms_ringbuf_hotspot_t *hs;
 	g_return_if_fail (ringbuf);
 
-	g_return_if_fail (!ringbuf->hotspot_callback);
+	hs = g_new0 (xmms_ringbuf_hotspot_t, 1);
+	hs->pos = ringbuf->wr_index;
+	hs->callback = cb;
+	hs->destroy = destroy;
+	hs->arg = arg;
 
-	ringbuf->hotspot_pos = ringbuf->wr_index;
-	ringbuf->hotspot_callback = cb;
-	ringbuf->hotspot_arg = arg;
-
+	g_queue_push_tail (ringbuf->hotspots, hs);
 }
 
 

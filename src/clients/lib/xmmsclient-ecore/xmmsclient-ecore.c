@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003, 2004 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -24,11 +24,11 @@ static int
 on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 {
 	xmmsc_connection_t *c = udata;
-	int ret;
+	int ret = 0;
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_ERROR)) {
 		xmmsc_io_disconnect (c);
-		return 0;
+		return ret;
 	}
 
 	if (ecore_main_fd_handler_active_get (handler, ECORE_FD_READ))

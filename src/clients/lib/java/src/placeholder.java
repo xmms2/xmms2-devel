@@ -14,4 +14,5 @@
  *  Lesser General Public License for more details.
  */
 
-public class placeholder {}
+public class placeholder {
+}

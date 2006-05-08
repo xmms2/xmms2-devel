@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundstr�m, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -155,11 +155,10 @@ typedef enum {
 
 typedef enum {
 	XMMS_PLUGIN_TYPE_ALL,
-	XMMS_PLUGIN_TYPE_TRANSPORT,
-	XMMS_PLUGIN_TYPE_DECODER,
 	XMMS_PLUGIN_TYPE_OUTPUT,
 	XMMS_PLUGIN_TYPE_PLAYLIST,
-	XMMS_PLUGIN_TYPE_EFFECT
+	XMMS_PLUGIN_TYPE_EFFECT,
+	XMMS_PLUGIN_TYPE_XFORM,
 } xmms_plugin_type_t;
 
 #endif /* __SIGNAL_XMMS_H__ */

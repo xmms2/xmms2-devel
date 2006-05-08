@@ -1,13 +1,13 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
- * 
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -390,6 +390,9 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_list_next (res);
 	}
 	xmmsc_result_unref (res);
+
+	/* rounding */
+	total_playtime += 500;
 
 	print_info ("\nTotal playtime: %d:%02d:%02d", total_playtime / 3600000, 
 	            (total_playtime / 60000) % 60, (total_playtime / 1000) % 60);

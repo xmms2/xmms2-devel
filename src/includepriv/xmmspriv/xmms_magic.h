@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 Peter Alm, Tobias Rundström, Anders Gustafsson
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,10 +17,10 @@
 #ifndef __XMMS_PRIV_MAGIC_H__
 #define __XMMS_PRIV_MAGIC_H__
 
-#include "xmms/xmms_transport.h"
+#include "xmms/xmms_xformplugin.h"
 
 typedef struct xmms_magic_checker_St {
-	xmms_transport_t *transport;
+	xmms_xform_t *xform;
 	gchar *buf;
 	guint alloc;
 	guint read;
@@ -29,8 +29,7 @@ typedef struct xmms_magic_checker_St {
 
 void xmms_magic_tree_free (GNode *tree);
 
-GNode *xmms_magic_add (GNode *tree, const gchar *s, GNode *prev_node);
-GNode *xmms_magic_match (xmms_magic_checker_t *c, const GList *magic);
+GNode *xmms_magic_match (xmms_magic_checker_t *c);
 guint xmms_magic_complexity (const GList *magic);
 
 #endif

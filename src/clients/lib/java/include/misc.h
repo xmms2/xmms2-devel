@@ -14,8 +14,24 @@
  *  Lesser General Public License for more details.
  */
 
+#ifndef __MISC_H__
+#define __MISC_H__
+
+#ifdef __cplusplus
+{
+#endif
+
 #include <xmmsclient/xmmsclient.h>
 #include <jni.h>
 
-extern xmmsc_result_t* getResultFromPointer(jlong val);
-extern jlong getPointerToConnection(xmmsc_connection_t *c);
+/*
+ * swig should wrap that two functions to make them java-usable
+ */
+extern xmmsc_result_t* getResultFromPointer (jlong val);
+extern jlong getPointerToConnection (xmmsc_connection_t *c);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
