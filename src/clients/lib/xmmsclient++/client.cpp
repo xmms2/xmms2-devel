@@ -27,7 +27,7 @@ namespace Xmms
 		  config(   conn_, connected_, mainloop_ ),
 		  stats(    conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
-		  mainloop_( 0 ), listener_( 0 ), quitSignal_( 0 )
+		  mainloop_( 0 ), listener_( 0 ), quitSignal_( 0 ), dc_( 0 )
 	{
 		conn_ = xmmsc_init( name.c_str() );
 	}
@@ -98,6 +98,7 @@ namespace Xmms
 			mainloop_ = new MainLoop( conn_ );
 			listener_ = new Listener( conn_ );
 			broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
+			setDisconnectCallback( boost::bind( &Client::dcHandler, this ) );
 			dynamic_cast<MainLoop*>(mainloop_)->addListener( listener_ );
 		}
 		return *mainloop_;
@@ -107,7 +108,25 @@ namespace Xmms
 	void Client::setMainloop( MainloopInterface* ml )
 	{
 
+		if( mainloop_ ) {
+			delete mainloop_;
+		}
 		mainloop_ = ml;
+		broadcastQuit( boost::bind( &Client::quitHandler, this, _1 ) );
+		setDisconnectCallback( boost::bind( &Client::dcHandler, this ) );
+
+	}
+
+	void
+	Client::setDisconnectCallback( const DisconnectCallback::slot_type& slot )
+	{
+
+		if( !dc_ ) {
+			dc_ = new DisconnectCallback;
+			xmmsc_disconnect_callback_set( conn_, &disconnect_callback,
+			                               static_cast< void* >( dc_ ) );
+		}
+		dc_->connect( slot );
 
 	}
 
@@ -123,14 +142,18 @@ namespace Xmms
 
 	bool Client::quitHandler( const unsigned int& /*time*/ )
 	{
+		return true;
+	}
+
+	void Client::dcHandler()
+	{
 		connected_ = false;
-		if( mainloop_ ) {
+		if( mainloop_ && listener_ ) {
 			dynamic_cast<MainLoop*>(mainloop_)->removeListener( listener_ );
 			delete listener_; listener_ = 0;
 		}
 
 		SignalHolder::getInstance().deleteAll();
-		return true;
 	}
 
 }

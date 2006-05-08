@@ -110,6 +110,13 @@ namespace Xmms
 			 */
 			void setMainloop( MainloopInterface* ml );
 
+			/** Set disconnection callback.
+			 *  
+			 *  @param slot A function pointer with function signature void()
+			 */
+			void
+			setDisconnectCallback( const DisconnectCallback::slot_type& slot );
+
 			/** Return the connection status.
 			 */
 			bool isConnected() const;
@@ -130,6 +137,7 @@ namespace Xmms
 			const Client operator=( const Client& ) const;
 
 			bool quitHandler( const unsigned int& time );
+			void dcHandler();
 
 			std::string name_;
 
@@ -141,6 +149,7 @@ namespace Xmms
 			Listener* listener_;
 
 			Signal<unsigned int>* quitSignal_;
+			DisconnectCallback* dc_;
 		/** @endcond */
 
 	};

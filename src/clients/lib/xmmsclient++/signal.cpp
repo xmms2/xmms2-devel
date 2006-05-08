@@ -35,5 +35,11 @@ namespace Xmms
 		signals_.clear();
 	}
 
+	void disconnect_callback( void* userdata )
+	{
+
+		(*(static_cast< DisconnectCallback* >( userdata )))();
+
+	}
 
 }

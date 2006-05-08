@@ -227,6 +227,10 @@ namespace Xmms
 		xmmsc_result_unref( res );
 
 	}
+
+	typedef boost::signal< void() > DisconnectCallback;
+
+	void disconnect_callback( void* userdata );
 	/** @endcond INTERNAL */
 
 }
