@@ -2,7 +2,7 @@
  *  Decoder plugin for AAC and MP4 audio formats
  *
  *  Copyright (C) 2005-2006 XMMS2 Team
- *  
+ *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License
  *  as published by the Free Software Foundation; either version 2
@@ -34,8 +34,8 @@
 #define FAAD_TYPE_ADIF 2
 #define FAAD_TYPE_ADTS 3
 
-static int faad_mpeg_samplerates[] = { 96000, 88200, 64000, 48000, 44100, 
-                                       32000, 24000, 22050, 16000, 12000, 
+static int faad_mpeg_samplerates[] = { 96000, 88200, 64000, 48000, 44100,
+                                       32000, 24000, 22050, 16000, 12000,
                                        11025, 8000, 7350, 0, 0, 0 };
 
 typedef struct {
@@ -68,8 +68,7 @@ static gint xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, x
 static gint64 xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 static void xmms_faad_get_mediainfo (xmms_xform_t *xform);
 
-uint32_t xmms_faad_read_callback (void *user_data, void *buffer,
-				  uint32_t length);
+uint32_t xmms_faad_read_callback (void *user_data, void *buffer, uint32_t length);
 uint32_t xmms_faad_seek_callback (void *user_data, uint64_t position);
 int xmms_faad_get_aac_track (mp4ff_t * infile);
 
@@ -262,7 +261,7 @@ xmms_faad_init (xmms_xform_t *xform)
 		}
 		data->numsamples = mp4ff_num_samples(data->mp4ff, data->track);
 		mp4ff_get_decoder_config (data->mp4ff, data->track, &tmpbuf,
-					  &tmpbuflen);
+		                          &tmpbuflen);
 
 		if (faacDecInit2 (data->decoder, tmpbuf, tmpbuflen,
 		                  &samplerate, &channels) < 0) {
@@ -287,7 +286,7 @@ xmms_faad_init (xmms_xform_t *xform)
 		/* Get mediainfo and skip the possible header */
 		xmms_faad_get_mediainfo (xform);
 		g_memmove (data->buffer, data->buffer + bytes_read,
-			   data->buffer_length - bytes_read);
+		           data->buffer_length - bytes_read);
 		data->buffer_length -= bytes_read;
 
 		data->samplerate = samplerate;
@@ -342,17 +341,17 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 				return 0;
 			}
 			
-			bytes_read = mp4ff_read_sample (data->mp4ff, data->track, 
-							data->sampleid, &tmpbuf, 
-							&tmpbuflen);
+			bytes_read = mp4ff_read_sample (data->mp4ff, data->track,
+			                                data->sampleid, &tmpbuf,
+			                                &tmpbuflen);
 			duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
 			                                      data->sampleid);
 			offset = mp4ff_get_sample_offset (data->mp4ff, data->track,
 			                                  data->sampleid);
 			data->sampleid++;
 
-			sample_buffer = faacDecDecode (data->decoder, &frameInfo, 
-						       tmpbuf, tmpbuflen);
+			sample_buffer = faacDecDecode (data->decoder, &frameInfo,
+			                               tmpbuf, tmpbuflen);
 			sample_buffer += offset;
 			bytes_read = (duration - offset) * frameInfo.channels *
 			             xmms_sample_size_get (data->sampleformat);
@@ -360,9 +359,9 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 		} else if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
 			if (data->buffer_length < FAAD_BUFFER_SIZE) {
 				bytes_read = xmms_xform_read (xform,
-							      (gchar *) data->buffer + data->buffer_length,
-							      data->buffer_size - data->buffer_length,
-							      &error);
+				                              (gchar *) data->buffer + data->buffer_length,
+				                              data->buffer_size - data->buffer_length,
+				                              &error);
 
 				if (bytes_read <= 0 && data->buffer_length == 0) {
 					XMMS_DBG ("EOF");
@@ -373,17 +372,17 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			}
 
 			sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
-						       data->buffer_length);
+			                               data->buffer_length);
 
 			g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
-				   data->buffer_length - frameInfo.bytesconsumed);
+			           data->buffer_length - frameInfo.bytesconsumed);
 			data->buffer_length -= frameInfo.bytesconsumed;
 			bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 		}
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
 			g_string_append_len (data->outbuf, sample_buffer + data->toskip,
-					     bytes_read - data->toskip);
+			                     bytes_read - data->toskip);
 			data->toskip = 0;
 		} else if (frameInfo.error > 0) {
 			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage(frameInfo.error));
@@ -412,7 +411,7 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	if (data->filetype == FAAD_TYPE_MP4) {
 		int32_t toskip;
 
-		data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track, 
+		data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
 		                                                samples, &toskip);
 		data->toskip = toskip * data->channels * xmms_sample_size_get (data->sampleformat);
 		data->buffer_length = 0;
@@ -439,9 +438,9 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		gchar *metabuf;
 
 		temp = mp4ff_get_sample_rate (data->mp4ff, data->track);
-			xmms_xform_metadata_set_int (xform,
-		                                     XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-		                                     temp);
+		xmms_xform_metadata_set_int (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+		                             temp);
 		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) / temp) >= 0) {
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
@@ -565,7 +564,7 @@ xmms_faad_read_callback (void *user_data, void *buffer, uint32_t length)
 	if (data->buffer_length == 0) {
 		guint bytes_read;
 
-		bytes_read = xmms_xform_read (xform, (gchar *) data->buffer, 
+		bytes_read = xmms_xform_read (xform, (gchar *) data->buffer,
 		                              data->buffer_size, &error);
 
 		if (bytes_read <= 0 && data->buffer_length == 0) {
