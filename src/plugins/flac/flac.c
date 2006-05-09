@@ -88,7 +88,7 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
-FLAC__SeekableStreamDecoderReadStatus
+static FLAC__SeekableStreamDecoderReadStatus
 flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder, 
                     FLAC__byte buffer[], 
                     guint *bytes, 
@@ -110,7 +110,7 @@ flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_OK;
 }
 
-FLAC__StreamDecoderWriteStatus
+static FLAC__StreamDecoderWriteStatus
 flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder, 
                      const FLAC__Frame *frame, 
                      const FLAC__int32 * const buffer[], 
@@ -147,7 +147,7 @@ flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
-FLAC__SeekableStreamDecoderTellStatus
+static FLAC__SeekableStreamDecoderTellStatus
 flac_callback_tell (const FLAC__SeekableStreamDecoder *flacdecoder, 
                     FLAC__uint64 *offset, void *client_data)
 {
@@ -163,7 +163,7 @@ flac_callback_tell (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_OK;
 }
 
-FLAC__SeekableStreamDecoderSeekStatus
+static FLAC__SeekableStreamDecoderSeekStatus
 flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder, 
                     FLAC__uint64 offset, void *client_data)
 {
@@ -182,7 +182,7 @@ flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_OK;
 }
 
-FLAC__SeekableStreamDecoderLengthStatus
+static FLAC__SeekableStreamDecoderLengthStatus
 flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder, 
                       FLAC__uint64 *stream_length, void *client_data)
 {
@@ -199,7 +199,7 @@ flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_OK;
 }
 
-void
+static void
 flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder, 
                         const FLAC__StreamMetadata *metadata, 
                         void *client_data)
@@ -236,7 +236,7 @@ flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder,
 	}
 }
 
-FLAC__bool
+static FLAC__bool
 flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder, 
                    void *client_data)
 {
@@ -248,7 +248,7 @@ flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return xmms_xform_iseos (xform);
 }
 
-void
+static void
 flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder, 
                      FLAC__StreamDecoderErrorStatus status, 
                      void *client_data)
@@ -455,7 +455,7 @@ xmms_flac_seek (xmms_xform_t *xform, guint samples)
 	return res;
 }
 
-void
+static void
 xmms_flac_destroy (xmms_xform_t *decoder)
 {
 	xmms_flac_data_t *data;
