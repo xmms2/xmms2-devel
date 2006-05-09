@@ -165,6 +165,7 @@ static gint64
 xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_id3v2_data_t *data;
+	int ret;
 
 	g_return_val_if_fail (xform, 0);
 
@@ -174,5 +175,14 @@ xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence
 	if (whence == XMMS_XFORM_SEEK_SET) {
 		bytes += data->len;
 	}
-	return xmms_xform_seek (xform, bytes, whence, err);
+
+	ret = xmms_xform_seek (xform, bytes, whence, err);
+
+	if(ret == -1) {
+		return -1;
+	}
+
+	ret -= data->len;
+
+	return ret;
 }

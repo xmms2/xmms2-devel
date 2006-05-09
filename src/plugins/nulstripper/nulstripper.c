@@ -120,6 +120,7 @@ xmms_nulstripper_seek (xmms_xform_t *xform, gint64 bytes,
                        xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_nulstripper_data_t *data;
+	int ret;
 
 	g_return_val_if_fail (xform, 0);
 
@@ -130,7 +131,15 @@ xmms_nulstripper_seek (xmms_xform_t *xform, gint64 bytes,
 		bytes += data->offset;
 	}
 
-	return xmms_xform_seek (xform, bytes, whence, err);
+	ret = xmms_xform_seek (xform, bytes, whence, err);
+
+	if(ret == -1) {
+		return -1;
+	}
+
+	ret -= data->offset;
+
+	return ret;
 }
 
 static guint
