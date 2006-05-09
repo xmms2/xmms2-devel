@@ -323,6 +323,8 @@ xmms_flac_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
+	FLAC__seekable_stream_decoder_set_metadata_respond_all (data->flacdecoder);
+
 	init_status = FLAC__seekable_stream_decoder_init (data->flacdecoder);
 
 	if (init_status != FLAC__SEEKABLE_STREAM_DECODER_OK) {
