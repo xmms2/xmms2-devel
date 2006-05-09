@@ -335,20 +335,27 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 		if (data->filetype == FAAD_TYPE_MP4) {
 			guchar *tmpbuf;
 			guint tmpbuflen;
+			gint duration, offset;
 
-			bytes_read = mp4ff_read_sample (data->mp4ff, data->track, 
-							data->sampleid, &tmpbuf, 
-							&tmpbuflen);
-			data->sampleid++;
-
-			if (bytes_read <= 0 || data->sampleid >= data->numsamples) {
+			if (data->sampleid >= data->numsamples) {
 				XMMS_DBG ("MP4 EOF");
 				return 0;
 			}
+			
+			bytes_read = mp4ff_read_sample (data->mp4ff, data->track, 
+							data->sampleid, &tmpbuf, 
+							&tmpbuflen);
+			duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
+			                                      data->sampleid);
+			offset = mp4ff_get_sample_offset (data->mp4ff, data->track,
+			                                  data->sampleid);
+			data->sampleid++;
 
 			sample_buffer = faacDecDecode (data->decoder, &frameInfo, 
 						       tmpbuf, tmpbuflen);
-			bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
+			sample_buffer += offset;
+			bytes_read = (duration - offset) * frameInfo.channels *
+			             xmms_sample_size_get (data->sampleformat);
 			g_free (tmpbuf);
 		} else if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
 			if (data->buffer_length < FAAD_BUFFER_SIZE) {
@@ -405,8 +412,8 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	if (data->filetype == FAAD_TYPE_MP4) {
 		int32_t toskip;
 
-		data->sampleid = mp4ff_find_sample (data->mp4ff, data->track, 
-		                                    samples, &toskip);
+		data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track, 
+		                                                samples, &toskip);
 		data->toskip = toskip * data->channels * xmms_sample_size_get (data->sampleformat);
 		data->buffer_length = 0;
 
@@ -435,7 +442,7 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 			xmms_xform_metadata_set_int (xform,
 		                                     XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
 		                                     temp);
-		if ((temp = mp4ff_get_track_duration (data->mp4ff, data->track) / temp) >= 0) {
+		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) / temp) >= 0) {
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                             temp * 1000);
