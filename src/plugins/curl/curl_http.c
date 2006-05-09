@@ -15,7 +15,7 @@
  */
 
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_transportplugin.h"
+#include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_medialib.h"
 
@@ -37,49 +37,42 @@ typedef struct {
 	CURL *curl_easy;
 	CURLM *curl_multi;
 
-	guint length, bytes_since_meta, meta_offset;
+	guint meta_offset;
+
+	gint read_timeout;
 
 	gchar *url;
 
-	gboolean know_length, know_mime, shoutcast;
-
-	struct curl_slist *http_aliases;
-	struct curl_slist *http_headers;
+	struct curl_slist *http_200_aliases;
+	struct curl_slist *http_req_headers;
 
 	gchar *buffer;
 	guint bufferpos, bufferlen;
 
-	gchar *metabuffer;
-	guint metabufferpos, metabufferleft;
+	gint curl_code;
 
 	xmms_error_t status;
 } xmms_curl_data_t;
 
-typedef void (*handler_func_t) (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
+typedef void (*handler_func_t) (xmms_xform_t *xform, gchar *header);
 
-static void header_handler_contenttype (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
-static void header_handler_contentlength (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
-static void header_handler_icy_metaint (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
-static void header_handler_icy_name (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
-static void header_handler_icy_genre (xmms_transport_t *transport, xmms_medialib_session_t *session,gchar *header);
-static void header_handler_icy_ok (xmms_transport_t *transport, xmms_medialib_session_t *session, gchar *header);
-static void header_handler_last (xmms_transport_t *transport,xmms_medialib_session_t *session, gchar *header);
+static void header_handler_contentlength (xmms_xform_t *xform, gchar *header);
+static void header_handler_icy_metaint (xmms_xform_t *xform, gchar *header);
+static void header_handler_icy_name (xmms_xform_t *xform, gchar *header);
+static void header_handler_icy_genre (xmms_xform_t *xform, gchar *header);
 static handler_func_t header_handler_find (gchar *header);
-static void handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata);
 
 typedef struct {
-	gchar *name;
+	const gchar *name;
 	handler_func_t func;
 } handler_t;
 
 handler_t handlers[] = {
-	{ "content-type", header_handler_contenttype },
 	{ "content-length", header_handler_contentlength },
 	{ "icy-metaint", header_handler_icy_metaint },
 	{ "icy-name", header_handler_icy_name },
 	{ "icy-genre", header_handler_icy_genre },
-	{ "ICY 200 OK", header_handler_icy_ok },
-	{ "\r\n", header_handler_last },
+/*	{ "\r\n", header_handler_last }, */
 	{ NULL, NULL }
 };
 
@@ -87,62 +80,80 @@ handler_t handlers[] = {
  * Function prototypes
  */
 
-static gboolean xmms_curl_can_handle (const gchar *url);
-static gboolean xmms_curl_init (xmms_transport_t *transport, const gchar *url);
-static void xmms_curl_close (xmms_transport_t *transport);
-static gint xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error);
-static guint64 xmms_curl_size (xmms_transport_t *transport);
+static gboolean xmms_curl_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gboolean xmms_curl_init (xmms_xform_t *xform);
+static void xmms_curl_destroy (xmms_xform_t *xform);
+static gint fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error);
+static gint xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
+/* static gint64 xmms_curl_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error); */
 static size_t xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream);
 static size_t xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream);
 
 /*
  * Plugin header
  */
+XMMS_XFORM_PLUGIN("curl",
+                  "Curl Transport for HTTP",
+                  XMMS_VERSION,
+                  "HTTP transport using CURL",
+                  xmms_curl_plugin_setup);
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+static gboolean
+xmms_curl_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_xform_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_TRANSPORT, 
-	                          XMMS_TRANSPORT_PLUGIN_API_VERSION,
-	                          "curl_http",
-	                          "Curl Transport for HTTP",
-	                          XMMS_VERSION,
-	                          "HTTP transport using CURL");
-	
-	if (!plugin) {
-		return NULL;
-	}
+	XMMS_XFORM_METHODS_INIT(methods);
+	methods.init = xmms_curl_init;
+	methods.destroy = xmms_curl_destroy;
+	methods.read = xmms_curl_read;
+	/*
+	methods.seek = xmms_curl_seek;
+	*/
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
-	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_curl_can_handle);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_curl_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ, xmms_curl_read);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SIZE, xmms_curl_size);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_curl_close);
+	/*
+	  xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
+	  xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl");
+	  xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	*/
 
-	xmms_plugin_config_property_register (plugin, "shoutcastinfo", "1",
-	                                   NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "buffersize", "131072",
-	                                   NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "verbose", "0", NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "connecttimeout", "15",
-	                                   NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "useproxy", "0", NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "proxyaddress", "127.0.0.1:8080",
-	                                   NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "authproxy", "0", NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "proxyuser", "user", NULL, NULL);
-	xmms_plugin_config_property_register (plugin, "proxypass", "password",
-	                                   NULL, NULL); 
+	xmms_xform_plugin_config_property_register (xform_plugin, "shoutcastinfo",
+	                                            "1", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "verbose",
+	                                            "0", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "connecttimeout",
+	                                            "15", NULL, NULL);
+	/* TODO is this timeout of 10 seconds really appropriate? */
+	xmms_xform_plugin_config_property_register (xform_plugin, "readtimeout",
+	                                            "10", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "useproxy",
+	                                            "0", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "proxyaddress",
+	                                            "127.0.0.1:8080", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "authproxy",
+	                                            "0", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "proxyuser",
+	                                            "user", NULL, NULL);
+	xmms_xform_plugin_config_property_register (xform_plugin, "proxypass",
+	                                            "password", NULL, NULL);
 
-	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_STREAM);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-url",
+	                              XMMS_STREAM_TYPE_URL,
+	                              "http://*",
+	                              XMMS_STREAM_TYPE_END);
 
-	return plugin;
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-url",
+	                              XMMS_STREAM_TYPE_URL,
+	                              "https://*",
+	                              XMMS_STREAM_TYPE_END);
+
+	return TRUE;
 }
 
 /*
@@ -150,68 +161,65 @@ xmms_plugin_get (void)
  */
 
 static gboolean
-xmms_curl_can_handle (const gchar *url)
-{
-	g_return_val_if_fail (url, FALSE);
-
-	if ((g_strncasecmp (url, "http", 4) == 0)) {
-		return TRUE;
-	}
-
-	return FALSE;
-}
-
-static gboolean
-xmms_curl_init (xmms_transport_t *transport, const gchar *url)
+xmms_curl_init (xmms_xform_t *xform)
 {
 	xmms_curl_data_t *data;
 	xmms_config_property_t *val;
-	gint bufsize, metaint, verbose, connecttimeout, useproxy, authproxy;
+	xmms_error_t error;
+	gint metaint, verbose, connecttimeout, useproxy, authproxy;
 	const gchar *proxyaddress, *proxyuser, *proxypass;
-	gchar proxyuserpass[90]; 
+	gchar proxyuserpass[90];
+	const gchar *url;
 
-	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (url, FALSE);
+	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
+
+	g_return_val_if_fail (xform, FALSE);
 
 	data = g_new0 (xmms_curl_data_t, 1);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "buffersize");
-	bufsize = xmms_config_property_get_int (val);
-
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "connecttimeout");
+	val = xmms_xform_config_lookup (xform, "connecttimeout");
 	connecttimeout = xmms_config_property_get_int (val);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "shoutcastinfo");
+	val = xmms_xform_config_lookup (xform, "readtimeout");
+	data->read_timeout = xmms_config_property_get_int (val);
+
+	val = xmms_xform_config_lookup (xform, "shoutcastinfo");
 	metaint = xmms_config_property_get_int (val);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "verbose");
+	val = xmms_xform_config_lookup (xform, "verbose");
 	verbose = xmms_config_property_get_int (val);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "useproxy");
+	val = xmms_xform_config_lookup (xform, "useproxy");
 	useproxy = xmms_config_property_get_int (val);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "authproxy");
+	val = xmms_xform_config_lookup (xform, "authproxy");
 	authproxy = xmms_config_property_get_int (val);
-	
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyaddress");
+
+	val = xmms_xform_config_lookup (xform, "proxyaddress");
 	proxyaddress = xmms_config_property_get_string (val);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxyuser");
+	val = xmms_xform_config_lookup (xform, "proxyuser");
 	proxyuser = xmms_config_property_get_string (val);
 
-	val = xmms_plugin_config_lookup (xmms_transport_plugin_get (transport), "proxypass");
+	val = xmms_xform_config_lookup (xform, "proxypass");
 	proxypass = xmms_config_property_get_string (val);
 
-	g_snprintf (proxyuserpass, sizeof (proxyuserpass), "%s:%s", proxyuser, proxypass);
+	g_snprintf (proxyuserpass, sizeof (proxyuserpass), "%s:%s", proxyuser,
+	            proxypass);
 
 	data->buffer = g_malloc (CURL_MAX_WRITE_SIZE);
-	data->metabuffer = g_malloc (256 * 16);
 
 	data->url = g_strdup (url);
 
-	data->http_aliases = curl_slist_append (data->http_aliases, "ICY 200 OK");
-	data->http_aliases = curl_slist_append (data->http_aliases, "ICY 402 Service Unavailabe");
-	data->http_headers = curl_slist_append (data->http_headers, "Icy-MetaData: 1");
+	data->http_200_aliases = curl_slist_append (data->http_200_aliases,
+	                                            "ICY 200 OK");
+	data->http_200_aliases = curl_slist_append (data->http_200_aliases,
+	                                            "ICY 402 Service Unavailabe");
+
+	if (metaint == 1) {
+		data->http_req_headers = curl_slist_append (data->http_req_headers,
+		                                            "Icy-MetaData: 1");
+	}
 
 	data->curl_easy = curl_easy_init ();
 
@@ -222,19 +230,23 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_AUTOREFERER, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_FAILONERROR, 1);
 	curl_easy_setopt (data->curl_easy, CURLOPT_NOPROGRESS, 1);
-	curl_easy_setopt (data->curl_easy, CURLOPT_USERAGENT, "XMMS/" XMMS_VERSION);
-	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEHEADER, transport);
-	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEDATA, transport);
-	curl_easy_setopt (data->curl_easy, CURLOPT_HTTP200ALIASES, data->http_aliases);
-	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION, xmms_curl_callback_write);
-	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION, xmms_curl_callback_header);
+	curl_easy_setopt (data->curl_easy, CURLOPT_USERAGENT,
+	                  "XMMS2/" XMMS_VERSION);
+	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEHEADER, xform);
+	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEDATA, xform);
+	curl_easy_setopt (data->curl_easy, CURLOPT_HTTP200ALIASES,
+	                  data->http_200_aliases);
+	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION,
+	                  xmms_curl_callback_write);
+	curl_easy_setopt (data->curl_easy, CURLOPT_HEADERFUNCTION,
+	                  xmms_curl_callback_header);
 	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, connecttimeout);
 
 	if (useproxy == 1) {
 		curl_easy_setopt (data->curl_easy, CURLOPT_PROXY, proxyaddress);
 		if (authproxy == 1) {
 			curl_easy_setopt (data->curl_easy, CURLOPT_PROXYUSERPWD,
-		                          proxyuserpass);
+			                  proxyuserpass);
 		}
 	}
 
@@ -243,146 +255,154 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYPEER, 0);
 	curl_easy_setopt (data->curl_easy, CURLOPT_SSL_VERIFYHOST, 0);
 
-	if (metaint == 1)
-		curl_easy_setopt (data->curl_easy, CURLOPT_HTTPHEADER, data->http_headers);
+	if (data->http_req_headers) {
+		curl_easy_setopt (data->curl_easy, CURLOPT_HTTPHEADER,
+		                  data->http_req_headers);
+	}
 
 	data->curl_multi = curl_multi_init ();
+	data->curl_code = CURLM_CALL_MULTI_PERFORM;
 
 	curl_multi_add_handle (data->curl_multi, data->curl_easy);
 
-	xmms_transport_private_data_set (transport, data);
+	xmms_xform_private_data_set (xform, data);
 
-	xmms_transport_buffering_start (transport);
+	/* perform initial fill to see if it contains shoutcast metadata or not */
+	if (fill_buffer (xform, data, &error) <= 0) {
+		/* something went wrong */
+		return FALSE;
+	}
+
+	if (data->meta_offset > 0) {
+		XMMS_DBG ("icy-metadata detected");
+
+		xmms_xform_outdata_type_add (xform,
+		                             XMMS_STREAM_TYPE_MIMETYPE,
+		                             "application/x-icy-stream",
+		                             XMMS_STREAM_TYPE_PRIVATE_INT,
+		                             data->meta_offset,
+		                             XMMS_STREAM_TYPE_END);
+	} else {
+		xmms_xform_outdata_type_add (xform,
+		                             XMMS_STREAM_TYPE_MIMETYPE,
+		                             "application/octet-stream",
+		                             XMMS_STREAM_TYPE_END);
+	}
 
 	return TRUE;
 }
 
 static gint
-xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len, xmms_error_t *error)
+fill_buffer (xmms_xform_t *xform, xmms_curl_data_t *data, xmms_error_t *error)
 {
-	xmms_curl_data_t *data;
-	xmms_medialib_entry_t entry;
-	gint code, handles;
+	gint handles;
 
-	g_return_val_if_fail (transport, -1);
-	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (data, -1);
 	g_return_val_if_fail (error, -1);
 
-	data = xmms_transport_private_data_get (transport);
-	g_return_val_if_fail (data, -1);
-
-	code = CURLM_CALL_MULTI_PERFORM;
-
 	while (TRUE) {
-
-		/* if we have data available, just pick it up */
-		if (data->bufferlen) {
-			len = MIN (len, data->bufferlen);
-			memcpy (buffer, data->buffer, len);
-			data->bufferlen -= len;
-			if (data->bufferlen)
-				memmove (data->buffer, data->buffer + len, data->bufferlen);
-			return len;
-		}
-
-		if (code == CURLM_OK) {
+		if (data->curl_code == CURLM_OK) {
 			fd_set fdread, fdwrite, fdexcp;
 			struct timeval timeout;
 			gint ret, maxfd;
 
-			timeout.tv_sec = 10;
+			timeout.tv_sec = data->read_timeout;
 			timeout.tv_usec = 0;
-			
+
 			FD_ZERO (&fdread);
 			FD_ZERO (&fdwrite);
 			FD_ZERO (&fdexcp);
-			
-			curl_multi_fdset (data->curl_multi, &fdread, &fdwrite, &fdexcp,  &maxfd);
-			
+
+			curl_multi_fdset (data->curl_multi, &fdread, &fdwrite, &fdexcp,
+			                  &maxfd);
+
 			ret = select (maxfd + 1, &fdread, &fdwrite, &fdexcp, &timeout);
 
 			if (ret == -1) {
 				xmms_error_set (error, XMMS_ERROR_GENERIC, "Error select");
-				break;
+				return -1;
 			} else if (ret == 0) {
-				xmms_error_set (error, XMMS_ERROR_GENERIC, "Timeout");
-				break;
+				xmms_error_set (error, XMMS_ERROR_GENERIC, "Read timeout");
+				return -1;
 			}
 
 		}
 
-		code = curl_multi_perform (data->curl_multi, &handles);
+		data->curl_code = curl_multi_perform (data->curl_multi, &handles);
 
-		if (code != CURLM_CALL_MULTI_PERFORM && code != CURLM_OK) {
-			xmms_error_set (error, XMMS_ERROR_GENERIC, curl_multi_strerror (code));
-			break;
+		if (data->curl_code != CURLM_CALL_MULTI_PERFORM &&
+		    data->curl_code != CURLM_OK) {
+
+			xmms_error_set (error, XMMS_ERROR_GENERIC,
+			                curl_multi_strerror (data->curl_code));
+			return -1;
 		}
 
 		/* done */
 		if (handles == 0) {
-			if (!data->know_mime) {
-				xmms_medialib_session_t *session = xmms_medialib_begin_write ();
-				entry = xmms_transport_medialib_entry_get (transport);
-				xmms_medialib_entry_property_set_str (session, entry,
-						XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
-				xmms_medialib_end (session);
-				xmms_medialib_entry_send_update (entry);
-			}
-
 			return 0;
 		}
 
+		if (data->bufferlen > 0) {
+			return 1;
+		}
 	}
-
-	if (!data->know_mime) {
-		xmms_medialib_session_t *session = xmms_medialib_begin_write ();
-		entry = xmms_transport_medialib_entry_get (transport);
-		xmms_medialib_entry_property_set_str (session, entry,
-				XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, NULL);
-		xmms_medialib_end (session);
-		xmms_medialib_entry_send_update (entry);
-	}
-
-	return -1;
 }
 
-static guint64
-xmms_curl_size (xmms_transport_t *transport)
+static gint
+xmms_curl_read (xmms_xform_t *xform, void *buffer, gint len,
+                xmms_error_t *error)
 {
 	xmms_curl_data_t *data;
-	gint len;
+	gint ret;
 
-	g_return_val_if_fail (transport, -1);
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (buffer, -1);
+	g_return_val_if_fail (error, -1);
 
-	data = xmms_transport_private_data_get (transport);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	if (data->know_length)
-		len = data->length;
-	else
-		len = -1;
+	while (TRUE) {
 
-	return len;
+		/* if we have data available, just pick it up (even if there's
+		   less bytes available than was requested) */
+		if (data->bufferlen) {
+			len = MIN (len, data->bufferlen);
+			memcpy (buffer, data->buffer, len);
+			data->bufferlen -= len;
+			if (data->bufferlen) {
+				memmove (data->buffer, data->buffer + len, data->bufferlen);
+			}
+			return len;
+		}
+
+		ret = fill_buffer (xform, data, error);
+
+		if (ret == 0 || ret == -1) {
+			return ret;
+		}
+	}
 }
 
 static void
-xmms_curl_close (xmms_transport_t *transport)
+xmms_curl_destroy (xmms_xform_t *xform)
 {
 	xmms_curl_data_t *data;
 
-	g_return_if_fail (transport);
+	g_return_if_fail (xform);
 
-	data = xmms_transport_private_data_get (transport);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
 	curl_multi_cleanup (data->curl_multi);
 	curl_easy_cleanup (data->curl_easy);
 
-	curl_slist_free_all (data->http_aliases);
-	curl_slist_free_all (data->http_headers);
+	curl_slist_free_all (data->http_200_aliases);
+	curl_slist_free_all (data->http_req_headers);
 
 	g_free (data->buffer);
-	g_free (data->metabuffer);
 
 	g_free (data->url);
 	g_free (data);
@@ -396,12 +416,12 @@ static size_t
 xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	xmms_curl_data_t *data;
-	xmms_transport_t *transport = (xmms_transport_t *) stream;
+	xmms_xform_t *xform = (xmms_xform_t *) stream;
 	gint len;
 
-	g_return_val_if_fail (transport, 0);
+	g_return_val_if_fail (xform, 0);
 
-	data = xmms_transport_private_data_get (transport);
+	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, 0);
 
 	g_return_val_if_fail (data->bufferlen == 0, 0);
@@ -410,51 +430,34 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 
 	g_return_val_if_fail (len <= CURL_MAX_WRITE_SIZE, 0);
 
-	while (len) {
-		if (data->metabufferleft) {
-			gint tlen = MIN (len, data->metabufferleft);
-			memcpy (data->metabuffer + data->metabufferpos, ptr, tlen);
-			data->metabufferleft -= tlen;
-			data->metabufferpos += tlen;
-			if (!data->metabufferleft) {
-				handle_shoutcast_metadata (transport, data->metabuffer);
-				data->bytes_since_meta = 0;
+	memcpy (data->buffer, ptr, len);
+	data->bufferlen = len;
 
-			}
-			len -= tlen;
-			ptr += tlen;
-		} else if (data->meta_offset && data->bytes_since_meta == data->meta_offset) {
-			data->metabufferleft = (*((guchar *)ptr)) * 16;
-			data->metabufferpos = 0;
-			len--;
-			ptr++;
-			if (data->metabufferleft == 0)
-				data->bytes_since_meta = 0;
-		} else {
-			gint tlen = len;
-			if (data->meta_offset)
-				tlen = MIN (tlen, data->meta_offset - data->bytes_since_meta);
-			memcpy (data->buffer + data->bufferlen, ptr, tlen);
-			len -= tlen;
-			ptr += tlen;
-			data->bytes_since_meta += tlen;
-			data->bufferlen += tlen;
+	return len;
+}
+
+static int
+strlen_no_crlf (char *ptr, int len) {
+	int ep = len - 1;
+	for (; ep >= 0; --ep) {
+		if (ptr[ep] != '\r' && ptr[ep] != '\n') {
+			break;
 		}
 	}
-
-	return size * nmemb;
+	return ep + 1;
 }
 
 static size_t
 xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 {
-	xmms_medialib_session_t *session;
-	xmms_transport_t *transport = (xmms_transport_t *) stream;
+	xmms_xform_t *xform = (xmms_xform_t *) stream;
 	handler_func_t func;
 	gchar *header;
 
-	g_return_val_if_fail (transport, -1);
-	g_return_val_if_fail (ptr, -1);
+	XMMS_DBG ("%.*s", strlen_no_crlf ((char*)ptr, size * nmemb), (char*)ptr);
+
+	g_return_val_if_fail (xform, 0);
+	g_return_val_if_fail (ptr, 0);
 
 	header = g_strndup ((gchar*)ptr, size * nmemb);
 
@@ -466,15 +469,12 @@ xmms_curl_callback_header (void *ptr, size_t size, size_t nmemb, void *stream)
 		} else {
 			val = header;
 		}
-		session = xmms_medialib_begin_write ();
-		func (transport, session, val);
-		xmms_medialib_end (session);
+		func (xform, val);
 	}
 
 	g_free (header);
 	return size * nmemb;
 }
-
 
 static handler_func_t
 header_handler_find (gchar *header)
@@ -486,150 +486,62 @@ header_handler_find (gchar *header)
 	for (i = 0; handlers[i].name != NULL; i++) {
 		guint len = strlen (handlers[i].name);
 
-		if (g_ascii_strncasecmp (handlers[i].name, header, len) == 0)
+		if (g_ascii_strncasecmp (handlers[i].name, header, len) == 0) {
 			return handlers[i].func;
+		}
 	}
 
 	return NULL;
 }
 
 static void
-header_handler_contenttype (xmms_transport_t *transport, 
-							xmms_medialib_session_t *session, 
-							gchar *header)
+header_handler_contentlength (xmms_xform_t *xform,
+                              gchar *header)
 {
 	xmms_curl_data_t *data;
-	xmms_medialib_entry_t entry;
+	int length;
 
-	data = xmms_transport_private_data_get (transport);
+	data = xmms_xform_private_data_get (xform);
 
-	data->know_mime = TRUE;
+	length = strtoul (header, NULL, 10);
 
-	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, header);
-	xmms_medialib_entry_send_update (entry);
+	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_SIZE, length);
 }
 
 static void
-header_handler_contentlength (xmms_transport_t *transport, 
-							  xmms_medialib_session_t *session,
-							  gchar *header)
+header_handler_icy_metaint (xmms_xform_t *xform,
+                            gchar *header)
 {
 	xmms_curl_data_t *data;
 
-	data = xmms_transport_private_data_get (transport);
-
-	data->length = strtoul (header, NULL, 10);
-}
-
-static void
-header_handler_icy_metaint (xmms_transport_t *transport,
-							xmms_medialib_session_t *session,
-							gchar *header)
-{
-	xmms_curl_data_t *data;
-
-	data = xmms_transport_private_data_get (transport);
+	data = xmms_xform_private_data_get (xform);
 
 	data->meta_offset = strtoul (header, NULL, 10);
 }
 
 static void
-header_handler_icy_name (xmms_transport_t *transport,
-						 xmms_medialib_session_t *session,
-						 gchar *header)
+header_handler_icy_name (xmms_xform_t *xform,
+                         gchar *header)
 {
-	xmms_medialib_entry_t entry;
-
-	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (session, entry, 
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL, 
-										  header);
-	xmms_medialib_entry_send_update (entry);
+	xmms_xform_metadata_set_str (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL,
+	                             header);
 }
 
 static void
-header_handler_icy_ok (xmms_transport_t *transport, 
-					   xmms_medialib_session_t *session, 
-					   gchar *header)
+header_handler_icy_genre (xmms_xform_t *xform,
+                          gchar *header)
 {
-	xmms_curl_data_t *data;
-
-	data = xmms_transport_private_data_get (transport);
-
-	data->shoutcast = TRUE;
+	xmms_xform_metadata_set_str (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
+	                             header);
 }
 
-static void
-header_handler_icy_genre (xmms_transport_t *transport, 
-						  xmms_medialib_session_t *session,
-						  gchar *header)
-{
-	xmms_medialib_entry_t entry;
-
-	entry = xmms_transport_medialib_entry_get (transport);
-	xmms_medialib_entry_property_set_str (session, entry, 
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, 
-										  header);
-	xmms_medialib_entry_send_update (entry);
+/*
+static gint64
+xmms_curl_seek (xmms_xform_t *xform, gint64 offset,
+                xmms_xform_seek_mode_t whence, xmms_error_t *error) {
+	xmms_error_set (error, XMMS_ERROR_INVAL, "Couldn't seek");
+	return -1;
 }
-
-static void
-header_handler_last (xmms_transport_t *transport, 
-					 xmms_medialib_session_t *session, 
-					 gchar *header)
-{
-	xmms_curl_data_t *data;
-	xmms_medialib_entry_t entry;
-	gchar *mime = NULL;
-
-	data = xmms_transport_private_data_get (transport);
-
-	if (data->shoutcast)
-		mime = "audio/mpeg";
-
-	if (!data->know_mime) {
-		entry = xmms_transport_medialib_entry_get (transport);
-		xmms_medialib_entry_property_set_str (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, mime);
-		xmms_medialib_entry_send_update (entry);
-	}
-
-	data->know_mime = TRUE;
-}
-
-static void
-handle_shoutcast_metadata (xmms_transport_t *transport, gchar *metadata)
-{
-	xmms_medialib_entry_t entry;
-	xmms_medialib_session_t *session;
-	xmms_curl_data_t *data;
-	gchar **tags;
-	guint i = 0;
-
-	data = xmms_transport_private_data_get (transport);
-	entry = xmms_transport_medialib_entry_get (transport);
-
-	session = xmms_medialib_begin_write ();
-
-	tags = g_strsplit (metadata, ";", 0);
-	while (tags[i] != NULL) {
-		if (g_strncasecmp (tags[i], "StreamTitle=", 12) == 0) {
-			gchar *raw;
-
-			raw = tags[i] + 13;
-			raw[strlen (raw) - 1] = '\0';
-
-			xmms_medialib_entry_property_set_str (session, entry, 
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, 
-												  raw);
-			xmms_medialib_entry_send_update (entry);
-		}
-
-		i++;
-	}
-
-	xmms_medialib_end (session);
-	g_strfreev (tags);
-}
+*/

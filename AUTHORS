@@ -16,6 +16,11 @@ N: Kristian Benoit
 E: softchill@blacky.sympatico.ca
 D: Various fixes.
 
+N: Jonas Berlin
+E: xkr47@outerspace.dyndns.org
+W: http://xkr47.outerspace.dyndns.org/
+D: curl_http updated to xforms, icymetaint plugin (extracted from curl)
+
 N: Magnus Bjernstad
 E: bjernstad@gmail.com
 D: PythonAPI fixes.

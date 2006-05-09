@@ -19,20 +19,20 @@ struct sidplay_wrapper {
 };
 
 BEGIN_EXTERN
-	
+
 struct sidplay_wrapper *sidplay_wrapper_init () {
 	struct sidplay_wrapper *res;
 	res = g_new0 (struct sidplay_wrapper, 1);
 	res->player = new sidplay2 ();
 	return res;
 }
-	
-void 
-sidplay_wrapper_destroy (struct sidplay_wrapper *wrap) 
+
+void
+sidplay_wrapper_destroy (struct sidplay_wrapper *wrap)
 {
 	wrap->player->stop ();
 	sidbuilder *bldr = wrap->conf.sidEmulation;
-	wrap->player->config (wrap->conf);	  
+	wrap->player->config (wrap->conf);
 	delete bldr;
 	delete wrap->player;
 	delete wrap->currTune;
@@ -40,16 +40,16 @@ sidplay_wrapper_destroy (struct sidplay_wrapper *wrap)
 }
 
 
-gint 
+gint
 sidplay_wrapper_play (struct sidplay_wrapper *wrap, void *buf, gint len)
 {
 	return wrap->player->play (buf, len);
 }
 
 
-gint 
-sidplay_wrapper_songinfo (struct sidplay_wrapper *wrap, gchar *artist, 
-						  gchar *title) 
+gint
+sidplay_wrapper_songinfo (struct sidplay_wrapper *wrap, gchar *artist,
+                          gchar *title)
 {
 	gint err = 0;
 	const SidTuneInfo *nfo = (wrap->player->info ()).tuneInfo;
@@ -58,13 +58,13 @@ sidplay_wrapper_songinfo (struct sidplay_wrapper *wrap, gchar *artist,
 	if (err > 0) {
 		err = g_strlcpy (artist, nfo->infoString[1], 32);
 	}
-	
+
 	return err;
 }
 
 
-gint 
-sidplay_wrapper_subtunes (struct sidplay_wrapper *wrap) 
+gint
+sidplay_wrapper_subtunes (struct sidplay_wrapper *wrap)
 {
 	const SidTuneInfo *nfo = (wrap->player->info ()).tuneInfo;
 
@@ -72,7 +72,7 @@ sidplay_wrapper_subtunes (struct sidplay_wrapper *wrap)
 }
 
 
-void 
+void
 sidplay_wrapper_set_subtune (struct sidplay_wrapper *wrap, gint subtune)
 {
 	wrap->currTune->selectSong (subtune);
@@ -80,11 +80,11 @@ sidplay_wrapper_set_subtune (struct sidplay_wrapper *wrap, gint subtune)
 }
 
 
-gint 
+gint
 sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 {
 	int res;
-	
+
 	wrap->currTune = new SidTune (0);
 	res = wrap->currTune->read ((const uint_least8_t *)buf, len);
 	if (!res) {
@@ -92,7 +92,7 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 	}
 
 	wrap->currTune->selectSong (1);
-	
+
 	res = wrap->player->load (wrap->currTune);
 	if (res) {
 		return -3;
@@ -102,21 +102,21 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 	if (!rs) {
 		return -4;
 	}
-	
+
 	if (!*rs) {
 		return -5;
 	}
-	
+
 	rs->create ((wrap->player->info ()).maxsids);
 	if (!*rs) {
 		return -6;
 	}
-	
+
 	rs->filter (false);
 	if (!*rs) {
 		return -6;
 	}
-    
+
 	rs->sampling (44100);
 	if (!*rs) {
 		return -6;
@@ -125,7 +125,7 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 	wrap->conf              = wrap->player->config ();
 	wrap->conf.frequency    = 44100;
 	wrap->conf.precision    = 16;
-    wrap->conf.playback     = sid2_stereo;
+	wrap->conf.playback     = sid2_stereo;
 	wrap->conf.sampleFormat = SID2_LITTLE_SIGNED;
 
 	/* These should be configurable ... */
@@ -139,7 +139,7 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 
 	wrap->conf.sidEmulation = rs;
 	res = wrap->player->config (wrap->conf);
-	
+
 	return res;
 }
 
