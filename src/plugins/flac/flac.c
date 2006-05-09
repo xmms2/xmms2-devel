@@ -262,7 +262,7 @@ flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder,
 	XMMS_DBG ("%s", FLAC__StreamDecoderErrorStatusString[status]);
 }
 
-typedef enum { STRING, INTEGER } ptype;
+typedef enum { STRING, INTEGER, RPGAIN } ptype;
 typedef struct {
 	gchar *vname;
 	gchar *xname;
@@ -282,6 +282,10 @@ static props properties[] = {
 	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
 	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
 	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
+	{ "replaygain_track_gain",XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,RPGAIN  },
+	{ "replaygain_album_gain",XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,RPGAIN  },
+	{ "replaygain_track_peak",XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,STRING  },
+	{ "replaygain_album_peak",XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,STRING  },
 };
 
 static gboolean
@@ -339,6 +343,7 @@ xmms_flac_init (xmms_xform_t *xform)
 			gchar **s, *val;
 			guint length;
 			gint i = 0;
+			gchar buf[8];
 
 			entry = &data->vorbiscomment->data.vorbis_comment.comments[current];
 			s = g_strsplit ((gchar *) entry->entry, "=", 2);
@@ -356,6 +361,13 @@ xmms_flac_init (xmms_xform_t *xform)
 						gint tmp = strtol (val, NULL, 10);
 						xmms_xform_metadata_set_int (xform,
 						                             properties[i].xname, tmp);
+					} else if (properties[i].type == RPGAIN) {
+						g_snprintf (buf, sizeof (buf), "%f",
+						            pow (10.0, g_strtod (val, NULL) / 20));
+
+						/** @todo this should probably be a int instead? */
+						xmms_xform_metadata_set_str (xform,
+						                             properties[i].xname, buf);
 					} else {
 						xmms_xform_metadata_set_str (xform,
 						                             properties[i].xname, val);
