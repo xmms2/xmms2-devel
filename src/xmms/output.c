@@ -658,7 +658,8 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_volume_map_init (&map);
 
 	/* ask the plugin how much channels it would like to set */
-	if (xmms_output_plugin_method_volume_get (output->plugin, output, NULL, NULL, &map.num_channels)) {
+	if (xmms_output_plugin_method_volume_get (output->plugin, output,
+	                                          NULL, NULL, &map.num_channels)) {
 		return NULL;
 	}
 
@@ -669,7 +670,9 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	map.names = g_new (const gchar *, map.num_channels);
 	map.values = g_new (guint, map.num_channels);
 
-	map.status = xmms_output_plugin_method_volume_get (output->plugin, output, map.names, map.values, &map.num_channels);
+	map.status = xmms_output_plugin_method_volume_get (output->plugin, output,
+	                                                   map.names, map.values,
+	                                                   &map.num_channels);
 
 	if (!map.status || !map.num_channels) {
 		return NULL; /* error is set (-> no leak) */
@@ -1103,7 +1106,9 @@ xmms_output_monitor_volume_thread (gpointer data)
 
 	while (output->monitor_volume_running) {
 		cur.num_channels = 0;
-		cur.status = xmms_output_plugin_method_volume_get (output->plugin, output, NULL, NULL, &cur.num_channels);
+		cur.status = xmms_output_plugin_method_volume_get (output->plugin,
+		                                                   output, NULL, NULL,
+		                                                   &cur.num_channels);
 
 		if (cur.status) {
 			/* check for sane values */
@@ -1118,7 +1123,11 @@ xmms_output_monitor_volume_thread (gpointer data)
 		}
 
 		if (cur.status) {
-			cur.status = xmms_output_plugin_method_volume_get (output->plugin, output, cur.names, cur.values, &cur.num_channels);
+			cur.status =
+				xmms_output_plugin_method_volume_get (output->plugin,
+				                                      output, cur.names,
+				                                      cur.values,
+				                                      &cur.num_channels);
 		}
 
 		/* we failed at getting volume for one of the two maps or
