@@ -658,8 +658,8 @@ xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error)
 	xmms_volume_map_init (&map);
 
 	/* ask the plugin how much channels it would like to set */
-	if (xmms_output_plugin_method_volume_get (output->plugin, output,
-	                                          NULL, NULL, &map.num_channels)) {
+	if (!xmms_output_plugin_method_volume_get (output->plugin, output,
+	                                           NULL, NULL, &map.num_channels)) {
 		return NULL;
 	}
 
