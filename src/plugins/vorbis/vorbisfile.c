@@ -43,7 +43,6 @@ typedef struct xmms_vorbis_data_St {
 	OggVorbis_File vorbisfile;
 	ov_callbacks callbacks;
 	gint current;
-	GMutex *lock;
 } xmms_vorbis_data_t;
 
 typedef enum { STRING, INTEGER } ptype;
@@ -123,8 +122,6 @@ xmms_vorbis_destroy (xmms_xform_t *xform)
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
-
-	g_mutex_free (data->lock);
 
 	ov_clear (&data->vorbisfile);
 	g_free (data);
@@ -257,7 +254,6 @@ xmms_vorbis_init (xmms_xform_t *xform)
 	g_return_val_if_fail (xform, FALSE);
 
 	data = g_new0 (xmms_vorbis_data_t, 1),
-	data->lock = g_mutex_new ();
 
 	data->callbacks.read_func = vorbis_callback_read;
 	data->callbacks.close_func = vorbis_callback_close;
@@ -378,15 +374,11 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	g_mutex_lock (data->lock);
-
 	ret = ov_read (&data->vorbisfile, (gchar *) buf, len,
 	               G_BYTE_ORDER == G_BIG_ENDIAN,
 	               xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16),
 				   1,
 	               &c);
-
-	g_mutex_unlock (data->lock);
 
 	if (!ret || ret < 0) {
 		return ret;
@@ -415,17 +407,12 @@ xmms_vorbis_seek (xmms_xform_t *xform, gint64 samples,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	g_mutex_lock (data->lock);
-
 	if (samples > ov_pcm_total (&data->vorbisfile, -1)) {
 		xmms_log_error ("Trying to seek past end of stream");
-		g_mutex_unlock (data->lock);
 		return -1;
 	}
 
 	ov_pcm_seek (&data->vorbisfile, samples);
-
-	g_mutex_unlock (data->lock);
 
 	return samples;
 }

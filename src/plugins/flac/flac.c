@@ -34,7 +34,6 @@ typedef struct xmms_flac_data_St {
 	guint bit_rate;
 	guint bits_per_sample;
 	guint64 total_samples;
-	gboolean is_seeking;
 
 	GString *buffer;
 } xmms_flac_data_t;
@@ -119,9 +118,6 @@ flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder,
 	guint16 *packed16 = (guint16 *) packed;
 
 	data = xmms_xform_private_data_get (xform);
-
-	if (data->is_seeking)
-		return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 
 	for (sample = 0; sample < frame->header.blocksize; sample++) {
 		for (channel = 0; channel < frame->header.channels; channel++) {
@@ -480,10 +476,8 @@ xmms_flac_seek (xmms_xform_t *xform, gint64 samples,
 		return -1;
 	}
 
-	data->is_seeking = TRUE;
 	res = FLAC__seekable_stream_decoder_seek_absolute (data->flacdecoder,
 	                                                   (FLAC__uint64) samples);
-	data->is_seeking = FALSE;
 
 	return res ? samples : -1;
 }
