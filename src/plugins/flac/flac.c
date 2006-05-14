@@ -48,9 +48,7 @@ static gint xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                             xmms_error_t *err);
 static gboolean xmms_flac_init (xmms_xform_t *decoder);
 static void xmms_flac_destroy (xmms_xform_t *decoder);
-/*
-static gboolean xmms_flac_seek (xmms_xform_t *decoder, guint samples);
-*/
+static gint64 xmms_flac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
@@ -71,6 +69,7 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_flac_init;
 	methods.destroy = xmms_flac_destroy;
 	methods.read = xmms_flac_read;
+	methods.seek = xmms_flac_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -463,26 +462,31 @@ xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	return size;
 }
 
-#if 0
-static gboolean
-xmms_flac_seek (xmms_xform_t *xform, guint samples)
+static gint64
+xmms_flac_seek (xmms_xform_t *xform, gint64 samples,
+                xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_flac_data_t *data;
 	FLAC__bool res;
 
-	g_return_val_if_fail (xform, FALSE);
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 
 	data = xmms_xform_private_data_get (xform);
-	g_return_val_if_fail (data, FALSE);
+	g_return_val_if_fail (data, -1);
+
+	if (samples > data->total_samples) {
+		xmms_log_error ("Trying to seek past end of stream");
+		return -1;
+	}
 
 	data->is_seeking = TRUE;
 	res = FLAC__seekable_stream_decoder_seek_absolute (data->flacdecoder,
 	                                                   (FLAC__uint64) samples);
 	data->is_seeking = FALSE;
 
-	return res;
+	return res ? samples : -1;
 }
-#endif
 
 static void
 xmms_flac_destroy (xmms_xform_t *decoder)
