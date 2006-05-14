@@ -237,6 +237,12 @@ xmms_xform_metadata_get_val (xmms_xform_t *xform, const char *key)
 	return NULL;
 }
 
+gboolean
+xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key)
+{
+	return !!xmms_xform_metadata_get_val (xform, key);
+}
+
 gint32
 xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key)
 {
