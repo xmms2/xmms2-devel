@@ -269,7 +269,7 @@ typedef struct {
 	guint32 source;
 } metadata_festate_t;
 
-void
+static void
 add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 {
 	xmms_object_cmd_value_t *value = (xmms_object_cmd_value_t *)_value;
