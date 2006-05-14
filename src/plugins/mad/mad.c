@@ -229,6 +229,13 @@ xmms_mad_init (xmms_xform_t *xform)
 	data->samplerate = frame.header.samplerate;
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
+	if (frame.header.flags & MAD_FLAG_PROTECTION) {
+		XMMS_DBG ("Frame has protection enabled");
+		if (stream.anc_ptr.byte > stream.buffer + 2) {
+			stream.anc_ptr.byte = stream.anc_ptr.byte - 2;
+		}
+	}
+
 	data->xing = xmms_xing_parse (stream.anc_ptr);
 	if (data->xing) {
 		XMMS_DBG ("File with Xing header!");
