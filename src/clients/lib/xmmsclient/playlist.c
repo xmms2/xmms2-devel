@@ -40,6 +40,8 @@
 xmmsc_result_t *
 xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
 }
 
@@ -50,6 +52,8 @@ xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_shuffle (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SHUFFLE);
 }
 
@@ -60,14 +64,14 @@ xmmsc_result_t *
 xmmsc_playlist_sort (xmmsc_connection_t *c, const char *property)
 {
 	xmms_ipc_msg_t *msg;
-	xmmsc_result_t *res;
-	
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!property, "with a NULL property", NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
 	xmms_ipc_msg_put_string (msg, property);
 
-	res = xmmsc_send_msg (c, msg);
-	
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -76,6 +80,8 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *property)
 xmmsc_result_t *
 xmmsc_playlist_clear (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CLEAR);
 }
 
@@ -87,6 +93,8 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_list (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
 }
 
@@ -101,15 +109,15 @@ xmmsc_playlist_list (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_ID);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 	xmms_ipc_msg_put_uint32 (msg, id);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -123,9 +131,11 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
 xmmsc_result_t *
 xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 	char *enc_url;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!url, "with a NULL url", NULL);
 
 	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
@@ -134,9 +144,8 @@ xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 	xmms_ipc_msg_put_string (msg, url);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 
@@ -151,14 +160,14 @@ xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
 xmmsc_result_t *
 xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_ID);
 	xmms_ipc_msg_put_uint32 (msg, id);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -177,6 +186,9 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 	char *enc_url;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!url, "with a NULL url", NULL);
 
 	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
@@ -198,15 +210,15 @@ xmmsc_result_t *
 xmmsc_playlist_move (xmmsc_connection_t *c,
                      unsigned int cur_pos, unsigned int new_pos)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MOVE);
 	xmms_ipc_msg_put_uint32 (msg, cur_pos);
 	xmms_ipc_msg_put_uint32 (msg, new_pos);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	return xmmsc_send_msg (c, msg);
 
 }
 
@@ -220,14 +232,14 @@ xmmsc_playlist_move (xmmsc_connection_t *c,
 xmmsc_result_t *
 xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int pos)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REMOVE);
 	xmms_ipc_msg_put_uint32 (msg, pos);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	return xmmsc_send_msg (c, msg);
 
 }
 
@@ -238,6 +250,8 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int pos)
 xmmsc_result_t *
 xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
 }
 
@@ -248,6 +262,8 @@ xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS);
 }
 
@@ -257,15 +273,14 @@ xmmsc_broadcast_playlist_current_pos (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int pos)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SET_POS);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -275,15 +290,14 @@ xmmsc_playlist_set_next (xmmsc_connection_t *c, unsigned int pos)
 xmmsc_result_t *
 xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SET_POS_REL);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /** @} */

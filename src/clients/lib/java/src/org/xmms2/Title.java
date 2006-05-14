@@ -23,7 +23,8 @@ import java.util.Map;
 
 public class Title implements Comparable {
     private HashMap attributes;
-
+    private long id = -1;
+    
     public Title() {
         attributes = new HashMap();
         setAttribute("artist", "[Unknown artist]");
@@ -50,6 +51,14 @@ public class Title implements Comparable {
         if (value == null)
             value = "";
         return "" + value;
+    }
+    
+    public long getID(){
+    	return id;
+    }
+    
+    public void setID(long id){
+    	this.id = id;
     }
 
     public Map getAttributes() {

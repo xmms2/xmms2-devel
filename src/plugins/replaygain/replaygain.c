@@ -29,6 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef void (*xmms_replaygain_apply_func_t)
+	(void *buf, gint len, gfloat gain);
+
 /**
  * Replaygain modes.
  */
@@ -44,18 +47,32 @@ typedef struct xmms_replaygain_data_St {
 	gfloat gain;
 	gboolean has_replaygain;
 	gboolean enabled;
+	xmms_replaygain_apply_func_t apply;
 } xmms_replaygain_data_t;
 
 static gboolean xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_replaygain_init (xmms_xform_t *xform);
 static void xmms_replaygain_destroy (xmms_xform_t *xform);
-static gint xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
-                                  xmms_error_t *error);
-static void xmms_replaygain_config_changed (xmms_object_t *obj, gconstpointer value,
+static gint xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf,
+                                  gint len, xmms_error_t *error);
+static gint64 xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
+                                    xmms_xform_seek_mode_t whence,
+                                    xmms_error_t *error);
+static void xmms_replaygain_config_changed (xmms_object_t *obj,
+                                            gconstpointer value,
                                             gpointer udata);
 
 static void compute_gain (xmms_xform_t *xform, xmms_replaygain_data_t *data);
 static xmms_replaygain_mode_t parse_mode (const char *s);
+
+static void apply_s8 (void *buf, gint len, gfloat gain);
+static void apply_u8 (void *buf, gint len, gfloat gain);
+static void apply_s16 (void *buf, gint len, gfloat gain);
+static void apply_u16 (void *buf, gint len, gfloat gain);
+static void apply_s32 (void *buf, gint len, gfloat gain);
+static void apply_u32 (void *buf, gint len, gfloat gain);
+static void apply_float (void *buf, gint len, gfloat gain);
+static void apply_double (void *buf, gint len, gfloat gain);
 
 /*
  * Plugin header
@@ -77,6 +94,7 @@ xmms_replaygain_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_replaygain_init;
 	methods.destroy = xmms_replaygain_destroy;
 	methods.read = xmms_replaygain_read;
+	methods.seek = xmms_replaygain_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -100,6 +118,7 @@ xmms_replaygain_init (xmms_xform_t *xform)
 {
 	xmms_replaygain_data_t *data;
 	xmms_config_property_t *cfgv;
+	xmms_sample_format_t fmt;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -133,6 +152,38 @@ xmms_replaygain_init (xmms_xform_t *xform)
 
 	compute_gain (xform, data);
 
+	fmt = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_FORMAT);
+
+	switch (fmt) {
+		case XMMS_SAMPLE_FORMAT_S8:
+			data->apply = apply_s8;
+			break;
+		case XMMS_SAMPLE_FORMAT_U8:
+			data->apply = apply_u8;
+			break;
+		case XMMS_SAMPLE_FORMAT_S16:
+			data->apply = apply_s16;
+			break;
+		case XMMS_SAMPLE_FORMAT_U16:
+			data->apply = apply_u16;
+			break;
+		case XMMS_SAMPLE_FORMAT_S32:
+			data->apply = apply_s32;
+			break;
+		case XMMS_SAMPLE_FORMAT_U32:
+			data->apply = apply_u32;
+			break;
+		case XMMS_SAMPLE_FORMAT_FLOAT:
+			data->apply = apply_float;
+			break;
+		case XMMS_SAMPLE_FORMAT_DOUBLE:
+			data->apply = apply_double;
+			break;
+		default:
+			xmms_log_info ("Unsupported sample format, disabling replay gain");
+			break;
+	}
+
 	return TRUE;
 }
 
@@ -165,7 +216,6 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	xmms_replaygain_data_t *data;
 	xmms_sample_format_t fmt;
 	gint read;
-	guint i;
 
 	g_return_val_if_fail (xform, -1);
 
@@ -174,88 +224,23 @@ xmms_replaygain_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	read = xmms_xform_read (xform, buf, len, error);
 
-	if (!data->has_replaygain || !data->enabled) {
+	if (!data->has_replaygain || !data->enabled || !data->apply) {
 		return read;
 	}
 
 	fmt = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_FORMAT);
 	len /= xmms_sample_size_get (fmt);
 
-	switch (fmt) {
-		case XMMS_SAMPLE_FORMAT_S8:
-			for (i = 0; i < len; i++) {
-				xmms_samples8_t *samples = (xmms_samples8_t *) buf;
-				gfloat sample = samples[i] * data->gain;
-
-				samples[i] = CLAMP (sample, XMMS_SAMPLES8_MIN,
-				                    XMMS_SAMPLES8_MAX);
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_U8:
-			for (i = 0; i < len; i++) {
-				xmms_sampleu8_t *samples = (xmms_sampleu8_t *) buf;
-				gfloat sample = samples[i] * data->gain;
-
-				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU8_MAX);
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_S16:
-			for (i = 0; i < len; i++) {
-				xmms_samples16_t *samples = (xmms_samples16_t *) buf;
-				gfloat sample = samples[i] * data->gain;
-
-				samples[i] = CLAMP (sample, XMMS_SAMPLES16_MIN,
-				                    XMMS_SAMPLES16_MAX);
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_U16:
-			for (i = 0; i < len; i++) {
-				xmms_sampleu16_t *samples = (xmms_sampleu16_t *) buf;
-				gfloat sample = samples[i] * data->gain;
-
-				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU16_MAX);
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_S32:
-			for (i = 0; i < len; i++) {
-				xmms_samples32_t *samples = (xmms_samples32_t *) buf;
-				gfloat sample = samples[i] * data->gain;
-
-				samples[i] = CLAMP (sample, XMMS_SAMPLES32_MIN,
-				                    XMMS_SAMPLES32_MAX);
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_U32:
-			for (i = 0; i < len; i++) {
-				xmms_sampleu32_t *samples = (xmms_sampleu32_t *) buf;
-				gfloat sample = samples[i] * data->gain;
-
-				samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU32_MAX);
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_FLOAT:
-			for (i = 0; i < len; i++) {
-				xmms_samplefloat_t *samples = (xmms_samplefloat_t *) buf;
-				samples[i] *= data->gain;
-			}
-
-			break;
-		case XMMS_SAMPLE_FORMAT_DOUBLE:
-			for (i = 0; i < len; i++) {
-				xmms_sampledouble_t *samples = (xmms_sampledouble_t *) buf;
-				samples[i] *= data->gain;
-			}
-		default:
-			break;
-	}
+	data->apply (buf, len, data->gain);
 
 	return read;
+}
+
+static gint64
+xmms_replaygain_seek (xmms_xform_t *xform, gint64 samples,
+                      xmms_xform_seek_mode_t whence, xmms_error_t *error)
+{
+	return xmms_xform_seek (xform, samples, whence, error);
 }
 
 static void
@@ -334,3 +319,101 @@ parse_mode (const char *s)
 		return XMMS_REPLAYGAIN_MODE_TRACK;
 	}
 }
+
+static void
+apply_s8 (void *buf, gint len, gfloat gain)
+{
+	xmms_samples8_t *samples = (xmms_samples8_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		gfloat sample = samples[i] * gain;
+		samples[i] = CLAMP (sample, XMMS_SAMPLES8_MIN,
+		                    XMMS_SAMPLES8_MAX);
+	}
+}
+
+static void
+apply_u8 (void *buf, gint len, gfloat gain)
+{
+	xmms_sampleu8_t *samples = (xmms_sampleu8_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		gfloat sample = samples[i] * gain;
+		samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU8_MAX);
+	}
+}
+
+static void
+apply_s16 (void *buf, gint len, gfloat gain)
+{
+	xmms_samples16_t *samples = (xmms_samples16_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		gfloat sample = samples[i] * gain;
+		samples[i] = CLAMP (sample, XMMS_SAMPLES16_MIN,
+		                    XMMS_SAMPLES16_MAX);
+	}
+}
+
+static void
+apply_u16 (void *buf, gint len, gfloat gain)
+{
+	xmms_sampleu16_t *samples = (xmms_sampleu16_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		gfloat sample = samples[i] * gain;
+		samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU16_MAX);
+	}
+}
+
+static void
+apply_s32 (void *buf, gint len, gfloat gain)
+{
+	xmms_samples32_t *samples = (xmms_samples32_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		gdouble sample = samples[i] * gain;
+		samples[i] = CLAMP (sample, XMMS_SAMPLES32_MIN,
+		                    XMMS_SAMPLES32_MAX);
+	}
+}
+
+static void
+apply_u32 (void *buf, gint len, gfloat gain)
+{
+	xmms_sampleu32_t *samples = (xmms_sampleu32_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		gdouble sample = samples[i] * gain;
+		samples[i] = CLAMP (sample, 0, XMMS_SAMPLEU32_MAX);
+	}
+}
+
+static void
+apply_float (void *buf, gint len, gfloat gain)
+{
+	xmms_samplefloat_t *samples = (xmms_samplefloat_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		samples[i] *= gain;
+	}
+}
+
+static void
+apply_double (void *buf, gint len, gfloat gain)
+{
+	xmms_sampledouble_t *samples = (xmms_sampledouble_t *) buf;
+	gint i;
+
+	for (i = 0; i < len; i++) {
+		samples[i] *= gain;
+	}
+}
+

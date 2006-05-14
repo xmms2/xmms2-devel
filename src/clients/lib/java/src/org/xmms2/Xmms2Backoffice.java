@@ -190,18 +190,24 @@ final class Xmms2Backoffice implements CallbacksListener {
     }
 
     protected void lockTitle() {
-        while (workingTitle != null)
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        workingTitle = new Title();
+		if (workingTitle != null)
+			synchronized (workingTitle){
+				try {
+					workingTitle.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		workingTitle = new Title();
     }
 
     protected Title unlockTitle() {
-        Title t = workingTitle;
-        workingTitle = null;
+    	Title t = null;
+    	synchronized (workingTitle){
+    		t = workingTitle;
+    		workingTitle.notify();
+    		workingTitle = null;
+    	}
         return t;
     }
 
@@ -478,7 +484,14 @@ final class Xmms2Backoffice implements CallbacksListener {
             int user_data) {
         if (user_data == 0 && dictForeachMap != null) {
             if (key != null && !key.equals("")) {
-                dictForeachMap.put(key, value);
+            	try {
+            		if (key.equals("id"))
+            			workingTitle.setID(Long.parseLong(value));
+            		else
+            			dictForeachMap.put(key, value);
+            	} catch (Exception e){
+            		e.printStackTrace();
+            	}
             }
         }
     }
@@ -487,7 +500,14 @@ final class Xmms2Backoffice implements CallbacksListener {
             String value, String source, int user_data) {
         if (user_data == 0 && workingTitle != null) {
             if (key != null && !key.equals("")) {
-                workingTitle.setAttribute(key, value);
+            	try {
+            		if (key.equals("id"))
+            			workingTitle.setID(Long.parseLong(value));
+            		else
+            			workingTitle.setAttribute(key, value);
+            	} catch (Exception e){
+            		e.printStackTrace();
+            	}
             }
         }
         if (user_data == 1 && dictForeachMap != null) {

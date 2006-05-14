@@ -205,11 +205,8 @@ add_to_entry (xmms_xform_t *xform,
 }
 
 static void
-xmms_mad_handle_id3v2_tcon (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head,
-                            gchar *key,
-                            guchar *buf,
-                            gint len)
+handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
 {
 	gint res;
 	guint genre_id;
@@ -239,11 +236,8 @@ xmms_mad_handle_id3v2_tcon (xmms_xform_t *xform,
 }
 
 static void
-xmms_mad_handle_id3v2_txxx (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head, 
-                            gchar *key, 
-                            guchar *buf, 
-                            gint len)
+handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
 {
 
 	guint32 l2;
@@ -281,11 +275,8 @@ xmms_mad_handle_id3v2_txxx (xmms_xform_t *xform,
 }
 
 static void
-xmms_mad_handle_int_field (xmms_xform_t *xform,
-                           xmms_id3v2_header_t *head, 
-                           gchar *key, 
-                           guchar *buf, 
-                           gint len)
+handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                  gchar *key, guchar *buf, gint len)
 {
 
 	gchar *nval;
@@ -301,11 +292,8 @@ xmms_mad_handle_int_field (xmms_xform_t *xform,
 }
 
 static void
-xmms_mad_handle_id3v2_ufid (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head, 
-                            gchar *key, 
-                            guchar *buf, 
-                            gint len)
+handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
 {
 	gchar *val;
 	guint32 l2 = strlen ((gchar *)buf);
@@ -329,25 +317,22 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
 	{ quad2long('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
 	{ quad2long('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, xmms_mad_handle_int_field },
-	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, xmms_mad_handle_int_field },
+	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
+	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
 	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
-	{ quad2long('T','C','O','N'), NULL, xmms_mad_handle_id3v2_tcon },
-	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, xmms_mad_handle_int_field },
-	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, xmms_mad_handle_int_field },
-	{ quad2long('T','X','X','X'), NULL, xmms_mad_handle_id3v2_txxx },
-	{ quad2long('U','F','I','D'), NULL, xmms_mad_handle_id3v2_ufid },
+	{ quad2long('T','C','O','N'), NULL, handle_id3v2_tcon },
+	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
+	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ 0, NULL, NULL }
 };
 
 
 static void
-xmms_mad_handle_id3v2_text (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head, 
-                            guint32 type, guchar *buf, 
-                            guint flags, 
-                            gint len)
+handle_id3v2_text (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   guint32 type, guchar *buf, guint flags, gint len)
 {
 	gint i = 0;
 
@@ -373,7 +358,7 @@ xmms_mad_handle_id3v2_text (xmms_xform_t *xform,
 
 
 gboolean
-xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
+xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 {
 	typedef struct {
 		/* All members are defined in terms of chars so padding does not
@@ -431,8 +416,8 @@ xmms_mad_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
  * 
  */
 gboolean
-xmms_mad_id3v2_parse (xmms_xform_t *xform,
-                      guchar *buf, xmms_id3v2_header_t *head)
+xmms_id3v2_parse (xmms_xform_t *xform,
+                  guchar *buf, xmms_id3v2_header_t *head)
 {
 	gint len=head->len;
 
@@ -469,7 +454,7 @@ xmms_mad_id3v2_parse (xmms_xform_t *xform,
 			flags = buf[8] | buf[9];
 
 			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_mad_handle_id3v2_text (xform, head, type, buf + 10, flags, size);
+				handle_id3v2_text (xform, head, type, buf + 10, flags, size);
 			}
 			
 			if (buf[0] == 0) { /* padding */
@@ -493,7 +478,7 @@ xmms_mad_id3v2_parse (xmms_xform_t *xform,
 			}
 
 			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_mad_handle_id3v2_text (xform, head, type, buf + 6, 0, size);
+				handle_id3v2_text (xform, head, type, buf + 6, 0, size);
 			}
 			
 			if (buf[0] == 0) { /* padding */

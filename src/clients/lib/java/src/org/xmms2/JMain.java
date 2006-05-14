@@ -34,8 +34,8 @@ import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
 
 public final class JMain extends Thread {
     private SWIGTYPE_p_xmmsc_connection_St myConnection;
-
     private boolean running = false;
+    private Boolean stopped = Boolean.FALSE;
 
     /**
      * constructor to set up the main loop and all needed callbacks
@@ -48,13 +48,12 @@ public final class JMain extends Thread {
     public JMain(CallbacksListener cb, SWIGTYPE_p_xmmsc_connection_St conn) {
         myConnection = conn;
         SpecialJNI.setENV(cb);
-        running = true;
     }
 
     /**
      * The run method - our little mainloop. First call SpecialJNI.setENV(this),
      * which is a native method and sets "this" as GlobalRef for the
-     * callback-oject in c and sets the pointer jvm, which is needed to call
+     * callback-object in c and sets the pointer jvm, which is needed to call
      * java methods outside the JNI functions. Furthermore, init the
      * callback-methods (set xmms2d's result_notifiers). While the
      * file-descriptor is valid, we will wait for new input and if something is
@@ -62,6 +61,7 @@ public final class JMain extends Thread {
      * 
      */
     public void run() {
+    	running = true;
         FileDescriptor fd = new FileDescriptor();
         SpecialJNI.getFD(fd, Xmmsclient.getPointerToConnection(myConnection));
         SpecialJNI.setupMainloop(this, Xmmsclient
@@ -69,11 +69,11 @@ public final class JMain extends Thread {
         FileInputStream in = new FileInputStream(fd);
         try {
             while (fd.valid() && running) {
-                Thread.sleep(40);
+                Thread.sleep(20);
                 if (in.available() > 0)
                     Xmmsclient.xmmsc_io_in_handle(myConnection);
-                if (Xmmsclient.xmmsc_io_want_out(myConnection) > 0)
-                    Xmmsclient.xmmsc_io_out_handle(myConnection);
+                if (Xmmsclient.xmmsc_io_want_out(myConnection) == 1)
+                	Xmmsclient.xmmsc_io_out_handle(myConnection);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -90,6 +90,10 @@ public final class JMain extends Thread {
                 e.printStackTrace();
             }
         }
+        synchronized (stopped){
+        	stopped.notifyAll();
+        	stopped = Boolean.TRUE;
+        }
     }
 
     /**
@@ -97,8 +101,16 @@ public final class JMain extends Thread {
      * 
      */
     public void spinDown() {
+    	Xmmsclient.xmmsc_io_disconnect(myConnection);
         running = false;
-        Xmmsclient.xmmsc_io_disconnect(myConnection);
+        synchronized (stopped){
+        	while (stopped == Boolean.FALSE)
+				try {
+					stopped.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+        }
     }
 
     public void setConfigvalChangedCallback(int user_data) {
@@ -212,7 +224,7 @@ public final class JMain extends Thread {
     }
 
     public void callbackIOWantOut(int val, int user_data) {
-        if (Xmmsclient.xmmsc_io_want_out(myConnection) > 0)
+        if (val == 1)
             Xmmsclient.xmmsc_io_out_handle(myConnection);
     }
 }

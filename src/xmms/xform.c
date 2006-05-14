@@ -237,6 +237,12 @@ xmms_xform_metadata_get_val (xmms_xform_t *xform, const char *key)
 	return NULL;
 }
 
+gboolean
+xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key)
+{
+	return !!xmms_xform_metadata_get_val (xform, key);
+}
+
 gint32
 xmms_xform_metadata_get_int (xmms_xform_t *xform, const char *key)
 {
@@ -269,7 +275,7 @@ typedef struct {
 	guint32 source;
 } metadata_festate_t;
 
-void
+static void
 add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 {
 	xmms_object_cmd_value_t *value = (xmms_object_cmd_value_t *)_value;

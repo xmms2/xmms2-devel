@@ -1116,6 +1116,17 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 
 /*
  * call-seq:
+ *  xc.configval_register(key, default_value) -> result
+ *
+ * Registers a configuration property at _key_ with the given default value.
+ */
+static VALUE c_configval_register (VALUE self, VALUE key, VALUE defval)
+{
+	METHOD_ADD_HANDLER_STR_STR (configval_register, key, defval);
+}
+
+/*
+ * call-seq:
  *  xc.signal_visualization_data -> result
  *
  * Retrieves visualization data as a signal.
@@ -1237,6 +1248,7 @@ void Init_Client (VALUE mXmms)
 	rb_define_method (c, "configval_list", c_configval_list, 0);
 	rb_define_method (c, "configval_get", c_configval_get, 1);
 	rb_define_method (c, "configval_set", c_configval_set, 2);
+	rb_define_method (c, "configval_register", c_configval_register, 2);
 	rb_define_method (c, "broadcast_configval_changed",
 	                  c_broadcast_configval_changed, 0);
 
