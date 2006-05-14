@@ -63,6 +63,8 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 xmmsc_result_t *
 xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
 }
 
@@ -346,6 +348,8 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 xmmsc_result_t *
 xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
 }
 
@@ -361,6 +365,8 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
@@ -380,6 +386,8 @@ xmmsc_medialib_playlist_list (xmmsc_connection_t *conn, const char *playlist)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (conn, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_LIST);
 	xmms_ipc_msg_put_string (msg, playlist);
 
@@ -396,6 +404,8 @@ xmmsc_medialib_playlists_list (xmmsc_connection_t *conn)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLISTS_LIST);
 
@@ -415,6 +425,8 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_IMPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
@@ -436,6 +448,8 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (conn, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE);
 	xmms_ipc_msg_put_uint32 (msg, entry);
 
@@ -456,6 +470,8 @@ xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 	char *enc_url;
 	xmmsc_result_t *res;
 
+	x_check_conn (conn, NULL);
+
 	enc_url = xmmsc_medialib_encode_url (url);
 	if (!enc_url)
 		return NULL;
@@ -474,6 +490,8 @@ xmmsc_result_t *
 xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
                                       const char *name)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT, name);
 }
 
@@ -484,6 +502,8 @@ xmmsc_result_t *
 xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
                                       const char *name)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_LOAD, name);
 }
 
@@ -495,6 +515,8 @@ xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
 xmmsc_result_t *
 xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_REMOVE, playlist);
 }
 
@@ -510,6 +532,8 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn,
 {
 	xmmsc_result_t *res;
 	char *enc_path;
+
+	x_check_conn (conn, NULL);
 
 	enc_path = xmmsc_medialib_encode_url (path);
 	if (!enc_path)
@@ -535,6 +559,8 @@ xmmsc_medialib_rehash (xmmsc_connection_t *conn,
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (conn, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REHASH);
 	xmms_ipc_msg_put_uint32 (msg, id);
 
@@ -553,6 +579,8 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO);
 	xmms_ipc_msg_put_uint32 (msg, id);
 
@@ -569,6 +597,8 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 xmmsc_result_t *
 xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED);
 }
 
@@ -579,6 +609,8 @@ xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 xmmsc_result_t * 
 xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED);
 }
 
@@ -590,6 +622,8 @@ xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 }
 
@@ -607,6 +641,8 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_ADD_TO_PLAYLIST);
 	xmms_ipc_msg_put_string (msg, query);
@@ -626,6 +662,8 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
 {
 	xmmsc_result_t *res;
 	char tmp[256];
+
+	x_check_conn (c, NULL);
 
 	snprintf (tmp, 256, "client/%s", c->clientname);
 	res = xmmsc_medialib_entry_property_set_with_source (c, id,
@@ -648,6 +686,8 @@ xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c,
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
 	                        XMMS_IPC_CMD_PROPERTY_SET);
@@ -672,6 +712,8 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
 	xmmsc_result_t *res;
 	char tmp[256];
 
+	x_check_conn (c, NULL);
+
 	snprintf(tmp, 256, "client/%s", c->clientname);
 	res = xmmsc_medialib_entry_property_remove_with_source (c, id, 
 	                                                        tmp, key);
@@ -691,6 +733,8 @@ xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
 	                        XMMS_IPC_CMD_PROPERTY_REMOVE);
@@ -721,6 +765,8 @@ xmmsc_medialib_encode_url (const char *url)
 	static char hex[16] = "0123456789abcdef";
 	int i = 0, j = 0;
 	char *res;
+
+	x_api_error_if (!url, "with a NULL url", NULL);
 
 	res = malloc (strlen(url) * 3 + 1);
 	if (!res)
