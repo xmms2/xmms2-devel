@@ -46,8 +46,8 @@ typedef struct xmms_flac_data_St {
 static gboolean xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                             xmms_error_t *err);
-static gboolean xmms_flac_init (xmms_xform_t *decoder);
-static void xmms_flac_destroy (xmms_xform_t *decoder);
+static gboolean xmms_flac_init (xmms_xform_t *xform);
+static void xmms_flac_destroy (xmms_xform_t *xform);
 static gint64 xmms_flac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
@@ -489,13 +489,13 @@ xmms_flac_seek (xmms_xform_t *xform, gint64 samples,
 }
 
 static void
-xmms_flac_destroy (xmms_xform_t *decoder)
+xmms_flac_destroy (xmms_xform_t *xform)
 {
 	xmms_flac_data_t *data;
 
-	g_return_if_fail (decoder);
+	g_return_if_fail (xform);
 
-	data = xmms_xform_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
 	if (data->vorbiscomment) {
