@@ -300,7 +300,6 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gulong total_playtime = 0;
 	guint p = 0;
 	guint pos = 0;
-	gsize r, w;
 
 	res = xmmsc_playlist_current_pos (conn);
 	xmmsc_result_wait (res);
@@ -321,10 +320,8 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	while (xmmsc_result_list_valid (res)) {
 		xmmsc_result_t *info_res;
-		GError *err = NULL;
 		gchar line[80];
 		gint playtime = 0;
-		gchar *conv;
 		guint ui;
 
 		if (!xmmsc_result_get_uint (res, &ui)) {
@@ -370,21 +367,13 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			xmmsc_entry_format (line, sizeof(line), listformat, info_res);
 		}
 
-
-		conv = g_locale_from_utf8 (line, -1, &r, &w, &err);
-
 		if (p == pos) {
-			print_info ("->[%d/%d] %s", pos, ui, conv);
+			print_info ("->[%d/%d] %s", pos, ui, line);
 		} else {
-			print_info ("  [%d/%d] %s", pos, ui, conv);
+			print_info ("  [%d/%d] %s", pos, ui, line);
 		}
-		g_free (conv);
-		pos++;
 
-		if (err) {
-			print_info ("convert error %s", err->message);
-		}
-		g_clear_error (&err);
+		pos++;
 
 		xmmsc_result_unref (info_res);
 		xmmsc_result_list_next (res);
