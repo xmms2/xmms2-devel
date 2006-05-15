@@ -130,9 +130,9 @@ static gboolean
 xmms_eq_init (xmms_xform_t *xform)
 {
 	xmms_equalizer_data_t *priv;
+	xmms_config_property_t *config;
 	gint i, j, srate;
 	gfloat gain;
-	xmms_config_property_t *config;
 	
 	g_return_val_if_fail (xform, FALSE);
 
@@ -162,7 +162,7 @@ xmms_eq_init (xmms_xform_t *xform)
 	gain = xmms_config_property_get_float (config);
 
 	for (i=0; i<EQ_CHANNELS; i++) {
-		set_preamp(i, xmms_eq_gain_scale (gain, TRUE));
+		set_preamp (i, xmms_eq_gain_scale (gain, TRUE));
 	}
 	
 	for (i=0; i<EQ_BANDS_LEGACY; i++) {
@@ -237,7 +237,7 @@ xmms_eq_destroy (xmms_xform_t *xform)
 	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
 
 	config = xmms_xform_config_lookup (xform, "preamp");
-	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
+	xmms_config_property_callback_remove (config, xmms_eq_gain_changed);
 
 	for (i=0; i<EQ_BANDS_LEGACY; i++) {
 		g_snprintf (buf, sizeof (buf), "legacy%d", i);
@@ -250,6 +250,27 @@ xmms_eq_destroy (xmms_xform_t *xform)
 		config = xmms_xform_config_lookup (xform, buf);
 		xmms_config_property_callback_remove (config, xmms_eq_gain_changed);
 	}
+}
+
+static gint
+xmms_eq_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+              xmms_error_t *error)
+{
+	xmms_equalizer_data_t *priv;
+	gint read, chan;
+
+	g_return_val_if_fail (xform, -1);
+
+	priv = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (priv, -1);
+
+	read = xmms_xform_read (xform, buf, len, error);
+	chan = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
+	if (read > 0) {
+		iir (buf, read, chan, priv->extra_filtering);
+	}
+
+	return read;
 }
 
 static void
@@ -270,7 +291,7 @@ xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
 
 	name = xmms_config_property_get_name (val);
 
-	XMMS_DBG ("configval changed! %s => %f", name,
+	XMMS_DBG ("gain value changed! %s => %f", name,
 	          xmms_config_property_get_float (val));
 
 	gain = xmms_config_property_get_float (val);
@@ -292,7 +313,7 @@ xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
 	if (!strcmp (name, "preamp")) {
 		/* scale the -20.0 - 20.0 value to correct one */
 		for (i=0; i<EQ_CHANNELS; i++) {
-			set_preamp(i, xmms_eq_gain_scale (gain, TRUE));
+			set_preamp (i, xmms_eq_gain_scale (gain, TRUE));
 		}
 	} else {
 		gint band = -1;
@@ -378,24 +399,6 @@ xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
 			}
 		}
 	}	
-}
-
-static gint
-xmms_eq_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
-              xmms_error_t *error)
-{
-	gint read, chan;
-	xmms_equalizer_data_t *priv = xmms_xform_private_data_get (xform);
-
-	g_return_val_if_fail (priv, -1);
-
-	read = xmms_xform_read (xform, buf, len, error);
-	chan = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	if (read > 0) {
-		iir (buf, read, chan, priv->extra_filtering);
-	}
-
-	return read;
 }
 
 static gfloat
