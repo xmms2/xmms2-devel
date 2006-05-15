@@ -1,0 +1,2 @@
+target="equalizer"
+source=["eq.c", "iir.c", "iir_cfs.c", "iir_fpu.c"]
