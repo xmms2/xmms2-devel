@@ -316,8 +316,8 @@ static void
 xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
                         gpointer userdata)
 {
-	xmms_config_property_t *val
-	xmms_equalizer_data_t *priv
+	xmms_config_property_t *val;
+	xmms_equalizer_data_t *priv;
 	const gchar *name;
 	gint value, i, j;
 
