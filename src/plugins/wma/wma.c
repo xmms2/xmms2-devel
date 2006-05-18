@@ -346,11 +346,13 @@ xmms_wma_metahack (xmms_xform_t *xform)
 			guint16 *tmpbuf = (guint16 *) current;
 			gchar *utfstr, *tmpstr;
 
-			titlel = GUINT16_FROM_LE (*(tmpbuf++));
-			artistl = GUINT16_FROM_LE (*(tmpbuf++));
-			copyl = GUINT16_FROM_LE (*(tmpbuf++));
-			commentl = GUINT16_FROM_LE (*(tmpbuf++));
-			ratingl = GUINT16_FROM_LE (*(tmpbuf++));
+			titlel = GUINT16_FROM_LE (tmpbuf[0]);
+			artistl = GUINT16_FROM_LE (tmpbuf[1]);
+			copyl = GUINT16_FROM_LE (tmpbuf[2]);
+			commentl = GUINT16_FROM_LE (tmpbuf[3]);
+			ratingl = GUINT16_FROM_LE (tmpbuf[4]);
+
+			tmpbuf+=5;
 
 			utfstr = (gchar *) tmpbuf;
 			if (titlel > 0) {
