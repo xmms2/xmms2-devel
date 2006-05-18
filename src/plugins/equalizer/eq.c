@@ -32,6 +32,8 @@ static gboolean xmms_eq_init (xmms_xform_t *xform);
 static void xmms_eq_destroy (xmms_xform_t *xform);
 static gint xmms_eq_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                           xmms_error_t *error);
+static gint64 xmms_eq_seek (xmms_xform_t *xform, gint64 offset,
+                            xmms_xform_seek_mode_t whence, xmms_error_t *err);
 static void xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
                                   gpointer userdata);
 static void xmms_eq_config_changed (xmms_object_t *object, gconstpointer data,
@@ -64,6 +66,7 @@ xmms_eq_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_eq_init;
 	methods.destroy = xmms_eq_destroy;
 	methods.read = xmms_eq_read;
+	methods.seek = xmms_eq_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -271,6 +274,12 @@ xmms_eq_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	}
 
 	return read;
+}
+
+static gint64
+xmms_eq_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	return xmms_xform_seek (xform, offset, whence, err);
 }
 
 static void
