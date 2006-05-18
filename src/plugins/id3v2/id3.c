@@ -27,6 +27,8 @@
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
 #define ID3v2_HEADER_FLAGS_FOOTER 0x10
 
+#define ID3v2_HEADER_SUPPORTED_FLAGS (ID3v2_HEADER_FLAGS_UNSYNC | ID3v2_HEADER_FLAGS_FOOTER)
+
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
 #define quad2long(a,b,c,d) ((a << 24) | (b << 16) | (c << 8) | (d))
@@ -421,10 +423,24 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 {
 	gint len=head->len;
 
-	if (head->flags != 0) {
-		/** @todo must handle unsync-flag */
+	if (head->flags & ~ID3v2_HEADER_SUPPORTED_FLAGS != 0) {
 		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
 		return FALSE;
+	}
+
+	if (head->flags & ID3v2_HEADER_FLAGS_UNSYNC) {
+		int i, j;
+		XMMS_DBG ("Removing false syncronisations from id3v2 tag");
+		for (i = 0, j = 0; i < len; i++, j++) {
+			buf[i] = buf[j];
+			if (i < len-1 && buf[i] == 0xff && buf[i+1] == 0x00) {
+				XMMS_DBG (" - false sync @%d", i);
+				/* skip next byte */
+				i++;
+			}
+		}
+		len = j;
+		XMMS_DBG ("Removed %d false syncs", i-j);
 	}
 
 	while (len>0) {
