@@ -155,7 +155,8 @@ static gpointer
 xmms_mediainfo_reader_thread (gpointer data)
 {
 	GList *goal_format;
-        xmms_stream_type_t *f;
+	GTimeVal timeval;
+	xmms_stream_type_t *f;
 	guint num = 0;
 
 	xmms_mediainfo_reader_t *mrt = (xmms_mediainfo_reader_t *) data;
@@ -229,12 +230,14 @@ xmms_mediainfo_reader_thread (gpointer data)
 		}
 		
 		xmms_object_unref (xform);
+		g_get_current_time (&timeval);
 
 		session = xmms_medialib_begin_write ();
 		xmms_medialib_entry_property_set_int (session, entry, 
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
 		xmms_medialib_entry_property_set_int (session, entry, 
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED, time(NULL));
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
+		                                      timeval.tv_sec);
 		xmms_medialib_end (session);
 		
 	}
