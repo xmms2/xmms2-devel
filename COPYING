@@ -16,31 +16,37 @@ copyright and LGPL license. The full GPL license text is available in
 COPYING.GPL
 
 README, INSTALL:
-	Licensed under GFDL without unmodifiable sections.
+        Licensed under GFDL without unmodifiable sections.
 
 manpages (doc/):
-	Copyright 2005, Alexander Botero-Lowry
+        Copyright 2005, Alexander Botero-Lowry
         Licensed under BSD license
 
 src/plugins/faad/faad.c:
-	Copyright (C) 2005 Juho Vähä-Herttua, <juhovh@iki.fi>
         Licensed under GPL license.
 
 src/plugins/mad/*:
         Licensed under GPL license.
 
 src/plugins/faad/mp4ff/drms*:
-	Copyright (C) 2004 VideoLAN
+        Copyright (C) 2004 VideoLAN
         Licensed under GPL license.
 
 src/plugins/faad/mp4ff/mp4*:
-	Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+        Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
+        Licensed under GPL license.
+
+src/plugins/equalizer/eq.c
+        Licensed under GPL license.
+
+src/plugins/equalizer/iir*
+        Copyright (C) 2002-2006 Felipe Rivera <liebremx@users.sourceforge.net>
         Licensed under GPL license.
 
 src/plugins/ices/encode.*:
-	Copyright (c) 2001 Michael Smith <msmith@labyrinth.net.au>
+        Copyright (c) 2001 Michael Smith <msmith@labyrinth.net.au>
         Licensed under GPL license.
 
 src/plugins/jack/jack.c:
-	Copyright (C) 2004  Chris Morgan <cmorgan@alum.wpi.edu>
+        Copyright (C) 2004  Chris Morgan <cmorgan@alum.wpi.edu>
 
