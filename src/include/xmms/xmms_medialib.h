@@ -62,6 +62,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_IN "channels:in"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE "size"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR "isvbr"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES "subtunes"
 
 
 typedef guint32 xmms_medialib_entry_t;

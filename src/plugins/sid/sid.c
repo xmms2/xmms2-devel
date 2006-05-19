@@ -200,6 +200,11 @@ xmms_sid_get_media_info (xmms_xform_t *xform)
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
 		                             artist);
 	}
+
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES,
+	                             sidplay_wrapper_subtunes (data->wrapper));
+
 }
 
 static gint
