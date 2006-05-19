@@ -332,6 +332,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start)
 			xmms_xform_metadata_collect_one (xform, &info);
 	}
 	xmms_medialib_end (info.session);
+	xmms_medialib_entry_send_update (info.entry);
 }
 
 static void
@@ -345,6 +346,7 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 	xmms_xform_metadata_collect_one (xform, &info);
 
 	xmms_medialib_end (info.session);
+	xmms_medialib_entry_send_update (info.entry);
 }
 
 const char *
