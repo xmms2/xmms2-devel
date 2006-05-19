@@ -642,7 +642,7 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_medialib_session_t *session;
 	xmms_xform_t *xform, *last;
 	const gchar *url;
-	gchar *durl;
+	gchar *durl, *args;
 	
 	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
 
@@ -651,6 +651,29 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_medialib_end (session);
 
 	durl = g_strdup (url);
+	args = strchr (durl, '?');
+	if (args) {
+		gchar **params;
+		int i;
+		*args = 0;
+		args++;
+		xmms_medialib_decode_url (args);
+
+		params = g_strsplit (args, "&", 0);
+
+		for(i = 0; params && params[i]; i++) {
+			gchar *v;
+			v = strchr (params[i], '=');
+			if (v) {
+				*v = 0;
+				v++;
+				xmms_xform_metadata_set_str (xform, params[i], v);
+			} else {
+				xmms_xform_metadata_set_int (xform, params[i], 1);
+			}
+		}
+		g_strfreev (params);
+	}
 	xmms_medialib_decode_url (durl);
 
 	xmms_xform_outdata_type_add (xform,
