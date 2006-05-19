@@ -44,6 +44,7 @@ typedef struct xmms_equalizer_priv_St {
 	guint bands;
 	xmms_config_property_t *gain[EQ_MAX_BANDS];
 	xmms_config_property_t *legacy[EQ_BANDS_LEGACY];
+	gboolean enabled;
 } xmms_equalizer_data_t;
 
 XMMS_XFORM_PLUGIN ("equalizer",
@@ -141,6 +142,11 @@ xmms_eq_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, priv);
 
+	config = xmms_xform_config_lookup (xform, "enabled");
+	g_return_val_if_fail (config, FALSE);
+	xmms_config_property_callback_set (config, xmms_eq_config_changed, priv);
+	priv->enabled = !!xmms_config_property_get_int (config);
+
 	config = xmms_xform_config_lookup (xform, "bands");
 	g_return_val_if_fail (config, FALSE);
 	xmms_config_property_callback_set (config, xmms_eq_config_changed, priv);
@@ -227,6 +233,9 @@ xmms_eq_destroy (xmms_xform_t *xform)
 
 	g_free (xmms_xform_private_data_get (xform));
 
+	config = xmms_xform_config_lookup (xform, "enabled");
+	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
+
 	config = xmms_xform_config_lookup (xform, "bands");
 	xmms_config_property_callback_remove (config, xmms_eq_config_changed);
 
@@ -266,7 +275,7 @@ xmms_eq_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	read = xmms_xform_read (xform, buf, len, error);
 	chan = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	if (read > 0) {
+	if (read > 0 && priv->enabled) {
 		iir (buf, read, chan, priv->extra_filtering);
 	}
 
@@ -359,7 +368,9 @@ xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
 	 */
 	name = strrchr (name, '.') + 1;
 
-	if (!strcmp (name, "extra_filtering")) {
+	if (!strcmp (name, "enabled")) {
+		priv->enabled = !!value;
+	} else if (!strcmp (name, "extra_filtering")) {
 		priv->extra_filtering = value;
 	} else if (!strcmp (name, "use_legacy")) {
 		gfloat gain;
