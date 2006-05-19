@@ -119,8 +119,8 @@ xmms_file_init (xmms_xform_t *xform)
 	                             "application/octet-stream",
 				     XMMS_STREAM_TYPE_END);
 
-	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_SIZE, st.st_size);
-	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_LMOD, st.st_mtime);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, st.st_size);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, st.st_mtime);
 
 	return TRUE;
 }

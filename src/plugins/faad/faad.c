@@ -532,7 +532,7 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 		                             bitrate);
 
-		duration = xmms_xform_metadata_get_int (xform, XMMS_XFORM_DATA_SIZE);;
+		duration = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);;
 		if (duration != 0) {
 			duration = ((float) duration * 8000.f) / ((float) bitrate) + 0.5f;
 			xmms_xform_metadata_set_int (xform,

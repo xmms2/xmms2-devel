@@ -505,7 +505,7 @@ header_handler_contentlength (xmms_xform_t *xform,
 
 	length = strtoul (header, NULL, 10);
 
-	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_SIZE, length);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, length);
 }
 
 static void

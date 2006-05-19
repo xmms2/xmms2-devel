@@ -46,8 +46,6 @@ typedef struct xmms_xform_plugin_St xmms_xform_plugin_t;
 #define XMMS_XFORM_PLUGIN(shname, name, ver, desc, setupfunc) XMMS_PLUGIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 
 /* */
-#define XMMS_XFORM_DATA_SIZE "size"
-#define XMMS_XFORM_DATA_LMOD "lmod"
 
 struct xmms_xform_St;
 typedef struct xmms_xform_St xmms_xform_t;

@@ -275,7 +275,7 @@ xmms_mad_init (xmms_xform_t *xform)
 		                             frame.header.bitrate);
 
 
-		filesize = xmms_xform_metadata_get_int (xform, XMMS_XFORM_DATA_SIZE);
+		filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 		if (filesize == -1) {
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,

@@ -128,10 +128,10 @@ xmms_id3v2_init (xmms_xform_t *xform)
 
 	data->len = head.len;
 
-	filesize = xmms_xform_metadata_get_int (xform, XMMS_XFORM_DATA_SIZE);
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 	if (filesize != -1) {
 		xmms_xform_metadata_set_int (xform,
-		                             XMMS_XFORM_DATA_SIZE,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
 		                             filesize - head.len);
 	}
 
