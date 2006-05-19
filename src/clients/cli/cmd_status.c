@@ -176,7 +176,6 @@ handle_mediainfo_update (xmmsc_result_t *res, void *userdata)
 	if (!xmmsc_result_get_uint (res, &id)) {
 		print_error ("Broken resultset");
 	}
-	xmmsc_result_unref (res);
 
 	if (id == current_id) {
 		res = xmmsc_medialib_get_info (conn, current_id);
