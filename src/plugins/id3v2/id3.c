@@ -423,7 +423,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 {
 	gint len=head->len;
 
-	if (head->flags & ~ID3v2_HEADER_SUPPORTED_FLAGS != 0) {
+	if ((head->flags & ~ID3v2_HEADER_SUPPORTED_FLAGS) != 0) {
 		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
 		return FALSE;
 	}
