@@ -351,16 +351,22 @@ xmms_output_filler (void *arg)
 
 	g_mutex_lock (output->filler_state_mutex);
 	while (output->filler_state != FILLER_QUIT) {
-		if (output->filler_state == FILLER_STOP || output->filler_state == FILLER_KILL) {
+		if (output->filler_state == FILLER_STOP) {
 			if (chain) {
 				xmms_object_unref (chain);
 				chain = NULL;
 			}
-			if (output->filler_state == FILLER_STOP) {
-				g_cond_wait (output->filler_state_cond, output->filler_state_mutex);
-				xmms_ringbuf_set_eos (output->filler_buffer, FALSE);
-			} else {
+			g_cond_wait (output->filler_state_cond, output->filler_state_mutex);
+			xmms_ringbuf_set_eos (output->filler_buffer, FALSE);
+			continue;
+		}
+		if (output->filler_state == FILLER_KILL) {
+			if (chain) {
+				xmms_object_unref (chain);
+				chain = NULL;
 				output->filler_state = FILLER_RUN;
+			} else {
+				output->filler_state = FILLER_STOP;
 			}
 			continue;
 		}
