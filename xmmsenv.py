@@ -240,7 +240,23 @@ class XMMSEnvironment(Environment):
 				sys.exit(1)
 			raise ConfigError("Headerfile '%s' not found" % header)
 
-	def checklib(self, lib, func, fail=False):
+	def checkcppheader(self, header, fail=False):
+        
+		if isinstance(header, list):
+			key = ("HEADER", tuple(header))
+		else:
+			key = ("HEADER", header)
+
+		if not self.config_cache.has_key(key):
+			self.config_cache[key] = self.conf.CheckCXXHeader(header)
+		if not self.config_cache[key]:
+			if fail:
+				print "Aborting!"
+				sys.exit(1)
+			raise ConfigError("Headerfile '%s' not found" % header)
+
+
+	def checklib(self, lib, func, header=0, lang="c", fail=False):
 		key = (lib, func)
 
 		if not self.config_cache.has_key(key):
@@ -257,7 +273,7 @@ class XMMSEnvironment(Environment):
 			#		self.config_cache[key] = libtool_flags["dependency_libs"]+" "
 			#		break
 
-			if self.conf.CheckLib(lib, func, 0):
+			if self.conf.CheckLib(lib, func, header, lang):
 				self.config_cache[key] += "-l"+lib
 				self.parse_config_string("-l"+lib)
 				return
