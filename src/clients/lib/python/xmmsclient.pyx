@@ -272,7 +272,8 @@ class PropDict(dict):
 						if k[0].startswith(src[:-1]) and k[1] == item:
 							return v
 				try:
-					return dict.__getitem__(self, (src, item))
+					t = dict.__getitem__(self, (src, item))
+					return t
 				except KeyError:
 					pass
 			raise KeyError, item
