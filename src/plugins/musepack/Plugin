@@ -2,5 +2,4 @@ target="musepack"
 source=["musepack.c", "ape.c"]
 
 def config(env):
-	raise ConfigError("Disabled")
 	env.checklib("mpcdec", "mpc_decoder_decode")
