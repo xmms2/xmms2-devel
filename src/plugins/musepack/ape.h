@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2005-2006 Daniel Svensson, <daniel@nittionio.nu> 
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -17,11 +17,18 @@
 #ifndef __APE_H__
 #define __APE_H__
 
-#define APE_HEADER_SIZE 32
+#include "xmms/xmms_log.h"
+#include "xmms/xmms_xformplugin.h"
 
-gint xmms_ape_get_size (gchar *buff, gint len);
-gchar *xmms_ape_get_text (gchar *key, gchar *buff, gint len);
-gboolean xmms_ape_tag_is_valid (gchar *buff, gint len);
+typedef struct xmms_apetag_St xmms_apetag_t;
+
+xmms_apetag_t *xmms_apetag_init (xmms_xform_t *xform);
+
+gboolean xmms_apetag_read (xmms_apetag_t *tag);
+void xmms_apetag_destroy (xmms_apetag_t *tag);
+
+const gchar *xmms_apetag_lookup_str (xmms_apetag_t *tag, const gchar *key);
+gint xmms_apetag_lookup_int (xmms_apetag_t *tag, const gchar *key);
 
 
 #endif

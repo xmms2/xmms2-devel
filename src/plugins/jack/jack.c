@@ -61,6 +61,7 @@ static int
 _JACK_OpenDevice(xmms_output_t *output);
 static int
 _JACK_Open(xmms_output_t *output, unsigned int bytes_per_channel, unsigned long *rate, int channels);
+static gboolean xmms_jack_start(xmms_output_t *output);
 
 
 
@@ -754,7 +755,7 @@ xmms_jack_new(xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data); 
 
-	return TRUE; 
+	return xmms_jack_start (output);
 }
 
 /**
@@ -882,41 +883,32 @@ xmms_jack_status (xmms_output_t *output, xmms_playback_status_t status)
 /**
  * Get plugin information
  */
-xmms_plugin_t *
-xmms_plugin_get (void)
+static gboolean xmms_jack_plugin_setup (xmms_output_plugin_t *plugin);
+
+XMMS_OUTPUT_PLUGIN ("jack", "Jack Output", XMMS_VERSION,
+                    "Jack audio server output plugin",
+                    xmms_jack_plugin_setup);
+
+static gboolean
+xmms_jack_plugin_setup (xmms_output_plugin_t *plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_output_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_OUTPUT, 
-	                          XMMS_OUTPUT_PLUGIN_API_VERSION,
-	                          "jack",
-	                          "Jack Output",
-	                          XMMS_VERSION,
-	                          "Jack audio server output plugin");
+	XMMS_OUTPUT_METHODS_INIT(methods);
 
-	if (!plugin) {
-		return NULL;
-	}
+	methods.new = xmms_jack_new;
+	methods.destroy = xmms_jack_destroy;
 
-	xmms_plugin_info_add (plugin, "URL", "http://xmms-jack.sf.net");
-	xmms_plugin_info_add (plugin, "Author", "Chris Morgan");
-	xmms_plugin_info_add (plugin, "E-Mail", "cmorgan@alum.wpi.edu");
+	methods.flush = xmms_jack_flush;
 
+	methods.volume_get = xmms_jack_volume_get;
+	methods.volume_set = xmms_jack_volume_set;
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW, 
-				xmms_jack_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY, 
-	                        xmms_jack_destroy);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_FLUSH, 
-				xmms_jack_flush);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_BUFFERSIZE_GET,
-				xmms_jack_buffersize_get);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_STATUS,
-				xmms_jack_status); 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_SET,
-                	        xmms_jack_volume_set);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_VOLUME_GET,
-        	                xmms_jack_volume_get);
+	methods.status = xmms_jack_status;
 
-	return (plugin);
+	methods.latency_get = xmms_jack_buffersize_get;
+
+	xmms_output_plugin_methods_set (plugin, &methods);
+
+	return TRUE;
 }
