@@ -99,6 +99,7 @@ static gboolean
 xmms_sid_init (xmms_xform_t *xform)
 {
 	xmms_sid_data_t *data;
+	const char *subtune;
 	gint ret;
 
 	data = g_new0 (xmms_sid_data_t, 1);
@@ -133,17 +134,16 @@ xmms_sid_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	/*
-	  numsubtunes = sidplay_wrapper_subtunes (data->wrapper);
-	  XMMS_DBG ("subtunes: %d (disabled, only plays first tune)",
-	  numsubtunes);
-	  if (data->subtune > numsubtunes || data->subtune < 0) {
-	  xmms_log_error ("Requested subtune %d not found, using default",
-	  data->subtune);
-	  data->subtune = 0;
-	  }
-	  sidplay_wrapper_set_subtune (data->wrapper, data->subtune);
-	*/
+	subtune = xmms_xform_metadata_get_str (xform, "subtune");
+	if (subtune) {
+		int num;
+		num = atoi (subtune);
+		if (num < 1 || num > sidplay_wrapper_subtunes (data->wrapper)) {
+			XMMS_DBG ("Invalid subtune index");
+			return FALSE;
+		}
+		sidplay_wrapper_set_subtune (data->wrapper, num);
+	}
 
 	xmms_sid_get_media_info (xform);
 

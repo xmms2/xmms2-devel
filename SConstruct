@@ -167,6 +167,7 @@ def scan_headers(name):
 scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
+scan_headers("xmmsclient/xmmsclient++")
 
 ### INSTALL MANUAL PAGES!
 
@@ -177,9 +178,11 @@ base_env.add_manpage(1, 'doc/xmms2-et.1')
 #### Generate pc files.
 
 pc_files = [{"name": "xmms2-plugin", "lib":""}, 
-            {"name":"xmms2-client", "lib":"-lxmmsclient"},
-            {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
-            {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"}]
+	    {"name":"xmms2-client", "lib":"-lxmmsclient"},
+	    {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
+	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"},
+	    {"name":"xmms2-client-cpp", "lib":"-lxmmsclient -lxmmsclient++"},
+	    {"name":"xmms2-client-cpp-glib", "lib":"-lxmmsclient-glib -lxmmsclient++-glib"}]
 
 for p in pc_files:
 	d = subst_dict.copy()
