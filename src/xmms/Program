@@ -35,6 +35,9 @@ def config(env):
 
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
+	if env.platform == 'sunos5':
+		env.checklib("socket", "socket", fail=True)
+		env.Append(CPPDEFINES=['_POSIX_PTHREAD_SEMANTICS'])
 
 	# we have an xmms2d - we might want plugins!
 	pluginenv.handle_targets("Plugin")
