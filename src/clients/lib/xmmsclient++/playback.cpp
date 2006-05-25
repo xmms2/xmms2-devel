@@ -362,23 +362,23 @@ namespace Xmms
 	}
 
 	void
-	Playback::broadcastStatus( const UintSlot& slot,
+	Playback::broadcastStatus( const StatusSlot& slot,
 	                           const ErrorSlot& error ) const
 	{
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_broadcast_playback_status,
-		                                  conn_ ),
-		                     slot, error );
+		aCall<Status>( connected_,
+		               boost::bind( xmmsc_broadcast_playback_status,
+		                            conn_ ),
+		               slot, error );
 	}
 
 	void
-	Playback::broadcastStatus( const std::list< UintSlot >& slots,
+	Playback::broadcastStatus( const std::list< StatusSlot >& slots,
 	                           const ErrorSlot& error ) const
 	{
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_broadcast_playback_status,
-		                                  conn_ ),
-		                     slots, error );
+		aCall<Status>( connected_,
+		               boost::bind( xmmsc_broadcast_playback_status,
+		                            conn_ ),
+		               slots, error );
 	}
 
 	void
