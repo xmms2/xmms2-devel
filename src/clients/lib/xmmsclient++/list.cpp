@@ -11,7 +11,7 @@ namespace Xmms
 {
 
 	SuperList::SuperList( xmmsc_result_t* result )
-		: result_( 0 ), constructed_( false )
+		: result_( 0 )
 	{
 
 		if( xmmsc_result_iserror( result ) ) {
@@ -27,7 +27,7 @@ namespace Xmms
 	}
 
 	SuperList::SuperList( const SuperList& list )
-		: result_( list.result_ ), constructed_( list.constructed_ )
+		: result_( list.result_ )
 	{
 		xmmsc_result_ref( result_ );
 	}
@@ -35,7 +35,6 @@ namespace Xmms
 	SuperList& SuperList::operator=( const SuperList& list )
 	{
 		result_ = list.result_;
-		constructed_ = list.constructed_;
 		xmmsc_result_ref( result_ );
 		return *this;
 	}
@@ -45,22 +44,20 @@ namespace Xmms
 		xmmsc_result_unref( result_ );
 	}
 
-	void SuperList::first()
+	void SuperList::first() const
 	{
 
 		if( !xmmsc_result_list_first( result_ ) ) {
 			// throw something...
 		}
-		constructed_ = false;
 
 	}
 
-	void SuperList::operator++()
+	void SuperList::operator++() const
 	{
 		if( !xmmsc_result_list_next( result_ ) ) {
 			// throw
 		}
-		constructed_ = false;
 	}
 
 	bool SuperList::isValid() const

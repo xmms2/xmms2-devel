@@ -50,7 +50,7 @@ namespace Xmms
 			 *
 			 *  @todo Should probably throw on error?
 			 */
-			virtual void first();
+			virtual void first() const;
 
 			/** Skip to next entry in list.
 			 *
@@ -60,7 +60,7 @@ namespace Xmms
 			 *
 			 *  @todo Throw on error?
 			 */
-			virtual void operator++();
+			virtual void operator++() const;
 
 			/** Check if current listnode is inside list boundary.
 			 */
@@ -68,13 +68,6 @@ namespace Xmms
 
 		protected:
 			xmmsc_result_t* result_;
-			bool constructed_;
-
-			/** This function should fetch the data from the listnode
-			 *  and set constructed_ to true.
-			 *  It's also a good idea to cache that data.
-			 */
-			virtual void constructContents() = 0;
 
 	};
 
@@ -98,14 +91,14 @@ namespace Xmms
 			 *  @see SuperList#SuperList.
 			 */
 			List( xmmsc_result_t* result ) :
-				SuperList( result ), contents_()
+				SuperList( result )
 			{
 			}
 
 			/** Copy-constructor.
 			 */
 			List( const List<T>& list ) :
-				SuperList( list ), contents_( list.contents_ )
+				SuperList( list )
 			{
 			}
 
@@ -114,7 +107,6 @@ namespace Xmms
 			List<T>& operator=( const List<T>& list )
 			{
 				SuperList::operator=( list );
-				contents_ = list.contents_;
 				return *this;
 			}
 
@@ -127,10 +119,9 @@ namespace Xmms
 			/** Operator *.
 			 *  Used to get the underlying value from the list.
 			 */
-			const T& operator*()
+			const T operator*() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
 			/** Operator ->.
@@ -138,17 +129,15 @@ namespace Xmms
 			 *  (only applicable for std::string and Dict).
 			 *  Same as (*list).function();
 			 */
-			const T& operator->()
+			const T operator->() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 			
 		/** @cond */
 		private:
-			T contents_;
 
-			virtual void constructContents() = 0;
+			virtual T constructContents() const = 0;
 		/** @endcond */
 
 	};
@@ -160,7 +149,7 @@ namespace Xmms
 
 		public:
 			List( xmmsc_result_t* result ) :
-				SuperList( result ), contents_( 0 )
+				SuperList( result )
 			{
 
 				if( xmmsc_result_get_type( result ) !=
@@ -177,14 +166,13 @@ namespace Xmms
 			}
 
 			List( const List<int>& list ) :
-				SuperList( list ), contents_( list.contents_ )
+				SuperList( list )
 			{
 			}
 
 			List<int>& operator=( const List<int>& list )
 			{   
 				SuperList::operator=( list );
-				contents_ = list.contents_;
 				return *this;
 			}
 
@@ -192,27 +180,21 @@ namespace Xmms
 			{
 			}
 
-			const int& operator*()
+			const int operator*() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
-			const int& operator->()
+			const int operator->() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
 		private:
-			int contents_;
 
-			virtual void constructContents()
+			virtual int constructContents() const
 			{
 
-				if( constructed_ ) {
-					return;
-				}
 				if( !isValid() ) {
 					throw out_of_range( "List out of range or empty list" );
 				}
@@ -221,8 +203,7 @@ namespace Xmms
 				if( !xmmsc_result_get_int( result_, &temp ) ) {
 					// throw something
 				}
-				contents_ = temp;
-				constructed_ = true;
+				return temp;
 				
 			}
 
@@ -234,7 +215,7 @@ namespace Xmms
 
 		public:
 			List( xmmsc_result_t* result ) :
-				SuperList( result ), contents_( 0 )
+				SuperList( result )
 			{
 
 				if( xmmsc_result_get_type( result ) !=
@@ -250,14 +231,13 @@ namespace Xmms
 			}
 
 			List( const List<unsigned int>& list ) :
-				SuperList( list ), contents_( list.contents_ )
+				SuperList( list )
 			{
 			}
 
 			List<unsigned int>& operator=( const List<unsigned int>& list )
 			{
 				SuperList::operator=( list );
-				contents_ = list.contents_;
 				return *this;
 			}
 
@@ -265,27 +245,21 @@ namespace Xmms
 			{
 			}
 
-			const unsigned int& operator*()
+			const unsigned int operator*() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
-			const unsigned int& operator->()
+			const unsigned int operator->()
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
 		private:
-			unsigned int contents_;
 
-			virtual void constructContents()
+			virtual unsigned int constructContents() const
 			{
 
-				if( constructed_ ) {
-					return;
-				}
 				if( !isValid() ) {
 					throw out_of_range( "List out of range or empty list" );
 				}
@@ -294,8 +268,7 @@ namespace Xmms
 				if( !xmmsc_result_get_uint( result_, &temp ) ) {
 					// throw something
 				}
-				contents_ = temp;
-				constructed_ = true;
+				return temp;
 				
 			}
 
@@ -307,7 +280,7 @@ namespace Xmms
 
 		public:
 			List( xmmsc_result_t* result ) :
-				SuperList( result ), contents_() 
+				SuperList( result )
 			{
 
 				if( xmmsc_result_get_type( result ) !=
@@ -322,14 +295,13 @@ namespace Xmms
 			}
 
 			List( const List<std::string>& list ) :
-				SuperList( list ), contents_( list.contents_ )
+				SuperList( list )
 			{
 			}
 
 			List<std::string>& operator=( const List<std::string>& list )
 			{
 				SuperList::operator=( list );
-				contents_ = list.contents_;
 				return *this;
 			}
 
@@ -337,27 +309,21 @@ namespace Xmms
 			{
 			}
 
-			const std::string& operator*()
+			const std::string operator*() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
-			const std::string& operator->()
+			const std::string operator->() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
 		private:
-			std::string contents_;
 
-			virtual void constructContents()
+			virtual std::string constructContents() const
 			{
 
-				if( constructed_ ) {
-					return;
-				}
 				if( !isValid() ) {
 					throw out_of_range( "List out of range or empty list" );
 				}
@@ -366,8 +332,7 @@ namespace Xmms
 				if( !xmmsc_result_get_string( result_, &temp ) ) {
 					// throw something
 				}
-				contents_ = std::string( temp );
-				constructed_ = true;
+				return std::string( temp );
 				
 			}
 
@@ -379,7 +344,7 @@ namespace Xmms
 
 		public:
 			List( xmmsc_result_t* result ) try :
-				SuperList( result ), contents_( result_ ) 
+				SuperList( result )
 			{
 				// checking the type here is a bit useless since
 				// Dict constructor checks it but we must catch it and
@@ -397,14 +362,13 @@ namespace Xmms
 			}
 
 			List( const List<Dict>& list ) :
-				SuperList( list ), contents_( list.contents_ )
+				SuperList( list )
 			{
 			}
 
 			List<Dict>& operator=( const List<Dict>& list )
 			{
 				SuperList::operator=( list );
-				contents_ = list.contents_;
 				return *this;
 			}
 
@@ -412,33 +376,26 @@ namespace Xmms
 			{
 			}
 
-			const Dict& operator*()
+			const Dict operator*() const
 			{
-				constructContents();
-				return contents_;
+				return constructContents();
 			}
 
-			const Dict* operator->()
+			const Dict operator->()
 			{
-				constructContents();
-				return &contents_;
+				return constructContents();
 			}
 
 		private:
-			Dict contents_;
 
-			virtual void constructContents()
+			virtual Dict constructContents() const
 			{
-				if( constructed_ ) {
-					return;
-				}
+
 				if( !isValid() ) {
 					throw out_of_range( "List out of range or empty list" );
 				}
 
-				contents_ = Dict( result_ );
-
-				constructed_ = true;
+				return Dict( result_ );
 
 			}
 
