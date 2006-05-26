@@ -127,9 +127,7 @@ const gchar *id3_genres[] =
 };
 
 static gchar *
-convert_id3_text (xmms_id3v2_header_t *head, 
-		  guchar *val, 
-		  gint len)
+convert_id3_text (xmms_id3v2_header_t *head, guchar *val, gint len)
 {
 	gchar *nval = NULL;
 	gsize readsize,writsize;
@@ -226,11 +224,11 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 	if (res > 0 && genre_id < G_N_ELEMENTS(id3_genres)) {
 		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, 
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
 		                             (gchar *)id3_genres[genre_id]);
 	} else {
 		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE, 
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
 		                             val);
 	}
 
@@ -259,16 +257,16 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		return;
 	}
 
-	if (g_strcasecmp ((gchar *)buf, "MusicBrainz Album Id") == 0)
+	if (g_strcasecmp ((gchar *)buf, "MusicBrainz Album Id") == 0) {
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
 		                             val);
-	else if (g_strcasecmp ((gchar *)buf, "MusicBrainz Artist Id") == 0)
+	} else if (g_strcasecmp ((gchar *)buf, "MusicBrainz Artist Id") == 0) {
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
 		                             val);
-	else if ((g_strcasecmp ((gchar *)buf, "MusicBrainz Album Artist Id") == 0) &&
-		 (g_strncasecmp ((gchar *)(buf+l2+1), MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+	} else if ((g_strcasecmp ((gchar *)buf, "MusicBrainz Album Artist Id") == 0) &&
+	           (g_strncasecmp ((gchar *)(buf+l2+1), MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 	}
@@ -415,7 +413,7 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 
 
 /**
- * 
+ *
  */
 gboolean
 xmms_id3v2_parse (xmms_xform_t *xform,
