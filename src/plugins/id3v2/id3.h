@@ -7,8 +7,8 @@
 
 
 
-#ifndef __XMMS_ID3_H__
-#define __XMMS_ID3_H__
+#ifndef __XMMS_MAD_ID3_H__
+#define __XMMS_MAD_ID3_H__
 
 #include <xmms/xmms_medialib.h>
 

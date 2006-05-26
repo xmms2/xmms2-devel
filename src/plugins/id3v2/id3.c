@@ -27,6 +27,8 @@
 #define ID3v2_HEADER_FLAGS_EXPERIMENTAL 0x20
 #define ID3v2_HEADER_FLAGS_FOOTER 0x10
 
+#define ID3v2_HEADER_SUPPORTED_FLAGS (ID3v2_HEADER_FLAGS_UNSYNC | ID3v2_HEADER_FLAGS_FOOTER)
+
 #define MUSICBRAINZ_VA_ID "89ad4ac3-39f7-470e-963a-56509c546377"
 
 #define quad2long(a,b,c,d) ((a << 24) | (b << 16) | (c << 8) | (d))
@@ -205,11 +207,8 @@ add_to_entry (xmms_xform_t *xform,
 }
 
 static void
-xmms_id3v2_handle_tcon (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head,
-                            gchar *key,
-                            guchar *buf,
-                            gint len)
+handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
 {
 	gint res;
 	guint genre_id;
@@ -239,11 +238,8 @@ xmms_id3v2_handle_tcon (xmms_xform_t *xform,
 }
 
 static void
-xmms_id3v2_handle_txxx (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head, 
-                            gchar *key, 
-                            guchar *buf, 
-                            gint len)
+handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
 {
 
 	guint32 l2;
@@ -281,11 +277,8 @@ xmms_id3v2_handle_txxx (xmms_xform_t *xform,
 }
 
 static void
-xmms_id3v2_handle_int_field (xmms_xform_t *xform,
-                             xmms_id3v2_header_t *head, 
-                             gchar *key, 
-                             guchar *buf, 
-                             gint len)
+handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                  gchar *key, guchar *buf, gint len)
 {
 
 	gchar *nval;
@@ -301,11 +294,8 @@ xmms_id3v2_handle_int_field (xmms_xform_t *xform,
 }
 
 static void
-xmms_id3v2_handle_ufid (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head, 
-                            gchar *key, 
-                            guchar *buf, 
-                            gint len)
+handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
 {
 	gchar *val;
 	guint32 l2 = strlen ((gchar *)buf);
@@ -329,25 +319,22 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
 	{ quad2long('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
 	{ quad2long('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, xmms_id3v2_handle_int_field },
-	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, xmms_id3v2_handle_int_field },
+	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
+	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
 	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
 	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
-	{ quad2long('T','C','O','N'), NULL, xmms_id3v2_handle_tcon },
-	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, xmms_id3v2_handle_int_field },
-	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, xmms_id3v2_handle_int_field },
-	{ quad2long('T','X','X','X'), NULL, xmms_id3v2_handle_txxx },
-	{ quad2long('U','F','I','D'), NULL, xmms_id3v2_handle_ufid },
+	{ quad2long('T','C','O','N'), NULL, handle_id3v2_tcon },
+	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
+	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ 0, NULL, NULL }
 };
 
 
 static void
-xmms_id3v2_handle_text (xmms_xform_t *xform,
-                            xmms_id3v2_header_t *head, 
-                            guint32 type, guchar *buf, 
-                            guint flags, 
-                            gint len)
+handle_id3v2_text (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   guint32 type, guchar *buf, guint flags, gint len)
 {
 	gint i = 0;
 
@@ -373,7 +360,7 @@ xmms_id3v2_handle_text (xmms_xform_t *xform,
 
 
 gboolean
-xmms_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
+xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 {
 	typedef struct {
 		/* All members are defined in terms of chars so padding does not
@@ -432,14 +419,28 @@ xmms_id3v2_header (guchar *buf, xmms_id3v2_header_t *header)
  */
 gboolean
 xmms_id3v2_parse (xmms_xform_t *xform,
-                      guchar *buf, xmms_id3v2_header_t *head)
+                  guchar *buf, xmms_id3v2_header_t *head)
 {
 	gint len=head->len;
 
-	if (head->flags != 0) {
-		/** @todo must handle unsync-flag */
+	if ((head->flags & ~ID3v2_HEADER_SUPPORTED_FLAGS) != 0) {
 		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
 		return FALSE;
+	}
+
+	if (head->flags & ID3v2_HEADER_FLAGS_UNSYNC) {
+		int i, j;
+		XMMS_DBG ("Removing false syncronisations from id3v2 tag");
+		for (i = 0, j = 0; i < len; i++, j++) {
+			buf[i] = buf[j];
+			if (i < len-1 && buf[i] == 0xff && buf[i+1] == 0x00) {
+				XMMS_DBG (" - false sync @%d", i);
+				/* skip next byte */
+				i++;
+			}
+		}
+		len = j;
+		XMMS_DBG ("Removed %d false syncs", i-j);
 	}
 
 	while (len>0) {
@@ -469,7 +470,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			flags = buf[8] | buf[9];
 
 			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_id3v2_handle_text (xform, head, type, buf + 10, flags, size);
+				handle_id3v2_text (xform, head, type, buf + 10, flags, size);
 			}
 			
 			if (buf[0] == 0) { /* padding */
@@ -493,7 +494,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			}
 
 			if (buf[0] == 'T' || buf[0] == 'U') {
-				xmms_id3v2_handle_text (xform, head, type, buf + 6, 0, size);
+				handle_id3v2_text (xform, head, type, buf + 6, 0, size);
 			}
 			
 			if (buf[0] == 0) { /* padding */
