@@ -41,13 +41,18 @@ namespace Xmms
 		if( quitSignal_ ) {
 			delete quitSignal_;
 		}
-		xmmsc_unref( conn_ );
+		if( conn_ ) {
+			xmmsc_unref( conn_ );
+		}
 	}
 
 	void Client::connect( const std::string& ipcpath )
 	{
 
 		if( !connected_ ) {
+			if( !conn_ ) {
+				conn_ = xmmsc_init( name_.c_str() );
+			}
 			if( !xmmsc_connect(conn_, 
 			                   ipcpath.empty() ? 0 : ipcpath.c_str() ) ) {
 
@@ -152,8 +157,12 @@ namespace Xmms
 			dynamic_cast<MainLoop*>(mainloop_)->removeListener( listener_ );
 			delete listener_; listener_ = 0;
 		}
+		else if( mainloop_ ) {
+			delete mainloop_; mainloop_ = 0;
+		}
 
 		SignalHolder::getInstance().deleteAll();
+		xmmsc_unref( conn_ ); conn_ = 0;
 	}
 
 }
