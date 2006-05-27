@@ -19,7 +19,7 @@ namespace Xmms
 
 		public:
 
-			typedef boost::variant< int, unsigned int, std::string > Variant;
+			typedef boost::variant< int32_t, uint32_t, std::string > Variant;
 
 			/** Constructs Dict and references the result.
 			 *  User must unref the result, the class does not take care of
@@ -77,7 +77,8 @@ namespace Xmms
 					return boost::get< T >( this->operator[]( key ) );
 				}
 				catch( boost::bad_get& e ) {
-					throw wrong_type_error( "Failed to get value." );
+					std::string error( "Failed to get value for " + key );
+					throw wrong_type_error( error );
 				}
 			}
 

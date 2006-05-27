@@ -59,7 +59,7 @@ namespace Xmms
 		{
 			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
 
-				unsigned int temp = 0;
+				uint32_t temp = 0;
 				if( !xmmsc_result_get_dict_entry_uint32( result_, 
 				                                         key.c_str(), 
 				                                         &temp ) ) {
@@ -71,7 +71,7 @@ namespace Xmms
 			}
 			case XMMSC_RESULT_VALUE_TYPE_INT32: {
 
-				int temp = 0;
+				int32_t temp = 0;
 				if( !xmmsc_result_get_dict_entry_int32( result_, 
 				                                        key.c_str(), 
 				                                        &temp ) ) {
@@ -114,13 +114,14 @@ namespace Xmms
 			
 			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
 
-				val = reinterpret_cast< unsigned int >( value );
+				val = static_cast< uint32_t >(
+				          reinterpret_cast< unsigned long >( value ));
 				break;
 
 			}
 			case XMMSC_RESULT_VALUE_TYPE_INT32: {
 
-				val = reinterpret_cast< int >( value );
+				val = static_cast< int32_t >(reinterpret_cast< long >( value ));
 				break;
 
 			}
