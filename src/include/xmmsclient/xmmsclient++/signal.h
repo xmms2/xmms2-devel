@@ -5,6 +5,7 @@
 #include <boost/signal.hpp>
 #include <string>
 #include <list>
+#include <iostream>
 
 namespace Xmms
 {
@@ -224,7 +225,12 @@ namespace Xmms
 
 		}
 
-		xmmsc_result_unref( res );
+		if( !ret &&
+		    xmmsc_result_get_class( res ) != XMMSC_RESULT_CLASS_BROADCAST ) {
+
+			xmmsc_result_unref( res );
+
+		}
 
 	}
 

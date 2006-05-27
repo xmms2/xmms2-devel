@@ -525,7 +525,7 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void
-			broadcastStatus( const UintSlot& slot,
+			broadcastStatus( const StatusSlot& slot,
 			                 const ErrorSlot& error = &Xmms::dummy_error
 			               ) const;
 
@@ -534,7 +534,7 @@ namespace Xmms
 			 * @note It takes a list of slots instead of just one slot.
 			 */
 			void
-			broadcastStatus( const std::list< UintSlot >& slots,
+			broadcastStatus( const std::list< StatusSlot >& slots,
 			                 const ErrorSlot& error = &Xmms::dummy_error
 			               ) const;
 
