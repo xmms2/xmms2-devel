@@ -92,7 +92,7 @@ namespace Xmms
 			typedef boost::function< void( const std::string&,
 			                               const Variant& ) > ForEachFunc;
 
-			virtual void foreach( const ForEachFunc& func ) const;
+			virtual void each( const ForEachFunc& func ) const;
 			
 		/** @cond */
 		protected:
@@ -155,7 +155,7 @@ namespace Xmms
 			                               const Dict::Variant&,
 			                               const std::string& ) > ForEachFunc;
 
-			virtual void foreach( const ForEachFunc& func ) const;
+			virtual void each( const ForEachFunc& func ) const;
 
 	};
 

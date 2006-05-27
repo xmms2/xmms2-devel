@@ -142,7 +142,7 @@ namespace Xmms
 
 	}
 
-	void Dict::foreach( const ForEachFunc& func ) const
+	void Dict::each( const ForEachFunc& func ) const
 	{
 
 		ForEachFunc* f = new ForEachFunc( func );
@@ -212,7 +212,7 @@ namespace Xmms
 
 	}
 
-	void PropDict::foreach( const PropDict::ForEachFunc& func ) const
+	void PropDict::each( const PropDict::ForEachFunc& func ) const
 	{
 
 		PropDict::ForEachFunc* f = new PropDict::ForEachFunc( func );
