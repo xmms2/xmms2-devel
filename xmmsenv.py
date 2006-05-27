@@ -356,6 +356,7 @@ class XMMSEnvironment(Environment):
 		self["SHLIBPREFIX"]="libxmms_"
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] += " -bundle"
+			self["SHLIBSUFFIX"] += ".so"
 		self.SharedLibrary(target, source)
 		self.Install(self.pluginpath, os.path.join(self.dir, self.shlibname(target)))
 
