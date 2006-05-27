@@ -303,6 +303,8 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_config_property_register ("medialib.path",
 				    path,
 				    xmms_medialib_path_changed, medialib);
+	xmms_config_property_register ("medialib.allow_remote_fs", 
+								   "0", NULL, NULL);
 
 
 	xmms_medialib_debug_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);

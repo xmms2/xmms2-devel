@@ -66,6 +66,16 @@ base_env = xmmsenv.XMMSEnvironment(options=opts)
 base_env["CONFIG"] = 0
 opts.Save("options.cache", base_env)
 
+statfs = "#define STATFS_NONE 1" 
+try:
+	base_env.checkheader("sys/vfs.h")
+	statfs = "#define STATFS_LINUX 1"
+except xmmsenv.ConfigError:
+	try:
+		base_env.checkheader("sys/param.h")
+		statfs = "#define STATFS_BSD 1"
+	except xmmsenv.ConfigError:
+		pass
 
 base_env.Append(CPPPATH=["#src/include"])
 
@@ -144,6 +154,7 @@ subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platf
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix,
 	      "%DEFAULT_OUTPUT%":xmmsenv.default_output[1],
+		  "%STATFS%":statfs,
 }
 
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)

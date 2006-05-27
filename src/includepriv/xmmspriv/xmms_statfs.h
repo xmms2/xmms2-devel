@@ -1,30 +1,22 @@
 /*  XMMS2 - X Music Multiplexer System
  *  Copyright (C) 2003-2006 XMMS2 Team
- * 
+ *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
- * 
+ *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
  *  License as published by the Free Software Foundation; either
  *  version 2.1 of the License, or (at your option) any later version.
- *                   
+ *
  *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  */
 
-#ifndef __XMMS_H__
-#define __XMMS_H__
+#ifndef __XMMS_PRIV_STATFS_H__
+#define __XMMS_PRIV_STATFS_H__
 
-#define XMMS_VERSION "%VERSION%"
-#define %PLATFORM% 1
-#define SYSCONFDIR "%SYSCONFDIR%"
-#define PKGLIBDIR "%PKGLIBDIR%"
-#define SHAREDDIR "%SHAREDDIR%"
-#define BINDIR "%BINDIR%"
-#define XMMS_OUTPUT_DEFAULT "%DEFAULT_OUTPUT%"
-#define XMMS_PATH_MAX 255
-%STATFS%
+gboolean xmms_statfs_is_remote (const gchar *path);
 
-#endif
+#endif 

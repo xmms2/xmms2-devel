@@ -19,7 +19,8 @@ source = ["main.c",
           "streamtype.c",
           "converter_plugin.c",
           "ringbuf_xform.c",
-          "outputplugin.c"]
+          "outputplugin.c",
+		  "statfs.c"]
 
 def config(env):
 	pluginenv = env.Copy()
