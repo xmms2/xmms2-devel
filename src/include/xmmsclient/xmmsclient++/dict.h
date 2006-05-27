@@ -50,6 +50,14 @@ namespace Xmms
 			 */
 			virtual ~Dict();
 
+			/** Checks if the dict has a value for the key.
+			 *  
+			 *  @param key Key to look for
+			 *
+			 *  @return true if key exists, false if not
+			 */
+			virtual bool contains( const std::string& key ) const;
+
 			/** Gets the corresponding value of the key.
 			 *  This is basically the same as 
 			 *  @link operator[]() operator[]@endlink but it does the 

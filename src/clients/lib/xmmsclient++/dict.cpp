@@ -41,6 +41,17 @@ namespace Xmms
 		xmmsc_result_unref( result_ );
 	}
 
+	bool Dict::contains( const std::string& key ) const
+	{
+		if( xmmsc_result_get_dict_entry_type( result_, key.c_str()) ==
+		    XMMSC_RESULT_VALUE_TYPE_NONE ) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+
 	Dict::Variant Dict::operator[]( const std::string& key ) const
 	{
 		Dict::Variant value;
