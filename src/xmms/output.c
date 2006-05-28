@@ -623,7 +623,7 @@ xmms_output_volume_set (xmms_output_t *output, const gchar *channel,
 		return;
 	}
 
-	if (xmms_output_plugin_methods_volume_set (output->plugin, output, channel, volume)) {
+	if (!xmms_output_plugin_methods_volume_set (output->plugin, output, channel, volume)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "couldn't set volume");
 	}
