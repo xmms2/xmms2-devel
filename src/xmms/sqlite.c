@@ -159,32 +159,6 @@ xmms_sqlite_open (gboolean *create)
 	cv = xmms_config_lookup ("medialib.path");
 	dbpath = xmms_config_property_get_string (cv);
 
-	/* Check if we are about to put the medialib on a
-	 * remote filesystem. They are known to work less
-	 * well with sqlite and therefore we should refuse
-	 * to do so. The user has to know that he is doing
-	 * something stupid
-	 */
-
-	tmp = g_path_get_dirname (dbpath);
-	if (xmms_statfs_is_remote (tmp)) {
-		cv = xmms_config_lookup ("medialib.allow_remote_fs");
-		if (xmms_config_property_get_int (cv) == 1) {
-			xmms_log_info ("Allowing database on remote system against best judgement.");
-		} else {
-			xmms_log_fatal ("Remote filesystem detected!\n"
-							"* It looks like you are putting your database: %s\n"
-							"* on a remote filesystem, this is a bad idea since there are many known bugs\n"
-							"* with SQLite on some remote filesystems. We recomend that you put the db\n"
-							"* somewhere else. You can do this by editing the xmms2.conf and find the\n"
-							"* property for medialib.path. If you however still want to try to run the\n"
-							"* db on a remote filesystem please set medialib.allow_remote_fs=1 in your\n"
-							"* config and restart xmms2d.", dbpath);
-		}
-	}
-
-	g_free (tmp);
-
 	*create = FALSE;
 	if (!g_file_test (dbpath, G_FILE_TEST_EXISTS)) {
 		*create = TRUE;
@@ -230,6 +204,32 @@ xmms_sqlite_open (gboolean *create)
 	}
 
 	if (*create) {
+		/* Check if we are about to put the medialib on a
+		 * remote filesystem. They are known to work less
+		 * well with sqlite and therefore we should refuse
+		 * to do so. The user has to know that he is doing
+		 * something stupid
+		 */
+
+		tmp = g_path_get_dirname (dbpath);
+		if (xmms_statfs_is_remote (tmp)) {
+			cv = xmms_config_lookup ("medialib.allow_remote_fs");
+			if (xmms_config_property_get_int (cv) == 1) {
+				xmms_log_info ("Allowing database on remote system against best judgement.");
+			} else {
+				xmms_log_fatal ("Remote filesystem detected!\n"
+				                "* It looks like you are putting your database: %s\n"
+				                "* on a remote filesystem, this is a bad idea since there are many known bugs\n"
+				                "* with SQLite on some remote filesystems. We recomend that you put the db\n"
+				                "* somewhere else. You can do this by editing the xmms2.conf and find the\n"
+				                "* property for medialib.path. If you however still want to try to run the\n"
+				                "* db on a remote filesystem please set medialib.allow_remote_fs=1 in your\n"
+				                "* config and restart xmms2d.", dbpath);
+			}
+		}
+
+		g_free (tmp);
+
 		XMMS_DBG ("Creating the database...");
 		/**
 		 * This will create the sqlite_stats1 table which we
