@@ -180,8 +180,10 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
 	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
-	xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
-	xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, unsigned int id, char *key, int value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, int value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, unsigned int id, char *key)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 
@@ -1541,9 +1543,15 @@ cdef class XMMS:
 	
 		if source:
 			s = from_unicode(source)
-			ret.res = xmmsc_medialib_entry_property_set_with_source(self.conn,id,s,k,v)
+			if isinstance(value, int):
+				ret.res = xmmsc_medialib_entry_property_set_int_with_source(self.conn,id,s,k,v)
+			else:
+				ret.res = xmmsc_medialib_entry_property_set_str_with_source(self.conn,id,s,k,v)
 		else:
-			ret.res = xmmsc_medialib_entry_property_set(self.conn,id,k,v)
+			if isinstance(value, str):
+				ret.res = xmmsc_medialib_entry_property_set_str(self.conn,id,k,v)
+			else:
+				ret.res = xmmsc_medialib_entry_property_set_int(self.conn,id,k,v)
 
 		ret.more_init()
 		return ret
