@@ -23,8 +23,10 @@
  */
 static void cmd_mlib_topsongs (xmmsc_connection_t *conn,
                                gint argc, gchar **argv);
-static void cmd_mlib_set (xmmsc_connection_t *conn,
-                          gint argc, gchar **argv);
+static void cmd_mlib_set_str (xmmsc_connection_t *conn,
+                              gint argc, gchar **argv);
+static void cmd_mlib_set_int (xmmsc_connection_t *conn,
+                              gint argc, gchar **argv);
 static void cmd_mlib_add (xmmsc_connection_t *conn,
                           gint argc, gchar **argv);
 static void cmd_mlib_loadall (xmmsc_connection_t *conn,
@@ -75,7 +77,8 @@ cmds mlib_commands[] = {
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", cmd_mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", cmd_mlib_rehash },
 	{ "remove", "Remove an entry from medialib", cmd_mlib_remove },
-	{ "set", "[id, key, value, (source)] Set a property together with a medialib entry.", cmd_mlib_set },
+	{ "setstr", "[id, key, value, (source)] Set a string property together with a medialib entry.", cmd_mlib_set_str },
+	{ "setint", "[id, key, value, (source)] Set a int property together with a medialib entry.", cmd_mlib_set_int },
 	{ "topsongs", "list the most played songs", cmd_mlib_topsongs },
 	{ NULL, NULL, NULL },
 };
@@ -199,26 +202,26 @@ cmd_mlib_topsongs (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 
 static void
-cmd_mlib_set (xmmsc_connection_t *conn, gint argc, gchar **argv)
+cmd_mlib_set_str (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	gint id;
 
 	if (argc < 6) {
-		print_error ("usage: set [id] [key] [value] ([source])");
+		print_error ("usage: setstr [id] [key] [value] ([source])");
 	}
 
 	id = strtol (argv[3], NULL, 10);
 	
 	if (argc == 7) {
-		res = xmmsc_medialib_entry_property_set_with_source (conn,
-		                                                     id,
-		                                                     argv[6],
-		                                                     argv[4],
-		                                                     argv[5]);
+		res = xmmsc_medialib_entry_property_set_str_with_source (conn,
+		                                                         id,
+		                                                         argv[6],
+		                                                         argv[4],
+		                                                         argv[5]);
 	} else {
-		res = xmmsc_medialib_entry_property_set (conn, id, argv[4],
-		                                         argv[5]);
+		res = xmmsc_medialib_entry_property_set_str (conn, id, argv[4],
+		                                             argv[5]);
 	}
 	xmmsc_result_wait (res);
 
@@ -229,7 +232,36 @@ cmd_mlib_set (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
+static void
+cmd_mlib_set_int (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	gint id;
 
+	if (argc < 6) {
+		print_error ("usage: setint [id] [key] [value] ([source])");
+	}
+
+	id = strtol (argv[3], NULL, 10);
+	
+	if (argc == 7) {
+		res = xmmsc_medialib_entry_property_set_int_with_source (conn,
+		                                                         id,
+		                                                         argv[6],
+		                                                         argv[4],
+		                                                         atoi (argv[5]));
+	} else {
+		res = xmmsc_medialib_entry_property_set_int (conn, id, argv[4],
+		                                             atoi (argv[5]));
+	}
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
+}
 
 static void
 cmd_mlib_add (xmmsc_connection_t *conn, gint argc, gchar **argv)

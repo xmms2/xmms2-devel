@@ -59,7 +59,8 @@ static gchar *xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *p
 static void xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, xmms_error_t *);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
-static void xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gchar *value, xmms_error_t *error);
+static void xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gchar *value, xmms_error_t *error);
+static void xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gint32 value, xmms_error_t *error);
 static void xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, xmms_error_t *error);
 static guint32 xmms_medialib_entry_get_id (xmms_medialib_t *medialib, gchar *url, xmms_error_t *error);
 
@@ -78,7 +79,10 @@ XMMS_CMD_DEFINE (playlist_remove, xmms_medialib_playlist_remove, xmms_medialib_t
 XMMS_CMD_DEFINE (path_import, xmms_medialib_path_import, xmms_medialib_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (rehash, xmms_medialib_rehash, xmms_medialib_t *, NONE, UINT32, NONE);
 XMMS_CMD_DEFINE (get_id, xmms_medialib_entry_get_id, xmms_medialib_t *, UINT32, STRING, NONE);
-XMMS_CMD_DEFINE4 (set_property, xmms_medialib_property_set_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING, STRING);
+
+XMMS_CMD_DEFINE4 (set_property_str, xmms_medialib_property_set_str_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING, STRING);
+XMMS_CMD_DEFINE4 (set_property_int, xmms_medialib_property_set_int_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING, INT32);
+
 XMMS_CMD_DEFINE3 (remove_property, xmms_medialib_property_remove_method, xmms_medialib_t *, NONE, UINT32, STRING, STRING); 
 
 /**
@@ -287,9 +291,14 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_GET_ID,
 	                     XMMS_CMD_FUNC (get_id));
+
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_PROPERTY_SET,
-	                     XMMS_CMD_FUNC (set_property));
+	                     XMMS_IPC_CMD_PROPERTY_SET_STR,
+	                     XMMS_CMD_FUNC (set_property_str));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_PROPERTY_SET_INT,
+	                     XMMS_CMD_FUNC (set_property_int));
+
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PROPERTY_REMOVE,
 	                     XMMS_CMD_FUNC (remove_property));
@@ -1414,9 +1423,9 @@ xmms_medialib_playlists_list (xmms_medialib_t *medialib, xmms_error_t *error)
 }
 
 static void
-xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
-                                   gchar *source, gchar *key,
-                                   gchar *value, xmms_error_t *error)
+xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
+                                       gchar *source, gchar *key,
+                                       gchar *value, xmms_error_t *error)
 {
 	guint32 sourceid;
 	xmms_medialib_session_t *session;
@@ -1429,6 +1438,27 @@ xmms_medialib_property_set_method (xmms_medialib_t *medialib, guint32 entry,
 	session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
 	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
+	xmms_medialib_end (session);
+
+	xmms_medialib_entry_send_update (entry);
+}
+
+static void
+xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry,
+                                       gchar *source, gchar *key,
+                                       gint32 value, xmms_error_t *error)
+{
+	guint32 sourceid;
+	xmms_medialib_session_t *session;
+
+	if (g_strcasecmp (source, "server") == 0) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
+		return;
+	}
+
+	session = xmms_medialib_begin_write ();
+	sourceid = xmms_medialib_source_to_id (session, source);
+	xmms_medialib_entry_property_set_int_source (session, entry, key, value, sourceid);
 	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);

@@ -653,12 +653,12 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
 }
 
 /**
- * Associate a value with a medialib entry. Uses default
+ * Associate a int value with a medialib entry. Uses default
  * source which is client/<clientname>
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
-                                   const char *key, const char *value)
+xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
+                                       const char *key, int32_t value)
 {
 	xmmsc_result_t *res;
 	char tmp[256];
@@ -666,9 +666,58 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
 	x_check_conn (c, NULL);
 
 	snprintf (tmp, 256, "client/%s", c->clientname);
-	res = xmmsc_medialib_entry_property_set_with_source (c, id,
-                                                             tmp, key,
-                                                             value);
+	res = xmmsc_medialib_entry_property_set_int_with_source (c, id,
+	                                                         tmp, key,
+	                                                         value);
+	return res;
+}
+
+/**
+ * Set a custom int field in the medialib associated with a entry,
+ * the same as #xmmsc_result_entry_property_set but with specifing
+ * your own source.
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, 
+                                                   uint32_t id,
+                                                   const char *source, 
+                                                   const char *key, 
+                                                   int32_t value)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
+	                        XMMS_IPC_CMD_PROPERTY_SET_INT);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_string (msg, source);
+	xmms_ipc_msg_put_string (msg, key);
+	xmms_ipc_msg_put_int32 (msg, value);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/**
+ * Associate a value with a medialib entry. Uses default
+ * source which is client/<clientname>
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
+                                       const char *key, const char *value)
+{
+	xmmsc_result_t *res;
+	char tmp[256];
+
+	x_check_conn (c, NULL);
+
+	snprintf (tmp, 256, "client/%s", c->clientname);
+	res = xmmsc_medialib_entry_property_set_str_with_source (c, id,
+	                                                         tmp, key,
+	                                                         value);
 	return res;
 }
 
@@ -678,11 +727,11 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
  * your own source.
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, 
-                                               uint32_t id,
-                                               const char *source, 
-                                               const char *key, 
-                                               const char *value)
+xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, 
+                                                   uint32_t id,
+                                                   const char *source, 
+                                                   const char *key, 
+                                                   const char *value)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -690,7 +739,7 @@ xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c,
 	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
-	                        XMMS_IPC_CMD_PROPERTY_SET);
+	                        XMMS_IPC_CMD_PROPERTY_SET_STR);
 	xmms_ipc_msg_put_uint32 (msg, id);
 	xmms_ipc_msg_put_string (msg, source);
 	xmms_ipc_msg_put_string (msg, key);
