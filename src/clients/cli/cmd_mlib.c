@@ -21,8 +21,6 @@
 /**
  * Function prototypes
  */
-static void cmd_mlib_topsongs (xmmsc_connection_t *conn,
-                               gint argc, gchar **argv);
 static void cmd_mlib_set_str (xmmsc_connection_t *conn,
                               gint argc, gchar **argv);
 static void cmd_mlib_set_int (xmmsc_connection_t *conn,
@@ -79,7 +77,6 @@ cmds mlib_commands[] = {
 	{ "remove", "Remove an entry from medialib", cmd_mlib_remove },
 	{ "setstr", "[id, key, value, (source)] Set a string property together with a medialib entry.", cmd_mlib_set_str },
 	{ "setint", "[id, key, value, (source)] Set a int property together with a medialib entry.", cmd_mlib_set_int },
-	{ "topsongs", "list the most played songs", cmd_mlib_topsongs },
 	{ NULL, NULL, NULL },
 };
 
@@ -164,42 +161,6 @@ cmd_info (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_unref (res);
 	}
 }
-
-
-static void
-cmd_mlib_topsongs (xmmsc_connection_t *conn, gint argc, gchar **argv)
-{
-	xmmsc_result_t *res;
-	const gchar *query;
-	GList *n = NULL;
-	
-	query = "select m.id as id, sum(l.value) as playsum from Log l left join Media m on l.id=m.id where m.key='url' group by l.id order by playsum desc limit 20";
-
-	res = xmmsc_medialib_select (conn, query);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
-	}
-
-	while (xmmsc_result_list_valid (res)) {
-		gint id;
-
-		if (!xmmsc_result_get_dict_entry_int32 (res, "id", &id)) {
-			print_error ("Broken resultset");
-		}
-
-		n = g_list_prepend (n, XINT_TO_POINTER (id));
-		xmmsc_result_list_next (res);
-	}
-
-	n = g_list_reverse (n);
-	format_pretty_list (conn, n);
-	g_list_free (n);
-
-	xmmsc_result_unref (res);
-}
-
 
 static void
 cmd_mlib_set_str (xmmsc_connection_t *conn, gint argc, gchar **argv)
