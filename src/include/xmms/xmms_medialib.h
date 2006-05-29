@@ -55,6 +55,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE "size"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR "isvbr"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES "subtunes"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN "chain"
 
 
 typedef guint32 xmms_medialib_entry_t;
