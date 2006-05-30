@@ -76,17 +76,40 @@ namespace Xmms
 
 		using boost::bind;
 		if( source.empty() ) {
-			f = bind( xmmsc_medialib_entry_property_set,
+			f = bind( xmmsc_medialib_entry_property_set_str,
 			          conn_, id, key.c_str(), value.c_str() );
 		}
 		else {
-			f = bind( xmmsc_medialib_entry_property_set_with_source,
+			f = bind( xmmsc_medialib_entry_property_set_str_with_source,
 			          conn_, id, source.c_str(), key.c_str(), value.c_str() );
 		}
 
 		vCall( connected_, ml_, f );
 
 	}
+
+	void Medialib::entryPropertySet( unsigned int id,
+	                                 const std::string& key,
+	                                 const int value,
+	                                 const std::string& source ) const
+	{
+
+		boost::function< xmmsc_result_t*() > f;
+
+		using boost::bind;
+		if( source.empty() ) {
+			f = bind( xmmsc_medialib_entry_property_set_int,
+			          conn_, id, key.c_str(), value );
+		}
+		else {
+			f = bind( xmmsc_medialib_entry_property_set_int_with_source,
+			          conn_, id, source.c_str(), key.c_str(), value );
+		}
+
+		vCall( connected_, ml_, f );
+
+	}
+
 
 	unsigned int Medialib::getID( const std::string& url ) const
 	{
@@ -368,7 +391,7 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_set_with_source,
+		             boost::bind( xmmsc_medialib_entry_property_set_str_with_source,
 		                          conn_, id, source.c_str(), key.c_str(),
 		                          value.c_str() ),
 		             slot, error );
@@ -384,7 +407,7 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_set_with_source,
+		             boost::bind( xmmsc_medialib_entry_property_set_str_with_source,
 		                          conn_, id, source.c_str(), key.c_str(),
 		                          value.c_str() ),
 		             slots, error );
@@ -399,7 +422,7 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_set, conn_,
+		             boost::bind( xmmsc_medialib_entry_property_set_str, conn_,
 		                          id, key.c_str(), value.c_str() ),
 		             slot, error );
 
@@ -413,11 +436,72 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_medialib_entry_property_set, conn_,
+		             boost::bind( xmmsc_medialib_entry_property_set_str, conn_,
 		                          id, key.c_str(), value.c_str() ),
 		             slots, error );
 
 	}
+
+	void
+	Medialib::entryPropertySet( unsigned int id, const std::string& key,
+	                            int value,
+	                            const std::string& source,
+	                            const VoidSlot& slot,
+	                            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_entry_property_set_int_with_source,
+		                          conn_, id, source.c_str(), key.c_str(),
+		                          value ),
+		             slot, error );
+
+	}
+
+	void
+	Medialib::entryPropertySet( unsigned int id, const std::string& key,
+	                            int value,
+	                            const std::string& source,
+	                            const std::list< VoidSlot >& slots,
+	                            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_entry_property_set_int_with_source,
+		                          conn_, id, source.c_str(), key.c_str(),
+		                          value ),
+		             slots, error );
+
+	}
+
+	void
+	Medialib::entryPropertySet( unsigned int id, const std::string& key,
+	                            int value,
+	                            const VoidSlot& slot,
+	                            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_entry_property_set_int, conn_,
+		                          id, key.c_str(), value ),
+		             slot, error );
+
+	}
+
+	void
+	Medialib::entryPropertySet( unsigned int id, const std::string& key,
+	                            int value,
+	                            const std::list< VoidSlot >& slots,
+	                            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_entry_property_set_int, conn_,
+		                          id, key.c_str(), value ),
+		             slots, error );
+
+	}
+
 
 	void
 	Medialib::getID( const std::string& url, const UintSlot& slot,

@@ -105,6 +105,15 @@ namespace Xmms
 			                       const std::string& value,
 			                       const std::string& source = "" ) const;
 
+			/**
+			 * @overload
+			 * @note It takes a int instead of string
+			 */
+			void entryPropertySet( unsigned int id,
+			                       const std::string& key,
+			                       int value,
+			                       const std::string& source = "" ) const;
+
 			/** Search for a entry (URL) in the medialib db
 			 *  and return its ID number.
 			 *
@@ -458,6 +467,55 @@ namespace Xmms
 			                  const std::list< VoidSlot >& slots,
 			                  const ErrorSlot& error = &Xmms::dummy_error
 			                ) const;
+			/**
+			 * @overload
+			 * @note It takes a int instead of a string
+			 */
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  int value,
+			                  const std::string& source,
+			                  const VoidSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a int instead of a string
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  int value,
+			                  const std::string& source,
+			                  const std::list< VoidSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a int instead of a string
+			 * @note It doesn't take the source.
+			 */
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  int value, const VoidSlot& slot,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+			
+			/**
+			 * @overload
+			 * @note It takes a int instead of a string
+			 * @note It doesn't take the source.
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			entryPropertySet( unsigned int id, const std::string& key,
+			                  int value,
+			                  const std::list< VoidSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error
+			                ) const;
+
 
 			/** Search for a entry (URL) in the medialib db
 			 *  and return its ID number.
