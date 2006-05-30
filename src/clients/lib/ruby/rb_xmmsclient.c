@@ -724,13 +724,11 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
-	bool is_str;
+	bool is_str = false;
 
 	if (!NIL_P (rb_check_string_type (arg)))
 		is_str = true;
-	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		is_str = false;
-	else {
+	else if (!rb_obj_is_kind_of (arg, rb_cFixnum)) {
 		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
@@ -758,13 +756,11 @@ static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
-	bool is_str;
+	bool is_str = false;
 
 	if (!NIL_P (rb_check_string_type (arg)))
 		is_str = true;
-	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		is_str = false;
-	else {
+	else if (!rb_obj_is_kind_of (arg, rb_cFixnum)) {
 		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
@@ -922,6 +918,7 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 	VALUE id, key, value, src = Qnil;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
+	bool is_str = false;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
@@ -931,20 +928,38 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 
 	Check_Type (id, T_FIXNUM);
 	StringValue (key);
-	StringValue (value);
 
-	if (NIL_P (src))
-		res = xmmsc_medialib_entry_property_set (xmms->real,
-		                                         FIX2INT (id),
-		                                         StringValuePtr (key),
-		                                         StringValuePtr (value));
-	else
-		res = xmmsc_medialib_entry_property_set_with_source (
+	if (!NIL_P (rb_check_string_type (value)))
+		is_str = true;
+	else if (!rb_obj_is_kind_of (value, rb_cFixnum)) {
+		rb_raise (eClientError, "unsupported argument");
+		return Qnil;
+	}
+
+	if (NIL_P (src) && is_str)
+		res = xmmsc_medialib_entry_property_set_str (xmms->real,
+		                                             FIX2INT (id),
+		                                             StringValuePtr (key),
+		                                             StringValuePtr (value));
+	else if (NIL_P (src))
+		res = xmmsc_medialib_entry_property_set_int (xmms->real,
+		                                             FIX2INT (id),
+		                                             StringValuePtr (key),
+		                                             FIX2INT (value));
+	else if (is_str)
+		res = xmmsc_medialib_entry_property_set_str_with_source (
 			xmms->real,
 			FIX2INT (id),
 			StringValuePtr (src),
 			StringValuePtr (key),
 			StringValuePtr (value));
+	else
+		res = xmmsc_medialib_entry_property_set_int_with_source (
+			xmms->real,
+			FIX2INT (id),
+			StringValuePtr (src),
+			StringValuePtr (key),
+			FIX2INT (value));
 
 	return TO_XMMS_CLIENT_RESULT (self, res);
 }
