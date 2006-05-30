@@ -700,35 +700,6 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 
 }
 
-/**
- * A nice wrapper for @code xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_PROPERTY_RESOLVED); @endcode
- *
- * @return TRUE if the entry was resolved, else false.
- */
-
-gboolean
-xmms_medialib_entry_is_resolved (xmms_medialib_session_t *session,
-								 xmms_medialib_entry_t entry)
-{
-	return xmms_medialib_entry_property_get_int (session,
-												 entry, 
-												 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
-}
-
-/**
- * A nice wrapper for @code xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_PROPERTY_ID); @endcode
- *
- * @return TRUE if the entry was resolved, else false.
- */
-
-guint
-xmms_medialib_entry_id_get (xmms_medialib_session_t *session, 
-							xmms_medialib_entry_t entry)
-{
-	return xmms_medialib_entry_property_get_int (session, 
-												 entry, 
-												 XMMS_MEDIALIB_ENTRY_PROPERTY_ID);
-}
 
 /**
  * Trigger a update signal to the client. This should be called
