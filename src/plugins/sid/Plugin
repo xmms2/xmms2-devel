@@ -1,5 +1,5 @@
 target="sid"
-source=["sid.c", "sidplay_wrapper.cpp"]
+source=["sid.c", "sidplay_wrapper.cpp", "md5.cpp"]
 
 def config(env):
     env.pkgconfig("libsidplay2")

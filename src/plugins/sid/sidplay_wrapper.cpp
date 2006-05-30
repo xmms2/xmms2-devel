@@ -7,15 +7,70 @@
 #include <sidplay/builders/resid.h>
 #include <glib.h>
 
+#include "md5.h"
 
 #define BEGIN_EXTERN extern "C" {
 #define END_EXTERN }
 
 
+class SidTuneMD5: public SidTune {
+public:
+	SidTuneMD5(const char* fileName): SidTune(fileName)
+	{
+		/* do nothing */
+	}
+
+	bool GetMD5(char *buf);
+};
+
+bool
+SidTuneMD5::GetMD5(char *buf)
+{
+	guint16 t;
+	int i;
+	MD5 md5;
+
+	if (!status)
+		return false;
+
+	md5.append(cache.get()+fileOffset, info.c64dataLen);
+
+	t = GUINT16_TO_LE (info.initAddr);
+	md5.append(&t, sizeof (t));
+
+	t = GUINT16_TO_LE (info.playAddr);
+	md5.append(&t, sizeof (t));
+
+	t = GUINT16_TO_LE (info.songs);
+	md5.append(&t, sizeof (t));
+	     
+	for (i = 1; i <= info.songs; i++) {
+		selectSong (i);
+		md5.append(&info.songSpeed, sizeof (info.songSpeed));
+	}
+	selectSong (1);
+
+	if (info.clockSpeed == SIDTUNE_CLOCK_NTSC)
+		md5.append(&info.clockSpeed, sizeof (info.clockSpeed));
+
+	md5.finish();
+
+	const char *d = (const char *)md5.getDigest ();
+	for (int i = 0; i < 16; i++) {
+		static const char hexchars[] = "0123456789abcdef";
+		buf[2*i] = hexchars[(d[i]&0xf0)>>4];
+		buf[2*i+1] = hexchars[d[i]&0xf];
+	}
+	buf[33] = 0;
+	return true;
+}
+
+
 struct sidplay_wrapper {
 	sidplay2 *player;
-	SidTune *currTune;
+	SidTuneMD5 *currTune;
 	sid2_config_t conf;
+	char md5[33];
 };
 
 BEGIN_EXTERN
@@ -62,6 +117,11 @@ sidplay_wrapper_songinfo (struct sidplay_wrapper *wrap, gchar *artist,
 	return err;
 }
 
+const gchar *
+sidplay_wrapper_md5 (struct sidplay_wrapper *wrap)
+{
+	return wrap->md5;
+}
 
 gint
 sidplay_wrapper_subtunes (struct sidplay_wrapper *wrap)
@@ -85,7 +145,7 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 {
 	int res;
 
-	wrap->currTune = new SidTune (0);
+	wrap->currTune = new SidTuneMD5 (0);
 	res = wrap->currTune->read ((const uint_least8_t *)buf, len);
 	if (!res) {
 		return -2;
@@ -97,6 +157,8 @@ sidplay_wrapper_load (struct sidplay_wrapper *wrap, const void *buf, gint len)
 	if (res) {
 		return -3;
 	}
+
+	wrap->currTune->GetMD5 (wrap->md5);
 
 	ReSIDBuilder *rs = new ReSIDBuilder ("ReSID");
 	if (!rs) {
