@@ -322,12 +322,15 @@ xmms_xform_metadata_collect (xmms_xform_t *start)
 	GString *namestr;
 	metadata_festate_t info;
 	xmms_xform_t *xform;
-	guint32 sourceid;
+	guint times_played;
 
 	info.entry = start->entry;
 	info.session = xmms_medialib_begin_write ();
 
 	namestr = g_string_new ("");
+
+	times_played = xmms_medialib_entry_property_get_int (info.session, info.entry,
+	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED);
 
 	xmms_medialib_entry_cleanup (info.session, info.entry);
 
@@ -341,8 +344,9 @@ xmms_xform_metadata_collect (xmms_xform_t *start)
 			xmms_xform_metadata_collect_one (xform, &info);
 	}
 
-	sourceid = xmms_medialib_source_to_id (info.session, "server");
-	xmms_medialib_entry_property_set_str_source (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str, sourceid);
+	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
+
+	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED, times_played + 1);
 
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);

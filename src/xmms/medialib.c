@@ -501,29 +501,27 @@ xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session,
 }
 
 /**
- * Retrieve a property as a int from a entry
+ * Retrieve a property as a int from a entry.
  *
  * @param entry Entry to query.
  * @param property The property to extract. Strings passed should 
  * be defined in medialib.h 
  * 
- * @returns Property as integer, will not require you to free memory
- * if you know the property is a int. On failure 0 will be returned.
+ * @returns Property as integer, or -1 if it doesn't exist.
  */
-
-guint
+gint
 xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
-									  xmms_medialib_entry_t entry, 
-									  const gchar *property)
+                                      xmms_medialib_entry_t entry, 
+                                      const gchar *property)
 {
-	guint ret = 0;
+	gint ret = -1;
 
-	g_return_val_if_fail (property, 0);
-	g_return_val_if_fail (session, 0);
+	g_return_val_if_fail (property, -1);
+	g_return_val_if_fail (session, -1);
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-							 XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
-							 property, entry, session->source);
+	                         XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
+	                         property, entry, session->source);
 
 	return ret;
 }
