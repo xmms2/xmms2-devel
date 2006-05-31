@@ -281,7 +281,6 @@ song_changed (void *data)
 {
 	/* executes in the output thread; NOT the filler thread */
 	xmms_output_song_changed_arg_t *arg = (xmms_output_song_changed_arg_t *)data;
-	xmms_medialib_session_t *session;
 	xmms_medialib_entry_t entry;
 
 	entry = xmms_xform_entry_get (arg->chain);
@@ -298,9 +297,6 @@ song_changed (void *data)
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
 	                    entry);
 
-	session = xmms_medialib_begin_write ();
-	xmms_medialib_logging_start (session, entry);
-	xmms_medialib_end (session);
 }
 
 static void

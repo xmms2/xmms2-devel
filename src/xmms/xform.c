@@ -319,20 +319,40 @@ xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 static void
 xmms_xform_metadata_collect (xmms_xform_t *start)
 {
+	GString *namestr;
 	metadata_festate_t info;
 	xmms_xform_t *xform;
+	guint times_played;
 
 	info.entry = start->entry;
 	info.session = xmms_medialib_begin_write ();
 
+	namestr = g_string_new ("");
+
+	times_played = xmms_medialib_entry_property_get_int (info.session, info.entry,
+	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED);
+
 	xmms_medialib_entry_cleanup (info.session, info.entry);
 
 	for (xform = start; xform->prev; xform = xform->prev) {
+		if (xform->plugin) {
+			if (namestr->len)
+				g_string_prepend (namestr, ":");
+			g_string_prepend (namestr, xmms_xform_shortname (xform));
+		}
 		if (xform->metadata_changed)
 			xmms_xform_metadata_collect_one (xform, &info);
 	}
+
+	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
+
+	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED, times_played + 1);
+
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
+
+	g_string_free (namestr, TRUE);
+
 }
 
 static void

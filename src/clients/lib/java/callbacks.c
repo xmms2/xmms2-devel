@@ -333,7 +333,7 @@ run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_da
 	                                 callbackObject, 
 	                                 mid, 
 	                                 jresult, 
-	                                 *((int*)user_data));
+	                                 0);
 }
 /*
  * call callbacks of form (void*), in java wrapped to (int)

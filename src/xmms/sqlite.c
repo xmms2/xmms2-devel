@@ -31,12 +31,11 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 27
+#define DB_VERSION 28
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
-const char create_Log_stm[] = "create table Log (id, starttime, percent)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
 
@@ -46,14 +45,12 @@ const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlis
  */
 const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '199568 14 1 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Media', 'prop_idx', '199568 6653 3');"
-                          "INSERT INTO sqlite_stat1 VALUES('Log', 'log_id', '12 2');"
                           "INSERT INTO sqlite_stat1 VALUES('PlaylistEntries', 'playlistentries_idx', '12784 12784 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'playlist_idx', '2 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'sqlite_autoindex_Playlist_1', '2 1');";
 
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
-                              "create index log_id on Log (id);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
 
@@ -93,19 +90,6 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 }
 
 static void
-upgrade_v21_to_v22 (sqlite3 *sql)
-{
-	XMMS_DBG ("Performing upgrade v21 to v22");
-
-	sqlite3_exec (sql,
-	              "update Playlist "
-	              "set name = '_autosaved' where name = 'autosaved';",
-	              NULL, NULL, NULL);
-
-	XMMS_DBG ("done");
-}
-
-static void
 upgrade_v26_to_v27 (sqlite3 *sql)
 {
 	XMMS_DBG ("Upgrade v26->v27");
@@ -119,17 +103,29 @@ upgrade_v26_to_v27 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+upgrade_v27_to_v28 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v27->v28");
+
+	sqlite3_exec (sql,
+	              "drop table Log;",
+	              NULL, NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
 	gboolean can_upgrade = TRUE;
 
 	switch (version) {
-		case 21:
-			upgrade_v21_to_v22 (sql);
-			break;
 		case 26:
 			upgrade_v26_to_v27 (sql);
+		case 27:
+			upgrade_v27_to_v28 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
@@ -247,7 +243,6 @@ xmms_sqlite_open (gboolean *create)
 		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Sources_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
-		sqlite3_exec (sql, create_Log_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);

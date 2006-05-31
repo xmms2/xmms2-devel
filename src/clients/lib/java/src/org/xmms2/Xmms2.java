@@ -332,14 +332,25 @@ public final class Xmms2 {
                 xbo.connectionOne, id));
     }
 
-    public void mlibProperySet(int id, String key, String value) {
+    public void mlibProperySetStr(int id, String key, String value) {
         if (source == null || source.equals(""))
             handleNotifierTypePlayback(Xmmsclient
-                    .xmmsc_medialib_entry_property_set(xbo.connectionOne, id,
+                    .xmmsc_medialib_entry_property_set_str(xbo.connectionOne, id,
                             key, value));
         else
             handleNotifierTypePlayback(Xmmsclient
-                    .xmmsc_medialib_entry_property_set_with_source(
+                    .xmmsc_medialib_entry_property_set_str_with_source(
+                            xbo.connectionOne, id, source, key, value));
+    }
+
+    public void mlibProperySetInt(int id, String key, int value) {
+        if (source == null || source.equals(""))
+            handleNotifierTypePlayback(Xmmsclient
+                    .xmmsc_medialib_entry_property_set_int(xbo.connectionOne, id,
+                            key, value));
+        else
+            handleNotifierTypePlayback(Xmmsclient
+                    .xmmsc_medialib_entry_property_set_int_with_source(
                             xbo.connectionOne, id, source, key, value));
     }
 

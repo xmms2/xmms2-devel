@@ -303,10 +303,6 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	                     XMMS_IPC_CMD_PROPERTY_REMOVE,
 	                     XMMS_CMD_FUNC (remove_property));
 
-	xmms_config_property_register ("medialib.dologging",
-				    "1",
-				    NULL, NULL);
-
 	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
 
 	xmms_config_property_register ("medialib.path",
@@ -410,89 +406,6 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 	g_free (session);
 }
 
-
-/**
- * Called to start the logging of a entry.
- * When this is called you *have* to call logging_stop in order to
- * ensure database consistency.
- *
- * @param entry Entry to log.
- *
- * @sa xmms_medialib_logging_stop
- */
-
-void
-xmms_medialib_logging_start (xmms_medialib_session_t *session,
-							 xmms_medialib_entry_t entry)
-{
-	time_t starttime;
-	gboolean ret;
-	xmms_config_property_t *cv;
-
-	g_return_if_fail (entry);
-	g_return_if_fail (session);
-	
-	cv = xmms_config_lookup ("medialib.dologging");
-	g_return_if_fail (cv);
-	
-	ret = xmms_config_property_get_int (cv);
-	if (!ret)
-		return;
-
-	starttime = time (NULL);
-	ret = xmms_sqlite_exec (session->sql, "INSERT INTO Log (id, starttime) VALUES (%u, %u)", 
-							entry, (guint) starttime);
-
-	if (ret) {
-		xmms_medialib_entry_property_set_int (session, entry,
-											  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED, 
-											  starttime);
-	}
-}
-
-
-/**
- * Stops logging for the entry. Will also write the value to the database
- *
- * @param entry The entry.
- * @param playtime Playtime of the entry, this will be used to calculate how
- * many % of the song that was played.
- */
-
-void
-xmms_medialib_logging_stop (xmms_medialib_session_t *session,
-							xmms_medialib_entry_t entry, 
-							guint playtime)
-{
-	gint sek;
-	gint value = 0.0;
-	gboolean ret;
-	xmms_config_property_t *cv;
-
-	g_return_if_fail (session);
-
-	cv = xmms_config_lookup ("medialib.dologging");
-	g_return_if_fail (cv);
-
-	ret = xmms_config_property_get_int (cv);
-	if (!ret)
-		return;
-
-	sek = xmms_medialib_entry_property_get_int (session, 
-												entry, 
-												XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
-	value = (gint) (100.0 * playtime / (gdouble)sek);
-		
-	sek = xmms_medialib_entry_property_get_int (session, entry,
-												XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
-	g_return_if_fail (sek);
-
-	ret = xmms_sqlite_exec (session->sql, 
-							"UPDATE Log SET percent=%d WHERE id=%u AND starttime=%d", 
-							value, entry, sek);
-}
-
-
 static gboolean
 xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
@@ -588,29 +501,27 @@ xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session,
 }
 
 /**
- * Retrieve a property as a int from a entry
+ * Retrieve a property as a int from a entry.
  *
  * @param entry Entry to query.
  * @param property The property to extract. Strings passed should 
  * be defined in medialib.h 
  * 
- * @returns Property as integer, will not require you to free memory
- * if you know the property is a int. On failure 0 will be returned.
+ * @returns Property as integer, or -1 if it doesn't exist.
  */
-
-guint
+gint
 xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
-									  xmms_medialib_entry_t entry, 
-									  const gchar *property)
+                                      xmms_medialib_entry_t entry, 
+                                      const gchar *property)
 {
-	guint ret = 0;
+	gint ret = -1;
 
-	g_return_val_if_fail (property, 0);
-	g_return_val_if_fail (session, 0);
+	g_return_val_if_fail (property, -1);
+	g_return_val_if_fail (session, -1);
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-							 XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
-							 property, entry, session->source);
+	                         XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
+	                         property, entry, session->source);
 
 	return ret;
 }
@@ -700,35 +611,6 @@ xmms_medialib_entry_property_set_str_source (xmms_medialib_session_t *session,
 
 }
 
-/**
- * A nice wrapper for @code xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_PROPERTY_RESOLVED); @endcode
- *
- * @return TRUE if the entry was resolved, else false.
- */
-
-gboolean
-xmms_medialib_entry_is_resolved (xmms_medialib_session_t *session,
-								 xmms_medialib_entry_t entry)
-{
-	return xmms_medialib_entry_property_get_int (session,
-												 entry, 
-												 XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED);
-}
-
-/**
- * A nice wrapper for @code xmms_medialib_entry_property_get_int (entry, XMMS_MEDIALIB_PROPERTY_ID); @endcode
- *
- * @return TRUE if the entry was resolved, else false.
- */
-
-guint
-xmms_medialib_entry_id_get (xmms_medialib_session_t *session, 
-							xmms_medialib_entry_t entry)
-{
-	return xmms_medialib_entry_property_get_int (session, 
-												 entry, 
-												 XMMS_MEDIALIB_ENTRY_PROPERTY_ID);
-}
 
 /**
  * Trigger a update signal to the client. This should be called
@@ -816,7 +698,6 @@ xmms_medialib_entry_remove (xmms_medialib_session_t *session,
 {
 	g_return_if_fail (session);
 	xmms_sqlite_exec (session->sql, "delete from Media where id=%d", entry);
-	xmms_sqlite_exec (session->sql, "delete from Log where id=%d", entry);
 	/** @todo remove from playlists too? or should we do refcounting on this? */
 }
 
