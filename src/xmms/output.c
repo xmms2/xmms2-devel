@@ -315,7 +315,7 @@ xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t stat
 	g_mutex_lock (output->filler_mutex);
 	output->filler_state = state;
 	g_cond_signal (output->filler_state_cond);
-	if (state == FILLER_QUIT || state == FILLER_KILL || state == FILLER_STOP || FILLER_SEEK) {
+	if (state == FILLER_QUIT || state == FILLER_KILL || state == FILLER_STOP || state == FILLER_SEEK) {
 		xmms_ringbuf_clear (output->filler_buffer);
 	}
 	g_mutex_unlock (output->filler_mutex);
