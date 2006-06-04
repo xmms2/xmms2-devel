@@ -451,7 +451,10 @@ cdef class XMMSResult:
 		@return: Error string from the result.
 		@rtype: String
 		"""
-		return xmmsc_result_get_error(self.res)
+		if xmmsc_result_get_error(self.res) == NULL:
+			return None
+		else:
+			return xmmsc_result_get_error(self.res)
 
 	def __dealloc__(self):
 		"""
