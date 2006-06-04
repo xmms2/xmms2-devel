@@ -318,6 +318,9 @@ xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t stat
 	if (state == FILLER_QUIT || state == FILLER_KILL || state == FILLER_STOP || state == FILLER_SEEK) {
 		xmms_ringbuf_clear (output->filler_buffer);
 	}
+	if (state != FILLER_STOP) {
+		xmms_ringbuf_set_eos (output->filler_buffer, FALSE);
+	}
 	g_mutex_unlock (output->filler_mutex);
 }
 
@@ -349,6 +352,7 @@ xmms_output_filler (void *arg)
 				xmms_object_unref (chain);
 				chain = NULL;
 			}
+			xmms_ringbuf_set_eos (output->filler_buffer, TRUE);
 			g_cond_wait (output->filler_state_cond, output->filler_mutex);
 			continue;
 		}
@@ -459,7 +463,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	g_mutex_lock (output->filler_mutex);
 	xmms_ringbuf_wait_used (output->filler_buffer, len, output->filler_mutex);
 	ret = xmms_ringbuf_read (output->filler_buffer, buffer, len);
-	if (ret == 0 && output->filler_state == FILLER_STOP) {
+	if (ret == 0 && xmms_ringbuf_iseos (output->filler_buffer)) {
 		xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_STOP);
 		g_mutex_unlock (output->filler_mutex);
 		return -1;
