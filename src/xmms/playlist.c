@@ -408,7 +408,7 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, guint pos, xmms_error_
 	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
 	
-	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_INT32, playlist->currentpos);
+	xmms_object_emit_f (XMMS_OBJECT (playlist), XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS, XMMS_OBJECT_CMD_ARG_UINT32, playlist->currentpos);
 
 	return TRUE;
 }
