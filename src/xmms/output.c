@@ -542,7 +542,7 @@ static void
 xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error)
 {
 	g_mutex_lock (output->playtime_mutex);
-	samples += output->played;
+	samples += output->played / xmms_sample_frame_size_get (output->format);
 	if(samples < 0) {
 		samples = 0;
 	}
