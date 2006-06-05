@@ -568,6 +568,18 @@ xmms_xform_plugin_indata_add (xmms_xform_plugin_t *plugin, ...)
 	plugin->in_types = g_list_prepend (plugin->in_types, t);
 }
 
+static gboolean
+xmms_xform_plugin_supports (xmms_xform_plugin_t *plugin, xmms_stream_type_t *st)
+{
+	GList *t;
+
+	for (t = plugin->in_types; t; t = g_list_next (t)) {
+		if (xmms_stream_type_match (t->data, st)) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
 
 typedef struct match_state_St {
 	xmms_xform_plugin_t *match;
@@ -579,7 +591,6 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 {
 	xmms_xform_plugin_t *plugin = (xmms_xform_plugin_t *)_plugin;
 	match_state_t *state = (match_state_t *)user_data;
-	GList *t;
 
 	g_assert (_plugin->type == XMMS_PLUGIN_TYPE_XFORM);
 	g_assert (!state->match);
@@ -590,14 +601,12 @@ xmms_xform_match (xmms_plugin_t *_plugin, gpointer user_data)
 	}
 
 	XMMS_DBG ("Trying plugin '%s'", xmms_plugin_shortname_get (_plugin));
-
-	for (t = plugin->in_types; t; t = g_list_next (t)) {
-		if (xmms_stream_type_match (t->data, state->out_type)) {
-			XMMS_DBG ("Plugin '%s' matched",  xmms_plugin_shortname_get (_plugin));
-			state->match = plugin;
-			return FALSE;
-		}
+	if (xmms_xform_plugin_supports (plugin, state->out_type)) {
+		XMMS_DBG ("Plugin '%s' matched",  xmms_plugin_shortname_get (_plugin));
+		state->match = plugin;
+		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -761,7 +770,7 @@ add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry, GList *goal_format
 
 	while (42) {
 		xmms_config_property_t *cfg;
-		xmms_plugin_t *plugin;
+		xmms_xform_plugin_t *plugin;
 		gchar key[64];
 		const gchar *name;
 
@@ -780,18 +789,29 @@ add_effects (xmms_xform_t *last, xmms_medialib_entry_t entry, GList *goal_format
 		if (!name[0])
 			break;
 
-		plugin = xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
-		if (plugin) {
-			xform = xmms_xform_new ((xmms_xform_plugin_t *) plugin,
-			                        last, entry, goal_formats);
+		plugin = (xmms_xform_plugin_t *)xmms_plugin_find (XMMS_PLUGIN_TYPE_XFORM, name);
+		if (!plugin) {
+			xmms_log_error ("Couldn't find any effect named '%s'",
+			                name);
+			continue;
+		}
 
+		if (!xmms_xform_plugin_supports (plugin, last->out_type)) {
+			xmms_log_info ("Skipping effect '%s' that doesn't support format", xmms_plugin_shortname_get ((xmms_plugin_t *)plugin));
 			xmms_object_unref (plugin);
+			continue;
+		}
+
+		xform = xmms_xform_new (plugin,
+		                        last, entry, goal_formats);
+
+		if (xform) {
 			xmms_object_unref (last);
 			last = xform;
-
-			xmms_plugin_config_property_register (plugin, "enabled", "0",
-			                                      NULL, NULL);
 		}
+		xmms_xform_plugin_config_property_register (plugin, "enabled", "0",
+		                                            NULL, NULL);
+		xmms_object_unref (plugin);
 	}
 
 	return last;
