@@ -95,7 +95,9 @@ xmms_null_new (xmms_output_t *output)
 
 	xmms_output_private_data_set (output, data);
 
-	xmms_output_stream_type_add (output, XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm");
+	xmms_output_stream_type_add (output,
+	                             XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
+	                             XMMS_STREAM_TYPE_END);
 
 	return TRUE;
 }
