@@ -428,8 +428,6 @@ xmms_magic_match (xmms_magic_checker_t *c)
 		GNode *tree = l->data;
 		gpointer *data = tree->data;
 
-		XMMS_DBG ("matching tree '%s'", (gchar *) data[0]);
-
 		if (tree_match (c, tree)) {
 			return tree;
 		}
