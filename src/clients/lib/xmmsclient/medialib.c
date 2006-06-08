@@ -56,7 +56,7 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 
 /**
  * Make a SQL query to the server medialib. The result will contain
- * a #x_list_t with #x_hash_t's.
+ * a list of dicts.
  * @param conn The #xmmsc_connection_t
  * @param query The SQL query.
  */
@@ -72,13 +72,12 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
  * Escape a string so that it can be used in sqlite queries.
  *
  * @param Input string, is not freed by this function!
- * @returns string enclosed in single quotes, with all single quotes in the string
- * replaced with double single quotes
+ * @returns string enclosed in single quotes, with all single quotes
+ * in the string replaced with double single quotes
  *
  * Example:
  * Ain't -> 'Ain''t'
  */
-
 char *
 xmmsc_sqlite_prepare_string (const char *input) {
 	char *output;

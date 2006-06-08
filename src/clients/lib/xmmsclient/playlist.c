@@ -86,9 +86,7 @@ xmmsc_playlist_clear (xmmsc_connection_t *c)
 }
 
 /**
- * This will make the server list the current playlist.
- * The entries will be feed to the XMMS_SIGNAL_PLAYLIST_LIST
- * callback.
+ * List current playlist.
  */
 xmmsc_result_t *
 xmmsc_playlist_list (xmmsc_connection_t *c)
@@ -171,13 +169,12 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
 }
 
 /**
- * Add the url to the playlist. The url should be encoded with
- * xmmsc_encode_path and be absolute to the server-side. Note that
- * you will have to include the protocol for the url to. ie:
- * file://mp3/my_mp3s/first.mp3.
+ * Add the url to the playlist. The url should be absolute to the
+ * server-side. Note that you will have to include the protocol for
+ * the url to. ie: file://mp3/my_mp3s/first.mp3.
  *
  * @param c The connection structure.
- * @param url an encoded path.
+ * @param url path.
  *
  */
 xmmsc_result_t *
