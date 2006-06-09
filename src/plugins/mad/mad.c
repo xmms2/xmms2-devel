@@ -126,7 +126,7 @@ xmms_mad_destroy (xmms_xform_t *xform)
 }
 
 static gint64
-xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_mad_data_t *data;
 	guint bytes;
@@ -139,11 +139,8 @@ xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence
 
 	if (data->xing) {
 		guint i;
-		guint x_samples;
 
-		x_samples = xmms_xing_get_frames (data->xing) * 1152;
-
-		i = (guint) (100.0 * (gdouble) samples) / (gdouble) x_samples;
+		i = (guint) (100ULL * samples / xmms_xing_get_frames (data->xing) / 1152);
 
 		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
 	} else {
