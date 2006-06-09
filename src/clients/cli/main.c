@@ -48,6 +48,7 @@ gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistfo
 cmds commands[] = {
 	/* Playlist managment */
 	{ "add", "adds a URL to the playlist", cmd_add },
+	{ "addarg", "adds one URL with arguments to the playlist", cmd_addarg },
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
 	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },

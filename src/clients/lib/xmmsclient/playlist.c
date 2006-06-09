@@ -129,13 +129,28 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
 xmmsc_result_t *
 xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
 {
+	return xmmsc_playlist_insert_args (c, pos, url, 0, NULL);
+}
+
+/**
+ * Insert entry at given position in playlist wit args.
+ *
+ * @param c The connection structure.
+ * @param pos A position in the playlist
+ * @param url The URL to insert
+ * @param numargs The number of arguments
+ * @param args array of numargs strings used as arguments
+ */
+xmmsc_result_t *
+xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int numargs, const char **args)
+{
 	xmms_ipc_msg_t *msg;
 	char *enc_url;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url);
+	enc_url = xmmsc_medialib_encode_url (url, numargs, args);
 	if (!enc_url)
 		return NULL;
 	
@@ -180,6 +195,20 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
 xmmsc_result_t *
 xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 {
+	return xmmsc_playlist_add_args (c, url, 0, NULL);
+}
+
+/**
+ * Add the url to the playlist with arguments.
+ *
+ * @param c The connection structure.
+ * @param url path.
+ * @param numargs The number of arguments
+ * @param args array of numargs strings used as arguments
+ */
+xmmsc_result_t *
+xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *url, int nargs, const char **args)
+{
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 	char *enc_url;
@@ -187,7 +216,7 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url);
+	enc_url = xmmsc_medialib_encode_url (url, nargs, args);
 	if (!enc_url)
 		return NULL;
 	
