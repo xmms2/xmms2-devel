@@ -40,7 +40,8 @@ on_fd_data (void *udata, Ecore_Fd_Handler *handler)
 	return ret;
 }
 
-void on_prepare (void *udata, Ecore_Fd_Handler *handler)
+static void
+on_prepare (void *udata, Ecore_Fd_Handler *handler)
 {
 	xmmsc_connection_t *c = udata;
 	int flags = ECORE_FD_READ | ECORE_FD_ERROR;
