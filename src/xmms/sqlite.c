@@ -54,9 +54,6 @@ const char create_idx_stm[] = "create unique index key_idx on Media (id,key,sour
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
 
-static void upgrade_v21_to_v22 (sqlite3 *sql);
-static void upgrade_v26_to_v27 (sqlite3 *sql);
-
 /**
  * @defgroup SQLite SQLite
  * @ingroup XMMSServer

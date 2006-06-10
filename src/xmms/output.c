@@ -57,7 +57,14 @@ static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, 
 static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
 static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
-enum xmms_output_filler_state_E;
+typedef enum xmms_output_filler_state_E {
+	FILLER_STOP,
+	FILLER_RUN,
+	FILLER_QUIT,
+	FILLER_KILL,
+	FILLER_SEEK,
+} xmms_output_filler_state_t;
+
 static void xmms_output_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
 static GHashTable *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
 static void xmms_output_filler_state (xmms_output_t *output, enum xmms_output_filler_state_E state);
@@ -101,14 +108,6 @@ XMMS_CMD_DEFINE (volume_get, xmms_output_volume_get, xmms_output_t *, DICT, NONE
  *                filler_mutex
  *                playtime_mutex is leaflock.
  */
-
-typedef enum xmms_output_filler_state_E {
-	FILLER_STOP,
-	FILLER_RUN,
-	FILLER_QUIT,
-	FILLER_KILL,
-	FILLER_SEEK,
-} xmms_output_filler_state_t;
 
 struct xmms_output_St {
 	xmms_object_t object;
