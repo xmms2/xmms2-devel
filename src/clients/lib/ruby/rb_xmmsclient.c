@@ -927,7 +927,7 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 	rb_scan_args (argc, argv, "31", &id, &key, &value, &src);
 
 	Check_Type (id, T_FIXNUM);
-	StringValue (key);
+	Check_Type (key, T_SYMBOL);
 
 	if (!NIL_P (rb_check_string_type (value)))
 		is_str = true;
@@ -935,6 +935,8 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
+
+	key = rb_obj_as_string (key);
 
 	if (NIL_P (src) && is_str)
 		res = xmmsc_medialib_entry_property_set_str (xmms->real,
