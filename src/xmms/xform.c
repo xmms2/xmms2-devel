@@ -317,17 +317,14 @@ xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 }
 
 static void
-xmms_xform_metadata_collect (xmms_xform_t *start)
+xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 {
-	GString *namestr;
 	metadata_festate_t info;
 	xmms_xform_t *xform;
 	guint times_played;
 
 	info.entry = start->entry;
 	info.session = xmms_medialib_begin_write ();
-
-	namestr = g_string_new ("");
 
 	times_played = xmms_medialib_entry_property_get_int (info.session, info.entry,
 	                                                     XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED);
@@ -350,8 +347,6 @@ xmms_xform_metadata_collect (xmms_xform_t *start)
 
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
-
-	g_string_free (namestr, TRUE);
 
 }
 
@@ -672,7 +667,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_xform_t *xform, *last;
 	const gchar *url;
 	gchar *durl, *args;
-	
+	GString *namestr;	
+
 	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
 
 	session = xmms_medialib_begin ();
@@ -719,7 +715,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	do {
 		xform = xmms_xform_find (last, entry, goal_formats);
 		if (!xform) {
-			XMMS_DBG ("Couldn't set up chain!");
+			xmms_log_error ("Couldn't set up chain for '%s' (%d)",
+			                url, entry);
 			xmms_object_unref (last);
 			return NULL;
 		}
@@ -736,9 +733,11 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 
 	last = add_effects (last, entry, goal_formats);
 
-	xmms_xform_metadata_collect (last);
-
-	XMMS_DBG ("Goaltype found!! \\o/");
+	namestr = g_string_new ("");
+	xmms_xform_metadata_collect (last, namestr);
+	xmms_log_info ("Successfully setup chain for '%s' (%d) containing %s",
+	               url, entry, namestr->str);
+	g_string_free (namestr, TRUE);
 
 	return last;
 }
