@@ -4,6 +4,5 @@ source=["jack.c"]
 output_priority = 1
 
 def config(env):
-	raise ConfigError("Disabled")
 	env.pkgconfig("jack")
 

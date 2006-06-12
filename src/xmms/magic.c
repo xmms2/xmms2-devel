@@ -426,9 +426,6 @@ xmms_magic_match (xmms_magic_checker_t *c)
 	/* only one of the contained sets has to match */
 	for (l = magic_list; l; l = g_list_next (l)) {
 		GNode *tree = l->data;
-		gpointer *data = tree->data;
-
-		XMMS_DBG ("matching tree '%s'", (gchar *) data[0]);
 
 		if (tree_match (c, tree)) {
 			return tree;

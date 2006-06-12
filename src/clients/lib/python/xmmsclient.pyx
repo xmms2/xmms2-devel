@@ -208,6 +208,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 from select import select
 from os import write
 import os
+import sys
 
 cdef to_unicode(char *s):
 	try:
@@ -246,9 +247,11 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 cdef ResultNotifier(xmmsc_result_t *res, obj):
 	if not obj.get_broadcast():
 		obj._del_ref()
-	obj._cb()
-	if not obj.get_broadcast():
-		xmmsc_result_unref(res)
+	try:
+		obj._cb()
+	finally:
+		if not obj.get_broadcast():
+			xmmsc_result_unref(res)
 
 class PropDict(dict):
 	def __init__(self, srcs):
@@ -292,9 +295,11 @@ cdef class XMMSResult:
 	cdef int broadcast
 	cdef object callback
 	cdef object c
+	cdef object exc
 
 	def __new__(self, c):
 		self.c = c
+		self.exc = None
 
 	def more_init(self, broadcast = 0):
 		self.orig = self.res
@@ -309,7 +314,10 @@ cdef class XMMSResult:
 		self._check()
 		if not self.callback:
 			return
-		self.callback(self)
+		try:
+			self.callback(self)
+		except:
+			self.exc = sys.exc_info()
 
 	def get_type(self):
 		"""
@@ -360,6 +368,8 @@ cdef class XMMSResult:
 		"""
 		self._check()
 		xmmsc_result_wait(self.res)
+		if self.exc is not None:
+			raise self.exc[0], self.exc[1], self.exc[2]
 
 	def disconnect(self):
 		""" @todo: Fail if this result isn't a signal or a broadcast """
@@ -451,7 +461,10 @@ cdef class XMMSResult:
 		@return: Error string from the result.
 		@rtype: String
 		"""
-		return xmmsc_result_get_error(self.res)
+		if xmmsc_result_get_error(self.res) == NULL:
+			return None
+		else:
+			return xmmsc_result_get_error(self.res)
 
 	def __dealloc__(self):
 		"""

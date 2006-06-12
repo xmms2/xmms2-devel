@@ -36,6 +36,12 @@ src/plugins/faad/mp4ff/mp4*:
         Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
         Licensed under GPL license.
 
+src/plugins/sid/*
+        Licensed under GPL license.
+
+src/plugins/sid/md5.*
+        Copyright (C) 1999 Aladdin Enterprises.
+
 src/plugins/equalizer/eq.c
         Licensed under GPL license.
 

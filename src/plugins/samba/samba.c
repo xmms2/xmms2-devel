@@ -14,6 +14,12 @@
  *  Lesser General Public License for more details.
  */
 
+/* smbclient might be compiled with this,
+ * and it might change size of struct stat.
+ * This is a ugly fix for an ugly API issue.
+ */
+#define _FILE_OFFSET_BITS 64
+
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
@@ -107,7 +113,6 @@ xmms_samba_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	/* smbc is drunk and url here, evil smbc */
 	err = smbc_stat (url, &st);
 	if (err < 0) {
 		xmms_log_error ("%s", strerror (errno));
@@ -119,8 +124,6 @@ xmms_samba_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	/* need to reget the url thanks to evil smbc */
-	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 	fd = smbc_open (url, O_RDONLY | O_NONBLOCK, 0);
 	if (fd == -1) {
 		xmms_log_error ("%s", strerror (errno));

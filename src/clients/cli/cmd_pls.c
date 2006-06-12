@@ -168,6 +168,35 @@ cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 }
 
+void
+cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	gchar *url;
+
+	if (argc < 4) {
+		print_error ("Need a filename and args to add");
+	}
+
+	url = format_url (argv[2]);
+	if (!url) {
+		print_error ("Invalid url");
+	}
+
+	res = xmmsc_playlist_add_args (conn, url, argc - 3, &argv[3]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Couldn't add %s to playlist: %s\n", url,
+		             xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Added %s", url);
+
+	g_free (url);
+}
+
 
 void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)

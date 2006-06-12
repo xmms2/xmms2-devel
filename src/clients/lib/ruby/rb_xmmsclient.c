@@ -918,6 +918,7 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 	VALUE id, key, value, src = Qnil;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
+	const char *ckey;
 	bool is_str = false;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
@@ -927,7 +928,7 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 	rb_scan_args (argc, argv, "31", &id, &key, &value, &src);
 
 	Check_Type (id, T_FIXNUM);
-	StringValue (key);
+	Check_Type (key, T_SYMBOL);
 
 	if (!NIL_P (rb_check_string_type (value)))
 		is_str = true;
@@ -936,29 +937,31 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 		return Qnil;
 	}
 
+	ckey = rb_id2name (SYM2ID (key));
+
 	if (NIL_P (src) && is_str)
 		res = xmmsc_medialib_entry_property_set_str (xmms->real,
 		                                             FIX2INT (id),
-		                                             StringValuePtr (key),
+		                                             ckey,
 		                                             StringValuePtr (value));
 	else if (NIL_P (src))
 		res = xmmsc_medialib_entry_property_set_int (xmms->real,
 		                                             FIX2INT (id),
-		                                             StringValuePtr (key),
+		                                             ckey,
 		                                             FIX2INT (value));
 	else if (is_str)
 		res = xmmsc_medialib_entry_property_set_str_with_source (
 			xmms->real,
 			FIX2INT (id),
 			StringValuePtr (src),
-			StringValuePtr (key),
+			ckey,
 			StringValuePtr (value));
 	else
 		res = xmmsc_medialib_entry_property_set_int_with_source (
 			xmms->real,
 			FIX2INT (id),
 			StringValuePtr (src),
-			StringValuePtr (key),
+			ckey,
 			FIX2INT (value));
 
 	return TO_XMMS_CLIENT_RESULT (self, res);

@@ -126,7 +126,7 @@ do_scriptdir (const gchar *scriptdir)
 
 	dir = g_dir_open (scriptdir, 0, &err);
 	if (!dir) {
-		XMMS_DBG ("Could not open %s error: %s", scriptdir, err->message);
+		xmms_log_error ("Could not open script dir '%s' error: %s", scriptdir, err->message);
 		return;
 	}
 
@@ -296,10 +296,10 @@ install_scripts (const gchar *into_dir)
 	s++;
 
 	g_snprintf (path, PATH_MAX, "%s/scripts/%s", SHAREDDIR, s);
-	xmms_log_info ("installing scripts from %s", path);
+	xmms_log_info ("Installing scripts from %s", path);
 	dir = g_dir_open (path, 0, &err);
 	if (!dir) {
-		XMMS_DBG ("global script directory not found");
+		xmms_log_error ("Global script directory not found");
 		return;
 	}
 
@@ -440,7 +440,7 @@ main (int argc, char **argv)
 
 	outname = xmms_config_property_get_string (cv);
 
-	xmms_log_info ("Using output: %s", outname);
+	xmms_log_info ("Using output plugin: %s", outname);
 
 	o_plugin = (xmms_output_plugin_t *)xmms_plugin_find (XMMS_PLUGIN_TYPE_OUTPUT, outname);
 

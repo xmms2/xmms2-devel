@@ -183,12 +183,14 @@ xmms_icymetaint_read (xmms_xform_t *xform, void *orig_ptr, gint orig_len, xmms_e
 
 			} else {
 				gint tlen = len;
+				gint tlen2;
+
 				if (data->meta_offset) {
 					tlen = MIN (tlen,
 					            data->meta_offset - data->bytes_since_meta);
 				}
 
-				int tlen2 = tlen;
+				tlen2 = tlen;
 
 				/* this is a hack to find the first mp3 frame */
 				if (data->found_mp3_stream == 0) {

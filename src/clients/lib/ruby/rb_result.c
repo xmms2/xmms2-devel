@@ -437,8 +437,7 @@ static VALUE c_propdict_aref (VALUE self, VALUE key)
 	tmp = rb_iv_get (self, "result");
 	Data_Get_Struct (tmp, RbResult, res);
 
-	key = rb_obj_as_string (key);
-	ckey = StringValuePtr (key);
+	ckey = rb_id2name (SYM2ID (key));
 
 	type = xmmsc_result_get_dict_entry_type (res->real, ckey);
 
@@ -468,16 +467,16 @@ static VALUE c_propdict_has_key (VALUE self, VALUE key)
 	RbResult *res = NULL;
 	VALUE tmp;
 	xmmsc_result_value_type_t type;
+	const char *ckey;
 
 	Check_Type (key, T_SYMBOL);
 
 	tmp = rb_iv_get (self, "result");
 	Data_Get_Struct (tmp, RbResult, res);
 
-	key = rb_obj_as_string (key);
+	ckey = rb_id2name (SYM2ID (key));
 
-	type = xmmsc_result_get_dict_entry_type (res->real,
-	                                         StringValuePtr (key));
+	type = xmmsc_result_get_dict_entry_type (res->real, ckey);
 
 	return (type == XMMSC_RESULT_VALUE_TYPE_NONE) ? Qfalse : Qtrue;
 }
