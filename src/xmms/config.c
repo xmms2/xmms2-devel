@@ -643,17 +643,23 @@ xmms_config_destroy (xmms_object_t *object)
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_CONFIG);
 }
 
+static gboolean
+foreach_remove (gpointer key, gpointer value, gpointer udata)
+{
+	return TRUE; /* remove this key/value pair */
+}
+
 /**
  * @internal Clear data in a config object
  * @param config The config object to clear
  */
 static void
-clear_config (xmms_config_t *config) {
-	g_hash_table_destroy(config->properties);
-	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                            g_free,
-	                                  (GDestroyNotify) __int_xmms_object_unref);
+clear_config (xmms_config_t *config)
+{
+	g_hash_table_foreach_remove (config->properties, foreach_remove, NULL);
+
 	config->version = XMMS_CONFIG_VERSION;
+
 	g_free(config->value_name);
 	config->value_name = NULL;
 }
