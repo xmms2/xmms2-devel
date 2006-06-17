@@ -336,19 +336,11 @@ xmms_config_property_register (const gchar *path,
 
 	prop = g_hash_table_lookup (global_config->properties, path);
 	if (!prop) {
-		gchar *name;
-
-		/* get our own copy of the string */
-		path = g_strdup (path);
-		name = strrchr (path, '.');
-
-		if (!name) 
-			prop = xmms_config_property_new (path);
-		else
-			prop = xmms_config_property_new (name+1);
+		prop = xmms_config_property_new (g_strdup (path));
 
 		xmms_config_property_set_data (prop, (gchar *) default_value);
-		g_hash_table_insert (global_config->properties, (gchar *) path, prop);
+		g_hash_table_insert (global_config->properties,
+		                     (gchar *) prop->name, prop);
 	}
 
 	if (cb) 
