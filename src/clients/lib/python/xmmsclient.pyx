@@ -569,7 +569,7 @@ cdef class XMMS:
 		level function that should only be used in certain
 		circumstances. e.g. a custom event loop
 		"""
-		xmmsc_io_in_handle(self.conn)
+		return xmmsc_io_in_handle(self.conn)
 
 	def ioout(self):
 		"""
@@ -577,7 +577,7 @@ cdef class XMMS:
 		low level function that should only be used in certain
 		circumstances. e.g. a custom event loop
 		"""
-		xmmsc_io_out_handle(self.conn)
+		return xmmsc_io_out_handle(self.conn)
 
 	def want_ioout(self):
 		return xmmsc_io_want_out(self.conn)
