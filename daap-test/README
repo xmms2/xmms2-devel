@@ -1,0 +1,33 @@
+Basic usage:
+
+./mydaap host [port]
+
+Connect to the DAAP share running at host. A prompt will come up, asking for a command, which can be any valid DAAP request. The session-id and revision-id fields will be filled in appropriately, if they exist. 
+
+For example, to list the songs contained in database 35, run the following:
+
+Command > /databases/35/items
+
+The DAAP request for items usually will require the session-id and revision-id parameters but, as mentioned before, they are filled in automatically. Some DAAP servers (iTunes, specifically) will require a /login and /update to get any useful data.
+
+When requesting a specific song, a prompt will come up asking for a filename. The streamed data will be stored to that file.
+
+Things to watch out for / Gotchas:
+
+- The host argument must be an IP; the program will choke if given a hostname.
+- When requesting a list of items, it's impossible (or, at best, tricky) to specify any arguments for meta=<meta values>. This is a frontend-specific issue, and doesn't apply to the DAAP code itself. The server is usually verbose enough in its response anyway, so it's nothing to worry about. :)
+- When listing data, there may be a few content-codes that aren't handled at all; the message "Unrecognized content code or end of data: mfoo" will signify this, and all data listing will terminate at that point. I've covered most of the content codes by testing my entire music collection against two different servers, but if I've missed a code or two, feel free to yell at me about it. :)
+- The code is written for little-endian machines; for big-endian, run the patch "big-endian.patch" to get things working right.
+
+Some commands:
+
+/login - Login to the server; required for some clients. Sets session-id.
+/update - Update the client's connection to the server (must be logged in). Sets revision-id.
+/databases - List all databases on the server.
+/databases/<dbid>/items - List all songs in the database specified by dbid.
+/databases/<dbid>/containers - List all playlists in the database.
+/databases/<dbid>/containers/<cid>/items - List all songs in the playlist specified by cid.
+/databases/<dbid>/items/<songid>.mp3 - Stream the song specified by songid.
+/server-info - Get general info about the server.
+/logout - Guess. ;)
+/content-codes - Not supported here, but if it was, it'd list some info about content codes and their respective data sizes.
