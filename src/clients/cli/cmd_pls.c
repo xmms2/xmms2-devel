@@ -183,7 +183,8 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("Invalid url");
 	}
 
-	res = xmmsc_playlist_add_args (conn, url, argc - 3, &argv[3]);
+	res = xmmsc_playlist_add_args (conn, url, argc - 3,
+	                               (const char **) &argv[3]);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
