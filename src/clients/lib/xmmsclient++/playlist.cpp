@@ -21,7 +21,7 @@ namespace Xmms
 	{
 
 		vCall( connected_, ml_, 
-		      boost::bind( xmmsc_playlist_add, conn_, url.c_str() ) );
+		      boost::bind( xmmsc_playlist_add_url, conn_, url.c_str() ) );
 
 	}
 
@@ -61,7 +61,7 @@ namespace Xmms
 	{
 
 		vCall( connected_, ml_,
-		      boost::bind( xmmsc_playlist_insert, conn_, pos, url.c_str() ) );
+		      boost::bind( xmmsc_playlist_insert_url, conn_, pos, url.c_str() ) );
 
 	}
 
@@ -159,7 +159,7 @@ namespace Xmms
 	{
 		
 		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_add, conn_, url.c_str() ),
+		             boost::bind( xmmsc_playlist_add_url, conn_, url.c_str() ),
 		             slot, error );
 
 	}
@@ -171,7 +171,7 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add, conn_, url.c_str() ),
+		             boost::bind( xmmsc_playlist_add_url, conn_, url.c_str() ),
 		             slots, error );
 
 	}
@@ -249,7 +249,7 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert, conn_, 
+		             boost::bind( xmmsc_playlist_insert_url, conn_, 
 		                          pos, url.c_str() ),
 		             slot, error );
 
@@ -262,7 +262,7 @@ namespace Xmms
 	{
 
 		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert, conn_, 
+		             boost::bind( xmmsc_playlist_insert_url, conn_, 
 		                          pos, url.c_str() ),
 		             slots, error );
 

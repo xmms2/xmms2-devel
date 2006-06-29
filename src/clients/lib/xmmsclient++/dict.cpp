@@ -60,9 +60,9 @@ namespace Xmms
 			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
 
 				uint32_t temp = 0;
-				if( !xmmsc_result_get_dict_entry_uint32( result_, 
-				                                         key.c_str(), 
-				                                         &temp ) ) {
+				if( !xmmsc_result_get_dict_entry_uint( result_, 
+				                                       key.c_str(), 
+				                                       &temp ) ) {
 					// FIXME: handle error
 				}
 				value = temp;
@@ -72,9 +72,9 @@ namespace Xmms
 			case XMMSC_RESULT_VALUE_TYPE_INT32: {
 
 				int32_t temp = 0;
-				if( !xmmsc_result_get_dict_entry_int32( result_, 
-				                                        key.c_str(), 
-				                                        &temp ) ) {
+				if( !xmmsc_result_get_dict_entry_int( result_, 
+				                                      key.c_str(), 
+				                                      &temp ) ) {
 					// FIXME: handle error
 				}
 				value = temp;
@@ -84,9 +84,9 @@ namespace Xmms
 			case XMMSC_RESULT_VALUE_TYPE_STRING: {
 
 				char* temp = 0;
-				if( !xmmsc_result_get_dict_entry_str( result_, 
-				                                      key.c_str(), 
-				                                      &temp ) ) {
+				if( !xmmsc_result_get_dict_entry_string( result_, 
+				                                         key.c_str(), 
+				                                         &temp ) ) {
 					// FIXME: handle error
 				}
 				value = std::string( temp );
