@@ -340,6 +340,118 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 }
 
 /**
+ * This function will make a pretty string about the information in
+ * the mediainfo hash supplied to it.
+ * @param target A allocated char *
+ * @param len Length of target
+ * @param fmt A format string to use. You can insert items from the hash by
+ * using specialformat "${field}".
+ * @param table The x_hash_t that you got from xmmsc_result_get_mediainfo
+ * @returns The number of chars written to #target
+ */
+
+int
+xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
+{
+	const char *pos;
+
+	if (!target) {
+		return 0;
+	}
+
+	if (!fmt) {
+		return 0;
+	}
+
+	memset (target, 0, len);
+
+	pos = fmt;
+	while (strlen (target) + 1 < len) {
+		char *next_key, *key, *result = NULL, *end;
+		int keylen;
+
+		next_key = strstr (pos, "${");
+		if (!next_key) {
+			strncat (target, pos, len - strlen (target) - 1);
+			break;
+		}
+
+		strncat (target, pos, MIN (next_key - pos, len - strlen (target) - 1));
+		keylen = strcspn (next_key + 2, "}");
+		key = malloc (keylen + 1);
+
+		if (!key) {
+			fprintf (stderr, "Unable to allocate %u bytes of memory, OOM?", keylen);
+			break;
+		}
+
+		memset (key, 0, keylen + 1);
+		strncpy (key, next_key + 2, keylen);
+
+		if (strcmp (key, "seconds") == 0) {
+			int duration;
+
+			xmmsc_result_get_dict_entry_int (res, "duration", &duration);
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+			} else {
+				char seconds[10];
+				/* rounding */
+				duration += 500;
+				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
+				strncat (target, seconds, len - strlen (target) - 1);
+			}
+		} else if (strcmp (key, "minutes") == 0) {
+			int duration;
+
+			xmmsc_result_get_dict_entry_int (res, "duration", &duration);
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+			} else {
+				char minutes[10];
+				/* rounding */
+				duration += 500;
+				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
+				strncat (target, minutes, len - strlen (target) - 1);
+			}
+		} else {
+			char tmp[12];
+
+			xmmsc_result_value_type_t type = xmmsc_result_get_dict_entry_type (res, key);
+			if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+				xmmsc_result_get_dict_entry_string (res, key, &result);
+			} else if (type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
+				uint32_t ui;
+				xmmsc_result_get_dict_entry_uint (res, key, &ui);
+				snprintf (tmp, 12, "%u", ui);
+				result = tmp;
+			} else if (type == XMMSC_RESULT_VALUE_TYPE_INT32) {
+				int32_t i;
+				xmmsc_result_get_dict_entry_int (res, key, &i);
+				snprintf (tmp, 12, "%d", i);
+				result = tmp;
+			}
+				
+			if (result)
+				strncat (target, result, len - strlen (target) - 1);
+		}
+
+		free (key);
+		end = strchr (next_key, '}');
+
+		if (!end) {
+			break;
+		}
+
+		pos = end + 1;
+	}
+
+	return strlen (target);
+}
+
+/**
  * Search for a entry (URL) in the medialib db and return its ID number
  * @param conn The #xmmsc_connection_t
  * @param url The URL to search for
@@ -491,7 +603,7 @@ xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const char *url, int nu
 	if (!enc_url)
 		return NULL;
 
-	res = do_methodcall (conn, XMMS_IPC_CMD_ADD, enc_url);
+	res = do_methodcall (conn, XMMS_IPC_CMD_ADD_URL, enc_url);
 
 	free (enc_url);
 

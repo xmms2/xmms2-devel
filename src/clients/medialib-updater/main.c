@@ -44,7 +44,7 @@ handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		guint32 id;
-		if (!xmmsc_result_get_dict_entry_uint32 (res, "id", &id)) {
+		if (!xmmsc_result_get_dict_entry_uint (res, "id", &id)) {
 			ERR ("Failed to get entry id from hash!");
 			continue;
 		}
@@ -233,12 +233,12 @@ handle_config_changed (xmmsc_result_t *res, void *data)
 	gchar *val;
 
 	
-	if (!xmmsc_result_get_dict_entry_str (res, "name", &key)) {
+	if (!xmmsc_result_get_dict_entry_string (res, "name", &key)) {
 		ERR ("Config changed has invalid result!");
 		return;
 	}
 
-	if (!xmmsc_result_get_dict_entry_str (res, "value", &val)) {
+	if (!xmmsc_result_get_dict_entry_string (res, "value", &val)) {
 		ERR ("Config changed has invalid result!");
 		return;
 	}

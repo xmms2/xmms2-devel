@@ -29,7 +29,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 		print_error ("Invalid url");
 	}
 
-	res = xmmsc_playlist_add (conn, url);
+	res = xmmsc_playlist_add_url (conn, url);
 	xmmsc_result_wait (res);
 	g_free (url);
 
@@ -364,7 +364,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			print_error ("%s", xmmsc_result_get_error (info_res));
 		}
 
-		if (xmmsc_result_get_dict_entry_int32 (info_res, "duration", &playtime)) {
+		if (xmmsc_result_get_dict_entry_int (info_res, "duration", &playtime)) {
 			total_playtime += playtime;
 		}
 		
@@ -383,7 +383,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			xmmsc_entry_format (dur, sizeof (dur),
 			                    "(${minutes}:${seconds})", info_res);
 			
-			if (xmmsc_result_get_dict_entry_str (info_res, "url", &url)) {
+			if (xmmsc_result_get_dict_entry_string (info_res, "url", &url)) {
 				filename = g_path_get_basename (url);
 				if (filename) {
 					g_snprintf (line, sizeof (line), "%s %s", filename, dur);

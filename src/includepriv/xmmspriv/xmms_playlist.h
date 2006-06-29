@@ -58,10 +58,10 @@ typedef struct xmms_playlist_St xmms_playlist_t;
 
 xmms_playlist_t * xmms_playlist_init (void);
 
-gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error);
+gboolean xmms_playlist_add_id (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error);
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
-gboolean xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err);
+gboolean xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err);
 GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
 guint32 xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *err);
 guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);

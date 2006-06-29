@@ -139,7 +139,7 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 
-	if (!xmmsc_result_get_dict_entry_int32 (res, "duration", &dur)) {
+	if (!xmmsc_result_get_dict_entry_int (res, "duration", &dur)) {
 		print_error ("Broken resultset");
 	}
 	xmmsc_result_unref (res);
