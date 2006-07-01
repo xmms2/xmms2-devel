@@ -14,25 +14,16 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
+package org.xmms2.events;
 
-#ifdef __cplusplus
-{
-#endif
+import org.xmms2.Playlist;
 
-#include <xmmsclient/xmmsclient.h>
-#include <jni.h>
-
-/*
- * swig should wrap that two functions to make them java-usable
- */
-extern xmmsc_result_t* getResultFromPointer (jlong val);
-extern jlong getPointerToConnection (xmmsc_connection_t *c);
-extern void* convertIntToVoidP (int val);
-
-#ifdef __cplusplus
+public class Xmms2PlaylistEvent extends Xmms2Event {
+	public Xmms2PlaylistEvent(int tid, Playlist pl){
+		super(tid, Xmms2Listener.PLAYLIST_TYPE, pl);
+	}
+	
+	public Playlist getPlaylist(){
+		return (Playlist)value;
+	}
 }
-#endif
-
-#endif

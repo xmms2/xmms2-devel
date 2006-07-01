@@ -14,25 +14,31 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
+package org.xmms2.events;
 
-#ifdef __cplusplus
-{
-#endif
 
-#include <xmmsclient/xmmsclient.h>
-#include <jni.h>
-
-/*
- * swig should wrap that two functions to make them java-usable
+/**
+ * Events are moved to the Xmms2Listeners. possible types are listed in
+ * Xmms2Listener
  */
-extern xmmsc_result_t* getResultFromPointer (jlong val);
-extern jlong getPointerToConnection (xmmsc_connection_t *c);
-extern void* convertIntToVoidP (int val);
 
-#ifdef __cplusplus
+public class Xmms2Event {
+    public long tid = 0;
+
+    public String type = Xmms2Listener.VOID_TYPE;
+
+    public Object value = null;
+
+    public Xmms2Event(long tid, String type, Object value) {
+        this.tid = tid;
+        this.type = type;
+        this.value = value;
+
+        if (type.equals(Xmms2Listener.ERROR_TYPE))
+            System.err.println(value);
+    }
+
+    public String toString() {
+        return "" + value;
+    }
 }
-#endif
-
-#endif

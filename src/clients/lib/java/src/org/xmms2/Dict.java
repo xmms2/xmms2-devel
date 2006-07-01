@@ -14,25 +14,22 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
+package org.xmms2;
 
-#ifdef __cplusplus
-{
-#endif
+import java.util.HashMap;
 
-#include <xmmsclient/xmmsclient.h>
-#include <jni.h>
-
-/*
- * swig should wrap that two functions to make them java-usable
- */
-extern xmmsc_result_t* getResultFromPointer (jlong val);
-extern jlong getPointerToConnection (xmmsc_connection_t *c);
-extern void* convertIntToVoidP (int val);
-
-#ifdef __cplusplus
+public class Dict extends HashMap {
+	
+	public void putDictEntry(String key, String value){
+		super.put(key, value);
+	}
+	
+	public Object put(Object key, Object value){
+		putDictEntry(""+key, ""+value);
+		return value;
+	}
+	
+	public String getDictEntry(String key){
+		return ""+get(key);
+	}
 }
-#endif
-
-#endif

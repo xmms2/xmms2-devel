@@ -14,25 +14,28 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
+package org.xmms2;
 
-#ifdef __cplusplus
-{
-#endif
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-#include <xmmsclient/xmmsclient.h>
-#include <jni.h>
-
-/*
- * swig should wrap that two functions to make them java-usable
- */
-extern xmmsc_result_t* getResultFromPointer (jlong val);
-extern jlong getPointerToConnection (xmmsc_connection_t *c);
-extern void* convertIntToVoidP (int val);
-
-#ifdef __cplusplus
+public class PropDict extends HashMap {
+	
+	public void putPropDictEntry(String key, String value, String source){
+		List l = (List)get(key);
+		if (l == null)
+			l = new ArrayList();
+		l.add(new PropDictEntry(value, source));
+		super.put(key, l);
+	}
+	
+	public List getEntry(String key){
+		return (List)get(key);
+	}
+	
+	public Object put(Object key, Object value){
+		putPropDictEntry(""+key, ""+value, "");
+		return value;
+	}
 }
-#endif
-
-#endif
