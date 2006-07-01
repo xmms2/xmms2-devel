@@ -41,7 +41,7 @@ struct xmmsc_coll_St {
 	x_list_t *attributes;
  
 	/* List of ids, 0-terminated. */
-	int32_t *idlist;
+	uint32_t *idlist;
 
 };
 
@@ -86,7 +86,7 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
 		return NULL;
 	}
 
-	if (!(coll->idlist = x_new0 (int32_t, 1))) {
+	if (!(coll->idlist = x_new0 (uint32_t, 1))) {
 		x_oom();
 		return NULL;
 	}
@@ -169,10 +169,10 @@ xmmsc_coll_set_type (xmmsc_coll_t *coll, xmmsc_coll_type_t type)
  * @param ids  the 0-terminated list of ids to store in the collection.
  */
 void
-xmmsc_coll_set_idlist (xmmsc_coll_t *coll, int ids[])
+xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[])
 {
-	int i;
-	int size = 0;
+	unsigned int i;
+	unsigned int size = 0;
 
 	x_return_if_fail (coll);
 
@@ -181,7 +181,7 @@ xmmsc_coll_set_idlist (xmmsc_coll_t *coll, int ids[])
 	} while (ids[size] != 0);
 
 	free (coll->idlist);
-	if (!(coll->idlist = x_new0 (int32_t, size))) {
+	if (!(coll->idlist = x_new0 (uint32_t, size))) {
 		x_oom();
 		return;
 	}
@@ -202,6 +202,11 @@ xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 {
 	x_return_if_fail (coll);
 
+	/* Already present, don't add twice! */
+	if (x_list_index (coll->operands, op) != -1) {
+		return;
+	}
+
 	xmmsc_coll_ref (op);
 
 	coll->operands = x_list_append (coll->operands, op);
@@ -215,12 +220,19 @@ xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 void
 xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 {
+	x_list_t *entry;
+
 	x_return_if_fail (coll);
 
-	/* FIXME: unref as many times as it is removed! */
-	xmmsc_coll_unref (op);
+	/* Find the entry, abort if not in the list */
+	entry = x_list_find (coll->operands, op);
+	if(entry == NULL) {
+		return;
+	}
 
-	coll->operands = x_list_remove_all (coll->operands, op);
+	coll->operands = x_list_delete_link (coll->operands, entry);
+
+	xmmsc_coll_unref (op);
 }
 
  
@@ -246,7 +258,7 @@ xmmsc_coll_get_type (xmmsc_coll_t *coll)
  * @param coll  The collection to consider.
  * @return The 0-terminated list of ids.
  */
-int32_t*
+uint32_t*
 xmmsc_coll_get_idlist (xmmsc_coll_t *coll)
 {
 	x_return_null_if_fail (coll);
@@ -354,11 +366,14 @@ xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key)
 {
 	x_list_t *n;
 	for (n = coll->attributes; n; n = x_list_next (n)) {
-		const char *k = n->data;
+		char *k = n->data;
 		if (strcasecmp (k, key) == 0 && n->next) {
+			char *v = n->next->data;
 			/* found right key, remove key and value */
 			coll->attributes = x_list_delete_link (coll->attributes, n->next);
 			coll->attributes = x_list_delete_link (coll->attributes, n);
+			free (k);
+			free (v);
 			return 1;
 		} else {
 			/* skip data part of this entry */
@@ -381,14 +396,14 @@ xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key)
  * @return 1 upon success, 0 otherwise
  */
 int
-xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, const char **value)
+xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
 {
 	x_list_t *n;
 	for (n = coll->attributes; n; n = x_list_next (n)) {
 		const char *k = n->data;
 		if (strcasecmp (k, key) == 0 && n->next) {
 			/* found right key, return value */
-			*value = (const char*) n->next->data;
+			*value = (char*) n->next->data;
 			return 1;
 		} else {
 			/* skip data part of this entry */
@@ -483,7 +498,7 @@ xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll)
 }
  
 /* Query */
-/* [list<int>] */
+/* [list<uint>] */
 xmmsc_result_t*
 xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, 
 					   const char* order[], int limit_start, int limit_len)
@@ -506,7 +521,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 /* Search (in collections) */
 /* [list<xmmsc_coll_t>] */
 xmmsc_result_t*
-xmmsc_coll_find (xmmsc_connection_t *conn, int mediaid, xmmsc_coll_namespace_t ns)
+xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns)
 {
 	/* FIXME: code */
 	return NULL;
