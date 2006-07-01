@@ -27,6 +27,7 @@ extern "C" {
 
 typedef struct xmmsc_connection_St xmmsc_connection_t;
 typedef struct xmmsc_result_St xmmsc_result_t;
+typedef struct xmmsc_coll_St xmmsc_coll_t;
 
 typedef enum {
 	XMMSC_RESULT_CLASS_DEFAULT,
@@ -183,6 +184,45 @@ xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connecti
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c);
+
+
+/*
+ * COLLECTION ***********************************************
+ */
+
+typedef void (*xmmsc_coll_attribute_foreach_func) (const char *key, const char *value, void *udata);
+
+xmmsc_coll_t* xmmsc_coll_new (xmmsc_coll_type_t type);
+void xmmsc_coll_unref (xmmsc_coll_t *coll);
+
+void xmmsc_coll_set_type (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
+void xmmsc_coll_set_idlist (xmmsc_coll_t *coll, int ids[]);
+void xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op);
+void xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op);
+
+xmmsc_coll_type_t xmmsc_coll_get_type (xmmsc_coll_t *coll);
+int32_t* xmmsc_coll_get_idlist (xmmsc_coll_t *coll);
+int xmmsc_coll_operand_list_first (xmmsc_coll_t *coll);
+int xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, xmmsc_coll_t **operand);
+int xmmsc_coll_operand_list_next (xmmsc_coll_t *coll);
+
+void xmmsc_coll_attribute_set (xmmsc_coll_t *coll, const char *key, const char *value);
+int xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key);
+int xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, const char **value);
+void xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll, xmmsc_coll_attribute_foreach_func func, void *user_data);
+
+xmmsc_coll_t* xmmsc_coll_universe ();
+
+xmmsc_result_t* xmmsc_coll_get (xmmsc_connection_t *conn, char *collname, xmmsc_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns);
+xmmsc_result_t* xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char* name, xmmsc_coll_namespace_t ns);
+int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll);
+
+xmmsc_result_t* xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], int limit_start, int limit_len);
+xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], int limit_start, int limit_len, const char* fetch[], const char* group[]);
+
+xmmsc_result_t* xmmsc_coll_find (xmmsc_connection_t *conn, int mediaid, xmmsc_coll_namespace_t ns);
+
 
 /*
  * MACROS 

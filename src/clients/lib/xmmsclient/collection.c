@@ -27,7 +27,7 @@
 #include "xmmsc/xmmsc_stringport.h"
 
 
-typedef struct xmmsc_coll_St {
+struct xmmsc_coll_St {
 
 	/* refcounting */
 	int ref;
@@ -43,14 +43,10 @@ typedef struct xmmsc_coll_St {
 	/* List of ids, 0-terminated. */
 	int32_t *idlist;
 
-} xmmsc_coll_t;
+};
 
 
 static int xmmsc_coll_unref_udata (void *coll, void *userdata);
-
-typedef void (*xmmsc_coll_attribute_foreach_func)(const char *key,
-                                                  const char *value,
-                                                  void* udata);
 
 
 /**
@@ -60,6 +56,18 @@ typedef void (*xmmsc_coll_attribute_foreach_func)(const char *key,
  *
  * @{
  */
+
+/**
+ * Increases the references for the #xmmsc_coll_t
+ *
+ * @param coll the collection to reference.
+ */
+static void 
+xmmsc_coll_ref (xmmsc_coll_t *coll)
+{
+	x_return_if_fail (coll);
+	coll->ref++;
+}
 
 /**
  * Allocate a new collection of the given type.
@@ -83,12 +91,16 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
 		return NULL;
 	}
 
+	coll->ref  = 0;
 	coll->type = type;
 
 	coll->operands   = NULL;
 	coll->attributes = NULL;
 
 	coll->curr_op = coll->operands;
+
+	/* user must give this back */
+	xmmsc_coll_ref (coll);
 
 	return coll;
 }
@@ -190,6 +202,8 @@ xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 {
 	x_return_if_fail (coll);
 
+	xmmsc_coll_ref (op);
+
 	coll->operands = x_list_append (coll->operands, op);
 }
 
@@ -202,6 +216,9 @@ void
 xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 {
 	x_return_if_fail (coll);
+
+	/* FIXME: unref as many times as it is removed! */
+	xmmsc_coll_unref (op);
 
 	coll->operands = x_list_remove_all (coll->operands, op);
 }
@@ -317,8 +334,8 @@ xmmsc_coll_attribute_set (xmmsc_coll_t *coll, const char *key, const char *value
 	}
 
 	/* Key not found, insert the new pair */
-	coll->operands = x_list_append (coll->operands, strdup (key));
-	coll->operands = x_list_append (coll->operands, strdup (value));
+	coll->attributes = x_list_append (coll->attributes, strdup (key));
+	coll->attributes = x_list_append (coll->attributes, strdup (value));
 
 	return;
 }
@@ -340,8 +357,8 @@ xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key)
 		const char *k = n->data;
 		if (strcasecmp (k, key) == 0 && n->next) {
 			/* found right key, remove key and value */
-			coll->operands = x_list_delete_link (coll->operands, n->next);
-			coll->operands = x_list_delete_link (coll->operands, n);
+			coll->attributes = x_list_delete_link (coll->attributes, n->next);
+			coll->attributes = x_list_delete_link (coll->attributes, n);
 			return 1;
 		} else {
 			/* skip data part of this entry */
@@ -397,7 +414,7 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, const char **valu
 void
 xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll,
                               xmmsc_coll_attribute_foreach_func func,
-                              void* user_data)
+                              void *user_data)
 {
 	x_list_t *n;
 	for (n = coll->attributes; n; n = x_list_next (n)) {
@@ -457,8 +474,9 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	return NULL;
 }
 
+/* FIXME: Should go in result.c, when done */
 int
-xmmsc_result_get_collection(xmmsc_result_t *conn, xmmsc_coll_t **coll)
+xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll)
 {
 	/* FIXME: code */
 	return 0;
@@ -467,7 +485,7 @@ xmmsc_result_get_collection(xmmsc_result_t *conn, xmmsc_coll_t **coll)
 /* Query */
 /* [list<int>] */
 xmmsc_result_t*
-xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll, 
+xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, 
 					   const char* order[], int limit_start, int limit_len)
 {
 	/* FIXME: code */
@@ -476,7 +494,7 @@ xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 
 /* [list<Dict>] */
 xmmsc_result_t*
-xmmsc_coll_query_infos(xmmsc_connection_t *conn, xmmsc_coll_t *coll,
+xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 					   const char* order[], int limit_start, int limit_len,
 					   const char* fetch[], const char* group[])
 {
@@ -488,7 +506,7 @@ xmmsc_coll_query_infos(xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 /* Search (in collections) */
 /* [list<xmmsc_coll_t>] */
 xmmsc_result_t*
-xmmsc_coll_find(xmmsc_connection_t *conn, int mediaid, xmmsc_coll_namespace_t ns)
+xmmsc_coll_find (xmmsc_connection_t *conn, int mediaid, xmmsc_coll_namespace_t ns)
 {
 	/* FIXME: code */
 	return NULL;
