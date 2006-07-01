@@ -45,6 +45,21 @@ struct xmms_ipc_msg_St {
 	uint32_t xfered;
 };
 
+
+void
+xmms_ipc_append_coll_attr (const char* key, const char* value, void *userdata) {
+	xmms_ipc_msg_t *msg = (xmms_ipc_msg_t *)userdata;
+	xmms_ipc_msg_put_string (msg, key);
+	xmms_ipc_msg_put_string (msg, value);
+}
+
+void
+xmms_ipc_count_coll_attr (const char* key, const char* value, void *userdata) {
+	int *n = (int *)userdata;
+	++(*n);
+}
+
+
 xmms_ipc_msg_t *
 xmms_ipc_msg_alloc (void)
 {
@@ -313,6 +328,60 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	xmms_ipc_msg_put_uint32 (msg, strlen (str) + 1);
 
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
+}
+
+
+/* FIXME: This is worse than a baby genocide... FIX IT! */
+#include "xmmsclient/xmmsclient.h"
+
+void *
+xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, struct xmmsc_coll_St *coll)
+{
+	int n;
+	uint32_t *idlist;
+	xmmsc_coll_t *op;
+	void *ret;
+
+	if (!msg) {
+		return NULL;
+	}
+
+	if (!coll) {
+		return xmms_ipc_msg_put_uint32 (msg, 0);
+	}
+
+	xmms_ipc_msg_put_uint32 (msg, xmmsc_coll_get_type (coll));
+
+	/* attribute counter and values */
+	/* FIXME: Use foreach or access the field directly? */
+	n = 0;
+	xmmsc_coll_attribute_foreach (coll, xmms_ipc_count_coll_attr, &n);
+	xmms_ipc_msg_put_uint32 (msg, n * 2);
+
+	xmmsc_coll_attribute_foreach (coll, xmms_ipc_append_coll_attr, msg);
+
+	/* idlist counter and content */
+	idlist = xmmsc_coll_get_idlist (coll);
+	for(n = 0; idlist[n] != 0; n++) { }
+
+	xmms_ipc_msg_put_uint32 (msg, n);
+	for(n = 0; idlist[n] != 0; n++) {
+		xmms_ipc_msg_put_uint32 (msg, idlist[n]);
+	}
+
+	/* operands counter and objects */
+	xmmsc_coll_operand_list_first (coll);
+	for (n = 0; xmmsc_coll_operand_list_entry (coll, &op); n++) { }
+
+	ret = xmms_ipc_msg_put_uint32 (msg, n);
+
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		ret = xmms_ipc_msg_put_collection (msg, op);
+		xmmsc_coll_operand_list_next (coll);
+	}
+
+	return ret;
 }
 
 static bool

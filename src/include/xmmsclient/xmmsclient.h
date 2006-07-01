@@ -218,12 +218,11 @@ xmmsc_coll_t* xmmsc_coll_universe ();
 xmmsc_result_t* xmmsc_coll_get (xmmsc_connection_t *conn, char *collname, xmmsc_coll_namespace_t ns);
 xmmsc_result_t* xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns);
 xmmsc_result_t* xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char* name, xmmsc_coll_namespace_t ns);
-int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll);
-
-xmmsc_result_t* xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], int limit_start, int limit_len);
-xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], int limit_start, int limit_len, const char* fetch[], const char* group[]);
-
+xmmsc_result_t* xmmsc_coll_remove (xmmsc_connection_t *conn, char* name, xmmsc_coll_namespace_t ns);
 xmmsc_result_t* xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns);
+
+xmmsc_result_t* xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], unsigned int limit_start, unsigned int limit_len);
+xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], unsigned int limit_start, unsigned int limit_len, const char* fetch[], const char* group[]);
 
 
 /*
@@ -259,6 +258,7 @@ const char * xmmsc_result_get_error (xmmsc_result_t *res);
 int xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, char **r);
+int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll);
 
 typedef enum {
 	XMMSC_RESULT_VALUE_TYPE_NONE = XMMS_OBJECT_CMD_ARG_NONE,
@@ -275,6 +275,7 @@ xmmsc_result_value_type_t xmmsc_result_get_dict_entry_type (xmmsc_result_t *res,
 int xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char **r);
 int xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *r);
 int xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t *r);
+int xmmsc_result_get_dict_entry_collection (xmmsc_result_t *conn, const char *key, xmmsc_coll_t **coll);
 int xmmsc_result_dict_foreach (xmmsc_result_t *res, xmmsc_dict_foreach_func func, void *user_data);
 int xmmsc_result_propdict_foreach (xmmsc_result_t *res, xmmsc_propdict_foreach_func func, void *user_data);
 void xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference);
