@@ -62,7 +62,7 @@ static int xmmsc_coll_unref_udata (void *coll, void *userdata);
  *
  * @param coll the collection to reference.
  */
-static void 
+void 
 xmmsc_coll_ref (xmmsc_coll_t *coll)
 {
 	x_return_if_fail (coll);
@@ -107,8 +107,12 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
 
 /**
  * Free the memory owned by the collection.
+ * You probably want to use #xmmsc_coll_unref instead, which handles
+ * reference counting.
+ *
+ * @param coll the collection to free.
  */
-static void
+void
 xmmsc_coll_free (xmmsc_coll_t *coll)
 {
 	x_return_if_fail (coll);
@@ -489,13 +493,6 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	return NULL;
 }
 
-/* FIXME: Should go in result.c, when done */
-int
-xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll)
-{
-	/* FIXME: code */
-	return 0;
-}
  
 /* Query */
 /* [list<uint>] */

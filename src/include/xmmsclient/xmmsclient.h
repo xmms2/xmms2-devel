@@ -193,7 +193,9 @@ xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 typedef void (*xmmsc_coll_attribute_foreach_func) (const char *key, const char *value, void *udata);
 
 xmmsc_coll_t* xmmsc_coll_new (xmmsc_coll_type_t type);
+void xmmsc_coll_ref (xmmsc_coll_t *coll);
 void xmmsc_coll_unref (xmmsc_coll_t *coll);
+void xmmsc_coll_free (xmmsc_coll_t *coll);
 
 void xmmsc_coll_set_type (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
 void xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[]);
@@ -262,7 +264,8 @@ typedef enum {
 	XMMSC_RESULT_VALUE_TYPE_NONE = XMMS_OBJECT_CMD_ARG_NONE,
 	XMMSC_RESULT_VALUE_TYPE_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32,
 	XMMSC_RESULT_VALUE_TYPE_INT32 = XMMS_OBJECT_CMD_ARG_INT32,
-	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING
+	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING,
+	XMMSC_RESULT_VALUE_TYPE_COLL = XMMS_OBJECT_CMD_ARG_COLL
 } xmmsc_result_value_type_t;
 
 typedef void (*xmmsc_propdict_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);

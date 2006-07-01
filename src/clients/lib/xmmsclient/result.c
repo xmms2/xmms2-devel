@@ -33,6 +33,7 @@
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static void free_dict_list (x_list_t *list);
 static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
+static xmmsc_coll_t *xmmsc_deserialize_coll (xmms_ipc_msg_t *msg);
 static int source_match_pattern (char* source, char* pattern);
 
 typedef struct xmmsc_result_value_St {
@@ -42,6 +43,7 @@ typedef struct xmmsc_result_value_St {
 		int32_t int32;
 		char *string;
 		x_list_t *dict;
+		xmmsc_coll_t *coll;
 	} value;
 	xmmsc_result_value_type_t type;
 } xmmsc_result_value_t;
@@ -80,6 +82,7 @@ struct xmmsc_result_St {
 		int32_t inte;
 		char *string;
 		x_list_t *dict;
+		xmmsc_coll_t *coll;
 	} data;
 
 	x_list_t *list;
@@ -319,6 +322,9 @@ xmmsc_result_value_free (void *v)
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			free_dict_list (val->value.dict);
 			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			xmmsc_coll_unref (val->value.coll);
+			break;
 		default:
 			break;
 	}
@@ -356,6 +362,10 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			free_dict_list (res->data.dict);
 			res->data.dict = NULL;
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			xmmsc_coll_unref (res->data.coll);
+			res->data.coll = NULL;
 			break;
 	}
 }
@@ -439,6 +449,19 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 						res->datatype = XMMS_OBJECT_CMD_ARG_NONE;
 					}
 				}
+			}
+			break;
+
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			{
+				xmmsc_coll_t *coll;
+
+				coll = xmmsc_deserialize_coll (msg);
+				if (!coll)
+					return false;
+
+				res->data.coll = coll;
+				xmmsc_coll_ref (res->data.coll);
 			}
 			break;
 
@@ -635,6 +658,28 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 	return 1;
 }
 
+/**
+ * Retrieves a collection from the resultset.
+ * @param res a #xmmsc_result_t containing a collection.
+ * @param c the return collection. This collection is owned by the result and will be freed when the result is freed.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsc_result_get_collection (xmmsc_result_t *res, xmmsc_coll_t **c)
+{
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_COLL) {
+		return 0;
+	}
+
+	*c = res->data.coll;
+
+	return 1;
+}
+
 static xmmsc_result_value_t *
 xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
 {
@@ -790,6 +835,45 @@ xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char *
 		*r = val->value.string;
 	} else {
 		*r = NULL;
+		return 0;
+	}
+	
+	return 1;
+}
+
+/**
+ * Retrieve collection associated for specified key in the resultset.
+ *
+ * If the key doesn't exist in the result the returned collection is
+ * NULL. The collection is owned by the result and will be freed when the
+ * result is freed.
+ *
+ * @param res a #xmmsc_result_t containing a hashtable.
+ * @param c the return collection (owned by result)
+ * @return 1 upon success otherwise 0
+ *
+ */
+int
+xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
+                                        xmmsc_coll_t **c)
+{
+	xmmsc_result_value_t *val;
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		*c = NULL;
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
+		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+		*c = NULL;
+		return 0;
+	}
+
+	val = xmmsc_result_dict_lookup (res, key);
+	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_COLL) {
+		*c = val->value.coll;
+	} else {
+		*c = NULL;
 		return 0;
 	}
 	
@@ -1219,6 +1303,13 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 				goto err;
 			}
 			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			val->value.coll = xmmsc_deserialize_coll (msg);
+			if (!val->value.coll) {
+				goto err;
+			}
+			xmmsc_coll_ref (val->value.coll);
+			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
 		default:
@@ -1271,6 +1362,94 @@ err:
 	x_internal_error ("Message from server did not parse correctly!");
 
 	free_dict_list (n);
+
+	return NULL;
+}
+
+static xmmsc_coll_t *
+xmmsc_deserialize_coll (xmms_ipc_msg_t *msg)
+{
+	unsigned int i;
+	unsigned int type;
+	unsigned int n_items;
+	unsigned int id;
+	xmmsc_coll_t *coll = NULL;
+	uint32_t *idlist = NULL;
+	char *key, *val;
+
+	/* Get the type and create the collection */
+	if (!xmms_ipc_msg_get_uint32 (msg, &type)) {
+		return NULL;
+	}
+
+	coll = xmmsc_coll_new (type);
+
+	/* Get the list of attributes */
+	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		unsigned int len;
+		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len)) {
+			goto err;
+		}
+		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len)) {
+			free (key);
+			goto err;
+		}
+
+		xmmsc_coll_attribute_set (coll, key, val);
+	}
+
+	/* Get the idlist */
+	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
+		goto err;
+	}
+
+	if (!(idlist = x_new (uint32_t, n_items))) {
+		x_oom();
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		if (!xmms_ipc_msg_get_uint32 (msg, &id)) {
+			goto err;
+		}
+
+		idlist[i] = id;
+	}
+
+	idlist[i] = 0;
+	xmmsc_coll_set_idlist (coll, idlist);
+	free (idlist);
+	idlist = NULL;
+
+	/* Get the operands */
+	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		xmmsc_coll_t *operand;
+
+		if (!(operand = xmmsc_deserialize_coll (msg))) {
+			goto err;
+		}
+
+		xmmsc_coll_add_operand (coll, operand);
+	}
+
+	return coll;
+
+err:
+	x_internal_error ("Message from server did not parse correctly!");
+
+	if(idlist != NULL) {
+		free (idlist);
+	}
+
+	xmmsc_coll_free (coll);
 
 	return NULL;
 }
