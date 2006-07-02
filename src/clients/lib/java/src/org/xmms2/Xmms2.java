@@ -19,11 +19,9 @@ package org.xmms2;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
 import org.xmms2.events.*;
 import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
@@ -191,12 +189,12 @@ public final class Xmms2 {
      * Following void returning functions work almost as their c-pendants
      */
     private synchronized int handleNotifierTypePlayback(SWIGTYPE_p_xmmsc_result_St result) {
-    	int tid = getNextTID();
+    	int t = getNextTID();
         Xmmsclient.xmmsc_result_notifier_set(result,
                 XmmsclientConstants.USER_DEFINED_CALLBACK_1, 
-                Xmmsclient.convertIntToVoidP(tid));
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
-        return tid;
+        return t;
     }
 
     public int play() {
@@ -572,7 +570,7 @@ public final class Xmms2 {
      * Following methods wait for the result and return to the caller. THEY
      * BLOCK!
      */
-    public Map configvalListSync() throws Xmms2Exception {
+    public Dict configvalListSync() throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_configval_list(xbo.connectionTwo);
         Xmmsclient.xmmsc_result_wait(result);
@@ -583,7 +581,7 @@ public final class Xmms2 {
         Xmmsclient.xmmsc_result_dict_foreach(result,
                 XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
                 Xmmsclient.convertIntToVoidP(0));
-        Map map = xbo.unlockDictForeach();
+        Dict map = xbo.unlockDictForeach();
         Xmmsclient.xmmsc_result_unref(result);
         return map;
     }
@@ -602,7 +600,7 @@ public final class Xmms2 {
         return value[0];
     }
 
-    public Map volumeGetSync() throws Xmms2Exception {
+    public Dict volumeGetSync() throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playback_volume_get(xbo.connectionTwo);
         Xmmsclient.xmmsc_result_wait(result);
@@ -613,7 +611,7 @@ public final class Xmms2 {
         Xmmsclient.xmmsc_result_dict_foreach(result,
                 XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
                 Xmmsclient.convertIntToVoidP(0));
-        Map vol = xbo.unlockDictForeach();
+        Dict vol = xbo.unlockDictForeach();
         Xmmsclient.xmmsc_result_unref(result);
         return vol;
     }
@@ -719,14 +717,14 @@ public final class Xmms2 {
         return id[0];
     }
 
-    public Map pluginsListSync(xmms_plugin_type_t type) throws Xmms2Exception {
+    public Dict pluginsListSync(xmms_plugin_type_t type) throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
                 xbo.connectionTwo, type);
         Xmmsclient.xmmsc_result_wait(result);
         if (!xbo.isError(result).equals("")) {
             throw new Xmms2Exception(xbo.isError(result));
         }
-        HashMap map = new HashMap();
+        Dict map = new Dict();
         if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
             Xmmsclient.xmmsc_result_list_first(result);
             String shortDes[] = new String[1];
@@ -736,7 +734,7 @@ public final class Xmms2 {
                         "shortname", shortDes) == 1) {
                     Xmmsclient.xmmsc_result_get_dict_entry_str(result,
                             "shortname", longDes);
-                    map.put(shortDes[0], longDes[0]);
+                    map.putDictEntry(shortDes[0], longDes[0]);
                 }
                 Xmmsclient.xmmsc_result_list_next(result);
             }

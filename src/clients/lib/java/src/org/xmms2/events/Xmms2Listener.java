@@ -16,7 +16,6 @@
 
 package org.xmms2.events;
 
-
 public interface Xmms2Listener {
     public static final String PLAYLIST_TYPE = "PLAYLIST";
     
@@ -48,7 +47,7 @@ public interface Xmms2Listener {
 
     public void xmms2MedialibSelect(Xmms2Event ev);
 
-    public void xmms2ConfigvalChanged(Xmms2Event ev);
+    public void xmms2ConfigvalChanged(Xmms2ConfigEvent ev);
 
     public void xmms2PlaybackStatusChanged(Xmms2Event ev);
 
@@ -58,7 +57,7 @@ public interface Xmms2Listener {
 
     public void xmms2PlaylistCurrentPositionChanged(Xmms2PlaylistPositionEvent ev);
 
-    public void xmms2TitleChanged(Xmms2Event ev);
+    public void xmms2TitleChanged(Xmms2TitleEvent ev);
 
     public void xmms2MediareaderStatusChanged(Xmms2Event ev);
 

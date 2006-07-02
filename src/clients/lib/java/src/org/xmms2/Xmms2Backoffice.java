@@ -21,10 +21,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.xmms2.events.Xmms2ConfigEvent;
 import org.xmms2.events.Xmms2Event;
 import org.xmms2.events.Xmms2Listener;
 import org.xmms2.events.Xmms2PlaylistEvent;
 import org.xmms2.events.Xmms2PlaylistPositionEvent;
+import org.xmms2.events.Xmms2TitleEvent;
 import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
 import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
 import org.xmms2.xmms2bindings.Xmmsclient;
@@ -131,7 +133,7 @@ final class Xmms2Backoffice implements CallbacksListener {
             medialibSelect = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2MedialibSelect", new Class[] { Xmms2Event.class });
             configvalChanged = Xmms2Listener.class.getDeclaredMethod(
-                    "xmms2ConfigvalChanged", new Class[] { Xmms2Event.class });
+                    "xmms2ConfigvalChanged", new Class[] { Xmms2ConfigEvent.class });
             playtimeSignal = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2PlaytimeSignal", new Class[] { Xmms2Event.class });
             visdataSignal = Xmms2Listener.class.getDeclaredMethod(
@@ -154,7 +156,7 @@ final class Xmms2Backoffice implements CallbacksListener {
                     .getDeclaredMethod("xmms2PlaylistCurrentPositionChanged",
                             new Class[] { Xmms2PlaylistPositionEvent.class });
             titleChanged = Xmms2Listener.class.getDeclaredMethod(
-                    "xmms2TitleChanged", new Class[] { Xmms2Event.class });
+                    "xmms2TitleChanged", new Class[] { Xmms2TitleEvent.class });
             mediareaderStatus = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2MediareaderStatusChanged",
                     new Class[] { Xmms2Event.class });
@@ -246,8 +248,8 @@ final class Xmms2Backoffice implements CallbacksListener {
                 XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
                 Xmmsclient.convertIntToVoidP(0));
         Dict map = unlockDictForeach();
-        myFront.notifiyListeners(configvalChanged, new Xmms2Event(user_data,
-                Xmms2Listener.DICT_TYPE, map));
+        myFront.notifiyListeners(configvalChanged, 
+        		new Xmms2ConfigEvent(user_data, map));
     }
 
     public void callbackPlaybackStatus(long res, int user_data) {
@@ -589,8 +591,8 @@ final class Xmms2Backoffice implements CallbacksListener {
         if (myFront.pl.indicesOfID(t.getID()).size() > 0){
         	myFront.pl.updateTitle(t);
         }
-        myFront.notifiyListeners(titleChanged, new Xmms2Event(user_data,
-                Xmms2Listener.TITLE_TYPE, t));
+        myFront.notifiyListeners(titleChanged,
+        		new Xmms2TitleEvent(user_data, t));
     }
 
     /**

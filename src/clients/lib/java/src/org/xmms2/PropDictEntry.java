@@ -16,9 +16,13 @@
 
 package org.xmms2;
 
+/**
+ * This class represents the elements of a PropDict.
+ */
+
 public class PropDictEntry {
-	String value;
-	String source;
+	private String value;
+	private String source;
 	public PropDictEntry(String value, String source){
 		this.value = value;
 		this.source = source;

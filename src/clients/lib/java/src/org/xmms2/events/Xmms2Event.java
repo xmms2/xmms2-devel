@@ -23,19 +23,23 @@ package org.xmms2.events;
  */
 
 public class Xmms2Event {
-    public long tid = 0;
+    public int tid = 0;
 
     public String type = Xmms2Listener.VOID_TYPE;
 
     public Object value = null;
 
-    public Xmms2Event(long tid, String type, Object value) {
+    public Xmms2Event(int tid, String type, Object value) {
         this.tid = tid;
         this.type = type;
         this.value = value;
 
         if (type.equals(Xmms2Listener.ERROR_TYPE))
             System.err.println(value);
+    }
+    
+    public Xmms2Event(long tid, String type, Object value){
+    	this((int)tid, type, value);
     }
 
     public String toString() {

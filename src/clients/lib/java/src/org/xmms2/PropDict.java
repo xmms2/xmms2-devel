@@ -20,8 +20,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * This class should reflect xmms2's propdicts (not plain dict). It is more
+ * or less a simple HashMap with the difference that it sores 3 values
+ * and returns a List or PropDictEntries
+ */
+
 public class PropDict extends HashMap {
-	
+	private static final long serialVersionUID = 6171320128340947211L;
+
 	public void putPropDictEntry(String key, String value, String source){
 		List l = (List)get(key);
 		if (l == null)

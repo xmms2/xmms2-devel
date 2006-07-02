@@ -38,8 +38,9 @@ public class SpecialJNI {
      * This function is called by the mainloop, should therefor not be called by
      * the user
      * 
-     * @param objectName
-     *            An object which implements the Callback interface
+     * @param mainloop
+     *            A JMain object
+     * @param connection pointer to a connection
      */
     protected final static native void setupMainloop(Object mainloop,
             long connection);

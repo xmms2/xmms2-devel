@@ -14,29 +14,16 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.events;
 
-import java.util.HashMap;
+import org.xmms2.Dict;
 
-/**
- * This class should reflect xmms2's dict's (not propdicts). It's more or
- * less a standard HashMap, only difference are the putDictEntry() and
- * getEntry methods which expect and return a String
- */
-
-public class Dict extends HashMap {
-	private static final long serialVersionUID = 6680740765293764269L;
-
-	public void putDictEntry(String key, String value){
-		super.put(key, value);
+public class Xmms2ConfigEvent extends Xmms2Event {
+	public Xmms2ConfigEvent(int tid, Dict configs){
+		super(tid, Xmms2Listener.DICT_TYPE, configs);
 	}
 	
-	public Object put(Object key, Object value){
-		putDictEntry(""+key, ""+value);
-		return value;
-	}
-	
-	public String getDictEntry(String key){
-		return ""+get(key);
+	public Dict getConfigs(){
+		return (Dict)value;
 	}
 }

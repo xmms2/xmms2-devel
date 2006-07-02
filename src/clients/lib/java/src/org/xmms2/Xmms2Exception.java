@@ -17,7 +17,8 @@
 package org.xmms2;
 
 public class Xmms2Exception extends Exception {
-    private String message = "Xmms2 exception occured";
+	private static final long serialVersionUID = 2143110896719541866L;
+	private String message = "Xmms2 exception occured";
 
     public Xmms2Exception(String message) {
         this.message = message;
