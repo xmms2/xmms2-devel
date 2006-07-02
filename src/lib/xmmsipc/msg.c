@@ -26,6 +26,7 @@
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_sockets.h"
 #include "xmmsc/xmmsc_stdint.h"
+#include "xmmsc/xmmsc_coll.h"
 
 typedef union {
 	struct {
@@ -330,17 +331,14 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 	return xmms_ipc_msg_put_data (msg, str, strlen (str) + 1);
 }
 
-
-/* FIXME: This is worse than a baby genocide... FIX IT! */
-#include "xmmsclient/xmmsclient.h"
-
 void *
-xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, struct xmmsc_coll_St *coll)
+xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 {
 	int n;
 	uint32_t *idlist;
 	xmmsc_coll_t *op;
 	void *ret;
+	void *save_curr_op;
 
 	if (!msg) {
 		return NULL;
@@ -350,10 +348,14 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, struct xmmsc_coll_St *coll)
 		return xmms_ipc_msg_put_uint32 (msg, 0);
 	}
 
+	/* save internal status */
+	/* FIXME: Does not work, how to save the state? /theefer */
+	/* save_curr_op = (void *)coll->curr_op; */
+
+	/* push type */
 	xmms_ipc_msg_put_uint32 (msg, xmmsc_coll_get_type (coll));
 
 	/* attribute counter and values */
-	/* FIXME: Use foreach or access the field directly? */
 	n = 0;
 	xmmsc_coll_attribute_foreach (coll, xmms_ipc_count_coll_attr, &n);
 	xmms_ipc_msg_put_uint32 (msg, n * 2);
@@ -380,6 +382,9 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, struct xmmsc_coll_St *coll)
 		ret = xmms_ipc_msg_put_collection (msg, op);
 		xmmsc_coll_operand_list_next (coll);
 	}
+
+	/* restore internal status */
+	/* FIXME: coll->curr_op = save_curr_op; */
 
 	return ret;
 }

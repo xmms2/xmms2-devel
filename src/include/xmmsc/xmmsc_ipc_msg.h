@@ -22,6 +22,7 @@
 #include "xmmsc/xmmsc_util.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_inline.h"
+#include "xmmsc/xmmsc_coll.h"
 
 #define XMMS_IPC_MSG_DEFAULT_SIZE 128 /*32768*/
 #define XMMS_IPC_MSG_MAX_SIZE 327680
@@ -45,13 +46,11 @@ void xmms_ipc_msg_destroy (xmms_ipc_msg_t *msg);
 bool xmms_ipc_msg_write_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, bool *disconnected);
 bool xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg, xmms_ipc_transport_t *transport, bool *disconnected);
 
-/* FIXME: HACK, find a good place to declare xmmsc_coll_t ! */
-struct xmmsc_coll_St;
 void* xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v);
 void* xmms_ipc_msg_put_int32 (xmms_ipc_msg_t *msg, int32_t v);
 void* xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, float v);
 void* xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str);
-void* xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, struct xmmsc_coll_St *coll);
+void* xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll);
 void* xmms_ipc_msg_append (xmms_ipc_msg_t *dmsg, xmms_ipc_msg_t *smsg);
 
 typedef enum {
