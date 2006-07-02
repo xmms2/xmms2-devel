@@ -640,11 +640,11 @@ xmmsc_coll_unref_udata (void *coll, void *userdata)
  
 
 /**
- * Given a '\0'-terminated array of strings, append the array length
+ * Given a NULL-terminated array of strings, append the array length
  * and content to the #xmms_ipc_msg_t.
  *
  * @param msg the #xmms_ipc_msg_t to append things to.
- * @param strings the '\0'-terminated array of strings.
+ * @param strings the NULL-terminated array of strings.
  */
 static void
 xmmsc_coll_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
@@ -652,10 +652,10 @@ xmmsc_coll_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
 	int n;
 
 	/* FIXME: nicer way? */
-	for (n = 0; strings[n] != '\0'; n++) { }
+	for (n = 0; strings[n] != NULL; n++) { }
 	xmms_ipc_msg_put_uint32 (msg, n);
 
-	for (n = 0; strings[n] != '\0'; n++) {
+	for (n = 0; strings[n] != NULL; n++) {
 		xmms_ipc_msg_put_string (msg, strings[n]);
 	}
 }
