@@ -211,7 +211,7 @@ public class Playlist {
 	
 	public void remove(int indices[]){
 		for ( int i = 0; i < indices.length; i++)
-			remove(indices[i]);
+			remove(indices[i]-i);
 	}
 	
 	protected void updateList(List l){
