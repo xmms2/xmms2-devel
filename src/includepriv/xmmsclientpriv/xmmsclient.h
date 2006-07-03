@@ -31,7 +31,7 @@
 
 #include "xmmsc/xmmsc_ipc_msg.h"
 
-#include "xmmsclientpriv/xmmsclient_list.h"
+#include "xmmspriv/xmms_list.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_stdint.h"
 
