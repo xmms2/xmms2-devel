@@ -302,6 +302,10 @@ xmms_vorbis_init (xmms_xform_t *xform)
 			gint i = 0;
 
 			s = g_strsplit (ptr->user_comments[temp], "=", 2);
+			if (!s[0] || !s[1]) {
+				g_strfreev (s);
+				continue;
+			}
 			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
