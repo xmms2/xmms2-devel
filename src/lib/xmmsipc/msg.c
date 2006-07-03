@@ -338,7 +338,6 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 	uint32_t *idlist;
 	xmmsc_coll_t *op;
 	void *ret;
-	void *save_curr_op;
 
 	if (!msg) {
 		return NULL;
@@ -349,8 +348,7 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 	}
 
 	/* save internal status */
-	/* FIXME: Does not work, how to save the state? /theefer */
-	/* save_curr_op = (void *)coll->curr_op; */
+	xmmsc_coll_operand_list_save (coll);
 
 	/* push type */
 	xmms_ipc_msg_put_uint32 (msg, xmmsc_coll_get_type (coll));
@@ -384,7 +382,7 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 	}
 
 	/* restore internal status */
-	/* FIXME: coll->curr_op = save_curr_op; */
+	xmmsc_coll_operand_list_restore (coll);
 
 	return ret;
 }

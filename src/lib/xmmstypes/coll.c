@@ -33,6 +33,9 @@ struct xmmsc_coll_St {
  
 	x_list_t *operands;
 	x_list_t *curr_op;
+
+	/* Stack of curr_op pointers to save/restore */
+	x_list_t *curr_stack;
  
 	/* stored as (key1, val1, key2, val2, ...) */
 	x_list_t *attributes;
@@ -95,6 +98,7 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
 	coll->attributes = NULL;
 
 	coll->curr_op = coll->operands;
+	coll->curr_stack = NULL;
 
 	/* user must give this back */
 	xmmsc_coll_ref (coll);
@@ -119,6 +123,7 @@ xmmsc_coll_free (xmmsc_coll_t *coll)
 
 	x_list_free (coll->operands);
 	x_list_free (coll->attributes);
+	x_list_free (coll->curr_stack);
 
 	free (coll->idlist);
 
@@ -317,6 +322,52 @@ xmmsc_coll_operand_list_next (xmmsc_coll_t *coll)
 	x_return_val_if_fail (coll->curr_op, 0);
 
 	coll->curr_op = coll->curr_op->next;
+
+	return 1;
+}
+
+
+/**
+ * Save the position of the operand iterator, to be restored later by
+ * calling #xmmsc_coll_operand_list_restore.  The pointer is saved on
+ * a stack, so it can be called any number of times, as long as it is
+ * restored as many times.
+ * Note that the iterator is not tested for consistency before being
+ * saved!
+ *
+ * @param coll  The collection to consider.
+ * @return 1 upon success, 0 otherwise.
+ */
+int
+xmmsc_coll_operand_list_save (xmmsc_coll_t *coll)
+{
+	x_return_val_if_fail (coll, 0);
+
+	x_list_prepend (coll->curr_stack, coll->curr_op);
+
+	return 1;
+}
+
+
+/**
+ * Restore the position of the operand iterator, previously saved by
+ * calling #xmmsc_coll_operand_list_save.
+ * Note that the iterator is not tested for consistency, so you better
+ * be careful if the list of operands was manipulated since the
+ * iterator was saved!
+ *
+ * @param coll  The collection to consider.
+ * @return 1 upon success, 0 otherwise.
+ */
+int
+xmmsc_coll_operand_list_restore (xmmsc_coll_t *coll)
+{
+	x_return_val_if_fail (coll, 0);
+	x_return_val_if_fail (coll->curr_stack, 0);
+
+	/* Pop stack head and restore curr_op */
+	coll->curr_op = x_list_nth_data (coll->curr_stack, 0);
+	x_list_delete_link (coll->curr_stack, coll->curr_stack);
 
 	return 1;
 }

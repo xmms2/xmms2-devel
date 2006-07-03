@@ -38,6 +38,8 @@ uint32_t* xmmsc_coll_get_idlist (xmmsc_coll_t *coll);
 int xmmsc_coll_operand_list_first (xmmsc_coll_t *coll);
 int xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, xmmsc_coll_t **operand);
 int xmmsc_coll_operand_list_next (xmmsc_coll_t *coll);
+int xmmsc_coll_operand_list_save (xmmsc_coll_t *coll);
+int xmmsc_coll_operand_list_restore (xmmsc_coll_t *coll);
 
 void xmmsc_coll_attribute_set (xmmsc_coll_t *coll, const char *key, const char *value);
 int xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, const char *key);
