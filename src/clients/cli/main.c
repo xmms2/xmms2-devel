@@ -72,6 +72,8 @@ cmds commands[] = {
 
 	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
 
+	{ "browse", "browse server file lists", cmd_browse },
+
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
 	{ "current", "formatted information about the current entry", cmd_current },
