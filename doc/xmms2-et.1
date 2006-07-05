@@ -1,0 +1,149 @@
+.\" 
+.\" xmms2-et - The ET Phone Home Client for XMMS2
+.\"
+.\" xmms2-et.1 - xmms2-et manpage 
+.\"
+.\" Copyright 2005-2006, Alexander Botero-Lowry
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer
+.\"    in this position and unchanged.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.\"
+.TH XMMS2-ET 1 
+.SH NAME
+.I xmms2-et
+transmits an anonymous informative packet to the
+.B XMMS2
+team on each song change.
+.SH SYNOPSIS
+.I xmms2-et
+.P
+.SH DESCRIPTION
+.B XMMS2 
+is a redesign of the XMMS (http://www.xmms.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organize your music.
+.PP
+.I xmms2-et
+is the ET Phone Home Client for 
+.B XMMS2.
+.I xmms2-et 
+is designed to transmit a packet of information to the 
+.B XMMS2
+team whenever a new song is played. The packet is anonymous and does not contain metadata about the song being played. The specifics of what data is transmitted to the 
+.B XMMS2
+team can be found in the 
+.B ET PACKET
+section of this manual page.
+.P
+.I xmms2-et
+is used for release engineering by the
+.B XMMS2
+team. During a release cycle, the usage of various plugins, operating systems, and XMMS2 components is collected from data transmitted by the 
+.I xmms2-et
+client. A release is made when sufficient testing has occured as determined by the number of related
+.I xmms2-et
+packets that the 
+.B XMMS2
+team has received.
+.SH ET PACKET
+The following data is transmitted with every packet transmitted by
+.I xmms2-et:
+.TP
+.I XMMS2-ET status
+Begins XMMS2-ET packets;
+.I status
+gives a descriptive message denoting what this packet is about. (e.g. Clean shutdown, Unclean shutdown, New media)
+.TP
+.I version=version
+contains the version of the
+.B XMMS2
+daemon
+.TP
+.I system=os
+contains the name and release of the operating system on which
+.I xmms2d
+is running
+.TP
+.I output=output_plugin 
+contains the output plugin being used to playback audio by
+.I xmms2d
+.TP
+.I starttime=start_time
+contains the time at which the
+.I xmms2-et
+client was started
+.TP
+.I uptime=xmms2d_uptime
+contains the uptime of the
+.I xmms2-et
+client
+.TP
+.I playlistloads=times
+contains the number of times a playlist has been loaded from the Media Library
+.TP
+.I mlibresolves=times
+contains the number of times that metadata has been resolved for media in the Media Library
+.PP
+The following data is different for each song being played:
+.TP
+.I decoder=plugin
+contains the decoder plugin used to playback the last played song
+.TP
+.I transport=plugin
+contains the transport plugin used to read the last played song
+.TP 
+.I samplefmt:in=in_fmt
+contains the sample format of the original audio file of the last played song
+.TP
+.I samplefmt:out=out_fmt
+contains the sample format that was sent to the output plugin for the last played song
+.TP
+.I samplerate:in=in_rate
+contains the sample rate of the original audio file of the last played song
+.TP
+.I samplerate:out=out_rate
+contains the sample rate that was sent to the output plugin for the last played song
+.TP
+.I channels:in=number_in
+contains the number of channels of the original audio file of the last played song
+.TP
+.I channels:out=number_out
+contains the number of channels that were sent to the output plugin for the last played song
+.SH ENVIRONMENTAL VARIABLES
+.TP
+.I XMMS_PATH
+The URL path to 
+.I xmms2d.
+See
+.B IPC SOCKET
+in  
+.I xmms2d(8)
+for details of possible values for this variable
+
+.SH SEE ALSO
+xmms2(1), xmms2d(8), http://xmms2.xmms.org
+.SH HISTORY
+The
+.B XMMS2
+Project was started by Tobias Rundström and Anders Gustafsson. It is developed with their lead by a small group of contributers from all over the world.
+.SH AUTHOR
+This manual page was written by Alexander Botero-Lowry <alex@foxybanana.com>

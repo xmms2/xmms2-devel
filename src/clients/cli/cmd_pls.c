@@ -168,6 +168,35 @@ cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 }
 
+void
+cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	gchar *url;
+
+	if (argc < 4) {
+		print_error ("Need a filename and args to add");
+	}
+
+	url = format_url (argv[2]);
+	if (!url) {
+		print_error ("Invalid url");
+	}
+
+	res = xmmsc_playlist_add_args (conn, url, argc - 3, &argv[3]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Couldn't add %s to playlist: %s\n", url,
+		             xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Added %s", url);
+
+	g_free (url);
+}
+
 
 void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
@@ -300,7 +329,6 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gulong total_playtime = 0;
 	guint p = 0;
 	guint pos = 0;
-	gsize r, w;
 
 	res = xmmsc_playlist_current_pos (conn);
 	xmmsc_result_wait (res);
@@ -321,10 +349,8 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	while (xmmsc_result_list_valid (res)) {
 		xmmsc_result_t *info_res;
-		GError *err = NULL;
 		gchar line[80];
 		gint playtime = 0;
-		gchar *conv;
 		guint ui;
 
 		if (!xmmsc_result_get_uint (res, &ui)) {
@@ -370,26 +396,21 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			xmmsc_entry_format (line, sizeof(line), listformat, info_res);
 		}
 
-
-		conv = g_locale_from_utf8 (line, -1, &r, &w, &err);
-
 		if (p == pos) {
-			print_info ("->[%d/%d] %s", pos, ui, conv);
+			print_info ("->[%d/%d] %s", pos, ui, line);
 		} else {
-			print_info ("  [%d/%d] %s", pos, ui, conv);
+			print_info ("  [%d/%d] %s", pos, ui, line);
 		}
-		g_free (conv);
-		pos++;
 
-		if (err) {
-			print_info ("convert error %s", err->message);
-		}
-		g_clear_error (&err);
+		pos++;
 
 		xmmsc_result_unref (info_res);
 		xmmsc_result_list_next (res);
 	}
 	xmmsc_result_unref (res);
+
+	/* rounding */
+	total_playtime += 500;
 
 	print_info ("\nTotal playtime: %d:%02d:%02d", total_playtime / 3600000, 
 	            (total_playtime / 60000) % 60, (total_playtime / 1000) % 60);

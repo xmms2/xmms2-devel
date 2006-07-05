@@ -54,25 +54,25 @@ unlock_function (void *v)
 
 void 
 io_want_out_callback (int val, void *error)
-{
+{	
 	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();  
 	if (environment == NULL) {
 		return;
 	}
-	
+
 	callbackObject = (*environment)->
 	                         NewLocalRef (environment, globalMainloopObj);
 	
 	if (io_want_out_mid == 0) {
 		return;
 	}
-
+	
 	(*environment)->CallObjectMethod (environment, 
 	                                 callbackObject, 
 	                                 io_want_out_mid, 
-	                                 val, 
-	                                 *((int*)error));
+	                                 (jint)val, 
+	                                 0);
 }
 
 void 
@@ -333,7 +333,7 @@ run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_da
 	                                 callbackObject, 
 	                                 mid, 
 	                                 jresult, 
-	                                 *((int*)user_data));
+	                                 0);
 }
 /*
  * call callbacks of form (void*), in java wrapped to (int)

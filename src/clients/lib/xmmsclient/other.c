@@ -33,22 +33,24 @@
  */
 
 /**
- * Registers a configvalue in the server.
- * @param valuename should be <clientname>.myval like cli.path or something like that.
- * @param defaultvalue The default value of this config value.
+ * Registers a config property in the server.
+ * @param key should be <clientname>.myval like cli.path or something like that.
+ * @param val The default value of this config property.
  */
 xmmsc_result_t *
-xmmsc_configval_register (xmmsc_connection_t *c, const char *valuename, const char *defaultvalue)
+xmmsc_configval_register (xmmsc_connection_t *c, const char *key,
+                          const char *val)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_REGVALUE);
-	xmms_ipc_msg_put_string (msg, valuename);
-	xmms_ipc_msg_put_string (msg, defaultvalue);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	x_check_conn (c, NULL);
+	x_api_error_if (!key, "with a NULL key", NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_REGVALUE);
+	xmms_ipc_msg_put_string (msg, key);
+	xmms_ipc_msg_put_string (msg, val);
+
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -57,15 +59,16 @@ xmmsc_configval_register (xmmsc_connection_t *c, const char *valuename, const ch
 xmmsc_result_t *
 xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!key, "with a NULL key", NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_SETVALUE);
 	xmms_ipc_msg_put_string (msg, key);
 	xmms_ipc_msg_put_string (msg, val);
-	res = xmmsc_send_msg (c, msg);
 
-	return res;
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -75,14 +78,15 @@ xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
 xmmsc_result_t *
 xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
 {
-	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!key, "with a NULL key", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_GETVALUE);
 	xmms_ipc_msg_put_string (msg, key);
-	res = xmmsc_send_msg (c, msg);
-	
-	return res;
+
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
@@ -91,6 +95,8 @@ xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
 xmmsc_result_t *
 xmmsc_configval_list (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_LISTVALUES);
 }
 
@@ -102,6 +108,8 @@ xmmsc_configval_list (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_CONFIGVALUE_CHANGED);
 }
 
@@ -111,6 +119,8 @@ xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_VISUALISATION_DATA);
 }
 
@@ -120,6 +130,8 @@ xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
 }
 
@@ -129,6 +141,8 @@ xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
 }
 

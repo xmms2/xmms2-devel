@@ -86,6 +86,11 @@ xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value, int
 	GError *err = NULL;
 	gchar *tmp;
 
+	/* property already set? */
+	if (xmms_xform_metadata_has_val (xform, key)) {
+		return;
+	}
+
 	g_clear_error (&err);
 
 	tmp = g_convert (value, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
@@ -100,6 +105,7 @@ gboolean
 xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 {
 	id3v1tag_t *tag = (id3v1tag_t *) buf;
+	gboolean tmp;
 
 	if (strncmp (tag->tag, "TAG", 3) != 0) {
 		return FALSE;
@@ -113,23 +119,31 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tag->year, sizeof (tag->year));
 	
 
-	if (tag->genre >= G_N_ELEMENTS (id3_genres)) {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-		                             "Unknown");
-	} else {
-		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-		                             id3_genres[tag->genre]);
+	if (!xmms_xform_metadata_has_val (xform,
+	    XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE)) {
+		if (tag->genre >= G_N_ELEMENTS (id3_genres)) {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
+			                             "Unknown");
+		} else {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
+			                             id3_genres[tag->genre]);
+		}
 	}
 	
 	if (tag->u.v1_1.__zero == 0 && tag->u.v1_1.track_number > 0) {
 		/* V1.1 */
 		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tag->u.v1_1.comment, sizeof (tag->u.v1_1.comment));
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
-		                             tag->u.v1_1.track_number);
 
+		tmp =
+			xmms_xform_metadata_has_val (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR);
+		if (!tmp) {
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
+			                             tag->u.v1_1.track_number);
+		}
 	} else {
 		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tag->u.v1_0.comment, sizeof (tag->u.v1_0.comment));
 	}

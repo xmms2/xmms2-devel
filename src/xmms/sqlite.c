@@ -25,17 +25,17 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_sqlite.h"
+#include "xmmspriv/xmms_statfs.h"
 
 #include <sqlite3.h>
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 27
+#define DB_VERSION 28
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
-const char create_Log_stm[] = "create table Log (id, starttime, percent)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
 
@@ -45,19 +45,14 @@ const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlis
  */
 const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '199568 14 1 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Media', 'prop_idx', '199568 6653 3');"
-                          "INSERT INTO sqlite_stat1 VALUES('Log', 'log_id', '12 2');"
                           "INSERT INTO sqlite_stat1 VALUES('PlaylistEntries', 'playlistentries_idx', '12784 12784 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'playlist_idx', '2 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'sqlite_autoindex_Playlist_1', '2 1');";
 
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
-                              "create index log_id on Log (id);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
-
-static void upgrade_v21_to_v22 (sqlite3 *sql);
-static void upgrade_v26_to_v27 (sqlite3 *sql);
 
 /**
  * @defgroup SQLite SQLite
@@ -92,19 +87,6 @@ xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, con
 }
 
 static void
-upgrade_v21_to_v22 (sqlite3 *sql)
-{
-	XMMS_DBG ("Performing upgrade v21 to v22");
-
-	sqlite3_exec (sql,
-	              "update Playlist "
-	              "set name = '_autosaved' where name = 'autosaved';",
-	              NULL, NULL, NULL);
-
-	XMMS_DBG ("done");
-}
-
-static void
 upgrade_v26_to_v27 (sqlite3 *sql)
 {
 	XMMS_DBG ("Upgrade v26->v27");
@@ -118,17 +100,29 @@ upgrade_v26_to_v27 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+upgrade_v27_to_v28 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v27->v28");
+
+	sqlite3_exec (sql,
+	              "drop table Log;",
+	              NULL, NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
 	gboolean can_upgrade = TRUE;
 
 	switch (version) {
-		case 21:
-			upgrade_v21_to_v22 (sql);
-			break;
 		case 26:
 			upgrade_v26_to_v27 (sql);
+		case 27:
+			upgrade_v27_to_v28 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
@@ -153,6 +147,7 @@ xmms_sqlite_open (gboolean *create)
 	const gchar *dbpath;
 	gint version = 0;
 	xmms_config_property_t *cv;
+	gchar *tmp;
 
 	cv = xmms_config_lookup ("medialib.path");
 	dbpath = xmms_config_property_get_string (cv);
@@ -202,6 +197,32 @@ xmms_sqlite_open (gboolean *create)
 	}
 
 	if (*create) {
+		/* Check if we are about to put the medialib on a
+		 * remote filesystem. They are known to work less
+		 * well with sqlite and therefore we should refuse
+		 * to do so. The user has to know that he is doing
+		 * something stupid
+		 */
+
+		tmp = g_path_get_dirname (dbpath);
+		if (xmms_statfs_is_remote (tmp)) {
+			cv = xmms_config_lookup ("medialib.allow_remote_fs");
+			if (xmms_config_property_get_int (cv) == 1) {
+				xmms_log_info ("Allowing database on remote system against best judgement.");
+			} else {
+				xmms_log_fatal ("Remote filesystem detected!\n"
+				                "* It looks like you are putting your database: %s\n"
+				                "* on a remote filesystem, this is a bad idea since there are many known bugs\n"
+				                "* with SQLite on some remote filesystems. We recomend that you put the db\n"
+				                "* somewhere else. You can do this by editing the xmms2.conf and find the\n"
+				                "* property for medialib.path. If you however still want to try to run the\n"
+				                "* db on a remote filesystem please set medialib.allow_remote_fs=1 in your\n"
+				                "* config and restart xmms2d.", dbpath);
+			}
+		}
+
+		g_free (tmp);
+
 		XMMS_DBG ("Creating the database...");
 		/**
 		 * This will create the sqlite_stats1 table which we
@@ -219,7 +240,6 @@ xmms_sqlite_open (gboolean *create)
 		sqlite3_exec (sql, create_Media_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Sources_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
-		sqlite3_exec (sql, create_Log_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);

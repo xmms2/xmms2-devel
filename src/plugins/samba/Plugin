@@ -2,7 +2,5 @@ target="smb"
 source=["samba.c"]
 
 def config(env):
-	raise ConfigError("disabled")
 	env.checkheader("libsmbclient.h")
 	env.checklib("smbclient", "smbc_init")
-

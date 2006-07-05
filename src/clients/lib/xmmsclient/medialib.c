@@ -56,13 +56,15 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 
 /**
  * Make a SQL query to the server medialib. The result will contain
- * a #x_list_t with #x_hash_t's.
+ * a list of dicts.
  * @param conn The #xmmsc_connection_t
  * @param query The SQL query.
  */
 xmmsc_result_t *
 xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
 }
 
@@ -70,13 +72,12 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
  * Escape a string so that it can be used in sqlite queries.
  *
  * @param Input string, is not freed by this function!
- * @returns string enclosed in single quotes, with all single quotes in the string
- * replaced with double single quotes
+ * @returns string enclosed in single quotes, with all single quotes
+ * in the string replaced with double single quotes
  *
  * Example:
  * Ain't -> 'Ain''t'
  */
-
 char *
 xmmsc_sqlite_prepare_string (const char *input) {
 	char *output;
@@ -346,6 +347,8 @@ xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
 xmmsc_result_t *
 xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_GET_ID, url);
 }
 
@@ -361,6 +364,8 @@ xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
@@ -380,6 +385,8 @@ xmmsc_medialib_playlist_list (xmmsc_connection_t *conn, const char *playlist)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (conn, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_LIST);
 	xmms_ipc_msg_put_string (msg, playlist);
 
@@ -396,6 +403,8 @@ xmmsc_medialib_playlists_list (xmmsc_connection_t *conn)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLISTS_LIST);
 
@@ -415,6 +424,8 @@ xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, 
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_IMPORT);
 	xmms_ipc_msg_put_string (msg, playlist);
@@ -436,6 +447,8 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (conn, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE);
 	xmms_ipc_msg_put_uint32 (msg, entry);
 
@@ -453,10 +466,28 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
 xmmsc_result_t *
 xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
 {
+	return xmmsc_medialib_add_entry_args (conn, url, 0, NULL);
+}
+
+/**
+ * Add a URL with arguments to the medialib.
+ *
+ * xmmsc_medialib-add_antry_args (conn, "file:///data/HVSC/C64Music/Hubbard_Rob/Commando.sid", 1, "subtune=2");
+ * 
+ * @param conn The #xmmsc_connection_t
+ * @param url URL to add to the medialib.
+ * @param numargs The number of arguments
+ * @param args array of numargs strings used as arguments
+ */
+xmmsc_result_t *
+xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const char *url, int numargs, const char **args)
+{
 	char *enc_url;
 	xmmsc_result_t *res;
 
-	enc_url = xmmsc_medialib_encode_url (url);
+	x_check_conn (conn, NULL);
+
+	enc_url = xmmsc_medialib_encode_url (url, numargs, args);
 	if (!enc_url)
 		return NULL;
 
@@ -474,6 +505,8 @@ xmmsc_result_t *
 xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
                                       const char *name)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT, name);
 }
 
@@ -484,6 +517,8 @@ xmmsc_result_t *
 xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
                                       const char *name)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_LOAD, name);
 }
 
@@ -495,6 +530,8 @@ xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
 xmmsc_result_t *
 xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist)
 {
+	x_check_conn (conn, NULL);
+
 	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_REMOVE, playlist);
 }
 
@@ -511,7 +548,9 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn,
 	xmmsc_result_t *res;
 	char *enc_path;
 
-	enc_path = xmmsc_medialib_encode_url (path);
+	x_check_conn (conn, NULL);
+
+	enc_path = xmmsc_medialib_encode_url (path, 0, NULL);
 	if (!enc_path)
 		return NULL;
 
@@ -530,10 +569,12 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn,
  */
 xmmsc_result_t *
 xmmsc_medialib_rehash (xmmsc_connection_t *conn,
-		       unsigned int id)
+                       unsigned int id)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REHASH);
 	xmms_ipc_msg_put_uint32 (msg, id);
@@ -553,6 +594,8 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_INFO);
 	xmms_ipc_msg_put_uint32 (msg, id);
 
@@ -569,6 +612,8 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 xmmsc_result_t *
 xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED);
 }
 
@@ -579,6 +624,8 @@ xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
 xmmsc_result_t * 
 xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_ADDED);
 }
 
@@ -590,6 +637,8 @@ xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 }
 
@@ -608,6 +657,8 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_ADD_TO_PLAYLIST);
 	xmms_ipc_msg_put_string (msg, query);
 	res = xmmsc_send_msg (c, msg);
@@ -617,20 +668,71 @@ xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
 }
 
 /**
- * Associate a value with a medialib entry. Uses default
+ * Associate a int value with a medialib entry. Uses default
  * source which is client/<clientname>
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
-                                   const char *key, const char *value)
+xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
+                                       const char *key, int32_t value)
 {
 	xmmsc_result_t *res;
 	char tmp[256];
 
+	x_check_conn (c, NULL);
+
 	snprintf (tmp, 256, "client/%s", c->clientname);
-	res = xmmsc_medialib_entry_property_set_with_source (c, id,
-                                                             tmp, key,
-                                                             value);
+	res = xmmsc_medialib_entry_property_set_int_with_source (c, id,
+	                                                         tmp, key,
+	                                                         value);
+	return res;
+}
+
+/**
+ * Set a custom int field in the medialib associated with a entry,
+ * the same as #xmmsc_result_entry_property_set but with specifing
+ * your own source.
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, 
+                                                   uint32_t id,
+                                                   const char *source, 
+                                                   const char *key, 
+                                                   int32_t value)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
+	                        XMMS_IPC_CMD_PROPERTY_SET_INT);
+	xmms_ipc_msg_put_uint32 (msg, id);
+	xmms_ipc_msg_put_string (msg, source);
+	xmms_ipc_msg_put_string (msg, key);
+	xmms_ipc_msg_put_int32 (msg, value);
+
+	res = xmmsc_send_msg (c, msg);
+
+	return res;
+}
+
+/**
+ * Associate a value with a medialib entry. Uses default
+ * source which is client/<clientname>
+ */
+xmmsc_result_t *
+xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
+                                       const char *key, const char *value)
+{
+	xmmsc_result_t *res;
+	char tmp[256];
+
+	x_check_conn (c, NULL);
+
+	snprintf (tmp, 256, "client/%s", c->clientname);
+	res = xmmsc_medialib_entry_property_set_str_with_source (c, id,
+	                                                         tmp, key,
+	                                                         value);
 	return res;
 }
 
@@ -640,17 +742,19 @@ xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, uint32_t id,
  * your own source.
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, 
-                                               uint32_t id,
-                                               const char *source, 
-                                               const char *key, 
-                                               const char *value)
+xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, 
+                                                   uint32_t id,
+                                                   const char *source, 
+                                                   const char *key, 
+                                                   const char *value)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
 
+	x_check_conn (c, NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
-	                        XMMS_IPC_CMD_PROPERTY_SET);
+	                        XMMS_IPC_CMD_PROPERTY_SET_STR);
 	xmms_ipc_msg_put_uint32 (msg, id);
 	xmms_ipc_msg_put_string (msg, source);
 	xmms_ipc_msg_put_string (msg, key);
@@ -672,6 +776,8 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
 	xmmsc_result_t *res;
 	char tmp[256];
 
+	x_check_conn (c, NULL);
+
 	snprintf(tmp, 256, "client/%s", c->clientname);
 	res = xmmsc_medialib_entry_property_remove_with_source (c, id, 
 	                                                        tmp, key);
@@ -691,6 +797,8 @@ xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB,
 	                        XMMS_IPC_CMD_PROPERTY_REMOVE);
@@ -716,18 +824,24 @@ xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
 
 
 char *
-xmmsc_medialib_encode_url (const char *url)
+xmmsc_medialib_encode_url (const char *url, int narg, const char **args)
 {
 	static char hex[16] = "0123456789abcdef";
-	int i = 0, j = 0;
+	int i = 0, j = 0, extra = 0;
 	char *res;
 
-	res = malloc (strlen(url) * 3 + 1);
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	for (i = 0; i < narg; i++) {
+		extra += strlen (args[i]) + 2;
+	}
+
+	res = malloc (strlen(url) * 3 + 1 + extra);
 	if (!res)
 		return NULL;
 
-	while (url[i]) {
-		unsigned char chr = url[i++];
+	for (i = 0; url[i]; i++) {
+		unsigned char chr = url[i];
 		if (GOODCHAR (chr)) {
 			res[j++] = chr;
 		} else if (chr == ' ') {
@@ -737,6 +851,15 @@ xmmsc_medialib_encode_url (const char *url)
 			res[j++] = hex[((chr & 0xf0) >> 4)];
 			res[j++] = hex[(chr & 0x0f)];
 		}
+	}
+
+	for (i = 0; i < narg; i++) {
+		int l;
+		l = strlen (args[i]);
+		res[j] = (i == 0) ? '?' : '&';
+		j++;
+		memcpy (&res[j], args[i], l);
+		j += l;
 	}
 
 	res[j] = '\0';

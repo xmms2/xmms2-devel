@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2005-2006 Daniel Svensson, <daniel@nittionio.nu> 
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,17 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __MUSEPACK_H__
-#define __MUSEPACK_H__
+#ifndef __XMMS_PRIV_STATFS_H__
+#define __XMMS_PRIV_STATFS_H__
 
-#include <mpcdec/mpcdec.h>
-#include <mpcdec/reader.h>
+gboolean xmms_statfs_is_remote (const gchar *path);
 
-typedef struct xmms_mpc_data_St {
-	mpc_decoder decoder;
-	mpc_reader reader;
-	mpc_streaminfo info;
-} xmms_mpc_data_t;
-
-#endif
-
+#endif 

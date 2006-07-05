@@ -7,8 +7,8 @@
 
 
 
-#ifndef __XMMS_MAD_ID3_H__
-#define __XMMS_MAD_ID3_H__
+#ifndef __XMMS_ID3V2_H__
+#define __XMMS_ID3V2_H__
 
 #include <xmms/xmms_medialib.h>
 
@@ -19,7 +19,7 @@ typedef struct xmms_id3v2_header_St {
 	guint32 len;
 } xmms_id3v2_header_t;
 
-gboolean xmms_mad_id3v2_header (guchar *, xmms_id3v2_header_t *);
-gboolean xmms_mad_id3v2_parse (xmms_xform_t *xform, guchar *buf, xmms_id3v2_header_t *head);
+gboolean xmms_id3v2_is_header (guchar *, xmms_id3v2_header_t *);
+gboolean xmms_id3v2_parse (xmms_xform_t *xform, guchar *buf, xmms_id3v2_header_t *head);
 
 #endif

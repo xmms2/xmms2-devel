@@ -15,8 +15,10 @@
  */
 
 #include "xmms/xmms_defs.h"
+#include "xmms/xmms_xformplugin.h"
+#include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_decoderplugin.h"
+#include "xmms/xmms_medialib.h"
 
 #include <string.h>
 #include <math.h>
@@ -27,439 +29,342 @@
 #include <mpcdec/reader.h>
 
 #include "ape.h"
-#include "musepack.h"
+
+typedef struct xmms_mpc_data_St {
+	mpc_decoder decoder;
+	mpc_reader reader;
+	mpc_streaminfo info;
+
+	GString *buffer;
+} xmms_mpc_data_t;
 
 /*
  * Function prototypes
  */
+static gboolean xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 
-static gboolean xmms_mpc_new (xmms_decoder_t *decoder);
-static gboolean xmms_mpc_init (xmms_decoder_t *decoder, gint mode);
-static void xmms_mpc_get_mediainfo (xmms_decoder_t *decoder);
-static void xmms_mpc_cache_streaminfo (xmms_decoder_t *decoder);
-static gboolean xmms_mpc_seek (xmms_decoder_t *decoder, guint samples);
-static gboolean xmms_mpc_decode_block (xmms_decoder_t *decoder);
-static void xmms_mpc_destroy (xmms_decoder_t *decoder);
+static gboolean xmms_mpc_init (xmms_xform_t *decoder);
 
+static void xmms_mpc_destroy (xmms_xform_t *decoder);
+
+static void xmms_mpc_cache_streaminfo (xmms_xform_t *decoder);
+
+static void xmms_mpc_collect_metadata (xmms_xform_t *xform);
+
+static gint xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
+                           gint len, xmms_error_t *err);
+
+XMMS_XFORM_PLUGIN ("musepack", "Musepack decoder", XMMS_VERSION,
+                   "Musepack Living Audio Compression",
+                   xmms_mpc_plugin_setup);
 
 /*
  * Plugin header
  */
-xmms_plugin_t *
-xmms_plugin_get (void)
+static gboolean
+xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_xform_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
-	                          XMMS_DECODER_PLUGIN_API_VERSION,
-	                          "mpc",
-	                          "Musepack Decoder",
-	                          XMMS_VERSION,
-	                          "Musepack Living Audio Compression");
+	XMMS_XFORM_METHODS_INIT(methods);
+	methods.init = xmms_mpc_init;
+	methods.destroy = xmms_mpc_destroy;
+	methods.read = xmms_mpc_read;
 
-	g_return_val_if_fail (plugin, NULL);
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org");
-	xmms_plugin_info_add (plugin, "URL", "http://www.musepack.net/");
+	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-mpc", NULL);
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_NEW,
-	                        xmms_mpc_new);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT,
-	                        xmms_mpc_init);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_GET_MEDIAINFO,
-	                        xmms_mpc_get_mediainfo);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_SEEK,
-	                        xmms_mpc_seek);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DECODE_BLOCK,
-	                        xmms_mpc_decode_block);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_DESTROY,
-	                        xmms_mpc_destroy);
+	xmms_magic_add ("mpc header", "audio/x-mpc", "0 string MP+", NULL);
 
-	xmms_plugin_magic_add (plugin,
-	                       "mpc header",
-	                       "audio/x-mpc",
-	                       "0 string MP+", NULL);
-
-	return plugin;
+	return TRUE;
 }
+
 
 
 static mpc_int32_t
 xmms_mpc_callback_read (void *data, void *buffer, mpc_int32_t size)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
-	xmms_transport_t *transport;
-	xmms_error_t error;
+	xmms_xform_t *xform = data;
+	xmms_error_t err;
 
-	g_return_val_if_fail (decoder, -1);
+	g_return_val_if_fail (xform, -1);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, -1);
+	xmms_error_reset (&err);
 
-	return xmms_transport_read (transport, (gchar *) buffer, size, &error);
+	return xmms_xform_read (xform, (gchar *) buffer, size, &err);
 }
 
 
 static mpc_bool_t
 xmms_mpc_callback_seek (void *data, mpc_int32_t offset)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = data;
+	xmms_error_t err;
 	gint ret;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, -1);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
+	xmms_error_reset (&err);
 
-	ret = xmms_transport_seek (transport, offset, XMMS_TRANSPORT_SEEK_SET);
-	if (ret == -1)
-		return FALSE;
+	ret = xmms_xform_seek (xform, (gint64) offset, XMMS_XFORM_SEEK_SET, &err);
 
-	return TRUE;
+	return (ret == -1) ? FALSE : TRUE;
 }
 
 
 static mpc_int32_t
 xmms_mpc_callback_tell (void *data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = data;
+	xmms_error_t err;
 
-	g_return_val_if_fail (decoder, -1);
+	g_return_val_if_fail (xform, -1);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, -1);
+	xmms_error_reset (&err);
 
-	return xmms_transport_tell (transport);
+	return xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &err);
 }
 
 
 static mpc_bool_t 
-xmms_mpc_callback_canseek (void *data) {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
-	xmms_transport_t *transport;
+xmms_mpc_callback_canseek (void *data)
+{
+	xmms_xform_t *xform = data;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
-
-	return xmms_transport_can_seek (transport);
+	return FALSE;
 }
 
 
 static mpc_int32_t
 xmms_mpc_callback_get_size (void *data)
 {
-	xmms_decoder_t *decoder = (xmms_decoder_t *) data;
-	xmms_transport_t *transport;
+	xmms_xform_t *xform = data;
+	g_return_val_if_fail (xform, -1);
 
-	g_return_val_if_fail (decoder, -1);
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, -1);
-
-	return xmms_transport_size (transport);
+	return xmms_xform_metadata_get_int (xform,
+	                                    XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 }
 
 
+
 static gboolean
-xmms_mpc_new (xmms_decoder_t *decoder)
+xmms_mpc_init (xmms_xform_t *xform)
 {
 	xmms_mpc_data_t *data;
+	gboolean ret = FALSE;
+	gint err;
 
 	data = g_new0 (xmms_mpc_data_t, 1);
-	xmms_decoder_private_data_set (decoder, data);
+	xmms_xform_private_data_set (xform, data);
+
+	xmms_mpc_collect_metadata (xform);
+
+
+	data->buffer = g_string_new (NULL);
 
 	data->reader.read = xmms_mpc_callback_read;
 	data->reader.seek = xmms_mpc_callback_seek;
 	data->reader.tell = xmms_mpc_callback_tell;
 	data->reader.canseek = xmms_mpc_callback_canseek;
 	data->reader.get_size = xmms_mpc_callback_get_size;
-	data->reader.data = decoder;
 
-	return TRUE;
-}
-
-
-static gboolean
-xmms_mpc_init (xmms_decoder_t *decoder, gint mode)
-{
-	xmms_mpc_data_t *data;
-
-	g_return_val_if_fail (decoder, FALSE);
-
-	data = xmms_decoder_private_data_get (decoder);
-	g_return_val_if_fail (data, FALSE);
+	data->reader.data = xform;
 
 	mpc_streaminfo_init (&data->info);
 
-	if (mpc_streaminfo_read (&data->info, &data->reader) != ERROR_CODE_OK)
-		return FALSE;
+	err = mpc_streaminfo_read (&data->info, &data->reader);
+	if (err == ERROR_CODE_OK) {
+		xmms_mpc_cache_streaminfo (xform);
 
-	if (mode & XMMS_DECODER_INIT_DECODING) {
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_FLOAT,
-		                         data->info.channels, data->info.sample_freq);
-
-		if (!xmms_decoder_format_finish (decoder))
-			return FALSE;
+		xmms_xform_outdata_type_add (xform,
+		                             XMMS_STREAM_TYPE_MIMETYPE,
+		                             "audio/pcm",
+		                             XMMS_STREAM_TYPE_FMT_FORMAT,
+		                             XMMS_SAMPLE_FORMAT_FLOAT,
+		                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+		                             data->info.channels,
+		                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
+		                             data->info.sample_freq,
+		                             XMMS_STREAM_TYPE_END);
 
 		mpc_decoder_setup (&data->decoder, &data->reader);
 
-		/* why? this is strange! dist otherwise!
-		 * nobody else does this
-		 */
-		mpc_decoder_scale_output (&data->decoder, 0.45);
+		ret = mpc_decoder_initialize (&data->decoder, &data->info);
 
-		if (!mpc_decoder_initialize (&data->decoder, &data->info))
-			return FALSE;
 	}
 
-	return TRUE;
+	return ret;
 }
 
 
 static void
-xmms_mpc_cache_streaminfo (xmms_decoder_t *decoder)
+xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 {
-	xmms_medialib_session_t *session;
-	xmms_medialib_entry_t entry;
 	xmms_mpc_data_t *data;
 	gint bitrate, duration;
 	gchar buf[8];
 
-	g_return_if_fail (decoder);
+	g_return_if_fail (xform);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	entry = xmms_decoder_medialib_entry_get (decoder);
-	session = xmms_medialib_begin_write ();
+	duration = mpc_streaminfo_get_length (&data->info) * 1000;
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+	                             duration);
 
 	bitrate = (data->info.bitrate) ? data->info.bitrate :
 	                                 data->info.average_bitrate;
 
-	xmms_medialib_entry_property_set_int (session, entry,
-	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                                      bitrate);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+	                             bitrate);
 
-	xmms_medialib_entry_property_set_int (session, entry,
-	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                                      data->info.sample_freq);
-
-	duration = (int) mpc_streaminfo_get_length (&data->info) * 1000;
-	xmms_medialib_entry_property_set_int (session, entry,
-	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-	                                      duration);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->info.sample_freq);
 
 	if (data->info.gain_album) {
 		gint tmp = exp ((M_LN10 / 2000.0) * data->info.gain_album);
 		g_snprintf (buf, sizeof (buf), "%f", pow (10, tmp / 20));
-		xmms_medialib_entry_property_set_str (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
-		                                      buf);
+		xmms_xform_metadata_set_str (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+		                             buf);
 	}
 
 	if (data->info.gain_title) {
 		gint tmp = exp ((M_LN10 / 2000.0) * data->info.gain_title);
 		g_snprintf (buf, sizeof (buf), "%f", pow (10, tmp / 20));
-		xmms_medialib_entry_property_set_str (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
-		                                      buf);
+		xmms_xform_metadata_set_str (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
+		                             buf);
 	}
 
 	if (data->info.peak_album) {
-		g_snprintf (buf, sizeof (buf), "%hi", data->info.peak_album);
-		xmms_medialib_entry_property_set_str (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
-		                                      buf);
+		xmms_xform_metadata_set_int (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
+		                             data->info.peak_album);
 	}
 
 	if (data->info.peak_title) {
-		g_snprintf (buf, sizeof (buf), "%hi", data->info.peak_title);
-		xmms_medialib_entry_property_set_str (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-		                                      buf);
+		xmms_xform_metadata_set_int (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+		                             data->info.peak_title);
 	}
 
-	xmms_medialib_end (session);
 }
 
 
 typedef enum { STRING, INTEGER } ptype;
 typedef struct {
-	gchar *vname;
-	gchar *xname;
-	ptype type;
+       gchar *vname;
+       gchar *xname;
+       ptype type;
 } props ;
 
+
 static props properties[] = {
-	{ "title",  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,   STRING  },
-	{ "album",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,   STRING  },
-	{ "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,  STRING  },
-	{ "track",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, INTEGER },
-	{ "genre",  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,   STRING  },
-	{ "year",   XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,    STRING  },
+       { "title",  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,   STRING  },
+       { "album",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,   STRING  },
+       { "artist", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,  STRING  },
+       { "track",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, INTEGER },
+       { "genre",  XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,   STRING  },
+       { "year",   XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,    STRING  },
 };
 
 
-static gint
-xmms_mpc_find_apetag (xmms_transport_t *transport, gint whence, gint pos)
-{
-	gchar header[APE_HEADER_SIZE];
-	xmms_error_t error;
-	gint ret, len = 0;
-
-	/* seek to header/footer */
-	ret = xmms_transport_seek (transport, pos, whence);
-	if (ret <= 0) {
-		return 0;
-	}
-
-	/* read header/footer */
-	ret = xmms_transport_read (transport, header, APE_HEADER_SIZE, &error);
-	if (ret <= 0) {
-		return 0;
-	}
-
-	if (xmms_ape_tag_is_valid (header, ret)) {
-		len = xmms_ape_get_size (header, ret);
-
-		if (whence == XMMS_TRANSPORT_SEEK_SET) {
-			pos = APE_HEADER_SIZE;
-		} else {
-			pos = -len;
-		}
-		
-		/* seek to first item */
-		ret = xmms_transport_seek (transport, pos, XMMS_TRANSPORT_SEEK_CUR);
-		if (ret <= 0) {
-			return 0;
-		}
-	}
-
-	return len;
-}
-
-
 static void
-xmms_mpc_get_mediainfo (xmms_decoder_t *decoder)
+xmms_mpc_collect_metadata (xmms_xform_t *xform)
 {
-	xmms_medialib_session_t *session;
-	xmms_medialib_entry_t entry;
-	xmms_transport_t *transport;
 	xmms_mpc_data_t *data;
-	xmms_error_t error;
-	gchar *buff, *val;
-	gint ret, i, tmp, len = 0;
+	xmms_apetag_t *tag;
+	gint i, intval;
+	const gchar *strval;
 
-
-	g_return_if_fail (decoder);
-
-	data = xmms_decoder_private_data_get (decoder);
+	g_return_if_fail (xform);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
+
+	tag = xmms_apetag_init (xform);
 	
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_if_fail (transport);
-
-	if (data->info.tag_offset < data->info.total_file_length) {
-		len = xmms_mpc_find_apetag (transport, XMMS_TRANSPORT_SEEK_SET,
-		                            data->info.tag_offset);
-	} else {
-		len = xmms_mpc_find_apetag (transport, XMMS_TRANSPORT_SEEK_END,
-		                            -APE_HEADER_SIZE);
-		if (!len) {
-			len = xmms_mpc_find_apetag (transport, XMMS_TRANSPORT_SEEK_END,
-			                            -APE_HEADER_SIZE * 5);
-		}
-	}
-
-	if (len <= 0) {
-		return;
-	}
-
-	/* max length? */
-	buff = (gchar *) g_new (gchar, len);
-	ret = xmms_transport_read (transport, buff, len, &error);
-	if (ret != len) {
-		g_free (buff);
-		return;
-	}
-
-	entry = xmms_decoder_medialib_entry_get (decoder);
-
-	session = xmms_medialib_begin_write ();
-
-	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-		val = xmms_ape_get_text (properties[i].vname, buff, len);
-
-		if (val) {
-			if (properties[i].type == INTEGER) {
-				tmp = strtol (val, NULL, 10);
-				xmms_medialib_entry_property_set_int (session, entry,
-				                                      properties[i].xname, tmp);
-			} else {
-				xmms_medialib_entry_property_set_str (session, entry,
-				                                      properties[i].xname, val);
+	if (xmms_apetag_read (tag)) {
+		for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+			switch (properties[i].type) {
+				case INTEGER:
+					intval = xmms_apetag_lookup_int (tag, properties[i].vname);
+					if (intval > 0) {
+						xmms_xform_metadata_set_int (xform, properties[i].xname,
+						                             intval);
+					}
+					break;
+				case STRING:
+					strval = xmms_apetag_lookup_str (tag, properties[i].vname);
+					if (strval != NULL) {
+						xmms_xform_metadata_set_str (xform, properties[i].xname,
+					                                 strval);
+					}
+					break;
 			}
-			g_free (val);
 		}
 	}
 
-	xmms_medialib_end (session);
-
-	xmms_mpc_cache_streaminfo (decoder);
+	xmms_apetag_destroy (tag);
 }
 
-
-static gboolean
-xmms_mpc_seek (xmms_decoder_t *decoder, guint samples)
+	
+static gint
+xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
+               gint len, xmms_error_t *err)
 {
-	xmms_mpc_data_t *data;
-
-	g_return_val_if_fail (decoder, FALSE);
-
-	data = xmms_decoder_private_data_get (decoder);
-	g_return_val_if_fail (data, FALSE);
-
-	return mpc_decoder_seek_sample (&data->decoder, samples);
-}
-
-
-static gboolean
-xmms_mpc_decode_block (xmms_decoder_t *decoder)
-{
-	MPC_SAMPLE_FORMAT buffer[MPC_DECODER_BUFFER_LENGTH];
+	MPC_SAMPLE_FORMAT internal[MPC_DECODER_BUFFER_LENGTH];
 	xmms_mpc_data_t *data;
 	mpc_uint32_t ret;
-	guint bizarro;
+	guint size;
 
-	g_return_val_if_fail (decoder, FALSE);
+	data = xmms_xform_private_data_get (xform);
 
-	data = xmms_decoder_private_data_get (decoder);
-	g_return_val_if_fail (data, FALSE);
+	size = MIN (data->buffer->len, len);
 
-	ret = mpc_decoder_decode (&data->decoder, buffer, NULL, NULL);
-	if (ret == -1 || ret == 0)
-		return FALSE;
+	if (size <= 0) {
+		ret = mpc_decoder_decode (&data->decoder, internal, NULL, NULL);
+		if (ret == -1) {
+			xmms_error_set (err, XMMS_ERROR_GENERIC, "Musepack decoder failed");
+			return -1;
+		}
 
-	bizarro = xmms_sample_size_get (XMMS_SAMPLE_FORMAT_FLOAT) * data->info.channels;
-	xmms_decoder_write (decoder, (gchar *) buffer, ret * bizarro);
+		ret *= xmms_sample_size_get (XMMS_SAMPLE_FORMAT_FLOAT);
+		ret *= data->info.channels;
 
-	return TRUE;
+		g_string_append_len (data->buffer, (gchar *) internal, ret);
+	}
+
+	size = MIN (data->buffer->len, len);
+
+	memcpy (buffer, data->buffer->str, size);
+	g_string_erase (data->buffer, 0, size);
+
+	return size;
 }
 
 
 void
-xmms_mpc_destroy (xmms_decoder_t *decoder)
+xmms_mpc_destroy (xmms_xform_t *xform)
 {
 	xmms_mpc_data_t *data;
 
-	g_return_if_fail (decoder);
+	g_return_if_fail (xform);
 
-	data = xmms_decoder_private_data_get (decoder);
+	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
+
+	if (data->buffer) {
+		g_string_free (data->buffer, TRUE);
+	}
 
 	g_free (data);
 }

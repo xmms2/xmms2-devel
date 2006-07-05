@@ -176,7 +176,6 @@ handle_mediainfo_update (xmmsc_result_t *res, void *userdata)
 	if (!xmmsc_result_get_uint (res, &id)) {
 		print_error ("Broken resultset");
 	}
-	xmmsc_result_unref (res);
 
 	if (id == current_id) {
 		res = xmmsc_medialib_get_info (conn, current_id);
@@ -220,6 +219,9 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 	}
 
 	xmmsc_result_get_dict_entry_int32 (res, "duration", &curr_dur);
+
+	/* rounding */
+	curr_dur += 500;
 
 	xmmsc_result_unref (res);
 }

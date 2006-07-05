@@ -174,7 +174,7 @@ read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint len)
 		if (hs->pos != ringbuf->rd_index) {
 			/* make sure we don't cross a hotspot */
 			to_read = MIN (to_read,
-			               (hs->pos - ringbuf->rd_index)
+			               (hs->pos - ringbuf->rd_index + ringbuf->buffer_size)
 			               % ringbuf->buffer_size);
 		} else {
 			hs->callback (hs->arg);

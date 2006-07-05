@@ -724,13 +724,11 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
-	bool is_str;
+	bool is_str = false;
 
 	if (!NIL_P (rb_check_string_type (arg)))
 		is_str = true;
-	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		is_str = false;
-	else {
+	else if (!rb_obj_is_kind_of (arg, rb_cFixnum)) {
 		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
@@ -758,13 +756,11 @@ static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
-	bool is_str;
+	bool is_str = false;
 
 	if (!NIL_P (rb_check_string_type (arg)))
 		is_str = true;
-	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		is_str = false;
-	else {
+	else if (!rb_obj_is_kind_of (arg, rb_cFixnum)) {
 		rb_raise (eClientError, "unsupported argument");
 		return Qnil;
 	}
@@ -922,6 +918,8 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 	VALUE id, key, value, src = Qnil;
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
+	const char *ckey;
+	bool is_str = false;
 
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
@@ -930,21 +928,41 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
 	rb_scan_args (argc, argv, "31", &id, &key, &value, &src);
 
 	Check_Type (id, T_FIXNUM);
-	StringValue (key);
-	StringValue (value);
+	Check_Type (key, T_SYMBOL);
 
-	if (NIL_P (src))
-		res = xmmsc_medialib_entry_property_set (xmms->real,
-		                                         FIX2INT (id),
-		                                         StringValuePtr (key),
-		                                         StringValuePtr (value));
-	else
-		res = xmmsc_medialib_entry_property_set_with_source (
+	if (!NIL_P (rb_check_string_type (value)))
+		is_str = true;
+	else if (!rb_obj_is_kind_of (value, rb_cFixnum)) {
+		rb_raise (eClientError, "unsupported argument");
+		return Qnil;
+	}
+
+	ckey = rb_id2name (SYM2ID (key));
+
+	if (NIL_P (src) && is_str)
+		res = xmmsc_medialib_entry_property_set_str (xmms->real,
+		                                             FIX2INT (id),
+		                                             ckey,
+		                                             StringValuePtr (value));
+	else if (NIL_P (src))
+		res = xmmsc_medialib_entry_property_set_int (xmms->real,
+		                                             FIX2INT (id),
+		                                             ckey,
+		                                             FIX2INT (value));
+	else if (is_str)
+		res = xmmsc_medialib_entry_property_set_str_with_source (
 			xmms->real,
 			FIX2INT (id),
 			StringValuePtr (src),
-			StringValuePtr (key),
+			ckey,
 			StringValuePtr (value));
+	else
+		res = xmmsc_medialib_entry_property_set_int_with_source (
+			xmms->real,
+			FIX2INT (id),
+			StringValuePtr (src),
+			ckey,
+			FIX2INT (value));
 
 	return TO_XMMS_CLIENT_RESULT (self, res);
 }
@@ -1116,6 +1134,17 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
 
 /*
  * call-seq:
+ *  xc.configval_register(key, default_value) -> result
+ *
+ * Registers a configuration property at _key_ with the given default value.
+ */
+static VALUE c_configval_register (VALUE self, VALUE key, VALUE defval)
+{
+	METHOD_ADD_HANDLER_STR_STR (configval_register, key, defval);
+}
+
+/*
+ * call-seq:
  *  xc.signal_visualization_data -> result
  *
  * Retrieves visualization data as a signal.
@@ -1237,6 +1266,7 @@ void Init_Client (VALUE mXmms)
 	rb_define_method (c, "configval_list", c_configval_list, 0);
 	rb_define_method (c, "configval_get", c_configval_get, 1);
 	rb_define_method (c, "configval_set", c_configval_set, 2);
+	rb_define_method (c, "configval_register", c_configval_register, 2);
 	rb_define_method (c, "broadcast_configval_changed",
 	                  c_broadcast_configval_changed, 0);
 

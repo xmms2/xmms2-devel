@@ -180,8 +180,10 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
 	xmmsc_result_t *xmmsc_medialib_get_id (xmmsc_connection_t *c, char *url)
-	xmmsc_result_t *xmmsc_medialib_entry_property_set (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
-	xmmsc_result_t *xmmsc_medialib_entry_property_set_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, unsigned int id, char *key, int value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, unsigned int id, char *key, char *value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, int value)
+	xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, unsigned int id, char *key)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 
@@ -206,6 +208,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 from select import select
 from os import write
 import os
+import sys
 
 cdef to_unicode(char *s):
 	try:
@@ -244,9 +247,11 @@ cdef foreach_hash(signed char *key, xmmsc_result_value_type_t type, void *value,
 cdef ResultNotifier(xmmsc_result_t *res, obj):
 	if not obj.get_broadcast():
 		obj._del_ref()
-	obj._cb()
-	if not obj.get_broadcast():
-		xmmsc_result_unref(res)
+	try:
+		obj._cb()
+	finally:
+		if not obj.get_broadcast():
+			xmmsc_result_unref(res)
 
 class PropDict(dict):
 	def __init__(self, srcs):
@@ -272,7 +277,8 @@ class PropDict(dict):
 						if k[0].startswith(src[:-1]) and k[1] == item:
 							return v
 				try:
-					return dict.__getitem__(self, (src, item))
+					t = dict.__getitem__(self, (src, item))
+					return t
 				except KeyError:
 					pass
 			raise KeyError, item
@@ -289,9 +295,11 @@ cdef class XMMSResult:
 	cdef int broadcast
 	cdef object callback
 	cdef object c
+	cdef object exc
 
 	def __new__(self, c):
 		self.c = c
+		self.exc = None
 
 	def more_init(self, broadcast = 0):
 		self.orig = self.res
@@ -306,7 +314,10 @@ cdef class XMMSResult:
 		self._check()
 		if not self.callback:
 			return
-		self.callback(self)
+		try:
+			self.callback(self)
+		except:
+			self.exc = sys.exc_info()
 
 	def get_type(self):
 		"""
@@ -357,6 +368,8 @@ cdef class XMMSResult:
 		"""
 		self._check()
 		xmmsc_result_wait(self.res)
+		if self.exc is not None:
+			raise self.exc[0], self.exc[1], self.exc[2]
 
 	def disconnect(self):
 		""" @todo: Fail if this result isn't a signal or a broadcast """
@@ -448,7 +461,10 @@ cdef class XMMSResult:
 		@return: Error string from the result.
 		@rtype: String
 		"""
-		return xmmsc_result_get_error(self.res)
+		if xmmsc_result_get_error(self.res) == NULL:
+			return None
+		else:
+			return xmmsc_result_get_error(self.res)
 
 	def __dealloc__(self):
 		"""
@@ -1540,9 +1556,15 @@ cdef class XMMS:
 	
 		if source:
 			s = from_unicode(source)
-			ret.res = xmmsc_medialib_entry_property_set_with_source(self.conn,id,s,k,v)
+			if isinstance(value, int):
+				ret.res = xmmsc_medialib_entry_property_set_int_with_source(self.conn,id,s,k,v)
+			else:
+				ret.res = xmmsc_medialib_entry_property_set_str_with_source(self.conn,id,s,k,v)
 		else:
-			ret.res = xmmsc_medialib_entry_property_set(self.conn,id,k,v)
+			if isinstance(value, str):
+				ret.res = xmmsc_medialib_entry_property_set_str(self.conn,id,k,v)
+			else:
+				ret.res = xmmsc_medialib_entry_property_set_int(self.conn,id,k,v)
 
 		ret.more_init()
 		return ret

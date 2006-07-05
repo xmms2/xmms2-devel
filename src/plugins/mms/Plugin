@@ -1,0 +1,5 @@
+target="mms"
+source=['mms.c']
+
+def config(env):
+	env.pkgconfig("libmms")

@@ -121,17 +121,17 @@ xmms_id3v2_init (xmms_xform_t *xform)
 	data = g_new0 (xmms_id3v2_data_t, 1);
 	xmms_xform_private_data_set (xform, data);
 	
-	if (!xmms_mad_id3v2_header (hbuf, &head)) {
+	if (!xmms_id3v2_is_header (hbuf, &head)) {
 		XMMS_DBG ("Couldn't parse id3v2 header!?");
 		return FALSE;
 	}
 
 	data->len = head.len;
 
-	filesize = xmms_xform_metadata_get_int (xform, XMMS_XFORM_DATA_SIZE);
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 	if (filesize != -1) {
 		xmms_xform_metadata_set_int (xform,
-		                             XMMS_XFORM_DATA_SIZE,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
 		                             filesize - head.len);
 	}
 
@@ -144,7 +144,7 @@ xmms_id3v2_init (xmms_xform_t *xform)
 		return FALSE;
 	}
 
-	xmms_mad_id3v2_parse (xform, buf, &head);
+	xmms_id3v2_parse (xform, buf, &head);
 
 	g_free (buf);
 
@@ -165,6 +165,7 @@ static gint64
 xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_id3v2_data_t *data;
+	int ret;
 
 	g_return_val_if_fail (xform, 0);
 
@@ -174,5 +175,14 @@ xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence
 	if (whence == XMMS_XFORM_SEEK_SET) {
 		bytes += data->len;
 	}
-	return xmms_xform_seek (xform, bytes, whence, err);
+
+	ret = xmms_xform_seek (xform, bytes, whence, err);
+
+	if(ret == -1) {
+		return -1;
+	}
+
+	ret -= data->len;
+
+	return ret;
 }

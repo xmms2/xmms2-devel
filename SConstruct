@@ -17,7 +17,7 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrDolittle+WIP (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrDolittle+WIP+TEST2 (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
@@ -65,7 +65,6 @@ opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
 base_env = xmmsenv.XMMSEnvironment(options=opts)
 base_env["CONFIG"] = 0
 opts.Save("options.cache", base_env)
-
 
 base_env.Append(CPPPATH=["#src/include"])
 
@@ -135,12 +134,6 @@ base_env.Depends('#src/xmms/sample.c', 'src/xmms/converter.c')
 
 base_env.Converter("src/xmms/converter.c", "src/xmms/generate-converter.py")
 
-#b = Builder(action = python_executable + ' src/clients/lib/xmmsclient++/generate_methods.py > src/include/xmmsclient/xmmsclient++_methods.h')
-#base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/clients/lib/xmmsclient++/generate_methods.py')
-#base_env.Depends('#src/include/xmmsclient/xmmsclient++_methods.h', 'src/include/xmmsclient/xmmsclient.h')
-#base_env.Depends('#src/clients/lib/xmmsclient++/xmmsclient.cpp', 'src/include/xmmsclient/xmmsclient++_methods.h')
-#base_env.SourceCode('src/include/xmmsclient/xmmsclient++_methods.h', b)
-
 base_env.handle_targets("Library")
 base_env.handle_targets("Program")
 
@@ -173,11 +166,13 @@ def scan_headers(name):
 scan_headers("xmmsc")
 scan_headers("xmms")
 scan_headers("xmmsclient")
+scan_headers("xmmsclient/xmmsclient++")
 
 ### INSTALL MANUAL PAGES!
 
 base_env.add_manpage(1, 'doc/xmms2.1')
 base_env.add_manpage(8, 'doc/xmms2d.8')
+base_env.add_manpage(1, 'doc/xmms2-et.1')
 
 #### Generate pc files.
 
@@ -185,7 +180,8 @@ pc_files = [{"name": "xmms2-plugin", "lib":""},
 	    {"name":"xmms2-client", "lib":"-lxmmsclient"},
 	    {"name":"xmms2-client-glib", "lib":"-lxmmsclient-glib"},
 	    {"name":"xmms2-client-ecore", "lib":"-lxmmsclient-ecore"},
-	    {"name":"xmms2-client-cpp", "lib":"-lxmmsclient++"}]
+	    {"name":"xmms2-client-cpp", "lib":"-lxmmsclient -lxmmsclient++"},
+	    {"name":"xmms2-client-cpp-glib", "lib":"-lxmmsclient-glib -lxmmsclient++-glib"}]
 
 for p in pc_files:
 	d = subst_dict.copy()

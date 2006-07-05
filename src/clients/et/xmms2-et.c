@@ -41,7 +41,6 @@ static time_t start_time;
 static gchar *server_version = "unknown";
 static gchar *output_plugin;
 static gchar *system_name = "unknown";
-static gint playlist_loads = 0;
 static gint mlib_resolves = 0;
 
 static int send_socket;
@@ -63,10 +62,8 @@ send_msg (const gchar *status, GString *data)
 	g_string_append_printf (str, "output=%s\n", output_plugin);
 	g_string_append_printf (str, "starttime=%ld\n", start_time);
 	g_string_append_printf (str, "uptime=%ld\n", now - start_time);
-	g_string_append_printf (str, "playlistloads=%d\n", playlist_loads);
 	g_string_append_printf (str, "mlibresolves=%d\n", mlib_resolves);
 
-	playlist_loads = 0;
 	mlib_resolves = 0;
 
 	if (data)
@@ -88,12 +85,6 @@ static void
 handle_quit (xmmsc_result_t *res, void *data)
 {
 	g_main_loop_quit ((GMainLoop *) data);
-}
-
-static void
-handle_playlist_load (xmmsc_result_t *res, void *userdata)
-{
-	playlist_loads ++;
 }
 
 static void
@@ -119,14 +110,7 @@ handle_mediainfo_reader (xmmsc_result_t *res, void *userdata)
 static void
 handle_mediainfo (xmmsc_result_t *res, void *userdata)
 {
-	static gchar *props[] = {"decoder",
-				 "transport",
-				 "samplefmt:in",
-				 "samplefmt:out",
-				 "samplerate:in",
-				 "samplerate:out",
-				 "channels:in",
-				 "channels:out",
+	static gchar *props[] = {"chain",
 				 NULL};
 	static const gchar *pref[] = {"server", NULL};
 	GString *str;
@@ -268,7 +252,6 @@ main (int argc, char **argv)
 	start_time = time (NULL);
 
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_current_id, handle_current_id, conn);
-	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_playlist_loaded, handle_playlist_load, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_main_stats, handle_stats, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_configval_changed, handle_config, NULL);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_quit, handle_quit, ml);

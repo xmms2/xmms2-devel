@@ -19,11 +19,31 @@ def walkDirs(path):
 	return pathlist
 	
 def config(env):
-	if not env.get('JAVAC'):
-		raise ConfigError("Couldn't find javac")
-		
+	print "Checking for swig >= 1.3.25 ... ",
+	
 	if not env.get('SWIG'):
+		print "no"
 		raise ConfigError("Couldn't find swig")
+
+	try:
+		version = env.run(env.get('SWIG') + " -version").strip().split("\n")[0].split(' ')[2]
+	
+		if not version or ([int(a) for a in version.split(".")] < [1,3,25]) :
+			print "no"
+			raise ConfigError("Need Swig 1.3.25")
+	
+		print version
+	except ValueError:
+		print "no"
+		raise ConfigError("Couldn't check version of swig")
+
+	print "Checking for presence of java ... ",
+	
+	if not env.get('JAVAC'):
+		print "no"
+		raise ConfigError("Couldn't find javac")
+	
+	print "yes"
 	
 	# link with xmmsclient is nice.
 	if env.platform == 'win32':

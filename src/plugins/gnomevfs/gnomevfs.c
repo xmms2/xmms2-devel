@@ -119,10 +119,10 @@ xmms_gnomevfs_init (xmms_xform_t *xform)
 	data->handle = handle;
 
 	xmms_xform_private_data_set (xform, data);
-	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_SIZE,
-								 info->size);
-	xmms_xform_metadata_set_int (xform, XMMS_XFORM_DATA_LMOD,
-								 info->mtime);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
+	                             info->size);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,
+	                             info->mtime);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,

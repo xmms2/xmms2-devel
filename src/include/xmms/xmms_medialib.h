@@ -52,17 +52,11 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED "added"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_BPM "bpm"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED "laststarted"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_DECODER "decoder"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_TRANSPORT "transport"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLEFMT_OUT "samplefmt:out"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLEFMT_IN "samplefmt:in"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLERATE_OUT "samplerate:out"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_SAMPLERATE_IN "samplerate:in"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_OUT "channels:out"
-#define XMMS_MEDIALIB_ENTRY_PROPERTY_FMT_CHANNELS_IN "channels:in"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE "size"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR "isvbr"
-
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES "subtunes"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN "chain"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED "timesplayed"
 
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
@@ -72,7 +66,7 @@ gboolean xmms_medialib_playlist_add (xmms_medialib_session_t *session, gint play
 
 xmms_object_cmd_value_t *xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
 gchar *xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
-guint xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
+gint xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property);
 gboolean xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, const gchar *value);
 gboolean xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value);
 void xmms_medialib_entry_send_added (xmms_medialib_entry_t entry);

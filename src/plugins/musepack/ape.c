@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2005-2006 XMMS2 Team
+ *  Copyright (C) 2003-2006 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -15,127 +15,355 @@
  */
 
 /*
- * Partial APEv2 parser, handles text only. 
+ * APEv2 Specifications:
  * http://wiki.hydrogenaudio.org/index.php?title=APEv2_specification
  */
 
+#include <stdlib.h>
 #include <glib.h>
 
-#include "musepack.h"
 #include "ape.h"
 
-static gboolean xmms_ape_tag_is_text (gint32 flags);
 
-#define get_int32(b,pos) ((b[pos]<<24)|(b[pos+1]<<16)|(b[pos+2]<<8)|(b[pos+3])) 
+/*
+ * Defines
+ */
+#define get_int32(b,pos) (GUINT32_FROM_BE((b[pos]<<24)|(b[pos+1]<<16)|(b[pos+2]<<8)|(b[pos+3])))
 
-#define APE_HEADER       ~0x7F
-#define APE_FLAGS_TYPE    0x06
+#define TAG_HEADER_SIZE   32
+#define TAG_SIGNATURE_SIZE 8
 
+#define TAG_IS_APE(buff) (g_strncasecmp (buff, "APETAGEX", 8) == 0)
+
+#define TAG_FLAGS_TYPE    (6)
+#define TAG_IS_TEXT(flags) ((flags & TAG_FLAGS_TYPE) == 0)
+
+
+/*
+ * Type definitions
+ */
+struct xmms_apetag_St {
+	xmms_xform_t *xform;
+
+	gint version;
+	gint items;
+	gint flags;
+
+	gint size;
+
+	gint header;
+	gint footer;
+	gint data;
+
+	GHashTable *hash;
+};
+
+
+/*
+ * Function prototypes
+ */
+static gboolean xmms_apetag_cache_tag (xmms_apetag_t *tag);
+static gboolean xmms_apetag_cache_tag_info (xmms_apetag_t *tag);
+static gboolean xmms_apetag_cache_items (xmms_apetag_t *tag);
+
+
+/*
+ * Member functions
+ */
 
 /**
- * Checks if the Text bit is set (no bits set in type flags)
+ * Initialize apetag object and fill it with metadata.
+ * Will cleanup its own mess if init fails.
  */
-static gboolean
-xmms_ape_tag_is_text (gint32 flags)
+xmms_apetag_t *
+xmms_apetag_init (xmms_xform_t *xform)
 {
-	return ((flags & APE_FLAGS_TYPE) == 0) ? TRUE : FALSE;
+	XMMS_DBG("xmms_apetag_init");
+	xmms_apetag_t *tag = g_new0 (xmms_apetag_t, 1);
+
+	tag->xform = xform;
+
+	return tag;
 }
 
 
 /**
- * Checks if the tag is valid.
- * @param buff a buffer to check for an APEv2 tag.
- * @param size the size of the buffer
- * @return true if the tag is valid, else false
+ * Read the tag
  */
 gboolean
-xmms_ape_tag_is_valid (gchar *buff, gint len)
+xmms_apetag_read (xmms_apetag_t *tag)
 {
-	gboolean ret = FALSE;
-
-	g_return_val_if_fail (buff, ret);
-
-	if (len == APE_HEADER_SIZE && g_strncasecmp (buff, "APETAGEX", 8) == 0) {
-		ret = TRUE;
+	if (!xmms_apetag_cache_tag (tag)) {
+		return FALSE;
 	}
 
-	return ret;
+	if (!xmms_apetag_cache_tag_info (tag)) {
+		return FALSE;
+	}
+
+	if (!xmms_apetag_cache_items (tag)) {
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 
 /**
- * Get the size of an APEv2 tag. 
- * @param buff a buffer with an APEv2 tag.
- * @param size the size of the buffer
- * @return the size of the tag or -1 on failure.
+ * Destroy and restore position so that MPC decoder
+ * plays happily ever after.
  */
-gint32
-xmms_ape_get_size (gchar *buff, gint len)
+void
+xmms_apetag_destroy (xmms_apetag_t *tag)
 {
-	gint ret = -1;
-	guint32 size;
+	xmms_error_t err;
 
-	g_return_val_if_fail (buff, ret);
+	g_return_if_fail (tag);
 
-	if (len == APE_HEADER_SIZE) {
-		size = get_int32 (buff, 12);
-		ret = GUINT32_SWAP_LE_BE (size);
+	xmms_error_reset (&err);
+	xmms_xform_seek (tag->xform, 0, XMMS_XFORM_SEEK_SET, &err);
+
+	if (tag->hash) {
+		g_hash_table_destroy (tag->hash);
 	}
-
-	return ret;
+	g_free (tag);
 }
 
 
 /**
- * Extract the text value matching an APEv2 tag key.
- *
- * @param key the key to search the tag for.
- * @param buff a buffer with the APEv2 tag.
- * @param size the size of the buffer.
- * @return an allocated string with the value or NULL on failure.
+ * Look up a string in the metadata hash.
  */
-gchar *
-xmms_ape_get_text (gchar *key, gchar *buff, gint size)
+const gchar *
+xmms_apetag_lookup_str (xmms_apetag_t *tag, const gchar *key)
 {
-	gint pos = 0;
-	gchar *item_val = NULL;
-	gchar *item_key = NULL;
-	gint32 len, flags;
+	const gchar *value;
 
-	g_return_val_if_fail (key, NULL);
-	g_return_val_if_fail (buff, NULL);
+	g_return_val_if_fail (tag, NULL);
+	g_return_val_if_fail (tag->hash, NULL);
 
-	while ((pos + 2 * sizeof (gint32)) < size) {
-		len = GUINT32_SWAP_LE_BE (get_int32 (buff, pos));
-		/* step over 'length' */
-		pos += sizeof (gint32); 
+	value = g_hash_table_lookup (tag->hash, key);
+	
+	return value;
+}
 
-		flags = GUINT32_SWAP_LE_BE (get_int32 (buff, pos));
-		/* step over 'item flags' */
-		pos += sizeof (gint32); 
 
-		if (xmms_ape_tag_is_text (flags)) {
-			item_key = &buff[pos];
+/**
+ * Look up an integer in the metadata hash.
+ */
+gint
+xmms_apetag_lookup_int (xmms_apetag_t *tag, const gchar *key)
+{
+	const gchar *tmp;
+	gint value = -1;
 
-			/* step over 'item key' and 'terminator' */
-			pos += strlen (item_key) + 1; 
-				 
-			if (g_strncasecmp (item_key, key, strlen (key)) == 0) {
-				item_val = (gchar *) g_new0 (gchar, len + 1);
+	g_return_val_if_fail (tag, -1);
+	g_return_val_if_fail (tag->hash, -1);
 
-				g_strlcpy (item_val, &buff[pos], len + 1);
+	tmp = g_hash_table_lookup (tag->hash, key);
+	if (tmp) {
+		value = strtol (tmp, NULL, 10); 
+	}
+	
+	return value;
+}
 
-				/* we've got our match! */
-				break; 
+
+/**
+ * See if there is an APEv2 tag at 'offset'.
+ */
+static gint
+xmms_apetag_find_tag (xmms_apetag_t *tag, gint offset)
+{
+	gchar header[TAG_HEADER_SIZE];
+	xmms_xform_seek_mode_t whence;
+	xmms_error_t err;
+	gint ret;
+
+	g_return_val_if_fail (tag, -1);
+	g_return_val_if_fail (tag->xform, -1);
+
+	whence = (offset < 0) ? XMMS_XFORM_SEEK_END : XMMS_XFORM_SEEK_SET;
+
+	xmms_error_reset (&err);
+	ret = xmms_xform_seek (tag->xform, offset, whence, &err);
+	if (ret > 0) {
+		ret = xmms_xform_read (tag->xform, header, TAG_SIGNATURE_SIZE, &err);
+		if (ret == TAG_SIGNATURE_SIZE) {
+			if (TAG_IS_APE (header)) {
+				offset = xmms_xform_seek (tag->xform, 0,
+				                          XMMS_XFORM_SEEK_CUR,
+				                          &err);
+				offset -= TAG_SIGNATURE_SIZE;
 			}
-
-			/* no match, step over item_val */
-			pos += len;
-
-		} else {
-			pos += 11;
 		}
 	}
 
-	return item_val;
+	return offset;
+}
+
+
+/**
+ * Look for APEv2 tag at a couple of diffrent places.
+ */
+static gboolean
+xmms_apetag_cache_tag (xmms_apetag_t *tag)
+{
+	gint offset;
+
+	g_return_val_if_fail (tag, FALSE);
+	
+	/* default position */
+	offset = xmms_apetag_find_tag (tag, -32);
+	if (offset > 0) {
+		tag->footer = offset;
+		XMMS_DBG("default pos");
+		return TRUE;
+	}
+
+	/* abnormal position (APEv2 followed by an ID3v1) */
+	offset = xmms_apetag_find_tag (tag, -160);
+	if (offset > 0) {
+		XMMS_DBG("default+id3 pos");
+		tag->footer = offset;
+		return TRUE;
+	}
+
+	/* crazy position */
+	offset = xmms_apetag_find_tag (tag, 0);
+	if (offset > 0) {
+		XMMS_DBG("first pos");
+		tag->header = offset;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
+/**
+ * Collect interesting data from APEv2 tag header.
+ */
+static gboolean
+xmms_apetag_cache_tag_info (xmms_apetag_t *tag)
+{
+	gchar buffer[TAG_HEADER_SIZE];
+	gboolean ret = FALSE;
+	xmms_error_t err;
+	gint offset;
+	gint res;
+
+	g_return_val_if_fail (tag, ret);
+	g_return_val_if_fail (tag->xform, ret);
+
+	XMMS_DBG("tag pos found");
+
+	offset = MAX (tag->header, tag->footer);
+
+	XMMS_DBG("offset at: %d", offset);
+
+	xmms_error_reset (&err);
+	res = xmms_xform_seek (tag->xform, offset, XMMS_XFORM_SEEK_SET, &err);
+	if (res > 0) {
+		res = xmms_xform_read (tag->xform, buffer, TAG_HEADER_SIZE, &err);
+		if (res == TAG_HEADER_SIZE) {
+
+			XMMS_DBG("checking for signs of any apetag");
+
+			if (TAG_IS_APE (buffer)) {
+
+				XMMS_DBG("apev2 tag found");
+
+				tag->version = get_int32 (buffer, 8);
+				tag->size = get_int32 (buffer, 12);
+				tag->items = get_int32 (buffer, 16);
+				tag->flags = get_int32 (buffer, 20);
+
+				XMMS_DBG ("version: %d, items: %d, flags: %d, size: %d",
+				          tag->version, tag->items, tag->flags, tag->size);
+
+				if (tag->header > 0) {
+					tag->data = tag->header + TAG_HEADER_SIZE;
+					XMMS_DBG("data (header) offset at %d", tag->data);
+				} else if (tag->footer > 0) {
+					tag->data = tag->footer - tag->size + TAG_HEADER_SIZE;
+					XMMS_DBG("data (footer) offset at %d", tag->data);
+				}
+
+				ret = TRUE;
+			}
+		}
+	}
+
+	return ret;
+}
+
+
+/**
+ * Iterate over the items and add the (key,value) pairs to a hash.
+ */
+static gboolean
+xmms_apetag_cache_items (xmms_apetag_t *tag)
+{
+	gint res, i, pos = 0;
+	gboolean ret = FALSE;
+	xmms_error_t err;
+
+	g_return_val_if_fail (tag, ret);
+
+	xmms_error_reset (&err);
+
+	res = xmms_xform_seek (tag->xform, tag->data, XMMS_XFORM_SEEK_SET, &err);
+	if (res > 0) {
+		gchar *buffer = g_new (gchar, tag->size);
+		res = xmms_xform_read (tag->xform, buffer, tag->size, &err);
+		if (res > 0) {
+			ret = TRUE;
+
+			tag->hash = g_hash_table_new_full (g_str_hash, g_str_equal,
+			                                   g_free, g_free);
+			
+			for (i = 0; i < tag->items; i++) {
+
+				gint size = get_int32 (buffer, pos);
+				pos += sizeof (gint32);
+
+				gint flags = get_int32 (buffer, pos);
+				pos += sizeof (gint32);
+
+				if (TAG_IS_TEXT(flags)) {
+
+					gint tmp = strlen (&buffer[pos]) + 1;
+					if ((pos+tmp+size) > tag->size) { /* sanity check */
+						ret = FALSE;
+						break;
+					}
+
+					gchar *key = g_utf8_strdown (&buffer[pos], tmp);
+					pos += tmp;
+
+					gchar *value = g_strndup (&buffer[pos], size);
+					pos += size;
+
+					XMMS_DBG ("tag[%s] = %s", key, value);
+
+					g_hash_table_insert (tag->hash, key, value);
+
+				} else { 
+					/* Some other kind of tag we don't care about */
+
+					gint tmp = strlen (&buffer[pos]) + 1;
+					if ((pos+tmp+size) > tag->size) { /* sanity check */
+						ret = FALSE;
+						break;
+					}
+
+					pos += tmp;
+					pos += size;
+				}
+			}
+		}
+		g_free (buffer);
+	}
+
+	return ret;
 }

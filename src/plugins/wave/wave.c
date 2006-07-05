@@ -84,9 +84,9 @@ static gint xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 static void xmms_wave_get_media_info (xmms_xform_t *xform);
 static void xmms_wave_destroy (xmms_xform_t *xform);
 static gboolean xmms_wave_init (xmms_xform_t *xform);
-#if 0
-static gboolean xmms_wave_seek (xmms_xform_t *xform, guint samples);
-#endif
+static gint64 xmms_wave_seek (xmms_xform_t *xform, gint64 samples,
+                              xmms_xform_seek_mode_t whence,
+                              xmms_error_t *error);
 
 static xmms_wave_format_t read_wave_header (xmms_wave_data_t *data,
                                             guint8 *buf, gint bytes_read);
@@ -110,6 +110,7 @@ xmms_wave_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_wave_init;
 	methods.destroy = xmms_wave_destroy;
 	methods.read = xmms_wave_read;
+	methods.seek = xmms_wave_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -192,9 +193,11 @@ xmms_wave_init (xmms_xform_t *xform)
 		case WAVE_FORMAT_PCM:
 			xmms_wave_get_media_info (xform);
 
+			if (read < data->header_size) {
+				xmms_log_info ("Wave header too big?");
+				return FALSE;
+			}
 			/* skip over the header */
-			g_assert (read >= data->header_size);
-
 			xmms_xform_read (xform, (gchar *) buf, data->header_size, &error);
 
 			sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_U8
@@ -246,38 +249,57 @@ xmms_wave_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	return ret;
 }
 
-#if 0
-static gboolean
-xmms_wave_seek (xmms_decoder_t *decoder, guint samples)
+static gint64
+xmms_wave_seek (xmms_xform_t *xform, gint64 samples,
+                xmms_xform_seek_mode_t whence, xmms_error_t *error)
 {
-	xmms_transport_t *transport;
 	xmms_wave_data_t *data;
-	guint offset;
-	gint ret;
+	gint64 offset;
+	gint64 ret;
 
-	g_return_val_if_fail (decoder, FALSE);
+	g_return_val_if_fail (xform, -1);
+	g_return_val_if_fail (samples >= 0, -1);
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 
-	data = xmms_xform_private_data_get (decoder);
-	g_return_val_if_fail (data, FALSE);
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
 
-	transport = xmms_decoder_transport_get (decoder);
-	g_return_val_if_fail (transport, FALSE);
+	/* in mp3 mode, the samples argument actually indicates bytes..
+	 * thus we've set up bits_per_sample to 8 and channels to 1 to get
+	 * expected behaviour. */
 
 	offset = data->header_size;
 	offset += samples * (data->bits_per_sample / 8) * data->channels;
 
-	if (offset > data->bytes_total) {
-		xmms_log_error ("Trying to seek past end of stream");
-
-		return FALSE;
+	if (offset < data->header_size) {
+		xmms_error_set (error, XMMS_ERROR_INVAL,
+		                "Trying to seek before start of stream");
+		return -1;
 	}
 
-	ret = xmms_transport_seek (transport, offset,
-	                           XMMS_TRANSPORT_SEEK_SET);
+	if (offset > data->header_size + data->bytes_total) {
+		xmms_error_set (error, XMMS_ERROR_INVAL,
+		                "Trying to seek past end of stream");
+		return -1;
+	}
 
-	return ret != -1;
+	ret = xmms_xform_seek (xform, offset, whence, error);
+
+	if (ret == -1) {
+		return -1;
+	}
+
+	if (ret != offset) {
+		XMMS_DBG ("xmms_xform_seek didn't return expected offset "
+		          "(%lld != %lld)\n", ret, offset);
+	}
+
+	ret -= data->header_size;
+
+	ret /= (data->bits_per_sample / 8) * data->channels;
+
+	return ret;
 }
-#endif
 
 static void
 xmms_wave_destroy (xmms_xform_t *xform)
@@ -296,7 +318,10 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 	gint bytes_left = bytes_read;
 	xmms_wave_format_t ret = WAVE_FORMAT_UNDEFINED;
 
-	g_assert (bytes_left >= WAVE_HEADER_MIN_SIZE);
+	if (bytes_left < WAVE_HEADER_MIN_SIZE) {
+		xmms_log_error ("Not enough data for wave header");
+		return ret;
+	}
 
 	GET_STR (buf, stmp, 4);
 	if (strcmp (stmp, "RIFF")) {
@@ -320,17 +345,20 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 	}
 
 	GET_32 (buf, tmp32); /* format chunk length */
-	XMMS_DBG ("format chunk length: %i\n", tmp32);
+	XMMS_DBG ("format chunk length: %i", tmp32);
 
 	GET_16 (buf, tmp16); /* format tag */
 	ret = tmp16;
 
 	switch (tmp16) {
 		case WAVE_FORMAT_PCM:
-			g_assert (tmp32 == 16);
+			if (tmp32 != 16) {
+				xmms_log_error ("Format chunk length not 16.");
+				return WAVE_FORMAT_UNDEFINED;
+			}
 
 			GET_16 (buf, data->channels);
-			XMMS_DBG("channels %i", data->channels);
+			XMMS_DBG ("channels %i", data->channels);
 			if (data->channels < 1 || data->channels > 2) {
 				xmms_log_error ("Unhandled number of channels: %i",
 				                data->channels);
@@ -338,7 +366,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 			}
 
 			GET_32 (buf, data->samplerate);
-			XMMS_DBG("samplerate %i", data->samplerate);
+			XMMS_DBG ("samplerate %i", data->samplerate);
 			if (data->samplerate != 8000 && data->samplerate != 11025 &&
 			    data->samplerate != 22050 && data->samplerate != 44100) {
 				xmms_log_error ("Invalid samplerate: %i", data->samplerate);
@@ -349,6 +377,7 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 			GET_16 (buf, tmp16);
 
 			GET_16 (buf, data->bits_per_sample);
+			XMMS_DBG ("bits per sample %i", data->bits_per_sample);
 			if (data->bits_per_sample != 8 && data->bits_per_sample != 16) {
 				xmms_log_error ("Unhandled bits per sample: %i",
 				                data->bits_per_sample);
@@ -358,6 +387,9 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 			break;
 		case WAVE_FORMAT_MP3:
 			SKIP (tmp32 - sizeof (tmp16));
+			/* set up so that seeking works with "bytes" as seek unit */
+			data->bits_per_sample = 8;
+			data->channels = 1;
 			break;
 		default:
 			xmms_log_error ("unhandled format tag: 0x%x", tmp16);

@@ -126,7 +126,7 @@ xmms_mad_destroy (xmms_xform_t *xform)
 }
 
 static gint64
-xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_mad_data_t *data;
 	guint bytes;
@@ -139,11 +139,8 @@ xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence
 
 	if (data->xing) {
 		guint i;
-		guint x_samples;
 
-		x_samples = xmms_xing_get_frames (data->xing) * 1152;
-
-		i = (guint) (100.0 * (gdouble) samples) / (gdouble) x_samples;
+		i = (guint) (100ULL * samples / xmms_xing_get_frames (data->xing) / 1152);
 
 		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
 	} else {
@@ -156,235 +153,8 @@ xmms_mad_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence
 	if (res == -1) {
 		return -1;
 	}
-	return bytes;
+	return samples;
 }
-
-#if 0
-/** This function will calculate the duration in seconds.
-  *
-  * This is very easy, until someone thougth that VBR was
-  * a good thing. That is a quite fucked up standard.
-  *
-  * We read the XING header and parse it accordingly to
-  * xing.c, then calculate the duration of the next frame
-  * and multiply it with the number of frames in the XING
-  * header.
-  *
-  * Better than to stream the whole file I guess.
-  */
-
-static void
-xmms_mad_calc_duration (xmms_medialib_session_t *session,
-                        xmms_decoder_t *decoder,
-                        guchar *buf, gint len,
-                        gint filesize,
-                        xmms_medialib_entry_t entry)
-{
-	struct mad_frame frame;
-	struct mad_stream stream;
-	xmms_mad_data_t *data;
-	guint bitrate=0;
-
-	data = xmms_xform_private_data_get (xform);
-
-	mad_stream_init (&stream);
-	mad_frame_init (&frame);
-
-	mad_stream_buffer (&stream, buf, len);
-
-	while (mad_frame_decode (&frame, &stream) == -1) {
-		if (!MAD_RECOVERABLE (stream.error)) {
-			XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
-			return;
-		}
-	}
-
-	data->samplerate = frame.header.samplerate;
-	data->channels = MAD_NCHANNELS (&frame.header);
-
-	if (filesize == -1) {
-		xmms_medialib_entry_property_set_int (session,
-		                                      entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                                      -1);
-
-		/* frame.header.bitrate might be wrong, but we cannot do it any
-		 * better for streams
-		 */
-		xmms_medialib_entry_property_set_int (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-		                                      frame.header.bitrate);
-		return;
-	}
-
-	data->fsize = filesize;
-
-	if (frame.header.flags & MAD_FLAG_PROTECTION) {
-		XMMS_DBG ("this frame has protection enabled!");
-		if (stream.anc_ptr.byte > stream.buffer + 2) {
-			stream.anc_ptr.byte = stream.anc_ptr.byte - 2;
-		}
-	}
-
-	data->xing = xmms_xing_parse (stream.anc_ptr);
-
-	if (data->xing) {
-		/* @todo Hmm? This is SO strange. */
-		while (42) {
-			if (mad_frame_decode (&frame, &stream) == -1) {
-				if (MAD_RECOVERABLE (stream.error))
-					continue;
-				break;
-			}
-		}
-
-		xmms_medialib_entry_property_set_int (session,
-		                                      entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR,
-		                                      1);
-
-		if (xmms_xing_has_flag (data->xing, XMMS_XING_FRAMES)) {
-			guint duration;
-			mad_timer_t timer;
-
-			timer = frame.header.duration;
-			mad_timer_multiply (&timer, xmms_xing_get_frames (data->xing));
-			duration = mad_timer_count (timer, MAD_UNITS_MILLISECONDS);
-
-			XMMS_DBG ("XING duration %d", duration);
-
-			xmms_medialib_entry_property_set_int (session, entry,
-			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                                      duration);
-
-			if (xmms_xing_has_flag (data->xing, XMMS_XING_BYTES) && duration) {
-				guint tmp;
-
-				tmp = xmms_xing_get_bytes (data->xing) * ((guint64)8000) / duration;
-				XMMS_DBG ("XING bitrate %d", tmp);
-				xmms_medialib_entry_property_set_int (session,
-				                                      entry,
-				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-				                                      tmp);
-			}
-		}
-
-		return;
-	}
-
-	data->bitrate = bitrate = frame.header.bitrate;
-
-	mad_frame_finish (&frame);
-	mad_stream_finish (&stream);
-
-	if (filesize == -1) {
-		xmms_medialib_entry_property_set_int (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                                      -1);
-	} else {
-		xmms_medialib_entry_property_set_int (session, entry,
-		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                                      (gint) (filesize*(gdouble)8000.0/bitrate));
-	}
-
-	xmms_medialib_entry_property_set_int (session, entry,
-	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                                      bitrate);
-
-}
-
-static void
-xmms_mad_get_media_info (xmms_xform_t *xform)
-{
-	xmms_transport_t *transport;
-	xmms_medialib_session_t *session;
-	xmms_medialib_entry_t entry;
-	xmms_mad_data_t *data;
-	xmms_id3v2_header_t head;
-	xmms_error_t error;
-	guchar buf[8192];
-	gboolean id3handled = FALSE;
-	gint ret;
-
-	g_return_if_fail (xform);
-
-	data = xmms_xform_private_data_get (xform);
-
-	transport = xmms_xform_transport_get (xform);
-	g_return_if_fail (transport);
-
-	entry = xmms_xform_medialib_entry_get (xform);
-
-	ret = xmms_transport_read (transport, (gchar *)buf, 8192, &error);
-	if (ret <= 0) {
-		return;
-	}
-
-	session = xmms_medialib_begin_write ();
-
-	if (xmms_transport_islocal (transport) && 
-			ret >= 10 && 
-			xmms_mad_id3v2_header (buf, &head)) {
-		guchar *id3v2buf;
-		gint pos;
-
-		/** @todo sanitycheck head.len */
-
-		XMMS_DBG ("id3v2 len = %d", head.len);
-
-		id3v2buf = g_malloc (head.len);
-		
-		memcpy (id3v2buf, buf+10, MIN (ret-10,head.len));
-		
-		if (ret-10 < head.len) { /* need more data */
-			pos = MIN (ret-10,head.len);
-			
-			while (pos < head.len) {
-				ret = xmms_transport_read (transport,
-							   (gchar *)id3v2buf + pos,
-							   MIN(4096,head.len - pos), &error);
-				if (ret <= 0) {
-					xmms_log_error ("error reading data for id3v2-tag");
-					xmms_medialib_end (session);
-					g_free (id3v2buf);
-					return;
-				}
-				pos += ret;
-			}
-			ret = xmms_transport_read (transport,(gchar *) buf, 8192, &error);
-		} else {
-			/* just make sure buf is full */
-			memmove (buf, buf + head.len + 10, 8192 - (head.len+10));
-			ret += xmms_transport_read (transport, (gchar *)buf + 8192 - (head.len+10), head.len + 10, &error) - head.len - 10;
-		}
-		
-		id3handled = xmms_mad_id3v2_parse (session, id3v2buf, &head, entry);
-		g_free (id3v2buf);
-	}
-	
-	xmms_mad_calc_duration (session, xform, buf, ret, xmms_transport_size (transport), entry);
-
-	if (xmms_transport_islocal (transport) && !id3handled) {
-		xmms_transport_seek (transport, -128, XMMS_TRANSPORT_SEEK_END);
-		ret = xmms_transport_read (transport, (gchar *)buf, 128, &error);
-		if (ret == 128) {
-			xmms_mad_id3_parse (session, buf, entry);
-		}
-	}
-
-	xmms_medialib_entry_property_set_int (session, entry, 
-										  XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-										  data->samplerate);
-
-
-	xmms_transport_seek (transport, 0, XMMS_TRANSPORT_SEEK_SET);
-
-	xmms_medialib_end (session);
-	xmms_medialib_entry_send_update (entry);
-
-	return;
-}
-#endif
 
 static void
 xmms_mad_get_id3v1 (xmms_xform_t *xform)
@@ -456,6 +226,13 @@ xmms_mad_init (xmms_xform_t *xform)
 	data->samplerate = frame.header.samplerate;
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
 
+	if (frame.header.flags & MAD_FLAG_PROTECTION) {
+		XMMS_DBG ("Frame has protection enabled");
+		if (stream.anc_ptr.byte > stream.buffer + 2) {
+			stream.anc_ptr.byte = stream.anc_ptr.byte - 2;
+		}
+	}
+
 	data->xing = xmms_xing_parse (stream.anc_ptr);
 	if (data->xing) {
 		XMMS_DBG ("File with Xing header!");
@@ -495,7 +272,7 @@ xmms_mad_init (xmms_xform_t *xform)
 		                             frame.header.bitrate);
 
 
-		filesize = xmms_xform_metadata_get_int (xform, XMMS_XFORM_DATA_SIZE);
+		filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 		if (filesize == -1) {
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,

@@ -19,7 +19,8 @@ source = ["main.c",
           "streamtype.c",
           "converter_plugin.c",
           "ringbuf_xform.c",
-          "outputplugin.c"]
+          "outputplugin.c",
+		  "statfs.c"]
 
 def config(env):
 	pluginenv = env.Copy()
@@ -35,6 +36,16 @@ def config(env):
 
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
+
+	try:
+		env.checkheader("sys/vfs.h")
+		env.Prepend(CPPDEFINES="STATFS_LINUX")
+	except ConfigError:
+		try:
+			env.checkheader("sys/param.h")
+			env.Prepend(CPPDEFINES="STATFS_BSD")
+		except ConfigError:
+			pass
 
 	# we have an xmms2d - we might want plugins!
 	pluginenv.handle_targets("Plugin")

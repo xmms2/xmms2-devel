@@ -10,6 +10,8 @@
 
 #include <glib.h>
 
+#define BUFFER_SIZE 4096
+
 /*
  * Type definitions
  */
@@ -118,6 +120,7 @@ xmms_nulstripper_seek (xmms_xform_t *xform, gint64 bytes,
                        xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_nulstripper_data_t *data;
+	int ret;
 
 	g_return_val_if_fail (xform, 0);
 
@@ -128,42 +131,55 @@ xmms_nulstripper_seek (xmms_xform_t *xform, gint64 bytes,
 		bytes += data->offset;
 	}
 
-	return xmms_xform_seek (xform, bytes, whence, err);
+	ret = xmms_xform_seek (xform, bytes, whence, err);
+
+	if(ret == -1) {
+		return -1;
+	}
+
+	ret -= data->offset;
+
+	return ret;
 }
 
 static guint
 find_offset (xmms_xform_t *xform)
 {
 	xmms_error_t err;
-	guint8 buf[4096];
+	guint8 *buf = NULL;
 	gboolean done = FALSE;
 	guint offset = 0;
-	gint nbytes, i;
+	gint read, i;
 
 	do {
-		xmms_error_reset (&err);
+		buf = g_realloc (buf, offset + BUFFER_SIZE);
 
-		nbytes = xmms_xform_read (xform, buf, sizeof (buf), &err);
+		xmms_error_reset (&err);
+		read = xmms_xform_peek (xform, buf, offset + BUFFER_SIZE, &err);
 
 		/* check for failures */
-		if (nbytes < 1) {
+		if (read < 1) {
+			g_free (buf);
+
 			return 0;
 		}
 
 		/* find first non-nul character */
-		for (i = 0; i < nbytes; i++) {
+		for (i = offset; i < read; i++) {
 			if (buf[i] != '\0') {
 				done = TRUE;
 				break;
 			}
 		}
 
-		offset += i;
+		offset = i;
 	} while (!done);
 
 	/* skip over the NULs */
 	xmms_error_reset (&err);
-	xmms_xform_seek (xform, offset, XMMS_XFORM_SEEK_SET, &err);
+	xmms_xform_read (xform, buf, offset, &err);
+
+	g_free (buf);
 
 	return offset;
 }
