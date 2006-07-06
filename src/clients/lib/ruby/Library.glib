@@ -34,6 +34,9 @@ def config(env):
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 		env.Append(LIBS=["xmmsclient"])
 		env["SHLIBPREFIX"]=''
+		
+		if env.platform == 'darwin':
+			env["SHLIBSUFFIX"] = ".bundle"
 
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")
 		env.Append(LIBS=["xmmsclient-glib"])
