@@ -47,6 +47,12 @@ xmms_xing_get_toc (xmms_xing_t *xing, gint index)
 	return xing->toc[index];
 }
 
+void
+xmms_xing_free (xmms_xing_t *xing)
+{
+	g_free (xing);
+}
+
 xmms_xing_t *
 xmms_xing_parse (struct mad_bitptr ptr)
 {
