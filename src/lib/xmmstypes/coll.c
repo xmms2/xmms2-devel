@@ -182,12 +182,12 @@ xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[])
 
 	x_return_if_fail (coll);
 
-	do {
+	while (ids[size] != 0) {
 		++size;
-	} while (ids[size] != 0);
+	}
 
 	free (coll->idlist);
-	if (!(coll->idlist = x_new0 (uint32_t, size))) {
+	if (!(coll->idlist = x_new0 (uint32_t, size + 1))) {
 		x_oom();
 		return;
 	}
@@ -302,7 +302,9 @@ int
 xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, xmmsc_coll_t **operand)
 {
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->curr_op, 0);
+	if (coll->curr_op == NULL) {
+		return 0;
+	}
 
 	*operand = (xmmsc_coll_t *)coll->curr_op->data;
 
@@ -319,7 +321,9 @@ int
 xmmsc_coll_operand_list_next (xmmsc_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (coll->curr_op, 0);
+	if (coll->curr_op == NULL) {
+		return 0;
+	}
 
 	coll->curr_op = coll->curr_op->next;
 
