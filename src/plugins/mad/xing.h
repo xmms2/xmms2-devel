@@ -29,5 +29,6 @@ guint xmms_xing_get_frames (xmms_xing_t *xing);
 guint xmms_xing_get_bytes (xmms_xing_t *xing);
 guint xmms_xing_get_toc (xmms_xing_t *xing, gint index);
 xmms_xing_t *xmms_xing_parse (struct mad_bitptr ptr);
+void xmms_xing_free (xmms_xing_t *xing);
 
 #endif

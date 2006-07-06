@@ -121,6 +121,10 @@ xmms_mad_destroy (xmms_xform_t *xform)
 	mad_frame_finish (&data->frame);
 	mad_synth_finish (&data->synth);
 
+	if (data->xing) {
+		xmms_xing_free (data->xing);
+	}
+
 	g_free (data);
 
 }
@@ -219,6 +223,8 @@ xmms_mad_init (xmms_xform_t *xform)
 	while (mad_frame_decode (&frame, &stream) == -1) {
 		if (!MAD_RECOVERABLE (stream.error)) {
 			XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
+			mad_frame_finish (&frame);
+			mad_stream_finish (&stream);
 			return FALSE;
 		}
 	}
@@ -299,6 +305,10 @@ xmms_mad_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
 	                             data->samplerate,
 	                             XMMS_STREAM_TYPE_END);
+
+	mad_frame_finish (&frame);
+	mad_stream_finish (&stream);
+
 	return TRUE;
 }
 
