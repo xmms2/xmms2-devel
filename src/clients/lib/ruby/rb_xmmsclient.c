@@ -1054,9 +1054,9 @@ static VALUE c_medialib_rehash (VALUE self, VALUE id)
  *
  * returns a list of files from the server
  */
-static VALUE c_xform_media_browse (VALUE self, VALUE id)
+static VALUE c_xform_media_browse (VALUE self, VALUE url)
 {
-	METHOD_ADD_HANDLER_STR (xform_media_browse, id);
+	METHOD_ADD_HANDLER_STR (xform_media_browse, url);
 }
 
 /*
