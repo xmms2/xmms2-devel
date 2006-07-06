@@ -477,6 +477,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	}
 
 	g_mutex_unlock (client->lock);
+	g_mutex_free (client->lock);
 	g_free (client);
 }
 
