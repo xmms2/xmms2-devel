@@ -401,7 +401,7 @@ xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 	gchar *src;
 
 	XMMS_DBG ("Collecting medadata from %s", xmms_xform_shortname (xform));
-	src = g_strdup_printf ("plugins/%s", xmms_xform_shortname (xform));
+	src = g_strdup_printf ("plugin/%s", xmms_xform_shortname (xform));
 	info->source = xmms_medialib_source_to_id (info->session, src);
 	g_hash_table_foreach (xform->metadata, add_metadatum, info);
 	g_free (src);
