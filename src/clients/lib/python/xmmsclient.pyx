@@ -186,6 +186,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key, char *value)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, unsigned int id, char *key)
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
+	
+	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
@@ -1686,6 +1688,23 @@ cdef class XMMS:
 		ret.more_init()
 		return ret
 
+	def xform_media_browse(self, url, cb=None):
+		"""
+		Browse files from xform plugins.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		u = from_unicode(url)
+
+		ret.res = xmmsc_xform_media_browse(self.conn,u)
+
+		ret.more_init()
+		return ret
 
 
 class XMMSSync:
