@@ -24,7 +24,7 @@ class GLibConnector:
 
 	def handle_in(self, source, cond):
 		if cond == gobject.IO_IN:
-			self.xmms.ioin()
+			return self.xmms.ioin()
 
 		return True
 
