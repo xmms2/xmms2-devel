@@ -347,7 +347,7 @@ xmmsc_coll_operand_list_save (xmmsc_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
-	x_list_prepend (coll->curr_stack, coll->curr_op);
+	coll->curr_stack = x_list_prepend (coll->curr_stack, coll->curr_op);
 
 	return 1;
 }
@@ -371,7 +371,7 @@ xmmsc_coll_operand_list_restore (xmmsc_coll_t *coll)
 
 	/* Pop stack head and restore curr_op */
 	coll->curr_op = x_list_nth_data (coll->curr_stack, 0);
-	x_list_delete_link (coll->curr_stack, coll->curr_stack);
+	coll->curr_stack = x_list_delete_link (coll->curr_stack, coll->curr_stack);
 
 	return 1;
 }
