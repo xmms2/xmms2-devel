@@ -387,7 +387,6 @@ class XMMSEnvironment(Environment):
 			if loadable:
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
-					self["SHLIBSUFFIX"] = ".bundle"
 				self.Install(self.librarypath, target + self["SHLIBSUFFIX"])
 			else:
 				if self.platform == 'darwin':
