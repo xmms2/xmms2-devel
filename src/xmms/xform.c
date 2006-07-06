@@ -768,6 +768,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_medialib_end (session);
 
 	durl = g_strdup (url);
+	g_free (url);
+
 	args = strchr (durl, '?');
 	if (args) {
 		gchar **params;
