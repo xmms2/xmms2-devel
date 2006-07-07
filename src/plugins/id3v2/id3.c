@@ -324,6 +324,7 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','C','O','N'), NULL, handle_id3v2_tcon },
 	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
 	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
 	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ 0, NULL, NULL }

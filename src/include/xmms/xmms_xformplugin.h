@@ -139,6 +139,14 @@ typedef struct xmms_xform_methods_St {
 	 * 
 	 */
 	gint64 (*seek)(xmms_xform_t *, gint64, xmms_xform_seek_mode_t, xmms_error_t *);
+
+	/**
+	 * browse method.
+	 *
+	 * Called when a users wants to do some server side browsing.
+	 * This is called without init() beeing called.
+	 */
+	GList *(*browse)(xmms_xform_t *, const gchar *, xmms_error_t *);
 } xmms_xform_methods_t;
 
 #define XMMS_XFORM_METHODS_INIT(m) memset (&m, 0, sizeof (xmms_xform_methods_t))
@@ -283,6 +291,8 @@ xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
  * @returns 
  */
 xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
+
+GList *xmms_xform_browse_add_entry (GList *list, const gchar *path, gboolean is_dir);
 
 /**
  * @}

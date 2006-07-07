@@ -41,7 +41,7 @@
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
 static gboolean get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata);
 static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
-static gchar *xmms_medialib_url_encode (const gchar *path);
+gchar *xmms_medialib_url_encode (const gchar *path);
 
 static GList *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err);
 static void xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
@@ -1741,7 +1741,7 @@ xmms_medialib_decode_url (char *url)
                      ((a) == '_'))
 
 /* we don't share code here with medialib because we want to use g_malloc :( */
-static gchar *
+gchar *
 xmms_medialib_url_encode (const gchar *path)
 {
 	static gchar hex[16] = "0123456789abcdef";

@@ -1,6 +1,7 @@
 target="xmmsclient"
 source=["xmmsclient.c"]
 static=False
+loadable=True
 
 def config(env):
 	try:
@@ -35,7 +36,7 @@ def config(env):
 	# we need to get rid of some warnings.
 	if env.platform != "win32":
 		env.Append(CCFLAGS=["-Wno-unused-function","-Wno-unused-label"])
-
+	
 	# link with xmmsclient is nice.
 	if env.platform == 'win32':		
 		env.Append(LIBS=["libxmmsclient"])
