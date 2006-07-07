@@ -39,7 +39,7 @@
   * @defgroup IPC IPC
   * @ingroup XMMSServer
   * @brief IPC functions for XMMS2 Daemon
-  * @{ 
+  * @{
   */
 
 
@@ -224,7 +224,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
 
-	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
+	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL &&
 	    xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_SIGNAL) {
 		guint signalid;
 
@@ -237,7 +237,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
 		g_mutex_unlock (client->lock);
 		return;
-	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
+	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL &&
 	           xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
 		guint broadcastid;
 
@@ -754,7 +754,7 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 }
 
 /**
- * Register a object to the IPC core. This needs to be done if you 
+ * Register a object to the IPC core. This needs to be done if you
  * want to send commands to that object from the client.
  */
 void
@@ -792,7 +792,7 @@ xmms_ipc_init (void)
  * Shutdown a IPC Server
  */
 void
-xmms_ipc_shutdown_server(xmms_ipc_t *ipc) 
+xmms_ipc_shutdown_server(xmms_ipc_t *ipc)
 {
 	GList *c;
 	xmms_ipc_client_t *co;
