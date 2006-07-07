@@ -94,8 +94,8 @@ xmms_xform_browse_add_entry (GList *list,
 }
 
 static GList *
-xmms_xform_browse (xmms_xform_object_t *obj, 
-                   const gchar *url, 
+xmms_xform_browse (xmms_xform_object_t *obj,
+                   const gchar *url,
                    xmms_error_t *error)
 {
 	GList *list = NULL;
@@ -157,8 +157,8 @@ xmms_xform_object_init (void)
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_XFORM, XMMS_OBJECT (obj));
 
-	xmms_object_cmd_add (XMMS_OBJECT (obj), 
-	                     XMMS_IPC_CMD_BROWSE, 
+	xmms_object_cmd_add (XMMS_OBJECT (obj),
+	                     XMMS_IPC_CMD_BROWSE,
 	                     XMMS_CMD_FUNC (browse));
 
 	return obj;
