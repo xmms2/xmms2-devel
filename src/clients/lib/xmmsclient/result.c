@@ -33,7 +33,6 @@
 static void xmmsc_result_cleanup_data (xmmsc_result_t *res);
 static void free_dict_list (x_list_t *list);
 static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
-static xmmsc_coll_t *xmmsc_deserialize_coll (xmms_ipc_msg_t *msg);
 static int source_match_pattern (char* source, char* pattern);
 
 typedef struct xmmsc_result_value_St {
@@ -456,7 +455,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			{
 				xmmsc_coll_t *coll;
 
-				coll = xmmsc_deserialize_coll (msg);
+				xmms_ipc_msg_get_collection_alloc (msg, &coll);
 				if (!coll)
 					return false;
 
@@ -1304,7 +1303,7 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL:
-			val->value.coll = xmmsc_deserialize_coll (msg);
+			xmms_ipc_msg_get_collection_alloc (msg, &val->value.coll);
 			if (!val->value.coll) {
 				goto err;
 			}
@@ -1362,94 +1361,6 @@ err:
 	x_internal_error ("Message from server did not parse correctly!");
 
 	free_dict_list (n);
-
-	return NULL;
-}
-
-static xmmsc_coll_t *
-xmmsc_deserialize_coll (xmms_ipc_msg_t *msg)
-{
-	unsigned int i;
-	unsigned int type;
-	unsigned int n_items;
-	unsigned int id;
-	xmmsc_coll_t *coll = NULL;
-	uint32_t *idlist = NULL;
-	char *key, *val;
-
-	/* Get the type and create the collection */
-	if (!xmms_ipc_msg_get_uint32 (msg, &type)) {
-		return NULL;
-	}
-
-	coll = xmmsc_coll_new (type);
-
-	/* Get the list of attributes */
-	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
-		goto err;
-	}
-
-	for (i = 0; i < n_items; i++) {
-		unsigned int len;
-		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len)) {
-			goto err;
-		}
-		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len)) {
-			free (key);
-			goto err;
-		}
-
-		xmmsc_coll_attribute_set (coll, key, val);
-	}
-
-	/* Get the idlist */
-	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
-		goto err;
-	}
-
-	if (!(idlist = x_new (uint32_t, n_items))) {
-		x_oom();
-		goto err;
-	}
-
-	for (i = 0; i < n_items; i++) {
-		if (!xmms_ipc_msg_get_uint32 (msg, &id)) {
-			goto err;
-		}
-
-		idlist[i] = id;
-	}
-
-	idlist[i] = 0;
-	xmmsc_coll_set_idlist (coll, idlist);
-	free (idlist);
-	idlist = NULL;
-
-	/* Get the operands */
-	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
-		goto err;
-	}
-
-	for (i = 0; i < n_items; i++) {
-		xmmsc_coll_t *operand;
-
-		if (!(operand = xmmsc_deserialize_coll (msg))) {
-			goto err;
-		}
-
-		xmmsc_coll_add_operand (coll, operand);
-	}
-
-	return coll;
-
-err:
-	x_internal_error ("Message from server did not parse correctly!");
-
-	if(idlist != NULL) {
-		free (idlist);
-	}
-
-	xmmsc_coll_free (coll);
 
 	return NULL;
 }

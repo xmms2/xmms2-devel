@@ -489,3 +489,87 @@ xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *buf, unsigned int maxlen)
 
 	return true;
 }
+
+bool
+xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
+{
+	unsigned int i;
+	unsigned int type;
+	unsigned int n_items;
+	unsigned int id;
+	uint32_t *idlist = NULL;
+	char *key, *val;
+
+	/* Get the type and create the collection */
+	if (!xmms_ipc_msg_get_uint32 (msg, &type)) {
+		return false;
+	}
+
+	*coll = xmmsc_coll_new (type);
+
+	/* Get the list of attributes */
+	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		unsigned int len;
+		if (!xmms_ipc_msg_get_string_alloc (msg, &key, &len)) {
+			goto err;
+		}
+		if (!xmms_ipc_msg_get_string_alloc (msg, &val, &len)) {
+			free (key);
+			goto err;
+		}
+
+		xmmsc_coll_attribute_set (*coll, key, val);
+	}
+
+	/* Get the idlist */
+	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
+		goto err;
+	}
+
+	if (!(idlist = x_new (uint32_t, n_items))) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		if (!xmms_ipc_msg_get_uint32 (msg, &id)) {
+			goto err;
+		}
+
+		idlist[i] = id;
+	}
+
+	idlist[i] = 0;
+	xmmsc_coll_set_idlist (*coll, idlist);
+	free (idlist);
+	idlist = NULL;
+
+	/* Get the operands */
+	if (!xmms_ipc_msg_get_uint32 (msg, &n_items)) {
+		goto err;
+	}
+
+	for (i = 0; i < n_items; i++) {
+		xmmsc_coll_t *operand;
+
+		if (!xmms_ipc_msg_get_collection_alloc (msg, &operand)) {
+			goto err;
+		}
+
+		xmmsc_coll_add_operand (*coll, operand);
+	}
+
+	return true;
+
+err:
+	if(idlist != NULL) {
+		free (idlist);
+	}
+
+	xmmsc_coll_free (coll);
+
+	return false;
+}
