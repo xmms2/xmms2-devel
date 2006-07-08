@@ -364,7 +364,7 @@ main (int argc, char **argv)
 	int loglevel = 1;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
-	gchar *default_path, *tmp;
+	gchar default_path[XMMS_PATH_MAX + 16], *tmp;
 
 	const gchar *vererr;
 
@@ -374,7 +374,6 @@ main (int argc, char **argv)
 	gboolean nologging = FALSE;
 	const gchar *outname = NULL;
 	const gchar *ipcpath = NULL;
-	gchar **ipcpath_split = NULL;
 	gchar *ppath = NULL;
 	int status_fd = -1;
 	GOptionContext *context = NULL;
@@ -437,8 +436,8 @@ main (int argc, char **argv)
 
 	load_config ();
 
-	default_path = g_strdup_printf ("unix:///tmp/xmms-ipc-%s",
-	                                g_get_user_name ());
+	g_strlcpy (default_path, "unix:///tmp/xmms-ipc-", sizeof (default_path));
+	g_strlcat (default_path, g_get_user_name (), sizeof (default_path));
 
 	cv = xmms_config_property_register ("core.ipcsocket",
 	                                    default_path,
@@ -519,11 +518,12 @@ main (int argc, char **argv)
 	mainobj->starttime = time (NULL);
 
 	/* Dirty hack to tell XMMS_PATH a valid path */
-	ipcpath_split = g_strsplit(ipcpath, ";", 2);
-	if(ipcpath_split && ipcpath_split[0]) {
-		g_snprintf (default_path, sizeof (default_path), "%s", ipcpath_split[0]);
+	g_strlcpy (default_path, ipcpath, sizeof (default_path));
+
+	tmp = strchr (default_path, ';');
+	if (tmp) {
+		*tmp = '\0';
 	}
-	g_strfreev(ipcpath_split);
 
 	putenv (g_strdup_printf ("XMMS_PATH=%s", default_path));
 
