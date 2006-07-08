@@ -15,7 +15,7 @@
  */
 
 
-/** @file 
+/** @file
  * Simple launcher that spawns off xmms2d in the background.
  * The launcher exits when xmms2d's ipc is up.
  */

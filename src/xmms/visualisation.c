@@ -18,7 +18,7 @@
 
 
 /** @file
- * 
+ *
  */
 
 #include <math.h>
@@ -39,7 +39,7 @@
   */
 
 /**
- * The structure for the vis module 
+ * The structure for the vis module
  */
 struct xmms_visualisation_St {
 	xmms_object_t object;
