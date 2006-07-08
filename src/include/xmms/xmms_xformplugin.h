@@ -292,7 +292,8 @@ xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
  */
 xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
 
-GList *xmms_xform_browse_add_entry (GList *list, const gchar *path, gboolean is_dir);
+GList *xmms_xform_browse_add_entry (GList *list, const gchar *path, 
+                                    gboolean is_dir, GHashTable *extended_info);
 
 /**
  * @}
