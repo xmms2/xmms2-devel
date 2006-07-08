@@ -73,20 +73,33 @@ static xmms_xform_t *add_effects (xmms_xform_t *last, xmms_medialib_entry_t entr
                                   GList *goal_formats);
 static void xmms_xform_destroy (xmms_object_t *object);
 
+static void
+copy_entry (gpointer key, gpointer value, gpointer user_data)
+{
+	GHashTable *target = user_data;
+	gchar *k = key;
+	g_hash_table_insert (target, g_strdup (k), value);
+}
+
 GList *
 xmms_xform_browse_add_entry (GList *list,
                              const gchar *path,
-                             gboolean is_dir)
+                             gboolean is_dir,
+                             GHashTable *extended_info)
 {
 	GHashTable *hsh;
 
 	g_return_val_if_fail (path, NULL);
 	
 	hsh = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                             NULL, xmms_object_cmd_value_free);
+	                             g_free, xmms_object_cmd_value_free);
 
-	g_hash_table_insert (hsh, "path", xmms_object_cmd_value_str_new (path));
-	g_hash_table_insert (hsh, "isdir", xmms_object_cmd_value_int_new (is_dir));
+	if (extended_info) {
+		g_hash_table_foreach (extended_info, copy_entry, (gpointer) hsh);
+	}
+
+	g_hash_table_insert (hsh, g_strdup ("path"), xmms_object_cmd_value_str_new (path));
+	g_hash_table_insert (hsh, g_strdup ("isdir"), xmms_object_cmd_value_int_new (is_dir));
 
 	list = g_list_prepend (list, xmms_object_cmd_value_dict_new (hsh));
 
