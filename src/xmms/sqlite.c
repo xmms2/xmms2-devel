@@ -31,7 +31,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 28
+#define DB_VERSION 29
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -112,6 +112,22 @@ upgrade_v27_to_v28 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+upgrade_v28_to_v29 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v28->v29");
+
+	sqlite3_exec (sql, "delete from Media where source in"
+	              "(select id from Sources where source like 'plugin%')",
+	              NULL, NULL, NULL);
+	sqlite3_exec (sql, "delete from Sources where source like 'plugin%'",
+	              NULL, NULL, NULL);
+	sqlite3_exec (sql, "update Media set value=0 where key='resolved'",
+	              NULL, NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
 
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
@@ -123,6 +139,9 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v26_to_v27 (sql);
 		case 27:
 			upgrade_v27_to_v28 (sql);
+			break;
+		case 28:
+			upgrade_v28_to_v29 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
