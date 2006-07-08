@@ -770,7 +770,7 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 {
 	xmms_medialib_session_t *session;
 	xmms_xform_t *xform, *last;
-	const gchar *url;
+	gchar *url;
 	gchar *durl, *args;
 	GString *namestr;	
 
