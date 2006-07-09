@@ -204,6 +204,7 @@ xmms_file_browse (xmms_xform_t *xform,
                   const gchar *url,
                   xmms_error_t *error)
 {
+	GHashTable *h;
 	GList *ret = NULL;
 	GDir *dir;
 	GError *err = NULL;
@@ -218,19 +219,24 @@ xmms_file_browse (xmms_xform_t *xform,
 		return NULL;
 	}
 
+
 	while ((d = g_dir_read_name (dir))) {
 		gboolean is_dir = FALSE;
 		gchar *t = g_build_filename (tmp, d, NULL);
 		gchar *t2 = xmms_medialib_url_encode (t);
 		gchar *file = g_strdup_printf ("file://%s", t2);
 		g_free (t2);
+		
+		h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
 		if (!stat (t, &st)) {
 			if (S_ISDIR (st.st_mode)) {
 				is_dir = TRUE;
 			}
 		}
-		ret = xmms_xform_browse_add_entry (ret, file, is_dir);
+		g_hash_table_insert (h, "size", xmms_object_cmd_value_int_new (st.st_size));
+		ret = xmms_xform_browse_add_entry (ret, file, is_dir, h);
+		g_hash_table_destroy (h);
 		g_free (t);
 		g_free (file);
 	}
