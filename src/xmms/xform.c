@@ -781,7 +781,6 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_medialib_end (session);
 
 	durl = g_strdup (url);
-	g_free (url);
 
 	args = strchr (durl, '?');
 	if (args) {
@@ -825,6 +824,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 			xmms_log_error ("Couldn't set up chain for '%s' (%d)",
 			                url, entry);
 			xmms_object_unref (last);
+			g_free (url);
+
 			return NULL;
 		}
 		xmms_object_unref (last);
@@ -844,6 +845,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_xform_metadata_collect (last, namestr);
 	xmms_log_info ("Successfully setup chain for '%s' (%d) containing %s",
 	               url, entry, namestr->str);
+
+	g_free (url);
 	g_string_free (namestr, TRUE);
 
 	return last;
