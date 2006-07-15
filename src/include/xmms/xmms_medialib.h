@@ -58,6 +58,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN "chain"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED "timesplayed"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET "partofset"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT "picture_front"
 
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;

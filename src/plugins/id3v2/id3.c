@@ -304,6 +304,33 @@ handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	g_free (val);
 }
 
+static void
+handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
+{
+	/*gchar enc = buf[0];*/
+	gchar *mime = g_strdup ((gchar *)buf+1);
+	gint l2 = strlen (mime);
+	
+	buf = buf + l2 + 2;
+	len -= (l2 + 2);
+
+	if (buf[0] == 0x00 || buf[0] == 0x03) {
+		gchar *data;
+		gchar *desc = (gchar *)buf+1;
+		buf = buf + strlen (desc) + 2;
+		len -= (strlen (desc) - 2);
+		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
+		data = g_base64_encode (buf, len);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, data);
+		g_free (data);
+	} else {
+		XMMS_DBG ("Picture type %x not handled", buf[0]);
+	}
+
+	
+}
+
 struct id3tags_t {
 	guint32 type;
 	gchar *prop;
@@ -327,6 +354,7 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
 	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
+	{ quad2long('A','P','I','C'), NULL, handle_id3v2_apic },
 	{ 0, NULL, NULL }
 };
 
@@ -494,7 +522,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			
 			flags = buf[8] | buf[9];
 
-			if (buf[0] == 'T' || buf[0] == 'U') {
+			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A') {
 				handle_id3v2_text (xform, head, type, buf + 10, flags, size);
 			}
 			
