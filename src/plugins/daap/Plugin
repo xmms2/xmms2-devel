@@ -1,0 +1,3 @@
+target="daap"
+source=["daap_xform.c", "daap_cmd.c", "daap_conn.c", "daap_util.c", "daap_md5.c", "cc_handlers.c"]
+
