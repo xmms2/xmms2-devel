@@ -331,7 +331,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	 */
 	session = xmms_medialib_begin_write ();
 	xmms_medialib_end (session);
-	
+
 	return TRUE;
 }
 
@@ -389,11 +389,11 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 		g_hash_table_remove (xmms_medialib_debug_hash, me);
 		g_mutex_unlock (xmms_medialib_debug_mutex);
 	}
-	
+
 	if (session->write) {
 		xmms_sqlite_exec (session->sql, "COMMIT");
 	}
-	
+
 	if (session == global_medialib_session) {
 		g_mutex_unlock (global_medialib_session_mutex);
 		return;
@@ -463,7 +463,7 @@ xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session,
 
 	g_return_val_if_fail (property, NULL);
 	g_return_val_if_fail (session, NULL);
-	
+
 	xmms_sqlite_query_array (session->sql, xmms_medialib_cmd_value_cb,
 	                         &ret, XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
 	                         property, entry, session->source);
@@ -825,7 +825,7 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
 	xmms_mediainfo_reader_wakeup (mr);
-	
+
 }
 
 static void
@@ -855,7 +855,7 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
 	xmms_mediainfo_reader_wakeup (mr);
-	
+
 }
 
 static xmms_medialib_entry_t
@@ -915,7 +915,7 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
 		}
 
 		ret++; /* next id */
-		
+
 		if (!xmms_medialib_entry_new_insert (session, ret, url, error))
 			return 0;
 	}
@@ -1004,7 +1004,7 @@ xmms_medialib_entry_to_list (xmms_medialib_session_t *session, xmms_medialib_ent
 
 	g_return_val_if_fail (session, NULL);
 	g_return_val_if_fail (entry, NULL);
-	
+
 	s = xmms_sqlite_query_array (session->sql, xmms_medialib_list_cb,
 	                             &ret,
 	                             "select s.source, m.key, "
@@ -1174,12 +1174,8 @@ xmms_medialib_playlist_add (xmms_medialib_session_t *session,
 	                        "(playlist_id, entry) "
 	                        "values (%u, %Q)",
 	                        playlist_id, mid);
-	if (!ret) {
-		return FALSE;
-	}
 
-	return TRUE;
-
+	return !!ret;
 }
 
 
@@ -1196,7 +1192,7 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 	xmms_medialib_session_t *session;
 
 	session = xmms_medialib_begin ();
-	
+
 	plsid = get_playlist_id (session, playlistname);
 	if (!plsid) {
 		xmms_error_set (error, XMMS_ERROR_NOENT, "No such playlist!");
@@ -1245,7 +1241,8 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 }
 
 static void
-xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname, xmms_error_t *error)
+xmms_medialib_playlist_remove (xmms_medialib_t *medialib, gchar *playlistname,
+                               xmms_error_t *error)
 {
 	gint playlist_id;
 	xmms_medialib_session_t *session;
@@ -1269,10 +1266,11 @@ static gboolean
 xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	GList **n = udata;
+
 	/* strip mlib:// */
-	if (g_strncasecmp (row[0]->value.string, "mlib", 4) == 0) {
+	if (!g_strncasecmp (row[0]->value.string, "mlib", 4)) {
 		char *p = row[0]->value.string + 7;
-		*n = g_list_prepend (*n, xmms_object_cmd_value_uint_new((atoi(p))));
+		*n = g_list_prepend (*n, xmms_object_cmd_value_uint_new ((atoi (p))));
 	}
 
 	destroy_array (row);
@@ -1281,27 +1279,31 @@ xmms_medialib_playlist_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 }
 
 static GList *
-xmms_medialib_playlist_list (xmms_medialib_t *medialib, gchar *playlistname, xmms_error_t *error)
+xmms_medialib_playlist_list (xmms_medialib_t *medialib, gchar *playlistname,
+                             xmms_error_t *error)
 {
 	GList *ret = NULL;
 	gint playlist_id;
 	xmms_medialib_session_t *session;
 
 	session = xmms_medialib_begin ();
-	
+
 	playlist_id = get_playlist_id (session, playlistname);
 	if (!playlist_id) {
 		xmms_error_set (error, XMMS_ERROR_NOENT, "No such playlist!");
 		xmms_medialib_end (session);
 		return NULL;
 	}
-	
+
 	/* sorted by pos? */
-	xmms_sqlite_query_array (session->sql, xmms_medialib_playlist_list_cb, &ret, "select entry from Playlistentries where playlist_id=%d order by pos", playlist_id);
-	
+	xmms_sqlite_query_array (session->sql, xmms_medialib_playlist_list_cb,
+	                         &ret,
+	                         "select entry from Playlistentries "
+	                         "where playlist_id=%d order by pos", playlist_id);
+
 	ret = g_list_reverse (ret);
 	xmms_medialib_end (session);
-		
+
 	return ret;
 }
 
@@ -1309,7 +1311,9 @@ static gboolean
 xmms_medialib_playlists_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	GList **n = udata;
-	*n = g_list_prepend (*n, xmms_object_cmd_value_str_new(row[0]->value.string));
+
+	*n = g_list_prepend (*n,
+	                     xmms_object_cmd_value_str_new (row[0]->value.string));
 
 	destroy_array (row);
 
@@ -1323,13 +1327,14 @@ xmms_medialib_playlists_list (xmms_medialib_t *medialib, xmms_error_t *error)
 	xmms_medialib_session_t *session;
 
 	session = xmms_medialib_begin ();
-	
+
 	/* order by (smth)? */
-	xmms_sqlite_query_array (session->sql, xmms_medialib_playlists_list_cb, &ret, "select name from Playlist");
-	
+	xmms_sqlite_query_array (session->sql, xmms_medialib_playlists_list_cb,
+	                         &ret, "select name from Playlist");
+
 	ret = g_list_reverse (ret);
 	xmms_medialib_end (session);
-	
+
 	return ret;
 }
 
@@ -1342,13 +1347,16 @@ xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
 	xmms_medialib_session_t *session;
 
 	if (g_strcasecmp (source, "server") == 0) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "Can't write to source server!");
 		return;
 	}
 
 	session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
-	xmms_medialib_entry_property_set_str_source (session, entry, key, value, sourceid);
+
+	xmms_medialib_entry_property_set_str_source (session, entry, key, value,
+	                                             sourceid);
 	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
@@ -1363,13 +1371,15 @@ xmms_medialib_property_set_int_method (xmms_medialib_t *medialib, guint32 entry,
 	xmms_medialib_session_t *session;
 
 	if (g_strcasecmp (source, "server") == 0) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't write to source server!");
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "Can't write to source server!");
 		return;
 	}
 
 	session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
-	xmms_medialib_entry_property_set_int_source (session, entry, key, value, sourceid);
+	xmms_medialib_entry_property_set_int_source (session, entry, key, value,
+	                                             sourceid);
 	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
@@ -1384,7 +1394,9 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
 
 	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
 	sourceid = xmms_medialib_source_to_id (session, source);
-	xmms_sqlite_exec (session->sql, "delete from Media where source=%d and key='%s' and id=%d", sourceid, key, entry);
+	xmms_sqlite_exec (session->sql,
+	                  "delete from Media where source=%d and "
+	                  "key='%s' and id=%d", sourceid, key, entry);
 	xmms_medialib_end(session);
 }
 
@@ -1394,7 +1406,8 @@ xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry,
                                       xmms_error_t *error)
 {
 	if (g_strcasecmp (source, "server") == 0) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Can't remove properties set by the server!");
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "Can't remove properties set by the server!");
 		return;
 	}
 
@@ -1431,12 +1444,12 @@ xmms_medialib_playlist_import (xmms_medialib_t *medialib, gchar *name,
 
 /*	if (!xmms_playlist_plugin_import (playlist_id, entry)) {*/
 	if (FALSE) {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Could not import playlist!");
+		xmms_error_set (error, XMMS_ERROR_GENERIC,
+		                "Could not import playlist!");
 		return;
 	}
 
 	xmms_mediainfo_reader_wakeup (xmms_playlist_mediainfo_reader_get (medialib->playlist));
-
 }
 
 
@@ -1468,7 +1481,7 @@ xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
 		xmms_medialib_end (session);
 		return;
 	}
-		
+
 	/* finally, add the playlist entries */
 	entries = xmms_playlist_list (medialib->playlist, NULL);
 
@@ -1513,7 +1526,7 @@ get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata)
 	}
 
 	destroy_array (row);
-	
+
 	return TRUE;
 }
 
@@ -1550,7 +1563,8 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 		return;
 	}
 
-	ret = xmms_sqlite_query_array (session->sql, get_playlist_entries_cb, &entries,
+	ret = xmms_sqlite_query_array (session->sql, get_playlist_entries_cb,
+	                               &entries,
 	                               "select entry from PlaylistEntries "
 	                               "where playlist_id = %u "
 	                               "order by pos", playlist_id);
@@ -1627,11 +1641,7 @@ xmms_medialib_select (xmms_medialib_session_t *session,
 	ret = xmms_sqlite_query_table (session->sql, select_callback,
 	                               (void *)&res, error, "%s", query);
 
-	if (!ret)
-		return NULL;
-
-	res = g_list_reverse (res);
-	return res;
+	return ret ? g_list_reverse (res) : NULL;
 }
 
 /** @} */
@@ -1656,12 +1666,7 @@ xmms_medialib_check_id (xmms_medialib_entry_t entry)
 
 	xmms_medialib_end (session);
 
-	if (c>0) {
-		return TRUE;
-	}
-
-	return FALSE;
-
+	return c > 0;
 }
 
 
@@ -1701,7 +1706,8 @@ xmms_medialib_entry_not_resolved_get (xmms_medialib_session_t *session)
 	g_return_val_if_fail (session, 0);
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
-	                         "select id from Media where key='%s' and source=%d and value=0 limit 1",
+	                         "select id from Media where key='%s' "
+	                         "and source=%d and value=0 limit 1",
 	                         XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
 	                         session->source);
 
