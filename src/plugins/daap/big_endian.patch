@@ -1,0 +1,40 @@
+--- cc_handlers.c	2006-06-07 22:07:59.000000000 -0500
++++ cc_handlers.c.be	2006-06-07 23:12:38.000000000 -0500
+@@ -29,24 +29,29 @@
+ 
+ void endian_swap_int16(gint16 *i)
+ {
++#if 0
+ 	gint16 tmp;
+ 	tmp = (gint16) (((*i >>  8) & 0x00FF) |
+ 	                ((*i <<  8) & 0xFF00));
+ 	*i = tmp;
++#endif
+ }
+ 
+ void endian_swap_int32(gint32 *i)
+ {
++#if 0
+ 	gint32 tmp;
+ 	tmp = (gint32) (((*i >> 24) & 0x000000FF) |
+ 	                ((*i >>  8) & 0x0000FF00) |
+ 	                ((*i <<  8) & 0x00FF0000) |
+ 	                ((*i << 24) & 0xFF000000));
+ 	*i = tmp;
++#endif
+ }
+ 
+ void endian_swap_int64(gint64 *i)
+ {
++#if 0
+ 	gint64 tmp;
+ 	tmp = (gint64) (                ((*i >> 40) & 0x00000000000000FF) |
+ 	                                ((*i >> 32) & 0x000000000000FF00) |
+@@ -57,6 +62,7 @@
+ 	               G_GINT64_CONSTANT((*i << 32) & 0x00FF000000000000) |
+ 	               G_GINT64_CONSTANT((*i << 40) & 0xFF00000000000000));
+ 	*i = tmp;
++#endif
+ }
+ 
+ gboolean is_valid_cc(gchar *cc)
