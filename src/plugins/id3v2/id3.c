@@ -329,7 +329,6 @@ static struct id3tags_t tags[] = {
 	{ 0, NULL, NULL }
 };
 
-
 static void
 handle_id3v2_text (xmms_xform_t *xform, xmms_id3v2_header_t *head,
                    guint32 type, guchar *buf, guint flags, gint len)
@@ -420,6 +419,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
                   guchar *buf, xmms_id3v2_header_t *head)
 {
 	gint len=head->len;
+	gboolean broken_version4_frame_size_hack = FALSE;
 
 	if ((head->flags & ~ID3v2_HEADER_SUPPORTED_FLAGS) != 0) {
 		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
@@ -446,7 +446,6 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 		guint flags;
 		guint32 type;
 
-
 		if (head->ver == 3 || head->ver == 4) {
 			if ( len < 10) {
 				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
@@ -457,7 +456,34 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			if (head->ver == 3) {
 				size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
 			} else {
-				size = (buf[4]<<21) | (buf[5]<<14) | (buf[6]<<7) | (buf[7]);
+				guchar *tmp;
+				guint next_size;
+
+				if (!broken_version4_frame_size_hack) {
+					size = (buf[4]<<21) | (buf[5]<<14) | (buf[6]<<7) | (buf[7]);
+					/* The specs say the above, but many taggers (inluding iTunes)
+					 * don't follow the spec and writes the int without synchsafe.
+					 * Since we want to be according to the spec we try correct
+					 * behaviour first, if that doesn't work out we try the former
+					 * behaviour. Yay for specficiations.
+					 *
+					 * Identification of "erronous" frames aren't that pretty. We
+					 * just check if the next frame seems to have a vaild size.
+					 * This should probably be done better in the future.
+					 * FIXME
+					 */
+					tmp = buf+10+size;
+					next_size = (tmp[4]<<21) | (tmp[5]<<14) | (tmp[6]<<7) | (tmp[7]);
+
+					if (next_size+10 > (len-size)) {
+						XMMS_DBG ("Uho, seems like someone isn't using synchsafe integers here...");
+						broken_version4_frame_size_hack = TRUE;
+					}
+				}
+
+				if (broken_version4_frame_size_hack) {
+					size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
+				}
 			}
 
 			if (size+10 > len) {
