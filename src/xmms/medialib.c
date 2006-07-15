@@ -39,6 +39,7 @@
 
 
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
+static gboolean get_playlist_entries (sqlite3 *sql, gint plsid, GList **entries);
 static gboolean get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata);
 static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
 gchar *xmms_medialib_url_encode (const gchar *path);
@@ -1200,10 +1201,7 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 		return NULL;
 	}
 
-	ret = xmms_sqlite_query_array (session->sql, get_playlist_entries_cb, &entries,
-	                               "select entry from PlaylistEntries "
-	                               "where playlist_id = %u "
-	                               "order by pos", plsid);
+	ret = get_playlist_entries (session->sql, plsid, &entries);
 
 	xmms_medialib_end (session);
 
@@ -1211,8 +1209,6 @@ xmms_medialib_playlist_export (xmms_medialib_t *medialib, gchar *playlistname,
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Failed to list entries!");
 		return NULL;
 	}
-
-	entries = g_list_reverse (entries);
 
 	list = g_malloc0 (sizeof (guint) * g_list_length (entries) + 1);
 	i = 0;
@@ -1512,6 +1508,19 @@ xmms_medialib_playlist_save_current (xmms_medialib_t *medialib,
 }
 
 static gboolean
+get_playlist_entries (sqlite3 *sql, gint plsid, GList **entries)
+{
+	/*
+	 * Let SQLite sort it descending, since get_playlist_entries_cb
+	 * prepends to entries. (thus re-reversing the entries)
+	 */
+	return xmms_sqlite_query_array (sql, get_playlist_entries_cb, entries,
+	                                "select entry from PlaylistEntries "
+	                                "where playlist_id = %u "
+	                                "order by pos desc", plsid);
+}
+
+static gboolean
 get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata)
 {
 	GList **entries = udata;
@@ -1563,11 +1572,8 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 		return;
 	}
 
-	ret = xmms_sqlite_query_array (session->sql, get_playlist_entries_cb,
-	                               &entries,
-	                               "select entry from PlaylistEntries "
-	                               "where playlist_id = %u "
-	                               "order by pos", playlist_id);
+	ret = get_playlist_entries (session->sql, playlist_id, &entries);
+
 	if (!ret) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "Couldn't retrieve playlist entries");
@@ -1577,11 +1583,6 @@ xmms_medialib_playlist_load (xmms_medialib_t *medialib, gchar *name,
 	}
 
 	xmms_medialib_end (session);
-
-	/* we use g_list_prepend() in get_playlist_entries_cb(), so
-	 * we need to reverse the list now
-	 */
-	entries = g_list_reverse (entries);
 
 	while (entries) {
 		gchar *entry = entries->data;
