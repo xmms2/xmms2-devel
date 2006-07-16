@@ -261,8 +261,12 @@ class PropDict(dict):
 		self._sources = srcs
 
 	def set_source_preference(self, sources):
-		"""Change list of source preference"""
-		self._sources = sources
+		"""
+		Change list of source preference
+		This method has been deprecated and should no longer be used.
+		"""
+		raise DeprecationWarning("This method has been deprecated and should no longer be used. Set the sources list using the 'sources' property.")
+		self._set_sources(sources)
 
 	def has_key(self, item):
 		try:
@@ -285,6 +289,17 @@ class PropDict(dict):
 					pass
 			raise KeyError, item
 		return dict.__getitem__(self, item)
+	
+	def _get_sources(self):
+		return self._sources
+	def _set_sources(self, val):
+		if not isinstance(val, list):
+			raise TypeError("Need a list of sources")
+		for i in val:
+			if not isinstance(i, basestring):
+				raise TypeError("Sources need to be strings")
+		self._sources = val
+	sources = property(_get_sources, _set_sources)
 	
 cdef class XMMSResult:
 	"""
