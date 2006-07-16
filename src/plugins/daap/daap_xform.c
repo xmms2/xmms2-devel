@@ -213,13 +213,19 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 {
 	/* TODO finish me */
 	xmms_daap_data_t *data;
-	gint read_bytes;
+	gint read_bytes = 0;
+	GIOStatus status;
 
 	data = xmms_xform_private_data_get(xform);
 
 	/* request is performed, header is stripped. now read the data. */
 	/* FIXME consider replacing this w/ a daap_command function? */
-	g_io_channel_read_chars(data->channel, buffer, len, &read_bytes, NULL);
+	while (read_bytes == 0) {
+		status = g_io_channel_read_chars(data->channel, buffer, len, &read_bytes, NULL);
+		if (status == G_IO_STATUS_EOF || status == G_IO_STATUS_ERROR) {
+			break;
+		}
+	}
 	
 	return read_bytes;
 }
