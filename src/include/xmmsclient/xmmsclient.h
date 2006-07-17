@@ -171,6 +171,9 @@ xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connect
 xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id, const char *key);
 xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key);
 
+/** XForm object */
+xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url);
+
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c);

@@ -1050,6 +1050,17 @@ static VALUE c_medialib_rehash (VALUE self, VALUE id)
 
 /*
  * call-seq:
+ *  xc.xform_media_browse(url) -> result
+ *
+ * returns a list of files from the server
+ */
+static VALUE c_xform_media_browse (VALUE self, VALUE url)
+{
+	METHOD_ADD_HANDLER_STR (xform_media_browse, url);
+}
+
+/*
+ * call-seq:
  *  xc.broadcast_mediainfo_reader_status -> result
  *
  * Requests the status of the mediainfo reader.
@@ -1251,6 +1262,8 @@ void Init_Client (VALUE mXmms)
 	                  c_medialib_playlist_export, 2);
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
+
+	rb_define_method (c, "xform_media_browse", c_xform_media_browse, 1);
 
 	rb_define_method (c, "broadcast_mediainfo_reader_status",
 	                  c_broadcast_mediainfo_reader_status, 0);

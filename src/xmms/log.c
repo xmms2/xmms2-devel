@@ -14,9 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
-/** @file 
+/** @file
  * Logging functions.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -33,7 +33,6 @@ xmms_log_init (gint verbosity)
 	                   GINT_TO_POINTER (verbosity));
 
 	xmms_log_info ("Initialized logging system :)");
-
 }
 
 void

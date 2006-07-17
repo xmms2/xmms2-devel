@@ -62,7 +62,8 @@ static props properties[] = {
 	{ "tracknumber",          XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
 	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
 	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
-	{ "comment"               XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
+	{ "comment",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
+	{ "discnumber",           XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, INTEGER },
 	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
 	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
 	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
@@ -302,6 +303,10 @@ xmms_vorbis_init (xmms_xform_t *xform)
 			gint i = 0;
 
 			s = g_strsplit (ptr->user_comments[temp], "=", 2);
+			if (!s[0] || !s[1]) {
+				g_strfreev (s);
+				continue;
+			}
 			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
 				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
