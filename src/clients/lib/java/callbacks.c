@@ -26,6 +26,7 @@
 #include <callbacks.h>
 #include <misc.h>
 #include <jni.h>
+#include <stdlib.h>
 
 
 void run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_data);
@@ -214,7 +215,7 @@ callback_dict_foreach_function (const void *key,
 	jstring jkey, jvalue;
 	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
-	
+
 	if (key == NULL || value == NULL) {
 		return;
 	}
@@ -316,7 +317,7 @@ run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_da
 	jlong jresult = 0;
 	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
-    
+
 	if (environment == NULL) {
 		return;
 	}
@@ -333,7 +334,7 @@ run_java_callback_result_void (xmmsc_result_t *res, jmethodID mid, void *user_da
 	                                 callbackObject, 
 	                                 mid, 
 	                                 jresult, 
-	                                 0);
+	                                 *((int*)user_data));
 }
 /*
  * call callbacks of form (void*), in java wrapped to (int)
@@ -343,7 +344,7 @@ run_java_callback_void (void *v, jmethodID mid)
 {
 	jobject callbackObject;
 	JNIEnv *environment = checkEnv ();
-	
+
 	if (environment == NULL) {
 		return;
 	}
@@ -379,6 +380,14 @@ getPointerToConnection (xmmsc_connection_t *c)
 	jlong connection;
 	*(xmmsc_connection_t **)(void *)&connection = c;
 	return connection;
+}
+
+void*
+convertIntToVoidP(int val)
+{
+	int *newval = (int*)malloc(sizeof(int));
+	*newval = val;
+	return newval;
 }
 
 /*

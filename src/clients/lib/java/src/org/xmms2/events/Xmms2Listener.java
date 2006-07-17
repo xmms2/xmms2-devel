@@ -14,12 +14,16 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.events;
 
 public interface Xmms2Listener {
+    public static final String PLAYLIST_TYPE = "PLAYLIST";
+    
     public static final String LIST_TYPE = "LIST";
 
-    public static final String MAP_TYPE = "MAP";
+    public static final String DICT_TYPE = "DICT";
+    
+    public static final String PROPDICT_TYPE = "PROPDICT";
 
     public static final String LONG_TYPE = "INT";
 
@@ -36,22 +40,24 @@ public interface Xmms2Listener {
     public static final String BOOL_TYPE = "BOOLEAN";
 
     public void xmms2ConnectionEstablished(Xmms2Event ev);
+    
+    public void xmms2MiscEvent(Xmms2Event ev);
 
     public void xmms2ErrorOccured(Xmms2Event ev);
 
     public void xmms2MedialibSelect(Xmms2Event ev);
 
-    public void xmms2ConfigvalChanged(Xmms2Event ev);
+    public void xmms2ConfigvalChanged(Xmms2ConfigEvent ev);
 
     public void xmms2PlaybackStatusChanged(Xmms2Event ev);
 
     public void xmms2PlaybackVolumeChanged(Xmms2Event ev);
 
-    public void xmms2PlaylistChanged(Xmms2Event ev);
+    public void xmms2PlaylistChanged(Xmms2PlaylistEvent ev);
 
-    public void xmms2PlaylistCurrentPositionChanged(Xmms2Event ev);
+    public void xmms2PlaylistCurrentPositionChanged(Xmms2PlaylistPositionEvent ev);
 
-    public void xmms2TitleChanged(Xmms2Event ev);
+    public void xmms2TitleChanged(Xmms2TitleEvent ev);
 
     public void xmms2MediareaderStatusChanged(Xmms2Event ev);
 

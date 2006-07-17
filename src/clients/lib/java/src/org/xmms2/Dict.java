@@ -16,19 +16,27 @@
 
 package org.xmms2;
 
-public class Xmms2Exception extends Exception {
-	private static final long serialVersionUID = 2143110896719541866L;
-	private String message = "Xmms2 exception occured";
+import java.util.HashMap;
 
-    public Xmms2Exception(String message) {
-        this.message = message;
-    }
+/**
+ * This class should reflect xmms2's dict's (not propdicts). It's more or
+ * less a standard HashMap, only difference are the putDictEntry() and
+ * getEntry methods which expect and return a String
+ */
 
-    public String getMessage() {
-        return message;
-    }
+public class Dict extends HashMap {
+	private static final long serialVersionUID = 6680740765293764269L;
 
-    public String getLocalizedMessage() {
-        return message;
-    }
+	public void putDictEntry(String key, String value){
+		super.put(key, value);
+	}
+	
+	public Object put(Object key, Object value){
+		putDictEntry(""+key, ""+value);
+		return value;
+	}
+	
+	public String getDictEntry(String key){
+		return ""+get(key);
+	}
 }

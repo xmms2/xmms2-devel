@@ -19,12 +19,11 @@ package org.xmms2;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
+import org.xmms2.events.*;
 import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
 import org.xmms2.xmms2bindings.Xmmsclient;
 import org.xmms2.xmms2bindings.XmmsclientConstants;
@@ -51,13 +50,17 @@ import org.xmms2.xmms2bindings.xmms_plugin_type_t;
 public final class Xmms2 {
     private static Xmms2 instance = null;
 
-    protected String serverip = "", serverport = "";
+    protected String ipcPath = null;
 
     private ArrayList listeners;
 
     private Xmms2Backoffice xbo;
 
     protected String sourcePref[], source;
+    
+    protected Playlist pl;
+    
+    private int tid = 0;
 
     private Xmms2(String clientname) throws UnsatisfiedLinkError,
             Xmms2Exception {
@@ -70,12 +73,16 @@ public final class Xmms2 {
         xbo = new Xmms2Backoffice(this, clientname);
         listeners = new ArrayList();
     }
+    
+    private synchronized int getNextTID(){
+    	return tid++;
+    }
 
-    public void addXmms2Listener(Xmms2Listener l) {
+    public synchronized void addXmms2Listener(Xmms2Listener l) {
         listeners.add(l);
     }
 
-    public void removeXmms2Listener(Xmms2Listener l) {
+    public synchronized void removeXmms2Listener(Xmms2Listener l) {
         if (listeners.contains(l))
             listeners.remove(l);
     }
@@ -108,6 +115,7 @@ public final class Xmms2 {
      */
     public void connect() throws Xmms2Exception {
         xbo.connect();
+        pl = new Playlist(this);
     }
 
     /**
@@ -165,353 +173,404 @@ public final class Xmms2 {
      * @param serverport
      */
     public void setConnectionParams(String serverip, String serverport) {
-        if (serverip != null && serverport != null) {
-            this.serverip = serverip;
-            this.serverport = serverport;
-        }
+        setConnectionParams("tcp://" + serverip + ":" + serverport);
+    }
+    
+    /**
+     * Set ipcPath here. This setting overrides everything else
+     * 
+     * @param ipcPath
+     */
+    public void setConnectionParams(String ipcPath) {
+        this.ipcPath = ipcPath;
     }
 
     /*
      * Following void returning functions work almost as their c-pendants
      */
-    private void handleNotifierTypePlayback(SWIGTYPE_p_xmmsc_result_St result) {
+    private synchronized int handleNotifierTypePlayback(SWIGTYPE_p_xmmsc_result_St result) {
+    	int t = getNextTID();
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.USER_DEFINED_CALLBACK_1, 0);
+                XmmsclientConstants.USER_DEFINED_CALLBACK_1, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void play() {
-        handleNotifierTypePlayback(Xmmsclient
+    public int play() {
+        return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_start(xbo.connectionOne));
     }
 
-    public void stop() {
-        handleNotifierTypePlayback(Xmmsclient
+    public int stop() {
+        return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_stop(xbo.connectionOne));
     }
 
-    public void pause() {
-        handleNotifierTypePlayback(Xmmsclient
+    public int pause() {
+        return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_pause(xbo.connectionOne));
     }
 
-    public void next() {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
+    public int next() {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
                 xbo.connectionOne, 1));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void prev() {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
+    public int prev() {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
                 xbo.connectionOne, -1));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void jumpBy(int x) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
+    protected int jumpBy(int x) {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
                 xbo.connectionOne, x));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void shuffle() {
-        handleNotifierTypePlayback(Xmmsclient
+    protected int shuffle() {
+        return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playlist_shuffle(xbo.connectionOne));
     }
 
-    public void clear() {
-        handleNotifierTypePlayback(Xmmsclient
+    protected int clear() {
+        return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playlist_clear(xbo.connectionOne));
     }
 
-    public void addId(int id) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_add_id(
+    protected int addId(long id) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_add_id(
                 xbo.connectionOne, id));
     }
 
-    public void addUrl(String url) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_add(
+    protected int addUrl(String url) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_add(
                 xbo.connectionOne, url));
     }
 
-    public void insertId(int id, int position) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_insert_id(
+    protected int insertId(long id, int position) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_insert_id(
                 xbo.connectionOne, position, id));
     }
 
-    public void insertUrl(String url, int position) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_insert(
+    protected int insertUrl(String url, int position) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_insert(
                 xbo.connectionOne, position, url));
     }
 
-    public void removeIndex(int index) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_remove(
+    protected int removeIndex(int index) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_remove(
                 xbo.connectionOne, index));
     }
 
-    public void sort(String by) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_sort(
+    protected int sort(String by) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_sort(
                 xbo.connectionOne, by));
     }
 
-    public void setNext(int index) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next(
+    protected int setNext(int index) {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next(
                 xbo.connectionOne, index));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void move(int sourceIndex, int destIndex) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_move(
+    protected int move(int sourceIndex, int destIndex) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_move(
                 xbo.connectionOne, sourceIndex, destIndex));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
     }
 
-    public void seek(int ms) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms(
+    public int seek(int ms) {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms(
                 xbo.connectionOne, ms));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void seekRel(int ms) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms_rel(
+    public int seekRel(int ms) {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms_rel(
                 xbo.connectionOne, ms));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void seekSamples(int samples) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples(
+    public int seekSamples(int samples) {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples(
                 xbo.connectionOne, samples));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void seekSamplesRel(int samples) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples_rel(
+    public int seekSamplesRel(int samples) {
+        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples_rel(
                 xbo.connectionOne, samples));
         handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_tickle(xbo.connectionOne));
+        return t;
     }
 
-    public void configvalSet(String key, String val) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_configval_set(
+    public int configvalSet(String key, String val) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_configval_set(
                 xbo.connectionOne, key, val));
     }
 
-    public void configvalAdd(String key, String val) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_configval_register(
+    public int configvalAdd(String key, String val) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_configval_register(
                 xbo.connectionOne, key, val));
     }
 
-    public void volumeSet(String channel, int value) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_volume_set(
+    public int volumeSet(String channel, int value) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_volume_set(
                 xbo.connectionOne, channel, value));
     }
 
-    public void killXmms2d() {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_quit(xbo.connectionOne));
+    public int killXmms2d() {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_quit(xbo.connectionOne));
     }
 
-    public void mlibAddUrl(String url) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_add_entry(
+    public int mlibAddUrl(String url) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_add_entry(
                 xbo.connectionOne, url));
     }
 
-    public void mlibAddToPlaylist(String sql) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_add_to_playlist(
+    public int mlibAddToPlaylist(String sql) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_add_to_playlist(
                 xbo.connectionOne, sql));
     }
 
-    public void mlibRemoveId(int id) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_remove_entry(
+    public int mlibRemoveId(int id) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_remove_entry(
                 xbo.connectionOne, id));
     }
 
-    public void mlibProperySetStr(int id, String key, String value) {
+    public int mlibPropertySetStr(int id, String key, String value) {
         if (source == null || source.equals(""))
-            handleNotifierTypePlayback(Xmmsclient
+            return handleNotifierTypePlayback(Xmmsclient
                     .xmmsc_medialib_entry_property_set_str(xbo.connectionOne, id,
                             key, value));
-        else
-            handleNotifierTypePlayback(Xmmsclient
+        return handleNotifierTypePlayback(Xmmsclient
                     .xmmsc_medialib_entry_property_set_str_with_source(
                             xbo.connectionOne, id, source, key, value));
     }
-
-    public void mlibProperySetInt(int id, String key, int value) {
+    
+    public int mlibPropertySetInt(int id, String key, int value) {
         if (source == null || source.equals(""))
-            handleNotifierTypePlayback(Xmmsclient
+            return handleNotifierTypePlayback(Xmmsclient
                     .xmmsc_medialib_entry_property_set_int(xbo.connectionOne, id,
                             key, value));
-        else
-            handleNotifierTypePlayback(Xmmsclient
+        return handleNotifierTypePlayback(Xmmsclient
                     .xmmsc_medialib_entry_property_set_int_with_source(
                             xbo.connectionOne, id, source, key, value));
     }
 
-    public void mlibProperyRemove(int id, String key) {
+    public int mlibPropertyRemove(int id, String key) {
         if (source == null || source.equals(""))
-            handleNotifierTypePlayback(Xmmsclient
+            return handleNotifierTypePlayback(Xmmsclient
                     .xmmsc_medialib_entry_property_remove(xbo.connectionOne,
                             id, key));
-        else
-            handleNotifierTypePlayback(Xmmsclient
+        return handleNotifierTypePlayback(Xmmsclient
                     .xmmsc_medialib_entry_property_remove_with_source(
                             xbo.connectionOne, id, source, key));
     }
 
-    public void saveCurrentPlaylist(String name) {
-        handleNotifierTypePlayback(Xmmsclient
+    public int saveCurrentPlaylist(String name) {
+        return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_medialib_playlist_save_current(xbo.connectionOne, name));
     }
 
-    public void mlibImportPlaylist(String url, String name) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_import(
+    public int mlibImportPlaylist(String url, String name) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_import(
                 xbo.connectionOne, name, url));
     }
 
-    public void mlibExportPlaylist(String name, String mime) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_export(
+    public int mlibExportPlaylist(String name, String mime) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_export(
                 xbo.connectionOne, name, mime));
     }
 
-    public void mlibLoadPlaylist(String name) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_load(
+    public int mlibLoadPlaylist(String name) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_load(
                 xbo.connectionOne, name));
     }
 
-    public void mlibRemovePlaylist(String name) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_remove(
+    public int mlibRemovePlaylist(String name) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_playlist_remove(
                 xbo.connectionOne, name));
     }
 
-    public void mlibRehash(int id) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_rehash(
+    public int mlibRehash(int id) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_rehash(
                 xbo.connectionOne, id));
     }
 
-    public void mlibPathImport(String url) {
-        handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_path_import(
+    public int mlibPathImport(String url) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_medialib_path_import(
                 xbo.connectionOne, url));
     }
 
     /*
      * Following methods notify all Xmms2Listeners with Xmms2Events.
      */
-    public void configvalListAsync() {
+    public int configvalListAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_configval_list(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, 0);
+                XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void configvalGetAsync(String key) {
+    public int configvalGetAsync(String key) {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_configval_get(
                 xbo.connectionOne, key);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, 0);
+                XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void volumeGetAsync() {
+    public int volumeGetAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playback_volume_get(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYBACK_VOLUME_CHANGED, 0);
+                XmmsclientConstants.CALLBACK_PLAYBACK_VOLUME_CHANGED, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void playlistListAsync() {
+    protected int playlistListAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_configval_list(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, 0);
+                XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void mlibGetTitleAsync(long id) {
+    public int mlibGetTitleAsync(long id) {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_medialib_get_info(
                 xbo.connectionOne, id);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.USER_DEFINED_CALLBACK_2, 0);
+                XmmsclientConstants.USER_DEFINED_CALLBACK_2, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void playlistGetCurrentIndexAsync() {
+    protected int playlistGetCurrentIndexAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playlist_current_pos(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYLIST_CURRENT_POSITION, 0);
+                XmmsclientConstants.CALLBACK_PLAYLIST_CURRENT_POSITION, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void getPlaybackStatusAsync() {
+    public int getPlaybackStatusAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playback_status(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYBACK_STATUS, 0);
+                XmmsclientConstants.CALLBACK_PLAYBACK_STATUS, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void mlibSelectAsync(String sql) {
+    public int mlibSelectAsync(String sql) {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_medialib_select(
                 xbo.connectionOne, sql);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.USER_DEFINED_CALLBACK_1, 0);
+                XmmsclientConstants.USER_DEFINED_CALLBACK_1, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void mlibPlaylistListAsync(String name) {
+    public int mlibPlaylistListAsync(String name) {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_medialib_playlist_list(xbo.connectionOne, name);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, 0);
+                XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void mlibPlaylistsListAsync() {
+    protected int mlibPlaylistsListAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_medialib_playlists_list(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_MEDIALIB_PLAYLIST_LOADED, 0);
+                XmmsclientConstants.CALLBACK_MEDIALIB_PLAYLIST_LOADED, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void mlibGetIDAsync(String url) {
+    public int mlibGetIDAsync(String url) {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_medialib_get_id(
                 xbo.connectionOne, url);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYBACK_ID, 0);
+                XmmsclientConstants.CALLBACK_PLAYBACK_ID, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void currentIDAsync() {
+    public int currentIDAsync() {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playback_current_id(xbo.connectionOne);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYBACK_ID, 0);
+                XmmsclientConstants.CALLBACK_PLAYBACK_ID, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
-    public void pluginsListAsync(xmms_plugin_type_t type) {
+    public int pluginsListAsync(xmms_plugin_type_t type) {
+    	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
                 xbo.connectionOne, type);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.USER_DEFINED_CALLBACK_3, 0);
+                XmmsclientConstants.USER_DEFINED_CALLBACK_3, 
+                Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
+        return t;
     }
 
     /*
      * Following methods wait for the result and return to the caller. THEY
      * BLOCK!
      */
-    public Map configvalListSync() throws Xmms2Exception {
+    public Dict configvalListSync() throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_configval_list(xbo.connectionTwo);
         Xmmsclient.xmmsc_result_wait(result);
@@ -520,8 +579,9 @@ public final class Xmms2 {
         }
         xbo.lockDictForeach();
         Xmmsclient.xmmsc_result_dict_foreach(result,
-                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 0);
-        Map map = xbo.unlockDictForeach();
+                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
+                Xmmsclient.convertIntToVoidP(0));
+        Dict map = xbo.unlockDictForeach();
         Xmmsclient.xmmsc_result_unref(result);
         return map;
     }
@@ -540,7 +600,7 @@ public final class Xmms2 {
         return value[0];
     }
 
-    public Map volumeGetSync() throws Xmms2Exception {
+    public Dict volumeGetSync() throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playback_volume_get(xbo.connectionTwo);
         Xmmsclient.xmmsc_result_wait(result);
@@ -549,31 +609,11 @@ public final class Xmms2 {
         }
         xbo.lockDictForeach();
         Xmmsclient.xmmsc_result_dict_foreach(result,
-                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 0);
-        Map vol = xbo.unlockDictForeach();
+                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
+                Xmmsclient.convertIntToVoidP(0));
+        Dict vol = xbo.unlockDictForeach();
         Xmmsclient.xmmsc_result_unref(result);
         return vol;
-    }
-
-    public List playlistListSync() throws Xmms2Exception {
-        SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
-                .xmmsc_configval_list(xbo.connectionTwo);
-        Xmmsclient.xmmsc_result_wait(result);
-        if (!xbo.isError(result).equals("")) {
-            throw new Xmms2Exception(xbo.isError(result));
-        }
-        ArrayList pl = new ArrayList();
-        if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
-            Xmmsclient.xmmsc_result_list_first(result);
-            long id[] = new long[1];
-            while (Xmmsclient.xmmsc_result_list_valid(result) == 1) {
-                Xmmsclient.xmmsc_result_get_uint(result, id);
-                pl.add(new Long(id[0]));
-                Xmmsclient.xmmsc_result_list_next(result);
-            }
-        }
-        Xmmsclient.xmmsc_result_unref(result);
-        return pl;
     }
 
     public Title mlibGetTitleSync(long id) throws Xmms2Exception {
@@ -587,23 +627,11 @@ public final class Xmms2 {
         if (sourcePref != null)
             Xmmsclient.xmmsc_result_source_preference_set(result, sourcePref);
         Xmmsclient.xmmsc_result_propdict_foreach(result,
-                XmmsclientConstants.CALLBACK_PROPDICT_FOREACH_FUNCTION, 0);
+                XmmsclientConstants.CALLBACK_PROPDICT_FOREACH_FUNCTION, 
+                Xmmsclient.convertIntToVoidP(0));
         Title t = xbo.unlockTitle();
         Xmmsclient.xmmsc_result_unref(result);
         return t;
-    }
-
-    public long playlistGetCurrentIndexSync() throws Xmms2Exception {
-        SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
-                .xmmsc_playlist_current_pos(xbo.connectionTwo);
-        Xmmsclient.xmmsc_result_wait(result);
-        if (!xbo.isError(result).equals("")) {
-            throw new Xmms2Exception(xbo.isError(result));
-        }
-        long[] pos = new long[1];
-        Xmmsclient.xmmsc_result_get_uint(result, pos);
-        Xmmsclient.xmmsc_result_unref(result);
-        return pos[0];
     }
 
     public long getPlaybackStatusSync() throws Xmms2Exception {
@@ -632,7 +660,8 @@ public final class Xmms2 {
             while (Xmmsclient.xmmsc_result_list_valid(result) == 1) {
                 xbo.lockDictForeach();
                 Xmmsclient.xmmsc_result_dict_foreach(result,
-                        XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 0);
+                        XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
+                        Xmmsclient.convertIntToVoidP(0));
                 entries.add(xbo.unlockDictForeach());
                 Xmmsclient.xmmsc_result_list_next(result);
             }
@@ -648,39 +677,18 @@ public final class Xmms2 {
         if (!xbo.isError(result).equals("")) {
             throw new Xmms2Exception(xbo.isError(result));
         }
-        ArrayList pl = new ArrayList();
+        ArrayList l = new ArrayList();
         if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
             Xmmsclient.xmmsc_result_list_first(result);
             long id[] = new long[1];
             while (Xmmsclient.xmmsc_result_list_valid(result) == 1) {
                 Xmmsclient.xmmsc_result_get_uint(result, id);
-                pl.add(new Long(id[0]));
+                l.add(new Long(id[0]));
                 Xmmsclient.xmmsc_result_list_next(result);
             }
         }
         Xmmsclient.xmmsc_result_unref(result);
-        return pl;
-    }
-
-    public List mlibPlaylistsListSync() throws Xmms2Exception {
-        SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
-                .xmmsc_medialib_playlists_list(xbo.connectionTwo);
-        Xmmsclient.xmmsc_result_wait(result);
-        if (!xbo.isError(result).equals("")) {
-            throw new Xmms2Exception(xbo.isError(result));
-        }
-        List entries = new LinkedList();
-        if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
-            Xmmsclient.xmmsc_result_list_first(result);
-            while (Xmmsclient.xmmsc_result_list_valid(result) == 1) {
-                String name[] = new String[1];
-                Xmmsclient.xmmsc_result_get_string(result, name);
-                entries.add(name[0]);
-                Xmmsclient.xmmsc_result_list_next(result);
-            }
-        }
-        Xmmsclient.xmmsc_result_unref(result);
-        return entries;
+        return l;
     }
 
     public long mlibGetIDSync(String url) throws Xmms2Exception {
@@ -709,14 +717,14 @@ public final class Xmms2 {
         return id[0];
     }
 
-    public Map pluginsListSync(xmms_plugin_type_t type) throws Xmms2Exception {
+    public Dict pluginsListSync(xmms_plugin_type_t type) throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
                 xbo.connectionTwo, type);
         Xmmsclient.xmmsc_result_wait(result);
         if (!xbo.isError(result).equals("")) {
             throw new Xmms2Exception(xbo.isError(result));
         }
-        HashMap map = new HashMap();
+        Dict map = new Dict();
         if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
             Xmmsclient.xmmsc_result_list_first(result);
             String shortDes[] = new String[1];
@@ -726,12 +734,16 @@ public final class Xmms2 {
                         "shortname", shortDes) == 1) {
                     Xmmsclient.xmmsc_result_get_dict_entry_str(result,
                             "shortname", longDes);
-                    map.put(shortDes[0], longDes[0]);
+                    map.putDictEntry(shortDes[0], longDes[0]);
                 }
                 Xmmsclient.xmmsc_result_list_next(result);
             }
         }
         Xmmsclient.xmmsc_result_unref(result);
         return map;
+    }
+    
+    public Playlist getPlaylist(){
+    	return pl;
     }
 }

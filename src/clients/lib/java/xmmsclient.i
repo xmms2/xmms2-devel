@@ -21,7 +21,6 @@
 %include "arrays_java.i"
 
 %apply int *INOUT { int* };
-%apply int *INPUT { void* };
 %apply unsigned int *INOUT { unsigned int* };
 %apply char **STRING_OUT { char ** };
 %apply char **STRING_ARRAY { char **preference };
