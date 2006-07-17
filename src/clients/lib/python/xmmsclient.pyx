@@ -945,7 +945,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_volume_changed(self.conn)
-		ret.more_init()
+		ret.more_init(1)
 		
 		return ret
 
@@ -1700,7 +1700,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_broadcast_mediainfo_reader_status(self.conn)
-		ret.more_init()
+		ret.more_init(1)
 		return ret
 
 	def xform_media_browse(self, url, cb=None):
