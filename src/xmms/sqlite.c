@@ -199,17 +199,19 @@ xmms_sqlite_open (gboolean *create)
 		              xmms_sqlite_version_cb, &version, NULL);
 
 		if (version != DB_VERSION && !try_upgrade (sql, version)) {
-			gchar old[XMMS_PATH_MAX];
+			gchar *old;
 
 			sqlite3_close (sql);
-			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old",
-			            g_get_home_dir ());
+
+			old = XMMS_BUILD_PATH ("medialib.db.old");
 			rename (dbpath, old);
 			if (sqlite3_open (dbpath, &sql)) {
 				xmms_log_fatal ("Error creating sqlite db: %s",
 				                sqlite3_errmsg (sql));
 				return NULL;
 			}
+			g_free (old);
+
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 			*create = TRUE;
 		}

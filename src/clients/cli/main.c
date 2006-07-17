@@ -103,11 +103,11 @@ read_config ()
 	FILE *fp;
 
 	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (), 
-	                     ".xmms2", "clients", "cli.conf", NULL);
+	                     ".config", "xmms2", "clients", "cli.conf", NULL);
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
 		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
-		                           ".xmms2", "clients", NULL);
+		                           ".config", "xmms2", "clients", NULL);
 		mkdir (dir, 0755);
 		g_free (dir);
 

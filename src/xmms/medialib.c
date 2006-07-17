@@ -236,7 +236,7 @@ xmms_medialib_session_new (const char *file, int line)
 gboolean
 xmms_medialib_init (xmms_playlist_t *playlist)
 {
-	gchar path[XMMS_PATH_MAX+1];
+	gchar *path;
 	xmms_medialib_session_t *session;
 
 	medialib = xmms_object_new (xmms_medialib_t, xmms_medialib_destroy);
@@ -302,13 +302,15 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	                     XMMS_IPC_CMD_PROPERTY_REMOVE,
 	                     XMMS_CMD_FUNC (remove_property));
 
-	g_snprintf (path, XMMS_PATH_MAX, "%s/.xmms2/medialib.db", g_get_home_dir());
+	path = XMMS_BUILD_PATH ("medialib.db");
 
 	xmms_config_property_register ("medialib.path",
 	                               path,
 	                               xmms_medialib_path_changed, medialib);
 	xmms_config_property_register ("medialib.allow_remote_fs",
 	                               "0", NULL, NULL);
+
+	g_free (path);
 
 
 	xmms_medialib_debug_hash = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
