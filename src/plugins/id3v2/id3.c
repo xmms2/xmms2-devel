@@ -323,11 +323,13 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
 		data = g_base64_encode (buf, len);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, data);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
 		g_free (data);
 	} else {
 		XMMS_DBG ("Picture type %x not handled", buf[0]);
 	}
 
+	g_free (mime);
 	
 }
 
