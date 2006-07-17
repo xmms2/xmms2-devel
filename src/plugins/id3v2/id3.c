@@ -304,6 +304,33 @@ handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	g_free (val);
 }
 
+static void
+handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
+{
+	/*gchar enc = buf[0];*/
+	gchar *mime = g_strdup ((gchar *)buf+1);
+	gint l2 = strlen (mime);
+	
+	buf = buf + l2 + 2;
+	len -= (l2 + 2);
+
+	if (buf[0] == 0x00 || buf[0] == 0x03) {
+		gchar *data;
+		gchar *desc = (gchar *)buf+1;
+		buf = buf + strlen (desc) + 2;
+		len -= (strlen (desc) - 2);
+		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
+		data = g_base64_encode (buf, len);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, data);
+		g_free (data);
+	} else {
+		XMMS_DBG ("Picture type %x not handled", buf[0]);
+	}
+
+	
+}
+
 struct id3tags_t {
 	guint32 type;
 	gchar *prop;
@@ -327,9 +354,9 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
 	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
+	{ quad2long('A','P','I','C'), NULL, handle_id3v2_apic },
 	{ 0, NULL, NULL }
 };
-
 
 static void
 handle_id3v2_text (xmms_xform_t *xform, xmms_id3v2_header_t *head,
@@ -421,6 +448,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
                   guchar *buf, xmms_id3v2_header_t *head)
 {
 	gint len=head->len;
+	gboolean broken_version4_frame_size_hack = FALSE;
 
 	if ((head->flags & ~ID3v2_HEADER_SUPPORTED_FLAGS) != 0) {
 		XMMS_DBG ("ID3v2 contain unsupported flags, skipping tag");
@@ -447,7 +475,6 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 		guint flags;
 		guint32 type;
 
-
 		if (head->ver == 3 || head->ver == 4) {
 			if ( len < 10) {
 				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
@@ -458,7 +485,34 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			if (head->ver == 3) {
 				size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
 			} else {
-				size = (buf[4]<<21) | (buf[5]<<14) | (buf[6]<<7) | (buf[7]);
+				guchar *tmp;
+				guint next_size;
+
+				if (!broken_version4_frame_size_hack) {
+					size = (buf[4]<<21) | (buf[5]<<14) | (buf[6]<<7) | (buf[7]);
+					/* The specs say the above, but many taggers (inluding iTunes)
+					 * don't follow the spec and writes the int without synchsafe.
+					 * Since we want to be according to the spec we try correct
+					 * behaviour first, if that doesn't work out we try the former
+					 * behaviour. Yay for specficiations.
+					 *
+					 * Identification of "erronous" frames aren't that pretty. We
+					 * just check if the next frame seems to have a vaild size.
+					 * This should probably be done better in the future.
+					 * FIXME
+					 */
+					tmp = buf+10+size;
+					next_size = (tmp[4]<<21) | (tmp[5]<<14) | (tmp[6]<<7) | (tmp[7]);
+
+					if (next_size+10 > (len-size)) {
+						XMMS_DBG ("Uho, seems like someone isn't using synchsafe integers here...");
+						broken_version4_frame_size_hack = TRUE;
+					}
+				}
+
+				if (broken_version4_frame_size_hack) {
+					size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
+				}
 			}
 
 			if (size+10 > len) {
@@ -468,7 +522,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			
 			flags = buf[8] | buf[9];
 
-			if (buf[0] == 'T' || buf[0] == 'U') {
+			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A') {
 				handle_id3v2_text (xform, head, type, buf + 10, flags, size);
 			}
 			
