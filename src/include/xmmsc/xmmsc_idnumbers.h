@@ -184,12 +184,11 @@ typedef enum {
 	XMMS_COLLECTION_TYPE_GREATER,
 	XMMS_COLLECTION_TYPE_IDLIST
 } xmmsc_coll_type_t;
- 
-typedef enum {
-	XMMS_COLLECTION_NS_ALL,
-	XMMS_COLLECTION_NS_COLLECTIONS,
-	XMMS_COLLECTION_NS_PLAYLISTS
-} xmmsc_coll_namespace_t;
+
+typedef const char* xmmsc_coll_namespace_t;
+#define	XMMS_COLLECTION_NS_ALL          "*"
+#define XMMS_COLLECTION_NS_COLLECTIONS  "Collections"
+#define XMMS_COLLECTION_NS_PLAYLISTS    "Playlists"
 
 
 #endif /* __SIGNAL_XMMS_H__ */

@@ -48,7 +48,7 @@ xmmsc_coll_get (xmmsc_connection_t *conn, char *collname,
 	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_GET);
 	xmms_ipc_msg_put_string (msg, collname);
-	xmms_ipc_msg_put_uint32 (msg, ns); /* FIXME: Type? */
+	xmms_ipc_msg_put_string (msg, ns);
 
 	res = xmmsc_send_msg (conn, msg);
 
@@ -66,7 +66,7 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 
 	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_LIST);
-	xmms_ipc_msg_put_uint32 (msg, ns); /* FIXME: Type? */
+	xmms_ipc_msg_put_string (msg, ns);
 
 	res = xmmsc_send_msg (conn, msg);
 
@@ -86,7 +86,7 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_SAVE);
 	xmms_ipc_msg_put_string (msg, name);
-	xmms_ipc_msg_put_uint32 (msg, ns); /* FIXME: Type? */
+	xmms_ipc_msg_put_string (msg, ns);
 	xmms_ipc_msg_put_collection (msg, coll);
 
 	res = xmmsc_send_msg (conn, msg);
@@ -107,7 +107,7 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_REMOVE);
 	xmms_ipc_msg_put_string (msg, name);
-	xmms_ipc_msg_put_uint32 (msg, ns); /* FIXME: Type? */
+	xmms_ipc_msg_put_string (msg, ns);
 
 	res = xmmsc_send_msg (conn, msg);
 
@@ -128,7 +128,7 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
 	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_FIND);
 	xmms_ipc_msg_put_uint32 (msg, mediaid);
-	xmms_ipc_msg_put_uint32 (msg, ns); /* FIXME: Type? */
+	xmms_ipc_msg_put_string (msg, ns);
 
 	res = xmmsc_send_msg (conn, msg);
 
