@@ -53,18 +53,19 @@ xmmsc_glib_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
 {
 	xmmsc_glib_watch_t *watch = (xmmsc_glib_watch_t *) source;
 
+	gboolean in = TRUE, out = TRUE;
 	if (watch->pollfd.revents & G_IO_IN)
-		xmmsc_io_in_handle (watch->conn);
+		in = xmmsc_io_in_handle (watch->conn);
 
 	if (watch->pollfd.revents & G_IO_OUT)
-		xmmsc_io_out_handle (watch->conn);
+		out = xmmsc_io_out_handle (watch->conn);
 
 	if (watch->pollfd.revents & (G_IO_HUP | G_IO_ERR)) {
 		xmmsc_io_disconnect (watch->conn);
 		return FALSE;
 	}
 
-	return TRUE;
+	return in && out;
 }
 
 GSourceFuncs xmmsc_glib_funcs = {

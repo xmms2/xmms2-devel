@@ -54,7 +54,6 @@ class Target:
 		if not isinstance(self.globs.get("source"), list):
 			raise RuntimeError("Target file '%s' does not specify 'source', or 'source' is not a list" % target)
 
-
 		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
 		self.target = os.path.join(self.dir, self.globs["target"])
 
@@ -273,7 +272,7 @@ class XMMSEnvironment(Environment):
 			#		self.config_cache[key] = libtool_flags["dependency_libs"]+" "
 			#		break
 
-			if self.conf.CheckLib(lib, func, header=header, language=lang):
+			if self.conf.CheckLib(lib, func, header=header, language=lang, autoadd=0):
 				self.config_cache[key] += "-l"+lib
 				self.parse_config_string("-l"+lib)
 				return
@@ -388,7 +387,6 @@ class XMMSEnvironment(Environment):
 			if loadable:
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
-					self["SHLIBSUFFIX"] = ".bundle"
 				self.Install(self.librarypath, target + self["SHLIBSUFFIX"])
 			else:
 				if self.platform == 'darwin':
@@ -481,7 +479,7 @@ class XMMSEnvironment(Environment):
 		for t in targets:
 			env = self.Copy()
 			env.dir = t.dir
-
+		
 			try:
 				t.config(env)
 				t.add(env)

@@ -109,13 +109,6 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	/*
-	xmms_xform_plugin_indata_add (xform_plugin,
-				      XMMS_STREAM_TYPE_MIMETYPE,
-				      "application/unbuffered-octet-stream",
-				      XMMS_STREAM_TYPE_END);
-	*/
-
 	ringbuf_plugin = xform_plugin;
 
 	return TRUE;

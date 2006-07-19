@@ -36,6 +36,7 @@ typedef enum {
 	XMMS_IPC_OBJECT_SIGNAL,
 	XMMS_IPC_OBJECT_VISUALISATION,
 	XMMS_IPC_OBJECT_MEDIAINFO_READER,
+	XMMS_IPC_OBJECT_XFORM,
 	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
@@ -128,6 +129,9 @@ typedef enum {
 	/* Signal subsystem */
 	XMMS_IPC_CMD_SIGNAL,
 	XMMS_IPC_CMD_BROADCAST,
+
+	/* xform object */
+	XMMS_IPC_CMD_BROWSE,
 
 	/* end */
 	XMMS_IPC_CMD_END

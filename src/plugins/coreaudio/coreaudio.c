@@ -280,24 +280,6 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 	
-	if (device != 0) {
-		AudioTimeStamp ts;
-		ts.mFlags = 0;
-		UInt32 bufferSize = 4096;
-		res = AudioDeviceSetProperty(device,
-		                             &ts, 
-		                             0,
-		                             0,
-		                             kAudioDevicePropertyBufferFrameSize,
-		                             sizeof(UInt32),
-		                             &bufferSize);
-		if (res) {
-			xmms_log_error ("Set prop failed!");
-			g_free (data);
-			return FALSE;
-		}
-	}
-
 	/* static for now */
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 
