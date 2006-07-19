@@ -27,10 +27,12 @@ import org.xmms2.events.Xmms2Listener;
 import org.xmms2.events.Xmms2PlaylistEvent;
 import org.xmms2.events.Xmms2PlaylistPositionEvent;
 import org.xmms2.events.Xmms2TitleEvent;
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
-import org.xmms2.xmms2bindings.Xmmsclient;
-import org.xmms2.xmms2bindings.XmmsclientConstants;
+import org.xmms2.wrapper.CallbacksListener;
+import org.xmms2.wrapper.JMain;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
+import org.xmms2.wrapper.xmms2bindings.Xmmsclient;
+import org.xmms2.wrapper.xmms2bindings.XmmsclientConstants;
 
 /**
  * User internally only by org.xmms2.Xmms2
