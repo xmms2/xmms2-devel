@@ -23,8 +23,9 @@ daap_command_login(gchar *host, gint port, guint request_id) {
 	session_id = cc_data->session_id;
 
 	g_free(request);
-	cc_data_free(cc_data);
+	cc_data_free(cc_data, TRUE);
 	g_io_channel_shutdown(chan, TRUE, NULL);
+	g_io_channel_unref(chan);
 
 	return session_id;
 }
@@ -48,8 +49,9 @@ daap_command_update(gchar *host, gint port, guint session_id, guint request_id) 
 	revision_id = cc_data->revision_id;
 
 	g_free(request);
-	cc_data_free(cc_data);
+	cc_data_free(cc_data, TRUE);
 	g_io_channel_shutdown(chan, TRUE, NULL);
+	g_io_channel_unref(chan);
 
 	return revision_id;
 }
@@ -58,6 +60,7 @@ gboolean daap_command_logout(gchar *host, gint port, guint session_id, guint req
 {
 	GIOChannel *chan;
 	gchar *tmp, *request;
+	cc_data_t *cc_data;
 
 	chan = daap_open_connection(host, port);
 	g_return_val_if_fail(NULL != chan, -1);
@@ -66,13 +69,14 @@ gboolean daap_command_logout(gchar *host, gint port, guint session_id, guint req
 	request = g_strconcat("/logout", tmp, NULL);
 	g_free(tmp);
 	
-	/*cc_data = */daap_request_data(chan, request, host, request_id);
-	//revision_id = cc_data->id;
+	cc_data = daap_request_data(chan, request, host, request_id);
+	cc_data_free(cc_data, TRUE);
 
 	g_free(request);
 	g_io_channel_shutdown(chan, TRUE, NULL);
+	g_io_channel_unref(chan);
 
-	return /*revision_id*/TRUE;
+	return TRUE;
 }
 
 GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
@@ -87,17 +91,18 @@ GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
 	chan = daap_open_connection(host, port);
 	g_return_val_if_fail(NULL != chan, NULL);
 
-	request =g_strdup_printf("/databases?session-id=%d&revision-id=%d",
-	                         session_id, revision_id);
+	request = g_strdup_printf("/databases?session-id=%d&revision-id=%d",
+	                          session_id, revision_id);
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
 	g_free(request);
 	g_return_val_if_fail(NULL != cc_data, NULL);
-	/* TODO deep copy the list and destroy cc_data */
 	db_id_list = cc_data->record_list;
 
-	cc_data_free(cc_data);
+	/* want to free the list manually */
+	cc_data_free(cc_data, FALSE);
 	g_io_channel_shutdown(chan, TRUE, NULL);
+	g_io_channel_unref(chan);
 
 	return db_id_list;
 }
@@ -118,12 +123,13 @@ GSList * daap_command_song_list(gchar *host, gint port, guint session_id,
 	                         db_id, session_id, revision_id);
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
-	/* TODO deep copy the list and destroy cc_data */
 	song_list = cc_data->record_list;
 
 	g_free(request);
-	cc_data_free(cc_data);
+	/* want to free the list manually */
+	cc_data_free(cc_data, FALSE);
 	g_io_channel_shutdown(chan, TRUE, NULL);
+	g_io_channel_unref(chan);
 
 	return song_list;
 }
@@ -168,19 +174,13 @@ daap_request_data(GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 
 	switch (status) {
 		case UNKNOWN_SERVER_STATUS:
-			/*g_printf("Server status is unknown, "
-			         "possibly due to a bad response.\n");*/
-			retval = NULL;
-		case HTTP_NO_CONTENT:
-			//g_printf("Logout successful.\n");
-			break;
-		case HTTP_NOT_FOUND:
-			/*g_printf("Server returned %d (file not found).\n", status);*/
-			break;
 		case HTTP_BAD_REQUEST:
 		case HTTP_FORBIDDEN:
-			/*g_printf("Server returned %d (bad request).\n", status);*/
 			retval = NULL;
+			break;
+		case HTTP_NO_CONTENT:
+		case HTTP_NOT_FOUND:
+			break;
 		case HTTP_OK:
 		default:
 			retval = daap_handle_data(chan, header);
@@ -205,23 +205,11 @@ daap_request_stream(GIOChannel *chan, gchar *path, gchar *host, guint request_id
 	g_return_val_if_fail(header != NULL, FALSE);
 
 	status = get_server_status(header);
-	if (HTTP_OK == status) {
-		/*
-		out_chan = prompt_for_file();
-		if (NULL == out_chan) {
-			return FALSE;
-		}
-		*/
-	} else {
-		//g_printf("Server error: %d\n", status);
+	if (HTTP_OK != status) {
 		g_free(header);
 		return FALSE;
 	}
 
-	/*daap_stream_data(chan, out_chan, header);
-
-	shutdown_file(out_chan);
-	*/
 	g_free(header);
 
 	return TRUE;

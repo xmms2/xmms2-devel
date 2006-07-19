@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -17,6 +18,7 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 {
 	gint sockfd;
 	struct sockaddr_in server;
+	struct hostent *hostinfo;
 	GIOChannel *sock_chan;
 	GError *err = NULL;
 
@@ -26,13 +28,13 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 		return NULL;
 	}
 
-	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
-	/* FIXME? inet_aton will choke if non-IP addr hostname given */
-	if (!inet_aton(host, &(server.sin_addr))) {
-		g_printf("inet_aton failed, invalid address given.\n");
+	hostinfo = gethostbyname(host);
+	if (NULL == hostinfo) {
 		return NULL;
 	}
+	server.sin_addr = *(struct in_addr *) hostinfo->h_addr_list[0];
+	server.sin_family = AF_INET;
+	server.sin_port = htons(port);
 
 	if (connect(sockfd,
 		        (struct sockaddr *) &server,
@@ -76,10 +78,6 @@ daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id
 		exit(1);
 	}
 
-	/* FIXME: this code is meant to be called after some subsequent
-	 * login or update or some such; we'll make some assumptions to be
-	 * replaced by actual values later. */
-#define DAAP_VERSION 3
 	daap_hash_generate(DAAP_VERSION, (guchar *) path, 2, (guchar *) hash,
 	                   request_id);
 
@@ -118,7 +116,7 @@ void daap_send_request(GIOChannel *sock_chan, gchar *request)
 
 void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 {
-	gint linelen, n_total_bytes_recvd = 0;
+	guint linelen, n_total_bytes_recvd = 0;
 	gchar *response, *recv_line;
 	GIOStatus io_stat;
 	GError *err = NULL;
@@ -229,6 +227,7 @@ cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header)
 	read_buffer_from_channel(sock_chan, response_data, response_length);
 
 	retval = cc_handler(response_data, response_length);
+	g_free(response_data);
 
 	return retval;
 }
