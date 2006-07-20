@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.xmms2.events.*;
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
-import org.xmms2.xmms2bindings.Xmmsclient;
-import org.xmms2.xmms2bindings.XmmsclientConstants;
-import org.xmms2.xmms2bindings.xmms_plugin_type_t;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
+import org.xmms2.wrapper.xmms2bindings.Xmmsclient;
+import org.xmms2.wrapper.xmms2bindings.XmmsclientConstants;
+import org.xmms2.wrapper.xmms2bindings.xmms_plugin_type_t;
 
 /**
  * Use this class to work with Xmms2 in Java. call getInstance(), connect() and
