@@ -17,6 +17,7 @@
 #ifndef __XMMS_COLL_H__
 #define __XMMS_COLL_H__
 
+#include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
 typedef struct xmmsc_coll_St xmmsc_coll_t;

@@ -29,6 +29,7 @@
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_unixsignal.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"
@@ -328,6 +329,7 @@ main (int argc, char **argv)
 	int loglevel = 1;
 	sigset_t signals;
 	xmms_playlist_t *playlist;
+	xmms_coll_dag_t *colldag;
 	gchar default_path[XMMS_PATH_MAX + 16];
 	gchar *tmp;
 
@@ -427,6 +429,7 @@ main (int argc, char **argv)
 		return 1;
 
 	playlist = xmms_playlist_init ();
+	colldag = xmms_collection_init ();
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 

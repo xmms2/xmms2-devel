@@ -110,6 +110,7 @@ static void xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_valu
 typedef gboolean (*xmms_ipc_client_callback_t) (GSource *, xmms_ipc_client_t *);
 typedef gboolean (*xmms_ipc_servers_callback_t) (GSource *, xmms_ipc_t *);
 
+
 static gboolean
 type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_object_cmd_arg_t *arg, gint i)
 {
@@ -131,6 +132,12 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			if (!xmms_ipc_msg_get_string_alloc (msg, &arg->values[i].value.string, &len)) {
 				return FALSE;
 			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL :
+			if (!xmms_ipc_msg_get_collection_alloc (msg, &arg->values[i].value.coll)) {
+				return FALSE;
+			}
+			xmmsc_coll_ref (arg->values[i].value.coll);
 			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");
@@ -203,6 +210,9 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			xmms_ipc_do_dict (msg, val->value.dict);
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL :
+			xmms_ipc_msg_put_collection (msg, val->value.coll);
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;
@@ -290,6 +300,8 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
 		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
 			g_free (arg.values[i].value.string);
+		else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_COLL)
+			xmmsc_coll_unref (arg.values[i].value.coll);
 	}
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);

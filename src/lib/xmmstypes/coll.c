@@ -512,6 +512,7 @@ xmmsc_coll_universe ()
 {
 	xmmsc_coll_t *univ = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
 	xmmsc_coll_attribute_set (univ, "reference", "All Media");
+	/* FIXME: namespace? */
 
 	return univ;
 }

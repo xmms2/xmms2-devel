@@ -45,7 +45,6 @@ xmmsc_coll_get (xmmsc_connection_t *conn, char *collname,
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_GET);
 	xmms_ipc_msg_put_string (msg, collname);
 	xmms_ipc_msg_put_string (msg, ns);
@@ -64,7 +63,6 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_LIST);
 	xmms_ipc_msg_put_string (msg, ns);
 
@@ -83,7 +81,6 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_SAVE);
 	xmms_ipc_msg_put_string (msg, name);
 	xmms_ipc_msg_put_string (msg, ns);
@@ -104,7 +101,6 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_REMOVE);
 	xmms_ipc_msg_put_string (msg, name);
 	xmms_ipc_msg_put_string (msg, ns);
@@ -125,7 +121,6 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_FIND);
 	xmms_ipc_msg_put_uint32 (msg, mediaid);
 	xmms_ipc_msg_put_string (msg, ns);
@@ -148,7 +143,6 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_IDS);
 	xmms_ipc_msg_put_collection (msg, coll);
 	xmms_ipc_msg_put_uint32 (msg, limit_start);
@@ -173,7 +167,6 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 
 	x_check_conn (conn, NULL);
 
-	/* FIXME: command */
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_INFOS);
 	xmms_ipc_msg_put_collection (msg, coll);
 	xmms_ipc_msg_put_uint32 (msg, limit_start);
@@ -205,7 +198,6 @@ xmmsc_coll_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
 {
 	int n;
 
-	/* FIXME: nicer way? */
 	for (n = 0; strings[n] != NULL; n++) { }
 	xmms_ipc_msg_put_uint32 (msg, n);
 
