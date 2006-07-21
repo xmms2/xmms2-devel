@@ -14,7 +14,8 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.events;
+
 
 public class Xmms2Adapter implements Xmms2Listener {
 
@@ -27,7 +28,7 @@ public class Xmms2Adapter implements Xmms2Listener {
     public void xmms2MedialibSelect(Xmms2Event ev) {
     }
 
-    public void xmms2ConfigvalChanged(Xmms2Event ev) {
+    public void xmms2ConfigvalChanged(Xmms2ConfigEvent ev) {
     }
 
     public void xmms2PlaybackStatusChanged(Xmms2Event ev) {
@@ -36,13 +37,13 @@ public class Xmms2Adapter implements Xmms2Listener {
     public void xmms2PlaybackVolumeChanged(Xmms2Event ev) {
     }
 
-    public void xmms2PlaylistChanged(Xmms2Event ev) {
+    public void xmms2PlaylistChanged(Xmms2PlaylistEvent ev) {
     }
 
-    public void xmms2PlaylistCurrentPositionChanged(Xmms2Event ev) {
+    public void xmms2PlaylistCurrentPositionChanged(Xmms2PlaylistPositionEvent ev) {
     }
 
-    public void xmms2TitleChanged(Xmms2Event ev) {
+    public void xmms2TitleChanged(Xmms2TitleEvent ev) {
     }
 
     public void xmms2MediareaderStatusChanged(Xmms2Event ev) {
@@ -71,4 +72,7 @@ public class Xmms2Adapter implements Xmms2Listener {
 
     public void xmms2PluginList(Xmms2Event ev) {
     }
+
+	public void xmms2MiscEvent(Xmms2Event ev) {
+	}
 }

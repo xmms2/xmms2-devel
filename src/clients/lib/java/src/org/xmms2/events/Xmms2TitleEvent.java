@@ -14,21 +14,16 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.events;
 
-public class Xmms2Exception extends Exception {
-	private static final long serialVersionUID = 2143110896719541866L;
-	private String message = "Xmms2 exception occured";
+import org.xmms2.Title;
 
-    public Xmms2Exception(String message) {
-        this.message = message;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getLocalizedMessage() {
-        return message;
-    }
+public class Xmms2TitleEvent extends Xmms2Event {
+	public Xmms2TitleEvent(int tid, Title t){
+		super(tid, Xmms2Listener.TITLE_TYPE, t);
+	}
+	
+	public Title getTitle(){
+		return (Title)value;
+	}
 }

@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.wrapper;
 
 /**
  * Extend this class if you don't want to have a huge bulk of empty methods in

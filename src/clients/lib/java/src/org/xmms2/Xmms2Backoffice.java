@@ -18,18 +18,21 @@ package org.xmms2;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
-import org.xmms2.xmms2bindings.Xmmsclient;
-import org.xmms2.xmms2bindings.XmmsclientConstants;
-import org.xmms2.xmms2bindings.xmmsc_result_type_t;
+import org.xmms2.events.Xmms2ConfigEvent;
+import org.xmms2.events.Xmms2Event;
+import org.xmms2.events.Xmms2Listener;
+import org.xmms2.events.Xmms2PlaylistEvent;
+import org.xmms2.events.Xmms2PlaylistPositionEvent;
+import org.xmms2.events.Xmms2TitleEvent;
+import org.xmms2.wrapper.CallbacksListener;
+import org.xmms2.wrapper.JMain;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
+import org.xmms2.wrapper.xmms2bindings.Xmmsclient;
+import org.xmms2.wrapper.xmms2bindings.XmmsclientConstants;
 
 /**
  * User internally only by org.xmms2.Xmms2
@@ -42,7 +45,7 @@ final class Xmms2Backoffice implements CallbacksListener {
             playbackVolumeChanged, playlistChanged,
             playlistCurrentPositionChanged, titleChanged, mediareaderStatus,
             medialibEntryChanged, medialibEntryAdded, medialibCurrentID,
-            medialibPlaylistLoaded, pluginList;
+            medialibPlaylistLoaded, pluginList, miscEvent;
 
     private Xmms2 myFront;
 
@@ -52,7 +55,9 @@ final class Xmms2Backoffice implements CallbacksListener {
 
     protected boolean connected = false;
 
-    private HashMap dictForeachMap;
+    private Dict dictForeachMap;
+    
+    private PropDict propDictForeachMap;
 
     private Title workingTitle;
 
@@ -98,8 +103,10 @@ final class Xmms2Backoffice implements CallbacksListener {
     }
 
     protected void spinDown() {
-        Xmmsclient.xmmsc_disconnect_callback_set(connectionOne, null, 0);
-        Xmmsclient.xmmsc_disconnect_callback_set(connectionTwo, null, 0);
+        Xmmsclient.xmmsc_disconnect_callback_set(connectionOne, null, 
+        		Xmmsclient.convertIntToVoidP(0));
+        Xmmsclient.xmmsc_disconnect_callback_set(connectionTwo, null, 
+        		Xmmsclient.convertIntToVoidP(0));
         if (main != null)
             main.spinDown();
         Xmmsclient.xmmsc_unref(connectionOne);
@@ -128,7 +135,7 @@ final class Xmms2Backoffice implements CallbacksListener {
             medialibSelect = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2MedialibSelect", new Class[] { Xmms2Event.class });
             configvalChanged = Xmms2Listener.class.getDeclaredMethod(
-                    "xmms2ConfigvalChanged", new Class[] { Xmms2Event.class });
+                    "xmms2ConfigvalChanged", new Class[] { Xmms2ConfigEvent.class });
             playtimeSignal = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2PlaytimeSignal", new Class[] { Xmms2Event.class });
             visdataSignal = Xmms2Listener.class.getDeclaredMethod(
@@ -146,12 +153,12 @@ final class Xmms2Backoffice implements CallbacksListener {
                     "xmms2PlaybackVolumeChanged",
                     new Class[] { Xmms2Event.class });
             playlistChanged = Xmms2Listener.class.getDeclaredMethod(
-                    "xmms2PlaylistChanged", new Class[] { Xmms2Event.class });
+                    "xmms2PlaylistChanged", new Class[] { Xmms2PlaylistEvent.class });
             playlistCurrentPositionChanged = Xmms2Listener.class
                     .getDeclaredMethod("xmms2PlaylistCurrentPositionChanged",
-                            new Class[] { Xmms2Event.class });
+                            new Class[] { Xmms2PlaylistPositionEvent.class });
             titleChanged = Xmms2Listener.class.getDeclaredMethod(
-                    "xmms2TitleChanged", new Class[] { Xmms2Event.class });
+                    "xmms2TitleChanged", new Class[] { Xmms2TitleEvent.class });
             mediareaderStatus = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2MediareaderStatusChanged",
                     new Class[] { Xmms2Event.class });
@@ -168,8 +175,10 @@ final class Xmms2Backoffice implements CallbacksListener {
                     new Class[] { Xmms2Event.class });
             pluginList = Xmms2Listener.class.getDeclaredMethod(
                     "xmms2PluginList", new Class[] { Xmms2Event.class });
+            miscEvent = Xmms2Listener.class.getDeclaredMethod(
+                    "xmms2MiscEvent", new Class[] { Xmms2Event.class });
         } catch (Throwable e) {
-            System.err.println("problems when initializing methods");
+            System.err.println("problems initializing methods");
         }
     }
 
@@ -180,12 +189,28 @@ final class Xmms2Backoffice implements CallbacksListener {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        dictForeachMap = new HashMap();
+        dictForeachMap = new Dict();
     }
 
-    protected Map unlockDictForeach() {
-        HashMap tmp = dictForeachMap;
+    protected Dict unlockDictForeach() {
+        Dict tmp = dictForeachMap;
         dictForeachMap = null;
+        return tmp;
+    }
+    
+    protected void lockPropDictForeach() {
+        while (propDictForeachMap != null)
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        propDictForeachMap = new PropDict();
+    }
+
+    protected PropDict unlockPropDictForeach() {
+        PropDict tmp = propDictForeachMap;
+        propDictForeachMap = null;
         return tmp;
     }
 
@@ -214,11 +239,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackConfigvalChanged(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -226,20 +247,17 @@ final class Xmms2Backoffice implements CallbacksListener {
         }
         lockDictForeach();
         Xmmsclient.xmmsc_result_dict_foreach(result,
-                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 0);
-        Map map = unlockDictForeach();
-        myFront.notifiyListeners(configvalChanged, new Xmms2Event(user_data,
-                Xmms2Listener.MAP_TYPE, map));
+                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
+                Xmmsclient.convertIntToVoidP(0));
+        Dict map = unlockDictForeach();
+        myFront.notifiyListeners(configvalChanged, 
+        		new Xmms2ConfigEvent(user_data, map));
     }
 
     public void callbackPlaybackStatus(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -254,11 +272,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackPlaybackID(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -273,11 +287,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackPlaylistChanged(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -293,21 +303,23 @@ final class Xmms2Backoffice implements CallbacksListener {
                 pl.add(new Long(id[0]));
                 Xmmsclient.xmmsc_result_list_next(result);
             }
-            myFront.notifiyListeners(playlistChanged, new Xmms2Event(user_data,
-                    Xmms2Listener.LIST_TYPE, pl));
+            myFront.pl.updateList(pl);
+            myFront.notifiyListeners(playlistChanged, new Xmms2PlaylistEvent(user_data, 
+                                     myFront.pl));
             if (pl.size() > 0) {
                 SWIGTYPE_p_xmmsc_result_St result2 = Xmmsclient
                         .xmmsc_playlist_current_pos(connectionOne);
                 Xmmsclient.xmmsc_result_notifier_set(result2,
                         XmmsclientConstants.CALLBACK_PLAYLIST_CURRENT_POSITION,
-                        -1);
+                        Xmmsclient.convertIntToVoidP(-1));
                 Xmmsclient.xmmsc_result_unref(result2);
             }
         } else {
             SWIGTYPE_p_xmmsc_result_St result2 = Xmmsclient
                     .xmmsc_playlist_list(connectionOne);
             Xmmsclient.xmmsc_result_notifier_set(result2,
-                    XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, user_data);
+                    XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, 
+                    Xmmsclient.convertIntToVoidP(user_data));
             Xmmsclient.xmmsc_result_unref(result2);
         }
     }
@@ -315,11 +327,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackMedialibEntryChanged(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -334,11 +342,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackMedialibEntryAdded(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+       
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -353,11 +357,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackMediainfoReaderStatus(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+      
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -372,11 +372,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackMedialibPlaylistLoaded(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -402,11 +398,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void callbackPlaylistCurrentPosition(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -414,19 +406,15 @@ final class Xmms2Backoffice implements CallbacksListener {
         }
         long[] pos = new long[1];
         Xmmsclient.xmmsc_result_get_uint(result, pos);
+        myFront.pl.updatePosition(pos[0]);
         myFront.notifiyListeners(playlistCurrentPositionChanged,
-                new Xmms2Event(user_data, Xmms2Listener.LONG_TYPE, new Long(
-                        pos[0])));
+                new Xmms2PlaylistPositionEvent(user_data, new Long(pos[0])));
     }
 
     public void callbackPlaybackVolumeChanged(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -434,28 +422,22 @@ final class Xmms2Backoffice implements CallbacksListener {
         }
         lockDictForeach();
         Xmmsclient.xmmsc_result_dict_foreach(result,
-                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 0);
-        Map vol = unlockDictForeach();
+                XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
+                Xmmsclient.convertIntToVoidP(0));
+        Dict vol = unlockDictForeach();
         myFront.notifiyListeners(playbackVolumeChanged, new Xmms2Event(
-                user_data, Xmms2Listener.MAP_TYPE, vol));
+                user_data, Xmms2Listener.DICT_TYPE, vol));
     }
 
     public void callbackDisconnect(int error) {
-        String path = null;
-        if (myFront.serverip.equals("") && myFront.serverport.equals(""))
-            path = System.getProperty("XMMS_PATH");
-        else
-            path = "tcp://" + myFront.serverip + ":" + myFront.serverport;
-        if (path != null
-                && (path.equals("") || path.equals("${env.XMMS_PATH}")))
-            path = null;
-
-        if (Xmmsclient.xmmsc_connect(connectionOne, path) <= 0) {
+    	if (System.getProperty("XMMS_PATH") != null)
+    		myFront.ipcPath = System.getProperty("XMMS_PATH");
+        if (Xmmsclient.xmmsc_connect(connectionOne, myFront.ipcPath) <= 0) {
             connected = false;
             myFront.notifiyListeners(errorOccured, new Xmms2Event(-1,
                     Xmms2Listener.ERROR_TYPE, Xmmsclient
                             .xmmsc_get_last_error(connectionOne)));
-        } else if (Xmmsclient.xmmsc_connect(connectionTwo, path) <= 0) {
+        } else if (Xmmsclient.xmmsc_connect(connectionTwo, myFront.ipcPath) <= 0) {
             connected = false;
             myFront.notifiyListeners(errorOccured, new Xmms2Event(-1,
                     Xmms2Listener.ERROR_TYPE, Xmmsclient
@@ -465,9 +447,11 @@ final class Xmms2Backoffice implements CallbacksListener {
             if (broadcastsEnabled)
                 initLoop();
             Xmmsclient.xmmsc_disconnect_callback_set(connectionOne,
-                    XmmsclientConstants.DISCONNECT_CALLBACK, 0);
+                    XmmsclientConstants.DISCONNECT_CALLBACK, 
+                    Xmmsclient.convertIntToVoidP(0));
             Xmmsclient.xmmsc_disconnect_callback_set(connectionTwo,
-                    XmmsclientConstants.DISCONNECT_CALLBACK, 0);
+                    XmmsclientConstants.DISCONNECT_CALLBACK, 
+                    Xmmsclient.convertIntToVoidP(0));
         }
         myFront.notifiyListeners(connectionEstablished, new Xmms2Event(-1,
                 Xmms2Listener.BOOL_TYPE, new Boolean(connected)));
@@ -485,10 +469,7 @@ final class Xmms2Backoffice implements CallbacksListener {
         if (user_data == 0 && dictForeachMap != null) {
             if (key != null && !key.equals("")) {
             	try {
-            		if (key.equals("id"))
-            			workingTitle.setID(Long.parseLong(value));
-            		else
-            			dictForeachMap.put(key, value);
+            		dictForeachMap.putDictEntry(key, value);
             	} catch (Exception e){
             		e.printStackTrace();
             	}
@@ -504,27 +485,23 @@ final class Xmms2Backoffice implements CallbacksListener {
             		if (key.equals("id"))
             			workingTitle.setID(Long.parseLong(value));
             		else
-            			workingTitle.setAttribute(key, value);
+            			workingTitle.setAttribute(key, value, source);
             	} catch (Exception e){
             		e.printStackTrace();
             	}
             }
         }
-        if (user_data == 1 && dictForeachMap != null) {
+        if (user_data == 1 && propDictForeachMap != null) {
             if (key != null && !key.equals("")) {
-                dictForeachMap.put(key, value);
+                propDictForeachMap.putPropDictEntry(key, value, source);
             }
         }
     }
 
     public void signalPlaybackPlaytime(long res, int user_data) {
-        final SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
+        SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_SIGNAL.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -532,17 +509,10 @@ final class Xmms2Backoffice implements CallbacksListener {
         }
         long playtime[] = new long[1];
         Xmmsclient.xmmsc_result_get_uint(result, playtime);
+        result = Xmmsclient.xmmsc_result_restart(result);
+		Xmmsclient.xmmsc_result_unref(result);
         myFront.notifiyListeners(playtimeSignal, new Xmms2Event(-1,
                 Xmms2Listener.LONG_TYPE, new Long(playtime[0])));
-
-        new Timer().schedule(new TimerTask() {
-            public void run() {
-                SWIGTYPE_p_xmmsc_result_St res2 = Xmmsclient
-                        .xmmsc_result_restart(result);
-                Xmmsclient.xmmsc_result_unref(result);
-                Xmmsclient.xmmsc_result_unref(res2);
-            }
-        }, 100);
     }
 
     public void signalVisualizationData(long res, int user_data) {
@@ -552,9 +522,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void signalMediareaderUnindexed(long res, int user_data) {
         final SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_SIGNAL.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -577,26 +545,28 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void userDefinedCallback1(long res, int user_data) {
         final SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
+        if (!isError(result).equals("")) {
+            myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
+                    Xmms2Listener.ERROR_TYPE, isError(result)));
+            return;
+        }
         if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
             Xmmsclient.xmmsc_result_list_first(result);
             List entries = new LinkedList();
             while (Xmmsclient.xmmsc_result_list_valid(result) == 1) {
                 lockDictForeach();
                 Xmmsclient.xmmsc_result_dict_foreach(result,
-                        XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 0);
+                        XmmsclientConstants.CALLBACK_DICT_FOREACH_FUNCTION, 
+                        Xmmsclient.convertIntToVoidP(0));
                 entries.add(unlockDictForeach());
                 Xmmsclient.xmmsc_result_list_next(result);
             }
             myFront.notifiyListeners(medialibSelect, new Xmms2Event(user_data,
                     Xmms2Listener.LIST_TYPE, entries));
         } else {
-            myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
-                    Xmms2Listener.ERROR_TYPE, isError(result)));
+        	myFront.notifiyListeners(miscEvent, new Xmms2Event(user_data,
+                    Xmms2Listener.VOID_TYPE, null));
         }
     }
 
@@ -606,11 +576,7 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void userDefinedCallback2(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
@@ -621,10 +587,14 @@ final class Xmms2Backoffice implements CallbacksListener {
             Xmmsclient.xmmsc_result_source_preference_set(result,
                     myFront.sourcePref);
         Xmmsclient.xmmsc_result_propdict_foreach(result,
-                XmmsclientConstants.CALLBACK_PROPDICT_FOREACH_FUNCTION, 0);
+                XmmsclientConstants.CALLBACK_PROPDICT_FOREACH_FUNCTION, 
+                Xmmsclient.convertIntToVoidP(0));
         Title t = unlockTitle();
-        myFront.notifiyListeners(titleChanged, new Xmms2Event(user_data,
-                Xmms2Listener.TITLE_TYPE, t));
+        if (myFront.pl.indicesOfID(t.getID()).size() > 0){
+        	myFront.pl.updateTitle(t);
+        }
+        myFront.notifiyListeners(titleChanged,
+        		new Xmms2TitleEvent(user_data, t));
     }
 
     /**
@@ -633,18 +603,14 @@ final class Xmms2Backoffice implements CallbacksListener {
     public void userDefinedCallback3(long res, int user_data) {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .getResultFromPointer(res);
-        if (xmmsc_result_type_t.XMMSC_RESULT_CLASS_BROADCAST.equals(Xmmsclient
-                .xmmsc_result_get_class(result)))
-            user_data = -1;
-        else
-            user_data = 1;
+        
         if (!isError(result).equals("")) {
             myFront.notifiyListeners(errorOccured, new Xmms2Event(user_data,
                     Xmms2Listener.ERROR_TYPE, isError(result)));
             return;
         }
         if (Xmmsclient.xmmsc_result_is_list(result) == 1) {
-            HashMap map = new HashMap();
+            Dict map = new Dict();
             Xmmsclient.xmmsc_result_list_first(result);
             String shortDes[] = new String[1];
             String longDes[] = new String[1];
@@ -653,12 +619,12 @@ final class Xmms2Backoffice implements CallbacksListener {
                         "shortname", shortDes) == 1) {
                     Xmmsclient.xmmsc_result_get_dict_entry_str(result,
                             "shortname", longDes);
-                    map.put(shortDes[0], longDes[0]);
+                    map.putDictEntry(shortDes[0], longDes[0]);
                 }
                 Xmmsclient.xmmsc_result_list_next(result);
             }
             myFront.notifiyListeners(pluginList, new Xmms2Event(user_data,
-                    Xmms2Listener.MAP_TYPE, map));
+                    Xmms2Listener.DICT_TYPE, map));
         }
     }
 
