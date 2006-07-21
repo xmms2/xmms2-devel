@@ -356,7 +356,7 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 	/* attribute counter and values */
 	n = 0;
 	xmmsc_coll_attribute_foreach (coll, xmms_ipc_count_coll_attr, &n);
-	xmms_ipc_msg_put_uint32 (msg, n * 2);
+	xmms_ipc_msg_put_uint32 (msg, n);
 
 	xmmsc_coll_attribute_foreach (coll, xmms_ipc_append_coll_attr, msg);
 
@@ -371,7 +371,9 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 
 	/* operands counter and objects */
 	xmmsc_coll_operand_list_first (coll);
-	for (n = 0; xmmsc_coll_operand_list_entry (coll, &op); n++) { }
+	for (n = 0; xmmsc_coll_operand_list_entry (coll, &op); n++) {
+		xmmsc_coll_operand_list_next (coll);
+	}
 
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
 
@@ -530,7 +532,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 		goto err;
 	}
 
-	if (!(idlist = x_new (uint32_t, n_items))) {
+	if (!(idlist = x_new (uint32_t, n_items + 1))) {
 		goto err;
 	}
 
@@ -569,7 +571,7 @@ err:
 		free (idlist);
 	}
 
-	xmmsc_coll_free (coll);
+	xmmsc_coll_free (*coll);
 
 	return false;
 }
