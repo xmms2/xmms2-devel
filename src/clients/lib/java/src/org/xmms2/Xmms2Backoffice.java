@@ -304,6 +304,7 @@ final class Xmms2Backoffice implements CallbacksListener {
                 Xmmsclient.xmmsc_result_list_next(result);
             }
             myFront.pl.updateList(pl);
+            myFront.pl.setLastAction(Xmmsclient.xmmsc_result_get_type(result));
             myFront.notifiyListeners(playlistChanged, new Xmms2PlaylistEvent(user_data, 
                                      myFront.pl));
             if (pl.size() > 0) {

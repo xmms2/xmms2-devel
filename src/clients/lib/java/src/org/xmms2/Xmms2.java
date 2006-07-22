@@ -211,29 +211,25 @@ public final class Xmms2 {
         return handleNotifierTypePlayback(Xmmsclient
                 .xmmsc_playback_pause(xbo.connectionOne));
     }
+    
+    public int tickle() {
+        return handleNotifierTypePlayback(Xmmsclient
+                .xmmsc_playback_tickle(xbo.connectionOne));
+    }
 
     public int next() {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
                 xbo.connectionOne, 1));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     public int prev() {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
                 xbo.connectionOne, -1));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
-    protected int jumpBy(int x) {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
+    protected int setNextRel(int x) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next_rel(
                 xbo.connectionOne, x));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     protected int shuffle() {
@@ -276,12 +272,9 @@ public final class Xmms2 {
                 xbo.connectionOne, by));
     }
 
-    protected int setNext(int index) {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next(
+    protected int setNextAbs(int index) {
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playlist_set_next(
                 xbo.connectionOne, index));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     protected int move(int sourceIndex, int destIndex) {
@@ -290,35 +283,23 @@ public final class Xmms2 {
     }
 
     public int seek(int ms) {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms(
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms(
                 xbo.connectionOne, ms));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     public int seekRel(int ms) {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms_rel(
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_ms_rel(
                 xbo.connectionOne, ms));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     public int seekSamples(int samples) {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples(
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples(
                 xbo.connectionOne, samples));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     public int seekSamplesRel(int samples) {
-        int t = handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples_rel(
+        return handleNotifierTypePlayback(Xmmsclient.xmmsc_playback_seek_samples_rel(
                 xbo.connectionOne, samples));
-        handleNotifierTypePlayback(Xmmsclient
-                .xmmsc_playback_tickle(xbo.connectionOne));
-        return t;
     }
 
     public int configvalSet(String key, String val) {
@@ -555,10 +536,10 @@ public final class Xmms2 {
         return t;
     }
 
-    public int pluginsListAsync(xmms_plugin_type_t type) {
+    public int pluginsListAsync(int type) {
     	int t = getNextTID();
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
-                xbo.connectionOne, type);
+                xbo.connectionOne, xmms_plugin_type_t.swigToEnum(type));
         Xmmsclient.xmmsc_result_notifier_set(result,
                 XmmsclientConstants.USER_DEFINED_CALLBACK_3, 
                 Xmmsclient.convertIntToVoidP(t));
@@ -634,7 +615,7 @@ public final class Xmms2 {
         return t;
     }
 
-    public long getPlaybackStatusSync() throws Xmms2Exception {
+    public int getPlaybackStatusSync() throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_playback_status(xbo.connectionTwo);
         Xmmsclient.xmmsc_result_wait(result);
@@ -644,7 +625,7 @@ public final class Xmms2 {
         long state[] = new long[1];
         Xmmsclient.xmmsc_result_get_uint(result, state);
         Xmmsclient.xmmsc_result_unref(result);
-        return state[0];
+        return (int)state[0];
     }
 
     public List mlibSelectSync(String sql) throws Xmms2Exception {
@@ -717,9 +698,9 @@ public final class Xmms2 {
         return id[0];
     }
 
-    public Dict pluginsListSync(xmms_plugin_type_t type) throws Xmms2Exception {
+    public Dict pluginsListSync(int type) throws Xmms2Exception {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_plugin_list(
-                xbo.connectionTwo, type);
+                xbo.connectionTwo, xmms_plugin_type_t.swigToEnum(type));
         Xmmsclient.xmmsc_result_wait(result);
         if (!xbo.isError(result).equals("")) {
             throw new Xmms2Exception(xbo.isError(result));
