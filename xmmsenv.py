@@ -150,7 +150,6 @@ class XMMSEnvironment(Environment):
 		self.potential_targets = []
 		self.scan_dir("src")
 
-	
 	def Install(self, target, source):
 		target = os.path.normpath(self.installdir + target)
 		SCons.Environment.Environment.Install(self, target, source)
@@ -238,6 +237,28 @@ class XMMSEnvironment(Environment):
 				print "Aborting!"
 				sys.exit(1)
 			raise ConfigError("Headerfile '%s' not found" % header)
+
+	def checkcompiler(self):
+		if not self.config_cache.has_key("c"):
+			print "Checking for working C compiler...",
+			self.config_cache["c"] = self.conf.TryCompile("int main() {}",".c")
+			if self.config_cache["c"]:
+				print "yes"
+			else:
+				print "no"
+		if not self.config_cache["c"]:
+			raise ConfigError("couldn't compile C files")
+
+	def checkcpp(self):
+		if not self.config_cache.has_key("cpp"):
+			print "Checking for working C++ compiler...",
+			self.config_cache["cpp"] = self.conf.TryCompile("int main() {}",".cpp")
+			if self.config_cache["cpp"]:
+				print "yes"
+			else:
+				print "no"
+		if not self.config_cache["cpp"]:
+			raise ConfigError("couldn't compile CPP files")
 
 	def checkcppheader(self, header, fail=False):
         
