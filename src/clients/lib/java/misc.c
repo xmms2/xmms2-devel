@@ -25,7 +25,7 @@ jmethodID get_method_id (const char* methodname, const char* sig, JNIEnv *enviro
  * called from the mainloop to get a valid framepointer object to be used in java
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlong jarg1) 
+Java_org_xmms2_wrapper_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlong jarg1) 
 {
 	jfieldID field_fd;
 	jclass class_fdesc;
@@ -45,7 +45,7 @@ Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlo
  * sets the environment (callbackfunctions, jvm pointer, global object, ...
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
+Java_org_xmms2_wrapper_SpecialJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
 {
 	jclass clazz;
 	globalObj = (*jenv)->NewGlobalRef (jenv, myobject);
@@ -119,7 +119,7 @@ get_method_id (const char* methodname, const char* sig, JNIEnv *environment, jcl
  * called by the mainloop to set mainloop specific things up
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobject, jlong jarg1)
+Java_org_xmms2_wrapper_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobject, jlong jarg1)
 {
 	xmmsc_connection_t *conn_ptr = (xmmsc_connection_t *) 0;
 	jclass clazz;
