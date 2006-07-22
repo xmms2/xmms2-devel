@@ -32,13 +32,27 @@
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
 
+
+typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+
+
 static void xmms_collection_destroy (xmms_object_t *object);
 
-static xmms_collection_namespace_id_t xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err);
+static xmms_collection_namespace_id_t xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace);
 static xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
 
-static void free_value_coll (gpointer key, gpointer value, gpointer udata);
+static void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
+static void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);
+static void xmms_collection_apply_to_collection (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, FuncApplyToColl f, void *udata);
+static void xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, FuncApplyToColl f, void *udata);
+
+static void call_apply_to_coll (gpointer name, gpointer coll, gpointer udata);
 static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
+
+static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+static void strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+
 
 
 XMMS_CMD_DEFINE (collection_get, xmms_collection_get, xmms_coll_dag_t *, COLL, STRING, STRING);
@@ -51,6 +65,22 @@ XMMS_CMD_DEFINE (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST,
 XMMS_CMD_DEFINE (query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, );
 XMMS_CMD_DEFINE (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, ...);
 */
+
+
+/* Internal helper structures */
+
+typedef struct {
+	gchar* name;
+	gchar* namespace;
+	xmmsc_coll_t *oldtarget;
+	xmmsc_coll_t *newtarget;
+} coll_rebind_infos_t;
+
+typedef struct {
+	xmms_coll_dag_t *dag;
+	FuncApplyToColl func;
+	void *udata;
+} coll_call_infos_t;
 
 
 /** @defgroup Collection Collection
@@ -75,8 +105,9 @@ struct xmms_coll_dag_St {
 };
 
 
-/**
- * Initializes a new xmms_coll_dag_t.
+/** Initializes a new xmms_coll_dag_t.
+ *
+ * @returns  The newly allocated collection DAG.
  */
 xmms_coll_dag_t *
 xmms_collection_init (void)
@@ -88,7 +119,8 @@ xmms_collection_init (void)
 	ret->mutex = g_mutex_new ();
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
-		ret->collrefs[i] = g_hash_table_new (g_str_hash, g_str_equal);
+		ret->collrefs[i] = g_hash_table_new_full (g_str_hash, g_str_equal,
+		                                          g_free, xmmsc_coll_unref);
 	}
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_COLLECTION, XMMS_OBJECT (ret));
@@ -125,51 +157,16 @@ xmms_collection_init (void)
 	return ret;
 }
 
-
-
-
-
-static xmms_collection_namespace_id_t
-xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
-{
-	guint nsid;
-
-	if (strcmp (namespace, XMMS_COLLECTION_NS_ALL) == 0) {
-		nsid = XMMS_COLLECTION_NSID_ALL;
-	}
-	else if (strcmp (namespace, XMMS_COLLECTION_NS_COLLECTIONS) == 0) {
-		nsid = XMMS_COLLECTION_NSID_COLLECTIONS;
-	}
-	else if (strcmp (namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
-		nsid = XMMS_COLLECTION_NSID_PLAYLISTS;
-	}
-	else {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
-		nsid = XMMS_COLLECTION_NSID_INVALID;
-	}
-
-	return nsid;
-}
-
-static xmmsc_coll_t *
-xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
-{
-	gint i;
-	xmmsc_coll_t *coll = NULL;
-
-	if (nsid == XMMS_COLLECTION_NSID_ALL) {
-		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES && coll == NULL; ++i) {
-			coll = g_hash_table_lookup (dag->collrefs[i], collname);
-		}
-	}
-	else {
-		coll = g_hash_table_lookup (dag->collrefs[nsid], collname);
-	}
-
-	return coll;
-}
-
-
+/** Remove the given collection from the DAG.
+ *
+ * If to be removed from ALL namespaces, then all matching collections are removed.
+ *
+ * @param dag  The collection DAG.
+ * @param name  The name of the collection to remove.
+ * @param namespace  The namespace where the collection to remove is (can be ALL).
+ * @param err  If an error occurs, a message is stored in it.
+ * @returns  True on success, false otherwise.
+ */
 gboolean
 xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_error_t *err)
 {
@@ -180,8 +177,9 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_remove");
 
-	nsid = xmms_collection_get_namespace (dag, namespace, err);
+	nsid = xmms_collection_get_namespace (dag, namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return FALSE;
 	}
 
@@ -189,76 +187,86 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 
 	/* FIXME: What if referenced by others? free coll and key (string) ! */
 
-	/* FIXME: cleaner modularisation */
+	/* FIXME: reduce copy-paste */
 	if (nsid == XMMS_COLLECTION_NSID_ALL) {
-		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES && existing == NULL; ++i) {
+		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 			existing = g_hash_table_lookup (dag->collrefs[i], name);
 			if (existing != NULL) {
+				/* Strip all references to the deleted coll, bind operator directly */
+				coll_rebind_infos_t infos = { name, namespace, existing, NULL };
+				xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
+
 				g_hash_table_remove (dag->collrefs[i], name);
+				retval = TRUE;
 			}
 		}
 	}
 	else {
 		existing = g_hash_table_lookup (dag->collrefs[nsid], name);
 		if (existing != NULL) {
+			/* Strip all references to the deleted coll, bind operator directly */
+			coll_rebind_infos_t infos = { name, namespace, existing, NULL };
+			xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
+
 			g_hash_table_remove (dag->collrefs[nsid], name);
+			retval = TRUE;
 		}
 	}
 
-	if (existing == NULL) {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "No such collection!");
-		retval = FALSE;
-	}
-	else {
-		xmmsc_coll_unref (existing);
-		retval = TRUE;
-	}
-/*
-	existing = xmms_collection_get_pointer (dag, name, nsid);
-	if (existing != NULL) {
-		xmmsc_coll_unref (existing);
-		retval = TRUE;
-	}
-	else {
-		xmms_error_set (err, XMMS_ERROR_NOENT, "No such collection!");
-		retval = FALSE;
-	}
-*/
-
 	g_mutex_unlock (dag->mutex);
+
+	if (retval == FALSE) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "No such collection!");
+	}
 
 	return retval;
 }
 
-
+/** Save the given collection in the DAG under the given name in the given namespace.
+ *
+ * @param dag  The collection DAG in which to save the collection.
+ * @param name  The name under which to save the collection.
+ * @param namespace  The namespace in which to save th collection.
+ * @param coll  The collection structure to save.
+ * @param err  If an error occurs, a message is stored in it.
+ * @returns  True on success, false otherwise.
+ */
 gboolean
-xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmmsc_coll_t *coll, xmms_error_t *err)
+xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
+                      xmmsc_coll_t *coll, xmms_error_t *err)
 {
 	xmmsc_coll_t *existing;
 	guint32 nsid;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_save");
 
-	nsid = xmms_collection_get_namespace (dag, namespace, err);
+	nsid = xmms_collection_get_namespace (dag, namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
+		return FALSE;
+	}
+	else if (nsid == XMMS_COLLECTION_NSID_ALL) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "cannot save collection in all namespaces");
 		return FALSE;
 	}
 
+	/* FIXME: Validate collection structure */
+
 	g_mutex_lock (dag->mutex);
-
-
-	/* FIXME: What if referenced by others? -- see _remove */
 
 	/* Unreference previously saved collection */
 	existing = xmms_collection_get_pointer (dag, name, nsid);
 	if (existing != NULL) {
-		xmmsc_coll_unref (existing);
+		/* Rebind reference pointers to the new collection */
+		coll_rebind_infos_t infos = { name, namespace, existing, coll };
+		xmms_collection_apply_to_all_collections (dag, rebind_references, &infos);
 	}
 
-	XMMS_DBG("COLLECTIONS: xmms_collection_save, done checking for removal, save %s", name);
+	/* Link references in saved collection to actual operators */
+	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
 
-	/* Save new collection */
-	g_hash_table_insert (dag->collrefs[nsid], g_strdup(name), coll);
+	/* Save new collection in the table */
+	g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
 	xmmsc_coll_ref (coll);
 
 	g_mutex_unlock (dag->mutex);
@@ -268,26 +276,40 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmmsc
 	return TRUE;
 }
 
-
+/** Retrieve the structure of a given collection.
+ *
+ * If looking in ALL namespaces, only the collection first found is returned!
+ *
+ * @param dag  The collection DAG.
+ * @param name  The name of the collection to retrieve.
+ * @param namespace  The namespace in which to look for the collection.
+ * @param err  If an error occurs, a message is stored in it.
+ * @returns  The collection structure if found, NULL otherwise.
+ */
 xmmsc_coll_t *
-xmms_collection_get (xmms_coll_dag_t *dag, gchar *collname, gchar *namespace, xmms_error_t *err)
+xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_error_t *err)
 {
 	xmmsc_coll_t *coll = NULL;
 	guint32 nsid;
 
-	nsid = xmms_collection_get_namespace (dag, namespace, err);
+	XMMS_DBG("COLLECTIONS: Entering xmms_collection_get");
+
+	nsid = xmms_collection_get_namespace (dag, namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return NULL;
 	}
 
 	g_mutex_lock (dag->mutex);
 
-	coll = xmms_collection_get_pointer (dag, collname, nsid);
+	coll = xmms_collection_get_pointer (dag, name, nsid);
 
 	/* New reference, will be freed after being put in the return message */
 	xmmsc_coll_ref (coll);
 	
 	g_mutex_unlock (dag->mutex);
+
+	XMMS_DBG("COLLECTIONS: xmms_collection_get, end");
 
 	return coll;
 }
@@ -295,6 +317,8 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *collname, gchar *namespace, xm
 
 /** Lists the collections in the given namespace.
  *
+ * @param dag  The collection DAG.
+ * @param namespace  The namespace to list collections from (can be ALL).
  * @returns A newly allocated GList with the list of collection names.
  * Remeber that it is only the LIST that is copied. Not the entries.
  * The entries are however referenced, and must be unreffed!
@@ -304,27 +328,19 @@ xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
 {
 	GList *r = NULL;
 	guint32 nsid;
-	gint i;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_list");
 
-	nsid = xmms_collection_get_namespace (dag, namespace, err);
+	nsid = xmms_collection_get_namespace (dag, namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return NULL;
 	}
 
 	g_mutex_lock (dag->mutex);
 
 	/* Get the list of collections in the given namespace */
-	if (nsid == XMMS_COLLECTION_NSID_ALL) {
-		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
-			g_hash_table_foreach (dag->collrefs[i], prepend_key_string, &r);
-		}
-	}
-	else if (nsid != XMMS_COLLECTION_NSID_INVALID) {
-		XMMS_DBG("COLLECTIONS: xmms_collection_list, in NS=%d", nsid);
-		g_hash_table_foreach (dag->collrefs[nsid], prepend_key_string, &r);
-	}
+	xmms_collection_foreach_in_namespace (dag, nsid, prepend_key_string, &r);
 
 	g_mutex_unlock (dag->mutex);
 
@@ -349,7 +365,6 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
  *
  *  This will free all entries in the list!
  */
-
 static void
 xmms_collection_destroy (xmms_object_t *object)
 {
@@ -361,29 +376,271 @@ xmms_collection_destroy (xmms_object_t *object)
 	g_mutex_free (dag->mutex);
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
-		g_hash_table_foreach (dag->collrefs[i], free_value_coll, NULL);
-		g_hash_table_destroy (dag->collrefs[i]);
+		g_hash_table_destroy (dag->collrefs[i]);  /* dag is freed here */
 	}
 
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_COLLECTION);
 }
 
-
-static void
-free_value_coll (gpointer key, gpointer value, gpointer udata)
+/** Find the namespace id corresponding to a namespace string.
+ *
+ * @param dag  The collection DAG.
+ * @param namespace  The namespace string.
+ * @returns  The namespace id.
+ */
+static xmms_collection_namespace_id_t
+xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace)
 {
-	/* FIXME: free key too ? */
-	xmmsc_coll_t *coll = (xmmsc_coll_t*)value;
-	xmmsc_coll_unref (coll);
+	guint nsid;
+
+	if (strcmp (namespace, XMMS_COLLECTION_NS_ALL) == 0) {
+		nsid = XMMS_COLLECTION_NSID_ALL;
+	}
+	else if (strcmp (namespace, XMMS_COLLECTION_NS_COLLECTIONS) == 0) {
+		nsid = XMMS_COLLECTION_NSID_COLLECTIONS;
+	}
+	else if (strcmp (namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
+		nsid = XMMS_COLLECTION_NSID_PLAYLISTS;
+	}
+	else {
+		nsid = XMMS_COLLECTION_NSID_INVALID;
+	}
+
+	return nsid;
 }
 
+/** Find the collection structure corresponding to the given name in the given namespace.
+ *
+ * @param dag  The collection DAG.
+ * @param collname  The name of the collection to find.
+ * @param nsid  The namespace id.
+ * @returns  The collection structure if found, NULL otherwise.
+ */
+static xmmsc_coll_t *
+xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
+{
+	gint i;
+	xmmsc_coll_t *coll = NULL;
+
+	if (nsid == XMMS_COLLECTION_NSID_ALL) {
+		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES && coll == NULL; ++i) {
+			coll = g_hash_table_lookup (dag->collrefs[i], collname);
+		}
+	}
+	else {
+		coll = g_hash_table_lookup (dag->collrefs[nsid], collname);
+	}
+
+	return coll;
+}
+
+
+/** Apply a function to all the collections in a given namespace.
+ *
+ * @param dag  The collection DAG.
+ * @param nsid  The namespace id.
+ * @param f  The function to apply to all the collections.
+ * @param udata  Additional user data parameter passed to the function.
+ */
+static void
+xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata)
+{
+	gint i;
+
+	if (nsid == XMMS_COLLECTION_NSID_ALL) {
+		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
+			g_hash_table_foreach (dag->collrefs[i], f, udata);
+		}
+	}
+	else if (nsid != XMMS_COLLECTION_NSID_INVALID) {
+		g_hash_table_foreach (dag->collrefs[nsid], f, udata);
+	}
+}
+
+/** Apply a function of type #FuncApplyToColl to all the collections in all namespaces.
+ *
+ * @param dag  The collection DAG.
+ * @param f  The function to apply to all the collections.
+ * @param udata  Additional user data parameter passed to the function.
+ */
+static void
+xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag,
+                                          FuncApplyToColl f, void *udata)
+{
+	gint i;
+	coll_call_infos_t callinfos = { dag, f, udata };
+
+	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
+		g_hash_table_foreach (dag->collrefs[i], call_apply_to_coll, &callinfos);
+	}
+}
+
+/** Apply a function of type #FuncApplyToColl to the given collection.
+ *
+ * @param dag  The collection DAG.
+ * @param coll  The collection on which to apply the function.
+ * @param f  The function to apply to all the collections.
+ * @param udata  Additional user data parameter passed to the function.
+ */
+static void
+xmms_collection_apply_to_collection (xmms_coll_dag_t *dag,
+                                     xmmsc_coll_t *coll,
+                                     FuncApplyToColl f, void *udata)
+{
+	xmms_collection_apply_to_collection_recurs (dag, coll, NULL, f, udata);
+}
+
+/* Internal function used for recursion (parent param, NULL by default) */
+static void
+xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
+                                            xmmsc_coll_t *coll,
+                                            xmmsc_coll_t *parent,
+                                            FuncApplyToColl f, void *udata)
+{
+	xmmsc_coll_t *op;
+
+	/* First apply the function to the operator. */
+	f (dag, coll, parent, udata);
+
+	/* Then recurse into the parents */
+	xmmsc_coll_operand_list_save (coll);
+
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		xmms_collection_apply_to_collection_recurs (dag, op, coll, f, udata);
+		xmmsc_coll_operand_list_next (coll);
+	}
+
+	xmmsc_coll_operand_list_restore (coll);
+}
+
+
+/**
+ * Work-around function to call a function on the value of the pair.
+ */
+static void
+call_apply_to_coll (gpointer name, gpointer coll, gpointer udata)
+{
+	coll_call_infos_t *callinfos = (coll_call_infos_t*)udata;
+
+	xmms_collection_apply_to_collection (callinfos->dag, coll,
+	                                     callinfos->func, callinfos->udata);
+}
+
+/**
+ * Prepend the key string (name) to the udata list.
+ */
 static void
 prepend_key_string (gpointer key, gpointer value, gpointer udata)
 {
 	xmms_object_cmd_value_t *val;
 	GList **list = (GList**)udata;
-	val = xmms_object_cmd_value_str_new (key);
+	val = xmms_object_cmd_value_str_new (g_strdup(key));
 	*list = g_list_prepend (*list, val);
+}
 
-	/* FIXME: duplicate strings ? */
+/**
+ * If a reference, add the operator of the pointed collection as an
+ * operand.
+ */
+static void
+bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
+{
+	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
+		xmmsc_coll_t *target;
+		gchar *target_name;
+		gchar *target_namespace;
+		gint   target_nsid;
+
+		xmmsc_coll_attribute_get (coll, "reference", &target_name);
+		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
+		if (target_name == NULL || target_namespace == NULL ||
+		    strcmp (target_name, "All Media") == 0) {
+			return;
+		}
+
+		target_nsid = xmms_collection_get_namespace (dag, target_namespace);
+		if (target_nsid == XMMS_COLLECTION_NSID_INVALID) {
+			return;
+		}
+
+		target = xmms_collection_get_pointer (dag, target_name, target_nsid);
+		if (target == NULL) {
+			return;
+		}
+
+		xmmsc_coll_add_operand (coll, target);
+		xmmsc_coll_ref (target);
+	}
+}
+
+/**
+ * If a reference, rebind the given operator to the new operator
+ * representing the referenced collection (pointers and so are in the
+ * udata structure).
+ */
+static void
+rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
+{
+	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
+		coll_rebind_infos_t *infos;
+
+		gchar *target_name = NULL;
+		gchar *target_namespace = NULL;
+
+		infos = (coll_rebind_infos_t*)udata;
+
+		/* FIXME: Or only compare operand vs oldtarget ? */
+
+		xmmsc_coll_attribute_get (coll, "reference", &target_name);
+		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
+		if (strcmp (infos->name, target_name) != 0 ||
+			strcmp (infos->namespace, target_namespace) != 0) {
+			return;
+		}
+
+		xmmsc_coll_remove_operand (coll, infos->oldtarget);
+		xmmsc_coll_unref (infos->oldtarget);
+
+		xmmsc_coll_add_operand (coll, infos->newtarget);
+		xmmsc_coll_ref (infos->newtarget);
+	}
+}
+
+/**
+ * Strip reference operators to the given collection by rebinding the
+ * parent directly to the pointed operator.
+ */
+static void
+strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
+{
+	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
+		coll_rebind_infos_t *infos;
+
+		gchar *target_name = NULL;
+		gchar *target_namespace = NULL;
+
+		infos = (coll_rebind_infos_t*)udata;
+
+		/* FIXME: Or only compare operand vs oldtarget ? */
+
+		xmmsc_coll_attribute_get (coll, "reference", &target_name);
+		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
+		if (strcmp (infos->name, target_name) != 0 ||
+			strcmp (infos->namespace, target_namespace) != 0) {
+			return;
+		}
+
+		/* Rebind parent to ref'd coll directly, effectively strip reference */
+		xmmsc_coll_remove_operand (coll, infos->oldtarget);
+		xmmsc_coll_unref (infos->oldtarget);
+
+		if (parent != NULL) {
+			xmmsc_coll_remove_operand (parent, coll);
+			xmmsc_coll_unref (coll);
+
+			xmmsc_coll_add_operand (parent, infos->oldtarget);
+			xmmsc_coll_ref (infos->oldtarget);
+		}
+	}
 }
