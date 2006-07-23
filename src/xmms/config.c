@@ -193,7 +193,7 @@ void
 xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 {
 	GHashTable *dict;
-	gchar file[XMMS_PATH_MAX];
+	gchar *file;
 
 	g_return_if_fail (prop);
 	g_return_if_fail (data);
@@ -223,10 +223,9 @@ xmms_config_property_set_data (xmms_config_property_t *prop, const gchar *data)
 	/* save the database to disk, so we don't lose any data
 	 * if the daemon crashes
 	 */
-	g_snprintf (file, sizeof (file), "%s/.xmms2/xmms2.conf",
-	            g_get_home_dir ());
-
+	file = XMMS_BUILD_PATH ("xmms2.conf");
 	xmms_config_save (file);
+	g_free (file);
 }
 
 /**

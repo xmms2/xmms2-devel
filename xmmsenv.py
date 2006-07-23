@@ -140,6 +140,15 @@ class XMMSEnvironment(Environment):
 		else:
 			self.platform = sys.platform
 
+		# Where to place the xmms2 user config directory
+		if self.has_key("USERCONFDIR"):
+			self.userconfpath = self["USERCONFDIR"]
+		else:
+			if sys.platform == 'darwin':
+				self.userconfpath = 'Library'
+			else:
+				self.userconfpath = '.config'
+
 		def gzipper(target, source, env):
 			gzip.GzipFile(target[0].path, 'wb',9).write(file(source[0].path).read())
 		self['BUILDERS']['GZipper'] = SCons.Builder.Builder(action=SCons.Action.Action(gzipper))

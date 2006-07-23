@@ -131,7 +131,7 @@ do_scriptdir (const gchar *scriptdir)
 
 	XMMS_DBG ("Running scripts in %s", scriptdir);
 	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
-		mkdir (scriptdir, 0755);
+		g_mkdir_with_parents (scriptdir, 0755);
 		install_scripts (scriptdir);
 	}
 
@@ -162,18 +162,19 @@ do_scriptdir (const gchar *scriptdir)
 static void
 load_config ()
 {
-	gchar configdir[XMMS_MAX_CONFIGFILE_LEN];
+	gchar *configdir;
 
 	if (!conffile) {
-		conffile = g_strdup_printf ("%s/.xmms2/xmms2.conf", g_get_home_dir ());
+		conffile = XMMS_BUILD_PATH ("xmms2.conf"); 
 	}
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
 
-	g_snprintf (configdir, XMMS_MAX_CONFIGFILE_LEN, "%s/.xmms2/", g_get_home_dir ());
+	configdir = XMMS_BUILD_PATH ();
 	if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
-		mkdir (configdir, 0755);
+		g_mkdir_with_parents (configdir, 0755);
 	}
+	g_free (configdir);
 
 	xmms_config_init(conffile);
 }
@@ -530,12 +531,12 @@ main (int argc, char **argv)
 	/* Also put the full path for clients that understands */
 	putenv (g_strdup_printf ("XMMS_PATH_FULL=%s", ipcpath));
 
-	tmp = g_strdup_printf ("%s/.xmms2/shutdown.d", g_get_home_dir());
+	tmp = XMMS_BUILD_PATH ("shutdown.d");
 	cv = xmms_config_property_register ("core.shutdownpath",
 	                                    tmp, NULL, NULL);
 	g_free (tmp);
 
-	tmp = g_strdup_printf ("%s/.xmms2/startup.d", g_get_home_dir());
+	tmp = XMMS_BUILD_PATH ("startup.d");
 	cv = xmms_config_property_register ("core.startuppath",
 	                                    tmp, NULL, NULL);
 	g_free (tmp);

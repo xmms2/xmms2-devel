@@ -143,6 +143,7 @@ subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platf
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix,
 	      "%DEFAULT_OUTPUT%":xmmsenv.default_output[1],
+	      "%USERCONFDIR%":base_env.userconfpath,
 }
 
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
