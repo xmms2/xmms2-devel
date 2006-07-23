@@ -14,6 +14,7 @@
 #include "xmms/xmms_medialib.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_xformplugin.h"
+#include "xmms/xmms_bindata.h"
 #include "id3.h"
 
 #include <glib.h>
@@ -316,15 +317,15 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	len -= (l2 + 2);
 
 	if (buf[0] == 0x00 || buf[0] == 0x03) {
-		gchar *data;
+		gchar *hash;
 		gchar *desc = (gchar *)buf+1;
 		buf = buf + strlen (desc) + 2;
 		len -= (strlen (desc) - 2);
 		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
-		data = g_base64_encode (buf, len);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, data);
+		hash = xmms_bindata_plugin_add ((guchar *)buf, len);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
-		g_free (data);
+		g_free (hash);
 	} else {
 		XMMS_DBG ("Picture type %x not handled", buf[0]);
 	}
