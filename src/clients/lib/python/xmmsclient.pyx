@@ -188,6 +188,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 	
 	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
+	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, char *)
+	xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, char *hash)
+	xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, char *hash)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
@@ -1717,6 +1720,54 @@ cdef class XMMS:
 		u = from_unicode(url)
 
 		ret.res = xmmsc_xform_media_browse(self.conn,u)
+
+		ret.more_init()
+		return ret
+
+	def bindata_add(self, data, cb=None):
+		"""
+		Add a datafile to the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_bindata_add(self.conn,data)
+
+		ret.more_init()
+		return ret
+
+	def bindata_retreive(self, hash, cb=None):
+		"""
+		Retreive a datafile from the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_bindata_retreive(self.conn,hash)
+
+		ret.more_init()
+		return ret
+
+	def bindata_remove(self, hash, cb=None):
+		"""
+		Remove a datafile from the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_bindata_remove(self.conn,hash)
 
 		ret.more_init()
 		return ret
