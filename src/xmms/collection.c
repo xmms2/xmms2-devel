@@ -38,8 +38,11 @@ typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_
 
 static void xmms_collection_destroy (xmms_object_t *object);
 
+static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
+
 static xmms_collection_namespace_id_t xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace);
 static xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
+static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *target);
 
 static void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
 static void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);
@@ -52,6 +55,8 @@ static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
 static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+
+static void coll_unref (void *coll);
 
 
 
@@ -120,7 +125,7 @@ xmms_collection_init (void)
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		ret->collrefs[i] = g_hash_table_new_full (g_str_hash, g_str_equal,
-		                                          g_free, xmmsc_coll_unref);
+		                                          g_free, coll_unref);
 	}
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_COLLECTION, XMMS_OBJECT (ret));
@@ -185,8 +190,6 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 
 	g_mutex_lock (dag->mutex);
 
-	/* FIXME: What if referenced by others? free coll and key (string) ! */
-
 	/* FIXME: reduce copy-paste */
 	if (nsid == XMMS_COLLECTION_NSID_ALL) {
 		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
@@ -250,7 +253,11 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 		return FALSE;
 	}
 
-	/* FIXME: Validate collection structure */
+	/* Validate collection structure */
+	if (!xmms_collection_validate (dag, coll)) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
+		return FALSE;
+	}
 
 	g_mutex_lock (dag->mutex);
 
@@ -305,7 +312,9 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
 	coll = xmms_collection_get_pointer (dag, name, nsid);
 
 	/* New reference, will be freed after being put in the return message */
-	xmmsc_coll_ref (coll);
+	if(coll != NULL) {
+		xmmsc_coll_ref (coll);
+	}
 	
 	g_mutex_unlock (dag->mutex);
 
@@ -382,6 +391,149 @@ xmms_collection_destroy (xmms_object_t *object)
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_COLLECTION);
 }
 
+/** Validate the given collection against a DAG.
+ *
+ * @return dag  The collection DAG.
+ * @return coll  The collection to validate.
+ * @returns  True if the collection is valid, false otherwise.
+ */
+static gboolean
+xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
+{
+	guint num_operands = 0;
+	xmmsc_coll_t *op;
+	gchar *attr, *attr2;
+	gboolean valid = TRUE;
+	xmms_collection_namespace_id_t nsid;
+
+	/* count operands */
+	xmmsc_coll_operand_list_save (coll);
+
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		num_operands++;
+		xmmsc_coll_operand_list_next (coll);
+	}
+
+	xmmsc_coll_operand_list_restore (coll);
+
+
+	/* analyse by type */
+	switch (xmmsc_coll_get_type (coll)) {
+	case XMMS_COLLECTION_TYPE_REFERENCE:
+		/* no operand */
+		if (num_operands > 0) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (ref)");
+			return FALSE;
+		}
+
+		/* check if referenced collection exists */
+		xmmsc_coll_attribute_get (coll, "reference", &attr);
+		xmmsc_coll_attribute_get (coll, "namespace", &attr2);
+		if (strcmp (attr, "All Media") != 0) {
+			if (attr == NULL || attr2 == NULL) {
+				XMMS_DBG("COLLECTIONS: validation, ref no attr");
+				return FALSE;
+			}
+
+			nsid = xmms_collection_get_namespace (dag, attr2);
+			if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+				XMMS_DBG("COLLECTIONS: validation, ref invalid ns");
+				return FALSE;
+			}
+
+			op = xmms_collection_get_pointer (dag, attr, nsid);
+			if (op == NULL) {
+				XMMS_DBG("COLLECTIONS: validation, ref invalid coll");
+				return FALSE;
+			}
+
+			/* check if the referenced coll references this one (loop!) */
+			if (xmms_collection_has_reference_to (dag, op, attr)) {
+				XMMS_DBG("COLLECTIONS: validation, ref loop");
+				return FALSE;
+			}
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_UNION:
+	case XMMS_COLLECTION_TYPE_INTERSECTION:
+		/* need operand(s) */
+		if (num_operands == 0) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (set)");
+			return FALSE;
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_COMPLEMENT:
+		/* one operand */
+		if (num_operands != 1) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (complement)");
+			return FALSE;
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_MATCH:
+	case XMMS_COLLECTION_TYPE_CONTAINS:
+	case XMMS_COLLECTION_TYPE_SMALLER:
+	case XMMS_COLLECTION_TYPE_GREATER:
+		/* one operand */
+		if (num_operands != 1) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (filter)");
+			return FALSE;
+		}
+
+		/* "field"/"value" attributes */
+		/* with valid values */
+		if (!xmmsc_coll_attribute_get (coll, "field", &attr)) {
+			XMMS_DBG("COLLECTIONS: validation, field");
+			return FALSE;
+		}
+		/* FIXME: valid fields?
+		else if (...) {
+			return FALSE;
+		}
+		*/
+
+		if (!xmmsc_coll_attribute_get (coll, "value", &attr)) {
+			XMMS_DBG("COLLECTIONS: validation, value");
+			return FALSE;
+		}
+		break;
+	
+	case XMMS_COLLECTION_TYPE_IDLIST:
+		/* no operand */
+		if (num_operands > 0) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (idlist)");
+			return FALSE;
+		}
+		break;
+
+	/* invalid type */
+	default:
+		XMMS_DBG("COLLECTIONS: validation, invalid type");
+		return FALSE;
+		break;
+	}
+
+
+	/* recurse in operands */
+	xmmsc_coll_operand_list_save (coll);
+
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op) && valid) {
+		if (!xmms_collection_validate (dag, op)) {
+			valid = FALSE;
+		}
+		xmmsc_coll_operand_list_next (coll);
+	}
+
+	xmmsc_coll_operand_list_restore (coll);
+
+	return valid;
+}
+
+
 /** Find the namespace id corresponding to a namespace string.
  *
  * @param dag  The collection DAG.
@@ -432,6 +584,13 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
 	}
 
 	return coll;
+}
+
+static gboolean
+xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *target)
+{
+	/* FIXME: use a reflist cache!  (we need this to find loops) */
+	return TRUE;
 }
 
 
@@ -643,4 +802,15 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 			xmmsc_coll_ref (infos->oldtarget);
 		}
 	}
+}
+
+
+/** Forwarding function to fix type warnings.
+ *
+ * @param coll  The collection to unref.
+ */
+static void
+coll_unref (void *coll)
+{
+	xmmsc_coll_unref (coll);
 }
