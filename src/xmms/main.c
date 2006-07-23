@@ -133,7 +133,7 @@ do_scriptdir (const gchar *scriptdir)
 
 	XMMS_DBG ("Running scripts in %s", scriptdir);
 	if (!g_file_test (scriptdir, G_FILE_TEST_IS_DIR)) {
-		mkdir (scriptdir, 0755);
+		g_mkdir_with_parents (scriptdir, 0755);
 		install_scripts (scriptdir);
 	}
 
@@ -174,7 +174,7 @@ load_config ()
 
 	configdir = XMMS_BUILD_PATH ();
 	if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
-		mkdir (configdir, 0755);
+		g_mkdir_with_parents (configdir, 0755);
 	}
 	g_free (configdir);
 

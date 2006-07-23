@@ -25,3 +25,4 @@ def config(env):
 	env.Append(CPPPATH=["#src/includepriv"])
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmssocket")
+	env.Append(CPPFLAGS=['-DUSERCONFDIR=\\"'+env.userconfpath+'\\"'])

@@ -28,7 +28,7 @@
 
 #define XMMS_BUILD_PATH(...) g_build_path (G_DIR_SEPARATOR_S, \
                                            g_get_home_dir (), \
-                                           ".config", \
+                                           "%USERCONFDIR%", \
                                            "xmms2",\
                                            ## __VA_ARGS__, \
                                            NULL)
