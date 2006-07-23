@@ -213,6 +213,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 from select import select
 from os import write
 import os
+import traceback
 import sys
 
 cdef to_unicode(char *s):
@@ -337,7 +338,8 @@ cdef class XMMSResult:
 		try:
 			self.callback(self)
 		except:
-			self.exc = sys.exc_info()
+			exc = sys.exc_info()
+			traceback.print_exception (exc[0], exc[1], exc[2])
 
 	def get_type(self):
 		"""
