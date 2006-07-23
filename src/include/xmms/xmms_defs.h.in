@@ -26,6 +26,7 @@
 #define XMMS_OUTPUT_DEFAULT "%DEFAULT_OUTPUT%"
 #define XMMS_PATH_MAX 255
 
+<<<<<<< HEAD/src/include/xmms/xmms_defs.h.in
 #define XMMS_BUILD_PATH(...) g_build_path (G_DIR_SEPARATOR_S, \
                                            g_get_home_dir (), \
                                            "%USERCONFDIR%", \
@@ -33,4 +34,13 @@
                                            ## __VA_ARGS__, \
                                            NULL)
 
+=======
+#define XMMS_BUILD_PATH(...) g_build_path (G_DIR_SEPARATOR_S, \
+                                           g_get_home_dir (), \
+                                           ".config", \
+                                           "xmms2",\
+                                           ## __VA_ARGS__, \
+                                           NULL)
+
+>>>>>>> 360019319900747b225da8c1a958e467e76a031e/src/include/xmms/xmms_defs.h.in
 #endif
