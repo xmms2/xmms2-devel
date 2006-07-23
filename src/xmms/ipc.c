@@ -373,8 +373,9 @@ xmms_ipc_client_thread (gpointer data)
 
 		if (FD_ISSET (fd, &rfdset)) {
 			while (TRUE) {
-				if (!client->read_msg)
+				if (!client->read_msg) {
 					client->read_msg = xmms_ipc_msg_alloc ();
+				}
 		
 				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
 					xmms_ipc_msg_t *msg = client->read_msg;
@@ -387,12 +388,12 @@ xmms_ipc_client_thread (gpointer data)
 			}
 		}
 
-		if (client->read_msg) {
-			xmms_ipc_msg_destroy (client->read_msg);
-			client->read_msg = NULL;
-		}
 
 		if (disconnect) {
+			if (client->read_msg) {
+				xmms_ipc_msg_destroy (client->read_msg);
+				client->read_msg = NULL;
+			}
 			XMMS_DBG ("disconnect was true!");
 			break;
 		}
