@@ -171,8 +171,17 @@ xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connect
 xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id, const char *key);
 xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key);
 
-/** XForm object */
+/* XForm object */
 xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url);
+
+/* Bindata object */ 
+xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *base64data);
+xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, const char *hash); 
+xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
+
+/* bindata tools */
+unsigned char *xmms_bindata_base64_decode (const char *text, unsigned int *out_len);
+char *xmms_bindata_base64_encode (const unsigned char *data, unsigned int len);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);

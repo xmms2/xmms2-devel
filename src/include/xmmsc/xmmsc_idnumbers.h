@@ -37,6 +37,7 @@ typedef enum {
 	XMMS_IPC_OBJECT_VISUALISATION,
 	XMMS_IPC_OBJECT_MEDIAINFO_READER,
 	XMMS_IPC_OBJECT_XFORM,
+	XMMS_IPC_OBJECT_BINDATA,
 	XMMS_IPC_OBJECT_END
 } xmms_ipc_objects_t;
 
@@ -132,6 +133,11 @@ typedef enum {
 
 	/* xform object */
 	XMMS_IPC_CMD_BROWSE,
+
+	/* bindata object */
+	XMMS_IPC_CMD_GET_DATA,
+	XMMS_IPC_CMD_ADD_DATA,
+	XMMS_IPC_CMD_REMOVE_DATA,
 
 	/* end */
 	XMMS_IPC_CMD_END

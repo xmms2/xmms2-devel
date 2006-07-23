@@ -36,6 +36,7 @@
 #include "xmmspriv/xmms_log.h"
 #include "xmmspriv/xmms_sqlite.h"
 #include "xmmspriv/xmms_xform.h"
+#include "xmmspriv/xmms_bindata.h"
 #include "xmms/xmms_defs.h"
 
 #include <stdio.h>
@@ -57,6 +58,7 @@ static GHashTable *stats (xmms_object_t *object, xmms_error_t *error);
 static guint hello (xmms_object_t *object, guint protocolver, gchar *client, xmms_error_t *error);
 static void install_scripts (const gchar *into_dir);
 static xmms_xform_object_t *xform_obj;
+static xmms_bindata_t *bindata_obj;
 
 XMMS_CMD_DEFINE (quit, quit, xmms_object_t*, NONE, NONE, NONE);
 XMMS_CMD_DEFINE (hello, hello, xmms_object_t *, UINT32, UINT32, STRING);
@@ -463,8 +465,8 @@ main (int argc, char **argv)
 	}
 
 	playlist = xmms_playlist_init ();
-
 	xform_obj = xmms_xform_object_init ();
+	bindata_obj = xmms_bindata_init ();
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 

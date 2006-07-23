@@ -12,7 +12,8 @@ source=["ipc.c",
 	"result.c", 
 	"xlist.c", 
 	"xqueue.c",
-	"xmmsclient.c"]
+	"xmmsclient.c",
+	"bindata.c"]
 
 def config(env):
 	env.Append(LIBS=["xmmsipc"])
