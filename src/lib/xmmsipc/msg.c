@@ -370,17 +370,23 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 	}
 
 	/* operands counter and objects */
-	xmmsc_coll_operand_list_first (coll);
-	for (n = 0; xmmsc_coll_operand_list_entry (coll, &op); n++) {
-		xmmsc_coll_operand_list_next (coll);
+	n = 0;
+	if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
+		xmmsc_coll_operand_list_first (coll);
+		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+			n++;
+			xmmsc_coll_operand_list_next (coll);
+		}
 	}
 
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
 
-	xmmsc_coll_operand_list_first (coll);
-	while (xmmsc_coll_operand_list_entry (coll, &op)) {
-		ret = xmms_ipc_msg_put_collection (msg, op);
-		xmmsc_coll_operand_list_next (coll);
+	if (n > 0) {
+		xmmsc_coll_operand_list_first (coll);
+		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+			ret = xmms_ipc_msg_put_collection (msg, op);
+			xmmsc_coll_operand_list_next (coll);
+		}
 	}
 
 	/* restore internal status */
