@@ -70,12 +70,17 @@ XMMS_CMD_DEFINE (collection_remove, xmms_collection_remove, xmms_coll_dag_t *, N
 XMMS_CMD_DEFINE (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, UINT32, STRING);
 
 /* FIXME: Arrays, num args, etc?
-XMMS_CMD_DEFINE (query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, );
-XMMS_CMD_DEFINE (query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, ...);
+XMMS_CMD_DEFINE4(query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST);
+XMMS_CMD_DEFINE6(query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, LIST, LIST, LIST);
 */
 
 
 /* Internal helper structures */
+
+typedef struct {
+	guint alias_count;
+	GString *conditions;
+} coll_query_t;
 
 typedef struct {
 	gchar* name;
@@ -380,6 +385,16 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
 	/* FIXME: Code that later */
 	return NULL;
 }
+
+/*
+GList *
+xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
+                           guint lim_start, guint lim_len, GList *order,
+                           xmms_error_t *err)
+{
+	return NULL;
+}
+*/
 
 /** @} */
 
@@ -891,4 +906,185 @@ static void
 coll_unref (void *coll)
 {
 	xmmsc_coll_unref (coll);
+}
+
+
+static void query_append_uint (coll_query_t *query, guint i);
+static void query_append_string (coll_query_t *query, gchar *s);
+static void query_append_protect_string (coll_query_t *query, gchar *s);
+static void query_append_currfield (coll_query_t *query);
+static void query_append_currvalue (coll_query_t *query);
+static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
+static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query);
+static coll_query_t* init_query ();
+static const gchar* xmms_collection_gen_query (coll_query_t *query);
+static const gchar* xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
+
+
+static void
+query_append_uint (coll_query_t *query, guint i)
+{
+	g_string_append_printf (query->conditions, "%u", i);
+}
+
+static void
+query_append_string (coll_query_t *query, gchar *s)
+{
+	g_string_append (query->conditions, s);
+}
+
+static void
+query_append_protect_string (coll_query_t *query, gchar *s)
+{
+	gchar *preps = s; /* FIXME: escape sql stuff! */
+	query_append_string (query, preps);
+}
+
+static void
+query_append_currfield (coll_query_t *query)
+{
+	g_string_append_printf (query->conditions, "m%u.key", query->alias_count);
+}
+
+static void
+query_append_currvalue (coll_query_t *query)
+{
+	g_string_append_printf (query->conditions, "m%u.value", query->alias_count);
+}
+
+static void
+query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
+{
+	xmmsc_coll_t *op;
+
+	xmmsc_coll_operand_list_save (coll);
+	xmmsc_coll_operand_list_first (coll);
+	if (xmmsc_coll_operand_list_entry (coll, &op)) {
+		xmms_collection_append_to_query (dag, op, query);
+	}
+	xmmsc_coll_operand_list_restore (coll);
+}
+
+static void
+xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query)
+{
+	gint i;
+	xmmsc_coll_t *op;
+	guint *idlist;
+	gchar *attr1, *attr2;
+
+	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
+	switch (type) {
+	case XMMS_COLLECTION_TYPE_REFERENCE:
+		query_append_operand (query, dag, coll);
+		break;
+
+	case XMMS_COLLECTION_TYPE_UNION:
+	case XMMS_COLLECTION_TYPE_INTERSECTION:
+		i = 0;
+		query_append_string (query, "(");
+
+		xmmsc_coll_operand_list_save (coll);
+		xmmsc_coll_operand_list_first (coll);
+		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+			if (i != 0) {
+				if (type == XMMS_COLLECTION_TYPE_UNION)
+					query_append_string (query, " OR ");
+				else
+					query_append_string (query, " AND ");
+			}
+			else {
+				i = 1;
+			}
+			xmms_collection_append_to_query (dag, op, query);
+		}
+		xmmsc_coll_operand_list_restore (coll);
+
+		query_append_string (query, ")");
+		break;
+
+	case XMMS_COLLECTION_TYPE_COMPLEMENT:
+		query_append_string (query, "NOT ");
+		query_append_operand (query, dag, coll);
+		break;
+
+	case XMMS_COLLECTION_TYPE_MATCH:
+	case XMMS_COLLECTION_TYPE_CONTAINS:
+	case XMMS_COLLECTION_TYPE_SMALLER:
+	case XMMS_COLLECTION_TYPE_GREATER:
+		xmmsc_coll_attribute_get (coll, "field", &attr1);
+		xmmsc_coll_attribute_get (coll, "value", &attr2);
+
+		/* FIXME: Operands for each type */
+
+		query_append_string (query, "(");
+		query_append_currfield (query);
+		query_append_string (query, "=");
+		query_append_string (query, attr1);
+		query_append_string (query, " AND ");
+		query_append_currvalue (query);
+		query_append_string (query, "=");
+		query_append_protect_string (query, attr2);
+		query_append_string (query, ")");
+		break;
+	
+	case XMMS_COLLECTION_TYPE_IDLIST:
+		idlist = xmmsc_coll_get_idlist (coll);
+		query_append_string (query, "m0.id IN (");
+		for (i = 0; idlist[i] != 0; ++i) {
+			if (i != 0) {
+				query_append_string (query, ",");
+			}
+			query_append_uint (query, idlist[i]);
+		}
+		query_append_string (query, ")");
+		break;
+
+	/* invalid type */
+	default:
+		XMMS_DBG("Cannot append invalid collection operator!");
+		break;
+	}
+
+}
+
+static coll_query_t*
+init_query ()
+{
+	coll_query_t *query;
+
+	query = g_new (coll_query_t, 1);
+	if(query == NULL) {
+		return NULL;
+	}
+
+	query->alias_count = 0;
+	query->conditions = g_string_new (NULL);
+
+	return query;
+}
+
+
+/* FIXME: order etc args? */
+static const gchar*
+xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
+{
+	const gchar *qstring;
+	coll_query_t *query;
+
+	query = init_query ();
+
+	xmms_collection_append_to_query (dag, coll, query);
+	qstring = xmms_collection_gen_query (query);
+
+	g_free (query);
+
+	return qstring;
+}
+
+static const gchar*
+xmms_collection_gen_query (coll_query_t *query)
+{
+	/* FIXME: code! */
+	return NULL;
 }
