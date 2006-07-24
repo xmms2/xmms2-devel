@@ -38,11 +38,13 @@ typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_
 
 static void xmms_collection_destroy (xmms_object_t *object);
 
-static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
+static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
 
-static xmms_collection_namespace_id_t xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace);
+
+static xmms_collection_namespace_id_t xmms_collection_get_namespace_id (gchar *namespace);
+static gchar* xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
 static xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
-static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *target);
+static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *tg_name, gchar *tg_ns);
 
 static void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
 static void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);
@@ -55,6 +57,7 @@ static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
 static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+static void check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 
 static void coll_unref (void *coll);
 
@@ -86,6 +89,12 @@ typedef struct {
 	FuncApplyToColl func;
 	void *udata;
 } coll_call_infos_t;
+
+typedef struct {
+	gchar *target_name;
+	gchar *target_namespace;
+	gboolean found;
+} coll_refcheck_t;
 
 
 /** @defgroup Collection Collection
@@ -182,7 +191,7 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_remove");
 
-	nsid = xmms_collection_get_namespace (dag, namespace);
+	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return FALSE;
@@ -195,8 +204,10 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 			existing = g_hash_table_lookup (dag->collrefs[i], name);
 			if (existing != NULL) {
+				char *nsname = xmms_collection_get_namespace_string (i);
+
 				/* Strip all references to the deleted coll, bind operator directly */
-				coll_rebind_infos_t infos = { name, namespace, existing, NULL };
+				coll_rebind_infos_t infos = { name, nsname, existing, NULL };
 				xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
 
 				g_hash_table_remove (dag->collrefs[i], name);
@@ -243,18 +254,18 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_save");
 
-	nsid = xmms_collection_get_namespace (dag, namespace);
+	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return FALSE;
 	}
 	else if (nsid == XMMS_COLLECTION_NSID_ALL) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "cannot save collection in all namespaces");
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "cannot save collection in all namespaces");
 		return FALSE;
 	}
 
 	/* Validate collection structure */
-	if (!xmms_collection_validate (dag, coll)) {
+	if (!xmms_collection_validate (dag, coll, name, namespace)) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
 		return FALSE;
 	}
@@ -301,7 +312,7 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_get");
 
-	nsid = xmms_collection_get_namespace (dag, namespace);
+	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return NULL;
@@ -311,8 +322,12 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
 
 	coll = xmms_collection_get_pointer (dag, name, nsid);
 
+	/* Not found! */
+	if(coll == NULL) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
+	}
 	/* New reference, will be freed after being put in the return message */
-	if(coll != NULL) {
+	else {
 		xmmsc_coll_ref (coll);
 	}
 	
@@ -340,7 +355,7 @@ xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_list");
 
-	nsid = xmms_collection_get_namespace (dag, namespace);
+	nsid = xmms_collection_get_namespace_id (namespace);
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return NULL;
@@ -398,7 +413,8 @@ xmms_collection_destroy (xmms_object_t *object)
  * @returns  True if the collection is valid, false otherwise.
  */
 static gboolean
-xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
+xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
+                          gchar *save_name, gchar *save_namespace)
 {
 	guint num_operands = 0;
 	xmmsc_coll_t *op;
@@ -436,7 +452,7 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 				return FALSE;
 			}
 
-			nsid = xmms_collection_get_namespace (dag, attr2);
+			nsid = xmms_collection_get_namespace_id (attr2);
 			if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 				XMMS_DBG("COLLECTIONS: validation, ref invalid ns");
 				return FALSE;
@@ -449,7 +465,7 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 			}
 
 			/* check if the referenced coll references this one (loop!) */
-			if (xmms_collection_has_reference_to (dag, op, attr)) {
+			if (xmms_collection_has_reference_to (dag, op, save_name, save_namespace)) {
 				XMMS_DBG("COLLECTIONS: validation, ref loop");
 				return FALSE;
 			}
@@ -522,7 +538,7 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 
 	xmmsc_coll_operand_list_first (coll);
 	while (xmmsc_coll_operand_list_entry (coll, &op) && valid) {
-		if (!xmms_collection_validate (dag, op)) {
+		if (!xmms_collection_validate (dag, op, save_name, save_namespace)) {
 			valid = FALSE;
 		}
 		xmmsc_coll_operand_list_next (coll);
@@ -536,12 +552,11 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 
 /** Find the namespace id corresponding to a namespace string.
  *
- * @param dag  The collection DAG.
  * @param namespace  The namespace string.
  * @returns  The namespace id.
  */
 static xmms_collection_namespace_id_t
-xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace)
+xmms_collection_get_namespace_id (gchar *namespace)
 {
 	guint nsid;
 
@@ -560,6 +575,56 @@ xmms_collection_get_namespace (xmms_coll_dag_t *dag, gchar *namespace)
 
 	return nsid;
 }
+
+/** Find the namespace name (string) corresponding to a namespace id.
+ *
+ * @param nsid  The namespace id.
+ * @returns  The namespace name (string).
+ */
+static gchar*
+xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid)
+{
+	gchar *name;
+
+	switch (nsid) {
+	case XMMS_COLLECTION_NSID_ALL:
+		name = XMMS_COLLECTION_NS_ALL;
+		break;
+	case XMMS_COLLECTION_NSID_COLLECTIONS:
+		name = XMMS_COLLECTION_NS_COLLECTIONS;
+		break;
+	case XMMS_COLLECTION_NSID_PLAYLISTS:
+		name = XMMS_COLLECTION_NS_PLAYLISTS;
+		break;
+
+	case XMMS_COLLECTION_NSID_INVALID:
+	default:
+		name = NULL;
+		break;
+	}
+
+	return name;
+}
+
+
+/** Check whether a collection structure contains a reference to a given collection.
+ * 
+ * @param dag  The collection DAG.
+ * @param coll  The collection to inspect for reference.
+ * @param tg_name  The name of the collection to find a reference to.
+ * @param tg_ns  The namespace of the collection to find a reference to.
+ * @returns  True if the collection contains a reference to the given
+ *           collection, false otherwise
+ */
+static gboolean
+xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *tg_name, gchar *tg_ns)
+{
+	coll_refcheck_t check = { tg_name, tg_ns, FALSE };
+	xmms_collection_apply_to_collection (dag, coll, check_for_reference, &check);
+
+	return check.found;
+}
+
 
 /** Find the collection structure corresponding to the given name in the given namespace.
  *
@@ -584,13 +649,6 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
 	}
 
 	return coll;
-}
-
-static gboolean
-xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *target)
-{
-	/* FIXME: use a reflist cache!  (we need this to find loops) */
-	return TRUE;
 }
 
 
@@ -718,7 +776,7 @@ bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *par
 			return;
 		}
 
-		target_nsid = xmms_collection_get_namespace (dag, target_namespace);
+		target_nsid = xmms_collection_get_namespace_id (target_namespace);
 		if (target_nsid == XMMS_COLLECTION_NSID_INVALID) {
 			return;
 		}
@@ -754,7 +812,7 @@ rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *paren
 		xmmsc_coll_attribute_get (coll, "reference", &target_name);
 		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
 		if (strcmp (infos->name, target_name) != 0 ||
-			strcmp (infos->namespace, target_namespace) != 0) {
+		    strcmp (infos->namespace, target_namespace) != 0) {
 			return;
 		}
 
@@ -786,7 +844,7 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 		xmmsc_coll_attribute_get (coll, "reference", &target_name);
 		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
 		if (strcmp (infos->name, target_name) != 0 ||
-			strcmp (infos->namespace, target_namespace) != 0) {
+		    strcmp (infos->namespace, target_namespace) != 0) {
 			return;
 		}
 
@@ -800,6 +858,26 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 
 			xmmsc_coll_add_operand (parent, infos->oldtarget);
 			xmmsc_coll_ref (infos->oldtarget);
+		}
+	}
+}
+
+/**
+ * Check if the current operator is a reference to a given collection,
+ * and if so, update the structure passed as userdata.
+ */
+static void
+check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
+{
+	coll_refcheck_t *check = (coll_refcheck_t*)udata;
+	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE && !check->found) {
+		gchar *target_name, *target_namespace;
+
+		xmmsc_coll_attribute_get (coll, "reference", &target_name);
+		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
+		if (strcmp (check->target_name, target_name) == 0 &&
+		    strcmp (check->target_namespace, target_namespace) == 0) {
+			check->found = TRUE;
 		}
 	}
 }
