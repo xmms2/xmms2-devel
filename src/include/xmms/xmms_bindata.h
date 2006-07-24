@@ -18,6 +18,6 @@
 #define __XMMS_BINDATA_H__
 
 gchar *xmms_bindata_calculate_md5 (guchar *data, guint size);
-gchar *xmms_bindata_plugin_add (guchar *data, guint size);
+gchar *xmms_bindata_plugin_add (GString *str);
 
 #endif

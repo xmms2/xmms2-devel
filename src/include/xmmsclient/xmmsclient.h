@@ -177,7 +177,7 @@ xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connecti
 xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url);
 
 /* Bindata object */ 
-xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *base64data);
+xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *data, unsigned int len);
 xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, const char *hash); 
 xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
 
@@ -223,12 +223,14 @@ const char * xmmsc_result_get_error (xmmsc_result_t *res);
 int xmmsc_result_get_int (xmmsc_result_t *res, int *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, char **r);
+int xmmsc_result_get_bin (xmmsc_result_t *res, unsigned char **r, unsigned int *rlen);
 
 typedef enum {
 	XMMSC_RESULT_VALUE_TYPE_NONE = XMMS_OBJECT_CMD_ARG_NONE,
 	XMMSC_RESULT_VALUE_TYPE_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32,
 	XMMSC_RESULT_VALUE_TYPE_INT32 = XMMS_OBJECT_CMD_ARG_INT32,
-	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING
+	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING,
+	XMMSC_RESULT_VALUE_TYPE_BIN = XMMS_OBJECT_CMD_ARG_BIN
 } xmmsc_result_value_type_t;
 
 typedef void (*xmmsc_propdict_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);

@@ -31,7 +31,8 @@
  */
 xmmsc_result_t *
 xmmsc_bindata_add (xmmsc_connection_t *c,
-                   const unsigned char *base64data)
+                   const unsigned char *data,
+				   unsigned int len)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -40,7 +41,7 @@ xmmsc_bindata_add (xmmsc_connection_t *c,
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_BINDATA,
 	                        XMMS_IPC_CMD_ADD_DATA);
 
-	xmms_ipc_msg_put_string (msg, (char *)base64data);
+	xmms_ipc_msg_put_bin (msg, data, len);
 
 	return xmmsc_send_msg (c, msg);
 }

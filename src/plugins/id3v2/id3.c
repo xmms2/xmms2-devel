@@ -317,12 +317,16 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	len -= (l2 + 2);
 
 	if (buf[0] == 0x00 || buf[0] == 0x03) {
+		GString *str;
 		gchar *hash;
 		gchar *desc = (gchar *)buf+1;
 		buf = buf + strlen (desc) + 2;
 		len -= (strlen (desc) - 2);
 		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
-		hash = xmms_bindata_plugin_add ((guchar *)buf, len);
+		str = g_string_new (NULL);
+		g_string_append_len (str, buf, len);
+		hash = xmms_bindata_plugin_add (str);
+		g_string_free (str, FALSE);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
 		g_free (hash);

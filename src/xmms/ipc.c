@@ -132,6 +132,15 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 				return FALSE;
 			}
 			break;
+		case XMMS_OBJECT_CMD_ARG_BIN :
+			{
+				GString *bin = g_string_new (NULL);
+				if (!xmms_ipc_msg_get_bin_alloc (msg, (unsigned char **)&bin->str, (uint32_t *)&bin->len)) {
+					return FALSE;
+				}
+				arg->values[i].value.bin = bin;
+			}
+			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");
 			return FALSE;
@@ -183,6 +192,9 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 	xmms_ipc_msg_put_int32 (msg, val->type);
 
 	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			xmms_ipc_msg_put_bin (msg, val->value.bin->str, val->value.bin->len);
+			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			xmms_ipc_msg_put_string (msg, val->value.string);
 			break;
@@ -288,8 +300,11 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		xmms_object_cmd_value_free (arg.retval);
 
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
+		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING) {
 			g_free (arg.values[i].value.string);
+		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_BIN) {
+			g_string_free (arg.values[i].value.bin, TRUE);
+		}
 	}
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
 	g_mutex_lock (client->lock);
