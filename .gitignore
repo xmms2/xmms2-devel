@@ -3,6 +3,9 @@
 *.so
 *.os
 *.pyc
+*.dylib
+*.bundle
+*.swp
 *~
 .sconsign.dblite
 .sconf_temp
@@ -20,10 +23,12 @@ xmms2-client.pc
 xmms2-plugin.pc
 src/clients/cli/xmms2
 src/clients/et/xmms2-et
+src/clients/lib/python/xmmsclient.c
 src/clients/lib/xmmsclient++-glib/libxmmsclient++-glib.so.0
 src/clients/lib/xmmsclient-ecore/libxmmsclient-ecore.so.0
 src/clients/lib/xmmsclient-glib/libxmmsclient-glib.so.0
 src/clients/lib/xmmsclient/libxmmsclient.so.0
+src/clients/mdns/dns_sd/xmms2-mdns-dnssd
 src/include/xmms/xmms_defs.h
 src/xmms/converter.c
 src/xmms/xmms2-launcher
