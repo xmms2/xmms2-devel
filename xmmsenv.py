@@ -261,7 +261,7 @@ class XMMSEnvironment(Environment):
 	def checkcpp(self):
 		if not self.config_cache.has_key("cpp"):
 			print "Checking for working C++ compiler...",
-			self.config_cache["cpp"] = self.conf.TryCompile("int main() {}",".cpp")
+			self.config_cache["cpp"] = self.conf.TryCompile("using namespace std; int main() {};",".cpp")
 			if self.config_cache["cpp"]:
 				print "yes"
 			else:
