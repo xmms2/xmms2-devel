@@ -207,6 +207,7 @@ void
 xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 {
 	x_return_if_fail (coll);
+	x_return_if_fail (op);
 
 	/* Already present, don't add twice! */
 	if (x_list_index (coll->operands, op) != -1) {
@@ -229,6 +230,7 @@ xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 	x_list_t *entry;
 
 	x_return_if_fail (coll);
+	x_return_if_fail (op);
 
 	/* Find the entry, abort if not in the list */
 	entry = x_list_find (coll->operands, op);
