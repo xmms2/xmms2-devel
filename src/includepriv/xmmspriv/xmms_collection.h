@@ -49,7 +49,7 @@ typedef struct xmms_coll_dag_St xmms_coll_dag_t;
  * Public functions
  */
 
-xmms_coll_dag_t * xmms_collection_init (void);
+xmms_coll_dag_t * xmms_collection_init ();
 
 xmmsc_coll_t * xmms_collection_get (xmms_coll_dag_t *dag, gchar *collname, gchar *namespace, xmms_error_t *error);
 GList * xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *error);
@@ -57,8 +57,8 @@ gboolean xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespa
 gboolean xmms_collection_remove (xmms_coll_dag_t *dag, gchar *collname, gchar *namespace, xmms_error_t *error);
 GList * xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_error_t *error);
 
-GList * xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar order[], guint limit_start, guint limit_len, xmms_error_t *error);
-GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar order[], guint limit_start, guint limit_len, gchar fetch[], gchar group[], xmms_error_t *error);
+GList * xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, guint lim_start, guint lim_len, GList *order, xmms_error_t *err);
+GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, guint lim_start, guint lim_len, GList *order, GList *fetch, GList *group, xmms_error_t *err);
 
 
 #endif
