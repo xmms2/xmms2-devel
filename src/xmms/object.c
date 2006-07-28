@@ -284,6 +284,7 @@ xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
 		case XMMS_OBJECT_CMD_ARG_DICT:
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
+		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
 		case XMMS_OBJECT_CMD_ARG_COLL:
 			/** Unsupported for now */
 			XMMS_DBG ("Unsupported value passed to value_copy()");
@@ -311,6 +312,13 @@ xmms_object_cmd_value_free (gpointer val)
 				                                    v->value.list);
 			}
 
+			break;
+		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
+			while (v->value.list) {
+				g_free (v->value.list->data);
+				v->value.list = g_list_delete_link (v->value.list,
+				                                    v->value.list);
+			}
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			if (v->value.dict) {
@@ -380,6 +388,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
+		case XMMS_OBJECT_CMD_ARG_STRINGLIST:
 			arg.retval = xmms_object_cmd_value_list_new ((GList *) va_arg (ap, gpointer));
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL:

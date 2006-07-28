@@ -124,6 +124,7 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_ARG_STRING(a) ,arg->values[a].value.string
 #define __XMMS_CMD_DO_ARG_UINT32(a) ,arg->values[a].value.uint32
 #define __XMMS_CMD_DO_ARG_INT32(a) ,arg->values[a].value.int32
+#define __XMMS_CMD_DO_ARG_STRINGLIST(a) ,arg->values[a].value.list
 #define __XMMS_CMD_DO_ARG_COLL(a) ,arg->values[a].value.coll
 #define __XMMS_CMD_DO_RETVAL_NONE() arg->retval = xmms_object_cmd_value_none_new();
 #define __XMMS_CMD_DO_RETVAL_DICT() arg->retval = xmms_object_cmd_value_dict_new
