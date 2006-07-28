@@ -47,7 +47,6 @@ static GList *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_er
 static void xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
 static void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
 static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
-GList *xmms_medialib_select (xmms_medialib_session_t *, gchar *query, xmms_error_t *error);
 static void xmms_medialib_playlist_save_current (xmms_medialib_t *, gchar *, xmms_error_t *);
 static void xmms_medialib_playlist_load (xmms_medialib_t *, gchar *, xmms_error_t *);
 static GList *xmms_medialib_playlist_list (xmms_medialib_t *, gchar *, xmms_error_t *);
