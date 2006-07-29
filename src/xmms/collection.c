@@ -442,7 +442,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	g_string_free (query, TRUE);
 
-	/* FIXME: get an int list directly ! */
+	/* FIXME: get an int list directly !   or Int vs UInt? */
 	for (n = res; n; n = n->next) {
 		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)n->data;
 		gint *v = (gint*)g_hash_table_lookup (cmdval->value.dict, "id");
@@ -805,16 +805,18 @@ xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
 	/* First apply the function to the operator. */
 	f (dag, coll, parent, udata);
 
-	/* Then recurse into the parents */
-	xmmsc_coll_operand_list_save (coll);
+	/* Then recurse into the parents (if not a reference) */
+	if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
+		xmmsc_coll_operand_list_save (coll);
 
-	xmmsc_coll_operand_list_first (coll);
-	while (xmmsc_coll_operand_list_entry (coll, &op)) {
-		xmms_collection_apply_to_collection_recurs (dag, op, coll, f, udata);
-		xmmsc_coll_operand_list_next (coll);
+		xmmsc_coll_operand_list_first (coll);
+		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+			xmms_collection_apply_to_collection_recurs (dag, op, coll, f, udata);
+			xmmsc_coll_operand_list_next (coll);
+		}
+
+		xmmsc_coll_operand_list_restore (coll);
 	}
-
-	xmmsc_coll_operand_list_restore (coll);
 }
 
 
@@ -964,6 +966,17 @@ check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *par
 		if (strcmp (check->target_name, target_name) == 0 &&
 		    strcmp (check->target_namespace, target_namespace) == 0) {
 			check->found = TRUE;
+		}
+		else {
+			xmmsc_coll_t *op;
+			xmmsc_coll_operand_list_save (coll);
+			xmmsc_coll_operand_list_first (coll);
+			if (xmmsc_coll_operand_list_entry (coll, &op)) {
+				xmms_collection_apply_to_collection_recurs (dag, op, coll,
+				                                            check_for_reference,
+				                                            udata);
+			}
+			xmmsc_coll_operand_list_restore (coll);
 		}
 	}
 }
@@ -1179,7 +1192,8 @@ xmms_collection_gen_query (coll_query_t *query)
 	/* Append select */
 	qstring = g_string_new ("SELECT DISTINCT m0.id FROM Media as m0");
 	for (i = 1; i < query->alias_count; i++) {
-		g_string_append_printf (qstring, ", Media as m%u", i);
+		g_string_append_printf (qstring,
+		                        " JOIN Media as m%u ON m0.id = m%u.id", i, i);
 	}
 
 	/* FIXME: select fetch fields OR ids? */
@@ -1194,16 +1208,8 @@ xmms_collection_gen_query (coll_query_t *query)
 	*/
 
 	/* Append conditions */
-	if (query->alias_count > 0 || query->conditions->len > 0) {
-		g_string_append (qstring, " WHERE ");
-	}
-	g_string_append (qstring, query->conditions->str);
-
-	for (i = 1; i < query->alias_count; i++) {
-		if (i > 1 || query->conditions->len > 0) {
-			g_string_append (qstring, " AND");
-		}
-		g_string_append_printf (qstring, " m0.id = m%u.id", i);
+	if (query->conditions->len > 0) {
+		g_string_append_printf (qstring, " WHERE %s", query->conditions->str);
 	}
 
 	/* Append ordering */
@@ -1249,7 +1255,8 @@ xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_
 	xmms_collection_append_to_query (dag, coll, query);
 	qstring = xmms_collection_gen_query (query);
 
-	/* FIXME: free conditions */
+	/* free the query struct */
+	g_string_free (query->conditions, TRUE);
 	g_free (query);
 
 	return qstring;
