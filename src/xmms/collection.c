@@ -77,6 +77,7 @@ typedef struct {
 static void xmms_collection_destroy (xmms_object_t *object);
 
 static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
+static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid);
 
 
 static xmms_collection_namespace_id_t xmms_collection_get_namespace_id (gchar *namespace);
@@ -212,10 +213,9 @@ xmms_collection_init (void)
 gboolean
 xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_error_t *err)
 {
-	xmmsc_coll_t *existing = NULL;
-	guint32 nsid;
+	guint nsid;
 	gboolean retval;
-	gint i;
+	guint i;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_remove");
 
@@ -227,32 +227,14 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 
 	g_mutex_lock (dag->mutex);
 
-	/* FIXME: reduce copy-paste */
+	/* Unreference the matching collection(s) */
 	if (nsid == XMMS_COLLECTION_NSID_ALL) {
 		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
-			existing = g_hash_table_lookup (dag->collrefs[i], name);
-			if (existing != NULL) {
-				char *nsname = xmms_collection_get_namespace_string (i);
-
-				/* Strip all references to the deleted coll, bind operator directly */
-				coll_rebind_infos_t infos = { name, nsname, existing, NULL };
-				xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
-
-				g_hash_table_remove (dag->collrefs[i], name);
-				retval = TRUE;
-			}
+			retval = xmms_collection_unreference (dag, name, i) || retval;
 		}
 	}
 	else {
-		existing = g_hash_table_lookup (dag->collrefs[nsid], name);
-		if (existing != NULL) {
-			/* Strip all references to the deleted coll, bind operator directly */
-			coll_rebind_infos_t infos = { name, namespace, existing, NULL };
-			xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
-
-			g_hash_table_remove (dag->collrefs[nsid], name);
-			retval = TRUE;
-		}
+		retval = xmms_collection_unreference (dag, name, nsid);
 	}
 
 	g_mutex_unlock (dag->mutex);
@@ -278,7 +260,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
                       xmmsc_coll_t *coll, xmms_error_t *err)
 {
 	xmmsc_coll_t *existing;
-	guint32 nsid;
+	guint nsid;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_save");
 
@@ -336,7 +318,7 @@ xmmsc_coll_t *
 xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_error_t *err)
 {
 	xmmsc_coll_t *coll = NULL;
-	guint32 nsid;
+	guint nsid;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_get");
 
@@ -379,7 +361,7 @@ GList *
 xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
 {
 	GList *r = NULL;
-	guint32 nsid;
+	guint nsid;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_list");
 
@@ -633,6 +615,34 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	xmmsc_coll_operand_list_restore (coll);
 
 	return valid;
+}
+
+/** Try to unreference a collection from a given namespace.
+ *
+ * @param dag  The collection DAG.
+ * @param name  The name of the collection to remove.
+ * @param nsid  The namespace in which to look for the collection.
+ * @returns  TRUE if a collection was removed, FALSE otherwise.
+ */
+static gboolean
+xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
+{
+	xmmsc_coll_t *existing;
+	gboolean retval = FALSE;
+
+	existing = g_hash_table_lookup (dag->collrefs[nsid], name);
+	if (existing != NULL) {
+		char *nsname = xmms_collection_get_namespace_string (nsid);
+
+		/* Strip all references to the deleted coll, bind operator directly */
+		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
+		xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
+
+		g_hash_table_remove (dag->collrefs[nsid], name);
+		retval = TRUE;
+	}
+
+	return retval;
 }
 
 
