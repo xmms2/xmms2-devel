@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <xmmsclient/xmmsclient.h>
 #include <callbacks.h>
-#include <misc.h>
 #include <jni.h>
 #include <stdlib.h>
 
@@ -359,35 +358,6 @@ run_java_callback_void (void *v, jmethodID mid)
 	                                 callbackObject, 
 	                                 mid, 
 	                                 *((int*)v));
-}
-/*
- * this function is here so that swig can wrap it. The dev can call it later
- * in his callbackfunctions to get results from the long values
- */
-xmmsc_result_t* 
-getResultFromPointer (jlong val)
-{
-	return *(xmmsc_result_t **)(void *)&val;
-}
-
-/*
- * swig rewrites this function so we can use it in java. it returns a pointer
- * to a connection object.
- */
-jlong 
-getPointerToConnection (xmmsc_connection_t *c)
-{
-	jlong connection;
-	*(xmmsc_connection_t **)(void *)&connection = c;
-	return connection;
-}
-
-void*
-convertIntToVoidP(int val)
-{
-	int *newval = (int*)malloc(sizeof(int));
-	*newval = val;
-	return newval;
 }
 
 /*

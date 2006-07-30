@@ -43,7 +43,7 @@ import org.xmms2.wrapper.xmms2bindings.xmms_plugin_type_t;
  * bleh.connect(); Map configs = bleh.configvalListSync(); # Do some nifty
  * things with the configs you got # bleh.spinDown();
  * 
- * Don't use org.xmms2.xmms2bindings.*, org.xmms2.SpecialJNI and org.xmms2.JMain
+ * Don't use org.xmms2.xmms2bindings.* and org.xmms2.JMain
  * directly if you are using org.xmms2.Xmms2
  */
 
@@ -184,7 +184,35 @@ public final class Xmms2 {
     public void setConnectionParams(String ipcPath) {
         this.ipcPath = ipcPath;
     }
+    
+    /**
+     * @return	The used path for the xmms2 client's configuration
+     */
+    public String getConfigurationPath(){
+    	return Xmmsclient.xmmsc_userconfdir_get();
+    }
+    
+    /**
+     * @param input 
+     * @return	Prepares some SQL-string for use with sqlite
+     */
+    public String getSQLPreparedString(String input){
+    	return Xmmsclient.xmmsc_sqlite_prepare_string(input);
+    }
 
+    public short[] bindataBase64Decode(String data) {
+    	short[] bindata = null;
+    	long[] datalength = new long[1];
+    	Xmmsclient.xmms_bindata_base64_decode_wrap(data, datalength, bindata);
+    	return bindata;
+    }
+    
+    public String bindataBase64Encode(short[] bindata) {
+    	return Xmmsclient.xmms_bindata_base64_encode(bindata, bindata.length);
+    }
+
+    
+    
     /*
      * Following void returning functions work almost as their c-pendants
      */
@@ -545,7 +573,8 @@ public final class Xmms2 {
                 Xmmsclient.convertIntToVoidP(t));
         Xmmsclient.xmmsc_result_unref(result);
         return t;
-    }
+    }  
+    
 
     /*
      * Following methods wait for the result and return to the caller. THEY
@@ -726,5 +755,29 @@ public final class Xmms2 {
     
     public Playlist getPlaylist(){
     	return pl;
+    }
+    public String bindataAdd(short data[]) {
+    	SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_bindata_add(
+        		xbo.connectionTwo, data, data.length);
+    	Xmmsclient.xmmsc_result_wait(result);
+    	String hash[] = new String[1];
+    	Xmmsclient.xmmsc_result_get_string(result, hash);
+    	Xmmsclient.xmmsc_result_unref(result);
+    	return hash[0];
+    }
+    public short[] bindataRetreive(String hash) {
+    	SWIGTYPE_p_xmmsc_result_St result = 
+    		Xmmsclient.xmmsc_bindata_retreive(xbo.connectionTwo, hash);
+    	Xmmsclient.xmmsc_result_wait(result);
+    	short[][] bindata = null;
+    	Xmmsclient.xmmsc_result_get_bin_wrap(result, bindata);
+    	Xmmsclient.xmmsc_result_unref(result);
+    	return bindata[0];
+    }
+    public void bindataRemove(String hash) {
+    	SWIGTYPE_p_xmmsc_result_St result = 
+    		Xmmsclient.xmmsc_bindata_remove(xbo.connectionTwo, hash);
+    	Xmmsclient.xmmsc_result_wait(result);
+    	Xmmsclient.xmmsc_result_unref(result);
     }
 }
