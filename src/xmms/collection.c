@@ -1090,6 +1090,40 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *c
 }
 
 static void
+query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *value)
+{
+		query_append_currvalue (query);
+		switch (type) {
+		case XMMS_COLLECTION_TYPE_MATCH:
+			query_append_string (query, "=");
+			query_append_protect_string (query, value);
+			break;
+
+		case XMMS_COLLECTION_TYPE_CONTAINS:
+			query_append_string (query, " LIKE ");
+			query_append_protect_string (query, value);
+			break;
+
+		/* FIXME: don't escape numerical values? */
+		case XMMS_COLLECTION_TYPE_SMALLER:
+			query_append_string (query, " < ");
+			query_append_protect_string (query, value);
+			break;
+
+		/* FIXME: don't escape numerical values? */
+		case XMMS_COLLECTION_TYPE_GREATER:
+			query_append_string (query, " > ");
+			query_append_protect_string (query, value);
+			break;
+
+		/* Called with invalid type? */
+		default:
+			g_assert_not_reached ();
+			break;
+		}
+}
+
+static void
 xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query)
 {
 	gint i;
@@ -1140,16 +1174,12 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 		xmmsc_coll_attribute_get (coll, "field", &attr1);
 		xmmsc_coll_attribute_get (coll, "value", &attr2);
 
-		/* FIXME: Operands for each type */
-
 		query_append_string (query, "(");
 		query_append_currfield (query);
 		query_append_string (query, "=");
 		query_append_protect_string (query, attr1);
 		query_append_string (query, " AND ");
-		query_append_currvalue (query);
-		query_append_string (query, "=");
-		query_append_protect_string (query, attr2);
+		query_append_filter (query, type, attr2);
 		query_append_string (query, ")");
 		query->alias_count++;
 		break;
