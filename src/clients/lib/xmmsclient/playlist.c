@@ -74,16 +74,16 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playlist)
  * Sorts the playlist according to the property
  */
 xmmsc_result_t *
-xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char *property[])
+xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char **properties)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
-	x_api_error_if (!property, "with a NULL property", NULL);
+	x_api_error_if (!properties, "with a NULL property", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
 	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_string (msg, property); /* FIXME: stringlist ? */
+	xmms_ipc_msg_put_string (msg, *properties); /* FIXME: stringlist ? */
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -110,7 +110,7 @@ xmmsc_playlist_clear (xmmsc_connection_t *c, const char *playlist)
 xmmsc_result_t *
 xmmsc_playlist_remove (xmmsc_connection_t *c, const char *playlist)
 {
-	return xmmsc_coll_list (c, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+	return xmmsc_coll_remove (c, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
 }
 
 
@@ -120,14 +120,12 @@ xmmsc_playlist_remove (xmmsc_connection_t *c, const char *playlist)
 xmmsc_result_t *
 xmmsc_playlist_list_entries (xmmsc_connection_t *c, const char *playlist)
 {
-	xmms_ipc_msg_t *msg;
-
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST_ENTRIES);
-	xmms_ipc_msg_put_string (msg, playlist);
+	/* FIXME: coll_query_ids with a reference to the active playlist */
+	/* return xmmsc_coll_query_ids (c, ..., XMMS_COLLECTION_NS_PLAYLISTS); */
 
-	return xmmsc_send_msg (c, msg);
+	return NULL;
 }
 
 /**
@@ -421,8 +419,7 @@ xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
  * Load a playlist as the current active playlist
  */
 xmmsc_result_t *
-xmmsc_playlist_load (xmmsc_connection_t *conn,
-                     const char *name)
+xmmsc_playlist_load (xmmsc_connection_t *c, const char *name)
 {
 	xmms_ipc_msg_t *msg;
 

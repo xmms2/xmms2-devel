@@ -32,6 +32,7 @@ void cmd_shuffle (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_move (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 
 

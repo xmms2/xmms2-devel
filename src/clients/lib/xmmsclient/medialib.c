@@ -185,7 +185,7 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
 
 	x_check_conn (conn, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE_ID);
 	xmms_ipc_msg_put_uint32 (msg, entry);
 
 	res = xmmsc_send_msg (conn, msg);

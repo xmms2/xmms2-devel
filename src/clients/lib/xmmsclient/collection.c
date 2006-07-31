@@ -37,7 +37,7 @@ static void xmmsc_coll_msg_put_string_list (xmms_ipc_msg_t *msg, const char* str
 
 /* [xmmsc_coll_t] */
 xmmsc_result_t*
-xmmsc_coll_get (xmmsc_connection_t *conn, char *collname,
+xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
                 xmmsc_coll_namespace_t ns)
 {
 	xmmsc_result_t *res;
@@ -74,7 +74,7 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 /* [void] */
 xmmsc_result_t*
 xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
-                 char* name, xmmsc_coll_namespace_t ns)
+                 const char* name, xmmsc_coll_namespace_t ns)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
@@ -94,7 +94,7 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 /* [void] */
 xmmsc_result_t*
 xmmsc_coll_remove (xmmsc_connection_t *conn,
-                   char* name, xmmsc_coll_namespace_t ns)
+                   const char* name, xmmsc_coll_namespace_t ns)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
