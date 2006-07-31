@@ -72,6 +72,13 @@ cmds commands[] = {
 
 	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
 
+	/* Playlist managment */
+	{ "playlists_list", "List all available playlists", cmd_playlists_list },
+	{ "load_playlist", "[playlistname] - Load 'playlistname' stored in medialib", cmd_playlist_load },
+	{ "import_playlist", "[name] [filename] - Import playlist from file", cmd_playlist_import },
+	{ "export_playlist", "[playlistname] [mimetype] - Export playlist", cmd_playlist_export },
+	{ "remove_playlist", "[playlistname] - Remove a playlist", cmd_playlist_remove },
+
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
 	{ "current", "formatted information about the current entry", cmd_current },

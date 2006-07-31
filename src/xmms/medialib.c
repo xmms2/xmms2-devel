@@ -39,14 +39,11 @@
 
 
 static void xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmms_error_t *error);
-static gboolean get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata);
 static gboolean xmms_medialib_int_cb (xmms_object_cmd_value_t **row, gpointer udata);
 static gchar *xmms_medialib_url_encode (const gchar *path);
 
 static GList *xmms_medialib_info (xmms_medialib_t *playlist, guint32 id, xmms_error_t *err);
-static void xmms_medialib_select_and_add (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error);
 static void xmms_medialib_add_entry (xmms_medialib_t *, gchar *, xmms_error_t *);
-static GList *xmms_medialib_select_method (xmms_medialib_t *, gchar *, xmms_error_t *);
 static void xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error);
 static void xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error);
 static void xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry, gchar *source, gchar *key, gchar *value, xmms_error_t *error);
@@ -196,11 +193,12 @@ xmms_medialib_session_new (const char *file, int line)
 	session->sql = xmms_sqlite_open (&create);
 	session->source = XMMS_MEDIALIB_SOURCE_SERVER_ID; /* Default to source server */
 
+	/* FIXME: Create an initial "Default" playlist that'd contain the sample */
 	if (create) {
 		xmms_medialib_entry_t entry;
 		xmms_error_t error;
 		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg", &error);
-		xmms_playlist_add_entry (medialib->playlist, entry);
+		xmms_playlist_add_entry (medialib->playlist, "_active", entry); /* FIXME: Does not exist yet! */
 	}
 	return session;
 }
@@ -228,14 +226,14 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-			     XMMS_IPC_CMD_INFO, 
-			     XMMS_CMD_FUNC (info));
+	                     XMMS_IPC_CMD_INFO, 
+	                     XMMS_CMD_FUNC (info));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-			     XMMS_IPC_CMD_ADD_URL, 
-			     XMMS_CMD_FUNC (mlib_add));
+	                     XMMS_IPC_CMD_ADD_URL, 
+ 	                     XMMS_CMD_FUNC (mlib_add));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-			     XMMS_IPC_CMD_REMOVE, 
-			     XMMS_CMD_FUNC (mlib_remove));
+  	                     XMMS_IPC_CMD_REMOVE_ID, 
+  	                     XMMS_CMD_FUNC (mlib_remove));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PATH_IMPORT,
 	                     XMMS_CMD_FUNC (path_import));
@@ -940,16 +938,6 @@ select_callback (GHashTable *row, gpointer udata)
 	return TRUE;
 }
 
-static GList *
-xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error_t *error)
-{
-	GList *ret;
-	xmms_medialib_session_t *session = xmms_medialib_begin ();
-	ret = xmms_medialib_select (session, query, error);
-	xmms_medialib_end (session);
-	return ret;
-}
-
 /**
  * Add a entry to the medialib. Calls #xmms_medialib_entry_new and then
  * wakes up the mediainfo_reader in order to resolve the metadata.
@@ -977,61 +965,6 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
 	xmms_mediainfo_reader_wakeup (mr);
-}
-
-static guint
-get_playlist_id (xmms_medialib_session_t *session, gchar *name)
-{
-	gint ret;
-	guint id = 0;
-
-	g_return_val_if_fail (session, 0);
-
-	ret = xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
-								   "select id as value from Playlist "
-								   "where name = '%s'", name);
-
-	return ret ? id : 0;
-}
-
-static guint
-prepare_playlist (xmms_medialib_session_t *session,
-                  guint id, gchar *name, guint32 pos)
-{
-	gint ret;
-
-	g_return_val_if_fail (session, 0);
-
-	/* if the playlist doesn't exist yet, add it.
-	 * if it does, delete the old entries and update the position field
-	 */
-	if (id) {
-		ret = xmms_sqlite_exec (session->sql,
-		                        "delete from PlaylistEntries "
-		                        "where playlist_id = %u", id);
-		if (!ret) {
-			return 0;
-		}
-
-		ret = xmms_sqlite_exec (session->sql,
-		                        "update Playlist set pos = %u "
-		                        "where id = %u", pos, id);
-		return ret ? id : 0;
-	}
-
-	/* supplied id is zero, so we need to add a new playlist first */
-	ret = xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
-	                               "select IFNULL(MAX (id), 0) as value from Playlist");
-	if (!ret) {
-		return 0;
-	}
-
-	id++; /* we want MAX + 1 */
-
-	ret = xmms_sqlite_exec (session->sql,
-	                        "insert into Playlist (id, name, pos) "
-	                        "values (%u, '%s', %u)", id, name, pos);
-	return ret ? id : 0;
 }
 
 /**
@@ -1135,25 +1068,6 @@ xmms_medialib_property_remove_method (xmms_medialib_t *medialib, guint32 entry,
 	return xmms_medialib_property_remove (medialib, entry, source, key, error);
 }
 
-static gboolean
-get_playlist_entries_cb (xmms_object_cmd_value_t **row, gpointer udata)
-{
-	GList **entries = udata;
-
-	/* 
-	 * valid prefixes for the playlist entries are:
-	 * 'mlib://' and 'sql://', so any valid string is longer
-	 * than 6 characters.
-	 */
-	if (row && row[0] && row[0]->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		*entries = g_list_prepend (*entries, g_strdup (row[0]->value.string));
-	}
-
-	destroy_array (row);
-	
-	return TRUE;
-}
-
 /**
  * Get a list of #GHashTables 's that matches the query.
  *
@@ -1212,29 +1126,6 @@ xmms_medialib_check_id (xmms_medialib_entry_t entry)
 
 }
 
-
-/**
- * @internal
- */
-
-void
-xmms_medialib_playlist_save_autosaved ()
-{
-	xmms_error_t err;
-
-	xmms_medialib_playlist_save_current (medialib, "_autosaved", &err);
-}
-
-/**
- * @internal
- */
-
-void
-xmms_medialib_playlist_load_autosaved ()
-{
-	xmms_error_t err;
-	xmms_medialib_playlist_load (medialib, "_autosaved", &err);
-}
 
 /**
  * @internal

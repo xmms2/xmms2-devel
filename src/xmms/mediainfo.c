@@ -225,7 +225,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_medialib_entry_remove (session, entry);
 			xmms_medialib_end (session);
 			
-			xmms_playlist_remove_by_entry (mrt->playlist, entry);
+			xmms_playlist_remove_by_entry (mrt->playlist, "_active", entry);
 			continue;
 		}
 		
