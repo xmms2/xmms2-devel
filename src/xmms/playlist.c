@@ -1042,7 +1042,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *property, x
 	for (i = 0; i < size; i++) {
 		data = g_new (sortdata_t, 1);
 
-		data->id = xmmsc_coll_idlist_get_index (plcoll, i);
+		xmmsc_coll_idlist_get_index (plcoll, i, &data->id);
 		data->val =
 			xmms_medialib_entry_property_get_cmd_value (session,
 			                                            data->id,

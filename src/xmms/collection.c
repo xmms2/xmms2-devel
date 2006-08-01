@@ -533,7 +533,7 @@ xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid,
  * @param nsid  The namespace id.
  * @returns  The collection structure if found, NULL otherwise.
  */
-static xmmsc_coll_t *
+xmmsc_coll_t *
 xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
 {
 	gint i;
