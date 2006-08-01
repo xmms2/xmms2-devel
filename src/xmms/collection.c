@@ -60,6 +60,12 @@ typedef struct {
 } coll_rebind_infos_t;
 
 typedef struct {
+	gchar* oldname;
+	gchar* newname;
+	gchar* namespace;
+} coll_rename_infos_t;
+
+typedef struct {
 	xmms_coll_dag_t *dag;
 	FuncApplyToColl func;
 	void *udata;
@@ -94,6 +100,7 @@ static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
 
 static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+static void rename_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 
@@ -117,6 +124,7 @@ XMMS_CMD_DEFINE (collection_list, xmms_collection_list, xmms_coll_dag_t *, LIST,
 XMMS_CMD_DEFINE3(collection_save, xmms_collection_save, xmms_coll_dag_t *, NONE, STRING, STRING, COLL);
 XMMS_CMD_DEFINE (collection_remove, xmms_collection_remove, xmms_coll_dag_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, UINT32, STRING);
+XMMS_CMD_DEFINE3(collection_rename, xmms_collection_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
 
 XMMS_CMD_DEFINE4(query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST);
 /* FIXME: Arrays, num args, etc?
@@ -186,6 +194,10 @@ xmms_collection_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_COLLECTION_FIND, 
 			     XMMS_CMD_FUNC (collection_find));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+			     XMMS_IPC_CMD_COLLECTION_RENAME, 
+			     XMMS_CMD_FUNC (collection_rename));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_QUERY_IDS, 
@@ -388,6 +400,59 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
 {
 	/* FIXME: Code that later */
 	return NULL;
+}
+
+gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
+                                 gchar *to_name, gchar *namespace,
+                                 xmms_error_t *err)
+{
+	gboolean retval;
+	guint nsid;
+	xmmsc_coll_t *from_coll, *to_coll;
+
+	nsid = xmms_collection_get_namespace_id (namespace);
+	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
+		return FALSE;
+	}
+	else if (nsid == XMMS_COLLECTION_NSID_ALL) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "cannot rename collection in all namespaces");
+		return FALSE;
+	}
+
+	g_mutex_lock (dag->mutex);
+
+	from_coll = xmms_collection_get_pointer (dag, from_name, nsid);
+	to_coll   = xmms_collection_get_pointer (dag, to_name, nsid);
+
+	/* Input validation */
+	if (from_coll == NULL) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
+		retval = FALSE;
+	}
+	else if (to_coll != NULL) {
+		xmms_error_set (err, XMMS_ERROR_NOENT, "a collection already exists with the target name");
+		retval = FALSE;
+	}
+	/* Update collection name everywhere */
+	else {
+		/* insert new pair in hashtable */
+		g_hash_table_insert (dag->collrefs[nsid], g_strdup (to_name), from_coll);
+		xmmsc_coll_ref (from_coll);
+
+		/* remove old pair from hashtable */
+		g_hash_table_remove (dag->collrefs[nsid], from_name);
+
+		/* update name in all reference operators */
+		coll_rename_infos_t infos = { from_name, to_name, namespace };
+		xmms_collection_apply_to_all_collections (dag, rename_references, &infos);
+
+		retval = TRUE;
+	}
+
+	g_mutex_unlock (dag->mutex);
+
+	return retval;
 }
 
 
@@ -939,6 +1004,30 @@ rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *paren
 
 		xmmsc_coll_add_operand (coll, infos->newtarget);
 		xmmsc_coll_ref (infos->newtarget);
+	}
+}
+
+/**
+ * If a reference with matching name, rename it according to the
+ * rename infos in the udata structure.
+ */
+static void
+rename_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
+{
+	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
+		coll_rename_infos_t *infos;
+
+		gchar *target_name = NULL;
+		gchar *target_namespace = NULL;
+
+		infos = (coll_rename_infos_t*)udata;
+
+		xmmsc_coll_attribute_get (coll, "reference", &target_name);
+		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
+		if (strcmp (infos->oldname, target_name) == 0 &&
+		    strcmp (infos->namespace, target_namespace) == 0) {
+			xmmsc_coll_attribute_set (coll, "reference", infos->newname);
+		}
 	}
 }
 

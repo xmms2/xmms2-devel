@@ -34,6 +34,14 @@ void xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[]);
 void xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op);
 void xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op);
 
+int xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id);
+int xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int index);
+int xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int newindex);
+int xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index);
+int xmmsc_coll_idlist_clear (xmmsc_coll_t *coll);
+int xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *val);
+int xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t val);
+
 xmmsc_coll_type_t xmmsc_coll_get_type (xmmsc_coll_t *coll);
 uint32_t* xmmsc_coll_get_idlist (xmmsc_coll_t *coll);
 int xmmsc_coll_operand_list_first (xmmsc_coll_t *coll);

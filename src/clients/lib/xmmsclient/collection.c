@@ -130,6 +130,26 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
 	return res;
 }
 
+/* Rename a saved collection */
+/* [void] */
+xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name,
+                                   char* to_name, xmmsc_coll_namespace_t ns)
+{
+	xmmsc_result_t *res;
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_RENAME);
+	xmms_ipc_msg_put_string (msg, from_name);
+	xmms_ipc_msg_put_string (msg, to_name);
+	xmms_ipc_msg_put_string (msg, ns);
+
+	res = xmmsc_send_msg (conn, msg);
+
+	return res;
+}
+
  
 /* Query */
 /* [list<uint>] */
