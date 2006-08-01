@@ -82,7 +82,6 @@ static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, 
 
 static xmms_collection_namespace_id_t xmms_collection_get_namespace_id (gchar *namespace);
 static gchar* xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
-static xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
 static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *tg_name, gchar *tg_ns);
 
 static void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
@@ -439,6 +438,53 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	return g_list_reverse (ids);
 }
 
+/**
+ * Update a reference to point to a new collection.
+ *
+ * @param dag  The collection DAG.
+ * @param name The name of the reference to update.
+ * @param nsid The namespace in which to locate the reference.
+ * @param newtarget The new collection pointed to by the reference.
+ */
+void
+xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid,
+                                xmmsc_coll_t *newtarget)
+{
+	xmmsc_coll_t *current;
+	current = xmms_collection_get_pointer (dag, name, nsid);
+	if (current != NULL) {
+		xmmsc_coll_unref (current);
+	}
+
+	g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), newtarget);
+	xmmsc_coll_ref (newtarget);
+}
+
+
+/** Find the collection structure corresponding to the given name in the given namespace.
+ *
+ * @param dag  The collection DAG.
+ * @param collname  The name of the collection to find.
+ * @param nsid  The namespace id.
+ * @returns  The collection structure if found, NULL otherwise.
+ */
+static xmmsc_coll_t *
+xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
+{
+	gint i;
+	xmmsc_coll_t *coll = NULL;
+
+	if (nsid == XMMS_COLLECTION_NSID_ALL) {
+		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES && coll == NULL; ++i) {
+			coll = g_hash_table_lookup (dag->collrefs[i], collname);
+		}
+	}
+	else {
+		coll = g_hash_table_lookup (dag->collrefs[nsid], collname);
+	}
+
+	return coll;
+}
 
 /** @} */
 
@@ -719,32 +765,6 @@ xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gcha
 	xmms_collection_apply_to_collection (dag, coll, check_for_reference, &check);
 
 	return check.found;
-}
-
-
-/** Find the collection structure corresponding to the given name in the given namespace.
- *
- * @param dag  The collection DAG.
- * @param collname  The name of the collection to find.
- * @param nsid  The namespace id.
- * @returns  The collection structure if found, NULL otherwise.
- */
-static xmmsc_coll_t *
-xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
-{
-	gint i;
-	xmmsc_coll_t *coll = NULL;
-
-	if (nsid == XMMS_COLLECTION_NSID_ALL) {
-		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES && coll == NULL; ++i) {
-			coll = g_hash_table_lookup (dag->collrefs[i], collname);
-		}
-	}
-	else {
-		coll = g_hash_table_lookup (dag->collrefs[nsid], collname);
-	}
-
-	return coll;
 }
 
 

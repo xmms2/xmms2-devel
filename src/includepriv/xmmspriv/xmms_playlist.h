@@ -69,7 +69,7 @@ guint32 xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *err)
 guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
 gboolean xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, gchar *plname, xmms_medialib_entry_t entry);
 
-void xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname, xmms_medialib_entry_t file);
+void xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);
 
 xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
 
