@@ -43,6 +43,7 @@ typedef enum {
 
 #define XMMS_MAX_URI_LEN 1024
 #define XMMS_MEDIA_DATA_LEN 1024
+#define XMMS_MAX_INT_ATTRIBUTE_LEN 64
 
 
 struct xmms_playlist_St;

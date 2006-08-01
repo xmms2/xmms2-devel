@@ -967,38 +967,6 @@ xmms_medialib_add_entry (xmms_medialib_t *medialib, gchar *url, xmms_error_t *er
 	xmms_mediainfo_reader_wakeup (mr);
 }
 
-/**
- * Add a entry to a medialib playlist.
- *
- * @param playlist_id ID number of the playlist.
- * @param entry Entry to add to playlist
- * @returns TRUE upon success and FALSE if something went wrong
- */
-
-gboolean
-xmms_medialib_playlist_add (xmms_medialib_session_t *session, 
-							gint playlist_id, 
-							xmms_medialib_entry_t entry)
-{
-	gint ret;
-	gchar mid[32];
-
-	g_return_val_if_fail (session, FALSE);
-
-	g_snprintf (mid, sizeof (mid), "mlib://%d", entry);
-
-	ret = xmms_sqlite_exec (session->sql,
-							"insert into PlaylistEntries"
-							"(playlist_id, entry) "
-							"values (%u, %Q)",
-							playlist_id, mid);
-	if (!ret) {
-		return FALSE;
-	}
-
-	return TRUE;
-
-}
 
 static void
 xmms_medialib_property_set_str_method (xmms_medialib_t *medialib, guint32 entry,
