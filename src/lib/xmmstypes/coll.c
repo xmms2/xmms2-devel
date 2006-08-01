@@ -253,6 +253,12 @@ xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 }
 
 
+/**
+ * Append a value to the idlist.
+ * @param coll  The collection to update.
+ * @param id    The id to append to the idlist.
+ * @return  TRUE on success, false otherwise.
+ */
 int
 xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
 {
@@ -261,6 +267,13 @@ xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
 	return xmmsc_coll_idlist_insert (coll, id, coll->idlist_size - 1);
 }
 
+/**
+ * Insert a value at a given position in the idlist.
+ * @param coll  The collection to update.
+ * @param id    The id to insert in the idlist.
+ * @param index The position at which to insert the value.
+ * @return  TRUE on success, false otherwise.
+ */
 int
 xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int index)
 {
@@ -284,6 +297,13 @@ xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int inde
 	return 1;
 }
 
+/**
+ * Move a value of the idlist to a new position.
+ * @param coll  The collection to update.
+ * @param index The index of the value to move.
+ * @param newindex The newindex to which to move the value.
+ * @return  TRUE on success, false otherwise.
+ */
 int
 xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int newindex)
 {
@@ -310,6 +330,12 @@ xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int new
 	return 1;
 }
 
+/**
+ * Remove the value at a given index from the idlist.
+ * @param coll  The collection to update.
+ * @param index The index at which to remove the value.
+ * @return  TRUE on success, false otherwise.
+ */
 int
 xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
 {
@@ -332,6 +358,11 @@ xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
 	return 1;
 }
 
+/**
+ * Empties the idlist.
+ * @param coll  The collection to update.
+ * @return  TRUE on success, false otherwise.
+ */
 int
 xmmsc_coll_idlist_clear (xmmsc_coll_t *coll)
 {
@@ -344,13 +375,38 @@ xmmsc_coll_idlist_clear (xmmsc_coll_t *coll)
 	return 1;
 }
 
+/**
+ * Retrieves the value at the given position in the idlist.
+ * @param coll  The collection to update.
+ * @param index The position of the value to retrieve.
+ * @param val   The pointer at which to store the found value.
+ * @return  TRUE on success, false otherwise.
+ */
 int
-xmmsc_coll_idlist_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *val)
+xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *val)
 {
 	x_return_val_if_fail (coll, 0);
 	x_return_val_if_fail (index < (coll->idlist_size - 1), 0);
 
 	*val = coll->idlist[index];
+
+	return 1;
+}
+
+/**
+ * Sets the value at the given position in the idlist.
+ * @param coll  The collection to update.
+ * @param index The position of the value to set.
+ * @param val   The new value.
+ * @return  TRUE on success, false otherwise.
+ */
+int
+xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t val)
+{
+	x_return_val_if_fail (coll, 0);
+	x_return_val_if_fail (index < (coll->idlist_size - 1), 0);
+
+	coll->idlist[index] = val;
 
 	return 1;
 }
