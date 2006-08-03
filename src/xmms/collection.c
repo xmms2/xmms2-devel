@@ -321,6 +321,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 			g_hash_table_replace (dag->collrefs[nsid],
 			                      g_strdup (search_pair.key),
 			                      coll);
+			xmmsc_coll_ref (coll);
 		}
 	}
 	else {
