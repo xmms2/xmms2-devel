@@ -43,13 +43,14 @@ typedef struct xmms_coll_dag_St xmms_coll_dag_t;
 
 #include "xmms/xmms_error.h"
 #include "xmmsc/xmmsc_coll.h"
+#include "xmmspriv/xmms_playlist.h"
 
 
 /*
  * Public functions
  */
 
-xmms_coll_dag_t * xmms_collection_init ();
+xmms_coll_dag_t * xmms_collection_init (xmms_playlist_t *playlist);
 
 xmmsc_coll_t * xmms_collection_get (xmms_coll_dag_t *dag, gchar *collname, gchar *namespace, xmms_error_t *error);
 GList * xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *error);
@@ -63,5 +64,12 @@ GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, g
 
 xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
 void xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid, xmmsc_coll_t *newtarget);
+
+
+GHashTable * xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, gchar *plname, gchar *namespace);
+void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict);
+
+#define XMMS_COLLECTION_PLAYLIST_CHANGED_MSG(dag, name) xmms_collection_changed_msg_send (dag, xmms_collection_changed_msg_new (XMMS_COLLECTION_CHANGED_UPDATE, name, XMMS_COLLECTION_NS_PLAYLISTS))
+
 
 #endif

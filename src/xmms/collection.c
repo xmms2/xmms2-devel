@@ -139,7 +139,7 @@ XMMS_CMD_DEFINE6(query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LI
 */
 
 
-static GHashTable *
+GHashTable *
 xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
                                  gchar *plname, gchar *namespace)
 {
@@ -154,12 +154,10 @@ xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
 	val = xmms_object_cmd_value_str_new (namespace);
 	g_hash_table_insert (dict, "namespace", val);
 
-	XMMS_DBG ("COLL-CHANGED: %d for %s in %s", type, plname, namespace);
-
 	return dict;
 }
 
-static void
+void
 xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict)
 {
 	g_return_if_fail (colldag);
@@ -191,6 +189,9 @@ xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict)
 struct xmms_coll_dag_St {
 	xmms_object_t object;
 
+	/* Ref to the playlist object, needed to notify it when a playlist changes */
+	xmms_playlist_t *playlist;
+
 	GHashTable *collrefs[XMMS_COLLECTION_NUM_NAMESPACES];
 
 	GMutex *mutex;
@@ -203,13 +204,14 @@ struct xmms_coll_dag_St {
  * @returns  The newly allocated collection DAG.
  */
 xmms_coll_dag_t *
-xmms_collection_init (void)
+xmms_collection_init (xmms_playlist_t *playlist)
 {
 	gint i;
 	xmms_coll_dag_t *ret;
 	
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
+	ret->playlist = playlist;
 
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		ret->collrefs[i] = g_hash_table_new_full (g_str_hash, g_str_equal,
@@ -363,6 +365,11 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
 			                             newkey,
 			                             namespace);
+
+			/* If updating a collection, trigger PLAYLIST_CHANGED */
+			if (nsid == XMMS_COLLECTION_NSID_PLAYLISTS) {
+				XMMS_PLAYLIST_COLLECTION_CHANGED_MSG (dag->playlist, newkey);
+			}
 		}
 	}
 	else {

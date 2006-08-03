@@ -84,41 +84,6 @@ XMMS_CMD_DEFINE (import, xmms_playlist_import, xmms_playlist_t *, NONE, STRING, 
 XMMS_CMD_DEFINE (export, xmms_playlist_export, xmms_playlist_t *, STRING, STRING, STRING);
 
 
-static GHashTable *
-xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type,
-                               guint32 id, gchar *plname)
-{
-	GHashTable *dict;
-	xmms_object_cmd_value_t *val;
-	dict = g_hash_table_new_full (g_str_hash, 
-				      g_str_equal, 
-				      NULL,
-				      xmms_object_cmd_value_free);
-	val = xmms_object_cmd_value_int_new (type);
-	g_hash_table_insert (dict, "type", val);
-	if (id) {
-		val = xmms_object_cmd_value_uint_new (id);
-		g_hash_table_insert (dict, "id", val);
-	}
-	val = xmms_object_cmd_value_str_new (plname);
-	g_hash_table_insert (dict, "name", val);
-	return dict;
-}
-
-static void
-xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
-{
-	g_return_if_fail (playlist);
-	g_return_if_fail (dict);
-
-	xmms_object_emit_f (XMMS_OBJECT (playlist),
-			    XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
-			    XMMS_OBJECT_CMD_ARG_DICT,
-			    dict);
-
-	g_hash_table_destroy (dict);
-}
-
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (type, id, name))
 
 
@@ -279,7 +244,7 @@ xmms_playlist_init (void)
 	xmms_medialib_init (ret);
 
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
-	ret->colldag = xmms_collection_init ();
+	ret->colldag = xmms_collection_init (ret);
 
 	return ret;
 }
@@ -1433,4 +1398,54 @@ xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll)
 	}
 
 	return size;
+}
+
+
+GHashTable *
+xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type,
+                               guint32 id, gchar *plname)
+{
+	GHashTable *dict;
+	xmms_object_cmd_value_t *val;
+	dict = g_hash_table_new_full (g_str_hash, 
+				      g_str_equal, 
+				      NULL,
+				      xmms_object_cmd_value_free);
+	val = xmms_object_cmd_value_int_new (type);
+	g_hash_table_insert (dict, "type", val);
+	if (id) {
+		val = xmms_object_cmd_value_uint_new (id);
+		g_hash_table_insert (dict, "id", val);
+	}
+	val = xmms_object_cmd_value_str_new (plname);
+	g_hash_table_insert (dict, "name", val);
+
+	return dict;
+}
+
+void
+xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
+{
+	xmms_object_cmd_value_t *type_cmd_val;
+	xmms_object_cmd_value_t *pl_cmd_val;
+
+	g_return_if_fail (playlist);
+	g_return_if_fail (dict);
+
+	/* If local playlist change, trigger a COLL_CHANGED signal */
+	type_cmd_val = g_hash_table_lookup (dict, "type");
+	pl_cmd_val = g_hash_table_lookup (dict, "name");
+	if (type_cmd_val != NULL &&
+	    type_cmd_val->value.int32 != XMMS_PLAYLIST_CHANGED_UPDATE &&
+	    pl_cmd_val != NULL) {
+		XMMS_COLLECTION_PLAYLIST_CHANGED_MSG (playlist->colldag,
+		                                      pl_cmd_val->value.string);
+	}
+
+	xmms_object_emit_f (XMMS_OBJECT (playlist),
+			    XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+			    XMMS_OBJECT_CMD_ARG_DICT,
+			    dict);
+
+	g_hash_table_destroy (dict);
 }
