@@ -352,13 +352,14 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 	/* Link references in newly saved collection to actual operators */
 	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
 
-	/* Save new collection in the table */
+	/* Update existing collection in the table */
 	if (existing != NULL) {
-		coll_table_pair_t search_pair = { NULL, existing };
-		while (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
-		                          &search_pair) != NULL) {
+		gchar *newkey;
+		while ((newkey = xmms_collection_find_alias (dag, nsid,
+		                                             existing, NULL)) != NULL) {
+			newkey = g_strdup (newkey);
+
 			/* update all pairs pointing to the old coll */
-			gchar *newkey = g_strdup (search_pair.key);
 			g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
 			xmmsc_coll_ref (coll);
 
@@ -372,6 +373,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 			}
 		}
 	}
+	/* Save new collection in the table */
 	else {
 		g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
 		xmmsc_coll_ref (coll);
@@ -871,22 +873,22 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
 
 	existing = g_hash_table_lookup (dag->collrefs[nsid], name);
 	if (existing != NULL) {
+		gchar *matchkey;
 		char *nsname = xmms_collection_get_namespace_string (nsid);
 		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
-		coll_table_pair_t search_pair = { NULL, existing };
 
 		/* Strip all references to the deleted coll, bind operator directly */
 		xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
 
 		/* Remove all pairs pointing to that collection */
-		while (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
-		                          &search_pair) != NULL) {
+		while ((matchkey = xmms_collection_find_alias (dag, nsid,
+		                                               existing, NULL)) != NULL) {
 
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_REMOVE,
-			                             search_pair.key,
+			                             matchkey,
 			                             nsname);
 
-			g_hash_table_remove (dag->collrefs[nsid], search_pair.key);
+			g_hash_table_remove (dag->collrefs[nsid], matchkey);
 		}
 
 		retval = TRUE;
