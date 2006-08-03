@@ -74,6 +74,7 @@ cmds commands[] = {
 
 	/* Playlist managment */
 	{ "playlists_list", "List all available playlists", cmd_playlists_list },
+	{ "create_playlist", "[playlistname] - Create a playlist", cmd_playlist_create },
 	{ "load_playlist", "[playlistname] - Load 'playlistname' stored in medialib", cmd_playlist_load },
 	{ "import_playlist", "[name] [filename] - Import playlist from file", cmd_playlist_import },
 	{ "export_playlist", "[playlistname] [mimetype] - Export playlist", cmd_playlist_export },

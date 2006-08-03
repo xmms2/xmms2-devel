@@ -35,6 +35,7 @@ void cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_move (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 void cmd_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_playlist_create (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv);

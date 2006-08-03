@@ -529,6 +529,31 @@ cmd_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 
 void
+cmd_playlist_create (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	gchar *playlist_name;
+	xmmsc_coll_t *playlist_coll;
+
+	if (argc < 3) {
+		print_error ("Supply a playlist name");
+	}
+
+	playlist_name = argv[2];
+	playlist_coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+
+	res = xmmsc_coll_save (conn, playlist_coll, playlist_name,
+	                       XMMS_COLLECTION_NS_PLAYLISTS);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+}
+
+
+void
 cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *active_name;
