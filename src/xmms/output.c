@@ -55,7 +55,6 @@ static void xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error
 static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
 static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
 static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
-static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
 typedef enum xmms_output_filler_state_E {
 	FILLER_STOP,
@@ -286,10 +285,10 @@ song_changed (void *data)
 
 	XMMS_DBG ("Running hotspot! Song changed!! %d", entry);
 
-	xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain));
-
 	arg->output->played = 0;
 	arg->output->current_entry = entry;
+	
+	xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain));
 
 	xmms_object_emit_f (XMMS_OBJECT (arg->output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
@@ -594,7 +593,7 @@ xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 	return ret;
 }
 
-static guint
+guint
 xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 {
 	return output->current_entry;

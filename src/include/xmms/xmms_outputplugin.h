@@ -82,6 +82,7 @@ void xmms_output_stream_type_add (xmms_output_t *output, ...);
 
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
+guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
 
 xmms_config_property_t *xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
