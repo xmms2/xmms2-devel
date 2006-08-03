@@ -97,6 +97,7 @@ static void xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag, xm
 
 static void call_apply_to_coll (gpointer name, gpointer coll, gpointer udata);
 static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
+static gboolean value_match (gpointer key, gpointer val, gpointer udata);
 
 static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
@@ -437,7 +438,7 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 	/* Update collection name everywhere */
 	else {
 		/* insert new pair in hashtable */
-		g_hash_table_insert (dag->collrefs[nsid], g_strdup (to_name), from_coll);
+		g_hash_table_replace (dag->collrefs[nsid], g_strdup (to_name), from_coll);
 		xmmsc_coll_ref (from_coll);
 
 		/* remove old pair from hashtable */
@@ -515,12 +516,6 @@ void
 xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid,
                                 xmmsc_coll_t *newtarget)
 {
-	xmmsc_coll_t *current;
-	current = xmms_collection_get_pointer (dag, name, nsid);
-	if (current != NULL) {
-		xmmsc_coll_unref (current);
-	}
-
 	g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), newtarget);
 	xmmsc_coll_ref (newtarget);
 }
@@ -749,13 +744,13 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
 		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
 		xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
 
-		g_hash_table_remove (dag->collrefs[nsid], name);
+		/* Remove all pairs pointing to that collection */
+		g_hash_table_foreach_remove (dag->collrefs[nsid], value_match, existing);
 		retval = TRUE;
 	}
 
 	return retval;
 }
-
 
 /** Find the namespace id corresponding to a namespace string.
  *
@@ -940,6 +935,16 @@ prepend_key_string (gpointer key, gpointer value, gpointer udata)
 }
 
 /**
+ * Returns TRUE if the value of the pair is equal to the userdata
+ * argument.
+ */
+static gboolean
+value_match (gpointer key, gpointer val, gpointer udata)
+{
+	return (val == udata);
+}
+
+/**
  * If a reference, add the operator of the pointed collection as an
  * operand.
  */
@@ -1108,6 +1113,7 @@ check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *par
 static void
 coll_unref (void *coll)
 {
+	XMMS_DBG ("REMOVED A COLL!");
 	xmmsc_coll_unref (coll);
 }
 

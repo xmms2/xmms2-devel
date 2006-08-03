@@ -428,7 +428,6 @@ main (int argc, char **argv)
 		return 1;
 
 	playlist = xmms_playlist_init ();
-	xmms_collection_init ();
 
 	mainobj = xmms_object_new (xmms_main_t, xmms_main_destroy);
 

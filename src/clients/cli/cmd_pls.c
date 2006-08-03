@@ -514,11 +514,11 @@ cmd_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
-	if (argc < 4) {
+	if (argc < 3) {
 		print_error ("Supply a playlist name");
 	}
 
-	res = xmmsc_playlist_load (conn, argv[3]);
+	res = xmmsc_playlist_load (conn, argv[2]);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -563,16 +563,16 @@ cmd_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	gchar *url;
 
-	if (argc < 5) {
+	if (argc < 4) {
 		print_error ("Supply a playlist name and url");
 	}
 
-	url = format_url (argv[4]);
+	url = format_url (argv[3]);
 	if (!url) {
 		print_error ("Invalid url");
 	}
 
-	res = xmmsc_playlist_import (conn, argv[3], url);
+	res = xmmsc_playlist_import (conn, argv[2], url);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -589,11 +589,11 @@ cmd_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
-	if (argc < 4) {
+	if (argc < 3) {
 		print_error ("Supply a playlist name");
 	}
 
-	res = xmmsc_playlist_remove (conn, argv[3]);
+	res = xmmsc_playlist_remove (conn, argv[2]);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -612,21 +612,21 @@ cmd_playlist_export (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *file;
 	gchar *mime;
 
-	if (argc < 5) {
+	if (argc < 4) {
 		print_error ("Supply a playlist name and a mimetype");
 	}
 
-	if (strcasecmp (argv[4], "m3u") == 0) {
+	if (strcasecmp (argv[3], "m3u") == 0) {
 		mime = "audio/mpegurl";
-	} else if (strcasecmp (argv[4], "pls") == 0) {
+	} else if (strcasecmp (argv[3], "pls") == 0) {
 		mime = "audio/x-scpls";
-	} else if (strcasecmp (argv[4], "html") == 0) {
+	} else if (strcasecmp (argv[3], "html") == 0) {
 		mime = "text/html";
 	} else {
-		mime = argv[4];
+		mime = argv[3];
 	}
 
-	res = xmmsc_playlist_export (conn, argv[3], mime);
+	res = xmmsc_playlist_export (conn, argv[2], mime);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
