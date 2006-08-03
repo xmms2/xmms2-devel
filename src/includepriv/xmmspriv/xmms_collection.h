@@ -64,6 +64,7 @@ GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, g
 
 xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
 void xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid, xmmsc_coll_t *newtarget);
+gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid, xmmsc_coll_t *value, gchar *key);
 
 
 GHashTable * xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, gchar *plname, gchar *namespace);

@@ -46,6 +46,17 @@ xmmsc_playlist_current_pos (xmmsc_connection_t *c)
 }
 
 /**
+ * Retrive the name of the active playlist
+ */
+xmmsc_result_t *
+xmmsc_playlist_current_active (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_ACTIVE);
+}
+
+/**
  * List the existing playlists.
  */
 xmmsc_result_t *

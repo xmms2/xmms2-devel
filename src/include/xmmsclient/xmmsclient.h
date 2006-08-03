@@ -80,6 +80,7 @@ xmmsc_result_t *xmmsc_playlist_set_next (xmmsc_connection_t *c, uint32_t);
 xmmsc_result_t *xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, int32_t);
 xmmsc_result_t *xmmsc_playlist_move_entry (xmmsc_connection_t *c, const char *playlist, uint32_t, uint32_t);
 xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
+xmmsc_result_t *xmmsc_playlist_current_active (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos, const char *url, int numargs, const char **args);
 xmmsc_result_t *xmmsc_playlist_insert_url (xmmsc_connection_t *c, const char *playlist, int pos, const char *url);
 xmmsc_result_t *xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, uint32_t id);

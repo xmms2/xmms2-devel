@@ -628,6 +628,33 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
 	return coll;
 }
 
+
+/**
+ * Reverse-search the list of collections in the given namespace to
+ * find the first pair whose value matches the argument.  If key is
+ * not NULL, any pair with the same key will be ignored.
+ *
+ * @param dag  The collection DAG.
+ * @param nsid  The id of the namespace to consider.
+ * @param value  The value of the pair to find.
+ * @param key  If not NULL, ignore any pair with that key.
+ * @return The key of the found pair.
+ */
+gchar *
+xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
+                            xmmsc_coll_t *value, gchar *key)
+{
+	gchar *otherkey = NULL;
+	coll_table_pair_t search_pair = { key, value };
+
+	if (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
+	                       &search_pair) != NULL) {
+		otherkey = search_pair.key;
+	}
+
+	return otherkey;
+}
+
 /** @} */
 
 
@@ -1062,7 +1089,9 @@ value_match_save_key (gpointer key, gpointer val, gpointer udata)
 	coll_table_pair_t *pair = (coll_table_pair_t*)udata;
 	xmmsc_coll_t *coll = (xmmsc_coll_t*)val;
 
-	if (coll == pair->value) {
+	/* value matching and key not ignored, found! */
+	if ((coll == pair->value) &&
+		(pair->key == NULL || strcmp (pair->key, key) != 0)) {
 		pair->key = key;
 		found = TRUE;
 	}

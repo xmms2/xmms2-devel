@@ -78,6 +78,7 @@ XMMS_CMD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, STRING, NO
 XMMS_CMD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, STRINGLIST);
 XMMS_CMD_DEFINE (list_entries, xmms_playlist_list_entries, xmms_playlist_t *, LIST, STRING, NONE);
 XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (current_active, xmms_playlist_current_active, xmms_playlist_t *, STRING, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 XMMS_CMD_DEFINE (import, xmms_playlist_import, xmms_playlist_t *, NONE, STRING, STRING);
@@ -172,6 +173,10 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_CURRENT_POS, 
 			     XMMS_CMD_FUNC (current_pos));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret), 
+			     XMMS_IPC_CMD_CURRENT_ACTIVE, 
+			     XMMS_CMD_FUNC (current_active));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 			     XMMS_IPC_CMD_LOAD,
@@ -364,6 +369,38 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *err)
 	g_mutex_unlock (playlist->mutex);
 
 	return pos;
+}
+
+/**
+ * Retrieve the name of the currently active playlist.
+ *
+ */
+gchar *
+xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
+{
+	gchar *name = NULL;
+	xmmsc_coll_t *active_coll;
+
+	g_return_val_if_fail (playlist, 0);
+	
+	g_mutex_lock (playlist->mutex);
+
+	active_coll = xmms_playlist_get_coll (playlist, "_active", err);
+	if (active_coll != NULL) {
+		name = xmms_collection_find_alias (playlist->colldag,
+		                                   XMMS_COLLECTION_NSID_PLAYLISTS,
+		                                   active_coll, "_active");
+		if (name == NULL) {
+			xmms_error_set (err, XMMS_ERROR_GENERIC, "active playlist not referenced!");
+		}
+	}
+	else {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "no active playlist");
+	}
+
+	g_mutex_unlock (playlist->mutex);
+
+	return name;
 }
 
 
