@@ -332,7 +332,7 @@ cmp (const void *av, const void *bv)
 void
 cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	gchar *playlist;
+	gchar *playlist = NULL;
 	gint i, size = 0;
 	gint *sort;
 
