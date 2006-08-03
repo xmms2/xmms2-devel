@@ -337,6 +337,11 @@ xmms_output_plugin_writer (gpointer data)
 				g_mutex_lock (plugin->api_mutex);
 				plugin->methods.write (output, buffer, ret, &err);
 				g_mutex_unlock (plugin->api_mutex);
+				if (xmms_error_iserror (&err)) {
+					XMMS_DBG ("Write method set error bit");
+					plugin->write_status = XMMS_PLAYBACK_STATUS_STOP;
+					xmms_output_set_error (output, &err);
+				}
 			}
 			g_mutex_lock (plugin->write_mutex);
 		}
