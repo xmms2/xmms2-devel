@@ -531,7 +531,16 @@ cmd_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv)
 void
 cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	xmmsc_result_t *res;
+	gchar *active_name;
+	xmmsc_result_t *res, *active_res;
+
+	active_res = xmmsc_playlist_current_active (conn);
+	xmmsc_result_wait (active_res);
+
+	if (xmmsc_result_iserror (active_res) || 
+	    !xmmsc_result_get_string (active_res, &active_name)) {
+		active_name = NULL;
+	}
 
 	res = xmmsc_playlist_list (conn);
 	xmmsc_result_wait (res);
@@ -549,11 +558,16 @@ cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 		/* Hide all lists that start with _ */
 		if (name[0] != '_') {
-			print_info ("%s", name);
+			if (active_name != NULL && strcmp (active_name, name) == 0) {
+				print_info ("->%s", name);
+			} else {
+				print_info ("  %s", name);
+			}
 		}
 		xmmsc_result_list_next (res);
 	}
 	xmmsc_result_unref (res);
+	xmmsc_result_unref (active_res);
 }
 
 
