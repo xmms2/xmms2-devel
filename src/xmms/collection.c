@@ -77,12 +77,18 @@ typedef struct {
 	gboolean found;
 } coll_refcheck_t;
 
+typedef struct {
+	gchar *key;
+	xmmsc_coll_t *value;
+} coll_table_pair_t;
+
 
 /* Functions */
 
 static void xmms_collection_destroy (xmms_object_t *object);
 
 static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
+static gboolean xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
 static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid);
 
 
@@ -98,6 +104,7 @@ static void xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag, xm
 static void call_apply_to_coll (gpointer name, gpointer coll, gpointer udata);
 static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
 static gboolean value_match (gpointer key, gpointer val, gpointer udata);
+static gboolean value_match_save_key (gpointer key, gpointer val, gpointer udata);
 
 static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
@@ -302,12 +309,24 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 		xmms_collection_apply_to_all_collections (dag, rebind_references, &infos);
 	}
 
-	/* Link references in saved collection to actual operators */
+	/* Link references in newly saved collection to actual operators */
 	xmms_collection_apply_to_collection (dag, coll, bind_all_references, NULL);
 
 	/* Save new collection in the table */
-	g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
-	xmmsc_coll_ref (coll);
+	if (existing != NULL) {
+		coll_table_pair_t search_pair = { NULL, existing };
+		while (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
+		                          &search_pair) != NULL) {
+			/* update all pairs pointing to the old coll */
+			g_hash_table_replace (dag->collrefs[nsid],
+			                      g_strdup (search_pair.key),
+			                      coll);
+		}
+	}
+	else {
+		g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
+		xmmsc_coll_ref (coll);
+	}
 
 	g_mutex_unlock (dag->mutex);
 
@@ -315,6 +334,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 
 	return TRUE;
 }
+
 
 /** Retrieve the structure of a given collection.
  *
@@ -585,6 +605,27 @@ static gboolean
 xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
                           gchar *save_name, gchar *save_namespace)
 {
+	/* Special validation checks for the Playlists namespace */
+	if (strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
+		/* only accept idlists */
+		if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST) {
+			return FALSE;
+		}
+	}
+
+	/* Standard checking of the whole coll DAG */
+	return xmms_collection_validate_recurs (dag, coll, save_name,
+	                                        save_namespace);
+}
+
+/**
+ * Internal recursive validation function used to validate the whole
+ * graph of a collection.
+ */
+static gboolean
+xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
+                                 gchar *save_name, gchar *save_namespace)
+{
 	guint num_operands = 0;
 	xmmsc_coll_t *op;
 	gchar *attr, *attr2;
@@ -712,7 +753,7 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	xmmsc_coll_operand_list_first (coll);
 	while (xmmsc_coll_operand_list_entry (coll, &op) && valid) {
-		if (!xmms_collection_validate (dag, op, save_name, save_namespace)) {
+		if (!xmms_collection_validate_recurs (dag, op, save_name, save_namespace)) {
 			valid = FALSE;
 		}
 		xmmsc_coll_operand_list_next (coll);
@@ -945,6 +986,26 @@ value_match (gpointer key, gpointer val, gpointer udata)
 }
 
 /**
+ * Returns TRUE if the value of the pair is equal to the value stored
+ * in the udata structure, and save the corresponding key in that
+ * structure.
+ */
+static gboolean
+value_match_save_key (gpointer key, gpointer val, gpointer udata)
+{
+	gboolean found = FALSE;
+	coll_table_pair_t *pair = (coll_table_pair_t*)udata;
+	xmmsc_coll_t *coll = (xmmsc_coll_t*)val;
+
+	if (coll == pair->value) {
+		pair->key = key;
+		found = TRUE;
+	}
+
+	return found;
+}
+
+/**
  * If a reference, add the operator of the pointed collection as an
  * operand.
  */
@@ -1113,7 +1174,6 @@ check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *par
 static void
 coll_unref (void *coll)
 {
-	XMMS_DBG ("REMOVED A COLL!");
 	xmmsc_coll_unref (coll);
 }
 
