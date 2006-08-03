@@ -103,7 +103,6 @@ static void xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag, xm
 
 static void call_apply_to_coll (gpointer name, gpointer coll, gpointer udata);
 static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
-static gboolean value_match (gpointer key, gpointer val, gpointer udata);
 static gboolean value_match_save_key (gpointer key, gpointer val, gpointer udata);
 
 static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
@@ -139,6 +138,42 @@ XMMS_CMD_DEFINE4(query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, 
 XMMS_CMD_DEFINE6(query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, LIST, LIST, LIST);
 */
 
+
+static GHashTable *
+xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
+                                 gchar *plname, gchar *namespace)
+{
+	GHashTable *dict;
+	xmms_object_cmd_value_t *val;
+	dict = g_hash_table_new_full (g_str_hash, g_str_equal, 
+	                              NULL, xmms_object_cmd_value_free);
+	val = xmms_object_cmd_value_int_new (type);
+	g_hash_table_insert (dict, "type", val);
+	val = xmms_object_cmd_value_str_new (plname);
+	g_hash_table_insert (dict, "name", val);
+	val = xmms_object_cmd_value_str_new (namespace);
+	g_hash_table_insert (dict, "namespace", val);
+
+	XMMS_DBG ("COLL-CHANGED: %d for %s in %s", type, plname, namespace);
+
+	return dict;
+}
+
+static void
+xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict)
+{
+	g_return_if_fail (colldag);
+	g_return_if_fail (dict);
+
+	xmms_object_emit_f (XMMS_OBJECT (colldag),
+			    XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+			    XMMS_OBJECT_CMD_ARG_DICT,
+			    dict);
+
+	g_hash_table_destroy (dict);
+}
+
+#define XMMS_COLLECTION_CHANGED_MSG(type, name, namespace) xmms_collection_changed_msg_send (dag, xmms_collection_changed_msg_new (type, name, namespace))
 
 
 /** @defgroup Collection Collection
@@ -182,6 +217,9 @@ xmms_collection_init (void)
 	}
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_COLLECTION, XMMS_OBJECT (ret));
+
+	xmms_ipc_broadcast_register (XMMS_OBJECT (ret),
+	                             XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_COLLECTION_GET, 
@@ -318,15 +356,22 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 		while (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
 		                          &search_pair) != NULL) {
 			/* update all pairs pointing to the old coll */
-			g_hash_table_replace (dag->collrefs[nsid],
-			                      g_strdup (search_pair.key),
-			                      coll);
+			gchar *newkey = g_strdup (search_pair.key);
+			g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
 			xmmsc_coll_ref (coll);
+
+			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
+			                             newkey,
+			                             namespace);
 		}
 	}
 	else {
 		g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
 		xmmsc_coll_ref (coll);
+
+		XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_ADD,
+		                             name,
+		                             namespace);
 	}
 
 	g_mutex_unlock (dag->mutex);
@@ -458,6 +503,8 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 	}
 	/* Update collection name everywhere */
 	else {
+		GHashTable *dict;
+
 		/* insert new pair in hashtable */
 		g_hash_table_replace (dag->collrefs[nsid], g_strdup (to_name), from_coll);
 		xmmsc_coll_ref (from_coll);
@@ -468,6 +515,13 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 		/* update name in all reference operators */
 		coll_rename_infos_t infos = { from_name, to_name, namespace };
 		xmms_collection_apply_to_all_collections (dag, rename_references, &infos);
+
+		/* Send _RENAME signal */
+		dict = xmms_collection_changed_msg_new (XMMS_COLLECTION_CHANGED_RENAME,
+		                                        from_name, namespace);
+		g_hash_table_insert (dict, "newname",
+		                     xmms_object_cmd_value_str_new (to_name));
+		xmms_collection_changed_msg_send (dag, dict);
 
 		retval = TRUE;
 	}
@@ -588,6 +642,8 @@ xmms_collection_destroy (xmms_object_t *object)
 	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 		g_hash_table_destroy (dag->collrefs[i]);  /* dag is freed here */
 	}
+
+	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_COLLECTION);
 }
@@ -770,7 +826,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
  *
  * @param dag  The collection DAG.
  * @param name  The name of the collection to remove.
- * @param nsid  The namespace in which to look for the collection.
+ * @param nsid  The namespace in which to look for the collection (yes, redundant).
  * @returns  TRUE if a collection was removed, FALSE otherwise.
  */
 static gboolean
@@ -782,13 +838,23 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
 	existing = g_hash_table_lookup (dag->collrefs[nsid], name);
 	if (existing != NULL) {
 		char *nsname = xmms_collection_get_namespace_string (nsid);
+		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
+		coll_table_pair_t search_pair = { NULL, existing };
 
 		/* Strip all references to the deleted coll, bind operator directly */
-		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
 		xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
 
 		/* Remove all pairs pointing to that collection */
-		g_hash_table_foreach_remove (dag->collrefs[nsid], value_match, existing);
+		while (g_hash_table_find (dag->collrefs[nsid], value_match_save_key,
+		                          &search_pair) != NULL) {
+
+			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_REMOVE,
+			                             search_pair.key,
+			                             nsname);
+
+			g_hash_table_remove (dag->collrefs[nsid], search_pair.key);
+		}
+
 		retval = TRUE;
 	}
 
@@ -975,16 +1041,6 @@ prepend_key_string (gpointer key, gpointer value, gpointer udata)
 	GList **list = (GList**)udata;
 	val = xmms_object_cmd_value_str_new (g_strdup(key));
 	*list = g_list_prepend (*list, val);
-}
-
-/**
- * Returns TRUE if the value of the pair is equal to the userdata
- * argument.
- */
-static gboolean
-value_match (gpointer key, gpointer val, gpointer udata)
-{
-	return (val == udata);
 }
 
 /**

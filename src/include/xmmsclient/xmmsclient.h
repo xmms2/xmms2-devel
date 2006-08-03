@@ -194,6 +194,9 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name, ch
 xmmsc_result_t* xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], unsigned int limit_start, unsigned int limit_len);
 xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], unsigned int limit_start, unsigned int limit_len, const char* fetch[], const char* group[]);
 
+/* broadcasts */
+xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c);
+
 
 /*
  * MACROS 

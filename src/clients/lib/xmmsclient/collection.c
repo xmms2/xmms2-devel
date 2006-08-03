@@ -196,4 +196,16 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	return res;
 }
 
+/**
+ * Request the collection changed broadcast from the server. Everytime someone
+ * manipulates a collection this will be emitted.
+ */
+xmmsc_result_t*
+xmmsc_broadcast_collection_changed (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
+}
+
 /** @} */
