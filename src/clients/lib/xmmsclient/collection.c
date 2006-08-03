@@ -24,9 +24,6 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 
 
-static void xmmsc_coll_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[]);
-
-
 /**
  * @defgroup Collection Collection
  * @ingroup XMMSClient
@@ -167,8 +164,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_put_collection (msg, coll);
 	xmms_ipc_msg_put_uint32 (msg, limit_start);
 	xmms_ipc_msg_put_uint32 (msg, limit_len);
-
-	xmmsc_coll_msg_put_string_list (msg, order);
+	xmms_ipc_msg_put_string_list (msg, order);
 
 	res = xmmsc_send_msg (conn, msg);
 
@@ -191,9 +187,9 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_put_collection (msg, coll);
 	xmms_ipc_msg_put_uint32 (msg, limit_start);
 	xmms_ipc_msg_put_uint32 (msg, limit_len);
-	xmmsc_coll_msg_put_string_list (msg, order);
-	xmmsc_coll_msg_put_string_list (msg, fetch);
-	xmmsc_coll_msg_put_string_list (msg, group);
+	xmms_ipc_msg_put_string_list (msg, order);
+	xmms_ipc_msg_put_string_list (msg, fetch);
+	xmms_ipc_msg_put_string_list (msg, group);
 
 	res = xmmsc_send_msg (conn, msg);
 
@@ -201,27 +197,3 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 }
 
 /** @} */
-
-
-
-/** @internal */
-
-/**
- * Given a NULL-terminated array of strings, append the array length
- * and content to the #xmms_ipc_msg_t.
- *
- * @param msg the #xmms_ipc_msg_t to append things to.
- * @param strings the NULL-terminated array of strings.
- */
-static void
-xmmsc_coll_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
-{
-	int n;
-
-	for (n = 0; strings[n] != NULL; n++) { }
-	xmms_ipc_msg_put_uint32 (msg, n);
-
-	for (n = 0; strings[n] != NULL; n++) {
-		xmms_ipc_msg_put_string (msg, strings[n]);
-	}
-}

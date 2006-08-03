@@ -607,7 +607,8 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
                           gchar *save_name, gchar *save_namespace)
 {
 	/* Special validation checks for the Playlists namespace */
-	if (strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
+	if (save_namespace != NULL &&
+	    strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
 		/* only accept idlists */
 		if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST) {
 			return FALSE;

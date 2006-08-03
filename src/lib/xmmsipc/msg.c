@@ -332,6 +332,22 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 }
 
 void *
+xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
+{
+	int n;
+	void *ret;
+
+	for (n = 0; strings[n] != NULL; n++) { }
+	ret = xmms_ipc_msg_put_uint32 (msg, n);
+
+	for (n = 0; strings[n] != NULL; n++) {
+		ret = xmms_ipc_msg_put_string (msg, strings[n]);
+	}
+
+	return ret;
+}
+
+void *
 xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 {
 	int n;

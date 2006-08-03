@@ -229,13 +229,14 @@ cmd_mlib_loadall (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *playlist = NULL;
 	xmmsc_result_t *res;
 	xmmsc_coll_t *all = xmmsc_coll_universe ();
+	const gchar *empty[] = { NULL };
 
 	/* Load in another playlist */
 	if (argc == 4) {
 		playlist = argv[3];
 	}
 
-	res = xmmsc_playlist_add_collection (conn, playlist, all);
+	res = xmmsc_playlist_add_collection (conn, playlist, all, empty);
 	xmmsc_result_wait (res);
 
 	xmmsc_coll_unref (all);
@@ -260,6 +261,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
+	const gchar *order[] = { NULL };
 
 	query = coll_from_args (argc, argv);
 	if (query == NULL) {
@@ -267,7 +269,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 	
 	/* FIXME: Always add to active playlist: allow loading in other playlist! */
-	res = xmmsc_playlist_add_collection (conn, NULL, query);
+	res = xmmsc_playlist_add_collection (conn, NULL, query, order);
 	xmmsc_result_wait (res);
 	xmmsc_coll_unref (query);
 

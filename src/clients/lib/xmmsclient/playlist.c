@@ -238,7 +238,7 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos
  */
 xmmsc_result_t *
 xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
-                                  int pos, xmmsc_coll_t *coll)
+                                  int pos, xmmsc_coll_t *coll, const char* order[])
 {
 	xmms_ipc_msg_t *msg;
 
@@ -253,6 +253,7 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 	xmms_ipc_msg_put_collection (msg, coll);
+	xmms_ipc_msg_put_string_list (msg, order);
 
 	return xmmsc_send_msg (c, msg);
 
@@ -348,7 +349,7 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char
  */
 xmmsc_result_t *
 xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
-                               xmmsc_coll_t *coll)
+                               xmmsc_coll_t *coll, const char* order[])
 {
 	xmms_ipc_msg_t *msg;
 
@@ -362,6 +363,7 @@ xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_collection (msg, coll);
+	xmms_ipc_msg_put_string_list (msg, order);
 
 	return xmmsc_send_msg (c, msg);
 
