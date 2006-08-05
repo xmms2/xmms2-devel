@@ -381,6 +381,7 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
 
 	if (c != data->current) {
 		xmms_vorbis_read_metadata (xform, data);
+		data->current = c;
 	}
 
 	return ret;
