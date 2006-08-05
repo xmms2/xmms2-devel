@@ -159,10 +159,13 @@ static GHashTable *xmms_medialib_debug_hash;
 static void
 xmms_medialib_destroy (xmms_object_t *object)
 {
+	xmms_medialib_t *mlib = (xmms_medialib_t *)object;
 	if (global_medialib_session) {
 		xmms_sqlite_close (global_medialib_session->sql);
 		g_free (global_medialib_session);
 	}
+	g_mutex_free (mlib->source_lock);
+	g_hash_table_destroy (mlib->sources);
 	g_mutex_free (global_medialib_session_mutex);
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 	xmms_ipc_object_unregister (XMMS_IPC_OBJECT_OUTPUT);
