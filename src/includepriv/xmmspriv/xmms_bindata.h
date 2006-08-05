@@ -14,21 +14,11 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+#ifndef __XMMS_PRIV_BINDATA_H__
+#define __XMMS_PRIV_BINDATA_H__
 
-public class Xmms2Exception extends Exception {
-	private static final long serialVersionUID = 2143110896719541866L;
-	private String message = "Xmms2 exception occured";
+typedef struct xmms_bindata_St xmms_bindata_t;
 
-    public Xmms2Exception(String message) {
-        this.message = message;
-    }
+xmms_bindata_t *xmms_bindata_init ();
 
-    public String getMessage() {
-        return message;
-    }
-
-    public String getLocalizedMessage() {
-        return message;
-    }
-}
+#endif

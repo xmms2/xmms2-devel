@@ -16,19 +16,23 @@
 
 package org.xmms2;
 
-public class Xmms2Exception extends Exception {
-	private static final long serialVersionUID = 2143110896719541866L;
-	private String message = "Xmms2 exception occured";
+/**
+ * This class represents the elements of a PropDict.
+ */
 
-    public Xmms2Exception(String message) {
-        this.message = message;
-    }
+public class PropDictEntry {
+	private String value;
+	private String source;
+	public PropDictEntry(String value, String source){
+		this.value = value;
+		this.source = source;
+	}
 
-    public String getMessage() {
-        return message;
-    }
-
-    public String getLocalizedMessage() {
-        return message;
-    }
+	public String getValue(){
+		return value;
+	}
+	
+	public String getSource(){
+		return source;
+	}
 }

@@ -39,7 +39,6 @@
 #include "xmms/mediainfo.h"
 #include "xmms/magic.h"
 */
-static void xmms_playlist_destroy (xmms_object_t *object);
 static void xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_clear (xmms_playlist_t *playlist, xmms_error_t *err);
 static void xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err);

@@ -62,7 +62,8 @@ xmms_xing_parse (struct mad_bitptr ptr)
 
 	xing_magic = mad_bit_read (&ptr, 4*8);
 
-	if (xing_magic != 0x58696e67) { /* "Xing" */
+	/* Xing or Info */
+	if (xing_magic != 0x58696e67 && xing_magic != 0x496e666f) {
 		return NULL;
 	}
 

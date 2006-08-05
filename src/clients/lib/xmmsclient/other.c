@@ -173,6 +173,15 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
 
 }
 
+/**
+ * Get user config dir.
+ */
+const char *
+xmmsc_userconfdir_get (void)
+{
+	return USERCONFDIR;
+}
+
 /** @} */
 
 
