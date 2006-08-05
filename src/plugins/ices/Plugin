@@ -2,4 +2,7 @@ target="ices"
 source=["ices.c", "encode.c"]
 
 def config(env):
-	raise ConfigError("Plugin disabled")
+	env.pkgconfig("shout")
+	env.checkheader("vorbis/vorbisenc.h")
+	env.checklib("vorbisenc", "vorbis_encode_ctl")
+	env.checklib("ogg", "ogg_stream_pageout")
