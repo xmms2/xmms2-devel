@@ -305,6 +305,8 @@ seek_done (void *data)
 	g_mutex_lock (output->playtime_mutex);
 	output->played = output->filler_seek * xmms_sample_frame_size_get (output->format);
 	g_mutex_unlock (output->playtime_mutex);
+
+	xmms_output_flush (output);
 }
 
 static void
