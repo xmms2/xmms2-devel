@@ -934,16 +934,29 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 
 	XMMS_DBG ("Setting format!");
 
-	if (output->format && xmms_stream_type_match (output->format, fmt)) {
-		XMMS_DBG ("audio formats are equal, not updating");
-		return;
+	if (!xmms_output_plugin_format_set_always (output->plugin)) {
+		if (output->format && xmms_stream_type_match (output->format, fmt)) {
+			XMMS_DBG ("audio formats are equal, not updating");
+			return;
+		}
+	
+		xmms_object_unref (output->format);
+		xmms_object_ref (fmt);
+		output->format = fmt;
+		xmms_output_plugin_method_format_set (output->plugin, output, output->format);
+	} else {
+		if (output->format && !xmms_stream_type_match (output->format, fmt)) {
+			xmms_object_unref (output->format);
+			xmms_object_ref (fmt);
+			output->format = fmt;
+		}
+		if (!output->format) {
+			xmms_object_unref (output->format);
+			xmms_object_ref (fmt);
+			output->format = fmt;
+		}
+		xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 	}
-
-	xmms_object_unref (output->format);
-	xmms_object_ref (fmt);
-	output->format = fmt;
-
-	xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 }
 
 
