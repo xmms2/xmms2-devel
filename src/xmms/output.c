@@ -472,7 +472,14 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	update_playtime (output, ret);
 
 	if (ret < len) {
-		XMMS_DBG ("Underrun %d of %d", ret, len);
+		XMMS_DBG ("Underrun %d of %d (%d)", ret, len, xmms_sample_frame_size_get (output->format));
+		
+		if ((ret % xmms_sample_frame_size_get (output->format)) != 0) {
+			xmms_log_error ("***********************************");
+			xmms_log_error ("* Read non-multiple of sample size,");
+			xmms_log_error ("*  you probably hear noise now :)");
+			xmms_log_error ("***********************************");
+		}
 		output->buffer_underruns++;
 	}
 
