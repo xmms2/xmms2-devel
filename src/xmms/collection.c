@@ -812,6 +812,21 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		}
 		break;
 
+	case XMMS_COLLECTION_TYPE_HAS:
+		/* one operand */
+		if (num_operands != 1) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (filter)");
+			return FALSE;
+		}
+
+		/* "field" attribute */
+		/* with valid value */
+		if (!xmmsc_coll_attribute_get (coll, "field", &attr)) {
+			XMMS_DBG("COLLECTIONS: validation, field");
+			return FALSE;
+		}
+		break;
+
 	case XMMS_COLLECTION_TYPE_MATCH:
 	case XMMS_COLLECTION_TYPE_CONTAINS:
 	case XMMS_COLLECTION_TYPE_SMALLER:
@@ -1412,44 +1427,39 @@ query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc
 }
 
 static void
-query_append_key (coll_query_t *query, gchar *field, gboolean optional)
-{
-	guint id;
-	id = query_make_alias (query, field, optional);
-	g_string_append_printf (query->conditions, "m%u.key=", id);
-	query_append_protect_string (query, field);
-}
-
-static void
 query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
                      gchar *key, gchar *value, gboolean case_sens)
 {
 	guint id;
-	id = query_make_alias (query, key, FALSE);
+	gboolean optional;
 
-	if (case_sens) {
-		g_string_append_printf (query->conditions, "m%u.value", id);
+	if (type == XMMS_COLLECTION_TYPE_HAS) {
+		optional = TRUE;
 	}
 	else {
-		g_string_append_printf (query->conditions, "LOWER(m%u.value)", id);
+		optional = FALSE;
 	}
+
+	id = query_make_alias (query, key, optional);
 
 	switch (type) {
 	/* escape strings */
 	case XMMS_COLLECTION_TYPE_MATCH:
-		query_append_string (query, "=");
+	case XMMS_COLLECTION_TYPE_CONTAINS:
 		if (case_sens) {
-			query_append_protect_string (query, value);
+			g_string_append_printf (query->conditions, "m%u.value", id);
 		}
 		else {
-			query_append_string (query, "LOWER(");
-			query_append_protect_string (query, value);
-			query_append_string (query, ")");
+			g_string_append_printf (query->conditions, "LOWER(m%u.value)", id);
 		}
-		break;
 
-	case XMMS_COLLECTION_TYPE_CONTAINS:
-		query_append_string (query, " LIKE ");
+		if (type == XMMS_COLLECTION_TYPE_MATCH) {
+			query_append_string (query, "=");
+		}
+		else {
+			query_append_string (query, " LIKE ");
+		}
+
 		if (case_sens) {
 			query_append_protect_string (query, value);
 		}
@@ -1462,13 +1472,19 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 
 	/* do not escape numerical values */
 	case XMMS_COLLECTION_TYPE_SMALLER:
-		query_append_string (query, " < ");
+	case XMMS_COLLECTION_TYPE_GREATER:
+		g_string_append_printf (query->conditions, "m%u.value", id);
+		if (type == XMMS_COLLECTION_TYPE_SMALLER) {
+			query_append_string (query, " < ");
+		}
+		else {
+			query_append_string (query, " > ");
+		}
 		query_append_string (query, value);
 		break;
 
-	case XMMS_COLLECTION_TYPE_GREATER:
-		query_append_string (query, " > ");
-		query_append_string (query, value);
+	case XMMS_COLLECTION_TYPE_HAS:
+		g_string_append_printf (query->conditions, "m%u.value is not null", id);
 		break;
 
 	/* Called with invalid type? */
@@ -1523,6 +1539,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 		query_append_operand (query, dag, coll);
 		break;
 
+	case XMMS_COLLECTION_TYPE_HAS:
 	case XMMS_COLLECTION_TYPE_MATCH:
 	case XMMS_COLLECTION_TYPE_CONTAINS:
 	case XMMS_COLLECTION_TYPE_SMALLER:
@@ -1576,6 +1593,9 @@ init_query (coll_query_params_t *params)
 	query->conditions = g_string_new (NULL);
 	query->params = params;
 
+	/* SELECT the 'url' property as a base */
+	query_make_alias (query, "url", FALSE);
+
 	return query;
 }
 
@@ -1587,7 +1607,7 @@ canonical_field_name (gchar *field) {
 	return field;
 }
 
-void
+static void
 query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 {
 	gchar *field;
@@ -1603,12 +1623,14 @@ query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 			g_string_append_printf (qstring, " LEFT");
 		}
 
-		g_string_append_printf (qstring, " JOIN Media as m%u ON m0.id = m%u.id",
-								alias->id, alias->id);
+		g_string_append_printf (qstring,
+		                        " JOIN Media as m%u ON m0.id=m%u.id"
+		                        " AND m%u.key='%s'",
+		                        alias->id, alias->id, alias->id, field);
 	}
 }
 
-void
+static void
 query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields)
 {
 	GList *n;
@@ -1629,23 +1651,6 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 			g_string_append (qstring, " DESC");
 		}
 	}
-}
-void
-query_append_alias_keymatch (gpointer key, gpointer val, gpointer udata)
-{
-	gchar *field;
-	coll_query_alias_t *alias;
-	coll_query_t *query;
-
-	field = key;
-	alias = (coll_query_alias_t*)val;
-	query = (coll_query_t*)udata;
-
-	if (query->conditions->len > 0) {
-		query_append_string (query, " AND ");
-	}
-
-	query_append_key (query, field, alias->optional);
 }
 
 static void
@@ -1678,9 +1683,6 @@ xmms_collection_gen_query (coll_query_t *query)
 		query_make_alias (query, n->data, TRUE);
 	}
 
-	/* Append WHERE clause for aliases to the query conditions */
-	g_hash_table_foreach (query->aliases, query_append_alias_keymatch, query);
-
 	/* Append select and joins */
 	qstring = g_string_new ("SELECT DISTINCT m0.id");
 	query_string_append_fetch (query, qstring);
@@ -1688,8 +1690,9 @@ xmms_collection_gen_query (coll_query_t *query)
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
 
 	/* Append conditions */
+	g_string_append (qstring, " WHERE m0.key='url'");
 	if (query->conditions->len > 0) {
-		g_string_append_printf (qstring, " WHERE %s", query->conditions->str);
+		g_string_append_printf (qstring, " AND %s", query->conditions->str);
 	}
 
 	/* Append grouping */
