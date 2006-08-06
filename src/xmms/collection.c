@@ -1601,6 +1601,19 @@ query_append_alias_keymatch (gpointer key, gpointer val, gpointer udata)
 	query_append_key (query, field, alias->optional);
 }
 
+static void
+query_string_append_fetch (coll_query_t *query, GString *qstring)
+{
+	GList *n;
+	guint id;
+
+	for (n = query->params->fetch; n; n = n->next) {
+		id = query_make_alias (query, n->data, TRUE);
+		g_string_append_printf (qstring, ", m%u.value AS %s", id, (gchar*)n->data);
+	}
+
+}
+
 static GString*
 xmms_collection_gen_query (coll_query_t *query)
 {
@@ -1614,17 +1627,18 @@ xmms_collection_gen_query (coll_query_t *query)
 	for (n = query->params->group; n; n = n->next) {
 		query_make_alias (query, n->data, TRUE);		
 	}
+	for (n = query->params->fetch; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);		
+	}
 
-	/* FIXME: aliases for fetch? */
-
-	/* Append WHERE clause for aliases to the query */
+	/* Append WHERE clause for aliases to the query conditions */
 	g_hash_table_foreach (query->aliases, query_append_alias_keymatch, query);
 
 	/* Append select and joins */
-	qstring = g_string_new ("SELECT DISTINCT m0.id FROM Media as m0");
+	qstring = g_string_new ("SELECT DISTINCT m0.id");
+	query_string_append_fetch (query, qstring);
+	g_string_append (qstring, " FROM Media as m0");
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
-
-	/* FIXME: select fetch fields OR ids? */
 
 	/* Append conditions */
 	if (query->conditions->len > 0) {
