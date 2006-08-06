@@ -42,8 +42,8 @@ typedef struct {
 	guint limit_start;
 	guint limit_len;
 	GList *order;
-	GList *group;
 	GList *fetch;
+	GList *group;
 } coll_query_params_t;
 
 typedef struct {
@@ -138,9 +138,7 @@ XMMS_CMD_DEFINE (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST,
 XMMS_CMD_DEFINE3(collection_rename, xmms_collection_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
 
 XMMS_CMD_DEFINE4(query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST);
-/* FIXME: Arrays, num args, etc?
-XMMS_CMD_DEFINE6(query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, LIST, LIST, LIST);
-*/
+XMMS_CMD_DEFINE6(query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST, STRINGLIST, STRINGLIST);
 
 
 GHashTable *
@@ -255,11 +253,10 @@ xmms_collection_init (xmms_playlist_t *playlist)
 			     XMMS_IPC_CMD_QUERY_IDS, 
 			     XMMS_CMD_FUNC (query_ids));
 
-/*
 	xmms_object_cmd_add (XMMS_OBJECT (ret), 
 			     XMMS_IPC_CMD_QUERY_INFOS, 
 			     XMMS_CMD_FUNC (query_infos));
-*/
+
 	return ret;
 }
 
@@ -590,6 +587,43 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	XMMS_DBG ("COLLECTIONS: done");
 
 	return g_list_reverse (ids);
+}
+
+
+GList *
+xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
+                             guint lim_start, guint lim_len, GList *order,
+                             GList *fetch, GList *group, xmms_error_t *err)
+{
+	GList *res = NULL;
+	GString *query;
+	coll_query_params_t params = { lim_start, lim_len, order, fetch, group };
+
+	/* validate the collection to query */
+	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
+		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
+		return NULL;
+	}
+
+	g_mutex_lock (dag->mutex);
+
+	query = xmms_collection_get_query (dag, coll, &params);
+	
+	g_mutex_unlock (dag->mutex);
+
+	XMMS_DBG ("COLLECTIONS: query_infos with %s", query->str);
+
+	/* Run the query */
+	xmms_medialib_session_t *session = xmms_medialib_begin ();
+	res = xmms_medialib_select (session, query->str, err);
+	xmms_medialib_end (session);
+
+	g_string_free (query, TRUE);
+
+	XMMS_DBG ("COLLECTIONS: done");
+
+	/* FIXME: okay already ? */
+	return res;
 }
 
 /**
