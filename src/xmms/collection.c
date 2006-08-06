@@ -550,29 +550,8 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	GList *res = NULL;
 	GList *ids = NULL;
 	GList *n = NULL;
-	GString *query;
-	coll_query_params_t params = { lim_start, lim_len, order, NULL, NULL };
 
-	/* validate the collection to query */
-	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
-		return NULL;
-	}
-
-	g_mutex_lock (dag->mutex);
-
-	query = xmms_collection_get_query (dag, coll, &params);
-	
-	g_mutex_unlock (dag->mutex);
-
-	XMMS_DBG ("COLLECTIONS: query_ids with %s", query->str);
-
-	/* Run the query */
-	xmms_medialib_session_t *session = xmms_medialib_begin ();
-	res = xmms_medialib_select (session, query->str, err);
-	xmms_medialib_end (session);
-
-	g_string_free (query, TRUE);
+	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, NULL, NULL, err);
 
 	/* FIXME: get an int list directly !   or Int vs UInt? */
 	for (n = res; n; n = n->next) {
@@ -583,8 +562,6 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	}
 
 	g_list_free (res);
-
-	XMMS_DBG ("COLLECTIONS: done");
 
 	return g_list_reverse (ids);
 }
@@ -622,7 +599,6 @@ xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	XMMS_DBG ("COLLECTIONS: done");
 
-	/* FIXME: okay already ? */
 	return res;
 }
 
@@ -1453,6 +1429,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *key, gc
 	g_string_append_printf (query->conditions, "m%u.value", id);
 
 	switch (type) {
+	/* escape strings */
 	case XMMS_COLLECTION_TYPE_MATCH:
 		query_append_string (query, "=");
 		query_append_protect_string (query, value);
@@ -1463,16 +1440,15 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *key, gc
 		query_append_protect_string (query, value);
 		break;
 
-	/* FIXME: don't escape numerical values? */
+	/* do not escape numerical values */
 	case XMMS_COLLECTION_TYPE_SMALLER:
 		query_append_string (query, " < ");
-		query_append_protect_string (query, value);
+		query_append_string (query, value);
 		break;
 
-	/* FIXME: don't escape numerical values? */
 	case XMMS_COLLECTION_TYPE_GREATER:
 		query_append_string (query, " > ");
-		query_append_protect_string (query, value);
+		query_append_string (query, value);
 		break;
 
 	/* Called with invalid type? */
