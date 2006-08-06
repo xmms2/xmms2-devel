@@ -716,7 +716,8 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	if (save_namespace != NULL &&
 	    strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
 		/* only accept idlists */
-		if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST) {
+		if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST &&
+		    xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_QUEUE) {
 			return FALSE;
 		}
 	}
@@ -856,6 +857,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		break;
 	
 	case XMMS_COLLECTION_TYPE_IDLIST:
+	case XMMS_COLLECTION_TYPE_QUEUE:
 		/* no operand */
 		if (num_operands > 0) {
 			XMMS_DBG("COLLECTIONS: validation, num_operands (idlist)");
@@ -1307,6 +1309,36 @@ coll_unref (void *coll)
 
 /* ============  QUERY FUNCTIONS ============ */
 
+/** Register a (unique) field alias in the query structure and return
+ * the corresponding identifier.
+ *
+ * @param query  The query object to insert the alias in.
+ * @param field  The name of the property that will correspond to the alias.
+ * @param optional  Whether the property can be optional (i.e. LEFT JOIN)
+ * @return  The id of the alias.
+ */
+guint
+query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
+{
+	coll_query_alias_t *alias;
+	alias = g_hash_table_lookup (query->aliases, field);
+
+	/* Insert in the hashtable */
+	if (alias == NULL) {
+		alias = g_new (coll_query_alias_t, 1);
+		alias->id = query->alias_count;
+		alias->optional = optional;
+		g_hash_table_insert (query->aliases, g_strdup (field), alias);
+		query->alias_count++;
+	}
+	/* If was not optional but now is, update */
+	else if (!alias->optional && optional) {
+		alias->optional = optional;
+	}
+
+	return alias->id;
+}
+
 /* Initialize a query structure */
 static coll_query_t*
 init_query (coll_query_params_t *params)
@@ -1381,36 +1413,6 @@ operator_is_allmedia (xmmsc_coll_t *op)
 	gchar *target_name;
 	xmmsc_coll_attribute_get (op, "reference", &target_name);
 	return (target_name != NULL && strcmp (target_name, "All Media") == 0);
-}
-
-/** Register a (unique) field alias in the query structure and return
- * the corresponding identifier.
- *
- * @param query  The query object to insert the alias in.
- * @param field  The name of the property that will correspond to the alias.
- * @param optional  Whether the property can be optional (i.e. LEFT JOIN)
- * @return  The id of the alias.
- */
-guint
-query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
-{
-	coll_query_alias_t *alias;
-	alias = g_hash_table_lookup (query->aliases, field);
-
-	/* Insert in the hashtable */
-	if (alias == NULL) {
-		alias = g_new (coll_query_alias_t, 1);
-		alias->id = query->alias_count;
-		alias->optional = optional;
-		g_hash_table_insert (query->aliases, g_strdup (field), alias);
-		query->alias_count++;
-	}
-	/* If was not optional but now is, update */
-	else if (!alias->optional && optional) {
-		alias->optional = optional;
-	}
-
-	return alias->id;
 }
 
 static void
@@ -1601,6 +1603,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 		break;
 	
 	case XMMS_COLLECTION_TYPE_IDLIST:
+	case XMMS_COLLECTION_TYPE_QUEUE:
 		idlist = xmmsc_coll_get_idlist (coll);
 		query_append_string (query, "m0.id IN (");
 		for (i = 0; idlist[i] != 0; ++i) {
