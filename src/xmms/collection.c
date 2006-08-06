@@ -1579,6 +1579,14 @@ init_query (coll_query_params_t *params)
 	return query;
 }
 
+static gchar *
+canonical_field_name (gchar *field) {
+	if (*field == '-') {
+		field++;
+	}
+	return field;
+}
+
 void
 query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 {
@@ -1608,12 +1616,18 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 
 	for (n = fields; n; n = n->next) {
 		coll_query_alias_t *alias;
-		alias = g_hash_table_lookup (query->aliases, n->data);
+		gchar *field = n->data;
+		alias = g_hash_table_lookup (query->aliases, canonical_field_name (field));
 		if (first) first = FALSE;
 		else {
 			g_string_append (qstring, ", ");
 		}
 		g_string_append_printf (qstring, "m%u.value", alias->id);
+
+		/* special prefix for ordering */
+		if (*field == '-') {
+			g_string_append (qstring, " DESC");
+		}
 	}
 }
 void
@@ -1655,13 +1669,13 @@ xmms_collection_gen_query (coll_query_t *query)
 
 	/* Prepare aliases for the order/group fields */
 	for (n = query->params->order; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);		
+		query_make_alias (query, canonical_field_name (n->data), TRUE);
 	}
 	for (n = query->params->group; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);		
+		query_make_alias (query, n->data, TRUE);
 	}
 	for (n = query->params->fetch; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);		
+		query_make_alias (query, n->data, TRUE);
 	}
 
 	/* Append WHERE clause for aliases to the query conditions */
