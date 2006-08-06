@@ -1307,6 +1307,39 @@ coll_unref (void *coll)
 
 /* ============  QUERY FUNCTIONS ============ */
 
+/* Initialize a query structure */
+static coll_query_t*
+init_query (coll_query_params_t *params)
+{
+	coll_query_t *query;
+
+	query = g_new (coll_query_t, 1);
+	if(query == NULL) {
+		return NULL;
+	}
+
+	query->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                        g_free, g_free);
+
+	query->alias_count = 0;
+	query->conditions = g_string_new (NULL);
+	query->params = params;
+
+	/* Select the 'url' property as base */
+	query_make_alias (query, "url", FALSE);
+
+	return query;
+}
+
+/* Find the canonical name of a field (strip flags, if any) */
+static gchar *
+canonical_field_name (gchar *field) {
+	if (*field == '-') {
+		field++;
+	}
+	return field;
+}
+
 /* Copied from xmmsc_sqlite_prepare_string */
 gchar *
 sqlite_prepare_string (const gchar *input) {
@@ -1341,6 +1374,7 @@ sqlite_prepare_string (const gchar *input) {
 	return output;
 }
 
+/* Determine whether the given operator is a reference to "All Media" */
 static gboolean
 operator_is_allmedia (xmmsc_coll_t *op)
 {
@@ -1349,6 +1383,14 @@ operator_is_allmedia (xmmsc_coll_t *op)
 	return (target_name != NULL && strcmp (target_name, "All Media") == 0);
 }
 
+/** Register a (unique) field alias in the query structure and return
+ * the corresponding identifier.
+ *
+ * @param query  The query object to insert the alias in.
+ * @param field  The name of the property that will correspond to the alias.
+ * @param optional  Whether the property can be optional (i.e. LEFT JOIN)
+ * @return  The id of the alias.
+ */
 guint
 query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 {
@@ -1426,6 +1468,7 @@ query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc
 	xmmsc_coll_operand_list_restore (coll);
 }
 
+/* Append a filtering clause on the field value, depending on the operator type. */
 static void
 query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
                      gchar *key, gchar *value, gboolean case_sens)
@@ -1494,6 +1537,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 	}
 }
 
+/* Recursively append conditions corresponding to the given collection to the query. */
 static void
 xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query)
 {
@@ -1571,42 +1615,13 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 	/* invalid type */
 	default:
 		XMMS_DBG("Cannot append invalid collection operator!");
+		g_assert_not_reached ();
 		break;
 	}
 
 }
 
-static coll_query_t*
-init_query (coll_query_params_t *params)
-{
-	coll_query_t *query;
-
-	query = g_new (coll_query_t, 1);
-	if(query == NULL) {
-		return NULL;
-	}
-
-	query->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                        g_free, g_free);
-
-	query->alias_count = 0;
-	query->conditions = g_string_new (NULL);
-	query->params = params;
-
-	/* SELECT the 'url' property as a base */
-	query_make_alias (query, "url", FALSE);
-
-	return query;
-}
-
-static gchar *
-canonical_field_name (gchar *field) {
-	if (*field == '-') {
-		field++;
-	}
-	return field;
-}
-
+/* Append SELECT joins to the argument string for each alias of the hashtable. */
 static void
 query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 {
@@ -1630,6 +1645,7 @@ query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 	}
 }
 
+/* Given a list of fields, append the corresponding aliases to the argument string. */
 static void
 query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields)
 {
@@ -1666,6 +1682,7 @@ query_string_append_fetch (coll_query_t *query, GString *qstring)
 
 }
 
+/* Generate a query string from a query structure. */
 static GString*
 xmms_collection_gen_query (coll_query_t *query)
 {
@@ -1724,6 +1741,7 @@ xmms_collection_gen_query (coll_query_t *query)
 	return qstring;
 }
 
+/* Generate a query string from a collection and query parameters. */
 static GString*
 xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_params_t* params)
 {
