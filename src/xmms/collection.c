@@ -47,6 +47,12 @@ typedef struct {
 } coll_query_params_t;
 
 typedef struct {
+	guint id;
+	gboolean optional;
+} coll_query_alias_t;
+
+typedef struct {
+	GHashTable *aliases;
 	guint alias_count;
 	GString *conditions;
 	coll_query_params_t *params;
@@ -117,8 +123,6 @@ static void coll_unref (void *coll);
 static void query_append_uint (coll_query_t *query, guint i);
 static void query_append_string (coll_query_t *query, gchar *s);
 static void query_append_protect_string (coll_query_t *query, gchar *s);
-static void query_append_currfield (coll_query_t *query);
-static void query_append_currvalue (coll_query_t *query);
 static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
 static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query);
 static coll_query_t* init_query (coll_query_params_t *params);
@@ -550,7 +554,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	GList *ids = NULL;
 	GList *n = NULL;
 	GString *query;
-	coll_query_params_t params = { lim_start, lim_len, order };
+	coll_query_params_t params = { lim_start, lim_len, order, NULL, NULL };
 
 	/* validate the collection to query */
 	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
@@ -1312,6 +1316,35 @@ sqlite_prepare_string (const gchar *input) {
 	return output;
 }
 
+static gboolean
+operator_is_allmedia (xmmsc_coll_t *op)
+{
+	gchar *target_name;
+	xmmsc_coll_attribute_get (op, "reference", &target_name);
+	return (target_name != NULL && strcmp (target_name, "All Media") == 0);
+}
+
+guint
+query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
+{
+	coll_query_alias_t *alias;
+	alias = g_hash_table_lookup (query->aliases, field);
+
+	/* Insert in the hashtable */
+	if (alias == NULL) {
+		alias = g_new (coll_query_alias_t, 1);
+		alias->id = query->alias_count;
+		alias->optional = optional;
+		g_hash_table_insert (query->aliases, g_strdup (field), alias);
+		query->alias_count++;
+	}
+	/* If was not optional but now is, update */
+	else if (!alias->optional && optional) {
+		alias->optional = optional;
+	}
+
+	return alias->id;
+}
 
 static void
 query_append_uint (coll_query_t *query, guint i)
@@ -1336,18 +1369,6 @@ query_append_protect_string (coll_query_t *query, gchar *s)
 }
 
 static void
-query_append_currfield (coll_query_t *query)
-{
-	g_string_append_printf (query->conditions, "m%u.key", query->alias_count);
-}
-
-static void
-query_append_currvalue (coll_query_t *query)
-{
-	g_string_append_printf (query->conditions, "m%u.value", query->alias_count);
-}
-
-static void
 query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 {
 	xmmsc_coll_t *op;
@@ -1357,41 +1378,74 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *c
 	if (xmmsc_coll_operand_list_entry (coll, &op)) {
 		xmms_collection_append_to_query (dag, op, query);
 	}
+	else {
+		/* FIXME: Hackish to accomodate the absence of operand (i.e. All Media refs)  */
+		query_append_string (query, "1");
+	}
 	xmmsc_coll_operand_list_restore (coll);
 }
 
 static void
-query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *value)
+query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 {
-		query_append_currvalue (query);
-		switch (type) {
-		case XMMS_COLLECTION_TYPE_MATCH:
-			query_append_string (query, "=");
-			query_append_protect_string (query, value);
-			break;
+	xmmsc_coll_t *op;
 
-		case XMMS_COLLECTION_TYPE_CONTAINS:
-			query_append_string (query, " LIKE ");
-			query_append_protect_string (query, value);
-			break;
-
-		/* FIXME: don't escape numerical values? */
-		case XMMS_COLLECTION_TYPE_SMALLER:
-			query_append_string (query, " < ");
-			query_append_protect_string (query, value);
-			break;
-
-		/* FIXME: don't escape numerical values? */
-		case XMMS_COLLECTION_TYPE_GREATER:
-			query_append_string (query, " > ");
-			query_append_protect_string (query, value);
-			break;
-
-		/* Called with invalid type? */
-		default:
-			g_assert_not_reached ();
-			break;
+	xmmsc_coll_operand_list_save (coll);
+	xmmsc_coll_operand_list_first (coll);
+	if (xmmsc_coll_operand_list_entry (coll, &op)) {
+		if (!operator_is_allmedia (op)) {
+			query_append_string (query, " AND ");
+			xmms_collection_append_to_query (dag, op, query);
 		}
+	}
+	xmmsc_coll_operand_list_restore (coll);
+}
+
+static void
+query_append_key (coll_query_t *query, gchar *field, gboolean optional)
+{
+	guint id;
+	id = query_make_alias (query, field, optional);
+	g_string_append_printf (query->conditions, "m%u.key=", id);
+	query_append_protect_string (query, field);
+}
+
+static void
+query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *key, gchar *value)
+{
+	guint id;
+	id = query_make_alias (query, key, FALSE);
+
+	g_string_append_printf (query->conditions, "m%u.value", id);
+
+	switch (type) {
+	case XMMS_COLLECTION_TYPE_MATCH:
+		query_append_string (query, "=");
+		query_append_protect_string (query, value);
+		break;
+
+	case XMMS_COLLECTION_TYPE_CONTAINS:
+		query_append_string (query, " LIKE ");
+		query_append_protect_string (query, value);
+		break;
+
+	/* FIXME: don't escape numerical values? */
+	case XMMS_COLLECTION_TYPE_SMALLER:
+		query_append_string (query, " < ");
+		query_append_protect_string (query, value);
+		break;
+
+	/* FIXME: don't escape numerical values? */
+	case XMMS_COLLECTION_TYPE_GREATER:
+		query_append_string (query, " > ");
+		query_append_protect_string (query, value);
+		break;
+
+	/* Called with invalid type? */
+	default:
+		g_assert_not_reached ();
+		break;
+	}
 }
 
 static void
@@ -1446,13 +1500,10 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 		xmmsc_coll_attribute_get (coll, "value", &attr2);
 
 		query_append_string (query, "(");
-		query_append_currfield (query);
-		query_append_string (query, "=");
-		query_append_protect_string (query, attr1);
-		query_append_string (query, " AND ");
-		query_append_filter (query, type, attr2);
+		query_append_filter (query, type, attr1, attr2);
+
+		query_append_intersect_operand (query, dag, coll);
 		query_append_string (query, ")");
-		query->alias_count++;
 		break;
 	
 	case XMMS_COLLECTION_TYPE_IDLIST:
@@ -1485,58 +1536,113 @@ init_query (coll_query_params_t *params)
 		return NULL;
 	}
 
-	query->alias_count = 1;
+	query->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                        g_free, g_free);
+
+	query->alias_count = 0;
 	query->conditions = g_string_new (NULL);
 	query->params = params;
 
 	return query;
 }
 
+void
+query_string_append_joins (gpointer key, gpointer val, gpointer udata)
+{
+	gchar *field;
+	GString *qstring;
+	coll_query_alias_t *alias;
+
+	field = key;
+	qstring = (GString*)udata;
+	alias = (coll_query_alias_t*)val;
+
+	if (alias->id > 0) {
+		if (alias->optional) {
+			g_string_append_printf (qstring, " LEFT");
+		}
+
+		g_string_append_printf (qstring, " JOIN Media as m%u ON m0.id = m%u.id",
+								alias->id, alias->id);
+	}
+}
+
+void
+query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields)
+{
+	GList *n;
+	gboolean first = TRUE;
+
+	for (n = fields; n; n = n->next) {
+		coll_query_alias_t *alias;
+		alias = g_hash_table_lookup (query->aliases, n->data);
+		if (first) first = FALSE;
+		else {
+			g_string_append (qstring, ", ");
+		}
+		g_string_append_printf (qstring, "m%u.value", alias->id);
+	}
+}
+void
+query_append_alias_keymatch (gpointer key, gpointer val, gpointer udata)
+{
+	gchar *field;
+	coll_query_alias_t *alias;
+	coll_query_t *query;
+
+	field = key;
+	alias = (coll_query_alias_t*)val;
+	query = (coll_query_t*)udata;
+
+	if (query->conditions->len > 0) {
+		query_append_string (query, " AND ");
+	}
+
+	query_append_key (query, field, alias->optional);
+}
 
 static GString*
 xmms_collection_gen_query (coll_query_t *query)
 {
-	GString *qstring;
-	guint i;
 	GList *n;
+	GString *qstring;
 
-	/* Append select */
-	qstring = g_string_new ("SELECT DISTINCT m0.id FROM Media as m0");
-	for (i = 1; i < query->alias_count; i++) {
-		g_string_append_printf (qstring,
-		                        " JOIN Media as m%u ON m0.id = m%u.id", i, i);
+	/* Prepare aliases for the order/group fields */
+	for (n = query->params->order; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);		
 	}
+	for (n = query->params->group; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);		
+	}
+
+	/* FIXME: aliases for fetch? */
+
+	/* Append WHERE clause for aliases to the query */
+	g_hash_table_foreach (query->aliases, query_append_alias_keymatch, query);
+
+	/* Append select and joins */
+	qstring = g_string_new ("SELECT DISTINCT m0.id FROM Media as m0");
+	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
 
 	/* FIXME: select fetch fields OR ids? */
-
-	/* FIXME: DISABLED! Ordering is Teh Broken (source?)
-	for (i = 1, n = query->params->order; n; i++, n = n->next) {
-		g_string_append_printf (qstring, " LEFT JOIN Media as j%u"
-		                                 " ON m0.id=j%u.id"
-		                                 " AND j%u.key='%s'",
-		                        i, i, i, (gchar*)n->data);
-	}
-	*/
 
 	/* Append conditions */
 	if (query->conditions->len > 0) {
 		g_string_append_printf (qstring, " WHERE %s", query->conditions->str);
 	}
 
+	/* Append grouping */
+	if (query->params->group != NULL) {
+		g_string_append (qstring, " GROUP BY ");
+		query_string_append_alias_list (query, qstring, query->params->group);
+	}
+
 	/* Append ordering */
-	/* FIXME: DISABLED! Ordering is Teh Broken (source?)
+	/* FIXME: Ordering is Teh Broken (source?) */
 	if (query->params->order != NULL) {
 		g_string_append (qstring, " ORDER BY ");
-		for (i = 1, n = query->params->order; n; i++, n = n->next) {
-			if (i > 1) {
-				g_string_append (qstring, ",");
-			}
-			g_string_append_printf (qstring, "j%u.value", i);
-		}
+		query_string_append_alias_list (query, qstring, query->params->order);
 	}
-	*/
-
-	/* FIXME: group, fetch => modular handling, with order too ! */
 
 	/* Append limit */
 	if (query->params->limit_len != 0) {
@@ -1554,7 +1660,6 @@ xmms_collection_gen_query (coll_query_t *query)
 	return qstring;
 }
 
-
 static GString*
 xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_params_t* params)
 {
@@ -1567,6 +1672,7 @@ xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_
 	qstring = xmms_collection_gen_query (query);
 
 	/* free the query struct */
+	g_hash_table_destroy (query->aliases);
 	g_string_free (query->conditions, TRUE);
 	g_free (query);
 
