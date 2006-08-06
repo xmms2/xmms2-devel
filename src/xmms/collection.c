@@ -1421,23 +1421,43 @@ query_append_key (coll_query_t *query, gchar *field, gboolean optional)
 }
 
 static void
-query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gchar *key, gchar *value)
+query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
+                     gchar *key, gchar *value, gboolean case_sens)
 {
 	guint id;
 	id = query_make_alias (query, key, FALSE);
 
-	g_string_append_printf (query->conditions, "m%u.value", id);
+	if (case_sens) {
+		g_string_append_printf (query->conditions, "m%u.value", id);
+	}
+	else {
+		g_string_append_printf (query->conditions, "LOWER(m%u.value)", id);
+	}
 
 	switch (type) {
 	/* escape strings */
 	case XMMS_COLLECTION_TYPE_MATCH:
 		query_append_string (query, "=");
-		query_append_protect_string (query, value);
+		if (case_sens) {
+			query_append_protect_string (query, value);
+		}
+		else {
+			query_append_string (query, "LOWER(");
+			query_append_protect_string (query, value);
+			query_append_string (query, ")");
+		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_CONTAINS:
 		query_append_string (query, " LIKE ");
-		query_append_protect_string (query, value);
+		if (case_sens) {
+			query_append_protect_string (query, value);
+		}
+		else {
+			query_append_string (query, "LOWER(");
+			query_append_protect_string (query, value);
+			query_append_string (query, ")");
+		}
 		break;
 
 	/* do not escape numerical values */
@@ -1464,7 +1484,8 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 	gint i;
 	xmmsc_coll_t *op;
 	guint *idlist;
-	gchar *attr1, *attr2;
+	gchar *attr1, *attr2, *attr3;
+	gboolean case_sens;
 
 	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
 	switch (type) {
@@ -1508,9 +1529,11 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 	case XMMS_COLLECTION_TYPE_GREATER:
 		xmmsc_coll_attribute_get (coll, "field", &attr1);
 		xmmsc_coll_attribute_get (coll, "value", &attr2);
+		xmmsc_coll_attribute_get (coll, "case-sensitive", &attr3);
+		case_sens = (attr3 != NULL && strcmp (attr3, "true") == 0);
 
 		query_append_string (query, "(");
-		query_append_filter (query, type, attr1, attr2);
+		query_append_filter (query, type, attr1, attr2, case_sens);
 
 		query_append_intersect_operand (query, dag, coll);
 		query_append_string (query, ")");
