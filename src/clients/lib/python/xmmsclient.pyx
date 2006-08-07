@@ -1671,9 +1671,9 @@ cdef class XMMS:
 	def broadcast_medialib_entry_changed(self, cb = None):
 		"""
 		Set a method to handle the medialib entry changed broadcast
-		from the XMMS2 daemon.(i.e. the current entry in the playlist
-		has changed)  Updated data is sent when the metadata for
-		a song is updated in the medialib.
+		from the XMMS2 daemon.
+		Updated data is sent when the metadata for a song is updated
+		in the medialib.
 		@rtype: L{XMMSResult}
 		"""
 		cdef XMMSResult ret
