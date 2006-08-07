@@ -651,9 +651,10 @@ cdef class XMMS:
 
 	def userconfdir_get(self):
 		"""
-		Get the user configuration directory, where clients should store 
-		their configuration files. This varies from platform to platform
-		so should always be retreived at runtime.
+		Get the user configuration directory, where XMMS2 stores its
+		user-specific configuration files. Clients may store their 
+		configuration under the 'clients' subdirectory. This varies from 
+		platform to platform so should always be retreived at runtime.
 		"""
 		return xmmsc_userconfdir_get()
 
