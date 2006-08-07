@@ -321,6 +321,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 {
 	xmmsc_coll_t *existing;
 	guint nsid;
+	gchar *newkey;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_save");
 
@@ -355,7 +356,6 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 
 	/* Update existing collection in the table */
 	if (existing != NULL) {
-		gchar *newkey;
 		while ((newkey = xmms_collection_find_alias (dag, nsid,
 		                                             existing, NULL)) != NULL) {
 			newkey = g_strdup (newkey);
@@ -367,24 +367,25 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
 			                             newkey,
 			                             namespace);
-
-			/* If updating a collection, trigger PLAYLIST_CHANGED */
-			if (nsid == XMMS_COLLECTION_NSID_PLAYLISTS) {
-				XMMS_PLAYLIST_COLLECTION_CHANGED_MSG (dag->playlist, newkey);
-			}
 		}
 	}
 	/* Save new collection in the table */
 	else {
+		newkey = name;
 		g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
 		xmmsc_coll_ref (coll);
 
 		XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_ADD,
-		                             name,
+		                             newkey,
 		                             namespace);
 	}
 
 	g_mutex_unlock (dag->mutex);
+
+	/* If updating a playlist, trigger PLAYLIST_CHANGED */
+	if (nsid == XMMS_COLLECTION_NSID_PLAYLISTS) {
+		XMMS_PLAYLIST_COLLECTION_CHANGED_MSG (dag->playlist, newkey);
+	}
 
 	XMMS_DBG("COLLECTIONS: xmms_collection_save, end");
 
