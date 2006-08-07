@@ -31,6 +31,7 @@ public class Playlist {
 	private HashMap titles;
 	private int position = 0;
 	private Xmms2 xmms2;
+	private int lastAction = -1;
 	
 	/**
 	 * 
@@ -161,8 +162,8 @@ public class Playlist {
 	 */
 	public int setNextAbs(int pos){
 		if (pos > pl.size()-1)
-			return xmms2.setNext(pos);
-		return xmms2.setNext(pos);
+			return xmms2.setNextAbs(pos);
+		return xmms2.setNextAbs(pos);
 	}
 	
 	/**
@@ -172,8 +173,8 @@ public class Playlist {
 	 */
 	public int setNextRel(int pos){
 		if (pos > pl.size()-1)
-			return xmms2.jumpBy(pos);
-		return xmms2.jumpBy(pos);
+			return xmms2.setNextRel(pos);
+		return xmms2.setNextRel(pos);
 	}
 	
 	/**
@@ -212,6 +213,14 @@ public class Playlist {
 	public void remove(int indices[]){
 		for ( int i = 0; i < indices.length; i++)
 			remove(indices[i]-i);
+	}
+	
+	public int getLastAction(){
+		return lastAction;
+	}
+	
+	protected void setLastAction(int lastAction){
+		this.lastAction = lastAction;
 	}
 	
 	protected void updateList(List l){

@@ -28,8 +28,7 @@ import org.xmms2.wrapper.xmms2bindings.XmmsclientConstants;
 /**
  * Java way of using a mainloop. Just create a new Object and give a
  * Callbacks-object, the mainloop does the rest :). Don't use this class if you
- * are using org.xmms2.Xmms2 and don't use org.xmms2.SpecialJNI if you are using
- * org.xmms2.JMain
+ * are using org.xmms2.Xmms2.
  */
 
 public final class JMain extends Thread {
@@ -47,11 +46,11 @@ public final class JMain extends Thread {
      */
     public JMain(CallbacksListener cb, SWIGTYPE_p_xmmsc_connection_St conn) {
         myConnection = conn;
-        SpecialJNI.setENV(cb);
+        Xmmsclient.setENV(cb);
     }
 
     /**
-     * The run method - our little mainloop. First call SpecialJNI.setENV(this),
+     * The run method - our little mainloop. First call Xmmsclient.setENV(this),
      * which is a native method and sets "this" as GlobalRef for the
      * callback-object in c and sets the pointer jvm, which is needed to call
      * java methods outside the JNI functions. Furthermore, init the
@@ -63,9 +62,8 @@ public final class JMain extends Thread {
     public void run() {
     	running = true;
         FileDescriptor fd = new FileDescriptor();
-        SpecialJNI.getFD(fd, Xmmsclient.getPointerToConnection(myConnection));
-        SpecialJNI.setupMainloop(this, Xmmsclient
-                .getPointerToConnection(myConnection));
+        Xmmsclient.getFD(fd, myConnection);
+        Xmmsclient.setupMainloop(this, myConnection);
         FileInputStream in = new FileInputStream(fd);
         try {
             while (fd.valid() && running) {
@@ -89,6 +87,7 @@ public final class JMain extends Thread {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            Xmmsclient.xmmsc_io_disconnect(myConnection);
         }
         synchronized (stopped){
         	stopped.notifyAll();
@@ -101,7 +100,6 @@ public final class JMain extends Thread {
      * 
      */
     public void spinDown() {
-    	Xmmsclient.xmmsc_io_disconnect(myConnection);
         running = false;
         synchronized (stopped){
         	while (stopped == Boolean.FALSE)
