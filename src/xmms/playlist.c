@@ -1001,8 +1001,6 @@ void
 xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname,
                          xmms_medialib_entry_t file, xmms_error_t *err)
 {
-	gint prev_size;
-	GHashTable *dict;
 	xmmsc_coll_t *plcoll;
 
 	g_mutex_lock (playlist->mutex);
@@ -1026,7 +1024,6 @@ xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, gchar *plname,
 {
 	gint prev_size;
 	GHashTable *dict;
-	xmmsc_coll_t *plcoll;
 
 	prev_size = xmms_playlist_coll_get_size (plcoll);
 	xmmsc_coll_idlist_append (plcoll, file);
