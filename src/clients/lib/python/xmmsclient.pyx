@@ -8,6 +8,7 @@ cdef extern from "stdlib.h":
 cdef extern from "Python.h":
 	object PyUnicode_DecodeUTF8(char *unicode, int size, char *errors)
 	object PyUnicode_AsUTF8String(object o)
+	object PyString_FromStringAndSize(char *, int)
 
 cdef extern from "string.h":
 	int strcmp(signed char *s1, signed char *s2)
@@ -20,7 +21,9 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_OBJECT_CMD_ARG_STRING,
 		XMMS_OBJECT_CMD_ARG_DICT,
 		XMMS_OBJECT_CMD_ARG_LIST,
-		XMMS_OBJECT_CMD_ARG_PROPDICT
+		XMMS_OBJECT_CMD_ARG_PROPDICT,
+		XMMS_OBJECT_CMD_ARG_BIN
+
 
 # The following constants are meant for interpreting the return value of
 # XMMSResult.get_type ()
@@ -30,6 +33,7 @@ OBJECT_CMD_ARG_INT32 = XMMS_OBJECT_CMD_ARG_INT32
 OBJECT_CMD_ARG_STRING = XMMS_OBJECT_CMD_ARG_STRING
 OBJECT_CMD_ARG_DICT = XMMS_OBJECT_CMD_ARG_DICT
 OBJECT_CMD_ARG_LIST = XMMS_OBJECT_CMD_ARG_LIST
+OBJECT_CMD_ARG_BIN = XMMS_OBJECT_CMD_ARG_BIN
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmms_playback_status_t:
@@ -78,7 +82,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 		XMMSC_RESULT_VALUE_TYPE_NONE,
 		XMMSC_RESULT_VALUE_TYPE_UINT32,
 		XMMSC_RESULT_VALUE_TYPE_INT32,
-		XMMSC_RESULT_VALUE_TYPE_STRING
+		XMMSC_RESULT_VALUE_TYPE_STRING,
+		XMMSC_RESULT_VALUE_TYPE_BIN
 
 	ctypedef struct xmmsc_connection_t:
 		pass
@@ -97,6 +102,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	signed int xmmsc_result_get_int(xmmsc_result_t *res, int *r)
 	signed int xmmsc_result_get_uint(xmmsc_result_t *res, unsigned int *r)
 	signed int xmmsc_result_get_string(xmmsc_result_t *res, signed char **r)
+	signed int xmmsc_result_get_bin(xmmsc_result_t *res, unsigned char **r, unsigned int *rlen)
 	signed int xmmsc_result_get_playlist_change(xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
 
 	ctypedef void(*xmmsc_dict_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, void *user_data)
@@ -188,6 +194,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, unsigned int id, char *source, char *key)
 	
 	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
+	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, char *, int len)
+	xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, char *hash)
+	xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, char *hash)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
@@ -210,6 +219,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 from select import select
 from os import write
 import os
+import traceback
 import sys
 
 cdef to_unicode(char *s):
@@ -289,6 +299,12 @@ class PropDict(dict):
 					pass
 			raise KeyError, item
 		return dict.__getitem__(self, item)
+
+	def get(self, item, default=None):
+		try:
+			return self[item]
+		except KeyError:
+			return default
 	
 	def _get_sources(self):
 		return self._sources
@@ -334,7 +350,8 @@ cdef class XMMSResult:
 		try:
 			self.callback(self)
 		except:
-			self.exc = sys.exc_info()
+			exc = sys.exc_info()
+			traceback.print_exception (exc[0], exc[1], exc[2])
 
 	def get_type(self):
 		"""
@@ -358,6 +375,8 @@ cdef class XMMSResult:
 			return self.get_int()
 		elif type == XMMS_OBJECT_CMD_ARG_STRING:
 			return self.get_string()
+		elif type == XMMS_OBJECT_CMD_ARG_BIN:
+			return self.get_bin()
 
 	def value(self):
 		"""
@@ -426,6 +445,20 @@ cdef class XMMSResult:
 		self._check()
 		if xmmsc_result_get_string(self.res, &ret):
 			return to_unicode(ret)
+		else:
+			raise ValueError("Failed to retrieve value!")
+
+	def get_bin(self):
+		"""
+		Get data from the result structure as binary data.
+		@rtype: string
+		"""
+		cdef unsigned char *ret
+		cdef unsigned int rlen
+
+		self._check()
+		if xmmsc_result_get_bin(self.res, &ret, &rlen):
+			return PyString_FromStringAndSize(<char *>ret, rlen)
 		else:
 			raise ValueError("Failed to retrieve value!")
 
@@ -945,7 +978,7 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_broadcast_playback_volume_changed(self.conn)
-		ret.more_init()
+		ret.more_init(1)
 		
 		return ret
 
@@ -1700,7 +1733,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		ret.res = xmmsc_broadcast_mediainfo_reader_status(self.conn)
-		ret.more_init()
+		ret.more_init(1)
 		return ret
 
 	def xform_media_browse(self, url, cb=None):
@@ -1717,6 +1750,54 @@ cdef class XMMS:
 		u = from_unicode(url)
 
 		ret.res = xmmsc_xform_media_browse(self.conn,u)
+
+		ret.more_init()
+		return ret
+
+	def bindata_add(self, data, cb=None):
+		"""
+		Add a datafile to the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_bindata_add(self.conn,data,len(data))
+
+		ret.more_init()
+		return ret
+
+	def bindata_retreive(self, hash, cb=None):
+		"""
+		Retreive a datafile from the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_bindata_retreive(self.conn,hash)
+
+		ret.more_init()
+		return ret
+
+	def bindata_remove(self, hash, cb=None):
+		"""
+		Remove a datafile from the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_bindata_remove(self.conn,hash)
 
 		ret.more_init()
 		return ret

@@ -55,7 +55,6 @@ static void xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error
 static void xmms_output_seeksamples (xmms_output_t *output, guint32 samples, xmms_error_t *error);
 static void xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t *error);
 static guint xmms_output_status (xmms_output_t *output, xmms_error_t *error);
-static guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
 
 typedef enum xmms_output_filler_state_E {
 	FILLER_STOP,
@@ -286,10 +285,10 @@ song_changed (void *data)
 
 	XMMS_DBG ("Running hotspot! Song changed!! %d", entry);
 
-	xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain));
-
 	arg->output->played = 0;
 	arg->output->current_entry = entry;
+	
+	xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain));
 
 	xmms_object_emit_f (XMMS_OBJECT (arg->output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
@@ -472,7 +471,14 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	update_playtime (output, ret);
 
 	if (ret < len) {
-		XMMS_DBG ("Underrun %d of %d", ret, len);
+		XMMS_DBG ("Underrun %d of %d (%d)", ret, len, xmms_sample_frame_size_get (output->format));
+		
+		if ((ret % xmms_sample_frame_size_get (output->format)) != 0) {
+			xmms_log_error ("***********************************");
+			xmms_log_error ("* Read non-multiple of sample size,");
+			xmms_log_error ("*  you probably hear noise now :)");
+			xmms_log_error ("***********************************");
+		}
 		output->buffer_underruns++;
 	}
 
@@ -594,7 +600,7 @@ xmms_output_status (xmms_output_t *output, xmms_error_t *error)
 	return ret;
 }
 
-static guint
+guint
 xmms_output_current_id (xmms_output_t *output, xmms_error_t *error)
 {
 	return output->current_entry;
@@ -935,16 +941,29 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 
 	XMMS_DBG ("Setting format!");
 
-	if (output->format && xmms_stream_type_match (output->format, fmt)) {
-		XMMS_DBG ("audio formats are equal, not updating");
-		return;
+	if (!xmms_output_plugin_format_set_always (output->plugin)) {
+		if (output->format && xmms_stream_type_match (output->format, fmt)) {
+			XMMS_DBG ("audio formats are equal, not updating");
+			return;
+		}
+	
+		xmms_object_unref (output->format);
+		xmms_object_ref (fmt);
+		output->format = fmt;
+		xmms_output_plugin_method_format_set (output->plugin, output, output->format);
+	} else {
+		if (output->format && !xmms_stream_type_match (output->format, fmt)) {
+			xmms_object_unref (output->format);
+			xmms_object_ref (fmt);
+			output->format = fmt;
+		}
+		if (!output->format) {
+			xmms_object_unref (output->format);
+			xmms_object_ref (fmt);
+			output->format = fmt;
+		}
+		xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 	}
-
-	xmms_object_unref (output->format);
-	xmms_object_ref (fmt);
-	output->format = fmt;
-
-	xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 }
 
 

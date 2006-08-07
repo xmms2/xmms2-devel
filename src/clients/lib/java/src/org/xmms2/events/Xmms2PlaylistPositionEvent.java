@@ -14,30 +14,15 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.events;
 
-/**
- * Events are moved to the Xmms2Listeners. possible types are listed in
- * Xmms2Listener
- */
-
-public class Xmms2Event {
-    public long tid = 0;
-
-    public String type = Xmms2Listener.VOID_TYPE;
-
-    public Object value = null;
-
-    protected Xmms2Event(long tid, String type, Object value) {
-        this.tid = tid;
-        this.type = type;
-        this.value = value;
-
-        if (type.equals(Xmms2Listener.ERROR_TYPE))
-            System.err.println(value);
-    }
-
-    public String toString() {
-        return "" + value;
-    }
+public class Xmms2PlaylistPositionEvent extends Xmms2Event {
+	
+	public Xmms2PlaylistPositionEvent(int tid, Long position){
+		super(tid, Xmms2Listener.LONG_TYPE, position);
+	}
+	
+	public int getPosition(){
+		return ((Long)value).intValue();
+	}
 }

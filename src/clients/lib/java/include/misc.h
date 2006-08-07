@@ -29,6 +29,7 @@
  */
 extern xmmsc_result_t* getResultFromPointer (jlong val);
 extern jlong getPointerToConnection (xmmsc_connection_t *c);
+extern void* convertIntToVoidP (int val);
 
 #ifdef __cplusplus
 }

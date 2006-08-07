@@ -14,7 +14,7 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.wrapper;
 
 /**
  * Interface CallbacksListener must be implemented by the class which should

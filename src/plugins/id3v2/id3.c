@@ -14,6 +14,7 @@
 #include "xmms/xmms_medialib.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_xformplugin.h"
+#include "xmms/xmms_bindata.h"
 #include "id3.h"
 
 #include <glib.h>
@@ -316,18 +317,28 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	len -= (l2 + 2);
 
 	if (buf[0] == 0x00 || buf[0] == 0x03) {
-		gchar *data;
+		GString *str;
+		gchar *hash;
 		gchar *desc = (gchar *)buf+1;
 		buf = buf + strlen (desc) + 2;
 		len -= (strlen (desc) - 2);
 		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
-		data = g_base64_encode (buf, len);
-		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, data);
-		g_free (data);
+		str = g_string_new (NULL);
+
+		g_string_append_len (str, buf, len);
+		hash = xmms_bindata_plugin_add (str);
+
+		if (hash) {
+			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
+			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
+			g_free (hash);
+		}
+		g_string_free (str, FALSE);
 	} else {
 		XMMS_DBG ("Picture type %x not handled", buf[0]);
 	}
 
+	g_free (mime);
 	
 }
 

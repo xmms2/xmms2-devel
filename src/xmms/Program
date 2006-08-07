@@ -20,7 +20,8 @@ source = ["main.c",
           "converter_plugin.c",
           "ringbuf_xform.c",
           "outputplugin.c",
-		  "statfs.c"]
+		  "statfs.c",
+		  "bindata.c"]
 
 def config(env):
 	pluginenv = env.Copy()

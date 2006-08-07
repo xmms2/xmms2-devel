@@ -66,6 +66,16 @@ base_env = xmmsenv.XMMSEnvironment(options=opts)
 base_env["CONFIG"] = 0
 opts.Save("options.cache", base_env)
 
+try:
+	base_env.checkcompiler()
+except xmmsenv.ConfigError:
+	try:
+		os.remove("config.cache")
+	except:
+		pass
+	print "OPTION CC MUST POINT TO A VALID C COMPILER!"
+	sys.exit(-1)
+
 base_env.Append(CPPPATH=["#src/include"])
 
 Help(opts.GenerateHelpText(base_env))
@@ -143,11 +153,10 @@ subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platf
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix,
 	      "%DEFAULT_OUTPUT%":xmmsenv.default_output[1],
+	      "%USERCONFDIR%":base_env.userconfpath,
 }
 
 config = base_env.SubstInFile("src/include/xmms/xmms_defs.h", "src/include/xmms/xmms_defs.h.in", SUBST_DICT=subst_dict)
-
-
 
 try:
 	dump(base_env.config_cache, open("config.cache", "wb+"))
