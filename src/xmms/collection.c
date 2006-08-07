@@ -578,7 +578,9 @@ xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	/* validate the collection to query */
 	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
-		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
+		if (err) {
+			xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection structure");
+		}
 		return NULL;
 	}
 
@@ -671,6 +673,37 @@ xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid,
 	return otherkey;
 }
 
+
+/**
+ * Get a random media entry from the given collection.
+ *
+ * @param dag  The collection DAG.
+ * @param source  The collection to query.
+ * @return  A random media from the source collection, or 0 if none found.
+ */
+xmms_medialib_entry_t
+xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsc_coll_t *source)
+{
+	GList *res;
+	GList *rorder = NULL;
+	xmms_medialib_entry_t mid = 0;
+
+	/* FIXME: Temporary hack to allow custom ordering functions */
+	rorder = g_list_prepend (rorder, "~RANDOM()");
+
+	res = xmms_collection_query_ids (dag, source, 0, 1, rorder, NULL);
+
+	g_list_free (rorder);
+
+	if (res != NULL) {
+		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)res->data;
+		mid = cmdval->value.int32;
+		g_list_free (res);
+	}
+
+	return mid;
+}
+
 /** @} */
 
 
@@ -717,7 +750,8 @@ xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 	    strcmp (save_namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
 		/* only accept idlists */
 		if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_IDLIST &&
-		    xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_QUEUE) {
+		    xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_QUEUE &&
+		    xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
 			return FALSE;
 		}
 	}
@@ -861,6 +895,14 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		/* no operand */
 		if (num_operands > 0) {
 			XMMS_DBG("COLLECTIONS: validation, num_operands (idlist)");
+			return FALSE;
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+		/* one operand */
+		if (num_operands != 1) {
+			XMMS_DBG("COLLECTIONS: validation, num_operands (party shuffle)");
 			return FALSE;
 		}
 		break;
@@ -1369,6 +1411,9 @@ canonical_field_name (gchar *field) {
 	if (*field == '-') {
 		field++;
 	}
+	else if (*field == '~') {
+		field = NULL;
+	}
 	return field;
 }
 
@@ -1604,6 +1649,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 	
 	case XMMS_COLLECTION_TYPE_IDLIST:
 	case XMMS_COLLECTION_TYPE_QUEUE:
+	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
 		idlist = xmmsc_coll_get_idlist (coll);
 		query_append_string (query, "m0.id IN (");
 		for (i = 0; idlist[i] != 0; ++i) {
@@ -1658,16 +1704,27 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 	for (n = fields; n; n = n->next) {
 		coll_query_alias_t *alias;
 		gchar *field = n->data;
-		alias = g_hash_table_lookup (query->aliases, canonical_field_name (field));
+		gchar *canon_field = canonical_field_name (field);
+
 		if (first) first = FALSE;
 		else {
 			g_string_append (qstring, ", ");
 		}
-		g_string_append_printf (qstring, "m%u.value", alias->id);
+
+		if (canon_field != NULL) {
+			alias = g_hash_table_lookup (query->aliases, canon_field);
+			if (alias != NULL) {
+				g_string_append_printf (qstring, "m%u.value", alias->id);
+			}
+		}
 
 		/* special prefix for ordering */
 		if (*field == '-') {
 			g_string_append (qstring, " DESC");
+		}
+		/* FIXME: Temporary hack to allow custom ordering functions */
+		else if (*field == '~') {
+			g_string_append (qstring, field + 1);
 		}
 	}
 }
@@ -1694,7 +1751,10 @@ xmms_collection_gen_query (coll_query_t *query)
 
 	/* Prepare aliases for the order/group fields */
 	for (n = query->params->order; n; n = n->next) {
-		query_make_alias (query, canonical_field_name (n->data), TRUE);
+		gchar *field = canonical_field_name (n->data);
+		if (field != NULL) {
+			query_make_alias (query, field, TRUE);
+		}
 	}
 	for (n = query->params->group; n; n = n->next) {
 		query_make_alias (query, n->data, TRUE);

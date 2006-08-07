@@ -66,6 +66,7 @@ static gint xmms_playlist_coll_get_currpos (xmmsc_coll_t *plcoll);
 static gint xmms_playlist_coll_get_size (xmmsc_coll_t *plcoll);
 
 static void xmms_playlist_update_queue (xmms_playlist_t *playlist, gchar *plname, xmmsc_coll_t *coll);
+static void xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist, gchar *plname, xmmsc_coll_t *coll);
 
 
 XMMS_CMD_DEFINE (load, xmms_playlist_load, xmms_playlist_t *, NONE, STRING, NONE);
@@ -115,6 +116,7 @@ struct xmms_playlist_St {
 
 	xmms_mediainfo_reader_t *mediainfordr;
 
+	gboolean update_flag;
 };
 
 
@@ -147,7 +149,12 @@ static void
 on_playlist_updated (xmms_object_t *object, gchar *plname)
 {
 	xmmsc_coll_t *plcoll;
-	xmms_playlist_t *playlist = object;
+	xmms_playlist_t *playlist = (xmms_playlist_t*)object;
+
+	/* Already in an update process, quit */
+	if (playlist->update_flag) {
+		return;
+	}
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, NULL);
 	if (plcoll == NULL) {
@@ -158,6 +165,10 @@ on_playlist_updated (xmms_object_t *object, gchar *plname)
 		switch (xmmsc_coll_get_type (plcoll)) {
 		case XMMS_COLLECTION_TYPE_QUEUE:
 			xmms_playlist_update_queue (playlist, plname, plcoll);
+			break;
+
+		case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+			xmms_playlist_update_partyshuffle (playlist, plname, plcoll);
 			break;
 
 		default:
@@ -210,11 +221,61 @@ xmms_playlist_update_queue (xmms_playlist_t *playlist, gchar *plname,
 		history = 0;
 	}
 
+	playlist->update_flag = TRUE;
 	currpos = xmms_playlist_coll_get_currpos (coll);
 	while (currpos > history) {
 		xmms_playlist_remove_unlocked (playlist, plname, coll, 0, NULL);
 		currpos = xmms_playlist_coll_get_currpos (coll);
 	}
+	playlist->update_flag = FALSE;
+}
+
+static void
+xmms_playlist_update_partyshuffle (xmms_playlist_t *playlist, gchar *plname,
+                                   xmmsc_coll_t *coll)
+{
+	gint history, upcoming, currpos, size;
+	xmmsc_coll_t *src;
+
+	XMMS_DBG ("PLAYLIST: update-partyshuffle!");
+
+	history = xmms_playlist_coll_get_int_attr (coll, "history");
+	if (history == -1) {
+		history = 0;
+	}
+
+	upcoming = xmms_playlist_coll_get_int_attr (coll, "upcoming");
+	if (upcoming == -1) {
+		upcoming = XMMS_DEFAULT_PARTYSHUFFLE_UPCOMING;
+	}
+
+	playlist->update_flag = TRUE;
+	currpos = xmms_playlist_coll_get_currpos (coll);
+	while (currpos > history) {
+		xmms_playlist_remove_unlocked (playlist, plname, coll, 0, NULL);
+		currpos = xmms_playlist_coll_get_currpos (coll);
+	}
+
+	xmmsc_coll_operand_list_save (coll);
+	xmmsc_coll_operand_list_first (coll);
+	if (!xmmsc_coll_operand_list_entry (coll, &src)) {
+		XMMS_DBG ("Cannot find party shuffle operand!");
+		return;
+	}
+	xmmsc_coll_operand_list_restore (coll);
+
+	size = xmms_playlist_coll_get_size (coll);
+	while (size < upcoming) {
+		xmms_medialib_entry_t randentry;
+		randentry = xmms_collection_get_random_media (playlist->colldag, src);
+		if (randentry == 0) {
+			break;  /* No media found in the collection, give up */
+		}
+		/* FIXME: add_collection might yield better perf here. */
+		xmms_playlist_add_entry_unlocked (playlist, plname, coll, randentry, NULL);
+		size = xmms_playlist_coll_get_size (coll);
+	}
+	playlist->update_flag = FALSE;
 }
 
 
@@ -247,6 +308,7 @@ xmms_playlist_init (void)
 	                                  on_playlist_r_all_changed, ret);
 	ret->repeat_all = xmms_config_property_get_int (val);
 
+	ret->update_flag = FALSE;
 
 	xmms_object_connect (XMMS_OBJECT (ret),
 	                     XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
@@ -946,11 +1008,25 @@ xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname,
 	g_mutex_lock (playlist->mutex);
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
-	if (plcoll == NULL) {
-		/* FIXME: happens ? */
-		g_mutex_unlock (playlist->mutex);
-		return;
+	if (plcoll != NULL) {
+		xmms_playlist_add_entry_unlocked (playlist, plname, plcoll, file, err);
 	}
+
+	g_mutex_unlock (playlist->mutex);
+
+}
+
+/**
+ * Add an entry to the playlist without locking the mutex.
+ */
+void
+xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, gchar *plname,
+                                  xmmsc_coll_t *plcoll, xmms_medialib_entry_t file,
+                                  xmms_error_t *err)
+{
+	gint prev_size;
+	GHashTable *dict;
+	xmmsc_coll_t *plcoll;
 
 	prev_size = xmms_playlist_coll_get_size (plcoll);
 	xmmsc_coll_idlist_append (plcoll, file);
@@ -960,9 +1036,6 @@ xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname,
 	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_ADD, file, plname);
 	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (prev_size));
 	xmms_playlist_changed_msg_send (playlist, dict);
-
-	g_mutex_unlock (playlist->mutex);
-
 }
 
 /** Clear the playlist */
