@@ -9,6 +9,7 @@
 
 #include "daap_cmd.h"
 #include "daap_util.h"
+#include "daap_mdns_browse.h"
 
 #include <stdlib.h>
 #include <glib.h>
@@ -19,6 +20,16 @@
  * Type definitions
  */
 
+/* TODO rethink this -- what's necessary and what's not? */
+/* url		:
+ * host		:
+ * command	:
+ * port		:
+ * request	:
+ * buffer	:
+ * channel	: keep
+ * status	:
+ */
 typedef struct {
 	gchar *url, *host, *command;
 	gint port;
@@ -60,7 +71,7 @@ static GList * xmms_daap_browse (xmms_xform_t *xform,
 XMMS_XFORM_PLUGIN("daap",
                   "DAAP access plugin",
                   "SoC",
-                  "Accesses iTunes music shares",
+                  "Accesses iTunes (DAAP) music shares",
                   xmms_daap_plugin_setup);
 
 static gboolean
@@ -179,7 +190,6 @@ xmms_daap_init (xmms_xform_t *xform)
 	login_data.request_id++;
 
 	xmms_xform_private_data_set(xform, data);
-	//g_free(data);
 
 	xmms_xform_outdata_type_add(xform,
 	                            XMMS_STREAM_TYPE_MIMETYPE,
@@ -225,88 +235,107 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 	return read_bytes;
 }
 
+static GList *
+add_song_to_list(GList *url_list, cc_list_item_t *song, gchar* host)
+{
+	GHashTable *h = NULL;
+	gchar *songurl;
+	gchar *sid = g_malloc(G_ASCII_DTOSTR_BUF_SIZE);
+
+	g_ascii_dtostr(sid, G_ASCII_DTOSTR_BUF_SIZE, song->dbid);
+	songurl = g_strconcat("daap://", host, "/", sid, ".mp3", NULL);
+
+	h = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+
+	g_hash_table_insert(h, "artist",
+	                    xmms_object_cmd_value_str_new(song->song_data_artist));
+	g_hash_table_insert(h, "title",
+	                    xmms_object_cmd_value_str_new(song->iname));
+
+	url_list = xmms_xform_browse_add_entry(url_list, songurl, FALSE, h);
+
+	g_hash_table_destroy(h);
+	g_free(sid);
+	g_free(songurl);
+
+	return url_list;
+}
+
+static GList *
+daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
+{
+	GSList *dbid_list = NULL;
+	GSList *song_list = NULL, *song_el;
+	cc_list_item_t *db_data;
+	guint session_id, revision_id;
+	gchar *host;
+	guint port;
+
+	host = server->address;
+	port = server->port;
+
+	session_id = daap_command_login(host, port, 0);
+
+	revision_id = daap_command_update(host, port, session_id, 0);
+	dbid_list = daap_command_db_list(host, port, session_id, revision_id, 0);
+	g_return_val_if_fail(dbid_list != NULL, NULL);
+
+	/* XXX i've never seen more than one db per server out in the wild,
+	 *     let's hope that never changes ;)
+	 *     just use the first db in the list */
+	db_data = (cc_list_item_t *) dbid_list->data;
+	song_list = daap_command_song_list(host, port, session_id, revision_id,
+	                                   0, db_data->dbid);
+
+	song_el = song_list;
+	for ( ; song_el != NULL; song_el = g_slist_next(song_el)) {
+		url_list = add_song_to_list(url_list, song_el->data, host);
+	}
+
+	daap_command_logout(host, port, session_id, revision_id);
+
+	/* cleanup */
+	g_slist_foreach(dbid_list, (GFunc) cc_list_item_free, NULL);
+	g_slist_free(dbid_list);
+	g_slist_foreach(song_list, (GFunc) cc_list_item_free, NULL);
+	g_slist_free(song_list);
+
+	return url_list;
+}
+
 static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
                                  xmms_error_t *error)
 {
 	gboolean ok;
-	gchar *songurl;
-	GSList *dbid_list = NULL, *dbid_list_head;
-	GSList *song_list = NULL, *song_list_head;
-	GList *ret = NULL;
-	GHashTable *h = NULL;
-	xmms_daap_data_t *data;
-	cc_list_item_t *db_data, *song_data;
+	GSList *server_list;
+	GList *url_list = NULL;
+	gchar *host; 
+	guint port;
 	
-	data = xmms_xform_private_data_get(xform);
+	ok = get_data_from_url(url, &host, &port, NULL);
 
-	if (NULL == data) {
-		data = g_malloc0(sizeof(xmms_daap_data_t));
-		g_return_val_if_fail(data != NULL, NULL);
+	if (ok) {
+		daap_mdns_server_t *mdns_serv = g_malloc0(sizeof(daap_mdns_server_t));
+		server_list = NULL;
+
+		mdns_serv->address = g_strdup(host);
+		mdns_serv->port = port;
+
+		server_list = g_slist_prepend(server_list, mdns_serv);
+
+		g_free(host);
+	} else {
+		daap_mdns_initialize();
+		server_list = daap_mdns_get_server_list();
 	}
 
-	data->url = g_strdup(url);
-
-	ok = get_data_from_url(url, &(data->host), &(data->port), NULL);
-	g_return_val_if_fail(ok, NULL);
-
-	if (! login_data.logged_in) {
-		login_data.request_id = 1;
-		login_data.session_id = daap_command_login(data->host, data->port,
-		                                      login_data.request_id);
-		if (login_data.session_id != 0) {
-			login_data.logged_in = TRUE;
-		}
+	//g_slist_foreach(server_list, (GFunc) daap_get_urls_from_server, url_list);
+	for ( ; server_list != NULL; server_list = g_slist_next(server_list)) {
+		url_list = daap_get_urls_from_server(server_list->data, url_list);
 	}
 
-	login_data.revision_id = daap_command_update(data->host, data->port,
-	                                             login_data.session_id,
-	                                             login_data.request_id);
-	dbid_list = daap_command_db_list(data->host, data->port,
-	                                 login_data.session_id,
-	                                 login_data.revision_id,
-	                                 login_data.request_id);
-	g_return_val_if_fail(dbid_list != NULL, NULL);
-	dbid_list_head = dbid_list;
+	/* TODO free server_list */
 
-	/* XXX i've never seen more than one db per server out in the wild,
-	 *     let's hope that never changes ;)
-	 *     in short, just use the first db in the list */
-	db_data = (cc_list_item_t *) dbid_list->data;
-	song_list = daap_command_song_list(data->host, data->port,
-	                                   login_data.session_id,
-	                                   login_data.revision_id,
-	                                   login_data.request_id,
-	                                   db_data->dbid);
-	song_list_head = song_list;
-	for (; NULL != song_list; song_list = g_slist_next(song_list)) {
-		gchar *sid = g_malloc(G_ASCII_DTOSTR_BUF_SIZE);
-		song_data = (cc_list_item_t *) song_list->data;
-
-		g_ascii_dtostr(sid, G_ASCII_DTOSTR_BUF_SIZE, song_data->dbid);
-		songurl = g_strconcat("daap://", data->host, "/", sid, ".mp3", NULL);
-
-		h = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
-
-		g_hash_table_insert(h, "artist",
-		            xmms_object_cmd_value_str_new(song_data->song_data_artist));
-		g_hash_table_insert(h, "title",
-		                    xmms_object_cmd_value_str_new(song_data->iname));
-
-		ret = xmms_xform_browse_add_entry(ret, songurl, FALSE, h);
-
-		g_hash_table_destroy(h);
-		g_free(sid);
-		g_free(songurl);
-	}
-
-	g_slist_foreach(dbid_list_head, (GFunc) cc_list_item_free, NULL);
-	g_slist_free(dbid_list_head);
-	g_slist_foreach(song_list_head, (GFunc) cc_list_item_free, NULL);
-	g_slist_free(song_list_head);
-
-	xmms_xform_private_data_set(xform, data);
-	//g_free(data);
-
-	return ret;
+	return url_list;
 }
 

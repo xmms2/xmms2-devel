@@ -176,10 +176,9 @@ daap_request_data(GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 		case UNKNOWN_SERVER_STATUS:
 		case HTTP_BAD_REQUEST:
 		case HTTP_FORBIDDEN:
-			retval = NULL;
-			break;
 		case HTTP_NO_CONTENT:
 		case HTTP_NOT_FOUND:
+			retval = NULL;
 			break;
 		case HTTP_OK:
 		default:
