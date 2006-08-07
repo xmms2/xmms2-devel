@@ -1,15 +1,18 @@
 
+/* XXX as of the current implementation, logging in to multiple DAAP servers 
+ * in the same xmms2d instance is impossible. in addition, there is no method
+ * of logging out of the logged-in servers. */
+
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 
 #include "daap_cmd.h"
 #include "daap_util.h"
+#include "daap_mdns_browse.h"
 
 #include <stdlib.h>
 #include <glib.h>
-/* TODO remove me */
-#include <glib/gprintf.h>
 
 #define DEFAULT_DAAP_PORT 3689
 
@@ -17,6 +20,16 @@
  * Type definitions
  */
 
+/* TODO rethink this -- what's necessary and what's not? */
+/* url		:
+ * host		:
+ * command	:
+ * port		:
+ * request	:
+ * buffer	:
+ * channel	: keep
+ * status	:
+ */
 typedef struct {
 	gchar *url, *host, *command;
 	gint port;
@@ -29,7 +42,6 @@ typedef struct {
 	xmms_error_t status;
 } xmms_daap_data_t;
 
-/* FIXME if possible... not so pretty. */
 typedef struct {
 	gboolean logged_in;
 
@@ -59,40 +71,42 @@ static GList * xmms_daap_browse (xmms_xform_t *xform,
 XMMS_XFORM_PLUGIN("daap",
                   "DAAP access plugin",
                   "SoC",
-                  "Accesses iTunes music shares",
+                  "Accesses iTunes (DAAP) music shares",
                   xmms_daap_plugin_setup);
 
 static gboolean
 get_data_from_url(const gchar *url, gchar **host, gint *port, gchar **cmd)
 {
-    gint host_len;
-    const gchar *host_begin, *cmd_begin, *port_begin;
+	gint host_len;
+	const gchar *host_begin, *cmd_begin, *port_begin;
 
 	host_begin = url;
-    host_begin += sizeof(gchar) * strlen("daap://");
+	host_begin += sizeof(gchar) * strlen("daap://");
 
-    cmd_begin = strstr(host_begin, "/");
+	cmd_begin = strstr(host_begin, "/");
 	g_return_val_if_fail(cmd_begin != NULL, FALSE);
 
-    port_begin = strstr(host_begin, ":");
-    if ((NULL == port_begin) || (port_begin > cmd_begin)) {
-        *port = DEFAULT_DAAP_PORT;
-    } else {
-        *port = atoi(port_begin + sizeof(gchar)*strlen(":"));
-    }
+	port_begin = strstr(host_begin, ":");
+	if ((NULL == port_begin) || (port_begin > cmd_begin)) {
+		*port = DEFAULT_DAAP_PORT;
+	} else {
+		*port = atoi(port_begin + sizeof(gchar)*strlen(":"));
+	}
 
-    if (NULL == port_begin) {
-        host_len = (gint) (cmd_begin - host_begin);
-    } else {
-        host_len = (gint) (port_begin - host_begin);
-    }
-    *host = (gchar *) g_malloc0(host_len+1);
+	if (NULL == port_begin) {
+		host_len = (gint) (cmd_begin - host_begin);
+	} else {
+		host_len = (gint) (port_begin - host_begin);
+	}
+	*host = (gchar *) g_malloc0(host_len+1);
 	g_return_val_if_fail(*host != NULL, FALSE);
-    memcpy(*host, host_begin, host_len);
+	memcpy(*host, host_begin, host_len);
 
-    *cmd = (gchar *) g_malloc0(sizeof(gchar) * (strlen(cmd_begin)+1));
-	g_return_val_if_fail(*cmd != NULL, FALSE);
-    strncpy(*cmd, cmd_begin, sizeof(gchar) * strlen(cmd_begin));
+	if (NULL != cmd) {
+		*cmd = (gchar *) g_malloc0(sizeof(gchar) * (strlen(cmd_begin)+1));
+		g_return_val_if_fail(*cmd != NULL, FALSE);
+		strncpy(*cmd, cmd_begin, sizeof(gchar) * strlen(cmd_begin));
+	}
 
 	return TRUE;
 }
@@ -100,7 +114,6 @@ get_data_from_url(const gchar *url, gchar **host, gint *port, gchar **cmd)
 static gboolean
 xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	/* TODO finish me */
 	xmms_xform_methods_t methods;
 
 	XMMS_XFORM_METHODS_INIT(methods);
@@ -110,8 +123,6 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.browse = xmms_daap_browse;
 
 	xmms_xform_plugin_methods_set(xform_plugin, &methods);
-
-	/* TODO more stuff goes here -- xmms_xform_plugin_config_property_register */
 
 	xmms_xform_plugin_indata_add(xform_plugin,
                                  XMMS_STREAM_TYPE_MIMETYPE,
@@ -130,7 +141,6 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 static gboolean
 xmms_daap_init (xmms_xform_t *xform)
 {
-	/* TODO finish me */
 	gint dbid;
 	GSList *dbid_list = NULL;
 	xmms_daap_data_t *data;
@@ -147,7 +157,6 @@ xmms_daap_init (xmms_xform_t *xform)
 	if (NULL == data) {
 		data = g_malloc0(sizeof(xmms_daap_data_t));
 		g_return_val_if_fail(data != NULL, FALSE);
-		//login_data.logged_in = FALSE;
 	}
 
 	data->url = g_strdup(url);
@@ -193,14 +202,12 @@ xmms_daap_init (xmms_xform_t *xform)
 static void
 xmms_daap_destroy (xmms_xform_t *xform)
 {
-	/* TODO finish me */
 	xmms_daap_data_t *data;
 
 	data = xmms_xform_private_data_get(xform);
 
-	/* FIXME remove this later */
-	//daap_command_logout(data->host, data->port, data->session_id);
 	g_io_channel_shutdown(data->channel, TRUE, NULL);
+	g_io_channel_unref(data->channel);
 
 	g_free(data->url);
 	g_free(data->host);
@@ -211,15 +218,13 @@ xmms_daap_destroy (xmms_xform_t *xform)
 static gint
 xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error)
 {
-	/* TODO finish me */
 	xmms_daap_data_t *data;
-	gint read_bytes = 0;
+	guint read_bytes = 0;
 	GIOStatus status;
 
 	data = xmms_xform_private_data_get(xform);
 
 	/* request is performed, header is stripped. now read the data. */
-	/* FIXME consider replacing this w/ a daap_command function? */
 	while (read_bytes == 0) {
 		status = g_io_channel_read_chars(data->channel, buffer, len, &read_bytes, NULL);
 		if (status == G_IO_STATUS_EOF || status == G_IO_STATUS_ERROR) {
@@ -230,83 +235,107 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 	return read_bytes;
 }
 
-static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
-                                 xmms_error_t *error)
+static GList *
+add_song_to_list(GList *url_list, cc_list_item_t *song, gchar* host)
 {
-	/* TODO finish me */
-	GList *ret = NULL;
-	gchar *song;
-	gchar *songurl;
-	gboolean ok;
-	GSList *dbid_list = NULL;
-	GSList *song_list = NULL;
-	xmms_daap_data_t *data;
 	GHashTable *h = NULL;
-	
-	data = xmms_xform_private_data_get(xform);
+	gchar *songurl;
+	gchar *sid = g_malloc(G_ASCII_DTOSTR_BUF_SIZE);
 
-	if (NULL == data) {
-		data = g_malloc0(sizeof(xmms_daap_data_t));
-		g_return_val_if_fail(data != NULL, NULL);
-		//login_data.logged_in = FALSE;
-	}
+	g_ascii_dtostr(sid, G_ASCII_DTOSTR_BUF_SIZE, song->dbid);
+	songurl = g_strconcat("daap://", host, "/", sid, ".mp3", NULL);
 
-	data->url = g_strdup(url);
+	h = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
-	ok = get_data_from_url(url, &(data->host), &(data->port), &song);
-	g_return_val_if_fail(ok, NULL);
+	g_hash_table_insert(h, "artist",
+	                    xmms_object_cmd_value_str_new(song->song_data_artist));
+	g_hash_table_insert(h, "title",
+	                    xmms_object_cmd_value_str_new(song->iname));
 
+	url_list = xmms_xform_browse_add_entry(url_list, songurl, FALSE, h);
 
-	if (! login_data.logged_in) {
-		login_data.request_id = 1;
-		login_data.session_id = daap_command_login(data->host, data->port,
-		                                      login_data.request_id);
-		if (login_data.session_id != 0) {
-			login_data.logged_in = TRUE;
-		}
-	}
+	g_hash_table_destroy(h);
+	g_free(sid);
+	g_free(songurl);
 
-	login_data.revision_id = daap_command_update(data->host, data->port,
-	                                        login_data.session_id,
-	                                        login_data.request_id);
-	dbid_list = daap_command_db_list(data->host, data->port, login_data.session_id,
-	                                 login_data.revision_id, login_data.request_id);
+	return url_list;
+}
+
+static GList *
+daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
+{
+	GSList *dbid_list = NULL;
+	GSList *song_list = NULL, *song_el;
+	cc_list_item_t *db_data;
+	guint session_id, revision_id;
+	gchar *host;
+	guint port;
+
+	host = server->address;
+	port = server->port;
+
+	session_id = daap_command_login(host, port, 0);
+
+	revision_id = daap_command_update(host, port, session_id, 0);
+	dbid_list = daap_command_db_list(host, port, session_id, revision_id, 0);
 	g_return_val_if_fail(dbid_list != NULL, NULL);
 
 	/* XXX i've never seen more than one db per server out in the wild,
 	 *     let's hope that never changes ;)
-	 *     in short, just use the first db in the list */
-	/* FIXME these lines are long and ugly :( */
-	song_list = daap_command_song_list(data->host, data->port,
-	                                   login_data.session_id, login_data.revision_id,
-	                                   login_data.request_id,
-	                                   ((cc_list_item_t *) dbid_list->data)->dbid);
-	for (; NULL != song_list; song_list = g_slist_next(song_list)) {
-		gchar *sid = g_malloc(G_ASCII_DTOSTR_BUF_SIZE);
+	 *     just use the first db in the list */
+	db_data = (cc_list_item_t *) dbid_list->data;
+	song_list = daap_command_song_list(host, port, session_id, revision_id,
+	                                   0, db_data->dbid);
 
-		g_ascii_dtostr(sid, G_ASCII_DTOSTR_BUF_SIZE,
-		               ((cc_list_item_t *) song_list->data)->dbid);
-		songurl = g_strconcat("daap://", data->host, "/", sid, ".mp3", NULL);
-
-		h = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
-		g_hash_table_insert(h, "title",
-		                    xmms_object_cmd_value_str_new(((cc_list_item_t *) song_list->data)->iname));
-
-		ret = xmms_xform_browse_add_entry(ret, songurl, FALSE, h);
-
-		g_hash_table_destroy(h);
-		g_free(sid);
-		g_free(songurl);
+	song_el = song_list;
+	for ( ; song_el != NULL; song_el = g_slist_next(song_el)) {
+		url_list = add_song_to_list(url_list, song_el->data, host);
 	}
 
-	g_free(song);
+	daap_command_logout(host, port, session_id, revision_id);
 
-	/* FIXME remove this later */
-	//daap_command_logout(data->host, data->port, data->session_id);
-	//login_data.logged_in = FALSE;
+	/* cleanup */
+	g_slist_foreach(dbid_list, (GFunc) cc_list_item_free, NULL);
+	g_slist_free(dbid_list);
+	g_slist_foreach(song_list, (GFunc) cc_list_item_free, NULL);
+	g_slist_free(song_list);
 
-	xmms_xform_private_data_set(xform, data);
+	return url_list;
+}
 
-	return ret;
+static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
+                                 xmms_error_t *error)
+{
+	gboolean ok;
+	GSList *server_list;
+	GList *url_list = NULL;
+	gchar *host; 
+	guint port;
+	
+	ok = get_data_from_url(url, &host, &port, NULL);
+
+	if (ok) {
+		daap_mdns_server_t *mdns_serv = g_malloc0(sizeof(daap_mdns_server_t));
+		server_list = NULL;
+
+		mdns_serv->address = g_strdup(host);
+		mdns_serv->port = port;
+
+		server_list = g_slist_prepend(server_list, mdns_serv);
+
+		g_free(host);
+	} else {
+		daap_mdns_initialize();
+		server_list = daap_mdns_get_server_list();
+	}
+
+	//g_slist_foreach(server_list, (GFunc) daap_get_urls_from_server, url_list);
+	for ( ; server_list != NULL; server_list = g_slist_next(server_list)) {
+		url_list = daap_get_urls_from_server(server_list->data, url_list);
+	}
+
+	/* TODO free server_list */
+
+	return url_list;
 }
 

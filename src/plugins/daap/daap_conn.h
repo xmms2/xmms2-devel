@@ -6,12 +6,7 @@
 
 #define BAD_CONTENT_LENGTH -1
 
-#if 0
-#define MAX_HOST_LENGTH 256
-#define MAX_RESPONSE_LENGTH (1024 * 1024 * 4)
-
-#define NO_HEADER -1
-#endif
+#define DAAP_VERSION 3
 
 #define HTTP_OK               200
 #define HTTP_NO_CONTENT       204

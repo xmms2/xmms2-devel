@@ -1,3 +1,5 @@
 target="daap"
-source=["daap_xform.c", "daap_cmd.c", "daap_conn.c", "daap_util.c", "daap_md5.c", "cc_handlers.c"]
+source=["daap_xform.c", "daap_cmd.c", "daap_conn.c", "daap_mdns_browse.c", "daap_util.c", "daap_md5.c", "cc_handlers.c"]
 
+def config(env):
+	env.configcmd("pkg-config --libs glib-2.0 avahi-client avahi-glib")

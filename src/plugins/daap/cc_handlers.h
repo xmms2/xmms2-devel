@@ -121,7 +121,6 @@ typedef struct {
 	gint32 song_date_mod;
 	gint32 container_id;
 
-	/* FIXME? */
 	gint32 deleted_id;
 
 	guint64 persistent_id;
@@ -144,33 +143,8 @@ typedef struct {
 } cc_list_item_t;
 
 cc_data_t * cc_data_new();
-void cc_data_free(cc_data_t *fields);
+void cc_data_free(cc_data_t *fields, gboolean free_record_list);
+void cc_list_item_free(cc_list_item_t *item);
 cc_data_t * cc_handler(gchar *data, gint data_len);
-
-/* return type is the appropriate value */
-/*
-static cc_data_t * cc_handler_adbs(gchar *data, gint data_len);
-static cc_data_t * cc_handler_msrv(gchar *data, gint data_len);
-static cc_data_t * cc_handler_mccr(gchar *data, gint data_len);
-static cc_data_t * cc_handler_mlog(gchar *data, gint data_len);
-static cc_data_t * cc_handler_mupd(gchar *data, gint data_len);
-static cc_data_t * cc_handler_avdb(gchar *data, gint data_len);
-static cc_data_t * cc_handler_apso(gchar *data, gint data_len);
-static cc_data_t * cc_handler_aply(gchar *data, gint data_len);
-*/
-
-/* return type must be int for offset calculation */
-/*
-static gint cc_handler_mtco(cc_data_t *fields, gchar *current_data);
-static gint cc_handler_mrco(cc_data_t *fields, gchar *current_data);
-static gint cc_handler_muty(cc_data_t *fields, gchar *current_data);
-static gint cc_handler_mstt(cc_data_t *fields, gchar *current_data);
-static gint cc_handler_mlcl(cc_data_t *fields, gchar *data, gint data_len);
-static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len);
-
-static int grab_data(void *container, gchar *data, content_type ct);
-static gint grab_data_string(gchar **container, gchar *data, gint str_len);
-static gint grab_data_version(gint16 *cont_upper, gint16 *cont_lower, gchar *data);
-*/
 
 #endif
