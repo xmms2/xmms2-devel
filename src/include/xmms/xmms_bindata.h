@@ -14,24 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __MISC_H__
-#define __MISC_H__
+#ifndef __XMMS_BINDATA_H__
+#define __XMMS_BINDATA_H__
 
-#ifdef __cplusplus
-{
-#endif
-
-#include <xmmsclient/xmmsclient.h>
-#include <jni.h>
-
-/*
- * swig should wrap that two functions to make them java-usable
- */
-extern xmmsc_result_t* getResultFromPointer (jlong val);
-extern jlong getPointerToConnection (xmmsc_connection_t *c);
-
-#ifdef __cplusplus
-}
-#endif
+gchar *xmms_bindata_calculate_md5 (guchar *data, guint size);
+gchar *xmms_bindata_plugin_add (GString *str);
 
 #endif

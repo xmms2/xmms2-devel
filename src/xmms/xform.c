@@ -334,7 +334,6 @@ xmms_xform_metadata_set_str (xmms_xform_t *xform, const char *key, const char *v
 	if (old && strcmp (old, val) == 0)
 		return;
 
-	XMMS_DBG ("Setting '%s' to '%s'", key, val);
 	g_hash_table_insert (xform->metadata, g_strdup (key), xmms_object_cmd_value_str_new (val));
 	xform->metadata_changed = TRUE;
 }
@@ -399,10 +398,8 @@ add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 	
 	if (value->type == XMMS_OBJECT_CMD_ARG_STRING) {
 		xmms_medialib_entry_property_set_str_source (st->session, st->entry, key, value->value.string, st->source);
-		XMMS_DBG ("setting property %s='%s'", key, value->value.string);
 	} else if (value->type == XMMS_OBJECT_CMD_ARG_INT32) {
 		xmms_medialib_entry_property_set_int_source (st->session, st->entry, key, value->value.int32, st->source);
-		XMMS_DBG ("setting property %s=%d", key, value->value.int32);
 	} else {
 		XMMS_DBG ("Unknown type?!?");
 	}
@@ -781,7 +778,6 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_medialib_end (session);
 
 	durl = g_strdup (url);
-	g_free (url);
 
 	args = strchr (durl, '?');
 	if (args) {
@@ -825,6 +821,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 			xmms_log_error ("Couldn't set up chain for '%s' (%d)",
 			                url, entry);
 			xmms_object_unref (last);
+			g_free (url);
+
 			return NULL;
 		}
 		xmms_object_unref (last);
@@ -844,6 +842,8 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_xform_metadata_collect (last, namestr);
 	xmms_log_info ("Successfully setup chain for '%s' (%d) containing %s",
 	               url, entry, namestr->str);
+
+	g_free (url);
 	g_string_free (namestr, TRUE);
 
 	return last;

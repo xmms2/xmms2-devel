@@ -65,7 +65,7 @@ xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 {
-	xmms_socket_t fd = 0;
+	xmms_socket_t fd = -1;
 	xmms_ipc_transport_t *ipct;
 	struct addrinfo hints;
 	struct addrinfo *addrinfo;
@@ -110,7 +110,7 @@ xmms_ipc_tcp_client_init (const xmms_url_t *url, int ipv6)
 		return NULL;
 	}
 
-	assert (fd);
+	assert (fd != -1);
 
 	if (!xmms_socket_set_nonblock(fd)) {
 		close (fd);
@@ -169,7 +169,7 @@ xmms_ipc_tcp_accept (xmms_ipc_transport_t *transport)
 xmms_ipc_transport_t *
 xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 {
-	xmms_socket_t fd = 0;
+	xmms_socket_t fd = -1;
 	xmms_ipc_transport_t *ipct;
 	struct addrinfo hints;
 	struct addrinfo *addrinfo;
@@ -217,7 +217,7 @@ xmms_ipc_tcp_server_init (const xmms_url_t *url, int ipv6)
 		return NULL;
 	}
 
-	assert (fd);
+	assert (fd != -1);
 
 	if (!xmms_socket_set_nonblock(fd)) {
 		close (fd);

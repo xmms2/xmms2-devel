@@ -17,19 +17,15 @@
 package org.xmms2;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
+
 
 public class Title implements Comparable {
-    private HashMap attributes;
+    private PropDict attributes;
     private long id = -1;
     
     public Title() {
-        attributes = new HashMap();
-        setAttribute("artist", "[Unknown artist]");
-        setAttribute("album", "[Unknown album]");
-        setAttribute("title", "[Unknown title]");
+        attributes = new PropDict();
     }
 
     /**
@@ -38,19 +34,24 @@ public class Title implements Comparable {
      * 
      * @param key
      * @param value
+     * @param source 
      */
-    public void setAttribute(String key, String value) {
+    public void setAttribute(String key, String value, String source) {
         if (value == null)
             value = "";
         if (key != null)
-            attributes.put(key.toLowerCase(), value);
+            attributes.putPropDictEntry(key.toLowerCase(), value, source);
     }
 
-    public String getAttribute(String key) {
-        Object value = attributes.get(key.toLowerCase());
-        if (value == null)
-            value = "";
-        return "" + value;
+    public List getAttribute(String key) {
+        return attributes.getEntry(key.toLowerCase());
+    }
+    
+    public PropDictEntry getFirstAttribute(String key){
+    	List l = getAttribute(key);
+    	if ( l != null && l.size() > 0)
+    		return (PropDictEntry)l.get(0);
+    	return new PropDictEntry("", "");
     }
     
     public long getID(){
@@ -61,7 +62,7 @@ public class Title implements Comparable {
     	this.id = id;
     }
 
-    public Map getAttributes() {
+    public PropDict getAttributes() {
         return attributes;
     }
 
@@ -70,7 +71,8 @@ public class Title implements Comparable {
         String keys[] = (String[]) attributes.keySet().toArray(new String[0]);
         Arrays.sort(keys);
         for (int i = 0; i < keys.length; i++) {
-            out += keys[i] + "\t" + attributes.get(keys[i]) + "\n";
+        	PropDictEntry p = (PropDictEntry)attributes.get(keys[i]);
+            out += keys[i] + "\t" + p.getValue() + "\t[" + p.getSource() + "]\n";
         }
         return out;
     }
@@ -79,27 +81,14 @@ public class Title implements Comparable {
         if (!(o instanceof Title))
             return false;
         Title t = (Title) o;
-        if (t.getAttributes().size() != getAttributes().size())
-            return false;
-        Iterator a = t.getAttributes().keySet().iterator();
-        while (a.hasNext()) {
-            String keyA = (String) a.next();
-            String valA = t.getAttribute(keyA);
-            String valB = getAttribute(keyA);
-            if (!valA.equals(valB))
-                return false;
-        }
-        return true;
+        return t.getID() == getID();
     }
 
     public int compareTo(Object arg0) {
         if (arg0 instanceof Title) {
             Title t = (Title) arg0;
-            try {
-                return new Integer(getAttribute("id")).compareTo(new Integer(t
-                        .getAttribute("id")));
-            } catch (Exception e) {
-            }
+            return new Long(getID()).compareTo(new Long(t
+                .getID()));
         }
         return 0;
     }

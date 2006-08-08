@@ -183,6 +183,17 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 }
 
 xmms_object_cmd_value_t *
+xmms_object_cmd_value_bin_new (GString *bin)
+{
+	xmms_object_cmd_value_t *val;
+	val = g_new0 (xmms_object_cmd_value_t, 1);
+	val->value.bin = bin;
+	val->type = XMMS_OBJECT_CMD_ARG_BIN;
+	return val;
+
+}
+
+xmms_object_cmd_value_t *
 xmms_object_cmd_value_str_new (const gchar *string)
 {
 	xmms_object_cmd_value_t *val;
@@ -259,6 +270,9 @@ xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
 	g_return_val_if_fail (val, NULL);
 
 	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			ret = xmms_object_cmd_value_bin_new (val->value.bin);
+			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			ret = xmms_object_cmd_value_str_new (val->value.string);
 			break;
@@ -291,6 +305,9 @@ xmms_object_cmd_value_free (gpointer val)
 	switch (v->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			g_free (v->value.string);
+			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			g_string_free (v->value.bin, TRUE);
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
@@ -358,6 +375,9 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			arg.retval = xmms_object_cmd_value_str_new (va_arg (ap, gchar *));
+			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			arg.retval = xmms_object_cmd_value_bin_new ((GString *) va_arg (ap, gpointer));
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			arg.retval = xmms_object_cmd_value_dict_new ((GHashTable *) va_arg (ap, gpointer));

@@ -14,22 +14,21 @@
  *  Lesser General Public License for more details.
  */
 
-package org.xmms2;
+package org.xmms2.wrapper;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.xmms2.xmms2bindings.Xmmsclient;
-import org.xmms2.xmms2bindings.XmmsclientConstants;
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
-import org.xmms2.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_connection_St;
+import org.xmms2.wrapper.xmms2bindings.SWIGTYPE_p_xmmsc_result_St;
+import org.xmms2.wrapper.xmms2bindings.Xmmsclient;
+import org.xmms2.wrapper.xmms2bindings.XmmsclientConstants;
 
 /**
  * Java way of using a mainloop. Just create a new Object and give a
  * Callbacks-object, the mainloop does the rest :). Don't use this class if you
- * are using org.xmms2.Xmms2 and don't use org.xmms2.SpecialJNI if you are using
- * org.xmms2.JMain
+ * are using org.xmms2.Xmms2.
  */
 
 public final class JMain extends Thread {
@@ -47,11 +46,11 @@ public final class JMain extends Thread {
      */
     public JMain(CallbacksListener cb, SWIGTYPE_p_xmmsc_connection_St conn) {
         myConnection = conn;
-        SpecialJNI.setENV(cb);
+        Xmmsclient.setENV(cb);
     }
 
     /**
-     * The run method - our little mainloop. First call SpecialJNI.setENV(this),
+     * The run method - our little mainloop. First call Xmmsclient.setENV(this),
      * which is a native method and sets "this" as GlobalRef for the
      * callback-object in c and sets the pointer jvm, which is needed to call
      * java methods outside the JNI functions. Furthermore, init the
@@ -63,9 +62,8 @@ public final class JMain extends Thread {
     public void run() {
     	running = true;
         FileDescriptor fd = new FileDescriptor();
-        SpecialJNI.getFD(fd, Xmmsclient.getPointerToConnection(myConnection));
-        SpecialJNI.setupMainloop(this, Xmmsclient
-                .getPointerToConnection(myConnection));
+        Xmmsclient.getFD(fd, myConnection);
+        Xmmsclient.setupMainloop(this, myConnection);
         FileInputStream in = new FileInputStream(fd);
         try {
             while (fd.valid() && running) {
@@ -89,6 +87,7 @@ public final class JMain extends Thread {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            Xmmsclient.xmmsc_io_disconnect(myConnection);
         }
         synchronized (stopped){
         	stopped.notifyAll();
@@ -101,7 +100,6 @@ public final class JMain extends Thread {
      * 
      */
     public void spinDown() {
-    	Xmmsclient.xmmsc_io_disconnect(myConnection);
         running = false;
         synchronized (stopped){
         	while (stopped == Boolean.FALSE)
@@ -117,7 +115,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_broadcast_configval_changed(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, user_data);
+                XmmsclientConstants.CALLBACK_CONFIGVAL_CHANGED, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -126,7 +125,7 @@ public final class JMain extends Thread {
                 .xmmsc_broadcast_playlist_current_pos(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
                 XmmsclientConstants.CALLBACK_PLAYLIST_CURRENT_POSITION,
-                user_data);
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -134,7 +133,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_broadcast_playback_current_id(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYBACK_ID, user_data);
+                XmmsclientConstants.CALLBACK_PLAYBACK_ID, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -144,7 +144,7 @@ public final class JMain extends Thread {
         Xmmsclient
                 .xmmsc_result_notifier_set(result,
                         XmmsclientConstants.CALLBACK_PLAYBACK_VOLUME_CHANGED,
-                        user_data);
+                        Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -152,7 +152,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_broadcast_playback_status(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYBACK_STATUS, user_data);
+                XmmsclientConstants.CALLBACK_PLAYBACK_STATUS, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -160,7 +161,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_broadcast_playlist_changed(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED, user_data);
+                XmmsclientConstants.CALLBACK_PLAYLIST_CHANGED,
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -168,7 +170,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_broadcast_medialib_entry_changed(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_CHANGED, user_data);
+                XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_CHANGED, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -176,7 +179,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_broadcast_medialib_entry_added(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_ADDED, user_data);
+                XmmsclientConstants.CALLBACK_MEDIALIB_ENTRY_ADDED, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -185,7 +189,7 @@ public final class JMain extends Thread {
                 .xmmsc_broadcast_medialib_playlist_loaded(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
                 XmmsclientConstants.CALLBACK_MEDIALIB_PLAYLIST_LOADED,
-                user_data);
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -195,7 +199,7 @@ public final class JMain extends Thread {
         Xmmsclient
                 .xmmsc_result_notifier_set(result,
                         XmmsclientConstants.CALLBACK_MEDIAINFO_READER_STATUS,
-                        user_data);
+                        Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -203,7 +207,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_signal_playback_playtime(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.SIGNAL_PLAYBACK_PLAYTIME, user_data);
+                XmmsclientConstants.SIGNAL_PLAYBACK_PLAYTIME, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -211,7 +216,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_signal_visualisation_data(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.SIGNAL_VISUALIZATION_DATA, user_data);
+                XmmsclientConstants.SIGNAL_VISUALIZATION_DATA, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
@@ -219,7 +225,8 @@ public final class JMain extends Thread {
         SWIGTYPE_p_xmmsc_result_St result = Xmmsclient
                 .xmmsc_signal_mediainfo_reader_unindexed(myConnection);
         Xmmsclient.xmmsc_result_notifier_set(result,
-                XmmsclientConstants.SIGNAL_MEDIAREADER_UNINDEXED, user_data);
+                XmmsclientConstants.SIGNAL_MEDIAREADER_UNINDEXED, 
+                Xmmsclient.convertIntToVoidP(user_data));
         Xmmsclient.xmmsc_result_unref(result);
     }
 
