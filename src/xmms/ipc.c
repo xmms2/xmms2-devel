@@ -368,22 +368,25 @@ xmms_ipc_client_thread (gpointer data)
 		}
 
 		if (FD_ISSET (fd, &wfdset)) {
-			g_mutex_lock (client->lock);
-			while (!g_queue_is_empty (client->out_msg)) {
-				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
+			while (TRUE) {
+				xmms_ipc_msg_t *msg;
 
-				g_mutex_unlock (client->lock);
-				if (xmms_ipc_msg_write_transport (msg, client->transport, &disconnect)) {
-					g_mutex_lock (client->lock);
-					g_queue_pop_head (client->out_msg);
-					g_mutex_unlock (client->lock);
-					xmms_ipc_msg_destroy (msg);
-				} else {
-					break;
-				}
 				g_mutex_lock (client->lock);
+				msg = g_queue_peek_head (client->out_msg);
+				g_mutex_unlock (client->lock);
+
+				if (!msg)
+					break;
+
+				if (!xmms_ipc_msg_write_transport (msg, client->transport, &disconnect))
+					break;
+
+				g_mutex_lock (client->lock);
+				g_queue_pop_head (client->out_msg);
+				g_mutex_unlock (client->lock);
+
+				xmms_ipc_msg_destroy (msg);
 			}
-			g_mutex_unlock (client->lock);
 		}
 
 		if (FD_ISSET (fd, &rfdset)) {
