@@ -285,6 +285,9 @@ class PropDict(dict):
 		except KeyError:
 			return False
 
+	def __contains__(self, item):
+		return self.has_key(item)
+
 	def __getitem__(self, item):
 		if isinstance(item, basestring):
 			for src in self._sources:
