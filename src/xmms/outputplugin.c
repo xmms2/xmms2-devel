@@ -181,6 +181,16 @@ xmms_output_plugin_method_flush (xmms_output_plugin_t *plugin, xmms_output_t *ou
 }
 
 gboolean
+xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin)
+{
+	g_return_val_if_fail (plugin, FALSE);
+	if (plugin->methods.format_set_always) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+gboolean
 xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin, xmms_output_t *output, xmms_stream_type_t *st)
 {
 	gboolean res = TRUE;
@@ -190,6 +200,10 @@ xmms_output_plugin_method_format_set (xmms_output_plugin_t *plugin, xmms_output_
 	if (plugin->methods.format_set) {
 		g_mutex_lock (plugin->api_mutex);
 		res = plugin->methods.format_set (output, st);
+		g_mutex_unlock (plugin->api_mutex);
+	} else if (plugin->methods.format_set_always) {
+		g_mutex_lock (plugin->api_mutex);
+		res = plugin->methods.format_set_always (output, st);
 		g_mutex_unlock (plugin->api_mutex);
 	}
 
@@ -337,6 +351,11 @@ xmms_output_plugin_writer (gpointer data)
 				g_mutex_lock (plugin->api_mutex);
 				plugin->methods.write (output, buffer, ret, &err);
 				g_mutex_unlock (plugin->api_mutex);
+				if (xmms_error_iserror (&err)) {
+					XMMS_DBG ("Write method set error bit");
+					plugin->write_status = XMMS_PLAYBACK_STATUS_STOP;
+					xmms_output_set_error (output, &err);
+				}
 			}
 			g_mutex_lock (plugin->write_mutex);
 		}

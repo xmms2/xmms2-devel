@@ -193,7 +193,7 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 
 	switch (val->type) {
 		case XMMS_OBJECT_CMD_ARG_BIN:
-			xmms_ipc_msg_put_bin (msg, val->value.bin->str, val->value.bin->len);
+			xmms_ipc_msg_put_bin (msg, (guchar *)val->value.bin->str, val->value.bin->len);
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			xmms_ipc_msg_put_string (msg, val->value.string);

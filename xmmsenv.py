@@ -145,9 +145,9 @@ class XMMSEnvironment(Environment):
 			self.userconfpath = self["USERCONFDIR"]
 		else:
 			if sys.platform == 'darwin':
-				self.userconfpath = 'Library'
+				self.userconfpath = 'Library/xmms2'
 			else:
-				self.userconfpath = '.config'
+				self.userconfpath = '.config/xmms2'
 
 		def gzipper(target, source, env):
 			gzip.GzipFile(target[0].path, 'wb',9).write(file(source[0].path).read())

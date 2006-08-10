@@ -299,6 +299,12 @@ class PropDict(dict):
 					pass
 			raise KeyError, item
 		return dict.__getitem__(self, item)
+
+	def get(self, item, default=None):
+		try:
+			return self[item]
+		except KeyError:
+			return default
 	
 	def _get_sources(self):
 		return self._sources

@@ -30,7 +30,7 @@ package org.xmms2.wrapper;
  * You can get a result object out from the long parameter using
  * org.xmms2.xmms2bindings.Xmmsclient.get_result_from_pointer(). Don't unref the
  * gotten result unless you know what you are doing! You have to run
- * org.xmms2.SpecialJNI.setENV(CallbacksListener) first. Otherwise the callbacks
+ * org.xmms2.wrapper.xmms2bindings.setENV(CallbacksListener) first. Otherwise the callbacks
  * won't work.
  */
 
