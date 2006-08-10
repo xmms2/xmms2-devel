@@ -37,20 +37,20 @@ void
 cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	xmms_plugin_type_t type;
+	xmms_plugin_type_t type = XMMS_PLUGIN_TYPE_ALL;
 
-	if (argc < 3) {
-		type = XMMS_PLUGIN_TYPE_ALL;
-	} else if (g_strcasecmp (argv[2], "output") == 0) {
-		type = XMMS_PLUGIN_TYPE_OUTPUT;
-	} else if (g_strcasecmp (argv[2], "xform") == 0) {
-		type = XMMS_PLUGIN_TYPE_XFORM;
-	} else if (g_strcasecmp (argv[2], "effect") == 0) {
-		type = XMMS_PLUGIN_TYPE_EFFECT;
-	} else if (g_strcasecmp (argv[2], "playlist") == 0) {
-		type = XMMS_PLUGIN_TYPE_PLAYLIST;
-	} else {
-		print_error ("no such plugin type!");
+	if (argc > 2) {
+		if (g_strcasecmp (argv[2], "output") == 0) {
+			type = XMMS_PLUGIN_TYPE_OUTPUT;
+		} else if (g_strcasecmp (argv[2], "xform") == 0) {
+			type = XMMS_PLUGIN_TYPE_XFORM;
+		} else if (g_strcasecmp (argv[2], "effect") == 0) {
+			type = XMMS_PLUGIN_TYPE_EFFECT;
+		} else if (g_strcasecmp (argv[2], "playlist") == 0) {
+			type = XMMS_PLUGIN_TYPE_PLAYLIST;
+		} else {
+			print_error ("no such plugin type!");
+		}
 	}
 
 	res = xmmsc_plugin_list (conn, type);
