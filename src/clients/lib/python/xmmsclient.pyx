@@ -76,7 +76,7 @@ PLUGIN_TYPE_XFORM = XMMS_PLUGIN_TYPE_XFORM
 PLUGIN_TYPE_OUTPUT = XMMS_PLUGIN_TYPE_OUTPUT
 PLUGIN_TYPE_PLAYLIST = XMMS_PLUGIN_TYPE_PLAYLIST
 PLUGIN_TYPE_EFFECT = XMMS_PLUGIN_TYPE_EFFECT
-                                                               
+
 cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef enum xmmsc_result_value_type_t:
 		XMMSC_RESULT_VALUE_TYPE_NONE,
@@ -124,7 +124,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_quit(xmmsc_connection_t *conn)
 	xmmsc_result_t *xmmsc_plugin_list (xmmsc_connection_t *c, unsigned int type)
 
-	void xmmsc_result_disconnect(xmmsc_result_t *res) 
+	void xmmsc_result_disconnect(xmmsc_result_t *res)
 
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
 	xmmsc_result_t *xmmsc_playlist_add(xmmsc_connection_t *, char *)
@@ -134,7 +134,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_remove(xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_clear(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playlist_list(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_sort(xmmsc_connection_t *c, char *property) 
+	xmmsc_result_t *xmmsc_playlist_sort(xmmsc_connection_t *c, char *property)
 	xmmsc_result_t *xmmsc_playlist_set_next(xmmsc_connection_t *c, int pos)
 	xmmsc_result_t *xmmsc_playlist_set_next_rel(xmmsc_connection_t *c, signed int)
 	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, signed int movement)
@@ -671,7 +671,7 @@ cdef class XMMS:
 		L{exit_loop} at some point.
 		"""
 		if path:
-			ret = xmmsc_connect(self.conn, path) 
+			ret = xmmsc_connect(self.conn, path)
 		else:
 			ret = xmmsc_connect(self.conn, NULL)
 
@@ -1214,7 +1214,7 @@ cdef class XMMS:
 
 	def broadcast_playlist_current_pos(self, cb = None):
 		"""
-		Set a method to handle the playlist current position updates 
+		Set a method to handle the playlist current position updates
 		from the XMMS2 daemon. This is triggered whenever the daemon
 		jumps from one playlist position to another. (not when moving
 		a playlist item from one position to another)
@@ -1681,8 +1681,7 @@ cdef class XMMS:
 	def broadcast_medialib_playlist_loaded(self, cb = None):
 		"""
 		Set a method to handle the medialib playlist loaded broadcast
-		from the XMMS2 daemon.(i.e. a playlist is loaded from 
-	        medialib). 		
+		from the XMMS2 daemon.(i.e. a playlist is loaded from medialib). 		
 		@rtype: L{XMMSResult}
 		"""
 		cdef XMMSResult ret
