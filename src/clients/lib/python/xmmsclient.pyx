@@ -206,6 +206,8 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 
+	char *xmmsc_userconfdir_get ()
+
 	void xmmsc_io_need_out_callback_set(xmmsc_connection_t *c, object(*callback)(int, object), object userdata)
 	void xmmsc_io_disconnect(xmmsc_connection_t *c)
 	int xmmsc_io_want_out(xmmsc_connection_t *c)
@@ -649,6 +651,15 @@ cdef class XMMS:
 		@return: IPC file descriptor
 		"""
 		return xmmsc_io_fd_get(self.conn)
+
+	def userconfdir_get(self):
+		"""
+		Get the user configuration directory, where XMMS2 stores its
+		user-specific configuration files. Clients may store their 
+		configuration under the 'clients' subdirectory. This varies from 
+		platform to platform so should always be retreived at runtime.
+		"""
+		return xmmsc_userconfdir_get()
 
 	def connect(self, path = None, disconnect_func = None):
 		"""
@@ -1663,9 +1674,9 @@ cdef class XMMS:
 	def broadcast_medialib_entry_changed(self, cb = None):
 		"""
 		Set a method to handle the medialib entry changed broadcast
-		from the XMMS2 daemon.(i.e. the current entry in the playlist
-		has changed)  Updated data is sent when the metadata for
-		a song is updated in the medialib.
+		from the XMMS2 daemon.
+		Updated data is sent when the metadata for a song is updated
+		in the medialib.
 		@rtype: L{XMMSResult}
 		"""
 		cdef XMMSResult ret
