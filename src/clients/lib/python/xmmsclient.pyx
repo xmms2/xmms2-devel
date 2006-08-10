@@ -286,7 +286,7 @@ class PropDict(dict):
 			return False
 
 	def __getitem__(self, item):
-		if isinstance(item, str):
+		if isinstance(item, basestring):
 			for src in self._sources:
 				if src.endswith('*'):
 					for k,v in self.iteritems():
