@@ -264,6 +264,7 @@ xmms_output_set_error (xmms_output_t *output, xmms_error_t *error)
 typedef struct {
 	xmms_output_t *output;
 	xmms_xform_t *chain;
+	gboolean flush;
 } xmms_output_song_changed_arg_t;
 
 static void
@@ -290,6 +291,9 @@ song_changed (void *data)
 	
 	xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain));
 
+	if (arg->flush)
+		xmms_output_flush (arg->output);
+
 	xmms_object_emit_f (XMMS_OBJECT (arg->output),
 	                    XMMS_IPC_SIGNAL_OUTPUT_CURRENTID,
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
@@ -305,6 +309,8 @@ seek_done (void *data)
 	g_mutex_lock (output->playtime_mutex);
 	output->played = output->filler_seek * xmms_sample_frame_size_get (output->format);
 	g_mutex_unlock (output->playtime_mutex);
+
+	xmms_output_flush (output);
 }
 
 static void
@@ -337,6 +343,7 @@ xmms_output_filler (void *arg)
 {
 	xmms_output_t *output = (xmms_output_t *)arg;
 	xmms_xform_t *chain = NULL;
+	gboolean last_was_kill = FALSE;
 	char buf[4096];
 	xmms_error_t err;
 	gint ret;
@@ -352,6 +359,7 @@ xmms_output_filler (void *arg)
 			}
 			xmms_ringbuf_set_eos (output->filler_buffer, TRUE);
 			g_cond_wait (output->filler_state_cond, output->filler_mutex);
+			last_was_kill = FALSE;
 			continue;
 		}
 		if (output->filler_state == FILLER_KILL) {
@@ -359,6 +367,7 @@ xmms_output_filler (void *arg)
 				xmms_object_unref (chain);
 				chain = NULL;
 				output->filler_state = FILLER_RUN;
+				last_was_kill = TRUE;
 			} else {
 				output->filler_state = FILLER_STOP;
 			}
@@ -409,7 +418,10 @@ xmms_output_filler (void *arg)
 			arg = g_new0 (xmms_output_song_changed_arg_t, 1);
 			arg->output = output;
 			arg->chain = chain;
+			arg->flush = last_was_kill;
 			xmms_object_ref (chain);
+
+			last_was_kill = FALSE;
 
 			g_mutex_lock (output->filler_mutex);
 			xmms_ringbuf_hotspot_set (output->filler_buffer, song_changed, song_changed_arg_free, arg);

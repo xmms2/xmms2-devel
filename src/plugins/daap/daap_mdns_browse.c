@@ -2,6 +2,7 @@
 
 #include <glib.h>
 
+#if MDNS_USING_AVAHI
 #include <avahi-client/client.h>
 #include <avahi-client/lookup.h>
 
@@ -11,9 +12,11 @@
 
 #include <avahi-glib/glib-watch.h>
 #include <avahi-glib/glib-malloc.h>
+#endif
 
 #define ADDR_LEN (3 * 4 + 3 + 1) /* standard dotted-quad fmt */
 
+#if MDNS_USING_AVAHI
 typedef struct {
 	AvahiClient *client;
 	GMainLoop *mainloop;
@@ -140,17 +143,17 @@ static void daap_mdns_client_cb(AvahiClient *client, AvahiClientState state, voi
 
 static void daap_mdns_timeout(AvahiTimeout *to, void *userdata)
 {
-	//g_message("DEBUG: avahi api timeout");
 }
 
 static gboolean daap_mdns_timeout_glib(void *userdata)
 {
-	//g_message("DEBUG: glib timeout");
 	return FALSE;
 }
+#endif
 
 gboolean daap_mdns_initialize()
 {
+#if MDNS_USING_AVAHI
 	const AvahiPoll *av_poll;
 
 	GMainLoop *ml = NULL;
@@ -197,12 +200,19 @@ gboolean daap_mdns_initialize()
 
 fail:
 	return ok;
+#else
+	return FALSE;
+#endif
 }
 
 GSList * daap_mdns_get_server_list()
 {
+#if MDNS_USING_AVAHI
 	GSList * l;
 	l = g_slist_copy(g_server_list);
 	return l;
+#else
+	return NULL;
+#endif
 }
 
