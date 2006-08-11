@@ -48,8 +48,11 @@ gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistfo
 cmds commands[] = {
 	/* Playlist managment */
 	{ "add", "adds a URL to the playlist", cmd_add },
+	{ "addarg", "adds one URL with arguments to the playlist", cmd_addarg },
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
 	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
+	{ "insert", "inserts one URL at a specific position", cmd_insert },
+	{ "insertid", "inserts one Medialib id at a specific position", cmd_insertid },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
@@ -70,6 +73,8 @@ cmds commands[] = {
 	{ "volume_list", "list volume levels for each channel", cmd_volume_list },
 
 	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
+
+	{ "browse", "browse server file lists", cmd_browse },
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },
@@ -97,13 +102,14 @@ read_config ()
 	struct stat st;
 	FILE *fp;
 
+	const gchar *userconf = xmmsc_userconfdir_get ();
 	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (), 
-	                     ".xmms2", "clients", "cli.conf", NULL);
+	                     userconf, "xmms2", "clients", "cli.conf", NULL);
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
 		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
-		                           ".xmms2", "clients", NULL);
-		mkdir (dir, 0755);
+		                           userconf, "xmms2", "clients", NULL);
+		g_mkdir_with_parents (dir, 0755);
 		g_free (dir);
 
 		fp = fopen (file, "w+");

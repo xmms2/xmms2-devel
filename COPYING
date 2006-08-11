@@ -27,6 +27,7 @@ src/plugins/faad/faad.c:
 
 src/plugins/mad/*:
         Licensed under GPL license.
+        Partially: Copyright (C) 2000-2004 Robert Leslie
 
 src/plugins/faad/mp4ff/drms*:
         Copyright (C) 2004 VideoLAN
@@ -35,6 +36,12 @@ src/plugins/faad/mp4ff/drms*:
 src/plugins/faad/mp4ff/mp4*:
         Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
         Licensed under GPL license.
+
+src/plugins/sid/*
+        Licensed under GPL license.
+
+src/plugins/sid/md5.*
+        Copyright (C) 1999 Aladdin Enterprises.
 
 src/plugins/equalizer/eq.c
         Licensed under GPL license.

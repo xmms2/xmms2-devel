@@ -138,7 +138,16 @@ xmms_ca_buffersize_get (xmms_output_t *output)
 static void
 xmms_ca_flush (xmms_output_t *output)
 {
-	XMMS_DBG ("Xmms wants us to flush!");
+	xmms_ca_data_t *data;
+	OSStatus res;
+
+	data = xmms_output_private_data_get (output);
+	g_return_if_fail (data);
+
+	res = AudioUnitReset (data->au, kAudioUnitScope_Global, 0);
+	if (res) {
+		xmms_log_error ("Reset failed!");
+	}
 }
 
 OSStatus
@@ -168,8 +177,9 @@ xmms_ca_render_cb (void *inRefCon,
 		if (ret == -1)
 			ret = 0;
 
-		if (ret < size) 
+		if (ret < size) { 
 			memset (ioData->mBuffers[b].mData+ret, 0, size - ret);
+		}
 	}
 
 	return noErr;
@@ -179,48 +189,6 @@ static gboolean
 xmms_ca_format_set (xmms_output_t *output,
                     const xmms_stream_type_t *stype)
 {
-	OSStatus res;
-	guint32 fmt;
-	xmms_ca_data_t *data;
-	AudioStreamBasicDescription format;
-	xmms_sample_format_t form;
-	gboolean do_start = FALSE;
-
-	g_return_val_if_fail (stype, FALSE);
-
-	g_return_val_if_fail (output, FALSE);
-	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, FALSE);
-
-	format.mSampleRate = xmms_stream_type_get_int (stype, 
-	                                               XMMS_STREAM_TYPE_FMT_SAMPLERATE);
-
-	form = xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_FORMAT);
-
-	fmt = xmms_sample_signed_get (form) ? kAudioFormatFlagIsSignedInteger : 0;
-	
-	format.mFormatID = kAudioFormatLinearPCM;
-	format.mFormatFlags = fmt | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
-	format.mBytesPerPacket = 4;
-	format.mFramesPerPacket = 1;
-	format.mBytesPerFrame = 4;
-	format.mChannelsPerFrame = xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS);
-	format.mBitsPerChannel = xmms_sample_size_get (form) * 8;
-
-	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
-	                            kAudioUnitScope_Input, 0, &format,
-	                            sizeof(AudioStreamBasicDescription));
-	if (res) {
-		xmms_log_error ("Failed to set %d %d %d", xmms_sample_size_get (form) * 8, 
-		                xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS),
-		                xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_SAMPLERATE));
-		return FALSE;
-	}
-		
-	XMMS_DBG ("Set format: %d %d %d", xmms_sample_size_get (form) * 8, 
-	          xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_CHANNELS),
-	          xmms_stream_type_get_int (stype, XMMS_STREAM_TYPE_FMT_SAMPLERATE));
-
 	return TRUE;
 }
 
@@ -232,6 +200,7 @@ xmms_ca_new (xmms_output_t *output)
 	OSStatus res;
 	ComponentDescription desc;
 	AURenderCallbackStruct input;
+	AudioStreamBasicDescription format;
 	Component comp;
 	AudioDeviceID device = 0;
 	UInt32 size = sizeof(device);
@@ -272,16 +241,31 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 
-	xmms_output_stream_type_add (output, XMMS_STREAM_TYPE_MIMETYPE, "audio/pcm",
-	                             NULL);
-	XMMS_DBG ("CoreAudio initialized!");
+	format.mSampleRate = 44100.0;
+	format.mFormatID = kAudioFormatLinearPCM;
+	format.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked | kAudioFormatFlagsNativeEndian;
+	format.mBytesPerPacket = 4;
+	format.mFramesPerPacket = 1;
+	format.mBytesPerFrame = 4;
+	format.mChannelsPerFrame = 2;
+	format.mBitsPerChannel = 16;
 
+	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
+	                            kAudioUnitScope_Input, 0, &format,
+	                            sizeof(AudioStreamBasicDescription));
+	if (res) {
+		xmms_log_error ("Failed to set format");		
+		return FALSE;
+	}
+		
 	res = AudioUnitInitialize (data->au);
 	if (res) {
 		xmms_log_error ("Audio Unit wouldn't initialize!");
 		g_free (data);
 		return FALSE;
 	}
+
+	XMMS_DBG ("CoreAudio initialized!");
 
 	res = AudioUnitGetProperty(data->au,
 	                           kAudioOutputUnitProperty_CurrentDevice,
@@ -296,24 +280,8 @@ xmms_ca_new (xmms_output_t *output)
 		return FALSE;
 	}
 	
-	if (device != 0) {
-		AudioTimeStamp ts;
-		ts.mFlags = 0;
-		UInt32 bufferSize = 4096;
-		res = AudioDeviceSetProperty(device,
-		                             &ts, 
-		                             0,
-		                             0,
-		                             kAudioDevicePropertyBufferFrameSize,
-		                             sizeof(UInt32),
-		                             &bufferSize);
-		if (res) {
-			xmms_log_error ("Set prop failed!");
-			g_free (data);
-			return FALSE;
-		}
-	}
-
+	/* static for now */
+	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 
 	data->running = FALSE;
 	xmms_output_private_data_set (output, data);

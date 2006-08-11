@@ -25,6 +25,9 @@
 void cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_clear (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_shuffle (xmmsc_connection_t *conn, gint argc, gchar **argv);

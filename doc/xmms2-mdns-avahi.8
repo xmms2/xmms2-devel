@@ -1,0 +1,77 @@
+.\" 
+.\" xmms2-mdns-avahi - The Avahi mDNS Announcer for XMMS2
+.\"
+.\" xmms2-mdns-avahi.8 - xmms2-mdns-avahi manpage 
+.\"
+.\" Copyright 2005-2006, Alexander Botero-Lowry
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer
+.\"    in this position and unchanged.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.\"
+.TH XMMS2-MDNS-AVAHI 8 
+.SH NAME
+.I xmms2-mdns-avahi
+announces 
+.B XMMS2
+via mDNS
+.SH SYNOPSIS
+.I xmms2-mdns-avahi
+.P
+.SH DESCRIPTION
+.B XMMS2 
+is a redesign of the XMMS (http://www.xmms.org) music player. It features a client-server model, allowing multiple (even simultaneous!) user interfaces, both textual and graphical. All common audio formats are supported using plugins. On top of this, there is a flexible media library to organize your music.
+.PP
+.I xmms2-mdns-avahi
+is the Avahi mDNS announcing client for
+.B XMMS2.
+.I xmms2-mdns-avahi
+is designed to announce the presence of an accessible 
+.B XMMS2
+TCP socket if one is available.
+.P
+.I xmms2-mdns-avahi
+offers a _xmms2._tcp service if, and only if, the 
+.I XMMS_PATH_FULL
+enviornmental variable contains a TCP socket. This allows clients that support mDNS discovery to easily locate and connect to this 
+.I xmms2d(8) 
+instance. 
+.SH ENVIRONMENTAL VARIABLES
+.TP
+.I XMMS_PATH_FULL
+A complete list of URL paths seperated by ';' pointed to the
+.I xmms2d(8).
+See
+.B IPC SOCKET
+in  
+.I xmms2d(8)
+for details of possible values for this variable
+
+.SH SEE ALSO
+xmms2(1), xmms2d(8), http://xmms2.xmms.org
+.SH HISTORY
+The
+.B XMMS2
+Project was started by Tobias Rundström and Anders Gustafsson. It is developed with their lead by a small group of contributers from all over the world.
+.SH AUTHOR
+This manual page was written by Alexander Botero-Lowry <alex@foxybanana.com>

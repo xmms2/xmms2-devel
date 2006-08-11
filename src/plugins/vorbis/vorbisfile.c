@@ -62,7 +62,8 @@ static props properties[] = {
 	{ "tracknumber",          XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,   INTEGER },
 	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
 	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
-	{ "comment"               XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
+	{ "comment",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
+	{ "discnumber",           XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, INTEGER },
 	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
 	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
 	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
@@ -243,6 +244,53 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 }
 
+static void
+xmms_vorbis_read_metadata (xmms_xform_t *xform, xmms_vorbis_data_t *data)
+{
+	vorbis_comment *ptr;
+
+	ptr = ov_comment (&data->vorbisfile, -1);
+
+	if (ptr) {
+		gint temp;
+
+		for (temp = 0; temp < ptr->comments; temp++) {
+			gchar **s;
+			gint i = 0;
+
+			s = g_strsplit (ptr->user_comments[temp], "=", 2);
+			if (!s[0] || !s[1]) {
+				g_strfreev (s);
+				continue;
+			}
+			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
+				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
+					xmms_xform_metadata_set_int (xform,
+					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 
+					                             1);
+				} else if (g_strcasecmp (s[0], properties[i].vname) == 0) {
+					if (properties[i].type == INTEGER) {
+						gint tmp = strtol (s[1], NULL, 10);
+						xmms_xform_metadata_set_int (xform,
+						                             properties[i].xname, 
+						                             tmp);
+					} else {
+						xmms_xform_metadata_set_str (xform,
+						                             properties[i].xname,
+						                             s[1]);
+					}
+				}
+			}
+
+			g_strfreev (s);
+		}
+
+		get_replaygain (xform, ptr);
+	}
+
+}
+
 static gboolean
 xmms_vorbis_init (xmms_xform_t *xform)
 {
@@ -250,7 +298,6 @@ xmms_vorbis_init (xmms_xform_t *xform)
 	vorbis_info *vi;
 	gint ret;
 	guint playtime;
-	vorbis_comment *ptr;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -292,60 +339,7 @@ xmms_vorbis_init (xmms_xform_t *xform)
 		                             (gint) vi->rate);
 	}
 
-	ptr = ov_comment (&data->vorbisfile, -1);
-
-	if (ptr) {
-		gint temp;
-
-		for (temp = 0; temp < ptr->comments; temp++) {
-			gchar **s;
-			gint i = 0;
-
-			s = g_strsplit (ptr->user_comments[temp], "=", 2);
-			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
-				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_xform_metadata_set_int (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 
-					                             1);
-				} else if (g_strcasecmp (s[0], properties[i].vname) == 0) {
-					if (properties[i].type == INTEGER) {
-						gint tmp = strtol (s[1], NULL, 10);
-						xmms_xform_metadata_set_int (xform,
-						                             properties[i].xname, 
-						                             tmp);
-					} else {
-						xmms_xform_metadata_set_str (xform,
-						                             properties[i].xname,
-						                             s[1]);
-					}
-				}
-			}
-
-			g_strfreev (s);
-		}
-
-		get_replaygain (xform, ptr);
-	}
-
-	/*
-
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16,
-		                         vi->channels, vi->rate);
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U16,
-		                         vi->channels, vi->rate);
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S8,
-		                         vi->channels, vi->rate);
-		xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_U8,
-		                         vi->channels, vi->rate);
-
-		data->format = xmms_decoder_format_finish (decoder);
-		if (!data->format) {
-			return FALSE;
-		}
-
-		XMMS_DBG ("Vorbis inited!!!!");
-	}*/
+	xmms_vorbis_read_metadata (xform, data);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
@@ -385,12 +379,9 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
 		return ret;
 	}
 
-	/* FIXME: read meta data again!  */
 	if (c != data->current) {
-		/*
-		xmms_vorbis_get_media_info (decoder);
+		xmms_vorbis_read_metadata (xform, data);
 		data->current = c;
-		*/
 	}
 
 	return ret;

@@ -21,8 +21,8 @@
 %include "arrays_java.i"
 
 %apply int *INOUT { int* };
-%apply int *INPUT { void* };
 %apply unsigned int *INOUT { unsigned int* };
+%apply unsigned char *INOUT { unsigned char * };
 %apply char **STRING_OUT { char ** };
 %apply char **STRING_ARRAY { char **preference };
 
@@ -35,13 +35,71 @@ typedef unsigned int uint32_t;
 #include <xmmsc/xmmsc_errorcodes.h>
 #include <xmmsc/xmmsc_stdint.h>
 #include <callbacks.h>
-#include <misc.h>
 
 %} 
+%ignore xmms_bindata_base64_decode;
+%ignore xmmsc_result_get_bin;
+%ignore xmmsc_io_get_fd;
+
+%inline %{
+xmmsc_result_t*
+getResultFromPointer (jlong val)
+{
+        return *(xmmsc_result_t **)(void *)&val;
+}
+
+void*
+convertIntToVoidP(int val)
+{
+        int *newval = (int*)malloc(sizeof(int));
+        *newval = val;
+        return newval;
+}
+
+void
+xmms_bindata_base64_decode_wrap(const char *data,
+                                unsigned int *len,
+                                unsigned char *buffer)
+{
+        buffer = xmms_bindata_base64_decode(data, len);
+}
+
+%}
+
+%native (xmmsc_result_get_bin_wrap) int xmmsc_result_get_bin_wrap ( jobject, jobjectArray);
+%{
+JNIEXPORT int JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_result_get_bin_wrap ( JNIEnv,
+                                                                            jclass,
+                                                                            jobject,
+                                                                            jobjectArray);
+%}
+
+%native (getFD) void getFD ( jobject, jobject );
+%{
+JNIEXPORT void JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_getFD (JNIEnv, jclass, jobject, jobject);
+%}
+
+%native (setENV) void setENV ( jobject );
+%{
+JNIEXPORT void JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setENV (JNIEnv, jclass, jobject);
+%}
+
+%native (setupMainloop) void setupMainloop ( jobject, jobject );
+%{
+JNIEXPORT void JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setupMainloop (JNIEnv,
+                                                               jclass,
+                                                               jobject,
+                                                               jobject);
+
+%}
 
 %include "src/include/xmmsclient/xmmsclient.h"
 %include "src/include/xmmsc/xmmsc_idnumbers.h"
-%include "include/misc.h"
+
 
 %constant void (*DISCONNECT_CALLBACK)(void*) = disconnect_callback;
 %constant void (*LOCK_FUNCTION)(void*) = lock_function;

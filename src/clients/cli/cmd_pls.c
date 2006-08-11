@@ -168,6 +168,91 @@ cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 }
 
+void
+cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+	gchar *url;
+
+	if (argc < 4) {
+		print_error ("Need a filename and args to add");
+	}
+
+	url = format_url (argv[2]);
+	if (!url) {
+		print_error ("Invalid url");
+	}
+
+	res = xmmsc_playlist_add_args (conn, url, argc - 3,
+	                               (const char **) &argv[3]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Couldn't add %s to playlist: %s\n", url,
+		             xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Added %s", url);
+
+	g_free (url);
+}
+
+void
+cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	guint pos;
+	gchar *url;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Need a position and a file");
+	}
+
+	pos = strtol (argv[2], NULL, 10);
+	url = format_url (argv[3]);
+	if (!url) {
+		print_error ("Invalid url");
+	}
+
+	res = xmmsc_playlist_insert (conn, pos, url);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to add %s at postion %u: %s", url,
+		             pos, xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Inserted %s at %u", url, pos);
+
+	g_free (url);
+}
+
+void
+cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	guint pos, mlib_id;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Need a position and a medialib id");
+	}
+
+	pos = strtol (argv[2], NULL, 10);
+	mlib_id = strtol (argv[3], NULL, 10);
+
+	res = xmmsc_playlist_insert_id(conn, pos, mlib_id);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to insert %u at position %u: %s", pos, 
+		             mlib_id, xmmsc_result_get_error(res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Inserted %u at position %u", mlib_id, pos);
+}
 
 void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)

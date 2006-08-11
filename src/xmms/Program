@@ -19,7 +19,9 @@ source = ["main.c",
           "streamtype.c",
           "converter_plugin.c",
           "ringbuf_xform.c",
-          "outputplugin.c"]
+          "outputplugin.c",
+		  "statfs.c",
+		  "bindata.c"]
 
 def config(env):
 	pluginenv = env.Copy()
@@ -38,6 +40,16 @@ def config(env):
 	if env.platform == 'sunos5':
 		env.checklib("socket", "socket", fail=True)
 		env.Append(CPPDEFINES=['_POSIX_PTHREAD_SEMANTICS'])
+
+	try:
+		env.checkheader("sys/vfs.h")
+		env.Prepend(CPPDEFINES="STATFS_LINUX")
+	except ConfigError:
+		try:
+			env.checkheader("sys/param.h")
+			env.Prepend(CPPDEFINES="STATFS_BSD")
+		except ConfigError:
+			pass
 
 	# we have an xmms2d - we might want plugins!
 	pluginenv.handle_targets("Plugin")

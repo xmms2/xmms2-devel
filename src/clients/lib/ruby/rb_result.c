@@ -289,6 +289,19 @@ static VALUE propdict_get (VALUE self, RbResult *res)
 	return res->propdict;
 }
 
+static VALUE bin_get (VALUE self, RbResult *res)
+{
+	unsigned char *data = NULL;
+	unsigned int len = 0;
+
+	if (!xmmsc_result_get_bin (res->real, &data, &len)) {
+		rb_raise (eValueError, "cannot retrieve value");
+		return Qnil;
+	}
+
+	return rb_str_new ((char *) data, len);
+}
+
 static VALUE value_get (VALUE self, RbResult *res)
 {
 	VALUE ret;
@@ -308,6 +321,9 @@ static VALUE value_get (VALUE self, RbResult *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			ret = propdict_get (self, res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			ret = bin_get (self, res);
 			break;
 		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
 		default:
@@ -382,6 +398,46 @@ static VALUE c_propdict_init (VALUE self, VALUE result)
 	return self;
 }
 
+static VALUE propdict_inspect_cb (VALUE args, VALUE s)
+{
+	VALUE src, key, value;
+
+	src = RARRAY (args)->ptr[0];
+	key = RARRAY (args)->ptr[1];
+	value = RARRAY (args)->ptr[2];
+
+	if (RSTRING (s)->len > 1)
+		rb_str_buf_cat2 (s, ", ");
+
+	rb_str_buf_cat2 (s, "[");
+	rb_str_buf_append (s, src);
+	rb_str_buf_cat2 (s, "]");
+
+	rb_str_buf_append (s, rb_inspect (key));
+	rb_str_buf_cat2 (s, "=>");
+	rb_str_buf_append (s, rb_inspect (value));
+
+	return Qnil;
+}
+
+static VALUE propdict_inspect (VALUE self)
+{
+	VALUE ret;
+
+	ret = rb_str_new2 ("{");
+	rb_iterate (rb_each, self, propdict_inspect_cb, ret);
+	rb_str_buf_cat2 (ret, "}");
+
+	OBJ_INFECT (ret, self);
+
+	return ret;
+}
+
+static VALUE c_propdict_inspect (VALUE self)
+{
+	return rb_protect_inspect (propdict_inspect, self, 0);
+}
+
 static VALUE c_propdict_aref (VALUE self, VALUE key)
 {
 	RbResult *res = NULL;
@@ -397,8 +453,7 @@ static VALUE c_propdict_aref (VALUE self, VALUE key)
 	tmp = rb_iv_get (self, "result");
 	Data_Get_Struct (tmp, RbResult, res);
 
-	key = rb_obj_as_string (key);
-	ckey = StringValuePtr (key);
+	ckey = rb_id2name (SYM2ID (key));
 
 	type = xmmsc_result_get_dict_entry_type (res->real, ckey);
 
@@ -428,16 +483,16 @@ static VALUE c_propdict_has_key (VALUE self, VALUE key)
 	RbResult *res = NULL;
 	VALUE tmp;
 	xmmsc_result_value_type_t type;
+	const char *ckey;
 
 	Check_Type (key, T_SYMBOL);
 
 	tmp = rb_iv_get (self, "result");
 	Data_Get_Struct (tmp, RbResult, res);
 
-	key = rb_obj_as_string (key);
+	ckey = rb_id2name (SYM2ID (key));
 
-	type = xmmsc_result_get_dict_entry_type (res->real,
-	                                         StringValuePtr (key));
+	type = xmmsc_result_get_dict_entry_type (res->real, ckey);
 
 	return (type == XMMSC_RESULT_VALUE_TYPE_NONE) ? Qfalse : Qtrue;
 }
@@ -547,6 +602,7 @@ void Init_Result (VALUE mXmms)
 	cPropDict = rb_define_class_under (mXmms, "PropDict", rb_cObject);
 
 	rb_define_method (cPropDict, "initialize", c_propdict_init, 1);
+	rb_define_method (cPropDict, "inspect", c_propdict_inspect, 0);
 
 	rb_define_method (cPropDict, "[]", c_propdict_aref, 1);
 	rb_define_method (cPropDict, "has_key?", c_propdict_has_key, 1);

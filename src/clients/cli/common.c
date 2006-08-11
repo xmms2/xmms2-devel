@@ -191,12 +191,12 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 		xmmsc_result_t *res;
 		gint mid = XPOINTER_TO_INT (n->data);
 
-		if (mid) {
-			res = xmmsc_medialib_get_info (conn, mid);
-			xmmsc_result_wait (res);
-		} else {
+		if (!mid) {
 			print_error ("Empty result!");
 		}
+
+		res = xmmsc_medialib_get_info (conn, mid);
+		xmmsc_result_wait (res);
 
 		if (xmmsc_result_get_dict_entry_str (res, "title", &title)) {
 			gchar *artist, *album;

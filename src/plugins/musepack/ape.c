@@ -108,6 +108,7 @@ xmms_apetag_read (xmms_apetag_t *tag)
 	return TRUE;
 }
 
+
 /**
  * Destroy and restore position so that MPC decoder
  * plays happily ever after.
@@ -329,11 +330,16 @@ xmms_apetag_cache_items (xmms_apetag_t *tag)
 				gint flags = get_int32 (buffer, pos);
 				pos += sizeof (gint32);
 
-				gint kind = (flags & 6) >> 1;
-
 				if (TAG_IS_TEXT(flags)) {
-					gchar *key = g_utf8_strdown (&buffer[pos], -1);
-					pos += g_utf8_strlen (key, -1) + 1;
+
+					gint tmp = strlen (&buffer[pos]) + 1;
+					if ((pos+tmp+size) > tag->size) { /* sanity check */
+						ret = FALSE;
+						break;
+					}
+
+					gchar *key = g_utf8_strdown (&buffer[pos], tmp);
+					pos += tmp;
 
 					gchar *value = g_strndup (&buffer[pos], size);
 					pos += size;
@@ -341,6 +347,18 @@ xmms_apetag_cache_items (xmms_apetag_t *tag)
 					XMMS_DBG ("tag[%s] = %s", key, value);
 
 					g_hash_table_insert (tag->hash, key, value);
+
+				} else { 
+					/* Some other kind of tag we don't care about */
+
+					gint tmp = strlen (&buffer[pos]) + 1;
+					if ((pos+tmp+size) > tag->size) { /* sanity check */
+						ret = FALSE;
+						break;
+					}
+
+					pos += tmp;
+					pos += size;
 				}
 			}
 		}
@@ -349,8 +367,3 @@ xmms_apetag_cache_items (xmms_apetag_t *tag)
 
 	return ret;
 }
-
-
-
-
-

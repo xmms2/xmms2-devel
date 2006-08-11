@@ -26,7 +26,7 @@
   * @defgroup Sample Sample Converter
   * @ingroup XMMSServer
   * @brief Convert sample formats back and forth.
-  * @{ 
+  * @{
   */
 
 /**
@@ -93,8 +93,8 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 	conv->resample = fsamplerate != tsamplerate;
 	
 	conv->func = xmms_sample_conv_get (fchannels, fformat,
-					   tchannels, tformat,
-					   conv->resample);
+	                                   tchannels, tformat,
+	                                   conv->resample);
 
 	if (conv->resample)
 		recalculate_resampler (conv, fsamplerate, tsamplerate);
@@ -314,8 +314,8 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 		b = t;
 	}
 
-	XMMS_DBG ("Resampling ratio: %d:%d", 
-		  from / a, to / a);
+	XMMS_DBG ("Resampling ratio: %d:%d",
+	          from / a, to / a);
 
 	conv->interpolator_ratio = to/a;
 	conv->decimator_ratio = from/a;

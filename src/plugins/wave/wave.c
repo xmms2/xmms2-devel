@@ -193,9 +193,11 @@ xmms_wave_init (xmms_xform_t *xform)
 		case WAVE_FORMAT_PCM:
 			xmms_wave_get_media_info (xform);
 
+			if (read < data->header_size) {
+				xmms_log_info ("Wave header too big?");
+				return FALSE;
+			}
 			/* skip over the header */
-			g_assert (read >= data->header_size);
-
 			xmms_xform_read (xform, (gchar *) buf, data->header_size, &error);
 
 			sample_fmt = (data->bits_per_sample == 8 ? XMMS_SAMPLE_FORMAT_U8
@@ -316,7 +318,10 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 	gint bytes_left = bytes_read;
 	xmms_wave_format_t ret = WAVE_FORMAT_UNDEFINED;
 
-	g_assert (bytes_left >= WAVE_HEADER_MIN_SIZE);
+	if (bytes_left < WAVE_HEADER_MIN_SIZE) {
+		xmms_log_error ("Not enough data for wave header");
+		return ret;
+	}
 
 	GET_STR (buf, stmp, 4);
 	if (strcmp (stmp, "RIFF")) {
@@ -340,14 +345,17 @@ read_wave_header (xmms_wave_data_t *data, guint8 *buf, gint bytes_read)
 	}
 
 	GET_32 (buf, tmp32); /* format chunk length */
-	XMMS_DBG ("format chunk length: %i\n", tmp32);
+	XMMS_DBG ("format chunk length: %i", tmp32);
 
 	GET_16 (buf, tmp16); /* format tag */
 	ret = tmp16;
 
 	switch (tmp16) {
 		case WAVE_FORMAT_PCM:
-			g_assert (tmp32 == 16);
+			if (tmp32 != 16) {
+				xmms_log_error ("Format chunk length not 16.");
+				return WAVE_FORMAT_UNDEFINED;
+			}
 
 			GET_16 (buf, data->channels);
 			XMMS_DBG ("channels %i", data->channels);

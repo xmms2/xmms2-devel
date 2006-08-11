@@ -169,20 +169,23 @@ read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint len)
 
 	to_read = MIN (len, xmms_ringbuf_bytes_used (ringbuf));
 
-	if (!g_queue_is_empty (ringbuf->hotspots)) {
+	while (!g_queue_is_empty (ringbuf->hotspots)) {
 		xmms_ringbuf_hotspot_t *hs = g_queue_peek_head (ringbuf->hotspots);
 		if (hs->pos != ringbuf->rd_index) {
 			/* make sure we don't cross a hotspot */
 			to_read = MIN (to_read,
 			               (hs->pos - ringbuf->rd_index + ringbuf->buffer_size)
 			               % ringbuf->buffer_size);
-		} else {
-			hs->callback (hs->arg);
-			(void) g_queue_pop_head (ringbuf->hotspots);
-			if (hs->destroy)
-				hs->destroy (hs->arg);
-			g_free (hs);
+			break;
 		}
+
+		hs->callback (hs->arg);
+		(void) g_queue_pop_head (ringbuf->hotspots);
+		if (hs->destroy)
+			hs->destroy (hs->arg);
+		g_free (hs);
+		/* we loop here, to see if there are multiple
+		   hotspots in same position */
 	}
 
 	tmp = ringbuf->rd_index;

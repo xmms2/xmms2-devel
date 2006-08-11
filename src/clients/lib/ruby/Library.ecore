@@ -38,6 +38,9 @@ def config(env):
 		env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 		env.Append(LIBS=["xmmsclient"])
 		env["SHLIBPREFIX"]=''
+		
+		if env.platform == 'darwin':
+			env["SHLIBSUFFIX"] = ".bundle"
 
 		# duplicated ecore check from xmmsclient-ecore.
 		# need to fix this the right way

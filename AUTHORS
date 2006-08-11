@@ -26,7 +26,7 @@ E: bjernstad@gmail.com
 D: PythonAPI fixes.
 
 N: Alexander Botero-Lowry
-E: drax@stampede.org
+E: alex@foxybanana.com
 D: *BSD support. Manpages. Various fixes.
 
 N: Sébastien Cevey
@@ -63,6 +63,10 @@ E: andersg@xmms.org
 P: 1024D/5D46D966 4186 4775 154B 9E4F 8CE7  A3F8 E165 5471 5D46 D966
 D: Stuff all over the place. Master bitch.
 
+N: Dries Harnie
+E: dries@harnie.be
+D: Status aware CLI
+
 N: Johannes Heimansberg
 E: wejpilot@gmail.com
 D: Fix remove command in cli.
@@ -70,6 +74,10 @@ D: Fix remove command in cli.
 N: Olle Hällnäs
 E: olle@xmms.org
 D: Better seeking in cli.
+
+N: Thomas Jollans
+E: thomas@jollans.com
+D: Python bindings improvements
 
 N: Daniel Kamiñski
 E: maniel.rulez@gmail.com

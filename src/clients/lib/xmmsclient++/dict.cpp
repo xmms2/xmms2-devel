@@ -41,6 +41,17 @@ namespace Xmms
 		xmmsc_result_unref( result_ );
 	}
 
+	bool Dict::contains( const std::string& key ) const
+	{
+		if( xmmsc_result_get_dict_entry_type( result_, key.c_str()) ==
+		    XMMSC_RESULT_VALUE_TYPE_NONE ) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+
 	Dict::Variant Dict::operator[]( const std::string& key ) const
 	{
 		Dict::Variant value;
@@ -48,7 +59,7 @@ namespace Xmms
 		{
 			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
 
-				unsigned int temp = 0;
+				uint32_t temp = 0;
 				if( !xmmsc_result_get_dict_entry_uint32( result_, 
 				                                         key.c_str(), 
 				                                         &temp ) ) {
@@ -60,7 +71,7 @@ namespace Xmms
 			}
 			case XMMSC_RESULT_VALUE_TYPE_INT32: {
 
-				int temp = 0;
+				int32_t temp = 0;
 				if( !xmmsc_result_get_dict_entry_int32( result_, 
 				                                        key.c_str(), 
 				                                        &temp ) ) {
@@ -103,13 +114,14 @@ namespace Xmms
 			
 			case XMMSC_RESULT_VALUE_TYPE_UINT32: {
 
-				val = reinterpret_cast< unsigned int >( value );
+				val = static_cast< uint32_t >(
+				          reinterpret_cast< unsigned long >( value ));
 				break;
 
 			}
 			case XMMSC_RESULT_VALUE_TYPE_INT32: {
 
-				val = reinterpret_cast< int >( value );
+				val = static_cast< int32_t >(reinterpret_cast< long >( value ));
 				break;
 
 			}
@@ -142,7 +154,7 @@ namespace Xmms
 
 	}
 
-	void Dict::foreach( const ForEachFunc& func ) const
+	void Dict::each( const ForEachFunc& func ) const
 	{
 
 		ForEachFunc* f = new ForEachFunc( func );
@@ -212,7 +224,7 @@ namespace Xmms
 
 	}
 
-	void PropDict::foreach( const PropDict::ForEachFunc& func ) const
+	void PropDict::each( const PropDict::ForEachFunc& func ) const
 	{
 
 		PropDict::ForEachFunc* f = new PropDict::ForEachFunc( func );

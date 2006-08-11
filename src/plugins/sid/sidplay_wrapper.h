@@ -25,6 +25,7 @@
 struct sidplay_wrapper;
 struct sidplay_wrapper *sidplay_wrapper_init(void);
 void sidplay_wrapper_destroy(struct sidplay_wrapper *wrap);
+const gchar *sidplay_wrapper_md5 (struct sidplay_wrapper *wrap);
 void sidplay_wrapper_set_subtune(struct sidplay_wrapper *wrap, gint subtune);
 gint sidplay_wrapper_subtunes(struct sidplay_wrapper *wrap);
 gint sidplay_wrapper_play(struct sidplay_wrapper *, void *, gint);
