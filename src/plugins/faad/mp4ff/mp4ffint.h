@@ -176,6 +176,7 @@ typedef struct
 {
     char *item;
     char *value;
+    uint32_t value_length;
 } mp4ff_tag_t;
 
 /* metadata list structure */
@@ -314,6 +315,7 @@ int32_t mp4ff_set_sample_position(mp4ff_t *f, const int32_t track, const int32_t
 
 #ifdef USE_TAGGING
 /* mp4meta.c */
+int32_t mp4ff_tag_add_field_len(mp4ff_metadata_t *tags, const char *item, const char *value, uint32_t valuelen);
 int32_t mp4ff_tag_add_field(mp4ff_metadata_t *tags, const char *item, const char *value);
 int32_t mp4ff_tag_set_field(mp4ff_metadata_t *tags, const char *item, const char *value);
 int32_t mp4ff_set_metadata_name(mp4ff_t *f, const uint8_t atom_type, char **name);

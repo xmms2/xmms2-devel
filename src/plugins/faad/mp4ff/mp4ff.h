@@ -111,6 +111,7 @@ typedef struct
 {
     char *item;
     char *value;
+    uint32_t value_length;
 } mp4ff_tag_t;
 
 /* metadata list structure */

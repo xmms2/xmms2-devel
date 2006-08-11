@@ -16,6 +16,7 @@
 
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
+#include "xmms/xmms_bindata.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 
@@ -491,13 +492,28 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 			gint tracknr;
 			gchar *end;
 
-			tracknr = strtol(metabuf, &end, 10);
+			tracknr = strtol (metabuf, &end, 10);
 			if (end && *end == '\0') {
 				xmms_xform_metadata_set_int (xform,
 				                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
 				                             tracknr);
 			}
 			g_free (metabuf);
+		}
+		if ((temp = mp4ff_meta_get_coverart (data->mp4ff, &metabuf))) {
+			GString *str;
+			gchar *hash;
+
+			str = g_string_new (NULL);
+			g_string_append_len (str, metabuf, temp);
+			hash = xmms_bindata_plugin_add (str);
+
+			if (hash) {
+				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
+				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, "image/jpeg");
+				g_free (hash);
+			}
+			g_string_free (str, FALSE);
 		}
 
 		/* MusicBrainz tag support */
