@@ -33,6 +33,7 @@
 #include "xmms/xmms_defs.h"
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 static char startup_msg[] = "\n--- Starting new xmms2d ---\n";
 
