@@ -32,6 +32,8 @@
 
 #include "xmms/xmms_defs.h"
 
+#include <glib.h>
+
 static char startup_msg[] = "\n--- Starting new xmms2d ---\n";
 
 int
@@ -40,6 +42,24 @@ main (int argc, char **argv)
 	pid_t pid;
 	int i, fd, max_fd;
 	int pipefd[2];
+	const gchar *logfile = "/tmp/xmms2.log";
+	const gchar *pidfile = NULL;
+	GError *error = NULL;
+	GOptionContext* context = NULL;
+	GOptionEntry opts[] = {
+		{"logfile", 'l', 0, G_OPTION_ARG_FILENAME, &logfile, "Redirect logs to <file>", "<file>"},
+		{"pidfile", 'P', 0, G_OPTION_ARG_FILENAME, &pidfile, "Save xmms2d pid in <file>", "<file>"},
+		{NULL}
+	};
+
+	context = g_option_context_new ("- XMMS2 launcher");
+	g_option_context_set_ignore_unknown_options (context, TRUE);
+	g_option_context_add_main_entries (context, opts, NULL);
+	if (!g_option_context_parse (context, &argc, &argv, &error)) {
+		g_print ("xmms2-launcher: %s\n", error->message);
+		g_clear_error (&error);
+	}
+	g_option_context_free (context);
 
 	if (pipe (&pipefd[0]) == -1) {
 		perror ("pipe");
@@ -71,7 +91,7 @@ main (int argc, char **argv)
 	fd = open ("/dev/null", O_RDONLY);
 	dup2 (fd, STDIN_FILENO);
 
-	fd = open ("/tmp/xmms2.log", O_WRONLY|O_CREAT|O_APPEND, 0644);
+	fd = open (logfile, O_WRONLY|O_CREAT|O_APPEND, 0644);
 	write(fd, startup_msg, sizeof (startup_msg) - 1);
 	dup2 (fd, STDOUT_FILENO);
 	dup2 (fd, STDERR_FILENO);
@@ -87,7 +107,15 @@ main (int argc, char **argv)
 	setsid ();
 
 	/* fork again to reparent to init */
-	if (!fork()) {
+    pid = fork();
+	if (pid && pidfile) {
+		FILE *pfile = NULL;
+		pfile = g_fopen (pidfile, "w");
+		if (pfile) {
+			g_fprintf (pfile, "%d", pid);
+		}
+	}
+	if (!pid) {
 		char *args[32];
 		char buf[32];
 		int i;
