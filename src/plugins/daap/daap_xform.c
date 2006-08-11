@@ -84,7 +84,7 @@ get_data_from_url(const gchar *url, gchar **host, gint *port, gchar **cmd)
 	host_begin += sizeof(gchar) * strlen("daap://");
 
 	cmd_begin = strstr(host_begin, "/");
-	g_return_val_if_fail(cmd_begin != NULL, FALSE);
+	//g_return_val_if_fail(cmd_begin != NULL, FALSE);
 
 	port_begin = strstr(host_begin, ":");
 	if ((NULL == port_begin) || (port_begin > cmd_begin)) {
@@ -93,7 +93,10 @@ get_data_from_url(const gchar *url, gchar **host, gint *port, gchar **cmd)
 		*port = atoi(port_begin + sizeof(gchar)*strlen(":"));
 	}
 
-	if (NULL == port_begin) {
+	if (NULL == cmd_begin && NULL == port_begin) {
+		host_len = (gint) (host_begin - (strstr(url, "daap://") +
+		                                 strlen("daap://")));
+	} else if (NULL == port_begin) {
 		host_len = (gint) (cmd_begin - host_begin);
 	} else {
 		host_len = (gint) (port_begin - host_begin);
@@ -307,35 +310,74 @@ static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
                                  xmms_error_t *error)
 {
 	gboolean ok;
-	GSList *server_list;
+	GSList *server_list, *sl;
 	GList *url_list = NULL;
 	gchar *host; 
 	guint port;
+	daap_mdns_server_t *mdns_serv;
+
+	daap_mdns_initialize();
+
+	g_return_val_if_fail(get_data_from_url(url, &host, &port, NULL), NULL);
+
+	mdns_serv = g_malloc0(sizeof(daap_mdns_server_t));
+
+	mdns_serv->address = g_strdup(host);
+	mdns_serv->port = port;
+
+	url_list = daap_get_urls_from_server(mdns_serv, url_list);
+
+	/* if url_list is empty, either the server has no songs (unlikely),
+	 * or communication with the server failed, probably due to a
+	 * nonexistant or bogus IP. at any rate, resort to mdns discovery
+	 * in this case; hostname resolution will be handled here. */
+	if (0 == g_list_length(url_list)) {
+		g_free(mdns_serv);
+
+		sl = daap_mdns_get_server_list();
 	
-	ok = get_data_from_url(url, &host, &port, NULL);
+		server_list = sl;
+		for ( ; server_list != NULL; server_list = g_slist_next(server_list)) {
+			gchar *str;
+			GHashTable *h = NULL;
+			mdns_serv = server_list->data;
+	
+			if (!strcmp(mdns_serv->mdns_hostname, host)) {
+				/* TODO free existing url_list */
+				url_list = daap_get_urls_from_server(mdns_serv, url_list);
+				break;
+			}
 
-	if (ok) {
-		daap_mdns_server_t *mdns_serv = g_malloc0(sizeof(daap_mdns_server_t));
-		server_list = NULL;
+			str = g_strconcat("daap://", mdns_serv->address, "/", NULL);
+	
+			h = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+	
+			g_hash_table_insert(h, "isdir",
+			           xmms_object_cmd_value_int_new(TRUE));
+			g_hash_table_insert(h, "servername",
+			           xmms_object_cmd_value_str_new(mdns_serv->server_name));
+			g_hash_table_insert(h, "ip",
+			           xmms_object_cmd_value_str_new(mdns_serv->address));
+			g_hash_table_insert(h, "hostname",
+			           xmms_object_cmd_value_str_new(mdns_serv->mdns_hostname));
+			g_hash_table_insert(h, "port",
+			           xmms_object_cmd_value_int_new(mdns_serv->port));
+			/* TODO implement the machinery to allow for this */
+			//g_hash_table_insert(h, "passworded",
+			//           xmms_object_cmd_value_int_new(mdns_serv->need_auth));
+			//g_hash_table_insert(h, "version",
+			//           xmms_object_cmd_value_str_new(mdns_serv->version));
+	
+			url_list = xmms_xform_browse_add_entry(url_list, str, FALSE, h);
+	
+			g_hash_table_destroy(h);
+			g_free(str);
 
-		mdns_serv->address = g_strdup(host);
-		mdns_serv->port = port;
-
-		server_list = g_slist_prepend(server_list, mdns_serv);
-
-		g_free(host);
-	} else {
-		daap_mdns_initialize();
-		server_list = daap_mdns_get_server_list();
+		/* TODO free sl */
+		}
 	}
 
-	//g_slist_foreach(server_list, (GFunc) daap_get_urls_from_server, url_list);
-	for ( ; server_list != NULL; server_list = g_slist_next(server_list)) {
-		url_list = daap_get_urls_from_server(server_list->data, url_list);
-	}
-
-	/* TODO free server_list */
-
+	g_free(host);
 	return url_list;
 }
 
