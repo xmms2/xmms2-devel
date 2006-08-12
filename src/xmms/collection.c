@@ -54,6 +54,7 @@ typedef struct {
 typedef struct {
 	GHashTable *aliases;
 	guint alias_count;
+	gchar *alias_base;
 	GString *conditions;
 	coll_query_params_t *params;
 } coll_query_t;
@@ -1836,11 +1837,21 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 
 	/* Insert in the hashtable */
 	if (alias == NULL) {
+		gchar *fieldkey = g_strdup (field);
+
 		alias = g_new (coll_query_alias_t, 1);
-		alias->id = query->alias_count;
 		alias->optional = optional;
-		g_hash_table_insert (query->aliases, g_strdup (field), alias);
-		query->alias_count++;
+
+		if (query->alias_base == NULL && !optional) {  /* Found a base */
+			alias->id = 0;
+			query->alias_base = fieldkey;
+		}
+		else {
+			alias->id = query->alias_count;
+			query->alias_count++;
+		}
+
+		g_hash_table_insert (query->aliases, fieldkey, alias);
 	}
 	/* If was not optional but now is, update */
 	else if (!alias->optional && optional) {
@@ -1848,30 +1859,6 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 	}
 
 	return alias->id;
-}
-
-/* Initialize a query structure */
-static coll_query_t*
-init_query (coll_query_params_t *params)
-{
-	coll_query_t *query;
-
-	query = g_new (coll_query_t, 1);
-	if(query == NULL) {
-		return NULL;
-	}
-
-	query->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                        g_free, g_free);
-
-	query->alias_count = 0;
-	query->conditions = g_string_new (NULL);
-	query->params = params;
-
-	/* Select the 'url' property as base */
-	query_make_alias (query, "url", FALSE);
-
-	return query;
 }
 
 /* Find the canonical name of a field (strip flags, if any) */
@@ -1884,6 +1871,43 @@ canonical_field_name (gchar *field) {
 		field = NULL;
 	}
 	return field;
+}
+
+/* Initialize a query structure */
+static coll_query_t*
+init_query (coll_query_params_t *params)
+{
+	GList *n;
+	coll_query_t *query;
+
+	query = g_new (coll_query_t, 1);
+	if(query == NULL) {
+		return NULL;
+	}
+
+	query->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                        g_free, g_free);
+
+	query->alias_count = 1;
+	query->alias_base = NULL;
+	query->conditions = g_string_new (NULL);
+	query->params = params;
+
+	/* Prepare aliases for the order/group fields */
+	for (n = query->params->order; n; n = n->next) {
+		gchar *field = canonical_field_name (n->data);
+		if (field != NULL) {
+			query_make_alias (query, field, TRUE);
+		}
+	}
+	for (n = query->params->group; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);
+	}
+	for (n = query->params->fetch; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);
+	}
+
+	return query;
 }
 
 /* Copied from xmmsc_sqlite_prepare_string */
@@ -2215,21 +2239,11 @@ query_string_append_fetch (coll_query_t *query, GString *qstring)
 static GString*
 xmms_collection_gen_query (coll_query_t *query)
 {
-	GList *n;
 	GString *qstring;
 
-	/* Prepare aliases for the order/group fields */
-	for (n = query->params->order; n; n = n->next) {
-		gchar *field = canonical_field_name (n->data);
-		if (field != NULL) {
-			query_make_alias (query, field, TRUE);
-		}
-	}
-	for (n = query->params->group; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
-	}
-	for (n = query->params->fetch; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
+	/* If no alias base yet (m0), select the 'url' property as base */
+	if (query->alias_base == NULL) {
+		query_make_alias (query, "url", FALSE);
 	}
 
 	/* Append select and joins */
@@ -2239,7 +2253,7 @@ xmms_collection_gen_query (coll_query_t *query)
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
 
 	/* Append conditions */
-	g_string_append (qstring, " WHERE m0.key='url'");
+	g_string_append_printf (qstring, " WHERE m0.key='%s'", query->alias_base);
 	if (query->conditions->len > 0) {
 		g_string_append_printf (qstring, " AND %s", query->conditions->str);
 	}
