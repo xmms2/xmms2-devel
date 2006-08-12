@@ -535,6 +535,15 @@ cdef python_need_out_fun(int i, obj):
 cdef python_disconnect_fun(obj):
 	obj._disconnect_cb()
 
+def userconfdir_get():
+	"""
+	Get the user configuration directory, where XMMS2 stores its
+	user-specific configuration files. Clients may store their
+	configuration under the 'clients' subdirectory. This varies from
+	platform to platform so should always be retreived at runtime.
+	"""
+	return xmmsc_userconfdir_get()
+
 cdef class XMMS:
 	"""
 	This is the class representing the XMMS2 client itself. The methods in
@@ -651,15 +660,6 @@ cdef class XMMS:
 		@return: IPC file descriptor
 		"""
 		return xmmsc_io_fd_get(self.conn)
-
-	def userconfdir_get(self):
-		"""
-		Get the user configuration directory, where XMMS2 stores its
-		user-specific configuration files. Clients may store their 
-		configuration under the 'clients' subdirectory. This varies from 
-		platform to platform so should always be retreived at runtime.
-		"""
-		return xmmsc_userconfdir_get()
 
 	def connect(self, path = None, disconnect_func = None):
 		"""
