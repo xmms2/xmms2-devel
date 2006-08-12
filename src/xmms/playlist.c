@@ -56,8 +56,8 @@ static gboolean xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plnam
 static gboolean xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname, guint32 pos, xmmsc_coll_t *coll, GList *order, xmms_error_t *error);
 
 static void xmms_playlist_load (xmms_playlist_t *, gchar *, xmms_error_t *);
-static void xmms_playlist_import (xmms_playlist_t *medialib, gchar *playlistname, gchar *url, xmms_error_t *error);
-static gchar *xmms_playlist_export (xmms_playlist_t *medialib, gchar *playlistname, gchar *mime, xmms_error_t *error);
+static void xmms_playlist_import (xmms_playlist_t *playlist, gchar *playlistname, gchar *url, xmms_error_t *error);
+static gchar *xmms_playlist_export (xmms_playlist_t *playlist, gchar *playlistname, gchar *mime, xmms_error_t *error);
 
 static xmmsc_coll_t * xmms_playlist_get_coll (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *error);
 static void xmms_playlist_coll_set_int_attr (xmmsc_coll_t *plcoll, gchar *attrname, gint newval);
