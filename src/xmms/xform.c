@@ -488,6 +488,11 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 
 		res = xform->plugin->methods.read (xform, &xform->buffer[xform->buffered], READ_CHUNK, err);
 
+		if (res < -1) {
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			res = -1;
+		}
+
 		if (res == 0) {
 			xform->eos = TRUE;
 			break;
@@ -536,6 +541,11 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		res = xform->plugin->methods.read (xform, buf + read, siz - read, err);
 		if (xform->metadata_changed)
 			xmms_xform_metadata_update (xform);
+
+		if (res < -1) {
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			res = -1;
+		}
 
 		if (res == 0) {
 			xform->eos = TRUE;
