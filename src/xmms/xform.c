@@ -515,10 +515,6 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		return -1;
 	}
 
-	if (xform->eos) {
-		return 0;
-	}
-
 	if (xform->buffered) {
 		read = MIN (siz, xform->buffered);
 		memcpy (buf, xform->buffer, read);
@@ -528,6 +524,10 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 			   this should be fine */
 			memmove (xform->buffer, &xform->buffer[read], xform->buffered);
 		}
+	}
+
+	if (xform->eos) {
+		return read;
 	}
 
 	while (read < siz) {
@@ -730,7 +730,9 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hi
 gboolean
 xmms_xform_iseos (xmms_xform_t *xform)
 {
-	return xform->eos;
+	if (!xform->prev)
+		return TRUE;
+	return xform->prev->eos;
 }
 
 const xmms_stream_type_t *
