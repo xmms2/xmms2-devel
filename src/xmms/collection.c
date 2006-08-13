@@ -28,7 +28,6 @@
 
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_playlist.h"
-#include "xmmspriv/xmms_medialib.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
@@ -89,6 +88,12 @@ typedef struct {
 	xmmsc_coll_t *value;
 } coll_table_pair_t;
 
+typedef enum {
+	XMMS_COLLECTION_FIND_STATE_UNCHECKED,
+	XMMS_COLLECTION_FIND_STATE_MATCH,
+	XMMS_COLLECTION_FIND_STATE_NOMATCH,
+} coll_find_state_t;
+
 
 /* Functions */
 
@@ -120,17 +125,26 @@ static void check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc
 
 static void coll_unref (void *coll);
 
+static GHashTable *xmms_collection_media_info (xmms_coll_dag_t *dag, guint mid, xmms_error_t *err);
+
 static gchar * filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo);
 static gint filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo);
 static gchar * filter_get_operator_value_string (xmmsc_coll_t *coll);
 static gint filter_get_operator_value_int (xmmsc_coll_t *coll);
 static gboolean filter_get_operator_case (xmmsc_coll_t *coll);
 
-static gboolean xmms_collection_media_filter_has (xmmsc_coll_t *coll, GHashTable *mediainfo);
-static gboolean xmms_collection_media_filter_match (xmmsc_coll_t *coll, GHashTable *mediainfo);
-static gboolean xmms_collection_media_filter_contains (xmmsc_coll_t *coll, GHashTable *mediainfo);
-static gboolean xmms_collection_media_filter_smaller (xmmsc_coll_t *coll, GHashTable *mediainfo);
-static gboolean xmms_collection_media_filter_greater (xmmsc_coll_t *coll, GHashTable *mediainfo);
+static void build_match_table (gpointer key, gpointer value, gpointer udata);
+static gboolean find_unchecked (gpointer name, gpointer value, gpointer udata);
+static void build_list_matches (gpointer key, gpointer value, gpointer udata);
+
+static gboolean xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table, gchar *refname, gchar *refns);
+static gboolean xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static gboolean xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 
 
 static void query_append_uint (coll_query_t *query, guint i);
@@ -334,7 +348,8 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 {
 	xmmsc_coll_t *existing;
 	guint nsid;
-	gchar *newkey;
+	gchar *alias;
+	gchar *newkey = NULL;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_save");
 
@@ -369,9 +384,9 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 
 	/* Update existing collection in the table */
 	if (existing != NULL) {
-		while ((newkey = xmms_collection_find_alias (dag, nsid,
-		                                             existing, NULL)) != NULL) {
-			newkey = g_strdup (newkey);
+		while ((alias = xmms_collection_find_alias (dag, nsid,
+		                                            existing, NULL)) != NULL) {
+			newkey = g_strdup (alias);
 
 			/* update all pairs pointing to the old coll */
 			g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
@@ -384,8 +399,8 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 	}
 	/* Save new collection in the table */
 	else {
-		newkey = name;
-		g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), coll);
+		newkey = g_strdup (name);
+		g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
 		xmmsc_coll_ref (coll);
 
 		XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_ADD,
@@ -486,226 +501,6 @@ xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
 }   
 
 
-typedef enum {
-	XMMS_COLLECTION_FIND_STATE_UNCHECKED,
-	XMMS_COLLECTION_FIND_STATE_MATCH,
-	XMMS_COLLECTION_FIND_STATE_NOMATCH,
-} coll_find_state_t;
-
-
-static void
-build_match_table (gpointer key, gpointer value, gpointer udata)
-{
-	GHashTable *match_table = udata;
-	coll_find_state_t *match = g_new (coll_find_state_t, 1);
-	*match = XMMS_COLLECTION_FIND_STATE_UNCHECKED;
-	g_hash_table_replace (match_table, g_strdup (key), &match);
-}
-
-static gboolean
-find_unchecked (gpointer name, gpointer value, gpointer udata)
-{
-	coll_find_state_t *match = value;
-	gchar **open = udata;
-	*open = name;
-	return (*match == XMMS_COLLECTION_FIND_STATE_UNCHECKED);
-}
-
-static void
-build_list_matches (gpointer key, gpointer value, gpointer udata)
-{
-	gchar *coll_name = key;
-	coll_find_state_t *state = value;
-	GList **list = udata;
-	if (*state == XMMS_COLLECTION_FIND_STATE_MATCH) {
-		*list = g_list_prepend (*list, g_strdup (coll_name));
-	}
-}
-
-
-
-static gboolean
-xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
-                             xmmsc_coll_t *coll, guint nsid,
-                             GHashTable *match_table);
-
-static gboolean
-xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo,
-                                     xmmsc_coll_t *coll, guint nsid,
-                                     GHashTable *match_table)
-{
-	xmmsc_coll_t *op;
-	gboolean match = FALSE;
-
-	xmmsc_coll_operand_list_save (coll);
-	xmmsc_coll_operand_list_first (coll);
-	if (xmmsc_coll_operand_list_entry (coll, &op)) {
-		match = xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
-	}
-	xmmsc_coll_operand_list_restore (coll);
-
-	return match;
-}
-
-static gboolean
-xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
-                             xmmsc_coll_t *coll, guint nsid,
-                             GHashTable *match_table)
-{
-	gboolean match = FALSE;
-	xmmsc_coll_t *op;
-	gchar *attr1 = NULL, *attr2 = NULL;
-	xmms_object_cmd_value_t *cmdval;
-	guint32 *idlist;
-	gint i;
-	gint id;
-
-	switch (xmmsc_coll_get_type (coll)) {
-	case XMMS_COLLECTION_TYPE_REFERENCE:
-		/* FIXME: ??? */
-		if (xmmsc_coll_attribute_get (coll, "reference", &attr1)) {
-			if (strcmp (attr1, "All Media") == 0) {
-				match = TRUE;
-			}
-			else if (xmmsc_coll_attribute_get (coll, "namespace", &attr2)) {
-				coll_find_state_t *matchstate;
-				guint refns = xmms_collection_get_namespace_id (attr2);
-				if (refns == nsid) {
-					matchstate = g_hash_table_lookup (match_table, attr1);
-					if (matchstate == XMMS_COLLECTION_FIND_STATE_UNCHECKED) {
-						/* Check collection match status and save it */
-						matchstate = g_new (coll_find_state_t, 1);
-						match = xmms_collection_media_match_operand (dag,
-						                                             mediainfo,
-						                                             coll, nsid,
-						                                             match_table);
-
-						if (match) {
-							*matchstate = XMMS_COLLECTION_FIND_STATE_MATCH;
-						}
-						else {
-							*matchstate = XMMS_COLLECTION_FIND_STATE_NOMATCH;
-						}
-						
-						g_hash_table_replace (match_table, g_strdup (attr1), matchstate);
-					}
-					else {
-						match = (*matchstate == XMMS_COLLECTION_FIND_STATE_MATCH);
-					}
-				}
-				else {
-					match = xmms_collection_media_match_operand (dag, mediainfo,
-					                                             coll, nsid,
-					                                             match_table);
-				}
-
-			}
-		}
-		break;
-
-	case XMMS_COLLECTION_TYPE_UNION:
-		/* if ANY matches */
-		xmmsc_coll_operand_list_save (coll);
-		xmmsc_coll_operand_list_first (coll);
-		while (!match && xmmsc_coll_operand_list_entry (coll, &op)) {
-			match = xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
-			xmmsc_coll_operand_list_next (coll);
-		}
-		xmmsc_coll_operand_list_restore (coll);
-		break;
-
-	case XMMS_COLLECTION_TYPE_INTERSECTION:
-		/* if ALL match */
-		xmmsc_coll_operand_list_save (coll);
-		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
-			match = match && xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
-			xmmsc_coll_operand_list_next (coll);
-		}
-		xmmsc_coll_operand_list_restore (coll);
-		break;
-
-	case XMMS_COLLECTION_TYPE_COMPLEMENT:
-		/* invert result from operand */
-		match = !xmms_collection_media_match_operand (dag, mediainfo, coll,
-                                                      nsid, match_table);
-		break;
-
-	case XMMS_COLLECTION_TYPE_HAS:
-		match = xmms_collection_media_filter_has (coll, mediainfo);
-		break;
-
-	case XMMS_COLLECTION_TYPE_MATCH:
-		match = xmms_collection_media_filter_match (coll, mediainfo);
-		break;
-
-	case XMMS_COLLECTION_TYPE_CONTAINS:
-		match = xmms_collection_media_filter_contains (coll, mediainfo);
-		break;
-
-	case XMMS_COLLECTION_TYPE_SMALLER:
-		match = xmms_collection_media_filter_smaller (coll, mediainfo);
-		break;
-
-	case XMMS_COLLECTION_TYPE_GREATER:
-		match = xmms_collection_media_filter_greater (coll, mediainfo);
-		break;
-
-	case XMMS_COLLECTION_TYPE_IDLIST:
-	case XMMS_COLLECTION_TYPE_QUEUE:
-	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		/* check if id in idlist */
-		cmdval = g_hash_table_lookup (mediainfo, "id");
-		if (cmdval != NULL) {
-			id = cmdval->value.int32;
-			idlist = xmmsc_coll_get_idlist (coll);
-			for (i = 0; idlist[i] != 0; i++) {
-				/* stop if mid in the list */
-				if (idlist[i] == id) {
-					match = TRUE;
-					break;
-				}
-			}
-		}
-		break;
-
-	/* invalid type */
-	default:
-		XMMS_DBG("invalid collection operator in xmms_collection_media_match");
-		g_assert_not_reached ();
-		break;
-	}
-	
-	return match;
-}
-
-static GHashTable *
-xmms_collection_media_info (xmms_coll_dag_t *dag, guint mid, xmms_error_t *err)
-{
-	GList *res;
-	GHashTable *infos = NULL;
-	xmmsc_coll_t *mediacoll;
-	guint32 idlist[] = { mid, 0 };
-
-	mediacoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
-	xmmsc_coll_set_idlist (mediacoll, idlist);
-
-	/* FIXME: How to fetch ALL fields ? Or we need to know the list of fields needed! */
-	res = xmms_collection_query_infos (dag, mediacoll, 0, 1, NULL, NULL /*???*/, NULL, err);
-
-	xmmsc_coll_unref (mediacoll);
-
-	if (res != NULL) {
-		xmms_object_cmd_value_t *cmdval = res->data;
-		infos = cmdval->value.dict;
-		/* FIXME: free cell? */
-		g_list_free (res);
-	}
-
-	return infos;
-}
-
-
 GList *
 xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_error_t *err)
 {
@@ -729,7 +524,7 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
 
 	/* Prepare the match table of all collections for the given namespace */
 	match_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-	xmms_collection_foreach_in_namespace (dag, nsid, build_match_table, &match_table);
+	xmms_collection_foreach_in_namespace (dag, nsid, build_match_table, match_table);
 
 	/* Get all infos for the given mid */
 	mediainfo = xmms_collection_media_info (dag, mid, err);
@@ -1658,6 +1453,258 @@ coll_unref (void *coll)
 }
 
 
+
+
+/* ============  FIND / COLLECTION MATCH FUNCTIONS ============ */
+
+static void
+build_match_table (gpointer key, gpointer value, gpointer udata)
+{
+	GHashTable *match_table = udata;
+	coll_find_state_t *match = g_new (coll_find_state_t, 1);
+	*match = XMMS_COLLECTION_FIND_STATE_UNCHECKED;
+	g_hash_table_replace (match_table, g_strdup (key), match);
+}
+
+static gboolean
+find_unchecked (gpointer name, gpointer value, gpointer udata)
+{
+	coll_find_state_t *match = value;
+	gchar **open = udata;
+	*open = name;
+	return (*match == XMMS_COLLECTION_FIND_STATE_UNCHECKED);
+}
+
+static void
+build_list_matches (gpointer key, gpointer value, gpointer udata)
+{
+	gchar *coll_name = key;
+	coll_find_state_t *state = value;
+	GList **list = udata;
+	if (*state == XMMS_COLLECTION_FIND_STATE_MATCH) {
+		*list = g_list_prepend (*list, xmms_object_cmd_value_str_new (coll_name));
+	}
+}
+
+
+static gboolean
+xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                             xmmsc_coll_t *coll, guint nsid,
+                             GHashTable *match_table)
+{
+	gboolean match = FALSE;
+	xmmsc_coll_t *op;
+	gchar *attr1 = NULL, *attr2 = NULL;
+	xmms_object_cmd_value_t *cmdval;
+	guint32 *idlist;
+	gint i;
+	gint id;
+
+	switch (xmmsc_coll_get_type (coll)) {
+	case XMMS_COLLECTION_TYPE_REFERENCE:
+		/* FIXME: Check, clean */
+		if (xmmsc_coll_attribute_get (coll, "reference", &attr1)) {
+			if (strcmp (attr1, "All Media") == 0) {
+				match = TRUE;
+			}
+			else if (xmmsc_coll_attribute_get (coll, "namespace", &attr2)) {
+				match = xmms_collection_media_match_reference (dag, mediainfo,
+				                                               coll, nsid,
+				                                               match_table,
+				                                               attr1, attr2);
+			}
+		}
+		break;
+
+	case XMMS_COLLECTION_TYPE_UNION:
+		/* if ANY matches */
+		xmmsc_coll_operand_list_save (coll);
+		xmmsc_coll_operand_list_first (coll);
+		while (!match && xmmsc_coll_operand_list_entry (coll, &op)) {
+			match = xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
+			xmmsc_coll_operand_list_next (coll);
+		}
+		xmmsc_coll_operand_list_restore (coll);
+		break;
+
+	case XMMS_COLLECTION_TYPE_INTERSECTION:
+		/* if ALL match */
+		xmmsc_coll_operand_list_save (coll);
+		xmmsc_coll_operand_list_first (coll);
+		while (xmmsc_coll_operand_list_entry (coll, &op)) {
+			match = match && xmms_collection_media_match (dag, mediainfo, op,
+			                                              nsid, match_table);
+			xmmsc_coll_operand_list_next (coll);
+		}
+		xmmsc_coll_operand_list_restore (coll);
+		break;
+
+	case XMMS_COLLECTION_TYPE_COMPLEMENT:
+		/* invert result from operand */
+		match = !xmms_collection_media_match_operand (dag, mediainfo, coll,
+                                                      nsid, match_table);
+		break;
+
+	case XMMS_COLLECTION_TYPE_HAS:
+		match = xmms_collection_media_filter_has (dag, mediainfo, coll,
+		                                          nsid, match_table);
+		break;
+
+	case XMMS_COLLECTION_TYPE_MATCH:
+		match = xmms_collection_media_filter_match (dag, mediainfo, coll,
+		                                            nsid, match_table);
+		break;
+
+	case XMMS_COLLECTION_TYPE_CONTAINS:
+		match = xmms_collection_media_filter_contains (dag, mediainfo, coll,
+		                                               nsid, match_table);
+		break;
+
+	case XMMS_COLLECTION_TYPE_SMALLER:
+		match = xmms_collection_media_filter_smaller (dag, mediainfo, coll,
+		                                              nsid, match_table);
+		break;
+
+	case XMMS_COLLECTION_TYPE_GREATER:
+		match = xmms_collection_media_filter_greater (dag, mediainfo, coll,
+		                                              nsid, match_table);
+		break;
+
+	case XMMS_COLLECTION_TYPE_IDLIST:
+	case XMMS_COLLECTION_TYPE_QUEUE:
+	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+		/* check if id in idlist */
+		cmdval = g_hash_table_lookup (mediainfo, "id");
+		if (cmdval != NULL) {
+			id = cmdval->value.int32;
+			idlist = xmmsc_coll_get_idlist (coll);
+			for (i = 0; idlist[i] != 0; i++) {
+				/* stop if mid in the list */
+				if (idlist[i] == id) {
+					match = TRUE;
+					break;
+				}
+			}
+		}
+		break;
+
+	/* invalid type */
+	default:
+		XMMS_DBG("invalid collection operator in xmms_collection_media_match");
+		g_assert_not_reached ();
+		break;
+	}
+	
+	return match;
+}
+
+static gboolean
+xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                       xmmsc_coll_t *coll, guint nsid,
+                                       GHashTable *match_table,
+                                       gchar *refname, gchar *refns)
+{
+	gboolean match;
+	guint refnsid;
+	coll_find_state_t *matchstate;
+
+	/* Same NS, should be in the match table */
+	refnsid = xmms_collection_get_namespace_id (refns);
+	if (refnsid == nsid) {
+		matchstate = g_hash_table_lookup (match_table, refname);
+		if (matchstate == XMMS_COLLECTION_FIND_STATE_UNCHECKED) {
+			/* Check ref'd collection match status and save it */
+			matchstate = g_new (coll_find_state_t, 1);
+			match = xmms_collection_media_match_operand (dag,
+			                                             mediainfo,
+			                                             coll, nsid,
+			                                             match_table);
+
+			if (match) {
+				*matchstate = XMMS_COLLECTION_FIND_STATE_MATCH;
+			}
+			else {
+				*matchstate = XMMS_COLLECTION_FIND_STATE_NOMATCH;
+			}
+						
+			g_hash_table_replace (match_table, g_strdup (refname), matchstate);
+		}
+		else {
+			match = (*matchstate == XMMS_COLLECTION_FIND_STATE_MATCH);
+		}
+	}
+	/* In another NS, just check if it matches */
+	else {
+		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+		                                             nsid, match_table);
+	}
+
+	return match;
+}
+
+static gboolean
+xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                     xmmsc_coll_t *coll, guint nsid,
+                                     GHashTable *match_table)
+{
+	xmmsc_coll_t *op;
+	gboolean match = FALSE;
+
+	xmmsc_coll_operand_list_save (coll);
+	xmmsc_coll_operand_list_first (coll);
+	if (xmmsc_coll_operand_list_entry (coll, &op)) {
+		match = xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
+	}
+	xmmsc_coll_operand_list_restore (coll);
+
+	return match;
+}
+
+static GHashTable *
+xmms_collection_media_info (xmms_coll_dag_t *dag, guint mid, xmms_error_t *err)
+{
+	GList *res;
+	GList *n;
+	GHashTable *infos;
+	gchar *name;
+	xmms_object_cmd_value_t *cmdval;
+	xmms_object_cmd_value_t *value;
+	guint state;
+
+	res = xmms_medialib_info (NULL, mid, err);
+
+	/* Transform the list into a HashMap */
+	infos = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                               g_free, xmms_object_cmd_value_free);
+	for (state = 0, n = res; n; state = (state + 1) % 3, n = n->next) {
+		switch (state) {
+		case 0:  /* source */
+			break;
+
+		case 1:  /* prop name */
+			cmdval = n->data;
+			name = g_strdup (cmdval->value.string);
+			break;
+
+		case 2:  /* prop value */
+			value = xmms_object_cmd_value_copy (n->data);
+		
+			/* Only insert the first source */
+			if (g_hash_table_lookup (infos, name) == NULL) {
+				g_hash_table_replace (infos, name, value);
+			}
+			break;
+		}
+
+		xmms_object_cmd_value_free (n->data);
+	}
+
+	g_list_free (res);
+
+	return infos;
+}
+
+
 static gchar *
 filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo)
 {
@@ -1720,15 +1767,27 @@ filter_get_operator_case (xmmsc_coll_t *coll)
 }
 
 static gboolean
-xmms_collection_media_filter_has (xmmsc_coll_t *coll, GHashTable *mediainfo)
+xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                  xmmsc_coll_t *coll, guint nsid,
+                                  GHashTable *match_table)
 {
+	gboolean match = FALSE;
 	gchar *mediaval;
 	mediaval = filter_get_mediainfo_field_string (coll, mediainfo);
-	return (mediaval != NULL);
+
+	/* If operator matches, recurse upwards in the operand */
+	if (mediaval != NULL) {
+		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+		                                             nsid, match_table);
+	}
+
+	return match;
 }
 
 static gboolean
-xmms_collection_media_filter_match (xmmsc_coll_t *coll, GHashTable *mediainfo)
+xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                    xmmsc_coll_t *coll, guint nsid,
+                                    GHashTable *match_table)
 {
 	gboolean match = FALSE;
 	gchar *mediaval;
@@ -1748,11 +1807,19 @@ xmms_collection_media_filter_match (xmmsc_coll_t *coll, GHashTable *mediainfo)
 		}
 	}
 
+	/* If operator matches, recurse upwards in the operand */
+	if (match) {
+		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+		                                             nsid, match_table);
+	}
+
 	return match;
 }
 
 static gboolean
-xmms_collection_media_filter_contains (xmmsc_coll_t *coll, GHashTable *mediainfo)
+xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                       xmmsc_coll_t *coll, guint nsid,
+                                       GHashTable *match_table)
 {
 	gboolean match;
 	gchar *mediaval;
@@ -1782,36 +1849,62 @@ xmms_collection_media_filter_contains (xmmsc_coll_t *coll, GHashTable *mediainfo
 		}
 	}
 
-	match = g_pattern_match_simple (mediaval, opval);
+	match = g_pattern_match_simple (opval, mediaval);
 
 	if (case_sens) {
 		g_free (opval);
 	}
 	g_free (mediaval);
 
+	/* If operator matches, recurse upwards in the operand */
+	if (match) {
+		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+		                                             nsid, match_table);
+	}
+
 	return match;
 }
 
 static gboolean
-xmms_collection_media_filter_smaller (xmmsc_coll_t *coll, GHashTable *mediainfo)
+xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                      xmmsc_coll_t *coll, guint nsid,
+                                      GHashTable *match_table)
 {
+	gboolean match = FALSE;
 	gint mediaval;
 	gint opval;
 
 	mediaval = filter_get_mediainfo_field_int (coll, mediainfo);
 	opval = filter_get_operator_value_int (coll);
-	return (mediaval < opval); /* FIXME: error, missing value ? */
+
+	/* If operator matches, recurse upwards in the operand */
+	if (mediaval < opval) { /* FIXME: error, missing value ? */
+		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+		                                             nsid, match_table);
+	}
+
+	return match;
 }
 
 static gboolean
-xmms_collection_media_filter_greater (xmmsc_coll_t *coll, GHashTable *mediainfo)
+xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo,
+                                      xmmsc_coll_t *coll, guint nsid,
+                                      GHashTable *match_table)
 {
+	gboolean match = FALSE;
 	gint mediaval;
 	gint opval;
 
 	mediaval = filter_get_mediainfo_field_int (coll, mediainfo);
 	opval = filter_get_operator_value_int (coll);
-	return (mediaval > opval); /* FIXME: error, missing value ? */
+
+	/* If operator matches, recurse upwards in the operand */
+	if (mediaval > opval) { /* FIXME: error, missing value ? */
+		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+		                                             nsid, match_table);
+	}
+
+	return match;
 }
 
 
