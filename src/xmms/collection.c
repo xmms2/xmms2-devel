@@ -2071,17 +2071,31 @@ static void
 query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
 {
 	xmmsc_coll_t *op;
+	gchar *target_name;
+	gchar *target_ns;
+	guint  target_nsid;
 
 	xmmsc_coll_operand_list_save (coll);
 	xmmsc_coll_operand_list_first (coll);
-	if (xmmsc_coll_operand_list_entry (coll, &op)) {
-		xmms_collection_append_to_query (dag, op, query);
-	}
-	else {
-		/* FIXME: Hackish to accomodate the absence of operand (i.e. All Media refs)  */
-		query_append_string (query, "1");
+	if (!xmmsc_coll_operand_list_entry (coll, &op)) {
+		/* Ref'd coll not saved as operand, look for it */
+		if (xmmsc_coll_attribute_get (coll, "reference", &target_name) &&
+			xmmsc_coll_attribute_get (coll, "namespace", &target_ns)) {
+
+			target_nsid = xmms_collection_get_namespace_id (target_ns);
+			op = xmms_collection_get_pointer (dag, target_name, target_nsid);
+		}
 	}
 	xmmsc_coll_operand_list_restore (coll);
+
+	/* Append reference operator */
+	if (op != NULL) {
+		xmms_collection_append_to_query (dag, op, query);
+	}
+	/* Cannot find reference, append dummy TRUE */
+	else {
+		query_append_string (query, "1");
+	}
 }
 
 static void
@@ -2182,7 +2196,13 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
 	switch (type) {
 	case XMMS_COLLECTION_TYPE_REFERENCE:
-		query_append_operand (query, dag, coll);
+		if (!operator_is_allmedia (coll)) {
+			query_append_operand (query, dag, coll);
+		}
+		else {
+			/* FIXME: Hackish solution to append a ref to All Media */
+			query_append_string (query, "1");
+		}
 		break;
 
 	case XMMS_COLLECTION_TYPE_UNION:
