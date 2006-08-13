@@ -1311,7 +1311,6 @@ bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *par
 		}
 
 		xmmsc_coll_add_operand (coll, target);
-		xmmsc_coll_ref (target);
 	}
 }
 
@@ -1344,7 +1343,6 @@ rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *paren
 		xmmsc_coll_unref (infos->oldtarget);
 
 		xmmsc_coll_add_operand (coll, infos->newtarget);
-		xmmsc_coll_ref (infos->newtarget);
 	}
 }
 
@@ -1405,7 +1403,6 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 			xmmsc_coll_unref (coll);
 
 			xmmsc_coll_add_operand (parent, infos->oldtarget);
-			xmmsc_coll_ref (infos->oldtarget);
 		}
 	}
 }
