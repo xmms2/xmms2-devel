@@ -1521,7 +1521,8 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		xmmsc_coll_operand_list_save (coll);
 		xmmsc_coll_operand_list_first (coll);
 		while (!match && xmmsc_coll_operand_list_entry (coll, &op)) {
-			match = xmms_collection_media_match (dag, mediainfo, op, nsid, match_table);
+			match = xmms_collection_media_match (dag, mediainfo, op,
+			                                     nsid, match_table);
 			xmmsc_coll_operand_list_next (coll);
 		}
 		xmmsc_coll_operand_list_restore (coll);
@@ -1529,11 +1530,12 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 
 	case XMMS_COLLECTION_TYPE_INTERSECTION:
 		/* if ALL match */
+		match = TRUE;
 		xmmsc_coll_operand_list_save (coll);
 		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
-			match = match && xmms_collection_media_match (dag, mediainfo, op,
-			                                              nsid, match_table);
+		while (match && xmmsc_coll_operand_list_entry (coll, &op)) {
+			match = xmms_collection_media_match (dag, mediainfo, op,
+			                                     nsid, match_table);
 			xmmsc_coll_operand_list_next (coll);
 		}
 		xmmsc_coll_operand_list_restore (coll);
@@ -1612,7 +1614,7 @@ xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediain
 	refnsid = xmms_collection_get_namespace_id (refns);
 	if (refnsid == nsid) {
 		matchstate = g_hash_table_lookup (match_table, refname);
-		if (matchstate == XMMS_COLLECTION_FIND_STATE_UNCHECKED) {
+		if (*matchstate == XMMS_COLLECTION_FIND_STATE_UNCHECKED) {
 			/* Check ref'd collection match status and save it */
 			matchstate = g_new (coll_find_state_t, 1);
 			match = xmms_collection_media_match_operand (dag,
