@@ -38,6 +38,11 @@ const char create_Media_stm[] = "create table Media (id integer, key, value, sou
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
+const char create_CollectionAttributes_stm[] = "create table CollectionAttributes (collid integer, key text, value text)";
+const char create_CollectionConnections_stm[] = "create table CollectionConnections (from_id integer, to_id integer)";
+const char create_CollectionIdlists_stm[] = "create table CollectionIdlists (collid integer, position integer, mid integer)";
+const char create_CollectionLabels_stm[] = "create table CollectionLabels (collid integer, namespace integer, name text)";
+const char create_CollectionOperators_stm[] = "create table CollectionOperators (id integer primary key AUTOINCREMENT, type integer)";
 
 /** 
  * This magic numbers are taken from ANALYZE on a big database, if we change the db
@@ -52,7 +57,11 @@ const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
-                              "create index playlist_idx on Playlist (name);";
+                              "create index playlist_idx on Playlist (name);"
+                              "create unique index collectionconnections_idx on CollectionConnections (from_id, to_id);"
+                              "create unique index collectionattributes_idx on CollectionAttributes (collid, key);"
+                              "create unique index collectionidlists_idx on CollectionIdlists (collid, position);"
+                              "create unique index collectionlabels_idx on CollectionLabels (collid);";
 
 /**
  * @defgroup SQLite SQLite

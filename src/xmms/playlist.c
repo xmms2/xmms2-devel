@@ -1500,6 +1500,7 @@ xmms_playlist_destroy (xmms_object_t *object)
 	val = xmms_config_lookup ("playlist.repeat_all");
 	xmms_config_property_callback_remove (val, on_playlist_r_all_changed);
 
+	xmms_object_unref (playlist->colldag);
 	xmms_object_unref (playlist->mediainfordr);
 
 	xmms_ipc_broadcast_unregister (XMMS_IPC_SIGNAL_PLAYLIST_CHANGED);
