@@ -1690,6 +1690,8 @@ dbwrite_operator (void *key, void *value, void *udata)
 	serial_id = xmms_collection_get_int_attr (coll, "_serialized_id");
 	if (serial_id == -1) {
 		serial_id = dbinfos->collid;
+		dbinfos->collid = xmms_collection_dbwrite_operator (dbinfos->session,
+		                                                    dbinfos->collid, coll);
 		xmms_collection_set_int_attr (coll, "_serialized_id", serial_id);
 	}
 
@@ -1697,9 +1699,6 @@ dbwrite_operator (void *key, void *value, void *udata)
 	query = g_strdup_printf ("INSERT INTO CollectionLabels VALUES(%d, %d, %s)",
 	                         serial_id, dbinfos->nsid, esc_label);
 	xmms_medialib_select (dbinfos->session, query, NULL);
-
-	dbinfos->collid = xmms_collection_dbwrite_operator (dbinfos->session,
-	                                                    dbinfos->collid, coll);
 
 	g_free (query);
 	g_free (esc_label);
