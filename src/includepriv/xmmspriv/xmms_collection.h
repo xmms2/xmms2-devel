@@ -68,6 +68,8 @@ void xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint ns
 gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid, xmmsc_coll_t *value, gchar *key);
 xmms_medialib_entry_t xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsc_coll_t *source);
 
+gboolean xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, guint *val);
+gboolean xmms_collection_set_int_attr (xmmsc_coll_t *coll, gchar *attrname, gint newval);
 
 GHashTable * xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, gchar *plname, gchar *namespace);
 void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict);

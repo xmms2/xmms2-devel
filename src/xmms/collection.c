@@ -144,11 +144,11 @@ static void coll_unref (void *coll);
 
 static GHashTable *xmms_collection_media_info (guint mid, xmms_error_t *err);
 
-static gchar * filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo);
-static gint filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo);
-static gchar * filter_get_operator_value_string (xmmsc_coll_t *coll);
-static gint filter_get_operator_value_int (xmmsc_coll_t *coll);
-static gboolean filter_get_operator_case (xmmsc_coll_t *coll);
+static gboolean filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo, gchar **val);
+static gboolean filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo, gint *val);
+static gboolean filter_get_operator_value_string (xmmsc_coll_t *coll, gchar **val);
+static gboolean filter_get_operator_value_int (xmmsc_coll_t *coll, gint *val);
+static gboolean filter_get_operator_case (xmmsc_coll_t *coll, gboolean *val);
 
 static void build_match_table (gpointer key, gpointer value, gpointer udata);
 static gboolean find_unchecked (gpointer name, gpointer value, gpointer udata);
@@ -777,26 +777,28 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
  *
  * @param coll  The collection to extract the attribute from.
  * @param attrname  The name of the attribute.
- * @returns  The integer value of the attribute, -1 if fails.
+ * @param val  The integer value of the attribute will be saved in this pointer.
+ * @return TRUE if attribute correctly read, FALSE otherwise
  */
-gint
-xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname)
+gboolean
+xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, guint *val)
 {
-	gint val;
+	gboolean retval = FALSE;
+	gint buf;
 	gchar *str;
 	gchar *endptr;
 
-	if (!xmmsc_coll_attribute_get (coll, attrname, &str)) {
-		val = -1;
-	}
-	else {
-		val = strtol (str, &endptr, 10);
-		if (*endptr != '\0') {
-			/* FIXME: Invalid characters in the string ! */
+	if (xmmsc_coll_attribute_get (coll, attrname, &str)) {
+		buf = strtol (str, &endptr, 10);
+
+		/* Valid integer string */
+		if (*endptr == '\0') {
+			*val = buf;
+			retval = TRUE;
 		}
 	}
 
-	return val;
+	return retval;
 }
 
 /** Set the attribute of a collection as an integer.
@@ -804,19 +806,26 @@ xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname)
  * @param coll  The collection in which to set the attribute.
  * @param attrname  The name of the attribute.
  * @param newval  The new value of the attribute.
+ * @return TRUE if attribute successfully saved, FALSE otherwise.
  */
-void
+gboolean
 xmms_collection_set_int_attr (xmmsc_coll_t *coll, gchar *attrname,
                               gint newval)
 {
+	gboolean retval = FALSE;
 	gchar *str;
+	gint written;
 
-	/* FIXME: Check for (soft) overflow */
 	str = g_new (char, XMMS_MAX_INT_ATTRIBUTE_LEN + 1);
-	g_snprintf (str, XMMS_MAX_INT_ATTRIBUTE_LEN, "%d", newval);
+	written = g_snprintf (str, XMMS_MAX_INT_ATTRIBUTE_LEN, "%d", newval);
+	if (written < XMMS_MAX_INT_ATTRIBUTE_LEN) {
+		xmmsc_coll_attribute_set (coll, attrname, str);
+		retval = TRUE;
+	}
 
-	xmmsc_coll_attribute_set (coll, attrname, str);
 	g_free (str);
+
+	return retval;
 }
 
 
@@ -1742,8 +1751,7 @@ dbwrite_operator (void *key, void *value, void *udata)
 	gint serial_id;
 
 	/* Only serialize each operator once, get previous id if exists */
-	serial_id = xmms_collection_get_int_attr (coll, "_serialized_id");
-	if (serial_id == -1) {
+	if (!xmms_collection_get_int_attr (coll, "_serialized_id", &serial_id)) {
 		serial_id = dbinfos->collid;
 		dbinfos->collid = xmms_collection_dbwrite_operator (dbinfos->session,
 		                                                    dbinfos->collid, coll);
@@ -2117,21 +2125,22 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
  *
  * @return  The property value as a string.
  */
-static gchar *
-filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo)
+static gboolean
+filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo, gchar **val)
 {
-	gchar *mediaval = NULL;
+	gboolean retval = FALSE;
 	gchar *attr;
 	xmms_object_cmd_value_t *cmdval;
 
 	if (xmmsc_coll_attribute_get (coll, "field", &attr)) {
 		cmdval = g_hash_table_lookup (mediainfo, attr);
 		if (cmdval != NULL) {
-			mediaval = cmdval->value.string;
+			*val = cmdval->value.string;
+			retval = TRUE;
 		}
 	}
 
-	return mediaval;
+	return retval;
 }
 
 /** Get the integer associated to the property of the mediainfo
@@ -2139,52 +2148,66 @@ filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo)
  *
  * @return  The property value as an integer.
  */
-static gint
-filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo)
+static gboolean
+filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo, gint *val)
 {
-	gint mediaval = -1;	/* FIXME: if error, missing? */
+	gboolean retval = FALSE;
 	gchar *attr;
 	xmms_object_cmd_value_t *cmdval;
 
 	if (xmmsc_coll_attribute_get (coll, "field", &attr)) {
 		cmdval = g_hash_table_lookup (mediainfo, attr);
 		if (cmdval != NULL) {
-			mediaval = cmdval->value.int32;
+			*val = cmdval->value.int32;
+			retval = TRUE;
 		}
 	}
 
-	return mediaval;
+	return retval;
 }
 
 /* Get the string value of the "value" attribute of the collection. */
-static gchar *
-filter_get_operator_value_string (xmmsc_coll_t *coll)
+static gboolean
+filter_get_operator_value_string (xmmsc_coll_t *coll, gchar **val)
 {
 	gchar *attr;
-	return (xmmsc_coll_attribute_get (coll, "value", &attr) ? attr : NULL);
+	gboolean valid;
+
+	valid = xmmsc_coll_attribute_get (coll, "value", &attr);
+	if (valid) {
+		*val = attr;
+	}
+
+	return valid;
 }
 
 /* Get the integer value of the "value" attribute of the collection. */
-static gint
-filter_get_operator_value_int (xmmsc_coll_t *coll)
+static gboolean
+filter_get_operator_value_int (xmmsc_coll_t *coll, gint *val)
 {
-	/* FIXME: if error, missing? */
-	return xmms_collection_get_int_attr (coll, "value");
+	gint buf;
+	gboolean valid;
+
+	valid = xmms_collection_get_int_attr (coll, "value", &buf);
+	if (valid) {
+		*val = buf;
+	}
+
+	return valid;
 }
 
 /* Check whether the given operator has the "case-sensitive" attribute
  * or not. */
 static gboolean
-filter_get_operator_case (xmmsc_coll_t *coll)
+filter_get_operator_case (xmmsc_coll_t *coll, gboolean *val)
 {
 	gchar *attr;
-	gboolean case_sensit = FALSE;
 
 	if (xmmsc_coll_attribute_get (coll, "case-sensitive", &attr)) {
-		case_sensit = (strcmp (attr, "true") == 0);
+		*val = (strcmp (attr, "true") == 0);
 	}
 
-	return case_sensit;
+	return TRUE;
 }
 
 /* Check whether the HAS filter operator matches the mediainfo. */
@@ -2195,10 +2218,9 @@ xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 {
 	gboolean match = FALSE;
 	gchar *mediaval;
-	mediaval = filter_get_mediainfo_field_string (coll, mediainfo);
 
 	/* If operator matches, recurse upwards in the operand */
-	if (mediaval != NULL) {
+	if (filter_get_mediainfo_field_string (coll, mediainfo, &mediaval)) {
 		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
 		                                             nsid, match_table);
 	}
@@ -2217,11 +2239,10 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	gchar *opval;
 	gboolean case_sens;
 
-	mediaval = filter_get_mediainfo_field_string (coll, mediainfo);
-	opval = filter_get_operator_value_string (coll);
-	case_sens = filter_get_operator_case (coll);
+	if (filter_get_mediainfo_field_string (coll, mediainfo, &mediaval) &&
+	    filter_get_operator_value_string (coll, &opval) && 
+	    filter_get_operator_case (coll, &case_sens)) {
 
-	if (mediaval && opval) {
 		if (case_sens) {
 			match = (strcmp (mediaval, opval) == 0);
 		}
@@ -2245,45 +2266,46 @@ xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediain
                                        xmmsc_coll_t *coll, guint nsid,
                                        GHashTable *match_table)
 {
-	gboolean match;
+	gboolean match = FALSE;
 	gchar *mediaval;
 	gchar *opval;
 	gboolean case_sens;
 	gint i, len;
 
-	mediaval = filter_get_mediainfo_field_string (coll, mediainfo);
-	opval = filter_get_operator_value_string (coll);
-	case_sens = filter_get_operator_case (coll);
+	if (filter_get_mediainfo_field_string (coll, mediainfo, &mediaval) &&
+	    filter_get_operator_value_string (coll, &opval) && 
+	    filter_get_operator_case (coll, &case_sens)) {
 
-	/* Prepare values */
-	if (case_sens) {
-		mediaval = g_strdup (mediaval);
-	}
-	else {
-		opval = g_utf8_strdown (opval, strlen (opval));
-		mediaval = g_utf8_strdown (mediaval, strlen (mediaval));
-	}
-
-	/* Transform SQL wildcards to GLib wildcards */
-	for (i = 0, len = strlen (mediaval); i < len; i++) {
-		switch (mediaval[i]) {
-		case '%':  mediaval[i] = '*';  break;
-		case '_':  mediaval[i] = '?';  break;
-		default:                       break;
+		/* Prepare values */
+		if (case_sens) {
+			mediaval = g_strdup (mediaval);
 		}
-	}
+		else {
+			opval = g_utf8_strdown (opval, strlen (opval));
+			mediaval = g_utf8_strdown (mediaval, strlen (mediaval));
+		}
 
-	match = g_pattern_match_simple (opval, mediaval);
+		/* Transform SQL wildcards to GLib wildcards */
+		for (i = 0, len = strlen (mediaval); i < len; i++) {
+			switch (mediaval[i]) {
+			case '%':  mediaval[i] = '*';  break;
+			case '_':  mediaval[i] = '?';  break;
+			default:                       break;
+			}
+		}
 
-	if (case_sens) {
-		g_free (opval);
-	}
-	g_free (mediaval);
+		match = g_pattern_match_simple (opval, mediaval);
 
-	/* If operator matches, recurse upwards in the operand */
-	if (match) {
-		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
-		                                             nsid, match_table);
+		if (case_sens) {
+			g_free (opval);
+		}
+		g_free (mediaval);
+
+		/* If operator matches, recurse upwards in the operand */
+		if (match) {
+			match = xmms_collection_media_match_operand (dag, mediainfo, coll,
+			                                             nsid, match_table);
+		}
 	}
 
 	return match;
@@ -2299,11 +2321,11 @@ xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainf
 	gint mediaval;
 	gint opval;
 
-	mediaval = filter_get_mediainfo_field_int (coll, mediainfo);
-	opval = filter_get_operator_value_int (coll);
-
 	/* If operator matches, recurse upwards in the operand */
-	if (mediaval < opval) { /* FIXME: error, missing value ? */
+	if (filter_get_mediainfo_field_int (coll, mediainfo, &mediaval) &&
+	    filter_get_operator_value_int (coll, &opval) &&
+	    (mediaval < opval) ) {
+
 		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
 		                                             nsid, match_table);
 	}
@@ -2321,11 +2343,11 @@ xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainf
 	gint mediaval;
 	gint opval;
 
-	mediaval = filter_get_mediainfo_field_int (coll, mediainfo);
-	opval = filter_get_operator_value_int (coll);
-
 	/* If operator matches, recurse upwards in the operand */
-	if (mediaval > opval) { /* FIXME: error, missing value ? */
+	if (filter_get_mediainfo_field_int (coll, mediainfo, &mediaval) &&
+	    filter_get_operator_value_int (coll, &opval) &&
+	    (mediaval > opval) ) {
+
 		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
 		                                             nsid, match_table);
 	}
