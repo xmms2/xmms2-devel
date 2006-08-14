@@ -107,6 +107,10 @@ static xmmsc_coll_t *xmms_collection_create_operator (xmms_medialib_session_t *s
 static void xmms_collection_dag_restore (xmms_coll_dag_t *dag);
 static void xmms_collection_dag_save (xmms_coll_dag_t *dag);
 
+static void dbwrite_operator (void *key, void *value, void *udata);
+static void dbwrite_coll_attributes (const char *key, const char *value, void *udata);
+static void dbwrite_strip_tmpprops (void *key, void *value, void *udata);
+
 static void xmms_collection_destroy (xmms_object_t *object);
 
 static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
@@ -138,7 +142,7 @@ static void check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc
 
 static void coll_unref (void *coll);
 
-static GHashTable *xmms_collection_media_info (xmms_coll_dag_t *dag, guint mid, xmms_error_t *err);
+static GHashTable *xmms_collection_media_info (guint mid, xmms_error_t *err);
 
 static gchar * filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo);
 static gint filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo);
@@ -487,7 +491,7 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
  * @param dag  The collection DAG.
  * @param namespace  The namespace to list collections from (can be ALL).
  * @returns A newly allocated GList with the list of collection names.
- * Remeber that it is only the LIST that is copied. Not the entries.
+ * Remember that it is only the LIST that is copied. Not the entries.
  * The entries are however referenced, and must be unreffed!
  */
 GList *
@@ -517,6 +521,13 @@ xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
 }   
 
 
+/** Find all collections in the given namespace that contain a given media.
+ *
+ * @param dag  The collection DAG.
+ * @param mid  The id of the media.
+ * @param namespace  The namespace in which to look for collections.
+ * @returns A newly allocated GList with the names of the matching collections.
+ */
 GList *
 xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_error_t *err)
 {
@@ -543,7 +554,7 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
 	xmms_collection_foreach_in_namespace (dag, nsid, build_match_table, match_table);
 
 	/* Get all infos for the given mid */
-	mediainfo = xmms_collection_media_info (dag, mid, err);
+	mediainfo = xmms_collection_media_info (mid, err);
 
 	/* While not all collections have been checked, check next */
 	while (g_hash_table_find (match_table, find_unchecked, &open_name) != NULL) {
@@ -567,6 +578,14 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
 	return ret;
 }
 
+
+/** Rename a collection in a given namespace.
+ *
+ * @param dag  The collection DAG.
+ * @param from_name  The name of the collection to rename.
+ * @param to_name  The new name of the collection.
+ * @param namespace  The namespace to consider (cannot be ALL).
+ */
 gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
                                  gchar *to_name, gchar *namespace,
                                  xmms_error_t *err)
@@ -630,6 +649,15 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 }
 
 
+/** Find the ids of the media matched by a collection.
+ *
+ * @param dag  The collection DAG.
+ * @param coll  The collection used to match media.
+ * @param lim_start  The beginning index of the LIMIT statement (0 to disable).
+ * @param lim_len  The number of entries of the LIMIT statement (0 to disable).
+ * @param order  The list of properties to order by (NULL to disable).
+ * @return A list of media ids.
+ */
 GList *
 xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
                            guint lim_start, guint lim_len, GList *order,
@@ -655,6 +683,17 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 }
 
 
+/** Find the properties of the media matched by a collection.
+ *
+ * @param dag  The collection DAG.
+ * @param coll  The collection used to match media.
+ * @param lim_start  The beginning index of the LIMIT statement (0 to disable).
+ * @param lim_len  The number of entries of the LIMIT statement (0 to disable).
+ * @param order  The list of properties to order by, prefix by '-' to invert (NULL to disable).
+ * @param fetch  The list of properties to be retrieved (NULL to only retrieve id).
+ * @param group  The list of properties to group by (NULL to disable).
+ * @return A list of property dicts for each entry.
+ */
 GList *
 xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
                              guint lim_start, guint lim_len, GList *order,
@@ -734,14 +773,20 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
 	return coll;
 }
 
+/** Extract an attribute from a collection as an integer.
+ *
+ * @param coll  The collection to extract the attribute from.
+ * @param attrname  The name of the attribute.
+ * @returns  The integer value of the attribute, -1 if fails.
+ */
 gint
-xmms_collection_get_int_attr (xmmsc_coll_t *plcoll, gchar *attrname)
+xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname)
 {
 	gint val;
 	gchar *str;
 	gchar *endptr;
 
-	if (!xmmsc_coll_attribute_get (plcoll, attrname, &str)) {
+	if (!xmmsc_coll_attribute_get (coll, attrname, &str)) {
 		val = -1;
 	}
 	else {
@@ -754,8 +799,14 @@ xmms_collection_get_int_attr (xmmsc_coll_t *plcoll, gchar *attrname)
 	return val;
 }
 
+/** Set the attribute of a collection as an integer.
+ *
+ * @param coll  The collection in which to set the attribute.
+ * @param attrname  The name of the attribute.
+ * @param newval  The new value of the attribute.
+ */
 void
-xmms_collection_set_int_attr (xmmsc_coll_t *plcoll, gchar *attrname,
+xmms_collection_set_int_attr (xmmsc_coll_t *coll, gchar *attrname,
                               gint newval)
 {
 	gchar *str;
@@ -764,7 +815,7 @@ xmms_collection_set_int_attr (xmmsc_coll_t *plcoll, gchar *attrname,
 	str = g_new (char, XMMS_MAX_INT_ATTRIBUTE_LEN + 1);
 	g_snprintf (str, XMMS_MAX_INT_ATTRIBUTE_LEN, "%d", newval);
 
-	xmmsc_coll_attribute_set (plcoll, attrname, str);
+	xmmsc_coll_attribute_set (coll, attrname, str);
 	g_free (str);
 }
 
@@ -1472,6 +1523,7 @@ coll_unref (void *coll)
 
 /* ============  SAVE / RESTORE COLLECTION DAG ============ */
 
+/* Extract the int value out of a xmms_object_cmd_value_t object. */
 static gint
 cmdval_get_dict_int (xmms_object_cmd_value_t *cmdval, const gchar *key)
 {
@@ -1480,6 +1532,7 @@ cmdval_get_dict_int (xmms_object_cmd_value_t *cmdval, const gchar *key)
 	return buf->value.int32;
 }
 
+/* Extract the string value out of a xmms_object_cmd_value_t object. */
 static const gchar *
 cmdval_get_dict_string (xmms_object_cmd_value_t *cmdval, const gchar *key)
 {
@@ -1488,6 +1541,14 @@ cmdval_get_dict_string (xmms_object_cmd_value_t *cmdval, const gchar *key)
 	return buf->value.string;
 }
 
+/** Given a collection id, query the DB to build the corresponding
+ *  collection DAG.
+ *
+ * @param session  The medialib session connected to the DB.
+ * @param id  The id of the collection to create.
+ * @param type  The type of the collection operator.
+ * @return  The created collection DAG.
+ */
 static xmmsc_coll_t *
 xmms_collection_create_operator (xmms_medialib_session_t *session,
                                  gint id, xmmsc_coll_type_t type)
@@ -1559,6 +1620,10 @@ xmms_collection_create_operator (xmms_medialib_session_t *session,
 	return coll;
 }
 
+/** Restore the collection DAG from the database.
+ *
+ * @param dag  The collection DAG to restore to.
+ */
 static void
 xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 {
@@ -1607,25 +1672,13 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 	xmms_collection_apply_to_all_collections (dag, bind_all_references, NULL);
 }
 
-static void
-dbwrite_coll_attributes (const char *key, const char *value, void *udata)
-{
-	gchar *query;
-	coll_dbwrite_t *dbwrite_infos = udata;
-	gchar *esc_key;
-	gchar *esc_val;
-
-	esc_key = sqlite_prepare_string (key);
-	esc_val = sqlite_prepare_string (value);
-	query = g_strdup_printf ("INSERT INTO CollectionAttributes VALUES(%d, %s, %s)",
-	                         dbwrite_infos->collid, esc_key, esc_val);
-	xmms_medialib_select (dbwrite_infos->session, query, NULL);
-
-	g_free (query);
-	g_free (esc_key);
-	g_free (esc_val);
-}
-
+/** Write the given operator to the database under the given id.
+ *
+ * @param session  The medialib session connected to the DB.
+ * @param collid  The id under which to save the collection.
+ * @param coll  The structure of the collection to save.
+ * @return  The next free collection id.
+ */
 static guint
 xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
                                   guint collid, xmmsc_coll_t *coll)
@@ -1676,6 +1729,8 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 	return newid;
 }
 
+/* For all label-operator pairs, write the operator and all its
+ * operands to the DB recursively. */
 static void
 dbwrite_operator (void *key, void *value, void *udata)
 {
@@ -1704,6 +1759,27 @@ dbwrite_operator (void *key, void *value, void *udata)
 	g_free (esc_label);
 }
 
+/* Write all attributes of a collection to the DB. */
+static void
+dbwrite_coll_attributes (const char *key, const char *value, void *udata)
+{
+	gchar *query;
+	coll_dbwrite_t *dbwrite_infos = udata;
+	gchar *esc_key;
+	gchar *esc_val;
+
+	esc_key = sqlite_prepare_string (key);
+	esc_val = sqlite_prepare_string (value);
+	query = g_strdup_printf ("INSERT INTO CollectionAttributes VALUES(%d, %s, %s)",
+	                         dbwrite_infos->collid, esc_key, esc_val);
+	xmms_medialib_select (dbwrite_infos->session, query, NULL);
+
+	g_free (query);
+	g_free (esc_key);
+	g_free (esc_val);
+}
+
+/* Remove all temp utility properties used to write collections to the DB. */
 static void
 dbwrite_strip_tmpprops (void *key, void *value, void *udata)
 {
@@ -1711,6 +1787,10 @@ dbwrite_strip_tmpprops (void *key, void *value, void *udata)
 	xmmsc_coll_attribute_remove (coll, "_serialized_id");
 }
 
+/** Save the collection DAG in the database.
+ *
+ * @param dag  The collection DAG to save.
+ */
 static void
 xmms_collection_dag_save (xmms_coll_dag_t *dag)
 {
@@ -1743,6 +1823,7 @@ xmms_collection_dag_save (xmms_coll_dag_t *dag)
 
 /* ============  FIND / COLLECTION MATCH FUNCTIONS ============ */
 
+/* Generate a build_match hashtable, states initialized to UNCHECKED. */
 static void
 build_match_table (gpointer key, gpointer value, gpointer udata)
 {
@@ -1752,6 +1833,9 @@ build_match_table (gpointer key, gpointer value, gpointer udata)
 	g_hash_table_replace (match_table, g_strdup (key), match);
 }
 
+/* Return the first unchecked element from the match_table, set the
+ * udata pointer to contain the key of that element.
+ */
 static gboolean
 find_unchecked (gpointer name, gpointer value, gpointer udata)
 {
@@ -1761,6 +1845,9 @@ find_unchecked (gpointer name, gpointer value, gpointer udata)
 	return (*match == XMMS_COLLECTION_FIND_STATE_UNCHECKED);
 }
 
+/* Build a list of all matched entries of the match_table in the udata
+ * pointer.
+ */
 static void
 build_list_matches (gpointer key, gpointer value, gpointer udata)
 {
@@ -1772,7 +1859,15 @@ build_list_matches (gpointer key, gpointer value, gpointer udata)
 	}
 }
 
-
+/** Determine whether the mediainfos match the given collection.
+ *
+ * @param dag  The collection DAG.
+ * @param mediainfo  The properties of the media to match against.
+ * @param coll  The collection to match with the mediainfos.
+ * @param nsid  The namespace id of the collection.
+ * @param match_table  The match_table for all collections in that namespace.
+ * @return  TRUE if the collection matches, FALSE otherwise.
+ */
 static gboolean
 xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                              xmmsc_coll_t *coll, guint nsid,
@@ -1885,6 +1980,17 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	return match;
 }
 
+/** Determine whether the mediainfos match the given reference operator.
+ *
+ * @param dag  The collection DAG.
+ * @param mediainfo  The properties of the media to match against.
+ * @param coll  The collection (ref op) to match with the mediainfos.
+ * @param nsid  The namespace id of the collection.
+ * @param match_table  The match_table for all collections in that namespace.
+ * @param refname  The name of the referenced collection.
+ * @param refns  The namespace of the referenced collection.
+ * @return  TRUE if the collection matches, FALSE otherwise.
+ */
 static gboolean
 xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                        xmmsc_coll_t *coll, guint nsid,
@@ -1929,6 +2035,16 @@ xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediain
 	return match;
 }
 
+/** Determine whether the mediainfos match the first operand of the
+ * given operator.
+ *
+ * @param dag  The collection DAG.
+ * @param mediainfo  The properties of the media to match against.
+ * @param coll  Match the mediainfos with the operand of that collection.
+ * @param nsid  The namespace id of the collection.
+ * @param match_table  The match_table for all collections in that namespace.
+ * @return  TRUE if the collection matches, FALSE otherwise.
+ */
 static gboolean
 xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                      xmmsc_coll_t *coll, guint nsid,
@@ -1947,8 +2063,13 @@ xmms_collection_media_match_operand (xmms_coll_dag_t *dag, GHashTable *mediainfo
 	return match;
 }
 
+/** Get all the properties for the given media.
+ *
+ * @param mid  The id of the media.
+ * @return  A HashTable with all the properties.
+ */
 static GHashTable *
-xmms_collection_media_info (xmms_coll_dag_t *dag, guint mid, xmms_error_t *err)
+xmms_collection_media_info (guint mid, xmms_error_t *err)
 {
 	GList *res;
 	GList *n;
@@ -1991,7 +2112,11 @@ xmms_collection_media_info (xmms_coll_dag_t *dag, guint mid, xmms_error_t *err)
 	return infos;
 }
 
-
+/** Get the string associated to the property of the mediainfo
+ *  identified by the "field" attribute of the collection.
+ *
+ * @return  The property value as a string.
+ */
 static gchar *
 filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo)
 {
@@ -2009,6 +2134,11 @@ filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo)
 	return mediaval;
 }
 
+/** Get the integer associated to the property of the mediainfo
+ *  identified by the "field" attribute of the collection.
+ *
+ * @return  The property value as an integer.
+ */
 static gint
 filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo)
 {
@@ -2026,6 +2156,7 @@ filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo)
 	return mediaval;
 }
 
+/* Get the string value of the "value" attribute of the collection. */
 static gchar *
 filter_get_operator_value_string (xmmsc_coll_t *coll)
 {
@@ -2033,6 +2164,7 @@ filter_get_operator_value_string (xmmsc_coll_t *coll)
 	return (xmmsc_coll_attribute_get (coll, "value", &attr) ? attr : NULL);
 }
 
+/* Get the integer value of the "value" attribute of the collection. */
 static gint
 filter_get_operator_value_int (xmmsc_coll_t *coll)
 {
@@ -2040,6 +2172,8 @@ filter_get_operator_value_int (xmmsc_coll_t *coll)
 	return xmms_collection_get_int_attr (coll, "value");
 }
 
+/* Check whether the given operator has the "case-sensitive" attribute
+ * or not. */
 static gboolean
 filter_get_operator_case (xmmsc_coll_t *coll)
 {
@@ -2053,6 +2187,7 @@ filter_get_operator_case (xmmsc_coll_t *coll)
 	return case_sensit;
 }
 
+/* Check whether the HAS filter operator matches the mediainfo. */
 static gboolean
 xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                   xmmsc_coll_t *coll, guint nsid,
@@ -2071,6 +2206,7 @@ xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	return match;
 }
 
+/* Check whether the MATCH filter operator matches the mediainfo. */
 static gboolean
 xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                     xmmsc_coll_t *coll, guint nsid,
@@ -2103,6 +2239,7 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	return match;
 }
 
+/* Check whether the CONTAINS filter operator matches the mediainfo. */
 static gboolean
 xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                        xmmsc_coll_t *coll, guint nsid,
@@ -2152,6 +2289,7 @@ xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediain
 	return match;
 }
 
+/* Check whether the SMALLER filter operator matches the mediainfo. */
 static gboolean
 xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                       xmmsc_coll_t *coll, guint nsid,
@@ -2173,6 +2311,7 @@ xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainf
 	return match;
 }
 
+/* Check whether the GREATER filter operator matches the mediainfo. */
 static gboolean
 xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                       xmmsc_coll_t *coll, guint nsid,
@@ -2193,8 +2332,6 @@ xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainf
 
 	return match;
 }
-
-
 
 
 

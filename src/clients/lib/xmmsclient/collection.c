@@ -32,7 +32,13 @@
  * @{
  */
 
-/* [xmmsc_coll_t] */
+/**
+ * Get the collection structure of a collection saved on the server.
+ *
+ * @param conn  The connection to the server.
+ * @param collname  The name of the saved collection.
+ * @param ns  The namespace containing the saved collection.
+ */
 xmmsc_result_t*
 xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
                 xmmsc_coll_namespace_t ns)
@@ -51,7 +57,12 @@ xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
 	return res;
 }
 
-/* [list<string>] */
+/**
+ * List all collections saved on the server in the given namespace.
+ *
+ * @param conn  The connection to the server.
+ * @param ns  The namespace containing the saved collections.
+ */
 xmmsc_result_t*
 xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 {
@@ -68,7 +79,15 @@ xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
 	return res;
 }
 
-/* [void] */
+/**
+ * Save a collection structure on the server under the given name, in
+ * the given namespace.
+ *
+ * @param conn  The connection to the server.
+ * @param coll  The collection structure to save.
+ * @param name  The name under which to save the collection.
+ * @param ns  The namespace in which to save the collection.
+ */
 xmmsc_result_t*
 xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
                  const char* name, xmmsc_coll_namespace_t ns)
@@ -88,7 +107,13 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	return res;
 }
 
-/* [void] */
+/**
+ * Remove a collection from the server.
+ *
+ * @param conn  The connection to the server.
+ * @param name  The name of the collection to remove.
+ * @param ns  The namespace from which to remove the collection.
+ */
 xmmsc_result_t*
 xmmsc_coll_remove (xmmsc_connection_t *conn,
                    const char* name, xmmsc_coll_namespace_t ns)
@@ -108,8 +133,14 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 }
 
  
-/* Search (in collections) */
-/* [list<xmmsc_coll_t>] */
+/**
+ * Find all collections in the given namespace which match the given
+ * media.  The names of these collections is returned as a list.
+ *
+ * @param conn  The connection to the server.
+ * @param mediaid  The id of the media to look for.
+ * @param ns  The namespace to consider (cannot be ALL).
+ */
 xmmsc_result_t*
 xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns)
 {
@@ -127,8 +158,14 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
 	return res;
 }
 
-/* Rename a saved collection */
-/* [void] */
+/**
+ * Rename a saved collection.
+ *
+ * @param conn  The connection to the server.
+ * @param from_name  The name of the collection to rename.
+ * @param to_name  The new name of the collection.
+ * @param ns  The namespace containing the collection.
+ */
 xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name,
                                    char* to_name, xmmsc_coll_namespace_t ns)
 {
@@ -148,8 +185,17 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name,
 }
 
  
-/* Query */
-/* [list<uint>] */
+/**
+ * List the ids of all media matched by the given collection.
+ * A list of ordering properties can be specified, as well as offsets
+ * to only retrieve part of the result set.
+ *
+ * @param conn  The connection to the server.
+ * @param coll  The collection used to query.
+ * @param order  The list of properties to order by (NULL to disable).
+ * @param limit_start  The offset at which to start retrieving results (0 to disable).
+ * @param limit_len  The maximum number of entries to retrieve (0 to disable).
+ */
 xmmsc_result_t*
 xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, 
                       const char* order[], unsigned int limit_start,
@@ -171,7 +217,21 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	return res;
 }
 
-/* [list<Dict>] */
+/**
+ * List the properties of all media matched by the given collection.
+ * A list of ordering properties can be specified, as well as offsets
+ * to only retrieve part of the result set. The list of properties to
+ * retrieve must be explicitely specified.  It is also possible to
+ * group by certain properties.
+ *
+ * @param conn  The connection to the server.
+ * @param coll  The collection used to query.
+ * @param order  The list of properties to order by (NULL to disable).
+ * @param limit_start  The offset at which to start retrieving results (0 to disable).
+ * @param limit_len  The maximum number of entries to retrieve (0 to disable).
+ * @param fetch  The list of properties to retrieve (NULL to only get the id).
+ * @param group  The list of properties to group by (NULL to disable).
+ */
 xmmsc_result_t*
 xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
                         const char* order[], unsigned int limit_start,
