@@ -594,7 +594,7 @@ err:
 		free (idlist);
 	}
 
-	xmmsc_coll_free (*coll);
+	xmmsc_coll_unref (*coll);
 
 	return false;
 }

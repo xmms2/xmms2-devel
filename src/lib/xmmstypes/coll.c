@@ -48,6 +48,8 @@ struct xmmsc_coll_St {
 };
 
 
+static void xmmsc_coll_free (xmmsc_coll_t *coll);
+
 static int xmmsc_coll_unref_udata (void *coll, void *userdata);
 static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, uint32_t newsize);
 
@@ -118,7 +120,7 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
  *
  * @param coll the collection to free.
  */
-void
+static void
 xmmsc_coll_free (xmmsc_coll_t *coll)
 {
 	x_return_if_fail (coll);

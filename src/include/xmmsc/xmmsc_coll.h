@@ -27,7 +27,6 @@ typedef void (*xmmsc_coll_attribute_foreach_func) (const char *key, const char *
 xmmsc_coll_t* xmmsc_coll_new (xmmsc_coll_type_t type);
 void xmmsc_coll_ref (xmmsc_coll_t *coll);
 void xmmsc_coll_unref (xmmsc_coll_t *coll);
-void xmmsc_coll_free (xmmsc_coll_t *coll);
 
 void xmmsc_coll_set_type (xmmsc_coll_t *coll, xmmsc_coll_type_t type);
 void xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[]);
