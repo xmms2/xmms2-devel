@@ -285,8 +285,10 @@ xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int inde
 
 	/* We need more memory, reallocate */
 	if (coll->idlist_size == coll->idlist_allocated) {
+		int success;
 		size_t double_size = coll->idlist_allocated * 2;
-		x_return_val_if_fail (xmmsc_coll_idlist_resize (coll, double_size), 0);
+		success = xmmsc_coll_idlist_resize (coll, double_size);
+		x_return_val_if_fail (!success, 0);
 	}
 
 	for (i = coll->idlist_size; i > index; i--) {
