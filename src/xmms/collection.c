@@ -28,41 +28,14 @@
 
 #include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_collquery.h"
+#include "xmmspriv/xmms_collserial.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
 
 
 /* Internal helper structures */
-
-typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
-
-typedef struct {
-	xmms_medialib_session_t *session;
-	guint collid;
-	xmms_collection_namespace_id_t nsid;
-} coll_dbwrite_t;
-
-typedef struct {
-	guint limit_start;
-	guint limit_len;
-	GList *order;
-	GList *fetch;
-	GList *group;
-} coll_query_params_t;
-
-typedef struct {
-	guint id;
-	gboolean optional;
-} coll_query_alias_t;
-
-typedef struct {
-	GHashTable *aliases;
-	guint alias_count;
-	gchar *alias_base;
-	GString *conditions;
-	coll_query_params_t *params;
-} coll_query_t;
 
 typedef struct {
 	gchar* name;
@@ -103,38 +76,20 @@ typedef enum {
 
 /* Functions */
 
-static xmmsc_coll_t *xmms_collection_create_operator (xmms_medialib_session_t *session, gint id, xmmsc_coll_type_t type);
-static void xmms_collection_dag_restore (xmms_coll_dag_t *dag);
-static void xmms_collection_dag_save (xmms_coll_dag_t *dag);
-
-static void dbwrite_operator (void *key, void *value, void *udata);
-static void dbwrite_coll_attributes (const char *key, const char *value, void *udata);
-static void dbwrite_strip_tmpprops (void *key, void *value, void *udata);
-
 static void xmms_collection_destroy (xmms_object_t *object);
 
 static gboolean xmms_collection_validate (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
 static gboolean xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *save_name, gchar *save_namespace);
 static gboolean xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid);
 
-
-static xmms_collection_namespace_id_t xmms_collection_get_namespace_id (gchar *namespace);
-static gchar* xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
 static gboolean xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gchar *tg_name, gchar *tg_ns);
 
-static void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
-static void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);
-static void xmms_collection_apply_to_collection (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, FuncApplyToColl f, void *udata);
 static void xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, FuncApplyToColl f, void *udata);
 
 static void call_apply_to_coll (gpointer name, gpointer coll, gpointer udata);
 static void prepend_key_string (gpointer key, gpointer value, gpointer udata);
 static gboolean value_match_save_key (gpointer key, gpointer val, gpointer udata);
 
-static gint cmdval_get_dict_int (xmms_object_cmd_value_t *cmdval, const gchar *key);
-static const gchar *cmdval_get_dict_string (xmms_object_cmd_value_t *cmdval, const gchar *key);
-
-static void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void rename_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 static void strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
@@ -162,16 +117,6 @@ static gboolean xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashT
 static gboolean xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
-
-static gchar *sqlite_prepare_string (const gchar *input);
-static void query_append_uint (coll_query_t *query, guint i);
-static void query_append_string (coll_query_t *query, gchar *s);
-static void query_append_protect_string (coll_query_t *query, gchar *s);
-static void query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll);
-static void xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query);
-static coll_query_t* init_query (coll_query_params_t *params);
-static GString* xmms_collection_gen_query (coll_query_t *query);
-static GString* xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_params_t *params);
 
 
 XMMS_CMD_DEFINE (collection_get, xmms_collection_get, xmms_coll_dag_t *, COLL, STRING, STRING);
@@ -407,7 +352,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 			newkey = g_strdup (alias);
 
 			/* update all pairs pointing to the old coll */
-			g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
+			xmms_collection_dag_replace (dag, nsid, newkey, coll);
 			xmmsc_coll_ref (coll);
 
 			XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_UPDATE,
@@ -418,7 +363,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 	/* Save new collection in the table */
 	} else {
 		newkey = g_strdup (name);
-		g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
+		xmms_collection_dag_replace (dag, nsid, newkey, coll);
 		xmmsc_coll_ref (coll);
 
 		XMMS_COLLECTION_CHANGED_MSG (XMMS_COLLECTION_CHANGED_ADD,
@@ -619,7 +564,7 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 		GHashTable *dict;
 
 		/* insert new pair in hashtable */
-		g_hash_table_replace (dag->collrefs[nsid], g_strdup (to_name), from_coll);
+		xmms_collection_dag_replace (dag, nsid, g_strdup (to_name), from_coll);
 		xmmsc_coll_ref (from_coll);
 
 		/* remove old pair from hashtable */
@@ -667,9 +612,10 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	/* FIXME: get an int list directly !   or Int vs UInt? */
 	for (n = res; n; n = n->next) {
+		xmms_object_cmd_value_t *buf;
 		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)n->data;
-		gint v = cmdval_get_dict_int (cmdval, "id");
-		ids = g_list_prepend (ids, xmms_object_cmd_value_int_new (v));
+		buf = g_hash_table_lookup (cmdval->value.dict, "id");
+		ids = g_list_prepend (ids, xmms_object_cmd_value_int_new (buf->value.int32));
 		xmms_object_cmd_value_free (n->data);
 	}
 
@@ -697,7 +643,6 @@ xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 {
 	GList *res = NULL;
 	GString *query;
-	coll_query_params_t params = { lim_start, lim_len, order, fetch, group };
 
 	/* validate the collection to query */
 	if (!xmms_collection_validate (dag, coll, NULL, NULL)) {
@@ -709,7 +654,8 @@ xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	g_mutex_lock (dag->mutex);
 
-	query = xmms_collection_get_query (dag, coll, &params);
+	query = xmms_collection_get_query (dag, coll, lim_start, lim_len,
+	                                   order, fetch, group);
 	
 	g_mutex_unlock (dag->mutex);
 
@@ -739,10 +685,18 @@ void
 xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid,
                                 xmmsc_coll_t *newtarget)
 {
-	g_hash_table_replace (dag->collrefs[nsid], g_strdup (name), newtarget);
+	xmms_collection_dag_replace (dag, nsid, g_strdup (name), newtarget);
 	xmmsc_coll_ref (newtarget);
 }
 
+/** Update the DAG to update the value of the pair with the given key. */
+void
+xmms_collection_dag_replace (xmms_coll_dag_t *dag,
+                             xmms_collection_namespace_id_t nsid,
+                             gchar *key, xmmsc_coll_t *newcoll)
+{
+	g_hash_table_replace (dag->collrefs[nsid], key, newcoll);
+}
 
 /** Find the collection structure corresponding to the given name in the given namespace.
  *
@@ -1155,7 +1109,7 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
  * @param namespace  The namespace string.
  * @returns  The namespace id.
  */
-static xmms_collection_namespace_id_t
+xmms_collection_namespace_id_t
 xmms_collection_get_namespace_id (gchar *namespace)
 {
 	guint nsid;
@@ -1178,7 +1132,7 @@ xmms_collection_get_namespace_id (gchar *namespace)
  * @param nsid  The namespace id.
  * @returns  The namespace name (string).
  */
-static gchar*
+gchar*
 xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid)
 {
 	gchar *name;
@@ -1230,7 +1184,7 @@ xmms_collection_has_reference_to (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, gcha
  * @param f  The function to apply to all the collections.
  * @param udata  Additional user data parameter passed to the function.
  */
-static void
+void
 xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata)
 {
 	gint i;
@@ -1250,7 +1204,7 @@ xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f
  * @param f  The function to apply to all the collections.
  * @param udata  Additional user data parameter passed to the function.
  */
-static void
+void
 xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag,
                                           FuncApplyToColl f, void *udata)
 {
@@ -1269,7 +1223,7 @@ xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag,
  * @param f  The function to apply to all the collections.
  * @param udata  Additional user data parameter passed to the function.
  */
-static void
+void
 xmms_collection_apply_to_collection (xmms_coll_dag_t *dag,
                                      xmmsc_coll_t *coll,
                                      FuncApplyToColl f, void *udata)
@@ -1354,7 +1308,7 @@ value_match_save_key (gpointer key, gpointer val, gpointer udata)
  * If a reference, add the operator of the pointed collection as an
  * operand.
  */
-static void
+void
 bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
 {
 	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
@@ -1516,305 +1470,6 @@ static void
 coll_unref (void *coll)
 {
 	xmmsc_coll_unref (coll);
-}
-
-
-
-/* ============  SAVE / RESTORE COLLECTION DAG ============ */
-
-/* Extract the int value out of a xmms_object_cmd_value_t object. */
-static gint
-cmdval_get_dict_int (xmms_object_cmd_value_t *cmdval, const gchar *key)
-{
-	xmms_object_cmd_value_t *buf;
-	buf = g_hash_table_lookup (cmdval->value.dict, key);
-	return buf->value.int32;
-}
-
-/* Extract the string value out of a xmms_object_cmd_value_t object. */
-static const gchar *
-cmdval_get_dict_string (xmms_object_cmd_value_t *cmdval, const gchar *key)
-{
-	xmms_object_cmd_value_t *buf;
-	buf = g_hash_table_lookup (cmdval->value.dict, key);
-	return buf->value.string;
-}
-
-/** Given a collection id, query the DB to build the corresponding
- *  collection DAG.
- *
- * @param session  The medialib session connected to the DB.
- * @param id  The id of the collection to create.
- * @param type  The type of the collection operator.
- * @return  The created collection DAG.
- */
-static xmmsc_coll_t *
-xmms_collection_create_operator (xmms_medialib_session_t *session,
-                                 gint id, xmmsc_coll_type_t type)
-{
-	xmmsc_coll_t *coll;
-	xmmsc_coll_t *op;
-	GList *res;
-	GList *n;
-	xmms_object_cmd_value_t *cmdval;
-	gchar *query;
-
-	coll = xmmsc_coll_new (type);
-
-	/* Retrieve the attributes */
-	query = g_strdup_printf ("SELECT attr.key AS key, attr.value AS value "
-							 "FROM CollectionOperators AS op, CollectionAttributes AS attr "
-							 "WHERE op.id=%d AND attr.collid=op.id", id);
-	res = xmms_medialib_select (session, query, NULL);
-	for (n = res; n; n = n->next) {
-		const gchar *key, *value;
-
-		cmdval = (xmms_object_cmd_value_t*)n->data;
-		key = cmdval_get_dict_string (cmdval, "key");
-		value = cmdval_get_dict_string (cmdval, "value");
-		xmmsc_coll_attribute_set (coll, g_strdup (key), g_strdup (value));
-
-		xmms_object_cmd_value_free (n->data);
-	}
-	g_list_free (res);
-	g_free (query);
-
-	/* Retrieve the idlist */
-	query = g_strdup_printf ("SELECT idl.mid AS mid "
-							 "FROM CollectionOperators AS op, CollectionIdlists AS idl "
-							 "WHERE op.id=%d AND idl.collid=op.id "
-							 "ORDER BY idl.position", id);
-	res = xmms_medialib_select (session, query, NULL);
-	for (n = res; n; n = n->next) {
-
-		cmdval = (xmms_object_cmd_value_t*)n->data;
-		xmmsc_coll_idlist_append (coll, cmdval_get_dict_int (cmdval, "mid"));
-
-		xmms_object_cmd_value_free (n->data);
-	}
-	g_list_free (res);
-	g_free (query);
-
-	/* Retrieve the operands */
-	query = g_strdup_printf ("SELECT op.id AS id, op.type AS type "
-							 "FROM CollectionOperators AS op, CollectionConnections AS conn "
-							 "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
-	res = xmms_medialib_select (session, query, NULL);
-	for (n = res; n; n = n->next) {
-		gint id;
-		gint type;
-
-		cmdval = (xmms_object_cmd_value_t*)n->data;
-		id = cmdval_get_dict_int (cmdval, "id");
-		type = cmdval_get_dict_int (cmdval, "type");
-
-		op = xmms_collection_create_operator (session, id, type);
-		xmmsc_coll_add_operand (coll, op);
-
-		xmms_object_cmd_value_free (n->data);
-	}
-	g_list_free (res);
-	g_free (query);
-
-	return coll;
-}
-
-/** Restore the collection DAG from the database.
- *
- * @param dag  The collection DAG to restore to.
- */
-static void
-xmms_collection_dag_restore (xmms_coll_dag_t *dag)
-{
-	xmmsc_coll_t *coll = NULL;
-	xmms_medialib_session_t *session;
-	xmms_object_cmd_value_t *cmdval;
-	gchar *query;
-	GList *res;
-	GList *n;
-	gint previd;
-
-	session = xmms_medialib_begin ();
-
-	/* Fetch all label-coll_operator for all namespaces, register in table */
-	query = "SELECT op.id AS id, lbl.name AS label, "
-	        "       lbl.namespace AS nsid, op.type AS type "
-	        "FROM CollectionOperators AS op, CollectionLabels as lbl "
-	        "WHERE op.id=lbl.collid "
-	        "ORDER BY id";
-	res = xmms_medialib_select (session, query, NULL);
-
-	previd = -1;
-	for (n = res; n; n = n->next) {
-		gint id, type, nsid;
-		const gchar *label;
-
-		cmdval = (xmms_object_cmd_value_t*)n->data;
-		id = cmdval_get_dict_int (cmdval, "id");
-		type = cmdval_get_dict_int (cmdval, "type");
-		nsid = cmdval_get_dict_int (cmdval, "nsid");
-		label = cmdval_get_dict_string (cmdval, "label");
-
-		/* Do not duplicate operator if same id */
-		if (previd < 0 || id != previd) {
-			coll = xmms_collection_create_operator (session, id, type);
-			previd = id;
-		}
-		g_hash_table_replace (dag->collrefs[nsid], g_strdup (label), coll);
-	}
-
-	xmms_medialib_end (session);
-
-	/* FIXME: validate ? */
-
-	/* Link references in collections to actual operators */
-	xmms_collection_apply_to_all_collections (dag, bind_all_references, NULL);
-}
-
-/** Write the given operator to the database under the given id.
- *
- * @param session  The medialib session connected to the DB.
- * @param collid  The id under which to save the collection.
- * @param coll  The structure of the collection to save.
- * @return  The next free collection id.
- */
-static guint
-xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
-                                  guint collid, xmmsc_coll_t *coll)
-{
-	gchar *query;
-	guint *idlist;
-	gint i;
-	xmmsc_coll_t *op;
-	gint newid, nextid;
-	coll_dbwrite_t dbwrite_infos = { session, collid, 0 };
-
-	/* Write operator */
-	query = g_strdup_printf ("INSERT INTO CollectionOperators VALUES(%d, %d)",
-	                         collid, xmmsc_coll_get_type (coll));
-	xmms_medialib_select (session, query, NULL);
-	g_free (query);
-
-	/* Write attributes */
-	xmmsc_coll_attribute_foreach (coll, dbwrite_coll_attributes, &dbwrite_infos);
-
-	/* Write idlist */
-	idlist = xmmsc_coll_get_idlist (coll);
-	for (i = 0; idlist[i] != 0; i++) {
-		query = g_strdup_printf ("INSERT INTO CollectionIdlists VALUES(%d, %d, %d)",
-		                         collid, i, idlist[i]);
-		xmms_medialib_select (session, query, NULL);
-		g_free (query);
-	}
-
-	/* Save operands and connections (don't recurse in ref operand) */
-	newid = collid + 1;
-	if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
-		xmmsc_coll_operand_list_save (coll);
-		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
-			nextid = xmms_collection_dbwrite_operator (session, newid, op);
-			query = g_strdup_printf ("INSERT INTO CollectionConnections VALUES(%d, %d)",
-									 newid, collid);
-			xmms_medialib_select (session, query, NULL);
-			g_free (query);
-			newid = nextid;
-			xmmsc_coll_operand_list_next (coll);
-		}
-		xmmsc_coll_operand_list_restore (coll);
-	}
-
-	/* return next available id */
-	return newid;
-}
-
-/* For all label-operator pairs, write the operator and all its
- * operands to the DB recursively. */
-static void
-dbwrite_operator (void *key, void *value, void *udata)
-{
-	gchar *query;
-	gchar *label = key;
-	xmmsc_coll_t *coll = value;
-	coll_dbwrite_t *dbinfos = udata;
-	gchar *esc_label;
-	gint serial_id;
-
-	/* Only serialize each operator once, get previous id if exists */
-	if (!xmms_collection_get_int_attr (coll, "_serialized_id", &serial_id)) {
-		serial_id = dbinfos->collid;
-		dbinfos->collid = xmms_collection_dbwrite_operator (dbinfos->session,
-		                                                    dbinfos->collid, coll);
-		xmms_collection_set_int_attr (coll, "_serialized_id", serial_id);
-	}
-
-	esc_label = sqlite_prepare_string (label);
-	query = g_strdup_printf ("INSERT INTO CollectionLabels VALUES(%d, %d, %s)",
-	                         serial_id, dbinfos->nsid, esc_label);
-	xmms_medialib_select (dbinfos->session, query, NULL);
-
-	g_free (query);
-	g_free (esc_label);
-}
-
-/* Write all attributes of a collection to the DB. */
-static void
-dbwrite_coll_attributes (const char *key, const char *value, void *udata)
-{
-	gchar *query;
-	coll_dbwrite_t *dbwrite_infos = udata;
-	gchar *esc_key;
-	gchar *esc_val;
-
-	esc_key = sqlite_prepare_string (key);
-	esc_val = sqlite_prepare_string (value);
-	query = g_strdup_printf ("INSERT INTO CollectionAttributes VALUES(%d, %s, %s)",
-	                         dbwrite_infos->collid, esc_key, esc_val);
-	xmms_medialib_select (dbwrite_infos->session, query, NULL);
-
-	g_free (query);
-	g_free (esc_key);
-	g_free (esc_val);
-}
-
-/* Remove all temp utility properties used to write collections to the DB. */
-static void
-dbwrite_strip_tmpprops (void *key, void *value, void *udata)
-{
-	xmmsc_coll_t *coll = value;
-	xmmsc_coll_attribute_remove (coll, "_serialized_id");
-}
-
-/** Save the collection DAG in the database.
- *
- * @param dag  The collection DAG to save.
- */
-static void
-xmms_collection_dag_save (xmms_coll_dag_t *dag)
-{
-	gint i;
-	xmms_medialib_session_t *session;
-
-	session = xmms_medialib_begin ();
-
-	/* Empty Collection* tables */
-	xmms_medialib_select (session, "DELETE FROM CollectionAttributes", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionConnections", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionIdlists", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionLabels", NULL);
-	xmms_medialib_select (session, "DELETE FROM CollectionOperators", NULL);
-
-	/* Write all collections in all namespaces */
-	coll_dbwrite_t dbinfos = { session, 1, 0 }; /* ids start at 1 */
-	for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
-		dbinfos.nsid = i;
-		xmms_collection_foreach_in_namespace (dag, i, dbwrite_operator, &dbinfos);
-	}
-
-	xmms_collection_foreach_in_namespace (dag, XMMS_COLLECTION_NSID_ALL,
-	                                      dbwrite_strip_tmpprops, NULL);
-
-	xmms_medialib_end (session);
 }
 
 
@@ -2339,504 +1994,4 @@ xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainf
 	}
 
 	return match;
-}
-
-
-
-
-/* ============  QUERY FUNCTIONS ============ */
-
-/** Register a (unique) field alias in the query structure and return
- * the corresponding identifier.
- *
- * @param query  The query object to insert the alias in.
- * @param field  The name of the property that will correspond to the alias.
- * @param optional  Whether the property can be optional (i.e. LEFT JOIN)
- * @return  The id of the alias.
- */
-guint
-query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
-{
-	coll_query_alias_t *alias;
-	alias = g_hash_table_lookup (query->aliases, field);
-
-	/* Insert in the hashtable */
-	if (alias == NULL) {
-		gchar *fieldkey = g_strdup (field);
-
-		alias = g_new (coll_query_alias_t, 1);
-		alias->optional = optional;
-
-		if (query->alias_base == NULL && !optional) {  /* Found a base */
-			alias->id = 0;
-			query->alias_base = fieldkey;
-		} else {
-			alias->id = query->alias_count;
-			query->alias_count++;
-		}
-
-		g_hash_table_insert (query->aliases, fieldkey, alias);
-
-	/* If was not optional but now is, update */
-	} else if (!alias->optional && optional) {
-		alias->optional = optional;
-	}
-
-	return alias->id;
-}
-
-/* Find the canonical name of a field (strip flags, if any) */
-static gchar *
-canonical_field_name (gchar *field) {
-	if (*field == '-') {
-		field++;
-	} else if (*field == '~') {
-		field = NULL;
-	}
-	return field;
-}
-
-/* Initialize a query structure */
-static coll_query_t*
-init_query (coll_query_params_t *params)
-{
-	GList *n;
-	coll_query_t *query;
-
-	query = g_new (coll_query_t, 1);
-	if(query == NULL) {
-		return NULL;
-	}
-
-	query->aliases = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                                        g_free, g_free);
-
-	query->alias_count = 1;
-	query->alias_base = NULL;
-	query->conditions = g_string_new (NULL);
-	query->params = params;
-
-	/* Prepare aliases for the order/group fields */
-	for (n = query->params->order; n; n = n->next) {
-		gchar *field = canonical_field_name (n->data);
-		if (field != NULL) {
-			query_make_alias (query, field, TRUE);
-		}
-	}
-	for (n = query->params->group; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
-	}
-	for (n = query->params->fetch; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
-	}
-
-	return query;
-}
-
-/* Copied from xmmsc_sqlite_prepare_string */
-static gchar *
-sqlite_prepare_string (const gchar *input) {
-	gchar *output;
-	gint outsize, nquotes = 0;
-	gint i, o;
-
-	for (i = 0; input[i] != '\0'; i++) {
-		if (input[i] == '\'') {
-			nquotes++;
-		}
-	}
-
-	outsize = strlen(input) + nquotes + 2 + 1; /* 2 quotes to terminate the string , and one \0 in the end */
-	output = g_new (gchar, outsize);
-
-	if (output == NULL) {
-		return NULL;
-	}
-
-	i = o = 0;
-	output[o++] = '\'';
-	while (input[i] != '\0') {
-		output[o++] = input[i];
-		if (input[i++] == '\'') {
-			output[o++] = '\'';
-		}
-	}
-	output[o++] = '\'';
-	output[o] = '\0';
-
-	return output;
-}
-
-/* Determine whether the given operator is a reference to "All Media" */
-static gboolean
-operator_is_allmedia (xmmsc_coll_t *op)
-{
-	gchar *target_name;
-	xmmsc_coll_attribute_get (op, "reference", &target_name);
-	return (target_name != NULL && strcmp (target_name, "All Media") == 0);
-}
-
-static void
-query_append_uint (coll_query_t *query, guint i)
-{
-	g_string_append_printf (query->conditions, "%u", i);
-}
-
-static void
-query_append_string (coll_query_t *query, gchar *s)
-{
-	g_string_append (query->conditions, s);
-}
-
-static void
-query_append_protect_string (coll_query_t *query, gchar *s)
-{
-	gchar *preps;
-	if((preps = sqlite_prepare_string (s)) != NULL) {  /* FIXME: Return oom error */
-		query_append_string (query, preps);
-		g_free (preps);
-	}
-}
-
-static void
-query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
-{
-	xmmsc_coll_t *op;
-	gchar *target_name;
-	gchar *target_ns;
-	guint  target_nsid;
-
-	xmmsc_coll_operand_list_save (coll);
-	xmmsc_coll_operand_list_first (coll);
-	if (!xmmsc_coll_operand_list_entry (coll, &op)) {
-		/* Ref'd coll not saved as operand, look for it */
-		if (xmmsc_coll_attribute_get (coll, "reference", &target_name) &&
-			xmmsc_coll_attribute_get (coll, "namespace", &target_ns)) {
-
-			target_nsid = xmms_collection_get_namespace_id (target_ns);
-			op = xmms_collection_get_pointer (dag, target_name, target_nsid);
-		}
-	}
-	xmmsc_coll_operand_list_restore (coll);
-
-	/* Append reference operator */
-	if (op != NULL) {
-		xmms_collection_append_to_query (dag, op, query);
-
-	/* Cannot find reference, append dummy TRUE */
-	} else {
-		query_append_string (query, "1");
-	}
-}
-
-static void
-query_append_intersect_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *coll)
-{
-	xmmsc_coll_t *op;
-
-	xmmsc_coll_operand_list_save (coll);
-	xmmsc_coll_operand_list_first (coll);
-	if (xmmsc_coll_operand_list_entry (coll, &op)) {
-		if (!operator_is_allmedia (op)) {
-			query_append_string (query, " AND ");
-			xmms_collection_append_to_query (dag, op, query);
-		}
-	}
-	xmmsc_coll_operand_list_restore (coll);
-}
-
-/* Append a filtering clause on the field value, depending on the operator type. */
-static void
-query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
-                     gchar *key, gchar *value, gboolean case_sens)
-{
-	guint id;
-	gboolean optional;
-
-	if (type == XMMS_COLLECTION_TYPE_HAS) {
-		optional = TRUE;
-	} else {
-		optional = FALSE;
-	}
-
-	id = query_make_alias (query, key, optional);
-
-	switch (type) {
-	/* escape strings */
-	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_CONTAINS:
-		if (case_sens) {
-			g_string_append_printf (query->conditions, "m%u.value", id);
-		} else {
-			g_string_append_printf (query->conditions, "LOWER(m%u.value)", id);
-		}
-
-		if (type == XMMS_COLLECTION_TYPE_MATCH) {
-			query_append_string (query, "=");
-		} else {
-			query_append_string (query, " LIKE ");
-		}
-
-		if (case_sens) {
-			query_append_protect_string (query, value);
-		} else {
-			query_append_string (query, "LOWER(");
-			query_append_protect_string (query, value);
-			query_append_string (query, ")");
-		}
-		break;
-
-	/* do not escape numerical values */
-	case XMMS_COLLECTION_TYPE_SMALLER:
-	case XMMS_COLLECTION_TYPE_GREATER:
-		g_string_append_printf (query->conditions, "m%u.value", id);
-		if (type == XMMS_COLLECTION_TYPE_SMALLER) {
-			query_append_string (query, " < ");
-		} else {
-			query_append_string (query, " > ");
-		}
-		query_append_string (query, value);
-		break;
-
-	case XMMS_COLLECTION_TYPE_HAS:
-		g_string_append_printf (query->conditions, "m%u.value is not null", id);
-		break;
-
-	/* Called with invalid type? */
-	default:
-		g_assert_not_reached ();
-		break;
-	}
-}
-
-/* Recursively append conditions corresponding to the given collection to the query. */
-static void
-xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_t *query)
-{
-	gint i;
-	xmmsc_coll_t *op;
-	guint *idlist;
-	gchar *attr1, *attr2, *attr3;
-	gboolean case_sens;
-
-	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
-	switch (type) {
-	case XMMS_COLLECTION_TYPE_REFERENCE:
-		if (!operator_is_allmedia (coll)) {
-			query_append_operand (query, dag, coll);
-		} else {
-			/* FIXME: Hackish solution to append a ref to All Media */
-			query_append_string (query, "1");
-		}
-		break;
-
-	case XMMS_COLLECTION_TYPE_UNION:
-	case XMMS_COLLECTION_TYPE_INTERSECTION:
-		i = 0;
-		query_append_string (query, "(");
-
-		xmmsc_coll_operand_list_save (coll);
-		xmmsc_coll_operand_list_first (coll);
-		while (xmmsc_coll_operand_list_entry (coll, &op)) {
-			if (i != 0) {
-				if (type == XMMS_COLLECTION_TYPE_UNION)
-					query_append_string (query, " OR ");
-				else
-					query_append_string (query, " AND ");
-			} else {
-				i = 1;
-			}
-			xmms_collection_append_to_query (dag, op, query);
-			xmmsc_coll_operand_list_next (coll);
-		}
-		xmmsc_coll_operand_list_restore (coll);
-
-		query_append_string (query, ")");
-		break;
-
-	case XMMS_COLLECTION_TYPE_COMPLEMENT:
-		query_append_string (query, "NOT ");
-		query_append_operand (query, dag, coll);
-		break;
-
-	case XMMS_COLLECTION_TYPE_HAS:
-	case XMMS_COLLECTION_TYPE_MATCH:
-	case XMMS_COLLECTION_TYPE_CONTAINS:
-	case XMMS_COLLECTION_TYPE_SMALLER:
-	case XMMS_COLLECTION_TYPE_GREATER:
-		xmmsc_coll_attribute_get (coll, "field", &attr1);
-		xmmsc_coll_attribute_get (coll, "value", &attr2);
-		xmmsc_coll_attribute_get (coll, "case-sensitive", &attr3);
-		case_sens = (attr3 != NULL && strcmp (attr3, "true") == 0);
-
-		query_append_string (query, "(");
-		query_append_filter (query, type, attr1, attr2, case_sens);
-
-		query_append_intersect_operand (query, dag, coll);
-		query_append_string (query, ")");
-		break;
-	
-	case XMMS_COLLECTION_TYPE_IDLIST:
-	case XMMS_COLLECTION_TYPE_QUEUE:
-	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
-		idlist = xmmsc_coll_get_idlist (coll);
-		query_append_string (query, "m0.id IN (");
-		for (i = 0; idlist[i] != 0; ++i) {
-			if (i != 0) {
-				query_append_string (query, ",");
-			}
-			query_append_uint (query, idlist[i]);
-		}
-		query_append_string (query, ")");
-		break;
-
-	/* invalid type */
-	default:
-		XMMS_DBG("Cannot append invalid collection operator!");
-		g_assert_not_reached ();
-		break;
-	}
-
-}
-
-/* Append SELECT joins to the argument string for each alias of the hashtable. */
-static void
-query_string_append_joins (gpointer key, gpointer val, gpointer udata)
-{
-	gchar *field;
-	GString *qstring;
-	coll_query_alias_t *alias;
-
-	field = key;
-	qstring = (GString*)udata;
-	alias = (coll_query_alias_t*)val;
-
-	if (alias->id > 0) {
-		if (alias->optional) {
-			g_string_append_printf (qstring, " LEFT");
-		}
-
-		g_string_append_printf (qstring,
-		                        " JOIN Media as m%u ON m0.id=m%u.id"
-		                        " AND m%u.key='%s'",
-		                        alias->id, alias->id, alias->id, field);
-	}
-}
-
-/* Given a list of fields, append the corresponding aliases to the argument string. */
-static void
-query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields)
-{
-	GList *n;
-	gboolean first = TRUE;
-
-	for (n = fields; n; n = n->next) {
-		coll_query_alias_t *alias;
-		gchar *field = n->data;
-		gchar *canon_field = canonical_field_name (field);
-
-		if (first) first = FALSE;
-		else {
-			g_string_append (qstring, ", ");
-		}
-
-		if (canon_field != NULL) {
-			alias = g_hash_table_lookup (query->aliases, canon_field);
-			if (alias != NULL) {
-				g_string_append_printf (qstring, "m%u.value", alias->id);
-			}
-		}
-
-		/* special prefix for ordering */
-		if (*field == '-') {
-			g_string_append (qstring, " DESC");
-		} else if (*field == '~') {
-			/* FIXME: Temporary hack to allow custom ordering functions */
-			g_string_append (qstring, field + 1);
-		}
-	}
-}
-
-static void
-query_string_append_fetch (coll_query_t *query, GString *qstring)
-{
-	GList *n;
-	guint id;
-
-	for (n = query->params->fetch; n; n = n->next) {
-		id = query_make_alias (query, n->data, TRUE);
-		g_string_append_printf (qstring, ", m%u.value AS %s", id, (gchar*)n->data);
-	}
-
-}
-
-/* Generate a query string from a query structure. */
-static GString*
-xmms_collection_gen_query (coll_query_t *query)
-{
-	GString *qstring;
-
-	/* If no alias base yet (m0), select the 'url' property as base */
-	if (query->alias_base == NULL) {
-		query_make_alias (query, "url", FALSE);
-	}
-
-	/* Append select and joins */
-	qstring = g_string_new ("SELECT DISTINCT m0.id");
-	query_string_append_fetch (query, qstring);
-	g_string_append (qstring, " FROM Media as m0");
-	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
-
-	/* Append conditions */
-	g_string_append_printf (qstring, " WHERE m0.key='%s'", query->alias_base);
-	if (query->conditions->len > 0) {
-		g_string_append_printf (qstring, " AND %s", query->conditions->str);
-	}
-
-	/* Append grouping */
-	if (query->params->group != NULL) {
-		g_string_append (qstring, " GROUP BY ");
-		query_string_append_alias_list (query, qstring, query->params->group);
-	}
-
-	/* Append ordering */
-	/* FIXME: Ordering is Teh Broken (source?) */
-	if (query->params->order != NULL) {
-		g_string_append (qstring, " ORDER BY ");
-		query_string_append_alias_list (query, qstring, query->params->order);
-	}
-
-	/* Append limit */
-	if (query->params->limit_len != 0) {
-		if (query->params->limit_start ) {
-			g_string_append_printf (qstring, " LIMIT %u,%u",
-			                        query->params->limit_start,
-			                        query->params->limit_len);
-		} else {
-			g_string_append_printf (qstring, " LIMIT %u",
-			                        query->params->limit_len);
-		}
-	}
-
-	return qstring;
-}
-
-/* Generate a query string from a collection and query parameters. */
-static GString*
-xmms_collection_get_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_query_params_t* params)
-{
-	GString *qstring;
-	coll_query_t *query;
-
-	query = init_query (params);
-
-	xmms_collection_append_to_query (dag, coll, query);
-	qstring = xmms_collection_gen_query (query);
-
-	/* free the query struct */
-	g_hash_table_destroy (query->aliases);
-	g_string_free (query->conditions, TRUE);
-	g_free (query);
-
-	return qstring;
 }

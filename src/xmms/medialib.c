@@ -197,7 +197,8 @@ xmms_medialib_session_new (const char *file, int line)
 		xmms_medialib_entry_t entry;
 		xmms_error_t error;
 		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg", &error);
-		xmms_playlist_add_entry (medialib->playlist, "_active", entry, NULL); /* FIXME: Does not exist yet! */
+		/* FIXME: There is no active playlist yet! */
+		/* xmms_playlist_add_entry (medialib->playlist, "_active", entry, NULL); */
 	}
 	return session;
 }

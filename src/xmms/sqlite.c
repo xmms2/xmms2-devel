@@ -28,6 +28,7 @@
 #include "xmmspriv/xmms_statfs.h"
 
 #include <sqlite3.h>
+#include <string.h>
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
@@ -57,11 +58,12 @@ const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
-                              "create index playlist_idx on Playlist (name);"
-                              "create unique index collectionconnections_idx on CollectionConnections (from_id, to_id);"
-                              "create unique index collectionattributes_idx on CollectionAttributes (collid, key);"
-                              "create unique index collectionidlists_idx on CollectionIdlists (collid, position);"
-                              "create unique index collectionlabels_idx on CollectionLabels (collid);";
+                              "create index playlist_idx on Playlist (name);";
+
+const char create_collidx_stm[] = "create unique index collectionconnections_idx on CollectionConnections (from_id, to_id);"
+                                  "create unique index collectionattributes_idx on CollectionAttributes (collid, key);"
+                                  "create unique index collectionidlists_idx on CollectionIdlists (collid, position);"
+                                  "create unique index collectionlabels_idx on CollectionLabels (collid);";
 
 /**
  * @defgroup SQLite SQLite
@@ -122,6 +124,22 @@ upgrade_v27_to_v28 (sqlite3 *sql)
 }
 
 
+static void
+upgrade_v28_to_v29 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v27->v28");
+
+	sqlite3_exec (sql, create_CollectionAttributes_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionConnections_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionIdlists_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionLabels_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionOperators_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_collidx_stm, NULL, NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
@@ -132,6 +150,8 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v26_to_v27 (sql);
 		case 27:
 			upgrade_v27_to_v28 (sql);
+		case 28:
+			upgrade_v28_to_v29 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
@@ -251,7 +271,13 @@ xmms_sqlite_open (gboolean *create)
 		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
 		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionAttributes_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionConnections_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionIdlists_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionLabels_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionOperators_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_collidx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
 	} 
 
@@ -463,6 +489,41 @@ xmms_sqlite_print_version (void)
 	printf (" Using sqlite version %d (compiled against "
 		XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
 		sqlite3_libversion_number());
+}
+
+/* Return an escaped string */
+gchar *
+sqlite_prepare_string (const gchar *input) {
+	gchar *output;
+	gint outsize, nquotes = 0;
+	gint i, o;
+
+	for (i = 0; input[i] != '\0'; i++) {
+		if (input[i] == '\'') {
+			nquotes++;
+		}
+	}
+
+	/* 2 quotes to terminate the string , and one \0 in the end */
+	outsize = strlen(input) + nquotes + 2 + 1;
+	output = g_new (gchar, outsize);
+
+	if (output == NULL) {
+		return NULL;
+	}
+
+	i = o = 0;
+	output[o++] = '\'';
+	while (input[i] != '\0') {
+		output[o++] = input[i];
+		if (input[i++] == '\'') {
+			output[o++] = '\'';
+		}
+	}
+	output[o++] = '\'';
+	output[o] = '\0';
+
+	return output;
 }
 
 /** @} */

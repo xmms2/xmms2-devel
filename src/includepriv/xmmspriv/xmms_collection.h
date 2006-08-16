@@ -46,6 +46,8 @@ typedef struct xmms_coll_dag_St xmms_coll_dag_t;
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_medialib.h"
 
+typedef void (*FuncApplyToColl)(xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
+
 
 /*
  * Public functions
@@ -63,16 +65,26 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name, gchar *
 GList * xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, guint lim_start, guint lim_len, GList *order, xmms_error_t *err);
 GList * xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, guint lim_start, guint lim_len, GList *order, GList *fetch, GList *group, xmms_error_t *err);
 
+void xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f, void *udata);
+void xmms_collection_apply_to_all_collections (xmms_coll_dag_t *dag, FuncApplyToColl f, void *udata);
+void xmms_collection_apply_to_collection (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, FuncApplyToColl f, void *udata);
+
 xmmsc_coll_t * xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint namespace);
 void xmms_collection_update_pointer (xmms_coll_dag_t *dag, gchar *name, guint nsid, xmmsc_coll_t *newtarget);
 gchar * xmms_collection_find_alias (xmms_coll_dag_t *dag, guint nsid, xmmsc_coll_t *value, gchar *key);
 xmms_medialib_entry_t xmms_collection_get_random_media (xmms_coll_dag_t *dag, xmmsc_coll_t *source);
+void xmms_collection_dag_replace (xmms_coll_dag_t *dag, xmms_collection_namespace_id_t nsid, gchar *key, xmmsc_coll_t *newcoll);
+
+xmms_collection_namespace_id_t xmms_collection_get_namespace_id (gchar *namespace);
+gchar* xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
 
 gboolean xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, guint *val);
 gboolean xmms_collection_set_int_attr (xmmsc_coll_t *coll, gchar *attrname, gint newval);
 
 GHashTable * xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, gchar *plname, gchar *namespace);
 void xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict);
+
+void bind_all_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata);
 
 #define XMMS_COLLECTION_PLAYLIST_CHANGED_MSG(dag, name) xmms_collection_changed_msg_send (dag, xmms_collection_changed_msg_new (XMMS_COLLECTION_CHANGED_UPDATE, name, XMMS_COLLECTION_NS_PLAYLISTS))
 
