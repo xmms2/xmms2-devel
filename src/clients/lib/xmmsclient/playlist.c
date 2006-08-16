@@ -104,7 +104,7 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char **p
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
 	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_string (msg, *properties); /* FIXME: stringlist ? */
+	xmms_ipc_msg_put_string_list (msg, properties);
 
 	return xmmsc_send_msg (c, msg);
 }
