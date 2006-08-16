@@ -87,7 +87,7 @@ xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playlist)
 }
 
 /**
- * Sorts the playlist according to the property
+ * Sorts the playlist according to the list of properties (NULL-terminated).
  */
 xmmsc_result_t *
 xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char **properties)
