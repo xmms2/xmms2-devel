@@ -339,8 +339,7 @@ xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmm
 		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 			retval = xmms_collection_unreference (dag, name, i) || retval;
 		}
-	}
-	else {
+	} else {
 		retval = xmms_collection_unreference (dag, name, nsid);
 	}
 
@@ -377,8 +376,7 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return FALSE;
-	}
-	else if (nsid == XMMS_COLLECTION_NSID_ALL) {
+	} else if (nsid == XMMS_COLLECTION_NSID_ALL) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "cannot save collection in all namespaces");
 		return FALSE;
 	}
@@ -416,9 +414,9 @@ xmms_collection_save (xmms_coll_dag_t *dag, gchar *name, gchar *namespace,
 			                             newkey,
 			                             namespace);
 		}
-	}
+
 	/* Save new collection in the table */
-	else {
+	} else {
 		newkey = g_strdup (name);
 		g_hash_table_replace (dag->collrefs[nsid], newkey, coll);
 		xmmsc_coll_ref (coll);
@@ -472,9 +470,9 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
 	/* Not found! */
 	if(coll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
-	}
+
 	/* New reference, will be freed after being put in the return message */
-	else {
+	} else {
 		xmmsc_coll_ref (coll);
 	}
 	
@@ -562,8 +560,7 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
 		coll = xmms_collection_get_pointer (dag, open_name, nsid);
 		if (xmms_collection_media_match (dag, mediainfo, coll, nsid, match_table)) {
 			*match = XMMS_COLLECTION_FIND_STATE_MATCH;
-		}
-		else {
+		} else {
 			*match = XMMS_COLLECTION_FIND_STATE_NOMATCH;
 		}
 		g_hash_table_replace (match_table, g_strdup (open_name), match);
@@ -598,8 +595,7 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 	if (nsid == XMMS_COLLECTION_NSID_INVALID) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid collection namespace");
 		return FALSE;
-	}
-	else if (nsid == XMMS_COLLECTION_NSID_ALL) {
+	} else if (nsid == XMMS_COLLECTION_NSID_ALL) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "cannot rename collection in all namespaces");
 		return FALSE;
 	}
@@ -613,13 +609,13 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
 	if (from_coll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such collection");
 		retval = FALSE;
-	}
-	else if (to_coll != NULL) {
+
+	} else if (to_coll != NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "a collection already exists with the target name");
 		retval = FALSE;
-	}
+
 	/* Update collection name everywhere */
-	else {
+	} else {
 		GHashTable *dict;
 
 		/* insert new pair in hashtable */
@@ -765,8 +761,7 @@ xmms_collection_get_pointer (xmms_coll_dag_t *dag, gchar *collname, guint nsid)
 		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES && coll == NULL; ++i) {
 			coll = g_hash_table_lookup (dag->collrefs[i], collname);
 		}
-	}
-	else {
+	} else {
 		coll = g_hash_table_lookup (dag->collrefs[nsid], collname);
 	}
 
@@ -1167,14 +1162,11 @@ xmms_collection_get_namespace_id (gchar *namespace)
 
 	if (strcmp (namespace, XMMS_COLLECTION_NS_ALL) == 0) {
 		nsid = XMMS_COLLECTION_NSID_ALL;
-	}
-	else if (strcmp (namespace, XMMS_COLLECTION_NS_COLLECTIONS) == 0) {
+	} else if (strcmp (namespace, XMMS_COLLECTION_NS_COLLECTIONS) == 0) {
 		nsid = XMMS_COLLECTION_NSID_COLLECTIONS;
-	}
-	else if (strcmp (namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
+	} else if (strcmp (namespace, XMMS_COLLECTION_NS_PLAYLISTS) == 0) {
 		nsid = XMMS_COLLECTION_NSID_PLAYLISTS;
-	}
-	else {
+	} else {
 		nsid = XMMS_COLLECTION_NSID_INVALID;
 	}
 
@@ -1247,8 +1239,7 @@ xmms_collection_foreach_in_namespace (xmms_coll_dag_t *dag, guint nsid, GHFunc f
 		for (i = 0; i < XMMS_COLLECTION_NUM_NAMESPACES; ++i) {
 			g_hash_table_foreach (dag->collrefs[i], f, udata);
 		}
-	}
-	else if (nsid != XMMS_COLLECTION_NSID_INVALID) {
+	} else if (nsid != XMMS_COLLECTION_NSID_INVALID) {
 		g_hash_table_foreach (dag->collrefs[nsid], f, udata);
 	}
 }
@@ -1502,8 +1493,7 @@ check_for_reference (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *par
 		if (strcmp (check->target_name, target_name) == 0 &&
 		    strcmp (check->target_namespace, target_namespace) == 0) {
 			check->found = TRUE;
-		}
-		else {
+		} else {
 			xmmsc_coll_t *op;
 			xmmsc_coll_operand_list_save (coll);
 			xmmsc_coll_operand_list_first (coll);
@@ -1894,8 +1884,7 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		if (xmmsc_coll_attribute_get (coll, "reference", &attr1)) {
 			if (strcmp (attr1, "All Media") == 0) {
 				match = TRUE;
-			}
-			else if (xmmsc_coll_attribute_get (coll, "namespace", &attr2)) {
+			} else if (xmmsc_coll_attribute_get (coll, "namespace", &attr2)) {
 				match = xmms_collection_media_match_reference (dag, mediainfo,
 				                                               coll, nsid,
 				                                               match_table,
@@ -2023,19 +2012,18 @@ xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediain
 
 			if (match) {
 				*matchstate = XMMS_COLLECTION_FIND_STATE_MATCH;
-			}
-			else {
+			} else {
 				*matchstate = XMMS_COLLECTION_FIND_STATE_NOMATCH;
 			}
 						
 			g_hash_table_replace (match_table, g_strdup (refname), matchstate);
-		}
-		else {
+
+		} else {
 			match = (*matchstate == XMMS_COLLECTION_FIND_STATE_MATCH);
 		}
-	}
+
 	/* In another NS, just check if it matches */
-	else {
+	} else {
 		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
 		                                             nsid, match_table);
 	}
@@ -2245,8 +2233,7 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 
 		if (case_sens) {
 			match = (strcmp (mediaval, opval) == 0);
-		}
-		else {
+		} else {
 			match = (g_ascii_strcasecmp (mediaval, opval) == 0);
 		}
 	}
@@ -2279,8 +2266,7 @@ xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediain
 		/* Prepare values */
 		if (case_sens) {
 			mediaval = g_strdup (mediaval);
-		}
-		else {
+		} else {
 			opval = g_utf8_strdown (opval, strlen (opval));
 			mediaval = g_utf8_strdown (mediaval, strlen (mediaval));
 		}
@@ -2384,16 +2370,15 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 		if (query->alias_base == NULL && !optional) {  /* Found a base */
 			alias->id = 0;
 			query->alias_base = fieldkey;
-		}
-		else {
+		} else {
 			alias->id = query->alias_count;
 			query->alias_count++;
 		}
 
 		g_hash_table_insert (query->aliases, fieldkey, alias);
-	}
+
 	/* If was not optional but now is, update */
-	else if (!alias->optional && optional) {
+	} else if (!alias->optional && optional) {
 		alias->optional = optional;
 	}
 
@@ -2405,8 +2390,7 @@ static gchar *
 canonical_field_name (gchar *field) {
 	if (*field == '-') {
 		field++;
-	}
-	else if (*field == '~') {
+	} else if (*field == '~') {
 		field = NULL;
 	}
 	return field;
@@ -2538,9 +2522,9 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *c
 	/* Append reference operator */
 	if (op != NULL) {
 		xmms_collection_append_to_query (dag, op, query);
-	}
+
 	/* Cannot find reference, append dummy TRUE */
-	else {
+	} else {
 		query_append_string (query, "1");
 	}
 }
@@ -2571,8 +2555,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 
 	if (type == XMMS_COLLECTION_TYPE_HAS) {
 		optional = TRUE;
-	}
-	else {
+	} else {
 		optional = FALSE;
 	}
 
@@ -2584,22 +2567,19 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 	case XMMS_COLLECTION_TYPE_CONTAINS:
 		if (case_sens) {
 			g_string_append_printf (query->conditions, "m%u.value", id);
-		}
-		else {
+		} else {
 			g_string_append_printf (query->conditions, "LOWER(m%u.value)", id);
 		}
 
 		if (type == XMMS_COLLECTION_TYPE_MATCH) {
 			query_append_string (query, "=");
-		}
-		else {
+		} else {
 			query_append_string (query, " LIKE ");
 		}
 
 		if (case_sens) {
 			query_append_protect_string (query, value);
-		}
-		else {
+		} else {
 			query_append_string (query, "LOWER(");
 			query_append_protect_string (query, value);
 			query_append_string (query, ")");
@@ -2612,8 +2592,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 		g_string_append_printf (query->conditions, "m%u.value", id);
 		if (type == XMMS_COLLECTION_TYPE_SMALLER) {
 			query_append_string (query, " < ");
-		}
-		else {
+		} else {
 			query_append_string (query, " > ");
 		}
 		query_append_string (query, value);
@@ -2645,8 +2624,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 	case XMMS_COLLECTION_TYPE_REFERENCE:
 		if (!operator_is_allmedia (coll)) {
 			query_append_operand (query, dag, coll);
-		}
-		else {
+		} else {
 			/* FIXME: Hackish solution to append a ref to All Media */
 			query_append_string (query, "1");
 		}
@@ -2665,8 +2643,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, coll_
 					query_append_string (query, " OR ");
 				else
 					query_append_string (query, " AND ");
-			}
-			else {
+			} else {
 				i = 1;
 			}
 			xmms_collection_append_to_query (dag, op, query);
@@ -2773,9 +2750,8 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 		/* special prefix for ordering */
 		if (*field == '-') {
 			g_string_append (qstring, " DESC");
-		}
-		/* FIXME: Temporary hack to allow custom ordering functions */
-		else if (*field == '~') {
+		} else if (*field == '~') {
+			/* FIXME: Temporary hack to allow custom ordering functions */
 			g_string_append (qstring, field + 1);
 		}
 	}
@@ -2836,8 +2812,7 @@ xmms_collection_gen_query (coll_query_t *query)
 			g_string_append_printf (qstring, " LIMIT %u,%u",
 			                        query->params->limit_start,
 			                        query->params->limit_len);
-		}
-		else {
+		} else {
 			g_string_append_printf (qstring, " LIMIT %u",
 			                        query->params->limit_len);
 		}

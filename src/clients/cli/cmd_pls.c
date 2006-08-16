@@ -201,8 +201,7 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			playlist = argv[2];
 			arg_start = argv[4];
 		}
-	}
-	else {
+	} else {
 		arg_start = argv[3];
 	}
 
@@ -292,12 +291,10 @@ cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	
 	if (argc < 3) {
 		print_error ("Sort needs a property to sort on, %d", argc);
-	}
-	else if (argc == 3) {
+	} else if (argc == 3) {
 		playlist = NULL;
 		sortby = argv[2];
-	}
-	else {
+	} else {
 		playlist = argv[2];
 		sortby = argv[3];
 	}
@@ -347,9 +344,8 @@ cmd_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		sort[size] = strtol (argv[i], &endptr, 10);
 		if (endptr != argv[i]) {
 			size++;
-		}
-		/* First argument is the playlist name */
-		else if (i == 2) {
+		} else if (i == 2) {
+			/* First argument is the playlist name */
 			playlist = argv[i];
 		}
 	}
@@ -487,8 +483,7 @@ cmd_move (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (argc == 4) {
 		playlist = NULL;
 		arg_start = 2;
-	}
-	else {
+	} else {
 		playlist = argv[2];
 		arg_start = 3;
 	}

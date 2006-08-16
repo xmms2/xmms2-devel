@@ -110,8 +110,7 @@ find_terminal_width() {
 
 	if (!ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)) {
 		columns = ws.ws_col;
-	} 
-	else {
+	} else {
 		colstr = getenv("COLUMNS");
 		if(colstr != NULL) {
 			columns = strtol(colstr, &endptr, 10);
@@ -142,8 +141,7 @@ print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar
 
 	if (padright) {
 		print_info ("%s%s", buf, padstring);
-	}
-	else {
+	} else {
 		print_info ("%s%s", padstring, buf);
 	}
 

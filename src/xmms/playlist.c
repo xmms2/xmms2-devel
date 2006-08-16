@@ -157,8 +157,7 @@ on_playlist_updated (xmms_object_t *object, gchar *plname)
 	plcoll = xmms_playlist_get_coll (playlist, plname, NULL);
 	if (plcoll == NULL) {
 		return;
-	}
-	else {
+	} else {
 		/* Run the update function if appropriate */
 		switch (xmmsc_coll_get_type (plcoll)) {
 		case XMMS_COLLECTION_TYPE_QUEUE:
@@ -196,8 +195,7 @@ on_playlist_updated_chg (xmms_object_t *object, gconstpointer data,
 	pl_cmd_val = g_hash_table_lookup (val->retval->value.dict, "name");
 	if (pl_cmd_val != NULL) {
 		plname = pl_cmd_val->value.string;
-	}
-	else {
+	} else {
 		/* FIXME: occurs? */
 		XMMS_DBG ("PLAYLIST: updated_chg, NULL playlist!");
 		g_assert_not_reached ();
@@ -537,8 +535,7 @@ xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 		if (name == NULL) {
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "active playlist not referenced!");
 		}
-	}
-	else {
+	} else {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "no active playlist");
 	}
 
