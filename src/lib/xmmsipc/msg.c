@@ -337,10 +337,10 @@ xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[])
 	int n;
 	void *ret;
 
-	for (n = 0; strings[n] != NULL; n++) { }
+	for (n = 0; strings && strings[n] != NULL; n++) { }
 	ret = xmms_ipc_msg_put_uint32 (msg, n);
 
-	for (n = 0; strings[n] != NULL; n++) {
+	for (n = 0; strings && strings[n] != NULL; n++) {
 		ret = xmms_ipc_msg_put_string (msg, strings[n]);
 	}
 
