@@ -96,7 +96,18 @@ print_entry (const void *key, xmmsc_result_value_type_t type,
 			 const void *value, const gchar *source, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
-		print_info ("[%s] %s = %s", source, key, value);
+		if (strcmp (key, "url") == 0 && strcmp(source, "server") == 0) {
+			const gchar *tmp = xmmsc_result_decode_url ((xmmsc_result_t *)udata, value);
+			if (g_utf8_validate (value, -1, NULL)) {
+				print_info ("[%s] %s = %s", source, key, tmp);
+			} else {
+				gchar *tmp2 = g_locale_to_utf8 (tmp, -1, NULL, NULL, NULL);
+				print_info ("[%s] %s = %s", source, key, tmp2);
+				g_free (tmp2);
+			}
+		} else {
+			print_info ("[%s] %s = %s", source, key, value);
+		}
 	} else {
 		print_info ("[%s] %s = %d", source, key, XPOINTER_TO_INT (value));
 	}
