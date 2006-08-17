@@ -59,6 +59,7 @@ class Target:
 
 	def config(self, env):
 		self.globs.get("config", lambda x: None)(env)
+		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
 
 class LibraryTarget(Target):
 	def add(self, env):
