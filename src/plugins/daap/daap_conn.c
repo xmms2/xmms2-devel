@@ -39,7 +39,6 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1) {
-		perror("socket failed");
 		return NULL;
 	}
 

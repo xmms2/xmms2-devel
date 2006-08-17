@@ -239,12 +239,13 @@ xmms_daap_init (xmms_xform_t *xform)
 	get_data_from_url(data->url, &(data->host), &(data->port), &command);
 
 	if (login_data.logged_in == FALSE) {
-		login_data.request_id = 1;
 		login_data.session_id = daap_command_login(data->host, data->port,
 		                                           login_data.request_id);
-		if (login_data.session_id != 0) {
-			login_data.logged_in = TRUE;
+		if (login_data.session_id == 0) {
+			return FALSE;
 		}
+		login_data.request_id = 1;
+		login_data.logged_in = TRUE;
 	}
 
 	login_data.revision_id = daap_command_update(data->host, data->port,
@@ -254,7 +255,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	                                 login_data.session_id,
 	                                 login_data.revision_id,
 	                                 login_data.request_id);
-	if (!dbid) {
+	if (!dbid_list) {
 		return FALSE;
 	}
 
@@ -276,7 +277,8 @@ xmms_daap_init (xmms_xform_t *xform)
 	                            "application/octet-stream",
 	                            XMMS_STREAM_TYPE_END);
 
-	cc_data_free(dbid_list, TRUE);
+	g_slist_foreach(dbid_list, cc_list_item_free, NULL);
+	g_slist_free(dbid_list);
 	g_free(command);
 
 	return TRUE;

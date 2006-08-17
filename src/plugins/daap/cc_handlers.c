@@ -728,10 +728,6 @@ cc_data_t * cc_data_new()
 
 void cc_data_free(cc_data_t *fields, gboolean free_record_list)
 {
-	if (!fields) {
-		return;
-	}
-
 	if (NULL != fields->server_name) g_free(fields->server_name);
 
 	if (free_record_list) {

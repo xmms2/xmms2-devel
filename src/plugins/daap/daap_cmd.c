@@ -38,6 +38,9 @@ daap_command_login(gchar *host, gint port, guint request_id) {
 	request = g_strdup("/login");
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
+	if (!cc_data) {
+		return 0;
+	}
 	session_id = cc_data->session_id;
 
 	g_free(request);
@@ -81,7 +84,6 @@ gboolean daap_command_logout(gchar *host, gint port, guint session_id,
 {
 	GIOChannel *chan;
 	gchar *tmp, *request;
-	cc_data_t *cc_data;
 
 	chan = daap_open_connection(host, port);
 	if (!chan) {
@@ -92,8 +94,8 @@ gboolean daap_command_logout(gchar *host, gint port, guint session_id,
 	request = g_strconcat("/logout", tmp, NULL);
 	g_free(tmp);
 	
-	cc_data = daap_request_data(chan, request, host, request_id);
-	cc_data_free(cc_data, TRUE);
+	/* there is no cc_data generated, so we don't need to store it anywhere */
+	daap_request_data(chan, request, host, request_id);
 
 	g_free(request);
 	g_io_channel_shutdown(chan, TRUE, NULL);

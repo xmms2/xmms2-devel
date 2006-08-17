@@ -35,7 +35,7 @@
 #define CONTENT_LENGTH "Content-Length: "
 #define CONTENT_TYPE "Content-Type: "
 /* TODO does this work ok? */
-#define USER_AGENT "XMMS2 dev release"
+#define USER_AGENT "XMMS2 (dev release)"
 /*#define USER_AGENT "iTunes/4.6 (Windows; N)"*/
 
 GIOChannel * daap_open_connection(gchar *host, gint port);
