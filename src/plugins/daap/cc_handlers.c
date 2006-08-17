@@ -1,3 +1,19 @@
+/** @file cc_handlers.c
+ *  Functions for parsing DAAP content code data.
+ *
+ *  Copyright (C) 2006 XMMS2 Team
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ */
+
 #define _GNU_SOURCE
 #include <string.h>
 
@@ -65,7 +81,9 @@ static gint grab_data_string(gchar **container, gchar *data, gint str_len)
 	return offset;
 }
 
-static gint grab_data_version(gint16 *cont_upper, gint16 *cont_lower, gchar *data)
+static gint grab_data_version(gint16 *cont_upper,
+                              gint16 *cont_lower,
+                              gchar *data)
 {
 	gint offset = DMAP_CC_SZ;
 	
@@ -233,10 +251,12 @@ static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
 				                    DMAP_CTYPE_STRING);
 				break;
 			case CC_TO_INT('a','s','s','r'):
-				offset += grab_data(&(item_fields->sample_rate), current_data, DMAP_CTYPE_INT);
+				offset += grab_data(&(item_fields->sample_rate), current_data,
+				                    DMAP_CTYPE_INT);
 				break;
 			case CC_TO_INT('a','s','s','z'):
-				offset += grab_data(&(item_fields->song_size), current_data, DMAP_CTYPE_INT);
+				offset += grab_data(&(item_fields->song_size), current_data,
+				                    DMAP_CTYPE_INT);
 				break;
 			case CC_TO_INT('a','s','s','t'):
 				offset += grab_data(&(item_fields->song_start_time), current_data,
@@ -251,7 +271,8 @@ static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
 				                    DMAP_CTYPE_INT);
 				break;
 			case CC_TO_INT('a','s','y','r'):
-				offset += grab_data(&(item_fields->song_year), current_data, DMAP_CTYPE_SHORT);
+				offset += grab_data(&(item_fields->song_year), current_data,
+				                    DMAP_CTYPE_SHORT);
 				break;
 			case CC_TO_INT('a','s','t','n'):
 				offset += grab_data(&(item_fields->song_track_no), current_data,
@@ -466,7 +487,8 @@ static cc_data_t * cc_handler_msrv(gchar *data, gint data_len)
 				                    DMAP_CTYPE_BYTE);
 				break;	
 			case CC_TO_INT('m','s','a','s'):
-				offset += grab_data(&(fields->auth_type), current_data, DMAP_CTYPE_BYTE);
+				offset += grab_data(&(fields->auth_type), current_data,
+				                    DMAP_CTYPE_BYTE);
 				break;	
 			case CC_TO_INT('m','s','a','u'):
 				offset += grab_data(&(fields->auth_method), current_data,
@@ -477,7 +499,8 @@ static cc_data_t * cc_handler_msrv(gchar *data, gint data_len)
 				                    DMAP_CTYPE_INT);
 				break;	
 			case CC_TO_INT('m','s','d','c'):
-				offset += grab_data(&(fields->db_count), current_data, DMAP_CTYPE_INT);
+				offset += grab_data(&(fields->db_count), current_data,
+				                    DMAP_CTYPE_INT);
 				break;	
 			case CC_TO_INT('m','i','n','m'):
 				offset += grab_data(&(fields->server_name), current_data,
@@ -637,7 +660,8 @@ static cc_data_t * cc_handler_apso(gchar *data, gint data_len)
 				offset += cc_handler_mrco(fields, current_data);
 				break;	
 			case CC_TO_INT('m','l','c','l'):
-				offset += cc_handler_mlcl(fields, current_data, DMAP_BYTES_REMAINING);
+				offset += cc_handler_mlcl(fields, current_data,
+				                          DMAP_BYTES_REMAINING);
 				break;
 			default:
 				do_break = TRUE;
@@ -772,5 +796,4 @@ cc_data_t * cc_handler(gchar *data, gint data_len)
 
 	return retval;
 }
-
 

@@ -1,6 +1,7 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
+/** @file daap_md5.c
  *
  *  Implementation of DAAP (iTunes Music Sharing) hashing, parsing, connection
+ *  Slightly modified for use in XMMS2
  *
  *  Copyright (C) 2004,2005 Charles Schmidt <cschmidt2@emich.edu>
  *
@@ -24,8 +25,6 @@
 #include <string.h>
 
 #include "daap_md5.h"
-
-#define RB_DAAP_USER_AGENT "iTunes/4.6 (Windows; N)"
 
 /* hashing - based on/copied from libopendaap
  * Copyright (c) 2004 David Hammerton
@@ -54,10 +53,10 @@ typedef struct {
 * on buffers full of bytes, and then call OpenDaap_MD5Final, which will fill
 * a supplied 16-byte array with the digest.
 */
-static void 
-MD5Transform (guint32 buf[4], 
-	      guint32 const in[16], 
-	      gint version);
+static void
+MD5Transform (guint32 buf[4],
+              guint32 const in[16],
+              gint version);
 /* for some reason we still have to reverse bytes on bigendian machines
  * I don't really know why... but otherwise it fails..
  * Any MD5 gurus out there know why???
@@ -65,17 +64,17 @@ MD5Transform (guint32 buf[4],
 #if 0 //ndef WORDS_BIGENDIAN /* was: HIGHFIRST */
 #define byteReverse(buf, len)     /* Nothing */
 #else
-static void 
-byteReverse (unsigned char *buf, 
-	     unsigned longs);
+static void
+byteReverse (unsigned char *buf,
+             unsigned longs);
 
 #ifndef ASM_MD5
 /*
 * Note: this code is harmless on little-endian machines.
 */
-static void 
-byteReverse (unsigned char *buf, 
-	     unsigned longs)
+static void
+byteReverse (unsigned char *buf,
+             unsigned longs)
 {
      guint32 t;
      do {
@@ -88,9 +87,9 @@ byteReverse (unsigned char *buf,
 #endif /* ! ASM_MD5 */
 #endif /* #if 0 */
 
-static void 
-OpenDaap_MD5Init (MD5_CTX *ctx, 
-		  gint version)
+static void
+OpenDaap_MD5Init (MD5_CTX *ctx,
+                  gint version)
 {
     memset (ctx, 0, sizeof (MD5_CTX));
     ctx->buf[0] = 0x67452301;
@@ -104,10 +103,10 @@ OpenDaap_MD5Init (MD5_CTX *ctx,
     ctx->version = version;
 }
 
-static void 
-OpenDaap_MD5Update (MD5_CTX *ctx, 
-		    unsigned char const *buf, 
-		    unsigned int len)
+static void
+OpenDaap_MD5Update (MD5_CTX *ctx,
+                    unsigned char const *buf,
+                    unsigned int len)
 {
     guint32 t;
 
@@ -152,9 +151,9 @@ OpenDaap_MD5Update (MD5_CTX *ctx,
 
 }
 
-static void 
-OpenDaap_MD5Final (MD5_CTX *ctx, 
-		   unsigned char digest[16])
+static void
+OpenDaap_MD5Final (MD5_CTX *ctx,
+                   unsigned char digest[16])
 {
     unsigned count;
     unsigned char *p;
@@ -216,10 +215,10 @@ OpenDaap_MD5Final (MD5_CTX *ctx,
 * the addition of 16 longwords of new data.  OpenDaap_MD5Update blocks the
 * data and converts bytes into longwords for this routine.
 */
-static void 
-MD5Transform (guint32 buf[4], 
-	      guint32 const in[16], 
-	      gint version)
+static void
+MD5Transform (guint32 buf[4],
+              guint32 const in[16],
+              gint version)
 {
     guint32 a, b, c, d;
 
@@ -324,9 +323,9 @@ static const char hexchars[] = "0123456789ABCDEF";
 static char ac[] = "Dpqzsjhiu!3114!Bqqmf!Dpnqvufs-!Jod/"; /* +1 */
 static gboolean ac_unfudged = FALSE;
 
-static void 
-DigestToString (const unsigned char *digest, 
-		char *string)
+static void
+DigestToString (const unsigned char *digest,
+                char *string)
 {
     int i;
     for (i = 0; i < 16; i++)
@@ -337,7 +336,7 @@ DigestToString (const unsigned char *digest,
     }
 }
 
-static void 
+static void
 GenerateStatic_42 ()
 {
     MD5_CTX ctx;
@@ -459,17 +458,17 @@ static void GenerateStatic_45()
     }
 }
 
-void 
-daap_hash_generate (short version_major, 
-		       const guchar *url, 
-		       guchar hash_select, 
-		       guchar *out, 
-		       gint request_id)
+void
+daap_hash_generate (short version_major,
+                    const guchar *url,
+                    guchar hash_select,
+                    guchar *out,
+                    gint request_id)
 {
     unsigned char buf[16];
     MD5_CTX ctx;
     int i;
-    
+
     unsigned char *hashTable = (version_major == 3) ?
                       staticHash_45 : staticHash_42;
 
@@ -485,9 +484,9 @@ daap_hash_generate (short version_major,
     OpenDaap_MD5Update (&ctx, url, strlen ((const gchar*)url));
     if (ac_unfudged == FALSE) {
 	    for (i = 0; i < strlen (ac); i++) {
-		ac[i] = ac[i]-1;
+		    ac[i] = ac[i]-1;
 	    }
-    	    ac_unfudged = TRUE;
+    	ac_unfudged = TRUE;
     }
     OpenDaap_MD5Update (&ctx, (const guchar*)ac, strlen (ac));
 
@@ -505,5 +504,3 @@ daap_hash_generate (short version_major,
 
     return;
 }
-
-/* vim:noexpandtab:shiftwidth=4:set tabstop=4: */

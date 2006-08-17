@@ -1,7 +1,23 @@
+/** @file daap_xform.c
+ *  XMMS2 transform for accessing DAAP music shares.
+ *
+ *  Copyright (C) 2006 XMMS2 Team
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ */
 
-/* XXX as of the current implementation, logging in to multiple DAAP servers 
- * in the same xmms2d instance is impossible. in addition, there is no method
- * of logging out of the logged-in servers. */
+/* XXX as of the current implementation, logging in to multiple DAAP servers
+ * in the same xmms2d instance is messy at best and impossible at worst.
+ * in addition, there is no method of logging out of the servers.
+ */
 
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
@@ -20,22 +36,9 @@
  * Type definitions
  */
 
-/* TODO rethink this -- what's necessary and what's not? */
-/* url		:
- * host		:
- * command	:
- * port		:
- * request	:
- * buffer	:
- * channel	: keep
- * status	:
- */
 typedef struct {
-	gchar *url, *host, *command;
+	gchar *url, *host;
 	gint port;
-
-	gchar *request;
-	gchar *buffer;
 
 	GIOChannel *channel;
 
@@ -84,7 +87,6 @@ get_data_from_url(const gchar *url, gchar **host, gint *port, gchar **cmd)
 	host_begin += sizeof(gchar) * strlen("daap://");
 
 	cmd_begin = strstr(host_begin, "/");
-	//g_return_val_if_fail(cmd_begin != NULL, FALSE);
 
 	port_begin = strstr(host_begin, ":");
 	if ((NULL == port_begin) || (port_begin > cmd_begin)) {
@@ -128,114 +130,13 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set(xform_plugin, &methods);
 
 	xmms_xform_plugin_indata_add(xform_plugin,
-                                 XMMS_STREAM_TYPE_MIMETYPE,
-                                 "application/x-url",
-                                 XMMS_STREAM_TYPE_URL,
-                                 "daap://*",
-								 XMMS_STREAM_TYPE_END);
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/x-url",
+	                             XMMS_STREAM_TYPE_URL,
+	                             "daap://*",
+	                             XMMS_STREAM_TYPE_END);
 
 	return TRUE;
-}
-
-/*
- * Member functions
- */
-
-static gboolean
-xmms_daap_init (xmms_xform_t *xform)
-{
-	gint dbid;
-	GSList *dbid_list = NULL;
-	xmms_daap_data_t *data;
-	const gchar *url;
-
-	g_return_val_if_fail(xform != NULL, FALSE);
-
-	url = xmms_xform_indata_get_str(xform, XMMS_STREAM_TYPE_URL);
-
-	g_return_val_if_fail(url != NULL, FALSE);
-
-	data = xmms_xform_private_data_get(xform);
-
-	if (NULL == data) {
-		data = g_malloc0(sizeof(xmms_daap_data_t));
-		g_return_val_if_fail(data != NULL, FALSE);
-	}
-
-	data->url = g_strdup(url);
-	get_data_from_url(data->url, &(data->host), &(data->port), &(data->command));
-
-	if (login_data.logged_in == FALSE) {
-		login_data.request_id = 1;
-		login_data.session_id = daap_command_login(data->host, data->port,
-		                                           login_data.request_id);
-		if (login_data.session_id != 0) {
-			login_data.logged_in = TRUE;
-		}
-	}
-
-	login_data.revision_id = daap_command_update(data->host, data->port, 
-	                                             login_data.session_id,
-	                                             login_data.request_id);
-	dbid_list = daap_command_db_list(data->host, data->port, login_data.session_id,
-	                                 login_data.revision_id, login_data.request_id);
-	g_return_val_if_fail(dbid_list != NULL, FALSE);
-
-	/* XXX: see the browse function below */
-	dbid = ((cc_list_item_t *) dbid_list->data)->dbid;
-	/* want to request a stream, but don't read the data yet */
-	data->channel = daap_command_init_stream(data->host, data->port,
-	                                         login_data.session_id,
-											 login_data.revision_id,
-											 login_data.request_id, dbid,
-	                                         data->command);
-	g_return_val_if_fail(data->channel != NULL, FALSE);
-	login_data.request_id++;
-
-	xmms_xform_private_data_set(xform, data);
-
-	xmms_xform_outdata_type_add(xform,
-	                            XMMS_STREAM_TYPE_MIMETYPE,
-	                            "application/octet-stream",
-	                            XMMS_STREAM_TYPE_END);
-
-	return TRUE;
-}
-
-static void
-xmms_daap_destroy (xmms_xform_t *xform)
-{
-	xmms_daap_data_t *data;
-
-	data = xmms_xform_private_data_get(xform);
-
-	g_io_channel_shutdown(data->channel, TRUE, NULL);
-	g_io_channel_unref(data->channel);
-
-	g_free(data->url);
-	g_free(data->host);
-	g_free(data->command);
-	g_free(data);
-}
-
-static gint
-xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error)
-{
-	xmms_daap_data_t *data;
-	guint read_bytes = 0;
-	GIOStatus status;
-
-	data = xmms_xform_private_data_get(xform);
-
-	/* request is performed, header is stripped. now read the data. */
-	while (read_bytes == 0) {
-		status = g_io_channel_read_chars(data->channel, buffer, len, &read_bytes, NULL);
-		if (status == G_IO_STATUS_EOF || status == G_IO_STATUS_ERROR) {
-			break;
-		}
-	}
-	
-	return read_bytes;
 }
 
 static GList *
@@ -281,10 +182,12 @@ daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
 
 	revision_id = daap_command_update(host, port, session_id, 0);
 	dbid_list = daap_command_db_list(host, port, session_id, revision_id, 0);
-	g_return_val_if_fail(dbid_list != NULL, NULL);
+	if (!dbid_list) {
+		return NULL;
+	}
 
 	/* XXX i've never seen more than one db per server out in the wild,
-	 *     let's hope that never changes ;)
+	 *     let's hope that never changes *wink*
 	 *     just use the first db in the list */
 	db_data = (cc_list_item_t *) dbid_list->data;
 	song_list = daap_command_song_list(host, port, session_id, revision_id,
@@ -306,19 +209,129 @@ daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
 	return url_list;
 }
 
+/*
+ * Member functions
+ */
+
+static gboolean
+xmms_daap_init (xmms_xform_t *xform)
+{
+	gint dbid;
+	GSList *dbid_list = NULL;
+	xmms_daap_data_t *data;
+	gchar *command;
+	const gchar *url;
+
+	g_return_val_if_fail(xform != NULL, FALSE);
+
+	url = xmms_xform_indata_get_str(xform, XMMS_STREAM_TYPE_URL);
+
+	g_return_val_if_fail(url != NULL, FALSE);
+
+	data = xmms_xform_private_data_get(xform);
+
+	if (NULL == data) {
+		data = g_malloc0(sizeof(xmms_daap_data_t));
+		g_return_val_if_fail(data != NULL, FALSE);
+	}
+
+	data->url = g_strdup(url);
+	get_data_from_url(data->url, &(data->host), &(data->port), &command);
+
+	if (login_data.logged_in == FALSE) {
+		login_data.request_id = 1;
+		login_data.session_id = daap_command_login(data->host, data->port,
+		                                           login_data.request_id);
+		if (login_data.session_id != 0) {
+			login_data.logged_in = TRUE;
+		}
+	}
+
+	login_data.revision_id = daap_command_update(data->host, data->port,
+	                                             login_data.session_id,
+	                                             login_data.request_id);
+	dbid_list = daap_command_db_list(data->host, data->port,
+	                                 login_data.session_id,
+	                                 login_data.revision_id,
+	                                 login_data.request_id);
+	if (!dbid) {
+		return FALSE;
+	}
+
+	/* XXX: see XXX in the browse function above */
+	dbid = ((cc_list_item_t *) dbid_list->data)->dbid;
+	/* want to request a stream, but don't read the data yet */
+	data->channel = daap_command_init_stream(data->host, data->port,
+	                                         login_data.session_id,
+	                                         login_data.revision_id,
+	                                         login_data.request_id, dbid,
+	                                         command);
+	g_return_val_if_fail(data->channel != NULL, FALSE);
+	login_data.request_id++;
+
+	xmms_xform_private_data_set(xform, data);
+
+	xmms_xform_outdata_type_add(xform,
+	                            XMMS_STREAM_TYPE_MIMETYPE,
+	                            "application/octet-stream",
+	                            XMMS_STREAM_TYPE_END);
+
+	cc_data_free(dbid_list, TRUE);
+	g_free(command);
+
+	return TRUE;
+}
+
+static void
+xmms_daap_destroy (xmms_xform_t *xform)
+{
+	xmms_daap_data_t *data;
+
+	data = xmms_xform_private_data_get(xform);
+
+	g_io_channel_shutdown(data->channel, TRUE, NULL);
+	g_io_channel_unref(data->channel);
+
+	g_free(data->url);
+	g_free(data->host);
+	g_free(data);
+}
+
+static gint
+xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error)
+{
+	xmms_daap_data_t *data;
+	guint read_bytes = 0;
+	GIOStatus status;
+
+	data = xmms_xform_private_data_get(xform);
+
+	/* request is performed, header is stripped. now read the data. */
+	while (read_bytes == 0) {
+		status = g_io_channel_read_chars(data->channel, buffer, len, &read_bytes, NULL);
+		if (status == G_IO_STATUS_EOF || status == G_IO_STATUS_ERROR) {
+			break;
+		}
+	}
+	
+	return read_bytes;
+}
+
 static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
                                  xmms_error_t *error)
 {
 	gboolean ok;
 	GSList *server_list, *sl;
 	GList *url_list = NULL;
-	gchar *host; 
+	gchar *host;
 	guint port;
 	daap_mdns_server_t *mdns_serv;
 
 	daap_mdns_initialize();
 
-	g_return_val_if_fail(get_data_from_url(url, &host, &port, NULL), NULL);
+	if (! get_data_from_url(url, &host, &port, NULL)) {
+		return NULL;
+	}
 
 	mdns_serv = g_malloc0(sizeof(daap_mdns_server_t));
 
@@ -326,13 +339,15 @@ static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 	mdns_serv->port = port;
 
 	url_list = daap_get_urls_from_server(mdns_serv, url_list);
+	/* after this point, mdns_serv is used only as a reference; the actual
+	 * data is no longer needed. */
+	g_free(mdns_serv);
 
-	/* if url_list is empty, either the server has no songs (unlikely),
-	 * or communication with the server failed, probably due to a
+	/* if url_list is empty, either the server specified by host has no songs
+	 * (unlikely), or communication with the server failed, probably due to a
 	 * nonexistant or bogus IP. at any rate, resort to mdns discovery
 	 * in this case; hostname resolution will be handled here. */
 	if (0 == g_list_length(url_list)) {
-		g_free(mdns_serv);
 
 		sl = daap_mdns_get_server_list();
 	
@@ -343,7 +358,7 @@ static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 			mdns_serv = server_list->data;
 	
 			if (!strcmp(mdns_serv->mdns_hostname, host)) {
-				/* TODO free existing url_list */
+				g_list_free(url_list);
 				url_list = daap_get_urls_from_server(mdns_serv, url_list);
 				break;
 			}
@@ -373,8 +388,8 @@ static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 			g_hash_table_destroy(h);
 			g_free(str);
 
-		/* TODO free sl */
 		}
+		g_slist_free(sl);
 	}
 
 	g_free(host);

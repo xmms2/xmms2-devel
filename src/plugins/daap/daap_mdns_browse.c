@@ -1,3 +1,19 @@
+/** @file daap_mdns_browse.c
+ *  Browser for DAAP servers shared via mDNS.
+ *
+ *  Copyright (C) 2006 XMMS2 Team
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ */
+
 #include "daap_mdns_browse.h"
 
 #include <glib.h>
@@ -58,10 +74,11 @@ static void daap_mdns_resolve_cb(AvahiServiceResolver *resolv,
 			server->port = port;
 
 			if (*remove) {
-				g_message("DEBUG: removing server");
+				/* FIXME if a server is removed after avahi is initialized,
+				 * Bad Things happen on browse. This is because the entry
+				 * in the list isn't _actually_ removed... */
 				g_server_list = g_slist_remove(g_server_list, server);
 			} else {
-				g_message("DEBUG: adding server");
 				g_server_list = g_slist_prepend(g_server_list, server);
 			}
 			g_free(remove);
@@ -99,23 +116,17 @@ static void daap_mdns_browse_cb(AvahiServiceBrowser *browser,
 		case AVAHI_BROWSER_NEW:
 			*b = FALSE;
 			ok = (gboolean)
-				 avahi_service_resolver_new(client, iface, proto, name, type,
+			     avahi_service_resolver_new(client, iface, proto, name, type,
 			                                domain, AVAHI_PROTO_UNSPEC, 0,
 			                                daap_mdns_resolve_cb, b);
-			if (!ok) {
-				//g_printf("failed to resolve service %s\n", name);
-			}
 			break;
 
 		case AVAHI_BROWSER_REMOVE:
 			*b = TRUE;
 			ok = (gboolean)
-				 avahi_service_resolver_new(client, iface, proto, name, type,
+			     avahi_service_resolver_new(client, iface, proto, name, type,
 			                                domain, AVAHI_PROTO_UNSPEC, 0,
 			                                daap_mdns_resolve_cb, b);
-			if (!ok) {
-				//g_printf("failed to resolve service %s\n", name);
-			}
 			break;
 
 		case AVAHI_BROWSER_CACHE_EXHAUSTED:

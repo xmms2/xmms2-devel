@@ -1,7 +1,22 @@
+/** @file daap_conn.c
+ *  Manages the connection to a DAAP server.
+ *
+ *  Copyright (C) 2006 XMMS2 Team
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -37,9 +52,8 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 	server.sin_port = htons(port);
 
 	if (connect(sockfd,
-		        (struct sockaddr *) &server,
-		        sizeof(struct sockaddr_in)) == -1) {
-		perror("connect failed");
+	            (struct sockaddr *) &server,
+	            sizeof(struct sockaddr_in)) == -1) {
 		return NULL;
 	}
 
@@ -83,7 +97,6 @@ daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id
 
 	g_sprintf(*request, "GET %s %s\r\n"
 	                   "Host: %s\r\n"
-	                   //"Cache-Control: no-cache\r\n"
 	                   "Accept: */*\r\n"
 	                   "User-Agent: %s\r\n"
 	                   "Accept-Language: en-us, en;q=5.0\r\n"
@@ -91,8 +104,6 @@ daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id
 	                   "Client-DAAP-Version: 3.0\r\n"
 	                   "Client-DAAP-Validation: %s\r\n"
 	                   "Client-DAAP-Request-ID: %d\r\n"
-	                   /* TODO: not accepting gzip yet; can't handle it */
-	                   //"Accept-Encoding: gzip\r\n"
 	                   "Connection: close\r\n"
 	                   "\r\n",
 	          path, HTTP_VER_STRING, host, USER_AGENT, hash, request_id);
@@ -163,7 +174,6 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 		}
 
 		if (io_stat == G_IO_STATUS_EOF) {
-			g_printf("debug: EOF, breaking\n");
 			break;
 		}
 
@@ -183,21 +193,6 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 	}
 }
 
-/*
-void daap_stream_data(GIOChannel *input, GIOChannel *output, gchar *header)
-{
-	gint read_bytes;
-	gchar stream_buf[BUFSIZ];
-
-	do {
-		read_bytes = read_buffer_from_channel(input, stream_buf, BUFSIZ);
-		write_buffer_to_channel(output, stream_buf, read_bytes);
-	} while (read_bytes > 0);
-
-	return request_id++;
-}
-*/
-
 cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header)
 {
 	cc_data_t * retval;
@@ -209,12 +204,10 @@ cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header)
 	if (BAD_CONTENT_LENGTH == response_length) {
 		g_printf("warning: Header does not contain a \""CONTENT_LENGTH
 		         "\" parameter.\n");
-		g_printf("DEBUG: Header is:\n%s\n", header);
 		return NULL;
 	} else if (0 == response_length) {
 		g_printf("warning: "CONTENT_LENGTH" is zero, most likely the result of "
 		         "a bad request.\n");
-		g_printf("DEBUG: Header is:\n%s\n", header);
 		return NULL;
 	}
 	
@@ -248,7 +241,7 @@ gint get_data_length(gchar *header)
 	return len;
 }
 
-gint get_server_status(gchar *header) 
+gint get_server_status(gchar *header)
 {
 	gint status;
 	gchar *server_status;

@@ -161,6 +161,10 @@ N: Jens Taprogge
 E: jlt_xmms2@shamrock.dyndns.org
 D: Debian packages. Various fixes.
 
+N: Cole Thompson
+E: cole.thompson@gmail.com
+D: DAAP xform.
+
 N: Rémi Vanicat
 E: remi.vanicat@gmail.com
 D: SQLite optimizations.
