@@ -248,14 +248,6 @@ cmd_mlib_loadall (xmmsc_connection_t *conn, gint argc, gchar **argv)
 }
 
 
-static xmmsc_coll_t *
-coll_from_args (gint argc, gchar **argv)
-{
-	/* FIXME: Code, possibly in the API itself! */
-	return NULL;
-}
-
-
 static void
 cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
@@ -263,7 +255,12 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_coll_t *query;
 	const gchar *order[] = { NULL };
 
-	query = coll_from_args (argc, argv);
+	if (argc < 4) {
+		print_error ("give a search pattern of the form "
+		             "[field1=val1 [field2=val2 ...]]");
+	}
+
+	query = pattern_to_coll (argc - 3, argv + 3);
 	if (query == NULL) {
 		print_error ("Unable to generate query");
 	}
@@ -287,7 +284,12 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	GList *n = NULL;
 	xmmsc_coll_t *query;
 
-	query = coll_from_args(argc, argv);
+	if (argc < 4) {
+		print_error ("give a search pattern of the form "
+		             "[field1=val1 [field2=val2 ...]]");
+	}
+
+	query = pattern_to_coll (argc - 3, argv + 3);
 	if (!query) {
 		print_error ("Unable to generate query");
 	}
