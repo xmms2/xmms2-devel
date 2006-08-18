@@ -1,3 +1,19 @@
+/** @file daap_cmd.c
+ *  Wrapper functions for issuing DAAP commands.
+ *
+ *  Copyright (C) 2006 XMMS2 Team
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ */
+
 #include "daap_cmd.h"
 #include "daap_conn.h"
 
@@ -15,7 +31,9 @@ daap_command_login(gchar *host, gint port, guint request_id) {
 	guint session_id;
 
 	chan = daap_open_connection(host, port);
-	g_return_val_if_fail(NULL != chan, 0);
+	if (!chan) {
+		return 0;
+	}
 
 	request = g_strdup("/login");
 	
@@ -39,7 +57,9 @@ daap_command_update(gchar *host, gint port, guint session_id, guint request_id) 
 	guint revision_id;
 
 	chan = daap_open_connection(host, port);
-	g_return_val_if_fail(NULL != chan, -1);
+	if (!chan) {
+		return 0;
+	}
 
 	tmp = g_strdup_printf("?session-id=%d", session_id);
 	request = g_strconcat("/update", tmp, NULL);
@@ -56,14 +76,17 @@ daap_command_update(gchar *host, gint port, guint session_id, guint request_id) 
 	return revision_id;
 }
 
-gboolean daap_command_logout(gchar *host, gint port, guint session_id, guint request_id)
+gboolean daap_command_logout(gchar *host, gint port, guint session_id,
+                             guint request_id)
 {
 	GIOChannel *chan;
 	gchar *tmp, *request;
 	cc_data_t *cc_data;
 
 	chan = daap_open_connection(host, port);
-	g_return_val_if_fail(NULL != chan, -1);
+	if (!chan) {
+		return FALSE;
+	}
 
 	tmp = g_strdup_printf("?session-id=%d", session_id);
 	request = g_strconcat("/logout", tmp, NULL);
@@ -89,14 +112,19 @@ GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
 	GSList * db_id_list;
 
 	chan = daap_open_connection(host, port);
-	g_return_val_if_fail(NULL != chan, NULL);
+	if (!chan) {
+		return NULL;
+	}
 
 	request = g_strdup_printf("/databases?session-id=%d&revision-id=%d",
 	                          session_id, revision_id);
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
 	g_free(request);
-	g_return_val_if_fail(NULL != cc_data, NULL);
+	if (!cc_data) {
+		return NULL;
+	}
+	/* TODO replace with a deep copy */
 	db_id_list = cc_data->record_list;
 
 	/* want to free the list manually */
@@ -117,12 +145,15 @@ GSList * daap_command_song_list(gchar *host, gint port, guint session_id,
 	GSList * song_list;
 
 	chan = daap_open_connection(host, port);
-	g_return_val_if_fail(NULL != chan, NULL);
+	if (!chan) {
+		return NULL;
+	}
 
 	request =g_strdup_printf("/databases/%d/items?session-id=%d&revision-id=%d",
 	                         db_id, session_id, revision_id);
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
+	/* TODO replace with a deep copy */
 	song_list = cc_data->record_list;
 
 	g_free(request);
@@ -143,7 +174,9 @@ GIOChannel * daap_command_init_stream(gchar *host, gint port, guint session_id,
 	gboolean ok;
 
 	chan = daap_open_connection(host, port);
-	g_return_val_if_fail(NULL != chan, NULL);
+	if (!chan) {
+		return NULL;
+	}
 
 	request = g_strdup_printf("/databases/%d/items%s"
 	                          "?session-id=%d",
@@ -152,11 +185,14 @@ GIOChannel * daap_command_init_stream(gchar *host, gint port, guint session_id,
 	ok = daap_request_stream(chan, request, host, request_id);
 	g_free(request);
 
-	g_return_val_if_fail(ok, NULL);
+	if (!ok) {
+		return NULL;
+	}
+
 	return chan;	
 }
 
-static cc_data_t * 
+static cc_data_t *
 daap_request_data(GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 {
 	guint status;
@@ -168,7 +204,9 @@ daap_request_data(GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 	g_free(request);
 
 	daap_receive_header(chan, &header);
-	g_return_val_if_fail(NULL != header, NULL);
+	if (!header) {
+		return NULL;
+	}
 
 	status = get_server_status(header);
 
@@ -201,7 +239,9 @@ daap_request_stream(GIOChannel *chan, gchar *path, gchar *host, guint request_id
 	g_free(request);
 
 	daap_receive_header(chan, &header);
-	g_return_val_if_fail(header != NULL, FALSE);
+	if (!header) {
+		return FALSE;
+	}
 
 	status = get_server_status(header);
 	if (HTTP_OK != status) {

@@ -1,3 +1,18 @@
+/** @file daap_conn.h
+ *
+ *  Copyright (C) 2006 XMMS2 Team
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ */
+
 #ifndef DAAP_CONN_H
 #define DAAP_CONN_H
 
@@ -19,11 +34,9 @@
 #define HTTP_VER_STRING "HTTP/1.1"
 #define CONTENT_LENGTH "Content-Length: "
 #define CONTENT_TYPE "Content-Type: "
-#if 0
-#define USER_AGENT "XMMS2 (dev release)"
-#else
-#define USER_AGENT "iTunes/4.6 (Windows; N)"
-#endif
+/* TODO does this work ok? */
+#define USER_AGENT "XMMS2 dev release"
+/*#define USER_AGENT "iTunes/4.6 (Windows; N)"*/
 
 GIOChannel * daap_open_connection(gchar *host, gint port);
 void

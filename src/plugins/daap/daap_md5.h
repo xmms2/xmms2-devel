@@ -1,6 +1,7 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
+/** @file daap_md5.h
  *
  *  Header for DAAP (iTunes Music Sharing) hashing, connection
+ *  Slightly modified for use in XMMS2
  *
  *  Copyright (C) 2004,2005 Charles Schmidt <cschmidt2@emich.edu>
  *
@@ -25,11 +26,11 @@
 
 #include <glib.h>
 
-void 
-daap_hash_generate (short version_major, 
-                    const guchar *url, 
-                    guchar hash_select, 
-                    guchar *out, 
+void
+daap_hash_generate (short version_major,
+                    const guchar *url,
+                    guchar hash_select,
+                    guchar *out,
                     gint request_id);
 
 #endif
