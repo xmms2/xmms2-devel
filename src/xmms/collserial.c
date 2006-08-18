@@ -118,6 +118,9 @@ xmms_collection_dag_restore (xmms_coll_dag_t *dag)
 			coll = xmms_collection_dbread_operator (session, id, type);
 			previd = id;
 		}
+		else {
+			xmmsc_coll_ref (coll);  /* New label references the coll */
+		}
 		xmms_collection_dag_replace (dag, nsid, g_strdup (label), coll);
 	}
 

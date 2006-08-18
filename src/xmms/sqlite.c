@@ -63,7 +63,7 @@ const char create_idx_stm[] = "create unique index key_idx on Media (id,key,sour
 const char create_collidx_stm[] = "create unique index collectionconnections_idx on CollectionConnections (from_id, to_id);"
                                   "create unique index collectionattributes_idx on CollectionAttributes (collid, key);"
                                   "create unique index collectionidlists_idx on CollectionIdlists (collid, position);"
-                                  "create unique index collectionlabels_idx on CollectionLabels (collid);";
+                                  "create index collectionlabels_idx on CollectionLabels (collid);";
 
 /**
  * @defgroup SQLite SQLite
