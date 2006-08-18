@@ -157,7 +157,6 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			if (!xmms_ipc_msg_get_collection_alloc (msg, &arg->values[i].value.coll)) {
 				return FALSE;
 			}
-			xmmsc_coll_ref (arg->values[i].value.coll);
 			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");

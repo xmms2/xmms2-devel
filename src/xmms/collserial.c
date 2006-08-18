@@ -164,7 +164,7 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		cmdval = (xmms_object_cmd_value_t*)n->data;
 		key = cmdval_get_dict_string (cmdval, "key");
 		value = cmdval_get_dict_string (cmdval, "value");
-		xmmsc_coll_attribute_set (coll, g_strdup (key), g_strdup (value));
+		xmmsc_coll_attribute_set (coll, key, value);
 
 		xmms_object_cmd_value_free (n->data);
 	}
@@ -203,6 +203,7 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 		op = xmms_collection_dbread_operator (session, id, type);
 		xmmsc_coll_add_operand (coll, op);
 
+		xmmsc_coll_unref (op);
 		xmms_object_cmd_value_free (n->data);
 	}
 	g_list_free (res);

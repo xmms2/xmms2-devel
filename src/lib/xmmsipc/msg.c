@@ -548,6 +548,8 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 		}
 
 		xmmsc_coll_attribute_set (*coll, key, val);
+		free (key);
+		free (val);
 	}
 
 	/* Get the idlist */
@@ -585,6 +587,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 		}
 
 		xmmsc_coll_add_operand (*coll, operand);
+		xmmsc_coll_unref (operand);
 	}
 
 	return true;

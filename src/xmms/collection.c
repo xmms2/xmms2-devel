@@ -1240,10 +1240,7 @@ xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
 {
 	xmmsc_coll_t *op;
 
-	/* First apply the function to the operator. */
-	f (dag, coll, parent, udata);
-
-	/* Then recurse into the parents (if not a reference) */
+	/* Recurse into the parents (if not a reference) */
 	if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
 		xmmsc_coll_operand_list_save (coll);
 
@@ -1255,6 +1252,9 @@ xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
 
 		xmmsc_coll_operand_list_restore (coll);
 	}
+
+	/* Apply the function to the operator. */
+	f (dag, coll, parent, udata);
 }
 
 
@@ -1364,8 +1364,6 @@ rebind_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *paren
 		}
 
 		xmmsc_coll_remove_operand (coll, infos->oldtarget);
-		xmmsc_coll_unref (infos->oldtarget);
-
 		xmmsc_coll_add_operand (coll, infos->newtarget);
 	}
 }
@@ -1420,12 +1418,9 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 
 		/* Rebind parent to ref'd coll directly, effectively strip reference */
 		xmmsc_coll_remove_operand (coll, infos->oldtarget);
-		xmmsc_coll_unref (infos->oldtarget);
 
 		if (parent != NULL) {
 			xmmsc_coll_remove_operand (parent, coll);
-			xmmsc_coll_unref (coll);
-
 			xmmsc_coll_add_operand (parent, infos->oldtarget);
 		}
 	}
