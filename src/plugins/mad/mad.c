@@ -95,6 +95,9 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	  xmms_plugin_info_add (plugin, "License", "GPL");
 	*/
 
+	xmms_xform_plugin_config_property_register (xform_plugin, "id3v1_encoding",
+	                                            "ISO8859-1", NULL, NULL);
+
 	/* xmms_xform_indata_constraint_add */
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -239,8 +242,13 @@ xmms_mad_init (xmms_xform_t *xform)
 		}
 	}
 
-	data->samplerate = frame.header.samplerate;
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
+
+	data->samplerate = frame.header.samplerate;
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->samplerate);
+
 
 	if (frame.header.flags & MAD_FLAG_PROTECTION) {
 		XMMS_DBG ("Frame has protection enabled");
@@ -283,10 +291,11 @@ xmms_mad_init (xmms_xform_t *xform)
 
 		if ((lame = xmms_xing_get_lame (data->xing))) {
 			/* FIXME: add a check for ignore_lame_headers from the medialib */
-			data->samples_to_skip = lame->encoder_delay_start;
-			data->samples_to_skip_end = lame->encoder_delay_stop;
-			data->samples_to_play = (guint64)(((guint64)xmms_xing_get_frames (data->xing) * (guint64)1152) - (guint64)lame->encoder_delay_stop);
+			data->samples_to_skip = lame->start_delay;
+			data->samples_to_skip_end = lame->end_padding;
+			data->samples_to_play = (guint64)(((guint64)xmms_xing_get_frames (data->xing) * (guint64)1152) - (guint64)lame->start_delay);
 			XMMS_DBG ("Samples to skip in the beginning: %d, total: %lld", data->samples_to_skip, data->samples_to_play);
+			/*
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
 			                             lame->audiophile_gain);
@@ -296,6 +305,7 @@ xmms_mad_init (xmms_xform_t *xform)
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
 			                             lame->radio_gain);
+										 */
 		}
 
 	} else {

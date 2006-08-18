@@ -27,6 +27,7 @@ src/plugins/faad/faad.c:
 
 src/plugins/mad/*:
         Licensed under GPL license.
+        Partially: Copyright (C) 2000-2004 Robert Leslie
 
 src/plugins/faad/mp4ff/drms*:
         Copyright (C) 2004 VideoLAN

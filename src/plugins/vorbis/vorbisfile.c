@@ -369,17 +369,19 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	ret = ov_read (&data->vorbisfile, (gchar *) buf, len,
-	               G_BYTE_ORDER == G_BIG_ENDIAN,
-	               xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16),
-				   1,
-	               &c);
+	do {
+		ret = ov_read (&data->vorbisfile, (gchar *) buf, len,
+		               G_BYTE_ORDER == G_BIG_ENDIAN,
+		               xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16),
+		               1,
+		               &c);
+	} while (ret == OV_HOLE);
 
-	if (!ret || ret < 0) {
-		return ret;
+	if (ret < 0) {
+		return -1;
 	}
 
-	if (c != data->current) {
+	if (ret && c != data->current) {
 		xmms_vorbis_read_metadata (xform, data);
 		data->current = c;
 	}
