@@ -26,6 +26,7 @@ cmds coll_commands[] = {
 	{ "find", "[mid] [namespace] - Find all collections that contain the given media", cmd_coll_find },
 	{ "get", "[collname] - Display the structure of a collection", cmd_coll_get },
 	{ "remove", "[collname] - Remove a saved collection", cmd_coll_remove },
+	{ "attr", "[collname] [attr] [val] - Get/set an attribute for a saved collection", cmd_coll_attr },
 	{ NULL, NULL, NULL },
 };
 
@@ -289,6 +290,12 @@ coll_print (xmmsc_coll_t *coll)
 	coll_dump (coll, 0);
 }
 
+static void
+coll_attr_print (const gchar *key, const gchar *val, gpointer userdata)
+{
+	print_info ("[%s] %s", (gchar*)key, (gchar*)val);
+}
+
 
 
 void
@@ -303,7 +310,7 @@ cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (!coll_read_collname (argv[3], &name, &namespace)) {
-		print_error ("usage: invalid collection name");
+		print_error ("invalid collection name");
 	}
 
 	coll = pattern_to_coll (argc - 4, argv + 4);
@@ -334,15 +341,15 @@ cmd_coll_rename (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (!coll_read_collname (argv[3], &from_name, &from_namespace)) {
-		print_error ("usage: invalid old collection name");
+		print_error ("invalid old collection name");
 	}
 
 	if (!coll_read_collname (argv[4], &to_name, &to_namespace)) {
-		print_error ("usage: invalid new collection name");
+		print_error ("invalid new collection name");
 	}
 
 	if (strcmp (from_namespace, to_namespace) != 0) {
-		print_error ("usage: cannot rename collection to a different namespace");
+		print_error ("cannot rename collection to a different namespace");
 	}
 
 	res = xmmsc_coll_rename (conn, from_name, to_name, from_namespace);
@@ -390,7 +397,7 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (!coll_read_collname (argv[3], &name, &namespace)) {
-		print_error ("usage: invalid collection name");
+		print_error ("invalid collection name");
 	}
 
 	/* allow custom ordering, if specified */
@@ -473,7 +480,7 @@ cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (!coll_read_collname (argv[3], &name, &namespace)) {
-		print_error ("usage: invalid collection name");
+		print_error ("invalid collection name");
 	}
 
 	res = xmmsc_coll_get (conn, name, namespace);
@@ -500,7 +507,7 @@ cmd_coll_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	if (!coll_read_collname (argv[3], &name, &namespace)) {
-		print_error ("usage: invalid collection name");
+		print_error ("invalid collection name");
 	}
 
 	res = xmmsc_coll_remove (conn, name, namespace);
@@ -511,3 +518,65 @@ cmd_coll_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 }
 
+
+void
+cmd_coll_attr (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *name, *namespace;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("usage: coll attr [collname] [attr] [val]");
+	}
+
+	if (!coll_read_collname (argv[3], &name, &namespace)) {
+		print_error ("invalid collection name");
+	}
+
+	res = xmmsc_coll_get (conn, name, namespace);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	} else {
+		xmmsc_coll_t *coll;
+		xmmsc_result_get_collection (res, &coll);
+
+		/* Print all attributes */
+		if (argc == 4) {
+			xmmsc_coll_attribute_foreach (coll, coll_attr_print, NULL);
+
+		/* Print the given attribute */
+		} else if (argc == 5) {
+			gchar *val;
+			if (xmmsc_coll_attribute_get (coll, argv[4], &val)) {
+				coll_attr_print (argv[4], val, NULL);
+			}
+
+		/* Set the given attribute */
+		} else {
+			xmmsc_result_t *saveres;
+			if (strlen (argv[5]) > 0) {
+				xmmsc_coll_attribute_set (coll, argv[4], argv[5]);
+			} else {
+				/* Empty value = remove */
+				xmmsc_coll_attribute_remove (coll, argv[4]);
+			}
+
+			saveres = xmmsc_coll_save (conn, coll, name, namespace);
+			xmmsc_result_wait (saveres);
+
+			if (xmmsc_result_iserror (saveres)) {
+				print_error ("Couldn't save %s in namespace %s: %s",
+				             name, namespace,
+				             xmmsc_result_get_error (saveres));
+			}
+
+			xmmsc_result_unref (saveres);
+		}
+
+		xmmsc_coll_unref (coll);
+	}
+
+	xmmsc_result_unref (res);
+}
