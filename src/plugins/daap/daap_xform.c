@@ -145,7 +145,7 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 }
 
 static GList *
-add_song_to_list(GList *url_list, cc_list_item_t *song, gchar* host)
+add_song_to_list(GList *url_list, cc_item_record_t *song, gchar* host)
 {
 	GHashTable *h = NULL;
 	gchar *songurl;
@@ -175,7 +175,7 @@ daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
 {
 	GSList *dbid_list = NULL;
 	GSList *song_list = NULL, *song_el;
-	cc_list_item_t *db_data;
+	cc_item_record_t *db_data;
 	guint session_id, revision_id;
 	gchar *host;
 	guint port;
@@ -194,7 +194,7 @@ daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
 	/* XXX i've never seen more than one db per server out in the wild,
 	 *     let's hope that never changes *wink*
 	 *     just use the first db in the list */
-	db_data = (cc_list_item_t *) dbid_list->data;
+	db_data = (cc_item_record_t *) dbid_list->data;
 	song_list = daap_command_song_list(host, port, session_id, revision_id,
 	                                   0, db_data->dbid);
 
@@ -206,9 +206,9 @@ daap_get_urls_from_server(daap_mdns_server_t *server, GList *url_list)
 	daap_command_logout(host, port, session_id, revision_id);
 
 	/* cleanup */
-	g_slist_foreach(dbid_list, (GFunc) cc_list_item_free, NULL);
+	g_slist_foreach(dbid_list, (GFunc) cc_item_record_free, NULL);
 	g_slist_free(dbid_list);
-	g_slist_foreach(song_list, (GFunc) cc_list_item_free, NULL);
+	g_slist_foreach(song_list, (GFunc) cc_item_record_free, NULL);
 	g_slist_free(song_list);
 
 	return url_list;
@@ -271,7 +271,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	}
 
 	/* XXX: see XXX in the browse function above */
-	dbid = ((cc_list_item_t *) dbid_list->data)->dbid;
+	dbid = ((cc_item_record_t *) dbid_list->data)->dbid;
 	/* want to request a stream, but don't read the data yet */
 	data->channel = daap_command_init_stream(data->host, data->port,
 	                                         login_data.session_id,
@@ -290,7 +290,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	                            "application/octet-stream",
 	                            XMMS_STREAM_TYPE_END);
 
-	g_slist_foreach(dbid_list, cc_list_item_free, NULL);
+	g_slist_foreach(dbid_list, cc_item_record_free, NULL);
 	g_slist_free(dbid_list);
 	g_free(command);
 
@@ -335,7 +335,6 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 static GList * xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
                                  xmms_error_t *error)
 {
-	gboolean ok;
 	GSList *server_list, *sl;
 	GList *url_list = NULL;
 	gchar *host;

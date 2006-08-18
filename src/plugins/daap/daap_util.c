@@ -19,6 +19,8 @@
 
 #include "daap_util.h"
 
+#include "xmms/xmms_log.h"
+
 void write_buffer_to_channel(GIOChannel *chan, gchar *buf, gint bufsize)
 {
 	guint sent_bytes, total_sent_bytes = 0;

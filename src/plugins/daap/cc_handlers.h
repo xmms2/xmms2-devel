@@ -154,11 +154,12 @@ typedef struct {
 	gint32 db_n_items;
 	gint32 db_n_playlist;
 
-} cc_list_item_t;
+} cc_item_record_t;
 
 cc_data_t * cc_data_new();
-void cc_data_free(cc_data_t *fields, gboolean free_record_list);
-void cc_list_item_free(cc_list_item_t *item);
+void cc_data_free(cc_data_t *fields);
+void cc_item_record_free(cc_item_record_t *item);
+GSList *cc_record_list_deep_copy(GSList *record_list);
 cc_data_t * cc_handler(gchar *data, gint data_len);
 
 #endif

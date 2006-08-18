@@ -29,6 +29,8 @@
 #include "daap_conn.h"
 #include "daap_util.h"
 
+#include "xmms/xmms_log.h"
+
 GIOChannel * daap_open_connection(gchar *host, gint port)
 {
 	gint sockfd;

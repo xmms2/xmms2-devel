@@ -44,7 +44,7 @@ daap_command_login(gchar *host, gint port, guint request_id) {
 	session_id = cc_data->session_id;
 
 	g_free(request);
-	cc_data_free(cc_data, TRUE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
@@ -72,7 +72,7 @@ daap_command_update(gchar *host, gint port, guint session_id, guint request_id) 
 	revision_id = cc_data->revision_id;
 
 	g_free(request);
-	cc_data_free(cc_data, TRUE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
@@ -126,11 +126,9 @@ GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
 	if (!cc_data) {
 		return NULL;
 	}
-	/* TODO replace with a deep copy */
-	db_id_list = cc_data->record_list;
+	db_id_list = cc_record_list_deep_copy(cc_data->record_list);
 
-	/* want to free the list manually */
-	cc_data_free(cc_data, FALSE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
@@ -155,12 +153,10 @@ GSList * daap_command_song_list(gchar *host, gint port, guint session_id,
 	                         db_id, session_id, revision_id);
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
-	/* TODO replace with a deep copy */
-	song_list = cc_data->record_list;
+	song_list = cc_record_list_deep_copy(cc_data->record_list);
 
 	g_free(request);
-	/* want to free the list manually */
-	cc_data_free(cc_data, FALSE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
