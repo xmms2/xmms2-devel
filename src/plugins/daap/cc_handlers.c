@@ -141,7 +141,7 @@ static gint grab_data(void *container, gchar *data, content_type ct)
 			offset += DMAP_INT_SZ;
 			break;
 		default:
-			g_printf("Warning: Unrecognized content type (%d).\n", ct);
+			XMMS_DBG ("Warning: Unrecognized content type (%d).\n", ct);
 			break;
 	}
 
@@ -338,8 +338,8 @@ static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
 				do_break = TRUE;
 				break;
 			default:
-				g_printf("Warning: Unrecognized content code "
-				         "or end of data: %s\n", current_data);
+				XMMS_DBG ("Warning: Unrecognized content code "
+				          "or end of data: %s\n", current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -507,8 +507,9 @@ static cc_data_t * cc_handler_msrv(gchar *data, gint data_len)
 				                    DMAP_CTYPE_STRING);
 				break;	
 			default:
-				g_printf("Unrecognized content code or end of data: %s\n",
-				         current_data);
+				XMMS_DBG ("Warning: Unrecognized content code "
+						  "or end of data: %s\n",
+				          current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -546,8 +547,8 @@ static cc_data_t * cc_handler_mlog(gchar *data, gint data_len)
 				offset += grab_data(&(fields->session_id), current_data, DMAP_CTYPE_INT);
 				break;
 			default:
-				g_printf("Unrecognized content code or end of data: %s\n",
-				         current_data);
+				XMMS_DBG ("Unrecognized content code or end of data: %s\n",
+				          current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -580,8 +581,8 @@ static cc_data_t * cc_handler_mupd(gchar *data, gint data_len)
 				offset += cc_handler_mstt(fields, current_data);
 				break;
 			default:
-				g_printf("Unrecognized content code or end of data: %s\n",
-				         current_data);
+				XMMS_DBG ("Unrecognized content code or end of data: %s\n",
+				          current_data);
 				do_break = TRUE;
 				break;
 		}

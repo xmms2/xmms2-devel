@@ -60,13 +60,13 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 
 	g_io_channel_set_flags(sock_chan, G_IO_FLAG_NONBLOCK, &err);
 	if (NULL != err) {
-		g_printf("Error setting nonblock flag: %s\n", err->message);
+		XMMS_DBG ("Error setting nonblock flag: %s\n", err->message);
 		return NULL;
 	}
 
 	g_io_channel_set_encoding(sock_chan, NULL, &err);
 	if (NULL != err) {
-		g_printf("Error setting encoding: %s\n", err->message);
+		XMMS_DBG ("Error setting encoding: %s\n", err->message);
 		return NULL;
 	}
 
@@ -87,8 +87,8 @@ daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id
 
 	*request = (gchar *) g_malloc0(sizeof(gchar) * MAX_REQUEST_LENGTH);
 	if (NULL == *request) {
-		g_printf("Error: couldn't allocate memory for request\n");
-		exit(1);
+		XMMS_DBG ("Error: couldn't allocate memory for request\n");
+		return;
 	}
 
 	daap_hash_generate(DAAP_VERSION, (guchar *) path, 2, (guchar *) hash,
@@ -110,7 +110,7 @@ daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id
 	
 	*request = g_realloc(*request, sizeof(gchar)*(request_len+1));
 	if (NULL == *request) {
-		g_printf("warning: realloc failed for request\n");
+		XMMS_DBG ("warning: realloc failed for request\n");
 	}
 	(*request)[request_len] = '\0';
 }
@@ -137,7 +137,7 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 
 	response = (gchar *) g_malloc0(sizeof(gchar) * MAX_HEADER_LENGTH);
 	if (NULL == response) {
-		g_printf("Error: couldn't allocate memory for response.\n");
+		XMMS_DBG ("Error: couldn't allocate memory for response.\n");
 		return;
 	}
 
@@ -147,7 +147,7 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 		io_stat = g_io_channel_read_line(sock_chan, &recv_line, &linelen,
 		                                 NULL, &err);
 		if (io_stat == G_IO_STATUS_ERROR) {
-			g_printf("Error reading from channel: %s\n", err->message);
+			XMMS_DBG ("Error reading from channel: %s\n", err->message);
 			break;
 		}
 
@@ -161,7 +161,7 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 					*header = (gchar *) g_malloc0(sizeof(gchar) *
 					                              n_total_bytes_recvd);
 					if (NULL == *header) {
-						g_printf("error: couldn't allocate header\n");
+						XMMS_DBG ("error: couldn't allocate header\n");
 						break;
 					}
 					memcpy(*header, response, n_total_bytes_recvd);
@@ -177,8 +177,8 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 		}
 
 		if (n_total_bytes_recvd >= MAX_HEADER_LENGTH) {
-			g_printf("Warning: Maximum header size reached without finding "
-			         "end of header; bailing.\n");
+			XMMS_DBG ("Warning: Maximum header size reached without finding "
+			          "end of header; bailing.\n");
 			break;
 		}
 	} while (TRUE);
@@ -187,7 +187,7 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 
 	g_io_channel_flush(sock_chan, &err);
 	if (NULL != err) {
-		g_printf("Error flushing buffer: %s\n", err->message);
+		XMMS_DBG ("Error flushing buffer: %s\n", err->message);
 		return;
 	}
 }
@@ -201,18 +201,18 @@ cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header)
 	response_length = get_data_length(header);
 	
 	if (BAD_CONTENT_LENGTH == response_length) {
-		g_printf("warning: Header does not contain a \""CONTENT_LENGTH
-		         "\" parameter.\n");
+		XMMS_DBG ("warning: Header does not contain a \""CONTENT_LENGTH
+		          "\" parameter.\n");
 		return NULL;
 	} else if (0 == response_length) {
-		g_printf("warning: "CONTENT_LENGTH" is zero, most likely the result of "
-		         "a bad request.\n");
+		XMMS_DBG ("warning: "CONTENT_LENGTH" is zero, most likely the result of "
+		          "a bad request.\n");
 		return NULL;
 	}
 	
 	response_data = (gchar *) g_malloc0(sizeof(gchar) * response_length);
 	if (NULL == response_data) {
-		g_printf("error: could not allocate response memory\n");
+		XMMS_DBG ("error: could not allocate response memory\n");
 		return NULL;
 	}
 
