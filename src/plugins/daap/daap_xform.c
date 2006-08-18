@@ -104,12 +104,17 @@ get_data_from_url(const gchar *url, gchar **host, gint *port, gchar **cmd)
 		host_len = (gint) (port_begin - host_begin);
 	}
 	*host = (gchar *) g_malloc0(host_len+1);
-	g_return_val_if_fail(*host != NULL, FALSE);
+	if (! *host) {
+		return FALSE;
+	}
 	memcpy(*host, host_begin, host_len);
 
 	if (NULL != cmd) {
 		*cmd = (gchar *) g_malloc0(sizeof(gchar) * (strlen(cmd_begin)+1));
-		g_return_val_if_fail(*cmd != NULL, FALSE);
+		if (! *cmd) {
+			g_free(*host);
+			return FALSE;
+		}
 		strncpy(*cmd, cmd_begin, sizeof(gchar) * strlen(cmd_begin));
 	}
 
@@ -222,17 +227,23 @@ xmms_daap_init (xmms_xform_t *xform)
 	gchar *command;
 	const gchar *url;
 
-	g_return_val_if_fail(xform != NULL, FALSE);
+	if (!xform) {
+		return FALSE;
+	}
 
 	url = xmms_xform_indata_get_str(xform, XMMS_STREAM_TYPE_URL);
 
-	g_return_val_if_fail(url != NULL, FALSE);
+	if (!url) {
+		return FALSE;
+	}
 
 	data = xmms_xform_private_data_get(xform);
 
 	if (NULL == data) {
 		data = g_malloc0(sizeof(xmms_daap_data_t));
-		g_return_val_if_fail(data != NULL, FALSE);
+		if (!data) {
+			return FALSE;
+		}
 	}
 
 	data->url = g_strdup(url);
@@ -267,7 +278,9 @@ xmms_daap_init (xmms_xform_t *xform)
 	                                         login_data.revision_id,
 	                                         login_data.request_id, dbid,
 	                                         command);
-	g_return_val_if_fail(data->channel != NULL, FALSE);
+	if (! data->channel) {
+		return FALSE;
+	}
 	login_data.request_id++;
 
 	xmms_xform_private_data_set(xform, data);
