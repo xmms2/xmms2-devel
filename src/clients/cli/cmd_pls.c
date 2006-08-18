@@ -394,7 +394,7 @@ cmd_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		playlist = argv[2];
 	}
 
-	res = xmmsc_playlist_current_pos (conn);
+	res = xmmsc_playlist_current_pos (conn, playlist);
 	xmmsc_result_wait (res);
 
 	if (!xmmsc_result_iserror (res)) {

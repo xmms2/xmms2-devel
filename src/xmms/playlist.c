@@ -80,7 +80,7 @@ XMMS_CMD_DEFINE3(add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NONE
 XMMS_CMD_DEFINE (clear, xmms_playlist_clear, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (sort, xmms_playlist_sort, xmms_playlist_t *, NONE, STRING, STRINGLIST);
 XMMS_CMD_DEFINE (list_entries, xmms_playlist_list_entries, xmms_playlist_t *, LIST, STRING, NONE);
-XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
+XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, STRING, NONE);
 XMMS_CMD_DEFINE (current_active, xmms_playlist_current_active, xmms_playlist_t *, STRING, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
@@ -488,7 +488,8 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
  *
  */
 guint32
-xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *err)
+xmms_playlist_current_pos (xmms_playlist_t *playlist, gchar *plname,
+                           xmms_error_t *err)
 {
 	guint32 pos;
 	xmmsc_coll_t *plcoll;
@@ -497,10 +498,11 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *err)
 	
 	g_mutex_lock (playlist->mutex);
 
-	plcoll = xmms_playlist_get_coll (playlist, "_active", err);
+	plcoll = xmms_playlist_get_coll (playlist, plname, err);
 	if (plcoll == NULL) {
 		g_mutex_unlock (playlist->mutex);
-		return -1;
+		xmms_error_set (err, XMMS_ERROR_INVAL, "no such playlist");
+		return 0;
 	}
 
 	pos = xmms_playlist_coll_get_currpos (plcoll);

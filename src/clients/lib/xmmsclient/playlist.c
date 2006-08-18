@@ -38,11 +38,21 @@
  * Retrive the current position in the playlist
  */
 xmmsc_result_t *
-xmmsc_playlist_current_pos (xmmsc_connection_t *c)
+xmmsc_playlist_current_pos (xmmsc_connection_t *c, const char *playlist)
 {
+	xmms_ipc_msg_t *msg;
+
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
