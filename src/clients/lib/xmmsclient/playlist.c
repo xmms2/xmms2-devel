@@ -249,7 +249,7 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos
  */
 xmmsc_result_t *
 xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
-                                  int pos, xmmsc_coll_t *coll, const char* order[])
+                                  int pos, xmmsc_coll_t *coll, const char **order)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -360,7 +360,7 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char
  */
 xmmsc_result_t *
 xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
-                               xmmsc_coll_t *coll, const char* order[])
+                               xmmsc_coll_t *coll, const char **order)
 {
 	xmms_ipc_msg_t *msg;
 

@@ -70,7 +70,7 @@ xmmsc_result_t *xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playl
 xmmsc_result_t *xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char *, int, const char **);
 xmmsc_result_t *xmmsc_playlist_add_url (xmmsc_connection_t *c, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, uint32_t id);
-xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist, xmmsc_coll_t *coll, const char* order[]);
+xmmsc_result_t *xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist, xmmsc_coll_t *coll, const char **order);
 xmmsc_result_t *xmmsc_playlist_remove_entry (xmmsc_connection_t *c, const char *playlist, uint32_t);
 xmmsc_result_t *xmmsc_playlist_clear (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_remove (xmmsc_connection_t *c, const char *playlist);
@@ -84,7 +84,7 @@ xmmsc_result_t *xmmsc_playlist_current_active (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos, const char *url, int numargs, const char **args);
 xmmsc_result_t *xmmsc_playlist_insert_url (xmmsc_connection_t *c, const char *playlist, int pos, const char *url);
 xmmsc_result_t *xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, uint32_t id);
-xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist, int pos, xmmsc_coll_t *coll, const char* order[]);
+xmmsc_result_t *xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist, int pos, xmmsc_coll_t *coll, const char **order);
 xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *c, const char *playlist);
 xmmsc_result_t *xmmsc_playlist_import (xmmsc_connection_t *c, const char *playlist, const char *url);
 xmmsc_result_t *xmmsc_playlist_export (xmmsc_connection_t *c, const char *playlist, const char *mime);
@@ -192,8 +192,8 @@ xmmsc_result_t* xmmsc_coll_remove (xmmsc_connection_t *conn, const char* name, x
 xmmsc_result_t* xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns);
 xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name, char* to_name, xmmsc_coll_namespace_t ns);
 
-xmmsc_result_t* xmmsc_coll_query_ids  (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], unsigned int limit_start, unsigned int limit_len);
-xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char* order[], unsigned int limit_start, unsigned int limit_len, const char* fetch[], const char* group[]);
+xmmsc_result_t* xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len);
+xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len, const char **fetch, const char **group);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c);

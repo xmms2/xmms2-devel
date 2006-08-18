@@ -198,7 +198,7 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name,
  */
 xmmsc_result_t*
 xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, 
-                      const char* order[], unsigned int limit_start,
+                      const char **order, unsigned int limit_start,
                       unsigned int limit_len)
 {
 	xmmsc_result_t *res;
@@ -234,9 +234,9 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
  */
 xmmsc_result_t*
 xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
-                        const char* order[], unsigned int limit_start,
-                        unsigned int limit_len, const char* fetch[],
-                        const char* group[])
+                        const char **order, unsigned int limit_start,
+                        unsigned int limit_len, const char **fetch,
+                        const char **group)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;

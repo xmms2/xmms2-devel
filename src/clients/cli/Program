@@ -2,6 +2,7 @@ target="xmms2"
 source=[
 	"main.c",
 	"cmd_mlib.c",
+	"cmd_coll.c",
 	"cmd_pls.c",
 	"cmd_playback.c",
 	"cmd_config.c",
