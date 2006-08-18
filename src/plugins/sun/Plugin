@@ -2,4 +2,6 @@ target="sun"
 source=["sun.c"]
 
 def config(env):
+	if env.platform == 'sunos5':
+		raise ConfigError("Sun output plugin broken on Solaris!")
 	env.checkheader(["sys/types.h", "sys/audioio.h"])

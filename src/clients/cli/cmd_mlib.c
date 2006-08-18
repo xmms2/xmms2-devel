@@ -133,7 +133,7 @@ cmd_info (xmmsc_connection_t *conn, gint argc, gchar **argv)
 				print_error ("%s", xmmsc_result_get_error (res));
 			}
 
-			xmmsc_result_propdict_foreach (res, print_entry, NULL);
+			xmmsc_result_propdict_foreach (res, print_entry, res);
 			xmmsc_result_unref (res);
 		}
 
@@ -157,7 +157,7 @@ cmd_info (xmmsc_connection_t *conn, gint argc, gchar **argv)
 			print_error ("%s", xmmsc_result_get_error (res));
 		}
 
-		xmmsc_result_propdict_foreach (res, print_entry, NULL);
+		xmmsc_result_propdict_foreach (res, print_entry, res);
 		xmmsc_result_unref (res);
 	}
 }
