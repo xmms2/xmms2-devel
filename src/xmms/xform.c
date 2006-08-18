@@ -488,6 +488,11 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 
 		res = xform->plugin->methods.read (xform, &xform->buffer[xform->buffered], READ_CHUNK, err);
 
+		if (res < -1) {
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			res = -1;
+		}
+
 		if (res == 0) {
 			xform->eos = TRUE;
 			break;
@@ -515,10 +520,6 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		return -1;
 	}
 
-	if (xform->eos) {
-		return 0;
-	}
-
 	if (xform->buffered) {
 		read = MIN (siz, xform->buffered);
 		memcpy (buf, xform->buffer, read);
@@ -530,12 +531,21 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		}
 	}
 
+	if (xform->eos) {
+		return read;
+	}
+
 	while (read < siz) {
 		gint res;
 
 		res = xform->plugin->methods.read (xform, buf + read, siz - read, err);
 		if (xform->metadata_changed)
 			xmms_xform_metadata_update (xform);
+
+		if (res < -1) {
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			res = -1;
+		}
 
 		if (res == 0) {
 			xform->eos = TRUE;
@@ -730,7 +740,9 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hi
 gboolean
 xmms_xform_iseos (xmms_xform_t *xform)
 {
-	return xform->eos;
+	if (!xform->prev)
+		return TRUE;
+	return xform->prev->eos;
 }
 
 const xmms_stream_type_t *

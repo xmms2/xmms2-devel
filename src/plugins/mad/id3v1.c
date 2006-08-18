@@ -80,7 +80,8 @@ typedef struct id3v1tag_St {
 } id3v1tag_t;
 
 static void
-xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value, int len)
+xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
+                    int len, const char *encoding)
 {
 	gsize readsize,writsize;
 	GError *err = NULL;
@@ -93,10 +94,17 @@ xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value, int
 
 	g_clear_error (&err);
 
-	tmp = g_convert (value, len, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
+	tmp = g_convert (value, len, "UTF-8", encoding, &readsize, &writsize, &err);
+	if (!tmp) {
+		/* in case of not supported encoding, we try to fallback to latin1 */
+		xmms_log_info ("Converting ID3v1 tag '%s' failed, check id3v1_encoding property!", key);
+		tmp = g_convert (value, len, "UTF-8", "ISO8859-1", &readsize, &writsize, &err);
+	}
 	if (tmp) {
 		g_strstrip (tmp);
-		xmms_xform_metadata_set_str (xform, key, tmp);
+		if (tmp[0] != '\0') {
+			xmms_xform_metadata_set_str (xform, key, tmp);
+		}
 		g_free (tmp);
 	}
 }
@@ -104,7 +112,9 @@ xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value, int
 gboolean
 xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 {
+	xmms_config_property_t *config;
 	id3v1tag_t *tag = (id3v1tag_t *) buf;
+	const char *encoding;
 	gboolean tmp;
 
 	if (strncmp (tag->tag, "TAG", 3) != 0) {
@@ -113,10 +123,18 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 
 	XMMS_DBG ("Found ID3v1 TAG!");
 
-	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, tag->artist, sizeof (tag->artist));
-	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, tag->album, sizeof (tag->album));
-	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tag->title, sizeof (tag->title));
-	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tag->year, sizeof (tag->year));
+	config = xmms_xform_config_lookup (xform, "id3v1_encoding");
+	g_return_val_if_fail (config, FALSE);
+	encoding = xmms_config_property_get_string (config);
+
+	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, tag->artist,
+	                    sizeof (tag->artist), encoding);
+	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, tag->album,
+	                    sizeof (tag->album), encoding);
+	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, tag->title,
+	                    sizeof (tag->title), encoding);
+	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tag->year,
+	                    sizeof (tag->year), encoding);
 	
 
 	if (!xmms_xform_metadata_has_val (xform,
@@ -134,7 +152,9 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	
 	if (tag->u.v1_1.__zero == 0 && tag->u.v1_1.track_number > 0) {
 		/* V1.1 */
-		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tag->u.v1_1.comment, sizeof (tag->u.v1_1.comment));
+		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
+		                    tag->u.v1_1.comment, sizeof (tag->u.v1_1.comment),
+		                    encoding);
 
 		tmp =
 			xmms_xform_metadata_has_val (xform,
@@ -145,7 +165,9 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 			                             tag->u.v1_1.track_number);
 		}
 	} else {
-		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, tag->u.v1_0.comment, sizeof (tag->u.v1_0.comment));
+		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
+		                    tag->u.v1_0.comment, sizeof (tag->u.v1_0.comment),
+		                    encoding);
 	}
 
 	return TRUE;

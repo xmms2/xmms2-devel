@@ -9,13 +9,9 @@ def config(env):
 	except ConfigError:
 		raise ConfigError("Could not find libfaad")
 
-	env.Append (CCFLAGS = '-DUSE_TAGGING')
+	env.Append(CPPDEFINES=['USE_TAGGING'])
 
 	# to use iTunes DRM change this to true
 	if False:
-		env.Append (CCFLAGS = '-DITUNES_DRM')
-		env.Append (CCFLAGS = '-DHAVE_SYS_STAT_H')
-		env.Append (CCFLAGS = '-DHAVE_ERRNO_H')
-		env.Append (CCFLAGS = '-DHAVE_LIMITS_H')
-		env.Append (CCFLAGS = '-DHAVE_STRING_H')
+		env.Append(CPPDEFINES=['ITUNES_DRM', 'HAVE_SYS_STAT_H', 'HAVE_ERRNO_H', 'HAVE_LIMITS_H', 'HAVE_STRING_H'])
 
