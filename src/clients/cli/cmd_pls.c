@@ -85,6 +85,18 @@ add_directory_to_playlist (xmmsc_connection_t *conn, gchar *playlist,
 	}
 }
 
+static gchar *
+get_playlist_type_string (xmmsc_coll_t *coll)
+{
+	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
+	switch (type) {
+	case XMMS_COLLECTION_TYPE_IDLIST:        return "list";
+	case XMMS_COLLECTION_TYPE_QUEUE:         return "queue";
+	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:  return "pshuffle";
+	default:                                 return "unknown";
+	}
+}
+
 
 void
 cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv)
@@ -544,6 +556,105 @@ cmd_playlist_create (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
+	xmmsc_result_unref (res);
+}
+
+static void
+playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *ref)
+{
+	xmmsc_result_t *psres;
+	xmmsc_coll_t *pscoll;
+	xmmsc_coll_t *op;
+	gchar *s_name, *s_namespace;
+
+	if (!coll_read_collname (ref, &s_name, &s_namespace)) {
+		print_error ("invalid source collection name");
+	}
+
+	psres = xmmsc_coll_get (conn, s_name, s_namespace);
+	xmmsc_result_wait (psres);
+
+	if (xmmsc_result_iserror (psres)) {
+		print_error ("%s", xmmsc_result_get_error (psres));
+	}
+	xmmsc_result_get_collection (psres, &pscoll);
+
+	/* Remove previous operands */
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		xmmsc_coll_remove_operand (coll, op);
+	}
+
+	xmmsc_coll_add_operand (coll, pscoll);
+}
+
+
+void
+cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *name;
+	xmmsc_coll_type_t type;
+	xmmsc_result_t *res;
+	xmmsc_coll_t *coll;
+	gint typelen;
+
+	/* Read playlist name */
+	if (argc < 3) {
+		print_error ("usage: type_playlist [playlistname] [type] [options]");
+	}
+	name = argv[2];
+
+	/* Retrieve the playlist operator */
+	res = xmmsc_coll_get (conn, name, "Playlists");
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_get_collection (res, &coll);
+
+
+	/* No type argument, simply display the current type */
+	if (argc < 4) {
+		print_info (get_playlist_type_string (coll));
+
+	/* Type argument, set the new type */
+	} else {
+		xmmsc_result_t *saveres;
+
+		typelen = strlen (argv[3]);
+		if (g_ascii_strncasecmp (argv[3], "list", typelen) == 0) {
+			type = XMMS_COLLECTION_TYPE_IDLIST;
+		} else if (g_ascii_strncasecmp (argv[3], "queue", typelen) == 0) {
+			type = XMMS_COLLECTION_TYPE_QUEUE;
+		} else if (g_ascii_strncasecmp (argv[3], "pshuffle", typelen) == 0) {
+			type = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
+
+			/* Setup operand for party shuffle ! */
+			if (argc < 5) {
+				print_error ("Give the source collection for the party shuffle");
+			}
+			playlist_setup_pshuffle (conn, coll, argv[4]);
+
+		} else {
+			print_error ("Invalid playlist type (valid types: list, queue, pshuffle)");
+		}
+
+		/* Update type and save back */
+		xmmsc_coll_set_type (coll, type);
+		saveres = xmmsc_coll_save (conn, coll, name, "Playlists");
+		xmmsc_result_wait (saveres);
+
+		if (xmmsc_result_iserror (saveres)) {
+			print_error ("Couldn't save %s : %s",
+				         name, xmmsc_result_get_error (saveres));
+		}
+
+		xmmsc_result_unref (saveres);
+	}
+
+	xmmsc_coll_unref (coll);
 	xmmsc_result_unref (res);
 }
 

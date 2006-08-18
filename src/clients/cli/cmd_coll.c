@@ -64,33 +64,6 @@ cmd_coll (xmmsc_connection_t *conn, gint argc, gchar **argv)
 }
 
 
-/** Extracts collection name and namespace from a string.
- *
- * Note that name and namespace must be freed afterwards.
- */
-static gboolean
-coll_read_collname (gchar *str, gchar **name, gchar **namespace)
-{
-	gchar **s;
-
-	s = g_strsplit (str, "/", 0);
-	g_assert (s);
-
-	if (!s[0]) {
-		g_strfreev (s);
-		return FALSE;
-	} else if (!s[1]) {
-		/* No namespace, assume default */
-		*name = s[0];
-		*namespace = g_strdup (CMD_COLL_DEFAULT_NAMESPACE);
-	} else {
-		*name = s[1];
-		*namespace = s[0];
-	}
-
-	return TRUE;
-}
-
 static void
 coll_list (xmmsc_connection_t *conn, gchar *namespace)
 {
@@ -270,6 +243,7 @@ coll_dump (xmmsc_coll_t *coll, unsigned int level)
 		break;
 
 	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+		idlist_str = coll_idlist_to_string (coll);
 		print_info ("%sParty Shuffle: %s from :", indent, idlist_str->str);
 		g_string_free (idlist_str, TRUE);
 		xmmsc_coll_operand_list_first (coll);

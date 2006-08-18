@@ -22,8 +22,6 @@
 #include <glib.h>
 #include <string.h>
 
-#define CMD_COLL_DEFAULT_NAMESPACE  "Collections"
-
 void cmd_coll (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 void cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv);
