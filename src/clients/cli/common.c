@@ -96,16 +96,37 @@ print_entry (const void *key, xmmsc_result_value_type_t type,
 			 const void *value, const gchar *source, void *udata)
 {
 	if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+		/* Ok it's a string, if it's the URL property from the
+		 * server source we need to decode it since it's
+		 * encoded in the server
+		 */
 		if (strcmp (key, "url") == 0 && strcmp(source, "server") == 0) {
+			/* First decode the URL encoding */
 			const gchar *tmp = xmmsc_result_decode_url ((xmmsc_result_t *)udata, value);
-			if (g_utf8_validate (value, -1, NULL)) {
+
+			/* Let's see if the result is valid utf-8. This must be done
+			 * since we don't know the charset of the binary string */
+			if (g_utf8_validate (tmp, -1, NULL)) {
+				/* If it's valid utf-8 we don't have any problem just
+				 * printing it to the screen
+				 */
 				print_info ("[%s] %s = %s", source, key, tmp);
 			} else {
+				/* Not valid utf-8 :-( We make a valid guess here that
+				 * the string when it was encoded with URL it was in the
+				 * same charset as we have on the terminal now.
+				 *
+				 * THIS MIGHT BE WRONG since different clients can have
+				 * different charsets and DIFFERENT computers most likely
+				 * have it.
+				 */
 				gchar *tmp2 = g_locale_to_utf8 (tmp, -1, NULL, NULL, NULL);
-				print_info ("[%s] %s = %s", source, key, tmp2);
+				/* Lets add a disclaimer */
+				print_info ("[%s] %s = %s (charset guessed)", source, key, tmp2);
 				g_free (tmp2);
 			}
 		} else {
+			/* Normal strings is ALWAYS utf-8 no problem */
 			print_info ("[%s] %s = %s", source, key, value);
 		}
 	} else {
