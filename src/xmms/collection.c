@@ -1773,8 +1773,25 @@ filter_get_mediainfo_field_string (xmmsc_coll_t *coll, GHashTable *mediainfo, gc
 	if (xmmsc_coll_attribute_get (coll, "field", &attr)) {
 		cmdval = g_hash_table_lookup (mediainfo, attr);
 		if (cmdval != NULL) {
-			*val = cmdval->value.string;
-			retval = TRUE;
+			switch (cmdval->type) {
+			case XMMS_OBJECT_CMD_ARG_STRING:
+				*val = g_strdup (cmdval->value.string);
+				retval = TRUE;
+				break;
+
+			case XMMS_OBJECT_CMD_ARG_UINT32:
+				*val = g_strdup_printf ("%u", cmdval->value.uint32);
+				retval = TRUE;
+				break;
+
+			case XMMS_OBJECT_CMD_ARG_INT32:
+				*val = g_strdup_printf ("%d", cmdval->value.int32);
+				retval = TRUE;
+				break;
+
+			default:
+				break;
+			}
 		}
 	}
 
@@ -1795,7 +1812,7 @@ filter_get_mediainfo_field_int (xmmsc_coll_t *coll, GHashTable *mediainfo, gint 
 
 	if (xmmsc_coll_attribute_get (coll, "field", &attr)) {
 		cmdval = g_hash_table_lookup (mediainfo, attr);
-		if (cmdval != NULL) {
+		if (cmdval != NULL && cmdval->type == XMMS_OBJECT_CMD_ARG_INT32) {
 			*val = cmdval->value.int32;
 			retval = TRUE;
 		}
@@ -1863,6 +1880,8 @@ xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		                                             nsid, match_table);
 	}
 
+	g_free (mediaval);
+
 	return match;
 }
 
@@ -1894,6 +1913,8 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		                                             nsid, match_table);
 	}
 
+	g_free (mediaval);
+
 	return match;
 }
 
@@ -1904,21 +1925,23 @@ xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediain
                                        GHashTable *match_table)
 {
 	gboolean match = FALSE;
+	gchar *buf;
 	gchar *mediaval;
 	gchar *opval;
 	gboolean case_sens;
 	gint i, len;
 
-	if (filter_get_mediainfo_field_string (coll, mediainfo, &mediaval) &&
+	if (filter_get_mediainfo_field_string (coll, mediainfo, &buf) &&
 	    filter_get_operator_value_string (coll, &opval) && 
 	    filter_get_operator_case (coll, &case_sens)) {
 
 		/* Prepare values */
 		if (case_sens) {
-			mediaval = g_strdup (mediaval);
+			mediaval = g_strdup (buf);
 		} else {
 			opval = g_utf8_strdown (opval, strlen (opval));
-			mediaval = g_utf8_strdown (mediaval, strlen (mediaval));
+			mediaval = g_utf8_strdown (buf, strlen (buf));
+			g_free (buf);
 		}
 
 		/* Transform SQL wildcards to GLib wildcards */
