@@ -72,16 +72,8 @@ cmds commands[] = {
 	{ "volume_list", "list volume levels for each channel", cmd_volume_list },
 
 	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
+	{ "playlist", "playlist manipulation - type 'xmms2 playlist' for more extensive help", cmd_playlist },
 	{ "coll", "collection manipulation - type 'xmms2 coll' for more extensive help", cmd_coll },
-
-	/* Playlist managment */
-	{ "playlists_list", "List all available playlists", cmd_playlists_list },
-	{ "create_playlist", "[playlistname] - Create a playlist", cmd_playlist_create },
-	{ "type_playlist", "[playlistname] [type] - Set the type of the playlist (list, queue, pshuffle)", cmd_playlist_type },
-	{ "load_playlist", "[playlistname] - Load 'playlistname' stored in medialib", cmd_playlist_load },
-	{ "import_playlist", "[name] [filename] - Import playlist from file", cmd_playlist_import },
-	{ "export_playlist", "[playlistname] [mimetype] - Export playlist", cmd_playlist_export },
-	{ "remove_playlist", "[playlistname] - Remove a playlist", cmd_playlist_remove },
 
 	{ "status", "go into status mode", cmd_status },
 	{ "info", "information about current entry", cmd_info },

@@ -22,6 +22,8 @@
 #include <glib.h>
 #include <string.h>
 
+void cmd_playlist (xmmsc_connection_t *conn, gint argc, gchar **argv);
+
 void cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv);

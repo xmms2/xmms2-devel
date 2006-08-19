@@ -16,6 +16,19 @@
 #include "cmd_pls.h"
 #include "common.h"
 
+
+cmds plist_commands[] = {
+	{ "list", "List all available playlists", cmd_playlists_list },
+	{ "create", "[playlistname] - Create a playlist", cmd_playlist_create },
+	{ "type", "[playlistname] [type] - Set the type of the playlist (list, queue, pshuffle)", cmd_playlist_type },
+	{ "load", "[playlistname] - Load 'playlistname' stored in medialib", cmd_playlist_load },
+	{ "import", "[name] [filename] - Import playlist from file", cmd_playlist_import },
+	{ "export", "[playlistname] [mimetype] - Export playlist", cmd_playlist_export },
+	{ "remove", "[playlistname] - Remove a playlist", cmd_playlist_remove },
+	{ NULL, NULL, NULL },
+};
+
+
 extern gchar *listformat;
 
 static void
@@ -95,6 +108,68 @@ get_playlist_type_string (xmmsc_coll_t *coll)
 	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:  return "pshuffle";
 	default:                                 return "unknown";
 	}
+}
+
+static void
+playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *ref)
+{
+	xmmsc_result_t *psres;
+	xmmsc_coll_t *pscoll;
+	xmmsc_coll_t *op;
+	gchar *s_name, *s_namespace;
+
+	if (!coll_read_collname (ref, &s_name, &s_namespace)) {
+		print_error ("invalid source collection name");
+	}
+
+	psres = xmmsc_coll_get (conn, s_name, s_namespace);
+	xmmsc_result_wait (psres);
+
+	if (xmmsc_result_iserror (psres)) {
+		print_error ("%s", xmmsc_result_get_error (psres));
+	}
+	xmmsc_result_get_collection (psres, &pscoll);
+
+	/* Remove previous operands */
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		xmmsc_coll_remove_operand (coll, op);
+	}
+
+	xmmsc_coll_add_operand (coll, pscoll);
+}
+
+
+static void
+cmd_playlist_help (void) {
+	gint i;
+
+	print_info ("Available playlist commands:");
+	for (i = 0; plist_commands[i].name; i++) {
+		print_info ("  %s\t %s", plist_commands[i].name,
+		            plist_commands[i].help);
+	}
+}
+
+
+void
+cmd_playlist (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gint i;
+	if (argc < 3) {
+		cmd_playlist_help();
+		return;
+	}
+
+	for (i = 0; plist_commands[i].name; i++) {
+		if (g_strcasecmp (plist_commands[i].name, argv[2]) == 0) {
+			plist_commands[i].func (conn, argc, argv);
+			return;
+		}
+	}
+
+	cmd_playlist_help();
+	print_error ("Unrecognised playlist command: %s", argv[2]);
 }
 
 
@@ -521,11 +596,11 @@ cmd_playlist_load (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
-	if (argc < 3) {
+	if (argc < 4) {
 		print_error ("Supply a playlist name");
 	}
 
-	res = xmmsc_playlist_load (conn, argv[2]);
+	res = xmmsc_playlist_load (conn, argv[3]);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -542,11 +617,11 @@ cmd_playlist_create (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *playlist_name;
 	xmmsc_coll_t *playlist_coll;
 
-	if (argc < 3) {
+	if (argc < 4) {
 		print_error ("Supply a playlist name");
 	}
 
-	playlist_name = argv[2];
+	playlist_name = argv[3];
 	playlist_coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 
 	res = xmmsc_coll_save (conn, playlist_coll, playlist_name,
@@ -557,35 +632,6 @@ cmd_playlist_create (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
-}
-
-static void
-playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *ref)
-{
-	xmmsc_result_t *psres;
-	xmmsc_coll_t *pscoll;
-	xmmsc_coll_t *op;
-	gchar *s_name, *s_namespace;
-
-	if (!coll_read_collname (ref, &s_name, &s_namespace)) {
-		print_error ("invalid source collection name");
-	}
-
-	psres = xmmsc_coll_get (conn, s_name, s_namespace);
-	xmmsc_result_wait (psres);
-
-	if (xmmsc_result_iserror (psres)) {
-		print_error ("%s", xmmsc_result_get_error (psres));
-	}
-	xmmsc_result_get_collection (psres, &pscoll);
-
-	/* Remove previous operands */
-	xmmsc_coll_operand_list_first (coll);
-	while (xmmsc_coll_operand_list_entry (coll, &op)) {
-		xmmsc_coll_remove_operand (coll, op);
-	}
-
-	xmmsc_coll_add_operand (coll, pscoll);
 }
 
 
@@ -599,10 +645,10 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gint typelen;
 
 	/* Read playlist name */
-	if (argc < 3) {
+	if (argc < 4) {
 		print_error ("usage: type_playlist [playlistname] [type] [options]");
 	}
-	name = argv[2];
+	name = argv[3];
 
 	/* Retrieve the playlist operator */
 	res = xmmsc_coll_get (conn, name, "Playlists");
@@ -616,26 +662,26 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 
 	/* No type argument, simply display the current type */
-	if (argc < 4) {
+	if (argc < 5) {
 		print_info (get_playlist_type_string (coll));
 
 	/* Type argument, set the new type */
 	} else {
 		xmmsc_result_t *saveres;
 
-		typelen = strlen (argv[3]);
-		if (g_ascii_strncasecmp (argv[3], "list", typelen) == 0) {
+		typelen = strlen (argv[4]);
+		if (g_ascii_strncasecmp (argv[4], "list", typelen) == 0) {
 			type = XMMS_COLLECTION_TYPE_IDLIST;
-		} else if (g_ascii_strncasecmp (argv[3], "queue", typelen) == 0) {
+		} else if (g_ascii_strncasecmp (argv[4], "queue", typelen) == 0) {
 			type = XMMS_COLLECTION_TYPE_QUEUE;
-		} else if (g_ascii_strncasecmp (argv[3], "pshuffle", typelen) == 0) {
+		} else if (g_ascii_strncasecmp (argv[4], "pshuffle", typelen) == 0) {
 			type = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
 
 			/* Setup operand for party shuffle ! */
-			if (argc < 5) {
+			if (argc < 6) {
 				print_error ("Give the source collection for the party shuffle");
 			}
-			playlist_setup_pshuffle (conn, coll, argv[4]);
+			playlist_setup_pshuffle (conn, coll, argv[5]);
 
 		} else {
 			print_error ("Invalid playlist type (valid types: list, queue, pshuffle)");
@@ -708,16 +754,16 @@ cmd_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	gchar *url;
 
-	if (argc < 4) {
+	if (argc < 5) {
 		print_error ("Supply a playlist name and url");
 	}
 
-	url = format_url (argv[3]);
+	url = format_url (argv[4]);
 	if (!url) {
 		print_error ("Invalid url");
 	}
 
-	res = xmmsc_playlist_import (conn, argv[2], url);
+	res = xmmsc_playlist_import (conn, argv[3], url);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -734,11 +780,11 @@ cmd_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 
-	if (argc < 3) {
+	if (argc < 4) {
 		print_error ("Supply a playlist name");
 	}
 
-	res = xmmsc_playlist_remove (conn, argv[2]);
+	res = xmmsc_playlist_remove (conn, argv[3]);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
@@ -757,21 +803,21 @@ cmd_playlist_export (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *file;
 	gchar *mime;
 
-	if (argc < 4) {
+	if (argc < 5) {
 		print_error ("Supply a playlist name and a mimetype");
 	}
 
-	if (strcasecmp (argv[3], "m3u") == 0) {
+	if (strcasecmp (argv[4], "m3u") == 0) {
 		mime = "audio/mpegurl";
-	} else if (strcasecmp (argv[3], "pls") == 0) {
+	} else if (strcasecmp (argv[4], "pls") == 0) {
 		mime = "audio/x-scpls";
-	} else if (strcasecmp (argv[3], "html") == 0) {
+	} else if (strcasecmp (argv[4], "html") == 0) {
 		mime = "text/html";
 	} else {
-		mime = argv[3];
+		mime = argv[4];
 	}
 
-	res = xmmsc_playlist_export (conn, argv[2], mime);
+	res = xmmsc_playlist_export (conn, argv[3], mime);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
