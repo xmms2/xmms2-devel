@@ -148,20 +148,22 @@ xmms_bindata_plugin_add (GString *str)
 static gchar *
 xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 {
-	gchar hash[33];
-	gchar *path;
-	gchar *tmp;
+	gchar hash[33], *path, *ret;
+	const gchar *ptr;
+	gsize left;
 	FILE *fp;
 
 	xmms_bindata_calculate_md5 ((guchar *)data->str, data->len, hash);
 
-	tmp = g_strdup_printf ("%s_%ld", hash, data->len);
-	path = XMMS_BUILD_PATH ("bindata", tmp);
+	ret = g_malloc (48); /* this _will_ suffice */
+	g_snprintf (ret, sizeof (ret), "%s_%ld", hash, data->len);
+
+	path = XMMS_BUILD_PATH ("bindata", ret);
 
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
 		XMMS_DBG ("file %s is already in bindata dir", path);
 		g_free (path);
-		return tmp;
+		return ret;
 	}
 
 	XMMS_DBG ("Creating %s", path);
@@ -170,15 +172,38 @@ xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 		xmms_log_error ("Couldn't create %s", path);
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Couldn't create file on server!");
 		g_free (path);
+		g_free (ret);
 		return NULL;
 	}
 
-	fwrite (data->str, data->len, 1, fp);
-	fclose (fp);
+	/* write the data to the file */
+	ptr = data->str;
+	left = data->len;
 
+	while (left > 0) {
+		size_t w;
+
+		w = fwrite (ptr, 1, left, fp);
+		if (!w && ferror (fp)) {
+			fclose (fp);
+			unlink (path);
+
+			xmms_log_error ("Couldn't write data");
+			xmms_error_set (err, XMMS_ERROR_GENERIC,
+			                "Couldn't write data!");
+			g_free (path);
+			g_free (ret);
+			return NULL;
+		}
+
+		left -= w;
+		ptr += w;
+	}
+
+	fclose (fp);
 	g_free (path);
 
-	return tmp;
+	return ret;
 }
 
 static GString *
