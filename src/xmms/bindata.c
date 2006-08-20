@@ -115,21 +115,21 @@ xmms_bindata_destroy (xmms_object_t *obj)
 }
 
 gchar *
-xmms_bindata_calculate_md5 (guchar *data, guint size)
+xmms_bindata_calculate_md5 (guchar *data, guint size, gchar ret[33])
 {
 	md5_state_t state;
 	md5_byte_t digest[16];
-	char hex_output[16*2 + 1];
 	int di;
 
 	md5_init(&state);
 	md5_append(&state, (const md5_byte_t *)data, size);
 	md5_finish(&state, digest);
+
 	for (di = 0; di < 16; ++di) {
-		sprintf(hex_output + di * 2, "%02x", digest[di]);
+		sprintf(&ret[di * 2], "%02x", digest[di]);
 	}
 
-	return g_strdup(hex_output);
+	return ret;
 }
 
 /** Add binary data from a plugin */
@@ -143,15 +143,14 @@ xmms_bindata_plugin_add (GString *str)
 static gchar *
 xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 {
-	gchar *hash;
+	gchar hash[33];
 	gchar *path;
 	gchar *tmp;
 	FILE *fp;
 
-	hash = xmms_bindata_calculate_md5 ((guchar *)data->str, data->len);
+	xmms_bindata_calculate_md5 ((guchar *)data->str, data->len, hash);
 
 	tmp = g_strdup_printf ("%s_%ld", hash, data->len);
-	g_free (hash);
 	path = XMMS_BUILD_PATH ("bindata", tmp);
 
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
