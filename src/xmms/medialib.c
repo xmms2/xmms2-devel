@@ -482,6 +482,8 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 		return;
 	}
 
+	g_free (session->source_pref);
+
 	xmms_sqlite_close (session->sql);
 	xmms_object_unref (XMMS_OBJECT (session->medialib));
 	g_free (session);

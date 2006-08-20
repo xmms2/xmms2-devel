@@ -1,6 +1,0 @@
-#!/bin/sh -e
-
-#. /usr/share/debconf/confmodule
-#db_get xmms2/betainfo
-
-exit 0
