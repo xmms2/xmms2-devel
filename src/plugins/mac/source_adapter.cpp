@@ -16,35 +16,37 @@
 
 #include "source_adapter.h"
 
-CSourceAdapter::CSourceAdapter(xmms_xform_t *xform)
+CSourceAdapter::CSourceAdapter (xmms_xform_t *xform)
 {
 	this->xform = xform;
 }
 
 int
-CSourceAdapter::Read(void * pBuffer, unsigned int nBytesToRead, unsigned int * pBytesRead)
+CSourceAdapter::Read (void * pBuffer, unsigned int nBytesToRead,
+                      unsigned int * pBytesRead)
 {
 	int ret = 0;
 	xmms_error_t error;
 
-	memset(&error, 0, sizeof(xmms_error_t));
+	xmms_error_reset (&error);
 
-	memset(&error, 0, sizeof(xmms_error_t));
-	ret = xmms_xform_read(xform,
-	                      (gchar *)pBuffer,
-	                      nBytesToRead,
-	                      &error);
+	ret = xmms_xform_read (xform,
+	                       (gchar *)pBuffer,
+	                       nBytesToRead,
+	                       &error);
 	*pBytesRead = ret;
 
-	return ERROR_SUCCESS;
+	return (error.code == XMMS_ERROR_NONE) ? ERROR_SUCCESS : ERROR_IO_READ;
 }
 
 int
-CSourceAdapter::Seek(int nDistance, unsigned int nMoveMode)
+CSourceAdapter::Seek (int nDistance, unsigned int nMoveMode)
 {
 	xmms_xform_seek_mode_t whence;
 	xmms_error_t error;
 	gint pos;
+
+	xmms_error_reset (&error);
 
 	switch (nMoveMode)
 	{
@@ -59,21 +61,26 @@ CSourceAdapter::Seek(int nDistance, unsigned int nMoveMode)
 		break;
 	}
 
-	pos = xmms_xform_seek(xform, nDistance, whence, &error);
+	pos = xmms_xform_seek (xform, nDistance, whence, &error);
 
-	return ERROR_SUCCESS;
+	return (error.code == XMMS_ERROR_NONE) ? ERROR_SUCCESS : -1;
 }
 
 int
-CSourceAdapter::GetPosition()
+CSourceAdapter::GetPosition ()
 {
+	gint pos;
 	xmms_error_t error;
 
-	return xmms_xform_seek(xform, 0, XMMS_XFORM_SEEK_CUR, &error);
+	xmms_error_reset (&error);
+
+	pos = xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &error);
+
+	return (error.code == XMMS_ERROR_NONE) ? pos : -1;
 }
 
 int
-CSourceAdapter::GetSize()
+CSourceAdapter::GetSize ()
 {
 	return xmms_xform_metadata_get_int (xform,
 	                                    XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);

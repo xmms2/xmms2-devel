@@ -21,50 +21,48 @@
 #include <mac/MACLib.h>
 #include <mac/IO.h>
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-
 #include <glib.h>
+
+extern "C" {
 
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_plugin.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_log.h"
 
-#ifdef __cplusplus
 }
-#endif
 
 class CSourceAdapter : public CIO
 {
 public:
-	CSourceAdapter(xmms_xform_t *xform);
-	~CSourceAdapter() {};
+	CSourceAdapter (xmms_xform_t *xform);
+	~CSourceAdapter () {};
 
 	// open / close
-	int Open(const wchar_t * pName) { return ERROR_SUCCESS; }
-	int Close() { return ERROR_SUCCESS; }
+	int Open (const wchar_t * pName) { return ERROR_SUCCESS; }
+	int Close () { return ERROR_SUCCESS; }
 
 	// read / write
-	int Read(void * pBuffer, unsigned int nBytesToRead, unsigned int * pBytesRead);
-	int Write(const void * pBuffer, unsigned int nBytesToWrite, unsigned int * pBytesWritten) { return ERROR_SUCCESS; };
+	int Read (void * pBuffer, unsigned int nBytesToRead,
+	          unsigned int * pBytesRead);
+	int Write (const void * pBuffer, unsigned int nBytesToWrite,
+	           unsigned int * pBytesWritten) { return ERROR_SUCCESS; };
 
 	// seek
-	int Seek(int nDistance, unsigned int nMoveMode);
+	int Seek (int nDistance, unsigned int nMoveMode);
 
 	// other functions
-	int SetEOF() { return ERROR_SUCCESS; };
+	int SetEOF () { return ERROR_SUCCESS; };
 
 	// creation / destruction
-	int Create(const wchar_t * pName) { return ERROR_SUCCESS; }
-	int Delete() { return ERROR_SUCCESS; }
+	int Create (const wchar_t * pName) { return ERROR_SUCCESS; }
+	int Delete () { return ERROR_SUCCESS; }
 
 	// attributes
-	int GetPosition();
-	int GetSize();
-	int GetName(wchar_t * pBuffer) { return 0; }
-	int GetHandle() { return 0; }
+	int GetPosition ();
+	int GetSize ();
+	int GetName (wchar_t * pBuffer) { return 0; }
+	int GetHandle () { return 0; }
 
 private:
 	xmms_xform_t *xform;
