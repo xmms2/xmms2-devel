@@ -19,6 +19,8 @@
 
 #include "daap_util.h"
 
+#include "xmms/xmms_log.h"
+
 void write_buffer_to_channel(GIOChannel *chan, gchar *buf, gint bufsize)
 {
 	guint sent_bytes, total_sent_bytes = 0;
@@ -33,7 +35,7 @@ void write_buffer_to_channel(GIOChannel *chan, gchar *buf, gint bufsize)
 		                                   &err);
 		if (io_stat == G_IO_STATUS_ERROR) {
 			if (NULL != err) {
-				g_printf("Error writing to channel: %s\n", err->message);
+				XMMS_DBG ("Error writing to channel: %s\n", err->message);
 			}
 			break;
 		}
@@ -44,7 +46,7 @@ void write_buffer_to_channel(GIOChannel *chan, gchar *buf, gint bufsize)
 
 	g_io_channel_flush(chan, &err);
 	if (NULL != err) {
-		g_printf("warning: error flushing channel: %s\n", err->message);
+		XMMS_DBG ("warning: error flushing channel: %s\n", err->message);
 	}
 }
 
@@ -61,7 +63,7 @@ gint read_buffer_from_channel(GIOChannel *chan, gchar *buf, gint bufsize)
 		                                  &read_bytes,
 		                                  &err);
 		if (io_stat == G_IO_STATUS_ERROR) {
-			g_printf("warning: error reading from channel: %s\n", err->message);
+			XMMS_DBG ("warning: error reading from channel: %s\n", err->message);
 		}
 		n_total_bytes_read += read_bytes;
 

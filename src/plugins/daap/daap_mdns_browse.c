@@ -61,7 +61,9 @@ static void daap_mdns_resolve_cb(AvahiServiceResolver *resolv,
 	gchar ad[ADDR_LEN];
 	daap_mdns_server_t *server;
 
-	g_return_if_fail(resolv);
+	if (!resolv) {
+		return;
+	}
 
 	switch (event) {
 		case AVAHI_RESOLVER_FOUND:
@@ -110,7 +112,9 @@ static void daap_mdns_browse_cb(AvahiServiceBrowser *browser,
 
 	AvahiClient *client = ((browse_callback_userdata_t *) userdata)->client;
 
-	g_return_if_fail(browser);
+	if (!browser) {
+		return;
+	}
 
 	switch (event) {
 		case AVAHI_BROWSER_NEW:
@@ -142,7 +146,9 @@ static void daap_mdns_browse_cb(AvahiServiceBrowser *browser,
 
 static void daap_mdns_client_cb(AvahiClient *client, AvahiClientState state, void * userdata)
 {
-	g_return_if_fail(client);
+	if (!client) {
+		return;
+	}
 
 	switch (state) {
 		case AVAHI_CLIENT_FAILURE:

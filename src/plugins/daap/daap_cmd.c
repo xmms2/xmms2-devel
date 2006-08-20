@@ -38,10 +38,13 @@ daap_command_login(gchar *host, gint port, guint request_id) {
 	request = g_strdup("/login");
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
+	if (!cc_data) {
+		return 0;
+	}
 	session_id = cc_data->session_id;
 
 	g_free(request);
-	cc_data_free(cc_data, TRUE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
@@ -69,7 +72,7 @@ daap_command_update(gchar *host, gint port, guint session_id, guint request_id) 
 	revision_id = cc_data->revision_id;
 
 	g_free(request);
-	cc_data_free(cc_data, TRUE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
@@ -81,7 +84,6 @@ gboolean daap_command_logout(gchar *host, gint port, guint session_id,
 {
 	GIOChannel *chan;
 	gchar *tmp, *request;
-	cc_data_t *cc_data;
 
 	chan = daap_open_connection(host, port);
 	if (!chan) {
@@ -92,8 +94,8 @@ gboolean daap_command_logout(gchar *host, gint port, guint session_id,
 	request = g_strconcat("/logout", tmp, NULL);
 	g_free(tmp);
 	
-	cc_data = daap_request_data(chan, request, host, request_id);
-	cc_data_free(cc_data, TRUE);
+	/* there is no cc_data generated, so we don't need to store it anywhere */
+	daap_request_data(chan, request, host, request_id);
 
 	g_free(request);
 	g_io_channel_shutdown(chan, TRUE, NULL);
@@ -124,11 +126,9 @@ GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
 	if (!cc_data) {
 		return NULL;
 	}
-	/* TODO replace with a deep copy */
-	db_id_list = cc_data->record_list;
+	db_id_list = cc_record_list_deep_copy(cc_data->record_list);
 
-	/* want to free the list manually */
-	cc_data_free(cc_data, FALSE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 
@@ -153,12 +153,10 @@ GSList * daap_command_song_list(gchar *host, gint port, guint session_id,
 	                         db_id, session_id, revision_id);
 	
 	cc_data = daap_request_data(chan, request, host, request_id);
-	/* TODO replace with a deep copy */
-	song_list = cc_data->record_list;
+	song_list = cc_record_list_deep_copy(cc_data->record_list);
 
 	g_free(request);
-	/* want to free the list manually */
-	cc_data_free(cc_data, FALSE);
+	cc_data_free(cc_data);
 	g_io_channel_shutdown(chan, TRUE, NULL);
 	g_io_channel_unref(chan);
 

@@ -25,6 +25,8 @@
 #include "cc_handlers.h"
 #include "daap_conn.h"
 
+#include "xmms/xmms_log.h"
+
 #define DMAP_BYTES_REMAINING ((gint) (data_end - current_data))
 
 static void endian_swap_int16(gint16 *i)
@@ -141,7 +143,7 @@ static gint grab_data(void *container, gchar *data, content_type ct)
 			offset += DMAP_INT_SZ;
 			break;
 		default:
-			g_printf("Warning: Unrecognized content type (%d).\n", ct);
+			XMMS_DBG ("Warning: Unrecognized content type (%d).\n", ct);
 			break;
 	}
 
@@ -180,8 +182,8 @@ static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_list_item_t *item_fields;
-	item_fields = g_malloc0(sizeof(cc_list_item_t));
+	cc_item_record_t *item_fields;
+	item_fields = g_malloc0(sizeof(cc_item_record_t));
 
 	while (current_data < data_end && !do_break) {
 		switch (CC_TO_INT(current_data[0], current_data[1],
@@ -338,8 +340,8 @@ static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
 				do_break = TRUE;
 				break;
 			default:
-				g_printf("Warning: Unrecognized content code "
-				         "or end of data: %s\n", current_data);
+				XMMS_DBG ("Warning: Unrecognized content code "
+				          "or end of data: %s\n", current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -507,8 +509,9 @@ static cc_data_t * cc_handler_msrv(gchar *data, gint data_len)
 				                    DMAP_CTYPE_STRING);
 				break;	
 			default:
-				g_printf("Unrecognized content code or end of data: %s\n",
-				         current_data);
+				XMMS_DBG ("Warning: Unrecognized content code "
+						  "or end of data: %s\n",
+				          current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -546,8 +549,8 @@ static cc_data_t * cc_handler_mlog(gchar *data, gint data_len)
 				offset += grab_data(&(fields->session_id), current_data, DMAP_CTYPE_INT);
 				break;
 			default:
-				g_printf("Unrecognized content code or end of data: %s\n",
-				         current_data);
+				XMMS_DBG ("Unrecognized content code or end of data: %s\n",
+				          current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -580,8 +583,8 @@ static cc_data_t * cc_handler_mupd(gchar *data, gint data_len)
 				offset += cc_handler_mstt(fields, current_data);
 				break;
 			default:
-				g_printf("Unrecognized content code or end of data: %s\n",
-				         current_data);
+				XMMS_DBG ("Unrecognized content code or end of data: %s\n",
+				          current_data);
 				do_break = TRUE;
 				break;
 		}
@@ -726,25 +729,19 @@ cc_data_t * cc_data_new()
 	return retval;
 }
 
-void cc_data_free(cc_data_t *fields, gboolean free_record_list)
+void cc_data_free(cc_data_t *fields)
 {
-	if (!fields) {
-		return;
-	}
-
 	if (NULL != fields->server_name) g_free(fields->server_name);
 
-	if (free_record_list) {
-		g_slist_foreach(fields->record_list,
-		                (GFunc) cc_list_item_free,
-		                NULL);
-		g_slist_free(fields->record_list);
-	}
+	g_slist_foreach(fields->record_list,
+	                (GFunc) cc_item_record_free,
+	                NULL);
+	g_slist_free(fields->record_list);
 
 	g_free(fields);
 }
 
-void cc_list_item_free(cc_list_item_t *item)
+void cc_item_record_free(cc_item_record_t *item)
 {
 	if (NULL != item->iname)            g_free(item->iname);
 	if (NULL != item->song_data_url)    g_free(item->song_data_url);
@@ -758,6 +755,67 @@ void cc_list_item_free(cc_list_item_t *item)
 	if (NULL != item->song_grouping)    g_free(item->song_grouping);
 
 	g_free(item);
+}
+
+GSList *cc_record_list_deep_copy(GSList *record_list) {
+	GSList *retval = NULL;
+	cc_item_record_t *record, *data;
+
+	for(; record_list; record_list = g_slist_next(record_list)) {
+		data = record_list->data;
+		record = g_malloc0(sizeof(cc_item_record_t));
+		if (!record) {
+			XMMS_DBG("memory allocation failed for cc_record_list_deep_copy\n");
+			return NULL;
+		}
+
+		record->item_kind        = data->item_kind;
+		record->song_data_kind   = data->song_data_kind;
+		record->song_compilation = data->song_compilation;
+		record->is_smart_pl      = data->is_smart_pl;
+		record->is_base_pl       = data->is_base_pl;
+
+		record->song_bitrate     = data->song_bitrate;
+		record->song_year        = data->song_year;
+		record->song_track_no    = data->song_track_no;
+		record->song_track_count = data->song_track_count;
+		record->song_disc_count  = data->song_disc_count;
+		record->song_disc_no     = data->song_disc_no;
+		record->song_bpm         = data->song_bpm;
+	
+		record->dbid             = data->dbid;
+		record->sample_rate      = data->sample_rate;
+		record->song_size        = data->song_size;
+		record->song_start_time  = data->song_start_time;
+		record->song_stop_time   = data->song_stop_time;
+		record->song_total_time  = data->song_total_time;
+		record->song_date        = data->song_date;
+		record->song_date_mod    = data->song_date_mod;
+		record->container_id     = data->container_id;
+	
+		record->deleted_id       = data->deleted_id;
+	
+		record->persistent_id    = data->persistent_id;
+		
+		record->iname            = g_strdup(data->iname);
+		record->song_data_url    = g_strdup(data->song_data_url);
+		record->song_data_album  = g_strdup(data->song_data_album);
+		record->song_data_artist = g_strdup(data->song_data_artist);
+		record->song_comment     = g_strdup(data->song_comment);
+		record->song_description = g_strdup(data->song_description);
+		record->song_genre       = g_strdup(data->song_genre);
+		record->song_format      = g_strdup(data->song_format);
+		record->song_composer    = g_strdup(data->song_composer);
+		record->song_grouping    = g_strdup(data->song_grouping);
+		
+		/* db list specific */
+		record->db_n_items       = data->db_n_items;
+		record->db_n_playlist    = data->db_n_playlist;
+
+		retval = g_slist_prepend(retval, record);
+	}
+
+	return retval;
 }
 
 cc_data_t * cc_handler(gchar *data, gint data_len)
