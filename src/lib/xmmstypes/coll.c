@@ -51,7 +51,7 @@ struct xmmsc_coll_St {
 static void xmmsc_coll_free (xmmsc_coll_t *coll);
 
 static int xmmsc_coll_unref_udata (void *coll, void *userdata);
-static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, uint32_t newsize);
+static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
 
 
 /**
