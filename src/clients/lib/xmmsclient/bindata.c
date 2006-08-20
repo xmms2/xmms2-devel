@@ -47,12 +47,12 @@ xmmsc_bindata_add (xmmsc_connection_t *c,
 }
 
 /**
- * Retreive a file from the servers bindata directory,
+ * Retrieve a file from the servers bindata directory,
  * based on the hash. Data will be returned in base64
  * encoded data.
  */
 xmmsc_result_t *
-xmmsc_bindata_retreive (xmmsc_connection_t *c, const char *hash)
+xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash)
 {
 	xmms_ipc_msg_t *msg;
 

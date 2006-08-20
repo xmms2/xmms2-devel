@@ -61,10 +61,10 @@ static void md5_append(md5_state_t *pms, const md5_byte_t *data, int nbytes);
 static void md5_finish(md5_state_t *pms, md5_byte_t digest[16]);
 
 static gchar *xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
-static GString *xmms_bindata_retreive (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err);
+static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err);
 static void xmms_bindata_remove (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *); 
 
-XMMS_CMD_DEFINE (get_data, xmms_bindata_retreive, xmms_bindata_t *, BIN, STRING, NONE);
+XMMS_CMD_DEFINE (get_data, xmms_bindata_retrieve, xmms_bindata_t *, BIN, STRING, NONE);
 XMMS_CMD_DEFINE (add_data, xmms_bindata_add, xmms_bindata_t *, STRING, BIN, NONE);
 XMMS_CMD_DEFINE (remove_data, xmms_bindata_remove, xmms_bindata_t *, NONE, STRING, NONE);
 
@@ -178,7 +178,7 @@ xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 }
 
 static GString *
-xmms_bindata_retreive (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
+xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
 {
 	gchar *path;
 	GString *str;

@@ -195,7 +195,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	
 	xmmsc_result_t *xmmsc_xform_media_browse (xmmsc_connection_t *c, char *url)
 	xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, char *, int len)
-	xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, char *hash)
+	xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, char *hash)
 	xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, char *hash)
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
@@ -540,7 +540,7 @@ def userconfdir_get():
 	Get the user configuration directory, where XMMS2 stores its
 	user-specific configuration files. Clients may store their
 	configuration under the 'clients' subdirectory. This varies from
-	platform to platform so should always be retreived at runtime.
+	platform to platform so should always be retrieved at runtime.
 	"""
 	return xmmsc_userconfdir_get()
 
@@ -1783,9 +1783,9 @@ cdef class XMMS:
 		ret.more_init()
 		return ret
 
-	def bindata_retreive(self, hash, cb=None):
+	def bindata_retrieve(self, hash, cb=None):
 		"""
-		Retreive a datafile from the server
+		Retrieve a datafile from the server
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
@@ -1794,7 +1794,7 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 
-		ret.res = xmmsc_bindata_retreive(self.conn,hash)
+		ret.res = xmmsc_bindata_retrieve(self.conn,hash)
 
 		ret.more_init()
 		return ret
