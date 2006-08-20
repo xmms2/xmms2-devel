@@ -1084,6 +1084,9 @@ xmms_collection_unreference (xmms_coll_dag_t *dag, gchar *name, guint nsid)
 		char *nsname = xmms_collection_get_namespace_string (nsid);
 		coll_rebind_infos_t infos = { name, nsname, existing, NULL };
 
+		/* FIXME: if reference pointed to by a label, we should update
+		 * the label to point to the ref'd operator instead ! */
+
 		/* Strip all references to the deleted coll, bind operator directly */
 		xmms_collection_apply_to_all_collections (dag, strip_references, &infos);
 
@@ -1240,6 +1243,9 @@ xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
 {
 	xmmsc_coll_t *op;
 
+	/* Apply the function to the operator. */
+	f (dag, coll, parent, udata);
+
 	/* Recurse into the parents (if not a reference) */
 	if (xmmsc_coll_get_type (coll) != XMMS_COLLECTION_TYPE_REFERENCE) {
 		xmmsc_coll_operand_list_save (coll);
@@ -1252,9 +1258,6 @@ xmms_collection_apply_to_collection_recurs (xmms_coll_dag_t *dag,
 
 		xmmsc_coll_operand_list_restore (coll);
 	}
-
-	/* Apply the function to the operator. */
-	f (dag, coll, parent, udata);
 }
 
 
@@ -1430,8 +1433,6 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 		xmmsc_coll_add_operand (coll, infos->oldtarget);
 
 		xmmsc_coll_operand_list_first (coll); /* Restart if oplist changed */
-
-		/* FIXME: What if *coll* should be considered ? */
 	}
 	xmmsc_coll_operand_list_restore (coll);
 }
