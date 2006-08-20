@@ -126,7 +126,7 @@ stats (xmms_object_t *object, xmms_error_t *error)
 static void
 do_scriptdir (const gchar *scriptdir)
 {
-	GError *err;
+	GError *err = NULL;
 	GDir *dir;
 	const gchar *f;
 	gchar *argv[2] = {NULL, NULL};
@@ -300,7 +300,7 @@ static void
 install_scripts (const gchar *into_dir)
 {
 	GDir *dir;
-	GError *err;
+	GError *err = NULL;
 	gchar path[PATH_MAX];
 	const gchar *f;
 	gchar *s;
