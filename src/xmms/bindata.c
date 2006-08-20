@@ -120,13 +120,18 @@ xmms_bindata_calculate_md5 (guchar *data, guint size, gchar ret[33])
 	md5_state_t state;
 	md5_byte_t digest[16];
 	int di;
+	static gchar hex[] = {
+		'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+	};
 
 	md5_init(&state);
 	md5_append(&state, (const md5_byte_t *)data, size);
 	md5_finish(&state, digest);
 
 	for (di = 0; di < 16; ++di) {
-		sprintf(&ret[di * 2], "%02x", digest[di]);
+		ret[di * 2] = hex[digest[di] >> 4];
+		ret[di * 2 + 1] = hex[digest[di] & 0x0f];
 	}
 
 	return ret;
