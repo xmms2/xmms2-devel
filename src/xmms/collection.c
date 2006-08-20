@@ -266,7 +266,7 @@ gboolean
 xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_error_t *err)
 {
 	guint nsid;
-	gboolean retval;
+	gboolean retval = FALSE;
 	guint i;
 
 	XMMS_DBG("COLLECTIONS: Entering xmms_collection_remove");
@@ -1399,31 +1399,41 @@ rename_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *paren
 static void
 strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent, void *udata)
 {
-	if (xmmsc_coll_get_type (coll) == XMMS_COLLECTION_TYPE_REFERENCE) {
-		coll_rebind_infos_t *infos;
+	xmmsc_coll_t *op;
+	coll_rebind_infos_t *infos;
+	gchar *target_name = NULL;
+	gchar *target_namespace = NULL;
 
-		gchar *target_name = NULL;
-		gchar *target_namespace = NULL;
+	infos = (coll_rebind_infos_t*)udata;
 
-		infos = (coll_rebind_infos_t*)udata;
+	xmmsc_coll_operand_list_save (coll);
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &op)) {
+		/* Skip if not potential reference */
+		if (xmmsc_coll_get_type (op) != XMMS_COLLECTION_TYPE_REFERENCE) {
+			xmmsc_coll_operand_list_next (coll);
+			continue;
+		}
 
-		/* FIXME: Or only compare operand vs oldtarget ? */
-
-		xmmsc_coll_attribute_get (coll, "reference", &target_name);
-		xmmsc_coll_attribute_get (coll, "namespace", &target_namespace);
+		xmmsc_coll_attribute_get (op, "reference", &target_name);
+		xmmsc_coll_attribute_get (op, "namespace", &target_namespace);
 		if (strcmp (infos->name, target_name) != 0 ||
-		    strcmp (infos->namespace, target_namespace) != 0) {
-			return;
+			strcmp (infos->namespace, target_namespace) != 0) {
+			xmmsc_coll_operand_list_next (coll);
+			continue;
 		}
 
-		/* Rebind parent to ref'd coll directly, effectively strip reference */
-		xmmsc_coll_remove_operand (coll, infos->oldtarget);
+		/* Rebind coll to ref'd operand directly, effectively strip reference */
+		xmmsc_coll_remove_operand (op, infos->oldtarget);
 
-		if (parent != NULL) {
-			xmmsc_coll_remove_operand (parent, coll);
-			xmmsc_coll_add_operand (parent, infos->oldtarget);
-		}
+		xmmsc_coll_remove_operand (coll, op);
+		xmmsc_coll_add_operand (coll, infos->oldtarget);
+
+		xmmsc_coll_operand_list_first (coll); /* Restart if oplist changed */
+
+		/* FIXME: What if *coll* should be considered ? */
 	}
+	xmmsc_coll_operand_list_restore (coll);
 }
 
 /**
@@ -1878,9 +1888,9 @@ xmms_collection_media_filter_has (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	if (filter_get_mediainfo_field_string (coll, mediainfo, &mediaval)) {
 		match = xmms_collection_media_match_operand (dag, mediainfo, coll,
 		                                             nsid, match_table);
-	}
 
-	g_free (mediaval);
+		g_free (mediaval);
+	}
 
 	return match;
 }
@@ -1892,7 +1902,7 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
                                     GHashTable *match_table)
 {
 	gboolean match = FALSE;
-	gchar *mediaval;
+	gchar *mediaval = NULL;
 	gchar *opval;
 	gboolean case_sens;
 
@@ -1913,7 +1923,9 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		                                             nsid, match_table);
 	}
 
-	g_free (mediaval);
+	if (mediaval != NULL) {
+		g_free (mediaval);
+	}
 
 	return match;
 }
