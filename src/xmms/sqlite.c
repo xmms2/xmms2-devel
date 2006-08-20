@@ -494,36 +494,11 @@ xmms_sqlite_print_version (void)
 /* Return an escaped string */
 gchar *
 sqlite_prepare_string (const gchar *input) {
-	gchar *output;
-	gint outsize, nquotes = 0;
-	gint i, o;
-
-	for (i = 0; input[i] != '\0'; i++) {
-		if (input[i] == '\'') {
-			nquotes++;
-		}
-	}
-
-	/* 2 quotes to terminate the string , and one \0 in the end */
-	outsize = strlen(input) + nquotes + 2 + 1;
-	output = g_new (gchar, outsize);
-
-	if (output == NULL) {
-		return NULL;
-	}
-
-	i = o = 0;
-	output[o++] = '\'';
-	while (input[i] != '\0') {
-		output[o++] = input[i];
-		if (input[i++] == '\'') {
-			output[o++] = '\'';
-		}
-	}
-	output[o++] = '\'';
-	output[o] = '\0';
-
-	return output;
+	gchar *q, *str;
+	q = sqlite3_mprintf ("%Q", input);
+	str = g_strdup (q);
+	sqlite3_free (q);
+	return str;
 }
 
 /** @} */
