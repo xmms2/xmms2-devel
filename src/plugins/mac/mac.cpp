@@ -20,9 +20,7 @@
 #include <mac/APEInfo.h>
 #include <mac/CharacterHelper.h>
 
-#ifdef __cplusplus
-extern "C"{
-#endif
+extern "C" {
 
 #include "source_adapter.h"
 
@@ -75,7 +73,7 @@ static gboolean xmms_mac_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static void xmms_mac_destroy (xmms_xform_t *decoder);
 static gboolean xmms_mac_init (xmms_xform_t *decoder);
 static gint xmms_mac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
-static gint64 xmms_mac_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
+static gint64 xmms_mac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 static void xmms_mac_get_media_info (xmms_xform_t *decoder);
 
@@ -87,6 +85,8 @@ XMMS_XFORM_PLUGIN ("mac",
                    "Monkey's Audio", XMMS_VERSION,
                    "Monkey's Audio Decoder",
                    xmms_mac_plugin_setup);
+
+}
 
 static gboolean
 xmms_mac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -121,7 +121,7 @@ xmms_mac_init (xmms_xform_t *xform)
 	gint err = 0;
 	CAPEInfo *ape_info = NULL;
 
-	XMMS_DBG("xmms_mac_init");
+	XMMS_DBG ("xmms_mac_init");
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -129,21 +129,21 @@ xmms_mac_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	CSourceAdapter *source_adapter = new CSourceAdapter(xform);
-	ape_info = new CAPEInfo(&err, source_adapter);
+	CSourceAdapter *source_adapter = new CSourceAdapter (xform);
+	ape_info = new CAPEInfo (&err, source_adapter);
 
-	/* 
-	 * Since we have to use a source adapter, so 
+	/*
+	 * Since we have to use a source adapter, so
 	 * using this function to create the decompressor is the only way.
 	 */
-	data->p_decompress = CreateIAPEDecompressEx2(ape_info, start_block, end_block, &err);
+	data->p_decompress = CreateIAPEDecompressEx2 (ape_info, start_block, end_block, &err);
 
-	data->block_align = data->p_decompress->GetInfo(APE_INFO_BLOCK_ALIGN);
-	data->sample_rate = data->p_decompress->GetInfo(APE_INFO_SAMPLE_RATE);
-	data->bits_per_sample = data->p_decompress->GetInfo(APE_INFO_BITS_PER_SAMPLE);
-	data->channels = data->p_decompress->GetInfo(APE_INFO_CHANNELS);
+	data->block_align = data->p_decompress->GetInfo (APE_INFO_BLOCK_ALIGN);
+	data->sample_rate = data->p_decompress->GetInfo (APE_INFO_SAMPLE_RATE);
+	data->bits_per_sample = data->p_decompress->GetInfo (APE_INFO_BITS_PER_SAMPLE);
+	data->channels = data->p_decompress->GetInfo (APE_INFO_CHANNELS);
 
-	xmms_mac_get_media_info(xform);
+	xmms_mac_get_media_info (xform);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
@@ -164,7 +164,7 @@ xmms_mac_destroy (xmms_xform_t *xform)
 {
 	xmms_mac_data_t *data;
 
-	XMMS_DBG("xmms_mac_destroy");
+	XMMS_DBG ("xmms_mac_destroy");
 	g_return_if_fail (xform);
 
 	data = (xmms_mac_data_t *)xmms_xform_private_data_get (xform);
@@ -183,25 +183,25 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 	xmms_mac_data_t *data;
 	xmms_error_t error;
 
-	XMMS_DBG("xmms_mac_get_media_info");
+	XMMS_DBG ("xmms_mac_get_media_info");
 
 	g_return_if_fail (xform);
 
 	data = (xmms_mac_data_t *)xmms_xform_private_data_get (xform);
 
-	memset(&error, 0, sizeof(xmms_error_t));
+	xmms_error_reset (&error);
 
 	/* Meta information */
 
-	CAPETag *p_ape_tag = (CAPETag *)(data->p_decompress->GetInfo(APE_INFO_TAG));
+	CAPETag *p_ape_tag = (CAPETag *)(data->p_decompress->GetInfo (APE_INFO_TAG));
 
-	BOOL bHasID3Tag = p_ape_tag->GetHasID3Tag();
-	BOOL bHasAPETag = p_ape_tag->GetHasAPETag();
+	BOOL bHasID3Tag = p_ape_tag->GetHasID3Tag ();
+	BOOL bHasAPETag = p_ape_tag->GetHasAPETag ();
 
 	if (bHasID3Tag || bHasAPETag) {
 		CAPETagField * pTagField;
 		int index = 0;
-		while ((pTagField = p_ape_tag->GetTagField(index)) != NULL) {
+		while ((pTagField = p_ape_tag->GetTagField (index)) != NULL) {
 			index ++;
 
 			const wchar_t *field_name;
@@ -209,12 +209,12 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 
 			gchar *name;
 
-			field_name = pTagField->GetFieldName();
-			name = (gchar *)GetUTF8FromUTF16(field_name);
+			field_name = pTagField->GetFieldName ();
+			name = (gchar *)GetUTF8FromUTF16 (field_name);
 
-			memset(field_value, 0, 255);
+			memset (field_value, 0, 255);
 			int size = 255;
-			p_ape_tag->GetFieldString(field_name, (char *)field_value, &size, TRUE);
+			p_ape_tag->GetFieldString (field_name, (char *)field_value, &size, TRUE);
 
 			guint i = 0;
 			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
@@ -222,7 +222,7 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 					if (properties[i].type == INTEGER) {
 						gint tmp = strtol (field_value, NULL, 10);
 						xmms_xform_metadata_set_int (xform,
-						                             properties[i].xname, 
+						                             properties[i].xname,
 						                             tmp);
 					} else {
 						xmms_xform_metadata_set_str (xform,
@@ -232,72 +232,67 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 					break;
 				}
 			}
-			if (i >= G_N_ELEMENTS(properties)) {
-				xmms_xform_metadata_set_str(xform, name, field_value);
+			if (i >= G_N_ELEMENTS (properties)) {
+				xmms_xform_metadata_set_str (xform, name, field_value);
 			}
-			g_free(name);
+			g_free (name);
 		}
 	}
 
-#define _(S) (S)
-
 	gchar *name, *value;
 
-	if (xmms_xform_metadata_get_int(xform, XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION) <= 0) {
-		/* if in CUE, the duration has been caculated */
-		gint duration = data->p_decompress->GetInfo(APE_DECOMPRESS_LENGTH_MS);
-		xmms_xform_metadata_set_int(xform,
-		                            XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                            duration);
-	}
+	gint duration = data->p_decompress->GetInfo (APE_DECOMPRESS_LENGTH_MS);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+	                             duration);
 
 	/* Technical Information */
 
 	/* APE Version */
-	name = _("Version");
-	value = g_strdup_printf("%.2f", (float)data->p_decompress->GetInfo(APE_INFO_FILE_VERSION) / float(1000));
-	xmms_xform_metadata_set_str(xform, name, value);
-	g_free(value);
+	name = "Version";
+	value = g_strdup_printf ("%.2f", (float) data->p_decompress->GetInfo (APE_INFO_FILE_VERSION) / float (1000));
+	xmms_xform_metadata_set_str (xform, name, value);
+	g_free (value);
 
 	/* Compression Level */
-	name = _("Compression Level");
-	switch (data->p_decompress->GetInfo(APE_INFO_COMPRESSION_LEVEL)) {
+	name = "Compression Level";
+	switch (data->p_decompress->GetInfo (APE_INFO_COMPRESSION_LEVEL)) {
 	case COMPRESSION_LEVEL_FAST:
-		value = _("Fast");
+		value = "Fast";
 		break;
 	case COMPRESSION_LEVEL_NORMAL:
-		value = _("Normal");
+		value = "Normal";
 		break;
 	case COMPRESSION_LEVEL_HIGH:
-		value = _("High");
+		value = "High";
 		break;
 	case COMPRESSION_LEVEL_EXTRA_HIGH:
-		value = _("Extra High");
+		value = "Extra High";
 		break;
 	case COMPRESSION_LEVEL_INSANE:
-		value = _("Insane");
+		value = "Insane";
 		break;
 	}
-	xmms_xform_metadata_set_str(xform, name, value);
+	xmms_xform_metadata_set_str (xform, name, value);
 
 	/* Format Flags */
-	name = _("Flags");
-	xmms_xform_metadata_set_int(xform, name, data->p_decompress->GetInfo(APE_INFO_FORMAT_FLAGS));
+	name = "Flags";
+	xmms_xform_metadata_set_int (xform, name, data->p_decompress->GetInfo (APE_INFO_FORMAT_FLAGS));
 
 	/* Sample Rate */
-	xmms_xform_metadata_set_int(xform,
-	                            XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-	                            data->p_decompress->GetInfo(APE_INFO_SAMPLE_RATE));
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->p_decompress->GetInfo (APE_INFO_SAMPLE_RATE));
 
 	/* Channels */
-	xmms_xform_metadata_set_int(xform,
-	                            XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL,
-	                            data->p_decompress->GetInfo(APE_INFO_CHANNELS));
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_CHANNEL,
+	                             data->p_decompress->GetInfo (APE_INFO_CHANNELS));
 
 	/* Average Bitrate */
-	xmms_xform_metadata_set_int(xform,
-	                            XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-	                            data->p_decompress->GetInfo(APE_INFO_AVERAGE_BITRATE));
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+	                             data->p_decompress->GetInfo (APE_INFO_AVERAGE_BITRATE));
 }
 
 static gint
@@ -312,13 +307,13 @@ xmms_mac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 
 	blocks_to_read = len / data->block_align;
 
-	nRetVal = data->p_decompress->GetData((gchar *)buf, blocks_to_read, &actrual_read);
+	nRetVal = data->p_decompress->GetData ((gchar *)buf, blocks_to_read, &actrual_read);
 
 	return actrual_read * data->block_align;
 }
 
 static gint64
-xmms_mac_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_mac_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_mac_data_t *data;
 	gint64 blocks;
@@ -328,23 +323,19 @@ xmms_mac_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence
 	data = (xmms_mac_data_t *)xmms_xform_private_data_get (xform);
 	switch (whence) {
 	case XMMS_XFORM_SEEK_CUR:
-		blocks = data->p_decompress->GetInfo(APE_DECOMPRESS_CURRENT_BLOCK);
+		blocks = data->p_decompress->GetInfo (APE_DECOMPRESS_CURRENT_BLOCK);
 		blocks += samples;
 		break;
 	case XMMS_XFORM_SEEK_SET:
 		blocks = samples;
 		break;
 	case XMMS_XFORM_SEEK_END:
-		blocks = data->p_decompress->GetInfo(APE_DECOMPRESS_TOTAL_BLOCKS);
+		blocks = data->p_decompress->GetInfo (APE_DECOMPRESS_TOTAL_BLOCKS);
 		blocks += samples;
 		break;
 	}
-	data->p_decompress->Seek(blocks);
-    
+	data->p_decompress->Seek (blocks);
+
 	return blocks;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
