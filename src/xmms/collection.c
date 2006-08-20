@@ -1871,6 +1871,9 @@ filter_get_operator_case (xmmsc_coll_t *coll, gboolean *val)
 	if (xmmsc_coll_attribute_get (coll, "case-sensitive", &attr)) {
 		*val = (strcmp (attr, "true") == 0);
 	}
+	else {
+		*val = FALSE;
+	}
 
 	return TRUE;
 }
