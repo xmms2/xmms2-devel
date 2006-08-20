@@ -4,6 +4,7 @@ Python bindings for XMMS2.
 
 cdef extern from "stdlib.h":
 	void *malloc(int size)
+	void *free(void *ptr)
 
 cdef extern from "Python.h":
 	object PyUnicode_DecodeUTF8(char *unicode, int size, char *errors)
@@ -12,6 +13,7 @@ cdef extern from "Python.h":
 
 cdef extern from "string.h":
 	int strcmp(signed char *s1, signed char *s2)
+	char *strdup(char *str)
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmms_object_cmd_arg_type_t:
@@ -92,6 +94,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	ctypedef struct xmmsc_connection_t:
 		pass
 	ctypedef struct xmmsc_result_t
+	ctypedef struct xmmsc_coll_t
 	ctypedef object(*xmmsc_result_notifier_t)(xmmsc_result_t *res, object user_data)
 
 	xmmsc_result_t *xmmsc_result_restart(xmmsc_result_t *res)
@@ -130,26 +133,35 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	void xmmsc_result_disconnect(xmmsc_result_t *res)
 
-	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
-	xmmsc_result_t *xmmsc_playlist_add_url(xmmsc_connection_t *, char *)
-	xmmsc_result_t *xmmsc_playlist_add_encoded(xmmsc_connection_t *, char *)
-	xmmsc_result_t *xmmsc_playlist_insert_url(xmmsc_connection_t *, int pos, char *)
-	xmmsc_result_t *xmmsc_playlist_add_id(xmmsc_connection_t *, unsigned int)
-	xmmsc_result_t *xmmsc_playlist_insert_id(xmmsc_connection_t *, int pos, unsigned int)
-	xmmsc_result_t *xmmsc_playlist_insert_encoded(xmmsc_connection_t *, int pos, char *)
-	xmmsc_result_t *xmmsc_playlist_remove(xmmsc_connection_t *, unsigned int)
-	xmmsc_result_t *xmmsc_playlist_clear(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_list(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_sort(xmmsc_connection_t *c, char *property)
-	xmmsc_result_t *xmmsc_playlist_set_next(xmmsc_connection_t *c, int pos)
-	xmmsc_result_t *xmmsc_playlist_set_next_rel(xmmsc_connection_t *c, signed int)
-	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, signed int movement)
-	xmmsc_result_t *xmmsc_playlist_current_pos(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *path)
-	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *path)
+	xmmsc_result_t *xmmsc_playlist_list(xmmsc_connection_t *)
+	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_add_args(xmmsc_connection_t *, char *playlist, char *, int, char **)
+	xmmsc_result_t *xmmsc_playlist_add_url(xmmsc_connection_t *, char *playlist, char *)
+	xmmsc_result_t *xmmsc_playlist_add_id(xmmsc_connection_t *, char *playlist, unsigned int)
+	xmmsc_result_t *xmmsc_playlist_add_encoded(xmmsc_connection_t *, char *, char *)
+	xmmsc_result_t *xmmsc_playlist_add_collection(xmmsc_connection_t *, char *playlist, xmmsc_coll_t *coll, char **order)
+	xmmsc_result_t *xmmsc_playlist_remove_entry(xmmsc_connection_t *, char *playlist, unsigned int)
+	xmmsc_result_t *xmmsc_playlist_clear(xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_remove(xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_list_entries(xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_sort(xmmsc_connection_t *, char *playlist, char **properties)
+	xmmsc_result_t *xmmsc_playlist_set_next(xmmsc_connection_t *, int pos)
+	xmmsc_result_t *xmmsc_playlist_set_next_rel(xmmsc_connection_t *, signed int)
+	xmmsc_result_t *xmmsc_playlist_move_entry(xmmsc_connection_t *, char *playlist, unsigned int id, signed int movement)
+	xmmsc_result_t *xmmsc_playlist_current_pos(xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_current_active(xmmsc_connection_t *)
+	xmmsc_result_t *xmmsc_playlist_insert_args(xmmsc_connection_t *, char *playlist, int pos, char *url, int numargs, char **args)
+	xmmsc_result_t *xmmsc_playlist_insert_url(xmmsc_connection_t *, char *playlist, int pos, char *)
+	xmmsc_result_t *xmmsc_playlist_insert_id(xmmsc_connection_t *, char *playlist, int pos, unsigned int)
+	xmmsc_result_t *xmmsc_playlist_insert_encoded(xmmsc_connection_t *, char *, int pos, char *)
+	xmmsc_result_t *xmmsc_playlist_insert_collection(xmmsc_connection_t *, char *playlist, int pos, xmmsc_coll_t *coll, char **order)
+	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *, char *path)
+	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *, char *path)
+
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playlist_current_pos(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_broadcast_playlist_loaded(xmmsc_connection_t *c)
 	
 	xmmsc_result_t *xmmsc_playback_stop(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_playback_tickle(xmmsc_connection_t *c)
@@ -179,19 +191,11 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	xmmsc_result_t *xmmsc_broadcast_configval_changed(xmmsc_connection_t *c)
 
-	xmmsc_result_t *xmmsc_medialib_select(xmmsc_connection_t *conn, char *query)
-	char *xmmsc_sqlite_prepare_string(char *query)
-	xmmsc_result_t *xmmsc_medialib_playlist_save_current(xmmsc_connection_t *conn, char *name)
+	#xmmsc_result_t *xmmsc_medialib_select(xmmsc_connection_t *conn, char *query)
 	xmmsc_result_t *xmmsc_medialib_playlist_load(xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_add_entry(xmmsc_connection_t *conn, char *url)
 	xmmsc_result_t *xmmsc_medialib_add_entry_encoded(xmmsc_connection_t *conn, char *url)
 	xmmsc_result_t *xmmsc_medialib_get_info(xmmsc_connection_t *, unsigned int id)
-	xmmsc_result_t *xmmsc_medialib_add_to_playlist(xmmsc_connection_t *c, char *query)
-	xmmsc_result_t *xmmsc_medialib_playlists_list (xmmsc_connection_t *)
-	xmmsc_result_t *xmmsc_medialib_playlist_list (xmmsc_connection_t *, char *playlist)
-	xmmsc_result_t *xmmsc_medialib_playlist_import(xmmsc_connection_t *c, char *name, char *url)
-	xmmsc_result_t *xmmsc_medialib_playlist_export(xmmsc_connection_t *c, char *name, char *mime)
-	xmmsc_result_t *xmmsc_medialib_playlist_remove (xmmsc_connection_t *c, char *name)
 	xmmsc_result_t *xmmsc_medialib_path_import (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_path_import_encoded (xmmsc_connection_t *c, char *path)
 	xmmsc_result_t *xmmsc_medialib_rehash(xmmsc_connection_t *c, unsigned int)
@@ -210,8 +214,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_added(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed(xmmsc_connection_t *c)
-	xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded(xmmsc_connection_t *c)
-	
 	xmmsc_result_t *xmmsc_signal_visualisation_data(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
@@ -246,6 +248,29 @@ cdef from_unicode(object o):
 		return PyUnicode_AsUTF8String(o)
 	else:
 		return o
+
+cdef class _ListConverter:
+	cdef char **lst
+	cdef int leng
+	
+	def __new__(self, inlist):
+		cdef int i
+		self.leng = len(inlist)
+		self.lst = <char **>malloc((self.leng + 1)* sizeof(char*))
+       
+		i = 0
+		while i < self.leng:
+			tmp = inlist[i]
+			self.lst[i] = strdup(tmp)
+			i = i + 1
+			self.lst[i] = NULL
+	
+	def __del__(self):
+		i = 0
+		while i < self.leng:
+			free(self.lst[i])
+			i = i + 1
+		free(self.lst) 
 
 cdef foreach_source_hash(signed char *key, xmmsc_result_value_type_t type, void *value, char *source, udata):
 	if type == XMMSC_RESULT_VALUE_TYPE_STRING:
@@ -1009,7 +1034,7 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_shuffle(self, cb = None):
+	def playlist_shuffle(self, playlist = None, cb = None):
 		"""
 		Instruct the XMMS2 daemon to shuffle the playlist.
 		@rtype: L{XMMSResult}
@@ -1019,13 +1044,18 @@ cdef class XMMS:
 		
 		ret = XMMSResult(self)
 		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_shuffle(self.conn, pl)
+		else:
+			ret.res = xmmsc_playlist_shuffle(self.conn, NULL)
 		
-		ret.res = xmmsc_playlist_shuffle(self.conn)
 		ret.more_init()
 		
 		return ret
 
-	def playlist_insert_url(self, pos, url, cb = None):
+	def playlist_insert_url(self, pos, url, playlist = None, cb = None):
 		"""
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1040,12 +1070,17 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_insert_url(self.conn, pos, c)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_insert_url(self.conn, pl, pos, c)
+		else:
+			ret.res = xmmsc_playlist_insert_url(self.conn, NULL, pos, c)
+
 		ret.more_init()
 		
 		return ret
 
-	def playlist_insert_encoded(self, pos, url, cb = None):
+	def playlist_insert_encoded(self, pos, url, playlist = None, cb = None):
 		"""
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1063,13 +1098,17 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_insert_encoded(self.conn, pos, c)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_insert_encoded(self.conn, pl, pos, c)
+		else:
+			ret.res = xmmsc_playlist_insert_encoded(self.conn, NULL, pos, c)
 		ret.more_init()
 		
 		return ret
 
 
-	def playlist_insert_id(self, pos, id, cb = None):
+	def playlist_insert_id(self, pos, id, playlist = None, cb = None):
 		"""
 		Insert a medialib to the playlist.
 		Requires an int 'pos' and an int 'id' as argument.
@@ -1081,12 +1120,17 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 
-		ret.res = xmmsc_playlist_insert_id(self.conn, pos, id)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_insert_id(self.conn, pl, pos, id)
+		else:
+			ret.res = xmmsc_playlist_insert_id(self.conn, NULL, pos, id)
+		
 		ret.more_init()
 		
 		return ret
 
-	def playlist_radd(self, url, cb = None):
+	def playlist_radd(self, url, playlist = None, cb = None):
 		"""
 		Add a directory to the playlist.
 		Requires a string 'url' as argument.
@@ -1100,12 +1144,16 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_radd(self.conn, c)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_radd(self.conn, pl, c)
+		else:
+			ret.res = xmmsc_playlist_radd(self.conn, NULL, c)
 		ret.more_init()
 		
 		return ret
 
-	def playlist_radd_encoded(self, url, cb = None):
+	def playlist_radd_encoded(self, url, playlist = None, cb = None):
 		"""
 		Add a directory to the playlist.
 		Requires a string 'url' as argument.
@@ -1120,12 +1168,16 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_radd_encoded(self.conn, c)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_radd_encoded(self.conn, pl, c)
+		else:
+			ret.res = xmmsc_playlist_radd_encoded(self.conn, NULL, c)
 		ret.more_init()
 		
 		return ret
 
-	def playlist_add_url(self, url, cb = None):
+	def playlist_add_url(self, url, playlist = None, cb = None):
 		"""
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1139,13 +1191,17 @@ cdef class XMMS:
 		ret.callback = cb
 
 		c = from_unicode(url)
-		
-		ret.res = xmmsc_playlist_add_url(self.conn, c)
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_add_url(self.conn, pl, c)
+		else:
+			ret.res = xmmsc_playlist_add_url(self.conn, NULL, c)
 		ret.more_init()
 		
 		return ret
 
-	def playlist_add_encoded(self, url, cb = None):
+	def playlist_add_encoded(self, url, playlist = None, cb = None):
 		"""
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1161,13 +1217,17 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_add_encoded(self.conn, c)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_add_encoded(self.conn, pl, c)
+		else:
+			ret.res = xmmsc_playlist_add_encoded(self.conn, NULL, c)
 		ret.more_init()
 		
 		return ret
 
 
-	def playlist_add_id(self, id, cb = None):
+	def playlist_add_id(self, id, playlist = None, cb = None):
 		"""
 		Add a medialib id to the playlist.
 		@rtype: L{XMMSResult}
@@ -1178,13 +1238,18 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_add_id(self.conn, id)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_add_id(self.conn, pl, id)
+		else:
+			ret.res = xmmsc_playlist_add_id(self.conn, NULL, id)
+
 		ret.more_init()
 		
 		return ret
 
 
-	def playlist_remove(self, id, cb = None):
+	def playlist_remove_entry(self, id, playlist = None, cb = None):
 		"""
 		Remove a certain media item from the playlist.
 		Requires a number 'id' as argument.
@@ -1196,12 +1261,17 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_remove(self.conn, id)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_remove_entry(self.conn, pl, id)
+		else:
+			ret.res = xmmsc_playlist_remove_entry(self.conn, NULL, id)
+
 		ret.more_init()
 		
 		return ret
 
-	def playlist_clear(self, cb = None):
+	def playlist_clear(self, playlist = None, cb = None):
 		"""
 		Clear the playlist.
 		@rtype: L{XMMSResult}
@@ -1212,12 +1282,16 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_clear(self.conn)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_clear(self.conn, pl)
+		else:
+			ret.res = xmmsc_playlist_clear(self.conn, NULL)
 		ret.more_init()
 		
 		return ret
 
-	def playlist_list(self, cb = None):
+	def playlist_list_entires(self, playlist = None, cb = None):
 		"""
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
@@ -1230,26 +1304,36 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_list(self.conn)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_list_entries(self.conn, pl)
+		else:
+			ret.res = xmmsc_playlist_list_entries(self.conn, NULL)
+			
 		ret.more_init()
 		
 		return ret
 
 
-	def playlist_sort(self, prop, cb = None):
+	def playlist_sort(self, props, playlist = None, cb = None):
 		"""
-		Sorts the playlist according to the property specified.
+		Sorts the playlist according to the properties specified.
 		@rtype: L{XMMSResult}
 		@return: The result of the operation.
 		"""
 		cdef XMMSResult ret
-		
+		cdef _ListConverter prl  
+		prl = _ListConverter(props)
+	
 		ret = XMMSResult(self)
 		ret.callback = cb
 
-		c = from_unicode(prop)
-		
-		ret.res = xmmsc_playlist_sort(self.conn, c)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_sort(self.conn, pl, prl.lst)
+		else:
+			ret.res = xmmsc_playlist_sort(self.conn, NULL, prl.lst)
+			
 		ret.more_init()
 		
 		return ret
@@ -1288,7 +1372,7 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_move(self, cur_pos, new_pos, cb = None):
+	def playlist_move(self, cur_pos, new_pos, playlist = None, cb = None):
 		"""
 		Moves a playlist entry to a new position.
 		@rtype: L{XMMSResult}
@@ -1299,12 +1383,17 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_move(self.conn, cur_pos, new_pos)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_move_entry(self.conn, pl, cur_pos, new_pos)
+		else:
+			ret.res = xmmsc_playlist_move_entry(self.conn, NULL, cur_pos, new_pos)
+
 		ret.more_init()
 		
 		return ret
 
-	def playlist_current_pos(self, cb = None):
+	def playlist_current_pos(self, playlist = None, cb = None):
 		"""
 		Returns the current position in the playlist. This value will
 		always be equal to, or larger than 0. The first entry in the
@@ -1316,7 +1405,11 @@ cdef class XMMS:
 		ret = XMMSResult(self)
 		ret.callback = cb
 		
-		ret.res = xmmsc_playlist_current_pos(self.conn)
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_current_pos(self.conn, pl)
+		else:
+			ret.res = xmmsc_playlist_current_pos(self.conn, NULL)
 		ret.more_init()
 
 		return ret
@@ -1446,30 +1539,22 @@ cdef class XMMS:
 		ret.more_init()
 		return ret
 
-	def medialib_select(self, query, cb = None):
-		"""
-		Query the MediaLib.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(query)
-		
-		ret.res = xmmsc_medialib_select(self.conn, c)
-		ret.more_init()
-		return ret
-
-	def prepare_string(self, value):
-		"""
-		Prepare a string for SQL queries.
-		@rtype: string
-		@return: The escaped string enclosed by quotations.
-		"""
-		return xmmsc_sqlite_prepare_string(value)
+	#def medialib_select(self, query, cb = None):
+	#	"""
+	#	Query the MediaLib.
+	#	@rtype: L{XMMSResult}
+	#	@return: The result of the operation.
+	#	"""
+	#	cdef XMMSResult ret
+	#	
+	#	ret = XMMSResult(self)
+	#	ret.callback = cb
+	#
+ 	#	c = from_unicode(query)
+	#
+	#	ret.res = xmmsc_medialib_select(self.conn, c)
+	#	ret.more_init()
+	#	return ret
 
 	def medialib_add_entry(self, file, cb = None):
 		"""
@@ -1507,40 +1592,6 @@ cdef class XMMS:
 		ret.more_init()
 		return ret
 
-	def medialib_playlist_save_current(self, playlistname, cb = None):
-		"""
-		Save the current playlist to a medialib playlist
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(playlistname)
-		
-		ret.res = xmmsc_medialib_playlist_save_current(self.conn, c)
-		ret.more_init()
-		return ret
-
-	def medialib_playlist_load(self, playlistname, cb = None):
-		"""
-		Load playlistname from the medialib
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(playlistname)
-		
-		ret.res = xmmsc_medialib_playlist_load(self.conn, c)
-		ret.more_init()
-		return ret
-
 	def medialib_get_info(self, id, cb = None):
 		"""
 		@rtype: L{XMMSResult}(HashTable)
@@ -1553,78 +1604,6 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_medialib_get_info(self.conn, id)
-		ret.more_init()
-		
-		return ret
-
-	def medialib_add_to_playlist(self, query, cb = None):
-		"""
-		Add items in the playlist by querying the medialib.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(query)
-		
-		ret.res = xmmsc_medialib_add_to_playlist(self.conn, c)
-		ret.more_init()
-		
-		return ret
-
-	def medialib_playlists_list(self, cb = None):
-		"""
-		Returns a list of all available playlists in the medialib.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		ret.res = xmmsc_medialib_playlists_list(self.conn)
-		ret.more_init()
-		
-		return ret
-
-	def medialib_playlist_list(self, name, cb = None):
-		"""
-		Get the specified playlist from medialib.
-		This function returns a list of IDs the files/streams
-		currently in the playlist. Use L{medialib_get_info} to
-		retrieve more specific information.
-		@rtype:	L{XMMSResult}(UIntList)
-		@return: The playlist with the given name.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-		
-		ret.res = xmmsc_medialib_playlist_list(self.conn, name)
-		ret.more_init()
-		
-		return ret
-
-	def medialib_playlist_import(self, name, url, cb = None):
-		"""
-		Import a playlist into the medialib.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(name)
-		c2 = from_unicode(url)
-		
-		ret.res = xmmsc_medialib_playlist_import(self.conn, c, c2)
 		ret.more_init()
 		
 		return ret
@@ -1659,45 +1638,6 @@ cdef class XMMS:
 		ret.callback = cb
 		
 		ret.res = xmmsc_medialib_get_id(self.conn, url)
-		ret.more_init()
-		
-		return ret
-
-
-	def medialib_playlist_export(self, name, mime, cb = None):
-		"""
-		Export a playlist from the medialib to another format.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(name)
-		c2 = from_unicode(mime)
-		
-		ret.res = xmmsc_medialib_playlist_export(self.conn, c, c2)
-		ret.more_init()
-		
-		return ret
-
-	def medialib_playlist_remove(self, name, cb = None):
-		"""
-		Remove a playlist from the medialib. This does not affect the
-		songs listed in the playlist itself.
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		c = from_unicode(name)
-		
-		ret.res = xmmsc_medialib_playlist_remove(self.conn, c)
 		ret.more_init()
 		
 		return ret
@@ -1825,23 +1765,6 @@ cdef class XMMS:
 		ret.more_init(1)
 		
 		return ret
-
-	def broadcast_medialib_playlist_loaded(self, cb = None):
-		"""
-		Set a method to handle the medialib playlist loaded broadcast
-		from the XMMS2 daemon.(i.e. a playlist is loaded from medialib). 		
-		@rtype: L{XMMSResult}
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-		
-		ret.res = xmmsc_broadcast_medialib_playlist_loaded(self.conn)
-		ret.more_init(1)
-		
-		return ret
-
 
 	def signal_visualisation_data(self, cb = None):
 		"""

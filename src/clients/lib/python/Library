@@ -4,7 +4,6 @@ static=False
 loadable=True
 
 def config(env):
-	raise ConfigError("Disabled")
 	try:
 		import distutils
 		import distutils.sysconfig
