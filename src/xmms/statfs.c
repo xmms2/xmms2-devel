@@ -16,7 +16,7 @@
 
 
 /** @file
- *  "Portable" statfs 
+ *  "Portable" statfs
  *  Since this file is filled with ugly ifdefs
  *  and other things that we don't like in xmms2
  *  we leave it just with one function.
@@ -60,13 +60,13 @@ xmms_statfs_is_remote (const gchar *path)
 
 #if defined(STATFS_LINUX)
 	if (st.f_type == 0xFF534D42 || /* cifs */
-		st.f_type == 0x6969 || /* nfs */
-		st.f_type == 0x517B) { /* smb */
+	    st.f_type == 0x6969 || /* nfs */
+	    st.f_type == 0x517B) { /* smb */
 		return TRUE;
 	}
 #elif defined(STATFS_BSD)
 	if ((g_strcasecmp (st.f_fstypename, "nfs") == 0) ||
-		(g_strcasecmp (st.f_fstypename, "smb") == 0)) {
+	    (g_strcasecmp (st.f_fstypename, "smb") == 0)) {
 		return TRUE;
 	}
 #endif

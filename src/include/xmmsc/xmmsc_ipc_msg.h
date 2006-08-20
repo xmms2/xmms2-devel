@@ -52,6 +52,7 @@ void* xmms_ipc_msg_put_float (xmms_ipc_msg_t *msg, float v);
 void* xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str);
 void* xmms_ipc_msg_put_string_list (xmms_ipc_msg_t *msg, const char* strings[]);
 void* xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll);
+void* xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg, const unsigned char *data, unsigned int len);
 void* xmms_ipc_msg_append (xmms_ipc_msg_t *dmsg, xmms_ipc_msg_t *smsg);
 
 typedef enum {
@@ -83,5 +84,6 @@ bool xmms_ipc_msg_get_float (xmms_ipc_msg_t *msg, float *v);
 bool xmms_ipc_msg_get_string (xmms_ipc_msg_t *msg, char *str, unsigned int maxlen);
 bool xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf, unsigned int *len);
 bool xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll);
+bool xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg, unsigned char **buf, unsigned int *len);
 
 #endif 

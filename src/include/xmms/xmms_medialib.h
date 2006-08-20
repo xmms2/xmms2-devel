@@ -57,6 +57,11 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_SUBTUNES "subtunes"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN "chain"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED "timesplayed"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET "partofset"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT "picture_front"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME "picture_front_mime"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_STARTSAMPLE "startsample"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_STOPSAMPLE "stopsample"
 
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;
@@ -71,6 +76,7 @@ gboolean xmms_medialib_entry_property_set_str (xmms_medialib_session_t *session,
 gboolean xmms_medialib_entry_property_set_int (xmms_medialib_session_t *session, xmms_medialib_entry_t entry, const gchar *property, gint value);
 void xmms_medialib_entry_send_added (xmms_medialib_entry_t entry);
 void xmms_medialib_entry_send_update (xmms_medialib_entry_t entry);
+gchar *xmms_medialib_url_encode (const gchar *path);
 
 #define xmms_medialib_begin() _xmms_medialib_begin(FALSE, __FILE__, __LINE__)
 #define xmms_medialib_begin_write() _xmms_medialib_begin(TRUE, __FILE__, __LINE__)

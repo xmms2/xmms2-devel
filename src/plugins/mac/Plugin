@@ -1,0 +1,6 @@
+target="mac"
+source=["source_adapter.cpp", "mac.cpp"]
+
+def config(env):
+	env.checklib("mac", "DecompressFile")
+

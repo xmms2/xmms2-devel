@@ -37,20 +37,20 @@ void
 cmd_plugin_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	xmms_plugin_type_t type;
+	xmms_plugin_type_t type = XMMS_PLUGIN_TYPE_ALL;
 
-	if (argc < 3) {
-		type = XMMS_PLUGIN_TYPE_ALL;
-	} else if (g_strcasecmp (argv[2], "output") == 0) {
-		type = XMMS_PLUGIN_TYPE_OUTPUT;
-	} else if (g_strcasecmp (argv[2], "xform") == 0) {
-		type = XMMS_PLUGIN_TYPE_XFORM;
-	} else if (g_strcasecmp (argv[2], "effect") == 0) {
-		type = XMMS_PLUGIN_TYPE_EFFECT;
-	} else if (g_strcasecmp (argv[2], "playlist") == 0) {
-		type = XMMS_PLUGIN_TYPE_PLAYLIST;
-	} else {
-		print_error ("no such plugin type!");
+	if (argc > 2) {
+		if (g_strcasecmp (argv[2], "output") == 0) {
+			type = XMMS_PLUGIN_TYPE_OUTPUT;
+		} else if (g_strcasecmp (argv[2], "xform") == 0) {
+			type = XMMS_PLUGIN_TYPE_XFORM;
+		} else if (g_strcasecmp (argv[2], "effect") == 0) {
+			type = XMMS_PLUGIN_TYPE_EFFECT;
+		} else if (g_strcasecmp (argv[2], "playlist") == 0) {
+			type = XMMS_PLUGIN_TYPE_PLAYLIST;
+		} else {
+			print_error ("no such plugin type!");
+		}
 	}
 
 	res = xmmsc_plugin_list (conn, type);
@@ -88,3 +88,29 @@ cmd_quit (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
+void
+cmd_browse (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res;
+
+	if (argc < 3) {
+		print_error ("Need to specify a URL to browse");
+	}
+
+	res = xmmsc_xform_media_browse (conn, argv[2]);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	for (;xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		gchar *r;
+		gint d;
+		xmmsc_result_get_dict_entry_string (res, "path", &r);
+		xmmsc_result_get_dict_entry_int (res, "isdir", &d);
+		print_info ("%s%c", r, d ? '/' : ' ');
+	}
+
+	xmmsc_result_unref (res);
+}

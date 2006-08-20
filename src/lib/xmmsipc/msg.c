@@ -293,6 +293,15 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
 }
 
 void *
+xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
+                      const unsigned char *data,
+                      unsigned int len)
+{
+	xmms_ipc_msg_put_uint32 (msg, len);
+	return xmms_ipc_msg_put_data (msg, data, len);
+}
+
+void *
 xmms_ipc_msg_put_uint32 (xmms_ipc_msg_t *msg, uint32_t v)
 {
 	v = htonl (v);
@@ -480,6 +489,28 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
 	}
 
 	(*buf)[*len] = '\0';
+
+	return true;
+}
+
+bool
+xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
+                            unsigned char **buf,
+                            unsigned int *len)
+{
+	if (!xmms_ipc_msg_get_uint32 (msg, len)) {
+		return false;
+	}
+
+	*buf = x_malloc0 (*len);
+	if (!*buf) {
+		return false;
+	}
+
+	if (!xmms_ipc_msg_get_data (msg, *buf, *len)) {
+		free (*buf);
+		return false;
+	}
 
 	return true;
 }

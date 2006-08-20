@@ -42,6 +42,7 @@ static gboolean xmms_file_init (xmms_xform_t *xform);
 static void xmms_file_destroy (xmms_xform_t *xform);
 static gint xmms_file_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error);
 static gint64 xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *error);
+static GList *xmms_file_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 static gboolean xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 
 /*
@@ -63,6 +64,7 @@ xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.destroy = xmms_file_destroy;
 	methods.read = xmms_file_read;
 	methods.seek = xmms_file_seek;
+	methods.browse = xmms_file_browse;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -195,4 +197,51 @@ xmms_file_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whenc
 		return -1;
 	}
 	return res;
+}
+
+static GList *
+xmms_file_browse (xmms_xform_t *xform,
+                  const gchar *url,
+                  xmms_error_t *error)
+{
+	GHashTable *h;
+	GList *ret = NULL;
+	GDir *dir;
+	GError *err = NULL;
+	const gchar *tmp, *d;
+	struct stat st;
+
+	tmp = url + 7; /* maybe a bit unsafe */
+
+	dir = g_dir_open (tmp, 0, &err);
+	if (!dir) {
+		xmms_error_set (error, XMMS_ERROR_NOENT, err->message);
+		return NULL;
+	}
+
+
+	while ((d = g_dir_read_name (dir))) {
+		gboolean is_dir = FALSE;
+		gchar *t = g_build_filename (tmp, d, NULL);
+		gchar *t2 = xmms_medialib_url_encode (t);
+		gchar *file = g_strdup_printf ("file://%s", t2);
+		g_free (t2);
+		
+		h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
+
+		if (!stat (t, &st)) {
+			if (S_ISDIR (st.st_mode)) {
+				is_dir = TRUE;
+			}
+		}
+		g_hash_table_insert (h, "size", xmms_object_cmd_value_int_new (st.st_size));
+		ret = xmms_xform_browse_add_entry (ret, file, is_dir, h);
+		g_hash_table_destroy (h);
+		g_free (t);
+		g_free (file);
+	}
+
+	g_dir_close (dir);
+
+	return ret;
 }

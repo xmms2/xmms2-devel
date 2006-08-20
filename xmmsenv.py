@@ -54,7 +54,6 @@ class Target:
 		if not isinstance(self.globs.get("source"), list):
 			raise RuntimeError("Target file '%s' does not specify 'source', or 'source' is not a list" % target)
 
-
 		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
 		self.target = os.path.join(self.dir, self.globs["target"])
 
@@ -141,6 +140,15 @@ class XMMSEnvironment(Environment):
 		else:
 			self.platform = sys.platform
 
+		# Where to place the xmms2 user config directory
+		if self.has_key("USERCONFDIR"):
+			self.userconfpath = self["USERCONFDIR"]
+		else:
+			if sys.platform == 'darwin':
+				self.userconfpath = 'Library/xmms2'
+			else:
+				self.userconfpath = '.config/xmms2'
+
 		def gzipper(target, source, env):
 			gzip.GzipFile(target[0].path, 'wb',9).write(file(source[0].path).read())
 		self['BUILDERS']['GZipper'] = SCons.Builder.Builder(action=SCons.Action.Action(gzipper))
@@ -151,7 +159,6 @@ class XMMSEnvironment(Environment):
 		self.potential_targets = []
 		self.scan_dir("src")
 
-	
 	def Install(self, target, source):
 		target = os.path.normpath(self.installdir + target)
 		SCons.Environment.Environment.Install(self, target, source)
@@ -240,6 +247,28 @@ class XMMSEnvironment(Environment):
 				sys.exit(1)
 			raise ConfigError("Headerfile '%s' not found" % header)
 
+	def checkcompiler(self):
+		if not self.config_cache.has_key("c"):
+			print "Checking for working C compiler...",
+			self.config_cache["c"] = self.conf.TryCompile("int main() {}",".c")
+			if self.config_cache["c"]:
+				print "yes"
+			else:
+				print "no"
+		if not self.config_cache["c"]:
+			raise ConfigError("couldn't compile C files")
+
+	def checkcpp(self):
+		if not self.config_cache.has_key("cpp"):
+			print "Checking for working C++ compiler...",
+			self.config_cache["cpp"] = self.conf.TryCompile("using namespace std; int main() {};",".cpp")
+			if self.config_cache["cpp"]:
+				print "yes"
+			else:
+				print "no"
+		if not self.config_cache["cpp"]:
+			raise ConfigError("couldn't compile CPP files")
+
 	def checkcppheader(self, header, fail=False):
         
 		if isinstance(header, list):
@@ -273,7 +302,7 @@ class XMMSEnvironment(Environment):
 			#		self.config_cache[key] = libtool_flags["dependency_libs"]+" "
 			#		break
 
-			if self.conf.CheckLib(lib, func, header=header, language=lang):
+			if self.conf.CheckLib(lib, func, header=header, language=lang, autoadd=0):
 				self.config_cache[key] += "-l"+lib
 				self.parse_config_string("-l"+lib)
 				return
@@ -309,6 +338,9 @@ class XMMSEnvironment(Environment):
 				elif opt == 'D':
 					self.Append( CPPFLAGS = [ arg ] )
 				elif arg[1:] == 'pthread':
+					self.Append( LINKFLAGS = [ arg ] )
+					self.Append( CPPFLAGS = [ arg ] )
+				elif arg[1:] == 'threads':
 					self.Append( LINKFLAGS = [ arg ] )
 					self.Append( CPPFLAGS = [ arg ] )
 				elif arg[1:6] == 'rpath':
@@ -388,7 +420,6 @@ class XMMSEnvironment(Environment):
 			if loadable:
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] = ' -bundle -undefined suppress -flat_namespace'
-					self["SHLIBSUFFIX"] = ".bundle"
 				self.Install(self.librarypath, target + self["SHLIBSUFFIX"])
 			else:
 				if self.platform == 'darwin':
@@ -481,7 +512,7 @@ class XMMSEnvironment(Environment):
 		for t in targets:
 			env = self.Copy()
 			env.dir = t.dir
-
+		
 			try:
 				t.config(env)
 				t.add(env)

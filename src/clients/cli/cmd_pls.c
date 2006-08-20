@@ -306,6 +306,80 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	g_free (url);
 }
 
+void
+cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *playlist = NULL;
+	guint pos;
+	gchar *url;
+	gchar **endptr;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Need a position and a file");
+	}
+
+	pos = strtol (argv[2], endptr, 10);
+	if (**endptr == '\0') {
+		url = format_url (argv[3]);  /* No playlist name */
+	}
+	else {
+		playlist = argv[2];  /* extract playlist name */
+		pos = strtol (argv[3], NULL, 10);
+		url = format_url (argv[4]);
+	}
+
+	if (!url) {
+		print_error ("Invalid url");
+	}
+
+	res = xmmsc_playlist_insert_url (conn, playlist, pos, url);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to add %s at postion %u: %s", url,
+		             pos, xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Inserted %s at %u", url, pos);
+
+	g_free (url);
+}
+
+void
+cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *playlist;
+	guint pos, mlib_id;
+	gchar **endptr;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Need a position and a medialib id");
+	}
+
+	pos = strtol (argv[2], endptr, 10);
+	if (**endptr == '\0') {
+		mlib_id = strtol (argv[3], NULL, 10); /* No playlist name */
+	}
+	else {
+		playlist = argv[2];  /* extract playlist name */
+		pos = strtol (argv[3], NULL, 10);
+		mlib_id = strtol (argv[4], NULL, 10);
+	}
+
+	res = xmmsc_playlist_insert_id (conn, playlist, pos, mlib_id);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to insert %u at position %u: %s", pos, 
+		             mlib_id, xmmsc_result_get_error(res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Inserted %u at position %u", mlib_id, pos);
+}
 
 void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)

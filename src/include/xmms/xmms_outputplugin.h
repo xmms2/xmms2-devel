@@ -46,6 +46,7 @@ typedef struct xmms_output_methods_St {
 
 	void (*flush)(xmms_output_t *);
 	gboolean (*format_set)(xmms_output_t *, const xmms_stream_type_t *);
+	gboolean (*format_set_always)(xmms_output_t *, const xmms_stream_type_t *);
 	gboolean (*status)(xmms_output_t *, xmms_playback_status_t);
 
 	gboolean (*volume_set)(xmms_output_t *, const gchar *, guint);
@@ -82,7 +83,8 @@ void xmms_output_stream_type_add (xmms_output_t *output, ...);
 
 gint xmms_output_read (xmms_output_t *output, char *buffer, gint len);
 void xmms_output_set_error (xmms_output_t *output, xmms_error_t *error);
-
+guint xmms_output_current_id (xmms_output_t *output, xmms_error_t *error);
+gboolean xmms_output_plugin_format_set_always (xmms_output_plugin_t *plugin);
 
 xmms_config_property_t *xmms_output_plugin_config_property_register (xmms_output_plugin_t *plugin, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);
 xmms_config_property_t *xmms_output_config_property_register (xmms_output_t *output, const gchar *name, const gchar *default_value, xmms_object_handler_t cb, gpointer userdata);

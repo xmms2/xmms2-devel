@@ -39,7 +39,7 @@
   * @defgroup IPC IPC
   * @ingroup XMMSServer
   * @brief IPC functions for XMMS2 Daemon
-  * @{ 
+  * @{
   */
 
 
@@ -158,6 +158,15 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 				return FALSE;
 			}
 			break;
+		case XMMS_OBJECT_CMD_ARG_BIN :
+			{
+				GString *bin = g_string_new (NULL);
+				if (!xmms_ipc_msg_get_bin_alloc (msg, (unsigned char **)&bin->str, (uint32_t *)&bin->len)) {
+					return FALSE;
+				}
+				arg->values[i].value.bin = bin;
+			}
+			break;
 		default:
 			XMMS_DBG ("Unknown value for a caller argument?");
 			return FALSE;
@@ -209,6 +218,9 @@ xmms_ipc_handle_cmd_value (xmms_ipc_msg_t *msg, xmms_object_cmd_value_t *val)
 	xmms_ipc_msg_put_int32 (msg, val->type);
 
 	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			xmms_ipc_msg_put_bin (msg, (guchar *)val->value.bin->str, val->value.bin->len);
+			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			xmms_ipc_msg_put_string (msg, val->value.string);
 			break;
@@ -253,7 +265,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
 
-	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
+	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL &&
 	    xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_SIGNAL) {
 		guint signalid;
 
@@ -266,7 +278,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
 		g_mutex_unlock (client->lock);
 		return;
-	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL && 
+	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL &&
 	           xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
 		guint broadcastid;
 
@@ -317,14 +329,15 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		xmms_object_cmd_value_free (arg.retval);
 
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING)
+		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING) {
 			g_free (arg.values[i].value.string);
-		else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRINGLIST) {
+		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRINGLIST) {
 			GList * list = arg.values[i].value.list;
 			while (list) {g_free(list->data); list=g_list_delete_link(list, list); }
-		}
-		else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_COLL) {
+		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_COLL) {
 			xmmsc_coll_unref (arg.values[i].value.coll);
+		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_BIN) {
+			g_string_free (arg.values[i].value.bin, TRUE);
 		}
 	}
 	xmms_ipc_msg_set_cookie (retmsg, xmms_ipc_msg_get_cookie (msg));
@@ -389,28 +402,32 @@ xmms_ipc_client_thread (gpointer data)
 		}
 
 		if (FD_ISSET (fd, &wfdset)) {
-			g_mutex_lock (client->lock);
-			while (!g_queue_is_empty (client->out_msg)) {
-				xmms_ipc_msg_t *msg = g_queue_peek_head (client->out_msg);
+			while (TRUE) {
+				xmms_ipc_msg_t *msg;
 
-				g_mutex_unlock (client->lock);
-				if (xmms_ipc_msg_write_transport (msg, client->transport, &disconnect)) {
-					g_mutex_lock (client->lock);
-					g_queue_pop_head (client->out_msg);
-					g_mutex_unlock (client->lock);
-					xmms_ipc_msg_destroy (msg);
-				} else {
-					break;
-				}
 				g_mutex_lock (client->lock);
+				msg = g_queue_peek_head (client->out_msg);
+				g_mutex_unlock (client->lock);
+
+				if (!msg)
+					break;
+
+				if (!xmms_ipc_msg_write_transport (msg, client->transport, &disconnect))
+					break;
+
+				g_mutex_lock (client->lock);
+				g_queue_pop_head (client->out_msg);
+				g_mutex_unlock (client->lock);
+
+				xmms_ipc_msg_destroy (msg);
 			}
-			g_mutex_unlock (client->lock);
 		}
 
 		if (FD_ISSET (fd, &rfdset)) {
 			while (TRUE) {
-				if (!client->read_msg)
+				if (!client->read_msg) {
 					client->read_msg = xmms_ipc_msg_alloc ();
+				}
 		
 				if (xmms_ipc_msg_read_transport (client->read_msg, client->transport, &disconnect)) {
 					xmms_ipc_msg_t *msg = client->read_msg;
@@ -423,12 +440,12 @@ xmms_ipc_client_thread (gpointer data)
 			}
 		}
 
-		if (client->read_msg) {
-			xmms_ipc_msg_destroy (client->read_msg);
-			client->read_msg = NULL;
-		}
 
 		if (disconnect) {
+			if (client->read_msg) {
+				xmms_ipc_msg_destroy (client->read_msg);
+				client->read_msg = NULL;
+			}
 			XMMS_DBG ("disconnect was true!");
 			break;
 		}
@@ -513,6 +530,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	}
 
 	g_mutex_unlock (client->lock);
+	g_mutex_free (client->lock);
 	g_free (client);
 }
 
@@ -789,7 +807,7 @@ xmms_ipc_signal_unregister (xmms_ipc_signals_t signalid)
 }
 
 /**
- * Register a object to the IPC core. This needs to be done if you 
+ * Register a object to the IPC core. This needs to be done if you
  * want to send commands to that object from the client.
  */
 void
@@ -827,7 +845,7 @@ xmms_ipc_init (void)
  * Shutdown a IPC Server
  */
 void
-xmms_ipc_shutdown_server(xmms_ipc_t *ipc) 
+xmms_ipc_shutdown_server(xmms_ipc_t *ipc)
 {
 	GList *c;
 	xmms_ipc_client_t *co;

@@ -87,7 +87,6 @@ XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playl
 XMMS_CMD_DEFINE (import, xmms_playlist_import, xmms_playlist_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (export, xmms_playlist_export, xmms_playlist_t *, STRING, STRING, STRING);
 
-
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (type, id, name))
 
 
@@ -120,19 +119,19 @@ struct xmms_playlist_St {
 
 static void
 on_playlist_r_all_changed (xmms_object_t *object, gconstpointer data,
-			   gpointer udata)
+                           gpointer udata)
 {
 	xmms_playlist_t *playlist = udata;
 
 	g_mutex_lock (playlist->mutex);
-	if (data) 
+	if (data)
 		playlist->repeat_all = atoi ((gchar *)data);
 	g_mutex_unlock (playlist->mutex);
 }
 
 static void
 on_playlist_r_one_changed (xmms_object_t *object, gconstpointer data,
-			   gpointer udata)
+                           gpointer udata)
 {
 	xmms_playlist_t *playlist = udata;
 
@@ -312,81 +311,81 @@ xmms_playlist_init (void)
 	                     on_playlist_updated_pos, ret);
 
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_CURRENT_POS, 
-			     XMMS_CMD_FUNC (current_pos));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_CURRENT_ACTIVE, 
-			     XMMS_CMD_FUNC (current_active));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_CURRENT_POS,
+	                     XMMS_CMD_FUNC (current_pos));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
-			     XMMS_IPC_CMD_LOAD,
-			     XMMS_CMD_FUNC (load));
+	                     XMMS_IPC_CMD_CURRENT_ACTIVE,
+	                     XMMS_CMD_FUNC (current_active));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_SHUFFLE, 
-			     XMMS_CMD_FUNC (shuffle));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_LOAD,
+	                     XMMS_CMD_FUNC (load));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_SET_POS, 
-			     XMMS_CMD_FUNC (set_pos));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_SHUFFLE,
+	                     XMMS_CMD_FUNC (shuffle));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_SET_POS_REL,
-			     XMMS_CMD_FUNC (set_pos_rel));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_SET_POS,
+	                     XMMS_CMD_FUNC (set_pos));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_ADD_URL, 
-			     XMMS_CMD_FUNC (add_url));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_SET_POS_REL,
+	                     XMMS_CMD_FUNC (set_pos_rel));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_ADD_URL,
+	                     XMMS_CMD_FUNC (add_url));
 	
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_ADD_ID, 
-			     XMMS_CMD_FUNC (add_id));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_ADD_ID,
+	                     XMMS_CMD_FUNC (add_id));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
-			     XMMS_IPC_CMD_ADD_COLL,
-			     XMMS_CMD_FUNC (add_coll));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_REMOVE_ENTRY, 
-			     XMMS_CMD_FUNC (remove));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_MOVE_ENTRY, 
-			     XMMS_CMD_FUNC (move));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_CLEAR, 
-			     XMMS_CMD_FUNC (clear));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_SORT, 
-			     XMMS_CMD_FUNC (sort));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_LIST, 
-			     XMMS_CMD_FUNC (list_entries));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_INSERT_URL, 
-			     XMMS_CMD_FUNC (insert_url));
-
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_INSERT_ID, 
-			     XMMS_CMD_FUNC (insert_id));
+	                     XMMS_IPC_CMD_ADD_COLL,
+	                     XMMS_CMD_FUNC (add_coll));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
-			     XMMS_IPC_CMD_INSERT_COLL,
-			     XMMS_CMD_FUNC (insert_coll));
+	                     XMMS_IPC_CMD_REMOVE_ENTRY,
+	                     XMMS_CMD_FUNC (remove));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
-			     XMMS_IPC_CMD_IMPORT,
-			     XMMS_CMD_FUNC (import));
+	                     XMMS_IPC_CMD_MOVE_ENTRY,
+	                     XMMS_CMD_FUNC (move));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
-			     XMMS_IPC_CMD_EXPORT,
-			     XMMS_CMD_FUNC (export));
+	                     XMMS_IPC_CMD_CLEAR,
+	                     XMMS_CMD_FUNC (clear));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_SORT,
+	                     XMMS_CMD_FUNC (sort));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_LIST,
+	                     XMMS_CMD_FUNC (list_entries));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_INSERT_URL,
+	                     XMMS_CMD_FUNC (insert_url));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_INSERT_ID,
+	                     XMMS_CMD_FUNC (insert_id));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_INSERT_COLL,
+	                     XMMS_CMD_FUNC (insert_coll));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_IMPORT,
+	                     XMMS_CMD_FUNC (import));
+
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_EXPORT,
+	                     XMMS_CMD_FUNC (export));
 
 	xmms_medialib_init (ret);
 
@@ -465,8 +464,8 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 		currpos = 0;
 		xmms_collection_set_int_attr (plcoll, "position", currpos);
 		xmms_object_emit_f (XMMS_OBJECT (playlist),
-				    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-				    XMMS_OBJECT_CMD_ARG_UINT32, 0);
+		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+		                    XMMS_OBJECT_CMD_ARG_UINT32, 0);
 	}
 
 	if (currpos < size) {
@@ -940,7 +939,7 @@ xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *plname, gchar *nurl, xm
  *  This function will wake xmms_playlist_wait.
  *  @param playlist the playlist to add the entry to.
  *  @param file the #xmms_medialib_entry to add
- *  @param error Upon error this will be set. 
+ *  @param error Upon error this will be set.
  *  @returns TRUE on success
  */
 
@@ -953,7 +952,7 @@ xmms_playlist_add_id (xmms_playlist_t *playlist, gchar *plname,
 	if (!xmms_medialib_check_id (file)) {
 		if (err) {
 			/* we can be called internaly also! */
-			xmms_error_set (err, XMMS_ERROR_NOENT, 
+			xmms_error_set (err, XMMS_ERROR_NOENT,
 			                "That is not a valid medialib id!");
 		}
 		return FALSE;
@@ -1562,10 +1561,10 @@ xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type,
 {
 	GHashTable *dict;
 	xmms_object_cmd_value_t *val;
-	dict = g_hash_table_new_full (g_str_hash, 
-				      g_str_equal, 
-				      NULL,
-				      xmms_object_cmd_value_free);
+	dict = g_hash_table_new_full (g_str_hash,
+	                              g_str_equal,
+	                              NULL,
+	                              xmms_object_cmd_value_free);
 	val = xmms_object_cmd_value_int_new (type);
 	g_hash_table_insert (dict, "type", val);
 	if (id) {
@@ -1598,9 +1597,9 @@ xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict)
 	}
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
-			    XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
-			    XMMS_OBJECT_CMD_ARG_DICT,
-			    dict);
+	                    XMMS_IPC_SIGNAL_PLAYLIST_CHANGED,
+	                    XMMS_OBJECT_CMD_ARG_DICT,
+	                    dict);
 
 	g_hash_table_destroy (dict);
 }

@@ -289,6 +289,19 @@ static VALUE propdict_get (VALUE self, RbResult *res)
 	return res->propdict;
 }
 
+static VALUE bin_get (VALUE self, RbResult *res)
+{
+	unsigned char *data = NULL;
+	unsigned int len = 0;
+
+	if (!xmmsc_result_get_bin (res->real, &data, &len)) {
+		rb_raise (eValueError, "cannot retrieve value");
+		return Qnil;
+	}
+
+	return rb_str_new ((char *) data, len);
+}
+
 static VALUE value_get (VALUE self, RbResult *res)
 {
 	VALUE ret;
@@ -308,6 +321,9 @@ static VALUE value_get (VALUE self, RbResult *res)
 			break;
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
 			ret = propdict_get (self, res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			ret = bin_get (self, res);
 			break;
 		/* don't check for XMMS_OBJECT_CMD_ARG_LIST here */
 		default:

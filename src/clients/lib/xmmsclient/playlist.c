@@ -243,7 +243,7 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_URL);
 	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, pos);
-	xmms_ipc_msg_put_string (msg, url);
+	xmms_ipc_msg_put_string (msg, enc_url);
 
 	return xmmsc_send_msg (c, msg);
 }

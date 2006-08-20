@@ -67,6 +67,8 @@ xmmsc_main_stats (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_VISUALISATION_DATA);
 }
 
@@ -76,6 +78,8 @@ xmmsc_signal_visualisation_data (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
 }
 
@@ -85,6 +89,8 @@ xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 xmmsc_result_t *
 xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 {
+	x_check_conn (c, NULL);
+
 	return xmmsc_send_signal_msg (c, XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
 }
 

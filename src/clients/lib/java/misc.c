@@ -25,14 +25,19 @@ jmethodID get_method_id (const char* methodname, const char* sig, JNIEnv *enviro
  * called from the mainloop to get a valid framepointer object to be used in java
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlong jarg1) 
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jobject connection) 
 {
-	jfieldID field_fd;
+	jfieldID field_fd, field_ptr;
 	jclass class_fdesc;
+	xmmsc_connection_t *conn_ptr;
 	int fd = 0;
-	xmmsc_connection_t *conn_ptr = (xmmsc_connection_t *) 0;
-	
-	conn_ptr = *(xmmsc_connection_t **)(void *)&jarg1;
+	jclass cls;
+	jmethodID mid;
+
+	cls = (*env)->GetObjectClass (env, connection);
+	field_ptr = (*env)->GetFieldID (env, cls, "swigCPtr", "J");
+
+	conn_ptr = (*env)->GetLongField (env, connection, field_ptr);
 
 	fd = xmmsc_io_fd_get (conn_ptr);
 
@@ -45,7 +50,7 @@ Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlo
  * sets the environment (callbackfunctions, jvm pointer, global object, ...
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
 {
 	jclass clazz;
 	globalObj = (*jenv)->NewGlobalRef (jenv, myobject);
@@ -119,11 +124,20 @@ get_method_id (const char* methodname, const char* sig, JNIEnv *environment, jcl
  * called by the mainloop to set mainloop specific things up
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobject, jlong jarg1)
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setupMainloop (JNIEnv *jenv,
+                                                 jclass cls,
+						 jobject myobject,
+						 jobject connection)
 {
-	xmmsc_connection_t *conn_ptr = (xmmsc_connection_t *) 0;
-	jclass clazz;
-	conn_ptr = *(xmmsc_connection_t **)(void *)&jarg1;
+	jclass clazz, cls2;
+	jfieldID field_ptr;
+	xmmsc_connection_t *conn_ptr;
+
+	cls2 = (*jenv)->GetObjectClass ( jenv, connection);
+	field_ptr = (*jenv)->GetFieldID (jenv, cls2, "swigCPtr", "J");
+
+	conn_ptr = (*jenv)->GetLongField (jenv, connection, field_ptr);
+
 	globalMainloopObj = (*jenv)->NewGlobalRef (jenv, myobject);
 	
 	if (jvm == NULL) {
@@ -132,7 +146,51 @@ Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobj
 
 	clazz = (*jenv)->GetObjectClass(jenv, myobject);
 	io_want_out_mid = get_method_id ("callbackIOWantOut", "(II)V", jenv, clazz);
-	
-	//xmmsc_io_need_out_callback_set (conn_ptr, io_want_out_callback, 0);
 }
 
+JNIEXPORT int JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_result_get_bin_wrap (JNIEnv *jenv,
+                                                                           jclass caller,
+									   jobject result,
+									   jobjectArray r)
+{
+	unsigned char **c_byte;
+	unsigned int *c_length;
+	xmmsc_result_t *result_address;
+	int ret_value = -1, i = 0, j = 0;
+	jclass cls;
+	jfieldID field_ptr;
+
+	cls = (*jenv)->GetObjectClass ( jenv, result);
+	field_ptr = (*jenv)->GetFieldID (jenv, cls, "swigCPtr", "J");
+
+	result_address = (*jenv)->GetLongField (jenv, result, field_ptr);
+
+	ret_value = xmmsc_result_get_bin(result_address, c_byte, c_length);
+
+	while ( c_length[j] ) {
+		j++;
+	}
+	
+	if ( c_length > 0 ) {
+		jshortArray row = (jshortArray)(*jenv)->NewShortArray(jenv, c_length[0]);
+		r = (jobjectArray)(*jenv)->NewObjectArray( jenv,
+		                                           j,
+		                                           (*jenv)->GetObjectClass(jenv, row),
+		                                           0);
+
+		for ( i = 0; i < j; i++ ) {
+			if ( row == NULL ) {
+				row = (jshortArray)(*jenv)->NewShortArray(jenv, c_length[i]);
+			}
+			
+			(*jenv)->SetShortArrayRegion ( jenv,
+			                             (jshortArray)row,
+		                                     (jsize)0,
+		                                     c_length[i],
+			                             (jshort *)c_byte[i]);
+			(*jenv)->SetObjectArrayElement(jenv, r, i, row);
+		}
+	}
+	return ret_value;
+}

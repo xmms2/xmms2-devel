@@ -23,7 +23,9 @@
 static void handle_current_id (xmmsc_result_t *res, void *userdata);
 static void handle_playtime (xmmsc_result_t *res, void *userdata);
 static void handle_mediainfo_update (xmmsc_result_t *res, void *userdata);
+static void handle_status_change (xmmsc_result_t *res, void *userdata);
 static void do_mediainfo (xmmsc_result_t *res, void *userdata);
+static void update_display ();
 static void quit (void *data);
 
 
@@ -37,7 +39,13 @@ static guint current_id = 0;
 static guint last_dur = 0;
 static gint curr_dur = 0;
 static gchar songname[60];
+static guint curr_status = 0;
 
+static gchar *status_messages[] = {
+	"Stopped",
+	"Playing",
+	"Paused"
+};
 
 /**
  * Functions
@@ -60,6 +68,10 @@ cmd_status (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	                   handle_current_id, conn);
 	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_medialib_entry_changed,
 	                   handle_mediainfo_update, conn);
+	XMMS_CALLBACK_SET (conn, xmmsc_broadcast_playback_status,
+	                   handle_status_change, NULL);
+	XMMS_CALLBACK_SET (conn, xmmsc_playback_status,
+	                   handle_status_change, NULL);
 
 	xmmsc_disconnect_callback_set (conn, quit, NULL);
 	xmmsc_mainloop_gmain_init (conn);
@@ -105,6 +117,22 @@ cmd_current (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
+static void
+handle_status_change (xmmsc_result_t *res, void *userdata)
+{
+	guint new_status;
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	if (!xmmsc_result_get_uint (res, &new_status)) {
+		print_error ("Broken resultset");
+	}
+
+	curr_status = new_status;
+	update_display ();
+}
 
 static void
 handle_current_id (xmmsc_result_t *res, void *userdata)
@@ -131,10 +159,7 @@ static void
 handle_playtime (xmmsc_result_t *res, void *userdata)
 {
 	xmmsc_result_t *newres;
-	GError *err = NULL;
 	guint dur;
-	gsize r, w;
-	gchar *conv;
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
@@ -144,17 +169,9 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 		print_error ("Broken resultset");
 	}
 
-	if (has_songname && ((dur / 1000) % 60) != ((last_dur / 1000) % 60)) {
-
+	if (((dur / 1000) % 60) != ((last_dur / 1000) % 60)) {
 		last_dur = dur;
-
-		conv =  g_locale_from_utf8 (songname, -1, &r, &w, &err);
-		printf ("\rPlaying: %s: %02d:%02d of %02d:%02d", conv,
-		        dur / 60000, (dur / 1000) % 60, curr_dur / 60000,
-		        (curr_dur / 1000) % 60);
-		g_free (conv);
-
-		fflush (stdout);
+		update_display ();
 
 	}
 	newres = xmmsc_result_restart (res);
@@ -162,6 +179,23 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 	xmmsc_result_unref (newres);
 }
 
+static void update_display ()
+{
+	gchar *conv;
+	gsize r, w;
+	GError *err = NULL;
+
+	if (has_songname) {
+		conv =  g_locale_from_utf8 (songname, -1, &r, &w, &err);
+		printf ("\r%7s: %s: %02d:%02d of %02d:%02d",
+		        status_messages[curr_status], conv,
+		        last_dur / 60000, (last_dur / 1000) % 60, curr_dur / 60000,
+		        (curr_dur / 1000) % 60);
+		g_free (conv);
+
+		fflush (stdout);
+	}
+}
 
 static void
 handle_mediainfo_update (xmmsc_result_t *res, void *userdata)

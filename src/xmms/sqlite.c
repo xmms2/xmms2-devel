@@ -32,7 +32,7 @@
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 29
+#define DB_VERSION 30
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
@@ -45,7 +45,7 @@ const char create_CollectionIdlists_stm[] = "create table CollectionIdlists (col
 const char create_CollectionLabels_stm[] = "create table CollectionLabels (collid integer, namespace integer, name text)";
 const char create_CollectionOperators_stm[] = "create table CollectionOperators (id integer primary key AUTOINCREMENT, type integer)";
 
-/** 
+/**
  * This magic numbers are taken from ANALYZE on a big database, if we change the db
  * layout drasticly we need to redo them!
  */
@@ -123,11 +123,26 @@ upgrade_v27_to_v28 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
-
 static void
 upgrade_v28_to_v29 (sqlite3 *sql)
 {
-	XMMS_DBG ("Upgrade v27->v28");
+	XMMS_DBG ("Upgrade v28->v29");
+
+	sqlite3_exec (sql, "delete from Media where source in"
+	              "(select id from Sources where source like 'plugin%')",
+	              NULL, NULL, NULL);
+	sqlite3_exec (sql, "delete from Sources where source like 'plugin%'",
+	              NULL, NULL, NULL);
+	sqlite3_exec (sql, "update Media set value=0 where key='resolved'",
+	              NULL, NULL, NULL);
+
+	XMMS_DBG ("done");
+}
+
+static void
+upgrade_v29_to_v30 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v29->v30");
 
 	sqlite3_exec (sql, create_CollectionAttributes_stm, NULL, NULL, NULL);
 	sqlite3_exec (sql, create_CollectionConnections_stm, NULL, NULL, NULL);
@@ -152,6 +167,8 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v27_to_v28 (sql);
 		case 28:
 			upgrade_v28_to_v29 (sql);
+		case 29:
+			upgrade_v29_to_v30 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
@@ -209,17 +226,19 @@ xmms_sqlite_open (gboolean *create)
 		              xmms_sqlite_version_cb, &version, NULL);
 
 		if (version != DB_VERSION && !try_upgrade (sql, version)) {
-			gchar old[XMMS_PATH_MAX];
+			gchar *old;
 
 			sqlite3_close (sql);
-			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old",
-			            g_get_home_dir ());
+
+			old = XMMS_BUILD_PATH ("medialib.db.old");
 			rename (dbpath, old);
 			if (sqlite3_open (dbpath, &sql)) {
 				xmms_log_fatal ("Error creating sqlite db: %s",
 				                sqlite3_errmsg (sql));
 				return NULL;
 			}
+			g_free (old);
+
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 			*create = TRUE;
 		}
@@ -279,7 +298,7 @@ xmms_sqlite_open (gboolean *create)
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_collidx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
-	} 
+	}
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
 
@@ -385,7 +404,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		gint i;
 		xmms_object_cmd_value_t *val;
 		GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-							 g_free, xmms_object_cmd_value_free);
+		                                         g_free, xmms_object_cmd_value_free);
 		gint num = sqlite3_data_count (stm);
 
 		for (i = 0; i < num; i++) {
@@ -487,8 +506,8 @@ void
 xmms_sqlite_print_version (void)
 {
 	printf (" Using sqlite version %d (compiled against "
-		XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
-		sqlite3_libversion_number());
+	        XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
+	        sqlite3_libversion_number());
 }
 
 /* Return an escaped string */

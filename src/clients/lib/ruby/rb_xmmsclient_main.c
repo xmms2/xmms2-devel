@@ -15,14 +15,22 @@
  */
 
 #include <xmms/xmms_defs.h>
+#include <xmmsclient/xmmsclient.h>
 
 #include <ruby.h>
 
 void Init_Client ();
 
+static VALUE m_userconfdir_get (VALUE self)
+{
+	return rb_str_new2 (xmmsc_userconfdir_get ());
+}
+
 void Init_xmmsclient (void)
 {
 	VALUE mXmms = rb_define_module ("Xmms");
+
+	rb_define_module_function (mXmms, "userconfdir", m_userconfdir_get, 0);
 
 	rb_define_const (mXmms, "VERSION", rb_str_new2 (XMMS_VERSION));
 

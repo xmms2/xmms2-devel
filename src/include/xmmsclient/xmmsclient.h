@@ -152,6 +152,8 @@ xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c);
 
+/* get user config dir */
+const char *xmmsc_userconfdir_get (void);
 
 /*
  * MEDIALIB ***********************************************
@@ -175,6 +177,18 @@ xmmsc_result_t *xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connect
 
 xmmsc_result_t *xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id, const char *key);
 xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c, uint32_t id, const char *source, const char *key);
+
+/* XForm object */
+xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url);
+
+/* Bindata object */ 
+xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *data, unsigned int len);
+xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, const char *hash); 
+xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
+
+/* bindata tools */
+unsigned char *xmms_bindata_base64_decode (const char *text, unsigned int *out_len);
+char *xmms_bindata_base64_encode (const unsigned char *data, unsigned int len);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
@@ -233,13 +247,15 @@ int xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r);
 int xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r);
 int xmmsc_result_get_string (xmmsc_result_t *res, char **r);
 int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll);
+int xmmsc_result_get_bin (xmmsc_result_t *res, unsigned char **r, unsigned int *rlen);
 
 typedef enum {
 	XMMSC_RESULT_VALUE_TYPE_NONE = XMMS_OBJECT_CMD_ARG_NONE,
 	XMMSC_RESULT_VALUE_TYPE_UINT32 = XMMS_OBJECT_CMD_ARG_UINT32,
 	XMMSC_RESULT_VALUE_TYPE_INT32 = XMMS_OBJECT_CMD_ARG_INT32,
 	XMMSC_RESULT_VALUE_TYPE_STRING = XMMS_OBJECT_CMD_ARG_STRING,
-	XMMSC_RESULT_VALUE_TYPE_COLL = XMMS_OBJECT_CMD_ARG_COLL
+	XMMSC_RESULT_VALUE_TYPE_COLL = XMMS_OBJECT_CMD_ARG_COLL,
+	XMMSC_RESULT_VALUE_TYPE_BIN = XMMS_OBJECT_CMD_ARG_BIN
 } xmmsc_result_value_type_t;
 
 typedef void (*xmmsc_propdict_foreach_func) (const void *key, xmmsc_result_value_type_t type, const void *value, const char *source, void *user_data);

@@ -229,21 +229,13 @@ static void
 handle_config_changed (xmmsc_result_t *res, void *data)
 {
 	xmonitor_t *mon = data;
-	gchar *key;
-	gchar *val;
+	gchar *val = NULL;
+	int s;
 
-	
-	if (!xmmsc_result_get_dict_entry_string (res, "name", &key)) {
-		ERR ("Config changed has invalid result!");
-		return;
-	}
-
-	if (!xmmsc_result_get_dict_entry_string (res, "value", &val)) {
-		ERR ("Config changed has invalid result!");
-		return;
-	}
-
-	if (g_strcasecmp (key, "clients.mlibupdater.watch_dirs") == 0) {
+	s = xmmsc_result_get_dict_entry_string (res,
+	                                        "clients.mlibupdater.watch_dirs",
+	                                        &val);
+	if (s) {
 		do_watch_dir (mon, val);
 	}
 

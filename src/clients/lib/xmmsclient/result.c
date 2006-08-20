@@ -35,6 +35,11 @@ static void free_dict_list (x_list_t *list);
 static x_list_t *xmmsc_deserialize_dict (xmms_ipc_msg_t *msg);
 static int source_match_pattern (char* source, char* pattern);
 
+typedef struct xmmsc_result_value_bin_St {
+	unsigned char *data;
+	uint32_t len;
+} xmmsc_result_value_bin_t;
+
 typedef struct xmmsc_result_value_St {
 	union {
 		void *generic;
@@ -43,6 +48,7 @@ typedef struct xmmsc_result_value_St {
 		char *string;
 		x_list_t *dict;
 		xmmsc_coll_t *coll;
+		xmmsc_result_value_bin_t *bin;
 	} value;
 	xmmsc_result_value_type_t type;
 } xmmsc_result_value_t;
@@ -82,6 +88,7 @@ struct xmmsc_result_St {
 		char *string;
 		x_list_t *dict;
 		xmmsc_coll_t *coll;
+		xmmsc_result_value_bin_t *bin;
 	} data;
 
 	x_list_t *list;
@@ -315,6 +322,10 @@ xmmsc_result_value_free (void *v)
 	xmmsc_result_value_t *val = v;
 
 	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			free (val->value.bin->data);
+			free (val->value.bin);
+			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			free (val->value.string);
 			break;
@@ -349,6 +360,11 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			free (res->data.string);
 			res->data.string = NULL;
+			break;
+		case XMMS_OBJECT_CMD_ARG_BIN :
+			free (res->data.bin->data);
+			free (res->data.bin);
+			res->data.bin = NULL;
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
@@ -397,6 +413,17 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 				return false;
 			}
 			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			{
+				xmmsc_result_value_bin_t *bin;
+				bin = x_new0 (xmmsc_result_value_bin_t, 1);
+				if (!xmms_ipc_msg_get_bin_alloc (msg, &bin->data, &bin->len)) {
+					free (bin);
+					return false;
+				}
+				res->data.bin = bin;
+				break;
+			}
 		case XMMS_OBJECT_CMD_ARG_STRING :
 			{
 				uint32_t len;
@@ -678,6 +705,32 @@ xmmsc_result_get_collection (xmmsc_result_t *res, xmmsc_coll_t **c)
 
 	return 1;
 }
+
+/**
+ * Retrives binary data from the resultset.
+ * @param res a #xmmsc_result_t containing a string.
+ * @param r the return data. This data is owned by the result and will be freed when the result is freed.
+ * @param rlen the return length of data. 
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsc_result_get_bin (xmmsc_result_t *res, unsigned char **r, unsigned int *rlen)
+{
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_BIN) {
+		return 0;
+	}
+
+	*r = res->data.bin->data;
+	*rlen = res->data.bin->len;
+
+	return 1;
+}
+
+
 
 static xmmsc_result_value_t *
 xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)

@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 
 #define CMD_COLL_DEFAULT_NAMESPACE  "Collections"
 

@@ -19,7 +19,7 @@
 
 /**
  * @file
- * 
+ *
  */
 
 
@@ -39,7 +39,7 @@
   * @{
   */
 
-/** 
+/**
  * Effect structure
  */
 struct xmms_effect_St {
@@ -63,7 +63,7 @@ on_enabled_changed (xmms_object_t *object, gconstpointer value,
 
 /**
  * Run the current effect on the the data you feed it.
- * 
+ *
  * @param e the effect to use
  * @param buf the buffer with unencoded data read from a decoder
  * @param len the length of #buf
@@ -101,7 +101,7 @@ xmms_effect_entry_set (xmms_effect_t *effect, xmms_medialib_entry_t entry)
 /**
  * Retreive plugin-private data.
  *
- * @param effect 
+ * @param effect
  * @returns the data
  */
 gpointer
@@ -130,7 +130,7 @@ xmms_effect_private_data_set (xmms_effect_t *effect, gpointer data)
 }
 
 /**
- * Return the plugin that is used by this effect 
+ * Return the plugin that is used by this effect
  */
 xmms_plugin_t *
 xmms_effect_plugin_get (xmms_effect_t *effect)

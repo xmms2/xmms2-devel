@@ -146,40 +146,34 @@ static guint
 find_offset (xmms_xform_t *xform)
 {
 	xmms_error_t err;
-	guint8 *buf = NULL;
+	guint8 buf[BUFFER_SIZE];
 	gboolean done = FALSE;
 	guint offset = 0;
 	gint read, i;
 
 	do {
-		buf = g_realloc (buf, offset + BUFFER_SIZE);
-
 		xmms_error_reset (&err);
-		read = xmms_xform_peek (xform, buf, offset + BUFFER_SIZE, &err);
+		read = xmms_xform_peek (xform, buf, BUFFER_SIZE, &err);
 
 		/* check for failures */
 		if (read < 1) {
-			g_free (buf);
-
 			return 0;
 		}
 
 		/* find first non-nul character */
-		for (i = offset; i < read; i++) {
+		for (i = 0; i < read; i++) {
 			if (buf[i] != '\0') {
 				done = TRUE;
 				break;
 			}
 		}
 
-		offset = i;
+		offset += i;
+
+		/* skip over the NULs */
+		xmms_error_reset (&err);
+		xmms_xform_read (xform, buf, i, &err);
 	} while (!done);
-
-	/* skip over the NULs */
-	xmms_error_reset (&err);
-	xmms_xform_read (xform, buf, offset, &err);
-
-	g_free (buf);
 
 	return offset;
 }

@@ -48,6 +48,9 @@ typedef struct xmms_mad_data_St {
 	guint64 fsize;
 
 	guint synthpos;
+	gint samples_to_skip;
+	guint64 samples_to_play;
+	gint samples_to_skip_end;
 
 	xmms_xing_t *xing;
 } xmms_mad_data_t;
@@ -92,6 +95,9 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	  xmms_plugin_info_add (plugin, "License", "GPL");
 	*/
 
+	xmms_xform_plugin_config_property_register (xform_plugin, "id3v1_encoding",
+	                                            "ISO8859-1", NULL, NULL);
+
 	/* xmms_xform_indata_constraint_add */
 	xmms_xform_plugin_indata_add (xform_plugin,
 	                              XMMS_STREAM_TYPE_MIMETYPE,
@@ -121,6 +127,10 @@ xmms_mad_destroy (xmms_xform_t *xform)
 	mad_frame_finish (&data->frame);
 	mad_synth_finish (&data->synth);
 
+	if (data->xing) {
+		xmms_xing_free (data->xing);
+	}
+
 	g_free (data);
 
 }
@@ -149,6 +159,13 @@ xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 
 	XMMS_DBG ("Try seek %lld samples -> %d bytes", samples, bytes);
 
+	if (data->samples_to_skip > 0) {
+		data->samples_to_skip -= samples;
+	}
+	if (data->samples_to_play > 0) {
+		data->samples_to_play -= samples;
+	}
+	
 	res = xmms_xform_seek (xform, bytes, XMMS_XFORM_SEEK_SET, err);
 	if (res == -1) {
 		return -1;
@@ -219,12 +236,19 @@ xmms_mad_init (xmms_xform_t *xform)
 	while (mad_frame_decode (&frame, &stream) == -1) {
 		if (!MAD_RECOVERABLE (stream.error)) {
 			XMMS_DBG ("couldn't decode %02x %02x %02x %02x",buf[0],buf[1],buf[2],buf[3]);
+			mad_frame_finish (&frame);
+			mad_stream_finish (&stream);
 			return FALSE;
 		}
 	}
 
-	data->samplerate = frame.header.samplerate;
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
+
+	data->samplerate = frame.header.samplerate;
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->samplerate);
+
 
 	if (frame.header.flags & MAD_FLAG_PROTECTION) {
 		XMMS_DBG ("Frame has protection enabled");
@@ -235,6 +259,7 @@ xmms_mad_init (xmms_xform_t *xform)
 
 	data->xing = xmms_xing_parse (stream.anc_ptr);
 	if (data->xing) {
+		xmms_xing_lame_t *lame;
 		XMMS_DBG ("File with Xing header!");
 
 		xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR, 1);
@@ -262,6 +287,25 @@ xmms_mad_init (xmms_xform_t *xform)
 				                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 				                             tmp);
 			}
+		}
+
+		if ((lame = xmms_xing_get_lame (data->xing))) {
+			/* FIXME: add a check for ignore_lame_headers from the medialib */
+			data->samples_to_skip = lame->start_delay;
+			data->samples_to_skip_end = lame->end_padding;
+			data->samples_to_play = (guint64)(((guint64)xmms_xing_get_frames (data->xing) * (guint64)1152) - (guint64)lame->start_delay);
+			XMMS_DBG ("Samples to skip in the beginning: %d, total: %lld", data->samples_to_skip, data->samples_to_play);
+			/*
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+			                             lame->audiophile_gain);
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+			                             lame->peak_amplitude);
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
+			                             lame->radio_gain);
+										 */
 		}
 
 	} else {
@@ -299,6 +343,10 @@ xmms_mad_init (xmms_xform_t *xform)
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
 	                             data->samplerate,
 	                             XMMS_STREAM_TYPE_END);
+
+	mad_frame_finish (&frame);
+	mad_stream_finish (&stream);
+
 	return TRUE;
 }
 
@@ -332,14 +380,23 @@ xmms_mad_read (xmms_xform_t *xform, gpointer buf, gint len, xmms_error_t *err)
 	while (read < len) {
 
 		/* use already synthetized frame first */
-
 		if (data->synthpos < data->synth.pcm.length) {
-			out[j++] = scale_linear (data->synth.pcm.samples[0][data->synthpos]);
-			if (data->channels == 2) {
-				out[j++] = scale_linear (data->synth.pcm.samples[1][data->synthpos]);
-				read += 2 * xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
+			if (data->samples_to_skip <= 0 && data->samples_to_play >= 0) {
+				out[j++] = scale_linear (data->synth.pcm.samples[0][data->synthpos]);
+				if (data->channels == 2) {
+					out[j++] = scale_linear (data->synth.pcm.samples[1][data->synthpos]);
+					read += 2 * xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
+					data->samples_to_play -= 2;
+				} else {
+					read += xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
+					data->samples_to_play --;
+				}
 			} else {
-				read += xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16);
+				if (data->channels == 2) {
+					data->samples_to_skip -= 2;
+				} else {
+					data->samples_to_skip --;
+				}
 			}
 			data->synthpos++;
 			continue;

@@ -13,3 +13,4 @@ install = False
 def config(env):
 	if env.platform != 'win32':
 		env.Append(CCFLAGS=["-fPIC"])
+	env.Append(CPPDEFINES=["_REENTRANT"])
