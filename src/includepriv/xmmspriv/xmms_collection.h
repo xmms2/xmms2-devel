@@ -78,7 +78,7 @@ void xmms_collection_dag_replace (xmms_coll_dag_t *dag, xmms_collection_namespac
 xmms_collection_namespace_id_t xmms_collection_get_namespace_id (gchar *namespace);
 gchar* xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid);
 
-gboolean xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, guint *val);
+gboolean xmms_collection_get_int_attr (xmmsc_coll_t *coll, gchar *attrname, gint *val);
 gboolean xmms_collection_set_int_attr (xmmsc_coll_t *coll, gchar *attrname, gint newval);
 
 GHashTable * xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type, gchar *plname, gchar *namespace);
