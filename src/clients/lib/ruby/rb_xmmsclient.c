@@ -72,6 +72,16 @@
 	res = xmmsc_##name (xmms->real, NUM2INT (arg1)); \
 	METHOD_HANDLER_FOOTER
 
+#define METHOD_ADD_HANDLER_BIN(name, arg1) \
+	METHOD_HANDLER_HEADER \
+\
+	StringValue (arg1); \
+\
+	res = xmmsc_##name (xmms->real, \
+	                    (unsigned char *) RSTRING (arg1)->ptr, \
+	                    RSTRING (arg1)->len); \
+	METHOD_HANDLER_FOOTER
+
 static VALUE eClientError, eDisconnectedError;
 
 static void c_mark (RbXmmsClient *xmms)
@@ -1165,6 +1175,29 @@ static VALUE c_signal_visualisation_data (VALUE self)
 	METHOD_ADD_HANDLER(signal_visualisation_data);
 }
 
+/*
+ * call-seq:
+ *  xc.bindata_add(str) -> result
+ *
+ * Stores binary data on the server.
+ */
+static VALUE c_bindata_add (VALUE self, VALUE data)
+{
+	METHOD_ADD_HANDLER_BIN (bindata_add, data);
+}
+
+/*
+ * call-seq:
+ *  xc.bindata_retrieve(hash) -> result
+ *
+ * Retrieves the bindata entry specified by hash (hex string)
+ * from the server.
+ */
+static VALUE c_bindata_retrieve (VALUE self, VALUE hash)
+{
+	METHOD_ADD_HANDLER_STR (bindata_retrieve, hash);
+}
+
 void Init_Client (VALUE mXmms)
 {
 	VALUE c;
@@ -1282,6 +1315,9 @@ void Init_Client (VALUE mXmms)
 	rb_define_method (c, "configval_register", c_configval_register, 2);
 	rb_define_method (c, "broadcast_configval_changed",
 	                  c_broadcast_configval_changed, 0);
+
+	rb_define_method (c, "bindata_add", c_bindata_add, 0);
+	rb_define_method (c, "bindata_retrieve", c_bindata_retrieve, 0);
 
 	rb_define_const (c, "PLAY",
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_PLAY));
