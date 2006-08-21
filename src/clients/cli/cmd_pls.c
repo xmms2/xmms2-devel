@@ -443,30 +443,48 @@ cmd_shuffle (xmmsc_connection_t *conn, gint argc, gchar **argv)
 }
 
 
+const gchar **
+copy_string_array (gchar **array, gint num)
+{
+	gint i;
+	const gchar **ret;
+
+	ret = g_new (const gchar*, num + 1);
+
+	for (i = 0; i < num; i++) {
+		ret[i] = array[i];
+	}
+	ret[i] = NULL;
+
+	return ret;
+}
+
 void
 cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *playlist;
-	const gchar *sortby;
+	const gchar **sortby;
 	xmmsc_result_t *res;
 	
 	if (argc < 3) {
-		print_error ("Sort needs a property to sort on, %d", argc);
+		print_error ("Sort needs a property to sort on");
 	} else if (argc == 3) {
 		playlist = NULL;
-		sortby = argv[2];
+		sortby = copy_string_array (&argv[2], argc - 2);
 	} else {
 		playlist = argv[2];
-		sortby = argv[3];
+		sortby = copy_string_array (&argv[3], argc - 3);
 	}
 	
-	res = xmmsc_playlist_sort (conn, playlist, &sortby);
+	res = xmmsc_playlist_sort (conn, playlist, sortby);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 	xmmsc_result_unref (res);
+
+	g_free (sortby);
 }
 
 
