@@ -48,7 +48,7 @@ static GList * xmms_playlist_list_entries (xmms_playlist_t *playlist, gchar *pln
 static void xmms_playlist_destroy (xmms_object_t *object);
 gboolean xmms_playlist_remove (xmms_playlist_t *playlist, gchar *plname, guint pos, xmms_error_t *err);
 static gboolean xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, gchar *plname, xmmsc_coll_t *plcoll, guint pos, xmms_error_t *err);
-static gboolean xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos, gint newpos, xmms_error_t *err);
+static gboolean xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos, guint newpos, xmms_error_t *err);
 static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, xmms_error_t *error);
 
 static gboolean xmms_playlist_insert_url (xmms_playlist_t *playlist, gchar *plname, guint32 pos, gchar *url, xmms_error_t *error);
@@ -73,7 +73,7 @@ XMMS_CMD_DEFINE3(insert_id, xmms_playlist_insert_id, xmms_playlist_t *, NONE, ST
 XMMS_CMD_DEFINE4(insert_coll, xmms_playlist_insert_collection, xmms_playlist_t *, NONE, STRING, UINT32, COLL, STRINGLIST);
 XMMS_CMD_DEFINE (shuffle, xmms_playlist_shuffle, xmms_playlist_t *, NONE, STRING, NONE);
 XMMS_CMD_DEFINE (remove, xmms_playlist_remove, xmms_playlist_t *, NONE, STRING, UINT32);
-XMMS_CMD_DEFINE3(move, xmms_playlist_move, xmms_playlist_t *, NONE, STRING, UINT32, INT32);
+XMMS_CMD_DEFINE3(move, xmms_playlist_move, xmms_playlist_t *, NONE, STRING, UINT32, UINT32);
 XMMS_CMD_DEFINE (add_url, xmms_playlist_add_url, xmms_playlist_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (add_id, xmms_playlist_add_id, xmms_playlist_t *, NONE, STRING, UINT32);
 XMMS_CMD_DEFINE3(add_coll, xmms_playlist_add_collection, xmms_playlist_t *, NONE, STRING, COLL, STRINGLIST);
@@ -743,11 +743,12 @@ xmms_playlist_remove (xmms_playlist_t *playlist, gchar *plname, guint pos,
  */
 static gboolean
 xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
-                    gint newpos, xmms_error_t *err)
+                    guint newpos, xmms_error_t *err)
 {
 	GHashTable *dict;
 	guint32 id;
 	gint currpos, size;
+	gint ipos, inewpos;
 	xmmsc_coll_t *plcoll;
 
 	g_return_val_if_fail (playlist, FALSE);
@@ -780,12 +781,14 @@ xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
 	}
 
 	/* Update the current position pointer */
-	if (newpos <= currpos && pos > currpos)
+	ipos = pos;
+	inewpos = newpos;
+	if (inewpos <= currpos && ipos > currpos)
 		currpos++;
-	else if (newpos >= currpos && pos < currpos)
+	else if (inewpos >= currpos && ipos < currpos)
 		currpos--;
-	else if (pos == currpos)
-		currpos = newpos;
+	else if (ipos == currpos)
+		currpos = inewpos;
 
 	xmms_collection_set_int_attr (plcoll, "position", currpos);
 
