@@ -43,19 +43,20 @@ static AvahiGLibPoll *gl_poll = NULL;
 static AvahiClient *client;
 static AvahiServiceBrowser *browser;
 
-static void daap_mdns_resolve_cb(AvahiServiceResolver *resolv,
-                                 AvahiIfIndex iface,
-                                 AvahiProtocol proto,
-                                 AvahiResolverEvent event,
-                                 const gchar *name,
-                                 const gchar *type,
-                                 const gchar *domain,
-                                 const gchar *hostname,
-                                 const AvahiAddress *addr,
-                                 guint16 port,
-                                 AvahiStringList *text,
-                                 AvahiLookupResultFlags flags,
-                                 void *userdata)
+static void
+daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
+                      AvahiIfIndex iface,
+                      AvahiProtocol proto,
+                      AvahiResolverEvent event,
+                      const gchar *name,
+                      const gchar *type,
+                      const gchar *domain,
+                      const gchar *hostname,
+                      const AvahiAddress *addr,
+                      guint16 port,
+                      AvahiStringList *text,
+                      AvahiLookupResultFlags flags,
+                      void *userdata)
 {
 	gboolean *remove = userdata;
 	gchar ad[ADDR_LEN];
@@ -67,23 +68,24 @@ static void daap_mdns_resolve_cb(AvahiServiceResolver *resolv,
 
 	switch (event) {
 		case AVAHI_RESOLVER_FOUND:
-			server = (daap_mdns_server_t *) g_malloc0(sizeof(daap_mdns_server_t));
-			avahi_address_snprint(ad, sizeof(ad), addr);
+			server = (daap_mdns_server_t *)
+			         g_malloc0 (sizeof(daap_mdns_server_t));
+			avahi_address_snprint (ad, sizeof(ad), addr);
 
-			server->server_name = g_strdup(name);
-			server->address = g_strdup(ad);
-			server->mdns_hostname = g_strdup(hostname);
+			server->server_name = g_strdup (name);
+			server->address = g_strdup (ad);
+			server->mdns_hostname = g_strdup (hostname);
 			server->port = port;
 
 			if (*remove) {
 				/* FIXME if a server is removed after avahi is initialized,
 				 * Bad Things happen on browse. This is because the entry
 				 * in the list isn't _actually_ removed... */
-				g_server_list = g_slist_remove(g_server_list, server);
+				g_server_list = g_slist_remove (g_server_list, server);
 			} else {
-				g_server_list = g_slist_prepend(g_server_list, server);
+				g_server_list = g_slist_prepend (g_server_list, server);
 			}
-			g_free(remove);
+			g_free (remove);
 
 			break;
 
@@ -94,21 +96,22 @@ static void daap_mdns_resolve_cb(AvahiServiceResolver *resolv,
 			break;
 	}
 
-	avahi_service_resolver_free(resolv);
+	avahi_service_resolver_free (resolv);
 }
 
-static void daap_mdns_browse_cb(AvahiServiceBrowser *browser,
-                                AvahiIfIndex iface,
-                                AvahiProtocol proto,
-                                AvahiBrowserEvent event,
-                                const gchar *name,
-                                const gchar *type,
-                                const gchar *domain,
-                                AvahiLookupResultFlags flags,
-                                void *userdata)
+static void
+daap_mdns_browse_cb (AvahiServiceBrowser *browser,
+                     AvahiIfIndex iface,
+                     AvahiProtocol proto,
+                     AvahiBrowserEvent event,
+                     const gchar *name,
+                     const gchar *type,
+                     const gchar *domain,
+                     AvahiLookupResultFlags flags,
+                     void *userdata)
 {
 	gboolean ok = FALSE;
-	gboolean *b = g_malloc(sizeof(gboolean));
+	gboolean *b = g_malloc (sizeof(gboolean));
 
 	AvahiClient *client = ((browse_callback_userdata_t *) userdata)->client;
 
@@ -144,7 +147,10 @@ static void daap_mdns_browse_cb(AvahiServiceBrowser *browser,
 	}
 }
 
-static void daap_mdns_client_cb(AvahiClient *client, AvahiClientState state, void * userdata)
+static void
+daap_mdns_client_cb (AvahiClient *client,
+                     AvahiClientState state,
+                     void * userdata)
 {
 	if (!client) {
 		return;
@@ -158,17 +164,20 @@ static void daap_mdns_client_cb(AvahiClient *client, AvahiClientState state, voi
 	}
 }
 
-static void daap_mdns_timeout(AvahiTimeout *to, void *userdata)
+static void
+daap_mdns_timeout (AvahiTimeout *to, void *userdata)
 {
 }
 
-static gboolean daap_mdns_timeout_glib(void *userdata)
+static gboolean
+daap_mdns_timeout_glib (void *userdata)
 {
 	return FALSE;
 }
 #endif
 
-gboolean daap_mdns_initialize()
+gboolean
+daap_mdns_initialize ()
 {
 #if MDNS_USING_AVAHI
 	const AvahiPoll *av_poll;
@@ -185,20 +194,20 @@ gboolean daap_mdns_initialize()
 		goto fail;
 	}
 
-	browse_userdata = g_malloc0(sizeof(browse_callback_userdata_t));
+	browse_userdata = g_malloc0 (sizeof(browse_callback_userdata_t));
 
-	avahi_set_allocator(avahi_glib_allocator());
+	avahi_set_allocator (avahi_glib_allocator ());
 
-	ml = g_main_loop_new(NULL, FALSE);
+	ml = g_main_loop_new (NULL, FALSE);
 
-	gl_poll = avahi_glib_poll_new(NULL, G_PRIORITY_DEFAULT);
-	av_poll = avahi_glib_poll_get(gl_poll);
+	gl_poll = avahi_glib_poll_new (NULL, G_PRIORITY_DEFAULT);
+	av_poll = avahi_glib_poll_get (gl_poll);
 	
-	avahi_elapse_time(&tv, 2000, 0);
-	av_poll->timeout_new(av_poll, &tv, daap_mdns_timeout, NULL);
-	g_timeout_add(5000, daap_mdns_timeout_glib, ml);
+	avahi_elapse_time (&tv, 2000, 0);
+	av_poll->timeout_new (av_poll, &tv, daap_mdns_timeout, NULL);
+	g_timeout_add (5000, daap_mdns_timeout_glib, ml);
 
-	client = avahi_client_new(av_poll, 0, daap_mdns_client_cb, ml, &errval);
+	client = avahi_client_new (av_poll, 0, daap_mdns_client_cb, ml, &errval);
 	if (!client) {
 		ok = FALSE;
 		goto fail;
@@ -222,11 +231,12 @@ fail:
 #endif
 }
 
-GSList * daap_mdns_get_server_list()
+GSList *
+daap_mdns_get_server_list ()
 {
 #if MDNS_USING_AVAHI
 	GSList * l;
-	l = g_slist_copy(g_server_list);
+	l = g_slist_copy (g_server_list);
 	return l;
 #else
 	return NULL;

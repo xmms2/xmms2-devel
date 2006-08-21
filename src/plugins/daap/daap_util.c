@@ -21,9 +21,11 @@
 
 #include "xmms/xmms_log.h"
 
-void write_buffer_to_channel(GIOChannel *chan, gchar *buf, gint bufsize)
+void
+write_buffer_to_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 {
-	guint sent_bytes, total_sent_bytes = 0;
+	guint total_sent_bytes = 0;
+	gsize sent_bytes;
 	GIOStatus io_stat;
 	GError *err = NULL;
 
@@ -44,15 +46,17 @@ void write_buffer_to_channel(GIOChannel *chan, gchar *buf, gint bufsize)
 		total_sent_bytes += sent_bytes;
 	} while (bufsize > 0);
 
-	g_io_channel_flush(chan, &err);
+	g_io_channel_flush (chan, &err);
 	if (NULL != err) {
 		XMMS_DBG ("warning: error flushing channel: %s\n", err->message);
 	}
 }
 
-gint read_buffer_from_channel(GIOChannel *chan, gchar *buf, gint bufsize)
+gint
+read_buffer_from_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 {
-	guint read_bytes, n_total_bytes_read = 0;
+	guint n_total_bytes_read = 0;
+	gsize read_bytes;
 	GIOStatus io_stat;
 	GError *err = NULL;
 
