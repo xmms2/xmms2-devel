@@ -1139,7 +1139,8 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos,
 
 typedef struct {
 	guint id;
-	xmms_object_cmd_value_t *val;
+	guint position;
+	GList *val;  /* List of (xmms_object_cmd_value_t *) prop values */
 	gboolean current;
 } sortdata_t;
 
@@ -1147,48 +1148,67 @@ typedef struct {
 /**
  * Sort helper function.
  * Performs a case insesitive comparation between two entries.
+ * We compare each pair of values in the list of prop values.
  */
 static gint
 xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 {
+	GList *n1, *n2;
+	xmms_object_cmd_value_t *val1, *val2;
 	sortdata_t *data1 = (sortdata_t *) a;
 	sortdata_t *data2 = (sortdata_t *) b;
-	int s1, s2;
+	int s1, s2, res;
 
-	if (!data1->val) {
-		return -(data2->val != NULL);
-	}
+	for (n1 = data1->val, n2 = data2->val;
+	     n1 && n2;
+	     n1 = n1->next, n2 = n2->next) {
 
-	if (!data2->val) {
-		return 1;
-	}
+		val1 = n1->data;
+		val2 = n2->data;
 
-	if (data1->val->type == XMMS_OBJECT_CMD_ARG_STRING &&
-	    data2->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		return g_utf8_collate (data1->val->value.string,
-		                       data2->val->value.string);
-	}
+		if (!val1) {
+			return -(val2 != NULL);
+		}
 
-	if ((data1->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-	     data1->val->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
-	    (data2->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-	     data2->val->type == XMMS_OBJECT_CMD_ARG_UINT32))
-	{
-		s1 = (data1->val->type == XMMS_OBJECT_CMD_ARG_INT32) ?
-		      data1->val->value.int32 : data1->val->value.uint32;
-		s2 = (data2->val->type == XMMS_OBJECT_CMD_ARG_INT32) ?
-		      data2->val->value.int32 : data2->val->value.uint32;
-
-		if (s1 < s2)
-			return -1;
-		else if (s1 > s2)
+		if (!val2) {
 			return 1;
-		else
-			return 0;
+		}
+
+		if (val1->type == XMMS_OBJECT_CMD_ARG_STRING &&
+			val2->type == XMMS_OBJECT_CMD_ARG_STRING) {
+			res = g_utf8_collate (val1->value.string,
+		                          val2->value.string);
+			/* keep comparing next pair if equal */
+			if (res == 0)
+				continue;
+			else
+				return res;
+		}
+
+		if ((val1->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+		     val1->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
+	        (val2->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+	         val2->type == XMMS_OBJECT_CMD_ARG_UINT32))
+		{
+			s1 = (val1->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+			      val1->value.int32 : val1->value.uint32;
+			s2 = (val2->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+			      val2->value.int32 : val2->value.uint32;
+
+			if (s1 < s2)
+				return -1;
+			else if (s1 > s2)
+				return 1;
+			else
+				continue;  /* equal, compare next pair of properties */
+		}
+
+		XMMS_DBG("Types in compare function differ to much");
+
+		return 0;
 	}
 
-	XMMS_DBG("Types in compare function differ to much");
-
+	/* all pairs matched, really equal! */
 	return 0;
 }
 
@@ -1200,14 +1220,16 @@ static void
 xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 {
 	gint size;
+	GList *n;
 	sortdata_t *sorted = (sortdata_t *) data;
 	xmmsc_coll_t *playlist = (xmmsc_coll_t *)userdata;
 
 	xmmsc_coll_idlist_append (playlist, sorted->id);
 
-	if (sorted->val) {
-		xmms_object_cmd_value_free (sorted->val);
+	for (n = sorted->val; n; n = n->next) {
+		xmms_object_cmd_value_free (n->data);
 	}
+	g_list_free (sorted->val);
 
 	if (sorted->current) {
 		size = xmms_playlist_coll_get_size (playlist);
@@ -1221,37 +1243,36 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
  *
  *  This will sort the list.
  *  @param playlist The playlist to sort.
- *  @param property Tells xmms_playlist_sort which property it
+ *  @param properties Tells xmms_playlist_sort which properties it
  *  should use when sorting.
  *  @param err An #xmms_error_t - needed since xmms_playlist_sort is an ipc
  *  method handler.
  */
 
 static void
-xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *property,
+xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
                     xmms_error_t *err)
 {
-	/* FIXME: handle properties as a list */
-	/* FIXME: Or use coll sorting ? */ 
-
 	guint32 i;
-	GList *tmp = NULL, *sorted, *l, *l2;
+	GList *tmp = NULL, *n;
 	sortdata_t *data;
 	gchar *str;
+	xmms_object_cmd_value_t *val;
 	xmms_medialib_session_t *session;
 	gboolean list_changed = FALSE;
 	xmmsc_coll_t *plcoll;
 	gint currpos, size;
 
 	g_return_if_fail (playlist);
-	g_return_if_fail (property);
-	XMMS_DBG ("Sorting on %s", (char*)property->data);
+	g_return_if_fail (properties);
+	XMMS_DBG ("Sorting on %s", (char*)properties->data);
 
 	g_mutex_lock (playlist->mutex);
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
 	if (plcoll == NULL) {
 		xmms_error_set (err, XMMS_ERROR_NOENT, "no such playlist!");
+		g_mutex_unlock (playlist->mutex);
 		return;
 	}
 
@@ -1270,16 +1291,23 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *property,
 		data = g_new (sortdata_t, 1);
 
 		xmmsc_coll_idlist_get_index (plcoll, i, &data->id);
-		data->val =
-			xmms_medialib_entry_property_get_cmd_value (session,
-			                                            data->id,
-			                                            (char*)property->data);
+		data->position = i;
 
-		if (data->val && data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-			str = data->val->value.string;
-			data->val->value.string = g_utf8_casefold (str, strlen (str));
-			g_free (str);
+		/* save the list of values corresponding to the list of sort props */
+		data->val = NULL;
+		for (n = properties; n; n = n->next) {
+			val = xmms_medialib_entry_property_get_cmd_value (session,
+			                                                  data->id,
+			                                                  (char*)n->data);
+			if (val && val->type == XMMS_OBJECT_CMD_ARG_STRING) {
+				str = val->value.string;
+				val->value.string = g_utf8_casefold (str, strlen (str));
+				g_free (str);
+			}
+
+			data->val = g_list_prepend (data->val, val);
 		}
+		data->val = g_list_reverse (data->val);
 
 		data->current = (currpos == i);
 
@@ -1289,12 +1317,11 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *property,
 	xmms_medialib_end (session);
 
 	tmp = g_list_reverse (tmp);
-	sorted = g_list_sort (tmp, xmms_playlist_entry_compare);
+	tmp = g_list_sort (tmp, xmms_playlist_entry_compare);
 
 	/* check whether there was any change */
-	for (l = sorted, l2 = tmp; l;
-	     l = g_list_next (l), l2 = g_list_next (l2)) {
-		if (!l2 || l->data != l2->data) {
+	for (i = 0, n = tmp; n; i++, n = g_list_next (n)) {
+		if (((sortdata_t*)n->data)->position != i) {
 			list_changed = TRUE;
 			break;
 		}
@@ -1307,9 +1334,9 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *property,
 	}
 
 	xmmsc_coll_idlist_clear (plcoll);
-	g_list_foreach (sorted, xmms_playlist_sorted_unwind, plcoll);
+	g_list_foreach (tmp, xmms_playlist_sorted_unwind, plcoll);
 
-	g_list_free (sorted);
+	g_list_free (tmp);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0, plname);
 
