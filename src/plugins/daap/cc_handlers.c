@@ -29,7 +29,7 @@
 
 #define DMAP_BYTES_REMAINING ((gint) (data_end - current_data))
 
-static void 
+static void
 endian_swap_int16 (gint16 *i)
 {
 #if G_LITTLE_ENDIAN
@@ -40,7 +40,7 @@ endian_swap_int16 (gint16 *i)
 #endif
 }
 
-static void 
+static void
 endian_swap_int32 (gint32 *i)
 {
 #if G_LITTLE_ENDIAN
@@ -53,7 +53,7 @@ endian_swap_int32 (gint32 *i)
 #endif
 }
 
-static void 
+static void
 endian_swap_int64 (gint64 *i)
 {
 #if G_LITTLE_ENDIAN
@@ -70,7 +70,7 @@ endian_swap_int64 (gint64 *i)
 #endif
 }
 
-static gint 
+static gint
 grab_data_string (gchar **container, gchar *data, gint str_len)
 {
 	gint offset = 0;
@@ -87,7 +87,7 @@ grab_data_string (gchar **container, gchar *data, gint str_len)
 	return offset;
 }
 
-static gint 
+static gint
 grab_data_version (gint16 *cont_upper, gint16 *cont_lower, gchar *data)
 {
 	gint offset = DMAP_CC_SZ;
@@ -103,7 +103,7 @@ grab_data_version (gint16 *cont_upper, gint16 *cont_lower, gchar *data)
 	return offset;
 }
 
-static gint 
+static gint
 grab_data (void *container, gchar *data, content_type ct)
 {
 	gint offset;
@@ -154,35 +154,35 @@ grab_data (void *container, gchar *data, content_type ct)
 	return offset;
 }
 
-static gint 
+static gint
 cc_handler_mtco (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->n_rec_matches), current_data, DMAP_CTYPE_INT);
 	return offset;
 }
 
-static gint 
+static gint
 cc_handler_mrco (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->n_ret_items), current_data, DMAP_CTYPE_INT);
 	return offset;
 }
 
-static gint 
+static gint
 cc_handler_muty (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->updt_type), current_data, DMAP_CTYPE_BYTE);
 	return offset;
 }
 
-static gint 
+static gint
 cc_handler_mstt (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->status), current_data, DMAP_CTYPE_INT);
 	return offset;
 }
 
-static gint 
+static gint
 cc_handler_mlit (cc_data_t *fields, gchar *data, gint data_len)
 {
 	gint offset = 0;
@@ -364,7 +364,7 @@ cc_handler_mlit (cc_data_t *fields, gchar *data, gint data_len)
 	return (gint) (current_data - data);
 }
 
-static gint 
+static gint
 cc_handler_mlcl (cc_data_t *fields, gchar *data, gint data_len)
 {
 	gint offset = 0;
@@ -391,7 +391,7 @@ cc_handler_mlcl (cc_data_t *fields, gchar *data, gint data_len)
 	return (gint)(current_data - data);
 }
 
-static cc_data_t * 
+static cc_data_t *
 cc_handler_adbs (gchar *data, gint data_len)
 {
 	gint offset = 0;
@@ -522,7 +522,7 @@ cc_handler_msrv (gchar *data, gint data_len)
 				break;	
 			default:
 				XMMS_DBG ("Warning: Unrecognized content code "
-						  "or end of data: %s\n",
+				          "or end of data: %s\n",
 				          current_data);
 				do_break = TRUE;
 				break;
@@ -535,7 +535,7 @@ cc_handler_msrv (gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * 
+static cc_data_t *
 cc_handler_mccr (gchar *data, gint data_len)
 {
 	/* not implemented */

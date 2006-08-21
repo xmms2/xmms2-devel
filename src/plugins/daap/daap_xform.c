@@ -38,7 +38,7 @@
 
 typedef struct {
 	gchar *url, *host;
-	gint port;
+	guint port;
 
 	GIOChannel *channel;
 
@@ -81,7 +81,7 @@ XMMS_XFORM_PLUGIN("daap",
                   xmms_daap_plugin_setup);
 
 static gboolean
-get_data_from_url (const gchar *url, gchar **host, gint *port, gchar **cmd)
+get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 {
 	gint host_len;
 	const gchar *host_begin, *cmd_begin, *port_begin;
@@ -319,7 +319,7 @@ static gint
 xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error)
 {
 	xmms_daap_data_t *data;
-	guint read_bytes = 0;
+	gsize read_bytes = 0;
 	GIOStatus status;
 
 	data = xmms_xform_private_data_get (xform);

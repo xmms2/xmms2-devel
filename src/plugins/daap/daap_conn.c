@@ -132,7 +132,8 @@ daap_send_request (GIOChannel *sock_chan, gchar *request)
 void
 daap_receive_header (GIOChannel *sock_chan, gchar **header)
 {
-	guint linelen, n_total_bytes_recvd = 0;
+	guint n_total_bytes_recvd = 0;
+	gsize linelen;
 	gchar *response, *recv_line;
 	GIOStatus io_stat;
 	GError *err = NULL;
@@ -231,7 +232,7 @@ daap_handle_data (GIOChannel *sock_chan, gchar *header)
 	return retval;
 }
 
-gint 
+gint
 get_data_length (gchar *header)
 {
 	gint len;

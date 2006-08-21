@@ -24,7 +24,8 @@
 void
 write_buffer_to_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 {
-	guint sent_bytes, total_sent_bytes = 0;
+	guint total_sent_bytes = 0;
+	gsize sent_bytes;
 	GIOStatus io_stat;
 	GError *err = NULL;
 
@@ -54,7 +55,8 @@ write_buffer_to_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 gint
 read_buffer_from_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 {
-	guint read_bytes, n_total_bytes_read = 0;
+	guint n_total_bytes_read = 0;
+	gsize read_bytes;
 	GIOStatus io_stat;
 	GError *err = NULL;
 

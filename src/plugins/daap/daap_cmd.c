@@ -106,7 +106,7 @@ daap_command_logout (gchar *host, gint port, guint session_id, guint request_id)
 	return TRUE;
 }
 
-GSList * 
+GSList *
 daap_command_db_list (gchar *host, gint port, guint session_id,
                       guint revision_id, guint request_id)
 {
