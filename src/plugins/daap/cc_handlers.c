@@ -29,7 +29,8 @@
 
 #define DMAP_BYTES_REMAINING ((gint) (data_end - current_data))
 
-static void endian_swap_int16(gint16 *i)
+static void 
+endian_swap_int16 (gint16 *i)
 {
 #if G_LITTLE_ENDIAN
 	gint16 tmp;
@@ -39,7 +40,8 @@ static void endian_swap_int16(gint16 *i)
 #endif
 }
 
-static void endian_swap_int32(gint32 *i)
+static void 
+endian_swap_int32 (gint32 *i)
 {
 #if G_LITTLE_ENDIAN
 	gint32 tmp;
@@ -51,7 +53,8 @@ static void endian_swap_int32(gint32 *i)
 #endif
 }
 
-static void endian_swap_int64(gint64 *i)
+static void 
+endian_swap_int64 (gint64 *i)
 {
 #if G_LITTLE_ENDIAN
 	gint64 tmp;
@@ -67,7 +70,8 @@ static void endian_swap_int64(gint64 *i)
 #endif
 }
 
-static gint grab_data_string(gchar **container, gchar *data, gint str_len)
+static gint 
+grab_data_string (gchar **container, gchar *data, gint str_len)
 {
 	gint offset = 0;
 	
@@ -83,9 +87,8 @@ static gint grab_data_string(gchar **container, gchar *data, gint str_len)
 	return offset;
 }
 
-static gint grab_data_version(gint16 *cont_upper,
-                              gint16 *cont_lower,
-                              gchar *data)
+static gint 
+grab_data_version (gint16 *cont_upper, gint16 *cont_lower, gchar *data)
 {
 	gint offset = DMAP_CC_SZ;
 	
@@ -100,7 +103,8 @@ static gint grab_data_version(gint16 *cont_upper,
 	return offset;
 }
 
-static gint grab_data(void *container, gchar *data, content_type ct)
+static gint 
+grab_data (void *container, gchar *data, content_type ct)
 {
 	gint offset;
 	gint data_size;
@@ -150,31 +154,36 @@ static gint grab_data(void *container, gchar *data, content_type ct)
 	return offset;
 }
 
-static gint cc_handler_mtco(cc_data_t *fields, gchar *current_data)
+static gint 
+cc_handler_mtco (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->n_rec_matches), current_data, DMAP_CTYPE_INT);
 	return offset;
 }
 
-static gint cc_handler_mrco(cc_data_t *fields, gchar *current_data)
+static gint 
+cc_handler_mrco (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->n_ret_items), current_data, DMAP_CTYPE_INT);
 	return offset;
 }
 
-static gint cc_handler_muty(cc_data_t *fields, gchar *current_data)
+static gint 
+cc_handler_muty (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->updt_type), current_data, DMAP_CTYPE_BYTE);
 	return offset;
 }
 
-static gint cc_handler_mstt(cc_data_t *fields, gchar *current_data)
+static gint 
+cc_handler_mstt (cc_data_t *fields, gchar *current_data)
 {
 	gint offset = grab_data(&(fields->status), current_data, DMAP_CTYPE_INT);
 	return offset;
 }
 
-static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
+static gint 
+cc_handler_mlit (cc_data_t *fields, gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -355,7 +364,8 @@ static gint cc_handler_mlit(cc_data_t *fields, gchar *data, gint data_len)
 	return (gint) (current_data - data);
 }
 
-static gint cc_handler_mlcl(cc_data_t *fields, gchar *data, gint data_len)
+static gint 
+cc_handler_mlcl (cc_data_t *fields, gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -381,7 +391,8 @@ static gint cc_handler_mlcl(cc_data_t *fields, gchar *data, gint data_len)
 	return (gint)(current_data - data);
 }
 
-static cc_data_t * cc_handler_adbs(gchar *data, gint data_len)
+static cc_data_t * 
+cc_handler_adbs (gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -422,7 +433,8 @@ static cc_data_t * cc_handler_adbs(gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * cc_handler_msrv(gchar *data, gint data_len)
+static cc_data_t *
+cc_handler_msrv (gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -523,13 +535,15 @@ static cc_data_t * cc_handler_msrv(gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * cc_handler_mccr(gchar *data, gint data_len)
+static cc_data_t * 
+cc_handler_mccr (gchar *data, gint data_len)
 {
 	/* not implemented */
 	return NULL;
 }
 
-static cc_data_t * cc_handler_mlog(gchar *data, gint data_len)
+static cc_data_t *
+cc_handler_mlog (gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -562,7 +576,8 @@ static cc_data_t * cc_handler_mlog(gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * cc_handler_mupd(gchar *data, gint data_len)
+static cc_data_t *
+cc_handler_mupd (gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -596,7 +611,8 @@ static cc_data_t * cc_handler_mupd(gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * cc_handler_avdb(gchar *data, gint data_len)
+static cc_data_t *
+cc_handler_avdb(gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -637,7 +653,8 @@ static cc_data_t * cc_handler_avdb(gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * cc_handler_apso(gchar *data, gint data_len)
+static cc_data_t *
+cc_handler_apso (gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -678,7 +695,8 @@ static cc_data_t * cc_handler_apso(gchar *data, gint data_len)
 	return fields;
 }
 
-static cc_data_t * cc_handler_aply(gchar *data, gint data_len)
+static cc_data_t *
+cc_handler_aply (gchar *data, gint data_len)
 {
 	gint offset = 0;
 	gboolean do_break = FALSE;
@@ -719,7 +737,8 @@ static cc_data_t * cc_handler_aply(gchar *data, gint data_len)
 	return fields;
 }
 
-cc_data_t * cc_data_new()
+cc_data_t *
+cc_data_new ()
 {
 	cc_data_t *retval;
 
@@ -729,7 +748,8 @@ cc_data_t * cc_data_new()
 	return retval;
 }
 
-void cc_data_free(cc_data_t *fields)
+void
+cc_data_free (cc_data_t *fields)
 {
 	if (NULL != fields->server_name) g_free(fields->server_name);
 
@@ -741,7 +761,8 @@ void cc_data_free(cc_data_t *fields)
 	g_free(fields);
 }
 
-void cc_item_record_free(cc_item_record_t *item)
+void
+cc_item_record_free (cc_item_record_t *item)
 {
 	if (NULL != item->iname)            g_free(item->iname);
 	if (NULL != item->song_data_url)    g_free(item->song_data_url);
@@ -757,7 +778,8 @@ void cc_item_record_free(cc_item_record_t *item)
 	g_free(item);
 }
 
-GSList *cc_record_list_deep_copy(GSList *record_list) {
+GSList *
+cc_record_list_deep_copy (GSList *record_list) {
 	GSList *retval = NULL;
 	cc_item_record_t *record, *data;
 
@@ -818,7 +840,8 @@ GSList *cc_record_list_deep_copy(GSList *record_list) {
 	return retval;
 }
 
-cc_data_t * cc_handler(gchar *data, gint data_len)
+cc_data_t *
+cc_handler (gchar *data, gint data_len)
 {
 	cc_data_t *retval;
 

@@ -31,7 +31,8 @@
 
 #include "xmms/xmms_log.h"
 
-GIOChannel * daap_open_connection(gchar *host, gint port)
+GIOChannel *
+daap_open_connection (gchar *host, gint port)
 {
 	gint sockfd;
 	struct sockaddr_in server;
@@ -39,18 +40,18 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 	GIOChannel *sock_chan;
 	GError *err = NULL;
 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	sockfd = socket (AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1) {
 		return NULL;
 	}
 
-	hostinfo = gethostbyname(host);
+	hostinfo = gethostbyname (host);
 	if (NULL == hostinfo) {
 		return NULL;
 	}
 	server.sin_addr = *(struct in_addr *) hostinfo->h_addr_list[0];
 	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
+	server.sin_port = htons (port);
 
 	if (connect(sockfd,
 	            (struct sockaddr *) &server,
@@ -58,43 +59,44 @@ GIOChannel * daap_open_connection(gchar *host, gint port)
 		return NULL;
 	}
 
-	sock_chan = g_io_channel_unix_new(sockfd);
+	sock_chan = g_io_channel_unix_new (sockfd);
 
-	g_io_channel_set_flags(sock_chan, G_IO_FLAG_NONBLOCK, &err);
+	g_io_channel_set_flags (sock_chan, G_IO_FLAG_NONBLOCK, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error setting nonblock flag: %s\n", err->message);
 		return NULL;
 	}
 
-	g_io_channel_set_encoding(sock_chan, NULL, &err);
+	g_io_channel_set_encoding (sock_chan, NULL, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error setting encoding: %s\n", err->message);
 		return NULL;
 	}
 
-	if(!g_io_channel_get_close_on_unref(sock_chan)) {
-		g_io_channel_set_close_on_unref(sock_chan, TRUE);
+	if (!g_io_channel_get_close_on_unref (sock_chan)) {
+		g_io_channel_set_close_on_unref (sock_chan, TRUE);
 	}
 
 	return sock_chan;
 }
 
 void
-daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id)
+daap_generate_request (gchar **request, gchar *path, gchar *host,
+                       gint request_id)
 {
 	gint request_len;
 	gint8 hash[33];
 
-	memset(hash, 0, 33);
+	memset (hash, 0, 33);
 
-	*request = (gchar *) g_malloc0(sizeof(gchar) * MAX_REQUEST_LENGTH);
+	*request = (gchar *) g_malloc0 (sizeof(gchar) * MAX_REQUEST_LENGTH);
 	if (NULL == *request) {
 		XMMS_DBG ("Error: couldn't allocate memory for request\n");
 		return;
 	}
 
-	daap_hash_generate(DAAP_VERSION, (guchar *) path, 2, (guchar *) hash,
-	                   request_id);
+	daap_hash_generate (DAAP_VERSION, (guchar *) path, 2, (guchar *) hash,
+	                    request_id);
 
 	g_sprintf(*request, "GET %s %s\r\n"
 	                   "Host: %s\r\n"
@@ -108,25 +110,27 @@ daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id
 	                   "Connection: close\r\n"
 	                   "\r\n",
 	          path, HTTP_VER_STRING, host, USER_AGENT, hash, request_id);
-	request_len = strlen(*request);
+	request_len = strlen (*request);
 	
-	*request = g_realloc(*request, sizeof(gchar)*(request_len+1));
+	*request = g_realloc (*request, sizeof(gchar)*(request_len+1));
 	if (NULL == *request) {
 		XMMS_DBG ("warning: realloc failed for request\n");
 	}
 	(*request)[request_len] = '\0';
 }
 
-void daap_send_request(GIOChannel *sock_chan, gchar *request)
+void
+daap_send_request (GIOChannel *sock_chan, gchar *request)
 {
 	gint n_bytes_to_send;
 
-	n_bytes_to_send = strlen(request);
+	n_bytes_to_send = strlen (request);
 
-	write_buffer_to_channel(sock_chan, request, n_bytes_to_send);
+	write_buffer_to_channel (sock_chan, request, n_bytes_to_send);
 }
 
-void daap_receive_header(GIOChannel *sock_chan, gchar **header)
+void
+daap_receive_header (GIOChannel *sock_chan, gchar **header)
 {
 	guint linelen, n_total_bytes_recvd = 0;
 	gchar *response, *recv_line;
@@ -137,7 +141,7 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 		*header = NULL;
 	}
 
-	response = (gchar *) g_malloc0(sizeof(gchar) * MAX_HEADER_LENGTH);
+	response = (gchar *) g_malloc0 (sizeof(gchar) * MAX_HEADER_LENGTH);
 	if (NULL == response) {
 		XMMS_DBG ("Error: couldn't allocate memory for response.\n");
 		return;
@@ -154,24 +158,24 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 		}
 
 		if (NULL != recv_line) {
-			memcpy(response+n_total_bytes_recvd, recv_line, linelen);
+			memcpy (response+n_total_bytes_recvd, recv_line, linelen);
 			n_total_bytes_recvd += linelen;
 
-			if (strcmp(recv_line, "\r\n") == 0) {
-				g_free(recv_line);
+			if (strcmp (recv_line, "\r\n") == 0) {
+				g_free (recv_line);
 				if (NULL != header) {
-					*header = (gchar *) g_malloc0(sizeof(gchar) *
-					                              n_total_bytes_recvd);
+					*header = (gchar *) g_malloc0 (sizeof(gchar) *
+					                               n_total_bytes_recvd);
 					if (NULL == *header) {
 						XMMS_DBG ("error: couldn't allocate header\n");
 						break;
 					}
-					memcpy(*header, response, n_total_bytes_recvd);
+					memcpy (*header, response, n_total_bytes_recvd);
 				}
 				break;
 			}
 
-			g_free(recv_line);
+			g_free (recv_line);
 		}
 
 		if (io_stat == G_IO_STATUS_EOF) {
@@ -185,22 +189,23 @@ void daap_receive_header(GIOChannel *sock_chan, gchar **header)
 		}
 	} while (TRUE);
 
-	g_free(response);
+	g_free (response);
 
-	g_io_channel_flush(sock_chan, &err);
+	g_io_channel_flush (sock_chan, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error flushing buffer: %s\n", err->message);
 		return;
 	}
 }
 
-cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header)
+cc_data_t *
+daap_handle_data (GIOChannel *sock_chan, gchar *header)
 {
 	cc_data_t * retval;
 	gint response_length;
 	gchar *response_data;
 
-	response_length = get_data_length(header);
+	response_length = get_data_length (header);
 	
 	if (BAD_CONTENT_LENGTH == response_length) {
 		XMMS_DBG ("warning: Header does not contain a \""CONTENT_LENGTH
@@ -212,47 +217,49 @@ cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header)
 		return NULL;
 	}
 	
-	response_data = (gchar *) g_malloc0(sizeof(gchar) * response_length);
+	response_data = (gchar *) g_malloc0 (sizeof(gchar) * response_length);
 	if (NULL == response_data) {
 		XMMS_DBG ("error: could not allocate response memory\n");
 		return NULL;
 	}
 
-	read_buffer_from_channel(sock_chan, response_data, response_length);
+	read_buffer_from_channel (sock_chan, response_data, response_length);
 
-	retval = cc_handler(response_data, response_length);
-	g_free(response_data);
+	retval = cc_handler (response_data, response_length);
+	g_free (response_data);
 
 	return retval;
 }
 
-gint get_data_length(gchar *header)
+gint 
+get_data_length (gchar *header)
 {
 	gint len;
 	gchar *content_length;
 
-	content_length = strstr(header, CONTENT_LENGTH);
+	content_length = strstr (header, CONTENT_LENGTH);
 	if (NULL == content_length) {
 		len = BAD_CONTENT_LENGTH;
 	} else {
-		content_length += strlen(CONTENT_LENGTH);
-		len = atoi(content_length);
+		content_length += strlen (CONTENT_LENGTH);
+		len = atoi (content_length);
 	}
 
 	return len;
 }
 
-gint get_server_status(gchar *header)
+gint
+get_server_status (gchar *header)
 {
 	gint status;
 	gchar *server_status;
 
-	server_status = strstr(header, HTTP_VER_STRING);
+	server_status = strstr (header, HTTP_VER_STRING);
 	if (NULL == server_status) {
 		status = UNKNOWN_SERVER_STATUS;
 	} else {
-		server_status += strlen(HTTP_VER_STRING" ");
-		status = atoi(server_status);
+		server_status += strlen (HTTP_VER_STRING" ");
+		status = atoi (server_status);
 	}
 
 	return status;
