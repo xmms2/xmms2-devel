@@ -748,7 +748,7 @@ xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
 	GHashTable *dict;
 	guint32 id;
 	gint currpos, size;
-	gint ipos, inewpos;
+	gint64 ipos, inewpos;
 	xmmsc_coll_t *plcoll;
 
 	g_return_val_if_fail (playlist, FALSE);
