@@ -114,7 +114,7 @@ read_config ()
 
 		fp = fopen (file, "w+");
 		if (!fp) {
-			print_error ("Could not create default configfile!!");
+			print_error ("Could not create configfile: %s\nMake sure you have write permissions to that location.", file);
 		}
 
 		fwrite (defaultconfig, strlen (defaultconfig), 1, fp);
