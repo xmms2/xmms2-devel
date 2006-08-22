@@ -765,9 +765,9 @@ public final class Xmms2 {
     	Xmmsclient.xmmsc_result_unref(result);
     	return hash[0];
     }
-    public short[] bindataRetreive(String hash) {
+    public short[] bindataRetrieve(String hash) {
     	SWIGTYPE_p_xmmsc_result_St result = 
-    		Xmmsclient.xmmsc_bindata_retreive(xbo.connectionTwo, hash);
+    		Xmmsclient.xmmsc_bindata_retrieve(xbo.connectionTwo, hash);
     	Xmmsclient.xmmsc_result_wait(result);
     	short[][] bindata = null;
     	Xmmsclient.xmmsc_result_get_bin_wrap(result, bindata);

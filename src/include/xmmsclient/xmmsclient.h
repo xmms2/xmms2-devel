@@ -178,7 +178,7 @@ xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *ur
 
 /* Bindata object */ 
 xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *data, unsigned int len);
-xmmsc_result_t *xmmsc_bindata_retreive (xmmsc_connection_t *c, const char *hash); 
+xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash); 
 xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
 
 /* bindata tools */
