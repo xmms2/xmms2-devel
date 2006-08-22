@@ -39,7 +39,7 @@ static void cmd_help (xmmsc_connection_t *conn, gint argc, gchar **argv);
 gchar *statusformat = NULL;
 gchar *listformat = NULL;
 GHashTable *config = NULL;
-gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\n";
+gchar defaultconfig[] = "ipcpath=NULL\nstatusformat=${artist} - ${title}\nlistformat=${artist} - ${title} (${minutes}:${seconds})\nautostart=true\n";
 
 
 /**
@@ -210,7 +210,7 @@ main (gint argc, gchar **argv)
 {
 	xmmsc_connection_t *connection;
 	gchar *path;
-	gint i;
+	gint i, ret;
 
 	setlocale (LC_ALL, "");
 
@@ -231,7 +231,25 @@ main (gint argc, gchar **argv)
 		path = g_hash_table_lookup (config, "ipcpath");
 	}
 
-	if (!xmmsc_connect (connection, path)) {
+
+	ret = xmmsc_connect (connection, path);
+	if (!ret) {
+		gboolean autostart = FALSE;
+		gchar *tmp;
+	   
+		tmp = g_hash_table_lookup (config, "autostart");
+		if (tmp && !g_ascii_strcasecmp (tmp, "true")) {
+		   autostart = TRUE;
+		}
+
+		if (autostart && (!path || !g_ascii_strncasecmp (path, "unix://", 7))) {
+			if (!system ("xmms2-launcher")) {
+				ret = xmmsc_connect (connection, path);
+			}
+		}
+	}
+
+	if (!ret) {
 		print_error ("Could not connect to xmms2d: %s", 
 		             xmmsc_get_last_error (connection));
 	}
