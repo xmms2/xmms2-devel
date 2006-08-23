@@ -1,0 +1,12 @@
+target="daap"
+source=["daap_xform.c", "daap_cmd.c", "daap_conn.c", "daap_mdns_browse.c", "daap_util.c", "daap_md5.c", "cc_handlers.c"]
+
+def config(env):
+	if env.conf.CheckLib('avahi-glib') and env.conf.CheckLib('avahi-client'):
+		env.configcmd("pkg-config --libs glib-2.0 avahi-client avahi-glib")
+		env.Append(CCFLAGS = "-DMDNS_USING_AVAHI")
+	#else if env.conf.CheckLib("apple_mdns_lib_placeholder"):
+	#	env.configcmd("pkg-config --libs glib-2.0 apple_mdns_lib_placeholder")
+	#	env.Append(CCFLAGS = "-DMDNS_USING_MAC_NATIVE")
+	else:
+		env.configcmd("pkg-config --libs glib-2.0")
