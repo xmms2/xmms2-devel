@@ -36,7 +36,13 @@ typedef struct {
 	GList *group;
 } coll_query_params_t;
 
+typedef enum {
+	XMMS_QUERY_ALIAS_ID,
+	XMMS_QUERY_ALIAS_PROP,
+} coll_query_alias_type_t;
+
 typedef struct {
+	coll_query_alias_type_t type;
 	guint id;
 	gboolean optional;
 } coll_query_alias_t;
@@ -65,10 +71,11 @@ static void query_append_filter (coll_query_t *query, xmmsc_coll_type_t type, gc
 static void query_string_append_joins (gpointer key, gpointer val, gpointer udata);
 static void query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fields);
 static void query_string_append_fetch (coll_query_t *query, GString *qstring);
+static void query_string_append_alias (GString *qstring, coll_query_alias_t *alias);
 
 static gchar *canonical_field_name (gchar *field);
 static gboolean operator_is_allmedia (xmmsc_coll_t *op);
-guint query_make_alias (coll_query_t *query, gchar *field, gboolean optional);
+static coll_query_alias_t *query_make_alias (coll_query_t *query, gchar *field, gboolean optional);
 
 
 
@@ -120,6 +127,9 @@ init_query (coll_query_params_t *params)
 	query->conditions = g_string_new (NULL);
 	query->params = params;
 
+	/* Always fetch the media id */
+	query->params->fetch = g_list_prepend (query->params->fetch, "id");
+
 	/* Prepare aliases for the order/group fields */
 	for (n = query->params->order; n; n = n->next) {
 		gchar *field = canonical_field_name (n->data);
@@ -159,7 +169,7 @@ xmms_collection_gen_query (coll_query_t *query)
 	}
 
 	/* Append select and joins */
-	qstring = g_string_new ("SELECT DISTINCT m0.id");
+	qstring = g_string_new ("SELECT DISTINCT ");
 	query_string_append_fetch (query, qstring);
 	g_string_append (qstring, " FROM Media as m0");
 	g_hash_table_foreach (query->aliases, query_string_append_joins, qstring);
@@ -291,14 +301,14 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 
 /** Register a (unique) field alias in the query structure and return
- * the corresponding identifier.
+ * the corresponding alias pointer.
  *
  * @param query  The query object to insert the alias in.
  * @param field  The name of the property that will correspond to the alias.
  * @param optional  Whether the property can be optional (i.e. LEFT JOIN)
- * @return  The id of the alias.
+ * @return  The alias pointer.
  */
-guint
+static coll_query_alias_t *
 query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 {
 	coll_query_alias_t *alias;
@@ -311,12 +321,18 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 		alias = g_new (coll_query_alias_t, 1);
 		alias->optional = optional;
 
-		if (query->alias_base == NULL && !optional) {  /* Found a base */
-			alias->id = 0;
-			query->alias_base = fieldkey;
+		if (strcmp (field, "id") == 0) {
+			alias->type = XMMS_QUERY_ALIAS_ID;
 		} else {
-			alias->id = query->alias_count;
-			query->alias_count++;
+			alias->type = XMMS_QUERY_ALIAS_PROP;
+
+			if (query->alias_base == NULL && !optional) {  /* Found a base */
+				alias->id = 0;
+				query->alias_base = fieldkey;
+			} else {
+				alias->id = query->alias_count;
+				query->alias_count++;
+			}
 		}
 
 		g_hash_table_insert (query->aliases, fieldkey, alias);
@@ -326,7 +342,7 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 		alias->optional = optional;
 	}
 
-	return alias->id;
+	return alias;
 }
 
 /* Find the canonical name of a field (strip flags, if any) */
@@ -425,7 +441,7 @@ static void
 query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
                      gchar *key, gchar *value, gboolean case_sens)
 {
-	guint id;
+	coll_query_alias_t *alias;
 	gboolean optional;
 
 	if (type == XMMS_COLLECTION_TYPE_HAS) {
@@ -434,16 +450,18 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 		optional = FALSE;
 	}
 
-	id = query_make_alias (query, key, optional);
+	alias = query_make_alias (query, key, optional);
 
 	switch (type) {
 	/* escape strings */
 	case XMMS_COLLECTION_TYPE_MATCH:
 	case XMMS_COLLECTION_TYPE_CONTAINS:
 		if (case_sens) {
-			g_string_append_printf (query->conditions, "m%u.value", id);
+			query_string_append_alias (query->conditions, alias);
 		} else {
-			g_string_append_printf (query->conditions, "LOWER(m%u.value)", id);
+			query_append_string (query, "LOWER(");
+			query_string_append_alias (query->conditions, alias);
+			query_append_string (query, ")");
 		}
 
 		if (type == XMMS_COLLECTION_TYPE_MATCH) {
@@ -464,7 +482,7 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 	/* do not escape numerical values */
 	case XMMS_COLLECTION_TYPE_SMALLER:
 	case XMMS_COLLECTION_TYPE_GREATER:
-		g_string_append_printf (query->conditions, "m%u.value", id);
+		query_string_append_alias (query->conditions, alias);
 		if (type == XMMS_COLLECTION_TYPE_SMALLER) {
 			query_append_string (query, " < ");
 		} else {
@@ -474,7 +492,8 @@ query_append_filter (coll_query_t *query, xmmsc_coll_type_t type,
 		break;
 
 	case XMMS_COLLECTION_TYPE_HAS:
-		g_string_append_printf (query->conditions, "m%u.value is not null", id);
+		query_string_append_alias (query->conditions, alias);
+		query_append_string (query, " is not null");
 		break;
 
 	/* Called with invalid type? */
@@ -496,7 +515,7 @@ query_string_append_joins (gpointer key, gpointer val, gpointer udata)
 	qstring = (GString*)udata;
 	alias = (coll_query_alias_t*)val;
 
-	if (alias->id > 0) {
+	if ((alias->id > 0) && (alias->type == XMMS_QUERY_ALIAS_PROP)) {
 		if (alias->optional) {
 			g_string_append_printf (qstring, " LEFT");
 		}
@@ -526,9 +545,9 @@ query_string_append_alias_list (coll_query_t *query, GString *qstring, GList *fi
 		}
 
 		if (canon_field != NULL) {
-			alias = g_hash_table_lookup (query->aliases, canon_field);
+			alias = query_make_alias (query, canon_field, FALSE);
 			if (alias != NULL) {
-				g_string_append_printf (qstring, "m%u.value", alias->id);
+				query_string_append_alias (qstring, alias);
 			}
 		}
 
@@ -546,10 +565,35 @@ static void
 query_string_append_fetch (coll_query_t *query, GString *qstring)
 {
 	GList *n;
-	guint id;
+	coll_query_alias_t *alias;
+	gboolean first = TRUE;
 
 	for (n = query->params->fetch; n; n = n->next) {
-		id = query_make_alias (query, n->data, TRUE);
-		g_string_append_printf (qstring, ", m%u.value AS %s", id, (gchar*)n->data);
+		alias = query_make_alias (query, n->data, TRUE);
+
+		if (first) first = FALSE;
+		else {
+			g_string_append (qstring, ", ");
+		}
+
+		query_string_append_alias (qstring, alias);
+		g_string_append_printf (qstring, " AS %s", (gchar*)n->data);
+	}
+}
+
+static void
+query_string_append_alias (GString *qstring, coll_query_alias_t *alias)
+{
+	switch (alias->type) {
+	case XMMS_QUERY_ALIAS_PROP:
+		g_string_append_printf (qstring, "m%u.value", alias->id);
+		break;
+
+	case XMMS_QUERY_ALIAS_ID:
+		g_string_append (qstring, "m0.id");
+		break;
+
+	default:
+		break;
 	}
 }
