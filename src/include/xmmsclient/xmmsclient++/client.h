@@ -5,6 +5,7 @@
 
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/playback.h>
+#include <xmmsclient/xmmsclient++/xform.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
 #include <xmmsclient/xmmsclient++/config.h>
@@ -92,6 +93,7 @@ namespace Xmms
 			const Medialib medialib;
 			const Config   config;
 			const Stats    stats;
+			const Xform    xform;
 
 			/** Get the current mainloop.
 			 *  If no mainloop is set, it will create a default MainLoop.
