@@ -62,7 +62,7 @@ MD5Transform (guint32 buf[4],
  * Any MD5 gurus out there know why???
  */
 #if 0 //ndef WORDS_BIGENDIAN /* was: HIGHFIRST */
-#define byteReverse(buf, len)     /* Nothing */
+#define byteReverse (buf, len)     /* Nothing */
 #else
 static void
 byteReverse (unsigned char *buf,
@@ -191,7 +191,7 @@ OpenDaap_MD5Final (MD5_CTX *ctx,
     MD5Transform (ctx->buf, (guint32 *) ctx->in, ctx->version);
     byteReverse ((unsigned char *) ctx->buf, 4);
     memcpy (digest, ctx->buf, 16);
-    memset (ctx, 0, sizeof(ctx));     /* In case it's sensitive */
+    memset (ctx, 0, sizeof (ctx));     /* In case it's sensitive */
 
     return;
 }
@@ -202,13 +202,13 @@ OpenDaap_MD5Final (MD5_CTX *ctx,
 
 /* #define F1(x, y, z) (x & y | ~x & z) */
 #define F1(x, y, z) (z ^ (x & (y ^ z)))
-#define F2(x, y, z) F1(z, x, y)
+#define F2(x, y, z) F1 (z, x, y)
 #define F3(x, y, z) (x ^ y ^ z)
 #define F4(x, y, z) (y ^ (x | ~z))
 
 /* This is the central step in the MD5 algorithm. */
 #define MD5STEP(f, w, x, y, z, data, s) \
-( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
+( w += f (x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
 
 /*
 * The core of the MD5 algorithm, this alters an existing MD5 hash to reflect
@@ -227,81 +227,81 @@ MD5Transform (guint32 buf[4],
     c = buf[2];
     d = buf[3];
 
-    MD5STEP(F1, a, b, c, d, in[0] + 0xd76aa478, 7);
-    MD5STEP(F1, d, a, b, c, in[1] + 0xe8c7b756, 12);
-    MD5STEP(F1, c, d, a, b, in[2] + 0x242070db, 17);
-    MD5STEP(F1, b, c, d, a, in[3] + 0xc1bdceee, 22);
-    MD5STEP(F1, a, b, c, d, in[4] + 0xf57c0faf, 7);
-    MD5STEP(F1, d, a, b, c, in[5] + 0x4787c62a, 12);
-    MD5STEP(F1, c, d, a, b, in[6] + 0xa8304613, 17);
-    MD5STEP(F1, b, c, d, a, in[7] + 0xfd469501, 22);
-    MD5STEP(F1, a, b, c, d, in[8] + 0x698098d8, 7);
-    MD5STEP(F1, d, a, b, c, in[9] + 0x8b44f7af, 12);
-    MD5STEP(F1, c, d, a, b, in[10] + 0xffff5bb1, 17);
-    MD5STEP(F1, b, c, d, a, in[11] + 0x895cd7be, 22);
-    MD5STEP(F1, a, b, c, d, in[12] + 0x6b901122, 7);
-    MD5STEP(F1, d, a, b, c, in[13] + 0xfd987193, 12);
-    MD5STEP(F1, c, d, a, b, in[14] + 0xa679438e, 17);
-    MD5STEP(F1, b, c, d, a, in[15] + 0x49b40821, 22);
+    MD5STEP (F1, a, b, c, d, in[0] + 0xd76aa478, 7);
+    MD5STEP (F1, d, a, b, c, in[1] + 0xe8c7b756, 12);
+    MD5STEP (F1, c, d, a, b, in[2] + 0x242070db, 17);
+    MD5STEP (F1, b, c, d, a, in[3] + 0xc1bdceee, 22);
+    MD5STEP (F1, a, b, c, d, in[4] + 0xf57c0faf, 7);
+    MD5STEP (F1, d, a, b, c, in[5] + 0x4787c62a, 12);
+    MD5STEP (F1, c, d, a, b, in[6] + 0xa8304613, 17);
+    MD5STEP (F1, b, c, d, a, in[7] + 0xfd469501, 22);
+    MD5STEP (F1, a, b, c, d, in[8] + 0x698098d8, 7);
+    MD5STEP (F1, d, a, b, c, in[9] + 0x8b44f7af, 12);
+    MD5STEP (F1, c, d, a, b, in[10] + 0xffff5bb1, 17);
+    MD5STEP (F1, b, c, d, a, in[11] + 0x895cd7be, 22);
+    MD5STEP (F1, a, b, c, d, in[12] + 0x6b901122, 7);
+    MD5STEP (F1, d, a, b, c, in[13] + 0xfd987193, 12);
+    MD5STEP (F1, c, d, a, b, in[14] + 0xa679438e, 17);
+    MD5STEP (F1, b, c, d, a, in[15] + 0x49b40821, 22);
 
-    MD5STEP(F2, a, b, c, d, in[1] + 0xf61e2562, 5);
-    MD5STEP(F2, d, a, b, c, in[6] + 0xc040b340, 9);
-    MD5STEP(F2, c, d, a, b, in[11] + 0x265e5a51, 14);
-    MD5STEP(F2, b, c, d, a, in[0] + 0xe9b6c7aa, 20);
-    MD5STEP(F2, a, b, c, d, in[5] + 0xd62f105d, 5);
-    MD5STEP(F2, d, a, b, c, in[10] + 0x02441453, 9);
-    MD5STEP(F2, c, d, a, b, in[15] + 0xd8a1e681, 14);
-    MD5STEP(F2, b, c, d, a, in[4] + 0xe7d3fbc8, 20);
-    MD5STEP(F2, a, b, c, d, in[9] + 0x21e1cde6, 5);
-    MD5STEP(F2, d, a, b, c, in[14] + 0xc33707d6, 9);
-    MD5STEP(F2, c, d, a, b, in[3] + 0xf4d50d87, 14);
+    MD5STEP (F2, a, b, c, d, in[1] + 0xf61e2562, 5);
+    MD5STEP (F2, d, a, b, c, in[6] + 0xc040b340, 9);
+    MD5STEP (F2, c, d, a, b, in[11] + 0x265e5a51, 14);
+    MD5STEP (F2, b, c, d, a, in[0] + 0xe9b6c7aa, 20);
+    MD5STEP (F2, a, b, c, d, in[5] + 0xd62f105d, 5);
+    MD5STEP (F2, d, a, b, c, in[10] + 0x02441453, 9);
+    MD5STEP (F2, c, d, a, b, in[15] + 0xd8a1e681, 14);
+    MD5STEP (F2, b, c, d, a, in[4] + 0xe7d3fbc8, 20);
+    MD5STEP (F2, a, b, c, d, in[9] + 0x21e1cde6, 5);
+    MD5STEP (F2, d, a, b, c, in[14] + 0xc33707d6, 9);
+    MD5STEP (F2, c, d, a, b, in[3] + 0xf4d50d87, 14);
 
     if (version == 1)
     {
-        MD5STEP(F2, b, c, d, a, in[8] + 0x445a14ed, 20);
+        MD5STEP (F2, b, c, d, a, in[8] + 0x445a14ed, 20);
     }
     else
     {
-        MD5STEP(F2, b, c, d, a, in[8] + 0x455a14ed, 20);
+        MD5STEP (F2, b, c, d, a, in[8] + 0x455a14ed, 20);
     }
-    MD5STEP(F2, a, b, c, d, in[13] + 0xa9e3e905, 5);
-    MD5STEP(F2, d, a, b, c, in[2] + 0xfcefa3f8, 9);
-    MD5STEP(F2, c, d, a, b, in[7] + 0x676f02d9, 14);
-    MD5STEP(F2, b, c, d, a, in[12] + 0x8d2a4c8a, 20);
+    MD5STEP (F2, a, b, c, d, in[13] + 0xa9e3e905, 5);
+    MD5STEP (F2, d, a, b, c, in[2] + 0xfcefa3f8, 9);
+    MD5STEP (F2, c, d, a, b, in[7] + 0x676f02d9, 14);
+    MD5STEP (F2, b, c, d, a, in[12] + 0x8d2a4c8a, 20);
 
-    MD5STEP(F3, a, b, c, d, in[5] + 0xfffa3942, 4);
-    MD5STEP(F3, d, a, b, c, in[8] + 0x8771f681, 11);
-    MD5STEP(F3, c, d, a, b, in[11] + 0x6d9d6122, 16);
-    MD5STEP(F3, b, c, d, a, in[14] + 0xfde5380c, 23);
-    MD5STEP(F3, a, b, c, d, in[1] + 0xa4beea44, 4);
-    MD5STEP(F3, d, a, b, c, in[4] + 0x4bdecfa9, 11);
-    MD5STEP(F3, c, d, a, b, in[7] + 0xf6bb4b60, 16);
-    MD5STEP(F3, b, c, d, a, in[10] + 0xbebfbc70, 23);
-    MD5STEP(F3, a, b, c, d, in[13] + 0x289b7ec6, 4);
-    MD5STEP(F3, d, a, b, c, in[0] + 0xeaa127fa, 11);
-    MD5STEP(F3, c, d, a, b, in[3] + 0xd4ef3085, 16);
-    MD5STEP(F3, b, c, d, a, in[6] + 0x04881d05, 23);
-    MD5STEP(F3, a, b, c, d, in[9] + 0xd9d4d039, 4);
-    MD5STEP(F3, d, a, b, c, in[12] + 0xe6db99e5, 11);
-    MD5STEP(F3, c, d, a, b, in[15] + 0x1fa27cf8, 16);
-    MD5STEP(F3, b, c, d, a, in[2] + 0xc4ac5665, 23);
+    MD5STEP (F3, a, b, c, d, in[5] + 0xfffa3942, 4);
+    MD5STEP (F3, d, a, b, c, in[8] + 0x8771f681, 11);
+    MD5STEP (F3, c, d, a, b, in[11] + 0x6d9d6122, 16);
+    MD5STEP (F3, b, c, d, a, in[14] + 0xfde5380c, 23);
+    MD5STEP (F3, a, b, c, d, in[1] + 0xa4beea44, 4);
+    MD5STEP (F3, d, a, b, c, in[4] + 0x4bdecfa9, 11);
+    MD5STEP (F3, c, d, a, b, in[7] + 0xf6bb4b60, 16);
+    MD5STEP (F3, b, c, d, a, in[10] + 0xbebfbc70, 23);
+    MD5STEP (F3, a, b, c, d, in[13] + 0x289b7ec6, 4);
+    MD5STEP (F3, d, a, b, c, in[0] + 0xeaa127fa, 11);
+    MD5STEP (F3, c, d, a, b, in[3] + 0xd4ef3085, 16);
+    MD5STEP (F3, b, c, d, a, in[6] + 0x04881d05, 23);
+    MD5STEP (F3, a, b, c, d, in[9] + 0xd9d4d039, 4);
+    MD5STEP (F3, d, a, b, c, in[12] + 0xe6db99e5, 11);
+    MD5STEP (F3, c, d, a, b, in[15] + 0x1fa27cf8, 16);
+    MD5STEP (F3, b, c, d, a, in[2] + 0xc4ac5665, 23);
 
-    MD5STEP(F4, a, b, c, d, in[0] + 0xf4292244, 6);
-    MD5STEP(F4, d, a, b, c, in[7] + 0x432aff97, 10);
-    MD5STEP(F4, c, d, a, b, in[14] + 0xab9423a7, 15);
-    MD5STEP(F4, b, c, d, a, in[5] + 0xfc93a039, 21);
-    MD5STEP(F4, a, b, c, d, in[12] + 0x655b59c3, 6);
-    MD5STEP(F4, d, a, b, c, in[3] + 0x8f0ccc92, 10);
-    MD5STEP(F4, c, d, a, b, in[10] + 0xffeff47d, 15);
-    MD5STEP(F4, b, c, d, a, in[1] + 0x85845dd1, 21);
-    MD5STEP(F4, a, b, c, d, in[8] + 0x6fa87e4f, 6);
-    MD5STEP(F4, d, a, b, c, in[15] + 0xfe2ce6e0, 10);
-    MD5STEP(F4, c, d, a, b, in[6] + 0xa3014314, 15);
-    MD5STEP(F4, b, c, d, a, in[13] + 0x4e0811a1, 21);
-    MD5STEP(F4, a, b, c, d, in[4] + 0xf7537e82, 6);
-    MD5STEP(F4, d, a, b, c, in[11] + 0xbd3af235, 10);
-    MD5STEP(F4, c, d, a, b, in[2] + 0x2ad7d2bb, 15);
-    MD5STEP(F4, b, c, d, a, in[9] + 0xeb86d391, 21);
+    MD5STEP (F4, a, b, c, d, in[0] + 0xf4292244, 6);
+    MD5STEP (F4, d, a, b, c, in[7] + 0x432aff97, 10);
+    MD5STEP (F4, c, d, a, b, in[14] + 0xab9423a7, 15);
+    MD5STEP (F4, b, c, d, a, in[5] + 0xfc93a039, 21);
+    MD5STEP (F4, a, b, c, d, in[12] + 0x655b59c3, 6);
+    MD5STEP (F4, d, a, b, c, in[3] + 0x8f0ccc92, 10);
+    MD5STEP (F4, c, d, a, b, in[10] + 0xffeff47d, 15);
+    MD5STEP (F4, b, c, d, a, in[1] + 0x85845dd1, 21);
+    MD5STEP (F4, a, b, c, d, in[8] + 0x6fa87e4f, 6);
+    MD5STEP (F4, d, a, b, c, in[15] + 0xfe2ce6e0, 10);
+    MD5STEP (F4, c, d, a, b, in[6] + 0xa3014314, 15);
+    MD5STEP (F4, b, c, d, a, in[13] + 0x4e0811a1, 21);
+    MD5STEP (F4, a, b, c, d, in[4] + 0xf7537e82, 6);
+    MD5STEP (F4, d, a, b, c, in[11] + 0xbd3af235, 10);
+    MD5STEP (F4, c, d, a, b, in[2] + 0x2ad7d2bb, 15);
+    MD5STEP (F4, b, c, d, a, in[9] + 0xeb86d391, 21);
 
     buf[0] += a;
     buf[1] += b;
@@ -348,47 +348,47 @@ GenerateStatic_42 ()
     {
         OpenDaap_MD5Init (&ctx, 0);
 
-#define MD5_STRUPDATE(str) OpenDaap_MD5Update(&ctx, (unsigned char const *)str, strlen(str))
+#define MD5_STRUPDATE(str) OpenDaap_MD5Update(&ctx, (unsigned char const *)str, strlen (str))
 
         if ((i & 0x80) != 0)
-            MD5_STRUPDATE("Accept-Language");
+            MD5_STRUPDATE ("Accept-Language");
         else
-            MD5_STRUPDATE("user-agent");
+            MD5_STRUPDATE ("user-agent");
 
         if ((i & 0x40) != 0)
-            MD5_STRUPDATE("max-age");
+            MD5_STRUPDATE ("max-age");
         else
-            MD5_STRUPDATE("Authorization");
+            MD5_STRUPDATE ("Authorization");
 
         if ((i & 0x20) != 0)
-            MD5_STRUPDATE("Client-DAAP-Version");
+            MD5_STRUPDATE ("Client-DAAP-Version");
         else
-            MD5_STRUPDATE("Accept-Encoding");
+            MD5_STRUPDATE ("Accept-Encoding");
 
         if ((i & 0x10) != 0)
-            MD5_STRUPDATE("daap.protocolversion");
+            MD5_STRUPDATE ("daap.protocolversion");
         else
-            MD5_STRUPDATE("daap.songartist");
+            MD5_STRUPDATE ("daap.songartist");
 
         if ((i & 0x08) != 0)
-            MD5_STRUPDATE("daap.songcomposer");
+            MD5_STRUPDATE ("daap.songcomposer");
         else
-            MD5_STRUPDATE("daap.songdatemodified");
+            MD5_STRUPDATE ("daap.songdatemodified");
 
         if ((i & 0x04) != 0)
-            MD5_STRUPDATE("daap.songdiscnumber");
+            MD5_STRUPDATE ("daap.songdiscnumber");
         else
-            MD5_STRUPDATE("daap.songdisabled");
+            MD5_STRUPDATE ("daap.songdisabled");
 
         if ((i & 0x02) != 0)
-            MD5_STRUPDATE("playlist-item-spec");
+            MD5_STRUPDATE ("playlist-item-spec");
         else
-            MD5_STRUPDATE("revision-number");
+            MD5_STRUPDATE ("revision-number");
 
         if ((i & 0x01) != 0)
-            MD5_STRUPDATE("session-id");
+            MD5_STRUPDATE ("session-id");
         else
-            MD5_STRUPDATE("content-codes");
+            MD5_STRUPDATE ("content-codes");
 #undef MD5_STRUPDATE
 
         OpenDaap_MD5Final (&ctx, buf);
@@ -397,7 +397,7 @@ GenerateStatic_42 ()
     }
 }
 
-static void GenerateStatic_45()
+static void GenerateStatic_45 ()
 {
     MD5_CTX ctx;
     unsigned char *p = staticHash_45;
@@ -408,47 +408,47 @@ static void GenerateStatic_45()
     {
         OpenDaap_MD5Init (&ctx, 1);
 
-#define MD5_STRUPDATE(str) OpenDaap_MD5Update(&ctx, (unsigned char const *)str, strlen(str))
+#define MD5_STRUPDATE(str) OpenDaap_MD5Update(&ctx, (unsigned char const *)str, strlen (str))
 
         if ((i & 0x40) != 0)
-            MD5_STRUPDATE("eqwsdxcqwesdc");
+            MD5_STRUPDATE ("eqwsdxcqwesdc");
         else
-            MD5_STRUPDATE("op[;lm,piojkmn");
+            MD5_STRUPDATE ("op[;lm,piojkmn");
 
         if ((i & 0x20) != 0)
-            MD5_STRUPDATE("876trfvb 34rtgbvc");
+            MD5_STRUPDATE ("876trfvb 34rtgbvc");
         else
-            MD5_STRUPDATE("=-0ol.,m3ewrdfv");
+            MD5_STRUPDATE ("=-0ol.,m3ewrdfv");
 
         if ((i & 0x10) != 0)
-            MD5_STRUPDATE("87654323e4rgbv ");
+            MD5_STRUPDATE ("87654323e4rgbv ");
         else
-            MD5_STRUPDATE("1535753690868867974342659792");
+            MD5_STRUPDATE ("1535753690868867974342659792");
 
         if ((i & 0x08) != 0)
-            MD5_STRUPDATE("Song Name");
+            MD5_STRUPDATE ("Song Name");
         else
-            MD5_STRUPDATE("DAAP-CLIENT-ID:");
+            MD5_STRUPDATE ("DAAP-CLIENT-ID:");
 
         if ((i & 0x04) != 0)
-            MD5_STRUPDATE("111222333444555");
+            MD5_STRUPDATE ("111222333444555");
         else
-            MD5_STRUPDATE("4089961010");
+            MD5_STRUPDATE ("4089961010");
 
         if ((i & 0x02) != 0)
-            MD5_STRUPDATE("playlist-item-spec");
+            MD5_STRUPDATE ("playlist-item-spec");
         else
-            MD5_STRUPDATE("revision-number");
+            MD5_STRUPDATE ("revision-number");
 
         if ((i & 0x01) != 0)
-            MD5_STRUPDATE("session-id");
+            MD5_STRUPDATE ("session-id");
         else
-            MD5_STRUPDATE("content-codes");
+            MD5_STRUPDATE ("content-codes");
 
         if ((i & 0x80) != 0)
-            MD5_STRUPDATE("IUYHGFDCXWEDFGHN");
+            MD5_STRUPDATE ("IUYHGFDCXWEDFGHN");
         else
-            MD5_STRUPDATE("iuytgfdxwerfghjm");
+            MD5_STRUPDATE ("iuytgfdxwerfghjm");
 
 #undef MD5_STRUPDATE
 

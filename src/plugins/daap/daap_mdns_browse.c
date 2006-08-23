@@ -69,8 +69,8 @@ daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
 	switch (event) {
 		case AVAHI_RESOLVER_FOUND:
 			server = (daap_mdns_server_t *)
-			         g_malloc0 (sizeof(daap_mdns_server_t));
-			avahi_address_snprint (ad, sizeof(ad), addr);
+			         g_malloc0 (sizeof (daap_mdns_server_t));
+			avahi_address_snprint (ad, sizeof (ad), addr);
 
 			server->server_name = g_strdup (name);
 			server->address = g_strdup (ad);
@@ -111,7 +111,7 @@ daap_mdns_browse_cb (AvahiServiceBrowser *browser,
                      void *userdata)
 {
 	gboolean ok = FALSE;
-	gboolean *b = g_malloc (sizeof(gboolean));
+	gboolean *b = g_malloc (sizeof (gboolean));
 
 	AvahiClient *client = ((browse_callback_userdata_t *) userdata)->client;
 
@@ -123,17 +123,17 @@ daap_mdns_browse_cb (AvahiServiceBrowser *browser,
 		case AVAHI_BROWSER_NEW:
 			*b = FALSE;
 			ok = (gboolean)
-			     avahi_service_resolver_new(client, iface, proto, name, type,
-			                                domain, AVAHI_PROTO_UNSPEC, 0,
-			                                daap_mdns_resolve_cb, b);
+			     avahi_service_resolver_new (client, iface, proto, name, type,
+			                                 domain, AVAHI_PROTO_UNSPEC, 0,
+			                                 daap_mdns_resolve_cb, b);
 			break;
 
 		case AVAHI_BROWSER_REMOVE:
 			*b = TRUE;
 			ok = (gboolean)
-			     avahi_service_resolver_new(client, iface, proto, name, type,
-			                                domain, AVAHI_PROTO_UNSPEC, 0,
-			                                daap_mdns_resolve_cb, b);
+			     avahi_service_resolver_new (client, iface, proto, name, type,
+			                                 domain, AVAHI_PROTO_UNSPEC, 0,
+			                                 daap_mdns_resolve_cb, b);
 			break;
 
 		case AVAHI_BROWSER_CACHE_EXHAUSTED:
@@ -194,7 +194,7 @@ daap_mdns_initialize ()
 		goto fail;
 	}
 
-	browse_userdata = g_malloc0 (sizeof(browse_callback_userdata_t));
+	browse_userdata = g_malloc0 (sizeof (browse_callback_userdata_t));
 
 	avahi_set_allocator (avahi_glib_allocator ());
 
@@ -216,9 +216,10 @@ daap_mdns_initialize ()
 	browse_userdata->client = client;
 	browse_userdata->mainloop = ml;
 
-	browser = avahi_service_browser_new(client, AVAHI_IF_UNSPEC,
-	                                    AVAHI_PROTO_UNSPEC, "_daap._tcp", NULL,
-	                                    0, daap_mdns_browse_cb, browse_userdata);
+	browser = avahi_service_browser_new (client, AVAHI_IF_UNSPEC,
+	                                     AVAHI_PROTO_UNSPEC, "_daap._tcp", NULL,
+	                                     0, daap_mdns_browse_cb,
+	                                     browse_userdata);
 	if (!browser) {
 		ok = FALSE;
 		goto fail;

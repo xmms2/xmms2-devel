@@ -121,8 +121,8 @@ daap_command_db_list (gchar *host, gint port, guint session_id,
 		return NULL;
 	}
 
-	request = g_strdup_printf("/databases?session-id=%d&revision-id=%d",
-	                          session_id, revision_id);
+	request = g_strdup_printf ("/databases?session-id=%d&revision-id=%d",
+	                           session_id, revision_id);
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
 	g_free (request);
@@ -153,8 +153,9 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 		return NULL;
 	}
 
-	request =g_strdup_printf("/databases/%d/items?session-id=%d&revision-id=%d",
-	                         db_id, session_id, revision_id);
+	request =g_strdup_printf ("/databases/%d/items?"
+	                          "session-id=%d&revision-id=%d",
+	                          db_id, session_id, revision_id);
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
 	song_list = cc_record_list_deep_copy (cc_data->record_list);
@@ -181,9 +182,9 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 		return NULL;
 	}
 
-	request = g_strdup_printf("/databases/%d/items%s"
-	                          "?session-id=%d",
-	                          dbid, song, session_id);
+	request = g_strdup_printf ("/databases/%d/items%s"
+	                           "?session-id=%d",
+	                           dbid, song, session_id);
 	
 	ok = daap_request_stream (chan, request, host, request_id);
 	g_free (request);

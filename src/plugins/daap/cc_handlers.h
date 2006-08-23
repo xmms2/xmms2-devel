@@ -23,12 +23,12 @@
                                     (c <<  8) | \
                                     (d      )    ))
 
-#define DMAP_CC_SZ              (sizeof(gchar) * 4)
-#define DMAP_BYTE_SZ            sizeof(gint8)
-#define DMAP_SHORT_SZ           sizeof(gint16)
-#define DMAP_INT_SZ             sizeof(gint32)
-#define DMAP_LONG_SZ            sizeof(gint64)
-#define DMAP_VERSION_SZ         sizeof(gint16)
+#define DMAP_CC_SZ              (sizeof (gchar) * 4)
+#define DMAP_BYTE_SZ            sizeof (gint8)
+#define DMAP_SHORT_SZ           sizeof (gint16)
+#define DMAP_INT_SZ             sizeof (gint32)
+#define DMAP_LONG_SZ            sizeof (gint64)
+#define DMAP_VERSION_SZ         sizeof (gint16)
 
 #define DMAP_UNKNOWN_CC -1
 
@@ -156,10 +156,19 @@ typedef struct {
 
 } cc_item_record_t;
 
-cc_data_t * cc_data_new();
-void cc_data_free(cc_data_t *fields);
-void cc_item_record_free(cc_item_record_t *item);
-GSList *cc_record_list_deep_copy(GSList *record_list);
-cc_data_t * cc_handler(gchar *data, gint data_len);
+cc_data_t *
+cc_data_new ();
+
+void
+cc_data_free (cc_data_t *fields);
+
+void
+cc_item_record_free (cc_item_record_t *item);
+
+GSList *
+cc_record_list_deep_copy (GSList *record_list);
+
+cc_data_t *
+cc_handler (gchar *data, gint data_len);
 
 #endif

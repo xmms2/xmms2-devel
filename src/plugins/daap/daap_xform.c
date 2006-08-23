@@ -74,11 +74,11 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("daap",
-                  "DAAP access plugin",
-                  "SoC",
-                  "Accesses iTunes (DAAP) music shares",
-                  xmms_daap_plugin_setup);
+XMMS_XFORM_PLUGIN ("daap",
+                   "DAAP access plugin",
+                   "SoC",
+                   "Accesses iTunes (DAAP) music shares",
+                   xmms_daap_plugin_setup);
 
 static gboolean
 get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
@@ -87,7 +87,7 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 	const gchar *host_begin, *cmd_begin, *port_begin;
 
 	host_begin = url;
-	host_begin += sizeof(gchar) * strlen ("daap://");
+	host_begin += sizeof (gchar) * strlen ("daap://");
 
 	cmd_begin = strstr (host_begin, "/");
 
@@ -95,7 +95,7 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 	if ((NULL == port_begin) || (port_begin > cmd_begin)) {
 		*port = DEFAULT_DAAP_PORT;
 	} else {
-		*port = atoi (port_begin + sizeof(gchar) * strlen (":"));
+		*port = atoi (port_begin + sizeof (gchar) * strlen (":"));
 	}
 
 	if (NULL == cmd_begin && NULL == port_begin) {
@@ -113,12 +113,12 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 	memcpy (*host, host_begin, host_len);
 
 	if (NULL != cmd) {
-		*cmd = (gchar *) g_malloc0 (sizeof(gchar) * (strlen (cmd_begin)+1));
+		*cmd = (gchar *) g_malloc0 (sizeof (gchar) * (strlen (cmd_begin)+1));
 		if (! *cmd) {
 			g_free (*host);
 			return FALSE;
 		}
-		strncpy (*cmd, cmd_begin, sizeof(gchar) * strlen (cmd_begin));
+		strncpy (*cmd, cmd_begin, sizeof (gchar) * strlen (cmd_begin));
 	}
 
 	return TRUE;
@@ -137,12 +137,12 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_xform_plugin_indata_add(xform_plugin,
-	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "application/x-url",
-	                             XMMS_STREAM_TYPE_URL,
-	                             "daap://*",
-	                             XMMS_STREAM_TYPE_END);
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-url",
+	                              XMMS_STREAM_TYPE_URL,
+	                              "daap://*",
+	                              XMMS_STREAM_TYPE_END);
 
 	return TRUE;
 }
@@ -159,10 +159,10 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host)
 
 	h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
-	g_hash_table_insert(h, "artist",
-	                    xmms_object_cmd_value_str_new (song->song_data_artist));
-	g_hash_table_insert(h, "title",
-	                    xmms_object_cmd_value_str_new (song->iname));
+	g_hash_table_insert (h, "artist",
+	                     xmms_object_cmd_value_str_new (song->song_data_artist));
+	g_hash_table_insert (h, "title",
+	                     xmms_object_cmd_value_str_new (song->iname));
 
 	url_list = xmms_xform_browse_add_entry (url_list, songurl, FALSE, h);
 
@@ -198,8 +198,8 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list)
 	 *     let's hope that never changes *wink*
 	 *     just use the first db in the list */
 	db_data = (cc_item_record_t *) dbid_list->data;
-	song_list = daap_command_song_list(host, port, session_id, revision_id,
-	                                   0, db_data->dbid);
+	song_list = daap_command_song_list (host, port, session_id, revision_id,
+	                                    0, db_data->dbid);
 
 	song_el = song_list;
 	for ( ; song_el != NULL; song_el = g_slist_next (song_el)) {
@@ -243,7 +243,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 
 	if (NULL == data) {
-		data = g_malloc0 (sizeof(xmms_daap_data_t));
+		data = g_malloc0 (sizeof (xmms_daap_data_t));
 		if (!data) {
 			return FALSE;
 		}
@@ -253,8 +253,8 @@ xmms_daap_init (xmms_xform_t *xform)
 	get_data_from_url (data->url, &(data->host), &(data->port), &command);
 
 	if (login_data.logged_in == FALSE) {
-		login_data.session_id = daap_command_login(data->host, data->port,
-		                                           login_data.request_id);
+		login_data.session_id = daap_command_login (data->host, data->port,
+		                                            login_data.request_id);
 		if (login_data.session_id == 0) {
 			return FALSE;
 		}
@@ -262,13 +262,13 @@ xmms_daap_init (xmms_xform_t *xform)
 		login_data.logged_in = TRUE;
 	}
 
-	login_data.revision_id = daap_command_update(data->host, data->port,
-	                                             login_data.session_id,
-	                                             login_data.request_id);
-	dbid_list = daap_command_db_list(data->host, data->port,
-	                                 login_data.session_id,
-	                                 login_data.revision_id,
-	                                 login_data.request_id);
+	login_data.revision_id = daap_command_update (data->host, data->port,
+	                                              login_data.session_id,
+	                                              login_data.request_id);
+	dbid_list = daap_command_db_list (data->host, data->port,
+	                                  login_data.session_id,
+	                                  login_data.revision_id,
+	                                  login_data.request_id);
 	if (!dbid_list) {
 		return FALSE;
 	}
@@ -276,11 +276,11 @@ xmms_daap_init (xmms_xform_t *xform)
 	/* XXX: see XXX in the browse function above */
 	dbid = ((cc_item_record_t *) dbid_list->data)->dbid;
 	/* want to request a stream, but don't read the data yet */
-	data->channel = daap_command_init_stream(data->host, data->port,
-	                                         login_data.session_id,
-	                                         login_data.revision_id,
-	                                         login_data.request_id, dbid,
-	                                         command);
+	data->channel = daap_command_init_stream (data->host, data->port,
+	                                          login_data.session_id,
+	                                          login_data.revision_id,
+	                                          login_data.request_id, dbid,
+	                                          command);
 	if (! data->channel) {
 		return FALSE;
 	}
@@ -288,10 +288,10 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	xmms_xform_private_data_set (xform, data);
 
-	xmms_xform_outdata_type_add(xform,
-	                            XMMS_STREAM_TYPE_MIMETYPE,
-	                            "application/octet-stream",
-	                            XMMS_STREAM_TYPE_END);
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/octet-stream",
+	                             XMMS_STREAM_TYPE_END);
 
 	g_slist_foreach (dbid_list, (GFunc) cc_item_record_free, NULL);
 	g_slist_free (dbid_list);
@@ -352,7 +352,7 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 		return NULL;
 	}
 
-	mdns_serv = g_malloc0 (sizeof(daap_mdns_server_t));
+	mdns_serv = g_malloc0 (sizeof (daap_mdns_server_t));
 
 	mdns_serv->address = g_strdup (host);
 	mdns_serv->port = port;
@@ -386,20 +386,20 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 	
 			h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 	
-			g_hash_table_insert(h, "isdir",
-			           xmms_object_cmd_value_int_new (TRUE));
-			g_hash_table_insert(h, "servername",
-			           xmms_object_cmd_value_str_new (mdns_serv->server_name));
-			g_hash_table_insert(h, "ip",
-			           xmms_object_cmd_value_str_new (mdns_serv->address));
-			g_hash_table_insert(h, "hostname",
-			           xmms_object_cmd_value_str_new (mdns_serv->mdns_hostname));
-			g_hash_table_insert(h, "port",
-			           xmms_object_cmd_value_int_new (mdns_serv->port));
+			g_hash_table_insert (h, "isdir",
+			                     xmms_object_cmd_value_int_new (TRUE));
+			g_hash_table_insert (h, "servername",
+			                     xmms_object_cmd_value_str_new (mdns_serv->server_name));
+			g_hash_table_insert (h, "ip",
+			                     xmms_object_cmd_value_str_new (mdns_serv->address));
+			g_hash_table_insert (h, "hostname",
+			                     xmms_object_cmd_value_str_new (mdns_serv->mdns_hostname));
+			g_hash_table_insert (h, "port",
+			                     xmms_object_cmd_value_int_new (mdns_serv->port));
 			/* TODO implement the machinery to allow for this */
-			//g_hash_table_insert(h, "passworded",
+			//g_hash_table_insert (h, "passworded",
 			//           xmms_object_cmd_value_int_new (mdns_serv->need_auth));
-			//g_hash_table_insert(h, "version",
+			//g_hash_table_insert (h, "version",
 			//           xmms_object_cmd_value_str_new (mdns_serv->version));
 	
 			url_list = xmms_xform_browse_add_entry (url_list, str, FALSE, h);
