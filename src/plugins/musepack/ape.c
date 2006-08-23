@@ -28,7 +28,7 @@
 /*
  * Defines
  */
-#define get_int32(b,pos) (GUINT32_FROM_BE((b[pos]<<24)|(b[pos+1]<<16)|(b[pos+2]<<8)|(b[pos+3])))
+#define get_int32(b,pos) ((b[pos+3]<<24)|(b[pos+2]<<16)|(b[pos+1]<<8)|b[pos])
 
 #define TAG_HEADER_SIZE   32
 #define TAG_SIGNATURE_SIZE 8
