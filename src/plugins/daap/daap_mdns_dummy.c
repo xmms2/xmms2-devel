@@ -1,4 +1,4 @@
-/** @file daap_mdns_browse.h
+/** XMMS2 transform for accessing DAAP music shares.
  *
  *  Copyright (C) 2006 XMMS2 Team
  *
@@ -13,25 +13,24 @@
  *  GNU General Public License for more details.
  */
 
-#ifndef DAAP_MDNS_BROWSE_H
-#define DAAP_MDNS_BROWSE_H
-
 #include <glib.h>
 
-typedef struct {
-	gchar *server_name;
-	gchar *address;
-	gchar *mdns_hostname;
-	guint16 port;
-} daap_mdns_server_t;
+#include "daap_mdns_browse.h"
 
 gboolean
-daap_mdns_initialize ();
+daap_mdns_initialize ()
+{
+	return FALSE;
+}
 
 GSList *
-daap_mdns_get_server_list ();
+daap_mdns_get_server_list ()
+{
+	return NULL;
+}
 
 void
-daap_mdns_destroy ();
+daap_mdns_destroy ()
+{
+}
 
-#endif

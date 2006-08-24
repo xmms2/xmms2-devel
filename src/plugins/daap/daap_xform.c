@@ -144,23 +144,26 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                              "daap://*",
 	                              XMMS_STREAM_TYPE_END);
 
+	daap_mdns_initialize ();
+
 	return TRUE;
 }
 
 static GList *
-add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host)
+add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint port)
 {
 	GHashTable *h = NULL;
 	gchar *songurl;
 	gchar *sid = g_malloc (G_ASCII_DTOSTR_BUF_SIZE);
 
 	g_ascii_dtostr (sid, G_ASCII_DTOSTR_BUF_SIZE, song->dbid);
-	songurl = g_strconcat ("daap://", host, "/", sid, ".mp3", NULL);
+	songurl = g_strdup_printf ("daap://%s:%d/%s.mp3", host, port, sid);
 
 	h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
 	g_hash_table_insert (h, "artist",
 	                     xmms_object_cmd_value_str_new (song->song_data_artist));
+	XMMS_DBG ("%s", song->song_data_artist);
 	g_hash_table_insert (h, "title",
 	                     xmms_object_cmd_value_str_new (song->iname));
 
@@ -203,7 +206,7 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list)
 
 	song_el = song_list;
 	for ( ; song_el != NULL; song_el = g_slist_next (song_el)) {
-		url_list = add_song_to_list (url_list, song_el->data, host);
+		url_list = add_song_to_list (url_list, song_el->data, host, port);
 	}
 
 	daap_command_logout (host, port, session_id, revision_id);
@@ -346,8 +349,6 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 	guint port;
 	daap_mdns_server_t *mdns_serv;
 
-	daap_mdns_initialize ();
-
 	if (! get_data_from_url (url, &host, &port, NULL)) {
 		return NULL;
 	}
@@ -382,17 +383,15 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 				break;
 			}
 
-			str = g_strconcat ("daap://", mdns_serv->address, "/", NULL);
+			str = g_strdup_printf ("daap://%s:%d", mdns_serv->address, mdns_serv->port);
 	
 			h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 	
-			g_hash_table_insert (h, "isdir",
-			                     xmms_object_cmd_value_int_new (TRUE));
 			g_hash_table_insert (h, "servername",
 			                     xmms_object_cmd_value_str_new (mdns_serv->server_name));
 			g_hash_table_insert (h, "ip",
 			                     xmms_object_cmd_value_str_new (mdns_serv->address));
-			g_hash_table_insert (h, "hostname",
+			g_hash_table_insert (h, "name",
 			                     xmms_object_cmd_value_str_new (mdns_serv->mdns_hostname));
 			g_hash_table_insert (h, "port",
 			                     xmms_object_cmd_value_int_new (mdns_serv->port));
@@ -402,7 +401,7 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 			//g_hash_table_insert (h, "version",
 			//           xmms_object_cmd_value_str_new (mdns_serv->version));
 	
-			url_list = xmms_xform_browse_add_entry (url_list, str, FALSE, h);
+			url_list = xmms_xform_browse_add_entry (url_list, str, TRUE, h);
 	
 			g_hash_table_destroy (h);
 			g_free (str);
