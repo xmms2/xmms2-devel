@@ -271,13 +271,11 @@ xmms_medialib_session_new (const char *file, int line)
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
 	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
 
-	/* FIXME: Create an initial "Default" playlist that'd contain the sample */
 	if (create) {
 		xmms_medialib_entry_t entry;
 		xmms_error_t error;
 		entry = xmms_medialib_entry_new (session, "file://" SHAREDDIR "/mind.in.a.box-lament_snipplet.ogg", &error);
-		/* FIXME: There is no active playlist yet! */
-		/* xmms_playlist_add_entry (medialib->playlist, "_active", entry, NULL); */
+		/* A default playlist containing that song has been created with the mlib */
 	}
 	return session;
 }
