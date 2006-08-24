@@ -157,7 +157,8 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 	gchar *sid = g_malloc (G_ASCII_DTOSTR_BUF_SIZE);
 
 	g_ascii_dtostr (sid, G_ASCII_DTOSTR_BUF_SIZE, song->dbid);
-	songurl = g_strdup_printf ("daap://%s:%d/%s.mp3", host, port, sid);
+	songurl = g_strdup_printf ("daap://%s:%d/%s.%s",
+	                           host, port, sid, song->song_format);
 
 	h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
