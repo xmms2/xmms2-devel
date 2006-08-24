@@ -161,6 +161,7 @@ const char *xmmsc_userconfdir_get (void);
 
 /* commands */
 int xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res);
+xmmsc_result_t *xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query);
 xmmsc_result_t *xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url);
 xmmsc_result_t *xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const char *url, int numargs, const char **args);
 xmmsc_result_t *xmmsc_medialib_get_info (xmmsc_connection_t *, uint32_t);
