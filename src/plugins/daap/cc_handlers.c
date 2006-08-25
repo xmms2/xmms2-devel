@@ -32,7 +32,7 @@
 static void
 endian_swap_int16 (gint16 *i)
 {
-#if G_LITTLE_ENDIAN
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
 	gint16 tmp;
 	tmp = (gint16) (((*i >>  8) & 0x00FF) |
 	                ((*i <<  8) & 0xFF00));
@@ -43,7 +43,7 @@ endian_swap_int16 (gint16 *i)
 static void
 endian_swap_int32 (gint32 *i)
 {
-#if G_LITTLE_ENDIAN
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
 	gint32 tmp;
 	tmp = (gint32) (((*i >> 24) & 0x000000FF) |
 	                ((*i >>  8) & 0x0000FF00) |
@@ -56,7 +56,7 @@ endian_swap_int32 (gint32 *i)
 static void
 endian_swap_int64 (gint64 *i)
 {
-#if G_LITTLE_ENDIAN
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
 	gint64 tmp;
 	tmp = (gint64) (                 ((*i >> 40) & 0x00000000000000FF) |
 	                                 ((*i >> 32) & 0x000000000000FF00) |
