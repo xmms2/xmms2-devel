@@ -174,12 +174,20 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
 }
 
 /**
- * Get user config dir.
+ * Get user config dir. The string returned must be freed after use.
  */
 const char *
 xmmsc_userconfdir_get (void)
 {
-	return USERCONFDIR;
+	char *config_home = getenv("XDG_CONFIG_HOME");
+	if (!config_home) {
+		return strdup(USERCONFDIR);
+	}
+	else {
+		char *path = malloc(PATH_MAX);
+		snprintf(path, PATH_MAX, "%s/%s", config_home, "xmms2");
+		return path;
+	}
 }
 
 /** @} */
