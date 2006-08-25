@@ -1189,7 +1189,7 @@ get_playlist_id (xmms_medialib_session_t *session, gchar *name)
 
 	ret = xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
 	                               "select id as value from Playlist "
-	                               "where name = '%s'", name);
+	                               "where name = '%q'", name);
 
 	return ret ? id : 0;
 }
@@ -1230,7 +1230,7 @@ prepare_playlist (xmms_medialib_session_t *session,
 
 	ret = xmms_sqlite_exec (session->sql,
 	                        "insert into Playlist (id, name, pos) "
-	                        "values (%u, '%s', %u)", id, name, pos);
+	                        "values (%u, '%q', %u)", id, name, pos);
 	return ret ? id : 0;
 }
 
