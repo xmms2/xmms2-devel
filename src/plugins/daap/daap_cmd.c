@@ -22,6 +22,8 @@ daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 static gboolean
 daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
                      guint request_id);
+static gchar *
+daap_url_append_meta (gchar *url, GSList *meta_list);
 
 guint
 daap_command_login (gchar *host, gint port, guint request_id) {
@@ -147,15 +149,27 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 	cc_data_t *cc_data;
 
 	GSList * song_list;
+	GSList * meta_items = NULL;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
 		return NULL;
 	}
 
-	request =g_strdup_printf ("/databases/%d/items?"
-	                          "session-id=%d&revision-id=%d",
-	                          db_id, session_id, revision_id);
+	meta_items = g_slist_prepend(meta_items, "dmap.itemid");
+	meta_items = g_slist_prepend(meta_items, "dmap.itemname");
+	meta_items = g_slist_prepend(meta_items, "daap.songartist");
+	meta_items = g_slist_prepend(meta_items, "daap.songformat");
+	meta_items = g_slist_prepend(meta_items, "daap.songtracknumber");
+	meta_items = g_slist_prepend(meta_items, "daap.songalbum");
+
+	request = g_strdup_printf ("/databases/%d/items?"
+	                           "session-id=%d&revision-id=%d",
+	                           db_id, session_id, revision_id);
+
+	if (meta_items) {
+		request = daap_url_append_meta(request, meta_items);
+	}
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
 	song_list = cc_record_list_deep_copy (cc_data->record_list);
@@ -259,3 +273,21 @@ daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
 	return TRUE;
 }
 
+static gchar *
+daap_url_append_meta (gchar *url, GSList *meta_list)
+{
+	gchar * tmpurl;
+
+	tmpurl = url;
+	url = g_strdup_printf("%s&meta=%s", url, (gchar *) meta_list->data);
+	g_free(tmpurl);
+	meta_list = g_slist_next(meta_list);
+
+	for ( ; meta_list != NULL; meta_list = g_slist_next(meta_list)) {
+		tmpurl = url;
+		url = g_strdup_printf("%s,%s", url, (gchar *) meta_list->data);
+		g_free(tmpurl);
+	}
+
+	return url;
+}
