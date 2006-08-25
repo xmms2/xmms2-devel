@@ -164,7 +164,6 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 
 	g_hash_table_insert (h, "artist",
 	                     xmms_object_cmd_value_str_new (song->song_data_artist));
-	XMMS_DBG ("%s", song->song_data_artist);
 	g_hash_table_insert (h, "title",
 	                     xmms_object_cmd_value_str_new (song->iname));
 
