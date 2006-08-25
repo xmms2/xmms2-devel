@@ -162,10 +162,18 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 
 	h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
-	g_hash_table_insert (h, "artist",
-	                     xmms_object_cmd_value_str_new (song->song_data_artist));
 	g_hash_table_insert (h, "title",
 	                     xmms_object_cmd_value_str_new (song->iname));
+	if (song->song_data_artist) {
+		g_hash_table_insert (h, "artist",
+		                     xmms_object_cmd_value_str_new (song->song_data_artist));
+	}
+	if (song->song_data_album) {
+		g_hash_table_insert (h, "album",
+		                     xmms_object_cmd_value_str_new (song->song_data_album));
+	}
+	g_hash_table_insert (h, "tracknr",
+	                     xmms_object_cmd_value_uint_new (song->song_track_no));
 
 	url_list = xmms_xform_browse_add_entry (url_list, songurl, FALSE, h);
 
