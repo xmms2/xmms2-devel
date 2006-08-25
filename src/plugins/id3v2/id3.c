@@ -249,7 +249,13 @@ handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		len -= 1; /* total len of buffer */
 	}
 
+	if (!buf || !*buf)
+		return;
+
 	l2 = strlen ((gchar *)buf);
+
+	if (l2 > len)
+		return;
 
 	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
 
