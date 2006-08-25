@@ -17,6 +17,7 @@
 #define DAAP_CMD_H
 
 #include "cc_handlers.h"
+#include "xmms/xmms_error.h"
 
 /**
  * Log into a DAAP server.
@@ -28,7 +29,7 @@
  * @return a session id for use in further commands
  */
 guint
-daap_command_login (gchar *host, gint port, guint request_id);
+daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err);
 
 /**
  * Update the DAAP server status.
