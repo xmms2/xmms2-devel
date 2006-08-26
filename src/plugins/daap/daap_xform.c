@@ -244,6 +244,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	xmms_error_t err;
 	gchar *command;
 	const gchar *url;
+	guint filesize;
 
 	if (!xform) {
 		return FALSE;
@@ -299,11 +300,13 @@ xmms_daap_init (xmms_xform_t *xform)
 	                                          login_data.session_id,
 	                                          login_data.revision_id,
 	                                          login_data.request_id, dbid,
-	                                          command);
+	                                          command, &filesize);
 	if (! data->channel) {
 		return FALSE;
 	}
 	login_data.request_id++;
+
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, filesize);
 
 	xmms_xform_private_data_set (xform, data);
 
