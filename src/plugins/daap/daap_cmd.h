@@ -101,11 +101,12 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
  * @param request_id the request id
  * @param dbid the database id
  * @param song a string containing the id and file type of the song to stream
+ * @param filesize a pointer to an integer that stores the content length 
  * @return: a GIOChannel corresponding to streaming song data
  */
 GIOChannel *
 daap_command_init_stream (gchar *host, gint port, guint session_id,
                           guint revision_id, guint request_id,
-                          gint dbid, gchar *song);
+                          gint dbid, gchar *song, guint *filesize);
 
 #endif

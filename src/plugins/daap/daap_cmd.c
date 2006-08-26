@@ -21,7 +21,7 @@ static cc_data_t *
 daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id);
 static gboolean
 daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
-                     guint request_id);
+                     guint request_id, guint *size);
 static gchar *
 daap_url_append_meta (gchar *url, GSList *meta_list);
 
@@ -187,7 +187,7 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 GIOChannel *
 daap_command_init_stream (gchar *host, gint port, guint session_id,
                           guint revision_id, guint request_id,
-                          gint dbid, gchar *song)
+                          gint dbid, gchar *song, guint *filesize)
 {
 	GIOChannel *chan;
 	gchar *request;
@@ -202,7 +202,7 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 	                           "?session-id=%d",
 	                           dbid, song, session_id);
 	
-	ok = daap_request_stream (chan, request, host, request_id);
+	ok = daap_request_stream (chan, request, host, request_id, filesize);
 	g_free (request);
 
 	if (!ok) {
@@ -250,7 +250,7 @@ daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 
 static gboolean
 daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
-                     guint request_id)
+                     guint request_id, guint *size)
 {
 	guint status;
 	gchar *request = NULL, *header = NULL;
@@ -269,6 +269,8 @@ daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
 		g_free (header);
 		return FALSE;
 	}
+
+	*size = get_data_length (header);
 
 	g_free (header);
 
@@ -293,3 +295,4 @@ daap_url_append_meta (gchar *url, GSList *meta_list)
 
 	return url;
 }
+
