@@ -5,7 +5,9 @@
 
 /* Windows */
 
-#ifdef _MSC_VER
+#ifdef __WIN32__
+/* Only support Windows XP and newer */
+#define _WIN32_WINNT 0x0501
 #include <Winsock2.h>
 #include <Ws2tcpip.h>
 typedef SOCKET xmms_socket_t;
