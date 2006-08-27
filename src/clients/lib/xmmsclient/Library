@@ -21,7 +21,6 @@ def config(env):
 	if env.platform == 'win32':
 		env["SHLIBPREFIX"] = ""
 		env.Append(LIBS=["ws2_32"])
-		env.Append(LINKFLAGS=["/DEF:src/clients/lib/xmmsclient/xmmsclient.def"])
 	elif env.platform == 'sunos5':
 		env.checklib("socket", "socket", fail=True)
 	env.Append(CPPPATH=["#src/includepriv"])
