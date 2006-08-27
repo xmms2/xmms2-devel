@@ -26,7 +26,7 @@ xmms_strnlen (const gchar *str, gsize max_len)
 {
 	gsize ret = 0;
 	while (max_len > 0) {
-		if (str[0] == '\0')
+		if (str[ret] == '\0')
 			break;
 		ret ++;
 		max_len --;
