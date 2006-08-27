@@ -27,21 +27,14 @@ def SimpleListOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
 
 
-if sys.platform == 'win32':
-	default_pyrex = 'pyrexc.py'
-	default_prefix = 'c:\\xmms2'
-	default_cxxflags = ['/Zi', '/TC']
-	default_cflags = ['/Zi', '/TC']
-	default_cpppath = ['z:\\xmms2\\winlibs\\include']
+default_pyrex = 'pyrexc'
+default_prefix = '/usr/local/'
+default_cxxflags = ['-g', '-Wall', '-O0']
+default_cflags = ['-g', '-Wall', '-O0']
+if sys.platform == 'darwin':
+	default_cpppath = ['/sw/lib']
 else:
-	default_pyrex = 'pyrexc'
-	default_prefix = '/usr/local/'
-	default_cxxflags = ['-g', '-Wall', '-O0']
-	default_cflags = ['-g', '-Wall', '-O0']
-	if sys.platform == 'darwin':
-		default_cpppath = ['/sw/lib']
-	else:
-		default_cpppath = []
+	default_cpppath = []
 
 opts = Options("options.cache")
 opts.Add('CC', 'C compiler to use')
