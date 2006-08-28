@@ -18,6 +18,7 @@
 
 #include "xmms/xmms_log.h"
 
+#include <string.h>
 #include <glib.h>
 
 #include <avahi-client/client.h>
@@ -42,6 +43,28 @@ static GStaticMutex serv_list_mut = G_STATIC_MUTEX_INIT;
 static AvahiGLibPoll *gl_poll = NULL;
 static AvahiClient *client = NULL;
 static AvahiServiceBrowser *browser = NULL;
+
+static GSList *
+daap_mdns_serv_remove (GSList *serv_list, gchar *addr, guint port)
+{
+	GSList *first = serv_list;
+	daap_mdns_server_t *serv;
+
+	for ( ; serv_list != NULL; serv_list = g_slist_next(serv_list)) {
+		serv = (daap_mdns_server_t *) serv_list->data;
+		if ( (port == serv->port) && (!strcmp(addr, serv->address)) ) {
+			serv_list = g_slist_remove (first, serv);
+
+			g_free(serv->server_name);
+			g_free(serv->mdns_hostname);
+			g_free(serv->address);
+			g_free(serv);
+
+			return serv_list;
+		}
+	}
+	return NULL;
+}
 
 static void
 daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
@@ -78,11 +101,8 @@ daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
 			server->port = port;
 
 			if (*remove) {
-				/* FIXME if a server is removed after avahi is initialized,
-				 * Bad Things happen on browse. This is because the entry
-				 * in the list isn't _actually_ removed... */
 				g_static_mutex_lock(&serv_list_mut);
-				g_server_list = g_slist_remove (g_server_list, server);
+				g_server_list = daap_mdns_serv_remove(g_server_list, ad, port);
 				g_static_mutex_unlock(&serv_list_mut);
 			} else {
 				g_static_mutex_lock(&serv_list_mut);
