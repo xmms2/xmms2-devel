@@ -156,7 +156,7 @@ xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 	xmms_bindata_calculate_md5 ((guchar *)data->str, data->len, hash);
 
 	ret = g_malloc (48); /* this _will_ suffice */
-	g_snprintf (ret, sizeof (ret), "%s_%ld", hash, data->len);
+	g_snprintf (ret, 48, "%s_%ld", hash, data->len);
 
 	path = XMMS_BUILD_PATH ("bindata", ret);
 
