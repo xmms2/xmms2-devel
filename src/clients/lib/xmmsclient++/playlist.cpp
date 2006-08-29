@@ -17,6 +17,14 @@ namespace Xmms
 	{
 	}
 
+	void Playlist::addRecursive( const std::string& url ) const
+	{
+
+		vCall( connected_, ml_, 
+		      boost::bind( xmmsc_playlist_radd, conn_, url.c_str() ) );
+
+	}
+
 	void Playlist::addUrl( const std::string& url ) const
 	{
 
@@ -151,6 +159,31 @@ namespace Xmms
 		      boost::bind( xmmsc_playlist_sort, conn_, property.c_str() ) );
 
 	}
+
+	void
+	Playlist::addRecursive( const std::string& url,
+	                        const VoidSlot& slot,
+	                        const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_radd, conn_, url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::addRecursive( const std::string& url,
+	                        const std::list< VoidSlot >& slots,
+	                        const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_radd, conn_, url.c_str() ),
+		             slots, error );
+
+	}
+
 
 	void
 	Playlist::addUrl( const std::string& url,
