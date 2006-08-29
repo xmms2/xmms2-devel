@@ -162,11 +162,18 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 
 	h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
-	g_hash_table_insert (h, "artist",
-	                     xmms_object_cmd_value_str_new (song->song_data_artist));
-	XMMS_DBG ("%s", song->song_data_artist);
 	g_hash_table_insert (h, "title",
 	                     xmms_object_cmd_value_str_new (song->iname));
+	if (song->song_data_artist) {
+		g_hash_table_insert (h, "artist",
+		                     xmms_object_cmd_value_str_new (song->song_data_artist));
+	}
+	if (song->song_data_album) {
+		g_hash_table_insert (h, "album",
+		                     xmms_object_cmd_value_str_new (song->song_data_album));
+	}
+	g_hash_table_insert (h, "tracknr",
+	                     xmms_object_cmd_value_uint_new (song->song_track_no));
 
 	url_list = xmms_xform_browse_add_entry (url_list, songurl, FALSE, h);
 
@@ -178,7 +185,7 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 }
 
 static GList *
-daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list)
+daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list, xmms_error_t *err)
 {
 	GSList *dbid_list = NULL;
 	GSList *song_list = NULL, *song_el;
@@ -190,7 +197,10 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list)
 	host = server->address;
 	port = server->port;
 
-	session_id = daap_command_login (host, port, 0);
+	session_id = daap_command_login (host, port, 0, err);
+	if (xmms_error_iserror (err)) {
+		return NULL;
+	}
 
 	revision_id = daap_command_update (host, port, session_id, 0);
 	dbid_list = daap_command_db_list (host, port, session_id, revision_id, 0);
@@ -231,6 +241,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	gint dbid;
 	GSList *dbid_list = NULL;
 	xmms_daap_data_t *data;
+	xmms_error_t err;
 	gchar *command;
 	const gchar *url;
 	guint filesize;
@@ -257,12 +268,16 @@ xmms_daap_init (xmms_xform_t *xform)
 	data->url = g_strdup (url);
 	get_data_from_url (data->url, &(data->host), &(data->port), &command);
 
+	xmms_error_reset (&err);
+
 	if (login_data.logged_in == FALSE) {
 		login_data.session_id = daap_command_login (data->host, data->port,
-		                                            login_data.request_id);
+		                                            login_data.request_id,
+													&err);
 		if (login_data.session_id == 0) {
 			return FALSE;
 		}
+
 		login_data.request_id = 1;
 		login_data.logged_in = TRUE;
 	}
@@ -362,31 +377,27 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 	mdns_serv->address = g_strdup (host);
 	mdns_serv->port = port;
 
-	url_list = daap_get_urls_from_server (mdns_serv, url_list);
+	url_list = daap_get_urls_from_server (mdns_serv, url_list, error);
 	/* after this point, mdns_serv is used only as a reference; the actual
 	 * data is no longer needed. */
 	g_free (mdns_serv);
+
+	sl = daap_mdns_get_server_list ();
 
 	/* if url_list is empty, either the server specified by host has no songs
 	 * (unlikely), or communication with the server failed, probably due to a
 	 * nonexistant or bogus IP. at any rate, resort to mdns discovery
 	 * in this case; hostname resolution will be handled here. */
-	if (0 == g_list_length (url_list)) {
+	if (0 == g_list_length (url_list) && g_strcasecmp (url, "daap://") == 0) {
 
-		sl = daap_mdns_get_server_list ();
-	
+		xmms_error_reset (error);
+
 		server_list = sl;
 		for ( ; server_list != NULL; server_list = g_slist_next (server_list)) {
 			gchar *str;
 			GHashTable *h = NULL;
 			mdns_serv = server_list->data;
 	
-			if (! strcmp (mdns_serv->mdns_hostname, host)) {
-				g_list_free (url_list);
-				url_list = daap_get_urls_from_server (mdns_serv, url_list);
-				break;
-			}
-
 			str = g_strdup_printf ("daap://%s:%d", mdns_serv->address, mdns_serv->port);
 	
 			h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
@@ -412,7 +423,28 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 
 		}
 		g_slist_free (sl);
+	} else {
+		for (server_list = sl; server_list != NULL; server_list = g_slist_next (server_list)) {
+			mdns_serv = server_list->data;
+	
+			if (! strcmp (mdns_serv->mdns_hostname, host)) {
+				xmms_error_reset (error);
+				g_list_free (url_list);
+				url_list = daap_get_urls_from_server (mdns_serv, url_list, error);
+				if (xmms_error_iserror (error)) {
+					g_free (host);
+					return NULL;
+				}
+				break;
+			}
+		}
+
+		if (g_list_length (url_list) == 0) {
+			g_free (host);
+			return NULL;
+		}
 	}
+
 
 	g_free (host);
 	return url_list;

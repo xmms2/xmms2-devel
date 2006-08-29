@@ -26,7 +26,7 @@ static gchar *
 daap_url_append_meta (gchar *url, GSList *meta_list);
 
 guint
-daap_command_login (gchar *host, gint port, guint request_id) {
+daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err) {
 	GIOChannel *chan;
 	gchar *request;
 	cc_data_t *cc_data;
@@ -35,6 +35,7 @@ daap_command_login (gchar *host, gint port, guint request_id) {
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "connection to server failed!");
 		return 0;
 	}
 
