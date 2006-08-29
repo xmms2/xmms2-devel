@@ -20,6 +20,8 @@
 
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -53,9 +55,9 @@ daap_open_connection (gchar *host, gint port)
 	server.sin_family = AF_INET;
 	server.sin_port = htons (port);
 
-	if (connect(sockfd,
-	            (struct sockaddr *) &server,
-	            sizeof(struct sockaddr_in)) == -1) {
+	if (connect (sockfd,
+	             (struct sockaddr *) &server,
+	             sizeof (struct sockaddr_in)) == -1) {
 		return NULL;
 	}
 
@@ -89,7 +91,7 @@ daap_generate_request (gchar **request, gchar *path, gchar *host,
 
 	memset (hash, 0, 33);
 
-	*request = (gchar *) g_malloc0 (sizeof(gchar) * MAX_REQUEST_LENGTH);
+	*request = (gchar *) g_malloc0 (sizeof (gchar) * MAX_REQUEST_LENGTH);
 	if (NULL == *request) {
 		XMMS_DBG ("Error: couldn't allocate memory for request\n");
 		return;
@@ -98,21 +100,21 @@ daap_generate_request (gchar **request, gchar *path, gchar *host,
 	daap_hash_generate (DAAP_VERSION, (guchar *) path, 2, (guchar *) hash,
 	                    request_id);
 
-	g_sprintf(*request, "GET %s %s\r\n"
-	                   "Host: %s\r\n"
-	                   "Accept: */*\r\n"
-	                   "User-Agent: %s\r\n"
-	                   "Accept-Language: en-us, en;q=5.0\r\n"
-	                   "Client-DAAP-Access-Index: 2\r\n"
-	                   "Client-DAAP-Version: 3.0\r\n"
-	                   "Client-DAAP-Validation: %s\r\n"
-	                   "Client-DAAP-Request-ID: %d\r\n"
-	                   "Connection: close\r\n"
-	                   "\r\n",
-	          path, HTTP_VER_STRING, host, USER_AGENT, hash, request_id);
+	g_sprintf (*request, "GET %s %s\r\n"
+	                     "Host: %s\r\n"
+	                     "Accept: */*\r\n"
+	                     "User-Agent: %s\r\n"
+	                     "Accept-Language: en-us, en;q=5.0\r\n"
+	                     "Client-DAAP-Access-Index: 2\r\n"
+	                     "Client-DAAP-Version: 3.0\r\n"
+	                     "Client-DAAP-Validation: %s\r\n"
+	                     "Client-DAAP-Request-ID: %d\r\n"
+	                     "Connection: close\r\n"
+	                     "\r\n",
+	           path, HTTP_VER_STRING, host, USER_AGENT, hash, request_id);
 	request_len = strlen (*request);
 	
-	*request = g_realloc (*request, sizeof(gchar)*(request_len+1));
+	*request = g_realloc (*request, sizeof (gchar)*(request_len+1));
 	if (NULL == *request) {
 		XMMS_DBG ("warning: realloc failed for request\n");
 	}
@@ -142,7 +144,7 @@ daap_receive_header (GIOChannel *sock_chan, gchar **header)
 		*header = NULL;
 	}
 
-	response = (gchar *) g_malloc0 (sizeof(gchar) * MAX_HEADER_LENGTH);
+	response = (gchar *) g_malloc0 (sizeof (gchar) * MAX_HEADER_LENGTH);
 	if (NULL == response) {
 		XMMS_DBG ("Error: couldn't allocate memory for response.\n");
 		return;
@@ -151,8 +153,8 @@ daap_receive_header (GIOChannel *sock_chan, gchar **header)
 	/* read data from the io channel one line at a time, looking for
 	 * the end of the header */
 	do {
-		io_stat = g_io_channel_read_line(sock_chan, &recv_line, &linelen,
-		                                 NULL, &err);
+		io_stat = g_io_channel_read_line (sock_chan, &recv_line, &linelen,
+		                                  NULL, &err);
 		if (io_stat == G_IO_STATUS_ERROR) {
 			XMMS_DBG ("Error reading from channel: %s\n", err->message);
 			break;
@@ -165,7 +167,7 @@ daap_receive_header (GIOChannel *sock_chan, gchar **header)
 			if (strcmp (recv_line, "\r\n") == 0) {
 				g_free (recv_line);
 				if (NULL != header) {
-					*header = (gchar *) g_malloc0 (sizeof(gchar) *
+					*header = (gchar *) g_malloc0 (sizeof (gchar) *
 					                               n_total_bytes_recvd);
 					if (NULL == *header) {
 						XMMS_DBG ("error: couldn't allocate header\n");
@@ -218,7 +220,7 @@ daap_handle_data (GIOChannel *sock_chan, gchar *header)
 		return NULL;
 	}
 	
-	response_data = (gchar *) g_malloc0 (sizeof(gchar) * response_length);
+	response_data = (gchar *) g_malloc0 (sizeof (gchar) * response_length);
 	if (NULL == response_data) {
 		XMMS_DBG ("error: could not allocate response memory\n");
 		return NULL;

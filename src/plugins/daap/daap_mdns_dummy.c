@@ -1,4 +1,4 @@
-/** @file daap_util.h
+/** XMMS2 transform for accessing DAAP music shares.
  *
  *  Copyright (C) 2006 XMMS2 Team
  *
@@ -13,13 +13,24 @@
  *  GNU General Public License for more details.
  */
 
-#ifndef DAAP_UTIL_H
-#define DAAP_UTIL_H
+#include <glib.h>
 
-gint
-read_buffer_from_channel (GIOChannel *chan, gchar *buf, gint bufsize);
+#include "daap_mdns_browse.h"
+
+gboolean
+daap_mdns_initialize ()
+{
+	return FALSE;
+}
+
+GSList *
+daap_mdns_get_server_list ()
+{
+	return NULL;
+}
 
 void
-write_buffer_to_channel (GIOChannel *chan, gchar *buf, gint bufsize);
+daap_mdns_destroy ()
+{
+}
 
-#endif

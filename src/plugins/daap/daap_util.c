@@ -30,11 +30,11 @@ write_buffer_to_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 	GError *err = NULL;
 
 	do {
-		io_stat = g_io_channel_write_chars(chan,
-		                                   buf + total_sent_bytes,
-		                                   bufsize - total_sent_bytes,
-		                                   &sent_bytes,
-		                                   &err);
+		io_stat = g_io_channel_write_chars (chan,
+		                                    buf + total_sent_bytes,
+		                                    bufsize - total_sent_bytes,
+		                                    &sent_bytes,
+		                                    &err);
 		if (io_stat == G_IO_STATUS_ERROR) {
 			if (NULL != err) {
 				XMMS_DBG ("Error writing to channel: %s\n", err->message);
@@ -61,11 +61,11 @@ read_buffer_from_channel (GIOChannel *chan, gchar *buf, gint bufsize)
 	GError *err = NULL;
 
 	do {
-		io_stat = g_io_channel_read_chars(chan,
-		                                  buf + n_total_bytes_read,
-		                                  bufsize - n_total_bytes_read,
-		                                  &read_bytes,
-		                                  &err);
+		io_stat = g_io_channel_read_chars (chan,
+		                                   buf + n_total_bytes_read,
+		                                   bufsize - n_total_bytes_read,
+		                                   &read_bytes,
+		                                   &err);
 		if (io_stat == G_IO_STATUS_ERROR) {
 			XMMS_DBG ("warning: error reading from channel: %s\n", err->message);
 		}

@@ -28,7 +28,7 @@
  * @return a session id for use in further commands
  */
 guint
-daap_command_login(gchar *host, gint port, guint request_id);
+daap_command_login (gchar *host, gint port, guint request_id);
 
 /**
  * Update the DAAP server status.
@@ -41,7 +41,7 @@ daap_command_login(gchar *host, gint port, guint request_id);
  * @return a revision id for use in further commands
  */
 guint
-daap_command_update(gchar *host, gint port, guint session_id, guint request_id);
+daap_command_update (gchar *host, gint port, guint session_id, guint request_id);
 
 /**
  * Log out of a DAAP server.
@@ -54,7 +54,7 @@ daap_command_update(gchar *host, gint port, guint session_id, guint request_id);
  * @return TRUE on success, FALSE otherwise
  */
 gboolean
-daap_command_logout(gchar *host, gint port, guint session_id, guint request_id);
+daap_command_logout (gchar *host, gint port, guint session_id, guint request_id);
 
 /**
  * Get a list of databases.
@@ -67,8 +67,9 @@ daap_command_logout(gchar *host, gint port, guint session_id, guint request_id);
  * @param request_id the request id
  * @return a list of database ids
  */
-GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
-                              guint revision_id, guint request_id);
+GSList *
+daap_command_db_list (gchar *host, gint port, guint session_id,
+                      guint revision_id, guint request_id);
 
 /**
  * Get a list of songs in a database.
@@ -82,8 +83,9 @@ GSList * daap_command_db_list(gchar *host, gint port, guint session_id,
  * @param db_id the database id
  * @return a list of songs in the database
  */
-GSList * daap_command_song_list(gchar *host, gint port, guint session_id,
-                               guint revision_id, guint request_id, gint db_id);
+GSList *
+daap_command_song_list (gchar *host, gint port, guint session_id,
+                        guint revision_id, guint request_id, gint db_id);
 
 /**
  * Begin streaming a song.
@@ -99,10 +101,12 @@ GSList * daap_command_song_list(gchar *host, gint port, guint session_id,
  * @param request_id the request id
  * @param dbid the database id
  * @param song a string containing the id and file type of the song to stream
+ * @param filesize a pointer to an integer that stores the content length 
  * @return: a GIOChannel corresponding to streaming song data
  */
-GIOChannel * daap_command_init_stream(gchar *host, gint port, guint session_id,
-                                      guint revision_id, guint request_id,
-                                      gint dbid, gchar *song);
+GIOChannel *
+daap_command_init_stream (gchar *host, gint port, guint session_id,
+                          guint revision_id, guint request_id,
+                          gint dbid, gchar *song, guint *filesize);
 
 #endif

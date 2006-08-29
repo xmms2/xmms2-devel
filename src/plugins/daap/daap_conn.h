@@ -38,15 +38,28 @@
 #define USER_AGENT "XMMS2 (dev release)"
 /*#define USER_AGENT "iTunes/4.6 (Windows; N)"*/
 
-GIOChannel * daap_open_connection(gchar *host, gint port);
-void
-daap_generate_request(gchar **request, gchar *path, gchar *host, gint request_id);
-void daap_send_request(GIOChannel *sock_chan, gchar *request);
-void daap_receive_header(GIOChannel *sock_chan, gchar **header);
-cc_data_t * daap_handle_data(GIOChannel *sock_chan, gchar *header);
-void daap_stream_data(GIOChannel *input, GIOChannel *output, gchar *header);
+GIOChannel *
+daap_open_connection (gchar *host, gint port);
 
-gint get_data_length(gchar *header);
-gint get_server_status(gchar *header);
+void
+daap_generate_request (gchar **request, gchar *path, gchar *host, gint request_id);
+
+void
+daap_send_request (GIOChannel *sock_chan, gchar *request);
+
+void
+daap_receive_header (GIOChannel *sock_chan, gchar **header);
+
+cc_data_t *
+daap_handle_data (GIOChannel *sock_chan, gchar *header);
+
+void
+daap_stream_data (GIOChannel *input, GIOChannel *output, gchar *header);
+
+gint
+get_data_length (gchar *header);
+
+gint
+get_server_status (gchar *header);
 
 #endif

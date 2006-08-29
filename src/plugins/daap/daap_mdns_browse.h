@@ -25,7 +25,13 @@ typedef struct {
 	guint16 port;
 } daap_mdns_server_t;
 
-gboolean daap_mdns_initialize();
-GSList * daap_mdns_get_server_list();
+gboolean
+daap_mdns_initialize ();
+
+GSList *
+daap_mdns_get_server_list ();
+
+void
+daap_mdns_destroy ();
 
 #endif
