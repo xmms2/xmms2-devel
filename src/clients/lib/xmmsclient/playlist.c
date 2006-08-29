@@ -199,6 +199,36 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 }
 
 /**
+ * Adds a directory recursivly to the playlist. The url should be absolute to the
+ * server-side. Note that you will have to include the protocol for
+ * the url to. ie: file://mp3/my_mp3s/first.mp3.
+ *
+ * @param c The connection structure.
+ * @param url path.
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_radd (xmmsc_connection_t *c, const char *url)
+{
+	xmms_ipc_msg_t *msg;
+	char *enc_url;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	enc_url = xmmsc_medialib_encode_url (url, 0, NULL);
+	if (!enc_url)
+		return NULL;
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_RADD);
+	xmms_ipc_msg_put_string (msg, enc_url);
+
+	free (enc_url);
+
+	return xmmsc_send_msg (c, msg);
+}
+
+/**
  * Add the url to the playlist with arguments.
  *
  * @param c The connection structure.

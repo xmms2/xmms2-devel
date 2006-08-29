@@ -42,50 +42,6 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 	print_info ("Added %s", item);
 }
 
-
-static void
-add_directory_to_playlist (xmmsc_connection_t *conn, gchar *directory,
-                           gboolean recursive)
-{
-	GSList *entries = NULL;
-	const gchar *entry;
-	gchar *buf;
-	GDir *dir;
-
-	dir = g_dir_open (directory, 0, NULL);
-	if (!dir) {
-		print_error ("cannot open directory: %s", directory);
-	}
-
-	while ((entry = g_dir_read_name (dir))) {
-		entries = g_slist_prepend (entries, g_strdup (entry));
-	}
-	g_dir_close (dir);
-
-	/* g_dir_read_name() will return the entries in a undefined
-	 * order, so sort the list now.
-	 */
-	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
-
-	while (entries) {
-		buf = g_build_path (G_DIR_SEPARATOR_S, directory, 
-		                    entries->data, NULL);
-
-		if (g_file_test (buf, G_FILE_TEST_IS_DIR)) {
-			if (recursive) {
-				add_directory_to_playlist (conn, buf, recursive);
-			}
-		} else {
-			add_item_to_playlist (conn, buf);
-		}
-
-		g_free (buf);
-		g_free (entries->data);
-		entries = g_slist_delete_link (entries, entries);
-	}
-}
-
-
 void
 cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
@@ -257,21 +213,27 @@ cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	gint i;
+	xmmsc_result_t *res;
+	char *rfile;
 
 	if (argc < 3) {
 		print_error ("Need a directory to add");
 	}
 
-	for (i = 2; argv[i]; i++) {
-		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			print_info ("not a directory: %s", argv[i]);
-		} else {
-			add_directory_to_playlist (conn, argv[i], TRUE);
-		}
+	rfile = format_url (argv[2], G_FILE_TEST_IS_DIR);
+	if (!rfile) {
+		print_error ("Invalid path!");
 	}
-}
 
+	res = xmmsc_playlist_radd (conn, rfile);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to add %s: %s", argv[2],
+		             xmmsc_result_get_error(res));
+	}
+	xmmsc_result_unref (res);
+}
 
 void
 cmd_clear (xmmsc_connection_t *conn, gint argc, gchar **argv)
