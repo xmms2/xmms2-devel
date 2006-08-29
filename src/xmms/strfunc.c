@@ -14,22 +14,23 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __XMMS_PRIV_MAGIC_H__
-#define __XMMS_PRIV_MAGIC_H__
+#include "xmms/xmms_strfunc.h"
+#include <glib.h>
 
-#include "xmms/xmms_xformplugin.h"
+/**
+ * strnlen implementation
+ * @returns the len of str or max_len if the string is longer
+ */
+gsize
+xmms_strnlen (const gchar *str, gsize max_len)
+{
+	gsize ret = 0;
+	while (max_len > 0) {
+		if (str[ret] == '\0')
+			break;
+		ret ++;
+		max_len --;
+	}
+	return ret;
+}
 
-typedef struct xmms_magic_checker_St {
-	xmms_xform_t *xform;
-	gchar *buf;
-	guint alloc;
-	guint read;
-	guint offset;
-} xmms_magic_checker_t;
-
-void xmms_magic_tree_free (GNode *tree);
-
-GNode *xmms_magic_match (xmms_magic_checker_t *c);
-guint xmms_magic_complexity (GNode *tree);
-
-#endif

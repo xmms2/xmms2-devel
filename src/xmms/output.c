@@ -840,6 +840,8 @@ xmms_output_t *
 xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 {
 	xmms_output_t *output;
+	xmms_config_property_t *prop;
+	gint size;
 
 	g_return_val_if_fail (playlist, NULL);
 	
@@ -851,11 +853,15 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 
 	output->status_mutex = g_mutex_new ();
 	output->playtime_mutex = g_mutex_new ();
+	
+	prop = xmms_config_property_register ("output.buffersize", "32768", NULL, NULL);
+	size = xmms_config_property_get_int (prop);
+	XMMS_DBG ("Using buffersize %d", size);
 
 	output->filler_mutex = g_mutex_new ();
 	output->filler_state = FILLER_STOP;
 	output->filler_state_cond = g_cond_new ();
-	output->filler_buffer = xmms_ringbuf_new (32 * 1024);
+	output->filler_buffer = xmms_ringbuf_new (size);
 	output->filler_thread = g_thread_create (xmms_output_filler, output, TRUE, NULL);
 
 	xmms_config_property_register ("output.flush_on_pause", "1", NULL, NULL);
