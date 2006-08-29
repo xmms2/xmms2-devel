@@ -181,10 +181,6 @@ xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *d
 xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash); 
 xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
 
-/* bindata tools */
-unsigned char *xmms_bindata_base64_decode (const char *text, unsigned int *out_len);
-char *xmms_bindata_base64_encode (const unsigned char *data, unsigned int len);
-
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c);
