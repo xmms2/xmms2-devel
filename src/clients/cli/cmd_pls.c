@@ -24,7 +24,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 	xmmsc_result_t *res;
 	gchar *url;
 
-	url = format_url (item);
+	url = format_url (item, G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}
@@ -127,7 +127,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_t *res;
 		gchar *url;
 
-		url = format_url (argv[i]);
+		url = format_url (argv[i], G_FILE_TEST_IS_REGULAR);
 		if (!url) {
 			print_error ("Invalid url");
 		}
@@ -178,7 +178,7 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("Need a filename and args to add");
 	}
 
-	url = format_url (argv[2]);
+	url = format_url (argv[2], G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}
@@ -210,7 +210,7 @@ cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	pos = strtol (argv[2], NULL, 10);
-	url = format_url (argv[3]);
+	url = format_url (argv[3], G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}
