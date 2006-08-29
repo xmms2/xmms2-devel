@@ -21,12 +21,12 @@ static cc_data_t *
 daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id);
 static gboolean
 daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
-                     guint request_id);
+                     guint request_id, guint *size);
 static gchar *
 daap_url_append_meta (gchar *url, GSList *meta_list);
 
 guint
-daap_command_login (gchar *host, gint port, guint request_id) {
+daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err) {
 	GIOChannel *chan;
 	gchar *request;
 	cc_data_t *cc_data;
@@ -35,6 +35,7 @@ daap_command_login (gchar *host, gint port, guint request_id) {
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
+		xmms_error_set (err, XMMS_ERROR_GENERIC, "connection to server failed!");
 		return 0;
 	}
 
@@ -156,12 +157,12 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 		return NULL;
 	}
 
-	meta_items = g_slist_prepend(meta_items, "dmap.itemid");
-	meta_items = g_slist_prepend(meta_items, "dmap.itemname");
-	meta_items = g_slist_prepend(meta_items, "daap.songartist");
-	meta_items = g_slist_prepend(meta_items, "daap.songformat");
-	meta_items = g_slist_prepend(meta_items, "daap.songtracknumber");
-	meta_items = g_slist_prepend(meta_items, "daap.songalbum");
+	meta_items = g_slist_prepend(meta_items, g_strdup("dmap.itemid"));
+	meta_items = g_slist_prepend(meta_items, g_strdup("dmap.itemname"));
+	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songartist"));
+	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songformat"));
+	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songtracknumber"));
+	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songalbum"));
 
 	request = g_strdup_printf ("/databases/%d/items?"
 	                           "session-id=%d&revision-id=%d",
@@ -178,6 +179,8 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
+	g_slist_foreach(meta_items, (GFunc) g_free, NULL);
+	g_slist_free(meta_items);
 
 	return song_list;
 }
@@ -185,7 +188,7 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 GIOChannel *
 daap_command_init_stream (gchar *host, gint port, guint session_id,
                           guint revision_id, guint request_id,
-                          gint dbid, gchar *song)
+                          gint dbid, gchar *song, guint *filesize)
 {
 	GIOChannel *chan;
 	gchar *request;
@@ -200,7 +203,7 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 	                           "?session-id=%d",
 	                           dbid, song, session_id);
 	
-	ok = daap_request_stream (chan, request, host, request_id);
+	ok = daap_request_stream (chan, request, host, request_id, filesize);
 	g_free (request);
 
 	if (!ok) {
@@ -248,7 +251,7 @@ daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id)
 
 static gboolean
 daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
-                     guint request_id)
+                     guint request_id, guint *size)
 {
 	guint status;
 	gchar *request = NULL, *header = NULL;
@@ -267,6 +270,8 @@ daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
 		g_free (header);
 		return FALSE;
 	}
+
+	*size = get_data_length (header);
 
 	g_free (header);
 
@@ -291,3 +296,4 @@ daap_url_append_meta (gchar *url, GSList *meta_list)
 
 	return url;
 }
+

@@ -22,6 +22,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/errno.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -32,6 +35,8 @@
 #include "daap_util.h"
 
 #include "xmms/xmms_log.h"
+#include "xmmsc/xmmsc_ipc_transport.h"
+#include "xmmsc/xmmsc_ipc_msg.h"
 
 GIOChannel *
 daap_open_connection (gchar *host, gint port)
@@ -47,36 +52,71 @@ daap_open_connection (gchar *host, gint port)
 		return NULL;
 	}
 
-	hostinfo = gethostbyname (host);
-	if (NULL == hostinfo) {
-		return NULL;
-	}
-	server.sin_addr = *(struct in_addr *) hostinfo->h_addr_list[0];
-	server.sin_family = AF_INET;
-	server.sin_port = htons (port);
-
-	if (connect (sockfd,
-	             (struct sockaddr *) &server,
-	             sizeof (struct sockaddr_in)) == -1) {
-		return NULL;
-	}
-
 	sock_chan = g_io_channel_unix_new (sockfd);
 
 	g_io_channel_set_flags (sock_chan, G_IO_FLAG_NONBLOCK, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error setting nonblock flag: %s\n", err->message);
+		g_io_channel_unref (sock_chan);
 		return NULL;
+	}
+
+	hostinfo = gethostbyname (host);
+	if (NULL == hostinfo) {
+		g_io_channel_unref (sock_chan);
+		return NULL;
+	}
+
+	server.sin_addr = *(struct in_addr *) hostinfo->h_addr_list[0];
+	server.sin_family = AF_INET;
+	server.sin_port = htons (port);
+
+	while (42) {
+		fd_set fds;
+		struct timeval tmout;
+		gint sret;
+
+		tmout.tv_sec = 3;
+		tmout.tv_usec = 0;
+
+		sret = connect (sockfd,
+						(struct sockaddr *) &server,
+						sizeof (struct sockaddr_in));
+
+		if (sret == 0) {
+			break;
+		} else if (sret == -1 && errno != EINPROGRESS) {
+			xmms_log_error ("connect says: %s", strerror (errno));
+			g_io_channel_unref (sock_chan);
+			return NULL;
+		}
+
+		FD_ZERO (&fds);
+		FD_SET (sockfd, &fds);
+
+		sret = select (sockfd + 1, NULL, &fds, NULL, &tmout);
+		if (sret == 0 || sret == SOCKET_ERROR) {
+			g_io_channel_unref (sock_chan);
+			return NULL;
+		}
+
+		XMMS_DBG ("korv?");
+
+		if (FD_ISSET (sockfd, &fds)) {
+			XMMS_DBG ("connected");
+			break;
+		}
+	}
+
+	if (!g_io_channel_get_close_on_unref (sock_chan)) {
+		g_io_channel_set_close_on_unref (sock_chan, TRUE);
 	}
 
 	g_io_channel_set_encoding (sock_chan, NULL, &err);
 	if (NULL != err) {
 		XMMS_DBG ("Error setting encoding: %s\n", err->message);
+		g_io_channel_unref (sock_chan);
 		return NULL;
-	}
-
-	if (!g_io_channel_get_close_on_unref (sock_chan)) {
-		g_io_channel_set_close_on_unref (sock_chan, TRUE);
 	}
 
 	return sock_chan;

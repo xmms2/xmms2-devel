@@ -17,6 +17,7 @@
 #define DAAP_CMD_H
 
 #include "cc_handlers.h"
+#include "xmms/xmms_error.h"
 
 /**
  * Log into a DAAP server.
@@ -28,7 +29,7 @@
  * @return a session id for use in further commands
  */
 guint
-daap_command_login (gchar *host, gint port, guint request_id);
+daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err);
 
 /**
  * Update the DAAP server status.
@@ -101,11 +102,12 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
  * @param request_id the request id
  * @param dbid the database id
  * @param song a string containing the id and file type of the song to stream
+ * @param filesize a pointer to an integer that stores the content length 
  * @return: a GIOChannel corresponding to streaming song data
  */
 GIOChannel *
 daap_command_init_stream (gchar *host, gint port, guint session_id,
                           guint revision_id, guint request_id,
-                          gint dbid, gchar *song);
+                          gint dbid, gchar *song, guint *filesize);
 
 #endif
