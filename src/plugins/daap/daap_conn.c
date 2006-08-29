@@ -100,10 +100,7 @@ daap_open_connection (gchar *host, gint port)
 			return NULL;
 		}
 
-		XMMS_DBG ("korv?");
-
 		if (FD_ISSET (sockfd, &fds)) {
-			XMMS_DBG ("connected");
 			break;
 		}
 	}
