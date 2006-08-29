@@ -539,7 +539,8 @@ xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist)
  * Import a all files recursivly from the directory passed
  * as argument.
  * @param conn #xmmsc_connection_t
- * @param path A directory to recursive search for mediafiles
+ * @param path A directory to recursive search for mediafiles, this must
+ * 		  include the protocol, i.e file://
  */
 xmmsc_result_t *
 xmmsc_medialib_path_import (xmmsc_connection_t *conn,

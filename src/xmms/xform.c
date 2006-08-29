@@ -106,7 +106,7 @@ xmms_xform_browse_add_entry (GList *list,
 	return list;
 }
 
-static GList *
+GList *
 xmms_xform_browse (xmms_xform_object_t *obj,
                    const gchar *url,
                    xmms_error_t *error)
