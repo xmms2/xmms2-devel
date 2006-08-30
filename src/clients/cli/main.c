@@ -104,12 +104,11 @@ read_config ()
 	
 	gchar userconf[PATH_MAX];
 	xmmsc_userconfdir_get (userconf, PATH_MAX);
-	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
-	                     userconf, "clients", "cli.conf", NULL);
+	file = g_build_path (G_DIR_SEPARATOR_S, userconf,
+	                     "clients", "cli.conf", NULL);
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
-		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
-		                           userconf, "clients", NULL);
+		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", NULL);
 		g_mkdir_with_parents (dir, 0755);
 		g_free (dir);
 

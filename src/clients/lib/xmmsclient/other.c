@@ -18,6 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <pwd.h>
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
@@ -177,18 +180,36 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
  * Get user config dir.
  * @param buf A char buffer
  * @param len The length of buf
+ * @return A pointer to buf, or NULL if an error occurred.
  */
 const char *
 xmmsc_userconfdir_get (char *buf, int len)
 {
 	char *config_home = getenv("XDG_CONFIG_HOME");
-	if (!config_home) {
-		strncpy(buf, USERCONFDIR, len);
+	char *ret = NULL;
+	if (!config_home || strlen (config_home) == 0) {
+		struct passwd *pw = NULL;
+		struct passwd pwd;
+		#ifdef _SC_GETPW_R_SIZE_MAX
+		long bufsiz = sysconf (_SC_GETPW_R_SIZE_MAX);
+		#else
+		long bufsiz = 64;
+		#endif
+		char *pbuf = malloc (bufsiz);
+		
+		if (getpwuid_r (getuid (), &pwd, pbuf, bufsiz, &pw) == 0) {
+			if (snprintf (buf, len, "%s/%s", pw->pw_dir, USERCONFDIR) >= 0) {
+				ret = buf;
+			}
+		}
+		free(pbuf);
 	}
 	else {
-		snprintf(buf, len, "%s/xmms2", config_home);
+		if (snprintf (buf, len, "%s/xmms2", config_home) >= 0) {
+			ret = buf;
+		}
 	}
-	return buf;
+	return ret;
 }
 
 /** @} */

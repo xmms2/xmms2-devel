@@ -547,7 +547,8 @@ def userconfdir_get():
 	platform to platform so should always be retrieved at runtime.
 	"""
 	cdef char path[XMMS_PATH_MAX]
-	xmmsc_userconfdir_get (path, XMMS_PATH_MAX)
+	if xmmsc_userconfdir_get (path, XMMS_PATH_MAX) == NULL:
+		return None
 	return path
 
 cdef class XMMS:
