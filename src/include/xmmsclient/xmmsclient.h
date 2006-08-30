@@ -176,9 +176,9 @@ xmmsc_result_t *xmmsc_medialib_entry_property_remove_with_source (xmmsc_connecti
 /* XForm object */
 xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url);
 
-/* Bindata object */ 
+/* Bindata object */
 xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *data, unsigned int len);
-xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash); 
+xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash);
 xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
 
 /* bindata tools */
@@ -191,7 +191,7 @@ xmmsc_result_t *xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c);
 
 /*
- * MACROS 
+ * MACROS
  */
 
 #define XMMS_CALLBACK_SET(conn,meth,callback,udata) {\

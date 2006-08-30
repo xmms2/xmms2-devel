@@ -103,7 +103,7 @@ read_config ()
 	FILE *fp;
 
 	const gchar *userconf = xmmsc_userconfdir_get ();
-	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (), 
+	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
 	                     userconf, "clients", "cli.conf", NULL);
 
 	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
@@ -134,7 +134,7 @@ read_config ()
 	buffer = g_malloc0 (st.st_size + 1);
 
 	while (read_bytes < st.st_size) {
-		guint ret = fread (buffer + read_bytes, 
+		guint ret = fread (buffer + read_bytes,
 		                   st.st_size - read_bytes, 1, fp);
 
 		if (ret == 0) {
@@ -236,7 +236,7 @@ main (gint argc, gchar **argv)
 	if (!ret) {
 		gboolean autostart = FALSE;
 		gchar *tmp;
-	   
+	
 		tmp = g_hash_table_lookup (config, "autostart");
 		if (tmp && !g_ascii_strcasecmp (tmp, "true")) {
 		   autostart = TRUE;
@@ -250,7 +250,7 @@ main (gint argc, gchar **argv)
 	}
 
 	if (!ret) {
-		print_error ("Could not connect to xmms2d: %s", 
+		print_error ("Could not connect to xmms2d: %s",
 		             xmmsc_get_last_error (connection));
 	}
 
