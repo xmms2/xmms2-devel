@@ -101,8 +101,9 @@ read_config ()
 	gint i, read_bytes = 0;
 	struct stat st;
 	FILE *fp;
-
-	const gchar *userconf = xmmsc_userconfdir_get ();
+	
+	gchar userconf[PATH_MAX];
+	xmmsc_userconfdir_get (userconf, PATH_MAX);
 	file = g_build_path (G_DIR_SEPARATOR_S, g_get_home_dir (),
 	                     userconf, "clients", "cli.conf", NULL);
 

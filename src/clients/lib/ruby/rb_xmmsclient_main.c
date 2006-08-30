@@ -23,7 +23,9 @@ void Init_Client ();
 
 static VALUE m_userconfdir_get (VALUE self)
 {
-	return rb_str_new2 (xmmsc_userconfdir_get ());
+	char path[PATH_MAX];
+	xmmsc_userconfdir_get (path, PATH_MAX);
+	return rb_str_new2 (path);
 }
 
 void Init_xmmsclient (void)

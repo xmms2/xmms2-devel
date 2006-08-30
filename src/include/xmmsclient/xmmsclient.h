@@ -140,7 +140,7 @@ xmmsc_result_t *xmmsc_signal_visualisation_data (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c);
 
 /* get user config dir */
-const char *xmmsc_userconfdir_get (void);
+const char *xmmsc_userconfdir_get (char *buf, int len);
 
 /*
  * MEDIALIB ***********************************************
