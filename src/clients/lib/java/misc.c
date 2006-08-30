@@ -33,12 +33,11 @@ Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_getFD (JNIEnv *env, jclass _i
 	xmmsc_connection_t *conn_ptr;
 	int fd = 0;
 	jclass cls;
-	jmethodID mid;
 
 	cls = (*env)->GetObjectClass (env, connection);
 	field_ptr = (*env)->GetFieldID (env, cls, "swigCPtr", "J");
 
-	conn_ptr = (*env)->GetLongField (env, connection, field_ptr);
+	conn_ptr = (xmmsc_connection_t*)(*env)->GetLongField (env, connection, field_ptr);
 
 	fd = xmmsc_io_fd_get (conn_ptr);
 
@@ -101,9 +100,9 @@ Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setENV (JNIEnv *jenv, jclass 
 	                      clazz);
 	propdict_foreach_mid = 
 	        get_method_id ("callbackPropdictForeachFunction", 
-		              "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;I)V",
-	                      jenv,
-	                      clazz);
+		               "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;I)V",
+	                       jenv,
+	                       clazz);
 	user_defined_1_mid = 
 	        get_method_id ("userDefinedCallback1", "(JI)V", jenv, clazz);
 	user_defined_2_mid = 
@@ -137,7 +136,7 @@ Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setupMainloop (JNIEnv *jenv,
 	cls2 = (*jenv)->GetObjectClass ( jenv, connection);
 	field_ptr = (*jenv)->GetFieldID (jenv, cls2, "swigCPtr", "J");
 
-	conn_ptr = (*jenv)->GetLongField (jenv, connection, field_ptr);
+	conn_ptr = (xmmsc_connection_t*)(*jenv)->GetLongField (jenv, connection, field_ptr);
 
 	globalMainloopObj = (*jenv)->NewGlobalRef (jenv, myobject);
 	
@@ -149,51 +148,36 @@ Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setupMainloop (JNIEnv *jenv,
 	io_want_out_mid = get_method_id ("callbackIOWantOut", "(II)V", jenv, clazz);
 }
 
-JNIEXPORT int JNICALL
-Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_result_get_bin_wrap (JNIEnv *jenv,
-                                                                           jclass caller,
-									   jobject result,
-									   jobjectArray r)
+JNIEXPORT jbyteArray JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_1result_1get_1byte (JNIEnv *jenv,
+                                                                             jclass caller,
+									     jobject result)
 {
-	unsigned char **c_byte;
-	unsigned int *c_length;
+	unsigned char *c_byte;
+	unsigned int c_length;
 	xmmsc_result_t *result_address;
-	int ret_value = -1, i = 0, j = 0;
+	int ret_value = -1, i = 0;
 	jclass cls;
 	jfieldID field_ptr;
 
 	cls = (*jenv)->GetObjectClass ( jenv, result);
 	field_ptr = (*jenv)->GetFieldID (jenv, cls, "swigCPtr", "J");
 
-	result_address = (*jenv)->GetLongField (jenv, result, field_ptr);
+	result_address = (xmmsc_result_t*)(*jenv)->GetLongField (jenv, result, field_ptr);
 
-	ret_value = xmmsc_result_get_bin(result_address, c_byte, c_length);
+	ret_value = xmmsc_result_get_bin(result_address, &c_byte, &c_length);
 
-	while ( c_length[j] ) {
-		j++;
+	if (ret_value && c_length > 0) {
+		jbyteArray row = (jbyteArray)(*jenv)->NewByteArray(jenv, c_length);
+		
+			(*jenv)->SetByteArrayRegion ( jenv,
+			                              (jbyteArray)row,
+		                                      (jsize)0,
+		                                      c_length,
+			                              (jbyte *)c_byte);
+		return row;
 	}
-	
-	if ( c_length > 0 ) {
-		jshortArray row = (jshortArray)(*jenv)->NewShortArray(jenv, c_length[0]);
-		r = (jobjectArray)(*jenv)->NewObjectArray( jenv,
-		                                           j,
-		                                           (*jenv)->GetObjectClass(jenv, row),
-		                                           0);
-
-		for ( i = 0; i < j; i++ ) {
-			if ( row == NULL ) {
-				row = (jshortArray)(*jenv)->NewShortArray(jenv, c_length[i]);
-			}
-			
-			(*jenv)->SetShortArrayRegion ( jenv,
-			                             (jshortArray)row,
-		                                     (jsize)0,
-		                                     c_length[i],
-			                             (jshort *)c_byte[i]);
-			(*jenv)->SetObjectArrayElement(jenv, r, i, row);
-		}
-	}
-	return ret_value;
+	return NULL;
 }
 
 JNIEXPORT jstring JNICALL

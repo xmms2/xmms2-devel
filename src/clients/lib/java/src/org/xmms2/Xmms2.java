@@ -200,19 +200,6 @@ public final class Xmms2 {
     	return Xmmsclient.xmmsc_sqlite_prepare_string(input);
     }
 
-    public short[] bindataBase64Decode(String data) {
-    	short[] bindata = null;
-    	long[] datalength = new long[1];
-    	Xmmsclient.xmms_bindata_base64_decode_wrap(data, datalength, bindata);
-    	return bindata;
-    }
-    
-    public String bindataBase64Encode(short[] bindata) {
-    	return Xmmsclient.xmms_bindata_base64_encode(bindata, bindata.length);
-    }
-
-    
-    
     /*
      * Following void returning functions work almost as their c-pendants
      */
@@ -756,7 +743,7 @@ public final class Xmms2 {
     public Playlist getPlaylist(){
     	return pl;
     }
-    public String bindataAdd(short data[]) {
+    public String bindataAdd(byte data[]) {
     	SWIGTYPE_p_xmmsc_result_St result = Xmmsclient.xmmsc_bindata_add(
         		xbo.connectionTwo, data, data.length);
     	Xmmsclient.xmmsc_result_wait(result);
@@ -765,14 +752,13 @@ public final class Xmms2 {
     	Xmmsclient.xmmsc_result_unref(result);
     	return hash[0];
     }
-    public short[] bindataRetrieve(String hash) {
+    public byte[] bindataRetrieve(String hash) {
     	SWIGTYPE_p_xmmsc_result_St result = 
     		Xmmsclient.xmmsc_bindata_retrieve(xbo.connectionTwo, hash);
     	Xmmsclient.xmmsc_result_wait(result);
-    	short[][] bindata = null;
-    	Xmmsclient.xmmsc_result_get_bin_wrap(result, bindata);
+    	byte[] data = Xmmsclient.xmmsc_result_get_byte(result);
     	Xmmsclient.xmmsc_result_unref(result);
-    	return bindata[0];
+    	return data;
     }
     public void bindataRemove(String hash) {
     	SWIGTYPE_p_xmmsc_result_St result = 

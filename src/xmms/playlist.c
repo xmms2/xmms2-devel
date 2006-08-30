@@ -49,6 +49,7 @@ static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, 
 
 static gboolean xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *error);
 static gboolean xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
+static void xmms_playlist_radd (xmms_playlist_t *playlist, gchar *path, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (insert, xmms_playlist_inserturl, xmms_playlist_t *, NONE, UINT32, STRING);
 XMMS_CMD_DEFINE (insertid, xmms_playlist_insert, xmms_playlist_t *, NONE, UINT32, UINT32);
@@ -63,6 +64,7 @@ XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, LIST, NONE, NONE);
 XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
+XMMS_CMD_DEFINE (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, NONE);
 
 static GHashTable *
 xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type, guint32 id)
@@ -123,7 +125,7 @@ struct xmms_playlist_St {
 	GMutex *mutex;
 
 	xmms_mediainfo_reader_t *mediainfordr;
-
+	xmms_medialib_t *medialib;
 };
 
 
@@ -239,8 +241,11 @@ xmms_playlist_init (void)
 	                     XMMS_IPC_CMD_INSERT_ID,
 	                     XMMS_CMD_FUNC (insertid));
 
-	xmms_medialib_init (ret);
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_RADD,
+	                     XMMS_CMD_FUNC (radd));
 
+	ret->medialib = xmms_medialib_init (ret);
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 
 	if (xmms_config_property_get_int (load_autosaved)) {
@@ -596,6 +601,24 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	xmms_medialib_end (session);
 
 	return !!entry;
+}
+
+/**
+  * Convenient function for adding a directory to the playlist,
+  * It will dive down the URL you feed it and recursivly add
+  * all files there.
+  *
+  * @param playlist the playlist to add it URL to.
+  * @param nurl the URL of an directory you want to add
+  * @param err an #xmms_error_t that should be defined upon error.
+  */
+void
+xmms_playlist_radd (xmms_playlist_t *playlist, gchar *path, xmms_error_t *err)
+{
+	/* we actually just call the medialib function, but keep
+	 * the ipc method here for not confusing users / developers
+	 */
+	xmms_medialib_add_recursive (playlist->medialib, path, TRUE, err);
 }
 
 /** Adds a xmms_medialib_entry to the playlist.

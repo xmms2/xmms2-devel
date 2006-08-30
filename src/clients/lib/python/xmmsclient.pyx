@@ -143,6 +143,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_set_next_rel(xmmsc_connection_t *c, signed int)
 	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, signed int movement)
 	xmmsc_result_t *xmmsc_playlist_current_pos(xmmsc_connection_t *c)
+	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *path)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playlist_current_pos(xmmsc_connection_t *c)
@@ -1055,6 +1056,26 @@ cdef class XMMS:
 		ret.more_init()
 		
 		return ret
+
+	def playlist_radd(self, url, cb = None):
+		"""
+		Add a directory to the playlist.
+		Requires a string 'url' as argument.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		c = from_unicode(url)
+		
+		ret.res = xmmsc_playlist_radd(self.conn, c)
+		ret.more_init()
+		
+		return ret
+
 
 	def playlist_add(self, url, cb = None):
 		"""

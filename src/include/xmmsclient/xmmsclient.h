@@ -87,6 +87,7 @@ xmmsc_result_t *xmmsc_playlist_current_pos (xmmsc_connection_t *c);
 xmmsc_result_t *xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url);
 xmmsc_result_t *xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int numargs, const char **args);
 xmmsc_result_t *xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, uint32_t id);
+xmmsc_result_t *xmmsc_playlist_radd (xmmsc_connection_t *c, const char *url);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_playlist_changed (xmmsc_connection_t *c);
@@ -180,10 +181,6 @@ xmmsc_result_t * xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *ur
 xmmsc_result_t *xmmsc_bindata_add (xmmsc_connection_t *c, const unsigned char *data, unsigned int len);
 xmmsc_result_t *xmmsc_bindata_retrieve (xmmsc_connection_t *c, const char *hash);
 xmmsc_result_t *xmmsc_bindata_remove (xmmsc_connection_t *c, const char *hash);
-
-/* bindata tools */
-unsigned char *xmms_bindata_base64_decode (const char *text, unsigned int *out_len);
-char *xmms_bindata_base64_encode (const unsigned char *data, unsigned int len);
 
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c);

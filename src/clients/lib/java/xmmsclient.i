@@ -22,7 +22,7 @@
 
 %apply int *INOUT { int* };
 %apply unsigned int *INOUT { unsigned int* };
-%apply unsigned char *INOUT { unsigned char * };
+%apply char *BYTE { unsigned char * };
 %apply char **STRING_OUT { char ** };
 %apply char **STRING_ARRAY { char **preference };
 
@@ -38,6 +38,7 @@ typedef unsigned int uint32_t;
 
 %} 
 %ignore xmms_bindata_base64_decode;
+%ignore xmms_bindata_base64_encode;
 %ignore xmmsc_result_get_bin;
 %ignore xmmsc_io_get_fd;
 %ignore xmmsc_userconfdir_get;
@@ -57,23 +58,14 @@ convertIntToVoidP(int val)
         return newval;
 }
 
-void
-xmms_bindata_base64_decode_wrap(const char *data,
-                                unsigned int *len,
-                                unsigned char *buffer)
-{
-        buffer = xmms_bindata_base64_decode(data, len);
-}
-
 %}
 
-%native (xmmsc_result_get_bin_wrap) int xmmsc_result_get_bin_wrap ( jobject, jobjectArray);
+%native (xmmsc_result_get_byte) jbyteArray xmmsc_result_get_byte ( jobject);
 %{
-JNIEXPORT int JNICALL
-Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_result_get_bin_wrap ( JNIEnv,
-                                                                            jclass,
-                                                                            jobject,
-                                                                            jobjectArray);
+JNIEXPORT jbyteArray JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_result_get_byte ( JNIEnv,
+                                                                           jclass,
+                                                                           jobject);
 %}
 
 %native (getFD) void getFD ( jobject, jobject );

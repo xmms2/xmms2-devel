@@ -15,12 +15,14 @@
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_bindata.h"
+#include "xmms/xmms_strfunc.h"
 #include "id3.h"
 
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <glib.h>
 
 
 #define ID3v2_HEADER_FLAGS_UNSYNC 0x80
@@ -127,67 +129,84 @@ const gchar *id3_genres[] =
         "Anime", "JPop", "Synthpop"
 };
 
+/**
+ * do the actual convertion to UTF-8 from enc
+ */
 static gchar *
-convert_id3_text (xmms_id3v2_header_t *head, guchar *val, gint len)
+convert_id3_text (const gchar *enc, const guchar *txt, gint len)
 {
 	gchar *nval = NULL;
-	gsize readsize,writsize;
+	gsize readsize, writesize;
 	GError *err = NULL;
 
-	g_return_val_if_fail (len>0, NULL);
+	if (len < 1)
+		return NULL;
 
-	if (head->ver == 4) {
-		if (len <= 1) {
-			/* we don't want to handle this at all, probably an empty tag */
-			return NULL;
-		} else if (val[0] == 0x00) {
-			/* ISO-8859-1 */
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		} else if (len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
-			/* UTF-16 with BOM */
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16", &readsize, &writsize, &err);
-		} else if (val[0] == 0x02) {
-			/* UTF-16 without BOM */
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16BE", &readsize, &writsize, &err);
-		} else if (val[0] == 0x03) {
-			/* UTF-8 */
-			nval = g_strndup ((gchar *)val+1, len-1);
-		} else {
-			XMMS_DBG ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
-			return NULL;
-		}
-	} else if (head->ver == 2 || head->ver == 3) {
-		if (len <= 1) {
-			/* we don't want to handle this at all, probably an empty tag */
-			return NULL;
-		} else if (val[0] == 0x00) {
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		} else if (val[0] == 0x01) {
-			if (len > 2 && val[1] == 0xFF && val[2] == 0xFE) {
-				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2LE", &readsize, &writsize, &err);
-			} else if (len > 2 && val[1] == 0xFE && val[2] == 0xFF) {
-				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2BE", &readsize, &writsize, &err);
-			} else {
-				XMMS_DBG ("Missing/bad boom in id3v2 tag!");
-				return NULL;
-			}
-		} else {
-			XMMS_DBG ("UNKNOWN id3v2.2/2.3 encoding (%02x)!", val[0]);
-			return NULL;
-		}
-	}
+	g_return_val_if_fail (txt, NULL);
 
+	nval = g_convert ((gchar *)txt, len, "UTF-8", enc, &readsize, &writesize, &err);
 	if (err) {
-		xmms_log_error ("Couldn't convert: %s", err->message);
-		g_error_free (err);
+		xmms_log_error ("couldn't convert field to %s", enc);
 		return NULL;
 	}
-
-	g_assert (nval);
 
 	return nval;
 }
 
+/**
+ * This function takes the binary field and returns the
+ * a string that describes how the text field was encoded.
+ * this is supposed to be feed directly to g_convert and
+ * friends.
+ */
+static const gchar *
+binary_to_enc (xmms_id3v2_header_t *head, guchar **bval, gint *len)
+{
+	const gchar *retval;
+	const guchar *val = *bval;
+
+	if (head->ver == 4) {
+		if (val[0] == 0x00) {
+			retval = "ISO8859-1";
+		} else if (*len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
+			retval = "UTF-16";
+		} else if (val[0] == 0x02) {
+			retval = "UTF-16BE";
+		} else if (val[0] == 0x03) {
+			retval = "UTF-8";
+		} else {
+			xmms_log_error ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
+			retval = NULL;
+		}
+		(*bval) ++;
+		(*len) --;
+		return retval;
+	} else if (head->ver == 2 || head->ver == 3) {
+		if (val[0] == 0x00) {
+			retval = "ISO8859-1";
+			(*bval) ++;
+			(*len) --;
+		} else if (val[0] == 0x01) {
+			if (*len > 2 && val[1] == 0xFF && val[2] == 0xFE) {
+				retval = "UCS-2LE";
+			} else if (*len > 2 && val[1] == 0xFE && val[2] == 0xFF) {
+				retval = "UCS-2BE";
+			} else {
+				xmms_log_error ("Missing/bad boom in id3v2 tag!");
+				retval = NULL;
+			}
+			(*bval) += 3;
+			(*len) -= 3;
+		} else {
+			xmms_log_error ("UNKNOWN id3v2.2/2.3 encoding (%02x)!", val[0]);
+			retval = NULL;
+			(*bval) ++;
+			(*len) --;
+		}
+		return retval;
+	}
+	return NULL;
+}
 
 static void
 add_to_entry (xmms_xform_t *xform,
@@ -197,8 +216,13 @@ add_to_entry (xmms_xform_t *xform,
               gint len)
 {
 	gchar *nval;
+	const gchar *tmp;
 
-	nval = convert_id3_text (head, val, len);
+	if (len < 1)
+		return;
+
+	tmp = binary_to_enc (head, &val, &len);
+	nval = convert_id3_text (tmp, val, len);
 	if (nval) {
 		xmms_xform_metadata_set_str (xform, key, nval);
 		g_free (nval);
@@ -212,13 +236,15 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	gint res;
 	guint genre_id;
 	gchar *val;
+	const gchar *tmp;
 
 	if (head->ver == 4) {
 		buf++;
 		len -= 1; /* total len of buffer */
 	}
 
-	val = convert_id3_text (head, buf, len);
+	tmp = binary_to_enc (head, &buf, &len);
+	val = convert_id3_text (tmp, buf, len);
 	if (!val)
 		return;
 	res = sscanf (val, "(%u)", &genre_id);
@@ -287,9 +313,11 @@ handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 {
 
 	gchar *nval;
+	const gchar *tmp;
 	gint i;
 
-	nval = convert_id3_text (head, buf, len);
+	tmp = binary_to_enc (head, &buf, &len);
+	nval = convert_id3_text (tmp, buf, len);
 	if (nval) {
 		i = strtol (nval, NULL, 10);
 		xmms_xform_metadata_set_int (xform, key, i);
@@ -331,7 +359,7 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
 		str = g_string_new (NULL);
 
-		g_string_append_len (str, buf, len);
+		g_string_append_len (str, (gchar *)buf, len);
 		hash = xmms_bindata_plugin_add (str);
 
 		if (hash) {
@@ -346,6 +374,50 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 	g_free (mime);
 	
+}
+
+static void
+handle_id3v2_comm (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, guchar *buf, gint len)
+{
+	/* COMM is weird but it's like this:
+	 * $xx enc
+	 * $xx xx xx lang
+	 * $text $0 desc according to enc
+	 * $text $0 comment according to enc
+	 */
+	const gchar *tmp;
+	gchar *lang;
+	gchar *desc;
+	gchar *comm;
+	gsize l;
+
+	tmp = binary_to_enc (head, &buf, &len);
+
+	/* Language is always three bytes */
+	lang = g_strndup ((gchar *)buf, 3);
+	buf += 3;
+	len -= 3;
+
+	l = xmms_strnlen ((gchar *)buf, len);
+	desc = convert_id3_text (tmp, buf, l);
+	buf += (l + 1);
+	len -= (l + 1);
+
+	l = xmms_strnlen ((gchar *)buf, len);
+	comm = convert_id3_text (tmp, buf, l);
+
+	if (comm) {
+		if (desc) {
+			key = g_strdup_printf ("%s_%s", XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, desc);
+			xmms_xform_metadata_set_str (xform, key, comm);
+			g_free (key);
+		} else {
+			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, comm);
+		}
+	}
+
+	g_free (lang);
 }
 
 struct id3tags_t {
@@ -372,6 +444,7 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ quad2long('A','P','I','C'), NULL, handle_id3v2_apic },
+	{ quad2long('C','O','M','M'), NULL, handle_id3v2_comm },
 	{ 0, NULL, NULL }
 };
 
@@ -539,7 +612,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			
 			flags = buf[8] | buf[9];
 
-			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A') {
+			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A' || buf[0] == 'C') {
 				handle_id3v2_text (xform, head, type, buf + 10, flags, size);
 			}
 			
@@ -563,7 +636,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 				return FALSE;
 			}
 
-			if (buf[0] == 'T' || buf[0] == 'U') {
+			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'C') {
 				handle_id3v2_text (xform, head, type, buf + 6, 0, size);
 			}
 			
