@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <xmmsclient/xmmsclient.h>
+#include <xmms/xmms_defs.h>
 #include <jni.h>
 #include <callbacks.h>
 
@@ -193,4 +194,20 @@ Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_result_get_bin_wrap (JN
 		}
 	}
 	return ret_value;
+}
+
+JNIEXPORT jstring JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_1get_1userconfdir (JNIEnv *jenv,
+                                                                            jclass caller)
+{
+	jstring jresult = 0;
+	char result[PATH_MAX];
+
+	xmmsc_userconfdir_get(result, PATH_MAX);
+	if(result)
+	{
+		jresult = (*jenv)->NewStringUTF(jenv, result);
+		return jresult;
+	}
+	return NULL;
 }

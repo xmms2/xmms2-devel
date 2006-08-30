@@ -40,6 +40,7 @@ typedef unsigned int uint32_t;
 %ignore xmms_bindata_base64_decode;
 %ignore xmmsc_result_get_bin;
 %ignore xmmsc_io_get_fd;
+%ignore xmmsc_userconfdir_get;
 
 %inline %{
 xmmsc_result_t*
@@ -85,6 +86,14 @@ Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_getFD (JNIEnv, jclass, jobjec
 %{
 JNIEXPORT void JNICALL
 Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setENV (JNIEnv, jclass, jobject);
+%}
+
+%native (xmmsc_get_userconfdir) jstring xmmsc_get_userconfdir ( );
+%{
+JNIEXPORT jstring JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_get_userconfdir (JNIEnv,
+                                                                          jclass);
+
 %}
 
 %native (setupMainloop) void setupMainloop ( jobject, jobject );
