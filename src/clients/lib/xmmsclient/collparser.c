@@ -229,6 +229,7 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 	TOKEN_MATCH_CHAR ('#', XMMS_COLLECTION_TOKEN_SYMBOL_ID);
 	TOKEN_MATCH_CHAR ('+', XMMS_COLLECTION_TOKEN_OPFIL_HAS);
 	TOKEN_MATCH_CHAR (':', XMMS_COLLECTION_TOKEN_OPFIL_MATCH);
+	TOKEN_MATCH_CHAR ('~', XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS);
 	TOKEN_MATCH_STRING ("<=", XMMS_COLLECTION_TOKEN_OPFIL_SMALLEREQ);
 	TOKEN_MATCH_STRING (">=", XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ);
 	TOKEN_MATCH_CHAR ('<', XMMS_COLLECTION_TOKEN_OPFIL_SMALLER);
@@ -258,7 +259,13 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 				} else if ((*tmp == '*') || (*tmp == '?')) {
 					type = XMMS_COLLECTION_TOKEN_PATTERN;
 				}
-				strval[i++] = *tmp;
+
+				/* FIXME: Kinda dirty, and we should escape % and _ then ! */
+				switch (*tmp) {
+				case '*':  strval[i++] = '%';  break;
+				case '?':  strval[i++] = '_';  break;
+				default:   strval[i++] = *tmp; break;
+				}
 			}
 
 			tmp++;
@@ -282,7 +289,8 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 				escape = 1;
 				tmp++;
 				continue;
-			} else if (*tmp == ':' || *tmp == '<' || *tmp == '>') {
+			} else if (*tmp == ':' || *tmp == '~' ||
+			           *tmp == '<' || *tmp == '>') {
 				/* that was a property name, ends with a colon */
 				if (tmp - str == 1)
 					type = XMMS_COLLECTION_TOKEN_PROP_SHORT;
@@ -329,7 +337,13 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 		if (escape) {
 			escape = 0;
 		}
-		strval[i++] = *tmp;
+
+		switch (*tmp) {
+		case '*':  strval[i++] = '%';  break;
+		case '?':  strval[i++] = '_';  break;
+		default:   strval[i++] = *tmp; break;
+		}
+
 		tmp++;
 	}
 
