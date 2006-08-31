@@ -63,36 +63,37 @@ xmmsc_coll_prop_short[] = { { 'a', "artist" },
 	} \
 } while (0)
 
-int coll_parse_prepare (xmmsc_coll_token_t *tokens);
 
-xmmsc_coll_token_t *coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_sequence (xmmsc_coll_token_t *token, const char *field, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_posseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_operation (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_binaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_andop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_orop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
-xmmsc_coll_token_t *coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret);
+static int coll_parse_prepare (xmmsc_coll_token_t *tokens);
 
-xmmsc_coll_token_t *coll_token_new (xmmsc_coll_token_type_t type, char *string);
-void coll_token_free (xmmsc_coll_token_t *token);
-xmmsc_coll_token_t *coll_next_token (xmmsc_coll_token_t *token);
-void coll_append_universe (xmmsc_coll_t *coll);
-char *coll_parse_prop (xmmsc_coll_token_t *token);
-char *coll_parse_strval (xmmsc_coll_token_t *token);
+static xmmsc_coll_token_t *coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_sequence (xmmsc_coll_token_t *token, const char *field, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_posseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_operation (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_binaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_andop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_orop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret);
+static xmmsc_coll_token_t *coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret);
 
-char *string_substr (char *start, char *end);
-char *string_intadd (char *number, int delta);
+static xmmsc_coll_token_t *coll_token_new (xmmsc_coll_token_type_t type, char *string);
+static void coll_token_free (xmmsc_coll_token_t *token);
+static xmmsc_coll_token_t *coll_next_token (xmmsc_coll_token_t *token);
+static void coll_append_universe (xmmsc_coll_t *coll);
+static char *coll_parse_prop (xmmsc_coll_token_t *token);
+static char *coll_parse_strval (xmmsc_coll_token_t *token);
+
+static char *string_substr (char *start, char *end);
+static char *string_intadd (char *number, int delta);
 
 
 
@@ -100,6 +101,26 @@ char *string_intadd (char *number, int delta);
  * @defgroup CollectionParser CollectionParser
  * @ingroup XMMSClient
  * @brief Generate a collection structure from a string pattern.
+ *
+ * The grammar of the default parser is the following:
+ * <pre>
+ * S         := OPERATION
+ * EXPR      := POSSEQ | IDSEQ | FILTER | TOKEN_GROUP_OPEN OPERATION TOKEN_GROUP_CLOSE | UNARYOP
+ * PROP      := TOKEN_PROP_LONG | TOKEN_PROP_SHORT
+ * INTVAL    := INTEGER | SEQUENCE
+ * STRVAL    := STRING | PATTERN
+ * POSSEQ    := INTVAL
+ * IDSEQ     := TOKEN_SYMBOL_ID INTVAL
+ * OPERATION := UNAOP | BINOP
+ * UNAOP     := TOKEN_OPSET_NOT EXPR | TOKEN_REFERENCE STRING
+ * BINOP     := ANDOP
+ * ANDOP     := OROP ANDOP | OROP TOKEN_OPSET_AND ANDOP | OROP
+ * OROP      := EXPR TOKEN_OPSET_OR OROP | EXPR
+ * FILTER    := UNAFILTER | BINFILTER | STRVAL
+ * UNAFILTER := TOKEN_OPFIL_HAS PROP
+ * BINFILTER := PROP TOKEN_OPFIL_MATCH STRING | PROP TOKEN_OPFIL_CONTAINS STRVAL |
+ *              PROP TOKEN_OPFIL_SMALLER INTEGER | PROP TOKEN_OPFIL_GREATER INTEGER
+ * </pre>
  *
  * @{
  */
@@ -120,6 +141,22 @@ xmmsc_coll_parse (const char *pattern, xmmsc_coll_t** coll)
 	                                coll);
 }
 
+/**
+ * Try to parse the given pattern to produce a collection structure,
+ * using custom token-parsing and collection-building functions.  This
+ * can be used to extend the default syntax of the parser.
+ *
+ * New token ids can be used, starting from
+ * XMMS_COLLECTION_TOKEN_CUSTOM upwards.
+ *
+ * @param pattern  The string to generate a collection from.
+ * @param parse_f The parsing function used to generate a list of tokens
+ *                from the pattern string.
+ * @param build_f The building function that produces the collection
+ *                structure from the list of tokens.
+ * @param coll  The pointer to which the collection will be saved.
+ * @return TRUE if the parsing succeeded, false otherwise.
+ */
 int
 xmmsc_coll_parse_custom (const char *pattern,
                          xmmsc_coll_parse_tokens_f parse_f,
@@ -167,6 +204,13 @@ xmmsc_coll_parse_custom (const char *pattern,
    - support in-string quoted parts, e.g.  hello"test here"world
    - optimize sequences (group, merge, create idlist, etc)
 */
+/**
+ * The default token parser.
+ *
+ * @param str The string to parse for a token.
+ * @param newpos The position in the string after the found token.
+ * @return The token found in the string.
+ */
 xmmsc_coll_token_t*
 xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 {
@@ -294,6 +338,12 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 }
 
 
+/**
+ * Default collection structure builder.
+ *
+ * @param tokens The chained list of tokens.
+ * @return The corresponding collection structure.
+ */
 xmmsc_coll_t *
 xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens)
 {
@@ -304,7 +354,8 @@ xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens)
 }
 
 
-int
+/* Pre-process the token list to apply contextual updates to tokens. */
+static int
 coll_parse_prepare (xmmsc_coll_token_t *tokens)
 {
 	xmmsc_coll_token_t *prev, *curr;
@@ -385,7 +436,7 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 	return 1;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -406,7 +457,7 @@ coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tokens;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_token_t *tk;
@@ -429,7 +480,7 @@ coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 }
 
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
                      xmmsc_coll_t **ret)
 {
@@ -528,7 +579,7 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 	return coll_next_token (tokens);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_token_t *tk;
@@ -542,14 +593,14 @@ coll_parse_idseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return (ret == NULL ? tokens : tk);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_posseq (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	/* FIXME: link with position in (active) playlist? */
 	return coll_parse_sequence (tokens, "position", ret);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_operation (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -562,7 +613,7 @@ coll_parse_operation (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tokens;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -575,13 +626,13 @@ coll_parse_unaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return pos;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_binaryop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	return coll_parse_andop (tokens, ret);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -604,19 +655,19 @@ coll_parse_notop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tk;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_andop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	return coll_parse_andop_append (tokens, NULL, ret);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_orop (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	return coll_parse_orop_append (tokens, NULL, ret);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
                          xmmsc_coll_t **ret)
 {
@@ -660,7 +711,7 @@ coll_parse_andop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 	return tk;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
                         xmmsc_coll_t **ret)
 {
@@ -695,7 +746,7 @@ coll_parse_orop_append (xmmsc_coll_token_t *tokens, xmmsc_coll_t *operator,
 	return tk;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -734,7 +785,7 @@ coll_parse_reference (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 }
 
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -748,7 +799,7 @@ coll_parse_filter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return tokens;
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	xmmsc_coll_t *coll;
@@ -774,7 +825,7 @@ coll_parse_unaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return coll_next_token (tk);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 {
 	char *prop, *strval;
@@ -843,7 +894,7 @@ coll_parse_binaryfilter (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	return coll_next_token (operand);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 {
 	char *strval;
@@ -878,7 +929,7 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 }
 
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_token_new (xmmsc_coll_token_type_t type, char *string)
 {
 	xmmsc_coll_token_t* token;
@@ -890,7 +941,7 @@ coll_token_new (xmmsc_coll_token_type_t type, char *string)
 	return token;
 }
 
-void
+static void
 coll_token_free (xmmsc_coll_token_t *token)
 {
 	if (token->string != NULL) {
@@ -900,13 +951,13 @@ coll_token_free (xmmsc_coll_token_t *token)
 	free (token);
 }
 
-xmmsc_coll_token_t *
+static xmmsc_coll_token_t *
 coll_next_token (xmmsc_coll_token_t *token)
 {
 	return (token ? token->next : NULL);
 }
 
-void
+static void
 coll_append_universe (xmmsc_coll_t *coll)
 {
 	xmmsc_coll_t *univ;
@@ -916,7 +967,7 @@ coll_append_universe (xmmsc_coll_t *coll)
 	xmmsc_coll_unref (univ);
 }
 
-char *
+static char *
 coll_parse_prop (xmmsc_coll_token_t *token)
 {
 	int i;
@@ -944,7 +995,7 @@ coll_parse_prop (xmmsc_coll_token_t *token)
 	return NULL;
 }
 
-char *
+static char *
 coll_parse_strval (xmmsc_coll_token_t *token)
 {
 	if (!token || (token->type != XMMS_COLLECTION_TOKEN_STRING &&
@@ -955,7 +1006,10 @@ coll_parse_strval (xmmsc_coll_token_t *token)
 	return token->string;
 }
 
-char *
+/* Create a new string from a substring of an existing string, between
+ * start and end.
+ */
+static char *
 string_substr (char *start, char *end)
 {
 	int len;
@@ -969,7 +1023,11 @@ string_substr (char *start, char *end)
 	return buf;
 }
 
-char *
+/* Given a string containing a number, add the given delta to that
+ * number and produce a new string with the result. The returned
+ * string must be freed afterwards.
+ */
+static char *
 string_intadd (char *number, int delta)
 {
 	int n, len, size;
