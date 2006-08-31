@@ -278,6 +278,7 @@ cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *name, *namespace;
 	xmmsc_coll_t *coll = NULL;
 	xmmsc_result_t *res;
+	gchar *pattern;
 
 	if (argc < 5) {
 		print_error ("usage: coll save [collname] [pattern]");
@@ -287,7 +288,12 @@ cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("invalid collection name");
 	}
 
-	coll = pattern_to_coll (argc - 4, argv + 4);
+	pattern = g_strjoinv (" ", argv + 4);
+	if (!xmmsc_coll_parse (pattern, &coll)) {
+		print_error ("Unable to generate query");
+	}
+
+	g_free (pattern);
 
 	res = xmmsc_coll_save (conn, coll, name, namespace);
 	xmmsc_result_wait (res);

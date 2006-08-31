@@ -43,8 +43,8 @@ static void cmd_mlib_remove (xmmsc_connection_t *conn,
 cmds mlib_commands[] = {
 	{ "add", "[url] - Add 'url' to medialib", cmd_mlib_add },
 	{ "loadall", "Load everything from the mlib to the playlist", cmd_mlib_loadall },
-	{ "searchadd", "[artist=Dismantled] ... - Search for, and add songs to playlist", cmd_mlib_searchadd },
-	{ "search", "[artist=Dismantled] ... - Search for songs matching criteria", cmd_mlib_search },
+	{ "searchadd", "[artist:Dismantled] ... - Search for, and add songs to playlist", cmd_mlib_searchadd },
+	{ "search", "[artist:Dismantled] ... - Search for songs matching criteria", cmd_mlib_search },
 	{ "addpath", "[path] - Import metadata from all media files under 'path'", cmd_mlib_addpath },
 	{ "rehash", "Force the medialib to check whether its data is up to date", cmd_mlib_rehash },
 	{ "remove", "Remove an entry from medialib", cmd_mlib_remove },
@@ -253,6 +253,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
+	gchar *pattern;
 	const gchar *order[] = { NULL };
 
 	if (argc < 4) {
@@ -260,10 +261,12 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		             "[field1=val1 [field2=val2 ...]]");
 	}
 
-	query = pattern_to_coll (argc - 3, argv + 3);
-	if (query == NULL) {
+	pattern = g_strjoinv (" ", argv + 3);
+	if (!xmmsc_coll_parse (pattern, &query)) {
 		print_error ("Unable to generate query");
 	}
+
+	g_free (pattern);
 	
 	/* FIXME: Always add to active playlist: allow loading in other playlist! */
 	res = xmmsc_playlist_add_collection (conn, NULL, query, order);
@@ -283,16 +286,19 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	GList *n = NULL;
 	xmmsc_coll_t *query;
+	gchar *pattern;
 
 	if (argc < 4) {
 		print_error ("give a search pattern of the form "
 		             "[field1=val1 [field2=val2 ...]]");
 	}
 
-	query = pattern_to_coll (argc - 3, argv + 3);
-	if (!query) {
+	pattern = g_strjoinv (" ", argv + 3);
+	if (!xmmsc_coll_parse (pattern, &query)) {
 		print_error ("Unable to generate query");
 	}
+
+	g_free (pattern);
 
 	res = xmmsc_coll_query_ids (conn, query, NULL, 0, 0);
 	xmmsc_result_wait (res);
