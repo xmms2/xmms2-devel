@@ -210,6 +210,51 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name, ch
 xmmsc_result_t* xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len);
 xmmsc_result_t* xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, const char **order, unsigned int limit_start, unsigned int limit_len, const char **fetch, const char **group);
 
+/* string-to-collection parser */
+typedef enum {
+	XMMS_COLLECTION_TOKEN_INVALID,
+	XMMS_COLLECTION_TOKEN_GROUP_OPEN,
+	XMMS_COLLECTION_TOKEN_GROUP_CLOSE,
+	XMMS_COLLECTION_TOKEN_REFERENCE,
+	XMMS_COLLECTION_TOKEN_SYMBOL_ID,
+	XMMS_COLLECTION_TOKEN_STRING,
+	XMMS_COLLECTION_TOKEN_PATTERN,
+	XMMS_COLLECTION_TOKEN_INTEGER,
+	XMMS_COLLECTION_TOKEN_SEQUENCE,
+	XMMS_COLLECTION_TOKEN_PROP_LONG,
+	XMMS_COLLECTION_TOKEN_PROP_SHORT,
+	XMMS_COLLECTION_TOKEN_OPSET_UNION,
+	XMMS_COLLECTION_TOKEN_OPSET_INTERSECTION,
+	XMMS_COLLECTION_TOKEN_OPSET_COMPLEMENT,
+	XMMS_COLLECTION_TOKEN_OPFIL_HAS,
+	XMMS_COLLECTION_TOKEN_OPFIL_MATCH,
+	XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS,
+	XMMS_COLLECTION_TOKEN_OPFIL_SMALLER,
+	XMMS_COLLECTION_TOKEN_OPFIL_GREATER,
+	XMMS_COLLECTION_TOKEN_OPFIL_SMALLEREQ,
+	XMMS_COLLECTION_TOKEN_OPFIL_GREATEREQ,
+} xmmsc_coll_token_type_t;
+
+#define XMMS_COLLECTION_TOKEN_CUSTOM 32
+
+typedef struct xmmsc_coll_token_St xmmsc_coll_token_t;
+
+struct xmmsc_coll_token_St {
+	xmmsc_coll_token_type_t type;
+	char *string;
+	xmmsc_coll_token_t *next;
+};
+
+typedef xmmsc_coll_token_t* (*xmmsc_coll_parse_tokens_f) (const char *str, const char **newpos);
+typedef xmmsc_coll_t* (*xmmsc_coll_parse_build_f) (xmmsc_coll_token_t *tokens);
+
+int xmmsc_coll_parse (const char *pattern, xmmsc_coll_t** coll);
+int xmmsc_coll_parse_custom (const char *pattern, xmmsc_coll_parse_tokens_f parse_f, xmmsc_coll_parse_build_f build_f, xmmsc_coll_t** coll);
+
+xmmsc_coll_t *xmmsc_coll_default_parse_build (xmmsc_coll_token_t *tokens);
+xmmsc_coll_token_t *xmmsc_coll_default_parse_tokens (const char *str, const char **newpos);
+
+
 /* broadcasts */
 xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c);
 
