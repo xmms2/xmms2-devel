@@ -260,7 +260,7 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	if (argc < 4) {
 		print_error ("give a search pattern of the form "
-		             "[field1=val1 [field2=val2 ...]]");
+		             "[field1:val1 [field2:val2 ...]]");
 	}
 
 	args = g_new0 (char*, argc - 2);
@@ -303,7 +303,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	if (argc < 4) {
 		print_error ("give a search pattern of the form "
-		             "[field1=val1 [field2=val2 ...]]");
+		             "[field1:val1 [field2:val2 ...]]");
 	}
 
 	args = g_new0 (char*, argc - 2);
