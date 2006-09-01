@@ -243,6 +243,7 @@ main (gint argc, gchar **argv)
 		}
 
 		if (autostart && (!path || !g_ascii_strncasecmp (path, "unix://", 7))) {
+			print_info ("Starting xmms2d... (see 'autostart' in configfile if you don't want autostart)");
 			if (!system ("xmms2-launcher")) {
 				ret = xmmsc_connect (connection, path);
 			}
