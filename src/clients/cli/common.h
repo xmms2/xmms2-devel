@@ -43,5 +43,6 @@ void print_entry (const void *key, xmmsc_result_value_type_t type,
 void format_pretty_list (xmmsc_connection_t *conn, GList *list);
 gint res_has_key (xmmsc_result_t *res, const gchar *key);
 gboolean coll_read_collname (gchar *str, gchar **name, gchar **namespace);
+char *string_escape (const char *s);
 
 #endif

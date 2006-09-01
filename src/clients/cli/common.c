@@ -286,3 +286,31 @@ coll_read_collname (gchar *str, gchar **name, gchar **namespace)
 
 	return TRUE;
 }
+
+/** Return an escaped version of the string, with \-protected chars. */
+char *
+string_escape (const char *s)
+{
+	int i, w;
+	int esc_chars;
+	char *res;
+
+	esc_chars = 0;
+	for (i = 0; s[i] != '\0'; i++) {
+		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'') {
+			esc_chars++;
+		}
+	}
+
+	res = g_new0 (char, strlen (s) + esc_chars + 1);
+	for (i = 0, w = 0; s[i] != '\0'; i++, w++) {
+		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'') {
+			res[w] = '\\';
+			w++;
+		}
+
+		res[w] = s[i];
+	}
+
+	return res;
+}

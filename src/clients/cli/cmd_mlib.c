@@ -254,6 +254,8 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	xmmsc_coll_t *query;
 	gchar *pattern;
+	gchar **args;
+	int i;
 	const gchar *order[] = { NULL };
 
 	if (argc < 4) {
@@ -261,9 +263,19 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		             "[field1=val1 [field2=val2 ...]]");
 	}
 
-	pattern = g_strjoinv (" ", argv + 3);
+	args = g_new0 (char*, argc - 2);
+	for (i = 0; i < argc - 3; i++) {
+		args[i] = string_escape (argv[i + 3]);
+	}
+	args[i] = NULL;
+
+	pattern = g_strjoinv (" ", args);
 	if (!xmmsc_coll_parse (pattern, &query)) {
 		print_error ("Unable to generate query");
+	}
+
+	for (i = 0; i < argc - 3; i++) {
+		g_free (args[i]);
 	}
 
 	g_free (pattern);
@@ -279,7 +291,6 @@ cmd_mlib_searchadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (res);
 }
 
-
 static void
 cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
@@ -287,15 +298,27 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	GList *n = NULL;
 	xmmsc_coll_t *query;
 	gchar *pattern;
+	gchar **args;
+	int i;
 
 	if (argc < 4) {
 		print_error ("give a search pattern of the form "
 		             "[field1=val1 [field2=val2 ...]]");
 	}
 
-	pattern = g_strjoinv (" ", argv + 3);
+	args = g_new0 (char*, argc - 2);
+	for (i = 0; i < argc - 3; i++) {
+		args[i] = string_escape (argv[i + 3]);
+	}
+	args[i] = NULL;
+
+	pattern = g_strjoinv (" ", args);
 	if (!xmmsc_coll_parse (pattern, &query)) {
 		print_error ("Unable to generate query");
+	}
+
+	for (i = 0; i < argc - 3; i++) {
+		g_free (args[i]);
 	}
 
 	g_free (pattern);
