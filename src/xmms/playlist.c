@@ -372,7 +372,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 		}
 
 		/* knuth <3 */
-		for (i = 1; i < len; i++) {
+		for (i = playlist->currentpos+1; i < len; i++) {
 			j = g_random_int_range (i, len);
 			
 			swap_entries (playlist->list, i, j);

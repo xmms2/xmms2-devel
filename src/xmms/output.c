@@ -43,7 +43,7 @@ typedef struct xmms_volume_map_St {
 	gboolean status;
 } xmms_volume_map_t;
 
-static void xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt);
+static gboolean xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt);
 static gpointer xmms_output_monitor_volume_thread (gpointer data);
 
 static void xmms_output_start (xmms_output_t *output, xmms_error_t *err);
@@ -66,7 +66,8 @@ typedef enum xmms_output_filler_state_E {
 
 static void xmms_output_volume_set (xmms_output_t *output, const gchar *channel, guint volume, xmms_error_t *error);
 static GHashTable *xmms_output_volume_get (xmms_output_t *output, xmms_error_t *error);
-static void xmms_output_filler_state (xmms_output_t *output, enum xmms_output_filler_state_E state);
+static void xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state);
+static void xmms_output_filler_state_nolock (xmms_output_t *output, xmms_output_filler_state_t state);
 
 static void xmms_volume_map_init (xmms_volume_map_t *vl);
 static void xmms_volume_map_free (xmms_volume_map_t *vl);
@@ -275,7 +276,7 @@ song_changed_arg_free (void *data)
 	g_free (arg);
 }
 
-static void
+static gboolean
 song_changed (void *data)
 {
 	/* executes in the output thread; NOT the filler thread */
@@ -289,7 +290,12 @@ song_changed (void *data)
 	arg->output->played = 0;
 	arg->output->current_entry = entry;
 	
-	xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain));
+	if (!xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain))) {
+		XMMS_DBG ("Couldn't set format, stopping filler..");
+		xmms_output_filler_state_nolock (arg->output, FILLER_STOP);
+		xmms_ringbuf_set_eos (arg->output->filler_buffer, TRUE);
+		return FALSE;
+	}
 
 	if (arg->flush)
 		xmms_output_flush (arg->output);
@@ -299,6 +305,7 @@ song_changed (void *data)
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
 	                    entry);
 
+	return TRUE;
 }
 
 static void
@@ -311,12 +318,12 @@ seek_done (void *data)
 	g_mutex_unlock (output->playtime_mutex);
 
 	xmms_output_flush (output);
+	return TRUE;
 }
 
 static void
-xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state)
+xmms_output_filler_state_nolock (xmms_output_t *output, xmms_output_filler_state_t state)
 {
-	g_mutex_lock (output->filler_mutex);
 	output->filler_state = state;
 	g_cond_signal (output->filler_state_cond);
 	if (state == FILLER_QUIT || state == FILLER_STOP || state == FILLER_KILL) {
@@ -325,9 +332,15 @@ xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t stat
 	if (state != FILLER_STOP) {
 		xmms_ringbuf_set_eos (output->filler_buffer, FALSE);
 	}
-	g_mutex_unlock (output->filler_mutex);
 }
 
+static void
+xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state)
+{
+	g_mutex_lock (output->filler_mutex);
+	xmms_output_filler_state_nolock (output, state);	
+	g_mutex_unlock (output->filler_mutex);
+}
 static void
 xmms_output_filler_seek_state (xmms_output_t *output, guint32 samples)
 {
@@ -951,24 +964,24 @@ xmms_output_flush (xmms_output_t *output)
 /**
  * @internal
  */
-static void
+static gboolean
 xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 {
-	g_return_if_fail (output);
-	g_return_if_fail (fmt);
+	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (fmt, FALSE);
 
 	XMMS_DBG ("Setting format!");
 
 	if (!xmms_output_plugin_format_set_always (output->plugin)) {
 		if (output->format && xmms_stream_type_match (output->format, fmt)) {
 			XMMS_DBG ("audio formats are equal, not updating");
-			return;
+			return TRUE;
 		}
 	
 		xmms_object_unref (output->format);
 		xmms_object_ref (fmt);
 		output->format = fmt;
-		xmms_output_plugin_method_format_set (output->plugin, output, output->format);
+		return xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 	} else {
 		if (output->format && !xmms_stream_type_match (output->format, fmt)) {
 			xmms_object_unref (output->format);
@@ -980,7 +993,7 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 			xmms_object_ref (fmt);
 			output->format = fmt;
 		}
-		xmms_output_plugin_method_format_set (output->plugin, output, output->format);
+		return xmms_output_plugin_method_format_set (output->plugin, output, output->format);
 	}
 }
 
