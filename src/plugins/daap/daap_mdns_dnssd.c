@@ -86,7 +86,7 @@ qr_reply (DNSServiceRef sdRef,
 
 	ud->server->address = g_strdup (addr);
 
-	g_debug ("adding server %s %s", ud->server->mdnsname, ud->server->address);
+	XMMS_DBG ("adding server %s %s", ud->server->mdnsname, ud->server->address);
 	g_mutex_lock (ud->mdns->mutex);
 	ud->mdns->service_list = g_slist_prepend (ud->mdns->service_list, ud->server);
 	g_mutex_unlock (ud->mdns->mutex);
@@ -123,8 +123,6 @@ resolve_reply (DNSServiceRef client,
 	ud->server->txtvalues = g_hash_table_new_full (g_str_hash, g_str_equal,
 												   g_free, g_free);
 
-	g_debug ("Resolved %s", ud->server->hostname);
-
 	for (i = 0; i < TXTRecordGetCount (txtLen, txtRecord); i++) {
 		gchar key[256];
 		const void *txt_value;
@@ -138,7 +136,6 @@ resolve_reply (DNSServiceRef client,
 
 		value = g_malloc (vallen + 1);
 		g_strlcpy (value, txt_value, vallen + 1);
-		g_debug ("%s = %s", key, value);
 		g_hash_table_insert (ud->server->txtvalues, g_strdup (key), value);
 	}
 
@@ -181,7 +178,6 @@ browse_reply (DNSServiceRef client,
 	if (!remove) {
 		server = g_new0 (GMDNSServer, 1);
 		server->mdnsname = g_strdup (replyName);
-		g_debug ("Looking up server %s", server->mdnsname);
 		ud2 = g_new0 (GMDNSUserData, 1);
 		err = DNSServiceResolve (&ud2->client, 0, kDNSServiceInterfaceIndexAny,
 								 server->mdnsname,
@@ -258,7 +254,6 @@ g_mdns_source_dispatch (GSource *source,
 	if ((ud->fd->revents & G_IO_ERR) || (ud->fd->revents & G_IO_HUP)) {
 		return FALSE;
 	} else if (ud->fd->revents & G_IO_IN) {
-		g_debug ("Processing events!");
 		err = DNSServiceProcessResult (ud->client);
 		if (err != kDNSServiceErr_NoError) {
 			g_warning ("DNSServiceProcessResult returned error");
@@ -310,8 +305,6 @@ g_mdns_poll_add (GMDNS *mdns, GMDNSUserData *ud, DNSServiceRef client)
 						   ud, NULL);
 	g_source_add_poll (ud->source, ud->fd);
 	g_source_attach (ud->source, NULL);
-
-	g_debug ("Inited fd %d", ud->fd->fd);
 
 	return TRUE;
 }
