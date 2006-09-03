@@ -312,7 +312,7 @@ xmms_medialib_session_new (const char *file, int line)
  * @returns TRUE if successful and FALSE if there was a problem
  */
 
-gboolean
+xmms_medialib_t *
 xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar *path;
@@ -419,7 +419,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	              add_to_source, medialib->sources, NULL);
 	xmms_medialib_end (session);
 
-	return TRUE;
+	return medialib;
 }
 
 /** Session handling */
@@ -792,7 +792,8 @@ static void
 process_file (xmms_medialib_session_t *session,
               const gchar *path,
               guint32 *id,
-              xmms_error_t *error)
+              xmms_error_t *error,
+              gboolean add)
 {
 	guint32 ret = 0;
 
@@ -805,6 +806,11 @@ process_file (xmms_medialib_session_t *session,
 	if (!ret) {
 		*id = *id + 1; /* increment id */
 		xmms_medialib_entry_new_insert (session, *id, path, error);
+		if (add) {
+			xmms_playlist_add_entry (session->medialib->playlist, *id);
+		}
+	} else if (add) {
+		xmms_playlist_add_entry (session->medialib->playlist, ret);
 	}
 }
 
@@ -846,12 +852,27 @@ lookup_int (xmms_object_cmd_value_t *tbl, gchar *key)
 	return val->value.int32;
 }
 
+static gint
+cmp_val (gconstpointer a, gconstpointer b)
+{
+	xmms_object_cmd_value_t *v1, *v2;
+	v1 = (xmms_object_cmd_value_t *)a;
+	v2 = (xmms_object_cmd_value_t *)b;
+	if (v1->type != XMMS_OBJECT_CMD_ARG_DICT)
+		return 0;
+	if (v2->type != XMMS_OBJECT_CMD_ARG_DICT)
+		return 0;
+
+	return strcmp (lookup_string (v1, "path"), lookup_string (v2, "path"));
+}
+
 /* code ported over from CLI's "radd" command. */
 static gboolean
 process_dir (xmms_medialib_session_t *session,
              const gchar *directory,
              guint32 *id,
-             xmms_error_t *error)
+             xmms_error_t *error,
+             gboolean add)
 {
 	GList *list, *n;
 
@@ -860,18 +881,15 @@ process_dir (xmms_medialib_session_t *session,
 		return FALSE;
 	}
 
-	/*
-	FIXME: no sorting?
-	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
-	*/
+	list = g_list_sort (list, cmp_val);
 
 	for (n = list; n; n = g_list_next (n)) {
 		xmms_object_cmd_value_t *val = n->data;
 
 		if (lookup_int (val, "isdir") == 1) {
-			process_dir (session, lookup_string (val, "path"), id, error);
+			process_dir (session, lookup_string (val, "path"), id, error, add);
 		} else {
-			process_file (session, lookup_string (val, "path"), id, error);
+			process_file (session, lookup_string (val, "path"), id, error, add);
 		}
 
 		xmms_object_cmd_value_free (val);
@@ -923,8 +941,9 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 }
 
-static void
-xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
+void
+xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *path,
+                             gboolean add, xmms_error_t *error)
 {
 	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
@@ -941,12 +960,17 @@ xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t 
 		return;
 	}
 
-	process_dir (session, path, &id, error);
+	process_dir (session, path, &id, error, add);
 
 	xmms_medialib_end (session);
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
 	xmms_mediainfo_reader_wakeup (mr);
+}
 
+static void
+xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
+{
+	xmms_medialib_add_recursive (medialib, path, FALSE, error);
 }
 
 static xmms_medialib_entry_t
