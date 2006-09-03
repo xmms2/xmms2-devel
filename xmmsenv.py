@@ -78,7 +78,7 @@ class ProgramTarget(Target):
 
 class PluginTarget(Target):
 	def config(self, env):
-		env.pkgconfig("glib-2.0", fail=False, libs=False)
+		env.pkgconfig("glib-2.0", fail=False, libs=True)
 		Target.config(self, env)
 		if isinstance(self.globs.get("output_priority"), int):
 			global default_output
