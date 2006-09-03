@@ -351,23 +351,17 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 	len -= (l2 + 2);
 
 	if (buf[0] == 0x00 || buf[0] == 0x03) {
-		GString *str;
-		gchar *hash;
+		gchar hash[33];
 		gchar *desc = (gchar *)buf+1;
+
 		buf = buf + strlen (desc) + 2;
 		len -= (strlen (desc) - 2);
 		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
-		str = g_string_new (NULL);
 
-		g_string_append_len (str, (gchar *)buf, len);
-		hash = xmms_bindata_plugin_add (str);
-
-		if (hash) {
+		if (xmms_bindata_plugin_add (buf, len, hash)) {
 			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
 			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
-			g_free (hash);
 		}
-		g_string_free (str, FALSE);
 	} else {
 		XMMS_DBG ("Picture type %x not handled", buf[0]);
 	}

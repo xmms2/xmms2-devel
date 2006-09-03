@@ -503,19 +503,12 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 			g_free (metabuf);
 		}
 		if ((temp = mp4ff_meta_get_coverart (data->mp4ff, &metabuf))) {
-			GString *str;
-			gchar *hash;
+			gchar hash[33];
 
-			str = g_string_new (NULL);
-			g_string_append_len (str, metabuf, temp);
-			hash = xmms_bindata_plugin_add (str);
-
-			if (hash) {
+			if (xmms_bindata_plugin_add (metabuf, temp, hash)) {
 				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
 				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, "image/jpeg");
-				g_free (hash);
 			}
-			g_string_free (str, FALSE);
 		}
 
 		/* MusicBrainz tag support */
