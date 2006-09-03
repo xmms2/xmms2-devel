@@ -308,7 +308,7 @@ song_changed (void *data)
 	return TRUE;
 }
 
-static void
+static gboolean
 seek_done (void *data)
 {
 	xmms_output_t *output = (xmms_output_t *)data;
