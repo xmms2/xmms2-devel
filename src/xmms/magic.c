@@ -436,17 +436,28 @@ xmms_magic_match (xmms_magic_checker_t *c)
 }
 
 guint
-xmms_magic_complexity (const GList *magic)
+xmms_magic_complexity (GNode *tree)
 {
-	const GList *l;
-	guint ret = 0;
-
-	for (l = magic; l; l = g_list_next (l)) {
-		ret = MAX (ret, g_node_n_nodes (l->data, G_TRAVERSE_ALL));
-	}
-
-	return ret;
+	return g_node_n_nodes (tree, G_TRAVERSE_ALL);
 }
+
+static gint
+cb_sort_magic_list (GNode *a, GNode *b)
+{
+	guint n1, n2;
+
+	n1 = xmms_magic_complexity (a);
+	n2 = xmms_magic_complexity (b);
+
+	if (n1 > n2) {
+		return -1;
+	} else if (n1 < n2) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 
 gboolean
 xmms_magic_add (const gchar *desc, const gchar *mime, ...)
@@ -497,7 +508,9 @@ xmms_magic_add (const gchar *desc, const gchar *mime, ...)
 
 	/* only add this tree to the list if all spec chunks are valid */
 	if (ret) {
-		magic_list = g_list_append (magic_list, tree);
+		magic_list =
+			g_list_insert_sorted (magic_list, tree,
+			                      (GCompareFunc) cb_sort_magic_list);
 	} else {
 		xmms_magic_tree_free (tree);
 	}

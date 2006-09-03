@@ -14,22 +14,11 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __XMMS_PRIV_MAGIC_H__
-#define __XMMS_PRIV_MAGIC_H__
+#ifndef __XMMS_STRFUNC_H__
+#define __XMMS_STRFUNC_H__
 
-#include "xmms/xmms_xformplugin.h"
+#include <glib.h>
 
-typedef struct xmms_magic_checker_St {
-	xmms_xform_t *xform;
-	gchar *buf;
-	guint alloc;
-	guint read;
-	guint offset;
-} xmms_magic_checker_t;
-
-void xmms_magic_tree_free (GNode *tree);
-
-GNode *xmms_magic_match (xmms_magic_checker_t *c);
-guint xmms_magic_complexity (GNode *tree);
+gsize xmms_strnlen (const gchar *str, gsize max_len);
 
 #endif
