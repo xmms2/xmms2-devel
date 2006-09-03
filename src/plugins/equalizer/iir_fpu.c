@@ -45,8 +45,8 @@ void clean_history()
 {
   int n;
   /* Zero the history arrays */
-  bzero(data_history, sizeof(sXYData) * EQ_MAX_BANDS * EQ_CHANNELS);
-  bzero(data_history2, sizeof(sXYData) * EQ_MAX_BANDS * EQ_CHANNELS);
+  memset(data_history, 0, sizeof(sXYData) * EQ_MAX_BANDS * EQ_CHANNELS);
+  memset(data_history2, 0, sizeof(sXYData) * EQ_MAX_BANDS * EQ_CHANNELS);
   /* this is only needed if we use fpu code and there's no other place for
   the moment to init the dither array*/
   for (n = 0; n < 256; n++) {

@@ -59,6 +59,8 @@ class Target:
 
 	def config(self, env):
 		self.globs.get("config", lambda x: None)(env)
+		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
+		self.target = os.path.join(self.dir, self.globs["target"])
 
 class LibraryTarget(Target):
 	def add(self, env):
@@ -76,7 +78,7 @@ class ProgramTarget(Target):
 
 class PluginTarget(Target):
 	def config(self, env):
-		env.pkgconfig("glib-2.0", fail=False, libs=False)
+		env.pkgconfig("glib-2.0", fail=False, libs=True)
 		Target.config(self, env)
 		if isinstance(self.globs.get("output_priority"), int):
 			global default_output

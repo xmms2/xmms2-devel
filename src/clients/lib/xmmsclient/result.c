@@ -1126,7 +1126,9 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 
 	url[j] = '\0';
 
-	res->extra_free = x_list_prepend (res->extra_free, url);
+	if (res)
+		res->extra_free = x_list_prepend (res->extra_free, url);
+
 	return url;
 
  err:
