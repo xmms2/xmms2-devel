@@ -484,7 +484,9 @@ coll_parse_parenexpr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 
 	/* paren mismatch :-/ */
 	if (!tk || tk->type != XMMS_COLLECTION_TOKEN_GROUP_CLOSE) {
-		xmmsc_coll_unref (expr);
+		if (expr) {
+			xmmsc_coll_unref (expr);
+		}
 		*ret = NULL;
 		return tokens;
 	}
