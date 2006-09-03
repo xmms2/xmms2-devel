@@ -14,9 +14,8 @@
  *  GNU General Public License for more details.
  */
 
-/* XXX as of the current implementation, logging in to multiple DAAP servers
- * in the same xmms2d instance is messy at best and impossible at worst.
- * in addition, there is no method of logging out of the servers.
+/* XXX as of the current implementation, there is no method of logging out
+ * of the servers.
  */
 
 #include "xmms/xmms_defs.h"
@@ -29,6 +28,7 @@
 
 #include <stdlib.h>
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #define DEFAULT_DAAP_PORT 3689
 
@@ -53,7 +53,7 @@ typedef struct {
 	guint request_id;
 } xmms_daap_login_data_t;
 
-static xmms_daap_login_data_t login_data;
+static GHashTable *login_sessions = NULL;
 
 /*
  * Function prototypes
@@ -146,6 +146,10 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 
 	daap_mdns_initialize ();
 
+	if (!login_sessions) {
+		login_sessions = g_hash_table_new (g_str_hash, g_str_equal);
+	}
+
 	return TRUE;
 }
 
@@ -190,20 +194,43 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list, xmms_err
 	GSList *dbid_list = NULL;
 	GSList *song_list = NULL, *song_el;
 	cc_item_record_t *db_data;
-	guint session_id, revision_id;
-	gchar *host;
+	xmms_daap_login_data_t *login_data;
+	gchar *host, *hash;
 	guint port;
 
 	host = server->address;
 	port = server->port;
 
-	session_id = daap_command_login (host, port, 0, err);
-	if (xmms_error_iserror (err)) {
-		return NULL;
+	hash = g_malloc0 (strlen (host) + 5 + 1 + 1);
+	g_sprintf (hash, "%s:%u", host, port);
+
+	login_data = g_hash_table_lookup (login_sessions, hash);
+
+	if (!login_data) {
+		login_data = (xmms_daap_login_data_t *)
+		             g_malloc0 (sizeof (xmms_daap_login_data_t));
+
+		login_data->session_id = daap_command_login (host, port, 0, err);
+		if (xmms_error_iserror (err)) {
+			return NULL;
+		}
+
+		login_data->revision_id = daap_command_update (host, port,
+		                                               login_data->session_id,
+		                                               0);
+
+		login_data->request_id = 1;
+		login_data->logged_in = TRUE;
+
+		g_hash_table_insert (login_sessions, hash, login_data);
+	} else {
+		login_data->revision_id = daap_command_update (host, port,
+		                                               login_data->session_id,
+		                                               0);
 	}
 
-	revision_id = daap_command_update (host, port, session_id, 0);
-	dbid_list = daap_command_db_list (host, port, session_id, revision_id, 0);
+	dbid_list = daap_command_db_list (host, port, login_data->session_id,
+	                                  login_data->revision_id, 0);
 	if (!dbid_list) {
 		return NULL;
 	}
@@ -212,15 +239,14 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list, xmms_err
 	 *     let's hope that never changes *wink*
 	 *     just use the first db in the list */
 	db_data = (cc_item_record_t *) dbid_list->data;
-	song_list = daap_command_song_list (host, port, session_id, revision_id,
+	song_list = daap_command_song_list (host, port, login_data->session_id,
+	                                    login_data->revision_id,
 	                                    0, db_data->dbid);
 
 	song_el = song_list;
 	for ( ; song_el != NULL; song_el = g_slist_next (song_el)) {
 		url_list = add_song_to_list (url_list, song_el->data, host, port);
 	}
-
-	daap_command_logout (host, port, session_id, revision_id);
 
 	/* cleanup */
 	g_slist_foreach (dbid_list, (GFunc) cc_item_record_free, NULL);
@@ -241,9 +267,10 @@ xmms_daap_init (xmms_xform_t *xform)
 	gint dbid;
 	GSList *dbid_list = NULL;
 	xmms_daap_data_t *data;
+	xmms_daap_login_data_t *login_data;
 	xmms_error_t err;
-	gchar *command;
 	const gchar *url;
+	gchar *command, *hash;
 	guint filesize;
 
 	if (!xform) {
@@ -258,7 +285,7 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	data = xmms_xform_private_data_get (xform);
 
-	if (NULL == data) {
+	if (!data) {
 		data = g_malloc0 (sizeof (xmms_daap_data_t));
 		if (!data) {
 			return FALSE;
@@ -270,25 +297,36 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	xmms_error_reset (&err);
 
-	if (login_data.logged_in == FALSE) {
-		login_data.session_id = daap_command_login (data->host, data->port,
-		                                            login_data.request_id,
-													&err);
-		if (login_data.session_id == 0) {
+	hash = g_malloc0 (strlen (data->host) + 5 + 1 + 1);
+	g_sprintf (hash, "%s:%u", data->host, data->port);
+
+	login_data = g_hash_table_lookup (login_sessions, hash);
+	if (!login_data) {
+		XMMS_DBG ("creating login data for %s", hash);
+		login_data = (xmms_daap_login_data_t *)
+		             g_malloc0 (sizeof (xmms_daap_login_data_t));
+
+		login_data->request_id = 1;
+		login_data->logged_in = TRUE;
+
+		login_data->session_id = daap_command_login (data->host, data->port,
+		                                             login_data->request_id,
+		                                             &err);
+		//if (login_data->session_id == 0) {
+		if (xmms_error_iserror (&err)) {
 			return FALSE;
 		}
 
-		login_data.request_id = 1;
-		login_data.logged_in = TRUE;
+		g_hash_table_insert (login_sessions, hash, login_data);
 	}
 
-	login_data.revision_id = daap_command_update (data->host, data->port,
-	                                              login_data.session_id,
-	                                              login_data.request_id);
+	login_data->revision_id = daap_command_update (data->host, data->port,
+	                                               login_data->session_id,
+	                                               login_data->request_id);
 	dbid_list = daap_command_db_list (data->host, data->port,
-	                                  login_data.session_id,
-	                                  login_data.revision_id,
-	                                  login_data.request_id);
+	                                  login_data->session_id,
+	                                  login_data->revision_id,
+	                                  login_data->request_id);
 	if (!dbid_list) {
 		return FALSE;
 	}
@@ -297,16 +335,17 @@ xmms_daap_init (xmms_xform_t *xform)
 	dbid = ((cc_item_record_t *) dbid_list->data)->dbid;
 	/* want to request a stream, but don't read the data yet */
 	data->channel = daap_command_init_stream (data->host, data->port,
-	                                          login_data.session_id,
-	                                          login_data.revision_id,
-	                                          login_data.request_id, dbid,
+	                                          login_data->session_id,
+	                                          login_data->revision_id,
+	                                          login_data->request_id, dbid,
 	                                          command, &filesize);
 	if (! data->channel) {
 		return FALSE;
 	}
-	login_data.request_id++;
+	login_data->request_id++;
 
-	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, filesize);
+	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE,
+	                             filesize);
 
 	xmms_xform_private_data_set (xform, data);
 

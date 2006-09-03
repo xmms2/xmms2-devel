@@ -50,15 +50,15 @@ daap_mdns_serv_remove (GSList *serv_list, gchar *addr, guint port)
 	GSList *first = serv_list;
 	daap_mdns_server_t *serv;
 
-	for ( ; serv_list != NULL; serv_list = g_slist_next(serv_list)) {
+	for ( ; serv_list != NULL; serv_list = g_slist_next (serv_list)) {
 		serv = (daap_mdns_server_t *) serv_list->data;
-		if ( (port == serv->port) && (!strcmp(addr, serv->address)) ) {
+		if ( (port == serv->port) && (!strcmp (addr, serv->address)) ) {
 			serv_list = g_slist_remove (first, serv);
 
-			g_free(serv->server_name);
-			g_free(serv->mdns_hostname);
-			g_free(serv->address);
-			g_free(serv);
+			g_free (serv->server_name);
+			g_free (serv->mdns_hostname);
+			g_free (serv->address);
+			g_free (serv);
 
 			return serv_list;
 		}
@@ -101,13 +101,13 @@ daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
 			server->port = port;
 
 			if (*remove) {
-				g_static_mutex_lock(&serv_list_mut);
-				g_server_list = daap_mdns_serv_remove(g_server_list, ad, port);
-				g_static_mutex_unlock(&serv_list_mut);
+				g_static_mutex_lock (&serv_list_mut);
+				g_server_list = daap_mdns_serv_remove (g_server_list, ad, port);
+				g_static_mutex_unlock (&serv_list_mut);
 			} else {
-				g_static_mutex_lock(&serv_list_mut);
+				g_static_mutex_lock (&serv_list_mut);
 				g_server_list = g_slist_prepend (g_server_list, server);
-				g_static_mutex_unlock(&serv_list_mut);
+				g_static_mutex_unlock (&serv_list_mut);
 			}
 			g_free (remove);
 
@@ -255,9 +255,9 @@ GSList *
 daap_mdns_get_server_list ()
 {
 	GSList * l;
-	g_static_mutex_lock(&serv_list_mut);
+	g_static_mutex_lock (&serv_list_mut);
 	l = g_slist_copy (g_server_list);
-	g_static_mutex_unlock(&serv_list_mut);
+	g_static_mutex_unlock (&serv_list_mut);
 	return l;
 }
 

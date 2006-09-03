@@ -157,19 +157,19 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 		return NULL;
 	}
 
-	meta_items = g_slist_prepend(meta_items, g_strdup("dmap.itemid"));
-	meta_items = g_slist_prepend(meta_items, g_strdup("dmap.itemname"));
-	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songartist"));
-	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songformat"));
-	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songtracknumber"));
-	meta_items = g_slist_prepend(meta_items, g_strdup("daap.songalbum"));
+	meta_items = g_slist_prepend (meta_items, g_strdup ("dmap.itemid"));
+	meta_items = g_slist_prepend (meta_items, g_strdup ("dmap.itemname"));
+	meta_items = g_slist_prepend (meta_items, g_strdup ("daap.songartist"));
+	meta_items = g_slist_prepend (meta_items, g_strdup ("daap.songformat"));
+	meta_items = g_slist_prepend (meta_items, g_strdup ("daap.songtracknumber"));
+	meta_items = g_slist_prepend (meta_items, g_strdup ("daap.songalbum"));
 
 	request = g_strdup_printf ("/databases/%d/items?"
 	                           "session-id=%d&revision-id=%d",
 	                           db_id, session_id, revision_id);
 
 	if (meta_items) {
-		request = daap_url_append_meta(request, meta_items);
+		request = daap_url_append_meta (request, meta_items);
 	}
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
@@ -179,8 +179,8 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
-	g_slist_foreach(meta_items, (GFunc) g_free, NULL);
-	g_slist_free(meta_items);
+	g_slist_foreach (meta_items, (GFunc) g_free, NULL);
+	g_slist_free (meta_items);
 
 	return song_list;
 }
@@ -284,14 +284,14 @@ daap_url_append_meta (gchar *url, GSList *meta_list)
 	gchar * tmpurl;
 
 	tmpurl = url;
-	url = g_strdup_printf("%s&meta=%s", url, (gchar *) meta_list->data);
-	g_free(tmpurl);
-	meta_list = g_slist_next(meta_list);
+	url = g_strdup_printf ("%s&meta=%s", url, (gchar *) meta_list->data);
+	g_free (tmpurl);
+	meta_list = g_slist_next (meta_list);
 
-	for ( ; meta_list != NULL; meta_list = g_slist_next(meta_list)) {
+	for ( ; meta_list != NULL; meta_list = g_slist_next (meta_list)) {
 		tmpurl = url;
-		url = g_strdup_printf("%s,%s", url, (gchar *) meta_list->data);
-		g_free(tmpurl);
+		url = g_strdup_printf ("%s,%s", url, (gchar *) meta_list->data);
+		g_free (tmpurl);
 	}
 
 	return url;
