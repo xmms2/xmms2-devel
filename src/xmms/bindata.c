@@ -140,7 +140,7 @@ xmms_bindata_calculate_md5 (const guchar *data, guint size, gchar ret[33])
 
 /** Add binary data from a plugin */
 gboolean
-xmms_bindata_plugin_add (guchar *data, gsize size, gchar hash[33])
+xmms_bindata_plugin_add (const guchar *data, gsize size, gchar hash[33])
 {
 	xmms_error_t err;
 	return _xmms_bindata_add (global_bindata, data, size, hash, &err);
@@ -206,7 +206,7 @@ char *
 xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 {
 	gchar hash[33];
-	if (_xmms_bindata_add (bindata, (const guchar *)data->str, data->len, hash, err))
+	if (_xmms_bindata_add (bindata, (guchar *)data->str, data->len, hash, err))
 		return g_strdup (hash);
 	return NULL;
 }
