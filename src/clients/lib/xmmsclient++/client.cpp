@@ -21,8 +21,9 @@ namespace Xmms
 {
 
 	Client::Client( const std::string& name ) 
-		: playback( conn_, connected_, mainloop_ ), 
-	      playlist( conn_, connected_, mainloop_ ), 
+		: bindata(  conn_, connected_, mainloop_ ),
+		  playback( conn_, connected_, mainloop_ ), 
+		  playlist( conn_, connected_, mainloop_ ), 
 		  medialib( conn_, connected_, mainloop_ ),
 		  config(   conn_, connected_, mainloop_ ),
 		  stats(    conn_, connected_, mainloop_ ),

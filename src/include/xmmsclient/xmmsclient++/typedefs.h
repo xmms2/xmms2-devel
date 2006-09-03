@@ -7,6 +7,8 @@
 #include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient.h>
 
+#include <string>
+
 namespace Xmms 
 {
 
@@ -14,6 +16,8 @@ namespace Xmms
 	class List;
 
 	typedef List< Dict > DictList;
+
+	typedef std::basic_string< unsigned char > bin;
 
 	/** Used for function pointers to functions with signature
 	 *  bool();
@@ -35,6 +39,10 @@ namespace Xmms
 	 */
 	typedef Signal< std::string >::signal_t::slot_type StringSlot;
 
+	/** Used for function pointers to functions with signature
+	 *  bool( const Xmms::bin& );
+	 */
+	typedef Signal< Xmms::bin >::signal_t::slot_type BinSlot;
 
 	/** Used for function pointers to functions with signature
 	 *  bool( const Xmms::Dict& );
