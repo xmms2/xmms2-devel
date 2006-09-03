@@ -57,3 +57,7 @@ src/plugins/ices/encode.*:
 src/plugins/jack/jack.c:
         Copyright (C) 2004  Chris Morgan <cmorgan@alum.wpi.edu>
 
+src/plugins/daap/daap_md5.*:
+        Copyright (C) 2004,2005 Charles Schmidt <cschmidt2@emich.edu> and David Hammerton
+src/plugins/daap/*:
+        Licensed under GPL license.

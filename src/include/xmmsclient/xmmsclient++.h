@@ -14,5 +14,6 @@
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/list.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
+#include <xmmsclient/xmmsclient++/xform.h>
 
 #endif // XMMSCLIENTPP_H
