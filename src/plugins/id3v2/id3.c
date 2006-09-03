@@ -146,7 +146,7 @@ convert_id3_text (const gchar *enc, const guchar *txt, gint len)
 
 	nval = g_convert ((gchar *)txt, len, "UTF-8", enc, &readsize, &writesize, &err);
 	if (err) {
-		xmms_log_error ("couldn't convert field to %s", enc);
+		xmms_log_error ("Couldn't convert field from %s", enc);
 		return NULL;
 	}
 
@@ -503,9 +503,9 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 	
 	if ((id3head->size[0] | id3head->size[1] | id3head->size[2] |
 	     id3head->size[3]) & 0x80) {
-		xmms_log_error ("id3v2 tag having lenpath with msb set "
+		xmms_log_error ("id3v2 tag having lenbyte with msb set "
 		                "(%02x %02x %02x %02x)!  Probably broken "
-		                "tag/tag-writer. Skipping Tag.",
+		                "tag/tag-writer. Skipping tag.",
 		                id3head->size[0], id3head->size[1],
 		                id3head->size[2], id3head->size[3]);
 		return FALSE;
