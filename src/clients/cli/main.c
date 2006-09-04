@@ -220,6 +220,19 @@ main (gint argc, gchar **argv)
 	statusformat = g_hash_table_lookup (config, "statusformat");
 	listformat = g_hash_table_lookup (config, "listformat");
 
+	if (argc < 2) {
+		print_info ("Available commands:");
+		
+		for (i = 0; commands[i].name; i++) {
+			print_info ("  %s - %s", commands[i].name, commands[i].help);
+		}
+
+		exit (0);
+	} else if (g_strcasecmp (argv[1], "help") == 0) {
+		cmd_help (NULL, argc, argv);
+		exit (0);
+	}
+
 	connection = xmmsc_init ("xmms2-cli");
 
 	if (!connection) {
@@ -252,17 +265,6 @@ main (gint argc, gchar **argv)
 	if (!ret) {
 		print_error ("Could not connect to xmms2d: %s", 
 		             xmmsc_get_last_error (connection));
-	}
-
-	if (argc < 2) {
-		xmmsc_unref (connection);
-		print_info ("Available commands:");
-		
-		for (i = 0; commands[i].name; i++) {
-			print_info ("  %s - %s", commands[i].name, commands[i].help);
-		}
-
-		exit (0);
 	}
 
 	for (i = 0; commands[i].name; i++) {
