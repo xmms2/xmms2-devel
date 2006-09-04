@@ -56,7 +56,7 @@ cmds commands[] = {
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
 	{ "clear", "clears the playlist", cmd_clear },
 	{ "shuffle", "shuffles the playlist", cmd_shuffle },
-	{ "sort", "sort the playlist", cmd_sort },
+	{ "sort", "sort the playlist; use a space delimiter for multiple properties", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
 	{ "list", "lists the playlist", cmd_list },
 	
@@ -243,7 +243,6 @@ main (gint argc, gchar **argv)
 		}
 
 		if (autostart && (!path || !g_ascii_strncasecmp (path, "unix://", 7))) {
-			print_info ("Starting xmms2d... (see 'autostart' in configfile if you don't want autostart)");
 			if (!system ("xmms2-launcher")) {
 				ret = xmmsc_connect (connection, path);
 			}

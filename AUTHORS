@@ -169,6 +169,10 @@ N: Cole Thompson
 E: cole.thompson@gmail.com
 D: DAAP xform.
 
+N: Bryan Taylor
+E: bryan.a.taylor@gmail.com
+D: Various fixes
+
 N: Rémi Vanicat
 E: remi.vanicat@gmail.com
 D: SQLite optimizations.
