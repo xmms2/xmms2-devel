@@ -47,6 +47,12 @@ opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', default_cxxflags))
 opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', default_cflags))
 opts.Add('PREFIX', 'install prefix', default_prefix)
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
+opts.Add('LIBDIR', 'specified library directory', '$PREFIX/lib')
+opts.Add('BINDIR', 'specified binary directory', '$PREFIX/bin')
+opts.Add('PLUGINDIR', 'specified plugin directory', '$LIBDIR/xmms2')
+opts.Add('SHAREDIR', 'specified share directory', '$PREFIX/share')
+opts.Add('SCRIPTDIR', 'specified scripts directory', '$SHAREDIR/scripts')
+opts.Add('INCLUDEDIR', 'specified include directory', '$PREFIX/xmms2/include')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
 opts.Add('PKGCONFIGDIR', 'Where should we put our .pc files?', '$PREFIX/lib/pkgconfig')
@@ -141,8 +147,8 @@ base_env.handle_targets("Library")
 base_env.handle_targets("Program")
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper().replace("-", ""), 
-	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
-	      "%BINDIR%":base_env["PREFIX"]+"/bin",
+	      "%PKGLIBDIR%":base_env["PLUGINDIR"],
+	      "%BINDIR%":base_env["BINDIR"],
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix,
 	      "%DEFAULT_OUTPUT%":xmmsenv.default_output[1],
@@ -189,6 +195,9 @@ for p in pc_files:
 	d = subst_dict.copy()
 	d["%NAME%"] = p["name"]
 	d["%LIB%"] = p["lib"]
+	d["%LIBDIR%"] = base_env["LIBDIR"]
+	d["%BINDIR%"] = base_env["BINDIR"]
+	d["%INCLUDEDIR%"] = base_env["INCLUDEDIR"]
 	pc = base_env.SubstInFile(p["name"]+".pc", "xmms2.pc.in", SUBST_DICT=d)
 	base_env.Install("$PKGCONFIGDIR", p["name"]+".pc")
 

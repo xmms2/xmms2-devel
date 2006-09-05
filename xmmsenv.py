@@ -120,12 +120,12 @@ class XMMSEnvironment(Environment):
 		self.loadable = False
 		self.install_prefix = self["PREFIX"]
 		self.manpath = self["MANDIR"].replace("$PREFIX", self.install_prefix)
-		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
-		self.binpath = os.path.join(self.install_prefix, "bin")
-		self.librarypath = os.path.join(self.install_prefix, "lib")
-		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
-		self.includepath = os.path.join(self.install_prefix, "include/xmms2")
-		self.scriptpath = os.path.join(self.sharepath, "scripts")
+		self.binpath = self["BINDIR"].replace("$PREFIX", self.install_prefix)
+		self.librarypath = self["LIBDIR"].replace("$PREFIX", self.install_prefix)
+		self.sharepath = self["SHAREDIR"].replace("$PREFIX", self.install_prefix)
+		self.includepath = self["INCLUDEDIR"].replace("$PREFIX", self.install_prefix)
+		self.scriptpath = self["SCRIPTDIR"].replace("$SHAREDIR", self.sharepath)
+		self.pluginpath = self["PLUGINDIR"].replace("$LIBDIR", self.librarypath)
 		self["SHLIBPREFIX"] = "lib"
 		self.shversion = "0"
 

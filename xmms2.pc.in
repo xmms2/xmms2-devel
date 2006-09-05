@@ -1,7 +1,7 @@
 prefix=%PREFIX%
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include/xmms2
+exec_prefix=%BINDIR%
+libdir=%LIBDIR%
+includedir=%INCLUDEDIR%
 
 Name: %NAME%
 Description: XMMS Generation 2
