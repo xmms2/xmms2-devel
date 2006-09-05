@@ -269,13 +269,53 @@ void
 cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
+	gchar *properties, *pbuf;
+	gchar ***prop_tokens;
+	gint i, j, prop_tokens_len, properties_len = 0;
 	
-	if (argc != 3) {
+	if (argc < 3) {
 		print_error ("Sort needs a property to sort on, %d", argc);
 	}
-	
-	res = xmmsc_playlist_sort (conn, argv[2]);
+
+	prop_tokens_len = argc - 2;
+	prop_tokens = g_new (gchar **, prop_tokens_len);
+	for (i = 2; i < argc; i++) {
+		guint temp_len;
+		argv[i] = g_strchug (argv[i]);
+		prop_tokens[i-2] = g_strsplit (argv[i], " ", 0);
+		temp_len = g_strv_length (prop_tokens[i-2]);
+
+		for (j = 0; j < temp_len; j++) {
+			properties_len += strlen (prop_tokens[i-2][j]) + (i > 2 || j > 0 ? 1 : 0);
+		}
+	}
+
+	properties = g_new (gchar, properties_len+1);
+	pbuf = properties;
+	for (i = 0; i < prop_tokens_len; i++) {
+		guint temp_len = g_strv_length (prop_tokens[i]);
+		for (j = 0; j < temp_len; j++ ) {
+			size_t prop_len = strlen (prop_tokens[i][j]);
+			if (!prop_len ) {
+				continue;
+			}
+			if (i > 0 || j > 0) {
+				*pbuf = ' ';
+				pbuf++;
+			}
+			memcpy (pbuf, prop_tokens[i][j], prop_len);
+			pbuf += prop_len;
+		}
+	}
+	*pbuf = '\0';
+
+	res = xmmsc_playlist_sort (conn, properties);
 	xmmsc_result_wait (res);
+	
+	for (i = 0; i < prop_tokens_len; i++) {
+		g_strfreev (prop_tokens[i]);
+	}
+	g_free (properties);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));

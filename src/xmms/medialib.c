@@ -290,7 +290,7 @@ xmms_medialib_session_new (const char *file, int line)
 	session->file = file;
 	session->line = line;
 	session->sql = xmms_sqlite_open (&create);
-	session->source_pref = g_strdup ("server:plugin/*");
+	session->source_pref = g_strdup ("server:client/*:plugin/id3v2:plugin/*");
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
 	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
 
