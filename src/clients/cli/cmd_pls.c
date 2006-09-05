@@ -114,7 +114,7 @@ static void
 playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *ref)
 {
 	xmmsc_result_t *psres;
-	xmmsc_coll_t *pscoll;
+	xmmsc_coll_t *refcoll;
 	xmmsc_coll_t *op;
 	gchar *s_name, *s_namespace;
 
@@ -128,7 +128,10 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 	if (xmmsc_result_iserror (psres)) {
 		print_error ("%s", xmmsc_result_get_error (psres));
 	}
-	xmmsc_result_get_collection (psres, &pscoll);
+
+	refcoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+	xmmsc_coll_attribute_set (refcoll, "reference", s_name);
+	xmmsc_coll_attribute_set (refcoll, "namespace", s_namespace);
 
 	/* Remove previous operands */
 	xmmsc_coll_operand_list_first (coll);
@@ -136,7 +139,8 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 		xmmsc_coll_remove_operand (coll, op);
 	}
 
-	xmmsc_coll_add_operand (coll, pscoll);
+	xmmsc_coll_add_operand (coll, refcoll);
+	xmmsc_coll_unref (refcoll);
 }
 
 
