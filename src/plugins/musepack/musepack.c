@@ -213,7 +213,7 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	filesize = xmms_xform_metadat_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 	if (filesize != -1) {
 		duration = mpc_streaminfo_get_length (&data->info) * 1000;
 		xmms_xform_metadata_set_int (xform,
