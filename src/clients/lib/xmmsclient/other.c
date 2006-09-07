@@ -177,7 +177,7 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
 }
 
 /**
- * Get user config dir.
+ * Get the absolute path to the user config dir.
  *
  * @param buf A char buffer
  * @param len The length of buf (PATH_MAX is a good choice)
