@@ -23,11 +23,11 @@ void Init_Client ();
 
 static VALUE m_userconfdir_get (VALUE self)
 {
-	char path[PATH_MAX];
-	if (xmmsc_userconfdir_get (path, PATH_MAX) == NULL) {
-		return Qnil;
-	}
-	return rb_str_new2 (path);
+	char *p, path[PATH_MAX];
+
+	p = xmmsc_userconfdir_get (path, PATH_MAX);
+
+	return p ? rb_str_new2 (p) : Qnil;
 }
 
 void Init_xmmsclient (void)
