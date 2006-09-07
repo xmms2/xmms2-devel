@@ -57,6 +57,10 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_PLUGIN_TYPE_PLAYLIST,
 		XMMS_PLUGIN_TYPE_EFFECT
 
+cdef extern from "xmms/xmms_defs.h":
+	cdef enum:
+		XMMS_PATH_MAX
+
 # The following constants are meant for interpreting the return value of
 # XMMS.playback_status ()
 PLAYBACK_STATUS_STOP = XMMS_PLAYBACK_STATUS_STOP
@@ -207,7 +211,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_broadcast_mediainfo_reader_status (xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 
-	char *xmmsc_userconfdir_get ()
+	char *xmmsc_userconfdir_get (char *buf, int len)
 
 	void xmmsc_io_need_out_callback_set(xmmsc_connection_t *c, object(*callback)(int, object), object userdata)
 	void xmmsc_io_disconnect(xmmsc_connection_t *c)
@@ -543,7 +547,10 @@ def userconfdir_get():
 	configuration under the 'clients' subdirectory. This varies from
 	platform to platform so should always be retrieved at runtime.
 	"""
-	return xmmsc_userconfdir_get()
+	cdef char path[XMMS_PATH_MAX]
+	if xmmsc_userconfdir_get (path, XMMS_PATH_MAX) == NULL:
+		return None
+	return path
 
 cdef class XMMS:
 	"""

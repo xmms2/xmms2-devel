@@ -189,7 +189,7 @@ public final class Xmms2 {
      * @return	The used path for the xmms2 client's configuration
      */
     public String getConfigurationPath(){
-    	return Xmmsclient.xmmsc_userconfdir_get();
+    	return Xmmsclient.xmmsc_get_userconfdir();
     }
     
     /**
