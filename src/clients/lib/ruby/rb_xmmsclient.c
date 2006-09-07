@@ -84,7 +84,8 @@
 
 static VALUE eClientError, eDisconnectedError;
 
-static void c_mark (RbXmmsClient *xmms)
+static void
+c_mark (RbXmmsClient *xmms)
 {
 	rb_gc_mark (xmms->results);
 
@@ -95,7 +96,8 @@ static void c_mark (RbXmmsClient *xmms)
 		rb_gc_mark (xmms->io_need_out_cb);
 }
 
-static void c_free (RbXmmsClient *xmms)
+static void
+c_free (RbXmmsClient *xmms)
 {
 	if (!xmms->deleted)
 		xmmsc_unref (xmms->real);
@@ -103,7 +105,8 @@ static void c_free (RbXmmsClient *xmms)
 	free (xmms);
 }
 
-static VALUE c_alloc (VALUE klass)
+static VALUE
+c_alloc (VALUE klass)
 {
 	RbXmmsClient *xmms;
 
@@ -117,7 +120,8 @@ static VALUE c_alloc (VALUE klass)
  *
  * Creates an XmmsClient::XmmsClient object.
  */
-static VALUE c_init (VALUE self, VALUE name)
+static VALUE
+c_init (VALUE self, VALUE name)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -143,7 +147,8 @@ static VALUE c_init (VALUE self, VALUE name)
  * Connects _xc_ to the XMMS2 daemon listening at _path_.
  * If _path_ isn't given, the default path is used.
  */
-static VALUE c_connect (int argc, VALUE *argv, VALUE self)
+static VALUE
+c_connect (int argc, VALUE *argv, VALUE self)
 {
 	VALUE path;
 	RbXmmsClient *xmms = NULL;
@@ -164,7 +169,8 @@ static VALUE c_connect (int argc, VALUE *argv, VALUE self)
 	return self;
 }
 
-static VALUE c_delete (VALUE self)
+static VALUE
+c_delete (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -178,7 +184,8 @@ static VALUE c_delete (VALUE self)
 	return Qnil;
 }
 
-static void on_disconnect (void *data)
+static void
+on_disconnect (void *data)
 {
 	VALUE self = (VALUE) data;
 	RbXmmsClient *xmms = NULL;
@@ -195,7 +202,8 @@ static void on_disconnect (void *data)
  * Sets the block that's executed when _xc_ is disconnected from the
  * XMMS2 daemon.
  */
-static VALUE c_on_disconnect (VALUE self)
+static VALUE
+c_on_disconnect (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -221,7 +229,8 @@ static VALUE c_on_disconnect (VALUE self)
  * Returns the last error that occured in _xc_ or +nil+, if no error
  * occured yet.
  */
-static VALUE c_last_error_get (VALUE self)
+static VALUE
+c_last_error_get (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 	const char *s;
@@ -241,7 +250,8 @@ static VALUE c_last_error_get (VALUE self)
  *
  * Returns the file descriptor of the XmmsClient IPC socket.
  */
-static VALUE c_io_fd (VALUE self)
+static VALUE
+c_io_fd (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -259,7 +269,8 @@ static VALUE c_io_fd (VALUE self)
  * Returns +true+ if an outgoing (to server) clientlib command is pending,
  * +false+ otherwise.
  */
-static VALUE c_io_want_out (VALUE self)
+static VALUE
+c_io_want_out (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -270,7 +281,8 @@ static VALUE c_io_want_out (VALUE self)
 	return xmmsc_io_want_out (xmms->real) ? Qtrue : Qfalse;
 }
 
-static void on_io_need_out (int flag, void *data)
+static void
+on_io_need_out (int flag, void *data)
 {
 	VALUE self = (VALUE) data;
 	RbXmmsClient *xmms = NULL;
@@ -286,7 +298,8 @@ static void on_io_need_out (int flag, void *data)
  *
  * Sets the block that's called when the output socket state changes.
  */
-static VALUE c_io_on_need_out (VALUE self)
+static VALUE
+c_io_on_need_out (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -312,7 +325,8 @@ static VALUE c_io_on_need_out (VALUE self)
  * Retrieves one incoming (from server) clientlib command if there are any in
  * the buffer.
  */
-static VALUE c_io_in_handle (VALUE self)
+static VALUE
+c_io_in_handle (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -332,7 +346,8 @@ static VALUE c_io_in_handle (VALUE self)
  * Sends one outgoing (to server) clientlib command. You should check
  * XmmsClient::XmmsClient#io_want_out before calling this method.
  */
-static VALUE c_io_out_handle (VALUE self)
+static VALUE
+c_io_out_handle (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -352,7 +367,8 @@ static VALUE c_io_out_handle (VALUE self)
  * Disconnects the IPC socket. This should only be used by event loop
  * implementations.
  */
-static VALUE c_io_disconnect (VALUE self)
+static VALUE
+c_io_disconnect (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -371,7 +387,8 @@ static VALUE c_io_disconnect (VALUE self)
  *
  * Shuts down the XMMS2 daemon.
  */
-static VALUE c_quit (VALUE self)
+static VALUE
+c_quit (VALUE self)
 {
 	METHOD_ADD_HANDLER (quit);
 }
@@ -382,7 +399,8 @@ static VALUE c_quit (VALUE self)
  *
  * Will be called when the server is terminating.
  */
-static VALUE c_broadcast_quit (VALUE self)
+static VALUE
+c_broadcast_quit (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_quit);
 }
@@ -393,7 +411,8 @@ static VALUE c_broadcast_quit (VALUE self)
  *
  * Starts playback.
  */
-static VALUE c_playback_start (VALUE self)
+static VALUE
+c_playback_start (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_start);
 }
@@ -404,7 +423,8 @@ static VALUE c_playback_start (VALUE self)
  *
  * Pauses playback.
  */
-static VALUE c_playback_pause (VALUE self)
+static VALUE
+c_playback_pause (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_pause);
 }
@@ -415,7 +435,8 @@ static VALUE c_playback_pause (VALUE self)
  *
  * Stops playback.
  */
-static VALUE c_playback_stop (VALUE self)
+static VALUE
+c_playback_stop (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_stop);
 }
@@ -426,7 +447,8 @@ static VALUE c_playback_stop (VALUE self)
  *
  * Advances to the next playlist entry.
  */
-static VALUE c_playback_tickle (VALUE self)
+static VALUE
+c_playback_tickle (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_tickle);
 }
@@ -437,7 +459,8 @@ static VALUE c_playback_tickle (VALUE self)
  *
  * Retrieves the playback status.
  */
-static VALUE c_playback_status (VALUE self)
+static VALUE
+c_playback_status (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_status);
 }
@@ -448,7 +471,8 @@ static VALUE c_playback_status (VALUE self)
  *
  * Retrieves the playback status as a broadcast.
  */
-static VALUE c_broadcast_playback_status (VALUE self)
+static VALUE
+c_broadcast_playback_status (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_playback_status);
 }
@@ -459,7 +483,8 @@ static VALUE c_broadcast_playback_status (VALUE self)
  *
  * Retrieves the playtime.
  */
-static VALUE c_playback_playtime (VALUE self)
+static VALUE
+c_playback_playtime (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_playtime);
 }
@@ -470,7 +495,8 @@ static VALUE c_playback_playtime (VALUE self)
  *
  * Retrieves the playtime as a signal.
  */
-static VALUE c_signal_playback_playtime (VALUE self)
+static VALUE
+c_signal_playback_playtime (VALUE self)
 {
 	METHOD_ADD_HANDLER (signal_playback_playtime);
 }
@@ -481,7 +507,8 @@ static VALUE c_signal_playback_playtime (VALUE self)
  *
  * Retrieves the media id of the currently played track.
  */
-static VALUE c_playback_current_id (VALUE self)
+static VALUE
+c_playback_current_id (VALUE self)
 {
 	METHOD_ADD_HANDLER (playback_current_id);
 }
@@ -492,7 +519,8 @@ static VALUE c_playback_current_id (VALUE self)
  *
  * Retrieves the media id of the currently played track as a broadcast.
  */
-static VALUE c_broadcast_playback_current_id (VALUE self)
+static VALUE
+c_broadcast_playback_current_id (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_playback_current_id);
 }
@@ -503,7 +531,8 @@ static VALUE c_broadcast_playback_current_id (VALUE self)
  *
  * Retrieves configuration properties as a broadcast.
  */
-static VALUE c_broadcast_configval_changed (VALUE self)
+static VALUE
+c_broadcast_configval_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_configval_changed);
 }
@@ -514,7 +543,8 @@ static VALUE c_broadcast_configval_changed (VALUE self)
  *
  * Seek to the song position given in _ms_.
  */
-static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
+static VALUE
+c_playback_seek_ms (VALUE self, VALUE ms)
 {
 	METHOD_ADD_HANDLER_UINT (playback_seek_ms, ms);
 }
@@ -525,7 +555,8 @@ static VALUE c_playback_seek_ms (VALUE self, VALUE ms)
  *
  * Seek in the song by the offset given in ms.
  */
-static VALUE c_playback_seek_ms_rel (VALUE self, VALUE ms)
+static VALUE
+c_playback_seek_ms_rel (VALUE self, VALUE ms)
 {
 	METHOD_ADD_HANDLER_INT (playback_seek_ms_rel, ms);
 }
@@ -536,7 +567,8 @@ static VALUE c_playback_seek_ms_rel (VALUE self, VALUE ms)
  *
  * Seek to the song position given in _samples_.
  */
-static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
+static VALUE
+c_playback_seek_samples (VALUE self, VALUE samples)
 {
 	METHOD_ADD_HANDLER_UINT (playback_seek_samples, samples);
 }
@@ -547,7 +579,8 @@ static VALUE c_playback_seek_samples (VALUE self, VALUE samples)
   *
   * Seek in the song position by the offset given in samples.
   */
-static VALUE c_playback_seek_samples_rel (VALUE self, VALUE samples)
+static VALUE
+c_playback_seek_samples_rel (VALUE self, VALUE samples)
 {
 	METHOD_ADD_HANDLER_INT (playback_seek_samples_rel, samples);
 }
@@ -558,8 +591,8 @@ static VALUE c_playback_seek_samples_rel (VALUE self, VALUE samples)
  *
  * Sets playback volume for _channel_ to _volume_.
  */
-static VALUE c_playback_volume_set (VALUE self, VALUE channel,
-                                    VALUE volume)
+static VALUE
+c_playback_volume_set (VALUE self, VALUE channel, VALUE volume)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
@@ -584,7 +617,8 @@ static VALUE c_playback_volume_set (VALUE self, VALUE channel,
  *
  * Gets the current playback volume.
  */
-static VALUE c_playback_volume_get (VALUE self)
+static VALUE
+c_playback_volume_get (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
@@ -605,7 +639,8 @@ static VALUE c_playback_volume_get (VALUE self)
  * Registers a broadcast handler that's evoked when the playback volume
  * changes.
  */
-static VALUE c_broadcast_playback_volume_changed (VALUE self)
+static VALUE
+c_broadcast_playback_volume_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_playback_volume_changed);
 }
@@ -616,7 +651,8 @@ static VALUE c_broadcast_playback_volume_changed (VALUE self)
  *
  * Retrieves a hash describing the change to the playlist as a broadcast.
  */
-static VALUE c_broadcast_playlist_changed (VALUE self)
+static VALUE
+c_broadcast_playlist_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER(broadcast_playlist_changed);
 }
@@ -629,7 +665,8 @@ static VALUE c_broadcast_playlist_changed (VALUE self)
  * XmmsClient::XmmsClient::ValueError exception if the current position is
  * undefined.
  */
-static VALUE c_playlist_current_pos (VALUE self)
+static VALUE
+c_playlist_current_pos (VALUE self)
 {
 	METHOD_ADD_HANDLER(playlist_current_pos);
 }
@@ -641,7 +678,8 @@ static VALUE c_playlist_current_pos (VALUE self)
  * Retrieves the current playlist position as a broadcast. See
  * _playlist_current_pos_.
  */
-static VALUE c_broadcast_playlist_current_pos (VALUE self)
+static VALUE
+c_broadcast_playlist_current_pos (VALUE self)
 {
 	METHOD_ADD_HANDLER(broadcast_playlist_current_pos);
 }
@@ -652,7 +690,8 @@ static VALUE c_broadcast_playlist_current_pos (VALUE self)
  *
  * Retrieves the id of a changed medialib entry as a broadcast.
  */
-static VALUE c_broadcast_medialib_entry_changed (VALUE self)
+static VALUE
+c_broadcast_medialib_entry_changed (VALUE self)
 {
 	METHOD_ADD_HANDLER(broadcast_medialib_entry_changed);
 }
@@ -663,7 +702,8 @@ static VALUE c_broadcast_medialib_entry_changed (VALUE self)
  *
  * Retrieves the id of an added medialib entry as a broadcast.
  */
-static VALUE c_broadcast_medialib_entry_added (VALUE self)
+static VALUE
+c_broadcast_medialib_entry_added (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_medialib_entry_added);
 }
@@ -674,7 +714,8 @@ static VALUE c_broadcast_medialib_entry_added (VALUE self)
  *
  * Shuffles the playlist.
  */
-static VALUE c_playlist_shuffle (VALUE self)
+static VALUE
+c_playlist_shuffle (VALUE self)
 {
 	METHOD_ADD_HANDLER(playlist_shuffle);
 }
@@ -685,7 +726,8 @@ static VALUE c_playlist_shuffle (VALUE self)
  *
  * Retrieves an array containing an id for each playlist position.
  */
-static VALUE c_playlist_list (VALUE self)
+static VALUE
+c_playlist_list (VALUE self)
 {
 	METHOD_ADD_HANDLER(playlist_list);
 }
@@ -696,7 +738,8 @@ static VALUE c_playlist_list (VALUE self)
  *
  * Clears the playlist.
  */
-static VALUE c_playlist_clear (VALUE self)
+static VALUE
+c_playlist_clear (VALUE self)
 {
 	METHOD_ADD_HANDLER(playlist_clear);
 }
@@ -707,7 +750,8 @@ static VALUE c_playlist_clear (VALUE self)
  *
  * Sets the next song to be played to _pos_ (an absolute position).
  */
-static VALUE c_playlist_set_next (VALUE self, VALUE pos)
+static VALUE
+c_playlist_set_next (VALUE self, VALUE pos)
 {
 	METHOD_ADD_HANDLER_UINT (playlist_set_next, pos);
 }
@@ -719,7 +763,8 @@ static VALUE c_playlist_set_next (VALUE self, VALUE pos)
  * Sets the next song to be played based on the current position where
  * _pos_ is a value relative to the current position.
  */
-static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
+static VALUE
+c_playlist_set_next_rel (VALUE self, VALUE pos)
 {
 	METHOD_ADD_HANDLER_INT (playlist_set_next_rel, pos);
 }
@@ -730,7 +775,8 @@ static VALUE c_playlist_set_next_rel (VALUE self, VALUE pos)
  *
  * Adds an entry to the current playlist. _arg_ can be either an URL or an id.
  */
-static VALUE c_playlist_add (VALUE self, VALUE arg)
+static VALUE
+c_playlist_add (VALUE self, VALUE arg)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
@@ -762,7 +808,8 @@ static VALUE c_playlist_add (VALUE self, VALUE arg)
  * Inserts an entry to the current playlist at position _pos_.
  * _arg_ can be either an URL or an id.
  */
-static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
+static VALUE
+c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
@@ -795,7 +842,8 @@ static VALUE c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
  *
  * Removes the entry at _pos_ from the current playlist.
  */
-static VALUE c_playlist_remove (VALUE self, VALUE pos)
+static VALUE
+c_playlist_remove (VALUE self, VALUE pos)
 {
 	METHOD_ADD_HANDLER_UINT (playlist_remove, pos);
 }
@@ -806,7 +854,8 @@ static VALUE c_playlist_remove (VALUE self, VALUE pos)
  *
  * Moves the entry at _current_pos_ to _new_pos_.
  */
-static VALUE c_playlist_move (VALUE self, VALUE cur_pos, VALUE new_pos)
+static VALUE
+c_playlist_move (VALUE self, VALUE cur_pos, VALUE new_pos)
 {
 	RbXmmsClient *xmms = NULL;
 	xmmsc_result_t *res;
@@ -831,7 +880,8 @@ static VALUE c_playlist_move (VALUE self, VALUE cur_pos, VALUE new_pos)
  * Sorts the playlist on _property_, which is a medialib property such as
  * "title".
  */
-static VALUE c_playlist_sort (VALUE self, VALUE property)
+static VALUE
+c_playlist_sort (VALUE self, VALUE property)
 {
 	METHOD_ADD_HANDLER_STR (playlist_sort, property);
 }
@@ -842,7 +892,8 @@ static VALUE c_playlist_sort (VALUE self, VALUE property)
  *
  * Runs an SQL query on the medialib.
  */
-static VALUE c_medialib_select (VALUE self, VALUE query)
+static VALUE
+c_medialib_select (VALUE self, VALUE query)
 {
 	METHOD_ADD_HANDLER_STR (medialib_select, query);
 }
@@ -853,7 +904,8 @@ static VALUE c_medialib_select (VALUE self, VALUE query)
  *
  * Saves the current playlist to the medialib under _name_.
  */
-static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
+static VALUE
+c_medialib_playlist_save_current (VALUE self, VALUE name)
 {
 	METHOD_ADD_HANDLER_STR (medialib_playlist_save_current, name);
 }
@@ -864,7 +916,8 @@ static VALUE c_medialib_playlist_save_current (VALUE self, VALUE name)
  *
  * Appends the playlist _name_ to the current playlist.
  */
-static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
+static VALUE
+c_medialib_playlist_load (VALUE self, VALUE name)
 {
 	METHOD_ADD_HANDLER_STR (medialib_playlist_load, name);
 }
@@ -875,7 +928,8 @@ static VALUE c_medialib_playlist_load (VALUE self, VALUE name)
  *
  * Removes the playlist _name_ from the medialib.
  */
-static VALUE c_medialib_playlist_remove (VALUE self, VALUE name)
+static VALUE
+c_medialib_playlist_remove (VALUE self, VALUE name)
 {
 	METHOD_ADD_HANDLER_STR (medialib_playlist_remove, name);
 }
@@ -886,7 +940,8 @@ static VALUE c_medialib_playlist_remove (VALUE self, VALUE name)
  *
  * Adds _url_ to the medialib.
  */
-static VALUE c_medialib_add_entry (VALUE self, VALUE url)
+static VALUE
+c_medialib_add_entry (VALUE self, VALUE url)
 {
 	METHOD_ADD_HANDLER_STR (medialib_add_entry, url);
 }
@@ -897,7 +952,8 @@ static VALUE c_medialib_add_entry (VALUE self, VALUE url)
  *
  * Retrieves the id corresponding to _url_.
  */
-static VALUE c_medialib_get_id (VALUE self, VALUE url)
+static VALUE
+c_medialib_get_id (VALUE self, VALUE url)
 {
 	METHOD_ADD_HANDLER_STR (medialib_get_id, url);
 }
@@ -908,7 +964,8 @@ static VALUE c_medialib_get_id (VALUE self, VALUE url)
  *
  * Retrieves medialib info for _id_.
  */
-static VALUE c_medialib_get_info (VALUE self, VALUE id)
+static VALUE
+c_medialib_get_info (VALUE self, VALUE id)
 {
 	METHOD_ADD_HANDLER_UINT (medialib_get_info, id);
 }
@@ -922,8 +979,8 @@ static VALUE c_medialib_get_info (VALUE self, VALUE id)
  * mediainfo is written to "client/<yourclient>" where <yourclient> is the
  * name you specified in _XmmsClient::XmmsClient.new(name)_.
  */
-static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
-                                            VALUE self)
+static VALUE
+c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 {
 	VALUE id, key, value, src = Qnil;
 	RbXmmsClient *xmms = NULL;
@@ -983,7 +1040,8 @@ static VALUE c_medialib_entry_property_set (int argc, VALUE *argv,
  *
  * Adds files matching the SQL query to the current playlist.
  */
-static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
+static VALUE
+c_medialib_add_to_playlist (VALUE self, VALUE query)
 {
 	METHOD_ADD_HANDLER_STR (medialib_add_to_playlist, query);
 }
@@ -996,7 +1054,8 @@ static VALUE c_medialib_add_to_playlist (VALUE self, VALUE query)
  * Note that clients should treat internally used playlists
  * (marked with a leading underscore) carefully.
  */
-static VALUE c_medialib_playlists_list (VALUE self)
+static VALUE
+c_medialib_playlists_list (VALUE self)
 {
 	METHOD_ADD_HANDLER (medialib_playlists_list);
 }
@@ -1007,7 +1066,8 @@ static VALUE c_medialib_playlists_list (VALUE self)
  *
  * Retrieves the contents of the playlist _name_.
  */
-static VALUE c_medialib_playlist_list (VALUE self, VALUE name)
+static VALUE
+c_medialib_playlist_list (VALUE self, VALUE name)
 {
 	METHOD_ADD_HANDLER_STR (medialib_playlist_list, name);
 }
@@ -1018,8 +1078,8 @@ static VALUE c_medialib_playlist_list (VALUE self, VALUE name)
  *
  * Imports a new playlist from _url_ to the medialib.
  */
-static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
-                                         VALUE url)
+static VALUE
+c_medialib_playlist_import (VALUE self, VALUE playlist, VALUE url)
 {
 	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_import, playlist, url);
 }
@@ -1030,7 +1090,8 @@ static VALUE c_medialib_playlist_import (VALUE self, VALUE playlist,
  *
  * Exports a medialib playlist in a format described by _mime_.
  */
-static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
+static VALUE
+c_medialib_playlist_export (VALUE self, VALUE playlist,
                                          VALUE mime)
 {
 	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_export, playlist, mime);
@@ -1042,7 +1103,8 @@ static VALUE c_medialib_playlist_export (VALUE self, VALUE playlist,
  *
  * Recursively imports all media files under _path_ to the medialib.
  */
-static VALUE c_medialib_path_import (VALUE self, VALUE path)
+static VALUE
+c_medialib_path_import (VALUE self, VALUE path)
 {
 	METHOD_ADD_HANDLER_STR (medialib_path_import, path);
 }
@@ -1053,7 +1115,8 @@ static VALUE c_medialib_path_import (VALUE self, VALUE path)
  *
  * Rehashes the medialib entry at _id_ or the whole medialib if _id_ == 0.
  */
-static VALUE c_medialib_rehash (VALUE self, VALUE id)
+static VALUE
+c_medialib_rehash (VALUE self, VALUE id)
 {
 	METHOD_ADD_HANDLER_UINT (medialib_rehash, id);
 }
@@ -1064,7 +1127,8 @@ static VALUE c_medialib_rehash (VALUE self, VALUE id)
  *
  * returns a list of files from the server
  */
-static VALUE c_xform_media_browse (VALUE self, VALUE url)
+static VALUE
+c_xform_media_browse (VALUE self, VALUE url)
 {
 	METHOD_ADD_HANDLER_STR (xform_media_browse, url);
 }
@@ -1075,7 +1139,8 @@ static VALUE c_xform_media_browse (VALUE self, VALUE url)
  *
  * Requests the status of the mediainfo reader.
  */
-static VALUE c_broadcast_mediainfo_reader_status (VALUE self)
+static VALUE
+c_broadcast_mediainfo_reader_status (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_mediainfo_reader_status);
 }
@@ -1086,7 +1151,8 @@ static VALUE c_broadcast_mediainfo_reader_status (VALUE self)
  *
  * Requests the number of unindexed entries in the medialib.
  */
-static VALUE c_signal_mediainfo_reader_unindexed (VALUE self)
+static VALUE
+c_signal_mediainfo_reader_unindexed (VALUE self)
 {
 	METHOD_ADD_HANDLER (signal_mediainfo_reader_unindexed);
 }
@@ -1097,7 +1163,8 @@ static VALUE c_signal_mediainfo_reader_unindexed (VALUE self)
  *
  * Retrieves an array containing a hash of information for each plugin.
  */
-static VALUE c_plugin_list (int argc, VALUE *argv, VALUE self)
+static VALUE
+c_plugin_list (int argc, VALUE *argv, VALUE self)
 {
 	VALUE type = Qnil;
 
@@ -1115,7 +1182,8 @@ static VALUE c_plugin_list (int argc, VALUE *argv, VALUE self)
  *
  * Retrieves a hash containing statistics about the daemon.
  */
-static VALUE c_main_stats (VALUE self)
+static VALUE
+c_main_stats (VALUE self)
 {
 	METHOD_ADD_HANDLER (main_stats);
 }
@@ -1126,7 +1194,8 @@ static VALUE c_main_stats (VALUE self)
  *
  * Retrieves a list of all config values.
  */
-static VALUE c_configval_list (VALUE self)
+static VALUE
+c_configval_list (VALUE self)
 {
 	METHOD_ADD_HANDLER (configval_list);
 }
@@ -1137,7 +1206,8 @@ static VALUE c_configval_list (VALUE self)
  *
  * Retrieves the value of the configuration property at _key_.
  */
-static VALUE c_configval_get (VALUE self, VALUE key)
+static VALUE
+c_configval_get (VALUE self, VALUE key)
 {
 	METHOD_ADD_HANDLER_STR (configval_get, key);
 }
@@ -1148,7 +1218,8 @@ static VALUE c_configval_get (VALUE self, VALUE key)
  *
  * Sets the value of the configuration property at _key_ to _value_.
  */
-static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
+static VALUE
+c_configval_set (VALUE self, VALUE key, VALUE val)
 {
 	METHOD_ADD_HANDLER_STR_STR (configval_set, key, val);
 }
@@ -1159,7 +1230,8 @@ static VALUE c_configval_set (VALUE self, VALUE key, VALUE val)
  *
  * Registers a configuration property at _key_ with the given default value.
  */
-static VALUE c_configval_register (VALUE self, VALUE key, VALUE defval)
+static VALUE
+c_configval_register (VALUE self, VALUE key, VALUE defval)
 {
 	METHOD_ADD_HANDLER_STR_STR (configval_register, key, defval);
 }
@@ -1170,7 +1242,8 @@ static VALUE c_configval_register (VALUE self, VALUE key, VALUE defval)
  *
  * Retrieves visualization data as a signal.
  */
-static VALUE c_signal_visualisation_data (VALUE self)
+static VALUE
+c_signal_visualisation_data (VALUE self)
 {
 	METHOD_ADD_HANDLER(signal_visualisation_data);
 }
@@ -1181,7 +1254,8 @@ static VALUE c_signal_visualisation_data (VALUE self)
  *
  * Stores binary data on the server.
  */
-static VALUE c_bindata_add (VALUE self, VALUE data)
+static VALUE
+c_bindata_add (VALUE self, VALUE data)
 {
 	METHOD_ADD_HANDLER_BIN (bindata_add, data);
 }
@@ -1193,12 +1267,14 @@ static VALUE c_bindata_add (VALUE self, VALUE data)
  * Retrieves the bindata entry specified by hash (hex string)
  * from the server.
  */
-static VALUE c_bindata_retrieve (VALUE self, VALUE hash)
+static VALUE
+c_bindata_retrieve (VALUE self, VALUE hash)
 {
 	METHOD_ADD_HANDLER_STR (bindata_retrieve, hash);
 }
 
-void Init_Client (VALUE mXmms)
+void
+Init_Client (VALUE mXmms)
 {
 	VALUE c;
 
