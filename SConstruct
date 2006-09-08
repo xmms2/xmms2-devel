@@ -181,6 +181,8 @@ scan_headers("xmmsclient/xmmsclient++")
 base_env.add_manpage(1, 'doc/xmms2.1')
 base_env.add_manpage(8, 'doc/xmms2d.8')
 base_env.add_manpage(1, 'doc/xmms2-et.1')
+base_env.add_manpage(1, 'doc/xmms2-launcher.8')
+base_env.add_manpage(1, 'doc/xmms2-mdns-avahi.8')
 
 #### Generate pc files.
 
