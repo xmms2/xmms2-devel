@@ -244,7 +244,6 @@ xmmsc_result_t *
 xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *url)
 {
 	xmms_ipc_msg_t *msg;
-	char *enc_url;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
@@ -253,7 +252,7 @@ xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *url)
 		x_api_error ("with a non encoded url", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_RADD);
-	xmms_ipc_msg_put_string (msg, enc_url);
+	xmms_ipc_msg_put_string (msg, url);
 
 	return xmmsc_send_msg (c, msg);
 }

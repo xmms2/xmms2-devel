@@ -578,15 +578,12 @@ xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn,
                                     const char *path)
 {
 	xmmsc_result_t *res;
-	char *enc_path;
 
 	x_check_conn (conn, NULL);
 	if (!_xmmsc_medialib_verify_url (path))
 		x_api_error ("with a non encoded url", NULL);
 
-	res = do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, enc_path);
-
-	free (enc_path);
+	res = do_methodcall (conn, XMMS_IPC_CMD_PATH_IMPORT, path);
 
 	return res;
 }
