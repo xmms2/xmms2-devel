@@ -23,7 +23,8 @@ void Init_Client ();
 
 static VALUE m_userconfdir_get (VALUE self)
 {
-	char *p, path[PATH_MAX];
+	const char *p;
+	char path[PATH_MAX];
 
 	p = xmmsc_userconfdir_get (path, PATH_MAX);
 
