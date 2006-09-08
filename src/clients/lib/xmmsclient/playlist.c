@@ -150,7 +150,7 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url, numargs, args);
+	enc_url = _xmmsc_medialib_encode_url (url, numargs, args);
 	if (!enc_url)
 		return NULL;
 	
@@ -210,20 +210,50 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
 xmmsc_result_t *
 xmmsc_playlist_radd (xmmsc_connection_t *c, const char *url)
 {
+	xmmsc_result_t *res;
+	char *enc_url;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	enc_url = _xmmsc_medialib_encode_url (url, 0, NULL);
+	if (!enc_url)
+		return NULL;
+
+	res = xmmsc_playlist_radd_encoded (c, enc_url);
+
+	free (enc_url);
+
+	return res;
+}
+
+/**
+ * Adds a directory recursivly to the playlist.
+ *
+ * The url should be absolute to the server-side and url encoded. Note
+ * that you will have to include the protocol for the url to. ie:
+ * file://mp3/my_mp3s/first.mp3. You probably want to use
+ * #xmmsc_playlist_radd unless you want to add a string that comes as
+ * a result from the daemon, such as from #xmms_xform_media_browse
+ *
+ * @param c The connection structure.
+ * @param url Encoded path.
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *url)
+{
 	xmms_ipc_msg_t *msg;
 	char *enc_url;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url, 0, NULL);
-	if (!enc_url)
-		return NULL;
+	if (!_xmmsc_medialib_verify_url (url))
+		x_api_error ("with a non encoded url", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_RADD);
 	xmms_ipc_msg_put_string (msg, enc_url);
-
-	free (enc_url);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -240,23 +270,44 @@ xmmsc_result_t *
 xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *url, int nargs, const char **args)
 {
 	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
 	char *enc_url;
 
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url, nargs, args);
+	enc_url = _xmmsc_medialib_encode_url (url, nargs, args);
 	if (!enc_url)
 		return NULL;
-	
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
-	xmms_ipc_msg_put_string (msg, enc_url);
-	res = xmmsc_send_msg (c, msg);
 
+	res = xmmsc_playlist_add_encoded (c, enc_url);	
 	free (enc_url);
 
 	return res;
+}
+
+
+/**
+ * Add the url to the playlist. The url should be absolute to the
+ * server-side AND encoded.
+ *
+ * @param c The connection structure.
+ * @param url path.
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *url)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	if (!_xmmsc_medialib_verify_url (url))
+		x_api_error ("with a non encoded url", NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
+	xmms_ipc_msg_put_string (msg, url);
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
