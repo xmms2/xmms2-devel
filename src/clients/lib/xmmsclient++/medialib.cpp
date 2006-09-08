@@ -149,6 +149,15 @@ namespace Xmms
 
 	}
 
+	void Medialib::pathImportEncoded( const std::string& path ) const
+	{
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_medialib_path_import_encoded, conn_, path.c_str() )
+		     );
+
+	}
+
 	const std::string Medialib::playlistExport( const std::string& playlist,
 	                                            const std::string& mime ) const
 	{
@@ -572,6 +581,30 @@ namespace Xmms
 		                          path.c_str() ),
 		             slots, error );
 
+	}
+
+	void
+	Medialib::pathImportEncoded( const std::string& path, const VoidSlot& slot,
+	                             const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_path_import_encoded, conn_,
+		                          path.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Medialib::pathImportEncoded( const std::string& path,
+	                             const std::list< VoidSlot >& slots,
+	                             const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_path_import_encoded, conn_,
+		                          path.c_str() ),
+		             slots, error );
 	}
 
 	void
