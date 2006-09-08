@@ -830,7 +830,7 @@ lookup_string (xmms_object_cmd_value_t *tbl, gchar *key)
 	if (val->type != XMMS_OBJECT_CMD_ARG_STRING)
 		return NULL;
 
-	return val->value.string;
+	return g_strdup (val->value.string);
 }
 
 static gint32
@@ -868,11 +868,9 @@ cmp_val (gconstpointer a, gconstpointer b)
 
 /* code ported over from CLI's "radd" command. */
 static gboolean
-process_dir (xmms_medialib_session_t *session,
-             const gchar *directory,
-             guint32 *id,
-             xmms_error_t *error,
-             gboolean add)
+process_dir (const gchar *directory,
+			 GList **ret,
+             xmms_error_t *error)
 {
 	GList *list, *n;
 
@@ -887,9 +885,9 @@ process_dir (xmms_medialib_session_t *session,
 		xmms_object_cmd_value_t *val = n->data;
 
 		if (lookup_int (val, "isdir") == 1) {
-			process_dir (session, lookup_string (val, "path"), id, error, add);
+			process_dir (lookup_string (val, "path"), ret, error);
 		} else {
-			process_file (session, lookup_string (val, "path"), id, error, add);
+			*ret = g_list_prepend (*ret, lookup_string (val, "path"));
 		}
 
 		xmms_object_cmd_value_free (val);
@@ -948,20 +946,31 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *path,
 	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
 	guint32 id;
+	GList *list = NULL, *n;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
+	
+	process_dir (path, &list, error);
 
+	XMMS_DBG ("taking the transaction!");
 	session = xmms_medialib_begin_write ();
-
 	if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
 	                              "select ifnull(MAX (id),0) from Media")) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
 		return;
 	}
 
-	process_dir (session, path, &id, error, add);
+	list = g_list_reverse (list);
 
+	for (n = list; n; n = g_list_next (n)) {
+		process_file (session, n->data, &id, error, add);
+		g_free (n->data);
+	}
+
+	g_list_free (list);
+
+	XMMS_DBG ("and we are done!");
 	xmms_medialib_end (session);
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
 	xmms_mediainfo_reader_wakeup (mr);
