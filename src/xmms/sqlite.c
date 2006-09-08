@@ -318,7 +318,7 @@ xmms_sqlite_exec (sqlite3 *sql, const char *query, ...)
 	ret = sqlite3_exec (sql, q, NULL, NULL, &err);
 	if (ret == SQLITE_BUSY) {
 		xmms_log_fatal ("BUSY EVENT!");
-		g_assert_not_reached();
+		g_assert_not_reached ();
 	}
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! \"%s\" (%d) - %s", q, ret, err);
@@ -355,6 +355,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 
 	if (ret == SQLITE_BUSY) {
 		xmms_log_fatal ("BUSY EVENT!");
+		g_assert_not_reached ();
 	}
 
 	if (ret != SQLITE_OK) {
@@ -391,6 +392,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		xmms_log_error ("SQLite api misuse on query '%s'", q);
 	} else if (ret == SQLITE_BUSY) {
 		xmms_log_error ("SQLite busy on query '%s'", q);
+		g_assert_not_reached ();
 	}
 
 	sqlite3_free (q);
@@ -421,7 +423,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 	if (ret == SQLITE_BUSY) {
 		xmms_log_fatal ("BUSY EVENT!");
-		g_assert_not_reached();
+		g_assert_not_reached ();
 	}
 
 	if (ret != SQLITE_OK) {
