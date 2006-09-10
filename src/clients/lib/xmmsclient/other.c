@@ -150,10 +150,42 @@ xmmsc_signal_mediainfo_reader_unindexed (xmmsc_connection_t *c)
 }
 
 /**
- * Browse a server plugin media.
+ * Browse available media in a path.
+ *
+ * Retrieves a list of paths available (directly) under the specified
+ * path.
+ *
  */
 xmmsc_result_t *
 xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
+{
+	char *enc_url;
+	xmmsc_result_t *res;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!url, "with a NULL url", NULL);
+
+	enc_url = _xmmsc_medialib_encode_url (url, 0, NULL);
+	if (!enc_url)
+		return NULL;
+
+	res = xmmsc_xform_media_browse_encoded (c, enc_url);
+
+	free (enc_url);
+
+	return res;
+
+}
+
+/**
+ * Browse available media in a (already encoded) path.
+ *
+ * Retrieves a list of paths available (directly) under the specified
+ * path.
+ *
+ */
+xmmsc_result_t *
+xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 {
 	char *enc_url;
 	xmms_ipc_msg_t *msg;
@@ -162,15 +194,12 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
 	x_check_conn (c, NULL);
 	x_api_error_if (!url, "with a NULL url", NULL);
 
-	enc_url = xmmsc_medialib_encode_url (url, 0, NULL);
-	if (!enc_url)
-		return NULL;
+	if (!_xmmsc_medialib_verify_url (url))
+		x_api_error ("with a non encoded url", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_XFORM, XMMS_IPC_CMD_BROWSE);
 	xmms_ipc_msg_put_string (msg, enc_url);
 	res = xmmsc_send_msg (c, msg);
-
-	free (enc_url);
 
 	return res;
 

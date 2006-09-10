@@ -157,6 +157,22 @@ namespace Xmms
 			 */
 			void pathImport( const std::string& path ) const;
 
+			/** Import all files recursively from the 
+			 *  directory passed as argument.
+			 *
+			 *  same as #pathImport but takes a encoded path instead.
+			 *
+			 *  @param path Directory to import.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void pathImportEncoded( const std::string& path ) const;
+
 			/** Export a serverside playlist to a format 
 			 *  that could be read from another mediaplayer.
 			 *
@@ -584,6 +600,31 @@ namespace Xmms
 			pathImport( const std::string& path,
 			            const std::list< VoidSlot >& slots,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/** Import all files recursively from the 
+			 *  directory passed as argument.
+			 *
+			 *  same as #pathImport but takes a encoded url instead.
+			 *
+			 *  @param path Directory to import.
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			pathImportEncoded( const std::string& path, const VoidSlot& slot,
+			                   const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			pathImportEncoded( const std::string& path,
+			                   const std::list< VoidSlot >& slots,
+			                   const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Export a serverside playlist to a format 
 			 *  that could be read from another mediaplayer.

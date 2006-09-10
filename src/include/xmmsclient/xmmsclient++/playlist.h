@@ -41,6 +41,20 @@ namespace Xmms
 			 */
 			void addUrl( const std::string& url ) const;
 
+			/**	Add the url to the playlist.
+			 *  Same as #addUrl but takes an encoded URL instead
+			 *  
+			 *  @param url file to be added
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void addUrlEncoded( const std::string& url ) const;
+
 			/**	Add the directory recursivly to the playlist.
 			 *  The url should be absolute to the server-side. 
 			 *  Note that you will have to include the protocol 
@@ -56,6 +70,20 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 */
 			void addRecursive( const std::string& url ) const;
+
+			/**	Add the directory recursivly to the playlist.
+			 *  Same as #addRecursive but takes a encoded URL instead.
+			 *  
+			 *  @param url directory to be added
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void addRecursiveEncoded( const std::string& url ) const;
 
 			/** Add a medialib id to the playlist.
 			 *
@@ -266,6 +294,55 @@ namespace Xmms
 			addRecursive( const std::string& url,
 			              const std::list<VoidSlot>& slots,
 			              const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**	Add the url to the playlist.
+			 *  Same as #addUrl but takes an Encoded Url instead.
+			 *  
+			 *  @param url file to be added
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			addUrlEncoded( const std::string& url,
+			               const VoidSlot& slot,
+			               const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			addUrlEncoded( const std::string& url,
+			               const std::list<VoidSlot>& slots,
+			               const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**	Add the directory recursivly to the playlist.
+			 *  Same as #addRecursive but takes a Encoded URL instead
+			 *  
+			 *  @param url directory to be added
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			addRecursiveEncoded( const std::string& url,
+			                     const VoidSlot& slot,
+			                     const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			addRecursiveEncoded( const std::string& url,
+			                     const std::list<VoidSlot>& slots,
+			                     const ErrorSlot& error = &Xmms::dummy_error ) const;
+
 
 			/** Add a medialib id to the playlist.
 			 *
