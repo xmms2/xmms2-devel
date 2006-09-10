@@ -214,25 +214,33 @@ void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	char *rfile;
+	gint i;
 
 	if (argc < 3) {
-		print_error ("Need a directory to add");
+		print_error ("Missing argument(s)");
 	}
 
-	rfile = format_url (argv[2], G_FILE_TEST_IS_DIR);
-	if (!rfile) {
-		print_error ("Invalid path!");
-	}
+	for (i = 2; i < argc; i++) {
+		gchar *rfile;
 
-	res = xmmsc_playlist_radd (conn, rfile);
-	xmmsc_result_wait (res);
+		rfile = format_url (argv[i], G_FILE_TEST_IS_DIR);
+		if (!rfile) {
+			print_info ("Ignoring invalid path '%s'", argv[i]);
+			continue;
+		}
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("Unable to add %s: %s", argv[2],
-		             xmmsc_result_get_error(res));
+		res = xmmsc_playlist_radd (conn, rfile);
+		g_free (rfile);
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_info ("Cannot add path '%s': %s",
+			            argv[i], xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
-	xmmsc_result_unref (res);
 }
 
 void
