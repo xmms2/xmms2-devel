@@ -626,24 +626,33 @@ static void
 cmd_mlib_addpath (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	gchar *rfile;
+	gint i;
 
 	if (argc < 4) {
-		print_error ("Supply a path to add!");
+		print_error ("Missing argument(s)");
 	}
 
-	rfile = format_url (argv[3], G_FILE_TEST_IS_DIR);
-	if (!rfile) {
-		print_error ("Invalid path!");
-	}
+	for (i = 3; i < argc; i++) {
+		gchar *rfile;
 
-	res = xmmsc_medialib_path_import (conn, rfile);
-	xmmsc_result_wait (res);
+		rfile = format_url (argv[i], G_FILE_TEST_IS_DIR);
+		if (!rfile) {
+			print_info ("Ignoring invalid path '%s'", argv[i]);
+			continue;
+		}
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
+		res = xmmsc_medialib_path_import (conn, rfile);
+		g_free (rfile);
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_info ("Cannot add path '%s': %s",
+			            argv[i], xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
-	xmmsc_result_unref (res);
 }
 
 static void
