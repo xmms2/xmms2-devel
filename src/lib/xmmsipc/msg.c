@@ -213,8 +213,16 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 			len += xmms_ipc_msg_get_length (msg);
 
 			if (len > msg->size) {
+				void *newbuf;
+				newbuf = realloc (msg->data, len);
+				if (!newbuf) {
+					if (disconnected) {
+						*disconnected = true;
+					}
+					return false;
+				}
 				msg->size = len;
-				msg->data = realloc (msg->data, msg->size);
+				msg->data = newbuf;
 			}
 
 			if (msg->xfered == len) {
