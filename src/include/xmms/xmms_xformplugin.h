@@ -49,7 +49,7 @@
 
 
 
-#define XMMS_XFORM_API_VERSION 1
+#define XMMS_XFORM_API_VERSION 2
 
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_plugin.h"
