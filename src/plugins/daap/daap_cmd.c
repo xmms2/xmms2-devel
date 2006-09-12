@@ -35,7 +35,10 @@ daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err)
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
-		xmms_error_set (err, XMMS_ERROR_GENERIC, "connection to server failed!");
+		xmms_error_set (err, XMMS_ERROR_GENERIC,
+		                "Connection to server failed! "
+		                "Please make sure the url is of the form:\n"
+		                "daap://ip[:port]/[song]");
 		return 0;
 	}
 

@@ -99,8 +99,7 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 	}
 
 	if (NULL == cmd_begin && NULL == port_begin) {
-		host_len = (gint) (host_begin - (strstr (url, "daap://") +
-		                                 strlen ("daap://")));
+		host_len = (gint) strlen (host_begin);
 	} else if (NULL == port_begin) {
 		host_len = (gint) (cmd_begin - host_begin);
 	} else {
@@ -312,7 +311,6 @@ xmms_daap_init (xmms_xform_t *xform)
 		login_data->session_id = daap_command_login (data->host, data->port,
 		                                             login_data->request_id,
 		                                             &err);
-		//if (login_data->session_id == 0) {
 		if (xmms_error_iserror (&err)) {
 			return FALSE;
 		}
@@ -463,7 +461,8 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 		}
 		g_slist_free (sl);
 	} else {
-		for (server_list = sl; server_list != NULL; server_list = g_slist_next (server_list)) {
+		server_list = sl;
+		for ( ; server_list != NULL; server_list = g_slist_next (server_list)) {
 			mdns_serv = server_list->data;
 	
 			if (! strcmp (mdns_serv->mdns_hostname, host)) {
@@ -483,7 +482,6 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 			return NULL;
 		}
 	}
-
 
 	g_free (host);
 	return url_list;
