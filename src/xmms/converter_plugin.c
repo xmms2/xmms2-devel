@@ -101,6 +101,33 @@ xmms_converter_plugin_read (xmms_xform_t *xform, void *buffer, gint len, xmms_er
 	return len;
 }
 
+static gint64
+xmms_converter_plugin_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+{
+	xmms_conv_xform_data_t *data;
+	gint64 res;
+	gint64 scaled_samples;
+
+	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
+	g_return_val_if_fail (xform, -1);
+
+	data = xmms_xform_private_data_get (xform);
+	g_return_val_if_fail (data, -1);
+
+	scaled_samples = xmms_sample_convert_scale (data->conv, samples);
+
+	res = xmms_xform_seek (xform, scaled_samples, XMMS_XFORM_SEEK_SET, err);
+	if (res == -1) {
+		return -1;
+	}
+
+	scaled_samples = xmms_sample_convert_rev_scale (data->conv, res);
+
+	xmms_sample_convert_reset (data->conv);
+
+	return scaled_samples;
+}
+
 static gboolean
 xmms_converter_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
@@ -110,10 +137,7 @@ xmms_converter_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_converter_plugin_init;
 	methods.destroy = xmms_converter_plugin_destroy;
 	methods.read = xmms_converter_plugin_read;
-	/*
-	  methods.seek
-	  methods.get_mediainfo
-	*/
+	methods.seek = xmms_converter_plugin_seek;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 

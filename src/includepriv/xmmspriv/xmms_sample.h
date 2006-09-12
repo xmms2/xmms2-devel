@@ -28,10 +28,13 @@ gint xmms_sample_frame_size_get (const xmms_stream_type_t *st);
 guint xmms_sample_ms_to_samples (const xmms_stream_type_t *st, guint ms);
 guint xmms_sample_samples_to_ms (const xmms_stream_type_t *st, guint samples);
 
-guint32 xmms_sample_samples_to_converted_bytes (xmms_sample_converter_t *conv, guint32 samples);
+gint64 xmms_sample_convert_scale (xmms_sample_converter_t *conv, gint64 samples);
+gint64 xmms_sample_convert_rev_scale (xmms_sample_converter_t *conv, gint64 samples);
+
 
 /* internal? */
 void xmms_sample_convert (xmms_sample_converter_t *conv, xmms_sample_t *in, guint len, xmms_sample_t **out, guint *outlen);
+void xmms_sample_convert_reset (xmms_sample_converter_t *conv);
 xmms_sample_converter_t *xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types);
 xmms_stream_type_t *xmms_sample_converter_get_from (xmms_sample_converter_t *conv);
 xmms_stream_type_t *xmms_sample_converter_get_to (xmms_sample_converter_t *conv);
