@@ -47,7 +47,7 @@ struct xmms_ringbuf_St {
 
 typedef struct xmms_ringbuf_hotspot_St {
 	guint pos;
-	void (*callback) (void *);
+	gboolean (*callback) (void *);
 	void (*destroy) (void *);
 	void *arg;
 } xmms_ringbuf_hotspot_t;
@@ -166,23 +166,32 @@ static guint
 read_bytes (xmms_ringbuf_t *ringbuf, guint8 *data, guint len)
 {
 	guint to_read, r = 0, cnt, tmp;
+	gboolean ok;
 
 	to_read = MIN (len, xmms_ringbuf_bytes_used (ringbuf));
 
-	if (!g_queue_is_empty (ringbuf->hotspots)) {
+	while (!g_queue_is_empty (ringbuf->hotspots)) {
 		xmms_ringbuf_hotspot_t *hs = g_queue_peek_head (ringbuf->hotspots);
 		if (hs->pos != ringbuf->rd_index) {
 			/* make sure we don't cross a hotspot */
 			to_read = MIN (to_read,
 			               (hs->pos - ringbuf->rd_index + ringbuf->buffer_size)
 			               % ringbuf->buffer_size);
-		} else {
-			hs->callback (hs->arg);
-			(void) g_queue_pop_head (ringbuf->hotspots);
-			if (hs->destroy)
-				hs->destroy (hs->arg);
-			g_free (hs);
+			break;
 		}
+
+		(void) g_queue_pop_head (ringbuf->hotspots);
+		ok = hs->callback (hs->arg);
+		if (hs->destroy)
+			hs->destroy (hs->arg);
+		g_free (hs);
+
+		if (!ok) {
+			return 0;
+		}
+
+		/* we loop here, to see if there are multiple
+		   hotspots in same position */
 	}
 
 	tmp = ringbuf->rd_index;
@@ -450,7 +459,7 @@ xmms_ringbuf_wait_eos (const xmms_ringbuf_t *ringbuf, GMutex *mtx)
  * Unused
  */
 void
-xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, void (*cb) (void *), void (*destroy) (void *), void *arg)
+xmms_ringbuf_hotspot_set (xmms_ringbuf_t *ringbuf, gboolean (*cb) (void *), void (*destroy) (void *), void *arg)
 {
 	xmms_ringbuf_hotspot_t *hs;
 	g_return_if_fail (ringbuf);

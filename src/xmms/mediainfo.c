@@ -72,15 +72,16 @@ xmms_mediainfo_reader_start (xmms_playlist_t *playlist)
 
 	g_return_val_if_fail (playlist, NULL);
 
-	mrt = xmms_object_new (xmms_mediainfo_reader_t, xmms_mediainfo_reader_stop);
+	mrt = xmms_object_new (xmms_mediainfo_reader_t,
+	                       xmms_mediainfo_reader_stop);
 
-	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIAINFO_READER, 
-							  XMMS_OBJECT (mrt));
+	xmms_ipc_object_register (XMMS_IPC_OBJECT_MEDIAINFO_READER,
+	                          XMMS_OBJECT (mrt));
 
 	xmms_ipc_broadcast_register (XMMS_OBJECT (mrt),
 	                             XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS);
 	xmms_ipc_signal_register (XMMS_OBJECT (mrt),
-							  XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
+	                          XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED);
 
 	mrt->mutex = g_mutex_new ();
 	mrt->cond = g_cond_new ();
@@ -145,8 +146,8 @@ xmms_mediainfo_playlist_changed_cb (xmms_object_t *object, gconstpointer arg, gp
 	if (!val)
 		return;
 
-	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD
-		|| val->value.uint32 == XMMS_PLAYLIST_CHANGED_INSERT) {
+	if (val->value.uint32 == XMMS_PLAYLIST_CHANGED_ADD ||
+	    val->value.uint32 == XMMS_PLAYLIST_CHANGED_INSERT) {
 		xmms_mediainfo_reader_wakeup (mir);
 	}
 }
@@ -168,9 +169,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 
 	f = _xmms_stream_type_new (NULL,
-				   XMMS_STREAM_TYPE_MIMETYPE,
-				   "audio/pcm",
-				   XMMS_STREAM_TYPE_END);
+	                           XMMS_STREAM_TYPE_MIMETYPE,
+	                           "audio/pcm",
+	                           XMMS_STREAM_TYPE_END);
 	goal_format = g_list_prepend (NULL, f);
 	
 	while (mrt->running) {
@@ -197,9 +198,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 			num = 0;
 			
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
-					    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
-					    XMMS_OBJECT_CMD_ARG_INT32,
-					    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
+			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
+			                    XMMS_OBJECT_CMD_ARG_INT32,
+			                    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
 			continue;
 		}
 		
@@ -207,9 +208,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		if (num == 0) {
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
-								XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
-								XMMS_OBJECT_CMD_ARG_UINT32,
-								xmms_medialib_num_not_resolved (session));
+			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
+			                    XMMS_OBJECT_CMD_ARG_UINT32,
+			                    xmms_medialib_num_not_resolved (session));
 			num = 50;
 		} else {
 			num--;
@@ -233,9 +234,9 @@ xmms_mediainfo_reader_thread (gpointer data)
 		g_get_current_time (&timeval);
 
 		session = xmms_medialib_begin_write ();
-		xmms_medialib_entry_property_set_int (session, entry, 
+		xmms_medialib_entry_property_set_int (session, entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
-		xmms_medialib_entry_property_set_int (session, entry, 
+		xmms_medialib_entry_property_set_int (session, entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
 		                                      timeval.tv_sec);
 		xmms_medialib_end (session);

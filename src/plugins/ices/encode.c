@@ -29,7 +29,7 @@
 #include <vorbis/vorbisenc.h>
 
 #include "encode.h"
-#include "xmms/util.h"
+#include "xmms/xmms_log.h"
 
 #define MODULE "encode/"
 

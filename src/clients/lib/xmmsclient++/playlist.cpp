@@ -17,11 +17,35 @@ namespace Xmms
 	{
 	}
 
+	void Playlist::addRecursive( const std::string& url ) const
+	{
+
+		vCall( connected_, ml_, 
+		      boost::bind( xmmsc_playlist_radd, conn_, url.c_str() ) );
+
+	}
+
+	void Playlist::addRecursiveEncoded( const std::string& url ) const
+	{
+
+		vCall( connected_, ml_, 
+		      boost::bind( xmmsc_playlist_radd_encoded, conn_, url.c_str() ) );
+
+	}
+
 	void Playlist::addUrl( const std::string& url ) const
 	{
 
 		vCall( connected_, ml_, 
 		      boost::bind( xmmsc_playlist_add, conn_, url.c_str() ) );
+
+	}
+
+	void Playlist::addUrlEncoded( const std::string& url ) const
+	{
+
+		vCall( connected_, ml_, 
+		      boost::bind( xmmsc_playlist_add_encoded, conn_, url.c_str() ) );
 
 	}
 
@@ -64,6 +88,15 @@ namespace Xmms
 		      boost::bind( xmmsc_playlist_insert, conn_, pos, url.c_str() ) );
 
 	}
+
+	void Playlist::insertUrlEncoded( int pos, const std::string& url ) const
+	{
+
+		vCall( connected_, ml_,
+		      boost::bind( xmmsc_playlist_insert_encoded, conn_, pos, url.c_str() ) );
+
+	}
+
 
 	void Playlist::insertId( int pos, unsigned int id ) const
 	{
@@ -153,6 +186,54 @@ namespace Xmms
 	}
 
 	void
+	Playlist::addRecursive( const std::string& url,
+	                        const VoidSlot& slot,
+	                        const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_radd, conn_, url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::addRecursive( const std::string& url,
+	                        const std::list< VoidSlot >& slots,
+	                        const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_radd, conn_, url.c_str() ),
+		             slots, error );
+
+	}
+
+	void
+	Playlist::addRecursiveEncoded( const std::string& url,
+	                               const VoidSlot& slot,
+	                               const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_radd_encoded, conn_, url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::addRecursiveEncoded( const std::string& url,
+	                               const std::list< VoidSlot >& slots,
+	                               const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_radd_encoded, conn_, url.c_str() ),
+		             slots, error );
+
+	}
+
+	void
 	Playlist::addUrl( const std::string& url,
 	                  const VoidSlot& slot,
 	                  const ErrorSlot& error ) const
@@ -172,6 +253,30 @@ namespace Xmms
 
 		aCall<void>( connected_,
 		             boost::bind( xmmsc_playlist_add, conn_, url.c_str() ),
+		             slots, error );
+
+	}
+
+	void
+	Playlist::addUrlEncoded( const std::string& url,
+	                         const VoidSlot& slot,
+	                         const ErrorSlot& error ) const
+	{
+		
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_playlist_add_encoded, conn_, url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::addUrlEncoded( const std::string& url,
+	                         const std::list< VoidSlot >& slots,
+	                         const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_add_encoded, conn_, url.c_str() ),
 		             slots, error );
 
 	}
@@ -267,6 +372,33 @@ namespace Xmms
 		             slots, error );
 
 	}
+
+	void
+	Playlist::insertUrlEncoded( int pos, const std::string& url,
+	                            const VoidSlot& slot,
+					            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_insert_encoded, conn_, 
+		                          pos, url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::insertUrlEncoded( int pos, const std::string& url,
+	                            const std::list< VoidSlot >& slots,
+					            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_insert_encoded, conn_, 
+		                          pos, url.c_str() ),
+		             slots, error );
+
+	}
+
 
 	void
 	Playlist::insertId( int pos, unsigned int id,

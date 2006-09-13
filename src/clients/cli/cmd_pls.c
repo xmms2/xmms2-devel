@@ -24,7 +24,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 	xmmsc_result_t *res;
 	gchar *url;
 
-	url = format_url (item);
+	url = format_url (item, G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}
@@ -41,50 +41,6 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *item)
 
 	print_info ("Added %s", item);
 }
-
-
-static void
-add_directory_to_playlist (xmmsc_connection_t *conn, gchar *directory,
-                           gboolean recursive)
-{
-	GSList *entries = NULL;
-	const gchar *entry;
-	gchar *buf;
-	GDir *dir;
-
-	dir = g_dir_open (directory, 0, NULL);
-	if (!dir) {
-		print_error ("cannot open directory: %s", directory);
-	}
-
-	while ((entry = g_dir_read_name (dir))) {
-		entries = g_slist_prepend (entries, g_strdup (entry));
-	}
-	g_dir_close (dir);
-
-	/* g_dir_read_name() will return the entries in a undefined
-	 * order, so sort the list now.
-	 */
-	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
-
-	while (entries) {
-		buf = g_build_path (G_DIR_SEPARATOR_S, directory, 
-		                    entries->data, NULL);
-
-		if (g_file_test (buf, G_FILE_TEST_IS_DIR)) {
-			if (recursive) {
-				add_directory_to_playlist (conn, buf, recursive);
-			}
-		} else {
-			add_item_to_playlist (conn, buf);
-		}
-
-		g_free (buf);
-		g_free (entries->data);
-		entries = g_slist_delete_link (entries, entries);
-	}
-}
-
 
 void
 cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv)
@@ -127,7 +83,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_t *res;
 		gchar *url;
 
-		url = format_url (argv[i]);
+		url = format_url (argv[i], G_FILE_TEST_IS_REGULAR);
 		if (!url) {
 			print_error ("Invalid url");
 		}
@@ -178,7 +134,7 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("Need a filename and args to add");
 	}
 
-	url = format_url (argv[2]);
+	url = format_url (argv[2], G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}
@@ -198,25 +154,94 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	g_free (url);
 }
 
+void
+cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	guint pos;
+	gchar *url;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Need a position and a file");
+	}
+
+	pos = strtol (argv[2], NULL, 10);
+	url = format_url (argv[3], G_FILE_TEST_IS_REGULAR);
+	if (!url) {
+		print_error ("Invalid url");
+	}
+
+	res = xmmsc_playlist_insert (conn, pos, url);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to add %s at postion %u: %s", url,
+		             pos, xmmsc_result_get_error (res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Inserted %s at %u", url, pos);
+
+	g_free (url);
+}
+
+void
+cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	guint pos, mlib_id;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("Need a position and a medialib id");
+	}
+
+	pos = strtol (argv[2], NULL, 10);
+	mlib_id = strtol (argv[3], NULL, 10);
+
+	res = xmmsc_playlist_insert_id(conn, pos, mlib_id);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("Unable to insert %u at position %u: %s", pos, 
+		             mlib_id, xmmsc_result_get_error(res));
+	}
+	xmmsc_result_unref (res);
+
+	print_info ("Inserted %u at position %u", mlib_id, pos);
+}
 
 void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
+	xmmsc_result_t *res;
 	gint i;
 
 	if (argc < 3) {
-		print_error ("Need a directory to add");
+		print_error ("Missing argument(s)");
 	}
 
-	for (i = 2; argv[i]; i++) {
-		if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			print_info ("not a directory: %s", argv[i]);
-		} else {
-			add_directory_to_playlist (conn, argv[i], TRUE);
+	for (i = 2; i < argc; i++) {
+		gchar *rfile;
+
+		rfile = format_url (argv[i], G_FILE_TEST_IS_DIR);
+		if (!rfile) {
+			print_info ("Ignoring invalid path '%s'", argv[i]);
+			continue;
 		}
+
+		res = xmmsc_playlist_radd (conn, rfile);
+		g_free (rfile);
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_info ("Cannot add path '%s': %s",
+			            argv[i], xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
 }
-
 
 void
 cmd_clear (xmmsc_connection_t *conn, gint argc, gchar **argv)
@@ -252,13 +277,53 @@ void
 cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
+	gchar *properties, *pbuf;
+	gchar ***prop_tokens;
+	gint i, j, prop_tokens_len, properties_len = 0;
 	
-	if (argc != 3) {
+	if (argc < 3) {
 		print_error ("Sort needs a property to sort on, %d", argc);
 	}
-	
-	res = xmmsc_playlist_sort (conn, argv[2]);
+
+	prop_tokens_len = argc - 2;
+	prop_tokens = g_new (gchar **, prop_tokens_len);
+	for (i = 2; i < argc; i++) {
+		guint temp_len;
+		argv[i] = g_strchug (argv[i]);
+		prop_tokens[i-2] = g_strsplit (argv[i], " ", 0);
+		temp_len = g_strv_length (prop_tokens[i-2]);
+
+		for (j = 0; j < temp_len; j++) {
+			properties_len += strlen (prop_tokens[i-2][j]) + (i > 2 || j > 0 ? 1 : 0);
+		}
+	}
+
+	properties = g_new (gchar, properties_len+1);
+	pbuf = properties;
+	for (i = 0; i < prop_tokens_len; i++) {
+		guint temp_len = g_strv_length (prop_tokens[i]);
+		for (j = 0; j < temp_len; j++ ) {
+			size_t prop_len = strlen (prop_tokens[i][j]);
+			if (!prop_len ) {
+				continue;
+			}
+			if (i > 0 || j > 0) {
+				*pbuf = ' ';
+				pbuf++;
+			}
+			memcpy (pbuf, prop_tokens[i][j], prop_len);
+			pbuf += prop_len;
+		}
+	}
+	*pbuf = '\0';
+
+	res = xmmsc_playlist_sort (conn, properties);
 	xmmsc_result_wait (res);
+	
+	for (i = 0; i < prop_tokens_len; i++) {
+		g_strfreev (prop_tokens[i]);
+	}
+	g_free (properties);
 
 	if (xmmsc_result_iserror (res)) {
 		print_error ("%s", xmmsc_result_get_error (res));

@@ -201,7 +201,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 {
 	const xmms_config_property_t *cv;
 	const gchar *dev;
-	int i, j, k;
+	int i, j, k, err;
 
 	cv = xmms_output_config_lookup (output, "device");
 	dev = xmms_config_property_get_string (cv);
@@ -212,10 +212,15 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 	}
 
 	XMMS_DBG ("Probing device: %s", dev);
-	if (snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0) < 0) {
+
+	err = snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK,
+	                    SND_PCM_NONBLOCK);
+   	if (err < 0) {
 		xmms_log_error ("Couldn't open device: %s", dev);
 		return FALSE;
 	}
+
+	snd_pcm_nonblock (data->pcm, 0);
 
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		for (j = 1; j < 3; j++) {
@@ -341,11 +346,14 @@ xmms_alsa_open (xmms_output_t *output)
 	XMMS_DBG ("Opening device: %s", dev);
 
 	/* Open the device */
-	err = snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK, 0);
+	err = snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK,
+	                    SND_PCM_NONBLOCK);
 	if (err < 0) {
 		xmms_log_error ("Cannot open audio device: %s", snd_strerror (err));
 		return FALSE;
 	}
+
+	snd_pcm_nonblock (data->pcm, 0);
 
 	return TRUE;
 }

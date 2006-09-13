@@ -44,7 +44,7 @@ static xmms_plugin_t *xmms_playlist_plugin_find_by_mime (const gchar *mime);
 
 GString *
 xmms_playlist_plugin_save (gchar *mime,
-			   guint32 *list)
+                           guint32 *list)
 {
 	GString *ret;
 	xmms_playlist_plugin_write_method_t write;

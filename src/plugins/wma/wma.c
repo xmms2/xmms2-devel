@@ -184,7 +184,7 @@ xmms_wma_init (xmms_xform_t *xform)
 
 	if ((temp = avcodec_open (data->codecctx, codec)) < 0) {
 		XMMS_DBG ("Opening WMA decoder failed");
-		goto err;
+		goto err_close_codec;
 	}
 
 	xmms_wma_get_mediainfo (xform);
@@ -204,10 +204,9 @@ xmms_wma_init (xmms_xform_t *xform)
 
 	return TRUE;
 
+err_close_codec:
+	avcodec_close (data->codecctx);
 err:
-	if (data->codecctx) {
-		avcodec_close (data->codecctx);
-	}
 	if (data->fmtctx) {
 		av_close_input_file (data->fmtctx);
 	}

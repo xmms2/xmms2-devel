@@ -48,6 +48,9 @@ typedef struct xmms_mad_data_St {
 	guint64 fsize;
 
 	guint synthpos;
+	gint samples_to_skip;
+	gint64 samples_to_play;
+	gint frames_to_skip;
 
 	xmms_xing_t *xing;
 } xmms_mad_data_t;
@@ -91,6 +94,9 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	  xmms_plugin_info_add (plugin, "Author", "XMMS Team");
 	  xmms_plugin_info_add (plugin, "License", "GPL");
 	*/
+
+	xmms_xform_plugin_config_property_register (xform_plugin, "id3v1_encoding",
+	                                            "ISO8859-1", NULL, NULL);
 
 	/* xmms_xform_indata_constraint_add */
 	xmms_xform_plugin_indata_add (xform_plugin,
@@ -157,6 +163,12 @@ xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	if (res == -1) {
 		return -1;
 	}
+
+	/* we don't have sample accuracy when seeking,
+	   so there is no use trying */
+	data->samples_to_skip = 0;
+	data->samples_to_play = -1;
+
 	return samples;
 }
 
@@ -229,8 +241,13 @@ xmms_mad_init (xmms_xform_t *xform)
 		}
 	}
 
-	data->samplerate = frame.header.samplerate;
 	data->channels = frame.header.mode == MAD_MODE_SINGLE_CHANNEL ? 1 : 2;
+
+	data->samplerate = frame.header.samplerate;
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->samplerate);
+
 
 	if (frame.header.flags & MAD_FLAG_PROTECTION) {
 		XMMS_DBG ("Frame has protection enabled");
@@ -239,8 +256,11 @@ xmms_mad_init (xmms_xform_t *xform)
 		}
 	}
 
+	data->samples_to_play = -1;
+
 	data->xing = xmms_xing_parse (stream.anc_ptr);
 	if (data->xing) {
+		xmms_xing_lame_t *lame;
 		XMMS_DBG ("File with Xing header!");
 
 		xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_IS_VBR, 1);
@@ -270,6 +290,25 @@ xmms_mad_init (xmms_xform_t *xform)
 			}
 		}
 
+		if ((lame = xmms_xing_get_lame (data->xing))) {
+			/* FIXME: add a check for ignore_lame_headers from the medialib */
+			data->frames_to_skip = 1;
+			data->samples_to_skip = lame->start_delay;
+			data->samples_to_play = ((guint64)xmms_xing_get_frames (data->xing) * 1152ULL) - lame->start_delay - lame->end_padding;
+			XMMS_DBG ("Samples to skip in the beginning: %d, total: %lld", data->samples_to_skip, data->samples_to_play);
+			/*
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+			                             lame->audiophile_gain);
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+			                             lame->peak_amplitude);
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
+			                             lame->radio_gain);
+										 */
+		}
+
 	} else {
 		gint filesize;
 
@@ -279,11 +318,7 @@ xmms_mad_init (xmms_xform_t *xform)
 
 
 		filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
-		if (filesize == -1) {
-			xmms_xform_metadata_set_int (xform,
-			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-			                             -1);
-		} else {
+		if (filesize != -1) {
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                             (gint) (filesize*(gdouble)8000.0/frame.header.bitrate));
@@ -342,7 +377,6 @@ xmms_mad_read (xmms_xform_t *xform, gpointer buf, gint len, xmms_error_t *err)
 	while (read < len) {
 
 		/* use already synthetized frame first */
-
 		if (data->synthpos < data->synth.pcm.length) {
 			out[j++] = scale_linear (data->synth.pcm.samples[0][data->synthpos]);
 			if (data->channels == 2) {
@@ -357,9 +391,32 @@ xmms_mad_read (xmms_xform_t *xform, gpointer buf, gint len, xmms_error_t *err)
 
 		/* then try to decode another frame */
 		if (mad_frame_decode (&data->frame, &data->stream) != -1) {
+
 			/* mad_synthpop_frame - go Depeche! */
 			mad_synth_frame (&data->synth, &data->frame);
-			data->synthpos = 0;
+
+			if (data->frames_to_skip) {
+				data->frames_to_skip--;
+				data->synthpos = 0x7fffffff;
+			} else if (data->samples_to_skip) {
+				if (data->samples_to_skip > data->synth.pcm.length) {
+					data->synthpos = 0x7fffffff;
+					data->samples_to_skip -= data->synth.pcm.length;
+				} else {
+					data->synthpos = data->samples_to_skip;
+					data->samples_to_skip = 0;
+				}
+			} else {
+				if (data->samples_to_play == 0) {
+					return read;
+				} else if (data->samples_to_play > 0) {
+					if (data->synth.pcm.length > data->samples_to_play) {
+						data->synth.pcm.length = data->samples_to_play;
+					}
+					data->samples_to_play -= data->synth.pcm.length;
+				}
+				data->synthpos = 0;
+			}
 			continue;
 		}
 

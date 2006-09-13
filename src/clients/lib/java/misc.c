@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <xmmsclient/xmmsclient.h>
+#include <xmms/xmms_defs.h>
 #include <jni.h>
 #include <callbacks.h>
 
@@ -25,14 +26,18 @@ jmethodID get_method_id (const char* methodname, const char* sig, JNIEnv *enviro
  * called from the mainloop to get a valid framepointer object to be used in java
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlong jarg1) 
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jobject connection) 
 {
-	jfieldID field_fd;
+	jfieldID field_fd, field_ptr;
 	jclass class_fdesc;
+	xmmsc_connection_t *conn_ptr;
 	int fd = 0;
-	xmmsc_connection_t *conn_ptr = (xmmsc_connection_t *) 0;
-	
-	conn_ptr = *(xmmsc_connection_t **)(void *)&jarg1;
+	jclass cls;
+
+	cls = (*env)->GetObjectClass (env, connection);
+	field_ptr = (*env)->GetFieldID (env, cls, "swigCPtr", "J");
+
+	conn_ptr = (xmmsc_connection_t*)(*env)->GetLongField (env, connection, field_ptr);
 
 	fd = xmmsc_io_fd_get (conn_ptr);
 
@@ -45,7 +50,7 @@ Java_org_xmms2_SpecialJNI_getFD (JNIEnv *env, jclass _ignore, jobject fdobj, jlo
  * sets the environment (callbackfunctions, jvm pointer, global object, ...
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
 {
 	jclass clazz;
 	globalObj = (*jenv)->NewGlobalRef (jenv, myobject);
@@ -95,9 +100,9 @@ Java_org_xmms2_SpecialJNI_setENV (JNIEnv *jenv, jclass cls, jobject myobject)
 	                      clazz);
 	propdict_foreach_mid = 
 	        get_method_id ("callbackPropdictForeachFunction", 
-		              "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;I)V",
-	                      jenv,
-	                      clazz);
+		               "(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;I)V",
+	                       jenv,
+	                       clazz);
 	user_defined_1_mid = 
 	        get_method_id ("userDefinedCallback1", "(JI)V", jenv, clazz);
 	user_defined_2_mid = 
@@ -119,11 +124,20 @@ get_method_id (const char* methodname, const char* sig, JNIEnv *environment, jcl
  * called by the mainloop to set mainloop specific things up
  */
 JNIEXPORT void JNICALL 
-Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobject, jlong jarg1)
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_setupMainloop (JNIEnv *jenv,
+                                                 jclass cls,
+						 jobject myobject,
+						 jobject connection)
 {
-	xmmsc_connection_t *conn_ptr = (xmmsc_connection_t *) 0;
-	jclass clazz;
-	conn_ptr = *(xmmsc_connection_t **)(void *)&jarg1;
+	jclass clazz, cls2;
+	jfieldID field_ptr;
+	xmmsc_connection_t *conn_ptr;
+
+	cls2 = (*jenv)->GetObjectClass ( jenv, connection);
+	field_ptr = (*jenv)->GetFieldID (jenv, cls2, "swigCPtr", "J");
+
+	conn_ptr = (xmmsc_connection_t*)(*jenv)->GetLongField (jenv, connection, field_ptr);
+
 	globalMainloopObj = (*jenv)->NewGlobalRef (jenv, myobject);
 	
 	if (jvm == NULL) {
@@ -132,7 +146,52 @@ Java_org_xmms2_SpecialJNI_setupMainloop (JNIEnv *jenv, jclass cls, jobject myobj
 
 	clazz = (*jenv)->GetObjectClass(jenv, myobject);
 	io_want_out_mid = get_method_id ("callbackIOWantOut", "(II)V", jenv, clazz);
-	
-	//xmmsc_io_need_out_callback_set (conn_ptr, io_want_out_callback, 0);
 }
 
+JNIEXPORT jbyteArray JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_1result_1get_1byte (JNIEnv *jenv,
+                                                                             jclass caller,
+									     jobject result)
+{
+	unsigned char *c_byte;
+	unsigned int c_length;
+	xmmsc_result_t *result_address;
+	int ret_value = -1, i = 0;
+	jclass cls;
+	jfieldID field_ptr;
+
+	cls = (*jenv)->GetObjectClass ( jenv, result);
+	field_ptr = (*jenv)->GetFieldID (jenv, cls, "swigCPtr", "J");
+
+	result_address = (xmmsc_result_t*)(*jenv)->GetLongField (jenv, result, field_ptr);
+
+	ret_value = xmmsc_result_get_bin(result_address, &c_byte, &c_length);
+
+	if (ret_value && c_length > 0) {
+		jbyteArray row = (jbyteArray)(*jenv)->NewByteArray(jenv, c_length);
+		
+			(*jenv)->SetByteArrayRegion ( jenv,
+			                              (jbyteArray)row,
+		                                      (jsize)0,
+		                                      c_length,
+			                              (jbyte *)c_byte);
+		return row;
+	}
+	return NULL;
+}
+
+JNIEXPORT jstring JNICALL
+Java_org_xmms2_wrapper_xmms2bindings_XmmsclientJNI_xmmsc_1get_1userconfdir (JNIEnv *jenv,
+                                                                            jclass caller)
+{
+	jstring jresult = 0;
+	char result[PATH_MAX];
+
+	xmmsc_userconfdir_get(result, PATH_MAX);
+	if(result)
+	{
+		jresult = (*jenv)->NewStringUTF(jenv, result);
+		return jresult;
+	}
+	return NULL;
+}

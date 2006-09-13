@@ -205,7 +205,7 @@ static void
 xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 {
 	xmms_mpc_data_t *data;
-	gint bitrate, duration;
+	gint bitrate, duration, filesize;
 	gchar buf[8];
 
 	g_return_if_fail (xform);
@@ -213,10 +213,13 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	duration = mpc_streaminfo_get_length (&data->info) * 1000;
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-	                             duration);
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	if (filesize != -1) {
+		duration = mpc_streaminfo_get_length (&data->info) * 1000;
+		xmms_xform_metadata_set_int (xform,
+								  	XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+									duration);
+	}
 
 	bitrate = (data->info.bitrate) ? data->info.bitrate :
 	                                 data->info.average_bitrate;

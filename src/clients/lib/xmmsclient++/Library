@@ -2,6 +2,7 @@ target="xmmsclient++"
 systemlibrary=True
 
 source=["client.cpp",
+		"bindata.cpp",
 		"dict.cpp",
 		"exceptions.cpp",
 		"list.cpp",
@@ -12,10 +13,12 @@ source=["client.cpp",
 		"stats.cpp",
 		"playback.cpp",
 		"signal.cpp",
+		"xform.cpp",
 		"playlist.cpp"]
 
 def config(env):
 	env.Append(LIBS=["xmmsclient"])
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env.checkcpp()
 	env.checkcppheader("boost/signal.hpp")
 	env.checklib("boost_signals", "boost::signals::connection::connection", "#include <boost/signal.hpp>", "cpp")

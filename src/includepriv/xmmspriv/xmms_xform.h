@@ -22,6 +22,10 @@
 #include "xmmspriv/xmms_streamtype.h"
 #include "xmmspriv/xmms_plugin.h"
 
+typedef struct xmms_xform_object_St xmms_xform_object_t;
+
+xmms_xform_object_t *xmms_xform_object_init (void);
+
 xmms_xform_t *xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hints);
 const gchar *xmms_xform_outtype_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 gint xmms_xform_outtype_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);
@@ -40,6 +44,7 @@ const GList *xmms_xform_goal_hints_get (xmms_xform_t *xform);
 xmms_stream_type_t *xmms_xform_intype_get (xmms_xform_t *xform);
 
 void xmms_xform_outdata_type_set (xmms_xform_t *xform, xmms_stream_type_t *type);
+GList *xmms_xform_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
 
 #define XMMS_XFORM_BUILTIN(shname, name, ver, desc, setupfunc) XMMS_BUILTIN(XMMS_PLUGIN_TYPE_XFORM, XMMS_XFORM_API_VERSION, shname, name, ver, desc, (gboolean (*)(gpointer))setupfunc)
 

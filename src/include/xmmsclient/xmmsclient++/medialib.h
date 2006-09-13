@@ -48,6 +48,21 @@ namespace Xmms
 			 */
 			void addEntry( const std::string& url ) const;
 
+			/** Add a URL to the medialib.
+			 *  Same as #addEntry but takes a encoded URL instead.
+			 *
+			 *  @param url URL to add to the medialib.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void addEntryEncoded( const std::string& url ) const;
+
+
 			/** Queries the medialib for files and adds the matching ones
 			 *  to the current playlist.
 			 *  Remember to include a field called id in the query.
@@ -156,6 +171,22 @@ namespace Xmms
 			 *  @throw result_error If the operation failed.
 			 */
 			void pathImport( const std::string& path ) const;
+
+			/** Import all files recursively from the 
+			 *  directory passed as argument.
+			 *
+			 *  same as #pathImport but takes a encoded path instead.
+			 *
+			 *  @param path Directory to import.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void pathImportEncoded( const std::string& path ) const;
 
 			/** Export a serverside playlist to a format 
 			 *  that could be read from another mediaplayer.
@@ -330,6 +361,31 @@ namespace Xmms
 			addEntry( const std::string& url,
 			          const std::list< VoidSlot >& slots,
 			          const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/** Add a URL to the medialib.
+			 *  Same as #addEntry but takes a encoded URL insetad.
+			 *
+			 *  @param url URL to add to the medialib.
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			addEntryEncoded( const std::string& url,
+			                 const VoidSlot& slot,
+			                 const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			addEntryEncoded( const std::string& url,
+			                 const std::list< VoidSlot >& slots,
+			                 const ErrorSlot& error = &Xmms::dummy_error ) const;
+
 
 			/** Queries the medialib for files and adds the matching ones
 			 *  to the current playlist.
@@ -584,6 +640,31 @@ namespace Xmms
 			pathImport( const std::string& path,
 			            const std::list< VoidSlot >& slots,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/** Import all files recursively from the 
+			 *  directory passed as argument.
+			 *
+			 *  same as #pathImport but takes a encoded url instead.
+			 *
+			 *  @param path Directory to import.
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			pathImportEncoded( const std::string& path, const VoidSlot& slot,
+			                   const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			pathImportEncoded( const std::string& path,
+			                   const std::list< VoidSlot >& slots,
+			                   const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Export a serverside playlist to a format 
 			 *  that could be read from another mediaplayer.

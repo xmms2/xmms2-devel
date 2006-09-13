@@ -213,8 +213,16 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 			len += xmms_ipc_msg_get_length (msg);
 
 			if (len > msg->size) {
+				void *newbuf;
+				newbuf = realloc (msg->data, len);
+				if (!newbuf) {
+					if (disconnected) {
+						*disconnected = true;
+					}
+					return false;
+				}
 				msg->size = len;
-				msg->data = realloc (msg->data, msg->size);
+				msg->data = newbuf;
 			}
 
 			if (msg->xfered == len) {
@@ -274,6 +282,15 @@ xmms_ipc_msg_put_data (xmms_ipc_msg_t *msg, const void *data, unsigned int len)
 	xmms_ipc_msg_set_length (msg, xmms_ipc_msg_get_length (msg) + len);
 
 	return &msg->data->rawdata[xmms_ipc_msg_get_length (msg) - len];
+}
+
+void *
+xmms_ipc_msg_put_bin (xmms_ipc_msg_t *msg,
+                      const unsigned char *data,
+                      unsigned int len)
+{
+	xmms_ipc_msg_put_uint32 (msg, len);
+	return xmms_ipc_msg_put_data (msg, data, len);
 }
 
 void *
@@ -384,6 +401,28 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
 	}
 
 	(*buf)[*len] = '\0';
+
+	return true;
+}
+
+bool
+xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
+                            unsigned char **buf,
+                            unsigned int *len)
+{
+	if (!xmms_ipc_msg_get_uint32 (msg, len)) {
+		return false;
+	}
+
+	*buf = x_malloc0 (*len);
+	if (!*buf) {
+		return false;
+	}
+
+	if (!xmms_ipc_msg_get_data (msg, *buf, *len)) {
+		free (*buf);
+		return false;
+	}
 
 	return true;
 }

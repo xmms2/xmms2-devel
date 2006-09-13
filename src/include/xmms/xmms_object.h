@@ -57,11 +57,13 @@ typedef struct {
 		gchar *string;
 		GHashTable *dict;
 		GList *list;
+		GString *bin;
 	} value;
 	xmms_object_cmd_arg_type_t type;
 } xmms_object_cmd_value_t;
 
 xmms_object_cmd_value_t *xmms_object_cmd_value_str_new (const gchar *string);
+xmms_object_cmd_value_t *xmms_object_cmd_value_bin_new (GString *bin);
 xmms_object_cmd_value_t *xmms_object_cmd_value_uint_new (guint32 uint);
 xmms_object_cmd_value_t *xmms_object_cmd_value_int_new (gint32 i);
 xmms_object_cmd_value_t *xmms_object_cmd_value_dict_new (GHashTable *dict);
@@ -121,6 +123,7 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_ARG_STRING(a) ,arg->values[a].value.string
 #define __XMMS_CMD_DO_ARG_UINT32(a) ,arg->values[a].value.uint32
 #define __XMMS_CMD_DO_ARG_INT32(a) ,arg->values[a].value.int32
+#define __XMMS_CMD_DO_ARG_BIN(a) ,arg->values[a].value.bin
 #define __XMMS_CMD_DO_RETVAL_NONE() arg->retval = xmms_object_cmd_value_none_new();
 #define __XMMS_CMD_DO_RETVAL_DICT() arg->retval = xmms_object_cmd_value_dict_new
 #define __XMMS_CMD_DO_RETVAL_UINT32() arg->retval = xmms_object_cmd_value_uint_new
@@ -128,6 +131,7 @@ void xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_a
 #define __XMMS_CMD_DO_RETVAL_LIST() arg->retval = xmms_object_cmd_value_list_new
 #define __XMMS_CMD_DO_RETVAL_PROPDICT() arg->retval = xmms_object_cmd_value_propdict_new
 #define __XMMS_CMD_DO_RETVAL_STRING() arg->retval = xmms_object_cmd_value_str_new
+#define __XMMS_CMD_DO_RETVAL_BIN() arg->retval = xmms_object_cmd_value_bin_new
 
 #define XMMS_CMD_DEFINE4(cmdid, realfunc, argtype0, _rettype, argtype1, argtype2, argtype3, argtype4) static void \
 __int_xmms_cmd_##cmdid (xmms_object_t *object, xmms_object_cmd_arg_t *arg) \

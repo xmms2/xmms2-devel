@@ -275,6 +275,7 @@ static props properties[] = {
 	{ "date",                 XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,      STRING  },
 	{ "genre",                XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,     STRING  },
 	{ "comment",              XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,   STRING  },
+	{ "discnumber",           XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, INTEGER },
 	{ "musicbrainz_albumid",  XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,  STRING  },
 	{ "musicbrainz_artistid", XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID, STRING  },
 	{ "musicbrainz_trackid",  XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,  STRING  },
@@ -292,6 +293,7 @@ xmms_flac_init (xmms_xform_t *xform)
 	FLAC__bool retval;
 	FLAC__SeekableStreamDecoderState init_status;
 	gint current, num_comments;
+	gint filesize;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -382,10 +384,13 @@ xmms_flac_init (xmms_xform_t *xform)
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             (gint) data->bit_rate);
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-	                             (gint) data->total_samples
-	                             / data->sample_rate * 1000);
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	if (filesize != -1) {
+		xmms_xform_metadata_set_int (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             (gint) data->total_samples
+		                             / data->sample_rate * 1000);
+	}
 
 	xmms_xform_metadata_set_int (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,

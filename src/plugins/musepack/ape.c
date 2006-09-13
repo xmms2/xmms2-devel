@@ -28,15 +28,18 @@
 /*
  * Defines
  */
-#define get_int32(b,pos) (GUINT32_FROM_BE((b[pos]<<24)|(b[pos+1]<<16)|(b[pos+2]<<8)|(b[pos+3])))
+#define get_int32(b,pos) ((((guchar *)(b))[(pos)+3]<<24) | \
+			  (((guchar *)(b))[(pos)+2]<<16) | \
+			  (((guchar *)(b))[(pos)+1]<<8) |  \
+			  ((guchar *)(b))[(pos)])
 
 #define TAG_HEADER_SIZE   32
 #define TAG_SIGNATURE_SIZE 8
 
-#define TAG_IS_APE(buff) (g_strncasecmp (buff, "APETAGEX", 8) == 0)
+#define TAG_IS_APE(buff) (g_strncasecmp ((buff), "APETAGEX", 8) == 0)
 
 #define TAG_FLAGS_TYPE    (6)
-#define TAG_IS_TEXT(flags) ((flags & TAG_FLAGS_TYPE) == 0)
+#define TAG_IS_TEXT(flags) (((flags) & TAG_FLAGS_TYPE) == 0)
 
 
 /*

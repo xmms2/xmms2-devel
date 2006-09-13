@@ -30,6 +30,6 @@ typedef struct xmms_magic_checker_St {
 void xmms_magic_tree_free (GNode *tree);
 
 GNode *xmms_magic_match (xmms_magic_checker_t *c);
-guint xmms_magic_complexity (const GList *magic);
+guint xmms_magic_complexity (GNode *tree);
 
 #endif

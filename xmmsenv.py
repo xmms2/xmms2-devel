@@ -66,6 +66,8 @@ class Target:
 
 	def config(self, env):
 		self.globs.get("config", lambda x: None)(env)
+		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
+		self.target = os.path.join(self.dir, self.globs["target"])
 
 class LibraryTarget(Target):
 	def add(self, env):
@@ -83,7 +85,7 @@ class ProgramTarget(Target):
 
 class PluginTarget(Target):
 	def config(self, env):
-		env.pkgconfig("glib-2.0", fail=False, libs=False)
+		env.pkgconfig("glib-2.0", fail=False, libs=True)
 		Target.config(self, env)
 		if isinstance(self.globs.get("output_priority"), int):
 			global default_output
@@ -125,12 +127,12 @@ class XMMSEnvironment(Environment):
 		self.loadable = False
 		self.install_prefix = self["PREFIX"]
 		self.manpath = self["MANDIR"].replace("$PREFIX", self.install_prefix)
-		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
-		self.binpath = os.path.join(self.install_prefix, "bin")
-		self.librarypath = os.path.join(self.install_prefix, "lib")
-		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
-		self.includepath = os.path.join(self.install_prefix, "include/xmms2")
-		self.scriptpath = os.path.join(self.sharepath, "scripts")
+		self.binpath = self["BINDIR"].replace("$PREFIX", self.install_prefix)
+		self.librarypath = self["LIBDIR"].replace("$PREFIX", self.install_prefix)
+		self.sharepath = self["SHAREDIR"].replace("$PREFIX", self.install_prefix)
+		self.includepath = self["INCLUDEDIR"].replace("$PREFIX", self.install_prefix)
+		self.scriptpath = self["SCRIPTDIR"].replace("$SHAREDIR", self.sharepath)
+		self.pluginpath = self["PLUGINDIR"].replace("$LIBDIR", self.librarypath)
 		self["SHLIBPREFIX"] = "lib"
 		self.shversion = "0"
 
@@ -147,6 +149,15 @@ class XMMSEnvironment(Environment):
 		else:
 			self.platform = sys.platform
 
+		# Where to place the xmms2 user config directory
+		if self.has_key("USERCONFDIR"):
+			self.userconfpath = self["USERCONFDIR"]
+		else:
+			if sys.platform == 'darwin':
+				self.userconfpath = 'Library/xmms2'
+			else:
+				self.userconfpath = '.config/xmms2'
+
 		def gzipper(target, source, env):
 			gzip.GzipFile(target[0].path, 'wb',9).write(file(source[0].path).read())
 		self['BUILDERS']['GZipper'] = SCons.Builder.Builder(action=SCons.Action.Action(gzipper))
@@ -161,7 +172,6 @@ class XMMSEnvironment(Environment):
 		self.potential_targets = []
 		self.scan_dir("src")
 
-	
 	def Install(self, target, source):
 		target = os.path.normpath(self.installdir + target)
 		SCons.Environment.Environment.Install(self, target, source)
@@ -250,6 +260,28 @@ class XMMSEnvironment(Environment):
 				sys.exit(1)
 			raise ConfigError("Headerfile '%s' not found" % header)
 
+	def checkcompiler(self):
+		if not self.config_cache.has_key("c"):
+			print "Checking for working C compiler...",
+			self.config_cache["c"] = self.conf.TryCompile("int main() {}",".c")
+			if self.config_cache["c"]:
+				print "yes"
+			else:
+				print "no"
+		if not self.config_cache["c"]:
+			raise ConfigError("couldn't compile C files")
+
+	def checkcpp(self):
+		if not self.config_cache.has_key("cpp"):
+			print "Checking for working C++ compiler...",
+			self.config_cache["cpp"] = self.conf.TryCompile("using namespace std; int main() {};",".cpp")
+			if self.config_cache["cpp"]:
+				print "yes"
+			else:
+				print "no"
+		if not self.config_cache["cpp"]:
+			raise ConfigError("couldn't compile CPP files")
+
 	def checkcppheader(self, header, fail=False):
         
 		if isinstance(header, list):
@@ -327,6 +359,9 @@ class XMMSEnvironment(Environment):
 				elif opt == 'D':
 					self.Append( CPPFLAGS = [ arg ] )
 				elif arg[1:] == 'pthread':
+					self.Append( LINKFLAGS = [ arg ] )
+					self.Append( CPPFLAGS = [ arg ] )
+				elif arg[1:] == 'threads':
 					self.Append( LINKFLAGS = [ arg ] )
 					self.Append( CPPFLAGS = [ arg ] )
 				elif arg[1:6] == 'rpath':

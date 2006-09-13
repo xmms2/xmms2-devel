@@ -39,7 +39,7 @@ const char create_Sources_stm[] = "create table Sources (id integer primary key 
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
 
-/** 
+/**
  * This magic numbers are taken from ANALYZE on a big database, if we change the db
  * layout drasticly we need to redo them!
  */
@@ -199,17 +199,19 @@ xmms_sqlite_open (gboolean *create)
 		              xmms_sqlite_version_cb, &version, NULL);
 
 		if (version != DB_VERSION && !try_upgrade (sql, version)) {
-			gchar old[XMMS_PATH_MAX];
+			gchar *old;
 
 			sqlite3_close (sql);
-			g_snprintf (old, XMMS_PATH_MAX, "%s/.xmms2/medialib.db.old",
-			            g_get_home_dir ());
+
+			old = XMMS_BUILD_PATH ("medialib.db.old");
 			rename (dbpath, old);
 			if (sqlite3_open (dbpath, &sql)) {
 				xmms_log_fatal ("Error creating sqlite db: %s",
 				                sqlite3_errmsg (sql));
 				return NULL;
 			}
+			g_free (old);
+
 			sqlite3_exec (sql, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 			*create = TRUE;
 		}
@@ -263,7 +265,7 @@ xmms_sqlite_open (gboolean *create)
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
-	} 
+	}
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
 
@@ -316,7 +318,7 @@ xmms_sqlite_exec (sqlite3 *sql, const char *query, ...)
 	ret = sqlite3_exec (sql, q, NULL, NULL, &err);
 	if (ret == SQLITE_BUSY) {
 		xmms_log_fatal ("BUSY EVENT!");
-		g_assert_not_reached();
+		g_assert_not_reached ();
 	}
 	if (ret != SQLITE_OK) {
 		xmms_log_error ("Error in query! \"%s\" (%d) - %s", q, ret, err);
@@ -353,6 +355,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 
 	if (ret == SQLITE_BUSY) {
 		xmms_log_fatal ("BUSY EVENT!");
+		g_assert_not_reached ();
 	}
 
 	if (ret != SQLITE_OK) {
@@ -369,7 +372,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		gint i;
 		xmms_object_cmd_value_t *val;
 		GHashTable *ret = g_hash_table_new_full (g_str_hash, g_str_equal,
-							 g_free, xmms_object_cmd_value_free);
+		                                         g_free, xmms_object_cmd_value_free);
 		gint num = sqlite3_data_count (stm);
 
 		for (i = 0; i < num; i++) {
@@ -389,6 +392,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 		xmms_log_error ("SQLite api misuse on query '%s'", q);
 	} else if (ret == SQLITE_BUSY) {
 		xmms_log_error ("SQLite busy on query '%s'", q);
+		g_assert_not_reached ();
 	}
 
 	sqlite3_free (q);
@@ -419,7 +423,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 
 	if (ret == SQLITE_BUSY) {
 		xmms_log_fatal ("BUSY EVENT!");
-		g_assert_not_reached();
+		g_assert_not_reached ();
 	}
 
 	if (ret != SQLITE_OK) {
@@ -471,8 +475,8 @@ void
 xmms_sqlite_print_version (void)
 {
 	printf (" Using sqlite version %d (compiled against "
-		XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
-		sqlite3_libversion_number());
+	        XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
+	        sqlite3_libversion_number());
 }
 
 /** @} */

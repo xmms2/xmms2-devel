@@ -5,10 +5,12 @@
 
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/playback.h>
+#include <xmmsclient/xmmsclient++/xform.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
 #include <xmmsclient/xmmsclient++/config.h>
 #include <xmmsclient/xmmsclient++/stats.h>
+#include <xmmsclient/xmmsclient++/bindata.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/listener.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
@@ -87,11 +89,13 @@ namespace Xmms
 
 			// Subsystems
 
+            const Bindata  bindata;
 			const Playback playback;
 			const Playlist playlist;
 			const Medialib medialib;
 			const Config   config;
 			const Stats    stats;
+			const Xform    xform;
 
 			/** Get the current mainloop.
 			 *  If no mainloop is set, it will create a default MainLoop.

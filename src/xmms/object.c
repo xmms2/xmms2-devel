@@ -70,7 +70,7 @@ xmms_object_cleanup (xmms_object_t *object)
   * Connect to a signal that is emitted by this object.
   * You can connect many handlers to the same signal as long as
   * the handler address is unique.
-  * 
+  *
   * @todo fix the need for a unique handler adress?
   *
   * @param object the object that will emit the signal
@@ -81,7 +81,7 @@ xmms_object_cleanup (xmms_object_t *object)
 
 void
 xmms_object_connect (xmms_object_t *object, guint32 signalid,
-		     xmms_object_handler_t handler, gpointer userdata)
+                     xmms_object_handler_t handler, gpointer userdata)
 {
 	GList *list = NULL;
 	GList *node;
@@ -112,7 +112,7 @@ xmms_object_connect (xmms_object_t *object, guint32 signalid,
 
 void
 xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
-			xmms_object_handler_t handler)
+                        xmms_object_handler_t handler)
 {
 	GList *list = NULL, *node;
 	xmms_object_handler_entry_t *entry;
@@ -179,6 +179,17 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 			entry->handler (object, data, entry->userdata);
 	}
 	g_list_free (list2);
+
+}
+
+xmms_object_cmd_value_t *
+xmms_object_cmd_value_bin_new (GString *bin)
+{
+	xmms_object_cmd_value_t *val;
+	val = g_new0 (xmms_object_cmd_value_t, 1);
+	val->value.bin = bin;
+	val->type = XMMS_OBJECT_CMD_ARG_BIN;
+	return val;
 
 }
 
@@ -259,6 +270,9 @@ xmms_object_cmd_value_copy (xmms_object_cmd_value_t *val)
 	g_return_val_if_fail (val, NULL);
 
 	switch (val->type) {
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			ret = xmms_object_cmd_value_bin_new (val->value.bin);
+			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			ret = xmms_object_cmd_value_str_new (val->value.string);
 			break;
@@ -291,6 +305,9 @@ xmms_object_cmd_value_free (gpointer val)
 	switch (v->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			g_free (v->value.string);
+			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			g_string_free (v->value.bin, TRUE);
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
@@ -340,7 +357,7 @@ xmms_object_cmd_arg_init (xmms_object_cmd_arg_t *arg)
 
 void
 xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
-		    xmms_object_cmd_arg_type_t type, ...)
+                    xmms_object_cmd_arg_type_t type, ...)
 {
 	va_list ap;
 	xmms_object_cmd_arg_t arg;
@@ -359,6 +376,9 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			arg.retval = xmms_object_cmd_value_str_new (va_arg (ap, gchar *));
 			break;
+		case XMMS_OBJECT_CMD_ARG_BIN:
+			arg.retval = xmms_object_cmd_value_bin_new ((GString *) va_arg (ap, gpointer));
+			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			arg.retval = xmms_object_cmd_value_dict_new ((GHashTable *) va_arg (ap, gpointer));
 			break;
@@ -374,10 +394,10 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 
 	xmms_object_emit (object, signalid, &arg);
 
-	/* 
+	/*
 	 * Let's not use value_free since that will free whatever
 	 * is in the struct also. This should be owned by the
-	 * parent 
+	 * parent
 	 */
 	if (type != XMMS_OBJECT_CMD_ARG_NONE)
 		g_free (arg.retval);
@@ -393,8 +413,8 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
   * @param desc A command description.
   */
 void
-xmms_object_cmd_add (xmms_object_t *object, guint cmdid, 
-		     xmms_object_cmd_desc_t *desc)
+xmms_object_cmd_add (xmms_object_t *object, guint cmdid,
+                     xmms_object_cmd_desc_t *desc)
 {
 	g_return_if_fail (object);
 	g_return_if_fail (desc);

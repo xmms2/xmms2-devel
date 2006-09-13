@@ -16,6 +16,7 @@
 
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
+#include "xmms/xmms_bindata.h"
 #include "xmms/xmms_sample.h"
 #include "xmms/xmms_log.h"
 
@@ -427,6 +428,7 @@ static void
 xmms_faad_get_mediainfo (xmms_xform_t *xform)
 {
 	xmms_faad_data_t *data;
+	gint filesize;
 
 	g_return_if_fail (xform);
 
@@ -441,7 +443,8 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
 		                             temp);
-		if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) / temp) >= 0) {
+		filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+		if (filesize != 1 && ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) / temp) >= 0)) {
 			xmms_xform_metadata_set_int (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
 			                             temp * 1000);
@@ -491,13 +494,21 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 			gint tracknr;
 			gchar *end;
 
-			tracknr = strtol(metabuf, &end, 10);
+			tracknr = strtol (metabuf, &end, 10);
 			if (end && *end == '\0') {
 				xmms_xform_metadata_set_int (xform,
 				                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
 				                             tracknr);
 			}
 			g_free (metabuf);
+		}
+		if ((temp = mp4ff_meta_get_coverart (data->mp4ff, &metabuf))) {
+			gchar hash[33];
+
+			if (xmms_bindata_plugin_add (metabuf, temp, hash)) {
+				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
+				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, "image/jpeg");
+			}
 		}
 
 		/* MusicBrainz tag support */
