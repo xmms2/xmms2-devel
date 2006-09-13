@@ -89,6 +89,15 @@ namespace Xmms
 
 	}
 
+	void Playlist::insertUrlEncoded( int pos, const std::string& url ) const
+	{
+
+		vCall( connected_, ml_,
+		      boost::bind( xmmsc_playlist_insert_encoded, conn_, pos, url.c_str() ) );
+
+	}
+
+
 	void Playlist::insertId( int pos, unsigned int id ) const
 	{
 
@@ -363,6 +372,33 @@ namespace Xmms
 		             slots, error );
 
 	}
+
+	void
+	Playlist::insertUrlEncoded( int pos, const std::string& url,
+	                            const VoidSlot& slot,
+					            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_insert_encoded, conn_, 
+		                          pos, url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::insertUrlEncoded( int pos, const std::string& url,
+	                            const std::list< VoidSlot >& slots,
+					            const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_insert_encoded, conn_, 
+		                          pos, url.c_str() ),
+		             slots, error );
+
+	}
+
 
 	void
 	Playlist::insertId( int pos, unsigned int id,

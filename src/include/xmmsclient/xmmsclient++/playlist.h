@@ -136,6 +136,21 @@ namespace Xmms
 			 */
 			void insertUrl( int pos, const std::string& url ) const;
 
+			/** Insert entry at given position in playlist.
+			 *  Same as #insertUrl but takes a encoded url instead.
+			 *  
+			 *  @param pos A position in the playlist.
+			 *  @param url The URL to insert.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void insertUrlEncoded( int pos, const std::string& url ) const;
+
 			/** Insert a medialib ID at given position in playlist.
 			 *
 			 *  @param pos A position in the playlist.
@@ -431,6 +446,31 @@ namespace Xmms
 			insertUrl( int pos, const std::string& url,
 			           const std::list< VoidSlot >& slots,
 			           const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/** Insert entry at given position in playlist.
+			 *  same as #insertUrl but takes a encoded url instead.
+			 *  
+			 *  @param pos A position in the playlist.
+			 *  @param url The URL to insert.
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			insertUrlEncoded( int pos, const std::string& url,
+			                  const VoidSlot& slot,
+					          const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/**
+			 * @overload
+			 * @note It takes a list of slots instead of just one slot.
+			 */
+			void
+			insertUrlEncoded( int pos, const std::string& url,
+			                  const std::list< VoidSlot >& slots,
+			                  const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Insert a medialib ID at given position in playlist.
 			 *
