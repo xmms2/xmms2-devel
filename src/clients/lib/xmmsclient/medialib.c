@@ -491,11 +491,32 @@ xmmsc_medialib_add_entry_args (xmmsc_connection_t *conn, const char *url, int nu
 	if (!enc_url)
 		return NULL;
 
-	res = do_methodcall (conn, XMMS_IPC_CMD_ADD, enc_url);
+	res = xmmsc_medialib_add_entry_encoded (conn, enc_url);
 
 	free (enc_url);
 
 	return res;
+}
+
+/**
+ * Add a URL to the medialib. If you want to add mutiple files
+ * you should call #xmmsc_medialib_path_import
+ *
+ * same as #xmmsc_medialib_add_entry but expects a encoded URL
+ * instead
+ *
+ * @param conn The #xmmsc_connection_t
+ * @param url URL to add to the medialib.
+ */
+xmmsc_result_t *
+xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url)
+{
+	x_check_conn (conn, NULL);
+
+	if (!_xmmsc_medialib_verify_url (url))
+		x_api_error ("with a non encoded url", NULL);
+
+	return do_methodcall (conn, XMMS_IPC_CMD_ADD, url);
 }
 
 /**

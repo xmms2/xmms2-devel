@@ -144,7 +144,7 @@ xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
 xmmsc_result_t *
 xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int numargs, const char **args)
 {
-	xmms_ipc_msg_t *msg;
+	xmmsc_result_t *res;
 	char *enc_url;
 
 	x_check_conn (c, NULL);
@@ -154,14 +154,36 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int
 	if (!enc_url)
 		return NULL;
 	
+	res = xmmsc_playlist_insert_encoded (c, pos, enc_url);
+	free (enc_url);
+
+	return res;
+}
+
+/**
+ * Insert entry at given position in playlist.
+ * Same as #xmmsc_playlist_insert but takes an encoded
+ * url instead.
+ *
+ * @param c The connection structure.
+ * @param pos A position in the playlist
+ * @param url The URL to insert
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, int pos, const char *url)
+{
+	xmms_ipc_msg_t *msg;
+
+	if (!_xmmsc_medialib_verify_url (url))
+		x_api_error ("with a non encoded url", NULL);
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT);
 	xmms_ipc_msg_put_uint32 (msg, pos);
-	xmms_ipc_msg_put_string (msg, enc_url);
+	xmms_ipc_msg_put_string (msg, url);
 
 	return xmmsc_send_msg (c, msg);
 }
-
-
 
 /**
  * Add a medialib id to the playlist. 
