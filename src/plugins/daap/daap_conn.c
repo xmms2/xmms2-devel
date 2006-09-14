@@ -75,6 +75,8 @@ daap_open_connection (gchar *host, gint port)
 		fd_set fds;
 		struct timeval tmout;
 		gint sret;
+		gint err = 0;
+		guint errsize = sizeof (err);
 
 		tmout.tv_sec = 3;
 		tmout.tv_usec = 0;
@@ -97,6 +99,17 @@ daap_open_connection (gchar *host, gint port)
 		sret = select (sockfd + 1, NULL, &fds, NULL, &tmout);
 		if (sret == 0 || sret == SOCKET_ERROR) {
 			g_io_channel_unref (sock_chan);
+			return NULL;
+		}
+
+		/** Haha, lol lol ololo sockets in POSIX */
+		if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, &err, &errsize) < 0) {
+			g_io_channel_unref (sock_chan);
+			return NULL;
+		}
+
+		if (err != 0) {
+			xmms_log_error ("Connect call failed!");
 			return NULL;
 		}
 
@@ -231,10 +244,12 @@ daap_receive_header (GIOChannel *sock_chan, gchar **header)
 
 	g_free (response);
 
-	g_io_channel_flush (sock_chan, &err);
-	if (NULL != err) {
-		XMMS_DBG ("Error flushing buffer: %s\n", err->message);
-		return;
+	if (sock_chan) {
+		g_io_channel_flush (sock_chan, &err);
+		if (NULL != err) {
+			XMMS_DBG ("Error flushing buffer: %s\n", err->message);
+			return;
+		}
 	}
 }
 

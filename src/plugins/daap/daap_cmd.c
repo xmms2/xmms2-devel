@@ -77,6 +77,9 @@ daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 	g_free (tmp);
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
+	if (!cc_data) {
+		return 0;
+	}
 	revision_id = cc_data->revision_id;
 
 	g_free (request);
