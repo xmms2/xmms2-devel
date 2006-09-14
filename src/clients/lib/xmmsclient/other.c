@@ -187,7 +187,6 @@ xmmsc_xform_media_browse (xmmsc_connection_t *c, const char *url)
 xmmsc_result_t *
 xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 {
-	char *enc_url;
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
 
@@ -198,7 +197,7 @@ xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 		x_api_error ("with a non encoded url", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_XFORM, XMMS_IPC_CMD_BROWSE);
-	xmms_ipc_msg_put_string (msg, enc_url);
+	xmms_ipc_msg_put_string (msg, url);
 	res = xmmsc_send_msg (c, msg);
 
 	return res;
