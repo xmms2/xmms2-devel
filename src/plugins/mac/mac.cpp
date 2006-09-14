@@ -242,11 +242,11 @@ xmms_mac_get_media_info (xmms_xform_t *xform)
 	gchar *name, *value;
 
 	gint filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
-	if (filesize == -1) {
+	if (filesize != -1) {	
 		gint duration = data->p_decompress->GetInfo (APE_DECOMPRESS_LENGTH_MS);
 		xmms_xform_metadata_set_int (xform,
-								   	XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-									duration);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             duration);
 	}
 
 	/* Technical Information */
