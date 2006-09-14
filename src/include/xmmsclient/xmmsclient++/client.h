@@ -97,6 +97,14 @@ namespace Xmms
 			const Stats    stats;
 			const Xform    xform;
 
+			/** Get the absolute path to the user config dir.
+			 *  
+			 *  @throw result_error If there was an error.
+			 *  
+			 *  @return string containing the path.
+			 */
+			std::string getUserConfDir() const;
+
 			/** Get the current mainloop.
 			 *  If no mainloop is set, it will create a default MainLoop.
 			 *  

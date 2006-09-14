@@ -99,6 +99,17 @@ namespace Xmms
 
 	}
 
+    std::string Client::getUserConfDir() const {
+        
+        char buf[PATH_MAX] = { '\0' };
+        if( !xmmsc_userconfdir_get( buf, PATH_MAX ) ) {
+            throw Xmms::result_error( "Error occured when trying to get "
+                                      "user config directory." );
+        }
+        return std::string(buf);
+
+    }
+
 	MainloopInterface& Client::getMainLoop() 
 	{
 
