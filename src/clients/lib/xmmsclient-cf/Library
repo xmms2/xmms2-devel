@@ -1,0 +1,9 @@
+target="xmmsclient-cf"
+systemlibrary=True
+source=["xmmsclient-cf.c"]
+
+def config(env):
+	env.Append(LIBS=["xmmsclient"])
+	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
+	env.checkheader("CoreFoundation/CoreFoundation.h")
+
