@@ -413,6 +413,32 @@ coll_parse_prepare (xmmsc_coll_token_t *tokens)
 			}
 			break;
 
+		/* Warning: must be placed _before_ the MATCH->CONTAINS converter! */
+		case XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS:
+			/* Fuzzy match the operand to CONTAINS, i.e. surround with '%' */
+			if (curr->type == XMMS_COLLECTION_TOKEN_STRING ||
+			    curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
+				int i, o;
+				char *newstr = x_new0 (char, strlen (curr->string) + 3);
+				i = 0;
+				o = 0;
+
+				if (curr->string[i] != '%') {
+					newstr[o++] = '%';
+				}
+				while (curr->string[i] != '\0') {
+					newstr[o++] = curr->string[i++];
+				}
+				if (i > 0 && curr->string[i - 1] != '%') {
+					newstr[o++] = '%';
+				}
+				newstr[o] = '\0';
+
+				free (curr->string);
+				curr->string = newstr;
+			}
+			break;
+
 		case XMMS_COLLECTION_TOKEN_OPFIL_MATCH:
 			/* If MATCHing a pattern, use CONTAINS instead */
 			if (curr->type == XMMS_COLLECTION_TOKEN_PATTERN) {
