@@ -220,7 +220,7 @@ cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	for (i = 2; argv[i]; i++) {
 		/* FIXME: Fulhack to check for optional playlist argument */
-		if (i == 2 && !g_file_test (argv[i], G_FILE_TEST_EXISTS)) {
+		if (i == 2 && argc > 3 && !g_file_test (argv[i], G_FILE_TEST_EXISTS)) {
 			playlist = argv[i];
 		}
 
@@ -357,7 +357,7 @@ cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	for (i = 2; i < argc; i++) {
 		gchar *rfile;
 
-		if (i == 2 && !g_file_test (argv[i], G_FILE_TEST_EXISTS)) {
+		if (i == 2 && argc > 3 && !g_file_test (argv[i], G_FILE_TEST_EXISTS)) {
 			playlist = argv[i];
 			continue;
 		}
