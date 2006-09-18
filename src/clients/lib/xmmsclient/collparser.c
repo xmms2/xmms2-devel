@@ -119,7 +119,8 @@ static char *string_intadd (char *number, int delta);
  * FILTER    := UNAFILTER | BINFILTER | STRVAL
  * UNAFILTER := TOKEN_OPFIL_HAS PROP
  * BINFILTER := PROP TOKEN_OPFIL_MATCH STRING | PROP TOKEN_OPFIL_CONTAINS STRVAL |
- *              PROP TOKEN_OPFIL_SMALLER INTEGER | PROP TOKEN_OPFIL_GREATER INTEGER
+ *              PROP TOKEN_OPFIL_SMALLER INTEGER | PROP TOKEN_OPFIL_GREATER INTEGER |
+ *              TOKEN_OPFIL_MATCH STRING | TOKEN_OPFIL_CONTAINS STRVAL
  * </pre>
  *
  * @{
@@ -944,16 +945,29 @@ coll_parse_autofilter (xmmsc_coll_token_t *token, xmmsc_coll_t **ret)
 	xmmsc_coll_t *coll, *operand;
 	int i;
 
+	if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_MATCH) {
+		colltype = XMMS_COLLECTION_TYPE_MATCH;
+		token = coll_next_token (token);
+	} else if (token->type == XMMS_COLLECTION_TOKEN_OPFIL_CONTAINS) {
+		colltype = XMMS_COLLECTION_TYPE_CONTAINS;
+		token = coll_next_token (token);
+	} else {
+		colltype = XMMS_COLLECTION_TYPE_ERROR;
+	}
+
 	strval = coll_parse_strval (token);
 	if (!strval) {
 		*ret = NULL;
 		return token;
 	}
 
-	if (token->type == XMMS_COLLECTION_TOKEN_PATTERN)
-		colltype = XMMS_COLLECTION_TYPE_CONTAINS;
-	else
-		colltype = XMMS_COLLECTION_TYPE_MATCH;
+	/* No operator at all, guess from argument type */
+	if (colltype == XMMS_COLLECTION_TYPE_ERROR) {
+		if (token->type == XMMS_COLLECTION_TOKEN_PATTERN)
+			colltype = XMMS_COLLECTION_TYPE_CONTAINS;
+		else
+			colltype = XMMS_COLLECTION_TYPE_MATCH;
+	}
 
 	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_UNION);
 
