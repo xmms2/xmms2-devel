@@ -379,7 +379,7 @@ void
 cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *name, *namespace;
-	const gchar **order = NULL;
+	gchar **order = NULL;
 	xmmsc_coll_t *collref;
 	xmmsc_result_t *res;
 	GList *n = NULL;
@@ -403,7 +403,7 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
  	xmmsc_coll_attribute_set (collref, "reference", name);
  	xmmsc_coll_attribute_set (collref, "namespace", namespace);
 
-	res = xmmsc_coll_query_ids (conn, collref, order, 0, 0);
+	res = xmmsc_coll_query_ids (conn, collref, (const gchar**)order, 0, 0);
 	xmmsc_result_wait (res);
 
 	if (xmmsc_result_iserror (res)) {
