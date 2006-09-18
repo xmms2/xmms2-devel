@@ -147,11 +147,7 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 					return FALSE;
 				}
 			}
-			if (!(arg->values[i].value.list = g_list_reverse (arg->values[i].value.list))) {
-				GList * list = arg->values[i].value.list;
-				while (list) {g_free(list->data); list=g_list_remove(list, list); }
-				return FALSE;
-			}
+			arg->values[i].value.list = g_list_reverse (arg->values[i].value.list);
 			break;
 		case XMMS_OBJECT_CMD_ARG_COLL :
 			if (!xmms_ipc_msg_get_collection_alloc (msg, &arg->values[i].value.coll)) {
