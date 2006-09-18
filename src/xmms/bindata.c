@@ -61,10 +61,11 @@ static void md5_append(md5_state_t *pms, const md5_byte_t *data, int nbytes);
 static void md5_finish(md5_state_t *pms, md5_byte_t digest[16]);
 
 static gchar *xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
-static GString *xmms_bindata_retreive (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err);
+static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err);
 static void xmms_bindata_remove (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *); 
+static gboolean _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar hash[33], xmms_error_t *err);
 
-XMMS_CMD_DEFINE (get_data, xmms_bindata_retreive, xmms_bindata_t *, BIN, STRING, NONE);
+XMMS_CMD_DEFINE (get_data, xmms_bindata_retrieve, xmms_bindata_t *, BIN, STRING, NONE);
 XMMS_CMD_DEFINE (add_data, xmms_bindata_add, xmms_bindata_t *, STRING, BIN, NONE);
 XMMS_CMD_DEFINE (remove_data, xmms_bindata_remove, xmms_bindata_t *, NONE, STRING, NONE);
 
@@ -115,49 +116,52 @@ xmms_bindata_destroy (xmms_object_t *obj)
 }
 
 gchar *
-xmms_bindata_calculate_md5 (guchar *data, guint size)
+xmms_bindata_calculate_md5 (const guchar *data, guint size, gchar ret[33])
 {
 	md5_state_t state;
 	md5_byte_t digest[16];
-	char hex_output[16*2 + 1];
 	int di;
+	static gchar hex[] = {
+		'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+	};
 
 	md5_init(&state);
 	md5_append(&state, (const md5_byte_t *)data, size);
 	md5_finish(&state, digest);
-	for (di = 0; di < 16; ++di) {
-		sprintf(hex_output + di * 2, "%02x", digest[di]);
-	}
 
-	return g_strdup(hex_output);
+	for (di = 0; di < 16; ++di) {
+		ret[di * 2] = hex[digest[di] >> 4];
+		ret[di * 2 + 1] = hex[digest[di] & 0x0f];
+	}
+	ret[32] = 0;
+	return ret;
 }
 
 /** Add binary data from a plugin */
-gchar *
-xmms_bindata_plugin_add (GString *str)
+gboolean
+xmms_bindata_plugin_add (const guchar *data, gsize size, gchar hash[33])
 {
 	xmms_error_t err;
-	return xmms_bindata_add (global_bindata, str, &err);
+	return _xmms_bindata_add (global_bindata, data, size, hash, &err);
 }
 
-static gchar *
-xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
+static gboolean
+_xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar hash[33], xmms_error_t *err)
 {
-	gchar *hash;
+	const guchar *ptr;
+	gsize left;
 	gchar *path;
-	gchar *tmp;
 	FILE *fp;
 
-	hash = xmms_bindata_calculate_md5 ((guchar *)data->str, data->len);
+	xmms_bindata_calculate_md5 (data, len, hash);
 
-	tmp = g_strdup_printf ("%s_%ld", hash, data->len);
-	g_free (hash);
-	path = XMMS_BUILD_PATH ("bindata", tmp);
+	path = XMMS_BUILD_PATH ("bindata", hash);
 
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
-		XMMS_DBG ("file %s is already in bindata dir", path);
+		XMMS_DBG ("file %s is already in bindata dir", hash);
 		g_free (path);
-		return tmp;
+		return FALSE;
 	}
 
 	XMMS_DBG ("Creating %s", path);
@@ -166,19 +170,49 @@ xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
 		xmms_log_error ("Couldn't create %s", path);
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Couldn't create file on server!");
 		g_free (path);
-		return NULL;
+		return FALSE;
 	}
 
-	fwrite (data->str, data->len, 1, fp);
-	fclose (fp);
+	/* write the data to the file */
+	ptr = data;
+	left = len;
 
+	while (left > 0) {
+		size_t w;
+
+		w = fwrite (ptr, 1, left, fp);
+		if (!w && ferror (fp)) {
+			fclose (fp);
+			unlink (path);
+
+			xmms_log_error ("Couldn't write data");
+			xmms_error_set (err, XMMS_ERROR_GENERIC,
+			                "Couldn't write data!");
+			g_free (path);
+			return FALSE;
+		}
+
+		left -= w;
+		ptr += w;
+	}
+
+	fclose (fp);
 	g_free (path);
 
-	return tmp;
+	return TRUE;
+}
+
+char *
+xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err)
+{
+	gchar hash[33];
+	if (_xmms_bindata_add (bindata, (guchar *)data->str, data->len, hash, err))
+		return g_strdup (hash);
+	return NULL;
 }
 
 static GString *
-xmms_bindata_retreive (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
+xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
 {
 	gchar *path;
 	GString *str;

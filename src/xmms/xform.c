@@ -106,7 +106,7 @@ xmms_xform_browse_add_entry (GList *list,
 	return list;
 }
 
-static GList *
+GList *
 xmms_xform_browse (xmms_xform_object_t *obj,
                    const gchar *url,
                    xmms_error_t *error)
@@ -446,6 +446,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
 
 	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED, times_played + 1);
+	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED, time (NULL));
 
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);

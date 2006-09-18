@@ -206,7 +206,7 @@ cmd_mlib_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	for (i = 3; argv[i]; i++) {
 		gchar *url;
 		
-		url = format_url (argv[i]);
+		url = format_url (argv[i], G_FILE_TEST_IS_REGULAR);
 		if (url) {
 			res = xmmsc_medialib_add_entry (conn, url);
 			xmmsc_result_wait (res);
@@ -353,27 +353,33 @@ static void
 cmd_mlib_addpath (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	xmmsc_result_t *res;
-	gchar rpath[PATH_MAX];
+	gint i;
 
 	if (argc < 4) {
-		print_error ("Supply a path to add!");
+		print_error ("Missing argument(s)");
 	}
 
-	if (!realpath (argv[3], rpath)) {
-		return;
-	}
+	for (i = 3; i < argc; i++) {
+		gchar *rfile;
 
-	if (!g_file_test (rpath, G_FILE_TEST_IS_DIR)) {
-		return;
-	}
+		rfile = format_url (argv[i], G_FILE_TEST_IS_DIR);
+		if (!rfile) {
+			print_info ("Ignoring invalid path '%s'", argv[i]);
+			continue;
+		}
 
-	res = xmmsc_medialib_path_import (conn, rpath);
-	xmmsc_result_wait (res);
+		res = xmmsc_medialib_path_import (conn, rfile);
+		g_free (rfile);
 
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_info ("Cannot add path '%s': %s",
+			            argv[i], xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
-	xmmsc_result_unref (res);
 }
 
 static void

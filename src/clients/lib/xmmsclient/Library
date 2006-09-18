@@ -12,10 +12,11 @@ source=["ipc.c",
 	"stats.c", 
 	"playback.c", 
 	"playlist.c", 
-	"result.c", 
+	"result.c",
 	"xqueue.c",
 	"xmmsclient.c",
-	"bindata.c"]
+	"bindata.c", 
+	"xform.c"]
 
 def config(env):
 	env.Append(LIBS=["xmmsipc"])
@@ -24,7 +25,6 @@ def config(env):
 	if env.platform == 'win32':
 		env["SHLIBPREFIX"] = ""
 		env.Append(LIBS=["ws2_32"])
-		env.Append(LINKFLAGS=["/DEF:src/clients/lib/xmmsclient/xmmsclient.def"])
 	elif env.platform == 'sunos5':
 		env.checklib("socket", "socket", fail=True)
 	env.Append(CPPPATH=["#src/includepriv"])

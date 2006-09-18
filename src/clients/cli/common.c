@@ -24,7 +24,7 @@ res_has_key (xmmsc_result_t *res, const gchar *key)
 
 
 gchar *
-format_url (gchar *item)
+format_url (gchar *item, GFileTest test)
 {
 	gchar *url, rpath[PATH_MAX], *p;
 
@@ -36,7 +36,7 @@ format_url (gchar *item)
 			return NULL;
 		}
 
-		if (!g_file_test (rpath, G_FILE_TEST_IS_REGULAR)) {
+		if (!g_file_test (rpath, test)) {
 			return NULL;
 		}
 

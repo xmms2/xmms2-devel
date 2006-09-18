@@ -400,7 +400,7 @@ main (int argc, char **argv)
 	};
 
 	/** Check that we are running against the correct glib version */
-	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, 0);
 	if (vererr) {
 		g_print ("Bad glib version: %s\n", vererr);
 		exit (1);

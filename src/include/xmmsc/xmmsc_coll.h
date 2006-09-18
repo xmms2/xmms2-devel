@@ -40,6 +40,7 @@ int xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index);
 int xmmsc_coll_idlist_clear (xmmsc_coll_t *coll);
 int xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *val);
 int xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t val);
+size_t xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll);
 
 xmmsc_coll_type_t xmmsc_coll_get_type (xmmsc_coll_t *coll);
 uint32_t* xmmsc_coll_get_idlist (xmmsc_coll_t *coll);

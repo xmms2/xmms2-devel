@@ -220,6 +220,8 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 		return FALSE;
 	}
 
+	snd_pcm_nonblock (data->pcm, 0);
+
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		for (j = 1; j < 3; j++) {
 			for (k = 0; k < G_N_ELEMENTS (rates); k++) {
@@ -350,6 +352,8 @@ xmms_alsa_open (xmms_output_t *output)
 		xmms_log_error ("Cannot open audio device: %s", snd_strerror (err));
 		return FALSE;
 	}
+
+	snd_pcm_nonblock (data->pcm, 0);
 
 	return TRUE;
 }

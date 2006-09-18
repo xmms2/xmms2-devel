@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/playback.h>
+#include <xmmsclient/xmmsclient++/bindata.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/config.h>
@@ -13,5 +14,6 @@
 #include <xmmsclient/xmmsclient++/dict.h>
 #include <xmmsclient/xmmsclient++/list.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
+#include <xmmsclient/xmmsclient++/xform.h>
 
 #endif // XMMSCLIENTPP_H

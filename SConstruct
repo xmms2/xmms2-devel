@@ -17,7 +17,7 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrFeelgood-WIP (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrFeelgood+WIP+TEST3 (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 1)
@@ -27,21 +27,14 @@ def SimpleListOption(key, help, default=[]):
 	return(key, help, default, None, lambda val: string.split(val))
 
 
-if sys.platform == 'win32':
-	default_pyrex = 'pyrexc.py'
-	default_prefix = 'c:\\xmms2'
-	default_cxxflags = ['/Zi', '/TC']
-	default_cflags = ['/Zi', '/TC']
-	default_cpppath = ['z:\\xmms2\\winlibs\\include']
+default_pyrex = 'pyrexc'
+default_prefix = '/usr/local/'
+default_cxxflags = ['-g', '-Wall', '-O0']
+default_cflags = ['-g', '-Wall', '-O0']
+if sys.platform == 'darwin':
+	default_cpppath = ['/sw/lib']
 else:
-	default_pyrex = 'pyrexc'
-	default_prefix = '/usr/local/'
-	default_cxxflags = ['-g', '-Wall', '-O0']
-	default_cflags = ['-g', '-Wall', '-O0']
-	if sys.platform == 'darwin':
-		default_cpppath = ['/sw/lib']
-	else:
-		default_cpppath = []
+	default_cpppath = []
 
 opts = Options("options.cache")
 opts.Add('CC', 'C compiler to use')
@@ -54,6 +47,12 @@ opts.Add(SimpleListOption('CXXFLAGS', 'C++ compilerflags', default_cxxflags))
 opts.Add(SimpleListOption('CCFLAGS', 'C compilerflags', default_cflags))
 opts.Add('PREFIX', 'install prefix', default_prefix)
 opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
+opts.Add('LIBDIR', 'specified library directory', '$PREFIX/lib')
+opts.Add('BINDIR', 'specified binary directory', '$PREFIX/bin')
+opts.Add('PLUGINDIR', 'specified plugin directory', '$LIBDIR/xmms2')
+opts.Add('SHAREDIR', 'specified share directory', '$PREFIX/share')
+opts.Add('SCRIPTDIR', 'specified scripts directory', '$SHAREDIR/scripts')
+opts.Add('INCLUDEDIR', 'specified include directory', '$PREFIX/include/xmms2')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
 opts.Add('INSTALLDIR', 'install dir')
 opts.Add('PKGCONFIGDIR', 'Where should we put our .pc files?', '$PREFIX/lib/pkgconfig')
@@ -148,8 +147,8 @@ base_env.handle_targets("Library")
 base_env.handle_targets("Program")
 
 subst_dict = {"%VERSION%":XMMS_VERSION, "%PLATFORM%":"XMMS_OS_" + base_env.platform.upper().replace("-", ""), 
-	      "%PKGLIBDIR%":base_env["PREFIX"]+"/lib/xmms2",
-	      "%BINDIR%":base_env["PREFIX"]+"/bin",
+	      "%PKGLIBDIR%":base_env["PLUGINDIR"],
+	      "%BINDIR%":base_env["BINDIR"],
 	      "%SHAREDDIR%":base_env.sharepath,
 	      "%PREFIX%":base_env.install_prefix,
 	      "%DEFAULT_OUTPUT%":xmmsenv.default_output[1],
@@ -182,6 +181,8 @@ scan_headers("xmmsclient/xmmsclient++")
 base_env.add_manpage(1, 'doc/xmms2.1')
 base_env.add_manpage(8, 'doc/xmms2d.8')
 base_env.add_manpage(1, 'doc/xmms2-et.1')
+base_env.add_manpage(1, 'doc/xmms2-launcher.8')
+base_env.add_manpage(1, 'doc/xmms2-mdns-avahi.8')
 
 #### Generate pc files.
 
@@ -196,6 +197,9 @@ for p in pc_files:
 	d = subst_dict.copy()
 	d["%NAME%"] = p["name"]
 	d["%LIB%"] = p["lib"]
+	d["%LIBDIR%"] = base_env["LIBDIR"]
+	d["%BINDIR%"] = base_env["BINDIR"]
+	d["%INCLUDEDIR%"] = base_env["INCLUDEDIR"]
 	pc = base_env.SubstInFile(p["name"]+".pc", "xmms2.pc.in", SUBST_DICT=d)
 	base_env.Install("$PKGCONFIGDIR", p["name"]+".pc")
 

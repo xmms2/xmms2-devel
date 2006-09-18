@@ -141,6 +141,7 @@ handle_mediainfo (xmmsc_result_t *res, void *userdata)
 			break;
 		case XMMSC_RESULT_VALUE_TYPE_NONE:
 		case XMMSC_RESULT_VALUE_TYPE_COLL:
+		case XMMSC_RESULT_VALUE_TYPE_BIN:
 			/* noop */
 			break;
 		}

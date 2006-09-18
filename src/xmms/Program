@@ -24,6 +24,7 @@ source = ["main.c",
           "ringbuf_xform.c",
           "outputplugin.c",
 		  "statfs.c",
+		  "strfunc.c",
 		  "bindata.c"]
 
 def config(env):

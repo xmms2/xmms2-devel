@@ -260,13 +260,17 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 	xmms_object_cmd_desc_t *cmd;
 	xmms_object_cmd_arg_t arg;
 	xmms_ipc_msg_t *retmsg;
+	uint32_t objid, cmdid;
 	gint i;
 
 	g_return_if_fail (ipc);
 	g_return_if_fail (msg);
 
-	if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL &&
-	    xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_SIGNAL) {
+	objid = xmms_ipc_msg_get_object (msg);
+	cmdid = xmms_ipc_msg_get_cmd (msg);
+
+	if (objid == XMMS_IPC_OBJECT_SIGNAL &&
+	    cmdid == XMMS_IPC_CMD_SIGNAL) {
 		guint signalid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &signalid)) {
@@ -274,16 +278,26 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			return;
 		}
 
+		if (signalid >= XMMS_IPC_SIGNAL_END) {
+			xmms_log_error ("Bad signal id (%d)", signalid);
+			return;
+		}
+
 		g_mutex_lock (client->lock);
 		client->pendingsignals[signalid] = xmms_ipc_msg_get_cookie (msg);
 		g_mutex_unlock (client->lock);
 		return;
-	} else if (xmms_ipc_msg_get_object (msg) == XMMS_IPC_OBJECT_SIGNAL &&
-	           xmms_ipc_msg_get_cmd (msg) == XMMS_IPC_CMD_BROADCAST) {
+	} else if (objid == XMMS_IPC_OBJECT_SIGNAL &&
+	           cmdid == XMMS_IPC_CMD_BROADCAST) {
 		guint broadcastid;
 
 		if (!xmms_ipc_msg_get_uint32 (msg, &broadcastid)) {
 			xmms_log_error ("No broadcastid in this msg?!");
+			return;
+		}
+
+		if (broadcastid >= XMMS_IPC_SIGNAL_END) {
+			xmms_log_error ("Bad broadcast id (%d)", broadcastid);
 			return;
 		}
 
@@ -296,47 +310,64 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 		return;
 	}
 
-	g_mutex_lock (ipc_object_pool_lock);
-	object = ipc_object_pool->objects[xmms_ipc_msg_get_object (msg)];
-	g_mutex_unlock (ipc_object_pool_lock);
-	if (!object) {
-		xmms_log_error ("Object %d was not found!", xmms_ipc_msg_get_object (msg));
+	if (objid >= XMMS_IPC_OBJECT_END) {
+		xmms_log_error ("Bad object id (%d)", objid);
 		return;
 	}
 
-	cmd = object->cmds[xmms_ipc_msg_get_cmd (msg)];
+	g_mutex_lock (ipc_object_pool_lock);
+	object = ipc_object_pool->objects[objid];
+	g_mutex_unlock (ipc_object_pool_lock);
+	if (!object) {
+		xmms_log_error ("Object %d was not found!", objid);
+		return;
+	}
+
+	if (cmdid >= XMMS_IPC_CMD_END) {
+		xmms_log_error ("Bad command id (%d)", cmdid);
+		return;
+	}
+
+	cmd = object->cmds[cmdid];
 	if (!cmd) {
-		xmms_log_error ("No such cmd %d on object %d", xmms_ipc_msg_get_cmd (msg), xmms_ipc_msg_get_object (msg));
+		xmms_log_error ("No such cmd %d on object %d", cmdid, objid);
 		return;
 	}
 
 	xmms_object_cmd_arg_init (&arg);
 
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		type_and_msg_to_arg (cmd->args[i], msg, &arg, i);
+		if (!type_and_msg_to_arg (cmd->args[i], msg, &arg, i)) {
+			xmms_log_error ("Error parsing args");
+			retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
+			xmms_ipc_msg_put_string (retmsg, "Corrupt msg");
+			goto err;
+		}
+			
 	}
 
-	xmms_object_cmd_call (object, xmms_ipc_msg_get_cmd (msg), &arg);
+	xmms_object_cmd_call (object, cmdid, &arg);
 	if (xmms_error_isok (&arg.error)) {
-		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_REPLY);
+		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_REPLY);
 		xmms_ipc_handle_cmd_value (retmsg, arg.retval);
 	} else {
-		retmsg = xmms_ipc_msg_new (xmms_ipc_msg_get_object (msg), XMMS_IPC_CMD_ERROR);
+		retmsg = xmms_ipc_msg_new (objid, XMMS_IPC_CMD_ERROR);
 		xmms_ipc_msg_put_string (retmsg, xmms_error_message_get (&arg.error));
 	}
 
 	if (arg.retval)
 		xmms_object_cmd_value_free (arg.retval);
 
+err:
 	for (i = 0; i < XMMS_OBJECT_CMD_MAX_ARGS; i++) {
-		if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRING) {
+		if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_STRING) {
 			g_free (arg.values[i].value.string);
-		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_STRINGLIST) {
+		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_STRINGLIST) {
 			GList * list = arg.values[i].value.list;
 			while (list) {g_free(list->data); list=g_list_delete_link(list, list); }
-		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_COLL) {
+		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_COLL) {
 			xmmsc_coll_unref (arg.values[i].value.coll);
-		} else if (cmd->args[i] == XMMS_OBJECT_CMD_ARG_BIN) {
+		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_BIN) {
 			g_string_free (arg.values[i].value.bin, TRUE);
 		}
 	}

@@ -25,6 +25,7 @@
 #include <string.h>
 #include <glib.h>
 #include <math.h>
+#include <ctype.h>
 
 #include "xmmspriv/xmms_playlist.h"
 #include "xmms/xmms_ipc.h"
@@ -54,6 +55,7 @@ static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, 
 static gboolean xmms_playlist_insert_url (xmms_playlist_t *playlist, gchar *plname, guint32 pos, gchar *url, xmms_error_t *error);
 static gboolean xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
 static gboolean xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname, guint32 pos, xmmsc_coll_t *coll, GList *order, xmms_error_t *error);
+static void xmms_playlist_radd (xmms_playlist_t *playlist, gchar *plname, gchar *path, xmms_error_t *error);
 
 static void xmms_playlist_load (xmms_playlist_t *, gchar *, xmms_error_t *);
 static void xmms_playlist_import (xmms_playlist_t *playlist, gchar *playlistname, gchar *url, xmms_error_t *error);
@@ -86,6 +88,7 @@ XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *,
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
 XMMS_CMD_DEFINE (import, xmms_playlist_import, xmms_playlist_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (export, xmms_playlist_export, xmms_playlist_t *, STRING, STRING, STRING);
+XMMS_CMD_DEFINE (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, STRING);
 
 #define XMMS_PLAYLIST_CHANGED_MSG(type, id, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (type, id, name))
 
@@ -114,6 +117,7 @@ struct xmms_playlist_St {
 	xmms_mediainfo_reader_t *mediainfordr;
 
 	gboolean update_flag;
+	xmms_medialib_t *medialib;
 };
 
 
@@ -387,8 +391,11 @@ xmms_playlist_init (void)
 	                     XMMS_IPC_CMD_EXPORT,
 	                     XMMS_CMD_FUNC (export));
 
-	xmms_medialib_init (ret);
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_RADD,
+	                     XMMS_CMD_FUNC (radd));
 
+	ret->medialib = xmms_medialib_init (ret);
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 	ret->colldag = xmms_collection_init (ret);
 
@@ -617,7 +624,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *e
 		}
 
 		/* knuth <3 */
-		for (i = 1; i < len; i++) {
+		for (i = currpos + 1; i < len; i++) {
 			j = g_random_int_range (i, len);
 
 			if (i != j) {
@@ -935,6 +942,25 @@ xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *plname, gchar *nurl, xm
 	return !!entry;
 }
 
+/**
+  * Convenient function for adding a directory to the playlist,
+  * It will dive down the URL you feed it and recursivly add
+  * all files there.
+  *
+  * @param playlist the playlist to add it URL to.
+  * @param nurl the URL of an directory you want to add
+  * @param err an #xmms_error_t that should be defined upon error.
+  */
+static void
+xmms_playlist_radd (xmms_playlist_t *playlist, gchar *plname,
+                    gchar *path, xmms_error_t *err)
+{
+	/* we actually just call the medialib function, but keep
+	 * the ipc method here for not confusing users / developers
+	 */
+	xmms_medialib_add_recursive (playlist->medialib, plname, path, err);
+}
+
 /** Adds a xmms_medialib_entry to the playlist.
  *
  *  This will append or prepend the entry according to
@@ -1217,29 +1243,40 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 
 /**
  * Unwind helper function.
+ * Frees the sortdata elements.
+ */
+static void
+xmms_playlist_sorted_free (gpointer data, gpointer userdata)
+{
+	GList *n;
+	sortdata_t *sorted = (sortdata_t *) data;
+
+	for (n = sorted->val; n; n = n->next) {
+		xmms_object_cmd_value_free (n->data);
+	}
+	g_list_free (sorted->val);
+	g_free (sorted);
+}
+
+/**
+ * Unwind helper function.
  * Fills the playlist with the new sorted data.
  */
 static void
 xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 {
 	gint size;
-	GList *n;
 	sortdata_t *sorted = (sortdata_t *) data;
 	xmmsc_coll_t *playlist = (xmmsc_coll_t *)userdata;
 
 	xmmsc_coll_idlist_append (playlist, sorted->id);
 
-	for (n = sorted->val; n; n = n->next) {
-		xmms_object_cmd_value_free (n->data);
-	}
-	g_list_free (sorted->val);
-
 	if (sorted->current) {
-		size = xmms_playlist_coll_get_size (playlist);
-		xmms_collection_set_int_attr (playlist, "position", size - 1);
+		size = xmmsc_coll_idlist_get_size (playlist);
+		xmms_collection_set_int_attr (playlist, "position", size - 2);
 	}
 
-	g_free (sorted);
+	xmms_playlist_sorted_free (sorted, NULL);
 }
 
 /** Sorts the playlist by properties.
@@ -1331,6 +1368,7 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *plname, GList *properties,
 	}
 
 	if (!list_changed) {
+		g_list_foreach (tmp, xmms_playlist_sorted_free, NULL);
 		g_list_free (tmp);
 		g_mutex_unlock (playlist->mutex);
 		return;

@@ -15,12 +15,14 @@
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmms/xmms_bindata.h"
+#include "xmms/xmms_strfunc.h"
 #include "id3.h"
 
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <glib.h>
 
 
 #define ID3v2_HEADER_FLAGS_UNSYNC 0x80
@@ -127,78 +129,85 @@ const gchar *id3_genres[] =
         "Anime", "JPop", "Synthpop"
 };
 
+/**
+ * do the actual convertion to UTF-8 from enc
+ */
 static gchar *
-convert_id3_text (xmms_id3v2_header_t *head, guchar *val, gint len)
+convert_id3_text (const gchar *enc, const gchar *txt, gint len, gsize *out_len)
 {
 	gchar *nval = NULL;
-	gsize readsize,writsize;
 	GError *err = NULL;
 
-	g_return_val_if_fail (len>0, NULL);
+	if (len < 1)
+		return NULL;
 
-	if (head->ver == 4) {
-		if (len <= 1) {
-			/* we don't want to handle this at all, probably an empty tag */
-			return NULL;
-		} else if (val[0] == 0x00) {
-			/* ISO-8859-1 */
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		} else if (len > 3 && val[0] == 0x01 && ((val[1] == 0xFF && val[2] == 0xFE) || (val[1] == 0xFE && val[2] == 0xFF))) {
-			/* UTF-16 with BOM */
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16", &readsize, &writsize, &err);
-		} else if (val[0] == 0x02) {
-			/* UTF-16 without BOM */
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "UTF-16BE", &readsize, &writsize, &err);
-		} else if (val[0] == 0x03) {
-			/* UTF-8 */
-			nval = g_strndup ((gchar *)val+1, len-1);
-		} else {
-			XMMS_DBG ("UNKNOWN id3v2.4 encoding (%02x)!", val[0]);
-			return NULL;
-		}
-	} else if (head->ver == 2 || head->ver == 3) {
-		if (len <= 1) {
-			/* we don't want to handle this at all, probably an empty tag */
-			return NULL;
-		} else if (val[0] == 0x00) {
-			nval = g_convert ((gchar *)val+1, len-1, "UTF-8", "ISO-8859-1", &readsize, &writsize, &err);
-		} else if (val[0] == 0x01) {
-			if (len > 2 && val[1] == 0xFF && val[2] == 0xFE) {
-				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2LE", &readsize, &writsize, &err);
-			} else if (len > 2 && val[1] == 0xFE && val[2] == 0xFF) {
-				nval = g_convert ((gchar *)val+3, len-3, "UTF-8", "UCS-2BE", &readsize, &writsize, &err);
-			} else {
-				XMMS_DBG ("Missing/bad boom in id3v2 tag!");
-				return NULL;
-			}
-		} else {
-			XMMS_DBG ("UNKNOWN id3v2.2/2.3 encoding (%02x)!", val[0]);
-			return NULL;
-		}
-	}
+	g_return_val_if_fail (txt, NULL);
 
+	nval = g_convert (txt, len, "UTF-8", enc, NULL, out_len, &err);
 	if (err) {
-		xmms_log_error ("Couldn't convert: %s", err->message);
-		g_error_free (err);
+		xmms_log_error ("Couldn't convert field from %s", enc);
 		return NULL;
 	}
-
-	g_assert (nval);
 
 	return nval;
 }
 
+/**
+ * This function takes the binary field and returns the
+ * a string that describes how the text field was encoded.
+ * this is supposed to be feed directly to g_convert and
+ * friends.
+ */
+static const gchar *
+binary_to_enc (guchar val)
+{
+	const gchar *retval;
+
+	if (val == 0x00) {
+		retval = "ISO8859-1";
+	} else if (val == 0x01) {
+		retval = "UTF-16";
+	} else if (val == 0x02) {
+		retval = "UTF-16BE";
+	} else if (val == 0x03) {
+		retval = "UTF-8";
+	} else {
+		xmms_log_error ("UNKNOWN id3v2.4 encoding (%02x)!", val);
+		retval = NULL;
+	}
+	return retval;
+}
+
+static const gchar *
+find_nul (const gchar *buf, gsize *len)
+{
+	gsize l = *len;
+	while (l) {
+		if (*buf == '\0' && l > 1) {
+			*len = l - 1;
+			return buf + 1;
+		}
+		buf++;
+		l--;
+	}
+	return NULL;
+}
 
 static void
 add_to_entry (xmms_xform_t *xform,
               xmms_id3v2_header_t *head,
               gchar *key,
-              guchar *val,
+              gchar *val,
               gint len)
 {
 	gchar *nval;
+	const gchar *tmp;
 
-	nval = convert_id3_text (head, val, len);
+	if (len < 1)
+		return;
+
+	tmp = binary_to_enc (val[0]);
+	nval = convert_id3_text (tmp, &val[1], len - 1, NULL);
 	if (nval) {
 		xmms_xform_metadata_set_str (xform, key, nval);
 		g_free (nval);
@@ -207,18 +216,22 @@ add_to_entry (xmms_xform_t *xform,
 
 static void
 handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, guchar *buf, gint len)
+                   gchar *key, gchar *buf, gsize len)
 {
 	gint res;
 	guint genre_id;
 	gchar *val;
+	const gchar *tmp;
 
+	/* XXX - we should handle it differently v4 separates them with NUL instead of using () */
+	/*
 	if (head->ver == 4) {
 		buf++;
-		len -= 1; /* total len of buffer */
+		len -= 1;
 	}
-
-	val = convert_id3_text (head, buf, len);
+	*/
+	tmp = binary_to_enc (buf[0]);
+	val = convert_id3_text (tmp, &buf[1], len - 1, NULL);
 	if (!val)
 		return;
 	res = sscanf (val, "(%u)", &genre_id);
@@ -238,52 +251,53 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_id3v2_txxx (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, guchar *buf, gint len)
+                   gchar *_key, gchar *buf, gsize len)
 {
+	const gchar *enc;
+	gchar *cbuf;
+	const gchar *key, *val;
+	gsize clen;
 
-	guint32 l2;
-	gchar *val;
+	enc = binary_to_enc (buf[0]);
+	cbuf = convert_id3_text (enc, &buf[1], len - 1, &clen);
+	if (!cbuf)
+		return;
 
-	if (head->ver == 4) {
-		buf++;
-		len -= 1; /* total len of buffer */
-	}
-
-	l2 = strlen ((gchar *)buf);
-
-	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
-
-	if ((len - l2 - 1) < 1) {
-		g_free (val);
+	key = cbuf;
+	val = find_nul (cbuf, &clen);
+	if (!val) {
+		g_free (cbuf);
 		return;
 	}
 
-	if (g_strcasecmp ((gchar *)buf, "MusicBrainz Album Id") == 0) {
+	if (g_strcasecmp (key, "MusicBrainz Album Id") == 0) {
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
 		                             val);
-	} else if (g_strcasecmp ((gchar *)buf, "MusicBrainz Artist Id") == 0) {
+	} else if (g_strcasecmp (key, "MusicBrainz Artist Id") == 0) {
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
 		                             val);
-	} else if ((g_strcasecmp ((gchar *)buf, "MusicBrainz Album Artist Id") == 0) &&
-	           (g_strncasecmp ((gchar *)(buf+l2+1), MUSICBRAINZ_VA_ID, len-l2-1) == 0)) {
+	} else if ((g_strcasecmp (key, "MusicBrainz Album Artist Id") == 0) &&
+	           (g_strcasecmp (val, MUSICBRAINZ_VA_ID) == 0)) {
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 1);
 	}
 
-	g_free (val);
+	g_free (cbuf);
 }
 
 static void
 handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                  gchar *key, guchar *buf, gint len)
+                  gchar *key, gchar *buf, gsize len)
 {
 
 	gchar *nval;
+	const gchar *tmp;
 	gint i;
 
-	nval = convert_id3_text (head, buf, len);
+	tmp = binary_to_enc (buf[0]);
+	nval = convert_id3_text (tmp, &buf[1], len - 1, NULL);
 	if (nval) {
 		i = strtol (nval, NULL, 10);
 		xmms_xform_metadata_set_int (xform, key, i);
@@ -294,58 +308,103 @@ handle_int_field (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 static void
 handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, guchar *buf, gint len)
+                   gchar *key, gchar *buf, gsize len)
 {
-	gchar *val;
-	guint32 l2 = strlen ((gchar *)buf);
-	val = g_strndup ((gchar *)(buf+l2+1), len-l2-1);
-	if (g_strcasecmp ((gchar *)buf, "http://musicbrainz.org") == 0)
+	const gchar *val;
+
+	val = find_nul (buf, &len);
+	if (!val)
+		return;
+
+	if (g_strcasecmp (buf, "http://musicbrainz.org") == 0) {
+		gchar *val0;
+		/* make sure it is NUL terminated */
+		val0 = g_strndup (val, len);
 		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID, val);
-	g_free (val);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
+		                             val);
+
+		g_free (val0);
+	}
 }
 
 static void
 handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   gchar *key, guchar *buf, gint len)
+                   gchar *key, gchar *buf, gsize len)
 {
-	/*gchar enc = buf[0];*/
-	gchar *mime = g_strdup ((gchar *)buf+1);
-	gint l2 = strlen (mime);
-	
-	buf = buf + l2 + 2;
-	len -= (l2 + 2);
+	const gchar *enc, *typ, *desc, *data, *mime;
+	gchar hash[33];
 
-	if (buf[0] == 0x00 || buf[0] == 0x03) {
-		GString *str;
-		gchar *hash;
-		gchar *desc = (gchar *)buf+1;
-		buf = buf + strlen (desc) + 2;
-		len -= (strlen (desc) - 2);
-		XMMS_DBG ("Other Picture with mime-type %s (desc=%s, len=%d) found", mime, desc, len);
-		str = g_string_new (NULL);
+	enc = binary_to_enc (buf[0]);
+	buf++;
+	len--;
+	mime = buf;
+	typ = find_nul (buf, &len);
 
-		g_string_append_len (str, buf, len);
-		hash = xmms_bindata_plugin_add (str);
-
-		if (hash) {
-			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
-			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
-			g_free (hash);
-		}
-		g_string_free (str, FALSE);
-	} else {
-		XMMS_DBG ("Picture type %x not handled", buf[0]);
+	if (typ[0] != 0x00 && typ[0] != 0x03) {
+		XMMS_DBG ("Picture type %02x not handled", typ[0]);
+		return;
 	}
 
-	g_free (mime);
+	desc = typ + 1;
+	len--;
 	
+	/* XXX desc might be UCS2 and find_nul will not do what we want */
+	data = find_nul (desc, &len);
+	
+	if (data && xmms_bindata_plugin_add ((const guchar *)data, len, hash)) {
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
+	}
+}
+
+static void
+handle_id3v2_comm (xmms_xform_t *xform, xmms_id3v2_header_t *head,
+                   gchar *key, gchar *buf, gsize len)
+{
+	/* COMM is weird but it's like this:
+	 * $xx enc
+	 * $xx xx xx lang
+	 * $text $0 desc according to enc
+	 * $text $0 comment according to enc
+	 */
+	const gchar *enc, *desc, *comm;
+	gchar *cbuf;
+	gsize clen;
+
+	enc = binary_to_enc (buf[0]);
+	buf++;
+	len--;
+
+	/* Language is always three _bytes_ - we currently don't care */
+	buf += 3;
+	len -= 3;
+
+	cbuf = convert_id3_text (enc, buf, len, &clen);
+	if (!cbuf)
+		return;
+
+	desc = cbuf;
+	comm = find_nul (cbuf, &clen);
+
+	if (comm && comm[0]) {
+		if (desc && desc[0]) {
+			key = g_strdup_printf ("%s_%s", XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, desc);
+			xmms_xform_metadata_set_str (xform, key, comm);
+			g_free (key);
+		} else {
+			xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT, comm);
+		}
+	}
+
+	g_free (cbuf);
+
 }
 
 struct id3tags_t {
 	guint32 type;
 	gchar *prop;
-	void (*fun)(xmms_xform_t *, xmms_id3v2_header_t *, gchar *, guchar *, gint); /* Instead of add_to_entry */
+	void (*fun)(xmms_xform_t *, xmms_id3v2_header_t *, gchar *, gchar *, gsize); /* Instead of add_to_entry */
 };
 
 static struct id3tags_t tags[] = {
@@ -366,12 +425,13 @@ static struct id3tags_t tags[] = {
 	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
 	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
 	{ quad2long('A','P','I','C'), NULL, handle_id3v2_apic },
+	{ quad2long('C','O','M','M'), NULL, handle_id3v2_comm },
 	{ 0, NULL, NULL }
 };
 
 static void
 handle_id3v2_text (xmms_xform_t *xform, xmms_id3v2_header_t *head,
-                   guint32 type, guchar *buf, guint flags, gint len)
+                   guint32 type, gchar *buf, guint flags, gint len)
 {
 	gint i = 0;
 
@@ -424,9 +484,9 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 	
 	if ((id3head->size[0] | id3head->size[1] | id3head->size[2] |
 	     id3head->size[3]) & 0x80) {
-		xmms_log_error ("id3v2 tag having lenpath with msb set "
+		xmms_log_error ("id3v2 tag having lenbyte with msb set "
 		                "(%02x %02x %02x %02x)!  Probably broken "
-		                "tag/tag-writer. Skipping Tag.",
+		                "tag/tag-writer. Skipping tag.",
 		                id3head->size[0], id3head->size[1],
 		                id3head->size[2], id3head->size[3]);
 		return FALSE;
@@ -482,7 +542,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 	}
 
 	while (len>0) {
-		guint size;
+		gsize size;
 		guint flags;
 		guint32 type;
 
@@ -533,8 +593,8 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			
 			flags = buf[8] | buf[9];
 
-			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A') {
-				handle_id3v2_text (xform, head, type, buf + 10, flags, size);
+			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A' || buf[0] == 'C') {
+				handle_id3v2_text (xform, head, type, (gchar *)(buf + 10), flags, size);
 			}
 			
 			if (buf[0] == 0) { /* padding */
@@ -557,8 +617,8 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 				return FALSE;
 			}
 
-			if (buf[0] == 'T' || buf[0] == 'U') {
-				handle_id3v2_text (xform, head, type, buf + 6, 0, size);
+			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'C') {
+				handle_id3v2_text (xform, head, type, (gchar *)(buf + 6), 0, size);
 			}
 			
 			if (buf[0] == 0) { /* padding */
@@ -573,4 +633,3 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 
 	return TRUE;
 }
-

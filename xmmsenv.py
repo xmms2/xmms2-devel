@@ -59,6 +59,8 @@ class Target:
 
 	def config(self, env):
 		self.globs.get("config", lambda x: None)(env)
+		self.source = [os.path.join(self.dir, s) for s in self.globs["source"]]
+		self.target = os.path.join(self.dir, self.globs["target"])
 
 class LibraryTarget(Target):
 	def add(self, env):
@@ -76,7 +78,7 @@ class ProgramTarget(Target):
 
 class PluginTarget(Target):
 	def config(self, env):
-		env.pkgconfig("glib-2.0", fail=False, libs=False)
+		env.pkgconfig("glib-2.0", fail=False, libs=True)
 		Target.config(self, env)
 		if isinstance(self.globs.get("output_priority"), int):
 			global default_output
@@ -118,12 +120,12 @@ class XMMSEnvironment(Environment):
 		self.loadable = False
 		self.install_prefix = self["PREFIX"]
 		self.manpath = self["MANDIR"].replace("$PREFIX", self.install_prefix)
-		self.pluginpath = os.path.join(self.install_prefix, "lib/xmms2")
-		self.binpath = os.path.join(self.install_prefix, "bin")
-		self.librarypath = os.path.join(self.install_prefix, "lib")
-		self.sharepath = os.path.join(self.install_prefix, "share/xmms2")
-		self.includepath = os.path.join(self.install_prefix, "include/xmms2")
-		self.scriptpath = os.path.join(self.sharepath, "scripts")
+		self.binpath = self["BINDIR"].replace("$PREFIX", self.install_prefix)
+		self.librarypath = self["LIBDIR"].replace("$PREFIX", self.install_prefix)
+		self.sharepath = self["SHAREDIR"].replace("$PREFIX", self.install_prefix)
+		self.includepath = self["INCLUDEDIR"].replace("$PREFIX", self.install_prefix)
+		self.scriptpath = self["SCRIPTDIR"].replace("$SHAREDIR", self.sharepath)
+		self.pluginpath = self["PLUGINDIR"].replace("$LIBDIR", self.librarypath)
 		self["SHLIBPREFIX"] = "lib"
 		self.shversion = "0"
 

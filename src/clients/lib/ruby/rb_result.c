@@ -44,7 +44,8 @@ enum {
 static VALUE cResult, cPropDict, cBroadcastResult, cSignalResult,
              eResultError, eValueError;
 
-static void c_mark (RbResult *res)
+static void
+c_mark (RbResult *res)
 {
 	rb_gc_mark (res->xmms);
 
@@ -55,14 +56,16 @@ static void c_mark (RbResult *res)
 		rb_gc_mark (res->propdict);
 }
 
-static void c_free (RbResult *res)
+static void
+c_free (RbResult *res)
 {
 	xmmsc_result_unref (res->real);
 
 	free (res);
 }
 
-VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
+VALUE
+TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 {
 	VALUE self, klass;
 	RbResult *rbres = NULL;
@@ -93,7 +96,8 @@ VALUE TO_XMMS_CLIENT_RESULT (VALUE xmms, xmmsc_result_t *res)
 	return self;
 }
 
-static void on_signal (xmmsc_result_t *res2, void *data)
+static void
+on_signal (xmmsc_result_t *res2, void *data)
 {
 	VALUE self = (VALUE) data;
 	RbResult *res = NULL;
@@ -123,7 +127,8 @@ static void on_signal (xmmsc_result_t *res2, void *data)
  * Sets the block that's executed when _res_ is handled.
  * Used by asyncronous results only.
  */
-static VALUE c_notifier_set (VALUE self)
+static VALUE
+c_notifier_set (VALUE self)
 {
 	RbResult *res = NULL;
 	RbXmmsClient *xmms = NULL;
@@ -149,7 +154,8 @@ static VALUE c_notifier_set (VALUE self)
  *
  * Waits for _res_ to be handled.
  */
-static VALUE c_wait (VALUE self)
+static VALUE
+c_wait (VALUE self)
 {
 	RbResult *res = NULL;
 
@@ -167,7 +173,8 @@ static VALUE c_wait (VALUE self)
  * Restarts _res_. If _res_ is not restartable, a +ResultError+ is
  * raised.
  */
-static VALUE c_sig_restart (VALUE self)
+static VALUE
+c_sig_restart (VALUE self)
 {
 	xmmsc_result_t *res2;
 	RbResult *res = NULL;
@@ -190,7 +197,8 @@ static VALUE c_sig_restart (VALUE self)
 	return self;
 }
 
-static VALUE c_disconnect (VALUE self)
+static VALUE
+c_disconnect (VALUE self)
 {
 	RbResult *res = NULL;
 
@@ -201,7 +209,8 @@ static VALUE c_disconnect (VALUE self)
 	return self;
 }
 
-static VALUE int_get (RbResult *res)
+static VALUE
+int_get (RbResult *res)
 {
 	int32_t id = 0;
 
@@ -213,7 +222,8 @@ static VALUE int_get (RbResult *res)
 	return INT2FIX (id);
 }
 
-static VALUE uint_get (RbResult *res)
+static VALUE
+uint_get (RbResult *res)
 {
 	uint32_t id = 0;
 
@@ -225,7 +235,8 @@ static VALUE uint_get (RbResult *res)
 	return UINT2NUM (id);
 }
 
-static VALUE string_get (RbResult *res)
+static VALUE
+string_get (RbResult *res)
 {
 	char *s = NULL;
 
@@ -237,8 +248,8 @@ static VALUE string_get (RbResult *res)
 	return rb_str_new2 (s ? s : "");
 }
 
-static VALUE cast_result_value (xmmsc_result_value_type_t type,
-                                const void *value)
+static VALUE
+cast_result_value (xmmsc_result_value_type_t type, const void *value)
 {
 	VALUE val;
 
@@ -260,9 +271,9 @@ static VALUE cast_result_value (xmmsc_result_value_type_t type,
 	return val;
 }
 
-static void dict_to_hash (const void *key,
-                          xmmsc_result_value_type_t type,
-                          const void *value, void *udata)
+static void
+dict_to_hash (const void *key, xmmsc_result_value_type_t type,
+              const void *value, void *udata)
 {
 	VALUE *h = udata;
 
@@ -270,7 +281,8 @@ static void dict_to_hash (const void *key,
 	              cast_result_value (type, value));
 }
 
-static VALUE hashtable_get (RbResult *res)
+static VALUE
+hashtable_get (RbResult *res)
 {
 	VALUE hash = rb_hash_new ();
 
@@ -281,7 +293,8 @@ static VALUE hashtable_get (RbResult *res)
 	return hash;
 }
 
-static VALUE propdict_get (VALUE self, RbResult *res)
+static VALUE
+propdict_get (VALUE self, RbResult *res)
 {
 	if (NIL_P (res->propdict))
 		res->propdict = rb_class_new_instance (1, &self, cPropDict);
@@ -289,7 +302,8 @@ static VALUE propdict_get (VALUE self, RbResult *res)
 	return res->propdict;
 }
 
-static VALUE bin_get (VALUE self, RbResult *res)
+static VALUE
+bin_get (VALUE self, RbResult *res)
 {
 	unsigned char *data = NULL;
 	unsigned int len = 0;
@@ -302,7 +316,8 @@ static VALUE bin_get (VALUE self, RbResult *res)
 	return rb_str_new ((char *) data, len);
 }
 
-static VALUE value_get (VALUE self, RbResult *res)
+static VALUE
+value_get (VALUE self, RbResult *res)
 {
 	VALUE ret;
 
@@ -334,7 +349,8 @@ static VALUE value_get (VALUE self, RbResult *res)
 	return ret;
 }
 
-static VALUE list_get (VALUE self, RbResult *res)
+static VALUE
+list_get (VALUE self, RbResult *res)
 {
 	VALUE ret;
 
@@ -355,7 +371,8 @@ static VALUE list_get (VALUE self, RbResult *res)
  *
  * Returns the value from _res_.
  */
-static VALUE c_value_get (VALUE self)
+static VALUE
+c_value_get (VALUE self)
 {
 	RbResult *res;
 
@@ -373,7 +390,8 @@ static VALUE c_value_get (VALUE self)
 		return value_get (self, res);
 }
 
-static VALUE c_decode_url (VALUE self, VALUE str)
+static VALUE
+c_decode_url (VALUE self, VALUE str)
 {
 	RbResult *res;
 	const char *cstr, *tmp;
@@ -391,14 +409,16 @@ static VALUE c_decode_url (VALUE self, VALUE str)
 	return rb_str_new2 (tmp);
 }
 
-static VALUE c_propdict_init (VALUE self, VALUE result)
+static VALUE
+c_propdict_init (VALUE self, VALUE result)
 {
 	rb_iv_set (self, "result", result);
 
 	return self;
 }
 
-static VALUE propdict_inspect_cb (VALUE args, VALUE s)
+static VALUE
+propdict_inspect_cb (VALUE args, VALUE s)
 {
 	VALUE src, key, value;
 
@@ -420,7 +440,8 @@ static VALUE propdict_inspect_cb (VALUE args, VALUE s)
 	return Qnil;
 }
 
-static VALUE propdict_inspect (VALUE self)
+static VALUE
+propdict_inspect (VALUE self)
 {
 	VALUE ret;
 
@@ -433,12 +454,14 @@ static VALUE propdict_inspect (VALUE self)
 	return ret;
 }
 
-static VALUE c_propdict_inspect (VALUE self)
+static VALUE
+c_propdict_inspect (VALUE self)
 {
 	return rb_protect_inspect (propdict_inspect, self, 0);
 }
 
-static VALUE c_propdict_aref (VALUE self, VALUE key)
+static VALUE
+c_propdict_aref (VALUE self, VALUE key)
 {
 	RbResult *res = NULL;
 	xmmsc_result_value_type_t type;
@@ -478,7 +501,8 @@ static VALUE c_propdict_aref (VALUE self, VALUE key)
 	return tmp;
 }
 
-static VALUE c_propdict_has_key (VALUE self, VALUE key)
+static VALUE
+c_propdict_has_key (VALUE self, VALUE key)
 {
 	RbResult *res = NULL;
 	VALUE tmp;
@@ -497,10 +521,9 @@ static VALUE c_propdict_has_key (VALUE self, VALUE key)
 	return (type == XMMSC_RESULT_VALUE_TYPE_NONE) ? Qfalse : Qtrue;
 }
 
-static void propdict_each (const void *key,
-                           xmmsc_result_value_type_t type,
-                           const void *value, const char *src,
-                           void *udata)
+static void
+propdict_each (const void *key, xmmsc_result_value_type_t type,
+               const void *value, const char *src, void *udata)
 {
 	switch (XPOINTER_TO_INT (udata)) {
 		case EACH_PAIR:
@@ -519,7 +542,8 @@ static void propdict_each (const void *key,
 	}
 }
 
-static VALUE c_propdict_each (VALUE self)
+static VALUE
+c_propdict_each (VALUE self)
 {
 	RbResult *res = NULL;
 	VALUE tmp;
@@ -533,7 +557,8 @@ static VALUE c_propdict_each (VALUE self)
 	return self;
 }
 
-static VALUE c_propdict_each_key (VALUE self)
+static VALUE
+c_propdict_each_key (VALUE self)
 {
 	RbResult *res = NULL;
 	VALUE tmp;
@@ -547,7 +572,8 @@ static VALUE c_propdict_each_key (VALUE self)
 	return self;
 }
 
-static VALUE c_propdict_each_value (VALUE self)
+static VALUE
+c_propdict_each_value (VALUE self)
 {
 	RbResult *res = NULL;
 	VALUE tmp;
@@ -561,7 +587,8 @@ static VALUE c_propdict_each_value (VALUE self)
 	return self;
 }
 
-void Init_Result (VALUE mXmms)
+void
+Init_Result (VALUE mXmms)
 {
 	cResult = rb_define_class_under (mXmms, "Result", rb_cObject);
 

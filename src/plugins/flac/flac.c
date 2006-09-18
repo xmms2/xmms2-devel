@@ -293,6 +293,7 @@ xmms_flac_init (xmms_xform_t *xform)
 	FLAC__bool retval;
 	FLAC__SeekableStreamDecoderState init_status;
 	gint current, num_comments;
+	gint filesize;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -383,10 +384,13 @@ xmms_flac_init (xmms_xform_t *xform)
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
 	                             (gint) data->bit_rate);
 
-	xmms_xform_metadata_set_int (xform,
-	                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-	                             (gint) data->total_samples
-	                             / data->sample_rate * 1000);
+	filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+	if (filesize != -1) {
+		xmms_xform_metadata_set_int (xform,
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             (gint) data->total_samples
+		                             / data->sample_rate * 1000);
+	}
 
 	xmms_xform_metadata_set_int (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,

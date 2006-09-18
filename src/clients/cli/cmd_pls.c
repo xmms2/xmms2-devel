@@ -37,7 +37,7 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *playlist, gchar *item)
 	xmmsc_result_t *res;
 	gchar *url;
 
-	url = format_url (item);
+	url = format_url (item, G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}
@@ -55,48 +55,6 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *playlist, gchar *item)
 	print_info ("Added %s", item);
 }
 
-
-static void
-add_directory_to_playlist (xmmsc_connection_t *conn, gchar *playlist,
-                           gchar *directory, gboolean recursive)
-{
-	GSList *entries = NULL;
-	const gchar *entry;
-	gchar *buf;
-	GDir *dir;
-
-	dir = g_dir_open (directory, 0, NULL);
-	if (!dir) {
-		print_error ("cannot open directory: %s", directory);
-	}
-
-	while ((entry = g_dir_read_name (dir))) {
-		entries = g_slist_prepend (entries, g_strdup (entry));
-	}
-	g_dir_close (dir);
-
-	/* g_dir_read_name() will return the entries in a undefined
-	 * order, so sort the list now.
-	 */
-	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
-
-	while (entries) {
-		buf = g_build_path (G_DIR_SEPARATOR_S, directory, 
-		                    entries->data, NULL);
-
-		if (g_file_test (buf, G_FILE_TEST_IS_DIR)) {
-			if (recursive) {
-				add_directory_to_playlist (conn, playlist, buf, recursive);
-			}
-		} else {
-			add_item_to_playlist (conn, playlist, buf);
-		}
-
-		g_free (buf);
-		g_free (entries->data);
-		entries = g_slist_delete_link (entries, entries);
-	}
-}
 
 static gchar *
 get_playlist_type_string (xmmsc_coll_t *coll)
@@ -222,7 +180,7 @@ cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		xmmsc_result_t *res;
 		gchar *url;
 
-		url = format_url (argv[i]);
+		url = format_url (argv[i], G_FILE_TEST_IS_REGULAR);
 		if (!url) {
 			print_error ("Invalid url");
 		}
@@ -282,9 +240,9 @@ cmd_addarg (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("Need a filename and args to add");
 	}
 
-	url = format_url (argv[2]);
+	url = format_url (argv[2], G_FILE_TEST_IS_REGULAR);
 	if (!url) {
-		url = format_url (argv[3]);
+		url = format_url (argv[3], G_FILE_TEST_IS_REGULAR);
 		if (!url) {
 			print_error ("Invalid url");
 		} else {
@@ -325,12 +283,12 @@ cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 	pos = strtol (argv[2], endptr, 10);
 	if (**endptr == '\0') {
-		url = format_url (argv[3]);  /* No playlist name */
+		url = format_url (argv[3], G_FILE_TEST_IS_REGULAR);  /* No playlist name */
 	}
 	else {
 		playlist = argv[2];  /* extract playlist name */
 		pos = strtol (argv[3], NULL, 10);
-		url = format_url (argv[4]);
+		url = format_url (argv[4], G_FILE_TEST_IS_REGULAR);
 	}
 
 	if (!url) {
@@ -389,23 +347,40 @@ void
 cmd_radd (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *playlist = NULL;
+	xmmsc_result_t *res;
 	gint i;
 
 	if (argc < 3) {
-		print_error ("Need a directory to add");
+		print_error ("Missing argument(s)");
 	}
 
-	for (i = 2; argv[i]; i++) {
+	for (i = 2; i < argc; i++) {
+		gchar *rfile;
+
 		if (i == 2 && !g_file_test (argv[i], G_FILE_TEST_EXISTS)) {
 			playlist = argv[i];
-		} else if (!g_file_test (argv[i], G_FILE_TEST_IS_DIR)) {
-			print_info ("not a directory: %s", argv[i]);
-		} else {
-			add_directory_to_playlist (conn, playlist, argv[i], TRUE);
+			continue;
 		}
+
+		rfile = format_url (argv[i], G_FILE_TEST_IS_DIR);
+		if (!rfile) {
+			print_info ("Ignoring invalid path '%s'", argv[i]);
+			continue;
+		}
+
+		res = xmmsc_playlist_radd (conn, playlist, rfile);
+		g_free (rfile);
+
+		xmmsc_result_wait (res);
+
+		if (xmmsc_result_iserror (res)) {
+			print_info ("Cannot add path '%s': %s",
+			            argv[i], xmmsc_result_get_error (res));
+		}
+
+		xmmsc_result_unref (res);
 	}
 }
-
 
 void
 cmd_clear (xmmsc_connection_t *conn, gint argc, gchar **argv)
@@ -471,7 +446,7 @@ cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_t *res;
 	
 	if (argc < 3) {
-		print_error ("Sort needs a property to sort on");
+		print_error ("Sort needs a property to sort on, %d", argc);
 	} else if (argc == 3) {
 		playlist = NULL;
 		sortby = copy_string_array (&argv[2], argc - 2);
@@ -479,7 +454,7 @@ cmd_sort (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		playlist = argv[2];
 		sortby = copy_string_array (&argv[3], argc - 3);
 	}
-	
+
 	res = xmmsc_playlist_sort (conn, playlist, sortby);
 	xmmsc_result_wait (res);
 
@@ -854,7 +829,7 @@ cmd_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("Supply a playlist name and url");
 	}
 
-	url = format_url (argv[4]);
+	url = format_url (argv[4], G_FILE_TEST_IS_REGULAR);
 	if (!url) {
 		print_error ("Invalid url");
 	}

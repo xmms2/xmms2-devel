@@ -22,7 +22,8 @@
 
 #include "rb_xmmsclient.h"
 
-static VALUE c_add_to_ecore_mainloop (VALUE self)
+static VALUE
+c_add_to_ecore_mainloop (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -33,7 +34,8 @@ static VALUE c_add_to_ecore_mainloop (VALUE self)
 	return self;
 }
 
-static VALUE c_remove_from_ecore_mainloop (VALUE self)
+static VALUE
+c_remove_from_ecore_mainloop (VALUE self)
 {
 	RbXmmsClient *xmms = NULL;
 
@@ -44,7 +46,8 @@ static VALUE c_remove_from_ecore_mainloop (VALUE self)
 	return self;
 }
 
-void Init_xmmsclient_ecore (void)
+void
+Init_xmmsclient_ecore (void)
 {
 	VALUE m, c;
 

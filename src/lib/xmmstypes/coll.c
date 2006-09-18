@@ -415,6 +415,19 @@ xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t va
 	return 1;
 }
 
+/**
+ * Get the size of the idlist.
+ * @param coll  The collection to update.
+ * @return  The size of the idlist.
+ */
+size_t
+xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll)
+{
+	x_return_val_if_fail (coll, 0);
+
+	return coll->idlist_size;
+}
+
 
  
 /**

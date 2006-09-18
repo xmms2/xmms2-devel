@@ -35,6 +35,14 @@ namespace Xmms
 
 	}
 
+	void Medialib::addEntryEncoded( const std::string& url ) const
+	{
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_medialib_add_entry_encoded, conn_, url.c_str() ) );
+
+	}
+
 	void Medialib::addToPlaylist( const std::string& query ) const
 	{
 
@@ -145,6 +153,15 @@ namespace Xmms
 
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_medialib_path_import, conn_, path.c_str() )
+		     );
+
+	}
+
+	void Medialib::pathImportEncoded( const std::string& path ) const
+	{
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_medialib_path_import_encoded, conn_, path.c_str() )
 		     );
 
 	}
@@ -295,6 +312,31 @@ namespace Xmms
 
 		aCall<void>( connected_, 
 		             boost::bind( xmmsc_medialib_add_entry, conn_,
+		                          url.c_str() ),
+		             slots, error );
+
+	}
+
+	void
+	Medialib::addEntryEncoded( const std::string& url, const VoidSlot& slot,
+	                           const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_medialib_add_entry_encoded, conn_,
+		                          url.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Medialib::addEntryEncoded( const std::string& url, 
+	                           const std::list< VoidSlot >& slots,
+	                           const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_, 
+		             boost::bind( xmmsc_medialib_add_entry_encoded, conn_,
 		                          url.c_str() ),
 		             slots, error );
 
@@ -572,6 +614,30 @@ namespace Xmms
 		                          path.c_str() ),
 		             slots, error );
 
+	}
+
+	void
+	Medialib::pathImportEncoded( const std::string& path, const VoidSlot& slot,
+	                             const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_path_import_encoded, conn_,
+		                          path.c_str() ),
+		             slot, error );
+
+	}
+
+	void
+	Medialib::pathImportEncoded( const std::string& path,
+	                             const std::list< VoidSlot >& slots,
+	                             const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_path_import_encoded, conn_,
+		                          path.c_str() ),
+		             slots, error );
 	}
 
 	void

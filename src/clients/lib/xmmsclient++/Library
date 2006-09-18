@@ -2,6 +2,7 @@ target="xmmsclient++"
 systemlibrary=True
 
 source=["client.cpp",
+		"bindata.cpp",
 		"dict.cpp",
 		"exceptions.cpp",
 		"list.cpp",
@@ -12,6 +13,7 @@ source=["client.cpp",
 		"stats.cpp",
 		"playback.cpp",
 		"signal.cpp",
+		"xform.cpp",
 		"playlist.cpp"]
 
 def config(env):
