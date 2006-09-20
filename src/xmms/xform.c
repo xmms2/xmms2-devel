@@ -784,13 +784,18 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	gchar *durl, *args;
 	GString *namestr;	
 
-	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
-
 	session = xmms_medialib_begin ();
 	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	xmms_medialib_end (session);
 
+	if (!url) {
+		xmms_log_error ("Couldn't get url for entry (%d)", entry);
+		return NULL;
+	}
+
 	durl = g_strdup (url);
+
+	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
 
 	args = strchr (durl, '?');
 	if (args) {
