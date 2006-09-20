@@ -423,6 +423,7 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
  *
  * @param dag  The collection DAG.
  * @param namespace  The namespace to list collections from (can be ALL).
+ * @param err  If an error occurs, a message is stored in it.
  * @returns A newly allocated GList with the list of collection names.
  * Remember that it is only the LIST that is copied. Not the entries.
  * The entries are however referenced, and must be unreffed!
@@ -455,6 +456,7 @@ xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
  * @param dag  The collection DAG.
  * @param mid  The id of the media.
  * @param namespace  The namespace in which to look for collections.
+ * @param err  If an error occurs, a message is stored in it.
  * @returns A newly allocated GList with the names of the matching collections.
  */
 GList *
@@ -513,6 +515,8 @@ xmms_collection_find (xmms_coll_dag_t *dag, guint mid, gchar *namespace, xmms_er
  * @param from_name  The name of the collection to rename.
  * @param to_name  The new name of the collection.
  * @param namespace  The namespace to consider (cannot be ALL).
+ * @param err  If an error occurs, a message is stored in it.
+ * @return True if a collection was found and renamed.
  */
 gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
                                  gchar *to_name, gchar *namespace,
@@ -583,6 +587,7 @@ gboolean xmms_collection_rename (xmms_coll_dag_t *dag, gchar *from_name,
  * @param lim_start  The beginning index of the LIMIT statement (0 to disable).
  * @param lim_len  The number of entries of the LIMIT statement (0 to disable).
  * @param order  The list of properties to order by (NULL to disable).
+ * @param err  If an error occurs, a message is stored in it.
  * @return A list of media ids.
  */
 GList *
@@ -620,6 +625,7 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
  * @param order  The list of properties to order by, prefix by '-' to invert (NULL to disable).
  * @param fetch  The list of properties to be retrieved (NULL to only retrieve id).
  * @param group  The list of properties to group by (NULL to disable).
+ * @param err  If an error occurs, a message is stored in it.
  * @return A list of property dicts for each entry.
  */
 GList *

@@ -37,7 +37,9 @@
 
 /**
  * Registers a configvalue in the server.
- * @param key should be <clientname>.myval like cli.path or something like that.
+ *
+ * @param c The connection structure.
+ * @param key should be &lt;clientname&gt;.myval like cli.path or something like that.
  * @param value The default value of this config value.
  */
 xmmsc_result_t *
@@ -60,6 +62,10 @@ xmmsc_configval_register (xmmsc_connection_t *c, const char *key,
 
 /**
  * Sets a configvalue in the server.
+ *
+ * @param c The connection structure.
+ * @param key The key of the configval to set a value for.
+ * @param val The new value of the configval.
  */
 xmmsc_result_t *
 xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
@@ -80,8 +86,10 @@ xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
 
 /**
  * Retrives a list of configvalues in server
+ *
+ * @param c The connection structure.
+ * @param key The key of the configval to retrieve.
  */
-
 xmmsc_result_t *
 xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
 {
@@ -100,6 +108,8 @@ xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
 
 /**
  * Lists all configuration values.
+ *
+ * @param c The connection structure.
  */
 xmmsc_result_t *
 xmmsc_configval_list (xmmsc_connection_t *c)
@@ -113,6 +123,8 @@ xmmsc_configval_list (xmmsc_connection_t *c)
 /**
  * Requests the configval_changed broadcast. This will be called when a configvalue
  * has been updated.
+ *
+ * @param c The connection structure.
  */
 xmmsc_result_t *
 xmmsc_broadcast_configval_changed (xmmsc_connection_t *c)

@@ -140,7 +140,7 @@ xmmsc_send_hello (xmmsc_connection_t *c)
  * 
  * @param c The connection to the server. This must be initialized
  * with #xmmsc_init first.
- * @param ipcpath The IPC path, it's broken down like this: <protocol>://<path>[:<port>].
+ * @param ipcpath The IPC path, it's broken down like this: &lt;protocol&gt;://&lt;path&gt;[:&lt;port&gt;].
  * If ipcpath is %NULL it will default to "unix:///tmp/xmms-ipc-<username>"
  * - Protocol could be "tcp" or "unix"
  * - Path is either the UNIX socket, or the ipnumber of the server.

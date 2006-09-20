@@ -513,6 +513,7 @@ xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session,
 /**
  * Retrieve a property from an entry.
  *
+ * @param session The medialib session to be used for the transaction.
  * @param entry Entry to query.
  * @param property The property to extract. Strings passed should
  * be defined in medialib.h
@@ -540,6 +541,7 @@ xmms_medialib_entry_property_get_str (xmms_medialib_session_t *session,
 /**
  * Retrieve a property as a int from a entry.
  *
+ * @param session The medialib session to be used for the transaction.
  * @param entry Entry to query.
  * @param property The property to extract. Strings passed should
  * be defined in medialib.h
@@ -566,6 +568,7 @@ xmms_medialib_entry_property_get_int (xmms_medialib_session_t *session,
 /**
  * Set a entry property to a new value, overwriting the old value.
  *
+ * @param session The medialib session to be used for the transaction.
  * @param entry Entry to alter.
  * @param property The property to extract. Strings passed should
  * be defined in medialib.h
@@ -606,6 +609,7 @@ xmms_medialib_entry_property_set_int_source (xmms_medialib_session_t *session,
 /**
  * Set a entry property to a new value, overwriting the old value.
  *
+ * @param session The medialib session to be used for the transaction.
  * @param entry Entry to alter.
  * @param property The property to extract. Strings passed should
  * be defined in medialib.h
@@ -689,6 +693,7 @@ xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmm
 /**
  * Remove a medialib entry from the database
  *
+ * @param session The medialib session to be used for the transaction.
  * @param entry Entry to remove
  */
 
@@ -978,7 +983,9 @@ xmms_medialib_entry_new_encoded (xmms_medialib_session_t *session,
  *
  * @todo rename to something better?
  *
+ * @param session The medialib session to be used for the transaction.
  * @param url URL to add/retrieve from the medialib
+ * @param error If an error occurs, it will be stored in there.
  *
  * @returns Entry mapped to the URL
  */
@@ -1035,6 +1042,7 @@ xmms_medialib_list_cb (xmms_object_cmd_value_t **row, gpointer udata)
  * Convert a entry and all properties to a hashtable that
  * could be feed to the client or somewhere else in the daemon.
  *
+ * @param session The medialib session to be used for the transaction.
  * @param entry Entry to convert.
  *
  * @returns Newly allocated hashtable with newly allocated strings
@@ -1219,6 +1227,7 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
 /**
  * Get a list of #GHashTables 's that matches the query.
  *
+ * @param session The medialib session to be used for the transaction.
  * @param query SQL query that should be executed.
  * @param error In case of error this will be filled.
  * @returns GList containing GHashTables. Caller are responsible to

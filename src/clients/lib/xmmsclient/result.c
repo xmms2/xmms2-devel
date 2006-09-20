@@ -788,6 +788,7 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
  * undefined. 
  *
  * @param res a #xmmsc_result_t containing dict list.
+ * @param key Key that should be retrieved
  * @param r the return int
  * @return 1 upon success otherwise 0
  *
@@ -825,6 +826,7 @@ xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *
  * undefined. 
  *
  * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
  * @param r the return uint
  * @return 1 upon success otherwise 0
  *
@@ -863,6 +865,7 @@ xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t
  * result is freed.
  *
  * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
  * @param r the return string (owned by result)
  * @return 1 upon success otherwise 0
  *
@@ -901,6 +904,7 @@ xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char *
  * result is freed.
  *
  * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
  * @param c the return collection (owned by result)
  * @return 1 upon success otherwise 0
  *
@@ -937,7 +941,7 @@ xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
  *
  * @param res a #xmmsc_result_t containing a hashtable.
  * @param key Key that should be retrieved
- * @return type of #key
+ * @return type of key
  *
  */
 xmmsc_result_value_type_t

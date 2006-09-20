@@ -54,7 +54,7 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
  * @param len Length of target
  * @param fmt A format string to use. You can insert items from the hash by
  * using specialformat "${field}".
- * @param table The x_hash_t that you got from xmmsc_result_get_mediainfo
+ * @param res The #xmmsc_result_t that contains the dict.
  * @returns The number of chars written to #target
  */
 
@@ -327,6 +327,8 @@ xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn,
 /**
  * Rehash the medialib, this will check data in the medialib
  * still is the same as the data in files.
+ *
+ * @param conn #xmmsc_connection_t
  * @param id The id to rehash. Set it to 0 if you want to rehash
  * the whole medialib.
  */
@@ -394,7 +396,7 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 
 /**
  * Associate a int value with a medialib entry. Uses default
- * source which is client/<clientname>
+ * source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
@@ -443,7 +445,7 @@ xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
 
 /**
  * Associate a value with a medialib entry. Uses default
- * source which is client/<clientname>
+ * source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
@@ -492,7 +494,7 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
 
 /** 
  * Remove a custom field in the medialib associated with an entry.
- * Uses default source which is client/<clientname>
+ * Uses default source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,

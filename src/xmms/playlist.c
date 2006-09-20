@@ -921,6 +921,7 @@ xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname,
   * to the list.
   *
   * @param playlist the playlist to add it URL to.
+  * @param plname the name of the playlist to modify.
   * @param nurl the URL to add
   * @param err an #xmms_error_t that should be defined upon error.
   * @return TRUE on success and FALSE otherwise.
@@ -948,6 +949,7 @@ xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *plname, gchar *nurl, xm
   * all files there.
   *
   * @param playlist the playlist to add it URL to.
+  * @param plname the name of the playlist to modify.
   * @param nurl the URL of an directory you want to add
   * @param err an #xmms_error_t that should be defined upon error.
   */
@@ -966,10 +968,12 @@ xmms_playlist_radd (xmms_playlist_t *playlist, gchar *plname,
  *  This will append or prepend the entry according to
  *  the option.
  *  This function will wake xmms_playlist_wait.
- *  @param playlist the playlist to add the entry to.
- *  @param file the #xmms_medialib_entry to add
- *  @param error Upon error this will be set.
- *  @returns TRUE on success
+ *
+ * @param playlist the playlist to add the entry to.
+ * @param plname the name of the playlist to modify.
+ * @param file the #xmms_medialib_entry to add
+ * @param err Upon error this will be set.
+ * @returns TRUE on success
  */
 
 gboolean

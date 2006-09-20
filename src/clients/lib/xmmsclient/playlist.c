@@ -175,6 +175,7 @@ xmmsc_playlist_list_entries (xmmsc_connection_t *c, const char *playlist)
  * Insert a medialib id at given position in playlist. 
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param id A medialib id.
  *
@@ -203,6 +204,7 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, 
  * Insert entry at given position in playlist.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param url The URL to insert
  *
@@ -217,6 +219,7 @@ xmmsc_playlist_insert_url (xmmsc_connection_t *c, const char *playlist, int pos,
  * Insert entry at given position in playlist wit args.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param url The URL to insert
  * @param numargs The number of arguments
@@ -281,6 +284,7 @@ xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, const char *playlist, int 
  * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param coll The collection to find media in the medialib.
+ * @param order The list of properties by which to order the matching media.
  */
 xmmsc_result_t *
 xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
@@ -311,6 +315,7 @@ xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
  * Add a medialib id to the playlist. 
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param id A medialib id.
  *
  */
@@ -339,6 +344,7 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, unsigned int
  * the url to. ie: file://mp3/my_mp3s/first.mp3.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
  *
  */
@@ -354,6 +360,7 @@ xmmsc_playlist_add_url (xmmsc_connection_t *c, const char *playlist, const char 
  * the url to. ie: file://mp3/my_mp3s/first.mp3.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
  *
  */
@@ -387,6 +394,7 @@ xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *ur
  * a result from the daemon, such as from #xmms_xform_media_browse
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url Encoded path.
  *
  */
@@ -417,8 +425,9 @@ xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *playlist, const 
  * Add the url to the playlist with arguments.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
- * @param numargs The number of arguments
+ * @param nargs The number of arguments
  * @param args array of numargs strings used as arguments
  */
 xmmsc_result_t *
@@ -451,6 +460,7 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char
  * server-side AND encoded.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
  *
  */
@@ -478,6 +488,7 @@ xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *playlist, const c
  * @param c The connection structure.
  * @param playlist The playlist in which to add the media.
  * @param coll The collection to find media in the medialib.
+ * @param order The list of properties by which to order the matching media.
  */
 xmmsc_result_t *
 xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
@@ -529,6 +540,8 @@ xmmsc_playlist_move_entry (xmmsc_connection_t *c, const char *playlist,
 /**
  * Remove an entry from the playlist.
  *
+ * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param pos The position that should be removed from the playlist.
  *
  * @sa xmmsc_playlist_list
