@@ -26,15 +26,15 @@ source = ["main.c",
 
 def config(env):
 	pluginenv = env.Copy()
+	env.pkgconfig("glib-2.0 >= 2.6.0", fail=True)
+	env.pkgconfig("gmodule-2.0", fail=True)
+	env.pkgconfig("gthread-2.0", fail=True)
+	env.pkgconfig("sqlite3", fail=True)
 	env.Prepend(LIBPATH=["src/lib/xmmsipc"])
 	env.Prepend(LIBPATH=["src/lib/xmmssocket"])
 	env.Append(LIBS=['xmmsipc'])
 	env.Append(LIBS=["xmmssocket"])
 	env.Append(CPPPATH=["#src/includepriv"])
-	env.pkgconfig("glib-2.0 >= 2.6.0", fail=True)
-	env.pkgconfig("gmodule-2.0", fail=True)
-	env.pkgconfig("gthread-2.0", fail=True)
-	env.pkgconfig("sqlite3", fail=True)
 
 	if env.platform != 'win32':
 		env.checklib("m", "sin", fail=True)
@@ -51,6 +51,9 @@ def config(env):
 			env.Prepend(CPPDEFINES="STATFS_BSD")
 		except ConfigError:
 			pass
+
+ 	if env.platform == 'darwin':
+ 		env.Append(LINKFLAGS=['-framework', 'CoreFoundation'])
 
 	# we have an xmms2d - we might want plugins!
 	pluginenv.handle_targets("Plugin")
