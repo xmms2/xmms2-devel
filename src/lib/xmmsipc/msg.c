@@ -335,7 +335,10 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 static bool
 xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, void *buf, unsigned int len)
 {
-	if (!msg || ((msg->get_pos + len) > xmms_ipc_msg_get_length (msg)))
+	if (!msg)
+		return false;
+
+	if (len > xmms_ipc_msg_get_length (msg) - msg->get_pos)
 		return false;
 
 	if (buf) {
@@ -393,7 +396,7 @@ xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
 		return false;
 	}
 
-	if ((msg->get_pos + l) > xmms_ipc_msg_get_length (msg))
+	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
 		return false;
 
 	str = x_malloc0 (l + 1);
@@ -426,7 +429,7 @@ xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
 		return false;
 	}
 
-	if ((msg->get_pos + l) > xmms_ipc_msg_get_length (msg))
+	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
 		return false;
 
 	b = x_malloc0 (l);
