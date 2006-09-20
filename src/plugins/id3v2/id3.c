@@ -322,7 +322,7 @@ handle_id3v2_ufid (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		val0 = g_strndup (val, len);
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
-		                             val);
+		                             val0);
 
 		g_free (val0);
 	}
