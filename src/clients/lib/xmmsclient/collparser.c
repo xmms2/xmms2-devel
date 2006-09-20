@@ -99,7 +99,7 @@ static char *string_intadd (char *number, int delta);
 
 /**
  * @defgroup CollectionParser CollectionParser
- * @ingroup XMMSClient
+ * @ingroup Collections
  * @brief Generate a collection structure from a string pattern.
  *
  * The grammar of the default parser is the following:

@@ -24,10 +24,17 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 
 
-/**
- * @defgroup Collection Collection
+/** @defgroup Collections Collections
  * @ingroup XMMSClient
- * @brief This performs everything related to collections.
+ * @brief All modules related to collection handling.
+ * The API to use collections ; please refer to the wiki for more infos on this.
+ */
+
+
+/**
+ * @defgroup CollectionControl CollectionControl
+ * @ingroup Collections
+ * @brief Functions to manage the collections on the server.
  *
  * @{
  */

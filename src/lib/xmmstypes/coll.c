@@ -55,9 +55,9 @@ static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
 
 
 /**
- * @defgroup Collection Collection
- * @ingroup XMMSClient
- * @brief This performs everything related to collections.
+ * @defgroup CollectionStructure CollectionStructure
+ * @ingroup Collections
+ * @brief The API to be used to work with collection structures.
  *
  * @{
  */
