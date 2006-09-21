@@ -859,10 +859,10 @@ xmms_collection_destroy (xmms_object_t *object)
  *
  * @param dag  The collection DAG.
  * @param coll  The collection to validate.
- * @param name  The name under which the collection will be saved (NULL
- *              if none).
- * @param namespace  The namespace in which the collection will be
- *                   saved (NULL if none).
+ * @param save_name  The name under which the collection will be saved (NULL
+ *                   if none).
+ * @param save_namespace  The namespace in which the collection will be
+ *                        saved (NULL if none).
  * @returns  True if the collection is valid, false otherwise.
  */
 static gboolean
@@ -894,9 +894,10 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
                                  gchar *save_name, gchar *save_namespace)
 {
 	guint num_operands = 0;
-	xmmsc_coll_t *op;
+	xmmsc_coll_t *op, *ref;
 	gchar *attr, *attr2;
 	gboolean valid = TRUE;
+	xmmsc_coll_type_t type;
 	xmms_collection_namespace_id_t nsid;
 
 	/* count operands */
@@ -912,10 +913,11 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 
 	/* analyse by type */
-	switch (xmmsc_coll_get_type (coll)) {
+	type = xmmsc_coll_get_type (coll);
+	switch (type) {
 	case XMMS_COLLECTION_TYPE_REFERENCE:
-		/* no operand */
-		if (num_operands > 0) {
+		/* zero or one (bound in DAG) operand */
+		if (num_operands > 1) {
 			return FALSE;
 		}
 
@@ -933,19 +935,31 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 			}
 
 			g_mutex_lock (dag->mutex);
-			op = xmms_collection_get_pointer (dag, attr, nsid);
-			if (op == NULL) {
+			ref = xmms_collection_get_pointer (dag, attr, nsid);
+			if (ref == NULL) {
 				g_mutex_unlock (dag->mutex);
 				return FALSE;
 			}
 
 			/* check if the referenced coll references this one (loop!) */
 			if (save_name && save_namespace &&
-			    xmms_collection_has_reference_to (dag, op, save_name, save_namespace)) {
+			    xmms_collection_has_reference_to (dag, ref, save_name, save_namespace)) {
 				g_mutex_unlock (dag->mutex);
 				return FALSE;
 			}
 			g_mutex_unlock (dag->mutex);
+		}
+
+		/* ensure that the operand is consistent with the reference infos */
+		if (num_operands == 1) {
+			xmmsc_coll_operand_list_save (coll);
+			xmmsc_coll_operand_list_first (coll);
+			xmmsc_coll_operand_list_entry (coll, &op);
+			xmmsc_coll_operand_list_restore (coll);
+
+			if (op != ref) {
+				return FALSE;
+			}
 		}
 		break;
 
@@ -1025,17 +1039,20 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 
 	/* recurse in operands */
-	xmmsc_coll_operand_list_save (coll);
+	if (num_operands > 0 && type != XMMS_COLLECTION_TYPE_REFERENCE) {
+		xmmsc_coll_operand_list_save (coll);
 
-	xmmsc_coll_operand_list_first (coll);
-	while (xmmsc_coll_operand_list_entry (coll, &op) && valid) {
-		if (!xmms_collection_validate_recurs (dag, op, save_name, save_namespace)) {
-			valid = FALSE;
+		xmmsc_coll_operand_list_first (coll);
+		while (xmmsc_coll_operand_list_entry (coll, &op) && valid) {
+			if (!xmms_collection_validate_recurs (dag, op, save_name,
+			                                      save_namespace)) {
+				valid = FALSE;
+			}
+			xmmsc_coll_operand_list_next (coll);
 		}
-		xmmsc_coll_operand_list_next (coll);
-	}
 
-	xmmsc_coll_operand_list_restore (coll);
+		xmmsc_coll_operand_list_restore (coll);
+	}
 
 	return valid;
 }
