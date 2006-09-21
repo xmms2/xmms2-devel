@@ -36,6 +36,23 @@
 namespace Xmms
 {
 
+	/** Get the absolute path to the user config dir.
+	 *  
+	 *  @throw result_error If there was an error.
+	 *  
+	 *  @return string containing the path.
+	 */
+	inline std::string getUserConfDir() {
+
+		char buf[PATH_MAX] = { '\0' };
+		if( !xmmsc_userconfdir_get( buf, PATH_MAX ) ) {
+			throw Xmms::result_error( "Error occured when trying to get "
+			                          "user config directory." );
+		}
+		return std::string(buf);
+
+	}
+
 	/** @cond INTERNAL */
 
 	/** Checks connection state.
