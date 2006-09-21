@@ -57,9 +57,8 @@ add_item_to_playlist (xmmsc_connection_t *conn, gchar *playlist, gchar *item)
 
 
 static gchar *
-get_playlist_type_string (xmmsc_coll_t *coll)
+get_playlist_type_string (xmmsc_coll_type_t type)
 {
-	xmmsc_coll_type_t type = xmmsc_coll_get_type (coll);
 	switch (type) {
 	case XMMS_COLLECTION_TYPE_IDLIST:        return "list";
 	case XMMS_COLLECTION_TYPE_QUEUE:         return "queue";
@@ -69,11 +68,22 @@ get_playlist_type_string (xmmsc_coll_t *coll)
 }
 
 static void
+coll_remove_operands (xmmsc_coll_t *coll)
+{
+	xmmsc_coll_t *curr;
+
+	xmmsc_coll_operand_list_first (coll);
+	while (xmmsc_coll_operand_list_entry (coll, &curr)) {
+		xmmsc_coll_remove_operand (coll, curr);
+		xmmsc_coll_operand_list_first (coll);
+	}
+}
+
+static void
 playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *ref)
 {
 	xmmsc_result_t *psres;
 	xmmsc_coll_t *refcoll;
-	xmmsc_coll_t *op;
 	gchar *s_name, *s_namespace;
 
 	if (!coll_read_collname (ref, &s_name, &s_namespace)) {
@@ -91,12 +101,8 @@ playlist_setup_pshuffle (xmmsc_connection_t *conn, xmmsc_coll_t *coll, gchar *re
 	xmmsc_coll_attribute_set (refcoll, "reference", s_name);
 	xmmsc_coll_attribute_set (refcoll, "namespace", s_namespace);
 
-	/* Remove previous operands */
-	xmmsc_coll_operand_list_first (coll);
-	while (xmmsc_coll_operand_list_entry (coll, &op)) {
-		xmmsc_coll_remove_operand (coll, op);
-	}
-
+	/* Remove previous operands, and new operand */
+	coll_remove_operands (coll);
 	xmmsc_coll_add_operand (coll, refcoll);
 	xmmsc_coll_unref (refcoll);
 }
@@ -710,7 +716,7 @@ void
 cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
 	gchar *name;
-	xmmsc_coll_type_t type;
+	xmmsc_coll_type_t prevtype, newtype;
 	xmmsc_result_t *res;
 	xmmsc_coll_t *coll;
 	gint typelen;
@@ -730,11 +736,11 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	xmmsc_result_get_collection (res, &coll);
-
+	prevtype = xmmsc_coll_get_type (coll);
 
 	/* No type argument, simply display the current type */
 	if (argc < 5) {
-		print_info (get_playlist_type_string (coll));
+		print_info (get_playlist_type_string (prevtype));
 
 	/* Type argument, set the new type */
 	} else {
@@ -742,11 +748,17 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 
 		typelen = strlen (argv[4]);
 		if (g_ascii_strncasecmp (argv[4], "list", typelen) == 0) {
-			type = XMMS_COLLECTION_TYPE_IDLIST;
+			newtype = XMMS_COLLECTION_TYPE_IDLIST;
+			if (prevtype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+				coll_remove_operands (coll);
+			}
 		} else if (g_ascii_strncasecmp (argv[4], "queue", typelen) == 0) {
-			type = XMMS_COLLECTION_TYPE_QUEUE;
+			newtype = XMMS_COLLECTION_TYPE_QUEUE;
+			if (prevtype == XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+				coll_remove_operands (coll);
+			}
 		} else if (g_ascii_strncasecmp (argv[4], "pshuffle", typelen) == 0) {
-			type = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
+			newtype = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
 
 			/* Setup operand for party shuffle ! */
 			if (argc < 6) {
@@ -759,7 +771,7 @@ cmd_playlist_type (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 
 		/* Update type and save back */
-		xmmsc_coll_set_type (coll, type);
+		xmmsc_coll_set_type (coll, newtype);
 		saveres = xmmsc_coll_save (conn, coll, name, "Playlists");
 		xmmsc_result_wait (saveres);
 
