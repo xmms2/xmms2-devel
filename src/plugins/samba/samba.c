@@ -246,14 +246,23 @@ xmms_samba_browse (xmms_xform_t *xform,
 	}
 
 	while ((dir = smbc_readdir (handle))) {
-		gboolean is_dir = dir->smbc_type == SMBC_DIR ||
-		                  dir->smbc_type == SMBC_WORKGROUP ||
-		                  dir->smbc_type == SMBC_SERVER ||
-		                  dir->smbc_type == SMBC_FILE_SHARE;
-		gchar *t2 = xmms_medialib_url_encode (dir->name);
+		gboolean is_dir;
+		gchar *t, *t2; 
+
+		if (dir->name[0] == '.')
+			continue;
+
+		is_dir = dir->smbc_type == SMBC_DIR ||
+		         dir->smbc_type == SMBC_WORKGROUP ||
+		         dir->smbc_type == SMBC_SERVER ||
+		         dir->smbc_type == SMBC_FILE_SHARE;
+		
+		t = g_build_filename (url, dir->name, NULL);
+		t2 = xmms_medialib_url_encode (t);
 		XMMS_DBG ("%s", t2);
 		ret = xmms_xform_browse_add_entry (ret, t2, is_dir, NULL);
 		g_free (t2);
+		g_free (t);
 	}
 
 	smbc_closedir (handle);
