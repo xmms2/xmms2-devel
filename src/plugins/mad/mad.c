@@ -152,7 +152,7 @@ xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 
 		i = (guint) (100ULL * samples / xmms_xing_get_frames (data->xing) / 1152);
 
-		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
+		bytes = xmms_xing_get_toc (data->xing, i) * (xmms_xing_get_bytes (data->xing) / 256);
 	} else {
 		bytes = (guint)(((gdouble)samples) * data->bitrate / data->samplerate) / 8;
 	}
