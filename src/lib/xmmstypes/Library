@@ -8,3 +8,5 @@ install = False
 
 def config(env):
 	env.Append(CPPPATH=["#src/includepriv"])
+	if env.platform != 'win32':
+		env.Append(CCFLAGS=["-fPIC"])
