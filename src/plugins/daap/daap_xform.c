@@ -91,6 +91,10 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 
 	cmd_begin = strstr (host_begin, "/");
 
+	if (NULL == cmd_begin) {
+		return FALSE;
+	}
+
 	port_begin = strstr (host_begin, ":");
 	if ((NULL == port_begin) || (port_begin > cmd_begin)) {
 		*port = DEFAULT_DAAP_PORT;
@@ -292,7 +296,9 @@ xmms_daap_init (xmms_xform_t *xform)
 	}
 
 	data->url = g_strdup (url);
-	get_data_from_url (data->url, &(data->host), &(data->port), &command);
+	if (!get_data_from_url (data->url, &(data->host), &(data->port), &command)) {
+		return FALSE;
+	}
 
 	xmms_error_reset (&err);
 
