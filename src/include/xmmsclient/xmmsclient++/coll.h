@@ -7,6 +7,8 @@
 #include <xmmsclient/xmmsclient++/coll.h>
 
 #include <string>
+#include <iostream>
+#include <stdexcept>
 
 namespace Xmms 
 {
@@ -28,6 +30,14 @@ namespace Xmms
 		protected:
 			AbstractElement( Coll& coll, keyT index );
 
+			// to avoid problems with ostream and implicit casting operator
+			friend std::ostream& operator<<( std::ostream& os,
+			                                 const AbstractElement< keyT, valT >& elem )
+			{
+				os << keyT( elem );
+				return os;
+			}
+
 			Coll& coll_;
 			keyT index_;
 	};
@@ -41,6 +51,8 @@ namespace Xmms
 		class AttributeElement : public AbstractElement< std::string, std::string >
 		{
 			public:
+				~AttributeElement();
+
 				// get value
 				operator std::string() const;
 
@@ -69,6 +81,7 @@ namespace Xmms
 				bool restore();
 
 				Coll operator *();
+				// FIXME: Operator -> ?
 
 			private:
 				friend class Coll;
@@ -77,41 +90,16 @@ namespace Xmms
 				Coll& coll_;
 		};
 
-
+		// FIXME: put it *in* Idlist and rename it
 		class Idlist
 		{
 			private:
-				class IdlistElement;
 
-			public:
-
-				Idlist( const Idlist& src );
-				Idlist operator=( const Idlist& src ) const;
-				~Idlist();
-
-				/* FIXME: or void and throw error ? */
-				bool append( unsigned int id );
-				bool insert( unsigned int id, unsigned int index );
-				bool move( unsigned int index, unsigned int newindex );
-				bool remove( unsigned int index );
-				bool clear();
-
-				unsigned int size() const;
-
-				// get/set value at index
-				IdlistElement operator []( unsigned int index );
-
-			private:
-
-				friend class Coll;
-				Idlist( Coll& coll );
-
-				Coll& coll_;
-
-
-				class IdlistElement : public AbstractElement< unsigned int, unsigned int >
+				class Element : public AbstractElement< unsigned int, unsigned int >
 				{
 					public:
+						~Element();
+
 						// get value
 						operator unsigned int() const;
 
@@ -120,9 +108,33 @@ namespace Xmms
 
 					private:
 						friend class Idlist;
-						IdlistElement( Coll& coll, unsigned int index );
+						Element( Coll& coll, unsigned int index );
 				};
 
+
+			public:
+
+				Idlist( const Idlist& src );
+				Idlist operator=( const Idlist& src ) const;
+				~Idlist();
+
+				void append( unsigned int id );
+				void insert( unsigned int id, unsigned int index );
+				void move( unsigned int index, unsigned int newindex );
+				void remove( unsigned int index );
+				void clear();
+
+				unsigned int size() const;
+
+				// get/set value at index
+				Element operator []( unsigned int index );
+
+			private:
+
+				friend class Coll;
+				Idlist( Coll& coll );
+
+				Coll& coll_;
 		};
 
 
@@ -150,7 +162,7 @@ namespace Xmms
 			/* FIXME: name conflict: class Idlist; */
 			class Queue;
 			class PartyShuffle;
-			/* ... to be implemented ... */
+			/* FIXME: classes to be implemented ... */
 
 			/** Destructor.
 			 */
@@ -168,6 +180,10 @@ namespace Xmms
 			// get/set attributes
 			AttributeElement operator []( const std::string& attrname );
 
+			void setAttribute( const std::string &attrname, const std::string &value );
+			std::string getAttribute( const std::string &attrname );
+			void removeAttribute( const std::string &attrname );
+
 		// FIXME: support operator[](unsigned int) ?
 			Idlist getIdlist();
 
@@ -181,9 +197,6 @@ namespace Xmms
 			// Copy-constructor / operator=
 			Coll( const Coll& src );
 			Coll operator=( const Coll& src );
-
-			void setAttribute( const std::string &attrname, const std::string &value );
-			std::string getAttribute( const std::string &attrname );
 
 			void idlistSetIndex( unsigned int index, unsigned int value );
 			unsigned int idlistGetIndex( unsigned int index );
@@ -207,7 +220,6 @@ namespace Xmms
 	{
 		coll_.unref();
 	}
-
 
 }
 

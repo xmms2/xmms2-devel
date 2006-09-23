@@ -6,14 +6,17 @@
 
 #include <string>
 #include <sstream>
+#include <stdexcept>
 
 namespace Xmms
 {
 	
 	Coll::Coll( Type type )
 	{
-		coll_ = xmmsc_coll_new (type);
-		/* FIXME: error, coll NULL ? */
+		coll_ = xmmsc_coll_new( type );
+		if( !coll_ ) {
+			throw std::runtime_error( "Failed to create a Coll object" );
+		}
 	}
 	
 	Coll::Coll( xmmsc_coll_t *coll )
@@ -30,6 +33,7 @@ namespace Xmms
 
 	Coll Coll::operator=( const Coll& src )
 	{
+		unref();
 		coll_ = src.coll_;
 		ref();
 		return *this;
@@ -85,6 +89,13 @@ namespace Xmms
 		return std::string( val );
 	}
 
+	void Coll::removeAttribute( const std::string &attrname )
+	{
+		if (!xmmsc_coll_attribute_remove( coll_, attrname.c_str() )) {
+			throw no_such_key_error( "No such attribute: " + attrname );
+		}
+	}
+
 	Coll::Idlist Coll::getIdlist()
 	{
 		return Coll::Idlist( *this );
@@ -129,7 +140,7 @@ namespace Xmms
 
 	Coll::OperandIterator Coll::OperandIterator::operator=( const Coll::OperandIterator& src ) const
 	{
-		/* FIXME: unref previous? */
+		coll_.unref();
 		coll_ = src.coll_;
 		coll_.ref();
 		return *this;
@@ -192,7 +203,7 @@ namespace Xmms
 
 	Coll::Idlist Coll::Idlist::operator=( const Idlist& src ) const
 	{
-		/* FIXME: unref previous? */
+		coll_.unref();
 		coll_ = src.coll_;
 		coll_.ref();
 		return *this;
@@ -203,29 +214,48 @@ namespace Xmms
 		coll_.unref();
 	}
 
-	bool Coll::Idlist::append( unsigned int id )
+	void Coll::Idlist::append( unsigned int id )
 	{
-		return xmmsc_coll_idlist_append( coll_.coll_, id );
+		if (!xmmsc_coll_idlist_append( coll_.coll_, id )) {
+			std::stringstream err;
+			err << "Failed to append " << id << " to idlist";
+			throw std::runtime_error( err.str() );
+		}
 	}
 
-	bool Coll::Idlist::insert( unsigned int id, unsigned int index )
+	void Coll::Idlist::insert( unsigned int id, unsigned int index )
 	{
-		return xmmsc_coll_idlist_insert( coll_.coll_, id, index );
+		if (!xmmsc_coll_idlist_insert( coll_.coll_, id, index )) {
+			std::stringstream err;
+			err << "Failed to insert " << id << " in idlist at index " << index;
+			throw std::runtime_error( err.str() );
+		}
 	}
 
-	bool Coll::Idlist::move( unsigned int index, unsigned int newindex )
+	void Coll::Idlist::move( unsigned int index, unsigned int newindex )
 	{
-		return xmmsc_coll_idlist_move( coll_.coll_, index, newindex );
+		if (!xmmsc_coll_idlist_move( coll_.coll_, index, newindex )) {
+			std::stringstream err;
+			err << "Failed to move idlist entry from index " << index
+			    << " to " << newindex;
+			throw std::runtime_error( err.str() );
+		}
 	}
 
-	bool Coll::Idlist::remove( unsigned int index )
+	void Coll::Idlist::remove( unsigned int index )
 	{
-		return xmmsc_coll_idlist_remove( coll_.coll_, index );
+		if (!xmmsc_coll_idlist_remove( coll_.coll_, index )) {
+			std::stringstream err;
+			err << "Failed to remove idlist entry at index " << index;
+			throw std::runtime_error( err.str() );
+		}
 	}
 
-	bool Coll::Idlist::clear()
+	void Coll::Idlist::clear()
 	{
-		return xmmsc_coll_idlist_clear( coll_.coll_ );
+		if (!xmmsc_coll_idlist_clear( coll_.coll_ )) {
+			throw std::runtime_error( "Failed to clear the idlist" );
+		}
 	}
 
 	unsigned int Coll::Idlist::size() const
@@ -234,15 +264,19 @@ namespace Xmms
 	}
 
 	// get/set value at index
-	Coll::Idlist::IdlistElement Coll::Idlist::operator []( unsigned int index )
+	Coll::Idlist::Element Coll::Idlist::operator []( unsigned int index )
 	{
-		return IdlistElement( coll_, index );
+		return Element( coll_, index );
 	}
 
 
 
 	Coll::AttributeElement::AttributeElement( Coll& coll, std::string index )
 		: AbstractElement< std::string, std::string >( coll, index )
+	{
+	}
+
+	Coll::AttributeElement::~AttributeElement()
 	{
 	}
 
@@ -259,18 +293,22 @@ namespace Xmms
 	}
 
 
-	Coll::Idlist::IdlistElement::IdlistElement( Coll& coll, unsigned int index )
+	Coll::Idlist::Element::Element( Coll& coll, unsigned int index )
 		: AbstractElement< unsigned int, unsigned int >( coll, index )
 	{
 	}
 
-	Coll::Idlist::IdlistElement::operator unsigned int() const
+	Coll::Idlist::Element::~Element()
+	{
+	}
+
+	Coll::Idlist::Element::operator unsigned int() const
 	{
 		return coll_.idlistGetIndex( index_ );
 	}
 
 	unsigned int
-	Coll::Idlist::IdlistElement::operator=( unsigned int value )
+	Coll::Idlist::Element::operator=( unsigned int value )
 	{
 		coll_.idlistSetIndex( index_, value );
 		return value;
