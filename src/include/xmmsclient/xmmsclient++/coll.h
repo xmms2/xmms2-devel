@@ -74,11 +74,11 @@ namespace Xmms
 				OperandIterator operator=( const OperandIterator& src ) const;
 				~OperandIterator();
 
-				bool first();
+				void first();
 				bool valid();
-				bool next();
-				bool save();
-				bool restore();
+				void next();
+				void save();
+				void restore();
 
 				Coll operator *();
 				// FIXME: Operator -> ?
@@ -145,7 +145,7 @@ namespace Xmms
 
 			typedef xmmsc_coll_type_t Type;
 
-		/* FIXME: for testing */
+			/* FIXME: for testing */
 			Coll( Type type );
 			xmmsc_coll_t* coll_;
 
@@ -171,7 +171,7 @@ namespace Xmms
 			void ref();
 			void unref();
 
-		// FIXME: support operator<< too ?
+			// FIXME: support operator<< too ?
 			void addOperand( Coll& operand );
 			void removeOperand( Coll& operand );
 
@@ -184,14 +184,14 @@ namespace Xmms
 			std::string getAttribute( const std::string &attrname );
 			void removeAttribute( const std::string &attrname );
 
-		// FIXME: support operator[](unsigned int) ?
+			// FIXME: support operator[](unsigned int) ?
 			Idlist getIdlist();
 
 		/** @cond */
 		private:
 
 			// Constructor, prevent creation of Coll objects
-		// FIXME: testing Coll( Type type );
+			// FIXME: testing Coll( Type type );
 			Coll( xmmsc_coll_t *coll );
 
 			// Copy-constructor / operator=
@@ -201,7 +201,7 @@ namespace Xmms
 			void idlistSetIndex( unsigned int index, unsigned int value );
 			unsigned int idlistGetIndex( unsigned int index );
 
-		// FIXME: testing xmmsc_coll_t* coll_;
+			// FIXME: testing xmmsc_coll_t* coll_;
 
 		/** @endcond */
 

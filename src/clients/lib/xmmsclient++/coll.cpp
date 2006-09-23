@@ -82,7 +82,7 @@ namespace Xmms
 	std::string Coll::getAttribute( const std::string &attrname )
 	{
 		char *val;
-		if (!xmmsc_coll_attribute_get( coll_, attrname.c_str(), &val )) {
+		if( !xmmsc_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
 
@@ -91,7 +91,7 @@ namespace Xmms
 
 	void Coll::removeAttribute( const std::string &attrname )
 	{
-		if (!xmmsc_coll_attribute_remove( coll_, attrname.c_str() )) {
+		if( !xmmsc_coll_attribute_remove( coll_, attrname.c_str() ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
 	}
@@ -103,8 +103,7 @@ namespace Xmms
 
 	void Coll::idlistSetIndex( unsigned int index, unsigned int value )
 	{
-		/* FIXME: suppress error message on stderr ! */
-		if (!xmmsc_coll_idlist_set_index( coll_, index, value )) {
+		if( !xmmsc_coll_idlist_set_index( coll_, index, value ) ) {
 			std::stringstream err;
 			err << "Index out of idlist: "  << index;
 			throw out_of_range( err.str() );
@@ -113,9 +112,8 @@ namespace Xmms
 
 	unsigned int Coll::idlistGetIndex( unsigned int index )
 	{
-		/* FIXME: suppress error message on stderr ! */
 		unsigned int value;
-		if (!xmmsc_coll_idlist_get_index( coll_, index, &value )) {
+		if( !xmmsc_coll_idlist_get_index( coll_, index, &value ) ) {
 			std::stringstream err;
 			err << "Index out of idlist: "  << index;
 			throw out_of_range( err.str() );
@@ -151,36 +149,43 @@ namespace Xmms
 		coll_.unref();
 	}
 
-	bool Coll::OperandIterator::first()
+	void Coll::OperandIterator::first()
 	{
-		return xmmsc_coll_operand_list_first( coll_.coll_ );
+		if( !xmmsc_coll_operand_list_first( coll_.coll_ ) ) {
+			throw out_of_range( "Access out of the operand list!" );
+		}
 	}
 
 	bool Coll::OperandIterator::valid()
 	{
-		xmmsc_coll_t *tmp;
-		return xmmsc_coll_operand_list_entry( coll_.coll_, &tmp );
+		return xmmsc_coll_operand_list_valid( coll_.coll_ );
 	}
 
-	bool Coll::OperandIterator::next()
+	void Coll::OperandIterator::next()
 	{
-		return xmmsc_coll_operand_list_next( coll_.coll_ );
+		if( !xmmsc_coll_operand_list_next( coll_.coll_ ) ) {
+			throw out_of_range( "Access out of the operand list!" );
+		}
 	}
 
-	bool Coll::OperandIterator::save()
+	void Coll::OperandIterator::save()
 	{
-		return xmmsc_coll_operand_list_save( coll_.coll_ );
+		if( !xmmsc_coll_operand_list_save( coll_.coll_ ) ) {
+			throw out_of_range( "Access out of the operand list!" );
+		}
 	}
 
-	bool Coll::OperandIterator::restore()
+	void Coll::OperandIterator::restore()
 	{
-		return xmmsc_coll_operand_list_restore( coll_.coll_ );
+		if( !xmmsc_coll_operand_list_restore( coll_.coll_ ) ) {
+			throw out_of_range( "Access out of the operand list!" );
+		}
 	}
 
 	Coll Coll::OperandIterator::operator *()
 	{
 		xmmsc_coll_t *op;
-		if (!xmmsc_coll_operand_list_entry( coll_.coll_, &op )) {
+		if( !xmmsc_coll_operand_list_entry( coll_.coll_, &op ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 
@@ -216,7 +221,7 @@ namespace Xmms
 
 	void Coll::Idlist::append( unsigned int id )
 	{
-		if (!xmmsc_coll_idlist_append( coll_.coll_, id )) {
+		if( !xmmsc_coll_idlist_append( coll_.coll_, id ) ) {
 			std::stringstream err;
 			err << "Failed to append " << id << " to idlist";
 			throw std::runtime_error( err.str() );
@@ -225,7 +230,7 @@ namespace Xmms
 
 	void Coll::Idlist::insert( unsigned int id, unsigned int index )
 	{
-		if (!xmmsc_coll_idlist_insert( coll_.coll_, id, index )) {
+		if( !xmmsc_coll_idlist_insert( coll_.coll_, id, index ) ) {
 			std::stringstream err;
 			err << "Failed to insert " << id << " in idlist at index " << index;
 			throw std::runtime_error( err.str() );
@@ -234,7 +239,7 @@ namespace Xmms
 
 	void Coll::Idlist::move( unsigned int index, unsigned int newindex )
 	{
-		if (!xmmsc_coll_idlist_move( coll_.coll_, index, newindex )) {
+		if( !xmmsc_coll_idlist_move( coll_.coll_, index, newindex ) ) {
 			std::stringstream err;
 			err << "Failed to move idlist entry from index " << index
 			    << " to " << newindex;
@@ -244,7 +249,7 @@ namespace Xmms
 
 	void Coll::Idlist::remove( unsigned int index )
 	{
-		if (!xmmsc_coll_idlist_remove( coll_.coll_, index )) {
+		if( !xmmsc_coll_idlist_remove( coll_.coll_, index ) ) {
 			std::stringstream err;
 			err << "Failed to remove idlist entry at index " << index;
 			throw std::runtime_error( err.str() );
@@ -253,7 +258,7 @@ namespace Xmms
 
 	void Coll::Idlist::clear()
 	{
-		if (!xmmsc_coll_idlist_clear( coll_.coll_ )) {
+		if( !xmmsc_coll_idlist_clear( coll_.coll_ ) ) {
 			throw std::runtime_error( "Failed to clear the idlist" );
 		}
 	}
