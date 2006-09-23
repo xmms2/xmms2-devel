@@ -478,6 +478,20 @@ xmmsc_coll_operand_list_first (xmmsc_coll_t *coll)
 }
 
 /**
+ * Checks if the internal pointer points to a valid operand of the list.
+ *
+ * @param coll  The collection to consider.
+ * @return 1 if the current operand is valid, 0 otherwise.
+ */
+int
+xmmsc_coll_operand_list_valid (xmmsc_coll_t *coll)
+{
+	x_return_val_if_fail (coll, 0);
+
+	return (coll->curr_op != NULL);
+}
+
+/**
  * Retrieve the current operand in the list
  * by changing the operand parameter to point to it.
  * The function returns 1 if the entry was valid, 0 otherwise.

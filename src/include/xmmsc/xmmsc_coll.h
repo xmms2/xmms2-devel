@@ -49,6 +49,7 @@ size_t xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll);
 xmmsc_coll_type_t xmmsc_coll_get_type (xmmsc_coll_t *coll);
 uint32_t* xmmsc_coll_get_idlist (xmmsc_coll_t *coll);
 int xmmsc_coll_operand_list_first (xmmsc_coll_t *coll);
+int xmmsc_coll_operand_list_valid (xmmsc_coll_t *coll);
 int xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, xmmsc_coll_t **operand);
 int xmmsc_coll_operand_list_next (xmmsc_coll_t *coll);
 int xmmsc_coll_operand_list_save (xmmsc_coll_t *coll);
