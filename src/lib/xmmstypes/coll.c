@@ -281,7 +281,10 @@ xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int inde
 {
 	int i;
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (index <= (coll->idlist_size - 1), 0);
+
+	if (index >= coll->idlist_size) {
+		return 0;
+	}
 
 	/* We need more memory, reallocate */
 	if (coll->idlist_size == coll->idlist_allocated) {
@@ -315,8 +318,10 @@ xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int new
 	uint32_t tmp;
 
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (index <= (coll->idlist_size - 1), 0);
-	x_return_val_if_fail (newindex <= (coll->idlist_size - 1), 0);
+
+	if ((index >= coll->idlist_size) || (newindex >= coll->idlist_size)) {
+		return 0;
+	}
 
 	tmp = coll->idlist[index];
 	if (index < newindex) {
@@ -390,7 +395,10 @@ int
 xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, uint32_t *val)
 {
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (index < (coll->idlist_size - 1), 0);
+
+	if (index >= (coll->idlist_size - 1)) {
+		return 0;
+	}
 
 	*val = coll->idlist[index];
 
@@ -408,7 +416,10 @@ int
 xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, uint32_t val)
 {
 	x_return_val_if_fail (coll, 0);
-	x_return_val_if_fail (index < (coll->idlist_size - 1), 0);
+
+	if (index >= (coll->idlist_size - 1)) {
+		return 0;
+	}
 
 	coll->idlist[index] = val;
 
