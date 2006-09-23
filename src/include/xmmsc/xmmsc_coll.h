@@ -20,6 +20,10 @@
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct xmmsc_coll_St xmmsc_coll_t;
 
 typedef void (*xmmsc_coll_attribute_foreach_func) (const char *key, const char *value, void *udata);
@@ -56,5 +60,9 @@ int xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
 void xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll, xmmsc_coll_attribute_foreach_func func, void *user_data);
 
 xmmsc_coll_t* xmmsc_coll_universe ();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif 
