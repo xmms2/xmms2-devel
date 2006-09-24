@@ -4,7 +4,7 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
-#include <xmmsclient/xmmsclient++/coll.h>
+#include <xmmsclient/xmmsclient++/collection.h>
 
 #include <string>
 #include <iostream>
@@ -13,50 +13,51 @@
 namespace Xmms 
 {
 
-	class Coll;
-
-	template< typename keyT, typename valT >
-	class AbstractElement
-	{
-		public:
-			virtual ~AbstractElement();
-
-			// get value
-			virtual operator valT() const = 0;
-
-			// set value
-			virtual valT operator=( valT value ) = 0;
-
-		protected:
-			AbstractElement( Coll& coll, keyT index );
-
-			// to avoid problems with ostream and implicit casting operator
-			friend std::ostream& operator<<( std::ostream& os,
-			                                 const AbstractElement< keyT, valT >& elem )
-			{
-				os << keyT( elem );
-				return os;
-			}
-
-			Coll& coll_;
-			keyT index_;
-	};
-
 	/** @class Coll coll.h "xmmsclient/xmmsclient++/coll.h"
 	 *  @brief This class is used to build collection structures.
 	 */
-	class Coll
+	namespace Coll
 	{
+
+		typedef xmmsc_coll_type_t Type;
+
+		class OperandIterator;
+		class Coll;
+
+		// FIXME: Hide classes?
+
+		template< typename keyT, typename valT >
+		class AbstractElement
+		{
+			public:
+				virtual ~AbstractElement();
+
+				// get value
+				virtual operator valT() const = 0;
+
+				// set value
+				virtual valT operator=( valT value ) = 0;
+
+			protected:
+				AbstractElement( Coll& coll, keyT index );
+
+				// to avoid problems with ostream and implicit casting operator
+				friend std::ostream& operator<<( std::ostream& os,
+				                                 const AbstractElement< keyT, valT >& elem )
+				{
+					os << keyT( elem );
+					return os;
+				}
+
+				Coll& coll_;
+				keyT index_;
+		};
 
 		class AttributeElement : public AbstractElement< std::string, std::string >
 		{
 			public:
 				~AttributeElement();
-
-				// get value
 				operator std::string() const;
-
-				// set value
 				std::string operator=( std::string value );
 
 			protected:
@@ -65,7 +66,98 @@ namespace Xmms
 		};
 
 
-	public: 
+		class Coll
+		{
+
+		public:
+
+			/* FIXME: for testing */
+			xmmsc_coll_t* coll_;
+
+			/** Destructor.
+			 */
+			virtual ~Coll();
+
+			void ref();
+			void unref();
+
+			// get/set attributes
+			AttributeElement operator []( const std::string& attrname );
+
+			void setAttribute( const std::string &attrname, const std::string &value );
+			std::string getAttribute( const std::string &attrname );
+			void removeAttribute( const std::string &attrname );
+
+			// FIXME: Make these protected!
+			void setIndex( unsigned int index, unsigned int value );
+			unsigned int getIndex( unsigned int index );
+
+		/** @cond */
+		protected:
+
+			// FIXME: testing xmmsc_coll_t* coll_;
+
+			// Copy-constructor / operator=
+			friend class OperandIterator;
+			friend class Unary; // FIXME: Why is this needed??
+			Coll( Type type );
+			Coll( const Coll& src );
+			Coll operator=( const Coll& src );
+
+		private:
+
+			// Constructor, prevent creation of Coll objects
+			Coll( xmmsc_coll_t *coll );
+
+		/** @endcond */
+		};
+
+
+		class Nary : public Coll
+		{
+			public:
+				Nary( Type type );
+				~Nary();
+
+				// FIXME: support operator<< too ?
+				void addOperand( Coll& operand );
+				void removeOperand( Coll& operand );
+
+				OperandIterator getOperandIterator();
+		};
+
+		class Unary : public Coll
+		{
+			public:
+				Unary( Type type );
+				Unary( Type type, Coll& operand );
+				~Unary();
+
+				void setOperand( Coll& operand );
+				void removeOperand();
+				Coll getOperand();
+		};
+
+		// FIXME: support integer value too? depend on class?
+		class Filter : public Unary
+		{
+			public:
+				Filter( Type type );
+				Filter( Type type, Coll& operand );
+				Filter( Type type, Coll& operand, const std::string& field);
+				Filter( Type type,
+				        Coll& operand,
+				        const std::string& field,
+				        const std::string& value );
+				Filter( Type type,
+				        Coll& operand,
+				        const std::string& field,
+				        const std::string& value,
+				        bool case_sensitive );
+				~Filter();
+		};
+
+
 		class OperandIterator
 		{
 
@@ -84,38 +176,130 @@ namespace Xmms
 				// FIXME: Operator -> ?
 
 			private:
-				friend class Coll;
+				/* FIXME: or define in Nary ? */
+				friend class Nary;
 				OperandIterator( Coll& coll );
 
 				Coll& coll_;
 		};
 
-		// FIXME: put it *in* Idlist and rename it
-		class Idlist
+
+		class Reference : public Coll
 		{
-			private:
+			public:
+				Reference();
+				Reference( const std::string& name,
+				           const Collection::Namespace& nsname );
+				~Reference();
+		};
 
-				class Element : public AbstractElement< unsigned int, unsigned int >
-				{
-					public:
-						~Element();
+		class Universe : public Reference
+		{
+			public:
+				Universe();
+				~Universe();
+		};
 
-						// get value
-						operator unsigned int() const;
+		class Union : public Nary
+		{
+			public:
+				Union();
+				~Union();
+		};
 
-						// set value
-						unsigned int operator=( unsigned int value );
+		class Intersection : public Nary
+		{
+			public:
+				Intersection();
+				~Intersection();
+		};
 
-					private:
-						friend class Idlist;
-						Element( Coll& coll, unsigned int index );
-				};
+		class Complement : public Unary
+		{
+			public:
+				Complement();
+				Complement( Coll& operand );
+				~Complement();
+		};
+
+		class Has : public Filter
+		{
+			public:
+				Has();
+				Has(Coll& operand);
+				Has(Coll& operand, const std::string& field);
+				~Has();
+		};
+
+		class Smaller : public Filter
+		{
+			public:
+				Smaller();
+				Smaller(Coll& operand);
+				Smaller(Coll& operand, const std::string& field);
+				Smaller(Coll& operand,
+				        const std::string& field,
+				        const std::string& value);
+				~Smaller();
+		};
+
+		class Greater : public Filter
+		{
+			public:
+				Greater();
+				Greater(Coll& operand);
+				Greater(Coll& operand, const std::string& field);
+				Greater(Coll& operand,
+				        const std::string& field,
+				        const std::string& value);
+				~Greater();
+		};
+
+		class Match : public Filter
+		{
+			public:
+				Match();
+				Match(Coll& operand);
+				Match(Coll& operand, const std::string& field);
+				Match(Coll& operand,
+				      const std::string& field,
+				      const std::string& value,
+				      bool case_sensitive = false);
+				~Match();
+		};
+
+		class Contains : public Filter
+		{
+			public:
+				Contains();
+				Contains(Coll& operand);
+				Contains(Coll& operand, const std::string& field);
+				Contains(Coll& operand,
+				         const std::string& field,
+				         const std::string& value,
+				         bool case_sensitive = false);
+				~Contains();
+		};
+
+		class Idlist : public Coll
+		{
+			friend class Element;
+
+			class Element : public AbstractElement< unsigned int, unsigned int >
+			{
+				public:
+					~Element();
+					operator unsigned int() const;
+					unsigned int operator=( unsigned int value );
+
+				private:
+					friend class Idlist;
+					Element( Coll& coll, unsigned int index );
+			};
 
 
 			public:
-
-				Idlist( const Idlist& src );
-				Idlist operator=( const Idlist& src ) const;
+				Idlist();
 				~Idlist();
 
 				void append( unsigned int id );
@@ -128,97 +312,40 @@ namespace Xmms
 
 				// get/set value at index
 				Element operator []( unsigned int index );
+		};
 
-			private:
+		class Queue : public Idlist
+		{
+			public:
+				Queue();
+				Queue(unsigned int history);
+				~Queue();
+		};
 
-				friend class Coll;
-				Idlist( Coll& coll );
-
-				Coll& coll_;
+		class PartyShuffle : public Queue
+		{
+			public:
+				PartyShuffle();
+				PartyShuffle(unsigned int history);
+				PartyShuffle(unsigned int history, unsigned int upcoming);
+				~PartyShuffle();
 		};
 
 
 
+		template< typename keyT, typename valT >
+		AbstractElement< keyT, valT >::AbstractElement( Coll& coll, keyT index )
+			: coll_ (coll), index_( index )
+		{
+			coll_.ref();
+		}
 
+		template< typename keyT, typename valT >
+		AbstractElement< keyT, valT >::~AbstractElement()
+		{
+			coll_.unref();
+		}
 
-		public:
-
-			typedef xmmsc_coll_type_t Type;
-
-			/* FIXME: for testing */
-			Coll( Type type );
-			xmmsc_coll_t* coll_;
-
-			class Universe;
-			class Reference;
-			class Union;
-			class Intersection;
-			class Complement;
-			class Has;
-			class Match;
-			class Contains;
-			class Smaller;
-			class Greater;
-			/* FIXME: name conflict: class Idlist; */
-			class Queue;
-			class PartyShuffle;
-			/* FIXME: classes to be implemented ... */
-
-			/** Destructor.
-			 */
-			virtual ~Coll();
-
-			void ref();
-			void unref();
-
-			// FIXME: support operator<< too ?
-			void addOperand( Coll& operand );
-			void removeOperand( Coll& operand );
-
-			OperandIterator getOperandIterator();
-
-			// get/set attributes
-			AttributeElement operator []( const std::string& attrname );
-
-			void setAttribute( const std::string &attrname, const std::string &value );
-			std::string getAttribute( const std::string &attrname );
-			void removeAttribute( const std::string &attrname );
-
-			// FIXME: support operator[](unsigned int) ?
-			Idlist getIdlist();
-
-		/** @cond */
-		private:
-
-			// Constructor, prevent creation of Coll objects
-			// FIXME: testing Coll( Type type );
-			Coll( xmmsc_coll_t *coll );
-
-			// Copy-constructor / operator=
-			Coll( const Coll& src );
-			Coll operator=( const Coll& src );
-
-			void idlistSetIndex( unsigned int index, unsigned int value );
-			unsigned int idlistGetIndex( unsigned int index );
-
-			// FIXME: testing xmmsc_coll_t* coll_;
-
-		/** @endcond */
-
-	};
-
-
-	template< typename keyT, typename valT >
-	AbstractElement< keyT, valT >::AbstractElement( Coll& coll, keyT index )
-		: coll_ (coll), index_( index )
-	{
-		coll_.ref();
-	}
-
-	template< typename keyT, typename valT >
-	AbstractElement< keyT, valT >::~AbstractElement()
-	{
-		coll_.unref();
 	}
 
 }
