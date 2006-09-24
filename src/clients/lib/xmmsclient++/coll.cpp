@@ -67,7 +67,7 @@ namespace Xmms
 		xmmsc_coll_attribute_set( coll_, attrname.c_str(), value.c_str() );
 	}
 
-	std::string Coll::getAttribute( const std::string &attrname )
+	std::string Coll::getAttribute( const std::string &attrname ) const
 	{
 		char *val;
 		if( !xmmsc_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
@@ -93,7 +93,7 @@ namespace Xmms
 		}
 	}
 
-	unsigned int Coll::getIndex( unsigned int index )
+	unsigned int Coll::getIndex( unsigned int index ) const
 	{
 		unsigned int value;
 		if( !xmmsc_coll_idlist_get_index( coll_, index, &value ) ) {
@@ -157,12 +157,11 @@ namespace Xmms
 		try {
 			xmmsc_coll_remove_operand( coll_, getOperand().coll_ );
 		}
-		catch (...) {
-			/* FIXME: throw error if none? */
-		}
+		/* don't throw an error if none */
+		catch (...) {}
 	}
 
-	Coll Unary::getOperand()
+	Coll Unary::getOperand() const
 	{
 		xmmsc_coll_t *op;
 
@@ -175,8 +174,7 @@ namespace Xmms
 		xmmsc_coll_operand_list_restore( coll_ );
 
 		if( !op ) {
-			/* FIXME: throw proper error if none */
-			throw "fan!";
+			throw missing_operand_error( "No operand in this operator!" );
 		}
 
 		return Coll( op );
@@ -348,6 +346,7 @@ namespace Xmms
 	{
 	}
 
+	// FIXME: make these throw better exceptions
 	void Idlist::append( unsigned int id )
 	{
 		if( !xmmsc_coll_idlist_append( coll_, id ) ) {
@@ -458,7 +457,7 @@ namespace Xmms
 		}
 	}
 
-	bool OperandIterator::valid()
+	bool OperandIterator::valid() const
 	{
 		return xmmsc_coll_operand_list_valid( coll_.coll_ );
 	}
@@ -484,7 +483,7 @@ namespace Xmms
 		}
 	}
 
-	Coll OperandIterator::operator *()
+	Coll OperandIterator::operator *() const
 	{
 		xmmsc_coll_t *op;
 		if( !xmmsc_coll_operand_list_entry( coll_.coll_, &op ) ) {

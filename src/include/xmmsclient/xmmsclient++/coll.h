@@ -68,80 +68,75 @@ namespace Xmms
 
 		class Coll
 		{
+			public:
 
-		public:
+				/* FIXME: for testing */
+				xmmsc_coll_t* coll_;
 
-			/* FIXME: for testing */
-			xmmsc_coll_t* coll_;
+				/** Destructor.
+				 */
+				virtual ~Coll();
 
-			/** Destructor.
-			 */
-			virtual ~Coll();
+				void ref();
+				void unref();
 
-			void ref();
-			void unref();
+				// get/set attributes
+				AttributeElement operator []( const std::string& attrname );
 
-			// get/set attributes
-			AttributeElement operator []( const std::string& attrname );
+				void setAttribute( const std::string &attrname, const std::string &value );
+				std::string getAttribute( const std::string &attrname ) const;
+				void removeAttribute( const std::string &attrname );
 
-			void setAttribute( const std::string &attrname, const std::string &value );
-			std::string getAttribute( const std::string &attrname );
-			void removeAttribute( const std::string &attrname );
+				// FIXME: Make these protected!
+				void setIndex( unsigned int index, unsigned int value );
+				unsigned int getIndex( unsigned int index ) const;
 
-			// FIXME: Make these protected!
-			void setIndex( unsigned int index, unsigned int value );
-			unsigned int getIndex( unsigned int index );
+			/** @cond */
+			protected:
 
-		/** @cond */
-		protected:
+				// FIXME: testing xmmsc_coll_t* coll_;
+				friend class OperandIterator;
+				friend class Unary;            // FIXME: why do we need that??
+				Coll( xmmsc_coll_t *coll );
+				Coll( Type type );
+				Coll( const Coll& src );
+				Coll operator=( const Coll& src );
 
-			// FIXME: testing xmmsc_coll_t* coll_;
-
-			// Copy-constructor / operator=
-			friend class OperandIterator;
-			friend class Unary; // FIXME: Why is this needed??
-			Coll( Type type );
-			Coll( const Coll& src );
-			Coll operator=( const Coll& src );
-
-		private:
-
-			// Constructor, prevent creation of Coll objects
-			Coll( xmmsc_coll_t *coll );
-
-		/** @endcond */
+			/** @endcond */
 		};
 
 
 		class Nary : public Coll
 		{
 			public:
-				Nary( Type type );
-				~Nary();
-
 				// FIXME: support operator<< too ?
 				void addOperand( Coll& operand );
 				void removeOperand( Coll& operand );
 
 				OperandIterator getOperandIterator();
+
+			protected:
+				Nary( Type type );
+				~Nary();
 		};
 
 		class Unary : public Coll
 		{
 			public:
+				void setOperand( Coll& operand );
+				void removeOperand();
+				Coll getOperand() const;
+
+			protected:
 				Unary( Type type );
 				Unary( Type type, Coll& operand );
 				~Unary();
-
-				void setOperand( Coll& operand );
-				void removeOperand();
-				Coll getOperand();
 		};
 
 		// FIXME: support integer value too? depend on class?
 		class Filter : public Unary
 		{
-			public:
+			protected:
 				Filter( Type type );
 				Filter( Type type, Coll& operand );
 				Filter( Type type, Coll& operand, const std::string& field);
@@ -167,16 +162,16 @@ namespace Xmms
 				~OperandIterator();
 
 				void first();
-				bool valid();
+				bool valid() const;
 				void next();
 				void save();
 				void restore();
 
-				Coll operator *();
+				Coll operator *() const;
 				// FIXME: Operator -> ?
 
 			private:
-				/* FIXME: or define in Nary ? */
+
 				friend class Nary;
 				OperandIterator( Coll& coll );
 
