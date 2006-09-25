@@ -20,7 +20,7 @@ else:
 XMMS_VERSION = "0.2 DrFeelgood+WIP+TEST4 (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
-EnsurePythonVersion(2, 1)
+EnsurePythonVersion(2, 3)
 SConsignFile()
 
 def SimpleListOption(key, help, default=[]):
