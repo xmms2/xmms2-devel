@@ -222,14 +222,14 @@ xmms_vocoder_read (xmms_xform_t *xform, xmms_sample_t *buffer, gint len,
 			}
 
 			for (i=0; i<data->bufsize; i++) {
-				data->procbuf[i] = (pvocoder_sample_t) samples[i] / 33000;
+				data->procbuf[i] = (pvocoder_sample_t) samples[i] / 32767;
 			}
 			pvocoder_add_chunk (data->pvoc, data->procbuf);
 			dpos = pvocoder_get_chunk (data->pvoc, data->procbuf);
 		}
 
 		for (i=0; i<data->bufsize; i++) {
-			samples[i] = data->procbuf[i] * 32768;
+			samples[i] = data->procbuf[i] * 32767;
 		}
 		g_string_append_len (data->outbuf, data->iobuf, data->bufsize * sizeof(gint16));
 		size = MIN (data->outbuf->len, len);
