@@ -244,7 +244,7 @@ xmms_vocoder_read (xmms_xform_t *xform, xmms_sample_t *buffer, gint len,
 static gint64
 xmms_vocoder_seek (xmms_xform_t *xform, gint64 offset,
                    xmms_xform_seek_mode_t whence, xmms_error_t *err)
-{                 
+{
 	return xmms_xform_seek (xform, offset, whence, err);
-}       
+}
 

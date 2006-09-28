@@ -87,7 +87,7 @@ pvocoder_init(int chunksize, int channels)
 	/* Calculate best plans for each stft buffer */
 	for (i=0; i<=ret->overlaps; i++) {
 		ret->stftplans[i] =
-			FFTWT(plan_many_dft)(1, &chunksize, channels,
+		        FFTWT(plan_many_dft)(1, &chunksize, channels,
 		                             ret->stft[i], NULL, channels, 1,
 		                             ret->stft[i], NULL, channels, 1,
 		                             FFTW_FORWARD, FFTW_MEASURE);
