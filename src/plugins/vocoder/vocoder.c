@@ -130,11 +130,18 @@ static void
 xmms_vocoder_destroy (xmms_xform_t *xform)
 {
 	xmms_vocoder_data_t *data;
+	xmms_config_property_t *config;
 
 	g_return_if_fail (xform);
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
+
+	config = xmms_xform_config_lookup (xform, "enabled");
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+
+	config = xmms_xform_config_lookup (xform, "speed");
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
 
 	if (data->pvoc) {
 		pvocoder_close (data->pvoc);
