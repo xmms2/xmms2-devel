@@ -4,6 +4,7 @@
 #include <xmmsclient/xmmsclient++/playback.h>
 #include <xmmsclient/xmmsclient++/playlist.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
+#include <xmmsclient/xmmsclient++/xform.h>
 #include <xmmsclient/xmmsclient++/config.h>
 #include <xmmsclient/xmmsclient++/stats.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
@@ -21,11 +22,13 @@ namespace Xmms
 {
 
 	Client::Client( const std::string& name ) 
-		: playback( conn_, connected_, mainloop_ ), 
-	      playlist( conn_, connected_, mainloop_ ), 
+		: bindata(  conn_, connected_, mainloop_ ),
+		  playback( conn_, connected_, mainloop_ ), 
+		  playlist( conn_, connected_, mainloop_ ), 
 		  medialib( conn_, connected_, mainloop_ ),
 		  config(   conn_, connected_, mainloop_ ),
 		  stats(    conn_, connected_, mainloop_ ),
+		  xform(    conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
 		  mainloop_( 0 ), listener_( 0 ), quitSignal_( 0 ), dc_( 0 )
 	{
@@ -95,6 +98,17 @@ namespace Xmms
 		quitSignal_->error_signal.connect( error );
 
 	}
+
+    std::string Client::getUserConfDir() const {
+        
+        char buf[PATH_MAX] = { '\0' };
+        if( !xmmsc_userconfdir_get( buf, PATH_MAX ) ) {
+            throw Xmms::result_error( "Error occured when trying to get "
+                                      "user config directory." );
+        }
+        return std::string(buf);
+
+    }
 
 	MainloopInterface& Client::getMainLoop() 
 	{

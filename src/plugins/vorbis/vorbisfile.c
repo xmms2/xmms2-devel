@@ -322,9 +322,12 @@ xmms_vorbis_init (xmms_xform_t *xform)
 
 	playtime = ov_time_total (&data->vorbisfile, -1);
 	if (playtime != OV_EINVAL) {
-		xmms_xform_metadata_set_int (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                             playtime * 1000);
+		gint filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
+		if (filesize != -1) {
+			xmms_xform_metadata_set_int (xform,
+		                                 XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                                 playtime * 1000);
+		}
 	}
 
 	if (vi && vi->bitrate_nominal) {
@@ -369,17 +372,19 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	ret = ov_read (&data->vorbisfile, (gchar *) buf, len,
-	               G_BYTE_ORDER == G_BIG_ENDIAN,
-	               xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16),
-				   1,
-	               &c);
+	do {
+		ret = ov_read (&data->vorbisfile, (gchar *) buf, len,
+		               G_BYTE_ORDER == G_BIG_ENDIAN,
+		               xmms_sample_size_get (XMMS_SAMPLE_FORMAT_S16),
+		               1,
+		               &c);
+	} while (ret == OV_HOLE);
 
-	if (!ret || ret < 0) {
-		return ret;
+	if (ret < 0) {
+		return -1;
 	}
 
-	if (c != data->current) {
+	if (ret && c != data->current) {
 		xmms_vorbis_read_metadata (xform, data);
 		data->current = c;
 	}

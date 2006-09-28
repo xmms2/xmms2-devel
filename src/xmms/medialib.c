@@ -16,6 +16,7 @@
 
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_plsplugins.h"
+#include "xmmspriv/xmms_xform.h"
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_config.h"
@@ -289,7 +290,7 @@ xmms_medialib_session_new (const char *file, int line)
 	session->file = file;
 	session->line = line;
 	session->sql = xmms_sqlite_open (&create);
-	session->source_pref = g_strdup ("server:plugin/*");
+	session->source_pref = g_strdup ("server:client/*:plugin/id3v2:plugin/*");
 	sqlite3_create_function (session->sql, "xmms_source_pref", 2, SQLITE_UTF8,
 	                         session->medialib, xmms_sqlite_source_pref, NULL, NULL);
 
@@ -311,7 +312,7 @@ xmms_medialib_session_new (const char *file, int line)
  * @returns TRUE if successful and FALSE if there was a problem
  */
 
-gboolean
+xmms_medialib_t *
 xmms_medialib_init (xmms_playlist_t *playlist)
 {
 	gchar *path;
@@ -418,7 +419,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	              add_to_source, medialib->sources, NULL);
 	xmms_medialib_end (session);
 
-	return TRUE;
+	return medialib;
 }
 
 /** Session handling */
@@ -481,6 +482,8 @@ xmms_medialib_end (xmms_medialib_session_t *session)
 		g_mutex_unlock (global_medialib_session_mutex);
 		return;
 	}
+
+	g_free (session->source_pref);
 
 	xmms_sqlite_close (session->sql);
 	xmms_object_unref (XMMS_OBJECT (session->medialib));
@@ -789,83 +792,108 @@ static void
 process_file (xmms_medialib_session_t *session,
               const gchar *path,
               guint32 *id,
-              xmms_error_t *error)
+              xmms_error_t *error,
+              gboolean add)
 {
-	gchar *enc_url;
-	gchar f[XMMS_PATH_MAX + 7] = "file://";
 	guint32 ret = 0;
-
-	g_strlcat (f, path, sizeof (f));
-
-	enc_url = xmms_medialib_url_encode (f);
-
-	if (!enc_url) {
-		xmms_log_error ("enc_url failed!");
-		return;
-	}
 
 	xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &ret,
 	                         "select id as value from Media where "
 	                         "key='%s' and value=%Q and source=%d",
-	                         XMMS_MEDIALIB_ENTRY_PROPERTY_URL, enc_url,
+	                         XMMS_MEDIALIB_ENTRY_PROPERTY_URL, path,
 	                         XMMS_MEDIALIB_SOURCE_SERVER_ID);
 
 	if (!ret) {
 		*id = *id + 1; /* increment id */
-		xmms_medialib_entry_new_insert (session, *id, enc_url, error);
+		xmms_medialib_entry_new_insert (session, *id, path, error);
+		if (add) {
+			xmms_playlist_add_entry (session->medialib->playlist, *id);
+		}
+	} else if (add) {
+		xmms_playlist_add_entry (session->medialib->playlist, ret);
 	}
+}
 
-	g_free (enc_url);
+static gchar *
+lookup_string (xmms_object_cmd_value_t *tbl, gchar *key)
+{
+	xmms_object_cmd_value_t *val;
+
+	if (!tbl || tbl->type != XMMS_OBJECT_CMD_ARG_DICT)
+		return NULL;
+
+	val = g_hash_table_lookup (tbl->value.dict, key);
+
+	if (!val)
+		return NULL;
+
+	if (val->type != XMMS_OBJECT_CMD_ARG_STRING)
+		return NULL;
+
+	return g_strdup (val->value.string);
+}
+
+static gint32
+lookup_int (xmms_object_cmd_value_t *tbl, gchar *key)
+{
+	xmms_object_cmd_value_t *val;
+
+	if (!tbl || tbl->type != XMMS_OBJECT_CMD_ARG_DICT)
+		return 0;
+
+	val = g_hash_table_lookup (tbl->value.dict, key);
+
+	if (!val)
+		return 0;
+
+	if (val->type != XMMS_OBJECT_CMD_ARG_INT32)
+		return 0;
+
+	return val->value.int32;
+}
+
+static gint
+cmp_val (gconstpointer a, gconstpointer b)
+{
+	xmms_object_cmd_value_t *v1, *v2;
+	v1 = (xmms_object_cmd_value_t *)a;
+	v2 = (xmms_object_cmd_value_t *)b;
+	if (v1->type != XMMS_OBJECT_CMD_ARG_DICT)
+		return 0;
+	if (v2->type != XMMS_OBJECT_CMD_ARG_DICT)
+		return 0;
+
+	return strcmp (lookup_string (v1, "path"), lookup_string (v2, "path"));
 }
 
 /* code ported over from CLI's "radd" command. */
 static gboolean
-process_dir (xmms_medialib_session_t *session,
-             const gchar *directory,
-             guint32 *id,
+process_dir (const gchar *directory,
+			 GList **ret,
              xmms_error_t *error)
 {
-	GDir *dir;
-	GSList *entries = NULL;
-	const gchar *entry;
-	gchar *buf;
+	GList *list, *n;
 
-	dir = g_dir_open (directory, 0, NULL);
-	if (!dir) {
-		gchar err[XMMS_PATH_MAX + 32];
-
-		g_snprintf (err, sizeof(err), "Failed to open dir %s", directory);
-		xmms_error_set (error, XMMS_ERROR_GENERIC, err);
-
+	list = xmms_xform_browse (NULL, directory, error);
+	if (!list) {
 		return FALSE;
 	}
 
-	while ((entry = g_dir_read_name (dir))) {
-		entries = g_slist_prepend (entries, g_strdup (entry));
-	}
+	list = g_list_sort (list, cmp_val);
 
-	g_dir_close (dir);
+	for (n = list; n; n = g_list_next (n)) {
+		xmms_object_cmd_value_t *val = n->data;
 
-	/* g_dir_read_name() will return the entries in a undefined
-	 * order, so sort the list now.
-	 */
-	entries = g_slist_sort (entries, (GCompareFunc) strcmp);
-
-	while (entries) {
-		buf = g_build_path (G_DIR_SEPARATOR_S, directory,
-		                    entries->data, NULL);
-
-		if (g_file_test (buf, G_FILE_TEST_IS_DIR)) {
-			process_dir (session, buf, id, error);
+		if (lookup_int (val, "isdir") == 1) {
+			process_dir (lookup_string (val, "path"), ret, error);
 		} else {
-			process_file (session, buf, id, error);
+			*ret = g_list_prepend (*ret, lookup_string (val, "path"));
 		}
 
-		g_free (buf);
-		g_free (entries->data);
-
-		entries = g_slist_delete_link (entries, entries);
+		xmms_object_cmd_value_free (val);
 	}
+
+	g_list_free (list);
 
 	return TRUE;
 }
@@ -911,34 +939,47 @@ xmms_medialib_rehash (xmms_medialib_t *medialib, guint32 id, xmms_error_t *error
 
 }
 
-static void
-xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
+void
+xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *path,
+                             gboolean add, xmms_error_t *error)
 {
 	xmms_mediainfo_reader_t *mr;
 	xmms_medialib_session_t *session;
 	guint32 id;
+	GList *list = NULL, *n;
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
+	
+	process_dir (path, &list, error);
 
+	XMMS_DBG ("taking the transaction!");
 	session = xmms_medialib_begin_write ();
-
 	if (!xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
 	                              "select ifnull(MAX (id),0) from Media")) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Sql error/corruption selecting max(id)");
 		return;
 	}
 
-	if (!xmms_medialib_decode_url (path)) {
-		xmms_log_error ("Bad encoding in path");
-	} else {
-		process_dir (session, path, &id, error);
-	}
-	xmms_medialib_end (session);
+	list = g_list_reverse (list);
 
+	for (n = list; n; n = g_list_next (n)) {
+		process_file (session, n->data, &id, error, add);
+		g_free (n->data);
+	}
+
+	g_list_free (list);
+
+	XMMS_DBG ("and we are done!");
+	xmms_medialib_end (session);
 	mr = xmms_playlist_mediainfo_reader_get (medialib->playlist);
 	xmms_mediainfo_reader_wakeup (mr);
+}
 
+static void
+xmms_medialib_path_import (xmms_medialib_t *medialib, gchar *path, xmms_error_t *error)
+{
+	xmms_medialib_add_recursive (medialib, path, FALSE, error);
 }
 
 static xmms_medialib_entry_t
@@ -1187,7 +1228,7 @@ get_playlist_id (xmms_medialib_session_t *session, gchar *name)
 
 	ret = xmms_sqlite_query_array (session->sql, xmms_medialib_int_cb, &id,
 	                               "select id as value from Playlist "
-	                               "where name = '%s'", name);
+	                               "where name = '%q'", name);
 
 	return ret ? id : 0;
 }
@@ -1228,7 +1269,7 @@ prepare_playlist (xmms_medialib_session_t *session,
 
 	ret = xmms_sqlite_exec (session->sql,
 	                        "insert into Playlist (id, name, pos) "
-	                        "values (%u, '%s', %u)", id, name, pos);
+	                        "values (%u, '%q', %u)", id, name, pos);
 	return ret ? id : 0;
 }
 

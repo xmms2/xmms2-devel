@@ -344,7 +344,7 @@ xmms_oss_new (xmms_output_t *output)
 				if (ioctl (fd, SNDCTL_DSP_SETFMT, &param) == -1)
 					continue;
 				param = j;
-				if (ioctl (fd, SNDCTL_DSP_STEREO, &param) == -1)
+				if (ioctl (fd, SNDCTL_DSP_STEREO, &param) == -1 || param != j)
 					continue;
 
 				for (k = 0; k < G_N_ELEMENTS(rates); k++) {

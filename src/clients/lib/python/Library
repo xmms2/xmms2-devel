@@ -7,7 +7,7 @@ def config(env):
 	try:
 		import distutils
 		import distutils.sysconfig
-		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc()])
+		env.Append(CPPPATH=[distutils.sysconfig.get_python_inc(plat_specific=True)])
 	except:
 		raise ConfigError("Python distutils not installed try again!")
 
@@ -54,7 +54,7 @@ def config(env):
 		env['SHLIBSUFFIX']=".so"
 		
 	# make sure that we put it in the right directory
-	env.librarypath = distutils.sysconfig.get_python_lib()
+	env.librarypath = distutils.sysconfig.get_python_lib(plat_specific=True)
 
 	#Make sure the .c-file is built from the .pyx
 	env.Pyx(source=env.dir+"/xmmsclient")

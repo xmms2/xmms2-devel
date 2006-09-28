@@ -21,12 +21,19 @@
 
 void Init_Client ();
 
-static VALUE m_userconfdir_get (VALUE self)
+static VALUE
+m_userconfdir_get (VALUE self)
 {
-	return rb_str_new2 (xmmsc_userconfdir_get ());
+	const char *p;
+	char path[PATH_MAX];
+
+	p = xmmsc_userconfdir_get (path, PATH_MAX);
+
+	return p ? rb_str_new2 (p) : Qnil;
 }
 
-void Init_xmmsclient (void)
+void
+Init_xmmsclient (void)
 {
 	VALUE mXmms = rb_define_module ("Xmms");
 

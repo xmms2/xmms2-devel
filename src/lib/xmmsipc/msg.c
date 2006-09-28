@@ -213,8 +213,16 @@ xmms_ipc_msg_read_transport (xmms_ipc_msg_t *msg,
 			len += xmms_ipc_msg_get_length (msg);
 
 			if (len > msg->size) {
+				void *newbuf;
+				newbuf = realloc (msg->data, len);
+				if (!newbuf) {
+					if (disconnected) {
+						*disconnected = true;
+					}
+					return false;
+				}
 				msg->size = len;
-				msg->data = realloc (msg->data, msg->size);
+				msg->data = newbuf;
 			}
 
 			if (msg->xfered == len) {
@@ -327,7 +335,10 @@ xmms_ipc_msg_put_string (xmms_ipc_msg_t *msg, const char *str)
 static bool
 xmms_ipc_msg_get_data (xmms_ipc_msg_t *msg, void *buf, unsigned int len)
 {
-	if (!msg || ((msg->get_pos + len) > xmms_ipc_msg_get_length (msg)))
+	if (!msg)
+		return false;
+
+	if (len > xmms_ipc_msg_get_length (msg) - msg->get_pos)
 		return false;
 
 	if (buf) {
@@ -378,21 +389,30 @@ bool
 xmms_ipc_msg_get_string_alloc (xmms_ipc_msg_t *msg, char **buf,
                                unsigned int *len)
 {
-	if (!xmms_ipc_msg_get_uint32 (msg, len)) {
+	char *str;
+	unsigned int l;
+
+	if (!xmms_ipc_msg_get_uint32 (msg, &l)) {
 		return false;
 	}
 
-	*buf = x_malloc0 (*len + 1);
-	if (!*buf) {
+	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
+		return false;
+
+	str = x_malloc0 (l + 1);
+	if (!str) {
 		return false;
 	}
 
-	if (!xmms_ipc_msg_get_data (msg, *buf, *len)) {
-		free (*buf);
+	if (!xmms_ipc_msg_get_data (msg, str, l)) {
+		free (str);
 		return false;
 	}
 
-	(*buf)[*len] = '\0';
+	str[l] = '\0';
+
+	*buf = str;
+	*len = l;
 
 	return true;
 }
@@ -402,19 +422,28 @@ xmms_ipc_msg_get_bin_alloc (xmms_ipc_msg_t *msg,
                             unsigned char **buf,
                             unsigned int *len)
 {
-	if (!xmms_ipc_msg_get_uint32 (msg, len)) {
+	unsigned char *b;
+	unsigned int l;
+
+	if (!xmms_ipc_msg_get_uint32 (msg, &l)) {
 		return false;
 	}
 
-	*buf = x_malloc0 (*len);
-	if (!*buf) {
+	if (l > xmms_ipc_msg_get_length (msg) - msg->get_pos)
+		return false;
+
+	b = x_malloc0 (l);
+	if (!b) {
 		return false;
 	}
 
-	if (!xmms_ipc_msg_get_data (msg, *buf, *len)) {
-		free (*buf);
+	if (!xmms_ipc_msg_get_data (msg, b, l)) {
+		free (b);
 		return false;
 	}
+
+	*buf = b;
+	*len = l;
 
 	return true;
 }

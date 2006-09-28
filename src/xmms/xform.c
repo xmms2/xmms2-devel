@@ -106,7 +106,7 @@ xmms_xform_browse_add_entry (GList *list,
 	return list;
 }
 
-static GList *
+GList *
 xmms_xform_browse (xmms_xform_object_t *obj,
                    const gchar *url,
                    xmms_error_t *error)
@@ -446,6 +446,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
 
 	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_TIMESPLAYED, times_played + 1);
+	xmms_medialib_entry_property_set_int (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED, time (NULL));
 
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
@@ -488,6 +489,11 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 
 		res = xform->plugin->methods.read (xform, &xform->buffer[xform->buffered], READ_CHUNK, err);
 
+		if (res < -1) {
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			res = -1;
+		}
+
 		if (res == 0) {
 			xform->eos = TRUE;
 			break;
@@ -515,10 +521,6 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		return -1;
 	}
 
-	if (xform->eos) {
-		return 0;
-	}
-
 	if (xform->buffered) {
 		read = MIN (siz, xform->buffered);
 		memcpy (buf, xform->buffer, read);
@@ -530,12 +532,21 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		}
 	}
 
+	if (xform->eos) {
+		return read;
+	}
+
 	while (read < siz) {
 		gint res;
 
 		res = xform->plugin->methods.read (xform, buf + read, siz - read, err);
 		if (xform->metadata_changed)
 			xmms_xform_metadata_update (xform);
+
+		if (res < -1) {
+			XMMS_DBG ("Read method of %s returned bad value (%d) - BUG IN PLUGIN", xmms_xform_shortname (xform), res);
+			res = -1;
+		}
 
 		if (res == 0) {
 			xform->eos = TRUE;
@@ -730,7 +741,9 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hi
 gboolean
 xmms_xform_iseos (xmms_xform_t *xform)
 {
-	return xform->eos;
+	if (!xform->prev)
+		return TRUE;
+	return xform->prev->eos;
 }
 
 const xmms_stream_type_t *
@@ -771,13 +784,18 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	gchar *durl, *args;
 	GString *namestr;	
 
-	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
-
 	session = xmms_medialib_begin ();
 	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
 	xmms_medialib_end (session);
 
+	if (!url) {
+		xmms_log_error ("Couldn't get url for entry (%d)", entry);
+		return NULL;
+	}
+
 	durl = g_strdup (url);
+
+	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
 
 	args = strchr (durl, '?');
 	if (args) {

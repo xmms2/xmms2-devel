@@ -52,6 +52,7 @@ static gint64 xmms_samba_seek (xmms_xform_t *xform, gint64 offset,
                                xmms_xform_seek_mode_t whence,
                                xmms_error_t *error);
 static gboolean xmms_samba_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static GList *xmms_samba_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 
 /*
  * Plugin header
@@ -60,31 +61,6 @@ XMMS_XFORM_PLUGIN("smb", "SMB/CIFS Transport", XMMS_VERSION,
                   "Access SMB/CIFS fileshares over a network",
                   xmms_samba_plugin_setup);
 
-static gboolean
-xmms_samba_plugin_setup (xmms_xform_plugin_t *xform_plugin)
-{
-	xmms_xform_methods_t methods;
-
-	XMMS_XFORM_METHODS_INIT (methods);
-
-	methods.init = xmms_samba_init;
-	methods.destroy = xmms_samba_destroy;
-	methods.read = xmms_samba_read;
-	methods.seek = xmms_samba_seek;
-
-	xmms_xform_plugin_methods_set (xform_plugin, &methods);
-
-	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
-	                              "application/x-url", XMMS_STREAM_TYPE_URL,
-	                              "smb://*", XMMS_STREAM_TYPE_END);
-
-	return TRUE;
-}
-
-
-/*
- * Member functions
- */
 static void 
 xmms_samba_auth_fn (const gchar *server, const gchar *share,
                     gchar *workgroup, gint wgmaxlen, gchar *username,
@@ -93,7 +69,39 @@ xmms_samba_auth_fn (const gchar *server, const gchar *share,
 	return;
 }
 
+static gboolean
+xmms_samba_plugin_setup (xmms_xform_plugin_t *xform_plugin)
+{
+	xmms_xform_methods_t methods;
+	gint err;
 
+	XMMS_XFORM_METHODS_INIT (methods);
+
+	methods.init = xmms_samba_init;
+	methods.destroy = xmms_samba_destroy;
+	methods.read = xmms_samba_read;
+	methods.seek = xmms_samba_seek;
+	methods.browse = xmms_samba_browse;
+
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
+
+	xmms_xform_plugin_indata_add (xform_plugin, XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-url", XMMS_STREAM_TYPE_URL,
+	                              "smb://*", XMMS_STREAM_TYPE_END);
+
+	err = smbc_init (xmms_samba_auth_fn, 0);
+	if (err < 0) {
+		xmms_log_error ("%s", strerror (errno));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+/*
+ * Member functions
+ */
 static gboolean
 xmms_samba_init (xmms_xform_t *xform)
 {
@@ -106,12 +114,6 @@ xmms_samba_init (xmms_xform_t *xform)
 
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 	g_return_val_if_fail (url, FALSE);
-
-	err = smbc_init (xmms_samba_auth_fn, 0);
-	if (err < 0) {
-		xmms_log_error ("%s", strerror (errno));
-		return FALSE;
-	}
 
 	err = smbc_stat (url, &st);
 	if (err < 0) {
@@ -225,4 +227,45 @@ xmms_samba_seek (xmms_xform_t *xform, gint64 offset,
 	}
 
 	return res;
+}
+
+static GList *
+xmms_samba_browse (xmms_xform_t *xform,
+                   const gchar *url,
+                   xmms_error_t *error)
+{
+	GList *ret = NULL;
+	int handle;
+	struct smbc_dirent *dir;
+
+	handle = smbc_opendir (url);
+	if (handle < 0) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't browse URL");
+		xmms_log_error ("Couldn't open directory %s!", url);
+		return NULL;
+	}
+
+	while ((dir = smbc_readdir (handle))) {
+		gboolean is_dir;
+		gchar *t, *t2; 
+
+		if (dir->name[0] == '.')
+			continue;
+
+		is_dir = dir->smbc_type == SMBC_DIR ||
+		         dir->smbc_type == SMBC_WORKGROUP ||
+		         dir->smbc_type == SMBC_SERVER ||
+		         dir->smbc_type == SMBC_FILE_SHARE;
+		
+		t = g_build_filename (url, dir->name, NULL);
+		t2 = xmms_medialib_url_encode (t);
+		XMMS_DBG ("%s", t2);
+		ret = xmms_xform_browse_add_entry (ret, t2, is_dir, NULL);
+		g_free (t2);
+		g_free (t);
+	}
+
+	smbc_closedir (handle);
+
+	return ret;
 }

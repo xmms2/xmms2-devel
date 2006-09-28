@@ -125,6 +125,16 @@ namespace Xmms
 		xmmsc_result_get_int( res, temp );
 		return temp;
 	}
+	
+	template<>
+	inline std::basic_string<unsigned char>*
+	extract_value( xmmsc_result_t* res )
+	{
+		unsigned char* temp = 0;
+		unsigned int len = 0;
+		xmmsc_result_get_bin( res, &temp, &len );
+		return new std::basic_string<unsigned char>( temp, len );
+	}
 
 	template<>
 	inline std::string*
@@ -225,7 +235,7 @@ namespace Xmms
 
 		}
 
-		if( !ret &&
+		if( ret &&
 		    xmmsc_result_get_class( res ) != XMMSC_RESULT_CLASS_BROADCAST ) {
 
 			xmmsc_result_unref( res );

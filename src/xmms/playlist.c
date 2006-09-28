@@ -25,6 +25,7 @@
 #include <string.h>
 #include <glib.h>
 #include <math.h>
+#include <ctype.h>
 
 #include "xmmspriv/xmms_playlist.h"
 #include "xmms/xmms_ipc.h"
@@ -49,6 +50,7 @@ static guint xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, 
 
 static gboolean xmms_playlist_inserturl (xmms_playlist_t *playlist, guint32 pos, gchar *url, xmms_error_t *error);
 static gboolean xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entry_t file, xmms_error_t *error);
+static void xmms_playlist_radd (xmms_playlist_t *playlist, gchar *path, xmms_error_t *error);
 
 XMMS_CMD_DEFINE (insert, xmms_playlist_inserturl, xmms_playlist_t *, NONE, UINT32, STRING);
 XMMS_CMD_DEFINE (insertid, xmms_playlist_insert, xmms_playlist_t *, NONE, UINT32, UINT32);
@@ -63,6 +65,7 @@ XMMS_CMD_DEFINE (list, xmms_playlist_list, xmms_playlist_t *, LIST, NONE, NONE);
 XMMS_CMD_DEFINE (current_pos, xmms_playlist_current_pos, xmms_playlist_t *, UINT32, NONE, NONE);
 XMMS_CMD_DEFINE (set_pos, xmms_playlist_set_current_position, xmms_playlist_t *, UINT32, UINT32, NONE);
 XMMS_CMD_DEFINE (set_pos_rel, xmms_playlist_set_current_position_rel, xmms_playlist_t *, UINT32, INT32, NONE);
+XMMS_CMD_DEFINE (radd, xmms_playlist_radd, xmms_playlist_t *, NONE, STRING, NONE);
 
 static GHashTable *
 xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type, guint32 id)
@@ -123,7 +126,7 @@ struct xmms_playlist_St {
 	GMutex *mutex;
 
 	xmms_mediainfo_reader_t *mediainfordr;
-
+	xmms_medialib_t *medialib;
 };
 
 
@@ -239,8 +242,11 @@ xmms_playlist_init (void)
 	                     XMMS_IPC_CMD_INSERT_ID,
 	                     XMMS_CMD_FUNC (insertid));
 
-	xmms_medialib_init (ret);
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_RADD,
+	                     XMMS_CMD_FUNC (radd));
 
+	ret->medialib = xmms_medialib_init (ret);
 	ret->mediainfordr = xmms_mediainfo_reader_start (ret);
 
 	if (xmms_config_property_get_int (load_autosaved)) {
@@ -367,7 +373,7 @@ xmms_playlist_shuffle (xmms_playlist_t *playlist, xmms_error_t *err)
 		}
 
 		/* knuth <3 */
-		for (i = 1; i < len; i++) {
+		for (i = playlist->currentpos+1; i < len; i++) {
 			j = g_random_int_range (i, len);
 			
 			swap_entries (playlist->list, i, j);
@@ -598,6 +604,24 @@ xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err)
 	return !!entry;
 }
 
+/**
+  * Convenient function for adding a directory to the playlist,
+  * It will dive down the URL you feed it and recursivly add
+  * all files there.
+  *
+  * @param playlist the playlist to add it URL to.
+  * @param nurl the URL of an directory you want to add
+  * @param err an #xmms_error_t that should be defined upon error.
+  */
+void
+xmms_playlist_radd (xmms_playlist_t *playlist, gchar *path, xmms_error_t *err)
+{
+	/* we actually just call the medialib function, but keep
+	 * the ipc method here for not confusing users / developers
+	 */
+	xmms_medialib_add_recursive (playlist->medialib, path, TRUE, err);
+}
+
 /** Adds a xmms_medialib_entry to the playlist.
  *
  *  This will append or prepend the entry according to
@@ -727,55 +751,78 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos, x
 
 typedef struct {
 	guint id;
-	xmms_object_cmd_value_t *val;
+	xmms_object_cmd_value_t **val;
 	gboolean current;
 } sortdata_t;
 
+typedef struct {
+	guint32 property_list_len;
+	xmms_playlist_t *playlist;
+} sortunwinddata_t;
+
+
+/**
+ * Sort helper function
+ * Clean up memory contained in a sortdata_t
+ */
+static void
+xmms_playlist_sortdata_free (gpointer data, gpointer userdata)
+{
+	g_free (((sortdata_t *)data)->val);
+}
 
 /**
  * Sort helper function.
  * Performs a case insesitive comparation between two entries.
  */
 static gint
-xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
+xmms_playlist_entry_compare (gconstpointer a, gconstpointer b, gpointer userdata)
 {
 	sortdata_t *data1 = (sortdata_t *) a;
 	sortdata_t *data2 = (sortdata_t *) b;
+	guint32 property_list_len = *((guint32 *) userdata);
 	int s1, s2;
+	guint32 i;
 
-	if (!data1->val) {
-		return -(data2->val != NULL);
-	}
+	for (i = 0; i < property_list_len; i++ ) {
+		if (!data1->val[i]) {
+			return -(data2->val[i] != NULL);
+		}
 
-	if (!data2->val) {
-		return 1;
-	}
-
-	if (data1->val->type == XMMS_OBJECT_CMD_ARG_STRING &&
-	    data2->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-		return g_utf8_collate (data1->val->value.string,
-		                       data2->val->value.string);
-	}
-
-	if ((data1->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-	     data1->val->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
-	    (data2->val->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-	     data2->val->type == XMMS_OBJECT_CMD_ARG_UINT32))
-	{
-		s1 = (data1->val->type == XMMS_OBJECT_CMD_ARG_INT32) ?
-		      data1->val->value.int32 : data1->val->value.uint32;
-		s2 = (data2->val->type == XMMS_OBJECT_CMD_ARG_INT32) ?
-		      data2->val->value.int32 : data2->val->value.uint32;
-
-		if (s1 < s2)
-			return -1;
-		else if (s1 > s2)
+		if (!data2->val[i]) {
 			return 1;
-		else
-			return 0;
+		}
+
+		if (data1->val[i]->type == XMMS_OBJECT_CMD_ARG_STRING &&
+			data2->val[i]->type == XMMS_OBJECT_CMD_ARG_STRING) {
+			gint res;
+			if ((res = g_utf8_collate (data1->val[i]->value.string,
+									  data2->val[i]->value.string))) {
+				return res;
+			}
+		}
+
+		if ((data1->val[i]->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+			 data1->val[i]->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
+			(data2->val[i]->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+			 data2->val[i]->type == XMMS_OBJECT_CMD_ARG_UINT32))
+		{
+			s1 = (data1->val[i]->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+				data1->val[i]->value.int32 : data1->val[i]->value.uint32;
+			s2 = (data2->val[i]->type == XMMS_OBJECT_CMD_ARG_INT32) ?
+				data2->val[i]->value.int32 : data2->val[i]->value.uint32;
+
+			if (s1 < s2)
+				return -1;
+			else if (s1 > s2)
+				return 1;
+		}
+	}
+	if (i == property_list_len) {
+		return 0;
 	}
 
-	XMMS_DBG("Types in compare function differ to much");
+	XMMS_DBG("Types in compare function differ too much");
 
 	return 0;
 }
@@ -788,18 +835,23 @@ static void
 xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 {
 	sortdata_t *sorted = (sortdata_t *) data;
-	xmms_playlist_t *playlist = (xmms_playlist_t *)userdata;
+	sortunwinddata_t *sortunwinddata = (sortunwinddata_t *)userdata;
+	xmms_playlist_t *playlist = sortunwinddata->playlist;
+	guint32 i;
 
 	g_array_append_val (playlist->list, sorted->id);
 
-	if (sorted->val) {
-		xmms_object_cmd_value_free (sorted->val);
+	for (i = 0; i < sortunwinddata->property_list_len; i++) {
+		if (sorted->val[i]) {
+			xmms_object_cmd_value_free (sorted->val[i]);
+		}
 	}
 
 	if (sorted->current) {
 		playlist->currentpos = playlist->list->len - 1;
 	}
 
+	g_free (sorted->val);
 	g_free (sorted);
 }
 
@@ -807,25 +859,30 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
  *
  *  This will sort the list.
  *  @param playlist The playlist to sort.
- *  @param property Tells xmms_playlist_sort which property it
- *  should use when sorting.
+ *  @param properties Tells xmms_playlist_sort which properties it
+ *  should use when sorting.  Properties are whitespace delimited.
  *  @param err An #xmms_error_t - needed since xmms_playlist_sort is an ipc
  *  method handler.
  */
 
 static void
-xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *err)
+xmms_playlist_sort (xmms_playlist_t *playlist, gchar *properties, xmms_error_t *err)
 {
-	guint32 i;
+	guint32 i, j;
 	GList *tmp = NULL, *sorted, *l, *l2;
 	sortdata_t *data;
 	gchar *str;
 	xmms_medialib_session_t *session;
 	gboolean list_changed = FALSE;
+	GList *property_list = NULL;
+	guint property_list_len;
+	gchar **prop_tokens;
+	guint prop_tokens_len;
+	sortunwinddata_t sortunwinddata;
 
 	g_return_if_fail (playlist);
-	g_return_if_fail (property);
-	XMMS_DBG ("Sorting on %s", property);
+	g_return_if_fail (properties);
+	XMMS_DBG ("Sorting on %s", properties);
 
 	g_mutex_lock (playlist->mutex);
 
@@ -835,23 +892,37 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 		return;
 	}
 
+	/* extract properties */
+	prop_tokens = g_strsplit (properties, " ", 0);
+	prop_tokens_len = g_strv_length (prop_tokens);
+	for (i = 0; i < prop_tokens_len; i++) {
+		if (!strlen (prop_tokens[i])) {
+			continue;
+		}
+		property_list = g_list_append (property_list, prop_tokens[i]);
+	}
+
 	session = xmms_medialib_begin ();
 
+	property_list_len = g_list_length (property_list);
 	for (i = 0; i < playlist->list->len; i++) {
 		data = g_new (sortdata_t, 1);
+		data->val = g_new (xmms_object_cmd_value_t *, property_list_len);
 
 		data->id = g_array_index (playlist->list, xmms_medialib_entry_t, i);
-		data->val =
-			xmms_medialib_entry_property_get_cmd_value (session,
-			                                            data->id,
-			                                            property);
+		for (j = 0; j < property_list_len; j++ ) {
+			data->val[j] =
+				xmms_medialib_entry_property_get_cmd_value (session,
+															data->id,
+															g_list_nth_data (property_list, j));
 
-		if (data->val && data->val->type == XMMS_OBJECT_CMD_ARG_STRING) {
-			str = data->val->value.string;
-			data->val->value.string = g_utf8_casefold (str, strlen (str));
-			g_free (str);
+			if (data->val[j] && data->val[j]->type == XMMS_OBJECT_CMD_ARG_STRING) {
+				str = data->val[j]->value.string;
+				data->val[j]->value.string = g_utf8_casefold (str, strlen (str));
+				g_free (str);
+			}
 		}
-
+		
 		data->current = (playlist->currentpos == i);
 
 		tmp = g_list_prepend (tmp, data);
@@ -860,7 +931,9 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	xmms_medialib_end (session);
 
 	tmp = g_list_reverse (tmp);
-	sorted = g_list_sort (tmp, xmms_playlist_entry_compare);
+	sorted = g_list_sort_with_data (tmp, xmms_playlist_entry_compare, &property_list_len);
+
+	g_list_free (property_list);
 
 	/* check whether there was any change */
 	for (l = sorted, l2 = tmp; l;
@@ -872,14 +945,19 @@ xmms_playlist_sort (xmms_playlist_t *playlist, gchar *property, xmms_error_t *er
 	}
 
 	if (!list_changed) {
+		g_list_foreach (tmp, xmms_playlist_sortdata_free, NULL);
 		g_list_free (tmp);
 		g_mutex_unlock (playlist->mutex);
 		return;
 	}
 
-	g_array_set_size (playlist->list, 0);
-	g_list_foreach (sorted, xmms_playlist_sorted_unwind, playlist);
+	sortunwinddata.playlist = playlist;
+	sortunwinddata.property_list_len = property_list_len;
 
+	g_array_set_size (playlist->list, 0);
+	g_list_foreach (sorted, xmms_playlist_sorted_unwind, &sortunwinddata);
+
+	g_strfreev (prop_tokens);
 	g_list_free (sorted);
 
 	XMMS_PLAYLIST_CHANGED_MSG (XMMS_PLAYLIST_CHANGED_SORT, 0);
