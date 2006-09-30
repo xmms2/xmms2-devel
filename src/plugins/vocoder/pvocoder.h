@@ -12,6 +12,7 @@ typedef float pvocoder_sample_t;
 pvocoder_t *pvocoder_init(int chunksize, int channels);
 void pvocoder_close(pvocoder_t *pvocoder);
 void pvocoder_set_scale(pvocoder_t *pvoc, double scale);
+void pvocoder_set_attack_detection(pvocoder_t *pvoc, int enabled);
 void pvocoder_add_chunk(pvocoder_t *pvoc, pvocoder_sample_t *chunk);
 int pvocoder_get_chunk(pvocoder_t *pvoc, pvocoder_sample_t *chunk);
 void pvocoder_get_final(pvocoder_t *pvoc, pvocoder_sample_t *chunk);

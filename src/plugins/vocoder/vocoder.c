@@ -39,6 +39,7 @@ typedef struct {
 	GString *outbuf;
 
 	gint speed;
+	gint attack_detection;
 	gboolean enabled;
 } xmms_vocoder_data_t;
 
@@ -76,6 +77,9 @@ xmms_vocoder_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	xmms_xform_plugin_config_property_register (xform_plugin, "speed", "100",
+	                                            NULL, NULL);
+
+	xmms_xform_plugin_config_property_register (xform_plugin, "attack_detection", "0",
 	                                            NULL, NULL);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
@@ -121,6 +125,12 @@ xmms_vocoder_init (xmms_xform_t *xform)
 	priv->speed = xmms_config_property_get_int (config);
 	pvocoder_set_scale (priv->pvoc, (gfloat) priv->speed / 100.0);
 
+	config = xmms_xform_config_lookup (xform, "attack_detection");
+	g_return_val_if_fail (config, FALSE);
+	xmms_config_property_callback_set (config, xmms_vocoder_config_changed, priv);
+	priv->attack_detection = !!xmms_config_property_get_int (config);
+	pvocoder_set_attack_detection (priv->pvoc, priv->attack_detection);
+
 	xmms_xform_outdata_type_copy (xform);
 
 	return TRUE;
@@ -141,6 +151,9 @@ xmms_vocoder_destroy (xmms_xform_t *xform)
 	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
 
 	config = xmms_xform_config_lookup (xform, "speed");
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+
+	config = xmms_xform_config_lookup (xform, "attack_detection");
 	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
 
 	if (data->pvoc) {
@@ -183,6 +196,9 @@ xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer data,
 	} else if (!strcmp (name, "speed")) {
 		priv->speed = value;
 		pvocoder_set_scale (priv->pvoc, (gfloat) priv->speed / 100.0);
+	} else if (!strcmp (name, "attack_detection")) {
+		priv->attack_detection = value;
+		pvocoder_set_attack_detection (priv->pvoc, value);
 	}
 }
 
