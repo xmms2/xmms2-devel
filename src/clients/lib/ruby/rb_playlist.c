@@ -22,6 +22,7 @@
 #include "rb_playlist.h"
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
+#include "rb_collection.h"
 
 #define DEF_CONST(mod, prefix, name) \
 	rb_define_const ((mod), #name, \
@@ -344,6 +345,27 @@ c_remove (VALUE self)
 	PLAYLIST_METHOD_ADD_HANDLER (remove);
 }
 
+/*
+ * call-seq:
+ *  pl.add_collection(coll) -> result
+ *
+ * Adds the collection _coll_ to the playlist.
+ */
+static VALUE
+c_add_collection (VALUE self, VALUE rbcoll)
+{
+	PLAYLIST_METHOD_HANDLER_HEADER
+
+	xmmsc_coll_t *coll;
+
+	coll = FROM_XMMS_CLIENT_COLLECTION (rbcoll);
+
+	res = xmmsc_playlist_add_collection (xmms->real, pl->name,
+	                                     coll, NULL);
+
+	PLAYLIST_METHOD_HANDLER_FOOTER
+}
+
 VALUE
 Init_Playlist (VALUE mXmms)
 {
@@ -366,6 +388,7 @@ Init_Playlist (VALUE mXmms)
 	rb_define_method (c, "entries", c_list_entries, 0);
 	rb_define_method (c, "load", c_load, 0);
 	rb_define_method (c, "remove", c_remove, 0);
+	rb_define_method (c, "add_collection", c_add_collection, 1);
 
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, ADD);
 	DEF_CONST (c, XMMS_PLAYLIST_CHANGED_, INSERT);
