@@ -27,6 +27,12 @@
 	rb_define_const ((mod), #name, \
 	                 INT2FIX (prefix##name));
 
+#define CHECK_IS_COLL(o) \
+	if (!rb_obj_is_kind_of ((o), cColl)) \
+		rb_raise (rb_eTypeError, \
+		          "wrong argument type %s (expected Collection)", \
+		          rb_obj_classname ((o)));
+
 #define COLL_METHOD_HANDLER_HEADER \
 	RbCollection *coll = NULL; \
 \
@@ -46,7 +52,7 @@
 	RbCollection *arg = NULL; \
 	COLL_METHOD_HANDLER_HEADER \
 \
-	/* FIXME: check that we actually have a Collection object */ \
+	CHECK_IS_COLL (arg1); \
 	Data_Get_Struct (arg1, RbCollection, arg); \
 \
 	xmmsc_coll_##action (coll->real, arg->real); \
@@ -56,7 +62,7 @@
 	RbCollection *opcoll = NULL; \
 	COLL_METHOD_HANDLER_HEADER \
 \
-	/* FIXME: Check that we actually have a Collection object */ \
+	CHECK_IS_COLL (operand); \
 	Data_Get_Struct (operand, RbCollection, opcoll); \
 \
 	ucoll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_##operation); \
@@ -113,7 +119,7 @@ FROM_XMMS_CLIENT_COLLECTION (VALUE rbcoll)
 {
 	RbCollection *coll = NULL;
 
-	/* FIXME: Check that we actually have a Collection object */
+	CHECK_IS_COLL (rbcoll);
 	Data_Get_Struct (rbcoll, RbCollection, coll);
 
 	return coll->real;
