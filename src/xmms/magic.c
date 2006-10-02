@@ -22,7 +22,6 @@
 
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_log.h"
-#include "xmmspriv/xmms_magic.h"
 #include "xmmspriv/xmms_xform.h"
 
 static GList *magic_list;
@@ -90,6 +89,19 @@ typedef struct xmms_magic_entry_St {
 		gchar s[32];
 	} value;
 } xmms_magic_entry_t;
+
+typedef struct xmms_magic_checker_St {
+	xmms_xform_t *xform;
+	gchar *buf;
+	guint alloc;
+	guint read;
+	guint offset;
+} xmms_magic_checker_t;
+
+static void xmms_magic_tree_free (GNode *tree);
+
+static gchar *xmms_magic_match (xmms_magic_checker_t *c);
+static guint xmms_magic_complexity (GNode *tree);
 
 static void
 xmms_magic_entry_free (xmms_magic_entry_t *e)
@@ -256,7 +268,7 @@ free_node (GNode *node, xmms_magic_entry_t *entry)
 	return FALSE; /* continue traversal */
 }
 
-void
+static void
 xmms_magic_tree_free (GNode *tree)
 {
 	g_node_traverse (tree, G_PRE_ORDER, G_TRAVERSE_ALL, -1,
@@ -416,7 +428,7 @@ tree_bytes_max_needed (xmms_magic_checker_t *c, GNode *tree)
 	return ret;
 }
 
-GNode *
+static gchar *
 xmms_magic_match (xmms_magic_checker_t *c)
 {
 	const GList *l;
@@ -428,14 +440,17 @@ xmms_magic_match (xmms_magic_checker_t *c)
 		GNode *tree = l->data;
 
 		if (tree_match (c, tree)) {
-			return tree;
+			gpointer *data = tree->data;
+			XMMS_DBG ("magic plugin detected '%s' (%s)",
+				  (char *)data[1], (char *)data[0]);
+			return (char *) (data[1]);
 		}
 	}
 
 	return NULL;
 }
 
-guint
+static guint
 xmms_magic_complexity (GNode *tree)
 {
 	return g_node_n_nodes (tree, G_TRAVERSE_ALL);
@@ -521,9 +536,8 @@ xmms_magic_add (const gchar *desc, const gchar *mime, ...)
 static gboolean
 xmms_magic_plugin_init (xmms_xform_t *xform)
 {
-	gpointer *data;
 	xmms_magic_checker_t c;
-	GNode *res;
+	gchar *res;
 
 	c.xform = xform;
 	c.read = c.offset = 0;
@@ -532,13 +546,9 @@ xmms_magic_plugin_init (xmms_xform_t *xform)
 
 	res = xmms_magic_match (&c);
 	if (res) {
-		data = res->data;
-		XMMS_DBG ("magic plugin detected '%s' (%s)", (char *)data[1], (char *)data[0]);
-
-
 		xmms_xform_outdata_type_add (xform,
 		                             XMMS_STREAM_TYPE_MIMETYPE,
-		                             data[1],
+					     res,
 		                             XMMS_STREAM_TYPE_END);
 	}
 
