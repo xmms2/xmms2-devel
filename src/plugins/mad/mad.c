@@ -110,6 +110,8 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 beshort&0xffe6 0xffe2",
 	                NULL);
 
+	xmms_magic_extension_add ("audio/mpeg", "*.mp3");
+
 	return TRUE;
 }
 

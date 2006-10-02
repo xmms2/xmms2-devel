@@ -278,6 +278,19 @@ xmms_xform_outdata_type_copy (xmms_xform_t *xform)
 }
 
 const char *
+xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key)
+{
+	const gchar *r;
+	r = xmms_stream_type_get_str (xform->prev->out_type, key);
+	if (r) {
+		return r;
+	} else if (xform->prev) {
+		return xmms_xform_indata_find_str (xform->prev, key);
+	}
+	return NULL;
+}
+
+const char *
 xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key)
 {
 	return xmms_stream_type_get_str (xform->prev->out_type, key);

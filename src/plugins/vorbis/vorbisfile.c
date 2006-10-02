@@ -112,6 +112,8 @@ xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 string OggS", ">4 byte 0",
 	                ">>28 string \x01vorbis", NULL);
 
+	xmms_magic_extension_add ("application/ogg", "*.ogg");
+
 	return TRUE;
 }
 

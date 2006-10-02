@@ -274,6 +274,7 @@ gint64 xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode
 gboolean xmms_xform_iseos (xmms_xform_t *xform);
 
 gboolean xmms_magic_add (const gchar *desc, const gchar *mime, ...);
+gboolean xmms_magic_extension_add (const gchar *mime, const gchar *ext);
 
 xmms_config_property_t *xmms_xform_plugin_config_property_register (
 	xmms_xform_plugin_t *xform_plugin,

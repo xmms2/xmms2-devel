@@ -24,7 +24,7 @@
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_xform.h"
 
-static GList *magic_list;
+static GList *magic_list, *ext_list;
 
 #define SWAP16(v, endian) \
 	if (endian == G_LITTLE_ENDIAN) { \
@@ -98,9 +98,14 @@ typedef struct xmms_magic_checker_St {
 	guint offset;
 } xmms_magic_checker_t;
 
+typedef struct xmms_magic_ext_data_St {
+	gchar *type;
+	gchar *pattern;
+} xmms_magic_ext_data_t;
+
 static void xmms_magic_tree_free (GNode *tree);
 
-static gchar *xmms_magic_match (xmms_magic_checker_t *c);
+static gchar *xmms_magic_match (xmms_magic_checker_t *c, const gchar *u);
 static guint xmms_magic_complexity (GNode *tree);
 
 static void
@@ -429,9 +434,10 @@ tree_bytes_max_needed (xmms_magic_checker_t *c, GNode *tree)
 }
 
 static gchar *
-xmms_magic_match (xmms_magic_checker_t *c)
+xmms_magic_match (xmms_magic_checker_t *c, const gchar *uri)
 {
 	const GList *l;
+	gchar *u;
 
 	g_return_val_if_fail (c, NULL);
 
@@ -446,6 +452,20 @@ xmms_magic_match (xmms_magic_checker_t *c)
 			return (char *) (data[1]);
 		}
 	}
+
+	if (!uri)
+		return NULL;
+
+	u = g_ascii_strdown (uri, -1);
+	for (l = ext_list; l; l = g_list_next (l)) {
+		xmms_magic_ext_data_t *e = l->data;
+		if (g_pattern_match_simple (e->pattern, u)) {
+			XMMS_DBG ("magic plugin detected '%s' (by extension '%s')", e->type, e->pattern);
+			g_free (u);
+			return e->type;
+		}
+	}
+	g_free (u);
 
 	return NULL;
 }
@@ -473,6 +493,23 @@ cb_sort_magic_list (GNode *a, GNode *b)
 	}
 }
 
+
+gboolean
+xmms_magic_extension_add (const gchar *mime, const gchar *ext)
+{
+	xmms_magic_ext_data_t *e;
+
+	g_return_val_if_fail (mime, FALSE);
+	g_return_val_if_fail (ext, FALSE);
+
+	e = g_new0 (xmms_magic_ext_data_t, 1);
+	e->pattern = g_strdup (ext);
+	e->type = g_strdup (mime);
+
+	ext_list = g_list_prepend (ext_list, e);
+
+	return TRUE;
+}
 
 gboolean
 xmms_magic_add (const gchar *desc, const gchar *mime, ...)
@@ -538,13 +575,16 @@ xmms_magic_plugin_init (xmms_xform_t *xform)
 {
 	xmms_magic_checker_t c;
 	gchar *res;
+	const gchar *url;
 
 	c.xform = xform;
 	c.read = c.offset = 0;
 	c.alloc = 128; /* start with a 128 bytes buffer */
 	c.buf = g_malloc (c.alloc);
 
-	res = xmms_magic_match (&c);
+	url = xmms_xform_indata_find_str (xform, XMMS_STREAM_TYPE_URL);
+
+	res = xmms_magic_match (&c, url);
 	if (res) {
 		xmms_xform_outdata_type_add (xform,
 		                             XMMS_STREAM_TYPE_MIMETYPE,
