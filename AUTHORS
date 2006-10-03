@@ -183,7 +183,9 @@ D: xmmsc_medialib_playlist_list in Python bindings
 
 N: Juho Vähä-Herttua
 E: juhovh@iki.fi
-D: Faad. Various fixes.
+W: http://juho.vaha-herttua.fi/
+P: 1024D/CB130DCE 1C70 BF1D AEF7 619C C0A6  60E7 563D FCA3 CB13 0DCE
+D: Faad, wma, equalizer, vocoder. Various fixes.
 
 N: Michael Walle
 E: michael@walle.cc

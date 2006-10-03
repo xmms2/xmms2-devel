@@ -15,6 +15,18 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  *  MA  02110-1301, USA.
+ *
+ *
+ * References
+ * ----------
+ *
+ * Phase vocoder routine based on matlab example code of Dan Ellis:
+ * http://labrosa.ee.columbia.edu/matlab/pvoc/
+ *
+ * Attack detection methods based on paper:
+ * Axel Röbel - Transient detection and preservation in the phase vocoder
+ * (Released in ICMC2003)
+ *
  */
 
 #include <stdlib.h>

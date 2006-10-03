@@ -50,6 +50,13 @@ src/plugins/equalizer/iir*
         Copyright (C) 2002-2006 Felipe Rivera <liebremx@users.sourceforge.net>
         Licensed under GPL license.
 
+src/plugins/vocoder/vocoder.c
+	Licensed under GPL license.
+
+src/plugins/vocoder/pvocoder*
+	Copyright (C) 2006 Juho Vähä-Herttua <juhovh@iki.fi>
+	Licensed under GPL license.
+
 src/plugins/ices/encode.*:
         Copyright (c) 2001 Michael Smith <msmith@labyrinth.net.au>
         Licensed under GPL license.
