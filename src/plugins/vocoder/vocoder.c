@@ -23,12 +23,15 @@
 #include <string.h>
 #include <math.h>
 #include <glib.h>
+
 #include <fftw3.h>
+#include <samplerate.h>
 
 #include "pvocoder.h"
 
 typedef struct {
 	pvocoder_t *pvoc;
+	SRC_STATE *resampler;
 	
 	gint winsize;
 	gint channels;
@@ -36,9 +39,12 @@ typedef struct {
 
 	xmms_sample_t *iobuf;
 	pvocoder_sample_t *procbuf;
+	gfloat *resbuf;
 	GString *outbuf;
 
-	gint speed;
+	gfloat speed;
+	gfloat pitch;
+	SRC_DATA resdata;
 	gint attack_detection;
 	gboolean enabled;
 } xmms_vocoder_data_t;
@@ -79,6 +85,9 @@ xmms_vocoder_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_config_property_register (xform_plugin, "speed", "100",
 	                                            NULL, NULL);
 
+	xmms_xform_plugin_config_property_register (xform_plugin, "pitch", "100",
+	                                            NULL, NULL);
+
 	xmms_xform_plugin_config_property_register (xform_plugin, "attack_detection", "0",
 	                                            NULL, NULL);
 
@@ -107,10 +116,14 @@ xmms_vocoder_init (xmms_xform_t *xform)
 
 	priv->iobuf = g_malloc (priv->bufsize * sizeof(gint16));
 	priv->procbuf = g_malloc (priv->bufsize * sizeof(pvocoder_sample_t));
+	priv->resbuf = g_malloc (priv->bufsize * sizeof(gfloat));
 	priv->outbuf = g_string_new (NULL);
 
 	priv->pvoc = pvocoder_init (priv->winsize, priv->channels);
 	g_return_val_if_fail (priv->pvoc, FALSE);
+
+	priv->resampler = src_new (SRC_LINEAR, priv->channels, NULL);
+	g_return_val_if_fail (priv->resampler, FALSE);
 
 	xmms_xform_private_data_set (xform, priv);
 	
@@ -122,14 +135,27 @@ xmms_vocoder_init (xmms_xform_t *xform)
 	config = xmms_xform_config_lookup (xform, "speed");
 	g_return_val_if_fail (config, FALSE);
 	xmms_config_property_callback_set (config, xmms_vocoder_config_changed, priv);
-	priv->speed = xmms_config_property_get_int (config);
-	pvocoder_set_scale (priv->pvoc, (gfloat) priv->speed / 100.0);
+	priv->speed = (gfloat) xmms_config_property_get_int (config) / 100.0;
+
+	config = xmms_xform_config_lookup (xform, "pitch");
+	g_return_val_if_fail (config, FALSE);
+	xmms_config_property_callback_set (config, xmms_vocoder_config_changed, priv);
+	priv->pitch = 100.0 / (gfloat) xmms_config_property_get_int (config);
 
 	config = xmms_xform_config_lookup (xform, "attack_detection");
 	g_return_val_if_fail (config, FALSE);
 	xmms_config_property_callback_set (config, xmms_vocoder_config_changed, priv);
 	priv->attack_detection = !!xmms_config_property_get_int (config);
+
+	pvocoder_set_scale (priv->pvoc, priv->speed * priv->pitch);
 	pvocoder_set_attack_detection (priv->pvoc, priv->attack_detection);
+
+	priv->resdata.data_in = NULL;
+	priv->resdata.input_frames = 0;
+	priv->resdata.data_out = priv->resbuf;
+	priv->resdata.output_frames = priv->winsize;
+	priv->resdata.src_ratio = priv->pitch;
+	priv->resdata.end_of_input = 0;
 
 	xmms_xform_outdata_type_copy (xform);
 
@@ -156,11 +182,11 @@ xmms_vocoder_destroy (xmms_xform_t *xform)
 	config = xmms_xform_config_lookup (xform, "attack_detection");
 	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
 
-	if (data->pvoc) {
-		pvocoder_close (data->pvoc);
-	}
+	pvocoder_close (data->pvoc);
+	src_delete (data->resampler);
 
 	g_string_free (data->outbuf, TRUE);
+	g_free (data->resbuf);
 	g_free (data->procbuf);
 	g_free (data->iobuf);
 	g_free (data);
@@ -179,7 +205,7 @@ xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer data,
 	g_return_if_fail (userdata);
 
 	val = (xmms_config_property_t *) object;
-	priv = (xmms_vocoder_data_t *) userdata;
+	data = (xmms_vocoder_data_t *) userdata;
 
 	name = xmms_config_property_get_name (val);
 	value = xmms_config_property_get_int (val);
@@ -192,13 +218,17 @@ xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer data,
 	name = strrchr (name, '.') + 1;
 
 	if (!strcmp (name, "enabled")) {
-		priv->enabled = !!value;
+		data->enabled = !!value;
 	} else if (!strcmp (name, "speed")) {
-		priv->speed = value;
-		pvocoder_set_scale (priv->pvoc, (gfloat) priv->speed / 100.0);
-	} else if (!strcmp (name, "attack_detection")) {
-		priv->attack_detection = value;
-		pvocoder_set_attack_detection (priv->pvoc, value);
+		data->speed = (gfloat) value / 100.0;
+		pvocoder_set_scale (data->pvoc, data->speed * data->pitch);
+	} else if (!strcmp (name, "pitch") && value != 0) {
+		data->pitch = 100.0 / (gfloat) value;
+		data->resdata.src_ratio = data->pitch;
+		pvocoder_set_scale (data->pvoc, data->speed * data->pitch);
+	} else if (!strcmp (name, "attack_detection") && value != 0) {
+		data->attack_detection = value;
+		pvocoder_set_attack_detection (data->pvoc, value);
 	}
 }
 
@@ -223,38 +253,51 @@ xmms_vocoder_read (xmms_xform_t *xform, xmms_sample_t *buffer, gint len,
 			return xmms_xform_read (xform, buffer, len, error);
 		}
 
-		dpos = pvocoder_get_chunk (data->pvoc, data->procbuf);
-		while (dpos != 0) {
-			int ret, read = 0;
-
-			memset (data->procbuf, 0, data->bufsize *
-			                          sizeof (pvocoder_sample_t));
-			while (read < data->bufsize * sizeof(gint16)) {
-				ret = xmms_xform_read (xform, data->iobuf+read,
-				                       data->bufsize*sizeof (gint16)-read, error);
-				if (ret <= 0) {
-					if (!ret && !read) {
-						/* end of file */
-						return 0;
-					} else if (ret < 0) {
-						return ret;
-					}
-					break;
-				}
-				read += ret;
-			}
-
-			for (i=0; i<data->bufsize; i++) {
-				data->procbuf[i] = (pvocoder_sample_t) samples[i] / 32767;
-			}
-			pvocoder_add_chunk (data->pvoc, data->procbuf);
+		if (!data->resdata.input_frames) {
 			dpos = pvocoder_get_chunk (data->pvoc, data->procbuf);
-		}
+			while (dpos != 0) {
+				int ret, read = 0;
 
-		for (i=0; i<data->bufsize; i++) {
-			samples[i] = data->procbuf[i] * 32767;
+				memset (data->procbuf, 0, data->bufsize *
+				        sizeof (pvocoder_sample_t));
+				while (read < data->bufsize * sizeof(gint16)) {
+					ret = xmms_xform_read (xform,
+					                       data->iobuf+read,
+					                       data->bufsize *
+					                       sizeof (gint16)-read,
+					                       error);
+					if (ret <= 0) {
+						if (!ret && !read) {
+							/* end of file */
+							return 0;
+						} else if (ret < 0) {
+							return ret;
+						}
+						break;
+					}
+					read += ret;
+				}
+
+				for (i=0; i<data->bufsize; i++) {
+					data->procbuf[i] = (pvocoder_sample_t) samples[i] / 32767;
+				}
+				pvocoder_add_chunk (data->pvoc, data->procbuf);
+				dpos = pvocoder_get_chunk (data->pvoc, data->procbuf);
+			}
+			data->resdata.data_in = data->procbuf;
+			data->resdata.input_frames = data->winsize;
 		}
-		g_string_append_len (data->outbuf, data->iobuf, data->bufsize * sizeof(gint16));
+		src_process (data->resampler, &data->resdata);
+		data->resdata.data_in += data->resdata.input_frames_used * data->channels;
+		data->resdata.input_frames -= data->resdata.input_frames_used;
+
+		for (i=0; i<data->resdata.output_frames_gen * data->channels; i++) {
+			samples[i] = data->resbuf[i] * 32767;
+		}
+		g_string_append_len (data->outbuf, data->iobuf,
+		                     data->resdata.output_frames_gen *
+		                     data->channels *
+		                     sizeof(gint16));
 		size = MIN (data->outbuf->len, len);
 	}
 

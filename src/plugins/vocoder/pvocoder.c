@@ -486,7 +486,6 @@ pvocoder_calculate_chunk(pvocoder_t *pvoc, double index)
 
 	/* Window and normalize the resulting sample buffer */
 	if (attack) {
-		printf("releasing attack!\n");
 		for (i=0; i<nsamples/2; i++) {
 			buffer[i][0] = buffer[i][1] = 0.0;
 		}
