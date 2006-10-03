@@ -179,6 +179,9 @@ xmms_vocoder_destroy (xmms_xform_t *xform)
 	config = xmms_xform_config_lookup (xform, "speed");
 	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
 
+	config = xmms_xform_config_lookup (xform, "pitch");
+	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
+
 	config = xmms_xform_config_lookup (xform, "attack_detection");
 	xmms_config_property_callback_remove (config, xmms_vocoder_config_changed);
 
@@ -193,11 +196,11 @@ xmms_vocoder_destroy (xmms_xform_t *xform)
 }
 
 static void
-xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer data,
+xmms_vocoder_config_changed (xmms_object_t *object, gconstpointer objdata,
                              gpointer userdata)
 {
 	xmms_config_property_t *val;
-	xmms_vocoder_data_t *priv;
+	xmms_vocoder_data_t *data;
 	const gchar *name;
 	gint value;
 
