@@ -428,6 +428,7 @@ xmms_magic_match (xmms_magic_checker_t *c)
 		GNode *tree = l->data;
 
 		if (tree_match (c, tree)) {
+			xmms_xform_metadata_set_str(c->xform, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, ((gpointer*)tree->data)[1]);
 			return tree;
 		}
 	}
