@@ -586,6 +586,7 @@ xmms_magic_plugin_init (xmms_xform_t *xform)
 
 	res = xmms_magic_match (&c, url);
 	if (res) {
+		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, res);
 		xmms_xform_outdata_type_add (xform,
 		                             XMMS_STREAM_TYPE_MIMETYPE,
 					     res,
