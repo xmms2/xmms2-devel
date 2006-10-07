@@ -53,6 +53,8 @@ struct xmms_xform_St {
 	gint buffered;
 	gint buffersize;
 
+	gboolean metadata_collected;
+
 	gboolean metadata_changed;
 	GHashTable *metadata;
 };
@@ -454,6 +456,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 		}
 		if (xform->metadata_changed)
 			xmms_xform_metadata_collect_one (xform, &info);
+		xform->metadata_collected = TRUE;
 	}
 
 	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
@@ -553,7 +556,7 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 		gint res;
 
 		res = xform->plugin->methods.read (xform, buf + read, siz - read, err);
-		if (xform->metadata_changed)
+		if (xform->metadata_collected && xform->metadata_changed)
 			xmms_xform_metadata_update (xform);
 
 		if (res < -1) {
