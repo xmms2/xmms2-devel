@@ -434,10 +434,25 @@ xmms_xform_metadata_collect_one (xmms_xform_t *xform, metadata_festate_t *info)
 }
 
 static void
+xmms_xform_metadata_collect_r (xmms_xform_t *xform, metadata_festate_t *info, GString *namestr)
+{
+	if (xform->prev)
+		xmms_xform_metadata_collect_r (xform->prev, info, namestr);
+
+	if (xform->plugin) {
+		if (namestr->len)
+			g_string_append (namestr, ":");
+		g_string_append (namestr, xmms_xform_shortname (xform));
+	}
+	if (xform->metadata_changed)
+		xmms_xform_metadata_collect_one (xform, info);
+	xform->metadata_collected = TRUE;
+}
+
+static void
 xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 {
 	metadata_festate_t info;
-	xmms_xform_t *xform;
 	guint times_played;
 
 	info.entry = start->entry;
@@ -448,16 +463,7 @@ xmms_xform_metadata_collect (xmms_xform_t *start, GString *namestr)
 
 	xmms_medialib_entry_cleanup (info.session, info.entry);
 
-	for (xform = start; xform->prev; xform = xform->prev) {
-		if (xform->plugin) {
-			if (namestr->len)
-				g_string_prepend (namestr, ":");
-			g_string_prepend (namestr, xmms_xform_shortname (xform));
-		}
-		if (xform->metadata_changed)
-			xmms_xform_metadata_collect_one (xform, &info);
-		xform->metadata_collected = TRUE;
-	}
+	xmms_xform_metadata_collect_r (start, &info, namestr);
 
 	xmms_medialib_entry_property_set_str (info.session, info.entry, XMMS_MEDIALIB_ENTRY_PROPERTY_CHAIN, namestr->str);
 
