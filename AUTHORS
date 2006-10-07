@@ -133,6 +133,10 @@ N: Daniel Pearson
 E: daniel@nanoo.org
 D: Python XMMSSync-proxy. PythonAPI fixes.
 
+N: Florian Ragwitz
+E: rafl@debian.org
+D: Official Debian packages. Bugfixes.
+
 N: Alexander Rigbo
 E: alex@rigbo.se
 D: Various fixes. Sorting on integers.
