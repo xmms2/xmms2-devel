@@ -568,7 +568,7 @@ xmms_ipc_source_accept (GIOChannel *chan, GIOCondition cond, gpointer data)
 		return FALSE;
 	}
 
-	XMMS_DBG ("Client connect?!");
+	XMMS_DBG ("Client connected");
 	transport = xmms_ipc_server_accept (ipc->transport);
 	if (!transport) {
 		xmms_log_error ("accept returned null!");
@@ -865,16 +865,14 @@ xmms_ipc_setup_server (const gchar *path)
 	for(i = 0; split && split[i]; i++) {
 		ipc = g_new0 (xmms_ipc_t, 1);
 		if(!ipc) {
-			XMMS_DBG("No IPC server initialized.");
+			XMMS_DBG ("No IPC server initialized.");
 			continue;
 		}
 
 		transport = xmms_ipc_server_init (split[i]);
 		if (!transport) {
-			if (ipc)
-				g_free (ipc);
-
-			XMMS_DBG("No transport for IPC server.");
+			g_free (ipc);
+			xmms_log_error ("Couldn't setup IPC listening on '%s'.", split[i]);
 			continue;
 		}
 
@@ -886,6 +884,7 @@ xmms_ipc_setup_server (const gchar *path)
 		ipc->objects = ipc_object_pool->objects;
 
 		xmms_ipc_setup_server_internaly (ipc);
+		xmms_log_error ("IPC listening on '%s'.", split[i]);
 
 		g_mutex_lock (ipc_servers_lock);
 		ipc_servers = g_list_prepend (ipc_servers, ipc);
@@ -901,7 +900,7 @@ xmms_ipc_setup_server (const gchar *path)
 	if (num_init < 1)
 		return FALSE;
 
-	XMMS_DBG ("Starting ipc threads!");
+	XMMS_DBG ("IPC setup done.");
 	return TRUE;
 }
 
