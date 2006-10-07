@@ -912,6 +912,12 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD,
 	                  XMMS_MEDIALIB_ENTRY_PROPERTY_LASTSTARTED);
+
+	xmms_sqlite_exec (session->sql,
+	                  "delete from Media where id=%d and source in "
+	                  "(select id from Sources where source like 'plugin/%%')",
+	                  entry);
+
 }
 
 static void
