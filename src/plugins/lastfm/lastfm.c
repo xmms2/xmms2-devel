@@ -88,6 +88,8 @@ xmms_lastfm_init (xmms_xform_t *xform)
 
 	curl = curl_easy_init ();
 
+	curl_easy_setopt (curl, CURLOPT_USERAGENT, "XMMS2/" XMMS_VERSION);
+	curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, 15);
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, buffer);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION,
 	                  xmms_lastfm_feed_buffer);

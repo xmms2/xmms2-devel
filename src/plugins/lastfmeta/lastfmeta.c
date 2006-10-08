@@ -111,6 +111,9 @@ xmms_lastfmeta_init (xmms_xform_t *xform)
 	
 	data->curl_easy = curl_easy_init ();
 	curl_easy_setopt (data->curl_easy, CURLOPT_URL, data->url);
+	curl_easy_setopt (data->curl_easy, CURLOPT_USERAGENT,
+	                  "XMMS2/" XMMS_VERSION);
+	curl_easy_setopt (data->curl_easy, CURLOPT_CONNECTTIMEOUT, 15);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEDATA, xform);
 	curl_easy_setopt (data->curl_easy, CURLOPT_WRITEFUNCTION,
 	                  xmms_lastfmeta_now_playing_callback);
@@ -259,6 +262,8 @@ xmms_lastfm_control (xmms_xform_t *xform, const gchar *cmd)
 	buffer = g_string_new (NULL);
 
 	curl = curl_easy_init ();
+	curl_easy_setopt (curl, CURLOPT_USERAGENT, "XMMS2/" XMMS_VERSION);
+	curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, 15);
 	curl_easy_setopt (curl, CURLOPT_WRITEDATA, buffer);
 	curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION,
 	                  xmms_lastfm_feed_buffer);
