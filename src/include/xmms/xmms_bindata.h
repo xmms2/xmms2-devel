@@ -17,7 +17,7 @@
 #ifndef __XMMS_BINDATA_H__
 #define __XMMS_BINDATA_H__
 
-gchar *xmms_bindata_calculate_hash (const guchar *data, gsize size, gchar ret[33]);
+gchar *xmms_bindata_calculate_md5 (const guchar *data, gsize size, gchar ret[33]);
 gboolean xmms_bindata_plugin_add (const guchar *data, gsize size, gchar hash[33]);
 
 #endif
