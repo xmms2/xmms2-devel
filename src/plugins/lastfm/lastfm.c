@@ -94,18 +94,28 @@ xmms_lastfm_init (xmms_xform_t *xform)
 
 
 	url = xmms_lastfm_handshake (xform, curl, buffer);
-	if (url) {
-		if (xmms_lastfm_adjust (xform, curl, buffer)) {
-			xmms_xform_outdata_type_add (xform,
-			                             XMMS_STREAM_TYPE_MIMETYPE,
-			                             "application/x-url",
-			                             XMMS_STREAM_TYPE_URL, url,
-			                             XMMS_STREAM_TYPE_END);
-			ret = TRUE;
-		}
-		g_free (url);
+	if (!url) {
+		xmms_log_error ("Last.fm handshake failed");
+		goto cleanup;
 	}
 
+	if (!xmms_lastfm_adjust (xform, curl, buffer)) {
+		xmms_log_error ("Last.fm could not tune in given channel");
+		goto cleanup;
+	}
+
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/x-url",
+	                             XMMS_STREAM_TYPE_URL, url,
+	                             XMMS_STREAM_TYPE_END);
+
+	ret = TRUE;
+
+cleanup:
+	if (url) {
+		g_free (url);
+	}
 	curl_easy_cleanup (curl);
 	g_string_free (buffer, TRUE);
 	
