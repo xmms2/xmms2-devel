@@ -48,8 +48,8 @@ static size_t xmms_lastfm_feed_buffer (void *ptr, size_t size,
                                        size_t nmemb, void *udata);
 static void xmms_lastfm_config_changed (xmms_object_t * object,
                                         gconstpointer data, gpointer udata);
-static gboolean xmms_lastfm_strstr_len (const gchar *haystack,
-                                        gint haystack_len, const gchar *needle);
+static gchar *xmms_lastfm_memstr (const gchar *haystack, gint haystack_len,
+                                  const gchar *needle);
 
 
 
@@ -192,7 +192,7 @@ xmms_lastfmeta_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	}
 
 	ret = xmms_xform_read (xform, buf, len, err);
-	if (xmms_lastfm_strstr_len (buf, ret, "SYNC")) {
+	if (xmms_lastfm_memstr (buf, ret, "SYNC") != NULL) {
 		curl_multi_add_handle (data->curl_multi, data->curl_easy);
 		curl_multi_perform (data->curl_multi, &(data->handles));
 	}
@@ -302,9 +302,9 @@ xmms_lastfm_feed_buffer (void *ptr, size_t size, size_t nmemb, void *udata)
 /**
  * This is a modified version of g_strstr_len that disregards \0 chars.
  */
-static gboolean
-xmms_lastfm_strstr_len (const gchar *haystack, gint haystack_len,
-                        const gchar *needle)
+static gchar *
+xmms_lastfm_memstr (const gchar *haystack, gint haystack_len,
+                    const gchar *needle)
 {
 	const gchar *p, *end;
 	gint needle_len, i;
@@ -312,11 +312,11 @@ xmms_lastfm_strstr_len (const gchar *haystack, gint haystack_len,
 	needle_len = strlen (needle);
 
 	if (needle_len == 0) {
-		return FALSE;
+		return (gchar *) haystack;
 	}
 
 	if (haystack_len < needle_len) {
-		return FALSE;
+		return NULL;
 	}
 
 	end = haystack + haystack_len - needle_len;
@@ -327,10 +327,10 @@ xmms_lastfm_strstr_len (const gchar *haystack, gint haystack_len,
 			if (p[i] != needle[i])
 				goto next;
 
-		return TRUE;
+		return (gchar *) p;
 next:
 		p++;
 	}
 
-	return FALSE;
+	return NULL;
 }
