@@ -58,7 +58,7 @@ static gchar *xmms_lastfm_memstr (const gchar *haystack, gint haystack_len,
  */
 
 XMMS_XFORM_PLUGIN ("lastfmeta", "lastfmeta", XMMS_VERSION,
-                   "Strips leading NUL bytes", xmms_lastfmeta_plugin_setup);
+                   "last.fm metadata", xmms_lastfmeta_plugin_setup);
 
 static gboolean
 xmms_lastfmeta_plugin_setup (xmms_xform_plugin_t *xform_plugin)
