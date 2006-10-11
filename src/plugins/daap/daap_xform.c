@@ -136,7 +136,7 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	methods.init = xmms_daap_init;
 	methods.destroy = xmms_daap_destroy;
 	methods.read = xmms_daap_read;
-	methods.browse = xmms_daap_browse;
+	/*methods.browse = xmms_daap_browse;*/
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -156,6 +156,8 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
+#if 0
+/* needs conversion */
 static GList *
 add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint port)
 {
@@ -259,7 +261,7 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list, xmms_err
 
 	return url_list;
 }
-
+#endif
 /*
  * Member functions
  */
@@ -400,7 +402,8 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 	
 	return read_bytes;
 }
-
+#if 0
+/* needs conversion to new api */
 static GList *
 xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
                   xmms_error_t *error)
@@ -492,4 +495,4 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url,
 	g_free (host);
 	return url_list;
 }
-
+#endif

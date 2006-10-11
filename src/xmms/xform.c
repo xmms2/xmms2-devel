@@ -57,6 +57,9 @@ struct xmms_xform_St {
 
 	gboolean metadata_changed;
 	GHashTable *metadata;
+
+	GList *browse_list;
+	GHashTable *browse_hash;
 };
 
 #define READ_CHUNK 4096
@@ -75,37 +78,51 @@ static xmms_xform_t *add_effects (xmms_xform_t *last, xmms_medialib_entry_t entr
                                   GList *goal_formats);
 static void xmms_xform_destroy (xmms_object_t *object);
 
-static void
-copy_entry (gpointer key, gpointer value, gpointer user_data)
+void
+xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmms_object_cmd_value_t *val)
 {
-	GHashTable *target = user_data;
-	gchar *k = key;
-	g_hash_table_insert (target, g_strdup (k), value);
+	g_return_if_fail (xform);
+	g_return_if_fail (xform->browse_hash);
+	g_return_if_fail (key);
+	g_return_if_fail (val);
+
+	g_hash_table_insert (xform->browse_hash, g_strdup (key), val);
 }
 
-GList *
-xmms_xform_browse_add_entry (GList *list,
-                             const gchar *path,
-                             gboolean is_dir,
-                             GHashTable *extended_info)
+void
+xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32 flags)
 {
-	GHashTable *hsh;
+	const gchar *url;
+	gchar *efile, *t;
+	int l;
 
-	g_return_val_if_fail (path, NULL);
-	
-	hsh = g_hash_table_new_full (g_str_hash, g_str_equal,
-	                             g_free, xmms_object_cmd_value_free);
+	g_return_if_fail (filename);
 
-	if (extended_info) {
-		g_hash_table_foreach (extended_info, copy_entry, (gpointer) hsh);
+	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
+
+	g_return_if_fail (url);
+
+	xform->browse_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                            g_free, xmms_object_cmd_value_free);
+
+	efile = xmms_medialib_url_encode (filename);
+	/* can't use g_build_filename as we need to preserve
+	   slashes stuff like file:/// */
+	l = strlen (url);
+	if (l && url[l - 1] == '/') {
+		t = g_strdup_printf ("%s%s", url, efile);
+	} else {
+		t = g_strdup_printf ("%s/%s", url, efile);
 	}
 
-	g_hash_table_insert (hsh, g_strdup ("path"), xmms_object_cmd_value_str_new (path));
-	g_hash_table_insert (hsh, g_strdup ("isdir"), xmms_object_cmd_value_int_new (is_dir));
+	xmms_xform_browse_add_entry_property (xform, "path", xmms_object_cmd_value_str_new (t));
+	xmms_xform_browse_add_entry_property (xform, "isdir", xmms_object_cmd_value_int_new (!!(flags & XMMS_XFORM_BROWSE_FLAG_DIR)));
 
-	list = g_list_prepend (list, xmms_object_cmd_value_dict_new (hsh));
+	xform->browse_list = g_list_prepend (xform->browse_list, xmms_object_cmd_value_dict_new (xform->browse_hash));
 
-	return list;
+	g_free (t);
+	g_free (efile);
+
 }
 
 GList *
@@ -142,7 +159,9 @@ xmms_xform_browse (xmms_xform_object_t *obj,
 	}
 
 	if (xform2->plugin->methods.browse) {
-		list = xform2->plugin->methods.browse (xform2, durl, error);
+		xform2->plugin->methods.browse (xform2, durl, error);
+		list = xform2->browse_list;
+		xform2->browse_list = NULL;
 		list = g_list_reverse (list);
 	} else {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't handle that URL");
