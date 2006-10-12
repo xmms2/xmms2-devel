@@ -27,6 +27,10 @@
 
 #include <string.h>
 
+/* not available everywhere. */
+#if !defined(O_BINARY)
+# define O_BINARY 0
+#endif
 /*
  * Type definitions
  */
@@ -108,7 +112,7 @@ xmms_file_init (xmms_xform_t *xform)
 	}
 
 	XMMS_DBG ("Opening %s", url);
-	fd = open (url, O_RDONLY);
+	fd = open (url, O_RDONLY | O_BINARY);
 	if (fd == -1) {
 		return FALSE;
 	}
