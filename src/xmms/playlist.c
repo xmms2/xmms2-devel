@@ -1277,7 +1277,7 @@ xmms_playlist_sorted_unwind (gpointer data, gpointer userdata)
 
 	if (sorted->current) {
 		size = xmmsc_coll_idlist_get_size (playlist);
-		xmms_collection_set_int_attr (playlist, "position", size - 2);
+		xmms_collection_set_int_attr (playlist, "position", size - 1);
 	}
 
 	xmms_playlist_sorted_free (sorted, NULL);

@@ -436,7 +436,7 @@ xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll)
 {
 	x_return_val_if_fail (coll, 0);
 
-	return coll->idlist_size;
+	return coll->idlist_size - 1;
 }
 
 
