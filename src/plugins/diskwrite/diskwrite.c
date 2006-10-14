@@ -170,6 +170,7 @@ static gboolean
 xmms_diskwrite_open (xmms_output_t *output)
 {
 	xmms_diskwrite_data_t *data;
+	gint ret;
 
 	g_return_val_if_fail (output, FALSE);
 
@@ -178,12 +179,12 @@ xmms_diskwrite_open (xmms_output_t *output)
 
 	/* create the destination directory if it doesn't exist yet */
 	if (!g_file_test (data->destdir, G_FILE_TEST_IS_DIR)) {
-		mkdir (data->destdir, 0755);
+		ret = mkdir (data->destdir, 0755);
 	} else {
-		access (data->destdir, W_OK);
+		ret = access (data->destdir, W_OK);
 	}
 
-	if (errno) {
+	if (ret == -1) {
 		xmms_log_error ("errno (%d) %s", errno, strerror (errno));
 		return FALSE;
 	} else {
