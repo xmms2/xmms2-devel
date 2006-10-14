@@ -37,6 +37,7 @@
 #include "pvocoder.h"
 
 #define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#define ABS(x) (x < 0.0 ? -x : x)
 
 struct pvocoder_s {
 	/* Basic information about the stream */
@@ -422,15 +423,13 @@ pvocoder_calculate_chunk(pvocoder_t *pvoc, double index)
 	buffer = pvoc->invbuf;
 
 	if (pvoc->attack_detection) {
-		double cog;
+		double treshold = 0.57;
 
-		cog = (1.0-diff)*pvoc->stft[idx][nsamples/2][0] +
-		      diff*pvoc->stft[idx+1][nsamples/2][0];
-
-		if (cog > 0.57) {
+		if (pvoc->stft[idx+1][nsamples/2][0] > treshold) {
 			pvoc->transient = 1;
 			return;
-		} else if (pvoc->transient) {
+		} else if (pvoc->stft[idx][nsamples/2][0] < treshold &&
+		           pvoc->transient) {
 			/* Release attack */
 			attack = 1;
 		}
@@ -486,11 +485,24 @@ pvocoder_calculate_chunk(pvocoder_t *pvoc, double index)
 
 	/* Window and normalize the resulting sample buffer */
 	if (attack) {
+		double max = 0.0, mult = 1.5;
+
+		/* Clear first half of the output buffer */
 		for (i=0; i<nsamples/2; i++) {
 			buffer[i][0] = buffer[i][1] = 0.0;
 		}
+
+		/* Make sure we don't clip when amplifying attack */
 		for (i=nsamples/2; i<nsamples; i++) {
-			buffer[i][0] *= 1.5 * pvoc->win[i / pvoc->channels] /
+			if (ABS(buffer[i][0]) > max) {
+				max = ABS(buffer[i][0]);
+			}
+		}
+		mult = CLAMP(mult, 0, 1.0/max);
+
+		/* Window and scale the second half of output buffer */
+		for (i=nsamples/2; i<nsamples; i++) {
+			buffer[i][0] *= mult * pvoc->win[i / pvoc->channels] /
 			                pvoc->chunksize;
 			buffer[i][1] = 0.0;
 		}
