@@ -54,6 +54,10 @@ N: Franz Endstrasser
 E: franz.endstrasser@gmail.com
 D: Java bindings
 
+N: Manuel Fuhr
+E: zod@knid.net
+D: lastfm
+
 N: G. Gallino
 E: ggallino@gmail.com
 D: Equaliser fixes
@@ -132,6 +136,10 @@ D: Cleanups.
 N: Daniel Pearson
 E: daniel@nanoo.org
 D: Python XMMSSync-proxy. PythonAPI fixes.
+
+N: Florian Ragwitz
+E: rafl@debian.org
+D: Official Debian packages. Bugfixes.
 
 N: Alexander Rigbo
 E: alex@rigbo.se
