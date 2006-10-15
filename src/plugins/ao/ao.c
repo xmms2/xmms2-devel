@@ -67,18 +67,18 @@ static gboolean xmms_ao_try_format (gint driver_id, ao_option *options, xmms_sam
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN("ao",
-                   "libao output",
-                   XMMS_VERSION,
-                   "libao output plugin",
-                   xmms_ao_plugin_setup);
+XMMS_OUTPUT_PLUGIN ("ao",
+                    "libao output",
+                    XMMS_VERSION,
+                    "libao output plugin",
+                    xmms_ao_plugin_setup);
 
 static gboolean
 xmms_ao_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
 
-	XMMS_OUTPUT_METHODS_INIT(methods);
+	XMMS_OUTPUT_METHODS_INIT (methods);
 	methods.new = xmms_ao_new;
 	methods.destroy = xmms_ao_destroy;
 	methods.flush = xmms_ao_flush;
@@ -109,7 +109,7 @@ static gboolean
 xmms_ao_new (xmms_output_t *output)
 {
 	xmms_ao_data_t* data;
-	const xmms_config_property_t *config;
+	xmms_config_property_t *config;
 	const gchar *value;
 	gint i, j, k;
 
@@ -117,7 +117,7 @@ xmms_ao_new (xmms_output_t *output)
 	data = g_new0 (xmms_ao_data_t, 1);
 	g_return_val_if_fail (data, FALSE);
 
-	ao_initialize();
+	ao_initialize ();
 
 	config = xmms_output_config_lookup (output, "driver");
 	value = xmms_config_property_get_string (config);
@@ -155,7 +155,7 @@ xmms_ao_new (xmms_output_t *output)
 
 		data->options = g_malloc (sizeof (ao_option));
 		data->options->key = "dev";
-		data->options->value = g_strdup (value);
+		data->options->value = (gchar *) value;
 		data->options->next = NULL;
 
 		/* let's just use some common format to check if the device
@@ -209,14 +209,11 @@ xmms_ao_destroy (xmms_output_t *output)
 	ao_shutdown ();
 
 	if (data) {
-		if (data->options) {
-			ao_option *current = data->options;
-			while (current) {
-				ao_option *next = current->next;
-				g_free (current->value);
-				g_free (current);
-				current = next;
-			}
+		ao_option *current = data->options;
+		while (current) {
+			ao_option *next = current->next;
+			g_free (current);
+			current = next;
 		}
 	}
 	g_free (data);
