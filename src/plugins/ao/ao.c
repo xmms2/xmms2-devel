@@ -111,6 +111,7 @@ xmms_ao_new (xmms_output_t *output)
 	xmms_ao_data_t* data;
 	xmms_config_property_t *config;
 	const gchar *value;
+	ao_sample_format format;
 	gint i, j, k;
 
 	g_return_val_if_fail (output, FALSE);
@@ -160,12 +161,12 @@ xmms_ao_new (xmms_output_t *output)
 
 		/* let's just use some common format to check if the device
 		 * name is valid */
-		data->format.bits = 16;
-		data->format.rate = 44100;
-		data->format.channels = 2;
-		data->format.byte_format = AO_FMT_NATIVE;
+		format.bits = 16;
+		format.rate = 44100;
+		format.channels = 2;
+		format.byte_format = AO_FMT_NATIVE;
 
-		device = ao_open_live (data->driver_id, &data->format, data->options);
+		device = ao_open_live (data->driver_id, &format, data->options);
 		if (!device && errno == AO_EOPENDEVICE) {
 			xmms_log_error ("Configured device name is incorrect, using default");
 			g_free (data->options);
@@ -184,9 +185,19 @@ xmms_ao_new (xmms_output_t *output)
 			for (k=0; k < G_N_ELEMENTS (rates); k++) {
 				if (xmms_ao_try_format (data->driver_id, data->options,
 				                        formats[i], j + 1, rates[k],
-				                        &data->format)) {
-					xmms_output_format_add (output, formats[i], j + 1,
-					                        rates[k]);
+				                        &format)) {
+					data->device = ao_open_live (data->driver_id,
+					                             &format,
+					                             data->options);
+					if (data->device) {
+							if (ao_close (data->device) == 0) {
+								xmms_log_error ("Failed to close libao device");
+							}
+							g_memmove (&data->format, &format,
+							           sizeof (ao_sample_format));
+							xmms_output_format_add (output, formats[i], j + 1,
+							                        rates[k]);
+					}
 				}
 			}
 		}
@@ -281,7 +292,6 @@ xmms_ao_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	ao_sample_format oldfmt;
 	xmms_sample_format_t sformat;
 	gint channels, srate;
-	ao_device *device;
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -305,16 +315,17 @@ xmms_ao_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 		return TRUE;
 	}
 
-	device = ao_open_live (data->driver_id, &data->format, data->options);
-	if (!device) {
-		xmms_log_error ("Weird, cannot reopen libao output device (errno %d)", errno);
-		return FALSE;
-	}
 	if (ao_close (data->device) == 0) {
 		xmms_log_error ("Failed to close libao device while changing format");
 	}
 
-	data->device = device;
+	data->device = ao_open_live (data->driver_id, &data->format, data->options);
+	if (!data->device) {
+		xmms_log_error ("Weird, cannot reopen libao output device (errno %d)", errno);
+		data->device = ao_open_live (data->driver_id, &data->format, data->options);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -322,39 +333,26 @@ static gboolean
 xmms_ao_try_format (gint driver_id, ao_option *options, xmms_sample_format_t format,
                     gint channels, gint samplerate, ao_sample_format *fmt)
 {
-	ao_device *device;
-	ao_sample_format tmpfmt;
-
 	g_return_val_if_fail (fmt, FALSE);
 
 	switch (format) {
 		case XMMS_SAMPLE_FORMAT_S8:
-			tmpfmt.bits = 8;
+			fmt->bits = 8;
 			break;
 		case XMMS_SAMPLE_FORMAT_S16:
-			tmpfmt.bits = 16;
+			fmt->bits = 16;
 			break;
 		case XMMS_SAMPLE_FORMAT_S32:
-			tmpfmt.bits = 32;
+			fmt->bits = 32;
 			break;
 		default:
 			/* unsupported format */
 			return FALSE;
 	}
-	tmpfmt.channels = channels;
-	tmpfmt.rate = samplerate;
-	tmpfmt.byte_format = AO_FMT_NATIVE;
+	fmt->channels = channels;
+	fmt->rate = samplerate;
+	fmt->byte_format = AO_FMT_NATIVE;
 
-	device = ao_open_live (driver_id, &tmpfmt, options);
-	if (!device) {
-		/* unsupported format */
-		return FALSE;
-	}
-	if (ao_close (device) == 0) {
-		xmms_log_error ("Failed to close libao device while trying format");
-	}
-
-	g_memmove (fmt, &tmpfmt, sizeof (ao_sample_format));
 	return TRUE;
 }
 
