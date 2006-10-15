@@ -168,7 +168,6 @@ xmms_ao_new (xmms_output_t *output)
 		device = ao_open_live (data->driver_id, &data->format, data->options);
 		if (!device && errno == AO_EOPENDEVICE) {
 			xmms_log_error ("Configured device name is incorrect, using default");
-			g_free (data->options->value);
 			g_free (data->options);
 			data->options = NULL;
 		} else if (device) {
