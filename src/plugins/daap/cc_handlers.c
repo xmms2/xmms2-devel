@@ -188,10 +188,11 @@ cc_handler_mlit (cc_data_t *fields, gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_item_record_t *item_fields;
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_item_record_t *item_fields;
 	item_fields = g_malloc0 (sizeof (cc_item_record_t));
 
 	while (current_data < data_end && !do_break) {
@@ -397,10 +398,12 @@ cc_handler_adbs (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
@@ -439,10 +442,11 @@ cc_handler_msrv (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
@@ -548,10 +552,12 @@ cc_handler_mlog (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
+	
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
@@ -582,10 +588,12 @@ cc_handler_mupd (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
+	
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
@@ -617,10 +625,12 @@ cc_handler_avdb (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
+	
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
@@ -659,10 +669,12 @@ cc_handler_apso (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
+	
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
@@ -701,10 +713,12 @@ cc_handler_aply (gchar *data, gint data_len)
 	gint offset = 0;
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
+	cc_data_t *fields;
+	
 	current_data = data + 8;
 	data_end = data + data_len;
 
-	cc_data_t *fields = cc_data_new ();
+	fields = cc_data_new ();
 
 	while ((current_data < data_end) && !do_break) {
 		switch (CC_TO_INT (current_data[0], current_data[1],
