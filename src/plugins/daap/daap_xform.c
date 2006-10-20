@@ -284,14 +284,7 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	g_return_val_if_fail (url, FALSE);
 
-	data = xmms_xform_private_data_get (xform);
-
-	if (!data) {
-		data = g_malloc0 (sizeof (xmms_daap_data_t));
-		if (!data) {
-			return FALSE;
-		}
-	}
+	data = g_new0 (xmms_daap_data_t, 1);
 
 	data->url = g_strdup (url);
 	if (!get_data_from_url (data->url, &(data->host), &(data->port), &command)) {
