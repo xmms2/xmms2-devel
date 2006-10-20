@@ -203,8 +203,7 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list, xmms_err
 	host = server->address;
 	port = server->port;
 
-	hash = g_malloc0 (strlen (host) + 5 + 1 + 1);
-	g_sprintf (hash, "%s:%u", host, port);
+	hash = g_strdup_printf ("%s:%u", host, port);
 
 	login_data = g_hash_table_lookup (login_sessions, hash);
 
