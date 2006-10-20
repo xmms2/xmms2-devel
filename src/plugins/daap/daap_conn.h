@@ -41,8 +41,8 @@
 GIOChannel *
 daap_open_connection (gchar *host, gint port);
 
-void
-daap_generate_request (gchar **request, const gchar *path, gchar *host, gint request_id);
+gchar *
+daap_generate_request (const gchar *path, gchar *host, gint request_id);
 
 void
 daap_send_request (GIOChannel *sock_chan, gchar *request);

@@ -215,10 +215,10 @@ static cc_data_t *
 daap_request_data (GIOChannel *chan, const gchar *path, gchar *host, guint request_id)
 {
 	guint status;
-	gchar *request = NULL, *header = NULL;
+	gchar *request, *header = NULL;
 	cc_data_t *retval;
 
-	daap_generate_request (&request, path, host, request_id);
+	request = daap_generate_request (path, host, request_id);
 	daap_send_request (chan, request);
 	g_free (request);
 
@@ -252,9 +252,9 @@ daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
                      guint request_id, guint *size)
 {
 	guint status;
-	gchar *request = NULL, *header = NULL;
+	gchar *request, *header = NULL;
 
-	daap_generate_request (&request, path, host, request_id);
+	request = daap_generate_request (path, host, request_id);
 	daap_send_request (chan, request);
 	g_free (request);
 
