@@ -208,8 +208,7 @@ daap_get_urls_from_server (daap_mdns_server_t *server, GList *url_list, xmms_err
 	login_data = g_hash_table_lookup (login_sessions, hash);
 
 	if (!login_data) {
-		login_data = (xmms_daap_login_data_t *)
-		             g_malloc0 (sizeof (xmms_daap_login_data_t));
+		login_data = g_new0 (xmms_daap_login_data_t, 1);
 
 		login_data->session_id = daap_command_login (host, port, 0, err);
 		if (xmms_error_iserror (err)) {
