@@ -37,7 +37,7 @@
  */
 
 typedef struct {
-	gchar *url, *host;
+	gchar *host;
 	guint port;
 
 	GIOChannel *channel;
@@ -286,8 +286,7 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_daap_data_t, 1);
 
-	data->url = g_strdup (url);
-	if (!get_data_from_url (data->url, &(data->host), &(data->port), &command)) {
+	if (!get_data_from_url (url, &(data->host), &(data->port), &command)) {
 		return FALSE;
 	}
 
@@ -364,7 +363,6 @@ xmms_daap_destroy (xmms_xform_t *xform)
 	g_io_channel_shutdown (data->channel, TRUE, NULL);
 	g_io_channel_unref (data->channel);
 
-	g_free (data->url);
 	g_free (data->host);
 	g_free (data);
 }
