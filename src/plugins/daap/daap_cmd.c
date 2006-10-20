@@ -30,7 +30,7 @@ daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err)
 	GIOChannel *chan;
 	cc_data_t *cc_data;
 
-	guint session_id;
+	guint session_id = 0;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
@@ -42,12 +42,11 @@ daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err)
 	}
 
 	cc_data = daap_request_data (chan, "/login", host, request_id);
-	if (!cc_data) {
-		return 0;
+	if (cc_data) {
+		session_id = cc_data->session_id;
+		cc_data_free (cc_data);
 	}
-	session_id = cc_data->session_id;
 
-	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
 
@@ -60,8 +59,7 @@ daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 	GIOChannel *chan;
 	gchar *request;
 	cc_data_t *cc_data;
-
-	guint revision_id;
+	guint revision_id = 0;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
@@ -71,13 +69,12 @@ daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 	request = g_strdup_printf ("/update?session-id=%d", session_id);
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
-	if (!cc_data) {
-		return 0;
+	if (cc_data) {
+		revision_id = cc_data->revision_id;
+		cc_data_free (cc_data);
 	}
-	revision_id = cc_data->revision_id;
 
 	g_free (request);
-	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
 
@@ -114,8 +111,7 @@ daap_command_db_list (gchar *host, gint port, guint session_id,
 	GIOChannel *chan;
 	gchar *request;
 	cc_data_t *cc_data;
-
-	GSList * db_id_list;
+	GSList *db_id_list = NULL;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
@@ -127,12 +123,11 @@ daap_command_db_list (gchar *host, gint port, guint session_id,
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
 	g_free (request);
-	if (!cc_data) {
-		return NULL;
+	if (cc_data) {
+		db_id_list = cc_record_list_deep_copy (cc_data->record_list);
+		cc_data_free (cc_data);
 	}
-	db_id_list = cc_record_list_deep_copy (cc_data->record_list);
 
-	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
 
