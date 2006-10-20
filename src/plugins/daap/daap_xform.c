@@ -298,8 +298,7 @@ xmms_daap_init (xmms_xform_t *xform)
 	login_data = g_hash_table_lookup (login_sessions, hash);
 	if (!login_data) {
 		XMMS_DBG ("creating login data for %s", hash);
-		login_data = (xmms_daap_login_data_t *)
-		             g_malloc0 (sizeof (xmms_daap_login_data_t));
+		login_data = g_new0 (xmms_daap_login_data_t, 1);
 
 		login_data->request_id = 1;
 		login_data->logged_in = TRUE;
