@@ -41,9 +41,10 @@
 GIOChannel *
 daap_open_connection (gchar *host, gint port)
 {
+	gint ai_status;
 	gint sockfd;
 	struct sockaddr_in server;
-	struct hostent *hostinfo;
+	struct addrinfo *ai_hint, *ai_result;
 	GIOChannel *sock_chan;
 	GError *err = NULL;
 
@@ -61,15 +62,30 @@ daap_open_connection (gchar *host, gint port)
 		return NULL;
 	}
 
-	hostinfo = gethostbyname (host);
-	if (NULL == hostinfo) {
-		g_io_channel_unref (sock_chan);
-		return NULL;
+	/* call getaddrinfo() to convert a hostname to ip */
+
+	ai_hint = g_new0 (struct addrinfo, 1);
+	/* FIXME sometime in the future, we probably want to append
+	 *       " | {A,P}F_INET6" for IPv6 support */
+	ai_hint->ai_family = AF_INET;
+	ai_hint->ai_protocol = PF_INET;
+
+	while ((ai_status = getaddrinfo (host, NULL, ai_hint, &ai_result))) {
+		if (ai_status != EAI_AGAIN) {
+			XMMS_DBG ("Error with getaddrinfo(): %s", gai_strerror (ai_status));
+			g_io_channel_unref (sock_chan);
+			return NULL;
+		}
 	}
 
-	server.sin_addr = *(struct in_addr *) hostinfo->h_addr_list[0];
+	memset (&server, 0, sizeof (struct sockaddr_in));
+	
+	server.sin_addr = ((struct sockaddr_in *) ai_result->ai_addr)->sin_addr;
 	server.sin_family = AF_INET;
 	server.sin_port = htons (port);
+
+	g_free (ai_hint);
+	freeaddrinfo (ai_result);
 
 	while (42) {
 		fd_set fds;
