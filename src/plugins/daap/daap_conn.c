@@ -18,14 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <sys/errno.h>
-
 #include <glib.h>
 #include <glib/gprintf.h>
 
@@ -37,6 +29,7 @@
 #include "xmms/xmms_log.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
+#include "xmmsc/xmmsc_sockets.h"
 
 GIOChannel *
 daap_open_connection (gchar *host, gint port)
@@ -103,7 +96,7 @@ daap_open_connection (gchar *host, gint port)
 
 		if (sret == 0) {
 			break;
-		} else if (sret == -1 && errno != EINPROGRESS) {
+		} else if (sret == -1 && errno != XMMS_EINPROGRESS) {
 			xmms_log_error ("connect says: %s", strerror (errno));
 			g_io_channel_unref (sock_chan);
 			return NULL;
