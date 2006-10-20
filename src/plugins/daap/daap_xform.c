@@ -278,15 +278,11 @@ xmms_daap_init (xmms_xform_t *xform)
 	gchar *command, *hash;
 	guint filesize;
 
-	if (!xform) {
-		return FALSE;
-	}
+	g_return_val_if_fail (xform, FALSE);
 
 	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
 
-	if (!url) {
-		return FALSE;
-	}
+	g_return_val_if_fail (url, FALSE);
 
 	data = xmms_xform_private_data_get (xform);
 
