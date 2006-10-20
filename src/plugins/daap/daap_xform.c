@@ -163,11 +163,9 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 {
 	GHashTable *h = NULL;
 	gchar *songurl;
-	gchar *sid = g_malloc (G_ASCII_DTOSTR_BUF_SIZE);
 
-	g_ascii_dtostr (sid, G_ASCII_DTOSTR_BUF_SIZE, song->dbid);
-	songurl = g_strdup_printf ("daap://%s:%d/%s.%s",
-	                           host, port, sid, song->song_format);
+	songurl = g_strdup_printf ("daap://%s:%d/%u.%s",
+	                           host, port, song->dbid, song->song_format);
 
 	h = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, NULL);
 
@@ -187,7 +185,6 @@ add_song_to_list (GList *url_list, cc_item_record_t *song, gchar* host, guint po
 	url_list = xmms_xform_browse_add_entry (url_list, songurl, FALSE, h);
 
 	g_hash_table_destroy (h);
-	g_free (sid);
 	g_free (songurl);
 
 	return url_list;
