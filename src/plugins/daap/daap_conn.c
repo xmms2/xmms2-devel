@@ -133,7 +133,7 @@ daap_open_connection (gchar *host, gint port)
 }
 
 void
-daap_generate_request (gchar **request, gchar *path, gchar *host,
+daap_generate_request (gchar **request, const gchar *path, gchar *host,
                        gint request_id)
 {
 	gint request_len;
