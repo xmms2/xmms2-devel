@@ -293,8 +293,7 @@ xmms_daap_init (xmms_xform_t *xform)
 
 	xmms_error_reset (&err);
 
-	hash = g_malloc0 (strlen (data->host) + 5 + 1 + 1);
-	g_sprintf (hash, "%s:%u", data->host, data->port);
+	hash = g_strdup_printf ("%s:%u", data->host, data->port);
 
 	login_data = g_hash_table_lookup (login_sessions, hash);
 	if (!login_data) {
