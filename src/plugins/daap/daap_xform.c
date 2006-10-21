@@ -80,52 +80,54 @@ XMMS_XFORM_PLUGIN ("daap",
                    "Accesses iTunes (DAAP) music shares",
                    xmms_daap_plugin_setup);
 
+
+/**
+ * Extract hostname, port and command from an url.
+ * daap://hostname:port/command
+ */
 static gboolean
 get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 {
-	gint host_len;
-	const gchar *host_begin, *cmd_begin, *port_begin;
+	const gchar *port_ptr, *cmd_ptr, *end_ptr, *stripped;
 
-	host_begin = url;
-	host_begin += sizeof (gchar) * strlen ("daap://");
+	stripped = url + sizeof (gchar) * strlen ("daap://");
 
-	cmd_begin = strstr (host_begin, "/");
+	end_ptr = stripped + sizeof (gchar) * strlen (stripped);
 
-	if (NULL == cmd_begin) {
+	if (stripped == end_ptr) {
+		/* empty url */
 		return FALSE;
 	}
 
-	port_begin = strstr (host_begin, ":");
-	if ((NULL == port_begin) || (port_begin > cmd_begin)) {
-		*port = DEFAULT_DAAP_PORT;
-	} else {
-		*port = atoi (port_begin + sizeof (gchar) * strlen (":"));
-	}
-
-	if (NULL == cmd_begin && NULL == port_begin) {
-		host_len = (gint) strlen (host_begin);
-	} else if (NULL == port_begin) {
-		host_len = (gint) (cmd_begin - host_begin);
-	} else {
-		host_len = (gint) (port_begin - host_begin);
-	}
-	*host = (gchar *) g_malloc0 (host_len+1);
-	if (! *host) {
-		return FALSE;
-	}
-	memcpy (*host, host_begin, host_len);
-
-	if (NULL != cmd) {
-		*cmd = (gchar *) g_malloc0 (sizeof (gchar) * (strlen (cmd_begin)+1));
-		if (! *cmd) {
-			g_free (*host);
-			return FALSE;
+	port_ptr = strstr (stripped, ":");
+	if (port && port_ptr && (port_ptr + 1) != end_ptr) {
+		*port = strtol (port_ptr, (gchar **) NULL, 10);
+		if (*port == 0) {
+			*port = DEFAULT_DAAP_PORT;
 		}
-		strncpy (*cmd, cmd_begin, sizeof (gchar) * strlen (cmd_begin));
+	} else if (port) {
+		*port = DEFAULT_DAAP_PORT;
+	}
+
+	cmd_ptr = strstr (stripped, "/");
+	if (cmd && cmd_ptr && (cmd_ptr + 1) != end_ptr) {
+		*cmd = g_strdup (cmd_ptr);
+	} else if (cmd) {
+		/* cmd wanted but not found */
+		return FALSE;
+	}
+
+	if (port_ptr) {
+		*host = g_strndup (stripped, port_ptr - stripped);
+	} else if (cmd_ptr) {
+		*host = g_strndup (stripped, cmd_ptr - stripped);
+	} else {
+		*host = g_strdup (stripped);
 	}
 
 	return TRUE;
 }
+
 
 static gboolean
 xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
