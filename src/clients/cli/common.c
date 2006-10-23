@@ -73,7 +73,7 @@ print_error (const gchar *fmt, ...)
 	g_vsnprintf (buf, 1024, fmt, ap);
 	va_end (ap);
 
-	g_print ("ERROR: %s\n", buf);
+	g_printerr ("ERROR: %s\n", buf);
 
 	exit (EXIT_FAILURE);
 }
