@@ -16,83 +16,87 @@
 
 #include <glib.h>
 
-#include <stdio.h>
-
 #include "xmmsclient/xmmsclient.h"
 
 typedef struct {
-	GSource source;
-	GPollFD pollfd;
 	xmmsc_connection_t *conn;
+	GIOChannel *iochan;
+	gboolean write_pending;
 } xmmsc_glib_watch_t;
 
 static gboolean
-xmmsc_glib_prepare (GSource *source, gint *timeout)
+xmmsc_glib_read_cb (GIOChannel *iochan, GIOCondition cond, gpointer data)
 {
-	xmmsc_glib_watch_t *watch = (xmmsc_glib_watch_t *) source;
+	xmmsc_glib_watch_t *watch = data;
+	gboolean ret = FALSE;
 
-	*timeout = -1;
+	g_return_val_if_fail (watch, FALSE);
+	if (cond == G_IO_HUP || cond == G_IO_ERR) {
+		xmmsc_io_disconnect (watch->conn);
+	} else {
+		ret = xmmsc_io_in_handle (watch->conn);
+	}
 
-	watch->pollfd.events = G_IO_IN | G_IO_HUP | G_IO_ERR;
-	if (xmmsc_io_want_out (watch->conn))
-		watch->pollfd.events |= G_IO_OUT;
+	return ret;
+}
+
+static gboolean
+xmmsc_glib_write_cb (GIOChannel *iochan, GIOCondition cond, gpointer data)
+{
+	xmmsc_glib_watch_t *watch = data;
+
+	g_return_val_if_fail (watch, FALSE);
+	xmmsc_io_out_handle (watch->conn);
 
 	return FALSE;
 }
 
-static gboolean
-xmmsc_glib_check (GSource *source)
+static void
+xmmsc_mainloop_need_out_cb (int need_out, void *data)
 {
-	xmmsc_glib_watch_t *watch = (xmmsc_glib_watch_t *) source;
+	xmmsc_glib_watch_t *watch = data;
 
-	return !!watch->pollfd.revents;
-}
-
-static gboolean
-xmmsc_glib_dispatch (GSource *source, GSourceFunc callback, gpointer user_data)
-{
-	xmmsc_glib_watch_t *watch = (xmmsc_glib_watch_t *) source;
-
-	gboolean in = TRUE, out = TRUE;
-	if (watch->pollfd.revents & G_IO_IN)
-		in = xmmsc_io_in_handle (watch->conn);
-
-	if (watch->pollfd.revents & G_IO_OUT)
-		out = xmmsc_io_out_handle (watch->conn);
-
-	if (watch->pollfd.revents & (G_IO_HUP | G_IO_ERR)) {
-		xmmsc_io_disconnect (watch->conn);
-		return FALSE;
+	g_return_if_fail (watch);
+	if (need_out && !watch->write_pending) {
+		g_io_add_watch (watch->iochan,
+		                G_IO_OUT,
+		                xmmsc_glib_write_cb,
+		                watch);
+		watch->write_pending = TRUE;
+	} else if (!need_out) {
+		/* our write_cb has finished writing */
+		watch->write_pending = FALSE;
 	}
-
-	return in && out;
 }
-
-GSourceFuncs xmmsc_glib_funcs = {
-	.prepare = xmmsc_glib_prepare,
-	.check = xmmsc_glib_check,
-	.dispatch = xmmsc_glib_dispatch,
-};
 
 void *
 xmmsc_mainloop_gmain_init (xmmsc_connection_t *c)
 {
-	xmmsc_glib_watch_t *src;
+	xmmsc_glib_watch_t *watch;
+	gint fd;
 
-	src = (xmmsc_glib_watch_t *)g_source_new (&xmmsc_glib_funcs,
-	                                          sizeof (xmmsc_glib_watch_t));
-	src->pollfd.fd = xmmsc_io_fd_get (c);
-	src->pollfd.events = G_IO_IN | G_IO_HUP | G_IO_ERR;
-	src->conn = c;
-	g_source_add_poll ((GSource *)src, &src->pollfd);
+	g_return_val_if_fail (c, NULL);
+	fd = xmmsc_io_fd_get (c);
 
-	g_source_attach ((GSource *)src, NULL);
+	watch = g_new0 (xmmsc_glib_watch_t, 1);
+	watch->conn = c;
+	watch->iochan = g_io_channel_unix_new (fd);
 
-	return src;
+	xmmsc_io_need_out_callback_set (c, xmmsc_mainloop_need_out_cb, watch);
+	g_io_add_watch (watch->iochan,
+	                G_IO_IN | G_IO_ERR | G_IO_HUP,
+	                xmmsc_glib_read_cb,
+	                watch);
+	g_io_channel_unref (watch->iochan);
+
+	if (xmmsc_io_want_out (c))
+		xmmsc_mainloop_need_out_cb (1, watch);
+
+	return watch;
 }
 
 void
-xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *c, void *udata)
+xmmsc_mainloop_gmain_shutdown (xmmsc_connection_t *c, void *data)
 {
-	g_source_destroy (udata);
+	g_free (data);
 }
