@@ -31,7 +31,7 @@ xmmsc_glib_read_cb (GIOChannel *iochan, GIOCondition cond, gpointer data)
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail (watch, FALSE);
-	if (cond == G_IO_HUP || cond == G_IO_ERR) {
+	if (!(cond & G_IO_IN)) {
 		xmmsc_io_disconnect (watch->conn);
 	} else {
 		ret = xmmsc_io_in_handle (watch->conn);
