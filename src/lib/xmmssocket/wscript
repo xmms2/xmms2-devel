@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+# encoding: utf-8
+#
+# Copyright 2006 David Anderson <dave at natulte.net>
+
+import os
+
+def build(bld):
+  platform_src = {'nt':'win32', 'posix':'unix'}
+
+  obj = bld.create_obj('cc', 'shlib')
+  obj.source = "socket_common.c socket_%s.c" % platform_src[os.name]
+  obj.includes='. ../../include'
+  obj.target='xmmssocket'
+
+def configure(conf):
+  pass
+
+def set_options(opt):
+  pass
