@@ -5,7 +5,11 @@
 
 import os
 import sys
+
+# Waf removes the current dir from the python path. We readd it to
+# import gittools.
 sys.path = [os.getcwd()]+sys.path
+
 import gittools
 
 from Params import fatal
@@ -17,6 +21,10 @@ srcdir='.'
 blddir = '_build_'
 
 def init():
+  import gc
+  gc.disable()
+  return
+  # Color disable code.
   import Params
   Params.g_col_scheme = [0 for _ in Params.g_col_scheme]
   Params.g_colors = dict([(k, "") for k,v
@@ -24,9 +32,6 @@ def init():
                                  Params.g_col_scheme)])
 
 def build(bld):
-  import gc
-  gc.disable()
-
   # Process subfolders
   bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/xmms')
 
