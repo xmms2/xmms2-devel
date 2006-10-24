@@ -3,14 +3,93 @@
 #
 # Copyright 2006 David Anderson <dave at natulte.net>
 
+import sys
+
 def build(bld):
-  pass
+  #return
+  prog = bld.create_obj('cc', 'program')
+  prog.target = 'xmms2d'
+  prog.includes = '../include ../includepriv'
+  prog.source = " ".join(["main.c",
+                          "sample.c",
+                          "config.c",
+                          "mediainfo.c",
+                          "sqlite.c",
+                          "medialib.c",
+                          "object.c",
+                          "error.c",
+                          "output.c",
+                          "unixsignal.c",
+                          "playlist.c",
+                          "ipc.c",
+                          "log.c",
+                          "plugin.c",
+                          "magic.c",
+                          "ringbuf.c",
+                          "xform.c",
+                          "streamtype.c",
+                          "converter_plugin.c",
+                          "ringbuf_xform.c",
+                          "outputplugin.c",
+                          "statfs.c",
+                          "strfunc.c",
+                          "bindata.c"])
+  prog.uselib_local='xmmsipc xmmssocket'
+  prog.uselib = 'glib gmodule gthread sqlite3'
+
+  #prog = bld.create_obj('cc', 'program')
+  #prog.target = 'xmms2-launcher'
+  #prog.source = 'xmms2-launcher.c'
+  #prog.includes = '../include'
+  #prog.uselib = 'glib gmodule gthread'
 
 def configure(conf):
-  conf.check_pkg('glib-2.0', destvar='GLIB', vnum='2.6.0')
-  conf.check_pkg('gmodule-2.0', destvar='GMODULE', vnum='2.6.0')
-  conf.check_pkg('gthread-2.0', destvar='GTHREAD', vnum='2.6.0')
-  conf.check_pkg('sqlite3', destvar='SQLITE3')
+  conf.check_tool('misc')
+  conf.check_pkg('glib-2.0', destvar='glib', vnum='2.6.0')
+  conf.check_pkg('gmodule-2.0', destvar='gmodule', vnum='2.6.0')
+  conf.check_pkg('gthread-2.0', destvar='gthread', vnum='2.6.0')
+  conf.check_pkg('sqlite3', destvar='sqlite3')
+
+  # Check for the sin function in the math lib
+  test = conf.create(enumerator='function')
+  test.function = 'sin'
+  test.headers = ['math.h']
+  test.libs = ['m']
+  test.mandatory = 1
+  test.run()
+
+  # Check sunOS support
+  if sys.platform == 'sunos5':
+    test = conf.create(enumerator='function')
+    test.function = 'socket'
+    test.headers = ['socket.h']
+    test.libs = ['socket']
+    test.mandatory = 1
+    test.run()
+    conf.env.appendUnique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
+
+  # Detect the type of stat call used
+
+  # This function is ploped down here for now because the change has
+  # been submitted to upstream, and will hopefully get rolled back
+  # into the waf dist.
+  def check_header(header_name, mandatory=0):
+    test = conf.create(enumerator='header')
+    test.name = header_name
+    test.mandatory = mandatory
+    return test.run()
+
+  if check_header('sys/vfs.h'):
+    if sys.platform == 'sunos5':
+      conf.env.appendUnique('CCFLAGS', '-DSTATFS_SOLARIS')
+    else:
+      conf.env.appendUnique('CCFLAGS', '-DSTATFS_LINUX')
+  elif check_header('sys/param.h'):
+    conf.env.appendUnique('CCFLAGS', '-DSTATFS_BSD')
+
+  # Add Darwin stuff
+  if sys.platform == 'darwin':
+    conf.env.appendUnique('LINKFLAGS', '-framework CoreFoundation')
 
 def set_options(opt):
   pass

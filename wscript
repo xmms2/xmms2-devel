@@ -32,12 +32,27 @@ def init():
                                  Params.g_col_scheme)])
 
 def build(bld):
+  # Build the XMMS2 defs file
+  defs = bld.create_obj('subst')
+  defs.source = 'src/include/xmms/xmms_defs.h.in'
+  defs.target = 'src/include/xmms/xmms_defs.h'
+  defs.dict = bld.env_of_name('default')
+
   # Process subfolders
   bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/xmms')
 
 def configure(conf):
   conf.check_tool('gcc')
 
+  # Set the platform in the configure env
+  platform_names = ['linux', 'freebsd', 'openbsd',
+                    'netbsd', 'dragonfly']
+  for platform in platform_names:
+    if sys.platform.startswith(platform):
+      conf.env['PLATFORM'] = platform
+      break
+
+  # Check for support for the generic platform
   has_platform_support = os.name in ('nt', 'posix')
   conf.check_message("platform code for", os.name,
                      has_platform_support)
