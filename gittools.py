@@ -41,3 +41,11 @@ def get_info():
         except:
             return 'Unknown', False
 
+def get_info_str():
+    commithash, changed = get_info()
+    if changed:
+        changed = " + local changes"
+    else:
+        changed = ""
+
+    return "%s%s" % (commithash, changed)
