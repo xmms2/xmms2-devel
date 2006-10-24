@@ -48,7 +48,7 @@ xmmsc_glib_write_cb (GIOChannel *iochan, GIOCondition cond, gpointer data)
 	g_return_val_if_fail (watch, FALSE);
 	xmmsc_io_out_handle (watch->conn);
 
-	return FALSE;
+	return !!xmmsc_io_want_out (watch->conn);
 }
 
 static void
