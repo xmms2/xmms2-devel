@@ -24,12 +24,6 @@ def init():
   import gc
   gc.disable()
   return
-  # Color disable code.
-  import Params
-  Params.g_col_scheme = [0 for _ in Params.g_col_scheme]
-  Params.g_colors = dict([(k, "") for k,v
-                          in zip(Params.g_col_names,
-                                 Params.g_col_scheme)])
 
 def build(bld):
   # Build the XMMS2 defs file
