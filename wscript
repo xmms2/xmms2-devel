@@ -23,7 +23,6 @@ blddir = '_build_'
 def init():
   import gc
   gc.disable()
-  return
 
 def build(bld):
   # Build the XMMS2 defs file
