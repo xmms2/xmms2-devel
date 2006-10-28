@@ -1,0 +1,6 @@
+target="waveout"
+source=["waveout.c"]
+
+def config(env):
+	env.checkheader("windows.h")
+	env.Append(LIBS=['winmm'])

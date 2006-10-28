@@ -206,7 +206,7 @@ get_systemname (void)
 {
 	struct utsname uts;
 
-	if (uname (&uts) == 0) {
+	if (uname (&uts) >= 0) {
 		system_name = g_strdup_printf ("%s %s %s",
 		                               uts.sysname,
 		                               uts.release,

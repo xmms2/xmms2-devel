@@ -85,7 +85,7 @@ struct xmms_config_St {
 	GQueue *states;
 	GQueue *sections;
 	gchar *value_name;
-	double version;
+	guint version;
 };
 
 /**
@@ -112,7 +112,7 @@ xmms_config_t *global_config;
 /**
  * Config file version
  */
-#define XMMS_CONFIG_VERSION 0.02
+#define XMMS_CONFIG_VERSION 2
 
 /**
  * @}
@@ -446,7 +446,11 @@ xmms_config_parse_start (GMarkupParseContext *ctx,
 			/* check config version here */
 			attr = lookup_attribute(attr_name, attr_data, "version");
 			if (attr) {
-				config->version = atof(attr);
+				if (strcmp (attr, "0.02") == 0) {
+					config->version = 2;
+				} else {
+					config->version = atoi (attr);
+				}
 			}
 			return;
 		default:
@@ -685,7 +689,7 @@ xmms_config_init (const gchar *filename)
 	config->properties = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free,
 	                                            (GDestroyNotify) __int_xmms_object_unref);
-	config->version = -1;
+	config->version = 0;
 	global_config = config;
 
 	xmms_ipc_object_register (XMMS_IPC_OBJECT_CONFIG, XMMS_OBJECT (config));
@@ -873,7 +877,7 @@ dump_node (GNode *node, FILE *fp)
 		         indent, data[0], data[1]);
 	} else {
 		if (is_root) {
-			fprintf (fp, "<?xml version=\"1.0\"?>\n<%s version=\"%.2f\">\n",
+			fprintf (fp, "<?xml version=\"1.0\"?>\n<%s version=\"%i\">\n",
 			         (gchar *) node->data, XMMS_CONFIG_VERSION);
 		} else {
 			fprintf (fp, "%s<section name=\"%s\">\n",

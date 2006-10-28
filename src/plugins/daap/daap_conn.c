@@ -18,14 +18,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <sys/errno.h>
-
 #include <glib.h>
 #include <glib/gprintf.h>
 
@@ -37,13 +29,15 @@
 #include "xmms/xmms_log.h"
 #include "xmmsc/xmmsc_ipc_transport.h"
 #include "xmmsc/xmmsc_ipc_msg.h"
+#include "xmmsc/xmmsc_sockets.h"
 
 GIOChannel *
 daap_open_connection (gchar *host, gint port)
 {
+	gint ai_status;
 	gint sockfd;
 	struct sockaddr_in server;
-	struct hostent *hostinfo;
+	struct addrinfo *ai_hint, *ai_result;
 	GIOChannel *sock_chan;
 	GError *err = NULL;
 
@@ -61,15 +55,30 @@ daap_open_connection (gchar *host, gint port)
 		return NULL;
 	}
 
-	hostinfo = gethostbyname (host);
-	if (NULL == hostinfo) {
-		g_io_channel_unref (sock_chan);
-		return NULL;
+	/* call getaddrinfo() to convert a hostname to ip */
+
+	ai_hint = g_new0 (struct addrinfo, 1);
+	/* FIXME sometime in the future, we probably want to append
+	 *       " | {A,P}F_INET6" for IPv6 support */
+	ai_hint->ai_family = AF_INET;
+	ai_hint->ai_protocol = PF_INET;
+
+	while ((ai_status = getaddrinfo (host, NULL, ai_hint, &ai_result))) {
+		if (ai_status != EAI_AGAIN) {
+			XMMS_DBG ("Error with getaddrinfo(): %s", gai_strerror (ai_status));
+			g_io_channel_unref (sock_chan);
+			return NULL;
+		}
 	}
 
-	server.sin_addr = *(struct in_addr *) hostinfo->h_addr_list[0];
+	memset (&server, 0, sizeof (struct sockaddr_in));
+	
+	server.sin_addr = ((struct sockaddr_in *) ai_result->ai_addr)->sin_addr;
 	server.sin_family = AF_INET;
 	server.sin_port = htons (port);
+
+	g_free (ai_hint);
+	freeaddrinfo (ai_result);
 
 	while (42) {
 		fd_set fds;
@@ -87,7 +96,7 @@ daap_open_connection (gchar *host, gint port)
 
 		if (sret == 0) {
 			break;
-		} else if (sret == -1 && errno != EINPROGRESS) {
+		} else if (sret == -1 && errno != XMMS_EINPROGRESS) {
 			xmms_log_error ("connect says: %s", strerror (errno));
 			g_io_channel_unref (sock_chan);
 			return NULL;
@@ -132,43 +141,31 @@ daap_open_connection (gchar *host, gint port)
 	return sock_chan;
 }
 
-void
-daap_generate_request (gchar **request, gchar *path, gchar *host,
-                       gint request_id)
+gchar *
+daap_generate_request (const gchar *path, gchar *host, gint request_id)
 {
-	gint request_len;
+	gchar *req;
 	gint8 hash[33];
 
 	memset (hash, 0, 33);
 
-	*request = (gchar *) g_malloc0 (sizeof (gchar) * MAX_REQUEST_LENGTH);
-	if (NULL == *request) {
-		XMMS_DBG ("Error: couldn't allocate memory for request\n");
-		return;
-	}
-
 	daap_hash_generate (DAAP_VERSION, (guchar *) path, 2, (guchar *) hash,
 	                    request_id);
 
-	g_sprintf (*request, "GET %s %s\r\n"
-	                     "Host: %s\r\n"
-	                     "Accept: */*\r\n"
-	                     "User-Agent: %s\r\n"
-	                     "Accept-Language: en-us, en;q=5.0\r\n"
-	                     "Client-DAAP-Access-Index: 2\r\n"
-	                     "Client-DAAP-Version: 3.0\r\n"
-	                     "Client-DAAP-Validation: %s\r\n"
-	                     "Client-DAAP-Request-ID: %d\r\n"
-	                     "Connection: close\r\n"
-	                     "\r\n",
-	           path, HTTP_VER_STRING, host, USER_AGENT, hash, request_id);
-	request_len = strlen (*request);
-	
-	*request = g_realloc (*request, sizeof (gchar)*(request_len+1));
-	if (NULL == *request) {
-		XMMS_DBG ("warning: realloc failed for request\n");
-	}
-	(*request)[request_len] = '\0';
+	req = g_strdup_printf ("GET %s %s\r\n"
+	                       "Host: %s\r\n"
+	                       "Accept: */*\r\n"
+	                       "User-Agent: %s\r\n"
+	                       "Accept-Language: en-us, en;q=5.0\r\n"
+	                       "Client-DAAP-Access-Index: 2\r\n"
+	                       "Client-DAAP-Version: 3.0\r\n"
+	                       "Client-DAAP-Validation: %s\r\n"
+	                       "Client-DAAP-Request-ID: %d\r\n"
+	                       "Connection: close\r\n"
+	                       "\r\n",
+	                       path, HTTP_VER_STRING, host,
+	                       USER_AGENT, hash, request_id);
+	return req;
 }
 
 void

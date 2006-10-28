@@ -110,6 +110,8 @@ xmms_mad_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	                "0 beshort&0xffe6 0xffe2",
 	                NULL);
 
+	xmms_magic_extension_add ("audio/mpeg", "*.mp3");
+
 	return TRUE;
 }
 
@@ -152,7 +154,7 @@ xmms_mad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 
 		i = (guint) (100ULL * samples / xmms_xing_get_frames (data->xing) / 1152);
 
-		bytes = xmms_xing_get_toc (data->xing, i) * xmms_xing_get_bytes (data->xing) / 256;
+		bytes = xmms_xing_get_toc (data->xing, i) * (xmms_xing_get_bytes (data->xing) / 256);
 	} else {
 		bytes = (guint)(((gdouble)samples) * data->bitrate / data->samplerate) / 8;
 	}

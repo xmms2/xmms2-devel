@@ -1,0 +1,6 @@
+target="vocoder"
+source=['vocoder.c', 'pvocoder.c']
+
+def config(env):
+	env.pkgconfig("fftw3f")
+	env.pkgconfig("samplerate")

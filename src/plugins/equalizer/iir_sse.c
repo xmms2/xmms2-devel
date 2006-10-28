@@ -59,7 +59,7 @@ void clean_history()
   setup_gain(band_count);
 
   /* Zero the history arrays */
-  bzero(history, sizeof(history));
+  memset(history, 0, sizeof(history));
   /* Init pointers */
   for (i=0; i<EQ_CHANNELS; i++)
   {
@@ -81,9 +81,9 @@ void clean_history()
 static void load_coeffs(int bands)
 {
   int i;
-  bzero(support.sse_iir_cf_alpha, sizeof(support.sse_iir_cf_alpha));
-  bzero(support.sse_iir_cf_beta, sizeof(support.sse_iir_cf_beta));
-  bzero(support.sse_iir_cf_gamma, sizeof(support.sse_iir_cf_gamma));
+  memset(support.sse_iir_cf_alpha, 0, sizeof(support.sse_iir_cf_alpha));
+  memset(support.sse_iir_cf_beta, 0, sizeof(support.sse_iir_cf_beta));
+  memset(support.sse_iir_cf_gamma, 0, sizeof(support.sse_iir_cf_gamma));
   for (i = 0; i < bands; i++)
   {
     support.sse_iir_cf_alpha[i/4].f[i%4] = iir_cf[i].alpha;

@@ -237,12 +237,16 @@ update_playtime (xmms_output_t *output, int ret)
 	g_mutex_lock (output->playtime_mutex);
 
 	if (output->format) {
-		output->played_time = xmms_sample_bytes_to_ms (output->format, output->played - buffersize);
-	
-		xmms_object_emit_f (XMMS_OBJECT (output),
-		                    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
-		                    XMMS_OBJECT_CMD_ARG_UINT32,
-		                    output->played_time);
+		guint ms = xmms_sample_bytes_to_ms (output->format,
+		                                    output->played - buffersize);
+		if ((ms / 100) != (output->played_time / 100)) {
+			xmms_object_emit_f (XMMS_OBJECT (output),
+			                    XMMS_IPC_SIGNAL_OUTPUT_PLAYTIME,
+			                    XMMS_OBJECT_CMD_ARG_UINT32,
+			                    ms);
+		}
+		output->played_time = ms;
+
 	}
 	
 	g_mutex_unlock (output->playtime_mutex);

@@ -17,6 +17,13 @@ class ConfigError(Exception):
 
 any = lambda x: reduce(operator.or_, x)
 
+
+def find_static_lib(env, lib):
+	libname = "lib%s.a" % lib
+	for d in env["LIBPATH"] + env.GCC_DIRS:
+		if os.path.exists(d+"/"+libname):
+			return d+"/"+libname
+
 def installFunc(dest, source, env):
 	"""Copy file, setting sane permissions"""
 	
@@ -157,6 +164,10 @@ class XMMSEnvironment(Environment):
 		
 		if self.platform == 'darwin':
 			self["SHLINKFLAGS"] = "$LINKFLAGS -multiply_defined suppress -flat_namespace -undefined suppress"
+
+		if "gcc" in self["CC"]:
+			GCC_DIRS=os.popen("%s --print-search-dirs" % self["CC"]).read()
+			self.GCC_DIRS=GCC_DIRS[GCC_DIRS.find("libraries:")+len("libraries: ="):].strip().split(":")
 
 		self.potential_targets = []
 		self.scan_dir("src")
@@ -332,9 +343,17 @@ class XMMSEnvironment(Environment):
 
 			if switch == '-':
 				if opt == 'L':
-					self.Append( LIBPATH = [ arg[2:] ] )
+					if not self["STATIC"]:
+						self.Append( LIBPATH = [ arg[2:] ] )
 				elif opt == 'l':
-					self.Append( LIBS = [ arg[2:] ] )
+					if self["STATIC"]:
+						lib = find_static_lib(self, arg[2:])
+						if not lib:
+							self.Append( LIBS = [ "-l"+arg[2:] ] )
+						else:
+							self.Append( LIBS = [ self.File(lib) ])
+					else:
+						self.Append( LIBS = [ arg[2:] ] )
 				elif opt == 'I':
 					self.Append( CPPPATH = [ arg[2:] ] )
 				elif opt == 'D':
@@ -426,6 +445,7 @@ class XMMSEnvironment(Environment):
 			else:
 				if self.platform == 'darwin':
 					self["SHLINKFLAGS"] += " -dynamiclib"
+ 					self["SHLINKFLAGS"] += " -single_module"
 				if install:
 					self.Install(self.librarypath, os.path.join(self.dir, self.shlibname(target)))
 					if self.platform == 'darwin':

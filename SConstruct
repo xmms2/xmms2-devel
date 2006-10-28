@@ -17,10 +17,10 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrFeelgood+WIP+TEST3 (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrGonzo+WIP (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
-EnsurePythonVersion(2, 1)
+EnsurePythonVersion(2, 3)
 SConsignFile()
 
 def SimpleListOption(key, help, default=[]):
@@ -50,7 +50,7 @@ opts.Add('MANDIR', 'manual directory', '$PREFIX/man')
 opts.Add('LIBDIR', 'specified library directory', '$PREFIX/lib')
 opts.Add('BINDIR', 'specified binary directory', '$PREFIX/bin')
 opts.Add('PLUGINDIR', 'specified plugin directory', '$LIBDIR/xmms2')
-opts.Add('SHAREDIR', 'specified share directory', '$PREFIX/share')
+opts.Add('SHAREDIR', 'specified share directory', '$PREFIX/share/xmms2')
 opts.Add('SCRIPTDIR', 'specified scripts directory', '$SHAREDIR/scripts')
 opts.Add('INCLUDEDIR', 'specified include directory', '$PREFIX/include/xmms2')
 opts.Add('RUBYARCHDIR', 'Path to install Ruby bindings')
@@ -59,6 +59,7 @@ opts.Add('PKGCONFIGDIR', 'Where should we put our .pc files?', '$PREFIX/lib/pkgc
 opts.Add(BoolOption('SHOWCACHE', 'show what flags that lives inside cache', 0))
 opts.Add(SimpleListOption('EXCLUDE', 'exclude these modules', []))
 opts.Add(BoolOption('CONFIG', 'run configuration commands again', 0))
+opts.Add(BoolOption('STATIC', 'Link everything static', 0))
 
 # base CCPATH
 base_env = xmmsenv.XMMSEnvironment(options=opts)
@@ -179,10 +180,10 @@ scan_headers("xmmsclient/xmmsclient++")
 ### INSTALL MANUAL PAGES!
 
 base_env.add_manpage(1, 'doc/xmms2.1')
-base_env.add_manpage(8, 'doc/xmms2d.8')
+base_env.add_manpage(1, 'doc/xmms2d.1')
 base_env.add_manpage(1, 'doc/xmms2-et.1')
-base_env.add_manpage(1, 'doc/xmms2-launcher.8')
-base_env.add_manpage(1, 'doc/xmms2-mdns-avahi.8')
+base_env.add_manpage(1, 'doc/xmms2-launcher.1')
+base_env.add_manpage(1, 'doc/xmms2-mdns-avahi.1')
 
 #### Generate pc files.
 

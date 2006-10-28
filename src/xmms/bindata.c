@@ -161,7 +161,7 @@ _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar
 	if (g_file_test (path, G_FILE_TEST_IS_REGULAR)) {
 		XMMS_DBG ("file %s is already in bindata dir", hash);
 		g_free (path);
-		return FALSE;
+		return TRUE;
 	}
 
 	XMMS_DBG ("Creating %s", path);

@@ -52,7 +52,7 @@ static gint64 xmms_samba_seek (xmms_xform_t *xform, gint64 offset,
                                xmms_xform_seek_mode_t whence,
                                xmms_error_t *error);
 static gboolean xmms_samba_plugin_setup (xmms_xform_plugin_t *xform_plugin);
-static GList *xmms_samba_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
+static gboolean xmms_samba_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 
 /*
  * Plugin header
@@ -228,35 +228,37 @@ xmms_samba_seek (xmms_xform_t *xform, gint64 offset,
 
 	return res;
 }
-
-static GList *
+static gboolean
 xmms_samba_browse (xmms_xform_t *xform,
                    const gchar *url,
                    xmms_error_t *error)
 {
-	GList *ret = NULL;
-	int handle;
 	struct smbc_dirent *dir;
+	int handle;
 
 	handle = smbc_opendir (url);
 	if (handle < 0) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't browse URL");
 		xmms_log_error ("Couldn't open directory %s!", url);
-		return NULL;
+		return FALSE;
 	}
 
 	while ((dir = smbc_readdir (handle))) {
-		gboolean is_dir = dir->smbc_type == SMBC_DIR ||
-		                  dir->smbc_type == SMBC_WORKGROUP ||
-		                  dir->smbc_type == SMBC_SERVER ||
-		                  dir->smbc_type == SMBC_FILE_SHARE;
-		gchar *t2 = xmms_medialib_url_encode (dir->name);
-		XMMS_DBG ("%s", t2);
-		ret = xmms_xform_browse_add_entry (ret, t2, is_dir, NULL);
-		g_free (t2);
+		guint32 flags = 0;
+
+		if (dir->name[0] == '.')
+			continue;
+
+		if (dir->smbc_type == SMBC_DIR ||
+		    dir->smbc_type == SMBC_WORKGROUP ||
+		    dir->smbc_type == SMBC_SERVER ||
+		    dir->smbc_type == SMBC_FILE_SHARE)
+			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
+		
+		xmms_xform_browse_add_entry (xform, dir->name, flags);
 	}
 
 	smbc_closedir (handle);
 
-	return ret;
+	return TRUE;
 }
