@@ -44,12 +44,12 @@ def build(bld):
   #prog.uselib = 'glib gmodule gthread'
 
 def configure(conf):
-  conf.check_tool('misc')
+  conf.check_tool('misc checks')
   conf.check_tool('python-generator', tooldir='xmmsenv')
-  conf.check_pkg('glib-2.0', destvar='glib', vnum='2.6.0')
-  conf.check_pkg('gmodule-2.0', destvar='gmodule', vnum='2.6.0')
-  conf.check_pkg('gthread-2.0', destvar='gthread', vnum='2.6.0')
-  conf.check_pkg('sqlite3', destvar='sqlite3')
+  conf.check_pkg2('glib-2.0', '2.6.0')
+  conf.check_pkg2('gmodule-2.0', '2.6.0')
+  conf.check_pkg2('gthread-2.0', '2.6.0')
+  conf.check_pkg2('sqlite3', '0.0')
 
   # Check for the sin function in the math lib
   test = conf.create(enumerator='function')
