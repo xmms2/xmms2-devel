@@ -7,16 +7,10 @@ import sys,os
 import pproc
 
 def build(bld):
-  f = open('src/xmms/converter.c', 'w')
-  pproc.call(['python', 'src/xmms/generate-converter.py'],
-             stdout=f)
-  f.close()
-
   prog = bld.create_obj('cc', 'program')
   prog.target = 'xmms2d'
-  prog.includes = '../include ../includepriv'
+  prog.includes = '. ../include ../includepriv'
   prog.source = ["main.c",
-                 "sample.c",
                  "config.c",
                  "mediainfo.c",
                  "sqlite.c",
@@ -38,7 +32,8 @@ def build(bld):
                  "outputplugin.c",
                  "statfs.c",
                  "strfunc.c",
-                 "bindata.c"]
+                 "bindata.c",
+                 "sample.genpy"]
   prog.uselib_local='xmmsipc xmmssocket'
   prog.uselib = 'glib gmodule gthread sqlite3'
 
@@ -50,6 +45,7 @@ def build(bld):
 
 def configure(conf):
   conf.check_tool('misc')
+  conf.check_tool('python-generator', tooldir='xmmsenv')
   conf.check_pkg('glib-2.0', destvar='glib', vnum='2.6.0')
   conf.check_pkg('gmodule-2.0', destvar='gmodule', vnum='2.6.0')
   conf.check_pkg('gthread-2.0', destvar='gthread', vnum='2.6.0')
