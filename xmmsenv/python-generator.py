@@ -10,9 +10,12 @@ def genpy_file(self, node):
     gen_script = node.m_parent.get_file("generate-%s.py" % basefile)
     static_src = node.m_parent.get_file("%s.c" % basefile)
 
-    gen_src = node.m_parent.get_file("%s-gen.c" % basefile)
+    gen_name = "%s-gen.c" % basefile
+    gen_src = node.m_parent.get_file(gen_name)
     if not gen_src:
-        gen_src = Node.Node("%s-gen.c" % basefile, node.m_parent)
+        gen_src = node.m_parent.get_build(gen_name)
+    if not gen_src:
+        gen_src = Node.Node(gen_name, node.m_parent)
         node.m_parent.append_build(gen_src)
 
     gentask = self.create_task('genpy')

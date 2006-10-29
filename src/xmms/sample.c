@@ -387,3 +387,4 @@ xmms_sample_convert_reset (xmms_sample_converter_t *conv)
 	conv->offset = 0;
 	memset (conv->state, 0, xmms_sample_frame_size_get (conv->from));
 }
+
