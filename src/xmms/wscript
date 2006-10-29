@@ -3,37 +3,42 @@
 #
 # Copyright 2006 David Anderson <dave at natulte.net>
 
-import sys
+import sys,os
+import pproc
 
 def build(bld):
-  #return
+  f = open('src/xmms/converter.c', 'w')
+  pproc.call(['python', 'src/xmms/generate-converter.py'],
+             stdout=f)
+  f.close()
+
   prog = bld.create_obj('cc', 'program')
   prog.target = 'xmms2d'
   prog.includes = '../include ../includepriv'
-  prog.source = " ".join(["main.c",
-                          "sample.c",
-                          "config.c",
-                          "mediainfo.c",
-                          "sqlite.c",
-                          "medialib.c",
-                          "object.c",
-                          "error.c",
-                          "output.c",
-                          "unixsignal.c",
-                          "playlist.c",
-                          "ipc.c",
-                          "log.c",
-                          "plugin.c",
-                          "magic.c",
-                          "ringbuf.c",
-                          "xform.c",
-                          "streamtype.c",
-                          "converter_plugin.c",
-                          "ringbuf_xform.c",
-                          "outputplugin.c",
-                          "statfs.c",
-                          "strfunc.c",
-                          "bindata.c"])
+  prog.source = ["main.c",
+                 "sample.c",
+                 "config.c",
+                 "mediainfo.c",
+                 "sqlite.c",
+                 "medialib.c",
+                 "object.c",
+                 "error.c",
+                 "output.c",
+                 "unixsignal.c",
+                 "playlist.c",
+                 "ipc.c",
+                 "log.c",
+                 "plugin.c",
+                 "magic.c",
+                 "ringbuf.c",
+                 "xform.c",
+                 "streamtype.c",
+                 "converter_plugin.c",
+                 "ringbuf_xform.c",
+                 "outputplugin.c",
+                 "statfs.c",
+                 "strfunc.c",
+                 "bindata.c"]
   prog.uselib_local='xmmsipc xmmssocket'
   prog.uselib = 'glib gmodule gthread sqlite3'
 
