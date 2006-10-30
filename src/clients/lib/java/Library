@@ -110,7 +110,7 @@ def config(env):
  
 	# add any special platform-specific compilation or linking flags
 	if sys.platform == 'darwin':
-		env.Append(SHLINKFLAGS = '-dynamiclib -framework JavaVM')
+		env.Append(SHLINKFLAGS = ' -dynamiclib -framework JavaVM')
 		env['SHLIBSUFFIX'] = '.jnilib'
 	elif sys.platform == 'cygwin':
 		env.Append(CCFLAGS = '-mno-cygwin')
