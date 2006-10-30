@@ -46,8 +46,12 @@ def build(bld):
   plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
   bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
 
-  # Build the client lib
+  # Build the client libs
   bld.add_subdirs('src/clients/lib/xmmsclient')
+  bld.add_subdirs('src/clients/lib/xmmsclient-glib')
+
+  # Build the client
+  bld.add_subdirs('src/clients/cli')
 
 ####
 ## Configuration
@@ -110,6 +114,8 @@ def configure(conf):
   conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/xmms')
+  conf.sub_config('src/clients/lib/xmmsclient-glib')
+  conf.sub_config('src/clients/cli')
 
   _configure_plugins(conf)
   _set_defs(conf)
