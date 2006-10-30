@@ -1,10 +1,11 @@
 import sys
 
 def build(bld):
-  obj = bld.create_obj('cpp', 'shlib')
+  obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_vocoder'
+  obj.includes = '../../include'
   obj.source = ['vocoder.c', 'pvocoder.c']
-  obj.uselib = 'fftw3f samplerate'
+  obj.uselib = 'fftw3f samplerate glib-2.0'
 
 def configure(conf):
   if (conf.check_pkg('fftw3f', destvar='fftw3f') and

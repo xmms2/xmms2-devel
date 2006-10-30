@@ -1,8 +1,9 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_lastfmeta'
+  obj.includes = '../../include'
   obj.source = 'lastfmeta.c'
-  obj.uselib = 'curl'
+  obj.uselib = 'curl glib-2.0'
 
 def configure(conf):
   cfg = conf.create(configurator='cfgtool')
@@ -10,4 +11,4 @@ def configure(conf):
   cfg.uselib = 'curl'
   cfg.run()
   if conf.env['HAVE_curl']:
-    conf.env['XMMS_PLUGINS_ENABLED'].append('lastfm')
+    conf.env['XMMS_PLUGINS_ENABLED'].append('lastfmeta')

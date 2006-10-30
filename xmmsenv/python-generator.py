@@ -18,7 +18,7 @@ def genpy_file(self, node):
         gen_src = Node.Node(gen_name, node.m_parent)
         node.m_parent.append_build(gen_src)
 
-    gentask = self.create_task('genpy')
+    gentask = self.create_task('genpy', nice=1)
     gentask.set_inputs([gen_script, static_src])
     gentask.set_outputs(gen_src)
 
