@@ -2,9 +2,14 @@ def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
   obj.target = 'sid'
   obj.sources = ['sid.c', 'sidplay_wrapper.cpp', 'md5.cpp']
-  obj.uselib = 'samba'
+  obj.uselib = 'sidplay'
 
 def configure(conf):
   conf.check_tool('checks g++')
-  if conf.check_pkg('libsidplay', destvar='sidplay'):
+  cfg = conf.create(configurator='pkgconfig')
+  cfg.name = 'libsidplay2'
+  cfg.uselib = 'sidplay'
+  cfg.variables = ['builders']
+  if cfg.run():
+    conf.env['LINKFLAGS_sidplay'].append("-L%s" % conf.env['sidplay_BUILDERS'])
     conf.env['XMMS_PLUGINS_ENABLED'].append('sid')
