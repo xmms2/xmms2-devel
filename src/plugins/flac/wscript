@@ -1,11 +1,13 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_flac'
-  obj.sources = 'flac.c'
-  obj.uselib = 'flac'
+  obj.includes = '../../include'
+  obj.source = 'flac.c'
+  obj.uselib = 'flac glib-2.0'
 
 def configure(conf):
   conf.check_tool('checks')
-  if (conf.check_header2('FLAC/all.h') and
+  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
+      conf.check_header2('FLAC/all.h') and
       conf.check_library2('FLAC', uselib='flac')):
     conf.env['XMMS_PLUGINS_ENABLED'].append('flac')

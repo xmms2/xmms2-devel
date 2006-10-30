@@ -1,11 +1,14 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
+  obj.includes = '../../include'
   obj.target = 'xmms_faad'
-  obj.find_sources_in_dirs(['.', 'mp4ff'])
-  obj.uselib = 'faad'
+  obj.find_sources_in_dirs('. mp4ff') # TODO: fix waf to accept lists
+  obj.uselib = 'faad glib-2.0'
 
 def configure(conf):
-  if conf.check_library2('faad', uselib='faad', mandatory=0):
+  conf.check_tool('checks')
+  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
+      conf.check_library2('faad', uselib='faad', mandatory=0)):
     conf.env['CCDEFINES_faad'] = ['USE_TAGGING']
     conf.env['XMMS_PLUGINS_ENABLED'].append('faad')
     # to use iTunes DRM change this to true

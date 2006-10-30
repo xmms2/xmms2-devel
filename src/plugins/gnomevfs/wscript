@@ -1,7 +1,7 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_gnomevfs'
-  obj.sources = 'gnomevfs.c'
+  obj.source = 'gnomevfs.c'
   obj.uselib = 'gnomevfs'
 
 def configure(conf):

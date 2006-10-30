@@ -3,8 +3,9 @@ import sys
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_wma'
-  obj.sources = 'wma.c'
-  obj.uselib = 'wma'
+  obj.includes = '../../include'
+  obj.source = 'wma.c'
+  obj.uselib = 'wma glib-2.0'
 
 def configure(conf):
   conf.check_tool('checks')

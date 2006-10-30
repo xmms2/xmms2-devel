@@ -1,7 +1,7 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_mms'
-  obj.sources = 'mms.c'
+  obj.source = 'mms.c'
   obj.uselib = 'mms'
 
 def configure(conf):

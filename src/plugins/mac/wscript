@@ -1,7 +1,7 @@
 def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
   obj.target = 'xmms_mac'
-  obj.sources = ['mac.cpp', 'source_adapter.cpp']
+  obj.source = ['mac.cpp', 'source_adapter.cpp']
   obj.uselib = 'mac'
 
 def configure(conf):

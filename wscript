@@ -35,6 +35,10 @@ def build(bld):
   # Process subfolders
   bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/xmms')
 
+  # Build configured plugins
+  plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
+  bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
+
 def _set_defs(conf):
   """Set the values needed by xmms_defs.h.in in the environment."""
 
@@ -59,7 +63,7 @@ def _set_defs(conf):
 
   conf.env['XMMS_DEFS'] = defs
 
-def _process_plugins(conf):
+def _configure_plugins(conf):
   """Process all xmms2d plugins"""
 
   conf.env['XMMS_PLUGINS_ENABLED'] = []
@@ -90,7 +94,7 @@ def configure(conf):
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/xmms')
 
-  _process_plugins(conf)
+  _configure_plugins(conf)
   _set_defs(conf)
 
 def set_options(opt):

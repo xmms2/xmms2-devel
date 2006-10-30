@@ -1,7 +1,7 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_jack'
-  obj.sources = 'jack.c'
+  obj.source = 'jack.c'
   obj.uselib = 'jack'
 
 def configure(conf):

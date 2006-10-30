@@ -1,8 +1,16 @@
 def build(bld):
-  obj = bld.create_obj('cpp', 'shlib')
+  obj = bld.create_obj('cpp', 'objects')
+  obj.target = 'xmms_sid_cpp'
+  obj.includes = '../../include'
+  obj.source = ['sidplay_wrapper.cpp', 'md5.cpp']
+  obj.uselib = 'sidplay glib-2.0'
+
+  obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_sid'
-  obj.sources = ['sid.c', 'sidplay_wrapper.cpp', 'md5.cpp']
-  obj.uselib = 'sidplay'
+  obj.includes = '../../include'
+  obj.source = 'sid.c'
+  obj.add_objects = 'xmms_sid_cpp'
+  obj.uselib = 'sidplay glib-2.0'
 
 def configure(conf):
   conf.check_tool('checks g++')
@@ -10,7 +18,8 @@ def configure(conf):
   cfg.name = 'libsidplay2'
   cfg.uselib = 'sidplay'
   cfg.variables = ['builders']
-  if cfg.run():
+  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
+      cfg.run()):
     builders = conf.env['sidplay_BUILDERS']
     conf.env['LIBPATH_sidplay'].append("%s" % builders)
     conf.env['LINKFLAGS_sidplay'].append("-rpath=%s" % builders)

@@ -1,7 +1,8 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_null'
-  obj.sources = 'null.c'
+  obj.includes = '../../include'
+  obj.source = 'null.c'
   obj.uselib = 'glib-2.0'
 
 def configure(conf):

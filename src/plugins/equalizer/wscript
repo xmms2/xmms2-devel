@@ -1,7 +1,10 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
+  obj.includes = '../../include'
   obj.target = 'xmms_equalizer'
-  obj.find_sources_in_dirs('.')
+  obj.source = ["eq.c", "iir.c", "iir_cfs.c", "iir_fpu.c"]
+  obj.uselib = 'glib-2.0'
 
 def configure(conf):
-  conf.env['XMMS_PLUGINS_ENABLED'].append('equalizer')
+  if conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0'):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('equalizer')

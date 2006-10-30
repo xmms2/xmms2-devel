@@ -1,9 +1,11 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_mad'
-  obj.sources = ['mad.c', 'xing.c', 'id3v1.c']
-  obj.uselib = 'mad'
+  obj.includes = '../../include'
+  obj.source = ['mad.c', 'xing.c', 'id3v1.c']
+  obj.uselib = 'mad glib-2.0'
 
 def configure(conf):
-  if conf.check_pkg('mad', destvar='mad'):
+  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
+      conf.check_pkg('mad', destvar='mad')):
     conf.env['XMMS_PLUGINS_ENABLED'].append('mad')

@@ -1,9 +1,12 @@
+import os
 def build(bld):
     obj = bld.create_obj('cc', 'shlib')
     obj.target = 'xmms_alsa'
+    obj.includes = '../../include'
     obj.source = 'alsa.c'
-    obj.uselib = 'alsa'
+    obj.uselib = 'alsa glib-2.0'
 
 def configure(conf):
-    if conf.check_pkg('alsa', destvar='alsa'):
+    if (conf.check_pkg('alsa', destvar='alsa') and
+        conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0')):
         conf.env['XMMS_PLUGINS_ENABLED'].append('alsa')

@@ -3,7 +3,7 @@ import sys
 def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
   obj.target = 'xmms_sun'
-  obj.sources = 'sun.c'
+  obj.source = 'sun.c'
 
 def configure(conf):
   conf.check_message_custom('sun plugin', '', 'currently broken, disabled')

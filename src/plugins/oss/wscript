@@ -3,7 +3,7 @@ import sys
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_oss'
-  obj.sources = 'oss.c'
+  obj.source = 'oss.c'
   obj.uselib = 'ossaudio'
 
 def configure(conf):

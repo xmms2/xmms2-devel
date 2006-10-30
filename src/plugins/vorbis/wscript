@@ -1,13 +1,15 @@
 import sys
 
 def build(bld):
-  obj = bld.create_obj('cpp', 'shlib')
+  obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_vorbisfile'
-  obj.sources = 'vorbisfile.c'
-  obj.uselib = 'vorbisfile vorbis ogg'
+  obj.includes = '../../include'
+  obj.source = 'vorbisfile.c'
+  obj.uselib = 'vorbisfile vorbis ogg glib-2.0'
 
 def configure(conf):
-  if (conf.check_pkg('vorbisfile', destvar='vorbisfile') and
+  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
+      conf.check_pkg('vorbisfile', destvar='vorbisfile') and
       conf.check_pkg('vorbis', destvar='vorbis') and
       conf.check_pkg('ogg', destvar='ogg')):
     conf.env['XMMS_PLUGINS_ENABLED'].append('vorbis')

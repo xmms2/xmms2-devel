@@ -1,10 +1,12 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_modplug'
-  obj.sources = 'modplug.c'
-  obj.uselib = 'modplug libmodplug'
+  obj.includes = '../../include'
+  obj.source = 'modplug.c'
+  obj.uselib = 'modplug libmodplug glib-2.0'
 
 def configure(conf):
-  if (conf.check_pkg('modplug', destvar='modplug') or
-      conf.check_pkg('libmodplug', destvar='libmodplug')):
+  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
+      (conf.check_pkg('modplug', destvar='modplug') or
+       conf.check_pkg('libmodplug', destvar='libmodplug'))):
     conf.env['XMMS_PLUGINS_ENABLED'].append('modplug')

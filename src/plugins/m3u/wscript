@@ -1,7 +1,7 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_m3u'
-  obj.sources = 'm3u.c'
+  obj.source = 'm3u.c'
 
 def configure(conf):
   conf.check_message_custom('m3u plugin', '', 'currently broken, disabled')

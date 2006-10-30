@@ -3,7 +3,7 @@ import sys
 def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
   obj.target = 'xmms_vocoder'
-  obj.sources = ['vocoder.c', 'pvocoder.c']
+  obj.source = ['vocoder.c', 'pvocoder.c']
   obj.uselib = 'fftw3f samplerate'
 
 def configure(conf):
