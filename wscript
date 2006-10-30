@@ -21,10 +21,16 @@ APPNAME='xmms2'
 srcdir='.'
 blddir = '_build_'
 
+####
+## Initialization
+####
 def init():
   import gc
   gc.disable()
 
+####
+## Build
+####
 def build(bld):
   # Build the XMMS2 defs file
   defs = bld.create_obj('subst')
@@ -39,6 +45,9 @@ def build(bld):
   plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
   bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
 
+####
+## Configuration
+####
 def _set_defs(conf):
   """Set the values needed by xmms_defs.h.in in the environment."""
 
@@ -101,5 +110,8 @@ def configure(conf):
   _configure_plugins(conf)
   _set_defs(conf)
 
+####
+## Options
+####
 def set_options(opt):
   opt.tool_options('gcc')
