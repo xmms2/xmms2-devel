@@ -11,5 +11,7 @@ def configure(conf):
   cfg.uselib = 'sidplay'
   cfg.variables = ['builders']
   if cfg.run():
-    conf.env['LINKFLAGS_sidplay'].append("-L%s" % conf.env['sidplay_BUILDERS'])
+    builders = conf.env['sidplay_BUILDERS']
+    conf.env['LIBPATH_sidplay'].append("%s" % builders)
+    conf.env['LINKFLAGS_sidplay'].append("-rpath=%s" % builders)
     conf.env['XMMS_PLUGINS_ENABLED'].append('sid')
