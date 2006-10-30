@@ -3,15 +3,20 @@ import sys
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_oss'
+  obj.includes = '../../include'
   obj.source = 'oss.c'
-  obj.uselib = 'ossaudio'
+  have_ossaudio = bld.env_of_name('default')['HAVE_OSSAUDIO']
+  obj.uselib = "ossaudio_extra glib-2.0" + (have_ossaudio and "ossaudio" or "")
 
 def configure(conf):
   conf.check_tool('checks')
   if conf.check_header2('sys/soundcard.h', mandatory=0):
     conf.check_library2('ossaudio', mandatory=0, uselib='ossaudio')
     if sys.platform in ('netbsd', 'openbsd'):
-      conf.env['CCDEFINES_ossaudio'].append('DEFAULT_DEVICE="/dev/audio"')
+      conf.env['CCFLAGS_ossaudio_extra'] = '-DDEFAULT_DEVICE=\\"/dev/audio\\"'
     else:
-      conf.env['CCDEFINES_ossaudio'].append('DEFAULT_DEVICE="/dev/dsp"')
+      conf.env['CCFLAGS_ossaudio_extra'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
+    for k in conf.env.m_table.keys():
+      if 'ossaudio' in k:
+        print k, conf.env[k]
     conf.env['XMMS_PLUGINS_ENABLED'].append('oss')
