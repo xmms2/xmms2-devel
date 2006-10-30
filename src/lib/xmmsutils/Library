@@ -1,0 +1,14 @@
+target = "xmmsutils"
+
+source = ["utils.c",
+          "strlist.c"]
+
+shared = False
+static = True
+install = False
+
+def config(env):
+	env.pkgconfig("glib-2.0 >= 2.6.0", fail=True)
+	if env.platform != 'win32':
+		env.Append(CCFLAGS=["-fPIC"])
+		env.Append(CPPFLAGS=['-DUSERCONFDIR=\\"'+env.userconfpath+'\\"'])

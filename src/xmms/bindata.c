@@ -35,6 +35,7 @@
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_bindata.h"
+#include "xmmspriv/xmms_utils.h"
 
 struct xmms_bindata_St {
 	xmms_object_t obj;

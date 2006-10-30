@@ -26,6 +26,7 @@
 #include "xmms/xmms_log.h"
 #include "xmmspriv/xmms_sqlite.h"
 #include "xmmspriv/xmms_statfs.h"
+#include "xmmspriv/xmms_utils.h"
 
 #include <sqlite3.h>
 #include <glib.h>
