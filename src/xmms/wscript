@@ -35,7 +35,7 @@ def build(bld):
                  "bindata.c",
                  "sample.genpy"]
   prog.uselib_local='xmmsipc xmmssocket'
-  prog.uselib = 'glib gmodule gthread sqlite3'
+  prog.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
 
   #prog = bld.create_obj('cc', 'program')
   #prog.target = 'xmms2-launcher'
@@ -46,10 +46,10 @@ def build(bld):
 def configure(conf):
   conf.check_tool('misc checks')
   conf.check_tool('python-generator', tooldir=os.path.abspath('xmmsenv'))
-  conf.check_pkg2('glib-2.0', '2.6.0')
-  conf.check_pkg2('gmodule-2.0', '2.6.0')
-  conf.check_pkg2('gthread-2.0', '2.6.0')
-  conf.check_pkg2('sqlite3', '0.0')
+  conf.check_pkg2('glib-2.0', '2.6.0', uselib='glib-2.0')
+  conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule-2.0')
+  conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread-2.0')
+  conf.check_pkg2('sqlite3', '0.0', uselib='sqlite3')
 
   # Check for the sin function in the math lib
   test = conf.create(enumerator='function')
