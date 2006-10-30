@@ -16,7 +16,4 @@ def configure(conf):
       conf.env['CCFLAGS_ossaudio_extra'] = '-DDEFAULT_DEVICE=\\"/dev/audio\\"'
     else:
       conf.env['CCFLAGS_ossaudio_extra'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
-    for k in conf.env.m_table.keys():
-      if 'ossaudio' in k:
-        print k, conf.env[k]
     conf.env['XMMS_PLUGINS_ENABLED'].append('oss')
