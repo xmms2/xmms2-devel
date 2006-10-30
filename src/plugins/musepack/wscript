@@ -7,6 +7,5 @@ def build(bld):
 
 def configure(conf):
   conf.check_tool('checks')
-  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
-      conf.check_library2('mpcdec', uselib='musepack', mandatory=0)):
+  if conf.check_library2('mpcdec', uselib='musepack', mandatory=0):
     conf.env['XMMS_PLUGINS_ENABLED'].append('musepack')

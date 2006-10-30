@@ -6,5 +6,4 @@ def build(bld):
   obj.uselib = 'glib-2.0'
 
 def configure(conf):
-  if conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0'):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('replaygain')
+  conf.env['XMMS_PLUGINS_ENABLED'].append('replaygain')

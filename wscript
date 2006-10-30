@@ -66,6 +66,10 @@ def _set_defs(conf):
 def _configure_plugins(conf):
   """Process all xmms2d plugins"""
 
+  # Glib is required by all plugins, so check for it here and let them
+  # assume its presence.
+  conf.check_tool('checks')
+  conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
   conf.env['XMMS_PLUGINS_ENABLED'] = []
   disabled = []
   for plugin in os.listdir('src/plugins'):

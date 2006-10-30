@@ -6,8 +6,7 @@ def build(bld):
   obj.uselib = 'shout vorbisenc ogg glib-2.0' # TODO: fix waf to accept a list
 
 def configure(conf):
-  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
-      conf.check_pkg('shout', destvar='shout') and
+  if (conf.check_pkg('shout', destvar='shout') and
       conf.check_pkg('ogg', destvar='ogg') and
       conf.check_pkg('vorbisenc', destvar='vorbisenc')):
     conf.env['XMMS_PLUGINS_ENABLED'].append('ices')

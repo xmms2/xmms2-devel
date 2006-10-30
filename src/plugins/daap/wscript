@@ -13,9 +13,6 @@ def configure(conf):
   # Set the default fallthrough, if no "intelligent" backend is found.
   conf.env['XMMS_DAAP_BACKEND'] = 'dummy'
 
-  if not conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0'):
-    return
-
   # First look for Avahi mdns support
   if (conf.check_pkg("avahi-glib", destvar='avahi') and
       conf.check_pkg("avahi-client", destvar='avahi')):

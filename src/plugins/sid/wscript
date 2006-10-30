@@ -18,8 +18,7 @@ def configure(conf):
   cfg.name = 'libsidplay2'
   cfg.uselib = 'sidplay'
   cfg.variables = ['builders']
-  if (conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0') and
-      cfg.run()):
+  if cfg.run():
     builders = conf.env['sidplay_BUILDERS']
     conf.env['LIBPATH_sidplay'].append("%s" % builders)
     conf.env['LINKFLAGS_sidplay'].append("-rpath=%s" % builders)
