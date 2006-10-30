@@ -6,6 +6,7 @@
 import os
 import os.path
 import sys
+import optparse
 
 # Waf removes the current dir from the python path. We readd it to
 # import gittools.
@@ -116,5 +117,14 @@ def configure(conf):
 ####
 ## Options
 ####
+def _list_cb(option, opt, value, parser):
+  """Callback that lets you specify lists of targets."""
+  vals = value.split(',')
+  if getattr(parser.values, option.dest):
+    vals += getattr(parser.values, option.dest)
+  setattr(parser.values, option.dest, vals)
+
 def set_options(opt):
+  opt.add_option('--with-plugins', action="callback", callback=_list_cb,
+                 type="string", dest="plugins")
   opt.tool_options('gcc')
