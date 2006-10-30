@@ -1,9 +1,11 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
   obj.target = 'xmms_jack'
+  obj.includes = '../../include'
   obj.source = 'jack.c'
-  obj.uselib = 'jack'
+  obj.uselib = 'jack glib-2.0'
 
 def configure(conf):
-  if conf.check_pkg('jack', destvar='jack'):
+  if (conf.check_pkg('jack', destvar='jack') and
+      conf.check_pkg('glib-2.0', vnum='2.6.0', destvar='glib-2.0')):
     conf.env['XMMS_PLUGINS_ENABLED'].append('jack')
