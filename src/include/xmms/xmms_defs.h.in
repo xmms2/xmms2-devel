@@ -25,6 +25,7 @@
 #define BINDIR "@BINDIR@"
 #define XMMS_OUTPUT_DEFAULT "@DEFAULT_OUTPUT@"
 #define XMMS_PATH_MAX 255
+#define USERCONFDIR "@USERCONFDIR@"
 
 #define XMMS_BUILD_PATH(...) g_build_path (G_DIR_SEPARATOR_S, \
                                            g_get_home_dir (), \
