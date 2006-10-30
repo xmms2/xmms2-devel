@@ -4,7 +4,7 @@ def build(bld):
   obj.source = ['cmd_config.c', 'cmd_mlib.c', 'cmd_other.c', 'cmd_playback.c', 'cmd_pls.c', 'cmd_status.c', 'common.c', 'main.c']
   obj.includes = '. ../../include'
   obj.uselib = 'glib-2.0'
-  obj.uselib_local = 'xmmsclient-glib'
+  obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 def configure(conf):
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
