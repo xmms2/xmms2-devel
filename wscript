@@ -45,6 +45,9 @@ def build(bld):
   plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
   bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
 
+  # Build the client lib
+  bld.add_subdirs('src/clients/lib/xmmsclient')
+
 ####
 ## Configuration
 ####
