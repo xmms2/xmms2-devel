@@ -1,5 +1,0 @@
-target="lastfmeta"
-source=["lastfmeta.c"]
-
-def config(env):
-	env.configcmd("curl-config --libs --cflags")

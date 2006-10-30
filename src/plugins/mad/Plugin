@@ -1,6 +1,0 @@
-target="mad"
-source=["mad.c", "xing.c", "id3v1.c"]
-
-def config(env):
-	env.checkheader("mad.h")
-	env.checklib("mad", "mad_synth_init")

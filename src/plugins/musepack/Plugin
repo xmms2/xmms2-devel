@@ -1,5 +1,0 @@
-target="musepack"
-source=["musepack.c", "ape.c"]
-
-def config(env):
-	env.checklib("mpcdec", "mpc_decoder_decode")

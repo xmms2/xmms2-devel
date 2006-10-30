@@ -1,9 +1,0 @@
-target="sid"
-source=["sid.c", "sidplay_wrapper.cpp", "md5.cpp"]
-
-def config(env):
-    env.pkgconfig("libsidplay2")
-    builder_path = env.run("pkg-config libsidplay2 --variable=builders").strip()
-    if builder_path:
-        env.Append(LIBPATH=["-L%s" % builder_path])
-    env.checklib("resid-builder", "resid_version_string")
