@@ -2,7 +2,7 @@ import sys
 
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'wma'
+  obj.target = 'xmms_wma'
   obj.sources = 'wma.c'
   obj.uselib = 'wma'
 

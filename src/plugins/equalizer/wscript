@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'equalizer'
+  obj.target = 'xmms_equalizer'
   obj.find_sources_in_dirs('.')
 
 def configure(conf):

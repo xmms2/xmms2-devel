@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'ices'
+  obj.target = 'xmms_ices'
   obj.sources = ['ices.c', 'encode.c']
   obj.uselib = ['shout', 'vorbisenc', 'ogg']
 

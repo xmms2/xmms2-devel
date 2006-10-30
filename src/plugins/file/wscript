@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'file'
+  obj.target = 'xmms_file'
   obj.sources = 'file.c'
 
 def configure(conf):

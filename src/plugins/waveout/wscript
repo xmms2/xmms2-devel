@@ -2,7 +2,7 @@ import sys
 
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'waveout'
+  obj.target = 'xmms_waveout'
   obj.sources = 'waveout.c'
   obj.uselib = 'waveout'
 

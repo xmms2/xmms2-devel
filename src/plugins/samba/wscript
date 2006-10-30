@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'smb'
+  obj.target = 'xmms_smb'
   obj.sources = 'samba.c'
   obj.uselib = 'samba'
 

@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'm3u'
+  obj.target = 'xmms_m3u'
   obj.sources = 'm3u.c'
 
 def configure(conf):

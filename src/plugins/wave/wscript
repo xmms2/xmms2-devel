@@ -2,7 +2,7 @@ import sys
 
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'wave'
+  obj.target = 'xmms_wave'
   obj.sources = 'wave.c'
 
 def configure(conf):

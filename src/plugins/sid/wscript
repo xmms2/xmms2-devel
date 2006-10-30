@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
-  obj.target = 'sid'
+  obj.target = 'xmms_sid'
   obj.sources = ['sid.c', 'sidplay_wrapper.cpp', 'md5.cpp']
   obj.uselib = 'sidplay'
 

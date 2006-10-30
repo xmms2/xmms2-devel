@@ -2,7 +2,7 @@ import sys
 
 def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
-  obj.target = 'vorbisfile'
+  obj.target = 'xmms_vorbisfile'
   obj.sources = 'vorbisfile.c'
   obj.uselib = 'vorbisfile vorbis ogg'
 

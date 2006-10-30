@@ -1,7 +1,10 @@
 import sys
 
 def build(bld):
-  pass
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'xmms_oss'
+  obj.sources = 'oss.c'
+  obj.uselib = 'ossaudio'
 
 def configure(conf):
   conf.check_tool('checks')

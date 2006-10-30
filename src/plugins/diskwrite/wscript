@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'diskwrite'
+  obj.target = 'xmms_diskwrite'
   obj.sources = 'diskwrite.c'
 
 def configure(conf):

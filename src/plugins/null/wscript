@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'null'
+  obj.target = 'xmms_null'
   obj.sources = 'null.c'
   obj.uselib = 'glib-2.0'
 

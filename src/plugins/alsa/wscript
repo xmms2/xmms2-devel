@@ -1,6 +1,6 @@
 def build(bld):
     obj = bld.create_obj('cc', 'shlib')
-    obj.target = 'alsa'
+    obj.target = 'xmms_alsa'
     obj.source = 'alsa.c'
     obj.uselib = 'alsa'
 

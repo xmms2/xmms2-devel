@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'html'
+  obj.target = 'xmms_html'
   obj.sources = 'html.c'
 
 def configure(conf):

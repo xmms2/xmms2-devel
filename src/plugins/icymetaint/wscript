@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'icymetaint'
+  obj.target = 'xmms_icymetaint'
   obj.sources = 'icymetaint.c'
 
 def configure(conf):

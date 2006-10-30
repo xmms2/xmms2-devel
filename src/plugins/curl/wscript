@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'curl_http'
+  obj.target = 'xmms_curl_http'
   obj.source = 'curl_http.c'
   obj.uselib = 'curl'
 

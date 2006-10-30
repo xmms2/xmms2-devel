@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'pls'
+  obj.target = 'xmms_pls'
   obj.sources = 'pls.c'
 
 def configure(conf):

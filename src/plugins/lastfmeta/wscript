@@ -1,6 +1,6 @@
 def build(bld):
   obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'lastfmeta'
+  obj.target = 'xmms_lastfmeta'
   obj.sources = 'lastfmeta.c'
   obj.uselib = 'curl'
 
