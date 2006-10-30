@@ -1,0 +1,7 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'equalizer'
+  obj.find_sources_in_dirs('.')
+
+def configure(conf):
+  conf.env['XMMS_PLUGINS_ENABLED'].append('equalizer')

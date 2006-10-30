@@ -1,0 +1,7 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'id3v2'
+  obj.sources = ['id3v2plugin.c', 'id3.c']
+
+def configure(conf):
+  conf.env['XMMS_PLUGINS_ENABLED'].append('id3v2')

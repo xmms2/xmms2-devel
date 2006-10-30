@@ -1,0 +1,9 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'mms'
+  obj.sources = 'mms.c'
+  obj.uselib = 'mms'
+
+def configure(conf):
+  if conf.check_pkg('mms', destvar='mms'):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('mms')

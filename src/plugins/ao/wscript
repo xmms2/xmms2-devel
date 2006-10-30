@@ -1,0 +1,9 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'ao'
+  obj.source = 'ao.c'
+  obj.uselib = 'ao'
+
+def configure(conf):
+  if conf.check_pkg('ao', destvar='ao'):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('ao')

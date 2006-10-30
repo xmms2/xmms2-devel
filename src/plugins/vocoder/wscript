@@ -1,0 +1,12 @@
+import sys
+
+def build(bld):
+  obj = bld.create_obj('cpp', 'shlib')
+  obj.target = 'vocoder'
+  obj.sources = ['vocoder.c', 'pvocoder.c']
+  obj.uselib = 'fftw3f samplerate'
+
+def configure(conf):
+  if (conf.check_pkg('fftw3f', destvar='fftw3f') and
+      conf.check_pkg('samplerate', destvar='samplerate')):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('vocoder')

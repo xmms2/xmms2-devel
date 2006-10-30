@@ -1,0 +1,9 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'jack'
+  obj.sources = 'jack.c'
+  obj.uselib = 'jack'
+
+def configure(conf):
+  if conf.check_pkg('jack', destvar='jack'):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('jack')

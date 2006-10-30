@@ -1,0 +1,7 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'html'
+  obj.sources = 'html.c'
+
+def configure(conf):
+  conf.check_message_custom('html plugin', '', 'currently broken, disabled')

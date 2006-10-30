@@ -13,7 +13,7 @@ sys.path = [os.getcwd()]+sys.path
 
 import gittools
 
-from Params import fatal
+from Params import fatal, pprint
 
 VERSION="0.2 DrGonzo+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
@@ -59,6 +59,22 @@ def _set_defs(conf):
 
   conf.env['XMMS_DEFS'] = defs
 
+def _process_plugins(conf):
+  """Process all xmms2d plugins"""
+
+  conf.env['XMMS_PLUGINS_ENABLED'] = []
+  disabled = []
+  for plugin in os.listdir('src/plugins'):
+    conf.sub_config("src/plugins/%s" % plugin)
+    if conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin:
+      disabled.append(plugin)
+
+  print "\nPlugins configuration:\n======================"
+  print " Enabled: ",
+  pprint('BLUE', " ".join(conf.env['XMMS_PLUGINS_ENABLED']))
+  print " Disabled: ",
+  pprint('BLUE', " ".join(disabled))
+
 def configure(conf):
   conf.check_tool('gcc')
 
@@ -74,10 +90,7 @@ def configure(conf):
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/xmms')
 
-  conf.env['XMMS_PLUGINS_ENABLED'] = []
-  for plugin in os.listdir('src/plugins'):
-    conf.sub_config("src/plugins/%s" % plugin)
-
+  _process_plugins(conf)
   _set_defs(conf)
 
 def set_options(opt):

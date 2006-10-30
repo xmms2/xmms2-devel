@@ -1,0 +1,7 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'file'
+  obj.sources = 'file.c'
+
+def configure(conf):
+  conf.env['XMMS_PLUGINS_ENABLED'].append('file')

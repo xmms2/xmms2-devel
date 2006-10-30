@@ -1,0 +1,7 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'pls'
+  obj.sources = 'pls.c'
+
+def configure(conf):
+  conf.check_message_custom('pls plugin', '', 'currently broken, disabled')

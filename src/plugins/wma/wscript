@@ -1,0 +1,17 @@
+import sys
+
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'wma'
+  obj.sources = 'wma.c'
+  obj.uselib = 'wma'
+
+def configure(conf):
+  conf.check_tool('checks')
+  cfg = conf.create(configurator='cfgtool')
+  cfg.binary = 'ffmpeg-config'
+  cfg.uselib = 'wma'
+  cfg.tests = {'--cflags': 'CCFLAGS',
+               '--plugin-libs': 'LINKFLAGS'}
+  if cfg.run() or conf.check_pkg('libavformat', destvar='wma'):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('wma')

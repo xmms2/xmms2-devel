@@ -1,0 +1,9 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'mad'
+  obj.sources = ['mad.c', 'xing.c', 'id3v1.c']
+  obj.uselib = 'mad'
+
+def configure(conf):
+  if conf.check_pkg('mad', destvar='mad'):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('mad')

@@ -1,0 +1,13 @@
+import sys
+
+def build(bld):
+  pass
+
+def configure(conf):
+  conf.check_tool('checks')
+  if conf.check_header2('sys/soundcard.h', mandatory=0):
+    conf.check_library2('ossaudio', mandatory=0, uselib='ossaudio')
+    if sys.platform in ('netbsd', 'openbsd'):
+      conf.env['CCDEFINES_ossaudio'].append('DEFAULT_DEVICE="/dev/audio"')
+    else:
+      conf.env['CCDEFINES_ossaudio'].append('DEFAULT_DEVICE="/dev/dsp"')

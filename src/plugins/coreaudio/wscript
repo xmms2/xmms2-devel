@@ -1,0 +1,13 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'coreaudio'
+  obj.source = 'coreaudio.c'
+  obj.uselib = 'coreaudio'
+
+def configure(conf):
+  conf.check_tool("checks")
+  conf.check_header('AudioUnit/AudioUnit.h', define="HAVE_COREAUDIO")
+  if conf.env['HAVE_COREAUDIO']:
+    conf.env['LINKFLAGS_coreaudio'] = ['-framework CoreAudio',
+                                       '-framework AudioUnit']
+    conf.env['XMMS_PLUGINS_ENABLED'].append('coreaudio')

@@ -1,0 +1,11 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'smb'
+  obj.sources = 'samba.c'
+  obj.uselib = 'samba'
+
+def configure(conf):
+  conf.check_tool('checks')
+  if (conf.check_header2('libsmbclient.h', mandatory=0) and
+      conf.check_library2('smbclient', mandatory=0, uselib='samba')):
+    conf.env['XMMS_PLUGINS_ENABLED'].append('samba')

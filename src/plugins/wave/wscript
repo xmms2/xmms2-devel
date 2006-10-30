@@ -1,0 +1,9 @@
+import sys
+
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'wave'
+  obj.sources = 'wave.c'
+
+def configure(conf):
+  conf.env['XMMS_PLUGINS_ENABLED'].append('wave')

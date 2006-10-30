@@ -1,0 +1,8 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'diskwrite'
+  obj.sources = 'diskwrite.c'
+
+def configure(conf):
+  conf.env['CCDEFINES'].append('_REENTRANT')
+  conf.env['XMMS_PLUGINS_ENABLED'].append('diskwrite')

@@ -1,0 +1,13 @@
+def build(bld):
+  obj = bld.create_obj('cc', 'shlib')
+  obj.target = 'lastfm'
+  obj.sources = 'lastfm.c'
+  obj.uselib = 'curl'
+
+def configure(conf):
+  cfg = conf.create(configurator='cfgtool')
+  cfg.binary = 'curl-config'
+  cfg.uselib = 'curl'
+  cfg.run()
+  if conf.env['HAVE_curl']:
+    conf.env['XMMS_PLUGINS_ENABLED'].append('lastfm')
