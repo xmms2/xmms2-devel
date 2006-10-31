@@ -18,7 +18,7 @@
 #include "daap_conn.h"
 
 static cc_data_t *
-daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id);
+daap_request_data (GIOChannel *chan, const gchar *path, gchar *host, guint request_id);
 static gboolean
 daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
                      guint request_id, guint *size);
@@ -28,10 +28,9 @@ daap_url_append_meta (gchar *url, GSList *meta_list);
 guint
 daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err) {
 	GIOChannel *chan;
-	gchar *request;
 	cc_data_t *cc_data;
 
-	guint session_id;
+	guint session_id = 0;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
@@ -42,16 +41,12 @@ daap_command_login (gchar *host, gint port, guint request_id, xmms_error_t *err)
 		return 0;
 	}
 
-	request = g_strdup ("/login");
-	
-	cc_data = daap_request_data (chan, request, host, request_id);
-	if (!cc_data) {
-		return 0;
+	cc_data = daap_request_data (chan, "/login", host, request_id);
+	if (cc_data) {
+		session_id = cc_data->session_id;
+		cc_data_free (cc_data);
 	}
-	session_id = cc_data->session_id;
 
-	g_free (request);
-	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
 
@@ -62,28 +57,24 @@ guint
 daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 {
 	GIOChannel *chan;
-	gchar *tmp, *request;
+	gchar *request;
 	cc_data_t *cc_data;
-
-	guint revision_id;
+	guint revision_id = 0;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
 		return 0;
 	}
 
-	tmp = g_strdup_printf ("?session-id=%d", session_id);
-	request = g_strconcat ("/update", tmp, NULL);
-	g_free (tmp);
+	request = g_strdup_printf ("/update?session-id=%d", session_id);
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
-	if (!cc_data) {
-		return 0;
+	if (cc_data) {
+		revision_id = cc_data->revision_id;
+		cc_data_free (cc_data);
 	}
-	revision_id = cc_data->revision_id;
 
 	g_free (request);
-	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
 
@@ -94,16 +85,14 @@ gboolean
 daap_command_logout (gchar *host, gint port, guint session_id, guint request_id)
 {
 	GIOChannel *chan;
-	gchar *tmp, *request;
+	gchar *request;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
 		return FALSE;
 	}
 
-	tmp = g_strdup_printf ("?session-id=%d", session_id);
-	request = g_strconcat ("/logout", tmp, NULL);
-	g_free (tmp);
+	request = g_strdup_printf ("/logout?session-id=%d", session_id);
 	
 	/* there is no cc_data generated, so we don't need to store it anywhere */
 	daap_request_data (chan, request, host, request_id);
@@ -122,8 +111,7 @@ daap_command_db_list (gchar *host, gint port, guint session_id,
 	GIOChannel *chan;
 	gchar *request;
 	cc_data_t *cc_data;
-
-	GSList * db_id_list;
+	GSList *db_id_list = NULL;
 
 	chan = daap_open_connection (host, port);
 	if (!chan) {
@@ -135,12 +123,11 @@ daap_command_db_list (gchar *host, gint port, guint session_id,
 	
 	cc_data = daap_request_data (chan, request, host, request_id);
 	g_free (request);
-	if (!cc_data) {
-		return NULL;
+	if (cc_data) {
+		db_id_list = cc_record_list_deep_copy (cc_data->record_list);
+		cc_data_free (cc_data);
 	}
-	db_id_list = cc_record_list_deep_copy (cc_data->record_list);
 
-	cc_data_free (cc_data);
 	g_io_channel_shutdown (chan, TRUE, NULL);
 	g_io_channel_unref (chan);
 
@@ -220,13 +207,13 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 }
 
 static cc_data_t *
-daap_request_data (GIOChannel *chan, gchar *path, gchar *host, guint request_id)
+daap_request_data (GIOChannel *chan, const gchar *path, gchar *host, guint request_id)
 {
 	guint status;
-	gchar *request = NULL, *header = NULL;
+	gchar *request, *header = NULL;
 	cc_data_t *retval;
 
-	daap_generate_request (&request, path, host, request_id);
+	request = daap_generate_request (path, host, request_id);
 	daap_send_request (chan, request);
 	g_free (request);
 
@@ -260,9 +247,9 @@ daap_request_stream (GIOChannel *chan, gchar *path, gchar *host,
                      guint request_id, guint *size)
 {
 	guint status;
-	gchar *request = NULL, *header = NULL;
+	gchar *request, *header = NULL;
 
-	daap_generate_request (&request, path, host, request_id);
+	request = daap_generate_request (path, host, request_id);
 	daap_send_request (chan, request);
 	g_free (request);
 

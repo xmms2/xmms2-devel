@@ -44,7 +44,10 @@ def config(env):
 
 	try:
 		env.checkheader("sys/vfs.h")
-		env.Prepend(CPPDEFINES="STATFS_LINUX")
+		if env.platform == 'sunos5':
+			env.Prepend(CPPDEFINES="STATFS_SOLARIS")
+		else:
+			env.Prepend(CPPDEFINES="STATFS_LINUX")
 	except ConfigError:
 		try:
 			env.checkheader("sys/param.h")

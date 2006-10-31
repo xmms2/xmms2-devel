@@ -14,11 +14,14 @@ typedef SOCKET xmms_socket_t;
 typedef int socklen_t;
 #define XMMS_EINTR WSAEINTR
 #define XMMS_EAGAIN WSAEWOULDBLOCK
+#define XMMS_EINPROGRESS WSAEINPROGRESS
+
 
 /* UNIX */
 #else
 #define SOCKET_ERROR (-1)
 #define XMMS_EINTR EINTR
+#define XMMS_EINPROGRESS EINPROGRESS
 #ifdef __hpux
 /* on HP-UX EAGAIN != EWOULDBLOCK */
 #define XMMS_EAGAIN EAGAIN

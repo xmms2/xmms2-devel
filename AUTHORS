@@ -54,6 +54,10 @@ N: Franz Endstrasser
 E: franz.endstrasser@gmail.com
 D: Java bindings
 
+N: Manuel Fuhr
+E: zod@knid.net
+D: lastfm
+
 N: G. Gallino
 E: ggallino@gmail.com
 D: Equaliser fixes
@@ -133,6 +137,10 @@ N: Daniel Pearson
 E: daniel@nanoo.org
 D: Python XMMSSync-proxy. PythonAPI fixes.
 
+N: Florian Ragwitz
+E: rafl@debian.org
+D: Official Debian packages. Bugfixes.
+
 N: Alexander Rigbo
 E: alex@rigbo.se
 D: Various fixes. Sorting on integers.
@@ -183,7 +191,9 @@ D: xmmsc_medialib_playlist_list in Python bindings
 
 N: Juho Vähä-Herttua
 E: juhovh@iki.fi
-D: Faad. Various fixes.
+W: http://juho.vaha-herttua.fi/
+P: 1024D/CB130DCE 1C70 BF1D AEF7 619C C0A6  60E7 563D FCA3 CB13 0DCE
+D: Faad, wma, equalizer, vocoder, ao. Various fixes.
 
 N: Michael Walle
 E: michael@walle.cc

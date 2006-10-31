@@ -1,7 +1,7 @@
 .\" 
 .\" xmms2-mdns-avahi - The Avahi mDNS Announcer for XMMS2
 .\"
-.\" xmms2-mdns-avahi.8 - xmms2-mdns-avahi manpage 
+.\" xmms2-mdns-avahi.1 - xmms2-mdns-avahi manpage 
 .\"
 .\" Copyright 2005-2006, Alexander Botero-Lowry
 .\"
@@ -29,7 +29,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" 
 .\"
-.TH XMMS2-MDNS-AVAHI 8 
+.TH XMMS2-MDNS-AVAHI 1 
 .SH NAME
 .I xmms2-mdns-avahi
 announces 
@@ -54,21 +54,21 @@ TCP socket if one is available.
 offers a _xmms2._tcp service if, and only if, the 
 .I XMMS_PATH_FULL
 enviornmental variable contains a TCP socket. This allows clients that support mDNS discovery to easily locate and connect to this 
-.I xmms2d(8) 
+.I xmms2d(1) 
 instance. 
 .SH ENVIRONMENTAL VARIABLES
 .TP
 .I XMMS_PATH_FULL
 A complete list of URL paths seperated by ';' pointed to the
-.I xmms2d(8).
+.I xmms2d(1).
 See
 .B IPC SOCKET
 in  
-.I xmms2d(8)
+.I xmms2d(1)
 for details of possible values for this variable
 
 .SH SEE ALSO
-xmms2(1), xmms2d(8), http://xmms2.xmms.org
+xmms2(1), xmms2d(1), http://xmms2.xmms.org
 .SH HISTORY
 The
 .B XMMS2
