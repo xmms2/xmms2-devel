@@ -1,8 +1,9 @@
 def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
+  obj = bld.create_obj('cc', 'plugin')
   obj.target = 'xmms_coreaudio'
   obj.source = 'coreaudio.c'
-  obj.uselib = 'coreaudio'
+  obj.uselib = 'coreaudio glib-2.0'
+  obj.includes = '../../include'
 
 def configure(conf):
   conf.check_tool("checks")

@@ -1,5 +1,5 @@
 def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
+  obj = bld.create_obj('cc', 'plugin')
   obj.target = 'xmms_id3v2'
   obj.includes = '../../include'
   obj.source = ['id3v2plugin.c', 'id3.c']

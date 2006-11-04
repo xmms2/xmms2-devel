@@ -1,5 +1,7 @@
+import sys
+
 def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
+  obj = bld.create_obj('cc', 'plugin')
   obj.target = 'xmms_daap'
   obj.includes = '../../include'
   daap_backend = bld.env_of_name('default')['XMMS_DAAP_BACKEND']
@@ -21,8 +23,7 @@ def configure(conf):
   elif conf.check_header('dns_sd.h'):
     # We might have dnssd support. If we're not on OSX, check for the
     # presence of the lib.
-    if (sys.platform != 'darwin' and
-        conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)):
+    if (sys.platform != 'darwin' and conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)):
       conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
 
   conf.env['XMMS_PLUGINS_ENABLED'].append('daap')

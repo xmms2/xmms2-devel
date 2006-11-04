@@ -62,7 +62,7 @@ def _set_defs(conf):
   defs = {}
 
   platform_names = ['linux', 'freebsd', 'openbsd',
-                    'netbsd', 'dragonfly']
+                    'netbsd', 'dragonfly', 'darwin']
   for platform in platform_names:
     if sys.platform.startswith(platform):
       defs['PLATFORM'] = "XMMS_OS_%s" % platform.upper()
@@ -91,7 +91,7 @@ def _configure_plugins(conf):
   disabled = []
   for plugin in os.listdir('src/plugins'):
     conf.sub_config("src/plugins/%s" % plugin)
-    if conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin:
+    if len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0 and conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin:
       disabled.append(plugin)
 
   print "\nPlugins configuration:\n======================"

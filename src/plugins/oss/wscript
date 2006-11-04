@@ -1,7 +1,7 @@
 import sys
 
 def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
+  obj = bld.create_obj('cc', 'plugin')
   obj.target = 'xmms_oss'
   obj.includes = '../../include'
   obj.source = 'oss.c'

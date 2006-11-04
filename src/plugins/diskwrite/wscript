@@ -1,5 +1,5 @@
 def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
+  obj = bld.create_obj('cc', 'plugin')
   obj.includes = '../../include'
   obj.target = 'xmms_diskwrite'
   obj.source = 'diskwrite.c'
