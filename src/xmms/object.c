@@ -304,10 +304,12 @@ xmms_object_cmd_value_free (gpointer val)
 
 	switch (v->type) {
 		case XMMS_OBJECT_CMD_ARG_STRING:
-			g_free (v->value.string);
+			if (v->value.string)
+				g_free (v->value.string);
 			break;
 		case XMMS_OBJECT_CMD_ARG_BIN:
-			g_string_free (v->value.bin, TRUE);
+			if (v->value.bin)
+				g_string_free (v->value.bin, TRUE);
 			break;
 		case XMMS_OBJECT_CMD_ARG_LIST:
 		case XMMS_OBJECT_CMD_ARG_PROPDICT:
@@ -316,7 +318,6 @@ xmms_object_cmd_value_free (gpointer val)
 				v->value.list = g_list_delete_link (v->value.list,
 				                                    v->value.list);
 			}
-
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			if (v->value.dict) {
