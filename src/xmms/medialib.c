@@ -1523,6 +1523,8 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
 	                  "delete from Media where source=%d and "
 	                  "key='%s' and id=%d", sourceid, key, entry);
 	xmms_medialib_end(session);
+
+	xmms_medialib_entry_send_update (entry);
 }
 
 static void
