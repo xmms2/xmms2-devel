@@ -26,6 +26,7 @@
 
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmspriv/xmms_config.h"
+#include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_defs.h"

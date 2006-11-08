@@ -26,6 +26,7 @@
 # error You need atleast glib 2.6.0
 #endif
 
+#include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
@@ -37,6 +38,7 @@
 #include "xmmspriv/xmms_sqlite.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_bindata.h"
+#include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_defs.h"
 
 #include <stdio.h>
@@ -164,7 +166,7 @@ do_scriptdir (const gchar *scriptdir)
 static void
 load_config ()
 {
-	gchar *configdir;
+	gchar *configdir = g_malloc0 (PATH_MAX);
 
 	if (!conffile) {
 		conffile = XMMS_BUILD_PATH ("xmms2.conf"); 
@@ -172,7 +174,8 @@ load_config ()
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
 
-	configdir = XMMS_BUILD_PATH ();
+	if (!xmms_userconfdir_get (configdir, PATH_MAX))
+		xmms_log_error ("Could not get path to config dir");
 	if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
 		g_mkdir_with_parents (configdir, 0755);
 	}
