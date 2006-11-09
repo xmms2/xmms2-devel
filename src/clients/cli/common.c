@@ -75,7 +75,7 @@ print_error (const gchar *fmt, ...)
 
 	g_print ("ERROR: %s\n", buf);
 
-	exit (-1);
+	exit (EXIT_FAILURE);
 }
 
 

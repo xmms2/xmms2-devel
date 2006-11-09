@@ -227,10 +227,10 @@ main (gint argc, gchar **argv)
 			print_info ("  %s - %s", commands[i].name, commands[i].help);
 		}
 
-		exit (0);
+		exit (EXIT_SUCCESS);
 	} else if (g_strcasecmp (argv[1], "help") == 0) {
 		cmd_help (NULL, argc, argv);
-		exit (0);
+		exit (EXIT_SUCCESS);
 	}
 
 	connection = xmmsc_init ("xmms2-cli");
@@ -271,7 +271,7 @@ main (gint argc, gchar **argv)
 		if (g_strcasecmp (commands[i].name, argv[1]) == 0) {
 			commands[i].func (connection, argc, argv);
 			xmmsc_unref (connection);
-			exit (0);
+			exit (EXIT_SUCCESS);
 		}
 	}
 

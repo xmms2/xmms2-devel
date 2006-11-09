@@ -355,7 +355,7 @@ print_version ()
 	        glib_micro_version);
 	xmms_sqlite_print_version ();
 
-	exit (0);
+	exit (EXIT_SUCCESS);
 }
 
 /**
@@ -405,7 +405,7 @@ main (int argc, char **argv)
 	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, 0);
 	if (vererr) {
 		g_print ("Bad glib version: %s\n", vererr);
-		exit (1);
+		exit (EXIT_FAILURE);
 	}
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -420,13 +420,13 @@ main (int argc, char **argv)
 	if (!g_option_context_parse (context, &argc, &argv, &error) || error) {
 		g_print ("Error parsing options: %s\n", error->message);
 		g_clear_error (&error);
-		exit (1);
+		exit (EXIT_FAILURE);
 	}
 	g_option_context_free (context);
 
 	if (argc != 1) {
 		g_print ("There was unknown options, aborting!\n");
-		exit (1);
+		exit (EXIT_FAILURE);
 	}
 
 	if (verbose) {
