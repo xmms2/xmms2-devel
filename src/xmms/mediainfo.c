@@ -211,7 +211,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_UNINDEXED,
 			                    XMMS_OBJECT_CMD_ARG_UINT32,
 			                    xmms_medialib_num_not_resolved (session));
-			num = 50;
+			num = 10;
 		} else {
 			num--;
 		}
@@ -223,10 +223,11 @@ xmms_mediainfo_reader_thread (gpointer data)
 
 		if (!xform) {
 			session = xmms_medialib_begin_write ();
-			xmms_medialib_entry_remove (session, entry);
+			xmms_medialib_entry_property_set_int (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 0);
+			xmms_medialib_entry_property_set_int (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
 			xmms_medialib_end (session);
-			
-			xmms_playlist_remove_by_entry (mrt->playlist, entry);
 			continue;
 		}
 		
@@ -236,6 +237,8 @@ xmms_mediainfo_reader_thread (gpointer data)
 		session = xmms_medialib_begin_write ();
 		xmms_medialib_entry_property_set_int (session, entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
+		xmms_medialib_entry_property_set_int (session, entry,
+		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 1);
 		xmms_medialib_entry_property_set_int (session, entry,
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
 		                                      timeval.tv_sec);

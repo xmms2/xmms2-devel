@@ -411,6 +411,7 @@ xmms_output_filler (void *arg)
 		if (!chain) {
 			xmms_medialib_entry_t entry;
 			xmms_output_song_changed_arg_t *arg;
+			xmms_medialib_session_t *session;
 
 			g_mutex_unlock (output->filler_mutex);
 
@@ -424,6 +425,10 @@ xmms_output_filler (void *arg)
 
 			chain = xmms_xform_chain_setup (entry, output->format_list);
 			if (!chain) {
+				session = xmms_medialib_begin_write ();
+				xmms_medialib_entry_property_set_int (session, entry,
+				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 0);
+				xmms_medialib_end (session);
 				if (!xmms_playlist_advance (output->playlist)) {
 					XMMS_DBG ("End of playlist");
 					output->filler_state = FILLER_STOP;
@@ -431,6 +436,12 @@ xmms_output_filler (void *arg)
 				g_mutex_lock (output->filler_mutex);
 				continue;
 			}
+
+			session = xmms_medialib_begin_write ();
+			xmms_medialib_entry_property_set_int (session, entry,
+			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 1);
+			xmms_medialib_end (session);
+
 
 			arg = g_new0 (xmms_output_song_changed_arg_t, 1);
 			arg->output = output;
