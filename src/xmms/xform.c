@@ -125,6 +125,27 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 
 }
 
+static gint
+xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
+{
+	xmms_object_cmd_value_t *val1 = (xmms_object_cmd_value_t *)a;
+	xmms_object_cmd_value_t *val2 = (xmms_object_cmd_value_t *)b;
+
+	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
+	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
+
+	val1 = g_hash_table_lookup (val1->value.dict, "path");
+	val2 = g_hash_table_lookup (val2->value.dict, "path");
+
+	g_return_val_if_fail (!!val1, 0);
+	g_return_val_if_fail (!!val2, 0);
+
+	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
+	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
+
+	return g_utf8_collate(val1->value.string, val2->value.string);
+}
+
 GList *
 xmms_xform_browse (xmms_xform_object_t *obj,
                    const gchar *url,
@@ -162,7 +183,7 @@ xmms_xform_browse (xmms_xform_object_t *obj,
 		xform2->plugin->methods.browse (xform2, durl, error);
 		list = xform2->browse_list;
 		xform2->browse_list = NULL;
-		list = g_list_reverse (list);
+		list = g_list_sort (list, xmms_browse_list_sortfunc);
 	} else {
 		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't handle that URL");
 	}
