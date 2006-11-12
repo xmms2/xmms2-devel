@@ -428,6 +428,7 @@ xmms_output_filler (void *arg)
 				session = xmms_medialib_begin_write ();
 				xmms_medialib_entry_property_set_int (session, entry,
 				                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 0);
+				xmms_medialib_entry_send_update (entry);
 				xmms_medialib_end (session);
 				if (!xmms_playlist_advance (output->playlist)) {
 					XMMS_DBG ("End of playlist");
@@ -441,7 +442,7 @@ xmms_output_filler (void *arg)
 			xmms_medialib_entry_property_set_int (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE, 1);
 			xmms_medialib_end (session);
-
+			xmms_medialib_entry_send_update (entry);
 
 			arg = g_new0 (xmms_output_song_changed_arg_t, 1);
 			arg->output = output;

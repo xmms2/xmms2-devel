@@ -228,6 +228,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_medialib_entry_property_set_int (session, entry,
 			                                      XMMS_MEDIALIB_ENTRY_PROPERTY_RESOLVED, 1);
 			xmms_medialib_end (session);
+			xmms_medialib_entry_send_update (entry);
 			continue;
 		}
 		
@@ -243,6 +244,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 		                                      XMMS_MEDIALIB_ENTRY_PROPERTY_ADDED,
 		                                      timeval.tv_sec);
 		xmms_medialib_end (session);
+		xmms_medialib_entry_send_update (entry);
 		
 	}
 	
