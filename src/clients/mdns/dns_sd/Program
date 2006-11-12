@@ -11,3 +11,4 @@ def config(env):
 	# on macosx it's in libc? 
 	if env.platform != "darwin":
 		env.checklib("dns_sd", "DNSServiceRegister")
+	env.add_script("startup.d", "src/clients/mdns/dns_sd/xmms2-mdns-launcher.sh.in")

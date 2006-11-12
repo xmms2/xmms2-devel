@@ -11,5 +11,5 @@ def config(env):
 	if env.platform == 'sunos5':
 		env.checklib("socket", "socket", fail=True)
 		env.checklib("resolv", "inet_aton", fail=True)
-	env.add_script("startup.d", "src/clients/et/xmms2-et-launcher.sh")
+	env.add_script("startup.d", "src/clients/et/xmms2-et-launcher.sh.in")
 

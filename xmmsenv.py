@@ -470,7 +470,9 @@ class XMMSEnvironment(Environment):
 		self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
 
 	def add_script(self, target, source):
-		self.Install(os.path.join(self.scriptpath,target), source)
+		subst = {"%PRG_PATH%":self.binpath}
+		self.SubstInFile(source[:-3], source, SUBST_DICT=subst)
+		self.Install(os.path.join(self.scriptpath,target), source[:-3])
 
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""
