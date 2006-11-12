@@ -133,9 +133,8 @@ static void
 upgrade_v29_to_v30 (sqlite3 *sql)
 {
 	XMMS_DBG ("Upgrade v29->v30");
-	sqlite3_exec (sql, "update Media set value=0 where key='resolved'",
-	              NULL, NULL, NULL);
-	XMMS_DBG ("done, now reindex in progress...");
+	sqlite3_exec (sql, "insert into Media (id, key, value, source) select distinct id, 'avaiable', 1, (select id from Sources where source='server') from Media", NULL, NULL, NULL);
+	XMMS_DBG ("done");
 }
 
 static gboolean
