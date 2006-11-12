@@ -93,7 +93,7 @@ void
 xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32 flags)
 {
 	const gchar *url;
-	gchar *efile, *t;
+	gchar *efile, *eurl, *t;
 	int l;
 
 	g_return_if_fail (filename);
@@ -105,14 +105,15 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 	xform->browse_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                            g_free, xmms_object_cmd_value_free);
 
+	eurl = xmms_medialib_url_encode (url);
 	efile = xmms_medialib_url_encode (filename);
 	/* can't use g_build_filename as we need to preserve
 	   slashes stuff like file:/// */
 	l = strlen (url);
 	if (l && url[l - 1] == '/') {
-		t = g_strdup_printf ("%s%s", url, efile);
+		t = g_strdup_printf ("%s%s", eurl, efile);
 	} else {
-		t = g_strdup_printf ("%s/%s", url, efile);
+		t = g_strdup_printf ("%s/%s", eurl, efile);
 	}
 
 	xmms_xform_browse_add_entry_property (xform, "path", xmms_object_cmd_value_str_new (t));
@@ -122,7 +123,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 
 	g_free (t);
 	g_free (efile);
-
+	g_free (eurl);
 }
 
 static gint
