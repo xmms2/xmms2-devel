@@ -448,8 +448,7 @@ main (int argc, char **argv)
 
 	load_config ();
 
-	g_strlcpy (default_path, "unix:///tmp/xmms-ipc-", sizeof (default_path));
-	g_strlcat (default_path, g_get_user_name (), sizeof (default_path));
+	xmms_default_ipcpath_get (default_path, sizeof (default_path));
 
 	cv = xmms_config_property_register ("core.ipcsocket",
 	                                    default_path,

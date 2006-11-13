@@ -47,3 +47,19 @@ xmms_userconfdir_get (char *buf, int len)
 
 	return NULL;
 }
+
+
+/**
+ * Get the default connection path.
+ *
+ * @param buf A char buffer
+ * @param len The length of buf (PATH_MAX is a good choice)
+ * @return A pointer to buf, or NULL if an error occured.
+ */
+const char *
+xmms_default_ipcpath_get (char *buf, int len)
+{
+	snprintf (buf, sizeof (len), "tcp://127.0.0.1:5555");
+
+	return buf;
+}

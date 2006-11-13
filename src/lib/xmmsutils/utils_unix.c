@@ -56,3 +56,25 @@ xmms_userconfdir_get (char *buf, int len)
 
 	return buf;
 }
+
+
+/**
+ * Get the default connection path.
+ *
+ * @param buf A char buffer
+ * @param len The length of buf (PATH_MAX is a good choice)
+ * @return A pointer to buf, or NULL if an error occured.
+ */
+const char *
+xmms_default_ipcpath_get (char *buf, int len)
+{
+	struct passwd *pw;
+
+	pw = getpwuid (getuid ());
+	if (!pw || !pw->pw_name)
+		return NULL;
+
+	snprintf (buf, len, "unix:///tmp/xmms-ipc-%s", pw->pw_name);
+
+	return buf;
+}
