@@ -1,7 +1,10 @@
 target = "xmmsutils"
 
-source = ["utils.c",
-          "strlist.c"]
+source = ["strlist.c"]
+if platform == 'win32':
+	source.append('utils_win32.c')
+else:
+	source.append('utils_unix.c')
 
 shared = False
 static = True
