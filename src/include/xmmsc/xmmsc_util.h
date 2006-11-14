@@ -23,5 +23,6 @@
 #endif
 
 const char *xmms_userconfdir_get (char *buf, int len);
+const char *xmms_default_ipcpath_get (char *buf, int len);
 
 #endif /* __XMMS_UTILS_H__ */

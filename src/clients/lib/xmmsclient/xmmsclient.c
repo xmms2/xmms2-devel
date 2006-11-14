@@ -37,6 +37,7 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_stringport.h"
+#include "xmmsc/xmmsc_util.h"
 
 #define XMMS_MAX_URI_LEN 1024
 
@@ -165,13 +166,9 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	x_api_error_if (!c, "with a NULL connection", false);
 
 	if (!ipcpath) {
-		struct passwd *pwd;
-
-		pwd = getpwuid (getuid ());
-		if (!pwd || !pwd->pw_name)
+		if (!xmms_default_ipcpath_get (path, PATH_MAX)) {
 			return false;
-
-		snprintf (path, sizeof(path), "unix:///tmp/xmms-ipc-%s", pwd->pw_name);
+		}
 	} else {
 		snprintf (path, sizeof(path), "%s", ipcpath);
 	}
