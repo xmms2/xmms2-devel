@@ -133,7 +133,7 @@ static void
 upgrade_v29_to_v30 (sqlite3 *sql)
 {
 	XMMS_DBG ("Upgrade v29->v30");
-	sqlite3_exec (sql, "insert into Media (id, key, value, source) select distinct id, 'avaiable', 1, (select id from Sources where source='server') from Media", NULL, NULL, NULL);
+	sqlite3_exec (sql, "insert into Media (id, key, value, source) select distinct id, 'available', 1, (select id from Sources where source='server') from Media", NULL, NULL, NULL);
 	XMMS_DBG ("done");
 }
 
