@@ -272,7 +272,7 @@ xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
 		                         source);
 		XMMS_DBG ("Added source %s with id %d", source, ret);
 		g_mutex_lock (session->medialib->source_lock);
-		g_hash_table_insert (session->medialib->sources, (gpointer)ret, g_strdup (source));
+		g_hash_table_insert (session->medialib->sources, GUINT_TO_POINTER(ret), g_strdup (source));
 		g_mutex_unlock (session->medialib->source_lock);
 	}
 
@@ -413,7 +413,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	 * this dummy just wants to put the default song in the playlist
 	 */
 	medialib->source_lock = g_mutex_new ();
-	medialib->sources = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_free, g_free);
+	medialib->sources = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
 	session = xmms_medialib_begin_write ();
 	sqlite3_exec (session->sql, "select id, source from Sources", 
