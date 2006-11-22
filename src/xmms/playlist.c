@@ -558,8 +558,6 @@ xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entr
 
 	g_mutex_lock (playlist->mutex);
 	len = playlist->list->len;
-	if (len != 0)
-		len --;
 
 	if (pos > len || pos < 0) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not insert entry outside of playlist!");
