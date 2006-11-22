@@ -158,6 +158,10 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_radd(xmmsc_connection_t *c, char *, char *path)
 	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *, char *path)
 
+	xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *, char *playlist)
+	xmmsc_result_t *xmmsc_playlist_import (xmmsc_connection_t *, char *playlist, char *url)
+	xmmsc_result_t *xmmsc_playlist_export (xmmsc_connection_t *, char *playlist, char *mime)
+	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, signed int movement)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed(xmmsc_connection_t *c)
 	xmmsc_result_t *xmmsc_broadcast_playlist_current_pos(xmmsc_connection_t *c)
@@ -191,7 +195,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 
 	xmmsc_result_t *xmmsc_broadcast_configval_changed(xmmsc_connection_t *c)
 
-	#xmmsc_result_t *xmmsc_medialib_select(xmmsc_connection_t *conn, char *query)
 	xmmsc_result_t *xmmsc_medialib_playlist_load(xmmsc_connection_t *conn, char *name)
 	xmmsc_result_t *xmmsc_medialib_add_entry(xmmsc_connection_t *conn, char *url)
 	xmmsc_result_t *xmmsc_medialib_add_entry_encoded(xmmsc_connection_t *conn, char *url)
@@ -1034,6 +1037,124 @@ cdef class XMMS:
 		
 		return ret
 
+	def broadcast_playlist_loaded(self, cb = None):
+		"""
+		Set a broadcast callback for loaded playlist event
+		@rtype: L{XMMSResult}(UInt)
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		
+		ret.res = xmmsc_broadcast_playlist_loaded(self.conn)
+		ret.more_init(1)
+		
+		return ret
+
+	def playlist_load(self, playlist = None):
+		"""
+		Load the playlist as current playlist
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_load(self.conn, pl)
+		else:
+			ret.res = xmmsc_playlist_load(self.conn, NULL)
+
+		ret.more_init()
+		
+		return ret
+
+
+	def playlist_list(self):
+		"""
+		Lists the playlists
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_playlist_list(self.conn)
+
+		ret.more_init()
+		
+		return ret
+
+	def playlist_remove(self, playlist = None):
+		"""
+		Remove the playlist from the server
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_remove(self.conn, pl)
+		else:
+			ret.res = xmmsc_playlist_remove(self.conn, NULL)
+
+		ret.more_init()
+		
+		return ret
+
+
+	def playlist_export(self, mime, playlist = None):
+		"""
+		Exports the playlist using mime type
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_export(self.conn, pl, mimetype)
+		else:
+			ret.res = xmmsc_playlist_export(self.conn, NULL, mimetype)
+
+		ret.more_init()
+		
+		return ret
+
+	def playlist_import(self, url, playlist = None):
+		"""
+		Imports the playlist from url
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		if playlist is not None:
+			pl = from_unicode(playlist)
+			ret.res = xmmsc_playlist_import(self.conn, pl, url)
+		else:
+			ret.res = xmmsc_playlist_import(self.conn, NULL, url)
+
+		ret.more_init()
+		
+		return ret
+
 	def playlist_shuffle(self, playlist = None, cb = None):
 		"""
 		Instruct the XMMS2 daemon to shuffle the playlist.
@@ -1291,7 +1412,7 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_list_entires(self, playlist = None, cb = None):
+	def playlist_list_entries(self, playlist = None, cb = None):
 		"""
 		Get the current playlist. This function returns a list of IDs
 		of the files/streams currently in the playlist. Use
@@ -1538,23 +1659,6 @@ cdef class XMMS:
 		ret.res = xmmsc_configval_register(self.conn, c1, c2)
 		ret.more_init()
 		return ret
-
-	#def medialib_select(self, query, cb = None):
-	#	"""
-	#	Query the MediaLib.
-	#	@rtype: L{XMMSResult}
-	#	@return: The result of the operation.
-	#	"""
-	#	cdef XMMSResult ret
-	#	
-	#	ret = XMMSResult(self)
-	#	ret.callback = cb
-	#
- 	#	c = from_unicode(query)
-	#
-	#	ret.res = xmmsc_medialib_select(self.conn, c)
-	#	ret.more_init()
-	#	return ret
 
 	def medialib_add_entry(self, file, cb = None):
 		"""
