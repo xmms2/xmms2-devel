@@ -36,13 +36,13 @@
 char **
 xmms_valist_to_strlist (char *first, va_list ap)
 {
-	if (first == NULL)
-		abort ();
-	
 	char *cur = first;
 	char **ret = NULL;
 	int i = 0, size = sizeof (char *);
 
+	if (first == NULL)
+		abort ();
+	
 	do {
 		size += sizeof (char *);
 		ret = realloc (ret, size);
@@ -65,11 +65,11 @@ xmms_valist_to_strlist (char *first, va_list ap)
 char **
 xmms_vargs_to_strlist (char *first, ...)
 {
-	if (first == NULL)
-		abort ();
-
 	va_list ap;
 	char **ret = NULL;
+
+	if (first == NULL)
+		abort ();
 
 	va_start(ap, first);
 	ret = xmms_valist_to_strlist (first, ap);
@@ -87,10 +87,10 @@ xmms_vargs_to_strlist (char *first, ...)
 int
 xmms_strlist_len (char **data)
 {
-	if (data == NULL)
-		abort ();
 	int ret = -1;
 	char *cur = NULL;
+	if (data == NULL)
+		abort ();
 	do {
 		ret++;
 		cur = data[ret];
@@ -105,9 +105,9 @@ xmms_strlist_len (char **data)
 void
 xmms_strlist_destroy (char **data)
 {
+	int i;
 	if (data == NULL)
 		abort ();
-	int i;
 	for (i = 0; data[i] != NULL; i++) {
 		free (data[i]);
 	}
