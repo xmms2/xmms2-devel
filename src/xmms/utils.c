@@ -35,10 +35,12 @@
 char *
 xmms_build_path (char *first, ...)
 {
-	g_return_val_if_fail (first, NULL);
-	
 	va_list ap;
-	gchar *confdir = g_malloc0 (PATH_MAX), *ret, **vargv, **argv;
+	gchar confdir[PATH_MAX];
+	gchar *ret, **vargv, **argv;
+
+	g_return_val_if_fail (first, NULL);
+
 	xmms_userconfdir_get (confdir, PATH_MAX);
 	
 	va_start (ap, first);
@@ -48,8 +50,7 @@ xmms_build_path (char *first, ...)
 	argv = xmms_strlist_prepend_copy (vargv, confdir);
 	
 	ret = g_build_pathv (G_DIR_SEPARATOR_S, argv);
-	g_strfreev (vargv);
-	g_strfreev (argv);
-	g_free (confdir);
+	xmms_strlist_destroy (vargv);
+	xmms_strlist_destroy (argv);
 	return ret;
 }
