@@ -94,7 +94,7 @@ xmms_strlist_len (char **data)
 	do {
 		ret++;
 		cur = data[ret];
-	} while (cur != NULL && *cur);
+	} while (cur != NULL);
 	return ret;
 }
 
