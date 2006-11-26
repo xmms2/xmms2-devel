@@ -416,8 +416,13 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 	gint size, currpos;
 	gboolean ret = TRUE;
 	xmmsc_coll_t *plcoll;
+	char *jumplist;
+	xmms_error_t err;
+	xmms_playlist_t *buffer = playlist;
 
 	g_return_val_if_fail (playlist, FALSE);
+
+	xmms_error_reset (&err);
 
 	g_mutex_lock (playlist->mutex);
 
@@ -425,17 +430,29 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 	if (plcoll == NULL) {
 		ret = FALSE;
 	} else if ((size = xmms_playlist_coll_get_size (plcoll)) == 0) {
-		ret = FALSE;
+		if (xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
+			xmms_playlist_load (buffer, jumplist, &err);
+			ret = xmms_error_isok (&err);
+		} else {
+			ret = FALSE;
+		}
 	} else if (!playlist->repeat_one) {
 		currpos = xmms_playlist_coll_get_currpos (plcoll);
 		currpos++;
-		currpos %= size;
-		xmms_collection_set_int_attr (plcoll, "position", currpos);
-		ret = (currpos != 0) || playlist->repeat_all;
-		xmms_object_emit_f (XMMS_OBJECT (playlist),
-		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-		                    XMMS_OBJECT_CMD_ARG_UINT32,
-		                    currpos);
+
+		if (currpos == size &&
+		    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
+
+			xmms_playlist_load (buffer, jumplist, &err);
+			ret = xmms_error_isok (&err) || playlist->repeat_all;
+		} else {
+			xmms_collection_set_int_attr (plcoll, "position", currpos%size);
+			xmms_object_emit_f (XMMS_OBJECT (playlist),
+			                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+			                    XMMS_OBJECT_CMD_ARG_UINT32,
+			                    currpos%size);
+			ret = (currpos != size) || playlist->repeat_all;
+		}
 	}
 	g_mutex_unlock (playlist->mutex);
 
@@ -1101,6 +1118,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 	guint mid;
 	guint *idlist;
 	xmmsc_coll_t *plcoll;
+	char *jumplist;
 
 	g_return_val_if_fail (playlist, FALSE);
 
@@ -1111,19 +1129,32 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 
 	size = xmms_playlist_coll_get_size (plcoll);
 
-	if (pos >= size) {
+	if (pos == size && 
+	    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
+
+		XMMS_DBG ("Loading different playlist! %s", jumplist);
+		xmms_playlist_load (playlist, jumplist, err);
+		if (xmms_error_iserror (err)) {
+			return 0;
+		}
+
+		plcoll = xmms_playlist_get_coll (playlist, "_active", err);
+		if (plcoll == NULL) {
+			return 0;
+		}
+	} else if (pos < size) {
+		XMMS_DBG ("newpos! %d", pos);
+		xmms_collection_set_int_attr (plcoll, "position", pos);
+
+		xmms_object_emit_f (XMMS_OBJECT (playlist),
+		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+		                    XMMS_OBJECT_CMD_ARG_UINT32,
+		                    pos);
+	} else {
 		xmms_error_set (err, XMMS_ERROR_INVAL,
 		                "Can't set pos outside the current playlist!");
 		return 0;
 	}
-
-	XMMS_DBG ("newpos! %d", pos);
-	xmms_collection_set_int_attr (plcoll, "position", pos);
-
-	xmms_object_emit_f (XMMS_OBJECT (playlist),
-	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
-	                    XMMS_OBJECT_CMD_ARG_UINT32,
-	                    pos);
 
 	idlist = xmmsc_coll_get_idlist (plcoll);
 	mid = idlist[pos];
