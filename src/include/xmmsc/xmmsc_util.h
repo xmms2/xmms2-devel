@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 
+#define XMMS_STRINGIFY_NOEXPAND(x) #x
+#define XMMS_STRINGIFY(x) XMMS_STRINGIFY_NOEXPAND(x)
+
 #define x_return_if_fail(expr) if (!(expr)) { fprintf (stderr, "Failed in file " __FILE__ " on  row %d\n", __LINE__); return; }
 #define x_return_val_if_fail(expr, val) if (!(expr)) { fprintf (stderr, "Failed in file " __FILE__ " on  row %d\n", __LINE__); return val; }
 #define x_return_null_if_fail(expr) x_return_val_if_fail (expr, NULL)

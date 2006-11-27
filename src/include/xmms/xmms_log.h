@@ -21,11 +21,9 @@
 #define __XMMS_LOG_H__
 
 #include <glib.h>
+#include <xmmsc/xmmsc_util.h>
 
 #define xmms_log_debug g_debug
-
-#define XMMS_STRINGIFY_NOEXPAND(x) #x
-#define XMMS_STRINGIFY(x) XMMS_STRINGIFY_NOEXPAND(x)
 
 #define DEBUG
 
