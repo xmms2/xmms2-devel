@@ -235,8 +235,7 @@ namespace Xmms
 
 		}
 
-		if( ret &&
-		    xmmsc_result_get_class( res ) != XMMSC_RESULT_CLASS_BROADCAST ) {
+		if( xmmsc_result_get_class( res ) != XMMSC_RESULT_CLASS_BROADCAST ) {
 
 			xmmsc_result_unref( res );
 
