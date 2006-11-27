@@ -38,18 +38,17 @@ xmms_valist_to_strlist (char *first, va_list ap)
 {
 	char *cur = first;
 	char **ret = NULL;
-	int i = 0, size = sizeof (char *);
+	int i, size = sizeof (char *);
 
 	if (first == NULL)
 		abort ();
 	
-	do {
+	for (i = 0; cur != NULL; i++) {
 		size += sizeof (char *);
 		ret = realloc (ret, size);
 		ret[i] = strdup (cur);
 		cur = va_arg (ap, char *);
-		i++;
-	} while (cur != NULL);
+	}
 	ret[i] = NULL;
 
 	return ret;
@@ -87,15 +86,11 @@ xmms_vargs_to_strlist (char *first, ...)
 int
 xmms_strlist_len (char **data)
 {
-	int ret = -1;
-	char *cur = NULL;
+	int i;
 	if (data == NULL)
 		abort ();
-	do {
-		ret++;
-		cur = data[ret];
-	} while (cur != NULL);
-	return ret;
+	for (i = 0; data[i] != NULL; i++);
+	return i;
 }
 
 /**
@@ -122,14 +117,15 @@ xmms_strlist_destroy (char **data)
  */
 char **
 xmms_strlist_prepend_copy (char **data, char *newstr) {
-	int i = 0;
-	char *cur = newstr;
-	char **ret = malloc ((xmms_strlist_len (data) + 2) * sizeof (char *));
-	do {
-		ret[i] = strdup (cur);
-		cur = data[i];
-		i++;
-	} while (cur != NULL);
-	ret[i] = NULL;
+	int i;
+	char **ret;
+       
+	ret = malloc ((xmms_strlist_len (data) + 2) * sizeof (char *));
+	ret[0] = strdup (newstr);
+
+	for (i = 0; data[i] != NULL; i++)
+		ret[i+1] = strdup (data[i]);
+	ret[i+1] = NULL;
+
 	return ret;
 }
