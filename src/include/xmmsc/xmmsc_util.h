@@ -25,6 +25,9 @@
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 #endif
 
+/* 9667 is XMMS written on a phone */
+#define XMMS_DEFAULT_TCP_PORT 9667
+
 const char *xmms_userconfdir_get (char *buf, int len);
 const char *xmms_default_ipcpath_get (char *buf, int len);
 
