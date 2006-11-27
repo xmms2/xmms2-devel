@@ -59,7 +59,7 @@ xmms_userconfdir_get (char *buf, int len)
 const char *
 xmms_default_ipcpath_get (char *buf, int len)
 {
-	snprintf (buf, sizeof (len), "tcp://127.0.0.1:5555");
+	snprintf (buf, len, "tcp://127.0.0.1:5555");
 
 	return buf;
 }
