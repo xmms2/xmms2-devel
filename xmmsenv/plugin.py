@@ -33,6 +33,8 @@ def plugin(name, source=None, configure=False, build=False,
     if sys.platform == 'win32':
       obj.uselib_local = 'xmms2d'
 
+    obj.install_in = bld.env_of_name('default')["XMMS_DEFS"]["PKGLIBDIR"]
+	
     if build:
       build(bld, obj)
 

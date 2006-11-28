@@ -17,6 +17,7 @@ def build(bld):
   obj.includes='. ../../include'
   obj.target='xmmsipc'
   obj.uselib_local='xmmssocket'
+  obj.install = lambda: True
 
 def configure(conf):
   pass

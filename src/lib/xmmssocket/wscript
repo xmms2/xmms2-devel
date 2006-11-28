@@ -12,6 +12,7 @@ def build(bld):
   obj.source = "socket_common.c socket_%s.c" % platform_src[os.name]
   obj.includes='. ../../include'
   obj.target='xmmssocket'
+  obj.install = lambda: True
 
 def configure(conf):
   pass
