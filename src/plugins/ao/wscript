@@ -1,10 +1,6 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'xmms_ao'
-  obj.includes = '../../include'
-  obj.source = 'ao.c'
-  obj.uselib = 'ao glib-2.0'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
-  if conf.check_pkg('ao', destvar='ao'):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('ao')
+def plugin_configure(conf):
+  return conf.check_pkg('ao', destvar='ao')
+
+configure, build = plugin('ao', configure=plugin_configure, needs_lib=True)

@@ -1,10 +1,7 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
-  obj.includes = '../../include'
-  obj.target = 'xmms_diskwrite'
-  obj.source = 'diskwrite.c'
-  obj.uselib = 'glib-2.0'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
+def plugin_configure(conf):
   conf.env['CCDEFINES'].append('_REENTRANT')
-  conf.env['XMMS_PLUGINS_ENABLED'].append('diskwrite')
+  return True
+
+configure, build = plugin('diskwrite', configure=plugin_configure)

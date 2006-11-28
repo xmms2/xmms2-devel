@@ -1,13 +1,10 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'xmms_lastfm'
-  obj.includes = '../../include'
-  obj.source = 'lastfm.c'
-  obj.uselib = 'curl glib-2.0'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
+def plugin_configure(conf):
   cfg = conf.create(configurator='cfgtool')
   cfg.binary = 'curl-config'
   cfg.uselib = 'curl'
-  if cfg.run() and conf.env['HAVE_curl']:
-    conf.env['XMMS_PLUGINS_ENABLED'].append('lastfm')
+  return (cfg.run() and conf.env['HAVE_curl'])
+
+configure, build = plugin('lastfm', configure=plugin_configure,
+                          extra_libs=['curl'])

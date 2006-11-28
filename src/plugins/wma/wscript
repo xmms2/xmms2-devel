@@ -1,18 +1,11 @@
-import sys
+from xmmsenv.plugin import plugin
 
-def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'xmms_wma'
-  obj.includes = '../../include'
-  obj.source = 'wma.c'
-  obj.uselib = 'wma glib-2.0'
-
-def configure(conf):
-  conf.check_tool('checks')
+def plugin_configure(conf):
   cfg = conf.create(configurator='cfgtool')
   cfg.binary = 'ffmpeg-config'
   cfg.uselib = 'wma'
   cfg.tests = {'--cflags': 'CCFLAGS',
                '--plugin-libs': 'LINKFLAGS'}
-  if cfg.run() or conf.check_pkg('libavformat', destvar='wma'):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('wma')
+  return (cfg.run() or conf.check_pkg('libavformat', destvar='wma'))
+
+configure, build = plugin('wma', configure=plugin_configure, needs_lib=True)

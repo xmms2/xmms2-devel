@@ -1,11 +1,7 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'xmms_mms'
-  obj.includes = '../../include'
-  obj.source = 'mms.c'
-  obj.uselib = 'mms glib-2.0'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
-  if (conf.check_pkg('mms', destvar='mms') or
-      conf.check_pkg('libmms', destvar='mms')):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('mms')
+def plugin_configure(conf):
+  return (conf.check_pkg('mms', destvar='mms') or
+          conf.check_pkg('libmms', destvar='mms'))
+
+configure, build = plugin('mms', configure=plugin_configure, needs_lib=True)

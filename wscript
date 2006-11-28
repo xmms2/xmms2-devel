@@ -9,10 +9,11 @@ import sys
 import optparse
 
 # Waf removes the current dir from the python path. We readd it to
-# import gittools.
+# import xmmsenv stuff.
 sys.path = [os.getcwd()]+sys.path
 
-import gittools
+from xmmsenv import sets # We have our own sets, to not depend on py2.4
+from xmmsenv import gittools
 
 from Params import fatal, pprint
 
@@ -62,7 +63,7 @@ def _set_defs(conf):
   defs = {}
 
   platform_names = ['linux', 'freebsd', 'openbsd',
-                    'netbsd', 'dragonfly']
+                    'netbsd', 'dragonfly', 'darwin']
   for platform in platform_names:
     if sys.platform.startswith(platform):
       defs['PLATFORM'] = "XMMS_OS_%s" % platform.upper()
@@ -82,23 +83,62 @@ def _set_defs(conf):
 
 def _configure_plugins(conf):
   """Process all xmms2d plugins"""
+  import Params
+
+  def _check_exist(plugins, msg):
+    unknown_plugins = plugins.difference(all_plugins)
+    if unknown_plugins:
+      fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
+    return plugins
 
   # Glib is required by all plugins, so check for it here and let them
   # assume its presence.
   conf.check_tool('checks')
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
   conf.env['XMMS_PLUGINS_ENABLED'] = []
-  disabled = []
-  for plugin in os.listdir('src/plugins'):
+
+  all_plugins = sets.Set(os.listdir('src/plugins'))
+
+  # If an explicit list was provided, only try to process that
+  if Params.g_options.plugins:
+    selected_plugins = _check_exist(sets.Set(Params.g_options.plugins),
+                                    "The following plugin(s) were requested, "
+                                    "but don't exist: %(unknown_plugins)s")
+    disabled_plugins = all_plugins.difference(selected_plugins)
+    plugins_must_work = True
+  # If a disable list was provided, we try all plugins except for those.
+  elif Params.g_options.disable_plugins:
+    disabled_plugins = _check_exist(sets.Set(Params.g_options.disable_plugins),
+                                    "The following plugins(s) were disabled, "
+                                    "but don't exist: %(unknown_plugins)s")
+    selected_plugins = all_plugins.difference(disabled_plugins)
+    plugins_must_work = False
+  # Else, we try all plugins.
+  else:
+    selected_plugins = all_plugins
+    disabled_plugins = sets.Set()
+    plugins_must_work = False
+
+
+  for plugin in selected_plugins:
     conf.sub_config("src/plugins/%s" % plugin)
-    if conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin:
-      disabled.append(plugin)
+    if (not conf.env["XMMS_PLUGINS_ENABLED"] or
+        (len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0
+         and conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin)):
+      disabled_plugins.add(plugin)
+
+  # If something failed and we don't tolerate failure...
+  if plugins_must_work:
+    broken_plugins = selected_plugins.intersection(disabled_plugins)
+    if broken_plugins:
+      fatal("The following required plugin(s) failed to configure: "
+            "%s" % ', '.join(broken_plugins))
 
   print "\nPlugins configuration:\n======================"
-  print " Enabled: ",
-  pprint('BLUE', " ".join(conf.env['XMMS_PLUGINS_ENABLED']))
-  print " Disabled: ",
-  pprint('BLUE', " ".join(disabled))
+  print " Enabled:",
+  pprint('BLUE', ", ".join(conf.env['XMMS_PLUGINS_ENABLED']))
+  print " Disabled:",
+  pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
   conf.check_tool('gcc')
@@ -133,4 +173,6 @@ def _list_cb(option, opt, value, parser):
 def set_options(opt):
   opt.add_option('--with-plugins', action="callback", callback=_list_cb,
                  type="string", dest="plugins")
+  opt.add_option('--without-plugins', action="callback", callback=_list_cb,
+                 type="string", dest="disable_plugins")
   opt.tool_options('gcc')

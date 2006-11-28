@@ -1,10 +1,7 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'shlib')
-  obj.target = 'xmms_gnomevfs'
-  obj.includes = '../../include'
-  obj.source = 'gnomevfs.c'
-  obj.uselib = 'gnomevfs'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
-  if conf.check_pkg('gnome-vfs-2.0', destvar='gnomevfs'):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('gnomevfs')
+def plugin_configure(conf):
+  return conf.check_pkg('gnome-vfs-2.0', destvar='gnomevfs')
+
+configure, build = plugin('gnomevfs', configure=plugin_configure,
+                          needs_lib=True)
