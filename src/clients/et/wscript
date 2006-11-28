@@ -1,7 +1,7 @@
 def build(bld):
   obj = bld.create_obj('cc', 'program')
-  obj.target = 'xmms2'
-  obj.source = ['cmd_config.c', 'cmd_mlib.c', 'cmd_other.c', 'cmd_playback.c', 'cmd_pls.c', 'cmd_status.c', 'common.c', 'main.c']
+  obj.target = 'xmms2-et'
+  obj.source = ['xmms2-et.c']
   obj.includes = '. ../../include'
   obj.uselib = 'glib-2.0'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'

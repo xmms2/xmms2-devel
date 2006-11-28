@@ -47,11 +47,11 @@ def build(bld):
   prog.uselib_local = 'xmms2d xmmsipc xmmssocket xmmsutils'
   prog.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
 
-  #prog = bld.create_obj('cc', 'program')
-  #prog.target = 'xmms2-launcher'
-  #prog.source = 'xmms2-launcher.c'
-  #prog.includes = '../include'
-  #prog.uselib = 'glib gmodule gthread'
+  launch = bld.create_obj('cc', 'program')
+  launch.target = 'xmms2-launcher'
+  launch.source = ['xmms2-launcher.c']
+  launch.includes = '../include'
+  launch.uselib = 'glib-2.0 gmodule gthread'
 
 def configure(conf):
   conf.check_tool('misc checks')

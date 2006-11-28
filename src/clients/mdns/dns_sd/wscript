@@ -1,0 +1,24 @@
+import sys
+
+def build(bld):
+  obj = bld.create_obj('cc', 'program')
+  obj.target = 'xmms2-mdns-dnssd'
+  obj.source = ['mdns-dnssd.c']
+  obj.includes = '. ../../../include'
+  obj.uselib = 'glib-2.0'
+  if sys.platform != 'darwin':
+    obj.uselib =+ ' dnssd'
+  obj.uselib_local = 'xmmsclient-glib xmmsclient'
+
+def configure(conf):
+  if not conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0'):
+    return False
+  if not conf.check_header('dns_sd.h'):
+    return False
+  if sys.platform == 'darwin':
+    return True
+  else:
+    return conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)
+
+def set_options(opt):
+  pass

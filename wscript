@@ -30,6 +30,12 @@ def init():
   import gc
   gc.disable()
 
+optional_subdirs = ["src/clients/cli",
+                    "src/clients/et",
+                    "src/clients/mdns/dns_sd",
+                    "src/clients/mdns/avahi",
+                    "src/clients/lib/xmmsclient++"]
+
 ####
 ## Build
 ####
@@ -51,8 +57,8 @@ def build(bld):
   bld.add_subdirs('src/clients/lib/xmmsclient')
   bld.add_subdirs('src/clients/lib/xmmsclient-glib')
 
-  # Build the client
-  bld.add_subdirs('src/clients/cli')
+  # Build the clients
+  bld.add_subdirs(bld.env_of_name('default')['XMMS_OPTIONAL_BUILD'])
 
 ####
 ## Configuration
@@ -134,6 +140,11 @@ def _configure_plugins(conf):
       fatal("The following required plugin(s) failed to configure: "
             "%s" % ', '.join(broken_plugins))
 
+  print "\nOptional configuration:\n======================"
+  print " Enabled:",
+  pprint('BLUE', ', '.join(conf.env['XMMS_OPTIONAL_BUILD']))
+  print " Disabled:",
+  pprint('BLUE', ", ".join([i for i in optional_subdirs if i not in conf.env['XMMS_OPTIONAL_BUILD']]))
   print "\nPlugins configuration:\n======================"
   print " Enabled:",
   pprint('BLUE', ", ".join(conf.env['XMMS_PLUGINS_ENABLED']))
@@ -155,7 +166,11 @@ def configure(conf):
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/xmms')
   conf.sub_config('src/clients/lib/xmmsclient-glib')
-  conf.sub_config('src/clients/cli')
+
+  conf.env['XMMS_OPTIONAL_BUILD'] = []
+  for o in optional_subdirs:
+    if conf.sub_config(o):
+      conf.env['XMMS_OPTIONAL_BUILD'].append(o)
 
   _configure_plugins(conf)
   _set_defs(conf)
@@ -176,3 +191,5 @@ def set_options(opt):
   opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                  type="string", dest="disable_plugins")
   opt.tool_options('gcc')
+  for o in optional_subdirs:
+    opt.sub_options(o)

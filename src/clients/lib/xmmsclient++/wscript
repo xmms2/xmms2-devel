@@ -1,0 +1,46 @@
+import os
+import Params
+
+def build(bld):
+  obj = bld.create_obj('cpp', 'shlib')
+  obj.target = 'xmmsclient++'
+  obj.includes = '../../../include ../../../includepriv'
+  obj.source = ["bindata.cpp",
+                "client.cpp",
+                "config.cpp",
+                "dict.cpp",
+                "exceptions.cpp",
+                "list.cpp",
+                "listener.cpp",
+                "mainloop.cpp",
+                "medialib.cpp",
+                "playback.cpp",
+                "playlist.cpp",
+                "signal.cpp",
+                "stats.cpp",
+                "xform.cpp"]
+  obj.uselib_local = 'xmmsclient'
+  obj.uselib = 'boost'
+
+def configure(conf):
+  if not conf.check_tool('g++'):
+    return False
+
+  h = conf.create_header_configurator()
+  h.name = 'boost/signal.hpp'
+  h.uselib = 'boost'
+
+  l = conf.create_library_configurator()
+  l.name = 'boost_signals'
+  l.uselib = 'boost'
+
+  if Params.g_options.boostprefix:
+    h.path = [os.path.join(Params.g_options.boostprefix, "include")]
+    l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
+
+  if not h.run():
+    return False
+  return l.run()
+
+def set_options(opt):
+  opt.add_option('--with-boost-prefix', type="string", dest="boostprefix")
