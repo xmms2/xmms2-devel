@@ -41,7 +41,7 @@ def build(bld):
   defs.dict = bld.env_of_name('default')['XMMS_DEFS']
 
   # Process subfolders
-  bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/xmms')
+  bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
 
   # Build configured plugins
   plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']

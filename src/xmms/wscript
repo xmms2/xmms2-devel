@@ -33,8 +33,9 @@ def build(bld):
                  "statfs.c",
                  "strfunc.c",
                  "bindata.c",
-                 "sample.genpy"]
-  prog.uselib_local='xmmsipc xmmssocket'
+                 "sample.genpy",
+				 "utils.c"]
+  prog.uselib_local='xmmsipc xmmssocket xmmsutils'
   prog.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
 
   #prog = bld.create_obj('cc', 'program')

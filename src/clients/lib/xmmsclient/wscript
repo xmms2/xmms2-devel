@@ -3,7 +3,7 @@ def build(bld):
   obj.target = 'xmmsclient'
   obj.includes = '../../../include ../../../includepriv'
   obj.source = ['bindata.c', 'ipc.c', 'medialib.c', 'other.c', 'playback.c', 'playlist.c', 'result.c', 'xlist.c', 'xmmsclient.c', 'xqueue.c']
-  obj.uselib_local = 'xmmsipc xmmssocket'
+  obj.uselib_local = 'xmmsipc xmmssocket xmmsutils'
 
 def configure(conf):
   pass
