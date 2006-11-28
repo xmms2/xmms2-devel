@@ -1,12 +1,7 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmms_flac'
-  obj.includes = '../../include'
-  obj.source = 'flac.c'
-  obj.uselib = 'flac glib-2.0'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
-  conf.check_tool('checks')
-  if (conf.check_header2('FLAC/all.h', mandatory=0) and
-      conf.check_library2('FLAC', uselib='flac', mandatory=0)):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('flac')
+def plugin_configure(conf):
+  return (conf.check_header2('FLAC/all.h', mandatory=0) and
+          conf.check_library2('FLAC', uselib='flac', mandatory=0))
+
+configure, build = plugin('flac', configure=plugin_configure, needs_lib=True)

@@ -1,4 +1,20 @@
-def build(bld):
+from xmmsenv.plugin import plugin
+
+def plugin_configure(conf):
+  conf.check_tool('g++')
+  cfg = conf.create(configurator='pkgconfig')
+  cfg.name = 'libsidplay2'
+  cfg.uselib = 'sidplay'
+  cfg.variables = ['builders']
+  if not cfg.run():
+    return False
+
+  builders = conf.env['sidplay_BUILDERS']
+  conf.env['LIBPATH_sidplay'].append("%s" % builders)
+  conf.env['LINKFLAGS_sidplay'].append("-rpath=%s" % builders)
+  return True
+
+def plugin_build(bld):
   obj = bld.create_obj('cpp', 'objects')
   obj.target = 'xmms_sid_cpp'
   obj.includes = '../../include'
@@ -12,14 +28,5 @@ def build(bld):
   obj.add_objects = 'xmms_sid_cpp'
   obj.uselib = 'sidplay glib-2.0'
 
-def configure(conf):
-  conf.check_tool('checks g++')
-  cfg = conf.create(configurator='pkgconfig')
-  cfg.name = 'libsidplay2'
-  cfg.uselib = 'sidplay'
-  cfg.variables = ['builders']
-  if cfg.run():
-    builders = conf.env['sidplay_BUILDERS']
-    conf.env['LIBPATH_sidplay'].append("%s" % builders)
-    conf.env['LINKFLAGS_sidplay'].append("-rpath=%s" % builders)
-    conf.env['XMMS_PLUGINS_ENABLED'].append('sid')
+configure, build = plugin('sid', configure=plugin_configure,
+                          build_replace=plugin_build)

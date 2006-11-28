@@ -1,7 +1,3 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmms_speex'
-  obj.source = 'speex.c'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
-  conf.check_message_custom('speex plugin', '', 'currently broken, disabled')
+configure, build = plugin('speex', broken=True)

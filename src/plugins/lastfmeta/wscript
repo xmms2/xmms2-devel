@@ -1,14 +1,11 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmms_lastfmeta'
-  obj.includes = '../../include'
-  obj.source = 'lastfmeta.c'
-  obj.uselib = 'curl glib-2.0'
+from xmmsenv.plugin import plugin
 
-def configure(conf):
+def plugin_configure(conf):
   cfg = conf.create(configurator='cfgtool')
   cfg.binary = 'curl-config'
   cfg.uselib = 'curl'
   cfg.run()
-  if conf.env['HAVE_curl']:
-    conf.env['XMMS_PLUGINS_ENABLED'].append('lastfmeta')
+  return conf.env['HAVE_curl']
+
+configure, build = plugin('lastfmeta', configure=plugin_configure,
+                          extra_libs=['curl'])

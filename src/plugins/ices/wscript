@@ -1,12 +1,10 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmms_ices'
-  obj.includes = '../../include'
-  obj.source = ['ices.c', 'encode.c']
-  obj.uselib = 'shout vorbisenc ogg glib-2.0' # TODO: fix waf to accept a list
+from xmmsenv.plugin import plugin
 
-def configure(conf):
-  if (conf.check_pkg('shout', destvar='shout') and
-      conf.check_pkg('ogg', destvar='ogg') and
-      conf.check_pkg('vorbisenc', destvar='vorbisenc')):
-    conf.env['XMMS_PLUGINS_ENABLED'].append('ices')
+def plugin_configure(conf):
+  return (conf.check_pkg('shout', destvar='shout') and
+          conf.check_pkg('ogg', destvar='ogg') and
+          conf.check_pkg('vorbisenc', destvar='vorbisenc'))
+
+configure, build = plugin('ices', configure=plugin_configure,
+                          source=['ices.c', 'encode.c'],
+                          extra_libs=['shout', 'vorbisenc', 'ogg'])

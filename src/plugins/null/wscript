@@ -1,9 +1,2 @@
-def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmms_null'
-  obj.includes = '../../include'
-  obj.source = 'null.c'
-  obj.uselib = 'glib-2.0'
-
-def configure(conf):
-  conf.env['XMMS_PLUGINS_ENABLED'].append('null')
+from xmmsenv.plugin import plugin
+configure, build = plugin('null')

@@ -1,13 +1,11 @@
-import sys
+# Plugin never tested! FEEDBACK PLEASE
+from xmmsenv.plugin import plugin
 
-def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmms_waveout'
-  obj.source = 'waveout.c'
-  obj.uselib = 'waveout'
+def plugin_configure(conf):
+  if not conf.check_header2('windows.h', mandatory=0):
+    return False
+  conf.env['LIBS_waveout'] = 'winmm'
+  return True
 
-def configure(conf):
-  conf.check_tool('checks')
-  if conf.check_header2('windows.h', mandatory=0):
-    conf.env['LIBS_waveout'] = 'winmm'
-    conf.env['XMMS_PLUGINS_ENABLED'].append('waveout')
+configure, build = plugin('waveout', configure=plugin_configure,
+                          needs_lib=True)
