@@ -2,6 +2,8 @@
 # common tasks carried out by plugins in order to configure and build
 # themselves.
 
+import sys
+
 def plugin(name, source=None, configure=False, build=False,
            build_replace=False, needs_lib=False, extra_libs=[],
            tool='cc', broken=False):
@@ -28,6 +30,8 @@ def plugin(name, source=None, configure=False, build=False,
       libs.append(name)
     libs += extra_libs
     obj.uselib = ' '.join(libs)
+    if sys.platform == 'win32':
+      obj.uselib_local = 'xmms2d'
 
     if build:
       build(bld, obj)
