@@ -9,10 +9,11 @@ import sys
 import optparse
 
 # Waf removes the current dir from the python path. We readd it to
-# import gittools.
+# import xmmsenv stuff.
 sys.path = [os.getcwd()]+sys.path
 
-import gittools
+from xmmsenv import sets # We have our own sets, to not depend on py2.4
+from xmmsenv import gittools
 
 from Params import fatal, pprint
 
@@ -82,23 +83,48 @@ def _set_defs(conf):
 
 def _configure_plugins(conf):
   """Process all xmms2d plugins"""
+  import Params
 
   # Glib is required by all plugins, so check for it here and let them
   # assume its presence.
   conf.check_tool('checks')
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
   conf.env['XMMS_PLUGINS_ENABLED'] = []
-  disabled = []
-  for plugin in os.listdir('src/plugins'):
+
+  all_plugins = sets.Set(os.listdir('src/plugins'))
+
+  # If an explicit list was provided, only try to process that
+  if hasattr(Params.g_options, 'plugins'):
+    selected_plugins = sets.Set(Params.g_options.plugins)
+    unknown_plugins = selected_plugins.difference(all_plugins)
+    if unknown_plugins:
+      fatal("The following plugin(s) were requested, but don't exist: "
+            "%s" % ', '.join(unknown_plugins))
+    plugins_must_work = True
+  # Else, the selected plugins are just everything.
+  else:
+    selected_plugins = all_plugins
+    plugins_must_work = False
+
+  disabled_plugins = all_plugins.difference(selected_plugins)
+  for plugin in selected_plugins:
     conf.sub_config("src/plugins/%s" % plugin)
-    if len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0 and conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin:
-      disabled.append(plugin)
+    if (len(conf.env["XMMS_PLUGINS_ENABLED"]) > 0
+        and conf.env['XMMS_PLUGINS_ENABLED'][-1] != plugin):
+      disabled_plugins.add(plugin)
+
+  # If something failed and we don't tolerate failure...
+  if plugins_must_work:
+    broken_plugins = selected_plugins.intersection(disabled_plugins)
+    if broken_plugins:
+      fatal("The following plugin(s) failed to configure: "
+            "%s" % ', '.join(broken_plugins))
 
   print "\nPlugins configuration:\n======================"
-  print " Enabled: ",
-  pprint('BLUE', " ".join(conf.env['XMMS_PLUGINS_ENABLED']))
-  print " Disabled: ",
-  pprint('BLUE', " ".join(disabled))
+  print " Enabled:",
+  pprint('BLUE', ", ".join(conf.env['XMMS_PLUGINS_ENABLED']))
+  print " Disabled:",
+  pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
   conf.check_tool('gcc')
