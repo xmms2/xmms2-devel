@@ -1392,8 +1392,8 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "broadcast_configval_changed",
 	                  c_broadcast_configval_changed, 0);
 
-	rb_define_method (c, "bindata_add", c_bindata_add, 0);
-	rb_define_method (c, "bindata_retrieve", c_bindata_retrieve, 0);
+	rb_define_method (c, "bindata_add", c_bindata_add, 1);
+	rb_define_method (c, "bindata_retrieve", c_bindata_retrieve, 1);
 
 	rb_define_const (c, "PLAY",
 	                 INT2FIX (XMMS_PLAYBACK_STATUS_PLAY));

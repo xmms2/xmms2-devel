@@ -106,7 +106,7 @@ register_service (int port)
 	GSource *source;
 
 	if (DNSServiceRegister (&g_sdref, 0, 0, NULL, "_xmms2._tcp", NULL, NULL,
-							port, 0, NULL, dns_callback, NULL) 
+							htons (port), 0, NULL, dns_callback, NULL) 
 		!= kDNSServiceErr_NoError) {
 
 		printf ("failed to register!\n");
@@ -164,7 +164,7 @@ main (int argc, char **argv)
 	if (s && s[2]) {
 		port = strtol (s[2], NULL, 10);
 	} else {
-		port = 5555;
+		port = XMMS_DEFAULT_TCP_PORT;
 	}
 
 	conn = xmmsc_init ("xmms2-mdns");

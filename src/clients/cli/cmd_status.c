@@ -265,5 +265,5 @@ static void
 quit (void *data)
 {
 	print_info ("\nbye cruel world!");
-	exit (0);
+	exit (EXIT_SUCCESS);
 }

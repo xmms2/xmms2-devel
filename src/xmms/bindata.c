@@ -35,6 +35,7 @@
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_bindata.h"
+#include "xmmspriv/xmms_utils.h"
 
 struct xmms_bindata_St {
 	xmms_object_t obj;
@@ -222,7 +223,7 @@ xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
 
 	fp = fopen (path, "rb");
 	if (!fp) {
-		xmms_log_error ("Requesting %s which is not on the server", path);
+		xmms_log_error ("Requesting '%s' which is not on the server", hash);
 		xmms_error_set (err, XMMS_ERROR_NOENT, "File not found!");
 		g_free (path);
 		return NULL;
@@ -236,6 +237,12 @@ xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err)
 		gint l;
 
 		l = fread (buf, 1, 1024, fp);
+		if (ferror (fp)) {
+			g_string_free (str, TRUE);
+			xmms_log_error ("Error reading bindata '%s'", hash);
+			xmms_error_set (err, XMMS_ERROR_GENERIC, "Error reading file");
+			return NULL;
+		}
 		g_string_append_len (str, buf, l);
 	}
 

@@ -17,6 +17,7 @@
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_plsplugins.h"
 #include "xmmspriv/xmms_xform.h"
+#include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_error.h"
 #include "xmms/xmms_config.h"
@@ -271,7 +272,7 @@ xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
 		                         source);
 		XMMS_DBG ("Added source %s with id %d", source, ret);
 		g_mutex_lock (session->medialib->source_lock);
-		g_hash_table_insert (session->medialib->sources, (gpointer)ret, g_strdup (source));
+		g_hash_table_insert (session->medialib->sources, GUINT_TO_POINTER(ret), g_strdup (source));
 		g_mutex_unlock (session->medialib->source_lock);
 	}
 
@@ -412,7 +413,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	 * this dummy just wants to put the default song in the playlist
 	 */
 	medialib->source_lock = g_mutex_new ();
-	medialib->sources = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_free, g_free);
+	medialib->sources = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
 	session = xmms_medialib_begin_write ();
 	sqlite3_exec (session->sql, "select id, source from Sources", 
@@ -769,6 +770,7 @@ xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmm
 	session = xmms_medialib_begin_write ();
 	xmms_medialib_entry_remove (session, entry);
 	xmms_medialib_end (session);
+	xmms_playlist_remove_by_entry (medialib->playlist, entry);
 }
 
 /**
@@ -1523,6 +1525,8 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
 	                  "delete from Media where source=%d and "
 	                  "key='%s' and id=%d", sourceid, key, entry);
 	xmms_medialib_end(session);
+
+	xmms_medialib_entry_send_update (entry);
 }
 
 static void

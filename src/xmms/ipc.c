@@ -865,7 +865,7 @@ xmms_ipc_setup_server (const gchar *path)
 		ipc->objects = ipc_object_pool->objects;
 
 		xmms_ipc_setup_server_internaly (ipc);
-		xmms_log_error ("IPC listening on '%s'.", split[i]);
+		xmms_log_info ("IPC listening on '%s'.", split[i]);
 
 		g_mutex_lock (ipc_servers_lock);
 		ipc_servers = g_list_prepend (ipc_servers, ipc);

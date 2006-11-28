@@ -19,14 +19,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <unistd.h>
-#include <pwd.h>
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmms/xmms_defs.h"
+#include "xmmsc/xmmsc_util.h"
 
 /**
  * @defgroup OtherControl OtherControl
@@ -207,6 +206,7 @@ xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 
 /**
  * Get the absolute path to the user config dir.
+ * @sa xmms_userconfdir_get()
  *
  * @param buf A char buffer
  * @param len The length of buf (PATH_MAX is a good choice)
@@ -215,27 +215,7 @@ xmmsc_xform_media_browse_encoded (xmmsc_connection_t *c, const char *url)
 const char *
 xmmsc_userconfdir_get (char *buf, int len)
 {
-	struct passwd *pw;
-	char *config_home;
-
-	if (!buf || len <= 0)
-		return NULL;
-
-	config_home = getenv ("XDG_CONFIG_HOME");
-
-	if (config_home && *config_home) {
-		snprintf (buf, len, "%s/xmms2", config_home);
-
-		return buf;
-	}
-
-	pw = getpwuid (getuid ());
-	if (!pw)
-		return NULL;
-
-	snprintf (buf, len, "%s/%s", pw->pw_dir, USERCONFDIR);
-
-	return buf;
+	return xmms_userconfdir_get(buf, len);
 }
 
 /** @} */
