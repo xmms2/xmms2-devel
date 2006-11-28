@@ -97,7 +97,7 @@ def _configure_plugins(conf):
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
   conf.env['XMMS_PLUGINS_ENABLED'] = []
 
-  all_plugins = sets.Set(os.listdir('src/plugins'))
+  all_plugins = sets.Set([p for p in os.listdir("src/plugins") if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
 
   # If an explicit list was provided, only try to process that
   if Params.g_options.plugins:
