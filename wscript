@@ -15,7 +15,6 @@ sys.path = [os.getcwd()]+sys.path
 from xmmsenv import sets # We have our own sets, to not depend on py2.4
 from xmmsenv import gittools
 
-from Params import fatal, pprint
 import Params
 
 VERSION="0.2 DrGonzo+WIP (git commit: %s)" % gittools.get_info_str()
@@ -38,6 +37,10 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/xmmsclient++",
                     "src/clients/lib/python",
                     "src/clients/lib/ruby"]
+
+all_plugins = sets.Set([p for p in os.listdir("src/plugins")
+                        if os.path.exists(os.path.join("src/plugins",
+                                                       p,"wscript"))])
 
 ####
 ## Build
@@ -97,14 +100,25 @@ def _set_defs(conf):
   conf.env['XMMS_DEFS'] = defs
   conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
 
+def _configure_optionals(conf):
+  """Process the optional xmms2 subprojects"""
+
+  conf.env['XMMS_OPTIONAL_BUILD'] = []
+  for o in optional_subdirs:
+    if conf.sub_config(o):
+      conf.env['XMMS_OPTIONAL_BUILD'].append(o)
+
+  disabled_optionals = sets.Set(optional_subdirs)
+  disabled_optionals.difference_update(conf.env['XMMS_OPTIONAL_BUILD'])
+
+  return conf.env['XMMS_OPTIONAL_BUILD'], disabled_optionals
+
 def _configure_plugins(conf):
   """Process all xmms2d plugins"""
-  import Params
-
   def _check_exist(plugins, msg):
     unknown_plugins = plugins.difference(all_plugins)
     if unknown_plugins:
-      fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
+      Params.fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
     return plugins
 
   # Glib is required by all plugins, so check for it here and let them
@@ -113,11 +127,9 @@ def _configure_plugins(conf):
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
   conf.env['XMMS_PLUGINS_ENABLED'] = []
 
-  all_plugins = sets.Set([p for p in os.listdir("src/plugins") if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
-
   # If an explicit list was provided, only try to process that
-  if Params.g_options.plugins:
-    selected_plugins = _check_exist(sets.Set(Params.g_options.plugins),
+  if Params.g_options.enable_plugins:
+    selected_plugins = _check_exist(sets.Set(Params.g_options.enable_plugins),
                                     "The following plugin(s) were requested, "
                                     "but don't exist: %(unknown_plugins)s")
     disabled_plugins = all_plugins.difference(selected_plugins)
@@ -147,19 +159,23 @@ def _configure_plugins(conf):
   if plugins_must_work:
     broken_plugins = selected_plugins.intersection(disabled_plugins)
     if broken_plugins:
-      fatal("The following required plugin(s) failed to configure: "
-            "%s" % ', '.join(broken_plugins))
+      Params.fatal("The following required plugin(s) failed to configure: "
+                   "%s" % ', '.join(broken_plugins))
 
+  return conf.env['XMMS_PLUGINS_ENABLED'], disabled_plugins
+
+def _output_summary(enabled_plugins, disabled_plugins,
+                    enabled_optionals, disabled_optionals):
   print "\nOptional configuration:\n======================"
   print " Enabled:",
-  pprint('BLUE', ', '.join(conf.env['XMMS_OPTIONAL_BUILD']))
+  Params.pprint('BLUE', ', '.join(enabled_optionals))
   print " Disabled:",
-  pprint('BLUE', ", ".join([i for i in optional_subdirs if i not in conf.env['XMMS_OPTIONAL_BUILD']]))
+  Params.pprint('BLUE', ", ".join(disabled_optionals))
   print "\nPlugins configuration:\n======================"
   print " Enabled:",
-  pprint('BLUE', ", ".join(conf.env['XMMS_PLUGINS_ENABLED']))
+  Params.pprint('BLUE', ", ".join(enabled_plugins))
   print " Disabled:",
-  pprint('BLUE', ", ".join(disabled_plugins))
+  Params.pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
   if (conf.check_tool('g++')):
@@ -172,29 +188,30 @@ def configure(conf):
   conf.env["CXXFLAGS"] += ['-g', '-O0']
 
   if Params.g_options.config_prefix:
-    conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
-    conf.env["CCFLAGS"] += ["-I%s" % os.path.join(Params.g_options.config_prefix, "include")]
-    conf.env["CXXFLAGS"] += ["-I%s" % os.path.join(Params.g_options.config_prefix, "include")]
+    conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix,
+                                         "lib")]
+    include = "-I%s" % os.path.join(Params.g_options.config_prefix,
+                                    "include")
+    conf.env["CCFLAGS"] += [include]
+    conf.env["CXXFLAGS"] += [include]
 
   # Check for support for the generic platform
   has_platform_support = os.name in ('nt', 'posix')
   conf.check_message("platform code for", os.name,
                      has_platform_support)
   if not has_platform_support:
-    fatal("xmms2 only has platform support for Windows "
-          "and POSIX operating systems.")
+    Params.fatal("xmms2 only has platform support for Windows "
+                 "and POSIX operating systems.")
 
   conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/xmms')
   conf.sub_config('src/clients/lib/xmmsclient-glib')
 
-  conf.env['XMMS_OPTIONAL_BUILD'] = []
-  for o in optional_subdirs:
-    if conf.sub_config(o):
-      conf.env['XMMS_OPTIONAL_BUILD'].append(o)
-
-  _configure_plugins(conf)
+  enabled_plugins, disabled_plugins = _configure_plugins(conf)
+  enabled_optionals, disabled_optionals = _configure_optionals(conf)
+  _output_summary(enabled_plugins, disabled_plugins,
+                  enabled_optionals, disabled_optionals)
   _set_defs(conf)
 
 ####
@@ -208,11 +225,11 @@ def _list_cb(option, opt, value, parser):
   setattr(parser.values, option.dest, vals)
 
 def set_options(opt):
+  opt.tool_options('gcc')
   opt.add_option('--with-plugins', action="callback", callback=_list_cb,
-                 type="string", dest="plugins")
+                 type="string", dest="enable_plugins")
   opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                  type="string", dest="disable_plugins")
-  opt.tool_options('gcc')
+  opt.add_option('--conf-prefix', type='string', dest='config_prefix')
   for o in optional_subdirs:
     opt.sub_options(o)
-  opt.add_option('--with-conf-prefix', type='string', dest='config_prefix')
