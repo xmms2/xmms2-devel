@@ -37,9 +37,7 @@ def configure(conf):
     h.path = [os.path.join(Params.g_options.boostprefix, "include")]
     l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
 
-  if not h.run():
-    return False
-  return l.run()
+  return (h.run() and l.run())
 
 def set_options(opt):
-  opt.add_option('--with-boost-prefix', type="string", dest="boostprefix")
+  opt.add_option('--with-boost', type="string", dest="boostprefix")
