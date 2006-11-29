@@ -1,7 +1,8 @@
 from xmmsenv.plugin import plugin
 
 def plugin_configure(conf):
-  conf.check_tool('g++')
+  if not conf.env["HAVE_CXX"]:
+    return False
   cfg = conf.create(configurator='pkgconfig')
   cfg.name = 'libsidplay2'
   cfg.uselib = 'sidplay'

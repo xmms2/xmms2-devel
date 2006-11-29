@@ -2,7 +2,8 @@
 from xmmsenv.plugin import plugin
 
 def plugin_configure(conf):
-  conf.check_tool('g++')
+  if not conf.env["HAVE_CXX"]:
+    return False
   return conf.check_library2('mac', uselib='mac', mandatory=0)
 
 configure, build = plugin('mac', configure=plugin_configure,

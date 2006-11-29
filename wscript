@@ -16,6 +16,7 @@ from xmmsenv import sets # We have our own sets, to not depend on py2.4
 from xmmsenv import gittools
 
 from Params import fatal, pprint
+import Params
 
 VERSION="0.2 DrGonzo+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
@@ -41,7 +42,7 @@ optional_subdirs = ["src/clients/cli",
 ####
 def build(bld):
   # Build the XMMS2 defs file
-  defs = bld.create_obj('subst')
+  defs = bld.create_obj('subst', 'uh')
   defs.source = 'src/include/xmms/xmms_defs.h.in'
   defs.target = 'src/include/xmms/xmms_defs.h'
   defs.dict = bld.env_of_name('default')['XMMS_DEFS']
@@ -152,7 +153,16 @@ def _configure_plugins(conf):
   pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
+  if (conf.check_tool('g++')):
+    conf.env["HAVE_CXX"] = True
+  else:
+  	conf.env["HAVE_CXX"] = False
   conf.check_tool('gcc')
+
+  if Params.g_options.config_prefix:
+    conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
+    conf.env["CCFLAGS"] += ["-I%s" % os.path.join(Params.g_options.config_prefix, "include")]
+    conf.env["CXXFLAGS"] += ["-I%s" % os.path.join(Params.g_options.config_prefix, "include")]
 
   # Check for support for the generic platform
   has_platform_support = os.name in ('nt', 'posix')
@@ -193,3 +203,4 @@ def set_options(opt):
   opt.tool_options('gcc')
   for o in optional_subdirs:
     opt.sub_options(o)
+  opt.add_option('--with-conf-prefix', type='string', dest='config_prefix')

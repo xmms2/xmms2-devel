@@ -23,9 +23,8 @@ def build(bld):
   obj.uselib = 'boost'
 
 def configure(conf):
-  if not conf.check_tool('g++'):
+  if not conf.env["HAVE_CXX"]:
     return False
-
   h = conf.create_header_configurator()
   h.name = 'boost/signal.hpp'
   h.uselib = 'boost'
