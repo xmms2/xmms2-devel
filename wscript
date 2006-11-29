@@ -41,11 +41,14 @@ optional_subdirs = ["src/clients/cli",
 ## Build
 ####
 def build(bld):
+#  bld.set_variants('default debug')
+
   # Build the XMMS2 defs file
   defs = bld.create_obj('subst', 'uh')
   defs.source = 'src/include/xmms/xmms_defs.h.in'
   defs.target = 'src/include/xmms/xmms_defs.h'
   defs.dict = bld.env_of_name('default')['XMMS_DEFS']
+
 
   # Process subfolders
   bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
@@ -158,6 +161,9 @@ def configure(conf):
   else:
   	conf.env["HAVE_CXX"] = False
   conf.check_tool('gcc')
+
+  conf.env["CCFLAGS"] += ['-g', '-O0']
+  conf.env["CXXFLAGS"] += ['-g', '-O0']
 
   if Params.g_options.config_prefix:
     conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
