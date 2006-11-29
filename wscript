@@ -95,6 +95,7 @@ def _set_defs(conf):
   defs['SYSCONFDIR'] = '/etc/xmms2'
 
   conf.env['XMMS_DEFS'] = defs
+  conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
 
 def _configure_plugins(conf):
   """Process all xmms2d plugins"""
