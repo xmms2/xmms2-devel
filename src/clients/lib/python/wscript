@@ -9,6 +9,9 @@ def build(bld):
   obj.uselib = 'python'
   obj.env["plugin_SUFFIX"] = '.so'
   obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label"]
+  import distutils
+  import distutils.sysconfig
+  obj.install_in = distutils.sysconfig.get_python_lib(plat_specific=True)
 
 def configure(conf):
   try:
