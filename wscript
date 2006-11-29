@@ -66,6 +66,9 @@ def build(bld):
   # Build the clients
   bld.add_subdirs(bld.env_of_name('default')['XMMS_OPTIONAL_BUILD'])
 
+  # Headers
+  bld.add_subdirs('src/include')
+
 ####
 ## Configuration
 ####
