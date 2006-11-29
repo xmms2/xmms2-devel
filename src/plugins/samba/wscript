@@ -1,7 +1,8 @@
 from xmmsenv.plugin import plugin
 
 def plugin_configure(conf):
-  return (conf.check_header2('libsmbclient.h', mandatory=0) and
-          conf.check_library2('smbclient', mandatory=0, uselib='samba'))
+  if not conf.check_header2('libsmbclient.h', mandatory=0):
+    return False
+  return conf.check_library2('smbclient', mandatory=0, uselib='samba')
 
 configure, build = plugin('samba', configure=plugin_configure, needs_lib=True)

@@ -6,6 +6,30 @@
 import sys,os,os.path
 import pproc
 
+source = ["config.c",
+	      "mediainfo.c",
+		  "sqlite.c",
+		  "medialib.c",
+		  "object.c",
+		  "error.c",
+		  "output.c",
+		  "playlist.c",
+		  "ipc.c",
+		  "log.c",
+		  "plugin.c",
+		  "magic.c",
+		  "ringbuf.c",
+		  "xform.c",
+		  "streamtype.c",
+		  "converter_plugin.c",
+		  "ringbuf_xform.c",
+		  "outputplugin.c",
+		  "statfs.c",
+		  "strfunc.c",
+		  "bindata.c",
+		  "sample.genpy",
+		  "utils.c"]
+
 def build(bld):
   if sys.platform == 'win32':
     lib = bld.create_obj('cc', 'shlib')
@@ -15,36 +39,15 @@ def build(bld):
   lib.target = 'xmms2d'
   lib.includes = '. ../include ../includepriv'
   lib.install = lambda: True
-  lib.source = ["config.c",
-                "mediainfo.c",
-                "sqlite.c",
-                "medialib.c",
-                "object.c",
-                "error.c",
-                "output.c",
-                "playlist.c",
-                "ipc.c",
-                "log.c",
-                "plugin.c",
-                "magic.c",
-                "ringbuf.c",
-                "xform.c",
-                "streamtype.c",
-                "converter_plugin.c",
-                "ringbuf_xform.c",
-                "outputplugin.c",
-                "statfs.c",
-                "strfunc.c",
-                "bindata.c",
-                "sample.genpy",
-				"utils.c"]
   lib.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
+  lib.source = source
 
   prog = bld.create_obj('cc', 'program')
   prog.target = 'xmms2d'
   prog.includes = '. ../include ../includepriv'
   prog.source = ["main.c", "unixsignal.c"]
-  prog.uselib_local = 'xmms2d xmmsipc xmmssocket xmmsutils'
+  prog.source += source
+  prog.uselib_local = 'xmmsipc xmmssocket xmmsutils'
   prog.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
 
   launch = bld.create_obj('cc', 'program')

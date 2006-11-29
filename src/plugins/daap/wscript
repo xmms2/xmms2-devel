@@ -1,4 +1,3 @@
-# Plugin never tested! FEEDBACK PLEASE for dnssd and dummy modes (avahi tested)
 import sys
 from xmmsenv.plugin import plugin
 
@@ -14,7 +13,9 @@ def plugin_configure(conf):
   elif conf.check_header('dns_sd.h'):
     # We might have dnssd support. If we're not on OSX, check for the
     # presence of the lib.
-    if (sys.platform != 'darwin' and conf.check_library2('dns_sd', uselib='dnssd', mandatory=0)):
+    if sys.platform == 'darwin':
+      conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
+    elif conf.check_library2('dns_sd', uselib='dnssd', mandatory=0):
       conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
   return True
 

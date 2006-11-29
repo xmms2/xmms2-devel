@@ -35,7 +35,8 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/et",
                     "src/clients/mdns/dns_sd",
                     "src/clients/mdns/avahi",
-                    "src/clients/lib/xmmsclient++"]
+                    "src/clients/lib/xmmsclient++",
+                    "src/clients/lib/python"]
 
 ####
 ## Build

@@ -1,9 +1,6 @@
 from xmmsenv.plugin import plugin
 
 def plugin_configure(conf):
-  return (conf.check_pkg('vorbisfile', destvar='vorbisfile') and
-          conf.check_pkg('vorbis', destvar='vorbis') and
-          conf.check_pkg('ogg', destvar='ogg'))
+  return conf.check_pkg('vorbisfile', destvar='vorbis')
 
-configure, build = plugin('vorbis', needs_lib=True,
-                          extra_libs=['vorbisfile', 'ogg'])
+configure, build = plugin('vorbis', needs_lib=True, configure=plugin_configure, source="vorbis.c")
