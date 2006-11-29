@@ -601,11 +601,11 @@ c_playback_volume_set (VALUE self, VALUE channel, VALUE volume)
 
 	CHECK_DELETED (xmms);
 
-	StringValue (channel);
+	Check_Type (channel, T_SYMBOL);
 	Check_Type (volume, T_FIXNUM);
 
 	res = xmmsc_playback_volume_set (xmms->real,
-	                                 StringValuePtr (channel),
+	                                 rb_id2name (SYM2ID (channel)),
 	                                 NUM2UINT (volume));
 
 	return TO_XMMS_CLIENT_RESULT (self, res);
