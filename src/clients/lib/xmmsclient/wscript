@@ -7,7 +7,7 @@ def build(bld):
 
 def configure(conf):
   conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client', '-lxmmsclient'))
-  pass
+  return True
 
 def set_options(opt):
   pass

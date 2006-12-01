@@ -229,7 +229,9 @@ def configure(conf):
 
   conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')
+  conf.sub_config('src/lib/xmmsutils')
   conf.sub_config('src/xmms')
+  conf.sub_config('src/clients/lib/xmmsclient')
   conf.sub_config('src/clients/lib/xmmsclient-glib')
 
   enabled_plugins, disabled_plugins = _configure_plugins(conf)
