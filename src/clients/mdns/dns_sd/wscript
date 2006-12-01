@@ -11,8 +11,6 @@ def build(bld):
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 def configure(conf):
-  if not conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0'):
-    return False
   if not conf.check_header('dns_sd.h'):
     return False
   if sys.platform == 'darwin':

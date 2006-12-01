@@ -6,6 +6,7 @@ def build(bld):
   obj.uselib_local = 'xmmsipc xmmssocket xmmsutils'
 
 def configure(conf):
+  conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client', '-lxmmsclient'))
   pass
 
 def set_options(opt):

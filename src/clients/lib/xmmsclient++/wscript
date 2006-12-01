@@ -37,7 +37,11 @@ def configure(conf):
     h.path = [os.path.join(Params.g_options.boostprefix, "include")]
     l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
 
-  return (h.run() and l.run())
+  ret = (h.run() and l.run())
+  if ret:
+    conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
+
+  return ret
 
 def set_options(opt):
   opt.add_option('--with-boost', type="string", dest="boostprefix")

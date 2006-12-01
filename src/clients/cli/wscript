@@ -7,7 +7,7 @@ def build(bld):
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 def configure(conf):
-  return conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
+  return True
 
 def set_options(opt):
   pass

@@ -16,6 +16,7 @@ from xmmsenv import sets # We have our own sets, to not depend on py2.4
 from xmmsenv import gittools
 
 import Params
+import Object
 
 VERSION="0.2 DrGonzo+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
@@ -35,6 +36,7 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/mdns/dns_sd",
                     "src/clients/mdns/avahi",
                     "src/clients/lib/xmmsclient++",
+                    "src/clients/lib/xmmsclient++-glib",
                     "src/clients/lib/python",
                     "src/clients/lib/ruby"]
 
@@ -45,35 +47,6 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ####
 ## Build
 ####
-
-class pkgcobj(misc.cmdobj):
-  
-
-def _make_pkgconfig(bld):
-  val = {}
-  p = bld.env_of_name("default")["PREFIX"]
-  val["PREFIX"] = p
-  val["BINDIR"] = os.path.join(p, "bin")
-  val["LIBDIR"] = os.path.join(p, "lib")
-  val["INCLUDEDIR"] = os.path.join(p, "include")
-  val["VERSION"] = VERSION
-
-  for name, lib in [("xmms2-plugin", ""),
-                    ("xmms2-client", "-lxmmsclient"),
-                    ("xmms2-client-glib", "-lxmmsclient-glib"),
-                    ("xmms2-client-ecore", "-lxmmsclient-ecore"),
-                    ("xmms2-client-cpp", "-lxmmsclient -lxmmsclient++"),
-                    ("xmms2-client-cpp-glib", "-lxmmsclient++-glib -lxmmsclient++")]:
-    val["NAME"] = name
-    val["LIB"] = lib
-
-    obj = bld.create_obj("subst")
-    obj.source = 'xmms2.pc.in'
-    obj.target = name+".pc"
-    obj.dict = val
-    install
-
-
 def build(bld):
 #  bld.set_variants('default debug')
 
@@ -102,7 +75,10 @@ def build(bld):
   bld.add_subdirs('src/include')
 
   # pkg-config
-  _make_pkgconfig(bld)
+  o = bld.create_obj('pkgc')
+  o.version = VERSION
+  o.libs = bld.env_of_name('default')['XMMS_PKGCONF_FILES']
+
 
 ####
 ## Configuration
@@ -131,6 +107,7 @@ def _set_defs(conf):
 
   conf.env['XMMS_DEFS'] = defs
   conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
+  conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
 
 def _configure_optionals(conf):
   """Process the optional xmms2 subprojects"""
@@ -153,10 +130,6 @@ def _configure_plugins(conf):
       Params.fatal(msg % {'unknown_plugins': ', '.join(unknown_plugins)})
     return plugins
 
-  # Glib is required by all plugins, so check for it here and let them
-  # assume its presence.
-  conf.check_tool('checks')
-  conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
   conf.env['XMMS_PLUGINS_ENABLED'] = []
 
   # If an explicit list was provided, only try to process that
@@ -215,9 +188,11 @@ def configure(conf):
   else:
   	conf.env["HAVE_CXX"] = False
   conf.check_tool('gcc')
+  conf.check_tool('pkgconfig', tooldir=os.path.abspath('xmmsenv'))
 
   conf.env["CCFLAGS"] += ['-g', '-O0']
   conf.env["CXXFLAGS"] += ['-g', '-O0']
+  conf.env['XMMS_PKGCONF_FILES'] = []
 
   if Params.g_options.config_prefix:
     conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix,
@@ -234,6 +209,11 @@ def configure(conf):
   if not has_platform_support:
     Params.fatal("xmms2 only has platform support for Windows "
                  "and POSIX operating systems.")
+
+  # Glib is required by everyone, so check for it here and let them
+  # assume its presence.
+  conf.check_tool('checks')
+  conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
 
   conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')

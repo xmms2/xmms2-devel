@@ -59,7 +59,6 @@ def build(bld):
 def configure(conf):
   conf.check_tool('misc checks')
   conf.check_tool('python-generator', tooldir=os.path.abspath('xmmsenv'))
-  conf.check_pkg2('glib-2.0', '2.6.0', uselib='glib-2.0')
   conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule-2.0')
   conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread-2.0')
   conf.check_pkg2('sqlite3', '0.0', uselib='sqlite3')
@@ -104,6 +103,8 @@ def configure(conf):
   # Add Darwin stuff
   if sys.platform == 'darwin':
     conf.env.appendUnique('LINKFLAGS', '-framework CoreFoundation')
+
+  conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-plugin', ''))
 
 def set_options(opt):
   pass
