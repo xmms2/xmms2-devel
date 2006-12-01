@@ -26,6 +26,7 @@
 # error You need atleast glib 2.6.0
 #endif
 
+#include "xmmsc/xmmsc_util.h"
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
@@ -37,6 +38,7 @@
 #include "xmmspriv/xmms_sqlite.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_bindata.h"
+#include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_defs.h"
 
 #include <stdio.h>
@@ -164,7 +166,7 @@ do_scriptdir (const gchar *scriptdir)
 static void
 load_config ()
 {
-	gchar *configdir;
+	gchar *configdir = g_malloc0 (PATH_MAX);
 
 	if (!conffile) {
 		conffile = XMMS_BUILD_PATH ("xmms2.conf"); 
@@ -172,7 +174,8 @@ load_config ()
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);
 
-	configdir = XMMS_BUILD_PATH ();
+	if (!xmms_userconfdir_get (configdir, PATH_MAX))
+		xmms_log_error ("Could not get path to config dir");
 	if (!g_file_test (configdir, G_FILE_TEST_IS_DIR)) {
 		g_mkdir_with_parents (configdir, 0755);
 	}
@@ -352,7 +355,7 @@ print_version ()
 	        glib_micro_version);
 	xmms_sqlite_print_version ();
 
-	exit (0);
+	exit (EXIT_SUCCESS);
 }
 
 /**
@@ -402,7 +405,7 @@ main (int argc, char **argv)
 	vererr = glib_check_version (GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, 0);
 	if (vererr) {
 		g_print ("Bad glib version: %s\n", vererr);
-		exit (1);
+		exit (EXIT_FAILURE);
 	}
 
 	memset (&signals, 0, sizeof (sigset_t));
@@ -417,13 +420,13 @@ main (int argc, char **argv)
 	if (!g_option_context_parse (context, &argc, &argv, &error) || error) {
 		g_print ("Error parsing options: %s\n", error->message);
 		g_clear_error (&error);
-		exit (1);
+		exit (EXIT_FAILURE);
 	}
 	g_option_context_free (context);
 
 	if (argc != 1) {
 		g_print ("There was unknown options, aborting!\n");
-		exit (1);
+		exit (EXIT_FAILURE);
 	}
 
 	if (verbose) {
@@ -445,8 +448,7 @@ main (int argc, char **argv)
 
 	load_config ();
 
-	g_strlcpy (default_path, "unix:///tmp/xmms-ipc-", sizeof (default_path));
-	g_strlcat (default_path, g_get_user_name (), sizeof (default_path));
+	xmms_default_ipcpath_get (default_path, sizeof (default_path));
 
 	cv = xmms_config_property_register ("core.ipcsocket",
 	                                    default_path,

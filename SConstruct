@@ -17,7 +17,7 @@ if changed:
 else:
 	changed = ""
 
-XMMS_VERSION = "0.2 DrGonzo+WIP (git commit: %s%s)" % (commithash, changed)
+XMMS_VERSION = "0.2 DrGonzo+WIP+TEST2 (git commit: %s%s)" % (commithash, changed)
 
 EnsureSConsVersion(0, 96)
 EnsurePythonVersion(2, 3)
@@ -214,7 +214,6 @@ map(lambda x: foo.append(x[x.rindex(os.sep)+1:]), base_env.plugins)
 print ", ".join(foo)
 print "Default output:", xmmsenv.default_output[1]
 
-base_env.add_script("startup.d", "src/clients/mdns/xmms2-mdns-launcher.sh")
 base_env.add_shared("mind.in.a.box-lament_snipplet.ogg")
 base_env.Alias('install', base_env.install_targets)
 

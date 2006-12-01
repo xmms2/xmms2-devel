@@ -15,6 +15,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include <xmmsclient/xmmsclient.h>
 #include <xmms/xmms_defs.h>
 #include <jni.h>

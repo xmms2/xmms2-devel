@@ -101,7 +101,7 @@ get_data_from_url (const gchar *url, gchar **host, guint *port, gchar **cmd)
 
 	port_ptr = strstr (stripped, ":");
 	if (port && port_ptr && (port_ptr + 1) != end_ptr) {
-		*port = strtol (port_ptr, (gchar **) NULL, 10);
+		*port = strtol (port_ptr + 1, (gchar **) NULL, 10);
 		if (*port == 0) {
 			*port = DEFAULT_DAAP_PORT;
 		}

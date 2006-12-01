@@ -63,6 +63,7 @@
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME "picture_front_mime"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STARTSAMPLE "startsample"
 #define XMMS_MEDIALIB_ENTRY_PROPERTY_STOPSAMPLE "stopsample"
+#define XMMS_MEDIALIB_ENTRY_PROPERTY_AVAILABLE "available"
 
 typedef guint32 xmms_medialib_entry_t;
 typedef struct xmms_medialib_session_St xmms_medialib_session_t;

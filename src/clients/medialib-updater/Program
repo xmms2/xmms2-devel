@@ -8,4 +8,4 @@ def config(env):
 	env.Append(LIBS=["xmmsclient-glib"])
 	env.pkgconfig("glib-2.0")
 	env.pkgconfig("gamin")
-	env.add_script("startup.d", "src/clients/medialib-updater/xmms2-mlib-updater.sh")
+	env.add_script("startup.d", "src/clients/medialib-updater/xmms2-mlib-updater.sh.in")

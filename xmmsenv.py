@@ -24,21 +24,29 @@ def find_static_lib(env, lib):
 		if os.path.exists(d+"/"+libname):
 			return d+"/"+libname
 
-def installFunc(dest, source, env):
+def our_install(dest, source, mode):
 	"""Copy file, setting sane permissions"""
 	
 	if os.path.islink(source):
 		os.symlink(os.readlink(source), dest)
 	else:
 		shutil.copy(source, dest)
-		st = os.stat(source)
-		mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
-		if st[ST_MODE] & S_IXUSR:
-			mode |= S_IXUSR | S_IXGRP | S_IXOTH
 		os.chmod(dest, mode)
 	return 0
 
+def installFunc(dest, source, env):
+	st = os.stat(source)
+	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+	if st[ST_MODE] & S_IXUSR:
+		mode |= S_IXUSR | S_IXGRP | S_IXOTH
+	return our_install(dest, source, mode)
 
+def installFuncExec(dest, source, env):
+	st = os.stat(source)
+	mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+	# always
+	mode |= S_IXUSR | S_IXGRP | S_IXOTH
+	return our_install(dest, source, mode)
 
 class Target:
 	def __init__(self, target, env):
@@ -176,7 +184,7 @@ class XMMSEnvironment(Environment):
 		target = os.path.normpath(self.installdir + target)
 		SCons.Environment.Environment.Install(self, target, source)
 		self.install_targets.append(target)
-			
+
 	def tryaction(self, cmd):
 		if self.config_cache.has_key(cmd):
 			return self.config_cache[cmd]
@@ -470,7 +478,10 @@ class XMMSEnvironment(Environment):
 		self.Install(os.path.join(self.manpath, "man"+str(section)), source+'.gz')
 
 	def add_script(self, target, source):
-		self.Install(os.path.join(self.scriptpath,target), source)
+		subst = {"%PRG_PATH%":self.binpath}
+		self.SubstInFile(source[:-3], source, SUBST_DICT=subst)
+		self["INSTALL"] = installFuncExec
+		self.Install(os.path.join(self.scriptpath,target), source[:-3])
 
 	def options_changed(self, options, exclude=[]):
 		"""NOTE: This method does not catch changed defaults."""

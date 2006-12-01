@@ -558,8 +558,6 @@ xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entr
 
 	g_mutex_lock (playlist->mutex);
 	len = playlist->list->len;
-	if (len != 0)
-		len --;
 
 	if (pos > len || pos < 0) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Could not insert entry outside of playlist!");
@@ -567,6 +565,11 @@ xmms_playlist_insert (xmms_playlist_t *playlist, guint32 pos, xmms_medialib_entr
 		return FALSE;
 	}
 	g_array_insert_val (playlist->list, pos, file);
+
+	/* update current position */
+	if (playlist->currentpos >= pos) {
+		playlist->currentpos ++;
+	}
 
 	/** propagate the MID ! */
 	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_INSERT, file);

@@ -209,7 +209,7 @@ main (int argc, char **argv)
 	if (s && s[2]) {
 		port = strtol (s[2], NULL, 10);
 	} else {
-		port = 5555;
+		port = XMMS_DEFAULT_TCP_PORT;
 	}
 
 	conn = xmmsc_init ("xmms2-mdns");

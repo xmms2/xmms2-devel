@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec %PRG_PATH%/xmms2-mdns-dnssd
+

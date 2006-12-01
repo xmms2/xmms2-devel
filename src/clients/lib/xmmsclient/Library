@@ -16,6 +16,7 @@ source=["ipc.c",
 	"bindata.c"]
 
 def config(env):
+	env.Append(LIBS=["xmmsutils"])
 	env.Append(LIBS=["xmmsipc"])
 	env.Append(LIBS=["xmmssocket"])
 	if env.platform == 'win32':
@@ -24,6 +25,6 @@ def config(env):
 	elif env.platform == 'sunos5':
 		env.checklib("socket", "socket", fail=True)
 	env.Append(CPPPATH=["#src/includepriv"])
+	env.Prepend(LIBPATH="src/lib/xmmsutils")
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmssocket")
-	env.Append(CPPFLAGS=['-DUSERCONFDIR=\\"'+env.userconfpath+'\\"'])
