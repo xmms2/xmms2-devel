@@ -114,6 +114,10 @@ def _set_defs(conf):
 
   for i in defs:
     conf.add_define(i, defs[i])
+  try:
+    os.makedirs(os.path.join(blddir, 'default','src','include','xmms'))
+  except:
+    pass
   conf.write_config_header('src/include/xmms/xmms_defs.h')
 
 def _configure_optionals(conf):
