@@ -28,7 +28,7 @@ def plugin_build(bld):
                 "daap_util.c", "daap_md5.c", "cc_handlers.c",
                 "daap_mdns_%s.c" % daap_backend]
   obj.uselib = 'curl glib-2.0'
-  obj.install_in = bld.env_of_name('default')["XMMS_DEFS"]["PKGLIBDIR"]
+  obj.install_in = "PLUGINDIR"
 
 configure, build = plugin('daap', configure=plugin_configure,
                           build_replace=plugin_build)
