@@ -3,7 +3,7 @@ def build(bld):
   obj.target = 'xmmsclient-glib'
   obj.includes = '../../../include'
   obj.source = 'xmmsclient-glib.c'
-  obj.uselib = 'glib-2.0'
+  obj.uselib = 'glib2'
   obj.uselib_local = 'xmmsclient'
 
 def configure(conf):

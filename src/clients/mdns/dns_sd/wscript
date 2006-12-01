@@ -5,7 +5,7 @@ def build(bld):
   obj.target = 'xmms2-mdns-dnssd'
   obj.source = ['mdns-dnssd.c']
   obj.includes = '. ../../../include'
-  obj.uselib = 'glib-2.0'
+  obj.uselib = 'glib2'
   if sys.platform != 'darwin':
     obj.uselib =+ ' dnssd'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'

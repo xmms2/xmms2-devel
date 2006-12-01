@@ -51,11 +51,10 @@ def build(bld):
 #  bld.set_variants('default debug')
 
   # Build the XMMS2 defs file
-  defs = bld.create_obj('subst', 'uh')
-  defs.source = 'src/include/xmms/xmms_defs.h.in'
-  defs.target = 'src/include/xmms/xmms_defs.h'
-  defs.dict = bld.env_of_name('default')['XMMS_DEFS']
-
+#  defs = bld.create_obj('subst', 'uh')
+#  defs.source = 'src/include/xmms/xmms_defs.h.in'
+#  defs.target = 'src/include/xmms/xmms_defs.h'
+#  defs.dict = bld.env_of_name('default')['XMMS_DEFS']
 
   # Process subfolders
   bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
@@ -92,9 +91,9 @@ def _set_defs(conf):
                     'netbsd', 'dragonfly', 'darwin']
   for platform in platform_names:
     if sys.platform.startswith(platform):
-      defs['PLATFORM'] = "XMMS_OS_%s" % platform.upper()
+      defs["XMMS_OS_%s" % platform.upper()] = 1
       break
-  defs['VERSION'] = VERSION
+  defs['XMMS_VERSION'] = VERSION
   defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
                                    'lib', 'xmms2')
   defs['BINDIR'] = os.path.join(conf.env['PREFIX'],
@@ -105,13 +104,17 @@ def _set_defs(conf):
   l = conf.env['XMMS_OUTPUT_PLUGINS']
   l.sort()
   l.reverse()
-  defs['DEFAULT_OUTPUT'] = l.pop(0)[1]
+  defs['XMMS_OUTPUT_DEFAULT'] = l.pop(0)[1]
   defs['USERCONFDIR'] = '.config/xmms2'
   defs['SYSCONFDIR'] = '/etc/xmms2'
 
   conf.env['XMMS_DEFS'] = defs
   conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
   conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
+
+  for i in defs:
+    conf.add_define(i, defs[i])
+  conf.write_config_header('src/include/xmms/xmms_defs.h')
 
 def _configure_optionals(conf):
   """Process the optional xmms2 subprojects"""
@@ -218,7 +221,7 @@ def configure(conf):
   # Glib is required by everyone, so check for it here and let them
   # assume its presence.
   conf.check_tool('checks')
-  conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib-2.0')
+  conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
   conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')
@@ -231,7 +234,7 @@ def configure(conf):
                   enabled_optionals, disabled_optionals)
   _set_defs(conf)
   print "\nDefault output plugin: ",
-  Params.pprint('BLUE', conf.env["XMMS_DEFS"]['DEFAULT_OUTPUT'])
+  Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
 
 ####
 ## Options

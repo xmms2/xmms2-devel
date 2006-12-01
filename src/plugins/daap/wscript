@@ -27,7 +27,7 @@ def plugin_build(bld):
   obj.source = ["daap_xform.c", "daap_cmd.c", "daap_conn.c",
                 "daap_util.c", "daap_md5.c", "cc_handlers.c",
                 "daap_mdns_%s.c" % daap_backend]
-  obj.uselib = 'curl glib-2.0'
+  obj.uselib = 'curl glib2'
   obj.install_in = "PLUGINDIR"
 
 configure, build = plugin('daap', configure=plugin_configure,

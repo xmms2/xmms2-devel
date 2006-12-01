@@ -39,7 +39,7 @@ def build(bld):
   lib.target = 'xmms2d'
   lib.includes = '. ../include ../includepriv'
   lib.install_in = 0
-  lib.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
+  lib.uselib = 'glib2 gmodule2 gthread2 sqlite3'
   lib.source = source
 
   prog = bld.create_obj('cc', 'program')
@@ -48,19 +48,19 @@ def build(bld):
   prog.source = ["main.c", "unixsignal.c"]
   prog.source += source
   prog.uselib_local = 'xmmsipc xmmssocket xmmsutils'
-  prog.uselib = 'glib-2.0 gmodule-2.0 gthread-2.0 sqlite3'
+  prog.uselib = 'glib2 gmodule2 gthread2 sqlite3'
 
   launch = bld.create_obj('cc', 'program')
   launch.target = 'xmms2-launcher'
   launch.source = ['xmms2-launcher.c']
   launch.includes = '../include'
-  launch.uselib = 'glib-2.0 gmodule gthread'
+  launch.uselib = 'glib2 gmodule2 gthread2'
 
 def configure(conf):
   conf.check_tool('misc checks')
   conf.check_tool('python-generator', tooldir=os.path.abspath('xmmsenv'))
-  conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule-2.0')
-  conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread-2.0')
+  conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule2')
+  conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread2')
   conf.check_pkg2('sqlite3', '0.0', uselib='sqlite3')
 
   # Check for the sin function in the math lib

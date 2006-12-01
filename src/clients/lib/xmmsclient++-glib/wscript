@@ -2,7 +2,7 @@ def build(bld):
   lib = bld.create_obj('cpp', 'shlib')
   lib.target = 'xmmsclient++-glib'
   lib.source = 'xmmsclient++-glib.cpp'
-  lib.uselib = 'glib-2.0'
+  lib.uselib = 'glib2'
   lib.uselib_local = 'xmmsclient-glib'
   lib.includes = '../../../include ../../../includepriv'
 

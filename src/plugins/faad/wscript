@@ -17,7 +17,7 @@ def plugin_build(bld):
   obj.includes = '../../include'
   obj.target = 'xmms_faad'
   obj.find_sources_in_dirs('. mp4ff') # TODO: fix waf to accept lists
-  obj.uselib = 'faad glib-2.0'
+  obj.uselib = 'faad glib2'
 
 configure, build = plugin('faad', configure=plugin_configure,
                           build_replace=plugin_build)
