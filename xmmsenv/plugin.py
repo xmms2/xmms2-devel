@@ -6,7 +6,7 @@ import sys
 
 def plugin(name, source=None, configure=False, build=False,
            build_replace=False, needs_lib=False, extra_libs=[],
-           tool='cc', broken=False):
+           tool='cc', broken=False, output_prio=None):
   def stock_configure(conf):
     if broken:
       conf.check_message_custom('%s plugin' % name, '',
@@ -15,6 +15,8 @@ def plugin(name, source=None, configure=False, build=False,
     if configure and not configure(conf):
       return
     conf.env['XMMS_PLUGINS_ENABLED'].append(name)
+    if output_prio:
+      conf.env['XMMS_OUTPUT_PLUGINS'].append((output_prio, name))
 
   def stock_build(bld):
     obj = bld.create_obj(tool, 'plugin')

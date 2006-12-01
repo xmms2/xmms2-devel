@@ -11,4 +11,5 @@ def plugin_configure(conf):
     conf.env['CCFLAGS_ossaudio'].append('-DDEFAULT_DEVICE=\\"/dev/dsp\\"')
   return True
 
-configure, build = plugin('oss', configure=plugin_configure, extra_libs=['ossaudio'])
+configure, build = plugin('oss', configure=plugin_configure, extra_libs=['ossaudio'],
+                          output_prio=3)

@@ -101,7 +101,11 @@ def _set_defs(conf):
                                 'bin')
   defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
                                   'share', 'xmms2')
-  defs['DEFAULT_OUTPUT'] = 'alsa' # TODO(dave): fix
+
+  l = conf.env['XMMS_OUTPUT_PLUGINS']
+  l.sort()
+  l.reverse()
+  defs['DEFAULT_OUTPUT'] = l.pop(0)[1]
   defs['USERCONFDIR'] = '.config/xmms2'
   defs['SYSCONFDIR'] = '/etc/xmms2'
 
@@ -193,6 +197,7 @@ def configure(conf):
   conf.env["CCFLAGS"] += ['-g', '-O0']
   conf.env["CXXFLAGS"] += ['-g', '-O0']
   conf.env['XMMS_PKGCONF_FILES'] = []
+  conf.env['XMMS_OUTPUT_PLUGINS'] = []
 
   if Params.g_options.config_prefix:
     conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix,
@@ -225,6 +230,8 @@ def configure(conf):
   _output_summary(enabled_plugins, disabled_plugins,
                   enabled_optionals, disabled_optionals)
   _set_defs(conf)
+  print "\nDefault output plugin: ",
+  Params.pprint('BLUE', conf.env["XMMS_DEFS"]['DEFAULT_OUTPUT'])
 
 ####
 ## Options
