@@ -45,6 +45,35 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ####
 ## Build
 ####
+
+class pkgcobj(misc.cmdobj):
+  
+
+def _make_pkgconfig(bld):
+  val = {}
+  p = bld.env_of_name("default")["PREFIX"]
+  val["PREFIX"] = p
+  val["BINDIR"] = os.path.join(p, "bin")
+  val["LIBDIR"] = os.path.join(p, "lib")
+  val["INCLUDEDIR"] = os.path.join(p, "include")
+  val["VERSION"] = VERSION
+
+  for name, lib in [("xmms2-plugin", ""),
+                    ("xmms2-client", "-lxmmsclient"),
+                    ("xmms2-client-glib", "-lxmmsclient-glib"),
+                    ("xmms2-client-ecore", "-lxmmsclient-ecore"),
+                    ("xmms2-client-cpp", "-lxmmsclient -lxmmsclient++"),
+                    ("xmms2-client-cpp-glib", "-lxmmsclient++-glib -lxmmsclient++")]:
+    val["NAME"] = name
+    val["LIB"] = lib
+
+    obj = bld.create_obj("subst")
+    obj.source = 'xmms2.pc.in'
+    obj.target = name+".pc"
+    obj.dict = val
+    install
+
+
 def build(bld):
 #  bld.set_variants('default debug')
 
@@ -71,6 +100,9 @@ def build(bld):
 
   # Headers
   bld.add_subdirs('src/include')
+
+  # pkg-config
+  _make_pkgconfig(bld)
 
 ####
 ## Configuration

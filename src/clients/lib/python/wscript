@@ -11,7 +11,7 @@ def build(bld):
   obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label"]
   import distutils
   import distutils.sysconfig
-  obj.install_in = distutils.sysconfig.get_python_lib(plat_specific=True)
+  obj.install_in = "LIBDIR_python"
 
 def configure(conf):
   try:
@@ -25,6 +25,8 @@ def configure(conf):
   h.path = [distutils.sysconfig.get_python_inc(plat_specific=True)]
   if not h.run():
     return False
+
+  conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
 
   return conf.check_tool('pyrexc', tooldir=os.path.abspath('xmmsenv'))
 

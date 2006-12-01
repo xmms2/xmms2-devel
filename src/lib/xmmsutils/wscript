@@ -12,7 +12,7 @@ def build(bld):
   obj.source = "strlist.c utils_%s.c" % platform_src[os.name]
   obj.includes='. ../../include'
   obj.target='xmmsutils'
-  obj.install = lambda: True
+  obj.install_in = 0
 
 def configure(conf):
   pass
