@@ -1,7 +1,0 @@
-target="xmmsclient-glib"
-systemlibrary=True
-
-source=["xmmsclient-glib.c"]
-
-def config(env):
-	env.pkgconfig("glib-2.0")
