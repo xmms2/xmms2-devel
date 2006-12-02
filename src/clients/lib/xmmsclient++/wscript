@@ -1,5 +1,6 @@
 import os
 import Params
+from xmmsenv import tool
 
 def build(bld):
   obj = bld.create_obj('cpp', 'shlib')
@@ -21,6 +22,7 @@ def build(bld):
                 "xform.cpp"]
   obj.uselib_local = 'xmmsclient'
   obj.uselib = 'boost'
+  tool.add_install_flag(obj)
 
 def configure(conf):
   if not conf.env["HAVE_CXX"]:

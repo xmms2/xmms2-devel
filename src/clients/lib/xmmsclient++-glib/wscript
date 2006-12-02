@@ -1,3 +1,4 @@
+from xmmsenv import tool
 def build(bld):
   lib = bld.create_obj('cpp', 'shlib')
   lib.target = 'xmmsclient++-glib'
@@ -5,6 +6,7 @@ def build(bld):
   lib.uselib = 'glib2'
   lib.uselib_local = 'xmmsclient-glib'
   lib.includes = '../../../include ../../../includepriv'
+  tool.add_install_flag(lib)
 
 def configure(conf):
   conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client-cpp-glib', '-lxmmsclient-glib -lxmmsclient++-glib'))

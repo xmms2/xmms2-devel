@@ -169,6 +169,8 @@ def configure(conf):
     conf.env["CCFLAGS"] += [include]
     conf.env["CXXFLAGS"] += [include]
 
+  conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
+
   # Check for support for the generic platform
   has_platform_support = os.name in ('nt', 'posix')
   conf.check_message("platform code for", os.name,
