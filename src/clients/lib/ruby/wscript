@@ -43,12 +43,12 @@ def configure(conf):
     return False
   conf.check_message('ruby', 'header file', True)
 
-  dir = os.popen("ruby -rrbconfig -e 'puts \"%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'").read().strip()
+  dir = os.popen(ruby + " -rrbconfig -e 'puts \"%s\" % [].fill(Config::CONFIG[\"archdir\"], 0..1)'").read().strip()
   conf.env["CCFLAGS_ruby"] = '-I%s' % dir
   conf.env["LINKFLAGS_ruby"] = '-L%s' % dir
 
   if not Params.g_options.rubyarchdir:
-    conf.env["ARCHDIR_ruby"] = os.popen("ruby -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'").read().strip()
+    conf.env["ARCHDIR_ruby"] = os.popen(ruby + " -rrbconfig -e 'print Config::CONFIG[\"sitearchdir\"]'").read().strip()
   else:
     conf.env["ARCHDIR_ruby"] = Params.g_options.rubyarchdir
 
