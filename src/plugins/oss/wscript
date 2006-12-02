@@ -4,12 +4,11 @@ import sys
 def plugin_configure(conf):
   if not conf.check_header2('sys/soundcard.h', mandatory=0):
     return False
-  conf.check_library2('ossaudio', mandatory=0, uselib='ossaudio')
-  if sys.platform in ('netbsd', 'openbsd'):
+  if conf.check_library2('ossaudio', mandatory=0, uselib='ossaudio'):
     conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/audio\\"'
   else:
     conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
   return True
  
-configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss', 'ossaudio'],
+configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss'],
                           output_prio=3)
