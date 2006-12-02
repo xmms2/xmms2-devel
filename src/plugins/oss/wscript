@@ -1,16 +1,15 @@
-# Currently broken, help fixing is welcome!
 from xmmsenv.plugin import plugin
-import sys
-
+import sys 
+ 
 def plugin_configure(conf):
   if not conf.check_header2('sys/soundcard.h', mandatory=0):
     return False
   conf.check_library2('ossaudio', mandatory=0, uselib='ossaudio')
   if sys.platform in ('netbsd', 'openbsd'):
-    conf.env['CCFLAGS_ossaudio'].append('-DDEFAULT_DEVICE=\\"/dev/audio\\"')
+    conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/audio\\"'
   else:
-    conf.env['CCFLAGS_ossaudio'].append('-DDEFAULT_DEVICE=\\"/dev/dsp\\"')
+    conf.env['CCFLAGS_oss'] = '-DDEFAULT_DEVICE=\\"/dev/dsp\\"'
   return True
-
-configure, build = plugin('oss', configure=plugin_configure, extra_libs=['ossaudio'],
+ 
+configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss', 'ossaudio'],
                           output_prio=3)
