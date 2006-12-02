@@ -23,13 +23,17 @@ def build(bld):
   # TODO - ECORE
 
 def configure(conf):
-  ruby = conf.find_program('ruby', var='RUBY')
+  if Params.g_options.rubybinary:
+    ruby = Params.g_options.rubybinary
+  else:
+    ruby = conf.find_program('ruby', var='RUBY')
+
   if not ruby:
     return False
   
   version = os.popen(ruby + " -e 'puts defined?(VERSION) ? VERSION : RUBY_VERSION'").read().strip()
   if not version or [int(a) for a in version.split(".")] < [1, 8]:
-    conf.check_message('ruby version', '> 1.8', false, version)
+    conf.check_message('ruby version', '> 1.8', False, version)
     return False
   conf.check_message('ruby version', '> 1.8', True, version)
 
@@ -52,3 +56,4 @@ def configure(conf):
 
 def set_options(opt):
   opt.add_option('--with-ruby-archdir', type="string", dest="rubyarchdir")
+  opt.add_option('--with-ruby-binary', type='string', dest='rubybinary')
