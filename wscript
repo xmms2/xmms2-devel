@@ -82,44 +82,6 @@ def build(bld):
 ####
 ## Configuration
 ####
-def _set_defs(conf):
-  """Set the values needed by xmms_defs.h.in in the environment."""
-
-  defs = {}
-
-  platform_names = ['linux', 'freebsd', 'openbsd',
-                    'netbsd', 'dragonfly', 'darwin']
-  for platform in platform_names:
-    if sys.platform.startswith(platform):
-      defs["XMMS_OS_%s" % platform.upper()] = 1
-      break
-  defs['XMMS_VERSION'] = VERSION
-  defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
-                                   'lib', 'xmms2')
-  defs['BINDIR'] = os.path.join(conf.env['PREFIX'],
-                                'bin')
-  defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
-                                  'share', 'xmms2')
-
-  l = conf.env['XMMS_OUTPUT_PLUGINS']
-  l.sort()
-  l.reverse()
-  defs['XMMS_OUTPUT_DEFAULT'] = l.pop(0)[1]
-  defs['USERCONFDIR'] = '.config/xmms2'
-  defs['SYSCONFDIR'] = '/etc/xmms2'
-
-  conf.env['XMMS_DEFS'] = defs
-  conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
-  conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
-
-  for i in defs:
-    conf.add_define(i, defs[i])
-  try:
-    os.makedirs(os.path.join(blddir, 'default','src','include','xmms'))
-  except:
-    pass
-  conf.write_config_header('src/include/xmms/xmms_defs.h')
-
 def _configure_optionals(conf):
   """Process the optional xmms2 subprojects"""
 
@@ -228,6 +190,7 @@ def configure(conf):
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
   conf.sub_config('src/lib/xmmssocket')
+  conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/lib/xmmsutils')
   conf.sub_config('src/xmms')
@@ -238,7 +201,11 @@ def configure(conf):
   enabled_optionals, disabled_optionals = _configure_optionals(conf)
   _output_summary(enabled_plugins, disabled_plugins,
                   enabled_optionals, disabled_optionals)
-  _set_defs(conf)
+
+  # generate xmms_defs.h
+  conf.env["VERSION"] = VERSION
+  conf.sub_config('src/include/xmms')
+
   print "\nDefault output plugin: ",
   Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
 
