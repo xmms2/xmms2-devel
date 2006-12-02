@@ -1,5 +1,6 @@
 # Currently broken, help fixing is welcome!
 from xmmsenv.plugin import plugin
+import sys
 
 def plugin_configure(conf):
   if not conf.check_header2('sys/soundcard.h', mandatory=0):
