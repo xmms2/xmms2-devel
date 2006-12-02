@@ -3,12 +3,12 @@ def build(bld):
   obj.target = 'xmms2-mdns-avahi'
   obj.source = ['mdns-avahi.c']
   obj.includes = '. ../../../include'
-  obj.uselib = 'glib2 avahi-client avahi-glib'
+  obj.uselib = 'glib2 avahiclient avahiglib'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 def configure(conf):
-  return (conf.check_pkg('avahi-client', destvar='avahi-client') and
-    conf.check_pkg('avahi-glib', destvar='avahi-glib'))
+  return (conf.check_pkg('avahi-client', destvar='avahiclient') and
+    conf.check_pkg('avahi-glib', destvar='avahiglib'))
 
 def set_options(opt):
   pass
