@@ -7,7 +7,7 @@ def build(bld):
   obj.includes = '. ../../../include'
   obj.uselib = 'glib2'
   if sys.platform != 'darwin':
-    obj.uselib =+ ' dnssd'
+    obj.uselib += ' dnssd'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 def configure(conf):
