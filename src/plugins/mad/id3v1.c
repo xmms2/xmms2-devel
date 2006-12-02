@@ -97,7 +97,8 @@ xmms_mad_id3v1_set (xmms_xform_t *xform, const char *key, const char *value,
 	tmp = g_convert (value, len, "UTF-8", encoding, &readsize, &writsize, &err);
 	if (!tmp) {
 		/* in case of not supported encoding, we try to fallback to latin1 */
-		xmms_log_info ("Converting ID3v1 tag '%s' failed, check id3v1_encoding property!", key);
+		xmms_log_info ("Converting ID3v1 tag '%s' failed (check id3v1_encoding property): %s", key, err ? err->message : "Error not set");
+		err = NULL;
 		tmp = g_convert (value, len, "UTF-8", "ISO8859-1", &readsize, &writsize, &err);
 	}
 	if (tmp) {
