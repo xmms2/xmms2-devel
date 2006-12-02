@@ -66,26 +66,55 @@ above (Why XMMS2?)
 
 == General Questions ==
 Q: Why rewrite XMMS?
-A: XMMS is an old project (started in 1997) and was not expected to become as popular as it did. The internal design of XMMS is somewhat ... troublesome, if not completely broken. Also, the frameworks around XMMS have changed a lot. The general opinion among the developers was that if ANYTHING should happen, it would be a complete rewrite.
+A: XMMS is an old project (started in 1997) and was not expected to
+become as popular as it did. The internal design of XMMS is somewhat
+... troublesome, if not completely broken. Also, the frameworks around
+XMMS have changed a lot. The general opinion among the developers was
+that if ANYTHING should happen, it would be a complete rewrite.
 
 Q: Who is responsible for XMMS2?
-A: Peter Alm (original author of XMMS) did the first designs and the initial code. Most of the code is written by Tobias Rundströ and Anders Gustafsson. The project is being maintained by Tobias and Anders. A big thanks goes out to Thomas Nilsson too, he bitches well. 
+A: Peter Alm (original author of XMMS) did the first designs and the
+initial code. Most of the code is written by Tobias Rundströ and
+Anders Gustafsson. The project is being maintained by Tobias and
+Anders. A big thanks goes out to Thomas Nilsson too, he bitches well.
 
 Q: Those are not the same developers who maintain XMMS?
-A: That's true. XMMS2 is a separate project. Rest assured, XMMS will live on for a long long time. XMMS2 will not be ready any time soon to take over from XMMS1.
+A: That's true. XMMS2 is a separate project. Rest assured, XMMS will
+live on for a long long time. XMMS2 will not be ready any time soon to
+take over from XMMS1.
 
 Q: What are the design goals of XMMS2?
-A: XMMS2 is designed to be a kickass music-player. We wanted to rectify various problems with the XMMS APIs. For example, splitting the input-plugin into transport- and decoder-plugins. We also wanted the UI to be separate from the core engine, in order to allow for other interfaces than a Gtk+ GUI.
+A: XMMS2 is designed to be a kickass music-player. We wanted to
+rectify various problems with the XMMS APIs. For example, splitting
+the input-plugin into transport- and decoder-plugins. We also wanted
+the UI to be separate from the core engine, in order to allow for
+other interfaces than a Gtk+ GUI.
 
 Q: Why just a music player?
-A: A lot of people ask us about video. But video will not be included, nor will it be supported in XMMS2 - in fact video-support is even less possible than in XMMS1. This choice has numerous reasons. Music and video are very separate things, despite what many people like to think. The architecture of XMMS2 is designed such that it handles audio wonderfully well - handling video is simply not part of this project's scope and will '''not''' be added. And we believe that we can make the best music player out there, but not the best video player, so we stick to what we are best at. There are other choices, if you wish to play video and audio via the same application.
+A: A lot of people ask us about video. But video will not be included,
+nor will it be supported in XMMS2 - in fact video-support is even less
+possible than in XMMS1. This choice has numerous reasons. Music and
+video are very separate things, despite what many people like to
+think. The architecture of XMMS2 is designed such that it handles
+audio wonderfully well - handling video is simply not part of this
+project's scope and will '''not''' be added. And we believe that we
+can make the best music player out there, but not the best video
+player, so we stick to what we are best at. There are other choices,
+if you wish to play video and audio via the same application.
 
 Q: But XMMS stands for X MultiMedia System, that includes video!
-A: Wrong. In "XMMS2", XMMS stands for X(cross)platform Music Multiplexing System.
+A: Wrong. In "XMMS2", XMMS stands for X(cross)platform Music
+Multiplexing System.
 
 Q: What platforms will you support?
-A: Our aim is to be able to port XMMS basically everywhere, but development is mainly done on Linux/x86, Linux/PPC and Mac OSX. Support for other platforms is currently secondary, although it has been known to work on OpenBSD and Solaris.
+A: Our aim is to be able to port XMMS basically everywhere, but
+development is mainly done on Linux/x86, Linux/PPC and Mac
+OSX. Support for other platforms is currently secondary, although it
+has been known to work on OpenBSD and Solaris.
 
 Q: What about Windows?
-A: In theory, our code should run on Windows without any problems, being ANSI-C. However, due to a general lack of interest (so far) from users and developers who primarily use Microsoft Windows, there hasn't been much effort towards making sure that XMMS2 runs on that platform. 
+A: In theory, our code should run on Windows without any problems,
+being ANSI-C. However, due to a general lack of interest (so far) from
+users and developers who primarily use Microsoft Windows, there hasn't
+been much effort towards making sure that XMMS2 runs on that platform.
 
