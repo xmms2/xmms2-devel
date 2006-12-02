@@ -657,25 +657,27 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 int
 xmms_faad_get_aac_track (mp4ff_t *infile)
 {
-	/* find first AAC audio track */
-	int i, rc;
+	int i;
 	int numTracks = mp4ff_total_tracks (infile);
 
+	/* find first AAC audio track */
 	for (i = 0; i < numTracks; i++) {
-		guchar *buff = NULL;
-		guint buff_size = 0;
-		mp4AudioSpecificConfig mp4ASC;
+		gint object_type = mp4ff_get_audio_type (infile, i);
 
-		mp4ff_get_decoder_config (infile, i, &buff, &buff_size);
-
-		if (buff) {
-			rc = AudioSpecificConfig (buff, buff_size, &mp4ASC);
-			g_free (buff);
-
-			if (rc < 0) {
-				continue;
-			}
+		/* these identifiers are mostly from VLC code */
+		switch (object_type) {
+		case 0x40:	/* MPEG-4 audio */
+		case 0x66:	/* MPEG-2 AAC */
+		case 0x67:	/* MPEG-2 AAC LC */
+		case 0x68:	/* MPEG-2 AAC SSR */
 			return i;
+		case 0x69:	/* MPEG-2 audio */
+		case 0x6B:	/* MPEG-1 audio */
+			continue;
+		case 0x00:	/* ALAC audio, 0x00 sounds quite fishy... */
+			continue;
+		default:
+			continue;
 		}
 	}
 
