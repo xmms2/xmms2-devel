@@ -17,6 +17,8 @@ def configure(conf):
                                 'bin')
   defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
                                   'share', 'xmms2')
+  defs['SCRIPTDIR'] = os.path.join(conf.env['PREFIX'],
+                                   'share', 'xmms2', 'scripts', 'startup.d')
 
   l = conf.env['XMMS_OUTPUT_PLUGINS']
   l.sort()

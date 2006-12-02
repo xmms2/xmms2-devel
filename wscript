@@ -49,14 +49,6 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ## Build
 ####
 def build(bld):
-#  bld.set_variants('default debug')
-
-  # Build the XMMS2 defs file
-#  defs = bld.create_obj('subst', 'uh')
-#  defs.source = 'src/include/xmms/xmms_defs.h.in'
-#  defs.target = 'src/include/xmms/xmms_defs.h'
-#  defs.dict = bld.env_of_name('default')['XMMS_DEFS']
-
   # Process subfolders
   bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
 
@@ -190,7 +182,6 @@ def configure(conf):
   conf.check_tool('checks')
   conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
-  conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmssocket')
   conf.sub_config('src/lib/xmmsipc')
   conf.sub_config('src/lib/xmmsutils')

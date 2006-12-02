@@ -1,3 +1,6 @@
+import os
+import Common
+
 def build(bld):
   obj = bld.create_obj('cc', 'program')
   obj.target = 'xmms2-mdns-avahi'
@@ -5,6 +8,11 @@ def build(bld):
   obj.includes = '. ../../../include'
   obj.uselib = 'glib2 avahiclient avahiglib'
   obj.uselib_local = 'xmmsclient-glib xmmsclient'
+
+  obj = bld.create_obj('subst')
+  obj.source = 'xmms2-mdns-launcher.sh.in'
+  obj.dict = {'PRG_PATH' : os.path.join(bld.env_of_name('default')['PREFIX'], 'bin')}
+  Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh',chmod=0755)
 
 def configure(conf):
   return (conf.check_pkg('avahi-client', destvar='avahiclient') and
