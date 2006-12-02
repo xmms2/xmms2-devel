@@ -17,6 +17,7 @@ from xmmsenv import gittools
 
 import Params
 import Object
+import Utils
 
 VERSION="0.2 DrGonzo+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
@@ -163,8 +164,8 @@ def configure(conf):
   conf.check_tool('gcc')
   conf.check_tool('pkgconfig', tooldir=os.path.abspath('xmmsenv'))
 
-  conf.env["CCFLAGS"] += ['-g', '-O0']
-  conf.env["CXXFLAGS"] += ['-g', '-O0']
+  conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
+  conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
   conf.env['XMMS_PKGCONF_FILES'] = []
   conf.env['XMMS_OUTPUT_PLUGINS'] = []
 
