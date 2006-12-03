@@ -19,7 +19,7 @@ import Params
 import Object
 import Utils
 
-VERSION="0.2 DrGonzo+WIP (git commit: %s)" % gittools.get_info_str()
+VERSION="0.2 DrHouse+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
 
 srcdir='.'
