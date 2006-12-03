@@ -6,4 +6,6 @@ def add_install_flag(obj):
 	obj.env["LINKFLAGS_xlibs"] = obj.env["LINKFLAGS_xlibs"][0] % obj.target
 	if obj.uselib:
 		obj.uselib += ' xlibs'
+	else:
+		obj.uselib = 'xlibs'
 
