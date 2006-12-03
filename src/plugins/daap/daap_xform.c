@@ -165,7 +165,6 @@ xmms_daap_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 static void
 daap_add_song_to_list (xmms_xform_t *xform, cc_item_record_t *song)
 {
-	xmms_object_cmd_value_t *val;
 	gchar *songurl;
 
 	songurl = g_strdup_printf ("%u.%s", song->dbid, song->song_format);
@@ -173,22 +172,22 @@ daap_add_song_to_list (xmms_xform_t *xform, cc_item_record_t *song)
 	g_free (songurl);
 
 	if (song->iname) {
-		val = xmms_object_cmd_value_str_new (song->iname);
-		xmms_xform_browse_add_entry_property (xform, "title", val);
+		xmms_xform_browse_add_entry_property_str (xform, "title",
+		                                          song->iname);
 	}
 
 	if (song->song_data_artist) {
-		val = xmms_object_cmd_value_str_new (song->song_data_artist);
-		xmms_xform_browse_add_entry_property (xform, "artist", val);
+		xmms_xform_browse_add_entry_property_str (xform, "artist",
+		                                          song->song_data_artist);
 	}
 
 	if (song->song_data_album) {
-		val = xmms_object_cmd_value_str_new (song->song_data_album);
-		xmms_xform_browse_add_entry_property (xform, "album", val);
+		xmms_xform_browse_add_entry_property_str (xform, "album",
+		                                          song->song_data_album);
 	}
 
-	val = xmms_object_cmd_value_uint_new (song->song_track_no);
-	xmms_xform_browse_add_entry_property (xform, "tracknr", val);
+	xmms_xform_browse_add_entry_property_int (xform, "tracknr",
+	                                          song->song_track_no);
 }
 
 
@@ -400,7 +399,6 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 		GSList *sl = daap_mdns_get_server_list ();
 
 		for (; sl; sl = g_slist_next (sl)) {
-			xmms_object_cmd_value_t *val;
 			daap_mdns_server_t *mdns_serv;
 			gchar *str;
 
@@ -411,17 +409,17 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 			xmms_xform_browse_add_entry (xform, str, 0);
 			g_free (str);
 
-			val = xmms_object_cmd_value_str_new (mdns_serv->server_name);
-			xmms_xform_browse_add_entry_property (xform, "servername", val);
+			xmms_xform_browse_add_entry_property_str (xform, "servername",
+			                                          mdns_serv->server_name);
 
-			val = xmms_object_cmd_value_str_new (mdns_serv->address);
-			xmms_xform_browse_add_entry_property (xform, "ip", val);
+			xmms_xform_browse_add_entry_property_str (xform, "ip",
+			                                          mdns_serv->address);
 
-			val = xmms_object_cmd_value_str_new (mdns_serv->mdns_hostname);
-			xmms_xform_browse_add_entry_property (xform, "name", val);
+			xmms_xform_browse_add_entry_property_str (xform, "name",
+			                                          mdns_serv->mdns_hostname);
 
-			val = xmms_object_cmd_value_int_new (mdns_serv->port);
-			xmms_xform_browse_add_entry_property (xform, "port", val);
+			xmms_xform_browse_add_entry_property_int (xform, "port",
+			                                          mdns_serv->port);
 
 			/* TODO implement the machinery to allow for this */
 			// val = xmms_object_cmd_value_int_new (mdns_serv->need_auth);
