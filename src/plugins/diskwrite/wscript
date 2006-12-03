@@ -1,7 +1,7 @@
 from xmmsenv.plugin import plugin
 
 def plugin_configure(conf):
-  conf.env['CCDEFINES'].append('_REENTRANT')
-  return True
+	conf.env['CCDEFINES'].append('_REENTRANT')
+	return True
 
 configure, build = plugin('diskwrite', configure=plugin_configure)

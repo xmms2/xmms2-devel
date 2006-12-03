@@ -6,16 +6,16 @@
 import os
 
 def build(bld):
-  platform_src = {'nt':'win32', 'posix':'unix'}
+	platform_src = {'nt':'win32', 'posix':'unix'}
 
-  obj = bld.create_obj('cc', 'staticlib')
-  obj.source = "strlist.c utils_%s.c" % platform_src[os.name]
-  obj.includes='. ../../include'
-  obj.target='xmmsutils'
-  obj.install_in = 0
+	obj = bld.create_obj('cc', 'staticlib')
+	obj.source = "strlist.c utils_%s.c" % platform_src[os.name]
+	obj.includes='. ../../include'
+	obj.target='xmmsutils'
+	obj.install_in = 0
 
 def configure(conf):
-  pass
+	pass
 
 def set_options(opt):
-  pass
+	pass

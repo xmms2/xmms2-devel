@@ -3,7 +3,7 @@ import sys
 from xmmsenv.plugin import plugin
 
 if sys.platform == 'darwin':
-  configure, build = plugin('equalizer', broken=True)
+	configure, build = plugin('equalizer', broken=True)
 else:
-  configure, build = plugin('equalizer',
-                            source=["eq.c", "iir.c", "iir_cfs.c", "iir_fpu.c"])
+	configure, build = plugin('equalizer',
+														source=["eq.c", "iir.c", "iir_cfs.c", "iir_fpu.c"])

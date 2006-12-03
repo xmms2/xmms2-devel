@@ -1,13 +1,13 @@
 def build(bld):
-  obj = bld.create_obj('cc', 'program')
-  obj.target = 'xmms2'
-  obj.source = ['cmd_config.c', 'cmd_mlib.c', 'cmd_other.c', 'cmd_playback.c', 'cmd_pls.c', 'cmd_status.c', 'common.c', 'main.c']
-  obj.includes = '. ../../include'
-  obj.uselib = 'glib2'
-  obj.uselib_local = 'xmmsclient-glib xmmsclient'
+	obj = bld.create_obj('cc', 'program')
+	obj.target = 'xmms2'
+	obj.source = ['cmd_config.c', 'cmd_mlib.c', 'cmd_other.c', 'cmd_playback.c', 'cmd_pls.c', 'cmd_status.c', 'common.c', 'main.c']
+	obj.includes = '. ../../include'
+	obj.uselib = 'glib2'
+	obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 def configure(conf):
-  return True
+	return True
 
 def set_options(opt):
-  pass
+	pass

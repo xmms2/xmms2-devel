@@ -1,10 +1,10 @@
 from xmmsenv.plugin import plugin
 
 def plugin_configure(conf):
-  cfg = conf.create(configurator='cfgtool')
-  cfg.binary = 'curl-config'
-  cfg.uselib = 'curl'
-  return (cfg.run() and conf.env['HAVE_curl'])
+	cfg = conf.create(configurator='cfgtool')
+	cfg.binary = 'curl-config'
+	cfg.uselib = 'curl'
+	return (cfg.run() and conf.env['HAVE_curl'])
 
 configure, build = plugin('curl', configure=plugin_configure,
-                          source=['curl_http.c'], extra_libs=['curl'])
+													source=['curl_http.c'], extra_libs=['curl'])

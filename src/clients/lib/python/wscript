@@ -1,34 +1,34 @@
 import os
 
 def build(bld):
-  obj = bld.create_obj('cc', 'plugin')
-  obj.target = 'xmmsclient'
-  obj.includes = '../../../include ../../../includepriv'
-  obj.source = ['xmmsclient.pyx']
-  obj.uselib_local = 'xmmsclient'
-  obj.uselib = 'python'
-  obj.env["plugin_SUFFIX"] = '.so'
-  obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label"]
-  import distutils
-  import distutils.sysconfig
-  obj.install_in = "LIBDIR_python"
+	obj = bld.create_obj('cc', 'plugin')
+	obj.target = 'xmmsclient'
+	obj.includes = '../../../include ../../../includepriv'
+	obj.source = ['xmmsclient.pyx']
+	obj.uselib_local = 'xmmsclient'
+	obj.uselib = 'python'
+	obj.env["plugin_SUFFIX"] = '.so'
+	obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label"]
+	import distutils
+	import distutils.sysconfig
+	obj.install_in = "LIBDIR_python"
 
 def configure(conf):
-  try:
-    import distutils
-    import distutils.sysconfig
-  except:
-    return False
-  h = conf.create_header_configurator()
-  h.name = 'Python.h'
-  h.uselib = 'python'
-  h.path = [distutils.sysconfig.get_python_inc(plat_specific=True)]
-  if not h.run():
-    return False
+	try:
+		import distutils
+		import distutils.sysconfig
+	except:
+		return False
+	h = conf.create_header_configurator()
+	h.name = 'Python.h'
+	h.uselib = 'python'
+	h.path = [distutils.sysconfig.get_python_inc(plat_specific=True)]
+	if not h.run():
+		return False
 
-  conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
+	conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
 
-  return conf.check_tool('pyrexc', tooldir=os.path.abspath('xmmsenv'))
+	return conf.check_tool('pyrexc', tooldir=os.path.abspath('xmmsenv'))
 
 def set_options(opt):
-  pass
+	pass
