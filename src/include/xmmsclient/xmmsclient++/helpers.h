@@ -144,39 +144,6 @@ namespace Xmms
 
 	}
 
-	/** Convenience function for calling async functions and settings callback.
-	 *
-	 *  Same as aCall but takes a list of callback function pointers.
-	 *  @see aCall
-	 */
-	template< typename T >
-	inline void 
-	aCall( bool connected,
-	       const boost::function< xmmsc_result_t*() >& func,
-	       const std::list< typename Signal<T>::signal_t::slot_type >& slots,
-		   const error_sig::slot_type& error )
-	{
-
-		check( connected );
-
-		Xmms::Signal< T >* sig = new Xmms::Signal< T >;
-
-		typename std::list< 
-			typename Signal<T>::signal_t::slot_type >::const_iterator i;
-		for( i = slots.begin(); i != slots.end(); ++i )
-		{
-			sig->signal.connect( *i );
-		}
-		sig->error_signal.connect( error );
-		SignalHolder::getInstance().addSignal( sig );
-
-		xmmsc_result_t* res = func();
-		xmmsc_result_notifier_set( res, Xmms::generic_callback< T >,
-		                           static_cast< void* >( sig ) );
-		xmmsc_result_unref( res );
-
-	}
-
 	/** Convenience function for converting an STL list of strings to
 	 *  an NULL-terminated array of char*.
 	 *
@@ -184,12 +151,12 @@ namespace Xmms
 	 *  @return a pointer to the newly allocated array of char*, must
 	 *          be freed manually.
 	 */ 
-	inline const char** c_stringList( std::list<std::string> li )
+	inline const char** c_stringList( const std::list<std::string>& li )
 	{
 		const char **clist = new const char*[ li.size() + 1 ];
 
 		int i;
-		std::list<std::string>::iterator it;
+		std::list<std::string>::const_iterator it;
 
 		for( i = 0, it = li.begin(); it != li.end(); ++i, ++it ) {
 			clist[i] = it->c_str();

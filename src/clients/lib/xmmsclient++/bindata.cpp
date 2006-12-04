@@ -62,16 +62,6 @@ namespace Xmms
 		                    slot, error );
 	}
 
-	void Bindata::add( const Xmms::bin& data,
-	                   const std::list< StringSlot >& slots,
-	                   const ErrorSlot& error ) const
-	{
-		aCall<std::string>( connected_,
-		                    boost::bind( xmmsc_bindata_add, conn_,
-		                                 data.data(), data.size() ),
-		                    slots, error );
-	}
-
 	void Bindata::retrieve( const std::string& hash, const BinSlot& slot, 
 	                        const ErrorSlot& error ) const
 	{
@@ -81,31 +71,12 @@ namespace Xmms
 		                  slot, error );
 	}
 
-	void Bindata::retrieve( const std::string& hash,
-	                        const std::list< BinSlot >& slots,
-	                        const ErrorSlot& error ) const
-	{
-		aCall<Xmms::bin>( connected_,
-		                  boost::bind( xmmsc_bindata_retrieve, conn_,
-		                               hash.c_str() ),
-		                  slots, error );
-	}
-
 	void Bindata::remove( const std::string& hash, const VoidSlot& slot,
 	                      const ErrorSlot& error ) const
 	{
 		aCall<void>( connected_,
 		             boost::bind( xmmsc_bindata_remove, conn_, hash.c_str() ),
 		             slot, error );
-	}
-
-	void Bindata::remove( const std::string& hash,
-	                      const std::list< VoidSlot >& slots,
-	                      const ErrorSlot& error ) const
-	{
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_bindata_remove, conn_, hash.c_str() ),
-		             slots, error );
 	}
 
 

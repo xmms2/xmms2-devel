@@ -36,7 +36,7 @@ namespace Xmms
 			 *  for the url to. ie: file://mp3/my_mp3s/first.mp3.
 			 *  
 			 *  @param url file to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -53,7 +53,7 @@ namespace Xmms
 			 *  Same as #addUrl but takes an encoded URL instead
 			 *  
 			 *  @param url file to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -73,7 +73,7 @@ namespace Xmms
 			 *  for the url to. ie: file://mp3/my_mp3s/directory
 			 *  
 			 *  @param url directory to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -91,7 +91,7 @@ namespace Xmms
 			 *  Same as #addRecursive but takes a encoded URL instead.
 			 *  
 			 *  @param url directory to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -109,7 +109,7 @@ namespace Xmms
 			/** Add a medialib id to a playlist.
 			 *
 			 *  @param id A medialib ID
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -124,7 +124,7 @@ namespace Xmms
 
 			/** Clears a playlist.
 			 *
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -138,7 +138,7 @@ namespace Xmms
 
 			/** Retrieve the current position in a playlist.
 			 *
-			 *  @param playlist the playlist to consider (if omitted,
+			 *  @param playlist the playlist to consider (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -157,7 +157,7 @@ namespace Xmms
 			 *  
 			 *  @param pos A position in the playlist.
 			 *  @param url The URL to insert.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -176,7 +176,7 @@ namespace Xmms
 			 *  
 			 *  @param pos A position in the playlist.
 			 *  @param url The URL to insert.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -194,7 +194,7 @@ namespace Xmms
 			 *
 			 *  @param pos A position in the playlist.
 			 *  @param id A medialib ID.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -210,7 +210,7 @@ namespace Xmms
 
 			/** Retrieve the entries in a playlist.
 			 *
-			 *  @param playlist the playlist to consider (if omitted,
+			 *  @param playlist the playlist to consider (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -230,7 +230,7 @@ namespace Xmms
 			 * 
 			 *  @param curpos Position of the entry to be moved.
 			 *  @param newpos Position where the entry should be moved to.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -248,7 +248,7 @@ namespace Xmms
 			 * 
 			 *  @param pos The position that should be 
 			 *             removed from the playlist.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -292,7 +292,7 @@ namespace Xmms
 
 			/** Shuffles a playlist.
 			 *
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -308,7 +308,7 @@ namespace Xmms
 			/** Sorts a playlist according to a list of properties.
 			 * 
 			 *  @param properties Properties to sort by.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *
 			 *  @throw connection_error If the client isn't connected.
@@ -327,7 +327,7 @@ namespace Xmms
 			 *  for the url to. ie: file://mp3/my_mp3s/first.mp3.
 			 *  
 			 *  @param url file to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -340,17 +340,6 @@ namespace Xmms
 			        const std::string& playlist,
 			        const VoidSlot& slot,
 			        const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			addUrl( const std::string& url,
-			        const std::string& playlist,
-			        const std::list<VoidSlot>& slots,
-			        const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/**
 			 * @overload
 			 * @note Acts on the current playlist.
@@ -358,16 +347,6 @@ namespace Xmms
 			void
 			addUrl( const std::string& url,
 			        const VoidSlot& slot,
-			        const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			addUrl( const std::string& url,
-			        const std::list<VoidSlot>& slots,
 			        const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/**	Add the directory recursivly to a playlist.
@@ -376,7 +355,7 @@ namespace Xmms
 			 *  for the url to. ie: file://mp3/my_mp3s/directory
 			 *  
 			 *  @param url directory to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -392,38 +371,18 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			addRecursive( const std::string& url,
-			              const std::string& playlist,
-			              const std::list<VoidSlot>& slots,
-			              const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			addRecursive( const std::string& url,
 			              const VoidSlot& slot,
-			              const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			addRecursive( const std::string& url,
-			              const std::list<VoidSlot>& slots,
 			              const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/**	Add the url to a playlist.
 			 *  Same as #addUrl but takes an Encoded Url instead.
 			 *  
 			 *  @param url file to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -439,38 +398,18 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			addUrlEncoded( const std::string& url,
-			               const std::string& playlist,
-			               const std::list<VoidSlot>& slots,
-			               const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			addUrlEncoded( const std::string& url,
 			               const VoidSlot& slot,
-			               const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			addUrlEncoded( const std::string& url,
-			               const std::list<VoidSlot>& slots,
 			               const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/**	Add the directory recursivly to a playlist.
 			 *  Same as #addRecursive but takes a Encoded URL instead
 			 *  
 			 *  @param url directory to be added
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -486,38 +425,18 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			addRecursiveEncoded( const std::string& url,
-			                     const std::string& playlist,
-			                     const std::list<VoidSlot>& slots,
-			                     const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			addRecursiveEncoded( const std::string& url,
 			                     const VoidSlot& slot,
-			                     const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			addRecursiveEncoded( const std::string& url,
-			                     const std::list<VoidSlot>& slots,
 			                     const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 
 			/** Add a medialib id to a playlist.
 			 *
 			 *  @param id A medialib ID
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -533,16 +452,6 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			addId( const unsigned int id,
-			       const std::string& playlist,
-			       const std::list<VoidSlot>& slots,
-			       const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
@@ -550,19 +459,9 @@ namespace Xmms
 			       const VoidSlot& slot,
 			       const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			addId( const unsigned int id,
-			       const std::list<VoidSlot>& slots,
-			       const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Clears a playlist.
 			 * 
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -573,15 +472,6 @@ namespace Xmms
 			void 
 			clear( const std::string& playlist,
 			       const VoidSlot& slot,
-			       const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			clear( const std::string& playlist,
-			       const std::list<VoidSlot>& slots,
 			       const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/**
@@ -592,18 +482,9 @@ namespace Xmms
 			clear( const VoidSlot& slot,
 			       const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			clear( const std::list<VoidSlot>& slots,
-			       const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Retrieve the current position in a playlist.
 			 * 
-			 *  @param playlist the playlist to consider (if omitted,
+			 *  @param playlist the playlist to consider (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function taking a
 			 *              const unsigned int& and returning a bool.
@@ -619,35 +500,17 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			currentPos( const std::string& playlist,
-			            const std::list<UintSlot>& slots,
-			            const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			currentPos( const UintSlot& slot,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			currentPos( const std::list<UintSlot>& slots,
-			            const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Insert an entry at given position in a playlist.
 			 *  
 			 *  @param pos A position in the playlist.
 			 *  @param url The URL to insert.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -663,39 +526,19 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			insertUrl( int pos, const std::string& url,
-			           const std::string& playlist,
-			           const std::list< VoidSlot >& slots,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			insertUrl( int pos, const std::string& url,
 			           const VoidSlot& slot,
 					   const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			insertUrl( int pos, const std::string& url,
-			           const std::list< VoidSlot >& slots,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Insert an entry at given position in a playlist.
 			 *  same as #insertUrl but takes a encoded url instead.
 			 *  
 			 *  @param pos A position in the playlist.
 			 *  @param url The URL to insert.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -711,38 +554,18 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			insertUrlEncoded( int pos, const std::string& url,
-			                  const std::string& playlist,
-			                  const std::list< VoidSlot >& slots,
-			                  const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			insertUrlEncoded( int pos, const std::string& url,
 			                  const VoidSlot& slot,
 					          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			insertUrlEncoded( int pos, const std::string& url,
-			                  const std::list< VoidSlot >& slots,
-			                  const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Insert a medialib ID at given position in a playlist.
 			 *
 			 *  @param pos A position in the playlist.
 			 *  @param id A medialib ID.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -758,16 +581,6 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			insertId( int pos, unsigned int id,
-			          const std::string& playlist,
-			          const std::list< VoidSlot >& slots,
-			          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
@@ -775,19 +588,9 @@ namespace Xmms
 			          const VoidSlot& slot,
 			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			insertId( int pos, unsigned int id,
-			          const std::list< VoidSlot >& slots,
-			          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Retrieve the entries of a playlist.
 			 *
-			 *  @param playlist the playlist to consider (if omitted,
+			 *  @param playlist the playlist to consider (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function taking a
 			 *              const List< unsigned int >& and returning a bool.
@@ -803,35 +606,17 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			listEntries( const std::string& playlist,
-			             const std::list< UintListSlot >& slots,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			listEntries( const UintListSlot& slot,
 			             const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			listEntries( const std::list< UintListSlot >& slots,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Move a playlist entry to a new position (absolute move).
 			 * 
 			 *  @param curpos Position of the entry to be moved.
 			 *  @param newpos Position where the entry should be moved to.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -847,38 +632,18 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			moveEntry( unsigned int curpos, unsigned int newpos,
-			           const std::string& playlist,
-			           const std::list< VoidSlot >& slots,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			moveEntry( unsigned int curpos, unsigned int newpos,
 			           const VoidSlot& slot,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			moveEntry( unsigned int curpos, unsigned int newpos,
-			           const std::list< VoidSlot >& slots,
 			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Remove an entry from a playlist.
 			 * 
 			 *  @param pos The position that should be 
 			 *             removed from the playlist.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -894,32 +659,12 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			removeEntry( unsigned int pos,
-			             const std::string& playlist,
-			             const std::list< VoidSlot >& slots,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			removeEntry( unsigned int pos,
 			             const VoidSlot& slot,
 					     const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			removeEntry( unsigned int pos,
-			             const std::list< VoidSlot >& slots,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Set next entry in the playlist.
 			 * 
@@ -935,15 +680,6 @@ namespace Xmms
 			setNext( unsigned int pos,
 			         const UintSlot& slot,
 					 const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			setNext( unsigned int pos,
-			         const std::list< UintSlot >& slots,
-			         const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Same as setNext but relative to the current position.
 			 *
@@ -962,18 +698,9 @@ namespace Xmms
 			            const UintSlot& slot,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			setNextRel( signed int pos,
-			            const std::list< UintSlot >& slots,
-			            const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Shuffles a playlist.
 			 *
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -988,34 +715,16 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			shuffle( const std::string& playlist,
-			         const std::list< VoidSlot >& slots,
-			         const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			shuffle( const VoidSlot& slot,
 			         const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			shuffle( const std::list< VoidSlot >& slots,
-			         const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Sorts a playlist according to a list of properties.
 			 * 
 			 *  @param properties Properties to sort by.
-			 *  @param playlist the playlist to modify (if omitted,
+			 *  @param playlist the playlist to modify (if omitted,
 			 *                  act on the current playlist)
 			 *  @param slot Function pointer to a function returning a bool.
 			 *  @param error Function pointer to an error callback
@@ -1031,31 +740,11 @@ namespace Xmms
 
 			/**
 			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			sort( const std::list<std::string>& property,
-			      const std::string& playlist,
-			      const std::list< VoidSlot >& slots,
-			      const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
 			 * @note Acts on the current playlist.
 			 */
 			void
 			sort( const std::list<std::string>& property,
 			      const VoidSlot& slot,
-			      const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note Acts on the current playlist and takes a list of
-			 * slots instead of just one slot.
-			 */
-			void
-			sort( const std::list<std::string>& property,
-			      const std::list< VoidSlot >& slots,
 			      const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Request the playlist changed broadcast from the server.
@@ -1074,15 +763,6 @@ namespace Xmms
 			                  const ErrorSlot& error = &Xmms::dummy_error
 			                ) const; 
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastChanged( const std::list< DictSlot >& slots,
-			                  const ErrorSlot& error = &Xmms::dummy_error
-			                ) const;
-
 			/** Request the playlist current position broadcast.
 			 *
 			 *  When the position in the playlist is
@@ -1097,15 +777,6 @@ namespace Xmms
 			 */
 			void
 			broadcastCurrentPos( const UintSlot& slot,
-			                     const ErrorSlot& error = &Xmms::dummy_error
-			                   ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastCurrentPos( const std::list< UintSlot >& slot,
 			                     const ErrorSlot& error = &Xmms::dummy_error
 			                   ) const;
 
