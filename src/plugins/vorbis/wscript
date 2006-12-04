@@ -1,4 +1,4 @@
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 def plugin_configure(conf):
 	return conf.check_pkg('vorbisfile', destvar='vorbis')

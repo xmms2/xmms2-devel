@@ -22,6 +22,8 @@ def build(bld):
 	Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
 
 def configure(conf):
+	return False
+
 	if Params.g_options.perlbinary:
 		perl = Params.g_options.perlbinary
 		conf.env["PERL"] = perl
@@ -51,7 +53,7 @@ def configure(conf):
 	conf.env["INST_AUTODIR_perl"] = conf.env["ARCHDIR_perl"] + '/auto/Audio/XMMSClient'
 	conf.env["INST_LIBDIR_perl"] = conf.env["ARCHDIR_perl"] + '/Audio'
 
-	if not conf.check_tool('xsubpp', tooldir=os.path.abspath('xmmsenv')):
+	if not conf.check_tool('xsubpp', tooldir=os.path.abspath('waftools')):
 		return False
 
 	dir = os.path.join(conf.m_blddir, 'default', 'src', 'clients', 'lib', 'perl')

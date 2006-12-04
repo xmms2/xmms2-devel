@@ -1,6 +1,6 @@
 # Plugin never tested! FEEDBACK PLEASE
 import sys
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 if sys.platform == 'darwin':
 	configure, build = plugin('equalizer', broken=True)

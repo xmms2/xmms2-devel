@@ -1,4 +1,4 @@
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 def plugin_configure(conf):
 	return (conf.check_header2('FLAC/all.h', mandatory=0) and

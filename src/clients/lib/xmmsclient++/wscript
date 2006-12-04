@@ -1,6 +1,6 @@
 import os
 import Params
-from xmmsenv import tool
+from waftools import tool
 
 def build(bld):
 	obj = bld.create_obj('cpp', 'shlib')
@@ -25,6 +25,8 @@ def build(bld):
 	tool.add_install_flag(obj)
 
 def configure(conf):
+	return False
+
 	if not conf.env["HAVE_CXX"]:
 		return False
 	h = conf.create_header_configurator()

@@ -28,7 +28,7 @@ def configure(conf):
 
 	conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
 
-	return conf.check_tool('pyrexc', tooldir=os.path.abspath('xmmsenv'))
+	return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
 
 def set_options(opt):
 	pass

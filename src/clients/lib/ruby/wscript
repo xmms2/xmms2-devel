@@ -23,6 +23,7 @@ def build(bld):
 	# TODO - ECORE
 
 def configure(conf):
+	return False
 	if Params.g_options.rubybinary:
 		ruby = Params.g_options.rubybinary
 	else:

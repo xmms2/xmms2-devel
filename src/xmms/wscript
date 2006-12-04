@@ -14,6 +14,9 @@ source = """config.c
 			error.c
 			output.c
 			playlist.c
+			collection.c
+			collquery.c
+			collserial.c
 			ipc.c
 			log.c
 			plugin.c
@@ -33,7 +36,7 @@ source = """config.c
 def build(bld):
 	if sys.platform == 'win32':
 		lib = bld.create_obj('cc', 'shlib')
-		lib.uselib_local = 'xmmsipc xmmssocket xmmsutils'
+		lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
 	else:
 		lib = bld.create_obj('cc', 'staticlib')
 	lib.target = 'xmms2d'
@@ -47,7 +50,7 @@ def build(bld):
 	prog.includes = '. ../include ../includepriv'
 	prog.source = ["main.c", "unixsignal.c"]
 	prog.source += source
-	prog.uselib_local = 'xmmsipc xmmssocket xmmsutils'
+	prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
 	prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
 
 	launch = bld.create_obj('cc', 'program')
@@ -58,7 +61,7 @@ def build(bld):
 
 def configure(conf):
 	conf.check_tool('misc checks')
-	conf.check_tool('python-generator', tooldir=os.path.abspath('xmmsenv'))
+	conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
 	conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule2')
 	conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread2')
 	conf.check_pkg2('sqlite3', '0.0', uselib='sqlite3')

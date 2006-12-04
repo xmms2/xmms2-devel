@@ -1,4 +1,4 @@
-from xmmsenv import tool
+from waftools import tool
 
 def build(bld):
 	obj = bld.create_obj('cc', 'shlib')

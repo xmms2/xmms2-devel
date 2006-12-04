@@ -1,5 +1,5 @@
 # Plugin never tested! FEEDBACK PLEASE
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 def plugin_configure(conf):
 	if not conf.check_header2('windows.h', mandatory=0):

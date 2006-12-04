@@ -1,5 +1,5 @@
 import sys
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 def plugin_configure(conf):
 	# Set the default fallthrough, if no "intelligent" backend is found.

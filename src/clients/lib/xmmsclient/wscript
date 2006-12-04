@@ -1,22 +1,25 @@
-from xmmsenv import tool
+from waftools import tool
 
 def build(bld):
 	obj = bld.create_obj('cc', 'shlib')
 	obj.target = 'xmmsclient'
 	obj.includes = '../../../include ../../../includepriv'
 	obj.source = """
+				 collection.c
+				 collparser.c
 				 bindata.c
+				 config.c
 				 ipc.c
 				 medialib.c
-				 other.c
 				 playback.c
 				 playlist.c
 				 result.c
-				 xlist.c
+				 stats.c
 				 xmmsclient.c
+				 xform.c
 				 xqueue.c
 				 """.split()
-	obj.uselib_local = 'xmmsipc xmmssocket xmmsutils'
+	obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
 	tool.add_install_flag(obj)
 
 def configure(conf):

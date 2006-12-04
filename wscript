@@ -9,11 +9,11 @@ import sys
 import optparse
 
 # Waf removes the current dir from the python path. We readd it to
-# import xmmsenv stuff.
+# import waftools stuff.
 sys.path = [os.getcwd()]+sys.path
 
-from xmmsenv import sets # We have our own sets, to not depend on py2.4
-from xmmsenv import gittools
+from waftools import sets # We have our own sets, to not depend on py2.4
+from waftools import gittools
 
 import Params
 import Object
@@ -50,7 +50,7 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ####
 def build(bld):
 	# Process subfolders
-	bld.add_subdirs('src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
+	bld.add_subdirs('src/lib/xmmstypes src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
 
 	# Build configured plugins
 	plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
@@ -154,7 +154,7 @@ def configure(conf):
 	else:
 		conf.env["HAVE_CXX"] = False
 	conf.check_tool('gcc')
-	conf.check_tool('pkgconfig', tooldir=os.path.abspath('xmmsenv'))
+	conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
 
 	conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
 	conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']

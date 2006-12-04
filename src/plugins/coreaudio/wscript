@@ -1,5 +1,5 @@
 # Plugin never tested! FEEDBACK PLEASE
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 def plugin_configure(conf):
 	if conf.check_header('AudioUnit/AudioUnit.h', define="HAVE_COREAUDIO"):

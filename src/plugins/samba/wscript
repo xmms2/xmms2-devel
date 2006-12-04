@@ -1,4 +1,4 @@
-from xmmsenv.plugin import plugin
+from waftools.plugin import plugin
 
 def plugin_configure(conf):
 	if not conf.check_header2('libsmbclient.h', mandatory=0):
