@@ -17,6 +17,7 @@ source=["client.cpp",
 		"playlist.cpp"]
 
 def config(env):
+	raise ConfigError("Disabled")
 	env.Append(LIBS=["xmmsclient"])
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient")
 	env.checkcpp()

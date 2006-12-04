@@ -237,7 +237,7 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 	} else if (!res_has_key (res, "title")) {
 		gchar *url, *filename;
 
-		if (xmmsc_result_get_dict_entry_str (res, "url", &url)) {
+		if (xmmsc_result_get_dict_entry_string (res, "url", &url)) {
 			filename = g_path_get_basename (url);
 
 			if (filename) {
@@ -252,7 +252,7 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 		has_songname = TRUE;
 	}
 
-	xmmsc_result_get_dict_entry_int32 (res, "duration", &curr_dur);
+	xmmsc_result_get_dict_entry_int (res, "duration", &curr_dur);
 
 	/* rounding */
 	curr_dur += 500;

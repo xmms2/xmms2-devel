@@ -119,12 +119,13 @@ xmmsc_playback_start
 xmmsc_playback_status
 xmmsc_playback_stop
 xmmsc_playback_tickle
-xmmsc_playlist_add
+xmmsc_playlist_add_url
 xmmsc_playlist_add_id
 xmmsc_playlist_clear
 xmmsc_playlist_current_pos
 xmmsc_playlist_entry_free
-xmmsc_playlist_insert
+xmmsc_playlist_insert_url
+xmmsc_playlist_insert_id
 xmmsc_playlist_list
 xmmsc_playlist_move
 xmmsc_playlist_remove

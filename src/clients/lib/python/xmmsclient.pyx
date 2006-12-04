@@ -131,9 +131,9 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	void xmmsc_result_disconnect(xmmsc_result_t *res)
 
 	xmmsc_result_t *xmmsc_playlist_shuffle(xmmsc_connection_t *)
-	xmmsc_result_t *xmmsc_playlist_add(xmmsc_connection_t *, char *)
+	xmmsc_result_t *xmmsc_playlist_add_url(xmmsc_connection_t *, char *)
 	xmmsc_result_t *xmmsc_playlist_add_encoded(xmmsc_connection_t *, char *)
-	xmmsc_result_t *xmmsc_playlist_insert(xmmsc_connection_t *, int pos, char *)
+	xmmsc_result_t *xmmsc_playlist_insert_url(xmmsc_connection_t *, int pos, char *)
 	xmmsc_result_t *xmmsc_playlist_add_id(xmmsc_connection_t *, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_insert_id(xmmsc_connection_t *, int pos, unsigned int)
 	xmmsc_result_t *xmmsc_playlist_insert_encoded(xmmsc_connection_t *, int pos, char *)
@@ -1025,7 +1025,7 @@ cdef class XMMS:
 		
 		return ret
 
-	def playlist_insert(self, pos, url, cb = None):
+	def playlist_insert_url(self, pos, url, cb = None):
 		"""
 		Insert a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1040,7 +1040,7 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_insert(self.conn, pos, c)
+		ret.res = xmmsc_playlist_insert_url(self.conn, pos, c)
 		ret.more_init()
 		
 		return ret
@@ -1125,8 +1125,7 @@ cdef class XMMS:
 		
 		return ret
 
-
-	def playlist_add(self, url, cb = None):
+	def playlist_add_url(self, url, cb = None):
 		"""
 		Add a path or URL to a playable media item to the playlist.
 		Playable media items may be files or streams.
@@ -1141,7 +1140,7 @@ cdef class XMMS:
 
 		c = from_unicode(url)
 		
-		ret.res = xmmsc_playlist_add(self.conn, c)
+		ret.res = xmmsc_playlist_add_url(self.conn, c)
 		ret.more_init()
 		
 		return ret

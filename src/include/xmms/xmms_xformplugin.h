@@ -204,7 +204,7 @@ void xmms_xform_outdata_type_copy (xmms_xform_t *xform);
  *
  * @param xform
  * @param key Metadatum key to set. Should preferably be one of the XMMS_MEDIALIB_ENTRY_PROPERTY_* values.
- * @param value
+ * @param val
  */
 void xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val);
 /**
@@ -212,7 +212,7 @@ void xmms_xform_metadata_set_int (xmms_xform_t *xform, const gchar *key, int val
  *
  * @param xform
  * @param key Metadatum key to set. Should preferably be one of the XMMS_MEDIALIB_ENTRY_PROPERTY_* values.
- * @param value
+ * @param val
  */
 void xmms_xform_metadata_set_str (xmms_xform_t *xform, const gchar *key, const char *val);
 

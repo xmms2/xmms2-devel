@@ -10,6 +10,9 @@ source = ["main.c",
           "output.c",
           "unixsignal.c",
           "playlist.c",
+          "collection.c",
+          "collquery.c",
+          "collserial.c",
           "ipc.c",
           "log.c",
           "plugin.c",
@@ -34,9 +37,11 @@ def config(env):
 	env.Prepend(LIBPATH=["src/lib/xmmsutils"])
 	env.Prepend(LIBPATH=["src/lib/xmmsipc"])
 	env.Prepend(LIBPATH=["src/lib/xmmssocket"])
-	env.Append(LIBS=["xmmsutils"])
+	env.Prepend(LIBPATH=["src/lib/xmmstypes"])
 	env.Append(LIBS=['xmmsipc'])
 	env.Append(LIBS=["xmmssocket"])
+	env.Append(LIBS=["xmmstypes"])
+	env.Append(LIBS=["xmmsutils"])
 	env.Append(CPPPATH=["#src/includepriv"])
 
 	if env.platform != 'win32':

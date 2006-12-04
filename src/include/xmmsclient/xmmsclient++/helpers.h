@@ -176,6 +176,29 @@ namespace Xmms
 		xmmsc_result_unref( res );
 
 	}
+
+	/** Convenience function for converting an STL list of strings to
+	 *  an NULL-terminated array of char*.
+	 *
+	 *  @param li the list to convert
+	 *  @return a pointer to the newly allocated array of char*, must
+	 *          be freed manually.
+	 */ 
+	inline const char** c_stringList( std::list<std::string> li )
+	{
+		const char **clist = new const char*[ li.size() + 1 ];
+
+		int i;
+		std::list<std::string>::iterator it;
+
+		for( i = 0, it = li.begin(); it != li.end(); ++i, ++it ) {
+			clist[i] = it->c_str();
+		}
+		clist[i] = NULL;
+
+		return clist;
+	}
+
 	/** @endcond INTERNAL */
 
 	/** @cond */

@@ -4,6 +4,7 @@ systemlibrary=True
 source=["xmmsclient++-glib.cpp"]
 
 def config(env):
+	raise ConfigError("Disabled")
 	env.Append(LIBS=["xmmsclient-glib"])
 	env.pkgconfig("glib-2.0")
 	env.Prepend(LIBPATH="src/clients/lib/xmmsclient-glib")

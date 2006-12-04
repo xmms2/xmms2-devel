@@ -44,6 +44,11 @@ namespace Xmms
 	{
 	}
 
+	missing_operand_error::missing_operand_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 	out_of_range::out_of_range( const std::string& what_arg ) :
 		std::out_of_range( what_arg )
 	{

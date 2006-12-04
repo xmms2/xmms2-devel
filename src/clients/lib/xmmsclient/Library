@@ -6,19 +6,23 @@ systemlibrary=True
 
 source=["ipc.c", 
 	"medialib.c", 
-	"other.c", 
+	"config.c", 
+	"collection.c", 
+	"collparser.c", 
+	"stats.c", 
 	"playback.c", 
 	"playlist.c", 
-	"result.c", 
-	"xlist.c", 
+	"result.c",
 	"xqueue.c",
 	"xmmsclient.c",
-	"bindata.c"]
+	"bindata.c", 
+	"xform.c"]
 
 def config(env):
 	env.Append(LIBS=["xmmsutils"])
 	env.Append(LIBS=["xmmsipc"])
 	env.Append(LIBS=["xmmssocket"])
+	env.Append(LIBS=["xmmstypes"])
 	if env.platform == 'win32':
 		env["SHLIBPREFIX"] = ""
 		env.Append(LIBS=["ws2_32"])
@@ -28,3 +32,5 @@ def config(env):
 	env.Prepend(LIBPATH="src/lib/xmmsutils")
 	env.Prepend(LIBPATH="src/lib/xmmsipc")
 	env.Prepend(LIBPATH="src/lib/xmmssocket")
+	env.Prepend(LIBPATH="src/lib/xmmstypes")
+	env.Append(CPPFLAGS=['-DUSERCONFDIR=\\"'+env.userconfpath+'\\"'])

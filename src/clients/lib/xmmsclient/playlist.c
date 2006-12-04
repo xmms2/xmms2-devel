@@ -38,38 +38,83 @@
  * Retrive the current position in the playlist
  */
 xmmsc_result_t *
-xmmsc_playlist_current_pos (xmmsc_connection_t *c)
+xmmsc_playlist_current_pos (xmmsc_connection_t *c, const char *playlist)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	return xmmsc_send_msg (c, msg);
+}
+
+/**
+ * Retrive the name of the active playlist
+ */
+xmmsc_result_t *
+xmmsc_playlist_current_active (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_POS);
+	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CURRENT_ACTIVE);
 }
 
+/**
+ * List the existing playlists.
+ */
+xmmsc_result_t *
+xmmsc_playlist_list (xmmsc_connection_t *c)
+{
+	return xmmsc_coll_list (c, XMMS_COLLECTION_NS_PLAYLISTS);
+}
 
 /**
  * Shuffles the current playlist.
  */
 xmmsc_result_t *
-xmmsc_playlist_shuffle (xmmsc_connection_t *c)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SHUFFLE);
-}
-
-/**
- * Sorts the playlist according to the property
- */
-xmmsc_result_t *
-xmmsc_playlist_sort (xmmsc_connection_t *c, const char *property)
+xmmsc_playlist_shuffle (xmmsc_connection_t *c, const char *playlist)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
-	x_api_error_if (!property, "with a NULL property", NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SHUFFLE);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	return xmmsc_send_msg (c, msg);
+}
+
+/**
+ * Sorts the playlist according to the list of properties (NULL-terminated).
+ */
+xmmsc_result_t *
+xmmsc_playlist_sort (xmmsc_connection_t *c, const char *playlist, const char **properties)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+	x_api_error_if (!properties, "with a NULL property", NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_SORT);
-	xmms_ipc_msg_put_string (msg, property);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_string_list (msg, properties);
 
 	return xmmsc_send_msg (c, msg);
 }
@@ -78,40 +123,77 @@ xmmsc_playlist_sort (xmmsc_connection_t *c, const char *property)
  * Clears the current playlist.
  */
 xmmsc_result_t *
-xmmsc_playlist_clear (xmmsc_connection_t *c)
+xmmsc_playlist_clear (xmmsc_connection_t *c, const char *playlist)
 {
+	xmms_ipc_msg_t *msg;
+
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CLEAR);
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_CLEAR);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	return xmmsc_send_msg (c, msg);
 }
+
+/**
+ * Remove the given playlist.
+ */
+xmmsc_result_t *
+xmmsc_playlist_remove (xmmsc_connection_t *c, const char *playlist)
+{
+	return xmmsc_coll_remove (c, playlist, XMMS_COLLECTION_NS_PLAYLISTS);
+}
+
 
 /**
  * List current playlist.
  */
 xmmsc_result_t *
-xmmsc_playlist_list (xmmsc_connection_t *c)
+xmmsc_playlist_list_entries (xmmsc_connection_t *c, const char *playlist)
 {
+	xmms_ipc_msg_t *msg;
+
 	x_check_conn (c, NULL);
 
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LIST);
+	xmms_ipc_msg_put_string (msg, playlist);
+
+	return xmmsc_send_msg (c, msg);
 }
 
 /**
  * Insert a medialib id at given position in playlist. 
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param id A medialib id.
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
+xmmsc_playlist_insert_id (xmmsc_connection_t *c, const char *playlist, int pos, unsigned int id)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_ID);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 	xmms_ipc_msg_put_uint32 (msg, id);
 
@@ -122,27 +204,29 @@ xmmsc_playlist_insert_id (xmmsc_connection_t *c, int pos, unsigned int id)
  * Insert entry at given position in playlist.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param url The URL to insert
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_insert (xmmsc_connection_t *c, int pos, const char *url)
+xmmsc_playlist_insert_url (xmmsc_connection_t *c, const char *playlist, int pos, const char *url)
 {
-	return xmmsc_playlist_insert_args (c, pos, url, 0, NULL);
+	return xmmsc_playlist_insert_args (c, playlist, pos, url, 0, NULL);
 }
 
 /**
  * Insert entry at given position in playlist wit args.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param url The URL to insert
  * @param numargs The number of arguments
  * @param args array of numargs strings used as arguments
  */
 xmmsc_result_t *
-xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int numargs, const char **args)
+xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos, const char *url, int numargs, const char **args)
 {
 	xmmsc_result_t *res;
 	char *enc_url;
@@ -153,8 +237,13 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int
 	enc_url = _xmmsc_medialib_encode_url (url, numargs, args);
 	if (!enc_url)
 		return NULL;
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
 	
-	res = xmmsc_playlist_insert_encoded (c, pos, enc_url);
+	res = xmmsc_playlist_insert_encoded (c, playlist, pos, enc_url);
 	free (enc_url);
 
 	return res;
@@ -166,19 +255,21 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, int pos, const char *url, int
  * url instead.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to insert the media.
  * @param pos A position in the playlist
  * @param url The URL to insert
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, int pos, const char *url)
+xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, const char *playlist, int pos, const char *url)
 {
 	xmms_ipc_msg_t *msg;
 
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_URL);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 	xmms_ipc_msg_put_string (msg, url);
 
@@ -186,20 +277,62 @@ xmmsc_playlist_insert_encoded (xmmsc_connection_t *c, int pos, const char *url)
 }
 
 /**
- * Add a medialib id to the playlist. 
+ * Queries the medialib for media and inserts the matching ones to
+ * the current playlist at the given position.
  *
  * @param c The connection structure.
- * @param id A medialib id.
- *
+ * @param playlist The playlist in which to insert the media.
+ * @param pos A position in the playlist
+ * @param coll The collection to find media in the medialib.
+ * @param order The list of properties by which to order the matching media.
  */
 xmmsc_result_t *
-xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
+xmmsc_playlist_insert_collection (xmmsc_connection_t *c, const char *playlist,
+                                  int pos, xmmsc_coll_t *coll, const char **order)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_INSERT_COLL);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_uint32 (msg, pos);
+	xmms_ipc_msg_put_collection (msg, coll);
+	xmms_ipc_msg_put_string_list (msg, order);
+
+	return xmmsc_send_msg (c, msg);
+
+}
+
+
+
+/**
+ * Add a medialib id to the playlist. 
+ *
+ * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
+ * @param id A medialib id.
+ *
+ */
+xmmsc_result_t *
+xmmsc_playlist_add_id (xmmsc_connection_t *c, const char *playlist, unsigned int id)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_ID);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, id);
 
 	return xmmsc_send_msg (c, msg);
@@ -211,13 +344,14 @@ xmmsc_playlist_add_id (xmmsc_connection_t *c, unsigned int id)
  * the url to. ie: file://mp3/my_mp3s/first.mp3.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
+xmmsc_playlist_add_url (xmmsc_connection_t *c, const char *playlist, const char *url)
 {
-	return xmmsc_playlist_add_args (c, url, 0, NULL);
+	return xmmsc_playlist_add_args (c, playlist, url, 0, NULL);
 }
 
 /**
@@ -226,11 +360,12 @@ xmmsc_playlist_add (xmmsc_connection_t *c, const char *url)
  * the url to. ie: file://mp3/my_mp3s/first.mp3.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_radd (xmmsc_connection_t *c, const char *url)
+xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *url)
 {
 	xmmsc_result_t *res;
 	char *enc_url;
@@ -242,7 +377,7 @@ xmmsc_playlist_radd (xmmsc_connection_t *c, const char *url)
 	if (!enc_url)
 		return NULL;
 
-	res = xmmsc_playlist_radd_encoded (c, enc_url);
+	res = xmmsc_playlist_radd_encoded (c, playlist, enc_url);
 
 	free (enc_url);
 
@@ -259,11 +394,12 @@ xmmsc_playlist_radd (xmmsc_connection_t *c, const char *url)
  * a result from the daemon, such as from #xmms_xform_media_browse
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url Encoded path.
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *url)
+xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *playlist, const char *url)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -273,7 +409,13 @@ xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *url)
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_RADD);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, url);
 
 	return xmmsc_send_msg (c, msg);
@@ -283,12 +425,13 @@ xmmsc_playlist_radd_encoded (xmmsc_connection_t *c, const char *url)
  * Add the url to the playlist with arguments.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
- * @param numargs The number of arguments
+ * @param nargs The number of arguments
  * @param args array of numargs strings used as arguments
  */
 xmmsc_result_t *
-xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *url, int nargs, const char **args)
+xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char *url, int nargs, const char **args)
 {
 	xmmsc_result_t *res;
 	char *enc_url;
@@ -300,7 +443,12 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *url, int nargs, cons
 	if (!enc_url)
 		return NULL;
 
-	res = xmmsc_playlist_add_encoded (c, enc_url);	
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	res = xmmsc_playlist_add_encoded (c, playlist, enc_url);	
 	free (enc_url);
 
 	return res;
@@ -312,11 +460,12 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *url, int nargs, cons
  * server-side AND encoded.
  *
  * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param url path.
  *
  */
 xmmsc_result_t *
-xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *url)
+xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *playlist, const char *url)
 {
 	xmms_ipc_msg_t *msg;
 
@@ -326,23 +475,61 @@ xmmsc_playlist_add_encoded (xmmsc_connection_t *c, const char *url)
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_URL);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_string (msg, url);
 	return xmmsc_send_msg (c, msg);
+}
+
+/**
+ * Queries the medialib for media and adds the matching ones to
+ * the current playlist.
+ *
+ * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
+ * @param coll The collection to find media in the medialib.
+ * @param order The list of properties by which to order the matching media.
+ */
+xmmsc_result_t *
+xmmsc_playlist_add_collection (xmmsc_connection_t *c, const char *playlist,
+                               xmmsc_coll_t *coll, const char **order)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_ADD_COLL);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_collection (msg, coll);
+	xmms_ipc_msg_put_string_list (msg, order);
+
+	return xmmsc_send_msg (c, msg);
+
 }
 
 /**
  * Move a playlist entry to a new position (absolute move)
  */
 xmmsc_result_t *
-xmmsc_playlist_move (xmmsc_connection_t *c,
-                     unsigned int cur_pos, unsigned int new_pos)
+xmmsc_playlist_move_entry (xmmsc_connection_t *c, const char *playlist,
+                           unsigned int cur_pos, unsigned int new_pos)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MOVE);
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_MOVE_ENTRY);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, cur_pos);
 	xmms_ipc_msg_put_uint32 (msg, new_pos);
 
@@ -353,18 +540,27 @@ xmmsc_playlist_move (xmmsc_connection_t *c,
 /**
  * Remove an entry from the playlist.
  *
+ * @param c The connection structure.
+ * @param playlist The playlist in which to add the media.
  * @param pos The position that should be removed from the playlist.
  *
  * @sa xmmsc_playlist_list
  */
 xmmsc_result_t *
-xmmsc_playlist_remove (xmmsc_connection_t *c, unsigned int pos)
+xmmsc_playlist_remove_entry (xmmsc_connection_t *c, const char *playlist,
+                             unsigned int pos)
 {
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (c, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REMOVE);
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_REMOVE_ENTRY);
+	xmms_ipc_msg_put_string (msg, playlist);
 	xmms_ipc_msg_put_uint32 (msg, pos);
 
 	return xmmsc_send_msg (c, msg);
@@ -426,6 +622,86 @@ xmmsc_playlist_set_next_rel (xmmsc_connection_t *c, signed int pos)
 	xmms_ipc_msg_put_uint32 (msg, pos);
 
 	return xmmsc_send_msg (c, msg);
+}
+
+/**
+ * Load a playlist as the current active playlist
+ */
+xmmsc_result_t *
+xmmsc_playlist_load (xmmsc_connection_t *c, const char *name)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (c, NULL);
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_LOAD);
+	xmms_ipc_msg_put_string (msg, name);
+
+	return xmmsc_send_msg (c, msg);
+}
+
+/**
+ * Request the playlist_loaded broadcast. This will be called
+ * if a playlist is loaded server-side. The argument will be a string
+ * with the playlist name.
+ */
+xmmsc_result_t *
+xmmsc_broadcast_playlist_loaded (xmmsc_connection_t *c)
+{
+	x_check_conn (c, NULL);
+
+	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_PLAYLIST_LOADED);
+}
+
+/**
+ * Export a serverside playlist to a format that could be read
+ * from another mediaplayer.
+ * @param conn The #xmmsc_connection_t
+ * @param playlist Name of a serverside playlist
+ * @param mime Mimetype of the export format.
+ */
+xmmsc_result_t *
+xmmsc_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_EXPORT);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_string (msg, mime);
+
+	return xmmsc_send_msg (conn, msg);
+}
+
+/**
+ * Import a playlist from a playlist file.
+ * @param conn The #xmmsc_connection_t
+ * @param playlist The name of the new playlist.
+ * @param url URL to the playlist file.
+ */
+xmmsc_result_t *
+xmmsc_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url)
+{
+	xmms_ipc_msg_t *msg;
+
+	x_check_conn (conn, NULL);
+
+	/* default to the active playlist */
+	if (playlist == NULL) {
+		playlist = "_active";
+	}
+
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_PLAYLIST, XMMS_IPC_CMD_IMPORT);
+	xmms_ipc_msg_put_string (msg, playlist);
+	xmms_ipc_msg_put_string (msg, url);
+
+	return xmmsc_send_msg (conn, msg);
 }
 
 /** @} */

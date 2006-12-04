@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "xmmsclientpriv/xmmsclient_list.h"
+#include "xmmspriv/xmms_list.h"
 #include "xmmsclientpriv/xmmsclient_util.h"
 #include "xmmsclientpriv/xmmsclient_queue.h"
 #include "xmmsc/xmmsc_util.h"
