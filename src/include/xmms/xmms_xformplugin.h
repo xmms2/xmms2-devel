@@ -297,7 +297,12 @@ xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
 
 void xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *path, guint32 flags);
 void xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmms_object_cmd_value_t *val);
-
+void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
+                                               const gchar *key,
+                                               const gchar *value);
+void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
+                                               const gchar *key,
+                                               gint value);
 /**
  * @}
  */

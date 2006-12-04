@@ -233,7 +233,7 @@ xmms_file_browse (xmms_xform_t *xform,
 			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
 		}
 		xmms_xform_browse_add_entry (xform, d, flags);
-		xmms_xform_browse_add_entry_property (xform, "size", xmms_object_cmd_value_int_new (st.st_size));
+		xmms_xform_browse_add_entry_property_int (xform, "size", st.st_size);
 
 		g_free (t);
 	}
