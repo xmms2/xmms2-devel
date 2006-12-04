@@ -39,6 +39,7 @@ optional_subdirs = ["src/clients/cli",
 					"src/clients/lib/xmmsclient++",
 					"src/clients/lib/xmmsclient++-glib",
 					"src/clients/lib/python",
+					"src/clients/lib/perl",
 					"src/clients/lib/ruby"]
 
 all_plugins = sets.Set([p for p in os.listdir("src/plugins")

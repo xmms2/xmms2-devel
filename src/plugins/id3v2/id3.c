@@ -587,7 +587,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			}
 
 			if (size+10 > len) {
-				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
+				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", (int)size, len);
 				return FALSE;
 			}
 			
@@ -613,7 +613,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			size = (buf[3]<<16) | (buf[4]<<8) | buf[5];
 
 			if (size+6 > len) {
-				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", size, len);
+				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", (int)size, len);
 				return FALSE;
 			}
 
