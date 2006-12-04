@@ -161,12 +161,6 @@ def configure(conf):
 	conf.env['XMMS_PKGCONF_FILES'] = []
 	conf.env['XMMS_OUTPUT_PLUGINS'] = []
 
-	if Params.g_options.config_prefix:
-		conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
-		include = "-I%s" % os.path.join(Params.g_options.config_prefix, "include")
-		conf.env["CCFLAGS"] += [include]
-		conf.env["CXXFLAGS"] += [include]
-
 	conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
 
 	# Check for support for the generic platform
@@ -191,10 +185,15 @@ def configure(conf):
 	enabled_plugins, disabled_plugins = _configure_plugins(conf)
 	enabled_optionals, disabled_optionals = _configure_optionals(conf)
 	_output_summary(enabled_plugins, disabled_plugins, enabled_optionals, disabled_optionals)
-
 	# generate xmms_defs.h
 	conf.env["VERSION"] = VERSION
 	conf.sub_config('src/include/xmms')
+
+	if Params.g_options.config_prefix:
+		conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
+		include = "-I%s" % os.path.join(Params.g_options.config_prefix, "include")
+		conf.env["CCFLAGS"] += [include]
+		conf.env["CXXFLAGS"] += [include]
 
 	print "\nDefault output plugin: ",
 	Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
