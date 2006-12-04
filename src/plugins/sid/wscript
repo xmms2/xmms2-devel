@@ -19,7 +19,7 @@ def plugin_build(bld):
 	obj = bld.create_obj('cpp', 'objects')
 	obj.target = 'xmms_sid_cpp'
 	obj.includes = '../../include'
-	obj.source = ['sidplay_wrapper.cpp', 'md5.cpp']
+	obj.source = """sidplay_wrapper.cpp md5.cpp""".split()
 	obj.uselib = 'sidplay glib2'
 
 	obj = bld.create_obj('cc', 'plugin')

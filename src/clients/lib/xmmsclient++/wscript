@@ -6,20 +6,20 @@ def build(bld):
 	obj = bld.create_obj('cpp', 'shlib')
 	obj.target = 'xmmsclient++'
 	obj.includes = '../../../include ../../../includepriv'
-	obj.source = ["bindata.cpp",
-				  "client.cpp",
-				  "config.cpp",
-				  "dict.cpp",
-				  "exceptions.cpp",
-				  "list.cpp",
-				  "listener.cpp",
-				  "mainloop.cpp",
-				  "medialib.cpp",
-				  "playback.cpp",
-				  "playlist.cpp",
-				  "signal.cpp",
-				  "stats.cpp",
-				  "xform.cpp"]
+	obj.source = """ bindata.cpp
+				  client.cpp
+				  config.cpp
+				  dict.cpp
+				  exceptions.cpp
+				  list.cpp
+				  listener.cpp
+				  mainloop.cpp
+				  medialib.cpp
+				  playback.cpp
+				  playlist.cpp
+				  signal.cpp
+				  stats.cpp
+				  xform.cpp""".split()
 	obj.uselib_local = 'xmmsclient'
 	obj.uselib = 'boost'
 	tool.add_install_flag(obj)

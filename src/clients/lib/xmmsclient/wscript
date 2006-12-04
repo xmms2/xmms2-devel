@@ -4,7 +4,18 @@ def build(bld):
 	obj = bld.create_obj('cc', 'shlib')
 	obj.target = 'xmmsclient'
 	obj.includes = '../../../include ../../../includepriv'
-	obj.source = ['bindata.c', 'ipc.c', 'medialib.c', 'other.c', 'playback.c', 'playlist.c', 'result.c', 'xlist.c', 'xmmsclient.c', 'xqueue.c']
+	obj.source = """
+				 bindata.c
+				 ipc.c
+				 medialib.c
+				 other.c
+				 playback.c
+				 playlist.c
+				 result.c
+				 xlist.c
+				 xmmsclient.c
+				 xqueue.c
+				 """.split()
 	obj.uselib_local = 'xmmsipc xmmssocket xmmsutils'
 	tool.add_install_flag(obj)
 

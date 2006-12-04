@@ -6,7 +6,13 @@ def build(bld):
 	obj = bld.create_obj("cc", "plugin")
 	obj.target = 'XMMSClient'
 	obj.includes = '. ../../../include ../../../includepriv ' + bld.env_of_name('default')["PERL_CORE_INC"]
-	obj.source = ['perl_xmmsclient.c', 'XMMSClient.xs', 'XMMSClientResult.xs', 'XMMSClientResultPropDict.xs', 'XMMSClientResultPropDictTie.xs']
+	obj.source = """
+				 perl_xmmsclient.c
+				 XMMSClient.xs
+				 XMMSClientResult.xs
+				 XMMSClientResultPropDict.xs
+				 XMMSClientResultPropDictTie.xs
+				 """.split()
 	obj.uselib_local = 'xmmsclient'
 	obj.install_in = "INST_AUTODIR_perl"
 
