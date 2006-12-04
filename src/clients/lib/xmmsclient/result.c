@@ -47,6 +47,7 @@ typedef struct xmmsc_result_value_St {
 		int32_t int32;
 		char *string;
 		x_list_t *dict;
+		xmmsc_coll_t *coll;
 		xmmsc_result_value_bin_t *bin;
 	} value;
 	xmmsc_result_value_type_t type;
@@ -86,6 +87,7 @@ struct xmmsc_result_St {
 		int32_t inte;
 		char *string;
 		x_list_t *dict;
+		xmmsc_coll_t *coll;
 		xmmsc_result_value_bin_t *bin;
 	} data;
 
@@ -111,7 +113,7 @@ struct xmmsc_result_St {
  * is a sync example:
  * @code
  * xmmsc_result_t *res;
- * unsigned int id;
+ * uint32_t id;
  * res = xmmsc_playback_get_current_id (connection);
  * xmmsc_result_wait (res);
  * if (xmmsc_result_iserror) {
@@ -125,7 +127,7 @@ struct xmmsc_result_St {
  * an async example is a bit more complex...
  * @code
  * static void handler (xmmsc_result_t *res, void *userdata) {
- *   unsigned int id;
+ *   uint32_t id;
  *   if (xmmsc_result_iserror) {
  *      printf ("error: %s", xmmsc_result_get_error (res);
  *   }
@@ -205,6 +207,35 @@ xmmsc_result_get_class (xmmsc_result_t *res)
 }
 
 /**
+ * Check the #xmmsc_result_t for error.
+ * @return 1 if error was encountered, else 0
+ */
+
+int
+xmmsc_result_iserror (xmmsc_result_t *res)
+{
+	x_return_val_if_fail (res, 1);
+
+	if (res->error > 0) {
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * Get an error string describing the error that occoured
+ */ 
+
+const char *
+xmmsc_result_get_error (xmmsc_result_t *res)
+{
+	x_return_null_if_fail (res);
+
+	return res->error_str;
+}
+
+/**
  * Disconnect a signal or a broadcast.
  * @param res The result to disconnect, must be of class signal or broadcast.
  */
@@ -230,7 +261,7 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
  * Here is an example on how you use a restartable signal.
  * @code
  * static void handler (xmmsc_result_t *res, void *userdata) {
- *   unsigned int id;
+ *   uint32_t id;
  *   xmmsc_result_t *newres;
  *
  *   if (xmmsc_result_iserror) {
@@ -301,6 +332,9 @@ xmmsc_result_value_free (void *v)
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			free_dict_list (val->value.dict);
 			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			xmmsc_coll_unref (val->value.coll);
+			break;
 		default:
 			break;
 	}
@@ -343,6 +377,10 @@ xmmsc_result_cleanup_data (xmmsc_result_t *res)
 		case XMMS_OBJECT_CMD_ARG_DICT:
 			free_dict_list (res->data.dict);
 			res->data.dict = NULL;
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			xmmsc_coll_unref (res->data.coll);
+			res->data.coll = NULL;
 			break;
 	}
 }
@@ -437,6 +475,19 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 						res->datatype = XMMS_OBJECT_CMD_ARG_NONE;
 					}
 				}
+			}
+			break;
+
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			{
+				xmmsc_coll_t *coll;
+
+				xmms_ipc_msg_get_collection_alloc (msg, &coll);
+				if (!coll)
+					return false;
+
+				res->data.coll = coll;
+				xmmsc_coll_ref (res->data.coll);
 			}
 			break;
 
@@ -567,35 +618,6 @@ xmmsc_result_get_type (xmmsc_result_t *res)
 }
 
 /**
- * Check the #xmmsc_result_t for error.
- * @return 1 if error was encountered, else 0
- */
-
-int
-xmmsc_result_iserror (xmmsc_result_t *res)
-{
-	x_return_val_if_fail (res, 1);
-
-	if (res->error > 0) {
-		return 1;
-	}
-
-	return 0;
-}
-
-/**
- * Get an error string describing the error that occoured
- */ 
-
-const char *
-xmmsc_result_get_error (xmmsc_result_t *res)
-{
-	x_return_null_if_fail (res);
-
-	return res->error_str;
-}
-
-/**
  * Retrives a signed integer from the resultset.
  * @param res a #xmmsc_result_t containing a integer.
  * @param r the return integer.
@@ -603,7 +625,7 @@ xmmsc_result_get_error (xmmsc_result_t *res)
  */
 
 int
-xmmsc_result_get_int (xmmsc_result_t *res, int *r)
+xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r)
 {
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
@@ -626,7 +648,7 @@ xmmsc_result_get_int (xmmsc_result_t *res, int *r)
  */
 
 int
-xmmsc_result_get_uint (xmmsc_result_t *res, unsigned int *r)
+xmmsc_result_get_uint (xmmsc_result_t *res, uint32_t *r)
 {
 	if (!res || res->error != XMMS_ERROR_NONE) {
 		return 0;
@@ -658,6 +680,28 @@ xmmsc_result_get_string (xmmsc_result_t *res, char **r)
 	}
 
 	*r = res->data.string;
+
+	return 1;
+}
+
+/**
+ * Retrieves a collection from the resultset.
+ * @param res a #xmmsc_result_t containing a collection.
+ * @param c the return collection. This collection is owned by the result and will be freed when the result is freed.
+ * @return 1 upon success otherwise 0
+ */
+int
+xmmsc_result_get_collection (xmmsc_result_t *res, xmmsc_coll_t **c)
+{
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_COLL) {
+		return 0;
+	}
+
+	*c = res->data.coll;
 
 	return 1;
 }
@@ -744,12 +788,13 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
  * undefined. 
  *
  * @param res a #xmmsc_result_t containing dict list.
+ * @param key Key that should be retrieved
  * @param r the return int
  * @return 1 upon success otherwise 0
  *
  */
 int
-xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t *r)
+xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {
@@ -781,12 +826,13 @@ xmmsc_result_get_dict_entry_int32 (xmmsc_result_t *res, const char *key, int32_t
  * undefined. 
  *
  * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
  * @param r the return uint
  * @return 1 upon success otherwise 0
  *
  */
 int
-xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32_t *r)
+xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t *r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {
@@ -819,12 +865,13 @@ xmmsc_result_get_dict_entry_uint32 (xmmsc_result_t *res, const char *key, uint32
  * result is freed.
  *
  * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
  * @param r the return string (owned by result)
  * @return 1 upon success otherwise 0
  *
  */
 int
-xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r)
+xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char **r)
 {
 	xmmsc_result_value_t *val;
 	if (!res || res->error != XMMS_ERROR_NONE) {
@@ -850,11 +897,51 @@ xmmsc_result_get_dict_entry_str (xmmsc_result_t *res, const char *key, char **r)
 }
 
 /**
+ * Retrieve collection associated for specified key in the resultset.
+ *
+ * If the key doesn't exist in the result the returned collection is
+ * NULL. The collection is owned by the result and will be freed when the
+ * result is freed.
+ *
+ * @param res a #xmmsc_result_t containing a hashtable.
+ * @param key Key that should be retrieved
+ * @param c the return collection (owned by result)
+ * @return 1 upon success otherwise 0
+ *
+ */
+int
+xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
+                                        xmmsc_coll_t **c)
+{
+	xmmsc_result_value_t *val;
+	if (!res || res->error != XMMS_ERROR_NONE) {
+		*c = NULL;
+		return 0;
+	}
+
+	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
+		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+		*c = NULL;
+		return 0;
+	}
+
+	val = xmmsc_result_dict_lookup (res, key);
+	if (val && val->type == XMMSC_RESULT_VALUE_TYPE_COLL) {
+		*c = val->value.coll;
+	} else {
+		*c = NULL;
+		return 0;
+	}
+	
+	return 1;
+}
+
+/**
  * Retrieve type associated for specified key in the resultset.
  *
  * @param res a #xmmsc_result_t containing a hashtable.
  * @param key Key that should be retrieved
- * @return type of #key
+ * @return type of key
  *
  */
 xmmsc_result_value_type_t
@@ -1275,6 +1362,13 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 			if (!val->value.dict) {
 				goto err;
 			}
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			xmms_ipc_msg_get_collection_alloc (msg, &val->value.coll);
+			if (!val->value.coll) {
+				goto err;
+			}
+			xmmsc_coll_ref (val->value.coll);
 			break;
 		case XMMS_OBJECT_CMD_ARG_NONE:
 			break;

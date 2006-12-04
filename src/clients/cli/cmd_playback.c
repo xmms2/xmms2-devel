@@ -139,7 +139,7 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		print_error ("%s", xmmsc_result_get_error (res));
 	}
 
-	if (!xmmsc_result_get_dict_entry_int32 (res, "duration", &dur)) {
+	if (!xmmsc_result_get_dict_entry_int (res, "duration", &dur)) {
 		print_error ("Broken resultset");
 	}
 	xmmsc_result_unref (res);
@@ -185,32 +185,6 @@ cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 		xmmsc_result_unref (res);
 	}
-}
-
-
-void
-cmd_move (xmmsc_connection_t *conn, gint argc, gchar **argv)
-{
-	xmmsc_result_t *res;
-	guint cur_pos, new_pos;
-
-	if (argc < 4) {
-		print_error ("You'll need to specifiy current and new position");
-	}
-
-	cur_pos = strtol (argv[2], NULL, 10);
-	new_pos = strtol (argv[3], NULL, 10);
-
-	res = xmmsc_playlist_move (conn, cur_pos, new_pos);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("Unable to move playlist entry: %s",
-		             xmmsc_result_get_error (res));
-	}
-	xmmsc_result_unref (res);
-
-	print_info ("Moved %u to %u", cur_pos, new_pos);
 }
 
 

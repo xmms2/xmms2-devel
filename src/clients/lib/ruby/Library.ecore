@@ -12,6 +12,7 @@ def ecorelib2sed(lib):
 	return " -e 's/ -lecore_" + lib + " / /'"
 
 def config(env):
+	raise ConfigError("Disabled")
 	if env.tryaction ("ruby --version") :
 		# we require ruby 1.8 or greater
 		print "Checking for Ruby 1.8 or greater... ",

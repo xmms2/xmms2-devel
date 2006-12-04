@@ -27,7 +27,6 @@ void cmd_pause (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_next (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_prev (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_seek (xmmsc_connection_t *conn, gint argc, gchar **argv);
-void cmd_move (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_jump (xmmsc_connection_t *conn, gint argc, gchar **argv);
 
 

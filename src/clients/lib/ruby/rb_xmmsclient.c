@@ -794,7 +794,7 @@ c_playlist_add (VALUE self, VALUE arg)
 	CHECK_DELETED (xmms);
 
 	if (is_str)
-		res = xmmsc_playlist_add (xmms->real, StringValuePtr (arg));
+		res = xmmsc_playlist_add_url (xmms->real, StringValuePtr (arg));
 	else
 		res = xmmsc_playlist_add_id (xmms->real, NUM2UINT (arg));
 
@@ -829,7 +829,7 @@ c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
 	CHECK_DELETED (xmms);
 
 	if (is_str)
-		res = xmmsc_playlist_insert (xmms->real, NUM2UINT (pos), StringValuePtr (arg));
+		res = xmmsc_playlist_insert_url (xmms->real, NUM2UINT (pos), StringValuePtr (arg));
 	else
 		res = xmmsc_playlist_insert_id (xmms->real, NUM2UINT (pos), NUM2UINT (arg));
 

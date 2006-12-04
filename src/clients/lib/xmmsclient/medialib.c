@@ -25,13 +25,6 @@
 #include "xmmsc/xmmsc_idnumbers.h"
 #include "xmmsc/xmmsc_stringport.h"
 
-static const char* constraint_templates[4] = {"m%d.key = LOWER(%s)",
-					      "LOWER(m%d.value) LIKE LOWER(%s)",
-					      "m%d.id = m%d.id",
-					      "Media AS m%d"};
-
-typedef enum templ_type_e {templ_key, templ_value, templ_id, templ_table} templ_type;
-
 /**
  * @defgroup MedialibControl MedialibControl
  * @ingroup XMMSClient
@@ -55,8 +48,122 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
 }
 
 /**
+ * This function will make a pretty string about the information in
+ * the mediainfo hash supplied to it.
+ * @param target A allocated char *
+ * @param len Length of target
+ * @param fmt A format string to use. You can insert items from the hash by
+ * using specialformat "${field}".
+ * @param res The #xmmsc_result_t that contains the dict.
+ * @returns The number of chars written to #target
+ */
+
+int
+xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
+{
+	const char *pos;
+
+	if (!target) {
+		return 0;
+	}
+
+	if (!fmt) {
+		return 0;
+	}
+
+	memset (target, 0, len);
+
+	pos = fmt;
+	while (strlen (target) + 1 < len) {
+		char *next_key, *key, *result = NULL, *end;
+		int keylen;
+
+		next_key = strstr (pos, "${");
+		if (!next_key) {
+			strncat (target, pos, len - strlen (target) - 1);
+			break;
+		}
+
+		strncat (target, pos, MIN (next_key - pos, len - strlen (target) - 1));
+		keylen = strcspn (next_key + 2, "}");
+		key = malloc (keylen + 1);
+
+		if (!key) {
+			fprintf (stderr, "Unable to allocate %u bytes of memory, OOM?", keylen);
+			break;
+		}
+
+		memset (key, 0, keylen + 1);
+		strncpy (key, next_key + 2, keylen);
+
+		if (strcmp (key, "seconds") == 0) {
+			int duration;
+
+			xmmsc_result_get_dict_entry_int (res, "duration", &duration);
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+			} else {
+				char seconds[10];
+				/* rounding */
+				duration += 500;
+				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
+				strncat (target, seconds, len - strlen (target) - 1);
+			}
+		} else if (strcmp (key, "minutes") == 0) {
+			int duration;
+
+			xmmsc_result_get_dict_entry_int (res, "duration", &duration);
+
+			if (!duration) {
+				strncat (target, "00", len - strlen (target) - 1);
+			} else {
+				char minutes[10];
+				/* rounding */
+				duration += 500;
+				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
+				strncat (target, minutes, len - strlen (target) - 1);
+			}
+		} else {
+			char tmp[12];
+
+			xmmsc_result_value_type_t type = xmmsc_result_get_dict_entry_type (res, key);
+			if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
+				xmmsc_result_get_dict_entry_string (res, key, &result);
+			} else if (type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
+				uint32_t ui;
+				xmmsc_result_get_dict_entry_uint (res, key, &ui);
+				snprintf (tmp, 12, "%u", ui);
+				result = tmp;
+			} else if (type == XMMSC_RESULT_VALUE_TYPE_INT32) {
+				int32_t i;
+				xmmsc_result_get_dict_entry_int (res, key, &i);
+				snprintf (tmp, 12, "%d", i);
+				result = tmp;
+			}
+				
+			if (result)
+				strncat (target, result, len - strlen (target) - 1);
+		}
+
+		free (key);
+		end = strchr (next_key, '}');
+
+		if (!end) {
+			break;
+		}
+
+		pos = end + 1;
+	}
+
+	return strlen (target);
+}
+
+/**
  * Make a SQL query to the server medialib. The result will contain
  * a list of dicts.
+ * \deprecated { This function is now deprecated, use the collection
+ * API instead! If it does not suffice, file a bug. }
  * @param conn The #xmmsc_connection_t
  * @param query The SQL query.
  */
@@ -66,277 +173,6 @@ xmmsc_medialib_select (xmmsc_connection_t *conn, const char *query)
 	x_check_conn (conn, NULL);
 
 	return do_methodcall (conn, XMMS_IPC_CMD_SELECT, query);
-}
-
-/**
- * Escape a string so that it can be used in sqlite queries.
- *
- * @param Input string, is not freed by this function!
- * @returns string enclosed in single quotes, with all single quotes
- * in the string replaced with double single quotes
- *
- * Example:
- * Ain't -> 'Ain''t'
- */
-char *
-xmmsc_sqlite_prepare_string (const char *input) {
-	char *output;
-	int outsize, nquotes = 0;
-	int i, o;
-
-	for (i = 0; input[i] != '\0'; i++) {
-		if (input[i] == '\'') {
-			nquotes++;
-		}
-	}
-
-	outsize = strlen(input) + nquotes + 2 + 1; /* 2 quotes to terminate the string , and one \0 in the end */
-	output = malloc(outsize);
-
-	if (output == NULL) {
-		x_oom();
-		return NULL;
-	}
-
-	i = o = 0;
-	output[o++] = '\'';
-	while (input[i] != '\0') {
-		output[o++] = input[i];
-		if (input[i++] == '\'') {
-			output[o++] = '\'';
-		}
-	}
-	output[o++] = '\'';
-	output[o] = '\0';
-
-	return output;
-
-}
-
-
-/**
- * @internal
- *
- */
-
-static char *
-xmmsc_querygen_fill_template (templ_type idx, xmmsc_query_attribute_t *attributes, unsigned i)
-{
-	int res_size = 0;
-	char *res;
-	char t;
-
-	switch (idx) {
-	case templ_key:
-		res_size = snprintf(&t, 1, constraint_templates[templ_key], i, attributes[i].key);
-		break;
-	case templ_value:
-		res_size = snprintf(&t, 1, constraint_templates[templ_value], i, attributes[i].value);
-		break;
-	case templ_id:
-		res_size = snprintf(&t, 1, constraint_templates[templ_id], i-1, i);
-		break;
-	case templ_table:
-		res_size = snprintf(&t, 1, constraint_templates[templ_table], i);
-		break;
-	default:
-		/* do we need a default error case? */
-		break;
-	}
-
-	res_size += 1;
-
-	res = malloc(res_size);
-	if (res == NULL) {
-		x_oom();
-		return NULL;
-	}
-
-
-	switch (idx) {
-	case templ_key:
-		snprintf(res, res_size, constraint_templates[templ_key], i, attributes[i].key);
-		break;
-	case templ_value:
-		snprintf(res, res_size, constraint_templates[templ_value], i, attributes[i].value);
-		break;
-	case templ_id:
-		snprintf(res, res_size, constraint_templates[templ_id], i-1, i);
-		break;
-	case templ_table:
-		snprintf(res, res_size, constraint_templates[templ_table], i);
-		break;
-	}
-	return res;
-
-}
-
-/**
- * @internal
- * Construct constraints of the query string from query attribute vector
- */
-
-static int
-xmmsc_querygen_parse_constraints (char **pconstraints,
-                                  xmmsc_query_attribute_t *attributes,
-                                  unsigned int n)
-{
-	int success = 1, tmp_size;
-	char *oconstraints = NULL, *constraints, *tmp = NULL;
-	unsigned int i, size = 0;
-	templ_type template;
-
-	constraints = strdup (" WHERE ");
-
-	if (constraints == NULL) {
-		x_oom ();
-		*pconstraints = NULL;
-		return 0;
-	} else {
-		size = strlen (constraints) + 1;
-	}
-
-	for (i = 0; i < n; i++) {
-		for (template = templ_key; template <= templ_id; template++) {
-			if (!i && template == templ_id) {
-				break; /* Can't do id matching on the first attribute */
-			}
-
-			tmp = xmmsc_querygen_fill_template(template, attributes, i);
-			if (!tmp) {
-				success = 0;
-			}
-
-			tmp_size = strlen (tmp);
-
-			size += tmp_size + (!i && template == templ_key ? 0 : 5);
-			oconstraints = constraints;
-			constraints = realloc(constraints, size);
-			if (!constraints) {
-				success = 0;
-				free (oconstraints);
-				break;
-			}
-
-			if (!(!i && template == templ_key) ) {
-				/* Don't need AND for first constraint */
-				strcat (constraints, " AND ");
-			}
-
-			strcat (constraints, tmp);
-			free (tmp);
-		}
-	}
-
-	*pconstraints = constraints;
-
-	return success;
-}
-
-/**
- * @internal
- * Construct tables of the query string from query attribute vector
- */
-
-static int
-xmmsc_querygen_parse_tables (char **ptables,
-                             xmmsc_query_attribute_t *attributes,
-                             unsigned int n)
-{
-	int success = 1;
-	char *otables = NULL, *tables, *tmp = NULL;
-	unsigned int i, size = 1; /* make space for the terminating null byte */
-	unsigned int tmp_size = 0;
-
-	tables = malloc (1);
-	if (tables == NULL) {
-		x_oom ();
-		*ptables = NULL;
-		return 0;
-	}
-
-	tables[0] = '\0';
-
-	for (i = 0; i < n; i++) {
-		tmp = xmmsc_querygen_fill_template (templ_table, attributes, i);
-		if (!tmp) {
-			success = 0;
-			break;
-		}
-
-		tmp_size = strlen (tmp);
-
-		size += tmp_size + (i==0 ? 0 : 2); /* space for ", " */
-		otables = tables;
-		tables = realloc (tables, size);
-
-		if (tables == NULL) {
-			x_oom ();
-			success = 0;
-			free (otables);
-			break;
-		}
-
-		if (i) {
-			strcat (tables, ", ");
-		}
-
-		strcat (tables, tmp);
-		free (tmp);
-	}
-
-	(*ptables) = tables;
-
-	return success;
-}
-
-/**
- * Construct a query to match songs with all the given attrbutes.
- *
- * @param A vector of attribute pointers
- * @param The length of the vector
- * @returns string with the query to match given attributes. Caller is responsible
- * of freeing both the table and the string.
- *
- *
- */
-
-char *
-xmmsc_querygen_and (xmmsc_query_attribute_t *attributes, unsigned n)
-{
-	char *tables = NULL, *constraints = NULL, *query = NULL;
-	int success, fullsize;
-
-	const char *initquery = "SELECT DISTINCT m0.id FROM ";
-
-	success = xmmsc_querygen_parse_tables (&tables, attributes, n);
-
-	if (success) {
-		success = xmmsc_querygen_parse_constraints (&constraints,
-		                                            attributes, n);
-	}
-
-	if (success) {
-		fullsize = strlen (initquery);
-		fullsize += strlen (tables);
-		fullsize += strlen (constraints);
-
-		query = malloc (fullsize + 1);
-		success = !!query;
-	}
-
-	if (success) {
-		query[0] = '\0';
-		strcat (query, initquery);
-		strcat (query, tables);
-		strcat (query, constraints);
-	}
-
-	if (tables) 
-		free (tables);
-	free (constraints);
-
-	return query;
 }
 
 /**
@@ -353,90 +189,6 @@ xmmsc_medialib_get_id (xmmsc_connection_t *conn, const char *url)
 }
 
 /**
- * Export a serverside playlist to a format that could be read
- * from another mediaplayer.
- * @param conn The #xmmsc_connection_t
- * @param playlist Name of a serverside playlist
- * @param mime Mimetype of the export format.
- */
-xmmsc_result_t *
-xmmsc_medialib_playlist_export (xmmsc_connection_t *conn, const char *playlist, const char *mime)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-
-	x_check_conn (conn, NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_EXPORT);
-	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_string (msg, mime);
-
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
-}
-
-/**
- * This will make the server list the given playlist. 
- */
-xmmsc_result_t *
-xmmsc_medialib_playlist_list (xmmsc_connection_t *conn, const char *playlist)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-
-	x_check_conn (conn, NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_LIST);
-	xmms_ipc_msg_put_string (msg, playlist);
-
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
-}
-
-/**
- * Returns a list of all available playlists
- */
-xmmsc_result_t *
-xmmsc_medialib_playlists_list (xmmsc_connection_t *conn)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-
-	x_check_conn (conn, NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLISTS_LIST);
-
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
-}
-
-/**
- * Import a playlist from a playlist file.
- * @param conn The #xmmsc_connection_t
- * @param playlist The name of the new playlist.
- * @param url URL to the playlist file.
- */
-xmmsc_result_t *
-xmmsc_medialib_playlist_import (xmmsc_connection_t *conn, const char *playlist, const char *url)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-
-	x_check_conn (conn, NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_PLAYLIST_IMPORT);
-	xmms_ipc_msg_put_string (msg, playlist);
-	xmms_ipc_msg_put_string (msg, url);
-
-	res = xmmsc_send_msg (conn, msg);
-
-	return res;
-}
-
-/**
  * Remove a entry from the medialib
  * @param conn The #xmmsc_connection_t
  * @param entry The entry id you want to remove
@@ -449,7 +201,7 @@ xmmsc_medialib_remove_entry (xmmsc_connection_t *conn, uint32_t entry)
 
 	x_check_conn (conn, NULL);
 
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_REMOVE_ID);
 	xmms_ipc_msg_put_uint32 (msg, entry);
 
 	res = xmmsc_send_msg (conn, msg);
@@ -516,44 +268,7 @@ xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url)
 	if (!_xmmsc_medialib_verify_url (url))
 		x_api_error ("with a non encoded url", NULL);
 
-	return do_methodcall (conn, XMMS_IPC_CMD_ADD, url);
-}
-
-/**
- * Save the current playlist to a serverside playlist
- */
-xmmsc_result_t *
-xmmsc_medialib_playlist_save_current (xmmsc_connection_t *conn,
-                                      const char *name)
-{
-	x_check_conn (conn, NULL);
-
-	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_SAVE_CURRENT, name);
-}
-
-/**
- * Load a playlist from the medialib to the current active playlist
- */
-xmmsc_result_t *
-xmmsc_medialib_playlist_load (xmmsc_connection_t *conn,
-                                      const char *name)
-{
-	x_check_conn (conn, NULL);
-
-	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_LOAD, name);
-}
-
-/**
- * Remove a playlist from the medialib, keeping the songs of course.
- * @param conn #xmmsc_connection_t
- * @param playlist The playlist to remove
- */
-xmmsc_result_t *
-xmmsc_medialib_playlist_remove (xmmsc_connection_t *conn, const char *playlist)
-{
-	x_check_conn (conn, NULL);
-
-	return do_methodcall (conn, XMMS_IPC_CMD_PLAYLIST_REMOVE, playlist);
+	return do_methodcall (conn, XMMS_IPC_CMD_ADD_URL, url);
 }
 
 /**
@@ -612,6 +327,8 @@ xmmsc_medialib_path_import_encoded (xmmsc_connection_t *conn,
 /**
  * Rehash the medialib, this will check data in the medialib
  * still is the same as the data in files.
+ *
+ * @param conn #xmmsc_connection_t
  * @param id The id to rehash. Set it to 0 if you want to rehash
  * the whole medialib.
  */
@@ -652,19 +369,6 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	return res;
 }
 
-/**
- * Request the medialib_playlist_loaded broadcast. This will be called
- * if a playlist is loaded server-side. The argument will be a string
- * with the playlist name.
- */
-xmmsc_result_t *
-xmmsc_broadcast_medialib_playlist_loaded (xmmsc_connection_t *c)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_MEDIALIB_PLAYLIST_LOADED);
-}
-
 /** 
  * Request the medialib_entry_added broadcast. This will be called
  * if a new entry is added to the medialib serverside.
@@ -691,33 +395,8 @@ xmmsc_broadcast_medialib_entry_changed (xmmsc_connection_t *c)
 }
 
 /**
- * Queries the medialib for files and adds the matching ones to
- * the current playlist. Remember to include a field called id
- * in the query.
- *
- * @param c The connection structure.
- * @param query sql-query to medialib.
- *
- */
-xmmsc_result_t *
-xmmsc_medialib_add_to_playlist (xmmsc_connection_t *c, const char *query)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-
-	x_check_conn (c, NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MEDIALIB, XMMS_IPC_CMD_ADD_TO_PLAYLIST);
-	xmms_ipc_msg_put_string (msg, query);
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
-
-}
-
-/**
  * Associate a int value with a medialib entry. Uses default
- * source which is client/<clientname>
+ * source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
@@ -766,7 +445,7 @@ xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
 
 /**
  * Associate a value with a medialib entry. Uses default
- * source which is client/<clientname>
+ * source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
@@ -815,7 +494,7 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
 
 /** 
  * Remove a custom field in the medialib associated with an entry.
- * Uses default source which is client/<clientname>
+ * Uses default source which is client/&lt;clientname&gt;
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
