@@ -1,9 +1,0 @@
-target="coreaudio"
-source=["coreaudio.c"]
-
-output_priority = 4
-
-def config(env):
-	env.checkheader("AudioUnit/AudioUnit.h")
-	env.Append(LINKFLAGS=['-framework', 'CoreAudio', '-framework', 'AudioUnit'])
-

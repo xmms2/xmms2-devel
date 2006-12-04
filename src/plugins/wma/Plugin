@@ -1,8 +1,0 @@
-target="wma"
-source=['wma.c']
-
-def config(env):
-	try:
-		env.configcmd("ffmpeg-config --cflags --plugin-libs avformat")
-	except ConfigError:
-		env.pkgconfig("libavformat")

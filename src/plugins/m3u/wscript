@@ -1,0 +1,3 @@
+from xmmsenv.plugin import plugin
+
+configure, build = plugin('m3u', needs_lib=False, broken=True)

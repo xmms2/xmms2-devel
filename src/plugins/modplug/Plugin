@@ -1,9 +1,0 @@
-target="modplug"
-source=["modplug.c"]
-
-def config(env):
-	try:
-		env.pkgconfig("modplug")
-	except ConfigError:
-		env.pkgconfig("libmodplug")
-

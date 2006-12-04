@@ -1,5 +1,0 @@
-target="diskwrite"
-source=["diskwrite.c"]
-
-def config(env):
-	env.Append(CPPDEFINES=["_REENTRANT"])

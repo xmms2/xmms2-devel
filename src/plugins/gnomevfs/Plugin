@@ -1,6 +1,0 @@
-target="gnomevfs"
-source=["gnomevfs.c"]
-
-def config(env):
-	env.pkgconfig("gnome-vfs-2.0")
-

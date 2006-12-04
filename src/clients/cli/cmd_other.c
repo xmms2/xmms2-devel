@@ -105,9 +105,17 @@ cmd_browse (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	}
 
 	for (;xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
+		xmmsc_result_value_type_t type;
 		gchar *r;
 		gint d;
-		xmmsc_result_get_dict_entry_str (res, "path", &r);
+
+		type = xmmsc_result_get_dict_entry_type (res, "realpath");
+		if (type != XMMSC_RESULT_VALUE_TYPE_NONE) {
+			xmmsc_result_get_dict_entry_str (res, "realpath", &r);
+		} else {
+			xmmsc_result_get_dict_entry_str (res, "path", &r);
+		}
+
 		xmmsc_result_get_dict_entry_int32 (res, "isdir", &d);
 		print_info ("%s%c", r, d ? '/' : ' ');
 	}

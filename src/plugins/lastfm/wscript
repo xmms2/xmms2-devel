@@ -1,0 +1,10 @@
+from xmmsenv.plugin import plugin
+
+def plugin_configure(conf):
+	cfg = conf.create(configurator='cfgtool')
+	cfg.binary = 'curl-config'
+	cfg.uselib = 'curl'
+	return (cfg.run() and conf.env['HAVE_curl'])
+
+configure, build = plugin('lastfm', configure=plugin_configure,
+													extra_libs=['curl'])

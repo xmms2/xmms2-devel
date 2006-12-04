@@ -1,9 +1,0 @@
-target="vorbisfile"
-source=["vorbisfile.c"]
-
-def config(env):
-	env.checkheader("vorbis/vorbisfile.h")
-	env.checklib("vorbisfile", "ov_open_callbacks")
-	env.checklib("vorbis", "vorbis_bitrate_init")
-	env.checklib("ogg", "ogg_stream_init")
-

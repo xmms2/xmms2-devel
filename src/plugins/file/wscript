@@ -1,0 +1,3 @@
+from xmmsenv.plugin import plugin
+
+configure, build = plugin('file');

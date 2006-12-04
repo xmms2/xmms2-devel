@@ -1,8 +1,0 @@
-target="ao"
-source=["ao.c"]
-
-output_priority = 2
-
-def config(env):
-	env.checklib("ao", "ao_open_live")
-	env.Append(CPPDEFINES=["_REENTRANT"])

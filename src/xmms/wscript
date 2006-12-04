@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+# encoding: utf-8
+#
+# Copyright 2006 David Anderson <dave at natulte.net>
+
+import sys,os,os.path
+import pproc
+
+source = ["config.c",
+		  "mediainfo.c",
+		  "sqlite.c",
+		  "medialib.c",
+		  "object.c",
+		  "error.c",
+		  "output.c",
+		  "playlist.c",
+		  "ipc.c",
+		  "log.c",
+		  "plugin.c",
+		  "magic.c",
+		  "ringbuf.c",
+		  "xform.c",
+		  "streamtype.c",
+	 	  "converter_plugin.c",
+		  "ringbuf_xform.c",
+		  "outputplugin.c",
+		  "statfs.c",
+		  "strfunc.c",
+		  "bindata.c",
+		  "sample.genpy",
+		  "utils.c"]
+
+def build(bld):
+	if sys.platform == 'win32':
+		lib = bld.create_obj('cc', 'shlib')
+		lib.uselib_local = 'xmmsipc xmmssocket xmmsutils'
+	else:
+		lib = bld.create_obj('cc', 'staticlib')
+	lib.target = 'xmms2d'
+	lib.includes = '. ../include ../includepriv'
+	lib.install_in = 0
+	lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
+	lib.source = source
+
+	prog = bld.create_obj('cc', 'program')
+	prog.target = 'xmms2d'
+	prog.includes = '. ../include ../includepriv'
+	prog.source = ["main.c", "unixsignal.c"]
+	prog.source += source
+	prog.uselib_local = 'xmmsipc xmmssocket xmmsutils'
+	prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
+
+	launch = bld.create_obj('cc', 'program')
+	launch.target = 'xmms2-launcher'
+	launch.source = ['xmms2-launcher.c']
+	launch.includes = '../include'
+	launch.uselib = 'glib2 gmodule2 gthread2'
+
+def configure(conf):
+	conf.check_tool('misc checks')
+	conf.check_tool('python-generator', tooldir=os.path.abspath('xmmsenv'))
+	conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule2')
+	conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread2')
+	conf.check_pkg2('sqlite3', '0.0', uselib='sqlite3')
+
+	# Check for the sin function in the math lib
+	test = conf.create(enumerator='function')
+	test.function = 'sin'
+	test.headers = ['math.h']
+	test.libs = ['m']
+	test.mandatory = 1
+	test.run()
+
+	# Check sunOS support
+	if sys.platform == 'sunos5':
+		test = conf.create(enumerator='function')
+		test.function = 'socket'
+		test.headers = ['socket.h']
+		test.libs = ['socket']
+		test.mandatory = 1
+		test.run()
+		conf.env.appendUnique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
+
+	# Detect the type of stat call used
+
+	# This function is ploped down here for now because the change has
+	# been submitted to upstream, and will hopefully get rolled back
+	# into the waf dist.
+	def check_header(header_name, mandatory=0):
+		test = conf.create(enumerator='header')
+		test.name = header_name
+		test.mandatory = mandatory
+		return test.run()
+
+	if check_header('sys/vfs.h'):
+		if sys.platform == 'sunos5':
+			conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_SOLARIS')
+		else:
+			conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_LINUX')
+	elif check_header('sys/param.h'):
+		conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_BSD')
+
+	# Add Darwin stuff
+	if sys.platform == 'darwin':
+		conf.env.appendUnique('LINKFLAGS', '-framework CoreFoundation')
+
+	conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-plugin', ''))
+
+def set_options(opt):
+	pass

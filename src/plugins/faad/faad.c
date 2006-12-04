@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <faad.h>
 #include <glib.h>
 
@@ -505,7 +506,7 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		if ((temp = mp4ff_meta_get_coverart (data->mp4ff, &metabuf))) {
 			gchar hash[33];
 
-			if (xmms_bindata_plugin_add (metabuf, temp, hash)) {
+			if (xmms_bindata_plugin_add ((guchar *) metabuf, temp, hash)) {
 				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
 				xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, "image/jpeg");
 			}
@@ -527,6 +528,42 @@ xmms_faad_get_mediainfo (xmms_xform_t *xform)
 		if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Artist Id", &metabuf)) {
 			xmms_xform_metadata_set_str (xform,
 			                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
+			                             metabuf);
+			g_free (metabuf);
+		}
+
+		/* Replay Gain support */
+		if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_track_gain", &metabuf)) {
+			gchar buf[8];
+
+			g_snprintf (buf, sizeof (buf), "%f",
+			            pow (10.0, g_strtod (metabuf, NULL) / 20));
+			g_free (metabuf);
+
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
+			                             buf);
+		}
+		if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_album_gain", &metabuf)) {
+			gchar buf[8];
+
+			g_snprintf (buf, sizeof (buf), "%f",
+			            pow (10.0, g_strtod (metabuf, NULL) / 20));
+			g_free (metabuf);
+
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+			                             buf);
+		}
+		if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_track_peak", &metabuf)) {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+			                             metabuf);
+			g_free (metabuf);
+		}
+		if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_album_peak", &metabuf)) {
+			xmms_xform_metadata_set_str (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
 			                             metabuf);
 			g_free (metabuf);
 		}
@@ -620,25 +657,27 @@ xmms_faad_seek_callback (void *user_data, uint64_t position)
 int
 xmms_faad_get_aac_track (mp4ff_t *infile)
 {
-	/* find first AAC audio track */
-	int i, rc;
+	int i;
 	int numTracks = mp4ff_total_tracks (infile);
 
+	/* find first AAC audio track */
 	for (i = 0; i < numTracks; i++) {
-		guchar *buff = NULL;
-		guint buff_size = 0;
-		mp4AudioSpecificConfig mp4ASC;
+		gint object_type = mp4ff_get_audio_type (infile, i);
 
-		mp4ff_get_decoder_config (infile, i, &buff, &buff_size);
-
-		if (buff) {
-			rc = AudioSpecificConfig (buff, buff_size, &mp4ASC);
-			g_free (buff);
-
-			if (rc < 0) {
-				continue;
-			}
+		/* these identifiers are mostly from VLC code */
+		switch (object_type) {
+		case 0x40:	/* MPEG-4 audio */
+		case 0x66:	/* MPEG-2 AAC */
+		case 0x67:	/* MPEG-2 AAC LC */
+		case 0x68:	/* MPEG-2 AAC SSR */
 			return i;
+		case 0x69:	/* MPEG-2 audio */
+		case 0x6B:	/* MPEG-1 audio */
+			continue;
+		case 0x00:	/* ALAC audio, 0x00 sounds quite fishy... */
+			continue;
+		default:
+			continue;
 		}
 	}
 

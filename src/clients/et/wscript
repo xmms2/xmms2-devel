@@ -1,0 +1,20 @@
+import os, Common
+
+def build(bld):
+	obj = bld.create_obj('cc', 'program')
+	obj.target = 'xmms2-et'
+	obj.source = ['xmms2-et.c']
+	obj.includes = '. ../../include'
+	obj.uselib = 'glib2'
+	obj.uselib_local = 'xmmsclient-glib xmmsclient'
+
+	obj = bld.create_obj('subst')
+	obj.source = 'xmms2-et-launcher.sh.in'
+	obj.dict = {'PRG_PATH' : os.path.join(bld.env_of_name('default')['PREFIX'], 'bin')}
+	Common.install_files('SCRIPTDIR', None, 'xmms2-et-launcher.sh', chmod=0755)
+
+def configure(conf):
+	return True
+
+def set_options(opt):
+	pass

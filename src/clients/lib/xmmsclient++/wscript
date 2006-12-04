@@ -1,0 +1,49 @@
+import os
+import Params
+from xmmsenv import tool
+
+def build(bld):
+	obj = bld.create_obj('cpp', 'shlib')
+	obj.target = 'xmmsclient++'
+	obj.includes = '../../../include ../../../includepriv'
+	obj.source = ["bindata.cpp",
+				  "client.cpp",
+				  "config.cpp",
+				  "dict.cpp",
+				  "exceptions.cpp",
+				  "list.cpp",
+				  "listener.cpp",
+				  "mainloop.cpp",
+				  "medialib.cpp",
+				  "playback.cpp",
+				  "playlist.cpp",
+				  "signal.cpp",
+				  "stats.cpp",
+				  "xform.cpp"]
+	obj.uselib_local = 'xmmsclient'
+	obj.uselib = 'boost'
+	tool.add_install_flag(obj)
+
+def configure(conf):
+	if not conf.env["HAVE_CXX"]:
+		return False
+	h = conf.create_header_configurator()
+	h.name = 'boost/signal.hpp'
+	h.uselib = 'boost'
+
+	l = conf.create_library_configurator()
+	l.name = 'boost_signals'
+	l.uselib = 'boost'
+
+	if Params.g_options.boostprefix:
+		h.path = [os.path.join(Params.g_options.boostprefix, "include")]
+		l.path = [os.path.join(Params.g_options.boostprefix, "lib")]
+
+	ret = (h.run() and l.run())
+	if ret:
+		conf.env['XMMS_PKGCONF_FILES'].append(('xmms2-client-cpp', '-lxmmsclient -lxmmsclient++'))
+
+	return ret
+
+def set_options(opt):
+	opt.add_option('--with-boost', type="string", dest="boostprefix")
