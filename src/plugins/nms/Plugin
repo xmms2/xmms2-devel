@@ -1,9 +1,0 @@
-target="nms"
-source=["nms.c"]
-
-output_priority = 4
-
-def config(env):
-	env.checkheader("generic-nms.h")
-	env.checklib("ncooler", "OutputInit")
-	env.Append(LIBS=["comnmsc"])

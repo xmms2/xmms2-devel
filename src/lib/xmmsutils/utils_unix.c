@@ -23,6 +23,7 @@
 #include <pwd.h>
 
 #include "xmmsc/xmmsc_util.h"
+#include "xmms/xmms_defs.h"
 
 /**
  * Get the absolute path to the user config dir.

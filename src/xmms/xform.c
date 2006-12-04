@@ -78,6 +78,27 @@ static xmms_xform_t *add_effects (xmms_xform_t *last, xmms_medialib_entry_t entr
                                   GList *goal_formats);
 static void xmms_xform_destroy (xmms_object_t *object);
 
+
+void
+xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
+                                          const gchar *key,
+                                          const gchar *value)
+{
+	xmms_object_cmd_value_t *val = xmms_object_cmd_value_str_new (value);
+	xmms_xform_browse_add_entry_property (xform, key, val);
+}
+
+
+void
+xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
+                                          const gchar *key,
+                                          gint value)
+{
+	xmms_object_cmd_value_t *val = xmms_object_cmd_value_int_new (value);
+	xmms_xform_browse_add_entry_property (xform, key, val);
+}
+
+
 void
 xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmms_object_cmd_value_t *val)
 {

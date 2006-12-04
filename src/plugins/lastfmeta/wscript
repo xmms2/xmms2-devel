@@ -1,0 +1,11 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+	cfg = conf.create(configurator='cfgtool')
+	cfg.binary = 'curl-config'
+	cfg.uselib = 'curl'
+	cfg.run()
+	return conf.env['HAVE_curl']
+
+configure, build = plugin('lastfmeta', configure=plugin_configure,
+													extra_libs=['curl'])

@@ -1,0 +1,6 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+	return conf.check_pkg('vorbisfile', destvar='vorbis')
+
+configure, build = plugin('vorbis', needs_lib=True, configure=plugin_configure, source="vorbis.c")

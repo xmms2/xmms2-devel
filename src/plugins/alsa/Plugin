@@ -1,8 +1,0 @@
-target="alsa"
-source=["alsa.c"]
-
-output_priority = 4
-
-def config(env):
-	return env.pkgconfig("alsa")
-

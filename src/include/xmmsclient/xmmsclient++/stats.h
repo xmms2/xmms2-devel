@@ -95,14 +95,6 @@ namespace Xmms
 			mainStats(const DictSlot& slot,
 			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			mainStats(const std::list< DictSlot >& slots,
-			          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Get a list of loaded plugins from the server.
 			 *
 			 *  @param type Type of plugins to get a list of.
@@ -125,22 +117,6 @@ namespace Xmms
 			pluginList(const DictListSlot& slot,
 			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/** @overload
-			 *  @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			pluginList(Plugins::Type type,
-			           const std::list< DictListSlot >& slots,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/** @overload
-			 *  @note It takes a list of slots instead of just one slot.
-			 *  @note This defaults the type to Plugins::ALL
-			 */
-			void
-			pluginList(const std::list< DictListSlot >& slots,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Request the visualisation data signal.
 			 *
 			 *  @param slot Function pointer to a function taking
@@ -152,14 +128,6 @@ namespace Xmms
 			 */
 			void
 			signalVisualisationData( const UintListSlot& slot,
-			                         const ErrorSlot& error = &Xmms::dummy_error
-			                       ) const;
-
-			/** @overload
-			 *  @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			signalVisualisationData( const std::list< UintListSlot >& slots,
 			                         const ErrorSlot& error = &Xmms::dummy_error
 			                       ) const;
 
@@ -180,14 +148,6 @@ namespace Xmms
 			                                const ErrorSlot& error
 			                                      = &Xmms::dummy_error) const;
 
-			/** @overload
-			 *  @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastMediainfoReaderStatus( const std::list<ReaderStatusSlot>&,
-			                                const ErrorSlot& error
-			                                      = &Xmms::dummy_error) const;
-
 			/** Request number of unindexed entries in medialib.
 			 *
 			 *  @param slot Function pointer to a function taking
@@ -199,14 +159,6 @@ namespace Xmms
 			 */
 			void
 			signalMediainfoReaderUnindexed( const UintSlot& slot,
-			                                const ErrorSlot& error
-			                                      = &Xmms::dummy_error) const;
-
-			/** @overload
-			 *  @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			signalMediainfoReaderUnindexed( const std::list< UintSlot >& slots,
 			                                const ErrorSlot& error
 			                                      = &Xmms::dummy_error) const;
 

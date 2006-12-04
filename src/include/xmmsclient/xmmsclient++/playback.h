@@ -8,7 +8,6 @@
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
 
-#include <list>
 #include <string>
 
 namespace Xmms 
@@ -225,13 +224,6 @@ namespace Xmms
 			void tickle( const VoidSlot& slot,
 			             const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void tickle( const std::list< VoidSlot >& slots,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Stops the current playback.
 			 * 
 			 *  This will make the server idle.
@@ -243,13 +235,6 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void stop( const VoidSlot& slot,
-			           const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void stop( const std::list< VoidSlot >& slots,
 			           const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Pause the current playback,
@@ -264,13 +249,6 @@ namespace Xmms
 			void pause( const VoidSlot& slot,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void pause( const std::list< VoidSlot >& slots,
-			            const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Starts playback if server is idle.
 			 *
 			 *  @param slot Function pointer to a function returning a bool.
@@ -280,13 +258,6 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void start( const VoidSlot& slot,
-			            const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void start( const std::list< VoidSlot >& slots,
 			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Seek to a absolute time in the current playback.
@@ -301,14 +272,6 @@ namespace Xmms
 			 */
 			void seekMs( unsigned int milliseconds,
 			             const VoidSlot& slot,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void seekMs( unsigned int milliseconds,
-			             const std::list< VoidSlot >& slots,
 			             const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Seek to a time relative to the current position 
@@ -326,14 +289,6 @@ namespace Xmms
 			                const VoidSlot& slot,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void seekMsRel( int milliseconds,
-			                const std::list< VoidSlot >& slots,
-			                const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Seek to a absolute number of samples in the current playback.
 			 *
 			 *  @param samples The total number of samples where
@@ -346,15 +301,6 @@ namespace Xmms
 			 */
 			void seekSamples( unsigned int samples,
 			                  const VoidSlot& slot,
-			                  const ErrorSlot& error = &Xmms::dummy_error
-			                ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void seekSamples( unsigned int samples,
-			                  const std::list< VoidSlot >& slots,
 			                  const ErrorSlot& error = &Xmms::dummy_error
 			                ) const;
 
@@ -374,15 +320,6 @@ namespace Xmms
 			                     const ErrorSlot& error = &Xmms::dummy_error
 			                     ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void seekSamplesRel( int samples,
-			                     const std::list< VoidSlot >& slots,
-			                     const ErrorSlot& error = &Xmms::dummy_error
-			                     ) const;
-
 			/** Make server emit the current id.
 			 *
 			 *  @param slot Function pointer to a function taking
@@ -393,13 +330,6 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void currentID( const UintSlot& slot,
-			                const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void currentID( const std::list< UintSlot >& slots,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
  
 			/** Make server emit the playback status.
@@ -414,13 +344,6 @@ namespace Xmms
 			void getStatus( const StatusSlot& slot,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void getStatus( const std::list< StatusSlot >& slots,
-			                const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Make server emit the current playtime.
 			 *
 			 *  @param slot Function pointer to a function taking
@@ -431,14 +354,6 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void getPlaytime( const UintSlot& slot,
-			                  const ErrorSlot& error = &Xmms::dummy_error
-			                ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void getPlaytime( const std::list< UintSlot >& slots,
 			                  const ErrorSlot& error = &Xmms::dummy_error
 			                ) const;
 
@@ -457,15 +372,6 @@ namespace Xmms
 			                const ErrorSlot& error = &Xmms::dummy_error
 			              ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void volumeSet( const std::string& channel, unsigned int volume,
-			                const std::list< VoidSlot >& slots,
-			                const ErrorSlot& error = &Xmms::dummy_error
-			              ) const;
-
 			/** Get a channel<->volume list from the server.
 			 *
 			 *  @param slot Function pointer to a function taking
@@ -476,14 +382,6 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void volumeGet( const DictSlot& slot,
-			                const ErrorSlot& error = &Xmms::dummy_error
-			              ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void volumeGet( const std::list< DictSlot >& slots,
 			                const ErrorSlot& error = &Xmms::dummy_error
 			              ) const;
 
@@ -504,15 +402,6 @@ namespace Xmms
 			                    const ErrorSlot& error = &Xmms::dummy_error
 			                  ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastCurrentID( const std::list< UintSlot >& slots,
-			                    const ErrorSlot& error = &Xmms::dummy_error
-			                  ) const;
-
 			/** Request the status broadcast.
 			 *
 			 *  This will be called when the playback status changes.
@@ -526,15 +415,6 @@ namespace Xmms
 			 */
 			void
 			broadcastStatus( const StatusSlot& slot,
-			                 const ErrorSlot& error = &Xmms::dummy_error
-			               ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastStatus( const std::list< StatusSlot >& slots,
 			                 const ErrorSlot& error = &Xmms::dummy_error
 			               ) const;
 
@@ -554,15 +434,6 @@ namespace Xmms
 			                        const ErrorSlot& error = &Xmms::dummy_error
 			                      ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastVolumeChanged( const std::list< DictSlot >& slots,
-			                        const ErrorSlot& error = &Xmms::dummy_error
-			                      ) const;
-
 			/** Request the playtime signal.
 			 *
 			 *  This will update the time we have played the current entry.
@@ -576,14 +447,6 @@ namespace Xmms
 			 */
 			void
 			signalPlaytime( const UintSlot& slot,
-			                const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			signalPlaytime( const std::list< UintSlot >& slots,
 			                const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 		/** @cond */

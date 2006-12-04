@@ -1,5 +1,0 @@
-target="pls"
-source=["pls.c"]
-
-def config(env):
-    raise ConfigError("Disabled")

@@ -1,7 +1,0 @@
-target="flac"
-source=["flac.c"]
-
-def config(env):
-	env.checkheader("FLAC/all.h")
-	env.checklib("FLAC", "FLAC__seekable_stream_decoder_get_state")
-

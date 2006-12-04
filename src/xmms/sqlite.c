@@ -27,18 +27,26 @@
 #include "xmmspriv/xmms_sqlite.h"
 #include "xmmspriv/xmms_statfs.h"
 #include "xmmspriv/xmms_utils.h"
+#include "xmmspriv/xmms_collection.h"
+#include "xmmsc/xmmsc_idnumbers.h"
 
 #include <sqlite3.h>
+#include <string.h>
 #include <glib.h>
 
 /* increment this whenever there are incompatible db structure changes */
-#define DB_VERSION 30
+#define DB_VERSION 31
 
 const char set_version_stm[] = "PRAGMA user_version=" XMMS_STRINGIFY (DB_VERSION);
 const char create_Media_stm[] = "create table Media (id integer, key, value, source integer)";
 const char create_Sources_stm[] = "create table Sources (id integer primary key AUTOINCREMENT, source)";
 const char create_Playlist_stm[] = "create table Playlist (id primary key, name, pos integer)";
 const char create_PlaylistEntries_stm[] = "create table PlaylistEntries (playlist_id int, entry, pos integer primary key AUTOINCREMENT)";
+const char create_CollectionAttributes_stm[] = "create table CollectionAttributes (collid integer, key text, value text)";
+const char create_CollectionConnections_stm[] = "create table CollectionConnections (from_id integer, to_id integer)";
+const char create_CollectionIdlists_stm[] = "create table CollectionIdlists (collid integer, position integer, mid integer)";
+const char create_CollectionLabels_stm[] = "create table CollectionLabels (collid integer, namespace integer, name text)";
+const char create_CollectionOperators_stm[] = "create table CollectionOperators (id integer primary key AUTOINCREMENT, type integer)";
 
 /**
  * This magic numbers are taken from ANALYZE on a big database, if we change the db
@@ -50,10 +58,20 @@ const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'playlist_idx', '2 1');"
                           "INSERT INTO sqlite_stat1 VALUES('Playlist', 'sqlite_autoindex_Playlist_1', '2 1');";
 
+const char fill_init_playlist_stm[] = "INSERT INTO CollectionOperators VALUES(1, %d);"
+                                      "INSERT INTO CollectionLabels VALUES(1, %d, 'Default');"
+                                      "INSERT INTO CollectionLabels VALUES(1, %d, '_active');"
+                                      "INSERT INTO CollectionIdlists VALUES(1, 1, 1);";
+
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"
 						      "create index prop_idx on Media (key,value);"
                               "create index playlistentries_idx on PlaylistEntries (playlist_id, entry);"
                               "create index playlist_idx on Playlist (name);";
+
+const char create_collidx_stm[] = "create unique index collectionconnections_idx on CollectionConnections (from_id, to_id);"
+                                  "create unique index collectionattributes_idx on CollectionAttributes (collid, key);"
+                                  "create unique index collectionidlists_idx on CollectionIdlists (collid, position);"
+                                  "create index collectionlabels_idx on CollectionLabels (collid);";
 
 /**
  * @defgroup SQLite SQLite
@@ -137,6 +155,26 @@ upgrade_v29_to_v30 (sqlite3 *sql)
 	XMMS_DBG ("done");
 }
 
+static void
+upgrade_v30_to_v31 (sqlite3 *sql)
+{
+	XMMS_DBG ("Upgrade v30->v31");
+
+	sqlite3_exec (sql, create_CollectionAttributes_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionConnections_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionIdlists_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionLabels_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_CollectionOperators_stm, NULL, NULL, NULL);
+	sqlite3_exec (sql, create_collidx_stm, NULL, NULL, NULL);
+
+	/* Create a default playlist */
+	xmms_sqlite_exec (sql, fill_init_playlist_stm, XMMS_COLLECTION_TYPE_IDLIST,
+	                                               XMMS_COLLECTION_NSID_PLAYLISTS,
+	                                               XMMS_COLLECTION_NSID_PLAYLISTS);
+
+	XMMS_DBG ("done");
+}
+
 static gboolean
 try_upgrade (sqlite3 *sql, gint version)
 {
@@ -147,12 +185,12 @@ try_upgrade (sqlite3 *sql, gint version)
 			upgrade_v26_to_v27 (sql);
 		case 27:
 			upgrade_v27_to_v28 (sql);
-			break;
 		case 28:
 			upgrade_v28_to_v29 (sql);
-			break;
 		case 29:
 			upgrade_v29_to_v30 (sql);
+		case 30:
+			upgrade_v30_to_v31 (sql);
 			break;
 		default:
 			can_upgrade = FALSE;
@@ -274,8 +312,20 @@ xmms_sqlite_open (gboolean *create)
 		sqlite3_exec (sql, "insert into Sources (source) values ('server')", NULL, NULL, NULL);
 		sqlite3_exec (sql, create_PlaylistEntries_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_Playlist_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionAttributes_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionConnections_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionIdlists_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionLabels_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_CollectionOperators_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, create_idx_stm, NULL, NULL, NULL);
+		sqlite3_exec (sql, create_collidx_stm, NULL, NULL, NULL);
 		sqlite3_exec (sql, set_version_stm, NULL, NULL, NULL);
+		/**
+		 * Create a default playlist
+		 */
+		xmms_sqlite_exec (sql, fill_init_playlist_stm, XMMS_COLLECTION_TYPE_IDLIST,
+		                                               XMMS_COLLECTION_NSID_PLAYLISTS,
+		                                               XMMS_COLLECTION_NSID_PLAYLISTS);
 	}
 
 	sqlite3_create_collation (sql, "INTCOLL", SQLITE_UTF8, NULL, xmms_sqlite_integer_coll);
@@ -488,6 +538,16 @@ xmms_sqlite_print_version (void)
 	printf (" Using sqlite version %d (compiled against "
 	        XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
 	        sqlite3_libversion_number());
+}
+
+/* Return an escaped string */
+gchar *
+sqlite_prepare_string (const gchar *input) {
+	gchar *q, *str;
+	q = sqlite3_mprintf ("%Q", input);
+	str = g_strdup (q);
+	sqlite3_free (q);
+	return str;
 }
 
 /** @} */

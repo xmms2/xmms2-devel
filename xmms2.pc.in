@@ -1,11 +1,11 @@
-prefix=%PREFIX%
-exec_prefix=%BINDIR%
-libdir=%LIBDIR%
-includedir=%INCLUDEDIR%
+prefix=@PREFIX@
+exec_prefix=@BINDIR@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
 
-Name: %NAME%
+Name: @NAME@
 Description: XMMS Generation 2
 Requires:
-Version: %VERSION%
-Libs: -L${libdir} %LIB%
+Version: @VERSION@
+Libs: -L${libdir} @LIB@
 Cflags: -I${includedir}

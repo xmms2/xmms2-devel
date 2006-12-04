@@ -756,8 +756,7 @@ xmms_config_init (const gchar *filename)
 		g_queue_free (config->sections);
 
 		config->is_parsing = FALSE;
-	}
-	else {
+	} else {
 		xmms_log_info ("No configfile specified, using default values.");
 	}
 

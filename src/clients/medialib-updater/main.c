@@ -44,7 +44,7 @@ handle_remove_from_mlib (xmmsc_result_t *res, void *userdata)
 
 	for (; xmmsc_result_list_valid (res); xmmsc_result_list_next (res)) {
 		guint32 id;
-		if (!xmmsc_result_get_dict_entry_uint32 (res, "id", &id)) {
+		if (!xmmsc_result_get_dict_entry_uint (res, "id", &id)) {
 			ERR ("Failed to get entry id from hash!");
 			continue;
 		}
@@ -232,9 +232,9 @@ handle_config_changed (xmmsc_result_t *res, void *data)
 	gchar *val = NULL;
 	int s;
 
-	s = xmmsc_result_get_dict_entry_str (res,
-	                                     "clients.mlibupdater.watch_dirs",
-	                                     &val);
+	s = xmmsc_result_get_dict_entry_string (res,
+	                                        "clients.mlibupdater.watch_dirs",
+	                                        &val);
 	if (s) {
 		do_watch_dir (mon, val);
 	}

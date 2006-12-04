@@ -212,7 +212,7 @@ c_disconnect (VALUE self)
 static VALUE
 int_get (RbResult *res)
 {
-	int id = 0;
+	int32_t id = 0;
 
 	if (!xmmsc_result_get_int (res->real, &id)) {
 		rb_raise (eValueError, "cannot retrieve value");
@@ -225,7 +225,7 @@ int_get (RbResult *res)
 static VALUE
 uint_get (RbResult *res)
 {
-	unsigned int id = 0;
+	uint32_t id = 0;
 
 	if (!xmmsc_result_get_uint (res->real, &id)) {
 		rb_raise (eValueError, "cannot retrieve value");
@@ -482,15 +482,15 @@ c_propdict_aref (VALUE self, VALUE key)
 
 	switch (type) {
 		case XMMSC_RESULT_VALUE_TYPE_INT32:
-			xmmsc_result_get_dict_entry_int32 (res->real, ckey, &vint);
+			xmmsc_result_get_dict_entry_int (res->real, ckey, &vint);
 			tmp = INT2NUM (vint);
 			break;
 		case XMMSC_RESULT_VALUE_TYPE_UINT32:
-			xmmsc_result_get_dict_entry_uint32 (res->real, ckey, &vuint);
+			xmmsc_result_get_dict_entry_uint (res->real, ckey, &vuint);
 			tmp = UINT2NUM (vuint);
 			break;
 		case XMMSC_RESULT_VALUE_TYPE_STRING:
-			xmmsc_result_get_dict_entry_str (res->real, ckey, &vstr);
+			xmmsc_result_get_dict_entry_string (res->real, ckey, &vstr);
 			tmp = rb_str_new2 (vstr ? vstr : "");
 			break;
 		default:

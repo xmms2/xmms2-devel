@@ -43,6 +43,8 @@ typedef enum {
 
 #define XMMS_MAX_URI_LEN 1024
 #define XMMS_MEDIA_DATA_LEN 1024
+#define XMMS_MAX_INT_ATTRIBUTE_LEN 64
+#define XMMS_DEFAULT_PARTYSHUFFLE_UPCOMING 10
 
 
 struct xmms_playlist_St;
@@ -58,18 +60,27 @@ typedef struct xmms_playlist_St xmms_playlist_t;
 
 xmms_playlist_t * xmms_playlist_init (void);
 
-gboolean xmms_playlist_add (xmms_playlist_t *playlist, xmms_medialib_entry_t file, xmms_error_t *error);
+gboolean xmms_playlist_add_id (xmms_playlist_t *playlist, gchar *plname, xmms_medialib_entry_t file, xmms_error_t *error);
 gboolean xmms_playlist_advance (xmms_playlist_t *playlist);
 xmms_medialib_entry_t xmms_playlist_current_entry (xmms_playlist_t *playlist);
-gboolean xmms_playlist_addurl (xmms_playlist_t *playlist, gchar *nurl, xmms_error_t *err);
-GList * xmms_playlist_list (xmms_playlist_t *playlist, xmms_error_t *err);
-guint32 xmms_playlist_current_pos (xmms_playlist_t *playlist, xmms_error_t *err);
+gboolean xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *plname, gchar *nurl, xmms_error_t *err);
+gboolean xmms_playlist_add_collection (xmms_playlist_t *playlist, gchar *plname, xmmsc_coll_t *coll, GList *order, xmms_error_t *err);
+void xmms_playlist_add_entry_unlocked (xmms_playlist_t *playlist, gchar *plname, xmmsc_coll_t *plcoll, xmms_medialib_entry_t file, xmms_error_t *err);
+GList * xmms_playlist_list (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *err);
+guint32 xmms_playlist_current_pos (xmms_playlist_t *playlist, gchar *plname, xmms_error_t *err);
+gchar * xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err);
 guint xmms_playlist_set_current_position (xmms_playlist_t *playlist, guint32 pos, xmms_error_t *error);
-gboolean xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t entry);
+gboolean xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, gchar *plname, xmms_medialib_entry_t entry);
 
-void xmms_playlist_add_entry (xmms_playlist_t *playlist, xmms_medialib_entry_t file);
+void xmms_playlist_add_entry (xmms_playlist_t *playlist, gchar *plname, xmms_medialib_entry_t file, xmms_error_t *err);
 
 xmms_mediainfo_reader_t *xmms_playlist_mediainfo_reader_get (xmms_playlist_t *playlist);
+
+
+GHashTable * xmms_playlist_changed_msg_new (xmms_playlist_changed_actions_t type, guint32 id, gchar *plname);
+void xmms_playlist_changed_msg_send (xmms_playlist_t *playlist, GHashTable *dict);
+
+#define XMMS_PLAYLIST_COLLECTION_CHANGED_MSG(playlist, name) xmms_playlist_changed_msg_send (playlist, xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_UPDATE, 0, name))
 
 /*
  * Entry modifications

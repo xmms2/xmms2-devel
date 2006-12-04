@@ -1,6 +1,0 @@
-target="curl_http"
-source=["curl_http.c"]
-
-def config(env):
-	env.configcmd("curl-config --libs --cflags")
-

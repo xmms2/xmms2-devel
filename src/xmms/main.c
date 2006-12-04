@@ -30,6 +30,7 @@
 #include "xmmspriv/xmms_plugin.h"
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
+#include "xmmspriv/xmms_collection.h"
 #include "xmmspriv/xmms_unixsignal.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"

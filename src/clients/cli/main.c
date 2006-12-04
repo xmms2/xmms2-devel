@@ -20,6 +20,7 @@
 
 #include "cmd_playback.h"
 #include "cmd_mlib.h"
+#include "cmd_coll.h"
 #include "cmd_config.h"
 #include "cmd_status.h"
 #include "cmd_pls.h"
@@ -73,6 +74,8 @@ cmds commands[] = {
 	{ "volume_list", "list volume levels for each channel", cmd_volume_list },
 
 	{ "mlib", "medialib manipulation - type 'xmms2 mlib' for more extensive help", cmd_mlib },
+	{ "playlist", "playlist manipulation - type 'xmms2 playlist' for more extensive help", cmd_playlist },
+	{ "coll", "collection manipulation - type 'xmms2 coll' for more extensive help", cmd_coll },
 
 	{ "browse", "browse server file lists", cmd_browse },
 

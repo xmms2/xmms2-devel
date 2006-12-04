@@ -24,6 +24,7 @@
 #include "xmmsclientpriv/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient_ipc.h"
 #include "xmmsc/xmmsc_idnumbers.h"
+#include "xmms/xmms_defs.h"
 #include "xmmsc/xmmsc_util.h"
 
 /**

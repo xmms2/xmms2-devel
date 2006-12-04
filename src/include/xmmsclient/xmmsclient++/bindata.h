@@ -81,14 +81,6 @@ namespace Xmms
 			void add( const Xmms::bin& data, const StringSlot& slot,
 			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void add( const Xmms::bin& data,
-			          const std::list< StringSlot >& slots,
-			          const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Retrieve binary data from the servers bindata directory,
 			 *  based on the hash.
 			 *
@@ -103,14 +95,6 @@ namespace Xmms
 			void retrieve( const std::string& hash, const BinSlot& slot, 
 			               const ErrorSlot& error = &Xmms::dummy_error ) const;
 			
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void retrieve( const std::string& hash,
-			               const std::list< BinSlot >& slots,
-			               const ErrorSlot& error = &Xmms::dummy_error ) const;
-
 			/** Remove the binary data associated with the hash.
 			 *  
 			 *  @param hash Hash of the binary data to remove.
@@ -121,14 +105,6 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void remove( const std::string& hash, const VoidSlot& slot,
-			             const ErrorSlot& error = &Xmms::dummy_error ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void remove( const std::string& hash,
-			             const std::list< VoidSlot >& slots,
 			             const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 		/** @cond */

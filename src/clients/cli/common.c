@@ -142,8 +142,7 @@ find_terminal_width() {
 
 	if (!ioctl(STDIN_FILENO, TIOCGWINSZ, &ws)) {
 		columns = ws.ws_col;
-	} 
-	else {
+	} else {
 		colstr = getenv("COLUMNS");
 		if(colstr != NULL) {
 			columns = strtol(colstr, &endptr, 10);
@@ -174,8 +173,7 @@ print_padded_string (gint columns, gchar padchar, gboolean padright, const gchar
 
 	if (padright) {
 		print_info ("%s%s", buf, padstring);
-	}
-	else {
+	} else {
 		print_info ("%s%s", padstring, buf);
 	}
 
@@ -230,20 +228,20 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 		res = xmmsc_medialib_get_info (conn, mid);
 		xmmsc_result_wait (res);
 
-		if (xmmsc_result_get_dict_entry_str (res, "title", &title)) {
+		if (xmmsc_result_get_dict_entry_string (res, "title", &title)) {
 			gchar *artist, *album;
-			if (!xmmsc_result_get_dict_entry_str (res, "artist", &artist)) {
+			if (!xmmsc_result_get_dict_entry_string (res, "artist", &artist)) {
 				artist = "Unknown";
 			}
 
-			if (!xmmsc_result_get_dict_entry_str (res, "album", &album)) {
+			if (!xmmsc_result_get_dict_entry_string (res, "album", &album)) {
 				album = "Unknown";
 			}
 
 			print_info (format_rows, mid, artist, album, title);
 		} else {
 			gchar *url, *filename;
-			xmmsc_result_get_dict_entry_str (res, "url", &url);
+			xmmsc_result_get_dict_entry_string (res, "url", &url);
 			if (url) {
 				filename = g_path_get_basename (url);
 				if (filename) {
@@ -260,4 +258,59 @@ format_pretty_list (xmmsc_connection_t *conn, GList *list)
 
 	g_free (format_header);
 	g_free (format_rows);
+}
+
+/** Extracts collection name and namespace from a string.
+ *
+ * Note that name and namespace must be freed afterwards.
+ */
+gboolean
+coll_read_collname (gchar *str, gchar **name, gchar **namespace)
+{
+	gchar **s;
+
+	s = g_strsplit (str, "/", 0);
+	g_assert (s);
+
+	if (!s[0]) {
+		g_strfreev (s);
+		return FALSE;
+	} else if (!s[1]) {
+		/* No namespace, assume default */
+		*name = s[0];
+		*namespace = g_strdup (CMD_COLL_DEFAULT_NAMESPACE);
+	} else {
+		*name = s[1];
+		*namespace = s[0];
+	}
+
+	return TRUE;
+}
+
+/** Return an escaped version of the string, with \-protected chars. */
+char *
+string_escape (const char *s)
+{
+	int i, w;
+	int esc_chars;
+	char *res;
+
+	esc_chars = 0;
+	for (i = 0; s[i] != '\0'; i++) {
+		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'') {
+			esc_chars++;
+		}
+	}
+
+	res = g_new0 (char, strlen (s) + esc_chars + 1);
+	for (i = 0, w = 0; s[i] != '\0'; i++, w++) {
+		if (s[i] == '\\' || s[i] == ' ' || s[i] == '"' || s[i] == '\'') {
+			res[w] = '\\';
+			w++;
+		}
+
+		res[w] = s[i];
+	}
+
+	return res;
 }

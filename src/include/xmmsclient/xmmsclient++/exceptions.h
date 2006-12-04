@@ -88,6 +88,17 @@ namespace Xmms
 
 	};
 
+	/** @class missing_operand_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if trying to retrieve a non-existing operand of a coll operator.
+	 */
+	class missing_operand_error : public std::runtime_error
+	{
+		public:
+			explicit missing_operand_error( const std::string& what_arg );
+
+	};
+
 	/** @class out_of_range exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
 	 *
 	 *  @brief Thrown if accessing a List which is at the end or over.

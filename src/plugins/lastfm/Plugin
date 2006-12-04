@@ -1,6 +1,0 @@
-target="lastfm"
-source=["lastfm.c"]
-
-def config(env):
-	env.configcmd("curl-config --libs --cflags")
-

@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 
-#include "xmmsclientpriv/xmmsclient_list.h"
+#include "xmmspriv/xmms_list.h"
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
@@ -38,6 +38,8 @@
 #include "xmmsc/xmmsc_stdint.h"
 #include "xmmsc/xmmsc_stringport.h"
 #include "xmmsc/xmmsc_util.h"
+
+#include "xmms/xmms_defs.h"
 
 #define XMMS_MAX_URI_LEN 1024
 
@@ -141,7 +143,7 @@ xmmsc_send_hello (xmmsc_connection_t *c)
  * 
  * @param c The connection to the server. This must be initialized
  * with #xmmsc_init first.
- * @param ipcpath The IPC path, it's broken down like this: <protocol>://<path>[:<port>].
+ * @param ipcpath The IPC path, it's broken down like this: &lt;protocol&gt;://&lt;path&gt;[:&lt;port&gt;].
  * If ipcpath is %NULL it will default to "unix:///tmp/xmms-ipc-<username>"
  * - Protocol could be "tcp" or "unix"
  * - Path is either the UNIX socket, or the ipnumber of the server.
@@ -272,37 +274,6 @@ xmmsc_lock_set (xmmsc_connection_t *c, void *lock, void (*lockfunc)(void *), voi
 }
 
 /**
- * Get a list of loaded plugins from the server
- */
-xmmsc_result_t *
-xmmsc_plugin_list (xmmsc_connection_t *c, xmms_plugin_type_t type)
-{
-	xmmsc_result_t *res;
-	xmms_ipc_msg_t *msg;
-
-	x_check_conn (c, NULL);
-
-	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_PLUGIN_LIST);
-	xmms_ipc_msg_put_uint32 (msg, type);
-
-	res = xmmsc_send_msg (c, msg);
-
-	return res;
-}
-
-/**
- * Get a list of statistics from the server
- */
-xmmsc_result_t *
-xmmsc_main_stats (xmmsc_connection_t *c)
-{
-	x_check_conn (c, NULL);
-
-	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_MAIN, XMMS_IPC_CMD_STATS);
-}
-
-
-/**
  * Tell the server to quit. This will terminate the server.
  * If you only want to disconnect, use #xmmsc_unref()
  */
@@ -326,118 +297,39 @@ xmmsc_broadcast_quit (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_QUIT);
 }
 
-
 /**
- * This function will make a pretty string about the information in
- * the mediainfo hash supplied to it.
- * @param target A allocated char *
- * @param len Length of target
- * @param fmt A format string to use. You can insert items from the hash by
- * using specialformat "${field}".
- * @param table The x_hash_t that you got from xmmsc_result_get_mediainfo
- * @returns The number of chars written to #target
+ * Get the absolute path to the user config dir.
+ *
+ * @param buf A char buffer
+ * @param len The length of buf (PATH_MAX is a good choice)
+ * @return A pointer to buf, or NULL if an error occurred.
  */
-
-int
-xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
+const char *
+xmmsc_userconfdir_get (char *buf, int len)
 {
-	const char *pos;
+	struct passwd *pw;
+	char *config_home;
 
-	if (!target) {
-		return 0;
+	if (!buf || len <= 0)
+		return NULL;
+
+	config_home = getenv ("XDG_CONFIG_HOME");
+
+	if (config_home && *config_home) {
+		snprintf (buf, len, "%s/xmms2", config_home);
+
+		return buf;
 	}
 
-	if (!fmt) {
-		return 0;
-	}
+	pw = getpwuid (getuid ());
+	if (!pw)
+		return NULL;
 
-	memset (target, 0, len);
+	snprintf (buf, len, "%s/%s", pw->pw_dir, USERCONFDIR);
 
-	pos = fmt;
-	while (strlen (target) + 1 < len) {
-		char *next_key, *key, *result = NULL, *end;
-		int keylen;
-
-		next_key = strstr (pos, "${");
-		if (!next_key) {
-			strncat (target, pos, len - strlen (target) - 1);
-			break;
-		}
-
-		strncat (target, pos, MIN (next_key - pos, len - strlen (target) - 1));
-		keylen = strcspn (next_key + 2, "}");
-		key = malloc (keylen + 1);
-
-		if (!key) {
-			fprintf (stderr, "Unable to allocate %u bytes of memory, OOM?", keylen);
-			break;
-		}
-
-		memset (key, 0, keylen + 1);
-		strncpy (key, next_key + 2, keylen);
-
-		if (strcmp (key, "seconds") == 0) {
-			int duration;
-
-			xmmsc_result_get_dict_entry_int32 (res, "duration", &duration);
-
-			if (!duration) {
-				strncat (target, "00", len - strlen (target) - 1);
-			} else {
-				char seconds[10];
-				/* rounding */
-				duration += 500;
-				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
-				strncat (target, seconds, len - strlen (target) - 1);
-			}
-		} else if (strcmp (key, "minutes") == 0) {
-			int duration;
-
-			xmmsc_result_get_dict_entry_int32 (res, "duration", &duration);
-
-			if (!duration) {
-				strncat (target, "00", len - strlen (target) - 1);
-			} else {
-				char minutes[10];
-				/* rounding */
-				duration += 500;
-				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
-				strncat (target, minutes, len - strlen (target) - 1);
-			}
-		} else {
-			char tmp[12];
-
-			xmmsc_result_value_type_t type = xmmsc_result_get_dict_entry_type (res, key);
-			if (type == XMMSC_RESULT_VALUE_TYPE_STRING) {
-				xmmsc_result_get_dict_entry_str (res, key, &result);
-			} else if (type == XMMSC_RESULT_VALUE_TYPE_UINT32) {
-				uint32_t ui;
-				xmmsc_result_get_dict_entry_uint32 (res, key, &ui);
-				snprintf (tmp, 12, "%u", ui);
-				result = tmp;
-			} else if (type == XMMSC_RESULT_VALUE_TYPE_INT32) {
-				int32_t i;
-				xmmsc_result_get_dict_entry_int32 (res, key, &i);
-				snprintf (tmp, 12, "%d", i);
-				result = tmp;
-			}
-				
-			if (result)
-				strncat (target, result, len - strlen (target) - 1);
-		}
-
-		free (key);
-		end = strchr (next_key, '}');
-
-		if (!end) {
-			break;
-		}
-
-		pos = end + 1;
-	}
-
-	return strlen (target);
+	return buf;
 }
+
 
 /** @} */
 

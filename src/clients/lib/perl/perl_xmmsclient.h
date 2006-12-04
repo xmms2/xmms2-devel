@@ -1,0 +1,72 @@
+#include <EXTERN.h>
+#include <perl.h>
+#include <XSUB.h>
+#include <proto.h>
+
+#define NEED_sv_2pvbyte
+#define NEED_sv_2pv_nolen_GLOBAL
+#define NEED_newRV_noinc_GLOBAL
+#include "ppport.h"
+
+#include <xmmsclient/xmmsclient.h>
+
+#define PERL_XMMSCLIENT_CALL_BOOT(name) \
+	{ \
+		EXTERN_C XS(name); \
+		_perl_xmmsclient_call_xs (aTHX_ name, cv, mark); \
+	}
+
+#ifdef PERL_IMPLICIT_CONTEXT
+
+#define dPERL_XMMS_CLIENT_CALLBACK_MARSHAL_SP \
+	SV** sp;
+
+#define PERL_XMMS_CLIENT_MARSHAL_INIT(cb) \
+	PERL_SET_CONTEXT(cb->priv); \
+	SPAGAIN;
+
+#else
+
+#define dPERL_XMMS_CLIENT_CALLBACK_MARSHAL_SP \
+	dSP;
+
+#define PERL_XMMS_CLIENT_MARSHAL_INIT(cb) \
+	/* nothing to do */
+
+#endif
+
+typedef enum {
+	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_UNKNOWN,
+	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION,
+	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_RESULT,
+	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_FLAG
+} PerlXMMSClientCallbackParamType;
+
+typedef struct _PerlXMMSClientCallback PerlXMMSClientCallback;
+struct _PerlXMMSClientCallback {
+	SV* func;
+	SV* data;
+	SV* wrapper;
+	int n_params;
+	PerlXMMSClientCallbackParamType* param_types;
+	void* priv;
+};
+
+void _perl_xmmsclient_call_xs(pTHX_ void (*subaddr) (pTHX_ CV* cv), CV* cv, SV** mark);
+
+SV* perl_xmmsclient_new_sv_from_ptr(void* con, const char* class);
+
+MAGIC*
+perl_xmmsclient_get_magic_from_sv(SV* sv, const char* class);
+
+void* perl_xmmsclient_get_ptr_from_sv(SV* sv, const char* class);
+
+PerlXMMSClientCallback* perl_xmmsclient_callback_new(SV* func, SV* data, SV* wrapper, int n_params, PerlXMMSClientCallbackParamType param_types[]);
+
+void perl_xmmsclient_callback_destroy(PerlXMMSClientCallback* cb);
+
+void perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...);
+
+SV* perl_xmmsclient_xmms_result_cast_value(xmmsc_result_value_type_t type, const void* value);
+
+void dump_sv(SV* sv);
