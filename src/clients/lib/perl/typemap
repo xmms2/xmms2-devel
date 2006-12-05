@@ -50,6 +50,8 @@ XMMS_OBJECT_CMD_ARG_TYPE_T
 			sv_setpv($arg, \"dict\");
 		} else if ($var == XMMSC_RESULT_VALUE_TYPE_BIN) {
 			sv_setpv($arg, \"bin\");
+		} else if ($var == XMMSC_RESULT_VALUE_TYPE_COLL) {
+			sv_setpv($arg, \"coll\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_LIST) {
 			sv_setpv($arg, \"list\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_PROPDICT) {

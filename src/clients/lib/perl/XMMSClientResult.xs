@@ -46,6 +46,19 @@ perl_xmmsclient_xmmsc_result_get_string(xmmsc_result_t* res) {
 }
 
 SV*
+perl_xmmsclient_xmmsc_result_get_coll(xmmsc_result_t* res) {
+	int ret;
+	xmmsc_coll_t* coll = NULL;
+
+	ret = xmmsc_result_get_collection(res, &coll);
+
+	if (ret == 0)
+		croak("Could not fetch collection value");
+
+	return perl_xmmsclient_new_sv_from_ptr((void *)coll, "Audio::XMMSClient::Collection");
+}
+
+SV*
 perl_xmmsclient_xmmsc_result_get_bin(xmmsc_result_t* res) {
 	int ret;
 	unsigned char* bin;
@@ -119,16 +132,19 @@ perl_xmmsclient_result_get_value(xmmsc_result_t* res) {
 	SV* ret;
 
 	switch (xmmsc_result_get_type(res)) {
-		case XMMS_OBJECT_CMD_ARG_UINT32:
+		case XMMSC_RESULT_VALUE_TYPE_UINT32:
 			ret = perl_xmmsclient_xmmsc_result_get_uint(res);
 			break;
-		case XMMS_OBJECT_CMD_ARG_INT32:
+		case XMMSC_RESULT_VALUE_TYPE_INT32:
 			ret = perl_xmmsclient_xmmsc_result_get_int(res);
 			break;
-		case XMMS_OBJECT_CMD_ARG_STRING:
+		case XMMSC_RESULT_VALUE_TYPE_STRING:
 			ret = perl_xmmsclient_xmmsc_result_get_string(res);
 			break;
-		case XMMS_OBJECT_CMD_ARG_BIN:
+		case XMMSC_RESULT_VALUE_TYPE_COLL:
+			ret = perl_xmmsclient_xmmsc_result_get_coll(res);
+			break;
+		case XMMSC_RESULT_VALUE_TYPE_BIN:
 			ret = perl_xmmsclient_xmmsc_result_get_bin(res);
 			break;
 		case XMMS_OBJECT_CMD_ARG_DICT:
