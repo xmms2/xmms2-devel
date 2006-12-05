@@ -5,6 +5,6 @@ def plugin_configure(conf):
 		return False
 	return conf.check_library2("faad", uselib='faad')
 
-configure, build = plugin('mad', configure=plugin_configure,
+configure, build = plugin('faad', configure=plugin_configure,
 													source="faad.c",
 													needs_lib=True)
