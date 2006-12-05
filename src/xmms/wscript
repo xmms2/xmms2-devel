@@ -26,7 +26,6 @@ source = """config.c
 			converter_plugin.c
 			ringbuf_xform.c
 			outputplugin.c
-			statfs.c
 			strfunc.c
 			bindata.c
 			sample.genpy
@@ -43,6 +42,9 @@ def build(bld):
 	lib.install_in = 0
 	lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
 	lib.source = source
+
+	env = bld.env_of_name("default")
+	lib.source.append("statfs_%s.c" % env["statfs_os"])
 
 	prog = bld.create_obj('cc', 'program')
 	prog.target = 'xmms2d'
@@ -100,11 +102,13 @@ def configure(conf):
 
 	if check_header('sys/vfs.h'):
 		if sys.platform == 'sunos5':
-			conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_SOLARIS')
+			conf.env.appendUnique('statfs_os', 'solaris')
 		else:
-			conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_LINUX')
+			conf.env.appendUnique('statfs_os', 'linux')
 	elif check_header('sys/param.h'):
-		conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_BSD')
+		conf.env.appendUnique('statfs_os', 'bsd')
+	else:
+		conf.env.appendUnique('statfs_os', 'dummy')
 
 	# Add Darwin stuff
 	if sys.platform == 'darwin':
