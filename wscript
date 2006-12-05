@@ -50,7 +50,7 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ####
 def build(bld):
 	# Process subfolders
-	bld.add_subdirs('src/lib/xmmstypes src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
+	bld.add_subdirs('src/lib/xmmstypes src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms doc')
 
 	# Build configured plugins
 	plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
