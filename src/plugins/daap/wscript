@@ -7,7 +7,7 @@ def plugin_configure(conf):
 
     # First look for Avahi mdns support
     if (conf.check_pkg("avahi-glib", destvar='avahi') and
-            conf.check_pkg("avahi-client", destvar='avahi')):
+        conf.check_pkg("avahi-client", destvar='avahi')):
         # Avahi found
         conf.env['XMMS_DAAP_BACKEND'] = 'avahi'
     elif conf.check_header('dns_sd.h'):
@@ -32,4 +32,4 @@ def plugin_build(bld):
     obj.install_in = "PLUGINDIR"
 
 configure, build = plugin('daap', configure=plugin_configure,
-                                                    build_replace=plugin_build)
+                          build_replace=plugin_build)

@@ -30,4 +30,4 @@ def plugin_build(bld):
     obj.uselib = 'sidplay glib2'
 
 configure, build = plugin('sid', configure=plugin_configure,
-                                                    build_replace=plugin_build)
+                          build_replace=plugin_build)

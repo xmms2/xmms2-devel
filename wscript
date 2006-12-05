@@ -108,15 +108,15 @@ def _configure_plugins(conf):
     # If an explicit list was provided, only try to process that
     if Params.g_options.enable_plugins:
         selected_plugins = _check_exist(sets.Set(Params.g_options.enable_plugins),
-                                                                        "The following plugin(s) were requested, "
-                                                                        "but don't exist: %(unknown_plugins)s")
+                                        "The following plugin(s) were requested, "
+                                        "but don't exist: %(unknown_plugins)s")
         disabled_plugins = all_plugins.difference(selected_plugins)
         plugins_must_work = True
     # If a disable list was provided, we try all plugins except for those.
     elif Params.g_options.disable_plugins:
         disabled_plugins = _check_exist(sets.Set(Params.g_options.disable_plugins),
-                                                                        "The following plugins(s) were disabled, "
-                                                                        "but don't exist: %(unknown_plugins)s")
+                                        "The following plugins(s) were disabled, "
+                                        "but don't exist: %(unknown_plugins)s")
         selected_plugins = all_plugins.difference(disabled_plugins)
         plugins_must_work = False
     # Else, we try all plugins.
@@ -213,9 +213,9 @@ def _list_cb(option, opt, value, parser):
 def set_options(opt):
     opt.tool_options('gcc')
     opt.add_option('--with-plugins', action="callback", callback=_list_cb,
-                                 type="string", dest="enable_plugins")
+                   type="string", dest="enable_plugins")
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
-                                 type="string", dest="disable_plugins")
+                   type="string", dest="disable_plugins")
     opt.add_option('--conf-prefix', type='string', dest='config_prefix')
 
     for o in optional_subdirs + subdirs:

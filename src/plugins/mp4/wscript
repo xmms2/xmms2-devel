@@ -20,4 +20,4 @@ def plugin_build(bld):
     obj.uselib = 'faad glib2'
 
 configure, build = plugin('mp4', configure=plugin_configure,
-                                                    build_replace=plugin_build)
+                          build_replace=plugin_build)

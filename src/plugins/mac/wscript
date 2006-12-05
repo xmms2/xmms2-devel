@@ -7,5 +7,5 @@ def plugin_configure(conf):
     return conf.check_library2('mac', uselib='mac', mandatory=0)
 
 configure, build = plugin('mac', configure=plugin_configure,
-                                                    source=['mac.cpp', 'source_adapter.cpp'],
-                                                    needs_lib=True, tool='cpp')
+                          source=['mac.cpp', 'source_adapter.cpp'],
+                          needs_lib=True, tool='cpp')

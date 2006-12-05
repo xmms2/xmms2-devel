@@ -11,4 +11,4 @@ def plugin_configure(conf):
     return True
  
 configure, build = plugin('oss', configure=plugin_configure, extra_libs=['oss'],
-                                                    output_prio=3)
+                          output_prio=3)

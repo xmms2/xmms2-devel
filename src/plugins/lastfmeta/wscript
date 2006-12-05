@@ -8,4 +8,4 @@ def plugin_configure(conf):
     return conf.env['HAVE_curl']
 
 configure, build = plugin('lastfmeta', configure=plugin_configure,
-                                                    extra_libs=['curl'])
+                          extra_libs=['curl'])

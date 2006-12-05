@@ -8,4 +8,4 @@ def plugin_configure(conf):
     return True
 
 configure, build = plugin('waveout', configure=plugin_configure,
-                                                    needs_lib=True)
+                          needs_lib=True)

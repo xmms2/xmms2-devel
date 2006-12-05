@@ -7,4 +7,4 @@ def plugin_configure(conf):
     return (cfg.run() and conf.env['HAVE_curl'])
 
 configure, build = plugin('lastfm', configure=plugin_configure,
-                                                    extra_libs=['curl'])
+                          extra_libs=['curl'])

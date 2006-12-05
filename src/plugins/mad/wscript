@@ -6,5 +6,5 @@ def plugin_configure(conf):
     return conf.check_library2("mad", uselib='mad')
 
 configure, build = plugin('mad', configure=plugin_configure,
-                                                    source=['mad.c', 'xing.c', 'id3v1.c'],
-                                                    needs_lib=True)
+                          source=['mad.c', 'xing.c', 'id3v1.c'],
+                          needs_lib=True)
