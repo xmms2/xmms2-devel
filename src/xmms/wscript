@@ -47,7 +47,11 @@ def build(bld):
 	prog = bld.create_obj('cc', 'program')
 	prog.target = 'xmms2d'
 	prog.includes = '. ../include ../includepriv'
-	prog.source = ["main.c", "unixsignal.c"]
+	prog.source = ["main.c"]
+	if sys.platform == 'win32':
+		prog.source.append("signal_dummy.c")
+	else:
+		prog.source.append("signal_unix.c")
 	prog.source += source
 	prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
 	prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
