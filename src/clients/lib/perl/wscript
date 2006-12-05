@@ -22,8 +22,6 @@ def build(bld):
 	Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
 
 def configure(conf):
-	return False
-
 	if Params.g_options.perlbinary:
 		perl = Params.g_options.perlbinary
 		conf.env["PERL"] = perl
