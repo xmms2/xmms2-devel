@@ -1,23 +1,10 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-	if not conf.check_library2('faad', uselib='faad', mandatory=0):
+	if not conf.check_header("faad.h"):
 		return False
+	return conf.check_library2("faad", uselib='faad')
 
-	conf.env['CCDEFINES_faad'] = ['USE_TAGGING']
-	# to use iTunes DRM change this to true
-	if False:
-		conf.env['CCDEFINES_faad'] += ['ITUNES_DRM', 'HAVE_SYS_STAT_H',
-									   'HAVE_ERRNO_H', 'HAVE_LIMITS_H',
-									   'HAVE_STRING_H']
-	return True
-
-def plugin_build(bld):
-	obj = bld.create_obj('cc', 'plugin')
-	obj.includes = '../../include'
-	obj.target = 'xmms_faad'
-	obj.find_sources_in_dirs('. mp4ff') # TODO: fix waf to accept lists
-	obj.uselib = 'faad glib2'
-
-configure, build = plugin('faad', configure=plugin_configure,
-													build_replace=plugin_build)
+configure, build = plugin('mad', configure=plugin_configure,
+													source="faad.c",
+													needs_lib=True)
