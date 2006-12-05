@@ -50,7 +50,7 @@ def build(bld):
 	prog.source = ["main.c", "unixsignal.c"]
 	prog.source += source
 	prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
-	prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
+	prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
 	launch = bld.create_obj('cc', 'program')
 	launch.target = 'xmms2-launcher'
@@ -72,16 +72,6 @@ def configure(conf):
 	test.libs = ['m']
 	test.mandatory = 1
 	test.run()
-
-	# Check sunOS support
-	if sys.platform == 'sunos5':
-		test = conf.create(enumerator='function')
-		test.function = 'socket'
-		test.headers = ['socket.h']
-		test.libs = ['socket']
-		test.mandatory = 1
-		test.run()
-		conf.env.appendUnique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
 
 	# Detect the type of stat call used
 
