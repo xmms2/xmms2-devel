@@ -167,3 +167,8 @@ xmmsc_coll_attribute_get (coll, key)
 			XSRETURN_UNDEF;
 	OUTPUT:
 		RETVAL
+
+xmmsc_coll_t *
+xmmsc_coll_universe (class)
+	C_ARGS:
+		/* void */
