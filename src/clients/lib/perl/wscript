@@ -9,11 +9,13 @@ def build(bld):
 	obj.source = """
 				 perl_xmmsclient.c
 				 XMMSClient.xs
+				 XMMSClientCollection.xs
 				 XMMSClientResult.xs
 				 XMMSClientResultPropDict.xs
 				 XMMSClientResultPropDictTie.xs
 				 """.split()
 	obj.uselib_local = 'xmmsclient'
+	obj.uselib = 'perl'
 	obj.install_in = "INST_AUTODIR_perl"
 
 	obj.env["plugin_PREFIX"] = ''
@@ -22,8 +24,6 @@ def build(bld):
 	Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
 
 def configure(conf):
-	return False
-
 	if Params.g_options.perlbinary:
 		perl = Params.g_options.perlbinary
 		conf.env["PERL"] = perl
@@ -39,11 +39,12 @@ def configure(conf):
 		return False
 	conf.check_message("perl version", "> 5.7.3", True, version)
 
-	conf.env["CCFLAGS_perl"] = os.popen(perl + " -MConfig -e'print $Config{ccflags}'").read()
 	conf.env["LDFLAGS_perl"] = os.popen(perl + " -MConfig -e'print $Config{ldflags}'").read()
 	conf.env["XSUBPP"] = os.popen(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/xsubpp$Config{exe_ext}\"'").read()
 	conf.env["EXTUTILS_TYPEMAP"] = os.popen(perl + " -MConfig -e'print \"$Config{privlib}/ExtUtils/typemap\"'").read()
 	conf.env["PERL_CORE_INC"] = os.popen(perl + " -MConfig -e'print \"$Config{archlib}/CORE\"'").read()
+	conf.env["CCFLAGS_perl"] = os.popen(perl + " -MConfig -e'print $Config{ccflags}'").read()
+	conf.env["CCFLAGS_perl"] += ' -DVERSION="0.03"'
 
 	if not Params.g_options.perlarchdir:
 		conf.env["ARCHDIR_perl"] = os.popen(perl + " -MConfig -e'print $Config{sitearch}'").read()
