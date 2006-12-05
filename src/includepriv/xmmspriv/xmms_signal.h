@@ -17,11 +17,12 @@
 
 
 
-#ifndef __XMMS_UNIXSIGNAL_H__
-#define __XMMS_UNIXSIGNAL_H__
+#ifndef __XMMS_SIGNAL_H__
+#define __XMMS_SIGNAL_H__
 
 #include "xmms/xmms_object.h"
 
+void xmms_signal_block (void);
 void xmms_signal_init (xmms_object_t *obj);
 
 #endif
