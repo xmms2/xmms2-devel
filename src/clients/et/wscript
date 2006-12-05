@@ -5,7 +5,7 @@ def build(bld):
 	obj.target = 'xmms2-et'
 	obj.source = ['xmms2-et.c']
 	obj.includes = '. ../../include'
-	obj.uselib = 'glib2'
+	obj.uselib = 'glib2 socket'
 	obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
 	obj = bld.create_obj('subst')

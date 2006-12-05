@@ -42,7 +42,7 @@ def build(bld):
 	lib.target = 'xmms2d'
 	lib.includes = '. ../include ../includepriv'
 	lib.install_in = 0
-	lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs'
+	lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 	lib.source = source
 
 	prog = bld.create_obj('cc', 'program')

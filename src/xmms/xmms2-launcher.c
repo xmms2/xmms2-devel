@@ -113,7 +113,7 @@ main (int argc, char **argv)
 		FILE *pfile = NULL;
 		pfile = g_fopen (pidfile, "w");
 		if (pfile) {
-			g_fprintf (pfile, "%d", pid);
+			g_fprintf (pfile, "%d", (int) pid);
 		}
 	}
 	if (!pid) {

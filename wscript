@@ -169,6 +169,9 @@ def configure(conf):
 
 	conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
 
+	# Our static libraries may link to dynamic libraries
+	conf.env["staticlib_CCFLAGS"] += ['-fPIC', '-DPIC']
+
 	# Check for support for the generic platform
 	has_platform_support = os.name in ('nt', 'posix')
 	conf.check_message("platform code for", os.name, has_platform_support)
@@ -176,9 +179,17 @@ def configure(conf):
 		Params.fatal("xmms2 only has platform support for Windows "
 								 "and POSIX operating systems.")
 
+	conf.check_tool('checks')
+
+	# Check sunOS socket support
+	if sys.platform == 'sunos5':
+		if not conf.check_library2("socket", uselib='socket'):
+			Params.fatal("xmms2 requires libsocket on Solaris.")
+		conf.env.appendUnique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
+		conf.env.appendUnique('CCFLAGS', '-D_REENTRANT')
+
 	# Glib is required by everyone, so check for it here and let them
 	# assume its presence.
-	conf.check_tool('checks')
 	conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
 	conf.sub_config('src/lib/xmmssocket')
