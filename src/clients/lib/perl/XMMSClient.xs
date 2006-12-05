@@ -67,6 +67,10 @@ xmmsc_disconnect_callback_set(c, func, data=NULL)
 
 		xmmsc_disconnect_callback_set(c, perl_xmmsclient_xmmsc_disconnect_callback_set_cb, cb);
 
+void
+xmmsc_io_disconnect(c)
+		xmmsc_connection_t* c
+
 char*
 xmmsc_get_last_error(c)
 		xmmsc_connection_t* c
@@ -99,27 +103,6 @@ xmmsc_medialib_select(c, query)
 xmmsc_result_t*
 xmmsc_medialib_get_id(c, url)
 		xmmsc_connection_t* c
-		const char* url
-
-xmmsc_result_t*
-xmmsc_medialib_playlist_export(c, playlist, mime)
-		xmmsc_connection_t* c
-		const char* playlist
-		const char* mime
-
-xmmsc_result_t*
-xmmsc_medialib_playlist_list(c, playlist)
-		xmmsc_connection_t* c
-		const char* playlist
-
-xmmsc_result_t*
-xmmsc_medialib_playlists_list(c)
-		xmmsc_connection_t* c
-
-xmmsc_result_t*
-xmmsc_medialib_playlist_import(c, playlist, url)
-		xmmsc_connection_t* c
-		const char* playlist
 		const char* url
 
 xmmsc_result_t*
@@ -158,17 +141,7 @@ xmmsc_medialib_add_entry_encoded(c, url)
 		const char* url
 
 xmmsc_result_t*
-xmmsc_medialib_playlist_save_current(c, name)
-		xmmsc_connection_t* c
-		const char* name
-
-xmmsc_result_t*
-xmmsc_medialib_playlist_load(c, name)
-		xmmsc_connection_t* c
-		const char* name
-
-xmmsc_result_t*
-xmmsc_medialib_playlist_remove(c, playlist)
+xmmsc_playlist_list_entries(c, playlist)
 		xmmsc_connection_t* c
 		const char* playlist
 
@@ -185,16 +158,12 @@ xmmsc_medialib_path_import_encoded(c, path)
 xmmsc_result_t*
 xmmsc_medialib_rehash(c, id=0)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 
 xmmsc_result_t*
 xmmsc_medialib_get_info(c, id)
 		xmmsc_connection_t* c
-		unsigned int id
-
-xmmsc_result_t*
-xmmsc_broadcast_medialib_playlist_loaded(c)
-		xmmsc_connection_t* c
+		uint32_t id
 
 xmmsc_result_t*
 xmmsc_broadcast_medialib_entry_added(c)
@@ -205,21 +174,16 @@ xmmsc_broadcast_medialib_entry_changed(c)
 		xmmsc_connection_t* c
 
 xmmsc_result_t*
-xmmsc_medialib_add_to_playlist(c, query)
-		xmmsc_connection_t* c
-		const char* query
-
-xmmsc_result_t*
 xmmsc_medialib_entry_property_set_int(c, id, key, value)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 		const char* key
 		int value
 
 xmmsc_result_t*
 xmmsc_medialib_entry_property_set_int_with_source(c, id, source, key, value)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 		const char* source
 		const char* key
 		int value
@@ -227,14 +191,14 @@ xmmsc_medialib_entry_property_set_int_with_source(c, id, source, key, value)
 xmmsc_result_t*
 xmmsc_medialib_entry_property_set_str(c, id, key, value)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 		const char* key
 		const char* value
 
 xmmsc_result_t*
 xmmsc_medialib_entry_property_set_str_with_source(c, id, source, key, value)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 		const char* source
 		const char* key
 		const char* value
@@ -242,15 +206,68 @@ xmmsc_medialib_entry_property_set_str_with_source(c, id, source, key, value)
 xmmsc_result_t*
 xmmsc_medialib_entry_property_remove(c, id, key)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 		const char* key
 
 xmmsc_result_t*
 xmmsc_medialib_entry_property_remove_with_source(c, id, source, key)
 		xmmsc_connection_t* c
-		unsigned int id
+		uint32_t id
 		const char* source
 		const char* key
+
+
+## Collections
+
+xmmsc_result_t*
+xmmsc_coll_get(c, collname, namespace)
+		xmmsc_connection_t* c
+		const char* collname
+		xmmsc_coll_namespace_t namespace
+
+xmmsc_result_t*
+xmmsc_coll_list(c, namespace)
+		xmmsc_connection_t* c
+		xmmsc_coll_namespace_t namespace
+
+xmmsc_result_t*
+xmmsc_coll_save(c, coll, name, namespace)
+		xmmsc_connection_t* c
+		xmmsc_coll_t* coll
+		const char* name
+		xmmsc_coll_namespace_t namespace
+
+xmmsc_result_t*
+xmmsc_coll_remove(c, name, namespace)
+		xmmsc_connection_t* c
+		const char* name
+		xmmsc_coll_namespace_t namespace
+
+xmmsc_result_t*
+xmmsc_coll_find(c, mediaid, namespace)
+		xmmsc_connection_t* c
+		unsigned int mediaid
+		xmmsc_coll_namespace_t namespace
+
+xmmsc_result_t*
+xmmsc_coll_rename(c, from, to, namespace)
+		xmmsc_connection_t* c
+		char* from
+		char* to
+		xmmsc_coll_namespace_t namespace
+
+xmmsc_result_t*
+xmmsc_coll_query_ids(c, coll, order, limit_start, limit_len)
+		xmmsc_connection_t* c
+		xmmsc_coll_t* coll
+		perl_xmmsclient_collection_order_t order
+		unsigned int limit_start
+		unsigned int limit_len
+
+#TODO:
+#xmmsc_result_t*
+#xmmsc_coll_query_infos(c, coll, order, limit_start, limit_len, fetch, group)
+
 
 ## XForm
 
@@ -361,7 +378,7 @@ xmmsc_playback_start(c)
 xmmsc_result_t*
 xmmsc_playback_seek_ms(c, milliseconds)
 		xmmsc_connection_t* c
-		unsigned int milliseconds
+		uint32_t milliseconds
 
 xmmsc_result_t*
 xmmsc_playback_seek_ms_rel(c, milliseconds)
@@ -371,7 +388,7 @@ xmmsc_playback_seek_ms_rel(c, milliseconds)
 xmmsc_result_t*
 xmmsc_playback_seek_samples(c, samples)
 		xmmsc_connection_t* c
-		unsigned int samples
+		uint32_t samples
 
 xmmsc_result_t*
 xmmsc_playback_seek_samples_rel(c, samples)
@@ -406,7 +423,7 @@ xmmsc_result_t*
 xmmsc_playback_volume_set(c, channel, volume)
 		xmmsc_connection_t* c
 		const char* channel
-		unsigned int volume
+		uint32_t volume
 
 xmmsc_result_t*
 xmmsc_playback_volume_get(c)
@@ -420,35 +437,41 @@ xmmsc_broadcast_playback_volume_changed(c)
 ## Playlist
 
 xmmsc_result_t*
-xmmsc_playlist_current_pos(c)
+xmmsc_playlist_current_pos(c, playlist)
 		xmmsc_connection_t* c
+		const char* playlist
 
 xmmsc_result_t*
-xmmsc_playlist_shuffle(c)
+xmmsc_playlist_shuffle(c, playlist)
 		xmmsc_connection_t* c
+		const char* playlist
 
 xmmsc_result_t*
-xmmsc_playlist_sort(c, property)
+xmmsc_playlist_sort(c, playlist, properties)
 		xmmsc_connection_t* c
-		const char* property
+		const char* playlist
+		perl_xmmsclient_collection_order_t properties
 
 xmmsc_result_t*
-xmmsc_playlist_clear(c)
+xmmsc_playlist_clear(c, playlist)
 		xmmsc_connection_t* c
+		const char* playlist
 
 xmmsc_result_t*
 xmmsc_playlist_list(c)
 		xmmsc_connection_t* c
 
 xmmsc_result_t*
-xmmsc_playlist_insert_id(c, pos, id)
+xmmsc_playlist_insert_id(c, playlist, pos, id)
 		xmmsc_connection_t* c
+		const char* playlist
 		int pos
 		unsigned int id
 
 xmmsc_result_t*
-xmmsc_playlist_insert_args(c, pos, url, ...)
+xmmsc_playlist_insert_args(c, playlist, pos, url, ...)
 		xmmsc_connection_t* c
+		const char* playlist
 		int pos
 		const char* url
 	PREINIT:
@@ -463,30 +486,42 @@ xmmsc_playlist_insert_args(c, pos, url, ...)
 			args[i] = SvPV_nolen(ST( i+3 ));
 		}
 
-		RETVAL = xmmsc_playlist_insert_args(c, pos, url, nargs, args);
+		RETVAL = xmmsc_playlist_insert_args(c, playlist, pos, url, nargs, args);
 	OUTPUT:
 		RETVAL
 
 xmmsc_result_t*
-xmmsc_playlist_insert(c, pos, url)
+xmmsc_playlist_insert_url(c, playlist, pos, url)
 		xmmsc_connection_t* c
+		const char* playlist
 		int pos
 		const char* url
 
 xmmsc_result_t*
-xmmsc_playlist_insert_encoded(c, pos, url)
+xmmsc_playlist_insert_encoded(c, playlist, pos, url)
 		xmmsc_connection_t* c
+		const char* playlist
 		int pos
 		const char* url
 
 xmmsc_result_t*
-xmmsc_playlist_add_id(c, id)
+xmmsc_playlist_insert_collection(c, playlist, pos, collection, order)
 		xmmsc_connection_t* c
+		const char* playlist
+		int pos
+		xmmsc_coll_t* collection
+		perl_xmmsclient_collection_order_t order
+
+xmmsc_result_t*
+xmmsc_playlist_add_id(c, playlist, id)
+		xmmsc_connection_t* c
+		const char* playlist
 		unsigned int id
 
 xmmsc_result_t*
-xmmsc_playlist_add_args(c, url, ...)
+xmmsc_playlist_add_args(c, playlist, url, ...)
 		xmmsc_connection_t* c
+		const char* playlist
 		const char* url
 	PREINIT:
 		int i;
@@ -500,39 +535,40 @@ xmmsc_playlist_add_args(c, url, ...)
 			args[i] = SvPV_nolen(ST( i+2 ));
 		}
 
-		RETVAL = xmmsc_playlist_add_args(c, url, nargs, args);
+		RETVAL = xmmsc_playlist_add_args(c, playlist, url, nargs, args);
 	OUTPUT:
 		RETVAL
 
 xmmsc_result_t*
-xmmsc_playlist_add(c, url)
+xmmsc_playlist_add_url(c, playlist, url)
 		xmmsc_connection_t* c
+		const char* playlist
 		const char* url
 
 xmmsc_result_t*
-xmmsc_playlist_add_encoded(c, url)
+xmmsc_playlist_add_encoded(c, playlist, url)
 		xmmsc_connection_t* c
+		const char* playlist
 		const char* url
 
 xmmsc_result_t*
-xmmsc_playlist_radd(c, url)
+xmmsc_playlist_add_collection(c, playlist, collection, order)
 		xmmsc_connection_t* c
-		const char* url
+		const char* playlist
+		xmmsc_coll_t* collection
+		perl_xmmsclient_collection_order_t order
 
 xmmsc_result_t*
-xmmsc_playlist_radd_encoded(c, url)
+xmmsc_playlist_move_entry(c, playlist, cur_pos, new_pos)
 		xmmsc_connection_t* c
-		const char* url
+		const char* playlist
+		uint32_t cur_pos
+		uint32_t new_pos
 
 xmmsc_result_t*
-xmmsc_playlist_move(c, cur_pos, new_pos)
+xmmsc_playlist_remove_entry(c, playlist, pos)
 		xmmsc_connection_t* c
-		unsigned int cur_pos
-		unsigned int new_pos
-
-xmmsc_result_t*
-xmmsc_playlist_remove(c, pos)
-		xmmsc_connection_t* c
+		const char* playlist
 		unsigned int pos
 
 xmmsc_result_t*
@@ -544,14 +580,51 @@ xmmsc_broadcast_playlist_current_pos(c)
 		xmmsc_connection_t* c
 
 xmmsc_result_t*
+xmmsc_broadcast_playlist_loaded(c)
+		xmmsc_connection_t* c
+
+xmmsc_result_t*
+xmmsc_playlist_current_active(c)
+		xmmsc_connection_t* c
+
+xmmsc_result_t*
 xmmsc_playlist_set_next(c, pos)
 		xmmsc_connection_t* c
-		unsigned int pos
+		uint32_t pos
 
 xmmsc_result_t*
 xmmsc_playlist_set_next_rel(c, pos)
 		xmmsc_connection_t* c
-		unsigned int pos
+		int32_t pos
+
+xmmsc_result_t*
+xmmsc_playlist_load(c, playlist)
+		xmmsc_connection_t* c
+		const char* playlist
+
+xmmsc_result_t*
+xmmsc_playlist_radd(c, playlist, url)
+		xmmsc_connection_t* c
+		const char* playlist
+		const char* url
+
+xmmsc_result_t*
+xmmsc_playlist_radd_encoded(c, playlist, url)
+		xmmsc_connection_t* c
+		const char* playlist
+		const char* url
+
+xmmsc_result_t*
+xmmsc_playlist_import(c, playlist, url)
+		xmmsc_connection_t* c
+		const char* playlist
+		const char* url
+
+xmmsc_result_t*
+xmmsc_playlist_export(c, playlist, mime)
+		xmmsc_connection_t* c
+		const char* playlist
+		const char* mime
 
 
 ## IO
@@ -590,10 +663,6 @@ xmmsc_io_need_out_callback_set(c, func, data=NULL)
 		cb = perl_xmmsclient_callback_new(func, data, c, 2, param_types);
 
 		xmmsc_io_need_out_callback_set(c_con, perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb);
-
-void
-xmmsc_io_disconnect(c)
-		xmmsc_connection_t* c
 
 void
 DESTROY(c)

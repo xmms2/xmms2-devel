@@ -1,11 +1,15 @@
 TYPEMAP
 xmmsc_connection_t*			XMMSC_CONNECTION_T
+xmmsc_coll_t*				XMMSC_COLL_T
+xmmsc_coll_namespace_t		T_PV
 xmmsc_result_t*				XMMSC_RESULT_T
 xmmsc_result_propdict_t*	XMMSC_RESULT_PROPDICT_T
 xmms_plugin_type_t			XMMS_PLUGIN_TYPE_T
 xmmsc_result_type_t			XMMS_RESULT_TYPE_T
 xmms_object_cmd_arg_type_t	XMMS_OBJECT_CMD_ARG_TYPE_T
 uint32_t					T_UV
+int32_t						T_IV
+perl_xmmsclient_collection_order_t	PERL_XMMSCLIENT_COLLECTION_ORDER_T
 
 OUTPUT
 
@@ -56,10 +60,13 @@ XMMS_OBJECT_CMD_ARG_TYPE_T
 INPUT
 
 XMMSC_CONNECTION_T
-	$var = (xmmsc_connection_t*)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient\");
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient\");
+
+XMMSC_COLL_T
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
-	$var = (xmmsc_result_t*)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Result\");
+	$var = ($type)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Result\");
 
 XMMSC_RESULT_PROPDICT_T
 	$var = (xmmsc_result_t*)perl_xmmsclient_get_ptr_from_sv($arg, \"Audio::XMMSClient::Result::PropDict::Tie\");
@@ -88,3 +95,24 @@ XMMS_PLUGIN_TYPE_T
 		}
 	}
 
+PERL_XMMSCLIENT_COLLECTION_ORDER_T
+	{
+		AV *av;
+		SV **ssv;
+		int avlen, i;
+
+		if (SvROK($arg) && (SvTYPE(SvRV($arg)) == SVt_PVAV)) {
+			av = (AV *)SvRV($arg);
+
+			avlen = av_len (av);
+			$var = (char **)malloc (sizeof(char*) * (avlen + 2));
+
+			for (i = 0; i <= avlen; ++i) {
+				ssv = av_fetch (av, i, 0);
+				$var [i] = SvPV_nolen(*ssv);
+			}
+		}
+		else {
+			croak (\"$var is not an array reference\");
+		}
+	}

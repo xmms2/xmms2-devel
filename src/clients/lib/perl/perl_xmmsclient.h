@@ -35,6 +35,8 @@
 
 #endif
 
+typedef char** perl_xmmsclient_collection_order_t;
+
 typedef enum {
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_UNKNOWN,
 	PERL_XMMSCLIENT_CALLBACK_PARAM_TYPE_CONNECTION,
