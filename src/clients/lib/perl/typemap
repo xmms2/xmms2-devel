@@ -1,6 +1,7 @@
 TYPEMAP
 xmmsc_connection_t*			XMMSC_CONNECTION_T
 xmmsc_coll_t*				XMMSC_COLL_T
+xmmsc_coll_type_t			XMMSC_COLL_TYPE_T
 xmmsc_coll_namespace_t		T_PV
 xmmsc_result_t*				XMMSC_RESULT_T
 xmmsc_result_propdict_t*	XMMSC_RESULT_PROPDICT_T
@@ -19,6 +20,9 @@ XMMSC_CONNECTION_T
 	} else {
 		$arg = perl_xmmsclient_new_sv_from_ptr($var, \"Audio::XMMSClient\");
 	}
+
+XMMSC_COLL_T
+	$arg = perl_xmmsclient_new_sv_from_ptr ($var, \"Audio::XMMSClient::Collection\");
 
 XMMSC_RESULT_T
 	$arg = perl_xmmsclient_new_sv_from_ptr($var, \"Audio::XMMSClient::Result\");
@@ -56,6 +60,53 @@ XMMS_OBJECT_CMD_ARG_TYPE_T
 			sv_setpv($arg, \"list\");
 		} else if ($var == XMMS_OBJECT_CMD_ARG_PROPDICT) {
 			sv_setpv($arg, \"propdict\");
+		}
+	}
+
+XMMSC_COLL_TYPE_T
+	{
+		$arg = newSVpv ("", 0);
+		if ($var == XMMS_COLLECTION_TYPE_ERROR) {
+			sv_setpv ($arg, \"error\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_REFERENCE) {
+			sv_setpv ($arg, \"reference\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_UNION) {
+			sv_setpv ($arg, \"union\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_INTERSECTION) {
+			sv_setpv ($arg, \"intersection\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_COMPLEMENT) {
+			sv_setpv ($arg, \"complement\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_HAS) {
+			sv_setpv ($arg, \"has\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_MATCH) {
+			sv_setpv ($arg, \"match\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_CONTAINS) {
+			sv_setpv ($arg, \"contains\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_SMALLER) {
+			sv_setpv ($arg, \"smaller\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_GREATER) {
+			sv_setpv ($arg, \"greater\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_IDLIST) {
+			sv_setpv ($arg, \"idlist\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_QUEUE) {
+			sv_setpv ($arg, \"queue\");
+		}
+		else if ($var == XMMS_COLLECTION_TYPE_PARTYSHUFFLE) {
+			sv_setpv ($arg, \"partyshuffle\");
+		}
+		else {
+			croak (\"unknown XMMSC_COLL_TYPE_T\");
 		}
 	}
 
@@ -116,5 +167,53 @@ PERL_XMMSCLIENT_COLLECTION_ORDER_T
 		}
 		else {
 			croak (\"$var is not an array reference\");
+		}
+	}
+
+XMMSC_COLL_TYPE_T
+	{
+		char *coll_type = SvPV_nolen($arg);
+
+		if (strcmp (coll_type, \"error\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_ERROR;
+		}
+		else if (strcmp (coll_type, \"reference\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_REFERENCE;
+		}
+		else if (strcmp (coll_type, \"union\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_UNION;
+		}
+		else if (strcmp (coll_type, \"intersection\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_INTERSECTION;
+		}
+		else if (strcmp (coll_type, \"complement\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_COMPLEMENT;
+		}
+		else if (strcmp (coll_type, \"has\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_HAS;
+		}
+		else if (strcmp (coll_type, \"match\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_MATCH;
+		}
+		else if (strcmp (coll_type, \"contains\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_CONTAINS;
+		}
+		else if (strcmp (coll_type, \"smaller\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_SMALLER;
+		}
+		else if (strcmp (coll_type, \"greater\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_GREATER;
+		}
+		else if (strcmp (coll_type, \"idlist\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_IDLIST;
+		}
+		else if (strcmp (coll_type, \"queue\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_QUEUE;
+		}
+		else if (strcmp (coll_type, \"partyshuffle\") == 0) {
+			$var = XMMS_COLLECTION_TYPE_PARTYSHUFFLE;
+		}
+		else {
+			croak (\"unknown XMMSC_COLL_TYPE_T: %s\", coll_type);
 		}
 	}
