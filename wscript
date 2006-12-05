@@ -4,7 +4,6 @@
 # Copyright 2006 David Anderson <dave at natulte.net>
 
 import os
-import os.path
 import sys
 import optparse
 

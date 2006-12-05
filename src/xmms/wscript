@@ -3,7 +3,7 @@
 #
 # Copyright 2006 David Anderson <dave at natulte.net>
 
-import sys,os,os.path
+import sys,os
 
 source = """config.c
             mediainfo.c
