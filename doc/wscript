@@ -1,0 +1,15 @@
+import os
+import Common
+import Params
+
+def configure(conf):
+	if Params.g_options.manualdir:
+		conf.env["MANDIR"] = Params.g_options.manualdir
+	else:
+		conf.env["MANDIR"] = os.path.join(conf.env["PREFIX"], "share", "man")
+
+def build(bld):
+	Common.install_files("MANDIR", "man1", "*.1")
+
+def set_options(opt):
+	opt.add_option("--with-mandir", type="string", dest="manualdir")

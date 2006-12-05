@@ -645,6 +645,7 @@ c_broadcast_playback_volume_changed (VALUE self)
 	METHOD_ADD_HANDLER (broadcast_playback_volume_changed);
 }
 
+#if 0
 /*
  * call-seq:
  *  xc.broadcast_playlist_changed -> result
@@ -1096,6 +1097,7 @@ c_medialib_playlist_export (VALUE self, VALUE playlist,
 {
 	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_export, playlist, mime);
 }
+#endif
 
 /*
  * call-seq:
@@ -1324,6 +1326,7 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "broadcast_playback_volume_changed",
 	                  c_broadcast_playback_volume_changed, 0);
 
+#if 0
 	rb_define_method (c, "broadcast_playlist_changed",
 	                  c_broadcast_playlist_changed, 0);
 	rb_define_method (c, "playlist_current_pos",
@@ -1369,6 +1372,7 @@ Init_Client (VALUE mXmms)
 	                  c_medialib_playlist_import, 2);
 	rb_define_method (c, "medialib_playlist_export",
 	                  c_medialib_playlist_export, 2);
+#endif
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 

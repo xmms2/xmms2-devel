@@ -32,6 +32,17 @@ def init():
 	import gc
 	gc.disable()
 
+subdirs = """
+		  doc
+		  src/lib/xmmstypes
+		  src/lib/xmmssocket
+		  src/lib/xmmsipc
+		  src/lib/xmmsutils
+		  src/clients/lib/xmmsclient
+		  src/clients/lib/xmmsclient-glib
+		  src/xmms
+		  """.split()
+
 optional_subdirs = ["src/clients/cli",
 					"src/clients/et",
 					"src/clients/mdns/dns_sd",
@@ -50,21 +61,17 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ####
 def build(bld):
 	# Process subfolders
-	bld.add_subdirs('src/lib/xmmstypes src/lib/xmmssocket src/lib/xmmsipc src/lib/xmmsutils src/xmms')
+	bld.add_subdirs(subdirs)
 
 	# Build configured plugins
 	plugins = bld.env_of_name('default')['XMMS_PLUGINS_ENABLED']
 	bld.add_subdirs(["src/plugins/%s" % plugin for plugin in plugins])
 
-	# Build the client libs
-	bld.add_subdirs('src/clients/lib/xmmsclient')
-	bld.add_subdirs('src/clients/lib/xmmsclient-glib')
-
 	# Build the clients
 	bld.add_subdirs(bld.env_of_name('default')['XMMS_OPTIONAL_BUILD'])
 
-	# Headers
-	bld.add_subdirs('src/include')
+	# include dir
+	bld.add_subdirs("src/include")
 
 	# pkg-config
 	o = bld.create_obj('pkgc')
@@ -192,12 +199,7 @@ def configure(conf):
 	# assume its presence.
 	conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
-	conf.sub_config('src/lib/xmmssocket')
-	conf.sub_config('src/lib/xmmsipc')
-	conf.sub_config('src/lib/xmmsutils')
-	conf.sub_config('src/xmms')
-	conf.sub_config('src/clients/lib/xmmsclient')
-	conf.sub_config('src/clients/lib/xmmsclient-glib')
+	[conf.sub_config(s) for s in subdirs]
 
 	enabled_plugins, disabled_plugins = _configure_plugins(conf)
 	enabled_optionals, disabled_optionals = _configure_optionals(conf)
@@ -226,5 +228,6 @@ def set_options(opt):
 	opt.add_option('--without-plugins', action="callback", callback=_list_cb,
 								 type="string", dest="disable_plugins")
 	opt.add_option('--conf-prefix', type='string', dest='config_prefix')
-	for o in optional_subdirs:
+
+	for o in optional_subdirs + subdirs:
 		opt.sub_options(o)

@@ -46,6 +46,19 @@ perl_xmmsclient_xmmsc_result_get_string(xmmsc_result_t* res) {
 }
 
 SV*
+perl_xmmsclient_xmmsc_result_get_coll(xmmsc_result_t* res) {
+	int ret;
+	xmmsc_coll_t* coll = NULL;
+
+	ret = xmmsc_result_get_collection(res, &coll);
+
+	if (ret == 0)
+		croak("Could not fetch collection value");
+
+	return perl_xmmsclient_new_sv_from_ptr((void *)coll, "Audio::XMMSClient::Collection");
+}
+
+SV*
 perl_xmmsclient_xmmsc_result_get_bin(xmmsc_result_t* res) {
 	int ret;
 	unsigned char* bin;
@@ -127,6 +140,9 @@ perl_xmmsclient_result_get_value(xmmsc_result_t* res) {
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			ret = perl_xmmsclient_xmmsc_result_get_string(res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			ret = perl_xmmsclient_xmmsc_result_get_coll(res);
 			break;
 		case XMMS_OBJECT_CMD_ARG_BIN:
 			ret = perl_xmmsclient_xmmsc_result_get_bin(res);

@@ -92,16 +92,16 @@ FETCH(res, key)
 	CODE:
 		switch (xmmsc_result_get_dict_entry_type(res, key)) {
 			case XMMS_OBJECT_CMD_ARG_UINT32:
-				ret = xmmsc_result_get_dict_entry_uint32(res, key, &uint32_val);
+				ret = xmmsc_result_get_dict_entry_uint(res, key, &uint32_val);
 
 				RETVAL = newSVuv(uint32_val);
 				break;
 			case XMMS_OBJECT_CMD_ARG_INT32:
-				ret = xmmsc_result_get_dict_entry_int32(res, key, &int32_val);
+				ret = xmmsc_result_get_dict_entry_int(res, key, &int32_val);
 				RETVAL = newSViv(int32_val);
 				break;
 			case XMMS_OBJECT_CMD_ARG_STRING:
-				ret = xmmsc_result_get_dict_entry_str(res, key, &string_val);
+				ret = xmmsc_result_get_dict_entry_string(res, key, &string_val);
 				RETVAL = newSVpv(string_val, 0);
 				break;
 			default:
