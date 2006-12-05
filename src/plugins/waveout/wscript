@@ -2,10 +2,10 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-	if not conf.check_header2('windows.h', mandatory=0):
-		return False
-	conf.env['LIBS_waveout'] = 'winmm'
-	return True
+    if not conf.check_header2('windows.h', mandatory=0):
+        return False
+    conf.env['LIBS_waveout'] = 'winmm'
+    return True
 
 configure, build = plugin('waveout', configure=plugin_configure,
-													needs_lib=True)
+                                                    needs_lib=True)

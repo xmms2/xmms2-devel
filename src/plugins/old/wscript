@@ -1,5 +1,5 @@
 def build(bld):
-	pass
+    pass
 
 def configure(conf):
-	pass
+    pass

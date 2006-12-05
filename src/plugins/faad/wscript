@@ -1,10 +1,10 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-	if not conf.check_header("faad.h"):
-		return False
-	return conf.check_library2("faad", uselib='faad')
+    if not conf.check_header("faad.h"):
+        return False
+    return conf.check_library2("faad", uselib='faad')
 
 configure, build = plugin('faad', configure=plugin_configure,
-													source="faad.c",
-													needs_lib=True)
+                                                    source="faad.c",
+                                                    needs_lib=True)

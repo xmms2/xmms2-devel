@@ -1,7 +1,7 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-	return conf.check_library2('mpcdec', uselib='musepack', mandatory=0)
+    return conf.check_library2('mpcdec', uselib='musepack', mandatory=0)
 
 configure, build = plugin('musepack', configure=plugin_configure,
-													source=['musepack.c', 'ape.c'], needs_lib=True)
+                                                    source=['musepack.c', 'ape.c'], needs_lib=True)
