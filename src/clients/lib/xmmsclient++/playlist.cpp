@@ -231,31 +231,10 @@ namespace Xmms
 
 	void
 	Playlist::addRecursive( const std::string& url,
-	                        const std::string& playlist,
-	                        const std::list< VoidSlot >& slots,
-	                        const ErrorSlot& error ) const
-	{
-		
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_radd, conn_, playlist.c_str(), url.c_str() ),
-		             slots, error );
-
-	}
-
-	void
-	Playlist::addRecursive( const std::string& url,
 	                        const VoidSlot& slot,
 	                        const ErrorSlot& error ) const
 	{
 		addRecursive( url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addRecursive( const std::string& url,
-	                        const std::list< VoidSlot >& slots,
-	                        const ErrorSlot& error ) const
-	{
-		addRecursive( url, DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -268,19 +247,6 @@ namespace Xmms
 		aCall<void>( connected_, 
 		             boost::bind( xmmsc_playlist_radd_encoded, conn_, playlist.c_str(), url.c_str() ),
 		             slot, error );
-
-	}
-
-	void
-	Playlist::addRecursiveEncoded( const std::string& url,
-	                               const std::string& playlist,
-	                               const std::list< VoidSlot >& slots,
-	                               const ErrorSlot& error ) const
-	{
-		
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_radd_encoded, conn_, playlist.c_str(), url.c_str() ),
-		             slots, error );
 
 	}
 
@@ -293,14 +259,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::addRecursiveEncoded( const std::string& url,
-	                               const std::list< VoidSlot >& slots,
-	                               const ErrorSlot& error ) const
-	{
-		addRecursiveEncoded(url, DEFAULT_PLAYLIST, slots, error);
-	}
-
-	void
 	Playlist::addUrl( const std::string& url,
 	                  const std::string& playlist,
 	                  const VoidSlot& slot,
@@ -310,19 +268,6 @@ namespace Xmms
 		aCall<void>( connected_, 
 		             boost::bind( xmmsc_playlist_add_url, conn_, playlist.c_str(), url.c_str() ),
 		             slot, error );
-
-	}
-
-	void
-	Playlist::addUrl( const std::string& url,
-	                  const std::string& playlist,
-	                  const std::list< VoidSlot >& slots,
-	                  const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add_url, conn_, playlist.c_str(), url.c_str() ),
-		             slots, error );
 
 	}
 
@@ -335,14 +280,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::addUrl( const std::string& url,
-	                  const std::list< VoidSlot >& slots,
-	                  const ErrorSlot& error ) const
-	{
-		addUrl( url, DEFAULT_PLAYLIST, slots, error );
-	}
-
-	void
 	Playlist::addUrlEncoded( const std::string& url,
 	                         const std::string& playlist,
 	                         const VoidSlot& slot,
@@ -357,31 +294,10 @@ namespace Xmms
 
 	void
 	Playlist::addUrlEncoded( const std::string& url,
-	                         const std::string& playlist,
-	                         const std::list< VoidSlot >& slots,
-	                         const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add_encoded, conn_, playlist.c_str(), url.c_str() ),
-		             slots, error );
-
-	}
-
-	void
-	Playlist::addUrlEncoded( const std::string& url,
 	                         const VoidSlot& slot,
 	                         const ErrorSlot& error ) const
 	{
 		addUrlEncoded( url, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::addUrlEncoded( const std::string& url,
-	                         const std::list< VoidSlot >& slots,
-	                         const ErrorSlot& error ) const
-	{
-		addUrlEncoded( url, DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -394,19 +310,6 @@ namespace Xmms
 		aCall<void>( connected_,
 		             boost::bind( xmmsc_playlist_add_id, conn_, playlist.c_str(), id ),
 		             slot, error );
-
-	}
-
-	void
-	Playlist::addId( const unsigned int id,
-	                 const std::string& playlist,
-	                 const std::list< VoidSlot >& slots,
-	                 const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_add_id, conn_, playlist.c_str(), id ),
-		             slots, error );
 
 	}
 
@@ -419,14 +322,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::addId( const unsigned int id,
-	                 const std::list< VoidSlot >& slots,
-	                 const ErrorSlot& error ) const
-	{
-		addId( id, DEFAULT_PLAYLIST, slots, error );
-	}
-
-	void
 	Playlist::clear( const std::string& playlist,
 	                 const VoidSlot& slot,
 	                 const ErrorSlot& error ) const
@@ -438,28 +333,10 @@ namespace Xmms
 	}
 
 	void
-	Playlist::clear( const std::string& playlist,
-	                 const std::list< VoidSlot >& slots,
-	                 const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_, boost::bind( xmmsc_playlist_clear, conn_, playlist.c_str() ),
-		             slots, error );
-
-	}
-
-	void
 	Playlist::clear( const VoidSlot& slot,
 	                 const ErrorSlot& error ) const
 	{
 		clear( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::clear( const std::list< VoidSlot >& slots,
-	                 const ErrorSlot& error ) const
-	{
-		clear( DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -475,29 +352,10 @@ namespace Xmms
 	}
 
 	void
-	Playlist::currentPos( const std::string& playlist,
-	                      const std::list< UintSlot >& slots,
-	                      const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_, 
-		                     boost::bind( xmmsc_playlist_current_pos, conn_, playlist.c_str() ),
-		                     slots, error );
-
-	}
-
-	void
 	Playlist::currentPos( const UintSlot& slot,
 	                      const ErrorSlot& error ) const
 	{
 		currentPos( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::currentPos( const std::list< UintSlot >& slots,
-	                      const ErrorSlot& error ) const
-	{
-		currentPos( DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -511,20 +369,6 @@ namespace Xmms
 		             boost::bind( xmmsc_playlist_insert_url, conn_, playlist.c_str(), 
 		                          pos, url.c_str() ),
 		             slot, error );
-
-	}
-
-	void
-	Playlist::insertUrl( int pos, const std::string& url,
-	                     const std::string& playlist,
-					     const std::list< VoidSlot >& slots,
-					     const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_url, conn_, playlist.c_str(), 
-		                          pos, url.c_str() ),
-		             slots, error );
 
 	}
 
@@ -537,14 +381,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::insertUrl( int pos, const std::string& url,
-					     const std::list< VoidSlot >& slots,
-					     const ErrorSlot& error ) const
-	{
-		insertUrl( pos, url, DEFAULT_PLAYLIST, slots, error );
-	}
-
-	void
 	Playlist::insertUrlEncoded( int pos, const std::string& url,
 	                            const std::string& playlist,
 					            const VoidSlot& slot,
@@ -555,20 +391,6 @@ namespace Xmms
 		             boost::bind( xmmsc_playlist_insert_encoded, conn_, playlist.c_str(), 
 		                          pos, url.c_str() ),
 		             slot, error );
-
-	}
-
-	void
-	Playlist::insertUrlEncoded( int pos, const std::string& url,
-	                            const std::string& playlist,
-					            const std::list< VoidSlot >& slots,
-					            const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_encoded, conn_, playlist.c_str(), 
-		                          pos, url.c_str() ),
-		             slots, error );
 
 	}
 
@@ -581,14 +403,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::insertUrlEncoded( int pos, const std::string& url,
-					            const std::list< VoidSlot >& slots,
-					            const ErrorSlot& error ) const
-	{
-		insertUrlEncoded( pos, url, DEFAULT_PLAYLIST, slots, error );
-	}
-
-	void
 	Playlist::insertId( int pos, unsigned int id,
 	                    const std::string& playlist,
 	                    const VoidSlot& slot,
@@ -603,31 +417,10 @@ namespace Xmms
 
 	void
 	Playlist::insertId( int pos, unsigned int id,
-	                    const std::string& playlist,
-	                    const std::list< VoidSlot >& slots,
-	                    const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_insert_id, conn_, playlist.c_str(), pos, id ),
-		             slots, error );
-
-	}
-
-	void
-	Playlist::insertId( int pos, unsigned int id,
 	                    const VoidSlot& slot,
 	                    const ErrorSlot& error ) const
 	{
 		insertId( pos, id, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::insertId( int pos, unsigned int id,
-	                    const std::list< VoidSlot >& slots,
-	                    const ErrorSlot& error ) const
-	{
-		insertId( pos, id, DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -643,29 +436,10 @@ namespace Xmms
 	}
 
 	void
-	Playlist::listEntries( const std::string& playlist,
-					       const std::list< UintListSlot >& slots,
-	                       const ErrorSlot& error ) const
-	{
-
-		aCall<List<unsigned int> >( connected_, 
-		                            boost::bind( xmmsc_playlist_list_entries, conn_, playlist.c_str() ),
-		                            slots, error );
-
-	}
-
-	void
 	Playlist::listEntries( const UintListSlot& slot,
 	                       const ErrorSlot& error ) const
 	{
 		listEntries( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::listEntries( const std::list< UintListSlot >& slots,
-	                       const ErrorSlot& error ) const
-	{
-		listEntries( DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -678,19 +452,6 @@ namespace Xmms
 		aCall<void>( connected_, 
 		             boost::bind( xmmsc_playlist_move_entry, conn_, playlist.c_str(), curpos, newpos ),
 		             slot, error );
-
-	}
-
-	void
-	Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
-	                     const std::string& playlist,
-	                     const std::list< VoidSlot >& slots,
-	                     const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_move_entry, conn_, playlist.c_str(), curpos, newpos ),
-		             slots, error );
 
 	}
 
@@ -703,14 +464,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::moveEntry( unsigned int curpos, unsigned int newpos,
-	                     const std::list< VoidSlot >& slots,
-	                     const ErrorSlot& error ) const
-	{
-		moveEntry( curpos, newpos, DEFAULT_PLAYLIST, slots, error );
-	}
-
-	void
 	Playlist::removeEntry( unsigned int pos,
 	                       const std::string& playlist,
 	                       const VoidSlot& slot,
@@ -725,31 +478,10 @@ namespace Xmms
 
 	void
 	Playlist::removeEntry( unsigned int pos,
-	                       const std::string& playlist,
-	                       const std::list< VoidSlot >& slots,
-	                       const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_remove_entry, conn_, playlist.c_str(), pos ),
-		             slots, error );
-
-	}
-
-	void
-	Playlist::removeEntry( unsigned int pos,
 	                       const VoidSlot& slot,
 	                       const ErrorSlot& error ) const
 	{
 		removeEntry( pos, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::removeEntry( unsigned int pos,
-	                       const std::list< VoidSlot >& slots,
-	                       const ErrorSlot& error ) const
-	{
-		removeEntry( pos, DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -761,18 +493,6 @@ namespace Xmms
 		aCall<unsigned int>( connected_,
 		                     boost::bind( xmmsc_playlist_set_next, conn_, pos ),
 		                     slot, error );
-
-	}
-
-	void
-	Playlist::setNext( unsigned int pos,
-	                   const std::list< UintSlot >& slots,
-					   const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_playlist_set_next, conn_, pos ),
-		                     slots, error );
 
 	}
 
@@ -790,19 +510,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::setNextRel( signed int pos,
-	                      const std::list< UintSlot >& slots,
-	                      const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_playlist_set_next_rel,
-		                                  conn_, pos ),
-		                     slots, error );
-
-	}
-
-	void
 	Playlist::shuffle( const std::string& playlist,
 	                   const VoidSlot& slot,
 	                   const ErrorSlot& error ) const
@@ -814,28 +521,10 @@ namespace Xmms
 	}
 
 	void
-	Playlist::shuffle( const std::string& playlist,
-					   const std::list< VoidSlot >& slots,
-	                   const ErrorSlot& error ) const
-	{
-
-		aCall<void>( connected_, boost::bind( xmmsc_playlist_shuffle, conn_, playlist.c_str() ),
-		             slots, error );
-
-	}
-
-	void
 	Playlist::shuffle( const VoidSlot& slot,
 	                   const ErrorSlot& error ) const
 	{
 		shuffle( DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::shuffle( const std::list< VoidSlot >& slots,
-	                   const ErrorSlot& error ) const
-	{
-		shuffle( DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -856,34 +545,10 @@ namespace Xmms
 
 	void
 	Playlist::sort( const std::list<std::string>& properties,
-	                const std::string& playlist,
-	                const std::list< VoidSlot >& slots,
-	                const ErrorSlot& error ) const
-	{
-
-		const char** props = c_stringList( properties );
-		aCall<void>( connected_, 
-		             boost::bind( xmmsc_playlist_sort, conn_, playlist.c_str(), 
-		                          props ),
-		             slots, error );
-		delete [] props;
-
-	}
-
-	void
-	Playlist::sort( const std::list<std::string>& properties,
 	                const VoidSlot& slot,
 	                const ErrorSlot& error ) const
 	{
 		sort( properties, DEFAULT_PLAYLIST, slot, error );
-	}
-
-	void
-	Playlist::sort( const std::list<std::string>& properties,
-	                const std::list< VoidSlot >& slots,
-	                const ErrorSlot& error ) const
-	{
-		sort(properties, DEFAULT_PLAYLIST, slots, error );
 	}
 
 	void
@@ -898,17 +563,6 @@ namespace Xmms
 	}
 
 	void
-	Playlist::broadcastChanged( const std::list< DictSlot >& slots,
-	                            const ErrorSlot& error ) const
-	{
-
-		aCall<Dict>( connected_,
-		             boost::bind( xmmsc_broadcast_playlist_changed, conn_ ),
-					 slots, error );
-
-	}
-
-	void
 	Playlist::broadcastCurrentPos( const UintSlot& slot,
 	                               const ErrorSlot& error ) const
 	{
@@ -917,18 +571,6 @@ namespace Xmms
 		                     boost::bind( xmmsc_broadcast_playlist_current_pos,
 		                                  conn_ ),
 		                     slot, error );
-
-	}
-
-	void
-	Playlist::broadcastCurrentPos( const std::list< UintSlot >& slots,
-	                               const ErrorSlot& error ) const
-	{
-
-		aCall<unsigned int>( connected_,
-		                     boost::bind( xmmsc_broadcast_playlist_current_pos,
-		                                  conn_ ),
-		                     slots, error );
 
 	}
 

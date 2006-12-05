@@ -103,16 +103,6 @@ namespace Xmms
 			               const ErrorSlot& error = &Xmms::dummy_error
 			             ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			valueRegister( const std::string& name, const std::string& defval,
-			               const std::list< VoidSlot >& slots,
-			               const ErrorSlot& error = &Xmms::dummy_error
-			             ) const;
-
 			/** Sets a config value in the server.
 			 *
 			 *  @param key Key of the config value to set.
@@ -126,16 +116,6 @@ namespace Xmms
 			void
 			valueSet( const std::string& key, const std::string& value,
 			          const VoidSlot& slot,
-			          const ErrorSlot& error = &Xmms::dummy_error
-			        ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			valueSet( const std::string& key, const std::string& value,
-			          const std::list< VoidSlot >& slots,
 			          const ErrorSlot& error = &Xmms::dummy_error
 			        ) const;
 
@@ -155,16 +135,6 @@ namespace Xmms
 			          const ErrorSlot& error = &Xmms::dummy_error
 			        ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			valueGet( const std::string& key,
-			          const std::list< StringSlot >& slots,
-			          const ErrorSlot& error = &Xmms::dummy_error
-			        ) const;
-
 			/** Gets a key<->value list of config values from the server.
 			 *  
 			 *  @param slot Function pointer to a function taking
@@ -179,16 +149,6 @@ namespace Xmms
 			           const ErrorSlot& error = &Xmms::dummy_error
 			         ) const;
 
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			valueList( const std::list< DictSlot >& slots,
-			           const ErrorSlot& error = &Xmms::dummy_error
-			         ) const;
-
-
 			/** Requests the <i>config value changed</i> broadcast.
 			 *
 			 *  @param slot Function pointer to a function taking
@@ -200,15 +160,6 @@ namespace Xmms
 			 */
 			void
 			broadcastValueChanged( const DictSlot& slot,
-			                       const ErrorSlot& error = &Xmms::dummy_error
-			                     ) const;
-
-			/**
-			 * @overload
-			 * @note It takes a list of slots instead of just one slot.
-			 */
-			void
-			broadcastValueChanged( const std::list< DictSlot >& slots,
 			                       const ErrorSlot& error = &Xmms::dummy_error
 			                     ) const;
 
