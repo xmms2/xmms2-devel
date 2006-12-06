@@ -18,6 +18,7 @@ from waftools import gittools
 import Params
 import Object
 import Utils
+import Common
 
 VERSION="0.2 DrI+WIP (git commit: %s)" % gittools.get_info_str()
 APPNAME='xmms2'
@@ -77,6 +78,8 @@ def build(bld):
 	o = bld.create_obj('pkgc')
 	o.version = VERSION
 	o.libs = bld.env_of_name('default')['XMMS_PKGCONF_FILES']
+
+	Common.install_files('SHAREDDIR', '', 'mind.in.a.box-lament_snipplet.ogg')
 
 
 ####
