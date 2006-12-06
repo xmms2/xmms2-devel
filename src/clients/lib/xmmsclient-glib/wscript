@@ -7,7 +7,6 @@ def build(bld):
     obj.source = 'xmmsclient-glib.c'
     obj.uselib = 'glib2'
     obj.uselib_local = 'xmmsclient'
-    obj.want_libtool = 1
     obj.vnum = '1.0.0'
     tool.add_install_flag(obj)
 
