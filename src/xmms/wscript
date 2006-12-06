@@ -26,7 +26,6 @@ source = """config.c
             converter_plugin.c
             ringbuf_xform.c
             outputplugin.c
-            statfs.c
             strfunc.c
             bindata.c
             sample.genpy
@@ -44,10 +43,17 @@ def build(bld):
     lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
     lib.source = source
 
+    env = bld.env_of_name("default")
+    lib.source.append("statfs_%s.c" % env["statfs_os"])
+
     prog = bld.create_obj('cc', 'program')
     prog.target = 'xmms2d'
     prog.includes = '. ../include ../includepriv'
-    prog.source = ["main.c", "unixsignal.c"]
+    prog.source = ["main.c"]
+    if sys.platform == 'win32':
+        prog.source.append("signal_dummy.c")
+    else:
+        prog.source.append("signal_unix.c")
     prog.source += source
     prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
@@ -86,11 +92,13 @@ def configure(conf):
 
     if check_header('sys/vfs.h'):
         if sys.platform == 'sunos5':
-            conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_SOLARIS')
+            conf.env.appendUnique('statfs_os', 'solaris')
         else:
-            conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_LINUX')
+            conf.env.appendUnique('statfs_os', 'linux')
     elif check_header('sys/param.h'):
-        conf.env.appendUnique('CCFLAGS_statfs', '-DSTATFS_BSD')
+        conf.env.appendUnique('statfs_os', 'bsd')
+    else:
+        conf.env.appendUnique('statfs_os', 'dummy')
 
     # Add Darwin stuff
     if sys.platform == 'darwin':

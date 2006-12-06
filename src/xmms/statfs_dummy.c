@@ -15,14 +15,30 @@
  */
 
 
+/** @file
+ *  Dummy statfs
+ */
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <glib.h>
 
-#ifndef __XMMS_UNIXSIGNAL_H__
-#define __XMMS_UNIXSIGNAL_H__
+#include "xmms/xmms_defs.h"
 
-#include "xmms/xmms_object.h"
+#include "xmms/xmms_log.h"
+#include "xmmspriv/xmms_statfs.h"
 
-void xmms_signal_init (xmms_object_t *obj);
-
-#endif
+/**
+ * This function uses the statfs() call to
+ * check if the path is on a remote filesystem
+ * or not.
+ *
+ * @returns TRUE if path is on a remote filesystem
+ */
+gboolean
+xmms_statfs_is_remote (const gchar *path)
+{
+	return FALSE;
+}
 

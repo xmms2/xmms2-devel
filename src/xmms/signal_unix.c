@@ -22,7 +22,7 @@
  */
 
 
-#include "xmmspriv/xmms_unixsignal.h"
+#include "xmmspriv/xmms_signal.h"
 #include "xmms/xmms_log.h"
 #include "xmms/xmms_object.h"
 
@@ -64,6 +64,21 @@ sigwaiter (gpointer data)
 				break;
 		}
 	}
+}
+
+void
+xmms_signal_block (void)
+{
+	sigset_t signals;
+
+	memset (&signals, 0, sizeof (sigset_t));
+
+	sigaddset (&signals, SIGHUP);
+	sigaddset (&signals, SIGTERM);
+	sigaddset (&signals, SIGINT);
+	sigaddset (&signals, SIGPIPE);
+
+	pthread_sigmask (SIG_BLOCK, &signals, NULL);
 }
 
 void
