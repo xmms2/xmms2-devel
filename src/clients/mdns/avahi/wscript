@@ -14,6 +14,11 @@ def build(bld):
   obj.dict = {'PRG_PATH' : os.path.join(bld.env_of_name('default')['PREFIX'], 'bin')}
   Common.install_files('SCRIPTDIR', None, 'xmms2-mdns-launcher.sh',chmod=0755)
 
+  find = bld.create_obj('cc', 'program')
+  find.target = 'xmms2-find-avahi'
+  find.source = ['find-avahi.c']
+  find.uselib = 'avahiclient'
+
 def configure(conf):
   return (conf.check_pkg('avahi-client', destvar='avahiclient') and
     conf.check_pkg('avahi-glib', destvar='avahiglib'))
