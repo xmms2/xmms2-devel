@@ -1,11 +1,11 @@
-import os, Common
+import sys, os, Common
 
 def build(bld):
     obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2-et'
     obj.source = ['xmms2-et.c']
     obj.includes = '. ../../include'
-    obj.uselib = 'glib2'
+    obj.uselib = 'glib2 socket resolv'
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
 
     obj = bld.create_obj('subst')
@@ -14,6 +14,9 @@ def build(bld):
     Common.install_files('SCRIPTDIR', None, 'xmms2-et-launcher.sh', chmod=0755)
 
 def configure(conf):
+   if sys.platform == 'sunos5':
+        if not conf.check_library2("resolv", uselib='resolv'):
+            return False
     return True
 
 def set_options(opt):

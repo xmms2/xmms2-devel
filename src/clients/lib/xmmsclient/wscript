@@ -20,6 +20,7 @@ def build(bld):
                  xqueue.c
                  """.split()
     obj.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
+    obj.uselib = 'socket'
     obj.want_libtool = 1
     obj.vnum = '2.0.0'
     tool.add_install_flag(obj)
