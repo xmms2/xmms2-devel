@@ -1,19 +1,21 @@
-#!/usr/bin/env python
 # encoding: utf-8
 #
 # Copyright 2006 David Anderson <dave at natulte.net>
 
-import os
 import sys
+if sys.version_info < (2,3):
+    raise RuntimeError("Python 2.3 or newer is required")
+
+import os
 import optparse
 
 # Waf removes the current dir from the python path. We readd it to
 # import waftools stuff.
-sys.path = [os.getcwd()]+sys.path
+sys.path.insert(0,os.getcwd())
 
-from waftools import sets # We have our own sets, to not depend on py2.4
 from waftools import gittools
 
+import sets
 import Params
 import Object
 import Utils
@@ -188,7 +190,9 @@ def configure(conf):
         Params.fatal("xmms2 only has platform support for Windows "
                      "and POSIX operating systems.")
 
-	# Check sunOS socket support
+    conf.check_tool('checks')
+
+    # Check sunOS socket support
     if sys.platform == 'sunos5':
         if not conf.check_library2("socket", uselib='socket'):
             Params.fatal("xmms2 requires libsocket on Solaris.")
@@ -197,7 +201,6 @@ def configure(conf):
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.
-    conf.check_tool('checks')
     conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
     [conf.sub_config(s) for s in subdirs]
