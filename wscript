@@ -185,7 +185,9 @@ def configure(conf):
         Params.fatal("xmms2 only has platform support for Windows "
                      "and POSIX operating systems.")
 
-	# Check sunOS socket support
+    conf.check_tool('checks')
+
+    # Check sunOS socket support
     if sys.platform == 'sunos5':
         if not conf.check_library2("socket", uselib='socket'):
             Params.fatal("xmms2 requires libsocket on Solaris.")
@@ -194,7 +196,6 @@ def configure(conf):
 
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.
-    conf.check_tool('checks')
     conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
     [conf.sub_config(s) for s in subdirs]
