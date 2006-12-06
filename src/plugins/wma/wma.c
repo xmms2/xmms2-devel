@@ -24,6 +24,7 @@
 #include <string.h>
 #include <glib.h>
 
+#undef ABS
 #include "avformat.h"
 
 #define WMA_BUFFER_SIZE 4096
