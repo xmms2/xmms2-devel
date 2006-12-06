@@ -78,7 +78,7 @@ def build(bld):
     o.version = VERSION
     o.libs = bld.env_of_name('default')['XMMS_PKGCONF_FILES']
 
-	Common.install_files('SHAREDDIR', '', 'mind.in.a.box-lament_snipplet.ogg')
+    Common.install_files('SHAREDDIR', '', 'mind.in.a.box-lament_snipplet.ogg')
 
 
 ####
