@@ -13,9 +13,9 @@ import optparse
 # import waftools stuff.
 sys.path.insert(0,os.getcwd())
 
-from waftools import sets # We have our own sets, to not depend on py2.4
 from waftools import gittools
 
+import sets
 import Params
 import Object
 import Utils
