@@ -108,7 +108,7 @@ struct xmms_config_property_St {
  * we can have the convenience of having it as a global variable.
  */
 
-xmms_config_t *global_config;
+static xmms_config_t *global_config;
 
 /**
  * Config file version

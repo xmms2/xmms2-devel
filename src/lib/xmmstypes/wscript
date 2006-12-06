@@ -6,14 +6,14 @@
 import os
 
 def build(bld):
-	obj = bld.create_obj('cc', 'staticlib')
-	obj.source = "coll.c xlist.c".split()
-	obj.includes='. ../../include ../../includepriv'
-	obj.target='xmmstypes'
-	obj.install_in = 0
+    obj = bld.create_obj('cc', 'staticlib')
+    obj.source = "coll.c xlist.c".split()
+    obj.includes='. ../../include ../../includepriv'
+    obj.target='xmmstypes'
+    obj.install_in = 0
 
 def configure(conf):
-	pass
+    pass
 
 def set_options(opt):
-	pass
+    pass

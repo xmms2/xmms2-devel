@@ -6,21 +6,21 @@
 import os
 
 def build(bld):
-	if os.name == 'nt':
-		platform_sources = "transport_win.c"
-	elif os.name == 'posix':
-		platform_sources = "socket_unix.c transport_unix.c"
+    if os.name == 'nt':
+        platform_sources = "transport_win.c"
+    elif os.name == 'posix':
+        platform_sources = "socket_unix.c transport_unix.c"
 
-	obj = bld.create_obj('cc', 'staticlib')
-	obj.source = " ".join(["msg.c", "socket_tcp.c", "transport.c",
-						   "url.c", platform_sources])
-	obj.includes='. ../../include'
-	obj.target='xmmsipc'
-	obj.uselib_local='xmmssocket'
-	obj.install_in = 0
+    obj = bld.create_obj('cc', 'staticlib')
+    obj.source = " ".join(["msg.c", "socket_tcp.c", "transport.c",
+                           "url.c", platform_sources])
+    obj.includes='. ../../include'
+    obj.target='xmmsipc'
+    obj.uselib_local='xmmssocket'
+    obj.install_in = 0
 
 def configure(conf):
-	pass
+    pass
 
 def set_options(opt):
-	pass
+    pass
