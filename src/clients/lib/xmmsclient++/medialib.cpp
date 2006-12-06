@@ -10,6 +10,8 @@
 #include <boost/bind.hpp>
 
 #include <string>
+#include <list>
+#include <vector>
 
 namespace Xmms
 {
@@ -23,6 +25,25 @@ namespace Xmms
 
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_medialib_add_entry, conn_, url.c_str() ) );
+
+	}
+
+	void Medialib::addEntry( const std::string& url,
+	                         const std::list< std::string >& args ) const {
+
+		std::vector< const char* > cargs( args.size() );
+
+		std::vector< const char* >::size_type i = 0;
+		for( std::list< std::string >::const_iterator it = args.begin();
+		     it != args.end(); ++it ) {
+
+			cargs[i++] = it->c_str();
+
+		}
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_medialib_add_entry_args, conn_,
+		                    url.c_str(), args.size(), &cargs[0] ) );
 
 	}
 
@@ -188,6 +209,28 @@ namespace Xmms
 		aCall<void>( connected_, 
 		             boost::bind( xmmsc_medialib_add_entry, conn_,
 		                          url.c_str() ),
+		             slot, error );
+
+	}
+
+	void Medialib::addEntry( const std::string& url,
+	                         const std::list< std::string >& args,
+	                         const VoidSlot& slot, const ErrorSlot& error
+	                       ) const {
+
+		std::vector< const char* > cargs( args.size() );
+
+		std::vector< const char* >::size_type i = 0;
+		for( std::list< std::string >::const_iterator it = args.begin();
+		     it != args.end(); ++it ) {
+
+			cargs[i++] = it->c_str();
+
+		}
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_medialib_add_entry_args, conn_,
+		                          url.c_str(), args.size(), &cargs[0] ),
 		             slot, error );
 
 	}
