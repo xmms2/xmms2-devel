@@ -17,7 +17,7 @@ def configure(conf):
    if sys.platform == 'sunos5':
         if not conf.check_library2("resolv", uselib='resolv'):
             return False
-    return True
+   return True
 
 def set_options(opt):
     pass
