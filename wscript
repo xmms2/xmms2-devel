@@ -9,7 +9,7 @@ import optparse
 
 # Waf removes the current dir from the python path. We readd it to
 # import waftools stuff.
-sys.path = [os.getcwd()]+sys.path
+sys.path.insert(0,os.getcwd())
 
 from waftools import sets # We have our own sets, to not depend on py2.4
 from waftools import gittools
