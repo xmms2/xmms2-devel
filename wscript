@@ -3,8 +3,11 @@
 #
 # Copyright 2006 David Anderson <dave at natulte.net>
 
-import os
 import sys
+if sys.version_info < (2,3):
+    raise RuntimeError("Python 2.3 or newer is required")
+
+import os
 import optparse
 
 # Waf removes the current dir from the python path. We readd it to
