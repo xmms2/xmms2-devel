@@ -38,8 +38,6 @@ typedef struct {
 	gchar *value;
 } xmms_plugin_info_t;
 
-extern xmms_config_t *global_config;
-
 /*
  * Global variables
  */
@@ -410,8 +408,6 @@ xmms_plugin_scan_directory (const gchar *dir)
 	gchar *pattern;
 	GModule *module;
 	gpointer sym;
-
-	g_return_val_if_fail (global_config, FALSE);
 
 #ifndef XMMS_OS_DARWIN
 	/* this is all great, except that it returns .so for

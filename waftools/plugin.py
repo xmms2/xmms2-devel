@@ -10,7 +10,7 @@ def plugin(name, source=None, configure=False, build=False,
 	def stock_configure(conf):
 		if broken:
 			conf.check_message_custom('%s plugin' % name, '',
-									  'currently broken, disabled')
+									  'disabled (broken)')
 			return
 		if configure and not configure(conf):
 			return
