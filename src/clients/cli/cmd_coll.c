@@ -23,6 +23,7 @@ cmds coll_commands[] = {
 	{ "rename", "[oldname] [newname] - Rename a collection", cmd_coll_rename },
 	{ "list", "[namespace] - List all collections in a given namespace", cmd_coll_list },
 	{ "query", "[collname] [order] - Display all the media in a collection", cmd_coll_query },
+	{ "queryadd", "[collname] [order] - Add all media in a collection to active playlist", cmd_coll_queryadd },
 	{ "find", "[mid] [namespace] - Find all collections that contain the given media", cmd_coll_find },
 	{ "get", "[collname] - Display the structure of a collection", cmd_coll_get },
 	{ "remove", "[collname] - Remove a saved collection", cmd_coll_remove },
@@ -435,6 +436,50 @@ cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	g_free (namespace);
 }
 
+void
+cmd_coll_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	gchar *name, *namespace;
+	gchar **order = NULL;
+	xmmsc_coll_t *collref;
+	xmmsc_result_t *res;
+
+	if (argc < 4) {
+		print_error ("usage: coll queryadd [collname] [order]");
+	}
+
+	if (!coll_read_collname (argv[3], &name, &namespace)) {
+		print_error ("invalid collection name");
+	}
+
+	/* allow custom ordering, if specified */
+	if (argc > 4) {
+		order = g_strsplit (argv[4], ",", 0);
+		g_assert (order);
+	}
+
+	/* Create a reference collection to the saved coll */
+	collref = xmmsc_coll_new (XMMS_COLLECTION_TYPE_REFERENCE);
+ 	xmmsc_coll_attribute_set (collref, "reference", name);
+ 	xmmsc_coll_attribute_set (collref, "namespace", namespace);
+
+	res = xmmsc_playlist_add_collection (conn, NULL, collref, (const gchar**)order);
+	xmmsc_result_wait (res);
+
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	xmmsc_result_unref (res);
+
+	if (order) {
+		g_strfreev (order);
+	}
+
+	xmmsc_coll_unref (collref);
+	g_free (name);
+	g_free (namespace);
+}
 
 void
 cmd_coll_find (xmmsc_connection_t *conn, gint argc, gchar **argv)

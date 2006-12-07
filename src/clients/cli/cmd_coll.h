@@ -28,6 +28,7 @@ void cmd_coll_save (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_rename (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_list (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_query (xmmsc_connection_t *conn, gint argc, gchar **argv);
+void cmd_coll_queryadd (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_find (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_get (xmmsc_connection_t *conn, gint argc, gchar **argv);
 void cmd_coll_remove (xmmsc_connection_t *conn, gint argc, gchar **argv);
