@@ -53,7 +53,7 @@ def build(bld):
         prog.source.append("signal_dummy.c")
     else:
         prog.source.append("signal_unix.c")
-    prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmms2core'
+    prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
     launch = bld.create_obj('cc', 'program')
