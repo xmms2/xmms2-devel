@@ -28,6 +28,7 @@ def plugin_build(bld):
     obj.source = 'sid.c'
     obj.add_objects = 'xmms_sid_cpp'
     obj.uselib = 'sidplay glib2'
+    obj.install_in = 'PLUGINDIR'
 
 configure, build = plugin('sid', configure=plugin_configure,
                           build_replace=plugin_build)
