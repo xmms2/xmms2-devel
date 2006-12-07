@@ -36,7 +36,7 @@ def build(bld):
         lib.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
     else:
         lib = bld.create_obj('cc', 'staticlib')
-    lib.target = 'xmms2d'
+    lib.target = 'xmms2core'
     lib.includes = '. ../include ../includepriv'
     lib.install_in = 0
     lib.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
@@ -53,8 +53,7 @@ def build(bld):
         prog.source.append("signal_dummy.c")
     else:
         prog.source.append("signal_unix.c")
-    prog.source += source
-    prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes'
+    prog.uselib_local = 'xmmsipc xmmssocket xmmsutils xmmstypes xmms2core'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
     launch = bld.create_obj('cc', 'program')
