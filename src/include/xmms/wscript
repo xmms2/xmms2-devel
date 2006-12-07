@@ -1,4 +1,12 @@
 import sys,os
+import Params
+
+def build(bld):
+	pass
+
+def set_option(env):
+	pass
+
 def configure(conf):
     """Set the values needed by xmms_defs.h.in in the environment."""
 
@@ -38,3 +46,5 @@ def configure(conf):
         conf.add_define(i, defs[i])
     conf.write_config_header('src/include/xmms/xmms_defs.h')
 
+    print "\nDefault output plugin: ",
+    Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])

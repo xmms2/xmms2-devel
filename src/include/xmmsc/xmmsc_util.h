@@ -23,6 +23,7 @@
 
 #ifndef MIN
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+
 #endif
 
 #define XMMS_BUILD_PATH(...) xmms_build_path (__VA_ARGS__, NULL)

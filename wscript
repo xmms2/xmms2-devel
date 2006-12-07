@@ -43,6 +43,8 @@ subdirs = """
           src/clients/lib/xmmsclient
           src/clients/lib/xmmsclient-glib
           src/xmms
+		  src/include
+		  src/includepriv
           """.split()
 
 optional_subdirs = ["src/clients/cli",
@@ -72,9 +74,6 @@ def build(bld):
 
     # Build the clients
     bld.add_subdirs(bld.env_of_name('default')['XMMS_OPTIONAL_BUILD'])
-
-    # include dir
-    bld.add_subdirs("src/include")
 
     # pkg-config
     o = bld.create_obj('pkgc')
@@ -168,6 +167,7 @@ def configure(conf):
     conf.check_tool('gcc')
     conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
 
+    conf.env["VERSION"] = VERSION
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
     conf.env["CXXFLAGS"] = Utils.to_list(conf.env["CXXFLAGS"]) + ['-g', '-O0']
     conf.env['XMMS_PKGCONF_FILES'] = []
@@ -204,17 +204,13 @@ def configure(conf):
     # assume its presence.
     conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
 
-    [conf.sub_config(s) for s in subdirs]
-
     enabled_plugins, disabled_plugins = _configure_plugins(conf)
     enabled_optionals, disabled_optionals = _configure_optionals(conf)
-    _output_summary(enabled_plugins, disabled_plugins, enabled_optionals, disabled_optionals)
-    # generate xmms_defs.h
-    conf.env["VERSION"] = VERSION
-    conf.sub_config('src/include/xmms')
 
-    print "\nDefault output plugin: ",
-    Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])
+    [conf.sub_config(s) for s in subdirs]
+    
+    _output_summary(enabled_plugins, disabled_plugins, enabled_optionals, disabled_optionals)
+
 
 ####
 ## Options

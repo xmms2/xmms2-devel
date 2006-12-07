@@ -14,9 +14,6 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #ifndef __XMMS_CONFIG_H__
 #define __XMMS_CONFIG_H__
 
