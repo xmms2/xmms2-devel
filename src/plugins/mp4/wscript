@@ -18,6 +18,7 @@ def plugin_build(bld):
     obj.target = 'xmms_mp4'
     obj.find_sources_in_dirs('. mp4ff') # TODO: fix waf to accept lists
     obj.uselib = 'faad glib2'
+    obj.install_in = 'PLUGINDIR'
 
 configure, build = plugin('mp4', configure=plugin_configure,
                           build_replace=plugin_build)

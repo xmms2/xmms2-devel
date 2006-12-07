@@ -6,7 +6,6 @@ def build(bld):
     lib.uselib = 'glib2'
     lib.uselib_local = 'xmmsclient-glib'
     lib.includes = '../../../include ../../../includepriv'
-    lib.want_libtool = 1
     lib.vnum = '1.0.0'
     tool.add_install_flag(lib)
 

@@ -1,0 +1,21 @@
+import os
+import Common
+
+def build(bld):
+    obj = bld.create_obj('cc', 'program')
+    obj.target = 'xmms2-mlib-updater'
+    obj.source = ['main.c', 'fam.c']
+    obj.includes = '. ../../include'
+    obj.uselib = 'glib2 gamin'
+    obj.uselib_local = 'xmmsclient xmmsclient-glib'
+
+    obj = bld.create_obj('subst')
+    obj.source = 'xmms2-mlib-updater.sh.in'
+    obj.dict = {'PRG_PATH' : os.path.join(bld.env_of_name('default')["PREFIX"], 'bin')}
+    Common.install_files('SCRIPTDIR', None, 'xmms2-mlib-updater.sh', chmod=0755)
+
+def configure(conf):
+    return conf.check_pkg('gamin', destvar='gamin')
+
+def set_options(opt):
+    pass

@@ -10,6 +10,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'ruby'
     obj.install_in = "ARCHDIR_ruby"
+    obj.env["plugin_PREFIX"] = ''
 
     # glib
     obj = bld.create_obj('cc', 'plugin')
@@ -19,6 +20,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'ruby glib2'
     obj.install_in = "ARCHDIR_ruby"
+    obj.env["plugin_PREFIX"] = ''
 
     # TODO - ECORE
 
