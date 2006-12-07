@@ -175,9 +175,8 @@ def configure(conf):
 
     if Params.g_options.config_prefix:
         conf.env["LIBPATH"] += [os.path.join(Params.g_options.config_prefix, "lib")]
-        include = "-I%s" % os.path.join(Params.g_options.config_prefix, "include")
-        conf.env["CCFLAGS"] += [include]
-        conf.env["CXXFLAGS"] += [include]
+        include = os.path.join(Params.g_options.config_prefix, "include")
+        conf.env.appendValue('CPPPATH', include)
 
     conf.env["LINKFLAGS_xlibs"] += ['-install_name %s%s%s' % (os.path.join(conf.env["PREFIX"], 'lib', conf.env["shlib_PREFIX"]), '%s', conf.env["shlib_SUFFIX"])]
 
