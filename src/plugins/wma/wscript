@@ -5,7 +5,7 @@ def plugin_configure(conf):
     cfg.binary = 'ffmpeg-config'
     cfg.uselib = 'wma'
     cfg.tests = {'--cflags': 'CCFLAGS',
-                 '--plugin-libs': 'LINKFLAGS'}
+                 '--plugin-libs avformat': 'LINKFLAGS'}
     return (cfg.run() or conf.check_pkg('libavformat', destvar='wma'))
 
 configure, build = plugin('wma', configure=plugin_configure, needs_lib=True)
