@@ -1,9 +1,8 @@
-# Plugin never tested! FEEDBACK PLEASE
-import sys
 from waftools.plugin import plugin
 
-if sys.platform == 'darwin':
-    configure, build = plugin('equalizer', broken=True)
-else:
-    configure, build = plugin('equalizer',
-                              source="""eq.c iir.c iir_cfs.c iir_fpu.c""".split())
+def plugin_configure(conf):
+	return conf.check_library2("m", uselib='equalizer')
+
+configure, build = plugin('equalizer', configure=plugin_configure,
+                          source=['eq.c', 'iir.c', 'iir_cfs.c', 'iir_fpu.c'],
+                          needs_lib=True)
