@@ -26,7 +26,6 @@
 
 #endif
 
-#define XMMS_BUILD_PATH(...) xmms_build_path (__VA_ARGS__, NULL)
 #define XMMS_PATH_MAX 255
 
 /* 9667 is XMMS written on a phone */
