@@ -440,11 +440,12 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 		currpos = xmms_playlist_coll_get_currpos (plcoll);
 		currpos++;
 
-		if (currpos == size &&
+		if (currpos == size && !playlist->repeat_all &&
 		    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 
+			xmms_collection_set_int_attr (plcoll, "position", 0);
 			xmms_playlist_load (buffer, jumplist, &err);
-			ret = xmms_error_isok (&err) || playlist->repeat_all;
+			ret = xmms_error_isok (&err);
 		} else {
 			xmms_collection_set_int_attr (plcoll, "position", currpos%size);
 			xmms_object_emit_f (XMMS_OBJECT (playlist),
@@ -586,6 +587,7 @@ xmms_playlist_load (xmms_playlist_t *playlist, gchar *name, xmms_error_t *err)
 		return;
 	}
 
+	XMMS_DBG ("Loading new playlist! %s", name);
 	xmms_collection_update_pointer (playlist->colldag, "_active", 
 	                                XMMS_COLLECTION_NSID_PLAYLISTS, plcoll);
 
@@ -1131,8 +1133,6 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 
 	if (pos == size && 
 	    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
-
-		XMMS_DBG ("Loading different playlist! %s", jumplist);
 		xmms_playlist_load (playlist, jumplist, err);
 		if (xmms_error_iserror (err)) {
 			return 0;
