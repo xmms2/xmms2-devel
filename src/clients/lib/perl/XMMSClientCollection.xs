@@ -190,7 +190,7 @@ xmmsc_coll_attribute_get (coll, key)
 		xmmsc_coll_t *coll
 		const char *key
 	CODE:
-		if (xmmsc_coll_attribute_get (coll, key, &RETVAL) != 0)
+		if (xmmsc_coll_attribute_get (coll, key, &RETVAL) == 0)
 			XSRETURN_UNDEF;
 	OUTPUT:
 		RETVAL
