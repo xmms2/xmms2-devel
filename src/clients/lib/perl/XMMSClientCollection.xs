@@ -3,10 +3,37 @@
 MODULE = Audio::XMMSClient::Collection	PACKAGE = Audio::XMMSClient::Collection	PREFIX = xmmsc_coll_
 
 xmmsc_coll_t *
-xmmsc_coll_new (class, type)
+xmmsc_coll_new (class, type, ...)
 		xmmsc_coll_type_t type
-	C_ARGS:
-		type
+	PREINIT:
+		int i, nargs;
+		HV *args;
+		HE *iter;
+	CODE:
+		RETVAL = xmmsc_coll_new (type);
+
+		nargs = items - 2;
+		if (nargs == 1) {
+			if (!SvOK (ST(2)) || !SvROK (ST(2)) || !(SvTYPE (SvRV (ST(2))) == SVt_PVHV))
+				croak ("expected hash reference or hash");
+
+			args = (HV *)SvRV (ST(2));
+
+			hv_iterinit (args);
+			while ((iter = hv_iternext (args))) {
+				xmmsc_coll_attribute_set (RETVAL, HePV (iter, PL_na), SvPV_nolen (HeVAL (iter)));
+			}
+		}
+		else {
+			if (nargs % 2 != 0)
+				croak ("expected even number of attributes/values");
+
+			for (i = 2; i <= nargs; i += 2) {
+				xmmsc_coll_attribute_set (RETVAL, SvPV_nolen (ST(i)), SvPV_nolen (ST(i+1)));
+			}
+		}
+	OUTPUT:
+		RETVAL
 
 void
 DESTROY (coll)
