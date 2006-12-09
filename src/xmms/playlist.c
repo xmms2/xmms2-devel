@@ -444,6 +444,11 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 		    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 
 			xmms_collection_set_int_attr (plcoll, "position", 0);
+			xmms_object_emit_f (XMMS_OBJECT (playlist),
+			                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+			                    XMMS_OBJECT_CMD_ARG_UINT32,
+			                    0);
+
 			xmms_playlist_load (buffer, jumplist, &err);
 			ret = xmms_error_isok (&err);
 		} else {
@@ -1133,6 +1138,13 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 
 	if (pos == size && 
 	    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
+
+		xmms_collection_set_int_attr (plcoll, "position", 0);
+		xmms_object_emit_f (XMMS_OBJECT (playlist),
+		                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
+		                    XMMS_OBJECT_CMD_ARG_UINT32,
+		                    0);
+
 		xmms_playlist_load (playlist, jumplist, err);
 		if (xmms_error_iserror (err)) {
 			return 0;
