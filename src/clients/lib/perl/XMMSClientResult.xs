@@ -233,6 +233,8 @@ xmmsc_result_wait(res)
 		c_res = (xmmsc_result_t*)perl_xmmsclient_get_ptr_from_sv(res, "Audio::XMMSClient::Result");
 
 		xmmsc_result_wait(c_res);
+
+		SvREFCNT_inc(res); /* TODO: Only do so in non-void context */
 		RETVAL = res;
 	OUTPUT:
 		RETVAL
