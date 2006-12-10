@@ -266,10 +266,19 @@ xmmsc_coll_query_ids(c, coll, order, limit_start, limit_len)
 	CLEANUP:
 		free (order);
 
-#TODO:
-#xmmsc_result_t*
-#xmmsc_coll_query_infos(c, coll, order, limit_start, limit_len, fetch, group)
-
+xmmsc_result_t*
+xmmsc_coll_query_infos(c, coll, order, limit_start, limit_len, fetch, group)
+		xmmsc_connection_t* c
+		xmmsc_coll_t* coll
+		perl_xmmsclient_collection_order_t order
+		unsigned int limit_start
+		unsigned int limit_len
+		perl_xmmsclient_collection_order_t fetch
+		perl_xmmsclient_collection_order_t group
+	CLEANUP:
+		free (order);
+		free (fetch);
+		free (group);
 
 ## XForm
 
