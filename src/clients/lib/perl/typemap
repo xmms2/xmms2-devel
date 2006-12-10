@@ -158,12 +158,13 @@ PERL_XMMSCLIENT_COLLECTION_ORDER_T
 			av = (AV *)SvRV($arg);
 
 			avlen = av_len (av);
-			$var = (char **)malloc (sizeof(char*) * (avlen + 2));
+			$var = ($type)malloc (sizeof(char*) * (avlen + 2));
 
 			for (i = 0; i <= avlen; ++i) {
 				ssv = av_fetch (av, i, 0);
 				$var [i] = SvPV_nolen(*ssv);
 			}
+			$var [avlen + 1] = NULL;
 		}
 		else {
 			croak (\"$var is not an array reference\");
