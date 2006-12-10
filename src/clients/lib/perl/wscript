@@ -21,6 +21,7 @@ def build(bld):
     obj.env["plugin_PREFIX"] = ''
 
     Common.install_files('INST_LIBDIR_perl', '', 'pm/XMMSClient.pm')
+    Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Sync.pm')
     Common.install_files('INST_LIBDIR_perl', 'XMMSClient', 'pm/XMMSClient/Glib.pm')
 
 def configure(conf):
