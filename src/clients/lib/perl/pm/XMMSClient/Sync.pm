@@ -10,6 +10,12 @@ sub new {
 
     my $c = Audio::XMMSClient->new( @_ );
 
+    return $base->new_from( $c );
+}
+
+sub new_from {
+    my ($base, $c) = @_;
+
     my $self = bless \$c, $base;
 
     return $self;
