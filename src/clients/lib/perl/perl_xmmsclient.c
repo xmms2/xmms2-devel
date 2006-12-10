@@ -187,3 +187,14 @@ perl_xmmsclient_unpack_char_ptr_ptr (SV *arg) {
 
 	return ret;
 }
+
+SV *
+perl_xmmsclient_hv_fetch (HV *hv, const char *key, I32 klen) {
+	SV **val;
+
+	val = hv_fetch (hv, key, klen, 0);
+	if (!val)
+		return NULL;
+
+	return *val;
+}
