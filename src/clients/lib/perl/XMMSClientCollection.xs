@@ -102,21 +102,11 @@ int
 xmmsc_coll_idlist_clear (coll)
 		xmmsc_coll_t *coll
 
-SV *
-xmmsc_coll_idlist_get_index (coll, index)
-		xmmsc_coll_t *coll
-		unsigned int index
-	PREINIT:
-		uint32_t val;
-	CODE:
-		if (xmmsc_coll_idlist_get_index (coll, index, &val) != 0) {
-			RETVAL = &PL_sv_undef;
-		}
-		else {
-			RETVAL = sv_2mortal (newSVuv (val));
-		}
-	OUTPUT:
-		RETVAL
+NO_OUTPUT int
+xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, OUTLIST uint32_t val)
+	POSTCALL:
+		if (RETVAL == 0)
+			XSRETURN_UNDEF;
 
 int
 xmmsc_coll_idlist_set_index (coll, index, val)
@@ -178,13 +168,10 @@ xmmsc_coll_operand_list_valid (coll)
 		xmmsc_coll_t *coll
 
 xmmsc_coll_t *
-xmmsc_coll_operand_list_entry (coll)
-		xmmsc_coll_t *coll
-	CODE:
-		if (xmmsc_coll_operand_list_entry (coll, &RETVAL) != 0)
+xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, OUTLIST xmmsc_coll_t *op)
+	POSTCALL:
+		if (RETVAL == 0)
 			XSRETURN_UNDEF;
-	OUTPUT:
-		RETVAL
 
 int
 xmmsc_coll_operand_list_next (coll)
@@ -209,15 +196,11 @@ xmmsc_coll_attribute_remove (coll, key)
 		xmmsc_coll_t *coll
 		const char *key
 
-char *
-xmmsc_coll_attribute_get (coll, key)
-		xmmsc_coll_t *coll
-		const char *key
-	CODE:
-		if (xmmsc_coll_attribute_get (coll, key, &RETVAL) == 0)
+NO_OUTPUT int
+xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, OUTLIST char *val)
+	POSTCALL:
+		if (RETVAL == 0)
 			XSRETURN_UNDEF;
-	OUTPUT:
-		RETVAL
 
 xmmsc_coll_t *
 xmmsc_coll_universe (class)

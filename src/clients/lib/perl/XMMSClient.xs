@@ -43,15 +43,13 @@ xmmsc_connect(c, ipcpath=NULL)
 		const char* ipcpath
 	PREINIT:
 		char* xmms_path_env = NULL;
-	CODE:
+	INIT:
 		if (ipcpath == NULL) {
 			xmms_path_env = getenv("XMMS_PATH");
 
 			if (xmms_path_env != NULL)
 				ipcpath = xmms_path_env;
 		}
-
-		RETVAL = xmmsc_connect(c, ipcpath);
 	OUTPUT:
 		RETVAL
 
