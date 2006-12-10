@@ -159,9 +159,6 @@ operands (coll)
 	PPCODE:
 		PERL_UNUSED_VAR(ix);
 
-		if (!xmmsc_coll_operand_list_valid (coll))
-			XSRETURN_EMPTY;
-
 		for (xmmsc_coll_operand_list_first (coll);
 				xmmsc_coll_operand_list_entry (coll, &op);
 				xmmsc_coll_operand_list_next (coll)) {
