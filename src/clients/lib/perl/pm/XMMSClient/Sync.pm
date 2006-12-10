@@ -40,9 +40,10 @@ sub AUTOLOAD {
 }
 
 sub sync_request {
-    my ($self, $request, @args) = @_;
+    my $self = shift;
+    my $request = shift;
 
-    my $resp = $$self->$request(@args);
+    my $resp = $$self->$request(@_);
 
     if (blessed $resp && $resp->isa('Audio::XMMSClient::Result')) {
         $resp->wait;
