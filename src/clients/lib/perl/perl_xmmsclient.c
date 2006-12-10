@@ -140,7 +140,6 @@ perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...) {
 				croak("failed to convert value to sv");
 			}
 
-			//dump_sv(sv);
 			XPUSHs(sv);
 		}
 	}
