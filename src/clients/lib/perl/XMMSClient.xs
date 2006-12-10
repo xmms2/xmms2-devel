@@ -258,7 +258,7 @@ xmmsc_result_t*
 xmmsc_coll_query_ids(c, coll, ...)
 		xmmsc_connection_t* c
 		xmmsc_coll_t* coll
-		perl_xmmsclient_collection_order_t order = perl_xmmsclient_unpack_char_ptr_ptr(ST(2));
+		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(2));
 		unsigned int limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
 		unsigned int limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
 	C_ARGS:
@@ -267,14 +267,16 @@ xmmsc_coll_query_ids(c, coll, ...)
 		free (order);
 
 xmmsc_result_t*
-xmmsc_coll_query_infos(c, coll, order, limit_start, limit_len, fetch, group)
+xmmsc_coll_query_infos(c, coll, ...)
 		xmmsc_connection_t* c
 		xmmsc_coll_t* coll
-		perl_xmmsclient_collection_order_t order
-		unsigned int limit_start
-		unsigned int limit_len
-		perl_xmmsclient_collection_order_t fetch
-		perl_xmmsclient_collection_order_t group
+		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(2));
+		unsigned int limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
+		unsigned int limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
+		const char **fetch = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(5));
+		const char **group = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(6));
+	C_ARGS:
+		c, coll, order, limit_start, limit_len, fetch, group
 	CLEANUP:
 		free (order);
 		free (fetch);
@@ -462,7 +464,7 @@ xmmsc_result_t*
 xmmsc_playlist_sort(c, playlist, properties)
 		xmmsc_connection_t* c
 		const char* playlist
-		perl_xmmsclient_collection_order_t properties
+		const char **properties = ($type)perl_xmmsclient_unpack_char_ptr_ptr($arg);
 	CLEANUP:
 		free (properties);
 
@@ -524,7 +526,7 @@ xmmsc_playlist_insert_collection(c, playlist, pos, collection, order)
 		const char* playlist
 		int pos
 		xmmsc_coll_t* collection
-		perl_xmmsclient_collection_order_t order
+		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr($arg);
 	CLEANUP:
 		free (order);
 
@@ -572,7 +574,7 @@ xmmsc_playlist_add_collection(c, playlist, collection, order)
 		xmmsc_connection_t* c
 		const char* playlist
 		xmmsc_coll_t* collection
-		perl_xmmsclient_collection_order_t order
+		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr($arg);
 	CLEANUP:
 		free (order);
 
