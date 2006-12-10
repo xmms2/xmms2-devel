@@ -40,7 +40,7 @@ xmmsc_coll_parse (class, const char *pattern, OUTLIST xmmsc_coll_t *coll)
 	C_ARGS:
 		pattern, &coll
 	POSTCALL:
-		if (RETVAL != 1)
+		if (RETVAL == 0)
 			XSRETURN_UNDEF;
 
 void

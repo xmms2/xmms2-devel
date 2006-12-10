@@ -255,12 +255,14 @@ xmmsc_coll_rename(c, from, to, namespace)
 		xmmsc_coll_namespace_t namespace
 
 xmmsc_result_t*
-xmmsc_coll_query_ids(c, coll, order, limit_start, limit_len)
+xmmsc_coll_query_ids(c, coll, ...)
 		xmmsc_connection_t* c
 		xmmsc_coll_t* coll
-		perl_xmmsclient_collection_order_t order
-		unsigned int limit_start
-		unsigned int limit_len
+		perl_xmmsclient_collection_order_t order = perl_xmmsclient_unpack_char_ptr_ptr(ST(2));
+		unsigned int limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
+		unsigned int limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
+	C_ARGS:
+		c, coll, order, limit_start, limit_len
 	CLEANUP:
 		free (order);
 
