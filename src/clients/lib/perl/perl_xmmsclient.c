@@ -157,3 +157,33 @@ perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...) {
 	FREETMPS;
 	LEAVE;
 }
+
+char **
+perl_xmmsclient_unpack_char_ptr_ptr (SV *arg) {
+	AV *av;
+	SV **ssv;
+	int avlen, i;
+	char **ret;
+
+	if (!SvOK (arg))
+		return NULL;
+
+	if (SvROK (arg) && (SvTYPE (SvRV (arg)) == SVt_PVAV)) {
+		av = (AV *)SvRV (arg);
+
+		avlen = av_len (av);
+		ret = (char **)malloc (sizeof(char *) * (avlen + 2));
+
+		for (i = 0; i <= avlen; ++i) {
+			ssv = av_fetch (av, i, 0);
+			ret[i] = SvPV_nolen (*ssv);
+		}
+
+		ret[avlen + 1] = NULL;
+	}
+	else {
+		croak ("not an array reference");
+	}
+
+	return ret;
+}
