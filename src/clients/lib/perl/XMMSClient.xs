@@ -120,18 +120,18 @@ xmmsc_medialib_add_entry_args(c, url, ...)
 	PREINIT:
 		int i;
 		int nargs;
-		char** args;
-	CODE:
+		const char** args;
+	INIT:
 		nargs = items - 2;
-		args = (char**)malloc( sizeof(char*) * nargs );
+		args = (const char**)malloc( sizeof(char*) * nargs );
 
 		for (i = 0; i < nargs; i++) {
 			args[i] = SvPV_nolen(ST( i+2 ));
 		}
-
-		RETVAL = xmmsc_medialib_add_entry_args(c, url, nargs, (const char**)args);
-	OUTPUT:
-		RETVAL
+	C_ARGS:
+		c, url, nargs, args
+	CLEANUP:
+		free (args);
 
 xmmsc_result_t*
 xmmsc_medialib_add_entry_encoded(c, url)
@@ -544,17 +544,17 @@ xmmsc_playlist_insert_args(c, playlist, pos, url, ...)
 		int i;
 		int nargs;
 		const char** args = NULL;
-	CODE:
+	INIT:
 		nargs = items - 3;
 		args = (const char**)malloc( sizeof(char*) * nargs );
 
 		for (i = 0; i < nargs; i++) {
 			args[i] = SvPV_nolen(ST( i+3 ));
 		}
-
-		RETVAL = xmmsc_playlist_insert_args(c, playlist, pos, url, nargs, args);
-	OUTPUT:
-		RETVAL
+	C_ARGS:
+		c, playlist, pos, url, nargs, args
+	CLEANUP:
+		free (args);
 
 xmmsc_result_t*
 xmmsc_playlist_insert_url(c, playlist, pos, url)
@@ -595,17 +595,17 @@ xmmsc_playlist_add_args(c, playlist, url, ...)
 		int i;
 		int nargs;
 		const char** args = NULL;
-	CODE:
+	INIT:
 		nargs = items - 2;
 		args = (const char**)malloc( sizeof(char*) * nargs );
 
 		for (i = 0; i < nargs; i++) {
 			args[i] = SvPV_nolen(ST( i+2 ));
 		}
-
-		RETVAL = xmmsc_playlist_add_args(c, playlist, url, nargs, args);
-	OUTPUT:
-		RETVAL
+	C_ARGS:
+		c, playlist, url, nargs, args
+	CLEANUP:
+		free (args);
 
 xmmsc_result_t*
 xmmsc_playlist_add_url(c, playlist, url)

@@ -37,6 +37,8 @@ xmmsc_coll_new (class, type, ...)
 
 NO_OUTPUT int
 xmmsc_coll_parse (class, const char *pattern, OUTLIST xmmsc_coll_t *coll)
+	INIT:
+		PERL_UNUSED_VAR(targ);
 	C_ARGS:
 		pattern, &coll
 	POSTCALL:
@@ -60,7 +62,7 @@ xmmsc_coll_set_idlist (coll, ...)
 	PREINIT:
 		int i;
 		unsigned int *ids;
-	CODE:
+	INIT:
 		ids = (unsigned int *)malloc (sizeof(unsigned int) * items);
 
 		for (i = 0; i < items - 1; i++) {
@@ -68,8 +70,10 @@ xmmsc_coll_set_idlist (coll, ...)
 		}
 
 		ids[items - 1] = 0;
-
-		xmmsc_coll_set_idlist (coll, ids);
+	C_ARGS:
+		coll, ids
+	CLEANUP:
+		free (ids);
 
 void
 xmmsc_coll_add_operand (coll, op)
@@ -104,6 +108,8 @@ xmmsc_coll_idlist_clear (coll)
 
 NO_OUTPUT int
 xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, OUTLIST uint32_t val)
+	INIT:
+		PERL_UNUSED_VAR(targ);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
@@ -153,6 +159,9 @@ operands (coll)
 	PPCODE:
 		PERL_UNUSED_VAR(ix);
 
+		if (!xmmsc_coll_operand_list_valid (coll))
+			XSRETURN_EMPTY;
+
 		for (xmmsc_coll_operand_list_first (coll);
 				xmmsc_coll_operand_list_entry (coll, &op);
 				xmmsc_coll_operand_list_next (coll)) {
@@ -167,8 +176,10 @@ int
 xmmsc_coll_operand_list_valid (coll)
 		xmmsc_coll_t *coll
 
-xmmsc_coll_t *
+NO_OUTPUT int
 xmmsc_coll_operand_list_entry (xmmsc_coll_t *coll, OUTLIST xmmsc_coll_t *op)
+	INIT:
+		PERL_UNUSED_VAR(targ);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;
@@ -198,6 +209,8 @@ xmmsc_coll_attribute_remove (coll, key)
 
 NO_OUTPUT int
 xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, OUTLIST char *val)
+	INIT:
+		PERL_UNUSED_VAR(targ);
 	POSTCALL:
 		if (RETVAL == 0)
 			XSRETURN_UNDEF;

@@ -234,7 +234,7 @@ xmmsc_result_wait(res)
 
 		xmmsc_result_wait(c_res);
 
-		SvREFCNT_inc(res); /* TODO: Only do so in non-void context */
+		SvREFCNT_inc(res); /* TODO: Only do so in non-void context? */
 		RETVAL = res;
 	OUTPUT:
 		RETVAL
@@ -243,20 +243,20 @@ void
 xmmsc_result_source_preference_set(res, ...)
 		xmmsc_result_t* res
 	PREINIT:
-		char** preference = NULL;
+		const char** preference = NULL;
 		int i;
-	CODE:
-		preference = (char**)malloc(sizeof(char*) * items - 1);
+	INIT:
+		preference = (const char**)malloc(sizeof(char*) * items - 1);
 
 		for (i = 0; i < items - 1; i++) {
 			preference[i] = SvPV_nolen(ST(i+1));
 		}
 
 		preference[items - 1] = NULL;
-
-		xmmsc_result_source_preference_set(res, (const char**)preference);
-
-		free(preference);
+	C_ARGS:
+		res, preference
+	CLEANUP:
+		free (preference);
 
 xmms_object_cmd_arg_type_t
 xmmsc_result_get_type(res)
