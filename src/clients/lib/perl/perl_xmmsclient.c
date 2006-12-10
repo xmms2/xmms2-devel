@@ -157,13 +157,3 @@ perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...) {
 	FREETMPS;
 	LEAVE;
 }
-
-void
-dump_sv(SV* sv) {
-	int lim = 4;
-	const STRLEN pv_lim = 0;
-	const I32 save_dumpindent = PL_dumpindent;
-	PL_dumpindent = 2;
-	do_sv_dump(0, Perl_debug_log, sv, 0, lim, 0, pv_lim);
-	PL_dumpindent = save_dumpindent;
-}
