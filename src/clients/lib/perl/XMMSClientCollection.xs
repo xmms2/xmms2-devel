@@ -145,6 +145,22 @@ xmmsc_coll_get_idlist (coll)
 			++i;
 		}
 
+void
+operands (coll)
+		xmmsc_coll_t *coll
+	ALIAS:
+		operand_list = 1
+	PREINIT:
+		xmmsc_coll_t *op;
+	PPCODE:
+		PERL_UNUSED_VAR(ix);
+
+		for (xmmsc_coll_operand_list_first (coll);
+				xmmsc_coll_operand_list_entry (coll, &op);
+				xmmsc_coll_operand_list_next (coll)) {
+			XPUSHs (perl_xmmsclient_new_sv_from_ptr (op, "Audio::XMMSClient::Collection"));
+		}
+
 int
 xmmsc_coll_operand_list_first (coll)
 		xmmsc_coll_t *coll
