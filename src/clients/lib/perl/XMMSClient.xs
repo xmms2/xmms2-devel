@@ -280,6 +280,10 @@ xmmsc_coll_query_infos(c, coll, order, limit_start, limit_len, fetch, group)
 		free (fetch);
 		free (group);
 
+xmmsc_result_t*
+xmmsc_broadcast_collection_changed (c)
+		xmmsc_connection_t* c
+
 ## XForm
 
 xmmsc_result_t*
@@ -587,6 +591,11 @@ xmmsc_playlist_remove_entry(c, playlist, pos)
 		xmmsc_connection_t* c
 		const char* playlist
 		unsigned int pos
+
+xmmsc_result_t*
+xmmsc_playlist_remove(c, playlist)
+		xmmsc_connection_t* c
+		const char* playlist
 
 xmmsc_result_t*
 xmmsc_broadcast_playlist_changed(c)
