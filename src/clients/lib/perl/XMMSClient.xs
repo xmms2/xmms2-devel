@@ -258,9 +258,30 @@ xmmsc_result_t*
 xmmsc_coll_query_ids(c, coll, ...)
 		xmmsc_connection_t* c
 		xmmsc_coll_t* coll
-		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(2));
-		unsigned int limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
-		unsigned int limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
+	INIT:
+		const char **order = NULL;
+		unsigned int limit_start = 0;
+		unsigned int limit_len = 0;
+		HV *args;
+		SV *val;
+
+		if (items == 3 && SvROK (ST(2)) && (SvTYPE (SvRV (ST(2))) == SVt_PVHV)) {
+			args = (HV *)SvRV (ST(2));
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "order", 5)))
+				order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "limit_start", 11)))
+				limit_start = SvUV (val);
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "limit_len", 9)))
+				limit_len = SvUV (val);
+		}
+		else {
+			order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST(2));
+			limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
+			limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
+		}
 	C_ARGS:
 		c, coll, order, limit_start, limit_len
 	CLEANUP:
@@ -270,11 +291,40 @@ xmmsc_result_t*
 xmmsc_coll_query_infos(c, coll, ...)
 		xmmsc_connection_t* c
 		xmmsc_coll_t* coll
-		const char **order = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(2));
-		unsigned int limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
-		unsigned int limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
-		const char **fetch = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(5));
-		const char **group = ($type)perl_xmmsclient_unpack_char_ptr_ptr(ST(6));
+	INIT:
+		const char **order = NULL;
+		unsigned int limit_start = 0;
+		unsigned int limit_len = 0;
+		const char **fetch = NULL;
+		const char **group = NULL;
+		HV *args;
+		SV *val;
+
+		if (items == 3 && SvROK (ST(2)) && (SvTYPE (SvRV (ST(2))) == SVt_PVHV)) {
+			args = (HV *)SvRV (ST(2));
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "order", 5)))
+				order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "fetch", 5)))
+				fetch = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "group", 5)))
+				group = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (val);
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "limit_start", 11)))
+				limit_start = SvUV (val);
+
+			if ((val = perl_xmmsclient_hv_fetch (args, "limit_len", 9)))
+				limit_len = SvUV (val);
+		}
+		else {
+			order = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST(2));
+			limit_start = SvOK(ST(3)) ? SvUV (ST(3)) : 0;
+			limit_len = SvOK(ST(4)) ? SvUV (ST(4)) : 0;
+			fetch = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST(5));
+			group = (const char **)perl_xmmsclient_unpack_char_ptr_ptr (ST(6));
+		}
 	C_ARGS:
 		c, coll, order, limit_start, limit_len, fetch, group
 	CLEANUP:
