@@ -263,6 +263,8 @@ xmmsc_coll_query_ids(c, coll, order, limit_start, limit_len)
 		perl_xmmsclient_collection_order_t order
 		unsigned int limit_start
 		unsigned int limit_len
+	CLEANUP:
+		free (order);
 
 #TODO:
 #xmmsc_result_t*
@@ -451,6 +453,8 @@ xmmsc_playlist_sort(c, playlist, properties)
 		xmmsc_connection_t* c
 		const char* playlist
 		perl_xmmsclient_collection_order_t properties
+	CLEANUP:
+		free (properties);
 
 xmmsc_result_t*
 xmmsc_playlist_clear(c, playlist)
@@ -511,6 +515,8 @@ xmmsc_playlist_insert_collection(c, playlist, pos, collection, order)
 		int pos
 		xmmsc_coll_t* collection
 		perl_xmmsclient_collection_order_t order
+	CLEANUP:
+		free (order);
 
 xmmsc_result_t*
 xmmsc_playlist_add_id(c, playlist, id)
@@ -557,6 +563,8 @@ xmmsc_playlist_add_collection(c, playlist, collection, order)
 		const char* playlist
 		xmmsc_coll_t* collection
 		perl_xmmsclient_collection_order_t order
+	CLEANUP:
+		free (order);
 
 xmmsc_result_t*
 xmmsc_playlist_move_entry(c, playlist, cur_pos, new_pos)
