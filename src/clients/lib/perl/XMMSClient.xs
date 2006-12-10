@@ -300,15 +300,12 @@ xmmsc_xform_media_browse_encoded(c, url)
 xmmsc_result_t*
 xmmsc_bindata_add(c, data)
 		xmmsc_connection_t* c
-		SV* data
 	PREINIT:
 		STRLEN len = 0;
-		const unsigned char* buf;
-	CODE:
-		buf = (const unsigned char*)SvPVbyte(data, len);
-		RETVAL = xmmsc_bindata_add(c, buf, len);
-	OUTPUT:
-		RETVAL
+	INPUT:
+		const unsigned char* data = ($type)SvPVbyte($arg, len);
+	C_ARGS:
+		c, data, len
 
 xmmsc_result_t*
 xmmsc_bindata_retrieve(c, hash)
