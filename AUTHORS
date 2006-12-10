@@ -139,7 +139,9 @@ D: Python XMMSSync-proxy. PythonAPI fixes.
 
 N: Florian Ragwitz
 E: rafl@debian.org
-D: Official Debian packages. Bugfixes.
+W: http://perldition.org/
+P: 1024D/8E635A5E E8DC 91A1 B7BE E5AB C172  47EE 742F 2A42 8E63 5A5E
+D: Official Debian packages. Bugfixes. Perl bindings.
 
 N: Alexander Rigbo
 E: alex@rigbo.se
