@@ -287,9 +287,10 @@ value(res)
 		RETVAL
 
 const char*
-xmmsc_result_decode_url(res, string)
-		xmmsc_result_t* res
+xmmsc_result_decode_url(class, string)
 		const char* string
+	C_ARGS:
+		NULL, string
 
 void
 DESTROY(res)
