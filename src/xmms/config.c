@@ -725,6 +725,7 @@ xmms_config_init (const gchar *filename)
 					xmms_log_error ("Cannot parse config file: %s",
 					                error->message);
 					g_error_free (error);
+					error = NULL;
 					parserr = TRUE;
 				}
 				eof = TRUE;
@@ -735,6 +736,7 @@ xmms_config_init (const gchar *filename)
 				xmms_log_error ("Cannot parse config file: %s",
 				                error->message);
 				g_error_free (error);
+				error = NULL;
 				parserr = TRUE;
 			}
 			/* check config file version, assumes that g_markup_context_parse
