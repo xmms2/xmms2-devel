@@ -130,18 +130,12 @@ init_query (coll_query_params_t *params)
 	/* Always fetch the media id */
 	query->params->fetch = g_list_prepend (query->params->fetch, "id");
 
-	/* Prepare aliases for the order/group fields */
+	/* Prepare aliases for the order fields */
 	for (n = query->params->order; n; n = n->next) {
 		gchar *field = canonical_field_name (n->data);
 		if (field != NULL) {
 			query_make_alias (query, field, TRUE);
 		}
-	}
-	for (n = query->params->group; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
-	}
-	for (n = query->params->fetch; n; n = n->next) {
-		query_make_alias (query, n->data, TRUE);
 	}
 
 	return query;
