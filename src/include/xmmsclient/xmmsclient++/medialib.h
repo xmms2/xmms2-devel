@@ -41,6 +41,22 @@ namespace Xmms
 			 */
 			void addEntry( const std::string& url ) const;
 
+			/** Add a URL with arguments to the medialib.
+			 *  If you want to add multiple files you should call pathImport.
+			 *
+			 *  @param url URL to add to the medialib.
+			 *  @param args List of strings used as arguments.
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 *  @throw mainloop_running_error If a mainloop is running -
+			 *  sync functions can't be called when mainloop is running. This
+			 *  is only thrown if the programmer is careless or doesn't know
+			 *  what he/she's doing. (logic_error)
+			 *  @throw result_error If the operation failed.
+			 */
+			void addEntry( const std::string& url,
+			               const std::list< std::string >& args ) const;
+
 			/** Add a URL to the medialib.
 			 *  Same as #addEntry but takes a encoded URL instead.
 			 *
@@ -221,6 +237,23 @@ namespace Xmms
 			 */
 			void
 			addEntry( const std::string& url,
+			          const VoidSlot& slot,
+			          const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			/** Add a URL with arguments to the medialib.
+			 *  If you want to add multiple files you should call pathImport.
+			 *
+			 *  @param url URL to add to the medialib.
+			 *  @param args List of strings used as arguments.
+			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param error Function pointer to an error callback
+			 *               function. (<b>optional</b>)
+			 *
+			 *  @throw connection_error If the client isn't connected.
+			 */
+			void
+			addEntry( const std::string& url,
+			          const std::list< std::string >& args,
 			          const VoidSlot& slot,
 			          const ErrorSlot& error = &Xmms::dummy_error ) const;
 
