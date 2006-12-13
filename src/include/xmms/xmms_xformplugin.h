@@ -304,6 +304,7 @@ xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
  * @returns 
  */
 xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
+const gchar *xmms_xform_get_url (xmms_xform_t *xform);
 
 #define XMMS_XFORM_BROWSE_FLAG_DIR (1 << 0)
 
@@ -315,6 +316,7 @@ void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
 void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
                                                const gchar *key,
                                                gint value);
+void xmms_xform_browse_add_entry_symlink (xmms_xform_t *xform, const gchar *link);
 
 #define XMMS_XFORM_MAX_LINE_SIZE 1024
 

@@ -275,4 +275,28 @@ xmmsc_broadcast_collection_changed (xmmsc_connection_t *c)
 	return xmmsc_send_broadcast_msg (c, XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 }
 
+/**
+ * Create a new collections structure with type idlist
+ * from a playlist file.
+ *
+ * @param conn  The connection to the server.
+ * @param path  Path to the playlist file. Must be unencoded.
+ */
+xmmsc_result_t *
+xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, const char *path)
+{
+	xmms_ipc_msg_t *msg;
+	char *enc_url;
+
+	x_check_conn (conn, NULL);
+
+	enc_url = _xmmsc_medialib_encode_url (path, 0, NULL);
+	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_IDLIST_FROM_PLS);
+	xmms_ipc_msg_put_string (msg, enc_url);
+	free (enc_url);
+
+	return xmmsc_send_msg (conn, msg);
+}
+
+
 /** @} */

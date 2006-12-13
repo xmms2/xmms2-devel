@@ -59,6 +59,7 @@ cmds commands[] = {
 	{ "sort", "sort the playlist; use a space delimiter for multiple properties", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
 	{ "list", "lists the playlist", cmd_list },
+	{ "addpls", "Adds the contents of a playlist file to the playlist", cmd_addpls },
 	
 	/* Playback managment */
 	{ "play", "starts playback", cmd_play },

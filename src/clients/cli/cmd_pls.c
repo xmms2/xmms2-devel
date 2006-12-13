@@ -806,3 +806,40 @@ cmd_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	print_info ("Playlist removed");
 }
 
+void
+cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
+{
+	xmmsc_result_t *res, *res2;
+	xmmsc_coll_t *coll;
+	const char *order[] = { "id", NULL };
+	gchar *url;
+
+	if (argc < 3) {
+		print_error ("Supply path to playlist file");
+	}
+
+	url = format_url (argv[2], G_FILE_TEST_IS_REGULAR);
+
+	res = xmmsc_coll_idlist_from_playlist_file (conn, url);
+	g_free (url);
+
+	xmmsc_result_wait (res);
+	if (xmmsc_result_iserror (res)) {
+		print_error ("%s", xmmsc_result_get_error (res));
+	}
+
+	if (!xmmsc_result_get_collection (res, &coll)) {
+		print_error ("Couldn't get collection from result!");
+	}
+
+	res2 = xmmsc_playlist_add_collection (conn, NULL, coll, order);
+	xmmsc_result_wait (res2);
+	if (xmmsc_result_iserror (res2)) {
+		print_error ("%s", xmmsc_result_get_error (res2));                                                  
+	}
+
+	print_info ("Playlist with %d entries added", xmmsc_coll_idlist_get_size (coll));
+
+	xmmsc_result_unref (res);
+	xmmsc_result_unref (res2);
+}

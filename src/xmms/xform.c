@@ -104,6 +104,15 @@ xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
 	xmms_xform_browse_add_entry_property (xform, key, val);
 }
 
+void
+xmms_xform_browse_add_entry_symlink (xmms_xform_t *xform,
+                                     const gchar *link)
+{
+	gchar *eurl = xmms_medialib_url_encode (link);
+	xmms_xform_browse_add_entry_property (xform, "realpath",
+	                                      xmms_object_cmd_value_str_new (eurl));
+	g_free (eurl);
+}
 
 void
 xmms_xform_browse_add_entry_property (xmms_xform_t *xform, const gchar *key, xmms_object_cmd_value_t *val)
@@ -125,7 +134,7 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 
 	g_return_if_fail (filename);
 
-	url = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_URL);
+	url = xmms_xform_get_url (xform);
 
 	g_return_if_fail (url);
 
@@ -175,6 +184,23 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 }
 
 GList *
+xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
+{
+	GList *list = NULL;
+
+	if (xform->plugin->methods.browse) {
+		xform->plugin->methods.browse (xform, url, error);
+		list = xform->browse_list;
+		xform->browse_list = NULL;
+		list = g_list_sort (list, xmms_browse_list_sortfunc);
+	} else {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't handle that URL");
+	}
+
+	return list;
+}
+
+GList *
 xmms_xform_browse (xmms_xform_object_t *obj,
                    const gchar *url,
                    xmms_error_t *error)
@@ -207,15 +233,8 @@ xmms_xform_browse (xmms_xform_object_t *obj,
 		return NULL;
 	}
 
-	if (xform2->plugin->methods.browse) {
-		xform2->plugin->methods.browse (xform2, durl, error);
-		list = xform2->browse_list;
-		xform2->browse_list = NULL;
-		list = g_list_sort (list, xmms_browse_list_sortfunc);
-	} else {
-		xmms_error_set (error, XMMS_ERROR_GENERIC, "Couldn't handle that URL");
-	}
-	
+	list = xmms_xform_browse_method (xform2, durl, error);
+
 	xmms_object_unref (xform);
 	xmms_object_unref (xform2);
 	g_free (durl);
@@ -280,6 +299,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 	xform->plugin = plugin;
 	xform->entry = entry;
 	xform->goal_hints = goal_hints;
+	xform->lr.bufend = &xform->lr.buf[0];
 
 	if (prev) {
 		xmms_object_ref (prev);
@@ -747,7 +767,20 @@ xmms_xform_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t when
 	return xmms_xform_this_seek (xform->prev, offset, whence, err);
 }
 
+const gchar *
+xmms_xform_get_url (xmms_xform_t *xform)
+{
+	const gchar *url = NULL;
+	xmms_xform_t *x;
+	x = xform;
 
+	while (!url && x) {
+		url = xmms_xform_indata_get_str (x, XMMS_STREAM_TYPE_URL);
+		x = x->prev;
+	}
+
+	return url;
+}
 
 static void
 xmms_xform_plugin_destroy (xmms_object_t *obj)
@@ -910,14 +943,13 @@ has_goalformat (xmms_xform_t *xform, GList *goal_formats)
 	return FALSE;
 }
 
+
 xmms_xform_t *
 xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 {
+	xmms_xform_t *xform;
 	xmms_medialib_session_t *session;
-	xmms_xform_t *xform, *last;
 	gchar *url;
-	gchar *durl, *args;
-	GString *namestr;	
 
 	session = xmms_medialib_begin ();
 	url = xmms_medialib_entry_property_get_str (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
@@ -928,9 +960,26 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 		return NULL;
 	}
 
-	durl = g_strdup (url);
+	xform = xmms_xform_chain_setup_url (entry, url, goal_formats);
+	g_free (url);
 
-	xform = xmms_xform_new (NULL, NULL, entry, goal_formats);
+	return xform;
+}
+
+xmms_xform_t *
+xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats)
+{
+	xmms_xform_t *xform, *last;
+	gchar *durl, *args;
+	GString *namestr;
+
+	if (!entry) {
+		entry = 1; /* FIXME: this is soooo ugly, don't do this */
+	}
+
+	xform = xmms_xform_new (NULL, NULL, 0, goal_formats);
+
+	durl = g_strdup (url);
 
 	args = strchr (durl, '?');
 	if (args) {
@@ -974,20 +1023,12 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 			xmms_log_error ("Couldn't set up chain for '%s' (%d)",
 			                url, entry);
 			xmms_object_unref (last);
-			g_free (url);
 
 			return NULL;
 		}
 		xmms_object_unref (last);
 		last = xform;
 	} while (!has_goalformat (xform, goal_formats));
-
-	/* add a buffer */
-/*
-	last = xmms_ringbuf_xform_new (xform, entry);
-
-	xmms_object_unref (xform);
-*/
 
 	last = add_effects (last, entry, goal_formats);
 
@@ -996,7 +1037,6 @@ xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats)
 	xmms_log_info ("Successfully setup chain for '%s' (%d) containing %s",
 	               url, entry, namestr->str);
 
-	g_free (url);
 	g_string_free (namestr, TRUE);
 
 	return last;
