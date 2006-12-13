@@ -189,7 +189,9 @@ xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_error_t *e
 	GList *list = NULL;
 
 	if (xform->plugin->methods.browse) {
-		xform->plugin->methods.browse (xform, url, error);
+		if (!xform->plugin->methods.browse (xform, url, error)) {
+			return NULL;
+		}
 		list = xform->browse_list;
 		xform->browse_list = NULL;
 		list = g_list_sort (list, xmms_browse_list_sortfunc);
