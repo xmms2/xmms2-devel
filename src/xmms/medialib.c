@@ -15,7 +15,6 @@
  */
 
 #include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_plsplugins.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_defs.h"

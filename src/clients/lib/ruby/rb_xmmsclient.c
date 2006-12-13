@@ -1073,30 +1073,6 @@ c_medialib_playlist_list (VALUE self, VALUE name)
 	METHOD_ADD_HANDLER_STR (medialib_playlist_list, name);
 }
 
-/*
- * call-seq:
- *  xc.medialib_playlist_import(playlist, url) -> result
- *
- * Imports a new playlist from _url_ to the medialib.
- */
-static VALUE
-c_medialib_playlist_import (VALUE self, VALUE playlist, VALUE url)
-{
-	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_import, playlist, url);
-}
-
-/*
- * call-seq:
- *  xc.medialib_playlist_export(playlist, mime) -> result
- *
- * Exports a medialib playlist in a format described by _mime_.
- */
-static VALUE
-c_medialib_playlist_export (VALUE self, VALUE playlist,
-                                         VALUE mime)
-{
-	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_export, playlist, mime);
-}
 #endif
 
 /*
@@ -1368,10 +1344,6 @@ Init_Client (VALUE mXmms)
 	                  c_medialib_playlists_list, 0);
 	rb_define_method (c, "medialib_playlist_list",
 	                  c_medialib_playlist_list, 1);
-	rb_define_method (c, "medialib_playlist_import",
-	                  c_medialib_playlist_import, 2);
-	rb_define_method (c, "medialib_playlist_export",
-	                  c_medialib_playlist_export, 2);
 #endif
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);

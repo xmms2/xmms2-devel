@@ -22,8 +22,6 @@ cmds plist_commands[] = {
 	{ "create", "[playlistname] - Create a playlist", cmd_playlist_create },
 	{ "type", "[playlistname] [type] - Set the type of the playlist (list, queue, pshuffle)", cmd_playlist_type },
 	{ "load", "[playlistname] - Load 'playlistname' stored in medialib", cmd_playlist_load },
-	{ "import", "[name] [filename] - Import playlist from file", cmd_playlist_import },
-	{ "export", "[playlistname] [mimetype] - Export playlist", cmd_playlist_export },
 	{ "remove", "[playlistname] - Remove a playlist", cmd_playlist_remove },
 	{ NULL, NULL, NULL },
 };
@@ -171,48 +169,6 @@ cmd_addid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		}
 	}
 }
-
-
-void
-cmd_addpls (xmmsc_connection_t *conn, gint argc, gchar **argv)
-{
-	gint i;
-
-	if (argc < 3) {
-		print_error ("Need a playlist url to add");
-	}
-
-	for (i = 2; argv[i]; i++) {
-		xmmsc_result_t *res;
-		gchar *url;
-
-		url = format_url (argv[i], G_FILE_TEST_IS_REGULAR);
-		if (!url) {
-			print_error ("Invalid url");
-		}
-
-		res = xmmsc_playlist_import (conn, "_xmms2cli", url);
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-		xmmsc_result_unref (res);
-
-		/* FIXME: Hack is BROKEN now ! use add_coll instead ! */
-		res = xmmsc_playlist_load (conn, "_xmms2cli");
-		xmmsc_result_wait (res);
-
-		if (xmmsc_result_iserror (res)) {
-			print_error ("%s", xmmsc_result_get_error (res));
-		}
-		xmmsc_result_unref (res);
-
-		print_info ("Added playlist %s", url);
-		g_free (url);
-	}
-}
-
 
 void
 cmd_add (xmmsc_connection_t *conn, gint argc, gchar **argv)
@@ -830,34 +786,6 @@ cmd_playlists_list (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	xmmsc_result_unref (active_res);
 }
 
-
-void
-cmd_playlist_import (xmmsc_connection_t *conn, gint argc, gchar **argv)
-{
-	xmmsc_result_t *res;
-	gchar *url;
-
-	if (argc < 5) {
-		print_error ("Supply a playlist name and url");
-	}
-
-	url = format_url (argv[4], G_FILE_TEST_IS_REGULAR);
-	if (!url) {
-		print_error ("Invalid url");
-	}
-
-	res = xmmsc_playlist_import (conn, argv[3], url);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
-	}
-	xmmsc_result_unref (res);
-
-	print_info ("Playlist imported");
-}
-
-
 void
 cmd_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
@@ -878,41 +806,3 @@ cmd_playlist_remove (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	print_info ("Playlist removed");
 }
 
-
-void
-cmd_playlist_export (xmmsc_connection_t *conn, gint argc, gchar **argv)
-{
-	xmmsc_result_t *res;
-	gchar *file;
-	gchar *mime;
-
-	if (argc < 5) {
-		print_error ("Supply a playlist name and a mimetype");
-	}
-
-	if (strcasecmp (argv[4], "m3u") == 0) {
-		mime = "audio/mpegurl";
-	} else if (strcasecmp (argv[4], "pls") == 0) {
-		mime = "audio/x-scpls";
-	} else if (strcasecmp (argv[4], "html") == 0) {
-		mime = "text/html";
-	} else {
-		mime = argv[4];
-	}
-
-	res = xmmsc_playlist_export (conn, argv[3], mime);
-	xmmsc_result_wait (res);
-
-	if (xmmsc_result_iserror (res)) {
-		print_error ("%s", xmmsc_result_get_error (res));
-	}
-
-	if (!xmmsc_result_get_string (res, &file)) {
-		print_error ("Broken resultset!");
-	}
-
-	fwrite (file, strlen (file), 1, stdout);
-	print_info ("Playlist exported");
-
-	xmmsc_result_unref (res);
-}

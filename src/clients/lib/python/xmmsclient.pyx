@@ -159,8 +159,6 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	xmmsc_result_t *xmmsc_playlist_radd_encoded(xmmsc_connection_t *c, char *, char *path)
 
 	xmmsc_result_t *xmmsc_playlist_load (xmmsc_connection_t *, char *playlist)
-	xmmsc_result_t *xmmsc_playlist_import (xmmsc_connection_t *, char *playlist, char *url)
-	xmmsc_result_t *xmmsc_playlist_export (xmmsc_connection_t *, char *playlist, char *mime)
 	xmmsc_result_t *xmmsc_playlist_move(xmmsc_connection_t *c, unsigned int id, signed int movement)
 
 	xmmsc_result_t *xmmsc_broadcast_playlist_changed(xmmsc_connection_t *c)
@@ -1107,49 +1105,6 @@ cdef class XMMS:
 			ret.res = xmmsc_playlist_remove(self.conn, pl)
 		else:
 			ret.res = xmmsc_playlist_remove(self.conn, NULL)
-
-		ret.more_init()
-		
-		return ret
-
-
-	def playlist_export(self, mime, playlist = None):
-		"""
-		Exports the playlist using mime type
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		if playlist is not None:
-			pl = from_unicode(playlist)
-			ret.res = xmmsc_playlist_export(self.conn, pl, mimetype)
-		else:
-			ret.res = xmmsc_playlist_export(self.conn, NULL, mimetype)
-
-		ret.more_init()
-		
-		return ret
-
-	def playlist_import(self, url, playlist = None):
-		"""
-		Imports the playlist from url
-		@rtype: L{XMMSResult}
-		@return: The result of the operation.
-		"""
-		cdef XMMSResult ret
-		
-		ret = XMMSResult(self)
-		ret.callback = cb
-
-		if playlist is not None:
-			pl = from_unicode(playlist)
-			ret.res = xmmsc_playlist_import(self.conn, pl, url)
-		else:
-			ret.res = xmmsc_playlist_import(self.conn, NULL, url)
 
 		ret.more_init()
 		
