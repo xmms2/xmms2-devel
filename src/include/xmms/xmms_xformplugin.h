@@ -243,6 +243,18 @@ gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err);
 
 /**
+ * Read one line from previous xform.
+ *
+ * Reads a line from the prev xform into buf.
+ *
+ * @param xform
+ * @param buf buffer to write the line to, should be at least XMMS_XFORM_MAX_LINE_SIZE
+ * @param err error container which is filled in if error occours.
+ * @returns the line read from the parent or NULL to indicate error.
+ */
+gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err);         
+
+/**
  * Read data from previous xform.
  *
  * Reads up to siz bytes into the supplied buffer starting at buf. If
@@ -303,6 +315,9 @@ void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
 void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
                                                const gchar *key,
                                                gint value);
+
+#define XMMS_XFORM_MAX_LINE_SIZE 1024
+
 /**
  * @}
  */

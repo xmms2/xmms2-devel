@@ -60,6 +60,12 @@ struct xmms_xform_St {
 
 	GList *browse_list;
 	GHashTable *browse_hash;
+
+	/** used for line reading */
+	struct {
+		gchar buf[XMMS_XFORM_MAX_LINE_SIZE];
+		gchar *bufend;
+	} lr;
 };
 
 #define READ_CHUNK 4096
@@ -680,6 +686,51 @@ xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 {
 	g_return_val_if_fail (xform->prev, -1);
 	return xmms_xform_this_peek (xform->prev, buf, siz, err);
+}
+
+gchar *
+xmms_xform_read_line (xmms_xform_t *xform, gchar *line, xmms_error_t *err)
+{
+	gchar *p;
+
+	g_return_val_if_fail (xform, NULL);
+	g_return_val_if_fail (line, NULL);
+
+	p = strchr (xform->lr.buf, '\n');
+
+	if (!p) {
+		gint l, r;
+
+		l = (XMMS_XFORM_MAX_LINE_SIZE - 1) - (xform->lr.bufend - xform->lr.buf);
+		if (l) {
+			r = xmms_xform_read (xform, xform->lr.bufend, l, err);
+			if (r < 0) {
+				return NULL;
+			}
+			xform->lr.bufend += r;
+		}
+		if (xform->lr.bufend <= xform->lr.buf)
+			return NULL;
+
+		*(xform->lr.bufend) = '\0';
+		p = strchr (xform->lr.buf, '\n');
+		if (!p) {
+			p = xform->lr.bufend;
+		}
+	}
+
+	if (p > xform->lr.buf && *(p-1) == '\r') {
+		*(p-1) = '\0';
+	} else {
+		*p = '\0';
+	}
+
+	strcpy (line, xform->lr.buf);
+	memmove (xform->lr.buf, p + 1, xform->lr.bufend - p);
+	xform->lr.bufend -= (p - xform->lr.buf) + 1;
+	*xform->lr.bufend = '\0';
+
+	return line;
 }
 
 gint
