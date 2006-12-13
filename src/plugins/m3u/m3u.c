@@ -142,6 +142,7 @@ xmms_m3u_browse (xmms_xform_t *xform,
 	do {
 		if (extm3u && line[0] == '#') {
 			if (!xmms_xform_read_line (xform, line, &err)) {
+				g_free (d);
 				return FALSE;
 			}
 		}
