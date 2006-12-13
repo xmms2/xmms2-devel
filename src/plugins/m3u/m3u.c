@@ -102,8 +102,8 @@ parse_line (const gchar *line, const gchar *m3u_path, gchar *newp)
 		g_snprintf (newp, XMMS_PATH_MAX, "%s", line);
 	}
 
-	/* in all code paths, newp should have been written */
-	g_assert (newp[0]);
+	if (!newp[0])
+		return FALSE;
 
 	return TRUE;
 }
@@ -140,14 +140,15 @@ xmms_m3u_browse (xmms_xform_t *xform,
 	p[0] = '\0';
 
 	do {
-		if (extm3u && line[0] == '#') {
+		if (line[0] == '#') {
 			if (!xmms_xform_read_line (xform, line, &err)) {
 				g_free (d);
 				return FALSE;
 			}
 		}
 
-		parse_line (line, d, entry);
+		if (!parse_line (line, d, entry))
+			continue;
 
 		if ((p = strchr (line, ':'))) {
 			if (p[1] == '/' && p[2] == '/') {
@@ -155,9 +156,7 @@ xmms_m3u_browse (xmms_xform_t *xform,
 				xmms_xform_browse_add_entry (xform, strrchr (entry, '/'), 0);
 				xmms_xform_browse_add_entry_symlink (xform, entry);
 			} else {
-				xmms_log_error ("error in parsing m3u file!");
-				g_free (d);
-				return FALSE;
+				continue; /* unreadable line, let's move on */
 			}
 		} else {
 			gchar *tmp = g_build_filename (d, entry, NULL);
