@@ -20,6 +20,7 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmms/xmms_util.h"
 #include "xmms/xmms_log.h"
 
 #include <glib.h>
@@ -88,27 +89,6 @@ xmms_m3u_init (xmms_xform_t *xform)
  */
 
 static gboolean
-parse_line (const gchar *line, const gchar *m3u_path, gchar *newp)
-{
-	g_return_val_if_fail (line, FALSE);
-
-	/* used to determine whether we got a valid path/url, see below */
-	newp[0] = '\0';
-
-	/* check for an absolute path */
-	if (line[0] == '/') {
-		g_snprintf (newp, XMMS_PATH_MAX, "file://%s", line);
-	} else {
-		g_snprintf (newp, XMMS_PATH_MAX, "%s", line);
-	}
-
-	if (!newp[0])
-		return FALSE;
-
-	return TRUE;
-}
-
-static gboolean
 xmms_m3u_browse (xmms_xform_t *xform,
                  const gchar *url,
                  xmms_error_t *error)
@@ -117,7 +97,8 @@ xmms_m3u_browse (xmms_xform_t *xform,
 	gchar entry[XMMS_PATH_MAX];
 	xmms_error_t err;
 	gboolean extm3u = FALSE;
-	gchar *p, *d;
+	gchar *tmp;
+	const gchar *d;
 
 	g_return_val_if_fail (xform, FALSE);
 
@@ -135,39 +116,23 @@ xmms_m3u_browse (xmms_xform_t *xform,
 		}
 	}
 
-	d = g_strdup (xmms_xform_get_url (xform));
-	p = strrchr (d, '/');
-	p[0] = '\0';
+	d = xmms_xform_get_url (xform);
 
 	do {
 		if (line[0] == '#') {
 			if (!xmms_xform_read_line (xform, line, &err)) {
-				g_free (d);
 				return FALSE;
 			}
 		}
 
-		if (!parse_line (line, d, entry))
-			continue;
+		tmp = xmms_build_playlist_url (d, line);
 
-		if ((p = strchr (line, ':'))) {
-			if (p[1] == '/' && p[2] == '/') {
-				/* proto:// */
-				xmms_xform_browse_add_entry (xform, strrchr (entry, '/'), 0);
-				xmms_xform_browse_add_entry_symlink (xform, entry);
-			} else {
-				continue; /* unreadable line, let's move on */
-			}
-		} else {
-			gchar *tmp = g_build_filename (d, entry, NULL);
-			xmms_xform_browse_add_entry (xform, entry, 0);
-			xmms_xform_browse_add_entry_symlink (xform, tmp);
-			g_free (tmp);
-		}
+		xmms_xform_browse_add_entry (xform, entry, 0);
+		xmms_xform_browse_add_entry_symlink (xform, tmp, 0, NULL);
+
+		g_free (tmp);
 
 	} while (xmms_xform_read_line (xform, line, &err));
-
-	g_free (d);
 
 	return TRUE;
 }

@@ -106,12 +106,24 @@ xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
 
 void
 xmms_xform_browse_add_entry_symlink (xmms_xform_t *xform,
-                                     const gchar *link)
+                                     const gchar *link,
+                                     gint numargs,
+                                     gchar **args)
 {
+	gint i;
 	gchar *eurl = xmms_medialib_url_encode (link);
+	GString *s = g_string_new (eurl);
+
+
+	for (i = 0; i < numargs; i++) {
+		g_string_append (s, i == 0 ? "?" : "&");
+		g_string_append (s, args[i]);
+	}
+
 	xmms_xform_browse_add_entry_property (xform, "realpath",
-	                                      xmms_object_cmd_value_str_new (eurl));
+	                                      xmms_object_cmd_value_str_new (s->str));
 	g_free (eurl);
+	g_string_free (s, TRUE);
 }
 
 void

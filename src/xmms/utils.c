@@ -21,8 +21,10 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "xmmsc/xmmsc_util.h"
+#include "xmms/xmms_util.h"
 #include "xmmspriv/xmms_utils.h"
 #include "xmmsc/xmmsc_strlist.h"
 
@@ -53,4 +55,51 @@ xmms_build_path (char *first, ...)
 	xmms_strlist_destroy (vargv);
 	xmms_strlist_destroy (argv);
 	return ret;
+}
+
+static gchar *
+path_get_body (const gchar *path)
+{
+	gchar *beg, *end;
+
+	g_return_val_if_fail (path, NULL);
+
+	beg = strstr (path, "://");
+
+	if (!beg) {
+		return g_strndup (path, strcspn (path, "/"));
+	}
+
+	beg += 3;
+	end = strchr (beg, '/');
+
+	if (!end) {
+		return g_strdup (path);
+	}
+
+	return g_strndup (path, end - path);
+}
+
+gchar *
+xmms_build_playlist_url (const gchar *plspath, const gchar *file)
+{
+	gchar *url;
+	gchar *path;
+
+	g_return_val_if_fail (plspath, NULL);
+	g_return_val_if_fail (file, NULL);
+
+	if (strstr (file, "://") != NULL) {
+		return g_strdup (file);
+	}
+
+	if (file[0] == '/') {
+		path = path_get_body (plspath);
+	} else {
+		path = g_path_get_dirname (plspath);
+	}
+	url = g_build_filename (path, file, NULL);
+
+	g_free (path);
+	return url;
 }

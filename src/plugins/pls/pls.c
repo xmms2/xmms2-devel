@@ -17,6 +17,7 @@
 #include "xmms/xmms_defs.h"
 #include "xmms/xmms_xformplugin.h"
 #include "xmmsc/xmmsc_util.h"
+#include "xmms/xmms_util.h"
 #include "xmms/xmms_log.h"
 
 #include <glib.h>
@@ -37,7 +38,6 @@ static gboolean xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_pls_init (xmms_xform_t *xform);
 static gboolean xmms_pls_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 static void xmms_pls_destroy (xmms_xform_t *xform);
-static gchar *build_encoded_url (const gchar *plspath, const gchar *file);
 
 /*
  * Plugin header
@@ -105,14 +105,14 @@ xmms_pls_add_entry (xmms_xform_t *xform,
 		gchar *title;
 		gchar *path;
 		
-		path = build_encoded_url (plspath, e->file);
+		path = xmms_build_playlist_url (plspath, e->file);
 		title = e->file;
 
 		if (e->title)
 			title = e->title;
 
 		xmms_xform_browse_add_entry (xform, title, 0);
-		xmms_xform_browse_add_entry_symlink (xform, path);
+		xmms_xform_browse_add_entry_symlink (xform, path, 0, NULL);
 
 		g_free (path);
 		g_free (e->file);
@@ -196,49 +196,3 @@ xmms_pls_browse (xmms_xform_t *xform, const char *url, xmms_error_t *error)
 	return TRUE;
 }
 
-static gchar *
-path_get_body (const gchar *path)
-{
-	gchar *beg, *end;
-
-	g_return_val_if_fail (path, NULL);
-
-	beg = strstr (path, "://");
-
-	if (!beg) {
-		return g_strndup (path, strcspn (path, "/"));
-	}
-
-	beg += 3;
-	end = strchr (beg, '/');
-
-	if (!end) {
-		return g_strdup (path);
-	}
-
-	return g_strndup (path, end - path);
-}
-
-static gchar *
-build_encoded_url (const gchar *plspath, const gchar *file)
-{
-	gchar *url;
-	gchar *path;
-
-	g_return_val_if_fail (plspath, NULL);
-	g_return_val_if_fail (file, NULL);
-
-	if (strstr (file, "://") != NULL) {
-		return g_strdup (file);
-	}
-
-	if (file[0] == '/') {
-		path = path_get_body (plspath);
-	} else {
-		path = g_path_get_dirname (plspath);
-	}
-	url = g_build_filename (path, file, NULL);
-
-	g_free (path);
-	return url;
-}
