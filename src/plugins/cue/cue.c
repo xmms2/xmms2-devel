@@ -161,9 +161,13 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 	file = xmms_build_playlist_url (xmms_xform_get_url (xform), tr->file);
 
 	while (n) {
-		cue_track *t = n->data;
 		gchar *arg[] = { NULL, NULL };
 		gint numargs = 1;
+		cue_track *t = n->data;
+		if (!t) {
+			continue;
+		}
+
 		arg[0] = g_strdup_printf ("startms=%d", t->index2 ? t->index2 : t->index);
 
 		if (n->next && n->next->data) {
@@ -176,7 +180,9 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 		xmms_xform_browse_add_entry_symlink (xform, file, numargs, arg);
 
 		g_free (arg[0]);
-		g_free (arg[1]);
+		if (numargs == 2) {
+			g_free (arg[1]);
+		}
 
 		g_free (t);
 		n = g_list_delete_link (n, n);
@@ -185,6 +191,7 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 	g_free (file);
 
 	tr->file[0] = '\0';
+	tr->tracks = NULL;
 }
 
 static gboolean
