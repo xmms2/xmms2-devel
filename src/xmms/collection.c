@@ -280,6 +280,7 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 	GList *lst, *n;
 	xmmsc_coll_t *coll;
 	xmms_medialib_session_t *session;
+	guint src;
 
 	xform = xmms_xform_chain_setup_url (0, path, global_stream_type);
 
@@ -296,6 +297,7 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 
 	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
 	session = xmms_medialib_begin_write ();
+	src = xmms_medialib_source_to_id (session, "plugin/playlist");
 
 	n = lst;
 	while (n) {
@@ -309,6 +311,24 @@ xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t
 		                                         b->value.string,
 		                                         err);
 		if (entry) {
+			b = g_hash_table_lookup (a->value.dict, "artist");
+			if (b) {
+				xmms_medialib_entry_property_set_str_source (session, entry,
+				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
+				                                             b->value.string, src);
+			}
+			b = g_hash_table_lookup (a->value.dict, "album");
+			if (b) {
+				xmms_medialib_entry_property_set_str_source (session, entry,
+				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
+				                                             b->value.string, src);
+			}
+			b = g_hash_table_lookup (a->value.dict, "title");
+			if (b) {
+				xmms_medialib_entry_property_set_str_source (session, entry,
+				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
+				                                             b->value.string, src);
+			}
 			xmmsc_coll_idlist_append (coll, entry);
 		} else {
 			xmms_log_error ("couldn't add %s to collection!", b->value.string);

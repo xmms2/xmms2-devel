@@ -119,6 +119,9 @@ save_to_char (gchar *p, gchar c, gchar *f)
 
 typedef struct {
 	gchar file[XMMS_PATH_MAX];
+	gchar title[1024];
+	gchar artist[1024];
+	gchar album[1024];
 	gint index;
 	gint index2;
 	GList *tracks;
@@ -178,6 +181,10 @@ add_track (xmms_xform_t *xform, cue_track *tr)
 
 		xmms_xform_browse_add_entry (xform, tr->file, 0);
 		xmms_xform_browse_add_entry_symlink (xform, file, numargs, arg);
+		xmms_xform_browse_add_entry_property_int (xform, "intsort", t->index);
+		xmms_xform_browse_add_entry_property_str (xform, "title", t->title);
+		xmms_xform_browse_add_entry_property_str (xform, "artist", t->artist);
+		xmms_xform_browse_add_entry_property_str (xform, "album", tr->album);
 
 		g_free (arg[0]);
 		if (numargs == 2) {
@@ -240,6 +247,28 @@ xmms_cue_browse (xmms_xform_t *xform,
 			p = skip_to_char (p, ' ');
 			p = skip_white_space (p);
 			add_index (t, p);
+		} else if (g_ascii_strncasecmp (p, "TITLE", 5) == 0) {
+			cue_track *t = g_list_nth_data (track.tracks, 0);
+
+			p = skip_to_char (p, '"');
+			p ++;
+
+			if (!t) {
+				save_to_char (p, '"', track.album);
+			} else {
+				save_to_char (p, '"', t->title);
+			}
+		} else if (g_ascii_strncasecmp (p, "PERFORMER", 9) == 0) {
+			cue_track *t = g_list_nth_data (track.tracks, 0);
+
+			p = skip_to_char (p, '"');
+			p ++;
+
+			if (!t) {
+				save_to_char (p, '"', track.artist);
+			} else {
+				save_to_char (p, '"', t->artist);
+			}
 		}
 	} while (xmms_xform_read_line (xform, line, error));
 

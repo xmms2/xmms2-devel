@@ -183,6 +183,15 @@ xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
 	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
 
+	val1 = g_hash_table_lookup (val1->value.dict, "intsort");
+	val2 = g_hash_table_lookup (val2->value.dict, "intsort");
+
+	if (val1 && val2) {
+		g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
+		g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
+		return val1->value.int32 > val2->value.int32;
+	}
+
 	val1 = g_hash_table_lookup (val1->value.dict, "path");
 	val2 = g_hash_table_lookup (val2->value.dict, "path");
 
