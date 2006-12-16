@@ -1,0 +1,335 @@
+#! /usr/bin/env python
+# encoding: utf-8
+# Thomas Nagy, 2005 (ita)
+
+import os, sys
+if 'PSYCOWAF' in os.environ:
+	try:
+		import psyco
+		psyco.full()
+	except:
+		pass
+
+VERSION="1.0.2"
+REVISION="x"
+cwd = os.getcwd()
+
+def decodeAscii85(s):
+	out=[]
+	app=out.append
+	s=''.join(s.split()).replace('z','!!!!!')
+	p1,p2=divmod(len(s), 5)
+	stop=5*p1
+	p3,p4=s[0:stop],s[stop:]
+	for i in range(p1):
+		off=i*5
+		a=ord(p3[off])-33
+		b=ord(p3[off+1])-33
+		c=ord(p3[off+2])-33
+		d=ord(p3[off+3])-33
+		e=ord(p3[off+4])-33
+		num=(52200625L*a)+(614125*b)+(7225*c)+(85*d)+e
+		x,p=divmod(num,256)
+		x,o=divmod(x,256)
+		m,n=divmod(x,256)
+		app(chr(m)+chr(n)+chr(o)+chr(p))
+	if p2:
+		while len(p4)<5: p4=p4+'!'
+		a=ord(p4[0])-33
+		b=ord(p4[1])-33
+		c=ord(p4[2])-33
+		d=ord(p4[3])-33
+		e=ord(p4[4])-33
+		num=(52200625L*a)+(614125*b)+(7225*c)+(85*d)+e
+		x,p=divmod(num,256)
+		x,o=divmod(x,256)
+		m,n=divmod(x, 256)
+		if p2==2: app(chr(m))
+		elif p2==3: app(chr(m)+chr(n))
+		elif p2==4: app(chr(m)+chr(n)+chr(o))
+	return ''.join(out)
+
+# wafdir is needed to parse the command-line arguments or print the version number
+wafdir = None
+
+def uncompress_wafdir(newdir):
+	file = open(sys.argv[0], 'rb')
+	while 1:
+		line = file.readline()
+		if not line:
+			print "This is a stripped-down waf, there is no wafadmin directory available"
+			print "Please set WAFDIR to a directory containing a directory named wafadmin"
+			print "Or use the full waf version available freely at http://freehackers.org/~tnagy/bksys.html"
+			print "\033[91mNo wafadmin: cannot execute anything (error)\033[0m"
+			sys.exit(1)
+		if line=='# ===>BEGIN WOOF<===\n':
+			cnt = file.readline()
+			if not cnt:
+				print "truncated waf contents, exiting"
+				sys.exit(1)
+
+			line = file.readline()
+			if line!='# ===>END WOOF<===\n':
+				print "invalid waf file contents"
+				sys.exit(1)
+			break
+
+	cnt = decodeAscii85(cnt[1:])
+
+	# create wafadmin
+	try: os.makedirs(newdir)
+	except: print "could not make ", newdir
+
+	os.chdir(newdir)
+	file = open('wafadmin.tar.bz2', 'wb')
+	file.write(cnt)
+	file.close()
+
+	# now we have the tar file to open
+	import tarfile
+	tar = tarfile.open('wafadmin.tar.bz2')
+	for tarinfo in tar:
+		tar.extract(tarinfo)
+	tar.close()
+
+	# cleanup the tarfile and chdir to the previous directory
+	os.chmod('wafadmin', 0755)
+	os.chmod('wafadmin'+os.sep+'Tools', 0755)
+	os.unlink('wafadmin.tar.bz2')
+	os.chdir(cwd)
+
+	global wafdir
+	wafdir = newdir
+
+def try_wafdir(dir):
+	global wafdir
+	if wafdir: return
+	try:
+		os.stat("%s%swafadmin" % (dir, os.sep))
+		wafdir = os.path.abspath(dir)
+	except:
+		pass
+
+def find_wafadmin():
+	global wafdir
+
+	# if wafadmin is in /usr/local/waf-x.x.x/ then use it directly
+	try_wafdir('/usr/local/lib/waf-%s/' % VERSION)
+	if wafdir: return
+
+	# wafadmin may be in $WAFDIR, have a look
+	if 'WAFDIR' in os.environ: try_wafdir(os.environ['WAFDIR'])
+	if wafdir: return
+
+	# look in $HOME
+	homevar=''
+	for var in ['WAF_HOME', 'HOME', 'HOMEPATH']:
+		if var in os.environ:
+			homevar=os.environ[var]
+			break
+
+	if sys.platform != 'win32': try_wafdir('%s/.waf-%s' % (homevar, VERSION))
+	else:
+		if ('HOMEPATH' in os.environ) and ('HOMEDRIVE' in os.environ):
+			try_wafdir('%s%s\\waf-%s' % (os.environ['HOMEDRIVE'], os.environ['HOMEPATH'], VERSION))
+		else:
+			try_wafdir('c:\\temp\\waf-%s\\' % VERSION)
+
+	# remove $HOME/.waf-version if asked to
+	name = sys.argv[0]
+	if wafdir:
+		if name[-5:] != 'light':
+			if "--nocache" in sys.argv:
+				import shutil
+				print "removing the local wafdir", wafdir
+				shutil.rmtree(wafdir)
+				wafdir = None
+
+	if wafdir: return
+
+	# uncompress waf-local
+	if name[-5:] != 'light':
+		if sys.platform != 'win32':
+			uncompress_wafdir('%s/.waf-%s' % (homevar, VERSION))
+		else:
+			if ('HOMEPATH' in os.environ) and ('HOMEDRIVE' in os.environ):
+				uncompress_wafdir('%s%s\\waf-%s' % (os.environ['HOMEDRIVE'], os.environ['HOMEPATH'], VERSION))
+			else:
+				uncompress_wafdir('c:\\temp\\waf-%s\\' % VERSION)
+		if wafdir: return
+
+	# look in the directory of the program
+	lst = sys.argv[0].split(os.sep)
+	lst = lst[:-1]
+	path = os.path.abspath(os.sep.join(lst))
+	try_wafdir(path)
+	if wafdir: return
+
+	print "\033[91mdevelopers using waf-light must set the WAFDIR (export WAFDIR=/folder)\033[0m"
+	sys.exit(1)
+
+# run the test
+find_wafadmin()
+if "-vv" in sys.argv: print "wafdir is ", wafdir
+
+# Update sys.path and import our modules
+wafadmindir = os.path.join(wafdir, 'wafadmin')
+tooldir = os.path.join(wafadmindir, 'Tools')
+sys.path = [wafadmindir, tooldir] + sys.path
+
+import Options, Params, Utils
+from Params import fatal, warning
+
+# Set the directory containing the tools
+Params.g_tooldir = [tooldir]
+
+if Params.g_version != VERSION:
+	fatal('version mismatch waf %s <-> wafadmin %s (wafdir %s)' % (VERSION, Params.g_version, wafdir))
+
+if Params.REVISION != REVISION:
+	if not 'WAFDIR' in os.environ:
+		warning('possible revision mismatch (set WAFDIR)')
+
+# some command-line options can be processed immediately
+if '--version' in sys.argv:
+	opt_obj = Options.Handler()
+	opt_obj.parse_args()
+	sys.exit(0)
+
+# now find the wscript file
+msg1 = 'Waf: *** Nothing to do! Please run waf from a directory containing a file named "wscript"'
+
+# Some people want to configure their projects gcc-style:
+# mkdir build && cd build && ../waf configure && ../waf
+# check that this is really what is wanted
+build_dir_override = None
+candidate = None
+
+lst = os.listdir(cwd)
+xml = 0
+#check if a wscript or a wscript_xml file is in current directory
+if (not 'wscript' in lst) and (not 'wscript_xml' in lst):
+	if 'configure' in sys.argv:
+		#set the build directory with the current directory
+		build_dir_override = cwd
+	if 'wscript_build' in lst:
+		#try to find the wscript root
+		candidate = cwd
+		Params.g_launchdir = cwd
+else:
+	#wscript or wscript_xml is in current directory, use this directory as candidate
+	candidate = cwd
+	Params.g_launchdir = cwd
+
+try:
+	#check the following dirs for wscript or wscript_xml
+	search_for_candidate = True
+	if not candidate:
+		#check first the calldir if there is wscript or wscript_xml
+		#for example: /usr/src/configure the calldir would be /usr/src
+		calldir = os.path.abspath(os.path.dirname(sys.argv[0]))
+		lst_calldir = os.listdir(calldir)
+		if 'wscript'       in lst_calldir:
+			candidate = calldir
+			if not Params.g_launchdir:
+				Params.g_launchdir = calldir
+			search_for_candidate = False
+		if 'wscript_xml'   in lst_calldir:
+			candidate = calldir
+			if not Params.g_launchdir:
+				Params.g_launchdir = calldir
+			xml = 1
+			search_for_candidate = False
+
+	#check all directories above current dir for wscript or wscript_xml if still not found
+	while search_for_candidate:
+		if len(cwd) <= 3:
+			break # stop at / or c:
+		dirlst = os.listdir(cwd)
+		if 'wscript' in dirlst:
+			candidate = cwd
+			xml = 0
+		if 'wscript_xml' in dirlst:
+			candidate = cwd
+			xml = 1
+			break
+		if 'configure' in sys.argv and candidate:
+			break
+		if Params.g_lockfile in dirlst:
+			break
+		cwd = cwd[:cwd.rfind(os.sep)] # climb up
+except:
+	fatal(msg1)
+
+if not candidate:
+	# check if the user only wanted to display the help
+	if '-h' in sys.argv or '--help' in sys.argv:
+		warning('No wscript file found: the help message may be incomplete')
+	        opt_obj = Options.Handler()
+		opt_obj.parse_args()
+		sys.exit(0)
+	else:
+		fatal(msg1)
+
+if not Params.g_launchdir:
+	Params.g_launchdir = candidate
+# We have found wscript, but there is no guarantee that it is valid
+os.chdir(candidate)
+
+# xml -> jump to the parser
+if xml:
+	from XMLScripting import compile
+	compile(candidate+os.sep+'wscript_xml')
+else:
+	# define the main module containing the functions init, shutdown, ..
+	Utils.set_main_module(os.path.join(candidate, 'wscript'))
+
+if build_dir_override:
+	try:
+		# test if user has set the blddir in wscript.
+		blddir = Utils.g_module.blddir
+		msg = 'Overriding blddir %s with %s' % (blddir, build_dir_override)
+		Params.niceprint('YELLOW', msg)
+	except:
+		pass
+	Utils.g_module.blddir = build_dir_override
+
+# fetch the custom command-line options recursively and in a procedural way
+opt_obj = Options.Handler()
+opt_obj.sub_options('') # will look in wscript
+opt_obj.parse_args()
+
+# use the parser results
+if Params.g_commands['dist']:
+	# try to use the user-defined dist function first, fallback to the waf scheme
+	try:
+		Utils.g_module.dist()
+		sys.exit(0)
+	except AttributeError:
+		pass
+	try: appname = Utils.g_module.APPNAME
+	except: appname = 'noname'
+
+	try: version = Utils.g_module.VERSION
+	except: version = '1.0'
+
+	from Scripting import Dist
+	Dist(appname, version)
+	sys.exit(0)
+elif Params.g_commands['distclean']:
+	# try to use the user-defined distclean first, fallback to the waf scheme
+	try:
+		Utils.g_module.distclean()
+		sys.exit(0)
+	except AttributeError:
+		pass
+	from Scripting import DistClean
+	DistClean()
+	sys.exit(0)
+
+try: Utils.g_module.init()
+except AttributeError: pass
+
+from Scripting import Main
+Main()
+
