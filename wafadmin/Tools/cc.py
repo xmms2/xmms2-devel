@@ -45,11 +45,14 @@ class ccobj(ccroot.ccroot):
 
 	def apply_obj_vars(self):
 		debug('apply_obj_vars called for ccobj', 'cc')
-		cpppath_st       = self.env['CPPPATH_ST']
-		lib_st           = self.env['LIB_ST']
-		staticlib_st     = self.env['STATICLIB_ST']
-		libpath_st       = self.env['LIBPATH_ST']
-		staticlibpath_st = self.env['STATICLIBPATH_ST']
+		env = self.env
+		app = env.appendValue
+
+		cpppath_st       = env['CPPPATH_ST']
+		lib_st           = env['LIB_ST']
+		staticlib_st     = env['STATICLIB_ST']
+		libpath_st       = env['LIBPATH_ST']
+		staticlibpath_st = env['STATICLIBPATH_ST']
 
 		self.addflags('CCFLAGS', self.ccflags)
 		self.addflags('CPPFLAGS', self.cppflags)
@@ -58,48 +61,38 @@ class ccobj(ccroot.ccroot):
 		# set the user-defined includes paths
 		if not self._incpaths_lst: self.apply_incpaths()
 		for i in self._bld_incpaths_lst:
-			self.env.appendValue('_CCINCFLAGS', cpppath_st % i.bldpath(self.env))
-			self.env.appendValue('_CCINCFLAGS', cpppath_st % i.srcpath(self.env))
+			app('_CCINCFLAGS', cpppath_st % i.bldpath(env))
+			app('_CCINCFLAGS', cpppath_st % i.srcpath(env))
 
 		# set the library include paths
-		for i in self.env['CPPPATH']:
-			self.env.appendValue('_CCINCFLAGS', cpppath_st % i)
-			#print self.env['_CCINCFLAGS']
-			#print " appending include ",i
+		for i in env['CPPPATH']:
+			app('_CCINCFLAGS', cpppath_st % i)
 
 		# this is usually a good idea
-		self.env.appendValue('_CCINCFLAGS', cpppath_st % '.')
-		self.env.appendValue('_CCINCFLAGS', cpppath_st % self.env.variant())
+		app('_CCINCFLAGS', cpppath_st % '.')
+		app('_CCINCFLAGS', cpppath_st % env.variant())
 		try:
 			tmpnode = Params.g_build.m_curdirnode
-			#tmpnode_mirror = Params.g_build.m_src_to_bld[tmpnode]
-			self.env.appendValue('_CCINCFLAGS', cpppath_st % tmpnode.bldpath(self.env))
-			self.env.appendValue('_CCINCFLAGS', cpppath_st % tmpnode.srcpath(self.env))
+			app('_CCINCFLAGS', cpppath_st % tmpnode.bldpath(env))
+			app('_CCINCFLAGS', cpppath_st % tmpnode.srcpath(env))
 		except:
 			pass
 
-		for i in self.env['RPATH']:
-			self.env.appendValue('LINKFLAGS', i)
+		for i in env['RPATH']:   app('LINKFLAGS', i)
+		for i in env['LIBPATH']: app('LINKFLAGS', libpath_st % i)
+		for i in env['LIBPATH']: app('LINKFLAGS', staticlibpath_st % i)
 
-		for i in self.env['LIBPATH']:
-			self.env.appendValue('LINKFLAGS', libpath_st % i)
-
-		for i in self.env['LIBPATH']:
-			self.env.appendValue('LINKFLAGS', staticlibpath_st % i)
-
-		if self.env['STATICLIB']:
-			self.env.appendValue('LINKFLAGS', self.env['STATICLIB_MARKER'])
-			for i in self.env['STATICLIB']:
-				self.env.appendValue('LINKFLAGS', staticlib_st % i)
+		if env['STATICLIB']:
+			app('LINKFLAGS', env['STATICLIB_MARKER'])
+			for i in env['STATICLIB']:
+				app('LINKFLAGS', staticlib_st % i)
 
 		# i doubt that anyone will make a fully static binary anyway
-		if not self.env['FULLSTATIC']:
-			if self.env['STATICLIB'] or self.env['LIB']:
-				self.env.appendValue('LINKFLAGS', self.env['SHLIB_MARKER'])
+		if not env['FULLSTATIC']:
+			if env['STATICLIB'] or env['LIB']:
+				app('LINKFLAGS', env['SHLIB_MARKER'])
 
-		if self.env['LIB']:
-			for i in self.env['LIB']:
-				self.env.appendValue('LINKFLAGS', lib_st % i)
+		for i in env['LIB']: app('LINKFLAGS', lib_st % i)
 
 	def apply_defines(self):
 		lst = self.to_list(self.defines)

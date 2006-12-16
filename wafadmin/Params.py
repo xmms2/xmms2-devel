@@ -11,7 +11,7 @@ import Utils
 # Fixed constants, change with care
 
 g_version="1.0.2"
-REVISION="1021S"
+REVISION="1025"
 g_rootname = ''
 if sys.path=='win32':
 	# get the first two letters (c:)

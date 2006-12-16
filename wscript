@@ -65,8 +65,6 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ## Build
 ####
 def build(bld):
-    bld.set_variants('default')
-
     # Process subfolders
     bld.add_subdirs(subdirs)
 

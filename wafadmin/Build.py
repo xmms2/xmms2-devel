@@ -81,7 +81,10 @@ class Build:
 		self.m_outstanding_objs = []
 
 		# build dir variants (release, debug, ..)
-		self.set_variants(['default'])
+		for name in ['default', 0]:
+			for v in 'm_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_abspath_cache'.split():
+				var = getattr(self, v)
+				if not name in var: var[name] = {}
 
 		# TODO used by xmlwaf
 		self.pushed = []
@@ -112,29 +115,6 @@ class Build:
 		# for example, find headers in c files
 		self.m_raw_deps        = {}
 
-	def _init_variants(self):
-		#print "init variants called"
-		debug("init variants", 'build')
-		for name in Utils.to_list(self._variants)+[0]:
-			for v in 'm_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_abspath_cache'.split():
-				var = getattr(self, v)
-				if not name in var:
-					var[name] = {}
-
-		for env in self.m_allenvs.values():
-			for f in env['dep_files']:
-				lst = f.split('/')
-				topnode = self.m_srcnode.find_node(lst[:-1])
-				newnode = topnode.search_existing_node([lst[-1]])
-				if not newnode:
-					newnode = Node.Node(lst[-1], topnode)
-					topnode.append_build(newnode)
-				try:
-					hash = Params.h_file(topnode.abspath(env)+os.sep+lst[-1])
-				except IOError:
-					hash = Params.sig_nil
-				self.m_tstamp_variants[env.variant()][newnode] = hash
-
 	# load existing data structures from the disk (stored using self._store())
 	def _load(self):
 		try:
@@ -145,7 +125,6 @@ class Build:
 		except:
 			debug("resetting the build object (dto failed)", 'build')
 			self._init_data()
-			self._init_variants()
 		#self.dump()
 
 	# store the data structures on disk, retrieve with self._load()
@@ -157,11 +136,6 @@ class Build:
 		file.close()
 
 	# ======================================= #
-
-	def set_variants(self, variants):
-		debug("set_variants", 'build')
-		self._variants = variants
-		self._init_variants()
 
 	def save(self):
 		self._store()
@@ -275,6 +249,39 @@ class Build:
 				print "loading failed:", file
 				raise
 
+		debug("init variants", 'build')
+
+		lstvariants = []
+		for env in self.m_allenvs.values():
+			if not env.variant() in lstvariants:
+				lstvariants.append(env.variant())
+		self._variants = lstvariants
+
+		debug("list of variants is "+str(lstvariants), 'build')
+
+		for name in lstvariants+[0]:
+			for v in 'm_tstamp_variants m_depends_on m_deps_tstamp m_raw_deps m_abspath_cache'.split():
+				var = getattr(self, v)
+				if not name in var:
+					var[name] = {}
+
+		for env in self.m_allenvs.values():
+			for f in env['dep_files']:
+				lst = f.split('/')
+				topnode = self.m_srcnode.find_node(lst[:-1])
+				newnode = topnode.search_existing_node([lst[-1]])
+				if not newnode:
+					newnode = Node.Node(lst[-1], topnode)
+					topnode.append_build(newnode)
+				try:
+					hash = Params.h_file(topnode.abspath(env)+os.sep+lst[-1])
+				except IOError:
+					hash = Params.sig_nil
+				self.m_tstamp_variants[env.variant()][newnode] = hash
+
+
+
+
 	# ======================================= #
 	# node and folder handling
 
@@ -385,7 +392,7 @@ class Build:
 		# list the files in the build dirs
 		# remove the existing timestamps if the build files are removed
 		lst = self.m_srcnode.difflst(src_dir_node)
-		for variant in Utils.to_list(self._variants):
+		for variant in self._variants:
 			sub_path = Utils.join_path(self.m_bldnode.abspath(), variant , *lst)
 			try:
 				files = self.scan_path(src_dir_node, sub_path, src_dir_node.build(), variant)

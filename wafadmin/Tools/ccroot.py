@@ -709,7 +709,7 @@ class ccroot(Object.genobj):
 
 				# add the path too
 				tmp_path = obj.m_current_path.bldpath(self.env)
-				if not tmp_path in env['LIBPATH']: env.appendValue('LIBPATH', tmp_path)
+				if not tmp_path in env['LIBPATH']: env.prependValue('LIBPATH', tmp_path)
 
 				# set the dependency over the link task
 				self.m_linktask.m_run_after.append(obj.m_linktask)
