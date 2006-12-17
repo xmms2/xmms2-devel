@@ -12,6 +12,10 @@ N: Peter Alm
 E: peter@xmms.org
 D: Initial design and code. XMMS1 :)
 
+N: David Anderson
+E: dave@natulte.net
+D: WAF migration
+
 N: Kristian Benoit
 E: softchill@blacky.sympatico.ca
 D: Various fixes.

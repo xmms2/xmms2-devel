@@ -1,6 +1,8 @@
 # encoding: utf-8
 #
-# Copyright 2006 David Anderson <dave at natulte.net>
+# WAF build scripts for XMMS2
+# Copyright XMMS2 Team
+#
 
 import sys
 if sys.version_info < (2,3):
