@@ -15,7 +15,6 @@
  */
 
 #include "xmmspriv/xmms_medialib.h"
-#include "xmmspriv/xmms_plsplugins.h"
 #include "xmmspriv/xmms_xform.h"
 #include "xmmspriv/xmms_utils.h"
 #include "xmms/xmms_defs.h"
@@ -839,7 +838,7 @@ xmms_medialib_entry_cleanup (xmms_medialib_session_t *session,
 
 	xmms_sqlite_exec (session->sql,
 	                  "delete from Media where id=%d and source in "
-	                  "(select id from Sources where source like 'plugin/%%')",
+	                  "(select id from Sources where source like 'plugin/%%' and source != 'plugin/playlist')",
 	                  entry);
 
 }

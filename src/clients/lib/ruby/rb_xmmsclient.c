@@ -645,6 +645,7 @@ c_broadcast_playback_volume_changed (VALUE self)
 	METHOD_ADD_HANDLER (broadcast_playback_volume_changed);
 }
 
+#if 0
 /*
  * call-seq:
  *  xc.broadcast_playlist_changed -> result
@@ -1072,30 +1073,7 @@ c_medialib_playlist_list (VALUE self, VALUE name)
 	METHOD_ADD_HANDLER_STR (medialib_playlist_list, name);
 }
 
-/*
- * call-seq:
- *  xc.medialib_playlist_import(playlist, url) -> result
- *
- * Imports a new playlist from _url_ to the medialib.
- */
-static VALUE
-c_medialib_playlist_import (VALUE self, VALUE playlist, VALUE url)
-{
-	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_import, playlist, url);
-}
-
-/*
- * call-seq:
- *  xc.medialib_playlist_export(playlist, mime) -> result
- *
- * Exports a medialib playlist in a format described by _mime_.
- */
-static VALUE
-c_medialib_playlist_export (VALUE self, VALUE playlist,
-                                         VALUE mime)
-{
-	METHOD_ADD_HANDLER_STR_STR (medialib_playlist_export, playlist, mime);
-}
+#endif
 
 /*
  * call-seq:
@@ -1324,6 +1302,7 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "broadcast_playback_volume_changed",
 	                  c_broadcast_playback_volume_changed, 0);
 
+#if 0
 	rb_define_method (c, "broadcast_playlist_changed",
 	                  c_broadcast_playlist_changed, 0);
 	rb_define_method (c, "playlist_current_pos",
@@ -1365,10 +1344,7 @@ Init_Client (VALUE mXmms)
 	                  c_medialib_playlists_list, 0);
 	rb_define_method (c, "medialib_playlist_list",
 	                  c_medialib_playlist_list, 1);
-	rb_define_method (c, "medialib_playlist_import",
-	                  c_medialib_playlist_import, 2);
-	rb_define_method (c, "medialib_playlist_export",
-	                  c_medialib_playlist_export, 2);
+#endif
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 

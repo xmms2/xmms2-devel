@@ -35,6 +35,7 @@ xmms_plugin_t *xmms_xform_plugin_new (void);
 gboolean xmms_xform_plugin_verify (xmms_plugin_t *plugin);
 
 xmms_xform_t *xmms_xform_chain_setup (xmms_medialib_entry_t entry, GList *goal_formats);
+xmms_xform_t *xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList *goal_formats);
 
 gint64 xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 int xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, int siz, xmms_error_t *err);
@@ -45,6 +46,7 @@ xmms_stream_type_t *xmms_xform_intype_get (xmms_xform_t *xform);
 
 void xmms_xform_outdata_type_set (xmms_xform_t *xform, xmms_stream_type_t *type);
 GList *xmms_xform_browse (xmms_xform_object_t *obj, const gchar *url, xmms_error_t *error);
+GList *xmms_xform_browse_method (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 
 const char *xmms_xform_indata_find_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 

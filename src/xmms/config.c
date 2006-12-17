@@ -12,6 +12,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
+ *
  */
 
 #include <glib.h>
@@ -108,7 +109,7 @@ struct xmms_config_property_St {
  * we can have the convenience of having it as a global variable.
  */
 
-xmms_config_t *global_config;
+static xmms_config_t *global_config;
 
 /**
  * Config file version
@@ -724,6 +725,7 @@ xmms_config_init (const gchar *filename)
 					xmms_log_error ("Cannot parse config file: %s",
 					                error->message);
 					g_error_free (error);
+					error = NULL;
 					parserr = TRUE;
 				}
 				eof = TRUE;
@@ -734,6 +736,7 @@ xmms_config_init (const gchar *filename)
 				xmms_log_error ("Cannot parse config file: %s",
 				                error->message);
 				g_error_free (error);
+				error = NULL;
 				parserr = TRUE;
 			}
 			/* check config file version, assumes that g_markup_context_parse

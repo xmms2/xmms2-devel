@@ -30,6 +30,8 @@
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_collquery.h"
 #include "xmmspriv/xmms_collserial.h"
+#include "xmmspriv/xmms_xform.h"
+#include "xmmspriv/xmms_streamtype.h"
 #include "xmms/xmms_ipc.h"
 #include "xmms/xmms_config.h"
 #include "xmms/xmms_log.h"
@@ -73,6 +75,7 @@ typedef enum {
 	XMMS_COLLECTION_FIND_STATE_NOMATCH,
 } coll_find_state_t;
 
+static GList *global_stream_type;
 
 /* Functions */
 
@@ -117,6 +120,7 @@ static gboolean xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashT
 static gboolean xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_smaller (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
 static gboolean xmms_collection_media_filter_greater (xmms_coll_dag_t *dag, GHashTable *mediainfo, xmmsc_coll_t *coll, guint nsid, GHashTable *match_table);
+static xmmsc_coll_t *xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *mediainfo, xmms_error_t *err);
 
 
 XMMS_CMD_DEFINE (collection_get, xmms_collection_get, xmms_coll_dag_t *, COLL, STRING, STRING);
@@ -125,6 +129,7 @@ XMMS_CMD_DEFINE3(collection_save, xmms_collection_save, xmms_coll_dag_t *, NONE,
 XMMS_CMD_DEFINE (collection_remove, xmms_collection_remove, xmms_coll_dag_t *, NONE, STRING, STRING);
 XMMS_CMD_DEFINE (collection_find, xmms_collection_find, xmms_coll_dag_t *, LIST, UINT32, STRING);
 XMMS_CMD_DEFINE3(collection_rename, xmms_collection_rename, xmms_coll_dag_t *, NONE, STRING, STRING, STRING);
+XMMS_CMD_DEFINE (collection_from_pls, xmms_collection_idlist_from_pls, xmms_coll_dag_t *, COLL, STRING, NONE);
 
 XMMS_CMD_DEFINE4(query_ids, xmms_collection_query_ids, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST);
 XMMS_CMD_DEFINE6(query_infos, xmms_collection_query_infos, xmms_coll_dag_t *, LIST, COLL, UINT32, UINT32, STRINGLIST, STRINGLIST, STRINGLIST);
@@ -199,6 +204,7 @@ xmms_collection_init (xmms_playlist_t *playlist)
 {
 	gint i;
 	xmms_coll_dag_t *ret;
+	xmms_stream_type_t *f;
 	
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
@@ -246,22 +252,108 @@ xmms_collection_init (xmms_playlist_t *playlist)
 			     XMMS_IPC_CMD_QUERY_INFOS, 
 			     XMMS_CMD_FUNC (query_infos));
 
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_IDLIST_FROM_PLS,
+	                     XMMS_CMD_FUNC (collection_from_pls));
+
 	xmms_collection_dag_restore (ret);
+
+	f = _xmms_stream_type_new (NULL,
+	                           XMMS_STREAM_TYPE_MIMETYPE,
+	                           "application/x-xmms2-playlist-entries",
+	                           XMMS_STREAM_TYPE_END);
+	global_stream_type = g_list_prepend (NULL, f);
 
 	return ret;
 }
 
+/** Create a idlist from a playlist file
+ * @param dag  The collection DAG.
+ * @param path  URL to the playlist file
+ * @param err  If error occurs, a message is stored in this variable.
+ * @returns  A idlist
+ */
+static xmmsc_coll_t *
+xmms_collection_idlist_from_pls (xmms_coll_dag_t *dag, gchar *path, xmms_error_t *err)
+{
+	xmms_xform_t *xform;
+	GList *lst, *n;
+	xmmsc_coll_t *coll;
+	xmms_medialib_session_t *session;
+	guint src;
+
+	xform = xmms_xform_chain_setup_url (0, path, global_stream_type);
+
+	if (!xform) {
+		xmms_error_set (err, XMMS_ERROR_NO_SAUSAGE, "We can't handle this type of playlist or URL");
+		return NULL;
+	}
+
+	lst = xmms_xform_browse_method (xform, "/", err);
+	if (!lst) {
+		xmms_object_unref (xform);
+		return NULL;
+	}
+
+	coll = xmmsc_coll_new (XMMS_COLLECTION_TYPE_IDLIST);
+	session = xmms_medialib_begin_write ();
+	src = xmms_medialib_source_to_id (session, "plugin/playlist");
+
+	n = lst;
+	while (n) {
+		xmms_medialib_entry_t entry;
+
+		xmms_object_cmd_value_t *a = n->data;
+		xmms_object_cmd_value_t *b;
+		b = g_hash_table_lookup (a->value.dict, "realpath");
+
+		entry = xmms_medialib_entry_new_encoded (session,
+		                                         b->value.string,
+		                                         err);
+		if (entry) {
+			b = g_hash_table_lookup (a->value.dict, "artist");
+			if (b) {
+				xmms_medialib_entry_property_set_str_source (session, entry,
+				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
+				                                             b->value.string, src);
+			}
+			b = g_hash_table_lookup (a->value.dict, "album");
+			if (b) {
+				xmms_medialib_entry_property_set_str_source (session, entry,
+				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
+				                                             b->value.string, src);
+			}
+			b = g_hash_table_lookup (a->value.dict, "title");
+			if (b) {
+				xmms_medialib_entry_property_set_str_source (session, entry,
+				                                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
+				                                             b->value.string, src);
+			}
+			xmmsc_coll_idlist_append (coll, entry);
+		} else {
+			xmms_log_error ("couldn't add %s to collection!", b->value.string);
+		}
+
+		xmms_object_cmd_value_free (a);
+		n = g_list_delete_link (n, n);
+	}
+
+	xmms_medialib_end (session);
+	xmms_object_unref (xform);
+
+	return coll;
+}
 
 /** Remove the given collection from the DAG.
- *
- * If to be removed from ALL namespaces, then all matching collections are removed.
- *
- * @param dag  The collection DAG.
- * @param name  The name of the collection to remove.
- * @param namespace  The namespace where the collection to remove is (can be ALL).
- * @param err  If an error occurs, a message is stored in it.
- * @returns  True on success, false otherwise.
- */
+*
+* If to be removed from ALL namespaces, then all matching collections are removed.
+*
+* @param dag  The collection DAG.
+* @param name  The name of the collection to remove.
+* @param namespace  The namespace where the collection to remove is (can be ALL).
+* @param err  If an error occurs, a message is stored in it.
+* @returns  True on success, false otherwise.
+*/
 gboolean
 xmms_collection_remove (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_error_t *err)
 {

@@ -14,16 +14,13 @@
  *  Lesser General Public License for more details.
  */
 
-
-
-
 #include "xmms/xmms_defs.h"
-#include "xmms/xmms_plugin.h"
-#include "xmms/xmms_transport.h"
+#include "xmms/xmms_xformplugin.h"
+#include "xmmsc/xmmsc_util.h"
+#include "xmms/xmms_util.h"
 #include "xmms/xmms_log.h"
-#include "xmms/xmms_plsplugins.h"
-#include "xmms/xmms_medialib.h"
 
+#include <glib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,43 +33,56 @@
  * Function prototypes
  */
 
-
-static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);
-static GString *xmms_pls_write_playlist (guint32 *list);
-
-static gchar *build_encoded_url (const gchar *plspath, const gchar *file);
-static gchar *path_get_body (const gchar *path);
+/*static gboolean xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id);*/
+static gboolean xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gboolean xmms_pls_init (xmms_xform_t *xform);
+static gboolean xmms_pls_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
+static void xmms_pls_destroy (xmms_xform_t *xform);
 
 /*
  * Plugin header
  */
+XMMS_XFORM_PLUGIN("pls",
+                  "PLS reader",
+                  XMMS_VERSION,
+                  "Playlist parser for PLS files.",
+                  xmms_pls_plugin_setup);                                                      
 
-xmms_plugin_t *
-xmms_plugin_get (void)
+static gboolean
+xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
-	xmms_plugin_t *plugin;
+	xmms_xform_methods_t methods;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_PLAYLIST, 
-	                          XMMS_PLAYLIST_PLUGIN_API_VERSION,
-	                          "pls",
-	                          "PLS Playlist",
-	                          XMMS_VERSION,
-	                          "PLS Playlist reader / writer");
+	XMMS_XFORM_METHODS_INIT(methods);
+	methods.init = xmms_pls_init;
+	methods.destroy = xmms_pls_destroy;
+	methods.browse = xmms_pls_browse;
 
-	if (!plugin) {
-		return NULL;
-	}
+	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
-	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
-	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
+	xmms_xform_plugin_indata_add (xform_plugin,
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "audio/x-scpls",
+	                              NULL);
 
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_READ_PLAYLIST, xmms_pls_read_playlist);
-	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_WRITE_PLAYLIST, xmms_pls_write_playlist);
+	xmms_magic_extension_add ("audio/x-scpls", "*.pls");
 
-	xmms_plugin_magic_add (plugin, "pls header", "audio/x-scpls",
-	                       "0 string [playlist]", NULL);
+	return TRUE;
+}
 
-	return plugin;
+static gboolean
+xmms_pls_init (xmms_xform_t *xform)
+{
+	xmms_xform_outdata_type_add (xform,
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/x-xmms2-playlist-entries",
+	                             XMMS_STREAM_TYPE_END);
+	return TRUE;
+}
+
+static void
+xmms_pls_destroy (xmms_xform_t *xform)
+{
 }
 
 /*
@@ -87,39 +97,33 @@ typedef struct {
 } xmms_pls_entry_t;
 
 static void
-xmms_pls_add_entry (xmms_medialib_session_t *session, 
+xmms_pls_add_entry (xmms_xform_t *xform,
 					const gchar *plspath, 
-					guint playlist_id, 
 					xmms_pls_entry_t *e)
 {
 	if (e->file) {
-		xmms_medialib_entry_t entry;
-		gchar *url;
-		xmms_error_t error;
-
-		url = build_encoded_url (plspath, e->file);
-		entry = xmms_medialib_entry_new (session, url, &error);
-		g_free (url);
+		gchar *title;
+		gchar *path;
 		
+		path = xmms_build_playlist_url (plspath, e->file);
+		title = e->file;
+
 		if (e->title)
-			xmms_medialib_entry_property_set_str (session, entry, 
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, 
-												  e->title);
+			title = e->title;
 
-		if (e->length && atoi (e->length) > 0)
-			xmms_medialib_entry_property_set_int (session, entry, 
-												  XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION, 
-												  atoi (e->length));
+		xmms_xform_browse_add_entry (xform, title, 0);
+		xmms_xform_browse_add_entry_symlink (xform, path, 0, NULL);
 
-		xmms_medialib_playlist_add (session, playlist_id, entry);
-
+		g_free (path);
 		g_free (e->file);
 		e->file = NULL;
 	}
+
 	if (e->title) {
 		g_free (e->title);
 		e->title = NULL;
 	}
+
 	if (e->length) {
 		g_free (e->length);
 		e->length = NULL;
@@ -127,24 +131,21 @@ xmms_pls_add_entry (xmms_medialib_session_t *session,
 }
 
 static gboolean
-xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
+xmms_pls_browse (xmms_xform_t *xform, const char *url, xmms_error_t *error)
 {
-	gchar buffer[XMMS_TRANSPORT_MAX_LINE_SIZE];
+	gchar buffer[XMMS_XFORM_MAX_LINE_SIZE];
 	gint num = -1;
 	gchar **val;
 	const gchar *plspath;
 	xmms_pls_entry_t entry;
-	xmms_error_t err;
-	xmms_medialib_session_t *session;
 
-	g_return_val_if_fail (transport, FALSE);
-	g_return_val_if_fail (playlist_id,  FALSE);
+	g_return_val_if_fail (xform, FALSE);
 
-	xmms_error_reset (&err);
+	xmms_error_reset (error);
 
-	plspath = xmms_transport_url_get (transport);
+	plspath = xmms_xform_get_url (xform);
 
-	if (!xmms_transport_read_line (transport, buffer, &err)) {
+	if (!xmms_xform_read_line (xform, buffer, error)) {
 		XMMS_DBG ("Error reading pls-file");
 		return FALSE;
 	}
@@ -160,9 +161,7 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 	memset (&entry, 0, sizeof (entry));
 	entry.num=-1;
 
-	session = xmms_medialib_begin_write ();
-
-	while (xmms_transport_read_line (transport, buffer, &err)) {
+	while (xmms_xform_read_line (xform, buffer, error)) {
 		gchar *np, *ep;
 
 		if (g_ascii_strncasecmp (buffer, "File", 4) == 0) {
@@ -185,116 +184,15 @@ xmms_pls_read_playlist (xmms_transport_t *transport, guint playlist_id)
 		}
 
 		if (entry.num != num && entry.num != -1) {
-			xmms_pls_add_entry (session, plspath, playlist_id, &entry);
+			xmms_pls_add_entry (xform, plspath, &entry);
 		}
 
 		*val = g_strdup (ep + 1);
 		entry.num = num;
 	}
 
-	xmms_pls_add_entry (session, plspath, playlist_id, &entry);
-
-	xmms_medialib_end (session);
+	xmms_pls_add_entry (xform, plspath, &entry);
 
 	return TRUE;
 }
 
-static GString *
-xmms_pls_write_playlist (guint32 *list)
-{
-	gint current;
-	GString *ret;
-	gint i = 0;
-	xmms_medialib_session_t *session;
-
-	g_return_val_if_fail (list, FALSE);
-
-	ret = g_string_new ("[playlist]\n");
-
-	session = xmms_medialib_begin ();
-
-	current = 1;
-	while (list[i]) {
-		xmms_medialib_entry_t entry = list[i];
-		gint duration;
-		const gchar *title;
-		gchar *url;
-
-		duration = xmms_medialib_entry_property_get_int (session, entry, 
-														 XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
-		title = xmms_medialib_entry_property_get_str (session, entry, 
-													  XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE);
-		url = xmms_medialib_entry_property_get_str (session, entry, 
-													XMMS_MEDIALIB_ENTRY_PROPERTY_URL);
-
-		if (g_strncasecmp (url, "file://", 7) == 0) {
-			g_string_append_printf (ret, "File%u=%s\n", current, url+7);
-		} else {
-			g_string_append_printf (ret, "File%u=%s\n", current, url);
-		}
-		g_string_append_printf (ret, "Title%u=%s\n", current, title);
-		if (!duration) {
-			g_string_append_printf (ret, "Length%u=%s\n", current, "-1");
-		} else {
-			g_string_append_printf (ret, "Length%u=%d\n", current, duration);
-		}
-
-		g_free (url);
-		current++;
-		i++;
-	}
-
-	xmms_medialib_end (session);
-
-	g_string_append_printf (ret, "NumberOfEntries=%u\n", current - 1);
-	g_string_append (ret, "Version=2\n");
-
-	return ret;
-}
-
-static gchar *
-path_get_body (const gchar *path)
-{
-	gchar *beg, *end;
-
-	g_return_val_if_fail (path, NULL);
-
-	beg = strstr (path, "://");
-
-	if (!beg) {
-		return g_strndup (path, strcspn (path, "/"));
-	}
-
-	beg += 3;
-	end = strchr (beg, '/');
-
-	if (!end) {
-		return g_strdup (path);
-	}
-
-	return g_strndup (path, end - path);
-}
-
-static gchar *
-build_encoded_url (const gchar *plspath, const gchar *file)
-{
-	gchar *url;
-	gchar *path;
-
-	g_return_val_if_fail (plspath, NULL);
-	g_return_val_if_fail (file, NULL);
-
-	if (strstr (file, "://") != NULL) {
-		return g_strdup (file);
-	}
-
-	if (file[0] == '/') {
-		path = path_get_body (plspath);
-	} else {
-		path = g_path_get_dirname (plspath);
-	}
-	url = g_build_filename (path, file, NULL);
-
-	g_free (path);
-	return url;
-}

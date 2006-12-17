@@ -43,7 +43,10 @@ set_source_preference(sv, ...)
 		}
 
 		prefs[items] = NULL;
+
 		xmmsc_result_source_preference_set(res, (const char**)prefs);
+
+		free (prefs);
 
 SV*
 source_hash(sv)

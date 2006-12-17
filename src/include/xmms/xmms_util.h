@@ -14,20 +14,9 @@
  *  Lesser General Public License for more details.
  */
 
+#ifndef __XMMS_UTIL_H__
+#define __XMMS_UTIL_H__
 
-
-
-#ifndef __XMMS_PLAYLIST_PLUGIN_H__
-#define __XMMS_PLAYLIST_PLUGIN_H__
-
-#include "xmms/xmms_xformplugin.h"
-
-typedef gboolean (*xmms_playlist_plugin_read_method_t) (xmms_xform_t *transport, guint playlist_id);
-typedef gboolean (*xmms_playlist_plugin_can_handle_method_t) (const gchar *mimetype);
-typedef GString *(*xmms_playlist_plugin_write_method_t) (guint32 *list);
-
-#define XMMS_PLUGIN_METHOD_CAN_HANDLE_TYPE xmms_playlist_plugin_can_handle_method_t
-#define XMMS_PLUGIN_METHOD_READ_PLAYLIST_TYPE xmms_playlist_plugin_read_method_t
-#define XMMS_PLUGIN_METHOD_WRITE_PLAYLIST_TYPE xmms_playlist_plugin_write_method_t
+gchar *xmms_build_playlist_url (const gchar *, const gchar *);
 
 #endif

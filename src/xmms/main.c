@@ -31,7 +31,7 @@
 #include "xmmspriv/xmms_config.h"
 #include "xmmspriv/xmms_playlist.h"
 #include "xmmspriv/xmms_collection.h"
-#include "xmmspriv/xmms_unixsignal.h"
+#include "xmmspriv/xmms_signal.h"
 #include "xmmspriv/xmms_medialib.h"
 #include "xmmspriv/xmms_output.h"
 #include "xmmspriv/xmms_ipc.h"
@@ -369,7 +369,6 @@ main (int argc, char **argv)
 	xmms_config_property_t *cv;
 	xmms_main_t *mainobj;
 	int loglevel = 1;
-	sigset_t signals;
 	xmms_playlist_t *playlist;
 	gchar default_path[XMMS_PATH_MAX + 16], *tmp;
 
@@ -409,12 +408,7 @@ main (int argc, char **argv)
 		exit (EXIT_FAILURE);
 	}
 
-	memset (&signals, 0, sizeof (sigset_t));
-	sigaddset (&signals, SIGHUP);
-	sigaddset (&signals, SIGTERM);
-	sigaddset (&signals, SIGINT);
-	sigaddset (&signals, SIGPIPE);
-	pthread_sigmask (SIG_BLOCK, &signals, NULL);
+	xmms_signal_block ();
 
 	context = g_option_context_new ("- XMMS2 Daemon");
 	g_option_context_add_main_entries (context, opts, NULL);

@@ -140,7 +140,6 @@ perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...) {
 				croak("failed to convert value to sv");
 			}
 
-			//dump_sv(sv);
 			XPUSHs(sv);
 		}
 	}
@@ -158,12 +157,43 @@ perl_xmmsclient_callback_invoke(PerlXMMSClientCallback* cb, ...) {
 	LEAVE;
 }
 
-void
-dump_sv(SV* sv) {
-	int lim = 4;
-	const STRLEN pv_lim = 0;
-	const I32 save_dumpindent = PL_dumpindent;
-	PL_dumpindent = 2;
-	do_sv_dump(0, Perl_debug_log, sv, 0, lim, 0, pv_lim);
-	PL_dumpindent = save_dumpindent;
+char **
+perl_xmmsclient_unpack_char_ptr_ptr (SV *arg) {
+	AV *av;
+	SV **ssv;
+	int avlen, i;
+	char **ret;
+
+	if (!SvOK (arg))
+		return NULL;
+
+	if (SvROK (arg) && (SvTYPE (SvRV (arg)) == SVt_PVAV)) {
+		av = (AV *)SvRV (arg);
+
+		avlen = av_len (av);
+		ret = (char **)malloc (sizeof(char *) * (avlen + 2));
+
+		for (i = 0; i <= avlen; ++i) {
+			ssv = av_fetch (av, i, 0);
+			ret[i] = SvPV_nolen (*ssv);
+		}
+
+		ret[avlen + 1] = NULL;
+	}
+	else {
+		croak ("not an array reference");
+	}
+
+	return ret;
+}
+
+SV *
+perl_xmmsclient_hv_fetch (HV *hv, const char *key, I32 klen) {
+	SV **val;
+
+	val = hv_fetch (hv, key, klen, 0);
+	if (!val)
+		return NULL;
+
+	return *val;
 }

@@ -46,6 +46,19 @@ perl_xmmsclient_xmmsc_result_get_string(xmmsc_result_t* res) {
 }
 
 SV*
+perl_xmmsclient_xmmsc_result_get_coll(xmmsc_result_t* res) {
+	int ret;
+	xmmsc_coll_t* coll = NULL;
+
+	ret = xmmsc_result_get_collection(res, &coll);
+
+	if (ret == 0)
+		croak("Could not fetch collection value");
+
+	return perl_xmmsclient_new_sv_from_ptr((void *)coll, "Audio::XMMSClient::Collection");
+}
+
+SV*
 perl_xmmsclient_xmmsc_result_get_bin(xmmsc_result_t* res) {
 	int ret;
 	unsigned char* bin;
@@ -127,6 +140,9 @@ perl_xmmsclient_result_get_value(xmmsc_result_t* res) {
 			break;
 		case XMMS_OBJECT_CMD_ARG_STRING:
 			ret = perl_xmmsclient_xmmsc_result_get_string(res);
+			break;
+		case XMMS_OBJECT_CMD_ARG_COLL:
+			ret = perl_xmmsclient_xmmsc_result_get_coll(res);
 			break;
 		case XMMS_OBJECT_CMD_ARG_BIN:
 			ret = perl_xmmsclient_xmmsc_result_get_bin(res);
@@ -217,6 +233,8 @@ xmmsc_result_wait(res)
 		c_res = (xmmsc_result_t*)perl_xmmsclient_get_ptr_from_sv(res, "Audio::XMMSClient::Result");
 
 		xmmsc_result_wait(c_res);
+
+		SvREFCNT_inc(res); /* TODO: Only do so in non-void context? */
 		RETVAL = res;
 	OUTPUT:
 		RETVAL
@@ -225,20 +243,20 @@ void
 xmmsc_result_source_preference_set(res, ...)
 		xmmsc_result_t* res
 	PREINIT:
-		char** preference = NULL;
+		const char** preference = NULL;
 		int i;
-	CODE:
-		preference = (char**)malloc(sizeof(char*) * items - 1);
+	INIT:
+		preference = (const char**)malloc(sizeof(char*) * items - 1);
 
 		for (i = 0; i < items - 1; i++) {
 			preference[i] = SvPV_nolen(ST(i+1));
 		}
 
 		preference[items - 1] = NULL;
-
-		xmmsc_result_source_preference_set(res, (const char**)preference);
-
-		free(preference);
+	C_ARGS:
+		res, preference
+	CLEANUP:
+		free (preference);
 
 xmms_object_cmd_arg_type_t
 xmmsc_result_get_type(res)
@@ -269,9 +287,10 @@ value(res)
 		RETVAL
 
 const char*
-xmmsc_result_decode_url(res, string)
-		xmmsc_result_t* res
+xmmsc_result_decode_url(class, string)
 		const char* string
+	C_ARGS:
+		NULL, string
 
 void
 DESTROY(res)

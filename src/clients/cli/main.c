@@ -51,7 +51,6 @@ cmds commands[] = {
 	{ "add", "adds a URL to the playlist", cmd_add },
 	{ "addarg", "adds one URL with arguments to the playlist", cmd_addarg },
 	{ "addid", "adds a Medialib id to the playlist", cmd_addid },
-	{ "addpls", "adds a Playlist file to the current playlist", cmd_addpls },
 	{ "insert", "inserts one URL at a specific position", cmd_insert },
 	{ "insertid", "inserts one Medialib id at a specific position", cmd_insertid },
 	{ "radd", "adds a directory recursively to the playlist", cmd_radd },
@@ -60,6 +59,7 @@ cmds commands[] = {
 	{ "sort", "sort the playlist; use a space delimiter for multiple properties", cmd_sort },
 	{ "remove", "removes something from the playlist", cmd_remove },
 	{ "list", "lists the playlist", cmd_list },
+	{ "addpls", "Adds the contents of a playlist file to the playlist", cmd_addpls },
 	
 	/* Playback managment */
 	{ "play", "starts playback", cmd_play },

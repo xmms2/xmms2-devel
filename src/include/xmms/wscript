@@ -1,37 +1,50 @@
 import sys,os
+import Params
+
+def build(bld):
+	pass
+
+def set_option(env):
+	pass
+
 def configure(conf):
-  """Set the values needed by xmms_defs.h.in in the environment."""
+    """Set the values needed by xmms_defs.h.in in the environment."""
 
-  defs = {}
+    defs = {}
 
-  platform_names = ['linux', 'freebsd', 'openbsd',
-                    'netbsd', 'dragonfly', 'darwin']
-  for platform in platform_names:
-    if sys.platform.startswith(platform):
-      defs["XMMS_OS_%s" % platform.upper()] = 1
-      break
-  defs['XMMS_VERSION'] = conf.env["VERSION"]
-  defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
-                                   'lib', 'xmms2')
-  defs['BINDIR'] = os.path.join(conf.env['PREFIX'],
-                                'bin')
-  defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
-                                  'share', 'xmms2')
-  defs['SCRIPTDIR'] = os.path.join(conf.env['PREFIX'],
-                                   'share', 'xmms2', 'scripts', 'startup.d')
+    platform_names = ['linux', 'freebsd', 'openbsd',
+                      'netbsd', 'dragonfly', 'darwin']
+    for platform in platform_names:
+        if sys.platform.startswith(platform):
+            defs["XMMS_OS_%s" % platform.upper()] = 1
+            break
+    defs['XMMS_VERSION'] = conf.env["VERSION"]
+    defs['PKGLIBDIR'] = os.path.join(conf.env['PREFIX'],
+                                     'lib', 'xmms2')
+    defs['BINDIR'] = os.path.join(conf.env['PREFIX'],
+                                  'bin')
+    defs['SHAREDDIR'] = os.path.join(conf.env['PREFIX'],
+                                     'share', 'xmms2')
+    defs['SCRIPTDIR'] = os.path.join(conf.env['PREFIX'],
+                                     'share', 'xmms2', 'scripts', 'startup.d')
 
-  l = conf.env['XMMS_OUTPUT_PLUGINS']
-  l.sort()
-  l.reverse()
-  defs['XMMS_OUTPUT_DEFAULT'] = l.pop(0)[1]
-  defs['USERCONFDIR'] = '.config/xmms2'
-  defs['SYSCONFDIR'] = '/etc/xmms2'
+    l = conf.env['XMMS_OUTPUT_PLUGINS']
+    l.sort()
+    l.reverse()
+    defs['XMMS_OUTPUT_DEFAULT'] = l.pop(0)[1]
+    if sys.platform == 'darwin':
+        defs["USERCONFDIR"] = 'Library/xmms2'
+    else:
+        defs['USERCONFDIR'] = '.config/xmms2'
+    defs['SYSCONFDIR'] = '/etc/xmms2'
 
-  conf.env['XMMS_DEFS'] = defs
-  conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
-  conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
+    conf.env['XMMS_DEFS'] = defs
+    conf.env['PLUGINDIR'] = defs['PKGLIBDIR']
+    conf.env['PKGCONFIGDIR'] = os.path.join(conf.env["PREFIX"], "lib", "pkgconfig")
 
-  for i in defs:
-    conf.add_define(i, defs[i])
-  conf.write_config_header('src/include/xmms/xmms_defs.h')
+    for i in defs:
+        conf.add_define(i, defs[i])
+    conf.write_config_header('src/include/xmms/xmms_defs.h')
 
+    print "\nDefault output plugin: ",
+    Params.pprint('BLUE', conf.env["XMMS_DEFS"]['XMMS_OUTPUT_DEFAULT'])

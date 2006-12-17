@@ -243,6 +243,18 @@ gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key)
 gint xmms_xform_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err);
 
 /**
+ * Read one line from previous xform.
+ *
+ * Reads a line from the prev xform into buf.
+ *
+ * @param xform
+ * @param buf buffer to write the line to, should be at least XMMS_XFORM_MAX_LINE_SIZE
+ * @param err error container which is filled in if error occours.
+ * @returns the line read from the parent or NULL to indicate error.
+ */
+gchar *xmms_xform_read_line (xmms_xform_t *xform, gchar *buf, xmms_error_t *err);         
+
+/**
  * Read data from previous xform.
  *
  * Reads up to siz bytes into the supplied buffer starting at buf. If
@@ -292,6 +304,7 @@ xmms_config_property_t *xmms_xform_config_lookup (xmms_xform_t *xform,
  * @returns 
  */
 xmms_medialib_entry_t xmms_xform_entry_get (xmms_xform_t *xform);
+const gchar *xmms_xform_get_url (xmms_xform_t *xform);
 
 #define XMMS_XFORM_BROWSE_FLAG_DIR (1 << 0)
 
@@ -303,6 +316,10 @@ void xmms_xform_browse_add_entry_property_str (xmms_xform_t *xform,
 void xmms_xform_browse_add_entry_property_int (xmms_xform_t *xform,
                                                const gchar *key,
                                                gint value);
+void xmms_xform_browse_add_entry_symlink (xmms_xform_t *xform, const gchar *link, gint numargs, gchar **args);
+
+#define XMMS_XFORM_MAX_LINE_SIZE 1024
+
 /**
  * @}
  */

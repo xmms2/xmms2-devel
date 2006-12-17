@@ -17,16 +17,13 @@
 
 
 
-#ifndef __XMMS_PRIV_PLAYLIST_PLUGIN_H__
-#define __XMMS_PRIV_PLAYLIST_PLUGIN_H__
+#ifndef __XMMS_SIGNAL_H__
+#define __XMMS_SIGNAL_H__
 
-#include "xmms/xmms_plsplugins.h"
-#include "xmms/xmms_medialib.h"
-#include "xmmspriv/xmms_plugin.h"
+#include "xmms/xmms_object.h"
 
-gboolean xmms_playlist_plugin_import (guint playlist_id, xmms_medialib_entry_t entry);
-GString *xmms_playlist_plugin_save (gchar *mime, guint32 *list);
-
-gboolean xmms_playlist_plugin_verify (xmms_plugin_t *plugin);
+void xmms_signal_block (void);
+void xmms_signal_init (xmms_object_t *obj);
 
 #endif
+
