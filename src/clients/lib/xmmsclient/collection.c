@@ -54,6 +54,7 @@ xmmsc_coll_get (xmmsc_connection_t *conn, const char *collname,
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
+	x_api_error_if (!collname, "with a NULL name", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_GET);
 	xmms_ipc_msg_put_string (msg, collname);
@@ -103,6 +104,8 @@ xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
+	x_api_error_if (!coll, "with a NULL collection", NULL);
+	x_api_error_if (!name, "with a NULL name", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_SAVE);
 	xmms_ipc_msg_put_string (msg, name);
@@ -129,6 +132,7 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
+	x_api_error_if (!name, "with a NULL name", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_REMOVE);
 	xmms_ipc_msg_put_string (msg, name);
@@ -180,6 +184,8 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name,
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
+	x_api_error_if (!from_name, "with a NULL from_name", NULL);
+	x_api_error_if (!to_name, "with a NULL to_name", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_COLLECTION_RENAME);
 	xmms_ipc_msg_put_string (msg, from_name);
@@ -212,6 +218,7 @@ xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
+	x_api_error_if (!coll, "with a NULL collection", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_IDS);
 	xmms_ipc_msg_put_collection (msg, coll);
@@ -249,6 +256,7 @@ xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
 	xmms_ipc_msg_t *msg;
 
 	x_check_conn (conn, NULL);
+	x_api_error_if (!coll, "with a NULL collection", NULL);
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_COLLECTION, XMMS_IPC_CMD_QUERY_INFOS);
 	xmms_ipc_msg_put_collection (msg, coll);
