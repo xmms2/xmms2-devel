@@ -130,12 +130,18 @@ init_query (coll_query_params_t *params)
 	/* Always fetch the media id */
 	query->params->fetch = g_list_prepend (query->params->fetch, "id");
 
-	/* Prepare aliases for the order fields */
+	/* Prepare aliases for the order/group/fetch fields */
 	for (n = query->params->order; n; n = n->next) {
 		gchar *field = canonical_field_name (n->data);
 		if (field != NULL) {
 			query_make_alias (query, field, TRUE);
 		}
+	}
+	for (n = query->params->group; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);
+	}
+	for (n = query->params->fetch; n; n = n->next) {
+		query_make_alias (query, n->data, TRUE);
 	}
 
 	return query;
@@ -320,7 +326,9 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 		} else {
 			alias->type = XMMS_QUERY_ALIAS_PROP;
 
-			if (query->alias_base == NULL && !optional) {  /* Found a base */
+			/* Found a base */
+			if (query->alias_base == NULL &&
+			    (!optional || strcmp(field, XMMS_COLLQUERY_DEFAULT_BASE) == 0)) {
 				alias->id = 0;
 				query->alias_base = fieldkey;
 			} else {
