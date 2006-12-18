@@ -19,9 +19,9 @@ class pkgcobj(copyobj):
 			val = {}
 			p = self.env["PREFIX"]
 			val["PREFIX"] = p
-			val["BINDIR"] = os.path.join(p, "bin")
-			val["LIBDIR"] = os.path.join(p, "lib")
-			val["INCLUDEDIR"] = os.path.join(p, "include", "xmms2")
+			val["BINDIR"] = os.path.join("${prefix}", "bin")
+			val["LIBDIR"] = os.path.join("${prefix}", "lib")
+			val["INCLUDEDIR"] = os.path.join("${prefix}", "include", "xmms2")
 			val["VERSION"] = self.version
 
 			val["NAME"] = name
