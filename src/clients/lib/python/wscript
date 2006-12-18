@@ -8,7 +8,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'python'
     obj.env["plugin_SUFFIX"] = '.so'
-    obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label"]
+    obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label", "-Wno-unused-variable", "-Wno-parentheses"]
     obj.env["plugin_PREFIX"] = ''
     import distutils
     import distutils.sysconfig
