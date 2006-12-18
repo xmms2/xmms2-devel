@@ -264,7 +264,7 @@ cdef class _ListConverter:
 			tmp = inlist[i]
 			self.lst[i] = strdup(tmp)
 			i = i + 1
-			self.lst[i] = NULL
+		self.lst[i] = NULL
 	
 	def __del__(self):
 		i = 0
