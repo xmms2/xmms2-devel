@@ -1214,6 +1214,7 @@ class Configure:
 		bld = Build.Build()
 		bld.load_dirs(dir, bdir, isconfigure=1)
 		bld.m_allenvs['default'] = env
+		bld._variants=['default']
 
 		os.chdir(dir)
 

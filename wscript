@@ -1,6 +1,8 @@
 # encoding: utf-8
 #
-# Copyright 2006 David Anderson <dave at natulte.net>
+# WAF build scripts for XMMS2
+# Copyright XMMS2 Team
+#
 
 import sys
 if sys.version_info < (2,3):
@@ -42,7 +44,6 @@ subdirs = """
           src/lib/xmmsutils
           src/clients/lib/xmmsclient
           src/clients/lib/xmmsclient-glib
-          src/xmms
 		  src/include
 		  src/includepriv
           """.split()
@@ -65,6 +66,9 @@ all_plugins = sets.Set([p for p in os.listdir("src/plugins")
 ## Build
 ####
 def build(bld):
+    if bld.env_of_name("default")["BUILD_XMMS2D"]:
+        subdirs.append("src/xmms")
+
     # Process subfolders
     bld.add_subdirs(subdirs)
 
@@ -160,10 +164,16 @@ def _output_summary(enabled_plugins, disabled_plugins,
     Params.pprint('BLUE', ", ".join(disabled_plugins))
 
 def configure(conf):
+    conf.env["BUILD_XMMS2D"] = False
+    if not Params.g_options.without_xmms2d == True:
+        conf.env["BUILD_XMMS2D"] = True
+        subdirs.insert(0, "src/xmms")
+
     if (conf.check_tool('g++')):
         conf.env["HAVE_CXX"] = True
     else:
         conf.env["HAVE_CXX"] = False
+    conf.check_tool('misc checks')
     conf.check_tool('gcc')
     conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
 
@@ -228,6 +238,7 @@ def set_options(opt):
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                    type="string", dest="disable_plugins")
     opt.add_option('--conf-prefix', type='string', dest='config_prefix')
+    opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)

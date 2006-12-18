@@ -1,3 +1,4 @@
 #!/bin/sh
 export WAFDIR="."
+export WAF_HOME="_build_"
 ./waf-light $@

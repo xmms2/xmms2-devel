@@ -1,6 +1,8 @@
 # encoding: utf-8
 #
-# Copyright 2006 David Anderson <dave at natulte.net>
+# WAF build scripts for XMMS2
+# Copyright XMMS2 Team
+#
 
 import sys,os
 
@@ -63,7 +65,6 @@ def build(bld):
     launch.uselib = 'glib2 gmodule2 gthread2'
 
 def configure(conf):
-    conf.check_tool('misc checks')
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
     conf.check_pkg2('gmodule-2.0', '2.6.0', uselib='gmodule2')
     conf.check_pkg2('gthread-2.0', '2.6.0', uselib='gthread2')
