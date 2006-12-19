@@ -234,7 +234,7 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 
 	if (data->info.gain_album) {
 		g_snprintf (buf, sizeof (buf), "%f",
-		            (gdouble) data->info.gain_album / 100.0);
+		            pow (10.0, (gdouble) data->info.gain_album / 2000.0));
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
 		                             buf);
@@ -242,7 +242,7 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 
 	if (data->info.gain_title) {
 		g_snprintf (buf, sizeof (buf), "%f",
-		            (gdouble) data->info.gain_title / 100.0);
+		            pow (10.0, (gdouble) data->info.gain_title / 2000.0));
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
 		                             buf);
