@@ -690,16 +690,9 @@ xmmsc_playlist_radd_encoded(c, playlist, url)
 		const char* url
 
 xmmsc_result_t*
-xmmsc_playlist_import(c, playlist, url)
+xmmsc_coll_idlist_from_playlist_file (c, path)
 		xmmsc_connection_t* c
-		const char* playlist
-		const char* url
-
-xmmsc_result_t*
-xmmsc_playlist_export(c, playlist, mime)
-		xmmsc_connection_t* c
-		const char* playlist
-		const char* mime
+		const char* path
 
 
 ## IO

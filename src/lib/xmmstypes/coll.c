@@ -717,7 +717,7 @@ xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll,
 void
 xmmsc_coll_attribute_list_first (xmmsc_coll_t *coll)
 {
-	x_return_val_if_fail (coll, 0);
+	x_return_if_fail (coll);
 
 	coll->curr_att = coll->attributes;
 }
