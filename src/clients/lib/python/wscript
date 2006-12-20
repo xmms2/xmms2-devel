@@ -8,7 +8,6 @@ def build(bld):
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'python'
     obj.env["plugin_SUFFIX"] = '.so'
-    obj.env["plugin_CCFLAGS"] += ["-Wno-unused-function", "-Wno-unused-label", "-Wno-unused-variable", "-Wno-parentheses"]
     obj.env["plugin_PREFIX"] = ''
     import distutils
     import distutils.sysconfig
@@ -28,6 +27,7 @@ def configure(conf):
         return False
 
     conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
+    conf.env["CCFLAGS_python"] += ["-Wno-unused-function", "-Wno-unused-label", "-Wno-unused-variable", "-Wno-parentheses"]
 
     return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
 
