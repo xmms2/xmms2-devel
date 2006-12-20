@@ -482,8 +482,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			{
 				xmmsc_coll_t *coll;
 
-				xmms_ipc_msg_get_collection_alloc (msg, &coll);
-				if (!coll)
+				if (!xmms_ipc_msg_get_collection_alloc (msg, &coll))
 					return false;
 
 				res->data.coll = coll;
