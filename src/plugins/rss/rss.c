@@ -19,6 +19,7 @@
 #include "xmms/xmms_log.h"
 
 #include <glib.h>
+#include <libxml/xmlreader.h>
 
 static gboolean xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_rss_init (xmms_xform_t *xform);
@@ -67,51 +68,72 @@ xmms_rss_init (xmms_xform_t *xform) {
 }
 
 static void
-xmms_rss_start_element (GMarkupParseContext *context, const gchar *elem_name,
-						   const gchar **attr_names, const gchar **attr_values,
-						   gpointer udata, GError **error) {
+xmms_rss_start_element (void *udata, const xmlChar *name, const xmlChar **attrs) {
 	int i;
 
-	if (g_ascii_strncasecmp (elem_name, "enclosure", 9) != 0)
+	XMMS_DBG("start elem %s", name);
+
+	if (xmlStrncmp (name, "enclosure", 9) != 0)
 		return;
 
-	if (!attr_names || !attr_values || !udata)
+	if (!attrs || !udata)
 		return;
 
-	for (i = 0; attr_names[i] && attr_values[i]; i++) {
-		if (g_ascii_strncasecmp (attr_names[i], "url", 3) == 0) {
+	for (i = 0; attrs[i]; i += 2) {
+		if (xmlStrncmp (attrs[i], "url", 3) == 0) {
 			xmms_xform_t *xform = (xmms_xform_t *)udata;
 
-			xmms_xform_browse_add_entry (xform, attr_values[i], 0);
-			xmms_xform_browse_add_entry_symlink (xform, attr_values[i], 0, NULL);
+			XMMS_DBG ("Found %s", attrs[i+1]);
+			xmms_xform_browse_add_entry (xform, attrs[i+1], 0);
+			xmms_xform_browse_add_entry_symlink (xform, attrs[i+1], 0, NULL);
+
+			break;
 		}
 	}
+}
+
+static void
+xmms_rss_error (void *udata, const char *msg, ...) {
+	va_list ap;
+	char str[1000];
+
+	va_start (ap, msg);
+	vsnprintf (str, 1000, msg, ap);
+	va_end (ap);
+
+	XMMS_DBG ("%s", str);
 }
 
 static gboolean
 xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
 	int ret;
-	gchar buffer[1024];
-	GMarkupParseContext *ctx;
-	GMarkupParser parser;
+	char buffer[1024];
+	xmlSAXHandler handler;
+	xmlParserCtxtPtr ctx;
 
 	g_return_val_if_fail (xform, FALSE);
 
-	memset (&parser, 0, sizeof (GMarkupParser));
-
-	parser.start_element = xmms_rss_start_element;
-	ctx = g_markup_parse_context_new (&parser, 0, xform, NULL);
+	memset (&handler, '\0', sizeof (xmlSAXHandler));
+	handler.startElement = xmms_rss_start_element;
+	handler.error = xmms_rss_error;
+	handler.fatalError = xmms_rss_error;
+	handler.warning = xmms_rss_error;
 
 	xmms_error_reset (error);
 
-	do {
-		ret = xmms_xform_read (xform, buffer, 1024, error);
-		if (!g_markup_parse_context_parse (ctx, buffer, ret, NULL))
-			break;
-	} while (ret > 0);
+	ret = xmms_xform_read (xform, buffer, 1024, error);
+	ctx = xmlCreatePushParserCtxt (&handler, xform, buffer, ret, NULL);
 
-	g_markup_parse_context_free (ctx);
+	while ((ret = xmms_xform_read (xform, buffer, 1024, error)) > 0) {
+		XMMS_DBG("read: %d", ret);
+		xmlParseChunk (ctx, buffer, ret, 0);
+	}
+
+	xmlParseChunk (ctx, buffer, 0, 1);
+
 	xmms_error_reset (error);
+
+	xmlFreeParserCtxt (ctx);
 
 	return TRUE;
 }
