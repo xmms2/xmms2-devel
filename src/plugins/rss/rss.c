@@ -21,6 +21,12 @@
 #include <glib.h>
 #include <libxml/xmlreader.h>
 
+typedef struct xmms_rss_data_St {
+	xmms_xform_t *xform;
+	xmms_error_t *error;
+	gboolean parse_failure;
+} xmms_rss_data_t;
+
 static gboolean xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_rss_init (xmms_xform_t *xform);
 static gboolean xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
@@ -81,7 +87,7 @@ xmms_rss_start_element (void *udata, const xmlChar *name, const xmlChar **attrs)
 
 	for (i = 0; attrs[i]; i += 2) {
 		if (xmlStrncmp (attrs[i], (xmlChar *)"url", 3) == 0) {
-			xmms_xform_t *xform = (xmms_xform_t *)udata;
+			xmms_xform_t *xform = ((xmms_rss_data_t *)udata)->xform;
 
 			XMMS_DBG ("Found %s", attrs[i+1]);
 			xmms_xform_browse_add_entry (xform, (char *)attrs[i+1], 0);
@@ -101,7 +107,8 @@ xmms_rss_error (void *udata, const char *msg, ...) {
 	vsnprintf (str, 1000, msg, ap);
 	va_end (ap);
 
-	XMMS_DBG ("%s", str);
+	((xmms_rss_data_t *)udata)->parse_failure = TRUE;
+	xmms_error_set (((xmms_rss_data_t *)udata)->error, XMMS_ERROR_INVAL, str);
 }
 
 static gboolean
@@ -110,29 +117,44 @@ xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
 	char buffer[1024];
 	xmlSAXHandler handler;
 	xmlParserCtxtPtr ctx;
+	xmms_rss_data_t data;
 
 	g_return_val_if_fail (xform, FALSE);
 
 	memset (&handler, '\0', sizeof (xmlSAXHandler));
+	memset (&data, '\0', sizeof (xmms_rss_data_t));
+
 	handler.startElement = xmms_rss_start_element;
 	handler.error = xmms_rss_error;
 	handler.fatalError = xmms_rss_error;
-	handler.warning = xmms_rss_error;
+
+	data.xform = xform;
+	data.error = error;
+	data.parse_failure = FALSE;
 
 	xmms_error_reset (error);
 
-	ret = xmms_xform_read (xform, buffer, 1024, error);
-	ctx = xmlCreatePushParserCtxt (&handler, xform, buffer, ret, NULL);
+	if (!(ctx = xmlCreatePushParserCtxt (&handler, &data, buffer, 0, NULL))) {
+		xmms_error_set (error, XMMS_ERROR_OOM, "Could not allocate xml parser");
+		return FALSE;
+	}
+	
 
 	while ((ret = xmms_xform_read (xform, buffer, 1024, error)) > 0) {
-		XMMS_DBG("read: %d", ret);
 		xmlParseChunk (ctx, buffer, ret, 0);
 	}
+
+	if (ret < 0) {
+		xmms_error_set (error, XMMS_ERROR_GENERIC, "xmms_xform_read failed");
+		return FALSE;
+	}
+
+	if (data.parse_failure)
+		return FALSE;
 
 	xmlParseChunk (ctx, buffer, 0, 1);
 
 	xmms_error_reset (error);
-
 	xmlFreeParserCtxt (ctx);
 
 	return TRUE;
