@@ -138,7 +138,6 @@ xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error) {
 		xmms_error_set (error, XMMS_ERROR_OOM, "Could not allocate xml parser");
 		return FALSE;
 	}
-	
 
 	while ((ret = xmms_xform_read (xform, buffer, 1024, error)) > 0) {
 		xmlParseChunk (ctx, buffer, ret, 0);

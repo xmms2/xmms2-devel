@@ -155,6 +155,13 @@ xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc)
 	}
 }
 
+bool
+xmmsc_ipc_disconnected (xmmsc_ipc_t *ipc)
+{
+	x_return_val_if_fail (ipc, true);
+	return ipc->disconnect;
+}
+
 xmmsc_ipc_t *
 xmmsc_ipc_init (void)
 {
