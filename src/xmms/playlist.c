@@ -886,6 +886,15 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 		return FALSE;
 	}
 
+	if (!xmms_medialib_check_id (file)) {
+		if (err) {
+			/* we can be called internaly also! */
+			xmms_error_set (err, XMMS_ERROR_NOENT,
+			                "That is not a valid medialib id!");
+		}
+		return FALSE;
+	}
+
 	len = xmms_playlist_coll_get_size (plcoll);
 	if (pos > len || pos < 0) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC,
