@@ -73,19 +73,19 @@ xmms_rss_start_element (void *udata, const xmlChar *name, const xmlChar **attrs)
 
 	XMMS_DBG("start elem %s", name);
 
-	if (xmlStrncmp (name, "enclosure", 9) != 0)
+	if (xmlStrncmp (name, (xmlChar *)"enclosure", 9) != 0)
 		return;
 
 	if (!attrs || !udata)
 		return;
 
 	for (i = 0; attrs[i]; i += 2) {
-		if (xmlStrncmp (attrs[i], "url", 3) == 0) {
+		if (xmlStrncmp (attrs[i], (xmlChar *)"url", 3) == 0) {
 			xmms_xform_t *xform = (xmms_xform_t *)udata;
 
 			XMMS_DBG ("Found %s", attrs[i+1]);
-			xmms_xform_browse_add_entry (xform, attrs[i+1], 0);
-			xmms_xform_browse_add_entry_symlink (xform, attrs[i+1], 0, NULL);
+			xmms_xform_browse_add_entry (xform, (char *)attrs[i+1], 0);
+			xmms_xform_browse_add_entry_symlink (xform, (char *)attrs[i+1], 0, NULL);
 
 			break;
 		}
