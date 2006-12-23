@@ -887,11 +887,8 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 	}
 
 	if (!xmms_medialib_check_id (file)) {
-		if (err) {
-			/* we can be called internaly also! */
-			xmms_error_set (err, XMMS_ERROR_NOENT,
-			                "That is not a valid medialib id!");
-		}
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+						"That is not a valid medialib id!");
 		return FALSE;
 	}
 
@@ -1004,11 +1001,8 @@ xmms_playlist_add_id (xmms_playlist_t *playlist, gchar *plname,
 	g_return_val_if_fail (file, FALSE);
 
 	if (!xmms_medialib_check_id (file)) {
-		if (err) {
-			/* we can be called internaly also! */
-			xmms_error_set (err, XMMS_ERROR_NOENT,
-			                "That is not a valid medialib id!");
-		}
+		xmms_error_set (err, XMMS_ERROR_NOENT,
+						"That is not a valid medialib id!");
 		return FALSE;
 	}
 
