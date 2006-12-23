@@ -684,6 +684,7 @@ c_broadcast_playlist_current_pos (VALUE self)
 {
 	METHOD_ADD_HANDLER(broadcast_playlist_current_pos);
 }
+#endif
 
 /*
  * call-seq:
@@ -709,6 +710,7 @@ c_broadcast_medialib_entry_added (VALUE self)
 	METHOD_ADD_HANDLER (broadcast_medialib_entry_added);
 }
 
+#if 0
 /*
  * call-seq:
  *  xc.playlist_shuffle -> result
@@ -934,6 +936,7 @@ c_medialib_playlist_remove (VALUE self, VALUE name)
 {
 	METHOD_ADD_HANDLER_STR (medialib_playlist_remove, name);
 }
+#endif
 
 /*
  * call-seq:
@@ -1035,6 +1038,7 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 	return TO_XMMS_CLIENT_RESULT (self, res);
 }
 
+#if 0
 /*
  * call-seq:
  *  xc.medialib_add_to_playlist(query) -> result
@@ -1309,11 +1313,13 @@ Init_Client (VALUE mXmms)
 	                  c_playlist_current_pos, 0);
 	rb_define_method (c, "broadcast_playlist_current_pos",
 	                  c_broadcast_playlist_current_pos, 0);
+#endif
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
 	rb_define_method (c, "broadcast_medialib_entry_added",
 	                  c_broadcast_medialib_entry_added, 0);
 
+#if 0
 	rb_define_method (c, "playlist_shuffle", c_playlist_shuffle, 0);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);
 	rb_define_method (c, "playlist_clear", c_playlist_clear, 0);
@@ -1333,11 +1339,13 @@ Init_Client (VALUE mXmms)
 	                  c_medialib_playlist_load, 1);
 	rb_define_method (c, "medialib_playlist_remove",
 	                  c_medialib_playlist_remove, 1);
+#endif
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
 	rb_define_method (c, "medialib_get_id", c_medialib_get_id, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 	rb_define_method (c, "medialib_entry_property_set",
 	                  c_medialib_entry_property_set, -1);
+#if 0
 	rb_define_method (c, "medialib_add_to_playlist",
 	                  c_medialib_add_to_playlist, 1);
 	rb_define_method (c, "medialib_playlists_list",
