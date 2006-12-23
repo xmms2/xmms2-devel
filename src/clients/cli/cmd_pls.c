@@ -236,15 +236,15 @@ cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	gchar *playlist = NULL;
 	guint pos;
 	gchar *url;
-	gchar **endptr;
+	char *endptr;
 	xmmsc_result_t *res;
 
 	if (argc < 4) {
 		print_error ("Need a position and a file");
 	}
 
-	pos = strtol (argv[2], endptr, 10);
-	if (**endptr == '\0') {
+	pos = strtol (argv[2], &endptr, 10);
+	if (*endptr == '\0') {
 		url = format_url (argv[3], G_FILE_TEST_IS_REGULAR);  /* No playlist name */
 	}
 	else {
