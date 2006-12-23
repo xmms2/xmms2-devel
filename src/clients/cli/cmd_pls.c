@@ -274,10 +274,10 @@ cmd_insert (xmmsc_connection_t *conn, gint argc, gchar **argv)
 void
 cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 {
-	gchar *playlist;
+	gchar *playlist = NULL;
 	guint pos, mlib_id;
 	char *endptr;
-	xmmsc_result_t *res, *active_res;
+	xmmsc_result_t *res;
 
 	if (argc < 4) {
 		print_error ("Need a position and a medialib id");
@@ -286,14 +286,6 @@ cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	pos = strtol (argv[2], &endptr, 10);
 	if (*endptr == '\0') {
 		mlib_id = strtol (argv[3], NULL, 10); /* No playlist name */
-
-		active_res = xmmsc_playlist_current_active (conn);
-		xmmsc_result_wait (active_res);
-
-		if (xmmsc_result_iserror (active_res))
-			print_error ("Unable to get currently active playlist");
-
-		xmmsc_result_get_string (active_res, &playlist);
 	}
 	else {
 		playlist = argv[2];  /* extract playlist name */
@@ -309,12 +301,9 @@ cmd_insertid (xmmsc_connection_t *conn, gint argc, gchar **argv)
 		             pos, xmmsc_result_get_error(res));
 	}
 
-	print_info ("Inserted %u at position %u in playlist %s", mlib_id, pos, playlist);
+	print_info ("Inserted %u at position %u", mlib_id, pos);
 
 	xmmsc_result_unref (res);
-
-	if (*endptr == '\0')
-		xmmsc_result_unref (active_res);
 }
 
 void
