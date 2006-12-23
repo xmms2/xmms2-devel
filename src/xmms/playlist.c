@@ -581,11 +581,11 @@ xmms_playlist_load (xmms_playlist_t *playlist, gchar *name, xmms_error_t *err)
 	}
 
 	XMMS_DBG ("Loading new playlist! %s", name);
-	xmms_collection_update_pointer (playlist->colldag, "_active", 
+	xmms_collection_update_pointer (playlist->colldag, "_active",
 	                                XMMS_COLLECTION_NSID_PLAYLISTS, plcoll);
 
-	xmms_object_emit_f (XMMS_OBJECT (playlist), 
-	                    XMMS_IPC_SIGNAL_PLAYLIST_LOADED, 
+	xmms_object_emit_f (XMMS_OBJECT (playlist),
+	                    XMMS_IPC_SIGNAL_PLAYLIST_LOADED,
 	                    XMMS_OBJECT_CMD_ARG_STRING,
 	                    name);
 }
@@ -737,7 +737,7 @@ xmms_playlist_remove_by_entry (xmms_playlist_t *playlist, gchar *plname,
  * Remove an entry from playlist.
  *
  */
-gboolean 
+gboolean
 xmms_playlist_remove (xmms_playlist_t *playlist, gchar *plname, guint pos,
                       xmms_error_t *err)
 {
@@ -888,7 +888,7 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 
 	if (!xmms_medialib_check_id (file)) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
-						"That is not a valid medialib id!");
+		                "That is not a valid medialib id!");
 		return FALSE;
 	}
 
@@ -1002,7 +1002,7 @@ xmms_playlist_add_id (xmms_playlist_t *playlist, gchar *plname,
 
 	if (!xmms_medialib_check_id (file)) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
-						"That is not a valid medialib id!");
+		                "That is not a valid medialib id!");
 		return FALSE;
 	}
 
@@ -1127,7 +1127,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 
 	size = xmms_playlist_coll_get_size (plcoll);
 
-	if (pos == size && 
+	if (pos == size &&
 	    xmmsc_coll_attribute_get (plcoll, "jumplist", &jumplist)) {
 
 		xmms_collection_set_int_attr (plcoll, "position", 0);
@@ -1242,9 +1242,9 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 		}
 
 		if (val1->type == XMMS_OBJECT_CMD_ARG_STRING &&
-			val2->type == XMMS_OBJECT_CMD_ARG_STRING) {
+		    val2->type == XMMS_OBJECT_CMD_ARG_STRING) {
 			res = g_utf8_collate (val1->value.string,
-		                          val2->value.string);
+			                      val2->value.string);
 			/* keep comparing next pair if equal */
 			if (res == 0)
 				continue;
@@ -1254,8 +1254,8 @@ xmms_playlist_entry_compare (gconstpointer a, gconstpointer b)
 
 		if ((val1->type == XMMS_OBJECT_CMD_ARG_INT32 ||
 		     val1->type == XMMS_OBJECT_CMD_ARG_UINT32) &&
-	        (val2->type == XMMS_OBJECT_CMD_ARG_INT32 ||
-	         val2->type == XMMS_OBJECT_CMD_ARG_UINT32))
+		    (val2->type == XMMS_OBJECT_CMD_ARG_INT32 ||
+		     val2->type == XMMS_OBJECT_CMD_ARG_UINT32))
 		{
 			s1 = (val1->type == XMMS_OBJECT_CMD_ARG_INT32) ?
 			      val1->value.int32 : val1->value.uint32;
