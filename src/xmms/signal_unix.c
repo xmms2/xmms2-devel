@@ -52,6 +52,8 @@ sigwaiter (gpointer data)
 		switch (caught){
 			case SIGINT:
 			case SIGTERM:
+				pthread_sigmask (SIG_UNBLOCK, &signals, NULL);
+
 				xmms_log_info ("Bye!");
 
 				xmms_object_cmd_arg_init (&arg);
