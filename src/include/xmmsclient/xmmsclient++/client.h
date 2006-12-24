@@ -16,6 +16,7 @@
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
+#include <xmmsclient/xmmsclient++/collection.h>
 
 #include <list>
 #include <string>
@@ -89,13 +90,14 @@ namespace Xmms
 
 			// Subsystems
 
-            const Bindata  bindata;
-			const Playback playback;
-			const Playlist playlist;
-			const Medialib medialib;
-			const Config   config;
-			const Stats    stats;
-			const Xform    xform;
+			const Bindata    bindata;
+			const Playback   playback;
+			const Playlist   playlist;
+			const Medialib   medialib;
+			const Config     config;
+			const Stats      stats;
+			const Xform      xform;
+			const Collection collection;
 
 			/** Get the absolute path to the user config dir.
 			 *  

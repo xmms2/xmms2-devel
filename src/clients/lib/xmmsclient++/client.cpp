@@ -22,13 +22,14 @@ namespace Xmms
 {
 
 	Client::Client( const std::string& name ) 
-		: bindata(  conn_, connected_, mainloop_ ),
-		  playback( conn_, connected_, mainloop_ ), 
-		  playlist( conn_, connected_, mainloop_ ), 
-		  medialib( conn_, connected_, mainloop_ ),
-		  config(   conn_, connected_, mainloop_ ),
-		  stats(    conn_, connected_, mainloop_ ),
-		  xform(    conn_, connected_, mainloop_ ),
+		: bindata(    conn_, connected_, mainloop_ ),
+		  playback(   conn_, connected_, mainloop_ ),
+		  playlist(   conn_, connected_, mainloop_ ),
+		  medialib(   conn_, connected_, mainloop_ ),
+		  config(     conn_, connected_, mainloop_ ),
+		  stats(      conn_, connected_, mainloop_ ),
+		  xform(      conn_, connected_, mainloop_ ),
+		  collection( conn_, connected_, mainloop_ ),
 		  name_( name ), conn_(0), connected_( false ),
 		  mainloop_( 0 ), listener_( 0 ), quitSignal_( 0 ), dc_( 0 )
 	{

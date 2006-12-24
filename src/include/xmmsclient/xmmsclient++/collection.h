@@ -11,6 +11,8 @@
 #include <list>
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 namespace Xmms 
 {
 
@@ -18,6 +20,8 @@ namespace Xmms
 	namespace Coll {
 		class Coll;
 	}
+
+	typedef boost::shared_ptr< Coll::Coll > CollPtr;
 
 	class Client;
 
@@ -28,6 +32,8 @@ namespace Xmms
 	{
 
 		public:
+
+			static CollPtr createColl( xmmsc_result_t* res );
 
 			typedef xmmsc_coll_namespace_t Namespace;
 
@@ -40,11 +46,11 @@ namespace Xmms
 			 */
 			virtual ~Collection();
 
-			Coll::Coll
+			CollPtr
 			get( const std::string& name, Namespace nsname ) const;
 
-			List< Coll::Coll >
-			list( const std::string& name, Namespace nsname ) const;
+			List< std::string >
+			list( Namespace nsname ) const;
 
 			void
 			save( const Coll::Coll& coll,
@@ -54,10 +60,10 @@ namespace Xmms
 			void
 			remove( const std::string& name, Namespace nsname ) const;
 
-			List< Coll::Coll >
+			List< std::string >
 			find( unsigned int id, Namespace nsname ) const;
 
-			Coll::Coll
+			CollPtr
 			rename( const std::string& from_name,
 			        const std::string& to_name,
 			        Namespace nsname ) const;

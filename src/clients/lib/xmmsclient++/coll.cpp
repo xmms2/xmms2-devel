@@ -57,6 +57,10 @@ namespace Xmms
 		xmmsc_coll_unref( coll_ );
 	}
 
+	Type Coll::getType() const {
+		return xmmsc_coll_get_type( coll_ );
+	}
+
 	AttributeElement Coll::operator []( const std::string& attrname )
 	{
 		return AttributeElement( *this, attrname );
@@ -105,9 +109,65 @@ namespace Xmms
 		return value;
 	}
 
+	void Coll::addOperand( Coll& ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::removeOperand( Coll& ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::removeOperand() {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::setOperand( Coll& ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	Coll Coll::getOperand() const {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::append( unsigned int ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::insert( unsigned int, unsigned int ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::move( unsigned int, unsigned int ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::remove( unsigned int ) {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	void Coll::clear() {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	unsigned int Coll::size() const {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	OperandIterator Coll::getOperandIterator() {
+		throw std::runtime_error( "Wrong type" );
+	}
+
+	IdlistElement Coll::operator[]( unsigned int ) {
+		throw std::runtime_error( "Wrong type" );
+	}
 
 	Nary::Nary( Type type )
 		: Coll( type )
+	{
+	}
+
+	Nary::Nary( xmmsc_coll_t* coll )
+		: Coll( coll )
 	{
 	}
 
@@ -117,12 +177,12 @@ namespace Xmms
 
 	void Nary::addOperand( Coll& operand )
 	{
-		xmmsc_coll_add_operand( coll_, operand.coll_ );
+		xmmsc_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void Nary::removeOperand( Coll& operand )
 	{
-		xmmsc_coll_remove_operand( coll_, operand.coll_ );
+		xmmsc_coll_remove_operand( coll_, operand.getColl() );
 	}
 
 	OperandIterator Nary::getOperandIterator()
@@ -142,6 +202,11 @@ namespace Xmms
 		setOperand( operand );
 	}
 
+	Unary::Unary( xmmsc_coll_t* coll )
+		: Coll( coll )
+	{
+	}
+
 	Unary::~Unary()
 	{
 	}
@@ -149,13 +214,13 @@ namespace Xmms
 	void Unary::setOperand( Coll& operand )
 	{
 		removeOperand();
-		xmmsc_coll_add_operand( coll_, operand.coll_ );
+		xmmsc_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void Unary::removeOperand()
 	{
 		try {
-			xmmsc_coll_remove_operand( coll_, getOperand().coll_ );
+			xmmsc_coll_remove_operand( coll_, getOperand().getColl() );
 		}
 		/* don't throw an error if none */
 		catch (...) {}
@@ -180,6 +245,10 @@ namespace Xmms
 		return Coll( op );
 	}
 
+	Filter::Filter( xmmsc_coll_t* coll )
+		: Unary( coll )
+	{
+	}
 
 	Filter::Filter( Type type )
 		: Unary ( type )
@@ -198,9 +267,9 @@ namespace Xmms
 	}
 
 	Filter::Filter( Type type,
-	                      Coll& operand,
-	                      const std::string& field,
-	                      const std::string& value )
+	                Coll& operand,
+	                const std::string& field,
+	                const std::string& value )
 		: Unary ( type, operand )
 	{
 		setAttribute( "field", field );
@@ -208,10 +277,10 @@ namespace Xmms
 	}
 
 	Filter::Filter( Type type,
-	                      Coll& operand,
-	                      const std::string& field,
-	                      const std::string& value,
-	                      bool case_sensitive )
+	                Coll& operand,
+	                const std::string& field,
+	                const std::string& value,
+	                bool case_sensitive )
 		: Unary ( type, operand )
 	{
 		setAttribute( "field", field );
@@ -226,6 +295,11 @@ namespace Xmms
 
 	Reference::Reference()
 		: Coll( XMMS_COLLECTION_TYPE_REFERENCE )
+	{
+	}
+
+	Reference::Reference( xmmsc_coll_t* coll )
+		: Coll( coll )
 	{
 	}
 
@@ -248,16 +322,22 @@ namespace Xmms
 
 	Union::Union()
 		: Nary( XMMS_COLLECTION_TYPE_UNION ) {}
+	Union::Union( xmmsc_coll_t* coll )
+		: Nary( coll ) {}
 	Union::~Union() {}
 
 	Intersection::Intersection()
 		: Nary( XMMS_COLLECTION_TYPE_INTERSECTION ) {}
+	Intersection::Intersection( xmmsc_coll_t* coll )
+		: Nary( coll ) {}
 	Intersection::~Intersection() {}
 
 	Complement::Complement()
 		: Unary( XMMS_COLLECTION_TYPE_COMPLEMENT ) {}
 	Complement::Complement( Coll& operand )
 		: Unary( XMMS_COLLECTION_TYPE_COMPLEMENT, operand ) {}
+	Complement::Complement( xmmsc_coll_t* coll )
+		: Unary( coll ) {}
 	Complement::~Complement() {}
 
 	Has::Has()
@@ -266,10 +346,14 @@ namespace Xmms
 		: Filter( XMMS_COLLECTION_TYPE_HAS, operand ) {}
 	Has::Has( Coll& operand, const std::string& field )
 		: Filter( XMMS_COLLECTION_TYPE_HAS, operand, field ) {}
+	Has::Has( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Has::~Has() {}
 
 	Smaller::Smaller()
 		: Filter( XMMS_COLLECTION_TYPE_SMALLER ) {}
+	Smaller::Smaller( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Smaller::Smaller( Coll& operand )
 		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand ) {}
 	Smaller::Smaller( Coll& operand, const std::string& field )
@@ -282,6 +366,8 @@ namespace Xmms
 
 	Greater::Greater()
 		: Filter( XMMS_COLLECTION_TYPE_GREATER ) {}
+	Greater::Greater( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Greater::Greater( Coll& operand )
 		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand ) {}
 	Greater::Greater( Coll& operand, const std::string& field )
@@ -294,6 +380,8 @@ namespace Xmms
 
 	Match::Match()
 		: Filter( XMMS_COLLECTION_TYPE_MATCH ) {}
+	Match::Match( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Match::Match( Coll& operand )
 		: Filter( XMMS_COLLECTION_TYPE_MATCH, operand ) {}
 	Match::Match( Coll& operand, const std::string& field )
@@ -308,6 +396,8 @@ namespace Xmms
 
 	Contains::Contains()
 		: Filter( XMMS_COLLECTION_TYPE_CONTAINS ) {}
+	Contains::Contains( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Contains::Contains( Coll& operand )
 		: Filter( XMMS_COLLECTION_TYPE_CONTAINS, operand ) {}
 	Contains::Contains( Coll& operand, const std::string& field )
@@ -321,6 +411,14 @@ namespace Xmms
 	Contains::~Contains() {}
 
 
+	Idlist::Idlist( xmmsc_coll_t* coll )
+		: Coll( coll )
+	{
+	}
+	Idlist::Idlist( Type type )
+		: Coll( type )
+	{
+	}
 	Idlist::Idlist()
 		: Coll( XMMS_COLLECTION_TYPE_IDLIST )
 	{
@@ -345,6 +443,50 @@ namespace Xmms
 	Idlist::~Idlist()
 	{
 	}
+
+	Queue::Queue( xmmsc_coll_t* coll )
+		: Idlist( coll ) {}
+	Queue::Queue( Type type )
+		: Idlist( type ) {}
+	Queue::Queue( Type type, unsigned int history )
+		: Idlist( type )
+	{
+		setAttribute( "history", history );
+	}
+	Queue::Queue()
+		: Idlist( XMMS_COLLECTION_TYPE_QUEUE )
+	{
+	}
+	Queue::Queue( unsigned int history )
+		: Idlist( XMMS_COLLECTION_TYPE_QUEUE )
+	{
+		setAttribute( "history", history );
+	}
+	Queue::~Queue()
+	{
+	}
+
+	PartyShuffle::PartyShuffle( xmmsc_coll_t* coll )
+		: Queue( coll ) {}
+	PartyShuffle::PartyShuffle()
+		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
+	{
+	}
+	PartyShuffle::PartyShuffle( unsigned int history )
+		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
+	{
+		setAttribute( "history", history );
+	}
+	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
+		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
+	{
+		setAttribute( "history", history );
+		setAttribute( "upcoming", upcoming );
+	}
+	PartyShuffle::~PartyShuffle()
+	{
+	}
+
 
 	// FIXME: make these throw better exceptions
 	void Idlist::append( unsigned int id )
@@ -397,27 +539,27 @@ namespace Xmms
 	}
 
 	// get/set value at index
-	Idlist::Element Idlist::operator []( unsigned int index )
+	IdlistElement Idlist::operator []( unsigned int index )
 	{
-		return Element( *this, index );
+		return IdlistElement( *this, index );
 	}
 
-	Idlist::Element::Element( Coll& coll, unsigned int index )
+	IdlistElement::IdlistElement( Coll& coll, unsigned int index )
 		: AbstractElement< unsigned int, unsigned int >( coll, index )
 	{
 	}
 
-	Idlist::Element::~Element()
+	IdlistElement::~IdlistElement()
 	{
 	}
 
-	Idlist::Element::operator unsigned int() const
+	IdlistElement::operator unsigned int() const
 	{
 		return coll_.getIndex( index_ );
 	}
 
 	unsigned int
-	Idlist::Element::operator=( unsigned int value )
+	IdlistElement::operator=( unsigned int value )
 	{
 		coll_.setIndex( index_, value );
 		return value;
