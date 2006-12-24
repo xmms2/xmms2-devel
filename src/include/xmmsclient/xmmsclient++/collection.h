@@ -69,19 +69,19 @@ namespace Xmms
 			        Namespace nsname ) const;
 
 			List< unsigned int >
-			queryIds( const Coll::Coll& name,
+			queryIds( const Coll::Coll& coll,
 			          const std::list<std::string>& order = std::list<std::string>(),
 			          unsigned int limit_len = 0,
-			          unsigned int limit_start = 0,
-			          const std::list<std::string>& fetch = std::list<std::string>(),
-			          const std::list<std::string>& group = std::list<std::string>()
-			        ) const;
+			          unsigned int limit_start = 0) const;
 
 			List< Dict >
-			queryInfos( const Coll::Coll& name,
-			            const std::vector<std::string>& order,
+			queryInfos( const Coll::Coll& coll,
+			            const std::list<std::string>& order = std::list<std::string>(),
 			            unsigned int limit_len = 0,
-			            unsigned int limit_start = 0) const;
+			            unsigned int limit_start = 0,
+			            const std::list<std::string>& fetch = std::list<std::string>(),
+			            const std::list<std::string>& group = std::list<std::string>()
+			          ) const;
 
 			void
 			broadcastCollectionChanged( const std::list< DictSlot >& slots,

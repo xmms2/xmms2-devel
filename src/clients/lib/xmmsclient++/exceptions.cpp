@@ -54,4 +54,14 @@ namespace Xmms
 	{
 	}
 
+	collection_type_error::collection_type_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
+	collection_operation_error::collection_operation_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 }

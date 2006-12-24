@@ -112,6 +112,29 @@ namespace Xmms
 
 	};
 
+	/** @class collection_type_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if trying to perform an operation forbidden by
+	 *         the type of the collection operator.
+	 */
+	class collection_type_error : public std::runtime_error
+	{
+		public:
+			explicit collection_type_error( const std::string& what_arg );
+
+	};
+
+	/** @class collection_operation_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if a collection operation failed.
+	 */
+	class collection_operation_error : public std::runtime_error
+	{
+		public:
+			explicit collection_operation_error( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H

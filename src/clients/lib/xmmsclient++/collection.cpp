@@ -106,11 +106,12 @@ namespace Xmms
 
 	List< std::string >
 	Collection::list( Namespace nsname ) const {
+
 		xmmsc_result_t* res
 		    = call( connected_, ml_,
 		            boost::bind( xmmsc_coll_list, conn_, nsname ) );
 
-		List < std::string > result( res);
+		List< std::string > result( res );
 		xmmsc_result_unref( res );
 
 		return result;
@@ -135,11 +136,12 @@ namespace Xmms
 
 	List< std::string >
 	Collection::find( unsigned int id, Namespace nsname ) const {
+
 		xmmsc_result_t* res
 		    = call( connected_, ml_,
 		            boost::bind( xmmsc_coll_find, conn_, id, nsname ) );
 
-		List < std::string > result( res);
+		List< std::string > result( res );
 		xmmsc_result_unref( res );
 
 		return result;
@@ -161,22 +163,51 @@ namespace Xmms
 
 	}
 
-	List<  unsigned int >
-	Collection::queryIds( const Coll::Coll& name,
+	List< unsigned int >
+	Collection::queryIds( const Coll::Coll& coll,
 	                      const std::list< std::string >& order,
 	                      unsigned int limit_len,
-	                      unsigned int limit_start,
-	                      const std::list< std::string >& fetch,
-	                      const std::list< std::string >& group
-	                    ) const {
+	                      unsigned int limit_start ) const {
+
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		xmmsc_result_t* res
+		    = call( connected_, ml_,
+		            boost::bind( xmmsc_coll_query_ids, conn_, coll.coll_,
+		                         &corder[0], limit_start, limit_len ) );
+
+		List< unsigned int > result( res );
+		xmmsc_result_unref( res );
+
+		return result;
 
 	}
 
 	List< Dict >
-	Collection::queryInfos( const Coll::Coll& name,
-	                        const std::vector< std::string >& order,
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& order,
 	                        unsigned int limit_len,
-	                        unsigned int limit_start ) const {
+	                        unsigned int limit_start,
+	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& group
+	                      ) const {
+
+		std::vector< const char* > corder, cfetch, cgroup;
+		fillCharArray( order, corder );
+		fillCharArray( fetch, cfetch );
+		fillCharArray( group, cgroup );
+
+		xmmsc_result_t* res
+		    = call( connected_, ml_,
+		            boost::bind( xmmsc_coll_query_infos, conn_, coll.coll_,
+		                         &corder[0], limit_start, limit_len,
+		                         &cfetch[0], &cgroup[0] ) );
+
+		List< Dict > result( res );
+		xmmsc_result_unref( res );
+
+		return result;
 
 	}
 

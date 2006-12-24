@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <boost/lexical_cast.hpp>
 
 namespace Xmms
 {
@@ -110,55 +111,55 @@ namespace Xmms
 	}
 
 	void Coll::addOperand( Coll& ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::removeOperand( Coll& ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::removeOperand() {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::setOperand( Coll& ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	Coll Coll::getOperand() const {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::append( unsigned int ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::insert( unsigned int, unsigned int ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::move( unsigned int, unsigned int ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::remove( unsigned int ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	void Coll::clear() {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	unsigned int Coll::size() const {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	OperandIterator Coll::getOperandIterator() {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	IdlistElement Coll::operator[]( unsigned int ) {
-		throw std::runtime_error( "Wrong type" );
+		throw collection_type_error( "Wrong type" );
 	}
 
 	Nary::Nary( Type type )
@@ -451,7 +452,7 @@ namespace Xmms
 	Queue::Queue( Type type, unsigned int history )
 		: Idlist( type )
 	{
-		setAttribute( "history", history );
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 	}
 	Queue::Queue()
 		: Idlist( XMMS_COLLECTION_TYPE_QUEUE )
@@ -460,7 +461,7 @@ namespace Xmms
 	Queue::Queue( unsigned int history )
 		: Idlist( XMMS_COLLECTION_TYPE_QUEUE )
 	{
-		setAttribute( "history", history );
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 	}
 	Queue::~Queue()
 	{
@@ -475,26 +476,25 @@ namespace Xmms
 	PartyShuffle::PartyShuffle( unsigned int history )
 		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
 	{
-		setAttribute( "history", history );
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 	}
 	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
 		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
 	{
-		setAttribute( "history", history );
-		setAttribute( "upcoming", upcoming );
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+		setAttribute( "upcoming", boost::lexical_cast<std::string>( upcoming ) );
 	}
 	PartyShuffle::~PartyShuffle()
 	{
 	}
 
 
-	// FIXME: make these throw better exceptions
 	void Idlist::append( unsigned int id )
 	{
 		if( !xmmsc_coll_idlist_append( coll_, id ) ) {
 			std::stringstream err;
 			err << "Failed to append " << id << " to idlist";
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
@@ -503,7 +503,7 @@ namespace Xmms
 		if( !xmmsc_coll_idlist_insert( coll_, id, index ) ) {
 			std::stringstream err;
 			err << "Failed to insert " << id << " in idlist at index " << index;
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
@@ -513,7 +513,7 @@ namespace Xmms
 			std::stringstream err;
 			err << "Failed to move idlist entry from index " << index
 			    << " to " << newindex;
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
@@ -522,14 +522,14 @@ namespace Xmms
 		if( !xmmsc_coll_idlist_remove( coll_, index ) ) {
 			std::stringstream err;
 			err << "Failed to remove idlist entry at index " << index;
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
 	void Idlist::clear()
 	{
 		if( !xmmsc_coll_idlist_clear( coll_ ) ) {
-			throw std::runtime_error( "Failed to clear the idlist" );
+			throw collection_operation_error( "Failed to clear the idlist" );
 		}
 	}
 

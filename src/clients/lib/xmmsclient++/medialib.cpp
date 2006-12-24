@@ -29,17 +29,11 @@ namespace Xmms
 	}
 
 	void Medialib::addEntry( const std::string& url,
-	                         const std::list< std::string >& args ) const {
+	                         const std::list< std::string >& args ) const
+	{
 
-		std::vector< const char* > cargs( args.size() );
-
-		std::vector< const char* >::size_type i = 0;
-		for( std::list< std::string >::const_iterator it = args.begin();
-		     it != args.end(); ++it ) {
-
-			cargs[i++] = it->c_str();
-
-		}
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
 
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_medialib_add_entry_args, conn_,

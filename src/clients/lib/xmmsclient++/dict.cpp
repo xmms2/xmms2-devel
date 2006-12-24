@@ -1,9 +1,11 @@
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/variant.hpp>
 #include <string>
 #include <list>
+#include <vector>
 #include <iostream>
 
 namespace Xmms
@@ -191,18 +193,10 @@ namespace Xmms
 
 	void PropDict::setSource( const std::list< std::string >& src ) const
 	{
-		const char **prefs = new const char*[ src.size() + 1 ];
+		std::vector< const char* > prefs;
+		fillCharArray( src, prefs );
 
-		std::list< std::string >::const_iterator it;
-		int n;
-		for(it = src.begin(), n = 0; it != src.end(); ++it, ++n) {
-			prefs[n] = it->c_str();
-		}
-		prefs[n] = 0;
-
-		xmmsc_result_source_preference_set( result_, prefs );
-
-		delete [] prefs;
+		xmmsc_result_source_preference_set( result_, &prefs[0] );
 	}
 
 	static void

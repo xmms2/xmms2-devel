@@ -15,6 +15,7 @@
 
 #include <string>
 #include <list>
+#include <vector>
 
 namespace Xmms
 {
@@ -67,6 +68,26 @@ namespace Xmms
 			std::string error( xmmsc_result_get_error( res ) );
 			xmmsc_result_unref( res );
 			throw result_error( error );
+		}
+	}
+
+	/** Fill a const char* array from a list of std::string.
+	 *  Convenience function to convert C++ arguments into a type
+	 *  accepted by the C functions.
+	 *  @note The array is NULL-terminated, i.e. size(array) = size(input) + 1.
+	 *
+	 *  @param input  The strings to put in the second argument.
+	 *  @param array  The array to fill.
+	 */
+	inline void fillCharArray( const std::list< std::string >& input,
+	                           std::vector< const char* >& array )
+	{
+		array.resize( input.size() + 1, 0 );
+		std::vector< const char* >::size_type i = 0;
+		for( std::list< std::string >::const_iterator it = input.begin();
+		     it != input.end(); ++it ) {
+
+			array[i++] = it->c_str();
 		}
 	}
 
