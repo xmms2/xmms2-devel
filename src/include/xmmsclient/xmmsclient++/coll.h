@@ -117,12 +117,12 @@ namespace Xmms
 
 				virtual OperandIterator getOperandIterator();
 
+				// FIXME: Hide this, we shouldn't need it..
 				xmmsc_coll_t* getColl() { return coll_; }
 
 			/** @cond */
 			protected:
 
-				// FIXME: testing xmmsc_coll_t* coll_;
 				friend class OperandIterator;
 				friend class ::Xmms::Collection;
 				friend class IdlistElement;
@@ -224,9 +224,13 @@ namespace Xmms
 
 		class Reference : public Coll
 		{
+			friend class Collection;
+
+			protected:
+				Reference( xmmsc_coll_t* coll );
+
 			public:
 				Reference();
-				Reference( xmmsc_coll_t* coll );
 				Reference( const std::string& name,
 				           const Collection::Namespace& nsname );
 				~Reference();
@@ -241,44 +245,64 @@ namespace Xmms
 
 		class Union : public Nary
 		{
+			friend class Collection;
+
+			protected:
+				Union( xmmsc_coll_t* coll );
+
 			public:
 				Union();
-				Union( xmmsc_coll_t* coll );
 				~Union();
 		};
 
 		class Intersection : public Nary
 		{
+			friend class Collection;
+
+			protected:
+				Intersection( xmmsc_coll_t* coll );
+
 			public:
 				Intersection();
-				Intersection( xmmsc_coll_t* coll );
 				~Intersection();
 		};
 
 		class Complement : public Unary
 		{
+			friend class Collection;
+
+			protected:
+				Complement( xmmsc_coll_t* coll );
+
 			public:
 				Complement();
 				Complement( Coll& operand );
-				Complement( xmmsc_coll_t* coll );
 				~Complement();
 		};
 
 		class Has : public Filter
 		{
+			friend class Collection;
+
+			protected:
+				Has( xmmsc_coll_t* coll );
+
 			public:
 				Has();
 				Has(Coll& operand);
 				Has(Coll& operand, const std::string& field);
-				Has( xmmsc_coll_t* coll );
 				~Has();
 		};
 
 		class Smaller : public Filter
 		{
+			friend class Collection;
+
+			protected:
+				Smaller( xmmsc_coll_t* coll );
+
 			public:
 				Smaller();
-				Smaller( xmmsc_coll_t* coll );
 				Smaller(Coll& operand);
 				Smaller(Coll& operand, const std::string& field);
 				Smaller(Coll& operand,
@@ -289,9 +313,13 @@ namespace Xmms
 
 		class Greater : public Filter
 		{
+			friend class Collection;
+
+			protected:
+				Greater( xmmsc_coll_t* coll );
+
 			public:
 				Greater();
-				Greater( xmmsc_coll_t* coll );
 				Greater(Coll& operand);
 				Greater(Coll& operand, const std::string& field);
 				Greater(Coll& operand,
@@ -302,9 +330,13 @@ namespace Xmms
 
 		class Match : public Filter
 		{
+			friend class Collection;
+
+			protected:
+				Match( xmmsc_coll_t* coll );
+
 			public:
 				Match();
-				Match( xmmsc_coll_t* coll );
 				Match(Coll& operand);
 				Match(Coll& operand, const std::string& field);
 				Match(Coll& operand,
@@ -316,9 +348,13 @@ namespace Xmms
 
 		class Contains : public Filter
 		{
+			friend class Collection;
+
+			protected:
+				Contains( xmmsc_coll_t* coll );
+
 			public:
 				Contains();
-				Contains( xmmsc_coll_t* coll );
 				Contains(Coll& operand);
 				Contains(Coll& operand, const std::string& field);
 				Contains(Coll& operand,
