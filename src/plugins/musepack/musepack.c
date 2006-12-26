@@ -233,31 +233,35 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	                             data->info.sample_freq);
 
 	if (data->info.gain_album) {
-		gint tmp = exp ((M_LN10 / 2000.0) * data->info.gain_album);
-		g_snprintf (buf, sizeof (buf), "%f", pow (10, tmp / 20));
+		g_snprintf (buf, sizeof (buf), "%f",
+		            pow (10.0, (gdouble) data->info.gain_album / 2000.0));
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
 		                             buf);
 	}
 
 	if (data->info.gain_title) {
-		gint tmp = exp ((M_LN10 / 2000.0) * data->info.gain_title);
-		g_snprintf (buf, sizeof (buf), "%f", pow (10, tmp / 20));
+		g_snprintf (buf, sizeof (buf), "%f",
+		            pow (10.0, (gdouble) data->info.gain_title / 2000.0));
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
 		                             buf);
 	}
 
 	if (data->info.peak_album) {
-		xmms_xform_metadata_set_int (xform,
+		g_snprintf (buf, sizeof (buf), "%f",
+		            (gdouble) data->info.peak_album / 32768.0);
+		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
-		                             data->info.peak_album);
+		                             buf);
 	}
 
 	if (data->info.peak_title) {
-		xmms_xform_metadata_set_int (xform,
+		g_snprintf (buf, sizeof (buf), "%f",
+		            (gdouble) data->info.peak_title / 32768.0);
+		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-		                             data->info.peak_title);
+		                             buf);
 	}
 
 }
