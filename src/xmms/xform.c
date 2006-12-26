@@ -177,31 +177,33 @@ xmms_xform_browse_add_entry (xmms_xform_t *xform, const gchar *filename, guint32
 static gint
 xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 {
-	xmms_object_cmd_value_t *val1 = (xmms_object_cmd_value_t *)a;
-	xmms_object_cmd_value_t *val2 = (xmms_object_cmd_value_t *)b;
+	xmms_object_cmd_value_t *val1, *val2, *tmp1, *tmp2;
+	
+	val1 = (xmms_object_cmd_value_t *) a;
+	val2 = (xmms_object_cmd_value_t *) b;
 
 	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
 	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_DICT, 0);
 
-	val1 = g_hash_table_lookup (val1->value.dict, "intsort");
-	val2 = g_hash_table_lookup (val2->value.dict, "intsort");
+	tmp1 = g_hash_table_lookup (val1->value.dict, "intsort");
+	tmp2 = g_hash_table_lookup (val2->value.dict, "intsort");
 
-	if (val1 && val2) {
-		g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
-		g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
-		return val1->value.int32 > val2->value.int32;
+	if (tmp1 && tmp2) {
+		g_return_val_if_fail (tmp1->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
+		g_return_val_if_fail (tmp2->type == XMMS_OBJECT_CMD_ARG_INT32, 0);
+		return tmp1->value.int32 > tmp2->value.int32;
 	}
 
-	val1 = g_hash_table_lookup (val1->value.dict, "path");
-	val2 = g_hash_table_lookup (val2->value.dict, "path");
+	tmp1 = g_hash_table_lookup (val1->value.dict, "path");
+	tmp2 = g_hash_table_lookup (val2->value.dict, "path");
 
-	g_return_val_if_fail (!!val1, 0);
-	g_return_val_if_fail (!!val2, 0);
+	g_return_val_if_fail (!!tmp1, 0);
+	g_return_val_if_fail (!!tmp2, 0);
 
-	g_return_val_if_fail (val1->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
-	g_return_val_if_fail (val2->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
+	g_return_val_if_fail (tmp1->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
+	g_return_val_if_fail (tmp2->type == XMMS_OBJECT_CMD_ARG_STRING, 0);
 
-	return g_utf8_collate(val1->value.string, val2->value.string);
+	return g_utf8_collate (tmp1->value.string, tmp2->value.string);
 }
 
 GList *

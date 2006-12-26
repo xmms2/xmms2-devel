@@ -424,13 +424,11 @@ xmms_curl_callback_write (void *ptr, size_t size, size_t nmemb, void *stream)
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, 0);
 
-	g_return_val_if_fail (data->bufferlen == 0, 0);
-
 	len = size * nmemb;
 
-	g_return_val_if_fail (len <= CURL_MAX_WRITE_SIZE, 0);
+	g_return_val_if_fail ((data->bufferlen + len) <= CURL_MAX_WRITE_SIZE, 0);
 
-	memcpy (data->buffer, ptr, len);
+	memcpy (data->buffer + data->bufferlen, ptr, len);
 	data->bufferlen = len;
 
 	return len;

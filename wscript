@@ -59,6 +59,7 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/perl",
                     "src/clients/lib/ruby"]
 
+all_optionals = sets.Set([o.split('/')[-1] for o in optional_subdirs])
 all_plugins = sets.Set([p for p in os.listdir("src/plugins")
                         if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
 
@@ -92,11 +93,30 @@ def build(bld):
 ####
 def _configure_optionals(conf):
     """Process the optional xmms2 subprojects"""
+    def _check_exist(optionals, msg):
+        unknown_optionals = optionals.difference(all_optionals)
+        if unknown_optionals:
+            Params.fatal(msg % {'unknown_optionals': ', '.join(unknown_optionals)})
+        return optionals
 
     conf.env['XMMS_OPTIONAL_BUILD'] = []
-    for o in optional_subdirs:
-        if conf.sub_config(o):
-            conf.env['XMMS_OPTIONAL_BUILD'].append(o)
+
+    if Params.g_options.enable_optionals:
+        selected_optionals = _check_exists(sets.Set(Params.g_options.enable_optionals),
+                                           "The following optional(s) were requested, "
+                                           "but don't exist: %(unknown_optionals)s")
+    elif Params.g_options.disable_optionals:
+        disabled_optionals = _check_exist(sets.Set(Params.g_options.disable_optionals),
+                                          "The following optional(s) were disabled, "
+                                          "but don't exist: %(unknown_optionals)s")
+        selected_optionals = all_optionals.difference(disabled_optionals)
+    else:
+        selected_optionals = all_optionals
+
+    for o in selected_optionals:
+        x = [x for x in optional_subdirs if x.split('/')[-1] == o][0]
+        if conf.sub_config(x):
+            conf.env['XMMS_OPTIONAL_BUILD'].append(x)
 
     disabled_optionals = sets.Set(optional_subdirs)
     disabled_optionals.difference_update(conf.env['XMMS_OPTIONAL_BUILD'])
@@ -237,6 +257,10 @@ def set_options(opt):
                    type="string", dest="enable_plugins")
     opt.add_option('--without-plugins', action="callback", callback=_list_cb,
                    type="string", dest="disable_plugins")
+    opt.add_option('--with-optionals', action="callback", callback=_list_cb,
+                   type="string", dest="enable_optionals")
+    opt.add_option('--without-optionals', action="callback", callback=_list_cb,
+                   type="string", dest="disable_optionals")
     opt.add_option('--conf-prefix', type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
 

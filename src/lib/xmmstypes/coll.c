@@ -39,6 +39,7 @@ struct xmmsc_coll_St {
  
 	/* stored as (key1, val1, key2, val2, ...) */
 	x_list_t *attributes;
+	x_list_t *curr_att;
  
 	/* List of ids, 0-terminated. */
 	uint32_t *idlist;
@@ -713,6 +714,44 @@ xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll,
 	return;
 }
 
+void
+xmmsc_coll_attribute_list_first (xmmsc_coll_t *coll)
+{
+	x_return_if_fail (coll);
+
+	coll->curr_att = coll->attributes;
+}
+
+int
+xmmsc_coll_attribute_list_valid (xmmsc_coll_t *coll)
+{
+	x_return_val_if_fail (coll, 0);
+
+	return !!coll->curr_att;
+}
+
+void
+xmmsc_coll_attribute_list_entry (xmmsc_coll_t *coll, const char **k, const char **v)
+{
+	x_return_if_fail (coll);
+	x_return_if_fail (coll->curr_att);
+	x_return_if_fail (coll->curr_att->next);
+
+	*k = coll->curr_att->data;
+	*v = coll->curr_att->next->data;
+}
+
+void
+xmmsc_coll_attribute_list_next (xmmsc_coll_t *coll)
+{
+	x_return_if_fail (coll);
+
+	if (coll->curr_att && coll->curr_att->next && coll->curr_att->next->next) {
+		coll->curr_att = coll->curr_att->next->next;
+	} else {
+		coll->curr_att = NULL;
+	}
+}
 
 /**
  * Return a collection referencing the whole media library,
