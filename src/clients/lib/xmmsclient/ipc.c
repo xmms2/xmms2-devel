@@ -46,9 +46,11 @@ struct xmmsc_ipc_St {
 
 	void (*disconnect_callback) (void *data);
 	void *disconnect_data;
+	void (*disconnect_data_free_func) (void *data);
 
 	void (*need_out_callback) (int need_out, void *data);
 	void *need_out_data;
+	void (*need_out_data_free_func) (void *data);
 };
 
 static inline void xmmsc_ipc_lock (xmmsc_ipc_t *ipc);
@@ -120,7 +122,7 @@ xmmsc_ipc_io_out_callback (xmmsc_ipc_t *ipc)
 	} else {
 		if (ipc->need_out_callback)
 			ipc->need_out_callback (xmmsc_ipc_io_out (ipc),
-						ipc->need_out_data);
+			                        ipc->need_out_data);
 	}
 
 	return !disco;
@@ -175,19 +177,21 @@ xmmsc_ipc_init (void)
 }
 
 void
-xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (void *), void *userdata)
+xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (void *), void *userdata, xmmsc_user_data_free_func_t free_func)
 {
 	x_return_if_fail (ipc);
 	ipc->disconnect_callback = disconnect_callback;
 	ipc->disconnect_data = userdata;
+	ipc->disconnect_data_free_func = free_func;
 }
 
 void
-xmmsc_ipc_need_out_callback_set (xmmsc_ipc_t *ipc, void (*callback) (int, void *), void *userdata)
+xmmsc_ipc_need_out_callback_set (xmmsc_ipc_t *ipc, void (*callback) (int, void *), void *userdata, xmmsc_user_data_free_func_t free_func)
 {
 	x_return_if_fail (ipc);
 	ipc->need_out_callback = callback;
 	ipc->need_out_data = userdata;
+	ipc->need_out_data_free_func = free_func;
 }
 
 void
@@ -338,6 +342,17 @@ xmmsc_ipc_destroy (xmmsc_ipc_t *ipc)
 	if (ipc->error) {
 		free (ipc->error);
 	}
+
+	if (ipc->disconnect_data && ipc->disconnect_data_free_func) {
+		xmmsc_user_data_free_func_t f = ipc->disconnect_data_free_func;
+		f (ipc->disconnect_data);
+	}
+
+	if (ipc->need_out_data && ipc->need_out_data_free_func) {
+		xmmsc_user_data_free_func_t f = ipc->need_out_data_free_func;
+		f (ipc->need_out_data);
+	}
+
 	free (ipc);
 }
 
