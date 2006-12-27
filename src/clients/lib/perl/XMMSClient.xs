@@ -63,7 +63,7 @@ xmmsc_disconnect_callback_set(c, func, data=NULL)
 	CODE:
 		cb = perl_xmmsclient_callback_new(func, data, NULL, 0, NULL);
 
-		xmmsc_disconnect_callback_set(c, perl_xmmsclient_xmmsc_disconnect_callback_set_cb, cb);
+		xmmsc_disconnect_callback_set_full(c, perl_xmmsclient_xmmsc_disconnect_callback_set_cb, cb, perl_xmmsclient_callback_destroy);
 
 void
 xmmsc_io_disconnect(c)
@@ -730,7 +730,7 @@ xmmsc_io_need_out_callback_set(c, func, data=NULL)
 
 		cb = perl_xmmsclient_callback_new(func, data, c, 2, param_types);
 
-		xmmsc_io_need_out_callback_set(c_con, perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb);
+		xmmsc_io_need_out_callback_set_full(c_con, perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb, perl_xmmsclient_callback_destroy);
 
 void
 DESTROY(c)
