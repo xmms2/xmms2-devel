@@ -135,6 +135,17 @@ namespace Xmms
 
 	};
 
+	/** @class collection_parsing_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if the parsing of a collection pattern failed.
+	 */
+	class collection_parsing_error : public std::runtime_error
+	{
+		public:
+			explicit collection_parsing_error( const std::string& what_arg );
+
+	};
+
 }
 
 #endif // XMMSCLIENTPP_EXCEPTIONS_H

@@ -34,15 +34,43 @@ namespace Xmms
 		return res;
 	}
 
+	List< Dict >
+	Xform::browseEncoded( const std::string& url ) const
+	{
+
+		xmmsc_result_t* res =
+		    call( connected_, ml_,
+		          boost::bind( xmmsc_xform_media_browse_encoded,
+		                       conn_, url.c_str() )
+		        );
+
+		List< Dict > result( res );
+		xmmsc_result_unref( res );
+
+		return res;
+	}
+
 	void
 	Xform::browse( const std::string& url, const DictListSlot& slot,
-				   const ErrorSlot& error ) const
+	               const ErrorSlot& error ) const
 	{
 
 		aCall<DictList>( connected_, 
 							 boost::bind( xmmsc_xform_media_browse, conn_,
 										  url.c_str() ),
 							 slot, error );
+
+	}
+
+	void
+	Xform::browseEncoded( const std::string& url, const DictListSlot& slot,
+	                      const ErrorSlot& error ) const
+	{
+
+		aCall<DictList>( connected_,
+		                 boost::bind( xmmsc_xform_media_browse_encoded,
+		                 conn_, url.c_str() ),
+		                 slot, error );
 
 	}
 

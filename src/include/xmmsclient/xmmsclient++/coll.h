@@ -118,7 +118,7 @@ namespace Xmms
 				virtual OperandIterator getOperandIterator();
 
 				// FIXME: Hide this, we shouldn't need it..
-				xmmsc_coll_t* getColl() { return coll_; }
+				xmmsc_coll_t* getColl() const { return coll_; }
 
 			/** @cond */
 			protected:

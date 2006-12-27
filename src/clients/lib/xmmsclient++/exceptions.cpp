@@ -64,4 +64,9 @@ namespace Xmms
 	{
 	}
 
+	collection_parsing_error::collection_parsing_error( const string& what_arg ) :
+		runtime_error( what_arg )
+	{
+	}
+
 }

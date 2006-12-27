@@ -23,7 +23,19 @@ namespace Xmms
 	Collection::createColl( xmmsc_result_t* res ) {
 
 		xmmsc_coll_t* coll = 0;
-		xmmsc_result_get_collection( res, &coll );
+		if( !xmmsc_result_get_collection( res, &coll ) ) {
+			throw result_error( "invalid collection in result" );
+		}
+
+		CollPtr collptr( createColl( coll ) );
+
+		xmmsc_result_unref( res );
+
+		return collptr;
+	}
+
+	CollPtr
+	Collection::createColl( xmmsc_coll_t* coll ) {
 
 		CollPtr collptr;
 
@@ -78,13 +90,12 @@ namespace Xmms
 				break;
 			}
 			case XMMS_COLLECTION_TYPE_ERROR: {
-				// ??
+				throw result_error( "invalid collection in result" );
 				break;
 			}
 
 		}
 
-		xmmsc_result_unref( res );
 		return collptr;
 
 	}
@@ -147,17 +158,24 @@ namespace Xmms
 		return result;
 	}
 
-	CollPtr
+	void
 	Collection::rename( const std::string& from_name,
 	                    const std::string& to_name,
 	                    Namespace nsname ) const {
 
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_coll_rename, conn_, from_name.c_str(),
+		                    to_name.c_str(), nsname ) );
+
+	}
+
+	CollPtr
+	Collection::idlistFromPlaylistFile( const std::string& path ) const {
+
 		xmmsc_result_t* res
 			= call( connected_, ml_,
-			        boost::bind( xmmsc_coll_rename, conn_,
-			                                        from_name.c_str(),
-			                                        to_name.c_str(),
-			                                        nsname ) );
+			        boost::bind( xmmsc_coll_idlist_from_playlist_file, conn_,
+			                     path.c_str() ) );
 
 		return createColl( res );
 
@@ -208,6 +226,19 @@ namespace Xmms
 		xmmsc_result_unref( res );
 
 		return result;
+
+	}
+
+	CollPtr
+	Collection::parse( const std::string& pattern ) const {
+
+		xmmsc_coll_t* coll;
+
+		if( !xmmsc_coll_parse( pattern.c_str(), &coll ) ) {
+			throw collection_parsing_error( "invalid collection pattern" );
+		}
+
+		return createColl( coll );
 
 	}
 

@@ -21,6 +21,22 @@ namespace Xmms
 	{
 	}
 
+	void Playlist::list() const
+	{
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_playlist_list, conn_ ) );
+
+	}
+
+	void Playlist::load( const std::string& playlist ) const
+	{
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_playlist_load, conn_, playlist.c_str() ) );
+
+	}
+
 	void Playlist::addRecursive( const std::string& url,
 	                             const std::string& playlist ) const
 	{
@@ -51,6 +67,20 @@ namespace Xmms
 
 	}
 
+	void Playlist::addUrl( const std::string& url,
+	                       const std::list< std::string >& args,
+	                       const std::string& playlist ) const
+	{
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_playlist_add_args, conn_,
+		                    playlist.c_str(), url.c_str(),
+		                    args.size(), &cargs[0] ) );
+
+	}
+
 	void Playlist::addUrlEncoded( const std::string& url,
 	                              const std::string& playlist ) const
 	{
@@ -68,6 +98,21 @@ namespace Xmms
 		vCall( connected_, ml_, 
 		       boost::bind( xmmsc_playlist_add_id, conn_,
 		                    playlist.c_str(), id ) );
+
+	}
+
+	void Playlist::addCollection( const Coll::Coll& collection,
+	                              const std::list< std::string >& order,
+	                              const std::string& playlist ) const
+	{
+
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_playlist_add_collection, conn_,
+		                    playlist.c_str(), collection.getColl(),
+		                    &corder[0] ) );
 
 	}
 
@@ -96,6 +141,24 @@ namespace Xmms
 
 	}
 
+	std::string Playlist::currentActive() const
+	{
+
+		xmmsc_result_t* res =
+		    call( connected_, ml_,
+		          boost::bind( xmmsc_playlist_current_active, conn_ ) );
+
+		char* cname;
+
+		xmmsc_result_get_string( res, &cname );
+		std::string retname( cname );
+
+		xmmsc_result_unref( res );
+
+		return retname;
+
+	}
+
 	void Playlist::insertUrl( int pos, const std::string& url,
 	                          const std::string& playlist ) const
 	{
@@ -103,6 +166,21 @@ namespace Xmms
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_playlist_insert_url, conn_,
 		                    playlist.c_str(), pos, url.c_str() ) );
+
+	}
+
+	void Playlist::insertUrl( int pos, const std::string& url,
+	                          const std::list< std::string >& args,
+	                          const std::string& playlist ) const
+	{
+
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_playlist_insert_args, conn_,
+		                    playlist.c_str(), pos, url.c_str(),
+		                    args.size(), &cargs[0] ) );
 
 	}
 
@@ -124,6 +202,21 @@ namespace Xmms
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_playlist_insert_id, conn_,
 		                    playlist.c_str(), pos, id ) );
+
+	}
+
+	void Playlist::insertCollection( int pos, const Coll::Coll& collection,
+	                                 const std::list< std::string >& order,
+	                                 const std::string& playlist ) const
+	{
+
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		vCall( connected_, ml_,
+		       boost::bind( xmmsc_playlist_insert_collection, conn_,
+		                    playlist.c_str(), pos, collection.getColl(),
+		                    &corder[0] ) );
 
 	}
 
@@ -217,6 +310,29 @@ namespace Xmms
 	}
 
 	void
+	Playlist::list( const VoidSlot& slot,
+	                const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_list, conn_ ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::load( const std::string& playlist,
+	                const VoidSlot& slot,
+	                const ErrorSlot& error ) const
+	{
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_load, conn_, playlist.c_str() ),
+		             slot, error );
+
+	}
+
+	void
 	Playlist::addRecursive( const std::string& url,
 	                        const std::string& playlist,
 	                        const VoidSlot& slot,
@@ -280,6 +396,34 @@ namespace Xmms
 	}
 
 	void
+	Playlist::addUrl( const std::string& url,
+	                  const std::list< std::string >& args,
+	                  const std::string& playlist,
+	                  const VoidSlot& slot,
+	                  const ErrorSlot& error ) const
+	{
+
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_add_args, conn_,
+		                          playlist.c_str(), url.c_str(),
+		                          args.size(), &cargs[0] ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::addUrl( const std::string& url,
+	                  const std::list< std::string >& args,
+	                  const VoidSlot& slot,
+	                  const ErrorSlot& error ) const
+	{
+		addUrl( url, args, DEFAULT_PLAYLIST, slot, error );
+	}
+
+	void
 	Playlist::addUrlEncoded( const std::string& url,
 	                         const std::string& playlist,
 	                         const VoidSlot& slot,
@@ -322,6 +466,34 @@ namespace Xmms
 	}
 
 	void
+	Playlist::addCollection( const Coll::Coll& collection,
+			                 const std::list< std::string >& order,
+			                 const std::string& playlist,
+			                 const VoidSlot& slot,
+			                 const ErrorSlot& error ) const
+	{
+
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_add_collection, conn_,
+		                          playlist.c_str(), collection.getColl(),
+		                          &corder[0] ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::addCollection( const Coll::Coll& collection,
+			                 const std::list< std::string >& order,
+			                 const VoidSlot& slot,
+			                 const ErrorSlot& error ) const
+	{
+		addCollection( collection, order, DEFAULT_PLAYLIST, slot, error );
+	}
+
+	void
 	Playlist::clear( const std::string& playlist,
 	                 const VoidSlot& slot,
 	                 const ErrorSlot& error ) const
@@ -359,6 +531,17 @@ namespace Xmms
 	}
 
 	void
+	Playlist::currentActive( const StringSlot& slot,
+	                         const ErrorSlot& error ) const
+	{
+
+		aCall<std::string>( connected_,
+		                    boost::bind( xmmsc_playlist_current_active, conn_ ),
+		                    slot, error );
+
+	}
+
+	void
 	Playlist::insertUrl( int pos, const std::string& url,
 	                     const std::string& playlist,
 					     const VoidSlot& slot,
@@ -378,6 +561,34 @@ namespace Xmms
 					     const ErrorSlot& error ) const
 	{
 		insertUrl( pos, url, DEFAULT_PLAYLIST, slot, error );
+	}
+
+	void
+	Playlist::insertUrl( int pos, const std::string& url,
+					     const std::list< std::string >& args,
+	                     const std::string& playlist,
+					     const VoidSlot& slot,
+					     const ErrorSlot& error ) const
+	{
+
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_insert_args, conn_,
+		                          playlist.c_str(), pos, url.c_str(),
+		                          args.size(), &cargs[0] ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::insertUrl( int pos, const std::string& url,
+					     const std::list< std::string >& args,
+					     const VoidSlot& slot,
+					     const ErrorSlot& error ) const
+	{
+		insertUrl( pos, url, args, DEFAULT_PLAYLIST, slot, error );
 	}
 
 	void
@@ -421,6 +632,34 @@ namespace Xmms
 	                    const ErrorSlot& error ) const
 	{
 		insertId( pos, id, DEFAULT_PLAYLIST, slot, error );
+	}
+
+	void
+	Playlist::insertCollection( int pos, const Coll::Coll& collection,
+			                    const std::list< std::string >& order,
+			                    const std::string& playlist,
+	                            const VoidSlot& slot,
+	                            const ErrorSlot& error ) const
+	{
+
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_playlist_insert_collection, conn_,
+		                          playlist.c_str(), pos, collection.getColl(),
+		                          &corder[0] ),
+		             slot, error );
+
+	}
+
+	void
+	Playlist::insertCollection( int pos, const Coll::Coll& collection,
+			                    const std::list< std::string >& order,
+			                    const VoidSlot& slot,
+	                            const ErrorSlot& error ) const
+	{
+		insertCollection( pos, collection, order, DEFAULT_PLAYLIST, slot, error );
 	}
 
 	void
@@ -571,6 +810,17 @@ namespace Xmms
 		                     boost::bind( xmmsc_broadcast_playlist_current_pos,
 		                                  conn_ ),
 		                     slot, error );
+
+	}
+
+	void
+	Playlist::broadcastLoaded( const StringSlot& slot,
+	                           const ErrorSlot& error ) const
+	{
+
+		aCall<std::string>( connected_,
+		                    boost::bind( xmmsc_broadcast_playlist_loaded, conn_ ),
+					        slot, error );
 
 	}
 
