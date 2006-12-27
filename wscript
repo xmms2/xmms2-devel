@@ -37,7 +37,6 @@ def init():
     gc.disable()
 
 subdirs = """
-          doc
           src/lib/xmmstypes
           src/lib/xmmssocket
           src/lib/xmmsipc
@@ -169,6 +168,11 @@ def configure(conf):
         conf.env["BUILD_XMMS2D"] = True
         subdirs.insert(0, "src/xmms")
 
+    if Params.g_options.manualdir:
+        conf.env["MANDIR"] = Params.g_options.manualdir
+    else:
+        conf.env["MANDIR"] = os.path.join(conf.env["PREFIX"], "share", "man")
+
     if (conf.check_tool('g++')):
         conf.env["HAVE_CXX"] = True
     else:
@@ -239,6 +243,7 @@ def set_options(opt):
                    type="string", dest="disable_plugins")
     opt.add_option('--conf-prefix', type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
+    opt.add_option('--with-mandir', type='string', dest='manualdir')
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)

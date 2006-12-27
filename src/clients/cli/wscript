@@ -1,3 +1,5 @@
+import Common
+
 def build(bld):
     obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2'
@@ -13,6 +15,8 @@ def build(bld):
     obj.includes = '. ../../include'
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'glib2'
+
+    Common.install_files('MANDIR', 'man1', 'xmms2.1')
 
 def configure(conf):
     return True

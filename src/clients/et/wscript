@@ -13,6 +13,8 @@ def build(bld):
     obj.dict = {'PRG_PATH' : os.path.join(bld.env_of_name('default')['PREFIX'], 'bin')}
     Common.install_files('SCRIPTDIR', None, 'xmms2-et-launcher.sh', chmod=0755)
 
+    Common.install_files('MANDIR', 'man1', 'xmms2-et.1')
+
 def configure(conf):
    if sys.platform == 'sunos5':
         if not conf.check_library2("resolv", uselib='resolv'):
