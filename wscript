@@ -200,6 +200,7 @@ def configure(conf):
     conf.check_tool('misc checks')
     conf.check_tool('gcc')
     conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
+    conf.check_tool('gzip', tooldir=os.path.abspath('waftools'))
 
     conf.env["VERSION"] = VERSION
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
