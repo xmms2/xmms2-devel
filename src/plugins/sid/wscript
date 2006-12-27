@@ -17,7 +17,6 @@ def plugin_configure(conf):
 
     builders = conf.env['sidplay_BUILDERS']
     if not builders in conf.env['LIBPATH_sidplay']:
-        print "Compiling sid with rpath"
         conf.env['LIBPATH_sidplay'].append("%s" % builders)
         conf.env['LINKFLAGS_sidplay'] = "-Wl,-rpath=%s" % builders
     return True
