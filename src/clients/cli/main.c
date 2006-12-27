@@ -97,56 +97,11 @@ cmds commands[] = {
  * Config functions.
  */
 static GHashTable *
-read_config ()
+parse_config (const gchar *buffer)
 {
+	gchar **split;
+	gint i;
 	GHashTable *config;
-	gchar **split, *buffer, *file;
-	gint i, read_bytes = 0;
-	struct stat st;
-	FILE *fp;
-	
-	gchar userconf[PATH_MAX];
-	xmmsc_userconfdir_get (userconf, PATH_MAX);
-	file = g_build_path (G_DIR_SEPARATOR_S, userconf,
-	                     "clients", "cli.conf", NULL);
-
-	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
-		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", NULL);
-		g_mkdir_with_parents (dir, 0755);
-		g_free (dir);
-
-		fp = fopen (file, "w+");
-		if (!fp) {
-			print_error ("Could not create configfile: %s\nMake sure you have write permissions to that location.", file);
-		}
-
-		fwrite (defaultconfig, strlen (defaultconfig), 1, fp);
-		fclose (fp);
-	}
-
-	fp = fopen (file, "r");
-	if (!fp) {
-		print_error ("Could not open configfile %s", file);
-	}
-	g_free (file);
-
-	if (fstat (fileno (fp), &st) == -1) {
-		print_error ("fstat");
-	}
-
-	buffer = g_malloc0 (st.st_size + 1);
-
-	while (read_bytes < st.st_size) {
-		guint ret = fread (buffer + read_bytes,
-		                   st.st_size - read_bytes, 1, fp);
-
-		if (ret == 0) {
-			break;
-		}
-
-		read_bytes += ret;
-		g_assert (read_bytes >= 0);
-	}
 
 	config = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
@@ -165,7 +120,70 @@ read_config ()
 		g_strfreev (s);
 	}
 	g_strfreev (split);
-	g_free (buffer);
+
+	return config;
+}
+
+
+static GHashTable *
+read_config ()
+{
+	GHashTable *config;
+	gchar *buffer, *file;
+	gint read_bytes = 0;
+	struct stat st;
+	FILE *fp;
+	
+	gchar userconf[PATH_MAX];
+	xmmsc_userconfdir_get (userconf, PATH_MAX);
+	file = g_build_path (G_DIR_SEPARATOR_S, userconf,
+	                     "clients", "cli.conf", NULL);
+
+	if (!g_file_test (file, G_FILE_TEST_EXISTS)) {
+		gchar *dir = g_build_path (G_DIR_SEPARATOR_S, userconf, "clients", NULL);
+		g_mkdir_with_parents (dir, 0755);
+		g_free (dir);
+
+		fp = fopen (file, "w+");
+		if (fp) {
+			fwrite (defaultconfig, strlen (defaultconfig), 1, fp);
+			fclose (fp);
+		} else {
+			print_info ("Could not create configfile: %s\nMake sure you have write permissions to that location.", file);
+		}
+	}
+
+	if (g_file_test (file, G_FILE_TEST_EXISTS)) {
+		fp = fopen (file, "r");
+		if (!fp) {
+			print_error ("Could not open configfile %s", file);
+		}
+		g_free (file);
+
+		if (fstat (fileno (fp), &st) == -1) {
+			print_error ("fstat");
+		}
+
+		buffer = g_malloc0 (st.st_size + 1);
+
+		while (read_bytes < st.st_size) {
+			guint ret = fread (buffer + read_bytes,
+							   st.st_size - read_bytes, 1, fp);
+
+			if (ret == 0) {
+				break;
+			}
+
+			read_bytes += ret;
+			g_assert (read_bytes >= 0);
+		}
+
+		config = parse_config (buffer);
+
+		g_free (buffer);
+	} else {
+		config = parse_config (defaultconfig);
+	}
 
 	return config;
 }

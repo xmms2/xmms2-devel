@@ -40,6 +40,7 @@ void xmmsc_ipc_disconnect_set (xmmsc_ipc_t *ipc, void (*disconnect_callback) (vo
 void xmmsc_ipc_need_out_callback_set (xmmsc_ipc_t *ipc, void (*callback) (int, void *), void *userdata);
 bool xmmsc_ipc_msg_write (xmmsc_ipc_t *ipc, xmms_ipc_msg_t *msg, uint32_t cookie);
 void xmmsc_ipc_disconnect (xmmsc_ipc_t *ipc);
+bool xmmsc_ipc_disconnected (xmmsc_ipc_t *ipc);
 void xmmsc_ipc_destroy (xmmsc_ipc_t *ipc);
 bool xmmsc_ipc_connect (xmmsc_ipc_t *ipc, char *path);
 void xmmsc_ipc_error_set (xmmsc_ipc_t *ipc, char *error);

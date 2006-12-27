@@ -49,7 +49,9 @@ struct _PerlXMMSClientCallback {
 	SV* wrapper;
 	int n_params;
 	PerlXMMSClientCallbackParamType* param_types;
+#ifdef PERL_IMPLICIT_CONTEXT
 	void* priv;
+#endif
 };
 
 void _perl_xmmsclient_call_xs(pTHX_ void (*subaddr) (pTHX_ CV* cv), CV* cv, SV** mark);
