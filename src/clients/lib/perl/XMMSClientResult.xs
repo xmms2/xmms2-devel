@@ -222,7 +222,7 @@ xmmsc_result_notifier_set(res, func, data=NULL)
 		
 		cb = perl_xmmsclient_callback_new(func, data, res, 1, param_types);
 
-		xmmsc_result_notifier_set_full(c_res, perl_xmmsclient_xmmsc_result_notifyer_cb, cb, perl_xmmsclient_callback_destroy);
+		xmmsc_result_notifier_set_full(c_res, perl_xmmsclient_xmmsc_result_notifyer_cb, cb, (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
 SV*
 xmmsc_result_wait(res)
