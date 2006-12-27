@@ -59,7 +59,7 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/perl",
                     "src/clients/lib/ruby"]
 
-all_optionals = sets.Set([o.split('/')[-1] for o in optional_subdirs])
+all_optionals = sets.Set([os.path.basename(o) for o in optional_subdirs])
 all_plugins = sets.Set([p for p in os.listdir("src/plugins")
                         if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
 
@@ -114,7 +114,7 @@ def _configure_optionals(conf):
         selected_optionals = all_optionals
 
     for o in selected_optionals:
-        x = [x for x in optional_subdirs if x.split('/')[-1] == o][0]
+        x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
         if conf.sub_config(x):
             conf.env['XMMS_OPTIONAL_BUILD'].append(x)
 
