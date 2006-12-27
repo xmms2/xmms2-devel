@@ -16,7 +16,7 @@ def build(bld):
     obj.uselib_local = 'xmmsclient-glib xmmsclient'
     obj.uselib = 'glib2'
 
-    obj = bld.create_obj('gzip')
+    obj = bld.create_obj('man')
     obj.files = ['xmms2.1']
 
 def configure(conf):

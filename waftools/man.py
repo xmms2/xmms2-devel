@@ -1,5 +1,6 @@
 import Common, Object, Utils, Node, Params
-import os
+import sys, os
+import gzip
 from misc import copyobj
 
 def gzip_func(task):
@@ -7,15 +8,18 @@ def gzip_func(task):
     infile = task.m_inputs[0].abspath(env)
     outfile = task.m_outputs[0].abspath(env)
 
-    os.popen('gzip -c %s > %s' % (infile, outfile)).read()
+    input = open(infile, 'r')
+    output = gzip.GzipFile(outfile, mode='w')
+    output.write(input.read())
 
     return 0
 
-class gzipobj(copyobj):
-    def __init__(self, type='none'):
+class manobj(copyobj):
+    def __init__(self, section=1, type='none'):
         copyobj.__init__(self, type)
         self.fun = gzip_func
         self.files = []
+        self.section = section
 
     def apply(self):
         for file in self.files:
@@ -38,10 +42,10 @@ class gzipobj(copyobj):
             task.fun = self.fun
 
             if Params.g_commands['install'] or Params.g_commands['uninstall']:
-                Common.install_files('MANDIR', 'man1', newnode.abspath(self.env))
+                Common.install_files('MANDIR', 'man' + str(self.section), newnode.abspath(self.env))
 
 def setup(env):
-    Object.register('gzip', gzipobj)
+    Object.register('man', manobj)
 
 def detect(conf):
     return 1

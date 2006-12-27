@@ -65,7 +65,7 @@ def build(bld):
     launch.includes = '../include'
     launch.uselib = 'glib2 gmodule2 gthread2'
 
-    obj = bld.create_obj('gzip')
+    obj = bld.create_obj('man')
     obj.files = ['xmms2d.1', 'xmms2-launcher.1']
 
 def configure(conf):
