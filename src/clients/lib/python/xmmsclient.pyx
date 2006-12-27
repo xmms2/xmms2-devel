@@ -473,6 +473,13 @@ cdef class Collection:
 			atr.append("%s=%s" % (k, repr(v)))
 		return "%s(%s)" % (self.__class__.__name__,",".join(atr))
 
+	def __or__(self, other): # |
+		return Union(self, other)
+	def __and__(self, other): # &
+		return Intersection(self, other)
+	def __invert__(self): #~
+		return Complement(self)
+
 cdef class CollectionIDList:
 	cdef xmmsc_coll_t *coll
 
@@ -665,29 +672,37 @@ class Universe(Reference):
 		Reference.__init__(self, "All Media")
 
 class Match(BaseCollection):
-	def __init__(Collection self, parent, **kv):
+	def __init__(Collection self, parent=None, **kv):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH)
+		if parent is None:
+			parent = Universe()
 		self.operands.append(parent)
 		for k,v in kv.items():
 			xmmsc_coll_attribute_set (self.coll, k, v);
 
 class Contains(BaseCollection):
-	def __init__(Collection self, parent, **kv):
+	def __init__(Collection self, parent=None, **kv):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_CONTAINS)
+		if parent is None:
+			parent = Universe()
 		self.operands.append(parent)
 		for k,v in kv.items():
 			xmmsc_coll_attribute_set (self.coll, k, v);
 
 class Smaller(BaseCollection):
-	def __init__(Collection self, parent, **kv):
+	def __init__(Collection self, parent=None, **kv):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER)
+		if parent is None:
+			parent = Universe()
 		self.operands.append(parent)
 		for k,v in kv.items():
 			xmmsc_coll_attribute_set (self.coll, k, v);
 
 class Greater(BaseCollection):
-	def __init__(Collection self, parent, **kv):
+	def __init__(Collection self, parent=None, **kv):
 		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER)
+		if parent is None:
+			parent = Universe()
 		self.operands.append(parent)
 		for k,v in kv.items():
 			xmmsc_coll_attribute_set (self.coll, k, v);
