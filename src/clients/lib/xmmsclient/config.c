@@ -20,7 +20,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <pwd.h>
+
 
 #include "xmmsclient/xmmsclient.h"
 #include "xmmsclientpriv/xmmsclient.h"
