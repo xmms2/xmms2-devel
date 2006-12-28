@@ -40,7 +40,7 @@ namespace Xmms
 			 *  what he/she's doing. (logic_error)
 			 *  @throw result_error If the operation failed.
 			 */
-			void list() const;
+			List< std::string > list() const;
 
 			/** Load a saved playlist and make it the active playlist.
 			 *
@@ -446,14 +446,15 @@ namespace Xmms
 
 			/** Get the list of saved playlists.
 			 *
-			 *  @param slot Function pointer to a function returning a bool.
+			 *  @param slot Function pointer to a function taking a
+			 *              const List<string>& returning a bool.
 			 *  @param error Function pointer to an error callback
 			 *               function. (<b>optional</b>)
 			 *
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void
-			list( const VoidSlot& slot,
+			list( const StringListSlot& slot,
 			      const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 			/** Load a saved playlist and make it the active playlist.

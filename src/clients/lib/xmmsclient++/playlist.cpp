@@ -21,11 +21,18 @@ namespace Xmms
 	{
 	}
 
-	void Playlist::list() const
+	List< std::string > Playlist::list() const
 	{
 
-		vCall( connected_, ml_,
-		       boost::bind( xmmsc_playlist_list, conn_ ) );
+		xmmsc_result_t* res =
+		    call( connected_, ml_,
+		          boost::bind( xmmsc_playlist_list, conn_ ) );
+
+		List< std::string > result( res );
+
+		xmmsc_result_unref( res );
+
+		return result;
 
 	}
 
@@ -310,13 +317,13 @@ namespace Xmms
 	}
 
 	void
-	Playlist::list( const VoidSlot& slot,
+	Playlist::list( const StringListSlot& slot,
 	                const ErrorSlot& error ) const
 	{
 
-		aCall<void>( connected_,
-		             boost::bind( xmmsc_playlist_list, conn_ ),
-		             slot, error );
+		aCall<List<std::string> >( connected_,
+		                           boost::bind( xmmsc_playlist_list, conn_ ),
+		                           slot, error );
 
 	}
 
