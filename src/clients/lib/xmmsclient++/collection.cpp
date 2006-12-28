@@ -350,11 +350,41 @@ namespace Xmms
 	}
 
 	void
+	Collection::queryIds( const Coll::Coll& coll,
+	                      const std::list< std::string >& order,
+	                      unsigned int limit_len,
+	                      const UintListSlot& slot,
+	                      const ErrorSlot& error ) const {
+
+		queryIds( coll, order, limit_len, 0, slot, error);
+
+	}
+
+	void
+	Collection::queryIds( const Coll::Coll& coll,
+	                      const std::list< std::string >& order,
+	                      const UintListSlot& slot,
+	                      const ErrorSlot& error ) const {
+
+		queryIds( coll, order, 0, 0, slot, error);
+
+	}
+
+	void
+	Collection::queryIds( const Coll::Coll& coll,
+	                      const UintListSlot& slot,
+	                      const ErrorSlot& error ) const {
+
+		queryIds( coll, std::list<std::string>(), 0, 0, slot, error);
+
+	}
+
+	void
 	Collection::queryInfos( const Coll::Coll& coll,
 	                        const std::list< std::string >& order,
+	                        const std::list< std::string >& fetch,
 	                        unsigned int limit_len,
 	                        unsigned int limit_start,
-	                        const std::list< std::string >& fetch,
 	                        const std::list< std::string >& group,
 	                        const DictListSlot& slot,
 	                        const ErrorSlot& error ) const {
@@ -369,6 +399,65 @@ namespace Xmms
 		                                 &corder[0], limit_start, limit_len,
 		                                 &cfetch[0], &cgroup[0] ),
 		                    slot, error );
+
+	}
+
+	void
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& order,
+	                        const std::list< std::string >& fetch,
+	                        unsigned int limit_len,
+	                        unsigned int limit_start,
+	                        const DictListSlot& slot,
+	                        const ErrorSlot& error ) const {
+
+		queryInfos( coll, order, fetch, limit_len, limit_start,
+		            std::list<std::string>(), slot, error );
+
+	}
+
+	void
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& order,
+	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& group,
+	                        const DictListSlot& slot,
+	                        const ErrorSlot& error ) const {
+
+		queryInfos( coll, order, fetch, 0, 0, group, slot, error );
+
+	}
+
+	void
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& order,
+	                        const std::list< std::string >& fetch,
+	                        const DictListSlot& slot,
+	                        const ErrorSlot& error ) const {
+
+		queryInfos( coll, order, fetch, 0, 0, std::list<std::string>(),
+		            slot, error );
+
+	}
+
+	void
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& order,
+	                        const DictListSlot& slot,
+	                        const ErrorSlot& error ) const {
+
+		queryInfos( coll, order, std::list<std::string>(), 0, 0,
+		            std::list<std::string>(), slot, error );
+
+	}
+
+	void
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const DictListSlot& slot,
+	                        const ErrorSlot& error ) const {
+
+		queryInfos( coll, std::list<std::string>(), std::list<std::string>(),
+		            0, 0, std::list<std::string>(), slot, error );
 
 	}
 
