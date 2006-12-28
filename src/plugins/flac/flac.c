@@ -322,6 +322,73 @@ static props properties[] = {
 	{ "replaygain_album_peak",XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,STRING  },
 };
 
+/* note that "key" is NOT NUL-terminated here,
+ * but "value" is.
+ */
+static void
+handle_comment (xmms_xform_t *xform,
+                const gchar *key, gint key_len, const gchar *value)
+{
+	gchar buf[8];
+	gint i;
+
+	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
+		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
+			                             1);
+		} else if (!g_ascii_strncasecmp (key, properties[i].vname, key_len)) {
+			if (properties[i].type == INTEGER) {
+				gint tmp = strtol (value, NULL, 10);
+				xmms_xform_metadata_set_int (xform,
+				                             properties[i].xname, tmp);
+			} else if (properties[i].type == RPGAIN) {
+				g_snprintf (buf, sizeof (buf), "%f",
+				            pow (10.0, g_strtod (value, NULL) / 20));
+
+				/** @todo this should probably be a int instead? */
+				xmms_xform_metadata_set_str (xform,
+				                             properties[i].xname, buf);
+			} else {
+				xmms_xform_metadata_set_str (xform,
+				                             properties[i].xname, value);
+			}
+		}
+	}
+}
+
+static void
+handle_comments (xmms_xform_t *xform, xmms_flac_data_t *data)
+{
+	FLAC__StreamMetadata_VorbisComment *vc;
+	gint i;
+
+	g_return_if_fail (data->vorbiscomment);
+
+	vc = &data->vorbiscomment->data.vorbis_comment;
+
+	for (i = 0; i < vc->num_comments; i++) {
+		FLAC__byte *ptr, *content = vc->comments[i].entry;
+		gint j;
+
+		/* check whether it's a valid comment */
+		if (!content || !*content || *content == '=')
+			continue;
+
+		for (ptr = content, j = 0; j < vc->comments[i].length; ptr++, j++)
+			if (*ptr == '=')
+				break;
+
+		if (j == vc->comments[i].length)
+			continue;
+
+		handle_comment (xform,
+		                (gchar *) content, j,
+		                (gchar *) ptr + 1);
+	}
+}
+
 static gboolean
 xmms_flac_init (xmms_xform_t *xform)
 {
@@ -333,7 +400,6 @@ xmms_flac_init (xmms_xform_t *xform)
 #else
 	FLAC__StreamDecoderInitStatus init_status;
 #endif
-	gint current, num_comments;
 	gint filesize;
 
 	g_return_val_if_fail (xform, FALSE);
@@ -402,48 +468,7 @@ xmms_flac_init (xmms_xform_t *xform)
 		goto err;
 
 	if (data->vorbiscomment) {
-		num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
-
-		for (current = 0; current < num_comments; current++) {
-			FLAC__StreamMetadata_VorbisComment_Entry *entry;
-			gchar **s, *val;
-			guint length;
-			gint i = 0;
-			gchar buf[8];
-
-			entry = &data->vorbiscomment->data.vorbis_comment.comments[current];
-			s = g_strsplit ((gchar *) entry->entry, "=", 2);
-			length = entry->length - strlen (s[0]) - 1;
-			val = g_strndup (s[1], length);
-
-			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-				if ((!g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID")) &&
-				    (!g_strcasecmp (val, MUSICBRAINZ_VA_ID))) {
-					xmms_xform_metadata_set_int (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
-					                             1);
-				} else if (!g_strcasecmp (properties[i].vname, s[0])) {
-					if (properties[i].type == INTEGER) {
-						gint tmp = strtol (val, NULL, 10);
-						xmms_xform_metadata_set_int (xform,
-						                             properties[i].xname, tmp);
-					} else if (properties[i].type == RPGAIN) {
-						g_snprintf (buf, sizeof (buf), "%f",
-						            pow (10.0, g_strtod (val, NULL) / 20));
-
-						/** @todo this should probably be a int instead? */
-						xmms_xform_metadata_set_str (xform,
-						                             properties[i].xname, buf);
-					} else {
-						xmms_xform_metadata_set_str (xform,
-						                             properties[i].xname, val);
-					}
-				}
-			}
-
-			g_free (val);
-			g_strfreev (s);
-		}
+		handle_comments (xform, data);
 	}
 
 	xmms_xform_metadata_set_int (xform,
