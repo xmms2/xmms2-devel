@@ -260,6 +260,10 @@ flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
 		case FLAC__METADATA_TYPE_VORBIS_COMMENT:
 			data->vorbiscomment = FLAC__metadata_object_clone (metadata);
 			break;
+		/* if we want to support more metadata types here,
+		 * don't forget to add a call to
+		 * FLAC__stream_decoder_set_metadata_respond() below.
+		 */
 		default:
 			break;
 	}
@@ -339,7 +343,12 @@ xmms_flac_init (xmms_xform_t *xform)
 	xmms_xform_private_data_set (xform, data);
 
 	data->flacdecoder = FLAC__stream_decoder_new ();
-	FLAC__stream_decoder_set_metadata_respond_all (data->flacdecoder);
+
+	/* we don't need to explicitly tell the decoder to respond to
+	 * FLAC__METADATA_TYPE_STREAMINFO here, it always does.
+	 */
+	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
+	                                           FLAC__METADATA_TYPE_VORBIS_COMMENT);
 
 #if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
 	FLAC__seekable_stream_decoder_set_eof_callback (data->flacdecoder,
