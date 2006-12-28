@@ -246,51 +246,62 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 	}
 }
 
+/* note that "key" is NOT NUL-terminated here,
+ * but "value" is.
+ */
+static void
+handle_comment (xmms_xform_t *xform,
+                const gchar *key, gint key_len,
+                const gchar *value)
+{
+	gint i;
+
+	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
+		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
+			                             1);
+		} else if (!g_ascii_strncasecmp (key, properties[i].vname, key_len)) {
+			if (properties[i].type == INTEGER) {
+				gint tmp = strtol (value, NULL, 10);
+				xmms_xform_metadata_set_int (xform,
+				                             properties[i].xname,
+				                             tmp);
+			} else {
+				xmms_xform_metadata_set_str (xform,
+				                             properties[i].xname,
+				                             value);
+			}
+		}
+	}
+}
+
 static void
 xmms_vorbis_read_metadata (xmms_xform_t *xform, xmms_vorbis_data_t *data)
 {
-	vorbis_comment *ptr;
+	vorbis_comment *vc;
+	gint i;
 
-	ptr = ov_comment (&data->vorbisfile, -1);
+	vc = ov_comment (&data->vorbisfile, -1);
+	if (!vc)
+		return;
 
-	if (ptr) {
-		gint temp;
+	for (i = 0; i < vc->comments; i++) {
+		gchar *ptr, *content = vc->user_comments[i];
+		gint key_len;
 
-		for (temp = 0; temp < ptr->comments; temp++) {
-			gchar **s;
-			gint i = 0;
+		/* check whether it's a valid comment */
+		ptr = strchr (content, '=');
+		if (!ptr || ptr == content)
+			continue;
 
-			s = g_strsplit (ptr->user_comments[temp], "=", 2);
-			if (!s[0] || !s[1]) {
-				g_strfreev (s);
-				continue;
-			}
-			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-				if ((g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID") == 0) &&
-				    (g_strcasecmp (s[1], MUSICBRAINZ_VA_ID) == 0)) {
-					xmms_xform_metadata_set_int (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION, 
-					                             1);
-				} else if (g_strcasecmp (s[0], properties[i].vname) == 0) {
-					if (properties[i].type == INTEGER) {
-						gint tmp = strtol (s[1], NULL, 10);
-						xmms_xform_metadata_set_int (xform,
-						                             properties[i].xname, 
-						                             tmp);
-					} else {
-						xmms_xform_metadata_set_str (xform,
-						                             properties[i].xname,
-						                             s[1]);
-					}
-				}
-			}
+		key_len = ptr - content;
 
-			g_strfreev (s);
-		}
-
-		get_replaygain (xform, ptr);
+		handle_comment (xform, content, key_len, ptr + 1);
 	}
 
+	get_replaygain (xform, vc);
 }
 
 static gboolean
