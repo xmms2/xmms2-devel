@@ -1,7 +1,18 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    return (conf.check_header2('FLAC/all.h', mandatory=0) and
-            conf.check_library2('FLAC', uselib='flac', mandatory=0))
+    if not conf.check_header2('FLAC/all.h', mandatory=0):
+        return False
+
+    # for flac 1.1.2, we just need to link to libFLAC
+    if conf.check_library2('FLAC', uselib='flac', mandatory=0):
+        return True
+
+    # flac 1.1.3+ wants us to link to libogg, too. so first check
+    # for libogg here
+    if not conf.check_pkg('ogg', destvar='flac_ogg'):
+        return False
+
+    return conf.check_library2('FLAC', uselib='flac flac_ogg', mandatory=0)
 
 configure, build = plugin('flac', configure=plugin_configure, needs_lib=True)
