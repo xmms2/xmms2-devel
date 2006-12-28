@@ -201,8 +201,15 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 void
 xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata)
 {
+	xmmsc_disconnect_callback_set_full (c, callback, userdata, NULL);
+}
+
+void
+xmmsc_disconnect_callback_set_full (xmmsc_connection_t *c, void (*callback) (void*),
+                                    void *userdata, xmmsc_user_data_free_func_t free_func)
+{
 	x_check_conn (c,);
-	xmmsc_ipc_disconnect_set (c->ipc, callback, userdata);
+	xmmsc_ipc_disconnect_set (c->ipc, callback, userdata, free_func);
 }
 
 /**
@@ -474,6 +481,7 @@ int
 xmmsc_io_in_handle (xmmsc_connection_t *c)
 {
 	x_check_conn (c, -1);
+	x_api_error_if (xmmsc_ipc_disconnected (c->ipc), "although the xmms2 deamon is not connected", -1);
 	
 	return xmmsc_ipc_io_in_callback (c->ipc);
 }
@@ -508,8 +516,14 @@ xmmsc_io_fd_get (xmmsc_connection_t *c)
 void
 xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata)
 {
+	return xmmsc_io_need_out_callback_set_full (c, callback, userdata, NULL);
+}
+
+void
+xmmsc_io_need_out_callback_set_full (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata, xmmsc_user_data_free_func_t free_func)
+{
 	x_check_conn (c,);
-	xmmsc_ipc_need_out_callback_set (c->ipc, callback, userdata);
+	xmmsc_ipc_need_out_callback_set (c->ipc, callback, userdata, free_func);
 }
 
 /**

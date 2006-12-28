@@ -37,7 +37,6 @@ def init():
     gc.disable()
 
 subdirs = """
-          doc
           src/lib/xmmstypes
           src/lib/xmmssocket
           src/lib/xmmsipc
@@ -59,7 +58,7 @@ optional_subdirs = ["src/clients/cli",
                     "src/clients/lib/perl",
                     "src/clients/lib/ruby"]
 
-all_optionals = sets.Set([o.split('/')[-1] for o in optional_subdirs])
+all_optionals = sets.Set([os.path.basename(o) for o in optional_subdirs])
 all_plugins = sets.Set([p for p in os.listdir("src/plugins")
                         if os.path.exists(os.path.join("src/plugins",p,"wscript"))])
 
@@ -114,7 +113,7 @@ def _configure_optionals(conf):
         selected_optionals = all_optionals
 
     for o in selected_optionals:
-        x = [x for x in optional_subdirs if x.split('/')[-1] == o][0]
+        x = [x for x in optional_subdirs if os.path.basename(x) == o][0]
         if conf.sub_config(x):
             conf.env['XMMS_OPTIONAL_BUILD'].append(x)
 
@@ -189,6 +188,11 @@ def configure(conf):
         conf.env["BUILD_XMMS2D"] = True
         subdirs.insert(0, "src/xmms")
 
+    if Params.g_options.manualdir:
+        conf.env["MANDIR"] = Params.g_options.manualdir
+    else:
+        conf.env["MANDIR"] = os.path.join(conf.env["PREFIX"], "share", "man")
+
     if (conf.check_tool('g++')):
         conf.env["HAVE_CXX"] = True
     else:
@@ -196,6 +200,7 @@ def configure(conf):
     conf.check_tool('misc checks')
     conf.check_tool('gcc')
     conf.check_tool('pkgconfig', tooldir=os.path.abspath('waftools'))
+    conf.check_tool('man', tooldir=os.path.abspath('waftools'))
 
     conf.env["VERSION"] = VERSION
     conf.env["CCFLAGS"] = Utils.to_list(conf.env["CCFLAGS"]) + ['-g', '-O0']
@@ -263,6 +268,7 @@ def set_options(opt):
                    type="string", dest="disable_optionals")
     opt.add_option('--conf-prefix', type='string', dest='config_prefix')
     opt.add_option('--without-xmms2d', type='int', dest='without_xmms2d')
+    opt.add_option('--with-mandir', type='string', dest='manualdir')
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)

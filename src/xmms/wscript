@@ -5,6 +5,7 @@
 #
 
 import sys,os
+import Common
 
 source = """config.c
             mediainfo.c
@@ -63,6 +64,9 @@ def build(bld):
     launch.source = ['xmms2-launcher.c']
     launch.includes = '../include'
     launch.uselib = 'glib2 gmodule2 gthread2'
+
+    obj = bld.create_obj('man')
+    obj.files = ['xmms2d.1', 'xmms2-launcher.1']
 
 def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))

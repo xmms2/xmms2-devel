@@ -42,7 +42,6 @@ static gboolean xmms_cue_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_cue_init (xmms_xform_t *xform);
 static gboolean xmms_cue_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 static void xmms_cue_destroy (xmms_xform_t *xform);
-static gboolean parse_line (const gchar *line, const gchar *cue_path, gchar *newp);
 
 /*
  * Plugin header

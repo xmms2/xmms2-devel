@@ -40,13 +40,17 @@ typedef struct xmmsc_query_attribute_St {
 	char *value;
 } xmmsc_query_attribute_t;
 
+typedef void (*xmmsc_user_data_free_func_t) (void *user_data);
+
 xmmsc_connection_t *xmmsc_init (const char *clientname);
 int xmmsc_connect (xmmsc_connection_t *, const char *);
 void xmmsc_unref (xmmsc_connection_t *c);
 void xmmsc_lock_set (xmmsc_connection_t *conn, void *lock, void (*lockfunc)(void *), void (*unlockfunc)(void *));
 void xmmsc_disconnect_callback_set (xmmsc_connection_t *c, void (*callback) (void*), void *userdata);
+void xmmsc_disconnect_callback_set_full (xmmsc_connection_t *c, void (*callback) (void*), void *userdata, xmmsc_user_data_free_func_t free_func);
 
 void xmmsc_io_need_out_callback_set (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata);
+void xmmsc_io_need_out_callback_set_full (xmmsc_connection_t *c, void (*callback) (int, void*), void *userdata, xmmsc_user_data_free_func_t free_func);
 void xmmsc_io_disconnect (xmmsc_connection_t *c);
 int xmmsc_io_want_out (xmmsc_connection_t *c);
 int xmmsc_io_out_handle (xmmsc_connection_t *c);
@@ -265,9 +269,12 @@ xmmsc_result_t *xmmsc_broadcast_collection_changed (xmmsc_connection_t *c);
  * MACROS
  */
 
-#define XMMS_CALLBACK_SET(conn,meth,callback,udata) {\
+#define XMMS_CALLBACK_SET(conn,meth,callback,udata) \
+	XMMS_CALLBACK_SET_FULL(conn,meth,callback,udata,NULL);
+
+#define XMMS_CALLBACK_SET_FULL(conn,meth,callback,udata,free_func) {\
 	xmmsc_result_t *res = meth (conn); \
-	xmmsc_result_notifier_set (res, callback, udata);\
+	xmmsc_result_notifier_set_full (res, callback, udata, free_func);\
 	xmmsc_result_unref (res);\
 }
 	
@@ -286,6 +293,7 @@ void xmmsc_result_ref (xmmsc_result_t *res);
 void xmmsc_result_unref (xmmsc_result_t *res);
 
 void xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data);
+void xmmsc_result_notifier_set_full (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data, xmmsc_user_data_free_func_t free_func);
 void xmmsc_result_wait (xmmsc_result_t *res);
 
 int xmmsc_result_iserror (xmmsc_result_t *res);
