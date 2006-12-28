@@ -235,6 +235,12 @@ def configure(conf):
         conf.env.appendUnique('CCFLAGS', '-D_POSIX_PTHREAD_SEMANTICS')
         conf.env.appendUnique('CCFLAGS', '-D_REENTRANT')
 
+    # Check win32 (winsock2) socket support
+    if sys.platform == 'win32':
+        if not conf.check_library2("wsock32", uselib='socket'):
+            Params.fatal("xmms2 requires wsock32 on windows.")
+        conf.env.appendUnique('LIB_socket', 'ws2_32')
+
     # Glib is required by everyone, so check for it here and let them
     # assume its presence.
     conf.check_pkg2('glib-2.0', version='2.6.0', uselib='glib2')
