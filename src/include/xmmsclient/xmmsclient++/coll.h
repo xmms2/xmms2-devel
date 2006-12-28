@@ -2,9 +2,6 @@
 #define XMMSCLIENTPP_COLL_H
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/exceptions.h>
-#include <xmmsclient/xmmsclient++/collection.h>
 
 #include <string>
 #include <iostream>
@@ -12,6 +9,10 @@
 
 namespace Xmms 
 {
+
+	class Collection;
+	template< typename T >
+	inline T* extract_value( xmmsc_result_t* );
 
 	/** @class Coll coll.h "xmmsclient/xmmsclient++/coll.h"
 	 *  @brief This class is used to build collection structures.
@@ -224,15 +225,19 @@ namespace Xmms
 
 		class Reference : public Coll
 		{
-			friend class Collection;
+			//friend Coll* Xmms::extract_value<Coll>( xmmsc_result_t* );
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend class ::Xmms::Collection;
 
 			protected:
 				Reference( xmmsc_coll_t* coll );
 
 			public:
+				// nsname is actually of type Collection::Namespace,
+				// but we try to avoid a dependency hell here..
 				Reference();
 				Reference( const std::string& name,
-				           const Collection::Namespace& nsname );
+				           const char* const& nsname );
 				~Reference();
 		};
 
@@ -245,7 +250,8 @@ namespace Xmms
 
 		class Union : public Nary
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Union( xmmsc_coll_t* coll );
@@ -257,7 +263,8 @@ namespace Xmms
 
 		class Intersection : public Nary
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Intersection( xmmsc_coll_t* coll );
@@ -269,7 +276,8 @@ namespace Xmms
 
 		class Complement : public Unary
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Complement( xmmsc_coll_t* coll );
@@ -282,7 +290,8 @@ namespace Xmms
 
 		class Has : public Filter
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Has( xmmsc_coll_t* coll );
@@ -296,7 +305,8 @@ namespace Xmms
 
 		class Smaller : public Filter
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Smaller( xmmsc_coll_t* coll );
@@ -313,7 +323,8 @@ namespace Xmms
 
 		class Greater : public Filter
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Greater( xmmsc_coll_t* coll );
@@ -330,7 +341,8 @@ namespace Xmms
 
 		class Match : public Filter
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Match( xmmsc_coll_t* coll );
@@ -348,7 +360,8 @@ namespace Xmms
 
 		class Contains : public Filter
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Contains( xmmsc_coll_t* coll );
@@ -367,7 +380,8 @@ namespace Xmms
 		class Idlist : public Coll
 		{
 			friend class Element;
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Idlist( xmmsc_coll_t* coll );
@@ -403,7 +417,8 @@ namespace Xmms
 
 		class Queue : public Idlist
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Queue( xmmsc_coll_t* coll );
@@ -418,7 +433,8 @@ namespace Xmms
 
 		class PartyShuffle : public Queue
 		{
-			friend class Collection;
+			friend class ::Xmms::Collection;
+			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				PartyShuffle( xmmsc_coll_t* coll );

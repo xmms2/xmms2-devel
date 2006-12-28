@@ -10,6 +10,7 @@
 
 namespace Xmms
 {
+
 	Dict::Dict( xmmsc_result_t* res ) : result_( 0 )
 	{
 		if( xmmsc_result_iserror( res ) ) {

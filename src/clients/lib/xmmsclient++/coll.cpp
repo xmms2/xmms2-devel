@@ -1,8 +1,8 @@
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/exceptions.h>
+#include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/coll.h>
+#include <xmmsclient/xmmsclient++/collection.h>
 
 #include <string>
 #include <sstream>
@@ -295,7 +295,7 @@ namespace Xmms
 
 
 	Reference::Reference()
-		: Coll( XMMS_COLLECTION_TYPE_REFERENCE )
+		: Coll( REFERENCE )
 	{
 	}
 
@@ -306,7 +306,7 @@ namespace Xmms
 
 	Reference::Reference( const std::string& name,
 	                      const Collection::Namespace& nsname )
-		: Coll( XMMS_COLLECTION_TYPE_REFERENCE )
+		: Coll( REFERENCE )
 	{
 		setAttribute( "reference", name );
 		setAttribute( "namespace", nsname );
@@ -322,92 +322,92 @@ namespace Xmms
 	Universe::~Universe() {}
 
 	Union::Union()
-		: Nary( XMMS_COLLECTION_TYPE_UNION ) {}
+		: Nary( UNION ) {}
 	Union::Union( xmmsc_coll_t* coll )
 		: Nary( coll ) {}
 	Union::~Union() {}
 
 	Intersection::Intersection()
-		: Nary( XMMS_COLLECTION_TYPE_INTERSECTION ) {}
+		: Nary( INTERSECTION ) {}
 	Intersection::Intersection( xmmsc_coll_t* coll )
 		: Nary( coll ) {}
 	Intersection::~Intersection() {}
 
 	Complement::Complement()
-		: Unary( XMMS_COLLECTION_TYPE_COMPLEMENT ) {}
+		: Unary( COMPLEMENT ) {}
 	Complement::Complement( Coll& operand )
-		: Unary( XMMS_COLLECTION_TYPE_COMPLEMENT, operand ) {}
+		: Unary( COMPLEMENT, operand ) {}
 	Complement::Complement( xmmsc_coll_t* coll )
 		: Unary( coll ) {}
 	Complement::~Complement() {}
 
 	Has::Has()
-		: Filter( XMMS_COLLECTION_TYPE_HAS ) {}
+		: Filter( HAS ) {}
 	Has::Has( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_HAS, operand ) {}
+		: Filter( HAS, operand ) {}
 	Has::Has( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_HAS, operand, field ) {}
+		: Filter( HAS, operand, field ) {}
 	Has::Has( xmmsc_coll_t* coll )
 		: Filter( coll ) {}
 	Has::~Has() {}
 
 	Smaller::Smaller()
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER ) {}
+		: Filter( SMALLER ) {}
 	Smaller::Smaller( xmmsc_coll_t* coll )
 		: Filter( coll ) {}
 	Smaller::Smaller( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand ) {}
+		: Filter( SMALLER, operand ) {}
 	Smaller::Smaller( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand, field ) {}
+		: Filter( SMALLER, operand, field ) {}
 	Smaller::Smaller( Coll& operand,
 	                  const std::string& field,
 	                  const std::string& value )
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand, field, value ) {}
+		: Filter( SMALLER, operand, field, value ) {}
 	Smaller::~Smaller() {}
 
 	Greater::Greater()
-		: Filter( XMMS_COLLECTION_TYPE_GREATER ) {}
+		: Filter( GREATER ) {}
 	Greater::Greater( xmmsc_coll_t* coll )
 		: Filter( coll ) {}
 	Greater::Greater( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand ) {}
+		: Filter( GREATER, operand ) {}
 	Greater::Greater( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand, field ) {}
+		: Filter( GREATER, operand, field ) {}
 	Greater::Greater( Coll& operand,
 	                  const std::string& field,
 	                  const std::string& value )
-		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand, field, value ) {}
+		: Filter( GREATER, operand, field, value ) {}
 	Greater::~Greater() {}
 
 	Match::Match()
-		: Filter( XMMS_COLLECTION_TYPE_MATCH ) {}
+		: Filter( MATCH ) {}
 	Match::Match( xmmsc_coll_t* coll )
 		: Filter( coll ) {}
 	Match::Match( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_MATCH, operand ) {}
+		: Filter( MATCH, operand ) {}
 	Match::Match( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_MATCH, operand, field ) {}
+		: Filter( MATCH, operand, field ) {}
 	Match::Match( Coll& operand,
 	              const std::string& field,
 	              const std::string& value,
 	              bool case_sensitive )
-		: Filter( XMMS_COLLECTION_TYPE_MATCH,
+		: Filter( MATCH,
 	              operand, field, value, case_sensitive ) {}
 	Match::~Match() {}
 
 	Contains::Contains()
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS ) {}
+		: Filter( CONTAINS ) {}
 	Contains::Contains( xmmsc_coll_t* coll )
 		: Filter( coll ) {}
 	Contains::Contains( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS, operand ) {}
+		: Filter( CONTAINS, operand ) {}
 	Contains::Contains( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS, operand, field ) {}
+		: Filter( CONTAINS, operand, field ) {}
 	Contains::Contains( Coll& operand,
 	                    const std::string& field,
 	                    const std::string& value,
 	                    bool case_sensitive )
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS,
+		: Filter( CONTAINS,
 	              operand, field, value, case_sensitive ) {}
 	Contains::~Contains() {}
 
@@ -421,7 +421,7 @@ namespace Xmms
 	{
 	}
 	Idlist::Idlist()
-		: Coll( XMMS_COLLECTION_TYPE_IDLIST )
+		: Coll( IDLIST )
 	{
 	}
 
@@ -455,11 +455,11 @@ namespace Xmms
 		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 	}
 	Queue::Queue()
-		: Idlist( XMMS_COLLECTION_TYPE_QUEUE )
+		: Idlist( QUEUE )
 	{
 	}
 	Queue::Queue( unsigned int history )
-		: Idlist( XMMS_COLLECTION_TYPE_QUEUE )
+		: Idlist( QUEUE )
 	{
 		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 	}
@@ -470,16 +470,16 @@ namespace Xmms
 	PartyShuffle::PartyShuffle( xmmsc_coll_t* coll )
 		: Queue( coll ) {}
 	PartyShuffle::PartyShuffle()
-		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
+		: Queue( PARTYSHUFFLE )
 	{
 	}
 	PartyShuffle::PartyShuffle( unsigned int history )
-		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
+		: Queue( PARTYSHUFFLE )
 	{
 		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 	}
 	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
-		: Queue( XMMS_COLLECTION_TYPE_QUEUE )
+		: Queue( PARTYSHUFFLE )
 	{
 		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
 		setAttribute( "upcoming", boost::lexical_cast<std::string>( upcoming ) );

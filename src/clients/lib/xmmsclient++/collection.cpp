@@ -1,7 +1,6 @@
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/exceptions.h>
+#include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/collection.h>
 #include <xmmsclient/xmmsclient++/coll.h>
 #include <xmmsclient/xmmsclient++/helpers.h>
@@ -245,6 +244,17 @@ namespace Xmms
 	void
 	Collection::broadcastCollectionChanged( const std::list< DictSlot >& slots,
 	                                        const ErrorSlot& error ) const {
+
+	}
+
+	void
+	Collection::get( const std::string& name, Namespace nsname,
+	                 const CollPtrSlot& slot, const ErrorSlot& error ) const {
+
+		aCall<Coll::Coll>( connected_,
+		                   boost::bind( xmmsc_coll_get, conn_,
+		                                name.c_str(), nsname ),
+		                   slot, error );
 
 	}
 

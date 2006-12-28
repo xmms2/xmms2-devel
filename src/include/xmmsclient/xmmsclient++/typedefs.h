@@ -1,11 +1,11 @@
 #ifndef XMMSCLIENTPP_TYPEDEFS_H
 #define XMMSCLIENTPP_TYPEDEFS_H
 
+#include <xmmsclient/xmmsclient.h>
 #include <boost/signal.hpp>
+#include <xmmsclient/xmmsclient++/signal.h>
 #include <xmmsclient/xmmsclient++/list.h>
 #include <xmmsclient/xmmsclient++/dict.h>
-#include <xmmsclient/xmmsclient++/signal.h>
-#include <xmmsclient/xmmsclient.h>
 
 #include <string>
 
@@ -85,6 +85,11 @@ namespace Xmms
 	 *  bool( const Xmms::List< Xmms::Dict >& );
 	 */
 	typedef Signal< List< Dict > >::signal_t::slot_type DictListSlot;
+
+	namespace Coll {
+		class Coll;
+	}
+	typedef Signal< Coll::Coll >::signal_t::slot_type CollPtrSlot;
 
 
 	/** Used for function pointers to functions with signature

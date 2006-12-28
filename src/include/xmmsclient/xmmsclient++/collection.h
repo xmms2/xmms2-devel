@@ -2,11 +2,11 @@
 #define XMMSCLIENTPP_COLLECTION_H
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient++/mainloop.h>
 #include <xmmsclient/xmmsclient++/signal.h>
-#include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/typedefs.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/mainloop.h>
+#include <xmmsclient/xmmsclient++/exceptions.h>
 
 #include <list>
 #include <string>
@@ -256,6 +256,12 @@ namespace Xmms
 			                            const ErrorSlot& error = &Xmms::dummy_error
 			                          ) const;
 
+
+			void
+			get( const std::string& name, Namespace nsname,
+			     const CollPtrSlot& slot,
+			     const ErrorSlot& error = &Xmms::dummy_error
+			   ) const;
 
 		/** @cond */
 		private:
