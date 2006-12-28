@@ -177,8 +177,10 @@ xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_name
  * @param to_name  The new name of the collection.
  * @param ns  The namespace containing the collection.
  */
-xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name,
-                                   char* to_name, xmmsc_coll_namespace_t ns)
+xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
+                                   const char* from_name,
+                                   const char* to_name,
+                                   xmmsc_coll_namespace_t ns)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;

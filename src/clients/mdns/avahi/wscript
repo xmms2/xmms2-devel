@@ -19,6 +19,9 @@ def build(bld):
   find.source = ['find-avahi.c']
   find.uselib = 'avahiclient'
 
+  obj = bld.create_obj('man')
+  obj.files = ['xmms2-mdns-avahi.1']
+
 def configure(conf):
   return (conf.check_pkg('avahi-client', destvar='avahiclient') and
     conf.check_pkg('avahi-glib', destvar='avahiglib'))

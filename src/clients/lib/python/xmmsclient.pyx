@@ -24,7 +24,23 @@ cdef extern from "xmmsc/xmmsc_idnumbers.h":
 		XMMS_OBJECT_CMD_ARG_DICT,
 		XMMS_OBJECT_CMD_ARG_LIST,
 		XMMS_OBJECT_CMD_ARG_PROPDICT,
+		XMMS_OBJECT_CMD_ARG_COLL
 		XMMS_OBJECT_CMD_ARG_BIN
+	ctypedef enum xmmsc_coll_type_t:
+		XMMS_COLLECTION_TYPE_ERROR
+		XMMS_COLLECTION_TYPE_REFERENCE
+		XMMS_COLLECTION_TYPE_UNION
+		XMMS_COLLECTION_TYPE_INTERSECTION
+		XMMS_COLLECTION_TYPE_COMPLEMENT
+		XMMS_COLLECTION_TYPE_HAS
+		XMMS_COLLECTION_TYPE_MATCH
+		XMMS_COLLECTION_TYPE_CONTAINS
+		XMMS_COLLECTION_TYPE_SMALLER
+		XMMS_COLLECTION_TYPE_GREATER
+		XMMS_COLLECTION_TYPE_IDLIST
+		XMMS_COLLECTION_TYPE_QUEUE
+		XMMS_COLLECTION_TYPE_PARTYSHUFFLE
+
 
 
 # The following constants are meant for interpreting the return value of
@@ -36,6 +52,7 @@ OBJECT_CMD_ARG_STRING = XMMS_OBJECT_CMD_ARG_STRING
 OBJECT_CMD_ARG_DICT = XMMS_OBJECT_CMD_ARG_DICT
 OBJECT_CMD_ARG_LIST = XMMS_OBJECT_CMD_ARG_LIST
 OBJECT_CMD_ARG_BIN = XMMS_OBJECT_CMD_ARG_BIN
+OBJECT_CMD_ARG_COLL = XMMS_OBJECT_CMD_ARG_COLL
 
 cdef extern from "xmmsc/xmmsc_idnumbers.h":
 	ctypedef enum xmms_playback_status_t:
@@ -111,6 +128,7 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	signed int xmmsc_result_get_string(xmmsc_result_t *res, signed char **r)
 	signed int xmmsc_result_get_bin(xmmsc_result_t *res, unsigned char **r, unsigned int *rlen)
 	signed int xmmsc_result_get_playlist_change(xmmsc_result_t *res, unsigned int *change, unsigned int *id, unsigned int *argument)
+	signed int xmmsc_result_get_collection (xmmsc_result_t *conn, xmmsc_coll_t **coll)
 
 	ctypedef void(*xmmsc_dict_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, void *user_data)
 	ctypedef void(*xmmsc_propdict_foreach_func)(void *key, xmmsc_result_value_type_t type, void *value, char *source, void *user_data)
@@ -229,6 +247,60 @@ cdef extern from "xmmsclient/xmmsclient.h":
 	int xmmsc_io_fd_get(xmmsc_connection_t *c)
 
 
+	ctypedef char *xmmsc_coll_namespace_t
+	char *XMMS_COLLECTION_NS_COLLECTIONS
+	char *XMMS_COLLECTION_NS_PLAYLISTS
+	char *XMMS_COLLECTION_NS_ALL
+
+	xmmsc_result_t *xmmsc_coll_get (xmmsc_connection_t *conn, char *collname, xmmsc_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_list (xmmsc_connection_t *conn, xmmsc_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_save (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char* name, xmmsc_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_remove (xmmsc_connection_t *conn, char* name, xmmsc_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_find (xmmsc_connection_t *conn, unsigned int mediaid, xmmsc_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_rename (xmmsc_connection_t *conn, char* from_name, char* to_name, xmmsc_coll_namespace_t ns)
+	xmmsc_result_t *xmmsc_coll_idlist_from_playlist_file (xmmsc_connection_t *conn, char *path)
+
+	xmmsc_result_t *xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char **order, unsigned int limit_start, unsigned int limit_len)
+	xmmsc_result_t *xmmsc_coll_query_infos (xmmsc_connection_t *conn, xmmsc_coll_t *coll, char **order, unsigned int limit_start, unsigned int limit_len, char **fetch, char **group)
+
+
+	xmmsc_coll_t *xmmsc_coll_new (xmmsc_coll_type_t)
+	void xmmsc_coll_ref (xmmsc_coll_t *)
+	void xmmsc_coll_unref (xmmsc_coll_t *)
+	xmmsc_coll_t *xmmsc_coll_universe ()
+	xmmsc_coll_type_t xmmsc_coll_get_type (xmmsc_coll_t *coll)
+
+	unsigned int* xmmsc_coll_get_idlist (xmmsc_coll_t *coll)
+	int xmmsc_coll_idlist_append (xmmsc_coll_t *coll, unsigned int id)
+	int xmmsc_coll_idlist_insert (xmmsc_coll_t *coll, unsigned int id, unsigned int index)
+	int xmmsc_coll_idlist_move (xmmsc_coll_t *coll, unsigned int index, unsigned int newindex)
+	int xmmsc_coll_idlist_remove (xmmsc_coll_t *coll, unsigned int index)
+	int xmmsc_coll_idlist_clear (xmmsc_coll_t *coll)
+	int xmmsc_coll_idlist_get_index (xmmsc_coll_t *coll, unsigned int index, unsigned int *val)
+	int xmmsc_coll_idlist_set_index (xmmsc_coll_t *coll, unsigned int index, unsigned int val)
+	int xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll)
+
+
+	void xmmsc_coll_add_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
+	void xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
+
+	int xmmsc_coll_operand_list_first (xmmsc_coll_t *)
+	int xmmsc_coll_operand_list_valid (xmmsc_coll_t *)
+	int xmmsc_coll_operand_list_entry (xmmsc_coll_t *, xmmsc_coll_t **)
+	int xmmsc_coll_operand_list_next (xmmsc_coll_t *)
+	int xmmsc_coll_operand_list_save (xmmsc_coll_t *)
+	int xmmsc_coll_operand_list_restore (xmmsc_coll_t *)
+	
+	void xmmsc_coll_attribute_set (xmmsc_coll_t *coll, char *key, char *value)
+	int xmmsc_coll_attribute_remove (xmmsc_coll_t *coll, char *key)
+	int xmmsc_coll_attribute_get (xmmsc_coll_t *coll, char *key, char **value)
+	void xmmsc_coll_attribute_list_first (xmmsc_coll_t *coll)
+	int xmmsc_coll_attribute_list_valid (xmmsc_coll_t *coll)
+	void xmmsc_coll_attribute_list_entry (xmmsc_coll_t *coll, char **k, char **v)
+	void xmmsc_coll_attribute_list_next (xmmsc_coll_t *coll)
+
+
+
 #####################################################################
 
 from select import select
@@ -264,7 +336,7 @@ cdef class _ListConverter:
 			tmp = inlist[i]
 			self.lst[i] = strdup(tmp)
 			i = i + 1
-			self.lst[i] = NULL
+		self.lst[i] = NULL
 	
 	def __del__(self):
 		i = 0
@@ -357,7 +429,384 @@ class PropDict(dict):
 				raise TypeError("Sources need to be strings")
 		self._sources = val
 	sources = property(_get_sources, _set_sources)
+
+cdef class Collection:
+	cdef xmmsc_coll_t *coll
+	cdef object attributes
+	cdef object operands
+	cdef object idl
+
+	def __init__(self):
+		self.idl=CollectionIDList()
+		self.attributes=CollectionAttributes()
+		self.operands=CollectionOperands()
+
+	def __dealloc__(self):
+		if self.coll != NULL:
+			xmmsc_coll_unref (self.coll)
+		self.coll = NULL
+
+
+	def __getattr__(self, name):
+		if name == 'attributes':
+			return self.attributes
+		elif name == 'operands':
+			return self.operands
+		elif name == 'ids':
+			return self.idl
+		raise AttributeError("No such attribute")
+
+	def x__setattr__(self, name, value):
+		if name == 'ids' and value != self.ids:
+			raise RuntimeError("Can't change ids")
+		if name == 'operands' and value != self.operands:
+			raise RuntimeError("Can't change operands")
+		if name == 'attributes' and value != self.attributes:
+			raise RuntimeError("Can't change attributes")
+
+		#if name not in ('ids', 'operands', 'attributes'):
+		#	raise AttributeError("No such attribute")
+
+	def __repr__(self):
+		atr = []
+		for k,v in self.attributes:
+			atr.append("%s=%s" % (k, repr(v)))
+		return "%s(%s)" % (self.__class__.__name__,",".join(atr))
+
+	def __or__(self, other): # |
+		return Union(self, other)
+	def __and__(self, other): # &
+		return Intersection(self, other)
+	def __invert__(self): #~
+		return Complement(self)
+
+cdef class CollectionIDList:
+	cdef xmmsc_coll_t *coll
+
+	def __new__(self):
+		self.coll = NULL
+
+	def __dealloc__(self):
+		if self.coll != NULL:
+			xmmsc_coll_unref(self.coll)
+		self.coll = NULL
+
+	def __len__(self):
+		return xmmsc_coll_idlist_get_size(self.coll)
+
+	def list(self):
+		"""Returns a _COPY_ of the idlist as an ordinary list"""
+		cdef unsigned int x
+		cdef int l
+		cdef int i
+		l = xmmsc_coll_idlist_get_size(self.coll)
+		i = 0
+		res = []
+		while i < l:
+			x = -1
+			xmmsc_coll_idlist_get_index(self.coll, i, &x)
+			res.append(x)
+			i = i + 1
+		return res
+
+	def __repr__(self):
+		return repr(self.list())
+
+	def __iter__(self):
+		return iter(self.list())
+
+	def append(self, int v):
+		"""Appends an id to the idlist"""
+		xmmsc_coll_idlist_append(self.coll, v)
+
+	def __iadd__(self, v):
+		for a in v:
+			self.append(a)
+		return self
+
+	def insert(self, int i, int v):
+		"""Inserts an id at specified position"""
+		if not xmmsc_coll_idlist_insert(self.coll, i, v):
+			raise IndexError("Index out of range")
+
+	def remove(self, int i):
+		"""Removes entry as specified position"""
+		if not xmmsc_coll_idlist_remove(self.coll, i):
+			raise IndexError("Index out of range")
+
+	def __delitem__(self, int i):
+		self.remove(i)
+
+	def __getitem__(self, int i):
+		cdef unsigned int x
+		if i < 0:
+			i = len(self) + i
+		if not xmmsc_coll_idlist_get_index(self.coll, i, &x):
+			raise IndexError("Index out of range")
+		return x
+		
+	def __setitem__(self, int i, int v):
+		if not xmmsc_coll_idlist_set_index(self.coll, i, v):
+			raise IndexError("Index out of range")
+
+cdef class CollectionOperands:
+	cdef xmmsc_coll_t *coll
+	cdef object pylist
 	
+	def __new__(self):
+		self.pylist = []
+		self.coll = NULL
+	def __dealloc__(self):
+		if self.coll != NULL:
+			xmmsc_coll_unref(self.coll)
+		self.coll = NULL
+	def __len__(self):
+		return len(self.pylist)
+	def __getitem__(self, i):
+		return self.pylist[i]
+	def __iter__(self):
+		return iter(self.pylist)
+
+	def append(self, Collection op):
+		"""Append an operand"""
+		xmmsc_coll_add_operand(self.coll, op.coll)
+		self.pylist.append(op)
+		
+	def remove(self, Collection op):
+		"""Remove an operand"""
+		self.pylist.remove(op)
+		xmmsc_coll_remove_operand(self.coll, op.coll)
+	
+cdef class CollectionAttributes:
+	cdef xmmsc_coll_t *coll
+
+	def __new__(self):
+		self.coll = NULL
+	def __dealloc__(self):
+		if self.coll != NULL:
+			xmmsc_coll_unref(self.coll)
+		self.coll = NULL
+
+	def __getitem__(self, name):
+		cdef char *val
+		if not xmmsc_coll_attribute_get(self.coll, name, &val):
+			raise KeyError("No such attribute")
+		ret = val
+		return ret
+
+	def get(self, name, default=None):
+		try:
+			return self[name]
+		except KeyError:
+			return default
+
+	def __setitem__(self, name, val):
+		xmmsc_coll_attribute_set(self.coll, name, val)
+
+	def items(self):
+		cdef char *x
+		cdef char *y
+		lst = []
+		xmmsc_coll_attribute_list_first(self.coll)
+		while xmmsc_coll_attribute_list_valid(self.coll):
+			xmmsc_coll_attribute_list_entry(self.coll, &x, &y)
+			lst.append((x,y))
+			xmmsc_coll_attribute_list_next(self.coll)
+		return lst
+	
+	def __iter__(self):
+		return iter(self.items())
+	def __repr__(self):
+		return repr(self.items())
+
+
+# Create a dummy object that can't be accessed
+# from outside this module. Used as a argument
+# to BaseCollection to tell it not to setup
+# the attributes. Pretty ugly hack.
+cdef object DontSetup
+DontSetup = object()
+
+class BaseCollection(Collection):
+	def __init__(Collection self, int typ, setup=None):
+		cdef CollectionAttributes atr
+		cdef CollectionOperands opr
+		cdef CollectionIDList idl
+
+		Collection.__init__(self)
+
+		if setup == DontSetup:
+			return
+
+		self.coll = xmmsc_coll_new(typ)
+		if self.coll == NULL:
+			raise RuntimeError("Bad coll")
+
+		atr = self.attributes
+		xmmsc_coll_ref(self.coll)
+		atr.coll = self.coll
+
+		opr = self.operands
+		xmmsc_coll_ref(self.coll)
+		opr.coll = self.coll
+
+		idl = self.idl
+		xmmsc_coll_ref(self.coll)
+		idl.coll = self.coll
+
+class Reference(BaseCollection):
+	def __init__(Collection self, ref):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_REFERENCE)
+		a = ref.split(":", 1)
+		if len(a) == 2:
+			xmmsc_coll_attribute_set (self.coll, "namespace", a[0]);
+			xmmsc_coll_attribute_set (self.coll, "reference", a[1]);
+		else:
+			xmmsc_coll_attribute_set (self.coll, "namespace", "Collections");
+			xmmsc_coll_attribute_set (self.coll, "reference", a[0]);
+
+class Universe(Reference):
+	def __init__(self):
+		# we could use "xmmsc_coll_universe()" here
+		# but this is easier. And coll_universe is just this
+		Reference.__init__(self, "All Media")
+
+class Match(BaseCollection):
+	def __init__(Collection self, parent=None, **kv):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_MATCH)
+		if parent is None:
+			parent = Universe()
+		self.operands.append(parent)
+		for k,v in kv.items():
+			xmmsc_coll_attribute_set (self.coll, k, v);
+
+class Contains(BaseCollection):
+	def __init__(Collection self, parent=None, **kv):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_CONTAINS)
+		if parent is None:
+			parent = Universe()
+		self.operands.append(parent)
+		for k,v in kv.items():
+			xmmsc_coll_attribute_set (self.coll, k, v);
+
+class Smaller(BaseCollection):
+	def __init__(Collection self, parent=None, **kv):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_SMALLER)
+		if parent is None:
+			parent = Universe()
+		self.operands.append(parent)
+		for k,v in kv.items():
+			xmmsc_coll_attribute_set (self.coll, k, v);
+
+class Greater(BaseCollection):
+	def __init__(Collection self, parent=None, **kv):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_GREATER)
+		if parent is None:
+			parent = Universe()
+		self.operands.append(parent)
+		for k,v in kv.items():
+			xmmsc_coll_attribute_set (self.coll, k, v);
+
+class IDList(BaseCollection):
+	def __init__(self):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_IDLIST)
+
+class Queue(BaseCollection):
+	def __init__(self):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_QUEUE)
+
+class PShuffle(BaseCollection):
+	def __init__(self, parent):
+		self.operands.append(parent)
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_PARTYSHUFFLE)
+
+class Union(BaseCollection):
+	def __init__(Collection self, *a):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_UNION)
+		for o in a:
+			self.operands.append(o)
+
+class Intersection(BaseCollection):
+	def __init__(Collection self, *a):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_INTERSECTION)
+		for o in a:
+			self.operands.append(o)
+
+class Complement(BaseCollection):
+	def __init__(Collection self, parent):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_COMPLEMENT)
+		self.operands.append(parent)
+
+class Has(BaseCollection):
+	def __init__(Collection self, parent, field):
+		BaseCollection.__init__(self, XMMS_COLLECTION_TYPE_HAS)
+		self.operands.append(parent)
+		self.attributes['field'] = field
+
+cdef create_coll(xmmsc_coll_t *coll):
+	cdef xmmsc_coll_type_t typ
+	cdef Collection c
+	cdef CollectionAttributes atr
+	cdef CollectionOperands opr
+	cdef CollectionIDList idl
+	
+	typ = xmmsc_coll_get_type(coll)
+	c = BaseCollection(typ, DontSetup)
+	if typ == XMMS_COLLECTION_TYPE_REFERENCE:
+		c.__class__ = Reference
+	elif typ == XMMS_COLLECTION_TYPE_UNION:
+		c.__class__ = Union
+	elif typ == XMMS_COLLECTION_TYPE_INTERSECTION:
+		c.__class__ = Intersection
+	elif typ == XMMS_COLLECTION_TYPE_COMPLEMENT:
+		c.__class__ = Complement
+	elif typ == XMMS_COLLECTION_TYPE_HAS:
+		c.__class__ = Has
+	elif typ == XMMS_COLLECTION_TYPE_MATCH:
+		c.__class__ = Match
+	elif typ == XMMS_COLLECTION_TYPE_CONTAINS:
+		c.__class__ = Contains
+	elif typ == XMMS_COLLECTION_TYPE_SMALLER:
+		c.__class__ = Smaller
+	elif typ == XMMS_COLLECTION_TYPE_GREATER:
+		c.__class__ = Greater
+	elif typ == XMMS_COLLECTION_TYPE_IDLIST:
+		c.__class__ = IDList
+	elif typ == XMMS_COLLECTION_TYPE_QUEUE:
+		c.__class__ = Queue
+	elif type == XMMS_COLLECTION_TYPE_PARTYSHUFFLE:
+		c.__class__ = PShuffle
+	else:
+		raise RuntimeError("Unknown collection typ")
+
+	c.coll = coll
+
+	atr = c.attributes
+	xmmsc_coll_ref(coll)
+	atr.coll = coll
+
+	#slightly hackish
+	if typ == XMMS_COLLECTION_TYPE_REFERENCE:
+		if atr.get("reference") == "All Media":
+			c.__class__ = Universe
+			
+
+	idl = c.idl
+	xmmsc_coll_ref(coll)
+	idl.coll = coll
+
+	opr = c.operands
+	cdef xmmsc_coll_t *ocoll
+	xmmsc_coll_operand_list_first(coll)
+	while xmmsc_coll_operand_list_valid(coll):
+		xmmsc_coll_operand_list_entry(coll, &ocoll)
+		opr.pylist.append(create_coll(ocoll))
+		xmmsc_coll_operand_list_next(coll)
+	xmmsc_coll_ref(coll)
+	opr.coll = coll
+	
+	return c
+
 cdef class XMMSResult:
 	"""
 	Class containing the results of some operation
@@ -418,6 +867,8 @@ cdef class XMMSResult:
 			return self.get_string()
 		elif type == XMMS_OBJECT_CMD_ARG_BIN:
 			return self.get_bin()
+		elif type == XMMS_OBJECT_CMD_ARG_COLL:
+			return self.get_coll()
 
 	def value(self):
 		"""
@@ -503,6 +954,18 @@ cdef class XMMSResult:
 		else:
 			raise ValueError("Failed to retrieve value!")
 
+	def get_coll(self):
+		"""
+		Get data from the result structure as a Collection.
+		@rtype: Collection
+		"""
+		cdef xmmsc_coll_t *coll
+		if not xmmsc_result_get_collection(self.res, &coll):
+			raise ValueError("Failed to retrieve value!")
+
+		return create_coll(coll)
+
+
 	def get_dict (self) :
 		"""
 		@return: A dictionary containing media info.
@@ -582,6 +1045,8 @@ def userconfdir_get():
 	if xmmsc_userconfdir_get (path, XMMS_PATH_MAX) == NULL:
 		return None
 	return path
+
+
 
 cdef class XMMS:
 	"""
@@ -1885,6 +2350,168 @@ cdef class XMMS:
 
 		ret.more_init()
 		return ret
+
+	def coll_get(self, name, ns, cb=None):
+		"""
+		Retrieve a Collection
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		if ns == "Collections":
+			n = XMMS_COLLECTION_NS_COLLECTIONS
+		elif ns == "Playlists":
+			n = XMMS_COLLECTION_NS_PLAYLISTS
+		else:
+			raise ValueError("Bad namespace")
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_coll_get(self.conn, name, n)
+
+		ret.more_init()
+		return ret
+
+	def coll_list(self, ns="*", cb=None):
+		"""
+		List collections
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		if ns == "Collections":
+			n = XMMS_COLLECTION_NS_COLLECTIONS
+		elif ns == "Playlists":
+			n = XMMS_COLLECTION_NS_PLAYLISTS
+		elif ns == "*":
+			n = XMMS_COLLECTION_NS_ALL
+		else:
+			raise ValueError("Bad namespace")
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_coll_list(self.conn, n)
+		ret.more_init()
+		return ret
+
+	def coll_save(self, Collection coll, name, ns, cb=None):
+		"""
+		Save a collection on server.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		if ns == "Collections":
+			n = XMMS_COLLECTION_NS_COLLECTIONS
+		elif ns == "Playlists":
+			n = XMMS_COLLECTION_NS_PLAYLISTS
+		else:
+			raise ValueError("Bad namespace")
+
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_coll_save(self.conn, coll.coll, name, n)
+		ret.more_init()
+		return ret
+
+	def coll_remove(self, name, ns, cb=None):
+		"""
+		Remove a collection on server.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		if ns == "Collections":
+			n = XMMS_COLLECTION_NS_COLLECTIONS
+		elif ns == "Playlists":
+			n = XMMS_COLLECTION_NS_PLAYLISTS
+		else:
+			raise ValueError("Bad namespace")
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_coll_remove(self.conn, name, n)
+
+		ret.more_init()
+		return ret
+
+
+	def coll_rename(self, oldname, newname, ns, cb=None):
+		"""
+		Change the name of a Collection.
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+
+		if ns == "Collections":
+			n = XMMS_COLLECTION_NS_COLLECTIONS
+		elif ns == "Playlists":
+			n = XMMS_COLLECTION_NS_PLAYLISTS
+		else:
+			raise ValueError("Bad namespace")
+		
+		ret = XMMSResult(self)
+		ret.callback = cb
+		ret.res = xmmsc_coll_rename(self.conn, oldname, newname, n)
+
+		ret.more_init()
+		return ret
+
+	def coll_query_ids(self, coll, start=0, leng=0, order=None, cb=None):
+		"""
+		Retrive a list of ids of the media matching the collection
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		cdef Collection c
+		cdef _ListConverter orderflds
+
+		if order is None:
+			order = []
+
+		orderflds = _ListConverter(order)
+
+		c = <Collection> coll
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_coll_query_ids(self.conn, c.coll, orderflds.lst, start, leng)
+
+		ret.more_init()
+		return ret
+
+	def coll_query_infos(self, coll, fields, start=0, leng=0, order=None, cb=None):
+		"""
+		Retrive a list of mediainfo of the media matching the collection
+		@rtype: L{XMMSResult}
+		@return: The result of the operation.
+		"""
+		cdef XMMSResult ret
+		cdef Collection c
+		cdef _ListConverter flds
+		cdef _ListConverter orderflds
+
+		if order is None:
+			order = []
+
+		flds = _ListConverter(fields)
+		orderflds = _ListConverter(order)
+		
+		c = <Collection> coll
+		ret = XMMSResult(self)
+		ret.callback = cb
+
+		ret.res = xmmsc_coll_query_infos(self.conn, c.coll, orderflds.lst, start, leng, flds.lst, NULL)
+
+		ret.more_init()
+		return ret
+
 
 	def bindata_add(self, data, cb=None):
 		"""

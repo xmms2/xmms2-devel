@@ -63,7 +63,7 @@ xmmsc_disconnect_callback_set(c, func, data=NULL)
 	CODE:
 		cb = perl_xmmsclient_callback_new(func, data, NULL, 0, NULL);
 
-		xmmsc_disconnect_callback_set(c, perl_xmmsclient_xmmsc_disconnect_callback_set_cb, cb);
+		xmmsc_disconnect_callback_set_full(c, perl_xmmsclient_xmmsc_disconnect_callback_set_cb, cb, (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
 void
 xmmsc_io_disconnect(c)
@@ -690,16 +690,9 @@ xmmsc_playlist_radd_encoded(c, playlist, url)
 		const char* url
 
 xmmsc_result_t*
-xmmsc_playlist_import(c, playlist, url)
+xmmsc_coll_idlist_from_playlist_file (c, path)
 		xmmsc_connection_t* c
-		const char* playlist
-		const char* url
-
-xmmsc_result_t*
-xmmsc_playlist_export(c, playlist, mime)
-		xmmsc_connection_t* c
-		const char* playlist
-		const char* mime
+		const char* path
 
 
 ## IO
@@ -737,7 +730,7 @@ xmmsc_io_need_out_callback_set(c, func, data=NULL)
 
 		cb = perl_xmmsclient_callback_new(func, data, c, 2, param_types);
 
-		xmmsc_io_need_out_callback_set(c_con, perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb);
+		xmmsc_io_need_out_callback_set_full(c_con, perl_xmmsclient_xmmsc_io_need_out_callback_set_cb, cb, (xmmsc_user_data_free_func_t)perl_xmmsclient_callback_destroy);
 
 void
 DESTROY(c)

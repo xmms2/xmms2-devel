@@ -48,6 +48,7 @@ perl_xmmsclient_callback_new(SV* func, SV* data, SV* wrapper, int n_params, Perl
 	PerlXMMSClientCallback* cb;
 
 	cb = (PerlXMMSClientCallback*)malloc(sizeof(PerlXMMSClientCallback));
+	memset (cb, '\0', sizeof(PerlXMMSClientCallback));
 
 	cb->func = newSVsv(func);
 

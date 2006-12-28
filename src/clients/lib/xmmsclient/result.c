@@ -66,6 +66,7 @@ struct xmmsc_result_St {
 	/** notifiers */
 	x_list_t *func_list;
 	x_list_t *udata_list;
+	x_list_t *udata_free_func_list;
 
 	int error;
 	char *error_str;
@@ -164,6 +165,8 @@ xmmsc_result_ref (xmmsc_result_t *res)
 static void
 xmmsc_result_free (xmmsc_result_t *res)
 {
+	x_list_t *n, *l, *f;
+
 	x_return_if_fail (res);
 
 	if (res->error_str)
@@ -176,8 +179,22 @@ xmmsc_result_free (xmmsc_result_t *res)
 
 	xmmsc_unref (res->c);
 
+	l = res->udata_list;
+	f = res->udata_free_func_list;
+	for (n = res->func_list; n; n = x_list_next (n)) {
+		if (l->data && f->data) {
+			xmmsc_user_data_free_func_t free_func = f->data;
+
+			free_func (l->data);
+		}
+
+		l = x_list_next (l);
+		f = x_list_next (f);
+	}
+
 	x_list_free (res->func_list);
 	x_list_free (res->udata_list);
+	x_list_free (res->udata_free_func_list);
 
 	while (res->source_pref) {
 		free (res->source_pref->data);
@@ -291,7 +308,7 @@ xmmsc_result_restart (xmmsc_result_t *res)
 {
 	xmmsc_result_t *newres;
 	xmms_ipc_msg_t *msg;
-	x_list_t *n, *l;
+	x_list_t *n, *l, *f;
 
 	x_return_null_if_fail (res);
 	x_return_null_if_fail (res->c);
@@ -305,11 +322,14 @@ xmmsc_result_restart (xmmsc_result_t *res)
 	newres = xmmsc_send_msg (res->c, msg);
 	
 	l = res->udata_list;
+	f = res->udata_free_func_list;
 	for (n = res->func_list; n; n = x_list_next (n)) {
-		xmmsc_result_notifier_set (newres, n->data, l->data);
+		xmmsc_result_notifier_set_full (newres, n->data, l->data, f->data);
 		l->data = NULL;
 		n->data = NULL;
+		f->data = NULL;
 		l = x_list_next (l);
+		f = x_list_next (f);
 	}
 	xmmsc_result_restartable (newres, res->restart_signal);
 	
@@ -482,8 +502,7 @@ xmmsc_result_parse_msg (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 			{
 				xmmsc_coll_t *coll;
 
-				xmms_ipc_msg_get_collection_alloc (msg, &coll);
-				if (!coll)
+				if (!xmms_ipc_msg_get_collection_alloc (msg, &coll))
 					return false;
 
 				res->data.coll = coll;
@@ -522,7 +541,7 @@ xmmsc_result_cookie_get (xmmsc_result_t *res)
  * will be deallocated.
  */
 
-void 
+void
 xmmsc_result_unref (xmmsc_result_t *res)
 {
 	x_return_if_fail (res);
@@ -545,6 +564,21 @@ xmmsc_result_unref (xmmsc_result_t *res)
 void
 xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data)
 {
+	xmmsc_result_notifier_set_full (res, func, user_data, NULL);
+}
+
+/**
+ * Set up a callback for the result retrieval. This callback
+ * will be called when the answer arrives. This function differs from xmmsc_result_notifier_set in the additional free_func parameter, which allows to pass a pointer to a function which will be called to free the user_data when needed.
+ * @param res a #xmmsc_result_t that you got from a command dispatcher.
+ * @param func the function that should be called when we receive the answer
+ * @param user_data optional user data to the callback
+ * @param free_func optional function that should be called to free the user_data
+ */
+
+void
+xmmsc_result_notifier_set_full (xmmsc_result_t *res, xmmsc_result_notifier_t func, void *user_data, xmmsc_user_data_free_func_t free_func)
+{
 	x_return_if_fail (res);
 	x_return_if_fail (func);
 
@@ -553,6 +587,7 @@ xmmsc_result_notifier_set (xmmsc_result_t *res, xmmsc_result_notifier_t func, vo
 
 	res->func_list = x_list_append (res->func_list, func);
 	res->udata_list = x_list_append (res->udata_list, user_data);
+	res->udata_free_func_list = x_list_append (res->udata_free_func_list, free_func);
 }
 
 
@@ -594,7 +629,7 @@ xmmsc_result_source_preference_set (xmmsc_result_t *res, const char **preference
 	}
 
 	for (i = 0; preference[i]; i++) {
-		res->source_pref = x_list_append (res->source_pref, strdup (preference[i])); 
+		res->source_pref = x_list_append (res->source_pref, strdup (preference[i]));
 	}
 }
 
@@ -757,7 +792,7 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
 			for (n = res->list; n; n = x_list_next (n)) {
 				xmmsc_result_value_t *k = n->data;
 
-				if (source_match_pattern (k->value.string, source) && 
+				if (source_match_pattern (k->value.string, source) &&
 					n->next && n->next->next) {
 
 					n = x_list_next (n);
@@ -966,8 +1001,8 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 }
 
 int
-xmmsc_result_propdict_foreach (xmmsc_result_t *res, 
-							   xmmsc_propdict_foreach_func func, 
+xmmsc_result_propdict_foreach (xmmsc_result_t *res,
+							   xmmsc_propdict_foreach_func func,
 							   void *user_data)
 {
 	x_list_t *n;

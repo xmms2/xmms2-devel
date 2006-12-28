@@ -41,7 +41,6 @@ static gboolean xmms_m3u_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_m3u_init (xmms_xform_t *xform);
 static gboolean xmms_m3u_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 static void xmms_m3u_destroy (xmms_xform_t *xform);
-static gboolean parse_line (const gchar *line, const gchar *m3u_path, gchar *newp);
 
 /*
  * Plugin header
