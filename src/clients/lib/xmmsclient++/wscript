@@ -23,7 +23,7 @@ def build(bld):
                   stats.cpp
                   xform.cpp""".split()
     obj.uselib_local = 'xmmsclient'
-    obj.uselib = 'boost'
+    obj.uselib = 'boost socket'
     obj.vnum = '1.0.0'
     tool.add_install_flag(obj)
 
