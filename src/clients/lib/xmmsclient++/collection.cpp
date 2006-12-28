@@ -242,19 +242,133 @@ namespace Xmms
 	}
 
 	void
-	Collection::broadcastCollectionChanged( const std::list< DictSlot >& slots,
+	Collection::broadcastCollectionChanged( const DictSlot& slot,
 	                                        const ErrorSlot& error ) const {
+
+		aCall<Dict>( connected_,
+		             boost::bind( xmmsc_broadcast_collection_changed, conn_ ),
+		             slot, error );
 
 	}
 
 	void
 	Collection::get( const std::string& name, Namespace nsname,
-	                 const CollPtrSlot& slot, const ErrorSlot& error ) const {
+	                 const CollSlot& slot, const ErrorSlot& error ) const {
 
 		aCall<Coll::Coll>( connected_,
 		                   boost::bind( xmmsc_coll_get, conn_,
 		                                name.c_str(), nsname ),
 		                   slot, error );
+
+	}
+
+	void
+	Collection::list( Namespace nsname, const StringListSlot& slot,
+	                  const ErrorSlot& error ) const {
+
+		aCall<List<std::string> >( connected_,
+		                           boost::bind( xmmsc_coll_list, conn_, nsname ),
+		                           slot, error );
+
+	}
+
+	void
+	Collection::save( const Coll::Coll& coll, const std::string& name,
+		              Namespace nsname, const VoidSlot& slot,
+		              const ErrorSlot& error ) const {
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_coll_save, conn_, coll.coll_,
+		                                           name.c_str(), nsname ),
+		             slot, error );
+
+	}
+
+	void
+	Collection::remove( const std::string& name, Namespace nsname,
+	                    const VoidSlot& slot, const ErrorSlot& error ) const {
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_coll_remove, conn_,
+		                                             name.c_str(), nsname ),
+		             slot, error );
+
+	}
+
+	void
+	Collection::find( unsigned int id, Namespace nsname,
+	                  const StringListSlot& slot, const ErrorSlot& error ) const {
+
+		aCall<List<std::string> >( connected_,
+		                           boost::bind( xmmsc_coll_find, conn_, id,
+		                                                         nsname ),
+		                           slot, error );
+
+	}
+
+	void
+	Collection::rename( const std::string& from_name,
+	                    const std::string& to_name, Namespace nsname,
+	                    const VoidSlot& slot, const ErrorSlot& error ) const {
+
+		aCall<void>( connected_,
+		             boost::bind( xmmsc_coll_rename, conn_, from_name.c_str(),
+		                                             to_name.c_str(), nsname ),
+		             slot, error );
+
+	}
+
+	void
+	Collection::idlistFromPlaylistFile( const std::string& path,
+	                                    const CollSlot& slot,
+	                                    const ErrorSlot& error ) const {
+
+		aCall< Coll::Coll >( connected_,
+		                     boost::bind( xmmsc_coll_idlist_from_playlist_file,
+		                                  conn_, path.c_str() ),
+		                     slot, error );
+
+	}
+
+	void
+	Collection::queryIds( const Coll::Coll& coll,
+	                      const std::list< std::string >& order,
+	                      unsigned int limit_len,
+	                      unsigned int limit_start,
+	                      const UintListSlot& slot,
+	                      const ErrorSlot& error ) const {
+
+		std::vector< const char* > corder;
+		fillCharArray( order, corder );
+
+		aCall<List<unsigned int> >( connected_,
+		                            boost::bind( xmmsc_coll_query_ids, conn_,
+		                                         coll.coll_, &corder[0],
+		                                         limit_start, limit_len ),
+		                            slot, error );
+
+	}
+
+	void
+	Collection::queryInfos( const Coll::Coll& coll,
+	                        const std::list< std::string >& order,
+	                        unsigned int limit_len,
+	                        unsigned int limit_start,
+	                        const std::list< std::string >& fetch,
+	                        const std::list< std::string >& group,
+	                        const DictListSlot& slot,
+	                        const ErrorSlot& error ) const {
+
+		std::vector< const char* > corder, cfetch, cgroup;
+		fillCharArray( order, corder );
+		fillCharArray( fetch, cfetch );
+		fillCharArray( group, cgroup );
+
+		aCall<List<Dict> >( connected_,
+		                    boost::bind( xmmsc_coll_query_infos, conn_, coll.coll_,
+		                                 &corder[0], limit_start, limit_len,
+		                                 &cfetch[0], &cgroup[0] ),
+		                    slot, error );
 
 	}
 

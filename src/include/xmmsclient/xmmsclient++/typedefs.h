@@ -89,7 +89,7 @@ namespace Xmms
 	namespace Coll {
 		class Coll;
 	}
-	typedef Signal< Coll::Coll >::signal_t::slot_type CollPtrSlot;
+	typedef Signal< Coll::Coll >::signal_t::slot_type CollSlot;
 
 
 	/** Used for function pointers to functions with signature

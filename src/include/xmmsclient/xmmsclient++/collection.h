@@ -252,16 +252,65 @@ namespace Xmms
 			 *  @throw connection_error If the client isn't connected.
 			 */
 			void
-			broadcastCollectionChanged( const std::list< DictSlot >& slots,
+			broadcastCollectionChanged( const DictSlot& slot,
 			                            const ErrorSlot& error = &Xmms::dummy_error
 			                          ) const;
 
 
 			void
 			get( const std::string& name, Namespace nsname,
-			     const CollPtrSlot& slot,
+			     const CollSlot& slot,
 			     const ErrorSlot& error = &Xmms::dummy_error
 			   ) const;
+
+			void
+			list( Namespace nsname, const StringListSlot& slot,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			save( const Coll::Coll& coll, const std::string& name,
+			      Namespace nsname, const VoidSlot& slot,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			remove( const std::string& name, Namespace nsname,
+			        const VoidSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			find( unsigned int id, Namespace nsname,
+			      const StringListSlot& slot,
+			      const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			rename( const std::string& from_name,
+			        const std::string& to_name, Namespace nsname,
+			        const VoidSlot& slot,
+			        const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			idlistFromPlaylistFile( const std::string& path,
+			                        const CollSlot& slot,
+			                        const ErrorSlot& error = &Xmms::dummy_error
+			                      ) const;
+
+			void
+			queryIds( const Coll::Coll& coll,
+			          const std::list< std::string >& order,
+			          unsigned int limit_len,
+			          unsigned int limit_start,
+			          const UintListSlot& slot,
+			          const ErrorSlot& error = &Xmms::dummy_error ) const;
+
+			void
+			queryInfos( const Coll::Coll& coll,
+			            const std::list< std::string >& order,
+			            unsigned int limit_len,
+			            unsigned int limit_start,
+			            const std::list< std::string >& fetch,
+			            const std::list< std::string >& group,
+						const DictListSlot& slot,
+			            const ErrorSlot& error = &Xmms::dummy_error ) const;
 
 		/** @cond */
 		private:
