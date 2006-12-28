@@ -28,7 +28,6 @@
 #include <limits.h>
 
 #include <sys/types.h>
-#include <pwd.h>
 
 #include "xmmspriv/xmms_list.h"
 
@@ -314,27 +313,7 @@ xmmsc_broadcast_quit (xmmsc_connection_t *c)
 const char *
 xmmsc_userconfdir_get (char *buf, int len)
 {
-	struct passwd *pw;
-	char *config_home;
-
-	if (!buf || len <= 0)
-		return NULL;
-
-	config_home = getenv ("XDG_CONFIG_HOME");
-
-	if (config_home && *config_home) {
-		snprintf (buf, len, "%s/xmms2", config_home);
-
-		return buf;
-	}
-
-	pw = getpwuid (getuid ());
-	if (!pw)
-		return NULL;
-
-	snprintf (buf, len, "%s/%s", pw->pw_dir, USERCONFDIR);
-
-	return buf;
+	return xmms_userconfdir_get (buf, len);
 }
 
 
