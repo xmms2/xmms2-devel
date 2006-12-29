@@ -1,6 +1,7 @@
 import Action
 import Node
 from Params import error
+import sys
 
 genpy_str = '${PYTHON} ${SRC} -> ${TGT}'
 
@@ -32,9 +33,6 @@ def setup(env):
 	env.hook('cc', 'GENPY_EXT', genpy_file)
 
 def detect(conf):
-		python = conf.find_program('python', var='PYTHON')
-		if not python:
-			error("Could not find python. What the fuck?")
-			return 0
-		conf.env['GENPY_EXT'] = ['.genpy']
-		return 1
+    conf.env['PYTHON'] = sys.executable
+    conf.env['GENPY_EXT'] = ['.genpy']
+    return 1
