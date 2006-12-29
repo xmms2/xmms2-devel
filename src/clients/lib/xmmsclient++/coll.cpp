@@ -1,12 +1,28 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
 
 #include <xmmsclient/xmmsclient.h>
-#include <xmmsclient/xmmsclient++/typedefs.h>
-#include <xmmsclient/xmmsclient++/exceptions.h>
+#include <xmmsclient/xmmsclient++/client.h>
 #include <xmmsclient/xmmsclient++/coll.h>
+#include <xmmsclient/xmmsclient++/collection.h>
 
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <boost/lexical_cast.hpp>
 
 namespace Xmms
 {
@@ -57,6 +73,10 @@ namespace Xmms
 		xmmsc_coll_unref( coll_ );
 	}
 
+	Type Coll::getType() const {
+		return xmmsc_coll_get_type( coll_ );
+	}
+
 	AttributeElement Coll::operator []( const std::string& attrname )
 	{
 		return AttributeElement( *this, attrname );
@@ -105,9 +125,65 @@ namespace Xmms
 		return value;
 	}
 
+	void Coll::addOperand( Coll& ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::removeOperand( Coll& ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::removeOperand() {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::setOperand( Coll& ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	Coll Coll::getOperand() const {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::append( unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::insert( unsigned int, unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::move( unsigned int, unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::remove( unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	void Coll::clear() {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	unsigned int Coll::size() const {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	OperandIterator Coll::getOperandIterator() {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	IdlistElement Coll::operator[]( unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
 
 	Nary::Nary( Type type )
 		: Coll( type )
+	{
+	}
+
+	Nary::Nary( xmmsc_coll_t* coll )
+		: Coll( coll )
 	{
 	}
 
@@ -117,12 +193,12 @@ namespace Xmms
 
 	void Nary::addOperand( Coll& operand )
 	{
-		xmmsc_coll_add_operand( coll_, operand.coll_ );
+		xmmsc_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void Nary::removeOperand( Coll& operand )
 	{
-		xmmsc_coll_remove_operand( coll_, operand.coll_ );
+		xmmsc_coll_remove_operand( coll_, operand.getColl() );
 	}
 
 	OperandIterator Nary::getOperandIterator()
@@ -142,6 +218,11 @@ namespace Xmms
 		setOperand( operand );
 	}
 
+	Unary::Unary( xmmsc_coll_t* coll )
+		: Coll( coll )
+	{
+	}
+
 	Unary::~Unary()
 	{
 	}
@@ -149,13 +230,13 @@ namespace Xmms
 	void Unary::setOperand( Coll& operand )
 	{
 		removeOperand();
-		xmmsc_coll_add_operand( coll_, operand.coll_ );
+		xmmsc_coll_add_operand( coll_, operand.getColl() );
 	}
 
 	void Unary::removeOperand()
 	{
 		try {
-			xmmsc_coll_remove_operand( coll_, getOperand().coll_ );
+			xmmsc_coll_remove_operand( coll_, getOperand().getColl() );
 		}
 		/* don't throw an error if none */
 		catch (...) {}
@@ -180,6 +261,10 @@ namespace Xmms
 		return Coll( op );
 	}
 
+	Filter::Filter( xmmsc_coll_t* coll )
+		: Unary( coll )
+	{
+	}
 
 	Filter::Filter( Type type )
 		: Unary ( type )
@@ -198,9 +283,9 @@ namespace Xmms
 	}
 
 	Filter::Filter( Type type,
-	                      Coll& operand,
-	                      const std::string& field,
-	                      const std::string& value )
+	                Coll& operand,
+	                const std::string& field,
+	                const std::string& value )
 		: Unary ( type, operand )
 	{
 		setAttribute( "field", field );
@@ -208,10 +293,10 @@ namespace Xmms
 	}
 
 	Filter::Filter( Type type,
-	                      Coll& operand,
-	                      const std::string& field,
-	                      const std::string& value,
-	                      bool case_sensitive )
+	                Coll& operand,
+	                const std::string& field,
+	                const std::string& value,
+	                bool case_sensitive )
 		: Unary ( type, operand )
 	{
 		setAttribute( "field", field );
@@ -225,13 +310,18 @@ namespace Xmms
 
 
 	Reference::Reference()
-		: Coll( XMMS_COLLECTION_TYPE_REFERENCE )
+		: Coll( REFERENCE )
+	{
+	}
+
+	Reference::Reference( xmmsc_coll_t* coll )
+		: Coll( coll )
 	{
 	}
 
 	Reference::Reference( const std::string& name,
 	                      const Collection::Namespace& nsname )
-		: Coll( XMMS_COLLECTION_TYPE_REFERENCE )
+		: Coll( REFERENCE )
 	{
 		setAttribute( "reference", name );
 		setAttribute( "namespace", nsname );
@@ -247,82 +337,106 @@ namespace Xmms
 	Universe::~Universe() {}
 
 	Union::Union()
-		: Nary( XMMS_COLLECTION_TYPE_UNION ) {}
+		: Nary( UNION ) {}
+	Union::Union( xmmsc_coll_t* coll )
+		: Nary( coll ) {}
 	Union::~Union() {}
 
 	Intersection::Intersection()
-		: Nary( XMMS_COLLECTION_TYPE_INTERSECTION ) {}
+		: Nary( INTERSECTION ) {}
+	Intersection::Intersection( xmmsc_coll_t* coll )
+		: Nary( coll ) {}
 	Intersection::~Intersection() {}
 
 	Complement::Complement()
-		: Unary( XMMS_COLLECTION_TYPE_COMPLEMENT ) {}
+		: Unary( COMPLEMENT ) {}
 	Complement::Complement( Coll& operand )
-		: Unary( XMMS_COLLECTION_TYPE_COMPLEMENT, operand ) {}
+		: Unary( COMPLEMENT, operand ) {}
+	Complement::Complement( xmmsc_coll_t* coll )
+		: Unary( coll ) {}
 	Complement::~Complement() {}
 
 	Has::Has()
-		: Filter( XMMS_COLLECTION_TYPE_HAS ) {}
+		: Filter( HAS ) {}
 	Has::Has( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_HAS, operand ) {}
+		: Filter( HAS, operand ) {}
 	Has::Has( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_HAS, operand, field ) {}
+		: Filter( HAS, operand, field ) {}
+	Has::Has( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Has::~Has() {}
 
 	Smaller::Smaller()
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER ) {}
+		: Filter( SMALLER ) {}
+	Smaller::Smaller( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Smaller::Smaller( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand ) {}
+		: Filter( SMALLER, operand ) {}
 	Smaller::Smaller( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand, field ) {}
+		: Filter( SMALLER, operand, field ) {}
 	Smaller::Smaller( Coll& operand,
 	                  const std::string& field,
 	                  const std::string& value )
-		: Filter( XMMS_COLLECTION_TYPE_SMALLER, operand, field, value ) {}
+		: Filter( SMALLER, operand, field, value ) {}
 	Smaller::~Smaller() {}
 
 	Greater::Greater()
-		: Filter( XMMS_COLLECTION_TYPE_GREATER ) {}
+		: Filter( GREATER ) {}
+	Greater::Greater( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Greater::Greater( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand ) {}
+		: Filter( GREATER, operand ) {}
 	Greater::Greater( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand, field ) {}
+		: Filter( GREATER, operand, field ) {}
 	Greater::Greater( Coll& operand,
 	                  const std::string& field,
 	                  const std::string& value )
-		: Filter( XMMS_COLLECTION_TYPE_GREATER, operand, field, value ) {}
+		: Filter( GREATER, operand, field, value ) {}
 	Greater::~Greater() {}
 
 	Match::Match()
-		: Filter( XMMS_COLLECTION_TYPE_MATCH ) {}
+		: Filter( MATCH ) {}
+	Match::Match( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Match::Match( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_MATCH, operand ) {}
+		: Filter( MATCH, operand ) {}
 	Match::Match( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_MATCH, operand, field ) {}
+		: Filter( MATCH, operand, field ) {}
 	Match::Match( Coll& operand,
 	              const std::string& field,
 	              const std::string& value,
 	              bool case_sensitive )
-		: Filter( XMMS_COLLECTION_TYPE_MATCH,
+		: Filter( MATCH,
 	              operand, field, value, case_sensitive ) {}
 	Match::~Match() {}
 
 	Contains::Contains()
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS ) {}
+		: Filter( CONTAINS ) {}
+	Contains::Contains( xmmsc_coll_t* coll )
+		: Filter( coll ) {}
 	Contains::Contains( Coll& operand )
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS, operand ) {}
+		: Filter( CONTAINS, operand ) {}
 	Contains::Contains( Coll& operand, const std::string& field )
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS, operand, field ) {}
+		: Filter( CONTAINS, operand, field ) {}
 	Contains::Contains( Coll& operand,
 	                    const std::string& field,
 	                    const std::string& value,
 	                    bool case_sensitive )
-		: Filter( XMMS_COLLECTION_TYPE_CONTAINS,
+		: Filter( CONTAINS,
 	              operand, field, value, case_sensitive ) {}
 	Contains::~Contains() {}
 
 
+	Idlist::Idlist( xmmsc_coll_t* coll )
+		: Coll( coll )
+	{
+	}
+	Idlist::Idlist( Type type )
+		: Coll( type )
+	{
+	}
 	Idlist::Idlist()
-		: Coll( XMMS_COLLECTION_TYPE_IDLIST )
+		: Coll( IDLIST )
 	{
 	}
 
@@ -346,13 +460,56 @@ namespace Xmms
 	{
 	}
 
-	// FIXME: make these throw better exceptions
+	Queue::Queue( xmmsc_coll_t* coll )
+		: Idlist( coll ) {}
+	Queue::Queue( Type type )
+		: Idlist( type ) {}
+	Queue::Queue( Type type, unsigned int history )
+		: Idlist( type )
+	{
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+	}
+	Queue::Queue()
+		: Idlist( QUEUE )
+	{
+	}
+	Queue::Queue( unsigned int history )
+		: Idlist( QUEUE )
+	{
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+	}
+	Queue::~Queue()
+	{
+	}
+
+	PartyShuffle::PartyShuffle( xmmsc_coll_t* coll )
+		: Queue( coll ) {}
+	PartyShuffle::PartyShuffle()
+		: Queue( PARTYSHUFFLE )
+	{
+	}
+	PartyShuffle::PartyShuffle( unsigned int history )
+		: Queue( PARTYSHUFFLE )
+	{
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+	}
+	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
+		: Queue( PARTYSHUFFLE )
+	{
+		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+		setAttribute( "upcoming", boost::lexical_cast<std::string>( upcoming ) );
+	}
+	PartyShuffle::~PartyShuffle()
+	{
+	}
+
+
 	void Idlist::append( unsigned int id )
 	{
 		if( !xmmsc_coll_idlist_append( coll_, id ) ) {
 			std::stringstream err;
 			err << "Failed to append " << id << " to idlist";
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
@@ -361,7 +518,7 @@ namespace Xmms
 		if( !xmmsc_coll_idlist_insert( coll_, id, index ) ) {
 			std::stringstream err;
 			err << "Failed to insert " << id << " in idlist at index " << index;
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
@@ -371,7 +528,7 @@ namespace Xmms
 			std::stringstream err;
 			err << "Failed to move idlist entry from index " << index
 			    << " to " << newindex;
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
@@ -380,14 +537,14 @@ namespace Xmms
 		if( !xmmsc_coll_idlist_remove( coll_, index ) ) {
 			std::stringstream err;
 			err << "Failed to remove idlist entry at index " << index;
-			throw std::runtime_error( err.str() );
+			throw collection_operation_error( err.str() );
 		}
 	}
 
 	void Idlist::clear()
 	{
 		if( !xmmsc_coll_idlist_clear( coll_ ) ) {
-			throw std::runtime_error( "Failed to clear the idlist" );
+			throw collection_operation_error( "Failed to clear the idlist" );
 		}
 	}
 
@@ -397,27 +554,27 @@ namespace Xmms
 	}
 
 	// get/set value at index
-	Idlist::Element Idlist::operator []( unsigned int index )
+	IdlistElement Idlist::operator []( unsigned int index )
 	{
-		return Element( *this, index );
+		return IdlistElement( *this, index );
 	}
 
-	Idlist::Element::Element( Coll& coll, unsigned int index )
+	IdlistElement::IdlistElement( Coll& coll, unsigned int index )
 		: AbstractElement< unsigned int, unsigned int >( coll, index )
 	{
 	}
 
-	Idlist::Element::~Element()
+	IdlistElement::~IdlistElement()
 	{
 	}
 
-	Idlist::Element::operator unsigned int() const
+	IdlistElement::operator unsigned int() const
 	{
 		return coll_.getIndex( index_ );
 	}
 
 	unsigned int
-	Idlist::Element::operator=( unsigned int value )
+	IdlistElement::operator=( unsigned int value )
 	{
 		coll_.setIndex( index_, value );
 		return value;

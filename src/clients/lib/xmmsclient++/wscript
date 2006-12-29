@@ -8,6 +8,8 @@ def build(bld):
     obj.includes = '../../../include ../../../includepriv'
     obj.source = """ bindata.cpp
                   client.cpp
+                  collection.cpp
+                  coll.cpp
                   config.cpp
                   dict.cpp
                   exceptions.cpp

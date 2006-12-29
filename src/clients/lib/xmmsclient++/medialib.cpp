@@ -1,3 +1,19 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/medialib.h>
 #include <xmmsclient/xmmsclient++/mainloop.h>
@@ -29,17 +45,11 @@ namespace Xmms
 	}
 
 	void Medialib::addEntry( const std::string& url,
-	                         const std::list< std::string >& args ) const {
+	                         const std::list< std::string >& args ) const
+	{
 
-		std::vector< const char* > cargs( args.size() );
-
-		std::vector< const char* >::size_type i = 0;
-		for( std::list< std::string >::const_iterator it = args.begin();
-		     it != args.end(); ++it ) {
-
-			cargs[i++] = it->c_str();
-
-		}
+		std::vector< const char* > cargs;
+		fillCharArray( args, cargs );
 
 		vCall( connected_, ml_,
 		       boost::bind( xmmsc_medialib_add_entry_args, conn_,

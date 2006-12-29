@@ -17,7 +17,7 @@ def build(bld):
     obj.target = 'xmmsclient_glib'
     obj.includes = '../../../include ../../../includepriv'
     obj.source = ['rb_xmmsclient_glib.c']
-    obj.uselib_local = 'xmmsclient'
+    obj.uselib_local = 'xmmsclient-glib'
     obj.uselib = 'ruby glib2'
     obj.install_in = "ARCHDIR_ruby"
     obj.env["plugin_PREFIX"] = ''

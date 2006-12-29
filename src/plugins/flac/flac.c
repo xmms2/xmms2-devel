@@ -26,8 +26,32 @@
 
 #include <glib.h>
 
+#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
+# define FLAC__STREAM_DECODER_SEEK_STATUS_OK FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_OK
+# define FLAC__STREAM_DECODER_SEEK_STATUS_ERROR FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR
+# define FLAC__STREAM_DECODER_TELL_STATUS_OK FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_OK
+# define FLAC__STREAM_DECODER_TELL_STATUS_ERROR FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_ERROR
+# define FLAC__STREAM_DECODER_LENGTH_STATUS_OK FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_OK
+# define FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_ERROR
+# define FLAC__STREAM_DECODER_END_OF_STREAM FLAC__SEEKABLE_STREAM_DECODER_END_OF_STREAM
+# define FLAC__StreamDecoder FLAC__SeekableStreamDecoder
+# define FLAC__StreamDecoderState FLAC__SeekableStreamDecoderState
+# define FLAC__StreamDecoderReadStatus FLAC__SeekableStreamDecoderReadStatus
+# define FLAC__StreamDecoderTellStatus FLAC__SeekableStreamDecoderTellStatus
+# define FLAC__StreamDecoderSeekStatus FLAC__SeekableStreamDecoderSeekStatus
+# define FLAC__StreamDecoderLengthStatus FLAC__SeekableStreamDecoderLengthStatus
+# define FLAC__stream_decoder_new FLAC__seekable_stream_decoder_new
+# define FLAC__stream_decoder_set_metadata_respond_all FLAC__seekable_stream_decoder_set_metadata_respond_all
+# define FLAC__stream_decoder_finish FLAC__seekable_stream_decoder_finish
+# define FLAC__stream_decoder_delete FLAC__seekable_stream_decoder_delete
+# define FLAC__stream_decoder_process_single FLAC__seekable_stream_decoder_process_single
+# define FLAC__stream_decoder_get_state FLAC__seekable_stream_decoder_get_state
+# define FLAC__stream_decoder_seek_absolute FLAC__seekable_stream_decoder_seek_absolute
+# define FLAC__stream_decoder_process_until_end_of_metadata FLAC__seekable_stream_decoder_process_until_end_of_metadata
+#endif
+
 typedef struct xmms_flac_data_St {
-	FLAC__SeekableStreamDecoder *flacdecoder;
+	FLAC__StreamDecoder *flacdecoder;
 	FLAC__StreamMetadata *vorbiscomment;
 	guint channels;
 	guint sample_rate;
@@ -83,8 +107,8 @@ xmms_flac_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	return TRUE;
 }
 
-static FLAC__SeekableStreamDecoderReadStatus
-flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder,
+static FLAC__StreamDecoderReadStatus
+flac_callback_read (const FLAC__StreamDecoder *flacdecoder,
                     FLAC__byte buffer[],
                     guint *bytes,
                     void *client_data)
@@ -94,17 +118,26 @@ flac_callback_read (const FLAC__SeekableStreamDecoder *flacdecoder,
 	gint ret;
 
 	g_return_val_if_fail (xform,
+#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
 	                      FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR);
+#else
+	                      FLAC__STREAM_DECODER_READ_STATUS_ABORT);
+#endif
 
 	ret = xmms_xform_read (xform, (gchar *)buffer, *bytes, &error);
 	*bytes = ret;
 
+#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
 	return (ret <= 0) ? FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_ERROR
 	                  : FLAC__SEEKABLE_STREAM_DECODER_READ_STATUS_OK;
+#else
+	return (ret <= 0) ? FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM
+	                  : FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
+#endif
 }
 
 static FLAC__StreamDecoderWriteStatus
-flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder,
+flac_callback_write (const FLAC__StreamDecoder *flacdecoder,
                      const FLAC__Frame *frame,
                      const FLAC__int32 * const buffer[],
                      void *client_data)
@@ -139,25 +172,25 @@ flac_callback_write (const FLAC__SeekableStreamDecoder *flacdecoder,
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
-static FLAC__SeekableStreamDecoderTellStatus
-flac_callback_tell (const FLAC__SeekableStreamDecoder *flacdecoder,
+static FLAC__StreamDecoderTellStatus
+flac_callback_tell (const FLAC__StreamDecoder *flacdecoder,
                     FLAC__uint64 *offset, void *client_data)
 {
 	xmms_error_t err;
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
 
 	g_return_val_if_fail (xform,
-	                      FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR);
+	                      FLAC__STREAM_DECODER_TELL_STATUS_ERROR);
 
 	xmms_error_reset (&err);
 
 	*offset = xmms_xform_seek (xform, 0, XMMS_XFORM_SEEK_CUR, &err);
 
-	return FLAC__SEEKABLE_STREAM_DECODER_TELL_STATUS_OK;
+	return FLAC__STREAM_DECODER_TELL_STATUS_OK;
 }
 
-static FLAC__SeekableStreamDecoderSeekStatus
-flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder,
+static FLAC__StreamDecoderSeekStatus
+flac_callback_seek (const FLAC__StreamDecoder *flacdecoder,
                     FLAC__uint64 offset, void *client_data)
 {
 	xmms_error_t err;
@@ -169,12 +202,12 @@ flac_callback_seek (const FLAC__SeekableStreamDecoder *flacdecoder,
 	retval = xmms_xform_seek (xform, (gint64) offset,
 	                          XMMS_XFORM_SEEK_SET, &err);
 
-	return (retval == -1) ? FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_ERROR
-	                      : FLAC__SEEKABLE_STREAM_DECODER_SEEK_STATUS_OK;
+	return (retval == -1) ? FLAC__STREAM_DECODER_SEEK_STATUS_ERROR
+	                      : FLAC__STREAM_DECODER_SEEK_STATUS_OK;
 }
 
-static FLAC__SeekableStreamDecoderLengthStatus
-flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder,
+static FLAC__StreamDecoderLengthStatus
+flac_callback_length (const FLAC__StreamDecoder *flacdecoder,
                       FLAC__uint64 *stream_length, void *client_data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
@@ -184,12 +217,12 @@ flac_callback_length (const FLAC__SeekableStreamDecoder *flacdecoder,
 										  XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 	*stream_length = retval;
 
-	return (retval == -1) ? FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_ERROR
-	                      : FLAC__SEEKABLE_STREAM_DECODER_LENGTH_STATUS_OK;
+	return (retval == -1) ? FLAC__STREAM_DECODER_LENGTH_STATUS_ERROR
+	                      : FLAC__STREAM_DECODER_LENGTH_STATUS_OK;
 }
 
 static void
-flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder,
+flac_callback_metadata (const FLAC__StreamDecoder *flacdecoder,
                         const FLAC__StreamMetadata *metadata,
                         void *client_data)
 {
@@ -227,13 +260,17 @@ flac_callback_metadata (const FLAC__SeekableStreamDecoder *flacdecoder,
 		case FLAC__METADATA_TYPE_VORBIS_COMMENT:
 			data->vorbiscomment = FLAC__metadata_object_clone (metadata);
 			break;
+		/* if we want to support more metadata types here,
+		 * don't forget to add a call to
+		 * FLAC__stream_decoder_set_metadata_respond() below.
+		 */
 		default:
 			break;
 	}
 }
 
 static FLAC__bool
-flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder,
+flac_callback_eof (const FLAC__StreamDecoder *flacdecoder,
                    void *client_data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) client_data;
@@ -245,7 +282,7 @@ flac_callback_eof (const FLAC__SeekableStreamDecoder *flacdecoder,
 }
 
 static void
-flac_callback_error (const FLAC__SeekableStreamDecoder *flacdecoder,
+flac_callback_error (const FLAC__StreamDecoder *flacdecoder,
                      FLAC__StreamDecoderErrorStatus status,
                      void *client_data)
 {
@@ -285,21 +322,101 @@ static props properties[] = {
 	{ "replaygain_album_peak",XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,STRING  },
 };
 
+/* note that "key" is NOT NUL-terminated here,
+ * but "value" is.
+ */
+static void
+handle_comment (xmms_xform_t *xform,
+                const gchar *key, gint key_len, const gchar *value)
+{
+	gchar buf[8];
+	gint i;
+
+	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		if ((!g_ascii_strncasecmp (key, "MUSICBRAINZ_ALBUMARTISTID", key_len)) &&
+		    (!g_ascii_strcasecmp (value, MUSICBRAINZ_VA_ID))) {
+			xmms_xform_metadata_set_int (xform,
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
+			                             1);
+		} else if (!g_ascii_strncasecmp (key, properties[i].vname, key_len)) {
+			if (properties[i].type == INTEGER) {
+				gint tmp = strtol (value, NULL, 10);
+				xmms_xform_metadata_set_int (xform,
+				                             properties[i].xname, tmp);
+			} else if (properties[i].type == RPGAIN) {
+				g_snprintf (buf, sizeof (buf), "%f",
+				            pow (10.0, g_strtod (value, NULL) / 20));
+
+				/** @todo this should probably be a int instead? */
+				xmms_xform_metadata_set_str (xform,
+				                             properties[i].xname, buf);
+			} else {
+				xmms_xform_metadata_set_str (xform,
+				                             properties[i].xname, value);
+			}
+		}
+	}
+}
+
+static void
+handle_comments (xmms_xform_t *xform, xmms_flac_data_t *data)
+{
+	FLAC__StreamMetadata_VorbisComment *vc;
+	gint i;
+
+	g_return_if_fail (data->vorbiscomment);
+
+	vc = &data->vorbiscomment->data.vorbis_comment;
+
+	for (i = 0; i < vc->num_comments; i++) {
+		FLAC__byte *ptr, *content = vc->comments[i].entry;
+		gint j;
+
+		/* check whether it's a valid comment */
+		if (!content || !*content || *content == '=')
+			continue;
+
+		for (ptr = content, j = 0; j < vc->comments[i].length; ptr++, j++)
+			if (*ptr == '=')
+				break;
+
+		if (j == vc->comments[i].length)
+			continue;
+
+		handle_comment (xform,
+		                (gchar *) content, j,
+		                (gchar *) ptr + 1);
+	}
+}
+
 static gboolean
 xmms_flac_init (xmms_xform_t *xform)
 {
 	xmms_flac_data_t *data;
 	xmms_sample_format_t sample_fmt;
 	FLAC__bool retval;
-	FLAC__SeekableStreamDecoderState init_status;
-	gint current, num_comments;
+#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
+	FLAC__StreamDecoderState init_status;
+#else
+	FLAC__StreamDecoderInitStatus init_status;
+#endif
 	gint filesize;
 
 	g_return_val_if_fail (xform, FALSE);
 
 	data = g_new0 (xmms_flac_data_t, 1);
 
-	data->flacdecoder = FLAC__seekable_stream_decoder_new ();
+	xmms_xform_private_data_set (xform, data);
+
+	data->flacdecoder = FLAC__stream_decoder_new ();
+
+	/* we don't need to explicitly tell the decoder to respond to
+	 * FLAC__METADATA_TYPE_STREAMINFO here, it always does.
+	 */
+	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
+	                                           FLAC__METADATA_TYPE_VORBIS_COMMENT);
+
+#if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
 	FLAC__seekable_stream_decoder_set_eof_callback (data->flacdecoder,
 	                                                flac_callback_eof);
 	FLAC__seekable_stream_decoder_set_read_callback (data->flacdecoder,
@@ -319,10 +436,6 @@ xmms_flac_init (xmms_xform_t *xform)
 
 	FLAC__seekable_stream_decoder_set_client_data (data->flacdecoder, xform);
 
-	xmms_xform_private_data_set (xform, data);
-
-	FLAC__seekable_stream_decoder_set_metadata_respond_all (data->flacdecoder);
-
 	init_status = FLAC__seekable_stream_decoder_init (data->flacdecoder);
 
 	if (init_status != FLAC__SEEKABLE_STREAM_DECODER_OK) {
@@ -330,54 +443,32 @@ xmms_flac_init (xmms_xform_t *xform)
 		XMMS_DBG ("FLAC init failed: %s", errmsg);
 		goto err;
 	}
+#else
+	init_status =
+		FLAC__stream_decoder_init_stream (data->flacdecoder,
+		                                  flac_callback_read,
+		                                  flac_callback_seek,
+		                                  flac_callback_tell,
+		                                  flac_callback_length,
+		                                  flac_callback_eof,
+		                                  flac_callback_write,
+		                                  flac_callback_metadata,
+		                                  flac_callback_error,
+		                                  xform);
 
-	retval = FLAC__seekable_stream_decoder_process_until_end_of_metadata (data->flacdecoder);
+	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
+		XMMS_DBG ("FLAC init failed: %s",
+		          FLAC__stream_decoder_get_resolved_state_string (data->flacdecoder));
+		goto err;
+	}
+#endif
+
+	retval = FLAC__stream_decoder_process_until_end_of_metadata (data->flacdecoder);
 	if (!retval)
 		goto err;
 
 	if (data->vorbiscomment) {
-		num_comments = data->vorbiscomment->data.vorbis_comment.num_comments;
-
-		for (current = 0; current < num_comments; current++) {
-			FLAC__StreamMetadata_VorbisComment_Entry *entry;
-			gchar **s, *val;
-			guint length;
-			gint i = 0;
-			gchar buf[8];
-
-			entry = &data->vorbiscomment->data.vorbis_comment.comments[current];
-			s = g_strsplit ((gchar *) entry->entry, "=", 2);
-			length = entry->length - strlen (s[0]) - 1;
-			val = g_strndup (s[1], length);
-
-			for (i = 0; i < G_N_ELEMENTS (properties); i++) {
-				if ((!g_strcasecmp (s[0], "MUSICBRAINZ_ALBUMARTISTID")) &&
-				    (!g_strcasecmp (val, MUSICBRAINZ_VA_ID))) {
-					xmms_xform_metadata_set_int (xform,
-					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMPILATION,
-					                             1);
-				} else if (!g_strcasecmp (properties[i].vname, s[0])) {
-					if (properties[i].type == INTEGER) {
-						gint tmp = strtol (val, NULL, 10);
-						xmms_xform_metadata_set_int (xform,
-						                             properties[i].xname, tmp);
-					} else if (properties[i].type == RPGAIN) {
-						g_snprintf (buf, sizeof (buf), "%f",
-						            pow (10.0, g_strtod (val, NULL) / 20));
-
-						/** @todo this should probably be a int instead? */
-						xmms_xform_metadata_set_str (xform,
-						                             properties[i].xname, buf);
-					} else {
-						xmms_xform_metadata_set_str (xform,
-						                             properties[i].xname, val);
-					}
-				}
-			}
-
-			g_free (val);
-			g_strfreev (s);
-		}
+		handle_comments (xform, data);
 	}
 
 	xmms_xform_metadata_set_int (xform,
@@ -422,9 +513,10 @@ xmms_flac_init (xmms_xform_t *xform)
 
 err:
 
-	FLAC__seekable_stream_decoder_finish (data->flacdecoder);
-	FLAC__seekable_stream_decoder_delete (data->flacdecoder);
+	FLAC__stream_decoder_finish (data->flacdecoder);
+	FLAC__stream_decoder_delete (data->flacdecoder);
 	g_free (data);
+	xmms_xform_private_data_set (xform, NULL);
 
 	return FALSE;
 
@@ -434,7 +526,7 @@ static gint
 xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
                 xmms_error_t *err)
 {
-	FLAC__SeekableStreamDecoderState state;
+	FLAC__StreamDecoderState state;
 	xmms_flac_data_t *data;
 	gboolean ret;
 	guint32 size;
@@ -447,12 +539,12 @@ xmms_flac_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 	size = MIN (data->buffer->len, len);
 
 	if (size <= 0) {
-		ret = FLAC__seekable_stream_decoder_process_single (data->flacdecoder);
+		ret = FLAC__stream_decoder_process_single (data->flacdecoder);
 	}
 
-	state = FLAC__seekable_stream_decoder_get_state (data->flacdecoder);
+	state = FLAC__stream_decoder_get_state (data->flacdecoder);
 
-	if (state == FLAC__SEEKABLE_STREAM_DECODER_END_OF_STREAM) {
+	if (state == FLAC__STREAM_DECODER_END_OF_STREAM) {
 		return 0;
 	}
 
@@ -482,8 +574,8 @@ xmms_flac_seek (xmms_xform_t *xform, gint64 samples,
 		return -1;
 	}
 
-	res = FLAC__seekable_stream_decoder_seek_absolute (data->flacdecoder,
-	                                                   (FLAC__uint64) samples);
+	res = FLAC__stream_decoder_seek_absolute (data->flacdecoder,
+	                                          (FLAC__uint64) samples);
 
 	return res ? samples : -1;
 }
@@ -504,8 +596,8 @@ xmms_flac_destroy (xmms_xform_t *xform)
 
 	g_string_free (data->buffer, TRUE);
 
-	FLAC__seekable_stream_decoder_finish (data->flacdecoder);
-	FLAC__seekable_stream_decoder_delete (data->flacdecoder);
+	FLAC__stream_decoder_finish (data->flacdecoder);
+	FLAC__stream_decoder_delete (data->flacdecoder);
 
 	g_free (data);
 }

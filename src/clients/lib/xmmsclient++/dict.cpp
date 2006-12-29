@@ -1,13 +1,32 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/dict.h>
+#include <xmmsclient/xmmsclient++/helpers.h>
 #include <xmmsclient/xmmsclient++/exceptions.h>
 #include <boost/variant.hpp>
 #include <string>
 #include <list>
+#include <vector>
 #include <iostream>
 
 namespace Xmms
 {
+
 	Dict::Dict( xmmsc_result_t* res ) : result_( 0 )
 	{
 		if( xmmsc_result_iserror( res ) ) {
@@ -191,18 +210,10 @@ namespace Xmms
 
 	void PropDict::setSource( const std::list< std::string >& src ) const
 	{
-		const char **prefs = new const char*[ src.size() + 1 ];
+		std::vector< const char* > prefs;
+		fillCharArray( src, prefs );
 
-		std::list< std::string >::const_iterator it;
-		int n;
-		for(it = src.begin(), n = 0; it != src.end(); ++it, ++n) {
-			prefs[n] = it->c_str();
-		}
-		prefs[n] = 0;
-
-		xmmsc_result_source_preference_set( result_, prefs );
-
-		delete [] prefs;
+		xmmsc_result_source_preference_set( result_, &prefs[0] );
 	}
 
 	static void

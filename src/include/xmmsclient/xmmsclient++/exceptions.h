@@ -1,3 +1,19 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 #ifndef XMMSCLIENTPP_EXCEPTIONS_H
 #define XMMSCLIENTPP_EXCEPTIONS_H
 
@@ -109,6 +125,40 @@ namespace Xmms
 	{
 		public:
 			explicit out_of_range( const std::string& what_arg );
+
+	};
+
+	/** @class collection_type_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if trying to perform an operation forbidden by
+	 *         the type of the collection operator.
+	 */
+	class collection_type_error : public std::runtime_error
+	{
+		public:
+			explicit collection_type_error( const std::string& what_arg );
+
+	};
+
+	/** @class collection_operation_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if a collection operation failed.
+	 */
+	class collection_operation_error : public std::runtime_error
+	{
+		public:
+			explicit collection_operation_error( const std::string& what_arg );
+
+	};
+
+	/** @class collection_parsing_error exceptions.h "xmmsclient/xmmsclient++/exceptions.h"
+	 *
+	 *  @brief Thrown if the parsing of a collection pattern failed.
+	 */
+	class collection_parsing_error : public std::runtime_error
+	{
+		public:
+			explicit collection_parsing_error( const std::string& what_arg );
 
 	};
 
