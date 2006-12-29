@@ -1,3 +1,19 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 #ifndef XMMSCLIENTPP_SIGNAL_H
 #define XMMSCLIENTPP_SIGNAL_H
 
@@ -6,6 +22,7 @@
 #include <string>
 #include <list>
 #include <iostream>
+#include <xmmsclient/xmmsclient++/coll.h>
 
 namespace Xmms
 {
@@ -167,6 +184,75 @@ namespace Xmms
 		*result = static_cast< xmms_mediainfo_reader_status_t >( temp );
 		return result;
 	}
+
+	template<>
+	inline Coll::Coll*
+	extract_value( xmmsc_result_t* res )
+	{
+		Coll::Coll* temp = 0;
+		xmmsc_coll_t* coll = 0;
+		xmmsc_result_get_collection( res, &coll );
+		switch( xmmsc_coll_get_type( coll ) ) {
+
+			case XMMS_COLLECTION_TYPE_REFERENCE: {
+				temp = new Coll::Reference( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_UNION: {
+				temp = new Coll::Union( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_INTERSECTION: {
+				temp = new Coll::Intersection( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_COMPLEMENT: {
+				temp = new Coll::Complement( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_HAS: {
+				temp = new Coll::Has( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_SMALLER: {
+				temp = new Coll::Smaller( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_GREATER: {
+				temp = new Coll::Greater( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_MATCH: {
+				temp = new Coll::Match( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_CONTAINS: {
+				temp = new Coll::Contains( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_IDLIST: {
+				temp = new Coll::Idlist( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_QUEUE: {
+				temp = new Coll::Queue( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_PARTYSHUFFLE: {
+				temp = new Coll::PartyShuffle( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_ERROR: {
+				// ??
+				break;
+			}
+
+		}
+
+		return temp;
+
+	}
+
 
 	/** Templated function to handle the value extraction, signal calling
 	 *  and deletion of the extracted value.

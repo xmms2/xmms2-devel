@@ -1,3 +1,19 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 #ifndef XMMSCLIENTPP_HELPERS_HH
 #define XMMSCLIENTPP_HELPERS_HH
 
@@ -15,6 +31,7 @@
 
 #include <string>
 #include <list>
+#include <vector>
 
 namespace Xmms
 {
@@ -67,6 +84,26 @@ namespace Xmms
 			std::string error( xmmsc_result_get_error( res ) );
 			xmmsc_result_unref( res );
 			throw result_error( error );
+		}
+	}
+
+	/** Fill a const char* array from a list of std::string.
+	 *  Convenience function to convert C++ arguments into a type
+	 *  accepted by the C functions.
+	 *  @note The array is NULL-terminated, i.e. size(array) = size(input) + 1.
+	 *
+	 *  @param input  The strings to put in the second argument.
+	 *  @param array  The array to fill.
+	 */
+	inline void fillCharArray( const std::list< std::string >& input,
+	                           std::vector< const char* >& array )
+	{
+		array.resize( input.size() + 1, 0 );
+		std::vector< const char* >::size_type i = 0;
+		for( std::list< std::string >::const_iterator it = input.begin();
+		     it != input.end(); ++it ) {
+
+			array[i++] = it->c_str();
 		}
 	}
 
