@@ -31,6 +31,12 @@ namespace Xmms
 	template< typename T >
 	class List;
 
+	namespace Coll {
+		class Coll;
+	}
+
+	typedef boost::shared_ptr< Coll::Coll > CollPtr;
+
 	typedef List< Dict > DictList;
 
 	typedef std::basic_string< unsigned char > bin;
@@ -102,9 +108,6 @@ namespace Xmms
 	 */
 	typedef Signal< List< Dict > >::signal_t::slot_type DictListSlot;
 
-	namespace Coll {
-		class Coll;
-	}
 	typedef Signal< Coll::Coll >::signal_t::slot_type CollSlot;
 
 

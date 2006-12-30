@@ -15,6 +15,7 @@
  */
 
 #include <xmmsclient/xmmsclient++/signal.h>
+#include <xmmsclient/xmmsclient++/coll.h>
 
 namespace Xmms
 {
@@ -49,6 +50,71 @@ namespace Xmms
 			delete *i; *i = 0;
 		}
 		signals_.clear();
+	}
+
+	Coll::Coll* extract_collection( xmmsc_result_t* res )
+	{
+		Coll::Coll* temp = 0;
+		xmmsc_coll_t* coll = 0;
+		xmmsc_result_get_collection( res, &coll );
+		switch( xmmsc_coll_get_type( coll ) ) {
+
+			case XMMS_COLLECTION_TYPE_REFERENCE: {
+				temp = new Coll::Reference( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_UNION: {
+				temp = new Coll::Union( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_INTERSECTION: {
+				temp = new Coll::Intersection( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_COMPLEMENT: {
+				temp = new Coll::Complement( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_HAS: {
+				temp = new Coll::Has( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_SMALLER: {
+				temp = new Coll::Smaller( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_GREATER: {
+				temp = new Coll::Greater( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_MATCH: {
+				temp = new Coll::Match( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_CONTAINS: {
+				temp = new Coll::Contains( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_IDLIST: {
+				temp = new Coll::Idlist( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_QUEUE: {
+				temp = new Coll::Queue( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_PARTYSHUFFLE: {
+				temp = new Coll::PartyShuffle( coll );
+				break;
+			}
+			case XMMS_COLLECTION_TYPE_ERROR: {
+				// ??
+				break;
+			}
+
+		}
+
+		return temp;
 	}
 
 	void disconnect_callback( void* userdata )

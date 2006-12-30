@@ -32,12 +32,6 @@
 namespace Xmms 
 {
 
-	namespace Coll {
-		class Coll;
-	}
-
-	typedef boost::shared_ptr< Coll::Coll > CollPtr;
-
 	class Client;
 
 	/** @class Collection collection.h "xmmsclient/xmmsclient++/collection.h"
