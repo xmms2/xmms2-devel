@@ -233,7 +233,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output),
 	                      XMMS_IPC_CMD_STOP, &arg);
 
-	sleep (1); /* wait for the output thread to end */
+	g_usleep(G_USEC_PER_SEC); /* wait for the output thread to end */
 	xmms_object_unref (mainobj->output);
 
 	xmms_object_unref (xform_obj);

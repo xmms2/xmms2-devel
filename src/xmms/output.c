@@ -1211,7 +1211,7 @@ xmms_output_monitor_volume_thread (gpointer data)
 
 		xmms_volume_map_copy (&cur, &old);
 
-		sleep (1);
+		g_usleep (G_USEC_PER_SEC);
 	}
 
 	xmms_volume_map_free (&old);
