@@ -1,3 +1,18 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
 
 #include <xmmsclient/xmmsclient.h>
 #include <xmmsclient/xmmsclient++/client.h>
@@ -5,6 +20,8 @@
 #include <xmmsclient/xmmsclient++/collection.h>
 
 #include <string>
+using std::string;
+
 #include <sstream>
 #include <stdexcept>
 #include <boost/lexical_cast.hpp>
@@ -62,27 +79,32 @@ namespace Xmms
 		return xmmsc_coll_get_type( coll_ );
 	}
 
-	AttributeElement Coll::operator []( const std::string& attrname )
+	AttributeElement Coll::operator []( const string& attrname )
 	{
 		return AttributeElement( *this, attrname );
 	}
 
-	void Coll::setAttribute( const std::string &attrname, const std::string &value )
+	const AttributeElement Coll::operator []( const string& attrname ) const
+	{
+		return AttributeElement( *this, attrname );
+	}
+
+	void Coll::setAttribute( const string &attrname, const string &value )
 	{
 		xmmsc_coll_attribute_set( coll_, attrname.c_str(), value.c_str() );
 	}
 
-	std::string Coll::getAttribute( const std::string &attrname ) const
+	string Coll::getAttribute( const string &attrname ) const
 	{
 		char *val;
 		if( !xmmsc_coll_attribute_get( coll_, attrname.c_str(), &val ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
 		}
 
-		return std::string( val );
+		return string( val );
 	}
 
-	void Coll::removeAttribute( const std::string &attrname )
+	void Coll::removeAttribute( const string &attrname )
 	{
 		if( !xmmsc_coll_attribute_remove( coll_, attrname.c_str() ) ) {
 			throw no_such_key_error( "No such attribute: " + attrname );
@@ -126,7 +148,7 @@ namespace Xmms
 		throw collection_type_error( "Wrong type" );
 	}
 
-	Coll Coll::getOperand() const {
+	CollPtr Coll::getOperand() const {
 		throw collection_type_error( "Wrong type" );
 	}
 
@@ -158,7 +180,15 @@ namespace Xmms
 		throw collection_type_error( "Wrong type" );
 	}
 
-	IdlistElement Coll::operator[]( unsigned int ) {
+	const OperandIterator Coll::getOperandIterator() const {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	IdlistElement Coll::operator []( unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	const IdlistElement Coll::operator []( unsigned int ) const {
 		throw collection_type_error( "Wrong type" );
 	}
 
@@ -187,6 +217,11 @@ namespace Xmms
 	}
 
 	OperandIterator Nary::getOperandIterator()
+	{
+		return OperandIterator( *this );
+	}
+
+	const OperandIterator Nary::getOperandIterator() const
 	{
 		return OperandIterator( *this );
 	}
@@ -221,13 +256,13 @@ namespace Xmms
 	void Unary::removeOperand()
 	{
 		try {
-			xmmsc_coll_remove_operand( coll_, getOperand().getColl() );
+			xmmsc_coll_remove_operand( coll_, (*getOperand()).getColl() );
 		}
 		/* don't throw an error if none */
 		catch (...) {}
 	}
 
-	Coll Unary::getOperand() const
+	CollPtr Unary::getOperand() const
 	{
 		xmmsc_coll_t *op;
 
@@ -243,7 +278,7 @@ namespace Xmms
 			throw missing_operand_error( "No operand in this operator!" );
 		}
 
-		return Coll( op );
+		return Collection::createColl( op );
 	}
 
 	Filter::Filter( xmmsc_coll_t* coll )
@@ -261,7 +296,7 @@ namespace Xmms
 	{
 	}
 
-	Filter::Filter( Type type, Coll& operand, const std::string& field )
+	Filter::Filter( Type type, Coll& operand, const string& field )
 		: Unary ( type, operand )
 	{
 		setAttribute( "field", field );
@@ -269,8 +304,8 @@ namespace Xmms
 
 	Filter::Filter( Type type,
 	                Coll& operand,
-	                const std::string& field,
-	                const std::string& value )
+	                const string& field,
+	                const string& value )
 		: Unary ( type, operand )
 	{
 		setAttribute( "field", field );
@@ -279,8 +314,8 @@ namespace Xmms
 
 	Filter::Filter( Type type,
 	                Coll& operand,
-	                const std::string& field,
-	                const std::string& value,
+	                const string& field,
+	                const string& value,
 	                bool case_sensitive )
 		: Unary ( type, operand )
 	{
@@ -304,7 +339,7 @@ namespace Xmms
 	{
 	}
 
-	Reference::Reference( const std::string& name,
+	Reference::Reference( const string& name,
 	                      const Collection::Namespace& nsname )
 		: Coll( REFERENCE )
 	{
@@ -345,7 +380,7 @@ namespace Xmms
 		: Filter( HAS ) {}
 	Has::Has( Coll& operand )
 		: Filter( HAS, operand ) {}
-	Has::Has( Coll& operand, const std::string& field )
+	Has::Has( Coll& operand, const string& field )
 		: Filter( HAS, operand, field ) {}
 	Has::Has( xmmsc_coll_t* coll )
 		: Filter( coll ) {}
@@ -357,11 +392,11 @@ namespace Xmms
 		: Filter( coll ) {}
 	Smaller::Smaller( Coll& operand )
 		: Filter( SMALLER, operand ) {}
-	Smaller::Smaller( Coll& operand, const std::string& field )
+	Smaller::Smaller( Coll& operand, const string& field )
 		: Filter( SMALLER, operand, field ) {}
 	Smaller::Smaller( Coll& operand,
-	                  const std::string& field,
-	                  const std::string& value )
+	                  const string& field,
+	                  const string& value )
 		: Filter( SMALLER, operand, field, value ) {}
 	Smaller::~Smaller() {}
 
@@ -371,11 +406,11 @@ namespace Xmms
 		: Filter( coll ) {}
 	Greater::Greater( Coll& operand )
 		: Filter( GREATER, operand ) {}
-	Greater::Greater( Coll& operand, const std::string& field )
+	Greater::Greater( Coll& operand, const string& field )
 		: Filter( GREATER, operand, field ) {}
 	Greater::Greater( Coll& operand,
-	                  const std::string& field,
-	                  const std::string& value )
+	                  const string& field,
+	                  const string& value )
 		: Filter( GREATER, operand, field, value ) {}
 	Greater::~Greater() {}
 
@@ -385,11 +420,11 @@ namespace Xmms
 		: Filter( coll ) {}
 	Match::Match( Coll& operand )
 		: Filter( MATCH, operand ) {}
-	Match::Match( Coll& operand, const std::string& field )
+	Match::Match( Coll& operand, const string& field )
 		: Filter( MATCH, operand, field ) {}
 	Match::Match( Coll& operand,
-	              const std::string& field,
-	              const std::string& value,
+	              const string& field,
+	              const string& value,
 	              bool case_sensitive )
 		: Filter( MATCH,
 	              operand, field, value, case_sensitive ) {}
@@ -401,11 +436,11 @@ namespace Xmms
 		: Filter( coll ) {}
 	Contains::Contains( Coll& operand )
 		: Filter( CONTAINS, operand ) {}
-	Contains::Contains( Coll& operand, const std::string& field )
+	Contains::Contains( Coll& operand, const string& field )
 		: Filter( CONTAINS, operand, field ) {}
 	Contains::Contains( Coll& operand,
-	                    const std::string& field,
-	                    const std::string& value,
+	                    const string& field,
+	                    const string& value,
 	                    bool case_sensitive )
 		: Filter( CONTAINS,
 	              operand, field, value, case_sensitive ) {}
@@ -452,7 +487,7 @@ namespace Xmms
 	Queue::Queue( Type type, unsigned int history )
 		: Idlist( type )
 	{
-		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+		setAttribute( "history", boost::lexical_cast<string>( history ) );
 	}
 	Queue::Queue()
 		: Idlist( QUEUE )
@@ -461,7 +496,7 @@ namespace Xmms
 	Queue::Queue( unsigned int history )
 		: Idlist( QUEUE )
 	{
-		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+		setAttribute( "history", boost::lexical_cast<string>( history ) );
 	}
 	Queue::~Queue()
 	{
@@ -476,13 +511,13 @@ namespace Xmms
 	PartyShuffle::PartyShuffle( unsigned int history )
 		: Queue( PARTYSHUFFLE )
 	{
-		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
+		setAttribute( "history", boost::lexical_cast<string>( history ) );
 	}
 	PartyShuffle::PartyShuffle( unsigned int history, unsigned int upcoming )
 		: Queue( PARTYSHUFFLE )
 	{
-		setAttribute( "history", boost::lexical_cast<std::string>( history ) );
-		setAttribute( "upcoming", boost::lexical_cast<std::string>( upcoming ) );
+		setAttribute( "history", boost::lexical_cast<string>( history ) );
+		setAttribute( "upcoming", boost::lexical_cast<string>( upcoming ) );
 	}
 	PartyShuffle::~PartyShuffle()
 	{
@@ -544,8 +579,19 @@ namespace Xmms
 		return IdlistElement( *this, index );
 	}
 
+	const IdlistElement Idlist::operator []( unsigned int index ) const
+	{
+		return IdlistElement( *this, index );
+	}
+
 	IdlistElement::IdlistElement( Coll& coll, unsigned int index )
 		: AbstractElement< unsigned int, unsigned int >( coll, index )
+	{
+	}
+
+	IdlistElement::IdlistElement( const Coll& coll, unsigned int index )
+		: AbstractElement< unsigned int, unsigned int >( const_cast< Coll& >( coll ),
+	                                                     index )
 	{
 	}
 
@@ -569,6 +615,12 @@ namespace Xmms
 
 	OperandIterator::OperandIterator( Coll& coll )
 		: coll_( coll )
+	{
+		coll_.ref();
+	}
+
+	OperandIterator::OperandIterator( const Coll& coll )
+		: coll_( const_cast< Coll& >( coll ) )
 	{
 		coll_.ref();
 	}
@@ -625,20 +677,25 @@ namespace Xmms
 		}
 	}
 
-	Coll OperandIterator::operator *() const
+	CollPtr OperandIterator::operator *() const
 	{
 		xmmsc_coll_t *op;
 		if( !xmmsc_coll_operand_list_entry( coll_.coll_, &op ) ) {
 			throw out_of_range( "Access out of the operand list!" );
 		}
 
-		return Coll( op );
+		return Collection::createColl( op );
 	}
 
 
 
-	AttributeElement::AttributeElement( Coll& coll, std::string index )
-		: AbstractElement< std::string, std::string >( coll, index )
+	AttributeElement::AttributeElement( Coll& coll, string index )
+		: AbstractElement< string, string >( coll, index )
+	{
+	}
+
+	AttributeElement::AttributeElement( const Coll& coll, string index )
+		: AbstractElement< string, string >( const_cast< Coll& >( coll ), index )
 	{
 	}
 
@@ -646,13 +703,13 @@ namespace Xmms
 	{
 	}
 
-	AttributeElement::operator std::string() const
+	AttributeElement::operator string() const
 	{
 		return coll_.getAttribute( index_ );
 	}
 
-	std::string
-	AttributeElement::operator=( std::string value )
+	string
+	AttributeElement::operator=( string value )
 	{
 		coll_.setAttribute( index_, value );
 		return value;

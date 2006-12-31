@@ -1,7 +1,24 @@
+/*  XMMS2 - X Music Multiplexer System
+ *  Copyright (C) 2003-2006 XMMS2 Team
+ *
+ *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2.1 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ */
+
 #ifndef XMMSCLIENTPP_COLL_H
 #define XMMSCLIENTPP_COLL_H
 
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient++/typedefs.h>
 
 #include <string>
 #include <iostream>
@@ -11,8 +28,8 @@ namespace Xmms
 {
 
 	class Collection;
-	template< typename T >
-	inline T* extract_value( xmmsc_result_t* );
+
+	Coll::Coll* extract_collection( xmmsc_result_t* );
 
 	/** @class Coll coll.h "xmmsclient/xmmsclient++/coll.h"
 	 *  @brief This class is used to build collection structures.
@@ -55,6 +72,7 @@ namespace Xmms
 
 			protected:
 				AbstractElement( Coll& coll, keyT index );
+				AbstractElement( const Coll& coll, keyT index );
 
 				// to avoid problems with ostream and implicit casting operator
 				friend std::ostream& operator<<( std::ostream& os,
@@ -78,6 +96,7 @@ namespace Xmms
 			protected:
 				friend class Coll;
 				AttributeElement( Coll& coll, std::string index );
+				AttributeElement( const Coll& coll, std::string index );
 		};
 
 		class IdlistElement;
@@ -93,6 +112,7 @@ namespace Xmms
 
 				// get/set attributes
 				AttributeElement operator []( const std::string& attrname );
+				const AttributeElement operator []( const std::string& attrname ) const;
 
 				void setAttribute( const std::string &attrname, const std::string &value );
 				std::string getAttribute( const std::string &attrname ) const;
@@ -103,7 +123,7 @@ namespace Xmms
 
 				virtual void removeOperand();
 				virtual void setOperand( Coll& operand );
-				virtual Coll getOperand() const;
+				virtual CollPtr getOperand() const;
 
 				virtual void append( unsigned int id );
 				virtual void insert( unsigned int id, unsigned int index );
@@ -114,9 +134,11 @@ namespace Xmms
 
 				virtual unsigned int size() const;
 
-				virtual IdlistElement operator[]( unsigned int index );
+				virtual IdlistElement operator []( unsigned int index );
+				virtual const IdlistElement operator []( unsigned int index ) const;
 
 				virtual OperandIterator getOperandIterator();
+				virtual const OperandIterator getOperandIterator() const;
 
 				// FIXME: Hide this, we shouldn't need it..
 				xmmsc_coll_t* getColl() const { return coll_; }
@@ -155,6 +177,7 @@ namespace Xmms
 				void removeOperand( Coll& operand );
 
 				OperandIterator getOperandIterator();
+				const OperandIterator getOperandIterator() const;
 
 			protected:
 				Nary( Type type );
@@ -167,7 +190,7 @@ namespace Xmms
 			public:
 				void setOperand( Coll& operand );
 				void removeOperand();
-				Coll getOperand() const;
+				CollPtr getOperand() const;
 
 			protected:
 				Unary( Type type );
@@ -211,13 +234,14 @@ namespace Xmms
 				void save();
 				void restore();
 
-				Coll operator *() const;
+				CollPtr operator *() const;
 				// FIXME: Operator -> ?
 
 			private:
 
 				friend class Nary;
 				OperandIterator( Coll& coll );
+				OperandIterator( const Coll& coll );
 
 				Coll& coll_;
 		};
@@ -225,8 +249,8 @@ namespace Xmms
 
 		class Reference : public Coll
 		{
-			//friend Coll* Xmms::extract_value<Coll>( xmmsc_result_t* );
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 			friend class ::Xmms::Collection;
 
 			protected:
@@ -251,7 +275,8 @@ namespace Xmms
 		class Union : public Nary
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Union( xmmsc_coll_t* coll );
@@ -264,7 +289,8 @@ namespace Xmms
 		class Intersection : public Nary
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Intersection( xmmsc_coll_t* coll );
@@ -277,7 +303,8 @@ namespace Xmms
 		class Complement : public Unary
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Complement( xmmsc_coll_t* coll );
@@ -291,7 +318,8 @@ namespace Xmms
 		class Has : public Filter
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Has( xmmsc_coll_t* coll );
@@ -306,7 +334,8 @@ namespace Xmms
 		class Smaller : public Filter
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Smaller( xmmsc_coll_t* coll );
@@ -324,7 +353,8 @@ namespace Xmms
 		class Greater : public Filter
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Greater( xmmsc_coll_t* coll );
@@ -342,7 +372,8 @@ namespace Xmms
 		class Match : public Filter
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Match( xmmsc_coll_t* coll );
@@ -361,7 +392,8 @@ namespace Xmms
 		class Contains : public Filter
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Contains( xmmsc_coll_t* coll );
@@ -381,7 +413,8 @@ namespace Xmms
 		{
 			friend class Element;
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Idlist( xmmsc_coll_t* coll );
@@ -401,6 +434,7 @@ namespace Xmms
 
 				// get/set value at index
 				IdlistElement operator []( unsigned int index );
+				const IdlistElement operator []( unsigned int index ) const;
 		};
 
 		class IdlistElement : public AbstractElement< unsigned int, unsigned int >
@@ -413,12 +447,14 @@ namespace Xmms
 			private:
 				friend class Idlist;
 				IdlistElement( Coll& coll, unsigned int index );
+				IdlistElement( const Coll& coll, unsigned int index );
 		};
 
 		class Queue : public Idlist
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				Queue( xmmsc_coll_t* coll );
@@ -434,7 +470,8 @@ namespace Xmms
 		class PartyShuffle : public Queue
 		{
 			friend class ::Xmms::Collection;
-			template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
+			friend Coll* ::Xmms::extract_collection( xmmsc_result_t* );
+			//template<typename T> friend T* Xmms::extract_value( xmmsc_result_t* );
 
 			protected:
 				PartyShuffle( xmmsc_coll_t* coll );
@@ -450,6 +487,14 @@ namespace Xmms
 
 		template< typename keyT, typename valT >
 		AbstractElement< keyT, valT >::AbstractElement( Coll& coll, keyT index )
+			: coll_ (coll), index_( index )
+		{
+			//coll_.ref();
+			xmmsc_coll_ref( coll_.getColl() );
+		}
+
+		template< typename keyT, typename valT >
+		AbstractElement< keyT, valT >::AbstractElement( const Coll& coll, keyT index )
 			: coll_ (coll), index_( index )
 		{
 			//coll_.ref();
