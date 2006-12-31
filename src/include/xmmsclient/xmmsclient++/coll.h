@@ -29,7 +29,7 @@ namespace Xmms
 
 	class Collection;
 
-	inline Coll::Coll* extract_collection( xmmsc_result_t* );
+	Coll::Coll* extract_collection( xmmsc_result_t* );
 
 	/** @class Coll coll.h "xmmsclient/xmmsclient++/coll.h"
 	 *  @brief This class is used to build collection structures.
@@ -134,8 +134,8 @@ namespace Xmms
 
 				virtual unsigned int size() const;
 
-				virtual IdlistElement operator[]( unsigned int index );
-				virtual const IdlistElement operator[]( unsigned int index ) const;
+				virtual IdlistElement operator []( unsigned int index );
+				virtual const IdlistElement operator []( unsigned int index ) const;
 
 				virtual OperandIterator getOperandIterator();
 				virtual const OperandIterator getOperandIterator() const;

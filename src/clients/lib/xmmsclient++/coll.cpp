@@ -180,7 +180,15 @@ namespace Xmms
 		throw collection_type_error( "Wrong type" );
 	}
 
-	IdlistElement Coll::operator[]( unsigned int ) {
+	const OperandIterator Coll::getOperandIterator() const {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	IdlistElement Coll::operator []( unsigned int ) {
+		throw collection_type_error( "Wrong type" );
+	}
+
+	const IdlistElement Coll::operator []( unsigned int ) const {
 		throw collection_type_error( "Wrong type" );
 	}
 

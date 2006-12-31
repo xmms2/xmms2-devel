@@ -188,7 +188,8 @@ namespace Xmms
 		return result;
 	}
 
-	Coll::Coll* extract_collection( xmmsc_result_t* res );
+	Coll::Coll*
+	extract_collection( xmmsc_result_t* res );
 
 	template<>
 	inline Coll::Coll*
