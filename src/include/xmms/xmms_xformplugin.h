@@ -220,13 +220,13 @@ gboolean xmms_xform_metadata_has_val (xmms_xform_t *xform, const gchar *key);
 gint xmms_xform_metadata_get_int (xmms_xform_t *xform, const gchar *key);
 const gchar *xmms_xform_metadata_get_str (xmms_xform_t *xform, const gchar *key);
 
-void xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int val);
+void xmms_xform_privdata_set_int (xmms_xform_t *xform, const gchar *key, gint32 val);
 void xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val);
 void xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len);
 gboolean xmms_xform_privdata_has_val (xmms_xform_t *xform, const gchar *key);
 gboolean xmms_xform_privdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val);
 gboolean xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val);
-gint32 xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data);
+gboolean xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data, gssize *datalen);
 
 const char *xmms_xform_indata_get_str (xmms_xform_t *xform, xmms_stream_type_key_t key);
 gint xmms_xform_indata_get_int (xmms_xform_t *xform, xmms_stream_type_key_t key);

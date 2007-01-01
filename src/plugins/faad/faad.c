@@ -42,6 +42,7 @@ typedef struct {
 	faacDecHandle decoder;
 	gint filetype;
 	gint toskip;
+	gint last_frame;
 
 	guchar buffer[FAAD_BUFFER_SIZE];
 	guint buffer_length;
@@ -129,6 +130,8 @@ xmms_faad_init (xmms_xform_t *xform)
 	data = g_new0 (xmms_faad_data_t, 1);
 	data->outbuf = g_string_new (NULL);
 	data->buffer_size = FAAD_BUFFER_SIZE;
+	data->toskip = 0;
+	data->last_frame = -1;
 
 	xmms_xform_private_data_set (xform, data);
 
@@ -174,7 +177,9 @@ xmms_faad_init (xmms_xform_t *xform)
 
 	/* which type of file are we dealing with? */
 	data->filetype = FAAD_TYPE_UNKNOWN;
-	if (!strncmp ((char *)data->buffer, "ADIF", 4)) {
+	if (xmms_xform_privdata_has_val (xform, "decoder_config")) {
+		data->filetype = FAAD_TYPE_MP4;
+	} else if (!strncmp ((char *) data->buffer, "ADIF", 4)) {
 		data->filetype = FAAD_TYPE_ADIF;
 	} else {
 		int i;
@@ -192,22 +197,48 @@ xmms_faad_init (xmms_xform_t *xform)
 	}
 
 	if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
-		if ((bytes_read =
-		     faacDecInit (data->decoder, data->buffer, data->buffer_length,
-		                  &samplerate, &channels)) < 0) {
-			XMMS_DBG ("Error initializing decoder library.");
+		bytes_read = faacDecInit (data->decoder, data->buffer,
+		                          data->buffer_length, &samplerate,
+		                          &channels);
+	} else if (data->filetype == FAAD_TYPE_MP4) {
+		gint temp;
+		gpointer tmpbuf;
+		gssize tmpbuflen;
+
+		if (!xmms_xform_privdata_get_bin (xform, "decoder_config", &tmpbuf,
+		                                  &tmpbuflen)) {
+			XMMS_DBG ("AAC decoder config data found but it's wrong type! (something broken?)");
 			goto err;
 		}
+		bytes_read = faacDecInit (data->decoder, tmpbuf, tmpbuflen, &samplerate,
+		                          &channels);
 
-		/* Get mediainfo and skip the possible header */
-		xmms_faad_get_mediainfo (xform);
-		g_memmove (data->buffer, data->buffer + bytes_read,
-		           data->buffer_length - bytes_read);
-		data->buffer_length -= bytes_read;
+		if (xmms_xform_privdata_get_int (xform, "decoder_delay", &temp)) {
+			data->toskip = temp * channels *
+			               xmms_sample_size_get (data->sampleformat);
+			XMMS_DBG ("file has %d samples decoder delay", temp);
+		}
 
-		data->samplerate = samplerate;
-		data->channels = channels;
+		if (xmms_xform_privdata_get_int (xform, "last_frame", &temp)) {
+			data->last_frame = temp * channels *
+			                   xmms_sample_size_get (data->sampleformat);
+			XMMS_DBG ("last frame has %d samples", temp);
+		}
 	}
+
+	if (bytes_read < 0) {
+		XMMS_DBG ("Error initializing decoder library.");
+		goto err;
+	}
+
+	/* Get mediainfo and skip the possible header */
+	xmms_faad_get_mediainfo (xform);
+	g_memmove (data->buffer, data->buffer + bytes_read,
+	           data->buffer_length - bytes_read);
+	data->buffer_length -= bytes_read;
+
+	data->samplerate = samplerate;
+	data->channels = channels;
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
@@ -246,28 +277,31 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 
 	size = MIN (data->outbuf->len, len);
 	while (size == 0) {
-		if (data->filetype == FAAD_TYPE_ADTS || data->filetype == FAAD_TYPE_ADIF) {
-			if (data->buffer_length < FAAD_BUFFER_SIZE) {
-				bytes_read = xmms_xform_read (xform,
-				                              (gchar *) data->buffer + data->buffer_length,
-				                              data->buffer_size - data->buffer_length,
-				                              &error);
+		if (data->buffer_length < FAAD_BUFFER_SIZE) {
+			bytes_read = xmms_xform_read (xform,
+			                              (gchar *) data->buffer + data->buffer_length,
+			                              data->buffer_size - data->buffer_length,
+			                              &error);
 
-				if (bytes_read <= 0 && data->buffer_length == 0) {
-					XMMS_DBG ("EOF");
-					return 0;
-				}
-
-				data->buffer_length += bytes_read;
+			if (bytes_read <= 0 && data->buffer_length == 0) {
+				XMMS_DBG ("EOF");
+				return 0;
 			}
 
-			sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
-			                               data->buffer_length);
+			data->buffer_length += bytes_read;
+		}
 
-			g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
-			           data->buffer_length - frameInfo.bytesconsumed);
-			data->buffer_length -= frameInfo.bytesconsumed;
-			bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
+		sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
+		                               data->buffer_length);
+
+		g_memmove (data->buffer, data->buffer + frameInfo.bytesconsumed,
+		           data->buffer_length - frameInfo.bytesconsumed);
+		data->buffer_length -= frameInfo.bytesconsumed;
+		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
+
+		/* if this is the last frame, get sample count from demuxer */
+		if (data->buffer_length == 0 && data->last_frame >= 0) {
+			bytes_read = data->last_frame;
 		}
 
 		if (bytes_read > 0 && frameInfo.error == 0) {

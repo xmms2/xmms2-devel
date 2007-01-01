@@ -1,19 +1,16 @@
 from waftools.plugin import plugin
 
 def plugin_configure(conf):
-    if not conf.check_library2('faad', uselib='faad', mandatory=0):
-        return False
-
-    conf.env['CCDEFINES_faad'] = ['USE_TAGGING']
+    conf.env['CCDEFINES_mp4'] = ['USE_TAGGING']
     # to use iTunes DRM change this to true
     if False:
-        conf.env['CCDEFINES_faad'] += ['ITUNES_DRM', 'HAVE_SYS_STAT_H',
-                                       'HAVE_ERRNO_H', 'HAVE_LIMITS_H',
-                                       'HAVE_STRING_H']
+        conf.env['CCDEFINES_mp4'] += ['ITUNES_DRM', 'HAVE_SYS_STAT_H',
+                                  'HAVE_ERRNO_H', 'HAVE_LIMITS_H',
+                                  'HAVE_STRING_H']
     return True
 
 def plugin_build(bld, obj):
     obj.find_sources_in_dirs('. mp4ff', excludes=['mp4.c']) # TODO: fix waf to accept lists
 
 configure, build = plugin('mp4', configure=plugin_configure, source=[],
-                          build=plugin_build, extra_libs=['faad'])
+                          build=plugin_build, needs_lib=True)

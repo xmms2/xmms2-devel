@@ -32,7 +32,6 @@
 #define FAAD_BUFFER_SIZE 4096
 
 typedef struct {
-	faacDecHandle decoder;
 	gint filetype;
 
 	mp4ff_t *mp4ff;
@@ -45,11 +44,6 @@ typedef struct {
 	guchar buffer[FAAD_BUFFER_SIZE];
 	guint buffer_length;
 	guint buffer_size;
-
-	guint channels;
-	guint bitrate;
-	guint samplerate;
-	xmms_sample_format_t sampleformat;
 
 	GString *outbuf;
 } xmms_mp4_data_t;
@@ -120,7 +114,6 @@ xmms_mp4_destroy (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	faacDecClose (data->decoder);
 	if (data->mp4ff) {
 		mp4ff_close (data->mp4ff);
 	}
@@ -136,11 +129,9 @@ xmms_mp4_init (xmms_xform_t *xform)
 	xmms_mp4_data_t *data;
 	xmms_error_t error;
 
-	faacDecConfigurationPtr config;
 	gint bytes_read;
-	gulong samplerate;
-	guchar channels;
 
+	gint temp;
 	guchar *tmpbuf;
 	guint tmpbuflen;
 
@@ -154,33 +145,6 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	data->sampleid = 0;
 	data->numsamples = 0;
-	data->decoder = faacDecOpen ();
-	config = faacDecGetCurrentConfiguration (data->decoder);
-	config->defObjectType = LC;
-	config->defSampleRate = 44100;
-	config->outputFormat = FAAD_FMT_16BIT;
-	config->downMatrix = 0;
-	config->dontUpSampleImplicitSBR = 0;
-	faacDecSetConfiguration (data->decoder, config);
-
-	switch (config->outputFormat) {
-	case FAAD_FMT_16BIT:
-		data->sampleformat = XMMS_SAMPLE_FORMAT_S16;
-		break;
-	case FAAD_FMT_24BIT:
-		/* we don't have 24-bit format to use in xmms2 */
-		data->sampleformat = XMMS_SAMPLE_FORMAT_S32;
-		break;
-	case FAAD_FMT_32BIT:
-		data->sampleformat = XMMS_SAMPLE_FORMAT_S32;
-		break;
-	case FAAD_FMT_FLOAT:
-		data->sampleformat = XMMS_SAMPLE_FORMAT_FLOAT;
-		break;
-	case FAAD_FMT_DOUBLE:
-		data->sampleformat = XMMS_SAMPLE_FORMAT_DOUBLE;
-		break;
-	}
 
 	bytes_read = xmms_xform_read (xform,
 	                              (gchar *) data->buffer + data->buffer_length,
@@ -220,34 +184,29 @@ xmms_mp4_init (xmms_xform_t *xform)
 		goto err;
 	}
 	data->numsamples = mp4ff_num_samples (data->mp4ff, data->track);
+
 	mp4ff_get_decoder_config (data->mp4ff, data->track, &tmpbuf,
 	                          &tmpbuflen);
-
-	if (faacDecInit2 (data->decoder, tmpbuf, tmpbuflen,
-	                  &samplerate, &channels) < 0) {
-		XMMS_DBG ("Error initializing decoder library.");
-		g_free (tmpbuf);
-		goto err;
-	}
+	xmms_xform_privdata_set_bin (xform, "decoder_config", tmpbuf, tmpbuflen);
 	g_free (tmpbuf);
 
-	data->samplerate = samplerate;
-	data->channels = channels;
+	if ((temp = mp4ff_get_sample_offset (data->mp4ff, data->track, 0)) >= 0) {
+		xmms_xform_privdata_set_int (xform, "decoder_delay", temp);
+	}
+
+	if ((temp = mp4ff_get_sample_duration (data->mp4ff, data->track,
+	                                       data->numsamples - 1)) >= 0) {
+		xmms_xform_privdata_set_int (xform, "last_frame", temp);
+	}
 
 	xmms_mp4_get_mediainfo (xform);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "audio/pcm",
-	                             XMMS_STREAM_TYPE_FMT_FORMAT,
-	                             data->sampleformat,
-	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
-	                             data->channels,
-	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	                             data->samplerate,
+	                             "audio/aac",
 	                             XMMS_STREAM_TYPE_END);
 
-	XMMS_DBG ("AAC decoder inited successfully!");
+	XMMS_DBG ("MP4 demuxer inited successfully!");
 
 	return TRUE;
 
@@ -263,9 +222,6 @@ static gint
 xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err)
 {
 	xmms_mp4_data_t *data;
-
-	faacDecFrameInfo frameInfo;
-	gpointer sample_buffer;
 	guint size, bytes_read = 0;
 
 	data = xmms_xform_private_data_get (xform);
@@ -291,20 +247,11 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		                                  data->sampleid);
 		data->sampleid++;
 
-		sample_buffer = faacDecDecode (data->decoder, &frameInfo,
-		                               tmpbuf, tmpbuflen);
-		sample_buffer += offset;
-		bytes_read = (duration - offset) * frameInfo.channels *
-		             xmms_sample_size_get (data->sampleformat);
-		g_free (tmpbuf);
+		/* FIXME: possible nonzero duration and offset should be handled */
 
-		if (bytes_read > 0 && frameInfo.error == 0) {
-			g_string_append_len (data->outbuf, sample_buffer + data->toskip,
-			                     bytes_read - data->toskip);
-			data->toskip = 0;
-		} else if (frameInfo.error > 0) {
-			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage (frameInfo.error));
-			return -1;
+		if (bytes_read > 0) {
+			g_string_append_len (data->outbuf, (gchar *) tmpbuf, tmpbuflen);
+			g_free (tmpbuf);
 		}
 
 		size = MIN (data->outbuf->len, len);
@@ -329,10 +276,9 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 
 	data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
 	                                                samples, &toskip);
-	data->toskip = toskip * data->channels * xmms_sample_size_get (data->sampleformat);
 	data->buffer_length = 0;
 
-	return samples;
+	return samples-toskip;
 }
 
 static void
