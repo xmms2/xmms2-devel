@@ -413,10 +413,9 @@ xmms_flac_init (xmms_xform_t *xform)
 	/* we don't need to explicitly tell the decoder to respond to
 	 * FLAC__METADATA_TYPE_STREAMINFO here, it always does.
 	 */
-	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
-	                                           FLAC__METADATA_TYPE_VORBIS_COMMENT);
-
 #if !defined(FLAC_API_VERSION_CURRENT) || FLAC_API_VERSION_CURRENT <= 7
+	FLAC__seekable_stream_decoder_set_metadata_respond (data->flacdecoder,
+	                                                    FLAC__METADATA_TYPE_VORBIS_COMMENT);
 	FLAC__seekable_stream_decoder_set_eof_callback (data->flacdecoder,
 	                                                flac_callback_eof);
 	FLAC__seekable_stream_decoder_set_read_callback (data->flacdecoder,
@@ -444,6 +443,9 @@ xmms_flac_init (xmms_xform_t *xform)
 		goto err;
 	}
 #else
+	FLAC__stream_decoder_set_metadata_respond (data->flacdecoder,
+	                                           FLAC__METADATA_TYPE_VORBIS_COMMENT);
+
 	init_status =
 		FLAC__stream_decoder_init_stream (data->flacdecoder,
 		                                  flac_callback_read,
