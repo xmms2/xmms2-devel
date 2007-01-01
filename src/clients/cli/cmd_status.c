@@ -35,6 +35,7 @@ static void quit (void *data);
 extern gchar *statusformat;
 
 static gboolean has_songname = FALSE;
+static gboolean fetching_songname = FALSE;
 static guint current_id = 0;
 static guint last_dur = 0;
 static gint curr_dur = 0;
@@ -148,6 +149,7 @@ handle_current_id (xmmsc_result_t *res, void *userdata)
 	}
 
 	if (current_id) {
+		fetching_songname = TRUE;
 		res = xmmsc_medialib_get_info (conn, current_id);
 		xmmsc_result_notifier_set (res, do_mediainfo, NULL);
 		xmmsc_result_unref (res);
@@ -171,7 +173,9 @@ handle_playtime (xmmsc_result_t *res, void *userdata)
 
 	if (((dur / 1000) % 60) != ((last_dur / 1000) % 60)) {
 		last_dur = dur;
-		update_display ();
+
+		if (!fetching_songname)
+			update_display ();
 
 	}
 	newres = xmmsc_result_restart (res);
@@ -258,6 +262,8 @@ do_mediainfo (xmmsc_result_t *res, void *userdata)
 	curr_dur += 500;
 
 	xmmsc_result_unref (res);
+
+	fetching_songname = FALSE;
 }
 
 
