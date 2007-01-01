@@ -1,5 +1,3 @@
-import Common
-
 def build(bld):
     obj = bld.create_obj('cc', 'program')
     obj.target = 'xmms2'
