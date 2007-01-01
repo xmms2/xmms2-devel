@@ -48,6 +48,7 @@ subdirs = """
           """.split()
 
 optional_subdirs = ["src/clients/cli",
+                    "src/clients/launcher",
                     "src/clients/et",
                     "src/clients/mdns/dns_sd",
                     "src/clients/mdns/avahi",

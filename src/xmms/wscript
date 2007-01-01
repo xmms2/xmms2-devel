@@ -59,14 +59,8 @@ def build(bld):
     prog.uselib_local = 'xmms2core xmmsipc xmmssocket xmmsutils xmmstypes'
     prog.uselib = 'glib2 gmodule2 gthread2 sqlite3 statfs socket'
 
-    launch = bld.create_obj('cc', 'program')
-    launch.target = 'xmms2-launcher'
-    launch.source = ['xmms2-launcher.c']
-    launch.includes = '../include'
-    launch.uselib = 'glib2 gmodule2 gthread2'
-
     obj = bld.create_obj('man')
-    obj.files = ['xmms2d.1', 'xmms2-launcher.1']
+    obj.files = ['xmms2d.1']
 
 def configure(conf):
     conf.check_tool('python-generator', tooldir=os.path.abspath('waftools'))
