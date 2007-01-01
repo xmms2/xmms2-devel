@@ -232,6 +232,7 @@ main (gint argc, gchar **argv)
 	xmmsc_connection_t *connection;
 	gchar *path;
 	gint i, ret;
+	void (*func) (xmmsc_connection_t *conn, int argc, char **argv) = NULL;
 
 	setlocale (LC_ALL, "");
 
@@ -266,6 +267,17 @@ main (gint argc, gchar **argv)
 	}
 
 
+	for (i = 0; commands[i].name; i++) {
+		if (g_strcasecmp (commands[i].name, argv[1]) == 0) {
+			func = commands[i].func;
+		}
+	}
+
+	if (!func) {
+		print_error ("Could not find any command called %s", argv[1]);
+		exit (EXIT_FAILURE);
+	}
+
 	ret = xmmsc_connect (connection, path);
 	if (!ret) {
 		gboolean autostart = FALSE;
@@ -276,7 +288,8 @@ main (gint argc, gchar **argv)
 		   autostart = TRUE;
 		}
 
-		if (autostart && (!path || !g_ascii_strncasecmp (path, "unix://", 7))) {
+		if (autostart && g_ascii_strncasecmp(argv[1], "quit", 4) &&
+		    (!path || !g_ascii_strncasecmp (path, "unix://", 7))) {
 			if (!system ("xmms2-launcher")) {
 				ret = xmmsc_connect (connection, path);
 			}
@@ -286,18 +299,12 @@ main (gint argc, gchar **argv)
 	if (!ret) {
 		print_error ("Could not connect to xmms2d: %s",
 		             xmmsc_get_last_error (connection));
+		xmmsc_unref (connection);
+		exit (EXIT_FAILURE);
 	}
 
-	for (i = 0; commands[i].name; i++) {
-		if (g_strcasecmp (commands[i].name, argv[1]) == 0) {
-			commands[i].func (connection, argc, argv);
-			xmmsc_unref (connection);
-			exit (EXIT_SUCCESS);
-		}
-	}
-
+	func (connection, argc, argv);
 	xmmsc_unref (connection);
-	print_error ("Could not find any command called %s", argv[1]);
 
-	return -1;
+	return 0;
 }
