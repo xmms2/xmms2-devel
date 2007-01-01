@@ -275,12 +275,11 @@ xmms_curl_init (xmms_xform_t *xform)
 
 	if (data->meta_offset > 0) {
 		XMMS_DBG ("icy-metadata detected");
+		xmms_xform_privdata_set_int (xform, "meta_offset", data->meta_offset);
 
 		xmms_xform_outdata_type_add (xform,
 		                             XMMS_STREAM_TYPE_MIMETYPE,
 		                             "application/x-icy-stream",
-		                             XMMS_STREAM_TYPE_PRIVATE_INT,
-		                             data->meta_offset,
 		                             XMMS_STREAM_TYPE_END);
 	} else {
 		xmms_xform_outdata_type_add (xform,

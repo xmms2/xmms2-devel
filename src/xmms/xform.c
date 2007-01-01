@@ -58,6 +58,8 @@ struct xmms_xform_St {
 	gboolean metadata_changed;
 	GHashTable *metadata;
 
+	GHashTable *privdata;
+
 	GList *browse_list;
 	GHashTable *browse_hash;
 
@@ -307,6 +309,8 @@ xmms_xform_destroy (xmms_object_t *object)
 
 	g_hash_table_destroy (xform->metadata);
 
+	g_hash_table_destroy (xform->privdata);
+
 	g_free (xform->buffer);
 
 	xmms_object_unref (xform->out_type);
@@ -337,6 +341,9 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 	}
 
 	xform->metadata = g_hash_table_new_full (g_str_hash, g_str_equal,
+	                                         g_free, xmms_object_cmd_value_free);
+
+	xform->privdata = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free, xmms_object_cmd_value_free);
 
 	if (plugin && entry) {
@@ -606,6 +613,96 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 
 	xmms_medialib_end (info.session);
 	xmms_medialib_entry_send_update (info.entry);
+}
+
+void
+xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int val)
+{
+	XMMS_DBG ("Setting private data '%s' to %d", key, val);
+	g_hash_table_insert (xform->privdata, g_strdup (key), xmms_object_cmd_value_int_new (val));
+}
+
+void
+xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar *val)
+{
+	const char *old;
+
+	if (xmms_xform_privdata_get_str (xform, key, &old) && strcmp (old, val) == 0)
+		return;
+
+	XMMS_DBG ("Setting private data '%s' to '%s'", key, val);
+	g_hash_table_insert (xform->privdata, g_strdup (key), xmms_object_cmd_value_str_new (val));
+}
+
+void
+xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer data, gssize len)
+{
+	GString *bin;
+
+	XMMS_DBG ("Setting private bin data of '%s'", key);
+	bin = g_string_new_len (data, len);
+	g_hash_table_insert (xform->privdata, g_strdup (key), xmms_object_cmd_value_bin_new (bin));
+}
+
+static const xmms_object_cmd_value_t *
+xmms_xform_privdata_get_val (xmms_xform_t *xform, const gchar *key)
+{
+	xmms_object_cmd_value_t *val;
+
+	val = g_hash_table_lookup (xform->prev->privdata, key);
+
+	return val;
+}
+
+gboolean
+xmms_xform_privdata_has_val (xmms_xform_t *xform, const gchar *key)
+{
+	return !!xmms_xform_privdata_get_val (xform, key);
+}
+
+gboolean
+xmms_xform_privdata_get_int (xmms_xform_t *xform, const gchar *key, gint32 *val)
+{
+	const xmms_object_cmd_value_t *obj;
+
+	obj = xmms_xform_privdata_get_val (xform, key);
+	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_INT32) {
+		*val = obj->value.int32;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+gboolean
+xmms_xform_privdata_get_str (xmms_xform_t *xform, const gchar *key, const gchar **val)
+{
+	const xmms_object_cmd_value_t *obj;
+
+	obj = xmms_xform_privdata_get_val (xform, key);
+	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_STRING) {
+		*val = obj->value.string;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+gboolean
+xmms_xform_privdata_get_bin (xmms_xform_t *xform, const gchar *key, gpointer *data, gssize *datalen) {
+	const xmms_object_cmd_value_t *obj;
+
+	obj = xmms_xform_privdata_get_val (xform, key);
+	if (obj && obj->type == XMMS_OBJECT_CMD_ARG_BIN) {
+		GString *bin = obj->value.bin;
+
+		*data = bin->str;
+		*datalen = bin->len;
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 const char *

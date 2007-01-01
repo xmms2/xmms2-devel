@@ -30,7 +30,6 @@ typedef enum xmms_stream_type_key_E {
 	XMMS_STREAM_TYPE_FMT_FORMAT,
 	XMMS_STREAM_TYPE_FMT_CHANNELS,
 	XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	XMMS_STREAM_TYPE_PRIVATE_INT,
 } xmms_stream_type_key_t;
 
 struct xmms_stream_type_St;

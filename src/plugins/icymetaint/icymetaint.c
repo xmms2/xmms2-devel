@@ -89,14 +89,15 @@ static gboolean
 xmms_icymetaint_init (xmms_xform_t *xform)
 {
 	xmms_icymetaint_data_t *data;
-	gint meta_offset;
-
-	meta_offset = xmms_xform_indata_get_int (xform,
-	                                         XMMS_STREAM_TYPE_PRIVATE_INT);
-
-	XMMS_DBG ("meta_offset = %d", meta_offset);
+	gint32 meta_offset;
+	gboolean res;
 
 	g_return_val_if_fail (xform, FALSE);
+
+	res = xmms_xform_privdata_get_int (xform, "meta_offset", &meta_offset);
+	g_return_val_if_fail (res, FALSE);
+
+	XMMS_DBG ("meta_offset = %d", meta_offset);
 
 	data = g_new0 (xmms_icymetaint_data_t, 1);
 
