@@ -43,8 +43,8 @@ subdirs = """
           src/lib/xmmsutils
           src/clients/lib/xmmsclient
           src/clients/lib/xmmsclient-glib
-		  src/include
-		  src/includepriv
+          src/include
+          src/includepriv
           """.split()
 
 optional_subdirs = ["src/clients/cli",
