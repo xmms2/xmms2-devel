@@ -273,3 +273,8 @@ def set_options(opt):
 
     for o in optional_subdirs + subdirs:
         opt.sub_options(o)
+
+def shutdown():
+    if Params.g_commands['install'] and os.geteuid() == 0:
+        try: os.popen('/sbin/ldconfig')
+        except: pass
