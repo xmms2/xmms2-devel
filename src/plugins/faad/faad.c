@@ -42,7 +42,6 @@ typedef struct {
 	faacDecHandle decoder;
 	gint filetype;
 	gint toskip;
-	gint last_frame;
 
 	guchar buffer[FAAD_BUFFER_SIZE];
 	guint buffer_length;
@@ -131,7 +130,6 @@ xmms_faad_init (xmms_xform_t *xform)
 	data->outbuf = g_string_new (NULL);
 	data->buffer_size = FAAD_BUFFER_SIZE;
 	data->toskip = 0;
-	data->last_frame = -1;
 
 	xmms_xform_private_data_set (xform, data);
 
@@ -201,7 +199,6 @@ xmms_faad_init (xmms_xform_t *xform)
 		                          data->buffer_length, &samplerate,
 		                          &channels);
 	} else if (data->filetype == FAAD_TYPE_MP4) {
-		gint temp;
 		gpointer tmpbuf;
 		gssize tmpbuflen;
 
@@ -212,18 +209,6 @@ xmms_faad_init (xmms_xform_t *xform)
 		}
 		bytes_read = faacDecInit (data->decoder, tmpbuf, tmpbuflen, &samplerate,
 		                          &channels);
-
-		if (xmms_xform_privdata_get_int (xform, "decoder_delay", &temp)) {
-			data->toskip = temp * channels *
-			               xmms_sample_size_get (data->sampleformat);
-			XMMS_DBG ("file has %d samples decoder delay", temp);
-		}
-
-		if (xmms_xform_privdata_get_int (xform, "last_frame", &temp)) {
-			data->last_frame = temp * channels *
-			                   xmms_sample_size_get (data->sampleformat);
-			XMMS_DBG ("last frame has %d samples", temp);
-		}
 	}
 
 	if (bytes_read < 0) {
@@ -277,7 +262,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 
 	size = MIN (data->outbuf->len, len);
 	while (size == 0) {
-		if (data->buffer_length < FAAD_BUFFER_SIZE) {
+		if (data->buffer_length < data->buffer_size) {
 			bytes_read = xmms_xform_read (xform,
 			                              (gchar *) data->buffer + data->buffer_length,
 			                              data->buffer_size - data->buffer_length,
@@ -299,12 +284,20 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 		data->buffer_length -= frameInfo.bytesconsumed;
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 
-		/* if this is the last frame, get sample count from demuxer */
-		if (data->buffer_length == 0 && data->last_frame >= 0) {
-			bytes_read = data->last_frame;
-		}
-
 		if (bytes_read > 0 && frameInfo.error == 0) {
+			/* FIXME: these are disabled since xmms2d always does full reads
+			gint32 temp;
+			
+			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
+				data->toskip += temp * frameInfo.channels *
+				                xmms_sample_size_get (data->sampleformat);	
+			}
+
+			if (xmms_xform_privdata_get_int (xform, "frame_duration", &temp)) {
+				bytes_read -= temp * frameInfo.channels *
+				              xmms_sample_size_get (data->sampleformat);
+			}*/
+			
 			g_string_append_len (data->outbuf, sample_buffer + data->toskip,
 			                     bytes_read - data->toskip);
 			data->toskip = 0;

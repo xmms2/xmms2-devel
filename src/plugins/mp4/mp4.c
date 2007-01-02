@@ -29,7 +29,7 @@
 
 #include "mp4ff/mp4ff.h"
 
-#define FAAD_BUFFER_SIZE 4096
+#define MP4_BUFFER_SIZE 4096
 
 typedef struct {
 	gint filetype;
@@ -39,9 +39,11 @@ typedef struct {
 	gint track;
 	glong sampleid;
 	glong numsamples;
-	gint toskip;
 
-	guchar buffer[FAAD_BUFFER_SIZE];
+	gint frame_offset;
+	gint frame_duration;
+
+	guchar buffer[MP4_BUFFER_SIZE];
 	guint buffer_length;
 	guint buffer_size;
 
@@ -131,7 +133,6 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	gint bytes_read;
 
-	gint temp;
 	guchar *tmpbuf;
 	guint tmpbuflen;
 
@@ -139,12 +140,15 @@ xmms_mp4_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_mp4_data_t, 1);
 	data->outbuf = g_string_new (NULL);
-	data->buffer_size = FAAD_BUFFER_SIZE;
+	data->buffer_size = MP4_BUFFER_SIZE;
 
 	xmms_xform_private_data_set (xform, data);
 
 	data->sampleid = 0;
 	data->numsamples = 0;
+
+	data->frame_offset = 0;
+	data->frame_duration = 0;
 
 	bytes_read = xmms_xform_read (xform,
 	                              (gchar *) data->buffer + data->buffer_length,
@@ -190,15 +194,6 @@ xmms_mp4_init (xmms_xform_t *xform)
 	xmms_xform_privdata_set_bin (xform, "decoder_config", tmpbuf, tmpbuflen);
 	g_free (tmpbuf);
 
-	if ((temp = mp4ff_get_sample_offset (data->mp4ff, data->track, 0)) >= 0) {
-		xmms_xform_privdata_set_int (xform, "decoder_delay", temp);
-	}
-
-	if ((temp = mp4ff_get_sample_duration (data->mp4ff, data->track,
-	                                       data->numsamples - 1)) >= 0) {
-		xmms_xform_privdata_set_int (xform, "last_frame", temp);
-	}
-
 	xmms_mp4_get_mediainfo (xform);
 
 	xmms_xform_outdata_type_add (xform,
@@ -241,13 +236,21 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		bytes_read = mp4ff_read_sample (data->mp4ff, data->track,
 		                                data->sampleid, &tmpbuf,
 		                                &tmpbuflen);
-		duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
-		                                      data->sampleid);
 		offset = mp4ff_get_sample_offset (data->mp4ff, data->track,
 		                                  data->sampleid);
+		duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
+		                                      data->sampleid);
 		data->sampleid++;
 
-		/* FIXME: possible nonzero duration and offset should be handled */
+		if (offset != data->frame_offset) {
+			xmms_xform_privdata_set_int (xform, "frame_offset", offset);
+			data->frame_offset = offset;
+		}
+
+		if (duration != data->frame_duration) {
+			xmms_xform_privdata_set_int (xform, "frame_duration", duration);
+			data->frame_duration = duration;
+		}
 
 		if (bytes_read > 0) {
 			g_string_append_len (data->outbuf, (gchar *) tmpbuf, tmpbuflen);
