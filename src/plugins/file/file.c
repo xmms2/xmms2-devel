@@ -74,11 +74,11 @@ xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
-				      XMMS_STREAM_TYPE_MIMETYPE,
-				      "application/x-url",
-				      XMMS_STREAM_TYPE_URL,
-				      "file://*",
-				      XMMS_STREAM_TYPE_END);
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/x-url",
+	                              XMMS_STREAM_TYPE_URL,
+	                              "file://*",
+	                              XMMS_STREAM_TYPE_END);
 
 	return TRUE;
 }
@@ -124,7 +124,7 @@ xmms_file_init (xmms_xform_t *xform)
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
 	                             "application/octet-stream",
-				     XMMS_STREAM_TYPE_END);
+	                             XMMS_STREAM_TYPE_END);
 
 	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE, st.st_size);
 	xmms_xform_metadata_set_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD, st.st_mtime);

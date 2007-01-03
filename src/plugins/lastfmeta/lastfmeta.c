@@ -203,7 +203,7 @@ xmms_lastfmeta_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 static size_t
 xmms_lastfmeta_now_playing_callback (void *ptr, size_t size,
-                                     size_t nmemb, void *stream) 
+                                     size_t nmemb, void *stream)
 {
 	xmms_xform_t *xform = (xmms_xform_t *) stream;
 	gchar **split;

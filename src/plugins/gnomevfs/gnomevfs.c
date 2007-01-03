@@ -34,9 +34,9 @@ typedef struct {
 static gboolean xmms_gnomevfs_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gboolean xmms_gnomevfs_init (xmms_xform_t *xform);
 static void xmms_gnomevfs_destroy (xmms_xform_t *xform);
-static gint xmms_gnomevfs_read (xmms_xform_t *xform, void *buffer, 
+static gint xmms_gnomevfs_read (xmms_xform_t *xform, void *buffer,
                                 gint len, xmms_error_t *error);
-static gint64 xmms_gnomevfs_seek (xmms_xform_t *xform, gint64 offset, 
+static gint64 xmms_gnomevfs_seek (xmms_xform_t *xform, gint64 offset,
                                   xmms_xform_seek_mode_t whence,
                                   xmms_error_t *error);
 
@@ -162,7 +162,7 @@ xmms_gnomevfs_destroy (xmms_xform_t *xform)
 
 
 static gint
-xmms_gnomevfs_read (xmms_xform_t *xform, void *buffer, gint len, 
+xmms_gnomevfs_read (xmms_xform_t *xform, void *buffer, gint len,
                     xmms_error_t *error)
 {
 	xmms_gnomevfs_data_t *data;

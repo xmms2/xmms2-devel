@@ -128,7 +128,7 @@ xmms_mpc_callback_tell (void *data)
 }
 
 
-static mpc_bool_t 
+static mpc_bool_t
 xmms_mpc_callback_canseek (void *data)
 {
 	xmms_xform_t *xform = data;
@@ -217,8 +217,8 @@ xmms_mpc_cache_streaminfo (xmms_xform_t *xform)
 	if (filesize != -1) {
 		duration = mpc_streaminfo_get_length (&data->info) * 1000;
 		xmms_xform_metadata_set_int (xform,
-								  	XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-									duration);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             duration);
 	}
 
 	bitrate = (data->info.bitrate) ? data->info.bitrate :
@@ -313,7 +313,7 @@ xmms_mpc_collect_metadata (xmms_xform_t *xform)
 					strval = xmms_apetag_lookup_str (tag, properties[i].vname);
 					if (strval != NULL) {
 						xmms_xform_metadata_set_str (xform, properties[i].xname,
-					                                 strval);
+						                             strval);
 					}
 					break;
 			}

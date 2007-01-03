@@ -94,7 +94,7 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
       pcm[channel] = data[index+channel];
       /* Preamp gain */
       pcm[channel] *= preamp[channel];
-      
+
       /* add random noise */
       pcm[channel] += dither[di];
 
@@ -105,7 +105,7 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
         /* Store Xi(n) */
         data_history[band][channel].x[i] = pcm[channel];
         /* Calculate and store Yi(n) */
-        data_history[band][channel].y[i] = 
+        data_history[band][channel].y[i] =
           (
            /* 		= alpha * [x(n)-x(n-2)] */
            iir_cf[band].alpha * ( data_history[band][channel].x[i]
@@ -115,7 +115,7 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
            /* 		- beta * y(n-2) */
            - iir_cf[band].beta * data_history[band][channel].y[k]
           );
-        /* 
+        /*
          * The multiplication by 2.0 was 'moved' into the coefficients to save
          * CPU cycles here */
         /* Apply the gain  */
@@ -130,7 +130,7 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
           /* Store Xi(n) */
           data_history2[band][channel].x[i] = out[channel];
           /* Calculate and store Yi(n) */
-          data_history2[band][channel].y[i] = 
+          data_history2[band][channel].y[i] =
             (
              /* y(n) = alpha * [x(n)-x(n-2)] */
              iir_cf[band].alpha * (data_history2[band][channel].x[i]
@@ -146,13 +146,13 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
       }
 
       /* Volume stuff
-         Scale down original PCM sample and add it to the filters 
+         Scale down original PCM sample and add it to the filters
          output. This substitutes the multiplication by 0.25
          Go back to use the floating point multiplication before the
          conversion to give more dynamic range
          */
       out[channel] += pcm[channel]*0.25;
-      
+
       /* remove random noise */
       out[channel] -= dither[di]*0.25;
 
@@ -172,10 +172,10 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
         data[index+channel] = -32768;
       else if (tempint > 32767)
         data[index+channel] = 32767;
-      else 
+      else
         data[index+channel] = tempint;
     } /* For each channel */
-    
+
     /* Wrap around the indexes */
     i = (i+1)%3;
     j = (j+1)%3;

@@ -50,7 +50,7 @@ XMMS_XFORM_PLUGIN("cue",
                   "CUE reader",
                   XMMS_VERSION,
                   "Playlist parser for cue files",
-                  xmms_cue_plugin_setup);                                                      
+                  xmms_cue_plugin_setup);
 
 static gboolean
 xmms_cue_plugin_setup (xmms_xform_plugin_t *xform_plugin)

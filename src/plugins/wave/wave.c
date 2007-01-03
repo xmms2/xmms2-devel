@@ -146,8 +146,8 @@ xmms_wave_get_media_info (xmms_xform_t *xform)
 
 	if (filesize != -1) {
 		xmms_xform_metadata_set_int (xform,
-							   		XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-								  	playtime * 1000);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             playtime * 1000);
 	}
 
 	bitrate = data->bits_per_sample * data->samplerate / data->channels;

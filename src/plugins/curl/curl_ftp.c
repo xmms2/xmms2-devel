@@ -135,7 +135,7 @@ xmms_curl_can_handle (const gchar *url)
 	return FALSE;
 }
 
-static size_t 
+static size_t
 xmms_curl_cwrite (void *ptr, size_t size, size_t nmemb, void  *stream)
 {
 	xmms_curl_data_t *data;
@@ -180,7 +180,7 @@ struct xmms_curl_ftp_list {
 };
 
 
-static size_t 
+static size_t
 xmms_curl_list_write (void *ptr, size_t size, size_t nmemb, void  *stream)
 {
 	gchar **rows;
@@ -278,8 +278,8 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 
 	curl_multi_add_handle (data->curlm, data->curl);
 
-	if (curl_multi_perform (data->curlm, &data->running) == 
-			CURLM_CALL_MULTI_PERFORM) {
+	if (curl_multi_perform (data->curlm, &data->running) ==
+	    CURLM_CALL_MULTI_PERFORM) {
 		data->again = TRUE;
 	}
 	
@@ -353,7 +353,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 		
 	if (data->again) {
 		if (curl_multi_perform (data->curlm, &data->running) ==
-				CURLM_CALL_MULTI_PERFORM) {
+		    CURLM_CALL_MULTI_PERFORM) {
 			data->again = TRUE;
 			return 0;
 		}
@@ -375,7 +375,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 			return 0;
 		default:
 			if (curl_multi_perform (data->curlm, &data->running) ==
-					CURLM_CALL_MULTI_PERFORM) {
+			    CURLM_CALL_MULTI_PERFORM) {
 				data->again = TRUE;
 			}
 			return 0;
@@ -406,8 +406,8 @@ xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 	curl_easy_cleanup (data->curl);
 	data->curl = curl;
 
-	if (curl_multi_perform (data->curlm, &data->running) == 
-			CURLM_CALL_MULTI_PERFORM) {
+	if (curl_multi_perform (data->curlm, &data->running) ==
+	    CURLM_CALL_MULTI_PERFORM) {
 		data->again = TRUE;
 	}
 	

@@ -59,7 +59,7 @@ xmms_plugin_get (void)
 {
 	xmms_plugin_t *plugin;
 
-	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER, 
+	plugin = xmms_plugin_new (XMMS_PLUGIN_TYPE_DECODER,
 	                          XMMS_DECODER_PLUGIN_API_VERSION,
 	                          "speex",
 	                          "Speex Decoder",
@@ -170,8 +170,8 @@ xmms_speex_init (xmms_decoder_t *decoder, gint mode)
 	ogg_stream_packetout (&data->stream_state, &data->ogg_packet);
 
 	xmms_decoder_format_add (decoder, XMMS_SAMPLE_FORMAT_S16,
-				 data->speexheader->nb_channels,
-				 data->speexheader->rate);
+	                         data->speexheader->nb_channels,
+	                         data->speexheader->rate);
 	/* we don't have to care about the return value other than NULL,
 	   as there is only one format (to rule them all) */
 	if (xmms_decoder_format_finish (decoder) == NULL) {
@@ -293,12 +293,12 @@ xmms_speex_get_mediainfo (xmms_decoder_t *decoder)
 	entry = xmms_medialib_entry_new (NULL);
 
 	xmms_medialib_entry_property_set_int (entry,
-					      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-					      data->speexheader->rate);
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                                      data->speexheader->rate);
 
 	xmms_medialib_entry_property_set_int (entry,
-					      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-					      data->speexheader->bitrate);
+	                                      XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+	                                      data->speexheader->bitrate);
 
 	xmms_medialib_entry_send_update (entry);
 }

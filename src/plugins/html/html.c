@@ -125,7 +125,7 @@ xmms_plugin_get (void)
 
 static gboolean
 xmms_html_read_playlist (xmms_transport_t *transport,
-						 guint32 playlist_id)
+                         guint32 playlist_id)
 {
 	gchar *buffer;
 	const gchar *plsurl;
@@ -235,15 +235,15 @@ xmms_html_write_playlist (guint32 *list)
 		xmms_medialib_entry_t entry = list[num_entries];
 
 		total_len += xmms_medialib_entry_property_get_int (session, entry,
-														   XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		                                                   XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 
 		num_entries++;
 	}
 
 	ret = g_string_new (NULL);
 	g_string_append_printf (ret, html_header, num_entries,
-				total_len / 3600000, (total_len / 60000) % 60,
-				(total_len / 1000) % 60);
+	                        total_len / 3600000, (total_len / 60000) % 60,
+	                        (total_len / 1000) % 60);
 
 	i = 0;
 
@@ -255,13 +255,13 @@ xmms_html_write_playlist (guint32 *list)
 		entry = list[i];
 
 		artist = escape_html (xmms_medialib_entry_property_get_str (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST));
+		    XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST));
 		title = escape_html (xmms_medialib_entry_property_get_str (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE));
+		    XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE));
 		len = xmms_medialib_entry_property_get_int (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
+		    XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION);
 		url = escape_html (xmms_medialib_entry_property_get_str (session, entry,
-			XMMS_MEDIALIB_ENTRY_PROPERTY_URL));
+		    XMMS_MEDIALIB_ENTRY_PROPERTY_URL));
 
 		if (!artist && !title) {
 			g_snprintf (buf, sizeof (buf), "%s (%02i:%02i)",

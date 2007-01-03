@@ -33,10 +33,10 @@ static gboolean xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_err
 static void xmms_rss_destroy (xmms_xform_t *xform);
 
 XMMS_XFORM_PLUGIN("rss",
-				  "reader for rss podcasts",
-				  XMMS_VERSION,
-				  "reader for rss podcasts",
-				  xmms_rss_plugin_setup);
+                  "reader for rss podcasts",
+                  XMMS_VERSION,
+                  "reader for rss podcasts",
+                  xmms_rss_plugin_setup);
 
 static gboolean
 xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin) {
@@ -50,12 +50,12 @@ xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin) {
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
 	xmms_xform_plugin_indata_add (xform_plugin,
-								  XMMS_STREAM_TYPE_MIMETYPE,
-								  "application/xml",
-								  NULL);
+	                              XMMS_STREAM_TYPE_MIMETYPE,
+	                              "application/xml",
+	                              NULL);
 
 	xmms_magic_add ("xml header", "application/xml",
-					"0 string <?xml", NULL);
+	                "0 string <?xml", NULL);
 
 	xmms_magic_extension_add ("application/xml", "*.xml");
 	xmms_magic_extension_add ("application/xml", "*.rss");
@@ -66,9 +66,9 @@ xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin) {
 static gboolean
 xmms_rss_init (xmms_xform_t *xform) {
 	xmms_xform_outdata_type_add (xform,
-								 XMMS_STREAM_TYPE_MIMETYPE,
-								 "application/x-xmms2-playlist-entries",
-								 XMMS_STREAM_TYPE_END);
+	                             XMMS_STREAM_TYPE_MIMETYPE,
+	                             "application/x-xmms2-playlist-entries",
+	                             XMMS_STREAM_TYPE_END);
 
 	return TRUE;
 }

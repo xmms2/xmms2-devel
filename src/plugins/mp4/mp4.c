@@ -221,10 +221,10 @@ xmms_mp4_init (xmms_xform_t *xform)
 	}
 	data->numsamples = mp4ff_num_samples(data->mp4ff, data->track);
 	mp4ff_get_decoder_config (data->mp4ff, data->track, &tmpbuf,
-				  &tmpbuflen);
+	                          &tmpbuflen);
 
 	if (faacDecInit2 (data->decoder, tmpbuf, tmpbuflen,
-			  &samplerate, &channels) < 0) {
+	                  &samplerate, &channels) < 0) {
 		XMMS_DBG ("Error initializing decoder library.");
 		g_free (tmpbuf);
 		goto err;
@@ -283,19 +283,19 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		}
 		
 		bytes_read = mp4ff_read_sample (data->mp4ff, data->track,
-						data->sampleid, &tmpbuf,
-						&tmpbuflen);
+		                                data->sampleid, &tmpbuf,
+		                                &tmpbuflen);
 		duration = mp4ff_get_sample_duration (data->mp4ff, data->track,
-						      data->sampleid);
+		                                      data->sampleid);
 		offset = mp4ff_get_sample_offset (data->mp4ff, data->track,
-						  data->sampleid);
+		                                  data->sampleid);
 		data->sampleid++;
 
 		sample_buffer = faacDecDecode (data->decoder, &frameInfo,
-					       tmpbuf, tmpbuflen);
+		                               tmpbuf, tmpbuflen);
 		sample_buffer += offset;
 		bytes_read = (duration - offset) * frameInfo.channels *
-			     xmms_sample_size_get (data->sampleformat);
+		             xmms_sample_size_get (data->sampleformat);
 		g_free (tmpbuf);
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
@@ -328,7 +328,7 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 	g_return_val_if_fail (data, FALSE);
 
 	data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
-							samples, &toskip);
+	                                                samples, &toskip);
 	data->toskip = toskip * data->channels * xmms_sample_size_get (data->sampleformat);
 	data->buffer_length = 0;
 
@@ -349,52 +349,52 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 
 	temp = mp4ff_get_sample_rate (data->mp4ff, data->track);
 	xmms_xform_metadata_set_int (xform,
-				     XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
-				     temp);
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             temp);
 	if ((temp = mp4ff_get_track_duration_use_offsets (data->mp4ff, data->track) / temp) >= 0) {
 		xmms_xform_metadata_set_int (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-					     temp * 1000);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             temp * 1000);
 	}
 	if ((temp = mp4ff_get_avg_bitrate (data->mp4ff, data->track)) >= 0) {
 		xmms_xform_metadata_set_int (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
-					     temp);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+		                             temp);
 	}
 	if (mp4ff_meta_get_artist (data->mp4ff, &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_get_title (data->mp4ff, &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_get_album (data->mp4ff, &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_get_date (data->mp4ff, &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_get_genre (data->mp4ff, &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_get_comment (data->mp4ff, &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_get_track (data->mp4ff, &metabuf)) {
@@ -404,8 +404,8 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 		tracknr = strtol (metabuf, &end, 10);
 		if (end && *end == '\0') {
 			xmms_xform_metadata_set_int (xform,
-						     XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
-						     tracknr);
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,
+			                             tracknr);
 		}
 		g_free (metabuf);
 	}
@@ -421,20 +421,20 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 	/* MusicBrainz tag support */
 	if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Track Id", &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACK_ID,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Album Id", &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM_ID,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_find_by_name (data->mp4ff, "MusicBrainz Artist Id", &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST_ID,
+		                             metabuf);
 		g_free (metabuf);
 	}
 
@@ -443,34 +443,34 @@ xmms_mp4_get_mediainfo (xmms_xform_t *xform)
 		gchar buf[8];
 
 		g_snprintf (buf, sizeof (buf), "%f",
-			    pow (10.0, g_strtod (metabuf, NULL) / 20));
+		            pow (10.0, g_strtod (metabuf, NULL) / 20));
 		g_free (metabuf);
 
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
-					     buf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
+		                             buf);
 	}
 	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_album_gain", &metabuf)) {
 		gchar buf[8];
 
 		g_snprintf (buf, sizeof (buf), "%f",
-			    pow (10.0, g_strtod (metabuf, NULL) / 20));
+		            pow (10.0, g_strtod (metabuf, NULL) / 20));
 		g_free (metabuf);
 
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
-					     buf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_ALBUM,
+		                             buf);
 	}
 	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_track_peak", &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_TRACK,
+		                             metabuf);
 		g_free (metabuf);
 	}
 	if (mp4ff_meta_find_by_name (data->mp4ff, "replaygain_album_peak", &metabuf)) {
 		xmms_xform_metadata_set_str (xform,
-					     XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
-					     metabuf);
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_PEAK_ALBUM,
+		                             metabuf);
 		g_free (metabuf);
 	}
 }

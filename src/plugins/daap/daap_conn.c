@@ -91,8 +91,8 @@ daap_open_connection (gchar *host, gint port)
 		tmout.tv_usec = 0;
 
 		sret = connect (sockfd,
-						(struct sockaddr *) &server,
-						sizeof (struct sockaddr_in));
+		                (struct sockaddr *) &server,
+		                sizeof (struct sockaddr_in));
 
 		if (sret == 0) {
 			break;

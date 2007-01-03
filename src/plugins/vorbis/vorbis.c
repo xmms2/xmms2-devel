@@ -209,7 +209,7 @@ get_replaygain (xmms_xform_t *xform, vorbis_comment *vc)
 		            pow (10.0, g_strtod (tmp, NULL) / 20));
 		/** @todo this should probably be a int instead? */
 		xmms_xform_metadata_set_str (xform,
-		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK, 
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GAIN_TRACK,
 		                             buf);
 	}
 
@@ -338,8 +338,8 @@ xmms_vorbis_init (xmms_xform_t *xform)
 		gint filesize = xmms_xform_metadata_get_int (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_SIZE);
 		if (filesize != -1) {
 			xmms_xform_metadata_set_int (xform,
-		                                 XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-		                                 playtime * 1000);
+			                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+			                             playtime * 1000);
 		}
 	}
 

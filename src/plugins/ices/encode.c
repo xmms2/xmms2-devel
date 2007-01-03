@@ -109,7 +109,7 @@ encoder_state *encode_initialise(int channels, int rate, int managed,
     } else if (!managed) {
         vorbis_encode_ctl(&s->vi, OV_ECTL_RATEMANAGE_SET, NULL);
     }
-    
+
     vorbis_encode_setup_init(&s->vi);
 
     vorbis_analysis_init(&s->vd, &s->vi);
@@ -135,7 +135,7 @@ void encode_data_float(encoder_state *s, float **pcm, int samples)
     float **buf;
     int i;
 
-    buf = vorbis_analysis_buffer(&s->vd, samples); 
+    buf = vorbis_analysis_buffer(&s->vd, samples);
 
     for(i=0; i < s->vi.channels; i++)
     {
@@ -201,7 +201,7 @@ int encode_dataout(encoder_state *s, ogg_page *og)
     if(s->in_header)
     {
         result = ogg_stream_flush(&s->os, og);
-        if(result==0) 
+        if(result==0)
         {
             s->in_header = 0;
             return encode_dataout(s,og);
@@ -216,15 +216,15 @@ int encode_dataout(encoder_state *s, ogg_page *og)
             vorbis_analysis(&s->vb, NULL);
             vorbis_bitrate_addblock(&s->vb);
 
-            while(vorbis_bitrate_flushpacket(&s->vd, &op)) 
+            while(vorbis_bitrate_flushpacket(&s->vd, &op))
                 ogg_stream_packetin(&s->os, &op);
         }
 
-        /** @todo 
+        /** @todo
 	 *  Make this threshold configurable.
          *  We don't want to buffer too many samples in one page when doing
          *  live encoding - that's fine for non-live encoding, but breaks
-         *  badly when doing things live. 
+         *  badly when doing things live.
          *  So, we flush the stream if we have too many samples buffered
          */
         if(s->samples_in_current_page > s->samplerate * 2)
@@ -240,7 +240,7 @@ int encode_dataout(encoder_state *s, ogg_page *og)
             return 0;
         else /* Page found! */
         {
-            s->samples_in_current_page -= ogg_page_granulepos(og) - 
+            s->samples_in_current_page -= ogg_page_granulepos(og) -
                     s->prevgranulepos;
             s->prevgranulepos = ogg_page_granulepos(og);
             return 1;

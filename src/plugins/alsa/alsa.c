@@ -461,7 +461,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	err = snd_pcm_hw_params_set_buffer_time_near (data->pcm, data->hwparams,
 	                                              &requested_buffer_time, NULL);
 	if (err < 0) {
-		xmms_log_error ("Unable to set buffer time %i for playback: %s", tmp, 
+		xmms_log_error ("Unable to set buffer time %i for playback: %s", tmp,
 		                snd_strerror (err));
 		return FALSE;
 	}
@@ -469,7 +469,7 @@ xmms_alsa_set_hwparams (xmms_alsa_data_t *data,
 	XMMS_DBG ("Buffer time requested: %dms, got: %dms",
 	          tmp / 1000, requested_buffer_time / 1000);
 
-	err = snd_pcm_hw_params_get_buffer_size (data->hwparams, 
+	err = snd_pcm_hw_params_get_buffer_size (data->hwparams,
 	                                         &data->buffer_size);
 	if (err != 0) {
 		xmms_log_error ("Unable to get buffer size for playback: %s",

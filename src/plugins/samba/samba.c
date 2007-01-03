@@ -61,7 +61,7 @@ XMMS_XFORM_PLUGIN("smb", "SMB/CIFS Transport", XMMS_VERSION,
                   "Access SMB/CIFS fileshares over a network",
                   xmms_samba_plugin_setup);
 
-static void 
+static void
 xmms_samba_auth_fn (const gchar *server, const gchar *share,
                     gchar *workgroup, gint wgmaxlen, gchar *username,
                     gint unmaxlen, gchar *password, gint pwmaxlen)
@@ -172,7 +172,7 @@ xmms_samba_destroy (xmms_xform_t *xform)
 
 
 static gint
-xmms_samba_read (xmms_xform_t *xform, void *buffer, gint len, 
+xmms_samba_read (xmms_xform_t *xform, void *buffer, gint len,
                  xmms_error_t *error)
 {
 	xmms_samba_data_t *data;
@@ -185,7 +185,7 @@ xmms_samba_read (xmms_xform_t *xform, void *buffer, gint len,
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 
-	ret = smbc_read (data->fd, buffer, len); 
+	ret = smbc_read (data->fd, buffer, len);
 
 	if (ret == 0) {
 		xmms_error_set (error, XMMS_ERROR_EOS, "End of file reached");

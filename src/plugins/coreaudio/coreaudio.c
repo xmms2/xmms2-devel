@@ -61,7 +61,7 @@ static gboolean xmms_ca_volume_set (xmms_output_t *output, const gchar
 static gboolean xmms_ca_volume_get (xmms_output_t *output, const gchar
                                     **names, guint *values, guint
                                     *num_channels);
-static gboolean xmms_ca_format_set (xmms_output_t *output, 
+static gboolean xmms_ca_format_set (xmms_output_t *output,
                                     const xmms_stream_type_t *stype);
 /*
  * Plugin header
@@ -177,7 +177,7 @@ xmms_ca_render_cb (void *inRefCon,
 		if (ret == -1)
 			ret = 0;
 
-		if (ret < size) { 
+		if (ret < size) {
 			memset (ioData->mBuffers[b].mData+ret, 0, size - ret);
 		}
 	}
@@ -305,10 +305,10 @@ xmms_ca_destroy (xmms_output_t *output)
 }
 
 
-static gboolean 
+static gboolean
 xmms_ca_volume_set (xmms_output_t *output,
-					const gchar *channel,
-					guint volume)
+                    const gchar *channel,
+                    guint volume)
 {
   	Float32 v;
   	xmms_ca_data_t *data;
@@ -323,18 +323,18 @@ xmms_ca_volume_set (xmms_output_t *output,
 
 	v = (Float32)(volume/100.0);
 	
-	AudioUnitSetParameter(data->au, 
-						  kHALOutputParam_Volume, 
-						  kAudioUnitScope_Global, 
-						  0, v, 0);
+	AudioUnitSetParameter(data->au,
+	                      kHALOutputParam_Volume,
+	                      kAudioUnitScope_Global,
+	                      0, v, 0);
 	return TRUE;
 }
 
 
-static gboolean 
+static gboolean
 xmms_ca_volume_get (xmms_output_t *output,
-					const gchar **names, guint *values,
-					guint *num_channels)
+                    const gchar **names, guint *values,
+                    guint *num_channels)
 {
   	Float32 v;
   	xmms_ca_data_t *data;
@@ -352,10 +352,10 @@ xmms_ca_volume_get (xmms_output_t *output,
 	g_return_val_if_fail (names, FALSE);
 	g_return_val_if_fail (values, FALSE);
 
-	AudioUnitGetParameter(data->au, 
-						  kHALOutputParam_Volume, 
-						  kAudioUnitScope_Global, 
-						  0, &v);
+	AudioUnitGetParameter(data->au,
+	                      kHALOutputParam_Volume,
+	                      kAudioUnitScope_Global,
+	                      0, &v);
 
 	values[0] = (guint)(v * 100);
 	names[0] = "master";

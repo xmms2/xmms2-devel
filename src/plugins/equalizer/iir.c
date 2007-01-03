@@ -25,8 +25,8 @@
 /* Coefficients */
 sIIRCoefficients *iir_cf;
 
-/* Volume gain 
- * values should be between 0.0 and 1.0 
+/* Volume gain
+ * values should be between 0.0 and 1.0
  * Use the preamp from XMMS for now
  * */
 float preamp[EQ_CHANNELS];
@@ -38,7 +38,7 @@ int count = 0;
 unsigned int blength = 0;
 #endif
 
-/* 
+/*
  * Global vars
  */
 int band_count;

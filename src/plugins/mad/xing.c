@@ -7,7 +7,7 @@
 
 
 
-/** @file 
+/** @file
  * Xing-header parser.
  */
 
@@ -155,8 +155,8 @@ parse_lame (struct mad_bitptr *ptr)
 		sscanf(str, "%u.%u.%u", &major, &minor, &patch);
 
 		if (major > 3 ||
-			(major == 3 && (minor > 95 ||
-							(minor == 95 && str[4] == '.')))) {
+		    (major == 3 && (minor > 95 ||
+		    (minor == 95 && str[4] == '.')))) {
 			for (i = 0; i < 2; ++i) {
 				if (RGAIN_SET(&lame->replay_gain[i]))
 					lame->replay_gain[i].adjustment -= 60;

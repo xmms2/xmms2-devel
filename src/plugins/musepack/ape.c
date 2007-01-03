@@ -29,9 +29,9 @@
  * Defines
  */
 #define get_int32(b,pos) ((((guchar *)(b))[(pos)+3]<<24) | \
-			  (((guchar *)(b))[(pos)+2]<<16) | \
-			  (((guchar *)(b))[(pos)+1]<<8) |  \
-			  ((guchar *)(b))[(pos)])
+                          (((guchar *)(b))[(pos)+2]<<16) | \
+                          (((guchar *)(b))[(pos)+1]<<8)  | \
+                           ((guchar *)(b))[(pos)])
 
 #define TAG_HEADER_SIZE   32
 #define TAG_SIGNATURE_SIZE 8
@@ -164,7 +164,7 @@ xmms_apetag_lookup_int (xmms_apetag_t *tag, const gchar *key)
 
 	tmp = g_hash_table_lookup (tag->hash, key);
 	if (tmp) {
-		value = strtol (tmp, NULL, 10); 
+		value = strtol (tmp, NULL, 10);
 	}
 	
 	return value;
@@ -351,7 +351,7 @@ xmms_apetag_cache_items (xmms_apetag_t *tag)
 
 					g_hash_table_insert (tag->hash, key, value);
 
-				} else { 
+				} else {
 					/* Some other kind of tag we don't care about */
 
 					gint tmp = strlen (&buffer[pos]) + 1;

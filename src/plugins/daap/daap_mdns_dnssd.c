@@ -66,16 +66,16 @@ static GMDNS *g_mdns;
 
 static void
 qr_reply (DNSServiceRef sdRef,
-		  DNSServiceFlags flags,
-		  uint32_t ifIndex,
-		  DNSServiceErrorType errorCode,
-		  const char *fullname,
-		  uint16_t rrtype,
-		  uint16_t rrclass,
-		  uint16_t rdlen,
-		  const void *rdata,
-		  uint32_t ttl,
-		  void *context)
+          DNSServiceFlags flags,
+          uint32_t ifIndex,
+          DNSServiceErrorType errorCode,
+          const char *fullname,
+          uint16_t rrtype,
+          uint16_t rrclass,
+          uint16_t rdlen,
+          const void *rdata,
+          uint32_t ttl,
+          void *context)
 {
 	GMDNSUserData *ud = context;
 	gchar addr[1000];
@@ -102,15 +102,15 @@ qr_reply (DNSServiceRef sdRef,
 
 static void
 resolve_reply (DNSServiceRef client,
-			   DNSServiceFlags flags,
-			   uint32_t ifIndex,
-			   DNSServiceErrorType errorCode,
-			   const char *fullname,
-			   const char *hosttarget,
-			   uint16_t opaqueport,
-			   uint16_t txtLen,
-			   const char *txtRecord,
-			   void *context)
+               DNSServiceFlags flags,
+               uint32_t ifIndex,
+               DNSServiceErrorType errorCode,
+               const char *fullname,
+               const char *hosttarget,
+               uint16_t opaqueport,
+               uint16_t txtLen,
+               const char *txtRecord,
+               void *context)
 {
 	GMDNSUserData *ud = context;
 	GMDNSUserData *ud2;
@@ -123,7 +123,7 @@ resolve_reply (DNSServiceRef client,
 	ud->server->port = ((guint16) portu.b[0]) << 8 | portu.b[1];
 	ud->server->hostname = g_strdup (hosttarget);
 	ud->server->txtvalues = g_hash_table_new_full (g_str_hash, g_str_equal,
-												   g_free, g_free);
+	                                               g_free, g_free);
 
 	for (i = 0; i < TXTRecordGetCount (txtLen, txtRecord); i++) {
 		gchar key[256];
@@ -144,11 +144,11 @@ resolve_reply (DNSServiceRef client,
 	ud2 = g_new0 (GMDNSUserData, 1);
 
 	err = DNSServiceQueryRecord (&ud2->client, 0,
-								 kDNSServiceInterfaceIndexAny,
-								 ud->server->hostname,
-								 kDNSServiceType_A,
-								 kDNSServiceClass_IN,
-								 qr_reply, ud2);
+	                             kDNSServiceInterfaceIndexAny,
+	                             ud->server->hostname,
+	                             kDNSServiceType_A,
+	                             kDNSServiceClass_IN,
+	                             qr_reply, ud2);
 
 	if (err != kDNSServiceErr_NoError) {
 		g_warning ("Error from QueryRecord!");
@@ -163,13 +163,13 @@ resolve_reply (DNSServiceRef client,
 
 static void
 browse_reply (DNSServiceRef client,
-			  DNSServiceFlags flags,
-			  uint32_t ifIndex,
-			  DNSServiceErrorType errorCode,
-			  const char *replyName,
-			  const char *replyType,
-			  const char *replyDomain,
-			  void *context)
+              DNSServiceFlags flags,
+              uint32_t ifIndex,
+              DNSServiceErrorType errorCode,
+              const char *replyName,
+              const char *replyType,
+              const char *replyDomain,
+              void *context)
 {
 	DNSServiceErrorType err;
 	GMDNSServer *server;
@@ -182,9 +182,9 @@ browse_reply (DNSServiceRef client,
 		server->mdnsname = g_strdup (replyName);
 		ud2 = g_new0 (GMDNSUserData, 1);
 		err = DNSServiceResolve (&ud2->client, 0, kDNSServiceInterfaceIndexAny,
-								 server->mdnsname,
-								 "_daap._tcp", "local",
-								 resolve_reply, ud2);
+		                         server->mdnsname,
+		                         "_daap._tcp", "local",
+		                         resolve_reply, ud2);
 
 		if (err != kDNSServiceErr_NoError) {
 			g_warning ("Couldn't do ServiceResolv");
@@ -247,8 +247,8 @@ g_mdns_source_check (GSource *source)
 
 static gboolean
 g_mdns_source_dispatch (GSource *source,
-						GSourceFunc callback,
-						gpointer user_data)
+                        GSourceFunc callback,
+                        gpointer user_data)
 {
 	GMDNSUserData *ud = user_data;
 	DNSServiceErrorType err;
@@ -303,8 +303,8 @@ g_mdns_poll_add (GMDNS *mdns, GMDNSUserData *ud, DNSServiceRef client)
 
 	ud->source = g_source_new (&g_mdns_poll_funcs, sizeof (GSource));
 	g_source_set_callback (ud->source,
-						   (GSourceFunc) g_mdns_source_dispatch,
-						   ud, NULL);
+	                       (GSourceFunc) g_mdns_source_dispatch,
+	                       ud, NULL);
 	g_source_add_poll (ud->source, ud->fd);
 	g_source_attach (ud->source, NULL);
 
@@ -317,9 +317,9 @@ g_mdns_poll_add (GMDNS *mdns, GMDNSUserData *ud, DNSServiceRef client)
  */
 static gboolean
 g_mdns_browse (GMDNS *mdns,
-			   gchar *service,
-			   GMDNSFunc callback,
-			   gpointer user_data)
+               gchar *service,
+               GMDNSFunc callback,
+               gpointer user_data)
 {
 	DNSServiceErrorType err;
 	DNSServiceRef client;
@@ -330,7 +330,7 @@ g_mdns_browse (GMDNS *mdns,
 	ud = g_new0 (GMDNSUserData, 1);
 
 	err = DNSServiceBrowse (&client, 0, kDNSServiceInterfaceIndexAny,
-							service, 0, browse_reply, ud);
+	                        service, 0, browse_reply, ud);
 
 	if (err != kDNSServiceErr_NoError) {
 		g_warning ("Couldn't setup mDNS poller");

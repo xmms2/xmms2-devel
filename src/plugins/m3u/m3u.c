@@ -49,7 +49,7 @@ XMMS_XFORM_PLUGIN("m3u",
                   "M3U reader",
                   XMMS_VERSION,
                   "Playlist parser for m3u's",
-                  xmms_m3u_plugin_setup);                                                      
+                  xmms_m3u_plugin_setup);
 
 static gboolean
 xmms_m3u_plugin_setup (xmms_xform_plugin_t *xform_plugin)

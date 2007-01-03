@@ -196,7 +196,7 @@ xmms_nms_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 	if (channels != CHANNELS) {
 		xmms_log_error ("Bad number of channels!");
 		return FALSE;
-	} 
+	}
 	if (srate != SAMPLERATE) {
 		xmms_log_error ("Bad samplerate!");
 		return FALSE;

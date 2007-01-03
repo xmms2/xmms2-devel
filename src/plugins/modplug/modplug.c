@@ -42,9 +42,9 @@ static gboolean xmms_modplug_init (xmms_xform_t *xform);
  * Plugin header
  */
 XMMS_XFORM_PLUGIN("modplug",
-		  "MODPLUG decoder ",
-		  XMMS_VERSION,
-		  "Module file decoder",
+                  "MODPLUG decoder ",
+                  XMMS_VERSION,
+                  "Module file decoder",
                   xmms_modplug_plugin_setup);
 
 static gboolean
@@ -219,8 +219,8 @@ xmms_modplug_init (xmms_xform_t *xform)
 
 	if (filesize != -1) {
 		xmms_xform_metadata_set_int (xform,
-							   		XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
-								  	ModPlug_GetLength (data->mod));
+		                             XMMS_MEDIALIB_ENTRY_PROPERTY_DURATION,
+		                             ModPlug_GetLength (data->mod));
 	}
 	xmms_xform_metadata_set_str (xform,
 	                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,

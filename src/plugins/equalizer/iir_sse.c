@@ -29,8 +29,8 @@
 #include "benchmark.h"
 #endif
 
-/* Volume gain 
- * values should be between 0.0 and 1.0 
+/* Volume gain
+ * values should be between 0.0 and 1.0
  * Use the preamp from XMMS for now
  * */
 
@@ -136,32 +136,32 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
       support.sse_acc.f[0] = support.sse_acc.f[1] = support.sse_acc.f[2] = support.sse_acc.f[3] = 0.;
       ptrs.p_sse_X_n[channel]->f[3] = data[index+channel];
       ptrs.p_sse_X_n[channel]->f[3] *= preamp[channel];
-      ptrs.p_sse_X_n[channel]->f[0] = ptrs.p_sse_X_n[channel]->f[1] 
+      ptrs.p_sse_X_n[channel]->f[0] = ptrs.p_sse_X_n[channel]->f[1]
         = ptrs.p_sse_X_n[channel]->f[2] = ptrs.p_sse_X_n[channel]->f[3];
 
       /* For each band */
       for (band = 0; band < sse_loop_num; band++)
       {
-        ptrs.p_sse_Y_n[channel][band].v = 
+        ptrs.p_sse_Y_n[channel][band].v =
           (ptrs.p_sse_X_n[channel]->v-ptrs.p_sse_X_n2[channel]->v) * support.sse_iir_cf_alpha[band].v
           +  ptrs.p_sse_Y_n1[channel][band].v * support.sse_iir_cf_gamma[band].v
           - ptrs.p_sse_Y_n2[channel][band].v * support.sse_iir_cf_beta[band].v;
-        support.sse_acc.v += ptrs.p_sse_Y_n[channel][band].v*gain[band][channel].v; 
+        support.sse_acc.v += ptrs.p_sse_Y_n[channel][band].v*gain[band][channel].v;
       } /* For each band */
 
-      support.sse_acc.v = support.sse_acc.v + support.sse_acc.v; 
+      support.sse_acc.v = support.sse_acc.v + support.sse_acc.v;
       if (extra_filtering)
       {
-        ptrs.p_sse_X2_n[channel]->f[0] = ptrs.p_sse_X2_n[channel]->f[1] = 
-          ptrs.p_sse_X2_n[channel]->f[2] = ptrs.p_sse_X2_n[channel]->f[3] = 
+        ptrs.p_sse_X2_n[channel]->f[0] = ptrs.p_sse_X2_n[channel]->f[1] =
+          ptrs.p_sse_X2_n[channel]->f[2] = ptrs.p_sse_X2_n[channel]->f[3] =
             support.sse_acc.f[0] + support.sse_acc.f[1] + support.sse_acc.f[2] + support.sse_acc.f[3];
           for (band = 0; band < sse_loop_num; band++)
           {
-            ptrs.p_sse_Y2_n[channel][band].v = 
+            ptrs.p_sse_Y2_n[channel][band].v =
               (ptrs.p_sse_X2_n[channel]->v-ptrs.p_sse_X2_n2[channel]->v) * support.sse_iir_cf_alpha[band].v
               +  ptrs.p_sse_Y2_n1[channel][band].v * support.sse_iir_cf_gamma[band].v
               - ptrs.p_sse_Y2_n2[channel][band].v * support.sse_iir_cf_beta[band].v;
-            support.sse_acc.v += ptrs.p_sse_Y2_n[channel][band].v*gain[band][channel].v; 
+            support.sse_acc.v += ptrs.p_sse_Y2_n[channel][band].v*gain[band][channel].v;
           } /* For each band */
       }
       /* Round and convert to integer */
@@ -172,7 +172,7 @@ __inline__ int iir(void *d, int length, int nch, int extra_filtering)
         data[index+channel] = -32768;
       else if (tempint > 32767)
         data[index+channel] = 32767;
-      else 
+      else
         data[index+channel] = tempint;
 
       ptrs.p_sse_tmp  = ptrs.p_sse_Y_n2[channel];

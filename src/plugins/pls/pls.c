@@ -46,7 +46,7 @@ XMMS_XFORM_PLUGIN("pls",
                   "PLS reader",
                   XMMS_VERSION,
                   "Playlist parser for PLS files.",
-                  xmms_pls_plugin_setup);                                                      
+                  xmms_pls_plugin_setup);
 
 static gboolean
 xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
@@ -98,8 +98,8 @@ typedef struct {
 
 static void
 xmms_pls_add_entry (xmms_xform_t *xform,
-					const gchar *plspath, 
-					xmms_pls_entry_t *e)
+                    const gchar *plspath,
+                    xmms_pls_entry_t *e)
 {
 	if (e->file) {
 		gchar *title;
