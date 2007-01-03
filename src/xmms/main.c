@@ -170,7 +170,7 @@ load_config ()
 	gchar *configdir = g_malloc0 (PATH_MAX);
 
 	if (!conffile) {
-		conffile = XMMS_BUILD_PATH ("xmms2.conf"); 
+		conffile = XMMS_BUILD_PATH ("xmms2.conf");
 	}
 
 	g_assert (strlen (conffile) <= XMMS_MAX_CONFIGFILE_LEN);

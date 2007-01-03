@@ -448,7 +448,7 @@ xmms_magic_match (xmms_magic_checker_t *c, const gchar *uri)
 		if (tree_match (c, tree)) {
 			gpointer *data = tree->data;
 			XMMS_DBG ("magic plugin detected '%s' (%s)",
-				  (char *)data[1], (char *)data[0]);
+			          (char *)data[1], (char *)data[0]);
 			return (char *) (data[1]);
 		}
 	}
@@ -589,7 +589,7 @@ xmms_magic_plugin_init (xmms_xform_t *xform)
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_MIME, res);
 		xmms_xform_outdata_type_add (xform,
 		                             XMMS_STREAM_TYPE_MIMETYPE,
-					     res,
+		                             res,
 		                             XMMS_STREAM_TYPE_END);
 	}
 

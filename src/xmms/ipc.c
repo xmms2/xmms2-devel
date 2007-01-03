@@ -119,7 +119,7 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 			for (k = 0; k < size; k++) {
 				gchar *buf;
 				if (!xmms_ipc_msg_get_string_alloc (msg, &buf, &len) ||
-					!(arg->values[i].value.list = g_list_prepend (arg->values[i].value.list, buf))) {
+				    !(arg->values[i].value.list = g_list_prepend (arg->values[i].value.list, buf))) {
 					GList * list = arg->values[i].value.list;
 					while (list) {g_free(list->data); list=g_list_remove(list, list); }
 					return FALSE;

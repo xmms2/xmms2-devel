@@ -155,8 +155,8 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 
 	/* Retrieve the attributes */
 	query = g_strdup_printf ("SELECT attr.key AS key, attr.value AS value "
-							 "FROM CollectionOperators AS op, CollectionAttributes AS attr "
-							 "WHERE op.id=%d AND attr.collid=op.id", id);
+	                         "FROM CollectionOperators AS op, CollectionAttributes AS attr "
+	                         "WHERE op.id=%d AND attr.collid=op.id", id);
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
 		const gchar *key, *value;
@@ -173,9 +173,9 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 
 	/* Retrieve the idlist */
 	query = g_strdup_printf ("SELECT idl.mid AS mid "
-							 "FROM CollectionOperators AS op, CollectionIdlists AS idl "
-							 "WHERE op.id=%d AND idl.collid=op.id "
-							 "ORDER BY idl.position", id);
+	                         "FROM CollectionOperators AS op, CollectionIdlists AS idl "
+	                         "WHERE op.id=%d AND idl.collid=op.id "
+	                         "ORDER BY idl.position", id);
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
 
@@ -189,8 +189,8 @@ xmms_collection_dbread_operator (xmms_medialib_session_t *session,
 
 	/* Retrieve the operands */
 	query = g_strdup_printf ("SELECT op.id AS id, op.type AS type "
-							 "FROM CollectionOperators AS op, CollectionConnections AS conn "
-							 "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
+	                         "FROM CollectionOperators AS op, CollectionConnections AS conn "
+	                         "WHERE conn.to_id=%d AND conn.from_id=op.id", id);
 	res = xmms_medialib_select (session, query, NULL);
 	for (n = res; n; n = n->next) {
 		gint id;
@@ -256,7 +256,7 @@ xmms_collection_dbwrite_operator (xmms_medialib_session_t *session,
 		while (xmmsc_coll_operand_list_entry (coll, &op)) {
 			nextid = xmms_collection_dbwrite_operator (session, newid, op);
 			query = g_strdup_printf ("INSERT INTO CollectionConnections VALUES(%d, %d)",
-									 newid, collid);
+			                         newid, collid);
 			xmms_medialib_select (session, query, NULL);
 			g_free (query);
 			newid = nextid;

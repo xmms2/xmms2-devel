@@ -275,7 +275,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 		query_append_intersect_operand (query, dag, coll);
 		query_append_string (query, ")");
 		break;
-	
+
 	case XMMS_COLLECTION_TYPE_IDLIST:
 	case XMMS_COLLECTION_TYPE_QUEUE:
 	case XMMS_COLLECTION_TYPE_PARTYSHUFFLE:

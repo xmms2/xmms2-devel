@@ -141,7 +141,7 @@ xmms_collection_changed_msg_new (xmms_collection_changed_actions_t type,
 {
 	GHashTable *dict;
 	xmms_object_cmd_value_t *val;
-	dict = g_hash_table_new_full (g_str_hash, g_str_equal, 
+	dict = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                              NULL, xmms_object_cmd_value_free);
 	val = xmms_object_cmd_value_int_new (type);
 	g_hash_table_insert (dict, "type", val);
@@ -160,9 +160,9 @@ xmms_collection_changed_msg_send (xmms_coll_dag_t *colldag, GHashTable *dict)
 	g_return_if_fail (dict);
 
 	xmms_object_emit_f (XMMS_OBJECT (colldag),
-			    XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
-			    XMMS_OBJECT_CMD_ARG_DICT,
-			    dict);
+	                    XMMS_IPC_SIGNAL_COLLECTION_CHANGED,
+	                    XMMS_OBJECT_CMD_ARG_DICT,
+	                    dict);
 
 	g_hash_table_destroy (dict);
 }
@@ -220,37 +220,37 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (ret),
 	                             XMMS_IPC_SIGNAL_COLLECTION_CHANGED);
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_COLLECTION_GET, 
-			     XMMS_CMD_FUNC (collection_get));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_GET,
+	                     XMMS_CMD_FUNC (collection_get));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_COLLECTION_LIST, 
-			     XMMS_CMD_FUNC (collection_list));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_LIST,
+	                     XMMS_CMD_FUNC (collection_list));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_COLLECTION_SAVE, 
-			     XMMS_CMD_FUNC (collection_save));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_SAVE,
+	                     XMMS_CMD_FUNC (collection_save));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_COLLECTION_REMOVE, 
-			     XMMS_CMD_FUNC (collection_remove));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_REMOVE,
+	                     XMMS_CMD_FUNC (collection_remove));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_COLLECTION_FIND, 
-			     XMMS_CMD_FUNC (collection_find));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_FIND,
+	                     XMMS_CMD_FUNC (collection_find));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_COLLECTION_RENAME, 
-			     XMMS_CMD_FUNC (collection_rename));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_COLLECTION_RENAME,
+	                     XMMS_CMD_FUNC (collection_rename));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_QUERY_IDS, 
-			     XMMS_CMD_FUNC (query_ids));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_QUERY_IDS,
+	                     XMMS_CMD_FUNC (query_ids));
 
-	xmms_object_cmd_add (XMMS_OBJECT (ret), 
-			     XMMS_IPC_CMD_QUERY_INFOS, 
-			     XMMS_CMD_FUNC (query_infos));
+	xmms_object_cmd_add (XMMS_OBJECT (ret),
+	                     XMMS_IPC_CMD_QUERY_INFOS,
+	                     XMMS_CMD_FUNC (query_infos));
 
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_IDLIST_FROM_PLS,
@@ -540,7 +540,7 @@ xmms_collection_list (xmms_coll_dag_t *dag, gchar *namespace, xmms_error_t *err)
 	g_mutex_unlock (dag->mutex);
 
 	return r;
-}   
+}
 
 
 /** Find all collections in the given namespace that contain a given media.
@@ -1383,7 +1383,7 @@ value_match_save_key (gpointer key, gpointer val, gpointer udata)
 
 	/* value matching and key not ignored, found! */
 	if ((coll == pair->value) &&
-		(pair->key == NULL || strcmp (pair->key, key) != 0)) {
+	    (pair->key == NULL || strcmp (pair->key, key) != 0)) {
 		pair->key = key;
 		found = TRUE;
 	}
@@ -1505,7 +1505,7 @@ strip_references (xmms_coll_dag_t *dag, xmmsc_coll_t *coll, xmmsc_coll_t *parent
 		xmmsc_coll_attribute_get (op, "reference", &target_name);
 		xmmsc_coll_attribute_get (op, "namespace", &target_namespace);
 		if (strcmp (infos->name, target_name) != 0 ||
-			strcmp (infos->namespace, target_namespace) != 0) {
+		    strcmp (infos->namespace, target_namespace) != 0) {
 			xmmsc_coll_operand_list_next (coll);
 			continue;
 		}
@@ -1666,7 +1666,7 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	case XMMS_COLLECTION_TYPE_COMPLEMENT:
 		/* invert result from operand */
 		match = !xmms_collection_media_match_operand (dag, mediainfo, coll,
-                                                      nsid, match_table);
+		                                              nsid, match_table);
 		break;
 
 	case XMMS_COLLECTION_TYPE_HAS:
@@ -1995,7 +1995,7 @@ xmms_collection_media_filter_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 	gboolean case_sens;
 
 	if (filter_get_mediainfo_field_string (coll, mediainfo, &mediaval) &&
-	    filter_get_operator_value_string (coll, &opval) && 
+	    filter_get_operator_value_string (coll, &opval) &&
 	    filter_get_operator_case (coll, &case_sens)) {
 
 		if (case_sens) {
@@ -2032,7 +2032,7 @@ xmms_collection_media_filter_contains (xmms_coll_dag_t *dag, GHashTable *mediain
 	gint i, len;
 
 	if (filter_get_mediainfo_field_string (coll, mediainfo, &buf) &&
-	    filter_get_operator_value_string (coll, &opval) && 
+	    filter_get_operator_value_string (coll, &opval) &&
 	    filter_get_operator_case (coll, &case_sens)) {
 
 		/* Prepare values */

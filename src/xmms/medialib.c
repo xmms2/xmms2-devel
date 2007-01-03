@@ -176,7 +176,7 @@ source_match_pattern (gchar* source, gchar* pattern)
 		match = TRUE;
 	}
 	else if(lpos >= 0 && pattern[lpos] == '*' &&
-			(lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
+	       (lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
 		match = TRUE;
 	}
 
@@ -304,17 +304,17 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_ipc_broadcast_register (XMMS_OBJECT (medialib), XMMS_IPC_SIGNAL_MEDIALIB_ENTRY_UPDATE);
 
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
-	                     XMMS_IPC_CMD_SELECT, 
+	                     XMMS_IPC_CMD_SELECT,
 	                     XMMS_CMD_FUNC (select));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-	                     XMMS_IPC_CMD_INFO, 
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_INFO,
 	                     XMMS_CMD_FUNC (info));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-	                     XMMS_IPC_CMD_ADD_URL, 
- 	                     XMMS_CMD_FUNC (mlib_add));
-	xmms_object_cmd_add (XMMS_OBJECT (medialib), 
-  	                     XMMS_IPC_CMD_REMOVE_ID, 
-  	                     XMMS_CMD_FUNC (mlib_remove));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_ADD_URL,
+	                     XMMS_CMD_FUNC (mlib_add));
+	xmms_object_cmd_add (XMMS_OBJECT (medialib),
+	                     XMMS_IPC_CMD_REMOVE_ID,
+	                     XMMS_CMD_FUNC (mlib_remove));
 	xmms_object_cmd_add (XMMS_OBJECT (medialib),
 	                     XMMS_IPC_CMD_PATH_IMPORT,
 	                     XMMS_CMD_FUNC (path_import));
@@ -368,7 +368,7 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	medialib->sources = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
 	session = xmms_medialib_begin_write ();
-	sqlite3_exec (session->sql, "select id, source from Sources", 
+	sqlite3_exec (session->sql, "select id, source from Sources",
 	              add_to_source, medialib->sources, NULL);
 	xmms_medialib_end (session);
 
@@ -733,7 +733,7 @@ process_file (xmms_medialib_session_t *session,
 		}
 	} else if (playlist != NULL) {
 		xmms_playlist_add_entry (session->medialib->playlist,
-                                 playlist, ret, error);
+		                         playlist, ret, error);
 	}
 }
 
@@ -792,7 +792,7 @@ cmp_val (gconstpointer a, gconstpointer b)
 /* code ported over from CLI's "radd" command. */
 static gboolean
 process_dir (const gchar *directory,
-			 GList **ret,
+             GList **ret,
              xmms_error_t *error)
 {
 	GList *list, *n;

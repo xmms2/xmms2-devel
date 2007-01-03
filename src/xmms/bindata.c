@@ -62,7 +62,7 @@ static void md5_finish(md5_state_t *pms, md5_byte_t digest[16]);
 
 static gchar *xmms_bindata_add (xmms_bindata_t *bindata, GString *data, xmms_error_t *err);
 static GString *xmms_bindata_retrieve (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *err);
-static void xmms_bindata_remove (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *); 
+static void xmms_bindata_remove (xmms_bindata_t *bindata, gchar *hash, xmms_error_t *);
 static gboolean _xmms_bindata_add (xmms_bindata_t *bindata, const guchar *data, gsize len, gchar hash[33], xmms_error_t *err);
 
 XMMS_CMD_DEFINE (get_data, xmms_bindata_retrieve, xmms_bindata_t *, BIN, STRING, NONE);
