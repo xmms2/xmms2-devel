@@ -403,7 +403,7 @@ query_append_operand (coll_query_t *query, xmms_coll_dag_t *dag, xmmsc_coll_t *c
 	if (!xmmsc_coll_operand_list_entry (coll, &op)) {
 		/* Ref'd coll not saved as operand, look for it */
 		if (xmmsc_coll_attribute_get (coll, "reference", &target_name) &&
-			xmmsc_coll_attribute_get (coll, "namespace", &target_ns)) {
+		    xmmsc_coll_attribute_get (coll, "namespace", &target_ns)) {
 
 			target_nsid = xmms_collection_get_namespace_id (target_ns);
 			op = xmms_collection_get_pointer (dag, target_name, target_nsid);

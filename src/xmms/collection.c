@@ -1246,7 +1246,7 @@ xmms_collection_get_namespace_string (xmms_collection_namespace_id_t nsid)
 
 
 /** Check whether a collection structure contains a reference to a given collection.
- * 
+ *
  * @param dag  The collection DAG.
  * @param coll  The collection to inspect for reference.
  * @param tg_name  The name of the collection to find a reference to.
