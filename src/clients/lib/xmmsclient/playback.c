@@ -197,7 +197,7 @@ xmmsc_playback_status (xmmsc_connection_t *c)
 	x_check_conn (c, NULL);
 
 	return xmmsc_send_msg_no_arg (c, XMMS_IPC_OBJECT_OUTPUT,
-								  XMMS_IPC_CMD_OUTPUT_STATUS);
+	                              XMMS_IPC_CMD_OUTPUT_STATUS);
 }
 
 /**

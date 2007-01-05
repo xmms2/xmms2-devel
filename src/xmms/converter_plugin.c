@@ -133,7 +133,7 @@ xmms_converter_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_converter_plugin_init;
 	methods.destroy = xmms_converter_plugin_destroy;
 	methods.read = xmms_converter_plugin_read;
@@ -166,8 +166,8 @@ xmms_converter_new (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *gt)
 }
 */
 
-XMMS_XFORM_BUILTIN(converter,
-                   "Sample format converter",
-                   XMMS_VERSION,
-                   "Sample format converter",
-                   xmms_converter_plugin_setup);
+XMMS_XFORM_BUILTIN (converter,
+                    "Sample format converter",
+                    XMMS_VERSION,
+                    "Sample format converter",
+                    xmms_converter_plugin_setup);

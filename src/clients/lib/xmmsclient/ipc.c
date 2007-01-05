@@ -290,16 +290,16 @@ xmmsc_ipc_wait_for_event (xmmsc_ipc_t *ipc, unsigned int timeout)
 		FD_SET (fd, &wfdset);
 	}
 
-	if (select(fd + 1, &rfdset, &wfdset, NULL, &tmout) == SOCKET_ERROR) {
+	if (select (fd + 1, &rfdset, &wfdset, NULL, &tmout) == SOCKET_ERROR) {
 		return;
 	}
 
-	if (FD_ISSET(fd, &rfdset)) {
+	if (FD_ISSET (fd, &rfdset)) {
 		if (!xmmsc_ipc_io_in_callback (ipc)) {
 			return;
 		}
 	}
-	if (FD_ISSET(fd, &wfdset)) {
+	if (FD_ISSET (fd, &wfdset)) {
 		xmmsc_ipc_io_out_callback (ipc);
 	}
 }

@@ -54,7 +54,7 @@ struct xmms_visualisation_St {
 gfloat window[FFT_LEN];
 
 static xmms_visualisation_t *vis;
-static void fft(gint16 *samples, gfloat *spec);
+static void fft (gint16 *samples, gfloat *spec);
 static void xmms_visualisation_destroy (xmms_object_t *object);
 
 /**
@@ -78,7 +78,7 @@ xmms_visualisation_init ()
 
 	/* calculate Hann window used to reduce spectral leakage */
 	for (i = 0; i < FFT_LEN; i++) {
-		window[i] = 0.5 - 0.5 * cos(2.0*M_PI*i/FFT_LEN);
+		window[i] = 0.5 - 0.5 * cos (2.0*M_PI*i/FFT_LEN);
 	}
 
 }

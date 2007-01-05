@@ -49,11 +49,11 @@ static void xmms_sid_get_media_info (xmms_xform_t *xform);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("sid",
-                  "SID Decoder",
-                  XMMS_VERSION,
-                  "libsidplay2 based SID decoder",
-                  xmms_sid_plugin_setup);
+XMMS_XFORM_PLUGIN ("sid",
+                   "SID Decoder",
+                   XMMS_VERSION,
+                   "libsidplay2 based SID decoder",
+                   xmms_sid_plugin_setup);
 
 static gboolean
 xmms_sid_plugin_setup (xmms_xform_plugin_t *xform_plugin)

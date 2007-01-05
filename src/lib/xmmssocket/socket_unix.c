@@ -2,7 +2,7 @@
 #include "xmmsc/xmmsc_sockets.h"
 
 
-int xmms_sockets_initialize() {
+int xmms_sockets_initialize () {
 	return 1;
 }
 
@@ -12,7 +12,7 @@ int xmms_sockets_initialize() {
  * On success, returns 1.
  * On failure, closes socket and returns 0.
  */
-int xmms_socket_set_nonblock(xmms_socket_t socket) {
+int xmms_socket_set_nonblock (xmms_socket_t socket) {
 
 	int flags;
 	flags = fcntl (socket, F_GETFL, 0);
@@ -33,17 +33,17 @@ int xmms_socket_set_nonblock(xmms_socket_t socket) {
 }
 
 
-int xmms_socket_valid(xmms_socket_t socket) {
+int xmms_socket_valid (xmms_socket_t socket) {
 	if (socket < 0) {
 		return 0;
 	}
 	return 1;
 }
 
-void xmms_socket_close(xmms_socket_t socket) {
-	close(socket);
+void xmms_socket_close (xmms_socket_t socket) {
+	close (socket);
 }
 
-int xmms_socket_errno() {
+int xmms_socket_errno () {
 	return errno;
 }

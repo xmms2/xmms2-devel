@@ -114,9 +114,9 @@ xmms_vocoder_init (xmms_xform_t *xform)
 	priv->channels = xmms_xform_indata_get_int (xform, XMMS_STREAM_TYPE_FMT_CHANNELS);
 	priv->bufsize = priv->winsize * priv->channels;
 
-	priv->iobuf = g_malloc (priv->bufsize * sizeof(gint16));
-	priv->procbuf = g_malloc (priv->bufsize * sizeof(pvocoder_sample_t));
-	priv->resbuf = g_malloc (priv->bufsize * sizeof(gfloat));
+	priv->iobuf = g_malloc (priv->bufsize * sizeof (gint16));
+	priv->procbuf = g_malloc (priv->bufsize * sizeof (pvocoder_sample_t));
+	priv->resbuf = g_malloc (priv->bufsize * sizeof (gfloat));
 	priv->outbuf = g_string_new (NULL);
 
 	priv->pvoc = pvocoder_init (priv->winsize, priv->channels);
@@ -263,7 +263,7 @@ xmms_vocoder_read (xmms_xform_t *xform, xmms_sample_t *buffer, gint len,
 
 				memset (data->procbuf, 0, data->bufsize *
 				        sizeof (pvocoder_sample_t));
-				while (read < data->bufsize * sizeof(gint16)) {
+				while (read < data->bufsize * sizeof (gint16)) {
 					ret = xmms_xform_read (xform,
 					                       data->iobuf+read,
 					                       data->bufsize *
@@ -300,7 +300,7 @@ xmms_vocoder_read (xmms_xform_t *xform, xmms_sample_t *buffer, gint len,
 		g_string_append_len (data->outbuf, data->iobuf,
 		                     data->resdata.output_frames_gen *
 		                     data->channels *
-		                     sizeof(gint16));
+		                     sizeof (gint16));
 		size = MIN (data->outbuf->len, len);
 	}
 

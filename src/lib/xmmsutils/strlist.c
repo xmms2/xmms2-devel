@@ -70,9 +70,9 @@ xmms_vargs_to_strlist (char *first, ...)
 	if (first == NULL)
 		abort ();
 
-	va_start(ap, first);
+	va_start (ap, first);
 	ret = xmms_valist_to_strlist (first, ap);
-	va_end(ap);
+	va_end (ap);
 
 	return ret;
 }
@@ -106,7 +106,7 @@ xmms_strlist_destroy (char **data)
 	for (i = 0; data[i] != NULL; i++) {
 		free (data[i]);
 	}
-	free(data);
+	free (data);
 }
 
 /**
@@ -119,7 +119,7 @@ char **
 xmms_strlist_prepend_copy (char **data, char *newstr) {
 	int i;
 	char **ret;
-       
+
 	ret = malloc ((xmms_strlist_len (data) + 2) * sizeof (char *));
 	ret[0] = strdup (newstr);
 

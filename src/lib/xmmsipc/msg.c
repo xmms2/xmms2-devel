@@ -395,10 +395,10 @@ xmms_ipc_msg_put_collection (xmms_ipc_msg_t *msg, xmmsc_coll_t *coll)
 
 	/* idlist counter and content */
 	idlist = xmmsc_coll_get_idlist (coll);
-	for(n = 0; idlist[n] != 0; n++) { }
+	for (n = 0; idlist[n] != 0; n++) { }
 
 	xmms_ipc_msg_put_uint32 (msg, n);
-	for(n = 0; idlist[n] != 0; n++) {
+	for (n = 0; idlist[n] != 0; n++) {
 		xmms_ipc_msg_put_uint32 (msg, idlist[n]);
 	}
 
@@ -653,7 +653,7 @@ xmms_ipc_msg_get_collection_alloc (xmms_ipc_msg_t *msg, xmmsc_coll_t **coll)
 	return true;
 
 err:
-	if(idlist != NULL) {
+	if (idlist != NULL) {
 		free (idlist);
 	}
 

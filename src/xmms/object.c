@@ -389,7 +389,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 
 	xmms_object_cmd_arg_init (&arg);
 
-	va_start(ap, type);
+	va_start (ap, type);
 
 	switch (type) {
 		case XMMS_OBJECT_CMD_ARG_UINT32:
@@ -419,7 +419,7 @@ xmms_object_emit_f (xmms_object_t *object, guint32 signalid,
 			arg.retval = xmms_object_cmd_value_none_new ();
 			break;
 	}
-	va_end(ap);
+	va_end (ap);
 
 	xmms_object_emit (object, signalid, &arg);
 

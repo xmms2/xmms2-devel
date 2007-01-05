@@ -175,8 +175,8 @@ source_match_pattern (gchar* source, gchar* pattern)
 	if (g_strcasecmp (pattern, source) == 0) {
 		match = TRUE;
 	}
-	else if(lpos >= 0 && pattern[lpos] == '*' &&
-	       (lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
+	else if (lpos >= 0 && pattern[lpos] == '*' &&
+	        (lpos == 0 || g_strncasecmp (source, pattern, lpos) == 0)) {
 		match = TRUE;
 	}
 
@@ -195,11 +195,11 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 
 	mlib = sqlite3_user_data (context);
 
-	if (sqlite3_value_type(val[0]) != SQLITE_INTEGER) {
+	if (sqlite3_value_type (val[0]) != SQLITE_INTEGER) {
 		sqlite3_result_error (context, "First argument to xmms_source_pref should be a integer", -1);
 		return;
 	}
-	if (sqlite3_value_type(val[1]) != SQLITE3_TEXT) {
+	if (sqlite3_value_type (val[1]) != SQLITE3_TEXT) {
 		sqlite3_result_error (context, "Second argument to xmms_source_pref should be a string", -1);
 		return;
 	}
@@ -249,7 +249,7 @@ xmms_medialib_source_to_id (xmms_medialib_session_t *session, gchar *source)
 		                         source);
 		XMMS_DBG ("Added source %s with id %d", source, ret);
 		g_mutex_lock (session->medialib->source_lock);
-		g_hash_table_insert (session->medialib->sources, GUINT_TO_POINTER(ret), g_strdup (source));
+		g_hash_table_insert (session->medialib->sources, GUINT_TO_POINTER (ret), g_strdup (source));
 		g_mutex_unlock (session->medialib->source_lock);
 	}
 
@@ -349,14 +349,14 @@ xmms_medialib_init (xmms_playlist_t *playlist)
 	xmms_medialib_debug_mutex = g_mutex_new ();
 	global_medialib_session = NULL;
 
-	if (sqlite3_libversion_number() < 3002004) {
+	if (sqlite3_libversion_number () < 3002004) {
 		xmms_log_info ("**************************************************************");
 		xmms_log_info ("* Using thread hack to compensate for old sqlite version!");
 		xmms_log_info ("* This can be a huge performance penalty - consider upgrading");
 		xmms_log_info ("**************************************************************");
 		/** Create a global session, this is only used when the sqlite version
 		* doesn't support concurrent sessions */
-	 	global_medialib_session = xmms_medialib_session_new ("global", 0);
+		global_medialib_session = xmms_medialib_session_new ("global", 0);
 	}
 
 	global_medialib_session_mutex = g_mutex_new ();
@@ -1204,7 +1204,7 @@ xmms_medialib_property_remove (xmms_medialib_t *medialib, guint32 entry,
 	xmms_sqlite_exec (session->sql,
 	                  "delete from Media where source=%d and "
 	                  "key='%s' and id=%d", sourceid, key, entry);
-	xmms_medialib_end(session);
+	xmms_medialib_end (session);
 
 	xmms_medialib_entry_send_update (entry);
 }
@@ -1375,7 +1375,7 @@ xmms_medialib_url_encode (const gchar *path)
 	gchar *res;
 	int i = 0, j = 0;
 
-	res = g_malloc (strlen(path) * 3 + 1);
+	res = g_malloc (strlen (path) * 3 + 1);
 	if (!res)
 		return NULL;
 

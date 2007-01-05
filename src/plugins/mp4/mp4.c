@@ -219,7 +219,7 @@ xmms_mp4_init (xmms_xform_t *xform)
 		XMMS_DBG ("Can't find AAC audio track from MP4 file\n");
 		goto err;
 	}
-	data->numsamples = mp4ff_num_samples(data->mp4ff, data->track);
+	data->numsamples = mp4ff_num_samples (data->mp4ff, data->track);
 	mp4ff_get_decoder_config (data->mp4ff, data->track, &tmpbuf,
 	                          &tmpbuflen);
 
@@ -303,7 +303,7 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 			                     bytes_read - data->toskip);
 			data->toskip = 0;
 		} else if (frameInfo.error > 0) {
-			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage(frameInfo.error));
+			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage (frameInfo.error));
 			return -1;
 		}
 
@@ -547,15 +547,15 @@ xmms_mp4_get_aac_track (mp4ff_t *infile)
 
 		/* these identifiers are mostly from VLC code */
 		switch (object_type) {
-		case 0x40:	/* MPEG-4 audio */
-		case 0x66:	/* MPEG-2 AAC */
-		case 0x67:	/* MPEG-2 AAC LC */
-		case 0x68:	/* MPEG-2 AAC SSR */
+		case 0x40: /* MPEG-4 audio */
+		case 0x66: /* MPEG-2 AAC */
+		case 0x67: /* MPEG-2 AAC LC */
+		case 0x68: /* MPEG-2 AAC SSR */
 			return i;
-		case 0x69:	/* MPEG-2 audio */
-		case 0x6B:	/* MPEG-1 audio */
+		case 0x69: /* MPEG-2 audio */
+		case 0x6B: /* MPEG-1 audio */
 			continue;
-		case 0x00:	/* ALAC audio, 0x00 sounds quite fishy... */
+		case 0x00: /* ALAC audio, 0x00 sounds quite fishy... */
 			continue;
 		default:
 			continue;

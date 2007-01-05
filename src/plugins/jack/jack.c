@@ -262,7 +262,7 @@ xmms_jack_callback (jack_nframes_t nframes, void *arg)
 	if (data->state == PLAYING) {
 		gulong tmp;
 
-	   	/* frames we have left to write to jack */
+		/* frames we have left to write to jack */
 		gulong jackFramesAvailable = nframes;
 
 		/* frames we have available this loop */
@@ -289,7 +289,7 @@ xmms_jack_callback (jack_nframes_t nframes, void *arg)
 			return 0;
 		}
 
-		tmp = jackFramesAvailable * sizeof(gfloat) * data->num_input_channels;
+		tmp = jackFramesAvailable * sizeof (gfloat) * data->num_input_channels;
 		XMMS_CALLBACK_DBG ("trying to read %ld bytes\n", tmp);
 
 		inputFramesAvailable = xmms_output_read (output,
@@ -378,7 +378,7 @@ xmms_jack_callback (jack_nframes_t nframes, void *arg)
 		/* and transition to STOPPED */
 		if (data->state == RESET) {
 
-		   	/* transition to STOPPED */
+			/* transition to STOPPED */
 			data->state = STOPPED;
 
 		}
@@ -555,7 +555,7 @@ xmms_jack_create_channel_names (xmms_jack_data_t *data)
 		data->channel_names[x] = g_strdup (channel_name);
 	}
 
-   	/* null terminate the string list */
+	/* null terminate the string list */
 	data->channel_names[data->num_output_channels] = NULL;
 }
 
@@ -581,15 +581,15 @@ xmms_jack_close_device (xmms_output_t *output)
 
 	xmms_jack_reset (data);
 
-   	/* reset client */
+	/* reset client */
 	data->client = NULL;
 
-   	/* free buffer memory */
+	/* free buffer memory */
 	g_free (data->sound_buffer);
 
 	data->sound_buffer = NULL;
 
-   	/* zero out size of the buffer */
+	/* zero out size of the buffer */
 	data->buffer_size  = 0;
 
 	/* free up the output_port array */
@@ -689,7 +689,7 @@ xmms_jack_open_device (xmms_output_t *output)
 	data->output_port = g_new (jack_port_t *, data->num_output_channels);
 
 	/* create the output ports */
-	for(i = 0; i < data->num_output_channels; i++) {
+	for (i = 0; i < data->num_output_channels; i++) {
 		gchar portname[32];
 		g_snprintf (portname, sizeof (portname), "out_%d", i);
 		XMMS_DBG ("port %d is named '%s'", i, portname);
@@ -791,7 +791,7 @@ xmms_jack_open (xmms_output_t *output, guint bytes_per_channel,
 
 	output_channels = input_channels = channels;
 
-   	/* flushes all queued buffers, sets status
+	/* flushes all queued buffers, sets status
 	 * to STOPPED and resets some variables */
 	xmms_jack_reset (data);
 
@@ -1019,7 +1019,7 @@ xmms_jack_start (xmms_output_t *output)
 	XMMS_DBG ("xmms_jack_start");
 
 	/* if we are already open, just return true */
-	if(data->client) {
+	if (data->client) {
 		return TRUE;
 	}
 
@@ -1040,7 +1040,7 @@ xmms_jack_start (xmms_output_t *output)
 			return FALSE;
 		}
 
-		XMMS_DBG("success!!");
+		XMMS_DBG ("success!!");
 	} else if (ret != ERR_SUCCESS) {
 		xmms_log_error ("failed to open jack with xmms_jack_open(), error %d",
 		                ret);

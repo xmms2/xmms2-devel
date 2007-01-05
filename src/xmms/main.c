@@ -114,7 +114,7 @@ stats (xmms_object_t *object, xmms_error_t *error)
 	g_hash_table_insert (ret, g_strdup ("version"),
 	                     xmms_object_cmd_value_str_new (XMMS_VERSION));
 	g_hash_table_insert (ret, g_strdup ("uptime"),
-	                     xmms_object_cmd_value_int_new (time(NULL)-starttime));
+	                     xmms_object_cmd_value_int_new (time (NULL)-starttime));
 
 	return ret;
 }
@@ -149,7 +149,7 @@ do_scriptdir (const gchar *scriptdir)
 	while ((f = g_dir_read_name (dir))) {
 		argv[0] = g_strdup_printf ("%s/%s", scriptdir, f);
 		if (g_file_test (argv[0], G_FILE_TEST_IS_EXECUTABLE)) {
-			g_spawn_async (g_get_home_dir(),
+			g_spawn_async (g_get_home_dir (),
 			               argv, NULL, 0,
 			               NULL, NULL, NULL, &err);
 		}
@@ -182,7 +182,7 @@ load_config ()
 	}
 	g_free (configdir);
 
-	xmms_config_init(conffile);
+	xmms_config_init (conffile);
 }
 
 /**
@@ -233,7 +233,7 @@ xmms_main_destroy (xmms_object_t *object)
 	xmms_object_cmd_call (XMMS_OBJECT (mainobj->output),
 	                      XMMS_IPC_CMD_STOP, &arg);
 
-	sleep(1); /* wait for the output thread to end */
+	sleep (1); /* wait for the output thread to end */
 	xmms_object_unref (mainobj->output);
 
 	xmms_object_unref (xform_obj);
@@ -265,7 +265,7 @@ kill_server (gpointer object) {
 	xmms_object_emit_f (XMMS_OBJECT (object),
 	                    XMMS_IPC_SIGNAL_QUIT,
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
-	                    time(NULL)-((xmms_main_t*)object)->starttime);
+	                    time (NULL)-((xmms_main_t*)object)->starttime);
 
 	xmms_object_unref (object);
 
@@ -459,7 +459,7 @@ main (int argc, char **argv)
 	}
 
 	if (!xmms_ipc_setup_server (ipcpath)) {
-		xmms_ipc_shutdown();
+		xmms_ipc_shutdown ();
 		xmms_log_fatal ("IPC failed to init!");
 	}
 

@@ -118,7 +118,7 @@ xmms_alsa_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
 
-	XMMS_OUTPUT_METHODS_INIT(methods);
+	XMMS_OUTPUT_METHODS_INIT (methods);
 
 	methods.new = xmms_alsa_new;
 	methods.destroy = xmms_alsa_destroy;
@@ -215,7 +215,7 @@ xmms_alsa_probe_modes (xmms_output_t *output, xmms_alsa_data_t *data)
 
 	err = snd_pcm_open (&(data->pcm), dev, SND_PCM_STREAM_PLAYBACK,
 	                    SND_PCM_NONBLOCK);
-   	if (err < 0) {
+	if (err < 0) {
 		xmms_log_error ("Couldn't open device: %s", dev);
 		return FALSE;
 	}
@@ -519,7 +519,7 @@ xmms_alsa_mixer_setup (xmms_output_t *output, xmms_alsa_data_t *data)
 	err = snd_mixer_attach (data->mixer, dev);
 	if (err < 0) {
 		xmms_log_error ("Attaching to mixer %s failed: %s", dev,
-		                snd_strerror(err));
+		                snd_strerror (err));
 		snd_mixer_close (data->mixer);
 		data->mixer = NULL;
 

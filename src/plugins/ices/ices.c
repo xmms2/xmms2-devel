@@ -61,18 +61,18 @@ static gboolean xmms_oss_volume_get (xmms_output_t *output,
  */
 
 
-XMMS_OUTPUT_PLUGIN("ices",
-                   "ICES Output",
-                   XMMS_VERSION,
-                   "Icecast source output plugin",
-                   xmms_ices_plugin_setup);
+XMMS_OUTPUT_PLUGIN ("ices",
+                    "ICES Output",
+                    XMMS_VERSION,
+                    "Icecast source output plugin",
+                    xmms_ices_plugin_setup);
 
 static gboolean
 xmms_ices_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
 	
-	XMMS_OUTPUT_METHODS_INIT(methods);
+	XMMS_OUTPUT_METHODS_INIT (methods);
 	methods.new = xmms_ices_new;
 	methods.destroy = xmms_ices_destroy;
 

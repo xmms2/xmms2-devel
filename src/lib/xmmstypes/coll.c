@@ -28,19 +28,19 @@ struct xmmsc_coll_St {
 
 	/* refcounting */
 	int ref;
- 
+
 	xmmsc_coll_type_t type;
- 
+
 	x_list_t *operands;
 	x_list_t *curr_op;
 
 	/* Stack of curr_op pointers to save/restore */
 	x_list_t *curr_stack;
- 
+
 	/* stored as (key1, val1, key2, val2, ...) */
 	x_list_t *attributes;
 	x_list_t *curr_att;
- 
+
 	/* List of ids, 0-terminated. */
 	uint32_t *idlist;
 	size_t idlist_size;
@@ -68,7 +68,7 @@ static int xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize);
  *
  * @param coll the collection to reference.
  */
-void 
+void
 xmmsc_coll_ref (xmmsc_coll_t *coll)
 {
 	x_return_if_fail (coll);
@@ -88,12 +88,12 @@ xmmsc_coll_new (xmmsc_coll_type_t type)
 	xmmsc_coll_t *coll;
 
 	if (!(coll = x_new0 (xmmsc_coll_t, 1))) {
-		x_oom();
+		x_oom ();
 		return NULL;
 	}
 
 	if (!(coll->idlist = x_new0 (uint32_t, 1))) {
-		x_oom();
+		x_oom ();
 		return NULL;
 	}
 	coll->idlist_size = 1;
@@ -145,7 +145,7 @@ xmmsc_coll_free (xmmsc_coll_t *coll)
  *
  * @param coll the collection to unref.
  */
-void 
+void
 xmmsc_coll_unref (xmmsc_coll_t *coll)
 {
 	x_return_if_fail (coll);
@@ -197,7 +197,7 @@ xmmsc_coll_set_idlist (xmmsc_coll_t *coll, unsigned int ids[])
 
 	free (coll->idlist);
 	if (!(coll->idlist = x_new0 (uint32_t, size))) {
-		x_oom();
+		x_oom ();
 		return;
 	}
 
@@ -246,7 +246,7 @@ xmmsc_coll_remove_operand (xmmsc_coll_t *coll, xmmsc_coll_t *op)
 
 	/* Find the entry, abort if not in the list */
 	entry = x_list_find (coll->operands, op);
-	if(entry == NULL) {
+	if (entry == NULL) {
 		return;
 	}
 
@@ -441,7 +441,7 @@ xmmsc_coll_idlist_get_size (xmmsc_coll_t *coll)
 }
 
 
- 
+
 /**
  * Return the type of the collection.
  * @param coll  The collection to consider.
@@ -689,7 +689,7 @@ xmmsc_coll_attribute_get (xmmsc_coll_t *coll, const char *key, char **value)
  * Iterate over all key/value-pair of the collection attributes.
  *
  * Calls specified function for each key/value-pair of the attribute list.
- * 
+ *
  * void function (const char *key, const char *value, void *user_data);
  *
  * @param coll the #xmmsc_coll_t.
@@ -706,7 +706,7 @@ xmmsc_coll_attribute_foreach (xmmsc_coll_t *coll,
 		const char *val = NULL;
 		if (n->next) {
 			val = n->next->data;
-		} 
+		}
 		func ((const char*)n->data, val, user_data);
 		n = x_list_next (n); /* skip data part */
 	}
@@ -793,10 +793,10 @@ xmmsc_coll_idlist_resize (xmmsc_coll_t *coll, size_t newsize)
 {
 	uint32_t *newmem;
 
-	newmem = realloc (coll->idlist, newsize * sizeof(uint32_t));
+	newmem = realloc (coll->idlist, newsize * sizeof (uint32_t));
 
 	if (newmem == NULL) {
-		x_oom();
+		x_oom ();
 		return 0;
 	}
 

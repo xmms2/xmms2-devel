@@ -143,7 +143,7 @@ xmmsc_coll_remove (xmmsc_connection_t *conn,
 	return res;
 }
 
- 
+
 /**
  * Find all collections in the given namespace which match the given
  * media.  The names of these collections is returned as a list.
@@ -199,7 +199,7 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
 	return res;
 }
 
- 
+
 /**
  * List the ids of all media matched by the given collection.
  * A list of ordering properties can be specified, as well as offsets
@@ -212,7 +212,7 @@ xmmsc_result_t* xmmsc_coll_rename (xmmsc_connection_t *conn,
  * @param limit_len  The maximum number of entries to retrieve (0 to disable).
  */
 xmmsc_result_t*
-xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll, 
+xmmsc_coll_query_ids (xmmsc_connection_t *conn, xmmsc_coll_t *coll,
                       const char **order, unsigned int limit_start,
                       unsigned int limit_len)
 {

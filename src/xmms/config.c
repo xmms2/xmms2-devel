@@ -446,7 +446,7 @@ xmms_config_parse_start (GMarkupParseContext *ctx,
 			return;
 		case XMMS_CONFIG_STATE_START:
 			/* check config version here */
-			attr = lookup_attribute(attr_name, attr_data, "version");
+			attr = lookup_attribute (attr_name, attr_data, "version");
 			if (attr) {
 				if (strcmp (attr, "0.02") == 0) {
 					config->version = 2;
@@ -667,7 +667,7 @@ clear_config (xmms_config_t *config)
 
 	config->version = XMMS_CONFIG_VERSION;
 
-	g_free(config->value_name);
+	g_free (config->value_name);
 	config->value_name = NULL;
 }
 

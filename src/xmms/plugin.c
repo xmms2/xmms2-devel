@@ -516,7 +516,7 @@ xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, g
 			if (!func (plugin, user_data))
 				break;
 		}
-	}	
+	}
 }
 
 /**

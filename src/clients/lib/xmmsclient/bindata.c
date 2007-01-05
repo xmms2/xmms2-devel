@@ -31,7 +31,7 @@
 xmmsc_result_t *
 xmmsc_bindata_add (xmmsc_connection_t *c,
                    const unsigned char *data,
-				   unsigned int len)
+                   unsigned int len)
 {
 	xmms_ipc_msg_t *msg;
 

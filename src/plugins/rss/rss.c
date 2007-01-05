@@ -32,17 +32,17 @@ static gboolean xmms_rss_init (xmms_xform_t *xform);
 static gboolean xmms_rss_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error);
 static void xmms_rss_destroy (xmms_xform_t *xform);
 
-XMMS_XFORM_PLUGIN("rss",
-                  "reader for rss podcasts",
-                  XMMS_VERSION,
-                  "reader for rss podcasts",
-                  xmms_rss_plugin_setup);
+XMMS_XFORM_PLUGIN ("rss",
+                   "reader for rss podcasts",
+                   XMMS_VERSION,
+                   "reader for rss podcasts",
+                   xmms_rss_plugin_setup);
 
 static gboolean
 xmms_rss_plugin_setup (xmms_xform_plugin_t *xform_plugin) {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_rss_init;
 	methods.browse = xmms_rss_browse;
 	methods.destroy = xmms_rss_destroy;
@@ -77,7 +77,7 @@ static void
 xmms_rss_start_element (void *udata, const xmlChar *name, const xmlChar **attrs) {
 	int i;
 
-	XMMS_DBG("start elem %s", name);
+	XMMS_DBG ("start elem %s", name);
 
 	if (xmlStrncmp (name, (xmlChar *)"enclosure", 9) != 0)
 		return;

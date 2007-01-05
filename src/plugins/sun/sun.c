@@ -79,7 +79,7 @@ static struct {
 #if G_BYTE_ORDER == G_LITTLE_ENDIAN
 	{XMMS_SAMPLE_FORMAT_S16, AUDIO_ENCODING_SLINEAR_LE, 16},
 	{XMMS_SAMPLE_FORMAT_U16, AUDIO_ENCODING_ULINEAR_LE, 16},
-#else	
+#else
 	{XMMS_SAMPLE_FORMAT_S16, AUDIO_ENCODING_SLINEAR_BE, 16},
 	{XMMS_SAMPLE_FORMAT_U16, AUDIO_ENCODING_ULINEAR_BE, 16},
 #endif
@@ -246,9 +246,9 @@ xmms_sun_new (xmms_output_t *output)
 		return FALSE;
 	}
 	
-	AUDIO_INITINFO(&info);
+	AUDIO_INITINFO (&info);
 
-	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		
 		support = 0;
 		enc.index = 0;
@@ -267,21 +267,21 @@ xmms_sun_new (xmms_output_t *output)
 			continue;
 		}
 
-		for (j = 0; j < G_N_ELEMENTS(rates); j++) {
-			for (k = 1; k <= 2; k++) { 			/* 1 or 2 channels */
+		for (j = 0; j < G_N_ELEMENTS (rates); j++) {
+			for (k = 1; k <= 2; k++) { /* 1 or 2 channels */
 
 				info.play.sample_rate = rates[j];
 				info.play.channels = k;
 
 				if (ioctl (tmp_audio_fd, AUDIO_SETINFO, &info) == 0) {
-					xmms_output_format_add(output, formats[i].xmms_fmt,
-					                       info.play.channels,
-					                       info.play.sample_rate);
+					xmms_output_format_add (output, formats[i].xmms_fmt,
+					                        info.play.channels,
+					                        info.play.sample_rate);
 				}
 			}
 		}
 	}
-	close(tmp_audio_fd);
+	close (tmp_audio_fd);
 
 	return TRUE;
 }
@@ -325,7 +325,7 @@ xmms_sun_open (xmms_output_t *output)
 	const xmms_config_property_t *val;
 	const gchar *dev;
 	
-	XMMS_DBG ("XMMS_SUN_OPEN");	
+	XMMS_DBG ("XMMS_SUN_OPEN");
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
@@ -386,10 +386,10 @@ xmms_sun_close (xmms_output_t *output)
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 	
-	XMMS_DBG("XMMS_SUN_CLOSE");
+	XMMS_DBG ("XMMS_SUN_CLOSE");
 	
 	if (close (data->fd) < 0) {
-		xmms_log_error ("Unable to close device (%s)", strerror(errno));
+		xmms_log_error ("Unable to close device (%s)", strerror (errno));
 	}
 }
 
@@ -407,7 +407,7 @@ xmms_sun_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpoint
 	xmms_output_t *output;
 	const gchar *newval;
 	
-	XMMS_DBG ("XMMS_SUN_MIXER_CONFIG_CHANGED");	
+	XMMS_DBG ("XMMS_SUN_MIXER_CONFIG_CHANGED");
 	
 	g_return_if_fail (userdata);
 	output = userdata;
@@ -453,12 +453,12 @@ xmms_sun_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 	
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
-	g_return_val_if_fail (data, FALSE);	
+	g_return_val_if_fail (data, FALSE);
 
-	AUDIO_INITINFO(&info);
+	AUDIO_INITINFO (&info);
 	
 	/* translate the sample format */
-	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		if (formats[i].xmms_fmt == format->format) {
 			info.play.encoding = formats[i].sun_encoding;
 			info.play.precision = formats[i].sun_precision;
@@ -468,7 +468,7 @@ xmms_sun_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 	info.play.sample_rate = format->samplerate;
 	info.play.channels = format->channels;
 
-	if (ioctl (data->fd, AUDIO_SETINFO, &info) < 0) {	
+	if (ioctl (data->fd, AUDIO_SETINFO, &info) < 0) {
 		XMMS_DBG ("unable to change the format");
 		return FALSE;
 	} else {
@@ -507,7 +507,7 @@ xmms_sun_mixer_set (xmms_output_t *output, gint left, gint right)
 		return FALSE;
 	}
 	
-	AUDIO_INITINFO(&info);
+	AUDIO_INITINFO (&info);
 	
 	for (info.index = 0; ioctl (data->mixerfd,
 	     AUDIO_MIXER_DEVINFO, &info) >= 0; info.index++) {
@@ -601,7 +601,7 @@ xmms_sun_buffersize_get (xmms_output_t *output)
 	if (ioctl (data->fd, AUDIO_GETINFO, &info) < 0) {
 		xmms_log_error ("AUDIO_GETINFO: %s", strerror (errno));
 		return FALSE;
-	}	
+	}
 #if defined(XMMS_OS_OPENBSD) || defined(XMMS_OS_NETBSD)
 	pending_bytes = info.play.seek * (info.play.precision / 8);
 #else  // XMMS_OS_SOLARIS
@@ -619,13 +619,13 @@ xmms_sun_buffersize_get (xmms_output_t *output)
 static void
 xmms_sun_flush (xmms_output_t *output)
 {
-	xmms_sun_data_t *data;	
+	xmms_sun_data_t *data;
 
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
 
-	XMMS_DBG("XMMS_SUN_FLUSH");
+	XMMS_DBG ("XMMS_SUN_FLUSH");
 
 	if (ioctl (data->fd, AUDIO_FLUSH, NULL) < 0) {
 		xmms_log_error ("unable to flush buffer");

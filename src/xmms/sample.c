@@ -285,7 +285,7 @@ recalculate_resampler (xmms_sample_converter_t *conv, guint from, guint to)
 	guint a,b;
 
 	/* calculate ratio */
-	if(from > to){
+	if (from > to){
 		a = from;
 		b = to;
 	} else {

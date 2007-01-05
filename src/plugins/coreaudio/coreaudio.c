@@ -78,7 +78,7 @@ xmms_ca_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
 
-	XMMS_OUTPUT_METHODS_INIT(methods);
+	XMMS_OUTPUT_METHODS_INIT (methods);
 	methods.new = xmms_ca_new;
 	methods.destroy = xmms_ca_destroy;
 
@@ -203,7 +203,7 @@ xmms_ca_new (xmms_output_t *output)
 	AudioStreamBasicDescription format;
 	Component comp;
 	AudioDeviceID device = 0;
-	UInt32 size = sizeof(device);
+	UInt32 size = sizeof (device);
 	
 	g_return_val_if_fail (output, FALSE);
 
@@ -252,9 +252,9 @@ xmms_ca_new (xmms_output_t *output)
 
 	res = AudioUnitSetProperty (data->au, kAudioUnitProperty_StreamFormat,
 	                            kAudioUnitScope_Input, 0, &format,
-	                            sizeof(AudioStreamBasicDescription));
+	                            sizeof (AudioStreamBasicDescription));
 	if (res) {
-		xmms_log_error ("Failed to set format");		
+		xmms_log_error ("Failed to set format");
 		return FALSE;
 	}
 		
@@ -267,12 +267,12 @@ xmms_ca_new (xmms_output_t *output)
 
 	XMMS_DBG ("CoreAudio initialized!");
 
-	res = AudioUnitGetProperty(data->au,
-	                           kAudioOutputUnitProperty_CurrentDevice,
-	                           kAudioUnitScope_Global,
-	                           0,
-	                           &device,
-	                           &size);
+	res = AudioUnitGetProperty (data->au,
+	                            kAudioOutputUnitProperty_CurrentDevice,
+	                            kAudioUnitScope_Global,
+	                            0,
+	                            &device,
+	                            &size);
 
 	if (res) {
 		xmms_log_error ("getprop failed!");
@@ -310,10 +310,10 @@ xmms_ca_volume_set (xmms_output_t *output,
                     const gchar *channel,
                     guint volume)
 {
-  	Float32 v;
-  	xmms_ca_data_t *data;
+	Float32 v;
+	xmms_ca_data_t *data;
 
- 	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
@@ -323,10 +323,10 @@ xmms_ca_volume_set (xmms_output_t *output,
 
 	v = (Float32)(volume/100.0);
 	
-	AudioUnitSetParameter(data->au,
-	                      kHALOutputParam_Volume,
-	                      kAudioUnitScope_Global,
-	                      0, v, 0);
+	AudioUnitSetParameter (data->au,
+	                       kHALOutputParam_Volume,
+	                       kAudioUnitScope_Global,
+	                       0, v, 0);
 	return TRUE;
 }
 
@@ -336,10 +336,10 @@ xmms_ca_volume_get (xmms_output_t *output,
                     const gchar **names, guint *values,
                     guint *num_channels)
 {
-  	Float32 v;
-  	xmms_ca_data_t *data;
+	Float32 v;
+	xmms_ca_data_t *data;
 
- 	g_return_val_if_fail (output, FALSE);
+	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
@@ -352,10 +352,10 @@ xmms_ca_volume_get (xmms_output_t *output,
 	g_return_val_if_fail (names, FALSE);
 	g_return_val_if_fail (values, FALSE);
 
-	AudioUnitGetParameter(data->au,
-	                      kHALOutputParam_Volume,
-	                      kAudioUnitScope_Global,
-	                      0, &v);
+	AudioUnitGetParameter (data->au,
+	                       kHALOutputParam_Volume,
+	                       kAudioUnitScope_Global,
+	                       0, &v);
 
 	values[0] = (guint)(v * 100);
 	names[0] = "master";

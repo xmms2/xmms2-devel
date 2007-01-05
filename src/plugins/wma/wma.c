@@ -232,7 +232,7 @@ xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 	size = MIN (data->outbuf->len, len);
 	while (size == 0) {
-		if (av_read_frame(data->fmtctx, &pkt) < 0)
+		if (av_read_frame (data->fmtctx, &pkt) < 0)
 			return -1;
 		if (pkt.size == 0)
 			return 0;
@@ -243,8 +243,8 @@ xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		while (inbufsize > 0) {
 			int inlen;
 			
-			inlen = avcodec_decode_audio(data->codecctx, (short *) outbuf,
-			                             &outbufsize, inbuf, inbufsize);
+			inlen = avcodec_decode_audio (data->codecctx, (short *) outbuf,
+			                              &outbufsize, inbuf, inbufsize);
 			data->codecctx->frame_number++;
 
 			if (inlen < 0)
@@ -358,7 +358,7 @@ xmms_wma_metahack (xmms_xform_t *xform)
 			if (titlel > 0) {
 				tmpstr = g_convert (utfstr, titlel, "UTF-8", "UTF-16LE", NULL,
 				                    NULL, NULL);
-				if (tmpstr && strlen(tmpstr)) {
+				if (tmpstr && strlen (tmpstr)) {
 					xmms_xform_metadata_set_str (xform,
 					                             XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE,
 					                             tmpstr);
@@ -369,7 +369,7 @@ xmms_wma_metahack (xmms_xform_t *xform)
 			if (artistl > 0) {
 				tmpstr = g_convert (utfstr, artistl, "UTF-8", "UTF-16LE", NULL,
 				                    NULL, NULL);
-				if (tmpstr && strlen(tmpstr)) {
+				if (tmpstr && strlen (tmpstr)) {
 					xmms_xform_metadata_set_str (xform,
 					                             XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST,
 					                             tmpstr);
@@ -381,7 +381,7 @@ xmms_wma_metahack (xmms_xform_t *xform)
 			if (commentl > 0) {
 				tmpstr = g_convert (utfstr, commentl, "UTF-8", "UTF-16LE",
 				                    NULL, NULL, NULL);
-				if (tmpstr && strlen(tmpstr)) {
+				if (tmpstr && strlen (tmpstr)) {
 					xmms_xform_metadata_set_str (xform,
 					                             XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,
 					                             tmpstr);
@@ -431,7 +431,7 @@ xmms_wma_metahack (xmms_xform_t *xform)
 					gint tracknr;
 					gchar *end;
 
-					tracknr = strtol(value, &end, 10);
+					tracknr = strtol (value, &end, 10);
 					if (end && *end == '\0') {
 						xmms_xform_metadata_set_int (xform,
 						                             XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR,

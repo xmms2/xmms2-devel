@@ -77,16 +77,16 @@ static gboolean xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_vorbis_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static gboolean xmms_vorbis_init (xmms_xform_t *decoder);
 static void xmms_vorbis_destroy (xmms_xform_t *decoder);
-static gint64 xmms_vorbis_seek(xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
+static gint64 xmms_vorbis_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN("vorbis",
-                  "Vorbis Decoder", XMMS_VERSION,
-                  "Xiph's Ogg/Vorbis decoder",
-                  xmms_vorbis_plugin_setup);
+XMMS_XFORM_PLUGIN ("vorbis",
+                   "Vorbis Decoder", XMMS_VERSION,
+                   "Xiph's Ogg/Vorbis decoder",
+                   xmms_vorbis_plugin_setup);
 
 static gboolean
 xmms_vorbis_plugin_setup (xmms_xform_plugin_t *xform_plugin)

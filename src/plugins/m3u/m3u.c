@@ -45,18 +45,18 @@ static void xmms_m3u_destroy (xmms_xform_t *xform);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("m3u",
-                  "M3U reader",
-                  XMMS_VERSION,
-                  "Playlist parser for m3u's",
-                  xmms_m3u_plugin_setup);
+XMMS_XFORM_PLUGIN ("m3u",
+                   "M3U reader",
+                   XMMS_VERSION,
+                   "Playlist parser for m3u's",
+                   xmms_m3u_plugin_setup);
 
 static gboolean
 xmms_m3u_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_m3u_init;
 	methods.destroy = xmms_m3u_destroy;
 	methods.browse = xmms_m3u_browse;

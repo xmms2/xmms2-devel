@@ -115,7 +115,7 @@ init_query (coll_query_params_t *params)
 	coll_query_t *query;
 
 	query = g_new (coll_query_t, 1);
-	if(query == NULL) {
+	if (query == NULL) {
 		return NULL;
 	}
 
@@ -292,7 +292,7 @@ xmms_collection_append_to_query (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	/* invalid type */
 	default:
-		XMMS_DBG("Cannot append invalid collection operator!");
+		XMMS_DBG ("Cannot append invalid collection operator!");
 		g_assert_not_reached ();
 		break;
 	}
@@ -328,7 +328,7 @@ query_make_alias (coll_query_t *query, gchar *field, gboolean optional)
 
 			/* Found a base */
 			if (query->alias_base == NULL &&
-			    (!optional || strcmp(field, XMMS_COLLQUERY_DEFAULT_BASE) == 0)) {
+			    (!optional || strcmp (field, XMMS_COLLQUERY_DEFAULT_BASE) == 0)) {
 				alias->id = 0;
 				query->alias_base = fieldkey;
 			} else {
@@ -384,7 +384,7 @@ static void
 query_append_protect_string (coll_query_t *query, gchar *s)
 {
 	gchar *preps;
-	if((preps = sqlite_prepare_string (s)) != NULL) {  /* FIXME: Return oom error */
+	if ((preps = sqlite_prepare_string (s)) != NULL) {  /* FIXME: Return oom error */
 		query_append_string (query, preps);
 		g_free (preps);
 	}

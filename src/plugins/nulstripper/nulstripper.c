@@ -133,7 +133,7 @@ xmms_nulstripper_seek (xmms_xform_t *xform, gint64 bytes,
 
 	ret = xmms_xform_seek (xform, bytes, whence, err);
 
-	if(ret == -1) {
+	if (ret == -1) {
 		return -1;
 	}
 

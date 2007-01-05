@@ -242,7 +242,7 @@ xmmsc_result_iserror (xmmsc_result_t *res)
 
 /**
  * Get an error string describing the error that occoured
- */ 
+ */
 
 const char *
 xmmsc_result_get_error (xmmsc_result_t *res)
@@ -793,7 +793,7 @@ xmmsc_result_dict_lookup (xmmsc_result_t *res, const char *key)
 				xmmsc_result_value_t *k = n->data;
 
 				if (source_match_pattern (k->value.string, source) &&
-					n->next && n->next->next) {
+				    n->next && n->next->next) {
 
 					n = x_list_next (n);
 					k = n->data;
@@ -838,7 +838,7 @@ xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+	    res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*r = -1;
 		return 0;
 	}
@@ -876,7 +876,7 @@ xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+	    res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*r = -1;
 		return 0;
 	}
@@ -915,7 +915,7 @@ xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char *
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+	    res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*r = NULL;
 		return 0;
 	}
@@ -955,7 +955,7 @@ xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+	    res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		*c = NULL;
 		return 0;
 	}
@@ -988,7 +988,7 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 	}
 
 	if (res->datatype != XMMS_OBJECT_CMD_ARG_DICT &&
-		res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
+	    res->datatype != XMMS_OBJECT_CMD_ARG_PROPDICT) {
 		return XMMSC_RESULT_VALUE_TYPE_NONE;
 	}
 
@@ -1002,8 +1002,8 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 
 int
 xmmsc_result_propdict_foreach (xmmsc_result_t *res,
-							   xmmsc_propdict_foreach_func func,
-							   void *user_data)
+                               xmmsc_propdict_foreach_func func,
+                               void *user_data)
 {
 	x_list_t *n;
 
@@ -1216,7 +1216,7 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 
 	url = strdup (string);
 	if (!url) {
-		x_oom();
+		x_oom ();
 		return NULL;
 	}
 
@@ -1334,7 +1334,7 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 	xmmsc_result_t *res;
 
 	if (!(res = x_new0 (xmmsc_result_t, 1))) {
-		x_oom();
+		x_oom ();
 		return NULL;
 	}
 
@@ -1343,7 +1343,7 @@ xmmsc_result_new (xmmsc_connection_t *c, xmmsc_result_type_t type,
 
 	res->type = type;
 	res->cookie = cookie;
-	res->source_pref = x_list_prepend (NULL, strdup("*"));
+	res->source_pref = x_list_prepend (NULL, strdup ("*"));
 	res->source_pref = x_list_prepend (res->source_pref, strdup ("plugin/*"));
 	res->source_pref = x_list_prepend (res->source_pref, strdup ("plugin/id3v2"));
 	res->source_pref = x_list_prepend (res->source_pref, strdup ("client/*"));
@@ -1368,7 +1368,7 @@ xmmsc_result_parse_value (xmms_ipc_msg_t *msg)
 	uint32_t len;
 
 	if (!(val = x_new0 (xmmsc_result_value_t, 1))) {
-		x_oom();
+		x_oom ();
 		return NULL;
 	}
 
@@ -1487,7 +1487,7 @@ source_match_pattern (char* source, char* pattern)
 	if (strcasecmp (pattern, source) == 0) {
 		match = 1;
 	}
-	else if(lpos >= 0 && pattern[lpos] == '*' &&
+	else if (lpos >= 0 && pattern[lpos] == '*' &&
 	        (lpos == 0 || strncasecmp (source, pattern, lpos) == 0)) {
 		match = 1;
 	}

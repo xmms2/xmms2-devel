@@ -66,7 +66,7 @@ xmms_mpc_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_mpc_init;
 	methods.destroy = xmms_mpc_destroy;
 	methods.read = xmms_mpc_read;

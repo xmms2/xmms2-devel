@@ -42,18 +42,18 @@ static void xmms_pls_destroy (xmms_xform_t *xform);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("pls",
-                  "PLS reader",
-                  XMMS_VERSION,
-                  "Playlist parser for PLS files.",
-                  xmms_pls_plugin_setup);
+XMMS_XFORM_PLUGIN ("pls",
+                   "PLS reader",
+                   XMMS_VERSION,
+                   "Playlist parser for PLS files.",
+                   xmms_pls_plugin_setup);
 
 static gboolean
 xmms_pls_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_pls_init;
 	methods.destroy = xmms_pls_destroy;
 	methods.browse = xmms_pls_browse;

@@ -39,8 +39,8 @@ static size_t xmms_lastfm_feed_buffer (void *ptr, size_t size,
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("lastfm", "last.fm transport", XMMS_VERSION,
-                  "last.fm stream transport", xmms_lastfm_plugin_setup);
+XMMS_XFORM_PLUGIN ("lastfm", "last.fm transport", XMMS_VERSION,
+                   "last.fm stream transport", xmms_lastfm_plugin_setup);
 
 static gboolean
 xmms_lastfm_plugin_setup (xmms_xform_plugin_t *xform_plugin)

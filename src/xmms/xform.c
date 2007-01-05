@@ -1016,7 +1016,7 @@ xmms_xform_chain_setup_url (xmms_medialib_entry_t entry, const gchar *url, GList
 
 		params = g_strsplit (args, "&", 0);
 
-		for(i = 0; params && params[i]; i++) {
+		for (i = 0; params && params[i]; i++) {
 			gchar *v;
 			v = strchr (params[i], '=');
 			if (v) {

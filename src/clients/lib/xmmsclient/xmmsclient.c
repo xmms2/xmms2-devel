@@ -103,7 +103,7 @@ xmmsc_init (const char *clientname)
 
 	while (clientname[i]) {
 		j = clientname[i];
-		if (!isalnum(j) && j != '_' && j != '-') {
+		if (!isalnum (j) && j != '_' && j != '-') {
 			/* snyggt! */
 			free (c);
 			x_api_error_if (true, "clientname contains invalid chars, just alphanumeric chars are allowed!", NULL);
@@ -171,7 +171,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 			return false;
 		}
 	} else {
-		snprintf (path, sizeof(path), "%s", ipcpath);
+		snprintf (path, sizeof (path), "%s", ipcpath);
 	}
 
 	ipc = xmmsc_ipc_init ();

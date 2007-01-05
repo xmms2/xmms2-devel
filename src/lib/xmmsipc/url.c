@@ -4,17 +4,17 @@
 
 #include "url.h"
 
-static int strstrsplit(const char *, const char *, char **, char **);
-static int strchrsplit(const char *, const char, char **, char **);
-static int strrchrsplit(const char *, const char, char **, char **);
-static int strpchrsplit(const char *, const char *, const char, char **, char **);
+static int strstrsplit (const char *, const char *, char **, char **);
+static int strchrsplit (const char *, const char, char **, char **);
+static int strrchrsplit (const char *, const char, char **, char **);
+static int strpchrsplit (const char *, const char *, const char, char **, char **);
 
 
 /**
  * Split a URL into its respective parts
  * @param url The URL to split
  */
-xmms_url_t *parse_url(const char *url)
+xmms_url_t *parse_url (const char *url)
 {
 	char *tmp1, *tmp2, *tmp3, *tmp4;
 	char *end;
@@ -45,7 +45,7 @@ xmms_url_t *parse_url(const char *url)
 		tmp4 = strdup (tmp2);
 	}
 
-	if( strchrsplit (tmp3, ':', &username, &password)) {
+	if (strchrsplit (tmp3, ':', &username, &password)) {
 		username = strdup (tmp3);
 		password = strdup ("");
 	}
@@ -54,14 +54,14 @@ xmms_url_t *parse_url(const char *url)
 	if (tmp4[0] == '[') {
 		result->ipv6_host = 1;
 
-	 	end = strchr(tmp4 + 1, ']');
+		end = strchr (tmp4 + 1, ']');
 		if (end) {
 			if (strpchrsplit (tmp4, end, ':', &host, &port)) {
 				host = strdup (tmp4);
 				port = strdup ("");
 			}
 
-			memmove(host, host + 1, end - tmp4 - 1);
+			memmove (host, host + 1, end - tmp4 - 1);
 			host[end - tmp4 - 1] = '\0';
 		} else {
 			host = strdup (tmp4 + 1);
@@ -91,7 +91,7 @@ xmms_url_t *parse_url(const char *url)
 	return result;
 }
 
-void free_url(xmms_url_t *url)
+void free_url (xmms_url_t *url)
 {
 	free (url->protocol);
 	free (url->username);
@@ -111,7 +111,7 @@ void free_url(xmms_url_t *url)
  * @param latter_result The last part (after the separator).
  * @return True on error, otherwise false.
  */
-static int strstrsplit(const char *str, const char *sep, char **former_result, char **latter_result)
+static int strstrsplit (const char *str, const char *sep, char **former_result, char **latter_result)
 {
 	char *split;
 	char *former, *latter;
@@ -144,7 +144,7 @@ static int strstrsplit(const char *str, const char *sep, char **former_result, c
  * @param latter_result The last part (after the separator).
  * @return True on error, otherwise false.
  */
-static int strchrsplit(const char *str, const char sep, char **former_result, char **latter_result)
+static int strchrsplit (const char *str, const char sep, char **former_result, char **latter_result)
 {
 	char *split;
 	char *former, *latter;
@@ -177,7 +177,7 @@ static int strchrsplit(const char *str, const char sep, char **former_result, ch
  * @param latter_result The last part (after the separator).
  * @return True on error, otherwise false.
  */
-static int strrchrsplit(const char *str, const char sep, char **former_result, char **latter_result)
+static int strrchrsplit (const char *str, const char sep, char **former_result, char **latter_result)
 {
 	char *split;
 	char *former, *latter;
@@ -211,7 +211,7 @@ static int strrchrsplit(const char *str, const char sep, char **former_result, c
  * @param latter_result The last part (after the separator).
  * @return True on error, otherwise false.
  */
-static int strpchrsplit(const char *str, const char *pos, const char sep, char **former_result, char **latter_result)
+static int strpchrsplit (const char *str, const char *pos, const char sep, char **former_result, char **latter_result)
 {
 	char *split;
 	char *former, *latter;

@@ -158,12 +158,12 @@ xmms_speex_init (xmms_decoder_t *decoder, gint mode)
 
 	data->speexheader = speex_packet_to_header (data->ogg_packet.packet,
 	                                            data->ogg_packet.bytes);
-	data->speex_state = speex_decoder_init(speex_mode_list[data->speexheader->mode]);
+	data->speex_state = speex_decoder_init (speex_mode_list[data->speexheader->mode]);
 
 	val = xmms_plugin_config_lookup (xmms_decoder_plugin_get (decoder),
 	                                 "perceptual_enhancer");
 	pe = xmms_config_property_get_int (val);
-	speex_decoder_ctl(data->speex_state, SPEEX_SET_ENH, &pe);
+	speex_decoder_ctl (data->speex_state, SPEEX_SET_ENH, &pe);
 
 	ogg_sync_pageout (&data->sync_state, &data->ogg_page);
 	ogg_stream_pagein (&data->stream_state, &data->ogg_page);
@@ -186,7 +186,7 @@ xmms_speex_seek (xmms_decoder_t *decoder, guint samples)
 {
 	g_return_val_if_fail (decoder, FALSE);
 
-	return FALSE;		/* Seeking not supported right now */
+	return FALSE; /* Seeking not supported right now */
 }
 
 static gboolean

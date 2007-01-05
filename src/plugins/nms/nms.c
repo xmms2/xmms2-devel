@@ -148,7 +148,7 @@ xmms_nms_open (xmms_output_t *output)
 		return FALSE;
 	}
 
-	OutputStart();
+	OutputStart ();
 
 	return TRUE;
 }
@@ -170,7 +170,7 @@ xmms_nms_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *
 
 	/* What is the size of buffer? */
 
-	while (OutputGetBuffer(&data->buf, 1000, 0))
+	while (OutputGetBuffer (&data->buf, 1000, 0))
 		;
 
 	memcpy (data->buf.abuf.data, buffer, len);

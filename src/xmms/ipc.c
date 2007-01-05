@@ -121,7 +121,7 @@ type_and_msg_to_arg (xmms_object_cmd_arg_type_t type, xmms_ipc_msg_t *msg, xmms_
 				if (!xmms_ipc_msg_get_string_alloc (msg, &buf, &len) ||
 				    !(arg->values[i].value.list = g_list_prepend (arg->values[i].value.list, buf))) {
 					GList * list = arg->values[i].value.list;
-					while (list) {g_free(list->data); list=g_list_remove(list, list); }
+					while (list) { g_free (list->data); list = g_list_remove (list, list); }
 					return FALSE;
 				}
 			}
@@ -339,7 +339,7 @@ err:
 			g_free (arg.values[i].value.string);
 		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_STRINGLIST) {
 			GList * list = arg.values[i].value.list;
-			while (list) {g_free(list->data); list=g_list_delete_link(list, list); }
+			while (list) { g_free (list->data); list = g_list_delete_link (list, list); }
 		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_COLL) {
 			xmmsc_coll_unref (arg.values[i].value.coll);
 		} else if (arg.values[i].type == XMMS_OBJECT_CMD_ARG_BIN) {
@@ -497,7 +497,7 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 	g_main_loop_unref (client->ml);
 	g_io_channel_unref (client->iochan);
 
-	if(client->ipc) {
+	if (client->ipc) {
 		g_mutex_lock (client->ipc->mutex_lock);
 		client->ipc->clients = g_list_remove (client->ipc->clients, client);
 		g_mutex_unlock (client->ipc->mutex_lock);
@@ -528,9 +528,9 @@ xmms_ipc_client_destroy (xmms_ipc_client_t *client)
 void
 on_config_ipcsocket_change (xmms_object_t *object, gconstpointer data, gpointer udata)
 {
-	xmms_ipc_shutdown();
-	XMMS_DBG("Shuttind down ipc server threads through config property \"core.ipcsocket\" change.");
-	xmms_ipc_setup_server((gchar *)data);
+	xmms_ipc_shutdown ();
+	XMMS_DBG ("Shuttind down ipc server threads through config property \"core.ipcsocket\" change.");
+	xmms_ipc_setup_server ((gchar *)data);
 }
 
 /**
@@ -623,8 +623,7 @@ xmms_ipc_has_pending (guint signalid)
 
 	g_mutex_lock (ipc_servers_lock);
 
-	for(s = ipc_servers; s; s = g_list_next (s))
-	{
+	for (s = ipc_servers; s; s = g_list_next (s)) {
 		ipc = s->data;
 		g_mutex_lock (ipc->mutex_lock);
 		for (c = ipc->clients; c; c = g_list_next (c)) {
@@ -655,8 +654,7 @@ xmms_ipc_signal_cb (xmms_object_t *object, gconstpointer arg, gpointer userdata)
 
 	g_mutex_lock (ipc_servers_lock);
 
-	for(s = ipc_servers; s && s->data; s = g_list_next (s))
-	{
+	for (s = ipc_servers; s && s->data; s = g_list_next (s)) {
 		ipc = s->data;
 		g_mutex_lock (ipc->mutex_lock);
 		for (c = ipc->clients; c; c = g_list_next (c)) {
@@ -689,8 +687,7 @@ xmms_ipc_broadcast_cb (xmms_object_t *object, gconstpointer arg, gpointer userda
 
 	g_mutex_lock (ipc_servers_lock);
 
-	for(s = ipc_servers; s && s->data; s = g_list_next (s))
-	{
+	for (s = ipc_servers; s && s->data; s = g_list_next (s)) {
 		ipc = s->data;
 		g_mutex_lock (ipc->mutex_lock);
 		for (c = ipc->clients; c; c = g_list_next (c)) {
@@ -812,27 +809,27 @@ xmms_ipc_init (void)
  * Shutdown a IPC Server
  */
 void
-xmms_ipc_shutdown_server(xmms_ipc_t *ipc)
+xmms_ipc_shutdown_server (xmms_ipc_t *ipc)
 {
 	GList *c;
 	xmms_ipc_client_t *co;
-	if(!ipc) return;
+	if (!ipc) return;
 	
 	g_mutex_lock (ipc->mutex_lock);
 	g_io_channel_unref (ipc->chan);
 	xmms_ipc_transport_destroy (ipc->transport);
 	
-	for(c = ipc->clients; c; c = g_list_next(c)) {
+	for (c = ipc->clients; c; c = g_list_next (c)) {
 		co = c->data;
-		if(!co) continue;
+		if (!co) continue;
 		co->ipc = NULL;
 	}
 	
-	g_list_free(ipc->clients);
+	g_list_free (ipc->clients);
 	g_mutex_unlock (ipc->mutex_lock);
-	g_mutex_free(ipc->mutex_lock);
+	g_mutex_free (ipc->mutex_lock);
 	
-	g_free(ipc);
+	g_free (ipc);
 
 }
 
@@ -847,11 +844,10 @@ xmms_ipc_shutdown (void)
 	xmms_ipc_t *ipc;
 	
 	g_mutex_lock (ipc_servers_lock);
-	while(s)
-	{
+	while (s) {
 		ipc = s->data;
-		s = g_list_next(s);
-		ipc_servers = g_list_remove(ipc_servers, ipc);
+		s = g_list_next (s);
+		ipc_servers = g_list_remove (ipc_servers, ipc);
 		xmms_ipc_shutdown_server (ipc);
 	}
 	g_mutex_unlock (ipc_servers_lock);
@@ -872,9 +868,9 @@ xmms_ipc_setup_server (const gchar *path)
 
 	split = g_strsplit (path, ";", 0);
 	
-	for(i = 0; split && split[i]; i++) {
+	for (i = 0; split && split[i]; i++) {
 		ipc = g_new0 (xmms_ipc_t, 1);
-		if(!ipc) {
+		if (!ipc) {
 			XMMS_DBG ("No IPC server initialized.");
 			continue;
 		}

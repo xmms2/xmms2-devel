@@ -342,7 +342,7 @@ static void
 xmms_output_filler_state (xmms_output_t *output, xmms_output_filler_state_t state)
 {
 	g_mutex_lock (output->filler_mutex);
-	xmms_output_filler_state_nolock (output, state);	
+	xmms_output_filler_state_nolock (output, state);
 	g_mutex_unlock (output->filler_mutex);
 }
 static void
@@ -569,12 +569,12 @@ xmms_output_seekms_rel (xmms_output_t *output, gint32 ms, xmms_error_t *error)
 {
 	g_mutex_lock (output->playtime_mutex);
 	ms += output->played_time;
-	if(ms < 0) {
+	if (ms < 0) {
 		ms = 0;
 	}
 	g_mutex_unlock (output->playtime_mutex);
 
-	xmms_output_seekms(output, ms, error);
+	xmms_output_seekms (output, ms, error);
 }
 
 static void
@@ -589,12 +589,12 @@ xmms_output_seeksamples_rel (xmms_output_t *output, gint32 samples, xmms_error_t
 {
 	g_mutex_lock (output->playtime_mutex);
 	samples += output->played / xmms_sample_frame_size_get (output->format);
-	if(samples < 0) {
+	if (samples < 0) {
 		samples = 0;
 	}
 	g_mutex_unlock (output->playtime_mutex);
 
-	xmms_output_seeksamples(output, samples, error);
+	xmms_output_seeksamples (output, samples, error);
 }
 
 static void

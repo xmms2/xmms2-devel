@@ -107,7 +107,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				char seconds[10];
 				/* rounding */
 				duration += 500;
-				snprintf (seconds, sizeof(seconds), "%02d", (duration/1000)%60);
+				snprintf (seconds, sizeof (seconds), "%02d", (duration/1000)%60);
 				strncat (target, seconds, len - strlen (target) - 1);
 			}
 		} else if (strcmp (key, "minutes") == 0) {
@@ -121,7 +121,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				char minutes[10];
 				/* rounding */
 				duration += 500;
-				snprintf (minutes, sizeof(minutes), "%02d", duration/60000);
+				snprintf (minutes, sizeof (minutes), "%02d", duration/60000);
 				strncat (target, minutes, len - strlen (target) - 1);
 			}
 		} else {
@@ -225,7 +225,7 @@ xmmsc_medialib_add_entry (xmmsc_connection_t *conn, const char *url)
  * Add a URL with arguments to the medialib.
  *
  * xmmsc_medialib-add_antry_args (conn, "file:///data/HVSC/C64Music/Hubbard_Rob/Commando.sid", 1, "subtune=2");
- * 
+ *
  * @param conn The #xmmsc_connection_t
  * @param url URL to add to the medialib.
  * @param numargs The number of arguments
@@ -279,8 +279,7 @@ xmmsc_medialib_add_entry_encoded (xmmsc_connection_t *conn, const char *url)
  * 		  include the protocol, i.e file://
  */
 xmmsc_result_t *
-xmmsc_medialib_path_import (xmmsc_connection_t *conn,
-			    const char *path)
+xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path)
 {
 	xmmsc_result_t *res;
 	char *enc_path;
@@ -369,11 +368,11 @@ xmmsc_medialib_get_info (xmmsc_connection_t *c, unsigned int id)
 	return res;
 }
 
-/** 
+/**
  * Request the medialib_entry_added broadcast. This will be called
  * if a new entry is added to the medialib serverside.
  */
-xmmsc_result_t * 
+xmmsc_result_t *
 xmmsc_broadcast_medialib_entry_added (xmmsc_connection_t *c)
 {
 	x_check_conn (c, NULL);
@@ -420,10 +419,10 @@ xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
  * your own source.
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c, 
+xmmsc_medialib_entry_property_set_int_with_source (xmmsc_connection_t *c,
                                                    uint32_t id,
-                                                   const char *source, 
-                                                   const char *key, 
+                                                   const char *source,
+                                                   const char *key,
                                                    int32_t value)
 {
 	xmmsc_result_t *res;
@@ -469,10 +468,10 @@ xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
  * your own source.
  */
 xmmsc_result_t *
-xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c, 
+xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
                                                    uint32_t id,
-                                                   const char *source, 
-                                                   const char *key, 
+                                                   const char *source,
+                                                   const char *key,
                                                    const char *value)
 {
 	xmmsc_result_t *res;
@@ -492,7 +491,7 @@ xmmsc_medialib_entry_property_set_str_with_source (xmmsc_connection_t *c,
 	return res;
 }
 
-/** 
+/**
  * Remove a custom field in the medialib associated with an entry.
  * Uses default source which is client/&lt;clientname&gt;
  */
@@ -505,8 +504,8 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
 
 	x_check_conn (c, NULL);
 
-	snprintf(tmp, 256, "client/%s", c->clientname);
-	res = xmmsc_medialib_entry_property_remove_with_source (c, id, 
+	snprintf (tmp, 256, "client/%s", c->clientname);
+	res = xmmsc_medialib_entry_property_remove_with_source (c, id,
 	                                                        tmp, key);
 	return res;
 }
@@ -518,7 +517,7 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
  */
 xmmsc_result_t *
 xmmsc_medialib_entry_property_remove_with_source (xmmsc_connection_t *c,
-                                                  uint32_t id, 
+                                                  uint32_t id,
                                                   const char *source,
                                                   const char *key)
 {
@@ -575,7 +574,7 @@ _xmmsc_medialib_encode_url (const char *url, int narg, const char **args)
 		extra += strlen (args[i]) + 2;
 	}
 
-	res = malloc (strlen(url) * 3 + 1 + extra);
+	res = malloc (strlen (url) * 3 + 1 + extra);
 	if (!res)
 		return NULL;
 

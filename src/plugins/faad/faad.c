@@ -275,7 +275,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			                     bytes_read - data->toskip);
 			data->toskip = 0;
 		} else if (frameInfo.error > 0) {
-			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage(frameInfo.error));
+			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage (frameInfo.error));
 			return -1;
 		}
 

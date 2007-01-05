@@ -53,18 +53,18 @@ static gboolean xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("file",
-                  "File transport",
-                  XMMS_VERSION,
-                  "Plain local file transport",
-                  xmms_file_plugin_setup);
+XMMS_XFORM_PLUGIN ("file",
+                   "File transport",
+                   XMMS_VERSION,
+                   "Plain local file transport",
+                   xmms_file_plugin_setup);
 
 static gboolean
 xmms_file_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_file_init;
 	methods.destroy = xmms_file_destroy;
 	methods.read = xmms_file_read;

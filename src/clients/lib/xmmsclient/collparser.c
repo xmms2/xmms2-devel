@@ -34,7 +34,7 @@ typedef struct {
 	char *longstr;
 } xmmsc_coll_prop_t;
 
-xmmsc_coll_prop_t 
+xmmsc_coll_prop_t
 xmmsc_coll_prop_short[] = { { 'a', "artist" },
                             { 'l', "album" },
                             { 't', "title" },
@@ -315,7 +315,7 @@ xmmsc_coll_default_parse_tokens (const char *str, const char **newpos)
 
 		/* matches [0-9,-] => SEQUENCE */
 		case XMMS_COLLECTION_TOKEN_SEQUENCE:
-			if (!isdigit(*tmp) && (*tmp != ',') && (*tmp != '-')) {
+			if (!isdigit (*tmp) && (*tmp != ',') && (*tmp != '-')) {
 				type = XMMS_COLLECTION_TOKEN_STRING;
 			}
 

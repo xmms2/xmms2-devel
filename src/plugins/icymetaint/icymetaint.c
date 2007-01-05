@@ -55,18 +55,18 @@ static void handle_shoutcast_metadata (xmms_xform_t *xform, gchar *metadata);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("icymetaint",
-                  "Icy-metaint stream decoder",
-                  XMMS_VERSION,
-                  "Decode & use shoutcast stream metadata",
-                  xmms_icymetaint_plugin_setup);
+XMMS_XFORM_PLUGIN ("icymetaint",
+                   "Icy-metaint stream decoder",
+                   XMMS_VERSION,
+                   "Decode & use shoutcast stream metadata",
+                   xmms_icymetaint_plugin_setup);
 
 static gboolean
 xmms_icymetaint_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_icymetaint_init;
 	methods.destroy = xmms_icymetaint_destroy;
 	methods.read = xmms_icymetaint_read;

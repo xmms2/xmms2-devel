@@ -448,7 +448,7 @@ xmmsc_playlist_add_args (xmmsc_connection_t *c, const char *playlist, const char
 		playlist = "_active";
 	}
 
-	res = xmmsc_playlist_add_encoded (c, playlist, enc_url);	
+	res = xmmsc_playlist_add_encoded (c, playlist, enc_url);
 	free (enc_url);
 
 	return res;

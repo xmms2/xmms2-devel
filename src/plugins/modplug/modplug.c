@@ -41,18 +41,18 @@ static gboolean xmms_modplug_init (xmms_xform_t *xform);
 /*
  * Plugin header
  */
-XMMS_XFORM_PLUGIN("modplug",
-                  "MODPLUG decoder ",
-                  XMMS_VERSION,
-                  "Module file decoder",
-                  xmms_modplug_plugin_setup);
+XMMS_XFORM_PLUGIN ("modplug",
+                   "MODPLUG decoder ",
+                   XMMS_VERSION,
+                   "Module file decoder",
+                   xmms_modplug_plugin_setup);
 
 static gboolean
 xmms_modplug_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_modplug_init;
 	methods.destroy = xmms_modplug_destroy;
 	methods.read = xmms_modplug_read;
@@ -189,7 +189,7 @@ xmms_modplug_init (xmms_xform_t *xform)
 	data->settings.mBits = 16;
 	data->settings.mFrequency = 44100;
 	/* more? */
-	ModPlug_SetSettings(&data->settings);
+	ModPlug_SetSettings (&data->settings);
 
 	data->buffer = g_string_new ("");
 
@@ -209,7 +209,7 @@ xmms_modplug_init (xmms_xform_t *xform)
 		g_string_append_len (data->buffer, buf, ret);
 	}
 
-	data->mod = ModPlug_Load(data->buffer->str, data->buffer->len);
+	data->mod = ModPlug_Load (data->buffer->str, data->buffer->len);
 	if (!data->mod) {
 		XMMS_DBG ("Error loading mod");
 		return FALSE;
@@ -237,5 +237,5 @@ xmms_modplug_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error
 
 	data = xmms_xform_private_data_get (xform);
 
-	return ModPlug_Read(data->mod, buf, len);
+	return ModPlug_Read (data->mod, buf, len);
 }

@@ -99,7 +99,7 @@ xmms_ringbuf_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_ringbuf_plugin_init;
 	methods.destroy = xmms_ringbuf_plugin_destroy;
 	methods.read = xmms_ringbuf_plugin_read;
@@ -179,8 +179,8 @@ xmms_ringbuf_xform_thread (gpointer data)
 	return NULL;
 }
 
-XMMS_XFORM_BUILTIN(ringbuf,
-                   "Ringbuffer",
-                   XMMS_VERSION,
-                   "Buffer",
-                   xmms_ringbuf_plugin_setup);
+XMMS_XFORM_BUILTIN (ringbuf,
+                    "Ringbuffer",
+                    XMMS_VERSION,
+                    "Buffer",
+                    xmms_ringbuf_plugin_setup);

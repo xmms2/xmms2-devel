@@ -32,7 +32,7 @@ int main ()
 			gchar buffer[5];
 
 			xmms_ipc_transport_t *client = xmms_ipc_server_accept (transport);
-			if (client == NULL) 
+			if (client == NULL)
 				return 0;
 			
 			printf ("Client connected...\n");

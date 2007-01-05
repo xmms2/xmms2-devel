@@ -98,8 +98,8 @@ static int
 xmms_sqlite_integer_coll (void *udata, int len1, const void *str1, int len2, const void *str2)
 {
 	guint32 a, b;
-	a = strtol(str1, NULL, 10);
-	b = strtol(str2, NULL, 10);
+	a = strtol (str1, NULL, 10);
+	b = strtol (str2, NULL, 10);
 	if (a < b) return -1;
 	if (a == b) return 0;
 	return 1;
@@ -226,7 +226,7 @@ xmms_sqlite_open (gboolean *create)
 	}
 
 	if (sqlite3_open (dbpath, &sql)) {
-		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg(sql));
+		xmms_log_fatal ("Error creating sqlite db: %s", sqlite3_errmsg (sql));
 		return NULL;
 	}
 
@@ -493,7 +493,7 @@ xmms_sqlite_query_array (sqlite3 *sql, xmms_medialib_row_array_method_t method, 
 		return FALSE;
 	}
 
-	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {		
+	while ((ret = sqlite3_step (stm)) == SQLITE_ROW) {
 		gint i;
 		xmms_object_cmd_value_t **row;
 		gint num = sqlite3_data_count (stm);
@@ -537,7 +537,7 @@ xmms_sqlite_print_version (void)
 {
 	printf (" Using sqlite version %d (compiled against "
 	        XMMS_STRINGIFY (SQLITE_VERSION_NUMBER) ")\n",
-	        sqlite3_libversion_number());
+	        sqlite3_libversion_number ());
 }
 
 /* Return an escaped string */

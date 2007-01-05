@@ -236,7 +236,7 @@ handle_id3v2_tcon (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 		return;
 	res = sscanf (val, "(%u)", &genre_id);
 
-	if (res > 0 && genre_id < G_N_ELEMENTS(id3_genres)) {
+	if (res > 0 && genre_id < G_N_ELEMENTS (id3_genres)) {
 		xmms_xform_metadata_set_str (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE,
 		                             (gchar *)id3_genres[genre_id]);
@@ -408,24 +408,24 @@ struct id3tags_t {
 };
 
 static struct id3tags_t tags[] = {
-	{ quad2long('T','Y','E',0), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
-	{ quad2long('T','Y','E','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
-	{ quad2long('T','A','L',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
-	{ quad2long('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
-	{ quad2long('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
-	{ quad2long('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
-	{ quad2long('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
-	{ quad2long('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
-	{ quad2long('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
-	{ quad2long('T','C','O','N'), NULL, handle_id3v2_tcon },
-	{ quad2long('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
-	{ quad2long('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
-	{ quad2long('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
-	{ quad2long('T','X','X','X'), NULL, handle_id3v2_txxx },
-	{ quad2long('U','F','I','D'), NULL, handle_id3v2_ufid },
-	{ quad2long('A','P','I','C'), NULL, handle_id3v2_apic },
-	{ quad2long('C','O','M','M'), NULL, handle_id3v2_comm },
+	{ quad2long ('T','Y','E',0), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long ('T','Y','E','R'), XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, NULL },
+	{ quad2long ('T','A','L',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long ('T','A','L','B'), XMMS_MEDIALIB_ENTRY_PROPERTY_ALBUM, NULL },
+	{ quad2long ('T','T','2',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long ('T','I','T','2'), XMMS_MEDIALIB_ENTRY_PROPERTY_TITLE, NULL },
+	{ quad2long ('T','R','K',0), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
+	{ quad2long ('T','R','C','K'), XMMS_MEDIALIB_ENTRY_PROPERTY_TRACKNR, handle_int_field },
+	{ quad2long ('T','P','1',0), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long ('T','P','E','1'), XMMS_MEDIALIB_ENTRY_PROPERTY_ARTIST, NULL },
+	{ quad2long ('T','C','O','N'), NULL, handle_id3v2_tcon },
+	{ quad2long ('T','B','P',0), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long ('T','B','P','M'), XMMS_MEDIALIB_ENTRY_PROPERTY_BPM, handle_int_field },
+	{ quad2long ('T','P','O','S'), XMMS_MEDIALIB_ENTRY_PROPERTY_PARTOFSET, handle_int_field },
+	{ quad2long ('T','X','X','X'), NULL, handle_id3v2_txxx },
+	{ quad2long ('U','F','I','D'), NULL, handle_id3v2_ufid },
+	{ quad2long ('A','P','I','C'), NULL, handle_id3v2_apic },
+	{ quad2long ('C','O','M','M'), NULL, handle_id3v2_comm },
 	{ 0, NULL, NULL }
 };
 
@@ -475,7 +475,7 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 
 	id3head = (id3head_t *) buf;
 	
-	if (strncmp((gchar *)id3head->id, "ID3", 3)) return FALSE;
+	if (strncmp ((gchar *)id3head->id, "ID3", 3)) return FALSE;
 
 	if (id3head->ver > 4 || id3head->ver < 2) {
 		XMMS_DBG ("Unsupported id3v2 version (%d)", id3head->ver);
@@ -501,7 +501,7 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 
 	if (id3head->flags & ID3v2_HEADER_FLAGS_FOOTER) {
 		/* footer is copy of header */
-		header->len += sizeof(id3head_t);
+		header->len += sizeof (id3head_t);
 	}
 
 	XMMS_DBG ("Found id3v2 header (version=%d, rev=%d, len=%d, flags=%x)",

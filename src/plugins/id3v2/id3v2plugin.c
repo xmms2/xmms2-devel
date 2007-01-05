@@ -40,24 +40,24 @@ gboolean xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin);
 static gint xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *err);
 static void xmms_id3v2_destroy (xmms_xform_t *decoder);
 static gboolean xmms_id3v2_init (xmms_xform_t *decoder);
-static gint64 xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err);
+static gint64 xmms_id3v2_seek (xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err);
 
 /*
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN("id3v2",
-                  "ID3v2 parser",
-                  XMMS_VERSION,
-                  "ID3v2 tag container handler",
-                  xmms_id3v2_plugin_setup);
+XMMS_XFORM_PLUGIN ("id3v2",
+                   "ID3v2 parser",
+                   XMMS_VERSION,
+                   "ID3v2 tag container handler",
+                   xmms_id3v2_plugin_setup);
 
 gboolean
 xmms_id3v2_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
-	XMMS_XFORM_METHODS_INIT(methods);
+	XMMS_XFORM_METHODS_INIT (methods);
 	methods.init = xmms_id3v2_init;
 	methods.destroy = xmms_id3v2_destroy;
 	methods.read = xmms_id3v2_read;
@@ -162,7 +162,7 @@ xmms_id3v2_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t
 }
 
 static gint64
-xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err)
+xmms_id3v2_seek (xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_id3v2_data_t *data;
 	int ret;
@@ -178,7 +178,7 @@ xmms_id3v2_seek(xmms_xform_t *xform, gint64 bytes, xmms_xform_seek_mode_t whence
 
 	ret = xmms_xform_seek (xform, bytes, whence, err);
 
-	if(ret == -1) {
+	if (ret == -1) {
 		return -1;
 	}
 

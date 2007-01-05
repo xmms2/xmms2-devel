@@ -81,7 +81,7 @@ static gboolean xmms_apetag_cache_items (xmms_apetag_t *tag);
 xmms_apetag_t *
 xmms_apetag_init (xmms_xform_t *xform)
 {
-	XMMS_DBG("xmms_apetag_init");
+	XMMS_DBG ("xmms_apetag_init");
 	xmms_apetag_t *tag = g_new0 (xmms_apetag_t, 1);
 
 	tag->xform = xform;
@@ -219,14 +219,14 @@ xmms_apetag_cache_tag (xmms_apetag_t *tag)
 	offset = xmms_apetag_find_tag (tag, -32);
 	if (offset > 0) {
 		tag->footer = offset;
-		XMMS_DBG("default pos");
+		XMMS_DBG ("default pos");
 		return TRUE;
 	}
 
 	/* abnormal position (APEv2 followed by an ID3v1) */
 	offset = xmms_apetag_find_tag (tag, -160);
 	if (offset > 0) {
-		XMMS_DBG("default+id3 pos");
+		XMMS_DBG ("default+id3 pos");
 		tag->footer = offset;
 		return TRUE;
 	}
@@ -234,7 +234,7 @@ xmms_apetag_cache_tag (xmms_apetag_t *tag)
 	/* crazy position */
 	offset = xmms_apetag_find_tag (tag, 0);
 	if (offset > 0) {
-		XMMS_DBG("first pos");
+		XMMS_DBG ("first pos");
 		tag->header = offset;
 		return TRUE;
 	}
@@ -258,11 +258,11 @@ xmms_apetag_cache_tag_info (xmms_apetag_t *tag)
 	g_return_val_if_fail (tag, ret);
 	g_return_val_if_fail (tag->xform, ret);
 
-	XMMS_DBG("tag pos found");
+	XMMS_DBG ("tag pos found");
 
 	offset = MAX (tag->header, tag->footer);
 
-	XMMS_DBG("offset at: %d", offset);
+	XMMS_DBG ("offset at: %d", offset);
 
 	xmms_error_reset (&err);
 	res = xmms_xform_seek (tag->xform, offset, XMMS_XFORM_SEEK_SET, &err);
@@ -270,11 +270,11 @@ xmms_apetag_cache_tag_info (xmms_apetag_t *tag)
 		res = xmms_xform_read (tag->xform, buffer, TAG_HEADER_SIZE, &err);
 		if (res == TAG_HEADER_SIZE) {
 
-			XMMS_DBG("checking for signs of any apetag");
+			XMMS_DBG ("checking for signs of any apetag");
 
 			if (TAG_IS_APE (buffer)) {
 
-				XMMS_DBG("apev2 tag found");
+				XMMS_DBG ("apev2 tag found");
 
 				tag->version = get_int32 (buffer, 8);
 				tag->size = get_int32 (buffer, 12);
@@ -286,10 +286,10 @@ xmms_apetag_cache_tag_info (xmms_apetag_t *tag)
 
 				if (tag->header > 0) {
 					tag->data = tag->header + TAG_HEADER_SIZE;
-					XMMS_DBG("data (header) offset at %d", tag->data);
+					XMMS_DBG ("data (header) offset at %d", tag->data);
 				} else if (tag->footer > 0) {
 					tag->data = tag->footer - tag->size + TAG_HEADER_SIZE;
-					XMMS_DBG("data (footer) offset at %d", tag->data);
+					XMMS_DBG ("data (footer) offset at %d", tag->data);
 				}
 
 				ret = TRUE;
@@ -333,7 +333,7 @@ xmms_apetag_cache_items (xmms_apetag_t *tag)
 				gint flags = get_int32 (buffer, pos);
 				pos += sizeof (gint32);
 
-				if (TAG_IS_TEXT(flags)) {
+				if (TAG_IS_TEXT (flags)) {
 
 					gint tmp = strlen (&buffer[pos]) + 1;
 					if ((pos+tmp+size) > tag->size) { /* sanity check */

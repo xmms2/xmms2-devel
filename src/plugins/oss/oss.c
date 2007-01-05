@@ -92,18 +92,18 @@ static gboolean xmms_oss_volume_get (xmms_output_t *output,
 /*
  * Plugin header
  */
-XMMS_OUTPUT_PLUGIN("oss",
-                   "OSS Output",
-                   XMMS_VERSION,
-                   "OpenSoundSystem output plugin",
-                   xmms_oss_plugin_setup);
+XMMS_OUTPUT_PLUGIN ("oss",
+                    "OSS Output",
+                    XMMS_VERSION,
+                    "OpenSoundSystem output plugin",
+                    xmms_oss_plugin_setup);
 
 static gboolean
 xmms_oss_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
 
-	XMMS_OUTPUT_METHODS_INIT(methods);
+	XMMS_OUTPUT_METHODS_INIT (methods);
 	methods.new = xmms_oss_new;
 	methods.destroy = xmms_oss_destroy;
 
@@ -336,7 +336,7 @@ xmms_oss_new (xmms_output_t *output)
 	if (ioctl (fd, SNDCTL_DSP_GETFMTS, &fmts) == -1)
 		goto err;
 
-	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		if (formats[i].oss_fmt & fmts) {
 			for (j = 0; j < 2; j++) {
 				gboolean added = FALSE;
@@ -347,7 +347,7 @@ xmms_oss_new (xmms_output_t *output)
 				if (ioctl (fd, SNDCTL_DSP_STEREO, &param) == -1 || param != j)
 					continue;
 
-				for (k = 0; k < G_N_ELEMENTS(rates); k++) {
+				for (k = 0; k < G_N_ELEMENTS (rates); k++) {
 					param = rates[k];
 					if (ioctl (fd, SNDCTL_DSP_SPEED, &param) == -1 || param != rates[k])
 						continue;
@@ -407,7 +407,7 @@ xmms_oss_format_set (xmms_output_t *output, const xmms_stream_type_t *format)
 
 	fmt = xmms_stream_type_get_int (format, XMMS_STREAM_TYPE_FMT_FORMAT);
 	param = -1;
-	for (i = 0; i < G_N_ELEMENTS(formats); i++) {
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		if (formats[i].xmms_fmt == fmt) {
 			param = formats[i].oss_fmt;
 			break;

@@ -67,7 +67,7 @@ daap_command_update (gchar *host, gint port, guint session_id, guint request_id)
 	}
 
 	request = g_strdup_printf ("/update?session-id=%d", session_id);
-	
+
 	cc_data = daap_request_data (chan, request, host, request_id);
 	if (cc_data) {
 		revision_id = cc_data->revision_id;
@@ -93,7 +93,7 @@ daap_command_logout (gchar *host, gint port, guint session_id, guint request_id)
 	}
 
 	request = g_strdup_printf ("/logout?session-id=%d", session_id);
-	
+
 	/* there is no cc_data generated, so we don't need to store it anywhere */
 	daap_request_data (chan, request, host, request_id);
 
@@ -120,7 +120,7 @@ daap_command_db_list (gchar *host, gint port, guint session_id,
 
 	request = g_strdup_printf ("/databases?session-id=%d&revision-id=%d",
 	                           session_id, revision_id);
-	
+
 	cc_data = daap_request_data (chan, request, host, request_id);
 	g_free (request);
 	if (cc_data) {
@@ -164,7 +164,7 @@ daap_command_song_list (gchar *host, gint port, guint session_id,
 	if (meta_items) {
 		request = daap_url_append_meta (request, meta_items);
 	}
-	
+
 	cc_data = daap_request_data (chan, request, host, request_id);
 	song_list = cc_record_list_deep_copy (cc_data->record_list);
 
@@ -195,7 +195,7 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 	request = g_strdup_printf ("/databases/%d/items%s"
 	                           "?session-id=%d",
 	                           dbid, song, session_id);
-	
+
 	ok = daap_request_stream (chan, request, host, request_id, filesize);
 	g_free (request);
 
@@ -203,7 +203,7 @@ daap_command_init_stream (gchar *host, gint port, guint session_id,
 		return NULL;
 	}
 
-	return chan;	
+	return chan;
 }
 
 static cc_data_t *
@@ -238,7 +238,7 @@ daap_request_data (GIOChannel *chan, const gchar *path, gchar *host, guint reque
 			break;
 	}
 	g_free (header);
-	
+
 	return retval;
 }
 

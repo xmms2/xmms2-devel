@@ -74,13 +74,13 @@ static gint
 grab_data_string (gchar **container, gchar *data, gint str_len)
 {
 	gint offset = 0;
-	
+
 	if (0 != str_len) {
 		*container = (gchar *) malloc (sizeof (gchar) * (str_len+1));
-	
+
 		memcpy (*container, data + DMAP_CC_SZ + DMAP_INT_SZ, str_len);
 		(*container)[str_len] = '\0';
-	
+
 		offset += str_len;
 	}
 
@@ -91,7 +91,7 @@ static gint
 grab_data_version (gint16 *cont_upper, gint16 *cont_lower, gchar *data)
 {
 	gint offset = DMAP_CC_SZ;
-	
+
 	memcpy (cont_lower, data + offset, DMAP_INT_SZ);
 	endian_swap_int16 (cont_lower);
 	offset += DMAP_INT_SZ;
@@ -113,7 +113,7 @@ grab_data (void *container, gchar *data, content_type ct)
 	memcpy (&data_size, data + offset, DMAP_INT_SZ);
 	endian_swap_int32 ((gint32 *)&data_size);
 	offset += DMAP_INT_SZ;
-	
+
 	switch (ct) {
 		case DMAP_CTYPE_BYTE:
 		case DMAP_CTYPE_UNSIGNEDBYTE:
@@ -219,7 +219,7 @@ cc_handler_mlit (cc_data_t *fields, gchar *data, gint data_len)
 			case CC_TO_INT ('a','s','d','k'):
 				offset += grab_data (&(item_fields->song_data_kind), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('a','s','u','l'):
 				offset += grab_data (&(item_fields->song_data_url), current_data,
 				                    DMAP_CTYPE_STRING);
@@ -361,7 +361,7 @@ cc_handler_mlit (cc_data_t *fields, gchar *data, gint data_len)
 	}
 
 	fields->record_list = g_slist_prepend (fields->record_list, item_fields);
-	
+
 	return (gint) (current_data - data);
 }
 
@@ -416,10 +416,10 @@ cc_handler_adbs (gchar *data, gint data_len)
 				break;
 			case CC_TO_INT ('m','t','c','o'):
 				offset += cc_handler_mtco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','r','c','o'):
 				offset += cc_handler_mrco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','l','c','l'):
 				offset += cc_handler_mlcl (fields, current_data,
 				                           DMAP_BYTES_REMAINING);
@@ -432,7 +432,7 @@ cc_handler_adbs (gchar *data, gint data_len)
 		current_data += offset;
 		offset = 0;
 	}
-	
+
 	return fields;
 }
 
@@ -467,63 +467,63 @@ cc_handler_msrv (gchar *data, gint data_len)
 			case CC_TO_INT ('m','s','t','m'):
 				offset += grab_data (&(fields->timeout_interval), current_data,
 				                    DMAP_CTYPE_INT);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','i','x'):
 				offset += grab_data (&(fields->has_indexing), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','e','x'):
 				offset += grab_data (&(fields->has_extensions), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','u','p'):
 				offset += grab_data (&(fields->has_update), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','a','l'):
 				offset += grab_data (&(fields->has_autologout), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','l','r'):
 				offset += grab_data (&(fields->login_required), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','q','y'):
 				offset += grab_data (&(fields->has_queries), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','r','s'):
 				offset += grab_data (&(fields->has_resolve), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','b','r'):
 				offset += grab_data (&(fields->has_browsing), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','p','i'):
 				offset += grab_data (&(fields->has_persistent), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','a','s'):
 				offset += grab_data (&(fields->auth_type), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','a','u'):
 				offset += grab_data (&(fields->auth_method), current_data,
 				                    DMAP_CTYPE_BYTE);
-				break;	
+				break;
 			case CC_TO_INT ('a','e','S','V'):
 				offset += grab_data (&(fields->sharing_version), current_data,
 				                    DMAP_CTYPE_INT);
-				break;	
+				break;
 			case CC_TO_INT ('m','s','d','c'):
 				offset += grab_data (&(fields->db_count), current_data,
 				                    DMAP_CTYPE_INT);
-				break;	
+				break;
 			case CC_TO_INT ('m','i','n','m'):
 				offset += grab_data (&(fields->server_name), current_data,
 				                    DMAP_CTYPE_STRING);
-				break;	
+				break;
 			default:
 				XMMS_DBG ("Warning: Unrecognized content code "
 				          "or end of data: %s\n",
@@ -553,7 +553,7 @@ cc_handler_mlog (gchar *data, gint data_len)
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
 	cc_data_t *fields;
-	
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
@@ -589,7 +589,7 @@ cc_handler_mupd (gchar *data, gint data_len)
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
 	cc_data_t *fields;
-	
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
@@ -626,7 +626,7 @@ cc_handler_avdb (gchar *data, gint data_len)
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
 	cc_data_t *fields;
-	
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
@@ -643,10 +643,10 @@ cc_handler_avdb (gchar *data, gint data_len)
 				break;
 			case CC_TO_INT ('m','t','c','o'):
 				offset += cc_handler_mtco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','r','c','o'):
 				offset += cc_handler_mrco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','l','c','l'):
 				offset += cc_handler_mlcl (fields, current_data,
 				                           DMAP_BYTES_REMAINING);
@@ -659,7 +659,7 @@ cc_handler_avdb (gchar *data, gint data_len)
 		current_data += offset;
 		offset = 0;
 	}
-	
+
 	return fields;
 }
 
@@ -670,7 +670,7 @@ cc_handler_apso (gchar *data, gint data_len)
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
 	cc_data_t *fields;
-	
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
@@ -687,10 +687,10 @@ cc_handler_apso (gchar *data, gint data_len)
 				break;
 			case CC_TO_INT ('m','t','c','o'):
 				offset += cc_handler_mtco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','r','c','o'):
 				offset += cc_handler_mrco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','l','c','l'):
 				offset += cc_handler_mlcl (fields, current_data,
 				                           DMAP_BYTES_REMAINING);
@@ -703,7 +703,7 @@ cc_handler_apso (gchar *data, gint data_len)
 		current_data += offset;
 		offset = 0;
 	}
-	
+
 	return fields;
 }
 
@@ -714,7 +714,7 @@ cc_handler_aply (gchar *data, gint data_len)
 	gboolean do_break = FALSE;
 	gchar *current_data, *data_end;
 	cc_data_t *fields;
-	
+
 	current_data = data + 8;
 	data_end = data + data_len;
 
@@ -731,10 +731,10 @@ cc_handler_aply (gchar *data, gint data_len)
 				break;
 			case CC_TO_INT ('m','t','c','o'):
 				offset += cc_handler_mtco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','r','c','o'):
 				offset += cc_handler_mrco (fields, current_data);
-				break;	
+				break;
 			case CC_TO_INT ('m','l','c','l'):
 				offset += cc_handler_mlcl (fields, current_data,
 				                           DMAP_BYTES_REMAINING);
@@ -747,7 +747,7 @@ cc_handler_aply (gchar *data, gint data_len)
 		current_data += offset;
 		offset = 0;
 	}
-	
+
 	return fields;
 }
 
@@ -818,7 +818,7 @@ cc_record_list_deep_copy (GSList *record_list) {
 		record->song_disc_count  = data->song_disc_count;
 		record->song_disc_no     = data->song_disc_no;
 		record->song_bpm         = data->song_bpm;
-	
+
 		record->dbid             = data->dbid;
 		record->sample_rate      = data->sample_rate;
 		record->song_size        = data->song_size;
@@ -828,11 +828,11 @@ cc_record_list_deep_copy (GSList *record_list) {
 		record->song_date        = data->song_date;
 		record->song_date_mod    = data->song_date_mod;
 		record->container_id     = data->container_id;
-	
+
 		record->deleted_id       = data->deleted_id;
-	
+
 		record->persistent_id    = data->persistent_id;
-		
+
 		record->iname            = g_strdup (data->iname);
 		record->song_data_url    = g_strdup (data->song_data_url);
 		record->song_data_album  = g_strdup (data->song_data_album);
@@ -843,7 +843,7 @@ cc_record_list_deep_copy (GSList *record_list) {
 		record->song_format      = g_strdup (data->song_format);
 		record->song_composer    = g_strdup (data->song_composer);
 		record->song_grouping    = g_strdup (data->song_grouping);
-		
+
 		/* db list specific */
 		record->db_n_items       = data->db_n_items;
 		record->db_n_playlist    = data->db_n_playlist;
