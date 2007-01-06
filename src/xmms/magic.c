@@ -63,7 +63,8 @@ typedef enum xmms_magic_entry_type_St {
 	XMMS_MAGIC_ENTRY_TYPE_BYTE,
 	XMMS_MAGIC_ENTRY_TYPE_INT16,
 	XMMS_MAGIC_ENTRY_TYPE_INT32,
-	XMMS_MAGIC_ENTRY_TYPE_STRING
+	XMMS_MAGIC_ENTRY_TYPE_STRING,
+	XMMS_MAGIC_ENTRY_TYPE_STRINGC,
 } xmms_magic_entry_type_t;
 
 typedef enum xmms_magic_entry_operator_St {
@@ -129,6 +130,7 @@ parse_type (gchar **s, gint *endian)
 		{"belong", XMMS_MAGIC_ENTRY_TYPE_INT32, G_BIG_ENDIAN},
 		{"leshort", XMMS_MAGIC_ENTRY_TYPE_INT16, G_LITTLE_ENDIAN},
 		{"lelong", XMMS_MAGIC_ENTRY_TYPE_INT32, G_LITTLE_ENDIAN},
+		{"string/c", XMMS_MAGIC_ENTRY_TYPE_STRINGC, G_BYTE_ORDER},
 		{"string", XMMS_MAGIC_ENTRY_TYPE_STRING, G_BYTE_ORDER},
 		{NULL, XMMS_MAGIC_ENTRY_TYPE_UNKNOWN, G_BYTE_ORDER}
 	};
@@ -228,8 +230,13 @@ parse_entry (const gchar *s)
 	}
 
 	/* @todo Implement string operators */
-	if (entry->type != XMMS_MAGIC_ENTRY_TYPE_STRING) {
-		entry->oper = parse_oper (&end);
+	switch (entry->type) {
+		case XMMS_MAGIC_ENTRY_TYPE_STRING:
+		case XMMS_MAGIC_ENTRY_TYPE_STRINGC:
+			break;
+		default:
+			entry->oper = parse_oper (&end);
+			break;
 	}
 
 	switch (entry->type) {
@@ -246,6 +253,7 @@ parse_entry (const gchar *s)
 			entry->len = 4;
 			break;
 		case XMMS_MAGIC_ENTRY_TYPE_STRING:
+		case XMMS_MAGIC_ENTRY_TYPE_STRINGC:
 			g_strlcpy (entry->value.s, end, sizeof (entry->value.s));
 			entry->len = strlen (entry->value.s);
 			break;
@@ -393,6 +401,8 @@ node_match (xmms_magic_checker_t *c, GNode *node)
 			CMP (i32, entry, entry->value.i32); /* returns */
 		case XMMS_MAGIC_ENTRY_TYPE_STRING:
 			return !strncmp (ptr, entry->value.s, entry->len);
+		case XMMS_MAGIC_ENTRY_TYPE_STRINGC:
+			return !g_ascii_strncasecmp (ptr, entry->value.s, entry->len);
 		default:
 			return FALSE;
 	}
