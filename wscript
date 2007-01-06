@@ -276,5 +276,7 @@ def set_options(opt):
 
 def shutdown():
     if Params.g_commands['install'] and os.geteuid() == 0:
-        try: os.popen('/sbin/ldconfig')
-        except: pass
+        ldconfig = '/sbin/ldconfig'
+        if os.path.isfile(ldconfig):
+            try: os.popen(ldconfig)
+            except: pass
