@@ -689,9 +689,10 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 {
 	GList *res = NULL;
 	GList *ids = NULL;
+	GList *fetch = g_list_prepend (NULL, "id");
 	GList *n = NULL;
 
-	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, NULL, NULL, err);
+	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, fetch, NULL, err);
 
 	/* FIXME: get an int list directly ! */
 	for (n = res; n; n = n->next) {
