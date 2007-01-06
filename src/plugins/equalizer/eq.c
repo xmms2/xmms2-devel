@@ -418,7 +418,7 @@ xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
 				}
 			}
 		}
-	}	
+	}
 }
 
 static gfloat
