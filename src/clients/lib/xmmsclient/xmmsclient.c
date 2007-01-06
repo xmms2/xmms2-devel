@@ -175,7 +175,7 @@ xmmsc_connect (xmmsc_connection_t *c, const char *ipcpath)
 	}
 
 	ipc = xmmsc_ipc_init ();
-	
+
 	if (!xmmsc_ipc_connect (ipc, path)) {
 		c->error = strdup ("xmms2d is not running.");
 		return false;
@@ -334,10 +334,10 @@ xmmsc_send_broadcast_msg (xmmsc_connection_t *c, uint32_t signalid)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_BROADCAST);
 	xmms_ipc_msg_put_uint32 (msg, signalid);
-	
+
 	res = xmmsc_send_msg (c, msg);
 
 	xmmsc_result_restartable (res, signalid);
@@ -351,12 +351,12 @@ xmmsc_send_signal_msg (xmmsc_connection_t *c, uint32_t signalid)
 {
 	xmms_ipc_msg_t *msg;
 	xmmsc_result_t *res;
-	
+
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 	xmms_ipc_msg_put_uint32 (msg, signalid);
-	
+
 	res = xmmsc_send_msg (c, msg);
-	
+
 	xmmsc_result_restartable (res, signalid);
 
 	return res;
@@ -444,7 +444,7 @@ xmmsc_io_out_handle (xmmsc_connection_t *c)
 {
 	x_check_conn (c, -1);
 	x_api_error_if (!xmmsc_ipc_io_out (c->ipc), "without pending output", -1);
-	
+
 	return xmmsc_ipc_io_out_callback (c->ipc);
 }
 
@@ -461,7 +461,7 @@ xmmsc_io_in_handle (xmmsc_connection_t *c)
 {
 	x_check_conn (c, -1);
 	x_api_error_if (xmmsc_ipc_disconnected (c->ipc), "although the xmms2 deamon is not connected", -1);
-	
+
 	return xmmsc_ipc_io_in_callback (c->ipc);
 }
 

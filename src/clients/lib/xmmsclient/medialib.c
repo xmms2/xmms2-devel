@@ -141,7 +141,7 @@ xmmsc_entry_format (char *target, int len, const char *fmt, xmmsc_result_t *res)
 				snprintf (tmp, 12, "%d", i);
 				result = tmp;
 			}
-				
+
 			if (result)
 				strncat (target, result, len - strlen (target) - 1);
 		}

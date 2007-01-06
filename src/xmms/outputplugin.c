@@ -310,7 +310,7 @@ xmms_output_plugin_writer (gpointer data)
 	gint ret;
 
 	g_mutex_lock (plugin->write_mutex);
-	
+
 	while (plugin->write_running) {
 		if (plugin->write_status == XMMS_PLAYBACK_STATUS_STOP) {
 			if (output) {

@@ -270,7 +270,7 @@ xmms_mad_init (xmms_xform_t *xform)
 		if (xmms_xing_has_flag (data->xing, XMMS_XING_FRAMES)) {
 			guint duration;
 			mad_timer_t timer;
-			
+
 			timer = frame.header.duration;
 			mad_timer_multiply (&timer, xmms_xing_get_frames (data->xing));
 			duration = mad_timer_count (timer, MAD_UNITS_MILLISECONDS);

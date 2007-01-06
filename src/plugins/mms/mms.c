@@ -73,7 +73,7 @@ xmms_mms_plugin_setup (xmms_xform_plugin_t *plugin)
 	xmms_xform_plugin_indata_add (plugin, XMMS_STREAM_TYPE_MIMETYPE,
 	                              "application/x-url", XMMS_STREAM_TYPE_URL,
 	                              "mmsu://*", XMMS_STREAM_TYPE_END);
-	
+
 	return TRUE;
 }
 

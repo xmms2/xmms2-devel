@@ -165,7 +165,7 @@ xmms_config_lookup (const gchar *path)
 {
 	xmms_config_property_t *prop;
 	g_return_val_if_fail (global_config, NULL);
-	
+
 	g_mutex_lock (global_config->mutex);
 	prop = g_hash_table_lookup (global_config->properties, path);
 	g_mutex_unlock (global_config->mutex);
@@ -790,7 +790,7 @@ void
 xmms_config_shutdown ()
 {
 	xmms_object_unref (global_config);
-	
+
 }
 
 /**

@@ -120,7 +120,7 @@ xmms_id3v2_init (xmms_xform_t *xform)
 
 	data = g_new0 (xmms_id3v2_data_t, 1);
 	xmms_xform_private_data_set (xform, data);
-	
+
 	if (!xmms_id3v2_is_header (hbuf, &head)) {
 		XMMS_DBG ("Couldn't parse id3v2 header!?");
 		return FALSE;

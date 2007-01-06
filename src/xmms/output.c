@@ -215,7 +215,7 @@ xmms_output_stream_type_add (xmms_output_t *output, ...)
 	va_end (ap);
 
         g_return_if_fail (f);
-	
+
         output->format_list = g_list_append (output->format_list, f);
 }
 
@@ -229,7 +229,7 @@ update_playtime (xmms_output_t *output, int ret)
 	g_mutex_unlock (output->playtime_mutex);
 
 	buffersize = xmms_output_plugin_method_latency_get (output->plugin, output);
-		
+
 	if (output->played < buffersize) {
 		buffersize = output->played;
 	}
@@ -248,7 +248,7 @@ update_playtime (xmms_output_t *output, int ret)
 		output->played_time = ms;
 
 	}
-	
+
 	g_mutex_unlock (output->playtime_mutex);
 
 }
@@ -293,7 +293,7 @@ song_changed (void *data)
 
 	arg->output->played = 0;
 	arg->output->current_entry = entry;
-	
+
 	if (!xmms_output_format_set (arg->output, xmms_xform_outtype_get (arg->chain))) {
 		XMMS_DBG ("Couldn't set format, stopping filler..");
 		xmms_output_filler_state_nolock (arg->output, FILLER_STOP);
@@ -513,7 +513,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 
 	if (ret < len) {
 		XMMS_DBG ("Underrun %d of %d (%d)", ret, len, xmms_sample_frame_size_get (output->format));
-		
+
 		if ((ret % xmms_sample_frame_size_get (output->format)) != 0) {
 			xmms_log_error ("***********************************");
 			xmms_log_error ("* Read non-multiple of sample size,");
@@ -524,7 +524,7 @@ xmms_output_read (xmms_output_t *output, char *buffer, gint len)
 	}
 
 	output->bytes_written += ret;
-	
+
 	return ret;
 }
 
@@ -601,7 +601,7 @@ static void
 xmms_output_start (xmms_output_t *output, xmms_error_t *err)
 {
 	g_return_if_fail (output);
-	
+
 	xmms_output_filler_state (output, FILLER_RUN);
 	if (!xmms_output_status_set (output, XMMS_PLAYBACK_STATUS_PLAY)) {
 		xmms_output_filler_state (output, FILLER_STOP);
@@ -657,7 +657,7 @@ xmms_output_volume_set (xmms_output_t *output, const gchar *channel,
 		                "couldn't set volume, output plugin not loaded");
 		return;
 	}
-	
+
 	if (!xmms_output_plugin_method_volume_set_available (output->plugin)) {
 		xmms_error_set (error, XMMS_ERROR_GENERIC,
 		                "operation not supported");
@@ -873,7 +873,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	gint size;
 
 	g_return_val_if_fail (playlist, NULL);
-	
+
 	XMMS_DBG ("Trying to open output");
 
 	output = xmms_object_new (xmms_output_t, xmms_output_destroy);
@@ -882,7 +882,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 
 	output->status_mutex = g_mutex_new ();
 	output->playtime_mutex = g_mutex_new ();
-	
+
 	prop = xmms_config_property_register ("output.buffersize", "32768", NULL, NULL);
 	size = xmms_config_property_get_int (prop);
 	XMMS_DBG ("Using buffersize %d", size);
@@ -904,7 +904,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	                             XMMS_IPC_SIGNAL_PLAYBACK_STATUS);
 	xmms_ipc_broadcast_register (XMMS_OBJECT (output),
 	                             XMMS_IPC_SIGNAL_OUTPUT_CURRENTID);
-	
+
 	/* Signals are only emitted if the client has a pending question to it
 	 * after the client recivies a signal, he must ask for it again */
 	xmms_ipc_signal_register (XMMS_OBJECT (output),
@@ -962,7 +962,7 @@ xmms_output_new (xmms_output_plugin_t *plugin, xmms_playlist_t *playlist)
 	}
 
 
-	
+
 	return output;
 }
 
@@ -973,7 +973,7 @@ void
 xmms_output_flush (xmms_output_t *output)
 {
 	g_return_if_fail (output);
-	
+
 	xmms_output_plugin_method_flush (output->plugin, output);
 }
 
@@ -993,7 +993,7 @@ xmms_output_format_set (xmms_output_t *output, xmms_stream_type_t *fmt)
 			XMMS_DBG ("audio formats are equal, not updating");
 			return TRUE;
 		}
-	
+
 		xmms_object_unref (output->format);
 		xmms_object_ref (fmt);
 		output->format = fmt;

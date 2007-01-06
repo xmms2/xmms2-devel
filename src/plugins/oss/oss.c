@@ -132,7 +132,7 @@ xmms_oss_plugin_setup (xmms_output_plugin_t *plugin)
 	                                             "/dev/mixer",
 	                                             NULL,
 	                                             NULL);
-	
+
 	xmms_output_plugin_config_property_register (plugin,
 	                                             "device",
 	                                             DEFAULT_DEVICE,
@@ -154,7 +154,7 @@ xmms_oss_volume_set (xmms_output_t *output,
 
 	g_return_val_if_fail (output, FALSE);
 	g_return_val_if_fail (channel, FALSE);
-	
+
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
@@ -243,7 +243,7 @@ xmms_oss_buffersize_get (xmms_output_t *output)
 	if (!err) {
 		ret = (buf_info.fragstotal * buf_info.fragsize) - buf_info.bytes;
 	}
-	
+
 	return ret;
 }
 
@@ -272,7 +272,7 @@ xmms_oss_open (xmms_output_t *output)
 	g_return_val_if_fail (output, FALSE);
 
 	data = xmms_output_private_data_get (output);
-	
+
 	XMMS_DBG ("xmms_oss_open (%p)", output);
 
 	val = xmms_output_config_lookup (output, "device");
@@ -366,7 +366,7 @@ xmms_oss_new (xmms_output_t *output)
 
 	close (fd);
 	XMMS_DBG ("OpenSoundSystem initilized!");
-	
+
 	return TRUE;
 
  err:
@@ -447,7 +447,7 @@ static void
 xmms_oss_write (xmms_output_t *output, gpointer buffer, gint len, xmms_error_t *err)
 {
 	xmms_oss_data_t *data;
-	
+
 	g_return_if_fail (output);
 	g_return_if_fail (buffer);
 	g_return_if_fail (len > 0);

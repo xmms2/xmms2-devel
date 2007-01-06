@@ -242,7 +242,7 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos
 	if (playlist == NULL) {
 		playlist = XMMS_ACTIVE_PLAYLIST;
 	}
-	
+
 	res = xmmsc_playlist_insert_encoded (c, playlist, pos, enc_url);
 	free (enc_url);
 

@@ -206,7 +206,7 @@ xmms_ao_new (xmms_output_t *output)
 
 	return TRUE;
 }
-	
+
 static void
 xmms_ao_destroy (xmms_output_t *output)
 {

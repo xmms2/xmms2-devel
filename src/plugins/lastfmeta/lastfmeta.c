@@ -105,10 +105,10 @@ xmms_lastfmeta_init (xmms_xform_t *xform)
 
 	/* seek over the first 4 bytes (SYNC) */
 	xmms_xform_read (xform, buf, 4, &err);
-	
+
 	session = xmms_xform_metadata_get_str (xform, "session");
 	g_snprintf (data->url, sizeof (data->url), np_fmt, session);
-	
+
 	data->curl_easy = curl_easy_init ();
 	curl_easy_setopt (data->curl_easy, CURLOPT_URL, data->url);
 	curl_easy_setopt (data->curl_easy, CURLOPT_USERAGENT,
@@ -308,7 +308,7 @@ xmms_lastfm_memstr (const gchar *haystack, gint haystack_len,
 {
 	const gchar *p, *end;
 	gint needle_len, i;
-	
+
 	needle_len = strlen (needle);
 
 	if (needle_len == 0) {

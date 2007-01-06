@@ -212,21 +212,21 @@ xmms_sun_new (xmms_output_t *output)
 	gint tmp_audio_fd;
 	gint i, j, k;
 	gint support = 0;
-	
+
 	XMMS_DBG ("XMMS_SUN_NEW");
-	
+
 	g_return_val_if_fail (output, FALSE);
 	data = g_new0 (xmms_sun_data_t, 1);
 
 	val = xmms_plugin_config_lookup ( xmms_output_plugin_get (output), "mixer");
 	mixdev = xmms_config_property_get_string (val);
-	
+
 	data->mixerfd = open (mixdev, O_WRONLY);
 	if (!data->mixerfd == -1)
 		data->have_mixer = FALSE;
 	else
 		data->have_mixer = TRUE;
-	
+
 	XMMS_DBG ("mixer: %d", data->have_mixer);
 	data->mixer_conf = xmms_plugin_config_lookup (
 	                           xmms_output_plugin_get (output),
@@ -235,9 +235,9 @@ xmms_sun_new (xmms_output_t *output)
 	xmms_config_property_callback_set (data->mixer_conf,
 	                                   xmms_sun_mixer_config_changed,
 	                                   (gpointer) output);
-	
+
 	xmms_output_private_data_set (output, data);
-	
+
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output), "device");
 	dev = xmms_config_property_get_string (val);
 
@@ -245,11 +245,11 @@ xmms_sun_new (xmms_output_t *output)
 	if ((tmp_audio_fd = open (dev, O_WRONLY)) < 0) {
 		return FALSE;
 	}
-	
+
 	AUDIO_INITINFO (&info);
 
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
-		
+
 		support = 0;
 		enc.index = 0;
 		while (ioctl (tmp_audio_fd, AUDIO_GETENC, &enc) == 0) {
@@ -324,21 +324,21 @@ xmms_sun_open (xmms_output_t *output)
 	audio_encoding_t enc;
 	const xmms_config_property_t *val;
 	const gchar *dev;
-	
+
 	XMMS_DBG ("XMMS_SUN_OPEN");
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
-	
+
 	val = xmms_plugin_config_lookup (xmms_output_plugin_get (output),
 	                                 "device");
-	
+
 	if ((dev = xmms_config_property_get_string (val)) == NULL) {
 		XMMS_DBG ("Device not found in config, using default");
 		dev = "/dev/audio";
 	}
-	
+
 	XMMS_DBG ("Opening device: %s", dev);
 
 	AUDIO_INITINFO (&info);
@@ -385,9 +385,9 @@ xmms_sun_close (xmms_output_t *output)
 	g_return_if_fail (output);
 	data = xmms_output_private_data_get (output);
 	g_return_if_fail (data);
-	
+
 	XMMS_DBG ("XMMS_SUN_CLOSE");
-	
+
 	if (close (data->fd) < 0) {
 		xmms_log_error ("Unable to close device (%s)", strerror (errno));
 	}
@@ -406,9 +406,9 @@ xmms_sun_mixer_config_changed (xmms_object_t *object, gconstpointer data, gpoint
 	guint left, right;
 	xmms_output_t *output;
 	const gchar *newval;
-	
+
 	XMMS_DBG ("XMMS_SUN_MIXER_CONFIG_CHANGED");
-	
+
 	g_return_if_fail (userdata);
 	output = userdata;
 	g_return_if_fail (data);
@@ -447,16 +447,16 @@ xmms_sun_format_set (xmms_output_t *output, xmms_audio_format_t *format)
 	xmms_sun_data_t *data;
 	audio_info_t info;
 	gint i;
-	
+
 	XMMS_DBG ("XMMS_SUN_FORMAT_SET %d %d %d", format->format,
 	          format->channels, format->samplerate);
-	
+
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
 
 	AUDIO_INITINFO (&info);
-	
+
 	/* translate the sample format */
 	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
 		if (formats[i].xmms_fmt == format->format) {
@@ -496,19 +496,19 @@ xmms_sun_mixer_set (xmms_output_t *output, gint left, gint right)
 	xmms_sun_data_t *data;
 	mixer_devinfo_t info;
 	mixer_ctrl_t mixer;
-	
+
 	XMMS_DBG ("XMMS_SUN_MIXER_SET");
 
 	g_return_val_if_fail (output, FALSE);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, FALSE);
-	
+
 	if (!data->have_mixer) {
 		return FALSE;
 	}
-	
+
 	AUDIO_INITINFO (&info);
-	
+
 	for (info.index = 0; ioctl (data->mixerfd,
 	     AUDIO_MIXER_DEVINFO, &info) >= 0; info.index++) {
 		if (!strcmp ("dac", info.label.name)) {
@@ -592,7 +592,7 @@ xmms_sun_buffersize_get (xmms_output_t *output)
 	xmms_sun_data_t *data;
 	audio_info_t info;
 	guint pending_bytes;
-	
+
 	g_return_val_if_fail (output, 0);
 	data = xmms_output_private_data_get (output);
 	g_return_val_if_fail (data, 0);

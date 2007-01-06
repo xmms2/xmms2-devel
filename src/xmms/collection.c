@@ -205,7 +205,7 @@ xmms_collection_init (xmms_playlist_t *playlist)
 	gint i;
 	xmms_coll_dag_t *ret;
 	xmms_stream_type_t *f;
-	
+
 	ret = xmms_object_new (xmms_coll_dag_t, xmms_collection_destroy);
 	ret->mutex = g_mutex_new ();
 	ret->playlist = playlist;
@@ -504,7 +504,7 @@ xmms_collection_get (xmms_coll_dag_t *dag, gchar *name, gchar *namespace, xmms_e
 	} else {
 		xmmsc_coll_ref (coll);
 	}
-	
+
 	g_mutex_unlock (dag->mutex);
 
 	return coll;
@@ -740,7 +740,7 @@ xmms_collection_query_infos (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	query = xmms_collection_get_query (dag, coll, lim_start, lim_len,
 	                                   order, fetch, group);
-	
+
 	g_mutex_unlock (dag->mutex);
 
 	XMMS_DBG ("COLLECTIONS: query_infos with %s", query->str);
@@ -1107,7 +1107,7 @@ xmms_collection_validate_recurs (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 			return FALSE;
 		}
 		break;
-	
+
 	case XMMS_COLLECTION_TYPE_IDLIST:
 	case XMMS_COLLECTION_TYPE_QUEUE:
 		/* no operand */
@@ -1718,7 +1718,7 @@ xmms_collection_media_match (xmms_coll_dag_t *dag, GHashTable *mediainfo,
 		g_assert_not_reached ();
 		break;
 	}
-	
+
 	return match;
 }
 
@@ -1760,7 +1760,7 @@ xmms_collection_media_match_reference (xmms_coll_dag_t *dag, GHashTable *mediain
 			} else {
 				*matchstate = XMMS_COLLECTION_FIND_STATE_NOMATCH;
 			}
-						
+
 			g_hash_table_replace (match_table, g_strdup (refname), matchstate);
 
 		} else {
@@ -1837,7 +1837,7 @@ xmms_collection_media_info (guint mid, xmms_error_t *err)
 
 		case 2:  /* prop value */
 			value = xmms_object_cmd_value_copy (n->data);
-		
+
 			/* Only insert the first source */
 			if (g_hash_table_lookup (infos, name) == NULL) {
 				g_hash_table_replace (infos, name, value);

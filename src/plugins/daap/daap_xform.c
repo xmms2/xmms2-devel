@@ -384,7 +384,7 @@ xmms_daap_read (xmms_xform_t *xform, void *buffer, gint len, xmms_error_t *error
 			break;
 		}
 	}
-	
+
 	return read_bytes;
 }
 
@@ -403,7 +403,7 @@ xmms_daap_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 			gchar *str;
 
 			mdns_serv = sl->data;
-	
+
 			str = g_strdup_printf ("%s:%d", mdns_serv->address,
 			                       mdns_serv->port);
 			xmms_xform_browse_add_entry (xform, str, 0);

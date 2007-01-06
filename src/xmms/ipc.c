@@ -171,7 +171,7 @@ hash_to_dict (gpointer key, gpointer value, gpointer udata)
 		xmms_ipc_msg_put_string (msg, k);
 		xmms_ipc_handle_cmd_value (msg, v);
 	}
-	
+
 }
 
 static void
@@ -318,7 +318,7 @@ process_msg (xmms_ipc_client_t *client, xmms_ipc_t *ipc, xmms_ipc_msg_t *msg)
 			xmms_ipc_msg_put_string (retmsg, "Corrupt msg");
 			goto err;
 		}
-			
+
 	}
 
 	xmms_object_cmd_call (object, cmdid, &arg);
@@ -473,7 +473,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	context = g_main_context_new ();
 	client->ml = g_main_loop_new (context, FALSE);
 	g_main_context_unref (context);
-	
+
 	fd = xmms_ipc_transport_fd_get (transport);
 	client->iochan = g_io_channel_unix_new (fd);
 	g_return_val_if_fail (client->iochan, NULL);
@@ -483,7 +483,7 @@ xmms_ipc_client_new (xmms_ipc_t *ipc, xmms_ipc_transport_t *transport)
 	client->out_msg = g_queue_new ();
 	client->lock = g_mutex_new ();
 	client->thread = g_thread_create (xmms_ipc_client_thread, client, FALSE, NULL);
-	
+
 	return client;
 }
 
@@ -715,7 +715,7 @@ xmms_ipc_broadcast_register (xmms_object_t *object, xmms_ipc_signals_t signalid)
 {
 	g_return_if_fail (object);
 	g_mutex_lock (ipc_object_pool_lock);
-	
+
 	ipc_object_pool->broadcasts[signalid] = object;
 	xmms_object_connect (object, signalid, xmms_ipc_broadcast_cb, GUINT_TO_POINTER (signalid));
 
@@ -814,21 +814,21 @@ xmms_ipc_shutdown_server (xmms_ipc_t *ipc)
 	GList *c;
 	xmms_ipc_client_t *co;
 	if (!ipc) return;
-	
+
 	g_mutex_lock (ipc->mutex_lock);
 	g_io_channel_unref (ipc->chan);
 	xmms_ipc_transport_destroy (ipc->transport);
-	
+
 	for (c = ipc->clients; c; c = g_list_next (c)) {
 		co = c->data;
 		if (!co) continue;
 		co->ipc = NULL;
 	}
-	
+
 	g_list_free (ipc->clients);
 	g_mutex_unlock (ipc->mutex_lock);
 	g_mutex_free (ipc->mutex_lock);
-	
+
 	g_free (ipc);
 
 }
@@ -842,7 +842,7 @@ xmms_ipc_shutdown (void)
 {
 	GList *s = ipc_servers;
 	xmms_ipc_t *ipc;
-	
+
 	g_mutex_lock (ipc_servers_lock);
 	while (s) {
 		ipc = s->data;
@@ -851,7 +851,7 @@ xmms_ipc_shutdown (void)
 		xmms_ipc_shutdown_server (ipc);
 	}
 	g_mutex_unlock (ipc_servers_lock);
-	
+
 }
 
 /**
@@ -867,7 +867,7 @@ xmms_ipc_setup_server (const gchar *path)
 	g_return_val_if_fail (path, FALSE);
 
 	split = g_strsplit (path, ";", 0);
-	
+
 	for (i = 0; split && split[i]; i++) {
 		ipc = g_new0 (xmms_ipc_t, 1);
 		if (!ipc) {

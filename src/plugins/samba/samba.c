@@ -254,7 +254,7 @@ xmms_samba_browse (xmms_xform_t *xform,
 		    dir->smbc_type == SMBC_SERVER ||
 		    dir->smbc_type == SMBC_FILE_SHARE)
 			flags |= XMMS_XFORM_BROWSE_FLAG_DIR;
-		
+
 		xmms_xform_browse_add_entry (xform, dir->name, flags);
 	}
 

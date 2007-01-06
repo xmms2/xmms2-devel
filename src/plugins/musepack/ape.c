@@ -145,7 +145,7 @@ xmms_apetag_lookup_str (xmms_apetag_t *tag, const gchar *key)
 	g_return_val_if_fail (tag->hash, NULL);
 
 	value = g_hash_table_lookup (tag->hash, key);
-	
+
 	return value;
 }
 
@@ -166,7 +166,7 @@ xmms_apetag_lookup_int (xmms_apetag_t *tag, const gchar *key)
 	if (tmp) {
 		value = strtol (tmp, NULL, 10);
 	}
-	
+
 	return value;
 }
 
@@ -214,7 +214,7 @@ xmms_apetag_cache_tag (xmms_apetag_t *tag)
 	gint offset;
 
 	g_return_val_if_fail (tag, FALSE);
-	
+
 	/* default position */
 	offset = xmms_apetag_find_tag (tag, -32);
 	if (offset > 0) {
@@ -324,7 +324,7 @@ xmms_apetag_cache_items (xmms_apetag_t *tag)
 
 			tag->hash = g_hash_table_new_full (g_str_hash, g_str_equal,
 			                                   g_free, g_free);
-			
+
 			for (i = 0; i < tag->items; i++) {
 
 				gint size = get_int32 (buffer, pos);

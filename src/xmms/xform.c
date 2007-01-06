@@ -178,7 +178,7 @@ static gint
 xmms_browse_list_sortfunc (gconstpointer a, gconstpointer b)
 {
 	xmms_object_cmd_value_t *val1, *val2, *tmp1, *tmp2;
-	
+
 	val1 = (xmms_object_cmd_value_t *) a;
 	val2 = (xmms_object_cmd_value_t *) b;
 
@@ -523,7 +523,7 @@ add_metadatum (gpointer _key, gpointer _value, gpointer user_data)
 	xmms_object_cmd_value_t *value = (xmms_object_cmd_value_t *)_value;
 	gchar *key = (gchar *)_key;
 	metadata_festate_t *st = (metadata_festate_t *)user_data;
-	
+
 	if (value->type == XMMS_OBJECT_CMD_ARG_STRING) {
 		xmms_medialib_entry_property_set_str_source (st->session, st->entry, key, value->value.string, st->source);
 	} else if (value->type == XMMS_OBJECT_CMD_ARG_INT32) {
@@ -921,7 +921,7 @@ xmms_xform_find (xmms_xform_t *prev, xmms_medialib_entry_t entry, GList *goal_hi
 	state.match = NULL;
 
 	xmms_plugin_foreach (XMMS_PLUGIN_TYPE_XFORM, xmms_xform_match, &state);
-	
+
 	if (state.match) {
 		xform = xmms_xform_new (state.match, prev, entry, goal_hints);
 	} else {

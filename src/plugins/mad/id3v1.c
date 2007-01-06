@@ -136,7 +136,7 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 	                    sizeof (tag->title), encoding);
 	xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_YEAR, tag->year,
 	                    sizeof (tag->year), encoding);
-	
+
 
 	if (!xmms_xform_metadata_has_val (xform,
 	    XMMS_MEDIALIB_ENTRY_PROPERTY_GENRE)) {
@@ -150,7 +150,7 @@ xmms_mad_id3v1_parse (xmms_xform_t *xform, guchar *buf)
 			                             id3_genres[tag->genre]);
 		}
 	}
-	
+
 	if (tag->u.v1_1.__zero == 0 && tag->u.v1_1.track_number > 0) {
 		/* V1.1 */
 		xmms_mad_id3v1_set (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_COMMENT,

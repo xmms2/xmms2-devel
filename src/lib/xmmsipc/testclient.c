@@ -11,7 +11,7 @@ int main ()
 
 	xmms_ipc_transport_t *transport;
 	gint fd;
-	
+
 	transport = xmms_ipc_client_init ("unix:///tmp/xmms2.socket");
 	if (!transport) {
 		printf  ("Korv!\n");

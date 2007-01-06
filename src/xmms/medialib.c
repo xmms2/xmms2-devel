@@ -210,7 +210,7 @@ xmms_sqlite_source_pref (sqlite3_context *context, int args, sqlite3_value **val
 	g_mutex_lock (mlib->source_lock);
 	source_name = g_hash_table_lookup (mlib->sources, (gpointer)source);
 	g_mutex_unlock (mlib->source_lock);
-	
+
 	split = g_strsplit ((gchar *)pref, ":", 0);
 
 	for (i = 0; split[i]; i++) {
@@ -883,7 +883,7 @@ xmms_medialib_add_recursive (xmms_medialib_t *medialib, gchar *playlist,
 
 	g_return_if_fail (medialib);
 	g_return_if_fail (path);
-	
+
 	process_dir (path, &list, error);
 
 	XMMS_DBG ("taking the transaction!");

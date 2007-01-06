@@ -291,7 +291,7 @@ static gint64
 xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_faad_data_t *data;
-	
+
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 	g_return_val_if_fail (xform, -1);
 

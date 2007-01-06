@@ -42,7 +42,7 @@ xmms_valist_to_strlist (char *first, va_list ap)
 
 	if (first == NULL)
 		abort ();
-	
+
 	for (i = 0; cur != NULL; i++) {
 		size += sizeof (char *);
 		ret = realloc (ret, size);

@@ -295,7 +295,7 @@ xmms_playlist_init (void)
 	val = xmms_config_property_register ("playlist.repeat_one", "0",
 	                                     on_playlist_r_one_changed, ret);
 	ret->repeat_one = xmms_config_property_get_int (val);
-	
+
 	val = xmms_config_property_register ("playlist.repeat_all", "0",
 	                                  on_playlist_r_all_changed, ret);
 	ret->repeat_all = xmms_config_property_get_int (val);
@@ -338,7 +338,7 @@ xmms_playlist_init (void)
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_ADD_URL,
 	                     XMMS_CMD_FUNC (add_url));
-	
+
 	xmms_object_cmd_add (XMMS_OBJECT (ret),
 	                     XMMS_IPC_CMD_ADD_ID,
 	                     XMMS_CMD_FUNC (add_id));
@@ -465,7 +465,7 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	xmms_medialib_entry_t ent = 0;
 
 	g_return_val_if_fail (playlist, 0);
-	
+
 	g_mutex_lock (playlist->mutex);
 
 	plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, NULL);
@@ -512,7 +512,7 @@ xmms_playlist_current_pos (xmms_playlist_t *playlist, gchar *plname,
 	xmmsc_coll_t *plcoll;
 
 	g_return_val_if_fail (playlist, 0);
-	
+
 	g_mutex_lock (playlist->mutex);
 
 	plcoll = xmms_playlist_get_coll (playlist, plname, err);
@@ -543,7 +543,7 @@ xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 	xmmsc_coll_t *active_coll;
 
 	g_return_val_if_fail (playlist, 0);
-	
+
 	g_mutex_lock (playlist->mutex);
 
 	active_coll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
@@ -687,7 +687,7 @@ xmms_playlist_remove_unlocked (xmms_playlist_t *playlist, gchar *plname,
 	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_REMOVE, 0, plname);
 	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
-	
+
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
 	                    XMMS_IPC_SIGNAL_PLAYLIST_CURRENT_POS,
 	                    XMMS_OBJECT_CMD_ARG_UINT32,
@@ -785,7 +785,7 @@ xmms_playlist_move (xmms_playlist_t *playlist, gchar *plname, guint pos,
 
 	currpos = xmms_playlist_coll_get_currpos (plcoll);
 	size = xmms_playlist_coll_get_size (plcoll);
-	
+
 	if (size == 0 || newpos > (size - 1)) {
 		xmms_error_set (err, XMMS_ERROR_NOENT,
 		                "Cannot move entry outside playlist");
@@ -906,7 +906,7 @@ xmms_playlist_insert_id (xmms_playlist_t *playlist, gchar *plname, guint32 pos,
 	dict = xmms_playlist_changed_msg_new (XMMS_PLAYLIST_CHANGED_INSERT, file, plname);
 	g_hash_table_insert (dict, "position", xmms_object_cmd_value_int_new (pos));
 	xmms_playlist_changed_msg_send (playlist, dict);
-	
+
 	g_mutex_unlock (playlist->mutex);
 	return TRUE;
 }
@@ -949,7 +949,7 @@ xmms_playlist_add_url (xmms_playlist_t *playlist, gchar *plname, gchar *nurl, xm
 {
 	xmms_medialib_entry_t entry = 0;
 	xmms_medialib_session_t *session = xmms_medialib_begin_write ();
-	
+
 	entry = xmms_medialib_entry_new_encoded (session, nurl, err);
 
 	if (entry) {

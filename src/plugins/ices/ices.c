@@ -71,7 +71,7 @@ static gboolean
 xmms_ices_plugin_setup (xmms_output_plugin_t *plugin)
 {
 	xmms_output_methods_t methods;
-	
+
 	XMMS_OUTPUT_METHODS_INIT (methods);
 	methods.new = xmms_ices_new;
 	methods.destroy = xmms_ices_destroy;
@@ -181,7 +181,7 @@ xmms_ices_new (xmms_output_t *output)
 {
 	xmms_ices_data_t *data;
 	xmms_config_property_t *val;
-	
+
 	shout_init ();
 
 	data = g_new0 (xmms_ices_data_t, 1);
@@ -225,7 +225,7 @@ xmms_ices_new (xmms_output_t *output)
 	data->serial = 1;
 
 	xmms_output_private_data_set (output, data);
-	
+
 	/* static for now */
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 

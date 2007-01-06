@@ -72,7 +72,7 @@ daap_open_connection (gchar *host, gint port)
 	}
 
 	memset (&server, 0, sizeof (struct sockaddr_in));
-	
+
 	server.sin_addr = ((struct sockaddr_in *) ai_result->ai_addr)->sin_addr;
 	server.sin_family = AF_INET;
 	server.sin_port = htons (port);
@@ -258,7 +258,7 @@ daap_handle_data (GIOChannel *sock_chan, gchar *header)
 	gchar *response_data;
 
 	response_length = get_data_length (header);
-	
+
 	if (BAD_CONTENT_LENGTH == response_length) {
 		XMMS_DBG ("warning: Header does not contain a \""CONTENT_LENGTH
 		          "\" parameter.\n");
@@ -268,7 +268,7 @@ daap_handle_data (GIOChannel *sock_chan, gchar *header)
 		          "a bad request.\n");
 		return NULL;
 	}
-	
+
 	response_data = (gchar *) g_malloc0 (sizeof (gchar) * response_length);
 	if (NULL == response_data) {
 		XMMS_DBG ("error: could not allocate response memory\n");

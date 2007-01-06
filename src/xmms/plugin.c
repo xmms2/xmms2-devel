@@ -126,7 +126,7 @@ xmms_plugin_config_lookup (xmms_plugin_t *plugin,
 
 	g_return_val_if_fail (plugin, NULL);
 	g_return_val_if_fail (key, NULL);
-	
+
 	g_snprintf (path, sizeof (path), "%s.%s",
 	            xmms_plugin_shortname_get (plugin), key);
 	prop = xmms_config_lookup (path);
@@ -187,7 +187,7 @@ xmms_plugin_type_t
 xmms_plugin_type_get (const xmms_plugin_t *plugin)
 {
 	g_return_val_if_fail (plugin, 0);
-	
+
 	return plugin->type;
 }
 
@@ -310,7 +310,7 @@ xmms_plugin_shutdown ()
 	VALGRIND_DO_LEAK_CHECK
 		;
 #endif
-	
+
 	for (n = xmms_plugin_list; n; n = g_list_next (n)) {
 		xmms_plugin_t *p = n->data;
 
@@ -421,7 +421,7 @@ xmms_plugin_scan_directory (const gchar *dir)
 	pattern = g_path_get_basename (temp);
 
 	g_free (temp);
-	
+
 	d = g_dir_open (dir, 0, NULL);
 	if (!d) {
 		xmms_log_error ("Failed to open plugin directory (%s)", dir);
@@ -508,10 +508,10 @@ void
 xmms_plugin_foreach (xmms_plugin_type_t type, xmms_plugin_foreach_func_t func, gpointer user_data)
 {
 	GList *node;
-	
+
 	for (node = xmms_plugin_list; node; node = g_list_next (node)) {
 		xmms_plugin_t *plugin = node->data;
-		
+
 		if (plugin->type == type || type == XMMS_PLUGIN_TYPE_ALL) {
 			if (!func (plugin, user_data))
 				break;
@@ -537,7 +537,7 @@ xmms_plugin_list_get (xmms_plugin_type_t type)
 			list = g_list_prepend (list, plugin);
 		}
 	}
-	
+
 	return list;
 }
 

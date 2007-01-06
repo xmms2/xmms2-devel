@@ -226,7 +226,7 @@ xmms_main_destroy (xmms_object_t *object)
 
 	cv = xmms_config_lookup ("core.shutdownpath");
 	do_scriptdir (xmms_config_property_get_string (cv));
-	
+
 	/* stop output */
 	xmms_object_cmd_arg_init (&arg);
 

@@ -318,9 +318,9 @@ xmmsc_result_restart (xmmsc_result_t *res)
 
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_SIGNAL, XMMS_IPC_CMD_SIGNAL);
 	xmms_ipc_msg_put_uint32 (msg, res->restart_signal);
-	
+
 	newres = xmmsc_send_msg (res->c, msg);
-	
+
 	l = res->udata_list;
 	f = res->udata_free_func_list;
 	for (n = res->func_list; n; n = x_list_next (n)) {
@@ -332,7 +332,7 @@ xmmsc_result_restart (xmmsc_result_t *res)
 		f = x_list_next (f);
 	}
 	xmmsc_result_restartable (newres, res->restart_signal);
-	
+
 	return newres;
 }
 
@@ -671,7 +671,7 @@ xmmsc_result_get_int (xmmsc_result_t *res, int32_t *r)
 	}
 
 	*r = res->data.inte;
-	
+
 	return 1;
 }
 
@@ -850,7 +850,7 @@ xmmsc_result_get_dict_entry_int (xmmsc_result_t *res, const char *key, int32_t *
 		*r = -1;
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -888,7 +888,7 @@ xmmsc_result_get_dict_entry_uint (xmmsc_result_t *res, const char *key, uint32_t
 		*r = -1;
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -927,7 +927,7 @@ xmmsc_result_get_dict_entry_string (xmmsc_result_t *res, const char *key, char *
 		*r = NULL;
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -967,7 +967,7 @@ xmmsc_result_get_dict_entry_collection (xmmsc_result_t *res, const char *key,
 		*c = NULL;
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -996,7 +996,7 @@ xmmsc_result_get_dict_entry_type (xmmsc_result_t *res, const char *key)
 	if (!val) {
 		return XMMSC_RESULT_VALUE_TYPE_NONE;
 	}
-	
+
 	return val->type;
 }
 
@@ -1139,7 +1139,7 @@ xmmsc_result_list_next (xmmsc_result_t *res)
 	}
 
 	res->current = res->current->next;
-	
+
 	if (res->current) {
 		xmmsc_result_value_t *val = res->current->data;
 		res->data.generic = val->value.generic;
@@ -1242,7 +1242,7 @@ xmmsc_result_decode_url (xmmsc_result_t *res, const char *string)
 			if (t != &ts[2])
 				goto err;
 		}
-		
+
 		url[j++] = chr;
 	}
 
@@ -1297,7 +1297,7 @@ xmmsc_result_run (xmmsc_result_t *res, xmms_ipc_msg_t *msg)
 	cmd = xmms_ipc_msg_get_cmd (msg);
 
 	xmms_ipc_msg_destroy (msg);
-	
+
 	xmmsc_result_ref (res);
 
 	if (res->func_list) {

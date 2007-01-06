@@ -35,7 +35,7 @@ int main (int argc, char **argv)
 		return 0;
 
 	printf ("%s\n", argv[1]);
-	
+
 	transport = xmms_ipc_client_init (argv[1]);
 	if (!transport) {
 		printf  ("Korv!\n");
@@ -45,7 +45,7 @@ int main (int argc, char **argv)
 	fd = xmms_ipc_transport_fd_get (transport);
 
 	msg = xmms_ipc_msg_string_new (42, "korv!");
-	
+
 	i = 5;
 
 	while (i) {

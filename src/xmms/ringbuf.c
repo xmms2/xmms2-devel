@@ -93,7 +93,7 @@ xmms_ringbuf_new (guint size)
 	ringbuf->eos_cond = g_cond_new ();
 
 	ringbuf->hotspots = g_queue_new ();
-	
+
 	return ringbuf;
 }
 

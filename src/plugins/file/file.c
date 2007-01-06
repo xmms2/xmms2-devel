@@ -141,7 +141,7 @@ xmms_file_destroy (xmms_xform_t *xform)
 	data = xmms_xform_private_data_get (xform);
 	if (!data)
 		return;
-	
+
 	if (data->fd != -1)
 		close (data->fd);
 

@@ -94,7 +94,7 @@ xmms_nms_new (xmms_output_t *output)
 
 	return TRUE;
 }
-	
+
 static void
 xmms_nms_destroy (xmms_output_t *output)
 {
@@ -132,7 +132,7 @@ xmms_nms_open (xmms_output_t *output)
 			.subtitle_type = NMS_SC_NO_SUBTITLE,
 		},
 	};
-	
+
 	XMMS_DBG ("Opening audio device");
 
 	PluginLoad ();

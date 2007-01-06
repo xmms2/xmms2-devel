@@ -60,7 +60,7 @@ xmms_ipc_usocket_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 	int fd;
 	x_return_val_if_fail (ipct, -1);
 	x_return_val_if_fail (buffer, -1);
-	
+
 	fd = ipct->fd;
 
 	return send (fd, buffer, len, 0);
@@ -103,7 +103,7 @@ xmms_ipc_usocket_client_init (const xmms_url_t *url)
 		close (fd);
 		return NULL;
 	}
-		
+
 	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
 	ipct->path = strdup (url->path);
@@ -206,7 +206,7 @@ xmms_ipc_usocket_server_init (const xmms_url_t *url)
 		close (fd);
 		return NULL;
 	}
-		
+
 	ipct = x_new0 (xmms_ipc_transport_t, 1);
 	ipct->fd = fd;
 	ipct->path = strdup (url->path);

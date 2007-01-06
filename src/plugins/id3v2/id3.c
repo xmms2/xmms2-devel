@@ -348,10 +348,10 @@ handle_id3v2_apic (xmms_xform_t *xform, xmms_id3v2_header_t *head,
 
 	desc = typ + 1;
 	len--;
-	
+
 	/* XXX desc might be UCS2 and find_nul will not do what we want */
 	data = find_nul (desc, &len);
-	
+
 	if (data && xmms_bindata_plugin_add ((const guchar *)data, len, hash)) {
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT, hash);
 		xmms_xform_metadata_set_str (xform, XMMS_MEDIALIB_ENTRY_PROPERTY_PICTURE_FRONT_MIME, mime);
@@ -463,25 +463,25 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 		/* All members are defined in terms of chars so padding does not
 		 * occur. Is there a cleaner way to keep the compiler from
 		 * padding? */
-		
+
 		guchar     id[3];
 		guchar     ver;
 		guchar     rev;
 		guchar     flags;
 		guchar     size[4];
 	} id3head_t;
-	
+
 	id3head_t *id3head;
 
 	id3head = (id3head_t *) buf;
-	
+
 	if (strncmp ((gchar *)id3head->id, "ID3", 3)) return FALSE;
 
 	if (id3head->ver > 4 || id3head->ver < 2) {
 		XMMS_DBG ("Unsupported id3v2 version (%d)", id3head->ver);
 		return FALSE;
 	}
-	
+
 	if ((id3head->size[0] | id3head->size[1] | id3head->size[2] |
 	     id3head->size[3]) & 0x80) {
 		xmms_log_error ("id3v2 tag having lenbyte with msb set "
@@ -491,11 +491,11 @@ xmms_id3v2_is_header (guchar *buf, xmms_id3v2_header_t *header)
 		                id3head->size[2], id3head->size[3]);
 		return FALSE;
 	}
-	
+
 	header->ver = id3head->ver;
 	header->rev = id3head->rev;
 	header->flags = id3head->flags;
-	
+
 	header->len = id3head->size[0] << 21 | id3head->size[1] << 14 |
 	              id3head->size[2] << 7 | id3head->size[3];
 
@@ -551,7 +551,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
 				return FALSE;
 			}
-			
+
 			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8) | (buf[3]);
 			if (head->ver == 3) {
 				size = (buf[4]<<24) | (buf[5]<<16) | (buf[6]<<8) | (buf[7]);
@@ -590,17 +590,17 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 				XMMS_DBG ("B0rken frame in ID3v2tag (size=%d,len=%d)", (int)size, len);
 				return FALSE;
 			}
-			
+
 			flags = buf[8] | buf[9];
 
 			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'A' || buf[0] == 'C') {
 				handle_id3v2_text (xform, head, type, (gchar *)(buf + 10), flags, size);
 			}
-			
+
 			if (buf[0] == 0) { /* padding */
 				return TRUE;
 			}
-			
+
 			buf += size+10;
 			len -= size+10;
 		} else if (head->ver == 2) {
@@ -608,7 +608,7 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 				XMMS_DBG ("B0rken frame in ID3v2tag (len=%d)", len);
 				return FALSE;
 			}
-			
+
 			type = (buf[0]<<24) | (buf[1]<<16) | (buf[2]<<8);
 			size = (buf[3]<<16) | (buf[4]<<8) | buf[5];
 
@@ -620,11 +620,11 @@ xmms_id3v2_parse (xmms_xform_t *xform,
 			if (buf[0] == 'T' || buf[0] == 'U' || buf[0] == 'C') {
 				handle_id3v2_text (xform, head, type, (gchar *)(buf + 6), 0, size);
 			}
-			
+
 			if (buf[0] == 0) { /* padding */
 				return TRUE;
 			}
-			
+
 			buf += size+6;
 			len -= size+6;
 		}

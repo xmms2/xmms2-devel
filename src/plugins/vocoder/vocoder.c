@@ -32,7 +32,7 @@
 typedef struct {
 	pvocoder_t *pvoc;
 	SRC_STATE *resampler;
-	
+
 	gint winsize;
 	gint channels;
 	gint bufsize;
@@ -126,7 +126,7 @@ xmms_vocoder_init (xmms_xform_t *xform)
 	g_return_val_if_fail (priv->resampler, FALSE);
 
 	xmms_xform_private_data_set (xform, priv);
-	
+
 	config = xmms_xform_config_lookup (xform, "enabled");
 	g_return_val_if_fail (config, FALSE);
 	xmms_config_property_callback_set (config, xmms_vocoder_config_changed, priv);

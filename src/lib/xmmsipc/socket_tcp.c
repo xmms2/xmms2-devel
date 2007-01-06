@@ -55,7 +55,7 @@ xmms_ipc_tcp_write (xmms_ipc_transport_t *ipct, char *buffer, int len)
 	xmms_socket_t fd;
 	x_return_val_if_fail (ipct, -1);
 	x_return_val_if_fail (buffer, -1);
-	
+
 	fd = ipct->fd;
 
 	return send (fd, buffer, len, 0);

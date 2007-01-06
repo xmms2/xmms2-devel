@@ -137,7 +137,7 @@ xmms_eq_init (xmms_xform_t *xform)
 	xmms_config_property_t *config;
 	gint i, j, srate;
 	gfloat gain;
-	
+
 	g_return_val_if_fail (xform, FALSE);
 
 	priv = g_new0 (xmms_equalizer_data_t, 1);
@@ -173,7 +173,7 @@ xmms_eq_init (xmms_xform_t *xform)
 	for (i=0; i<EQ_CHANNELS; i++) {
 		set_preamp (i, xmms_eq_gain_scale (gain, TRUE));
 	}
-	
+
 	for (i=0; i<EQ_BANDS_LEGACY; i++) {
 		gchar buf[16];
 
@@ -183,7 +183,7 @@ xmms_eq_init (xmms_xform_t *xform)
 
 		priv->legacy[i] = config;
 		xmms_config_property_callback_set (config, xmms_eq_gain_changed, priv);
-		
+
 		gain = xmms_config_property_get_float (config);
 		if (priv->use_legacy) {
 			for (j = 0; j < EQ_CHANNELS; j++) {
@@ -321,7 +321,7 @@ xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
 
 		xmms_config_property_set_data (val, buf);
 	}
-	
+
 	/* we are passed the full config key, not just the last token,
 	 * which makes this code kinda ugly.
 	 * fix when bug 97 has been resolved
@@ -335,7 +335,7 @@ xmms_eq_gain_changed (xmms_object_t *object, gconstpointer data,
 		}
 	} else {
 		gint band = -1;
-		
+
 		if (!strncmp (name, "gain", 4) && !priv->use_legacy) {
 			band = atoi (name + 4);
 		} else if (!strncmp (name, "legacy", 6) && priv->use_legacy) {
@@ -365,10 +365,10 @@ xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
 
 	val = (xmms_config_property_t *) object;
 	priv = (xmms_equalizer_data_t *) userdata;
-	
+
 	name = xmms_config_property_get_name (val);
 	value = xmms_config_property_get_int (val);
-	
+
 	XMMS_DBG ("config value changed! %s => %d", name, value);
 
 	/* we are passed the full config key, not just the last token,
@@ -383,7 +383,7 @@ xmms_eq_config_changed (xmms_object_t * object, gconstpointer data,
 		priv->extra_filtering = value;
 	} else if (!strcmp (name, "use_legacy")) {
 		gfloat gain;
-		
+
 		priv->use_legacy = value;
 		if (priv->use_legacy) {
 			for (i=0; i<EQ_BANDS_LEGACY; i++) {

@@ -102,7 +102,7 @@ static void
 xmms_mediainfo_reader_stop (xmms_object_t *o)
 {
 	xmms_mediainfo_reader_t *mir = (xmms_mediainfo_reader_t *) o;
-		
+
 	g_mutex_lock (mir->mutex);
 	mir->running = FALSE;
 	g_cond_signal (mir->cond);
@@ -173,37 +173,37 @@ xmms_mediainfo_reader_thread (gpointer data)
 	                           "audio/pcm",
 	                           XMMS_STREAM_TYPE_END);
 	goal_format = g_list_prepend (NULL, f);
-	
+
 	while (mrt->running) {
 		xmms_medialib_session_t *session;
 		guint lmod = 0;
 		xmms_medialib_entry_t entry;
 		xmms_xform_t *xform;
-		
+
 		session = xmms_medialib_begin ();
 		entry = xmms_medialib_entry_not_resolved_get (session);
-		
+
 		if (!entry) {
 			xmms_medialib_end (session);
-			
+
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 			                    XMMS_OBJECT_CMD_ARG_INT32,
 			                    XMMS_MEDIAINFO_READER_STATUS_IDLE);
-			
+
 			g_mutex_lock (mrt->mutex);
 			g_cond_wait (mrt->cond, mrt->mutex);
 			g_mutex_unlock (mrt->mutex);
 
 			num = 0;
-			
+
 			xmms_object_emit_f (XMMS_OBJECT (mrt),
 			                    XMMS_IPC_SIGNAL_MEDIAINFO_READER_STATUS,
 			                    XMMS_OBJECT_CMD_ARG_INT32,
 			                    XMMS_MEDIAINFO_READER_STATUS_RUNNING);
 			continue;
 		}
-		
+
 		lmod = xmms_medialib_entry_property_get_int (session, entry, XMMS_MEDIALIB_ENTRY_PROPERTY_LMOD);
 
 		if (num == 0) {
@@ -231,7 +231,7 @@ xmms_mediainfo_reader_thread (gpointer data)
 			xmms_medialib_entry_send_update (entry);
 			continue;
 		}
-		
+
 		xmms_object_unref (xform);
 		g_get_current_time (&timeval);
 
@@ -245,8 +245,8 @@ xmms_mediainfo_reader_thread (gpointer data)
 		                                      timeval.tv_sec);
 		xmms_medialib_end (session);
 		xmms_medialib_entry_send_update (entry);
-		
+
 	}
-	
+
 	return NULL;
 }

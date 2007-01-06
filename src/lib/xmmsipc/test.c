@@ -12,7 +12,7 @@ int main ()
 {
 	xmms_ipc_transport_t *transport;
 	gint fd;
-	
+
 	transport = xmms_ipc_server_init ("unix:///tmp/xmms2.socket");
 	if (!transport) {
 		printf  ("Korv!\n");
@@ -34,7 +34,7 @@ int main ()
 			xmms_ipc_transport_t *client = xmms_ipc_server_accept (transport);
 			if (client == NULL)
 				return 0;
-			
+
 			printf ("Client connected...\n");
 			xmms_ipc_transport_read (client, buffer, 4);
 			printf ("%s\n", buffer);

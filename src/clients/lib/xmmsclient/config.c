@@ -48,7 +48,7 @@ xmmsc_configval_register (xmmsc_connection_t *c, const char *key,
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	x_check_conn (c, NULL);
 	x_api_error_if (!key, "with a NULL key", NULL);
 
@@ -72,7 +72,7 @@ xmmsc_configval_set (xmmsc_connection_t *c, const char *key, const char *val)
 {
 	xmmsc_result_t *res;
 	xmms_ipc_msg_t *msg;
-	
+
 	x_check_conn (c, NULL);
 	x_api_error_if (!key, "with a NULL key", NULL);
 
@@ -102,7 +102,7 @@ xmmsc_configval_get (xmmsc_connection_t *c, const char *key)
 	msg = xmms_ipc_msg_new (XMMS_IPC_OBJECT_CONFIG, XMMS_IPC_CMD_GETVALUE);
 	xmms_ipc_msg_put_string (msg, key);
 	res = xmmsc_send_msg (c, msg);
-	
+
 	return res;
 }
 

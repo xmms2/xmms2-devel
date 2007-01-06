@@ -103,7 +103,7 @@ xmms_object_connect (xmms_object_t *object, guint32 signalid,
 		list = g_list_prepend (list, entry);
 		object->signals[signalid] = list;
 	}
-	
+
 }
 
 /**
@@ -122,7 +122,7 @@ xmms_object_disconnect (xmms_object_t *object, guint32 signalid,
 	g_return_if_fail (handler);
 
 	g_mutex_lock (object->mutex);
-	
+
 	if (!object->signals[signalid])
 		goto unlock;
 
@@ -157,12 +157,12 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 {
 	GList *list, *node, *list2 = NULL;
 	xmms_object_handler_entry_t *entry;
-	
+
 	g_return_if_fail (object);
 	g_return_if_fail (XMMS_IS_OBJECT (object));
 
 	g_mutex_lock (object->mutex);
-	
+
 	list = object->signals[signalid];
 	for (node = list; node; node = g_list_next (node)) {
 		entry = node->data;
@@ -174,7 +174,7 @@ xmms_object_emit (xmms_object_t *object, guint32 signalid, gconstpointer data)
 
 	for (node = list2; node; node = g_list_next (node)) {
 		entry = node->data;
-		
+
 		if (entry && entry->handler)
 			entry->handler (object, data, entry->userdata);
 	}
@@ -459,7 +459,7 @@ void
 xmms_object_cmd_call (xmms_object_t *object, guint cmdid, xmms_object_cmd_arg_t *arg)
 {
 	xmms_object_cmd_desc_t *desc;
-	
+
 	g_return_if_fail (object);
 
 	desc = object->cmds[cmdid];

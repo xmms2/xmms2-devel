@@ -352,7 +352,7 @@ pvocoder_get_chunk (pvocoder_t *pvoc, pvocoder_sample_t *chunk) {
 		memset (pvoc->outbuf + nsamples, 0,
 		        nsamples * sizeof (pvocoder_sample_t));
 	}
-	
+
 	/* Rounding can cause too high or low values so we need to clip */
 	for (i=0; i<nsamples; i++)
 		chunk[i] = CLAMP (chunk[i], -1.0, 1.0);

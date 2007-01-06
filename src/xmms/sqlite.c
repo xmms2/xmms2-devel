@@ -458,7 +458,7 @@ xmms_sqlite_query_table (sqlite3 *sql, xmms_medialib_row_table_method_t method, 
 
 	sqlite3_free (q);
 	sqlite3_finalize (stm);
-	
+
 	return (ret == SQLITE_DONE);
 }
 

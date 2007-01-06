@@ -98,7 +98,7 @@ xmms_plugin_get (void)
 	xmms_plugin_info_add (plugin, "URL", "http://www.xmms.org/");
 	xmms_plugin_info_add (plugin, "INFO", "http://curl.haxx.se/libcurl/");
 	xmms_plugin_info_add (plugin, "Author", "XMMS Team");
-	
+
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CAN_HANDLE, xmms_curl_can_handle);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_INIT, xmms_curl_init);
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_CLOSE, xmms_curl_close);
@@ -108,7 +108,7 @@ xmms_plugin_get (void)
 	xmms_plugin_method_add (plugin, XMMS_PLUGIN_METHOD_LIST, xmms_curl_list);
 
 	xmms_plugin_properties_add (plugin, XMMS_PLUGIN_PROPERTY_LIST);
-	
+
 	return plugin;
 }
 
@@ -125,7 +125,7 @@ xmms_curl_can_handle (const gchar *url)
 	dec = xmms_util_decode_path (url);
 
 	XMMS_DBG ("xmms_curl_ftp_can_handle (%s)", dec);
-	
+
 	if ((g_strncasecmp (dec, "ftp:", 4) == 0) || (dec[0] == '/')) {
 		g_free (dec);
 		return TRUE;
@@ -188,7 +188,7 @@ xmms_curl_list_write (void *ptr, size_t size, size_t nmemb, void  *stream)
 	struct xmms_curl_ftp_list *fl = stream;
 
 	((gchar*)ptr)[size*nmemb-2]='\0';
-	
+
 	rows = g_strsplit ((gchar *)ptr, "\r\n", 0);
 
 	while (rows[i]) {
@@ -208,7 +208,7 @@ xmms_curl_list_write (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 		tmp2 = xmms_util_encode_path (tmp);
 		g_free (tmp);
-		
+
 		e = xmms_transport_entry_new (tmp2, t);
 		g_free (tmp2);
 
@@ -216,9 +216,9 @@ xmms_curl_list_write (void *ptr, size_t size, size_t nmemb, void  *stream)
 
 		i++;
 	}
-	
+
 	g_strfreev (rows);
-	
+
 	return size*nmemb;
 }
 
@@ -260,7 +260,7 @@ static gboolean
 xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 {
 	xmms_curl_data_t *data;
-	
+
 	g_return_val_if_fail (transport, FALSE);
 	g_return_val_if_fail (url, FALSE);
 
@@ -269,9 +269,9 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	data->curlm = curl_multi_init ();
 	data->stream = FALSE;
 	data->url = xmms_util_decode_path (url);
-	
+
 	xmms_transport_private_data_set (transport, data);
-	
+
 	g_return_val_if_fail (data->curlm, FALSE);
 
 	data->curl = xmms_curl_easy_new (transport, url, 0);
@@ -282,11 +282,11 @@ xmms_curl_init (xmms_transport_t *transport, const gchar *url)
 	    CURLM_CALL_MULTI_PERFORM) {
 		data->again = TRUE;
 	}
-	
+
 	FD_ZERO (&data->fdread);
 	FD_ZERO (&data->fdwrite);
 	FD_ZERO (&data->fdexcep);
-	
+
 	return TRUE;
 }
 
@@ -296,10 +296,10 @@ xmms_curl_close (xmms_transport_t *transport)
 	xmms_curl_data_t *data;
 
 	g_return_if_fail (transport);
-	
+
 	data = xmms_transport_private_data_get (transport);
 	g_return_if_fail (data);
-	
+
 	curl_multi_cleanup (data->curlm);
 	curl_easy_cleanup (data->curl);
 
@@ -350,7 +350,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 
 	if (!data->running)
 		return -1;
-		
+
 	if (data->again) {
 		if (curl_multi_perform (data->curlm, &data->running) ==
 		    CURLM_CALL_MULTI_PERFORM) {
@@ -362,7 +362,7 @@ xmms_curl_read (xmms_transport_t *transport, gchar *buffer, guint len)
 			curl_multi_fdset (data->curlm, &data->fdread, &data->fdwrite, &data->fdexcep, &data->maxfd);
 		return 0;
 	}
-	
+
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 
@@ -395,7 +395,7 @@ xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 	data = xmms_transport_private_data_get (transport);
 	g_return_val_if_fail (data, 0);
 
-	
+
 	if (data->stream)
 		return 0;
 
@@ -410,7 +410,7 @@ xmms_curl_seek (xmms_transport_t *transport, guint offset, gint whence)
 	    CURLM_CALL_MULTI_PERFORM) {
 		data->again = TRUE;
 	}
-	
+
 	return offset;
 }
 

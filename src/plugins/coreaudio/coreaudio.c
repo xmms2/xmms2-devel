@@ -204,7 +204,7 @@ xmms_ca_new (xmms_output_t *output)
 	Component comp;
 	AudioDeviceID device = 0;
 	UInt32 size = sizeof (device);
-	
+
 	g_return_val_if_fail (output, FALSE);
 
 	desc.componentType = kAudioUnitType_Output;
@@ -257,7 +257,7 @@ xmms_ca_new (xmms_output_t *output)
 		xmms_log_error ("Failed to set format");
 		return FALSE;
 	}
-		
+
 	res = AudioUnitInitialize (data->au);
 	if (res) {
 		xmms_log_error ("Audio Unit wouldn't initialize!");
@@ -279,7 +279,7 @@ xmms_ca_new (xmms_output_t *output)
 		g_free (data);
 		return FALSE;
 	}
-	
+
 	/* static for now */
 	xmms_output_format_add (output, XMMS_SAMPLE_FORMAT_S16, 2, 44100);
 
@@ -322,7 +322,7 @@ xmms_ca_volume_set (xmms_output_t *output,
 	}
 
 	v = (Float32)(volume/100.0);
-	
+
 	AudioUnitSetParameter (data->au,
 	                       kHALOutputParam_Volume,
 	                       kAudioUnitScope_Global,

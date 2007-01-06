@@ -384,7 +384,7 @@ daap_mdns_get_server_list ()
 		ret = g_slist_append (ret, server);
 	}
 	g_mutex_unlock (g_mdns->mutex);
-	
+
 	return ret;
 }
 

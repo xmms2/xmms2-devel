@@ -298,7 +298,7 @@ xmms_mpc_collect_metadata (xmms_xform_t *xform)
 	g_return_if_fail (data);
 
 	tag = xmms_apetag_init (xform);
-	
+
 	if (xmms_apetag_read (tag)) {
 		for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 			switch (properties[i].type) {
@@ -323,7 +323,7 @@ xmms_mpc_collect_metadata (xmms_xform_t *xform)
 	xmms_apetag_destroy (tag);
 }
 
-	
+
 static gint
 xmms_mpc_read (xmms_xform_t *xform, xmms_sample_t *buffer,
                gint len, xmms_error_t *err)

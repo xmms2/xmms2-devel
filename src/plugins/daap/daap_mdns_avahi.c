@@ -115,7 +115,7 @@ daap_mdns_resolve_cb (AvahiServiceResolver *resolv,
 
 		case AVAHI_RESOLVER_FAILURE:
 			break;
-		
+
 		default:
 			break;
 	}
@@ -224,7 +224,7 @@ daap_mdns_initialize ()
 
 	gl_poll = avahi_glib_poll_new (NULL, G_PRIORITY_DEFAULT);
 	av_poll = avahi_glib_poll_get (gl_poll);
-	
+
 	avahi_elapse_time (&tv, 2000, 0);
 	av_poll->timeout_new (av_poll, &tv, daap_mdns_timeout, NULL);
 	g_timeout_add (5000, daap_mdns_timeout_glib, ml);

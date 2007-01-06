@@ -78,7 +78,7 @@ xmms_ringbuf_plugin_destroy (xmms_xform_t *xform)
 		g_cond_wait (priv->state_cond, priv->state_lock);
 	}
 	g_mutex_unlock (priv->state_lock);
-	
+
 	g_thread_join (priv->thread);
 
 	XMMS_DBG ("Ringbuf destroyed!");
@@ -149,7 +149,7 @@ xmms_ringbuf_xform_thread (gpointer data)
 {
 	xmms_xform_t *xform = (xmms_xform_t *)data;
 	xmms_ringbuf_priv_t *priv;
-	
+
 	priv = xmms_xform_private_data_get (xform);
 
 	g_mutex_lock (priv->state_lock);

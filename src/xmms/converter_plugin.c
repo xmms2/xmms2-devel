@@ -65,14 +65,14 @@ static void
 xmms_converter_plugin_destroy (xmms_xform_t *xform)
 {
 	xmms_conv_xform_data_t *data;
-	
+
 	data = xmms_xform_private_data_get (xform);
 
 	if (data) {
 		if (data->conv) {
 			xmms_object_unref (data->conv);
 		}
-		
+
 		g_free (data);
 	}
 }

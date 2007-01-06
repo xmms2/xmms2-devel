@@ -91,7 +91,7 @@ xmms_sample_converter_init (xmms_stream_type_t *from, xmms_stream_type_t *to)
 	conv->to = to;
 
 	conv->resample = fsamplerate != tsamplerate;
-	
+
 	conv->func = xmms_sample_conv_get (fchannels, fformat,
 	                                   tchannels, tformat,
 	                                   conv->resample);
@@ -229,7 +229,7 @@ xmms_sample_audioformats_coerce (xmms_stream_type_t *in, const GList *goal_types
 			bestscore = score;
 		}
 	}
-	
+
 	if (!best) {
 		return NULL;
 	}

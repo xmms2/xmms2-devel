@@ -242,14 +242,14 @@ xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 
 		while (inbufsize > 0) {
 			int inlen;
-			
+
 			inlen = avcodec_decode_audio (data->codecctx, (short *) outbuf,
 			                              &outbufsize, inbuf, inbufsize);
 			data->codecctx->frame_number++;
 
 			if (inlen < 0)
 				return -1;
-			
+
 			if (outbufsize <= 0)
 				continue;
 
@@ -326,10 +326,10 @@ xmms_wma_metahack (xmms_xform_t *xform)
 		bufsize += headersize;
 		buffer = g_realloc (buffer, bufsize);
 		current = buffer + bufsize - headersize;
-		
+
 		read = xmms_xform_peek (xform, buffer, bufsize, &error);
 		g_return_if_fail (read == bufsize);
-		
+
 		xmms_wma_read_GUID (current, &guid);
 		current += sizeof (xmms_wma_GUID_t);
 		objectsize = GULONG_FROM_LE (*((gulong *) current));
@@ -337,10 +337,10 @@ xmms_wma_metahack (xmms_xform_t *xform)
 		bufsize += objectsize - headersize;
 		buffer = g_realloc (buffer, bufsize);
 		current = buffer + bufsize - objectsize + headersize;
-		
+
 		read = xmms_xform_peek (xform, buffer, bufsize, &error);
 		g_return_if_fail (read == bufsize);
-		
+
 		if (xmms_wma_check_GUID (&guid, &xmms_wma_GUIDs[1])) {
 			guint16 titlel, artistl, copyl, commentl, ratingl;
 			guint16 *tmpbuf = (guint16 *) current;
@@ -463,7 +463,7 @@ xmms_wma_get_mediainfo (xmms_xform_t *xform)
 
 	fmtctx = data->fmtctx;
 	codecctx = data->codecctx;
-	
+
 	if (codecctx->sample_rate > 0) {
 		xmms_xform_metadata_set_int (xform,
 		                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
@@ -529,7 +529,7 @@ xmms_wma_seek_callback (void *user_data, offset_t offset, int whence)
 		w = XMMS_XFORM_SEEK_CUR;
 		offset -= data->offset;
 	}
-	
+
 	if (w == XMMS_XFORM_SEEK_CUR && offset <= 4096) {
 		guint8 buf[4096];
 
@@ -550,7 +550,7 @@ xmms_wma_get_track (AVFormatContext *fmtctx)
 {
 	gint wma_idx;
 	AVCodecContext *codec;
-	
+
 	g_return_val_if_fail (fmtctx, -1);
 
 	for (wma_idx = 0; wma_idx < fmtctx->nb_streams; wma_idx++) {
@@ -563,7 +563,7 @@ xmms_wma_get_track (AVFormatContext *fmtctx)
 	if (wma_idx == fmtctx->nb_streams) {
 		return -1;
 	}
-	
+
 	return wma_idx;
 }
 

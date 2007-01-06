@@ -281,7 +281,7 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 			XMMS_DBG ("MP4 EOF");
 			return 0;
 		}
-		
+
 		bytes_read = mp4ff_read_sample (data->mp4ff, data->track,
 		                                data->sampleid, &tmpbuf,
 		                                &tmpbuflen);
@@ -320,7 +320,7 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 {
 	int32_t toskip;
 	xmms_mp4_data_t *data;
-	
+
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 	g_return_val_if_fail (xform, -1);
 

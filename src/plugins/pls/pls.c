@@ -104,7 +104,7 @@ xmms_pls_add_entry (xmms_xform_t *xform,
 	if (e->file) {
 		gchar *title;
 		gchar *path;
-		
+
 		path = xmms_build_playlist_url (plspath, e->file);
 		title = e->file;
 

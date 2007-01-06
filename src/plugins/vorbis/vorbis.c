@@ -381,7 +381,7 @@ xmms_vorbis_read (xmms_xform_t *xform, gpointer buf, gint len,
 	xmms_vorbis_data_t *data;
 
 	g_return_val_if_fail (xform, -1);
-	
+
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
 

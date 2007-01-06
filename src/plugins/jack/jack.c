@@ -337,11 +337,11 @@ xmms_jack_callback (jack_nframes_t nframes, void *arg)
 		for (i = 0; i < data->num_output_channels; i++) {
 			XMMS_CALLBACK_DBG ("\t%f to channel %d ", data->volume[i], i);
 		}
-		
+
 		XMMS_CALLBACK_DBG ("to %ld frames and %ld channels",
 		                   (nframes - jackFramesAvailable),
 		                   data->num_output_channels);
-		
+
 		xmms_jack_float_volume_effect (out_buffer,
 		                               (nframes - jackFramesAvailable),
 		                               data->num_output_channels,
@@ -354,7 +354,7 @@ xmms_jack_callback (jack_nframes_t nframes, void *arg)
 		if (jackFramesAvailable) {
 			XMMS_CALLBACK_DBG ("buffer underrun of %ld frames",
 			                   jackFramesAvailable);
-			
+
 			for (i = 0 ; i < data->num_output_channels; i++) {
 				jack_default_audio_sample_t *dest;
 

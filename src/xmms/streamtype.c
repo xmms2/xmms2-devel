@@ -165,7 +165,7 @@ xmms_stream_type_match (const xmms_stream_type_t *in_type, const xmms_stream_typ
 	for (in = in_type->list; in; in = g_list_next (in)) {
 		xmms_stream_type_val_t *inval = in->data;
 		GList *n;
-		
+
 		for (n = out_type->list; n; n = g_list_next (n)) {
 			xmms_stream_type_val_t *outval = n->data;
 			if (inval->key == outval->key) {
@@ -173,7 +173,7 @@ xmms_stream_type_match (const xmms_stream_type_t *in_type, const xmms_stream_typ
 					return FALSE;
 				break;
 			}
-			
+
 		}
 		if (!n) {
 			/* didn't exist in out */

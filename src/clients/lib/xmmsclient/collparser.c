@@ -493,7 +493,7 @@ coll_parse_expr (xmmsc_coll_token_t *tokens, xmmsc_coll_t **ret)
 	PARSER_TRY (coll_parse_filter);
 	PARSER_TRY (coll_parse_parenexpr);
 	PARSER_TRY (coll_parse_unaryop);
-	
+
 	*ret = NULL;
 	return tokens;
 }
@@ -529,7 +529,7 @@ coll_parse_sequence (xmmsc_coll_token_t *tokens, const char *field,
 {
 	char *start, *end, *seq, *num;
 	xmmsc_coll_t *coll, *parent;
-	
+
 	if (!tokens || (tokens->type != XMMS_COLLECTION_TOKEN_INTEGER &&
 	                tokens->type != XMMS_COLLECTION_TOKEN_SEQUENCE)) {
 		*ret = NULL;

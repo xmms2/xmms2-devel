@@ -120,7 +120,7 @@ cleanup:
 	}
 	curl_easy_cleanup (curl);
 	g_string_free (buffer, TRUE);
-	
+
 	return ret;
 }
 
