@@ -178,7 +178,7 @@ on_playlist_updated_pos (xmms_object_t *object, gconstpointer data,
                          gpointer udata)
 {
 	XMMS_DBG ("PLAYLIST: updated pos!");
-	on_playlist_updated (object, "_active");
+	on_playlist_updated (object, XMMS_ACTIVE_PLAYLIST);
 }
 
 static void
@@ -414,7 +414,7 @@ xmms_playlist_advance (xmms_playlist_t *playlist)
 
 	g_mutex_lock (playlist->mutex);
 
-	plcoll = xmms_playlist_get_coll (playlist, "_active", NULL);
+	plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, NULL);
 	if (plcoll == NULL) {
 		ret = FALSE;
 	} else if ((size = xmms_playlist_coll_get_size (plcoll)) == 0) {
@@ -468,7 +468,7 @@ xmms_playlist_current_entry (xmms_playlist_t *playlist)
 	
 	g_mutex_lock (playlist->mutex);
 
-	plcoll = xmms_playlist_get_coll (playlist, "_active", NULL);
+	plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, NULL);
 	if (plcoll == NULL) {
 		/* FIXME: What happens? */
 		g_mutex_unlock (playlist->mutex);
@@ -546,11 +546,11 @@ xmms_playlist_current_active (xmms_playlist_t *playlist, xmms_error_t *err)
 	
 	g_mutex_lock (playlist->mutex);
 
-	active_coll = xmms_playlist_get_coll (playlist, "_active", err);
+	active_coll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
 	if (active_coll != NULL) {
 		name = xmms_collection_find_alias (playlist->colldag,
 		                                   XMMS_COLLECTION_NSID_PLAYLISTS,
-		                                   active_coll, "_active");
+		                                   active_coll, XMMS_ACTIVE_PLAYLIST);
 		if (name == NULL) {
 			xmms_error_set (err, XMMS_ERROR_GENERIC, "active playlist not referenced!");
 		}
@@ -569,7 +569,7 @@ xmms_playlist_load (xmms_playlist_t *playlist, gchar *name, xmms_error_t *err)
 {
 	xmmsc_coll_t *plcoll;
 
-	if (strcmp (name, "_active") == 0) {
+	if (strcmp (name, XMMS_ACTIVE_PLAYLIST) == 0) {
 		xmms_error_set (err, XMMS_ERROR_INVAL, "invalid playlist to load");
 		return;
 	}
@@ -581,7 +581,7 @@ xmms_playlist_load (xmms_playlist_t *playlist, gchar *name, xmms_error_t *err)
 	}
 
 	XMMS_DBG ("Loading new playlist! %s", name);
-	xmms_collection_update_pointer (playlist->colldag, "_active",
+	xmms_collection_update_pointer (playlist->colldag, XMMS_ACTIVE_PLAYLIST,
 	                                XMMS_COLLECTION_NSID_PLAYLISTS, plcoll);
 
 	xmms_object_emit_f (XMMS_OBJECT (playlist),
@@ -1120,7 +1120,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 
 	g_return_val_if_fail (playlist, FALSE);
 
-	plcoll = xmms_playlist_get_coll (playlist, "_active", err);
+	plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
 	if (plcoll == NULL) {
 		return 0;
 	}
@@ -1141,7 +1141,7 @@ xmms_playlist_set_current_position_do (xmms_playlist_t *playlist, guint32 pos,
 			return 0;
 		}
 
-		plcoll = xmms_playlist_get_coll (playlist, "_active", err);
+		plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
 		if (plcoll == NULL) {
 			return 0;
 		}
@@ -1191,7 +1191,7 @@ xmms_playlist_set_current_position_rel (xmms_playlist_t *playlist, gint32 pos,
 
 	g_mutex_lock (playlist->mutex);
 
-	plcoll = xmms_playlist_get_coll (playlist, "_active", err);
+	plcoll = xmms_playlist_get_coll (playlist, XMMS_ACTIVE_PLAYLIST, err);
 	if (plcoll != NULL) {
 		currpos = xmms_playlist_coll_get_currpos (plcoll);
 

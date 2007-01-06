@@ -688,7 +688,7 @@ xmms_medialib_entry_remove_method (xmms_medialib_t *medialib, guint32 entry, xmm
 	session = xmms_medialib_begin_write ();
 	xmms_medialib_entry_remove (session, entry);
 	xmms_medialib_end (session);
-	xmms_playlist_remove_by_entry (medialib->playlist, "_active", entry);
+	xmms_playlist_remove_by_entry (medialib->playlist, XMMS_ACTIVE_PLAYLIST, entry);
 }
 
 /**

@@ -60,7 +60,7 @@ const char fill_stats[] = "INSERT INTO sqlite_stat1 VALUES('Media', 'key_idx', '
 
 const char fill_init_playlist_stm[] = "INSERT INTO CollectionOperators VALUES(1, %d);"
                                       "INSERT INTO CollectionLabels VALUES(1, %d, 'Default');"
-                                      "INSERT INTO CollectionLabels VALUES(1, %d, '_active');"
+                                      "INSERT INTO CollectionLabels VALUES(1, %d, '" XMMS_STRINGIFY (XMMS_ACTIVE_PLAYLIST) "');"
                                       "INSERT INTO CollectionIdlists VALUES(1, 1, 1);";
 
 const char create_idx_stm[] = "create unique index key_idx on Media (id,key,source);"

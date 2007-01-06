@@ -30,7 +30,7 @@
 namespace Xmms
 {
 
-	const std::string Playlist::DEFAULT_PLAYLIST = "_active";
+	const std::string Playlist::DEFAULT_PLAYLIST = XMMS_ACTIVE_PLAYLIST;
 
 
 	Playlist::~Playlist()

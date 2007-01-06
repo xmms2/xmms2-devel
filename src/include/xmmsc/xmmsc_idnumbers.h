@@ -214,5 +214,7 @@ typedef const char* xmmsc_coll_namespace_t;
 #define XMMS_COLLECTION_NS_COLLECTIONS  "Collections"
 #define XMMS_COLLECTION_NS_PLAYLISTS    "Playlists"
 
+#define XMMS_ACTIVE_PLAYLIST "_default"
+
 
 #endif /* __SIGNAL_XMMS_H__ */
