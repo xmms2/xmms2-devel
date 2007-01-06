@@ -279,7 +279,9 @@ xmms_mp4_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whenc
 
 	data->sampleid = mp4ff_find_sample_use_offsets (data->mp4ff, data->track,
 	                                                samples, &toskip);
+
 	data->buffer_length = 0;
+	g_string_erase (data->outbuf, 0, -1);
 
 	return samples-toskip;
 }

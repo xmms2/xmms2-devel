@@ -41,7 +41,6 @@ static int faad_mpeg_samplerates[] = { 96000, 88200, 64000, 48000, 44100,
 typedef struct {
 	faacDecHandle decoder;
 	gint filetype;
-	gint toskip;
 
 	guchar buffer[FAAD_BUFFER_SIZE];
 	guint buffer_length;
@@ -129,7 +128,6 @@ xmms_faad_init (xmms_xform_t *xform)
 	data = g_new0 (xmms_faad_data_t, 1);
 	data->outbuf = g_string_new (NULL);
 	data->buffer_size = FAAD_BUFFER_SIZE;
-	data->toskip = 0;
 
 	xmms_xform_private_data_set (xform, data);
 
@@ -285,12 +283,14 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
+			gint32 toskip = 0;
+
 			/* FIXME: these are disabled since xmms2d always does full reads
 			gint32 temp;
 			
 			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
-				data->toskip += temp * frameInfo.channels *
-				                xmms_sample_size_get (data->sampleformat);	
+				toskip += temp * frameInfo.channels *
+				          xmms_sample_size_get (data->sampleformat);	
 			}
 
 			if (xmms_xform_privdata_get_int (xform, "frame_duration", &temp)) {
@@ -298,9 +298,8 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 				              xmms_sample_size_get (data->sampleformat);
 			}*/
 			
-			g_string_append_len (data->outbuf, sample_buffer + data->toskip,
-			                     bytes_read - data->toskip);
-			data->toskip = 0;
+			g_string_append_len (data->outbuf, sample_buffer + toskip,
+			                     bytes_read - toskip);
 		} else if (frameInfo.error > 0) {
 			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage (frameInfo.error));
 			return -1;
@@ -318,6 +317,7 @@ static gint64
 xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t whence, xmms_error_t *err)
 {
 	xmms_faad_data_t *data;
+	gint64 ret = -1;
 
 	g_return_val_if_fail (whence == XMMS_XFORM_SEEK_SET, -1);
 	g_return_val_if_fail (xform, -1);
@@ -325,8 +325,16 @@ xmms_faad_seek (xmms_xform_t *xform, gint64 samples, xmms_xform_seek_mode_t when
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, FALSE);
 
-	/* Seeking not supported on non-MP4 AAC right now */
-	return -1;
+	/* Seeking only supported on MP4 AAC right now */
+	if (data->filetype == FAAD_TYPE_MP4) {
+		ret = xmms_xform_seek (xform, samples, whence, err);
+		faacDecPostSeekReset(data->decoder, -1);
+
+		data->buffer_length = 0;
+		g_string_erase (data->outbuf, 0, -1);
+	}
+
+	return ret;
 }
 
 static void
