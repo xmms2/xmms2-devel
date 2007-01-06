@@ -55,9 +55,7 @@ xmms_asx_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 	xmms_magic_extension_add ("application/x-asx-playlist", "*.asx");
 
 	xmms_magic_add ("ASX header", "application/x-asx-playlist",
-	                "0 string <ASX version=\"3.0\">", NULL);
-	xmms_magic_add ("ASX header", "application/x-asx-playlist",
-	                "0 string <asx version=\"3.0\">", NULL);
+	                "0 string/c <asx version=\"3.0\">", NULL);
 
 	return TRUE;
 }
