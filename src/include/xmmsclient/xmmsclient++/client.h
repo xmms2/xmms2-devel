@@ -69,7 +69,7 @@ namespace Xmms
 			virtual ~Client();
 
 			/** Connects to the XMMS2 server.
-			 *  if ipcpath is omitted or empty (""), it will try to open
+			 *  if ipcpath is omitted or 0, it will try to open
 			 *  the default path.
 			 *
 			 *  @param ipcpath The IPC path. It's broken down like this:
@@ -81,7 +81,7 @@ namespace Xmms
 			 *                 - Port is only used when the protocol tcp.
 			 *  @throw connection_error If connection fails.
 			 */
-			void connect( const std::string& ipcpath = "" );
+			void connect( const char* ipcpath = 0 );
 
 			/** Tell the server to quit.
 			 *  This will terminate the server. Destruct this object if you

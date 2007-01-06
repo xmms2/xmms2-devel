@@ -66,15 +66,14 @@ namespace Xmms
 		}
 	}
 
-	void Client::connect( const std::string& ipcpath )
+	void Client::connect( const char* ipcpath )
 	{
 
 		if( !connected_ ) {
 			if( !conn_ ) {
 				conn_ = xmmsc_init( name_.c_str() );
 			}
-			if( !xmmsc_connect(conn_, 
-			                   ipcpath.empty() ? 0 : ipcpath.c_str() ) ) {
+			if( !xmmsc_connect( conn_, ipcpath ) ) {
 
 				throw connection_error( xmmsc_get_last_error( conn_ ) );
 
