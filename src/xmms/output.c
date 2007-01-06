@@ -120,6 +120,7 @@ struct xmms_output_St {
 	guint played;
 	guint played_time;
 	xmms_medialib_entry_t current_entry;
+	guint toskip;
 
 	/* */
 	GThread *filler_thread;
@@ -130,6 +131,7 @@ struct xmms_output_St {
 
 	xmms_ringbuf_t *filler_buffer;
 	guint32 filler_seek;
+	gint filler_skip;
 
 	/** Internal status, tells which state the
 	    output really is in */
@@ -319,6 +321,7 @@ seek_done (void *data)
 
 	g_mutex_lock (output->playtime_mutex);
 	output->played = output->filler_seek * xmms_sample_frame_size_get (output->format);
+	output->toskip = output->filler_skip * xmms_sample_frame_size_get (output->format);
 	g_mutex_unlock (output->playtime_mutex);
 
 	xmms_output_flush (output);
@@ -402,10 +405,20 @@ xmms_output_filler (void *arg)
 				XMMS_DBG ("Seeking failed: %s", xmms_error_message_get (&err));
 			} else {
 				XMMS_DBG ("Seek ok! %d", ret);
+
+				output->filler_skip = output->filler_seek - ret;
+				if (output->filler_skip < 0) {
+					XMMS_DBG ("Seeked %d samples too far! Updating position...",
+					          -output->filler_skip);
+
+					output->filler_skip = 0;
+					output->filler_seek = ret;
+				}
+
+				output->filler_state = FILLER_RUN;
+				xmms_ringbuf_clear (output->filler_buffer);
+				xmms_ringbuf_hotspot_set (output->filler_buffer, seek_done, NULL, output);
 			}
-			output->filler_state = FILLER_RUN;
-			xmms_ringbuf_clear (output->filler_buffer);
-			xmms_ringbuf_hotspot_set (output->filler_buffer, seek_done, NULL, output);
 		}
 
 		if (!chain) {
@@ -467,7 +480,13 @@ xmms_output_filler (void *arg)
 		g_mutex_lock (output->filler_mutex);
 
 		if (ret > 0) {
-			xmms_ringbuf_write_wait (output->filler_buffer, buf, ret, output->filler_mutex);
+			gint skip = MIN (ret, output->toskip);
+
+			output->toskip -= skip;
+			xmms_ringbuf_write_wait (output->filler_buffer,
+			                         buf + skip,
+			                         ret - skip,
+			                         output->filler_mutex);
 		} else {
 			if (ret == -1) {
 				/* print error */
