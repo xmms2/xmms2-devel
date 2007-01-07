@@ -45,6 +45,7 @@ typedef struct {
 	guchar buffer[FAAD_BUFFER_SIZE];
 	guint buffer_length;
 	guint buffer_size;
+	gboolean need_data;
 
 	guint channels;
 	guint bitrate;
@@ -260,7 +261,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 
 	size = MIN (data->outbuf->len, len);
 	while (size == 0) {
-		if (data->buffer_length < data->buffer_size) {
+		if (data->need_data) {
 			bytes_read = xmms_xform_read (xform,
 			                              (gchar *) data->buffer + data->buffer_length,
 			                              data->buffer_size - data->buffer_length,
@@ -272,6 +273,9 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			}
 
 			data->buffer_length += bytes_read;
+
+			if (bytes_read > 0)
+				data->need_data = FALSE;
 		}
 
 		sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
@@ -283,10 +287,7 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 		bytes_read = frameInfo.samples * xmms_sample_size_get (data->sampleformat);
 
 		if (bytes_read > 0 && frameInfo.error == 0) {
-			gint32 toskip = 0;
-
-			/* FIXME: these are disabled since xmms2d always does full reads
-			gint32 temp;
+			gint32 temp, toskip = 0;
 			
 			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
 				toskip += temp * frameInfo.channels *
@@ -294,14 +295,18 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			}
 
 			if (xmms_xform_privdata_get_int (xform, "frame_duration", &temp)) {
-				bytes_read -= temp * frameInfo.channels *
-				              xmms_sample_size_get (data->sampleformat);
-			}*/
+				bytes_read = temp * frameInfo.channels *
+				             xmms_sample_size_get (data->sampleformat);
+			}
 			
+			XMMS_DBG ("outputted %d %d bytes from faad", bytes_read, toskip);
 			g_string_append_len (data->outbuf, sample_buffer + toskip,
 			                     bytes_read - toskip);
+		} else if (frameInfo.error > 0 && !data->need_data) {
+			data->need_data = TRUE;
 		} else if (frameInfo.error > 0) {
-			XMMS_DBG ("ERROR in faad decoding: %s", faacDecGetErrorMessage (frameInfo.error));
+			XMMS_DBG ("ERROR %d in faad decoding: %s", frameInfo.error,
+			          faacDecGetErrorMessage (frameInfo.error));
 			return -1;
 		}
 
