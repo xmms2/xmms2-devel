@@ -59,6 +59,7 @@ struct xmms_xform_St {
 	GHashTable *metadata;
 
 	GHashTable *privdata;
+	GQueue *hotspots;
 
 	GList *browse_list;
 	GHashTable *browse_hash;
@@ -69,6 +70,12 @@ struct xmms_xform_St {
 		gchar *bufend;
 	} lr;
 };
+
+typedef struct xmms_xform_hotspot_St {
+	guint pos;
+	gchar *key;
+	xmms_object_cmd_value_t *obj;
+} xmms_xform_hotspot_t;
 
 #define READ_CHUNK 4096
 
@@ -310,6 +317,7 @@ xmms_xform_destroy (xmms_object_t *object)
 	g_hash_table_destroy (xform->metadata);
 
 	g_hash_table_destroy (xform->privdata);
+	g_queue_free (xform->hotspots);
 
 	g_free (xform->buffer);
 
@@ -345,6 +353,7 @@ xmms_xform_new (xmms_xform_plugin_t *plugin, xmms_xform_t *prev, xmms_medialib_e
 
 	xform->privdata = g_hash_table_new_full (g_str_hash, g_str_equal,
 	                                         g_free, xmms_object_cmd_value_free);
+	xform->hotspots = g_queue_new ();
 
 	if (plugin && entry) {
 		if (!plugin->methods.init (xform)) {
@@ -615,11 +624,22 @@ xmms_xform_metadata_update (xmms_xform_t *xform)
 	xmms_medialib_entry_send_update (info.entry);
 }
 
+static void
+xmms_xform_privdata_set_val (xmms_xform_t *xform, char *key, xmms_object_cmd_value_t *val)
+{
+	xmms_xform_hotspot_t *hs;
+
+	hs = g_new0 (xmms_xform_hotspot_t, 1);
+	hs->pos = xform->buffered;
+	hs->key = key;
+	hs->obj = val;
+	g_queue_push_tail (xform->hotspots, hs);
+}
+
 void
 xmms_xform_privdata_set_int (xmms_xform_t *xform, const char *key, int val)
 {
-	XMMS_DBG ("Setting private data '%s' to %d", key, val);
-	g_hash_table_insert (xform->privdata, g_strdup (key), xmms_object_cmd_value_int_new (val));
+	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_int_new (val));
 }
 
 void
@@ -630,8 +650,7 @@ xmms_xform_privdata_set_str (xmms_xform_t *xform, const gchar *key, const gchar 
 	if (xmms_xform_privdata_get_str (xform, key, &old) && strcmp (old, val) == 0)
 		return;
 
-	XMMS_DBG ("Setting private data '%s' to '%s'", key, val);
-	g_hash_table_insert (xform->privdata, g_strdup (key), xmms_object_cmd_value_str_new (val));
+	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_str_new (val));
 }
 
 void
@@ -639,17 +658,32 @@ xmms_xform_privdata_set_bin (xmms_xform_t *xform, const gchar *key, gpointer dat
 {
 	GString *bin;
 
-	XMMS_DBG ("Setting private bin data of '%s'", key);
 	bin = g_string_new_len (data, len);
-	g_hash_table_insert (xform->privdata, g_strdup (key), xmms_object_cmd_value_bin_new (bin));
+	xmms_xform_privdata_set_val (xform, g_strdup (key), xmms_object_cmd_value_bin_new (bin));
 }
 
 static const xmms_object_cmd_value_t *
 xmms_xform_privdata_get_val (xmms_xform_t *xform, const gchar *key)
 {
-	xmms_object_cmd_value_t *val;
+	guint i;
+	xmms_xform_hotspot_t *hs;
+	xmms_object_cmd_value_t *val = NULL;
 
-	val = g_hash_table_lookup (xform->prev->privdata, key);
+	/* privdata is always got from the previous xform */
+	xform = xform->prev;
+
+	/* check if we have unhandled current (pos 0) hotspots for this key */
+	for (i=0; (hs = g_queue_peek_nth (xform->hotspots, i)) != NULL; i++) {
+		if (hs->pos != 0) {
+			break;
+		} else if (!strcmp (key, hs->key)) {
+			val = hs->obj;
+		}
+	}
+
+	if (!val) {
+		val = g_hash_table_lookup (xform->privdata, key);
+	}
 
 	return val;
 }
@@ -749,20 +783,59 @@ xmms_xform_this_peek (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 	return siz;
 }
 
+static void
+xmms_xform_hotspot_callback (gpointer data, gpointer user_data)
+{
+	xmms_xform_hotspot_t *hs = data;
+	gint *read = user_data;
+
+	hs->pos -= *read;
+}
+
+static gint
+xmms_xform_hotspots_update (xmms_xform_t *xform) {
+	xmms_xform_hotspot_t *hs;
+	gint ret = -1;
+
+	hs = g_queue_peek_head (xform->hotspots);
+	while (hs != NULL && hs->pos == 0) {
+		g_queue_pop_head (xform->hotspots);
+		g_hash_table_insert (xform->privdata, hs->key, hs->obj);
+		hs = g_queue_peek_head (xform->hotspots);
+	}
+
+	if (hs != NULL) {
+		ret = hs->pos;
+	}
+
+	return ret;
+}
+
 gint
 xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t *err)
 {
 	gint read = 0;
+	gint nexths;
 
 	if (xform->error) {
 		xmms_error_set (err, XMMS_ERROR_GENERIC, "Read on errored xform");
 		return -1;
 	}
 
+	/* update hotspots */
+	nexths = xmms_xform_hotspots_update (xform);
+	if (nexths >= 0) {
+		siz = MIN (siz, nexths);
+	}
+
 	if (xform->buffered) {
 		read = MIN (siz, xform->buffered);
 		memcpy (buf, xform->buffer, read);
 		xform->buffered -= read;
+
+		/* buffer edited, update hotspot positions */
+		g_queue_foreach (xform->hotspots, &xmms_xform_hotspot_callback, &read);
+
 		if (xform->buffered) {
 			/* unless we are _peek:ing often
 			   this should be fine */
@@ -793,6 +866,19 @@ xmms_xform_this_read (xmms_xform_t *xform, gpointer buf, gint siz, xmms_error_t 
 			xform->error = TRUE;
 			return -1;
 		} else {
+			if (read == 0)
+				xmms_xform_hotspots_update (xform);
+
+			if (!g_queue_is_empty (xform->hotspots)) {
+				if (xform->buffered + res > xform->buffersize) {
+					xform->buffersize *= 2;
+					xform->buffer = g_realloc (xform->buffer, xform->buffersize);
+				}
+
+				g_memmove (xform->buffer + xform->buffered, buf + read, res);
+				xform->buffered += res;
+				break;
+			}
 			read += res;
 		}
 	}
@@ -822,8 +908,18 @@ xmms_xform_this_seek (xmms_xform_t *xform, gint64 offset, xmms_xform_seek_mode_t
 
 	res = xform->plugin->methods.seek (xform, offset, whence, err);
 	if (res != -1) {
+		xmms_xform_hotspot_t *hs;
+
 		xform->eos = FALSE;
 		xform->buffered = 0;
+
+		/* flush the hotspot queue on seek */
+		while ((hs = g_queue_pop_head (xform->hotspots)) != NULL) {
+			g_free (hs->key);
+			xmms_object_cmd_value_free (hs->obj);
+			g_free (hs);
+			
+		}
 	}
 
 	return res;
