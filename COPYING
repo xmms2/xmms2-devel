@@ -24,8 +24,10 @@ manpages (src/clients/cli/xmms2.1, src/clients/et/xmms2-et.1,
           src/xmms/xmms2d.1):
         Licensed under BSD license
 
-src/plugins/mad/xing.c:
+src/plugins/mad/*.[ch]:
         Licensed under GPL license.
+
+src/plugins/mad/xing.c:
         Uses code base on/copied from madplay:
         Copyright (C) 2000-2004 Robert Leslie
 
