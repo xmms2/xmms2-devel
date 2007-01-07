@@ -1,7 +1,7 @@
 /** @file wma.c
  *  Decoder plugin for WMA audio format
  *
- *  Copyright (C) 2006 XMMS2 Team
+ *  Copyright (C) 2006-2007 XMMS2 Team
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
