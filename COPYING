@@ -18,44 +18,47 @@ COPYING.GPL
 README, INSTALL:
         Licensed under GFDL without unmodifiable sections.
 
-manpages (doc/):
-        Copyright 2005, Alexander Botero-Lowry
+manpages (src/clients/cli/xmms2.1, src/clients/et/xmms2-et.1,
+          src/clients/launcher/xmms2-launcher.1,
+          src/clients/mdns/avahi/xmms2-mdns-avahi.1,
+          src/xmms/xmms2d.1):
         Licensed under BSD license
 
-src/plugins/faad/faad.c:
+src/plugins/mad/xing.c:
+        Licensed under GPL license.
+        Uses code base on/copied from madplay:
+        Copyright (C) 2000-2004 Robert Leslie
+
+src/plugins/mp4/mp4.c:
         Licensed under GPL license.
 
-src/plugins/mad/*:
-        Licensed under GPL license.
-        Partially: Copyright (C) 2000-2004 Robert Leslie
-
-src/plugins/faad/mp4ff/drms*:
+src/plugins/mp4/mp4ff/drms*:
         Copyright (C) 2004 VideoLAN
         Licensed under GPL license.
 
-src/plugins/faad/mp4ff/mp4*:
+src/plugins/mp4/mp4ff/mp4*:
         Copyright (C) 2003-2004 M. Bakker, Ahead Software AG, http://www.nero.com
         Licensed under GPL license.
 
-src/plugins/sid/*
+src/plugins/sid/*:
         Licensed under GPL license.
 
-src/plugins/sid/md5.*
+src/plugins/sid/md5.*:
         Copyright (C) 1999 Aladdin Enterprises.
 
-src/plugins/equalizer/eq.c
+src/plugins/equalizer/eq.c:
         Licensed under GPL license.
 
-src/plugins/equalizer/iir*
+src/plugins/equalizer/iir*:
         Copyright (C) 2002-2006 Felipe Rivera <liebremx@users.sourceforge.net>
         Licensed under GPL license.
 
-src/plugins/vocoder/vocoder.c
-	Licensed under GPL license.
+src/plugins/vocoder/vocoder.c:
+        Licensed under GPL license.
 
-src/plugins/vocoder/pvocoder*
-	Copyright (C) 2006 Juho Vähä-Herttua <juhovh@iki.fi>
-	Licensed under GPL license.
+src/plugins/vocoder/pvocoder*:
+        Copyright (C) 2006 Juho Vähä-Herttua <juhovh@iki.fi>
+        Licensed under GPL license.
 
 src/plugins/ices/encode.*:
         Copyright (c) 2001 Michael Smith <msmith@labyrinth.net.au>
@@ -65,6 +68,27 @@ src/plugins/jack/jack.c:
         Copyright (C) 2004  Chris Morgan <cmorgan@alum.wpi.edu>
 
 src/plugins/daap/daap_md5.*:
-        Copyright (C) 2004,2005 Charles Schmidt <cschmidt2@emich.edu> and David Hammerton
+        Copyright (C) 2004,2005 Charles Schmidt <cschmidt2@emich.edu>
+        Licensed under GPL license.
+        Uses code base on/copied from libopendaap:
+        Copyright (c) 2004 David Hammerton
+
 src/plugins/daap/*:
         Licensed under GPL license.
+
+src/includepriv/xmmspriv/xmms_list.h:
+        Copyright (C) 1995-1997  Peter Mattis, Spencer Kimball and Josh MacDonald
+
+src/xmms/bindata.c:
+        Partially: Copyright (C) 1999, 2000, 2002 Aladdin Enterprises.  All rights reserved.
+        Licensed under BSD license.
+
+wafadmin/:
+        Copyright (C) 2005 Thomas Nagy
+        Licensed under BSD license.
+
+wafadmin/libtool_config.py:
+        Copyright (C) 2006  Matthias Jahn <jahn.matthias@freenet.de>
+
+wafadmin/pproc.py:
+        Copyright (C) 2003-2004 by Peter Astrand <astrand@lysator.liu.se>
