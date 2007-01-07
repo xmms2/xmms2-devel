@@ -1,0 +1,13 @@
+from waftools.plugin import plugin
+
+def plugin_configure(conf):
+    cfg = conf.create(configurator='cfgtool')
+    cfg.binary = 'ffmpeg-config'
+    cfg.uselib = 'avcodec'
+    cfg.tests = {'--cflags': 'CCFLAGS',
+                 '--plugin-libs avcodec': 'LINKFLAGS'}
+    return (cfg.run() or conf.check_pkg('libavcodec', destvar='avcodec'))
+
+configure, build = plugin('avcodec', configure=plugin_configure,
+                          source="avcodec.c",
+                          needs_lib=True)

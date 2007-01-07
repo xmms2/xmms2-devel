@@ -1,5 +1,5 @@
-/** @file wma.c
- *  Decoder plugin for WMA audio format
+/** @file avformat.c
+ *  Avformat decoder plugin
  *
  *  Copyright (C) 2006-2007 XMMS2 Team
  *
@@ -27,7 +27,7 @@
 #undef ABS
 #include "avformat.h"
 
-#define WMA_BUFFER_SIZE 4096
+#define AVFORMAT_BUFFER_SIZE 4096
 
 typedef struct {
 	gint track;
@@ -36,25 +36,20 @@ typedef struct {
 	AVCodecContext *codecctx;
 	offset_t offset;
 
-	guchar buffer[WMA_BUFFER_SIZE];
+	guchar buffer[AVFORMAT_BUFFER_SIZE];
 	guint buffer_size;
 
-	guint channels;
-	guint bitrate;
-	guint samplerate;
-	xmms_sample_format_t sampleformat;
-
 	GString *outbuf;
-} xmms_wma_data_t;
+} xmms_avformat_data_t;
 
 typedef struct {
 	guint32 v1;
 	guint16 v2;
 	guint16 v3;
 	guint8 v4[8];
-} xmms_wma_GUID_t;
+} xmms_asf_GUID_t;
 
-xmms_wma_GUID_t xmms_wma_GUIDs[] = {
+xmms_asf_GUID_t xmms_asf_GUIDs[] = {
 	/* header */
 	{ 0x75B22630, 0x668E, 0x11CF,
 	  { 0xA6, 0xD9, 0x00, 0xAA, 0x00, 0x62, 0xCE, 0x6C } },
@@ -66,37 +61,38 @@ xmms_wma_GUID_t xmms_wma_GUIDs[] = {
 	  { 0x97, 0xF0, 0x00, 0xA0, 0xC9, 0x5E, 0xA8, 0x50 } },
 };
 
-static gboolean xmms_wma_plugin_setup (xmms_xform_plugin_t *xform_plugin);
-static gboolean xmms_wma_init (xmms_xform_t *xform);
-static void xmms_wma_destroy (xmms_xform_t *xform);
-static gint xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
-                           xmms_error_t *err);
-static void xmms_wma_metahack (xmms_xform_t *xform);
-static void xmms_wma_get_mediainfo (xmms_xform_t *xform);
+static gboolean xmms_avformat_plugin_setup (xmms_xform_plugin_t *xform_plugin);
+static gboolean xmms_avformat_init (xmms_xform_t *xform);
+static void xmms_avformat_destroy (xmms_xform_t *xform);
+static gint xmms_avformat_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                                xmms_error_t *err);
+static void xmms_avformat_get_mediainfo (xmms_xform_t *xform);
+int xmms_avformat_get_track (AVFormatContext *fmtctx);
 
-int xmms_wma_read_callback (void *user_data, uint8_t *buffer,
-                            int length);
-offset_t xmms_wma_seek_callback (void *user_data, offset_t offset, int whence);
-int xmms_wma_get_track (AVFormatContext *fmtctx);
+static void xmms_asf_metahack (xmms_xform_t *xform);
+
+int xmms_avformat_read_callback (void *user_data, uint8_t *buffer,
+                                 int length);
+offset_t xmms_avformat_seek_callback (void *user_data, offset_t offset, int whence);
 
 /*
  * Plugin header
  */
 
-XMMS_XFORM_PLUGIN ("wma",
-                   "WMA Decoder", XMMS_VERSION,
-                   "Windows Media Audio decoder",
-                   xmms_wma_plugin_setup);
+XMMS_XFORM_PLUGIN ("avformat",
+                   "AVFormat Demuxer", XMMS_VERSION,
+                   "ffmpeg libavformat demuxer",
+                   xmms_avformat_plugin_setup);
 
 static gboolean
-xmms_wma_plugin_setup (xmms_xform_plugin_t *xform_plugin)
+xmms_avformat_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 {
 	xmms_xform_methods_t methods;
 
 	XMMS_XFORM_METHODS_INIT (methods);
-	methods.init = xmms_wma_init;
-	methods.destroy = xmms_wma_destroy;
-	methods.read = xmms_wma_read;
+	methods.init = xmms_avformat_init;
+	methods.destroy = xmms_avformat_destroy;
+	methods.read = xmms_avformat_read;
 
 	xmms_xform_plugin_methods_set (xform_plugin, &methods);
 
@@ -112,16 +108,15 @@ xmms_wma_plugin_setup (xmms_xform_plugin_t *xform_plugin)
 }
 
 static void
-xmms_wma_destroy (xmms_xform_t *xform)
+xmms_avformat_destroy (xmms_xform_t *xform)
 {
-	xmms_wma_data_t *data;
+	xmms_avformat_data_t *data;
 
 	g_return_if_fail (xform);
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_if_fail (data);
 
-	avcodec_close (data->codecctx);
 	av_close_input_file (data->fmtctx);
 
 	g_string_free (data->outbuf, TRUE);
@@ -129,36 +124,44 @@ xmms_wma_destroy (xmms_xform_t *xform)
 }
 
 static gboolean
-xmms_wma_init (xmms_xform_t *xform)
+xmms_avformat_init (xmms_xform_t *xform)
 {
-	xmms_wma_data_t *data;
-	gint temp;
+	xmms_avformat_data_t *data;
 	AVInputFormat *format;
-	AVCodec *codec;
 	ByteIOContext byteio;
+	AVCodec *codec;
+	const gchar *mimetype;
+	gint temp;
 
 	g_return_val_if_fail (xform, FALSE);
 
-	data = g_new0 (xmms_wma_data_t, 1);
+	data = g_new0 (xmms_avformat_data_t, 1);
 	data->outbuf = g_string_new (NULL);
-	data->buffer_size = WMA_BUFFER_SIZE;
+	data->buffer_size = AVFORMAT_BUFFER_SIZE;
 	data->offset = 0;
 
 	xmms_xform_private_data_set (xform, data);
 
 	av_register_all ();
 
-	xmms_wma_metahack (xform);
+	mimetype = xmms_xform_indata_get_str (xform, XMMS_STREAM_TYPE_MIMETYPE);
+	if (!strcmp (mimetype, "video/x-ms-asf")) {
+		xmms_asf_metahack (xform);
 
-	format = av_find_input_format ("asf");
-	if (!format) {
-		XMMS_DBG ("ASF format not registered for library, this is strange");
-		goto err;
+		format = av_find_input_format ("asf");
+		if (!format) {
+			XMMS_DBG ("ASF format not registered to library, this is strange");
+			goto err;
+		}
+	} else {
+		/* Unknown mimetype, init failed */
+		return FALSE;
 	}
+
 	format->flags |= AVFMT_NOFILE;
 	if ((temp = init_put_byte (&byteio, data->buffer, data->buffer_size, 0,
-	                           xform, xmms_wma_read_callback, NULL,
-	                           xmms_wma_seek_callback)) < 0) {
+	                           xform, xmms_avformat_read_callback, NULL,
+	                           xmms_avformat_seek_callback)) < 0) {
 		XMMS_DBG ("Could not initialize ByteIOContext structure: %d", temp);
 		goto err;
 	}
@@ -167,7 +170,7 @@ xmms_wma_init (xmms_xform_t *xform)
 		XMMS_DBG ("Could not open input stream for ASF format: %d", temp);
 		goto err;
 	}
-	data->track = xmms_wma_get_track (data->fmtctx);
+	data->track = xmms_avformat_get_track (data->fmtctx);
 	if (data->track < 0) {
 		XMMS_DBG ("Could not find WMA data track from file");
 		goto err;
@@ -175,38 +178,46 @@ xmms_wma_init (xmms_xform_t *xform)
 
 	data->codecctx = data->fmtctx->streams[data->track]->codec;
 	codec = avcodec_find_decoder (data->codecctx->codec_id);
-	if (!codec) {
-		XMMS_DBG ("No suitable decoder found for track");
+
+	if (!strcmp(codec->name, "wmav1")) {
+		mimetype = "audio/x-ffmpeg-wmav1";
+	} else if (!strcmp(codec->name, "wmav2")) {
+		mimetype = "audio/x-ffmpeg-wmav2";
+	} else {
+		xmms_log_error ("Unknown codec %s inside asf stream",
+		                codec->name);
 		goto err;
 	}
 
-	data->samplerate = data->codecctx->sample_rate;
-	data->channels = data->codecctx->channels;
+	XMMS_DBG ("mimetype set to '%s'", mimetype);
 
-	if ((temp = avcodec_open (data->codecctx, codec)) < 0) {
-		XMMS_DBG ("Opening WMA decoder failed");
-		goto err_close_codec;
-	}
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_SAMPLERATE,
+	                             data->codecctx->sample_rate);
+	xmms_xform_metadata_set_int (xform,
+	                             XMMS_MEDIALIB_ENTRY_PROPERTY_BITRATE,
+	                             data->codecctx->bit_rate);
 
-	xmms_wma_get_mediainfo (xform);
+	xmms_xform_privdata_set_bin (xform,
+	                             "decoder_config",
+	                             data->codecctx->extradata,
+	                             data->codecctx->extradata_size);
+
+	xmms_avformat_get_mediainfo (xform);
 
 	xmms_xform_outdata_type_add (xform,
 	                             XMMS_STREAM_TYPE_MIMETYPE,
-	                             "audio/pcm",
-	                             XMMS_STREAM_TYPE_FMT_FORMAT,
-	                             XMMS_SAMPLE_FORMAT_S16,
-	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
-	                             data->channels,
+	                             mimetype,
 	                             XMMS_STREAM_TYPE_FMT_SAMPLERATE,
-	                             data->samplerate,
+	                             data->codecctx->sample_rate,
+	                             XMMS_STREAM_TYPE_FMT_CHANNELS,
+	                             data->codecctx->channels,
 	                             XMMS_STREAM_TYPE_END);
 
-	XMMS_DBG ("WMA decoder inited successfully!");
+	XMMS_DBG ("ASF demuxer inited successfully!");
 
 	return TRUE;
 
-err_close_codec:
-	avcodec_close (data->codecctx);
 err:
 	if (data->fmtctx) {
 		av_close_input_file (data->fmtctx);
@@ -218,14 +229,12 @@ err:
 }
 
 static gint
-xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
-               xmms_error_t *err)
+xmms_avformat_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
+                    xmms_error_t *err)
 {
-	xmms_wma_data_t *data;
+	xmms_avformat_data_t *data;
 	AVPacket pkt;
-	unsigned char *inbuf;
-	char outbuf[AVCODEC_MAX_AUDIO_FRAME_SIZE];
-	int inbufsize, outbufsize, size;
+	int size;
 
 	data = xmms_xform_private_data_get (xform);
 	g_return_val_if_fail (data, -1);
@@ -237,27 +246,9 @@ xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 		if (pkt.size == 0)
 			return 0;
 
-		inbuf = pkt.data;
-		inbufsize = pkt.size;
+		xmms_xform_privdata_set_none (xform);
 
-		while (inbufsize > 0) {
-			int inlen;
-
-			inlen = avcodec_decode_audio (data->codecctx, (short *) outbuf,
-			                              &outbufsize, inbuf, inbufsize);
-			data->codecctx->frame_number++;
-
-			if (inlen < 0)
-				return -1;
-
-			if (outbufsize <= 0)
-				continue;
-
-			g_string_append_len (data->outbuf, outbuf, outbufsize);
-
-			inbuf += inlen;
-			inbufsize -= inlen;
-		}
+		g_string_append_len (data->outbuf, (gchar *) pkt.data, pkt.size);
 
 		if (pkt.data) {
 			av_free_packet (&pkt);
@@ -273,7 +264,7 @@ xmms_wma_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len,
 }
 
 static void
-xmms_wma_read_GUID (guchar *buffer, xmms_wma_GUID_t *guid)
+xmms_asf_read_GUID (guchar *buffer, xmms_asf_GUID_t *guid)
 {
 	guid->v1 = GUINT32_FROM_LE (*((guint32 *) buffer));
 	buffer += 4;
@@ -285,43 +276,43 @@ xmms_wma_read_GUID (guchar *buffer, xmms_wma_GUID_t *guid)
 }
 
 static gboolean
-xmms_wma_check_GUID (const xmms_wma_GUID_t *guid1,
-                     const xmms_wma_GUID_t *guid2)
+xmms_asf_check_GUID (const xmms_asf_GUID_t *guid1,
+                     const xmms_asf_GUID_t *guid2)
 {
-	return !memcmp (guid1, guid2, sizeof (xmms_wma_GUID_t));
+	return !memcmp (guid1, guid2, sizeof (xmms_asf_GUID_t));
 }
 
 /* This is a hack for reading ASF metadata since libavformat
  * totally breaks UTF-16 characters in them. */
 static void
-xmms_wma_metahack (xmms_xform_t *xform)
+xmms_asf_metahack (xmms_xform_t *xform)
 {
 	gint i;
 	guint objects;
 	gulong read, bufsize;
 	guchar *buffer, *current;
 	xmms_error_t error;
-	xmms_wma_GUID_t guid;
+	xmms_asf_GUID_t guid;
 
 	g_return_if_fail (xform);
 
-	bufsize = sizeof (xmms_wma_GUID_t) + 8+4+2;
+	bufsize = sizeof (xmms_asf_GUID_t) + 8+4+2;
 	buffer = g_malloc (bufsize * sizeof (guchar));
 	current = buffer;
 
 	read = xmms_xform_peek (xform, buffer, bufsize, &error);
 	g_return_if_fail (read == bufsize);
 
-	xmms_wma_read_GUID (buffer, &guid);
-	g_return_if_fail (xmms_wma_check_GUID (&guid, &xmms_wma_GUIDs[0]));
-	current += sizeof (xmms_wma_GUID_t);;
+	xmms_asf_read_GUID (buffer, &guid);
+	g_return_if_fail (xmms_asf_check_GUID (&guid, &xmms_asf_GUIDs[0]));
+	current += sizeof (xmms_asf_GUID_t);;
 
 	current += 8;
 	objects = GUINT32_FROM_LE (*((guint32 *) current));
 
 	for (i = 0; i < objects; i++) {
 		gulong objectsize;
-		gint headersize = sizeof (xmms_wma_GUID_t) + 8;
+		gint headersize = sizeof (xmms_asf_GUID_t) + 8;
 
 		bufsize += headersize;
 		buffer = g_realloc (buffer, bufsize);
@@ -330,8 +321,8 @@ xmms_wma_metahack (xmms_xform_t *xform)
 		read = xmms_xform_peek (xform, buffer, bufsize, &error);
 		g_return_if_fail (read == bufsize);
 
-		xmms_wma_read_GUID (current, &guid);
-		current += sizeof (xmms_wma_GUID_t);
+		xmms_asf_read_GUID (current, &guid);
+		current += sizeof (xmms_asf_GUID_t);
 		objectsize = GULONG_FROM_LE (*((gulong *) current));
 
 		bufsize += objectsize - headersize;
@@ -341,7 +332,7 @@ xmms_wma_metahack (xmms_xform_t *xform)
 		read = xmms_xform_peek (xform, buffer, bufsize, &error);
 		g_return_if_fail (read == bufsize);
 
-		if (xmms_wma_check_GUID (&guid, &xmms_wma_GUIDs[1])) {
+		if (xmms_asf_check_GUID (&guid, &xmms_asf_GUIDs[1])) {
 			guint16 titlel, artistl, copyl, commentl, ratingl;
 			guint16 *tmpbuf = (guint16 *) current;
 			gchar *utfstr, *tmpstr;
@@ -389,7 +380,7 @@ xmms_wma_metahack (xmms_xform_t *xform)
 				g_free (tmpstr);
 				utfstr += commentl;
 			}
-		} else if (xmms_wma_check_GUID (&guid, &xmms_wma_GUIDs[2])) {
+		} else if (xmms_asf_check_GUID (&guid, &xmms_asf_GUIDs[2])) {
 			guint16 i, descriptors;
 
 			descriptors = GUINT16_FROM_LE (*((guint16 *) current));
@@ -450,9 +441,9 @@ xmms_wma_metahack (xmms_xform_t *xform)
 
 
 static void
-xmms_wma_get_mediainfo (xmms_xform_t *xform)
+xmms_avformat_get_mediainfo (xmms_xform_t *xform)
 {
-	xmms_wma_data_t *data;
+	xmms_avformat_data_t *data;
 	AVFormatContext *fmtctx;
 	AVCodecContext *codecctx;
 
@@ -482,10 +473,10 @@ xmms_wma_get_mediainfo (xmms_xform_t *xform)
 }
 
 int
-xmms_wma_read_callback (void *user_data, uint8_t *buffer, int length)
+xmms_avformat_read_callback (void *user_data, uint8_t *buffer, int length)
 {
 	xmms_xform_t *xform;
-	xmms_wma_data_t *data;
+	xmms_avformat_data_t *data;
 	xmms_error_t error;
 	gint ret;
 
@@ -506,10 +497,10 @@ xmms_wma_read_callback (void *user_data, uint8_t *buffer, int length)
 }
 
 offset_t
-xmms_wma_seek_callback (void *user_data, offset_t offset, int whence)
+xmms_avformat_seek_callback (void *user_data, offset_t offset, int whence)
 {
 	xmms_xform_t *xform;
-	xmms_wma_data_t *data;
+	xmms_avformat_data_t *data;
 	xmms_error_t error;
 	gint64 ret;
 	gint w;
@@ -546,7 +537,7 @@ xmms_wma_seek_callback (void *user_data, offset_t offset, int whence)
 }
 
 int
-xmms_wma_get_track (AVFormatContext *fmtctx)
+xmms_avformat_get_track (AVFormatContext *fmtctx)
 {
 	gint wma_idx;
 	AVCodecContext *codec;
