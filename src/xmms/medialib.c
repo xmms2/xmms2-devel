@@ -503,9 +503,13 @@ xmms_medialib_entry_property_get_cmd_value (xmms_medialib_session_t *session,
 	g_return_val_if_fail (property, NULL);
 	g_return_val_if_fail (session, NULL);
 
-	xmms_sqlite_query_array (session->sql, xmms_medialib_cmd_value_cb,
-	                         &ret, XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
-	                         property, entry, session->source_pref);
+	if (!strcmp (property, XMMS_MEDIALIB_ENTRY_PROPERTY_ID)) {
+		ret = xmms_object_cmd_value_int_new (entry);
+	} else {
+		xmms_sqlite_query_array (session->sql, xmms_medialib_cmd_value_cb,
+		                         &ret, XMMS_MEDIALIB_RETRV_PROPERTY_SQL,
+		                         property, entry, session->source_pref);
+	}
 
 	return ret;
 }
