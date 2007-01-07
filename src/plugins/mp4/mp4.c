@@ -40,9 +40,6 @@ typedef struct {
 	glong sampleid;
 	glong numsamples;
 
-	gint frame_offset;
-	gint frame_duration;
-
 	guchar buffer[MP4_BUFFER_SIZE];
 	guint buffer_length;
 	guint buffer_size;
@@ -147,9 +144,6 @@ xmms_mp4_init (xmms_xform_t *xform)
 	data->sampleid = 0;
 	data->numsamples = 0;
 
-	data->frame_offset = 0;
-	data->frame_duration = 0;
-
 	bytes_read = xmms_xform_read (xform,
 	                              (gchar *) data->buffer + data->buffer_length,
 	                              data->buffer_size - data->buffer_length,
@@ -242,15 +236,8 @@ xmms_mp4_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t *
 		                                      data->sampleid);
 		data->sampleid++;
 
-		if (offset != data->frame_offset) {
-			xmms_xform_privdata_set_int (xform, "frame_offset", offset);
-			data->frame_offset = offset;
-		}
-
-		if (duration != data->frame_duration) {
-			xmms_xform_privdata_set_int (xform, "frame_duration", duration);
-			data->frame_duration = duration;
-		}
+		xmms_xform_privdata_set_int (xform, "frame_offset", offset);
+		xmms_xform_privdata_set_int (xform, "frame_duration", duration);
 
 		if (bytes_read > 0) {
 			g_string_append_len (data->outbuf, (gchar *) tmpbuf, tmpbuflen);

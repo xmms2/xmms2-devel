@@ -45,7 +45,6 @@ typedef struct {
 	guchar buffer[FAAD_BUFFER_SIZE];
 	guint buffer_length;
 	guint buffer_size;
-	gboolean need_data;
 
 	guint channels;
 	guint bitrate;
@@ -210,8 +209,8 @@ xmms_faad_init (xmms_xform_t *xform)
 			XMMS_DBG ("AAC decoder config data found but it's wrong type! (something broken?)");
 			goto err;
 		}
-		bytes_read = faacDecInit (data->decoder, tmpbuf, tmpbuflen, &samplerate,
-		                          &channels);
+		bytes_read = faacDecInit2 (data->decoder, tmpbuf, tmpbuflen, &samplerate,
+		                           &channels);
 	}
 
 	if (bytes_read < 0) {
@@ -265,7 +264,15 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 
 	size = MIN (data->outbuf->len, len);
 	while (size == 0) {
-		if (data->need_data) {
+		gboolean need_read;
+
+		/* MP4 demuxer always gives full packets so we need different handling */
+		if (data->filetype == FAAD_TYPE_MP4)
+			need_read = (data->buffer_length == 0);
+		else
+			need_read = (data->buffer_length < data->buffer_size);
+
+		if (need_read) {
 			bytes_read = xmms_xform_read (xform,
 			                              (gchar *) data->buffer + data->buffer_length,
 			                              data->buffer_size - data->buffer_length,
@@ -277,9 +284,6 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			}
 
 			data->buffer_length += bytes_read;
-
-			if (bytes_read > 0)
-				data->need_data = FALSE;
 		}
 
 		sample_buffer = faacDecDecode (data->decoder, &frameInfo, data->buffer,
@@ -294,8 +298,8 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			gint32 temp, toskip = 0;
 			
 			if (xmms_xform_privdata_get_int (xform, "frame_offset", &temp)) {
-				toskip += temp * frameInfo.channels *
-				          xmms_sample_size_get (data->sampleformat);	
+				toskip = temp * frameInfo.channels *
+				         xmms_sample_size_get (data->sampleformat);	
 			}
 
 			if (xmms_xform_privdata_get_int (xform, "frame_duration", &temp)) {
@@ -305,8 +309,6 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 			
 			g_string_append_len (data->outbuf, sample_buffer + toskip,
 			                     bytes_read - toskip);
-		} else if (frameInfo.error > 0 && !data->need_data) {
-			data->need_data = TRUE;
 		} else if (frameInfo.error > 0) {
 			XMMS_DBG ("ERROR %d in faad decoding: %s", frameInfo.error,
 			          faacDecGetErrorMessage (frameInfo.error));
