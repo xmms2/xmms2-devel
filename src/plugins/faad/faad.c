@@ -164,11 +164,15 @@ xmms_faad_init (xmms_xform_t *xform)
 	                              (gchar *) data->buffer + data->buffer_length,
 	                              data->buffer_size - data->buffer_length,
 	                              &error);
-
 	data->buffer_length += bytes_read;
 
+	if (bytes_read < 0) {
+		xmms_log_error ("Error while trying to read data on init");
+		goto err;
+	}
+
 	if (bytes_read < 8) {
-		XMMS_DBG ("Not enough bytes to check the MP4 header");
+		XMMS_DBG ("Not enough bytes to check the AAC header");
 		goto err;
 	}
 
@@ -299,7 +303,6 @@ xmms_faad_read (xmms_xform_t *xform, xmms_sample_t *buf, gint len, xmms_error_t 
 				             xmms_sample_size_get (data->sampleformat);
 			}
 			
-			XMMS_DBG ("outputted %d %d bytes from faad", bytes_read, toskip);
 			g_string_append_len (data->outbuf, sample_buffer + toskip,
 			                     bytes_read - toskip);
 		} else if (frameInfo.error > 0 && !data->need_data) {
