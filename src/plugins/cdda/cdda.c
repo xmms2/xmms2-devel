@@ -65,12 +65,14 @@ log_handler (cdio_log_level_t level, const char *message)
 {
 	switch (level) {
 		case CDIO_LOG_DEBUG:
+			XMMS_DBG ("libcdio (%d): %s.", level, message);
+			break;
 		case CDIO_LOG_INFO:
 		case CDIO_LOG_WARN:
-			XMMS_DBG ("libcdio (%d): %s\n", level, message);
+			xmms_log_info ("libcdio (%d): %s.", level, message);
 			break;
 		default:
-			xmms_log_error ("libcdio (%d): %s\n", level, message);
+			xmms_log_error ("libcdio (%d): %s.", level, message);
 			break;
 	}
 }
@@ -150,20 +152,20 @@ xmms_cdda_init (xmms_xform_t *xform)
 	url_data = g_strsplit (url, "/", 2);
 
 	if (g_ascii_strcasecmp (url_data[0], disc_id)) {
-		XMMS_DBG ("Wrong disc inserted.");
+		xmms_log_error ("Wrong disc inserted.");
 		ret = FALSE;
 		goto end;
 	}
 
 	if (url_data[1] == NULL) {
-		XMMS_DBG ("Missing track number.");
+		xmms_log_error ("Missing track number.");
 		ret = FALSE;
 		goto end;
 	}
 
 	track = strtol (url_data[1], &url_end, 10);
 	if (url_data[1] == url_end) {
-		XMMS_DBG ("Invalid track, need a number.");
+		xmms_log_error ("Invalid track, need a number.");
 		ret = FALSE;
 		goto end;
 	}
@@ -176,20 +178,20 @@ xmms_cdda_init (xmms_xform_t *xform)
 
 	drive = cdio_cddap_identify_cdio (cdio, 1, NULL);
 	if (!drive) {
-		XMMS_DBG ("Failed to identify drive");
+		xmms_log_error ("Failed to identify drive.");
 		ret = FALSE;
 		goto end;
 	}
 
 	if (cdio_cddap_open (drive)) {
-		XMMS_DBG ("Unable to open disc.");
+		xmms_log_error ("Unable to open disc.");
 		ret = FALSE;
 		goto end;
 	}
 
 	first_lsn = cdio_cddap_track_firstsector (drive, track);
 	if (first_lsn == -1) {
-		XMMS_DBG ("No such track");
+		xmms_log_error ("No such track.");
 		ret = FALSE;
 		goto end;
 	}
@@ -275,7 +277,7 @@ xmms_cdda_browse (xmms_xform_t *xform, const gchar *url, xmms_error_t *error)
 		gchar *file;
 
 		g_snprintf (cdda_url, XMMS_PATH_MAX, "cdda://%s/%d", disc_id, t);
-		XMMS_DBG ("Adding %s", cdda_url);
+		XMMS_DBG ("Adding '%s'.", cdda_url);
 
 		file = xmms_build_playlist_url (xmms_xform_get_url (xform), cdda_url);
 
@@ -399,7 +401,7 @@ open_cd (xmms_xform_t *xform)
 	val = xmms_xform_config_lookup (xform, "accessmode");
 	accessmode = xmms_config_property_get_string (val);
 
-	XMMS_DBG ("Trying to open device %s, using %s access mode.",
+	XMMS_DBG ("Trying to open device '%s', using '%s' access mode.",
 	          device, accessmode);
 
 	if (g_ascii_strcasecmp (accessmode, "default") == 0) {
@@ -409,10 +411,10 @@ open_cd (xmms_xform_t *xform)
 	}
 
 	if (!cdio) {
-		XMMS_DBG ("Failed to open device %s.", device);
+		xmms_log_error ("Failed to open device '%s'.", device);
 	} else {
 		cdio_set_speed (cdio, 1);
-		XMMS_DBG ("Opened device %s.", device);
+		xmms_log_info ("Opened device '%s'.", device);
 	}
 
 	return cdio;
@@ -426,7 +428,7 @@ get_disc_ids (const gchar *device, gchar **disc_id,
 	g_return_val_if_fail (disc, FALSE);
 
 	if (discid_read (disc, device) == 0) {
-		XMMS_DBG ("Error reading disc: %s", discid_get_error_msg (disc));
+		xmms_log_error ("Could not read disc: %s", discid_get_error_msg (disc));
 		discid_free (disc);
 		return FALSE;
 	}
