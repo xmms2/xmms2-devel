@@ -10,8 +10,6 @@ def build(bld):
     obj.uselib = 'python'
     obj.env["plugin_SUFFIX"] = '.so'
     obj.env["plugin_PREFIX"] = ''
-    import distutils
-    import distutils.sysconfig
     obj.install_in = "LIBDIR_python"
 
 def configure(conf):
