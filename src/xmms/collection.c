@@ -693,12 +693,12 @@ xmms_collection_query_ids (xmms_coll_dag_t *dag, xmmsc_coll_t *coll,
 
 	res = xmms_collection_query_infos (dag, coll, lim_start, lim_len, order, NULL, NULL, err);
 
-	/* FIXME: get an int list directly !   or Int vs UInt? */
+	/* FIXME: get an int list directly ! */
 	for (n = res; n; n = n->next) {
 		xmms_object_cmd_value_t *buf;
 		xmms_object_cmd_value_t *cmdval = (xmms_object_cmd_value_t*)n->data;
 		buf = g_hash_table_lookup (cmdval->value.dict, "id");
-		ids = g_list_prepend (ids, xmms_object_cmd_value_int_new (buf->value.int32));
+		ids = g_list_prepend (ids, xmms_object_cmd_value_uint_new (buf->value.int32));
 		xmms_object_cmd_value_free (n->data);
 	}
 
