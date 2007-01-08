@@ -1,4 +1,5 @@
 import os
+import Params
 
 def build(bld):
     obj = bld.create_obj('cc', 'plugin')
@@ -26,10 +27,13 @@ def configure(conf):
     if not h.run():
         return False
 
-    conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
+    if Params.g_options.pythonarchdir:
+        conf.env["LIBDIR_python"] = Params.g_options.pythonarchdir
+    else:
+        conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
     conf.env["CCFLAGS_python"] += ["-Wno-unused-function", "-Wno-unused-label", "-Wno-unused-variable", "-Wno-parentheses"]
 
     return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))
 
 def set_options(opt):
-    pass
+    opt.add_option('--with-python-archdir', type='string', dest='pythonarchdir')
