@@ -1,5 +1,6 @@
 import os
 import Params
+import Common
 
 def build(bld):
     obj = bld.create_obj('cc', 'plugin')
@@ -11,6 +12,8 @@ def build(bld):
     obj.env["plugin_SUFFIX"] = '.so'
     obj.env["plugin_PREFIX"] = ''
     obj.install_in = "LIBDIR_python"
+
+    Common.install_files('LIBDIR_python', '', 'xmmsclient/__init__.py')
 
 def configure(conf):
     try:
@@ -26,9 +29,10 @@ def configure(conf):
         return False
 
     if Params.g_options.pythonarchdir:
-        conf.env["LIBDIR_python"] = Params.g_options.pythonarchdir
+        archdir = Params.g_options.pythonarchdir
     else:
-        conf.env["LIBDIR_python"] = distutils.sysconfig.get_python_lib(plat_specific=True)
+        archdir = distutils.sysconfig.get_python_lib(plat_specific=True)
+    conf.env["LIBDIR_python"] = os.path.join(archdir, "xmmsclient")
     conf.env["CCFLAGS_python"] += ["-Wno-unused-function", "-Wno-unused-label", "-Wno-unused-variable", "-Wno-parentheses"]
 
     return conf.check_tool('pyrexc', tooldir=os.path.abspath('waftools'))

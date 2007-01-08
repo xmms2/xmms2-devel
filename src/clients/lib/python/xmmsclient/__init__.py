@@ -1,0 +1,2 @@
+##
+from xmmsclient import *
