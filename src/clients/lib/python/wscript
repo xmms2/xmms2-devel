@@ -17,6 +17,7 @@ def build(bld):
     Common.install_files('LIBDIR_python', '', 'xmmsclient/sync.py')
     Common.install_files('LIBDIR_python', '', 'xmmsclient/propdict.py')
     Common.install_files('LIBDIR_python', '', 'xmmsclient/consts.py')
+    Common.install_files('LIBDIR_python', '', 'xmmsclient/collections.py')
 
 def configure(conf):
     try:
