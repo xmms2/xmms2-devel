@@ -4,9 +4,9 @@ import Common
 
 def build(bld):
     obj = bld.create_obj('cc', 'plugin')
-    obj.target = 'xmmsclient'
+    obj.target = 'xmmsapi'
     obj.includes = '../../../include ../../../includepriv'
-    obj.source = ['xmmsclient.pyx']
+    obj.source = ['xmmsapi.pyx']
     obj.uselib_local = 'xmmsclient'
     obj.uselib = 'python'
     obj.env["plugin_SUFFIX"] = '.so'

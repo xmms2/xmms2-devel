@@ -1,4 +1,6 @@
 
+import xmmsapi
+
 class XMMSSync:
 	"""
 	A wrapper for the xmmsclient.XMMS class which simplifies synchronous
@@ -20,7 +22,7 @@ class XMMSSync:
 		default to "Unnamed Python Client"
 		"""
 		if not xmms:
-			self.__xmms = XMMS(clientname)
+			self.__xmms = xmmsapi.XMMS(clientname)
 		else:
 			self.__xmms = xmms
 
@@ -43,7 +45,7 @@ class XMMSSyncMethod:
 
 	def __call__(self, *args):
 		ret = self.method(*args)
-		if isinstance(ret, XMMSResult):
+		if isinstance(ret, xmmsapi.XMMSResult):
 			ret.wait()
 			if ret.iserror():
 				raise XMMSError(ret.get_error())

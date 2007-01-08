@@ -1,4 +1,4 @@
 ##
 
-from xmmsclient import *
+from xmmsapi import *
 from sync import *
