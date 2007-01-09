@@ -38,14 +38,14 @@
 #define PLAYLIST_METHOD_ADD_HANDLER(action) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
-	res = xmmsc_playlist_##action (xmms->real, StringValuePtr (pl->name)); \
+	res = xmmsc_playlist_##action (xmms->real, pl->name); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
 #define PLAYLIST_METHOD_ADD_HANDLER_STR(action, arg) \
 	PLAYLIST_METHOD_HANDLER_HEADER \
 \
-	res = xmmsc_playlist_##action (xmms->real, StringValuePtr (pl->name), StringValuePtr (arg)); \
+	res = xmmsc_playlist_##action (xmms->real, pl->name, StringValuePtr (arg)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
@@ -54,7 +54,7 @@
 \
 	Check_Type (arg, T_FIXNUM); \
 \
-	res = xmmsc_playlist_##action (xmms->real, StringValuePtr (pl->name), \
+	res = xmmsc_playlist_##action (xmms->real, pl->name, \
 	                               NUM2UINT (arg)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
@@ -65,14 +65,16 @@
 	Check_Type (arg1, T_FIXNUM); \
 	Check_Type (arg2, T_FIXNUM); \
 \
-	res = xmmsc_playlist_##action (xmms->real, StringValuePtr (pl->name), \
+	res = xmmsc_playlist_##action (xmms->real, pl->name, \
 	                               NUM2UINT (arg1), NUM2UINT (arg2)); \
 \
 	PLAYLIST_METHOD_HANDLER_FOOTER
 
 typedef struct {
 	VALUE xmms;
-	VALUE name;
+
+	VALUE name_value;
+	const char *name;
 } RbPlaylist;
 
 static VALUE cPlaylist, ePlaylistError, eDisconnectedError, eClientError;
@@ -81,7 +83,7 @@ static void
 c_mark (RbPlaylist *pl)
 {
 	rb_gc_mark (pl->xmms);
-	rb_gc_mark (pl->name);
+	rb_gc_mark (pl->name_value);
 }
 
 static void
@@ -101,11 +103,13 @@ playlist_new (VALUE xmms, VALUE name)
 	pl->xmms = xmms;
 
 	if (NIL_P (name))
-		pl->name = rb_str_new2 (XMMS_ACTIVE_PLAYLIST);
+		pl->name_value = rb_str_new2 (XMMS_ACTIVE_PLAYLIST);
 	else
-		pl->name = rb_str_dup (name);
+		pl->name_value = rb_str_dup (name);
 
-	OBJ_FREEZE (pl->name);
+	OBJ_FREEZE (pl->name_value);
+
+	pl->name = StringValuePtr (pl->name_value);
 
 	return self;
 }
@@ -122,7 +126,7 @@ c_playlist_name (VALUE self)
 
 	Data_Get_Struct (self, RbPlaylist, pl);
 
-	return pl->name;
+	return pl->name_value;
 }
 
 /*
@@ -163,10 +167,10 @@ c_playlist_add_entry (VALUE self, VALUE arg)
 	PLAYLIST_METHOD_HANDLER_HEADER
 
 	if (!NIL_P (rb_check_string_type (arg)))
-		res = xmmsc_playlist_add_url (xmms->real, StringValuePtr (pl->name),
+		res = xmmsc_playlist_add_url (xmms->real, pl->name,
 		                              StringValuePtr (arg));
 	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		res = xmmsc_playlist_add_id (xmms->real, StringValuePtr (pl->name),
+		res = xmmsc_playlist_add_id (xmms->real, pl->name,
 		                             NUM2UINT (arg));
 	else {
 		rb_raise (eClientError, "unsupported argument");
@@ -191,10 +195,10 @@ c_playlist_insert_entry (VALUE self, VALUE pos, VALUE arg)
 	Check_Type (pos, T_FIXNUM);
 
 	if (!NIL_P (rb_check_string_type (arg)))
-		res = xmmsc_playlist_insert_url (xmms->real, StringValuePtr (pl->name),
+		res = xmmsc_playlist_insert_url (xmms->real, pl->name,
 		                                 NUM2UINT (pos), StringValuePtr (arg));
 	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
-		res = xmmsc_playlist_insert_id (xmms->real, StringValuePtr (pl->name),
+		res = xmmsc_playlist_insert_id (xmms->real, pl->name,
 		                                NUM2UINT (pos), NUM2UINT (arg));
 	else {
 		rb_raise (ePlaylistError, "unsupported argument");
@@ -285,7 +289,7 @@ c_playlist_sort (VALUE self, VALUE props)
 		return Qnil;
 	}
 
-	res = xmmsc_playlist_sort (xmms->real, StringValuePtr (pl->name), cprops);
+	res = xmmsc_playlist_sort (xmms->real, pl->name, cprops);
 
 	free (cprops);
 
