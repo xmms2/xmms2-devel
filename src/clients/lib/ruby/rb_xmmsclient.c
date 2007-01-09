@@ -116,9 +116,9 @@ c_alloc (VALUE klass)
 
 /*
  * call-seq:
- *  XmmsClient::XmmsClient.new(name) -> xc
+ *  Xmms::Client.new(name) -> xc
  *
- * Creates an XmmsClient::XmmsClient object.
+ * Creates an Xmms::Client object.
  */
 static VALUE
 c_init (VALUE self, VALUE name)
@@ -248,7 +248,7 @@ c_last_error_get (VALUE self)
  * call-seq:
  *  xc.io_fd -> integer
  *
- * Returns the file descriptor of the XmmsClient IPC socket.
+ * Returns the file descriptor of the Xmms::Client IPC socket.
  */
 static VALUE
 c_io_fd (VALUE self)
@@ -344,7 +344,7 @@ c_io_in_handle (VALUE self)
  *  xc.io_out_handle -> nil
  *
  * Sends one outgoing (to server) clientlib command. You should check
- * XmmsClient::XmmsClient#io_want_out before calling this method.
+ * Xmms::Client#io_want_out before calling this method.
  */
 static VALUE
 c_io_out_handle (VALUE self)
@@ -663,7 +663,7 @@ c_broadcast_playlist_changed (VALUE self)
  *  xc.playlist_current_pos -> result
  *
  * Retrieves the current position of the playlist. May raise an
- * XmmsClient::XmmsClient::ValueError exception if the current position is
+ * Xmms::Client::ValueError exception if the current position is
  * undefined.
  */
 static VALUE
@@ -981,7 +981,7 @@ c_medialib_get_info (VALUE self, VALUE id)
  * Write info to the medialib at _id_. _source_ is an optional argument that
  * describes where to write the mediainfo. If _source_ is omitted, the
  * mediainfo is written to "client/<yourclient>" where <yourclient> is the
- * name you specified in _XmmsClient::XmmsClient.new(name)_.
+ * name you specified in _Xmms::Client.new(name)_.
  */
 static VALUE
 c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
