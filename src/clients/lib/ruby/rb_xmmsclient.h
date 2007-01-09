@@ -17,6 +17,10 @@
 #ifndef __RB_XMMSCLIENT_H
 #define __RB_XMMSCLIENT_H
 
+#define CHECK_DELETED(xmms) \
+	if (xmms->deleted) \
+		rb_raise (eDisconnectedError, "client deleted");
+
 typedef struct {
 	xmmsc_connection_t *real;
 	bool deleted;
