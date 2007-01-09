@@ -86,19 +86,13 @@ c_mark (RbPlaylist *pl)
 	rb_gc_mark (pl->name_value);
 }
 
-static void
-c_free (RbPlaylist *pl)
-{
-	/* FIXME */
-}
-
 VALUE
 playlist_new (VALUE xmms, VALUE name)
 {
 	VALUE self;
 	RbPlaylist *pl = NULL;
 
-	self = Data_Make_Struct (cPlaylist, RbPlaylist, c_mark, c_free, pl);
+	self = Data_Make_Struct (cPlaylist, RbPlaylist, c_mark, NULL, pl);
 
 	pl->xmms = xmms;
 
