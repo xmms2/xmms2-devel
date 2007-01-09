@@ -41,5 +41,5 @@ Init_xmmsclient (void)
 
 	rb_define_const (mXmms, "VERSION", rb_str_new2 (XMMS_VERSION));
 
-	Init_Client (mXmms); /* initializes Result, too */
+	Init_Client (mXmms); /* initializes Result and Playlist, too */
 }

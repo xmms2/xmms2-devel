@@ -21,11 +21,8 @@
 #include <xmmsc/xmmsc_stdbool.h>
 
 #include "rb_xmmsclient.h"
+#include "rb_xmmsclient_playlist.h"
 #include "rb_result.h"
-
-#define CHECK_DELETED(xmms) \
-	if (xmms->deleted) \
-		rb_raise (eDisconnectedError, "client deleted");
 
 #define METHOD_HANDLER_HEADER \
 	RbXmmsClient *xmms = NULL; \
@@ -645,7 +642,6 @@ c_broadcast_playback_volume_changed (VALUE self)
 	METHOD_ADD_HANDLER (broadcast_playback_volume_changed);
 }
 
-#if 0
 /*
  * call-seq:
  *  xc.broadcast_playlist_changed -> result
@@ -660,20 +656,6 @@ c_broadcast_playlist_changed (VALUE self)
 
 /*
  * call-seq:
- *  xc.playlist_current_pos -> result
- *
- * Retrieves the current position of the playlist. May raise an
- * Xmms::Client::ValueError exception if the current position is
- * undefined.
- */
-static VALUE
-c_playlist_current_pos (VALUE self)
-{
-	METHOD_ADD_HANDLER(playlist_current_pos);
-}
-
-/*
- * call-seq:
  *  xc.broadcast_playlist_current_pos -> result
  *
  * Retrieves the current playlist position as a broadcast. See
@@ -684,7 +666,6 @@ c_broadcast_playlist_current_pos (VALUE self)
 {
 	METHOD_ADD_HANDLER(broadcast_playlist_current_pos);
 }
-#endif
 
 /*
  * call-seq:
@@ -708,43 +689,6 @@ static VALUE
 c_broadcast_medialib_entry_added (VALUE self)
 {
 	METHOD_ADD_HANDLER (broadcast_medialib_entry_added);
-}
-
-#if 0
-/*
- * call-seq:
- *  xc.playlist_shuffle -> result
- *
- * Shuffles the playlist.
- */
-static VALUE
-c_playlist_shuffle (VALUE self)
-{
-	METHOD_ADD_HANDLER(playlist_shuffle);
-}
-
-/*
- * call-seq:
- *  xc.playlist_list -> result
- *
- * Retrieves an array containing an id for each playlist position.
- */
-static VALUE
-c_playlist_list (VALUE self)
-{
-	METHOD_ADD_HANDLER(playlist_list);
-}
-
-/*
- * call-seq:
- *  xc.playlist_clear -> result
- *
- * Clears the playlist.
- */
-static VALUE
-c_playlist_clear (VALUE self)
-{
-	METHOD_ADD_HANDLER(playlist_clear);
 }
 
 /*
@@ -772,121 +716,24 @@ c_playlist_set_next_rel (VALUE self, VALUE pos)
 	METHOD_ADD_HANDLER_INT (playlist_set_next_rel, pos);
 }
 
-/*
- * call-seq:
- *  xc.playlist_add(arg) -> result
+/* call-seq:
+ * xc.playlist([name]) -> p
  *
- * Adds an entry to the current playlist. _arg_ can be either an URL or an id.
+ * Creates a new Xmms::Client::Playlist object tied to the current Xmms::Client
+ * instance. _name_ is is the name of the playlist and the active playlist will
+ * be used if it is not specified. Raises PlaylistError if the playlist name is
+ * invalid.
  */
 static VALUE
-c_playlist_add (VALUE self, VALUE arg)
+c_playlist (int argc, VALUE *argv, VALUE self)
 {
+	VALUE name = Qnil;
 	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-	bool is_str = false;
 
-	if (!NIL_P (rb_check_string_type (arg)))
-		is_str = true;
-	else if (!rb_obj_is_kind_of (arg, rb_cFixnum)) {
-		rb_raise (eClientError, "unsupported argument");
-		return Qnil;
-	}
-
+	rb_scan_args (argc, argv, "01", &name);
 	Data_Get_Struct (self, RbXmmsClient, xmms);
 
-	CHECK_DELETED (xmms);
-
-	if (is_str)
-		res = xmmsc_playlist_add_url (xmms->real, StringValuePtr (arg));
-	else
-		res = xmmsc_playlist_add_id (xmms->real, NUM2UINT (arg));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
-}
-
-/*
- * call-seq:
- *  xc.playlist_insert(pos, arg) -> result
- *
- * Inserts an entry to the current playlist at position _pos_.
- * _arg_ can be either an URL or an id.
- */
-static VALUE
-c_playlist_insert (VALUE self, VALUE pos, VALUE arg)
-{
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-	bool is_str = false;
-
-	if (!NIL_P (rb_check_string_type (arg)))
-		is_str = true;
-	else if (!rb_obj_is_kind_of (arg, rb_cFixnum)) {
-		rb_raise (eClientError, "unsupported argument");
-		return Qnil;
-	}
-
-	Check_Type (pos, T_FIXNUM);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	if (is_str)
-		res = xmmsc_playlist_insert_url (xmms->real, NUM2UINT (pos), StringValuePtr (arg));
-	else
-		res = xmmsc_playlist_insert_id (xmms->real, NUM2UINT (pos), NUM2UINT (arg));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
-}
-
-/*
- * call-seq:
- *  xc.playlist_remove(pos) -> result
- *
- * Removes the entry at _pos_ from the current playlist.
- */
-static VALUE
-c_playlist_remove (VALUE self, VALUE pos)
-{
-	METHOD_ADD_HANDLER_UINT (playlist_remove, pos);
-}
-
-/*
- * call-seq:
- *  xc.playlist_move(current_pos, new_pos) -> result
- *
- * Moves the entry at _current_pos_ to _new_pos_.
- */
-static VALUE
-c_playlist_move (VALUE self, VALUE cur_pos, VALUE new_pos)
-{
-	RbXmmsClient *xmms = NULL;
-	xmmsc_result_t *res;
-
-	Check_Type (cur_pos, T_FIXNUM);
-	Check_Type (new_pos, T_FIXNUM);
-
-	Data_Get_Struct (self, RbXmmsClient, xmms);
-
-	CHECK_DELETED (xmms);
-
-	res = xmmsc_playlist_move (xmms->real, NUM2UINT (cur_pos),
-	                           NUM2UINT (new_pos));
-
-	return TO_XMMS_CLIENT_RESULT (self, res);
-}
-
-/*
- * call-seq:
- *  xc.playlist_sort(property) -> result
- *
- * Sorts the playlist on _property_, which is a medialib property such as
- * "title".
- */
-static VALUE
-c_playlist_sort (VALUE self, VALUE property)
-{
-	METHOD_ADD_HANDLER_STR (playlist_sort, property);
+	return playlist_new (self, name);
 }
 
 /*
@@ -900,43 +747,6 @@ c_medialib_select (VALUE self, VALUE query)
 {
 	METHOD_ADD_HANDLER_STR (medialib_select, query);
 }
-
-/*
- * call-seq:
- *  xc.medialib_playlist_save_current(name) -> result
- *
- * Saves the current playlist to the medialib under _name_.
- */
-static VALUE
-c_medialib_playlist_save_current (VALUE self, VALUE name)
-{
-	METHOD_ADD_HANDLER_STR (medialib_playlist_save_current, name);
-}
-
-/*
- * call-seq:
- *  xc.medialib_playlist_load(name) -> result
- *
- * Appends the playlist _name_ to the current playlist.
- */
-static VALUE
-c_medialib_playlist_load (VALUE self, VALUE name)
-{
-	METHOD_ADD_HANDLER_STR (medialib_playlist_load, name);
-}
-
-/*
- * call-seq:
- *  xc.medialib_playlist_remove(name) -> result
- *
- * Removes the playlist _name_ from the medialib.
- */
-static VALUE
-c_medialib_playlist_remove (VALUE self, VALUE name)
-{
-	METHOD_ADD_HANDLER_STR (medialib_playlist_remove, name);
-}
-#endif
 
 /*
  * call-seq:
@@ -1038,46 +848,19 @@ c_medialib_entry_property_set (int argc, VALUE *argv, VALUE self)
 	return TO_XMMS_CLIENT_RESULT (self, res);
 }
 
-#if 0
 /*
  * call-seq:
- *  xc.medialib_add_to_playlist(query) -> result
+ *  xc.playlist_list -> result
  *
- * Adds files matching the SQL query to the current playlist.
- */
-static VALUE
-c_medialib_add_to_playlist (VALUE self, VALUE query)
-{
-	METHOD_ADD_HANDLER_STR (medialib_add_to_playlist, query);
-}
-
-/*
- * call-seq:
- *  xc.medialib_playlists_list -> result
- *
- * Retrieves all playlists that are stored in the medialib.
+ * Retrieves a list of all saved playlists from the medialib.
  * Note that clients should treat internally used playlists
  * (marked with a leading underscore) carefully.
  */
 static VALUE
-c_medialib_playlists_list (VALUE self)
+c_playlist_list (VALUE self)
 {
-	METHOD_ADD_HANDLER (medialib_playlists_list);
+	METHOD_ADD_HANDLER (playlist_list);
 }
-
-/*
- * call-seq:
- *  xc.medialib_playlist_list(name) -> result
- *
- * Retrieves the contents of the playlist _name_.
- */
-static VALUE
-c_medialib_playlist_list (VALUE self, VALUE name)
-{
-	METHOD_ADD_HANDLER_STR (medialib_playlist_list, name);
-}
-
-#endif
 
 /*
  * call-seq:
@@ -1306,53 +1089,26 @@ Init_Client (VALUE mXmms)
 	rb_define_method (c, "broadcast_playback_volume_changed",
 	                  c_broadcast_playback_volume_changed, 0);
 
-#if 0
 	rb_define_method (c, "broadcast_playlist_changed",
 	                  c_broadcast_playlist_changed, 0);
-	rb_define_method (c, "playlist_current_pos",
-	                  c_playlist_current_pos, 0);
 	rb_define_method (c, "broadcast_playlist_current_pos",
 	                  c_broadcast_playlist_current_pos, 0);
-#endif
 	rb_define_method (c, "broadcast_medialib_entry_changed",
 	                  c_broadcast_medialib_entry_changed, 0);
 	rb_define_method (c, "broadcast_medialib_entry_added",
 	                  c_broadcast_medialib_entry_added, 0);
 
-#if 0
-	rb_define_method (c, "playlist_shuffle", c_playlist_shuffle, 0);
+	rb_define_method (c, "playlist", c_playlist, -1);
 	rb_define_method (c, "playlist_list", c_playlist_list, 0);
-	rb_define_method (c, "playlist_clear", c_playlist_clear, 0);
 	rb_define_method (c, "playlist_set_next", c_playlist_set_next, 1);
-	rb_define_method (c, "playlist_set_next_rel",
-	                  c_playlist_set_next_rel, 1);
-	rb_define_method (c, "playlist_add", c_playlist_add, 1);
-	rb_define_method (c, "playlist_insert", c_playlist_insert, 2);
-	rb_define_method (c, "playlist_remove", c_playlist_remove, 1);
-	rb_define_method (c, "playlist_move", c_playlist_move, 2);
-	rb_define_method (c, "playlist_sort", c_playlist_sort, 1);
+	rb_define_method (c, "playlist_set_next_rel", c_playlist_set_next_rel, 1);
 
 	rb_define_method (c, "medialib_select", c_medialib_select, 1);
-	rb_define_method (c, "medialib_playlist_save_current",
-	                  c_medialib_playlist_save_current, 1);
-	rb_define_method (c, "medialib_playlist_load",
-	                  c_medialib_playlist_load, 1);
-	rb_define_method (c, "medialib_playlist_remove",
-	                  c_medialib_playlist_remove, 1);
-#endif
 	rb_define_method (c, "medialib_add_entry", c_medialib_add_entry, 1);
 	rb_define_method (c, "medialib_get_id", c_medialib_get_id, 1);
 	rb_define_method (c, "medialib_get_info", c_medialib_get_info, 1);
 	rb_define_method (c, "medialib_entry_property_set",
 	                  c_medialib_entry_property_set, -1);
-#if 0
-	rb_define_method (c, "medialib_add_to_playlist",
-	                  c_medialib_add_to_playlist, 1);
-	rb_define_method (c, "medialib_playlists_list",
-	                  c_medialib_playlists_list, 0);
-	rb_define_method (c, "medialib_playlist_list",
-	                  c_medialib_playlist_list, 1);
-#endif
 	rb_define_method (c, "medialib_path_import", c_medialib_path_import, 1);
 	rb_define_method (c, "medialib_rehash", c_medialib_rehash, 1);
 
@@ -1403,4 +1159,5 @@ Init_Client (VALUE mXmms)
 	                                            eClientError);
 
 	Init_Result (mXmms);
+	Init_Playlist (c);
 }

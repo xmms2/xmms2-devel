@@ -1,5 +1,5 @@
 /*  XMMS2 - X Music Multiplexer System
- *  Copyright (C) 2003-2006 XMMS2 Team
+ *  Copyright (C) 2003-2007 XMMS2 Team
  *
  *  PLUGINS ARE NOT CONSIDERED TO BE DERIVED WORK !!!
  *
@@ -14,22 +14,10 @@
  *  Lesser General Public License for more details.
  */
 
-#ifndef __RB_XMMSCLIENT_H
-#define __RB_XMMSCLIENT_H
+#ifndef __RB_XMMSCLIENT_PLAYLIST_H
+#define __RB_XMMSCLIENT_PLAYLIST_H
 
-#define CHECK_DELETED(xmms) \
-	if (xmms->deleted) \
-		rb_raise (eDisconnectedError, "client deleted");
+VALUE playlist_new (VALUE xmms, VALUE name);
+void Init_Playlist (VALUE cClient);
 
-typedef struct {
-	xmmsc_connection_t *real;
-	bool deleted;
-	VALUE results;
-	VALUE disconnect_cb;
-	VALUE io_need_out_cb;
-
-	void *ecore_handle;
-	void *gmain_handle;
-} RbXmmsClient;
-
-#endif
+#endif /* __RB_XMMSCLIENT_PLAYLIST_H */
