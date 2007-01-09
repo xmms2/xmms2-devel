@@ -120,7 +120,7 @@ playlist_new (VALUE xmms, VALUE name)
  * Returns the name of the playlist in the medialib as a String.
  */
 VALUE
-c_playlist_name (VALUE self)
+c_name (VALUE self)
 {
 	RbPlaylist *pl = NULL;
 
@@ -138,7 +138,7 @@ c_playlist_name (VALUE self)
  * undefined.
  */
 static VALUE
-c_playlist_current_pos (VALUE self)
+c_current_pos (VALUE self)
 {
 	PLAYLIST_METHOD_ADD_HANDLER (current_pos)
 }
@@ -150,7 +150,7 @@ c_playlist_current_pos (VALUE self)
  * Retrieves an array containing ids for each position of the playlist.
  */
 static VALUE
-c_playlist_list_entries (VALUE self)
+c_list_entries (VALUE self)
 {
 	PLAYLIST_METHOD_ADD_HANDLER (list_entries)
 }
@@ -162,7 +162,7 @@ c_playlist_list_entries (VALUE self)
  * Adds an entry to the playlist. _arg_ can be either a URL or an id.
  */
 static VALUE
-c_playlist_add_entry (VALUE self, VALUE arg)
+c_add_entry (VALUE self, VALUE arg)
 {
 	PLAYLIST_METHOD_HANDLER_HEADER
 
@@ -188,7 +188,7 @@ c_playlist_add_entry (VALUE self, VALUE arg)
  * _arg_ can be either a URL or an id.
  */
 static VALUE
-c_playlist_insert_entry (VALUE self, VALUE pos, VALUE arg)
+c_insert_entry (VALUE self, VALUE pos, VALUE arg)
 {
 	PLAYLIST_METHOD_HANDLER_HEADER
 
@@ -215,7 +215,7 @@ c_playlist_insert_entry (VALUE self, VALUE pos, VALUE arg)
  * Removes the entry at _pos_ from the playlist.
  */
 static VALUE
-c_playlist_remove_entry (VALUE self, VALUE pos)
+c_remove_entry (VALUE self, VALUE pos)
 {
 	PLAYLIST_METHOD_ADD_HANDLER_UINT (remove_entry, pos)
 }
@@ -227,7 +227,7 @@ c_playlist_remove_entry (VALUE self, VALUE pos)
  * Moves the entry at _current_pos_ to _new_pos_ in the playlist.
  */
 static VALUE
-c_playlist_move_entry (VALUE self, VALUE cur_pos, VALUE new_pos)
+c_move_entry (VALUE self, VALUE cur_pos, VALUE new_pos)
 {
 	PLAYLIST_METHOD_ADD_HANDLER_UINT_UINT (move_entry, cur_pos, new_pos)
 }
@@ -239,7 +239,7 @@ c_playlist_move_entry (VALUE self, VALUE cur_pos, VALUE new_pos)
  * Shuffles the playlist.
  */
 static VALUE
-c_playlist_shuffle (VALUE self)
+c_shuffle (VALUE self)
 {
 	PLAYLIST_METHOD_ADD_HANDLER (shuffle)
 }
@@ -251,7 +251,7 @@ c_playlist_shuffle (VALUE self)
  * Clears the playlist.
  */
 static VALUE
-c_playlist_clear (VALUE self)
+c_clear (VALUE self)
 {
 	PLAYLIST_METHOD_ADD_HANDLER (clear)
 }
@@ -264,7 +264,7 @@ c_playlist_clear (VALUE self)
  * such as ["title", "artist"].
  */
 static VALUE
-c_playlist_sort (VALUE self, VALUE props)
+c_sort (VALUE self, VALUE props)
 {
 	struct RArray *ary;
 	const char **cprops;
@@ -303,7 +303,7 @@ c_playlist_sort (VALUE self, VALUE props)
  * Loads the playlist as the current active playlist.
  */
 static VALUE
-c_playlist_load (VALUE self)
+c_load (VALUE self)
 {
 	PLAYLIST_METHOD_ADD_HANDLER (load);
 }
@@ -315,7 +315,7 @@ c_playlist_load (VALUE self)
  * Removes the playlist from the medialib.
  */
 static VALUE
-c_playlist_remove (VALUE self)
+c_remove (VALUE self)
 {
 	PLAYLIST_METHOD_ADD_HANDLER (remove);
 }
@@ -331,18 +331,18 @@ Init_Playlist (VALUE cClient)
 	rb_define_singleton_method (cPlaylist, "new", NULL, 0);
 	rb_undef_method (rb_singleton_class (cPlaylist), "new");
 
-	rb_define_method (cPlaylist, "name", c_playlist_name, 0);
-	rb_define_method (cPlaylist, "current_pos", c_playlist_current_pos, 0);
-	rb_define_method (cPlaylist, "sort", c_playlist_sort, 1);
-	rb_define_method (cPlaylist, "shuffle", c_playlist_shuffle, 0);
-	rb_define_method (cPlaylist, "clear", c_playlist_clear, 0);
-	rb_define_method (cPlaylist, "add_entry", c_playlist_add_entry, 1);
-	rb_define_method (cPlaylist, "insert_entry", c_playlist_insert_entry, 2);
-	rb_define_method (cPlaylist, "remove_entry", c_playlist_remove_entry, 1);
-	rb_define_method (cPlaylist, "move_entry", c_playlist_move_entry, 2);
-	rb_define_method (cPlaylist, "entries", c_playlist_list_entries, 0);
-	rb_define_method (cPlaylist, "load", c_playlist_load, 0);
-	rb_define_method (cPlaylist, "remove", c_playlist_remove, 0);
+	rb_define_method (cPlaylist, "name", c_name, 0);
+	rb_define_method (cPlaylist, "current_pos", c_current_pos, 0);
+	rb_define_method (cPlaylist, "sort", c_sort, 1);
+	rb_define_method (cPlaylist, "shuffle", c_shuffle, 0);
+	rb_define_method (cPlaylist, "clear", c_clear, 0);
+	rb_define_method (cPlaylist, "add_entry", c_add_entry, 1);
+	rb_define_method (cPlaylist, "insert_entry", c_insert_entry, 2);
+	rb_define_method (cPlaylist, "remove_entry", c_remove_entry, 1);
+	rb_define_method (cPlaylist, "move_entry", c_move_entry, 2);
+	rb_define_method (cPlaylist, "entries", c_list_entries, 0);
+	rb_define_method (cPlaylist, "load", c_load, 0);
+	rb_define_method (cPlaylist, "remove", c_remove, 0);
 
 	ePlaylistError = rb_define_class_under (cPlaylist, "PlaylistError",
 	                                        rb_eStandardError);
