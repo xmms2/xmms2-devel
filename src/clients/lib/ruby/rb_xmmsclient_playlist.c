@@ -172,10 +172,8 @@ c_add_entry (VALUE self, VALUE arg)
 	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
 		res = xmmsc_playlist_add_id (xmms->real, pl->name,
 		                             NUM2UINT (arg));
-	else {
+	else
 		rb_raise (eClientError, "unsupported argument");
-		return Qnil;
-	}
 
 	PLAYLIST_METHOD_HANDLER_FOOTER
 }
@@ -200,10 +198,8 @@ c_insert_entry (VALUE self, VALUE pos, VALUE arg)
 	else if (rb_obj_is_kind_of (arg, rb_cFixnum))
 		res = xmmsc_playlist_insert_id (xmms->real, pl->name,
 		                                NUM2UINT (pos), NUM2UINT (arg));
-	else {
+	else
 		rb_raise (ePlaylistError, "unsupported argument");
-		return Qnil;
-	}
 
 	PLAYLIST_METHOD_HANDLER_FOOTER
 }
@@ -271,7 +267,7 @@ c_sort (VALUE self, VALUE props)
 	int i;
 	PLAYLIST_METHOD_HANDLER_HEADER
 
-	if (!NIL_P (rb_check_array_type (props))) {
+	if (!NIL_P (props = rb_check_array_type (props))) {
 		ary = RARRAY (props);
 
 		cprops = malloc (sizeof (char *) * (ary->len + 1));
@@ -284,10 +280,8 @@ c_sort (VALUE self, VALUE props)
 		cprops = malloc (sizeof (char *) * 2);
 		cprops[0] = StringValuePtr (props);
 		cprops[1] = NULL;
-	} else {
+	} else
 		rb_raise (ePlaylistError, "unsupported argument");
-		return Qnil;
-	}
 
 	res = xmmsc_playlist_sort (xmms->real, pl->name, cprops);
 

@@ -182,10 +182,8 @@ c_sig_restart (VALUE self)
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (!(res2 = xmmsc_result_restart (res->real))) {
+	if (!(res2 = xmmsc_result_restart (res->real)))
 		rb_raise (eResultError, "cannot restart result");
-		return Qnil;
-	}
 
 	res->real = res2;
 
@@ -214,10 +212,8 @@ int_get (RbResult *res)
 {
 	int32_t id = 0;
 
-	if (!xmmsc_result_get_int (res->real, &id)) {
+	if (!xmmsc_result_get_int (res->real, &id))
 		rb_raise (eValueError, "cannot retrieve value");
-		return Qnil;
-	}
 
 	return INT2FIX (id);
 }
@@ -227,10 +223,8 @@ uint_get (RbResult *res)
 {
 	uint32_t id = 0;
 
-	if (!xmmsc_result_get_uint (res->real, &id)) {
+	if (!xmmsc_result_get_uint (res->real, &id))
 		rb_raise (eValueError, "cannot retrieve value");
-		return Qnil;
-	}
 
 	return UINT2NUM (id);
 }
@@ -240,10 +234,8 @@ string_get (RbResult *res)
 {
 	char *s = NULL;
 
-	if (!xmmsc_result_get_string (res->real, &s)) {
+	if (!xmmsc_result_get_string (res->real, &s))
 		rb_raise (eValueError, "cannot retrieve value");
-		return Qnil;
-	}
 
 	return rb_str_new2 (s ? s : "");
 }
@@ -308,10 +300,8 @@ bin_get (VALUE self, RbResult *res)
 	unsigned char *data = NULL;
 	unsigned int len = 0;
 
-	if (!xmmsc_result_get_bin (res->real, &data, &len)) {
+	if (!xmmsc_result_get_bin (res->real, &data, &len))
 		rb_raise (eValueError, "cannot retrieve value");
-		return Qnil;
-	}
 
 	return rb_str_new ((char *) data, len);
 }
@@ -378,11 +368,8 @@ c_value_get (VALUE self)
 
 	Data_Get_Struct (self, RbResult, res);
 
-	if (xmmsc_result_iserror (res->real)) {
+	if (xmmsc_result_iserror (res->real))
 		rb_raise (eValueError, "cannot retrieve value");
-
-		return Qnil;
-	}
 
 	if (xmmsc_result_is_list (res->real))
 		return list_get (self, res);
@@ -401,10 +388,8 @@ c_decode_url (VALUE self, VALUE str)
 	cstr = StringValuePtr (str);
 
 	tmp = xmmsc_result_decode_url (res->real, cstr);
-	if (!tmp) {
+	if (!tmp)
 		rb_raise (eResultError, "cannot decode URL - %s", cstr);
-		return Qnil;
-	}
 
 	return rb_str_new2 (tmp);
 }
