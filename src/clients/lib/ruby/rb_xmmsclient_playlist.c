@@ -259,16 +259,19 @@ c_playlist_clear (VALUE self)
 static VALUE
 c_playlist_sort (VALUE self, VALUE props)
 {
+	struct RArray *ary;
 	const char **cprops;
 	int i;
 	PLAYLIST_METHOD_HANDLER_HEADER
 
 	if (!NIL_P (rb_check_array_type (props))) {
-		cprops = malloc (sizeof (char *) * (RARRAY (props)->len + 1));
-		for (i = 0; i < RARRAY (props)->len; i++) {
-			Check_Type (RARRAY (props)->ptr[i], T_STRING);
-			cprops[i] = StringValuePtr (RARRAY_PTR (props)[i]);
-		}
+		ary = RARRAY (props);
+
+		cprops = malloc (sizeof (char *) * (ary->len + 1));
+
+		for (i = 0; i < ary->len; i++)
+			cprops[i] = StringValuePtr (ary->ptr[i]);
+
 		cprops[i] = NULL;
 	} else if (!NIL_P (rb_check_string_type (props))) {
 		cprops = malloc (sizeof (char *) * 2);
