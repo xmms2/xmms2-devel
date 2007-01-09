@@ -99,10 +99,13 @@ playlist_new (VALUE xmms, VALUE name)
 	self = Data_Make_Struct (cPlaylist, RbPlaylist, c_mark, c_free, pl);
 
 	pl->xmms = xmms;
+
 	if (NIL_P (name))
-		pl-> name = rb_str_freeze (rb_str_new2 (XMMS_ACTIVE_PLAYLIST));
+		pl->name = rb_str_new2 (XMMS_ACTIVE_PLAYLIST);
 	else
-		pl->name = rb_str_freeze (rb_str_dup (name));
+		pl->name = rb_str_dup (name);
+
+	OBJ_FREEZE (pl->name);
 
 	return self;
 }
