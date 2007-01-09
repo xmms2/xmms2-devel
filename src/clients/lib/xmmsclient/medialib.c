@@ -55,7 +55,7 @@ do_methodcall (xmmsc_connection_t *conn, unsigned int id, const char *arg)
  * @param fmt A format string to use. You can insert items from the hash by
  * using specialformat "${field}".
  * @param res The #xmmsc_result_t that contains the dict.
- * @returns The number of chars written to #target
+ * @returns The number of chars written to target
  */
 
 int
@@ -302,7 +302,7 @@ xmmsc_medialib_path_import (xmmsc_connection_t *conn, const char *path)
  * which must already be url encoded. You probably want to use
  * #xmmsc_medialib_path_import unless you want to add a string that
  * comes as a result from the daemon, such as from
- * #xmms_xform_media_browse
+ * #xmmsc_xform_media_browse
  *
  * @param conn #xmmsc_connection_t
  * @param path A directory to recursive search for mediafiles, this must
@@ -415,7 +415,7 @@ xmmsc_medialib_entry_property_set_int (xmmsc_connection_t *c, uint32_t id,
 
 /**
  * Set a custom int field in the medialib associated with a entry,
- * the same as #xmmsc_result_entry_property_set but with specifing
+ * the same as #xmmsc_medialib_entry_property_set_int but with specifing
  * your own source.
  */
 xmmsc_result_t *
@@ -464,7 +464,7 @@ xmmsc_medialib_entry_property_set_str (xmmsc_connection_t *c, uint32_t id,
 
 /**
  * Set a custom field in the medialib associated with a entry,
- * the same as #xmmsc_result_entry_property_set but with specifing
+ * the same as #xmmsc_medialib_entry_property_set_str but with specifing
  * your own source.
  */
 xmmsc_result_t *
@@ -512,7 +512,7 @@ xmmsc_medialib_entry_property_remove (xmmsc_connection_t *c, uint32_t id,
 
 /**
  * Remove a custom field in the medialib associated with an entry.
- * Identical to #xmmsc_result_entry_property_remove except with specifying
+ * Identical to #xmmsc_medialib_entry_property_remove except with specifying
  * your own source.
  */
 xmmsc_result_t *

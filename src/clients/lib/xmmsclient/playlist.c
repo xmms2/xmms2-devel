@@ -251,7 +251,7 @@ xmmsc_playlist_insert_args (xmmsc_connection_t *c, const char *playlist, int pos
 
 /**
  * Insert entry at given position in playlist.
- * Same as #xmmsc_playlist_insert but takes an encoded
+ * Same as #xmmsc_playlist_insert_url but takes an encoded
  * url instead.
  *
  * @param c The connection structure.
@@ -391,7 +391,7 @@ xmmsc_playlist_radd (xmmsc_connection_t *c, const char *playlist, const char *ur
  * that you will have to include the protocol for the url to. ie:
  * file://mp3/my_mp3s/first.mp3. You probably want to use
  * #xmmsc_playlist_radd unless you want to add a string that comes as
- * a result from the daemon, such as from #xmms_xform_media_browse
+ * a result from the daemon, such as from #xmmsc_xform_media_browse
  *
  * @param c The connection structure.
  * @param playlist The playlist in which to add the media.

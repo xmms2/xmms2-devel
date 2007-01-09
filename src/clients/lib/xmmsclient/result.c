@@ -145,7 +145,7 @@ struct xmmsc_result_St {
  *   xmmsc_result_unref (res);
  * }
  * @endcode
- * When the answer arrives #handler will be called. with the resulting #xmmsc_result_t
+ * When the answer arrives handler will be called. with the resulting #xmmsc_result_t
  * @{
 **/
 
@@ -300,7 +300,7 @@ xmmsc_result_disconnect (xmmsc_result_t *res)
  *   xmmsc_result_unref (res);
  * }
  * @endcode
- * In the above example the #handler would be called when the playtime is updated.
+ * In the above example the handler would be called when the playtime is updated.
  * Only signals are restatable. Broadcasts will automaticly restart.
  */
 xmmsc_result_t *
