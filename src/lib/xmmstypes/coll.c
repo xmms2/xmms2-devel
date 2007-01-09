@@ -459,7 +459,7 @@ xmmsc_coll_get_type (xmmsc_coll_t *coll)
  * Return the list of ids stored in the collection.
  * The list is owned by the collection.
  * Note that this must not be confused with the content of the
- * collection, which must be queried using #xmmsc_coll_query_ids!
+ * collection, which must be queried using xmmsc_coll_query_ids!
  *
  * @param coll  The collection to consider.
  * @return The 0-terminated list of ids.

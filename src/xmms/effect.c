@@ -66,7 +66,7 @@ on_enabled_changed (xmms_object_t *object, gconstpointer value,
  *
  * @param e the effect to use
  * @param buf the buffer with unencoded data read from a decoder
- * @param len the length of #buf
+ * @param len the length of buf
  */
 void
 xmms_effect_run (xmms_effect_t *e, xmms_sample_t *buf, guint len)

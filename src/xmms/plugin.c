@@ -81,8 +81,6 @@ static gboolean xmms_plugin_load (xmms_plugin_desc_t *desc, GModule *module);
  * }
  * @endcode
  *
- * @if api_plugin
- * @{
  */
 
 /**
@@ -168,10 +166,6 @@ xmms_plugin_config_property_register (xmms_plugin_t *plugin,
 }
 
 /**
- * @}
- * -- end of plugin API section --
- * @endif
- *
  * @if internal
  * -- internal documentation section --
  * @addtogroup XMMSPlugin

@@ -721,7 +721,12 @@ remove_from_playlist (gpointer key, gpointer value, gpointer udata)
 
 
 /**
- * Remove all additions of #entry in the playlist
+ * Remove all additions of entry in the playlist
+ *
+ * @param playlist the playlist to remove entries from
+ * @param plname the name of the playlist
+ * @param entry the playlist entry to remove
+ *
  * @sa xmms_playlist_remove
  */
 gboolean
@@ -945,7 +950,7 @@ xmms_playlist_insert_collection (xmms_playlist_t *playlist, gchar *plname,
 
 /**
   * Convenient function for adding a URL to the playlist,
-  * Creates a #xmms_medialib_entry for you and adds it
+  * Creates a #xmms_medialib_entry_t for you and adds it
   * to the list.
   *
   * @param playlist the playlist to add it URL to.
@@ -999,7 +1004,7 @@ xmms_playlist_radd (xmms_playlist_t *playlist, gchar *plname,
  *
  * @param playlist the playlist to add the entry to.
  * @param plname the name of the playlist to modify.
- * @param file the #xmms_medialib_entry to add
+ * @param file the #xmms_medialib_entry_t to add
  * @param err Upon error this will be set.
  * @returns TRUE on success
  */

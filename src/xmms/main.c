@@ -53,7 +53,7 @@
 
 #include <pthread.h>
 
-/**
+/*
  * Forward declarations of the methods in the main object
  */
 static void quit (xmms_object_t *object, xmms_error_t *error);

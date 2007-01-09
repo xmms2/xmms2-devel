@@ -613,7 +613,7 @@ xmms_ipc_setup_server_internaly (xmms_ipc_t *ipc)
 }
 
 /**
- * Checks if someone is waiting for #signalid
+ * Checks if someone is waiting for signalid
  */
 gboolean
 xmms_ipc_has_pending (guint signalid)

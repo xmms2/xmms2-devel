@@ -118,7 +118,6 @@ static xmms_config_t *global_config;
 
 /**
  * @}
- * @if api_plugin
  * @addtogroup Config
  * @{
  */
@@ -356,7 +355,6 @@ xmms_config_property_register (const gchar *path,
 
 /**
  * @}
- * @endif
  *
  * @if internal
  * @addtogroup Config

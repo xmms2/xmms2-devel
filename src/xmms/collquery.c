@@ -596,3 +596,7 @@ query_string_append_alias (GString *qstring, coll_query_alias_t *alias)
 		break;
 	}
 }
+
+/**
+ * @}
+ */

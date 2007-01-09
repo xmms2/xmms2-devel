@@ -390,3 +390,6 @@ xmms_sample_convert_reset (xmms_sample_converter_t *conv)
 	}
 }
 
+/**
+ * @}
+ */

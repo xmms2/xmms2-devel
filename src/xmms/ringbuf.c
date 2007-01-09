@@ -314,7 +314,7 @@ xmms_ringbuf_peek_wait (xmms_ringbuf_t *ringbuf, gpointer data,
  *
  * @param ringbuf Ringbuffer to put data in.
  * @param data Data to put in ringbuffer
- * @param len Length of #data
+ * @param len Length of data
  * @returns Number of bytes that was written
  */
 guint

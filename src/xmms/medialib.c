@@ -1239,7 +1239,7 @@ xmms_medialib_select_method (xmms_medialib_t *medialib, gchar *query, xmms_error
 }
 
 /**
- * Get a list of #GHashTables 's that matches the query.
+ * Get a list of GHashTables 's that matches the query.
  *
  * @param session The medialib session to be used for the transaction.
  * @param query SQL query that should be executed.
