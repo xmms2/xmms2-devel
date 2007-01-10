@@ -334,7 +334,7 @@ cmd_mlib_search (xmmsc_connection_t *conn, gint argc, gchar **argv)
 	while (xmmsc_result_list_valid (res)) {
 		gint id;
 
-		if (!xmmsc_result_get_int (res, &id)) {
+		if (!xmmsc_result_get_uint (res, &id)) {
 			print_error ("Broken resultset");
 		}
 
