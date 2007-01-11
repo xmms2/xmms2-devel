@@ -19,19 +19,14 @@ def plugin_configure(conf):
             conf.env['XMMS_DAAP_BACKEND'] = 'dnssd'
     return True
 
-def plugin_build(bld):
-    obj = bld.create_obj('cc', 'plugin')
-    obj.target = 'xmms_daap'
-    obj.includes = '../../include'
+def plugin_build(bld, obj):
     daap_backend = bld.env_of_name('default')['XMMS_DAAP_BACKEND']
-    obj.source = """daap_xform.c daap_cmd.c daap_conn.c
-                    daap_util.c daap_md5.c cc_handlers.c
-                 """.split()
     obj.source.append("daap_mdns_%s.c" % daap_backend)
-    obj.uselib = 'curl glib2'
     if daap_backend == 'avahi':
         obj.uselib += ' avahiglib avahiclient'
-    obj.install_in = "PLUGINDIR"
 
 configure, build = plugin('daap', configure=plugin_configure,
-                          build_replace=plugin_build)
+                          extra_libs=['curl'], build=plugin_build,
+                          source="""daap_xform.c daap_cmd.c daap_conn.c
+                                    daap_util.c daap_md5.c cc_handlers.c
+                                 """.split())

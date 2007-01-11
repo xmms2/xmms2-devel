@@ -12,13 +12,8 @@ def plugin_configure(conf):
                                        'HAVE_STRING_H']
     return True
 
-def plugin_build(bld):
-    obj = bld.create_obj('cc', 'plugin')
-    obj.includes = '../../include'
-    obj.target = 'xmms_mp4'
-    obj.find_sources_in_dirs('. mp4ff') # TODO: fix waf to accept lists
-    obj.uselib = 'faad glib2'
-    obj.install_in = 'PLUGINDIR'
+def plugin_build(bld, obj):
+    obj.find_sources_in_dirs('. mp4ff', excludes=['mp4.c']) # TODO: fix waf to accept lists
 
-configure, build = plugin('mp4', configure=plugin_configure,
-                          build_replace=plugin_build)
+configure, build = plugin('mp4', configure=plugin_configure, source=[],
+                          build=plugin_build, extra_libs=['faad'])

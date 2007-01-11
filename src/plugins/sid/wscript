@@ -21,20 +21,14 @@ def plugin_configure(conf):
         conf.env['LINKFLAGS_sidplay'] = "-Wl,-rpath=%s" % builders
     return True
 
-def plugin_build(bld):
+def plugin_build(bld, obj):
+    obj.add_objects = 'xmms_sid_cpp'
+
     obj = bld.create_obj('cpp', 'objects')
     obj.target = 'xmms_sid_cpp'
     obj.includes = '../../include'
     obj.source = """sidplay_wrapper.cpp md5.cpp""".split()
     obj.uselib = 'sidplay glib2'
 
-    obj = bld.create_obj('cc', 'plugin')
-    obj.target = 'xmms_sid'
-    obj.includes = '../../include'
-    obj.source = 'sid.c'
-    obj.add_objects = 'xmms_sid_cpp'
-    obj.uselib = 'sidplay glib2 resid'
-    obj.install_in = 'PLUGINDIR'
-
 configure, build = plugin('sid', configure=plugin_configure,
-                          build_replace=plugin_build)
+                          build=plugin_build, extra_libs=['sidplay resid'])
