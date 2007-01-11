@@ -36,11 +36,8 @@ def plugin(name, source=None, configure=False, build=False,
 			obj.uselib_local = 'xmms2core'
 
 		obj.install_in = 'PLUGINDIR'
-	
+
 		if build:
 			build(bld, obj)
 
-	if build_replace:
-		return stock_configure, build_replace
-	else:
-		return stock_configure, stock_build
+	return stock_configure, stock_build
