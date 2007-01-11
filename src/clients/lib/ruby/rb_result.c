@@ -23,10 +23,6 @@
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
-#define DEF_CONST(mod, prefix, name) \
-	rb_define_const ((mod), #name, \
-	                 INT2FIX (prefix##name));
-
 typedef struct {
 	xmmsc_result_t *real;
 	xmmsc_result_t *orig;
@@ -587,14 +583,6 @@ Init_Result (VALUE mXmms)
 	rb_define_method (cResult, "wait", c_wait, 0);
 	rb_define_method (cResult, "value", c_value_get, 0);
 	rb_define_method (cResult, "decode_url", c_decode_url, 1);
-
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_ADD);
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_INSERT);
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SHUFFLE);
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_REMOVE);
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_CLEAR);
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_MOVE);
-	DEF_CONST (cResult, XMMS_, PLAYLIST_CHANGED_SORT);
 
 	cBroadcastResult = rb_define_class_under (mXmms,
 	                                          "BroadcastResult",

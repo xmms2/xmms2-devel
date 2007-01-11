@@ -23,6 +23,10 @@
 #include "rb_xmmsclient.h"
 #include "rb_result.h"
 
+#define DEF_CONST(mod, prefix, name) \
+	rb_define_const ((mod), #name, \
+	                 INT2FIX (prefix##name));
+
 #define PLAYLIST_METHOD_HANDLER_HEADER \
 	RbPlaylist *pl = NULL; \
 	RbXmmsClient *xmms = NULL; \
@@ -331,6 +335,14 @@ Init_Playlist (VALUE cClient)
 	rb_define_method (cPlaylist, "entries", c_list_entries, 0);
 	rb_define_method (cPlaylist, "load", c_load, 0);
 	rb_define_method (cPlaylist, "remove", c_remove, 0);
+
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, ADD);
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, INSERT);
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, SHUFFLE);
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, REMOVE);
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, CLEAR);
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, MOVE);
+	DEF_CONST (cPlaylist, XMMS_PLAYLIST_CHANGED_, SORT);
 
 	ePlaylistError = rb_define_class_under (cPlaylist, "PlaylistError",
 	                                        rb_eStandardError);
